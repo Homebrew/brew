@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "requirements"
@@ -7,7 +8,7 @@ RSpec.describe Requirements do
 
   describe "#<<" do
     it "returns itself" do
-      expect(requirements << Object.new).to be(requirements)
+      expect(requirements << Class.new(Requirement).new).to be(requirements)
     end
 
     it "merges duplicate requirements" do

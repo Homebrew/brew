@@ -120,7 +120,7 @@ module Homebrew
     # @api private
     sig {
       params(bottle: Bottle, signing_repo: String,
-             signing_workflow: T.nilable(String), subject: T.nilable(String)).returns(T::Hash[T.untyped, T.untyped])
+             signing_workflow: T.nilable(String), subject: T.nilable(String)).returns(T::Hash[String, T.untyped])
     }
     def self.check_attestation(bottle, signing_repo, signing_workflow = nil, subject = nil)
       cmd = ["attestation", "verify", bottle.cached_download, "--repo", signing_repo, "--format",
@@ -138,12 +138,12 @@ module Homebrew
                                  env: { "GH_TOKEN" => credentials, "GH_HOST" => "github.com" },
                                  secrets: [credentials], print_stderr: false, chdir: HOMEBREW_TEMP)
       rescue ErrorDuringExecution => e
-        if e.status.exitstatus == 1 && e.stderr.include?("unknown command")
+        if e.exitstatus == 1 && e.stderr.include?("unknown command")
           raise GhIncompatible, "gh CLI is incompatible with attestations"
         end
 
         # Even if we have credentials, they may be invalid or malformed.
-        if e.status.exitstatus == 4 || e.stderr.include?("HTTP 401: Bad credentials")
+        if e.exitstatus == 4 || e.stderr.include?("HTTP 401: Bad credentials")
           raise GhAuthInvalid, "invalid credentials"
         end
 
@@ -205,7 +205,7 @@ module Homebrew
     # @raise [InvalidAttestationError] on any verification failures
     #
     # @api private
-    sig { params(bottle: Bottle).returns(T::Hash[T.untyped, T.untyped]) }
+    sig { params(bottle: Bottle).returns(T::Hash[String, T.untyped]) }
     def self.check_core_attestation(bottle)
       begin
         # Ideally, we would also constrain the signing workflow here, but homebrew-core

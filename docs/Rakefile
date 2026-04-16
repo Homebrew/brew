@@ -43,6 +43,7 @@ task test: :build do
     ],
     ignore_urls:         [
       "/",
+      %r{https://docs\.brew\.sh/},
       %r{/rubydoc/},
       %r{https://github.com/},
       %r{https://homebrew.1password.com/},

@@ -103,7 +103,7 @@ module Homebrew
            !formula.head_version_outdated?(installed_head_version, fetch_head:)
           new_head_installed = true
         end
-        prefix_installed = formula.prefix.exist? && !formula.prefix.children.empty?
+        prefix_installed = formula.prefix.exist? && !formula.prefix.empty?
 
         # Check if the installed formula is from a different tap
         if formula.any_version_installed? &&

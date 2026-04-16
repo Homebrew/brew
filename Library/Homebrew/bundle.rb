@@ -20,9 +20,18 @@ module Homebrew
       def system(cmd, *args, verbose: false)
         return super cmd, *args if verbose
 
+        env = {}
+
+        # Make sure node's bin opt path is part of the PATH
+        # This is essential for the npm bundle extension that calls node directly
+        if Npm.package_manager_executable && cmd.to_s == Npm.package_manager_executable.to_s
+          node_bin = "#{HOMEBREW_PREFIX}/opt/node/bin"
+          env["PATH"] = "#{ENV.fetch("PATH")}:#{node_bin}"
+        end
+
         logs = []
         success = T.let(false, T::Boolean)
-        IO.popen([cmd, *args], err: [:child, :out]) do |pipe|
+        IO.popen(env, [cmd, *args], err: [:child, :out]) do |pipe|
           while (buf = pipe.gets)
             logs << buf
           end
@@ -44,13 +53,6 @@ module Homebrew
         @cask_installed ||= File.directory?("#{HOMEBREW_PREFIX}/Caskroom") &&
                             (File.directory?("#{HOMEBREW_LIBRARY}/Taps/homebrew/homebrew-cask") ||
                              !Homebrew::EnvConfig.no_install_from_api?)
-      end
-
-      sig { params(name: String).returns(T::Boolean) }
-      def which_formula?(name)
-        formula = Formulary.factory(name)
-        ENV["PATH"] = "#{formula.opt_bin}:#{ENV.fetch("PATH", nil)}" if formula.any_version_installed?
-        which(name).present?
       end
 
       sig { params(block: T.proc.returns(T.anything)).returns(T.untyped) }
@@ -147,7 +149,8 @@ module Homebrew
           next if installed_formulae.exclude?(name)
 
           tab = Tab.for_name(name)
-          next if tab.tabfile.blank? || !tab.tabfile.exist?
+          tabfile = tab.tabfile
+          next if tabfile.blank? || !tabfile.exist?
           next if tab.installed_on_request
 
           next name if use_brew_tab

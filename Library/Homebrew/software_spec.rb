@@ -270,7 +270,7 @@ class SoftwareSpec
     dependency_collector.deps
   end
 
-  sig { returns(T::Array[Dependable]) }
+  sig { returns(T::Array[Dependency]) }
   def recursive_dependencies
     deps_f = []
     recursive_dependencies = deps.filter_map do |dep|

@@ -1,5 +1,5 @@
 ---
-last_review_date: "2026-01-23"
+last_review_date: "2026-04-10"
 ---
 
 # FAQ (Frequently Asked Questions)
@@ -35,11 +35,17 @@ To stop something from being updated/upgraded:
 
     brew pin <formula>
 
+If you also do not want Homebrew to automatically learn about newer versions until you choose to, disable auto-updating entirely:
+
+    export HOMEBREW_NO_AUTO_UPDATE=1
+
+For the tradeoffs and alternatives, see [Locking installed formulae at specific versions](Versions.md#locking-installed-formulae-at-specific-versions).
+
 To allow that formulae to update again:
 
     brew unpin <formula>
 
-Note that pinned, outdated formulae that another formula depends on need to be upgraded when required, as we do not allow formulae to be built against outdated versions. If this is not desired, you can instead use `brew version-install` to install your own copy of the formula from [your own tap](How-to-Create-and-Maintain-a-Tap.md).
+Note that pinned, outdated formulae that another formula depends on need to be upgraded when required, as we do not allow formulae to be built against outdated versions. If this is not desired, see [Locking installed formulae at specific versions](Versions.md#locking-installed-formulae-at-specific-versions) instead.
 
 ## How do I uninstall Homebrew?
 
@@ -75,6 +81,15 @@ Which is usually: `~/Library/Caches/Homebrew`
 
 GUI apps on macOS don't have Homebrew's prefix in their `PATH` by default. You can fix this by running `sudo launchctl config user path "$(brew --prefix)/bin:${PATH}"` and then rebooting, as documented in `man launchctl`. Note that this sets the `launchctl` `PATH` for *all users*.
 
+## Why does Homebrew update more frequently after I run a developer command?
+
+Running a developer command (e.g. `brew edit`, `brew create`) enables Homebrew's developer mode. This means:
+
+* Homebrew may auto-run `brew update` before some commands every hour instead of every 24 hours.
+* Updates track the latest commit on `main` instead of the latest stable tag.
+
+To switch back to the default behavior, run `brew developer off`. If you only want to switch back to stable tags, set `HOMEBREW_UPDATE_TO_TAG=1` in your shell environment. To control auto-update frequency, use `HOMEBREW_AUTO_UPDATE_SECS`; to disable auto-updates entirely, set `HOMEBREW_NO_AUTO_UPDATE=1`.
+
 ## How do I contribute to Homebrew?
 
 Read our [contribution guidelines](https://github.com/Homebrew/brew/blob/HEAD/CONTRIBUTING.md#contributing-to-homebrew).
@@ -108,7 +123,7 @@ The prefix `/opt/homebrew` was chosen to allow installations in `/opt/homebrew` 
 
 ## Why is the default installation prefix `/home/linuxbrew/.linuxbrew` on Linux?
 
-The prefix `/home/linuxbrew/.linuxbrew` was chosen so that users without admin access can still benefit from precompiled binaries via a `linuxbrew` role account. If you do not yourself have admin privileges, consider asking your admin staff to create a `linuxbrew` role account for you with home directory `/home/linuxbrew`.
+The prefix `/home/linuxbrew/.linuxbrew` was chosen to avoid writing to system-owned directories after installation while still allowing most precompiled binaries (bottles) to be used. Homebrew is designed for single-user installations rather than shared role accounts. See [Support Tiers](Support-Tiers.md#unsupported) for unsupported multi-user environments.
 
 ## Why does Homebrew say sudo is bad?
 
@@ -232,7 +247,7 @@ There are a few ideas to fix this problem:
 * Try to prevent the software’s automated updates. It wouldn’t be a universal solution and may cause it to break. Most software on Homebrew Cask is closed-source, so we’d be guessing. This is also why pinning casks to a version isn’t available.
 * Try to extract the installed software’s version and compare it to the cask, deciding what to do at that time. It’d be a complicated solution that would break other parts of our methodology, such as using versions to interpolate `url` values (a definite win for maintainability). This solution also isn’t universal, as many software developers are inconsistent in their versioning schemes (and app bundles are meant to have two version strings) and it doesn’t work for all types of software we support.
 
-So we let software be. Anything installed with Homebrew Cask should behave the same as if it were installed manually. But since we also want to support software that doesn’t self-upgrade, we add [`auto_updates true`](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/a/alfred.rb#L18) to casks for software that does, which excludes them from `brew upgrade`.
+So we let software be. Anything installed with Homebrew Cask should behave the same as if it were installed manually. But since we also want to support software that doesn’t self-upgrade, we add [`auto_updates true`](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/a/alfred.rb#L18) to casks for software that does. These casks may still be skipped by `brew upgrade` unless you explicitly include them. You can also set `HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS=1` so Homebrew will try to upgrade them automatically when it can detect that the version currently installed in the user’s `appdir` is older than the latest version in the tap. This will become the default behavior in Homebrew 5.2.0.
 
 Casks which use [`version :latest`](Cask-Cookbook.md#special-value-latest) are also excluded, because we have no way to track their installed version. It helps to ask the developers of such software to provide versioned releases (i.e. include the version in the path of the download `url`).
 

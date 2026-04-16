@@ -22,8 +22,6 @@ module Homebrew
       class Cpan
         extend Strategic
 
-        NICE_NAME = "CPAN"
-
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://(?:cpan\.metacpan\.org|www\.cpan\.org)

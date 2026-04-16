@@ -126,9 +126,6 @@ class Formula
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def no_autobump!(*args, &block); end
 
-  sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
-  def no_autobump_defined?(*args, &block); end
-
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def no_autobump_message(*args, &block); end
 

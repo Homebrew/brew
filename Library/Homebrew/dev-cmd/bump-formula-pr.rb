@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "abstract_command"
+require "bump"
 require "fileutils"
 require "formula"
 require "utils/inreplace"
@@ -123,8 +124,6 @@ module Homebrew
           tap = formula.tap
           raise ArgumentError, "This formula is not in a tap!" if tap.blank?
           raise ArgumentError, "This formula's tap is not a Git repository!" unless tap.git?
-
-          formula
         rescue ArgumentError => e
           odie e.message if @tap_retried
 
@@ -152,10 +151,8 @@ module Homebrew
         # spamming during normal output.
         Homebrew.install_bundler_gems!(groups: ["audit", "style"]) unless args.no_audit?
 
-        tap_remote_repo = T.must(tap.remote_repository)
-        remote = "origin"
-        remote_branch = tap.git_repository.origin_branch_name
-        previous_branch = "-"
+        tap_remote_repo = tap.remote_repository
+        odie "#{tap.name} tap does not have a remote repository!" if tap_remote_repo.nil?
 
         check_pull_requests(formula, tap_remote_repo, state: "open") unless args.write_only?
 
@@ -422,7 +419,7 @@ module Homebrew
 
           formula_checkboxes = []
 
-          if resources_checked.nil? && (failed_updates.any? || unchecked_resources.any?)
+          if failed_updates.any? || (resources_checked.nil? && unchecked_resources.any?)
             formula_checkboxes << "- [ ] `resource` blocks have been checked for updates."
 
             if failed_updates.any?
@@ -524,7 +521,7 @@ module Homebrew
           "#{Formatter.truncate(Array(args.bump_synced).join(" "), max:)} #{new_formula_version}"
         end
 
-        pr_message = "Created with `brew bump-formula-pr`."
+        pr_message = Homebrew::Bump.pr_message("bump-formula-pr", user_message: args.message)
         commits.each do |commit|
           next if commit[:formula_pr_message].empty?
 
@@ -532,18 +529,35 @@ module Homebrew
           pr_message += "#{commit[:formula_pr_message]}<hr>"
         end
 
-        pr_info = {
-          commits:,
-          remote:,
-          remote_branch:,
-          branch_name:     "bump-#{formula.name}-#{new_formula_version}",
-          pr_title:,
-          previous_branch:,
-          tap:             tap,
-          tap_remote_repo:,
-          pr_message:,
-        }
-        GitHub.create_bump_pr(pr_info, args:)
+        return if args.write_only? && !args.commit?
+
+        url = Homebrew::Bump.create_pr(
+          Homebrew::Bump::BumpInfo.new(
+            package_tap: tap,
+            branch_name: "bump-#{formula.name}-#{new_formula_version}",
+            pr_title:,
+            pr_message:,
+            commits:     commits.map do |commit|
+              Homebrew::Bump::Commit.new(
+                sourcefile_path:  commit[:sourcefile_path],
+                old_contents:     commit[:old_contents],
+                commit_message:   commit[:commit_message],
+                additional_files: commit[:additional_files] || [],
+              )
+            end,
+          ),
+          dry_run:  args.dry_run?,
+          no_fork:  args.no_fork? || args.write_only?,
+          fork_org: args.fork_org,
+          commit:   args.commit?,
+        )
+        return if url.blank?
+
+        if args.no_browse?
+          puts url
+        else
+          exec_browser url
+        end
       end
 
       private
@@ -579,6 +593,8 @@ module Homebrew
       sig { params(old_url: String, old_version: String, new_version: String).returns(String) }
       def update_url(old_url, old_version, new_version)
         new_url = old_url.gsub(old_version, new_version)
+        new_url.gsub!(old_version.tr(".", "_"), new_version.tr(".", "_")) if old_version.include?(".")
+
         return new_url if (old_version_parts = old_version.split(".")).length < 2
         return new_url if (new_version_parts = new_version.split(".")).length != old_version_parts.length
 
@@ -599,7 +615,10 @@ module Homebrew
         resource.owner = if formula_or_resource.is_a?(Formula)
           Resource.new(formula_or_resource.name)
         else
-          Resource.new(formula_or_resource.owner.name)
+          owner = formula_or_resource.owner
+          raise "Owner of Resource#{formula_or_resource.name} is nil" if owner.nil?
+
+          Resource.new(owner.name)
         end
         forced_version = new_version && new_version != resource.version.to_s
         resource.version(new_version) if forced_version
@@ -732,7 +751,7 @@ module Homebrew
         Utils::Tar.validate_file(resource_path)
         new_hash = resource_path.sha256
 
-        escaped_name = Regexp.escape(resource.name)
+        escaped_name = Regexp.escape(resource.name.to_s)
 
         Utils::Inreplace.inreplace formula.path do |s|
           leading_spaces = T.must(s.inreplace_string.match(/^( +)resource "#{escaped_name}"/)).captures.first

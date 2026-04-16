@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "livecheck/livecheck"
@@ -387,7 +388,7 @@ RSpec.describe Homebrew::Livecheck do
 
           livecheck do
             url :homepage
-            regex(/href=.*?test[._-]v?(\d+(?:.\d+)+).(?:t|dmg)/i)
+            regex(/href=.*?test[._-]v?(\\d+(?:\\.\\d+)+)\\.(?:t|dmg)/i)
             throttle 4
           end
         end
@@ -406,7 +407,7 @@ RSpec.describe Homebrew::Livecheck do
 
           livecheck do
             url :homepage
-            regex(/href=.*?test[._-]v?(\d+(?:.\d+)+).(?:t|dmg)/i)
+            regex(/href=.*?test[._-]v?(\\d+(?:\\.\\d+)+)\\.(?:t|dmg)/i)
             throttle days: 1
           end
         end
@@ -425,34 +426,28 @@ RSpec.describe Homebrew::Livecheck do
 
           livecheck do
             url :homepage
-            regex(/href=.*?test[._-]v?(\d+(?:.\d+)+).(?:t|dmg)/i)
+            regex(/href=.*?test[._-]v?(\\d+(?:\\.\\d+)+)\\.(?:t|dmg)/i)
             throttle 4, days: 1
           end
         end
       RUBY
     end
 
-    let(:page_match) { Homebrew::Livecheck::Strategy::PageMatch }
-    let(:base_match_data) do
-      {
-        matches: {
-          "0.0.1" => Version.new("0.0.1"),
-          "0.0.2" => Version.new("0.0.2"),
-        },
-        url:     homepage_url,
-        regex:   brew_regex,
-      }
+    let(:base_content) do
+      <<~HTML
+        <a href="test-0.0.1.tgz">0.0.1</a>
+        <a href="test-0.0.2.tgz">0.0.2</a>
+      HTML
     end
 
     it "sets `latest_throttled` to the highest throttled version" do
-      match_data = base_match_data.merge({
-        matches: {
-          "0.0.3" => Version.new("0.0.3"),
-          "0.0.4" => Version.new("0.0.4"),
-          "0.0.5" => Version.new("0.0.5"),
-        },
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({
+        content: <<~HTML,
+          <a href="test-0.0.3.tgz">0.0.3</a>
+          <a href="test-0.0.4.tgz">0.0.4</a>
+          <a href="test-0.0.5.tgz">0.0.5</a>
+        HTML
       })
-      allow(page_match).to receive(:find_versions).and_return(match_data)
 
       f_result = nil
       expect { f_result = livecheck.latest_version(f_throttle_rate, debug: true, verbose: true) }
@@ -474,7 +469,7 @@ RSpec.describe Homebrew::Livecheck do
     end
 
     it "does not set `latest_throttled` when there are no throttled versions and throttle interval has not elapsed" do
-      allow(page_match).to receive(:find_versions).and_return(base_match_data)
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: base_content })
       allow(livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
       latest_version = Version.new("0.0.2")
 
@@ -490,7 +485,7 @@ RSpec.describe Homebrew::Livecheck do
     end
 
     it "sets `latest_throttled` to `latest` when there are no throttled versions and throttle interval has elapsed" do
-      allow(page_match).to receive(:find_versions).and_return(base_match_data)
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: base_content })
       allow(livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
       latest_version = Version.new("0.0.2")
 

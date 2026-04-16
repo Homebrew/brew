@@ -20,7 +20,7 @@ module Homebrew
         formula,
         cache_key: "update-report",
       ) do |_, dependency|
-        Dependency.prune if dependency.build? || dependency.test?
+        next Dependable::PRUNE if dependency.build? || dependency.test?
       end
       next unless recursive_runtime_dependencies.map(&:name).include? "gcc"
 

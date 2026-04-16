@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "cmd/install"
@@ -7,6 +8,39 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
   include FileUtils
 
   it_behaves_like "parseable arguments"
+
+  it "installs an explicitly requested tap before resolving a formula" do
+    cmd = described_class.new(["user/repo/foo"])
+    tap = Tap.fetch("user", "repo")
+
+    allow(Tap).to receive(:with_formula_name).with("user/repo/foo").and_return([tap, "foo"])
+    expect(tap).to receive(:ensure_installed!).ordered
+    expect(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).ordered
+                                                             .and_raise(TapFormulaUnavailableError.new(tap, "foo"))
+
+    expect { cmd.run }.to output(/If you trust this tap/).to_stderr
+
+    expect(Homebrew).to have_failed
+  end
+
+  it "does not install `homebrew/cask` when a cask remains unavailable" do
+    cmd = described_class.new(["foo"])
+    cask_tap = CoreCaskTap.instance
+
+    require "search"
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil, untapped_official_taps: [])
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false)
+                                                            .and_raise(FormulaOrCaskUnavailableError.new("foo"))
+    allow(cask_tap).to receive(:installed?).and_return(false)
+    allow(Homebrew::Search).to receive(:search_names).and_return([[], []])
+
+    expect(cask_tap).not_to receive(:ensure_installed!)
+
+    expect { cmd.run }.to raise_error(SystemExit)
+
+    expect(Homebrew).to have_failed
+  end
 
   context "when using a bottle" do
     let(:formula_name) { "testball_bottle" }
@@ -119,5 +153,54 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       expect(testball1_prefix/"foo/test").not_to be_a_file
       expect(testball1_prefix/"bin/something.bin").to be_a_file
     end
+  end
+
+  it "prints a shared fetch heading and correct upgrade count", :cask do
+    cmd = described_class.new(["codex"])
+    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil)
+    formula = formula("testball_bottle") { url "https://brew.sh/testball_bottle-0.1.tar.gz" }
+    formula_installer = instance_double(FormulaInstaller, formula:)
+    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    installer = instance_double(Cask::Installer, prelude: nil, enqueue_downloads: nil)
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula, cask])
+    allow(cask).to receive_messages(
+      installed?:        true,
+      full_name:         "codex",
+      installed_version: "0.117.0",
+      version:           "0.118.0",
+    )
+    allow(Cask::Upgrade).to receive(:outdated_casks).and_return([cask])
+    allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+    allow(Homebrew::Install).to receive(:install_formula?).and_return(true)
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Upgrade).to receive(:dependants).and_return(Homebrew::Upgrade::Dependents.new(
+                                                                  upgradeable: [],
+                                                                  pinned:      [],
+                                                                  skipped:     [],
+                                                                ))
+    allow(Homebrew::Install).to receive_messages(
+      formula_installers: [formula_installer],
+      enqueue_formulae:   [formula_installer],
+    )
+    allow(Cask::Installer).to receive(:new).and_return(installer)
+    allow(Homebrew::Install).to receive(:install_formulae)
+    allow(Homebrew::Upgrade).to receive(:upgrade_dependents)
+    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+    allow(Homebrew.messages).to receive(:display_messages)
+    allow(Cask::Upgrade).to receive(:upgrade_casks!) do |*_, **kwargs|
+      expect(kwargs[:skip_prefetch]).to be(true)
+      expect(kwargs[:show_upgrade_summary]).to be(false)
+
+      true
+    end
+
+    expect { cmd.run }.to output(<<~EOS).to_stdout
+      ==> Upgrading 1 outdated package:
+      codex 0.117.0 -> 0.118.0
+      ==> Fetching downloads for: testball_bottle and codex
+    EOS
   end
 end

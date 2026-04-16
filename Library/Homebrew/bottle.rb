@@ -194,7 +194,7 @@ class Bottle
 
   sig { returns(Filename) }
   def filename
-    Filename.create(resource.owner, @tag, @spec.rebuild)
+    Filename.create(T.cast(resource.owner, Formula), @tag, @spec.rebuild)
   end
 
   sig { returns(T.nilable(Resource::BottleManifest)) }
@@ -259,7 +259,7 @@ class Bottle
 
     @root_url = T.let(val, T.nilable(String))
 
-    filename = Filename.create(resource.owner, @tag, @spec.rebuild)
+    filename = Filename.create(T.cast(resource.owner, Formula), @tag, @spec.rebuild)
     resource_checksum = resource.checksum
     odie "resource checksum is nil" if resource_checksum.nil?
 

@@ -213,12 +213,10 @@ module Homebrew
 
         description = option_description(description, *names, hidden:)
         env, counterpart = env
-        if env && @non_global_processed_options.any?
+        env_hidden = Homebrew::EnvConfig::ENVS.fetch(:"HOMEBREW_#{env.upcase}", {}).fetch(:hidden, false) if env
+        if env && @non_global_processed_options.any? && !hidden && !env_hidden
           affix = counterpart ? " and `#{counterpart}` is passed." : "."
           description += " Enabled by default if `$HOMEBREW_#{env.upcase}` is set#{affix}"
-        end
-        if odeprecated || odisabled
-          description += " (#{odisabled ? "disabled" : "deprecated"}#{"; replaced by #{replacement}" if replacement})"
         end
         process_option(*names, description, type: :switch, hidden:) unless odisabled
 

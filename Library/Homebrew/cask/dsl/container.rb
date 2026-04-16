@@ -15,8 +15,8 @@ module Cask
 
       sig { params(nested: T.nilable(String), type: T.nilable(Symbol)).void }
       def initialize(nested: nil, type: nil)
-        @nested = T.let(nested, T.nilable(String))
-        @type = T.let(type, T.nilable(Symbol))
+        @nested = nested
+        @type = type
 
         return if type.nil?
         return unless UnpackStrategy.from_type(type).nil?

@@ -63,10 +63,10 @@ module Cask
       def initialize(cask, commands, base_name:, shell_parameter_format:, shells:)
         super(cask, *commands, base_name:, shell_parameter_format:, shells:)
 
-        @commands = T.let(commands, T::Array[T.any(Pathname, String)])
-        @base_name = T.let(base_name, T.nilable(String))
-        @shell_parameter_format = T.let(shell_parameter_format, T.nilable(T.any(Symbol, String)))
-        @shells = T.let(shells, T::Array[Symbol])
+        @commands = commands
+        @base_name = base_name
+        @shell_parameter_format = shell_parameter_format
+        @shells = shells
         @resolved_base_name = T.let(nil, T.nilable(String))
       end
 

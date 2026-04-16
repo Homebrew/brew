@@ -90,7 +90,7 @@ module Homebrew
           ""
         end
         release_notes += GitHub.generate_release_notes("Homebrew", "brew", new_version,
-                                                       previous_tag: latest_version)["body"]
+                                                       previous_tag: latest_version.to_s)["body"]
 
         puts release_notes
         puts

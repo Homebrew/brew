@@ -18,8 +18,6 @@ module Homebrew
       class Npm
         extend Strategic
 
-        NICE_NAME = "npm"
-
         # The default `strategy` block used to extract version information when
         # a `strategy` block isn't provided.
         DEFAULT_BLOCK = T.let(proc do |json|

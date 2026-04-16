@@ -274,7 +274,7 @@ module Homebrew
 
         if recursive
           deps ||= recursive_dep_includes(dependency, includes, ignores)
-          reqs   = recursive_req_includes(dependency, includes, ignores)
+          reqs = args.include_requirements? ? recursive_req_includes(dependency, includes, ignores) : Requirements.new
         else
           deps ||= select_includes(dependency.deps, ignores, includes)
           reqs   = select_includes(dependency.requirements, ignores, includes)

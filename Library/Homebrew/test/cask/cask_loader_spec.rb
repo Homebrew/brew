@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 RSpec.describe Cask::CaskLoader, :cask do
@@ -110,6 +111,15 @@ RSpec.describe Cask::CaskLoader, :cask do
             expect do
               described_class.for("#{old_tap}/#{token}")
             end.to output(%r{Cask #{old_tap}/#{token} was renamed to #{new_tap}/#{token}\.}).to_stderr
+          end
+
+          it "raises when the migrated tap is not installed" do
+            FileUtils.rm_rf new_tap.path
+
+            expect(new_tap).not_to receive(:ensure_installed!)
+
+            expect { described_class.load("#{old_tap}/#{token}") }
+              .to raise_error(Cask::TapCaskUnavailableError, /If you trust this tap/)
           end
         end
 

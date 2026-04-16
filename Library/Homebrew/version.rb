@@ -720,6 +720,9 @@ class Version
     version.to_i
   end
 
+  # The implicit string conversion of this {Version}, for use where
+  # a {String} is expected. Raises {NoMethodError} if this is a {NULL} version.
+  #
   # @api public
   sig { returns(String) }
   def to_str
@@ -728,6 +731,8 @@ class Version
     T.must(version).to_str
   end
 
+  # The string representation of this {Version}.
+  #
   # @api public
   sig { returns(String) }
   def to_s = version.to_s

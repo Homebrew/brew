@@ -1,5 +1,5 @@
 ---
-last_review_date: 2025-07-15
+last_review_date: 2026-04-04
 redirect_from:
   - /Tips-N'-Tricks
 ---
@@ -8,7 +8,7 @@ redirect_from:
 
 ## Install previous versions of formulae
 
-Some formulae in `homebrew/core` are made available as [versioned formulae](Versions.md) using a special naming format, e.g. `gcc@9`. If the version you're looking for isn't available, consider using `brew version-install`.
+Some formulae in `homebrew/core` are made available as [versioned formulae](Versions.md) using a special naming format, e.g. `gcc@9`. If the version you're looking for isn't available, see [Locking installed formulae at specific versions](Versions.md#locking-installed-formulae-at-specific-versions).
 
 ## Quickly remove something from Homebrew's prefix
 

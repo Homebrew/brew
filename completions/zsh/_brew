@@ -179,6 +179,7 @@ __brew_internal_commands() {
     'generate-cask-api:Generate `homebrew/cask` API data files for https://formulae.brew.sh'
     'generate-cask-ci-matrix:Generate a GitHub Actions matrix for a given pull request URL or list of cask names'
     'generate-formula-api:Generate `homebrew/core` API data files for https://formulae.brew.sh'
+    'generate-internal-api:Generate internal API data files for https://formulae.brew.sh'
     'generate-man-completions:Generate Homebrew'\''s manpages and shell completions'
     'generate-zap:Generate a `zap` stanza for a cask by scanning the system for associated files and directories'
     'gist-logs:Upload logs for a failed build of formula to a new Gist'
@@ -671,7 +672,7 @@ _brew_bump_unversioned_casks() {
 _brew_bundle() {
   _arguments \
     '(--no-vscode --no-go --no-cargo --no-uv --no-flatpak --no-krew --no-npm)--all[`list` all dependencies]' \
-    '(--no-cargo)--cargo[`list` or `dump` Cargo packages]' \
+    '(--no-cargo)--cargo[`list`, `dump` or `cleanup` Cargo packages]' \
     '--cask[`list`, `dump` or `cleanup` Homebrew cask dependencies]' \
     '--check[Check that all dependencies in the Brewfile are installed before running `exec`, `sh`, or `env`. Enabled by default if `$HOMEBREW_BUNDLE_CHECK` is set]' \
     '--cleanup[`install` performs cleanup operation, same as running `cleanup --force`. Enabled by default if `$HOMEBREW_BUNDLE_INSTALL_CLEANUP` is set and `--global` is passed]' \
@@ -682,7 +683,7 @@ _brew_bundle() {
     '--force[`install` runs with `--force`/`--overwrite`. `dump` overwrites an existing `Brewfile`. `cleanup` actually performs its cleanup operations]' \
     '--formula[`list`, `dump` or `cleanup` Homebrew formula dependencies]' \
     '(--file)--global[Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set), `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise]' \
-    '(--no-go)--go[`list` or `dump` Go packages]' \
+    '(--no-go)--go[`list`, `dump` or `cleanup` Go packages]' \
     '--help[Show this message]' \
     '(--upgrade)--install[Run `install` before continuing to other operations, e.g. `exec`]' \
     '(--no-krew)--krew[`list` or `dump` Krew plugins]' \
@@ -697,13 +698,13 @@ _brew_bundle() {
     '--no-upgrade[`install` does not run `brew upgrade` on outdated dependencies. `check` does not check for outdated dependencies. Note they may still be upgraded by `brew install` if needed. Enabled by default if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
     '(--all --uv)--no-uv[`dump` without uv tools. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_UV` is set]' \
     '(--all --vscode)--no-vscode[`dump` without VSCode (and forks/variants) extensions. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_VSCODE` is set]' \
-    '(--no-npm)--npm[`list` or `dump` npm packages]' \
+    '(--no-npm)--npm[`list`, `dump` or `cleanup` npm packages]' \
     '--quiet[Make some output more quiet]' \
     '--services[Temporarily start services while running the `exec` or `sh` command. Enabled by default if `$HOMEBREW_BUNDLE_SERVICES` is set]' \
     '--tap[`list`, `dump` or `cleanup` Homebrew tap dependencies]' \
     '(--install)--upgrade[`install` runs `brew upgrade` on outdated dependencies, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
     '--upgrade-formulae[`install` runs `brew upgrade` on any of these comma-separated formulae, even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set]' \
-    '(--no-uv)--uv[`list` or `dump` uv tools]' \
+    '(--no-uv)--uv[`list`, `dump` or `cleanup` uv tools]' \
     '--verbose[`install` prints output from commands as they are run. `check` lists all missing dependencies]' \
     '(--no-vscode)--vscode[`list`, `dump` or `cleanup` VSCode (and forks/variants) extensions]' \
     '--zap[`cleanup` casks using the `zap` command instead of `uninstall`]' \
@@ -1157,6 +1158,16 @@ _brew_generate_formula_api() {
     '--verbose[Make some output more verbose]'
 }
 
+# brew generate-internal-api
+_brew_generate_internal_api() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--dry-run[Generate internal API data without writing it to files]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
 # brew generate-man-completions
 _brew_generate_man_completions() {
   _arguments \
@@ -1255,7 +1266,7 @@ _brew_instal() {
     '(--cask)--as-dependency[Install but mark as installed as a dependency and not installed on request]' \
     '--ask[Ask for confirmation before downloading and installing formulae. Print download and install sizes of bottles and dependencies. Enabled by default if `$HOMEBREW_ASK` is set]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
-    '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
+    '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
     '(--cask --build-from-source --force-bottle)--build-bottle[Prepare the formula for eventual bottling during installation, skipping any post-install steps]' \
     '(--cask --build-bottle --force-bottle)--build-from-source[Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available]' \
@@ -1281,13 +1292,13 @@ _brew_instal() {
     '(--formula)--keyboard-layoutdir[Target location for Keyboard Layouts (default: `/Library/Keyboard Layouts`)]' \
     '(--formula)--language[Comma-separated list of language codes to prefer for cask installation. The first matching language is used, otherwise it reverts to the cask'\''s default language. The default value is the language of your system]' \
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
-    '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
+    '--no-binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --ignore-dependencies)--only-dependencies[Install the dependencies with specified options but do not install the formula itself]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
     '(--formula)--qlplugindir[Target location for Quick Look Plugins (default: `~/Library/QuickLook`)]' \
     '--quiet[Make some output more quiet]' \
-    '(--formula)--require-sha[Require all casks to have a checksum. Enabled by default if `$HOMEBREW_CASK_OPTS_REQUIRE_SHA` is set]' \
+    '(--formula)--require-sha[Require all casks to have a checksum]' \
     '(--formula)--screen-saverdir[Target location for Screen Savers (default: `~/Library/Screen Savers`)]' \
     '(--formula)--servicedir[Target location for Services (default: `~/Library/Services`)]' \
     '(--formula)--skip-cask-deps[Skip installing cask dependencies]' \
@@ -1314,7 +1325,7 @@ _brew_install() {
     '(--cask)--as-dependency[Install but mark as installed as a dependency and not installed on request]' \
     '--ask[Ask for confirmation before downloading and installing formulae. Print download and install sizes of bottles and dependencies. Enabled by default if `$HOMEBREW_ASK` is set]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
-    '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
+    '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
     '(--cask --build-from-source --force-bottle)--build-bottle[Prepare the formula for eventual bottling during installation, skipping any post-install steps]' \
     '(--cask --build-bottle --force-bottle)--build-from-source[Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available]' \
@@ -1340,13 +1351,13 @@ _brew_install() {
     '(--formula)--keyboard-layoutdir[Target location for Keyboard Layouts (default: `/Library/Keyboard Layouts`)]' \
     '(--formula)--language[Comma-separated list of language codes to prefer for cask installation. The first matching language is used, otherwise it reverts to the cask'\''s default language. The default value is the language of your system]' \
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
-    '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
+    '--no-binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --ignore-dependencies)--only-dependencies[Install the dependencies with specified options but do not install the formula itself]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
     '(--formula)--qlplugindir[Target location for Quick Look Plugins (default: `~/Library/QuickLook`)]' \
     '--quiet[Make some output more quiet]' \
-    '(--formula)--require-sha[Require all casks to have a checksum. Enabled by default if `$HOMEBREW_CASK_OPTS_REQUIRE_SHA` is set]' \
+    '(--formula)--require-sha[Require all casks to have a checksum]' \
     '(--formula)--screen-saverdir[Target location for Screen Savers (default: `~/Library/Screen Savers`)]' \
     '(--formula)--servicedir[Target location for Services (default: `~/Library/Services`)]' \
     '(--formula)--skip-cask-deps[Skip installing cask dependencies]' \
@@ -1641,8 +1652,8 @@ _brew_outdated() {
   _arguments \
     '--debug[Display any debugging information]' \
     '--fetch-HEAD[Fetch the upstream repository to detect if the HEAD installation of the formula is outdated. Otherwise, the repository'\''s HEAD will only be checked for updates when a new stable or development version has been released]' \
-    '--greedy[Also include outdated casks with `auto_updates true` or `version :latest`. Enabled by default if `$HOMEBREW_UPGRADE_GREEDY` is set]' \
-    '--greedy-auto-updates[Also include outdated casks including those with `auto_updates true`]' \
+    '--greedy[Also include outdated casks with `version :latest` and `auto_updates true` casks that would otherwise be skipped. Enabled by default if `$HOMEBREW_UPGRADE_GREEDY` is set]' \
+    '--greedy-auto-updates[Also include outdated `auto_updates true` casks that would otherwise be skipped]' \
     '--greedy-latest[Also include outdated casks including those with `version :latest`]' \
     '--help[Show this message]' \
     '(--quiet --verbose)--json[Print output in JSON format. There are two versions: `v1` and `v2`. `v1` is deprecated and is currently the default if no version is specified. `v2` prints outdated formulae and casks]' \
@@ -1821,7 +1832,7 @@ _brew_reinstall() {
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
     '--ask[Ask for confirmation before downloading and upgrading formulae. Print download, install and net install sizes of bottles and dependencies. Enabled by default if `$HOMEBREW_ASK` is set]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
-    '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
+    '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --force-bottle)--build-from-source[Compile formula from source even if a bottle is available]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \
@@ -1840,11 +1851,11 @@ _brew_reinstall() {
     '(--formula)--keyboard-layoutdir[Target location for Keyboard Layouts (default: `/Library/Keyboard Layouts`)]' \
     '(--formula)--language[Comma-separated list of language codes to prefer for cask installation. The first matching language is used, otherwise it reverts to the cask'\''s default language. The default value is the language of your system]' \
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
-    '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
+    '--no-binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
     '(--formula)--qlplugindir[Target location for Quick Look Plugins (default: `~/Library/QuickLook`)]' \
     '--quiet[Make some output more quiet]' \
-    '(--formula)--require-sha[Require all casks to have a checksum. Enabled by default if `$HOMEBREW_CASK_OPTS_REQUIRE_SHA` is set]' \
+    '(--formula)--require-sha[Require all casks to have a checksum]' \
     '(--formula)--screen-saverdir[Target location for Screen Savers (default: `~/Library/Screen Savers`)]' \
     '(--formula)--servicedir[Target location for Services (default: `~/Library/Services`)]' \
     '(--formula)--skip-cask-deps[Skip installing cask dependencies]' \
@@ -2485,7 +2496,7 @@ _brew_upgrade() {
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
     '--ask[Ask for confirmation before downloading and upgrading formulae. Print download, install and net install sizes of bottles and dependencies. Enabled by default if `$HOMEBREW_ASK` is set]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
-    '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
+    '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --force-bottle)--build-from-source[Compile formula from source even if a bottle is available]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \
@@ -2497,8 +2508,8 @@ _brew_upgrade() {
     '(--formula)--fontdir[Target location for Fonts (default: `~/Library/Fonts`)]' \
     '--force[Install formulae without checking for previously installed keg-only or non-migrated versions. When installing casks, overwrite existing files (binaries and symlinks are excluded, unless originally from the same cask)]' \
     '(--cask --build-from-source)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
-    '(--formula)--greedy[Also include casks with `auto_updates true` or `version :latest`. Enabled by default if `$HOMEBREW_UPGRADE_GREEDY` is set]' \
-    '(--formula)--greedy-auto-updates[Also include casks with `auto_updates true`]' \
+    '(--formula)--greedy[Also include casks with `version :latest` and `auto_updates true` casks that would otherwise be skipped. Enabled by default if `$HOMEBREW_UPGRADE_GREEDY` is set]' \
+    '(--formula)--greedy-auto-updates[Also include `auto_updates true` casks that would otherwise be skipped]' \
     '(--formula)--greedy-latest[Also include casks with `version :latest`]' \
     '--help[Show this message]' \
     '(--formula)--input-methoddir[Target location for Input Methods (default: `~/Library/Input Methods`)]' \
@@ -2508,12 +2519,12 @@ _brew_upgrade() {
     '(--formula)--keyboard-layoutdir[Target location for Keyboard Layouts (default: `/Library/Keyboard Layouts`)]' \
     '(--formula)--language[Comma-separated list of language codes to prefer for cask installation. The first matching language is used, otherwise it reverts to the cask'\''s default language. The default value is the language of your system]' \
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
-    '--no-binaries[Disable/enable linking of helper executables (default: enabled). Enabled by default if `$HOMEBREW_CASK_OPTS_BINARIES` is set]' \
+    '--no-binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
     '(--formula)--qlplugindir[Target location for Quick Look Plugins (default: `~/Library/QuickLook`)]' \
     '--quiet[Make some output more quiet]' \
-    '(--formula)--require-sha[Require all casks to have a checksum. Enabled by default if `$HOMEBREW_CASK_OPTS_REQUIRE_SHA` is set]' \
+    '(--formula)--require-sha[Require all casks to have a checksum]' \
     '(--formula)--screen-saverdir[Target location for Screen Savers (default: `~/Library/Screen Savers`)]' \
     '(--formula)--servicedir[Target location for Services (default: `~/Library/Services`)]' \
     '(--formula)--skip-cask-deps[Skip installing cask dependencies]' \

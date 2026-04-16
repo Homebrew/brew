@@ -3,6 +3,9 @@
 
 require "utils/output"
 
+# Homebrew extends Ruby's `Kernel` to make our code more readable.
+# Extending Kernel makes these methods available globally.
+# TODO: move all of these to other modules e.g. Utils.
 module Kernel
   sig { params(env: T.nilable(String)).returns(T::Boolean) }
   def superenv?(env)

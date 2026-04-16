@@ -94,7 +94,7 @@ module Debrew
   sig {
     type_parameters(:U)
       .params(_block: T.proc.returns(T.type_parameter(:U)))
-      .returns(T.type_parameter(:U))
+      .returns(T.nilable(T.type_parameter(:U)))
   }
   def self.debrew(&_block)
     @mutex = Mutex.new
@@ -106,6 +106,7 @@ module Debrew
       raise
     rescue Ignorable::ExceptionMixin => e
       e.ignore if debug(e) == :ignore # execution jumps back to where the exception was thrown
+      nil
     ensure
       Ignorable.unhook_raise
       @mutex = nil

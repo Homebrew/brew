@@ -12,10 +12,14 @@ module Cask
         "Generic Artifact"
       end
 
-      sig { params(cask: Cask, args: T.untyped).returns(T.attached_class) }
-      def self.from_args(cask, *args)
-        source, options = args
-
+      sig {
+        override.params(
+          cask:    Cask,
+          source:  T.any(String, Pathname),
+          options: T.untyped, # required due to https://github.com/sorbet/sorbet/issues/10114
+        ).returns(T.attached_class)
+      }
+      def self.from_args(cask, source, options = nil)
         raise CaskInvalidError.new(cask.token, "No source provided for #{english_name}.") if source.blank?
 
         unless options&.key?(:target)
@@ -25,9 +29,9 @@ module Cask
         new(cask, source, **options)
       end
 
-      sig { params(target: T.any(String, Pathname)).returns(Pathname) }
-      def resolve_target(target)
-        super(target, base_dir: nil)
+      sig { override.params(target: T.any(String, Pathname), base_dir: T.nilable(Pathname)).returns(Pathname) }
+      def resolve_target(target, base_dir: nil)
+        super
       end
     end
   end

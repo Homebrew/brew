@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "abstract_command"
-require "sandbox"
 require "formula_installer"
 
 module Homebrew

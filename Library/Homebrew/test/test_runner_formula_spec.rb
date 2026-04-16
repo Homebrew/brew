@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "test_runner_formula"

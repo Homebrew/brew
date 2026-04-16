@@ -5,6 +5,7 @@ url: https://docs.brew.sh
 remote_theme: Homebrew/brew.sh
 
 exclude:
+  - AGENTS.md
   - bin
   - CNAME
   - docs_rubocop_style.yml

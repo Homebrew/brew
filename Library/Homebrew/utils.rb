@@ -1,8 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "homebrew"
-
 module Utils
   # Removes the rightmost segment from the constant expression in the string.
   #
@@ -40,6 +38,21 @@ module Utils
     else
       path
     end
+  end
+
+  sig { params(full_name: String).returns(String) }
+  def self.name_from_full_name(full_name)
+    _, _, name = full_name.split("/", 3)
+
+    name || full_name
+  end
+
+  sig { params(full_name: String).returns(T.nilable(String)) }
+  def self.tap_from_full_name(full_name)
+    user, repository, name = full_name.split("/", 3)
+    return unless name
+
+    "#{user}/#{repository}"
   end
 
   # A lightweight alternative to `ActiveSupport::Inflector.pluralize`:

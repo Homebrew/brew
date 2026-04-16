@@ -1,10 +1,16 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-04-05"
 ---
 
 # Formulae Versions
 
 [homebrew/core](https://github.com/homebrew/homebrew-core) supports multiple versions of formulae by using a special naming format. For example, the formula for GCC 9 is named `gcc@9.rb` and begins with `class GccAT9 < Formula`.
+
+This page is about versioned formulae such as `foo@1.2`. Formula variants such
+as `foo-full` are not versioned formulae: they are separate formulae used to
+provide a different dependency or feature trade-off and follow the
+[`Homebrew/homebrew-core` dependency policy]({% link Homebrew-homebrew-core-Maintainer-Guide.md %}#dependencies-and-full-variants)
+instead.
 
 ## Acceptable versioned formulae
 
@@ -24,7 +30,108 @@ Versioned formulae we include in [homebrew/core](https://github.com/homebrew/hom
 * No more than five versions of a formula (including the main one) will be supported at any given time, unless they are popular (e.g. have over 1000 [analytics 90 days installs](https://formulae.brew.sh/analytics/install/90d/) of usage). When removing formulae that violate this, we will aim to do so based on usage and support status rather than age.
 * Versioned formulae must be ABI-stable for the lifetime of the version branch. Updates to the versioned formula must not introduce ABI incompatibilities or otherwise require dependents to be revision bumped. In practice, this means that their dependents should never need `revision` bumps to be rebuilt against newer versions. Version updates which violate this should be rejected and the formula be deprecated from that point onwards.
 
-Homebrew's versions should not be used to "pin" formulae to your personal requirements. You should instead [create your own tap](How-to-Create-and-Maintain-a-Tap.md) for formulae you or your organisation wish to control the versioning of, or those that do not meet the above standards. Software that has regular API or ABI breaking releases still needs to meet all the above requirements; that a `brew upgrade` has broken something for you is not an argument for us to add and maintain a formula for you.
+## Locking installed formulae at specific versions
+
+Homebrew's versions should not be used to "pin" formulae to your personal requirements. If a versioned formula already exists in `homebrew/core`, prefer that first: it remains supported and updated by Homebrew.
+
+If you want something else, choose the smallest tool that fits:
+
+### `brew pin`
+
+Use `brew pin <formula>` when you want `brew upgrade` to stop upgrading a formula you already have installed.
+
+Pros:
+
+* simplest built-in option
+
+Cons:
+
+* you will not receive updates for that formula, including security updates, while it remains pinned
+* pinned formulae can block installs or upgrades when other formulae require a newer version
+
+### `$HOMEBREW_NO_AUTO_UPDATE`
+
+Use `export HOMEBREW_NO_AUTO_UPDATE=1` when you want Homebrew to stop automatically refreshing formula and cask metadata until you choose to run `brew update`.
+
+Pros:
+
+* Homebrew only learns about newer versions when you explicitly run `brew update`
+
+Cons:
+
+* this does not itself stop `brew upgrade` from changing installed formulae
+* you may miss fixes and security updates until you run `brew update`
+
+If you are using `brew bundle`, combine this with `brew bundle --no-upgrade` or `export HOMEBREW_BUNDLE_NO_UPGRADE=1` if you also want `brew bundle` to stop upgrading installed dependencies.
+
+### `brew bundle --no-upgrade` and `$HOMEBREW_BUNDLE_NO_UPGRADE`
+
+Use `brew bundle --no-upgrade` or `export HOMEBREW_BUNDLE_NO_UPGRADE=1` when you want `brew bundle` to stop running `brew upgrade` on outdated dependencies.
+
+Pros:
+
+* simplest way to reduce churn in `brew bundle`
+
+Cons:
+
+* this does not pin versions or add lock file support
+* `brew install` may still upgrade a dependency if needed
+* you may miss fixes and security updates while using it
+
+### `$HOMEBREW_NO_INSTALL_UPGRADE`
+
+Use `export HOMEBREW_NO_INSTALL_UPGRADE=1` when you want `brew install <formula>` to stop upgrading an already installed but outdated formula.
+
+Pros:
+
+* avoids surprise upgrades from `brew install`
+
+Cons:
+
+* this does not pin versions
+* this does not stop `brew upgrade`
+* you may miss fixes and security updates while using it
+
+### `$HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK`
+
+Use `export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1` when you want Homebrew to skip checking for outdated or broken installed dependents after installs, upgrades, or reinstalls.
+
+Pros:
+
+* can reduce cascading upgrades and reinstalls
+
+Cons:
+
+* this is not a version-freezing tool
+* it can leave broken linkage or outdated dependents in place
+* it may increase breakage from later `brew install` or `brew upgrade`
+
+### `brew version-install`
+
+Use `brew version-install` when you want a simpler workflow to extract a specific older formula version into your own tap and install it.
+
+Pros:
+
+* simplest way to start using an older formula version from your own tap
+
+Cons:
+
+* from that point on, you are responsible for updating, maintaining, fixing deprecations, and applying security updates for that formula
+
+### `brew extract`
+
+Use `brew extract` when you want the lower-level workflow and to manage the extracted formula file yourself in a tap. See [How to Create and Maintain a Tap](How-to-Create-and-Maintain-a-Tap.md#extracting-a-historical-formula-into-your-tap) for more information.
+
+Pros:
+
+* gives you the most control over the formula file in your own tap
+
+Cons:
+
+* this is the most manual option
+* from that point on, you are responsible for updating, maintaining, fixing deprecations, and applying security updates for that formula
+
+Homebrew supports these commands and local workflows, but it does not commit to maintaining every frozen or extracted formula version for you. Before submitting Homebrew issues, run `brew update` first and reproduce with current metadata. If you use `brew pin`, `$HOMEBREW_NO_AUTO_UPDATE`, `$HOMEBREW_BUNDLE_NO_UPGRADE`, `$HOMEBREW_NO_INSTALL_UPGRADE`, `$HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK`, `brew version-install`, or `brew extract`, you must only file issues when you can reproduce with core formulae. If you maintain formulae in your own tap, those formulae, their deprecations, and their security updates are your responsibility. If you or your organisation need long-term control over formula versions, [create your own tap](How-to-Create-and-Maintain-a-Tap.md). A `brew upgrade` breaking your local frozen or extracted formula is not an argument for Homebrew to add and maintain another historical version in `homebrew/core`.
 
 If there is a formula that currently exists in the Homebrew/homebrew-core repository or has existed in the past (i.e. was migrated or deleted), you can recover it for your own use with the `brew version-install` command. This will install the desired version of the formula from your own custom tap. For example, if your project depends on `automake` 1.12 instead of the most recent version, you can obtain the `automake` formula at version 1.12 by running:
 

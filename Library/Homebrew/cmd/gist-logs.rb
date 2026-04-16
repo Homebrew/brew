@@ -118,8 +118,9 @@ module Homebrew
         end
 
         if args.new_issue?
-          url = GitHub.create_issue(formula.tap, "#{formula.name} failed to build on #{OS_VERSION}",
-                                    url)
+          tap = formula.tap
+          odie "Formula #{formula.name} is not associated with a tap!" unless tap
+          url = GitHub.create_issue(tap.full_name, "#{formula.name} failed to build on #{OS_VERSION}", url)
         end
 
         puts url if url
@@ -139,17 +140,7 @@ module Homebrew
         string.freeze
       end
 
-      # Causes some terminals to display secure password entry indicators.
-      sig { void }
-      def noecho_gets
-        system "stty", "-echo"
-        result = $stdin.gets
-        system "stty", "echo"
-        puts
-        result
-      end
-
-      sig { params(dir: Pathname, basedir: Pathname).returns(T::Hash[String, T::Hash[Symbol, String]]) }
+      sig { params(dir: Pathname, basedir: Pathname).returns(T::Hash[String, { content: String }]) }
       def load_logs(dir, basedir = dir)
         logs = {}
         if dir.exist?

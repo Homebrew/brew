@@ -2,16 +2,16 @@
 # frozen_string_literal: true
 
 require "keg"
-require "language/python"
 require "formula"
 require "formulary"
+require "utils"
 require "version"
 require "development_tools"
 require "utils/shell"
 require "utils/output"
-require "system_config"
 require "cask/caskroom"
 require "cask/quarantine"
+require "git_repository"
 require "system_command"
 
 module Homebrew
@@ -612,19 +612,42 @@ module Homebrew
         return if ENV["CI"]
         return unless Utils::Git.available?
 
-        commands = Tap.installed.filter_map do |tap|
-          next if tap.git_repository.default_origin_branch?
+        deprecated_master = []
+        commands = []
 
-          "git -C $(brew --repo #{tap.name}) checkout #{tap.git_repository.origin_branch_name}"
+        brew_repo = GitRepository.new(HOMEBREW_REPOSITORY)
+        deprecated_master << "Homebrew/brew" if brew_repo.branch_name == "master"
+
+        Tap.installed.each do |tap|
+          if tap.git_repository.branch_name == "master" && tap.official?
+            deprecated_master << tap.name
+          elsif !tap.git_repository.default_origin_branch?
+            commands << "git -C $(brew --repo #{tap.name}) checkout #{tap.git_repository.origin_branch_name}"
+          end
         end
 
-        return if commands.blank?
+        message = +""
 
-        <<~EOS
-          Some taps are not on the default git origin branch and may not receive
-          updates. If this is a surprise to you, check out the default branch with:
-            #{commands.join("\n  ")}
-        EOS
+        if deprecated_master.any?
+          message << <<~EOS
+            The following repositories are on the deprecated "master" branch.
+            The "master" branch sync will stop and this warning will become an error
+            when Homebrew 5.2.0 is released (no earlier than 2026-06-10).
+            Run `brew update` to migrate to "main":
+              #{deprecated_master.join("\n  ")}
+          EOS
+        end
+
+        if commands.any?
+          message << "\n" if deprecated_master.any?
+          message << <<~EOS
+            Some taps are not on the default git origin branch and may not receive
+            updates. If this is a surprise to you, check out the default branch with:
+              #{commands.join("\n  ")}
+          EOS
+        end
+
+        message.presence
       end
 
       sig { returns(T.nilable(String)) }
@@ -698,10 +721,16 @@ module Homebrew
         end
         return if missing.empty?
 
+        resolvable_missing = missing.filter_map do |d|
+          d.to_installed_formula
+        rescue FormulaUnavailableError
+          nil
+        end
+
         <<~EOS
           Some installed formulae are missing dependencies.
           You should `brew install` the missing dependencies:
-            brew install #{missing.map(&:to_installed_formula).sort_by(&:full_name) * " "}
+            brew install #{resolvable_missing.sort_by(&:full_name) * " "}
 
           Run `brew missing` for more details.
         EOS
@@ -711,8 +740,7 @@ module Homebrew
       def check_deprecated_disabled
         return unless HOMEBREW_CELLAR.exist?
 
-        deprecated_or_disabled = Formula.installed.select(&:deprecated?)
-        deprecated_or_disabled += Formula.installed.select(&:disabled?)
+        deprecated_or_disabled = Formula.installed.select { |f| f.deprecated? || f.disabled? }
         return if deprecated_or_disabled.empty?
 
         <<~EOS
@@ -1027,6 +1055,20 @@ module Homebrew
       end
 
       sig { returns(T.nilable(String)) }
+      def check_cask_corrupt_dirs
+        corrupt = Cask::Caskroom.corrupt_cask_dirs
+        return if corrupt.empty?
+
+        <<~EOS
+          Some directories in the Caskroom do not have valid metadata.
+            #{corrupt.map { |token| "#{Cask::Caskroom.path}/#{token}" }.join("\n  ")}
+          The following #{Utils.pluralize("cask", corrupt.count)} cannot be upgraded as-is.
+          To fix this, run:
+            #{corrupt.map { |token| "brew reinstall --cask --force #{token}" }.join("\n  ")}
+        EOS
+      end
+
+      sig { returns(T.nilable(String)) }
       def check_cask_taps
         error_tap_paths = []
 
@@ -1136,7 +1178,7 @@ module Homebrew
         return if shadowed_formula_full_names.empty?
 
         installed_formula_tap_names = Formula.installed.filter_map(&:tap).uniq.reject(&:official?).map(&:name)
-        shadowed_formula_tap_names = shadowed_formula_full_names.map { |s| s.rpartition("/").first }.uniq
+        shadowed_formula_tap_names = shadowed_formula_full_names.filter_map { |s| Utils.tap_from_full_name(s) }.uniq
         unused_shadowed_formula_tap_names = (shadowed_formula_tap_names - installed_formula_tap_names).sort
 
         resolution = if unused_shadowed_formula_tap_names.empty?
@@ -1164,7 +1206,7 @@ module Homebrew
         return if shadowed_cask_full_names.empty?
 
         installed_cask_tap_names = Cask::Caskroom.casks.filter_map(&:tap).uniq.reject(&:official?).map(&:name)
-        shadowed_cask_tap_names = shadowed_cask_full_names.map { |s| s.rpartition("/").first }.uniq
+        shadowed_cask_tap_names = shadowed_cask_full_names.filter_map { |s| Utils.tap_from_full_name(s) }.uniq
         unused_shadowed_cask_tap_names = (shadowed_cask_tap_names - installed_cask_tap_names).sort
 
         resolution = if unused_shadowed_cask_tap_names.empty?

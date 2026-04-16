@@ -14,8 +14,6 @@ module Homebrew
       class ElectronBuilder
         extend Strategic
 
-        NICE_NAME = "electron-builder"
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {ElectronBuilder} so we can selectively apply it when appropriate.
         PRIORITY = 0

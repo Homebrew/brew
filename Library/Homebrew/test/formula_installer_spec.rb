@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -80,6 +81,23 @@ RSpec.describe FormulaInstaller do
     temporary_install(TestballBottle.new, cc: "clang") do |f|
       tab = Tab.for_formula(f)
       expect(tab.compiler).to eq("clang")
+    end
+  end
+
+  describe "#verify_deps_exist" do
+    it "does not install an untapped dependency tap" do
+      formula = Testball.new
+      installer = described_class.new(formula)
+      tap = instance_double(Tap, user: "user", repository: "repo", to_s: "user/repo", installed?: false)
+
+      allow(installer).to receive(:compute_dependencies).and_raise(TapFormulaUnavailableError.new(tap, "foo"))
+
+      expect(tap).not_to receive(:ensure_installed!)
+
+      expect { installer.send(:verify_deps_exist) }
+        .to raise_error(TapFormulaUnavailableError, /If you trust this tap/) { |error|
+          expect(error.dependent).to eq(formula.full_name)
+        }
     end
   end
 

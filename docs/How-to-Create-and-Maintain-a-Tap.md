@@ -1,5 +1,5 @@
 ---
-last_review_date: "2025-09-05"
+last_review_date: "2026-04-04"
 ---
 
 # How to Create and Maintain a Tap
@@ -57,6 +57,16 @@ Editing /opt/homebrew/Library/Taps/$YOUR_GITHUB_USERNAME/homebrew-tap/Formula/$Y
 After that, follow the [Adding Software to Homebrew](Adding-Software-to-Homebrew.md) guide to create your formula or cask file.
 
 Finally, `git add`, `git commit` and `git push` your formula or cask to your tap and others can use it too.
+
+### Extracting a historical formula into your tap
+
+If you want to keep an older formula version in your tap, `brew extract` can copy a historical version from `homebrew/core` into it:
+
+```console
+brew extract --version=1.2.3 foo $YOUR_GITHUB_USERNAME/homebrew-tap
+```
+
+This only creates the formula file in your tap. You are then responsible for committing it, pushing it, and maintaining it, including fixing deprecations and applying security updates. If you want the simpler workflow that both extracts and installs, use `brew version-install` instead. See [Locking installed formulae at specific versions](Versions.md#locking-installed-formulae-at-specific-versions) for the tradeoffs and support boundaries of these approaches.
 
 ### Naming your formulae to avoid clashes
 

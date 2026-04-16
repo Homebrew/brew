@@ -68,9 +68,9 @@ module Cask
     sig { params(cask: Cask).returns(T::Hash[Symbol, T::Array[T::Hash[String, T.untyped]]]) }
     def self.runtime_deps_hash(cask)
       cask_and_formula_dep_graph = ::Utils::TopologicalHash.graph_package_dependencies(cask)
-      cask_deps, formula_deps = cask_and_formula_dep_graph.values.flatten.uniq.partition do |dep|
+      cask_deps, formula_deps = T.cast(cask_and_formula_dep_graph.values.flatten.uniq.partition do |dep|
         dep.is_a?(Cask)
-      end
+      end, [T::Array[Cask], T::Array[Formula]])
 
       runtime_deps = {}
 
@@ -126,7 +126,9 @@ module Cask
       elsif loaded_from_api
         s << "using the formulae.brew.sh API"
       end
-      s << Time.at(time).strftime("on %Y-%m-%d at %H:%M:%S") if time
+      if (t = time)
+        s << Time.at(t).strftime("on %Y-%m-%d at %H:%M:%S")
+      end
       s.join(" ")
     end
   end

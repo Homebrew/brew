@@ -135,6 +135,7 @@
 **/vendor/bundle/ruby/*/gems/rspec-support-*/
 **/vendor/bundle/ruby/*/gems/rspec-sorbet-*/
 **/vendor/bundle/ruby/*/gems/rubocop-*/
+**/vendor/bundle/ruby/*/gems/rubydex-*/
 **/vendor/bundle/ruby/*/gems/ruby-lsp-*/
 **/vendor/bundle/ruby/*/gems/ruby-prof-*/
 **/vendor/bundle/ruby/*/gems/ruby-progressbar-*/

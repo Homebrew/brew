@@ -66,10 +66,13 @@ module Language
       (libexec/"lib").mkpath
 
       # npm install args for global style module format installed into libexec
+      # Delay packages published in the last day so builds are less likely to
+      # install a freshly compromised npm release or dependency.
       args = %W[
         --loglevel=silly
         --global
         --build-from-source
+        --min-release-age=1
         --#{npm_cache_config}
         --prefix=#{libexec}
         #{Dir.pwd}/#{pack}
@@ -85,9 +88,12 @@ module Language
     def self.local_npm_install_args(ignore_scripts: true)
       setup_npm_environment
       # npm install args for local style module format
+      # Delay packages published in the last day so builds are less likely to
+      # install a freshly compromised npm release or dependency.
       args = %W[
         --loglevel=silly
         --build-from-source
+        --min-release-age=1
         --#{npm_cache_config}
       ]
 

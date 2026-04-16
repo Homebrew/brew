@@ -1,5 +1,5 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-04-05"
 ---
 
 # Formula Cookbook
@@ -119,6 +119,14 @@ We generally try not to duplicate system libraries and complicated tools in core
 
 Special exceptions are OpenSSL and LibreSSL. Things that use either *should* be built using Homebrew’s shipped equivalent and our BrewTestBot's post-install `audit` will warn if it detects you haven't done this.
 
+For `Homebrew/homebrew-core`, keep dependencies minimal and context-dependent.
+Prefer dependencies needed to build, test or satisfy current core dependents,
+and avoid adding optional upstream features that bring in large recursive
+dependency trees. When a formula needs both a light default build and a maximal
+build, maintainers may prefer a separate `*-full` formula instead. See the
+[dependency policy in the `Homebrew/homebrew-core` Maintainer
+Guide]({% link Homebrew-homebrew-core-Maintainer-Guide.md %}#dependencies-and-full-variants).
+
 **Important:** `$(brew --prefix)/bin` is NOT in the `PATH` during formula installation. If you have dependencies at build time, you must specify them and `brew` will add them to the `PATH` or create a [`Requirement`](/rubydoc/Requirement.html).
 
 ### Specifying other formulae as dependencies
@@ -183,6 +191,18 @@ Occasionally, these updates require a forced-recompile of the formula itself or 
 When a dependent of a formula fails to build against a new version of that dependency it must receive a [`revision`](/rubydoc/Formula.html#revision-class_method). An example of such failure is in [this issue report](https://github.com/Homebrew/legacy-homebrew/issues/31195) and [its fix](https://github.com/Homebrew/legacy-homebrew/pull/31207).
 
 [`revision`](/rubydoc/Formula.html#revision-class_method)s are also used for formulae that move from the system OpenSSL to the Homebrew-shipped OpenSSL without any other changes to that formula. This ensures users aren’t left exposed to the potential security issues of the outdated OpenSSL. An example of this can be seen in [this commit](https://github.com/Homebrew/homebrew-core/commit/0d4453a91923e6118983961e18d0609e9828a1a4).
+
+#### `compatibility_version`
+
+Use [`compatibility_version`](/rubydoc/Formula.html#compatibility_version-class_method) to record whether a formula update remains compatible with already-built dependents. Homebrew records this in installed tabs so later installs and upgrades can avoid rebuilding dependents unnecessarily when the installed dependency is still known to be compatible. This exists both to reduce the number of dependency upgrades users need and to avoid unnecessary dependent [`revision`](/rubydoc/Formula.html#revision-class_method) bumps.
+
+Bump `compatibility_version` by `1` when a formula update requires any recursive dependent formula to receive a [`revision`](/rubydoc/Formula.html#revision-class_method) bump in the same pull request. If only some dependents need rebuilding, still bump `compatibility_version`; only the dependents that actually need rebuilding should receive a `revision` bump.
+
+Do not change `compatibility_version` for updates that do not require dependent `revision` bumps. It should never decrease and should only increment by `1` at a time.
+
+[`brew audit`](Manpage.md) checks this relationship in both directions. If a formula's `compatibility_version` increases, at least one recursive dependent in the same pull request must also increase `revision` by `1`. If a formula's `revision` increases because a changed recursive dependency also changed versions, that dependency must increase `compatibility_version` by `1`.
+
+These checks are based on dependent `revision` bumps in the pull request, not on general ABI analysis. Homebrew cannot automatically detect every compatibility break that is not covered by linkage or formula tests, so maintainers may still need to bump `compatibility_version` and dependent `revision`s manually when they know a rebuild is required.
 
 ### Version scheme changes
 
@@ -1311,7 +1331,7 @@ The full list can be found in the [`SharedEnvExtension` module](/rubydoc/SharedE
 
 ### Deprecating and disabling a formula
 
-See our [Deprecating, Disabling and Removing Formulae](Deprecating-Disabling-and-Removing-Formulae.md) documentation for more information about how and when to deprecate or disable a formula.
+See our [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removing.md) documentation for more information about how and when to deprecate or disable a formula, cask or Homebrew code.
 
 ## Updating formulae
 

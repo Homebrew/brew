@@ -10,17 +10,15 @@ version_string() {
     return
   fi
 
-  local pretty_revision
-  pretty_revision="$(git -C "${repo}" rev-parse --short --verify --quiet HEAD)"
-  if [[ -z "${pretty_revision}" ]]
+  local git_revision_and_date
+  git_revision_and_date="$(git -C "${repo}" log -1 --format='%h %cd' --date=short HEAD 2>/dev/null)"
+  if [[ -z "${git_revision_and_date}" ]]
   then
     echo "(no Git repository)"
     return
   fi
 
-  local git_last_commit_date
-  git_last_commit_date="$(git -C "${repo}" show -s --format='%cd' --date=short HEAD)"
-  echo "(git revision ${pretty_revision}; last commit ${git_last_commit_date})"
+  echo "(git revision ${git_revision_and_date%% *}; last commit ${git_revision_and_date#* })"
 }
 
 homebrew-version() {

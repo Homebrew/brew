@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "search"
@@ -66,15 +67,19 @@ RSpec.describe Homebrew::Search do
   end
 
   describe "#search_formulae" do
+    let(:tab) { instance_double(Tab, installed_on_request: false, installed_as_dependency: false) }
     let(:formula) do
       instance_double(Formula, full_name: "testball", any_version_installed?: false,
-                              valid_platform?: true, deprecated?: false, disabled?: false)
+                              valid_platform?: true, deprecated?: false, disabled?: false,
+                              pinned?: false, requirements: [], deps: [],
+                              runtime_installed_formula_dependents: [], stable: nil, head: nil, pour_bottle?: true)
     end
 
     before do
       allow($stdout).to receive(:tty?).and_return(true)
       allow(Formula).to receive_messages(full_names: ["testball"], alias_full_names: [])
       allow(Formulary).to receive(:factory).with("testball").and_return(formula)
+      allow(Tab).to receive(:for_formula).with(formula).and_return(tab)
     end
 
     it "annotates deprecated formulae" do
@@ -90,17 +95,28 @@ RSpec.describe Homebrew::Search do
     it "does not annotate normal formulae" do
       expect(described_class.search_formulae(/testball/)).to eq(["testball"])
     end
+
+    it "shows only the installed icon for installed formulae" do
+      allow(formula).to receive_messages(any_version_installed?: true, pinned?: true)
+
+      expect(described_class.search_formulae(/testball/))
+        .to eq([described_class.pretty_installed("testball")])
+    end
   end
 
   describe "#search_casks" do
+    let(:depends_on) { instance_double(Cask::DSL::DependsOn, formula: [], cask: []) }
+    let(:tab) { instance_double(Cask::Tab, installed_on_request: false, installed_as_dependency: false) }
     let(:cask) do
-      instance_double(Cask::Cask, full_name: "testball", installed?: false, deprecated?: false, disabled?: false)
+      instance_double(Cask::Cask, full_name: "testball", installed?: false, deprecated?: false, disabled?: false,
+                                   supports_linux?: true, depends_on:)
     end
 
     before do
       allow($stdout).to receive(:tty?).and_return(true)
       allow(Tap).to receive(:each_with_object).and_return(["testball"])
       allow(Cask::CaskLoader).to receive(:load).with("testball").and_return(cask)
+      allow(Cask::Tab).to receive(:for_cask).with(cask).and_return(tab)
     end
 
     it "annotates deprecated casks", :needs_macos do
@@ -115,6 +131,19 @@ RSpec.describe Homebrew::Search do
 
     it "does not annotate normal casks", :needs_macos do
       expect(described_class.search_casks(/testball/)).to eq(["testball"])
+    end
+
+    it "hides macOS-only casks on Linux", :needs_linux do
+      allow(cask).to receive(:supports_linux?).and_return(false)
+
+      expect(described_class.search_casks(/testball/)).to eq([])
+    end
+
+    it "shows only the installed icon for installed casks", :needs_macos do
+      allow(cask).to receive(:installed?).and_return(true)
+
+      expect(described_class.search_casks(/testball/))
+        .to eq([described_class.pretty_installed("testball")])
     end
   end
 

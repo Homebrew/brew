@@ -169,7 +169,14 @@ module Homebrew
         end
 
         hash = ::Utils.deep_stringify_symbols(hash)
-        ::Utils.deep_compact_blank(hash)
+
+        service_args = hash["service_args"]
+        hash = ::Utils.deep_compact_blank(hash)
+
+        # service_args may have falsey values that we don't want to remove, like `keep_alive successful_exit: false`
+        hash["service_args"] = service_args if service_args&.any?
+
+        hash
       end
 
       sig { params(hash: T::Hash[String, T.untyped], bottle_tag: ::Utils::Bottles::Tag).returns(FormulaStruct) }
@@ -205,10 +212,6 @@ module Homebrew
           hash["#{key}_uses_from_macos"] = uses_from_macos.map do |args|
             format_arg_pair(args, last: {})
           end
-        end
-
-        hash["service_args"] = if (service_args = hash["service_args"])
-          service_args.map { |service_arg| format_arg_pair(service_arg, last: nil) }
         end
 
         hash["conflicts"] = if (conflicts = hash["conflicts"])

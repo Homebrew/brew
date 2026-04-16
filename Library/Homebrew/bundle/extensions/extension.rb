@@ -139,7 +139,7 @@ module Homebrew
         true
       end
 
-      sig { params(_name: String, _options: Homebrew::Bundle::EntryOptions).returns(String) }
+      sig { override.params(_name: String, _options: Homebrew::Bundle::EntryOptions).returns(String) }
       def self.install_verb(_name = "", _options = {})
         "Installing"
       end
@@ -228,9 +228,18 @@ module Homebrew
         new.find_actionable(entries, exit_on_first_error:, no_upgrade:, verbose:)
       end
 
-      sig { params(_entries: T::Array[Dsl::Entry]).returns(T::Array[String]) }
-      def self.cleanup_items(_entries)
-        []
+      sig { params(entries: T::Array[Dsl::Entry]).returns(T::Array[String]) }
+      def self.cleanup_items(entries)
+        return [].freeze unless package_manager_installed?
+
+        kept_packages = entries.filter_map do |entry|
+          entry.name if entry.type == type
+        end
+
+        return [].freeze if kept_packages.empty?
+
+        installed_names = packages.map { |pkg| dump_name(pkg) }
+        installed_names - kept_packages
       end
 
       sig { returns(Symbol) }
@@ -238,8 +247,23 @@ module Homebrew
         :registered_extensions_to_install
       end
 
-      sig { params(_items: T::Array[String]).void }
-      def self.cleanup!(_items); end
+      sig { params(items: T::Array[String]).void }
+      def self.cleanup!(items)
+        executable = package_manager_executable
+        return if executable.nil?
+
+        with_env(package_manager_env(executable)) do
+          items.each do |name|
+            uninstall_package!(name, executable:)
+          end
+        end
+        puts "Uninstalled #{items.size} #{banner_name}#{"s" if items.size != 1}"
+      end
+
+      sig { params(name: String, executable: Pathname).void }
+      def self.uninstall_package!(name, executable: Pathname.new(""))
+        raise NotImplementedError, "#{self} must override `uninstall_package!` or `cleanup!`."
+      end
 
       sig { params(name: String, with: T.nilable(T::Array[String])).returns(Object) }
       def self.package_record(name, with: nil)

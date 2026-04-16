@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
@@ -82,6 +83,22 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
       name "Test"
       desc "Test cask"
       homepage "https://brew.sh"
+    end
+  end
+  let(:c_on_macos_depends_on_arm) do
+    Cask::Cask.new("test-on-macos-depends-on-arm") do
+      os macos: "darwin", linux: "linux"
+
+      version "0.0.1,2"
+
+      url "https://brew.sh/test-0.0.1.dmg"
+      name "Test"
+      desc "Test cask"
+      homepage "https://brew.sh"
+
+      on_macos do
+        depends_on arch: :arm64
+      end
     end
   end
   let(:c_depends_macos_on_intel) do
@@ -228,12 +245,42 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
             { arch: :arm, name: arm_linux_runner, symbol: :linux }     => 1.0,
           })
 
+        expect(generate_matrix.filter_runners(c_on_macos_depends_on_arm))
+          .to eq({
+            { arch: :arm, name: "macos-14", symbol: :sonoma }       => 0.0,
+            { arch: :arm, name: "macos-15", symbol: :sequoia }      => 0.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 1.0,
+            { arch: :arm, name: arm_linux_runner, symbol: :linux }  => 1.0,
+            { arch: :intel, name: "ubuntu-latest", symbol: :linux } => 1.0,
+          })
+
         expect(generate_matrix.filter_runners(c_on_system_depends_on_mixed))
           .to eq({
             { arch: :arm, name: arm_linux_runner, symbol: :linux }     => 1.0,
             { arch: :intel, name: "macos-15-intel", symbol: :sequoia } => 1.0,
           })
       end
+    end
+  end
+
+  describe "::runner_arch_pairs" do
+    let(:arm_linux_runner) { OS::LINUX_CI_ARM_RUNNER }
+
+    it "emits both Linux runners and no cross-arch macOS jobs when macOS is single-arch" do
+      runners = generate_matrix.filter_runners(c_on_macos_depends_on_arm).keys
+      pairs = generate_matrix.runner_arch_pairs(runners:, multi_os: true)
+      archs_by_runner = pairs.each_with_object({}) do |(runner, arch, _), h|
+        (h[runner.fetch(:name)] ||= []) << arch
+      end
+
+      # both Linux runners produce jobs for their native arch
+      expect(archs_by_runner[arm_linux_runner]).to eq([:arm])
+      expect(archs_by_runner["ubuntu-latest"]).to eq([:intel])
+
+      # macOS runners only get their native :arm, never simulated :intel
+      expect(archs_by_runner["macos-14"]).to eq([:arm])
+      expect(archs_by_runner["macos-15"]).to eq([:arm])
+      expect(archs_by_runner["macos-26"]).to eq([:arm])
     end
   end
 end

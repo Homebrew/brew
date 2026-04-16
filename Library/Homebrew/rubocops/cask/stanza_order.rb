@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "forwardable"
@@ -15,6 +15,7 @@ module RuboCop
 
         MESSAGE = "`%<stanza>s` stanza out of order"
 
+        sig { override.params(stanza_block: RuboCop::Cask::AST::StanzaBlock).void }
         def on_cask_stanza_block(stanza_block)
           stanzas = stanza_block.stanzas
           ordered_stanzas = sort_stanzas(stanzas)
@@ -29,6 +30,7 @@ module RuboCop
               message: format(MESSAGE, stanza: stanza_before.stanza_name),
             ) do |corrector|
               next if part_of_ignored_node?(stanza_before.method_node)
+              raise "unexpected nil value for stanza_after" unless stanza_after
 
               corrector.replace(
                 stanza_before.source_range_with_comments,
@@ -41,6 +43,7 @@ module RuboCop
           end
         end
 
+        sig { override.void }
         def on_new_investigation
           super
 
@@ -49,6 +52,7 @@ module RuboCop
 
         private
 
+        sig { params(stanzas: T::Array[RuboCop::Cask::AST::Stanza]).returns(T::Array[RuboCop::Cask::AST::Stanza]) }
         def sort_stanzas(stanzas)
           stanzas.sort do |stanza1, stanza2|
             i1 = stanza1.stanza_index
@@ -58,14 +62,11 @@ module RuboCop
               i1 = stanzas.index(stanza1)
               i2 = stanzas.index(stanza2)
             end
+            raise "unexpected nil value for i1" unless i1
+            raise "unexpected nil value for i2" unless i2
 
             i1 - i2
           end
-        end
-
-        def stanza_order_index(stanza)
-          stanza_name = stanza.respond_to?(:method_name) ? stanza.method_name : stanza.stanza_name
-          RuboCop::Cask::Constants::STANZA_ORDER.index(stanza_name)
         end
       end
     end

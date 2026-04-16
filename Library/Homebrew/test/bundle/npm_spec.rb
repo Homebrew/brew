@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bundle"
@@ -71,6 +72,37 @@ RSpec.describe Homebrew::Bundle::Npm do
         allow(dumper).to receive(:packages).and_return(["vercel", "typescript"])
         expect(dumper.dump).to eql("npm \"vercel\"\nnpm \"typescript\"")
       end
+    end
+  end
+
+  describe "cleanup" do
+    before do
+      described_class.reset!
+      allow(described_class).to receive_messages(
+        package_manager_executable: Pathname.new("/opt/homebrew/bin/npm"),
+        packages:                   %w[vercel typescript prettier],
+        installed_packages:         %w[vercel typescript prettier],
+      )
+    end
+
+    it "returns packages not in Brewfile entries" do
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel")]
+      expect(described_class.cleanup_items(entries)).to eql(%w[typescript prettier])
+    end
+
+    it "returns empty when all packages are in Brewfile" do
+      entries = [
+        Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel"),
+        Homebrew::Bundle::Dsl::Entry.new(:npm, "typescript"),
+        Homebrew::Bundle::Dsl::Entry.new(:npm, "prettier"),
+      ]
+      expect(described_class.cleanup_items(entries)).to eql([])
+    end
+
+    it "returns frozen empty array when npm is not installed" do
+      allow(described_class).to receive(:package_manager_installed?).and_return(false)
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel")]
+      expect(described_class.cleanup_items(entries)).to eql([])
     end
   end
 

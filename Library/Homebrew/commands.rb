@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "utils"
+require "homebrew"
 
 # Helper functions for commands.
 module Commands

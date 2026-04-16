@@ -1,3 +1,5 @@
+# typed: false
+
 cask "sourceforge-with-livecheck" do
   version "1.2.3"
 

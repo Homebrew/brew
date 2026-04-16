@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 RSpec.describe Cask::DSL, :cask, :no_api do
@@ -414,6 +415,16 @@ RSpec.describe Cask::DSL, :cask, :no_api do
   end
 
   describe "depends_on macos" do
+    context "when bare :macos is used without a version" do
+      let(:token) { "with-depends-on-macos-bare" }
+
+      it "creates a MacOSRequirement without a version" do
+        macos_requirement = cask.depends_on.macos
+        expect(macos_requirement).to be_a(MacOSRequirement)
+        expect(macos_requirement.version_specified?).to be false
+      end
+    end
+
     context "when the depends_on macos value is invalid" do
       let(:token) { "invalid-depends-on-macos-bad-release" }
 

@@ -144,12 +144,15 @@ module Homebrew
               if cask.version == version
                 oh1 "Cask #{cask} is up-to-date at #{version}"
               else
+                sourcefile_path = cask.sourcefile_path
+                raise "unexpected nil cask.sourcefile_path" unless sourcefile_path
+
                 bump_cask_pr_args = [
                   "bump-cask-pr",
                   "--version", version.to_s,
                   "--sha256", ":no_check",
                   "--message", "Automatic update via `brew bump-unversioned-casks`.",
-                  cask.sourcefile_path
+                  sourcefile_path
                 ]
 
                 if args.dry_run?

@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "diagnostic"
@@ -129,5 +130,19 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect_any_instance_of(CoreCaskTap).to receive(:installed?).and_return(true)
 
     expect(checks.check_for_unnecessary_cask_tap).to match("unnecessary local Cask tap")
+  end
+
+  specify "#check_cask_corrupt_dirs" do
+    allow(Cask::Caskroom).to receive(:corrupt_cask_dirs).and_return(["google-chrome", "docker-desktop"])
+
+    expect(checks.check_cask_corrupt_dirs).to eq <<~EOS
+      Some directories in the Caskroom do not have valid metadata.
+        #{Cask::Caskroom.path}/google-chrome
+        #{Cask::Caskroom.path}/docker-desktop
+      The following casks cannot be upgraded as-is.
+      To fix this, run:
+        brew reinstall --cask --force google-chrome
+        brew reinstall --cask --force docker-desktop
+    EOS
   end
 end

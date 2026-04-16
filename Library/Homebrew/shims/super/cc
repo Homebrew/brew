@@ -320,9 +320,6 @@ class Cmd
     args << "-std=c++11" if cxx11?
     args << "-stdlib=libc++" if libcxx?
     args << "-stdlib=libstdc++" if libstdcxx?
-    if ENV["HOMEBREW_CC"] == "llvm_clang" && mac?
-      args << "-I#{ENV["HOMEBREW_LIBRARY"]}/Homebrew/shims/mac/shared/include/llvm"
-    end
     args
   end
 

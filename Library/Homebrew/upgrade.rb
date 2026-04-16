@@ -410,8 +410,10 @@ module Homebrew
             next unless keg
             next unless keg.directory?
 
-            LinkageChecker.new(keg, cache_db: db)
-                          .broken_library_linkage?
+            LinkageChecker.new(
+              keg,
+              cache_db: T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]]),
+            ).broken_library_linkage?
           end.compact
         end
       end

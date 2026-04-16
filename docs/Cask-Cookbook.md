@@ -455,7 +455,7 @@ A complete list of allowable symbols can be found in the [`DeprecateDisable` mod
 
 The `replacement_formula:` and `replacement_cask:` parameters accept a string for suggesting a replacement formula or cask to the user.
 
-Refer to [Deprecating, Disabling and Removing Casks](Deprecating-Disabling-and-Removing-Casks.md) for more information about the deprecation process for casks.
+Refer to [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removing.md) for more information about the deprecation process for casks and Homebrew code.
 
 ### Stanza: `desc`
 

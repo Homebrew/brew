@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bundle"
@@ -443,11 +444,10 @@ RSpec.describe Homebrew::Bundle::Brew do
 
       context "when the conflicts_with option is provided" do
         before do
-          allow(described_class).to receive(:formulae_by_full_name).and_call_original
-          allow(described_class).to receive(:formulae_by_full_name).with("mysql").and_return(
-            name:           "mysql",
-            conflicts_with: ["mysql55"],
-          )
+          stub_formula_loader formula(formula_name) {
+            url "mysql-1.0"
+            conflicts_with "mysql55"
+          }
           allow(described_class).to receive(:formula_installed?).and_return(true)
           allow_any_instance_of(described_class).to receive(:install_formula!).and_return(true)
           allow_any_instance_of(described_class).to receive(:upgrade_formula!).and_return(true)

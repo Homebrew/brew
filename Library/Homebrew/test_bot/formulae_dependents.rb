@@ -192,8 +192,8 @@ module Homebrew
           else
             begin
               Dependency.expand(f, cache_key: "test-bot-dependents") do |_, dependency|
-                Dependency.skip if dependency.implicit?
-                Dependency.keep_but_prune_recursive_deps if dependency.build? || dependency.test?
+                next Dependable::SKIP if dependency.implicit?
+                next Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS if dependency.build? || dependency.test?
               end
             rescue TapFormulaUnavailableError => e
               raise if e.tap.installed?
@@ -300,7 +300,7 @@ module Homebrew
                   !dependency.optional? &&
                   testable_dependents.include?(dependent)
 
-          Dependency.prune
+          next Dependable::PRUNE
         end
 
         unless dependent_was_previously_installed

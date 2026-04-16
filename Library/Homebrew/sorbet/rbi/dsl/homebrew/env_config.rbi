@@ -272,6 +272,9 @@ module Homebrew::EnvConfig
     def no_update_report_new?; end
 
     sig { returns(T::Boolean) }
+    def no_upgrade_auto_updates_casks?; end
+
+    sig { returns(T::Boolean) }
     def no_verify_attestations?; end
 
     sig { returns(T.nilable(::String)) }

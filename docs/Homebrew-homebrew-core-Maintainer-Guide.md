@@ -1,5 +1,5 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-04-05"
 ---
 
 # Homebrew/homebrew-core Maintainer Guide
@@ -22,6 +22,48 @@ Checking dependencies is important, because they will probably stick around fore
 Depend on as little stuff as possible. Disable X11 functionality if possible. For example, we build Wireshark, but not the heavy GUI.
 
 Homebrew is about Unix software. Stuff that builds to an `.app` should be in Homebrew Cask instead.
+
+## Dependencies and full variants
+
+In `Homebrew/homebrew-core`, the default formula should generally carry the
+dependencies needed to build and test the software and to satisfy other
+formulae in `Homebrew/homebrew-core`. We should not try to enable every
+optional upstream feature in the default formula, particularly when doing so
+adds a large recursive dependency tree.
+
+When deciding whether to add or keep a dependency:
+
+- keep dependencies that are required to build, test or support current
+  `Homebrew/homebrew-core` dependents
+- keep or add lightweight dependencies when they avoid obvious, surprising or
+  silent breakage in common workflows
+- keep or add dependencies when they avoid relying on deprecated or
+  problematic system components
+- avoid dependencies that only enable optional upstream features for a subset
+  of users, especially when they pull in many recursive dependencies
+
+Repeated, specific user requests can justify adding a lightweight dependency
+back to the default formula, particularly when missing support causes
+surprising behaviour rather than a clear failure.
+
+For formulae that need both a light default build and a maximal build, a
+`*-full` formula can be appropriate. In these cases:
+
+- other `Homebrew/homebrew-core` formulae should not depend on the `*-full`
+  formula
+- the non-`-full` formula should remain the formula that other
+  `Homebrew/homebrew-core` formulae depend on
+- the `*-full` formula should be treated as a rare escape hatch for extra
+  features rather than the default dependency target
+- the conflicting sibling should be `keg_only` when needed so both formulae
+  can coexist
+- these variants should be used sparingly and are best suited to formulae
+  whose `-full` variant is effectively a leaf in `Homebrew/homebrew-core`
+
+If users want dependents to use a different dependency trade-off than
+`Homebrew/homebrew-core` provides, that should generally live in a tap rather
+than making more `Homebrew/homebrew-core` formulae depend on a `*-full`
+formula.
 
 ## Merging, rebasing, cherry-picking
 
@@ -87,7 +129,7 @@ Formulae that:
 
 should not be removed from Homebrew. The exception to this rule are [versioned formulae](Versions.md) for which there are higher standards of usage and a maximum number of versions for a given formula.
 
-For more information about deprecating, disabling and removing formulae, see the [Deprecating, Disabling and Removing Formulae](Deprecating-Disabling-and-Removing-Formulae.md) page.
+For more information about deprecating, disabling and removing formulae, see the [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removing.md#formulae-and-casks) page.
 
 ## Detailed merge checklist
 

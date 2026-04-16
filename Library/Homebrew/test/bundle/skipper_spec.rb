@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bundle"
@@ -65,6 +66,42 @@ RSpec.describe Homebrew::Bundle::Skipper do
       let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:flatpak, "org.gnome.Calculator") }
 
       it "does not skip" do
+        expect(skipper.skip?(entry)).to be false
+      end
+    end
+
+    context "with a cask that requires macOS", :needs_linux do
+      let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:cask, "testball") }
+
+      it "skips on Linux with warning" do
+        allow(Cask::CaskLoader).to receive(:load).with("testball").and_return(
+          instance_double(Cask::Cask, supports_linux?: false),
+        )
+        expect($stdout).to receive(:puts).with(
+          Formatter.warning("Skipping cask testball (requires macOS)"),
+        )
+        expect(skipper.skip?(entry)).to be true
+      end
+    end
+
+    context "with a platform-agnostic cask on Linux", :needs_linux do
+      let(:entry) { Homebrew::Bundle::Dsl::Entry.new(:cask, "testball") }
+
+      it "does not skip" do
+        allow(Cask::CaskLoader).to receive(:load).with("testball").and_return(
+          instance_double(Cask::Cask, supports_linux?: true),
+        )
+        expect(skipper.skip?(entry)).to be false
+      end
+    end
+
+    context "with a cask from an untapped tap on Linux", :needs_linux do
+      let(:entry) do
+        Homebrew::Bundle::Dsl::Entry.new(:cask, "vscodium-linux", full_name: "ublue-os/tap/vscodium-linux")
+      end
+
+      it "does not skip when cask can't be loaded" do
+        allow(Cask::CaskLoader).to receive(:load).with("vscodium-linux").and_raise(Cask::CaskUnavailableError.new("vscodium-linux"))
         expect(skipper.skip?(entry)).to be false
       end
     end

@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "test/support/fixtures/testball"
@@ -5,6 +6,7 @@ require "formula"
 
 PHASES = [:build, :postinstall, :test].freeze
 
+# These tests need to duplicate methods.
 RSpec.describe Formula do
   alias_matcher :follow_installed_alias, :be_follow_installed_alias
   alias_matcher :have_any_version_installed, :be_any_version_installed
@@ -638,15 +640,15 @@ RSpec.describe Formula do
       expect(f).not_to be_latest_version_installed
     end
 
-    it "returns false if the #latest_installed_prefix does not have children" do
+    it "returns false if the #latest_installed_prefix is empty" do
       allow(f).to receive(:latest_installed_prefix)
-        .and_return(instance_double(Pathname, directory?: true, children: []))
+        .and_return(instance_double(Pathname, directory?: true, empty?: true))
       expect(f).not_to be_latest_version_installed
     end
 
-    it "returns true if the #latest_installed_prefix has children" do
+    it "returns true if the #latest_installed_prefix is not empty" do
       allow(f).to receive(:latest_installed_prefix)
-        .and_return(instance_double(Pathname, directory?: true, children: [double]))
+        .and_return(instance_double(Pathname, directory?: true, empty?: false))
       expect(f).to be_latest_version_installed
     end
   end
@@ -1244,6 +1246,43 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#missing_dependencies" do
+    let(:f) { formula("foo") { url "foo-1.0" } }
+    let(:keg) { instance_double(Keg) }
+
+    before do
+      allow(f).to receive(:any_installed_keg).and_return(keg)
+    end
+
+    it "returns empty when no tab runtime_dependencies data" do
+      allow(keg).to receive(:runtime_dependencies).and_return(nil)
+      expect(f.missing_dependencies).to be_empty
+    end
+
+    it "returns empty when dep is present in cellar" do
+      (HOMEBREW_CELLAR/"bar").mkpath
+      allow(keg).to receive(:runtime_dependencies).and_return([{ "full_name" => "bar" }])
+      expect(f.missing_dependencies).to be_empty
+    end
+
+    it "returns dep when not present in cellar" do
+      allow(keg).to receive(:runtime_dependencies).and_return([{ "full_name" => "baz" }])
+      expect(f.missing_dependencies.map(&:name)).to eq(["baz"])
+    end
+
+    it "returns dep as missing when it is in the hide list, even if installed" do
+      (HOMEBREW_CELLAR/"bar").mkpath
+      allow(keg).to receive(:runtime_dependencies).and_return([{ "full_name" => "bar" }])
+      expect(f.missing_dependencies(hide: ["bar"]).map(&:name)).to eq(["bar"])
+    end
+
+    it "matches tapnamed deps against base-name hide list" do
+      (HOMEBREW_CELLAR/"wget").mkpath
+      allow(keg).to receive(:runtime_dependencies).and_return([{ "full_name" => "homebrew/core/wget" }])
+      expect(f.missing_dependencies(hide: ["wget"]).map(&:name)).to eq(["homebrew/core/wget"])
+    end
+  end
+
   specify "requirements" do
     # don't try to load/fetch gcc/glibc
     allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
@@ -1278,7 +1317,7 @@ RSpec.describe Formula do
     ).to eq(Set[xcode])
 
     requirements = f2.recursive_requirements do |_dependent, requirement|
-      Requirement.prune if requirement.is_a?(XcodeRequirement)
+      next Dependable::PRUNE if requirement.is_a?(XcodeRequirement)
     end
 
     expect(Set.new(requirements)).to eq(Set[])
@@ -2497,6 +2536,20 @@ RSpec.describe Formula do
 
       expect { described_class.all(eval_all: true) }.not_to raise_error
       expect(described_class.all(eval_all: true)).to eq([])
+    end
+  end
+
+  describe "#std_pip_args" do
+    let(:f) do
+      formula do
+        url "foo-1.0"
+      end
+    end
+
+    it "filters packages uploaded within the last day" do
+      allow(Time).to receive(:now).and_return(Time.utc(2026, 4, 4, 12, 0, 0))
+
+      expect(f.std_pip_args).to include("--uploaded-prior-to=2026-04-03T12:00:00Z")
     end
   end
 end

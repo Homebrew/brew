@@ -11,9 +11,9 @@ module Context
   class ContextStruct
     sig { params(debug: T.nilable(T::Boolean), quiet: T.nilable(T::Boolean), verbose: T.nilable(T::Boolean)).void }
     def initialize(debug: nil, quiet: nil, verbose: nil)
-      @debug = T.let(debug, T.nilable(T::Boolean))
-      @quiet = T.let(quiet, T.nilable(T::Boolean))
-      @verbose = T.let(verbose, T.nilable(T::Boolean))
+      @debug = debug
+      @quiet = quiet
+      @verbose = verbose
     end
 
     sig { returns(T::Boolean) }

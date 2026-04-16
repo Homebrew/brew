@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -262,6 +263,20 @@ RSpec.describe Formulary do
           expect(formula).to be_a(Formula)
           expect(formula.tap).to eq(another_tap)
           expect(formula.path).to eq(another_tap_formula_path)
+        end
+
+        it "raises when the migrated tap is not installed" do
+          tap_migrations_path.write <<~EOS
+            {
+              "#{formula_name}": "#{another_tap}"
+            }
+          EOS
+          FileUtils.rm_rf another_tap.path
+
+          expect(another_tap).not_to receive(:ensure_installed!)
+
+          expect { described_class.factory("#{tap}/#{formula_name}") }
+            .to raise_error(TapFormulaUnavailableError, /If you trust this tap/)
         end
       end
 

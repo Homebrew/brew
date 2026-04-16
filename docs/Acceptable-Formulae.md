@@ -61,6 +61,7 @@ The software in question must:
 * be stable (e.g. not declared "unstable" or "beta" by upstream)
 * be maintainable (i.e. the new formula must be a stable release that works without patching on all Homebrew-supported OS versions and has no outstanding and unpatched security vulnerabilities)
 * be known (e.g. GitHub repositories should have >=30 forks, >=30 watchers or >=75 stars)
+  * notability requirements for self-submitted software are 3 times higher than the applicable thresholds above (e.g. on GitHub: >=90 forks, >=90 watchers, or >=225 stars)
 * be used by someone other than the author (e.g. someone other than the author submitted the pull request or opened an issue with us or them to add it to Homebrew)
 * have a homepage (e.g. somewhere on the internet, can be a GitHub repository with a README, which can be accessed in a browser to learn about the project)
 

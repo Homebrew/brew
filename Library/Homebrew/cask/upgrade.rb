@@ -3,6 +3,7 @@
 
 require "env_config"
 require "cask/config"
+require "deprecate_disable"
 require "utils/output"
 
 module Cask
@@ -31,10 +32,18 @@ module Cask
     }
     def self.outdated_casks(casks, args:, force:, quiet:,
                             greedy: false, greedy_latest: false, greedy_auto_updates: false)
+      # Validate mutually exclusive opt-in/opt-out env vars before we start
+      # selecting casks so `brew upgrade` errors consistently.
+      Homebrew::EnvConfig.upgrade_auto_updates_casks?
       greedy = true if Homebrew::EnvConfig.upgrade_greedy?
 
       if casks.empty?
         Caskroom.casks(config: Config.from_args(args)).select do |cask|
+          if cask.disabled?
+            opoo "Not upgrading #{cask.token}, it is #{DeprecateDisable.message(cask)}" unless quiet
+            next false
+          end
+
           cask_greedy = greedy || greedy_casks.include?(cask.token)
           cask.outdated?(greedy: cask_greedy, greedy_latest:,
                          greedy_auto_updates:)
@@ -42,6 +51,11 @@ module Cask
       else
         casks.select do |cask|
           raise CaskNotInstalledError, cask if !cask.installed? && !force
+
+          if cask.disabled?
+            opoo "Not upgrading #{cask.token}, it is #{DeprecateDisable.message(cask)}" unless quiet
+            next false
+          end
 
           if cask.outdated?(greedy: true)
             true
@@ -56,23 +70,33 @@ module Cask
       end
     end
 
+    sig { params(cask_upgrades: T::Array[String], dry_run: T.nilable(T::Boolean)).void }
+    def self.show_upgrade_summary(cask_upgrades, dry_run: false)
+      return if cask_upgrades.empty?
+
+      verb = dry_run ? "Would upgrade" : "Upgrading"
+      oh1 "#{verb} #{cask_upgrades.count} outdated #{::Utils.pluralize("package", cask_upgrades.count)}:"
+      puts cask_upgrades.join("\n")
+    end
+
     sig {
       params(
-        casks:               Cask,
-        args:                Homebrew::CLI::Args,
-        force:               T.nilable(T::Boolean),
-        greedy:              T.nilable(T::Boolean),
-        greedy_latest:       T.nilable(T::Boolean),
-        greedy_auto_updates: T.nilable(T::Boolean),
-        dry_run:             T.nilable(T::Boolean),
-        skip_cask_deps:      T.nilable(T::Boolean),
-        verbose:             T.nilable(T::Boolean),
-        quiet:               T.nilable(T::Boolean),
-        binaries:            T.nilable(T::Boolean),
-        quarantine:          T.nilable(T::Boolean),
-        require_sha:         T.nilable(T::Boolean),
-        skip_prefetch:       T::Boolean,
-        download_queue:      T.nilable(Homebrew::DownloadQueue),
+        casks:                Cask,
+        args:                 Homebrew::CLI::Args,
+        force:                T.nilable(T::Boolean),
+        greedy:               T.nilable(T::Boolean),
+        greedy_latest:        T.nilable(T::Boolean),
+        greedy_auto_updates:  T.nilable(T::Boolean),
+        dry_run:              T.nilable(T::Boolean),
+        skip_cask_deps:       T.nilable(T::Boolean),
+        verbose:              T.nilable(T::Boolean),
+        quiet:                T.nilable(T::Boolean),
+        binaries:             T.nilable(T::Boolean),
+        quarantine:           T.nilable(T::Boolean),
+        require_sha:          T.nilable(T::Boolean),
+        skip_prefetch:        T::Boolean,
+        show_upgrade_summary: T::Boolean,
+        download_queue:       T.nilable(Homebrew::DownloadQueue),
       ).returns(T::Boolean)
     }
     def self.upgrade_casks!(
@@ -90,6 +114,7 @@ module Cask
       quarantine: nil,
       require_sha: nil,
       skip_prefetch: false,
+      show_upgrade_summary: true,
       download_queue: nil
     )
       quarantine = true if quarantine.nil?
@@ -112,31 +137,55 @@ module Cask
 
       return false if outdated_casks.empty?
 
-      if casks.empty? && !greedy && greedy_casks.empty?
+      if !Homebrew::EnvConfig.no_env_hints? && casks.empty? && !greedy && greedy_casks.empty?
+        output_hint = false
+        if !greedy_auto_updates && outdated_casks.any?(&:auto_updates)
+          puts "Homebrew will now attempt to upgrade casks with `auto_updates true`."
+          puts "Disable this behaviour with `HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1`."
+          output_hint ||= true
+        end
         if !greedy_auto_updates && !greedy_latest
-          ohai "Casks with 'auto_updates true' or 'version :latest' " \
-               "will not be upgraded; pass `--greedy` to upgrade them."
+          puts "Some casks with `auto_updates true` or `version :latest` may still require `--greedy`,"
+          puts "`HOMEBREW_UPGRADE_GREEDY` or `HOMEBREW_UPGRADE_GREEDY_CASKS` to be upgraded."
+          output_hint ||= true
         end
         if greedy_auto_updates && !greedy_latest
-          ohai "Casks with 'version :latest' will not be upgraded; pass `--greedy-latest` to upgrade them."
+          puts "Casks with `version :latest` will not be upgraded; pass `--greedy-latest` to upgrade them."
+          output_hint ||= true
         end
         if !greedy_auto_updates && greedy_latest
-          ohai "Casks with 'auto_updates true' will not be upgraded; pass `--greedy-auto-updates` to upgrade them."
+          puts "Some casks with `auto_updates true` may still require `--greedy-auto-updates` to be upgraded."
+          output_hint ||= true
         end
+        puts "Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`)." if output_hint
       end
 
-      upgradable_casks = outdated_casks.map do |c|
-        unless c.installed?
-          odie <<~EOS
-            The cask '#{c.token}' was affected by a bug and cannot be upgraded as-is. To fix this, run:
-              brew reinstall --cask --force #{c.token}
-          EOS
+      upgradable_casks = outdated_casks.filter_map do |c|
+        invalid_cask = !c.installed?
+
+        invalid_cask ||= begin
+          loaded_cask = CaskLoader.load(T.must(c.installed_caskfile))
+          false
+        rescue CaskInvalidError, CaskUnavailableError
+          true
         end
 
-        [CaskLoader.load(c.installed_caskfile), c]
+        if invalid_cask
+          opoo <<~EOS
+            The cask '#{c.token}' cannot be upgraded as-is. To fix this, run:
+            brew reinstall --cask --force #{c.token}
+          EOS
+          next
+        end
+
+        [loaded_cask, c]
       end
 
       return false if upgradable_casks.empty?
+
+      cask_upgrades = upgradable_casks.map do |(old_cask, new_cask)|
+        "#{new_cask.full_name} #{old_cask.version} -> #{new_cask.version}"
+      end
 
       created_download_queue = T.let(false, T::Boolean)
       download_queue ||= if !dry_run && !skip_prefetch
@@ -170,15 +219,10 @@ module Cask
         end
       end
 
-      verb = dry_run ? "Would upgrade" : "Upgrading"
-      oh1 "#{verb} #{upgradable_casks.count} outdated #{::Utils.pluralize("package", upgradable_casks.count)}:"
+      show_upgrade_summary(cask_upgrades, dry_run:) if show_upgrade_summary
+      return true if dry_run
 
       caught_exceptions = []
-
-      puts upgradable_casks
-        .map { |(old_cask, new_cask)| "#{new_cask.full_name} #{old_cask.version} -> #{new_cask.version}" }
-        .join("\n")
-      return true if dry_run
 
       download_queue ||= Homebrew.default_download_queue
 

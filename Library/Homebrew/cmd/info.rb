@@ -6,9 +6,11 @@ require "missing_formula"
 require "caveats"
 require "options"
 require "formula"
+require "formula_pin"
 require "keg"
 require "tab"
 require "json"
+require "cask/cask_loader"
 require "utils/spdx"
 require "deprecate_disable"
 require "api"
@@ -136,6 +138,175 @@ module Homebrew
         end
       end
 
+      sig { params(formula_or_cask: T.untyped).returns(T::Array[String]) }
+      def self.metadata_lines(formula_or_cask)
+        return [] unless $stdout.tty?
+
+        if formula_or_cask.is_a?(Formula) || formula_or_cask.respond_to?(:pinned?)
+          formula_metadata_lines(formula_or_cask)
+        elsif formula_or_cask.is_a?(Cask::Cask) || formula_or_cask.respond_to?(:supports_macos?)
+          []
+        else
+          raise TypeError, "Unsupported formula_or_cask type: #{formula_or_cask.class}"
+        end
+      end
+
+      sig { params(formula_or_cask: T.untyped).returns(T::Array[String]) }
+      def self.requirements_lines(formula_or_cask)
+        return [] unless $stdout.tty?
+        return [] if formula_or_cask.is_a?(Formula) || formula_or_cask.respond_to?(:pinned?)
+        if formula_or_cask.is_a?(Cask::Cask) || formula_or_cask.respond_to?(:supports_macos?)
+          return cask_requirements_lines(formula_or_cask)
+        end
+
+        raise TypeError,
+              "Unsupported formula_or_cask type: #{formula_or_cask.class}"
+      end
+
+      sig { params(tab: T.any(Tab, Cask::Tab)).returns(String) }
+      def self.installation_status(tab)
+        # TODO: Deprecate reading `installed_as_dependency`; `installed_on_request`
+        # is the only state we need to render install intent.
+        tab.installed_on_request ? "Installed (on request)" : "Installed (as dependency)"
+      end
+
+      sig { params(requirement: Requirement).returns(T::Boolean) }
+      def self.requirement_for_other_os?(requirement)
+        requirement.instance_of?(MacOSRequirement) || requirement.instance_of?(LinuxRequirement)
+      end
+
+      sig { params(installed_count: Integer, total_count: Integer).returns(String) }
+      def self.dependency_status_counts(installed_count, total_count)
+        "#{installed_count} #{Formatter.success("✔")}, " \
+          "#{total_count - installed_count} #{Formatter.error("✘")}"
+      end
+
+      sig { params(full_name: String, name: String).returns(Integer) }
+      def self.count_installed_dependents(full_name, name)
+        Formula.racks.count do |rack|
+          keg = Keg.from_rack(rack)
+          next false unless keg
+
+          tab_path = keg/AbstractTab::FILENAME
+          next false unless tab_path.file?
+
+          # Fast path: skip JSON parsing when the formula name
+          # does not appear anywhere in the raw receipt.
+          content = File.read(tab_path)
+          next false unless content.include?(name)
+
+          tab_deps = Tab.from_file_content(content, tab_path).runtime_dependencies
+          next false unless tab_deps
+
+          tab_deps.any? do |dep|
+            dep_full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
+            dep_full_name == full_name || dep_full_name&.split("/")&.last == name
+          end
+        end
+      end
+
+      sig { params(formula: T.untyped).returns(T::Array[String]) }
+      def self.formula_metadata_lines(formula)
+        metadata = T.let([], T::Array[String])
+        if formula.pinned?
+          pinned = "Pinned: #{formula.pinned_version}"
+          if (pinned_time = formula_pinned_time(formula))
+            pinned << " on #{formatted_time(pinned_time)}"
+          end
+          metadata << pinned
+        end
+
+        if !formula.any_version_installed? &&
+           formula_installs_from_source?(formula) &&
+           formula.requirements.none? { |requirement| requirement_for_other_os?(requirement) }
+          metadata << "Installs from source: yes"
+        end
+        metadata
+      end
+
+      sig { params(cask: T.untyped).returns(T::Array[String]) }
+      def self.cask_requirements_lines(cask)
+        requirement = if (macos = cask.depends_on.macos)
+          requirement = macos.display_s
+          if cask.supports_linux?
+            requirement.sub(" (or Linux)",
+                            " or Linux")
+          else
+            requirement.delete_suffix(" (or Linux)")
+          end
+        elsif cask.supports_macos? && cask.supports_linux?
+          "macOS or Linux"
+        elsif cask.supports_macos?
+          "macOS"
+        elsif cask.supports_linux?
+          "Linux"
+        end
+
+        requirement ? [requirement] : []
+      end
+
+      sig { params(time: T.any(Integer, Time)).returns(String) }
+      def self.formatted_time(time)
+        time = Time.at(time) if time.is_a?(Integer)
+
+        time.strftime("%Y-%m-%d at %H:%M:%S")
+      end
+
+      sig { params(formula: T.untyped).returns(T.nilable(Time)) }
+      def self.formula_pinned_time(formula)
+        pin_path = FormulaPin.new(formula).path
+        pin_path.lstat.mtime if pin_path.symlink? || pin_path.exist?
+      rescue Errno::ENOENT
+        nil
+      end
+
+      sig { params(formula: T.untyped).returns(T::Boolean) }
+      def self.formula_installs_from_source?(formula)
+        return true if formula.stable.blank? && formula.head.present?
+        return false if formula.stable.blank?
+
+        !formula.stable.bottled? || !formula.pour_bottle?
+      end
+
+      sig {
+        params(cask: T.untyped, formula_dependencies: T::Set[String], cask_dependencies: T::Set[String],
+               visited_casks: T::Set[String]).void
+      }
+      def self.collect_cask_dependency_names(cask, formula_dependencies, cask_dependencies, visited_casks)
+        cask.depends_on.formula.each do |name|
+          dep_name = name.to_s
+          formula_dependencies << dep_name
+          rack = HOMEBREW_CELLAR/dep_name.split("/").last
+          next unless rack.directory?
+
+          keg = Keg.from_rack(rack)
+          next unless keg
+
+          tab_deps = Tab.for_keg(keg).runtime_dependencies
+          tab_deps&.each do |runtime_dep|
+            dep_full_name = T.cast(runtime_dep, T::Hash[String, T.untyped])["full_name"]
+            formula_dependencies << dep_full_name if dep_full_name
+          end
+        end
+
+        cask.depends_on.cask.each do |name|
+          token = name.to_s
+          next if visited_casks.include?(token)
+
+          cask_dependencies << token
+          visited_casks << token
+          begin
+            dependency = Cask::CaskLoader.load(token)
+            collect_cask_dependency_names(dependency, formula_dependencies, cask_dependencies, visited_casks)
+          rescue Cask::CaskUnavailableError
+            next
+          end
+        end
+      end
+
+      private_class_method :formula_metadata_lines, :formatted_time, :formula_pinned_time,
+                           :formula_installs_from_source?, :cask_requirements_lines
+
       private
 
       sig { void }
@@ -160,7 +331,7 @@ module Homebrew
           when Formula
             Utils::Analytics.formula_output(obj, args:) if obj.core_formula?
           when Cask::Cask
-            Utils::Analytics.cask_output(obj, args:) if obj.tap.core_cask_tap?
+            Utils::Analytics.cask_output(obj, args:) if obj.tap&.core_cask_tap?
           when FormulaOrCaskUnavailableError
             Utils::Analytics.output(filter: obj.name, args:)
           else
@@ -260,6 +431,7 @@ module Homebrew
 
       sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(String) }
       def github_info(formula_or_cask)
+        tap = T.let(nil, T.nilable(Tap))
         path = case formula_or_cask
         when Formula
           formula = formula_or_cask
@@ -272,14 +444,18 @@ module Homebrew
           tap = cask.tap
           return cask.sourcefile_path.to_s if tap.blank? || tap.remote.blank?
 
-          if cask.sourcefile_path.blank? || cask.sourcefile_path.extname != ".rb"
+          sourcefile_path = cask.sourcefile_path
+          if sourcefile_path.blank? || sourcefile_path.extname != ".rb"
             return "#{tap.default_remote}/blob/HEAD/#{tap.relative_cask_path(cask.token)}"
           end
 
-          cask.sourcefile_path.relative_path_from(tap.path)
+          sourcefile_path.relative_path_from(tap.path)
         end
 
-        github_remote_path(tap.remote, path.to_s)
+        remote = tap.remote
+        raise "unexpected nil tap.remote" unless remote
+
+        github_remote_path(remote, path.to_s)
       end
 
       sig { params(formula: Formula).void }
@@ -295,7 +471,6 @@ module Homebrew
         specs << "HEAD" if formula.head
 
         attrs = []
-        attrs << "pinned at #{formula.pinned_version}" if formula.pinned?
         attrs << "keg-only" if formula.keg_only?
 
         kegs = formula.installed_kegs
@@ -345,7 +520,7 @@ module Homebrew
             end
           end
         else
-          puts "Installed"
+          puts self.class.installation_status(Tab.for_formula(formula))
           kegs.each do |keg|
             puts "#{keg} (#{keg.abv})#{" *" if keg.linked?}"
             tab = keg.tab.to_s
@@ -356,13 +531,40 @@ module Homebrew
         puts "From: #{Formatter.url(github_info(formula))}"
 
         puts "License: #{SPDX.license_expression_to_string formula.license}" if formula.license.present?
+        metadata = self.class.metadata_lines(formula)
+        puts metadata if metadata.present?
 
-        unless formula.deps.empty?
+        tab_runtime_deps = kegs.last&.runtime_dependencies
+        installed_dependents = if $stdout.tty? && kegs.any?
+          self.class.count_installed_dependents(formula.full_name, formula.name)
+        else
+          0
+        end
+        dependency_lines = %w[build required recommended optional].filter_map do |type|
+          next if type == "build" &&
+                  (kegs.all? { |keg| keg.tab.poured_from_bottle } ||
+                   (kegs.empty? &&
+                    (formula.requirements.any? { |requirement| self.class.requirement_for_other_os?(requirement) } ||
+                     (stable.present? ? stable.bottled? && formula.pour_bottle? : formula.head.blank?))))
+
+          deps = formula.deps.send(type).uniq
+          "#{type.capitalize} (#{deps.count}): #{decorate_dependencies deps}" unless deps.empty?
+        end
+        if dependency_lines.present? || tab_runtime_deps.present? || installed_dependents.positive?
           ohai "Dependencies"
-          %w[build required recommended optional].map do |type|
-            deps = formula.deps.send(type).uniq
-            puts "#{type.capitalize}: #{decorate_dependencies deps}" unless deps.empty?
+          puts dependency_lines
+          if tab_runtime_deps.present?
+            installed_count = tab_runtime_deps.count do |dep|
+              dep_name = dep["full_name"]&.split("/")&.last
+              next false unless dep_name
+
+              rack = HOMEBREW_CELLAR/dep_name
+              rack.directory? && !rack.subdirs.empty?
+            end
+            puts "Recursive Runtime (#{tab_runtime_deps.count}): " \
+                 "#{self.class.dependency_status_counts(installed_count, tab_runtime_deps.count)}"
           end
+          puts "Dependents: #{installed_dependents}" if installed_dependents.positive?
         end
 
         unless formula.requirements.to_a.empty?
@@ -487,3 +689,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/cmd/info"

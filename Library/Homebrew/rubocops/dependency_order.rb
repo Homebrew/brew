@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/extend/formula_cop"
@@ -28,6 +28,7 @@ module RuboCop
           end
         end
 
+        sig { params(parent_node: T.nilable(RuboCop::AST::Node)).void }
         def check_uses_from_macos_nodes_order(parent_node)
           return if parent_node.nil?
 
@@ -35,6 +36,7 @@ module RuboCop
           ensure_dependency_order(dependency_nodes)
         end
 
+        sig { params(parent_node: T.nilable(RuboCop::AST::Node)).void }
         def check_dependency_nodes_order(parent_node)
           return if parent_node.nil?
 
@@ -42,9 +44,14 @@ module RuboCop
           ensure_dependency_order(dependency_nodes)
         end
 
+        sig { params(nodes: T::Array[RuboCop::AST::Node]).void }
         def ensure_dependency_order(nodes)
-          name_node_pairs = nodes.map { |node| [dependency_name(node), node] }
-          name_node_pairs.select! { |name, _| name } # skip nodes with invalid dependency name
+          name_node_pairs = nodes.filter_map do |node|
+            name = dependency_name(node)
+            next unless name
+
+            [name, node]
+          end
           name_node_pairs.sort_by! { |name, _| name.downcase }
           ordered = sort_dependencies_by_type(name_node_pairs.map { |_, node| node })
           sort_conditional_dependencies!(ordered)
@@ -53,6 +60,7 @@ module RuboCop
 
         # Separate dependencies according to precedence order:
         # build-time > test > normal > recommended > optional
+        sig { params(dependency_nodes: T::Array[RuboCop::AST::Node]).returns(T::Array[RuboCop::AST::Node]) }
         def sort_dependencies_by_type(dependency_nodes)
           unsorted_deps = dependency_nodes.to_a
           ordered = []
@@ -90,13 +98,14 @@ module RuboCop
               end
               break if idx2
             end
-            insert_after!(ordered, idx1, idx2 + T.must(idx1)) if idx2
+            insert_after!(ordered, idx1, idx2 + idx1) if idx1 &&idx2
           end
           ordered
         end
 
         # Verify actual order of sorted `depends_on` nodes in source code;
         # raise RuboCop problem otherwise.
+        sig { params(ordered: T::Array[RuboCop::AST::Node]).void }
         def verify_order_in_source(ordered)
           ordered.each_with_index do |node_1, idx|
             l1 = line_number(node_1)
@@ -154,16 +163,22 @@ module RuboCop
           (send (send nil? :build) :with? $({str sym} _))
         EOS
 
+        sig { params(arr: T::Array[RuboCop::AST::Node], idx1: Integer, idx2: Integer).void }
         def insert_after!(arr, idx1, idx2)
-          arr.insert(idx2+1, arr.delete_at(idx1))
+          arr.insert(
+            idx2+1,
+            arr.delete_at(idx1) || raise("unexpected nil value for arr.delete_at(idx1)"),
+          )
         end
 
+        sig { params(node: RuboCop::AST::Node).returns(T.nilable(T::Array[String])) }
         def build_with_dependency_name(node)
           match_nodes = build_with_dependency_node(node)
           match_nodes = match_nodes.to_a.compact
           match_nodes.map { |n| string_content(n) } unless match_nodes.empty?
         end
 
+        sig { params(dependency_node: RuboCop::AST::Node).returns(T.nilable(String)) }
         def dependency_name(dependency_node)
           match_node = dependency_name_node(dependency_node).to_a.first
           string_content(match_node) if match_node

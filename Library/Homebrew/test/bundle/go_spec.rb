@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bundle"
@@ -113,6 +114,30 @@ RSpec.describe Homebrew::Bundle::Go do
           expect(described_class.dump).to eql('go "github.com/charmbracelet/crush"')
         end
       end
+    end
+  end
+
+  describe "cleanup" do
+    before do
+      described_class.reset!
+      pkgs = %w[github.com/charmbracelet/crush github.com/golangci/golangci-lint/v2/cmd/golangci-lint]
+      allow(described_class).to receive_messages(
+        package_manager_executable: Pathname.new("go"),
+        packages:                   pkgs,
+        installed_packages:         pkgs,
+      )
+    end
+
+    it "returns packages not in Brewfile entries" do
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:go, "github.com/charmbracelet/crush")]
+      expect(described_class.cleanup_items(entries))
+        .to eql(%w[github.com/golangci/golangci-lint/v2/cmd/golangci-lint])
+    end
+
+    it "returns frozen empty array when go is not installed" do
+      allow(described_class).to receive(:package_manager_installed?).and_return(false)
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:go, "github.com/charmbracelet/crush")]
+      expect(described_class.cleanup_items(entries)).to eql([])
     end
   end
 end

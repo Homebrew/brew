@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "warnings"
@@ -11,21 +11,25 @@ module Ignorable
   # Marks exceptions which can be ignored and provides
   # the ability to jump back to where it was raised.
   module ExceptionMixin
+    sig { returns(T.untyped) }
     attr_accessor :continuation
 
+    sig { void }
     def ignore
       continuation.call
     end
   end
 
-  def self.hook_raise
+  sig { params(blk: T.nilable(T.proc.void)).void }
+  def self.hook_raise(&blk)
     # TODO: migrate away from this inline class here, they don't play nicely with
     #       Sorbet, when we migrate to `typed: strict`
     # rubocop:todo Sorbet/BlockMethodDefinition
     Object.class_eval do
       alias_method :original_raise, :raise
 
-      def raise(*)
+      sig { params(args: T.anything).void }
+      def raise(*args)
         callcc do |continuation|
           super
         # Handle all possible exceptions.
@@ -48,11 +52,12 @@ module Ignorable
     unhook_raise
   end
 
+  sig { void }
   def self.unhook_raise
     Object.class_eval do
       alias_method :raise, :original_raise
       alias_method :fail, :original_raise
-      undef :original_raise
+      undef_method :original_raise
     end
   end
 end

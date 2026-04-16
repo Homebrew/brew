@@ -283,7 +283,7 @@ module Homebrew
           verbose:,
           extract_plist:,
         )
-        return if skip_info.blank?
+        return if skip_info.empty?
 
         referenced_name = Livecheck.package_or_resource_name(livecheck_package_or_resource, full_name:)
         referenced_type = case livecheck_package_or_resource

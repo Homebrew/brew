@@ -5,7 +5,6 @@ require "cachable"
 require "api"
 require "api/source_download"
 require "download_queue"
-require "autobump_constants"
 require "api/formula/formula_struct_generator"
 
 module Homebrew

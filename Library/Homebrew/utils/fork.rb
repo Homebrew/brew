@@ -68,8 +68,8 @@ module Utils
             error_hash["cmd"] = e.cmd
             error_hash["status"] = if e.status.is_a?(Process::Status)
               {
-                exitstatus: e.status.exitstatus,
-                termsig:    e.status.termsig,
+                exitstatus: e.exitstatus,
+                termsig:    e.termsig,
               }
             else
               e.status

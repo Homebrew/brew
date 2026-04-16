@@ -112,6 +112,16 @@ module Homebrew
                      "`~/.profile`, `~/.bash_profile`, or `~/.zshenv`:" \
                      "\n\n    `export HOMEBREW_CASK_OPTS=\"--appdir=${HOME}/Applications --fontdir=/Library/Fonts\"`",
       },
+      # odeprecated: deprecate in 5.2.0
+      HOMEBREW_CASK_OPTS_BINARIES:               {
+        description: "Enable linking of helper executables for casks.",
+        hidden:      true,
+      },
+      # odeprecated: deprecate in 5.2.0
+      HOMEBREW_CASK_OPTS_REQUIRE_SHA:            {
+        description: "Require all casks to have a checksum.",
+        hidden:      true,
+      },
       HOMEBREW_CLEANUP_MAX_AGE_DAYS:             {
         description: "Cleanup all cached files older than this many days.",
         default:     120,
@@ -453,6 +463,12 @@ module Homebrew
         description: "If set, `brew update` will not show the list of newly added formulae/casks.",
         boolean:     true,
       },
+      HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS:    {
+        description: "If set, `brew upgrade` will not automatically upgrade casks with `auto_updates true`. " \
+                     "Does not affect `--greedy` or `--greedy-auto-updates` upgrades.",
+        boolean:     true,
+        hidden:      true, # odeprecated: remove in 5.2.0
+      },
       HOMEBREW_NO_VERIFY_ATTESTATIONS:           {
         description: "If set, Homebrew will not verify cryptographic attestations of build provenance for bottles " \
                      "from homebrew-core.",
@@ -519,6 +535,14 @@ module Homebrew
                      "have been run).",
         boolean:     true,
       },
+      HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS:       {
+        # odeprecated: edit in 5.2.0
+        description: "If set, `brew upgrade` will automatically upgrade casks with `auto_updates true` when " \
+                     "Homebrew detects that the version in the app bundle is older than the version in the tap. " \
+                     "Does not affect `--greedy` or `--greedy-auto-updates` upgrades. Enabled by default if " \
+                     "`$HOMEBREW_DEVELOPER` is set. This will become the default behavior in Homebrew 5.2.0.",
+        boolean:     true,
+      },
       HOMEBREW_UPGRADE_GREEDY:                   {
         description: "If set, pass `--greedy` to all cask upgrade commands.",
         boolean:     true,
@@ -578,8 +602,11 @@ module Homebrew
     CUSTOM_IMPLEMENTATIONS = T.let(Set.new([
       :HOMEBREW_MAKE_JOBS,
       :HOMEBREW_CASK_OPTS,
+      :HOMEBREW_CASK_OPTS_BINARIES,
+      :HOMEBREW_CASK_OPTS_REQUIRE_SHA,
       :HOMEBREW_FORBID_PACKAGES_FROM_PATHS,
       :HOMEBREW_DOWNLOAD_CONCURRENCY,
+      :HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS,
       :HOMEBREW_USE_INTERNAL_API,
     ]).freeze, T::Set[Symbol])
 
@@ -625,11 +652,20 @@ module Homebrew
       Shellwords.shellsplit(ENV.fetch("HOMEBREW_CASK_OPTS", ""))
     end
 
+    sig { returns(T.nilable(String)) }
+    def cask_opts_binaries
+      ENV["HOMEBREW_CASK_OPTS_BINARIES"].presence
+    end
+
     sig { returns(T::Boolean) }
     def cask_opts_binaries?
       cask_opts.reverse_each do |opt|
         return true if opt == "--binaries"
         return false if opt == "--no-binaries"
+      end
+
+      if (env_value = ENV.fetch("HOMEBREW_CASK_OPTS_BINARIES", nil)).present?
+        return FALSY_VALUES.exclude?(env_value.downcase)
       end
 
       true
@@ -645,9 +681,18 @@ module Homebrew
       true
     end
 
+    sig { returns(T.nilable(String)) }
+    def cask_opts_require_sha
+      ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"].presence
+    end
+
     sig { returns(T::Boolean) }
     def cask_opts_require_sha?
-      cask_opts.include?("--require-sha")
+      cask_opts.include?("--require-sha") ||
+        begin
+          env_value = ENV.fetch("HOMEBREW_CASK_OPTS_REQUIRE_SHA", nil)
+          env_value.present? && FALSY_VALUES.exclude?(env_value.downcase)
+        end
     end
 
     sig { returns(T::Boolean) }
@@ -660,6 +705,24 @@ module Homebrew
       # Provide an opt-out for tests and developers.
       # Our testing framework installs formulae from file paths all over the place.
       ENV["HOMEBREW_TESTS"].blank? && ENV["HOMEBREW_DEVELOPER"].blank?
+    end
+
+    sig { returns(T::Boolean) }
+    def upgrade_auto_updates_casks?
+      upgrade_auto_updates_casks = ENV.fetch("HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS", nil)
+      upgrade_auto_updates_casks = upgrade_auto_updates_casks.present? &&
+                                   FALSY_VALUES.exclude?(upgrade_auto_updates_casks.downcase)
+      no_upgrade_auto_updates_casks = T.unsafe(self).no_upgrade_auto_updates_casks?
+
+      if upgrade_auto_updates_casks && no_upgrade_auto_updates_casks
+        raise UsageError,
+              "`HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS` and `HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS` " \
+              "cannot both be set."
+      end
+
+      return false if no_upgrade_auto_updates_casks
+
+      upgrade_auto_updates_casks || T.unsafe(self).developer?
     end
 
     sig { returns(T::Boolean) }

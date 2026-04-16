@@ -1,3 +1,5 @@
+# typed: false
+
 cask "invalid-two-arch" do
   arch arm: "arm", intel: "intel"
   arch arm: "amd64", intel: "x86_64"

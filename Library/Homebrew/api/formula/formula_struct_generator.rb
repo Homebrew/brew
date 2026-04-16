@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "deprecate_disable"
+
 module Homebrew
   module API
     module Formula

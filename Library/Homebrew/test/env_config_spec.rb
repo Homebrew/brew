@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "diagnostic"
@@ -70,6 +71,30 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".cask_opts_binaries?" do
+    before do
+      ENV["HOMEBREW_CASK_OPTS"] = nil
+      ENV["HOMEBREW_CASK_OPTS_BINARIES"] = nil
+    end
+
+    it "returns false if HOMEBREW_CASK_OPTS_BINARIES is set to a falsey value" do
+      ENV["HOMEBREW_CASK_OPTS_BINARIES"] = "0"
+      expect(env_config.cask_opts_binaries?).to be(false)
+    end
+  end
+
+  describe ".cask_opts_require_sha?" do
+    before do
+      ENV["HOMEBREW_CASK_OPTS"] = nil
+      ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"] = nil
+    end
+
+    it "returns true if HOMEBREW_CASK_OPTS_REQUIRE_SHA is set" do
+      ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"] = "1"
+      expect(env_config.cask_opts_require_sha?).to be(true)
+    end
+  end
+
   describe ".forbid_packages_from_paths?" do
     before do
       ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = nil
@@ -97,6 +122,47 @@ RSpec.describe Homebrew::EnvConfig do
       ENV["HOMEBREW_DEVELOPER"] = "1"
       ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
       expect(env_config.forbid_packages_from_paths?).to be(true)
+    end
+  end
+
+  describe ".upgrade_auto_updates_casks?" do
+    before do
+      ENV["HOMEBREW_DEVELOPER"] = nil
+      ENV["HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS"] = nil
+      ENV["HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS"] = nil
+    end
+
+    it "returns false if the opt-in is not set" do
+      expect(env_config.upgrade_auto_updates_casks?).to be(false)
+    end
+
+    it "returns true if HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS is set" do
+      ENV["HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS"] = "1"
+      expect(env_config.upgrade_auto_updates_casks?).to be(true)
+    end
+
+    it "returns true if HOMEBREW_DEVELOPER is set" do
+      ENV["HOMEBREW_DEVELOPER"] = "1"
+      expect(env_config.upgrade_auto_updates_casks?).to be(true)
+    end
+
+    it "returns false if HOMEBREW_DEVELOPER is set to a falsey value" do
+      ENV["HOMEBREW_DEVELOPER"] = "0"
+      expect(env_config.upgrade_auto_updates_casks?).to be(false)
+    end
+
+    it "returns false if HOMEBREW_DEVELOPER and HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS are set" do
+      ENV["HOMEBREW_DEVELOPER"] = "1"
+      ENV["HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS"] = "1"
+      expect(env_config.upgrade_auto_updates_casks?).to be(false)
+    end
+
+    it "raises if both opt-in and opt-out are set" do
+      ENV["HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS"] = "1"
+      ENV["HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS"] = "1"
+
+      expect { env_config.upgrade_auto_updates_casks? }
+        .to raise_error(UsageError, /cannot both be set/i)
     end
   end
 end

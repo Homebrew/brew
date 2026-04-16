@@ -61,11 +61,6 @@ module Tty
     end
 
     sig { params(line_count: Integer).returns(String) }
-    def move_cursor_up(line_count)
-      "\033[#{line_count}A"
-    end
-
-    sig { params(line_count: Integer).returns(String) }
     def move_cursor_up_beginning(line_count)
       "\033[#{line_count}F"
     end

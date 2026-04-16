@@ -453,22 +453,26 @@ module Cask
         return enum_for(:each_resolved_path, action, paths) unless block_given?
 
         paths.each do |path|
-          resolved_path = Pathname.new(path)
+          resolved_path = Pathname.new(path.to_s.sub(%r{^~(?=(/|$))}, Dir.home))
 
-          resolved_path = resolved_path.expand_path if path.to_s.start_with?("~")
-
-          if resolved_path.relative? || resolved_path.split.any? { |part| part.to_s == ".." }
+          if resolved_path.relative?
             opoo "Skipping #{Formatter.identifier(action)} for relative path '#{path}'."
             next
           end
 
-          if undeletable?(resolved_path)
-            opoo "Skipping #{Formatter.identifier(action)} for undeletable path '#{path}'."
+          if resolved_path.each_filename.any? { |part| [".", ".."].include?(part) }
+            opoo "Skipping #{Formatter.identifier(action)} for path with relative segments '#{path}'."
             next
           end
 
           begin
-            yield path, Pathname.glob(resolved_path)
+            resolved_paths = Pathname.glob(resolved_path).reject do |target|
+              next false unless undeletable?(target)
+
+              opoo "Skipping #{Formatter.identifier(action)} for undeletable path '#{target}'."
+              true
+            end
+            yield path, resolved_paths
           rescue Errno::EPERM
             raise if File.readable?(File.expand_path("~/Library/Application Support/com.apple.TCC"))
 

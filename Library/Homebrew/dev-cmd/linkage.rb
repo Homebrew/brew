@@ -40,7 +40,11 @@ module Homebrew
           kegs.each do |keg|
             ohai "Checking #{keg.name} linkage" if kegs.size > 1
 
-            result = LinkageChecker.new(keg, cache_db: db)
+            result = LinkageChecker.new(keg,
+                                        cache_db: T.cast(db,
+                                                         CacheStoreDatabase[String,
+                                                                            T::Hash[T.any(String, Symbol),
+                                                                                    T.anything]]))
 
             if args.test?
               result.display_test_output(strict: args.strict?)

@@ -70,7 +70,8 @@ module Homebrew
       const :auto_updates, T::Boolean, default: false
       const :caveats_rosetta, T::Boolean, default: false
       const :conflicts_with_args, T::Hash[Symbol, T::Array[String]], default: {}
-      const :container_args, T::Hash[Symbol, T.any(Symbol, T.anything)], default: {}
+      const :container_args, { nested: T.nilable(String), type: T.nilable(Symbol) },
+            default: { nested: nil, type: nil }
       const :depends_on_args, DependsOnArgs, default: {}
       const :deprecate_args, T::Hash[Symbol, T.nilable(T.any(String, Symbol))], default: {}
       const :desc, T.nilable(String)

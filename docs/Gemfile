@@ -17,8 +17,7 @@ group :jekyll_plugins do
 end
 
 gem "redcarpet"
-# Ruby 4.0 support: https://github.com/lsegal/yard/pull/1649
-gem "yard", github: "Bo98/yard", ref: "62a50d2fd54f2d23365b14553323c1f90b946d1f"
+gem "yard"
 gem "yard-sorbet"
 
 group :development do

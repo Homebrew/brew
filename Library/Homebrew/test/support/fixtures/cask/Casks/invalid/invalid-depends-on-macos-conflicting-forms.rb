@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 cask "invalid-depends-on-macos-conflicting-forms" do

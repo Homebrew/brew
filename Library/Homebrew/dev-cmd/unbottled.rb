@@ -185,7 +185,7 @@ module Homebrew
 
         all_formulae.each do |f|
           deps = Dependency.expand(f, cache_key: "unbottled") do |_, dep|
-            Dependency.prune if dep.optional?
+            next Dependable::PRUNE if dep.optional?
           end.map(&:to_formula)
           deps_hash[f.name] = deps
 
@@ -250,7 +250,7 @@ module Homebrew
               when MacOSRequirement
                 next true unless r.version_specified?
 
-                macos_version.compare(r.comparator, r.version)
+                macos_version.compare(r.comparator, T.cast(r.version, MacOSVersion))
               when XcodeRequirement
                 next true unless r.version
 

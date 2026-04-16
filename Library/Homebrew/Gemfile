@@ -69,7 +69,8 @@ group :typecheck, optional: true do
   gem "method_source", require: false
   gem "sorbet-static-and-runtime", require: false
   gem "spoom", require: false
-  gem "tapioca", require: false
+  # TODO: remove < 0.19.0 when https://github.com/Shopify/rubydex/pull/725 is in a release
+  gem "tapioca", "< 0.19.0", require: false
 end
 group :vscode, optional: true do
   gem "ruby-lsp", require: false

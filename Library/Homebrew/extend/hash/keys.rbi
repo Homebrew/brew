@@ -19,12 +19,6 @@ class Hash
   sig { returns(T::Hash[String, V]) }
   def deep_stringify_keys; end
 
-  sig { returns(T::Hash[String, V]) }
-  def deep_stringify_keys!; end
-
   sig { returns(T::Hash[Symbol, V]) }
   def deep_symbolize_keys; end
-
-  sig { returns(T::Hash[Symbol, V]) }
-  def deep_symbolize_keys!; end
 end

@@ -8,18 +8,24 @@ require "extend/pathname/write_mkpath_extension"
 require "utils/output"
 
 # Stubs needed to keep Sorbet happy.
+# rubocop:disable Style/OneClassPerFile
+
+# {Pathname} extension for dealing with Mach-O files.
 module MachOShim; end
-module ELFShim; end # rubocop:todo Style/OneClassPerFile
+
+# {Pathname} extension for dealing with ELF files.
+module ELFShim; end
 
 # @api private
-module BinaryPathname # rubocop:todo Style/OneClassPerFile
+module BinaryPathname
   sig { params(path: T.any(Pathname, String, MachOShim, ELFShim)).returns(T.any(MachOShim, ELFShim)) }
   def self.wrap(path) = raise NotImplementedError
 end
 
 # Homebrew extends Ruby's `Pathname` to make our code more readable.
 # @see https://ruby-doc.org/stdlib-2.6.3/libdoc/pathname/rdoc/Pathname.html Ruby's Pathname API
-class Pathname # rubocop:todo Style/OneClassPerFile
+# TODO: move all of these to other modules e.g. Utils.
+class Pathname
   include SystemCommand::Mixin
   include DiskUsageExtension
   include Utils::Output::Mixin
@@ -289,6 +295,8 @@ class Pathname # rubocop:todo Style/OneClassPerFile
   end
 
   # Writes an exec script in this folder for each target pathname.
+  #
+  # @api public
   sig { params(targets: T.any(T::Array[T.any(String, Pathname)], String, Pathname)).void }
   def write_exec_script(*targets)
     targets.flatten!
@@ -307,6 +315,8 @@ class Pathname # rubocop:todo Style/OneClassPerFile
   end
 
   # Writes an exec script that sets environment variables.
+  #
+  # @api public
   sig {
     params(target:      T.any(Pathname, String),
            args_or_env: T.any(String, T::Array[String], T::Hash[String, String], T::Hash[Symbol, String]),
@@ -335,6 +345,8 @@ class Pathname # rubocop:todo Style/OneClassPerFile
   end
 
   # Writes a wrapper env script and moves all files to the dst.
+  #
+  # @api public
   sig { params(dst: Pathname, env: T::Hash[String, String]).void }
   def env_script_all_files(dst, env)
     dst.mkpath
@@ -350,6 +362,8 @@ class Pathname # rubocop:todo Style/OneClassPerFile
   end
 
   # Writes an exec script that invokes a Java jar.
+  #
+  # @api public
   sig {
     params(
       target_jar:   T.any(String, Pathname),
@@ -495,4 +509,6 @@ class Pathname # rubocop:todo Style/OneClassPerFile
       end
   end
 end
+# rubocop:enable Style/OneClassPerFile
+#
 require "extend/os/pathname"

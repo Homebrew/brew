@@ -17,6 +17,11 @@ module Homebrew
           @installed_packages = T.let(nil, T.nilable(T::Array[String]))
         end
 
+        sig { override.returns(T.nilable(String)) }
+        def cleanup_heading
+          banner_name
+        end
+
         sig { override.returns(String) }
         def package_manager_name
           "rust"
@@ -66,6 +71,16 @@ module Homebrew
           return installed_packages if installed_packages
 
           @installed_packages = packages.dup
+        end
+
+        sig { override.params(name: String, executable: Pathname).void }
+        def uninstall_package!(name, executable: Pathname.new(""))
+          Bundle.system(executable.to_s, "uninstall", name, verbose: false)
+        end
+
+        sig { override.params(executable: Pathname).returns(T::Hash[String, String]) }
+        def package_manager_env(executable)
+          cargo_env(executable)
         end
 
         sig { params(output: String).returns(T::Array[String]) }

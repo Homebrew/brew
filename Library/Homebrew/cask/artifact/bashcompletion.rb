@@ -7,8 +7,8 @@ module Cask
   module Artifact
     # Artifact corresponding to the `bash_completion` stanza.
     class BashCompletion < ShellCompletion
-      sig { params(target: T.any(String, Pathname)).returns(Pathname) }
-      def resolve_target(target)
+      sig { override.params(target: T.any(String, Pathname), base_dir: T.nilable(Pathname)).returns(Pathname) }
+      def resolve_target(target, base_dir: nil)
         name = if File.extname(target).nil?
           target
         else

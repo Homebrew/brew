@@ -3,7 +3,6 @@
 
 require "abstract_command"
 require "formula"
-require "tab"
 require "diagnostic"
 
 module Homebrew

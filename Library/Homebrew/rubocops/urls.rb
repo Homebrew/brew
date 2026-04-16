@@ -129,8 +129,8 @@ module RuboCop
           return if formula_tap != "homebrew-core"
 
           find_method_calls_by_name(body_node, :url).each do |url|
-            next unless string_content(parameters(url).first).match?(/\.git$/)
-            next if url_has_revision?(parameters(url).last)
+            next unless string_content(parameters(url).fetch(0)).match?(/\.git$/)
+            next if url_has_revision?(parameters(url).fetch(-1))
 
             offending_node(url)
             problem "Formulae in homebrew/core should specify a revision for Git URLs"
@@ -152,8 +152,8 @@ module RuboCop
           return if formula_tap != "homebrew-core"
 
           find_method_calls_by_name(body_node, :url).each do |url|
-            next unless string_content(parameters(url).first).match?(/\.git$/)
-            next if url_has_tag?(parameters(url).last)
+            next unless string_content(parameters(url).fetch(0)).match?(/\.git$/)
+            next if url_has_tag?(parameters(url).fetch(-1))
 
             offending_node(url)
             problem "Formulae in homebrew/core should specify a tag for Git URLs"

@@ -33,8 +33,6 @@ module Homebrew
       class GithubReleases
         extend Strategic
 
-        NICE_NAME = "GitHub - Releases"
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {GithubReleases} so we can selectively apply the strategy using
         # `strategy :github_releases` in a `livecheck` block.

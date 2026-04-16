@@ -34,6 +34,8 @@ If this is a major or minor release (e.g. X.0.0 or X.Y.0) then there are a few m
 
    Also delete any command argument definitions that pass `replacement: ...`.
 
+   See [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removing.md#the-deprecation-lifecycle) for details on the deprecation lifecycle.
+
 2. Write up a release notes blog post for <https://brew.sh> (e.g. [brew.sh#319](https://github.com/Homebrew/brew.sh/pull/319)). This should use the output from `brew release [--major|--minor]` as input but have the wording adjusted to be more human readable and explain not just what has changed but why.
 
 3. When the release has shipped and the blog post has been merged, tweet the blog post as the [@MacHomebrew Twitter account](https://twitter.com/MacHomebrew) or tweet it yourself and retweet it with the @MacHomebrew Twitter account (credentials are in 1Password).

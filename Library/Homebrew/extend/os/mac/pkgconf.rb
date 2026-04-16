@@ -18,11 +18,11 @@ module Homebrew
       return unless pkgconf&.any_version_installed?
 
       tab = Tab.for_formula(pkgconf)
-      return unless tab.built_on
+      return unless (built_on = tab.built_on)
 
-      built_on_version = tab.built_on["os_version"]
-                            &.delete_prefix("macOS ")
-                            &.sub(/\.\d+$/, "")
+      built_on_version = built_on["os_version"]
+                         &.delete_prefix("macOS ")
+                         &.sub(/\.\d+$/, "")
       return unless built_on_version
 
       current_version = MacOS.version.to_s

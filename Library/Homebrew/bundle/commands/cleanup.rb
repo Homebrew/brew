@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/formatter"
@@ -10,13 +10,14 @@ module Homebrew
     module Commands
       # Uninstalls formulae, casks, taps, VSCode extensions and Flatpak packages not listed in the Brewfile.
       module Cleanup
+        sig { void }
         def self.reset!
           require "bundle/cask"
           require "bundle/brew"
           require "bundle/tap"
           require "bundle/brew_services"
 
-          @dsl = nil
+          @dsl = T.let(nil, T.nilable(Homebrew::Bundle::Dsl))
           @kept_casks = nil
           @kept_formulae = nil
           Homebrew::Bundle::Cask.reset!
@@ -26,6 +27,11 @@ module Homebrew
           Homebrew::Bundle.extensions.each(&:reset!)
         end
 
+        sig {
+          params(global: T::Boolean, file: T.nilable(String), force: T::Boolean, zap: T::Boolean,
+                 dsl: T.nilable(Homebrew::Bundle::Dsl), formulae: T::Boolean, casks: T::Boolean, taps: T::Boolean,
+                 extension_types: Homebrew::Bundle::ExtensionTypes).void
+        }
         def self.run(global: false, file: nil, force: false, zap: false, dsl: nil,
                      formulae: true, casks: true, taps: true, extension_types: {})
           read_dsl_from_brewfile!(global:, file:, dsl:)
@@ -38,6 +44,7 @@ module Homebrew
           taps = taps ? taps_to_untap(global:, file:) : []
           cleanup_extensions = Homebrew::Bundle.extensions.select(&:cleanup_supported?).filter_map do |extension|
             next unless extension_types.fetch(extension.type, false)
+            raise ArgumentError, "dsl is unset!" unless @dsl
 
             [extension, extension.cleanup_items(@dsl.entries)]
           end
@@ -49,6 +56,8 @@ module Homebrew
             end
 
             if formulae.any?
+              raise ArgumentError, "dsl is unset!" unless @dsl
+
               # Mark Brewfile formulae as installed_on_request to prevent autoremove
               # from removing them when their dependents are uninstalled
               Homebrew::Bundle.mark_as_installed_on_request!(@dsl.entries)
@@ -107,13 +116,17 @@ module Homebrew
           end
         end
 
+        sig { params(global: T::Boolean, file: T.nilable(String), dsl: T.nilable(Homebrew::Bundle::Dsl)).void }
         def self.read_dsl_from_brewfile!(global: false, file: nil, dsl: nil)
-          @dsl = if dsl
-            dsl
-          else
-            require "bundle/brewfile"
-            Brewfile.read(global:, file:)
-          end
+          @dsl = T.let(
+            if dsl
+              dsl
+            else
+              require "bundle/brewfile"
+              Brewfile.read(global:, file:)
+            end,
+            T.nilable(Homebrew::Bundle::Dsl),
+          )
         end
 
         sig { returns(T.nilable(Homebrew::Bundle::Dsl)) }
@@ -121,6 +134,7 @@ module Homebrew
           @dsl
         end
 
+        sig { params(global: T::Boolean, file: T.nilable(String)).returns(T::Array[String]) }
         def self.casks_to_uninstall(global: false, file: nil)
           raise ArgumentError, "@dsl is unset!" unless @dsl
 
@@ -128,6 +142,7 @@ module Homebrew
           Homebrew::Bundle::Cask.cask_names - kept_casks(global:, file:)
         end
 
+        sig { params(global: T::Boolean, file: T.nilable(String)).returns(T::Array[String]) }
         def self.formulae_to_uninstall(global: false, file: nil)
           raise ArgumentError, "@dsl is unset!" unless @dsl
 
@@ -148,39 +163,55 @@ module Homebrew
           current_formulae.map { |f| f[:full_name] }
         end
 
+        sig { params(global: T::Boolean, file: T.nilable(String)).returns(T::Array[String]) }
         private_class_method def self.kept_formulae(global: false, file: nil)
           require "bundle/brew"
           require "bundle/cask"
 
-          @kept_formulae ||= begin
-            kept_formulae = @dsl.entries.select { |e| e.type == :brew }.map(&:name)
-            kept_formulae += Homebrew::Bundle::Cask.formula_dependencies(kept_casks)
-            kept_formulae.map! do |f|
-              Homebrew::Bundle::Brew.formula_aliases.fetch(
-                f,
-                Homebrew::Bundle::Brew.formula_oldnames.fetch(f, f),
-              )
-            end
+          @kept_formulae ||= T.let(
+            begin
+              raise ArgumentError, "dsl is unset!" unless @dsl
 
-            kept_formulae + recursive_dependencies(Homebrew::Bundle::Brew.formulae, kept_formulae)
-          end
+              kept_formulae = @dsl.entries.select { |e| e.type == :brew }.map(&:name)
+              kept_formulae += Homebrew::Bundle::Cask.formula_dependencies(kept_casks)
+              kept_formulae.map! do |f|
+                Homebrew::Bundle::Brew.formula_aliases.fetch(
+                  f,
+                  Homebrew::Bundle::Brew.formula_oldnames.fetch(f, f),
+                )
+              end
+
+              kept_formulae + recursive_dependencies(Homebrew::Bundle::Brew.formulae, kept_formulae)
+            end,
+            T.nilable(T::Array[String]),
+          )
         end
 
+        sig { params(global: T::Boolean, file: T.nilable(String)).returns(T::Array[String]) }
         private_class_method def self.kept_casks(global: false, file: nil)
           return @kept_casks if @kept_casks
+          raise ArgumentError, "dsl is unset!" unless @dsl
 
           kept_casks = @dsl.entries.select { |e| e.type == :cask }.flat_map(&:name)
           kept_casks.map! do |c|
             Homebrew::Bundle::Cask.cask_oldnames.fetch(c, c)
           end
-          @kept_casks = kept_casks
+          @kept_casks = T.let(kept_casks, T.nilable(T::Array[String]))
+          raise "kept_casks is nil" unless @kept_casks
+
+          @kept_casks
         end
 
+        sig {
+          params(current_formulae: T::Array[T::Hash[Symbol, T.untyped]], formulae_names: T::Array[String],
+                 top_level: T::Boolean).returns(T::Array[String])
+        }
         private_class_method def self.recursive_dependencies(current_formulae, formulae_names, top_level: true)
-          @checked_formulae_names = [] if top_level
-          dependencies = T.let([], T::Array[Formula])
+          @checked_formulae_names = T.let([], T.nilable(T::Array[String])) if top_level
+          dependencies = T.let([], T::Array[String])
 
           formulae_names.each do |name|
+            raise "checked_formulae_names is unset!" unless @checked_formulae_names
             next if @checked_formulae_names.include?(name)
 
             formula = current_formulae.find { |f| f[:full_name] == name }
@@ -204,6 +235,7 @@ module Homebrew
 
         IGNORED_TAPS = %w[homebrew/core].freeze
 
+        sig { params(global: T::Boolean, file: T.nilable(String)).returns(T::Array[String]) }
         def self.taps_to_untap(global: false, file: nil)
           raise ArgumentError, "@dsl is unset!" unless @dsl
 
@@ -216,6 +248,7 @@ module Homebrew
           current_taps - kept_taps - IGNORED_TAPS
         end
 
+        sig { params(formula: String).returns(T.nilable(Formula)) }
         private_class_method def self.lookup_formula(formula)
           Formulary.factory(formula)
         rescue TapFormulaUnavailableError
@@ -223,6 +256,7 @@ module Homebrew
           nil
         end
 
+        sig { params(cmd: T.any(Pathname, String), args: T.anything).returns(String) }
         def self.system_output_no_stderr(cmd, *args)
           IO.popen([cmd, *args], err: :close).read
         end

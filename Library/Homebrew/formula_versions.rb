@@ -21,7 +21,7 @@ class FormulaVersions
   def initialize(formula)
     @name = T.let(formula.name, String)
     @path = T.let(formula.tap_path, Pathname)
-    @repository = T.let(T.must(formula.tap).path, Pathname)
+    @repository = T.let(formula.tap!.path, Pathname)
     @relative_path = T.let(@path.relative_path_from(repository).to_s, String)
     # Also look at e.g. older homebrew-core paths before sharding.
     if (match = @relative_path.match(%r{^(HomebrewFormula|Formula)/([a-z]|lib)/(.+)}))

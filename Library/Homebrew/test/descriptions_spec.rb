@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "descriptions"
@@ -46,5 +47,48 @@ RSpec.describe Descriptions do
   it "can print description for a cask" do
     descriptions_hash["homebrew/cask/foo"] = ["Foo", "Cask foo"]
     expect { descriptions.print }.to output("foo: (Foo) Cask foo\n").to_stdout
+  end
+
+  it "skips formulae without a description" do
+    descriptions_hash["homebrew/core/foo"] = nil
+
+    expect { descriptions.print }.not_to output.to_stdout
+  end
+
+  it "skips casks without a description" do
+    descriptions_hash["homebrew/cask/foo"] = ["Foo", nil]
+
+    expect { descriptions.print }.not_to output.to_stdout
+  end
+
+  it "prints trailing status for interactive formula descriptions" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    descriptions_hash["homebrew/core/foo"] = "Core foo"
+
+    allow(Formula).to receive(:installed).and_return(
+      [instance_double(Formula, name: "foo", full_name: "homebrew/core/foo")],
+    )
+    formula = instance_double(Formula, any_version_installed?: true, deprecated?: false, disabled?: false)
+    allow(Formulary).to receive(:factory).with("homebrew/core/foo").and_return(formula)
+
+    expect { descriptions.print }.to output(/foo .*: Core foo/).to_stdout
+  end
+
+  it "uses installed and deprecation metadata without loading formulae" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    descriptions_hash["homebrew/core/foo"] = "Core foo"
+
+    descriptions = described_class.new(
+      descriptions_hash,
+      status_data: { "homebrew/core/foo" => { deprecated: true, disabled: false } },
+    )
+
+    allow(Formula).to receive(:installed).and_return(
+      [instance_double(Formula, name: "foo", full_name: "homebrew/core/foo")],
+    )
+    expect(Formulary).not_to receive(:factory)
+    expect(Cask::CaskLoader).not_to receive(:load)
+
+    expect { descriptions.print }.to output(/foo .*deprecated.*: Core foo/).to_stdout
   end
 end

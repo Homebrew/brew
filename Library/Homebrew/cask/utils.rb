@@ -131,13 +131,5 @@ module Cask
           .delete_prefix("-")
           .delete_suffix("-")
     end
-
-    sig { returns(String) }
-    def self.error_message_with_suggestions
-      <<~EOS
-        Follow the instructions here:
-          #{Formatter.url(BUG_REPORTS_URL)}
-      EOS
-    end
   end
 end

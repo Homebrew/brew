@@ -205,23 +205,14 @@ module Homebrew
           EOS
         end
 
-        begin
-          formulae, casks = T.cast(
-            args.named.to_formulae_and_casks(warn: false).partition { it.is_a?(Formula) },
-            [T::Array[Formula], T::Array[Cask::Cask]],
-          )
-        rescue FormulaOrCaskUnavailableError, Cask::CaskUnavailableError
-          cask_tap = CoreCaskTap.instance
-          if !cask_tap.installed? && (args.cask? || Tap.untapped_official_taps.exclude?(cask_tap.name))
-            cask_tap.ensure_installed!
-            retry if cask_tap.installed?
-          end
-
-          raise
-        end
+        formulae, casks = T.cast(
+          args.named.to_formulae_and_casks(warn: false).partition { it.is_a?(Formula) },
+          [T::Array[Formula], T::Array[Cask::Cask]],
+        )
 
         installed_casks = T.let([], T::Array[Cask::Cask])
         new_casks = T.let([], T::Array[Cask::Cask])
+        upgrade_casks = T.let([], T::Array[Cask::Cask])
         fetch_casks = T.let([], T::Array[Cask::Cask])
         if casks.any?
           Install.ask_casks casks if args.ask?
@@ -251,7 +242,8 @@ module Homebrew
           fetch_casks = if Homebrew::EnvConfig.no_install_upgrade?
             new_casks
           else
-            new_casks | Cask::Upgrade.outdated_casks(casks, args:, force: true, quiet: true)
+            upgrade_casks = Cask::Upgrade.outdated_casks(casks, args:, force: true, quiet: true)
+            new_casks | upgrade_casks
           end
         end
 
@@ -340,6 +332,9 @@ module Homebrew
         if !args.dry_run? && (formulae_installer.any? || fetch_casks.any?)
           download_queue = Homebrew::DownloadQueue.new(pour: true)
           begin
+            Cask::Upgrade.show_upgrade_summary(
+              upgrade_casks.map { |cask| "#{cask.full_name} #{cask.installed_version} -> #{cask.version}" },
+            )
             Install.show_combined_fetch_downloads_heading(
               formula_names: formulae_installer.map { |fi| fi.formula.name },
               cask_names:    fetch_casks.map(&:full_name),
@@ -418,15 +413,16 @@ module Homebrew
             begin
               Cask::Upgrade.upgrade_casks!(
                 *installed_casks,
-                force:          args.force?,
-                dry_run:        args.dry_run?,
-                binaries:       args.binaries?,
-                quarantine:     args.quarantine?,
-                require_sha:    args.require_sha?,
-                skip_cask_deps: args.skip_cask_deps?,
-                verbose:        args.verbose?,
-                quiet:          args.quiet?,
-                skip_prefetch:  true,
+                force:                args.force?,
+                dry_run:              args.dry_run?,
+                binaries:             args.binaries?,
+                quarantine:           args.quarantine?,
+                require_sha:          args.require_sha?,
+                skip_cask_deps:       args.skip_cask_deps?,
+                verbose:              args.verbose?,
+                quiet:                args.quiet?,
+                skip_prefetch:        true,
+                show_upgrade_summary: false,
                 args:,
               )
             rescue => e

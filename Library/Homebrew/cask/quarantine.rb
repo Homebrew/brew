@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "development_tools"
@@ -14,29 +14,35 @@ module Cask
 
     QUARANTINE_ATTRIBUTE = "com.apple.quarantine"
 
-    QUARANTINE_SCRIPT = (HOMEBREW_LIBRARY_PATH/"cask/utils/quarantine.swift").freeze
-    COPY_XATTRS_SCRIPT = (HOMEBREW_LIBRARY_PATH/"cask/utils/copy-xattrs.swift").freeze
+    QUARANTINE_SCRIPT = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/quarantine.swift").freeze, Pathname)
+    COPY_XATTRS_SCRIPT = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/copy-xattrs.swift").freeze, Pathname)
 
+    sig { returns(T.nilable(T.any(String, Pathname))) }
     def self.swift
-      @swift ||= begin
-        # /usr/bin/swift (which runs via xcrun) adds `/usr/local/include` to the top of the include path,
-        # which allows really broken local setups to break our Swift usage here. Using the underlying
-        # Swift executable directly however (returned by `xcrun -find`) avoids this CPATH mess.
-        xcrun_swift = ::Utils.popen_read("/usr/bin/xcrun", "-find", "swift", err: :close).chomp
-        if $CHILD_STATUS.success? && File.executable?(xcrun_swift)
-          xcrun_swift
-        else
-          DevelopmentTools.locate("swift")
-        end
-      end
+      @swift ||= T.let(
+        begin
+          # /usr/bin/swift (which runs via xcrun) adds `/usr/local/include` to the top of the include path,
+          # which allows really broken local setups to break our Swift usage here. Using the underlying
+          # Swift executable directly however (returned by `xcrun -find`) avoids this CPATH mess.
+          xcrun_swift = ::Utils.popen_read("/usr/bin/xcrun", "-find", "swift", err: :close).chomp
+          if $CHILD_STATUS.success? && File.executable?(xcrun_swift)
+            xcrun_swift
+          else
+            DevelopmentTools.locate("swift")
+          end
+        end,
+        T.nilable(T.any(String, Pathname)),
+      )
     end
     private_class_method :swift
 
+    sig { returns(T.nilable(Pathname)) }
     def self.xattr
-      @xattr ||= DevelopmentTools.locate("xattr")
+      @xattr ||= T.let(DevelopmentTools.locate("xattr"), T.nilable(Pathname))
     end
     private_class_method :xattr
 
+    sig { returns(T::Array[String]) }
     def self.swift_target_args
       ["-target", "#{Hardware::CPU.arch}-apple-macosx#{MacOS.version}"]
     end
@@ -47,14 +53,17 @@ module Cask
       odebug "Checking quarantine support"
 
       check_output = nil
-      status = if xattr.nil? || !system_command(xattr, args: ["-h"], print_stderr: false).success?
+      status = if xattr.nil? || !system_command(T.must(xattr), args: ["-h"], print_stderr: false).success?
         odebug "There's no working version of `xattr` on this system."
         :xattr_broken
       elsif swift.nil?
         odebug "Swift is not available on this system."
         :no_swift
       else
-        api_check = system_command(swift,
+        s = swift
+        raise "unexpected nil swift" unless s
+
+        api_check = system_command(s,
                                    args:         [*swift_target_args, QUARANTINE_SCRIPT],
                                    print_stderr: false)
 
@@ -90,11 +99,12 @@ module Cask
 
     sig { returns(T::Boolean) }
     def self.available?
-      @quarantine_support ||= check_quarantine_support
+      @quarantine_support ||= T.let(check_quarantine_support, T.nilable([Symbol, T.nilable(String)]))
 
       @quarantine_support[0] == :quarantine_available
     end
 
+    sig { params(file: T.nilable(T.any(String, Pathname))).returns(T.nilable(T::Boolean)) }
     def self.detect(file)
       return if file.nil?
 
@@ -107,12 +117,16 @@ module Cask
       quarantine_status
     end
 
+    sig { params(file: T.any(String, Pathname)).returns(String) }
     def self.status(file)
-      system_command(xattr,
+      raise "unexpected nil xattr" unless xattr
+
+      system_command(T.must(xattr),
                      args:         ["-p", QUARANTINE_ATTRIBUTE, file],
                      print_stderr: false).stdout.rstrip
     end
 
+    sig { params(attribute: String).returns(String) }
     def self.toggle_no_translocation_bit(attribute)
       fields = attribute.split(";")
 
@@ -120,17 +134,20 @@ module Cask
       # Let's toggle the app translocation bit, bit 8
       # http://www.openradar.me/radar?id=5022734169931776
 
-      fields[0] = (fields[0].to_i(16) | 0x0100).to_s(16).rjust(4, "0")
+      fields[0] = (fields.fetch(0).to_i(16) | 0x0100).to_s(16).rjust(4, "0")
 
       fields.join(";")
     end
 
+    sig { params(download_path: T.nilable(Pathname)).void }
     def self.release!(download_path: nil)
-      return unless detect(download_path)
+      return if !download_path || !detect(download_path)
 
       odebug "Releasing #{download_path} from quarantine"
 
-      quarantiner = system_command(xattr,
+      raise "unexpected nil xattr" unless xattr
+
+      quarantiner = system_command(T.must(xattr),
                                    args:         [
                                      "-d",
                                      QUARANTINE_ATTRIBUTE,
@@ -143,6 +160,7 @@ module Cask
       raise CaskQuarantineReleaseError.new(download_path, quarantiner.stderr)
     end
 
+    sig { params(cask: T.nilable(Cask), download_path: T.nilable(Pathname), action: T::Boolean).void }
     def self.cask!(cask: nil, download_path: nil, action: true)
       return if cask.nil? || download_path.nil?
 
@@ -150,7 +168,9 @@ module Cask
 
       odebug "Quarantining #{download_path}"
 
-      quarantiner = system_command(swift,
+      raise "unexpected nil swift" unless swift
+
+      quarantiner = system_command(T.must(swift),
                                    args:         [
                                      *swift_target_args,
                                      QUARANTINE_SCRIPT,
@@ -170,6 +190,7 @@ module Cask
       end
     end
 
+    sig { params(from: T.nilable(Pathname), to: T.nilable(Pathname)).void }
     def self.propagate(from: nil, to: nil)
       return if from.nil? || to.nil?
 
@@ -191,11 +212,13 @@ module Cask
                       ],
                       input: resolved_paths.join("\0"))
 
+      raise "unexpected nil xattr" unless xattr
+
       quarantiner = system_command("/usr/bin/xargs",
                                    args:         [
                                      "-0",
                                      "--",
-                                     xattr,
+                                     T.must(xattr),
                                      "-w",
                                      QUARANTINE_ATTRIBUTE,
                                      quarantine_status,
@@ -212,8 +235,10 @@ module Cask
     def self.copy_xattrs(from, to, command:)
       odebug "Copying xattrs from #{from} to #{to}"
 
+      raise "unexpected nil swift" unless swift
+
       command.run!(
-        swift,
+        T.must(swift),
         args: [
           *swift_target_args,
           COPY_XATTRS_SCRIPT,

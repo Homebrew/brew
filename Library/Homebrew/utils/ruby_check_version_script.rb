@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 HOMEBREW_REQUIRED_RUBY_VERSION = ARGV.first.freeze

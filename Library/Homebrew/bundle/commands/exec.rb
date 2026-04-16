@@ -227,7 +227,7 @@ module Homebrew
               entry:                Homebrew::Bundle::Dsl::Entry,
               info:                 T::Hash[String, T.untyped],
               service_file:         Pathname,
-              conflicting_services: T::Array[T::Hash[String, T.anything]],
+              conflicting_services: T::Array[T::Hash[String, T.untyped]],
             ).void,
           ).void
         }

@@ -80,7 +80,8 @@ module OS
         keg = ::Keg.new(formula.prefix)
 
         CacheStoreDatabase.use(:linkage) do |db|
-          checker = ::LinkageChecker.new(keg, formula, cache_db: db)
+          typed_db = T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]])
+          checker = ::LinkageChecker.new(keg, formula, cache_db: typed_db)
           next unless checker.broken_library_linkage?
 
           output = <<~EOS
@@ -93,7 +94,7 @@ module OS
             output += <<~EOS
               Rebuild this from source with:
                 brew reinstall --build-from-source #{formula}
-              If that's successful, file an issue#{formula.tap ? " here:\n  #{formula.tap.issues_url}" : "."}
+              If that's successful, file an issue#{formula.tap ? " here:\n  #{formula.tap!.issues_url}" : "."}
             EOS
           end
           problem_if_output output

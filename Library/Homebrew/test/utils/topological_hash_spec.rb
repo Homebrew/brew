@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "utils/topological_hash"

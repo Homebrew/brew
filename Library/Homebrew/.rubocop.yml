@@ -101,3 +101,19 @@ Homebrew/NegateInclude:
 Style/DocumentationMethod:
   Include:
     - "formula.rb"
+
+# Ensure @api public methods have proper YARD documentation.
+# No Include needed: the cop self-selects by finding @api public comments.
+Homebrew/PublicApiDocumentation:
+  Enabled: true
+  Exclude:
+    - "vendor/**/*"
+
+# Ensure cookbook-referenced methods are annotated @api public.
+# No Include needed: the cop self-selects from cookbook rubydoc links.
+Homebrew/PublicApiCookbook:
+  Enabled: true
+
+# Ensure official tap formulae don't use @api internal/@api private methods.
+FormulaAudit/NonPublicApiUsage:
+  Enabled: true

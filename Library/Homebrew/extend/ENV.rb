@@ -55,7 +55,7 @@ module EnvActivation
 
   sig { params(key: T.any(String, Symbol)).returns(T::Boolean) }
   def sensitive?(key)
-    key.match?(/(cookie|key|token|password|passphrase)/i)
+    key.match?(/(cookie|key|token|password|passphrase|auth)/i)
   end
 
   sig { returns(T::Hash[String, String]) }

@@ -18,7 +18,7 @@ module Utils
     output = popen(args, "rb", options, &block)
     return output if !safe || $CHILD_STATUS.success?
 
-    raise ErrorDuringExecution.new(args, status: $CHILD_STATUS, output: [[:stdout, output]])
+    raise ErrorDuringExecution.new(args, status: $CHILD_STATUS, output: [[:stdout, T.cast(output, String)]])
   end
 
   sig {

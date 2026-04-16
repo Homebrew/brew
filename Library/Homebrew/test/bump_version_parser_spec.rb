@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bump_version_parser"

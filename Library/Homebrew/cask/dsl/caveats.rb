@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Cask
@@ -26,12 +26,16 @@ module Cask
         @invoked_caveats = T.let(Set.new, T::Set[Symbol])
       end
 
+      sig {
+        params(name: Symbol, block: T.proc.bind(Caveats).void).void
+      }
       def self.caveat(name, &block)
         define_method(name) do |*args|
+          T.bind(self, Caveats)
           key = [name, *args]
-          @invoked_caveats.add(name)
+          invoked_caveats.add(name)
           text = instance_exec(*args, &block)
-          @built_in_caveats[key] = text if text
+          built_in_caveats[key] = text if text
           :built_in_caveat
         end
       end
@@ -89,7 +93,7 @@ module Cask
         end
 
         <<~EOS
-          #{@cask} requires a kernel extension to work.
+          #{cask} requires a kernel extension to work.
           If the installation fails, retry after you enable it in:
             #{navigation_path}
 
@@ -108,18 +112,18 @@ module Cask
         end
 
         <<~EOS
-          #{@cask} is not signed and requires Accessibility access,
+          #{cask} is not signed and requires Accessibility access,
           so you will need to re-grant Accessibility access every time the app is updated.
 
           Enable or re-enable it in:
             #{navigation_path} → #{access}
-          To re-enable, untick and retick #{@cask}.app.
+          To re-enable, untick and retick #{cask}.app.
         EOS
       end
 
       caveat :path_environment_variable do |path|
         <<~EOS
-          To use #{@cask}, you may need to add the #{path} directory
+          To use #{cask}, you may need to add the #{path} directory
           to your PATH environment variable, e.g. (for Bash shell):
             export PATH=#{path}:"$PATH"
         EOS
@@ -127,7 +131,7 @@ module Cask
 
       caveat :zsh_path_helper do |path|
         <<~EOS
-          To use #{@cask}, zsh users may need to add the following line to their
+          To use #{cask}, zsh users may need to add the following line to their
           ~/.zprofile. (Among other effects, #{path} will be added to the
           PATH environment variable):
             eval `/usr/libexec/path_helper -s`
@@ -138,7 +142,7 @@ module Cask
         next unless HOMEBREW_PREFIX.to_s.downcase.start_with?("/usr/local")
 
         <<~EOS
-          Cask #{@cask} installs files under /usr/local. The presence of such
+          Cask #{cask} installs files under /usr/local. The presence of such
           files can cause warnings when running `brew doctor`, which is considered
           to be a bug in Homebrew Cask.
         EOS
@@ -147,17 +151,17 @@ module Cask
       caveat :depends_on_java do |java_version = :any|
         if java_version == :any
           <<~EOS
-            #{@cask} requires Java. You can install the latest version with:
+            #{cask} requires Java. You can install the latest version with:
               brew install --cask temurin
           EOS
-        elsif java_version.include?("+")
+        elsif java_version.to_s.include?("+")
           <<~EOS
-            #{@cask} requires Java #{java_version}. You can install the latest version with:
+            #{cask} requires Java #{java_version}. You can install the latest version with:
               brew install --cask temurin
           EOS
         else
           <<~EOS
-            #{@cask} requires Java #{java_version}. You can install it with:
+            #{cask} requires Java #{java_version}. You can install it with:
               brew install --cask temurin@#{java_version}
           EOS
         end
@@ -167,7 +171,7 @@ module Cask
         next if Homebrew::SimulateSystem.current_arch != :arm
 
         <<~EOS
-          #{@cask} is built for Intel macOS and so requires Rosetta 2 to be installed.
+          #{cask} is built for Intel macOS and so requires Rosetta 2 to be installed.
           You can install Rosetta 2 with:
             softwareupdate --install-rosetta --agree-to-license
           Note that it is very difficult to remove Rosetta 2 once it is installed.
@@ -176,29 +180,39 @@ module Cask
 
       caveat :logout do
         <<~EOS
-          You must log out and log back in for the installation of #{@cask} to take effect.
+          You must log out and log back in for the installation of #{cask} to take effect.
         EOS
       end
 
       caveat :reboot do
         <<~EOS
-          You must reboot for the installation of #{@cask} to take effect.
+          You must reboot for the installation of #{cask} to take effect.
         EOS
       end
 
       caveat :license do |web_page|
         <<~EOS
-          Installing #{@cask} means you have AGREED to the license at:
+          Installing #{cask} means you have AGREED to the license at:
             #{Formatter.url(web_page.to_s)}
         EOS
       end
 
       caveat :free_license do |web_page|
         <<~EOS
-          The vendor offers a free license for #{@cask} at:
+          The vendor offers a free license for #{cask} at:
             #{Formatter.url(web_page.to_s)}
         EOS
       end
+
+      private
+
+      # These attrs are required as a workaround for https://github.com/sorbet/sorbet/issues/8106
+
+      sig { returns(T::Set[Symbol]) }
+      attr_reader :invoked_caveats
+
+      sig { returns(T::Hash[T::Array[Symbol], String]) }
+      attr_reader :built_in_caveats
     end
   end
 end

@@ -303,15 +303,15 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 `--go`
 
-: `list` or `dump` Go packages.
+: `list`, `dump` or `cleanup` Go packages.
 
 `--cargo`
 
-: `list` or `dump` Cargo packages.
+: `list`, `dump` or `cleanup` Cargo packages.
 
 `--uv`
 
-: `list` or `dump` uv tools.
+: `list`, `dump` or `cleanup` uv tools.
 
 `--flatpak`
 
@@ -323,7 +323,7 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 `--npm`
 
-: `list` or `dump` npm packages.
+: `list`, `dump` or `cleanup` npm packages.
 
 `--no-vscode`
 
@@ -957,13 +957,11 @@ upgrade *`formula`* if it is already installed but outdated.
 
 `--[no-]binaries`
 
-: Disable/enable linking of helper executables (default: enabled). Enabled by
-  default if `$HOMEBREW_CASK_OPTS_BINARIES` is set.
+: Disable/enable linking of helper executables (default: enabled).
 
 `--require-sha`
 
-: Require all casks to have a checksum. Enabled by default if
-  `$HOMEBREW_CASK_OPTS_REQUIRE_SHA` is set.
+: Require all casks to have a checksum.
 
 `--adopt`
 
@@ -1223,8 +1221,9 @@ otherwise.
 
 `-g`, `--greedy`
 
-: Also include outdated casks with `auto_updates true` or `version :latest`.
-  Enabled by default if `$HOMEBREW_UPGRADE_GREEDY` is set.
+: Also include outdated casks with `version :latest` and `auto_updates true`
+  casks that would otherwise be skipped. Enabled by default if
+  `$HOMEBREW_UPGRADE_GREEDY` is set.
 
 `--greedy-latest`
 
@@ -1232,7 +1231,8 @@ otherwise.
 
 `--greedy-auto-updates`
 
-: Also include outdated casks including those with `auto_updates true`.
+: Also include outdated `auto_updates true` casks that would otherwise be
+  skipped.
 
 ### `pin` *`installed_formula`* \[...\]
 
@@ -1369,13 +1369,11 @@ for the reinstalled formulae or, every 30 days, for all formulae.
 
 `--[no-]binaries`
 
-: Disable/enable linking of helper executables (default: enabled). Enabled by
-  default if `$HOMEBREW_CASK_OPTS_BINARIES` is set.
+: Disable/enable linking of helper executables (default: enabled).
 
 `--require-sha`
 
-: Require all casks to have a checksum. Enabled by default if
-  `$HOMEBREW_CASK_OPTS_REQUIRE_SHA` is set.
+: Require all casks to have a checksum.
 
 `--adopt`
 
@@ -1830,8 +1828,9 @@ for the upgraded formulae or, every 30 days, for all formulae.
 
 `-g`, `--greedy`
 
-: Also include casks with `auto_updates true` or `version :latest`. Enabled by
-  default if `$HOMEBREW_UPGRADE_GREEDY` is set.
+: Also include casks with `version :latest` and `auto_updates true` casks that
+  would otherwise be skipped. Enabled by default if `$HOMEBREW_UPGRADE_GREEDY`
+  is set.
 
 `--greedy-latest`
 
@@ -1839,17 +1838,15 @@ for the upgraded formulae or, every 30 days, for all formulae.
 
 `--greedy-auto-updates`
 
-: Also include casks with `auto_updates true`.
+: Also include `auto_updates true` casks that would otherwise be skipped.
 
 `--[no-]binaries`
 
-: Disable/enable linking of helper executables (default: enabled). Enabled by
-  default if `$HOMEBREW_CASK_OPTS_BINARIES` is set.
+: Disable/enable linking of helper executables (default: enabled).
 
 `--require-sha`
 
-: Require all casks to have a checksum. Enabled by default if
-  `$HOMEBREW_CASK_OPTS_REQUIRE_SHA` is set.
+: Require all casks to have a checksum.
 
 ### `uses` \[*`options`*\] *`formula`* \[...\]
 
@@ -2820,6 +2817,15 @@ generated files are written to the current directory.
 `-n`, `--dry-run`
 
 : Generate API data without writing it to files.
+
+### `generate-internal-api` \[`--dry-run`\]
+
+Generate internal API data files for <https://formulae.brew.sh>. The generated
+files are written to the current directory.
+
+`-n`, `--dry-run`
+
+: Generate internal API data without writing it to files.
 
 ### `generate-man-completions` \[`--no-exit-code`\]
 
@@ -4611,6 +4617,14 @@ command execution (e.g. `$(cat file)`).
 
 : If set, always use the latest stable tag (even if developer commands have been
   run).
+
+`HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS`
+
+: If set, `brew upgrade` will automatically upgrade casks with `auto_updates
+  true` when Homebrew detects that the version in the app bundle is older than
+  the version in the tap. Does not affect `--greedy` or `--greedy-auto-updates`
+  upgrades. Enabled by default if `$HOMEBREW_DEVELOPER` is set. This will become
+  the default behavior in Homebrew 5.2.0.
 
 `HOMEBREW_UPGRADE_GREEDY`
 

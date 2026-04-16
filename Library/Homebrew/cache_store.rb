@@ -8,16 +8,20 @@ require "json"
 # residing in the `HOMEBREW_CACHE`.
 #
 class CacheStoreDatabase
+  extend T::Generic
+
+  # Sorbet type members are mutable by design and cannot be frozen.
+  Key = type_member # rubocop:disable Style/MutableConstant
+  # Sorbet type members are mutable by design and cannot be frozen.
+  Value = type_member # rubocop:disable Style/MutableConstant
+
   # Yields the cache store database.
   # Closes the database after use if it has been loaded.
-  #
-  # @param  [Symbol] type
-  # @yield  [CacheStoreDatabase] self
   sig {
     type_parameters(:U)
       .params(
         type: Symbol,
-        _blk: T.proc.params(arg0: CacheStoreDatabase).returns(T.type_parameter(:U)),
+        _blk: T.proc.params(arg0: CacheStoreDatabase[T.anything, T.anything]).returns(T.type_parameter(:U)),
       )
       .returns(T.type_parameter(:U))
   }
@@ -47,24 +51,21 @@ class CacheStoreDatabase
   end
 
   # Creates a CacheStoreDatabase.
-  #
-  # @param  [Symbol] type
-  # @return [nil]
   sig { params(type: Symbol).void }
   def initialize(type)
-    @type = T.let(type, Symbol)
+    @type = type
     @dirty = T.let(false, T.nilable(T::Boolean))
   end
 
   # Sets a value in the underlying database (and creates it if necessary).
-  sig { params(key: T.anything, value: T.anything).void }
+  sig { params(key: Key, value: Value).void }
   def set(key, value)
     dirty!
     db[key] = value
   end
 
   # Gets a value from the underlying database (if it already exists).
-  sig { params(key: T.anything).returns(T.untyped) }
+  sig { params(key: Key).returns(T.nilable(Value)) }
   def get(key)
     return unless created?
 
@@ -72,7 +73,7 @@ class CacheStoreDatabase
   end
 
   # Deletes a value from the underlying database (if it already exists).
-  sig { params(key: T.anything).void }
+  sig { params(key: Key).void }
   def delete(key)
     return unless created?
 
@@ -99,16 +100,12 @@ class CacheStoreDatabase
   end
 
   # Returns `true` if the cache file has been created for the given `@type`.
-  #
-  # @return [Boolean]
   sig { returns(T::Boolean) }
   def created?
     cache_path.exist?
   end
 
   # Returns the modification time of the cache file (if it already exists).
-  #
-  # @return [Time]
   sig { returns(T.nilable(Time)) }
   def mtime
     return unless created?
@@ -117,25 +114,23 @@ class CacheStoreDatabase
   end
 
   # Performs a `select` on the underlying database.
-  #
-  # @return [Hash]
-  sig { params(block: T.proc.params(arg0: T.untyped, arg1: T.untyped).returns(BasicObject)).returns(T::Hash[T.untyped, T.untyped]) }
+  sig {
+    overridable.params(block: T.proc.params(arg0: Key, arg1: Value).returns(BasicObject)).returns(T::Hash[Key, Value])
+  }
   def select(&block)
     db.select(&block)
   end
 
   # Returns `true` if the cache is empty.
-  #
-  # @return [Boolean]
   sig { returns(T::Boolean) }
   def empty?
     db.empty?
   end
 
   # Performs a `each_key` on the underlying database.
-  #
-  # @return [Hash]
-  sig { params(block: T.proc.params(arg0: T.untyped).returns(BasicObject)).returns(T::Hash[T.untyped, T.untyped]) }
+  sig {
+    params(block: T.proc.params(arg0: Key).returns(BasicObject)).returns(T::Hash[Key, Value])
+  }
   def each_key(&block)
     db.each_key(&block)
   end
@@ -145,11 +140,9 @@ class CacheStoreDatabase
   # Lazily loaded database in read/write mode. If this method is called, a
   # database file will be created in the `HOMEBREW_CACHE` with a name
   # corresponding to the `@type` instance variable.
-  #
-  # @return [Hash] db
-  sig { returns(T::Hash[T.untyped, T.untyped]) }
+  sig { returns(T::Hash[Key, Value]) }
   def db
-    @db ||= T.let({}, T.nilable(T::Hash[T.untyped, T.untyped]))
+    @db ||= T.let({}, T.nilable(T::Hash[Key, Value]))
     return @db if !@db.empty? || !created?
 
     begin
@@ -163,8 +156,6 @@ class CacheStoreDatabase
 
   # The path where the database resides in the `HOMEBREW_CACHE` for the given
   # `@type`.
-  #
-  # @return [Pathname]
   sig { returns(Pathname) }
   def cache_path
     HOMEBREW_CACHE/"#{@type}.json"
@@ -177,8 +168,6 @@ class CacheStoreDatabase
   end
 
   # Returns `true` if the cache needs to be written to disk.
-  #
-  # @return [Boolean]
   sig { returns(T::Boolean) }
   def dirty?
     !!@dirty
@@ -190,20 +179,23 @@ end
 # storage mechanism.
 #
 class CacheStore # rubocop:todo Style/OneClassPerFile
+  extend T::Generic
   extend T::Helpers
 
   abstract!
 
-  # @param  [CacheStoreDatabase] database
-  # @return [nil]
-  sig { params(database: CacheStoreDatabase).void }
+  # Sorbet type members are mutable by design and cannot be frozen.
+  Key = type_member # rubocop:disable Style/MutableConstant
+  # Sorbet type members are mutable by design and cannot be frozen.
+  Value = type_member # rubocop:disable Style/MutableConstant
+
+  sig { params(database: CacheStoreDatabase[Key, Value]).void }
   def initialize(database)
-    @database = T.let(database, CacheStoreDatabase)
+    @database = database
   end
 
   protected
 
-  # @return [CacheStoreDatabase]
-  sig { returns(CacheStoreDatabase) }
+  sig { returns(CacheStoreDatabase[Key, Value]) }
   attr_reader :database
 end

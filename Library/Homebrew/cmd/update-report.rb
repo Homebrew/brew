@@ -186,11 +186,11 @@ module Homebrew
             hub.reporters.each { |r| r.migrate_formula_rename(force: args.force?, verbose: args.verbose?) }
 
             CacheStoreDatabase.use(:descriptions) do |db|
-              DescriptionCacheStore.new(db)
+              DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
                                    .update_from_report!(hub)
             end
             CacheStoreDatabase.use(:cask_descriptions) do |db|
-              CaskDescriptionCacheStore.new(db)
+              CaskDescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
                                        .update_from_report!(hub)
             end
           end
@@ -467,7 +467,7 @@ class Reporter # rubocop:todo Style/OneClassPerFile
       case status
       when "A", "D"
         full_name = tap.formula_file_to_name(src)
-        name = full_name.split("/").fetch(-1)
+        name = Utils.name_from_full_name(full_name)
         new_tap = tap.tap_migrations[name]
         if new_tap.blank?
           @report[T.must(status).to_sym] << full_name
@@ -492,7 +492,7 @@ class Reporter # rubocop:todo Style/OneClassPerFile
 
     renamed_casks = Set.new
     @report[:DC].each do |old_full_name|
-      old_name = old_full_name.split("/").last
+      old_name = Utils.name_from_full_name(old_full_name)
       new_name = tap.cask_renames[old_name]
       next unless new_name
 
@@ -506,7 +506,7 @@ class Reporter # rubocop:todo Style/OneClassPerFile
     end
 
     @report[:AC].each do |new_full_name|
-      new_name = new_full_name.split("/").last
+      new_name = Utils.name_from_full_name(new_full_name)
       old_name = tap.cask_renames.key(new_name)
       next unless old_name
 
@@ -527,7 +527,7 @@ class Reporter # rubocop:todo Style/OneClassPerFile
 
     renamed_formulae = Set.new
     @report[:D].each do |old_full_name|
-      old_name = old_full_name.split("/").last
+      old_name = Utils.name_from_full_name(old_full_name)
       new_name = tap.formula_renames[old_name]
       next unless new_name
 
@@ -541,7 +541,7 @@ class Reporter # rubocop:todo Style/OneClassPerFile
     end
 
     @report[:A].each do |new_full_name|
-      new_name = new_full_name.split("/").last
+      new_name = Utils.name_from_full_name(new_full_name)
       old_name = tap.formula_renames.key(new_name)
       next unless old_name
 
@@ -586,22 +586,23 @@ class Reporter # rubocop:todo Style/OneClassPerFile
   sig { void }
   def migrate_tap_migration
     [report[:D], report[:DC], report[:T]].flatten.each do |full_name|
-      name = full_name.split("/").fetch(-1)
-      new_tap_name = tap.tap_migrations[name]
-      next if new_tap_name.nil? # skip if not in tap_migrations list.
+      name = Utils.name_from_full_name(full_name)
+      migration_target = tap.tap_migrations[name]
+      next if migration_target.nil? # skip if not in tap_migrations list.
 
-      new_tap_user, new_tap_repo, new_tap_new_name = new_tap_name.split("/")
-      new_name = if new_tap_new_name
-        new_full_name = new_tap_new_name
-        new_tap_name = "#{new_tap_user}/#{new_tap_repo}"
-        new_tap_new_name
-      elsif new_tap_repo
+      migrated_tap_name = Utils.tap_from_full_name(migration_target)
+      new_name = if migrated_tap_name
+        new_full_name = Utils.name_from_full_name(migration_target)
+        new_tap_name = migrated_tap_name
+        new_full_name
+      elsif migration_target.include?("/")
+        new_tap_name = migration_target
         new_full_name = "#{new_tap_name}/#{name}"
         name
       else
         new_tap_name = tap.name
-        new_full_name = "#{new_tap_name}/#{new_tap_user}"
-        new_tap_user
+        new_full_name = "#{new_tap_name}/#{migration_target}"
+        migration_target
       end
 
       # This means it is a cask
@@ -614,7 +615,7 @@ class Reporter # rubocop:todo Style/OneClassPerFile
           To uninstall the cask, run:
             brew uninstall --cask --force #{name}
         EOS
-        next if (HOMEBREW_CELLAR/new_name.split("/").last).directory?
+        next if (HOMEBREW_CELLAR/Utils.name_from_full_name(new_name)).directory?
 
         ohai "Installing #{new_name}..."
         begin
@@ -894,7 +895,7 @@ class ReporterHub # rubocop:todo Style/OneClassPerFile
       true
     end
     casks.each do |cask|
-      cask_token = cask.split("/").fetch(-1)
+      cask_token = Utils.name_from_full_name(cask)
       if should_display_descriptions && (desc = cask_description(cask))
         puts "#{cask_token}: #{desc}"
       else
@@ -917,7 +918,7 @@ class ReporterHub # rubocop:todo Style/OneClassPerFile
     return if Homebrew::SimulateSystem.simulating_or_running_on_linux?
 
     casks = select_formula_or_cask(:DC).sort.filter_map do |name|
-      name = name.split("/").fetch(-1)
+      name = Utils.name_from_full_name(name)
       pretty_uninstalled(name) if cask_installed?(name)
     end
 
@@ -933,7 +934,7 @@ class ReporterHub # rubocop:todo Style/OneClassPerFile
 
   sig { params(formula: String).returns(T::Boolean) }
   def installed?(formula)
-    (HOMEBREW_CELLAR/formula.split("/").last).directory?
+    (HOMEBREW_CELLAR/Utils.name_from_full_name(formula)).directory?
   end
 
   sig { params(cask: String).returns(T::Boolean) }

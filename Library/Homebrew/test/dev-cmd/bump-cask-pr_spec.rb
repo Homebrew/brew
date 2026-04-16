@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
@@ -139,12 +140,14 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     end
 
     context "when cask has on_system blocks/calls and `depends_on arch`" do
-      it "returns an array with combinations of `OnSystem::BASE_OS_OPTIONS` and `depends_on arch` value" do
+      it "returns an array with combinations of `OnSystem::BASE_OS_OPTIONS` and `OnSystem::ARCH_OPTIONS`" do
         Homebrew::SimulateSystem.with(os: :linux, arch: :arm) do
           expect(bump_cask_pr.send(:generate_system_options, c_on_system_depends_on_intel, new_version))
             .to eq([
               [newest_macos, :intel],
+              [newest_macos, :arm],
               [:linux, :intel],
+              [:linux, :arm],
             ])
         end
 
@@ -152,7 +155,39 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
           expect(bump_cask_pr.send(:generate_system_options, c_on_system_depends_on_intel, new_version))
             .to eq([
               [older_macos, :intel],
+              [older_macos, :arm],
               [:linux, :intel],
+              [:linux, :arm],
+            ])
+        end
+      end
+    end
+
+    context "when cask has `depends_on arch` scoped to an `on_os` block" do
+      it "returns all arch combinations for `OnSystem::BASE_OS_OPTIONS`" do
+        Homebrew::SimulateSystem.with(os: older_macos, arch: :arm) do
+          cask = Cask::Cask.new("test-on-macos-scoped-depends-on-arm") do
+            os macos: "darwin", linux: "linux"
+
+            version "0.0.1,2"
+
+            url "https://brew.sh/test-0.0.1.dmg"
+            name "Test"
+            desc "Test cask"
+            homepage "https://brew.sh"
+
+            on_macos do
+              depends_on arch: :arm64
+            end
+          end
+
+          expect(cask.depends_on.arch).to eq([{ type: :arm, bits: 64 }])
+          expect(bump_cask_pr.send(:generate_system_options, cask, new_version))
+            .to eq([
+              [older_macos, :intel],
+              [older_macos, :arm],
+              [:linux, :intel],
+              [:linux, :arm],
             ])
         end
       end

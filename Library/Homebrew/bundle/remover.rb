@@ -32,7 +32,7 @@ module Homebrew
         content.split("\n").compact.each do |line|
           if line.match?(entry_regex)
             name = line[entry_regex, 2]
-            remove_package_description_comment(new_lines, name)
+            remove_package_description_comment(new_lines, T.must(name))
           else
             new_lines << line
           end

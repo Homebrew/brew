@@ -58,10 +58,10 @@ module Homebrew
 
           # Don't test formulae missing test dependencies
           missing_test_deps = f.recursive_dependencies do |dependent, dependency|
-            Dependency.prune if dependency.installed?
+            next Dependable::PRUNE if dependency.installed?
             next if dependency.test? && dependent == f
 
-            Dependency.prune unless dependency.required?
+            next Dependable::PRUNE unless dependency.required?
           end.map(&:to_s)
           unless missing_test_deps.empty?
             ofail "#{f.full_name} is missing test dependencies: #{missing_test_deps.join(" ")}"

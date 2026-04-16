@@ -309,7 +309,7 @@ module OS
         def check_xcode_license_approved
           # If the user installs Xcode-only, they have to approve the
           # license or no "xc*" tool will work.
-          return unless `/usr/bin/xcrun clang 2>&1`.include?("license")
+          return unless `/usr/bin/xcrun --find clang 2>&1`.include?("license")
           return if $CHILD_STATUS.success?
 
           <<~EOS

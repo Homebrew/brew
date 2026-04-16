@@ -130,8 +130,8 @@ module UnpackStrategy
   }
   def initialize(path, ref_type: nil, ref: nil, merge_xattrs: false)
     @path = T.let(Pathname(path).expand_path, Pathname)
-    @ref_type = T.let(ref_type, T.nilable(Symbol))
-    @ref = T.let(ref, T.nilable(String))
+    @ref_type = ref_type
+    @ref = ref
     @merge_xattrs = merge_xattrs
   end
 

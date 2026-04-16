@@ -116,12 +116,14 @@ module Cask
     sig { params(languages: T::Array[String]).returns(::Cask::Audit) }
     def audit_languages(languages)
       original_config = cask.config
-      localized_config = original_config.merge(Config.new(explicit: { languages: }))
-      cask.config = localized_config
+      begin
+        localized_config = original_config.merge(Config.new(explicit: { languages: }))
+        cask.config = localized_config
 
-      audit_cask_instance(cask)
-    ensure
-      cask.config = original_config
+        audit_cask_instance(cask)
+      ensure
+        cask.config = original_config
+      end
     end
 
     sig { params(cask: ::Cask::Cask).returns(::Cask::Audit) }

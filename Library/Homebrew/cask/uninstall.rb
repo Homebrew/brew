@@ -41,6 +41,8 @@ module Cask
       caskroom = ::Cask::Caskroom.casks
 
       caskroom.each do |dependent|
+        next if all_requireds.include?(dependent.token)
+
         d = CaskDependent.new(dependent)
         dependencies = d.recursive_requirements.filter_map { |r| r.cask if r.is_a?(CaskDependent::Requirement) }
         found_dependents = dependencies.intersection(all_requireds)

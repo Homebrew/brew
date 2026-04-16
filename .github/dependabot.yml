@@ -19,22 +19,6 @@ updates:
   - dependency-type: all
   cooldown:
     default-days: 7
-- package-ecosystem: cargo
-  directories:
-  - "/Library/Homebrew/rust/brew-rs"
-  schedule:
-    interval: weekly
-    day: friday
-    time: '08:00'
-    timezone: Etc/UTC
-  groups:
-    cargo:
-      patterns:
-      - "*"
-  allow:
-  - dependency-type: all
-  cooldown:
-    default-days: 7
 - package-ecosystem: devcontainers
   directory: "/"
   schedule:

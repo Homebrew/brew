@@ -386,7 +386,7 @@ module Utils
         cache[:default_package_fields] ||= begin
           version = if (match_data = HOMEBREW_VERSION.match(/^[\d.]+/))
             suffix = "-dev" if HOMEBREW_VERSION.include?("-")
-            match_data[0] + suffix.to_s
+            T.must(match_data[0]) + suffix.to_s
           else
             ">=4.1.22"
           end

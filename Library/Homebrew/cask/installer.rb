@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "formula_installer"
@@ -51,8 +51,9 @@ module Cask
       @verify_download_integrity = verify_download_integrity
       @quiet = quiet
       @download_queue = download_queue
-      @defer_fetch = T.let(defer_fetch, T::Boolean)
+      @defer_fetch = defer_fetch
       @ran_prelude = T.let(false, T::Boolean)
+      @cask_and_formula_dependencies = T.let(nil, T.nilable(T::Array[T.any(Formula, ::Cask::Cask)]))
     end
 
     sig { returns(T::Boolean) }
@@ -94,6 +95,7 @@ module Cask
     sig { returns(T::Boolean) }
     def zap? = @zap
 
+    sig { params(cask: ::Cask::Cask).returns(T.nilable(String)) }
     def self.caveats(cask)
       odebug "Printing caveats"
 
@@ -113,7 +115,6 @@ module Cask
       odebug "Cask::Installer#fetch"
 
       load_cask_from_source_api! if cask_from_source_api?
-      verify_has_sha if require_sha? && !force?
       check_requirements
 
       forbidden_tap_check
@@ -242,7 +243,10 @@ on_request: true)
 
     sig { returns(Download) }
     def downloader
-      @downloader ||= Download.new(@cask, quarantine: quarantine?)
+      @downloader ||= T.let(
+        Download.new(@cask, quarantine: quarantine?, require_sha: require_sha? && !force?),
+        T.nilable(Download),
+      )
     end
 
     sig { params(quiet: T.nilable(T::Boolean), timeout: T.nilable(T.any(Integer, Float))).returns(Pathname) }
@@ -252,22 +256,15 @@ on_request: true)
                                           timeout:)
     end
 
-    sig { void }
-    def verify_has_sha
-      odebug "Checking cask has checksum"
-      return if @cask.sha256 != :no_check
-
-      raise CaskError, <<~EOS
-        Cask '#{@cask}' does not have a sha256 checksum defined and was not installed.
-        This means you have the #{Formatter.identifier("--require-sha")} option set, perhaps in your `$HOMEBREW_CASK_OPTS`.
-      EOS
-    end
-
+    sig { returns(UnpackStrategy) }
     def primary_container
-      @primary_container ||= begin
-        downloaded_path = download(quiet: true)
-        UnpackStrategy.detect(downloaded_path, type: @cask.container&.type, merge_xattrs: true)
-      end
+      @primary_container ||= T.let(
+        begin
+          downloaded_path = download(quiet: true)
+          UnpackStrategy.detect(downloaded_path, type: @cask.container&.type, merge_xattrs: true)
+        end,
+        T.nilable(UnpackStrategy),
+      )
     end
 
     sig { returns(ArtifactSet) }
@@ -279,14 +276,17 @@ on_request: true)
     def extract_primary_container(to: @cask.staged_path)
       odebug "Extracting primary container"
 
-      odebug "Using container class #{primary_container.class} for #{primary_container.path}"
+      container = primary_container
+      raise "unexpected nil primary_container" unless container
+
+      odebug "Using container class #{container.class} for #{container.path}"
 
       basename = downloader.basename
 
       if (nested_container = @cask.container&.nested)
         Dir.mktmpdir("cask-installer", HOMEBREW_TEMP) do |tmpdir|
           tmpdir = Pathname(tmpdir)
-          primary_container.extract(to: tmpdir, basename:, verbose: verbose?)
+          container.extract(to: tmpdir, basename:, verbose: verbose?)
 
           FileUtils.chmod_R "+rw", tmpdir/nested_container, force: true, verbose: verbose?
 
@@ -294,13 +294,13 @@ on_request: true)
                         .extract_nestedly(to:, verbose: verbose?)
         end
       else
-        primary_container.extract_nestedly(to:, basename:, verbose: verbose?)
+        container.extract_nestedly(to:, basename:, verbose: verbose?)
       end
 
       return unless quarantine?
       return unless Quarantine.available?
 
-      Quarantine.propagate(from: primary_container.path, to:)
+      Quarantine.propagate(from: container.path, to:)
     end
 
     sig { params(target_dir: T.nilable(Pathname)).void }
@@ -384,6 +384,7 @@ on_request: true)
       nil
     end
 
+    sig { void }
     def check_macos_requirements
       return unless @cask.depends_on.macos
       return if @cask.depends_on.macos.satisfied?
@@ -395,6 +396,7 @@ on_request: true)
     def check_arch_requirements
       return if @cask.depends_on.arch.nil?
 
+      @current_arch = T.let(@current_arch, T.nilable(T::Hash[Symbol, T.untyped]))
       @current_arch ||= { type: Hardware::CPU.type, bits: Hardware::CPU.bits }
       return if @cask.depends_on.arch.any? do |arch|
         arch[:type] == @current_arch[:type] &&
@@ -407,7 +409,7 @@ on_request: true)
             "but you are running #{@current_arch}."
     end
 
-    sig { returns(T::Array[T.untyped]) }
+    sig { returns(T::Array[T.any(Formula, ::Cask::Cask)]) }
     def cask_and_formula_dependencies
       return @cask_and_formula_dependencies if @cask_and_formula_dependencies
 
@@ -415,7 +417,10 @@ on_request: true)
 
       raise CaskSelfReferencingDependencyError, @cask.token if graph.fetch(@cask).include?(@cask)
 
-      ::Utils::TopologicalHash.graph_package_dependencies(primary_container.dependencies, graph)
+      pc = primary_container
+      raise "unexpected nil primary_container" unless pc
+
+      ::Utils::TopologicalHash.graph_package_dependencies(pc.dependencies, graph)
 
       begin
         @cask_and_formula_dependencies = graph.tsort - [@cask]
@@ -426,6 +431,7 @@ on_request: true)
       end
     end
 
+    sig { returns(T::Array[T.any(Formula, ::Cask::Cask)]) }
     def missing_cask_and_formula_dependencies
       cask_and_formula_dependencies.reject do |cask_or_formula|
         case cask_or_formula
@@ -437,6 +443,7 @@ on_request: true)
       end
     end
 
+    sig { void }
     def satisfy_cask_and_formula_dependencies
       return if installed_as_dependency?
 
@@ -498,14 +505,25 @@ on_request: true)
       end
     end
 
+    sig { returns(T.nilable(String)) }
     def caveats
       self.class.caveats(@cask)
     end
 
+    sig { returns(Pathname) }
     def metadata_subdir
-      @metadata_subdir ||= @cask.metadata_subdir("Casks", timestamp: :now, create: true)
+      @metadata_subdir ||= T.let(
+        begin
+          msd = @cask.metadata_subdir("Casks", timestamp: :now, create: true)
+          raise "unexpected nil metadata_subdir" unless msd
+
+          msd
+        end,
+        T.nilable(Pathname),
+      )
     end
 
+    sig { void }
     def save_caskfile
       old_savedir = @cask.metadata_timestamped_path
 
@@ -530,12 +548,16 @@ on_request: true)
       FileUtils.rm_r(old_savedir) if old_savedir
     end
 
+    sig { void }
     def save_config_file
       @cask.config_path.atomic_write(@cask.config.to_json)
     end
 
+    sig { void }
     def save_download_sha
-      @cask.download_sha_path.atomic_write(@cask.new_download_sha) if @cask.checksumable?
+      return unless @cask.checksumable?
+
+      @cask.download_sha_path.atomic_write(@cask.new_download_sha)
     end
 
     sig { params(successor: T.nilable(Cask)).void }
@@ -552,17 +574,20 @@ on_request: true)
       purge_caskroom_path if force?
     end
 
+    sig { void }
     def remove_tabfile
       tabfile = @cask.tab.tabfile
       FileUtils.rm_f tabfile if tabfile
       @cask.config_path.parent.rmdir_if_possible
     end
 
+    sig { void }
     def remove_config_file
       FileUtils.rm_f @cask.config_path
       @cask.config_path.parent.rmdir_if_possible
     end
 
+    sig { void }
     def remove_download_sha
       FileUtils.rm_f @cask.download_sha_path
       @cask.download_sha_path.parent.rmdir_if_possible
@@ -574,19 +599,33 @@ on_request: true)
       backup
     end
 
+    sig { void }
     def backup
-      @cask.staged_path.rename backup_path
-      @cask.metadata_versioned_path.rename backup_metadata_path
+      bp = backup_path
+      raise "unexpected nil backup_path" unless bp
+
+      bmp = backup_metadata_path
+      raise "unexpected nil backup_metadata_path" unless bmp
+
+      @cask.staged_path.rename bp.to_s
+      @cask.metadata_versioned_path.rename bmp.to_s
     end
 
+    sig { void }
     def restore_backup
-      return if !backup_path.directory? || !backup_metadata_path.directory?
+      bp = backup_path
+      return unless bp
+
+      bmp = backup_metadata_path
+      return unless bmp
+
+      return if !bp.directory? || !bmp.directory?
 
       FileUtils.rm_r(@cask.staged_path) if @cask.staged_path.exist?
       FileUtils.rm_r(@cask.metadata_versioned_path) if @cask.metadata_versioned_path.exist?
 
-      backup_path.rename @cask.staged_path
-      backup_metadata_path.rename @cask.metadata_versioned_path
+      bp.rename @cask.staged_path.to_s
+      bmp.rename @cask.metadata_versioned_path.to_s
     end
 
     sig { params(predecessor: Cask).void }
@@ -596,6 +635,7 @@ on_request: true)
       install_artifacts(predecessor:)
     end
 
+    sig { void }
     def finalize_upgrade
       ohai "Purging files for version #{@cask.version} of Cask #{@cask}"
 
@@ -651,6 +691,7 @@ on_request: true)
       end
     end
 
+    sig { void }
     def zap
       load_installed_caskfile!
       uninstall_artifacts
@@ -666,35 +707,41 @@ on_request: true)
       purge_caskroom_path
     end
 
+    sig { returns(T.nilable(Pathname)) }
     def backup_path
       return if @cask.staged_path.nil?
 
       Pathname("#{@cask.staged_path}.upgrading")
     end
 
+    sig { returns(T.nilable(Pathname)) }
     def backup_metadata_path
       return if @cask.metadata_versioned_path.nil?
 
       Pathname("#{@cask.metadata_versioned_path}.upgrading")
     end
 
+    sig { params(path: Pathname).void }
     def gain_permissions_remove(path)
       Utils.gain_permissions_remove(path, command: @command)
     end
 
+    sig { void }
     def purge_backed_up_versioned_files
       # versioned staged distribution
-      gain_permissions_remove(backup_path) if backup_path&.exist?
+      gain_permissions_remove(T.must(backup_path)) if backup_path&.exist?
 
       # Homebrew Cask metadata
-      return unless backup_metadata_path.directory?
+      bmp = backup_metadata_path
+      return unless bmp&.directory?
 
-      backup_metadata_path.children.each do |subdir|
+      bmp.children.each do |subdir|
         gain_permissions_remove(subdir)
       end
-      backup_metadata_path.rmdir_if_possible
+      bmp.rmdir_if_possible
     end
 
+    sig { void }
     def purge_versioned_files
       ohai "Purging files for version #{@cask.version} of Cask #{@cask}"
 
@@ -721,6 +768,7 @@ on_request: true)
       end
     end
 
+    sig { void }
     def purge_caskroom_path
       odebug "Purging all staged versions of Cask #{@cask}"
       gain_permissions_remove(@cask.caskroom_path)

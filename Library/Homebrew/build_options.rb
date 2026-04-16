@@ -30,7 +30,7 @@ class BuildOptions
   #   args << "--with-example1"
   # end
   # ```
-  sig { params(val: T.any(String, Requirement, Dependency)).returns(T::Boolean) }
+  sig { params(val: T.any(String, Dependable)).returns(T::Boolean) }
   def with?(val)
     option_names = if val.is_a?(String)
       [val]
@@ -56,7 +56,7 @@ class BuildOptions
   # ```ruby
   # args << "--no-spam-plz" if build.without? "spam"
   # ```
-  sig { params(val: T.any(String, Requirement, Dependency)).returns(T::Boolean) }
+  sig { params(val: T.any(String, Dependable)).returns(T::Boolean) }
   def without?(val)
     !with?(val)
   end

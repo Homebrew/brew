@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bundle"
@@ -306,6 +307,33 @@ RSpec.describe Homebrew::Bundle::Uv do
           expect(described_class.dump).to eql('uv "mkdocs", with: ["mkdocs-material<10"]')
         end
       end
+    end
+  end
+
+  describe "cleanup" do
+    before do
+      described_class.reset!
+      tools = [
+        { name: "ruff", with: [] },
+        { name: "mkdocs", with: ["mkdocs-material<10"] },
+        { name: "black", with: [] },
+      ]
+      allow(described_class).to receive_messages(
+        package_manager_executable: Pathname.new("/tmp/uv/bin/uv"),
+        packages:                   tools,
+        installed_packages:         tools,
+      )
+    end
+
+    it "returns tools not in Brewfile entries" do
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:uv, "ruff")]
+      expect(described_class.cleanup_items(entries)).to eql(%w[mkdocs black])
+    end
+
+    it "returns frozen empty array when uv is not installed" do
+      allow(described_class).to receive(:package_manager_installed?).and_return(false)
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:uv, "ruff")]
+      expect(described_class.cleanup_items(entries)).to eql([])
     end
   end
 end

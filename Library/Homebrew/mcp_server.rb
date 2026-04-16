@@ -191,9 +191,9 @@ module Homebrew
     def initialize(stdin: $stdin, stdout: $stdout, stderr: $stderr)
       @debug_logging = T.let(ARGV.include?("--debug") || ARGV.include?("-d"), T::Boolean)
       @ping_switch = T.let(ARGV.include?("--ping"), T::Boolean)
-      @stdin = T.let(stdin, T.any(IO, StringIO))
-      @stdout = T.let(stdout, T.any(IO, StringIO))
-      @stderr = T.let(stderr, T.any(IO, StringIO))
+      @stdin = stdin
+      @stdout = stdout
+      @stderr = stderr
     end
 
     sig { returns(T::Boolean) }

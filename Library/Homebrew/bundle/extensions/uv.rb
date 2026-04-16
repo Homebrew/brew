@@ -39,6 +39,11 @@ module Homebrew
           @installed_packages = T.let(nil, T.nilable(T::Array[Tool]))
         end
 
+        sig { override.returns(T.nilable(String)) }
+        def cleanup_heading
+          banner_name
+        end
+
         sig { override.returns(T::Array[Tool]) }
         def packages
           packages = @packages
@@ -212,6 +217,11 @@ module Homebrew
           end
         end
         private :package_with
+
+        sig { override.params(name: String, executable: Pathname).void }
+        def uninstall_package!(name, executable: Pathname.new(""))
+          Bundle.system(executable.to_s, "tool", "uninstall", name, verbose: false)
+        end
       end
 
       sig { override.params(entries: T::Array[Object]).returns(T::Array[Object]) }

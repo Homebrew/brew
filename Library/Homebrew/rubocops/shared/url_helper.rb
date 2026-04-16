@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/shared/helper_functions"
@@ -13,10 +13,17 @@ module RuboCop
       #
       # @param urls [Array] url/mirror method call nodes
       # @param regex [Regexp] pattern to match URLs
-      def audit_urls(urls, regex)
+      sig {
+        params(
+          urls:   T::Array[T.any(RuboCop::AST::BlockNode, RuboCop::AST::SendNode)],
+          regex:  T.any(Regexp, String),
+          _block: T.proc.params(match_object: MatchData, url: String, index: Integer).void,
+        ).void
+      }
+      def audit_urls(urls, regex, &_block)
         urls.each_with_index do |url_node, index|
           if @type == :cask
-            url_string_node = url_node.first_argument
+            url_string_node = T.cast(url_node, RuboCop::AST::SendNode).first_argument
             url_string = url_node.source
           else
             url_string_node = parameters(url_node).first
@@ -34,8 +41,16 @@ module RuboCop
         end
       end
 
+      sig {
+        params(
+          type:           Symbol,
+          urls:           T::Array[T.any(RuboCop::AST::BlockNode, RuboCop::AST::SendNode)],
+          mirrors:        T::Array[T.any(RuboCop::AST::BlockNode, RuboCop::AST::SendNode)],
+          livecheck_urls: T::Array[String],
+        ).void
+      }
       def audit_url(type, urls, mirrors, livecheck_urls: [])
-        @type = type
+        @type = T.let(type, T.nilable(Symbol))
 
         # URLs must be ASCII; IDNs must be punycode
         ascii_pattern = /[^\p{ASCII}]+/
@@ -69,7 +84,7 @@ module RuboCop
           next if livecheck_urls.include?(url)
 
           fixed = "https://www.apache.org/dyn/closer.lua?path=#{match[1]}"
-          url_parameter_node = parameters(urls.fetch(index)).first
+          url_parameter_node = parameters(urls.fetch(index)).fetch(0)
           problem "#{url} should be: #{fixed}" do |corrector|
             corrector.replace(url_parameter_node.source_range, "\"#{fixed}\"")
           end
@@ -87,7 +102,7 @@ module RuboCop
 
         audit_urls(mirrors, /.*/) do |_, mirror|
           urls.each do |url|
-            url_string = string_content(parameters(url).first)
+            url_string = string_content(parameters(url).fetch(0))
             next unless url_string.eql?(mirror)
 
             problem "URL should not be duplicated as a mirror: #{url_string}"

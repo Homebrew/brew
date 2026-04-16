@@ -509,7 +509,7 @@ module Homebrew
             tab.changed_files = changed_files.dup
             if args.only_json_tab?
               tab.changed_files&.delete(Pathname.new(AbstractTab::FILENAME))
-              tab.tabfile.unlink
+              tab.tabfile&.unlink
             else
               tab.write
             end
@@ -855,7 +855,7 @@ module Homebrew
             ENV["GIT_COMMITTER_EMAIL"] = committer[:email]
           end
 
-          short_name = formula_name.split("/", -1).last
+          short_name = Utils.name_from_full_name(formula_name)
           pkg_version = bottle_hash["formula"]["pkg_version"]
 
           path.parent.cd do

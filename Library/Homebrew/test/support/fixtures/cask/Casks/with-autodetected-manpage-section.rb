@@ -1,3 +1,5 @@
+# typed: false
+
 cask "with-autodetected-manpage-section" do
   version "1.2.3"
   sha256 "1f078d5fbbaf44b05d0389b14a15f6704e0e5f8f663bc38153a4d685e38baad5"

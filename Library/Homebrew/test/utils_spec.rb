@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "utils"
@@ -33,6 +34,34 @@ RSpec.describe Utils do
 
     it "raise an ArgumentError when passed nil" do
       expect { described_class.demodulize(nil) }.to raise_error(ArgumentError)
+    end
+  end
+
+  describe ".name_from_full_name" do
+    it "returns the package name for a full name" do
+      expect(described_class.name_from_full_name("homebrew/core/wget")).to eq("wget")
+    end
+
+    it "returns untapped names unchanged" do
+      expect(described_class.name_from_full_name("wget")).to eq("wget")
+    end
+
+    it "does not treat taps as full names" do
+      expect(described_class.name_from_full_name("homebrew/core")).to eq("homebrew/core")
+    end
+  end
+
+  describe ".tap_from_full_name" do
+    it "returns the tap for a full name" do
+      expect(described_class.tap_from_full_name("homebrew/core/wget")).to eq("homebrew/core")
+    end
+
+    it "returns nil for untapped names" do
+      expect(described_class.tap_from_full_name("wget")).to be_nil
+    end
+
+    it "returns nil for tap names" do
+      expect(described_class.tap_from_full_name("homebrew/core")).to be_nil
     end
   end
 

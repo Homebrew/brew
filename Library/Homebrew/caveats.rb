@@ -1,7 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "language/python"
 require "utils/service"
 
 # A formula's caveats.

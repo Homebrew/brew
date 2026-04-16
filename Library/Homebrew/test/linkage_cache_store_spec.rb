@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "linkage_cache_store"

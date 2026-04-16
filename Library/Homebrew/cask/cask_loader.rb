@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/cache"
@@ -39,8 +39,15 @@ module Cask
       sig { returns(String) }
       attr_reader :content
 
-      sig { returns(T.nilable(Tap)) }
+      sig { overridable.returns(T.nilable(Tap)) }
       attr_reader :tap
+
+      sig { void }
+      def initialize
+        @content = T.let("", String)
+        @tap = T.let(nil, T.nilable(Tap))
+        @config = T.let(nil, T.nilable(Config))
+      end
 
       private
 
@@ -68,12 +75,15 @@ module Cask
         content = ref.to_str
 
         # Cache compiled regex
-        @regex ||= begin
-          token  = /(?:"[^"]*"|'[^']*')/
-          curly  = /\(\s*#{token.source}\s*\)\s*\{.*\}/
-          do_end = /\s+#{token.source}\s+do(?:\s*;\s*|\s+).*end/
-          /\A\s*cask(?:#{curly.source}|#{do_end.source})\s*\Z/m
-        end
+        @regex ||= T.let(
+          begin
+            token  = /(?:"[^"]*"|'[^']*')/
+            curly  = /\(\s*#{token.source}\s*\)\s*\{.*\}/
+            do_end = /\s+#{token.source}\s+do(?:\s*;\s*|\s+).*end/
+            /\A\s*cask(?:#{curly.source}|#{do_end.source})\s*\Z/m
+          end,
+          T.nilable(Regexp),
+        )
 
         return unless content.match?(@regex)
 
@@ -84,10 +94,11 @@ module Cask
       def initialize(content, tap: T.unsafe(nil))
         super()
 
-        @content = content.dup.force_encoding("UTF-8")
-        @tap = tap
+        @content = T.let(content.dup.force_encoding("UTF-8"), String)
+        @tap = T.let(tap, T.nilable(Tap))
       end
 
+      sig { override.params(config: T.nilable(Config)).returns(Cask) }
       def load(config:)
         @config = config
 
@@ -122,11 +133,15 @@ module Cask
       def self.invalid_path?(pathname, valid_extnames: %w[.rb .json])
         return true if valid_extnames.exclude?(pathname.extname)
 
-        @invalid_basenames ||= %w[INSTALL_RECEIPT.json sbom.spdx.json].freeze
+        @invalid_basenames ||= T.let(%w[INSTALL_RECEIPT.json sbom.spdx.json].freeze, T.nilable(T::Array[String]))
         @invalid_basenames.include?(pathname.basename.to_s)
       end
 
-      attr_reader :token, :path
+      sig { returns(String) }
+      attr_reader :token
+
+      sig { returns(Pathname) }
+      attr_reader :path
 
       sig { params(path: T.any(Pathname, String), token: String).void }
       def initialize(path, token: T.unsafe(nil))
@@ -134,10 +149,10 @@ module Cask
 
         path = Pathname(path).expand_path
 
-        @token = path.basename(path.extname).basename(".internal").to_s
-        @path = path
-        @tap = Tap.from_path(path) || Homebrew::API.tap_from_source_download(path)
-        @from_installed_caskfile = false
+        @token = T.let(path.basename(path.extname).basename(".internal").to_s, String)
+        @path = T.let(path, Pathname)
+        @tap = T.let(Tap.from_path(path) || Homebrew::API.tap_from_source_download(path), T.nilable(Tap))
+        @from_installed_caskfile = T.let(false, T::Boolean)
       end
 
       sig { override.params(config: T.nilable(Config)).returns(Cask) }
@@ -172,7 +187,7 @@ module Cask
         end
 
         begin
-          instance_eval(content, path).tap do |cask|
+          instance_eval(content, path.to_s).tap do |cask|
             raise CaskUnreadableError.new(token, "'#{path}' does not contain a cask.") unless cask.is_a?(Cask)
           end
         rescue NameError, ArgumentError, ScriptError => e
@@ -192,6 +207,13 @@ module Cask
 
       private
 
+      sig {
+        override.params(
+          header_token: String,
+          options:      T.untyped,
+          block:        T.nilable(T.proc.bind(DSL).void),
+        ).returns(Cask)
+      }
       def cask(header_token, **options, &block)
         raise CaskTokenMismatchError.new(token, header_token) if token != header_token
 
@@ -209,10 +231,13 @@ module Cask
         return if Homebrew::EnvConfig.forbid_packages_from_paths?
 
         # Cache compiled regex
-        @uri_regex ||= begin
-          uri_regex = ::URI::RFC2396_PARSER.make_regexp
-          Regexp.new("\\A#{uri_regex.source}\\Z", uri_regex.options)
-        end
+        @uri_regex ||= T.let(
+          begin
+            uri_regex = ::URI::RFC2396_PARSER.make_regexp
+            Regexp.new("\\A#{uri_regex.source}\\Z", uri_regex.options)
+          end,
+          T.nilable(Regexp),
+        )
 
         uri = ref.to_s
         return unless uri.match?(@uri_regex)
@@ -223,15 +248,23 @@ module Cask
         new(uri)
       end
 
-      attr_reader :url, :name
+      sig { returns(URI::Generic) }
+      attr_reader :url
+
+      sig { returns(String) }
+      attr_reader :name
 
       sig { params(url: T.any(URI::Generic, String)).void }
       def initialize(url)
-        @url = URI(url)
-        @name = File.basename(T.must(@url.path))
+        @url = T.let(URI(url), URI::Generic)
+        url_path = @url.path
+        raise "unexpected nil url.path" unless url_path
+
+        @name = T.let(File.basename(url_path), String)
         super Cache.path/name
       end
 
+      sig { override.params(config: T.nilable(Config)).returns(Cask) }
       def load(config:)
         path.dirname.mkpath
 
@@ -255,7 +288,7 @@ module Cask
 
     # Loads a cask from a specific tap.
     class FromTapLoader < FromPathLoader
-      sig { returns(Tap) }
+      sig { override.returns(Tap) }
       attr_reader :tap
 
       sig {
@@ -279,14 +312,18 @@ module Cask
 
       sig { params(tapped_token: String).void }
       def initialize(tapped_token)
-        tap, token = Tap.with_cask_token(tapped_token)
+        tap_with_token = Tap.with_cask_token(tapped_token)
+        raise "unexpected nil Tap.with_cask_token" unless tap_with_token
+
+        tap, token = tap_with_token
         cask = CaskLoader.find_cask_in_tap(token, tap)
         super cask
+        @tap = T.let(tap, Tap)
       end
 
       sig { override.params(config: T.nilable(Config)).returns(Cask) }
       def load(config:)
-        raise TapCaskUnavailableError.new(tap, token) unless T.must(tap).installed?
+        raise TapCaskUnavailableError.new(tap, token) unless tap.installed?
 
         super
       end
@@ -298,7 +335,7 @@ module Cask
 
       sig {
         params(ref: T.any(String, Pathname, Cask, URI::Generic), warn: T::Boolean)
-          .returns(T.nilable(T.attached_class))
+          .returns(T.nilable(FromInstanceLoader))
       }
       def self.try_new(ref, warn: false)
         new(ref) if ref.is_a?(Cask)
@@ -309,6 +346,8 @@ module Cask
         @cask = cask
       end
 
+      # This is a false positive incompatibililty warning, due to Kernel#load being overridden.
+      sig { override(allow_incompatible: true).params(config: T.nilable(Config)).returns(Cask) } # rubocop:disable Sorbet/AllowIncompatibleOverride
       def load(config:)
         @cask
       end
@@ -329,7 +368,7 @@ module Cask
 
       sig {
         params(ref: T.any(String, Pathname, Cask, URI::Generic), warn: T::Boolean)
-          .returns(T.nilable(T.attached_class))
+          .returns(T.nilable(FromAPILoader))
       }
       def self.try_new(ref, warn: false)
         return if Homebrew::EnvConfig.no_install_from_api?
@@ -357,20 +396,25 @@ module Cask
       }
       def initialize(token, from_json: T.unsafe(nil), path: nil, from_installed_caskfile: false,
                      from_internal_json: false)
-        @token = token.sub(%r{^homebrew/(?:homebrew-)?cask/}i, "")
-        @sourcefile_path = if path
-          path
-        elsif from_json
-          from_internal_json ? Homebrew::API::Internal.cached_cask_json_file_path : Homebrew::API::Cask.cached_json_file_path
-        else
-          Homebrew::API.cached_cask_json_file_path
-        end
-        @path = path || CaskLoader.default_path(@token)
+        @token = T.let(token.sub(%r{^homebrew/(?:homebrew-)?cask/}i, ""), String)
+        @sourcefile_path = T.let(
+          if path
+            path
+          elsif from_json
+            from_internal_json ? Homebrew::API::Internal.cached_cask_json_file_path : Homebrew::API::Cask.cached_json_file_path
+          else
+            Homebrew::API.cached_cask_json_file_path
+          end,
+          Pathname,
+        )
+        @path = T.let(path || CaskLoader.default_path(@token), Pathname)
         @from_json = from_json
         @from_installed_caskfile = from_installed_caskfile
         @from_internal_json = from_internal_json
       end
 
+      # This is a false positive incompatibililty warning, due to Kernel#load being overridden.
+      sig { override(allow_incompatible: true).params(config: T.nilable(Config)).returns(Cask) } # rubocop:disable Sorbet/AllowIncompatibleOverride
       def load(config:)
         if (api_source = from_json)
           if @from_internal_json
@@ -387,6 +431,7 @@ module Cask
 
       private
 
+      sig { params(config: T.nilable(Config)).returns(Cask) }
       def load_from_api(config:)
         api_source = Homebrew::API::Cask.all_casks.fetch(token)
         tap_git_head = api_source["tap_git_head"]
@@ -397,6 +442,7 @@ module Cask
         load_from_struct(config:, cask_struct:, api_source:, tap_git_head:)
       end
 
+      sig { params(config: T.nilable(Config)).returns(Cask) }
       def load_from_internal_api(config:)
         cask_struct = Homebrew::API::Internal.cask_struct(token)
         api_source = Homebrew::API::Internal.cask_hashes.fetch(token)
@@ -405,6 +451,7 @@ module Cask
         load_from_struct(config:, cask_struct:, api_source:, tap_git_head:, internal_api: true)
       end
 
+      sig { params(config: T.nilable(Config), api_source: T::Hash[String, T.untyped]).returns(Cask) }
       def load_from_json(config:, api_source:)
         tap_git_head = api_source["tap_git_head"]
         cask_struct = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(
@@ -414,6 +461,7 @@ module Cask
         load_from_struct(config:, cask_struct:, api_source:, tap_git_head:)
       end
 
+      sig { params(config: T.nilable(Config), api_source: T::Hash[String, T.untyped]).returns(Cask) }
       def load_from_internal_json(config:, api_source:)
         api_source = api_source.dup
         tap_git_head = api_source.delete("tap_git_head")
@@ -477,13 +525,15 @@ module Cask
             end
           end
 
-          container(**cask_struct.container_args) if cask_struct.container?
+          if cask_struct.container?
+            container(nested: cask_struct.container_args[:nested], type: cask_struct.container_args[:type])
+          end
 
           cask_struct.artifacts(appdir:).each do |key, args, kwargs, block|
             send(key, *args, **kwargs, &block)
           end
 
-          caveats cask_struct.caveats(appdir:) if cask_struct.caveats?
+          caveats T.must(cask_struct.caveats(appdir:)) if cask_struct.caveats?
 
           if cask_struct.caveats_rosetta
             caveats do
@@ -556,7 +606,7 @@ module Cask
 
         installed_tap = Cask.new(@token).tab.tap
         @tap = installed_tap if installed_tap
-        @from_installed_caskfile = true
+        @from_installed_caskfile = T.let(true, T::Boolean)
       end
     end
 
@@ -579,17 +629,28 @@ module Cask
         super CaskLoader.default_path(token)
       end
 
+      sig { override.params(config: T.nilable(Config)).returns(Cask) }
       def load(config:)
         raise CaskUnavailableError.new(token, "No Cask with this name exists.")
       end
     end
 
+    # NOTE: Using `WithoutRuntime` to avoid Sorbet wrapping this method,
+    # which would interfere with RSpec mocking of this class method.
+    T::Sig::WithoutRuntime.sig { params(ref: T.any(String, Pathname, Cask, URI::Generic)).returns(Pathname) }
     def self.path(ref)
-      self.for(ref, need_path: true).path
+      T.cast(self.for(ref, need_path: true), T.any(FromAPILoader, FromPathLoader)).path
     end
 
+    # NOTE: Using `WithoutRuntime` to avoid Sorbet wrapping this method,
+    # which would interfere with RSpec mocking of this class method.
+    T::Sig::WithoutRuntime.sig {
+      params(ref: T.any(String, Symbol, Pathname, Cask, URI::Generic), config: T.nilable(Config),
+             warn: T::Boolean).returns(Cask)
+    }
     def self.load(ref, config: nil, warn: true)
-      self.for(ref, warn:).load(config:)
+      normalized_ref = ref.is_a?(Symbol) ? ref.to_s : ref
+      self.for(normalized_ref, warn:).load(config:)
     end
 
     sig { params(tapped_token: String, warn: T::Boolean).returns(T.nilable([String, Tap, T.nilable(Symbol)])) }
@@ -616,7 +677,6 @@ module Cask
             new_token = new_tap_name
           end
         end
-        new_tap.ensure_installed!
         new_tapped_token = "#{new_tap}/#{new_token}"
 
         if tapped_token != new_tapped_token
@@ -634,6 +694,12 @@ module Cask
       [token, tap, type]
     end
 
+    # NOTE: Using `WithoutRuntime` to avoid Sorbet wrapping this method,
+    # which would interfere with RSpec mocking of this class method.
+    T::Sig::WithoutRuntime.sig {
+      params(ref: T.any(String, Pathname, Cask, URI::Generic), need_path: T::Boolean, warn: T::Boolean)
+        .returns(ILoader)
+    }
     def self.for(ref, need_path: false, warn: true)
       [
         FromInstanceLoader,
@@ -651,6 +717,8 @@ module Cask
           return loader
         end
       end
+
+      raise CaskError, "No cask loader found for #{ref.inspect}"
     end
 
     sig { params(ref: String, config: T.nilable(Config), warn: T::Boolean).returns(Cask) }
@@ -679,10 +747,12 @@ module Cask
       loader.load(config:)
     end
 
+    sig { params(token: T.any(String, Symbol)).returns(Pathname) }
     def self.default_path(token)
       find_cask_in_tap(token.to_s.downcase, CoreCaskTap.instance)
     end
 
+    sig { params(token: String, tap: Tap).returns(Pathname) }
     def self.find_cask_in_tap(token, tap)
       filename = "#{token}.rb"
 

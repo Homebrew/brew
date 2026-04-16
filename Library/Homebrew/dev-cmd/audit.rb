@@ -3,10 +3,8 @@
 
 require "abstract_command"
 require "formula"
-require "formula_versions"
 require "utils/curl"
 require "utils/github/actions"
-require "utils/shared_audits"
 require "utils/spdx"
 require "extend/ENV"
 require "formula_cellar_checks"

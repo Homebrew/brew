@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "missing_formula"
@@ -34,13 +35,15 @@ RSpec.describe Homebrew::MissingFormula do
   end
 
   describe "::tap_migration_reason" do
-    subject { described_class.tap_migration_reason(formula) }
+    subject(:reason) { described_class.tap_migration_reason(formula) }
+
+    let(:migration_target) { "homebrew/bar" }
 
     before do
       tap_path = HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-foo"
       tap_path.mkpath
       (tap_path/"tap_migrations.json").write <<~JSON
-        { "migrated-formula": "homebrew/bar" }
+        { "migrated-formula": "#{migration_target}" }
       JSON
     end
 
@@ -54,6 +57,16 @@ RSpec.describe Homebrew::MissingFormula do
       let(:formula) { "missing-formula" }
 
       it { is_expected.to be_nil }
+    end
+
+    context "with a same-tap renamed formula" do
+      let(:formula) { "migrated-formula" }
+      let(:migration_target) { "renamed-formula" }
+
+      specify(:aggregate_failures) do
+        expect(reason).to include("brew install renamed-formula")
+        expect(reason).not_to include("brew tap")
+      end
     end
   end
 

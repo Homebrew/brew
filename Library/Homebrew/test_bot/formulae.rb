@@ -135,7 +135,7 @@ module Homebrew
 
       sig { params(formula: Formula, formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args).void }
       def setup_formulae_deps_instances(formula, formula_name, args:)
-        conflicts = formula.conflicts
+        conflicts = T.let(formula.conflicts, T::Array[T.any(Formula, Formula::FormulaConflict)])
         formula_recursive_dependencies = formula.recursive_dependencies.map(&:to_formula)
         formula_recursive_dependencies.each do |dependency|
           conflicts += dependency.conflicts
@@ -672,11 +672,11 @@ module Homebrew
         bottled_dep_allowlist = /\A(?:glibc|linux-headers)@/
         deps = Dependency.expand(Formula[formula_name],
                                  cache_key: "portable-package-#{formula_name}") do |_dependent, dep|
-          Dependency.prune if dep.test? || dep.optional?
+          next Dependable::PRUNE if dep.test? || dep.optional?
 
           next unless bottled_dep_allowlist.match?(dep.name)
 
-          Dependency.keep_but_prune_recursive_deps
+          next Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS
         end.map(&:name)
 
         bottled_deps, deps = deps.partition { |dep| bottled_dep_allowlist.match?(dep) }

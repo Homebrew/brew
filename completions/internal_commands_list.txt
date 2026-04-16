@@ -52,6 +52,7 @@ generate-analytics-api
 generate-cask-api
 generate-cask-ci-matrix
 generate-formula-api
+generate-internal-api
 generate-man-completions
 generate-zap
 gist-logs

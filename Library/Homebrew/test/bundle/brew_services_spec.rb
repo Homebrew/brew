@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bundle"
@@ -84,6 +85,34 @@ RSpec.describe Homebrew::Bundle::Brew::Services do
                                                         verbose: false).and_return(true)
       expect(described_class.restart("nginx")).to be(true)
       expect(described_class.started_services).to include("nginx")
+    end
+  end
+
+  describe "#installed_and_up_to_date?" do
+    subject(:services) { described_class.new }
+
+    before do
+      described_class.reset!
+      allow(described_class).to receive(:started_services).and_return(%w[mailhog])
+      allow(services).to receive(:formula_needs_to_start?).and_return(true)
+      allow(Homebrew::Bundle::Brew).to receive(:formula_oldnames).and_return({})
+    end
+
+    it "matches a tap-qualified formula by base name" do
+      entry = instance_double(Homebrew::Bundle::Dsl::Entry, name:    "some-tap/tap/mailhog",
+                                                            options: { restart_service: true })
+      expect(services.installed_and_up_to_date?(entry)).to be(true)
+    end
+
+    it "matches a non-tap-qualified formula by name" do
+      entry = instance_double(Homebrew::Bundle::Dsl::Entry, name: "mailhog", options: { restart_service: true })
+      expect(services.installed_and_up_to_date?(entry)).to be(true)
+    end
+
+    it "returns false when service is not started" do
+      entry = instance_double(Homebrew::Bundle::Dsl::Entry, name:    "some-tap/tap/nginx",
+                                                            options: { restart_service: true })
+      expect(services.installed_and_up_to_date?(entry)).to be(false)
     end
   end
 

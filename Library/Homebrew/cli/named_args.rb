@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cli/args"
+require "utils"
 require "utils/output"
 
 module Homebrew
@@ -447,10 +448,10 @@ module Homebrew
 
           raise unreadable_error if unreadable_error
 
-          user, repo, short_name = name.downcase.split("/", 3)
-          if repo.present? && short_name.present?
-            tap = Tap.fetch(T.must(user), repo)
-            raise TapFormulaOrCaskUnavailableError.new(tap, short_name)
+          downcased_name = name.downcase
+          if (tap_name = Utils.tap_from_full_name(downcased_name))
+            raise TapFormulaOrCaskUnavailableError.new(Tap.fetch(tap_name),
+                                                       Utils.name_from_full_name(downcased_name))
           end
 
           raise NoSuchKegError, name if resolve_formula(name)

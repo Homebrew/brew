@@ -1,7 +1,9 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bundle"
 require "bundle/commands/cleanup"
+require "utils"
 
 RSpec.describe Homebrew::Bundle::Commands::Cleanup do
   describe "read Brewfile and current installation", :no_api do
@@ -31,7 +33,8 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       described_class.read_dsl_from_brewfile!
       %w[a b d2 homebrew/tap/f homebrew/tap/g homebrew/tap/h homebrew/tap/i2
          homebrew/tap/hasdependency hasbuilddependency1 hasbuilddependency2].each do |full_name|
-        tap_name, _, name = full_name.rpartition("/")
+        tap_name = Utils.tap_from_full_name(full_name)
+        name = Utils.name_from_full_name(full_name)
         tap = tap_name.present? ? Tap.fetch(tap_name) : nil
         f = formula(name, tap:) { url "#{name}-1.0" }
         stub_formula_loader f, full_name
@@ -78,7 +81,7 @@ RSpec.describe Homebrew::Bundle::Commands::Cleanup do
       formulae_hash.each do |hash_formula|
         name = hash_formula[:name]
         full_name = hash_formula[:full_name]
-        tap_name = full_name.rpartition("/").first.presence || "homebrew/core"
+        tap_name = Utils.tap_from_full_name(full_name) || "homebrew/core"
         tap = Tap.fetch(tap_name)
         f = formula(name, tap:) { url "#{name}-1.0" }
         stub_formula_loader f, full_name

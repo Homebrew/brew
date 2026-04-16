@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "bundle"
@@ -116,6 +117,28 @@ RSpec.describe Homebrew::Bundle::Cargo do
           expect(described_class.install!("ripgrep")).to be(true)
         end
       end
+    end
+  end
+
+  describe "cleanup" do
+    before do
+      described_class.reset!
+      allow(described_class).to receive_messages(
+        package_manager_executable: Pathname.new("/tmp/rust/bin/cargo"),
+        packages:                   %w[ripgrep fd-find bat],
+        installed_packages:         %w[ripgrep fd-find bat],
+      )
+    end
+
+    it "returns packages not in Brewfile entries" do
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:cargo, "ripgrep")]
+      expect(described_class.cleanup_items(entries)).to eql(%w[fd-find bat])
+    end
+
+    it "returns frozen empty array when cargo is not installed" do
+      allow(described_class).to receive(:package_manager_installed?).and_return(false)
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:cargo, "ripgrep")]
+      expect(described_class.cleanup_items(entries)).to eql([])
     end
   end
 end

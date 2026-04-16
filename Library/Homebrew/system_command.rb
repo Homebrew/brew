@@ -27,7 +27,7 @@ class SystemCommand
         args:            T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
         sudo:            T::Boolean,
         sudo_as_root:    T::Boolean,
-        env:             T::Hash[String, T.nilable(T.any(String, T::Boolean))],
+        env:             T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
         input:           T.any(String, T::Array[String]),
         must_succeed:    T::Boolean,
         print_stdout:    T.any(T::Boolean, Symbol),
@@ -57,7 +57,7 @@ class SystemCommand
         args:            T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
         sudo:            T::Boolean,
         sudo_as_root:    T::Boolean,
-        env:             T::Hash[String, T.nilable(T.any(String, T::Boolean))],
+        env:             T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
         input:           T.any(String, T::Array[String]),
         print_stdout:    T.any(T::Boolean, Symbol),
         print_stderr:    T.any(T::Boolean, Symbol),
@@ -86,7 +86,7 @@ class SystemCommand
       args:            T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
       sudo:            T::Boolean,
       sudo_as_root:    T::Boolean,
-      env:             T::Hash[String, T.nilable(T.any(String, T::Boolean))],
+      env:             T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
       input:           T.any(String, T::Array[String]),
       must_succeed:    T::Boolean,
       print_stdout:    T.any(T::Boolean, Symbol),
@@ -113,7 +113,7 @@ class SystemCommand
       args:            T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
       sudo:            T::Boolean,
       sudo_as_root:    T::Boolean,
-      env:             T::Hash[String, T.nilable(T.any(String, T::Boolean))],
+      env:             T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
       input:           T.any(String, T::Array[String]),
       must_succeed:    T::Boolean,
       print_stdout:    T.any(T::Boolean, Symbol),
@@ -173,7 +173,7 @@ class SystemCommand
       args:            T::Array[T.any(String, Integer, Float, Pathname, URI::Generic)],
       sudo:            T::Boolean,
       sudo_as_root:    T::Boolean,
-      env:             T::Hash[String, T.nilable(T.any(String, T::Boolean))],
+      env:             T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
       input:           T.any(String, T::Array[String]),
       must_succeed:    T::Boolean,
       print_stdout:    T.any(T::Boolean, Symbol),
@@ -244,7 +244,7 @@ class SystemCommand
   sig { returns(T.nilable(T.any(String, Pathname))) }
   attr_reader :chdir
 
-  sig { returns(T::Hash[String, T.nilable(T.any(String, T::Boolean))]) }
+  sig { returns(T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))]) }
   attr_reader :env
 
   sig { returns(T::Boolean) }
@@ -388,7 +388,7 @@ class SystemCommand
 
   sig {
     params(
-      env:        T::Hash[String, T.nilable(String)],
+      env:        T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
       executable: String,
       args:       String,
       options:    T.untyped,

@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "cask/uninstall"
@@ -252,6 +253,41 @@ RSpec.describe Cask::Uninstall, :cask do
       expect do
         described_class.check_dependent_casks(depends_on_cask, named_args: ["with-depends-on-cask"])
       end.not_to output.to_stderr
+    end
+
+    it "does not show an error when the dependent is also being uninstalled" do
+      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
+      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+
+      allow(Cask::Caskroom).to receive(:casks).and_return([depends_on_cask, local_transmission])
+
+      expect do
+        described_class.check_dependent_casks(
+          local_transmission,
+          depends_on_cask,
+          named_args: ["local-transmission-zip", "with-depends-on-cask"],
+        )
+      end.not_to output.to_stderr
+    end
+
+    it "still shows an error when a non-uninstalled cask depends on one being uninstalled" do
+      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
+      depends_on_cask_multiple = Cask::CaskLoader.load(cask_path("with-depends-on-cask-multiple"))
+      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+
+      allow(Cask::Caskroom).to receive(:casks).and_return([
+        depends_on_cask,
+        depends_on_cask_multiple,
+        local_transmission,
+      ])
+
+      expect do
+        described_class.check_dependent_casks(
+          local_transmission,
+          depends_on_cask,
+          named_args: ["local-transmission-zip", "with-depends-on-cask"],
+        )
+      end.to output(/Refusing to uninstall/).to_stderr
     end
 
     it "lists other named args when showing the error message" do

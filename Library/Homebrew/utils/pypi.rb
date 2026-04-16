@@ -4,6 +4,7 @@
 require "utils/inreplace"
 require "utils/output"
 require "utils/ast"
+require "time"
 
 # Helper functions for updating PyPI resources.
 module PyPI
@@ -330,14 +331,12 @@ module PyPI
       input_packages << extra_package unless input_packages.include? extra_package
     end
 
-    unless print_only
-      formula.resources.each do |resource|
-        next if resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
-        next if resource.livecheck_defined?
+    non_pypi_resource_names = formula.resources.filter_map do |resource|
+      next if resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
+      next if resource.livecheck_defined?
 
-        odie "\"#{formula.name}\" contains non-PyPI resources. Please update the resources manually."
-      end
-    end
+      resource.name
+    end.to_set
 
     existing_resources_by_name = formula.resources.to_h { |resource| [resource.name, resource] }
     formula_contents = formula.path.read
@@ -376,7 +375,7 @@ module PyPI
       end
 
       ohai "Getting PyPI info for \"#{package}\"" if show_info
-      name, url, checksum, _, package_error = package.pypi_info(ignore_errors: ignore_errors)
+      name, url, checksum, version, package_error = package.pypi_info(ignore_errors: ignore_errors)
       if package_error.blank?
         # Fail if unable to find name, url or checksum for any resource
         if name.blank?
@@ -394,29 +393,31 @@ module PyPI
               Please update the resources for "#{formula.name}" manually.
             EOS
           end
-        end
-      end
+        else
+          existing_is_non_pypi = !non_pypi_resource_names.delete?(name).nil?
 
-      if package_error.blank?
-        if (existing_resource = existing_resources_by_name[T.must(name)]) &&
-           existing_resource.url == url &&
-           existing_resource.checksum&.hexdigest == checksum &&
-           (existing_block = existing_resource_blocks[T.must(name)])
-          new_resource_blocks += <<-EOS
+          if (existing_resource = existing_resources_by_name[name]) &&
+             (existing_block = existing_resource_blocks[name]) &&
+             ((existing_resource.url == url && existing_resource.checksum&.hexdigest == checksum) ||
+              (existing_is_non_pypi && existing_resource.version.to_s == version))
+            new_resource_blocks += <<-EOS
   #{existing_block.dup}
 
-          EOS
-          next
-        end
-        # Append indented resource block
-        new_resource_blocks += <<-EOS
+            EOS
+            next
+          end
+          # Append indented resource block
+          new_resource_blocks += <<-EOS
   resource "#{name}" do
     url "#{url}"
     sha256 "#{checksum}"
   end
 
-        EOS
-      else
+          EOS
+        end
+      end
+
+      if package_error.present?
         # Leave a placeholder for formula author to investigate
         package_errors += "  # RESOURCE-ERROR: Unable to resolve \"#{package}\" (#{package_error})\n"
       end
@@ -431,6 +432,11 @@ module PyPI
       puts resource_section.chomp
       return
     end
+
+    odie <<~EOS unless non_pypi_resource_names.empty?
+      "#{formula.name}" contains non-PyPI resources: #{non_pypi_resource_names.sort.join(", ")}
+      Please update the resources manually.
+    EOS
 
     # Check whether resources already exist (excluding virtualenv dependencies)
     if formula.resources.all? { |resource| resource.name.start_with?("homebrew-") }
@@ -505,9 +511,12 @@ module PyPI
   def self.pip_report(packages, python_name: "python", print_stderr: false)
     return [] if packages.blank?
 
+    # Delay packages published in the last day so resource resolution is less
+    # likely to pick a freshly compromised PyPI release.
     command = [
       Formula[python_name].opt_libexec/"bin/python", "-m", "pip", "install", "-q", "--disable-pip-version-check",
-      "--dry-run", "--ignore-installed", "--report=/dev/stdout", *packages.map(&:to_s)
+      "--dry-run", "--ignore-installed", "--uploaded-prior-to=#{(Time.now.utc - (24 * 60 * 60)).iso8601(0)}",
+      "--report=/dev/stdout", *packages.map(&:to_s)
     ]
     options = {}
     options[:err] = :err if print_stderr

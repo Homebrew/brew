@@ -60,7 +60,6 @@ begin
   ENV["PATH"] = path.to_s
 
   require "commands"
-  require "warnings"
 
   internal_cmd = T.let(false, T::Boolean)
   external_ruby_v2_cmd = T.let(false, T::Boolean)
@@ -164,16 +163,16 @@ rescue BuildError => e
       #{Formatter.bold("Do not report any issues to Homebrew/* repositories!")}
       Read the above document instead before opening any issues or PRs.
     EOS
-  elsif e.formula.head? || e.formula.deprecated? || e.formula.disabled?
-    reason = if e.formula.head?
+  elsif (formula = e.formula) && (formula.head? || formula.deprecated? || formula.disabled?)
+    reason = if formula.head?
       "was built from an unstable upstream --HEAD"
-    elsif e.formula.deprecated?
+    elsif formula.deprecated?
       "is deprecated"
-    elsif e.formula.disabled?
+    elsif formula.disabled?
       "is disabled"
     end
     $stderr.puts <<~EOS
-      #{e.formula.name}'s formula #{reason}.
+      #{formula.name}'s formula #{reason}.
       This build failure is expected behaviour.
     EOS
   end

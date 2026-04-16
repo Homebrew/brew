@@ -118,10 +118,11 @@ module Homebrew
                 raise exception
               else
                 message = if exception.is_a?(DownloadError) && exception.cause.is_a?(ErrorDuringExecution)
-                  if (stderr_output = exception.cause.stderr.presence)
-                    "#{stderr_output}#{exception.cause.message}"
+                  cause = T.cast(exception.cause, ErrorDuringExecution)
+                  if (stderr_output = cause.stderr.presence)
+                    "#{stderr_output}#{cause.message}"
                   else
-                    exception.cause.message
+                    cause.message
                   end
                 else
                   future.reason.to_s

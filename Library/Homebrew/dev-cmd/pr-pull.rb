@@ -469,7 +469,7 @@ module Homebrew
         end
       end
 
-      sig { params(tap: Tap, original_commit: String).returns(T::Array[String]) }
+      sig { params(tap: Tap, original_commit: String).returns(T::Array[T.any(Formula, Cask::Cask)]) }
       def changed_packages(tap, original_commit)
         formulae = Utils.popen_read("git", "-C", tap.path, "diff-tree",
                                     "-r", "--name-only", "--diff-filter=AM",

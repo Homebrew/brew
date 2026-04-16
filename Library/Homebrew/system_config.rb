@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require "hardware"
-require "software_spec"
+require "tap"
 require "development_tools"
 require "extend/ENV"
 require "system_command"
@@ -70,18 +70,6 @@ module SystemConfig
         clang.to_s
       else
         "#{clang} build #{clang_build}"
-      end
-    end
-
-    sig { params(path: T.nilable(Pathname)).returns(String) }
-    def describe_path(path)
-      return "N/A" if path.nil?
-
-      realpath = path.realpath
-      if realpath == path
-        path.to_s
-      else
-        "#{path} => #{realpath}"
       end
     end
 

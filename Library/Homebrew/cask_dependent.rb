@@ -8,7 +8,10 @@ class CaskDependent
   # Defines a dependency on another cask
   class Requirement < ::Requirement
     satisfy(build_env: false) do
-      Cask::CaskLoader.load(cask).installed?
+      cask_token = cask
+      raise "unexpected nil cask" unless cask_token
+
+      Cask::CaskLoader.load(cask_token).installed?
     end
   end
 
@@ -77,12 +80,22 @@ class CaskDependent
     )
   end
 
-  sig { params(block: T.nilable(T.proc.returns(T::Array[Dependency]))).returns(T::Array[Dependency]) }
+  sig {
+    params(
+      block: T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent, SoftwareSpec),
+                                     arg1: ::Dependency).returns(T.nilable(Symbol))),
+    ).returns(T::Array[::Dependency])
+  }
   def recursive_dependencies(&block)
     Dependency.expand(self, &block)
   end
 
-  sig { params(block: T.nilable(T.proc.returns(CaskDependent::Requirement))).returns(Requirements) }
+  sig {
+    params(
+      block: T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent, SoftwareSpec),
+                                     arg1: ::Requirement).returns(T.nilable(Symbol))),
+    ).returns(Requirements)
+  }
   def recursive_requirements(&block)
     Requirement.expand(self, &block)
   end

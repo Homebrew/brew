@@ -1,36 +1,71 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
+
+require "utils"
 
 module Homebrew
   # Auditor for checking common violations in {Tap}s.
   class TapAuditor
-    attr_reader :name, :path, :formula_names, :formula_aliases, :formula_renames, :cask_tokens, :cask_renames,
-                :tap_audit_exceptions, :tap_style_exceptions, :problems
+    sig { returns(String) }
+    attr_reader :name
+
+    sig { returns(Pathname) }
+    attr_reader :path
+
+    sig { returns(T::Array[String]) }
+    attr_reader :formula_names
+
+    sig { returns(T::Array[String]) }
+    attr_reader :formula_aliases
+
+    sig { returns(T::Hash[String, String]) }
+    attr_reader :formula_renames
+
+    sig { returns(T::Array[String]) }
+    attr_reader :cask_tokens
+
+    sig { returns(T::Hash[String, String]) }
+    attr_reader :cask_renames
+
+    sig { returns(T::Hash[Symbol, T.untyped]) }
+    attr_reader :tap_audit_exceptions
+
+    sig { returns(T::Hash[Symbol, T.untyped]) }
+    attr_reader :tap_style_exceptions
+
+    sig { returns(T::Array[T::Hash[Symbol, T.untyped]]) }
+    attr_reader :problems
 
     sig { params(tap: Tap, strict: T.nilable(T::Boolean)).void }
     def initialize(tap, strict:)
+      @name                                           = T.let(tap.name, String)
+      @path                                           = T.let(tap.path, Pathname)
+      @tap_audit_exceptions                           = T.let(tap.audit_exceptions, T::Hash[Symbol, T.untyped])
+      @tap_style_exceptions                           = T.let(tap.style_exceptions, T::Hash[Symbol, T.untyped])
+      @tap_synced_versions_formulae                   = T.let(tap.synced_versions_formulae,
+                                                              T::Array[T::Array[String]])
+      @tap_disabled_new_usr_local_relocation_formulae = T.let(tap.disabled_new_usr_local_relocation_formulae,
+                                                              T::Array[String])
+      @tap_autobump                                   = T.let(tap.autobump, T::Array[String])
+      @tap_official                                   = T.let(tap.official?, T::Boolean)
+      @problems                                       = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
+      @cask_tokens                                    = T.let([], T::Array[String])
+      @formula_aliases                                = T.let([], T::Array[String])
+      @formula_renames                                = T.let(tap.formula_renames, T::Hash[String, String])
+      @cask_renames                                   = T.let(tap.cask_renames, T::Hash[String, String])
+      @formula_names                                  = T.let([], T::Array[String])
+
       Homebrew.with_no_api_env do
         tap.clear_cache if Homebrew::EnvConfig.automatically_set_no_install_from_api?
-        @name                                           = tap.name
-        @path                                           = tap.path
-        @tap_audit_exceptions                           = tap.audit_exceptions
-        @tap_style_exceptions                           = tap.style_exceptions
-        @tap_synced_versions_formulae                   = tap.synced_versions_formulae
-        @tap_disabled_new_usr_local_relocation_formulae = tap.disabled_new_usr_local_relocation_formulae
-        @tap_autobump                                   = tap.autobump
-        @tap_official                                   = tap.official?
-        @problems                                       = []
 
         @cask_tokens = tap.cask_tokens.map do |cask_token|
-          cask_token.split("/").last
+          Utils.name_from_full_name(cask_token)
         end
         @formula_aliases = tap.aliases.map do |formula_alias|
-          formula_alias.split("/").last
+          Utils.name_from_full_name(formula_alias)
         end
-        @formula_renames = tap.formula_renames
-        @cask_renames = tap.cask_renames
         @formula_names = tap.formula_names.map do |formula_name|
-          formula_name.split("/").last
+          Utils.name_from_full_name(formula_name)
         end
       end
     end
@@ -106,7 +141,7 @@ module Homebrew
       EOS
     end
 
-    sig { params(directory_name: String, lists: Hash).void }
+    sig { params(directory_name: String, lists: T::Hash[Symbol, T.untyped]).void }
     def check_formula_list_directory(directory_name, lists)
       lists.each do |list_name, list|
         check_formula_list "#{directory_name}/#{list_name}", list

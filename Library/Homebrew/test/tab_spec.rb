@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "tab"
@@ -58,10 +59,11 @@ RSpec.describe Tab do
       "stdlib"                  => "libcxx",
       "runtime_dependencies"    => [],
       "source"                  => {
-        "tap"      => CoreTap.instance.to_s,
-        "path"     => CoreTap.instance.path.to_s,
-        "spec"     => "stable",
-        "versions" => {
+        "tap"          => CoreTap.instance.to_s,
+        "path"         => CoreTap.instance.path.to_s,
+        "spec"         => "stable",
+        "scm_revision" => "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "versions"     => {
           "stable" => "0.10",
           "head"   => "HEAD-1111111",
         },
@@ -74,10 +76,30 @@ RSpec.describe Tab do
   let(:time) { Time.now.to_i }
   let(:unused_options) { Options.create(%w[--with-baz --without-qux]) }
   let(:used_options) { Options.create(%w[--with-foo --without-bar]) }
+  let(:git_repo) { HOMEBREW_CACHE/"tab-spec-git-repo" }
 
   let(:f) { formula { url "foo-1.0" } }
   let(:f_tab_path) { f.prefix/"INSTALL_RECEIPT.json" }
   let(:f_tab_content) { (TEST_FIXTURE_DIR/"receipt.json").read }
+
+  after do
+    FileUtils.rm_rf git_repo
+  end
+
+  def git_commit_all
+    system "git", "add", "--all"
+    system "git", "commit", "-m", "tab spec commit"
+  end
+
+  def setup_git_repo(path)
+    path.mkpath
+
+    path.cd do
+      system "git", "-c", "init.defaultBranch=master", "init"
+      FileUtils.touch "README"
+      git_commit_all
+    end
+  end
 
   specify "defaults" do
     # < 1.1.7 runtime_dependencies were wrong so are ignored
@@ -396,6 +418,7 @@ RSpec.describe Tab do
       expect(tab.runtime_dependencies).to eq(runtime_dependencies)
 
       expect(tab.source["path"]).to eq(f.path.to_s)
+      expect(tab.source["scm_revision"]).to be_nil
     end
 
     it "can create a formula Tab from an alias" do
@@ -406,6 +429,22 @@ RSpec.describe Tab do
       tab = described_class.create(f, compiler, stdlib)
 
       expect(tab.source["path"]).to eq(f.alias_path.to_s)
+    end
+
+    it "records the upstream source revision for VCS formulae" do
+      setup_git_repo(git_repo)
+
+      commit = git_repo.cd { Utils.popen_read("git", "rev-parse", "HEAD").chomp }
+      repo = git_repo
+      f = formula("tab-spec-git") do
+        url "file://#{repo}", using: :git, branch: "master"
+        version "1.0"
+      end
+      f.public_send(f.active_spec_sym).fetch
+
+      tab = described_class.create(f, DevelopmentTools.default_compiler, :libcxx)
+
+      expect(tab.source["scm_revision"]).to eq(commit)
     end
   end
 
@@ -500,6 +539,7 @@ RSpec.describe Tab do
     expect(json_tab.stable_version).to eq(tab.stable_version)
     expect(json_tab.head_version).to eq(tab.head_version)
     expect(json_tab.source["path"]).to eq(tab.source["path"])
+    expect(json_tab.source["scm_revision"]).to eq(tab.source["scm_revision"])
     expect(json_tab.arch).to eq(tab.arch.to_s)
     expect(json_tab.built_on["os"]).to eq(tab.built_on["os"])
   end
@@ -512,6 +552,7 @@ RSpec.describe Tab do
     expect(json_tab.stdlib).to eq(tab.stdlib)
     expect(json_tab.compiler).to eq(tab.compiler)
     expect(json_tab.runtime_dependencies).to eq(tab.runtime_dependencies)
+    expect(json_tab.source["scm_revision"]).to eq(tab.source["scm_revision"])
     expect(json_tab.arch).to eq(tab.arch.to_s)
     expect(json_tab.built_on["os"]).to eq(tab.built_on["os"])
   end

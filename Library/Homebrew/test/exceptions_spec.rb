@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "exceptions"
@@ -48,7 +49,9 @@ RSpec.describe "Exception" do
 
     let(:tap) { instance_double(Tap, user: "u", repository: "r", to_s: "u/r", installed?: false) }
 
-    it(:to_s) { expect(error.to_s).to match(%r{Please tap it and then try again: brew tap u/r}) }
+    it(:to_s) {
+      expect(error.to_s).to match(%r{If you trust this tap, tap it explicitly and then try again:\n  brew tap u/r})
+    }
   end
 
   describe FormulaUnavailableError do
@@ -90,7 +93,9 @@ RSpec.describe "Exception" do
 
     let(:tap) { instance_double(Tap, user: "u", repository: "r", to_s: "u/r", installed?: false) }
 
-    it(:to_s) { expect(error.to_s).to match(%r{Please tap it and then try again: brew tap u/r}) }
+    it(:to_s) {
+      expect(error.to_s).to match(%r{If you trust this tap, tap it explicitly and then try again:\n  brew tap u/r})
+    }
   end
 
   describe FormulaClassUnavailableError do

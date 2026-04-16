@@ -23,9 +23,7 @@ gem:
     - public_suffix
     - redcarpet
     - rspec-github
-    - rspec-mocks
     - rspec-retry
-    - rspec
     - rspec_junit_formatter
     - rubocop-md
     - rubocop-performance

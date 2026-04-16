@@ -65,19 +65,9 @@ jobs:
 
       - run: brew typecheck
 
-      - name: Check RuboCop filepaths
-        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}/Library/Homebrew
-        run: |
-          public_apis="$(git grep -l "@api public" -- :^sorbet/ :^vendor/ | sort)"
-          rubocop_docs="$(yq '.Style/Documentation.Include[]' .rubocop.yml | sort)"
-
-          if [[ "${public_apis}" != "${rubocop_docs}" ]]; then
-            echo "All public Homebrew APIs should be included in the \`Style/Documentation\` RuboCop."
-            echo "Add/remove the following paths from \`Library/Homebrew/.rubocop.yml\` as appropriate:"
-            echo "${public_apis} ${rubocop_docs}" | tr ' ' '\n' | sort | uniq -u
-
-            exit 1
-          fi
+      - name: Check public API lists are in sync
+        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+        run: brew ruby Library/Homebrew/github_actions_utils/public_api_check.rb
 
   tap-syntax:
     name: tap syntax
@@ -100,7 +90,7 @@ jobs:
           restore-keys: ${{ runner.os }}-rubygems-tap-syntax-
 
       - name: Install Bundler RubyGems
-        run: brew install-bundler-gems --groups=style
+        run: brew install-bundler-gems --groups=style,typecheck
 
       - name: Cache style cache
         uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
@@ -111,6 +101,9 @@ jobs:
 
       - name: Run brew style on official taps
         run: brew style homebrew/core homebrew/cask
+
+      - name: Run brew typecheck on official taps
+        run: brew typecheck homebrew/core homebrew/cask
 
   formula-audit:
     name: formula audit
@@ -307,7 +300,7 @@ jobs:
           filenames=$(find Library/Homebrew/test/junit -name 'rspec*.xml' -print | tr '\n' ',')
           echo "filenames=${filenames%,}" >> "$GITHUB_OUTPUT"
 
-      - uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
+      - uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         with:
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: ${{ steps.junit_xml.outputs.filenames }}
@@ -315,7 +308,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           report_type: test_results
 
-      - uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
+      - uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         with:
           working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
           files: Library/Homebrew/test/coverage/coverage.xml
@@ -441,7 +434,7 @@ jobs:
             cask "1password-cli"
             cask "google-chrome"
             # VSCode cask is not available on Linux.
-            vscode "github.copilot" if OS.mac?
+            vscode "shopify.ruby-lsp" if OS.mac?
           EOS
 
           brew bundle check && exit 1

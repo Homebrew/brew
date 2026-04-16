@@ -14,8 +14,6 @@ module Homebrew
       class HeaderMatch
         extend Strategic
 
-        NICE_NAME = "Header match"
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {HeaderMatch} so we can selectively apply it when appropriate.
         PRIORITY = 0

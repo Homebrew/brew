@@ -170,7 +170,7 @@ module Homebrew
         return unless package_name
 
         api_url = "https://pypi.org/pypi/#{package_name.gsub(/%20|_/, "-")}/json"
-        curl_args = Utils::Curl.curl_args(show_error: false, retries: 0)
+        curl_args = Utils::Curl.curl_args(show_error: false, retries: 2)
         stdout, _, status = Utils::Curl.curl_output(*curl_args, api_url)
 
         return unless status.success?

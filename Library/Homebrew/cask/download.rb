@@ -16,12 +16,19 @@ module Cask
     sig { returns(::Cask::Cask) }
     attr_reader :cask
 
-    sig { params(cask: ::Cask::Cask, quarantine: T.nilable(T::Boolean)).void }
-    def initialize(cask, quarantine: nil)
+    sig {
+      params(
+        cask:        ::Cask::Cask,
+        quarantine:  T.nilable(T::Boolean),
+        require_sha: T::Boolean,
+      ).void
+    }
+    def initialize(cask, quarantine: nil, require_sha: false)
       super()
 
       @cask = cask
       @quarantine = quarantine
+      @require_sha = require_sha
     end
 
     sig { override.returns(T.nilable(::URL)) }
@@ -51,6 +58,7 @@ module Cask
         .returns(Pathname)
     }
     def fetch(quiet: nil, verify_download_integrity: true, timeout: nil)
+      verify_has_sha if @require_sha
       downloader.quiet! if quiet
 
       begin
@@ -96,6 +104,16 @@ module Cask
     def download_queue_type = "Cask"
 
     private
+
+    sig { void }
+    def verify_has_sha
+      return if @cask.sha256 != :no_check
+
+      raise CaskError, <<~EOS
+        Cask '#{@cask}' does not have a sha256 checksum defined.
+        This means you have the #{Formatter.identifier("--require-sha")} option set, perhaps in your `$HOMEBREW_CASK_OPTS`.
+      EOS
+    end
 
     sig { params(path: Pathname).void }
     def quarantine(path)

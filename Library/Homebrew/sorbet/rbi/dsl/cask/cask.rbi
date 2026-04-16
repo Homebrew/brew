@@ -150,6 +150,9 @@ class Cask::Cask
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def no_autobump_message(*args, &block); end
 
+  sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def on_os_blocks_exist?(*args, &block); end
+
   sig { params(args: T.untyped, block: T.untyped).returns(T.nilable(MacOSVersion)) }
   def on_system_block_min_os(*args, &block); end
 

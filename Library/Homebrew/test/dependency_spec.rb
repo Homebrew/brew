@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "dependency"
@@ -27,7 +28,7 @@ RSpec.describe Dependency do
     end
 
     it "rejects nil names" do
-      expect { described_class.new(nil) }.to raise_error(ArgumentError)
+      expect { described_class.new(nil) }.to raise_error(TypeError)
     end
   end
 

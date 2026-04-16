@@ -35,35 +35,49 @@ module Homebrew
         end
 
         Item = Struct.new(
+          # The title of the Sparkle feed item.
           # @api public
           :title,
+          # The download link for the item.
           # @api public
           :link,
+          # The release channel name.
           # @api public
           :channel,
+          # The URL for the release notes.
           # @api public
           :release_notes_link,
+          # The publication date of the item.
           # @api public
           :pub_date,
+          # The target operating system.
           # @api public
           :os,
+          # The download URL for the update.
           # @api public
           :url,
           # @api private
           :bundle_version,
+          # The minimum required system version.
           # @api public
           :minimum_system_version,
         ) do
           extend Forwardable
 
+          # The full version string from the bundle.
+          #
           # @!attribute [r] version
           # @api public
           delegate version: :bundle_version
 
+          # The short version string from the bundle.
+          #
           # @!attribute [r] short_version
           # @api public
           delegate short_version: :bundle_version
 
+          # The combined version and short version string.
+          #
           # @!attribute [r] nice_version
           # @api public
           delegate nice_version: :bundle_version

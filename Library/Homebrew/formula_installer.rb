@@ -373,14 +373,7 @@ class FormulaInstaller
 
   sig { void }
   def verify_deps_exist
-    begin
-      compute_dependencies
-    rescue TapFormulaUnavailableError => e
-      raise if e.tap.installed?
-
-      e.tap.ensure_installed!
-      retry if e.tap.installed? # It may have not installed if it's a core tap.
-    end
+    compute_dependencies
   rescue FormulaUnavailableError => e
     e.dependent = formula.full_name
     raise
@@ -687,12 +680,6 @@ on_request: installed_on_request?, options:)
     end
   end
 
-  sig { void }
-  def compute_and_install_dependencies
-    deps = compute_dependencies
-    install_dependencies(deps)
-  end
-
   sig { params(req_map: T::Hash[Formula, T::Array[Requirement]]).void }
   def check_requirements(req_map)
     @requirement_messages = []
@@ -717,7 +704,7 @@ on_request: installed_on_request?, options:)
   def runtime_requirements(formula)
     runtime_deps = formula.runtime_formula_dependencies(undeclared: false)
     recursive_requirements = formula.recursive_requirements do |dependent, _|
-      Requirement.prune unless runtime_deps.include?(dependent)
+      next Dependable::PRUNE unless runtime_deps.include?(dependent)
     end
     (recursive_requirements.to_a + formula.requirements.to_a).reject(&:build?).uniq
   end
@@ -732,6 +719,7 @@ on_request: installed_on_request?, options:)
     while (f = formulae.pop)
       runtime_requirements = runtime_requirements(f)
       f.recursive_requirements do |dependent, req|
+        dependent = T.cast(dependent, Formula)
         build = effective_build_options_for(dependent)
         install_bottle_for_dependent = install_bottle_for?(dependent, build)
 
@@ -745,9 +733,10 @@ on_request: installed_on_request?, options:)
            ((req.build? || req.test?) && !keep_build_test) ||
            formula_deps_map[dependent.name]&.build? ||
            (only_deps? && f == dependent)
-          Requirement.prune
+          next Dependable::PRUNE
         else
           unsatisfied_reqs[dependent] << req
+          nil # Return nil to satisfy T.nilable(Symbol) block sig (Array from << would violate it).
         end
       end
     end
@@ -760,6 +749,7 @@ on_request: installed_on_request?, options:)
     # Cache for this expansion only. FormulaInstaller has a lot of inputs which can alter expansion.
     cache_key = "FormulaInstaller-#{formula.full_name}-#{Time.now.to_f}"
     Dependency.expand(formula, cache_key:) do |dependent, dep|
+      dependent = T.cast(dependent, Formula)
       build = effective_build_options_for(dependent)
 
       keep_build_test = false
@@ -769,13 +759,13 @@ on_request: installed_on_request?, options:)
 
       minimum_version = @bottle_tab_runtime_dependencies.dig(dep.name, "version").presence
       minimum_version = Version.new(minimum_version) if minimum_version
-      minimum_revision = @bottle_tab_runtime_dependencies.dig(dep.name, "revision")
+      minimum_revision = @bottle_tab_runtime_dependencies.dig(dep.name, "revision")&.to_i
       bottle_os_version = @bottle_built_os_version
 
       if dep.prune_from_option?(build) || ((dep.build? || dep.test?) && !keep_build_test)
-        Dependency.prune
+        next Dependable::PRUNE
       elsif dep.satisfied?(minimum_version:, minimum_revision:, bottle_os_version:)
-        Dependency.skip
+        next Dependable::SKIP
       end
     end
   end
@@ -1003,7 +993,8 @@ on_request: installed_on_request?, options:)
     CacheStoreDatabase.use(:linkage) do |db|
       break unless db.created?
 
-      LinkageChecker.new(keg, formula, cache_db: db, rebuild_cache: true)
+      typed_db = T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]])
+      LinkageChecker.new(keg, formula, cache_db: typed_db, rebuild_cache: true)
     end
 
     # Update tab with actual runtime dependencies
@@ -1485,7 +1476,7 @@ on_request: installed_on_request?, options:)
   sig { returns(Downloadable) }
   def downloadable
     if (bottle_path = formula.local_bottle_path)
-      Resource::Local.new(bottle_path)
+      Resource::Local.new(bottle_path.to_s)
     elsif pour_bottle?
       T.must(formula.bottle)
     else

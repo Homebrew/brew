@@ -16,6 +16,9 @@ class Dependencies < SimpleDelegator
   sig { override.params(blk: T.proc.params(arg0: Dependency).returns(T.anything)).returns(T::Array[Dependency]) }
   sig { override.returns(T::Enumerator[Dependency]) }
   def select(&blk); end
+
+  sig { params(other: Dependency).returns(T.self_type) }
+  def <<(other); end
 end
 
 class Requirements < SimpleDelegator

@@ -70,7 +70,12 @@ module Homebrew
             end
           when Cask::Cask
             cask = formula_or_cask
-            ref = cask.loaded_from_api? ? cask.full_name : cask.sourcefile_path
+            if cask.loaded_from_api?
+              ref = cask.full_name
+            else
+              ref = cask.sourcefile_path
+              raise "unexpected nil cask sourcefile_path" unless ref
+            end
 
             os_arch_combinations.each do |os, arch|
               next if os == :linux

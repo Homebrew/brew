@@ -10,7 +10,6 @@ require "utils/output"
 require "utils/path"
 require "service"
 require "utils/curl"
-require "deprecate_disable"
 require "extend/hash/deep_transform_values"
 require "extend/hash/keys"
 require "tap"
@@ -377,7 +376,7 @@ module Formulary
         f.active_spec = resolved_spec if f.send(resolved_spec)
         f.build = tab
         if f.head? && tab.tabfile
-          k = Keg.new(tab.tabfile.parent)
+          k = Keg.new(T.must(tab.tabfile).parent)
           f.version.update_commit(k.version.version.commit) if k.version.head?
         end
       end
@@ -1088,31 +1087,6 @@ module Formulary
                          .get_formula(spec, alias_path:, force_bottle:, flags:, ignore_errors:)
   end
 
-  # Return a {Formula} instance directly from JSON contents.
-  sig {
-    params(
-      name:          String,
-      contents:      T::Hash[String, T.untyped],
-      spec:          Symbol,
-      alias_path:    T.nilable(Pathname),
-      force_bottle:  T::Boolean,
-      flags:         T::Array[String],
-      ignore_errors: T::Boolean,
-    ).returns(Formula)
-  }
-  def self.from_json_contents(
-    name,
-    contents,
-    spec = :stable,
-    alias_path: nil,
-    force_bottle: false,
-    flags: [],
-    ignore_errors: false
-  )
-    FormulaJSONContentsLoader.new(name, contents)
-                             .get_formula(spec, alias_path:, force_bottle:, flags:, ignore_errors:)
-  end
-
   sig { params(ref: String).returns(Pathname) }
   def self.to_rack(ref)
     # If using a fully-scoped reference, check if the formula can be resolved.
@@ -1155,7 +1129,7 @@ module Formulary
     if (possible_alias = tap.alias_table[alias_table_key].presence)
       # FIXME: Remove the need to split the name and instead make
       #        the alias table only contain short names.
-      name = possible_alias.split("/").fetch(-1)
+      name = Utils.name_from_full_name(possible_alias)
       type = :alias
     elsif (new_name = tap.formula_renames[name].presence)
       old_name = tap.core_tap? ? name : tapped_name
@@ -1173,7 +1147,6 @@ module Formulary
           new_name = new_tap_name
         end
       end
-      new_tap.ensure_installed!
       new_tapped_name = "#{new_tap}/#{new_name}"
 
       if tapped_name != new_tapped_name

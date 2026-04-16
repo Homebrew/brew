@@ -86,7 +86,7 @@ module Homebrew
           options[:except_cops] = %w[FormulaAuditStrict]
         end
 
-        Homebrew.failed = !Style.check_style_and_print(target, **options)
+        Homebrew.failed = !Style.check_style_and_print(target || [], **options)
       end
 
       sig { returns(T::Array[Pathname]) }

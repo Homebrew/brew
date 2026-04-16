@@ -227,11 +227,16 @@ module OS
       def prepare_relocation_to_locations
         relocation = super
 
-        brewed_perl = runtime_dependencies&.any? { |dep| dep["full_name"] == "perl" && dep["declared_directly"] }
+        brewed_perl = runtime_dependencies&.any? do |dep|
+          T.cast(dep,
+                 T::Hash[String,
+                         T.untyped])["full_name"] == "perl" && T.cast(dep,
+                                                                      T::Hash[String, T.untyped])["declared_directly"]
+        end
         perl_path = if brewed_perl || name == "perl"
           "#{HOMEBREW_PREFIX}/opt/perl/bin/perl"
         elsif tab.built_on.present? &&
-              (preferred_perl_version = tab.built_on["preferred_perl"].presence) &&
+              (preferred_perl_version = tab.built_on&.[]("preferred_perl")&.presence) &&
               preferred_perl_version.match?(/^\d+\.\d+$/) &&
               (perl_path = "/usr/bin/perl#{preferred_perl_version}") &&
               File.exist?(perl_path)

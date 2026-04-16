@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "source_location"
-require "utils/curl"
 
 module Cask
   # Class corresponding to the `url` stanza.

@@ -14,25 +14,40 @@ module Utils
       sig { params(formulae: T::Array[Formula], casks: T::Array[Cask::Cask]).returns(T::Array[Formula]) }
       def removable_formulae(formulae, casks)
         unused_formulae = unused_formulae_with_no_formula_dependents(formulae)
-        unused_formulae - formulae_with_cask_dependents(casks)
+        cask_dep_names = cask_dependent_formula_names(casks, formulae)
+        unused_formulae.reject { |f| cask_dep_names.intersect?(f.possible_names) }
       end
 
       private
 
-      # An array of all installed {Formula} with {Cask} dependents.
+      # A set of names for all installed {Formula} objects that are {Cask} formula
+      # dependencies (direct or transitive).
       # @private
-      sig { params(casks: T::Array[Cask::Cask]).returns(T::Array[Formula]) }
-      def formulae_with_cask_dependents(casks)
-        casks.flat_map { |cask| cask.depends_on[:formula] }.compact.flat_map do |name|
-          f = begin
-            Formulary.resolve(name)
-          rescue FormulaUnavailableError
-            nil
-          end
+      sig { params(casks: T::Array[Cask::Cask], formulae: T::Array[Formula]).returns(T::Set[String]) }
+      def cask_dependent_formula_names(casks, formulae)
+        formulae_by_name = formulae.to_h { |f| [f.name, f] }
+        names = casks.flat_map { |cask| cask.depends_on.formula }.flat_map do |name|
+          base = Utils.name_from_full_name(name)
+          f = formulae_by_name[base]
           next [] unless f
 
-          [f, *f.installed_runtime_formula_dependencies].compact
+          tab = f.any_installed_keg&.tab
+          dep_names = if (tab_deps = T.cast(tab&.runtime_dependencies,
+                                            T.nilable(T::Array[T::Hash[String, T.untyped]])))
+            # Use tab data to avoid Formulary.resolve for each dependency.
+            tab_deps.filter_map do |dep|
+              full_name = dep["full_name"]
+              next unless full_name
+
+              Utils.name_from_full_name(full_name)
+            end
+          else
+            # Fallback for pre-1.1.6 installations without tab runtime_dependencies.
+            f.installed_runtime_formula_dependencies.map(&:name)
+          end
+          [base, *dep_names]
         end
+        names.to_set
       end
 
       # An array of all installed bottled {Formula} without runtime {Formula}
@@ -41,26 +56,37 @@ module Utils
       # @private
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def bottled_formulae_with_no_formula_dependents(formulae)
-        formulae_to_keep = T.let([], T::Array[Formula])
+        names_to_keep = T.let(Set.new, T::Set[String])
         formulae.each do |formula|
-          formulae_to_keep += formula.installed_runtime_formula_dependencies
+          tab = formula.any_installed_keg&.tab
+          if (tab_deps = T.cast(tab&.runtime_dependencies, T.nilable(T::Array[T::Hash[String, T.untyped]])))
+            # Use tab data to avoid Formulary.resolve for each dependency.
+            tab_deps.each do |dep|
+              full_name = dep["full_name"]
+              next unless full_name
 
-          if (tab = formula.any_installed_keg&.tab)
+              names_to_keep.add(Utils.name_from_full_name(full_name))
+            end
+          else
+            # Fallback for pre-1.1.6 installations without tab runtime_dependencies.
+            formula.installed_runtime_formula_dependencies.each { |f| names_to_keep.add(f.name) }
+          end
+
+          if tab
             # Ignore build dependencies when the formula is a bottle
             next if tab.poured_from_bottle
 
             # Keep the formula if it was built from source
-            formulae_to_keep << formula
+            names_to_keep.add(formula.name)
           end
 
           formula.deps.select(&:build?).each do |dep|
-            formulae_to_keep << dep.to_formula
+            names_to_keep.add(dep.to_formula.name)
           rescue FormulaUnavailableError
             # do nothing
           end
         end
-        names_to_keep = formulae_to_keep.to_set(&:name)
-        formulae.reject { |f| names_to_keep.include?(f.name) }
+        formulae.reject { |f| names_to_keep.intersect?(f.possible_names) }
       end
 
       # Recursive function that returns an array of {Formula} without

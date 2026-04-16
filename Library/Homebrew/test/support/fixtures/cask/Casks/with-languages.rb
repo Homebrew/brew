@@ -1,3 +1,5 @@
+# typed: false
+
 cask "with-languages" do
   version "1.2.3"
 

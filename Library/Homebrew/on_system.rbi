@@ -7,10 +7,10 @@ end
 
 module OnSystem::MacOSAndLinux
   sig {
-    params(
-      macos: T.nilable(T.any(T::Array[T.any(String, Pathname)], String, Pathname)),
-      linux: T.nilable(T.any(T::Array[T.any(String, Pathname)], String, Pathname)),
-    ).returns(T.nilable(T.any(T::Array[T.any(String, Pathname)], String, Pathname)))
+    type_parameters(:U).params(
+      macos: T.all(T.type_parameter(:U), T.nilable(T.any(T::Array[T.any(String, Pathname)], String, Pathname))),
+      linux: T.all(T.type_parameter(:U), T.nilable(T.any(T::Array[T.any(String, Pathname)], String, Pathname))),
+    ).returns(T.type_parameter(:U))
   }
   def on_system_conditional(macos: nil, linux: nil); end
 

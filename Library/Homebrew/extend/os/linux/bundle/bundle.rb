@@ -5,11 +5,6 @@ module OS
   module Linux
     module Bundle
       module ClassMethods
-        sig { returns(T::Boolean) }
-        def mas_installed?
-          false
-        end
-
         # Setup pkg-config, if present, to help locate packages
         # Only need this on Linux as Homebrew provides a shim on macOS
         sig { void }

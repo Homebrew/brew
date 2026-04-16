@@ -1,3 +1,5 @@
+# typed: false
+
 cask "sha256-os" do
   arch arm: "arm", intel: "intel"
   os macos: "darwin", linux: "linux"

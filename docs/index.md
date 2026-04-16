@@ -31,6 +31,7 @@ last_review_date: "2025-02-08"
 - [Custom GCC and Cross Compilers](Custom-GCC-and-cross-compilers.md)
 - [External Commands](External-Commands.md)
 - [Ruby Gems, Python Eggs and Perl Modules](Gems,-Eggs-and-Perl-Modules.md)
+- [Java](Homebrew-and-Java.md)
 - [Python](Homebrew-and-Python.md)
 - [How to Build Software Outside Homebrew with Homebrew `keg_only` Dependencies](How-to-Build-Software-Outside-Homebrew-with-Homebrew-keg-only-Dependencies.md)
 - [Xcode](Xcode.md)
@@ -50,7 +51,7 @@ last_review_date: "2025-02-08"
 - [Acceptable Casks](Acceptable-Casks.md)
 - [License Guidelines](License-Guidelines.md)
 - [Formulae Versions](Versions.md)
-- [Deprecating, Disabling and Removing Formulae](Deprecating-Disabling-and-Removing-Formulae.md)
+- [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removing.md)
 - [Node for Formula Authors](Node-for-Formula-Authors.md)
 - [Python for Formula Authors](Python-for-Formula-Authors.md)
 - [`brew livecheck`](Brew-Livecheck.md)
@@ -79,6 +80,8 @@ last_review_date: "2025-02-08"
 - [BrewTestBot for Maintainers](BrewTestBot-For-Maintainers.md)
 - [Common Issues for Maintainers](Common-Issues-for-Core-Contributors.md)
 - [Releases](Releases.md)
+
+- [Linux CI](Linux-CI.md)
 
 ## Governance
 

@@ -1,5 +1,5 @@
 ---
-last_review_date: "2025-03-19"
+last_review_date: "2026-04-04"
 ---
 
 # Homebrew Bundle, `brew bundle` and `Brewfile`
@@ -249,6 +249,8 @@ It's also got the same backbone as `brew bundle exec` so the same arguments (e.g
 By default, `brew bundle` will attempt to upgrade all software.
 You can disable this behaviour by passing `--no-upgrade` or with `export HOMEBREW_BUNDLE_NO_UPGRADE=1` in your environment.
 
+This only skips `brew upgrade`. It does not pin versions or add lock file support.
+
 If you do this, you can upgrade everything with:
 
 ```console
@@ -325,9 +327,11 @@ ENV["SOME_ENV_VAR"] = "some_value"
 
 Homebrew is a [rolling release](https://en.wikipedia.org/wiki/Rolling_release) package manager so it does not support installing arbitrary older versions of software.
 
-`brew bundle` does not have a concept of a "`Brewfile` lock file" that can be used to pin versions like e.g. `package-lock.json` or `Gemfile.lock`.
+`brew bundle` does not and will not have a concept of a "`Brewfile` lock file" that can be used to pin versions like e.g. `package-lock.json` or `Gemfile.lock`.
 
-This must be done with solutions outside or built on top of `brew bundle` instead.
+If you want `brew bundle` to stop upgrading installed dependencies, pass `--no-upgrade` or set `export HOMEBREW_BUNDLE_NO_UPGRADE=1`.
+
+For the tradeoffs and alternatives, see [Locking installed formulae at specific versions](Versions.md#locking-installed-formulae-at-specific-versions).
 
 ## Adding New Packages Support
 

@@ -5,7 +5,7 @@ redirect_from:
   - /linux
   - /Linux
   - /Linuxbrew
-last_review_date: "2025-04-02"
+last_review_date: "2026-04-03"
 ---
 
 # Homebrew on Linux
@@ -28,7 +28,7 @@ The installation script installs Homebrew to `/home/linuxbrew/.linuxbrew` using 
 
 Technically, you can install Homebrew wherever you want. However, you shouldn't install outside the default, supported, best prefix. Many things will need to be built from source outside the default prefix. Building from source is slow, energy-inefficient, buggy and unsupported. The main reason Homebrew just works is **because** we use bottles (binary packages) and most of these require using the default prefix. If you decide to use another prefix: don't open any issues, even if you think they are unrelated to your prefix choice. They will be closed without response.
 
-The prefix `/home/linuxbrew/.linuxbrew` was chosen so that users without admin access can ask an admin to create a `linuxbrew` role account and still benefit from precompiled binaries. If you do not have admin privileges, consider asking your admin staff to create a `linuxbrew` role account for you with home directory set to `/home/linuxbrew`.
+The prefix `/home/linuxbrew/.linuxbrew` was chosen to avoid writing to system-owned directories after installation while still allowing most precompiled binaries (bottles) to be used. Homebrew is designed for single-user installations rather than shared role accounts.
 
 Follow the *Next steps* instructions to add Homebrew to your `PATH` and to your bash shell rcfile, either `~/.bashrc` for `bash` or `~/.zshrc` for `zsh`.
 

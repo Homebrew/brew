@@ -17,7 +17,7 @@ class String
   # @!visibility private
   sig { params(config: T.nilable(T::Hash[Symbol, T.untyped])).returns(Cask::Cask) }
   def c(config: nil)
-    Cask::CaskLoader.load(self, config:)
+    Cask::CaskLoader.load(self, config: Cask::Config.new(**config))
   end
 end
 

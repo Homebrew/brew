@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "resource"
@@ -192,7 +193,7 @@ RSpec.describe Resource do
 
     expect(fn).to receive(:verify_checksum)
       .with(checksum)
-      .and_raise(ChecksumMismatchError.new(fn, checksum, Object.new))
+      .and_raise(ChecksumMismatchError.new(fn, checksum, Checksum.new(Digest::SHA256.new.hexdigest)))
 
     expect do
       resource.verify_download_integrity(fn)

@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "formula_auditor"
@@ -34,7 +35,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       options.delete :tap_audit_exceptions
     end
 
-    described_class.new(formula, options)
+    described_class.new(formula, **options)
   end
 
   def formula_gsub(before, after = "")
@@ -1359,19 +1360,70 @@ RSpec.describe Homebrew::FormulaAuditor do
       )
     end
     let(:auditor) { described_class.new(target_formula, git: true) }
+    let(:foo_path) { tap_path/"Formula/f/foo.rb" }
 
     it "resolves sharded formula paths when filtering by names" do
-      sharded_path = tap_path/"Formula/f/foo.rb"
-      sharded_path.dirname.mkpath
-      sharded_path.write(test_formula_source(name: "foo"))
+      foo_path.dirname.mkpath
+      foo_path.write(test_formula_source(name: "foo"))
       allow(tap).to receive(:formula_files_by_name)
-        .and_return({ "foo" => sharded_path, "bar" => tap_path/"Formula/bar.rb" })
+        .and_return({ "foo" => foo_path, "bar" => tap_path/"Formula/bar.rb" })
       allow(Utils::Git).to receive(:git).and_return("git")
+      allow(Utils).to receive(:popen_read).and_call_original
+      allow(Utils).to receive(:popen_read).with("git", "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+                                          .and_return("merge-base-sha\n")
       allow(Utils).to receive(:safe_popen_read).and_return("Formula/f/foo.rb\n")
 
       paths = auditor.send(:changed_formulae_paths, tap, only_names: ["foo"])
 
-      expect(paths).to eq([sharded_path])
+      expect(paths).to eq([foo_path])
+    end
+
+    it "diffs against the merge-base with origin/HEAD" do
+      foo_path.dirname.mkpath
+      foo_path.write(test_formula_source(name: "foo"))
+      allow(tap).to receive(:formula_files_by_name).and_return({ "foo" => foo_path })
+      allow(Utils::Git).to receive(:git).and_return("git")
+      allow(Utils).to receive(:popen_read).and_call_original
+      allow(Utils).to receive(:popen_read).with("git", "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+                                          .and_return("merge-base-sha\n")
+      expect(Utils).to receive(:safe_popen_read).with("git", "-C", tap.path, "diff", "--name-only", "merge-base-sha")
+                                                .and_return("Formula/f/foo.rb\n")
+
+      expect(auditor.send(:changed_formulae_paths, tap, only_names: ["foo"])).to eq([foo_path])
+    end
+  end
+
+  describe "#committed_version_info" do
+    let(:tap_path) { Pathname("#{dir}/committed-version-info-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:        true,
+        core_tap?:   false,
+        path:        tap_path,
+        formula_dir: tap_path/"Formula",
+        name:        "homebrew/core",
+      )
+    end
+    let(:target_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:     "foo",
+      )
+    end
+    let(:auditor) { described_class.new(target_formula, git: true) }
+    let(:formula_versions) { instance_double(FormulaVersions) }
+
+    it "walks history from the merge-base with origin/HEAD" do
+      allow(Utils::Git).to receive(:git).and_return("git")
+      allow(Utils).to receive(:popen_read).and_call_original
+      allow(Utils).to receive(:popen_read).with("git", "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+                                          .and_return("merge-base-sha\n")
+      allow(FormulaVersions).to receive(:new).with(target_formula).and_return(formula_versions)
+      expect(formula_versions).to receive(:rev_list).with("merge-base-sha")
+
+      auditor.send(:committed_version_info)
     end
   end
 
@@ -1492,7 +1544,11 @@ RSpec.describe Homebrew::FormulaAuditor do
         auditor.audit_compatibility_version
 
         expect(auditor.problems).to include(
-          a_hash_including(message: a_string_matching(/no recursive dependent formulae increased `revision` by 1/)),
+          a_hash_including(
+            message: a_string_matching(
+              %r{no recursive dependent formulae increased `revision` by 1.*https://docs\.brew\.sh/Formula-Cookbook#compatibility_version},
+            ),
+          ),
         )
       end
 
@@ -1640,7 +1696,9 @@ RSpec.describe Homebrew::FormulaAuditor do
 
           expect(auditor.problems).to include(
             a_hash_including(
-              message: a_string_matching(/must increase `compatibility_version` by 1: foo \(1 to 2\)/),
+              message: a_string_matching(
+                %r{must increase `compatibility_version` by 1 in the same PR: foo \(1 to 2\).*https://docs\.brew\.sh/Formula-Cookbook#compatibility_version},
+              ),
             ),
           )
         end

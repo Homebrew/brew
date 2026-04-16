@@ -3,7 +3,6 @@
 
 require "abstract_command"
 require "formula"
-require "keg"
 require "cask/caskroom"
 require "api"
 
@@ -32,12 +31,13 @@ module Homebrew
                             "formula is outdated. Otherwise, the repository's HEAD will only be checked for " \
                             "updates when a new stable or development version has been released."
         switch "-g", "--greedy",
-               description: "Also include outdated casks with `auto_updates true` or `version :latest`.",
+               description: "Also include outdated casks with `version :latest` and `auto_updates true` " \
+                            "casks that would otherwise be skipped.",
                env:         :upgrade_greedy
         switch "--greedy-latest",
                description: "Also include outdated casks including those with `version :latest`."
         switch "--greedy-auto-updates",
-               description: "Also include outdated casks including those with `auto_updates true`."
+               description: "Also include outdated `auto_updates true` casks that would otherwise be skipped."
 
         conflicts "--quiet", "--verbose", "--json"
         conflicts "--formula", "--cask"
@@ -155,8 +155,11 @@ module Homebrew
           else
             c = formula_or_cask
 
-            c.outdated_info(upgrade_greedy_cask?(args.greedy?, formula_or_cask),
-                            verbose?, true, args.greedy_latest?, args.greedy_auto_updates?)
+            T.cast(
+              c.outdated_info(upgrade_greedy_cask?(args.greedy?, formula_or_cask),
+                              verbose?, true, args.greedy_latest?, args.greedy_auto_updates?),
+              T::Hash[Symbol, T.untyped],
+            )
           end
         end
       end
@@ -216,7 +219,10 @@ module Homebrew
           if formula_or_cask.is_a?(Formula)
             formula_or_cask.outdated?(fetch_head: args.fetch_HEAD?)
           else
-            formula_or_cask.outdated?(greedy:              upgrade_greedy_cask?(args.greedy?, formula_or_cask),
+            cask_greedy = upgrade_greedy_cask?(args.greedy?, formula_or_cask)
+            next false if formula_or_cask.auto_updates && !cask_greedy && !args.greedy_auto_updates?
+
+            formula_or_cask.outdated?(greedy:              cask_greedy,
                                       greedy_latest:       args.greedy_latest?,
                                       greedy_auto_updates: args.greedy_auto_updates?)
           end

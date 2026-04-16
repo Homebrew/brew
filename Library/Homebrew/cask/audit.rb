@@ -12,7 +12,6 @@ require "system_command"
 require "utils/backtrace"
 require "formula_name_cask_token_auditor"
 require "utils/curl"
-require "utils/git"
 require "utils/shared_audits"
 require "utils/output"
 
@@ -502,7 +501,7 @@ module Cask
       url = cask.url
       return if url.nil?
 
-      return if !cask.tap.official? && !signing?
+      return if !cask.tap&.official? && !signing?
       return if cask.deprecated? && cask.deprecation_reason != :fails_gatekeeper_check
 
       unless Quarantine.available?
@@ -515,15 +514,24 @@ module Cask
                                                  Homebrew::SimulateSystem.current_arch.to_s) ||
                        cask.tap&.audit_exception(:signing_audit_skiplist, cask.token, "all")
 
-      extract_artifacts do |artifacts, tmpdir|
-        is_container = artifacts.any? { |a| a.is_a?(Artifact::App) || a.is_a?(Artifact::Pkg) }
+      extract_artifacts(include_manual_installers: true) do |artifacts, tmpdir|
+        is_container = artifacts.any? do |artifact|
+          artifact.is_a?(Artifact::App) || artifact.is_a?(Artifact::Pkg) ||
+            (artifact.is_a?(Artifact::Installer) && [".app", ".pkg"].include?(artifact.path.extname.downcase))
+        end
 
         any_signing_failure = artifacts.any? do |artifact|
           next false if artifact.is_a?(Artifact::Binary) && is_container == true
 
-          artifact_path = artifact.is_a?(Artifact::Pkg) ? artifact.path : artifact.source
+          artifact_path = case artifact
+          when Artifact::Pkg, Artifact::Installer
+            artifact.path
+          else
+            artifact.source
+          end
 
-          path = tmpdir/artifact_path.relative_path_from(cask.staged_path)
+          artifact_path = artifact_path.relative_path_from(cask.staged_path) if artifact_path.absolute?
+          path = tmpdir/artifact_path
 
           unless Quarantine.detect(path)
             odebug "#{path} does not have quarantine attributes, skipping signing audit"
@@ -537,6 +545,16 @@ module Cask
             next opoo "gktool not found, skipping app signing audit" unless which("gktool")
 
             system_command("gktool", args: ["scan", path], print_stderr: false)
+          when Artifact::Installer
+            if artifact.path.extname.downcase == ".app"
+              next opoo "gktool not found, skipping app signing audit" unless which("gktool")
+
+              system_command("gktool", args: ["scan", path], print_stderr: false)
+            elsif artifact.path.extname.downcase == ".pkg"
+              system_command("spctl", args: ["--assess", "--type", "install", path], print_stderr: false)
+            else
+              next false
+            end
           when Artifact::Binary
             # Shell scripts cannot be signed, so we skip them
             next false if path.text_executable?
@@ -557,7 +575,7 @@ module Cask
             #{result.merged_output}
           EOS
 
-          if cask.tap.official?
+          if cask.tap&.official?
             signing_failure_message += <<~EOS
               The homebrew/cask tap requires all casks to be signed and notarized by Apple.
               Please contact the upstream developer and ask them to sign and notarize their software.
@@ -585,18 +603,25 @@ module Cask
 
     sig {
       params(
-        _block: T.nilable(T.proc.params(
-          arg0: T::Array[T.any(Artifact::Pkg, Artifact::Relocated)],
+        include_manual_installers: T::Boolean,
+        _block:                    T.nilable(T.proc.params(
+          arg0: T::Array[T.any(Artifact::Installer, Artifact::Pkg, Artifact::Relocated)],
           arg1: Pathname,
         ).void),
       ).void
     }
-    def extract_artifacts(&_block)
+    def extract_artifacts(include_manual_installers: false, &_block)
       return unless online?
       return if (download = self.download).nil?
 
       artifacts = cask.artifacts.select do |artifact|
-        artifact.is_a?(Artifact::Pkg) || artifact.is_a?(Artifact::App) || artifact.is_a?(Artifact::Binary)
+        artifact.is_a?(Artifact::Pkg) ||
+          artifact.is_a?(Artifact::App) ||
+          artifact.is_a?(Artifact::Binary) ||
+          (include_manual_installers &&
+            artifact.is_a?(Artifact::Installer) &&
+            artifact.manual_install &&
+            [".app", ".pkg"].include?(artifact.path.extname.downcase))
       end
 
       if @artifacts_extracted && @tmpdir
@@ -886,6 +911,8 @@ module Cask
 
       extract_artifacts do |artifacts, tmpdir|
         artifacts.each do |artifact|
+          next if artifact.is_a?(Artifact::Installer)
+
           artifact_path = artifact.is_a?(Artifact::Pkg) ? artifact.path : artifact.source
           path = tmpdir/artifact_path.relative_path_from(cask.staged_path)
 
@@ -1138,7 +1165,7 @@ module Cask
 
     sig { void }
     def audit_conflicts_with
-      return if !cask.tap.official? || cask.conflicts_with.nil?
+      return if !cask.tap&.official? || cask.conflicts_with.nil?
 
       Homebrew.with_no_api_env do
         nonexisting_conflicting_casks = cask.conflicts_with.fetch(:cask, Set.new) - core_cask_tokens
@@ -1150,8 +1177,7 @@ module Cask
 
     sig { void }
     def audit_denylist
-      return unless cask.tap
-      return unless cask.tap.official?
+      return unless cask.tap&.official?
       return unless (reason = Denylist.reason(cask.token))
 
       add_error "#{cask.token} is not allowed: #{reason}"
@@ -1160,9 +1186,8 @@ module Cask
     sig { void }
     def audit_reverse_migration
       return unless new_cask?
-      return unless cask.tap
-      return unless cask.tap.official?
-      return unless cask.tap.tap_migrations.key?(cask.token)
+      return unless cask.tap&.official?
+      return unless cask.tap&.tap_migrations&.key?(cask.token)
 
       add_error "#{cask.token} is listed in tap_migrations.json"
     end
@@ -1227,11 +1252,11 @@ module Cask
 
     sig { void }
     def audit_cask_path
-      return unless cask.tap.core_cask_tap?
+      return unless (tap = cask.tap)&.core_cask_tap?
 
-      expected_path = cask.tap.new_cask_path(cask.token)
+      expected_path = tap.new_cask_path(cask.token)
 
-      return if cask.sourcefile_path.to_s.end_with?(expected_path)
+      return if cask.sourcefile_path.to_s.end_with?(expected_path.to_s)
 
       add_error "Cask should be located in '#{expected_path}'"
     end

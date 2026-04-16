@@ -2,7 +2,9 @@
 # frozen_string_literal: true
 
 module Utils
+  # Helper methods for outputting messages in Homebrew's formats.
   module Output
+    # Mixin used to add these helpers to stdout and stderr.
     module Mixin
       extend T::Helpers
 

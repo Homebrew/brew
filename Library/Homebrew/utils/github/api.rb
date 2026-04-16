@@ -56,6 +56,14 @@ module GitHub
       end
     end
 
+    # Error when the Git repository to be queried is empty.
+    class GitRepositoryIsEmptyError < Error
+      sig { params(github_message: String).void }
+      def initialize(github_message)
+        super(nil, github_message)
+      end
+    end
+
     # Error when the requested URL is not found.
     class HTTPNotFoundError < Error
       sig { params(github_message: String).void }
@@ -152,6 +160,7 @@ module GitHub
 
     ERRORS = T.let([
       AuthenticationFailedError,
+      GitRepositoryIsEmptyError,
       HTTPNotFoundError,
       RateLimitExceededError,
       Error,
@@ -228,6 +237,7 @@ module GitHub
       env_token:                  "HOMEBREW_GITHUB_API_TOKEN",
       github_cli_token:           "GitHub CLI login",
       keychain_username_password: "macOS Keychain GitHub",
+      none:                       "none",
     }.freeze, T::Hash[Symbol, String])
 
     # Given an API response from GitHub, warn the user if their credentials
@@ -266,11 +276,7 @@ module GitHub
         request_method:   Symbol,
         scopes:           T::Array[String],
         parse_json:       T::Boolean,
-        _block:           T.nilable(
-          T.proc
-                          .params(data: T::Hash[String, T.untyped])
-                          .returns(T.untyped),
-        ),
+        _block:           T.nilable(T.proc.params(data: T::Hash[String, T.untyped]).returns(T.untyped)),
       ).returns(T.untyped)
     }
     def self.open_rest(url, data: T.unsafe(nil), data_binary_path: T.unsafe(nil), request_method: T.unsafe(nil),
@@ -465,6 +471,10 @@ module GitHub
         raise MissingAuthenticationError if credentials_type == :none && scopes.present?
 
         raise HTTPNotFoundError, message
+      when "409"
+        raise GitRepositoryIsEmptyError, message if message.downcase.include? "git repository is empty"
+
+        raise Error, message
       when "422"
         errors = json&.[]("errors") || []
         raise ValidationFailedError.new(message, errors)

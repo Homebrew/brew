@@ -130,7 +130,7 @@ module Homebrew
         filtered_macos_runners = RUNNERS.select do |runner, _|
           runner[:symbol] != :linux &&
             cask.depends_on.macos.present? &&
-            cask.depends_on.macos.allows?(MacOSVersion.from_symbol(T.must(runner[:symbol]).to_sym))
+            cask.depends_on.macos.allows?(MacOSVersion.from_symbol(runner.fetch(:symbol).to_sym))
         end
 
         filtered_runners = if filtered_macos_runners.any?
@@ -152,6 +152,31 @@ module Homebrew
         end
 
         filtered_runners.merge(linux_runners)
+      end
+
+      sig {
+        params(
+          runners:  T::Array[T::Hash[Symbol, T.any(Symbol, String)]],
+          multi_os: T::Boolean,
+        ).returns(T::Array[[T::Hash[Symbol, T.any(Symbol, String)], T.any(Symbol, String), T::Boolean]])
+      }
+      def runner_arch_pairs(runners:, multi_os:)
+        macos_archs = runners.reject { |r| r.fetch(:symbol) == :linux }.map { |r| r.fetch(:arch) }.uniq
+        linux_archs = runners.select { |r| r.fetch(:symbol) == :linux }.map { |r| r.fetch(:arch) }.uniq
+        product_archs = macos_archs | linux_archs
+        runners.product(product_archs).filter_map do |runner, arch|
+          native_runner_arch = arch == runner.fetch(:arch)
+          # we don't need to run simulated archs on Linux or macOS Sequoia
+          # because they exist as real GitHub hosted runners
+          next if runner.fetch(:symbol) == :linux && !native_runner_arch
+          next if runner.fetch(:symbol) == :sequoia && !native_runner_arch
+          # skip macOS runners simulating architectures not supported on macOS
+          next if runner.fetch(:symbol) != :linux && !native_runner_arch && macos_archs.exclude?(arch)
+          # if it's just a single OS test then we can just use the two real arch runners
+          next if !native_runner_arch && !multi_os
+
+          [runner, arch, native_runner_arch]
+        end
       end
 
       private
@@ -183,8 +208,10 @@ module Homebrew
                                           Float]).returns(T::Hash[Symbol, T.any(Symbol, String)])
       }
       def random_runner(available_runners = ARM_MACOS_RUNNERS)
-        T.must(available_runners.max_by { |(_, weight)| rand ** (1.0 / weight) })
-         .first
+        max_runner = available_runners.max_by { |(_, weight)| rand ** (1.0 / weight) }
+        raise "unexpected nil max_runner" unless max_runner
+
+        max_runner.first
       end
 
       sig { params(cask: Cask::Cask).returns([T::Array[T::Hash[Symbol, T.any(Symbol, String)]], T::Boolean]) }
@@ -192,7 +219,7 @@ module Homebrew
         filtered_runners = filter_runners(cask)
 
         filtered_macos_found = filtered_runners.keys.any? do |runner|
-          cask.to_hash_with_variations["variations"].key?(T.must(runner[:symbol]).to_sym)
+          cask.to_hash_with_variations["variations"].key?(runner.fetch(:symbol).to_sym)
         end
 
         if filtered_macos_found
@@ -219,10 +246,10 @@ module Homebrew
         changed_files = find_changed_files(tap)
 
         ruby_files_in_wrong_directory =
-          T.must(changed_files[:modified_ruby_files]) - (
-            T.must(changed_files[:modified_cask_files]) +
-            T.must(changed_files[:modified_command_files]) +
-            T.must(changed_files[:modified_github_actions_files])
+          changed_files[:modified_ruby_files] - (
+            changed_files[:modified_cask_files] +
+            changed_files[:modified_command_files] +
+            changed_files[:modified_github_actions_files]
           )
 
         if ruby_files_in_wrong_directory.any?
@@ -238,7 +265,7 @@ module Homebrew
             Cask::CaskLoader.find_cask_in_tap(cask_name, tap).relative_path_from(tap.path)
           end
         else
-          T.must(changed_files[:modified_cask_files])
+          changed_files[:modified_cask_files]
         end
 
         jobs = cask_files_to_check.count
@@ -248,7 +275,7 @@ module Homebrew
           cask_token = path.basename(".rb")
 
           audit_args = ["--online", "--signing"]
-          audit_args << "--new" if T.must(changed_files[:added_files]).include?(path) || new_cask
+          audit_args << "--new" if changed_files.fetch(:added_files).include?(path) || new_cask
 
           audit_exceptions = []
 
@@ -274,16 +301,7 @@ module Homebrew
           cask = Cask::CaskLoader.load(path.expand_path)
 
           runners, multi_os = runners(cask:)
-          runners.product(architectures(cask:, os: :macos)).filter_map do |runner, arch|
-            native_runner_arch = arch == runner.fetch(:arch)
-            # we don't need to run simulated archs on Linux or macOS Sequoia
-            # because they exist as real GitHub hosted runner
-            next if runner.fetch(:symbol) == :linux && !native_runner_arch
-            next if runner.fetch(:symbol) == :sequoia && !native_runner_arch
-
-            # If it's just a single OS test then we can just use the two real arch runners.
-            next if !native_runner_arch && !multi_os
-
+          runner_arch_pairs(runners:, multi_os:).map do |runner, arch, native_runner_arch|
             arch_args = native_runner_arch ? [] : ["--arch=#{arch}"]
             runner_output = {
               name:         "test #{cask_token} (#{runner.fetch(:name)}, #{arch})",
@@ -310,7 +328,16 @@ module Homebrew
         end
       end
 
-      sig { params(tap: Tap).returns(T::Hash[Symbol, T::Array[String]]) }
+      sig {
+        params(tap: Tap).returns({
+          modified_files:                T::Array[Pathname],
+          added_files:                   T::Array[Pathname],
+          modified_ruby_files:           T::Array[Pathname],
+          modified_command_files:        T::Array[Pathname],
+          modified_github_actions_files: T::Array[Pathname],
+          modified_cask_files:           T::Array[Pathname],
+        })
+      }
       def find_changed_files(tap)
         commit_range_start = Utils.safe_popen_read("git", "rev-parse", "origin").chomp
         commit_range_end = Utils.safe_popen_read("git", "rev-parse", "HEAD").chomp

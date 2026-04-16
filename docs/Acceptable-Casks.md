@@ -1,5 +1,5 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-04-03"
 ---
 
 # Acceptable Casks
@@ -29,6 +29,10 @@ Our nomenclature is:
 ### Stable versions
 
 Stable versions live in the main repository at [Homebrew/homebrew-cask](https://github.com/Homebrew/homebrew-cask). They should run on the latest major version of macOS.
+
+Casks that require [`requires_rosetta`](Cask-Cookbook.md#caveats-mini-dsl) are still acceptable while the latest major macOS release supports Rosetta 2 for general app compatibility. Apple says in its [Rosetta 2 transition documentation](https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment/) that this support will remain available through macOS 27, with only a narrower legacy-games-focused subset beyond that, so we expect to stop accepting new `requires_rosetta` casks when macOS 27 is the latest stable macOS version.
+
+If Apple keeps that timeline, existing `requires_rosetta` casks are expected to be deprecated while macOS 27 is current, then disabled or removed after macOS 28 is the latest stable macOS version.
 
 ### Beta, Unstable, Development, Nightly, or Legacy
 
@@ -125,7 +129,7 @@ Common reasons to reject a cask entirely:
 * App is both open-source and CLI-only (i.e. it only uses the `binary` artifact). In that case, and [in the spirit of deduplication](https://github.com/Homebrew/homebrew-cask/issues/15603), submit it first to [homebrew/core](https://github.com/Homebrew/homebrew-core) as a formula that builds from source. If it is rejected, you may then try again as a cask (link to the issue from your pull request so we can see the discussion and reasoning for rejection).
 * App is open-source and has a GUI but no compiled versions (or only old ones) are provided. It’s better to have them in [homebrew/core](https://github.com/Homebrew/homebrew-core) so users don’t get perpetually outdated versions. See [`gedit`](https://github.com/Homebrew/homebrew-cask/pull/23360) for example.
 * We have strong reasons to believe including the cask can put the whole project at risk. Happened only once so far, [with Popcorn Time](https://github.com/Homebrew/homebrew-cask/pull/3954).
-* Casks that do not work on the latest macOS version will be rejected e.g. [when Apple drops support for Rosetta with macOS 28](https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment/) this will include x86-only software.
+* Casks that do not work on the latest macOS version will be rejected. If Apple keeps its [current Rosetta 2 transition plan](https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment/), this will include x86_64-only software when macOS 28 is the latest macOS version.
 
 ### Adult Content
 

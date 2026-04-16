@@ -153,9 +153,10 @@ module Homebrew
                 formula.enqueue_resources_and_patches(download_queue:)
               end
             end
-          else
+          when Cask::Cask
             cask = formula_or_cask
             ref = cask.loaded_from_api? ? cask.full_name : cask.sourcefile_path
+            odie "unexpected nil cask sourcefile_path" unless ref
 
             os_arch_combinations.each do |os, arch|
               SimulateSystem.with(os:, arch:) do
@@ -169,10 +170,16 @@ module Homebrew
                 quarantine = args.quarantine?
                 quarantine = true if quarantine.nil?
 
-                download = Cask::Download.new(cask, quarantine:)
+                download = Cask::Download.new(
+                  cask,
+                  quarantine:,
+                  require_sha: Homebrew::EnvConfig.cask_opts_require_sha?,
+                )
                 download_queue.enqueue(download)
               end
             end
+          else
+            odie "Invalid formula or cask: #{formula_or_cask}"
           end
         end
 

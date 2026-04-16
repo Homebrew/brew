@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "dependency"
@@ -31,13 +32,13 @@ RSpec.describe Dependency do
       expect(described_class.expand(formula)).to eq(deps)
     end
 
-    it "prunes all when given a block with ::prune" do
-      expect(described_class.expand(formula) { described_class.prune }).to be_empty
+    it "prunes all when given a block with PRUNE" do
+      expect(described_class.expand(formula) { next described_class::PRUNE }).to be_empty
     end
 
     it "can prune selectively" do
       deps = described_class.expand(formula) do |_, dep|
-        described_class.prune if dep.name == "foo"
+        next described_class::PRUNE if dep.name == "foo"
       end
 
       expect(deps).to eq([bar, baz, qux])
@@ -81,7 +82,7 @@ RSpec.describe Dependency do
     expect(described_class.expand(formula).first.tags).to eq(%w[option])
   end
 
-  it "skips parent but yields children with ::skip" do
+  it "skips parent but yields children with SKIP" do
     f = instance_double(
       Formula,
       name: "f",
@@ -92,19 +93,19 @@ RSpec.describe Dependency do
     )
 
     deps = described_class.expand(f) do |_dependent, dep|
-      described_class.skip if %w[foo qux].include? dep.name
+      next described_class::SKIP if %w[foo qux].include? dep.name
     end
 
     expect(deps).to eq([bar, baz])
   end
 
-  it "keeps dependency but prunes recursive dependencies with ::keep_but_prune_recursive_deps" do
+  it "keeps dependency but prunes recursive dependencies with KEEP_BUT_PRUNE_RECURSIVE_DEPS" do
     foo = build_dep(:foo, [:test], bar)
     baz = build_dep(:baz, [:test])
     f = instance_double(Formula, name: "f", deps: [foo, baz])
 
     deps = described_class.expand(f) do |_dependent, dep|
-      described_class.keep_but_prune_recursive_deps if dep.test?
+      next described_class::KEEP_BUT_PRUNE_RECURSIVE_DEPS if dep.test?
     end
 
     expect(deps).to eq([foo, baz])

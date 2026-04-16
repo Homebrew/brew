@@ -172,42 +172,8 @@ module OS
     # @api public
     sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(::Pathname)) }
     def self.sdk_path_if_needed(version = nil)
+      # odeprecated "MacOS.sdk_path_if_needed", "MacOS.sdk_path"
       sdk_path(version)
-    end
-
-    # See these issues for some history:
-    #
-    # - {https://github.com/Homebrew/legacy-homebrew/issues/13}
-    # - {https://github.com/Homebrew/legacy-homebrew/issues/41}
-    # - {https://github.com/Homebrew/legacy-homebrew/issues/48}
-    sig { returns(T::Array[Pathname]) }
-    def self.macports_or_fink
-      paths = []
-
-      # First look in the path because MacPorts is relocatable and Fink
-      # may become relocatable in the future.
-      %w[port fink].each do |ponk|
-        path = which(ponk)
-        paths << path unless path.nil?
-      end
-
-      # Look in the standard locations, because even if port or fink are
-      # not in the path they can still break builds if the build scripts
-      # have these paths baked in.
-      %w[/sw/bin/fink /opt/local/bin/port].each do |ponk|
-        path = ::Pathname.new(ponk)
-        paths << path if path.exist?
-      end
-
-      # Finally, some users make their MacPorts or Fink directories
-      # read-only in order to try out Homebrew, but this doesn't work as
-      # some build scripts error out when trying to read from these now
-      # unreadable paths.
-      %w[/sw /opt/local].map { |p| ::Pathname.new(p) }.each do |path|
-        paths << path if path.exist? && !path.readable?
-      end
-
-      paths.uniq
     end
 
     sig { params(ids: String).returns(T.nilable(::Pathname)) }

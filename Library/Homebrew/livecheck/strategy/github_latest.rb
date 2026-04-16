@@ -32,8 +32,6 @@ module Homebrew
       class GithubLatest
         extend Strategic
 
-        NICE_NAME = "GitHub - Latest"
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {GithubLatest} so we can selectively apply the strategy using
         # `strategy :github_latest` in a `livecheck` block.
@@ -110,6 +108,5 @@ module Homebrew
         end
       end
     end
-    GitHubLatest = Homebrew::Livecheck::Strategy::GithubLatest
   end
 end

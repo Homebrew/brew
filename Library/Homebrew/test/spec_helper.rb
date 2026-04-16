@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 if ENV["HOMEBREW_TESTS_COVERAGE"]
@@ -286,6 +287,7 @@ RSpec.configure do |config|
       example.example.set_exception(e)
     ensure
       ENV.replace(@__env)
+      Homebrew::SimulateSystem.clear
       Context.current = Context::ContextStruct.new
 
       $stdout.reopen(@__stdout)

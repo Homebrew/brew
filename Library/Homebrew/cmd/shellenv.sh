@@ -81,6 +81,7 @@ homebrew-shellenv() {
       if [[ "${HOMEBREW_SHELL_NAME}" == "zsh" ]] || [[ "${HOMEBREW_SHELL_NAME}" == "-zsh" ]]
       then
         echo "fpath[1,0]=\"${HOMEBREW_PREFIX}/share/zsh/site-functions\";"
+        echo "export FPATH;"
       fi
       if [[ -n "${PATH_HELPER_ROOT}" ]]
       then

@@ -166,7 +166,7 @@ jobs:
           echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
 
       - name: Log in to GitHub Packages (github-actions[bot])
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: github-actions[bot]
@@ -187,7 +187,7 @@ jobs:
 
       - name: Log in to GitHub Packages (BrewTestBot)
         if: fromJSON(steps.attributes.outputs.push)
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: BrewTestBot
@@ -244,7 +244,7 @@ jobs:
           merge-multiple: true
 
       - name: Log in to GitHub Packages (BrewTestBot)
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: BrewTestBot

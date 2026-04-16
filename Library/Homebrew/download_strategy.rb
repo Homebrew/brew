@@ -4,7 +4,6 @@
 require "json"
 require "time"
 require "unpack_strategy"
-require "lazy_object"
 require "lock_file"
 require "system_command"
 require "utils/output"
@@ -145,6 +144,12 @@ class AbstractDownloadStrategy # rubocop:todo Style/OneClassPerFile
   def source_modified_time
     Pathname.pwd.to_enum(:find).select(&:file?).map(&:mtime).max
   end
+
+  # Return the checked out source revision for version control downloads.
+  #
+  # @api public
+  sig { overridable.returns(T.nilable(String)) }
+  def source_revision; end
 
   # Remove {#cached_location} and any other files associated with the resource
   # from the cache.
@@ -365,12 +370,6 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy # rubocop:todo Sty
   end
 
   private
-
-  sig { returns(String) }
-  def resolved_url
-    resolved_url, = resolved_url_and_basename
-    resolved_url
-  end
 
   sig { returns(String) }
   def resolved_basename
@@ -850,7 +849,7 @@ class LocalBottleDownloadStrategy < AbstractFileDownloadStrategy # rubocop:todo 
   # rubocop:disable Lint/MissingSuper
   sig { params(path: Pathname).void }
   def initialize(path)
-    @cached_location = T.let(path, Pathname)
+    @cached_location = path
   end
   # rubocop:enable Lint/MissingSuper
 
@@ -895,6 +894,9 @@ class SubversionDownloadStrategy < VCSDownloadStrategy # rubocop:todo Style/OneC
     end
     Time.parse T.must(time)
   end
+
+  sig { override.returns(T.nilable(String)) }
+  def source_revision = last_commit
 
   # Return last commit's unique identifier for the repository.
   #
@@ -1010,6 +1012,9 @@ class GitDownloadStrategy < VCSDownloadStrategy # rubocop:todo Style/OneClassPer
     Time.parse(silent_command("git", args: ["--git-dir", git_dir, "show", "-s", "--format=%cD"]).stdout)
   end
 
+  sig { override.returns(T.nilable(String)) }
+  def source_revision = current_revision.presence
+
   # Return last commit's unique identifier for the repository if fetched locally.
   #
   # @api public
@@ -1069,7 +1074,7 @@ class GitDownloadStrategy < VCSDownloadStrategy # rubocop:todo Style/OneClassPer
 
   sig { override.returns(T::Boolean) }
   def repo_valid?
-    silent_command("git", args: ["--git-dir", git_dir, "status", "-s"]).success?
+    silent_command("git", args: ["-C", cached_location, "status", "-s"]).success?
   end
 
   sig { returns(T::Boolean) }
@@ -1273,7 +1278,7 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy # rubocop:todo Style/OneCl
   sig { params(url: String, name: String, version: T.nilable(Version), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
-    @version = T.let(version, T.nilable(Version))
+    @version = version
 
     match_data = %r{^https?://github\.com/(?<user>[^/]+)/(?<repo>[^/]+)\.git$}.match(@url)
     return unless match_data
@@ -1284,7 +1289,8 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy # rubocop:todo Style/OneCl
 
   sig { override.returns(String) }
   def last_commit
-    @last_commit ||= GitHub.last_commit(@user, @repo, @ref, version, length: MINIMUM_COMMIT_HASH_LENGTH)
+    @last_commit ||= GitHub.last_commit(T.must(@user), T.must(@repo), @ref, T.cast(T.must(version), Version),
+                                        length: MINIMUM_COMMIT_HASH_LENGTH)
     @last_commit || super
   end
 
@@ -1294,7 +1300,7 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy # rubocop:todo Style/OneCl
     return super if last_commit.blank?
     return true unless last_commit.start_with?(commit)
 
-    if GitHub.multiple_short_commits_exist?(@user, @repo, commit)
+    if GitHub.multiple_short_commits_exist?(T.must(@user), T.must(@repo), commit)
       true
     else
       T.must(@version).update_commit(commit)
@@ -1438,6 +1444,9 @@ class MercurialDownloadStrategy < VCSDownloadStrategy # rubocop:todo Style/OneCl
     Time.parse(silent_command("hg", args: ["tip", "--template", "{date|isodate}", "-R", cached_location]).stdout)
   end
 
+  sig { override.returns(T.nilable(String)) }
+  def source_revision = current_revision.presence
+
   # Return last commit's unique identifier for the repository.
   #
   # @api public
@@ -1529,6 +1538,9 @@ class BazaarDownloadStrategy < VCSDownloadStrategy # rubocop:todo Style/OneClass
     Time.parse(timestamp)
   end
 
+  sig { override.returns(T.nilable(String)) }
+  def source_revision = last_commit.presence
+
   # Return last commit's unique identifier for the repository.
   #
   # @api public
@@ -1592,6 +1604,9 @@ class FossilDownloadStrategy < VCSDownloadStrategy # rubocop:todo Style/OneClass
     out = silent_command("fossil", args: ["info", "tip", "-R", cached_location]).stdout
     Time.parse(T.must(out[/^(hash|uuid): +\h+ (.+)$/, 1]))
   end
+
+  sig { override.returns(T.nilable(String)) }
+  def source_revision = last_commit.presence
 
   # Return last commit's unique identifier for the repository.
   #

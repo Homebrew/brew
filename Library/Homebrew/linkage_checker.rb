@@ -25,7 +25,13 @@ class LinkageChecker
   sig { returns(T::Set[String]) }
   attr_reader :system_dylibs
 
-  sig { params(keg: Keg, formula: T.nilable(Formula), cache_db: CacheStoreDatabase, rebuild_cache: T::Boolean).void }
+  sig {
+    params(
+      keg: Keg, formula: T.nilable(Formula),
+      cache_db: CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]],
+      rebuild_cache: T::Boolean
+    ).void
+  }
   def initialize(keg, formula = nil, cache_db:, rebuild_cache: false)
     @keg = keg
     @formula = T.let(formula || resolve_formula(keg), T.nilable(Formula))
@@ -264,7 +270,7 @@ class LinkageChecker
                                       .reject { |dep| filter_out.call(dep) }
                                       .map(&:name)
     declared_deps_names = declared_deps_full_names.map do |dep|
-      dep.split("/").last
+      Utils.name_from_full_name(dep)
     end
 
     # Get dependencies marked with :no_linkage
@@ -273,7 +279,7 @@ class LinkageChecker
                                         .select(&:no_linkage?)
                                         .map(&:name)
     no_linkage_deps_names = no_linkage_deps_full_names.map do |dep|
-      dep.split("/").last
+      Utils.name_from_full_name(dep)
     end
 
     recursive_deps = formula.runtime_formula_dependencies(undeclared: false)
@@ -283,7 +289,7 @@ class LinkageChecker
     undeclared_deps = []
     unexpected_linkage_deps = []
     @brewed_dylibs.each_key do |full_name|
-      name = full_name.split("/").last
+      name = Utils.name_from_full_name(full_name)
       next if name == formula.name
 
       # Check if this is a no_linkage dependency with unexpected linkage
@@ -306,8 +312,8 @@ class LinkageChecker
     unnecessary_deps = declared_deps_full_names.reject do |full_name|
       next true if Formula[full_name].bin.directory?
 
-      name = full_name.split("/").last
-      @brewed_dylibs.keys.map { |l| l.split("/").last }.include?(name)
+      name = Utils.name_from_full_name(full_name)
+      @brewed_dylibs.keys.map { |l| Utils.name_from_full_name(l) }.include?(name)
     end
 
     # Remove no_linkage dependencies from unnecessary_deps since they're expected not to have linkage
@@ -319,7 +325,7 @@ class LinkageChecker
     version_hash = {}
     version_conflict_deps = Set.new
     @brewed_dylibs.each_key do |l|
-      name = l.split("/").fetch(-1)
+      name = Utils.name_from_full_name(l)
       unversioned_name, = name.split("@")
       version_hash[unversioned_name] ||= Set.new
       version_hash[unversioned_name] << name

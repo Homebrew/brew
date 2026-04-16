@@ -370,9 +370,21 @@ EOS
     pop_stash_message
   fi
 
-  if [[ -n "${MAIN_MIGRATION_REQUIRED}" && -n "$(git config branch.main.remote 2>/dev/null || true)" ]]
+  if [[ -n "${MAIN_MIGRATION_REQUIRED}" ]]
   then
-    git branch -d "${QUIET_ARGS[@]}" master
+    if [[ -n "$(git config branch.main.remote 2>/dev/null || true)" ]]
+    then
+      git branch -d "${QUIET_ARGS[@]}" master
+    else
+      opoo "$(
+        cat <<EOWARN
+Failed to migrate ${DIR} from the deprecated "master" branch to "main"!
+The "master" branch sync will stop and this warning will become an error when
+Homebrew 5.2.0 is released (no earlier than 2026-06-10).
+Re-run \`brew update\` to try again.
+EOWARN
+      )"
+    fi
   fi
 
   trap - SIGINT
@@ -502,10 +514,8 @@ homebrew-update() {
         [[ "${option}" == *f* ]] && HOMEBREW_UPDATE_FORCE=1
         ;;
       *)
-        odie <<EOS
-This command updates brew itself, and does not take formula names.
-Use \`brew upgrade $@\` instead.
-EOS
+        opoo "Use \`brew upgrade $*\` to upgrade formulae; running it instead."
+        exec "${HOMEBREW_BREW_FILE}" upgrade "$@"
         ;;
     esac
   done
@@ -877,7 +887,7 @@ EOS
           local git_errors
           git_errors="$(cat "${tmp_failure_file}")"
           # Attempt migration from master to main branch.
-          if [[ "${git_errors}" == "fatal: couldn't find remote ref refs/heads/master" ]]
+          if [[ "${git_errors}" == *"couldn't find remote ref refs/heads/master"* ]]
           then
             if git fetch --tags --force "${QUIET_ARGS[@]}" origin \
                "refs/heads/main:refs/remotes/origin/main" 2>>"${tmp_failure_file}"

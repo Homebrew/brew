@@ -46,16 +46,22 @@ module Homebrew
       raise "#{query} is not a valid regex."
     end
 
+    sig { params(_cask: Cask::Cask).returns(T::Boolean) }
+    def self.ignore_cask?(_cask) = false
+
     T::Sig::WithoutRuntime.sig {
       params(
         string_or_regex: T.any(Regexp, String),
         # These must define `cask?`, `eval_all?`, and `formula?` methods.
         # Since only one command is typically loaded at a time, this alias is not expected to be available at runtime.
         args:            T.any(Homebrew::Cmd::Desc::Args, Homebrew::Cmd::SearchCmd::Args),
-        search_type:     Descriptions::SearchField,
+        search_type:     T.nilable(Descriptions::SearchField),
       ).void
     }
-    def self.search_descriptions(string_or_regex, args, search_type: Descriptions::SearchField::Description)
+    def self.search_descriptions(string_or_regex, args, search_type: nil)
+      require "descriptions"
+
+      search_type ||= Descriptions::SearchField::Description
       both = !args.formula? && !args.cask?
       eval_all = args.eval_all? || Homebrew::EnvConfig.eval_all?
 
@@ -63,8 +69,8 @@ module Homebrew
         ohai "Formulae"
         if eval_all
           CacheStoreDatabase.use(:descriptions) do |db|
-            cache_store = DescriptionCacheStore.new(db)
-            Descriptions.search(string_or_regex, search_type, cache_store, eval_all).print
+            cache_store = DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+            Descriptions.search(string_or_regex, search_type, cache_store, eval_all:).print
           end
         else
           unofficial = Tap.all.sum { |tap| tap.official? ? 0 : tap.formula_files.size }
@@ -72,8 +78,12 @@ module Homebrew
             opoo "Use `--eval-all` to search #{unofficial} additional " \
                  "#{Utils.pluralize("formula", unofficial)} in third party taps."
           end
-          descriptions = Homebrew::API::Formula.all_formulae.transform_values { |data| data["desc"] }
-          Descriptions.search(string_or_regex, search_type, descriptions, eval_all).print
+          formulae = Homebrew::API::Formula.all_formulae
+          descriptions = formulae.transform_values { |data| data["desc"] }
+          status_data = formulae.transform_values do |data|
+            { deprecated: data["deprecate_present"].present?, disabled: data["disable_present"].present? }
+          end
+          Descriptions.search(string_or_regex, search_type, descriptions, status_data:, eval_all:).print
         end
       end
       return if !args.cask? && !both
@@ -83,8 +93,8 @@ module Homebrew
       ohai "Casks"
       if eval_all
         CacheStoreDatabase.use(:cask_descriptions) do |db|
-          cache_store = CaskDescriptionCacheStore.new(db)
-          Descriptions.search(string_or_regex, search_type, cache_store, eval_all).print
+          cache_store = CaskDescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+          Descriptions.search(string_or_regex, search_type, cache_store, eval_all:).print
         end
       else
         unofficial = Tap.all.sum { |tap| tap.official? ? 0 : tap.cask_files.size }
@@ -92,8 +102,12 @@ module Homebrew
           opoo "Use `--eval-all` to search #{unofficial} additional " \
                "#{Utils.pluralize("cask", unofficial)} in third party taps."
         end
-        descriptions = Homebrew::API::Cask.all_casks.transform_values { |c| [c["name"].join(", "), c["desc"]] }
-        Descriptions.search(string_or_regex, search_type, descriptions, eval_all).print
+        casks = Homebrew::API::Cask.all_casks
+        descriptions = casks.transform_values { |cask| [cask["name"].join(", "), cask["desc"]] }
+        status_data = casks.transform_values do |cask|
+          { deprecated: cask["deprecate_present"].present?, disabled: cask["disable_present"].present? }
+        end
+        Descriptions.search(string_or_regex, search_type, descriptions, status_data:, eval_all:).print
       end
     end
 
@@ -148,7 +162,8 @@ module Homebrew
     def self.search_casks(string_or_regex)
       if string_or_regex.is_a?(String) && string_or_regex.match?(HOMEBREW_TAP_CASK_REGEX)
         return begin
-          [Cask::CaskLoader.load(string_or_regex).token]
+          matched_cask = Cask::CaskLoader.load(string_or_regex)
+          ignore_cask?(matched_cask) ? [] : [matched_cask.token]
         rescue Cask::CaskUnavailableError
           []
         end
@@ -169,14 +184,15 @@ module Homebrew
                                            .correct(string_or_regex)
       end
 
-      results.sort.map do |name|
-        cask = Cask::CaskLoader.load(name)
+      results.sort.filter_map do |name|
+        cask = Cask::CaskLoader.load(name.to_s)
+        next if ignore_cask?(cask)
+
         display_name = if cask.installed?
           pretty_installed(cask.full_name)
         else
           cask.full_name
         end
-
         if cask.deprecated?
           pretty_deprecated(display_name)
         elsif cask.disabled?
@@ -245,3 +261,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/search"

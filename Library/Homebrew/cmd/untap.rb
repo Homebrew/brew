@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "abstract_command"
+require "utils"
 
 module Homebrew
   module Cmd
@@ -49,7 +50,7 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Array[Formula]) }
       def installed_formulae_for(tap:)
         tap.formula_names.filter_map do |formula_name|
-          next unless installed_formulae_names.include?(formula_name.split("/").fetch(-1))
+          next unless installed_formulae_names.include?(Utils.name_from_full_name(formula_name))
 
           formula = begin
             Formulary.factory(formula_name)
@@ -68,7 +69,7 @@ module Homebrew
       sig { params(tap: Tap).returns(T::Array[Cask::Cask]) }
       def installed_casks_for(tap:)
         tap.cask_tokens.filter_map do |cask_token|
-          next unless installed_cask_tokens.include?(cask_token.split("/").fetch(-1))
+          next unless installed_cask_tokens.include?(Utils.name_from_full_name(cask_token))
 
           cask = begin
             Cask::CaskLoader.load(cask_token)

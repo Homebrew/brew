@@ -2,42 +2,37 @@
 # frozen_string_literal: true
 
 require "cask/cask_loader"
-require "cask/installer"
-
 module OS
   module Linux
     module Bundle
       module Skipper
         module ClassMethods
           sig { params(entry: Homebrew::Bundle::Dsl::Entry).returns(T::Boolean) }
-          def macos_only_entry?(entry)
-            entry.type == :mas
-          end
-
-          sig { params(entry: Homebrew::Bundle::Dsl::Entry).returns(T::Boolean) }
-          def macos_only_cask?(entry)
-            return false if entry.type != :cask
-
-            cask = ::Cask::CaskLoader.load(entry.name)
-            installer = ::Cask::Installer.new(cask)
-            installer.check_stanza_os_requirements
-
-            false
+          def requires_macos?(entry)
+            case entry.type
+            when :mas
+              true
+            when :cask
+              !::Cask::CaskLoader.load(entry.name).supports_linux?
+            else
+              false
+            end
           rescue ::Cask::CaskError
+            # If the cask can't be loaded, it may be from a tap that hasn't been
+            # tapped yet. Don't assume macOS-only in that case — let the normal
+            # install flow handle it after the tap is processed.
+            full_name = T.cast(entry.options[:full_name], T.nilable(String))
+            return false if full_name&.include?("/")
+
             true
           end
 
           sig { params(entry: Homebrew::Bundle::Dsl::Entry, silent: T::Boolean).returns(T::Boolean) }
           def skip?(entry, silent: false)
-            if macos_only_entry?(entry) || macos_only_cask?(entry)
-              unless silent
-                $stdout.puts Formatter.warning "Skipping #{entry.type} #{entry.name} (unsupported on Linux)"
-              end
+            return super unless requires_macos?(entry)
 
-              true
-            else
-              super(entry)
-            end
+            $stdout.puts Formatter.warning("Skipping #{entry.type} #{entry.name} (requires macOS)") unless silent
+            true
           end
         end
       end

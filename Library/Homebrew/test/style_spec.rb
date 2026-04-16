@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "style"
@@ -53,6 +54,8 @@ RSpec.describe Homebrew::Style do
   describe ".run_actionlint!" do
     before do
       allow(described_class).to receive_messages(actionlint: "actionlint", shellcheck: "shellcheck")
+      # Run a trivial command so $CHILD_STATUS is non-nil after the stubbed `system` call.
+      system("true")
       allow(described_class).to receive(:system).and_return(true)
     end
 

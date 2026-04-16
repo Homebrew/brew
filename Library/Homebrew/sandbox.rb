@@ -119,16 +119,6 @@ class Sandbox
     add_rule allow: true, operation: "network*", filter: path_filter(path, type)
   end
 
-  sig { params(path: T.any(String, Pathname), type: Symbol).void }
-  def deny_network(path:, type: :literal)
-    add_rule allow: false, operation: "network*", filter: path_filter(path, type)
-  end
-
-  sig { void }
-  def allow_all_network
-    add_rule allow: true, operation: "network*"
-  end
-
   sig { void }
   def deny_all_network
     add_rule allow: false, operation: "network*"

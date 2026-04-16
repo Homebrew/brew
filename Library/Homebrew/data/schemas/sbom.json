@@ -20,7 +20,8 @@
         "properties" : {
           "annotationDate" : {
             "description" : "Identify when the comment was made. This is to be specified according to the combined date and time in the UTC format, as specified in the ISO 8601 standard.",
-            "type" : "string"
+            "type" : "string",
+            "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
           },
           "annotationType" : {
             "description" : "Type of the annotation.",
@@ -51,7 +52,8 @@
         },
         "created" : {
           "description" : "Identify when the SPDX document was originally created. The date is to be specified according to combined date and time in UTC format as specified in ISO 8601 standard.",
-          "type" : "string"
+          "type" : "string",
+          "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
         },
         "creators" : {
           "description" : "Identify who (or what, in the case of a tool) created the SPDX document. If the SPDX document was created by an individual, indicate the person's name. If the SPDX document was created on behalf of a company or organization, indicate the entity name. If the SPDX document was created using a software tool, indicate the name and version for that tool. If multiple participants or tools were involved, use multiple instances of this field. Person name or organization name may be designated as “anonymous” if appropriate.",
@@ -149,7 +151,8 @@
                 },
                 "timestamp" : {
                   "description" : "Timestamp",
-                  "type" : "string"
+                  "type" : "string",
+                  "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
                 },
                 "url" : {
                   "description" : "URL Reference",
@@ -201,7 +204,8 @@
           },
           "reviewDate" : {
             "description" : "The date and time at which the SpdxDocument was reviewed. This value must be in UTC and have 'Z' as its timezone indicator.",
-            "type" : "string"
+            "type" : "string",
+            "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
           },
           "reviewer" : {
             "description" : "The name and, optionally, contact information of the person who performed the review. Values of this property must conform to the agent and tool syntax.  The reviewer property is deprecated in favor of Annotation with an annotationType review.",
@@ -249,7 +253,8 @@
               "properties" : {
                 "annotationDate" : {
                   "description" : "Identify when the comment was made. This is to be specified according to the combined date and time in the UTC format, as specified in the ISO 8601 standard.",
-                  "type" : "string"
+                  "type" : "string",
+                  "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
                 },
                 "annotationType" : {
                   "description" : "Type of the annotation.",
@@ -279,7 +284,8 @@
           },
           "builtDate" : {
             "description" : "This field provides a place for recording the actual date the package was built.",
-            "type" : "string"
+            "type" : "string",
+            "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
           },
           "checksums" : {
             "description" : "The checksum property provides a mechanism that can be used to verify that the contents of a File or Package have not changed.",
@@ -421,7 +427,8 @@
           },
           "releaseDate" : {
             "description" : "This field provides a place for recording the date the package was released.",
-            "type" : "string"
+            "type" : "string",
+            "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
           },
           "sourceInfo" : {
             "description" : "Allows the producer(s) of the SPDX document to describe how the package was acquired and/or changed from the original source.",
@@ -437,7 +444,8 @@
           },
           "validUntilDate" : {
             "description" : "This field provides a place for recording the end of the support period for a package from the supplier.",
-            "type" : "string"
+            "type" : "string",
+            "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
           },
           "versionInfo" : {
             "description" : "Provides an indication of the version of the package that is described by this SpdxDocument.",
@@ -466,7 +474,8 @@
               "properties" : {
                 "annotationDate" : {
                   "description" : "Identify when the comment was made. This is to be specified according to the combined date and time in the UTC format, as specified in the ISO 8601 standard.",
-                  "type" : "string"
+                  "type" : "string",
+                  "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
                 },
                 "annotationType" : {
                   "description" : "Type of the annotation.",
@@ -603,7 +612,8 @@
               "properties" : {
                 "annotationDate" : {
                   "description" : "Identify when the comment was made. This is to be specified according to the combined date and time in the UTC format, as specified in the ISO 8601 standard.",
-                  "type" : "string"
+                  "type" : "string",
+                  "pattern" : "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|30|31)T([0-1][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)Z$"
                 },
                 "annotationType" : {
                   "description" : "Type of the annotation.",
