@@ -277,6 +277,7 @@ module Homebrew
         # with a short description of the software they come with.
         allow_list = [
           "libfuse-t*.a", # FUSE-T
+          "libfuse3.a", # FUSE-T
           "libntfs-3g.a", # NTFS-3G
           "libntfs.a", # NTFS-3G
           "libublio.a", # NTFS-3G

@@ -349,6 +349,129 @@ RSpec.describe Cask::Upgrade, :cask do
     end
   end
 
+  context "when releasing quarantine during upgrade" do
+    let(:outdated_auto_updates) { Cask::CaskLoader.load(cask_path("outdated/auto-updates")) }
+    let(:outdated_local_caffeine) { Cask::CaskLoader.load(cask_path("outdated/local-caffeine")) }
+    let(:auto_updates_identity) do
+      Cask::Quarantine::SigningIdentity.new(identifier: "sh.brew.auto-updates", team_identifier: "ABCDE12345")
+    end
+    let(:auto_updates_changed_team_identity) do
+      Cask::Quarantine::SigningIdentity.new(identifier: "sh.brew.auto-updates", team_identifier: "VWXYZ98765")
+    end
+    let(:auto_updates_changed_identifier_identity) do
+      Cask::Quarantine::SigningIdentity.new(identifier: "sh.brew.auto-updates-renamed", team_identifier: "ABCDE12345")
+    end
+    let(:local_caffeine_identity) do
+      Cask::Quarantine::SigningIdentity.new(identifier: "sh.brew.local-caffeine", team_identifier: "ABCDE12345")
+    end
+
+    before do
+      [
+        "outdated/local-caffeine",
+        "outdated/auto-updates",
+      ].each do |cask_name|
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask_name)))
+      end
+    end
+
+    it 'prefetches "auto_updates true" casks with quarantine until signed identity is checked' do
+      installer = instance_double(Cask::Installer, prelude: nil, enqueue_downloads: nil)
+
+      expect(Cask::Installer).to receive(:new) do |cask, **options|
+        expect(cask).to eq(auto_updates)
+        expect(options[:quarantine]).to be(true)
+        installer
+      end
+      expect(described_class).to receive(:upgrade_cask)
+
+      described_class.upgrade_casks!(auto_updates, show_upgrade_summary: false, args:)
+    end
+
+    it "releases quarantine when Gatekeeper was already approved and identity matches" do
+      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path).and_return(auto_updates_identity)
+
+      expect(described_class.release_app_upgrade_quarantine?(
+               outdated_auto_updates,
+               auto_updates,
+               { auto_updates_path.to_s => auto_updates_identity },
+               { auto_updates_path.to_s => true },
+             )).to be(true)
+    end
+
+    it "still keeps quarantine when the Team ID changes" do
+      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path)
+                                                           .and_return(auto_updates_changed_team_identity)
+
+      expect(described_class.release_app_upgrade_quarantine?(
+               outdated_auto_updates,
+               auto_updates,
+               { auto_updates_path.to_s => auto_updates_identity },
+               { auto_updates_path.to_s => true },
+             )).to be(false)
+    end
+
+    it "still keeps quarantine when the signed identifier changes" do
+      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path)
+                                                           .and_return(auto_updates_changed_identifier_identity)
+
+      expect(described_class.release_app_upgrade_quarantine?(
+               outdated_auto_updates,
+               auto_updates,
+               { auto_updates_path.to_s => auto_updates_identity },
+               { auto_updates_path.to_s => true },
+             )).to be(false)
+    end
+
+    it "releases quarantine when signed fields are unset before or after the upgrade" do
+      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path)
+                                                           .and_return(auto_updates_identity)
+
+      expect(described_class.release_app_upgrade_quarantine?(
+               outdated_auto_updates,
+               auto_updates,
+               { auto_updates_path.to_s => Cask::Quarantine::SigningIdentity.new(identifier:      nil,
+                                                                                 team_identifier: nil) },
+               { auto_updates_path.to_s => true },
+             )).to be(true)
+    end
+
+    it "still keeps quarantine when Gatekeeper was not approved" do
+      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path).and_return(auto_updates_identity)
+
+      expect(described_class.release_app_upgrade_quarantine?(
+               outdated_auto_updates,
+               auto_updates,
+               { auto_updates_path.to_s => auto_updates_identity },
+               { auto_updates_path.to_s => false },
+             )).to be(false)
+    end
+
+    it "releases quarantine for casks without auto_updates when Gatekeeper was already approved " \
+       "and identity matches" do
+      allow(Cask::Quarantine).to receive(:signing_identity).with(local_caffeine_path)
+                                                           .and_return(local_caffeine_identity)
+
+      expect(described_class.release_app_upgrade_quarantine?(
+               outdated_local_caffeine,
+               local_caffeine,
+               { local_caffeine_path.to_s => local_caffeine_identity },
+               { local_caffeine_path.to_s => true },
+             )).to be(true)
+    end
+
+    it "still keeps quarantine for casks without auto_updates when Gatekeeper was not approved" do
+      allow(Cask::Quarantine).to receive(:signing_identity).with(local_caffeine_path)
+                                                           .and_return(local_caffeine_identity)
+
+      expect(described_class.release_app_upgrade_quarantine?(
+               outdated_local_caffeine,
+               local_caffeine,
+               { local_caffeine_path.to_s => local_caffeine_identity },
+               { local_caffeine_path.to_s => false },
+             )).to be(false)
+    end
+  end
+
   it "warns and skips disabled casks" do
     cask = Cask::CaskLoader.load(cask_path("livecheck/livecheck-disabled"))
     InstallHelper.stub_cask_installation(cask)

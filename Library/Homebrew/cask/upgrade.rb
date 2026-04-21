@@ -3,6 +3,7 @@
 
 require "env_config"
 require "cask/config"
+require "cask/quarantine"
 require "deprecate_disable"
 require "utils/output"
 
@@ -117,8 +118,6 @@ module Cask
       show_upgrade_summary: true,
       download_queue: nil
     )
-      quarantine = true if quarantine.nil?
-
       outdated_casks =
         self.outdated_casks(casks, args:, greedy:, greedy_latest:, greedy_auto_updates:, force:, quiet:)
 
@@ -201,9 +200,9 @@ module Cask
             # This is significantly easier given the weird difference in Sorbet signatures here.
             # rubocop:disable Style/DoubleNegation
             Installer.new(cask, binaries: !!binaries, verbose: !!verbose, force: !!force,
-                                                 skip_cask_deps: !!skip_cask_deps, require_sha: !!require_sha,
-                                                 upgrade: true, quarantine:, download_queue: prefetch_download_queue,
-                                                 defer_fetch: true)
+                                    skip_cask_deps: !!skip_cask_deps, require_sha: !!require_sha,
+                                    upgrade: true, quarantine: quarantine != false,
+                                    download_queue: prefetch_download_queue, defer_fetch: true)
             # rubocop:enable Style/DoubleNegation
           end
 
@@ -230,7 +229,8 @@ module Cask
         upgrade_cask(
           old_cask, new_cask,
           binaries:, force:, skip_cask_deps:, verbose:,
-          quarantine:, require_sha:, download_queue:
+          quarantine:,
+          require_sha:, download_queue:
         )
       rescue => e
         new_exception = e.exception("#{new_cask.full_name}: #{e}")
@@ -243,6 +243,36 @@ module Cask
       raise MultipleCaskErrors, caught_exceptions if caught_exceptions.count > 1
       raise caught_exceptions.fetch(0) if caught_exceptions.one?
 
+      false
+    end
+
+    sig {
+      params(
+        old_cask:               Cask,
+        new_cask:               Cask,
+        old_signing_identities: T::Hash[String, T.nilable(Quarantine::SigningIdentity)],
+        old_user_approved:      T::Hash[String, T::Boolean],
+      ).returns(T::Boolean)
+    }
+    def self.release_app_upgrade_quarantine?(old_cask, new_cask, old_signing_identities, old_user_approved)
+      old_app_artifacts = old_cask.artifacts.grep(Artifact::App)
+      new_app_artifacts = new_cask.artifacts.grep(Artifact::App)
+      return false if old_app_artifacts.empty? || old_app_artifacts.length != new_app_artifacts.length
+
+      old_app_artifacts.each_with_index.all? do |artifact, index|
+        next false unless old_user_approved.fetch(artifact.target.to_s, false)
+
+        new_identity = Quarantine.signing_identity(new_app_artifacts.fetch(index).target)
+        old_identity = old_signing_identities[artifact.target.to_s]
+
+        [
+          [old_identity&.identifier, new_identity&.identifier],
+          [old_identity&.team_identifier, new_identity&.team_identifier],
+        ].none? do |old_value, new_value|
+          !old_value.nil? && !new_value.nil? && old_value != new_value
+        end
+      end
+    rescue
       false
     end
 
@@ -288,16 +318,16 @@ module Cask
         skip_cask_deps:,
         require_sha:,
         upgrade:        true,
-        quarantine:,
         download_queue:,
-        defer_fetch:    true,
       }.compact
 
       new_cask_installer =
-        Installer.new(new_cask, **new_options)
+        Installer.new(new_cask, **new_options, quarantine: quarantine != false, defer_fetch: true)
 
       started_upgrade = false
       new_artifacts_installed = false
+      old_signing_identities = T.let({}, T::Hash[String, T.nilable(Quarantine::SigningIdentity)])
+      old_user_approved = T.let({}, T::Hash[String, T::Boolean])
 
       begin
         oh1 "Upgrading #{Formatter.identifier(old_cask)}"
@@ -312,6 +342,14 @@ module Cask
 
         new_cask_installer.fetch
 
+        if quarantine.nil?
+          old_cask.artifacts.grep(Artifact::App).each do |artifact|
+            old_user_approved[artifact.target.to_s] =
+              artifact.target.exist? ? Quarantine.user_approved?(artifact.target) : false
+            old_signing_identities[artifact.target.to_s] = Quarantine.signing_identity(artifact.target)
+          end
+        end
+
         # Move the old cask's artifacts back to staging
         old_cask_installer.start_upgrade(successor: new_cask)
         # And flag it so in case of error
@@ -322,6 +360,14 @@ module Cask
 
         new_cask_installer.install_artifacts(predecessor: old_cask)
         new_artifacts_installed = true
+
+        if quarantine.nil? &&
+           Quarantine.available? &&
+           release_app_upgrade_quarantine?(old_cask, new_cask, old_signing_identities, old_user_approved)
+          new_cask.artifacts.grep(Artifact::App).each do |artifact|
+            Quarantine.release!(download_path: artifact.target)
+          end
+        end
 
         # If successful, wipe the old cask from staging.
         old_cask_installer.finalize_upgrade

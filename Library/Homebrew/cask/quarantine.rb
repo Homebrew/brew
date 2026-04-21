@@ -12,7 +12,13 @@ module Cask
     extend SystemCommand::Mixin
     extend ::Utils::Output::Mixin
 
+    class SigningIdentity < T::Struct
+      const :identifier, T.nilable(String)
+      const :team_identifier, T.nilable(String)
+    end
+
     QUARANTINE_ATTRIBUTE = "com.apple.quarantine"
+    USER_APPROVED_FLAG = 0x0040
 
     QUARANTINE_SCRIPT = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/quarantine.swift").freeze, Pathname)
     COPY_XATTRS_SCRIPT = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/copy-xattrs.swift").freeze, Pathname)
@@ -124,6 +130,37 @@ module Cask
       system_command(T.must(xattr),
                      args:         ["-p", QUARANTINE_ATTRIBUTE, file],
                      print_stderr: false).stdout.rstrip
+    end
+
+    sig { params(file: T.any(String, Pathname)).returns(T::Boolean) }
+    def self.user_approved?(file)
+      return false if xattr.nil?
+
+      quarantine_status = status(file)
+      return false if quarantine_status.empty?
+
+      quarantine_status.split(";").fetch(0).to_i(16).anybits?(USER_APPROVED_FLAG)
+    end
+
+    sig { params(file: T.any(String, Pathname)).returns(T.nilable(SigningIdentity)) }
+    def self.signing_identity(file)
+      result = system_command("codesign", args: ["-dvvv", file], print_stderr: false)
+      return unless result.success?
+
+      identifier = T.let(nil, T.nilable(String))
+      team_identifier = T.let(nil, T.nilable(String))
+
+      result.merged_output.to_s.each_line do |line|
+        case line.chomp
+        when /\AIdentifier=(.+)\z/
+          identifier = Regexp.last_match(1)
+        when /\ATeamIdentifier=(.+)\z/
+          team_identifier = Regexp.last_match(1)
+          team_identifier = nil if team_identifier == "not set"
+        end
+      end
+
+      SigningIdentity.new(identifier:, team_identifier:)
     end
 
     sig { params(attribute: String).returns(String) }
