@@ -112,7 +112,7 @@ To make changes on a new branch and submit it for review, create a GitHub pull r
 
 4. Make your changes. For formulae or casks, use `brew edit` or your favourite text editor, using the guidelines in the [Formula Cookbook](Formula-Cookbook.md) or [Cask Cookbook](Cask-Cookbook.md) for reference.
    * If there's a `bottle do` block in the formula, don't remove or change it; we'll update it when we merge your PR.
-5. For changed formulae and casks, make sure you do the brew audit step after your changed formula/cask has been installed.
+5. For changed formulae and casks, make sure you do the `brew audit` step after your changed formula/cask has been installed.
 
    For formulae:
 
