@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "abstract_command"
+require "bundler"
 require "formula"
 require "utils/bottles"
 
@@ -21,6 +22,13 @@ module Homebrew
                             "`Gemfile.lock` updates."
 
         named_args :none
+      end
+
+      sig { params(contents: String, ruby_version: String, bundler_version: String).returns(T::Boolean) }
+      def self.lockfile_in_sync?(contents, ruby_version, bundler_version)
+        parsed = Bundler::LockfileParser.new(contents)
+        parsed.ruby_version == "ruby #{ruby_version}" &&
+          parsed.bundler_version&.to_s == bundler_version
       end
 
       sig { override.void }
@@ -65,6 +73,9 @@ module Homebrew
           ohai "Writing #{ruby_sh}"
           ruby_sh.atomic_write(updated)
         end
+
+        gemfile_lock = (HOMEBREW_LIBRARY_PATH/"Gemfile.lock").read
+        return if self.class.lockfile_in_sync?(gemfile_lock, version, bundler_version)
 
         ohai "brew vendor-gems --no-commit --update=--ruby,--bundler=#{bundler_version}"
         safe_system HOMEBREW_BREW_FILE, "vendor-gems", "--no-commit", "--update=--ruby,--bundler=#{bundler_version}"
