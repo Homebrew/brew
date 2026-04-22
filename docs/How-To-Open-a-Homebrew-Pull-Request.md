@@ -123,6 +123,7 @@ To make changes on a new branch and submit it for review, create a GitHub pull r
    ```
 
    For new formulae, use `--new` instead (which implies `--strict`, `--online` and additional new-formula eligibility checks):
+
    ```sh
    HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source <NEW_FORMULA>
    brew test <NEW_FORMULA>
