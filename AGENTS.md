@@ -1,6 +1,6 @@
 # Agent Instructions for Homebrew/brew
 
-Most importantly, run `./bin/brew lgtm` to verify any file edits before prompting for input to run all style checks and tests.
+Most importantly, run `./bin/brew lgtm` to verify any file edits before prompting the user, to run all style checks and tests.
 
 This is a Ruby based repository with Bash scripts for faster execution.
 It is primarily responsible for providing the `brew` command for the Homebrew package manager.
@@ -17,10 +17,21 @@ When running commands in this repository, use `./bin/brew` (not a system `brew` 
   `./bin/brew typecheck` is fast enough to just be run globally every time.
 - Run `./bin/brew style --fix --changed` to lint code formatting using RuboCop.
   Individual files can be checked/fixed by passing them as arguments e.g. `./bin/brew style --fix Library/Homebrew/cmd/reinstall.rb`
-- Run `./bin/brew tests --online  --changed` to ensure that RSpec unit tests are passing (although some online tests may be flaky so can be ignored if they pass on a rerun).
+- Run `./bin/brew tests --online --changed` to ensure that RSpec unit tests are passing (although some online tests may be flaky so can be ignored if they pass on a rerun).
   Individual test files can be passed with `--only` e.g. to test `Library/Homebrew/cmd/reinstall.rb` with `Library/Homebrew/test/cmd/reinstall_spec.rb` run `./bin/brew tests --only=cmd/reinstall`.
 - Shortcut: `./bin/brew lgtm --online` runs all of the required checks above in one command.
 - All of the above can be run via the Homebrew MCP Server (launch with `./bin/brew mcp-server`).
+- After adding or updating gems, regenerate Sorbet RBI stubs with `./bin/brew typecheck --update`. Use `--update-all` when gems are added or significantly changed; plain `--update` is sufficient for DSL-only changes. Commit the resulting changes to `Library/Homebrew/sorbet/` alongside the gem change.
+
+### Sandbox Setup
+
+When working in a sandboxed environment (e.g. OpenAI Codex) where the default Homebrew cache directory is not writable:
+
+1. Copy the API cache: `cp -r "$(./bin/brew --cache)/api/" tmp/cache/api/`
+2. Export the writable path: `export HOMEBREW_CACHE="$(pwd)/tmp/cache/"`
+3. Then run `./bin/brew tests` as normal.
+
+This avoids permission errors when the test suite tries to write API cache entries or runtime logs.
 
 ### Development Flow
 
@@ -34,14 +45,18 @@ When running commands in this repository, use `./bin/brew` (not a system `brew` 
 ## Repository Structure
 
 - `bin/brew`: Homebrew's `brew` command main Bash entry point script
-- `completions/`: Generated shell (`bash`/`fish`/`zsh`) completion files. Don't edit directly, regenerate with `./bin/brew generate-man-completions`
+- `completions/`: Generated shell (`bash`/`fish`/`zsh`) completion files. Don't edit directly; regenerate with `./bin/brew generate-man-completions` when adding, removing, or renaming commands or their flags.
 - `Library/Homebrew/`: Homebrew's core Ruby (with a little bash) logic.
 - `Library/Homebrew/bundle/`: Homebrew's `brew bundle` command.
 - `Library/Homebrew/cask/`: Homebrew's Cask classes and DSL.
 - `Library/Homebrew/extend/os/`: Homebrew's OS-specific (i.e. macOS or Linux) class extension logic.
 - `Library/Homebrew/formula.rb`: Homebrew's Formula class and DSL.
+- `Library/Homebrew/cmd/`: User-facing `brew` commands (e.g. `install`, `upgrade`).
+- `Library/Homebrew/dev-cmd/`: Developer/maintainer commands (e.g. `audit`, `bottle`).
+- `Library/Homebrew/test/`: RSpec test files mirroring the structure of `Library/Homebrew/`.
+- `Library/Homebrew/sorbet/`: Sorbet RBI type definitions and Tapioca-generated stubs.
 - `docs/`: Documentation for Homebrew users, contributors and maintainers. Consult these for best practices and help.
-- `manpages/`: Generated `man` documentation files. Don't edit directly, regenerate with `./bin/brew generate-man-completions`
+- `manpages/`: Generated `man` documentation files. Don't edit directly; regenerate with `./bin/brew generate-man-completions` at the same time as `completions/`.
 - `package/`: Files to generate the macOS `.pkg` file.
 
 ## Key Guidelines
@@ -53,5 +68,6 @@ When running commands in this repository, use `./bin/brew` (not a system `brew` 
 5. Suggest changes to the `docs/` folder when appropriate
 6. Follow software principles such as DRY and YAGNI.
 7. Keep diffs as minimal as possible.
-8. Prefer shelling out via `HOMEBREW_BREW_FILE` instead of requiring `cmd/` or `dev-cmd` when composing brew commands.
+8. When composing `brew` sub-commands from within Ruby code, shell out via `HOMEBREW_BREW_FILE` (e.g. `safe_system HOMEBREW_BREW_FILE, "install", name`) rather than requiring files from `cmd/` or `dev-cmd/` directly. Use `./bin/brew` only from the terminal or shell scripts.
 9. Inline new or existing methods as methods or local variables unless they are reused 2+ times or needed for unit tests.
+10. Use `scope: description` commit message format, matching the scope to the area changed — e.g. `livecheck:`, `sorbet:`, `tests:`, `docs:`, `style:`, `bundle:`, or a command name like `install:`. Use sentence case for the description and keep it under 72 characters. Dependency-bump commits from automated tooling use `build(deps):` or `build(deps-dev):` and do not need to follow this convention manually.
