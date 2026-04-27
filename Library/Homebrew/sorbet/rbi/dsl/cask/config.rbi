@@ -11,43 +11,10 @@ module Cask
     def appdir; end
 
     sig { returns(String) }
-    def audio_unit_plugindir; end
-
-    sig { returns(String) }
-    def colorpickerdir; end
-
-    sig { returns(String) }
-    def dictionarydir; end
-
-    sig { returns(String) }
     def fontdir; end
-
-    sig { returns(String) }
-    def input_methoddir; end
-
-    sig { returns(String) }
-    def internet_plugindir; end
-
-    sig { returns(String) }
-    def keyboard_layoutdir; end
 
     sig { returns(T::Array[String]) }
     def languages; end
-
-    sig { returns(String) }
-    def mdimporterdir; end
-
-    sig { returns(String) }
-    def prefpanedir; end
-
-    sig { returns(String) }
-    def qlplugindir; end
-
-    sig { returns(String) }
-    def screen_saverdir; end
-
-    sig { returns(String) }
-    def servicedir; end
 
     sig { returns(String) }
     def vst3_plugindir; end
