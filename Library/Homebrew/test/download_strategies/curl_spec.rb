@@ -11,6 +11,7 @@ RSpec.describe CurlDownloadStrategy do
   let(:version) { "1.2.3" }
   let(:specs) { { user: "download:123456" } }
   let(:artifact_domain) { nil }
+  let(:artifact_domain_no_fallback) { false }
   let(:headers) do
     {
       "accept-ranges"  => "bytes",
@@ -29,7 +30,10 @@ RSpec.describe CurlDownloadStrategy do
 
   describe "#fetch" do
     before do
-      allow(Homebrew::EnvConfig).to receive(:artifact_domain).and_return(artifact_domain)
+      allow(Homebrew::EnvConfig).to receive_messages(
+        artifact_domain:              artifact_domain,
+        artifact_domain_no_fallback?: artifact_domain_no_fallback,
+      )
 
       strategy.temporary_path.dirname.mkpath
       FileUtils.touch strategy.temporary_path
@@ -183,18 +187,48 @@ RSpec.describe CurlDownloadStrategy do
       context "with an asset hosted under #{GitHubPackages::URL_DOMAIN} (HTTPS)" do
         let(:resource_path) { "v2/homebrew/core/spec/manifests/0.0" }
         let(:url) { "https://#{GitHubPackages::URL_DOMAIN}/#{resource_path}" }
+        let(:mirror_url) { "#{artifact_domain}/#{resource_path}" }
         let(:status) { instance_double(Process::Status, success?: true, exitstatus: 0) }
+        let(:stderr) { "curl: (6) Could not resolve host: mirror.example.com" }
 
         it "rewrites the URL correctly" do
           expect(strategy).to receive(:system_command)
             .with(
               /curl/,
-              hash_including(args: array_including_cons("#{artifact_domain}/#{resource_path}")),
+              hash_including(args: array_including_cons(mirror_url)),
             )
             .at_least(:once)
             .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
 
           strategy.fetch
+        end
+
+        it "falls back to the original URL if the artifact mirror download fails" do
+          expect(strategy).to receive(:_fetch)
+            .with(url: mirror_url, resolved_url: mirror_url, timeout: anything)
+            .ordered
+            .and_raise(ErrorDuringExecution.new(["curl"], status: 1, output: [[:stderr, stderr]]))
+          expect(strategy).to receive(:_fetch)
+            .with(url:, resolved_url: url, timeout: anything)
+            .ordered
+            .and_return(nil)
+
+          strategy.fetch
+        end
+
+        context "when artifact_domain_no_fallback is set" do
+          let(:artifact_domain_no_fallback) { true }
+
+          it "does not fall back to the original URL" do
+            expect(strategy).to receive(:_fetch)
+              .with(url: mirror_url, resolved_url: mirror_url, timeout: anything)
+              .once
+              .and_raise(ErrorDuringExecution.new(["curl"], status: 1, output: [[:stderr, stderr]]))
+
+            expect do
+              strategy.fetch
+            end.to raise_error(CurlDownloadStrategyError, /#{Regexp.escape(mirror_url)}/)
+          end
         end
       end
     end

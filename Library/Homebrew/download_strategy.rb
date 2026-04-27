@@ -467,13 +467,22 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy # rubocop:todo Style/O
 
       urls = [url, *mirrors]
 
-      begin
-        url = T.must(urls.shift)
-
-        if (domain = Homebrew::EnvConfig.artifact_domain)
-          url = url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
-          urls = [] if Homebrew::EnvConfig.artifact_domain_no_fallback?
+      if (domain = Homebrew::EnvConfig.artifact_domain.presence)
+        artifact_urls = urls.filter_map do |download_url|
+          rewritten_url = download_url.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
+          rewritten_url if rewritten_url != download_url
         end
+
+        urls = if Homebrew::EnvConfig.artifact_domain_no_fallback?
+          artifact_urls.presence || urls
+        else
+          [*artifact_urls, *urls].uniq
+        end
+      end
+
+      begin
+        url = urls.fetch(0)
+        urls = urls.drop(1)
 
         ohai "Downloading #{url}"
 
@@ -751,9 +760,37 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy # rubocop:todo S
 
   sig { override.params(url: String, timeout: T.nilable(T.any(Float, Integer))).returns(URLMetadata) }
   def resolve_url_basename_time_file_size(url, timeout: nil)
-    return super if @resolved_basename.blank?
+    with_github_packages_auth(url) do
+      if @resolved_basename.blank?
+        super(url, timeout:)
+      else
+        [url, @resolved_basename, nil, nil, nil, false]
+      end
+    end
+  end
 
-    [url, @resolved_basename, nil, nil, nil, false]
+  sig {
+    override.params(url: String, resolved_url: String, timeout: T.nilable(T.any(Float, Integer)))
+             .returns(T.nilable(SystemCommand::Result))
+  }
+  def _fetch(url:, resolved_url:, timeout:)
+    with_github_packages_auth(resolved_url) { super }
+  end
+
+  sig { params(url: String, _block: T.proc.returns(T.untyped)).returns(T.untyped) }
+  def with_github_packages_auth(url, &_block)
+    auth_header = "Authorization: #{HOMEBREW_GITHUB_PACKAGES_AUTH}"
+    added_auth_header = false
+    return yield if HOMEBREW_GITHUB_PACKAGES_AUTH.blank?
+    return yield unless url.match?(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o)
+    return yield if meta.fetch(:headers, []).include?(auth_header)
+
+    meta[:headers] ||= []
+    meta[:headers] << auth_header
+    added_auth_header = true
+    yield
+  ensure
+    meta[:headers]&.delete(auth_header) if added_auth_header
   end
 end
 
