@@ -290,7 +290,7 @@ RSpec.describe Homebrew::Services::Cli do
       expect(dest_timer.read).to eq("[Timer]\nOnCalendar=daily\n")
     end
 
-    it "warns and is a no-op when the source timer file is missing" do
+    it "raises UsageError when the source timer file is missing" do
       missing_timer = tmp_root/"missing.timer"
       service = instance_double(
         Homebrew::Services::FormulaWrapper,
@@ -301,9 +301,23 @@ RSpec.describe Homebrew::Services::Cli do
 
       expect do
         services_cli.install_timer_file(service)
-      end.to output(/timed but no `\.timer` file was found/).to_stderr
+      end.to raise_error(UsageError, /timed but no `\.timer` file was found/)
 
       expect(dest_timer).not_to exist
+    end
+
+    it "overwrites a stale destination timer file with the new contents" do
+      dest_timer.write("[Timer]\nOnCalendar=hourly\n")
+      service = instance_double(
+        Homebrew::Services::FormulaWrapper,
+        name:       "example_service",
+        timer_file: source_timer,
+        dest_timer: dest_timer,
+      )
+
+      services_cli.install_timer_file(service)
+
+      expect(dest_timer.read).to eq("[Timer]\nOnCalendar=daily\n")
     end
   end
 
@@ -326,7 +340,7 @@ RSpec.describe Homebrew::Services::Cli do
       dest_timer.write("tmr")
     end
 
-    it "disables --now both the service unit and the timer unit, and removes both files" do
+    it "disables --now the timer before the service and removes both files" do
       service = instance_double(
         Homebrew::Services::FormulaWrapper,
         name:         "example_service",
@@ -343,13 +357,16 @@ RSpec.describe Homebrew::Services::Cli do
         services_cli.stop([service])
       end
 
-      expect(log.read).to include("--user disable --now homebrew.example_service\n")
-      expect(log.read).to include("--user disable --now homebrew.example_service.timer\n")
+      systemctl_lines = log.read.lines.grep(/disable/)
+      expect(systemctl_lines).to eq([
+        "--user disable --now homebrew.example_service.timer\n",
+        "--user disable --now homebrew.example_service\n",
+      ])
       expect(dest_service).not_to exist
       expect(dest_timer).not_to exist
     end
 
-    it "leaves the timer file in place when keep: true and only stops the units" do
+    it "leaves the timer file in place when keep: true and stops the timer before the service" do
       service = instance_double(
         Homebrew::Services::FormulaWrapper,
         name:         "example_service",
@@ -366,11 +383,37 @@ RSpec.describe Homebrew::Services::Cli do
         services_cli.stop([service], keep: true)
       end
 
-      expect(log.read).to include("--user stop homebrew.example_service\n")
-      expect(log.read).to include("--user stop homebrew.example_service.timer\n")
+      systemctl_lines = log.read.lines.grep(/stop/)
+      expect(systemctl_lines).to eq([
+        "--user stop homebrew.example_service.timer\n",
+        "--user stop homebrew.example_service\n",
+      ])
       expect(log.read).not_to include("disable")
       expect(dest_service).to exist
       expect(dest_timer).to exist
+    end
+
+    it "removes a stale timer file when the service is no longer loaded" do
+      service = instance_double(
+        Homebrew::Services::FormulaWrapper,
+        name:                  "example_service",
+        service_name:          "homebrew.example_service",
+        timer_name:            "homebrew.example_service.timer",
+        timed?:                true,
+        loaded?:               false,
+        owner:                 nil,
+        service_file_present?: false,
+        dest:                  dest_service,
+        dest_timer:            dest_timer,
+      )
+
+      with_env(PATH: bindir.to_s) do
+        expect { services_cli.stop([service]) }.to output(/not started/).to_stderr
+      end
+
+      expect(dest_service).not_to exist
+      expect(dest_timer).not_to exist
+      expect(log).not_to exist
     end
   end
 

@@ -73,8 +73,8 @@ module Homebrew
       sig { returns(T::Array[String]) }
       def self.remove_unused_service_files
         cleaned = []
-        System.path.glob("homebrew.*.{plist,service}").each do |file|
-          next if running.include?(File.basename(file).sub(/\.(plist|service)$/i, ""))
+        System.path.glob("homebrew.*.{plist,service,timer}").each do |file|
+          next if running.include?(File.basename(file).sub(/\.(plist|service|timer)$/i, ""))
 
           puts "Removing unused service file: #{file}"
           rm file
@@ -196,12 +196,14 @@ module Homebrew
           end
 
           if System.systemctl?
+            # Stop the timer before the service so a scheduled fire can't re-activate the
+            # service mid-stop.
             if keep
-              System::Systemctl.quiet_run(*systemctl_args, "stop", service.service_name)
               System::Systemctl.quiet_run(*systemctl_args, "stop", service.timer_name) if service.timed?
+              System::Systemctl.quiet_run(*systemctl_args, "stop", service.service_name)
             else
-              System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
               System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.timer_name) if service.timed?
+              System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
             end
           elsif System.launchctl?
             dont_wait_statuses = [
@@ -430,13 +432,14 @@ module Homebrew
       end
 
       # Install the systemd `.timer` companion unit alongside the `.service`
-      # file so that scheduled (cron/interval) services actually fire.
+      # file so that scheduled (cron/interval) services actually fire. Callers
+      # must gate on `System.systemctl?` and `service.timed?`.
       sig { params(service: Services::FormulaWrapper).void }
       def self.install_timer_file(service)
         timer_source = service.timer_file
         unless timer_source.exist?
-          opoo "Formula `#{service.name}` is timed but no `.timer` file was found at #{timer_source}."
-          return
+          raise UsageError, "Formula `#{service.name}` is timed but no `.timer` file was found at " \
+                            "#{timer_source}. Try `brew reinstall #{service.name}`."
         end
 
         timer_dest = service.dest_timer
