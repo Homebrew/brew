@@ -25,8 +25,8 @@ module Homebrew
     KEEP_ALIVE_KEYS = [:always, :successful_exit, :crashed, :path].freeze
     NICE_RANGE = T.let(-20..19, T::Range[Integer])
     SOCKET_STRING_REGEX = %r{^(?<type>[a-z]+)://(?<host>.+):(?<port>[0-9]+)$}i
-    # cron's integer weekdays (0..6, Sunday-indexed) mapped to the abbreviations systemd's
-    # `OnCalendar` accepts. Used by `to_systemd_timer`.
+    # Sunday-indexed weekday abbreviations accepted by systemd's `OnCalendar`. Indexed 0..6;
+    # cron's 0..7 (where both 0 and 7 are Sunday) is normalized via `% 7` in `to_systemd_timer`.
     SYSTEMD_WEEKDAYS = T.let(%w[Sun Mon Tue Wed Thu Fri Sat].freeze, T::Array[String])
 
     RunParam = T.type_alias { T.nilable(T.any(T::Array[T.any(String, Pathname)], String, Pathname)) }
@@ -534,7 +534,12 @@ module Homebrew
         options << if weekday == "*"
           "OnCalendar=#{date_and_time}"
         else
-          "OnCalendar=#{SYSTEMD_WEEKDAYS.fetch(T.cast(weekday, Integer) % 7)} #{date_and_time}"
+          weekday_int = T.cast(weekday, Integer)
+          unless (0..7).cover?(weekday_int)
+            raise ArgumentError,
+                  "Service#to_systemd_timer: Weekday must be 0..7, got #{weekday_int}"
+          end
+          "OnCalendar=#{SYSTEMD_WEEKDAYS.fetch(weekday_int % 7)} #{date_and_time}"
         end
       end
 

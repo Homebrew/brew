@@ -1101,6 +1101,20 @@ RSpec.describe Homebrew::Service do
       expect(unit).to eq(unit_expect)
     end
 
+    it "raises on out-of-range cron weekday" do
+      f = stub_formula do
+        service do
+          run opt_bin/"beanstalkd"
+          run_type :cron
+          cron "0 0 * * 14"
+        end
+      end
+
+      expect do
+        f.service.to_systemd_timer
+      end.to raise_error(ArgumentError, /Weekday must be 0..7/)
+    end
+
     it "throws on incomplete cron" do
       f = stub_formula do
         service do
@@ -1124,6 +1138,7 @@ RSpec.describe Homebrew::Service do
         "@yearly":   "*-1-1 00:00:00",
         "@annually": "*-1-1 00:00:00",
         "5 5 5 5 5": "Fri *-5-5 05:05:00",
+        "5 5 5 5 7": "Sun *-5-5 05:05:00",
       }
 
       styles.each do |cron, calendar|

@@ -183,6 +183,25 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       expect(service.loaded?).to be(false)
     end
 
+    it "systemD - returns true when only the timer unit is active for a timed service" do
+      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
+      allow(service).to receive(:timed?).and_return(true)
+      allow(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
+        .with("status", service.service_file.basename).and_return(false)
+      allow(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
+        .with("status", service.timer_file.basename).and_return(true)
+      expect(service.loaded?).to be(true)
+    end
+
+    it "systemD - does not consult the timer when service is not timed" do
+      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
+      allow(service).to receive(:timed?).and_return(false)
+      allow(Homebrew::Services::System::Systemctl).to receive(:quiet_run).and_return(false)
+      expect(Homebrew::Services::System::Systemctl).not_to receive(:quiet_run)
+        .with("status", service.timer_file.basename)
+      expect(service.loaded?).to be(false)
+    end
+
     it "Other - raises an error" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: false)
       expect do
