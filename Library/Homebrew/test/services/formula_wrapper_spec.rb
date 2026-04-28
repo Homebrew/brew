@@ -15,6 +15,7 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
                     service_name:           "plist-mysql-test",
                     launchd_service_path:   Pathname.new("/usr/local/opt/mysql/homebrew.mysql.plist"),
                     systemd_service_path:   Pathname.new("/usr/local/opt/mysql/homebrew.mysql.service"),
+                    systemd_timer_path:     Pathname.new("/usr/local/opt/mysql/homebrew.mysql.timer"),
                     opt_prefix:             Pathname.new("/usr/local/opt/mysql"),
                     any_version_installed?: true,
                     service?:               false)
@@ -83,6 +84,37 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
         service.service_name
       end.to raise_error(UsageError,
                          "Invalid usage: `brew services` is supported only on macOS or Linux (with systemd)!")
+    end
+  end
+
+  describe "#timer_file" do
+    it "returns the systemd timer path from the formula" do
+      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
+      expect(service.timer_file.to_s).to eq("/usr/local/opt/mysql/homebrew.mysql.timer")
+    end
+  end
+
+  describe "#timer_name" do
+    it "appends `.timer` to the service name" do
+      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
+      expect(service.timer_name).to eq("plist-mysql-test.timer")
+    end
+  end
+
+  describe "#dest_timer" do
+    before do
+      ENV["HOME"] = "/tmp_home"
+      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
+    end
+
+    it "systemD - user - outputs the destination for the timer file" do
+      allow(Homebrew::Services::System).to receive(:root?).and_return(false)
+      expect(service.dest_timer.to_s).to eq("/tmp_home/.config/systemd/user/homebrew.mysql.timer")
+    end
+
+    it "systemD - root - outputs the destination for the timer file" do
+      allow(Homebrew::Services::System).to receive(:root?).and_return(true)
+      expect(service.dest_timer.to_s).to eq("/usr/lib/systemd/system/homebrew.mysql.timer")
     end
   end
 

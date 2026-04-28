@@ -92,6 +92,24 @@ module Homebrew
         )
       end
 
+      # Path to the source systemd .timer file in the Cellar (systemd-only).
+      sig { returns(Pathname) }
+      def timer_file
+        @timer_file ||= T.let(formula.systemd_timer_path, T.nilable(Pathname))
+      end
+
+      # Name passed to `systemctl` for the timer unit (e.g. `homebrew.<formula>.timer`).
+      sig { returns(String) }
+      def timer_name
+        @timer_name ||= T.let("#{service_name}.timer", T.nilable(String))
+      end
+
+      # Path to the destination .timer file (boot_path or user_path).
+      sig { returns(Pathname) }
+      def dest_timer
+        dest_dir + timer_file.basename
+      end
+
       # Whether the service should be launched at startup
       sig { returns(T::Boolean) }
       def service_startup?

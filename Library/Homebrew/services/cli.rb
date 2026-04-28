@@ -172,6 +172,7 @@ module Homebrew
         targets.each do |service|
           unless service.loaded?
             rm service.dest if !keep && service.dest.exist? # get rid of installed service file anyway, dude
+            rm service.dest_timer if !keep && System.systemctl? && service.dest_timer.exist?
             if service.service_file_present?
               odie <<~EOS
                 Service `#{service.name}` is started as `#{service.owner}`. Try:
@@ -197,8 +198,10 @@ module Homebrew
           if System.systemctl?
             if keep
               System::Systemctl.quiet_run(*systemctl_args, "stop", service.service_name)
+              System::Systemctl.quiet_run(*systemctl_args, "stop", service.timer_name) if service.timed?
             else
               System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.service_name)
+              System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service.timer_name) if service.timed?
             end
           elsif System.launchctl?
             dont_wait_statuses = [
@@ -230,6 +233,7 @@ module Homebrew
 
           unless keep
             rm service.dest if service.dest.exist?
+            rm service.dest_timer if System.systemctl? && service.dest_timer.exist?
             # Run daemon-reload on systemctl to finish unloading stopped and deleted service.
             System::Systemctl.run(*systemctl_args, "daemon-reload") if System.systemctl?
           end
@@ -355,6 +359,11 @@ module Homebrew
       def self.systemd_load(service, enable:)
         System::Systemctl.run("start", service.service_name)
         System::Systemctl.run("enable", service.service_name) if enable
+
+        return unless service.timed?
+
+        System::Systemctl.run("start", service.timer_name)
+        System::Systemctl.run("enable", service.timer_name) if enable
       end
 
       sig { params(service: Services::FormulaWrapper, file: T.nilable(Pathname), enable: T::Boolean).void }
@@ -415,7 +424,25 @@ module Homebrew
 
         chmod 0644, service.dest
 
+        install_timer_file(service) if System.systemctl? && service.timed?
+
         System::Systemctl.run("daemon-reload") if System.systemctl?
+      end
+
+      # Install the systemd `.timer` companion unit alongside the `.service`
+      # file so that scheduled (cron/interval) services actually fire.
+      sig { params(service: Services::FormulaWrapper).void }
+      def self.install_timer_file(service)
+        timer_source = service.timer_file
+        unless timer_source.exist?
+          opoo "Formula `#{service.name}` is timed but no `.timer` file was found at #{timer_source}."
+          return
+        end
+
+        timer_dest = service.dest_timer
+        rm timer_dest if timer_dest.exist?
+        cp timer_source, timer_dest
+        chmod 0644, timer_dest
       end
     end
   end
