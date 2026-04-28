@@ -158,14 +158,18 @@ module Homebrew
         @status_output_success_type = nil
       end
 
-      # Returns `true` if the service is loaded, else false.
+      # Returns `true` if the service is loaded, else false. For systemd timers, the
+      # service unit is inactive between fires, so we also consider the timer's load
+      # state — otherwise `brew services stop` on an idle cron service takes the
+      # "not loaded" early-exit branch and leaves the timer registered with systemd.
       sig { params(cached: T::Boolean).returns(T::Boolean) }
       def loaded?(cached: false)
         if System.launchctl?
           reset_cache! unless cached
           status_success
         else # System.systemctl?
-          System::Systemctl.quiet_run("status", service_file.basename)
+          System::Systemctl.quiet_run("status", service_file.basename) ||
+            (timed? && System::Systemctl.quiet_run("status", timer_file.basename))
         end
       end
 

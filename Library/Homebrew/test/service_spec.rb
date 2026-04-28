@@ -1119,11 +1119,11 @@ RSpec.describe Homebrew::Service do
       styles = {
         "@hourly":   "*-*-* *:00:00",
         "@daily":    "*-*-* 00:00:00",
-        "@weekly":   "0 *-*-* 00:00:00",
+        "@weekly":   "Sun *-*-* 00:00:00",
         "@monthly":  "*-*-1 00:00:00",
         "@yearly":   "*-1-1 00:00:00",
         "@annually": "*-1-1 00:00:00",
-        "5 5 5 5 5": "5 *-5-5 05:05:00",
+        "5 5 5 5 5": "Fri *-5-5 05:05:00",
       }
 
       styles.each do |cron, calendar|

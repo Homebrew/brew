@@ -25,6 +25,9 @@ module Homebrew
     KEEP_ALIVE_KEYS = [:always, :successful_exit, :crashed, :path].freeze
     NICE_RANGE = T.let(-20..19, T::Range[Integer])
     SOCKET_STRING_REGEX = %r{^(?<type>[a-z]+)://(?<host>.+):(?<port>[0-9]+)$}i
+    # cron's integer weekdays (0..6, Sunday-indexed) mapped to the abbreviations systemd's
+    # `OnCalendar` accepts. Used by `to_systemd_timer`.
+    SYSTEMD_WEEKDAYS = T.let(%w[Sun Mon Tue Wed Thu Fri Sat].freeze, T::Array[String])
 
     RunParam = T.type_alias { T.nilable(T.any(T::Array[T.any(String, Pathname)], String, Pathname)) }
     Sockets = T.type_alias { T::Hash[Symbol, { host: String, port: String, type: String }] }
@@ -522,14 +525,16 @@ module Homebrew
       if @run_type == RUN_TYPE_CRON
         minutes = (@cron[:Minute] == "*") ? "*" : format("%02d", @cron[:Minute])
         hours   = (@cron[:Hour] == "*") ? "*" : format("%02d", @cron[:Hour])
-        # systemd's `OnCalendar` rejects a literal `*` in the day-of-week field; the field must be
-        # omitted entirely to mean "any day". A numeric (0-7) or named (Mon, ...) weekday is
-        # included with a space separator before the date.
+        # systemd's `OnCalendar` rejects a literal `*` in the day-of-week field — the field must
+        # be omitted entirely to mean "any day". When a weekday is set, systemd accepts only
+        # English abbreviations (Mon..Sun); cron's integer convention (0..7, where both 0 and 7
+        # are Sunday) is rejected, so we map it here.
         date_and_time = "*-#{@cron[:Month]}-#{@cron[:Day]} #{hours}:#{minutes}:00"
-        options << if @cron[:Weekday] == "*"
+        weekday = @cron[:Weekday]
+        options << if weekday == "*"
           "OnCalendar=#{date_and_time}"
         else
-          "OnCalendar=#{@cron[:Weekday]} #{date_and_time}"
+          "OnCalendar=#{SYSTEMD_WEEKDAYS.fetch(T.cast(weekday, Integer) % 7)} #{date_and_time}"
         end
       end
 
