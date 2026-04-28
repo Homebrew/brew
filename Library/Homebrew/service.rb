@@ -522,7 +522,15 @@ module Homebrew
       if @run_type == RUN_TYPE_CRON
         minutes = (@cron[:Minute] == "*") ? "*" : format("%02d", @cron[:Minute])
         hours   = (@cron[:Hour] == "*") ? "*" : format("%02d", @cron[:Hour])
-        options << "OnCalendar=#{@cron[:Weekday]}-*-#{@cron[:Month]}-#{@cron[:Day]} #{hours}:#{minutes}:00"
+        # systemd's `OnCalendar` rejects a literal `*` in the day-of-week field; the field must be
+        # omitted entirely to mean "any day". A numeric (0-7) or named (Mon, ...) weekday is
+        # included with a space separator before the date.
+        date_and_time = "*-#{@cron[:Month]}-#{@cron[:Day]} #{hours}:#{minutes}:00"
+        options << if @cron[:Weekday] == "*"
+          "OnCalendar=#{date_and_time}"
+        else
+          "OnCalendar=#{@cron[:Weekday]} #{date_and_time}"
+        end
       end
 
       <<~SYSTEMD
@@ -533,7 +541,7 @@ module Homebrew
         WantedBy=timers.target
 
         [Timer]
-        Unit=#{service_name}
+        Unit=#{service_name}.service
         #{options.join("\n")}
       SYSTEMD
     end

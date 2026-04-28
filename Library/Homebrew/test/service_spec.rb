@@ -1072,7 +1072,7 @@ RSpec.describe Homebrew::Service do
         WantedBy=timers.target
 
         [Timer]
-        Unit=homebrew.formula_name
+        Unit=homebrew.formula_name.service
         OnUnitActiveSec=5
       SYSTEMD
       expect(unit).to eq(unit_expect)
@@ -1095,7 +1095,7 @@ RSpec.describe Homebrew::Service do
         WantedBy=timers.target
 
         [Timer]
-        Unit=homebrew.formula_name
+        Unit=homebrew.formula_name.service
 
       SYSTEMD
       expect(unit).to eq(unit_expect)
@@ -1117,13 +1117,13 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid cron timers" do
       styles = {
-        "@hourly":   "*-*-*-* *:00:00",
-        "@daily":    "*-*-*-* 00:00:00",
-        "@weekly":   "0-*-*-* 00:00:00",
-        "@monthly":  "*-*-*-1 00:00:00",
-        "@yearly":   "*-*-1-1 00:00:00",
-        "@annually": "*-*-1-1 00:00:00",
-        "5 5 5 5 5": "5-*-5-5 05:05:00",
+        "@hourly":   "*-*-* *:00:00",
+        "@daily":    "*-*-* 00:00:00",
+        "@weekly":   "0 *-*-* 00:00:00",
+        "@monthly":  "*-*-1 00:00:00",
+        "@yearly":   "*-1-1 00:00:00",
+        "@annually": "*-1-1 00:00:00",
+        "5 5 5 5 5": "5 *-5-5 05:05:00",
       }
 
       styles.each do |cron, calendar|
@@ -1144,7 +1144,7 @@ RSpec.describe Homebrew::Service do
           WantedBy=timers.target
 
           [Timer]
-          Unit=homebrew.formula_name
+          Unit=homebrew.formula_name.service
           Persistent=true
           OnCalendar=#{calendar}
         SYSTEMD
