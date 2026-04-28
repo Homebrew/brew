@@ -25,7 +25,7 @@ module Cask
           args:                   T.any(Pathname, String),
           base_name:              T.nilable(String),
           shell_parameter_format: T.nilable(T.any(Symbol, String)),
-          shells:                 T.nilable(T::Array[Symbol]),
+          shells:                 T.nilable(T::Array[T.any(Symbol, String)]),
         ).returns(T.attached_class)
       }
       def self.from_args(cask, *args, base_name: nil, shell_parameter_format: nil, shells: nil)
@@ -33,6 +33,7 @@ module Cask
 
         commands = args.to_a
         resolved_shells = shells || ::Utils::ShellCompletion.default_completion_shells(shell_parameter_format)
+        resolved_shells = resolved_shells.map(&:to_sym)
 
         unsupported_shells = resolved_shells - SUPPORTED_SHELLS
         unless unsupported_shells.empty?

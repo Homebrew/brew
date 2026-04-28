@@ -84,6 +84,20 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
     end
   end
 
+  context "with string shell values (as loaded from cask.jws.json)" do
+    it "accepts and normalizes string shells to symbols" do
+      artifact = described_class.from_args(cask, "bin/foo", "completions", shells: ["zsh"])
+
+      expect(artifact.shells).to eq([:zsh])
+    end
+
+    it "raises CaskInvalidError for unsupported string shells" do
+      expect do
+        described_class.from_args(cask, "bin/foo", "completions", shells: ["nope"])
+      end.to raise_error(Cask::CaskInvalidError, /does not support shell\(s\): nope/)
+    end
+  end
+
   context "with specific shells and format" do
     let(:cask) do
       tmp_staged = staged_path
