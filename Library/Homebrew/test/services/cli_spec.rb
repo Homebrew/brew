@@ -59,6 +59,30 @@ RSpec.describe Homebrew::Services::Cli do
     end
   end
 
+  describe "#remove_unused_service_files" do
+    let(:tmp_path) { mktmpdir }
+
+    before do
+      allow(Homebrew::Services::System).to receive(:path).and_return(tmp_path)
+    end
+
+    it "removes orphaned `.service` and `.timer` files but leaves matching ones running" do
+      (tmp_path/"homebrew.foo.service").write("svc")
+      (tmp_path/"homebrew.foo.timer").write("tmr")
+      (tmp_path/"homebrew.bar.service").write("svc")
+      (tmp_path/"homebrew.bar.timer").write("tmr")
+      allow(services_cli).to receive(:running).and_return(["homebrew.foo"])
+
+      expect { services_cli.remove_unused_service_files }
+        .to output(/homebrew\.bar\.service.*homebrew\.bar\.timer/m).to_stdout
+
+      expect(tmp_path/"homebrew.foo.service").to exist
+      expect(tmp_path/"homebrew.foo.timer").to exist
+      expect(tmp_path/"homebrew.bar.service").not_to exist
+      expect(tmp_path/"homebrew.bar.timer").not_to exist
+    end
+  end
+
   describe "#kill_orphaned_services" do
     it "skips unmanaged services" do
       allow(services_cli).to receive(:running).and_return(["example_service"])
@@ -184,6 +208,44 @@ RSpec.describe Homebrew::Services::Cli do
         UsageError,
         "Invalid usage: Formula `name` has not implemented #plist, #service or provided a locatable service file.",
       )
+    end
+
+    context "with a timed service under systemd" do
+      let(:tmp_root) { mktmpdir }
+      let(:source_service) { tmp_root/"src"/"homebrew.example_service.service" }
+      let(:source_timer) { tmp_root/"src"/"homebrew.example_service.timer" }
+      let(:dest_dir) { tmp_root/"dest" }
+      let(:dest_service) { dest_dir/"homebrew.example_service.service" }
+      let(:dest_timer) { dest_dir/"homebrew.example_service.timer" }
+
+      before do
+        source_service.parent.mkpath
+        source_service.write("[Service]\nExecStart=/bin/true\n")
+        source_timer.write("[Timer]\nOnCalendar=daily\n")
+        allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
+        allow(Homebrew::Services::System::Systemctl).to receive(:run)
+      end
+
+      it "installs both the service file and the timer companion" do
+        service = instance_double(
+          Homebrew::Services::FormulaWrapper,
+          name:         "example_service",
+          service_name: "homebrew.example_service",
+          installed?:   true,
+          service_file: source_service,
+          timer_file:   source_timer,
+          timed?:       true,
+          dest_dir:     dest_dir,
+          dest:         dest_service,
+          dest_timer:   dest_timer,
+        )
+
+        services_cli.install_service_file(service, nil)
+
+        expect(dest_service).to be_file
+        expect(dest_timer).to be_file
+        expect(dest_timer.read).to eq("[Timer]\nOnCalendar=daily\n")
+      end
     end
   end
 

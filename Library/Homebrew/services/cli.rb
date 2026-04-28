@@ -78,7 +78,7 @@ module Homebrew
 
           puts "Removing unused service file: #{file}"
           rm file
-          cleaned << file
+          cleaned << file.to_s
         end
 
         cleaned
