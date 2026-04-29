@@ -30,6 +30,7 @@ module Language
         )
       end
 
+      # @api public
       sig { params(formula: Formula).returns(Utils::Shebang::RewriteInfo) }
       def detected_perl_shebang(formula = T.cast(self, Formula))
         perl_deps = formula.declared_deps.select { |dep| dep.required? && dep.name == "perl" }

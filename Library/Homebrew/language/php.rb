@@ -30,6 +30,7 @@ module Language
         )
       end
 
+      # @api public
       sig { params(formula: Formula).returns(Utils::Shebang::RewriteInfo) }
       def detected_php_shebang(formula = T.cast(self, Formula))
         php_deps = formula.deps.select(&:required?).map(&:name).grep(/^php(@.+)?$/)
