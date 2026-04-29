@@ -144,6 +144,11 @@ module Homebrew
         "Installing"
       end
 
+      sig { override.params(name: String, options: Homebrew::Bundle::EntryOptions).returns(Homebrew::Bundle::LockEntry) }
+      def self.lock_entry(name, options = {})
+        super
+      end
+
       sig {
         params(
           name:       String,

@@ -69,7 +69,13 @@ class Homebrew::Cmd::Bundle::Args < Homebrew::CLI::Args
   def jobs; end
 
   sig { returns(T::Boolean) }
+  def lock?; end
+
+  sig { returns(T::Boolean) }
   def krew?; end
+
+  sig { returns(T::Boolean) }
+  def lock?; end
 
   sig { returns(T::Boolean) }
   def mas?; end

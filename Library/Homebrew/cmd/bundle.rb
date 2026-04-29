@@ -114,6 +114,9 @@ module Homebrew
                             "`check` does not check for outdated dependencies. " \
                             "Note they may still be upgraded by `brew install` if needed.",
                env:         :bundle_no_upgrade
+        switch "--lock",
+               description: "`install` writes `Brewfile.lock.json` next to the Brewfile after install. " \
+                            "Phase 1: opt-in. Default off."
         switch "--upgrade",
                description: "`install` runs `brew upgrade` on outdated dependencies, " \
                             "even if `$HOMEBREW_BUNDLE_NO_UPGRADE` is set."
@@ -237,7 +240,8 @@ module Homebrew
 
           require "bundle/commands/install"
           redirect_stdout($stderr) do
-            Homebrew::Bundle::Commands::Install.run(global:, file:, no_upgrade:, verbose:, force:, jobs:, quiet: true)
+            Homebrew::Bundle::Commands::Install.run(global:, file:, no_upgrade:, verbose:, force:, jobs:, quiet: true,
+                                                    lock: args.lock?)
           end
         end
 
@@ -245,7 +249,7 @@ module Homebrew
         when nil, "install", "upgrade"
           require "bundle/commands/install"
           Homebrew::Bundle::Commands::Install.run(global:, file:, no_upgrade:, verbose:, force:, jobs:,
-                                                  quiet: args.quiet?)
+                                                  quiet: args.quiet?, lock: args.lock?)
 
           cleanup = if ENV.fetch("HOMEBREW_BUNDLE_INSTALL_CLEANUP", nil)
             args.global?
