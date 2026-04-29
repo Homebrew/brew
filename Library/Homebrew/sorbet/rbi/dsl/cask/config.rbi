@@ -11,6 +11,9 @@ module Cask
     def appdir; end
 
     sig { returns(String) }
+    def appimagedir; end
+
+    sig { returns(String) }
     def audio_unit_plugindir; end
 
     sig { returns(String) }

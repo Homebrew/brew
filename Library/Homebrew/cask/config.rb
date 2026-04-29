@@ -49,6 +49,7 @@ module Cask
       args = T.unsafe(args)
       new(explicit: {
         appdir:               args.appdir,
+        appimagedir:          args.appimagedir,
         keyboard_layoutdir:   args.keyboard_layoutdir,
         colorpickerdir:       args.colorpickerdir,
         prefpanedir:          args.prefpanedir,

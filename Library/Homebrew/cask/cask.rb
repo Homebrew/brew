@@ -216,12 +216,12 @@ module Cask
 
       # Cache the os value before contains_os_specific_artifacts? refreshes the cask
       # (the refresh clears @dsl.os in generic/non-OS-specific contexts)
-      os_value = dsl!.os
+      on_system_blocks_exist = dsl!.on_system_blocks_exist?
 
       return false if contains_os_specific_artifacts?
 
       # Casks with OS-specific blocks rely on the os stanza for Linux support
-      return os_value.present? if dsl!.on_os_blocks_exist?
+      return on_system_blocks_exist.present? if dsl!.on_system_blocks_exist?
 
       # Platform-agnostic casks: reject macOS-only artifacts and manual installers
       artifacts.none? do |a|

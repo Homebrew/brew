@@ -14,6 +14,9 @@ class Homebrew::Cmd::UpgradeCmd::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def appdir; end
 
+  sig { returns(T.nilable(String)) }
+  def appimagedir; end
+
   sig { returns(T::Boolean) }
   def ask?; end
 

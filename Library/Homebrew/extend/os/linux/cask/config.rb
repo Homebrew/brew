@@ -13,6 +13,7 @@ module OS
             vst3_plugindir: "~/.vst3",
             fontdir:        "#{ENV.fetch("HOMEBREW_XDG_DATA_HOME", "~/.local/share")}/fonts",
             appdir:         "~/.config/apps",
+            appimagedir:    "~/Applications",
           }.freeze, T::Hash[Symbol, String])
 
           sig { returns(T::Hash[Symbol, T.any(LazyObject, String)]) }
