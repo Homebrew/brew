@@ -46,12 +46,12 @@ module OS
   ::OS_VERSION = T.let(ENV.fetch("HOMEBREW_OS_VERSION").freeze, String)
 
   # See Linux-CI.md
-  LINUX_CI_OS_VERSION = "Ubuntu 22.04"
-  LINUX_CI_ARM_RUNNER = "ubuntu-22.04-arm"
-  LINUX_GLIBC_CI_VERSION = "2.35"
+  LINUX_CI_OS_VERSION = "Ubuntu 24.04"
+  LINUX_CI_ARM_RUNNER = "ubuntu-24.04-arm"
+  LINUX_GLIBC_CI_VERSION = "2.39"
   LINUX_GLIBC_NEXT_CI_VERSION = "2.39" # users below this version will be warned by `brew doctor`
-  LINUX_GCC_CI_VERSION = "12" # https://packages.ubuntu.com/jammy/gcc-12
-  LINUX_LIBSTDCXX_CI_VERSION = "6.0.30" # https://packages.ubuntu.com/jammy/libstdc++6
+  LINUX_GCC_CI_VERSION = "13" # https://packages.ubuntu.com/noble/gcc
+  LINUX_LIBSTDCXX_CI_VERSION = "6.0.33" # https://packages.ubuntu.com/noble/libstdc++6
   LINUX_PREFERRED_GCC_COMPILER_FORMULA = T.let("gcc@#{LINUX_GCC_CI_VERSION}".freeze, String)
   LINUX_PREFERRED_GCC_RUNTIME_FORMULA = "gcc"
 
