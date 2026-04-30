@@ -18,9 +18,11 @@ RSpec.describe Homebrew::Bundle::Locker do
   before do
     allow(Homebrew::Bundle).to receive(:installable).with(:brew).and_return(Homebrew::Bundle::Brew)
     allow(Homebrew::Bundle).to receive(:installable).with(:cask).and_return(Homebrew::Bundle::Cask)
+    allow(Homebrew::Bundle::Brew).to receive(:lock_entry).and_call_original
     allow(Homebrew::Bundle::Brew).to receive(:lock_entry)
       .with("ruby", { args: ["with-yjit"] })
       .and_return({ "name" => "ruby", "version" => "3.4.2" })
+    allow(Homebrew::Bundle::Cask).to receive(:lock_entry).and_call_original
     allow(Homebrew::Bundle::Cask).to receive(:lock_entry)
       .with("firefox", {})
       .and_return({ "name" => "firefox", "version" => "139.0.1" })
