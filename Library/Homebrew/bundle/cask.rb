@@ -77,6 +77,22 @@ module Homebrew
           "Upgrading"
         end
 
+        sig { override.params(name: String, options: Homebrew::Bundle::EntryOptions).returns(Homebrew::Bundle::LockEntry) }
+        def lock_entry(name, options = {})
+          _ = options
+
+          require "cask/cask_loader"
+
+          cask = ::Cask::CaskLoader.load(name)
+          result = super
+          result["version"] = cask.version.to_s
+          result["sha256"] = cask.sha256.to_s
+
+          result
+        rescue
+          super
+        end
+
         sig { override.params(name: String, no_upgrade: T::Boolean, verbose: T::Boolean, options: T.untyped).returns(T::Boolean) }
         def preinstall!(name, no_upgrade: false, verbose: false, **options)
           if cask_installed?(name) && !upgrading?(no_upgrade, name, options)
@@ -216,6 +232,12 @@ module Homebrew
           return false if cask.nil?
 
           cask.outdated?(greedy: true)
+        end
+
+        sig { params(name: String, options: Homebrew::Bundle::EntryOptions).returns(T.nilable(::Cask::Cask)) }
+        def find_cask(name, options = {})
+          full_name = T.cast(options.fetch(:full_name, name), String)
+          casks.find { |cask| [cask.to_s, cask.full_name].include?(name) || cask.full_name == full_name }
         end
 
         sig { override.params(describe: T::Boolean).returns(String) }

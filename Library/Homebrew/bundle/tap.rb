@@ -79,6 +79,18 @@ module Homebrew
           "Tapping"
         end
 
+        sig { override.params(name: String, options: Homebrew::Bundle::EntryOptions).returns(Homebrew::Bundle::LockEntry) }
+        def lock_entry(name, options = {})
+          tap = ::Tap.fetch(name)
+          result = super
+
+          result["remote"] = tap.remote if tap.remote.present?
+          result["branch"] = tap.git_branch if tap.git_branch.present?
+          result
+        rescue
+          super
+        end
+
         sig { override.returns(String) }
         def dump
           taps.map do |tap|

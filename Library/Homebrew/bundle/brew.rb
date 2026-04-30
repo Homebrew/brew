@@ -65,6 +65,36 @@ module Homebrew
           "Upgrading"
         end
 
+        sig { override.params(name: String, options: Homebrew::Bundle::EntryOptions).returns(Homebrew::Bundle::LockEntry) }
+        def lock_entry(name, options = {})
+          formula = find_formula(name)
+          return super if formula.blank?
+
+          result = super
+          result["version"] = formula[:version].to_s if formula[:version].present?
+          result["revision"] = formula_revision(name)
+
+          bottle = formula[:bottle]
+          if bottle.is_a?(Hash)
+            files = T.let(bottle[:files] || bottle["files"], T.untyped)
+            bottle_file = if files.is_a?(Hash)
+              files.min_by { |tag, _| tag.to_s }&.second
+            else
+              bottle
+            end
+
+            if bottle_file.is_a?(Hash)
+              url = bottle_file[:url] || bottle_file["url"]
+              sha256 = bottle_file[:sha256] || bottle_file["sha256"]
+              result["bottle"] = { "url" => url.to_s, "sha256" => sha256.to_s } if url && sha256
+            end
+          end
+
+          result
+        rescue FormulaUnavailableError
+          super
+        end
+
         sig { params(formula: String, no_upgrade: T::Boolean).returns(T::Boolean) }
         def formula_installed_and_up_to_date?(formula, no_upgrade: false)
           return false unless formula_installed?(formula)
@@ -284,6 +314,15 @@ module Homebrew
         end
 
         private
+
+        sig { params(name: String).returns(Integer) }
+        def formula_revision(name)
+          require "formula"
+
+          Formula[name].revision
+        rescue FormulaUnavailableError
+          0
+        end
 
         sig { params(formula: Formula).returns(T::Hash[Symbol, T.untyped]) }
         def add_formula(formula)

@@ -9,6 +9,7 @@ module Homebrew
     EntryOption = T.type_alias { T.any(EntryOptionScalar, T::Array[String], NestedEntryOptions) }
     EntryOptions = T.type_alias { T::Hash[Symbol, EntryOption] }
     EntryInputOptions = T.type_alias { T::Hash[Symbol, Object] }
+    LockEntry = T.type_alias { T::Hash[String, T.untyped] }
 
     class PackageType
       extend T::Helpers
@@ -36,6 +37,20 @@ module Homebrew
       sig { returns(T::Boolean) }
       def self.install_supported?
         true
+      end
+
+      sig { overridable.params(name: String, options: Homebrew::Bundle::EntryOptions).returns(Homebrew::Bundle::LockEntry) }
+      def self.lock_entry(name, options = {})
+        result = T.let({ "name" => name }, T::Hash[String, T.untyped])
+        unless options.empty?
+          serialized_options = options.each_with_object({}) do |(key, value), memo|
+            next if key == :full_name
+
+            memo[key.to_s] = value
+          end
+          result["options"] = serialized_options unless serialized_options.empty?
+        end
+        result
       end
 
       sig { overridable.params(_name: String, _options: Homebrew::Bundle::EntryOptions).returns(String) }
