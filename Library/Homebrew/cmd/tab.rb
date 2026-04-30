@@ -79,6 +79,7 @@ module Homebrew
         end
 
         tab.installed_on_request = installed_on_request
+        tab.installed_as_dependency = !installed_on_request if formula_or_cask.is_a?(Formula)
         tab.write
         ohai "#{name} is now marked as #{installed_on_request_str}."
       end
