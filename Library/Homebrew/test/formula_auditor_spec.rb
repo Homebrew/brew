@@ -755,6 +755,8 @@ RSpec.describe Homebrew::FormulaAuditor do
 
   describe "#audit_specs" do
     let(:livecheck_throttle) { "livecheck do\n    throttle 10\n  end" }
+    let(:livecheck_throttle_days) { "livecheck do\n    throttle days: 1\n  end" }
+    let(:livecheck_throttle_rate_days) { "livecheck do\n    throttle 10, days: 1\n  end" }
     let(:versioned_head_spec_list) { { versioned_head_spec_allowlist: ["foo"] } }
 
     it "doesn't allow to miss a checksum" do
@@ -913,6 +915,67 @@ RSpec.describe Homebrew::FormulaAuditor do
 
       fa.audit_specs
       expect(fa.problems.first[:message]).to match "Should only be updated every 10 releases on multiples of 10"
+    end
+
+    it "allows patch versions that aren't multiples of the throttle rate when throttle interval has elapsed" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.1.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          #{livecheck_throttle_rate_days}
+        end
+      RUBY
+
+      allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "doesn't allow patch versions that aren't multiples when throttle interval has not elapsed" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.1.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          #{livecheck_throttle_rate_days}
+        end
+      RUBY
+
+      allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
+
+      fa.audit_specs
+      expect(fa.problems.first[:message])
+        .to match "Should only be updated every 10 releases on multiples of 10 or 1 day"
+    end
+
+    it "allows throttle with only days when throttle interval has elapsed" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.1.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          #{livecheck_throttle_days}
+        end
+      RUBY
+
+      allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "doesn't allow throttle with only days when throttle interval has not elapsed" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.1.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          #{livecheck_throttle_days}
+        end
+      RUBY
+
+      allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
+
+      fa.audit_specs
+      expect(fa.problems.first[:message]).to match "Should only be updated every 1 day"
     end
 
     it "allows non-versioned formulae to have a `HEAD` spec" do

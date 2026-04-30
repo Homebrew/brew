@@ -4,6 +4,7 @@
 require "deprecate_disable"
 require "formula_versions"
 require "formula_name_cask_token_auditor"
+require "livecheck/livecheck"
 require "resource_auditor"
 require "utils"
 require "utils/shared_audits"
@@ -880,10 +881,15 @@ module Homebrew
       stable_url_version = Version.parse(url)
       stable_url_minor_version = stable_url_version.minor.to_i
 
-      formula_suffix = stable.version.patch.to_i
-      throttled_rate = formula.livecheck.throttle
-      if throttled_rate && formula_suffix.modulo(throttled_rate).nonzero?
-        problem "Should only be updated every #{throttled_rate} releases on multiples of #{throttled_rate}"
+      throttle_rate = formula.livecheck.throttle
+      throttle_days = formula.livecheck.throttle_days
+      if (!throttle_rate.nil? || !throttle_days.nil?) &&
+         !Livecheck.throttle_allows_bump?(formula, stable.version, throttle_rate:, throttle_days:)
+        throttle_items = []
+        throttle_items << "#{throttle_rate} releases on multiples of #{throttle_rate}" if throttle_rate
+        throttle_items << "#{throttle_days} #{Utils.pluralize("day", throttle_days)}" if throttle_days
+
+        problem "Should only be updated every #{throttle_items.join(" or ")}"
       end
 
       case url
