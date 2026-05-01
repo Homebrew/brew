@@ -20,7 +20,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        db_path = Pathname(T.unsafe(args).output_db) if T.unsafe(args).output_db
+        db_path = Pathname(args.output_db) if args.output_db
         args.named.each { |name| process(name, db_path:) }
       end
 
@@ -52,7 +52,7 @@ module Homebrew
         return if formula.disabled? || formula.deprecated?
 
         exes = executables_from_manifest(formula)
-        "#{formula.full_name}(#{formula.pkg_version}):#{exes.join(" ")}"
+        "#{formula.full_name}:#{exes.join(" ")}"
       end
 
       sig { params(formula: Formula).returns(T::Array[String]) }
