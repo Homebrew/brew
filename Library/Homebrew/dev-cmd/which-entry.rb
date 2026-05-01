@@ -20,7 +20,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        db_path = Pathname(args.output_db) if args.output_db
+        db_path = Pathname(T.must(args.output_db)) if args.output_db
         args.named.each { |name| process(name, db_path:) }
       end
 
