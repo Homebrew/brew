@@ -20,29 +20,27 @@ module Homebrew
 
       sig { override.void }
       def run
-        db_path = Pathname(T.must(args.output_db)) if args.output_db
+        raise UsageError, "`--output-db` is required." unless args.output_db
+
+        db_path = Pathname(T.must(args.output_db))
         args.named.each { |name| process(name, db_path:) }
       end
 
       private
 
-      sig { params(name: String, db_path: T.nilable(Pathname)).void }
+      sig { params(name: String, db_path: Pathname).void }
       def process(name, db_path:)
         formula = Formulary.factory(name)
         line = db_line(formula)
-        if db_path
-          write_db(db_path, formula.full_name, line)
-        elsif line
-          puts line
-        end
+        write_db(db_path, formula.full_name, line)
       rescue FormulaUnavailableError
-        write_db(db_path, name, nil) if db_path&.exist?
+        write_db(db_path, name, nil) if db_path.exist?
       end
 
       sig { params(db_path: Pathname, name: String, line: T.nilable(String)).void }
       def write_db(db_path, name, line)
         lines = db_path.readlines(chomp: true).compact_blank if db_path.exist?
-        lines = (lines || []).reject { |l| l.start_with?("#{name}(") }
+        lines = Array(lines).reject { |l| l.start_with?("#{name}:") }
         lines << line if line
         db_path.write("#{lines.sort.join("\n")}\n")
       end
@@ -59,14 +57,14 @@ module Homebrew
       def executables_from_manifest(formula)
         return [] unless formula.bottled?
 
-        manifest_path = HOMEBREW_CACHE.glob("#{formula.name}_bottle_manifest--*").first
-        if manifest_path.blank?
-          bottle = formula.bottle
-          return [] unless bottle
+        bottle = formula.bottle
+        return [] unless bottle
 
-          bottle.fetch
-          manifest_path = HOMEBREW_CACHE.glob("#{formula.name}_bottle_manifest--*").first
-        end
+        manifest_resource = bottle.github_packages_manifest_resource
+        return [] unless manifest_resource
+
+        manifest_resource.fetch unless manifest_resource.downloaded?
+        manifest_path = manifest_resource.cached_download
         return [] if manifest_path.blank?
 
         manifest = JSON.parse(manifest_path.read)
