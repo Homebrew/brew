@@ -411,6 +411,14 @@ class Resource
       manifest_annotations["sh.brew.bottle.installed_size"]&.to_i
     end
 
+    sig { returns(T::Array[String]) }
+    def path_exec_files
+      exec_files = manifest_annotations["sh.brew.path_exec_files"]
+      return [] if exec_files.blank?
+
+      exec_files.split.map { |f| File.basename(f) }.sort
+    end
+
     sig { override.returns(String) }
     def download_queue_type = "Bottle Manifest"
 

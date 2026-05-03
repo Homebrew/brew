@@ -4,7 +4,6 @@
 require "abstract_command"
 require "formula"
 require "formulary"
-require "json"
 
 module Homebrew
   module DevCmd
@@ -20,27 +19,25 @@ module Homebrew
 
       sig { override.void }
       def run
-        raise UsageError, "`--output-db` is required." unless args.output_db
+        db_path = args.output_db
+        raise UsageError, "`--output-db` is required." unless db_path
 
-        db_path = Pathname(T.must(args.output_db))
-        args.named.each { |name| process(name, db_path:) }
+        args.named.to_formulae.each { |formula| process(formula, db_path: Pathname(db_path)) }
       end
 
       private
 
-      sig { params(name: String, db_path: Pathname).void }
-      def process(name, db_path:)
-        formula = Formulary.factory(name)
+      sig { params(formula: Formula, db_path: Pathname).void }
+      def process(formula, db_path:)
         line = db_line(formula)
         write_db(db_path, formula.full_name, line)
-      rescue FormulaUnavailableError
-        write_db(db_path, name, nil) if db_path.exist?
       end
 
       sig { params(db_path: Pathname, name: String, line: T.nilable(String)).void }
       def write_db(db_path, name, line)
         lines = db_path.readlines(chomp: true).compact_blank if db_path.exist?
-        lines = Array(lines).reject { |l| l.start_with?("#{name}:") }
+        # TODO: remove once pkg_versions are no longer in executables.txt
+        lines = Array(lines).reject { |l| l.start_with?(/#{Regexp.escape(name)}(?:\(.+\))?:/) }
         lines << line if line
         db_path.write("#{lines.sort.join("\n")}\n")
       end
@@ -55,23 +52,14 @@ module Homebrew
 
       sig { params(formula: Formula).returns(T::Array[String]) }
       def executables_from_manifest(formula)
-        return [] unless formula.bottled?
-
-        bottle = formula.bottle
-        return [] unless bottle
-
-        manifest_resource = bottle.github_packages_manifest_resource
+        manifest_resource = formula.bottle&.github_packages_manifest_resource
         return [] unless manifest_resource
 
         manifest_resource.fetch unless manifest_resource.downloaded?
         manifest_path = manifest_resource.cached_download
-        return [] if manifest_path.blank?
+        return [] unless manifest_path.exist?
 
-        manifest = JSON.parse(manifest_path.read)
-        exec_files = manifest.dig("manifests", 0, "annotations", "sh.brew.path_exec_files")
-        return [] if exec_files.blank?
-
-        exec_files.split.map { |f| File.basename(f) }.sort
+        manifest_resource.path_exec_files
       rescue JSON::ParserError => e
         opoo "Failed to parse bottle manifest for #{formula.name}: #{e.message}"
         []
