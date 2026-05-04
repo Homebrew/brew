@@ -10,6 +10,8 @@ module RuboCop
       class Patches < FormulaCop
         extend AutoCorrector
 
+        PLATFORM_CONDITIONALS = T.let([:on_macos, :on_linux].freeze, T::Array[Symbol])
+
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
           node = formula_nodes.node
@@ -18,9 +20,9 @@ module RuboCop
           return if (body_node = formula_nodes.body_node).nil?
 
           find_all_blocks(body_node, :patch).each do |patch_block|
-            file_node = find_every_method_call_by_name(patch_block, :file).first
-            if file_node
-              local_patch_problems(patch_block)
+            file_nodes = find_every_method_call_by_name(patch_block, :file)
+            if file_nodes.present?
+              local_patch_problems(patch_block, file_nodes)
               next
             end
 
@@ -136,21 +138,74 @@ module RuboCop
           end
         end
 
-        sig { params(patch_block: RuboCop::AST::Node).void }
-        def local_patch_problems(patch_block)
+        sig { params(patch_block: RuboCop::AST::Node, file_nodes: T::Array[RuboCop::AST::Node]).void }
+        def local_patch_problems(patch_block, file_nodes)
+          file_nodes.each do |file_node|
+            file_path_node = parameters(file_node).first
+            next unless file_path_node&.str_type?
+
+            file_path = Pathname(string_content(file_path_node)).cleanpath
+            next if !file_path.absolute? && file_path.to_s != ".." && !file_path.to_s.start_with?("../")
+
+            offending_node(file_node)
+            problem "Patch file must be a relative path within the repository."
+          end
+
           {
             url:       "Patch cannot have both `file` and `url`.",
             sha256:    "Patch cannot use `sha256` with `file`.",
             directory: "Patch cannot use `directory` with `file`.",
             apply:     "Patch cannot use `apply` with `file`.",
           }.each do |method_name, message|
-            node = find_every_method_call_by_name(patch_block, method_name).first
-            next unless node
+            find_every_method_call_by_name(patch_block, method_name).each do |node|
+              next unless conflicts_with_file?(node, file_nodes, patch_block)
 
-            offending_node(node)
-            problem message
+              offending_node(node)
+              problem message
+            end
           end
         end
+
+        sig {
+          params(
+            node:        RuboCop::AST::Node,
+            file_nodes:  T::Array[RuboCop::AST::Node],
+            patch_block: RuboCop::AST::Node,
+          ).returns(T::Boolean)
+        }
+        def conflicts_with_file?(node, file_nodes, patch_block)
+          file_nodes.any? do |file_node|
+            !mutually_exclusive_platform_conditionals?(node, file_node, patch_block)
+          end
+        end
+
+        sig {
+          params(
+            node:        RuboCop::AST::Node,
+            other_node:  RuboCop::AST::Node,
+            patch_block: RuboCop::AST::Node,
+          ).returns(T::Boolean)
+        }
+        def mutually_exclusive_platform_conditionals?(node, other_node, patch_block)
+          platform_conditional(node, patch_block).then do |platform|
+            other_platform = platform_conditional(other_node, patch_block)
+            platform.present? && other_platform.present? && platform != other_platform
+          end
+        end
+
+        sig { params(node: RuboCop::AST::Node, patch_block: RuboCop::AST::Node).returns(T.nilable(Symbol)) }
+        def platform_conditional(node, patch_block)
+          node.each_ancestor do |ancestor|
+            break if ancestor.equal?(patch_block)
+            next unless ancestor.block_type?
+
+            method_name = ancestor.method_name
+            return method_name if PLATFORM_CONDITIONALS.include?(method_name)
+          end
+
+          nil
+        end
+
         sig { params(patch: RuboCop::AST::Node).void }
         def inline_patch_problems(patch)
           return if !patch_data?(patch) || patch_end?

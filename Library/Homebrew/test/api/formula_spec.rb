@@ -6,9 +6,11 @@ require "test/support/fixtures/testball"
 
 RSpec.describe Homebrew::API::Formula do
   let(:cache_dir) { mktmpdir }
+  let(:source_cache_dir) { mktmpdir }
 
   before do
     stub_const("Homebrew::API::HOMEBREW_CACHE_API", cache_dir)
+    stub_const("Homebrew::API::HOMEBREW_CACHE_API_SOURCE", source_cache_dir)
   end
 
   def mock_curl_download(stdout:)
@@ -134,6 +136,31 @@ RSpec.describe Homebrew::API::Formula do
       result = described_class.source_download_formula(f)
       expect(result).to be_a(Formula)
       expect(result.name).to eq("testball")
+    end
+
+    it "loads local patch files from API source cache" do
+      source_path = source_cache_dir/"Homebrew/homebrew-core/abc123/Formula/testball.rb"
+      source_path.dirname.mkpath
+      source_path.write <<~RUBY
+        class Testball < Formula
+          url "https://brew.sh/testball-0.1.tar.gz"
+
+          patch do
+            file "patches/noop-a.diff"
+          end
+        end
+      RUBY
+
+      allow_any_instance_of(Homebrew::API::SourceDownload).to receive(:fetch) do |download|
+        next if download.symlink_location.basename.to_s != "noop-a.diff"
+
+        download.symlink_location.dirname.mkpath
+        download.symlink_location.write("patch contents")
+      end
+
+      result = described_class.source_download_formula(f)
+
+      expect(result.patchlist.fetch(0).contents).to eq("patch contents")
     end
   end
 end

@@ -44,19 +44,22 @@ module Homebrew
       sig {
         params(
           formula:        ::Formula,
+          path:           String,
+          checksum:       T.nilable(Checksum),
           download_queue: Homebrew::DownloadQueue,
           enqueue:        T::Boolean,
         ).returns(Homebrew::API::SourceDownload)
       }
-      def self.source_download(formula, download_queue: Homebrew.default_download_queue, enqueue: false)
-        path = formula.ruby_source_path || "Formula/#{formula.name}.rb"
+      def self.source_download_path(formula, path, checksum: nil, download_queue: Homebrew.default_download_queue,
+                                    enqueue: false)
         git_head = formula.tap_git_head || "HEAD"
         tap = formula.tap&.full_name || "Homebrew/homebrew-core"
+        path = Pathname(path).cleanpath.to_s
 
         download = Homebrew::API::SourceDownload.new(
           "https://raw.githubusercontent.com/#{tap}/#{git_head}/#{path}",
-          formula.ruby_source_checksum,
-          cache: HOMEBREW_CACHE_API_SOURCE/"#{tap}/#{git_head}/Formula",
+          checksum,
+          cache: HOMEBREW_CACHE_API_SOURCE/"#{tap}/#{git_head}"/Pathname(path).dirname,
         )
 
         if enqueue
@@ -66,6 +69,18 @@ module Homebrew
         end
 
         download
+      end
+
+      sig {
+        params(
+          formula:        ::Formula,
+          download_queue: Homebrew::DownloadQueue,
+          enqueue:        T::Boolean,
+        ).returns(Homebrew::API::SourceDownload)
+      }
+      def self.source_download(formula, download_queue: Homebrew.default_download_queue, enqueue: false)
+        path = formula.ruby_source_path || "Formula/#{formula.name}.rb"
+        source_download_path(formula, path, checksum: formula.ruby_source_checksum, download_queue:, enqueue:)
       end
 
       sig { params(formula: ::Formula).returns(::Formula) }
@@ -78,12 +93,25 @@ module Homebrew
                 "Try `rm -rf $(brew --cache)/api-source` and retrying."
         end
 
+        source_formula = T.let(nil, T.nilable(::Formula))
         with_env(HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS: "1") do
-          Formulary.factory(download.symlink_location,
-                            formula.active_spec_sym,
-                            alias_path: formula.alias_path,
-                            flags:      formula.class.build_flags)
+          source_formula = Formulary.factory(download.symlink_location,
+                                             formula.active_spec_sym,
+                                             alias_path: formula.alias_path,
+                                             flags:      formula.class.build_flags)
         end
+        source_formula = T.must(source_formula)
+
+        source_formula.resources.each do |resource|
+          resource.patches.grep(LocalPatch) do |patch|
+            source_download_path(formula, patch.file.to_s)
+          end
+        end
+        source_formula.patchlist.grep(LocalPatch) do |patch|
+          source_download_path(formula, patch.file.to_s)
+        end
+
+        source_formula
       end
 
       sig { returns(Pathname) }

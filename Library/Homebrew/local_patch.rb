@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "api"
 # A patch file stored locally with a formula or tap.
 class LocalPatch < EmbeddedPatch
   sig { returns(T.any(String, Pathname)) }
@@ -20,7 +21,9 @@ class LocalPatch < EmbeddedPatch
     formula = T.cast(owner, SoftwareSpec).owner
     raise ArgumentError, "LocalPatch#contents requires a formula owner!" unless formula.is_a?(::Formula)
 
-    repository_path = formula.tap&.path || formula.path.dirname
+    repository_path = Homebrew::API.source_download_tap_path(formula.path) ||
+                      formula.tap&.path ||
+                      formula.path.dirname
     file_path = repository_path/Pathname(file)
     repository_realpath = repository_path.realpath
     file_realpath = begin

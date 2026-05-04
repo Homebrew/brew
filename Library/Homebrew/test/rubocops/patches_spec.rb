@@ -241,6 +241,25 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
       RUBY
     end
 
+    it "reports no offenses for mutually exclusive platform patch sources" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+
+          patch do
+            on_macos do
+              file "Patches/foo.diff"
+            end
+
+            on_linux do
+              url "https://brew.sh/foo.diff"
+              sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            end
+          end
+        end
+      RUBY
+    end
+
     it "reports an offense for local file patches with url" do
       expect_offense(<<~RUBY)
         class Foo < Formula
@@ -249,6 +268,30 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
             file "Patches/foo.diff"
             url "https://brew.sh/foo.diff"
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patch cannot have both `file` and `url`.
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense for absolute local file patch paths" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            file "/tmp/foo.diff"
+            ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patch file must be a relative path within the repository.
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense for local file patch paths outside the repository" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            file "../foo.diff"
+            ^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patch file must be a relative path within the repository.
           end
         end
       RUBY

@@ -293,6 +293,18 @@ module Homebrew
       Tap.fetch(org, repo)
     end
 
+    sig { params(path: Pathname).returns(T.nilable(Pathname)) }
+    def self.source_download_tap_path(path)
+      path = path.expand_path
+      source_relative_path = path.relative_path_from(Homebrew::API::HOMEBREW_CACHE_API_SOURCE)
+      return if source_relative_path.to_s.start_with?("../")
+
+      org, repo, git_head = source_relative_path.each_filename.first(3)
+      return if org.blank? || repo.blank? || git_head.blank?
+
+      HOMEBREW_CACHE_API_SOURCE/org/repo/git_head
+    end
+
     sig { returns(T::Array[String]) }
     def self.formula_names
       if Homebrew::EnvConfig.use_internal_api?
