@@ -21,18 +21,14 @@ module RuboCop
 
           find_all_blocks(body_node, :patch).each do |patch_block|
             file_nodes = find_every_method_call_by_name(patch_block, :file)
-            if file_nodes.present?
-              local_patch_problems(patch_block, file_nodes)
-              next
+            local_patch_problems(patch_block, file_nodes) if file_nodes.present?
+
+            find_every_method_call_by_name(patch_block, :url).each do |url_node|
+              url_string = parameters(url_node).fetch(0)
+              sha256_node = sha256_node_for(url_node, patch_block)
+              sha256_string = parameters(sha256_node).first if sha256_node
+              patch_problems(url_string, sha256_string)
             end
-
-            url_node = find_every_method_call_by_name(patch_block, :url).first
-            next unless url_node
-
-            url_string = parameters(url_node).fetch(0)
-            sha256_node = find_every_method_call_by_name(patch_block, :sha256).first
-            sha256_string = parameters(sha256_node).first if sha256_node
-            patch_problems(url_string, sha256_string)
           end
 
           inline_patches = find_every_method_call_by_name(body_node, :patch)
@@ -204,6 +200,16 @@ module RuboCop
           end
 
           nil
+        end
+
+        sig {
+          params(url_node: RuboCop::AST::Node, patch_block: RuboCop::AST::Node)
+            .returns(T.nilable(RuboCop::AST::Node))
+        }
+        def sha256_node_for(url_node, patch_block)
+          find_every_method_call_by_name(patch_block, :sha256).find do |sha256_node|
+            !mutually_exclusive_platform_conditionals?(url_node, sha256_node, patch_block)
+          end
         end
 
         sig { params(patch: RuboCop::AST::Node).void }

@@ -260,6 +260,26 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
       RUBY
     end
 
+    it "reports URL offenses for external patches in mutually exclusive platform patch sources" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+
+          patch do
+            on_macos do
+              file "Patches/foo.diff"
+            end
+
+            on_linux do
+              url "https://github.com/foo/bar/pull/123.patch"
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Use a commit hash URL rather than an unstable pull request URL: https://github.com/foo/bar/pull/123.patch
+              sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            end
+          end
+        end
+      RUBY
+    end
+
     it "reports an offense for local file patches with url" do
       expect_offense(<<~RUBY)
         class Foo < Formula
