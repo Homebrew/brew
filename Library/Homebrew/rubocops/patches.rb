@@ -17,9 +17,12 @@ module RuboCop
 
           return if (body_node = formula_nodes.body_node).nil?
 
-          external_patches = find_all_blocks(body_node, :patch)
-          external_patches.each do |patch_block|
-            next if find_every_method_call_by_name(patch_block, :file).any?
+          find_all_blocks(body_node, :patch).each do |patch_block|
+            file_node = find_every_method_call_by_name(patch_block, :file).first
+            if file_node
+              local_patch_problems(patch_block)
+              next
+            end
 
             url_node = find_every_method_call_by_name(patch_block, :url).first
             next unless url_node
@@ -133,6 +136,21 @@ module RuboCop
           end
         end
 
+        sig { params(patch_block: RuboCop::AST::Node).void }
+        def local_patch_problems(patch_block)
+          {
+            url:       "Patch cannot have both `file` and `url`.",
+            sha256:    "Patch cannot use `sha256` with `file`.",
+            directory: "Patch cannot use `directory` with `file`.",
+            apply:     "Patch cannot use `apply` with `file`.",
+          }.each do |method_name, message|
+            node = find_every_method_call_by_name(patch_block, method_name).first
+            next unless node
+
+            offending_node(node)
+            problem message
+          end
+        end
         sig { params(patch: RuboCop::AST::Node).void }
         def inline_patch_problems(patch)
           return if !patch_data?(patch) || patch_end?

@@ -9,8 +9,8 @@ RSpec.describe Patch do
       subject(:patch) { described_class.create(:p2, nil) }
 
       specify(:aggregate_failures) do
-        expect(subject).to be_a ExternalPatch # rubocop:todo RSpec/NamedSubject
-        expect(subject).to be_external # rubocop:todo RSpec/NamedSubject
+        expect(patch).to be_a ExternalPatch
+        expect(patch).to be_external
       end
 
       it(:strip) { expect(patch.strip).to eq(:p2) }
@@ -48,8 +48,8 @@ RSpec.describe Patch do
       subject(:patch) { described_class.create(:p0, nil) { file "Patches/foo.diff" } }
 
       specify(:aggregate_failures) do
-        expect(subject).to be_a LocalPatch # rubocop:todo RSpec/NamedSubject
-        expect(subject).not_to be_external # rubocop:todo RSpec/NamedSubject
+        expect(patch).to be_a LocalPatch
+        expect(patch).not_to be_external
       end
 
       it(:strip) { expect(patch.strip).to eq(:p0) }
@@ -75,6 +75,33 @@ RSpec.describe Patch do
           url "https://brew.sh/foo.diff"
         end
       end.to raise_error(ArgumentError, "Patch cannot have both `file` and `url`.")
+    end
+
+    it "rejects local file patches with sha256" do
+      expect do
+        described_class.create(:p1, nil) do
+          file "Patches/foo.diff"
+          sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+        end
+      end.to raise_error(ArgumentError, "Patch cannot use `sha256` with `file`.")
+    end
+
+    it "rejects local file patches with directory" do
+      expect do
+        described_class.create(:p1, nil) do
+          file "Patches/foo.diff"
+          directory "subdir"
+        end
+      end.to raise_error(ArgumentError, "Patch cannot use `directory` with `file`.")
+    end
+
+    it "rejects local file patches with apply" do
+      expect do
+        described_class.create(:p1, nil) do
+          file "Patches/foo.diff"
+          apply "foo.diff"
+        end
+      end.to raise_error(ArgumentError, "Patch cannot use `apply` with `file`.")
     end
   end
 

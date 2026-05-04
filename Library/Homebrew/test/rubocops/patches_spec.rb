@@ -241,13 +241,53 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
       RUBY
     end
 
-    it "reports no offenses for local file patches with strip and sha256" do
-      expect_no_offenses(<<~RUBY)
+    it "reports an offense for local file patches with url" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            file "Patches/foo.diff"
+            url "https://brew.sh/foo.diff"
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patch cannot have both `file` and `url`.
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense for local file patches with sha256" do
+      expect_offense(<<~RUBY)
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           patch :p0 do
             file "Patches/foo.diff"
             sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patch cannot use `sha256` with `file`.
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense for local file patches with directory" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch :p0 do
+            file "Patches/foo.diff"
+            directory "subdir"
+            ^^^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patch cannot use `directory` with `file`.
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense for local file patches with apply" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch :p0 do
+            file "Patches/foo.diff"
+            apply "foo.diff"
+            ^^^^^^^^^^^^^^^^ FormulaAudit/Patches: Patch cannot use `apply` with `file`.
           end
         end
       RUBY

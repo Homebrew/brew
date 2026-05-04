@@ -26,9 +26,10 @@ RSpec.describe "patching", type: :system do
     end
   end
 
-  def formula(name = "formula_name", path: Formulary.core_path(name), spec: :stable, alias_path: nil, &block)
+  def formula(name = "formula_name", path: Formulary.core_path(name), spec: :stable, alias_path: nil, tap: nil,
+              &block)
     formula_subclass.class_eval(&block)
-    formula_subclass.new(name, path, spec, alias_path:)
+    formula_subclass.new(name, path, spec, alias_path:, tap:)
   end
 
   matcher :be_patched do
@@ -98,9 +99,9 @@ RSpec.describe "patching", type: :system do
     ).to be_patched
   end
 
-  specify "local_patch_dsl" do
+  specify "local_patch_dsl_resolves_path_loaded_formulae_from_formula_directory" do
     expect(
-      formula(path: TEST_FIXTURE_DIR/"local-patch.rb") do
+      formula(path: TEST_FIXTURE_DIR/"testball.rb") do
         patch do
           file "patches/noop-a.diff"
         end
@@ -110,7 +111,7 @@ RSpec.describe "patching", type: :system do
 
   specify "local_patch_dsl_with_strip" do
     expect(
-      formula(path: TEST_FIXTURE_DIR/"local-patch.rb") do
+      formula(path: TEST_FIXTURE_DIR/"testball.rb") do
         patch :p0 do
           file "patches/noop-b.diff"
         end
@@ -120,12 +121,58 @@ RSpec.describe "patching", type: :system do
 
   specify "local_patch_dsl_with_homebrew_prefix" do
     expect(
-      formula(path: TEST_FIXTURE_DIR/"local-patch.rb") do
+      formula(path: TEST_FIXTURE_DIR/"testball.rb") do
         patch do
           file "patches/noop-d.diff"
         end
       end,
     ).to be_patched_with_homebrew_prefix
+  end
+
+  specify "local_patch_dsl_resolves_tapped_formulae_from_tap_root" do
+    tap = Tap.fetch("homebrew", "local-patch-test")
+    (tap.path/"Formula").mkpath
+    (tap.path/"patches").mkpath
+    FileUtils.cp TEST_FIXTURE_DIR/"patches/noop-a.diff", tap.path/"patches/noop-a.diff"
+
+    expect(
+      formula(path: tap.path/"Formula/testball.rb", tap:) do
+        patch do
+          file "patches/noop-a.diff"
+        end
+      end,
+    ).to be_patched
+  ensure
+    FileUtils.rm_rf tap.path if tap
+  end
+
+  specify "local_patch_dsl_missing_file_fail" do
+    f = formula(path: TEST_FIXTURE_DIR/"testball.rb") do
+      patch do
+        file "patches/missing.diff"
+      end
+    end
+
+    expect { f.stable.patches.last.contents }
+      .to raise_error(ArgumentError, "Patch file does not exist: patches/missing.diff")
+  end
+
+  specify "local_patch_dsl_rejects_symlink_escape" do
+    mktmpdir do |tmpdir|
+      repository = tmpdir/"repository"
+      repository.mkpath
+      FileUtils.cp TEST_FIXTURE_DIR/"patches/noop-a.diff", tmpdir/"outside.diff"
+      FileUtils.ln_s tmpdir/"outside.diff", repository/"escape.diff"
+
+      f = formula(path: repository/"testball.rb") do
+        patch do
+          file "escape.diff"
+        end
+      end
+
+      expect { f.stable.patches.last.contents }
+        .to raise_error(ArgumentError, "Patch file must be within the formula repository.")
+    end
   end
 
   specify "single_patch_dsl_for_resource" do
