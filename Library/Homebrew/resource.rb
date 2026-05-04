@@ -464,6 +464,7 @@ class Resource
     sig { params(block: T.nilable(T.proc.bind(Resource::Patch).void)).void }
     def initialize(&block)
       @patch_files = T.let([], T::Array[T.any(String, Pathname)])
+      @file = T.let(nil, T.nilable(T.any(String, Pathname)))
       @directory = T.let(nil, T.nilable(T.any(String, Pathname)))
       super "patch", &block
     end
@@ -479,6 +480,18 @@ class Resource
       return @directory if val.nil?
 
       @directory = val
+    end
+
+    sig { params(val: T.nilable(T.any(String, Pathname))).returns(T.nilable(T.any(String, Pathname))) }
+    def file(val = nil)
+      return @file if val.nil?
+
+      path = Pathname(val).cleanpath
+      if path.absolute? || path.to_s == ".." || path.to_s.start_with?("../")
+        raise ArgumentError, "Patch file must be a relative path within the repository."
+      end
+
+      @file = val
     end
 
     sig { override.returns(String) }

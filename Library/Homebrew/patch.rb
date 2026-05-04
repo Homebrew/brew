@@ -27,7 +27,14 @@ module Patch
       when String
         StringPatch.new(strip, src)
       else
-        ExternalPatch.new(strip, &block)
+        resource = Resource::Patch.new(&block)
+        if (file = resource.file)
+          raise ArgumentError, "Patch cannot have both `file` and `url`." if resource.url.present?
+
+          LocalPatch.new(strip, file)
+        else
+          ExternalPatch.new(strip, resource)
+        end
       end
     end
   end
@@ -40,8 +47,8 @@ class EmbeddedPatch # rubocop:todo Style/OneClassPerFile
 
   abstract!
 
-  sig { params(owner: T.nilable(Resource::Owner)).returns(T.nilable(Resource::Owner)) }
-  attr_writer :owner
+  sig { returns(T.nilable(Resource::Owner)) }
+  attr_accessor :owner
 
   sig { returns(T.any(String, Symbol)) }
   attr_reader :strip
@@ -121,6 +128,42 @@ class StringPatch < EmbeddedPatch # rubocop:todo Style/OneClassPerFile
   end
 end
 
+# A patch file stored in the same repository as its formula.
+class LocalPatch < EmbeddedPatch # rubocop:todo Style/OneClassPerFile
+  sig { returns(T.any(String, Pathname)) }
+  attr_reader :file
+
+  sig { params(strip: T.any(String, Symbol), file: T.any(String, Pathname)).void }
+  def initialize(strip, file)
+    super(strip)
+    @file = file
+  end
+
+  sig { override.returns(String) }
+  def contents
+    owner = self.owner
+    raise ArgumentError, "LocalPatch#contents called before owner was set!" unless owner
+
+    formula = T.cast(owner, SoftwareSpec).owner
+    raise ArgumentError, "LocalPatch#contents requires a formula owner!" unless formula.is_a?(::Formula)
+
+    repository_path = formula.tap&.path || formula.path.dirname
+    file_path = repository_path/Pathname(file)
+    repository_realpath = repository_path.realpath
+    file_realpath = file_path.realpath
+    unless file_realpath.to_s.start_with?("#{repository_realpath}/")
+      raise ArgumentError, "Patch file must be within the formula repository."
+    end
+
+    file_realpath.read
+  end
+
+  sig { override.returns(String) }
+  def inspect
+    "#<#{self.class.name}: #{strip.inspect} #{file.inspect}>"
+  end
+end
+
 # A file containing a patch.
 class ExternalPatch # rubocop:todo Style/OneClassPerFile
   include Utils::Output::Mixin
@@ -137,10 +180,16 @@ class ExternalPatch # rubocop:todo Style/OneClassPerFile
                  :url, :fetch, :patch_files, :verify_download_integrity,
                  :cached_download, :downloaded?, :clear_cache
 
-  sig { params(strip: T.any(String, Symbol), block: T.nilable(T.proc.bind(Resource::Patch).void)).void }
-  def initialize(strip, &block)
+  sig {
+    params(
+      strip:    T.any(String, Symbol),
+      resource: T.nilable(Resource::Patch),
+      block:    T.nilable(T.proc.bind(Resource::Patch).void),
+    ).void
+  }
+  def initialize(strip, resource = nil, &block)
     @strip    = strip
-    @resource = T.let(Resource::Patch.new(&block), Resource::Patch)
+    @resource = T.let(resource || Resource::Patch.new(&block), Resource::Patch)
   end
 
   sig { returns(T::Boolean) }

@@ -43,6 +43,39 @@ RSpec.describe Patch do
       it { is_expected.to be_a DATAPatch }
       it(:strip) { expect(patch.strip).to eq(:p1) }
     end
+
+    context "with a local file patch" do
+      subject(:patch) { described_class.create(:p0, nil) { file "Patches/foo.diff" } }
+
+      specify(:aggregate_failures) do
+        expect(subject).to be_a LocalPatch # rubocop:todo RSpec/NamedSubject
+        expect(subject).not_to be_external # rubocop:todo RSpec/NamedSubject
+      end
+
+      it(:strip) { expect(patch.strip).to eq(:p0) }
+      it(:inspect) { expect(patch.inspect).to eq('#<LocalPatch: :p0 "Patches/foo.diff">') }
+    end
+
+    it "rejects local file patches outside the repository" do
+      expect do
+        described_class.create(:p1, nil) { file "../foo.diff" }
+      end.to raise_error(ArgumentError, "Patch file must be a relative path within the repository.")
+    end
+
+    it "rejects absolute local file patches" do
+      expect do
+        described_class.create(:p1, nil) { file "/tmp/foo.diff" }
+      end.to raise_error(ArgumentError, "Patch file must be a relative path within the repository.")
+    end
+
+    it "rejects local file patches with URLs" do
+      expect do
+        described_class.create(:p1, nil) do
+          file "Patches/foo.diff"
+          url "https://brew.sh/foo.diff"
+        end
+      end.to raise_error(ArgumentError, "Patch cannot have both `file` and `url`.")
+    end
   end
 
   describe "#patch_files" do

@@ -98,6 +98,36 @@ RSpec.describe "patching", type: :system do
     ).to be_patched
   end
 
+  specify "local_patch_dsl" do
+    expect(
+      formula(path: TEST_FIXTURE_DIR/"local-patch.rb") do
+        patch do
+          file "patches/noop-a.diff"
+        end
+      end,
+    ).to be_patched
+  end
+
+  specify "local_patch_dsl_with_strip" do
+    expect(
+      formula(path: TEST_FIXTURE_DIR/"local-patch.rb") do
+        patch :p0 do
+          file "patches/noop-b.diff"
+        end
+      end,
+    ).to be_patched
+  end
+
+  specify "local_patch_dsl_with_homebrew_prefix" do
+    expect(
+      formula(path: TEST_FIXTURE_DIR/"local-patch.rb") do
+        patch do
+          file "patches/noop-d.diff"
+        end
+      end,
+    ).to be_patched_with_homebrew_prefix
+  end
+
   specify "single_patch_dsl_for_resource" do
     expect(
       formula do
