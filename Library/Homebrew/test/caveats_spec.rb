@@ -253,12 +253,21 @@ RSpec.describe Caveats do
         allow_any_instance_of(Object).to receive(:which).and_call_original
       end
 
-      it "warns when an executable is shadowed by another on PATH" do
-        shadower = Pathname.new("/usr/local/bin/foo")
-        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(shadower)
-        allow(shadower).to receive(:realpath).and_return(shadower)
+      it "warns about shadowed executables on PATH in alphabetical order" do
+        FileUtils.touch(f.opt_bin/"bar")
+        FileUtils.chmod(0755, f.opt_bin/"bar")
 
-        expect(described_class.new(f).caveats).to include("foo (shadowed by #{shadower})")
+        foo_shadower = Pathname.new("/usr/local/bin/foo")
+        bar_shadower = Pathname.new("/usr/local/bin/bar")
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(foo_shadower)
+        allow_any_instance_of(Object).to receive(:which).with("bar", ORIGINAL_PATHS).and_return(bar_shadower)
+        allow(foo_shadower).to receive(:realpath).and_return(foo_shadower)
+        allow(bar_shadower).to receive(:realpath).and_return(bar_shadower)
+        allow(f.opt_bin).to receive(:children).and_return([f.opt_bin/"foo", f.opt_bin/"bar"])
+
+        caveats = described_class.new(f).caveats
+        expect(caveats).to include("foo (shadowed by #{foo_shadower})")
+        expect(caveats.index("bar (shadowed by")).to be < caveats.index("foo (shadowed by")
       end
 
       it "does not warn when PATH resolves to the formula's own executable" do

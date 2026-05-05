@@ -133,7 +133,7 @@ class Caveats
     shadowed = shadowed_executables
     return if shadowed.empty?
 
-    lines = shadowed.map { |name, shadower| "  #{name} (shadowed by #{shadower})" }
+    lines = shadowed.sort_by(&:first).map { |name, shadower| "  #{name} (shadowed by #{shadower})" }
     s = <<~EOS
       The following #{formula.name} executables are shadowed by other commands earlier in your PATH:
       #{lines.join("\n")}
