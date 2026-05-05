@@ -290,7 +290,7 @@ module GitHub
       # rubocop:enable Style/FormatStringToken
 
       token = credentials
-      args += ["--header", "Authorization: token #{token}"] if credentials_type != :none
+      args += ["--header", "Authorization: token #{token}"] if token.present?
       args += ["--header", "X-GitHub-Api-Version:2022-11-28"]
 
       require "tempfile"
@@ -322,7 +322,7 @@ module GitHub
         args += ["--dump-header", T.must(headers_tmpfile.path)]
 
         require "utils/curl"
-        result = Utils::Curl.curl_output("--location", url.to_s, *args, secrets: [token])
+        result = Utils::Curl.curl_output("--location", url.to_s, *args, secrets: [token].compact)
         output, _, http_code = result.stdout.rpartition("\n")
         output, _, http_code = output.rpartition("\n") if http_code == "000"
         headers = headers_tmpfile.read
