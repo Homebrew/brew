@@ -36,6 +36,7 @@ module Cask
         @cask = T.let(nil, T.nilable(T::Array[String]))
         @formula = T.let(nil, T.nilable(T::Array[String]))
         @macos = T.let(nil, T.nilable(MacOSRequirement))
+        @requires_macos = T.let(false, T::Boolean)
       end
 
       sig { returns(T::Array[String]) }
@@ -69,15 +70,20 @@ module Cask
 
       sig { params(args: T.any(String, Symbol)).returns(T.nilable(MacOSRequirement)) }
       def macos=(*args)
-        raise "Only a single 'depends_on macos' is allowed." if @macos
-
         # workaround for https://github.com/sorbet/sorbet/issues/6860
         first_arg = args.first
         first_arg_s = first_arg&.to_s
 
+        if first_arg && first_arg != :any && @macos&.version_specified?
+          raise "Only a single 'depends_on macos:' is allowed."
+        end
+
         begin
           @macos = if first_arg == :any
-            MacOSRequirement.new
+            @requires_macos ||= true
+
+            # Don't override an existing `@macos` value with a blank requirement
+            @macos || MacOSRequirement.new
           elsif args.count > 1
             MacOSRequirement.new([args], comparator: "==")
           elsif first_arg.is_a?(Symbol) && MacOSVersion::SYMBOLS.key?(first_arg)
@@ -108,6 +114,9 @@ module Cask
 
         @arch.concat(arches.map { |arch| VALID_ARCHES.fetch(arch) })
       end
+
+      sig { returns(T::Boolean) }
+      def macos? = @requires_macos
 
       sig { returns(T::Boolean) }
       def empty? = T.let(__getobj__, T::Hash[Symbol, T.untyped]).empty?

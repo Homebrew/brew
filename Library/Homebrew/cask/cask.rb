@@ -212,10 +212,10 @@ module Cask
       return true if font?
 
       # Bare `depends_on :macos` explicitly marks a cask as macOS-only
-      return false if (macos_requirement = depends_on.macos) && !macos_requirement.version_specified?
+      return false if depends_on.macos?
 
-      # Cache the os value before contains_os_specific_artifacts? refreshes the cask
-      # (the refresh clears @dsl.os in generic/non-OS-specific contexts)
+      # Cache the os value before contains_os_specific_artifacts? refreshes the
+      # cask (the refresh clears @dsl.os in generic/non-OS-specific contexts)
       os_value = dsl!.os
 
       return false if contains_os_specific_artifacts?

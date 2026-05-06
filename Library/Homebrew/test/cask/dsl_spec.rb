@@ -442,9 +442,28 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       let(:token) { "with-depends-on-macos-bare" }
 
       it "creates a MacOSRequirement without a version" do
-        macos_requirement = cask.depends_on.macos
-        expect(macos_requirement).to be_a(MacOSRequirement)
-        expect(macos_requirement.version_specified?).to be false
+        depends_on_macos = cask.depends_on.macos
+        expect(depends_on_macos).to eq(MacOSRequirement.new)
+        expect(depends_on_macos.version_specified?).to be false
+      end
+    end
+
+    context "when bare :macos is used alongside a version" do
+      let(:token) { "with-depends-on-macos-bare-and-comparison" }
+
+      it "creates a MacOSRequirement with the version" do
+        macos_requirement = MacOSRequirement.new([:catalina], comparator: ">=")
+
+        depends_on_macos = cask.depends_on.macos
+        expect(depends_on_macos).to eq(macos_requirement)
+        expect(depends_on_macos.version_specified?).to be true
+        expect(cask.depends_on.macos?).to be true
+
+        # Call `depends_on :macos` again (after `depends_on macos: "..." has
+        # been called) to confirm it doesn't override the specific macOS
+        # requirement with a blank one.
+        cask.depends_on :macos
+        expect(cask.depends_on.macos).to eq(macos_requirement)
       end
     end
 

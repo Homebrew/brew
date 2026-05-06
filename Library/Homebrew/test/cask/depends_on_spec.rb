@@ -34,6 +34,14 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
   end
 
   describe "depends_on macos" do
+    context "with :macos" do
+      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-bare")) }
+
+      it "does not raise an error" do
+        expect { install }.not_to raise_error
+      end
+    end
+
     context "with an array" do
       let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-array")) }
 
@@ -50,7 +58,15 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
       end
     end
 
-    context "with a symbol" do
+    context "with :macos and a comparison" do
+      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-bare-and-comparison")) }
+
+      it "does not raise an error" do
+        expect { install }.not_to raise_error
+      end
+    end
+
+    context "with a macOS version symbol" do
       let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-symbol")) }
 
       it "does not raise an error" do
