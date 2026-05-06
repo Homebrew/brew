@@ -10,5 +10,5 @@ cask "with-depends-on-macos-bare" do
 
   depends_on :macos
 
-  binary "#{appdir}/Caffeine.app/Contents/MacOS/caffeine"
+  binary "#{staged_path}/Caffeine.app/Contents/MacOS/Caffeine"
 end
