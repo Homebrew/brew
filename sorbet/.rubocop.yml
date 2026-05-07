@@ -6,9 +6,5 @@ AllCops:
     - "rbi/{annotations,dsl,gems}/**/*.rbi"
     - "rbi/parser*.rbi"
 
-Homebrew/NegateInclude:
-  Exclude:
-    - "tapioca/**/*"
-
 Style/Documentation:
   Enabled: false
