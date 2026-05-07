@@ -23,6 +23,10 @@ RSpec.describe Cask::CaskLoader::FromURILoader do
         end
       RUBY
     end
+
+    it "returns nil when given a scheme-less absolute path string" do
+      expect(described_class.try_new("#{TEST_FIXTURE_DIR}/cask/Casks/local-caffeine.rb")).to be_nil
+    end
   end
 
   describe "::load" do

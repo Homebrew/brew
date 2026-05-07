@@ -5,6 +5,12 @@ RSpec.describe Cask::CaskLoader, :cask do
   describe "::for" do
     let(:tap) { CoreCaskTap.instance }
 
+    it "uses FromPathLoader for scheme-less absolute path strings", :no_api do
+      path = "#{TEST_FIXTURE_DIR}/cask/Casks/local-caffeine.rb"
+
+      expect(described_class.for(path)).to be_a(Cask::CaskLoader::FromPathLoader)
+    end
+
     context "when a cask is renamed" do
       let(:old_token) { "version-newest" }
       let(:new_token) { "version-latest" }

@@ -244,6 +244,7 @@ module Cask
 
         uri = URI(uri)
         return unless uri.path
+        return unless uri.scheme.present?
 
         new(uri)
       end
