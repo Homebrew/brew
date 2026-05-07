@@ -176,6 +176,7 @@
 !/completions
 !/docs
 !/manpages
+!/sorbet
 !/CODEOWNERS
 
 # Unignore our packaging files

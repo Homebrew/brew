@@ -57,91 +57,89 @@ module Homebrew
         # Sorbet doesn't use bash privileged mode so we align EUID and UID here.
         Process::UID.change_privilege(Process.euid) if Process.euid != Process.uid
 
-        HOMEBREW_LIBRARY_PATH.cd do
-          if update
-            workers = args.debug? ? ["--workers=1"] : []
-            safe_system "bundle", "exec", "tapioca", "annotations"
-            safe_system "bundle", "exec", "tapioca", "dsl", *workers
-            # Prefer adding args here: Library/Homebrew/sorbet/tapioca/config.yml
-            tapioca_args = args.update_all? ? ["--all"] : []
+        # sorbet/ lives at the project root; run all commands from there so
+        # sorbet finds its config. install_bundler_gems! already set
+        # BUNDLE_GEMFILE and GEM_HOME/GEM_PATH. Restore TMPDIR to the user's
+        # original value (HOMEBREW_TMPDIR) because sorbet segfaults on macOS
+        # when TMPDIR is set to the Homebrew build temp dir (/private/tmp).
+        HOMEBREW_REPOSITORY.cd do
+          with_env("TMPDIR" => ENV.fetch("HOMEBREW_TMPDIR", nil)) do
+            if update
+              workers = args.debug? ? ["--workers=1"] : []
+              safe_system "bundle", "exec", "tapioca", "annotations"
+              safe_system "bundle", "exec", "tapioca", "dsl", *workers
+              # Prefer adding args here: sorbet/tapioca/config.yml
+              tapioca_args = args.update_all? ? ["--all"] : []
 
-            ohai "Updating Tapioca RBI files..."
-            safe_system "bundle", "exec", "tapioca", "gem", *tapioca_args
+              ohai "Updating Tapioca RBI files..."
+              safe_system "bundle", "exec", "tapioca", "gem", *tapioca_args
 
-            ohai "Trimming RuboCop RBI because by default it's massive..."
-            trim_rubocop_rbi
+              ohai "Trimming RuboCop RBI because by default it's massive..."
+              trim_rubocop_rbi
 
-            if args.suggest_typed?
-              ohai "Checking if we can bump Sorbet `typed` sigils..."
-              # --sorbet needed because of https://github.com/Shopify/spoom/issues/488
-              #
-              # Use the native sorbet binary directly to avoid Ruby version conflicts.
-              # spoom's exec uses Bundler.with_unbundled_env which can cause `#!/usr/bin/env ruby`
-              # scripts to use the wrong Ruby version (e.g., system Ruby 2.6 on macOS).
-              sorbet_path = Gem::Specification.find_by_name("sorbet-static").full_gem_path
-              sorbet_bin = File.join(sorbet_path, "libexec", "sorbet")
-              system "bundle", "exec", "spoom", "srb", "bump", "--from", "false", "--to", "true",
-                     "--sorbet", sorbet_bin
-              system "bundle", "exec", "spoom", "srb", "bump", "--from", "true", "--to", "strict",
-                     "--sorbet", sorbet_bin
+              if args.suggest_typed?
+                ohai "Checking if we can bump Sorbet `typed` sigils..."
+                # --sorbet needed because of https://github.com/Shopify/spoom/issues/488
+                #
+                # Use the native sorbet binary directly to avoid Ruby version conflicts.
+                # spoom's exec uses Bundler.with_unbundled_env which can cause `#!/usr/bin/env ruby`
+                # scripts to use the wrong Ruby version (e.g., system Ruby 2.6 on macOS).
+                sorbet_path = Gem::Specification.find_by_name("sorbet-static").full_gem_path
+                sorbet_bin = File.join(sorbet_path, "libexec", "sorbet")
+                system "bundle", "exec", "spoom", "srb", "bump", "--from", "false", "--to", "true",
+                       "--sorbet", sorbet_bin
+                system "bundle", "exec", "spoom", "srb", "bump", "--from", "true", "--to", "strict",
+                       "--sorbet", sorbet_bin
+              end
+
+              return
             end
 
-            return
-          end
+            srb_exec = %w[bundle exec srb tc]
 
-          srb_exec = %w[bundle exec srb tc]
+            srb_exec << "--quiet" if args.quiet?
 
-          srb_exec << "--quiet" if args.quiet?
+            if args.fix?
+              # Auto-correcting method names is almost always wrong.
+              srb_exec << "--suppress-error-code" << "7003"
 
-          if args.fix?
-            # Auto-correcting method names is almost always wrong.
-            srb_exec << "--suppress-error-code" << "7003"
-
-            srb_exec << "--autocorrect"
-          end
-
-          if args.lsp?
-            srb_exec << "--lsp"
-            if (watchman = which("watchman", ORIGINAL_PATHS))
-              srb_exec << "--watchman-path" << watchman.to_s
-            else
-              srb_exec << "--disable-watchman"
+              srb_exec << "--autocorrect"
             end
-          end
 
-          srb_exec += ["--ignore", args.ignore] if args.ignore.present?
-          if args.file.present? || args.dir.present? || (tap_dirs = args.named.to_paths(only: :tap)).present?
-            cd("sorbet") do
-              path = if (file = args.file.presence)
+            if args.lsp?
+              srb_exec << "--lsp"
+              if (watchman = which("watchman", ORIGINAL_PATHS))
+                srb_exec << "--watchman-path" << watchman.to_s
+              else
+                srb_exec << "--disable-watchman"
+              end
+            end
+
+            srb_exec += ["--ignore", args.ignore] if args.ignore.present?
+            if args.file.present? || args.dir.present? || (tap_dirs = args.named.to_paths(only: :tap)).present?
+              if (file = args.file.presence)
                 srb_exec << "--file"
-                Pathname(file)
+                srb_exec << Pathname(file).to_path
               elsif (dir = args.dir.presence)
                 srb_exec << "--dir"
-                Pathname(dir)
-              end
-              if path
-                srb_exec << if path.absolute?
-                  path.to_path
-                else
-                  "../#{path}"
-                end
+                srb_exec << Pathname(dir).to_path
               end
               tap_dirs&.each do |tap_dir|
                 srb_exec += ["--dir", tap_dir.to_s]
               end
             end
-          end
-          success = system(*srb_exec)
-          return if success
+            success = system(*srb_exec)
+            return if success
 
-          $stderr.puts "Check #{Formatter.url("https://docs.brew.sh/Typechecking")} for " \
-                       "more information on how to resolve these errors."
-          Homebrew.failed = true
+            $stderr.puts "Check #{Formatter.url("https://docs.brew.sh/Typechecking")} for " \
+                         "more information on how to resolve these errors."
+            Homebrew.failed = true
+          end
         end
       end
 
       sig { params(path: T.any(String, Pathname)).void }
-      def trim_rubocop_rbi(path: HOMEBREW_LIBRARY_PATH/"sorbet/rbi/gems/rubocop@*.rbi")
+      def trim_rubocop_rbi(path: HOMEBREW_REPOSITORY/"sorbet/rbi/gems/rubocop@*.rbi")
         rbi_file = Dir.glob(path).first
         return unless rbi_file.present?
         return unless (rbi_path = Pathname.new(rbi_file)).exist?
