@@ -1,5 +1,14 @@
 inherit_from:
   - ../Library/.rubocop.yml
 
+AllCops:
+  Exclude:
+    - "rbi/{annotations,dsl,gems}/**/*.rbi"
+    - "rbi/parser*.rbi"
+
+Homebrew/NegateInclude:
+  Exclude:
+    - "tapioca/**/*"
+
 Style/Documentation:
   Enabled: false
