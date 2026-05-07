@@ -1,7 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
-require_relative "../../../global"
+require_relative "../../../Library/Homebrew/global"
 require "api/formula_struct"
 require "api/cask_struct"
 

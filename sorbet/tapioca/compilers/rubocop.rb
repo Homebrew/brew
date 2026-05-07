@@ -3,7 +3,7 @@
 
 require "method_source"
 require "rubocop"
-require_relative "../../../rubocops"
+require_relative "../../../Library/Homebrew/rubocops"
 
 module Tapioca
   module Compilers

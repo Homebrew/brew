@@ -1,15 +1,15 @@
 # typed: strict
 # frozen_string_literal: true
 
-require_relative "../../../global"
-require "sorbet/tapioca/utils"
+require_relative "../../../Library/Homebrew/global"
+require_relative "../utils"
 require "utils/ast"
 
 module Tapioca
   module Compilers
     class Forwardables < Tapioca::Dsl::Compiler
       FORWARDABLE_FILENAME = "forwardable.rb"
-      ARRAY_METHODS = T.let(%w[to_a to_ary].freeze, T::Array[String])
+      ARRAY_METHODS = T.let(["to_a", "to_ary"].freeze, T::Array[String])
       HASH_METHODS = T.let(%w[to_h to_hash].freeze, T::Array[String])
       STRING_METHODS = T.let(%w[to_s to_str to_json].freeze, T::Array[String])
       # Use this to override the default return type of a forwarded method:
