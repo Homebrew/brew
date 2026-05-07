@@ -18,7 +18,7 @@ module Tapioca
 
           path = T.must(Object.const_source_location(klass.to_s)).fetch(0).to_s
           # exclude vendored code, to avoid contradicting their RBI files
-          !path.include?("/vendor/bundle/ruby/") &&
+          path.exclude?("/vendor/bundle/ruby/") &&
             # exclude source code that already has an RBI file
             !File.exist?("#{path}i") &&
             # exclude source code that doesn't use the DSLs

@@ -18,7 +18,7 @@ module Tapioca
       sig { override.returns(T::Enumerable[Parsable]) }
       def self.gather_constants
         # require all the commands to ensure the command subclasses are defined
-        ["cmd", "dev-cmd"].each do |dir|
+        %w[cmd dev-cmd].each do |dir|
           Dir[File.join(__dir__, "../../../#{dir}", "*.rb")].each { require(it) }
         end
         Homebrew::AbstractCommand.subclasses
