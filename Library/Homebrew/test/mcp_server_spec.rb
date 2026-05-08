@@ -113,6 +113,12 @@ RSpec.describe Homebrew::McpServer do
       expect(result).to eq({ jsonrpc:, id:, result: {} })
     end
 
+    it "responds to logging/setLevel with invalid params" do
+      request = { "id" => id, "method" => "logging/setLevel" }
+      result = server.handle_request(request)
+      expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid params", code: } })
+    end
+
     it "responds to notifications/initialized" do
       request = { "id" => id, "method" => "notifications/initialized" }
       expect(server.handle_request(request)).to be_nil
@@ -157,6 +163,18 @@ RSpec.describe Homebrew::McpServer do
       request = { "id" => id, "method" => "tools/call", "params" => { "name" => "not_a_tool", "arguments" => {} } }
       result = server.handle_request(request)
       expect(result).to eq({ jsonrpc:, id:, error: { message: "Unknown tool", code: } })
+    end
+
+    it "responds to tools/call with invalid params" do
+      request = { "id" => id, "method" => "tools/call" }
+      result = server.handle_request(request)
+      expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid params", code: } })
+    end
+
+    it "responds to tools/call with invalid arguments" do
+      request = { "id" => id, "method" => "tools/call", "params" => { "name" => "info", "arguments" => "bad" } }
+      result = server.handle_request(request)
+      expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid params", code: } })
     end
 
     it "responds with error for unknown method" do

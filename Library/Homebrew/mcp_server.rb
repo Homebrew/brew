@@ -281,7 +281,10 @@ module Homebrew
       when "get_server_info"
         respond_result(id, SERVER_INFO)
       when "logging/setLevel"
-        @debug_logging = request["params"]["level"] == "debug"
+        params = request["params"]
+        return respond_error(id, "Invalid params") unless params.is_a?(Hash)
+
+        @debug_logging = params["level"] == "debug"
         respond_result(id)
       when "notifications/initialized", "notifications/cancelled"
         respond_result
@@ -296,15 +299,28 @@ module Homebrew
 
     sig { params(id: Integer, request: T::Hash[String, T.untyped]).returns(T.nilable(T::Hash[Symbol, T.anything])) }
     def respond_to_tools_call(id, request)
-      tool_name = request["params"]["name"].to_sym
-      tool = TOOLS.fetch tool_name do
+      params = request["params"]
+      return respond_error(id, "Invalid params") unless params.is_a?(Hash)
+
+      tool_name = params["name"]
+      return respond_error(id, "Invalid params") unless tool_name.is_a?(String)
+
+      tool = TOOLS.fetch tool_name.to_sym do
         return respond_error(id, "Unknown tool")
       end
 
       require "open3"
 
-      command_args = tool_command_arguments(tool_name, request["params"]["arguments"])
-      progress_token = request["params"]["_meta"]&.fetch("progressToken", nil)
+      arguments = params["arguments"]
+      return respond_error(id, "Invalid params") unless arguments.nil? || arguments.is_a?(Hash)
+
+      arguments ||= {}
+
+      meta = params["_meta"]
+      return respond_error(id, "Invalid params") unless meta.nil? || meta.is_a?(Hash)
+
+      command_args = tool_command_arguments(tool_name, arguments)
+      progress_token = meta&.fetch("progressToken", nil)
       brew_command = T.cast(tool.fetch(:command), String)
                       .delete_prefix("brew ")
       buffer_size = 4096 # 4KB
