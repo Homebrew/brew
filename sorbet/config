@@ -1,5 +1,4 @@
 --dir=Library/Homebrew
---dir=sorbet/rbi
 --enable-experimental-requires-ancestor
 --enable-experimental-rspec
 --ignore=/vendor/bundle

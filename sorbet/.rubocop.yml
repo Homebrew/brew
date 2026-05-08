@@ -1,10 +1,5 @@
 inherit_from:
   - ../Library/.rubocop.yml
 
-AllCops:
-  Exclude:
-    - "rbi/{annotations,dsl,gems}/**/*.rbi"
-    - "rbi/parser*.rbi"
-
 Style/Documentation:
   Enabled: false

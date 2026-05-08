@@ -139,7 +139,7 @@ module Homebrew
       end
 
       sig { params(path: T.any(String, Pathname)).void }
-      def trim_rubocop_rbi(path: HOMEBREW_REPOSITORY/"sorbet/rbi/gems/rubocop@*.rbi")
+      def trim_rubocop_rbi(path: HOMEBREW_LIBRARY_PATH/"sorbet/rbi/gems/rubocop@*.rbi")
         rbi_file = Dir.glob(path).first
         return unless rbi_file.present?
         return unless (rbi_path = Pathname.new(rbi_file)).exist?
