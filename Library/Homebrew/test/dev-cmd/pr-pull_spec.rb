@@ -163,6 +163,52 @@ RSpec.describe Homebrew::DevCmd::PrPull do
     end
   end
 
+  describe "#separate_commit_message" do
+    it "separates standard -by: trailers" do
+      message = "Update foo\n\nSome body text.\n\nCo-authored-by: Alice <a@b.com>\nSigned-off-by: Bob <b@b.com>\n"
+      subject, body, trailers = pr_pull.separate_commit_message(message)
+      expect(subject).to eq("Update foo")
+      expect(body).to eq("Some body text.")
+      expect(trailers).to include("Co-authored-by: Alice <a@b.com>")
+      expect(trailers).to include("Signed-off-by: Bob <b@b.com>")
+    end
+
+    it "separates non-by trailers like Closes: and Fixes:" do
+      message = "Fix bug\n\nBody here.\n\nCloses: #123\nFixes: #456\nReviewed-by: Carol <c@c.com>\n"
+      subject, body, trailers = pr_pull.separate_commit_message(message)
+      expect(subject).to eq("Fix bug")
+      expect(body).to eq("Body here.")
+      expect(trailers).to include("Closes: #123")
+      expect(trailers).to include("Fixes: #456")
+      expect(trailers).to include("Reviewed-by: Carol <c@c.com>")
+    end
+
+    it "does not extract trailer-like text from mid-body" do
+      message = "Subject\n\nSome text.\nCloses: #99\nMore text.\n\nCo-authored-by: D <d@d.com>\n"
+      subject, body, trailers = pr_pull.separate_commit_message(message)
+      expect(subject).to eq("Subject")
+      expect(body).to include("Closes: #99")
+      expect(body).to include("More text.")
+      expect(trailers).to eq("Co-authored-by: D <d@d.com>")
+    end
+
+    it "returns empty trailers when there are none" do
+      message = "Subject\n\nJust a body with no trailers.\n"
+      subject, body, trailers = pr_pull.separate_commit_message(message)
+      expect(subject).to eq("Subject")
+      expect(body).to eq("Just a body with no trailers.")
+      expect(trailers).to eq("")
+    end
+
+    it "handles empty and blank messages" do
+      expect(pr_pull.separate_commit_message("")).to eq(["", "", ""])
+      subject, body, trailers = pr_pull.separate_commit_message("Subject only\n")
+      expect(subject).to eq("Subject only")
+      expect(body).to eq("")
+      expect(trailers).to eq("")
+    end
+  end
+
   describe "#determine_bump_subject" do
     it "correctly bumps a new formula" do
       expect(pr_pull.determine_bump_subject("", formula, formula_file)).to eq("foo 1.0 (new formula)")

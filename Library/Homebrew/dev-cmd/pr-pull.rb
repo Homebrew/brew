@@ -188,12 +188,24 @@ module Homebrew
         first_line = message.lines.first
         return ["", "", ""] unless first_line
 
-        # Skip the subject and separate lines that look like trailers (e.g. "Co-authored-by")
-        # from lines that look like regular body text.
-        trailers, body = message.lines.drop(1).partition { |s| s.match?(/^[a-z-]+-by:/i) }
+        remaining = message.lines.drop(1)
 
-        trailers = trailers.uniq.join.strip
-        body = body.join.strip.gsub(/\n{3,}/, "\n\n")
+        # Detect trailers as a contiguous block at the end of the message.
+        trailer_start = remaining.length
+        remaining.reverse_each.with_index do |line, i|
+          pos = remaining.length - 1 - i
+          if line.match?(/^[A-Za-z][A-Za-z0-9-]*:\s/)
+            trailer_start = pos
+          elsif line.strip.empty?
+            # Allow blank lines between trailer lines
+            next
+          else
+            break
+          end
+        end
+
+        body = remaining[0...trailer_start].to_a.join.strip.gsub(/\n{3,}/, "\n\n")
+        trailers = remaining[trailer_start..].to_a.grep(/^[A-Za-z][A-Za-z0-9-]*:\s/).uniq.join.strip
 
         [first_line.strip, body, trailers]
       end
