@@ -116,7 +116,11 @@ RSpec.describe Homebrew::McpServer do
     it "responds to logging/setLevel with invalid params" do
       request = { "id" => id, "method" => "logging/setLevel" }
       result = server.handle_request(request)
-      expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid params", code: } })
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        error:   { message: "Invalid params: 'params' must be a JSON object", code: },
+      })
     end
 
     it "responds to notifications/initialized" do
@@ -168,13 +172,41 @@ RSpec.describe Homebrew::McpServer do
     it "responds to tools/call with invalid params" do
       request = { "id" => id, "method" => "tools/call" }
       result = server.handle_request(request)
-      expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid params", code: } })
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        error:   { message: "Invalid params: 'params' must be a JSON object", code: },
+      })
     end
 
     it "responds to tools/call with invalid arguments" do
       request = { "id" => id, "method" => "tools/call", "params" => { "name" => "info", "arguments" => "bad" } }
       result = server.handle_request(request)
-      expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid params", code: } })
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        error:   { message: "Invalid params: 'arguments' must be a JSON object", code: },
+      })
+    end
+
+    it "responds to tools/call with invalid name" do
+      request = { "id" => id, "method" => "tools/call", "params" => { "name" => true } }
+      result = server.handle_request(request)
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        error:   { message: "Invalid params: 'name' must be a JSON string", code: },
+      })
+    end
+
+    it "responds to tools/call with invalid _meta" do
+      request = { "id" => id, "method" => "tools/call", "params" => { "name" => "info", "_meta" => "bad" } }
+      result = server.handle_request(request)
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        error:   { message: "Invalid params: '_meta' must be a JSON object", code: },
+      })
     end
 
     it "responds with error for unknown method" do
