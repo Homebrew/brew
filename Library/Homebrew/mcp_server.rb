@@ -282,7 +282,7 @@ module Homebrew
         respond_result(id, SERVER_INFO)
       when "logging/setLevel"
         params = request["params"]
-        return respond_error(id, invalid_param_type_error("params", "object")) unless params.is_a?(Hash)
+        return respond_error(id, respond_param_type_error("params", "object")) unless params.is_a?(Hash)
 
         @debug_logging = params["level"] == "debug"
         respond_result(id)
@@ -300,10 +300,10 @@ module Homebrew
     sig { params(id: Integer, request: T::Hash[String, T.untyped]).returns(T.nilable(T::Hash[Symbol, T.anything])) }
     def respond_to_tools_call(id, request)
       params = request["params"]
-      return respond_error(id, invalid_param_type_error("params", "object")) unless params.is_a?(Hash)
+      return respond_error(id, respond_param_type_error("params", "object")) unless params.is_a?(Hash)
 
       tool_name = params["name"]
-      return respond_error(id, invalid_param_type_error("name", "string")) unless tool_name.is_a?(String)
+      return respond_error(id, respond_param_type_error("name", "string")) unless tool_name.is_a?(String)
 
       tool = TOOLS.fetch tool_name.to_sym do
         return respond_error(id, "Unknown tool")
@@ -313,13 +313,13 @@ module Homebrew
 
       arguments = params["arguments"]
       if !arguments.nil? && !arguments.is_a?(Hash)
-        return respond_error(id, invalid_param_type_error("arguments", "object"))
+        return respond_error(id, respond_param_type_error("arguments", "object"))
       end
 
       arguments ||= {}
 
       meta = params["_meta"]
-      return respond_error(id, invalid_param_type_error("_meta", "object")) if !meta.nil? && !meta.is_a?(Hash)
+      return respond_error(id, respond_param_type_error("_meta", "object")) if !meta.nil? && !meta.is_a?(Hash)
 
       command_args = tool_command_arguments(tool_name.to_sym, arguments)
       progress_token = meta&.fetch("progressToken", nil)
@@ -419,7 +419,7 @@ module Homebrew
     end
 
     sig { params(param_name: String, expected_type: String).returns(String) }
-    def invalid_param_type_error(param_name, expected_type)
+    def respond_param_type_error(param_name, expected_type)
       "Invalid params: '#{param_name}' must be a JSON #{expected_type}"
     end
   end
