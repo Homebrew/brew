@@ -312,14 +312,14 @@ module Homebrew
       require "open3"
 
       arguments = params["arguments"]
-      return respond_error(id, "Invalid params") unless arguments.nil? || arguments.is_a?(Hash)
+      return respond_error(id, "Invalid params") if !arguments.nil? && !arguments.is_a?(Hash)
 
       arguments ||= {}
 
       meta = params["_meta"]
-      return respond_error(id, "Invalid params") unless meta.nil? || meta.is_a?(Hash)
+      return respond_error(id, "Invalid params") if !meta.nil? && !meta.is_a?(Hash)
 
-      command_args = tool_command_arguments(tool_name, arguments)
+      command_args = tool_command_arguments(tool_name.to_sym, arguments)
       progress_token = meta&.fetch("progressToken", nil)
       brew_command = T.cast(tool.fetch(:command), String)
                       .delete_prefix("brew ")
