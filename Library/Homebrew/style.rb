@@ -186,7 +186,7 @@ module Homebrew
       files.map!(&:expand_path)
       base_dir = Dir.pwd
       if files.blank? || files == [HOMEBREW_REPOSITORY]
-        files = [HOMEBREW_LIBRARY_PATH]
+        files = [HOMEBREW_LIBRARY_PATH, HOMEBREW_REPOSITORY/"sorbet"]
         base_dir = HOMEBREW_LIBRARY_PATH
       elsif files.any? { |f| f.to_s.start_with?(HOMEBREW_REPOSITORY/"docs") || (f.basename.to_s == "docs") }
         args << "--config" << (HOMEBREW_REPOSITORY/"docs/docs_rubocop_style.yml")

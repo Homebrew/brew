@@ -5,7 +5,7 @@ require "bundler"
 require "yaml"
 
 RSpec.describe "Tapioca Config", type: :system do
-  let(:config) { YAML.load_file(File.join(__dir__, "../../../sorbet/tapioca/config.yml")) }
+  let(:config) { YAML.load_file(File.join(__dir__, "../../../../../sorbet/tapioca/config.yml")) }
 
   it "only excludes dependencies" do
     exclusions = config.dig("gem", "exclude")
