@@ -9,10 +9,17 @@ module RequireHooks
   class << self
     def around_load(patterns: T.unsafe(nil), exclude_patterns: T.unsafe(nil), &block); end
     def context_for(path); end
+    def contexts; end
     def hijack_load(patterns: T.unsafe(nil), exclude_patterns: T.unsafe(nil), &block); end
     def print_warnings; end
     def print_warnings=(_arg0); end
+    def setup_path_coverage(path, contents = T.unsafe(nil)); end
     def source_transform(patterns: T.unsafe(nil), exclude_patterns: T.unsafe(nil), &block); end
+
+    private
+
+    def eval_coverage_enabled?; end
+    def register_hook(type, block, patterns: T.unsafe(nil), exclude_patterns: T.unsafe(nil)); end
   end
 end
 
@@ -25,8 +32,10 @@ class RequireHooks::Context
   def hijack?; end
   def hijack_load; end
   def match?(path); end
+  def merge!(another_ctx); end
   def patterns; end
   def perform_source_transform(path); end
+  def readonly?; end
   def run_around_load_callbacks(path); end
   def source_transform; end
   def source_transform?; end
@@ -35,6 +44,12 @@ class RequireHooks::Context
 end
 
 RequireHooks::EMPTY_ISEQ = T.let(T.unsafe(nil), RubyVM::InstructionSequence)
+
+module RequireHooks::Iseq
+  class << self
+    def compile_with_coverage(ctx, path); end
+  end
+end
 
 module RequireHooks::LoadIseq
   def load_iseq(path); end

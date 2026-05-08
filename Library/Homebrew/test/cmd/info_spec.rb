@@ -368,6 +368,213 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  it "marks a tab-listed dep with no installed rack as unsatisfied" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      url "https://brew.sh/testball-0.1.tar.gz"
+      desc "Some test"
+
+      depends_on "bar"
+    end
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = [{ "full_name" => "bar", "version" => "1.0", "pkg_version" => "1.0" }]
+    tab.write
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive(:core_formula?).and_return(false)
+
+    expect { info.send(:info_formula, formula) }
+      .to output(/Required \(1\): .*bar.*✘/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "marks a tab-listed dep with an installed rack as satisfied when the dep formula is not outdated" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      url "https://brew.sh/testball-0.1.tar.gz"
+      desc "Some test"
+
+      depends_on "bar"
+    end
+    direct_dependency = formula.deps.required.first
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = [{ "full_name" => "bar", "version" => "1.0", "pkg_version" => "1.0" }]
+    tab.write
+
+    bar_keg_path = HOMEBREW_CELLAR/"bar/1.0"
+    bar_keg_path.mkpath
+    bar_tab = Tab.empty
+    bar_tab.tabfile = bar_keg_path/AbstractTab::FILENAME
+    bar_tab.write
+
+    bar_formula = instance_double(Formula, outdated?: false)
+    allow(direct_dependency).to receive(:to_formula).and_return(bar_formula)
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive(:core_formula?).and_return(false)
+
+    expect { info.send(:info_formula, formula) }
+      .to output(/Required \(1\): .*bar.*✔/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "marks a tab-listed dep with an installed rack as outdated when the dep formula is outdated" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      url "https://brew.sh/testball-0.1.tar.gz"
+      desc "Some test"
+
+      depends_on "bar"
+    end
+    direct_dependency = formula.deps.required.first
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = [{ "full_name" => "bar", "version" => "1.0", "pkg_version" => "1.0" }]
+    tab.write
+
+    bar_keg_path = HOMEBREW_CELLAR/"bar/1.0"
+    bar_keg_path.mkpath
+    bar_tab = Tab.empty
+    bar_tab.tabfile = bar_keg_path/AbstractTab::FILENAME
+    bar_tab.write
+
+    bar_formula = instance_double(Formula, outdated?: true)
+    allow(direct_dependency).to receive(:to_formula).and_return(bar_formula)
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive(:core_formula?).and_return(false)
+
+    expect { info.send(:info_formula, formula) }
+      .to output(/Required \(1\): .*bar.*↑/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "marks an installed dep on an uninstalled formula as satisfied" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      url "https://brew.sh/testball-0.1.tar.gz"
+      desc "Some test"
+
+      depends_on "bar"
+    end
+    direct_dependency = formula.deps.required.first
+
+    bar_keg_path = HOMEBREW_CELLAR/"bar/1.0"
+    bar_keg_path.mkpath
+    bar_tab = Tab.empty
+    bar_tab.tabfile = bar_keg_path/AbstractTab::FILENAME
+    bar_tab.write
+
+    bar_formula = instance_double(Formula, outdated?: false)
+    allow(direct_dependency).to receive(:to_formula).and_return(bar_formula)
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive(:core_formula?).and_return(false)
+
+    expect { info.send(:info_formula, formula) }
+      .to output(/Required \(1\): .*bar.*✔/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "marks an outdated installed dep on an uninstalled formula as upgradable" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      url "https://brew.sh/testball-0.1.tar.gz"
+      desc "Some test"
+
+      depends_on "bar"
+    end
+    direct_dependency = formula.deps.required.first
+
+    bar_keg_path = HOMEBREW_CELLAR/"bar/1.0"
+    bar_keg_path.mkpath
+    bar_tab = Tab.empty
+    bar_tab.tabfile = bar_keg_path/AbstractTab::FILENAME
+    bar_tab.write
+
+    bar_formula = instance_double(Formula, outdated?: true)
+    allow(direct_dependency).to receive(:to_formula).and_return(bar_formula)
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive(:core_formula?).and_return(false)
+
+    expect { info.send(:info_formula, formula) }
+      .to output(/Required \(1\): .*bar.*↑/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "marks a missing dep on an uninstalled formula as unsatisfied" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      url "https://brew.sh/testball-0.1.tar.gz"
+      desc "Some test"
+
+      depends_on "bar"
+    end
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive(:core_formula?).and_return(false)
+
+    expect { info.send(:info_formula, formula) }
+      .to output(/Required \(1\): .*bar.*✘/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "marks a dep absent from the installed keg's tab as unsatisfied" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      url "https://brew.sh/testball-0.1.tar.gz"
+      desc "Some test"
+
+      depends_on "bar"
+    end
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = []
+    tab.write
+
+    bar_keg_path = HOMEBREW_CELLAR/"bar/1.0"
+    bar_keg_path.mkpath
+    bar_tab = Tab.empty
+    bar_tab.tabfile = bar_keg_path/AbstractTab::FILENAME
+    bar_tab.write
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive(:core_formula?).and_return(false)
+
+    expect { info.send(:info_formula, formula) }
+      .to output(/Required \(1\): .*bar.*✘/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
   it "omits build dependencies when a formula would pour from a bottle" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 

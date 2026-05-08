@@ -227,8 +227,6 @@ class RBI::Class < ::RBI::Scope
   sig { returns(::String) }
   def name; end
 
-  def name=(_arg0); end
-
   sig { returns(T.nilable(::String)) }
   def superclass_name; end
 
@@ -712,8 +710,6 @@ class RBI::Method < ::RBI::NodeWithComments
   sig { returns(::String) }
   def name; end
 
-  def name=(_arg0); end
-
   sig { returns(T::Array[::RBI::Param]) }
   def params; end
 
@@ -803,8 +799,6 @@ class RBI::Module < ::RBI::Scope
 
   sig { returns(::String) }
   def name; end
-
-  def name=(_arg0); end
 end
 
 class RBI::Node
@@ -2274,8 +2268,6 @@ class RBI::Struct < ::RBI::Scope
 
   sig { returns(::String) }
   def name; end
-
-  def name=(_arg0); end
 end
 
 class RBI::TEnum < ::RBI::Class
@@ -2403,8 +2395,6 @@ class RBI::TStructField < ::RBI::NodeWithComments
 
   sig { returns(::String) }
   def name; end
-
-  def name=(_arg0); end
 
   sig { returns(T.any(::RBI::Type, ::String)) }
   def type; end

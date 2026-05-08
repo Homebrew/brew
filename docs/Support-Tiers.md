@@ -95,6 +95,7 @@ Tier 3 configurations include:
 - macOS versions no longer covered by CI and no longer receiving regular Apple security updates
 - Systems that build official packages from source despite available bottles
 - Homebrew installed outside the default prefix (e.g. `/opt/homebrew`, `/usr/local`, or `/home/linuxbrew/.linuxbrew` used on mismatched architectures)
+- Homebrew installations managed by Nix (e.g. nix-darwin or nix-homebrew)
 - Installing formulae using `--HEAD`
 - Installing deprecated or disabled formulae
 - Macs using OpenCore Legacy Patcher with an Intel CPU older than Westmere

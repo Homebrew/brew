@@ -683,12 +683,13 @@ class BuildError < RuntimeError
           Read the above document instead before opening any issues or PRs.
         EOS
       elsif formula_tap.official?
-        puts Formatter.error(Formatter.url(OS::ISSUES_URL), label: "READ THIS")
+        if OS.nix_managed_homebrew?
+          puts issue_reporting_message(OS::ISSUES_URL)
+        else
+          puts issue_reporting_message(OS::ISSUES_URL, read_this: true)
+        end
       elsif (issues_url = formula_tap.issues_url)
-        puts <<~EOS
-          If reporting this issue please do so at (not Homebrew/* repositories):
-            #{Formatter.url(issues_url)}
-        EOS
+        puts issue_reporting_message(issues_url)
       else
         puts <<~EOS
           If reporting this issue please do so to (not Homebrew/* repositories):

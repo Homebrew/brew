@@ -612,6 +612,21 @@ module Homebrew
       end
 
       sig { returns(T.nilable(String)) }
+      def check_for_nix_homebrew
+        return unless OS.nix_managed_homebrew?
+
+        <<~EOS
+          Your Homebrew installation is managed by Nix.
+          Homebrew does not support Nix-managed installations.
+
+          This is a Tier 3 configuration:
+            #{Formatter.url("https://docs.brew.sh/Support-Tiers#tier-3")}
+          #{Formatter.bold("Report issues to the upstream Nix project, not Homebrew/* repositories:")}
+            #{Formatter.url(OS.nix_managed_homebrew_issues_url)}
+        EOS
+      end
+
+      sig { returns(T.nilable(String)) }
       def check_coretap_integrity
         core_tap = CoreTap.instance
         unless core_tap.installed?

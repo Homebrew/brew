@@ -209,11 +209,13 @@ rescue Exception => e # rubocop:disable Lint/RescueException
     $stderr.puts "#{Tty.bold}You have disabled automatic updates and have not updated today.#{Tty.reset}"
     $stderr.puts "#{Tty.bold}Do not report this issue until you've run `brew update` and tried again.#{Tty.reset}"
   elsif (issues_url = (method_deprecated_error && e.issues_url) || Utils::Backtrace.tap_error_url(e))
-    $stderr.puts "If reporting this issue please do so at (not Homebrew/* repositories):"
-    $stderr.puts "  #{Formatter.url(issues_url)}"
+    $stderr.puts Utils::Output.issue_reporting_message(issues_url)
   elsif internal_cmd && !method_deprecated_error
-    $stderr.puts "#{Tty.bold}Please report this issue:#{Tty.reset}"
-    $stderr.puts "  #{Formatter.url(OS::ISSUES_URL)}"
+    if OS.nix_managed_homebrew?
+      $stderr.puts Utils::Output.issue_reporting_message(OS::ISSUES_URL)
+    else
+      $stderr.puts Utils::Output.issue_reporting_message(OS::ISSUES_URL, homebrew: true)
+    end
   end
 
   exit 1

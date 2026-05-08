@@ -685,9 +685,7 @@ Patches can also be embedded by passing a string. This makes it possible to prov
 patch :p0, "..."
 ```
 
-In embedded patches, the string "HOMEBREW\_PREFIX" is replaced with the value of the constant `HOMEBREW_PREFIX` before the patch is applied.
-
-In external patches, the string "@@HOMEBREW\_PREFIX@@" is replaced with the value of the constant `HOMEBREW_PREFIX` before the patch is applied.
+In embedded and external patches, the string "@@HOMEBREW\_PREFIX@@" is replaced with the value of the constant `HOMEBREW_PREFIX` before the patch is applied.
 
 ### Creating the diff
 

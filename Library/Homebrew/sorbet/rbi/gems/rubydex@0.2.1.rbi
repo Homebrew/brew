@@ -12,7 +12,12 @@ module Rubydex; end
 class Rubydex::AttrAccessorDefinition < ::Rubydex::Definition; end
 class Rubydex::AttrReaderDefinition < ::Rubydex::Definition; end
 class Rubydex::AttrWriterDefinition < ::Rubydex::Definition; end
-class Rubydex::Class < ::Rubydex::Namespace; end
+
+class Rubydex::Class < ::Rubydex::Namespace
+  include ::Rubydex::Visibility
+
+  def visibility; end
+end
 
 class Rubydex::ClassDefinition < ::Rubydex::Definition
   sig { returns(T::Array[Rubydex::Mixin]) }
@@ -41,13 +46,24 @@ class Rubydex::Comment
 end
 
 class Rubydex::Constant < ::Rubydex::Declaration
+  include ::Rubydex::Visibility
+
   sig { returns(T::Enumerable[Rubydex::ConstantReference]) }
   def references; end
+
+  def visibility; end
 end
 
 class Rubydex::ConstantAlias < ::Rubydex::Declaration
+  include ::Rubydex::Visibility
+
   sig { returns(T::Enumerable[Rubydex::ConstantReference]) }
   def references; end
+
+  sig { returns(T.nilable(Rubydex::Declaration)) }
+  def target; end
+
+  def visibility; end
 end
 
 class Rubydex::ConstantAliasDefinition < ::Rubydex::Definition; end
@@ -178,7 +194,7 @@ class Rubydex::GlobalVariableDefinition < ::Rubydex::Definition; end
 
 class Rubydex::Graph
   sig { params(workspace_path: T.nilable(String)).void }
-  def initialize(workspace_path: T.unsafe(nil)); end
+  def initialize(workspace_path: nil); end
 
   sig { params(fully_qualified_name: String).returns(T.nilable(Rubydex::Declaration)) }
   def [](fully_qualified_name); end
@@ -186,35 +202,10 @@ class Rubydex::Graph
   sig { returns(T::Array[Rubydex::Failure]) }
   def check_integrity; end
 
-  # Returns completion candidates for an expression context. This includes all keywords, constants, methods, instance
-  # variables, class variables and global variables reachable from the current lexical scope and self type.
-  #
-  # The nesting array represents the lexical scope stack, where the last element is the self type. An empty array
-  # defaults to `Object` as the self type (top-level context).
-  sig { params(nesting: T::Array[String]).returns(T::Array[T.any(Rubydex::Declaration, Rubydex::Keyword)]) }
-  def complete_expression(nesting); end
-
-  # Returns completion candidates inside a method call's argument list (e.g., `foo.bar(|)`). This includes everything
-  # that expression completion provides plus keyword argument names of the method being called.
-  #
-  # The nesting array represents the lexical scope stack, where the last element is the self type.
-  sig do
-    params(
-      name: String,
-      nesting: T::Array[String]
-    ).returns(T::Array[T.any(Rubydex::Declaration, Rubydex::Keyword, Rubydex::KeywordParameter)])
-  end
-  def complete_method_argument(name, nesting); end
-
-  # Returns completion candidates after a method call operator (e.g., `foo.`). This includes all methods that exist on
-  # the type of the receiver and its ancestors.
-  sig { params(name: String).returns(T::Array[Rubydex::Method]) }
-  def complete_method_call(name); end
-
-  # Returns completion candidates after a namespace access operator (e.g., `Foo::`). This includes all constants and
-  # singleton methods for the namespace and its ancestors.
-  sig { params(name: String).returns(T::Array[Rubydex::Declaration]) }
-  def complete_namespace_access(name); end
+  def complete_expression(*_arg0); end
+  def complete_method_argument(*_arg0); end
+  def complete_method_call(*_arg0); end
+  def complete_namespace_access(*_arg0); end
 
   sig { returns(T::Enumerable[Rubydex::ConstantReference]) }
   def constant_references; end
@@ -227,6 +218,9 @@ class Rubydex::Graph
 
   sig { returns(T::Array[Rubydex::Diagnostic]) }
   def diagnostics; end
+
+  sig { params(uri: String).returns(T.nilable(Rubydex::Document)) }
+  def document(uri); end
 
   sig { returns(T::Enumerable[Rubydex::Document]) }
   def documents; end
@@ -361,8 +355,12 @@ end
 class Rubydex::Location::NotFileUriError < ::StandardError; end
 
 class Rubydex::Method < ::Rubydex::Declaration
+  include ::Rubydex::Visibility
+
   sig { returns(T::Enumerable[Rubydex::MethodReference]) }
   def references; end
+
+  def visibility; end
 end
 
 class Rubydex::MethodAliasDefinition < ::Rubydex::Definition; end
@@ -376,6 +374,9 @@ class Rubydex::MethodReference < ::Rubydex::Reference
 
   sig { returns(String) }
   def name; end
+
+  sig { returns(T.nilable(Rubydex::Declaration)) }
+  def receiver; end
 end
 
 class Rubydex::MethodVisibilityDefinition < ::Rubydex::Definition; end
@@ -387,7 +388,11 @@ class Rubydex::Mixin
   def constant_reference; end
 end
 
-class Rubydex::Module < ::Rubydex::Namespace; end
+class Rubydex::Module < ::Rubydex::Namespace
+  include ::Rubydex::Visibility
+
+  def visibility; end
+end
 
 class Rubydex::ModuleDefinition < ::Rubydex::Definition
   sig { returns(T::Array[Rubydex::Mixin]) }
@@ -448,3 +453,9 @@ class Rubydex::UnresolvedConstantReference < ::Rubydex::ConstantReference
 end
 
 Rubydex::VERSION = T.let(T.unsafe(nil), String)
+
+module Rubydex::Visibility
+  def private?; end
+  def protected?; end
+  def public?; end
+end

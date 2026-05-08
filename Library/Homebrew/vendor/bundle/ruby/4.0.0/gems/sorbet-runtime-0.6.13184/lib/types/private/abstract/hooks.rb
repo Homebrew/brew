@@ -27,7 +27,7 @@ module T::Private::Abstract::Hooks
     # `self` may not actually be abstract -- it could be a concrete class that inherited from an
     # abstract class. We only need to check this in `inherited` because, for modules being included
     # or extended, the concrete ones won't have these hooks at all. This is just an optimization.
-    return if !T::AbstractUtils.abstract_module?(self)
+    return if !T::AbstractUtils.abstract_module?(T.unsafe(self))
 
     T::Private::Abstract::Data.set(self, :last_used_by, other)
   end

@@ -20,6 +20,7 @@ RSpec.describe Homebrew::API::Cask::CaskStructGenerator do
       expect(described_class.process_depends_on(depends_on_macos_equals)).to eq({ macos: [:sequoia] })
       expect(described_class.process_depends_on(depends_on_macos_greater)).to eq({ macos: ">= :sequoia" })
       expect(described_class.process_depends_on(depends_on_macos_bare)).to eq({ macos: :any })
+      expect(described_class.process_depends_on({ macos: {} })).to eq({ macos: :any })
     end
   end
 

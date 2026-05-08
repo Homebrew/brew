@@ -627,7 +627,10 @@ module Homebrew
                      (stable.present? ? stable.bottled? && formula.pour_bottle? : formula.head.blank?))))
 
           deps = formula.deps.send(type).uniq
-          "#{type.capitalize} (#{deps.count}): #{decorate_dependencies deps}" unless deps.empty?
+          next if deps.empty?
+
+          tab_deps = (kegs.any? && type != "build") ? tab_runtime_deps : nil
+          "#{type.capitalize} (#{deps.count}): #{decorate_dependencies(deps, tab_runtime_deps: tab_deps)}"
         end
         if dependency_lines.present? || tab_runtime_deps.present? || installed_dependents.any?
           ohai "Dependencies"
@@ -693,16 +696,26 @@ module Homebrew
         Utils::Analytics.formula_output(formula, args:)
       end
 
-      sig { params(dependencies: T::Array[Dependency]).returns(String) }
-      def decorate_dependencies(dependencies)
-        deps_status = dependencies.map do |dep|
-          if dep.satisfied?
-            pretty_installed(dep_display_s(dep))
+      sig {
+        params(dependencies:     T::Array[Dependency],
+               tab_runtime_deps: T.nilable(T::Array[T::Hash[String, T.untyped]])).returns(String)
+      }
+      def decorate_dependencies(dependencies, tab_runtime_deps: nil)
+        dependencies.map do |dep|
+          display = dep_display_s(dep)
+          full_name = if tab_runtime_deps
+            tab_runtime_deps.find do |d|
+              name = d["full_name"]
+              name == dep.name || name&.split("/")&.last == dep.name
+            end&.fetch("full_name")
           else
-            pretty_uninstalled(dep_display_s(dep))
+            dep.name
           end
-        end
-        deps_status.join(", ")
+          rack = HOMEBREW_CELLAR/full_name.split("/").last if full_name
+          next pretty_uninstalled(display) if rack.nil? || !rack.directory? || rack.subdirs.empty?
+
+          dep.to_formula.outdated? ? pretty_upgradable(display) : pretty_installed(display)
+        end.join(", ")
       end
 
       sig { params(requirements: T::Array[Requirement]).returns(String) }

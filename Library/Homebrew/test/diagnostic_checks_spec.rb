@@ -128,6 +128,13 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(checks.check_tmpdir).to match("doesn't exist")
   end
 
+  specify "#check_for_nix_homebrew" do
+    stub_const("HOMEBREW_REPOSITORY", HOMEBREW_PREFIX/"Library/.homebrew-is-managed-by-nix")
+
+    expect(checks.check_for_nix_homebrew)
+      .to include("This is a Tier 3 configuration", "https://github.com/zhaofengli/nix-homebrew/issues")
+  end
+
   specify "#check_for_external_cmd_name_conflict" do
     mktmpdir do |path1|
       mktmpdir do |path2|

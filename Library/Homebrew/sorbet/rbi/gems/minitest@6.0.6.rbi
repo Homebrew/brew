@@ -59,7 +59,6 @@ Minitest::Assertion::RE = T.let(T.unsafe(nil), Regexp)
 
 module Minitest::Assertions
   def _synchronize; end
-  def _where; end
   def assert(test, msg = T.unsafe(nil)); end
   def assert_empty(obj, msg = T.unsafe(nil)); end
   def assert_equal(exp, act, msg = T.unsafe(nil)); end

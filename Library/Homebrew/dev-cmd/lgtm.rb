@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "formula"
 require "tap"
 
 module Homebrew

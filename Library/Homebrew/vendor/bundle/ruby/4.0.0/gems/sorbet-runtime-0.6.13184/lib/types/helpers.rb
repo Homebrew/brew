@@ -4,8 +4,6 @@
 # Use as a mixin with extend (`extend T::Helpers`).
 # Docs at https://sorbet.org/docs/
 module T::Helpers
-  extend T::Sig
-
   Private = T::Private
 
   ### Class/Module Helpers ###

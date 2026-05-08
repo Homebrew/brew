@@ -109,6 +109,25 @@ module Utils
         Homebrew.failed = true
       end
 
+      sig { params(issues_url: String, homebrew: T::Boolean, read_this: T::Boolean).returns(String) }
+      def issue_reporting_message(issues_url, homebrew: false, read_this: false)
+        formatted_issues_url = Formatter.url(issues_url)
+
+        if read_this
+          Formatter.error(formatted_issues_url, label: "READ THIS")
+        elsif homebrew
+          <<~EOS
+            #{Tty.bold}Please report this issue:#{Tty.reset}
+              #{formatted_issues_url}
+          EOS
+        else
+          <<~EOS
+            If reporting this issue please do so at (not Homebrew/* repositories):
+              #{formatted_issues_url}
+          EOS
+        end
+      end
+
       # Print an error message and fail immediately.
       #
       # @api public

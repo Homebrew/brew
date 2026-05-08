@@ -306,15 +306,7 @@ module T::Private::Methods::CallValidation
   end
 
   # Get the name of a method owner via its `.to_s`, but fallback if its implementation raises or returns `nil`.
-  def self.safe_method_owner_to_s(method_owner)
-    result = begin
-      mod.to_s
-    rescue Exception # rubocop:disable Lint/RescueException
-      nil
-    end
-
-    return result if result
-
+  private_class_method def self.safe_method_owner_to_s(method_owner)
     case method_owner
     when Module # methods are usually owned by a Class or Module...
       MODULE_TO_S.bind_call(method_owner)
