@@ -50,6 +50,23 @@ RSpec.describe GitDownloadStrategy do
     expect(strategy.last_commit).to eq("f68266e")
   end
 
+  describe "#repo_valid?" do
+    it "returns true when the ref exists" do
+      cached_location.cd do
+        setup_git_repo
+      end
+      expect(strategy.send(:repo_valid?)).to be true
+    end
+
+    it "returns false when the ref does not exist" do
+      cached_location.cd do
+        setup_git_repo
+      end
+      strategy_with_branch = described_class.new(url, name, version, branch: "nonexistent")
+      expect(strategy_with_branch.send(:repo_valid?)).to be false
+    end
+  end
+
   describe "#fetch_last_commit" do
     let(:url) { "file://#{remote_repo}" }
     let(:version) { Version.new("HEAD") }
