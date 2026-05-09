@@ -40,6 +40,8 @@ module UnpackStrategy
       Dir.mktmpdir("homebrew-tar", HOMEBREW_TEMP) do |tmpdir|
         tar_path = if DependencyCollector.tar_needs_xz_dependency? && Xz.can_extract?(path)
           subextract(Xz, Pathname(tmpdir), verbose)
+        elsif DependencyCollector.tar_needs_bzip2_dependency? && Bzip2.can_extract?(path)
+          subextract(Bzip2, Pathname(tmpdir), verbose)
         elsif Zstd.can_extract?(path)
           subextract(Zstd, Pathname(tmpdir), verbose)
         else
@@ -55,7 +57,8 @@ module UnpackStrategy
     end
 
     sig {
-      params(extractor: T.any(T.class_of(Xz), T.class_of(Zstd)), dir: Pathname, verbose: T::Boolean).returns(Pathname)
+      params(extractor: T.any(T.class_of(Bzip2), T.class_of(Xz), T.class_of(Zstd)), dir: Pathname,
+             verbose: T::Boolean).returns(Pathname)
     }
     def subextract(extractor, dir, verbose)
       extractor.new(path).extract(to: dir, verbose:)

@@ -68,6 +68,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 USER linuxbrew
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}" \
+  HOMEBREW_PREFIX=/home/linuxbrew/.linuxbrew \
+  HOMEBREW_CELLAR=/home/linuxbrew/.linuxbrew/Cellar \
+  HOMEBREW_REPOSITORY=/home/linuxbrew/.linuxbrew/Homebrew \
   XDG_CACHE_HOME=/home/linuxbrew/.cache
 WORKDIR /home/linuxbrew
 

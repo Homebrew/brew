@@ -153,6 +153,11 @@ class DependencyCollector
     !new.xz_dep_if_needed([]).nil?
   end
 
+  sig { returns(T::Boolean) }
+  def self.tar_needs_bzip2_dependency?
+    !new.bzip2_dep_if_needed([]).nil?
+  end
+
   private
 
   sig { void }

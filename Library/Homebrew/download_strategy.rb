@@ -444,6 +444,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy # rubocop:todo Style/O
     @try_partial = T.let(true, T::Boolean)
     @mirrors = T.let(meta.fetch(:mirrors, []), T::Array[String])
     @file_size = T.let(nil, T.nilable(Integer))
+    @last_modified = T.let(nil, T.nilable(Time))
 
     # Merge `:header` with `:headers`.
     if (header = meta.delete(:header))
@@ -497,6 +498,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy # rubocop:todo Style/O
         rescue ErrorDuringExecution
           raise unless cached_location_valid
         end
+        @last_modified = last_modified
 
         # Authorization is no longer valid after redirects
         meta[:headers]&.delete_if { |header| header.start_with?("Authorization") } if is_redirection
@@ -708,6 +710,20 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy # rubocop:todo Style/O
   def curl(*args, print_stdout: true, **options)
     options[:connect_timeout] = 15 unless mirrors.empty?
     super(*_curl_args, *args, **_curl_opts, **command_output_options, **options)
+  end
+end
+
+# Strategy for downloading files from PyPI.
+#
+# @api public
+class PyPIDownloadStrategy < CurlDownloadStrategy # rubocop:todo Style/OneClassPerFile
+  sig { override.returns(Time) }
+  def source_modified_time
+    last_modified = @last_modified
+    source_modified_time = super
+    return source_modified_time if last_modified.nil? || source_modified_time > last_modified
+
+    last_modified
   end
 end
 
@@ -1693,6 +1709,8 @@ class DownloadStrategyDetector # rubocop:todo Style/OneClassPerFile
     when %r{^https?://www\.apache\.org/dyn/closer\.cgi},
          %r{^https?://www\.apache\.org/dyn/closer\.lua}
       CurlApacheMirrorDownloadStrategy
+    when %r{^https?://files\.pythonhosted\.org/packages/}
+      PyPIDownloadStrategy
     when %r{^https?://([A-Za-z0-9\-.]+\.)?googlecode\.com/svn},
          %r{^https?://svn\.},
          %r{^svn://},

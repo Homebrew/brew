@@ -88,7 +88,7 @@ module Cask
 
       formula_deps = Array(depends_on[:formula]).map do |dep|
         name = dep.to_s
-        rack = HOMEBREW_CELLAR/name.split("/").last
+        rack = HOMEBREW_CELLAR/::Utils.name_from_full_name(name)
         decorate_dependency(name, installed: rack.directory? && !rack.subdirs.empty?)
       end
 
@@ -111,7 +111,7 @@ module Cask
       )
       unless recursive_count.zero?
         installed_count = formula_dependencies.count do |name|
-          rack = HOMEBREW_CELLAR/name.split("/").last
+          rack = HOMEBREW_CELLAR/::Utils.name_from_full_name(name)
           rack.directory? && !rack.subdirs.empty?
         end + cask_dependencies.count do |name|
           (Caskroom.path/name).directory?

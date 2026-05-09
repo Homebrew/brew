@@ -28,6 +28,14 @@ RSpec.describe DownloadStrategyDetector do
       it { is_expected.to eq(GitHubGitDownloadStrategy) }
     end
 
+    context "when given a PyPI URL" do
+      let(:url) do
+        "https://files.pythonhosted.org/packages/ab/cd/efg/example-package-1.2.3.tar.gz"
+      end
+
+      it { is_expected.to eq(PyPIDownloadStrategy) }
+    end
+
     it "defaults to curl" do
       expect(strategy_detector).to eq(CurlDownloadStrategy)
     end

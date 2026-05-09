@@ -4,6 +4,7 @@
 require "concurrent/executors"
 require "concurrent/promises"
 require "monitor"
+require "utils"
 require "bundle/package_types"
 
 module Homebrew
@@ -166,7 +167,7 @@ module Homebrew
 
       sig { params(name: String).returns(String) }
       def normalize_formula_name(name)
-        name.split("/").fetch(-1)
+        Utils.name_from_full_name(name)
       end
 
       # Walk cask-on-cask dependencies transitively, returning the set of

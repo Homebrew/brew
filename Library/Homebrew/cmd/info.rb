@@ -227,7 +227,7 @@ module Homebrew
 
           dependent = tab_deps.any? do |dep|
             dep_full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
-            dep_full_name == full_name || dep_full_name&.split("/")&.last == name
+            dep_full_name == full_name || dep_full_name&.then { Utils.name_from_full_name(it) } == name
           end
           keg.name if dependent
         end.sort.uniq
@@ -304,7 +304,7 @@ module Homebrew
         cask.depends_on.formula.each do |name|
           dep_name = name.to_s
           formula_dependencies << dep_name
-          rack = HOMEBREW_CELLAR/dep_name.split("/").last
+          rack = HOMEBREW_CELLAR/Utils.name_from_full_name(dep_name)
           next unless rack.directory?
 
           keg = Keg.from_rack(rack)
@@ -637,7 +637,7 @@ module Homebrew
           puts dependency_lines
           if tab_runtime_deps.present?
             installed_count = tab_runtime_deps.count do |dep|
-              dep_name = dep["full_name"]&.split("/")&.last
+              dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
               next false unless dep_name
 
               rack = HOMEBREW_CELLAR/dep_name
@@ -706,12 +706,12 @@ module Homebrew
           full_name = if tab_runtime_deps
             tab_runtime_deps.find do |d|
               name = d["full_name"]
-              name == dep.name || name&.split("/")&.last == dep.name
+              name == dep.name || name&.then { Utils.name_from_full_name(it) } == dep.name
             end&.fetch("full_name")
           else
             dep.name
           end
-          rack = HOMEBREW_CELLAR/full_name.split("/").last if full_name
+          rack = HOMEBREW_CELLAR/Utils.name_from_full_name(full_name) if full_name
           next pretty_uninstalled(display) if rack.nil? || !rack.directory? || rack.subdirs.empty?
 
           dep.to_formula.outdated? ? pretty_upgradable(display) : pretty_installed(display)

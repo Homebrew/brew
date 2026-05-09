@@ -152,6 +152,31 @@ RSpec.describe Resource do
     end
   end
 
+  describe "#stage" do
+    let(:last_modified) { Time.utc(2026, 5, 6, 13, 43, 5) }
+    let(:tarball) { TEST_FIXTURE_DIR/"tarballs/testball-0.1.tbz" }
+    let(:url) { "https://files.pythonhosted.org/packages/ab/cd/efg/testball-0.1.tbz" }
+
+    before do
+      resource.url(url)
+      resource.sha256(tarball.sha256)
+      allow(resource.downloader).to receive(:resolve_url_basename_time_file_size)
+        .and_return([url, tarball.basename.to_s, last_modified, tarball.size, "application/x-bzip2", false])
+      allow(resource.downloader).to receive(:_fetch) do
+        resource.downloader.temporary_path.dirname.mkpath
+        FileUtils.cp tarball, resource.downloader.temporary_path
+      end
+    end
+
+    after { resource.clear_cache }
+
+    it "records the PyPI last modified time when staged files are older" do
+      resource.stage(mktmpdir)
+
+      expect(resource.source_modified_time).to eq(last_modified)
+    end
+  end
+
   describe "#owner" do
     let(:owner) { described_class.new("test-owner") }
 

@@ -27,15 +27,10 @@ brew tap --force homebrew/core
 
 # install some useful development things
 sudo apt-get update
-
-apt_get_install() {
-  sudo apt-get install -y \
-    -o Dpkg::Options::=--force-confdef \
-    -o Dpkg::Options::=--force-confnew \
-    "$@"
-}
-
-apt_get_install \
+sudo apt-get install -y \
+  -o Dpkg::Options::=--force-confdef \
+  -o Dpkg::Options::=--force-confnew \
+  bash-completion \
   openssh-server \
   zsh
 
