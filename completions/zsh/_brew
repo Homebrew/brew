@@ -257,7 +257,6 @@ __brew_internal_commands() {
     'verify:Verify the build provenance of bottles using GitHub'\''s attestation tools'
     'version-install:Extract a specific version of formula into a personal tap and install it'
     'which-formula:Show which formula(e) provides the given command'
-    'which-update:Database update for `brew which-formula`'
   )
   _describe -t internal-commands 'internal commands' commands
 }
@@ -2635,7 +2634,6 @@ _brew_which_formula() {
     '*:command:__brew_commands'
 }
 
-# brew which-update
 _brew_which_update() {
   _arguments \
     '(--stats)--commit[Commit the changes using `git`]' \

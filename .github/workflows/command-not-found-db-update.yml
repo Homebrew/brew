@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - .github/workflows/command-not-found-db-update.yml
-      - Library/Homebrew/dev-cmd/which-update.rb
       - Library/Homebrew/executables_db.rb
   schedule:
     - cron: "0 0 * * *"
@@ -34,24 +33,6 @@ jobs:
 
       - name: Pull executables.txt from GitHub Packages
         run: oras pull ghcr.io/homebrew/command-not-found/executables:latest
-
-      - name: Update database
-        env:
-          MAX_DOWNLOADS: ${{ github.event.inputs.max-downloads }}
-        run: |
-          set -eo pipefail
-
-          if [[ -n "$MAX_DOWNLOADS" ]]
-          then
-            MAX_DOWNLOADS_ARGS="--max-downloads $MAX_DOWNLOADS"
-          fi
-
-          # Need to intentionally leave MAX_DOWNLOADS_ARGS unquoted.
-          # shellcheck disable=SC2086
-          brew which-update --update-existing --install-missing $MAX_DOWNLOADS_ARGS executables.txt --summary-file=$GITHUB_STEP_SUMMARY
-
-      - name: Output database stats
-        run: brew which-update --stats executables.txt
 
       - name: Log in to GitHub Packages
         if: github.ref == 'refs/heads/main'

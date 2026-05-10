@@ -3555,7 +3555,6 @@ _brew() {
     verify) _brew_verify ;;
     version-install) _brew_version_install ;;
     which-formula) _brew_which_formula ;;
-    which-update) _brew_which_update ;;
     *) ;;
   esac
 }

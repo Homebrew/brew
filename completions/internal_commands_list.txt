@@ -138,4 +138,3 @@ vendor-install
 verify
 version-install
 which-formula
-which-update
