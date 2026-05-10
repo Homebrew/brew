@@ -60,15 +60,31 @@ module Homebrew
       sig { params(formula_or_cask: T.any(Formula, Cask::Cask), installed_on_request: T::Boolean).void }
       def update_tab(formula_or_cask, installed_on_request:)
         name, tab = if formula_or_cask.is_a?(Formula)
-          [formula_or_cask.name, Tab.for_formula(formula_or_cask)]
-        else
-          [formula_or_cask.token, formula_or_cask.tab]
-        end
+          # Formulae have always written INSTALL_RECEIPT.json on install, so a
+          # missing Tab file means filesystem corruption or manual deletion.
+          formula_tab = Tab.for_formula(formula_or_cask)
+          formula_tabfile = formula_tab.tabfile
+          if formula_tabfile.blank? || !formula_tabfile.exist?
+            raise ArgumentError, "Tab file for #{formula_or_cask.name} does not exist."
+          end
 
-        tabfile = tab.tabfile
-        if tabfile.blank? || !tabfile.exist?
-          raise ArgumentError,
-                "Tab file for #{name} does not exist."
+          [formula_or_cask.name, formula_tab]
+        else
+          # Casks installed as a dependency, or installed before cask Tab
+          # support existed, can have no Tab file on disk. If we need to flip
+          # the on-request flag, build a fresh Tab so we have somewhere to
+          # write. When the desired state already matches the empty
+          # fallback's `installed_on_request: false`, the "already marked"
+          # early-return below handles it without synthesis.
+          cask = formula_or_cask
+          cask_tab = cask.tab
+          cask_tabfile = cask_tab.tabfile
+          tabfile_missing = cask_tabfile.blank? || !cask_tabfile.exist?
+          if tabfile_missing && cask_tab.installed_on_request != installed_on_request
+            opoo "No install receipt for #{cask.token}; creating one to record this flag."
+            cask_tab = Cask::Tab.create(cask)
+          end
+          [cask.token, cask_tab]
         end
 
         installed_on_request_str = "#{"not " unless installed_on_request}installed on request"

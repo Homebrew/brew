@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "tab"
+require "utils/topological_hash"
 
 module Cask
   class Tab < ::AbstractTab
