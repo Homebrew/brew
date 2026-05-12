@@ -12,8 +12,9 @@ module Homebrew
       # Cookies for curl to use when making a request.
       prop :cookies, T.nilable(T::Hash[String, String])
 
-      # Header(s) for curl to use when making a request.
-      prop :header, T.nilable(T.any(String, T::Array[String]))
+      # Header(s) for curl to use when making a request. Can be a callable that
+      # returns a header string/array, evaluated lazily before each request.
+      prop :header, T.nilable(T.any(String, T::Array[String], T.proc.returns(T.any(String, T::Array[String]))))
 
       # Whether to use brewed curl.
       prop :homebrew_curl, T.nilable(T::Boolean)

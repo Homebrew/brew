@@ -187,7 +187,7 @@ class Livecheck
       # URL to check for version information.
       url:           T.any(String, Symbol),
       cookies:       T.nilable(T::Hash[String, String]),
-      header:        T.nilable(T.any(String, T::Array[String])),
+      header:        T.nilable(T.any(String, T::Array[String], T.proc.returns(T.any(String, T::Array[String])))),
       homebrew_curl: T.nilable(T::Boolean),
       post_form:     T.nilable(T::Hash[Symbol, String]),
       post_json:     T.nilable(T::Hash[Symbol, T.anything]),

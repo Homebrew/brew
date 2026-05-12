@@ -143,6 +143,33 @@ end
 
 `POST` support only applies to strategies that use `Strategy::page_headers` or `::page_content` (directly or indirectly), so it does not apply to `ExtractPlist`, `Git`, `GithubLatest`, `GithubReleases`, etc.
 
+### Custom request headers
+
+Some checks require custom HTTP headers (e.g. an `Authorization` header for a private endpoint). A static header string or array of strings can be passed via the `header` option:
+
+```ruby
+livecheck do
+  url "https://example.com/api/versions", header: "Authorization: Bearer mytoken"
+  strategy :json do |json|
+    json["version"]
+  end
+end
+```
+
+When the header value must be generated at check time (e.g. an OAuth token from a CLI command), pass a callable instead:
+
+```ruby
+livecheck do
+  url "https://example.com/api/versions",
+      header: -> { "Authorization: Bearer #{`my-auth-command`.strip}" }
+  strategy :json do |json|
+    json["version"]
+  end
+end
+```
+
+The callable is evaluated immediately before each request, so short-lived tokens are refreshed automatically. As with `POST` support, the `header` option only applies to strategies that use `Strategy::page_headers` or `::page_content`.
+
 ### `strategy` blocks
 
 If the upstream version format needs to be manipulated to match the formula/cask format, a `strategy` block can be used instead of a `regex`.

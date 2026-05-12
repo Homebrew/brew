@@ -219,6 +219,9 @@ module Homebrew
           [:default, :browser]
         end
 
+        header = options.header
+        resolved_header = header.is_a?(Proc) ? header.call : header
+
         user_agents.each do |user_agent|
           begin
             parsed_output = curl_headers(
@@ -229,7 +232,7 @@ module Homebrew
               wanted_headers:    ["location", "content-disposition"],
               use_homebrew_curl: options.homebrew_curl || false,
               cookies:           options.cookies,
-              header:            options.header,
+              header:            resolved_header,
               referer:           options.referer,
               user_agent:,
               **DEFAULT_CURL_OPTIONS,
@@ -268,6 +271,9 @@ module Homebrew
           [:default, :browser]
         end
 
+        header = options.header
+        resolved_header = header.is_a?(Proc) ? header.call : header
+
         stderr = T.let(nil, T.nilable(String))
         user_agents.each do |user_agent|
           stdout, stderr, status = curl_output(
@@ -278,7 +284,7 @@ module Homebrew
                                !curl_supports_fail_with_body? ||
                                false,
             cookies:           options.cookies,
-            header:            options.header,
+            header:            resolved_header,
             referer:           options.referer,
             user_agent:
           )
