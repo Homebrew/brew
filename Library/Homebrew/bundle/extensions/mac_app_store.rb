@@ -200,7 +200,9 @@ module Homebrew
           end
 
           puts "Installing #{name} app. It is not currently installed." if verbose
-          return false unless Bundle.system(mas, "get", id.to_s, verbose:)
+          installed = Bundle.system(mas, "install", id.to_s, verbose:) ||
+                      Bundle.system(mas, "get", id.to_s, verbose:)
+          return false unless installed
 
           apps << [id.to_s, name] unless apps.any? { |app_id, _app_name| app_id.to_i == id }
           packages << App.new(id: id.to_s, name:) unless packages.any? { |app| app.id.to_i == id }
