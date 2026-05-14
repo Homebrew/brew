@@ -25,11 +25,22 @@ RSpec.describe Homebrew::Cmd::WhichFormula do
     end
 
     it "prints the formula name for a given binary", :integration_test do
-      expect { brew_sh "which-formula", "--skip-update", "foo2" }.to output("foo\n").to_stdout
-      expect { brew_sh "which-formula", "--skip-update", "baz" }.to output("baz\n").to_stdout
-      expect { brew_sh "which-formula", "--skip-update", "bar" }.not_to output.to_stdout
-      expect { brew_sh "which-formula", "--skip-update", "QUX" }.to output("qux\n").to_stdout
-      expect { brew_sh "which-formula", "--skip-update", "quux" }.to output("quux\n").to_stdout
+      expect { brew "which-formula", "--skip-update", "foo2" }.to output(/==> foo2\nfoo\n/).to_stdout
+      expect { brew "which-formula", "--skip-update", "baz" }.to output(/==> baz\nbaz\n/).to_stdout
+      expect { brew "which-formula", "--skip-update", "QUX" }.to output(/==> QUX\nqux\n/).to_stdout
+      expect { brew "which-formula", "--skip-update", "quux" }.to output(/==> quux\nquux\n/).to_stdout
+    end
+
+    it "suggests a similar binary when the query has no matches", :integration_test do
+      expect { brew "which-formula", "--skip-update", "fooo" }
+        .to output(/No formula provides the binary "fooo"\. Did you mean foo[23]/).to_stderr
+        .and be_a_failure
+    end
+
+    it "fails silently for a binary not in the database and with no suggestions", :integration_test do
+      expect { brew "which-formula", "--skip-update", "totallyunrelated" }
+        .to output(/No formula provides the binary "totallyunrelated"\./).to_stderr
+        .and be_a_failure
     end
   end
 end
