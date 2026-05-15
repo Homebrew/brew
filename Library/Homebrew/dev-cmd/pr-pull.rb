@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "abstract_command"
+require "commit_message"
 require "fileutils"
 require "utils/github"
 require "utils/github/artifacts"
@@ -182,20 +183,10 @@ module Homebrew
         end
       end
 
-      # Separates a commit message into subject, body and trailers.
       sig { params(message: String).returns([String, String, String]) }
       def separate_commit_message(message)
-        first_line = message.lines.first
-        return ["", "", ""] unless first_line
-
-        # Skip the subject and separate lines that look like trailers (e.g. "Co-authored-by")
-        # from lines that look like regular body text.
-        trailers, body = message.lines.drop(1).partition { |s| s.match?(/^[a-z-]+-by:/i) }
-
-        trailers = trailers.uniq.join.strip
-        body = body.join.strip.gsub(/\n{3,}/, "\n\n")
-
-        [first_line.strip, body, trailers]
+        parsed = CommitMessage.parse(message)
+        [parsed.subject, parsed.body, parsed.trailers]
       end
 
       sig { params(git_repo: GitRepository, pull_request: T.nilable(String), dry_run: T::Boolean).void }
