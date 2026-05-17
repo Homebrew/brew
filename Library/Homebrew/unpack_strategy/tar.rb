@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "system_command"
+require "utils/tar"
 
 module UnpackStrategy
   # Strategy for unpacking tar archives.
@@ -29,7 +30,9 @@ module UnpackStrategy
       return false unless [Bzip2, Gzip, Lzip, Xz, Zstd].any? { |s| s.can_extract?(path) }
 
       # Check if `tar` can list the contents, then it can also extract it.
-      stdout, _, status = system_command("tar", args: ["--list", "--file", path], print_stderr: false).to_a
+      stdout, _, status = system_command("tar", args:         ["--list", "--file", path],
+                                                env:          Utils::Tar.system_tar_env,
+                                                print_stderr: false).to_a
       (status.success? && !stdout.empty?) || false
     end
 
@@ -52,6 +55,7 @@ module UnpackStrategy
                         args:    ["--extract", "--no-same-owner",
                                   "--file", tar_path,
                                   "--directory", unpack_dir],
+                        env:     Utils::Tar.system_tar_env,
                         verbose:
       end
     end

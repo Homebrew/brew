@@ -27,6 +27,12 @@ module Utils
         @executable = T.let(which("gtar") || gnu_tar_gtar || which("tar"), T.nilable(Pathname))
       end
 
+      sig { returns(T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))]) }
+      def system_tar_env
+        # Keep original PATH entries so system tar can find external compressors while tests rewrite PATH.
+        { "PATH" => PATH.new(ORIGINAL_PATHS, ENV.fetch("PATH")) }
+      end
+
       sig { params(path: T.any(Pathname, String)).void }
       def validate_file(path)
         return unless available?
@@ -35,6 +41,7 @@ module Utils
         return unless TAR_FILE_EXTENSIONS.include? path.extname
 
         stdout, _, status = system_command(T.must(executable), args:         ["--list", "--file", path],
+                                                               env:          system_tar_env,
                                                                print_stderr: false).to_a
         odie "#{path} is not a valid tar file!" if !status.success? || stdout.blank?
       end
