@@ -11,7 +11,7 @@ require "timeout"
 require "formula_assertions"
 require "formula_free_port"
 require "fcntl"
-require "utils/socket"
+require "utils/fork"
 require "cli/parser"
 require "dev-cmd/test"
 require "json/add/exception"
@@ -27,7 +27,7 @@ begin
   args = Homebrew::DevCmd::Test.new.args
   Context.current = args.context
 
-  error_pipe = Utils::UNIXSocketExt.open(ENV.fetch("HOMEBREW_ERROR_PIPE"), &:recv_io)
+  error_pipe = Utils.safe_fork_error_pipe
   error_pipe.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
 
   trap("INT", old_trap)

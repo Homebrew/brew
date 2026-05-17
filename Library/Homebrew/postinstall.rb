@@ -8,7 +8,7 @@ old_trap = trap("INT") { exit! 130 }
 require_relative "global"
 
 require "fcntl"
-require "utils/socket"
+require "utils/fork"
 require "cli/parser"
 require "cmd/postinstall"
 require "json/add/exception"
@@ -20,7 +20,7 @@ begin
   ENV["HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS"] = "1"
 
   args = Homebrew::Cmd::Postinstall.new.args
-  error_pipe = Utils::UNIXSocketExt.open(ENV.fetch("HOMEBREW_ERROR_PIPE"), &:recv_io)
+  error_pipe = Utils.safe_fork_error_pipe
   error_pipe.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
 
   trap("INT", old_trap)
