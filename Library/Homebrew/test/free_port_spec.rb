@@ -9,6 +9,13 @@ RSpec.describe Homebrew::FreePort do
 
   describe "#free_port" do
     it "returns a free TCP/IP port" do
+      # Some WSL/sandboxed environments reject TCP socket creation entirely.
+      begin
+        TCPServer.new(nil, 0).close
+      rescue Errno::EPERM
+        skip "TCP sockets are not available"
+      end
+
       # IANA recommends:
       # - User ports:   1024–49151
       # - Dynamic ports: 49152–65535

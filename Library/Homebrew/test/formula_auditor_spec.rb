@@ -795,6 +795,11 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "requires `branch:` to be specified for Git head URLs" do
+      # Stub remote HEAD detection so the default offline suite still covers this audit.
+      allow(Utils::Git).to receive(:remote_exists?).and_return(true)
+      allow(Utils).to receive(:popen_read).with("git", "ls-remote", "--symref",
+                                                "https://github.com/Homebrew/homebrew-test-bot.git", "HEAD")
+                                          .and_return("ref: refs/heads/main\tHEAD\n")
       fa = formula_auditor "foo", <<~RUBY, online: true
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
@@ -809,6 +814,11 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "suggests a detected default branch for Git head URLs" do
+      # Stub remote HEAD detection so the default offline suite still covers this audit.
+      allow(Utils::Git).to receive(:remote_exists?).and_return(true)
+      allow(Utils).to receive(:popen_read).with("git", "ls-remote", "--symref",
+                                                "https://github.com/Homebrew/homebrew-test-bot.git", "HEAD")
+                                          .and_return("ref: refs/heads/main\tHEAD\n")
       fa = formula_auditor "foo", <<~RUBY, online: true, core_tap: true
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
@@ -824,6 +834,11 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "can specify a default branch without an allowlist if not in a core tap" do
+      # Stub remote HEAD detection so the default offline suite still covers this audit.
+      allow(Utils::Git).to receive(:remote_exists?).and_return(true)
+      allow(Utils).to receive(:popen_read).with("git", "ls-remote", "--symref",
+                                                "https://github.com/Homebrew/homebrew-test-bot.git", "HEAD")
+                                          .and_return("ref: refs/heads/main\tHEAD\n")
       fa = formula_auditor "foo", <<~RUBY, online: true
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
@@ -1477,12 +1492,10 @@ RSpec.describe Homebrew::FormulaAuditor do
     let(:auditor) { described_class.new(target_formula, git: true) }
     let(:formula_versions) { instance_double(FormulaVersions) }
 
-    it "walks history from the merge-base with origin/HEAD" do
-      allow(Utils::Git).to receive(:git).and_return("git")
-      allow(Utils).to receive(:popen_read).and_call_original
-      allow(Utils).to receive(:popen_read).with("git", "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
-                                          .and_return("merge-base-sha\n")
+    it "walks history from the git audit base ref" do
       allow(FormulaVersions).to receive(:new).with(target_formula).and_return(formula_versions)
+      # Stub the audit base ref directly so this unit test does not depend on the git command used to derive it.
+      expect(auditor).to receive(:git_audit_base_ref).with(tap).and_return("merge-base-sha")
       expect(formula_versions).to receive(:rev_list).with("merge-base-sha")
 
       auditor.send(:committed_version_info)
