@@ -270,6 +270,10 @@ module Homebrew
 
           ENV.delete(env)
         end
+        # Deprecated bundle variables may not be in EnvConfig, but still affect integration commands.
+        ENV.keys.grep(/\AHOMEBREW_BUNDLE_/).each do |env|
+          ENV.delete(env)
+        end
 
         # Fetch JSON API files if needed.
         require "api"

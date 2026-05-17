@@ -325,6 +325,8 @@ RSpec.configure do |config|
         CoreTap.instance.path/"style_exceptions",
         *Pathname.glob("#{HOMEBREW_CELLAR}/*/"),
         HOMEBREW_LIBRARY_PATH/"test/.vscode",
+        # HOME points at Library/Homebrew/test, so editor remotes can leave local server state here.
+        HOMEBREW_LIBRARY_PATH/"test/.vscode-server",
         HOMEBREW_LIBRARY_PATH/"test/.cursor",
         HOMEBREW_LIBRARY_PATH/"test/Library",
       ]
