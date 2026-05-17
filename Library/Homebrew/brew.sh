@@ -939,6 +939,20 @@ then
     HOMEBREW_CACHE="${HOMEBREW_REPOSITORY}/tmp/cache"
     printf 'Warning: HOMEBREW_CACHE is not writable at %s; using %s for Homebrew cache files instead.\n' \
       "${original_cache}" "${HOMEBREW_CACHE}" >&2
+    # Keep helper-install logs writable when developer commands fall back to the repository cache.
+    if [[ "${HOMEBREW_LOGS}" == "${HOMEBREW_DEFAULT_LOGS}" ]] ||
+       [[ -d "${HOMEBREW_LOGS}" && ! -w "${HOMEBREW_LOGS}" ]] ||
+       [[ ! -d "${HOMEBREW_LOGS}" && ! -w "${HOMEBREW_LOGS%/*}" ]]
+    then
+      original_logs="${HOMEBREW_LOGS}"
+      HOMEBREW_LOGS="${HOMEBREW_CACHE}/Logs"
+      export HOMEBREW_LOGS
+      if [[ "${original_logs}" != "${HOMEBREW_DEFAULT_LOGS}" ]]
+      then
+        printf 'Warning: HOMEBREW_LOGS is not writable at %s; using %s for Homebrew log files instead.\n' \
+          "${original_logs}" "${HOMEBREW_LOGS}" >&2
+      fi
+    fi
     mkdir -p "${HOMEBREW_CACHE}/api"
     if [[ -d "${original_cache}/api" ]]
     then
