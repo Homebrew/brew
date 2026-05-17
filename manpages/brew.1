@@ -942,32 +942,29 @@ Manage background services with macOS\[u2019] \fBlaunchctl\fP(1) daemon manager 
 .P
 If \fBsudo\fP is passed, operate on \fB/Library/LaunchDaemons\fP or \fB/usr/lib/systemd/system\fP (started at boot)\. Otherwise, operate on \fB~/Library/LaunchAgents\fP or \fB~/\.config/systemd/user\fP (started at login)\.
 .TP
-[\fBsudo\fP] \fBbrew services\fP [\fBlist\fP] [\fB\-\-json\fP] [\fB\-\-debug\fP]
-List information about all managed services for the current user (or root)\. Provides more output from Homebrew and \fBlaunchctl\fP(1) or \fBsystemctl\fP(1) if run with \fB\-\-debug\fP\&\.
-.TP
-[\fBsudo\fP] \fBbrew services info\fP (\fIformula\fP|\fB\-\-all\fP) [\fB\-\-json\fP]
-List all managed services for the current user (or root)\.
-.TP
-[\fBsudo\fP] \fBbrew services run\fP (\fIformula\fP|\fB\-\-all\fP) [\fB\-\-file=\fP]
-Run the service \fIformula\fP without registering to launch at login (or boot)\.
+[\fBsudo\fP] \fBbrew services stop\fP [\fB\-\-keep\fP] [\fB\-\-no\-wait\fP|\fB\-\-max\-wait=\fP] (\fIformula\fP|\fB\-\-all\fP)
+Stop the service \fIformula\fP immediately and unregister it from launching at login (or boot), unless \fB\-\-keep\fP is specified\.
 .TP
 [\fBsudo\fP] \fBbrew services start\fP (\fIformula\fP|\fB\-\-all\fP) [\fB\-\-file=\fP]
 Start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
 .TP
-[\fBsudo\fP] \fBbrew services stop\fP [\fB\-\-keep\fP] [\fB\-\-no\-wait\fP|\fB\-\-max\-wait=\fP] (\fIformula\fP|\fB\-\-all\fP)
-Stop the service \fIformula\fP immediately and unregister it from launching at login (or boot), unless \fB\-\-keep\fP is specified\.
-.TP
-[\fBsudo\fP] \fBbrew services kill\fP (\fIformula\fP|\fB\-\-all\fP)
-Stop the service \fIformula\fP immediately but keep it registered to launch at login (or boot)\.
+[\fBsudo\fP] \fBbrew services run\fP (\fIformula\fP|\fB\-\-all\fP) [\fB\-\-file=\fP]
+Run the service \fIformula\fP without registering to launch at login (or boot)\.
 .TP
 [\fBsudo\fP] \fBbrew services restart\fP (\fIformula\fP|\fB\-\-all\fP) [\fB\-\-file=\fP]
 Stop (if necessary) and start the service \fIformula\fP immediately and register it to launch at login (or boot)\.
 .TP
+[\fBsudo\fP] \fBbrew services\fP [\fBlist\fP] [\fB\-\-json\fP] [\fB\-\-debug\fP]
+List information about all managed services for the current user (or root)\. Provides more output from Homebrew and \fBlaunchctl\fP(1) or \fBsystemctl\fP(1) if run with \fB\-\-debug\fP\&\.
+.TP
+[\fBsudo\fP] \fBbrew services kill\fP (\fIformula\fP|\fB\-\-all\fP)
+Stop the service \fIformula\fP immediately but keep it registered to launch at login (or boot)\.
+.TP
+[\fBsudo\fP] \fBbrew services info\fP (\fIformula\fP|\fB\-\-all\fP) [\fB\-\-json\fP]
+List all managed services for the current user (or root)\.
+.TP
 [\fBsudo\fP] \fBbrew services cleanup\fP
 Remove all unused services\.
-.TP
-\fB\-\-file\fP
-Use the service file from this location to \fBstart\fP the service\.
 .TP
 \fB\-\-sudo\-service\-user\fP
 When run as root on macOS, run the service(s) as this user\.
@@ -980,6 +977,9 @@ Don\[u2019]t wait for \fBstop\fP to finish stopping the service\.
 .TP
 \fB\-\-keep\fP
 When stopped, don\[u2019]t unregister the service from launching at login (or boot)\.
+.TP
+\fB\-\-file\fP
+Use the service file from this location to \fBstart\fP the service\.
 .TP
 \fB\-\-all\fP
 Run \fIsubcommand\fP on all services\.
@@ -2931,6 +2931,9 @@ Use this value as the number of parallel jobs to run when building with \fBmake\
 If set, do not send analytics\. Google Analytics were destroyed\. For more information, see: 
 .UR https://docs\.brew\.sh/Analytics
 .UE
+.TP
+\fBHOMEBREW_NO_ASK\fP
+If set, do not ask for confirmation before downloading and installing, upgrading or reinstalling formulae and casks\. This is a no\-op until ask mode becomes the default behaviour in a later release\.
 .TP
 \fBHOMEBREW_NO_AUTOREMOVE\fP
 If set, calls to \fBbrew cleanup\fP and \fBbrew uninstall\fP will not automatically remove unused formula dependents\.

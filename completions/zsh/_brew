@@ -1968,20 +1968,141 @@ _brew_search() {
 
 # brew services
 _brew_services() {
-  _arguments \
-    '(--file)--all[Run subcommand on all services]' \
-    '--debug[Display any debugging information]' \
-    '(--all)--file[Use the service file from this location to `start` the service]' \
-    '--help[Show this message]' \
-    '--json[Output as JSON]' \
-    '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
-    '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Defaults to 60. Set this to zero (0) seconds to wait indefinitely]' \
-    '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
-    '--quiet[Make some output more quiet]' \
-    '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
-    '--verbose[Make some output more verbose]' \
-    - subcommand \
-    '*:subcommand:(list info run start stop kill restart cleanup)'
+  local state
+  local -a subcommands
+  subcommands=(
+    'stop:Stop the service formula immediately and unregister it from launching at login (or boot),'
+    'unload:Stop the service formula immediately and unregister it from launching at login (or boot),'
+    'terminate:Stop the service formula immediately and unregister it from launching at login (or boot),'
+    'term:Stop the service formula immediately and unregister it from launching at login (or boot),'
+    't:Stop the service formula immediately and unregister it from launching at login (or boot),'
+    'u:Stop the service formula immediately and unregister it from launching at login (or boot),'
+    'start:Start the service formula immediately and register it to launch at login (or boot)'
+    'launch:Start the service formula immediately and register it to launch at login (or boot)'
+    'load:Start the service formula immediately and register it to launch at login (or boot)'
+    's:Start the service formula immediately and register it to launch at login (or boot)'
+    'l:Start the service formula immediately and register it to launch at login (or boot)'
+    'run:Run the service formula without registering to launch at login (or boot)'
+    'restart:Stop (if necessary) and start the service formula immediately and register it to launch at login (or boot)'
+    'relaunch:Stop (if necessary) and start the service formula immediately and register it to launch at login (or boot)'
+    'reload:Stop (if necessary) and start the service formula immediately and register it to launch at login (or boot)'
+    'r:Stop (if necessary) and start the service formula immediately and register it to launch at login (or boot)'
+    'list:List information about all managed services for the current user (or root)'
+    'ls:List information about all managed services for the current user (or root)'
+    'kill:Stop the service formula immediately but keep it registered to launch at login (or boot)'
+    'k:Stop the service formula immediately but keep it registered to launch at login (or boot)'
+    'info:List all managed services for the current user (or root)'
+    'i:List all managed services for the current user (or root)'
+    'cleanup:Remove all unused services'
+    'clean:Remove all unused services'
+    'cl:Remove all unused services'
+    'rm:Remove all unused services'
+  )
+
+  _arguments -C \
+    '1:subcommand:->subcommand' \
+    '*::arg:->args'
+
+  case "$state" in
+    subcommand)
+      _describe -t subcommands 'subcommand' subcommands
+      ;;
+    args)
+      case "$words[2]" in
+stop|unload|terminate|term|t|u)
+        _arguments \
+          '(--file)--all[Run subcommand on all services]' \
+          '--debug[Display any debugging information]' \
+          '--help[Show this message]' \
+          '--keep[When stopped, don'\''t unregister the service from launching at login (or boot)]' \
+          '(--no-wait)--max-wait[Wait at most this many seconds for `stop` to finish stopping a service. Defaults to 60. Set this to zero (0) seconds to wait indefinitely]' \
+          '(--max-wait)--no-wait[Don'\''t wait for `stop` to finish stopping the service]' \
+          '--quiet[Make some output more quiet]' \
+          '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+          '--verbose[Make some output more verbose]' \
+          - service \
+          '*:service:__brew_services'
+        ;;
+start|launch|load|s|l)
+        _arguments \
+          '(--file)--all[Run subcommand on all services]' \
+          '--debug[Display any debugging information]' \
+          '(--all)--file[Use the service file from this location to `start` the service]' \
+          '--help[Show this message]' \
+          '--quiet[Make some output more quiet]' \
+          '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+          '--verbose[Make some output more verbose]' \
+          - service \
+          '*:service:__brew_services'
+        ;;
+run)
+        _arguments \
+          '(--file)--all[Run subcommand on all services]' \
+          '--debug[Display any debugging information]' \
+          '(--all)--file[Use the service file from this location to `start` the service]' \
+          '--help[Show this message]' \
+          '--quiet[Make some output more quiet]' \
+          '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+          '--verbose[Make some output more verbose]' \
+          - service \
+          '*:service:__brew_services'
+        ;;
+restart|relaunch|reload|r)
+        _arguments \
+          '(--file)--all[Run subcommand on all services]' \
+          '--debug[Display any debugging information]' \
+          '(--all)--file[Use the service file from this location to `start` the service]' \
+          '--help[Show this message]' \
+          '--quiet[Make some output more quiet]' \
+          '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+          '--verbose[Make some output more verbose]' \
+          - service \
+          '*:service:__brew_services'
+        ;;
+list|ls)
+        _arguments \
+          '--debug[Display any debugging information]' \
+          '--help[Show this message]' \
+          '--json[Output as JSON]' \
+          '--quiet[Make some output more quiet]' \
+          '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+          '--verbose[Make some output more verbose]'
+        ;;
+kill|k)
+        _arguments \
+          '(--file)--all[Run subcommand on all services]' \
+          '--debug[Display any debugging information]' \
+          '--help[Show this message]' \
+          '--quiet[Make some output more quiet]' \
+          '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+          '--verbose[Make some output more verbose]' \
+          - service \
+          '*:service:__brew_services'
+        ;;
+info|i)
+        _arguments \
+          '(--file)--all[Run subcommand on all services]' \
+          '--debug[Display any debugging information]' \
+          '--help[Show this message]' \
+          '--json[Output as JSON]' \
+          '--quiet[Make some output more quiet]' \
+          '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+          '--verbose[Make some output more verbose]' \
+          - service \
+          '*:service:__brew_services'
+        ;;
+cleanup|clean|cl|rm)
+        _arguments \
+          '--debug[Display any debugging information]' \
+          '--help[Show this message]' \
+          '--quiet[Make some output more quiet]' \
+          '--sudo-service-user[When run as root on macOS, run the service(s) as this user]' \
+          '--verbose[Make some output more verbose]'
+        ;;
+        *) ;;
+      esac
+      ;;
+  esac
 }
 
 # brew setup-ruby

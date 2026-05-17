@@ -2428,26 +2428,158 @@ _brew_search() {
 
 _brew_services() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
+  local subcommand=""
+  local i
+  for (( i = 2; i < COMP_CWORD; i++ ))
+  do
+    case "${COMP_WORDS[i]}" in
+      stop|unload|terminate|term|t|u) subcommand="stop"; break ;;
+      start|launch|load|s|l) subcommand="start"; break ;;
+      run) subcommand="run"; break ;;
+      restart|relaunch|reload|r) subcommand="restart"; break ;;
+      list|ls) subcommand="list"; break ;;
+      kill|k) subcommand="kill"; break ;;
+      info|i) subcommand="info"; break ;;
+      cleanup|clean|cl|rm) subcommand="cleanup"; break ;;
+      *) ;;
+    esac
+  done
   case "${cur}" in
     -*)
-      __brewcomp "
-      --all
-      --debug
-      --file
-      --help
-      --json
-      --keep
-      --max-wait
-      --no-wait
-      --quiet
-      --sudo-service-user
-      --verbose
-      "
-      return
+      case "${subcommand}" in
+        "")
+          __brewcomp "
+          --debug
+          --help
+          --json
+          --quiet
+          --sudo-service-user
+          --verbose
+          "
+          return
+          ;;
+stop)
+        __brewcomp "
+        --all
+        --debug
+        --help
+        --keep
+        --max-wait
+        --no-wait
+        --quiet
+        --sudo-service-user
+        --verbose
+        "
+        return
+        ;;
+start)
+        __brewcomp "
+        --all
+        --debug
+        --file
+        --help
+        --quiet
+        --sudo-service-user
+        --verbose
+        "
+        return
+        ;;
+run)
+        __brewcomp "
+        --all
+        --debug
+        --file
+        --help
+        --quiet
+        --sudo-service-user
+        --verbose
+        "
+        return
+        ;;
+restart)
+        __brewcomp "
+        --all
+        --debug
+        --file
+        --help
+        --quiet
+        --sudo-service-user
+        --verbose
+        "
+        return
+        ;;
+list)
+        __brewcomp "
+        --debug
+        --help
+        --json
+        --quiet
+        --sudo-service-user
+        --verbose
+        "
+        return
+        ;;
+kill)
+        __brewcomp "
+        --all
+        --debug
+        --help
+        --quiet
+        --sudo-service-user
+        --verbose
+        "
+        return
+        ;;
+info)
+        __brewcomp "
+        --all
+        --debug
+        --help
+        --json
+        --quiet
+        --sudo-service-user
+        --verbose
+        "
+        return
+        ;;
+cleanup)
+        __brewcomp "
+        --debug
+        --help
+        --quiet
+        --sudo-service-user
+        --verbose
+        "
+        return
+        ;;
+      esac
       ;;
     *) ;;
   esac
-  __brewcomp "list info run start stop kill restart cleanup"
+  case "${subcommand}" in
+    "")
+      __brewcomp "stop unload terminate term t u start launch load s l run restart relaunch reload r list ls kill k info i cleanup clean cl rm"
+      ;;
+stop)
+  __brew_complete_services
+        ;;
+start)
+  __brew_complete_services
+        ;;
+run)
+  __brew_complete_services
+        ;;
+restart)
+  __brew_complete_services
+        ;;
+kill)
+  __brew_complete_services
+        ;;
+info)
+  __brew_complete_services
+        ;;
+    *) ;;
+  esac
 }
 
 _brew_setup_ruby() {
