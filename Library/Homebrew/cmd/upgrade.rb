@@ -347,7 +347,9 @@ module Homebrew
 
         Install.perform_preinstall_checks_once
 
-        if formulae_to_install.any? { |formula| formula.bottle&.github_packages_manifest_resource }
+        if formulae_to_install.any? do |formula|
+          formula.bottle&.github_packages_manifest_resource&.downloaded? == false
+        end
           oh1 "Downloading bottle manifests"
         end
 

@@ -280,6 +280,28 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     end.to output("==> Downloading bottle manifests\n").to_stdout
   end
 
+  it "omits the bottle manifest heading for cached formula manifests" do
+    cmd = described_class.new([])
+    formula = formula("deno") do
+      url "https://brew.sh/deno-2.7.11.tar.gz"
+
+      bottle do
+        root_url HOMEBREW_BOTTLE_DEFAULT_DOMAIN
+        sha256 cellar: :any_skip_relocation,
+               Utils::Bottles.tag.to_sym => "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
+      end
+    end
+
+    allow(formula).to receive_messages(outdated?: true, latest_formula: formula, latest_version_installed?: false)
+    allow(formula.bottle&.github_packages_manifest_resource).to receive(:downloaded?).and_return(true)
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Upgrade).to receive(:formula_installers).and_return([])
+
+    expect do
+      cmd.send(:formulae_upgrade_context, [formula], show_upgrade_summary: false)
+    end.not_to output(/Downloading bottle manifests/).to_stdout
+  end
+
   it "does not trust failed shared prefetches" do
     cmd = described_class.new([])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, fetch_failed: true, shutdown: nil)

@@ -1427,7 +1427,7 @@ on_request: installed_on_request?, options:)
     if (bottle = formula.bottle) &&
        (manifest_resource = bottle.github_packages_manifest_resource) &&
        enqueue
-      download_queue.enqueue(manifest_resource)
+      download_queue.enqueue(manifest_resource) unless manifest_resource.downloaded?
     else
       begin
         formula.fetch_bottle_tab(quiet: quiet)
