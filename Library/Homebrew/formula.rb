@@ -2457,7 +2457,7 @@ class Formula
     }
 
     shells.each do |shell|
-      popen_read_env = { "SHELL" => shell.to_s }
+      popen_read_env = { "SHELL" => "/bin/#{shell}" }
       script_path = completion_script_path_map[shell]
 
       shell_parameter = Utils::ShellCompletion.completion_shell_parameter(

@@ -93,7 +93,7 @@ module Cask
         executable = staged_path_join_executable(T.must(commands.first))
 
         shells.each do |shell|
-          popen_read_env = { "SHELL" => shell.to_s }
+          popen_read_env = { "SHELL" => "/bin/#{shell}" }
           shell_parameter = ::Utils::ShellCompletion.completion_shell_parameter(
             shell_parameter_format, shell, executable.to_s, popen_read_env
           )

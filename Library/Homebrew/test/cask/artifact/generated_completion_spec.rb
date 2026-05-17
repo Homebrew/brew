@@ -40,11 +40,11 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       artifact.install_phase
 
       expect(bash_dir/"foo").to be_a_file
-      expect((bash_dir/"foo").read).to eq("bash completion output")
+      expect((bash_dir/"foo").read).to eq("/bin/bash completion output")
       expect(zsh_dir/"_foo").to be_a_file
-      expect((zsh_dir/"_foo").read).to eq("zsh completion output")
+      expect((zsh_dir/"_foo").read).to eq("/bin/zsh completion output")
       expect(fish_dir/"foo.fish").to be_a_file
-      expect((fish_dir/"foo.fish").read).to eq("fish completion output")
+      expect((fish_dir/"foo.fish").read).to eq("/bin/fish completion output")
     end
 
     context "when generation fails for one shell" do
@@ -52,7 +52,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
         artifact = cask.artifacts.grep(described_class).first
 
         allow(Utils).to receive(:safe_popen_read) do |env, *_args, **_opts|
-          raise "boom" if env.fetch("SHELL") == "bash"
+          raise "boom" if env.fetch("SHELL").end_with?("bash")
 
           "zsh completion"
         end
