@@ -4,6 +4,7 @@
 require "abstract_command"
 require "formula"
 require "utils/bottles"
+require "utils/portable_ruby"
 
 module Homebrew
   module DevCmd
@@ -29,10 +30,10 @@ module Homebrew
 
         version = formula.version.to_s
         pkg_version = formula.pkg_version.to_s
-        vendor_dir = HOMEBREW_LIBRARY_PATH/"vendor"
+        vendor_dir = Utils::PortableRuby.vendor_dir
 
-        write_file(vendor_dir/"portable-ruby-version", "#{pkg_version}\n")
-        write_file(HOMEBREW_LIBRARY_PATH/".ruby-version", "#{version}\n")
+        write_file(Utils::PortableRuby.portable_ruby_version_file, "#{pkg_version}\n")
+        write_file(Utils::PortableRuby.ruby_version_file, "#{version}\n")
 
         formula.bottle_specification.checksums.each do |checksum|
           tag_symbol = checksum.fetch("tag")
@@ -44,34 +45,10 @@ module Homebrew
 
         return if args.skip_vendor_install?
 
-        if args.dry_run?
-          ohai "brew vendor-install ruby"
-          ohai "Would update #{HOMEBREW_LIBRARY_PATH/"utils/ruby.sh"} and #{HOMEBREW_LIBRARY_PATH/"Gemfile.lock"} " \
-               "with the bundler version shipped by portable-ruby #{pkg_version}."
-          ohai "brew typecheck --update"
-          return
-        end
-
         ohai "brew vendor-install ruby"
-        safe_system HOMEBREW_BREW_FILE, "vendor-install", "ruby"
+        safe_system HOMEBREW_BREW_FILE, "vendor-install", "ruby" unless args.dry_run?
 
-        bundler_dir = Pathname.glob(vendor_dir/"portable-ruby/#{pkg_version}/lib/ruby/gems/*/gems/bundler-*").first
-        odie "Cannot find vendored bundler for portable-ruby #{pkg_version}." if bundler_dir.nil?
-        bundler_version = bundler_dir.basename.to_s.delete_prefix("bundler-")
-
-        ruby_sh = HOMEBREW_LIBRARY_PATH/"utils/ruby.sh"
-        original = ruby_sh.read
-        updated = original.sub(/(?<=^export HOMEBREW_BUNDLER_VERSION=")[^"]+/, bundler_version)
-        if original != updated
-          ohai "Writing #{ruby_sh}"
-          ruby_sh.atomic_write(updated)
-        end
-
-        ohai "brew vendor-gems --no-commit --update=--ruby,--bundler=#{bundler_version}"
-        safe_system HOMEBREW_BREW_FILE, "vendor-gems", "--no-commit", "--update=--ruby,--bundler=#{bundler_version}"
-
-        ohai "brew typecheck --update"
-        safe_system HOMEBREW_BREW_FILE, "typecheck", "--update"
+        Utils::PortableRuby.refresh_vendored_gems_and_rbis!(pkg_version:, dry_run: args.dry_run?)
       end
 
       private
