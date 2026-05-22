@@ -26,7 +26,7 @@ module Homebrew
         switch "--all",
                depends_on:  "--installed",
                description: "Include formulae installed as dependencies, not just those installed on request."
-        flag   "--json",
+        switch "--json",
                description: "Print a JSON representation of the footprint data."
 
         named_args :installed_formula
@@ -151,7 +151,7 @@ module Homebrew
 
         analyses.sort_by! { |a| -a[:total_footprint] }
 
-        if args.json
+        if args.json?
           output_json(analyses)
         else
           output_table(analyses)
@@ -169,7 +169,7 @@ module Homebrew
           analyze_formula(formula, reverse_map)
         end
 
-        if args.json
+        if args.json?
           output_json(analyses)
         else
           analyses.each_with_index do |analysis, i|
@@ -238,13 +238,13 @@ module Homebrew
       def output_table(analyses)
         return if analyses.empty?
 
-        puts "Package                  Direct     Excl. Deps  Total Footprint"
+        fmt = "%-20<pkg>s  %10<direct>s  %14<excl>s  %16<total>s"
 
-        total_footprint_sum = 0
+        puts format(fmt, pkg: "Package", direct: "Direct", excl: "Excl. Deps", total: "Total Footprint")
+
         analyses.each do |analysis|
-          total_footprint_sum += analysis[:total_footprint]
           puts format(
-            "%-20<pkg>s %10<direct>s %14<excl>s %16<total>s",
+            fmt,
             pkg:    analysis[:name],
             direct: Formatter.disk_usage_readable(analysis[:direct_size]),
             excl:   Formatter.disk_usage_readable(analysis[:exclusive_deps_size]),
@@ -252,10 +252,8 @@ module Homebrew
           )
         end
 
-        puts format(
-          "%-20<pkg>s %10<direct>s %14<excl>s %16<total>s",
-          pkg: "Total", direct: "", excl: "", total: Formatter.disk_usage_readable(total_footprint_sum),
-        )
+        grand_total = analyses.sum { |a| a[:total_footprint] }
+        puts format(fmt, pkg: "Total", direct: "", excl: "", total: Formatter.disk_usage_readable(grand_total))
       end
 
       sig { params(analyses: T::Array[T::Hash[Symbol, T.untyped]]).void }

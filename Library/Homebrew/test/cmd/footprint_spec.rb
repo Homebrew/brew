@@ -20,31 +20,20 @@ RSpec.describe Homebrew::Cmd::Footprint do
       }
     end
 
-    it "shows footprint for a named formula" do
+    it "shows footprint for named formulae and filters --installed correctly" do
       expect { brew "footprint", "testball" }
         .to be_a_success
         .and output(/testball/).to_stdout
-    end
 
-    it "shows footprint with --installed" do
       expect { brew "footprint", "--installed" }
         .to be_a_success
         .and output(/testball/).to_stdout
-    end
-
-    it "excludes dependencies from --installed by default" do
-      expect { brew "footprint", "--installed" }
-        .to be_a_success
         .and not_to_output(/testball2/).to_stdout
-    end
 
-    it "includes dependencies with --installed --all" do
       expect { brew "footprint", "--installed", "--all" }
         .to be_a_success
         .and output(/testball2/).to_stdout
-    end
 
-    it "errors for a formula that is not installed" do
       expect { brew "footprint", "notinstalled" }
         .to be_a_failure
     end
