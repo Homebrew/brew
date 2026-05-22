@@ -69,7 +69,7 @@ module Homebrew
         sorted_formulae.each do |f|
           verify_local_bottles
           if testing_portable_ruby?
-            portable_formula!(f)
+            portable_formula!(f, args:)
           else
             formula!(f, args:)
           end
@@ -754,8 +754,8 @@ module Homebrew
         end
       end
 
-      sig { params(formula_name: String).void }
-      def portable_formula!(formula_name)
+      sig { params(formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args).void }
+      def portable_formula!(formula_name, args:)
         test_header(:Formulae, method: "portable_formula!(#{formula_name})")
 
         install_ca_certificates_if_needed
@@ -788,6 +788,16 @@ module Homebrew
         test "brew", "test", formula_name
         test "brew", "linkage", formula_name
         test "brew", "bottle", "--skip-relocation", "--json", "--no-rebuild", formula_name
+
+        # We only do full testing on `portable-ruby` itself.
+        return if formula_name != "portable-ruby"
+
+        bottle_file = bottle_glob(formula_name).first
+        if bottle_file
+          test "brew", "test-portable-ruby", bottle_file.to_s
+        elsif !args.dry_run?
+          failed formula_name, "no bottle file found to run `brew test-portable-ruby` against"
+        end
       end
 
       sig { params(formula_name: String).void }
