@@ -11,8 +11,8 @@
 
 -----
 
-<!-- Please specify below how you used AI to help you, and what steps you have taken to manually verify the changes*. Non-maintainers may only have one AI-assisted/generated PR open at a time. -->
-
 - [ ] AI was used to generate or assist with generating this PR.
+
+<!-- If ticked, explain below how AI was used and how you verified the changes. Non-maintainers may only have one AI-assisted/generated PR open at a time. -->
 
 -----
