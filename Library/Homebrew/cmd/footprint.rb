@@ -47,7 +47,7 @@ module Homebrew
 
       sig { returns(T::Hash[String, T::Set[String]]) }
       def build_reverse_dep_map
-        reverse_map = T.let(Hash.new { |h, k| h[k] = Set.new }, T::Hash[String, T::Set[String]])
+        reverse_map = T.let({}, T::Hash[String, T::Set[String]])
 
         Formula.installed.each do |formula|
           keg = formula.any_installed_keg
@@ -63,7 +63,7 @@ module Homebrew
             next unless full_name
 
             dep_name = Utils.name_from_full_name(full_name)
-            reverse_map[dep_name].add(formula.name)
+            (reverse_map[dep_name] ||= Set.new).add(formula.name)
           end
         end
 
@@ -105,12 +105,12 @@ module Homebrew
             next if dep_kegs.empty?
 
             dep_size = dep_kegs.sum(&:disk_usage)
-            dependents = reverse_map[dep_name]
+            dependents = reverse_map[dep_name] || Set.new
 
             if dependents.size == 1 && dependents.include?(formula.name)
               exclusive_deps << { name: dep_name, size: dep_size }
             else
-              also_needed_by = (dependents - [formula.name]).sort
+              also_needed_by = (dependents.to_a - [formula.name]).sort
               shared_deps << { name: dep_name, size: dep_size, also_needed_by: also_needed_by }
             end
           end
