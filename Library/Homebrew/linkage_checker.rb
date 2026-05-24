@@ -213,9 +213,8 @@ class LinkageChecker
           if (dep = dylib_to_dep(dylib))
             broken_dep = (@broken_deps[dep] ||= [])
             broken_dep << dylib unless broken_dep.include?(dylib)
-          elsif system_libraries_exist_in_cache? && dylib_found_in_shared_cache?(dylib)
-            # If we cannot associate the dylib with a dependency, then it may be a system library.
-            # Check the dylib shared cache for the library to verify this.
+          elsif dylib_found_in_shared_cache?(dylib)
+            # In macOS Big Sur and later, system libraries do not exist on-disk and instead exist in a cache.
             @system_dylibs << dylib
           elsif !system_framework?(dylib) && !broken_dylibs_allowed?(file.to_s)
             @broken_dylibs << dylib
@@ -240,11 +239,6 @@ class LinkageChecker
     return unless keg_files_dylibs_was_empty
 
     store.update!(keg_files_dylibs:)
-  end
-
-  sig { returns(T::Boolean) }
-  def system_libraries_exist_in_cache?
-    false
   end
 
   sig { params(_dylib: String).returns(T::Boolean) }

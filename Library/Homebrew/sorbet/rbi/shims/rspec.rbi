@@ -4,6 +4,7 @@ class RSpec::Core::ExampleGroup
   include RSpec::SharedContext
   include RSpec::Matchers
   include RSpec::Mocks::ExampleMethods
+  include Test::Helper::MkTmpDir
 end
 
 # The rspec-mocks RBI defines `ExpectHost#expect(target)` with a required

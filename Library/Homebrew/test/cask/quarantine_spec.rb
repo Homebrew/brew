@@ -4,6 +4,41 @@
 RSpec.describe Cask::Quarantine do
   let(:klass) { Cask::Quarantine }
 
+  describe ".cask!", :needs_macos do
+    let(:cask) do
+      instance_double(
+        Cask::Cask,
+        url:      "https://example.com/download",
+        homepage: "https://example.com",
+      )
+    end
+
+    it "sets the quarantine attribute on a file in a temporary directory" do
+      mktmpdir do |tmpdir|
+        download_path = tmpdir/"Test.dmg"
+        download_path.write("test")
+
+        expect(klass.status(download_path)).to eq("")
+
+        klass.cask!(cask:, download_path:)
+
+        expect(klass.status(download_path)).to match(
+          /\A[0-9a-f]{4};[0-9a-f]+;Homebrew\\x20Cask;[0-9A-F-]{36}\z/i,
+        )
+      end
+    end
+
+    it "raises when the quarantine properties cannot be written" do
+      mktmpdir do |tmpdir|
+        download_path = tmpdir/"missing.dmg"
+
+        expect do
+          klass.cask!(cask:, download_path:)
+        end.to raise_error(Cask::CaskQuarantineError, /Failed to set quarantine properties for URL/)
+      end
+    end
+  end
+
   describe ".user_approved?" do
     let(:file) { Pathname("/tmp/Test.app") }
 

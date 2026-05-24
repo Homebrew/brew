@@ -20,7 +20,6 @@ module Cask
     QUARANTINE_ATTRIBUTE = "com.apple.quarantine"
     USER_APPROVED_FLAG = 0x0040
 
-    QUARANTINE_SCRIPT = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/quarantine.swift").freeze, Pathname)
     COPY_XATTRS_SCRIPT = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/copy-xattrs.swift").freeze, Pathname)
 
     sig { returns(T.nilable(T.any(String, Pathname))) }
@@ -70,7 +69,7 @@ module Cask
         raise "unexpected nil swift" unless s
 
         api_check = system_command(s,
-                                   args:         [*swift_target_args, QUARANTINE_SCRIPT],
+                                   args:         [*swift_target_args, COPY_XATTRS_SCRIPT],
                                    print_stderr: false)
 
         exit_status = api_check.exit_status
@@ -205,26 +204,40 @@ module Cask
 
       odebug "Quarantining #{download_path}"
 
-      raise "unexpected nil swift" unless swift
+      require "os/mac/ffi"
 
-      quarantiner = system_command(T.must(swift),
-                                   args:         [
-                                     *swift_target_args,
-                                     QUARANTINE_SCRIPT,
-                                     download_path,
-                                     cask.url.to_s,
-                                     cask.homepage.to_s,
-                                   ],
-                                   print_stderr: false)
+      path_cf_string = MacOS::FFI::CoreFoundation.string_create(download_path.to_s)
+      raise CaskQuarantineError.new(download_path, "Failed to create CFString for path") if path_cf_string.null?
 
-      return if quarantiner.success?
+      path_cf_url = MacOS::FFI::CoreFoundation.url_create_with_file_system_path(path_cf_string)
+      raise CaskQuarantineError.new(download_path, "Failed to create CFURL for path") if path_cf_url.null?
 
-      case quarantiner.exit_status
-      when 2
-        raise CaskQuarantineError.new(download_path, "Insufficient parameters")
-      else
-        raise CaskQuarantineError.new(download_path, quarantiner.stderr)
+      quarantine_agent_name = MacOS::FFI::CoreFoundation.string_create("Homebrew Cask")
+      quarantine_data_url = MacOS::FFI::CoreFoundation.string_create(cask.url.to_s)
+      quarantine_origin_url = MacOS::FFI::CoreFoundation.string_create(cask.homepage.to_s)
+      if quarantine_agent_name.null? || quarantine_data_url.null? || quarantine_origin_url.null?
+        raise CaskQuarantineError.new(download_path, "Failed to create CFString for quarantine properties")
       end
+
+      quarantine_dictionary = MacOS::FFI::CoreFoundation.dictionary_create(
+        MacOS::FFI::LaunchServices.quarantine_agent_name_key => quarantine_agent_name,
+        MacOS::FFI::LaunchServices.quarantine_type_key       => MacOS::FFI::LaunchServices.quarantine_type_web_download,
+        MacOS::FFI::LaunchServices.quarantine_data_url_key   => quarantine_data_url,
+        MacOS::FFI::LaunchServices.quarantine_origin_url_key => quarantine_origin_url,
+      )
+      if quarantine_dictionary.null?
+        raise CaskQuarantineError.new(download_path, "Failed to create quarantine dictionary")
+      end
+
+      success = MacOS::FFI::CoreFoundation.url_set_resource_property_for_key(
+        path_cf_url,
+        MacOS::FFI::CoreFoundation.url_quarantine_properties_key,
+        quarantine_dictionary,
+      )
+
+      return if success
+
+      raise CaskQuarantineError.new(download_path, "Failed to set quarantine properties for URL")
     end
 
     sig { params(from: T.nilable(Pathname), to: T.nilable(Pathname)).void }
