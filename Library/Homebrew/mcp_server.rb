@@ -317,7 +317,7 @@ module Homebrew
 
       require "open3"
 
-      command_args = tool_command_arguments(tool_name, request["params"]["arguments"])
+      command_args = tool_command_arguments(tool_name, request["params"]["arguments"] || {})
       progress_token = request["params"]["_meta"]&.fetch("progressToken", nil)
       brew_command = T.cast(tool.fetch(:command), String)
                       .delete_prefix("brew ")
@@ -325,9 +325,10 @@ module Homebrew
       progress = T.let(0, Integer)
       done = T.let(false, T::Boolean)
       new_output = T.let(false, T::Boolean)
+      success = T.let(true, T::Boolean)
       output = +""
 
-      text = Open3.popen2e(HOMEBREW_BREW_FILE, brew_command, *command_args) do |stdin, io, _wait|
+      text = Open3.popen2e(HOMEBREW_BREW_FILE, brew_command, *command_args) do |stdin, io, wait|
         stdin.close
 
         reader = Thread.new do
@@ -361,11 +362,14 @@ module Homebrew
         end
 
         reader.join
+        success = wait.value.success?
 
         output
       end
 
-      respond_result(id, { content: [{ type: "text", text: }] })
+      result = { content: [{ type: "text", text: }] }
+      result[:isError] = true unless success
+      respond_result(id, result)
     end
 
     sig { params(tool_name: Symbol, arguments: T::Hash[String, T.untyped]).returns(T::Array[String]) }

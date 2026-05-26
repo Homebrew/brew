@@ -215,6 +215,54 @@ RSpec.describe Homebrew::McpServer do
     end
   end
 
+  describe "#respond_to_tools_call" do
+    it "sets isError: true when the brew command exits non-zero" do
+      mock_stdin = instance_double(IO, close: nil)
+      mock_io = instance_double(IO)
+      mock_wait = instance_double(Thread)
+      mock_status = instance_double(Process::Status, success?: false)
+      allow(mock_io).to receive(:readpartial).and_raise(EOFError)
+      allow(mock_wait).to receive(:value).and_return(mock_status)
+      allow(Open3).to receive(:popen2e).and_yield(mock_stdin, mock_io, mock_wait)
+
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "config", "arguments" => {} },
+      }
+      result = server.handle_request(request)
+      expect(result[:result][:isError]).to be(true)
+    end
+
+    it "omits isError when the brew command exits zero" do
+      mock_stdin = instance_double(IO, close: nil)
+      mock_io = instance_double(IO)
+      mock_wait = instance_double(Thread)
+      mock_status = instance_double(Process::Status, success?: true)
+      allow(mock_io).to receive(:readpartial).and_raise(EOFError)
+      allow(mock_wait).to receive(:value).and_return(mock_status)
+      allow(Open3).to receive(:popen2e).and_yield(mock_stdin, mock_io, mock_wait)
+
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "config", "arguments" => {} },
+      }
+      result = server.handle_request(request)
+      expect(result[:result]).not_to have_key(:isError)
+    end
+
+    it "does not crash when arguments is nil" do
+      allow(Open3).to receive(:popen2e).and_return("")
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "config", "arguments" => nil },
+      }
+      expect { server.handle_request(request) }.not_to raise_error
+    end
+  end
+
   describe "#run" do
     let(:sleep_time) { 0.001 }
 
