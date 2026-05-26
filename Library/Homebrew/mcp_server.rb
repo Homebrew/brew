@@ -165,7 +165,8 @@ module Homebrew
       },
       lgtm:      {
         name:        "lgtm",
-        description: "Run brew typecheck, brew style --changed and the relevant brew tests in one go. " \
+        description: "Run brew typecheck, brew style --changed and the relevant brew tests, " \
+                     "brew audit and brew test checks in one go. " \
                      "Use this to verify file edits before committing.",
         command:     "brew lgtm",
         inputSchema: {
