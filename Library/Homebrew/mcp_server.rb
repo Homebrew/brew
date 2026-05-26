@@ -46,8 +46,8 @@ module Homebrew
               description: "Text or regex to search for",
             },
           },
+          required:   ["text_or_regex"],
         },
-        required:    ["text_or_regex"],
       },
       info:      {
         name:        "info",
@@ -60,8 +60,7 @@ module Homebrew
         name:        "install",
         description: "Install a <formula> or <cask>.",
         command:     "brew install",
-        inputSchema: { type: "object", properties: FORMULA_OR_CASK_PROPERTIES },
-        required:    ["formula_or_cask"],
+        inputSchema: { type: "object", properties: FORMULA_OR_CASK_PROPERTIES, required: ["formula_or_cask"] },
       },
       update:    {
         name:        "update",
@@ -82,8 +81,7 @@ module Homebrew
         name:        "uninstall",
         description: "Uninstall a <formula> or <cask>.",
         command:     "brew uninstall",
-        inputSchema: { type: "object", properties: FORMULA_OR_CASK_PROPERTIES },
-        required:    ["formula_or_cask"],
+        inputSchema: { type: "object", properties: FORMULA_OR_CASK_PROPERTIES, required: ["formula_or_cask"] },
       },
       list:      {
         name:        "list",
@@ -161,6 +159,21 @@ module Homebrew
             online:    {
               type:        "boolean",
               description: "Run online tests",
+            },
+          },
+        },
+      },
+      lgtm:      {
+        name:        "lgtm",
+        description: "Run brew typecheck, brew style --changed and the relevant brew tests in one go. " \
+                     "Use this to verify file edits before committing.",
+        command:     "brew lgtm",
+        inputSchema: {
+          type:       "object",
+          properties: {
+            online: {
+              type:        "boolean",
+              description: "Run additional, slower checks that require a network connection",
             },
           },
         },
@@ -357,6 +370,8 @@ module Homebrew
     sig { params(tool_name: Symbol, arguments: T::Hash[String, T.untyped]).returns(T::Array[String]) }
     def tool_command_arguments(tool_name, arguments)
       case tool_name
+      when :lgtm
+        arguments["online"] ? ["--online"] : []
       when :style
         style_args = []
         style_args << "--fix" if arguments["fix"]

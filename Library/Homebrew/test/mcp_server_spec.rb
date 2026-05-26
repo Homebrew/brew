@@ -135,7 +135,7 @@ RSpec.describe Homebrew::McpServer do
       it "responds to tools/call for #{tool_name}" do
         allow(Open3).to receive(:popen2e).and_return("output for #{tool_name}")
         arguments = {}
-        Array(tool_definition[:required]).each do |required_key|
+        Array(tool_definition.dig(:inputSchema, :required)).each do |required_key|
           arguments[required_key] = "dummy"
         end
         request = {
