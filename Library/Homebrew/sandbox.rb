@@ -375,6 +375,11 @@ class Sandbox
 
                 ensure_child_tty_available
 
+                # Move into a non-denied directory before `exec` so subsequent
+                # `getcwd(3)` calls (which walk every parent) never cross a
+                # `deny_read_home` path inherited from the caller's CWD.
+                Dir.chdir(tmpdir)
+
                 worker.close_on_exec = true
                 exec(*command, in: worker, out: worker, err: worker) # And map everything to the PTY.
               else
