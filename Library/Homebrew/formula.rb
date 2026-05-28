@@ -399,6 +399,9 @@ class Formula
   sig { returns(T::Boolean) }
   def preserve_rpath? = self.class.preserve_rpath?
 
+  sig { returns(T::Boolean) }
+  def skip_patchelf? = self.class.skip_patchelf?
+
   private
 
   # Allow full name logic to be re-used between names, aliases and installed aliases.
@@ -3787,6 +3790,7 @@ class Formula
           [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
         end, T.nilable(T::Hash[Symbol, T::Boolean]))
         @preserve_rpath = T.let(false, T.nilable(T::Boolean))
+        @skip_patchelf = T.let(false, T.nilable(T::Boolean))
         @pypi_packages_info = T.let(nil, T.nilable(PypiPackages))
       end
     end
@@ -3800,6 +3804,7 @@ class Formula
       @link_overwrite_paths.freeze
       @post_install_steps.freeze
       @preserve_rpath&.freeze
+      @skip_patchelf&.freeze
       super
     end
 
@@ -4629,6 +4634,34 @@ class Formula
     sig { returns(T::Boolean) }
     def preserve_rpath?
       @preserve_rpath == true
+    end
+
+    # Skip running patchelf.rb when bottling on Linux.
+    #
+    # This is needed to avoid corrupting binaries in specific formulae, e.g.
+    # `bazel` and self-contained executables created by `sbcl` are actually
+    # concatenated ELF and data files where patchelf writes over the data part.
+    #
+    # Enabling this feature will usually result in a non-relocatable bottle.
+    #
+    # ### Example
+    #
+    # ```ruby
+    # skip_patchelf
+    # ```
+    #
+    # @api public
+    sig { params(value: T::Boolean).returns(T::Boolean) }
+    def skip_patchelf(value: true)
+      @skip_patchelf = value
+    end
+
+    # Check if patchelf.rb should be skipped.
+    #
+    # @api internal
+    sig { returns(T::Boolean) }
+    def skip_patchelf?
+      @skip_patchelf == true
     end
 
     # Software that will not be symlinked into the `brew --prefix` and will
