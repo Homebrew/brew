@@ -14,6 +14,13 @@ RSpec.describe Homebrew::Cmd::Doctor do
       .to output(/This is an integration test/).to_stderr
   end
 
+  specify "prints json when requested" do
+    cmd = klass.new(["--json"])
+
+    expect { cmd.run }
+      .to output(/"tier": 1/).to_stdout
+  end
+
   specify "does not print removed caveats method errors for installed casks", :cask do
     cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
     installer = InstallHelper.install_with_caskfile(cask)

@@ -4,6 +4,7 @@
 require "abstract_command"
 require "diagnostic"
 require "cask/caskroom"
+require "json"
 
 module Homebrew
   module Cmd
@@ -20,6 +21,8 @@ module Homebrew
         switch "--list-checks",
                description: "List all audit methods, which can be run individually " \
                             "if provided as arguments."
+        switch "--json",
+               description: "Print a JSON representation."
         switch "-D", "--audit-debug",
                description: "Enable debugging and profiling of audit methods."
 
@@ -48,6 +51,12 @@ module Homebrew
           methods = args.named
         end
 
+        json_output = {
+          tier:     1,
+          findings: [],
+        }
+        tier_regex = %r{/This is a (Tier [0-9]|Unsupported) configuration/}
+
         first_warning = T.let(true, T::Boolean)
         methods.each do |method|
           $stderr.puts Formatter.headline("Checking #{method}", color: :magenta) if args.debug?
@@ -58,6 +67,15 @@ module Homebrew
 
           out = checks.send(method)
           next if out.blank?
+
+          if args.json?
+            json_output[:findings].push({ value: out })
+            next unless out.match?(tier_regex)
+
+            tier_match = out.match(tier_regex)
+            json_output[:tier] = tier_match[0]
+            next
+          end
 
           if first_warning && !args.quiet?
             $stderr.puts <<~EOS
@@ -71,6 +89,11 @@ module Homebrew
           opoo out
           Homebrew.failed = true
           first_warning = false
+        end
+
+        if args.json?
+          puts JSON.pretty_generate(json_output).gsub(/\[\n\n\s*\]/, "[]")
+          return
         end
 
         puts "Your system is ready to brew." if !Homebrew.failed? && !args.quiet?
