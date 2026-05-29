@@ -4,6 +4,7 @@
 require "abstract_command"
 require "diagnostic"
 require "cask/caskroom"
+require "json"
 
 module Homebrew
   module Cmd
@@ -20,6 +21,8 @@ module Homebrew
         switch "--list-checks",
                description: "List all audit methods, which can be run individually " \
                             "if provided as arguments."
+        switch "--json",
+               description: "Print a JSON representation."
         switch "-D", "--audit-debug",
                description: "Enable debugging and profiling of audit methods."
 
@@ -48,6 +51,7 @@ module Homebrew
           methods = args.named
         end
 
+        findings = []
         first_warning = T.let(true, T::Boolean)
         methods.each do |method|
           $stderr.puts Formatter.headline("Checking #{method}", color: :magenta) if args.debug?
@@ -56,8 +60,20 @@ module Homebrew
             next
           end
 
-          out = checks.send(method)
-          next if out.blank?
+          finding = checks.send(method)
+
+          return_findings = if finding.is_a?(Array)
+            T.let(finding.compact, T::Array[Diagnostic::Finding])
+          else
+            T.let([finding].compact, T::Array[Diagnostic::Finding])
+          end
+
+          next if return_findings.empty?
+
+          if args.json?
+            findings.concat(return_findings.compact.map(&:to_h))
+            next
+          end
 
           if first_warning && !args.quiet?
             $stderr.puts <<~EOS
@@ -68,9 +84,15 @@ module Homebrew
           end
 
           $stderr.puts
-          opoo out
+          opoo return_findings.each(&:to_s).join("\n")
           Homebrew.failed = true
           first_warning = false
+        end
+
+        if args.json?
+          tier = findings.max_by { |f| f[:tier] }&.fetch(:tier, 1)
+          puts JSON.pretty_generate({ tier: tier, findings: findings }).gsub(/\[\n\n\s*\]/, "[]")
+          return
         end
 
         puts "Your system is ready to brew." if !Homebrew.failed? && !args.quiet?
