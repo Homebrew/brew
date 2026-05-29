@@ -3,7 +3,9 @@
 
 require "abstract_command"
 require "diagnostic"
+require "diagnostic/finding"
 require "cask/caskroom"
+require "json"
 
 module Homebrew
   module Cmd
@@ -20,6 +22,9 @@ module Homebrew
         switch "--list-checks",
                description: "List all audit methods, which can be run individually " \
                             "if provided as arguments."
+        switch "--json",
+               description: "Print a JSON representation.",
+               hidden:      true
         switch "-D", "--audit-debug",
                description: "Enable debugging and profiling of audit methods."
 
@@ -48,6 +53,7 @@ module Homebrew
           methods = args.named
         end
 
+        finding_collection = []
         first_warning = T.let(true, T::Boolean)
         methods.each do |method|
           $stderr.puts Formatter.headline("Checking #{method}", color: :magenta) if args.debug?
@@ -56,8 +62,14 @@ module Homebrew
             next
           end
 
-          out = checks.send(method)
-          next if out.blank?
+          finding         = checks.public_send(method)
+          method_findings = T.let(Array(finding).compact, T::Array[T.any(Diagnostic::Finding, String)])
+
+          next if method_findings.empty?
+
+          finding_collection.concat(method_findings.compact)
+          Homebrew.failed = true
+          next if args.json?
 
           if first_warning && !args.quiet?
             $stderr.puts <<~EOS
@@ -68,11 +80,20 @@ module Homebrew
           end
 
           $stderr.puts
-          opoo out
-          Homebrew.failed = true
+          opoo method_findings.each(&:to_s).join("\n")
           first_warning = false
         end
 
+        # TODO: Remove string filtering when all diagnostics are Finding objects
+        finding_maps = finding_collection.grep_v(String).map(&:to_h)
+        tier = (finding_maps.max_by { |f| f[:tier] } || {}).fetch(:tier, 1)
+        if args.json?
+          puts JSON.pretty_generate({ tier:, findings: finding_maps }).gsub(/\[\n\n\s*\]/, "[]")
+
+          return
+        end
+
+        puts Diagnostic::Finding.support_tier_message(tier:) if Homebrew.failed? && !args.quiet?
         puts "Your system is ready to brew." if !Homebrew.failed? && !args.quiet?
       end
     end

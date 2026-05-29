@@ -103,6 +103,7 @@ module OS
 
       sig { params(formula: ::Formula).returns(T.nilable(String)) }
       def check_flat_namespace(formula)
+        # See https://developer.apple.com/forums/thread/689991?answerId=687895022#687895022
         return unless formula.prefix.directory?
         return if formula.tap&.audit_exception(:flat_namespace_allowlist, formula.name)
 

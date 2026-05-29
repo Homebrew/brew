@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "diagnostic"
+require "diagnostic/finding"
 require "fileutils"
 require "hardware"
 require "development_tools"
@@ -30,11 +31,10 @@ module Homebrew
       def check_cc_argv(cc)
         return unless cc
 
-        @checks ||= T.let(Diagnostic::Checks.new, T.nilable(Homebrew::Diagnostic::Checks))
         opoo <<~EOS
           You passed `--cc=#{cc}`.
 
-          #{@checks.support_tier_message(tier: 3)}
+          #{Diagnostic::Finding.support_tier_message(tier: 3)}
         EOS
       end
 

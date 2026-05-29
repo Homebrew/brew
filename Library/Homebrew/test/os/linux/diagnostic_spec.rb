@@ -14,14 +14,14 @@ RSpec.describe Homebrew::Diagnostic::Checks do
   specify "#check_supported_architecture" do
     allow(Hardware::CPU).to receive(:type).and_return(:arm64)
 
-    expect(checks.check_supported_architecture)
+    expect(checks.check_supported_architecture&.to_s)
       .to match(/Your CPU architecture .+ is not supported/)
   end
 
   specify "#check_glibc_minimum_version" do
     allow(OS::Linux::Glibc).to receive(:below_minimum_version?).and_return(true)
 
-    expect(checks.check_glibc_minimum_version)
+    expect(checks.check_glibc_minimum_version&.to_s)
       .to match(/Your system glibc .+ is too old/)
   end
 
@@ -30,21 +30,21 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     allow(OS::Linux::Glibc).to receive_messages(below_ci_version?: false, system_version: Version.new("2.35"))
     allow(ENV).to receive(:[]).and_return(nil)
 
-    expect(checks.check_glibc_next_version)
+    expect(checks.check_glibc_next_version&.to_s)
       .to match("Your system glibc 2.35 is older than 2.39")
   end
 
   specify "#check_kernel_minimum_version" do
     allow(OS::Linux::Kernel).to receive(:below_minimum_version?).and_return(true)
 
-    expect(checks.check_kernel_minimum_version)
+    expect(checks.check_kernel_minimum_version&.to_s)
       .to match(/Your Linux kernel .+ is too old/)
   end
 
   specify "#check_for_installed_developer_tools explains system build tools" do
     allow(DevelopmentTools).to receive(:installed?).and_return(false)
 
-    expect(checks.check_for_installed_developer_tools)
+    expect(checks.check_for_installed_developer_tools&.to_s)
       .to include(
         "No developer tools installed.",
         "Install a system C compiler and the standard development tools",
@@ -66,7 +66,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(Sandbox).not_to receive(:failure_reason)
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: "1") do
-      expect(checks.check_linux_sandbox).to be_nil
+      expect(checks.check_linux_sandbox&.to_s).to be_nil
     end
   end
 
@@ -75,7 +75,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(Sandbox).not_to receive(:failure_reason)
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
-      expect(checks.check_linux_sandbox).to be_nil
+      expect(checks.check_linux_sandbox&.to_s).to be_nil
     end
   end
 
@@ -84,7 +84,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(Sandbox).not_to receive(:state)
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
-      expect(checks.check_linux_sandbox).to be_nil
+      expect(checks.check_linux_sandbox&.to_s).to be_nil
     end
   end
 
@@ -96,7 +96,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     )
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
-      message = checks.check_linux_sandbox.to_s
+      message = checks.check_linux_sandbox&.to_s&.rstrip
 
       expect(message)
         .to include(
@@ -107,7 +107,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
           "export HOMEBREW_NO_SANDBOX_LINUX=1",
         )
       expect(message).not_to include("sysctl")
-      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1\n")
+      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1")
     end
   end
 
@@ -118,7 +118,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     )
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
-      message = checks.check_linux_sandbox.to_s
+      message = checks.check_linux_sandbox&.to_s&.rstrip
 
       expect(message)
         .to include(
@@ -128,7 +128,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
           "export HOMEBREW_NO_SANDBOX_LINUX=1",
         )
       expect(message).not_to include("sysctl")
-      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1\n")
+      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1")
     end
   end
 
@@ -139,7 +139,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     )
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
-      message = checks.check_linux_sandbox.to_s
+      message = checks.check_linux_sandbox&.to_s&.rstrip
 
       expect(message)
         .to include(
@@ -153,14 +153,14 @@ RSpec.describe Homebrew::Diagnostic::Checks do
           "Allows unprivileged user namespaces on AppArmor-enabled systems",
           "export HOMEBREW_NO_SANDBOX_LINUX=1",
         )
-      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1\n")
+      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1")
     end
   end
 
   specify "#check_for_symlinked_home" do
     allow(File).to receive(:symlink?).with("/home").and_return(true)
 
-    expect(checks.check_for_symlinked_home)
+    expect(checks.check_for_symlinked_home&.to_s)
       .to include("Your /home directory is a symlink")
   end
 end

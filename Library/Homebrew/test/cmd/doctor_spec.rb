@@ -12,6 +12,13 @@ RSpec.describe Homebrew::Cmd::Doctor do
       .to output(/This is an integration test/).to_stderr
   end
 
+  specify "prints json when requested" do
+    cmd = described_class.new(["--json"])
+
+    expect { cmd.run }
+      .to output(/"tier": 1/).to_stdout
+  end
+
   specify "check_missing_deps reports formula and cask dependencies", :cask do
     formula = instance_double(Formula, full_name:            "needs-foo",
                                        missing_dependencies: [instance_double(Dependency, to_s: "foo")])
@@ -25,7 +32,7 @@ RSpec.describe Homebrew::Cmd::Doctor do
     allow(Cask::Caskroom).to receive(:casks).and_return([cask])
     allow(Cask::Tab).to receive(:for_cask).with(cask).and_return(tab)
 
-    expect(Homebrew::Diagnostic::Checks.new.check_missing_deps)
+    expect(Homebrew::Diagnostic::Checks.new.check_missing_deps&.to_s)
       .to include(
         "Some installed formulae or casks are missing dependencies.",
         "brew install foo local-caffeine unar",
