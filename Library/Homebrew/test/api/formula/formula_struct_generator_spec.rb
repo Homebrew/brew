@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "api"
@@ -144,6 +144,26 @@ RSpec.describe Homebrew::API::Formula::FormulaStructGenerator do
 
     expect(struct.head_dependencies).not_to be_empty
     expect(struct.head_dependencies).to eq struct.stable_dependencies
+  end
+
+  specify "::generate_formula_struct_hash preserves stable patches" do
+    hash = {
+      "desc"                 => "Test formula",
+      "homepage"             => "https://example.com",
+      "license"              => "MIT",
+      "ruby_source_checksum" => { "sha256" => "abc123" },
+      "versions"             => { "stable" => "1.0.0" },
+      "urls"                 => { "stable" => { "url" => "https://example.com/foo-1.0.tar.gz" } },
+      "patches"              => [
+        {
+          "strip"  => "p1",
+          "url"    => "https://example.com/foo.patch",
+          "sha256" => "def456",
+        },
+      ],
+    }
+
+    expect(klass.generate_formula_struct_hash(hash).stable_patches).to eq hash["patches"]
   end
 
   specify "::symbolize_dependency_hash" do

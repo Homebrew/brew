@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "cask/cask_loader"
@@ -6,6 +6,10 @@ require "cask/cask_loader"
 module Test
   module Helper
     module Cask
+      extend T::Helpers
+
+      requires_ancestor { RSpec::Mocks::ExampleMethods }
+
       def stub_cask_loader(cask, ref = cask.token, call_original: false)
         allow(::Cask::CaskLoader).to receive(:for).and_call_original if call_original
 

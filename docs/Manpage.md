@@ -1703,16 +1703,17 @@ packages.
 
 : Only migrate casks.
 
-### `missing` \[`--hide=`\] \[*`formula`* ...\]
+### `missing` \[`--hide=`\] \[*`formula`*\|*`cask`* ...\]
 
-Check the given *`formula`* kegs for missing dependencies. If no *`formula`* are
-provided, check all kegs. Will exit with a non-zero status if any kegs are found
-to be missing dependencies.
+Check the given *`formula`* kegs and *`cask`* installations for missing
+dependencies. If no *`formula`* or *`cask`* are provided, check all kegs and
+casks. Will exit with a non-zero status if any kegs or casks are found to be
+missing dependencies.
 
 `--hide`
 
 : Act as if none of the specified *`hidden`* are installed. *`hidden`* should be
-  a comma-separated list of formulae.
+  a comma-separated list of formulae or casks.
 
 ### `nodenv-sync`
 

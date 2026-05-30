@@ -521,6 +521,12 @@ module Homebrew
                      "shadowed by other commands earlier on `$PATH`.",
         boolean:     true,
       },
+      HOMEBREW_NO_REQUIRE_TAP_TRUST:             {
+        # odeprecated: keep the current default until trust checks are default in a later release.
+        description: "If set, do not require non-official tap formulae, casks or commands to be trusted.",
+        boolean:     true,
+        hidden:      true,
+      },
       HOMEBREW_NO_SANDBOX_CASK:                  {
         # odeprecated: make cask executable sandboxing mandatory in a future release.
         description: "If set, disable sandboxing for cask artifacts that generate files by running executables.",
@@ -556,6 +562,13 @@ module Homebrew
       HOMEBREW_PRY:                              {
         description: "If set, use Pry for the `brew irb` command.",
         boolean:     true,
+      },
+      HOMEBREW_REQUIRE_TAP_TRUST:                {
+        # odeprecated: make tap trust checks default in a later release.
+        description: "If set, require non-official tap formulae, casks and commands to be trusted before " \
+                     "Homebrew loads them.",
+        boolean:     true,
+        hidden:      true,
       },
       HOMEBREW_SANDBOX_LINUX:                    {
         # odeprecated: edit in 5.2.0

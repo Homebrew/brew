@@ -1358,13 +1358,14 @@ __fish_brew_complete_arg 'migrate; and not __fish_seen_argument -l cask -l casks
 __fish_brew_complete_arg 'migrate; and not __fish_seen_argument -l formula -l formulae' -a '(__fish_brew_suggest_casks_installed)'
 
 
-__fish_brew_complete_cmd 'missing' 'Check the given formula kegs for missing dependencies'
+__fish_brew_complete_cmd 'missing' 'Check the given formula kegs and cask installations for missing dependencies'
 __fish_brew_complete_arg 'missing' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'missing' -l help -d 'Show this message'
-__fish_brew_complete_arg 'missing' -l hide -d 'Act as if none of the specified hidden are installed. hidden should be a comma-separated list of formulae'
+__fish_brew_complete_arg 'missing' -l hide -d 'Act as if none of the specified hidden are installed. hidden should be a comma-separated list of formulae or casks'
 __fish_brew_complete_arg 'missing' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'missing' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'missing' -a '(__fish_brew_suggest_formulae_all)'
+__fish_brew_complete_arg 'missing' -a '(__fish_brew_suggest_casks_all)'
 
 
 __fish_brew_complete_cmd 'nodenv-sync' 'Create symlinks for Homebrew\'s installed NodeJS versions in `~/.nodenv/versions`'

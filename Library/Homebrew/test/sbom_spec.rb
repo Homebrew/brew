@@ -32,6 +32,7 @@ RSpec.describe SBOM do
 
           patch do
             url "patch_macos"
+            sha256 TEST_SHA256
           end
 
           bottle do
@@ -88,6 +89,28 @@ RSpec.describe SBOM do
 
       it "returns true if valid when bottling" do
         expect(sbom.schema_validation_errors(bottling: true)).to be_empty
+      end
+
+      it "only emits relationships with defined SPDX IDs" do
+        spdx = sbom.send(:to_spdx_sbom, bottling: false)
+        spdx_ids = Set.new(["SPDXRef-DOCUMENT"] + spdx[:packages].map { |package| package[:SPDXID] } +
+                           spdx[:files].map { |file| file[:SPDXID] })
+
+        expect(spdx[:relationships].flat_map do |relation|
+          [relation[:spdxElementId], relation[:relatedSpdxElement]]
+        end).to all(satisfy { |spdx_id| spdx_ids.include?(spdx_id) })
+      end
+
+      it "emits external patches as packages" do
+        spdx = sbom.send(:to_spdx_sbom, bottling: false)
+
+        expect(spdx[:packages]).to include(
+          hash_including(
+            SPDXID:           "SPDXRef-Patch-formula_name-0",
+            downloadLocation: "patch_macos",
+            checksums:        [{ algorithm: "SHA256", checksumValue: TEST_SHA256 }],
+          ),
+        )
       end
     end
 

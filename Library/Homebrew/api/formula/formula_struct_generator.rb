@@ -175,6 +175,7 @@ module Homebrew
           )
 
           hash["stable_dependencies"] = stable_dependencies
+          hash["stable_patches"] = hash["patches"] || []
           hash["stable_uses_from_macos"] = stable_uses_from_macos
           hash["head_dependencies"] = head_dependencies
           hash["head_uses_from_macos"] = head_uses_from_macos

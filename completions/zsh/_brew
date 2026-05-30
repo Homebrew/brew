@@ -199,7 +199,7 @@ __brew_internal_commands() {
     'log:Show the `git log` for formula or cask, or show the log for the Homebrew repository if no formula or cask is provided'
     'mcp-server:Starts the Homebrew MCP (Model Context Protocol) server'
     'migrate:Migrate renamed packages to new names, where formula are old names of packages'
-    'missing:Check the given formula kegs for missing dependencies'
+    'missing:Check the given formula kegs and cask installations for missing dependencies'
     'nodenv-sync:Create symlinks for Homebrew'\''s installed NodeJS versions in `~/.nodenv/versions`'
     'options:Show install options specific to formula'
     'outdated:List installed casks and formulae that have an updated version available'
@@ -1731,11 +1731,13 @@ _brew_missing() {
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
-    '--hide[Act as if none of the specified hidden are installed. hidden should be a comma-separated list of formulae]' \
+    '--hide[Act as if none of the specified hidden are installed. hidden should be a comma-separated list of formulae or casks]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]' \
     - formula \
-    '*:formula:__brew_formulae'
+    '*:formula:__brew_formulae' \
+    - cask \
+    '*:cask:__brew_casks'
 }
 
 # brew nodenv-sync

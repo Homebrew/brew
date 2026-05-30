@@ -53,17 +53,45 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
     CASK
   end
 
-  it "does not report simple legacy flight block file preparation" do
+  it "autocorrects simple flight block file preparation" do
+    expect_offense <<~CASK
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        postflight do
+        ^^^^^^^^^^^^^ Use `postflight_steps` for simple file preparation.
+          (staged_path/"Prepared").mkpath
+          FileUtils.touch staged_path/"Prepared/touched"
+          FileUtils.mv staged_path/"source", staged_path/"target"
+          FileUtils.ln_s "target", staged_path/"Linked"
+        end
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        postflight_steps do
+          mkdir_p "Prepared"
+          touch "Prepared/touched"
+          mv "source", "target"
+          ln_s "target", "Linked", source_base: :relative
+        end
+      end
+    CASK
+  end
+
+  it "does not autocorrect non-file preparation in flight blocks" do
     expect_no_offenses <<~CASK
       cask "foo" do
         version :latest
         sha256 :no_check
 
         postflight do
-          (staged_path/"Prepared").mkpath
-          FileUtils.touch staged_path/"Prepared/touched"
-          FileUtils.mv staged_path/"source", staged_path/"target"
-          FileUtils.ln_s "target", staged_path/"Linked"
+          system_command "/usr/bin/true"
         end
       end
     CASK

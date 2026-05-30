@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "cask/config"
@@ -34,6 +34,8 @@ end
 
 # These shared contexts starting with `when` don't make sense.
 RSpec.shared_context "Homebrew Cask", :needs_macos do # rubocop:disable RSpec/ContextWording
+  T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
+
   around do |example|
     third_party_tap = Tap.fetch("third-party", "tap")
 

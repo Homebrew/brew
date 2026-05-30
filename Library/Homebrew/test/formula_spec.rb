@@ -2966,6 +2966,24 @@ RSpec.describe Formula do
       expect { Formula.all(eval_all: true) }.not_to raise_error
       expect(Formula.all(eval_all: true)).to eq([])
     end
+
+    it "skips untrusted tap formulae when trust is enabled" do
+      tap = Tap.fetch("thirdparty", "foo")
+      formula_path = tap.formula_dir/"untrusted.rb"
+      formula_path.dirname.mkpath
+      formula_path.write <<~RUBY
+        raise "untrusted formula evaluated"
+      RUBY
+
+      allow(Formula).to receive_messages(core_names: [], tap_files: [formula_path])
+      expect(Formulary).not_to receive(:factory).with(formula_path)
+
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+        expect(Formula.all(eval_all: true)).to eq([])
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
   end
 
   describe "#std_pip_args" do

@@ -1,9 +1,13 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 module Test
   module Helper
     module Subcommand
+      extend T::Helpers
+
+      requires_ancestor { Kernel }
+
       class Args
         attr_reader :named
 

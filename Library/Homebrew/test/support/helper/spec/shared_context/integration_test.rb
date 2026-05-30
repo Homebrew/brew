@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "open3"
@@ -6,43 +6,47 @@ require "open3"
 require "formula_installer"
 require "uninstall"
 
+RSpec::Matchers.define :be_a_success do
+  T.bind(self, T.class_of(RSpec::Matchers::DSL::Matcher))
+
+  match do |actual|
+    T.bind(self, RSpec::Matchers::DSL::Matcher)
+
+    status = actual.is_a?(Proc) ? actual.call : actual
+    expect(status).to respond_to(:success?)
+    status.success?
+  end
+
+  def supports_block_expectations?
+    true
+  end
+
+  # It needs to be nested like this:
+  #
+  #   expect {
+  #     expect {
+  #       # command
+  #     }.to be_a_success
+  #   }.to output(something).to_stdout
+  #
+  # rather than this:
+  #
+  #   expect {
+  #     expect {
+  #       # command
+  #     }.to output(something).to_stdout
+  #   }.to be_a_success
+  #
+  def expects_call_stack_jump?
+    true
+  end
+end
+
 RSpec::Matchers.define_negated_matcher :be_a_failure, :be_a_success
 
 # These shared contexts starting with `when` don't make sense.
 RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWording
-  extend RSpec::Matchers::DSL
-
-  matcher :be_a_success do
-    match do |actual|
-      status = actual.is_a?(Proc) ? actual.call : actual
-      expect(status).to respond_to(:success?)
-      status.success?
-    end
-
-    def supports_block_expectations?
-      true
-    end
-
-    # It needs to be nested like this:
-    #
-    #   expect {
-    #     expect {
-    #       # command
-    #     }.to be_a_success
-    #   }.to output(something).to_stdout
-    #
-    # rather than this:
-    #
-    #   expect {
-    #     expect {
-    #       # command
-    #     }.to output(something).to_stdout
-    #   }.to be_a_success
-    #
-    def expects_call_stack_jump?
-      true
-    end
-  end
+  T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
 
   around do |example|
     ENV["HOMEBREW_INTEGRATION_TEST"] = "1"
@@ -93,12 +97,13 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
       if ENV["HOMEBREW_TESTS_COVERAGE"]
         simplecov_spec = Gem.loaded_specs["simplecov"]
         parallel_tests_spec = Gem.loaded_specs["parallel_tests"]
-        specs = []
+        specs = T.let([], T::Array[Gem::Specification])
         [simplecov_spec, parallel_tests_spec].each do |spec|
           specs << spec
           spec.runtime_dependencies.each do |dep|
             specs += dep.to_specs
           rescue Gem::LoadError => e
+            T.bind(self, Utils::Output::Mixin)
             onoe e
           end
         end
@@ -260,8 +265,8 @@ RSpec.shared_context "integration test" do # rubocop:disable RSpec/ContextWordin
       # Check to see if the original Homebrew process has taps we can use.
       system_tap_path = Pathname("#{ENV.fetch("HOMEBREW_LIBRARY")}/Taps/#{full_name}")
       if system_tap_path.exist?
-        system "git", "clone", "--shared", system_tap_path, tap.path
-        system "git", "-C", tap.path, "checkout", "master"
+        system "git", "clone", "--shared", system_tap_path.to_s, tap.path.to_s
+        system "git", "-C", tap.path.to_s, "checkout", "master"
       else
         tap.install(quiet: true)
       end

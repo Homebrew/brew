@@ -10,6 +10,7 @@ require "utils/path"
 require "extend/hash/keys"
 require "extend/ENV/sensitive"
 require "api"
+require "trust"
 
 module Cask
   # Loads a cask from various sources.
@@ -163,6 +164,8 @@ module Cask
         raise CaskUnavailableError.new(token, "'#{path}' does not exist.")  unless path.exist?
         raise CaskUnavailableError.new(token, "'#{path}' is not readable.") unless path.readable?
         raise CaskUnavailableError.new(token, "'#{path}' is not a file.")   unless path.file?
+
+        Homebrew::Trust.require_trusted_cask!(token, path)
 
         @content = path.read(encoding: "UTF-8")
         @config = config

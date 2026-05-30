@@ -43,6 +43,7 @@ require "utils/spdx"
 require "on_system"
 require "api"
 require "api_hashable"
+require "trust"
 require "utils/output"
 require "pypi_packages"
 require "time"
@@ -2567,7 +2568,9 @@ class Formula
       raise ArgumentError, "Formula#all cannot be used without `--eval-all` or `HOMEBREW_EVAL_ALL=1`"
     end
 
-    (core_names + tap_files).filter_map do |name_or_file|
+    trusted_tap_files = tap_files.select { |file| Homebrew::Trust.trusted_formula_file?(file) }
+
+    (core_names + trusted_tap_files).filter_map do |name_or_file|
       Formulary.factory(name_or_file)
     rescue FormulaUnavailableError, FormulaUnreadableError, FormulaSpecificationError => e
       # Don't let one broken formula break commands. But do complain.

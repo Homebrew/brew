@@ -60,4 +60,70 @@ RSpec.describe Homebrew::DevCmd::Tests do
       end
     end
   end
+
+  describe "#changed_test_files" do
+    subject(:changed_test_files) { tests.send(:changed_test_files) }
+
+    let(:tests) { klass.new([]) }
+
+    context "when a spec file changed" do
+      let(:changed_file) { "Library/Homebrew/test/cmd/help_spec.rb\n" }
+
+      before do
+        allow(Utils).to receive(:popen_read).with("git", "diff", "--name-only", "main")
+                                            .and_return(changed_file)
+      end
+
+      it "includes the changed spec file" do
+        expect(changed_test_files).to include("test/cmd/help_spec.rb")
+      end
+    end
+
+    context "when a non-test Ruby file changed" do
+      let(:changed_file) { "Library/Homebrew/cmd/help.rb\n" }
+
+      before do
+        allow(Utils).to receive(:popen_read).with("git", "diff", "--name-only", "main")
+                                            .and_return(changed_file)
+      end
+
+      it "maps the file to its corresponding spec" do
+        expect(changed_test_files).to include("test/cmd/help_spec.rb")
+      end
+    end
+
+    context "when integration shared context changed" do
+      let(:changed_file) do
+        "Library/Homebrew/test/support/helper/spec/shared_context/integration_test.rb\n"
+      end
+
+      before do
+        allow(Utils).to receive(:popen_read).with("git", "diff", "--name-only", "main")
+                                            .and_return(changed_file)
+      end
+
+      it "includes integration tests and excludes unrelated tests", :aggregate_failures do
+        expect(changed_test_files).to include("test/cmd/help_spec.rb")
+        expect(changed_test_files).not_to include("test/dev-cmd/tests_spec.rb")
+      end
+    end
+
+    context "when cask shared context changed" do
+      let(:changed_file) do
+        "Library/Homebrew/test/support/helper/spec/shared_context/homebrew_cask.rb\n"
+      end
+
+      before do
+        allow(Utils).to receive(:popen_read).with("git", "diff", "--name-only", "main")
+                                            .and_return(changed_file)
+      end
+
+      it "includes cask tests and excludes non-cask tests", :aggregate_failures do
+        expect(changed_test_files).to include("test/cmd/outdated_spec.rb")
+        expect(changed_test_files).not_to include("test/cmd/help_spec.rb")
+        expect(changed_test_files).not_to include("test/dev-cmd/pr-pull_spec.rb")
+        expect(changed_test_files).not_to include("test/cmd/bundle/remove_subcommand_spec.rb")
+      end
+    end
+  end
 end

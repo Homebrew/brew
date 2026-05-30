@@ -356,6 +356,9 @@ module Homebrew::EnvConfig
     def no_proxy; end
 
     sig { returns(T::Boolean) }
+    def no_require_tap_trust?; end
+
+    sig { returns(T::Boolean) }
     def no_sandbox_cask?; end
 
     sig { returns(T::Boolean) }
@@ -378,6 +381,9 @@ module Homebrew::EnvConfig
 
     sig { returns(T::Boolean) }
     def pry?; end
+
+    sig { returns(T::Boolean) }
+    def require_tap_trust?; end
 
     sig { returns(T::Boolean) }
     def sbom?; end

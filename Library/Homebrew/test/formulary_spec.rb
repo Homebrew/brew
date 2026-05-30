@@ -118,6 +118,31 @@ RSpec.describe Formulary do
         expect(formula_class::SECRET_TOKEN_PRESENT).to be(true)
       end
     end
+
+    it "refuses untrusted third-party tap formulae when trust is enabled" do
+      tap = Tap.fetch("thirdparty", "foo")
+      formula_path = tap.formula_dir/"sensitive-env.rb"
+      formula_path.dirname.mkpath
+      formula_path.write <<~RUBY
+        class SensitiveEnv < Formula
+          url "https://brew.sh/sensitive-env-1.0.tar.gz"
+        end
+      RUBY
+
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+        expect { Formulary.factory(formula_path) }
+          .to raise_error(Homebrew::UntrustedTapError, %r{thirdparty/foo})
+      end
+
+      Homebrew::Trust.trust!(:formula, "thirdparty/foo/sensitive-env")
+
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+        expect(Formulary.factory(formula_path).full_name).to eq("thirdparty/foo/sensitive-env")
+      end
+    ensure
+      Homebrew::Trust.clear!(:formula)
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
   end
 
   describe "::factory" do
@@ -606,6 +631,22 @@ RSpec.describe Formulary do
 
         expected_hash = formula_json_contents[formula_name]
         expect(formula.to_hash_with_variations).to eq(expected_hash)
+      end
+
+      it "loads patches from API JSON" do
+        allow(Homebrew::API::Formula).to receive(:all_formulae).and_return formula_json_contents(
+          "patches" => [
+            {
+              "strip"  => "p1",
+              "url"    => "https://example.com/test.patch",
+              "sha256" => TEST_SHA256,
+            },
+          ],
+        )
+
+        formula = klass.factory(formula_name)
+
+        expect(formula.patchlist.first).to be_a(ExternalPatch)
       end
 
       it "returns a deprecated Formula when given a name" do

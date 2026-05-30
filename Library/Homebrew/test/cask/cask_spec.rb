@@ -57,6 +57,27 @@ RSpec.describe Cask::Cask, :cask do
     Cask::CaskLoader.load(path)
   end
 
+  describe ".all" do
+    it "skips untrusted tap casks when trust is enabled" do
+      tap = Tap.fetch("thirdparty", "foo")
+      cask_path = tap.cask_dir/"untrusted.rb"
+      cask_path.dirname.mkpath
+      cask_path.write <<~RUBY
+        raise "untrusted cask evaluated"
+      RUBY
+
+      allow(CoreCaskTap.instance).to receive(:cask_tokens).and_return([])
+      allow(Tap).to receive(:reject).and_return([tap])
+      expect(Cask::CaskLoader).not_to receive(:load).with(cask_path)
+
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+        expect(klass.all(eval_all: true)).to eq([])
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+  end
+
   context "when multiple versions are installed" do
     describe "#installed_version" do
       context "when there are duplicate versions" do
@@ -419,7 +440,9 @@ RSpec.describe Cask::Cask, :cask do
 
     context "when it is from a non-core tap" do
       it "returns the fully-qualified name of the cask" do
-        c = Cask::CaskLoader.load("third-party/tap/third-party-cask")
+        c = with_env(HOMEBREW_NO_REQUIRE_TAP_TRUST: "1") do
+          Cask::CaskLoader.load("third-party/tap/third-party-cask")
+        end
         expect(c.full_name).to eq("third-party/tap/third-party-cask")
       end
     end

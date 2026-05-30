@@ -9,6 +9,7 @@ require "cask/metadata"
 require "cask/tab"
 require "utils/output"
 require "api_hashable"
+require "trust"
 
 module Cask
   # An instance of a cask.
@@ -59,6 +60,7 @@ module Cask
       # Load core casks from tokens so they load from the API when the core cask is not tapped.
       tokens_and_files = CoreCaskTap.instance.cask_tokens
       tokens_and_files += Tap.reject(&:core_cask_tap?).flat_map(&:cask_files)
+                             .select { |file| Homebrew::Trust.trusted_cask_file?(file) }
       tokens_and_files.filter_map do |token_or_file|
         CaskLoader.load(token_or_file)
       rescue CaskUnreadableError => e

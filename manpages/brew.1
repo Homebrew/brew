@@ -1086,11 +1086,11 @@ Only migrate formulae\.
 .TP
 \fB\-\-cask\fP
 Only migrate casks\.
-.SS "\fBmissing\fP \fR[\fB\-\-hide=\fP] \fR[\fIformula\fP \.\.\.]"
-Check the given \fIformula\fP kegs for missing dependencies\. If no \fIformula\fP are provided, check all kegs\. Will exit with a non\-zero status if any kegs are found to be missing dependencies\.
+.SS "\fBmissing\fP \fR[\fB\-\-hide=\fP] \fR[\fIformula\fP|\fIcask\fP \.\.\.]"
+Check the given \fIformula\fP kegs and \fIcask\fP installations for missing dependencies\. If no \fIformula\fP or \fIcask\fP are provided, check all kegs and casks\. Will exit with a non\-zero status if any kegs or casks are found to be missing dependencies\.
 .TP
 \fB\-\-hide\fP
-Act as if none of the specified \fIhidden\fP are installed\. \fIhidden\fP should be a comma\-separated list of formulae\.
+Act as if none of the specified \fIhidden\fP are installed\. \fIhidden\fP should be a comma\-separated list of formulae or casks\.
 .SS "\fBnodenv\-sync\fP"
 Create symlinks for Homebrew\[u2019]s installed NodeJS versions in \fB~/\.nodenv/versions\fP\&\.
 .P

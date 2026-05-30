@@ -2074,6 +2074,7 @@ _brew_missing() {
     *) ;;
   esac
   __brew_complete_formulae
+  __brew_complete_casks
 }
 
 _brew_nodenv_sync() {

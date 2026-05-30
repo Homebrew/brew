@@ -89,18 +89,32 @@ module Commands
   sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.external_ruby_v2_cmd_path(cmd)
     path = which("#{cmd}.rb", tap_cmd_directories)
+    require_trusted_command!(path, cmd)
     path if ENV.clear_sensitive_environment! { Homebrew.require?(path) }
   end
 
   # Ruby commands which are run by being `require`d.
   sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.external_ruby_cmd_path(cmd)
-    which("brew-#{cmd}.rb", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
+    path = which("brew-#{cmd}.rb", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
+    require_trusted_command!(path, cmd)
+    path
   end
 
   sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.external_cmd_path(cmd)
-    which("brew-#{cmd}", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
+    path = which("brew-#{cmd}", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
+    require_trusted_command!(path, cmd)
+    path
+  end
+
+  sig { params(path: T.nilable(Pathname), cmd: String).void }
+  def self.require_trusted_command!(path, cmd)
+    return unless path
+    return if path.expand_path.ascend.none?(HOMEBREW_TAP_DIRECTORY)
+
+    require "trust"
+    Homebrew::Trust.require_trusted_command!(path, cmd)
   end
 
   sig { params(cmd: String).returns(T.nilable(Pathname)) }
