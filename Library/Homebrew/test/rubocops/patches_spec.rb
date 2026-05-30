@@ -454,4 +454,101 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
       RUBY
     end
   end
+
+  context "when auditing patch resolves" do
+    it "reports no offenses for CVE ids, GHSA ids and issue URLs" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://brew.sh/foo.diff"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            resolves "CVE-2024-1234", "GHSA-xr7r-f8xq-vfvv", "https://github.com/foo/bar/issues/1"
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects non-canonical CVE identifiers" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://brew.sh/foo.diff"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            resolves "cve-2024-1234"
+                     ^^^^^^^^^^^^^^^ FormulaAudit/Patches: `resolves` should use the canonical CVE format: CVE-2024-1234
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://brew.sh/foo.diff"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            resolves "CVE-2024-1234"
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense for unrecognised identifiers" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://brew.sh/foo.diff"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            resolves "issue-123"
+                     ^^^^^^^^^^^ FormulaAudit/Patches: `resolves` should be a CVE/GHSA identifier or issue URL, got: "issue-123"
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense for non-string arguments" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://brew.sh/foo.diff"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            resolves :CVE_2024_1234
+                     ^^^^^^^^^^^^^^ FormulaAudit/Patches: `resolves` should be passed identifier strings (CVE/GHSA id or issue URL)
+          end
+        end
+      RUBY
+    end
+  end
+
+  context "when auditing patch type" do
+    it "reports no offenses for valid types" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://brew.sh/foo.diff"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            type :backport
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense for invalid types" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          patch do
+            url "https://brew.sh/foo.diff"
+            sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
+            type :hotfix
+                 ^^^^^^^ FormulaAudit/Patches: Patch `type` should be one of: :unofficial, :monkey, :backport, :cherry_pick
+          end
+        end
+      RUBY
+    end
+  end
 end

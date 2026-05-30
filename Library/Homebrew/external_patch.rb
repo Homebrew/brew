@@ -33,6 +33,16 @@ class ExternalPatch
     true
   end
 
+  sig { returns(T::Array[String]) }
+  def resolves
+    (resource.resolves + Patch.extract_cves(url.to_s, *resource.patch_files.map(&:to_s))).uniq
+  end
+
+  sig { returns(T.nilable(Symbol)) }
+  def type
+    resource.type
+  end
+
   sig { params(owner: T.nilable(Resource::Owner)).void }
   def owner=(owner)
     resource.owner = owner

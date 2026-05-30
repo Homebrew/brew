@@ -3126,8 +3126,14 @@ class Formula
         h["sha256"] = external.resource.checksum&.hexdigest
         h["apply"] = external.resource.patch_files.map(&:to_s) if external.resource.patch_files.any?
         h["directory"] = external.resource.directory.to_s if external.resource.directory.present?
+        h["type"] = external.type.to_s.tr("_", "-") if external.type
+        resolves = external.resolves
+        h["resolves"] = resolves.map { |id| { "type" => Patch.resolves_type(id), "id" => id } } if resolves.any?
       elsif p.is_a?(LocalPatch)
         h["file"] = p.file.to_s
+        h["type"] = p.type.to_s.tr("_", "-") if p.type
+        resolves = p.resolves
+        h["resolves"] = resolves.map { |id| { "type" => Patch.resolves_type(id), "id" => id } } if resolves.any?
       else
         h["data"] = true
       end

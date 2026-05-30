@@ -10,6 +10,9 @@ module RuboCop
       class Patches < FormulaCop
         extend AutoCorrector
 
+        # Keep in sync with `Patch::TYPES` in `Library/Homebrew/patch.rb`.
+        PATCH_TYPES = T.let([:unofficial, :monkey, :backport, :cherry_pick].freeze, T::Array[Symbol])
+
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
           node = formula_nodes.node
@@ -24,6 +27,12 @@ module RuboCop
               sha256_node = find_every_method_call_by_name(patch_block, :sha256).first
               sha256_string = parameters(sha256_node).first if sha256_node
               patch_problems(url_string, sha256_string)
+            end
+            find_every_method_call_by_name(patch_block, :resolves).each do |resolves_node|
+              parameters(resolves_node).each { |arg| resolves_problems(arg) }
+            end
+            find_every_method_call_by_name(patch_block, :type).each do |type_node|
+              parameters(type_node).each { |arg| type_problems(arg) }
             end
           end
 
@@ -128,6 +137,38 @@ module RuboCop
             corrector.replace(patch_url_node.source_range,
                               patch_url_node.source.sub(%r{\A"http://}, '"https://'))
           end
+        end
+
+        sig { params(node: RuboCop::AST::Node).void }
+        def resolves_problems(node)
+          unless node.str_type?
+            offending_node(node)
+            problem "`resolves` should be passed identifier strings (CVE/GHSA id or issue URL)"
+            return
+          end
+
+          value = string_content(node)
+          return if value.match?(/\ACVE-\d{4}-\d{4,}\z/)
+          return if value.match?(/\AGHSA(-[23456789cfghjmpqrvwx]{4}){3}\z/)
+          return if value.match?(%r{\Ahttps?://})
+
+          offending_node(node)
+          if (m = value.match(/\ACVE-?(\d{4})-(\d{4,})\z/i))
+            corrected = "CVE-#{m[1]}-#{m[2]}"
+            problem "`resolves` should use the canonical CVE format: #{corrected}" do |corrector|
+              corrector.replace(node.source_range, corrected.inspect)
+            end
+          else
+            problem "`resolves` should be a CVE/GHSA identifier or issue URL, got: #{value.inspect}"
+          end
+        end
+
+        sig { params(node: RuboCop::AST::Node).void }
+        def type_problems(node)
+          return if node.sym_type? && PATCH_TYPES.include?(T.cast(node, RuboCop::AST::SymbolNode).value)
+
+          offending_node(node)
+          problem "Patch `type` should be one of: #{PATCH_TYPES.map(&:inspect).join(", ")}"
         end
 
         sig { params(patch: RuboCop::AST::Node).void }

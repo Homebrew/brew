@@ -21,10 +21,25 @@ class LocalPatch < EmbeddedPatch
       !path.to_s.start_with?("../")
   end
 
-  sig { params(strip: T.any(String, Symbol), file: T.any(String, Pathname)).void }
-  def initialize(strip, file)
+  sig { returns(T.nilable(Symbol)) }
+  attr_reader :type
+
+  sig {
+    params(
+      strip: T.any(String, Symbol), file: T.any(String, Pathname),
+      resolves: T::Array[String], type: T.nilable(Symbol)
+    ).void
+  }
+  def initialize(strip, file, resolves: [], type: nil)
     super(strip)
     @file = file
+    @resolves = T.let(resolves.dup, T::Array[String])
+    @type = type
+  end
+
+  sig { returns(T::Array[String]) }
+  def resolves
+    (@resolves + Patch.extract_cves(file.to_s)).uniq
   end
 
   sig { override.returns(String) }
