@@ -510,8 +510,8 @@ class Resource
     sig { params(val: T.nilable(Symbol)).returns(T.nilable(Symbol)) }
     def type(val = nil)
       return @type if val.nil?
-      if ::Patch::TYPES.exclude?(val)
-        raise ArgumentError, "Patch type must be one of: #{::Patch::TYPES.map(&:inspect).join(", ")}"
+      unless ::Patch::TYPES.key?(val)
+        raise ArgumentError, "Patch type must be one of: #{::Patch::TYPES.keys.map(&:inspect).join(", ")}"
       end
 
       @type = val

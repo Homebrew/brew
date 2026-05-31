@@ -11,8 +11,18 @@ require "local_patch"
 module Patch
   CVE_PATTERN = /CVE-?(\d{4})-(\d{4,})/i
   GHSA_PATTERN = /\AGHSA(-[23456789cfghjmpqrvwx]{4}){3}\z/
+  # CycloneDX `pedigree.patches.type` values applicable to source diffs.
+  # `monkey` is omitted: it describes runtime modification, which `patch do` cannot express.
   # Keep in sync with `PATCH_TYPES` in `Library/Homebrew/rubocops/patches.rb`.
-  TYPES = T.let([:unofficial, :monkey, :backport, :cherry_pick].freeze, T::Array[Symbol])
+  TYPES = T.let({
+    unofficial:  "A patch that has not been developed by the upstream maintainers " \
+                 "(e.g. a Homebrew- or distribution-specific build fix).",
+    backport:    "A patch that takes code from a newer version of the software and " \
+                 "applies it to the older version Homebrew ships (e.g. an unreleased " \
+                 "upstream security fix).",
+    cherry_pick: "A patch created by selectively applying upstream commits that are " \
+                 "not strictly from a newer release (e.g. a fix from a maintenance branch).",
+  }.freeze, T::Hash[Symbol, String])
 
   sig { params(strings: String).returns(T::Array[String]) }
   def self.extract_cves(*strings)

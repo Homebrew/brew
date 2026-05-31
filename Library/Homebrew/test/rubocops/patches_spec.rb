@@ -545,7 +545,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
             url "https://brew.sh/foo.diff"
             sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
             type :hotfix
-                 ^^^^^^^ FormulaAudit/Patches: Patch `type` should be one of: :unofficial, :monkey, :backport, :cherry_pick
+                 ^^^^^^^ FormulaAudit/Patches: Patch `type` should be one of: :unofficial, :backport, :cherry_pick
           end
         end
       RUBY
