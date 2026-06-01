@@ -9,6 +9,7 @@ module RuboCop
     module FormulaAudit
       # This cop checks declarative install step usage.
       class InstallSteps < FormulaCop
+        extend AutoCorrector
         include InstallStepsHelper
 
         CONFLICT_MSG = "`post_install` and `post_install_steps` cannot both be used."
@@ -25,6 +26,7 @@ module RuboCop
           end
 
           audit_step_block(post_install_steps_block)
+          audit_post_install_method(post_install_method) if post_install_steps_block.nil?
         end
 
         private
@@ -35,6 +37,27 @@ module RuboCop
 
           offending_node(offense_node)
           problem STEP_BLOCK_MSG
+        end
+
+        sig { params(post_install_method: T.nilable(RuboCop::AST::Node)).void }
+        def audit_post_install_method(post_install_method)
+          return if post_install_method.nil?
+          return unless post_install_method.def_type?
+
+          post_install_def = T.cast(post_install_method, RuboCop::AST::DefNode)
+          step_lines = simple_install_step_lines(post_install_def.body,
+                                                 default_base:        :var,
+                                                 default_source_base: :prefix,
+                                                 default_target_base: :prefix)
+          return if step_lines.blank?
+
+          add_offense(post_install_method,
+                      message: format(SIMPLE_STEP_CONVERSION_MSG, steps_block: "post_install_steps")) do |corrector|
+            corrector.replace(
+              post_install_method.source_range,
+              install_steps_block_source(:post_install_steps, step_lines, post_install_method.source_range.column),
+            )
+          end
         end
       end
     end

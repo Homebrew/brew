@@ -50,16 +50,55 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
     RUBY
   end
 
-  it "does not report simple legacy `post_install` file preparation" do
+  it "autocorrects simple `post_install` file preparation" do
+    expect_offense(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        def post_install
+        ^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Use `post_install_steps` for simple file preparation.
+          (var/"log/foo").mkpath
+          FileUtils.touch var/"foo/state"
+          FileUtils.mv prefix/"move-source", prefix/"move-target"
+          FileUtils.ln_sf "move-target", prefix/"linked-target"
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        post_install_steps do
+          mkdir_p "log/foo"
+          touch "foo/state"
+          mv "move-source", "move-target"
+          ln_sf "move-target", "linked-target", source_base: :relative
+        end
+      end
+    RUBY
+  end
+
+  it "does not autocorrect non-file preparation in `post_install`" do
+    expect_no_offenses(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        def post_install
+          system "true"
+        end
+      end
+    RUBY
+  end
+
+  it "does not autocorrect mixed `post_install` bodies" do
     expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
 
         def post_install
           (var/"log/foo").mkpath
-          FileUtils.touch var/"foo/state"
-          FileUtils.mv prefix/"move-source", prefix/"move-target"
-          FileUtils.ln_sf "move-target", prefix/"linked-target"
+          system "true"
         end
       end
     RUBY
