@@ -488,6 +488,8 @@ class Resource
       @patch_files = T.let([], T::Array[T.any(String, Pathname)])
       @directory = T.let(nil, T.nilable(T.any(String, Pathname)))
       @file = T.let(nil, T.nilable(T.any(String, Pathname)))
+      @resolves = T.let([], T::Array[String])
+      @type = T.let(nil, T.nilable(Symbol))
       super "patch", &block
     end
 
@@ -495,6 +497,24 @@ class Resource
     def apply(*paths)
       @patch_files.concat(paths.flatten)
       @patch_files.uniq!
+    end
+
+    sig { params(cves: String).returns(T::Array[String]) }
+    def resolves(*cves)
+      return @resolves if cves.empty?
+
+      @resolves.concat(cves).uniq!
+      @resolves
+    end
+
+    sig { params(val: T.nilable(Symbol)).returns(T.nilable(Symbol)) }
+    def type(val = nil)
+      return @type if val.nil?
+      unless ::Patch::TYPES.key?(val)
+        raise ArgumentError, "Patch type must be one of: #{::Patch::TYPES.keys.map(&:inspect).join(", ")}"
+      end
+
+      @type = val
     end
 
     sig { params(val: T.nilable(T.any(String, Pathname))).returns(T.nilable(T.any(String, Pathname))) }

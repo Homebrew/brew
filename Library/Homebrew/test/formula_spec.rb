@@ -1601,6 +1601,76 @@ RSpec.describe Formula do
       expect(f.to_hash["patches"]).to eq([{ "strip" => "p2", "data" => true }])
     end
 
+    it "serialises type and explicit resolves on an external patch" do
+      f = formula "foo" do
+        url "foo-1.0"
+        patch do
+          url "https://example.com/foo.diff"
+          sha256 TEST_SHA256
+          type :cherry_pick
+          resolves "CVE-2024-1111", "CVE-2024-2222"
+        end
+      end
+
+      expect(f.to_hash["patches"]).to eq([
+        {
+          "strip"    => "p1",
+          "url"      => "https://example.com/foo.diff",
+          "sha256"   => TEST_SHA256,
+          "type"     => "cherry-pick",
+          "resolves" => [
+            { "type" => "security", "id" => "CVE-2024-1111" },
+            { "type" => "security", "id" => "CVE-2024-2222" },
+          ],
+        },
+      ])
+    end
+
+    it "serialises resolves inferred from url and apply paths" do
+      f = formula "foo" do
+        url "foo-1.0"
+        patch do
+          url "https://example.com/debian.tar.xz"
+          sha256 TEST_SHA256
+          apply "patches/CVE-2024-1234.patch", "patches/cve-2024-5678.patch"
+        end
+      end
+
+      expect(f.to_hash["patches"].first["resolves"]).to eq([
+        { "type" => "security", "id" => "CVE-2024-1234" },
+        { "type" => "security", "id" => "CVE-2024-5678" },
+      ])
+    end
+
+    it "serialises non-CVE resolves entries with the appropriate issue type" do
+      f = formula "foo" do
+        url "foo-1.0"
+        patch do
+          url "https://example.com/foo.diff"
+          sha256 TEST_SHA256
+          resolves "CVE-2024-1234", "GHSA-xr7r-f8xq-vfvv", "https://github.com/foo/bar/issues/1"
+        end
+      end
+
+      expect(f.to_hash["patches"].first["resolves"]).to eq([
+        { "type" => "security", "id" => "CVE-2024-1234" },
+        { "type" => "security", "id" => "GHSA-xr7r-f8xq-vfvv" },
+        { "type" => "defect", "id" => "https://github.com/foo/bar/issues/1" },
+      ])
+    end
+
+    it "serialises type on a local file patch" do
+      f = formula "foo" do
+        url "foo-1.0"
+        patch do
+          file "Patches/foo.diff"
+          type :unofficial
+        end
+      end
+
+      expect(f.to_hash["patches"]).to eq([{ "strip" => "p1", "file" => "Patches/foo.diff", "type" => "unofficial" }])
+    end
+
     it "serialises a local file patch" do
       f = formula "foo" do
         url "foo-1.0"

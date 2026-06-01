@@ -131,6 +131,76 @@ RSpec.describe Patch do
     end
   end
 
+  describe ".extract_cves" do
+    it "extracts and normalises CVE identifiers from strings" do
+      result = klass.extract_cves(
+        "patches/any/CVE-2024-2961.patch",
+        "patches/28-cve-2022-0529-and-cve-2022-0530.patch",
+        "patches/any/CVE-2024-33601_33602.patch",
+        "https://example.com/fix.diff",
+      )
+      expect(result).to eq(%w[CVE-2024-2961 CVE-2022-0529 CVE-2022-0530 CVE-2024-33601])
+    end
+
+    it "returns an empty array when nothing matches" do
+      expect(klass.extract_cves("foo", "bar.patch")).to eq([])
+    end
+  end
+
+  describe ".resolves_type" do
+    it "classifies CVE and GHSA identifiers as security and everything else as defect" do
+      expect(klass.resolves_type("CVE-2024-1234")).to eq("security")
+      expect(klass.resolves_type("GHSA-xr7r-f8xq-vfvv")).to eq("security")
+      expect(klass.resolves_type("https://github.com/foo/bar/issues/1")).to eq("defect")
+    end
+  end
+
+  describe "#resolves" do
+    it "merges explicit resolves with CVEs inferred from url and apply paths" do
+      patch = klass.create(:p1, nil) do
+        url "https://example.com/CVE-2024-1111.patch"
+        apply "patches/cve-2024-2222.patch"
+        resolves "CVE-2024-3333"
+      end
+      expect(patch.resolves).to eq(["CVE-2024-3333", "CVE-2024-1111", "CVE-2024-2222"])
+    end
+
+    it "carries explicit resolves through to a local file patch and infers from the file path" do
+      patch = klass.create(:p1, nil) do
+        file "Patches/CVE-2024-1234.diff"
+        resolves "CVE-2024-5678"
+      end
+      expect(patch.resolves).to eq(["CVE-2024-5678", "CVE-2024-1234"])
+    end
+  end
+
+  describe "#type" do
+    it "stores a valid type on an external patch" do
+      patch = klass.create(:p1, nil) do
+        url "https://example.com/foo.diff"
+        type :backport
+      end
+      expect(patch.type).to eq(:backport)
+    end
+
+    it "carries type through to a local file patch" do
+      patch = klass.create(:p1, nil) do
+        file "Patches/foo.diff"
+        type :unofficial
+      end
+      expect(patch.type).to eq(:unofficial)
+    end
+
+    it "rejects invalid types" do
+      expect do
+        klass.create(:p1, nil) do
+          url "https://example.com/foo.diff"
+          type :hotfix
+        end
+      end.to raise_error(ArgumentError, /Patch type must be one of/)
+    end
+  end
+
   describe "#patch_files" do
     subject(:patch) { klass.create(:p2, nil) }
 

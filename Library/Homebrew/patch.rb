@@ -9,6 +9,35 @@ require "local_patch"
 
 # Helper module for creating patches.
 module Patch
+  CVE_PATTERN = /CVE-?(\d{4})-(\d{4,})/i
+  GHSA_PATTERN = /\AGHSA(-[23456789cfghjmpqrvwx]{4}){3}\z/
+  # CycloneDX `pedigree.patches.type` values applicable to source diffs.
+  # `monkey` is omitted: it describes runtime modification, which `patch do` cannot express.
+  # Keep in sync with `PATCH_TYPES` in `Library/Homebrew/rubocops/patches.rb`.
+  TYPES = T.let({
+    unofficial:  "A patch that has not been developed by the upstream maintainers " \
+                 "(e.g. a Homebrew- or distribution-specific build fix).",
+    backport:    "A patch that takes code from a newer version of the software and " \
+                 "applies it to the older version Homebrew ships (e.g. an unreleased " \
+                 "upstream security fix).",
+    cherry_pick: "A patch created by selectively applying upstream commits that are " \
+                 "not strictly from a newer release (e.g. a fix from a maintenance branch).",
+  }.freeze, T::Hash[Symbol, String])
+
+  sig { params(strings: String).returns(T::Array[String]) }
+  def self.extract_cves(*strings)
+    strings.flat_map { |s| s.scan(CVE_PATTERN) }
+           .map { |year, id| "CVE-#{year}-#{id}" }
+           .uniq
+  end
+
+  sig { params(id: String).returns(String) }
+  def self.resolves_type(id)
+    return "security" if id.match?(/\ACVE-\d{4}-\d{4,}\z/) || id.match?(GHSA_PATTERN)
+
+    "defect"
+  end
+
   sig {
     params(
       strip: T.any(Symbol, String),
@@ -37,7 +66,7 @@ module Patch
           raise ArgumentError, "Patch cannot use `directory` with `file`." if resource.directory.present?
           raise ArgumentError, "Patch cannot use `apply` with `file`." if resource.patch_files.present?
 
-          LocalPatch.new(strip, file)
+          LocalPatch.new(strip, file, resolves: resource.resolves, type: resource.type)
         else
           external_patch
         end
