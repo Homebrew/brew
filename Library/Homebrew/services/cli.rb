@@ -152,7 +152,8 @@ module Homebrew
             puts
           end
 
-          next if !take_root_ownership?(service) && System.root?
+          take_root_ownership?(service)
+          next if sudo_service_user && !System.root?
 
           service_load(service, nil, enable: true)
         end
@@ -372,7 +373,7 @@ module Homebrew
 
       sig { params(service: Services::FormulaWrapper, file: T.nilable(Pathname), enable: T::Boolean).void }
       def self.service_load(service, file, enable:)
-        if System.root? && !service.service_startup?
+        if System.root? && !service.service_startup? && !sudo_service_user
           opoo "#{service.name} must be run as non-root to start at user login!"
         elsif !System.root? && service.service_startup?
           opoo "#{service.name} must be run as root to start at system startup!"
@@ -407,7 +408,7 @@ module Homebrew
 
           if sudo_service_user && System.launchctl?
             # set the username in the new plist file
-            ohai "Setting username in #{service.service_name} to: #{System.user}"
+            ohai "Setting username in #{service.service_name} to: #{sudo_service_user}"
             plist_data = Plist.parse_xml(contents, marshal: false)
             plist_data["UserName"] = sudo_service_user
             plist_data.to_plist
