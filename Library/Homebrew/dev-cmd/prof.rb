@@ -47,19 +47,33 @@ module Homebrew
           end
           output_filename = "prof/d3-flamegraph.html"
           safe_system "stackprof --d3-flamegraph prof/stackprof.dump > #{output_filename}"
-          exec_browser output_filename
+          # `brew prof` is often run from tests or scripts. Only open the HTML
+          # report automatically when the user is attached to a terminal.
+          exec_browser output_filename if $stdout.tty?
         elsif args.vernier?
           output_filename = "prof/vernier.json"
           Process::UID.change_privilege(Process.euid) if Process.euid != Process.uid
-          safe_system "vernier", "run", "--output=#{output_filename}", "--allocation_interval=500", "--",
-                      RUBY_PATH, brew_rb, *args.named
+          # Avoid `vernier run`: it injects `vernier/autorun` through `RUBYOPT`,
+          # which child Ruby processes inherit. Profiling only this Ruby process
+          # keeps nested `brew` commands from trying to write the same profile.
+          #
+          # `HOMEBREW_SPAWN_SYSTEM` is intentionally scoped to this profiled
+          # process. It lets selected process helpers avoid manual fork paths
+          # that can inherit Vernier's active native collector state.
+          safe_system({ "HOMEBREW_SPAWN_SYSTEM" => "1",
+                        "VERNIER_ALLOCATION_INTERVAL" => "500", "VERNIER_OUTPUT" => output_filename },
+                      RUBY_PATH, "-I", (Pathname(Gem::Specification.find_by_name("vernier").full_gem_path)/"lib").to_s,
+                      "-r", "vernier/autorun",
+                      "-r", (HOMEBREW_LIBRARY_PATH/"prof/vernier_fork_guard").to_s, brew_rb, *args.named)
           ohai "Profiling complete!"
           puts "Upload the results from #{output_filename} to:"
           puts "  #{Formatter.url("https://vernier.prof")}"
         else
           output_filename = "prof/call_stack.html"
           safe_system "ruby-prof", "--printer=call_stack", "--file=#{output_filename}", brew_rb, "--", *args.named
-          exec_browser output_filename
+          # Match the stackprof behaviour above: generating the file is useful
+          # in non-interactive runs but launching a browser is not.
+          exec_browser output_filename if $stdout.tty?
         end
       rescue OptionParser::InvalidOption => e
         ofail e

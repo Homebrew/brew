@@ -86,6 +86,17 @@ module Utils
       ).returns(T.any(T.type_parameter(:U), String))
   }
   def self.popen(args, mode, options = {}, &_block)
+    # `brew prof --vernier` uses this to avoid inheriting Vernier's active
+    # native collector state through `IO.popen("-")` fork paths.
+    if ENV["HOMEBREW_SPAWN_SYSTEM"] == "1"
+      options[:err] ||= File::NULL unless ENV["HOMEBREW_STDERR"]
+      IO.popen(args, mode, options) do |pipe|
+        return pipe.read unless block_given?
+
+        return yield pipe
+      end
+    end
+
     IO.popen("-", mode) do |pipe|
       if pipe
         return pipe.read unless block_given?
