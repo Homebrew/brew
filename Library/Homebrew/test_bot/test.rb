@@ -82,7 +82,7 @@ module Homebrew
         params(
           arguments:        T.any(String, Pathname),
           named_args:       T.nilable(T.any(String, T::Array[String])),
-          env:              T::Hash[String, String],
+          env:              T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
           verbose:          T::Boolean,
           ignore_failures:  T::Boolean,
           report_analytics: T::Boolean,

@@ -42,7 +42,7 @@ module Homebrew
       sig {
         params(
           command:         T::Array[String],
-          env:             T::Hash[String, String],
+          env:             T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
           verbose:         T::Boolean,
           named_args:      T.nilable(T.any(String, T::Array[String])),
           ignore_failures: T::Boolean,

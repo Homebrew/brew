@@ -18,5 +18,13 @@ RSpec.describe Homebrew::TestBot::Test do
       expect(step.command).to eq(["git", "-C", "/some/path", "status"])
       expect(step).to be_passed
     end
+
+    it "allows nil environment values" do
+      test_instance = klass.new(dry_run: true)
+
+      step = test_instance.send(:test, "brew", "install", env: { "HOMEBREW_DEVELOPER" => nil })
+
+      expect(step).to be_passed
+    end
   end
 end
