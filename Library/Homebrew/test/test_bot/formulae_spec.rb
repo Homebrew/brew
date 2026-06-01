@@ -32,8 +32,6 @@ RSpec.describe Homebrew::TestBot::Formulae do
 
   describe "#annotate_added_dependencies" do
     it "writes a warning annotation for the new recursive dependency impact" do
-      T.bind(self, T.untyped)
-
       formula = formula("foo") do
         url "foo-1.0"
         depends_on "existing"
@@ -127,8 +125,8 @@ RSpec.describe Homebrew::TestBot::Formulae do
     it "restores bottled config with InstallRenamed handling" do
       Dir.mktmpdir do |tmpdir|
         formula_class = Class.new(Formula)
-        T.unsafe(formula_class).url "foo-2.0"
-        T.unsafe(formula_class).version "2.0"
+        formula_class.url "foo-2.0"
+        formula_class.version "2.0"
         f = formula_class.new("test-bot-config", Formulary.core_path("test-bot-config"), :stable)
         config_file = HOMEBREW_PREFIX/"etc/test-bot-config.conf"
         default_config_file = Pathname.new("#{config_file}.default")

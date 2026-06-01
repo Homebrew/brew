@@ -149,8 +149,28 @@ end
 
 # Some helper blocks are inferred as Formula instances or class contexts.
 class Formula
+  sig { params(names: T.untyped).void }
+  def conflicts_with(*names); end
+
+  sig { params(dep: T.any(String, Symbol, T::Hash[T.any(String, Symbol, T::Class[Requirement]), T.untyped], T::Class[Requirement])).void }
+  def depends_on(dep); end
+
+  sig { params(reason: T.any(String, Symbol), explanation: String).void }
+  def keg_only(reason, explanation = ""); end
+
+  sig { params(paths: T.any(String, Symbol)).returns(T::Set[T.any(String, Symbol)]) }
+  def skip_clean(*paths); end
+
   sig { params(val: String, specs: T::Hash[Symbol, T.anything]).returns(String) }
   def url(val = "", specs = {}); end
+
+  sig {
+    params(
+      dep:    T.any(String, T::Hash[T.any(String, Symbol), T.any(Symbol, T::Array[Symbol])]),
+      bounds: T::Hash[Symbol, Symbol],
+    ).void
+  }
+  def uses_from_macos(dep, bounds = {}); end
 end
 
 # The rspec-mocks RBI defines `ExpectHost#expect(target)` with a required
