@@ -7,6 +7,11 @@ class RSpec::Core::ExampleGroup
   include RSpec::Mocks::ExampleMethods
   include RuboCop::RSpec::ExpectOffense
 
+  # RSpec::Matchers.alias_matcher is available in example groups at runtime;
+  # declare it here so Sorbet can resolve specs' direct usage.
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def self.alias_matcher(*args, &block); end
+
   # These methods are added to specs in
   # `test/support/helper/spec/shared_context/integration_test.rb`; declare them
   # here so Sorbet can resolve them in typed spec files.
