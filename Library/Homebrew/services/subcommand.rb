@@ -36,7 +36,7 @@ module Homebrew
           if (sudo_service_user = args.sudo_service_user)
             unless Homebrew::Services::System.root?
               raise UsageError,
-                    "`brew services` is supported only when running as root!"
+                    "`brew services --sudo-service-user` is supported only when running as root!"
             end
 
             unless Homebrew::Services::System.launchctl?
