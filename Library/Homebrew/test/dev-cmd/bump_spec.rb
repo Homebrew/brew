@@ -153,6 +153,77 @@ RSpec.describe Homebrew::DevCmd::Bump do
     end
   end
 
+  describe "::retrieve_and_display_info_and_open_pr" do
+    subject(:bump) { klass.new(["--open-pr", "test"]) }
+
+    before do
+      allow(bump).to receive(:retrieve_pull_requests)
+      allow(GitHub).to receive(:too_many_open_prs?).and_return(false)
+    end
+
+    it "passes arch-specific version arguments when a cask moves from one version to arch-specific versions" do
+      version_info = klass::VersionBumpInfo.new(
+        type:                          :cask,
+        deprecated:                    { general: false },
+        multiple_versions:             { current: false, new: true },
+        version_name:                  "cask version:   ",
+        current_version:               Homebrew::BumpVersionParser.new(general: Version.new("1.2.3")),
+        new_version:                   Homebrew::BumpVersionParser.new(
+          arm:   Version.new("1.2.5"),
+          intel: Version.new("1.2.4"),
+        ),
+        repology_latest:               "not found",
+        newer_than_upstream:           { general: false },
+        duplicate_pull_requests:       nil,
+        maybe_duplicate_pull_requests: nil,
+      )
+      allow(bump).to receive(:retrieve_versions_by_arch).and_return(version_info)
+
+      expect(bump).to receive(:system).with(
+        HOMEBREW_BREW_FILE,
+        "bump-cask-pr",
+        "basic-cask",
+        "--version-arm=1.2.5",
+        "--version-intel=1.2.4",
+        "--no-browse",
+        "--message=Created by `brew bump`",
+      ).and_return(true)
+
+      bump.send(:retrieve_and_display_info_and_open_pr, c_basic, "basic-cask", [], ambiguous_cask: false)
+    end
+
+    it "passes a single version argument when an arch-specific cask moves to one version" do
+      version_info = klass::VersionBumpInfo.new(
+        type:                          :cask,
+        deprecated:                    { arm: false, intel: false },
+        multiple_versions:             { current: true, new: false },
+        version_name:                  "cask version:   ",
+        current_version:               Homebrew::BumpVersionParser.new(
+          arm:   Version.new("1.2.3"),
+          intel: Version.new("1.2.2"),
+        ),
+        new_version:                   Homebrew::BumpVersionParser.new(general: Version.new("1.2.4")),
+        repology_latest:               "not found",
+        newer_than_upstream:           { arm: false, intel: false },
+        duplicate_pull_requests:       nil,
+        maybe_duplicate_pull_requests: nil,
+      )
+      allow(bump).to receive(:retrieve_versions_by_arch).and_return(version_info)
+
+      expect(bump).to receive(:system).with(
+        HOMEBREW_BREW_FILE,
+        "bump-cask-pr",
+        "basic-cask",
+        "--version-arm=1.2.4",
+        "--version-intel=1.2.4",
+        "--no-browse",
+        "--message=Created by `brew bump`",
+      ).and_return(true)
+
+      bump.send(:retrieve_and_display_info_and_open_pr, c_basic, "basic-cask", [], ambiguous_cask: false)
+    end
+  end
+
   describe "::message?" do
     let(:version) { Version.new("1.2.3") }
     let(:cask_version) { Cask::DSL::Version.new("1.2.3,4") }
@@ -181,6 +252,83 @@ RSpec.describe Homebrew::DevCmd::Bump do
         expect(bump.send(:message?, Cask::DSL::Version.new(message_string))).to be(true)
         expect(bump.send(:message?, message_string)).to be(true)
       end
+    end
+  end
+
+  describe "::version_args_for_bump" do
+    let(:current_general) { Homebrew::BumpVersionParser.new(general: "26.519.41501") }
+    let(:new_split) do
+      Homebrew::BumpVersionParser.new(
+        arm:   "26.519.81530",
+        intel: "26.519.41501",
+      )
+    end
+    let(:current_split) do
+      Homebrew::BumpVersionParser.new(
+        arm:   "1.2.3",
+        intel: "1.2.2",
+      )
+    end
+    let(:new_general) { Homebrew::BumpVersionParser.new(general: "1.2.4") }
+
+    it "emits only changed arch arguments when a general cask version becomes arch-specific" do
+      expect(
+        bump.send(:version_args_for_bump,
+                  current_version:   current_general,
+                  new_version:       new_split,
+                  multiple_versions: { current: false, new: true },
+                  name:              "codex-app"),
+      ).to eq(["--version-arm=26.519.81530"])
+    end
+
+    it "emits arch arguments for both architectures when split cask versions merge" do
+      expect(
+        bump.send(:version_args_for_bump,
+                  current_version:   current_split,
+                  new_version:       new_general,
+                  multiple_versions: { current: true, new: false },
+                  name:              "foo"),
+      ).to eq(["--version-arm=1.2.4", "--version-intel=1.2.4"])
+    end
+
+    it "keeps existing split-to-split routing" do
+      new_split = Homebrew::BumpVersionParser.new(
+        arm:   "1.2.4",
+        intel: "1.2.2",
+      )
+
+      expect(
+        bump.send(:version_args_for_bump,
+                  current_version:   current_split,
+                  new_version:       new_split,
+                  multiple_versions: { current: true, new: true },
+                  name:              "foo"),
+      ).to eq(["--version-arm=1.2.4"])
+    end
+
+    it "keeps existing general version routing" do
+      expect(
+        bump.send(:version_args_for_bump,
+                  current_version:   current_general,
+                  new_version:       new_general,
+                  multiple_versions: { current: false, new: false },
+                  name:              "foo"),
+      ).to eq(["--version=1.2.4"])
+    end
+
+    it "ignores message versions in arch-specific routing" do
+      new_split = Homebrew::BumpVersionParser.new(
+        arm:   "26.519.81530",
+        intel: "skipped",
+      )
+
+      expect(
+        bump.send(:version_args_for_bump,
+                  current_version:   current_general,
+                  new_version:       new_split,
+                  multiple_versions: { current: false, new: true },
+                  name:              "foo"),
+      ).to eq(["--version-arm=26.519.81530"])
     end
   end
 

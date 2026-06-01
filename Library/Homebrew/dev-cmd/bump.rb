@@ -705,27 +705,7 @@ module Homebrew
 
         return if duplicate_pull_requests.present?
 
-        version_args = []
-        if multiple_versions[:current] && multiple_versions[:new]
-          if (new_version_arm = new_version.arm) &&
-             !message?(new_version_arm) &&
-             current_version.arm &&
-             new_version_arm > current_version.arm
-            version_args << "--version-arm=#{new_version_arm}"
-          end
-          if (new_version_intel = new_version.intel) &&
-             !message?(new_version_intel) &&
-             current_version.intel &&
-             new_version_intel > current_version.intel
-            version_args << "--version-intel=#{new_version_intel}"
-          end
-        elsif multiple_versions[:current]
-          opoo "`#{name}` needs to be manually updated using one version"
-        elsif multiple_versions[:new]
-          opoo "`#{name}` needs to be manually updated using arch-specific versions"
-        elsif new_version.general
-          version_args << "--version=#{new_version.general}"
-        end
+        version_args = version_args_for_bump(current_version:, new_version:, multiple_versions:, name:)
         return if version_args.blank?
 
         bump_pr_args = [
@@ -754,6 +734,49 @@ module Homebrew
 
         result = system HOMEBREW_BREW_FILE, *bump_pr_args
         Homebrew.failed = true unless result
+      end
+
+      sig {
+        params(
+          current_version:   BumpVersionParser,
+          new_version:       BumpVersionParser,
+          multiple_versions: T::Hash[Symbol, T::Boolean],
+          name:              String,
+        ).returns(T::Array[String])
+      }
+      def version_args_for_bump(current_version:, new_version:, multiple_versions:, name:)
+        version_args = T.let([], T::Array[String])
+
+        if multiple_versions[:new]
+          (BumpVersionParser::VERSION_SYMBOLS - [:general]).each do |arch|
+            new_arch_version = new_version.send(arch)
+            next if new_arch_version.blank? || message?(new_arch_version)
+
+            current_arch_version = if multiple_versions[:current]
+              current_version.send(arch)
+            else
+              current_version.general
+            end
+            next if current_arch_version.blank? || new_arch_version <= current_arch_version
+
+            version_args << "--version-#{arch}=#{new_arch_version}"
+          end
+        elsif multiple_versions[:current]
+          if (new_general_version = new_version.general) && !message?(new_general_version)
+            (BumpVersionParser::VERSION_SYMBOLS - [:general]).each do |arch|
+              current_arch_version = current_version.send(arch)
+              next if current_arch_version.blank? || new_general_version <= current_arch_version
+
+              version_args << "--version-#{arch}=#{new_general_version}"
+            end
+          end
+
+          opoo "`#{name}` needs to be manually updated using one version" if version_args.blank?
+        elsif new_version.general
+          version_args << "--version=#{new_version.general}"
+        end
+
+        version_args
       end
 
       sig {

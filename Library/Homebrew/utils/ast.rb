@@ -587,16 +587,42 @@ module Utils
         replace_stanza_argument(stanza_node, value)
       end
 
+      sig { params(name: Symbol, within: T.nilable(Symbol)).returns(T::Boolean) }
+      def stanza?(name, within: nil)
+        stanzas(name, within:).present?
+      end
+
+      sig { params(name: Symbol, within: Symbol).returns(T::Boolean) }
+      def stanza_anywhere?(name, within:)
+        cask_block.each_node(:block).any? do |node|
+          block_node = T.cast(node, BlockNode)
+          next false if block_node.method_name != within || block_node.receiver.present?
+
+          block_node.each_node(:send).any? do |send_node|
+            send_node.method_name == name && send_node.receiver.nil? && send_node.first_argument.present?
+          end
+        end
+      end
+
+      sig { params(name: Symbol, within: T.nilable(Symbol)).returns(T.untyped) }
+      def first_stanza_value(name, within: nil)
+        stanza_node = stanzas(name, within:).first
+        return if stanza_node.blank?
+
+        literal_value(stanza_node.first_argument)
+      end
+
       sig {
         params(
           name:      Symbol,
           old_value: T.any(Numeric, String, Symbol),
           new_value: T.any(Numeric, String, Symbol),
+          within:    T.nilable(Symbol),
         ).returns(Integer)
       }
-      def replace_stanza_value(name, old_value, new_value)
+      def replace_stanza_value(name, old_value, new_value, within: nil)
         replacement_count = T.let(0, Integer)
-        stanzas(name).each do |stanza_node|
+        stanzas(name, within:).each do |stanza_node|
           if literal_value(stanza_node.first_argument) == old_value
             replace_stanza_argument(stanza_node, new_value)
             replacement_count += 1
@@ -613,6 +639,25 @@ module Utils
         end
 
         replacement_count
+      end
+
+      sig { params(name: Symbol, old_value: T.any(Numeric, String, Symbol)).void }
+      def replace_root_stanza_with_arch_blocks(name, old_value)
+        stanza_node = top_level_stanzas(name).find do |node|
+          literal_value(node.first_argument) == old_value
+        end
+        return if stanza_node.blank?
+
+        indent = " " * stanza_node.source_range.column
+        replacement = [
+          "#{indent}on_arm do",
+          "#{indent}  #{name} #{ruby_literal(old_value)}",
+          "#{indent}end",
+          "#{indent}on_intel do",
+          "#{indent}  #{name} #{ruby_literal(old_value)}",
+          "#{indent}end",
+        ].join("\n")
+        tree_rewriter.replace(whole_line_range(stanza_node.source_range), "#{replacement}\n")
       end
 
       sig { returns(T::Boolean) }
@@ -641,10 +686,35 @@ module Utils
       sig { returns(TreeRewriter) }
       attr_reader :tree_rewriter
 
-      sig { params(name: Symbol).returns(T::Array[SendNode]) }
-      def stanzas(name)
-        cask_block.each_node(:send).select do |node|
+      sig { params(name: Symbol, within: T.nilable(Symbol)).returns(T::Array[SendNode]) }
+      def stanzas(name, within: nil)
+        if within == :root
+          nodes = body_children(cask_block.body).grep(SendNode)
+        elsif within
+          blocks = on_system_blocks(within)
+          return [] if blocks.blank?
+
+          nodes = blocks.flat_map { |block| body_children(block.body).grep(SendNode) }
+        else
+          nodes = cask_block.each_node(:send)
+        end
+
+        nodes.select do |node|
           node.method_name == name && node.receiver.nil? && node.first_argument.present?
+        end
+      end
+
+      sig { params(name: Symbol).returns(T::Array[SendNode]) }
+      def top_level_stanzas(name)
+        body_children(cask_block.body).grep(SendNode).select do |node|
+          node.method_name == name && node.receiver.nil? && node.first_argument.present?
+        end
+      end
+
+      sig { params(name: Symbol).returns(T::Array[BlockNode]) }
+      def on_system_blocks(name)
+        body_children(cask_block.body).grep(BlockNode).select do |node|
+          node.method_name == name && node.receiver.nil?
         end
       end
 
@@ -654,6 +724,20 @@ module Utils
         raise "Could not find '#{stanza_node.method_name}' stanza value!" if argument.blank?
 
         tree_rewriter.replace(argument.source_range, ruby_literal(value))
+      end
+
+      sig { params(range: Parser::Source::Range).returns(Parser::Source::Range) }
+      def whole_line_range(range)
+        range.with(
+          begin_pos: range.begin_pos - range.column,
+          end_pos:   line_end_pos(range.end_pos),
+        )
+      end
+
+      sig { params(position: Integer).returns(Integer) }
+      def line_end_pos(position)
+        newline_pos = cask_contents.index("\n", position)
+        newline_pos ? newline_pos + 1 : cask_contents.length
       end
 
       sig { returns([ProcessedSource, BlockNode]) }

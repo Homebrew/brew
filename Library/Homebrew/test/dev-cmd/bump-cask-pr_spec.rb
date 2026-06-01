@@ -263,7 +263,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
           sha256 arm:   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                  intel: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 
-          url "https://brew.sh/foo-\#{arch}-\#{version}.dmg"
+          url "https://brew.sh/foo-\#{version}.dmg"
           name "Foo"
         end
       RUBY
@@ -284,6 +284,202 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     it "raises when the stanza is missing entirely" do
       expect { bump_cask_pr.send(:replace_cask_stanza_value, contents, :version, "9.9", "2.0") }
         .to raise_error(/Could not find 'version' stanza/)
+    end
+  end
+
+  describe "#replace_version_and_checksum" do
+    let(:old_hash) { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+    let(:new_hash) { "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" }
+    let(:intel_hash) { "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" }
+
+    before do
+      Homebrew.install_bundler_gems!(groups: ["ast"])
+      require "utils/ast"
+    end
+
+    def cask_from_contents(contents)
+      path = mktmpdir/"foo.rb"
+      path.write(contents)
+      Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) do
+        Cask::CaskLoader.load(path)
+      end
+    end
+
+    it "splits a root version and single checksum before replacing the ARM values" do
+      contents = <<~RUBY
+        cask "foo" do
+          version "1.0"
+          sha256 "#{old_hash}"
+
+          url "https://brew.sh/foo-\#{version}.dmg"
+          name "Foo"
+        end
+      RUBY
+      cask = Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { cask_from_contents(contents) }
+      new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
+
+      expect(bump_cask_pr.send(:replace_version_and_checksum, cask, new_hash, new_version, contents))
+        .to eq <<~RUBY
+          cask "foo" do
+            on_arm do
+              version "2.0"
+            end
+            on_intel do
+              version "1.0"
+            end
+            on_arm do
+              sha256 "#{new_hash}"
+            end
+            on_intel do
+              sha256 "#{old_hash}"
+            end
+
+            url "https://brew.sh/foo-\#{version}.dmg"
+            name "Foo"
+          end
+        RUBY
+    end
+
+    it "splits a root version and keeps top-level architecture checksums" do
+      contents = <<~RUBY
+        cask "foo" do
+          arch arm: "arm", intel: "intel"
+
+          version "1.0"
+          sha256 arm:   "#{old_hash}",
+                 intel: "#{intel_hash}"
+
+          url "https://brew.sh/foo-\#{arch}-\#{version}.dmg"
+          name "Foo"
+        end
+      RUBY
+      cask = Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { cask_from_contents(contents) }
+      new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
+
+      expect(bump_cask_pr.send(:replace_version_and_checksum, cask, new_hash, new_version, contents))
+        .to eq <<~RUBY
+          cask "foo" do
+            arch arm: "arm", intel: "intel"
+
+            on_arm do
+              version "2.0"
+            end
+            on_intel do
+              version "1.0"
+            end
+            sha256 arm:   "#{new_hash}",
+                   intel: "#{intel_hash}"
+
+            url "https://brew.sh/foo-\#{arch}-\#{version}.dmg"
+            name "Foo"
+          end
+        RUBY
+    end
+
+    it "splits a root version and leaves top-level no_check checksums" do
+      contents = <<~RUBY
+        cask "foo" do
+          version "1.0"
+          sha256 :no_check
+
+          url "https://brew.sh/foo-\#{version}.dmg"
+          name "Foo"
+        end
+      RUBY
+      cask = cask_from_contents(contents)
+      new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
+
+      expect(bump_cask_pr.send(:replace_version_and_checksum, cask, new_hash, new_version, contents))
+        .to eq <<~RUBY
+          cask "foo" do
+            on_arm do
+              version "2.0"
+            end
+            on_intel do
+              version "1.0"
+            end
+            sha256 :no_check
+
+            url "https://brew.sh/foo-\#{version}.dmg"
+            name "Foo"
+          end
+        RUBY
+    end
+
+    it "splits root version and checksum stanzas when new versions differ by architecture" do
+      contents = <<~RUBY
+        cask "foo" do
+          version "1.0"
+          sha256 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+          url "https://brew.sh/foo-\#{version}.dmg"
+          name "Foo"
+        end
+      RUBY
+      cask = cask_from_contents(contents)
+      new_version = Homebrew::BumpVersionParser.new(arm: "2.0", intel: "1.5")
+
+      expect(
+        bump_cask_pr.send(:replace_version_and_checksum, cask, :no_check, new_version, contents),
+      ).to eq <<~RUBY
+        cask "foo" do
+          on_arm do
+            version "2.0"
+          end
+          on_intel do
+            version "1.5"
+          end
+          on_arm do
+            sha256 :no_check
+          end
+          on_intel do
+            sha256 :no_check
+          end
+
+          url "https://brew.sh/foo-\#{version}.dmg"
+          name "Foo"
+        end
+      RUBY
+    end
+
+    it "only updates matching version and checksum stanzas inside the target architecture block" do
+      contents = <<~RUBY
+        cask "foo" do
+          on_arm do
+            version "1.0"
+            sha256 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          end
+
+          on_intel do
+            version "1.0"
+            sha256 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          end
+
+          url "https://brew.sh/foo-\#{version}.dmg"
+          name "Foo"
+        end
+      RUBY
+      cask = cask_from_contents(contents)
+      new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
+
+      expect(
+        bump_cask_pr.send(:replace_version_and_checksum, cask, :no_check, new_version, contents),
+      ).to eq <<~RUBY
+        cask "foo" do
+          on_arm do
+            version "2.0"
+            sha256 :no_check
+          end
+
+          on_intel do
+            version "1.0"
+            sha256 "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          end
+
+          url "https://brew.sh/foo-\#{version}.dmg"
+          name "Foo"
+        end
+      RUBY
     end
   end
 

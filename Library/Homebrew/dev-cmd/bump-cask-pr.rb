@@ -293,7 +293,11 @@ module Homebrew
         cask_sourcefile_path = cask.sourcefile_path
         raise "unexpected nil cask.sourcefile_path" unless cask_sourcefile_path
 
-        old_cask = Cask::CaskLoader.load(cask_sourcefile_path)
+        contents = split_root_version_and_checksum(new_version, contents)
+
+        old_cask = Homebrew::SimulateSystem.with(os: default_cask_os, arch: :arm) do
+          Cask::CaskLoader.load(cask_sourcefile_path)
+        end
         generate_system_options(cask, new_version).each do |os, arch|
           tag = Utils::Bottles::Tag.new(system: os, arch:)
           old_cask.refresh_for_tag(tag) do
@@ -307,25 +311,34 @@ module Homebrew
             bump_version = new_version.send(arch) || new_version.general
             next unless bump_version
 
+            version_scope = cask_stanza_scope(contents, :version, arch)
             contents = replace_cask_stanza_value(
               contents, :version,
               old_version.latest? ? :latest : old_version.to_s,
-              bump_version.latest? ? :latest : bump_version.to_s
+              bump_version.latest? ? :latest : bump_version.to_s,
+              within: version_scope
             )
 
             tmp_cask = Cask::CaskLoader::FromContentLoader.new(contents)
                                                           .load(config: nil)
             old_hash = tmp_cask.sha256
+            next if new_hash.is_a?(String) && old_hash.to_s == new_hash
+
+            checksum_scope = cask_stanza_scope(contents, :sha256, arch)
             if tmp_cask.version.latest? || new_hash == :no_check
               opoo "Ignoring specified `--sha256=` argument." if new_hash.is_a?(String)
               if old_hash != :no_check
-                contents = replace_cask_stanza_value(contents, :sha256, old_hash.to_s,
-                                                     :no_check)
+                contents = replace_cask_stanza_value(contents, :sha256, old_hash.to_s, :no_check,
+                                                     within: checksum_scope)
               end
             elsif old_hash == :no_check && new_hash != :no_check
-              contents = replace_cask_stanza_value(contents, :sha256, :no_check, new_hash) if new_hash.is_a?(String)
-            elsif new_hash && !cask.on_system_blocks_exist? && cask.languages.empty?
-              contents = replace_cask_stanza_value(contents, :sha256, old_hash.to_s, new_hash.to_s)
+              if new_hash.is_a?(String) && (!arch_specific_version_bump?(new_version) || checksum_scope)
+                contents = replace_cask_stanza_value(contents, :sha256, :no_check, new_hash, within: checksum_scope)
+              end
+            elsif new_hash && cask.languages.empty? &&
+                  (!cask.on_system_blocks_exist? || checksum_scope || arch_specific_version_bump?(new_version))
+              contents = replace_cask_stanza_value(contents, :sha256, old_hash.to_s, new_hash.to_s,
+                                                   within: checksum_scope)
             elsif old_hash != :no_check
               opoo "Multiple checksum replacements required; ignoring specified `--sha256` argument." if new_hash
               languages = if cask.languages.empty?
@@ -346,7 +359,8 @@ module Homebrew
                 Utils::Tar.validate_file(download)
 
                 if new_cask.sha256.to_s != download.sha256
-                  contents = replace_cask_stanza_value(contents, :sha256, new_cask.sha256.to_s, download.sha256)
+                  contents = replace_cask_stanza_value(contents, :sha256, new_cask.sha256.to_s, download.sha256,
+                                                       within: checksum_scope)
                 end
               end
             end
@@ -357,22 +371,74 @@ module Homebrew
 
       sig {
         params(
+          new_version: BumpVersionParser,
+          contents:    String,
+        ).returns(String)
+      }
+      def split_root_version_and_checksum(new_version, contents)
+        return contents unless arch_specific_version_bump?(new_version)
+
+        cask_ast = Utils::AST::CaskAST.new(contents)
+        root_version = cask_ast.first_stanza_value(:version, within: :root)
+        if root_version &&
+           !cask_ast.stanza_anywhere?(:version, within: :on_arm) &&
+           !cask_ast.stanza_anywhere?(:version, within: :on_intel)
+          cask_ast.replace_root_stanza_with_arch_blocks(:version, root_version)
+          contents = cask_ast.process
+        end
+
+        cask_ast = Utils::AST::CaskAST.new(contents)
+        root_sha256 = cask_ast.first_stanza_value(:sha256, within: :root)
+        if root_sha256.is_a?(String) &&
+           !cask_ast.stanza_anywhere?(:sha256, within: :on_arm) &&
+           !cask_ast.stanza_anywhere?(:sha256, within: :on_intel)
+          cask_ast.replace_root_stanza_with_arch_blocks(:sha256, root_sha256)
+          contents = cask_ast.process
+        end
+
+        contents
+      end
+
+      sig { params(new_version: BumpVersionParser).returns(T::Boolean) }
+      def arch_specific_version_bump?(new_version)
+        new_version.arm.present? || new_version.intel.present?
+      end
+
+      sig { returns(Symbol) }
+      def default_cask_os
+        current_os = Homebrew::SimulateSystem.current_os
+        return current_os if MacOSVersion::SYMBOLS.include?(current_os)
+
+        MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED).to_sym
+      end
+
+      sig { params(contents: String, name: Symbol, arch: Symbol).returns(T.nilable(Symbol)) }
+      def cask_stanza_scope(contents, name, arch)
+        scope = :"on_#{arch}"
+        return scope if Utils::AST::CaskAST.new(contents).stanza?(name, within: scope)
+
+        nil
+      end
+
+      sig {
+        params(
           contents:  String,
           name:      Symbol,
           old_value: T.any(Numeric, String, Symbol),
           new_value: T.any(Numeric, String, Symbol),
+          within:    T.nilable(Symbol),
         ).returns(String)
       }
-      def replace_cask_stanza_value(contents, name, old_value, new_value)
+      def replace_cask_stanza_value(contents, name, old_value, new_value, within: nil)
         return contents if old_value == new_value
 
         cask_ast = Utils::AST::CaskAST.new(contents)
-        replacement_count = cask_ast.replace_stanza_value(name, old_value, new_value)
+        replacement_count = cask_ast.replace_stanza_value(name, old_value, new_value, within:)
         if replacement_count.zero?
           # Treat an already-applied replacement as a successful no-op so the
           # per-(os, arch) loop in `replace_version_and_checksum` can yield the
           # same general version more than once without raising.
-          return contents if cask_ast.replace_stanza_value(name, new_value, new_value).positive?
+          return contents if cask_ast.replace_stanza_value(name, new_value, new_value, within:).positive?
 
           raise "Could not find '#{name}' stanza with value #{old_value.inspect}!"
         end
