@@ -4,7 +4,7 @@ last_review_date: "2026-03-19"
 
 # Linux CI in `homebrew/core`
 
-We currently use Ubuntu 22.04 for bottling in `homebrew/core`.
+We currently use Ubuntu 24.04 for bottling in `homebrew/core`.
 
 We aim to use the oldest supported Ubuntu LTS version for our CI that provides the GCC version we need.
 
