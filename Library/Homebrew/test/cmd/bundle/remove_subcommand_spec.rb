@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "bundle"
@@ -13,6 +13,14 @@ RSpec.describe Homebrew::Cmd::Bundle::RemoveSubcommand do
   let(:klass) { Homebrew::Cmd::Bundle::RemoveSubcommand }
   let(:global) { false }
   let(:context) { bundle_subcommand_context(:remove, global:, file:, no_type_args: type == :none) }
+
+  # These next four `let`s are for the purposes of Sorbet typechecking; the
+  # actual values in `args_object` are set by test `let`s.
+  let(:type) { :brew }
+  let(:file) { "/tmp/some_random_brewfile#{Random.rand(2 ** 16)}" }
+  let(:content) { "dummy content for Sorbet" }
+  let(:args) { ["hello"] }
+
   let(:args_object) do
     args_for_subcommand(:remove, *args, formulae?: type == :brew, casks?: type == :cask, taps?: type == :tap)
   end

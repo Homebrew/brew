@@ -1,9 +1,10 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::FishCompletion, :cask do
   let(:klass) { Cask::Artifact::FishCompletion }
 
+  let(:cask_token) { "with-shellcompletion" } # Dummy value required for Sorbet.
   let(:cask) { Cask::CaskLoader.load(cask_token) }
 
   context "with install" do

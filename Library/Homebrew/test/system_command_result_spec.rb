@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "system_command"
@@ -50,6 +50,7 @@ RSpec.describe SystemCommand::Result do
   describe "#plist" do
     subject(:result_plist) { result.plist }
 
+    let(:stdout) { "" } # Dummy value required for Sorbet.
     let(:output_array) { [[:stdout, stdout]] }
     let(:garbage) do
       <<~EOS

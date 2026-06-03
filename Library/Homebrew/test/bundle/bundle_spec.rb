@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "bundle"
@@ -46,6 +46,7 @@ RSpec.describe Homebrew::Bundle do
   describe ".mark_as_installed_on_request!", :no_api do
     subject(:mark_installed!) { klass.mark_as_installed_on_request!(entries) }
 
+    let(:brewfile_content) { "" } # Dummy value required for Sorbet.
     let(:entries) { dsl.entries }
     let(:dsl) { Homebrew::Bundle::Dsl.new(Pathname.new("/fake/Brewfile")) }
     let(:tabfile) { Pathname.new("/fake/INSTALL_RECEIPT.json") }

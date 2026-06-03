@@ -11,9 +11,7 @@ RSpec.describe User do
   it { is_expected.to eq ENV.fetch("USER") }
 
   describe "#gui?" do
-    # Required for Sorbet, but the actual value is set in the individual
-    # examples which provide their `let(:who_output)` value to `before`.
-    let(:who_output) { "" }
+    let(:who_output) { "" } # Dummy value required for Sorbet.
 
     before do
       allow(SystemCommand).to receive(:run)

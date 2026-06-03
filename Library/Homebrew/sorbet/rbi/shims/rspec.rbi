@@ -149,8 +149,14 @@ end
 
 # Some helper blocks are inferred as Formula instances or class contexts.
 class Formula
+  sig { params(reason: T.any(String, Symbol), explanation: String).void }
+  def keg_only(reason, explanation = ""); end
+
   sig { params(val: String, specs: T::Hash[Symbol, T.anything]).returns(String) }
   def url(val = "", specs = {}); end
+
+  sig { params(paths: T.any(String, Symbol)).returns(T::Set[T.any(String, Symbol)]) }
+  def skip_clean(*paths); end
 end
 
 # The rspec-mocks RBI defines `ExpectHost#expect(target)` with a required

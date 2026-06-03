@@ -1,9 +1,9 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::Manpage, :cask do
   let(:klass) { Cask::Artifact::Manpage }
-
+  let(:cask_token) { "basic-cask" } # Dummy value required for Sorbet.
   let(:cask) { Cask::CaskLoader.load(cask_token) }
 
   context "without section" do

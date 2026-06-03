@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "test/cask/dsl/shared_examples/base"
@@ -6,6 +6,7 @@ require "test/cask/dsl/shared_examples/base"
 RSpec.describe Cask::DSL::Container do
   subject(:container) { klass.new(**params) }
 
+  let(:params) { {} } # Dummy value required for Sorbet.
   let(:klass) { Cask::DSL::Container }
 
   describe "#pairs" do

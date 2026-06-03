@@ -218,9 +218,7 @@ RSpec.describe Cask::DSL, :cask, :no_api do
         end
       end
 
-      # Required for Sorbet, but the actual value is set in the individual
-      # examples which provide their `let(:languages)` value to `before`.
-      let(:languages) { [] }
+      let(:languages) { [] } # Dummy value required for Sorbet.
 
       before do
         config = cask.config

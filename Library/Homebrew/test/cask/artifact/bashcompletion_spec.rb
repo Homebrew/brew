@@ -1,9 +1,9 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::BashCompletion, :cask do
   let(:klass) { Cask::Artifact::BashCompletion }
-
+  let(:cask_token) { "basic-cask" } # Dummy value required for Sorbet.
   let(:cask) { Cask::CaskLoader.load(cask_token) }
 
   context "with install" do

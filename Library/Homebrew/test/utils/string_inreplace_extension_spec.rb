@@ -6,9 +6,7 @@ require "utils/string_inreplace_extension"
 RSpec.describe StringInreplaceExtension do
   subject(:string_extension) { klass.new(string.dup) }
 
-  # Required for Sorbet, but the actual value is set in the individual
-  # examples which provide their `let(:string)` value to `subject`.
-  let(:string) { "" }
+  let(:string) { "" } # Dummy value required for Sorbet.
   let(:klass) { StringInreplaceExtension }
 
   describe "#change_make_var!" do
