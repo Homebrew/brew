@@ -145,13 +145,6 @@ class RSpec::Core::ExampleGroup
   def url(val = "", specs = {}); end
 end
 
-# `formula(...) { ... }` helper blocks can be inferred as this helper module in
-# typed specs; declare Formula DSL methods to satisfy static analysis.
-module Test::Helper::Formula
-  sig { params(val: String, specs: T::Hash[Symbol, T.anything]).returns(String) }
-  def url(val = "", specs = {}); end
-end
-
 # Some helper blocks are inferred as Formula instances or class contexts.
 class Formula
   sig { params(names: T.untyped).void }
