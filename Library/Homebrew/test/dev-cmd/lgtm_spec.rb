@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "open3"
@@ -187,7 +187,7 @@ RSpec.describe Homebrew::DevCmd::Lgtm do
   end
 
   describe "cache fallback" do
-    let(:repository_root) { Pathname(__dir__).parent.parent.parent.parent }
+    let(:repository_root) { Pathname(T.must(__dir__)).parent.parent.parent.parent }
     let(:test_root) do
       (repository_root/"tmp").mkpath
       Pathname(Dir.mktmpdir("brew-lgtm-cache-fallback-", repository_root/"tmp"))

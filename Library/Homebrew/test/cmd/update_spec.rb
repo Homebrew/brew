@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "open3"
@@ -12,7 +12,7 @@ RSpec.describe Homebrew::Cmd::Update do
     (repository_root/"tmp").mkpath
     Pathname(Dir.mktmpdir("brew-update-", repository_root/"tmp"))
   end
-  let(:repository_root) { Pathname(__dir__).parent.parent.parent.parent }
+  let(:repository_root) { Pathname(T.must(__dir__)).parent.parent.parent.parent }
 
   after do
     FileUtils.rm_rf test_root
