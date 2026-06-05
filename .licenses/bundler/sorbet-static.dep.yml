@@ -1,6 +1,6 @@
 ---
 name: sorbet-static
-version: 0.6.13244
+version: 0.6.13261
 type: bundler
 summary: A Typechecker for Ruby
 homepage: https://sorbet.org

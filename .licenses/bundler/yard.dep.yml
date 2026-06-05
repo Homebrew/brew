@@ -1,6 +1,6 @@
 ---
 name: yard
-version: 0.9.43
+version: 0.9.44
 type: bundler
 summary: Documentation tool for consistent and usable documentation in Ruby.
 homepage: https://yardoc.org
@@ -8,7 +8,7 @@ license: mit
 licenses:
 - sources: LICENSE
   text: |
-    Copyright (c) 2007-2022 Loren Segal
+    Copyright (c) 2007-2026 Loren Segal
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -32,7 +32,7 @@ licenses:
     OTHER DEALINGS IN THE SOFTWARE.
 - sources: README.md
   text: |-
-    YARD &copy; 2007-2020 by [Loren Segal](mailto:lsegal@soen.ca). YARD is licensed
+    YARD &copy; by [Loren Segal](mailto:lsegal@soen.ca). YARD is licensed
     under the MIT license except for some files which come from the RDoc/Ruby
     distributions. Please see the {file:LICENSE} and {file:LEGAL} documents for more
     information.

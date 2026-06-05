@@ -1,6 +1,6 @@
 ---
 name: rubydex
-version: 0.2.3
+version: 0.2.5
 type: bundler
 summary: A high-performance static analysis suite for Ruby
 homepage: https://github.com/Shopify/rubydex
@@ -1983,9 +1983,9 @@ licenses:
     \                           1.0.25</a></li>\n                    <li><a\n                            href=\"
     https://github.com/dtolnay/ref-cast \">ref-cast\n                            1.0.25</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/modelcontextprotocol/rust-sdk/
-    \">rmcp-macros\n                            0.15.0</a></li>\n                    <li><a\n
+    \">rmcp-macros\n                            1.6.0</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/modelcontextprotocol/rust-sdk/
-    \">rmcp\n                            0.15.0</a></li>\n                    <li><a\n
+    \">rmcp\n                            1.4.0</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/rust-lang/rustc-hash \">rustc-hash\n
     \                           2.1.1</a></li>\n                    <li><a\n                            href=\"
     https://github.com/dtolnay/rustversion \">rustversion\n                            1.0.22</a></li>\n
