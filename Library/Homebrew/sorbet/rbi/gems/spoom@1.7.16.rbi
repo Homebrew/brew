@@ -2860,8 +2860,15 @@ Spoom::Sorbet::Sigils::VALID_STRICTNESS = T.let(T.unsafe(nil), Array)
 
 module Spoom::Sorbet::Translate
   class << self
-    sig { params(ruby_contents: ::String, file: ::String, max_line_length: T.nilable(::Integer)).returns(::String) }
-    def rbs_comments_to_sorbet_sigs(ruby_contents, file:, max_line_length: T.unsafe(nil)); end
+    sig do
+      params(
+        ruby_contents: ::String,
+        file: ::String,
+        max_line_length: T.nilable(::Integer),
+        overloads_strategy: ::Symbol
+      ).returns(::String)
+    end
+    def rbs_comments_to_sorbet_sigs(ruby_contents, file:, max_line_length: T.unsafe(nil), overloads_strategy: T.unsafe(nil)); end
 
     sig do
       params(
@@ -2899,8 +2906,15 @@ class Spoom::Sorbet::Translate::Error < ::Spoom::Error; end
 class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs < ::Spoom::Sorbet::Translate::Translator
   include ::Spoom::RBS::ExtractRBSComments
 
-  sig { params(ruby_contents: ::String, file: ::String, max_line_length: T.nilable(::Integer)).void }
-  def initialize(ruby_contents, file:, max_line_length: T.unsafe(nil)); end
+  sig do
+    params(
+      ruby_contents: ::String,
+      file: ::String,
+      max_line_length: T.nilable(::Integer),
+      overloads_strategy: ::Symbol
+    ).void
+  end
+  def initialize(ruby_contents, file:, max_line_length: T.unsafe(nil), overloads_strategy: T.unsafe(nil)); end
 
   sig { override.params(node: ::Prism::CallNode).void }
   def visit_call_node(node); end
@@ -2936,6 +2950,15 @@ class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs < ::Spoom::Sorbet::Trans
   sig { params(annotations: T::Array[::Spoom::RBS::Annotation], sig: ::RBI::Sig).void }
   def apply_member_annotations(annotations, sig); end
 
+  sig do
+    params(
+      signatures: T::Array[::Spoom::RBS::Signature],
+      method_name: ::String,
+      location: ::String
+    ).returns(T::Array[::Spoom::RBS::Signature])
+  end
+  def apply_overloads_strategy(signatures, method_name:, location:); end
+
   sig { params(comments: T::Array[::Prism::Comment]).void }
   def apply_type_aliases(comments); end
 
@@ -2952,11 +2975,19 @@ class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs < ::Spoom::Sorbet::Trans
     sig { params(source: ::String).returns(T::Boolean) }
     def contains_rbs_syntax?(source); end
 
-    sig { params(ruby_contents: ::String, file: ::String, max_line_length: T.nilable(::Integer)).returns(::String) }
-    def rewrite_if_needed(ruby_contents, file:, max_line_length: T.unsafe(nil)); end
+    sig do
+      params(
+        ruby_contents: ::String,
+        file: ::String,
+        max_line_length: T.nilable(::Integer),
+        overloads_strategy: ::Symbol
+      ).returns(::String)
+    end
+    def rewrite_if_needed(ruby_contents, file:, max_line_length: T.unsafe(nil), overloads_strategy: T.unsafe(nil)); end
   end
 end
 
+Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::ALLOWED_OVERLOAD_STRATEGIES = T.let(T.unsafe(nil), Array)
 Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::RBS_ANNOTATION_MARKERS = T.let(T.unsafe(nil), Array)
 Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::RBS_REWRITE_PATTERN = T.let(T.unsafe(nil), Regexp)
 

@@ -3071,6 +3071,8 @@ YARD::Server::CRLF = T.let(T.unsafe(nil), String)
 module YARD::Server::Commands; end
 
 class YARD::Server::Commands::Base
+  include ::YARD::Server::StaticCaching
+
   def initialize(opts = T.unsafe(nil)); end
 
   def adapter; end
@@ -3425,7 +3427,12 @@ class YARD::Server::Router
 end
 
 module YARD::Server::StaticCaching
+  def cache(data); end
   def check_static_cache; end
+
+  private
+
+  def cache_path(request_path); end
 end
 
 class YARD::StubProxy
@@ -3702,18 +3709,30 @@ class YARD::Tags::TypesExplainer::CollectionType < ::YARD::Tags::TypesExplainer:
   def types=(_arg0); end
 end
 
+class YARD::Tags::TypesExplainer::DuckType < ::YARD::Tags::TypesExplainer::Type
+  def to_s(singular = T.unsafe(nil)); end
+end
+
 class YARD::Tags::TypesExplainer::FixedCollectionType < ::YARD::Tags::TypesExplainer::CollectionType
   def to_s(_singular = T.unsafe(nil)); end
 end
 
 class YARD::Tags::TypesExplainer::HashCollectionType < ::YARD::Tags::TypesExplainer::Type
-  def initialize(name, key_types, value_types); end
+  def initialize(name, key_types_or_pairs, value_types = T.unsafe(nil)); end
 
   def key_types; end
-  def key_types=(_arg0); end
+  def key_types=(types); end
+  def key_value_pairs; end
+  def key_value_pairs=(_arg0); end
   def to_s(_singular = T.unsafe(nil)); end
   def value_types; end
-  def value_types=(_arg0); end
+  def value_types=(types); end
+end
+
+YARD::Tags::TypesExplainer::LITERALMATCH = T.let(T.unsafe(nil), Regexp)
+
+class YARD::Tags::TypesExplainer::LiteralType < ::YARD::Tags::TypesExplainer::Type
+  def to_s(_singular = T.unsafe(nil)); end
 end
 
 class YARD::Tags::TypesExplainer::Parser
@@ -3721,7 +3740,13 @@ class YARD::Tags::TypesExplainer::Parser
 
   def initialize(string); end
 
-  def parse; end
+  def parse(until_tokens: T.unsafe(nil)); end
+
+  private
+
+  def create_type(name); end
+  def parse_hash_collection(name); end
+  def parse_with_handlers; end
 
   class << self
     def parse(string); end
@@ -3737,7 +3762,7 @@ class YARD::Tags::TypesExplainer::Type
   def name=(_arg0); end
   def to_s(singular = T.unsafe(nil)); end
 
-  private
+  protected
 
   def list_join(list, with: T.unsafe(nil)); end
 end
@@ -3878,6 +3903,8 @@ end
 
 YARD::Templates::Helpers::HtmlSyntaxHighlightHelper::ALREADY_HIGHLIGHTED_RE = T.let(T.unsafe(nil), Regexp)
 module YARD::Templates::Helpers::Markup; end
+module YARD::Templates::Helpers::Markup::HtmlEntities; end
+YARD::Templates::Helpers::Markup::HtmlEntities::ENTITIES = T.let(T.unsafe(nil), Hash)
 
 class YARD::Templates::Helpers::Markup::HybridMarkdown
   def initialize(text, options = T.unsafe(nil)); end
@@ -4028,7 +4055,6 @@ YARD::Templates::Helpers::Markup::HybridMarkdown::HTML_BLOCK_TAGS = T.let(T.unsa
 YARD::Templates::Helpers::Markup::HybridMarkdown::HTML_TAG_RE = T.let(T.unsafe(nil), Regexp)
 YARD::Templates::Helpers::Markup::HybridMarkdown::LABEL_LIST_BRACKET_RE = T.let(T.unsafe(nil), Regexp)
 YARD::Templates::Helpers::Markup::HybridMarkdown::LABEL_LIST_COLON_RE = T.let(T.unsafe(nil), Regexp)
-YARD::Templates::Helpers::Markup::HybridMarkdown::NAMED_ENTITIES = T.let(T.unsafe(nil), Hash)
 YARD::Templates::Helpers::Markup::HybridMarkdown::ORDERED_LIST_RE = T.let(T.unsafe(nil), Regexp)
 YARD::Templates::Helpers::Markup::HybridMarkdown::PLACEHOLDER_RE = T.let(T.unsafe(nil), Regexp)
 YARD::Templates::Helpers::Markup::HybridMarkdown::RDOC_ESCAPED_CAPITALIZED_CROSSREF_RE = T.let(T.unsafe(nil), Regexp)

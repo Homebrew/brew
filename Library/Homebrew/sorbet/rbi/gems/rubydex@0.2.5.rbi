@@ -125,6 +125,12 @@ class Rubydex::Definition
   sig { returns(T::Boolean) }
   def deprecated?; end
 
+  sig { returns(T::Array[Rubydex::Definition]) }
+  def lexical_nesting; end
+
+  sig { returns(T.nilable(Rubydex::Definition)) }
+  def lexical_owner; end
+
   sig { returns(Rubydex::Location) }
   def location; end
 
@@ -295,6 +301,7 @@ class Rubydex::Graph
 end
 
 Rubydex::Graph::IGNORED_DIRECTORIES = T.let(T.unsafe(nil), Array)
+Rubydex::Graph::INDEXABLE_EXTENSIONS = T.let(T.unsafe(nil), Array)
 class Rubydex::Include < ::Rubydex::Mixin; end
 
 class Rubydex::InstanceVariable < ::Rubydex::Declaration
@@ -426,6 +433,9 @@ class Rubydex::Namespace < ::Rubydex::Declaration
 
   def find_member(*_arg0); end
 
+  sig { params(ancestor_names: String).returns(T::Boolean) }
+  def has_ancestor?(*ancestor_names); end
+
   sig { params(name: String).returns(T.nilable(Rubydex::Declaration)) }
   def member(name); end
 
@@ -495,7 +505,11 @@ class Rubydex::Signature::PositionalParameter < ::Rubydex::Signature::Parameter;
 class Rubydex::Signature::PostParameter < ::Rubydex::Signature::Parameter; end
 class Rubydex::Signature::RestKeywordParameter < ::Rubydex::Signature::Parameter; end
 class Rubydex::Signature::RestPositionalParameter < ::Rubydex::Signature::Parameter; end
-class Rubydex::SingletonClass < ::Rubydex::Namespace; end
+
+class Rubydex::SingletonClass < ::Rubydex::Namespace
+  sig { returns(Rubydex::Declaration) }
+  def attached_class; end
+end
 
 class Rubydex::SingletonClassDefinition < ::Rubydex::Definition
   sig { returns(T::Array[Rubydex::Mixin]) }
