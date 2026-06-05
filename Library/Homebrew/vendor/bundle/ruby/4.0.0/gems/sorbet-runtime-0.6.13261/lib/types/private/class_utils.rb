@@ -44,7 +44,10 @@ module T::Private::ClassUtils
       end
 
       if block && block.arity < 0 && respond_to?(:ruby2_keywords, true)
-        ruby2_keywords(name)
+        m = instance_method(name)
+        has_rest = m.parameters.any? { |type, _| type == :rest }
+        has_keywords = m.parameters.any? { |type, _| %i[keyrest keyreq key].include?(type) }
+        ruby2_keywords(name) if has_rest && !has_keywords
       end
     end
   end

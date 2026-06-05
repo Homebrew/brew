@@ -92,15 +92,15 @@ module T::Private::Methods::SignatureValidation
         validate_override_visibility(signature, super_signature)
       end
     else
-      validate_non_override_mode(signature)
+      validate_non_override_mode(signature.mode, signature.method_name, signature.method)
     end
   end
 
-  private_class_method def self.pretty_mode(signature)
-    if signature.mode == Modes.overridable_override
-      '.overridable.override'
+  private_class_method def self.pretty_mode(mode)
+    if mode == Modes.overridable_override
+      'overridable.override'
     else
-      ".#{signature.mode}"
+      mode
     end
   end
 
@@ -138,10 +138,10 @@ module T::Private::Methods::SignatureValidation
     end
   end
 
-  def self.validate_non_override_mode(signature)
-    case signature.mode
+  def self.validate_non_override_mode(mode, method_name, method, source_loc=method.source_location)
+    case mode
     when Modes.override
-      if signature.method_name == :each && signature.method.owner < Enumerable
+      if method_name == :each && method.owner < Enumerable
         # Enumerable#each is the only method in Sorbet's RBI payload that defines an abstract method.
         # Enumerable#each does not actually exist at runtime, but it is required to be implemented by
         # any class which includes Enumerable. We want to declare Enumerable#each as abstract so that
@@ -151,25 +151,25 @@ module T::Private::Methods::SignatureValidation
         # This is a one-off hack, and we should think carefully before adding more methods here.
         nil
       else
-        raise "You marked `#{signature.method_name}` as #{pretty_mode(signature)}, but that method doesn't already exist in this class/module to be overridden.\n" \
+        raise "You marked `#{method_name}` as #{pretty_mode(mode)}, but that method doesn't already exist in this class/module to be overridden.\n" \
           "  Either check for typos and for missing includes or super classes to make the parent method shows up\n" \
-          "  ... or remove #{pretty_mode(signature)} here: #{signature.method_desc}\n"
+          "  ... or remove #{pretty_mode(mode)} here: #{T::Private::Methods::Signature.method_desc(method, method_name, source_loc)}\n"
       end
     when Modes.standard, *Modes::NON_OVERRIDE_MODES
       # Peaceful
       nil
     else
-      raise "Unexpected mode: #{signature.mode}. Please report this bug at https://github.com/sorbet/sorbet/issues"
+      raise "Unexpected mode: #{mode}. Please report this bug at https://github.com/sorbet/sorbet/issues"
     end
 
     # Given a singleton class, we can check if it belongs to a
     # module by looking at its superclass; given `module M`,
     # `M.singleton_class.superclass == Module`, which is not true
     # for any class.
-    owner = signature.method.owner
-    if (signature.mode == Modes.abstract || Modes::OVERRIDABLE_MODES.include?(signature.mode)) &&
+    owner = method.owner
+    if (mode == Modes.abstract || Modes::OVERRIDABLE_MODES.include?(mode)) &&
         owner.singleton_class? && Class === owner && owner.superclass == Module
-      raise "Defining an overridable class method (via #{pretty_mode(signature)}) " \
+      raise "Defining an overridable class method (via #{pretty_mode(mode)}) " \
             "on a module is not allowed. Class methods on " \
             "modules do not get inherited and thus cannot be overridden."
     end

@@ -51,8 +51,6 @@ module T::Private::Methods
   DeclarationBlock = Struct.new(:mod, :loc, :blk_or_decl, :final)
 
   def self.declare_sig(mod, loc, arg, &blk)
-    install_hooks(mod)
-
     if T::Private::DeclState.current.active_declaration
       T::Private::DeclState.current.reset!
       raise "You called sig twice without declaring a method in between"
@@ -561,23 +559,17 @@ module T::Private::Methods
     end
   end
 
+  # Normally, this should be taken care of by simply `extend T::Sig`.
+  #
+  # But there are a few cases where we actually want the hooks to be "viral"
+  # for final modules and final methods, such that we actually want to forcibly
+  # install the hooks even if they would not have naturally been there via
+  # inheritance.
+  #
+  # As such, we don't have to handle quite as many edge cases as `lib/types/sig.rb` does
   def self.install_hooks(mod)
     return if @installed_hooks.include?(mod)
     @installed_hooks[mod] = true
-
-    if mod == TOP_SELF
-      # self at the top-level of a file is weirdly special in Ruby
-      # The Ruby VM on startup creates an `Object.new` and stashes it.
-      # Unlike when we're using sig inside a module, `self` is actually a
-      # normal object, not an instance of Module.
-      #
-      # Thus we can't ask things like mod.singleton_class? (since that's
-      # defined only on Module, not on Object) and even if we could, the places
-      # where we need to install the hooks are special.
-      mod.extend(SingletonMethodHooks) # def self.foo; end (at top level)
-      Object.extend(MethodHooks)       # def foo; end      (at top level)
-      return
-    end
 
     # See https://github.com/sorbet/sorbet/pull/3964 for an explanation of why this
     # check (which theoretically should not be needed) is actually needed.

@@ -246,12 +246,16 @@ class T::Private::Methods::Signature
   end
 
   def method_desc
-    loc = if (source_loc = @method.source_location)
+    self.class.method_desc(@method, @method_name)
+  end
+
+  def self.method_desc(method, method_name, source_loc=method.source_location)
+    loc = if source_loc
       source_loc.join(':')
     else
       "<unknown location>"
     end
-    "#{@method.owner}##{@method_name} at #{loc}"
+    "#{method.owner}##{method_name} at #{loc}"
   end
 
   def force_type_init
