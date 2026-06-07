@@ -27,6 +27,9 @@ class Homebrew::Cmd::Info::Args < Homebrew::CLI::Args
   def days; end
 
   sig { returns(T::Boolean) }
+  def deps?; end
+
+  sig { returns(T::Boolean) }
   def eval_all?; end
 
   sig { returns(T::Boolean) }
