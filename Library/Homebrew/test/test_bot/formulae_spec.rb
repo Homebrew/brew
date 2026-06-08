@@ -4,6 +4,36 @@
 require "test_bot"
 
 RSpec.describe Homebrew::TestBot::Formulae do
+  describe "#tap_needed_taps" do
+    it "trusts a missing dependency tap after tapping it and retries" do
+      tap = Tap.fetch("thirdparty", "tap")
+      dependency = Dependency.new("thirdparty/tap/foo")
+      formula = instance_double(Formula, recursive_dependencies: [])
+      output_paths = {
+        bottle:                     Pathname.new("/tmp/bottle.txt"),
+        linkage:                    Pathname.new("/tmp/linkage.txt"),
+        skipped_or_failed_formulae: Pathname.new("/tmp/skipped.txt"),
+      }
+      formulae = described_class.new(
+        tap: nil, git: "git", dry_run: true, fail_fast: false, verbose: false,
+        output_paths:
+      )
+      attempts = 0
+
+      allow(tap).to receive(:installed?).and_return(false)
+      allow(dependency).to receive(:to_formula) do
+        attempts += 1
+        raise TapFormulaUnavailableError.new(tap, "foo") if attempts == 1
+
+        formula
+      end
+
+      expect(formulae).to receive(:tap_and_trust!).with(tap)
+
+      formulae.send(:tap_needed_taps, [dependency])
+    end
+  end
+
   describe "#dependency_name_match?" do
     it "requires exact matches when either name is tap-qualified", :aggregate_failures do
       Dir.mktmpdir do |tmpdir|

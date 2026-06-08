@@ -40,6 +40,13 @@ module Homebrew
         { "HOMEBREW_REQUIRE_TAP_TRUST" => "1" }
       end
 
+      sig { params(tap: Tap).void }
+      def tap_and_trust!(tap)
+        tap.clear_cache
+        safe_system "brew", "tap", tap.name
+        Homebrew::Trust.trust!(:tap, tap.name) unless tap.official?
+      end
+
       sig { returns(T.nilable(Pathname)) }
       def cached_event_json
         return unless (event_json = artifact_cache/"event.json").exist?
@@ -503,8 +510,7 @@ module Homebrew
           rescue TapFormulaUnavailableError => e
             raise if e.tap.installed?
 
-            e.tap.clear_cache
-            safe_system "brew", "tap", e.tap.name
+            tap_and_trust!(e.tap)
             retry
           end
 

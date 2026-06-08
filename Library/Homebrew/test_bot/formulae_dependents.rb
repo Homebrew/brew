@@ -261,8 +261,7 @@ module Homebrew
               rescue TapFormulaUnavailableError => e
                 raise if e.tap.installed?
 
-                e.tap.clear_cache
-                safe_system "brew", "tap", e.tap.name
+                tap_and_trust!(e.tap)
                 retry
               end
             end.reject(&:optional?)
@@ -530,8 +529,7 @@ module Homebrew
         rescue TapFormulaUnavailableError => e
           raise if e.tap.installed?
 
-          e.tap.clear_cache
-          safe_system "brew", "tap", e.tap.name
+          tap_and_trust!(e.tap)
           retry
         end
         formula_recursive_dependencies.each do |dependency|
