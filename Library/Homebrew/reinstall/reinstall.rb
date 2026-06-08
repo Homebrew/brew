@@ -89,8 +89,14 @@ module Homebrew
         formula_installer.install
         formula_installer.finish
       rescue FormulaInstallationAlreadyAttemptedError
+        # The formula was already installed by a prior attempt in this run.
+        # Clean up the backup of the previous keg since the new version is in place.
+        if keg
+          backup_keg = backup_path(keg)
+          ignore_interrupts { FileUtils.rm_r(backup_keg) if backup_keg.exist? }
+        end
         nil
-        # Any other exceptions we want to restore the previous keg and report the error.
+      # Any other exceptions we want to restore the previous keg and report the error.
       rescue Exception # rubocop:disable Lint/RescueException
         ignore_interrupts { restore_backup(keg, link_keg, verbose:) if keg }
         raise

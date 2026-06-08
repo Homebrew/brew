@@ -332,7 +332,10 @@ module Homebrew
 
       require "openssl"
 
-      pubkey = OpenSSL::PKey::RSA.new((HOMEBREW_LIBRARY_PATH/"api/homebrew-1.pem").read)
+      pubkey = cache[:pubkey] ||= T.let(
+        OpenSSL::PKey::RSA.new((HOMEBREW_LIBRARY_PATH/"api/homebrew-1.pem").read),
+        T.nilable(OpenSSL::PKey::RSA),
+      )
       signing_input = "#{homebrew_signature["protected"]}.#{json_data["payload"]}"
       unless pubkey.verify_pss("SHA512",
                                Base64.urlsafe_decode64(homebrew_signature["signature"]),

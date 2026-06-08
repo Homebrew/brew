@@ -33,6 +33,19 @@ module Cask
 
         target_file = staged_path.join(@to)
 
+        # Validate that the target path stays within staged_path to prevent path traversal.
+        if target_file.each_filename.any? { |part| [".", ".."].include?(part) }
+          opoo "Skipping rename: target path '#{@to}' contains relative segments."
+          return
+        end
+
+        resolved_target = target_file.expand_path
+        resolved_staged = staged_path.expand_path
+        if !resolved_target.to_s.start_with?("#{resolved_staged}/") && resolved_target != resolved_staged
+          opoo "Skipping rename: target path resolves outside staged directory."
+          return
+        end
+
         # Ensure target directory exists
         target_file.dirname.mkpath
 

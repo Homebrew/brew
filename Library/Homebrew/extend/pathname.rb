@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "shellwords"
 require "system_command"
 require "extend/pathname/disk_usage_extension"
 require "extend/pathname/eager_initialize_extension"
@@ -311,7 +312,7 @@ class Pathname
       target = Pathname.new(target) # allow pathnames or strings
       join(target.basename).write <<~SH
         #!/bin/bash
-        exec "#{target}" "$@"
+        exec #{Shellwords.shellescape(target.to_s)} "$@"
       SH
     end
   end
@@ -349,7 +350,7 @@ class Pathname
 
     write <<~SH
       #!/bin/bash
-      #{env_export}exec "#{target}" #{args} "$@"
+      #{env_export}exec #{Shellwords.shellescape(target.to_s)} #{args} "$@"
     SH
   end
 
@@ -386,7 +387,7 @@ class Pathname
     (self/script_name).write <<~EOS
       #!/bin/bash
       export JAVA_HOME="#{Language::Java.overridable_java_home_env(java_version)[:JAVA_HOME]}"
-      exec "${JAVA_HOME}/bin/java" #{java_opts} -jar "#{target_jar}" "$@"
+      exec "${JAVA_HOME}/bin/java" #{java_opts} -jar #{Shellwords.shellescape(target_jar.to_s)} "$@"
     EOS
   end
 

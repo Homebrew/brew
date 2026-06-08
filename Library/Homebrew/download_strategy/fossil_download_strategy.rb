@@ -17,7 +17,7 @@ class FossilDownloadStrategy < VCSDownloadStrategy
   sig { override.returns(Time) }
   def source_modified_time
     out = silent_command("fossil", args: ["info", "tip", "-R", cached_location]).stdout
-    Time.parse(T.must(out[/^(hash|uuid): +\h+ (.+)$/, 1]))
+    Time.parse(T.must(out[/^(hash|uuid): +\h+ (.+)$/, 2]))
   end
 
   sig { override.returns(T.nilable(String)) }
@@ -29,7 +29,7 @@ class FossilDownloadStrategy < VCSDownloadStrategy
   sig { override.returns(String) }
   def last_commit
     out = silent_command("fossil", args: ["info", "tip", "-R", cached_location]).stdout
-    T.must(out[/^(hash|uuid): +(\h+) .+$/, 1])
+    T.must(out[/^(hash|uuid): +(\h+) .+$/, 2])
   end
 
   sig { override.returns(T::Boolean) }

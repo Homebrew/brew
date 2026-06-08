@@ -264,6 +264,7 @@ class Migrator
     end
     puts "Backing up..."
     ignore_interrupts { backup_oldname }
+    raise
   ensure
     unlock
   end

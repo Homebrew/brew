@@ -10,7 +10,7 @@ RSpec.describe Pathname do
         (tmpdir/"wrapper_script").write_env_script tmpdir/"test", ["foo", "bar"], TEST: "baz"
         expect((tmpdir/"wrapper_script").read).to eq(<<~BASH)
           #!/bin/bash
-          TEST="baz" exec "#{tmpdir}/test" foo bar "$@"
+          TEST="baz" exec #{Shellwords.shellescape((tmpdir/"test").to_s)} foo bar "$@"
         BASH
       end
     end
@@ -20,7 +20,7 @@ RSpec.describe Pathname do
         (tmpdir/"wrapper_script").write_env_script "test", TEST: "bar", TEST2: tmpdir/"baz"
         expect((tmpdir/"wrapper_script").read).to eq(<<~BASH)
           #!/bin/bash
-          TEST="bar" TEST2="#{tmpdir}/baz" exec "test"  "$@"
+          TEST="bar" TEST2="#{tmpdir}/baz" exec #{Shellwords.shellescape("test")}  "$@"
         BASH
       end
     end
@@ -37,12 +37,12 @@ RSpec.describe Pathname do
 
           expect((input_dir/"foo").read).to eq(<<~BASH)
             #!/bin/bash
-            FOO="foo" BAR="#{input_dir}/test" exec "#{output_dir}/foo"  "$@"
+            FOO="foo" BAR="#{input_dir}/test" exec #{Shellwords.shellescape((output_dir/"foo").to_s)}  "$@"
           BASH
 
           expect((input_dir/"bar").read).to eq(<<~BASH)
             #!/bin/bash
-            FOO="foo" BAR="#{input_dir}/test" exec "#{output_dir}/bar"  "$@"
+            FOO="foo" BAR="#{input_dir}/test" exec #{Shellwords.shellescape((output_dir/"bar").to_s)}  "$@"
           BASH
         end
       end

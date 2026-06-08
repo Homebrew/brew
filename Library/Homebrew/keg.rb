@@ -590,7 +590,7 @@ class Keg
   sig { void }
   def remove_oldname_opt_records
     oldname_opt_records.reject! do |record|
-      return false if record.resolved_path != path
+      next false if record.resolved_path != path
 
       record.unlink
       record.parent.rmdir_if_possible

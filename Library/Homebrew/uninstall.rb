@@ -33,8 +33,10 @@ module Homebrew
           if rack.directory?
             puts "Uninstalling #{name}... (#{rack.abv})"
             kegs.each do |keg|
-              keg.unlink
-              keg.uninstall
+              keg.lock do
+                keg.unlink
+                keg.uninstall
+              end
             end
           end
 
