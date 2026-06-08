@@ -16,15 +16,13 @@ module Homebrew
         EOS
         switch "--all-supported",
                description: "Instead of selecting runners based on the chosen formula, return all supported runners."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae, whether installed or not, to determine testing " \
                             "dependents.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--dependents",
-               description: "Determine runners for testing dependents. " \
-                            "Requires `HOMEBREW_REQUIRE_TAP_TRUST=1` or `HOMEBREW_NO_REQUIRE_TAP_TRUST=1` to be set."
+               description: "Determine runners for testing dependents."
         flag   "--dependent-shards=",
                description: "Split each dependent runner into the given number of shards.",
                depends_on:  "--dependents",
@@ -47,10 +45,6 @@ module Homebrew
 
         eval_all = args.eval_all?
         eval_all ||= Homebrew::EnvConfig.tap_trust_configured?
-        if args.dependents? && !eval_all
-          raise UsageError, "`brew determine-test-runners --dependents` needs " \
-                            "`HOMEBREW_REQUIRE_TAP_TRUST=1` or `HOMEBREW_NO_REQUIRE_TAP_TRUST=1` set!"
-        end
 
         testing_formulae = args.named.first&.split(",").to_a.map do |name|
           TestRunnerFormula.new(Formulary.factory(name), eval_all:)

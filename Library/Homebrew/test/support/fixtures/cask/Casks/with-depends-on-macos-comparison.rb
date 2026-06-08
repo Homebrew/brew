@@ -8,7 +8,7 @@ cask "with-depends-on-macos-comparison" do
   url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
   homepage "https://brew.sh/with-depends-on-macos-comparison"
 
-  depends_on macos: ">= :catalina"
+  depends_on macos: :catalina
 
   app "Caffeine.app"
 end

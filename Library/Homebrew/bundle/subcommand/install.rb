@@ -44,7 +44,8 @@ module Homebrew
           switch "--cleanup",
                  description: "Ask to perform cleanup after installing dependencies. Requires `--force`, " \
                               "`--force-cleanup` or `$HOMEBREW_ASK`.",
-                 env:         [:bundle_install_cleanup, "--global"]
+                 env:         [:bundle_install_cleanup, "--global"],
+                 odeprecated: true
           switch "--force-cleanup",
                  description: "Perform cleanup after installing dependencies without asking.",
                  env:         [:bundle_force_install_cleanup, "--global"]
@@ -63,7 +64,6 @@ module Homebrew
             raise UsageError, "`brew bundle install --cleanup` requires `--force`, `--force-cleanup` " \
                               "or `$HOMEBREW_ASK`."
           end
-          # odeprecated "HOMEBREW_BUNDLE_INSTALL_CLEANUP", "HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP"
 
           @dsl = Homebrew::Bundle::Brewfile.read(global: context.global, file: context.file)
           result = Homebrew::Bundle::Installer.install!(

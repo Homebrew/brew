@@ -5,11 +5,14 @@ require "delegate"
 
 require "requirements/macos_requirement"
 require "requirements/linux_requirement"
+require "utils/output"
 
 module Cask
   class DSL
     # Class corresponding to the `depends_on` stanza.
     class DependsOn < SimpleDelegator
+      include ::Utils::Output::Mixin
+
       VALID_KEYS = T.let(Set.new([
         :formula,
         :cask,
@@ -188,14 +191,12 @@ module Cask
           raise "`depends_on :macos` cannot be combined with another macOS `depends_on`" if @macos_bare_set_top_level
 
           if @macos_version_set_top_level || @maximum_macos_set_top_level
-            # odeprecated "`depends_on :macos` with `depends_on macos:`"
+            odeprecated "`depends_on :macos` with `depends_on macos:`"
           end
 
           @macos_bare_set_top_level = true
         elsif requirement.comparator == "<="
-          if @macos_bare_set_top_level
-            # odeprecated "`depends_on :macos` with `depends_on maximum_macos:`"
-          end
+          odeprecated "`depends_on :macos` with `depends_on maximum_macos:`" if @macos_bare_set_top_level
 
           if @maximum_macos_set_top_level
             raise "`depends_on maximum_macos:` cannot be combined with another macOS `depends_on`"
@@ -203,9 +204,7 @@ module Cask
 
           @maximum_macos_set_top_level = true
         else
-          if @macos_bare_set_top_level
-            # odeprecated "`depends_on :macos` with `depends_on macos:`"
-          end
+          odeprecated "`depends_on :macos` with `depends_on macos:`" if @macos_bare_set_top_level
 
           if @macos_version_set_top_level
             raise "`depends_on macos:` cannot be combined with another macOS `depends_on`"

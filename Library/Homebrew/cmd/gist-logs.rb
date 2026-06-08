@@ -18,9 +18,9 @@ module Homebrew
           Upload logs for a failed build of <formula> to a new Gist. Presents an
           error message if no logs are found.
         EOS
-        # odeprecated: remove in a future release.
         switch "--with-hostname",
-               description: "Include the hostname in the Gist."
+               description: "Include the hostname in the Gist.",
+               odeprecated: true
         switch "-n", "--new-issue",
                description: "Automatically create a new issue in the appropriate GitHub repository " \
                             "after creating the Gist."

@@ -7,7 +7,7 @@ cask "invalid-depends-on-macos-bad-release" do
   url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
   homepage "https://brew.sh/invalid-depends-on-macos-bad-release"
 
-  depends_on macos: :no_such_release
+  depends_on macos: [:no_such_release, :catalina]
 
   app "Caffeine.app"
 end

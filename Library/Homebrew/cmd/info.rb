@@ -53,9 +53,9 @@ module Homebrew
         switch "--github",
                description: "Open the GitHub source page for <formula> and <cask> in a browser. " \
                             "To view the history locally: `brew log -p` <formula> or <cask>"
-        # odeprecated replace this with --verbose on next release
         switch "--fetch-manifest",
-               description: "Fetch GitHub Packages manifest for extra information when <formula> is not installed."
+               description: "Fetch GitHub Packages manifest for extra information when <formula> is not installed.",
+               odeprecated: true
         flag   "--json",
                description: "Print a JSON representation. Currently the default value for <version> is `v1` for " \
                             "<formula>. For <formula> and <cask> use `v2`. See the docs for examples of using the " \
@@ -63,13 +63,12 @@ module Homebrew
         switch "--installed",
                description: "Output a human-readable inventory of installed formulae and casks. If `--json` is " \
                             "passed, print JSON for installed formulae and, with `--json=v2`, installed casks."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                depends_on:  "--json",
                description: "Evaluate all available formulae and casks, whether installed or not, to print their " \
                             "JSON.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--variations",
                depends_on:  "--json",
                description: "Include the variations hash in each formula's JSON output."
@@ -129,7 +128,7 @@ module Homebrew
           print_analytics
         elsif (json = args.json)
           eval_all = args.eval_all?
-          eval_all ||= args.no_named? && Homebrew::EnvConfig.tap_trust_configured?
+          eval_all ||= args.no_named? && !args.installed? && Homebrew::EnvConfig.tap_trust_configured?
           print_json(json, eval_all)
         elsif args.installed?
           T.let([

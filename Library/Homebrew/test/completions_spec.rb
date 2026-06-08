@@ -255,7 +255,6 @@ RSpec.describe Homebrew::Completions do
           "--debug"       => "Display a trace of all shell commands as they are executed.",
           "--force"       => "Always do a slower, full update check (even if unnecessary).",
           "--help"        => "Show this message.",
-          "--merge"       => "Use `git merge` to apply updates (rather than `git rebase`).",
           "--quiet"       => "Make some output more quiet.",
           "--verbose"     => "Print the directories checked and `git` operations performed.",
         }
@@ -264,9 +263,7 @@ RSpec.describe Homebrew::Completions do
 
       it "handles --[no]- options correctly" do
         options = described_class.command_options("audit")
-        expect(options.key?("--signing")).to be true
-        expect(options.key?("--no-signing")).to be true
-        expect(options["--signing"] == options["--no-signing"]).to be true
+        expect(options).not_to include("--signing", "--no-signing")
       end
 
       it "return an empty array if command is not found" do
@@ -353,7 +350,6 @@ RSpec.describe Homebrew::Completions do
                 --debug
                 --force
                 --help
-                --merge
                 --quiet
                 --verbose
                 "
@@ -453,7 +449,6 @@ RSpec.describe Homebrew::Completions do
               '--debug[Display a trace of all shell commands as they are executed]' \\
               '--force[Always do a slower, full update check (even if unnecessary)]' \\
               '--help[Show this message]' \\
-              '--merge[Use `git merge` to apply updates (rather than `git rebase`)]' \\
               '--quiet[Make some output more quiet]' \\
               '--verbose[Print the directories checked and `git` operations performed]'
           }
@@ -548,7 +543,6 @@ RSpec.describe Homebrew::Completions do
           __fish_brew_complete_arg 'update' -l debug -d 'Display a trace of all shell commands as they are executed'
           __fish_brew_complete_arg 'update' -l force -d 'Always do a slower, full update check (even if unnecessary)'
           __fish_brew_complete_arg 'update' -l help -d 'Show this message'
-          __fish_brew_complete_arg 'update' -l merge -d 'Use `git merge` to apply updates (rather than `git rebase`)'
           __fish_brew_complete_arg 'update' -l quiet -d 'Make some output more quiet'
           __fish_brew_complete_arg 'update' -l verbose -d 'Print the directories checked and `git` operations performed'
         COMPLETION

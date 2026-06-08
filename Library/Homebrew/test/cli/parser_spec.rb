@@ -131,14 +131,14 @@ RSpec.describe Homebrew::CLI::Parser do
       end
     end
 
-    it "lets HOMEBREW_NO_ASK override HOMEBREW_ASK defaults" do
-      with_env(HOMEBREW_ASK: "1", HOMEBREW_NO_ASK: "1") do
+    it "lets HOMEBREW_NO_ASK override default ask mode" do
+      with_env(HOMEBREW_NO_ASK: "1") do
         expect(parser.parse([]).ask?).to be(false)
       end
     end
 
     it "lets --ask override HOMEBREW_NO_ASK" do
-      with_env(HOMEBREW_ASK: "1", HOMEBREW_NO_ASK: "1") do
+      with_env(HOMEBREW_NO_ASK: "1") do
         expect(parser.parse(["--ask"]).ask?).to be(true)
       end
     end
@@ -772,6 +772,43 @@ RSpec.describe Homebrew::CLI::Parser do
       expect(args.subcommand).to eq("install")
       expect(args.upgrade?).to be(true)
       expect(args.force?).to be(true)
+    end
+
+    it "deprecates subcommands" do
+      parser = described_class.new(Cmd) do
+        subcommand "install", odeprecated: true do
+          named_args :none
+        end
+      end
+
+      expect { parser.parse(["install"]) }
+        .to raise_error(MethodDeprecatedError, /the `install` subcommand.*deprecated/)
+    end
+
+    it "disables subcommands" do
+      parser = described_class.new(Cmd) do
+        subcommand "install", odisabled: true do
+          named_args :none
+        end
+      end
+
+      expect { parser.parse(["install"]) }
+        .to raise_error(MethodDeprecatedError, /the `install` subcommand.*disabled/)
+    end
+
+    it "hides deprecated subcommands from root help" do
+      parser = described_class.new(Cmd) do
+        usage_banner "`test` [<subcommand>]"
+        subcommand "install", odeprecated: true do
+          named_args :none
+        end
+        subcommand "info" do
+          named_args :none
+        end
+      end
+
+      expect(parser.generate_help_text).to include("info")
+      expect(parser.generate_help_text).not_to include("install")
     end
 
     it "returns options for a specific subcommand" do

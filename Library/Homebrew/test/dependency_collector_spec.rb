@@ -96,6 +96,10 @@ RSpec.describe DependencyCollector do
       expect { collector.add(Class.new) }.to raise_error(TypeError)
     end
 
+    it "raises an ArgumentError for a removed codesign requirement" do
+      expect { collector.add(:codesign) }.to raise_error(ArgumentError, "Unsupported special dependency: :codesign")
+    end
+
     it "raises a TypeError for unknown Types" do
       expect { collector.add(Object.new) }.to raise_error(TypeError)
     end

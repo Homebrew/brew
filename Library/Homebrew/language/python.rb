@@ -87,28 +87,6 @@ module Language
       quiet_system python, "-c", script
     end
 
-    sig { params(prefix: Pathname, python: T.any(String, Pathname)).returns(T::Array[String]) }
-    def self.setup_install_args(prefix, python = "python3")
-      odisabled "Language::Python.setup_install_args", "pip and `std_pip_args`"
-      shim = <<~PYTHON
-        import setuptools, tokenize
-        __file__ = 'setup.py'
-        exec(compile(getattr(tokenize, 'open', open)(__file__).read()
-          .replace('\\r\\n', '\\n'), __file__, 'exec'))
-      PYTHON
-      %W[
-        -c
-        #{shim}
-        --no-user-cfg
-        install
-        --prefix=#{prefix}
-        --install-scripts=#{prefix}/bin
-        --install-lib=#{prefix/site_packages(python)}
-        --single-version-externally-managed
-        --record=installed.txt
-      ]
-    end
-
     # Mixin module for {Formula} adding shebang rewrite features.
     module Shebang
       extend T::Helpers

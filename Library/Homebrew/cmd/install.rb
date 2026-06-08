@@ -151,10 +151,6 @@ module Homebrew
             description: "Require all casks to have a checksum.",
             env:         :cask_opts_require_sha,
           }],
-          [:switch, "--[no-]quarantine", {
-            env:       :cask_opts_quarantine,
-            odisabled: true,
-          }],
           [:switch, "--adopt", {
             description: "Adopt existing artifacts in the destination that are identical to those being installed. " \
                          "Cannot be combined with `--force`.",
@@ -336,13 +332,6 @@ module Homebrew
           )
         end
 
-        if formulae_installer.any? && fetch_casks.empty? && !args.ask? && !args.dry_run? &&
-           !Homebrew::EnvConfig.no_env_hints?
-          puts "Inspect the formula dependency plan before installing with `brew install --ask`."
-          puts "Enable ask mode by setting `HOMEBREW_ASK=1`."
-          puts "Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`)."
-        end
-
         if !args.dry_run? && (formulae_installer.any? || fetch_casks.any?)
           download_queue = Homebrew::DownloadQueue.new(pour: true)
           begin
@@ -366,7 +355,6 @@ module Homebrew
                   force:          args.force?,
                   skip_cask_deps: args.skip_cask_deps?,
                   require_sha:    args.require_sha?,
-                  quarantine:     args.quarantine?,
                   zap:            args.zap?,
                   download_queue:,
                   defer_fetch:    true,
@@ -412,7 +400,6 @@ module Homebrew
                 binaries:       args.binaries?,
                 defer_fetch:    fetch_casks.include?(cask),
                 force:          args.force?,
-                quarantine:     args.quarantine?,
                 quiet:          args.quiet?,
                 require_sha:    args.require_sha?,
                 skip_cask_deps: args.skip_cask_deps?,
@@ -430,7 +417,6 @@ module Homebrew
                 force:                args.force?,
                 dry_run:              args.dry_run?,
                 binaries:             args.binaries?,
-                quarantine:           args.quarantine?,
                 require_sha:          args.require_sha?,
                 skip_cask_deps:       args.skip_cask_deps?,
                 verbose:              args.verbose?,

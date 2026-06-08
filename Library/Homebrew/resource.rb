@@ -395,7 +395,7 @@ class Resource
       tab
     end
 
-    sig { returns(T::Boolean) }
+    sig { override.returns(T::Boolean) }
     def downloaded_and_valid?
       return false unless downloaded?
 

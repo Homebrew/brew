@@ -87,6 +87,14 @@ module Cask
       downloader.basename
     end
 
+    sig { override.returns(T::Boolean) }
+    def downloaded_and_valid?
+      return false unless super
+
+      quarantine(cached_download)
+      true
+    end
+
     sig { override.params(filename: Pathname).void }
     def verify_download_integrity(filename)
       if no_checksum_defined? && !official_cask_tap?

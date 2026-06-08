@@ -12,7 +12,6 @@ RSpec.describe Homebrew::Cmd::Bundle do
   it "handles default install subcommand options", :aggregate_failures do
     with_env("HOMEBREW_BUNDLE_INSTALL_CLEANUP" => nil, "HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP" => nil) do
       expect(described_class.new([]).args.subcommand).to eq("install")
-      expect(described_class.new(%w[--cleanup --zap]).args.subcommand).to eq("install")
       expect(described_class.new(%w[--force-cleanup --zap]).args.subcommand).to eq("install")
     end
   end
@@ -66,11 +65,13 @@ RSpec.describe Homebrew::Cmd::Bundle do
     end
   end
 
-  it "lets HOMEBREW_NO_ASK disable env-driven ask mode" do
-    with_env(HOMEBREW_ASK: "1", HOMEBREW_NO_ASK: "1") do
+  it "disables ask mode for subcommands" do
+    with_env(HOMEBREW_ASK: nil, HOMEBREW_NO_ASK: nil) do
       args = described_class.new(%w[cleanup]).args
       expect(Homebrew::Cmd::Bundle::CleanupSubcommand).to receive(:new) do |_, context:|
-        expect(context.ask).to be(false)
+        expect(context.ask).to be(true)
+        expect(ENV.fetch("HOMEBREW_ASK", nil)).to be_nil
+        expect(ENV.fetch("HOMEBREW_NO_ASK", nil)).to eq("1")
         instance_double(Homebrew::Cmd::Bundle::CleanupSubcommand, run: nil)
       end
 
@@ -88,12 +89,9 @@ RSpec.describe Homebrew::Cmd::Bundle do
   it "uses subcommand-specific option descriptions", :aggregate_failures do
     subcommand_options = ->(subcommand) { Commands.command_options("bundle", subcommand:).to_h }
 
-    expect(subcommand_options.call("install")["--cleanup"])
-      .to include("Requires `--force`, `--force-cleanup` or `$HOMEBREW_ASK`")
     expect(subcommand_options.call("install")).not_to have_key("--ask")
     expect(subcommand_options.call("install")["--force-cleanup"])
       .to include("`$HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP`")
-    expect(subcommand_options.call("install")["--cleanup"]).not_to include("`$HOMEBREW_BUNDLE_INSTALL_CLEANUP`")
     expect(subcommand_options.call("list")["--vscode"]).to eq("List VSCode (and forks/variants) extensions.")
     expect(subcommand_options.call("dump")["--vscode"]).to eq("Dump VSCode (and forks/variants) extensions.")
     expect(subcommand_options.call("dump")["--no-mas"])
@@ -144,7 +142,7 @@ RSpec.describe Homebrew::Cmd::Bundle do
     ["env", ["env", "--check"], "env"],
   ].each do |subcommand, args, command|
     it "passes --check through to #{subcommand}" do
-      with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil) do
+      with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil, "HOMEBREW_BUNDLE_SECRETS" => nil) do
         expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
           .with(
             command,
@@ -153,7 +151,7 @@ RSpec.describe Homebrew::Cmd::Bundle do
             subcommand:,
             services:   false,
             check:      true,
-            no_secrets: false,
+            no_secrets: true,
           )
 
         described_class.new(args).run
@@ -162,7 +160,8 @@ RSpec.describe Homebrew::Cmd::Bundle do
   end
 
   it "passes HOMEBREW_BUNDLE_CHECK through to exec" do
-    with_env("HOMEBREW_BUNDLE_CHECK" => "1", "HOMEBREW_BUNDLE_NO_SECRETS" => nil) do
+    with_env("HOMEBREW_BUNDLE_CHECK" => "1", "HOMEBREW_BUNDLE_NO_SECRETS" => nil,
+             "HOMEBREW_BUNDLE_SECRETS" => nil) do
       expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
         .with(
           "/usr/bin/true",
@@ -171,7 +170,7 @@ RSpec.describe Homebrew::Cmd::Bundle do
           subcommand: "exec",
           services:   false,
           check:      true,
-          no_secrets: false,
+          no_secrets: true,
         )
 
       described_class.new(["exec", "/usr/bin/true"]).run

@@ -20,43 +20,49 @@ RSpec.describe Cask::List, :cask do
   end
 
   it "lists oneline" do
-    casks = %w[
-      local-caffeine
-      third-party/tap/third-party-cask
-      local-transmission
-    ].map { |c| Cask::CaskLoader.load(c) }
+    with_env(HOMEBREW_USER_CONFIG_HOME: mktmpdir) do
+      Homebrew::Trust.trust!(:tap, "third-party/tap")
+      casks = %w[
+        local-caffeine
+        third-party/tap/third-party-cask
+        local-transmission
+      ].map { |c| Cask::CaskLoader.load(c) }
 
-    casks.each do |c|
-      InstallHelper.install_with_caskfile(c)
+      casks.each do |c|
+        InstallHelper.install_with_caskfile(c)
+      end
+
+      expect do
+        described_class.list_casks(one: true)
+      end.to output(<<~EOS).to_stdout
+        local-caffeine
+        local-transmission
+        third-party-cask
+      EOS
     end
-
-    expect do
-      described_class.list_casks(one: true)
-    end.to output(<<~EOS).to_stdout
-      local-caffeine
-      local-transmission
-      third-party-cask
-    EOS
   end
 
   it "lists full names" do
-    casks = %w[
-      local-caffeine
-      third-party/tap/third-party-cask
-      local-transmission
-    ].map { |c| Cask::CaskLoader.load(c) }
+    with_env(HOMEBREW_USER_CONFIG_HOME: mktmpdir) do
+      Homebrew::Trust.trust!(:tap, "third-party/tap")
+      casks = %w[
+        local-caffeine
+        third-party/tap/third-party-cask
+        local-transmission
+      ].map { |c| Cask::CaskLoader.load(c) }
 
-    casks.each do |c|
-      InstallHelper.install_with_caskfile(c)
+      casks.each do |c|
+        InstallHelper.install_with_caskfile(c)
+      end
+
+      expect do
+        described_class.list_casks(full_name: true)
+      end.to output(<<~EOS).to_stdout
+        local-caffeine
+        local-transmission
+        third-party/tap/third-party-cask
+      EOS
     end
-
-    expect do
-      described_class.list_casks(full_name: true)
-    end.to output(<<~EOS).to_stdout
-      local-caffeine
-      local-transmission
-      third-party/tap/third-party-cask
-    EOS
   end
 
   describe "lists versions" do

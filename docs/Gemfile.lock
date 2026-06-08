@@ -112,11 +112,6 @@ GEM
       jekyll (>= 3.3, < 5.0)
     jekyll-relative-links (0.7.0)
       jekyll (>= 3.3, < 5.0)
-    jekyll-remote-theme (0.4.3)
-      addressable (~> 2.0)
-      jekyll (>= 3.5, < 5.0)
-      jekyll-sass-converter (>= 1.0, <= 3.0.0, != 2.0.0)
-      rubyzip (>= 1.3.0, < 3.0)
     jekyll-sass-converter (3.0.0)
       sass-embedded (~> 1.54)
     jekyll-seo-tag (2.9.0)
@@ -199,7 +194,6 @@ GEM
     rexml (3.4.4)
     rouge (4.7.0)
     ruby-rc4 (0.1.5)
-    rubyzip (2.4.1)
     safe_yaml (1.0.5)
     sass-embedded (1.100.0-aarch64-linux-gnu)
       google-protobuf (~> 4.31)
@@ -256,7 +250,6 @@ DEPENDENCIES
   jekyll-optional-front-matter
   jekyll-redirect-from
   jekyll-relative-links
-  jekyll-remote-theme (= 0.4.3)
   jekyll-seo-tag
   jekyll-sitemap
   jekyll-titles-from-headings
@@ -315,7 +308,6 @@ CHECKSUMS
   jekyll-optional-front-matter (0.3.2) sha256=ecdc061d711472469fcf04da617653b553e914c038a17df3b6a5f6f92aeb761b
   jekyll-redirect-from (0.16.0) sha256=6635cae569ef9b0f90ffb71ec014ba977177fafb44d32a2b0526288d4d9be6db
   jekyll-relative-links (0.7.0) sha256=831e54c348eeae751845c0d4ac4b244bd73b664341f0e8c9f1803b16f4570835
-  jekyll-remote-theme (0.4.3) sha256=d3fde726484fb3df04de9e347baf75aaa3d5bfea771a330412e0c52608e54b40
   jekyll-sass-converter (3.0.0) sha256=e2e7674f186e906b9d99b8066e13f9b4d5cb9f806d36f7bc8cf2610053d8c902
   jekyll-seo-tag (2.9.0) sha256=0260015a8e1df9bf195cdfb0c675b7b2883fd8cbf12556e1c1cbe36a831c6852
   jekyll-sitemap (1.4.0) sha256=0de08c5debc185ea5a8f980e1025c7cd3f8e0c35c8b6ef592f15c46235cf4218
@@ -359,7 +351,6 @@ CHECKSUMS
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
   rouge (4.7.0) sha256=dba5896715c0325c362e895460a6d350803dbf6427454f49a47500f3193ea739
   ruby-rc4 (0.1.5) sha256=00cc40a39d20b53f5459e7ea006a92cf584e9bc275e2a6f7aa1515510e896c03
-  rubyzip (2.4.1) sha256=8577c88edc1fde8935eb91064c5cb1aef9ad5494b940cf19c775ee833e075615
   safe_yaml (1.0.5) sha256=a6ac2d64b7eb027bdeeca1851fe7e7af0d668e133e8a88066a0c6f7087d9f848
   sass-embedded (1.100.0-aarch64-linux-gnu) sha256=c13187f8eaae7e7e64246b18eb896534a84465a17198829ef65730db4662860e
   sass-embedded (1.100.0-aarch64-linux-musl) sha256=1b0945a66cd4e40f505db73b1e790e2561e07e6d9fd04ef6ebbf279835666b3f

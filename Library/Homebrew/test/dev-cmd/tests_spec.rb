@@ -22,7 +22,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
       expect(Sandbox).not_to receive(:ensure_sandbox_installed!)
       expect(Sandbox).not_to receive(:configure!)
 
-      with_env(HOMEBREW_DEVELOPER: nil, HOMEBREW_SANDBOX_LINUX: nil) do
+      with_env(HOMEBREW_NO_SANDBOX_LINUX: "1") do
         expect { tests.send(:check_test_environment!) }.not_to raise_error
       end
     end
@@ -32,19 +32,15 @@ RSpec.describe Homebrew::DevCmd::Tests do
                                          failure_reason: "Bubblewrap is not working.")
       expect(Sandbox).to receive(:ensure_sandbox_installed!).with(install_from_tests: true)
 
-      with_env(HOMEBREW_SANDBOX_LINUX: "1") do
-        expect { tests.send(:check_test_environment!) }
-          .to raise_error(UsageError, "Invalid usage: Bubblewrap is not working.")
-      end
+      expect { tests.send(:check_test_environment!) }
+        .to raise_error(UsageError, "Invalid usage: Bubblewrap is not working.")
     end
 
     it "installs and probes sandbox availability when Linux sandboxing is enabled" do
       allow(Sandbox).to receive(:available?).and_return(true)
       expect(Sandbox).to receive(:ensure_sandbox_installed!).with(install_from_tests: true)
 
-      with_env(HOMEBREW_SANDBOX_LINUX: "1") do
-        expect { tests.send(:check_test_environment!) }.not_to raise_error
-      end
+      expect { tests.send(:check_test_environment!) }.not_to raise_error
     end
 
     it "configures the sandbox on GitHub Actions when Linux sandboxing is enabled" do
@@ -53,9 +49,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
       expect(Sandbox).to receive(:configure!)
       expect(Sandbox).not_to receive(:ensure_sandbox_installed!)
 
-      with_env(HOMEBREW_SANDBOX_LINUX: "1") do
-        expect { tests.send(:check_test_environment!) }.not_to raise_error
-      end
+      expect { tests.send(:check_test_environment!) }.not_to raise_error
     end
   end
 

@@ -59,12 +59,16 @@ module Homebrew
         @download_threads.add(Thread.current)
         begin
           download.clear_cache if force
+          if !force && downloadable.downloaded_and_valid?
+            check_bottle_attestation(downloadable, check_attestation:)
+            create_symlinks_for_shared_download(cached_location)
+            next cached_location
+          end
+
           download.fetch(quiet:)
           raise CancelledDownloadError if cancelled.true?
 
-          if check_attestation && downloadable.is_a?(Bottle)
-            Utils::Attestation.check_attestation(downloadable, quiet: true)
-          end
+          check_bottle_attestation(downloadable, check_attestation:)
           create_symlinks_for_shared_download(cached_location)
         rescue Interrupt
           raise CancelledDownloadError
@@ -228,6 +232,14 @@ module Homebrew
     end
 
     private
+
+    sig { params(downloadable: Downloadable, check_attestation: T::Boolean).void }
+    def check_bottle_attestation(downloadable, check_attestation:)
+      return unless check_attestation
+      return unless downloadable.is_a?(Bottle)
+
+      Utils::Attestation.check_attestation(downloadable, quiet: true)
+    end
 
     sig { params(cached_location: Pathname).void }
     def create_symlinks_for_shared_download(cached_location)

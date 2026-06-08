@@ -97,28 +97,8 @@ RSpec.describe Formulary do
       end
     end
 
-    it "supports temporarily opting out of scrubbing while evaluating formulae" do
-      with_env(HOMEBREW_NO_EVAL_ENV_SCRUBBING: "1", SECRET_TOKEN: "password") do
-        formula_class = described_class.load_formula(
-          "unscrubbed-env",
-          mktmpdir/"unscrubbed-env.rb",
-          <<~RUBY,
-            class UnscrubbedEnv < Formula
-              SECRET_TOKEN_PRESENT = ENV.key?("SECRET_TOKEN")
-              url "https://brew.sh/unscrubbed-env-1.0.tar.gz"
-            end
-          RUBY
-          "UnscrubbedEnvNamespace",
-          flags:         [],
-          ignore_errors: false,
-        )
-
-        expect(formula_class::SECRET_TOKEN_PRESENT).to be(true)
-      end
-    end
-
     it "refuses untrusted third-party tap formulae when trust is enabled" do
-      tap = Tap.fetch("thirdparty", "foo")
+      tap = Tap.fetch("formularytrust", "foo")
       formula_path = tap.formula_dir/"sensitive-env.rb"
       formula_path.dirname.mkpath
       formula_path.write <<~RUBY
@@ -126,20 +106,18 @@ RSpec.describe Formulary do
           url "https://brew.sh/sensitive-env-1.0.tar.gz"
         end
       RUBY
+      full_name = "#{tap.name}/sensitive-env"
 
-      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1", HOMEBREW_USER_CONFIG_HOME: mktmpdir) do
         expect { described_class.factory(formula_path) }
-          .to raise_error(Homebrew::UntrustedTapError, %r{thirdparty/foo})
-      end
+          .to raise_error(Homebrew::UntrustedTapError, /#{tap.name}/)
 
-      Homebrew::Trust.trust!(:formula, "thirdparty/foo/sensitive-env")
+        Homebrew::Trust.trust!(:formula, full_name)
 
-      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
-        expect(described_class.factory(formula_path).full_name).to eq("thirdparty/foo/sensitive-env")
+        expect(described_class.factory(formula_path).full_name).to eq(full_name)
       end
     ensure
-      Homebrew::Trust.clear!(:formula)
-      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"formularytrust"
     end
   end
 
@@ -905,6 +883,7 @@ RSpec.describe Formulary do
           old_tap.path.mkpath
           new_tap.path.mkpath
           (old_tap.path/"tap_migrations.json").write tap_migrations.to_json
+          old_tap.clear_cache
         end
 
         context "to a cask in the default tap" do

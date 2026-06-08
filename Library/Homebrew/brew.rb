@@ -113,9 +113,9 @@ begin
       Utils::Analytics.report_command_run(command_instance)
       command_instance.run
     else
-      Utils::Output.odeprecated "Calling `brew #{cmd}` without subclassing `AbstractCommand`",
-                                "subclassing of `Homebrew::AbstractCommand` " \
-                                "(see https://docs.brew.sh/External-Commands)"
+      Utils::Output.odisabled "Calling `brew #{cmd}` without subclassing `AbstractCommand`",
+                              "subclassing of `Homebrew::AbstractCommand` " \
+                              "(see https://docs.brew.sh/External-Commands)"
       begin
         Homebrew.public_send Commands.method_name(cmd)
       rescue NoMethodError => e

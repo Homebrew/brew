@@ -11,6 +11,9 @@ RSpec.describe Homebrew::DownloadQueue do
     instance_double(
       Downloadable,
       cached_download:,
+      checksum:               nil,
+      downloaded_and_valid?:  false,
+      downloader:             nil,
       download_queue_message: "Bottle testball",
       download_queue_name:    "testball",
       download_queue_type:    "Bottle",
@@ -36,5 +39,36 @@ RSpec.describe Homebrew::DownloadQueue do
 
     expect(download_queue.fetch_failed).to be(true)
     expect(Homebrew).to have_failed
+  end
+
+  it "skips fetching already downloaded files with a valid checksum" do
+    cached_download.dirname.mkpath
+    cached_download.write("already downloaded")
+
+    allow(downloadable).to receive(:downloaded_and_valid?).and_return(true)
+
+    expect(retryable_download).not_to receive(:fetch)
+    expect(downloadable).to receive(:downloader).and_return(nil)
+
+    download_queue.enqueue(downloadable)
+    download_queue.fetch
+  end
+
+  it "checks attestations for valid cached bottles" do
+    bottle = Bottle.allocate
+    allow(bottle).to receive_messages(
+      cached_download:,
+      checksum:               nil,
+      downloaded_and_valid?:  true,
+      downloader:             nil,
+      download_queue_message: "Bottle testball",
+      download_queue_name:    "testball",
+      download_queue_type:    "Bottle",
+    )
+
+    expect(Utils::Attestation).to receive(:check_attestation).with(bottle, quiet: true)
+
+    download_queue.enqueue(bottle, check_attestation: true)
+    download_queue.fetch
   end
 end

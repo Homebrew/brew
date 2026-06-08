@@ -43,9 +43,7 @@ module Homebrew
     def setup_github_actions_sandbox!
       return unless GitHub::Actions.env_set?
 
-      # TODO: odeprecated: force Linux sandbox support on when using `test-bot`.
-      ENV["HOMEBREW_SANDBOX_LINUX"] = "1" if ENV["HOMEBREW_DEVELOPER"].present? &&
-                                             ENV["HOMEBREW_SANDBOX_LINUX"].blank?
+      # TODO: odeprecated: make Linux sandbox support mandatory when using `test-bot`.
       return unless Homebrew::EnvConfig.sandbox_linux?
 
       return if configure_sandbox!

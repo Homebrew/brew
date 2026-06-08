@@ -36,8 +36,6 @@ module EnvSensitive
 
   sig { params(block: T.proc.returns(T.untyped)).returns(T.untyped) }
   def clear_sensitive_environment_for_eval!(&block)
-    return yield if Homebrew::EnvConfig.no_eval_env_scrubbing?
-
     clear_sensitive_environment!(except: ["HOMEBREW_GITHUB_API_TOKEN"], &block)
   end
 end

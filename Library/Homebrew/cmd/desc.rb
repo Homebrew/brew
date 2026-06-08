@@ -23,12 +23,11 @@ module Homebrew
         switch "-d", "--description",
                description: "Search just descriptions for <text>. If <text> is flanked by slashes, " \
                             "it is interpreted as a regular expression."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to search their " \
                             "descriptions.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--formula", "--formulae",
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",

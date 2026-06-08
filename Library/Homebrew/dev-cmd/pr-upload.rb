@@ -27,9 +27,9 @@ module Homebrew
                             "Useful for repairing bottle uploads that previously failed."
         switch "--upload-only",
                description: "Skip running `brew bottle` before uploading."
-        # odeprecated: replace with `HOMEBREW_GIT_COMMITTER_NAME` and `HOMEBREW_GIT_COMMITTER_EMAIL`.
         flag   "--committer=",
-               description: "Specify a committer name and email in `git`'s standard author format."
+               description: "Specify a committer name and email in `git`'s standard author format.",
+               odeprecated: true
         flag   "--root-url=",
                description: "Use the specified <URL> as the root of the bottle's URL instead of Homebrew's default."
         flag   "--root-url-using=",

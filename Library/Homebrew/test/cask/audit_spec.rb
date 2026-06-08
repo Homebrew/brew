@@ -1066,7 +1066,11 @@ RSpec.describe Cask::Audit, :cask do
         context "when it isn't in the official Homebrew tap" do
           let(:cask_token) { "pharo" }
 
-          it { is_expected.to pass }
+          it do
+            allow(Homebrew::Trust).to receive(:trusted?).and_return(true)
+
+            expect(run).to pass
+          end
         end
       end
     end

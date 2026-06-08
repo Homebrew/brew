@@ -22,12 +22,15 @@ RSpec.describe Homebrew::Cmd::Config do
   end
 
   it "prints HOMEBREW_CASK_OPTS_REQUIRE_SHA in env config output when set" do
+    Homebrew.raise_deprecation_exceptions = false
     ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"] = "1"
     output = StringIO.new
 
     SystemConfig.homebrew_env_config(output)
 
     expect(output.string).to include("HOMEBREW_CASK_OPTS_REQUIRE_SHA: 1")
+  ensure
+    Homebrew.raise_deprecation_exceptions = true
   end
 
   it "reads the Windows version on WSL", :needs_linux do

@@ -14,7 +14,7 @@ cask "with-depends-on-macos-failure" do
   url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
   homepage "https://brew.sh/with-depends-on-macos-failure"
 
-  depends_on macos: "== :monterey"
+  depends_on maximum_macos: :monterey
 
   app "Caffeine.app"
 end

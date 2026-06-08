@@ -90,10 +90,6 @@ module Homebrew
             description: "Require all casks to have a checksum.",
             env:         :cask_opts_require_sha,
           }],
-          [:switch, "--[no-]quarantine", {
-            env:       :cask_opts_quarantine,
-            odisabled: true,
-          }],
           [:switch, "--adopt", {
             description: "Adopt existing artifacts in the destination that are identical to those being installed. " \
                          "Cannot be combined with `--force`.",
@@ -246,7 +242,6 @@ module Homebrew
                   skip_cask_deps: args.skip_cask_deps?,
                   require_sha:    args.require_sha?,
                   reinstall:      true,
-                  quarantine:     args.quarantine?,
                   zap:            args.zap?,
                   download_queue: shared_download_queue,
                   defer_fetch:    true,
@@ -296,7 +291,7 @@ module Homebrew
               force:          args.force?,
               require_sha:    args.require_sha?,
               skip_cask_deps: args.skip_cask_deps?,
-              quarantine:     args.quarantine?,
+              quarantine:     true,
               zap:            args.zap?,
               skip_prefetch:  casks_prefetched,
               download_queue: nil,

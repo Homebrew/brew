@@ -60,6 +60,27 @@ RSpec.describe Cask::Download, :cask do
     end
   end
 
+  describe "#downloaded_and_valid?" do
+    it "quarantines valid cached downloads" do
+      cached_download = HOMEBREW_CACHE/"downloads/cask.zip"
+      cached_download.dirname.mkpath
+      cached_download.write("already downloaded")
+      checksum = Checksum.new(cached_download.sha256)
+      cask = instance_double(Cask::Cask, sha256: checksum)
+      download = described_class.new(cask, quarantine: true)
+
+      allow(download).to receive(:cached_download).and_return(cached_download)
+      allow(download).to receive(:verify_download_integrity) do |filename|
+        filename.verify_checksum(checksum)
+      end
+      allow(Cask::Quarantine).to receive(:available?).and_return(true)
+
+      expect(Cask::Quarantine).to receive(:cask!).with(cask:, download_path: cached_download)
+
+      expect(download.downloaded_and_valid?).to be(true)
+    end
+  end
+
   describe "#verify_download_integrity" do
     subject(:verification) { described_class.new(cask).verify_download_integrity(downloaded_path) }
 

@@ -4,9 +4,13 @@ last_review_date: "2026-04-25"
 
 # Documentation
 
+Start with the `brew` manual, installation, troubleshooting and FAQ (Frequently
+Asked Questions) guides if you are using Homebrew. Formulae, cask and tap
+documentation is grouped below for contributors and maintainers.
+
 ## Users
 
-- [`brew` manual page (command documentation)](Manpage.md)
+- [`brew` manual page (command documentation, also available with `man brew`)](Manpage.md)
 - [Homebrew Blog (news on major updates)](https://brew.sh/blog/)
 - [Installation](Installation.md)
 - [Support Tiers](Support-Tiers.md)

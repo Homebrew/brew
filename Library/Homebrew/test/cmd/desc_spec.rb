@@ -53,10 +53,17 @@ RSpec.describe Homebrew::Cmd::Desc do
       .and not_to_output.to_stderr
   end
 
-  it "errors when searching without tap trust mode" do
-    with_env("HOMEBREW_NO_INSTALL_FROM_API" => "1") do
+  it "successfully searches without API by default" do
+    expect(Homebrew::Search).to receive(:search_descriptions)
+      .with("testball", anything, search_type: Descriptions::SearchField::Either)
+
+    with_env(
+      "HOMEBREW_NO_INSTALL_FROM_API"  => "1",
+      "HOMEBREW_REQUIRE_TAP_TRUST"    => nil,
+      "HOMEBREW_NO_REQUIRE_TAP_TRUST" => nil,
+    ) do
       expect { described_class.new(["--search", "testball"]).run }
-        .to raise_error(UsageError, /`brew desc --search` needs `HOMEBREW_REQUIRE_TAP_TRUST=1`/)
+        .to not_to_output.to_stderr
     end
   end
 

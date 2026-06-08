@@ -30,11 +30,10 @@ module Homebrew
                description: "Print the number of unbottled and total formulae."
         switch "--lost",
                description: "Print the `homebrew/core` commits where bottles were lost in the last week."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to check them.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
 
         conflicts "--dependents", "--total", "--lost"
 

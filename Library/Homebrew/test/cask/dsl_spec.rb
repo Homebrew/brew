@@ -475,15 +475,6 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       end
     end
 
-    context "when bare macOS and a macOS version are used" do
-      let(:token) { "invalid-depends-on-macos-bare-and-version" }
-
-      it "allows the migration-only combination" do
-        expect(cask.depends_on.macos).to eq(MacOSRequirement.new([:monterey], comparator: ">="))
-        expect(cask.depends_on.requires_macos?).to be true
-      end
-    end
-
     context "when bare macOS and a block-scoped macOS version are used" do
       it "allows the active block to provide the macOS version" do
         Homebrew::SimulateSystem.with(os: :tahoe, arch: :intel) do
@@ -529,11 +520,11 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       end
     end
 
-    context "when the comparator is not an upper bound" do
+    context "when a deprecated string comparator is used" do
       let(:token) { "invalid-depends-on-maximum-macos-comparator" }
 
       it "refuses to load" do
-        expect { cask }.to raise_error(Cask::CaskInvalidError)
+        expect { cask }.to raise_error(MethodDeprecatedError)
       end
     end
 

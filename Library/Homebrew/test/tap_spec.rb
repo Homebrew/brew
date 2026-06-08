@@ -83,6 +83,11 @@ RSpec.describe Tap do
   end
 
   def setup_completion(link:)
+    allow(Commands).to receive(:rebuild_commands_completion_list)
+    allow(CacheStoreDatabase).to receive(:use).and_call_original
+    allow(CacheStoreDatabase).to receive(:use).with(:descriptions)
+    allow(CacheStoreDatabase).to receive(:use).with(:cask_descriptions)
+
     HOMEBREW_REPOSITORY.cd do
       system "git", "init"
       system "git", "config", "--replace-all", "homebrew.linkcompletions", link.to_s
@@ -358,6 +363,11 @@ RSpec.describe Tap do
       source_repository = HOMEBREW_PREFIX.parent/"source-repository"
       worktree_git_dir = HOMEBREW_REPOSITORY/".git"
 
+      allow(Commands).to receive(:rebuild_commands_completion_list)
+      allow(CacheStoreDatabase).to receive(:use).and_call_original
+      allow(CacheStoreDatabase).to receive(:use).with(:descriptions)
+      allow(CacheStoreDatabase).to receive(:use).with(:cask_descriptions)
+
       [CoreTap.instance, CoreCaskTap.instance].each do |tap|
         source_tap = source_repository/"Library/Taps/#{tap.full_name.downcase}"
 
@@ -373,7 +383,7 @@ RSpec.describe Tap do
         worktree_git_dir.write "gitdir: #{source_repository}/.git/worktrees/#{HOMEBREW_REPOSITORY.basename}\n"
 
         allow(tap).to receive_messages(command_files: [], formula_files: [], cask_files: [],
-                                       formula_names: [], cask_tokens: [])
+                                       formula_names: [], cask_tokens: [], link_completions_and_manpages: nil)
         expect(tap).to receive(:safe_system)
           .with("git", "-C", source_tap, "worktree", "add", "--detach", tap.path, "HEAD")
           .and_wrap_original do
@@ -396,6 +406,11 @@ RSpec.describe Tap do
       source_worktree = HOMEBREW_PREFIX.parent/"source-worktree"
       source_tap = source_worktree/"Library/Taps/#{tap.full_name.downcase}"
 
+      allow(Commands).to receive(:rebuild_commands_completion_list)
+      allow(CacheStoreDatabase).to receive(:use).and_call_original
+      allow(CacheStoreDatabase).to receive(:use).with(:descriptions)
+      allow(CacheStoreDatabase).to receive(:use).with(:cask_descriptions)
+
       FileUtils.rm_rf tap.path
       source_tap.mkpath
       source_tap.cd do
@@ -413,7 +428,7 @@ RSpec.describe Tap do
         .with("git", "-C", HOMEBREW_REPOSITORY, "worktree", "list", "--porcelain")
         .and_return("worktree #{source_worktree}\n")
       allow(tap).to receive_messages(command_files: [], formula_files: [], cask_files: [],
-                                     formula_names: [], cask_tokens: [])
+                                     formula_names: [], cask_tokens: [], link_completions_and_manpages: nil)
       expect(tap).to receive(:safe_system)
         .with("git", "-C", source_tap, "worktree", "add", "--detach", tap.path, "HEAD")
         .and_wrap_original do
@@ -434,6 +449,11 @@ RSpec.describe Tap do
       source_repository = HOMEBREW_PREFIX.parent/"source-repository"
       source_tap = source_repository/"Library/Taps/#{tap.full_name.downcase}"
 
+      allow(Commands).to receive(:rebuild_commands_completion_list)
+      allow(CacheStoreDatabase).to receive(:use).and_call_original
+      allow(CacheStoreDatabase).to receive(:use).with(:descriptions)
+      allow(CacheStoreDatabase).to receive(:use).with(:cask_descriptions)
+
       FileUtils.rm_rf tap.path
       source_tap.mkpath
       (source_tap/".git").mkpath
@@ -442,7 +462,7 @@ RSpec.describe Tap do
         .write "gitdir: #{source_repository}/.git/worktrees/#{HOMEBREW_REPOSITORY.basename}\n"
 
       allow(tap).to receive_messages(command_files: [], formula_files: [], cask_files: [],
-                                     formula_names: [], cask_tokens: [])
+                                     formula_names: [], cask_tokens: [], link_completions_and_manpages: nil)
       expect(tap).to receive(:safe_system)
         .with("git", "clone", requested_remote, tap.path.to_s, "--origin=origin", "--template=",
               "--config", "core.fsmonitor=false")
@@ -543,6 +563,7 @@ RSpec.describe Tap do
   end
 
   specify "#link_completions_and_manpages when completions are enabled for non-official tap" do
+    tap = T.let(nil, T.untyped)
     setup_tap_files
     setup_git_repo
     setup_completion link: true
@@ -559,11 +580,13 @@ RSpec.describe Tap do
     expect(HOMEBREW_PREFIX/"share/fish/vendor_completions.d/brew-tap-cmd.fish").to be_a_file
     tap.uninstall
   ensure
+    tap.uninstall if tap&.installed?
     FileUtils.rm_r(HOMEBREW_PREFIX/"etc") if (HOMEBREW_PREFIX/"etc").exist?
     FileUtils.rm_r(HOMEBREW_PREFIX/"share") if (HOMEBREW_PREFIX/"share").exist?
   end
 
   specify "#link_completions_and_manpages when completions are disabled for non-official tap" do
+    tap = T.let(nil, T.untyped)
     setup_tap_files
     setup_git_repo
     setup_completion link: false
@@ -577,6 +600,7 @@ RSpec.describe Tap do
     expect(HOMEBREW_PREFIX/"share/fish/vendor_completions.d/brew-tap-cmd.fish").not_to be_a_file
     tap.uninstall
   ensure
+    tap.uninstall if tap&.installed?
     FileUtils.rm_r(HOMEBREW_PREFIX/"etc") if (HOMEBREW_PREFIX/"etc").exist?
     FileUtils.rm_r(HOMEBREW_PREFIX/"share") if (HOMEBREW_PREFIX/"share").exist?
   end

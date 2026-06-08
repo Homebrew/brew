@@ -67,22 +67,6 @@ Show an alias\[u2019]s command\. If no alias is given, print the whole list\.
 .TP
 \fB\-\-edit\fP
 Edit aliases in a text editor\. Either one or all aliases may be opened at once\. If the given alias doesn\[u2019]t exist it\[u2019]ll be pre\-populated with a template\.
-.SS "\fBanalytics\fP \fR[\fIsubcommand\fP]"
-Control Homebrew\[u2019]s anonymous aggregate user behaviour analytics\. Read more at 
-.UR https://docs\.brew\.sh/Analytics
-.UE \&\.
-.TP
-\fBbrew analytics\fP [\fBstate\fP]
-Display the current state of Homebrew\[u2019]s analytics\.
-.TP
-\fBbrew analytics regenerate\-uuid\fP
-Delete Homebrew\[u2019]s legacy analytics UUID\.
-.TP
-\fBbrew analytics on\fP
-Turn Homebrew\[u2019]s analytics on\.
-.TP
-\fBbrew analytics off\fP
-Turn Homebrew\[u2019]s analytics off\.
 .SS "\fBas\-console\-user\fP \fIcommand\fP \fR[\fIargs\fP \.\.\.]"
 Run a Homebrew command as the active macOS console user\.
 .P
@@ -235,9 +219,6 @@ Run up to this many formula installations in parallel\. Defaults to 1 (sequentia
 .TP
 \fB\-f\fP, \fB\-\-force\fP
 Run with \fB\-\-force\fP/\fB\-\-overwrite\fP\&\.
-.TP
-\fB\-\-cleanup\fP
-Ask to perform cleanup after installing dependencies\. Requires \fB\-\-force\fP, \fB\-\-force\-cleanup\fP or \fB$HOMEBREW_ASK\fP\&\.
 .TP
 \fB\-\-force\-cleanup\fP
 Perform cleanup after installing dependencies without asking\. Enabled by default if \fB$HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP\fP is set and \fB\-\-global\fP is passed\.
@@ -804,11 +785,8 @@ Treat all named arguments as formulae\.
 Treat all named arguments as casks\.
 .SS "\fBformulae\fP"
 List all locally installable formulae including short names\.
-.SS "\fBgist\-logs\fP \fR[\fIoptions\fP] \fIformula\fP"
+.SS "\fBgist\-logs\fP \fR[\fB\-\-new\-issue\fP] \fR[\fB\-\-private\fP] \fIformula\fP"
 Upload logs for a failed build of \fIformula\fP to a new Gist\. Presents an error message if no logs are found\.
-.TP
-\fB\-\-with\-hostname\fP
-Include the hostname in the Gist\.
 .TP
 \fB\-n\fP, \fB\-\-new\-issue\fP
 Automatically create a new issue in the appropriate GitHub repository after creating the Gist\.
@@ -839,9 +817,6 @@ Which type of analytics data to retrieve\. The value for \fIcategory\fP must be 
 .TP
 \fB\-\-github\fP
 Open the GitHub source page for \fIformula\fP and \fIcask\fP in a browser\. To view the history locally: \fBbrew log \-p\fP \fIformula\fP or \fIcask\fP
-.TP
-\fB\-\-fetch\-manifest\fP
-Fetch GitHub Packages manifest for extra information when \fIformula\fP is not installed\.
 .TP
 \fB\-\-json\fP
 Print a JSON representation\. Currently the default value for \fIversion\fP is \fBv1\fP for \fIformula\fP\&\. For \fIformula\fP and \fIcask\fP use \fBv2\fP\&\. See the docs for examples of using the JSON output: 
@@ -890,7 +865,7 @@ Print the verification and post\-install steps\.
 Show what would be installed, but do not actually install anything\.
 .TP
 \fB\-\-ask\fP
-Ask for confirmation before downloading and installing\. Print the same plan as \fB\-\-dry\-run\fP before prompting\. Only prompts if the plan includes dependencies or dependants; if the requested formulae or casks are the only things to install, it only prints the plan\. The confirmation prompt is skipped without a TTY\. Enabled by default if \fB$HOMEBREW_ASK\fP is set\.
+Ask for confirmation before downloading and installing\. Print the same plan as \fB\-\-dry\-run\fP before prompting\. Only prompts if the plan includes dependencies or dependants; if the requested formulae or casks are the only things to install, it only prints the plan\. The confirmation prompt is skipped without a TTY\.
 .TP
 \fB\-\-formula\fP
 Treat all named arguments as formulae\.
@@ -1015,9 +990,6 @@ List only pinned packages, or only the specified (pinned) packages if \fIformula
 \fB\-\-installed\-on\-request\fP
 List the formulae installed on request\.
 .TP
-\fB\-\-installed\-as\-dependency\fP
-List the formulae installed as dependencies\.
-.TP
 \fB\-\-poured\-from\-bottle\fP
 List the formulae installed from a bottle\.
 .TP
@@ -1086,7 +1058,7 @@ Act as if none of the specified \fIhidden\fP are installed\. \fIhidden\fP should
 Create symlinks for Homebrew\[u2019]s installed NodeJS versions in \fB~/\.nodenv/versions\fP\&\.
 .P
 Note that older version symlinks will also be created so e\.g\. NodeJS 19\.1\.0 will also be symlinked to 19\.0\.0\.
-.SS "\fBoptions\fP \fR[\fIoptions\fP] \fR[\fIformula\fP \.\.\.]"
+.SS "\fBoptions\fP \fR[\fB\-\-compact\fP] \fR[\fB\-\-installed\fP] \fR[\fIformula\fP \.\.\.]"
 Show install options specific to \fIformula\fP\&\.
 .TP
 \fB\-\-compact\fP
@@ -1094,9 +1066,6 @@ Show all options on a single line separated by spaces\.
 .TP
 \fB\-\-installed\fP
 Show options for formulae that are currently installed\.
-.TP
-\fB\-\-command\fP
-Show options for the specified \fIcommand\fP\&\.
 .SS "\fBoutdated\fP \fR[\fIoptions\fP] \fR[\fIformula\fP|\fIcask\fP \.\.\.]"
 List installed casks and formulae that have an updated version available\. By default, version information is displayed in interactive shells and suppressed otherwise\.
 .TP
@@ -1186,7 +1155,7 @@ Install without checking for previously installed keg\-only or non\-migrated ver
 Print the verification and post\-install steps\.
 .TP
 \fB\-\-ask\fP
-Ask for confirmation before downloading and reinstalling\. Print what would be reinstalled before prompting\. Only prompts if the plan includes dependencies or dependants; if the requested formulae or casks are the only things to reinstall, it only prints the plan\. The confirmation prompt is skipped without a TTY\. Enabled by default if \fB$HOMEBREW_ASK\fP is set\.
+Ask for confirmation before downloading and reinstalling\. Print what would be reinstalled before prompting\. Only prompts if the plan includes dependencies or dependants; if the requested formulae or casks are the only things to reinstall, it only prints the plan\. The confirmation prompt is skipped without a TTY\.
 .TP
 \fB\-\-formula\fP
 Treat all named arguments as formulae\.
@@ -1469,9 +1438,6 @@ Untrust the named external command\.
 .SS "\fBupdate\fP, \fBup\fP \fR[\fIoptions\fP]"
 Fetch the newest version of Homebrew and all formulae from GitHub using \fBgit\fP(1) and perform any necessary migrations\.
 .TP
-\fB\-\-merge\fP
-Use \fBgit merge\fP to apply updates (rather than \fBgit rebase\fP)\.
-.TP
 \fB\-\-auto\-update\fP
 Run on auto\-updates (e\.g\. before \fBbrew install\fP)\. Skips some slower steps\.
 .TP
@@ -1515,7 +1481,7 @@ Show what would be upgraded, but do not actually upgrade anything\.
 Only upgrade a named formula or cask with an installed version below the given minimum version\.
 .TP
 \fB\-\-ask\fP
-Ask for confirmation before downloading and upgrading\. Print the same plan as \fB\-\-dry\-run\fP, including available download sizes\. When named arguments are provided, only prompts if the plan includes packages other than those arguments; if the requested formulae or casks are the only things to upgrade, it only prints the plan\. With no named arguments, prompts if anything would be upgraded\. The confirmation prompt is skipped without a TTY\. Enabled by default if \fB$HOMEBREW_ASK\fP is set\.
+Ask for confirmation before downloading and upgrading\. Print the same plan as \fB\-\-dry\-run\fP, including available download sizes\. When named arguments are provided, only prompts if the plan includes packages other than those arguments; if the requested formulae or casks are the only things to upgrade, it only prints the plan\. With no named arguments, prompts if anything would be upgraded\. The confirmation prompt is skipped without a TTY\.
 .TP
 \fB\-\-formula\fP
 Treat all named arguments as formulae\. If no named arguments are specified, upgrade only outdated formulae\.
@@ -1700,9 +1666,6 @@ Only check formulae and casks that are currently installed\.
 \fB\-\-new\fP
 Run various additional style checks to determine if a new formula or cask is eligible for Homebrew\. This should be used when creating new formulae or casks and implies \fB\-\-strict\fP and \fB\-\-online\fP\&\.
 .TP
-\fB\-\-[no\-]signing\fP
-Audit for app signatures, which are required by macOS on ARM\.
-.TP
 \fB\-\-changed\fP
 Check files that were changed from the \fBmain\fP branch\.
 .TP
@@ -1770,9 +1733,6 @@ When passed with \fB\-\-json\fP, the tab will be written to the JSON file but no
 .TP
 \fB\-\-no\-all\-checks\fP
 Don\[u2019]t try to create an \fBall\fP bottle or stop a no\-change upload\.
-.TP
-\fB\-\-committer\fP
-Specify a committer name and email in \fBgit\fP\[u2019]s standard author format\.
 .TP
 \fB\-\-root\-url\fP
 Use the specified \fIURL\fP as the root of the bottle\[u2019]s URL instead of Homebrew\[u2019]s default\.
@@ -2506,14 +2466,11 @@ Treat all named arguments as formulae\.
 .TP
 \fB\-\-cask\fP
 Treat all named arguments as casks\.
-.SS "\fBupdate\-perl\-resources\fP \fR[\fIoptions\fP] \fIformula\fP \fR[\.\.\.]"
+.SS "\fBupdate\-perl\-resources\fP \fR[\fB\-\-print\-only\fP] \fR[\fB\-\-ignore\-errors\fP] \fIformula\fP \fR[\.\.\.]"
 Update versions for CPAN resource blocks in \fIformula\fP\&\.
 .TP
 \fB\-p\fP, \fB\-\-print\-only\fP
 Print the updated resource blocks instead of changing \fIformula\fP\&\.
-.TP
-\fB\-s\fP, \fB\-\-silent\fP
-Suppress any output\.
 .TP
 \fB\-\-ignore\-errors\fP
 Continue processing even if some resources can\[u2019]t be resolved\.
@@ -2522,9 +2479,6 @@ Update versions for PyPI resource blocks in \fIformula\fP\&\.
 .TP
 \fB\-p\fP, \fB\-\-print\-only\fP
 Print the updated resource blocks instead of changing \fIformula\fP\&\.
-.TP
-\fB\-s\fP, \fB\-\-silent\fP
-Suppress any output\.
 .TP
 \fB\-\-ignore\-errors\fP
 Record all discovered resources, even those that can\[u2019]t be resolved successfully\. This option is ignored for homebrew/core formulae\.
@@ -2733,9 +2687,6 @@ Prefix all download URLs, including those for bottles, with this value\. For exa
 \fBHOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK\fP
 When \fB$HOMEBREW_ARTIFACT_DOMAIN\fP and \fB$HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK\fP are both set, if the request to \fB$HOMEBREW_ARTIFACT_DOMAIN\fP fails then Homebrew will error rather than trying any other/default URLs\.
 .TP
-\fBHOMEBREW_ASK\fP
-If set, pass \fB\-\-ask\fP to \fBbrew install\fP, \fBbrew upgrade\fP and \fBbrew reinstall\fP commands\. Enabled by default if \fB$HOMEBREW_DEVELOPER\fP is set\. This will become the default behaviour in the next release\. Ask mode prints the plan before proceeding and prompts only if the plan includes dependencies, dependants or packages other than named arguments\. Otherwise, it only prints the plan\. The confirmation prompt is skipped without a TTY\.
-.TP
 \fBHOMEBREW_AUTO_UPDATE_SECS\fP
 Run \fBbrew update\fP once every \fB$HOMEBREW_AUTO_UPDATE_SECS\fP seconds before some commands, e\.g\. \fBbrew install\fP, \fBbrew upgrade\fP or \fBbrew tap\fP\&\. Alternatively, disable auto\-update entirely with \fB$HOMEBREW_NO_AUTO_UPDATE\fP\&\.
 .RS
@@ -2818,7 +2769,11 @@ If set, \fBbrew bundle cleanup\fP will not clean up VSCode (and forks/variants) 
 If set, \fBbrew bundle cleanup\fP will not clean up WinGet packages\.
 .TP
 \fBHOMEBREW_BUNDLE_DESCRIBE\fP
-If set, add a description comment above each line in \fBbrew bundle dump\fP and \fBbrew bundle add\fP, unless the dependency does not have a description\. Enabled by default if \fB$HOMEBREW_DEVELOPER\fP is set\. This will become the default behaviour in a later minor release\.
+If set, add a description comment above each line in \fBbrew bundle dump\fP and \fBbrew bundle add\fP, unless the dependency does not have a description\. This is the default unless \fB$HOMEBREW_BUNDLE_NO_DESCRIBE\fP is set\.
+.RS
+.P
+\fIDefault:\fP \fBtrue\fP\&\.
+.RE
 .TP
 \fBHOMEBREW_BUNDLE_DUMP_NO_BREW\fP
 If set, \fBbrew bundle dump\fP will not dump formula dependencies\.
@@ -2867,16 +2822,20 @@ Use this value as the number of formula installations to run in parallel for \fB
 .RE
 .TP
 \fBHOMEBREW_BUNDLE_NO_DESCRIBE\fP
-If set, do not enable bundle description comments from \fB$HOMEBREW_BUNDLE_DESCRIBE\fP or the \fB$HOMEBREW_DEVELOPER\fP default\. This does not disable an explicit \fB\-\-describe\fP\&\.
+If set, do not enable bundle description comments from \fB$HOMEBREW_BUNDLE_DESCRIBE\fP or the default\. This does not disable an explicit \fB\-\-describe\fP\&\.
 .TP
 \fBHOMEBREW_BUNDLE_NO_JOBS\fP
 If set, do not enable parallel jobs from \fB$HOMEBREW_BUNDLE_JOBS\fP or its default\. This does not disable an explicit \fB\-\-jobs\fP\&\.
 .TP
 \fBHOMEBREW_BUNDLE_NO_SECRETS\fP
-If set, \fBbrew bundle exec\fP, \fBbrew bundle env\fP and \fBbrew bundle sh\fP will attempt to remove secrets from the environment\. Enabled by default if \fB$HOMEBREW_DEVELOPER\fP is set\. This will become the default behaviour in a later minor release\.
+If set, \fBbrew bundle exec\fP, \fBbrew bundle env\fP and \fBbrew bundle sh\fP will attempt to remove secrets from the environment\. This is the default unless \fB$HOMEBREW_BUNDLE_SECRETS\fP is set\.
+.RS
+.P
+\fIDefault:\fP \fBtrue\fP\&\.
+.RE
 .TP
 \fBHOMEBREW_BUNDLE_SECRETS\fP
-If set, do not enable secret scrubbing from \fB$HOMEBREW_BUNDLE_NO_SECRETS\fP or the \fB$HOMEBREW_DEVELOPER\fP default\. This does not disable an explicit \fB\-\-no\-secrets\fP\&\.
+If set, do not enable secret scrubbing from \fB$HOMEBREW_BUNDLE_NO_SECRETS\fP or the default\. This does not disable an explicit \fB\-\-no\-secrets\fP\&\.
 .TP
 \fBHOMEBREW_BUNDLE_USER_CACHE\fP
 If set, use this directory as the \fBbundle\fP(1) user cache\.
@@ -3134,7 +3093,7 @@ If set, do not send analytics\. Google Analytics were destroyed\. For more infor
 .UE
 .TP
 \fBHOMEBREW_NO_ASK\fP
-If set, do not enable ask mode from \fB$HOMEBREW_ASK\fP or the \fB$HOMEBREW_DEVELOPER\fP default\. This does not disable an explicit \fB\-\-ask\fP\&\.
+If set, do not enable default ask mode\. This does not disable an explicit \fB\-\-ask\fP\&\.
 .TP
 \fBHOMEBREW_NO_AUTOREMOVE\fP
 If set, calls to \fBbrew cleanup\fP and \fBbrew uninstall\fP will not automatically remove unused formula dependents\.
@@ -3160,9 +3119,6 @@ If set, do not print \fB$HOMEBREW_INSTALL_BADGE\fP on a successful build\.
 .TP
 \fBHOMEBREW_NO_ENV_HINTS\fP
 If set, do not print any hints about changing Homebrew\[u2019]s behaviour with environment variables\.
-.TP
-\fBHOMEBREW_NO_EVAL_ENV_SCRUBBING\fP
-If set, sensitive environment variables are available while evaluating formulae and casks\. \fB$HOMEBREW_GITHUB_API_TOKEN\fP is still available during evaluation when this is unset\. This setting will be removed in a later release\.
 .TP
 \fBHOMEBREW_NO_FORCE_BREW_WRAPPER\fP
 \fBDeprecated:\fP If set, disables \fB$HOMEBREW_FORCE_BREW_WRAPPER\fP behaviour, even if set\.
@@ -3195,14 +3151,14 @@ If set, \fBbrew info\fP and \fBbrew install\fP will not warn when a formula\[u20
 \fBHOMEBREW_NO_REQUIRE_TAP_TRUST\fP
 If set, do not require non\-official tap formulae, casks or commands to be trusted\. This is not recommended and will be removed in a later release\. Also enables commands that evaluate all formulae and casks\.
 .TP
-\fBHOMEBREW_NO_SANDBOX_CASK\fP
-If set, disable sandboxing for cask artifacts that generate files by running executables\.
-.TP
 \fBHOMEBREW_NO_SANDBOX_LINUX\fP
 If set, disable the Linux sandbox\.
 .TP
 \fBHOMEBREW_NO_UPDATE_REPORT_NEW\fP
 If set, \fBbrew update\fP will not show the list of newly added formulae/casks\.
+.TP
+\fBHOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS\fP
+If set, \fBbrew upgrade\fP will not automatically upgrade casks with \fBauto_updates true\fP\&\. Does not affect \fB\-\-greedy\fP or \fB\-\-greedy\-auto\-updates\fP upgrades\.
 .TP
 \fBHOMEBREW_NO_UPGRADE_QUIT_CASKS\fP
 If set, \fBbrew upgrade\fP will not quit running applications for casks during upgrades\.
@@ -3221,13 +3177,14 @@ If set, \fBbrew install\fP \fIformula\fP will use this URL to download PyPI pack
 If set, use Pry for the \fBbrew irb\fP command\.
 .TP
 \fBHOMEBREW_REQUIRE_TAP_TRUST\fP
-If set, require non\-official tap formulae, casks and commands to be trusted with \fBbrew trust\fP before Homebrew loads them\. Also enables commands that evaluate all formulae and casks\.
-.TP
-\fBHOMEBREW_SANDBOX_LINUX\fP
-If set, use the \fBbwrap\fP(1) sandbox for formula installation and testing on Linux\. Enabled by default if \fB$HOMEBREW_DEVELOPER\fP is set\. This will be the default in Homebrew 5\.2\.0\.
+If set, require non\-official tap formulae, casks and commands to be trusted with \fBbrew trust\fP before Homebrew loads them\. This is the default unless \fB$HOMEBREW_NO_REQUIRE_TAP_TRUST\fP is set\. Also enables commands that evaluate all formulae and casks\.
+.RS
+.P
+\fIDefault:\fP \fBtrue\fP\&\.
+.RE
 .TP
 \fBHOMEBREW_SBOM\fP
-If set, Homebrew will write SBOM files and run SBOM\-related installation logic\. This is a no\-op until Homebrew 5\.2\.0, when it will become required for that behaviour\.
+If set, Homebrew will write SBOM files and run SBOM\-related installation logic\.
 .TP
 \fBHOMEBREW_SIMULATE_MACOS_ON_LINUX\fP
 If set, running Homebrew on Linux will simulate certain macOS code paths\. This is useful when auditing macOS formulae while on Linux\.
@@ -3272,7 +3229,11 @@ Use this path as the temporary directory for building packages\. Changing this m
 If set, always use the latest stable tag (even if developer commands have been run)\.
 .TP
 \fBHOMEBREW_UPGRADE_AUTO_UPDATES_CASKS\fP
-If set, \fBbrew upgrade\fP will automatically upgrade casks with \fBauto_updates true\fP when Homebrew detects that the version in the app bundle is older than the version in the tap\. Does not affect \fB\-\-greedy\fP or \fB\-\-greedy\-auto\-updates\fP upgrades\. Enabled by default if \fB$HOMEBREW_DEVELOPER\fP is set\. This will become the default behavior in Homebrew 5\.2\.0\.
+If set, \fBbrew upgrade\fP will automatically upgrade casks with \fBauto_updates true\fP when Homebrew detects that the version in the app bundle is older than the version in the tap\. Does not affect \fB\-\-greedy\fP or \fB\-\-greedy\-auto\-updates\fP upgrades\. This is the default unless \fB$HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS\fP is set\.
+.RS
+.P
+\fIDefault:\fP \fBtrue\fP\&\.
+.RE
 .TP
 \fBHOMEBREW_UPGRADE_GREEDY\fP
 If set, pass \fB\-\-greedy\fP to all cask upgrade commands\.
@@ -3342,8 +3303,6 @@ Homebrew\[u2019]s Project Leader is Mike McQuaid\.
 Homebrew\[u2019]s Lead Maintainers are Bevan Kay, Bo Anderson, Branch Vincent, Carlo Cabrera, Dustin Rodrigues, FX Coudert, Issy Long, Justin Krehel, Michael Cho, Michka Popoff, Mike McQuaid, Nanda H Krishna, Patrick Linnane, Rui Chen, Ruoyu Zhong, Sam Ford, Sean Molenaar and Thierry Moisan\.
 .P
 Homebrew\[u2019]s other Maintainers are Anton Melnikov, Caleb Xu, Daeho Ro, Douglas Eichelberger, Eric Knibbe, Klaus Hipp, Markus Reiter, Rylan Polster, Štefan Baebler and William Woodruff\.
-.P
-Former Maintainers with significant contributions include Alexander Bayandin, Miccal Matthews, Misty De Méo, Shaun Jackman, Vítor Galvão, Claudia Pellegrino, Seeker, Jan Viljanen, JCount, commitay, Dominyk Tiller, Tim Smith, Baptiste Fontaine, Xu Cheng, Martin Afanasjew, Brett Koonce, Charlie Sharpsteen, Jack Nagel, Adam Vandenberg, Andrew Janke, Alex Dunn, neutric, Tomasz Pajor, Uladzislau Shablinski, Alyssa Ross, ilovezfs, Chongyu Zhu and Homebrew\[u2019]s creator: Max Howell\.
 .SH "BUGS"
 See our issues on GitHub:
 .TP

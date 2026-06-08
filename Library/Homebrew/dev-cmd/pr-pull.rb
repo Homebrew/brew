@@ -45,9 +45,9 @@ module Homebrew
                             "Useful for repairing bottle uploads that previously failed."
         switch "--retain-bottle-dir",
                description: "Does not clean up the tmp directory for the bottle so it can be used later."
-        # odeprecated: replace with `HOMEBREW_GIT_COMMITTER_NAME` and `HOMEBREW_GIT_COMMITTER_EMAIL`.
         flag   "--committer=",
-               description: "Specify a committer name and email in `git`'s standard author format."
+               description: "Specify a committer name and email in `git`'s standard author format.",
+               odeprecated: true
         flag   "--message=",
                depends_on:  "--autosquash",
                description: "Message to include when autosquashing revision bumps, deletions and rebuilds."

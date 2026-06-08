@@ -34,12 +34,11 @@ module Homebrew
                description: "Only list formulae and casks that are currently installed."
         switch "--missing",
                description: "Only list formulae and casks that are not currently installed."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to show " \
                             "their dependents.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--include-implicit",
                description: "Include formulae that have <formula> as an implicit dependency for " \
                             "downloading and unpacking source files."

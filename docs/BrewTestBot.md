@@ -1,6 +1,6 @@
 ---
-logo: /assets/img/brewtestbot.png
-image: /assets/img/brewtestbot.png
+logo: https://brew.sh/assets/img/brewtestbot.png
+image: https://brew.sh/assets/img/brewtestbot.png
 redirect_from:
   - /Brew-Test-Bot
 last_review_date: "2025-02-08"

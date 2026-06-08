@@ -8,12 +8,15 @@ RSpec.describe RuboCop::Cop::Homebrew::OSDependsOn, :config do
     expect_offense(<<~RUBY)
       depends_on macos: ">= :catalina"
                         ^^^^^^^^^^^^^^ Use `depends_on macos: :catalina`.
+      depends_on macos: "<= :sonoma"
+                        ^^^^^^^^^^^^ Use `depends_on maximum_macos: :sonoma`.
       depends_on maximum_macos: "<= :tahoe"
                                 ^^^^^^^^^^^ Use `depends_on maximum_macos: :tahoe`.
     RUBY
 
     expect_correction(<<~RUBY)
       depends_on macos: :catalina
+      depends_on maximum_macos: :sonoma
       depends_on maximum_macos: :tahoe
     RUBY
   end

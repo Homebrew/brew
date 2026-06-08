@@ -491,7 +491,7 @@ class Tap
 
     raise TapNoCustomRemoteError, name if custom_remote && clone_target.nil?
 
-    requested_remote = clone_target || default_remote
+    requested_remote = (clone_target || default_remote).to_s
 
     if installed? && !custom_remote
       raise TapRemoteMismatchError.new(name, @remote, requested_remote) if clone_target && requested_remote != remote
@@ -586,13 +586,17 @@ class Tap
     $stderr.puts "Tapped#{formatted_contents} (#{path.abv})." unless quiet
 
     require "description_cache_store"
-    CacheStoreDatabase.use(:descriptions) do |db|
-      DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
-                           .update_from_formula_names!(formula_names)
+    if formula_names.present?
+      CacheStoreDatabase.use(:descriptions) do |db|
+        DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+                             .update_from_formula_names!(formula_names)
+      end
     end
-    CacheStoreDatabase.use(:cask_descriptions) do |db|
-      CaskDescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
-                               .update_from_cask_tokens!(cask_tokens)
+    if cask_tokens.present?
+      CacheStoreDatabase.use(:cask_descriptions) do |db|
+        CaskDescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
+                                 .update_from_cask_tokens!(cask_tokens)
+      end
     end
 
     if official?

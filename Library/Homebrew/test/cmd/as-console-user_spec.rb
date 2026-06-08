@@ -98,7 +98,8 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
       <<~SH,
         source "#{macos_user_script}"
         defaults() { printf 'munki\\n'; }
-        stat() { printf 'root\\n'; }
+        stat() { printf 'root 600\\n'; }
+        ls() { printf -- '-rw------- 1 root wheel 0 x\\n'; }
         homebrew-package-user
       SH
       "HOMEBREW_PKG_USER_PLIST" => homebrew_pkg_user_plist.to_s,
@@ -106,6 +107,108 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
 
     expect(status.success?).to be true
     expect(stdout).to eq("munki\n")
+    expect(stderr).to be_empty
+  end
+
+  it "honours a root-owned plist that carries extended attributes" do
+    homebrew_pkg_user_plist = test_root/".homebrew_pkg_user.plist"
+    homebrew_pkg_user_plist.write "plist"
+
+    stdout, stderr, status = run_as_console_user_shell(
+      <<~SH,
+        source "#{macos_user_script}"
+        defaults() { printf 'munki\\n'; }
+        stat() { printf 'root 600\\n'; }
+        ls() { printf -- '-rw-------@ 1 root wheel 0 x\\n'; }
+        homebrew-package-user
+      SH
+      "HOMEBREW_PKG_USER_PLIST" => homebrew_pkg_user_plist.to_s,
+    )
+
+    expect(status.success?).to be true
+    expect(stdout).to eq("munki\n")
+    expect(stderr).to be_empty
+  end
+
+  it "ignores a package user plist not owned by root" do
+    homebrew_pkg_user_plist = test_root/".homebrew_pkg_user.plist"
+    homebrew_pkg_user_plist.write "plist"
+
+    stdout, stderr, status = run_as_console_user_shell(
+      <<~SH,
+        source "#{macos_user_script}"
+        defaults() { printf 'attacker\\n'; }
+        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'attacker 600\\n';; esac; }
+        ls() { printf -- '-rw------- 1 attacker staff 0 x\\n'; }
+        homebrew-package-user
+      SH
+      "HOMEBREW_PKG_USER_PLIST" => homebrew_pkg_user_plist.to_s,
+    )
+
+    expect(status.exitstatus).to eq 1
+    expect(stdout).to be_empty
+    expect(stderr).to be_empty
+  end
+
+  it "ignores a package user plist with loose permissions" do
+    homebrew_pkg_user_plist = test_root/".homebrew_pkg_user.plist"
+    homebrew_pkg_user_plist.write "plist"
+
+    stdout, stderr, status = run_as_console_user_shell(
+      <<~SH,
+        source "#{macos_user_script}"
+        defaults() { printf 'attacker\\n'; }
+        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'root 644\\n';; esac; }
+        ls() { printf -- '-rw-rw-rw- 1 root wheel 0 x\\n'; }
+        homebrew-package-user
+      SH
+      "HOMEBREW_PKG_USER_PLIST" => homebrew_pkg_user_plist.to_s,
+    )
+
+    expect(status.exitstatus).to eq 1
+    expect(stdout).to be_empty
+    expect(stderr).to be_empty
+  end
+
+  it "ignores a package user plist carrying an ACL" do
+    homebrew_pkg_user_plist = test_root/".homebrew_pkg_user.plist"
+    homebrew_pkg_user_plist.write "plist"
+
+    stdout, stderr, status = run_as_console_user_shell(
+      <<~SH,
+        source "#{macos_user_script}"
+        defaults() { printf 'attacker\\n'; }
+        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'root 600\\n';; esac; }
+        ls() { printf -- '-rw-------@ 1 root wheel 0 x\\n 0: group:everyone deny delete\\n'; }
+        homebrew-package-user
+      SH
+      "HOMEBREW_PKG_USER_PLIST" => homebrew_pkg_user_plist.to_s,
+    )
+
+    expect(status.exitstatus).to eq 1
+    expect(stdout).to be_empty
+    expect(stderr).to be_empty
+  end
+
+  it "ignores a package user plist that is a symlink" do
+    homebrew_pkg_user_target = test_root/"target.plist"
+    homebrew_pkg_user_target.write "plist"
+    homebrew_pkg_user_plist = test_root/".homebrew_pkg_user.plist"
+    FileUtils.ln_s homebrew_pkg_user_target, homebrew_pkg_user_plist
+
+    stdout, stderr, status = run_as_console_user_shell(
+      <<~SH,
+        source "#{macos_user_script}"
+        defaults() { printf 'attacker\\n'; }
+        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'root\\n';; esac; }
+        ls() { printf -- '-rw------- 1 root wheel 0 x\\n'; }
+        homebrew-package-user
+      SH
+      "HOMEBREW_PKG_USER_PLIST" => homebrew_pkg_user_plist.to_s,
+    )
+
+    expect(status.exitstatus).to eq 1
+    expect(stdout).to be_empty
     expect(stderr).to be_empty
   end
 

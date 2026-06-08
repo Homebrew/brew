@@ -72,12 +72,11 @@ module Homebrew
                             "specified, list only its dependencies that are currently installed."
         switch "--missing",
                description: "Show only missing dependencies."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to list " \
                             "their dependencies.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--for-each",
                description: "Switch into the mode used when evaluating all formulae and casks, but only list " \
                             "dependencies for each provided <formula>, one formula per line."

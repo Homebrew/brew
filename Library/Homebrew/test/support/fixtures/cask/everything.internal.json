@@ -12,7 +12,9 @@
     ":cask": [
       "something"
     ],
-    ":macos": ">= :catalina"
+    ":macos": [
+      ":catalina"
+    ]
   },
   "desc": "Little bit of everything",
   "homepage": "https://www.everything.app/",

@@ -261,32 +261,6 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     EOS
   end
 
-  it "prints an ask mode environment hint when installing formulae" do
-    cmd = described_class.new(["testball"])
-    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil)
-    formula = formula("testball") do
-      T.bind(self, T.class_of(Formula))
-      url "https://brew.sh/testball-0.1.tar.gz"
-    end
-    formula_installer = FormulaInstaller.new(formula)
-    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
-
-    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
-    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula])
-    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
-    allow(Homebrew::Install).to receive(:check_cc_argv)
-    allow(Homebrew::Upgrade).to receive(:dependants).and_return(dependants)
-    allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
-    allow(Homebrew::Install).to receive_messages(install_formula?: true, formula_installers: [formula_installer],
-                                                 enqueue_formulae: [formula_installer])
-    allow(Homebrew::Install).to receive(:install_formulae)
-    allow(Homebrew::Upgrade).to receive(:upgrade_dependents)
-    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
-    allow(Homebrew.messages).to receive(:display_messages)
-
-    expect { cmd.run }.to output(/Enable ask mode by setting `HOMEBREW_ASK=1`/).to_stdout
-  end
-
   it "installs an explicitly requested tap before resolving a formula" do
     cmd = described_class.new(["user/repo/foo"])
     tap = Tap.fetch("user", "repo")
@@ -342,10 +316,16 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
         keg_only "test reason"
       RUBY
 
-      expect { brew "install", source_formula_name, bottle_formula_name }
-        .to output(/#{Regexp.escape(source_formula_prefix)}.*#{Regexp.escape(bottle_formula_prefix)}/m).to_stdout
-        .and output(/✔︎.*/m).to_stderr
-        .and be_a_success
+      with_env(HOMEBREW_NO_ASK: "1", HOMEBREW_NO_INSTALL_FROM_API: "1") do
+        expect do
+          brew "install", source_formula_name, bottle_formula_name,
+               "HOMEBREW_NO_ASK"              => "1",
+               "HOMEBREW_NO_INSTALL_FROM_API" => "1"
+        end
+          .to output(/#{Regexp.escape(source_formula_prefix)}.*#{Regexp.escape(bottle_formula_prefix)}/m).to_stdout
+          .and output(/✔︎.*/m).to_stderr
+          .and be_a_success
+      end
       expect(source_formula_prefix/"built-from-source").to be_a_file
       expect(bottle_formula_prefix/"foo/test").not_to be_a_file
       expect(bottle_formula_prefix/"bin/helloworld").to be_a_file
@@ -380,10 +360,17 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
         end
       RUBY
 
-      expect { brew "install", formula_name, "--HEAD", "HOMEBREW_DOWNLOAD_CONCURRENCY" => "1" }
-        .to output(/#{Regexp.escape(testball1_prefix)}/o).to_stdout
-        .and output(/Cloning into/).to_stderr
-        .and be_a_success
+      with_env(HOMEBREW_NO_ASK: "1", HOMEBREW_NO_INSTALL_FROM_API: "1") do
+        expect do
+          brew "install", formula_name, "--HEAD",
+               "HOMEBREW_DOWNLOAD_CONCURRENCY" => "1",
+               "HOMEBREW_NO_ASK"               => "1",
+               "HOMEBREW_NO_INSTALL_FROM_API"  => "1"
+        end
+          .to output(/#{Regexp.escape(testball1_prefix)}/o).to_stdout
+          .and output(/Cloning into/).to_stderr
+          .and be_a_success
+      end
       expect(testball1_prefix/"foo/test").not_to be_a_file
       expect(testball1_prefix/"bin/something.bin").to be_a_file
     end

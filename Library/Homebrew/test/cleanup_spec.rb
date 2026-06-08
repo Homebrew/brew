@@ -60,6 +60,15 @@ RSpec.describe Homebrew::Cleanup do
       expect(lock_file).to exist
     end
 
+    it "removes leftover `.reinstall` kegs in the Cellar" do
+      reinstall_keg = HOMEBREW_CELLAR/"foo/1.0.reinstall"
+      reinstall_keg.mkpath
+
+      cleanup.clean!
+
+      expect(reinstall_keg).not_to exist
+    end
+
     it "doesn't remove the lock file if it is locked" do
       lock_file.open(File::RDWR | File::CREAT).flock(File::LOCK_EX | File::LOCK_NB)
 

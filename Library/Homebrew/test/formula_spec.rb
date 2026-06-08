@@ -2380,15 +2380,16 @@ RSpec.describe Formula do
       expect(f.supports_linux?).to be true
     end
 
-    it "allows bare and versioned macOS requirements for now" do
-      f = formula do
-        url "foo"
-        version "1.0"
-        depends_on :macos
-        depends_on macos: :catalina
-      end
-
-      expect(f.requirements.grep(MacOSRequirement).count).to eq(2)
+    it "deprecates bare and versioned macOS requirements" do
+      expect do
+        formula do
+          url "foo"
+          version "1.0"
+          depends_on :macos
+          depends_on macos: :catalina
+        end
+      end.to raise_error(MethodDeprecatedError,
+                         /`depends_on :macos` with `depends_on macos:` inside an `on_macos` block/)
     end
 
     it "does not allow duplicate bare macOS requirements" do

@@ -85,17 +85,17 @@ module CPAN
     params(
       formula:       Formula,
       print_only:    T.nilable(T::Boolean),
-      silent:        T.nilable(T::Boolean),
+      quiet:         T.nilable(T::Boolean),
       verbose:       T.nilable(T::Boolean),
       ignore_errors: T.nilable(T::Boolean),
     ).returns(T.nilable(T::Boolean))
   }
-  def self.update_perl_resources!(formula, print_only: false, silent: false, verbose: false, ignore_errors: false)
+  def self.update_perl_resources!(formula, print_only: false, quiet: false, verbose: false, ignore_errors: false)
     cpan_resources = formula.resources.select { |resource| resource.url.start_with?(METACPAN_URL_PREFIX) }
 
     odie "\"#{formula.name}\" has no CPAN resources to update." if cpan_resources.empty?
 
-    show_info = !print_only && !silent
+    show_info = !print_only && !quiet
 
     non_cpan_resources = formula.resources.reject { |resource| resource.url.start_with?(METACPAN_URL_PREFIX) }
     ohai "Skipping #{non_cpan_resources.length} non-CPAN resources" if non_cpan_resources.any? && show_info
@@ -157,7 +157,7 @@ module CPAN
       return true
     end
 
-    ohai "Updating resource blocks" unless silent
+    ohai "Updating resource blocks" unless quiet
     require "utils/ast"
 
     formula_ast = Utils::AST::FormulaAST.new(formula.path.read)
@@ -172,7 +172,7 @@ module CPAN
     if package_errors.present?
       ofail "Unable to resolve some dependencies. Please check #{formula.path} for RESOURCE-ERROR comments."
     elsif updated_count.positive?
-      ohai "Updated #{updated_count} CPAN resource#{"s" if updated_count != 1}" unless silent
+      ohai "Updated #{updated_count} CPAN resource#{"s" if updated_count != 1}" unless quiet
     end
 
     true

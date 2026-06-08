@@ -86,21 +86,6 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       expect(homes).to all(satisfy { |home| !home.exist? })
     end
 
-    it "does not sandbox when HOMEBREW_NO_SANDBOX_CASK is set" do
-      artifact = cask.artifacts.grep(described_class).first
-
-      ENV["HOMEBREW_NO_SANDBOX_CASK"] = "1"
-      allow(Sandbox).to receive(:available?).and_return(true)
-      allow(Utils).to receive(:safe_popen_read) { |env, *_args, **_opts| "#{env.fetch("SHELL")} completion" }
-      expect(Sandbox).not_to receive(:new)
-
-      artifact.install_phase
-
-      expect((bash_dir/"foo").read).to eq("bash completion")
-    ensure
-      ENV["HOMEBREW_NO_SANDBOX_CASK"] = nil
-    end
-
     context "when generation fails for one shell" do
       it "warns and continues generating other shells" do
         artifact = cask.artifacts.grep(described_class).first

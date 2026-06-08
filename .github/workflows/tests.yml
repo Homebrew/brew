@@ -293,7 +293,6 @@ jobs:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # These cannot be queried at the macOS level on GitHub Actions.
           HOMEBREW_LANGUAGES: en-GB
-          HOMEBREW_SANDBOX_LINUX: 1
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Get RSpec JUnit XML filenames
@@ -355,7 +354,6 @@ jobs:
           - name: test-bot (macOS arm64)
             runs-on: macos-26
     env:
-      HOMEBREW_SANDBOX_LINUX: 1
       HOMEBREW_TEST_BOT_ANALYTICS: 1
     steps:
       - name: Install Homebrew and Homebrew's dependencies

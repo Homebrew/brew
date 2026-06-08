@@ -192,8 +192,6 @@ module Cask
 
       sig { returns(T.nilable(Sandbox)) }
       def cask_sandbox
-        return if Homebrew::EnvConfig.no_sandbox_cask?
-
         Sandbox.ensure_sandbox_installed!
         return unless Sandbox.available?
 

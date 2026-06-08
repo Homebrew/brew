@@ -144,7 +144,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     end
   end
 
-  specify "#check_untrusted_taps warns when tap trust is unset" do
+  specify "#check_untrusted_taps requires trust by default" do
     tap = instance_double(Tap, name: "thirdparty/foo")
     allow(Homebrew::Trust).to receive(:wholly_untrusted_taps).and_return([tap])
     allow(Formula).to receive(:racks).and_return([])
@@ -152,10 +152,8 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     with_env(HOMEBREW_REQUIRE_TAP_TRUST: nil, HOMEBREW_NO_REQUIRE_TAP_TRUST: nil) do
       expect(checks.check_untrusted_taps)
         .to include(
-          "Homebrew will ignore formulae, casks and commands from these taps when " \
-          "`HOMEBREW_REQUIRE_TAP_TRUST` is set.",
-          "This will become the default in Homebrew 6.0.0 or 5.2.0, whichever comes first.",
-          "export HOMEBREW_REQUIRE_TAP_TRUST=1",
+          "Homebrew is currently ignoring formulae, casks and commands from these taps " \
+          "because tap trust is required.",
           "brew untap thirdparty/foo",
           "brew trust thirdparty/foo",
           "export HOMEBREW_NO_REQUIRE_TAP_TRUST=1",

@@ -22,6 +22,54 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".env_value" do
+    it "deprecates variables using ENVS metadata" do
+      ENV["HOMEBREW_TEST_DEPRECATED"] = "1"
+
+      expect { env_config.env_value(:HOMEBREW_TEST_DEPRECATED, odeprecated: true) }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_TEST_DEPRECATED.*deprecated/)
+    ensure
+      ENV["HOMEBREW_TEST_DEPRECATED"] = nil
+    end
+
+    it "disables variables using ENVS metadata" do
+      ENV["HOMEBREW_TEST_DISABLED"] = "1"
+
+      expect { env_config.env_value(:HOMEBREW_TEST_DISABLED, odisabled: true) }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_TEST_DISABLED.*disabled/)
+    ensure
+      ENV["HOMEBREW_TEST_DISABLED"] = nil
+    end
+
+    it "applies variable deprecations to matching commands" do
+      with_env(HOMEBREW_TEST_DEPRECATED: "1", HOMEBREW_COMMAND: "install") do
+        expect { env_config.env_value(:HOMEBREW_TEST_DEPRECATED, odeprecated: true, commands: ["install"]) }
+          .to raise_error(MethodDeprecatedError, /HOMEBREW_TEST_DEPRECATED.*deprecated/)
+      end
+    end
+
+    it "skips variable deprecations for other commands" do
+      with_env(HOMEBREW_TEST_DEPRECATED: "1", HOMEBREW_COMMAND: "info") do
+        expect(env_config.env_value(:HOMEBREW_TEST_DEPRECATED, odeprecated: true, commands: ["install"]))
+          .to eq("1")
+      end
+    end
+
+    it "applies variable deprecations to matching subcommands" do
+      with_env(HOMEBREW_TEST_DEPRECATED: "1", HOMEBREW_SUBCOMMAND: "install") do
+        expect { env_config.env_value(:HOMEBREW_TEST_DEPRECATED, odeprecated: true, subcommands: ["install"]) }
+          .to raise_error(MethodDeprecatedError, /HOMEBREW_TEST_DEPRECATED.*deprecated/)
+      end
+    end
+
+    it "skips variable deprecations for other subcommands" do
+      with_env(HOMEBREW_TEST_DEPRECATED: "1", HOMEBREW_SUBCOMMAND: "dump") do
+        expect(env_config.env_value(:HOMEBREW_TEST_DEPRECATED, odeprecated: true, subcommands: ["install"]))
+          .to eq("1")
+      end
+    end
+  end
+
   describe ".artifact_domain" do
     it "returns value if set" do
       ENV["HOMEBREW_ARTIFACT_DOMAIN"] = "https://brew.sh"
@@ -69,10 +117,18 @@ RSpec.describe Homebrew::EnvConfig do
       ENV["HOMEBREW_NO_ASK"] = nil
     end
 
+    it "returns true by default" do
+      expect(env_config.ask?).to be(true)
+    end
+
     it "returns false if HOMEBREW_NO_ASK is set" do
-      ENV["HOMEBREW_ASK"] = "1"
       ENV["HOMEBREW_NO_ASK"] = "1"
       expect(env_config.ask?).to be(false)
+    end
+
+    it "deprecates HOMEBREW_ASK" do
+      ENV["HOMEBREW_ASK"] = "1"
+      expect { env_config.ask? }.to raise_error(MethodDeprecatedError, /HOMEBREW_ASK.*deprecated/)
     end
   end
 
@@ -102,31 +158,13 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
-  describe ".cask_opts_binaries?" do
-    before do
-      ENV["HOMEBREW_CASK_OPTS"] = nil
-      ENV["HOMEBREW_CASK_OPTS_BINARIES"] = nil
-    end
-
-    it "returns false if HOMEBREW_CASK_OPTS_BINARIES is set to a falsey value" do
-      ENV["HOMEBREW_CASK_OPTS_BINARIES"] = "0"
-      expect(env_config.cask_opts_binaries?).to be(false)
-    end
-  end
-
-  describe ".cask_opts_require_sha?" do
-    before do
-      ENV["HOMEBREW_CASK_OPTS"] = nil
-      ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"] = nil
-    end
-
-    it "returns true if HOMEBREW_CASK_OPTS_REQUIRE_SHA is set" do
-      ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"] = "1"
-      expect(env_config.cask_opts_require_sha?).to be(true)
-    end
-  end
-
   describe ".bundle_describe?" do
+    it "returns true if unset" do
+      with_env(HOMEBREW_BUNDLE_DESCRIBE: nil, HOMEBREW_BUNDLE_NO_DESCRIBE: nil) do
+        expect(env_config.bundle_describe?).to be(true)
+      end
+    end
+
     it "returns false if HOMEBREW_BUNDLE_NO_DESCRIBE is set" do
       with_env(HOMEBREW_BUNDLE_DESCRIBE: "1", HOMEBREW_BUNDLE_NO_DESCRIBE: "1") do
         expect(env_config.bundle_describe?).to be(false)
@@ -149,6 +187,12 @@ RSpec.describe Homebrew::EnvConfig do
   end
 
   describe ".bundle_no_secrets?" do
+    it "returns true if unset" do
+      with_env(HOMEBREW_BUNDLE_NO_SECRETS: nil, HOMEBREW_BUNDLE_SECRETS: nil) do
+        expect(env_config.bundle_no_secrets?).to be(true)
+      end
+    end
+
     it "returns false if HOMEBREW_BUNDLE_SECRETS is set" do
       with_env(HOMEBREW_BUNDLE_NO_SECRETS: "1", HOMEBREW_BUNDLE_SECRETS: "1") do
         expect(env_config.bundle_no_secrets?).to be(false)
@@ -199,9 +243,9 @@ RSpec.describe Homebrew::EnvConfig do
       ) { example.run }
     end
 
-    it "does not infer a developer default" do
+    it "returns true by default" do
       ENV["HOMEBREW_DEVELOPER"] = "1"
-      expect(env_config.upgrade_auto_updates_casks?).to be(false)
+      expect(env_config.upgrade_auto_updates_casks?).to be(true)
     end
 
     it "returns true if set to a falsey value" do
@@ -225,32 +269,28 @@ RSpec.describe Homebrew::EnvConfig do
       ) { example.run }
     end
 
-    it "returns true if HOMEBREW_SANDBOX_LINUX is set" do
-      ENV["HOMEBREW_SANDBOX_LINUX"] = "1"
+    it "returns true by default" do
       expect(env_config.sandbox_linux?).to be(true)
     end
 
-    it "does not infer a developer default" do
+    it "returns true for developers" do
       ENV["HOMEBREW_DEVELOPER"] = "1"
-      expect(env_config.sandbox_linux?).to be(false)
-    end
-
-    it "returns true if HOMEBREW_SANDBOX_LINUX is set to a falsey value with HOMEBREW_DEVELOPER" do
-      ENV["HOMEBREW_DEVELOPER"] = "1"
-      ENV["HOMEBREW_SANDBOX_LINUX"] = "0"
       expect(env_config.sandbox_linux?).to be(true)
     end
 
-    it "returns false if HOMEBREW_NO_SANDBOX_LINUX is set" do
-      ENV["HOMEBREW_NO_SANDBOX_LINUX"] = "1"
+    it "deprecates HOMEBREW_SANDBOX_LINUX" do
       ENV["HOMEBREW_SANDBOX_LINUX"] = "1"
-      expect(env_config.sandbox_linux?).to be(false)
+      expect { env_config.sandbox_linux? }.to raise_error(MethodDeprecatedError, /HOMEBREW_SANDBOX_LINUX.*deprecated/)
     end
+  end
 
-    it "returns false if HOMEBREW_DEVELOPER and HOMEBREW_NO_SANDBOX_LINUX are set" do
-      ENV["HOMEBREW_DEVELOPER"] = "1"
-      ENV["HOMEBREW_NO_SANDBOX_LINUX"] = "1"
-      expect(env_config.sandbox_linux?).to be(false)
+  describe ".no_sandbox_cask?" do
+    it "deprecates HOMEBREW_NO_SANDBOX_CASK" do
+      ENV["HOMEBREW_NO_SANDBOX_CASK"] = "1"
+      expect { env_config.no_sandbox_cask? }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_NO_SANDBOX_CASK.*deprecated/)
+    ensure
+      ENV["HOMEBREW_NO_SANDBOX_CASK"] = nil
     end
   end
 
@@ -262,10 +302,8 @@ RSpec.describe Homebrew::EnvConfig do
       ) { example.run }
     end
 
-    it "returns false if HOMEBREW_NO_REQUIRE_TAP_TRUST is set" do
-      ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
-      ENV["HOMEBREW_NO_REQUIRE_TAP_TRUST"] = "1"
-      expect(env_config.require_tap_trust?).to be(false)
+    it "returns true by default" do
+      expect(env_config.require_tap_trust?).to be(true)
     end
   end
 
@@ -284,30 +322,12 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
-  describe ".no_sandbox_cask?" do
-    it "returns true if HOMEBREW_NO_SANDBOX_CASK is set" do
-      ENV["HOMEBREW_NO_SANDBOX_CASK"] = "1"
-      expect(env_config.no_sandbox_cask?).to be(true)
-    ensure
-      ENV["HOMEBREW_NO_SANDBOX_CASK"] = nil
-    end
-  end
-
-  describe ".no_sandbox_linux?" do
-    it "returns true if set to a falsey value" do
-      ENV["HOMEBREW_NO_SANDBOX_LINUX"] = "0"
-      expect(env_config.no_sandbox_linux?).to be(true)
-    ensure
-      ENV["HOMEBREW_NO_SANDBOX_LINUX"] = nil
-    end
-  end
-
   describe ".eval_all?" do
     before do
       ENV["HOMEBREW_EVAL_ALL"] = nil
       ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = nil
       ENV["HOMEBREW_NO_REQUIRE_TAP_TRUST"] = nil
-      env_config.instance_variable_set(:@eval_all_deprecation_warned, nil)
+      ENV["HOMEBREW_DEVELOPER"] = nil
     end
 
     it "returns false if HOMEBREW_REQUIRE_TAP_TRUST is set" do
@@ -315,26 +335,15 @@ RSpec.describe Homebrew::EnvConfig do
 
       expect(env_config.eval_all?).to be(false)
     end
+  end
 
-    it "returns false if HOMEBREW_NO_REQUIRE_TAP_TRUST is set" do
-      ENV["HOMEBREW_NO_REQUIRE_TAP_TRUST"] = "1"
-
-      expect(env_config.eval_all?).to be(false)
-    end
-
-    it "warns if HOMEBREW_EVAL_ALL is set" do
-      ENV["HOMEBREW_EVAL_ALL"] = "1"
-
-      expect { expect(env_config.eval_all?).to be(true) }
-        .to output(/HOMEBREW_EVAL_ALL.*deprecated.*HOMEBREW_REQUIRE_TAP_TRUST.*HOMEBREW_NO_REQUIRE_TAP_TRUST/m)
-        .to_stderr
-    end
-
-    it "warns only once if HOMEBREW_EVAL_ALL is set and queried repeatedly" do
-      ENV["HOMEBREW_EVAL_ALL"] = "1"
-
-      env_config.eval_all?
-      expect { env_config.eval_all? }.not_to output.to_stderr
+  describe ".no_eval_env_scrubbing?" do
+    it "deprecates HOMEBREW_NO_EVAL_ENV_SCRUBBING" do
+      ENV["HOMEBREW_NO_EVAL_ENV_SCRUBBING"] = "1"
+      expect { env_config.no_eval_env_scrubbing? }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_NO_EVAL_ENV_SCRUBBING.*deprecated/)
+    ensure
+      ENV["HOMEBREW_NO_EVAL_ENV_SCRUBBING"] = nil
     end
   end
 
@@ -344,18 +353,16 @@ RSpec.describe Homebrew::EnvConfig do
       ENV["HOMEBREW_NO_REQUIRE_TAP_TRUST"] = nil
     end
 
+    it "returns true by default" do
+      expect(env_config.tap_trust_configured?).to be(true)
+      expect(env_config.require_tap_trust?).to be(true)
+    end
+
     it "returns true if HOMEBREW_REQUIRE_TAP_TRUST is set" do
       ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
 
       expect(env_config.tap_trust_configured?).to be(true)
       expect(env_config.require_tap_trust?).to be(true)
-    end
-
-    it "returns true if HOMEBREW_NO_REQUIRE_TAP_TRUST is set" do
-      ENV["HOMEBREW_NO_REQUIRE_TAP_TRUST"] = "1"
-
-      expect(env_config.tap_trust_configured?).to be(true)
-      expect(env_config.no_require_tap_trust?).to be(true)
     end
   end
 end

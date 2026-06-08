@@ -115,7 +115,7 @@ RSpec.describe Homebrew::Cmd::Bundle::InstallSubcommand do
       install_subcommand.run
     end
 
-    it "asks before cleaning up when HOMEBREW_ASK is set" do
+    it "asks before cleaning up when ask mode is enabled" do
       args = args_for_subcommand(:install, quiet?: false, global?: false, cleanup?: true, force_cleanup?: false)
       context = bundle_subcommand_context(:install, ask: true)
       subcommand = described_class.new(args, context:)

@@ -2,8 +2,6 @@ title: Homebrew Documentation
 description: Documentation for the missing package manager for macOS (or Linux).
 url: https://docs.brew.sh
 
-remote_theme: Homebrew/brew.sh
-
 exclude:
   - AGENTS.md
   - bin
@@ -20,7 +18,6 @@ plugins:
   - jekyll-optional-front-matter
   - jekyll-redirect-from
   - jekyll-relative-links
-  - jekyll-remote-theme
   - jekyll-seo-tag
   - jekyll-sitemap
   - jekyll-titles-from-headings
@@ -34,7 +31,7 @@ defaults:
       path: ""
     values:
       layout: default
-      image: /assets/img/homebrew-256x256.png
+      image: https://brew.sh/assets/img/homebrew-256x256.png
       search_name: Documentation
       search_site: docs
   - scope:
@@ -45,7 +42,7 @@ defaults:
 kramdown:
   toc_levels: 2..3
 
-logo: /assets/img/homebrew.svg
+logo: https://brew.sh/assets/img/homebrew.svg
 
 twitter:
   username: MacHomebrew

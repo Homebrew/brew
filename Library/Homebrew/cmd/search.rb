@@ -37,12 +37,11 @@ module Homebrew
         switch "--desc",
                description: "Search for formulae with a description matching <text> and casks with " \
                             "a name or description matching <text>."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to search their " \
                             "descriptions.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--pull-request",
                description: "Search for GitHub pull requests containing <text>."
         switch "--open",

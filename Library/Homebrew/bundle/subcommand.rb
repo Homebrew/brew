@@ -30,12 +30,9 @@ module Homebrew
 
           # Don't want to ask for input in Bundle
           ENV["HOMEBREW_ASK"] = nil
+          ENV["HOMEBREW_NO_ASK"] = "1"
 
-          if !args.describe? && (dump_describe = ENV["HOMEBREW_BUNDLE_DUMP_DESCRIBE"].presence)
-            opoo "`HOMEBREW_BUNDLE_DUMP_DESCRIBE` is deprecated. Use `HOMEBREW_BUNDLE_DESCRIBE` instead."
-            # odeprecated "HOMEBREW_BUNDLE_DUMP_DESCRIBE", "HOMEBREW_BUNDLE_DESCRIBE"
-            ENV["HOMEBREW_BUNDLE_DESCRIBE"] = dump_describe
-          end
+          Homebrew::EnvConfig.bundle_dump_describe? unless args.describe?
 
           context = context(args, extensions:, ask:)
           Homebrew::Bundle.upgrade_formulae = args.upgrade_formulae

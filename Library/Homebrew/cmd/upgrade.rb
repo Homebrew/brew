@@ -137,10 +137,6 @@ module Homebrew
             description: "Require all casks to have a checksum.",
             env:         :cask_opts_require_sha,
           }],
-          [:switch, "--[no-]quarantine", {
-            env:       :cask_opts_quarantine,
-            odisabled: true,
-          }],
         ].each do |args|
           options = args.pop
           send(*args, **options)
@@ -751,7 +747,6 @@ module Homebrew
             skip_cask_deps: args.skip_cask_deps?,
             require_sha:    args.require_sha?,
             upgrade:        true,
-            quarantine:     args.quarantine?,
             download_queue:,
             defer_fetch:    true,
           )
@@ -792,7 +787,6 @@ module Homebrew
           greedy_auto_updates:  args.greedy_auto_updates?,
           dry_run:,
           binaries:             args.binaries?,
-          quarantine:           args.quarantine?,
           require_sha:          args.require_sha?,
           skip_cask_deps:       args.skip_cask_deps?,
           quit:                 !args.no_quit?,

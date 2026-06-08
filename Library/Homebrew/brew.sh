@@ -1067,12 +1067,7 @@ fi
 # Enable features for developers and CI before they become the default for everyone.
 if [[ -n "${HOMEBREW_DEVELOPER}" ]]
 then
-  export HOMEBREW_ASK="1"
-  export HOMEBREW_BUNDLE_DESCRIBE="1"
-  export HOMEBREW_BUNDLE_JOBS="auto"
-  export HOMEBREW_BUNDLE_NO_SECRETS="1"
-  export HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS="1"
-  export HOMEBREW_SANDBOX_LINUX="1"
+  :
 fi
 
 # Enable features for users who have run a devcmd before they become the default for everyone.
@@ -1087,13 +1082,6 @@ if [[ "${HOMEBREW_COMMAND}" == "test" || "${HOMEBREW_COMMAND}" == "test-bot" ||
       "${HOMEBREW_COMMAND}" == "tests" ]]
 then
   export HOMEBREW_SORBET_RUNTIME="1"
-fi
-
-# Provide a (temporary, undocumented) way to disable Sorbet globally if needed
-# to override any earlier environment setting.
-if [[ -n "${HOMEBREW_NO_SORBET_RUNTIME}" ]]
-then
-  unset HOMEBREW_SORBET_RUNTIME
 fi
 
 if [[ -z "${HOMEBREW_FORCE_RUBY_COMMAND:-}" && -f "${HOMEBREW_LIBRARY}/Homebrew/cmd/${HOMEBREW_COMMAND}.sh" ]]

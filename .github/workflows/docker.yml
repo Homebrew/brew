@@ -19,7 +19,7 @@ defaults:
 
 env:
   # odeprecated: remove 22.04 image in Homebrew >=6.1
-  VERSIONS: '["22.04", "24.04"]'
+  VERSIONS: '["22.04", "24.04", "26.04"]'
 
 jobs:
   generate-tags:
@@ -145,7 +145,7 @@ jobs:
       fail-fast: false
       matrix:
         # odeprecated: remove 22.04 image in Homebrew >=5.4
-        version: ["22.04", "24.04"]
+        version: ["22.04", "24.04", "26.04"]
         arch: ["x86_64", "arm64"]
 
     steps:

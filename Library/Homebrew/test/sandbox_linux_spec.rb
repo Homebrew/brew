@@ -7,10 +7,6 @@ require "extend/os/linux/sandbox" if OS.linux?
 RSpec.describe Sandbox, :needs_linux do
   subject(:sandbox) { described_class.new }
 
-  around do |example|
-    with_env(HOMEBREW_SANDBOX_LINUX: "1") { example.run }
-  end
-
   describe "::bubblewrap_executable" do
     let(:sandbox_class) do
       Class.new(Sandbox) do
@@ -71,8 +67,8 @@ RSpec.describe Sandbox, :needs_linux do
       sandbox_class.test_executable_candidate_paths = PATH.new(bubblewrap_dir)
     end
 
-    it "returns false unless Linux sandboxing is enabled" do
-      with_env(HOMEBREW_DEVELOPER: nil, HOMEBREW_SANDBOX_LINUX: nil) do
+    it "returns false when Linux sandboxing is disabled" do
+      with_env(HOMEBREW_NO_SANDBOX_LINUX: "1") do
         expect(sandbox_class.available?).to be(false)
       end
     end

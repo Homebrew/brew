@@ -42,9 +42,10 @@ module Homebrew
                             "<cask> are provided. See also `pin`, `unpin`."
         switch "--installed-on-request",
                description: "List the formulae installed on request."
-        # odeprecated: replace with `--no-installed-on-request` in a future release.
         switch "--installed-as-dependency",
-               description: "List the formulae installed as dependencies."
+               description: "List the formulae installed as dependencies.",
+               odeprecated: true,
+               replacement: "--no-installed-on-request"
         switch "--poured-from-bottle",
                description: "List the formulae installed from a bottle."
         switch "--built-from-source",
@@ -198,8 +199,6 @@ module Homebrew
 
             statuses = []
             statuses << "installed on request" if args.installed_on_request? && tab.installed_on_request
-            # TODO: Uncomment to deprecate in a future release:
-            # odeprecated "brew list --installed-as-dependency", "brew list --no-installed-on-request"
             statuses << "installed as dependency" if args.installed_as_dependency? && !tab.installed_on_request
             statuses << "poured from bottle" if args.poured_from_bottle? && tab.poured_from_bottle
             statuses << "built from source" if args.built_from_source? && !tab.poured_from_bottle

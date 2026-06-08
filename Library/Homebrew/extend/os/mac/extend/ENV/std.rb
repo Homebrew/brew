@@ -114,14 +114,14 @@ module OS
       sig { void }
       def no_weak_imports
         # This has little-to-no usage and doesn't make sense to have a special function for.
-        # odeprecated "ENV.no_weak_imports"
+        odeprecated "ENV.no_weak_imports"
         append "LDFLAGS", "-Wl,-no_weak_imports" if no_weak_imports_support?
       end
 
       sig { void }
       def no_fixup_chains
         # This has little-to-no usage and behaved inconsistently with the superenv equivalent.
-        # odeprecated "ENV.no_fixup_chains"
+        odeprecated "ENV.no_fixup_chains"
         append "LDFLAGS", "-Wl,-no_fixup_chains" if no_fixup_chains_support?
       end
     end

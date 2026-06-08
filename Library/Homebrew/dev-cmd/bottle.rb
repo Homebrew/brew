@@ -81,9 +81,9 @@ module Homebrew
         switch "--no-all-checks",
                depends_on:  "--merge",
                description: "Don't try to create an `all` bottle or stop a no-change upload."
-        # odeprecated: replace with `HOMEBREW_GIT_COMMITTER_NAME` and `HOMEBREW_GIT_COMMITTER_EMAIL`.
         flag   "--committer=",
-               description: "Specify a committer name and email in `git`'s standard author format."
+               description: "Specify a committer name and email in `git`'s standard author format.",
+               odeprecated: true
         flag   "--root-url=",
                description: "Use the specified <URL> as the root of the bottle's URL instead of Homebrew's default."
         flag   "--root-url-using=",

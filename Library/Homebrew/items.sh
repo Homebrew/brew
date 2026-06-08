@@ -160,7 +160,6 @@ homebrew-items-paths() {
 
 homebrew-tap-trust-required() {
   [[ -n "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" ]] && return 1
-  [[ -n "${HOMEBREW_REQUIRE_TAP_TRUST:-}" ]] && return 0
 
-  return 1
+  return 0
 }

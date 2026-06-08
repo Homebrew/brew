@@ -28,12 +28,11 @@ module Homebrew
         switch "--repair",
                description: "Add missing symlinks to tap manpages and shell completions. Correct git remote " \
                             "refs for any taps where upstream HEAD branch has been renamed."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae, casks and aliases in the new tap to check their " \
                             "validity.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "-f", "--force",
                description: "Force install core taps even under API mode."
 

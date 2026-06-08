@@ -28,7 +28,7 @@ module Homebrew
     def assert_equal(exp, act, msg = nil)
       return super unless exp.nil?
 
-      odeprecated "assert_equal(nil, ...)", "assert_nil(...)"
+      odisabled "assert_equal(nil, ...)", "assert_nil(...)"
       assert_nil(act, msg)
     end
 

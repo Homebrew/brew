@@ -22,11 +22,10 @@ module Homebrew
                description: "Print formulae and casks with fully-qualified names."
         flag   "--tap=",
                description: "Check formulae and casks within the given tap, specified as <user>`/`<repo>."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to check them.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--installed",
                description: "Check formulae and casks that are currently installed."
         switch "--newer-only",

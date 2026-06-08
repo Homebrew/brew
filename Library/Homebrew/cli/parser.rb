@@ -38,6 +38,10 @@ module Homebrew
         prop :max_named_args, T.nilable(Integer), default: nil
         prop :min_named_args, T.nilable(Integer), default: nil
         prop :named_args_without_api, T::Boolean, default: false
+        const :hidden, T::Boolean, default: false
+        const :replacement, T.nilable(T.any(String, Symbol)), default: nil
+        const :odeprecated, T::Boolean, default: false
+        const :odisabled, T::Boolean, default: false
       end
 
       sig { returns(Args) }
@@ -217,33 +221,25 @@ module Homebrew
         params(names: String, description: T.nilable(String), env: T.untyped,
                depends_on: T.nilable(String), method: Symbol,
                hidden: T::Boolean, replacement: T.nilable(T.any(String, FalseClass)),
-               odeprecated: T::Boolean, odisabled: T::Boolean, disable: T::Boolean,
+               odeprecated: T::Boolean, odisabled: T::Boolean,
                subcommands: T.nilable(T.any(String, T::Array[String]))).void
       }
       def switch(*names, description: nil, env: nil,
                  depends_on: nil, method: :on,
                  hidden: false, replacement: nil,
-                 odeprecated: false, odisabled: false, disable: false,
+                 odeprecated: false, odisabled: false,
                  subcommands: nil)
         global_switch = names.first.is_a?(Symbol)
         return if global_switch
 
-        if disable
-          # this odisabled should be removed in 5.2.0
-          odisabled "disable:", "odisabled:"
-          odisabled = disable
-        end
-        if !odeprecated && !odisabled && replacement
-          # this odisabled should be removed in 5.2.0
-          odisabled "replacement: without :odeprecated or :odisabled",
-                    "replacement: with :odeprecated or :odisabled"
-          odeprecated = true
-        end
         hidden = true if odisabled || odeprecated
 
         description = option_description(description, *names, hidden:)
         env, counterpart = env
-        env_hidden = Homebrew::EnvConfig::ENVS.fetch(:"HOMEBREW_#{env.upcase}", {}).fetch(:hidden, false) if env
+        if env
+          env_hidden = Homebrew::EnvConfig.hidden?(Homebrew::EnvConfig::ENVS.fetch(:"HOMEBREW_#{env.upcase}",
+                                                                                   {}))
+        end
         if env && @non_global_processed_options.any? && !hidden && !env_hidden
           affix = if counterpart
             " and `#{counterpart}` is passed."
@@ -340,25 +336,27 @@ module Homebrew
 
       sig {
         params(names: String, description: T.nilable(String), replacement: T.nilable(T.any(Symbol, String)),
-               depends_on: T.nilable(String), hidden: T::Boolean,
+               depends_on: T.nilable(String), hidden: T::Boolean, odeprecated: T::Boolean, odisabled: T::Boolean,
                subcommands: T.nilable(T.any(String, T::Array[String]))).void
       }
-      def flag(*names, description: nil, replacement: nil, depends_on: nil, hidden: false, subcommands: nil)
+      def flag(*names, description: nil, replacement: nil, depends_on: nil, hidden: false, odeprecated: false,
+               odisabled: false, subcommands: nil)
         required, flag_type = if names.any? { |name| name.end_with? "=" }
           [OptionParser::REQUIRED_ARGUMENT, :required_flag]
         else
           [OptionParser::OPTIONAL_ARGUMENT, :optional_flag]
         end
         names.map! { |name| name.chomp "=" }
+        hidden = true if odeprecated || odisabled
         description = option_description(description, *names, hidden:)
-        if replacement.nil?
-          process_option(*names, description, type: flag_type, hidden:, subcommands:)
-        else
+        if odisabled
           description += " (disabled#{"; replaced by #{replacement}" if replacement.present?})"
+        else
+          process_option(*names, description, type: flag_type, hidden:, subcommands:)
         end
         @parser.on(*names, *wrap_option_desc(description), required) do |option_value|
           # This odisabled should stick around indefinitely.
-          odisabled "the `#{names.first}` flag", replacement unless replacement.nil?
+          odeprecated "the `#{names.first}` flag", replacement, disable: odisabled if odeprecated || odisabled
           names.each do |name|
             option_name = option_to_name(name)
             @option_sources[option_name] = :args
@@ -509,6 +507,12 @@ module Homebrew
 
         if @subcommands.present?
           parsed_subcommand = subcommand_name(named_args)
+          # This odeprecated should stick around indefinitely.
+          if parsed_subcommand && (subcommand = subcommand_for_name(parsed_subcommand)) &&
+             (subcommand.odeprecated || subcommand.odisabled)
+            odeprecated "the `#{subcommand.name}` subcommand", subcommand.replacement,
+                        disable: subcommand.odisabled
+          end
           set_args_method(:subcommand, parsed_subcommand)
           named_args = if parsed_subcommand && named_args.present?
             named_args.drop(1)
@@ -561,7 +565,9 @@ module Homebrew
           parts << usage_banner if usage_banner.present?
           parts << description if description.present?
 
-          subcommand_lines = @subcommands.map do |subcommand|
+          subcommand_lines = @subcommands.filter_map do |subcommand|
+            next if subcommand.hidden
+
             subcommand_summary = if (usage_banner = subcommand.usage_banner)
               usage_banner.lines.drop(1).map(&:strip).find(&:present?)
             end
@@ -665,11 +671,17 @@ module Homebrew
           alias_options: T::Hash[String, String],
           description:   T.nilable(String),
           default:       T::Boolean,
+          hidden:        T::Boolean,
+          replacement:   T.nilable(T.any(String, Symbol)),
+          odeprecated:   T::Boolean,
+          odisabled:     T::Boolean,
           block:         T.nilable(T.proc.bind(Parser).void),
         ).void
       }
-      def subcommand(name, aliases: [], alias_options: {}, description: nil, default: false, &block)
+      def subcommand(name, aliases: [], alias_options: {}, description: nil, default: false, hidden: false,
+                     replacement: nil, odeprecated: false, odisabled: false, &block)
         previous_subcommands = @current_subcommands
+        hidden = true if odeprecated || odisabled
 
         @subcommands << Subcommand.new(
           name:,
@@ -677,6 +689,10 @@ module Homebrew
           alias_options:,
           description:,
           default:,
+          hidden:,
+          replacement:,
+          odeprecated:,
+          odisabled:,
         )
 
         @current_subcommands = [name]

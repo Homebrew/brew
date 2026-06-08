@@ -81,6 +81,7 @@ module Test
           "HOMEBREW_INTEGRATION_TEST"    => command_id,
           "HOMEBREW_TEST_TMPDIR"         => TEST_TMPDIR,
           "HOMEBREW_DEV_CMD_RUN"         => "true",
+          "HOMEBREW_ASK"                 => nil,
           "HOMEBREW_USE_RUBY_FROM_PATH"  => ENV.fetch("HOMEBREW_USE_RUBY_FROM_PATH", nil),
           "HOMEBREW_NO_INSTALL_FROM_API" => ENV.fetch("HOMEBREW_NO_INSTALL_FROM_API", nil),
           "GEM_HOME"                     => nil,

@@ -59,13 +59,13 @@ module RuboCop
             next unless MACOS_DEPENDENCY_STANZAS.include?(key)
             next unless pair.value.str_type?
 
-            expected_comparator = (key == :macos) ? ">=" : "<="
-            match = pair.value.value.match(/\A\s*#{Regexp.escape(expected_comparator)}\s*:(?<version>\S+)\s*\z/)
+            match = pair.value.value.match(/\A\s*(?<comparator>>=|<=)\s*:(?<version>\S+)\s*\z/)
             next unless match
 
-            message = "Use `depends_on #{key}: :#{match[:version]}`."
+            replacement_key = (match[:comparator] == "<=") ? :maximum_macos : :macos
+            message = "Use `depends_on #{replacement_key}: :#{match[:version]}`."
             add_offense(pair.value.source_range, message:) do |corrector|
-              corrector.replace(pair.value.source_range, ":#{match[:version]}")
+              corrector.replace(pair.source_range, "#{replacement_key}: :#{match[:version]}")
             end
           end
         end

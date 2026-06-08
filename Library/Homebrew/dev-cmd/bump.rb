@@ -71,11 +71,10 @@ module Homebrew
                description: "Check only formulae."
         switch "--cask", "--casks",
                description: "Check only casks."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--repology",
                description: "Use Repology to check for outdated packages."
         flag   "--tap=",

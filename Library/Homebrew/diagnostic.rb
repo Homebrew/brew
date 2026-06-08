@@ -722,21 +722,11 @@ module Homebrew
 
           "  brew trust --formula #{formulae.sort.join(" ")}"
         end.join("\n")
-        trust_required_message = if Homebrew::EnvConfig.require_tap_trust?
-          "Homebrew is currently ignoring formulae, casks and commands from these taps because tap trust is required."
-        else
-          "Homebrew will ignore formulae, casks and commands from these taps when " \
-            "`HOMEBREW_REQUIRE_TAP_TRUST` is set.\n" \
-            "This will become the default in Homebrew 6.0.0 or 5.2.0, whichever comes first."
-        end
-
         <<~EOS
           The following taps are not trusted:
             #{untrusted_tap_names.join("\n  ")}
 
-          #{trust_required_message}
-          Enable trust checks now with:
-            export HOMEBREW_REQUIRE_TAP_TRUST=1
+          Homebrew is currently ignoring formulae, casks and commands from these taps because tap trust is required.
           Trust specific formulae, casks or commands with:
             brew trust --formula <user>/<tap>/<formula>
             brew trust --cask <user>/<tap>/<cask>
@@ -747,7 +737,7 @@ module Homebrew
           Prefer trusting only the specific formulae, casks or commands you need.
           Untap them with:
             brew untap #{untrusted_tap_names.join(" ")}
-          To keep allowing them by default during the transition:
+          To disable trust checks:
             export HOMEBREW_NO_REQUIRE_TAP_TRUST=1
           This is not recommended and will be removed in a later release.
         EOS

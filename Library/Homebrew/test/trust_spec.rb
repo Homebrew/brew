@@ -112,14 +112,14 @@ RSpec.describe Homebrew::Trust do
     described_class.clear!(:tap)
   end
 
-  it "allows third-party taps by default" do
+  it "requires third-party taps by default" do
     described_class.clear!(:tap)
     tap = Tap.fetch("thirdparty", "foo")
     formula_path = tap.formula_dir/"default-trust.rb"
     formula_path.dirname.mkpath
 
     expect { described_class.require_trusted_formula!("default-trust", formula_path) }
-      .not_to output.to_stderr
+      .to raise_error(Homebrew::UntrustedTapError)
 
     expect(described_class.trusted?(:tap, "thirdparty/foo")).to be(false)
   ensure
@@ -127,12 +127,12 @@ RSpec.describe Homebrew::Trust do
     FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
   end
 
-  it "does not store default trust when checking files" do
+  it "does not trust or store default trust when checking files" do
     tap = Tap.fetch("thirdparty", "foo")
     formula_path = tap.formula_dir/"default-trust.rb"
     formula_path.dirname.mkpath
 
-    expect { expect(described_class.trusted_formula_file?(formula_path)).to be(true) }
+    expect { expect(described_class.trusted_formula_file?(formula_path)).to be(false) }
       .not_to output.to_stderr
 
     expect(described_class.trusted?(:tap, "thirdparty/foo")).to be(false)

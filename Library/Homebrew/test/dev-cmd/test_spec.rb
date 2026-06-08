@@ -9,13 +9,15 @@ RSpec.describe Homebrew::DevCmd::Test do
   it_behaves_like "parseable arguments"
 
   it "tests a given Formula", :integration_test do
-    install_test_formula "testball", <<~'RUBY'
-      test do
-        assert_equal "test", shell_output("#{bin}/test")
-      end
-    RUBY
+    with_env(HOMEBREW_NO_INSTALL_FROM_API: "1") do
+      install_test_formula "testball", <<~'RUBY'
+        test do
+          assert_equal "test", shell_output("#{bin}/test")
+        end
+      RUBY
+    end
 
-    expect { brew "test", "--verbose", "testball" }
+    expect { brew "test", "--verbose", "testball", "HOMEBREW_NO_INSTALL_FROM_API" => "1" }
       .to output(/Testing testball/).to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
@@ -23,14 +25,16 @@ RSpec.describe Homebrew::DevCmd::Test do
 
   it "blocks network access when test phase is offline", :integration_test do
     if Sandbox.available?
-      install_test_formula "testball_offline_test", <<~RUBY
-        deny_network_access! :test
-        test do
-          system "curl", "example.org"
-        end
-      RUBY
+      with_env(HOMEBREW_NO_INSTALL_FROM_API: "1") do
+        install_test_formula "testball_offline_test", <<~RUBY
+          deny_network_access! :test
+          test do
+            system "curl", "example.org"
+          end
+        RUBY
+      end
 
-      expect { brew "test", "--verbose", "testball_offline_test" }
+      expect { brew "test", "--verbose", "testball_offline_test", "HOMEBREW_NO_INSTALL_FROM_API" => "1" }
         .to output(/curl: \(6\) Could not resolve host: example\.org/).to_stdout
         .and be_a_failure
     end

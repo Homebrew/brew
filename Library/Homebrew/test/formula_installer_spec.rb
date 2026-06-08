@@ -22,8 +22,10 @@ RSpec.describe FormulaInstaller do
 
     installer = FormulaInstaller.new(formula, **options)
 
-    installer.fetch
-    installer.install
+    with_env(HOMEBREW_NO_INSTALL_FROM_API: "1") do
+      installer.fetch
+      installer.install
+    end
 
     keg = Keg.new(formula.prefix)
 
@@ -640,6 +642,7 @@ RSpec.describe FormulaInstaller do
   describe "#forbidden_tap_check" do
     before do
       allow(Tap).to receive_messages(allowed_taps: allowed_taps_set, forbidden_taps: forbidden_taps_set)
+      allow(Homebrew::Trust).to receive(:trusted_tap?).and_return(true)
     end
 
     let(:homebrew_forbidden) { Tap.fetch("homebrew/forbidden") }
@@ -870,8 +873,10 @@ RSpec.describe FormulaInstaller do
 
     it "shows audit problems if HOMEBREW_DEVELOPER is set" do
       ENV["HOMEBREW_DEVELOPER"] = "1"
-      formula_installer.fetch
-      formula_installer.install
+      with_env(HOMEBREW_NO_INSTALL_FROM_API: "1") do
+        formula_installer.fetch
+        formula_installer.install
+      end
       expect(formula_installer).to receive(:audit_installed).and_call_original
       formula_installer.caveats
     end

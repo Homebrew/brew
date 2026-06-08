@@ -84,15 +84,14 @@ module Homebrew
         boolean:     :set,
       },
       HOMEBREW_ASK:                              {
-        # odeprecated: make `HOMEBREW_ASK` the default in the next release
-        description: "If set, pass `--ask` to `brew install`, `brew upgrade` and `brew reinstall` commands. " \
-                     "Enabled by default if `$HOMEBREW_DEVELOPER` is set. This will become the default behaviour " \
-                     "in the next release. " \
-                     "Ask mode prints the plan before proceeding and prompts only if the plan includes " \
-                     "dependencies, dependants or packages other than named arguments. Otherwise, it only " \
-                     "prints the plan. The confirmation prompt is skipped without a TTY.",
+        description: "Ask mode is the default for `brew install`, `brew upgrade` and " \
+                     "`brew reinstall` commands. Ask mode prints the plan before proceeding and prompts only " \
+                     "if the plan includes dependencies, dependants or packages other than named arguments. " \
+                     "Otherwise, it only prints the plan. The confirmation prompt is skipped without a TTY.",
         boolean:     :set,
         disabled_by: :HOMEBREW_NO_ASK,
+        default:     true,
+        odeprecated: true,
       },
       HOMEBREW_AUTO_UPDATE_SECS:                 {
         description:  "Run `brew update` once every `$HOMEBREW_AUTO_UPDATE_SECS` seconds before some commands, " \
@@ -134,12 +133,19 @@ module Homebrew
       },
       **BUNDLE_DISABLE_ENVS.select { |env,| env < :HOMEBREW_BUNDLE_DESCRIBE },
       HOMEBREW_BUNDLE_DESCRIBE:                  {
-        # odeprecated: make `HOMEBREW_BUNDLE_DESCRIBE` the default in a later minor release
         description: "If set, add a description comment above each line in `brew bundle dump` and " \
-                     "`brew bundle add`, unless the dependency does not have a description. Enabled by default " \
-                     "if `$HOMEBREW_DEVELOPER` is set. This will become the default behaviour in a later minor " \
-                     "release.",
+                     "`brew bundle add`, unless the dependency does not have a description. This is the default " \
+                     "unless `$HOMEBREW_BUNDLE_NO_DESCRIBE` is set.",
         boolean:     true,
+        disabled_by: :HOMEBREW_BUNDLE_NO_DESCRIBE,
+        default:     true,
+      },
+      HOMEBREW_BUNDLE_DUMP_DESCRIBE:             {
+        description: "If set, add a description comment above each line in `brew bundle dump` " \
+                     "unless the dependency does not have a description. Use `$HOMEBREW_BUNDLE_DESCRIBE` instead.",
+        boolean:     true,
+        replacement: :HOMEBREW_BUNDLE_DESCRIBE,
+        odeprecated: true,
       },
       **BUNDLE_DISABLE_ENVS.select { |env,| env > :HOMEBREW_BUNDLE_DESCRIBE },
       HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP:     {
@@ -159,7 +165,7 @@ module Homebrew
       },
       HOMEBREW_BUNDLE_NO_DESCRIBE:               {
         description: "If set, do not enable bundle description comments from `$HOMEBREW_BUNDLE_DESCRIBE` or " \
-                     "the `$HOMEBREW_DEVELOPER` default. This does not disable an explicit `--describe`.",
+                     "the default. This does not disable an explicit `--describe`.",
         boolean:     true,
       },
       HOMEBREW_BUNDLE_NO_JOBS:                   {
@@ -168,15 +174,15 @@ module Homebrew
         boolean:     true,
       },
       HOMEBREW_BUNDLE_NO_SECRETS:                {
-        # odeprecated: make `HOMEBREW_BUNDLE_NO_SECRETS` the default in a later minor release
         description: "If set, `brew bundle exec`, `brew bundle env` and `brew bundle sh` will attempt to remove " \
-                     "secrets from the environment. Enabled by default if `$HOMEBREW_DEVELOPER` is set. This " \
-                     "will become the default behaviour in a later minor release.",
+                     "secrets from the environment. This is the default unless `$HOMEBREW_BUNDLE_SECRETS` is set.",
         boolean:     true,
+        disabled_by: :HOMEBREW_BUNDLE_SECRETS,
+        default:     true,
       },
       HOMEBREW_BUNDLE_SECRETS:                   {
         description: "If set, do not enable secret scrubbing from `$HOMEBREW_BUNDLE_NO_SECRETS` or the " \
-                     "`$HOMEBREW_DEVELOPER` default. This does not disable an explicit `--no-secrets`.",
+                     "default. This does not disable an explicit `--no-secrets`.",
         boolean:     true,
       },
       HOMEBREW_BUNDLE_USER_CACHE:                {
@@ -195,15 +201,16 @@ module Homebrew
                      "`~/.profile`, `~/.bash_profile`, or `~/.zshenv`:" \
                      "\n\n    `export HOMEBREW_CASK_OPTS=\"--appdir=${HOME}/Applications --fontdir=/Library/Fonts\"`",
       },
-      # odeprecated: deprecate in 5.2.0
       HOMEBREW_CASK_OPTS_BINARIES:               {
-        description: "Enable linking of helper executables for casks.",
-        hidden:      true,
+        description: "Enable linking of helper executables for casks. Use " \
+                     "`$HOMEBREW_CASK_OPTS` instead.",
+        replacement: "HOMEBREW_CASK_OPTS",
+        odeprecated: true,
       },
-      # odeprecated: deprecate in 5.2.0
       HOMEBREW_CASK_OPTS_REQUIRE_SHA:            {
-        description: "Require all casks to have a checksum.",
-        hidden:      true,
+        description: "Require all casks to have a checksum. Use `$HOMEBREW_CASK_OPTS` instead.",
+        replacement: "HOMEBREW_CASK_OPTS",
+        odeprecated: true,
       },
       HOMEBREW_CLEANUP_MAX_AGE_DAYS:             {
         description: "Cleanup all cached files older than this many days.",
@@ -299,12 +306,12 @@ module Homebrew
         boolean:     true,
       },
       HOMEBREW_EVAL_ALL:                         {
-        # odeprecated: deprecate in the next release.
-        description: "If set, `brew` commands evaluate all trusted formulae and casks, executing their arbitrary " \
-                     "code. This will be deprecated soon; use " \
-                     "`$HOMEBREW_REQUIRE_TAP_TRUST` or `$HOMEBREW_NO_REQUIRE_TAP_TRUST` instead.",
+        description: "If set, `brew` commands evaluate all trusted formulae and casks, " \
+                     "executing their arbitrary code. Use `$HOMEBREW_REQUIRE_TAP_TRUST` or " \
+                     "`$HOMEBREW_NO_REQUIRE_TAP_TRUST` instead.",
         boolean:     true,
-        hidden:      true,
+        replacement: "HOMEBREW_REQUIRE_TAP_TRUST or HOMEBREW_NO_REQUIRE_TAP_TRUST",
+        odeprecated: true,
       },
       HOMEBREW_FAIL_LOG_LINES:                   {
         description: "Output this many lines of output on formula `system` failures.",
@@ -474,8 +481,7 @@ module Homebrew
         boolean:     :set,
       },
       HOMEBREW_NO_ASK:                           {
-        description: "If set, do not enable ask mode from `$HOMEBREW_ASK` or the `$HOMEBREW_DEVELOPER` default. " \
-                     "This does not disable an explicit `--ask`.",
+        description: "If set, do not enable default ask mode. This does not disable an explicit `--ask`.",
         boolean:     :set,
       },
       HOMEBREW_NO_AUTOREMOVE:                    {
@@ -514,10 +520,11 @@ module Homebrew
       },
       HOMEBREW_NO_EVAL_ENV_SCRUBBING:            {
         # odeprecated: remove in a later release
-        description: "If set, sensitive environment variables are available while evaluating formulae and casks. " \
-                     "`$HOMEBREW_GITHUB_API_TOKEN` is still available during evaluation when this is unset. " \
-                     "This setting will be removed in a later release.",
+        description: "If set, sensitive environment variables are available while evaluating " \
+                     "formulae and casks. `$HOMEBREW_GITHUB_API_TOKEN` is still available during evaluation " \
+                     "when this is unset. This setting will be removed in a later release.",
         boolean:     true,
+        odeprecated: true,
       },
       HOMEBREW_NO_FORCE_BREW_WRAPPER:            {
         description: "`Deprecated:` If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even if set.",
@@ -572,8 +579,10 @@ module Homebrew
       },
       HOMEBREW_NO_SANDBOX_CASK:                  {
         # odeprecated: make cask executable sandboxing mandatory in a future release.
-        description: "If set, disable sandboxing for cask artifacts that generate files by running executables.",
+        description: "If set, disable sandboxing for cask artifacts that generate files by running " \
+                     "executables.",
         boolean:     true,
+        odeprecated: true,
       },
       HOMEBREW_NO_SANDBOX_LINUX:                 {
         description: "If set, disable the Linux sandbox.",
@@ -587,7 +596,6 @@ module Homebrew
         description: "If set, `brew upgrade` will not automatically upgrade casks with `auto_updates true`. " \
                      "Does not affect `--greedy` or `--greedy-auto-updates` upgrades.",
         boolean:     :set,
-        hidden:      true, # odeprecated: remove in 5.2.0
       },
       HOMEBREW_NO_UPGRADE_QUIT_CASKS:            {
         description: "If set, `brew upgrade` will not quit running applications for casks during upgrades.",
@@ -609,23 +617,23 @@ module Homebrew
       HOMEBREW_REQUIRE_TAP_TRUST:                {
         # odeprecated: make tap trust checks default in a later release.
         description: "If set, require non-official tap formulae, casks and commands to be trusted with " \
-                     "`brew trust` before Homebrew loads them. Also enables commands that evaluate all " \
-                     "formulae and casks.",
+                     "`brew trust` before Homebrew loads them. This is the default unless " \
+                     "`$HOMEBREW_NO_REQUIRE_TAP_TRUST` is set. Also enables commands that evaluate all formulae " \
+                     "and casks.",
         boolean:     :set,
         disabled_by: :HOMEBREW_NO_REQUIRE_TAP_TRUST,
+        default:     true,
       },
       HOMEBREW_SANDBOX_LINUX:                    {
-        # odeprecated: edit in 5.2.0
-        description: "If set, use the `bwrap`(1) sandbox for formula installation and testing on Linux. " \
-                     "Enabled by default if `$HOMEBREW_DEVELOPER` is set. This will be the default in " \
-                     "Homebrew 5.2.0.",
+        description: "The `bwrap`(1) sandbox is the default for formula installation and testing " \
+                     "on Linux unless `$HOMEBREW_NO_SANDBOX_LINUX` is set.",
         boolean:     :set,
         disabled_by: :HOMEBREW_NO_SANDBOX_LINUX,
+        default:     true,
+        odeprecated: true,
       },
       HOMEBREW_SBOM:                             {
-        # odeprecated: edit in 5.2.0
-        description: "If set, Homebrew will write SBOM files and run SBOM-related installation logic. " \
-                     "This is a no-op until Homebrew 5.2.0, when it will become required for that behaviour.",
+        description: "If set, Homebrew will write SBOM files and run SBOM-related installation logic.",
         boolean:     true,
       },
       HOMEBREW_SIMULATE_MACOS_ON_LINUX:          {
@@ -682,13 +690,13 @@ module Homebrew
         boolean:     :set,
       },
       HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS:       {
-        # odeprecated: edit in 5.2.0
         description: "If set, `brew upgrade` will automatically upgrade casks with `auto_updates true` when " \
                      "Homebrew detects that the version in the app bundle is older than the version in the tap. " \
-                     "Does not affect `--greedy` or `--greedy-auto-updates` upgrades. Enabled by default if " \
-                     "`$HOMEBREW_DEVELOPER` is set. This will become the default behavior in Homebrew 5.2.0.",
+                     "Does not affect `--greedy` or `--greedy-auto-updates` upgrades. This is the default unless " \
+                     "`$HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS` is set.",
         boolean:     :set,
         disabled_by: :HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS,
+        default:     true,
       },
       HOMEBREW_UPGRADE_GREEDY:                   {
         description: "If set, pass `--greedy` to all cask upgrade commands.",
@@ -743,20 +751,22 @@ module Homebrew
       method_name
     end
 
-    # Developer-mode defaults should be materialised in `brew.sh` by setting
-    # the matching environment variable rather than inferred here.
+    sig { params(hash: T::Hash[Symbol, T.untyped]).returns(T::Boolean) }
+    def hidden?(hash)
+      !!(hash[:hidden] || hash[:odeprecated] || hash[:odisabled])
+    end
+
+    # Defaults and parsing that cannot be expressed by the generated helpers.
     CUSTOM_IMPLEMENTATIONS = T.let(Set.new([
-      :HOMEBREW_BUNDLE_DESCRIBE,
       :HOMEBREW_BUNDLE_JOBS,
-      :HOMEBREW_BUNDLE_NO_SECRETS,
-      :HOMEBREW_EVAL_ALL,
       :HOMEBREW_CASK_OPTS,
-      :HOMEBREW_CASK_OPTS_BINARIES,
-      :HOMEBREW_CASK_OPTS_REQUIRE_SHA,
       :HOMEBREW_DOWNLOAD_CONCURRENCY,
       :HOMEBREW_FORBID_PACKAGES_FROM_PATHS,
       :HOMEBREW_MAKE_JOBS,
     ]).freeze, T::Set[Symbol])
+
+    # This tracks process-local warnings, so it must remain mutable.
+    WARNED_DEPRECATED_ENVS = T.let(Set.new, T::Set[String]) # rubocop:disable Style/MutableConstant
 
     # Boolean env vars have two generated parsing modes. Use `boolean: true`
     # for Ruby-only toggles that accept explicit false values like `0` or
@@ -779,19 +789,58 @@ module Homebrew
                             env_method_name(hash[:disabled_by], ENVS.fetch(hash[:disabled_by])),
                           )
 
-          env_value = ENV.fetch(env, nil)
+          env_value = env_value(env, hash)
+          return true if hash[:default] == true && env_value.blank?
 
           env_value.present? && (hash[:boolean] == :set || FALSY_VALUES.exclude?(env_value.downcase))
         end
       elsif hash[:default].present?
         define_method(method_name) do
-          ENV[env].presence || hash.fetch(:default).to_s
+          env_value(env, hash).presence || hash.fetch(:default).to_s
         end
       else
         define_method(method_name) do
-          ENV[env].presence
+          env_value(env, hash).presence
         end
       end
+    end
+
+    sig { params(env: T.any(String, Symbol), hash: T::Hash[Symbol, T.untyped]).returns(T.nilable(String)) }
+    def env_value(env, hash)
+      env = env.to_s
+      env_value = ENV.fetch(env, nil)
+      return if env_value.nil?
+
+      odeprecated_env(env, hash) if env_value.present?
+      if (replacement = hash[:replacement]).is_a?(Symbol)
+        ENV[replacement.to_s] ||= env_value
+      end
+      env_value
+    end
+
+    sig { params(env: String, hash: T::Hash[Symbol, T.untyped]).void }
+    def odeprecated_env(env, hash)
+      return if !hash[:odeprecated] && !hash[:odisabled]
+      return unless env_deprecation_applies?(hash)
+
+      replacement = hash[:replacement] if hash.key?(:replacement)
+      return if !Homebrew.raise_deprecation_exceptions? && ENV["HOMEBREW_TESTS"].blank? &&
+                !WARNED_DEPRECATED_ENVS.add?(env)
+
+      odeprecated env, replacement, disable: hash.fetch(:odisabled, false)
+    end
+
+    sig { params(hash: T::Hash[Symbol, T.untyped]).returns(T::Boolean) }
+    def env_deprecation_applies?(hash)
+      commands = Array(hash[:commands]).map(&:to_s)
+      command = ENV.fetch("HOMEBREW_COMMAND", nil)
+      return false if commands.present? && command.present? && commands.exclude?(command)
+
+      subcommands = Array(hash[:subcommands]).map(&:to_s)
+      subcommand = ENV.fetch("HOMEBREW_SUBCOMMAND", nil)
+      return false if subcommands.present? && subcommand.present? && subcommands.exclude?(subcommand)
+
+      true
     end
 
     sig { returns(String) }
@@ -810,11 +859,6 @@ module Homebrew
       Shellwords.shellsplit(ENV.fetch("HOMEBREW_CASK_OPTS", ""))
     end
 
-    sig { returns(T.nilable(String)) }
-    def cask_opts_binaries
-      ENV["HOMEBREW_CASK_OPTS_BINARIES"].presence
-    end
-
     sig { returns(T::Boolean) }
     def cask_opts_binaries?
       cask_opts.reverse_each do |opt|
@@ -822,9 +866,9 @@ module Homebrew
         return false if opt == "--no-binaries"
       end
 
-      if (env_value = ENV.fetch("HOMEBREW_CASK_OPTS_BINARIES", nil)).present?
-        return FALSY_VALUES.exclude?(env_value.downcase)
-      end
+      method_name = :cask_opts_binaries
+      env_value = T.cast(Homebrew::EnvConfig.public_send(method_name), T.nilable(String))
+      return FALSY_VALUES.exclude?(env_value.downcase) if env_value.present?
 
       true
     end
@@ -839,28 +883,12 @@ module Homebrew
       true
     end
 
-    sig { returns(T.nilable(String)) }
-    def cask_opts_require_sha
-      ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"].presence
-    end
-
     sig { returns(T::Boolean) }
     def cask_opts_require_sha?
-      cask_opts.include?("--require-sha") ||
-        begin
-          env_value = ENV.fetch("HOMEBREW_CASK_OPTS_REQUIRE_SHA", nil)
-          env_value.present? && FALSY_VALUES.exclude?(env_value.downcase)
-        end
-    end
+      return true if cask_opts.include?("--require-sha")
 
-    sig { returns(T::Boolean) }
-    def bundle_describe?
-      if (env_value = ENV.fetch("HOMEBREW_BUNDLE_NO_DESCRIBE",
-                                nil)).present? && FALSY_VALUES.exclude?(env_value.downcase)
-        return false
-      end
-
-      env_value = ENV.fetch("HOMEBREW_BUNDLE_DESCRIBE", nil)
+      method_name = :cask_opts_require_sha
+      env_value = T.cast(Homebrew::EnvConfig.public_send(method_name), T.nilable(String))
       env_value.present? && FALSY_VALUES.exclude?(env_value.downcase)
     end
 
@@ -872,16 +900,6 @@ module Homebrew
 
       ENV["HOMEBREW_BUNDLE_JOBS"].presence ||
         ENVS.fetch(:HOMEBREW_BUNDLE_JOBS).fetch(:default).to_s
-    end
-
-    sig { returns(T::Boolean) }
-    def bundle_no_secrets?
-      if (env_value = ENV.fetch("HOMEBREW_BUNDLE_SECRETS", nil)).present? && FALSY_VALUES.exclude?(env_value.downcase)
-        return false
-      end
-
-      env_value = ENV.fetch("HOMEBREW_BUNDLE_NO_SECRETS", nil)
-      env_value.present? && FALSY_VALUES.exclude?(env_value.downcase)
     end
 
     sig { returns(T::Boolean) }
@@ -918,24 +936,6 @@ module Homebrew
       end
 
       [concurrency, 1].max
-    end
-
-    # odeprecated: deprecate `HOMEBREW_EVAL_ALL` in the next minor release.
-    sig { returns(T::Boolean) }
-    def eval_all?
-      eval_all = ENV.fetch("HOMEBREW_EVAL_ALL", nil)
-      if eval_all.present? && FALSY_VALUES.exclude?(eval_all.downcase)
-        # odeprecated: deprecate in the next release.
-        @eval_all_deprecation_warned = T.let(@eval_all_deprecation_warned, T.nilable(T::Boolean))
-        unless @eval_all_deprecation_warned
-          opoo "`HOMEBREW_EVAL_ALL` will be deprecated soon. " \
-               "Use `HOMEBREW_REQUIRE_TAP_TRUST=1` or `HOMEBREW_NO_REQUIRE_TAP_TRUST=1` instead."
-          @eval_all_deprecation_warned = true
-        end
-        return true
-      end
-
-      false
     end
 
     sig { returns(T::Boolean) }

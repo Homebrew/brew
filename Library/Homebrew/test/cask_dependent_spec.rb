@@ -12,7 +12,7 @@ RSpec.describe CaskDependent, :needs_macos do
       cask "testing" do
         depends_on formula: "baz"
         depends_on cask: "foo-cask"
-        depends_on macos: ">= :sequoia"
+        depends_on macos: :sequoia
       end
     RUBY
   end

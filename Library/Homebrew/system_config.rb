@@ -167,16 +167,16 @@ module SystemConfig
       end
 
       Homebrew::EnvConfig::ENVS.each do |env, hash|
-        next if hash[:hidden] && !ENV.key?(env.to_s)
+        next if Homebrew::EnvConfig.hidden?(hash) && !ENV.key?(env.to_s)
 
         method_name = Homebrew::EnvConfig.env_method_name(env, hash)
 
         if hash[:boolean]
-          out.puts "#{env}: set" if Homebrew::EnvConfig.send(method_name)
+          out.puts "#{env}: set" if Homebrew::EnvConfig.public_send(method_name)
           next
         end
 
-        value = Homebrew::EnvConfig.send(method_name)
+        value = Homebrew::EnvConfig.public_send(method_name)
         next unless value
         next if (default = hash[:default].presence) && value.to_s == default.to_s
 

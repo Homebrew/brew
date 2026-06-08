@@ -8,7 +8,6 @@ module Homebrew
   # Helper functions for generating homebrew manual.
   module Manpages
     Variables = Struct.new(
-      :alumni,
       :commands,
       :developer_commands,
       :environment_variables,
@@ -58,8 +57,6 @@ module Homebrew
         lead_maintainers:      readme.read[/(Homebrew's \[Lead Maintainers.*\.)/, 1]
                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
         maintainers:           readme.read[/(Homebrew's other Maintainers .*\.)/, 1]
-                                     .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
-        alumni:                readme.read[/(Former Maintainers .*\.)/, 1]
                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
       )
 
@@ -196,7 +193,7 @@ module Homebrew
     sig { returns(String) }
     def self.env_vars_manpage
       lines = Homebrew::EnvConfig::ENVS.filter_map do |env, hash|
-        next if hash[:hidden]
+        next if Homebrew::EnvConfig.hidden?(hash)
 
         entry = "`#{env}`\n\n: #{hash[:description]}\n"
         default = hash[:default_text]

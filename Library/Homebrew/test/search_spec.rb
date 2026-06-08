@@ -152,11 +152,28 @@ RSpec.describe Homebrew::Search do
 
     context "with api" do
       let(:api_formulae) do
-        { "testball" => { "desc" => "Some test" } }
+        {
+          "testball" => {
+            "desc"                 => "Some test",
+            "homepage"             => "https://brew.sh/testball",
+            "license"              => "MIT",
+            "ruby_source_checksum" => "abc123",
+            "stable_url_args"      => ["https://brew.sh/testball-1.0.tar.gz", {}],
+            "stable_version"       => "1.0",
+          },
+        }
       end
 
       let(:api_casks) do
-        { "testball" => { "desc" => "Some test", "names" => ["Test Ball"] } }
+        {
+          "testball" => {
+            "desc"    => "Some test",
+            "names"   => ["Test Ball"],
+            "sha256"  => "abc123",
+            "url"     => "https://brew.sh/testball.zip",
+            "version" => "1.0",
+          },
+        }
       end
 
       before do

@@ -30,7 +30,16 @@ homebrew-user-home() {
 # Print the package install user, preferring MDM's plist override.
 homebrew-package-user() {
   local homebrew_pkg_user_plist="${HOMEBREW_PKG_USER_PLIST:-/var/tmp/.homebrew_pkg_user.plist}"
-  if [[ -f "${homebrew_pkg_user_plist}" ]]
+  # Only honour an override plist that is securely managed by an administrator:
+  # a non-symlink regular file, owned by root, mode 0600 and free of ACLs.
+  # Otherwise fall back to the console user below. Read ownership and mode from
+  # `stat` so extended attributes are ignored, and detect ACLs with `ls -led`,
+  # which prints an extra line per ACL entry (its "@"/"+" mode suffix is not
+  # reliable as "@" for extended attributes masks "+" for ACLs).
+  # shellcheck disable=SC2012 # `ls -led` is needed to detect ACLs; `find` cannot.
+  if [[ ! -L "${homebrew_pkg_user_plist}" && -f "${homebrew_pkg_user_plist}" ]] &&
+     [[ "$(stat -f "%Su %Lp" "${homebrew_pkg_user_plist}" 2>/dev/null)" == "root 600" ]] &&
+     [[ "$(ls -led "${homebrew_pkg_user_plist}" 2>/dev/null | wc -l)" -eq 1 ]]
   then
     local homebrew_pkg_user
     if homebrew_pkg_user="$(defaults read "${homebrew_pkg_user_plist}" HOMEBREW_PKG_USER 2>/dev/null)" &&

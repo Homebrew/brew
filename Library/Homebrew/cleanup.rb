@@ -406,6 +406,7 @@ module Homebrew
         cleanup_bootsnap
         cleanup_logs
         cleanup_temp_cellar
+        cleanup_reinstall_kegs
         cleanup_lockfiles
         cleanup_python_site_packages
         prune_prefix_symlinks_and_directories
@@ -496,6 +497,15 @@ module Homebrew
 
       HOMEBREW_TEMP_CELLAR.each_child do |child|
         cleanup_path(child) { FileUtils.rm_r(child) }
+      end
+    end
+
+    sig { void }
+    def cleanup_reinstall_kegs
+      return unless HOMEBREW_CELLAR.directory?
+
+      HOMEBREW_CELLAR.glob("*/*.reinstall").each do |reinstall_keg|
+        cleanup_path(reinstall_keg) { FileUtils.rm_r(reinstall_keg) }
       end
     end
 

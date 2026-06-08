@@ -112,7 +112,7 @@ __brew_complete_commands() {
   fi
   if [[ -n ${HOMEBREW_DEVELOPER:-} ]]
   then
-    maintainer_cmds="determine-test-runners dispatch-build-bottle formula-analytics generate-analytics-api generate-cask-api generate-cask-ci-matrix generate-formula-api generate-internal-api pr-automerge pr-publish pr-pull pr-upload release update-license-data update-maintainers update-portable-ruby update-report update-sponsors vendor-install"
+    maintainer_cmds="analytics determine-test-runners dispatch-build-bottle formula-analytics generate-analytics-api generate-cask-api generate-cask-ci-matrix generate-formula-api generate-internal-api pr-automerge pr-publish pr-pull pr-upload release update-license-data update-maintainers update-portable-ruby update-report update-sponsors vendor-install"
   fi
   while read -r line
   do
@@ -456,13 +456,11 @@ _brew_audit() {
       --help
       --installed
       --new
-      --no-signing
       --online
       --only
       --only-cops
       --os
       --quiet
-      --signing
       --skip-style
       --strict
       --tap
@@ -498,7 +496,6 @@ _brew_bottle() {
   case "${cur}" in
     -*)
       __brewcomp "
-      --committer
       --debug
       --force-core-tap
       --help
@@ -766,7 +763,6 @@ list)
         ;;
 install)
         __brewcomp "
-        --cleanup
         --debug
         --file
         --force
@@ -1745,7 +1741,6 @@ _brew_gist_logs() {
       --private
       --quiet
       --verbose
-      --with-hostname
       "
       return
       ;;
@@ -1784,7 +1779,6 @@ _brew_info() {
       --category
       --days
       --debug
-      --fetch-manifest
       --formula
       --github
       --help
@@ -1992,7 +1986,6 @@ _brew_list() {
       --formula
       --full-name
       --help
-      --installed-as-dependency
       --installed-on-request
       --json
       --multiple
@@ -2145,7 +2138,6 @@ _brew_options() {
   case "${cur}" in
     -*)
       __brewcomp "
-      --command
       --compact
       --debug
       --help
@@ -2278,7 +2270,6 @@ _brew_pr_pull() {
       --autosquash
       --branch-okay
       --clean
-      --committer
       --debug
       --dry-run
       --help
@@ -2309,7 +2300,6 @@ _brew_pr_upload() {
   case "${cur}" in
     -*)
       __brewcomp "
-      --committer
       --debug
       --dry-run
       --help
@@ -3211,7 +3201,6 @@ _brew_update() {
       --debug
       --force
       --help
-      --merge
       --quiet
       --verbose
       "
@@ -3279,7 +3268,6 @@ _brew_update_perl_resources() {
       --ignore-errors
       --print-only
       --quiet
-      --silent
       --verbose
       "
       return
@@ -3320,7 +3308,6 @@ _brew_update_python_resources() {
       --package-name
       --print-only
       --quiet
-      --silent
       --verbose
       --version
       "

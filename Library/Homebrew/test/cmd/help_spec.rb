@@ -51,7 +51,9 @@ RSpec.describe Homebrew::Cmd::HelpCmd, :integration_test do
       RUBY
       cmd_path.chmod(0755)
 
-      expect { brew "help", "hello-trust-tap", "SECRET_TOKEN" => "password" }
+      expect do
+        brew "help", "hello-trust-tap", "SECRET_TOKEN" => "password", "HOMEBREW_NO_REQUIRE_TAP_TRUST" => "1"
+      end
         .to output(%r{^From tap: trusthelp/foo$}).to_stdout
         .and not_to_output.to_stderr
         .and be_a_success

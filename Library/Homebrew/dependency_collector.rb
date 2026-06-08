@@ -198,7 +198,6 @@ class DependencyCollector
     # whether `Homebrew::API::Formula::FormulaStructGenerator::API_SUPPORTED_REQUIREMENTS` should also be changed.
     case spec
     when :arch          then ArchRequirement.new(T.cast(tags, T::Array[Symbol]))
-    when :codesign      then CodesignRequirement.new(tags)
     when :linux         then LinuxRequirement.new(tags)
     when :macos         then MacOSRequirement.new(tags)
     when :maximum_macos then MacOSRequirement.new(tags, comparator: "<=")

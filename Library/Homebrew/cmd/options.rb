@@ -16,15 +16,14 @@ module Homebrew
                description: "Show all options on a single line separated by spaces."
         switch "--installed",
                description: "Show options for formulae that are currently installed."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to show their " \
                             "options.",
                env:         :eval_all,
-               hidden:      true
-        # odeprecated: replace with `brew help <command>` in a future release.
+               odeprecated: true
         flag   "--command=",
-               description: "Show options for the specified <command>."
+               description: "Show options for the specified <command>.",
+               odeprecated: true
 
         conflicts "--command", "--installed", "--eval-all"
 

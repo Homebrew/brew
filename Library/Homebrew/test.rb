@@ -55,6 +55,7 @@ begin
     if formula.run_test(keep_tmp: args.keep_tmp?) == false
       require "utils/output"
       Utils::Output.odisabled "`return false` in test", "`raise \"<reason for failure>\"`"
+      raise "test returned false"
     end
   end
   if args.debug? # --debug is interactive

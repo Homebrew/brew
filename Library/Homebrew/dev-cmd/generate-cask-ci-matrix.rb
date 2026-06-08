@@ -277,7 +277,7 @@ module Homebrew
         cask_files_to_check.flat_map do |path|
           cask_token = path.basename(".rb")
 
-          audit_args = ["--online", "--signing"]
+          audit_args = ["--online"]
           audit_args << "--new" if changed_files.fetch(:added_files).include?(path) || new_cask
 
           audit_exceptions = []

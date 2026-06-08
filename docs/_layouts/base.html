@@ -1,0 +1,227 @@
+---
+algolia:
+  apiKey: e3369d62b2366b374c54b2c5a2835a00
+  indexName: brew_all
+  appId: D9HG3G8GS4
+  container: '#search-container'
+---
+{% assign t = site.data.locales[page.lang][page.lang] -%}
+<!DOCTYPE html>
+<html {% if page.direction == "rtl" %}dir="rtl" {% endif %}lang="{{ page.lang | default: "en" }}">
+  <head>
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'none';
+                    connect-src https://{{ layout.algolia.appId }}-dsn.algolia.net https://{{ layout.algolia.appId }}-1.algolianet.com https://{{ layout.algolia.appId }}-2.algolianet.com https://{{ layout.algolia.appId }}-3.algolianet.com;
+                    font-src data: https://fonts.gstatic.com;
+                    img-src 'self' https://avatars2.githubusercontent.com https://avatars.githubusercontent.com https://brew.sh https://github.com;
+                    object-src 'none';
+                    form-action 'self' https://buttondown.email;
+                    {% comment %}
+                      We could remove the 'unsafe-inline' by externalizing
+                      the JavaScript and the end of the page.
+                    {% endcomment %}
+                    script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com {%if site.url == "http://localhost:4000" %}'unsafe-eval'{%endif%};
+                    style-src 'self' 'unsafe-inline' https://brew.sh https://cdnjs.cloudflare.com;
+                    {%comment%}
+                      This is a nice to have but requires changes in
+                      libraries we use. We can periodically enable this
+                      after updating libraries to see if they support it.
+                    {%endcomment%}
+                    {%comment%}require-trusted-types-for 'script';{%endcomment%}">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    {% if page.title -%}
+      <title>{{ site.title }}: {{ page.title }}</title>
+    {% elsif t.subtitle -%}
+      {% if page.url == "/" or page.direction == "rtl" -%}
+        <title>{{ site.title }}: {{ t.subtitle }}</title>
+      {% else -%}
+        <title>{{ site.title }}: {{ t.subtitle }}</title>
+      {% endif -%}
+    {% else -%}
+      <title>{{ site.title }}</title>
+    {% endif -%}
+    {% comment -%}
+      The `jekyll-feed` and `jekyll-seo-tag` plugins use self-closing tags (for
+      XHTML compatibility) and, while it's still valid for an HTML5 DOCTYPE,
+      this leads to many `info` notices when running the HTML through a
+      validator. There's no way for us to control this behavior in the plugins,
+      so our only option is to capture the plugin output and naively remove the
+      trailing slash at the end of self-closing tags.
+    {% endcomment -%}
+    {% capture plugin_output -%}
+      {% seo title=false -%}
+    {% endcapture -%}
+    {{ plugin_output | replace: " />", ">" | replace: "/>", ">" }}
+    <meta name="viewport" content="width=device-width">
+    <link rel="icon" href="https://brew.sh/assets/img/favicon.ico" sizes="48x48">
+    <link rel="icon" href="https://brew.sh/assets/img/homebrew.svg" sizes="any" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="https://brew.sh/assets/img/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://brew.sh/assets/css/style.css" type="text/css" media="screen">
+    <link rel="preconnect" href="https://{{ layout.algolia.appId }}-dsn.algolia.net" crossorigin>
+    {% if site.url == "http://localhost:4000" -%}
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/tota11y/0.1.6/tota11y.min.js" crossorigin="anonymous" async></script>
+    {% endif -%}
+    {% if site.data.locales and page.lang -%}
+      {% assign locales = site.data.locales | sort -%}
+      {% for locale in locales -%}
+        {% assign lang = locale[0] -%}
+        {% if lang == "en" -%}
+          <link rel="alternate" hreflang="en" href="{% if site.url %}{{ site.url }}{% else %}/{% endif %}">
+          <link rel="alternate" hreflang="x-default" href="{% if site.url %}{{ site.url }}{% else %}/{% endif %}">
+        {% else -%}
+          <link rel="alternate" hreflang="{{ lang }}" href="{{ lang | prepend: '/' | prepend: site.url }}">
+        {% endif -%}
+      {% endfor -%}
+    {% endif -%}
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/docsearch-css/3.9.0/style.min.css" integrity="sha512-sIgq4M6w/5zPkFzkEpaTuKtZnko/4fsTWj/4XcsVLfpj5q68YkybfOxxLidjo5yZ16dsidABSz4RaapCvzbntQ==" crossorigin="anonymous" referrerpolicy="no-referrer" as="style" media="screen" onload="this.onload=null;this.rel='stylesheet'">
+    {% if page.url == "/" -%}
+      {% for rel_me_url in site.link_rel_me_urls -%}
+        <link href="{{rel_me_url}}" rel="me">
+      {% endfor -%}
+    {% endif -%}
+  </head>
+  <body>
+    <div id="wrap">
+      <header id="header"{% if page.header-class %} class="{{ page.header-class }}"{% endif %}>
+        <div id="brand">
+          {% if page.logo -%}
+            <img alt="{{ page.title }} logo" src="{{ page.logo | relative_url }}" width="128" height="128">
+          {% elsif site.logo -%}
+            <img alt="{{ site.title }} logo" src="{{ site.logo | relative_url }}" width="128" height="128">
+          {% else -%}
+            <img alt="Homebrew logo" src="https://brew.sh/assets/img/homebrew.svg" width="128" height="128">
+          {% endif -%}
+          <h1><a href="{{ site.baseurl }}/">{{ site.title }}</a></h1>
+        </div>
+        {% if t.subtitle -%}
+          <p id="subtitle"><strong>{{ t.subtitle }}</strong></p>
+        {% endif -%}
+        {% if t.pagecontent.install.supported -%}
+          <p class="support-note header-support">{{ t.pagecontent.install.supported }}</p>
+        {% endif -%}
+        <div id="header-controls">
+          <div id="search-container"></div>
+
+          {% if page.lang -%}
+            {% if t.pagecontent.language -%}
+              {% assign language_text = t.pagecontent.language -%}
+            {% else -%}
+              {% assign language_text = site.data.locales.en.en.pagecontent.language -%}
+            {% endif -%}
+            <label class="hidden" for="language">{{ language_text }}</label>
+            <select id="language" name="language" title="{{ language_text }}" aria-label="{{ language_text }}" onchange="loadLanguage(this.options[this.selectedIndex].value)">
+              {% for locale in locales -%}
+                {% assign lang = locale[0] -%}
+                {% assign locale_name = locale[1][lang].locale_name -%}
+                {% if page.lang == lang -%}
+                  <option value="{{ lang }}" selected="selected">{{ locale_name }}</option>
+                {% else -%}
+                  <option value="{{ lang }}">{{ locale_name }}</option>
+                {% endif -%}
+              {% endfor -%}
+            </select>
+          {% endif -%}
+        </div>
+        </header>
+
+      <main> 
+        {% comment -%}
+          This is primarily intended to remove the trailing slash from the
+          self-closing `img` tags that result from rendered Markdown text.
+        {% endcomment -%}
+        {% capture rendered_content -%}
+          {{ content }}
+        {% endcapture -%}
+        {{ rendered_content | replace: " />", ">" | replace: "/>", ">" -}}
+      </main>
+    </div>
+
+    {% if site.forkme_nwo -%}
+      {% assign forkme_url = "https://github.com/" |
+                             append: site.forkme_nwo -%}
+    {% elsif site.github.repository_nwo and site.github.source.branch and site.github.source.path -%}
+      {% assign forkme_url = "https://github.com/" |
+                             append: site.github.repository_nwo |
+                             append: "/edit/" |
+                             append: site.github.source.branch |
+                             append: site.github.source.path |
+                             append: "/" |
+                             append: page.path -%}
+    {% else -%}
+      {% assign forkme_url = "https://github.com/Homebrew/brew" -%}
+    {% endif -%}
+
+    <aside>
+      <a href="{{ forkme_url }}">
+        <img id="forkme" src="https://brew.sh/assets/img/forkme_right_gray_6d6d6d.svg" alt="Fork me on GitHub">
+      </a>
+    </aside>
+    <script>
+      function loadLanguage(lang) {
+        if (lang === {{ page.lang | jsonify }}) {
+          return;
+        } else if (lang === 'en') {
+          window.location.assign('/');
+        } else {
+          window.location.assign('/' + lang);
+        }
+      }
+
+      function loadAnchors() {
+        anchors.options = {
+          placement: 'left',
+          visible: 'hover',
+        };
+        anchors.add('#page > h2, #page > h3, #page > h4, #page > h5, #page > h6');
+      };
+
+      function loadSearch(lang, site) {
+        docsearch(Object.assign(
+          { searchParameters: { facetFilters: ['site:' + site] } },
+          { initialQuery: new URLSearchParams(window.location.search).get('search') },
+          { placeholder: "{% if t.pagecontent.search %}{{ t.pagecontent.search }}{% else %}Search{% endif %} {% if page.search_name %}{{ page.search_name }}{% else %}Homebrew{% endif %}" },
+          {{ layout.algolia | jsonify }}
+        ));
+      };
+
+      async function setupCopyables() {
+        if (navigator.clipboard) {
+          for (const element of document.getElementsByClassName('copyable')) {
+            let text = element.innerText.trim();
+            if (text.startsWith('$')) {
+              text = text.slice(1).trimStart();
+            }
+
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = '⧉';
+            button.setAttribute('aria-label', 'Copy to clipboard');
+            button.onclick = () => {
+              navigator.clipboard.writeText(text);
+              button.textContent = '✓';
+              setTimeout(() => button.textContent = '⧉', 1000);
+            }
+            element.appendChild(button);
+          }
+        }
+      }
+
+      window.addEventListener("DOMContentLoaded", function() {
+        setupCopyables();
+      });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/anchor-js/5.0.0/anchor.min.js" 
+            integrity="sha512-byAcNWVEzFfu+tZItctr+WIMUJvpzT2kokkqcBq+VsrM3OrC5Aj9E2gh+hHpU0XNA3wDmX4sDbV5/nkhvTrj4w==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"
+            onload="loadAnchors()"
+            async></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docsearch-js/3.9.0/umd/index.min.js" 
+            integrity="sha512-GQvKUarIhGPpbful5R03aNwrhDKd/b+KdasOD9Uq0SFTZHJV14rly+Uss2pKazgeZz+G3JQ0wk1ximS6crma/w==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"
+            onload="loadSearch('{{ page.lang }}', '{{ page.search_site }}')"
+            async></script>
+  </body>
+</html>

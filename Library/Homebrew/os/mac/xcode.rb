@@ -251,12 +251,6 @@ module OS
         !version.null?
       end
 
-      sig { returns(T::Boolean) }
-      def self.separate_header_package?
-        odisabled "MacOS::CLT.separate_header_package?"
-        true
-      end
-
       sig { returns(CLTSDKLocator) }
       def self.sdk_locator
         @sdk_locator ||= T.let(CLTSDKLocator.new, T.nilable(OS::Mac::CLTSDKLocator))

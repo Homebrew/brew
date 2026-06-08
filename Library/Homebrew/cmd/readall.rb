@@ -23,11 +23,10 @@ module Homebrew
                description: "Verify any alias symlinks in each tap."
         switch "--syntax",
                description: "Syntax-check all of Homebrew's Ruby files (if no <tap> is passed)."
-        # odeprecated: remove in a future release.
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not.",
                env:         :eval_all,
-               hidden:      true
+               odeprecated: true
         switch "--no-simulate",
                description: "Don't simulate other system configurations when checking formulae and casks."
 

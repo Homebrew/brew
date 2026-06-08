@@ -2,9 +2,12 @@
 # frozen_string_literal: true
 
 require "requirement"
+require "utils/output"
 
 # A requirement on macOS.
 class MacOSRequirement < Requirement
+  extend Utils::Output::Mixin
+
   # Sorbet type members are mutable by design and cannot be frozen.
   # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
@@ -40,13 +43,18 @@ class MacOSRequirement < Requirement
     elsif first_arg.is_a?(Symbol) && MacOSVersion::SYMBOLS.key?(first_arg)
       new([first_arg], comparator:)
     elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*:(?<version>\S+)\s*$/.match(first_arg_s))
-      # odeprecated "string comparison format for `depends_on macos:`"
+      replacement = if md[:comparator] == "<="
+        "`depends_on maximum_macos: :#{md[:version]}`"
+      elsif md[:comparator] == ">="
+        "`depends_on macos: :#{md[:version]}`"
+      end
+      odeprecated "string comparison format for `depends_on macos:`", replacement
       new([T.must(md[:version]).to_sym], comparator: T.must(md[:comparator]))
     elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*(?<version>\S+)\s*$/.match(first_arg_s))
-      # odeprecated "string comparison format for `depends_on macos:`"
+      odeprecated "string comparison format for `depends_on macos:`"
       new([md[:version]], comparator: T.must(md[:comparator]))
     else
-      # odeprecated "strict symbol format for `depends_on macos:`"
+      odeprecated "strict symbol format for `depends_on macos:`"
       new([first_arg], comparator: "==")
     end
   end

@@ -325,7 +325,7 @@ module Homebrew
                                                               extra_packages:           args.python_extra_packages,
                                                               exclude_packages:         args.python_exclude_packages,
                                                               install_dependencies:     args.install_dependencies?,
-                                                              silent:                   args.quiet?,
+                                                              quiet:                    args.quiet?,
                                                               ignore_non_pypi_packages: true
 
             resource_update_results.merge!(

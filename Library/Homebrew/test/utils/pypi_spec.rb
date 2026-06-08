@@ -216,7 +216,7 @@ RSpec.describe PyPI do
       expect(livecheck_package).not_to receive(:pypi_info)
 
       described_class.update_python_resources!(Formulary.from_contents("foo", path, contents),
-                                               package_name: "foo", silent: true)
+                                               package_name: "foo", quiet: true)
 
       expect(path.read).to eq <<~RUBY
         class Foo < Formula

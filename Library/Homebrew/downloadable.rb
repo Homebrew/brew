@@ -81,6 +81,17 @@ module Downloadable
     cached_download.exist?
   end
 
+  sig { overridable.returns(T::Boolean) }
+  def downloaded_and_valid?
+    return false unless cached_download.file?
+    return false if checksum.blank?
+
+    with_context(quiet: true) { verify_download_integrity(cached_download) }
+    true
+  rescue ChecksumMismatchError
+    false
+  end
+
   sig { overridable.returns(Pathname) }
   def cached_download
     downloader.cached_location

@@ -919,7 +919,7 @@ module Cask
         raise CaskInvalidError.new(cask, "'no_autobump!' stanza may only appear once.")
       end
 
-      odeprecated "no_autobump! because: :requires_manual_review" if because == :requires_manual_review
+      odisabled "no_autobump! because: :requires_manual_review" if because == :requires_manual_review
 
       @no_autobump_defined = true
       @no_autobump_message = because

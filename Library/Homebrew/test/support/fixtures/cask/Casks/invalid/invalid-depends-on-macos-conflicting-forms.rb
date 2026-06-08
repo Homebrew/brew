@@ -9,7 +9,7 @@ cask "invalid-depends-on-macos-conflicting-forms" do
   homepage "https://brew.sh/invalid-depends-on-macos-conflicting-forms"
 
   depends_on macos: :sequoia
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "Caffeine.app"
 end

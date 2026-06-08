@@ -12,9 +12,9 @@ module Homebrew
         EOS
         switch "-p", "--print-only",
                description: "Print the updated resource blocks instead of changing <formula>."
-        # odeprecated: remove in a future release.
         switch "-s", "--silent",
-               description: "Suppress any output."
+               description: "Suppress any output.",
+               odeprecated: true
         switch "--ignore-errors",
                description: "Record all discovered resources, even those that can't be resolved successfully. " \
                             "This option is ignored for homebrew/core formulae."
@@ -54,7 +54,7 @@ module Homebrew
                                         exclude_packages:         args.exclude_packages,
                                         install_dependencies:     args.install_dependencies?,
                                         print_only:               args.print_only?,
-                                        silent:                   args.silent?,
+                                        quiet:                    args.quiet? || args.silent?,
                                         verbose:                  args.verbose?,
                                         ignore_errors:            ignore_errors,
                                         ignore_non_pypi_packages: args.ignore_non_pypi_packages?

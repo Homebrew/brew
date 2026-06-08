@@ -154,7 +154,7 @@ module OS
         # This has little-to-no usage and doesn't make sense to have a special function for.
         # When removing this function, also cleanup related usage in the `cc` shim
         # and remove `no_weak_imports_support?`.
-        # odeprecated "ENV.no_weak_imports"
+        odeprecated "ENV.no_weak_imports"
         append_to_cccfg "w" if no_weak_imports_support?
       end
 
@@ -162,7 +162,7 @@ module OS
       def no_fixup_chains
         # This function has been no-op for quite some time as it's set by default.
         # Unlike above, do not touch the `cc` shim or the support method when removing this.
-        # odeprecated "ENV.no_fixup_chains"
+        odeprecated "ENV.no_fixup_chains"
         append_to_cccfg "f" if no_fixup_chains_support?
       end
     end

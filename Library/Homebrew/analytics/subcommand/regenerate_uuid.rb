@@ -14,14 +14,12 @@ module Homebrew
             Delete Homebrew's legacy analytics UUID.
           EOS
           named_args :none
+          hide_from_man_page!
         end
 
         sig { override.void }
         def run
-          # odeprecated: remove in 5.2.0.
-          Utils::Analytics.delete_uuid!
-          opoo "Homebrew no longer uses an analytics UUID so this has been deleted!"
-          puts "brew analytics regenerate-uuid is no longer necessary."
+          odisabled "brew analytics regenerate-uuid"
         end
       end
     end
