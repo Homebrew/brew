@@ -1012,69 +1012,33 @@ module Homebrew
 
       sig { params(formulae: T::Array[Formula]).void }
       def print_sizes_with_deps(formulae)
-        reverse_map = build_reverse_dep_map
-
-        if args.no_named?
-          analyses = formulae.filter_map do |formula|
-            analyze_formula_footprint(formula, reverse_map)
-          rescue FormulaUnavailableError
-            nil
-          end
-          analyses.sort_by! { |a| -a[:total_footprint] }
-          print_footprint_table(analyses)
-        else
-          formulae.each_with_index do |formula, i|
-            puts if i.positive?
-            analysis = analyze_formula_footprint(formula, reverse_map)
-            print_footprint_single(analysis)
-          end
-        end
-      end
-
-      sig { returns(T::Hash[String, T::Set[String]]) }
-      def build_reverse_dep_map
         reverse_map = T.let({}, T::Hash[String, T::Set[String]])
 
-        Formula.installed.each do |formula|
-          keg = formula.any_installed_keg
+        Formula.installed.each do |installed_formula|
+          keg = installed_formula.any_installed_keg
           next unless keg
 
-          deps = keg.runtime_dependencies
-          next unless deps.is_a?(Array)
-
-          deps.each do |dep|
+          Array(keg.runtime_dependencies).each do |dep|
             next unless dep.is_a?(Hash)
 
             full_name = dep["full_name"]
             next unless full_name
 
             dep_name = Utils.name_from_full_name(full_name)
-            (reverse_map[dep_name] ||= Set.new).add(formula.name)
+            (reverse_map[dep_name] ||= Set.new).add(installed_formula.name)
           end
         end
 
-        reverse_map
-      end
+        analyses = formulae.filter_map do |formula|
+          kegs = formula.installed_kegs
+          next if kegs.empty?
 
-      sig {
-        params(
-          formula:     Formula,
-          reverse_map: T::Hash[String, T::Set[String]],
-        ).returns(T::Hash[Symbol, T.untyped])
-      }
-      def analyze_formula_footprint(formula, reverse_map)
-        kegs = formula.installed_kegs
-        raise FormulaUnavailableError, formula.name if kegs.empty?
+          direct_size = kegs.sum(&:disk_usage)
+          keg = formula.any_installed_keg
+          exclusive_deps = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
+          shared_deps = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
 
-        direct_size = kegs.sum(&:disk_usage)
-
-        keg = formula.any_installed_keg
-        tab_deps = keg&.runtime_dependencies
-        exclusive_deps = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
-        shared_deps = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
-
-        if tab_deps.is_a?(Array)
-          tab_deps.each do |dep|
+          Array(keg&.runtime_dependencies).each do |dep|
             next unless dep.is_a?(Hash)
 
             full_name = dep["full_name"]
@@ -1100,90 +1064,92 @@ module Homebrew
               shared_deps << { name: dep_name, size: dep_size, also_needed_by: }
             end
           end
+
+          exclusive_deps_size = exclusive_deps.sum { |d| d[:size] }
+          total_footprint = direct_size + exclusive_deps_size
+
+          {
+            name:                formula.full_name,
+            direct_size:,
+            exclusive_deps:,
+            shared_deps:,
+            exclusive_deps_size:,
+            total_footprint:,
+          }
         end
 
-        exclusive_deps_size = exclusive_deps.sum { |d| d[:size] }
-        total_footprint = direct_size + exclusive_deps_size
+        if args.no_named?
+          return if analyses.empty?
 
-        {
-          name:                formula.full_name,
-          direct_size:,
-          exclusive_deps:,
-          shared_deps:,
-          exclusive_deps_size:,
-          total_footprint:,
-        }
-      end
+          analyses.sort_by! { |a| -a[:total_footprint] }
 
-      sig { params(analyses: T::Array[T::Hash[Symbol, T.untyped]]).void }
-      def print_footprint_table(analyses)
-        return if analyses.empty?
+          ohai "Formulae footprint:"
 
-        ohai "Formulae footprint:"
+          name_width = (analyses.map { |a| a[:name].length } + [7]).max
+          fmt = "%-#{name_width}s  %10s  %10s  %10s"
 
-        name_width = (analyses.map { |a| a[:name].length } + [7]).max
-        fmt = "%-#{name_width}s  %10s  %10s  %10s"
-
-        puts format(fmt, "Name", "Direct", "Excl.Deps", "Total")
-        analyses.each do |a|
-          puts format(
-            fmt,
-            a[:name],
-            Formatter.disk_usage_readable(a[:direct_size]),
-            Formatter.disk_usage_readable(a[:exclusive_deps_size]),
-            Formatter.disk_usage_readable(a[:total_footprint]),
-          )
-        end
-
-        grand_total = analyses.sum { |a| a[:total_footprint] }
-        puts format(fmt, "Total", "", "", Formatter.disk_usage_readable(grand_total))
-      end
-
-      sig { params(analysis: T::Hash[Symbol, T.untyped]).void }
-      def print_footprint_single(analysis)
-        name = analysis[:name]
-        direct = Formatter.disk_usage_readable(analysis[:direct_size])
-        exclusive = analysis[:exclusive_deps]
-        shared = analysis[:shared_deps]
-        total = Formatter.disk_usage_readable(analysis[:total_footprint])
-
-        if exclusive.empty? && shared.empty?
-          puts "#{name}: #{direct}"
-          return
-        end
-
-        if exclusive.empty?
-          puts "#{name}: #{direct} (direct), no exclusive deps"
-        else
-          dep_count = exclusive.size
-          excl_size = Formatter.disk_usage_readable(analysis[:exclusive_deps_size])
-          puts "#{name}: #{direct} (direct) + #{excl_size} " \
-               "(#{dep_count} exclusive #{(dep_count == 1) ? "dep" : "deps"}) = #{total} total"
-        end
-
-        if shared.any?
-          shared_size = Formatter.disk_usage_readable(shared.sum { |d| d[:size] })
-          puts "  #{shared_size} in shared deps (would not be freed)"
-        end
-
-        return unless args.verbose?
-
-        if exclusive.any?
-          puts ""
-          puts "Exclusive dependencies (only needed by #{name}):"
-          exclusive.sort_by { |d| -d[:size] }.each do |dep|
-            puts "  #{dep[:name].ljust(16)} #{Formatter.disk_usage_readable(dep[:size])}"
+          puts format(fmt, "Name", "Direct", "Excl.Deps", "Total")
+          analyses.each do |a|
+            puts format(
+              fmt,
+              a[:name],
+              Formatter.disk_usage_readable(a[:direct_size]),
+              Formatter.disk_usage_readable(a[:exclusive_deps_size]),
+              Formatter.disk_usage_readable(a[:total_footprint]),
+            )
           end
-        end
 
-        return if shared.none?
+          grand_total = analyses.sum { |a| a[:total_footprint] }
+          puts format(fmt, "Total", "", "", Formatter.disk_usage_readable(grand_total))
+        else
+          analyses.each_with_index do |analysis, i|
+            puts if i.positive?
 
-        puts ""
-        puts "Shared dependencies (also needed by other formulae):"
-        shared.sort_by { |d| -d[:size] }.each do |dep|
-          also = dep[:also_needed_by]
-          also_str = also.empty? ? "" : "  (also: #{also.join(", ")})"
-          puts "  #{dep[:name].ljust(16)} #{Formatter.disk_usage_readable(dep[:size])}#{also_str}"
+            name = analysis[:name]
+            direct = Formatter.disk_usage_readable(analysis[:direct_size])
+            exclusive = analysis[:exclusive_deps]
+            shared = analysis[:shared_deps]
+            total = Formatter.disk_usage_readable(analysis[:total_footprint])
+
+            if exclusive.empty? && shared.empty?
+              puts "#{name}: #{direct}"
+              next
+            end
+
+            if exclusive.empty?
+              puts "#{name}: #{direct} (direct), no exclusive deps"
+            else
+              dep_count = exclusive.size
+              excl_size = Formatter.disk_usage_readable(analysis[:exclusive_deps_size])
+              puts "#{name}: #{direct} (direct) + #{excl_size} " \
+                   "(#{dep_count} exclusive #{(dep_count == 1) ? "dep" : "deps"}) = #{total} total"
+            end
+
+            if shared.any?
+              shared_size = Formatter.disk_usage_readable(shared.sum { |d| d[:size] })
+              puts "  #{shared_size} in shared deps (would not be freed)"
+            end
+
+            next unless args.verbose?
+
+            if exclusive.any?
+              puts ""
+              puts "Exclusive dependencies (only needed by #{name}):"
+              exclusive.sort_by { |d| -d[:size] }.each do |dep|
+                puts "  #{dep[:name].ljust(16)} #{Formatter.disk_usage_readable(dep[:size])}"
+              end
+            end
+
+            next if shared.none?
+
+            puts ""
+            puts "Shared dependencies (also needed by other formulae):"
+            shared.sort_by { |d| -d[:size] }.each do |dep|
+              also = dep[:also_needed_by]
+              also_str = also.empty? ? "" : "  (also: #{also.join(", ")})"
+              puts "  #{dep[:name].ljust(16)} #{Formatter.disk_usage_readable(dep[:size])}#{also_str}"
+            end
+          end
         end
       end
     end
