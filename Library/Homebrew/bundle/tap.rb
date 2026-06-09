@@ -3,7 +3,7 @@
 
 require "json"
 require "bundle/package_type"
-require "trust"
+require "bundle/trust"
 
 module Homebrew
   module Bundle
@@ -92,7 +92,7 @@ module Homebrew
               ", \"#{tap_remote}\""
             end
             tapline = "tap \"#{tap.name}\"#{remote}"
-            tapline += ", trusted: true" if Homebrew::Trust.explicitly_trusted_tap?(tap)
+            tapline += ", trusted: true" if Bundle::Trust.explicitly_trusted_tap?(tap)
             tapline
           end.sort.uniq.join("\n")
         end

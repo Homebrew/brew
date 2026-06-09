@@ -4,7 +4,7 @@
 require "utils"
 require "utils/output"
 require "bundle/package_type"
-require "trust"
+require "bundle/trust"
 
 module Homebrew
   module Bundle
@@ -99,7 +99,7 @@ module Homebrew
 
           # Only fully-qualified names map to a tap, so unqualified tokens
           # cannot be meaningfully trusted.
-          Homebrew::Trust.trust!(:cask, full_name) if options[:trusted] && Utils.full_name?(full_name)
+          Bundle::Trust.trust!(:cask, full_name) if options[:trusted] && Utils.full_name?(full_name)
 
           install_result = if cask_installed?(name) && upgrading?(no_upgrade, name, options)
             status = "#{options[:greedy] ? "may not be" : "not"} up-to-date"
@@ -224,7 +224,7 @@ module Homebrew
 
         sig { override.params(describe: T::Boolean).returns(String) }
         def dump(describe: false)
-          trusted_casks = Homebrew::Trust.trusted_entries(:cask)
+          trusted_casks = Bundle::Trust.trusted_entries(:cask)
           casks.map do |cask|
             description = "# #{cask.desc}\n" if describe && cask.desc.present?
             config = ", args: { #{explicit_s(cask.config)} }" if cask.config.present? && cask.config.explicit.present?

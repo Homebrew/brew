@@ -238,7 +238,7 @@ RSpec.describe Homebrew::Bundle::Brew do
           # foobar
           brew "qux/quuz/foo"
         RUBY
-        allow(Homebrew::Trust).to receive(:trusted_entries).with(:formula).and_return(["bazzles/bizzles/baz"])
+        allow(Homebrew::Bundle::Trust).to receive(:trusted_entries).with(:formula).and_return(["bazzles/bizzles/baz"])
         expect(dumper.dump(describe: true)).to eql(expected.chomp)
       end
     end
@@ -599,14 +599,14 @@ RSpec.describe Homebrew::Bundle::Brew do
         tap = instance_double(Tap, ensure_installed!: nil)
         allow(Tap).to receive(:with_formula_name).with(tapped_name).and_return([tap, "baz"])
         allow(tap).to receive(:ensure_installed!) { order << :tap }
-        allow(Homebrew::Trust).to receive(:trust!).with(:formula, tapped_name) { order << :trust }
+        allow(Homebrew::Bundle::Trust).to receive(:trust!).with(:formula, tapped_name) { order << :trust }
         described_class.install!(tapped_name, trusted: true)
         expect(order).to eq([:trust, :tap])
       end
 
       it "does not trust an unqualified formula name" do
         allow(Tap).to receive(:with_formula_name).and_return(nil)
-        expect(Homebrew::Trust).not_to receive(:trust!)
+        expect(Homebrew::Bundle::Trust).not_to receive(:trust!)
         described_class.install!("baz", trusted: true)
       end
     end
@@ -687,7 +687,8 @@ RSpec.describe Homebrew::Bundle::Brew do
         described_class.reset!
         allow(Homebrew::EnvConfig).to receive(:require_tap_trust?).and_return(true)
         allow(Formula).to receive(:installed_formula_names).and_return(["php@7.2"])
-        allow(Homebrew::Trust).to receive(:trusted?).with(:formula, "shivammathur/php/php@7.2").and_return(false)
+        allow(Homebrew::Bundle::Trust).to receive(:trusted?).with(:formula,
+                                                                  "shivammathur/php/php@7.2").and_return(false)
       end
 
       it "warns and marks the formula actionable without loading it" do

@@ -74,7 +74,7 @@ RSpec.describe Homebrew::Bundle::Cask do
           # Software
           cask "baz"
         RUBY
-        allow(Homebrew::Trust).to receive(:trusted_entries).with(:cask).and_return(["bar"])
+        allow(Homebrew::Bundle::Trust).to receive(:trusted_entries).with(:cask).and_return(["bar"])
         expect(dumper.dump(describe: true)).to eql(expected.chomp)
       end
 
@@ -260,13 +260,13 @@ RSpec.describe Homebrew::Bundle::Cask do
 
         it "trusts the cask before installing it" do
           allow(Homebrew::Bundle).to receive(:brew).and_return(true)
-          expect(Homebrew::Trust).to receive(:trust!).with(:cask, "puma/puma/puma-cask")
+          expect(Homebrew::Bundle::Trust).to receive(:trust!).with(:cask, "puma/puma/puma-cask")
           described_class.install!("puma-cask", full_name: "puma/puma/puma-cask", trusted: true)
         end
 
         it "does not trust an unqualified cask token" do
           allow(Homebrew::Bundle).to receive(:brew).and_return(true)
-          expect(Homebrew::Trust).not_to receive(:trust!)
+          expect(Homebrew::Bundle::Trust).not_to receive(:trust!)
           described_class.install!("google-chrome", trusted: true)
         end
 

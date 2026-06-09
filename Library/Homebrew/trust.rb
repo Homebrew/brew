@@ -13,6 +13,46 @@ module Homebrew
   module Trust
     extend Utils::Output::Mixin
 
+    module Read
+      extend T::Helpers
+
+      abstract!
+
+      sig { abstract.params(type: Symbol).returns(T::Array[String]) }
+      def trusted_entries(type); end
+
+      sig { params(type: Symbol, name: String).returns(T::Boolean) }
+      def trusted?(type, name)
+        name = normalise_name(name)
+        return true if trusted_entries(type).include?(name)
+        return false if type == :tap
+        return false unless (tap_name = ::Utils.tap_from_full_name(name))
+
+        trusted_tap?(Tap.fetch(tap_name))
+      rescue Tap::InvalidNameError
+        false
+      end
+
+      sig { params(tap: Tap).returns(T::Boolean) }
+      def trusted_tap?(tap)
+        tap.implicitly_trusted? || explicitly_trusted_tap?(tap)
+      end
+
+      # Whether the tap appears in the trust list, ignoring any implicit official-tap trust. The
+      # entries may be `user/repository` names or remote URLs, so match via {Tap#matches_reference?}.
+      sig { params(tap: Tap).returns(T::Boolean) }
+      def explicitly_trusted_tap?(tap)
+        trusted_entries(:tap).any? { |reference| tap.matches_reference?(reference) }
+      end
+
+      sig { params(name: String).returns(String) }
+      def normalise_name(name)
+        name.downcase
+      end
+    end
+
+    extend Read
+
     SETTING_KEYS = T.let({
       tap:     :trustedtaps,
       formula: :trustedformulae,
@@ -91,30 +131,6 @@ module Homebrew
       store = trust_store
       store.delete(setting_key(type))
       write_trust_store(store)
-    end
-
-    sig { params(type: Symbol, name: String).returns(T::Boolean) }
-    def self.trusted?(type, name)
-      name = normalise_name(name)
-      return true if trusted_entries(type).include?(name)
-      return false if type == :tap
-      return false unless (tap_name = ::Utils.tap_from_full_name(name))
-
-      trusted_tap?(Tap.fetch(tap_name))
-    rescue Tap::InvalidNameError
-      false
-    end
-
-    sig { params(tap: Tap).returns(T::Boolean) }
-    def self.trusted_tap?(tap)
-      tap.implicitly_trusted? || explicitly_trusted_tap?(tap)
-    end
-
-    # Whether the tap appears in the trust list, ignoring any implicit official-tap trust. The
-    # entries may be `user/repository` names or remote URLs, so match via {Tap#matches_reference?}.
-    sig { params(tap: T.untyped).returns(T::Boolean) }
-    def self.explicitly_trusted_tap?(tap)
-      trusted_entries(:tap).any? { |reference| tap.matches_reference?(reference) }
     end
 
     sig { params(name: String, path: Pathname).void }
@@ -202,14 +218,9 @@ module Homebrew
       SETTING_KEYS.fetch(type).to_s
     end
 
-    sig { params(type: Symbol).returns(T::Array[String]) }
+    sig { override.params(type: Symbol).returns(T::Array[String]) }
     def self.trusted_entries(type)
       trust_store.fetch(setting_key(type), [])
-    end
-
-    sig { params(name: String).returns(String) }
-    def self.normalise_name(name)
-      name.downcase
     end
 
     sig { params(name: String, type: T.nilable(Symbol), include_existing: T::Boolean).returns([Symbol, String]) }

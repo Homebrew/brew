@@ -6,7 +6,7 @@ require "tsort"
 require "utils"
 require "utils/output"
 require "bundle/package_type"
-require "trust"
+require "bundle/trust"
 
 module Homebrew
   module Bundle
@@ -145,14 +145,11 @@ module Homebrew
 
           # Reading the formula is needed for authoritative outdated state, so
           # report trust problems before the upgrade check tries to load it.
-          if Utils.full_name?(formula) && Homebrew::EnvConfig.require_tap_trust?
-            require "trust"
-
-            unless Homebrew::Trust.trusted?(:formula, formula)
-              opoo "Cannot check whether #{formula} is outdated because its tap is not trusted. " \
-                   "Run `brew trust --formula #{formula}` to trust it."
-              return true
-            end
+          if Utils.full_name?(formula) && Homebrew::EnvConfig.require_tap_trust? &&
+             !Bundle::Trust.trusted?(:formula, formula)
+            opoo "Cannot check whether #{formula} is outdated because its tap is not trusted. " \
+                 "Run `brew trust --formula #{formula}` to trust it."
+            return true
           end
 
           # Check local cache first and then authoritative Homebrew source.
@@ -250,7 +247,7 @@ module Homebrew
           requested_formula = formulae.select do |f|
             f[:installed_on_request?]
           end
-          trusted_formulae = Homebrew::Trust.trusted_entries(:formula)
+          trusted_formulae = Bundle::Trust.trusted_entries(:formula)
           requested_formula.map do |f|
             brewline = if describe && f[:desc].present?
               f[:desc].split("\n").map { |s| "# #{s}\n" }.join
@@ -558,7 +555,7 @@ module Homebrew
         # triggers the trust check before any later step could grant trust.
         # Only fully-qualified names map to a tap, so unqualified names cannot
         # be meaningfully trusted.
-        Homebrew::Trust.trust!(:formula, @full_name) if @trusted && Utils.full_name?(@full_name)
+        Bundle::Trust.trust!(:formula, @full_name) if @trusted && Utils.full_name?(@full_name)
 
         if (tap_with_name = ::Tap.with_formula_name(@full_name))
           tap, = tap_with_name
