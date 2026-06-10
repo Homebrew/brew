@@ -13,10 +13,23 @@ homebrew-which-formula() {
         HOMEBREW_EXPLAIN=1
         shift
         ;;
+      -\? | -h | --help | --usage)
+        brew help which-formula
+        exit $?
+        ;;
+      --verbose) HOMEBREW_VERBOSE=1 ;;
+      --debug) HOMEBREW_DEBUG=1 ;;
+      --quiet) HOMEBREW_QUIET=1 ;;
       --*)
-        echo "Unknown option: $1" >&2
+        onoe "Unknown option: $1"
         brew help which-formula
         return 1
+        ;;
+      -*)
+        [[ "$1" == *v* ]] && HOMEBREW_VERBOSE=1
+        [[ "$1" == *q* ]] && HOMEBREW_QUIET=1
+        [[ "$1" == *d* ]] && HOMEBREW_DEBUG=1
+        shift
         ;;
       *)
         args+=("$1")
@@ -24,6 +37,11 @@ homebrew-which-formula() {
         ;;
     esac
   done
+
+  if [[ -n "${HOMEBREW_DEBUG}" ]]
+  then
+    set -x
+  fi
 
   if [[ ${#args[@]} -eq 0 ]]
   then
