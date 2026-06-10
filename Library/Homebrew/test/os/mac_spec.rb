@@ -5,6 +5,18 @@ require "locale"
 require "os/mac"
 
 RSpec.describe OS::Mac do
+  describe "::latest_sdk_version" do
+    it "uses the beta floor for prerelease macOS versions" do
+      allow(described_class).to receive(:version).and_return(MacOSVersion.new("27"))
+      expect(described_class.latest_sdk_version).to eq(Version.new("27"))
+    end
+
+    it "uses the current stable floor on supported macOS versions" do
+      allow(described_class).to receive(:version).and_return(MacOSVersion.new("26"))
+      expect(described_class.latest_sdk_version).to eq(Version.new("26"))
+    end
+  end
+
   describe "::languages" do
     it "returns a list of all languages" do
       expect(described_class.languages).not_to be_empty

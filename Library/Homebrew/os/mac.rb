@@ -60,6 +60,8 @@ module OS
     def self.latest_sdk_version
       # TODO: bump version when new Xcode macOS SDK is released
       # NOTE: We only track the major version of the SDK.
+      return ::Version.new(HOMEBREW_MACOS_NEWEST_UNSUPPORTED) if version.prerelease?
+
       ::Version.new("26")
     end
 
