@@ -646,9 +646,9 @@ HOMEBREW_BOTTLE_DEFAULT_DOMAIN="https://ghcr.io/v2/homebrew/core"
 # - Library/Homebrew/os/mac/xcode.rb (latest_version), (minimum_version)
 # and, if needed:
 # - MacOSVersion::SYMBOLS
-HOMEBREW_MACOS_NEWEST_UNSUPPORTED="27"
+HOMEBREW_MACOS_NEWEST_UNSUPPORTED="28"
 # TODO: bump version when new macOS is released
-HOMEBREW_MACOS_NEWEST_SUPPORTED="26"
+HOMEBREW_MACOS_NEWEST_SUPPORTED="27"
 # TODO: bump version when new macOS is released and update references in:
 # - docs/Installation.md
 # - HOMEBREW_MACOS_OLDEST_SUPPORTED in .github/workflows/release.yml

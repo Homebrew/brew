@@ -60,7 +60,7 @@ module OS
     def self.latest_sdk_version
       # TODO: bump version when new Xcode macOS SDK is released
       # NOTE: We only track the major version of the SDK.
-      ::Version.new("26")
+      ::Version.new("27")
     end
 
     sig { returns(String) }
