@@ -80,6 +80,36 @@ RSpec.describe Homebrew::Bundle::Dsl do
     end
   end
 
+  context "with tap entries" do
+    it "processes trusted taps without a clone target" do
+      dsl = dsl_from_string 'tap "oven-sh/bun", trusted: true'
+
+      expect(dsl.entries[0]).to have_attributes(
+        name:    "oven-sh/bun",
+        options: { trusted: true, clone_target: nil },
+      )
+    end
+
+    it "processes trusted taps with a clone target" do
+      dsl = dsl_from_string 'tap "oven-sh/bun", "https://github.com/oven-sh/homebrew-bun", trusted: true'
+
+      expect(dsl.entries[0]).to have_attributes(
+        name:    "oven-sh/bun",
+        options: { clone_target: "https://github.com/oven-sh/homebrew-bun", trusted: true },
+      )
+    end
+
+    it "processes legacy positional tap options" do
+      dsl = described_class.new(StringIO.new(""))
+      dsl.tap("oven-sh/bun", nil, { trusted: true })
+
+      expect(dsl.entries[0]).to have_attributes(
+        name:    "oven-sh/bun",
+        options: { trusted: true, clone_target: nil },
+      )
+    end
+  end
+
   context "with flatpak entries" do
     it "processes flatpak without options" do
       dsl = dsl_from_string 'flatpak "org.gnome.Calculator"'

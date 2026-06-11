@@ -83,8 +83,21 @@ module Homebrew
         @entries << Entry.new(:cask, name, options)
       end
 
-      sig { params(name: String, clone_target: T.nilable(String), options: Homebrew::Bundle::EntryOptions).void }
-      def tap(name, clone_target = nil, options = {})
+      sig {
+        params(
+          name:               String,
+          clone_target:       T.nilable(T.any(String, Homebrew::Bundle::EntryOptions)),
+          positional_options: Homebrew::Bundle::EntryOptions,
+          options:            T.untyped,
+        ).void
+      }
+      def tap(name, clone_target = nil, positional_options = {}, **options)
+        if clone_target.is_a?(Hash)
+          positional_options = clone_target
+          clone_target = nil
+        end
+
+        options = positional_options.merge(options)
         options[:clone_target] = clone_target
         name = Homebrew::Bundle::Dsl.sanitize_tap_name(name)
         @entries << Entry.new(:tap, name, options)
