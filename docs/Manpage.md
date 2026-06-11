@@ -4854,6 +4854,15 @@ command execution (e.g. `$(cat file)`).
 
 : If set, use Pry for the `brew irb` command.
 
+`HOMEBREW_RELEASE_COOLDOWN_DAYS`
+
+: Number of days a newly published upstream release must have been available
+  before Homebrew tooling will use it. Applies to npm, PyPI and RubyGems
+  dependency installs during formula builds and tests, PyPI resource resolution
+  and `brew bump`. Set to `0` to disable release cooldowns.
+  
+  *Default:* `1`.
+
 `HOMEBREW_REQUIRE_TAP_TRUST`
 
 : If set, require non-official tap formulae, casks and commands to be trusted

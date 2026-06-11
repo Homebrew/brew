@@ -624,6 +624,13 @@ module Homebrew
         description: "If set, use Pry for the `brew irb` command.",
         boolean:     true,
       },
+      HOMEBREW_RELEASE_COOLDOWN_DAYS:            {
+        description: "Number of days a newly published upstream release must have been available before " \
+                     "Homebrew tooling will use it. Applies to npm, PyPI and RubyGems dependency installs " \
+                     "during formula builds and tests, PyPI resource resolution and `brew bump`. " \
+                     "Set to `0` to disable release cooldowns.",
+        default:     1,
+      },
       HOMEBREW_REQUIRE_TAP_TRUST:                {
         # odeprecated: make tap trust checks default in a later release.
         description: "If set, require non-official tap formulae, casks and commands to be trusted with " \
@@ -781,6 +788,7 @@ module Homebrew
       :HOMEBREW_DOWNLOAD_CONCURRENCY,
       :HOMEBREW_FORBID_PACKAGES_FROM_PATHS,
       :HOMEBREW_MAKE_JOBS,
+      :HOMEBREW_RELEASE_COOLDOWN_DAYS,
     ]).freeze, T::Set[Symbol])
 
     # This tracks process-local warnings, so it must remain mutable.
@@ -959,6 +967,14 @@ module Homebrew
       end
 
       [concurrency, 1].max
+    end
+
+    sig { returns(Integer) }
+    def release_cooldown_days
+      days = Integer(ENV.fetch("HOMEBREW_RELEASE_COOLDOWN_DAYS", ""), 10, exception: false)
+      return ENVS.fetch(:HOMEBREW_RELEASE_COOLDOWN_DAYS).fetch(:default) if days.nil?
+
+      [days, 0].max
     end
 
     sig { returns(T::Boolean) }

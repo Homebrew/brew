@@ -907,7 +907,7 @@ module Homebrew
 
           current_str = current.to_s
           current_is_prerelease = current_str.include?("-")
-          cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
+          cooldown_interval = (DateTime.now - Homebrew.release_cooldown_days)
           release_dates.sort_by { |_, date| date }.reverse_each do |version_str, date|
             version = Version.new(version_str)
             return version if version_str == current_str
@@ -940,7 +940,7 @@ module Homebrew
 
           current_str = current.to_s
           current_is_prerelease = current_str.match?(PYPI_UNSTABLE_VERSION_REGEX)
-          cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
+          cooldown_interval = (DateTime.now - Homebrew.release_cooldown_days)
           releases.sort_by { |k, _| Version.new(k) }.reverse_each do |version_str, assets|
             version = Version.new(version_str)
             return version if version_str == current_str
@@ -972,7 +972,7 @@ module Homebrew
           return unless json.is_a?(Array)
 
           current_str = current.to_s
-          cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
+          cooldown_interval = (DateTime.now - Homebrew.release_cooldown_days)
           json.sort_by { |release| Version.new(release["number"]) }.reverse_each do |release|
             next if release["platform"] != (match[:platform] || "ruby")
 

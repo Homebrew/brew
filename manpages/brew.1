@@ -3165,6 +3165,13 @@ If set, \fBbrew install\fP \fIformula\fP will use this URL to download PyPI pack
 \fBHOMEBREW_PRY\fP
 If set, use Pry for the \fBbrew irb\fP command\.
 .TP
+\fBHOMEBREW_RELEASE_COOLDOWN_DAYS\fP
+Number of days a newly published upstream release must have been available before Homebrew tooling will use it\. Applies to npm, PyPI and RubyGems dependency installs during formula builds and tests, PyPI resource resolution and \fBbrew bump\fP\&\. Set to \fB0\fP to disable release cooldowns\.
+.RS
+.P
+\fIDefault:\fP \fB1\fP\&\.
+.RE
+.TP
 \fBHOMEBREW_REQUIRE_TAP_TRUST\fP
 If set, require non\-official tap formulae, casks and commands to be trusted with \fBbrew trust\fP before Homebrew loads them\. This is the default unless \fB$HOMEBREW_NO_REQUIRE_TAP_TRUST\fP is set\. Also enables commands that evaluate all formulae and casks\.
 .RS

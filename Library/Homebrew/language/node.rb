@@ -19,7 +19,7 @@ module Language
     sig { params(ignore_scripts: T::Boolean).returns(T::Array[String]) }
     def self.npm_install_security_args(ignore_scripts: true)
       args = %W[
-        --min-release-age=#{Homebrew::RELEASE_COOLDOWN_DAYS}
+        --min-release-age=#{Homebrew.release_cooldown_days}
         --#{npm_cache_config}
       ]
 
