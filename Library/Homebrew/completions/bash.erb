@@ -113,6 +113,7 @@ __brew_complete_commands() {
 
   local cur="${COMP_WORDS[COMP_CWORD]}"
   local cmds
+  local -a cmds_user_aliases
   local maintainer_cmds
 
   if [[ -n ${__HOMEBREW_COMMANDS} ]]
@@ -129,6 +130,15 @@ __brew_complete_commands() {
   then
     maintainer_cmds="<%= maintainer_commands.join(" ") %>"
   fi
+
+  # Append user-defined aliases (if any) to the list of commands
+  # Please refer to https://github.com/Homebrew/brew/pull/22352 for details
+  while read -r cmds_user_alias
+  do
+    cmds_user_aliases+=("${cmds_user_alias}")
+  done < <(compgen -W "$(__brew_list_aliases)")
+  [[ -n ${cmd_aliases[*]+"${cmd_aliases[*]}"} ]] && cmds+=" ${cmds_user_aliases[*]}"
+
   while read -r line
   do
     [[ $(__brew_internal_command_alias "${line}") == "${line}" ]] || continue
@@ -159,6 +169,7 @@ __brew_internal_command_alias() {
 }
 
 # https://github.com/Homebrew/homebrew-aliases
+# Please refer to https://github.com/Homebrew/brew/pull/22352 for details
 __brew_list_aliases() {
   local aliases_dir="${HOME}/.brew-aliases"
   local pattern="^# alias: brew ([[:alnum:]-]+)$"
