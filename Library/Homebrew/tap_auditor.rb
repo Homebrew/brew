@@ -27,12 +27,6 @@ module Homebrew
     sig { returns(T::Hash[String, String]) }
     attr_reader :cask_renames
 
-    sig { returns(T::Hash[Symbol, T.untyped]) }
-    attr_reader :tap_audit_exceptions
-
-    sig { returns(T::Hash[Symbol, T.untyped]) }
-    attr_reader :tap_style_exceptions
-
     sig { returns(T::Array[T::Hash[Symbol, T.untyped]]) }
     attr_reader :problems
 

@@ -29,6 +29,9 @@ module Homebrew
           end
         end
 
+        # Dispatched by Kramdown as `convert_#{element.type}` for the `:variable`
+        # elements produced by the Ronn parser, so it has no static callers.
+        # deadcode:keep
         sig { params(element: ::Kramdown::Element, options: T::Hash[Symbol, T.untyped]).void }
         def convert_variable(element, options)
           options[:result] << "\\fI#{escape(element.value)}\\fP"

@@ -44,9 +44,6 @@ module Cask
 
       private_class_method :caveat
 
-      sig { returns(T::Boolean) }
-      def discontinued? = @discontinued
-
       sig { returns(String) }
       def to_s
         (@custom_caveats + @built_in_caveats.values).join("\n")

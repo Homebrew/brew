@@ -8,11 +8,6 @@ module Cask
   module Artifact
     # Superclass for all artifacts that are installed by moving them to the target location.
     class Moved < Relocated
-      sig { returns(String) }
-      def self.english_description
-        "#{english_name}s"
-      end
-
       sig {
         overridable.params(
           adopt:        T::Boolean,

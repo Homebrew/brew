@@ -126,6 +126,10 @@ module Cask
         @maximum_macos = maximum_macos
       end
 
+      # Reached only via `DependsOn#load`, which dispatches with
+      # `send(:"#{key}=", ...)`, so it has no static callers for `brew deadcode`
+      # to find. This is an internal implementation detail rather than an API.
+      # deadcode:keep
       sig { params(args: T.any(String, Symbol)).returns(T.nilable(LinuxRequirement)) }
       def linux=(*args)
         raise "Only a single 'depends_on linux' is allowed." if @linux

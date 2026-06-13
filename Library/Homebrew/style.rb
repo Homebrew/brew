@@ -464,10 +464,7 @@ module Homebrew
       attr_reader :message
 
       sig { returns(T.nilable(String)) }
-      attr_reader :severity, :cop_name
-
-      sig { returns(T::Boolean) }
-      attr_reader :corrected
+      attr_reader :cop_name
 
       sig { returns(SourceLocation) }
       attr_reader :location

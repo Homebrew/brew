@@ -313,11 +313,6 @@ module Homebrew
       end
 
       sig { returns(T::Array[String]) }
-      def homebrew_tap_cask_names
-        downcased_unique_named.grep(HOMEBREW_CASK_TAP_CASK_REGEX)
-      end
-
-      sig { returns(T::Array[String]) }
       def downcased_unique_named
         # Only lowercase names, not paths, bottle filenames or URLs
         map do |arg|

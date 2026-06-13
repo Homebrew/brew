@@ -12,24 +12,6 @@ class FormulaInfo
     @info = info
   end
 
-  # Looks up formula on disk and reads its info.
-  # Returns nil if formula is absent or if there was an error reading it.
-  sig { params(name: Pathname).returns(T.nilable(FormulaInfo)) }
-  def self.lookup(name)
-    json = Utils.popen_read(
-      *HOMEBREW_RUBY_EXEC_ARGS,
-      HOMEBREW_LIBRARY_PATH/"brew.rb",
-      "info",
-      "--json=v1",
-      name,
-    )
-
-    return unless $CHILD_STATUS.success?
-
-    force_utf8!(json)
-    FormulaInfo.new(JSON.parse(json)[0])
-  end
-
   sig { returns(T::Array[String]) }
   def bottle_tags
     return [] unless info["bottle"]["stable"]
@@ -48,11 +30,6 @@ class FormulaInfo
     return unless btl_info
 
     { "url" => btl_info["url"], "sha256" => btl_info["sha256"] }
-  end
-
-  sig { returns(T.nilable(T::Hash[String, String])) }
-  def bottle_info_any
-    bottle_info(any_bottle_tag)
   end
 
   sig { returns(T.nilable(String)) }

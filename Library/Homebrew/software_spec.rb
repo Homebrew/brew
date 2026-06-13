@@ -56,9 +56,6 @@ class SoftwareSpec
   sig { returns(T::Array[CompilerFailure]) }
   attr_reader :compiler_failures
 
-  sig { returns(T::Boolean) }
-  attr_reader :depends_on_macos_set_in_block
-
   def_delegators :@resource, :stage, :fetch, :verify_download_integrity, :source_modified_time,
                  :cached_download, :clear_cache, :checksum, :mirrors, :specs, :using, :version, :mirror,
                  :downloader, :download_queue_name, :download_queue_type

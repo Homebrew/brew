@@ -9,6 +9,8 @@ class Array
   # ```ruby
   # %w( a b c d e ).second # => "b"
   # ```
+  #
+  # @api internal
   def second = self[1]
 
   # Equal to `self[2]`.
@@ -18,6 +20,8 @@ class Array
   # ```ruby
   # %w( a b c d e ).third # => "c"
   # ```
+  #
+  # @api internal
   def third = self[2]
 
   # Equal to `self[3]`.
@@ -27,6 +31,8 @@ class Array
   # ```ruby
   # %w( a b c d e ).fourth # => "d"
   # ```
+  #
+  # @api internal
   def fourth = self[3]
 
   # Equal to `self[4]`.
@@ -36,6 +42,8 @@ class Array
   # ```ruby
   # %w( a b c d e ).fifth # => "e"
   # ```
+  #
+  # @api internal
   def fifth = self[4]
 
   # Converts the array to a comma-separated sentence where the last element is
