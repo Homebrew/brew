@@ -4,56 +4,9 @@
 module Hardware
   class CPU
     class << self
-      sig { returns(Integer) }
-      def extmodel
-        sysctl_int("machdep.cpu.extmodel")
-      end
-
-      sig { returns(T::Boolean) }
-      def aes?
-        sysctl_bool!("hw.optional.aes")
-      end
-
-      sig { returns(T::Boolean) }
-      def altivec?
-        sysctl_bool!("hw.optional.altivec")
-      end
-
-      sig { returns(T::Boolean) }
-      def avx?
-        sysctl_bool!("hw.optional.avx1_0")
-      end
-
-      sig { returns(T::Boolean) }
-      def avx2?
-        sysctl_bool!("hw.optional.avx2_0")
-      end
-
-      sig { returns(T::Boolean) }
-      def sse3?
-        sysctl_bool!("hw.optional.sse3")
-      end
-
-      sig { returns(T::Boolean) }
-      def ssse3?
-        sysctl_bool!("hw.optional.supplementalsse3")
-      end
-
-      sig { returns(T::Boolean) }
-      def sse4_2?
-        sysctl_bool!("hw.optional.sse4_2")
-      end
-
-      # NOTE: This is more reliable than checking `uname`. `sysctl` returns
-      #       the right answer even when running in Rosetta 2.
       sig { returns(T::Boolean) }
       def physical_cpu_arm64?
         sysctl_bool!("hw.optional.arm64")
-      end
-
-      sig { returns(T::Boolean) }
-      def virtualized?
-        sysctl_bool!("kern.hv_vmm_present")
       end
 
       sig { returns(Symbol) }

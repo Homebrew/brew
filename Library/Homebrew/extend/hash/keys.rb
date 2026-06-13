@@ -42,11 +42,6 @@ class Hash
   # ```
   def deep_transform_keys(&block) = _deep_transform_keys_in_object(self, &block)
 
-  # Destructively converts all keys by using the block operation.
-  # This includes the keys from the root hash and from all
-  # nested hashes and arrays.
-  def deep_transform_keys!(&block) = _deep_transform_keys_in_object!(self, &block)
-
   # Returns a new hash with all keys converted to strings.
   # This includes the keys from the root hash and from all
   # nested hashes and arrays.

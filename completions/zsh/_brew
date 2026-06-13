@@ -186,6 +186,7 @@ __brew_internal_commands() {
     'config:Show Homebrew and system configuration info useful for debugging'
     'contributions:Summarise contributions to Homebrew repositories'
     'create:Generate a formula or, with `--cask`, a cask for the downloadable file at URL and open it in the editor'
+    'deadcode:Find and remove dead code identified by Spoom'
     'debugger:Run the specified Homebrew command in debug mode'
     'deps:Show dependencies for formula'
     'desc:Display formula'\''s name and one-line description'
@@ -1164,6 +1165,16 @@ _brew_create() {
     '--tap[Generate the new formula within the given tap, specified as user`/`repo]' \
     '--verbose[Make some output more verbose]' \
     '(--autotools --cabal --cmake --crystal --go --meson --node --perl --python --ruby --rust --cask)--zig[Create a basic template for a Zig build]'
+}
+
+# brew deadcode
+_brew_deadcode() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--dry-run[List the dead code that would be removed without removing it]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
 }
 
 # brew debugger

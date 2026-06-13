@@ -271,9 +271,6 @@ module Cask
     def on_system_blocks_exist? = @on_system_blocks_exist
 
     sig { returns(T::Boolean) }
-    def on_os_blocks_exist? = @on_os_blocks_exist
-
-    sig { returns(T::Boolean) }
     def sha256_set_for_linux? = @sha256_set_for_linux
 
     # Specifies the cask's name.

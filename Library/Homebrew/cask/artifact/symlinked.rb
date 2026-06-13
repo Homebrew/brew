@@ -12,11 +12,6 @@ module Cask
         "Symlink"
       end
 
-      sig { returns(String) }
-      def self.english_description
-        "#{english_name} #{link_type_english_name}s"
-      end
-
       sig {
         params(
           force:   T::Boolean,

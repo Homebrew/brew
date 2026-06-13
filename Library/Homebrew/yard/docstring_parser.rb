@@ -21,7 +21,7 @@ module Homebrew
         private_constant :SELF_EXPLANATORY_METHODS
       end
 
-      sig { params(content: T.nilable(String)).returns(String) }
+      sig { override.params(content: T.nilable(String)).returns(String) }
       def parse_content(content)
         # Convert plain text to tags.
         content = content&.gsub(/^\s*(TODO|FIXME):\s*/i, "@todo ")

@@ -16,14 +16,6 @@ module Homebrew
     require "minitest/assertions"
     include ::Minitest::Assertions
 
-    sig { params(assertions: Integer).returns(Integer) }
-    attr_writer :assertions
-
-    sig { returns(Integer) }
-    def assertions
-      @assertions ||= T.let(0, T.nilable(Integer))
-    end
-
     sig { params(exp: Object, act: Object, msg: T.nilable(String)).returns(TrueClass) }
     def assert_equal(exp, act, msg = nil)
       return super unless exp.nil?

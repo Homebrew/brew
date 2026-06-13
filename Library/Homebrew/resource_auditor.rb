@@ -76,6 +76,9 @@ module Homebrew
       only_audits = @only
       except_audits = @except
 
+      # deadcode:keep-matching ^audit_
+      # Each `audit_*` method is invoked dynamically here, so they have no static
+      # callers for `brew deadcode` to find.
       methods.map(&:to_s).grep(/^audit_/).each do |audit_method_name|
         name = audit_method_name.delete_prefix("audit_")
         next if only_audits&.exclude?(name)

@@ -23,11 +23,4 @@ RSpec.describe Language::Python, :needs_python do
       described_class.site_packages("python")
     end
   end
-
-  describe "#user_site_packages" do
-    it "can determine user site packages location" do
-      expect(described_class).to receive(:user_site_packages).and_return(Pathname)
-      described_class.user_site_packages("python")
-    end
-  end
 end

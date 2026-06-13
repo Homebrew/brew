@@ -3287,6 +3287,20 @@ see: <https://docs.brew.sh/rubydoc/Formula>
 
 : Ignore errors for disallowed formula names and names that shadow aliases.
 
+### `deadcode` \[`--dry-run`\]
+
+Find and remove dead code identified by Spoom. Test code is excluded from the
+analysis so that definitions only referenced by their tests are also treated as
+dead. Definitions documented with `# @api public` or `# @api internal`, defined
+with an `override` signature, marked with a `# deadcode:keep` (or file-scoped `#
+deadcode:keep-matching
+<pattern>`) comment, or deprecated with `odeprecated`/`odisabled`, are always
+kept.
+
+`-n`, `--dry-run`
+
+: List the dead code that would be removed without removing it.
+
 ### `debugger` \[`--open`\] *`command`* \[...\]
 
 Run the specified Homebrew command in debug mode.

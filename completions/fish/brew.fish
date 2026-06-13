@@ -894,6 +894,14 @@ __fish_brew_complete_arg 'create' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'create' -l zig -d 'Create a basic template for a Zig build'
 
 
+__fish_brew_complete_cmd 'deadcode' 'Find and remove dead code identified by Spoom'
+__fish_brew_complete_arg 'deadcode' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'deadcode' -l dry-run -d 'List the dead code that would be removed without removing it'
+__fish_brew_complete_arg 'deadcode' -l help -d 'Show this message'
+__fish_brew_complete_arg 'deadcode' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'deadcode' -l verbose -d 'Make some output more verbose'
+
+
 __fish_brew_complete_cmd 'debugger' 'Run the specified Homebrew command in debug mode'
 __fish_brew_complete_arg 'debugger' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'debugger' -l help -d 'Show this message'

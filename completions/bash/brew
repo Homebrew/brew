@@ -1253,6 +1253,23 @@ _brew_create() {
   esac
 }
 
+_brew_deadcode() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --debug
+      --dry-run
+      --help
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+}
+
 _brew_debugger() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -3757,6 +3774,7 @@ _brew() {
     config) _brew_config ;;
     contributions) _brew_contributions ;;
     create) _brew_create ;;
+    deadcode) _brew_deadcode ;;
     debugger) _brew_debugger ;;
     deps) _brew_deps ;;
     desc) _brew_desc ;;
