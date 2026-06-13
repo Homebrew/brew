@@ -6,12 +6,6 @@ require "services/system"
 require "services/cli"
 
 RSpec.describe Homebrew::Cmd::Services::CleanupSubcommand do
-  describe "#TRIGGERS" do
-    it "contains all restart triggers" do
-      expect(Homebrew::Cmd::Services::CleanupSubcommand::TRIGGERS).to eq(%w[cleanup clean cl rm])
-    end
-  end
-
   describe "#run" do
     it "root - prints on empty cleanup" do
       expect(Homebrew::Services::System).to receive(:root?).once.and_return(true)

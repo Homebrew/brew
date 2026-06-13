@@ -26,6 +26,9 @@ module Homebrew
 
         # HTML-like tags denote variables instead, except <br>.
         VARIABLE_REGEX = /<([\w\-|]+)>/
+        # Dispatched by Kramdown via the `:variable` span parser registered with
+        # `define_parser` below, so it has no static callers for `brew deadcode`.
+        # deadcode:keep
         sig { returns(T.nilable(Integer)) }
         def parse_variable
           @src = T.let(@src, T.nilable(Kramdown::Utils::StringScanner))

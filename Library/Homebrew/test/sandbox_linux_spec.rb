@@ -37,13 +37,6 @@ RSpec.describe Sandbox, :needs_linux do
                                                                             "/bin")
       expect(sandbox_class.bubblewrap_executable).to eq(usable_bubblewrap)
     end
-
-    it "raises when no suitable bubblewrap candidate exists" do
-      sandbox_class.test_executable_candidate_paths = PATH.new(mktmpdir)
-
-      expect { sandbox_class.bubblewrap_executable! }
-        .to raise_error(RuntimeError, "Bubblewrap is required to use the Linux sandbox.")
-    end
   end
 
   describe "::available?" do

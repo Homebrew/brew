@@ -16,30 +16,6 @@ class GitHubRunnerMatrix
   RunnerSpec = T.type_alias { T.any(LinuxRunnerSpec, MacOSRunnerSpec) }
   private_constant :RunnerSpec
 
-  MacOSRunnerSpecHash = T.type_alias do
-    {
-      name:             String,
-      runner:           String,
-      timeout:          Integer,
-      cleanup:          T::Boolean,
-      testing_formulae: String,
-    }
-  end
-  private_constant :MacOSRunnerSpecHash
-
-  LinuxRunnerSpecHash = T.type_alias do
-    {
-      name:             String,
-      runner:           String,
-      container:        T::Hash[Symbol, String],
-      workdir:          String,
-      timeout:          Integer,
-      cleanup:          T::Boolean,
-      testing_formulae: String,
-    }
-  end
-  private_constant :LinuxRunnerSpecHash
-
   RunnerSpecHash = T.type_alias { T::Hash[Symbol, T.untyped] }
   private_constant :RunnerSpecHash
   sig { returns(T::Array[GitHubRunner]) }

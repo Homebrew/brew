@@ -56,68 +56,8 @@ module Homebrew
           verbose:             T::Boolean,
         ).returns(T::Array[Object])
       }
-      def self.apps_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        extension_errors(:apps_to_install, exit_on_first_error:, no_upgrade:, verbose:)
-      end
-
-      sig {
-        params(
-          exit_on_first_error: T::Boolean,
-          no_upgrade:          T::Boolean,
-          verbose:             T::Boolean,
-        ).returns(T::Array[Object])
-      }
-      def self.formulae_to_start(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        raise ArgumentError, "dsl is unset!" unless @dsl
-
-        Homebrew::Bundle::Brew::Services.new.find_actionable(
-          @dsl.entries,
-          exit_on_first_error:, no_upgrade:, verbose:,
-        )
-      end
-
-      sig {
-        params(
-          exit_on_first_error: T::Boolean,
-          no_upgrade:          T::Boolean,
-          verbose:             T::Boolean,
-        ).returns(T::Array[Object])
-      }
-      def self.taps_to_tap(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        package_type_errors(:tap, exit_on_first_error:, no_upgrade:, verbose:)
-      end
-
-      sig {
-        params(
-          exit_on_first_error: T::Boolean,
-          no_upgrade:          T::Boolean,
-          verbose:             T::Boolean,
-        ).returns(T::Array[Object])
-      }
-      def self.casks_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        package_type_errors(:cask, exit_on_first_error:, no_upgrade:, verbose:)
-      end
-
-      sig {
-        params(
-          exit_on_first_error: T::Boolean,
-          no_upgrade:          T::Boolean,
-          verbose:             T::Boolean,
-        ).returns(T::Array[Object])
-      }
       def self.formulae_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
         package_type_errors(:brew, exit_on_first_error:, no_upgrade:, verbose:)
-      end
-
-      sig {
-        params(
-          exit_on_first_error: T::Boolean,
-          no_upgrade:          T::Boolean,
-          verbose:             T::Boolean,
-        ).returns(T::Array[Object])
-      }
-      def self.registered_extensions_to_install(exit_on_first_error: false, no_upgrade: false, verbose: false)
-        extension_errors(:registered_extensions_to_install, exit_on_first_error:, no_upgrade:, verbose:)
       end
 
       sig {

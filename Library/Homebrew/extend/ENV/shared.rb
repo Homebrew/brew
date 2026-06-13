@@ -121,11 +121,6 @@ module SharedEnvExtension
     self[key] = PATH.new(self[key]).append(path)
   end
 
-  sig { params(rustflags: String).void }
-  def append_to_rustflags(rustflags)
-    append("HOMEBREW_RUSTFLAGS", rustflags)
-  end
-
   # Prepends a directory to `PATH`.
   # Is the formula struggling to find the pkgconfig file? Point it to it.
   # This is done automatically for keg-only formulae.
@@ -138,13 +133,6 @@ module SharedEnvExtension
     return if %w[/usr/bin /bin /usr/sbin /sbin].include? path.to_s
 
     self[key] = PATH.new(self[key]).prepend(path)
-  end
-
-  sig { params(key: String, path: T.any(String, Pathname)).void }
-  def prepend_create_path(key, path)
-    path = Pathname(path)
-    path.mkpath
-    prepend_path key, path
   end
 
   sig { params(keys: T.any(String, T::Array[String]), value: T.untyped).void }
@@ -170,43 +158,13 @@ module SharedEnvExtension
   end
 
   sig { returns(T.nilable(String)) }
-  def cxx
-    self["CXX"]
-  end
-
-  sig { returns(T.nilable(String)) }
   def cflags
     self["CFLAGS"]
   end
 
   sig { returns(T.nilable(String)) }
-  def cxxflags
-    self["CXXFLAGS"]
-  end
-
-  sig { returns(T.nilable(String)) }
-  def cppflags
-    self["CPPFLAGS"]
-  end
-
-  sig { returns(T.nilable(String)) }
-  def ldflags
-    self["LDFLAGS"]
-  end
-
-  sig { returns(T.nilable(String)) }
   def fc
     self["FC"]
-  end
-
-  sig { returns(T.nilable(String)) }
-  def fflags
-    self["FFLAGS"]
-  end
-
-  sig { returns(T.nilable(String)) }
-  def fcflags
-    self["FCFLAGS"]
   end
 
   # Outputs the current compiler.
@@ -260,37 +218,6 @@ module SharedEnvExtension
     end
   end
 
-  sig { void }
-  def fortran
-    # Ignore repeated calls to this function as it will misleadingly warn about
-    # building with an alternative Fortran compiler without optimization flags,
-    # despite it often being the Homebrew-provided one set up in the first call.
-    return if @fortran_setup_done
-
-    @fortran_setup_done = T.let(true, T.nilable(TrueClass))
-
-    flags = []
-
-    if fc
-      opoo "Building with an unsupported Fortran compiler"
-      self["F77"] ||= fc
-    else
-      if (gfortran = which("gfortran", (HOMEBREW_PREFIX/"bin").to_s))
-        ohai "Using Homebrew-provided Fortran compiler"
-      elsif (gfortran = which("gfortran", PATH.new(ORIGINAL_PATHS)))
-        ohai "Using a Fortran compiler found at #{gfortran}"
-      end
-      if gfortran
-        puts "This may be changed by setting the `$FC` environment variable."
-        self["FC"] = self["F77"] = gfortran
-        flags = FC_FLAG_VARS
-      end
-    end
-
-    flags.each { |key| self[key] = cflags }
-    set_cpu_flags(flags)
-  end
-
   sig { returns(Symbol) }
   def effective_arch
     if @build_bottle && @bottle_arch
@@ -333,9 +260,6 @@ module SharedEnvExtension
   end
   private :warn_about_non_apple_gcc
 
-  sig { void }
-  def permit_arch_flags; end
-
   sig { returns(Integer) }
   def make_jobs
     Homebrew::EnvConfig.make_jobs.to_i
@@ -374,11 +298,6 @@ module SharedEnvExtension
         raise "Invalid value for #{source}: #{other}"
       end
     end
-  end
-
-  sig { void }
-  def check_for_compiler_universal_support
-    raise "Non-Apple GCC can't build universal binaries" if homebrew_cc&.match?(GNU_GCC_REGEXP)
   end
 end
 

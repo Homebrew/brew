@@ -118,11 +118,6 @@ module Hardware
       end
 
       sig { returns(T::Boolean) }
-      def sse4?
-        RUBY_PLATFORM.to_s.include?("x86_64")
-      end
-
-      sig { returns(T::Boolean) }
       def is_32_bit?
         bits == 32
       end
@@ -181,19 +176,9 @@ module Hardware
         [1].pack("I") == [1].pack("N")
       end
 
-      sig { returns(T::Boolean) }
-      def virtualized?
-        false
-      end
-
       sig { returns(T::Array[Symbol]) }
       def features
         []
-      end
-
-      sig { params(name: Symbol).returns(T::Boolean) }
-      def feature?(name)
-        features.include?(name)
       end
 
       sig { params(arch: T.any(String, Symbol)).returns(String) }

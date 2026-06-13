@@ -90,6 +90,9 @@ module Cask
 
         args = directives[directive_sym]
 
+        # deadcode:keep-matching ^uninstall_
+        # Each `uninstall_<directive>` method is invoked dynamically here, so
+        # they have no static callers for `brew deadcode` to find.
         send(:"uninstall_#{directive_sym}", *(args.is_a?(Hash) ? [args] : args), **options)
       end
 

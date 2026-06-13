@@ -314,14 +314,6 @@ RSpec.describe Homebrew::CLI::NamedArgs do
     end
   end
 
-  describe "#homebrew_tap_cask_names" do
-    specify do
-      expect(described_class.new("foo", "homebrew/cask/local-caffeine").homebrew_tap_cask_names)
-        .to eq ["homebrew/cask/local-caffeine"]
-      expect(described_class.new("foo").homebrew_tap_cask_names).to be_empty
-    end
-  end
-
   describe "#to_paths" do
     let(:existing_path) { mktmpdir }
     let(:formula_path) { Pathname("/path/to/foo.rb") }

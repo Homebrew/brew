@@ -78,19 +78,9 @@ module OS
       private_constant :BUBBLEWRAP, :BUBBLEWRAP_TEST_ARGS, :SYSTEM_BUBBLEWRAP_PATHS, :HOMEBREW_BUBBLEWRAP_PATHS,
                        :SysctlSetting, :SANDBOX_SYSCTL_SETTINGS, :TIOCSCTTY, :BUBBLEWRAP_INSTALL_COMMANDS
 
-      sig { returns(::PATH) }
-      def self.bubblewrap_candidate_paths
-        ::Sandbox.executable_candidate_paths
-      end
-
       sig { returns(T.nilable(::Pathname)) }
       def self.bubblewrap_executable
         ::Sandbox.executable
-      end
-
-      sig { returns(::Pathname) }
-      def self.bubblewrap_executable!
-        bubblewrap_executable || raise("Bubblewrap is required to use the Linux sandbox.")
       end
 
       sig { void }
@@ -141,19 +131,9 @@ module OS
           PATH.new(HOMEBREW_BUBBLEWRAP_PATHS, system_bubblewrap_paths, super)
         end
 
-        sig { returns(::PATH) }
-        def bubblewrap_candidate_paths
-          executable_candidate_paths
-        end
-
         sig { returns(T.nilable(::Pathname)) }
         def bubblewrap_executable
           executable
-        end
-
-        sig { returns(::Pathname) }
-        def bubblewrap_executable!
-          bubblewrap_executable || raise("Bubblewrap is required to use the Linux sandbox.")
         end
 
         sig { params(install_from_tests: T::Boolean).void }

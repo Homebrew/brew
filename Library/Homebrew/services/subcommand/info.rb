@@ -36,8 +36,6 @@ module Homebrew
           end
         end
 
-        TRIGGERS = %w[info i].freeze
-
         sig { params(bool: T.nilable(T.any(String, T::Boolean))).returns(String) }
         def self.pretty_bool(bool)
           return bool.to_s if !$stdout.tty? || Homebrew::EnvConfig.no_emoji?

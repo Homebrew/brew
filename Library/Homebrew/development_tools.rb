@@ -132,12 +132,6 @@ class DevelopmentTools
       end
     end
 
-    sig { void }
-    def clear_version_cache
-      @clang_version = @clang_build_version = T.let(nil, T.nilable(Version))
-      @gcc_version = T.let({}, T.nilable(T::Hash[String, Version]))
-    end
-
     sig { returns(T::Boolean) }
     def needs_build_formulae?
       needs_libc_formula? || needs_compiler_formula?

@@ -748,11 +748,6 @@ module Homebrew
         subcommand&.name
       end
 
-      sig { params(option: String).returns(T::Array[String]) }
-      def subcommands_for_option(option)
-        @option_subcommands.fetch(option_to_name(option), [])
-      end
-
       private
 
       sig { returns(String) }

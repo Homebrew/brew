@@ -13,6 +13,9 @@ module Homebrew
           super(root, options.merge(line_width: 80))
         end
 
+        # Dispatched by Kramdown as `convert_#{element.type}` for the `:variable`
+        # elements produced by the Ronn parser, so it has no static callers.
+        # deadcode:keep
         sig { params(element: ::Kramdown::Element, _options: T::Hash[Symbol, T.untyped]).returns(String) }
         def convert_variable(element, _options)
           "*`#{element.value}`*"

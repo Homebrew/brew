@@ -27,7 +27,7 @@ RSpec.describe Homebrew::Services::System::Systemctl do
         exit 0
       SH
       systemctl.chmod 0755
-      described_class.reset_executable!
+      described_class.instance_variable_set(:@executable, nil)
 
       with_env(PATH: bindir.to_s) do
         expect(described_class.executable).to eq(systemctl)

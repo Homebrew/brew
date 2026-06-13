@@ -2043,6 +2043,11 @@ Generate the new formula within the given tap, specified as \fIuser\fP\fB/\fP\fI
 .TP
 \fB\-f\fP, \fB\-\-force\fP
 Ignore errors for disallowed formula names and names that shadow aliases\.
+.SS "\fBdeadcode\fP \fR[\fB\-\-dry\-run\fP]"
+Find and remove dead code identified by Spoom\. Test code is excluded from the analysis so that definitions only referenced by their tests are also treated as dead\. Definitions documented with \fB# @api public\fP or \fB# @api internal\fP, defined with an \fBoverride\fP signature, marked with a \fB# deadcode:keep\fP (or file\-scoped \fB# deadcode:keep\-matching <pattern>\fP) comment, or deprecated with \fBodeprecated\fP/\fBodisabled\fP, are always kept\.
+.TP
+\fB\-n\fP, \fB\-\-dry\-run\fP
+List the dead code that would be removed without removing it\.
 .SS "\fBdebugger\fP \fR[\fB\-\-open\fP] \fIcommand\fP \fR[\.\.\.]"
 Run the specified Homebrew command in debug mode\.
 .P

@@ -10,8 +10,6 @@ module Cask
   module Utils
     extend ::Utils::Output::Mixin
 
-    BUG_REPORTS_URL = "https://github.com/Homebrew/homebrew-cask#reporting-bugs"
-
     sig { params(path: Pathname, command: T.class_of(SystemCommand)).void }
     def self.gain_permissions_mkpath(path, command: SystemCommand)
       dir = path.ascend.find(&:directory?)

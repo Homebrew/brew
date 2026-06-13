@@ -174,20 +174,6 @@ module Homebrew
         end
       end
 
-      sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(T::Array[String]) }
-      def self.requirements_lines(formula_or_cask)
-        return [] unless $stdout.tty?
-
-        case formula_or_cask
-        when Formula
-          []
-        when Cask::Cask
-          cask_requirements_lines(formula_or_cask)
-        else
-          T.absurd(formula_or_cask)
-        end
-      end
-
       sig { params(tab: T.any(Tab, Cask::Tab)).returns(String) }
       def self.installation_status(tab)
         # TODO: Deprecate reading `installed_as_dependency`; `installed_on_request`

@@ -79,8 +79,6 @@ RSpec.describe MacOSVersion do
     expect(described_class.new(MacOSVersion::SYMBOLS.values.first).outdated_release?).to be false
     expect(described_class.new("10.0").outdated_release?).to be true
     expect(described_class.new("1000").prerelease?).to be true
-    expect(described_class.new("10.0").unsupported_release?).to be true
-    expect(described_class.new("1000").unsupported_release?).to be true
   end
 
   describe "after Big Sur" do

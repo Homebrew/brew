@@ -23,8 +23,6 @@ module Homebrew
           Homebrew::Services::Cli.check!(targets)
           Homebrew::Services::Cli.kill(targets, verbose: args.verbose?)
         end
-
-        TRIGGERS = %w[kill k].freeze
       end
     end
   end

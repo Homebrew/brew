@@ -505,22 +505,10 @@ class Formula
   sig { returns(T.any(String, Pathname)) }
   def reloadable_ref = loaded_from_api? ? full_name : path
 
-  # The name specified to find this formula.
-  sig { returns(String) }
-  def specified_name
-    alias_name || name
-  end
-
   # The name (including tap) specified to find this formula.
   sig { returns(String) }
   def full_specified_name
     full_alias_name || full_name
-  end
-
-  # The name specified to install this formula.
-  sig { returns(String) }
-  def installed_specified_name
-    installed_alias_name || name
   end
 
   # The name (including tap) specified to install this formula.
@@ -746,16 +734,6 @@ class Formula
     end
 
     formula_names_for_glob("#{sibling_name}.rb")
-  end
-
-  # Returns sibling `-full` or non-`-full` Formula objects for any Formula.
-  sig { returns(T::Array[Formula]) }
-  def full_formulae
-    full_formulae_names.filter_map do |formula_name|
-      Formula[formula_name]
-    rescue FormulaUnavailableError
-      nil
-    end.sort_by(&:version).reverse
   end
 
   sig { returns(T.nilable(String)) }
@@ -1067,14 +1045,6 @@ class Formula
   # Is the formula linked to `opt`?
   sig { returns(T::Boolean) }
   def optlinked? = opt_prefix.symlink?
-
-  # If a formula's linked keg points to the prefix.
-  sig { params(version: T.any(String, PkgVersion)).returns(T::Boolean) }
-  def prefix_linked?(version = pkg_version)
-    return false unless linked?
-
-    linked_keg.resolved_path == versioned_prefix(version)
-  end
 
   # {PkgVersion} of the linked keg for the formula.
   sig { returns(T.nilable(PkgVersion)) }
@@ -2622,12 +2592,6 @@ class Formula
     installed.select { |f| f.installed_alias_path == alias_path }
   end
 
-  # An array of all alias files of core {Formula}e.
-  sig { returns(T::Array[Pathname]) }
-  def self.core_alias_files
-    CoreTap.instance.alias_files
-  end
-
   # An array of all core aliases.
   sig { returns(T::Array[String]) }
   def self.core_aliases
@@ -3242,25 +3206,6 @@ class Formula
     hash
   end
 
-  sig { params(spec_symbol: Symbol).returns(T.nilable(T::Hash[String, T.untyped])) }
-  def internal_dependencies_hash(spec_symbol)
-    raise ArgumentError, "Unsupported spec: #{spec_symbol}" unless [:stable, :head].include?(spec_symbol)
-    return unless (spec = public_send(spec_symbol))
-
-    spec.declared_deps.each_with_object({}) do |dep, dep_hash|
-      # Implicit dependencies are only needed when installing from source
-      # since they are only used to download and unpack source files.
-      # @see DependencyCollector
-      next if dep.implicit?
-
-      metadata_hash = {}
-      metadata_hash[:tags] = dep.tags if dep.tags.present?
-      metadata_hash[:uses_from_macos] = dep.bounds.presence if dep.uses_from_macos?
-
-      dep_hash[dep.name] = metadata_hash.presence
-    end
-  end
-
   sig { returns(T.nilable(T::Boolean)) }
   def on_system_blocks_exist?
     self.class.on_system_blocks_exist? || @on_system_blocks_exist
@@ -3328,6 +3273,9 @@ class Formula
   }
   def test; end
 
+  # Returns the path to a fixture file for use in formula tests.
+  #
+  # @api public
   sig { params(file: T.any(Pathname, String)).returns(Pathname) }
   def test_fixtures(file)
     HOMEBREW_LIBRARY_PATH/"test/support/fixtures"/file
@@ -3660,6 +3608,8 @@ class Formula
   end
 
   # Runs `xcodebuild` without Homebrew's compiler environment variables set.
+  #
+  # @api public
   sig { params(args: T.any(String, Integer, Pathname, Symbol)).void }
   def xcodebuild(*args)
     removed = ENV.remove_cc_etc
@@ -3946,38 +3896,6 @@ class Formula
       end
     end
 
-    # The phases for which network access is allowed. By default, network
-    # access is allowed for all phases. Valid phases are `:build`, `:test`,
-    # and `:postinstall`. When no argument is passed, network access will be
-    # allowed for all phases.
-    #
-    # ### Examples
-    #
-    # ```ruby
-    # allow_network_access!
-    # ```
-    #
-    # ```ruby
-    # allow_network_access! :build
-    # ```
-    #
-    # ```ruby
-    # allow_network_access! [:build, :test]
-    # ```
-    sig { params(phases: T.any(Symbol, T::Array[Symbol])).void }
-    def allow_network_access!(phases = [])
-      phases_array = Array(phases)
-      if phases_array.empty?
-        network_access_allowed.each_key { |phase| network_access_allowed[phase] = true }
-      else
-        phases_array.each do |phase|
-          raise ArgumentError, "Unknown phase: #{phase}" unless SUPPORTED_NETWORK_ACCESS_PHASES.include?(phase)
-
-          network_access_allowed[phase] = true
-        end
-      end
-    end
-
     # The phases for which network access is denied. By default, network
     # access is allowed for all phases. Valid phases are `:build`, `:test`,
     # and `:postinstall`. When no argument is passed, network access will be
@@ -3996,6 +3914,8 @@ class Formula
     # ```ruby
     # deny_network_access! [:build, :test]
     # ```
+    #
+    # @api public
     sig { params(phases: T.any(Symbol, T::Array[Symbol])).void }
     def deny_network_access!(phases = [])
       phases_array = Array(phases)
@@ -4366,6 +4286,8 @@ class Formula
     # # Special case: empty `package_name` allows to skip resource updates for non-extra packages
     # pypi_packages package_name: "", extra_packages: "setuptools"
     # ```
+    #
+    # @api public
     sig {
       params(
         package_name:     T.nilable(String),

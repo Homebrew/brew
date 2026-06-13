@@ -74,10 +74,6 @@ else
     def bind(value, type, checked: false)
       super
     end
-
-    def assert_type!(value, type, checked: false)
-      super
-    end
   end
 
   # @private

@@ -52,11 +52,6 @@ module OS
               "machdep.cpu.leaf7_features",
             ).split.map { |s| s.downcase.to_sym }, T.nilable(T::Array[Symbol]))
           end
-
-          sig { returns(T::Boolean) }
-          def sse4?
-            ::Hardware::CPU.sysctl_bool!("hw.optional.sse4_1")
-          end
         end
       end
     end

@@ -215,31 +215,6 @@ module Cask
         ["/usr/bin/env", *env.map { |key, value| "#{key}=#{value}" }, *args]
       end
 
-      sig {
-        params(
-          sandbox: Sandbox,
-          args:    T::Array[T.any(String, Pathname)],
-          input:   T.any(String, T::Array[String]),
-        ).void
-      }
-      def run_cask_sandbox(sandbox, args, input: [])
-        return sandbox.run(*args) if Array(input).empty?
-
-        Tempfile.create("homebrew-cask-script-input", HOMEBREW_TEMP) do |input_file|
-          input_file.write(Array(input).join)
-          input_file.close
-          sandbox.allow_read(path: input_file.path)
-          sandbox.run(
-            "/bin/sh",
-            "-c",
-            "input=$1; shift; exec \"$@\" < \"$input\"",
-            "sh",
-            input_file.path,
-            *args,
-          )
-        end
-      end
-
       sig { returns(String) }
       def to_s
         "#{summarize} (#{self.class.english_name})"

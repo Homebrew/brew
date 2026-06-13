@@ -25,8 +25,6 @@ module Homebrew
           Homebrew::Services::Cli.check!(targets)
           Homebrew::Services::Cli.run(targets, args.file, verbose: args.verbose?)
         end
-
-        TRIGGERS = ["run"].freeze
       end
     end
   end

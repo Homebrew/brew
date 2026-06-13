@@ -407,7 +407,7 @@ RSpec.describe Homebrew::Services::Cli do
         printf '%s\\n' "$*" >> "#{log}"
       SH
       (bindir/"systemctl").chmod 0755
-      Homebrew::Services::System::Systemctl.reset_executable!
+      Homebrew::Services::System::Systemctl.instance_variable_set(:@executable, nil)
     end
 
     it "checks non-enabling run" do
@@ -466,7 +466,7 @@ RSpec.describe Homebrew::Services::Cli do
         printf '%s\\n' "$*" >> "#{log}"
       SH
       (bindir/"launchctl").chmod 0755
-      Homebrew::Services::System.reset_launchctl!
+      Homebrew::Services::System.instance_variable_set(:@launchctl, nil)
     end
 
     it "checks non-enabling run" do

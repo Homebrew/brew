@@ -33,6 +33,7 @@ class MacOSVersion < Version
     catalina:    "10.15",
   }.freeze, T::Hash[Symbol, String])
 
+  # @api internal
   sig { params(macos_version: MacOSVersion).returns(Version) }
   def self.kernel_major_version(macos_version)
     version_major = macos_version.major.to_i
@@ -133,11 +134,6 @@ class MacOSVersion < Version
   sig { returns(T::Boolean) }
   def prerelease?
     self >= HOMEBREW_MACOS_NEWEST_UNSUPPORTED
-  end
-
-  sig { returns(T::Boolean) }
-  def unsupported_release?
-    outdated_release? || prerelease?
   end
 
   sig { returns(T::Boolean) }

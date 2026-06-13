@@ -768,39 +768,6 @@ module Homebrew
         Homebrew::Ask.confirm?(action:)
         nil
       end
-
-      # Compute the total sizes (download and installed) for the given formulae.
-      sig { params(sized_formulae: T::Array[Formula], debug: T::Boolean).returns(T::Hash[Symbol, Integer]) }
-      def compute_total_sizes(sized_formulae, debug: false)
-        total_download_size  = 0
-        total_installed_size = 0
-
-        sized_formulae.each do |formula|
-          bottle = formula.bottle
-          next unless bottle
-
-          # Fetch additional bottle metadata (if necessary).
-          bottle.fetch_tab(quiet: !debug)
-
-          total_download_size  += bottle.bottle_size.to_i if bottle.bottle_size
-          total_installed_size += bottle.installed_size.to_i if bottle.installed_size
-        end
-
-        { download:  total_download_size,
-          installed: total_installed_size }
-      end
-
-      sig {
-        params(formulae_installer: T::Array[FormulaInstaller],
-               dependants:         Homebrew::Upgrade::Dependents).returns(T::Array[Formula])
-      }
-      def collect_dependencies(formulae_installer, dependants)
-        formulae_dependencies = formulae_installer.flat_map do |f|
-          [f.formula, f.compute_dependencies.flatten.grep(Dependency).flat_map(&:to_formula)]
-        end.flatten.uniq
-        formulae_dependencies.concat(dependants.upgradeable) if dependants.upgradeable
-        formulae_dependencies.uniq
-      end
     end
   end
 end

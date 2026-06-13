@@ -32,8 +32,6 @@ module Homebrew
           end
           puts "All #{service_type} services OK, nothing cleaned..."
         end
-
-        TRIGGERS = %w[cleanup clean cl rm].freeze
       end
     end
   end

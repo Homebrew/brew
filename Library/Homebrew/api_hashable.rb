@@ -20,19 +20,6 @@ module APIHashable
     @generating_hash = T.let(true, T.nilable(T::Boolean))
   end
 
-  sig { void }
-  def generated_hash!
-    return unless generating_hash?
-
-    # Revert monkeypatches for API generation
-    Object.send(:remove_const, :HOMEBREW_PREFIX)
-    Object.const_set(:HOMEBREW_PREFIX, @old_homebrew_prefix)
-    ENV["HOME"] = @old_home
-    ENV["GIT_CONFIG_GLOBAL"] = @old_git_config_global
-
-    @generating_hash = false
-  end
-
   sig { returns(T::Boolean) }
   def generating_hash?
     @generating_hash ||= false

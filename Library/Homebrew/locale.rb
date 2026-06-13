@@ -21,9 +21,6 @@ class Locale
   REGION_REGEX = /(?:[A-Z]{2}|\d{3})/
   private_constant :REGION_REGEX
 
-  LOCALE_REGEX = /\A((?:#{LANGUAGE_REGEX}|#{REGION_REGEX}|#{SCRIPT_REGEX})(?:-|$)){1,3}\Z/
-  private_constant :LOCALE_REGEX
-
   sig { params(string: String).returns(T.attached_class) }
   def self.parse(string)
     if (locale = try_parse(string))

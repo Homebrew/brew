@@ -27,6 +27,7 @@ completions
 config
 contributions
 create
+deadcode
 debugger
 deps
 desc

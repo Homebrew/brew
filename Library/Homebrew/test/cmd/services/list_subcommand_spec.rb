@@ -4,12 +4,6 @@
 require "cmd/services"
 
 RSpec.describe Homebrew::Cmd::Services::ListSubcommand do
-  describe "#TRIGGERS" do
-    it "contains all restart triggers" do
-      expect(Homebrew::Cmd::Services::ListSubcommand::TRIGGERS).to eq([nil, "list", "ls"])
-    end
-  end
-
   describe "#run" do
     it "fails with empty list" do
       expect(Homebrew::Services::Formulae).to receive(:services_list).and_return([])

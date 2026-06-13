@@ -223,16 +223,6 @@ module Homebrew
       raise_untrusted!(:command, full_name, tap)
     end
 
-    sig { params(path: Pathname).returns(T::Boolean) }
-    def self.trusted_formula_file?(path)
-      trusted_file?(:formula, path)
-    end
-
-    sig { params(path: Pathname).returns(T::Boolean) }
-    def self.trusted_cask_file?(path)
-      trusted_file?(:cask, path)
-    end
-
     sig { params(files: T::Array[Pathname]).returns(T::Array[Pathname]) }
     def self.trusted_formula_files(files)
       trusted_files(:formula, files)

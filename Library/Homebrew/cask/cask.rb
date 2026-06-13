@@ -233,11 +233,6 @@ module Cask
     def any_version_installed? = installed?
 
     sig { returns(T::Boolean) }
-    def font?
-      artifacts.all?(Artifact::Font)
-    end
-
-    sig { returns(T::Boolean) }
     def supports_linux?
       return true if depends_on.requires_linux?
 

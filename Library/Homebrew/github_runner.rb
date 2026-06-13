@@ -22,11 +22,6 @@ class GitHubRunner < T::Struct
   end
 
   sig { returns(T::Boolean) }
-  def x86_64?
-    arch == :x86_64
-  end
-
-  sig { returns(T::Boolean) }
   def arm64?
     arch == :arm64
   end

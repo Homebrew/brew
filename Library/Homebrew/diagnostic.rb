@@ -1294,6 +1294,10 @@ module Homebrew
         EOS
       end
 
+      # deadcode:keep-matching ^check_
+      # `check_*` methods (here and in the OS-specific `Checks` modules) are
+      # invoked dynamically by name, so they have no static callers for
+      # `brew deadcode` to find.
       sig { returns(T::Array[String]) }
       def all
         methods.map(&:to_s).grep(/^check_/).sort

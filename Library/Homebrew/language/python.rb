@@ -33,60 +33,6 @@ module Language
       end
     end
 
-    sig {
-      params(
-        build: T.any(BuildOptions, Tab),
-        block: T.nilable(T.proc.params(python: String, version: T.nilable(Version)).void),
-      ).void
-    }
-    def self.each_python(build, &block)
-      original_pythonpath = ENV.fetch("PYTHONPATH", nil)
-      pythons = { "python@3" => "python3",
-                  "pypy"     => "pypy",
-                  "pypy3"    => "pypy3" }
-      pythons.each do |python_formula, python|
-        python_formula = Formulary.factory(python_formula)
-        next if build.without? python_formula.to_s
-
-        version = major_minor_version python
-        ENV["PYTHONPATH"] = if python_formula.latest_version_installed?
-          nil
-        else
-          homebrew_site_packages(python).to_s
-        end
-        block&.call python, version
-      end
-      ENV["PYTHONPATH"] = original_pythonpath
-    end
-
-    sig { params(python: T.any(String, Pathname)).returns(T::Boolean) }
-    def self.reads_brewed_pth_files?(python)
-      return false unless homebrew_site_packages(python).directory?
-      return false unless homebrew_site_packages(python).writable?
-
-      probe_file = homebrew_site_packages(python)/"homebrew-pth-probe.pth"
-      begin
-        probe_file.atomic_write("import site; site.homebrew_was_here = True")
-        with_homebrew_path { quiet_system python, "-c", "import site; assert(site.homebrew_was_here)" }
-      ensure
-        probe_file.unlink if probe_file.exist?
-      end
-    end
-
-    sig { params(python: T.any(String, Pathname)).returns(Pathname) }
-    def self.user_site_packages(python)
-      Pathname.new(`#{python} -c "import site; print(site.getusersitepackages())"`.chomp)
-    end
-
-    sig { params(python: T.any(String, Pathname), path: T.any(String, Pathname)).returns(T::Boolean) }
-    def self.in_sys_path?(python, path)
-      script = <<~PYTHON
-        import os, sys
-        [os.path.realpath(p) for p in sys.path].index(os.path.realpath("#{path}"))
-      PYTHON
-      quiet_system python, "-c", script
-    end
-
     # Mixin module for {Formula} adding shebang rewrite features.
     module Shebang
       extend T::Helpers
@@ -111,6 +57,7 @@ module Language
         )
       end
 
+      # @api internal
       sig { params(formula: Formula, use_python_from_path: T::Boolean).returns(Utils::Shebang::RewriteInfo) }
       def detected_python_shebang(formula = T.cast(self, Formula), use_python_from_path: false)
         python_path = if use_python_from_path
@@ -205,55 +152,6 @@ module Language
         return true if build.with?(python)
 
         (requirements.to_a | deps).any? { |r| Utils.name_from_full_name(r.name) == python && r.required? }
-      end
-
-      # Helper method for the common case of installing a Python application.
-      # Creates a virtualenv in `libexec`, installs all `resource`s defined
-      # on the formula and then installs the formula. An options hash may be
-      # passed (e.g. `:using => "python"`) to override the default, guessed
-      # formula preference for python or python@x.y, or to resolve an ambiguous
-      # case where it's not clear whether python or python@x.y should be the
-      # default guess.
-      sig {
-        params(
-          using:                T.nilable(String),
-          system_site_packages: T::Boolean,
-          without_pip:          T::Boolean,
-          link_manpages:        T::Boolean,
-          without:              T.nilable(T.any(String, T::Array[String])),
-          start_with:           T.nilable(T.any(String, T::Array[String])),
-          end_with:             T.nilable(T.any(String, T::Array[String])),
-        ).returns(Virtualenv)
-      }
-      def virtualenv_install_with_resources(using: nil, system_site_packages: true, without_pip: true,
-                                            link_manpages: true, without: nil, start_with: nil, end_with: nil)
-        python = using
-        if python.nil?
-          wanted = python_names.select { |py| needs_python?(py) }
-          raise FormulaUnknownPythonError, self if wanted.empty?
-          raise FormulaAmbiguousPythonError, self if wanted.size > 1
-
-          python = wanted.fetch(0)
-          python = "python3" if python == "python"
-        end
-
-        venv_resources = if without.nil? && start_with.nil? && end_with.nil?
-          resources
-        else
-          remaining_resources = resources.to_h { |resource| [resource.name, resource] }
-
-          slice_resources!(remaining_resources, Array(without))
-          start_with_resources = slice_resources!(remaining_resources, Array(start_with))
-          end_with_resources = slice_resources!(remaining_resources, Array(end_with))
-
-          start_with_resources + remaining_resources.values + end_with_resources
-        end
-
-        venv = virtualenv_create(libexec, python.delete("@"), system_site_packages:,
-                                                              without_pip:)
-        venv.pip_install venv_resources
-        venv.pip_install_and_link(T.must(buildpath), link_manpages:)
-        venv
       end
 
       sig { returns(T::Array[String]) }

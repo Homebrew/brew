@@ -44,8 +44,6 @@ module Homebrew
         # after a package gets updated through `brew upgrade`.
         # This works by removing the old file with `brew services stop`
         # and installing the new one with `brew services start|run`.
-
-        TRIGGERS = %w[restart relaunch reload r].freeze
       end
     end
   end

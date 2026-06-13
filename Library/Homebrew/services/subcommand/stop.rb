@@ -38,8 +38,6 @@ module Homebrew
             keep:     args.keep?,
           )
         end
-
-        TRIGGERS = %w[stop unload terminate term t u].freeze
       end
     end
   end

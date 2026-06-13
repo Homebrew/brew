@@ -100,20 +100,6 @@ module Homebrew
 
       sig {
         params(
-          source:      ::T.any(::String, ::Pathname),
-          target:      ::T.any(::String, ::Pathname),
-          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
-          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
-        ).void
-      }
-      def move_children(source, target, source_base: nil, target_base: nil)
-        add_step("move_children",
-                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
-                 "target" => path_spec(target, base: target_base, default_base: @default_target_base))
-      end
-
-      sig {
-        params(
           source:         ::T.any(::String, ::Pathname),
           target:         ::T.any(::String, ::Pathname),
           source_base:    ::T.nilable(::T.any(::String, ::Symbol)),
@@ -166,36 +152,6 @@ module Homebrew
       def ln_sf(source, target, source_base: nil, target_base: nil, source_formula: nil, target_formula: nil,
                 uninstall: false)
         symlink(source, target, source_base:, target_base:, source_formula:, target_formula:, force: true, uninstall:)
-      end
-
-      sig { void }
-      def compile_gsettings_schemas
-        add_rebuild_action("compile_gsettings_schemas", "share/glib-2.0/schemas")
-      end
-
-      sig { void }
-      def gio_querymodules
-        add_rebuild_action("gio_querymodules", "lib/gio/modules")
-      end
-
-      sig { void }
-      def gdk_pixbuf_query_loaders
-        add_step("gdk_pixbuf_query_loaders")
-      end
-
-      sig { void }
-      def gtk_update_icon_cache
-        add_rebuild_action("gtk_update_icon_cache", "share/icons/hicolor")
-      end
-
-      sig { void }
-      def update_mime_database
-        add_rebuild_action("update_mime_database", "share/mime")
-      end
-
-      sig { void }
-      def update_desktop_database
-        add_rebuild_action("update_desktop_database", "share/applications")
       end
 
       private

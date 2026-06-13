@@ -39,8 +39,6 @@ module Homebrew
 
         extend Utils::Output::Mixin
 
-        TRIGGERS = T.let([nil, "list", "ls"].freeze, T::Array[T.nilable(String)])
-
         JSON_FIELDS = T.let([:name, :status, :user, :file, :exit_code].freeze, T::Array[Symbol])
 
         # Print the JSON representation in the CLI

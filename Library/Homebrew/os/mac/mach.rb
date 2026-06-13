@@ -159,26 +159,6 @@ module MachOShim
   end
 
   sig { returns(T::Boolean) }
-  def universal?
-    arch == :universal
-  end
-
-  sig { returns(T::Boolean) }
-  def i386?
-    arch == :i386
-  end
-
-  sig { returns(T::Boolean) }
-  def x86_64?
-    arch == :x86_64
-  end
-
-  sig { returns(T::Boolean) }
-  def ppc7400?
-    arch == :ppc7400
-  end
-
-  sig { returns(T::Boolean) }
   def ppc64?
     arch == :ppc64
   end

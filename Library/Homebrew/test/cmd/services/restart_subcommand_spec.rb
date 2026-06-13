@@ -4,12 +4,6 @@
 require "cmd/services"
 
 RSpec.describe Homebrew::Cmd::Services::RestartSubcommand do
-  describe "#TRIGGERS" do
-    it "contains all restart triggers" do
-      expect(Homebrew::Cmd::Services::RestartSubcommand::TRIGGERS).to eq(%w[restart relaunch reload r])
-    end
-  end
-
   describe "#run" do
     it "fails with empty list" do
       expect do

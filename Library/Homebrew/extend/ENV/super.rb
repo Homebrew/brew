@@ -334,46 +334,10 @@ module Superenv
 
   public
 
-  # Removes the MAKEFLAGS environment variable, causing make to use a single job.
-  # This is useful for makefiles with race conditions.
-  # When passed a block, MAKEFLAGS is removed only for the duration of the block and is restored after its completion.
-  sig { params(block: T.nilable(T.proc.returns(T.untyped))).returns(T.untyped) }
-  def deparallelize(&block)
-    old_makeflags = delete("MAKEFLAGS")
-    old_make_jobs = delete("HOMEBREW_MAKE_JOBS")
-    self["HOMEBREW_MAKE_JOBS"] = "1"
-    if block
-      begin
-        yield
-      ensure
-        self["MAKEFLAGS"] = old_makeflags
-        self["HOMEBREW_MAKE_JOBS"] = old_make_jobs
-      end
-    end
-
-    old_makeflags
-  end
-
   sig { returns(Integer) }
   def make_jobs
     self["MAKEFLAGS"] =~ /-\w*j(\d+)/
     [Regexp.last_match(1).to_i, 1].max
-  end
-
-  sig { void }
-  def permit_arch_flags
-    append_to_cccfg "K"
-  end
-
-  sig { void }
-  def runtime_cpu_detection
-    append_to_cccfg "d"
-  end
-
-  sig { void }
-  def cxx11
-    append_to_cccfg "x"
-    append_to_cccfg "g" if homebrew_cc == "clang"
   end
 
   sig { void }
@@ -390,36 +354,6 @@ module Superenv
   def refurbish_args
     append_to_cccfg "O"
   end
-
-  # This is an exception where we want to use this method name format.
-  # rubocop: disable Naming/MethodName
-  sig { params(block: T.nilable(T.proc.void)).void }
-  def O0(&block)
-    if block
-      with_env(HOMEBREW_OPTIMIZATION_LEVEL: "O0", &block)
-    else
-      self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O0"
-    end
-  end
-
-  sig { params(block: T.nilable(T.proc.void)).void }
-  def O1(&block)
-    if block
-      with_env(HOMEBREW_OPTIMIZATION_LEVEL: "O1", &block)
-    else
-      self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O1"
-    end
-  end
-
-  sig { params(block: T.nilable(T.proc.void)).void }
-  def O3(&block)
-    if block
-      with_env(HOMEBREW_OPTIMIZATION_LEVEL: "O3", &block)
-    else
-      self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O3"
-    end
-  end
-  # rubocop: enable Naming/MethodName
 end
 
 require "extend/os/extend/ENV/super"

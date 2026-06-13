@@ -8,12 +8,6 @@ RSpec.describe Homebrew::Cmd::Services::InfoSubcommand do
     allow_any_instance_of(IO).to receive(:tty?).and_return(false)
   end
 
-  describe "#TRIGGERS" do
-    it "contains all restart triggers" do
-      expect(Homebrew::Cmd::Services::InfoSubcommand::TRIGGERS).to eq(%w[info i])
-    end
-  end
-
   describe "#run" do
     it "fails with empty list" do
       expect do
