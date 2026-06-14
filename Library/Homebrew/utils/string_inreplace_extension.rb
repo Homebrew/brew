@@ -74,11 +74,11 @@ class StringInreplaceExtension
     end
   end
 
-  # Finds the specified variable.
+  # Finds the specified variable, or returns `nil` if it is not present.
   #
   # @api public
-  sig { params(flag: String).returns(String) }
+  sig { params(flag: String).returns(T.nilable(String)) }
   def get_make_var(flag)
-    T.must(inreplace_string[/^#{Regexp.escape(flag)}[ \t]*[\\?+:!]?=[ \t]*((?:.*\\\n)*.*)$/, 1])
+    inreplace_string[/^#{Regexp.escape(flag)}[ \t]*[\\?+:!]?=[ \t]*((?:.*\\\n)*.*)$/, 1]
   end
 end

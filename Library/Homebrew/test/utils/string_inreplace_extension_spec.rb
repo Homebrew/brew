@@ -244,6 +244,14 @@ RSpec.describe StringInreplaceExtension do
         expect(string_extension.get_make_var("CFLAGS")).to match(/^-Wall -O2 \\\n +-DSOME_VAR=1$/)
       end
     end
+
+    context "when the variable is missing" do
+      let(:string) { "CFLAGS = -Wall -O2\n" }
+
+      it "returns nil" do
+        expect(string_extension.get_make_var("LDFLAGS")).to be_nil
+      end
+    end
   end
 
   describe "#sub!" do
