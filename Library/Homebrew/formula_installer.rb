@@ -1806,6 +1806,16 @@ on_request: installed_on_request?, options:)
     true
   end
 
+  # Lock the formula and all its recursive dependencies.
+  #
+  # NOTE: Homebrew uses per-formula locks, not a global lock. Multiple brew
+  # processes can run concurrently for different formulas as long as their
+  # dependency trees do not overlap. This is intentional: a global lock would
+  # serialise all brew operations.
+  #
+  # Consequence: CacheStoreDatabase (linkage.json, desc_cache.json) has no
+  # flock — last-writer-wins is accepted for diagnostic caches.
+  # See FormulaLock (lock_file.rb) for the lock mechanism.
   sig { void }
   def lock
     return unless self.class.locked.empty?
