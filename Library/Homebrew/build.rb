@@ -308,7 +308,15 @@ rescue Exception => e # rubocop:disable Lint/RescueException
     error_hash["output"] = e.output
   end
 
-  error_pipe&.puts error_hash.to_json
-  error_pipe&.close
+  begin
+    error_pipe&.puts error_hash.to_json
+  rescue Errno::EPIPE, Errno::EBADF
+    # Parent process closed the error pipe — exit below.
+  end
+  begin
+    error_pipe&.close
+  rescue Errno::EPIPE, Errno::EBADF
+    # Already closed or broken — ignore.
+  end
   exit! 1
 end
