@@ -219,6 +219,12 @@ RSpec.describe Cask::Cask, :cask do
   end
 
   describe "outdated" do
+    it "returns false without checking the version when not installed" do
+      c = Cask::CaskLoader.load("basic-cask")
+      expect(c).not_to receive(:outdated_version)
+      expect(c).not_to be_outdated
+    end
+
     it "ignores the Casks that have auto_updates true (without --greedy)" do
       c = Cask::CaskLoader.load("auto-updates")
       expect(c).not_to be_outdated

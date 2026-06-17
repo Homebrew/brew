@@ -2053,6 +2053,8 @@ class Formula
   # @api internal
   sig { params(fetch_head: T::Boolean).returns(T::Boolean) }
   def outdated?(fetch_head: false)
+    return false unless any_version_installed?
+
     !outdated_kegs(fetch_head:).empty?
   rescue Migrator::MigrationNeededError
     true

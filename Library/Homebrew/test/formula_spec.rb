@@ -2487,6 +2487,30 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#outdated?" do
+    let(:f) { Testball.new }
+
+    it "returns false without checking kegs when nothing is installed" do
+      expect(f).not_to receive(:outdated_kegs)
+      expect(f).not_to be_outdated
+    end
+
+    it "returns true when only an old name needing migration is installed" do
+      f = Testball.new("newname")
+      f.instance_variable_set(:@oldnames, ["oldname"])
+      f.instance_variable_set(:@tap, CoreTap.instance)
+
+      oldname_prefix = HOMEBREW_CELLAR/"oldname/2.20"
+      oldname_prefix.mkpath
+      oldname_tab = Tab.empty
+      oldname_tab.tabfile = oldname_prefix/AbstractTab::FILENAME
+      oldname_tab.source["tap"] = "homebrew/core"
+      oldname_tab.write
+
+      expect(f).to be_outdated
+    end
+  end
+
   describe "#any_installed_version" do
     let(:f) do
       Class.new(Testball) do

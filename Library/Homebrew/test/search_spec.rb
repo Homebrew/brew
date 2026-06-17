@@ -69,7 +69,7 @@ RSpec.describe Homebrew::Search do
   describe "#search_formulae" do
     let(:tab) { instance_double(Tab, installed_on_request: false) }
     let(:formula) do
-      instance_double(Formula, full_name: "testball", any_version_installed?: false,
+      instance_double(Formula, full_name: "testball", any_version_installed?: false, outdated?: false,
                               valid_platform?: true, deprecated?: false, disabled?: false,
                               pinned?: false, requirements: [], deps: [],
                               runtime_installed_formula_dependents: [], stable: nil, head: nil, pour_bottle?: true)
@@ -102,14 +102,21 @@ RSpec.describe Homebrew::Search do
       expect(described_class.search_formulae(/testball/))
         .to eq([described_class.pretty_installed("testball")])
     end
+
+    it "shows the upgradable icon for installed but outdated formulae" do
+      allow(formula).to receive_messages(any_version_installed?: true, outdated?: true)
+
+      expect(described_class.search_formulae(/testball/))
+        .to eq([described_class.pretty_upgradable("testball")])
+    end
   end
 
   describe "#search_casks" do
     let(:depends_on) { instance_double(Cask::DSL::DependsOn, formula: [], cask: []) }
     let(:tab) { instance_double(Cask::Tab, installed_on_request: false) }
     let(:cask) do
-      instance_double(Cask::Cask, full_name: "testball", installed?: false, deprecated?: false, disabled?: false,
-                                   supports_linux?: true, depends_on:)
+      instance_double(Cask::Cask, full_name: "testball", installed?: false, outdated?: false, deprecated?: false,
+                                   disabled?: false, supports_linux?: true, depends_on:)
     end
 
     before do
@@ -148,6 +155,13 @@ RSpec.describe Homebrew::Search do
 
       expect(described_class.search_casks(/testball/))
         .to eq([described_class.pretty_installed("testball")])
+    end
+
+    it "shows the upgradable icon for installed but outdated casks", :needs_macos do
+      allow(cask).to receive_messages(installed?: true, outdated?: true)
+
+      expect(described_class.search_casks(/testball/))
+        .to eq([described_class.pretty_upgradable("testball")])
     end
   end
 

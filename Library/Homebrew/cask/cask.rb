@@ -417,6 +417,8 @@ module Cask
         .returns(T::Boolean)
     }
     def outdated?(greedy: false, greedy_latest: false, greedy_auto_updates: false)
+      return false unless installed?
+
       !outdated_version(greedy:, greedy_latest:,
                         greedy_auto_updates:).nil?
     end
