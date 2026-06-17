@@ -37,6 +37,29 @@ Do not use conventional commit prefixes such as `feat:`, `fix:`, `chore:`, `refa
 - Put a comment immediately above each `shellcheck disable` explaining why it is needed.
 - Aim to wrap human-written user-facing terminal output at around 80 characters; this does not apply to generated output or code.
 
+### User-Facing Errors And Warnings
+
+When changing `odie`, `ofail`, `opoo`, caveats, diagnostics, or other terminal
+output, make the message actionable at the boundary where it appears.
+
+- Say what happened and name the relevant operation, package, tap, file, or
+  setting.
+- Include the specific problematic items when the message recommends acting on
+  specific items.
+- Put the recommended next step before broader or less-preferred alternatives.
+- Provide copy-pasteable commands when possible, and ensure they are valid for
+  the state being reported.
+- Make clear whether the current command is blocked, continuing with degraded
+  behavior, skipping specific items, or only reporting a broader diagnostic.
+- Avoid dead-end messages: if the user cannot fix it directly, link to the
+  relevant documentation or give the escalation/debugging path.
+- Link to deeper docs when the "why" is too long for command output, but keep
+  the immediate reason and next step in the output.
+- Preserve useful diagnostic context in structured errors, logs, or tests rather
+  than replacing it with friendlier but less specific prose.
+- Test important warning/error text when the behavior depends on ordering,
+  copy-paste commands, or user-visible decision paths.
+
 ## Repository Structure
 
 - `bin/brew`: Homebrew's `brew` command main Bash entry point script
