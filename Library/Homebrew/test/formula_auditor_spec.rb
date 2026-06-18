@@ -757,6 +757,21 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
+  describe "#audit_wayback_url" do
+    specify "#audit_wayback_url for an Internet Archive Wayback Machine homepage" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          homepage "https://web.archive.org/web/https://example.com"
+          url "https://brew.sh/foo-1.0.tgz"
+        end
+      RUBY
+
+      fa.audit_wayback_url
+      expect(fa.problems.first[:message])
+        .to start_with("Formula with an Internet Archive Wayback Machine")
+    end
+  end
+
   describe "#audit_specs" do
     let(:livecheck_throttle) { "livecheck do\n    throttle 10\n  end" }
     let(:livecheck_throttle_days) { "livecheck do\n    throttle days: 1\n  end" }
