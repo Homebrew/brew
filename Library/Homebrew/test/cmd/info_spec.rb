@@ -1083,7 +1083,7 @@ RSpec.describe Homebrew::Cmd::Info do
   describe "#print_sizes_with_deps" do
     it "prints direct size for a formula with no dependencies" do
       testball = formula("testball") { url "https://brew.sh/testball-0.1.tar.gz" }
-      keg = instance_double(Keg, disk_usage: 1_000_000, runtime_dependencies: nil)
+      keg = instance_double(Keg, disk_usage: 1_000_000, runtime_dependencies: [])
       allow(testball).to receive_messages(installed_kegs: [keg], any_installed_keg: keg)
       allow(Formula).to receive(:installed).and_return([testball])
 
@@ -1101,7 +1101,7 @@ RSpec.describe Homebrew::Cmd::Info do
       testball_keg = instance_double(Keg,
                                      disk_usage:           1_000_000,
                                      runtime_dependencies: [{ "full_name" => "libfoo", "version" => "1.0" }])
-      libfoo_keg = instance_double(Keg, disk_usage: 500_000, runtime_dependencies: nil)
+      libfoo_keg = instance_double(Keg, disk_usage: 500_000, runtime_dependencies: [])
 
       allow(testball).to receive_messages(installed_kegs: [testball_keg], any_installed_keg: testball_keg)
       allow(libfoo).to receive_messages(installed_kegs: [libfoo_keg], any_installed_keg: libfoo_keg)
@@ -1126,7 +1126,7 @@ RSpec.describe Homebrew::Cmd::Info do
       other_keg = instance_double(Keg,
                                   disk_usage:           800_000,
                                   runtime_dependencies: [{ "full_name" => "libbar", "version" => "1.0" }])
-      libbar_keg = instance_double(Keg, disk_usage: 500_000, runtime_dependencies: nil)
+      libbar_keg = instance_double(Keg, disk_usage: 500_000, runtime_dependencies: [])
 
       allow(testball).to receive_messages(installed_kegs: [testball_keg], any_installed_keg: testball_keg)
       allow(other).to receive_messages(installed_kegs: [other_keg], any_installed_keg: other_keg)
@@ -1143,7 +1143,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     it "prints a table when no formulae are named" do
       testball = formula("testball") { url "https://brew.sh/testball-0.1.tar.gz" }
-      keg = instance_double(Keg, disk_usage: 2_000_000, runtime_dependencies: nil)
+      keg = instance_double(Keg, disk_usage: 2_000_000, runtime_dependencies: [])
       allow(testball).to receive_messages(installed_kegs: [keg], any_installed_keg: keg)
       allow(Formula).to receive(:installed).and_return([testball])
 
