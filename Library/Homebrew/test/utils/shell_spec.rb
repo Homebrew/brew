@@ -84,6 +84,52 @@ RSpec.describe Utils::Shell do
     expect(described_class.send(:csh_quote, "word")).to eq("word")
   end
 
+  describe "::export_value" do
+    it "supports Bash" do
+      expect(described_class.export_value("FOO", "bar", :bash)).to eq('export FOO="bar"')
+    end
+
+    it "supports Zsh with the same form as Bash" do
+      expect(described_class.export_value("FOO", "bar", :zsh)).to eq('export FOO="bar"')
+    end
+
+    it "supports Ksh with the same form as Bash" do
+      expect(described_class.export_value("FOO", "bar", :ksh)).to eq('export FOO="bar"')
+    end
+
+    it "supports sh with the same form as Bash" do
+      expect(described_class.export_value("FOO", "bar", :sh)).to eq('export FOO="bar"')
+    end
+
+    it "supports fish" do
+      expect(described_class.export_value("FOO", "bar", :fish)).to eq('set -gx FOO "bar"')
+    end
+
+    it "supports rc" do
+      expect(described_class.export_value("FOO", "bar", :rc)).to eq("FOO=(bar)")
+    end
+
+    it "supports tcsh" do
+      expect(described_class.export_value("FOO", "bar", :tcsh)).to eq("setenv FOO bar;")
+    end
+
+    it "supports csh" do
+      expect(described_class.export_value("FOO", "bar", :csh)).to eq("setenv FOO bar;")
+    end
+
+    it "quotes unsafe characters via sh_quote for Bourne-compatible shells" do
+      expect(described_class.export_value("FOO", "hello world", :bash)).to eq('export FOO="hello\\ world"')
+    end
+
+    it "quotes unsafe characters via csh_quote for csh" do
+      expect(described_class.export_value("FOO", "hello world", :csh)).to eq("setenv FOO hello\\ world;")
+    end
+
+    it "returns nil for an unsupported shell" do
+      expect(described_class.export_value("FOO", "bar", :pwsh)).to be_nil
+    end
+  end
+
   describe "::prepend_path_in_profile" do
     let(:path) { "/my/path" }
 
