@@ -1138,6 +1138,20 @@ RSpec.describe Homebrew::Service do
       end.to raise_error TypeError, "Service#parse_cron expects a valid cron syntax"
     end
 
+    it "throws on unsupported cron syntax" do
+      f = stub_formula do
+        service do
+          run opt_bin/"beanstalkd"
+          run_type :cron
+          cron "*/5 * * * *"
+        end
+      end
+
+      expect do
+        f.service.to_systemd_timer
+      end.to raise_error TypeError, "Service#parse_cron does not support cron syntax: */5"
+    end
+
     it "returns valid cron timers" do
       styles = {
         "@hourly":   "*-*-* *:00:00",

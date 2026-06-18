@@ -347,7 +347,11 @@ module Homebrew
         raise TypeError, "Service#parse_cron expects a valid cron syntax" if cron_parts.length != 5
 
         [:Minute, :Hour, :Day, :Month, :Weekday].each_with_index do |selector, index|
-          parsed[selector] = Integer(cron_parts.fetch(index)) if cron_parts.fetch(index) != "*"
+          part = cron_parts.fetch(index)
+          next if part == "*"
+          raise TypeError, "Service#parse_cron does not support cron syntax: #{part}" unless part.match?(/\A\d+\z/)
+
+          parsed[selector] = Integer(part)
         end
       end
 
