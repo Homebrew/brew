@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "trust"
+
 class Reporter
   include Utils::Output::Mixin
 
@@ -241,7 +243,8 @@ class Reporter
         next unless (HOMEBREW_PREFIX/"Caskroom"/name).exist?
 
         new_tap = Tap.fetch(new_tap_name)
-        new_tap.ensure_installed!
+        next unless ensure_trusted_tap_installed!(name, new_name, new_tap)
+
         ohai "#{name} has been moved to Homebrew.", <<~EOS
           To uninstall the cask, run:
             brew uninstall --cask --force #{name}
@@ -297,7 +300,8 @@ class Reporter
           EOS
         end
       else
-        new_tap.ensure_installed!
+        next unless ensure_trusted_tap_installed!(name, new_name, new_tap)
+
         # update tap for each Tab
         tabs.each { |tab| tab.tap = new_tap }
         tabs.each(&:write)
@@ -335,6 +339,34 @@ class Reporter
   end
 
   private
+
+  sig { params(name: String, new_name: String, new_tap: Tap).returns(T::Boolean) }
+  def ensure_trusted_tap_installed!(name, new_name, new_tap)
+    return true if new_tap.installed?
+
+    unless Homebrew::Trust.trusted_tap?(new_tap)
+      new_bare_name = Utils.name_from_full_name(new_name)
+      new_full_name = "#{new_tap.name}/#{new_bare_name}"
+      # `brew migrate` only migrates renamed packages, so a tap-only migration
+      # (unchanged name) needs a reinstall from the new tap instead.
+      complete_command = if new_bare_name == name
+        "brew reinstall #{name}"
+      else
+        "brew migrate #{name}"
+      end
+      opoo <<~EOS
+        Not automatically tapping #{new_tap} to migrate #{name} as it is not a
+        trusted tap. To complete the migration yourself, run:
+          brew tap #{new_tap}
+          brew trust #{new_full_name}
+          #{complete_command}
+      EOS
+      return false
+    end
+
+    new_tap.ensure_installed!
+    true
+  end
 
   sig { returns(Tap) }
   attr_reader :tap

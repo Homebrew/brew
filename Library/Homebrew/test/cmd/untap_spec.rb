@@ -24,6 +24,27 @@ RSpec.describe Homebrew::Cmd::Untap do
       .and raise_error(SystemExit)
   end
 
+  it "continues untapping remaining taps when one has installed formulae" do
+    tap1 = Tap.fetch("homebrew", "foo")
+    tap2 = Tap.fetch("homebrew", "bar")
+
+    cmd = described_class.new(["homebrew/foo", "homebrew/bar"])
+    allow(cmd.args.named).to receive(:to_installed_taps).and_return([tap1, tap2])
+
+    allow(cmd).to receive(:installed_formulae_for).with(tap: tap1).and_return(["homebrew/foo/testball"])
+    allow(cmd).to receive(:installed_formulae_for).with(tap: tap2).and_return([])
+    allow(cmd).to receive(:installed_casks_for).with(tap: tap1).and_return([])
+    allow(cmd).to receive(:installed_casks_for).with(tap: tap2).and_return([])
+
+    expect(tap1).not_to receive(:uninstall)
+    expect(tap2).to receive(:uninstall).with(manual: true)
+
+    expect { cmd.run }.to output(/Refusing to untap/).to_stderr
+    expect(Homebrew).to have_failed
+  ensure
+    Homebrew.failed = false
+  end
+
   describe "#installed_formulae_for" do
     shared_examples "finds installed formulae in tap", :no_api do
       def load_formula(name:, with_formula_file: false, mock_install: false)
@@ -39,6 +60,7 @@ RSpec.describe Homebrew::Cmd::Untap do
           Formulary.factory(path)
         else
           formula(name, tap:) do
+            T.bind(self, T.class_of(Formula))
             url "https://brew.sh/#{name}-1.0.tgz"
           end
         end
@@ -122,23 +144,28 @@ RSpec.describe Homebrew::Cmd::Untap do
 
   describe "#installed_casks_for", :cask do
     shared_examples "finds installed casks in tap", :no_api do
-      def load_cask(token:, with_cask_file: false, mock_install: false)
-        cask_loader = Cask::CaskLoader::FromContentLoader.new(<<~RUBY, tap:)
+      def load_cask(token:, with_cask_file: false, mock_install: false, deprecated: false)
+        cask_source = <<~RUBY
           cask '#{token}' do
             version "1.2.3"
             sha256 :no_check
 
             url 'https://brew.sh/'
+
+            #{"raise MethodDeprecatedError" if deprecated}
           end
         RUBY
-
-        cask = cask_loader.load(config: nil)
 
         if with_cask_file
           cask_path = tap.cask_dir/"#{token}.rb"
           cask_path.parent.mkpath
-          cask_path.write cask.source
+          cask_path.write cask_source
         end
+
+        return if deprecated
+
+        cask_loader = Cask::CaskLoader::FromContentLoader.new(cask_source, tap:)
+        cask = cask_loader.load(config: nil)
 
         InstallHelper.install_with_caskfile(cask) if mock_install
 
@@ -155,6 +182,9 @@ RSpec.describe Homebrew::Cmd::Untap do
 
         # Cask that was installed from a tap but is no longer available from that tap.
         load_cask(token: "legacy_install", mock_install: true)
+
+        # Cask that uses deprecated method.
+        load_cask(token: "deprecated_method", with_cask_file: true, deprecated: true)
       end
 
       it "returns the expected casks" do

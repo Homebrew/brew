@@ -2,12 +2,12 @@
 
 require "yaml"
 
+AI_MENTION = /\b(?:AI|LLM)\b/i
 CHECKBOX_MARKER = /\A- \[[ xX]\] /
-CHECKED_CHECKBOX_MARKER = /\A- \[[xX]\] /
 HTML_COMMENT_LINE = /\A<!--.*-->\z/
-ISSUE_FORM_HEADING = /\A### /
+ISSUE_FORM_HEADING_MARKER = "### "
+MARKDOWN_HEADING = /\A#+ /
 MARKDOWN_HORIZONTAL_LINE = /\A-+\z/
-NO_RESPONSE = "_No response_"
 NORMALISED_CHECKBOX_MARKER = "- [ ] "
 REQUIRED_TEMPLATE_PERCENTAGE = 75
 PERCENTAGE_SCALE = 100
@@ -31,57 +31,57 @@ end
 
 case ARGV.fetch(0)
 when "pull-request"
-  pr_body_path = ARGV.fetch(1)
-  template_path = ARGV.fetch(2)
-  pr_lines = normalised_lines.call(pr_body_path)
-  template_lines = normalised_lines.call(template_path)
-  matching_template_lines = template_lines.count { |line| pr_lines.include?(line) }
-  scaled_matching_percentage = matching_template_lines * PERCENTAGE_SCALE
-  scaled_required_percentage = template_lines.count * REQUIRED_TEMPLATE_PERCENTAGE
-  preserves_template = scaled_matching_percentage >= scaled_required_percentage
-  has_checked_checkbox = lines.call(pr_body_path).any? { |line| line.match?(CHECKED_CHECKBOX_MARKER) }
-  has_non_template_content = (pr_lines - template_lines).any?
+  # Pass when the body keeps at least REQUIRED_TEMPLATE_PERCENTAGE of the template's
+  # headings and checkboxes combined (ticked or not) and still discloses AI usage:
+  # either the template's AI disclosure checkbox (whose label mentions AI) or any
+  # mention of AI/LLM in the text. This blocks bodies that strip out the template
+  # (e.g. AI-generated pull requests) without caring whether boxes are ticked.
+  body_lines = lines.call(ARGV.fetch(1))
+  normalised_body = normalised_lines.call(ARGV.fetch(1))
+  template_items = normalised_lines.call(ARGV.fetch(2)).select do |line|
+    line.start_with?(NORMALISED_CHECKBOX_MARKER) || line.match?(MARKDOWN_HEADING)
+  end
+  present_count = template_items.count { |item| normalised_body.include?(item) }
+  preserves_template = present_count * PERCENTAGE_SCALE >= template_items.count * REQUIRED_TEMPLATE_PERCENTAGE
+  discloses_ai = body_lines.any? { |line| line.match?(AI_MENTION) }
 
-  puts preserves_template && (has_checked_checkbox || has_non_template_content)
+  puts preserves_template && discloses_ai
 when "issue"
-  issue_body = File.read(ARGV.fetch(1), mode: "rb")
-                   .encode("UTF-8", invalid: :replace, undef: :replace)
-  issue_lines = issue_body.lines(chomp: true)
-  issue_field_responses = {}
-  issue_lines.each do |line|
-    if line.match?(ISSUE_FORM_HEADING)
-      issue_field_responses[line.delete_prefix("### ").strip] = []
-    elsif issue_field_responses.any?
-      issue_field_responses.fetch(issue_field_responses.keys.last) << line
+  # Pass when the body keeps at least REQUIRED_TEMPLATE_PERCENTAGE of some template's
+  # headings and checkboxes combined (ticked or not). Counting headings as well as
+  # checkboxes lets the feature template (a single checkbox) be told apart from a
+  # stripped body. The missing items from the closest template are reported on stderr.
+  body_lines = lines.call(ARGV.fetch(1))
+
+  templates = Dir.glob("#{ARGV.fetch(2)}/*.{yml,yaml}").filter_map do |template_path|
+    fields = YAML.safe_load_file(template_path).fetch("body", [])
+    headings = fields.filter_map { |field| field.dig("attributes", "label") if field["type"] != "markdown" }
+    checkboxes = fields.flat_map do |field|
+      next [] if field["type"] != "checkboxes"
+
+      field.fetch("attributes", {}).fetch("options", []).map { |option| option.fetch("label") }
     end
+    items = headings.map { |label| [:heading, label] } + checkboxes.map { |label| [:checkbox, label] }
+    next if items.empty?
+
+    missing = items.reject { |_kind, label| body_lines.any? { |line| line.include?(label) } }
+    present_count = items.length - missing.length
+    { total: items.length, present_count: present_count, missing: missing }
   end
 
-  puts(Dir.glob("#{ARGV.fetch(2)}/*.{yml,yaml}").any? do |template_path|
-    required_fields = []
-    required_checkboxes = []
+  preserves_template = templates.any? do |template|
+    template[:present_count] * PERCENTAGE_SCALE >= template[:total] * REQUIRED_TEMPLATE_PERCENTAGE
+  end
 
-    YAML.safe_load_file(template_path).fetch("body", []).each do |field|
-      attributes = field.fetch("attributes", {})
-      case field["type"]
-      when "checkboxes"
-        attributes.fetch("options", []).each do |option|
-          required_checkboxes << option.fetch("label") if option["required"]
-        end
-      when "dropdown", "input", "textarea"
-        required_fields << attributes.fetch("label") if field.dig("validations", "required")
-      end
+  if preserves_template
+    puts true
+  else
+    puts false
+    closest_missing = templates.min_by { |template| template[:missing].length }&.fetch(:missing)
+    closest_missing&.each do |kind, label|
+      warn((kind == :checkbox) ? "- [ ] #{label}" : "- `#{ISSUE_FORM_HEADING_MARKER}#{label}` section")
     end
-    next false if required_fields.empty? && required_checkboxes.empty?
-
-    required_fields.all? do |field|
-      issue_field_responses.fetch(field, []).any? do |line|
-        !line.strip.empty? && line.strip != NO_RESPONSE
-      end
-    end &&
-      required_checkboxes.all? do |checkbox|
-        issue_lines.any? { |line| line.match?(CHECKED_CHECKBOX_MARKER) && line.include?(checkbox) }
-      end
-  end)
+  end
 else
   warn "Usage: check_template.rb pull-request BODY TEMPLATE"
   warn "       check_template.rb issue BODY TEMPLATE_DIRECTORY"

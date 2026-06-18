@@ -17,7 +17,7 @@ RSpec.describe Cask::Installer, :cask do
       described_class.new(caffeine).install
 
       expect(Cask::Caskroom.path.join("local-caffeine", caffeine.version)).to be_a_directory
-      expect(caffeine.config.appdir.join("Caffeine.app")).to be_a_directory
+      expect(Pathname(caffeine.config.appdir).join("Caffeine.app")).to be_a_directory
     end
 
     it "works with HFS+ dmg-based Casks" do
@@ -27,7 +27,7 @@ RSpec.describe Cask::Installer, :cask do
       described_class.new(asset).install
 
       expect(Cask::Caskroom.path.join("container-dmg", asset.version)).to be_a_directory
-      expect(asset.config.appdir.join("container")).to be_a_file
+      expect(Pathname(asset.config.appdir).join("container")).to be_a_file
     end
 
     it "works with tar-gz-based Casks" do
@@ -36,7 +36,7 @@ RSpec.describe Cask::Installer, :cask do
       described_class.new(asset).install
 
       expect(Cask::Caskroom.path.join("container-tar-gz", asset.version)).to be_a_directory
-      expect(asset.config.appdir.join("container")).to be_a_file
+      expect(Pathname(asset.config.appdir).join("container")).to be_a_file
     end
 
     it "works with xar-based Casks" do
@@ -45,16 +45,23 @@ RSpec.describe Cask::Installer, :cask do
       described_class.new(asset).install
 
       expect(Cask::Caskroom.path.join("container-xar", asset.version)).to be_a_directory
-      expect(asset.config.appdir.join("container")).to be_a_file
+      expect(Pathname(asset.config.appdir).join("container")).to be_a_file
     end
 
     it "works with pure bzip2-based Casks" do
       asset = Cask::CaskLoader.load(cask_path("container-bzip2"))
+      # The bzip2 container depends on the `bzip2` formula via its unpack
+      # strategy. Exercise dependency resolution without pouring a real
+      # bottle (and flaking on its GitHub Packages manifest).
+      allow_any_instance_of(Formula).to receive(:any_version_installed?).and_return(false)
+      allow(Homebrew::Install).to receive(:fetch_formulae) { |installers| installers }
+      allow_any_instance_of(FormulaInstaller).to receive(:install)
+      allow_any_instance_of(FormulaInstaller).to receive(:finish)
 
       described_class.new(asset).install
 
       expect(Cask::Caskroom.path.join("container-bzip2", asset.version)).to be_a_directory
-      expect(asset.config.appdir.join("container")).to be_a_file
+      expect(Pathname(asset.config.appdir).join("container")).to be_a_file
     end
 
     it "works with pure gzip-based Casks" do
@@ -63,7 +70,7 @@ RSpec.describe Cask::Installer, :cask do
       described_class.new(asset).install
 
       expect(Cask::Caskroom.path.join("container-gzip", asset.version)).to be_a_directory
-      expect(asset.config.appdir.join("container")).to be_a_file
+      expect(Pathname(asset.config.appdir).join("container")).to be_a_file
     end
 
     it "blows up on a bad checksum" do
@@ -202,7 +209,7 @@ RSpec.describe Cask::Installer, :cask do
 
       described_class.new(nested_app).install
 
-      expect(nested_app.config.appdir.join("MyNestedApp.app")).to be_a_directory
+      expect(Pathname(nested_app.config.appdir).join("MyNestedApp.app")).to be_a_directory
     end
 
     it "generates and finds a timestamped metadata directory for an installed Cask" do
@@ -301,7 +308,7 @@ RSpec.describe Cask::Installer, :cask do
       described_class.new(caffeine).zap
 
       expect(caffeine).not_to be_installed
-      expect(caffeine.config.appdir.join("Caffeine.app")).not_to be_a_symlink
+      expect(Pathname(caffeine.config.appdir).join("Caffeine.app")).not_to be_a_symlink
     end
   end
 
@@ -389,8 +396,8 @@ RSpec.describe Cask::Installer, :cask do
     let(:homebrew_forbidden) { Tap.fetch("homebrew/forbidden") }
     let(:allowed_third_party) { Tap.fetch("nothomebrew/allowed") }
     let(:disallowed_third_party) { Tap.fetch("nothomebrew/notallowed") }
-    let(:allowed_taps_set) { Set.new([allowed_third_party]) }
-    let(:forbidden_taps_set) { Set.new([homebrew_forbidden]) }
+    let(:allowed_taps_set) { [allowed_third_party.name] }
+    let(:forbidden_taps_set) { [homebrew_forbidden.name] }
 
     it "raises on forbidden tap on cask" do
       cask = Cask::Cask.new("homebrew-forbidden-tap", tap: homebrew_forbidden) do
@@ -431,7 +438,7 @@ RSpec.describe Cask::Installer, :cask do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(dep_path)
+      Formulary.cache.delete(dep_path.to_s)
 
       cask = Cask::Cask.new("homebrew-forbidden-dependent-tap") do
         url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
@@ -467,7 +474,7 @@ RSpec.describe Cask::Installer, :cask do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(dep_path)
+      Formulary.cache.delete(dep_path.to_s)
 
       cask = Cask::Cask.new("homebrew-forbidden-dependent-cask") do
         url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
@@ -548,6 +555,30 @@ RSpec.describe Cask::Installer, :cask do
   end
 
   describe "#prelude_fetch" do
+    it "uses API cask metadata for API-loaded cask downloads" do
+      cask = Cask::Cask.new("api-cask", loaded_from_api: true, loaded_from_internal_api: true) do
+        url "https://example.com/source-cask.zip"
+        version "0.9"
+        sha256 "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
+      end
+      cask_struct = Homebrew::API::CaskStruct.new(
+        sha256:   "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97",
+        url_args: ["https://example.com/api-cask.zip"],
+        version:  "1.0",
+      )
+      download_queue = instance_double(Homebrew::DownloadQueue)
+      installer = described_class.new(cask, download_queue:)
+
+      allow(Homebrew::API::Internal).to receive(:cask_struct).with("api-cask").and_return(cask_struct)
+      expect(Homebrew::API::Cask).not_to receive(:source_download)
+      expect(download_queue).to receive(:enqueue) do |download|
+        expect(download).to be_a(Cask::Download)
+        expect(download.url.to_s).to eq("https://example.com/api-cask.zip")
+      end
+
+      installer.enqueue_downloads
+    end
+
     it "enqueues source API caskfiles before the main cask download" do
       cask = Cask::Cask.new("source-api-cask") do
         url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"

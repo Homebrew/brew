@@ -33,9 +33,10 @@ module OS
         params(
           prefix:       T.any(String, ::Pathname),
           release_mode: Symbol,
+          cpu:          T.nilable(Symbol),
         ).returns(T::Array[String])
       }
-      def std_zig_args(prefix: self.prefix, release_mode: :fast)
+      def std_zig_args(prefix: self.prefix, release_mode: :fast, cpu: nil)
         args = super
         args << "-fno-rosetta" if ::Hardware::CPU.arm?
         args

@@ -38,6 +38,15 @@ RSpec.describe GitRepository do
     end
   end
 
+  it "reads the origin URL when the global Git config is unusable" do
+    global_config = repo_root/"global.gitconfig"
+    global_config.write("[broken\n")
+
+    with_env(GIT_CONFIG_GLOBAL: global_config.to_s) do
+      expect(git_repo.origin_url).to eq(remote_path.to_s)
+    end
+  end
+
   describe "when the origin has a branch and tag with the same name" do
     it "disambiguates branch_name, origin_branch_name, and default_origin_branch?" do
       expect(git_repo.branch_name).to eq(branch_name)

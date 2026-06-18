@@ -114,6 +114,7 @@ __brew_complete_commands() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   local cmds
   local maintainer_cmds
+  local user_aliases
 
   if [[ -n ${__HOMEBREW_COMMANDS} ]]
   then
@@ -129,11 +130,12 @@ __brew_complete_commands() {
   then
     maintainer_cmds="<%= maintainer_commands.join(" ") %>"
   fi
+  user_aliases="$(__brew_list_aliases)"
   while read -r line
   do
     [[ $(__brew_internal_command_alias "${line}") == "${line}" ]] || continue
     COMPREPLY+=("${line}")
-  done < <(compgen -W "${cmds} ${maintainer_cmds}" -- "${cur}")
+  done < <(compgen -W "${cmds} ${maintainer_cmds} ${user_aliases}" -- "${cur}")
   export __HOMEBREW_COMMANDS=${cmds}
 }
 
@@ -160,20 +162,24 @@ __brew_internal_command_alias() {
 
 # https://github.com/Homebrew/homebrew-aliases
 __brew_list_aliases() {
-  local aliases_dir="${HOME}/.brew-aliases"
-  local pattern="^# alias: brew ([[:alnum:]-]+)$"
+  local aliases_dir="${HOME}/.config/brew-aliases"
+  local pattern="alias: brew ([^[:space:]]+)"
+  local alias_name line
   local -a aliases
 
+  [[ ! -d ${aliases_dir} ]] && aliases_dir="${HOME}/.brew-aliases"
   [[ ! -d ${aliases_dir} ]] && return
 
   for file in "${aliases_dir}"/*; do
-    [[ ! -f ${file} ]] && continue
-    while read -r line; do
-      if [[ ${line} =~ ${pattern} ]]; then
-        aliases+=("${BASH_REMATCH[1]}")
-        break
+    [[ ! -f ${file} || ${file} == *~ ]] && continue
+    alias_name="${file##*/}"
+    {
+      read -r line
+      if read -r line && [[ ${line} =~ ${pattern} ]]; then
+        alias_name="${BASH_REMATCH[1]}"
       fi
-    done < "${file}"
+    } < "${file}"
+    aliases+=("${alias_name}")
   done
   [[ -n ${aliases[*]+"${aliases[*]}"} ]] && echo "${aliases[@]}"
 }

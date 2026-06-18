@@ -8,10 +8,13 @@ require "trust"
 module Homebrew
   module Bundle
     class Tap < Homebrew::Bundle::PackageType
-      PACKAGE_TYPE = :tap
-      PACKAGE_TYPE_NAME = "Tap"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :tap
+
+        sig { override.returns(String) }
+        def check_label = "Tap"
+
         sig { override.void }
         def reset!
           @taps = T.let(nil, T.nilable(T::Array[::Tap]))
@@ -71,6 +74,8 @@ module Homebrew
             return false
           end
 
+          require "tap"
+          ::Tap.fetch(name).clear_cache
           installed_taps << name
           true
         end
@@ -82,9 +87,8 @@ module Homebrew
 
         sig { override.returns(String) }
         def dump
-          trusted_taps = Homebrew::Trust.trusted_entries(:tap)
           taps.map do |tap|
-            remote = if tap.custom_remote? && (tap_remote = tap.remote)
+            remote = if (tap_remote = tap.remote) && tap_remote != tap.default_remote
               if (api_token = ENV.fetch("HOMEBREW_GITHUB_API_TOKEN", false).presence)
                 # Replace the API token in the remote URL with interpolation.
                 # Keep the interpolation unevaluated until the Brewfile is evaluated.
@@ -93,7 +97,7 @@ module Homebrew
               ", \"#{tap_remote}\""
             end
             tapline = "tap \"#{tap.name}\"#{remote}"
-            tapline += ", trusted: true" if trusted_taps.include?(tap.name)
+            tapline += ", trusted: true" if Homebrew::Trust.explicitly_trusted_tap?(tap)
             tapline
           end.sort.uniq.join("\n")
         end

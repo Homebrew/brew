@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
@@ -10,6 +10,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
 
   let(:f) do
     formula("test") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/test-1.2.3.tgz"
     end
   end
@@ -66,6 +67,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
 
     let(:f_throttle) do
       formula("throttle-test") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/test-1.2.3.tgz"
 
         livecheck do
@@ -76,6 +78,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
 
     let(:f_throttle_days) do
       formula("throttle-days-test") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/test-1.2.3.tgz"
 
         livecheck do
@@ -86,6 +89,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
 
     let(:f_throttle_rate_and_days) do
       formula("throttle-rate-and-days-test") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/test-1.2.3.tgz"
 
         livecheck do

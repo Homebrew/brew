@@ -2,18 +2,28 @@
 
 # `HOMEBREW_*` variables are set by brew.sh before sourcing this command.
 # shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/cmd.sh"
+
 homebrew-as-console-user() {
-  case "${1:-}" in
-    --help | -h | --usage | "-?")
-      "${HOMEBREW_BREW_FILE}" help as-console-user
-      return
-      ;;
-    *) ;;
-  esac
+  while [[ "$#" -gt 0 ]]
+  do
+    if homebrew-command-help as-console-user "$1"
+    then
+      return $?
+    fi
+    if homebrew-command-common-option "$1"
+    then
+      shift
+      continue
+    fi
+    break
+  done
+
+  homebrew-command-enable-debug
 
   if [[ "$#" -eq 0 ]]
   then
-    "${HOMEBREW_BREW_FILE}" help as-console-user
+    brew help as-console-user
     return 1
   fi
 

@@ -1,5 +1,9 @@
 # Documentation defined in Library/Homebrew/cmd/update-reset.rb
 
+# HOMEBREW_LIBRARY is set by bin/brew
+# shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/cmd.sh"
+
 # Replaces the function in Library/Homebrew/brew.sh to cache the Git executable to provide
 # speedup when using Git repeatedly and prevent errors if the shim changes mid-update.
 git() {
@@ -23,15 +27,17 @@ homebrew-update-reset() {
 
   for option in "$@"
   do
+    if homebrew-command-help update-reset "${option}"
+    then
+      exit $?
+    fi
+    if homebrew-command-common-option "${option}"
+    then
+      continue
+    fi
+
     case "${option}" in
-      -\? | -h | --help | --usage)
-        brew help update-reset
-        exit $?
-        ;;
-      --debug) HOMEBREW_DEBUG=1 ;;
-      -*)
-        [[ "${option}" == *d* ]] && HOMEBREW_DEBUG=1
-        ;;
+      -*) homebrew-command-common-short-options "${option}" ;;
       *)
         if [[ -d "${option}/.git" ]]
         then
@@ -45,10 +51,7 @@ homebrew-update-reset() {
     esac
   done
 
-  if [[ -n "${HOMEBREW_DEBUG}" ]]
-  then
-    set -x
-  fi
+  homebrew-command-enable-debug
 
   if [[ -z "${REPOS[*]}" ]]
   then

@@ -353,14 +353,12 @@ module Homebrew
           formula_sentence = formulae_names_to_install.map { |name| Formatter.identifier(name) }.to_sentence
           oh1 "Fetching downloads for: #{formula_sentence}", truncate: false
         end
-        formula_installers.each do |fi|
-          fi.download_queue = download_queue
-        end
-
-        valid_formula_installers = formula_installers.dup
 
         begin
-          [:prelude_fetch, :prelude, :enqueue_fetch].each do |step|
+          valid_formula_installers = prelude_fetch_formulae(formula_installers, download_queue:)
+          download_queue.fetch
+
+          [:prelude, :enqueue_fetch].each do |step|
             valid_formula_installers.select! do |fi|
               fi.public_send(step)
               true
@@ -380,6 +378,29 @@ module Homebrew
         end
 
         valid_formula_installers
+      end
+
+      sig {
+        params(
+          formula_installers: T::Array[FormulaInstaller],
+          download_queue:     Homebrew::DownloadQueue,
+        ).returns(T::Array[FormulaInstaller])
+      }
+      def prelude_fetch_formulae(formula_installers, download_queue:)
+        formula_installers.each do |fi|
+          fi.download_queue = download_queue
+        end
+
+        formula_installers.select do |fi|
+          fi.prelude_fetch
+          true
+        rescue CannotInstallFormulaError => e
+          ofail e.message
+          false
+        rescue UnsatisfiedRequirements, DownloadError, ChecksumMismatchError => e
+          ofail "#{fi.formula}: #{e}"
+          false
+        end
       end
 
       sig { params(formula_installers: T::Array[FormulaInstaller], download_queue: Homebrew::DownloadQueue).returns(T::Array[FormulaInstaller]) }
@@ -488,7 +509,10 @@ module Homebrew
           dependency = dep.to_formula
           next if skip_formula_names.include?(dependency.full_name)
 
-          yield dependency
+          name = yield dependency
+          installed = dependency.any_version_installed?
+          pretty_install_status(name, installed:, outdated: installed && dependency.outdated?,
+                                mark_uninstalled: false, bold: false)
         end
         return if formula_names.empty?
 

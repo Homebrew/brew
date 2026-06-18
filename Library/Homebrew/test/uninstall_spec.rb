@@ -1,13 +1,19 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "uninstall"
 
 RSpec.describe Homebrew::Uninstall do
-  let(:dependency) { formula("dependency") { url "f-1" } }
+  let(:dependency) do
+    formula("dependency") do
+      T.bind(self, T.class_of(Formula))
+      url "f-1"
+    end
+  end
 
   let(:dependent_formula) do
     formula("dependent_formula") do
+      T.bind(self, T.class_of(Formula))
       url "f-1"
       depends_on "dependency"
     end

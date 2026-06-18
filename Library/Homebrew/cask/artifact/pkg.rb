@@ -19,6 +19,7 @@ module Cask
 
       sig { params(cask: Cask, path: T.any(String, Pathname), stanza_options: T.untyped).returns(T.attached_class) }
       def self.from_args(cask, path, **stanza_options)
+        # odeprecated: `allow_untrusted` disables certificate verification and is being removed.
         stanza_options.assert_valid_keys(:allow_untrusted, :choices)
         new(cask, path, **stanza_options)
       end
@@ -67,6 +68,7 @@ module Cask
           "-target", "/"
         ]
         args << "-verboseR" if verbose
+        # odeprecated: `allow_untrusted` disables certificate verification and is being removed.
         args << "-allowUntrusted" if stanza_options.fetch(:allow_untrusted, false)
         with_choices_file do |choices_path|
           args << "-applyChoiceChangesXML" << choices_path if choices_path

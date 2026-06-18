@@ -58,40 +58,6 @@ If you want a non-interactive run of the Homebrew installer that doesn't prompt 
 
 Check out the documentation for installing [Homebrew on Linux](Homebrew-on-Linux.md).
 
-### Untar anywhere (unsupported)
-
-Technically, you can just extract (or `git clone`) Homebrew wherever you want. However, you shouldn't install outside the default, supported, best prefix. Many things will need to be built from source outside the default prefix. Building from source is slow, energy-inefficient, buggy and unsupported. The main reason Homebrew just works is **because** we use bottles (binary packages) and most of these require using the default prefix. If you decide to use another prefix: don't open any issues, even if you think they are unrelated to your prefix choice. They will be closed without response.
-
-**TL;DR: pick another prefix at your peril!**
-
-```sh
-mkdir homebrew && curl -L https://github.com/Homebrew/brew/tarball/main | tar xz --strip-components 1 -C homebrew
-```
-
-or:
-
-```sh
-git clone https://github.com/Homebrew/brew homebrew
-```
-
-then:
-
-```sh
-eval "$(homebrew/bin/brew shellenv)"
-brew update --force --quiet
-chmod -R go-w "$(brew --prefix)/share/zsh"
-```
-
-Make sure you avoid installing into:
-
-* Directories with names that contain spaces. Homebrew itself can handle spaces, but many build scripts cannot.
-* `/tmp` subdirectories because Homebrew gets upset.
-* `/sw` and `/opt/local` because build scripts get confused when Homebrew is there instead of Fink or MacPorts, respectively.
-
-### Multiple installations (unsupported)
-
-Create a Homebrew installation wherever you extract the tarball. Whichever `brew` command is called is where the packages will be installed. You can use this as you see fit, e.g. to have a system set of libs in the default prefix and tweaked formulae for development in `~/homebrew`.
-
 ## Post-installation steps
 
 When you install Homebrew, it prints some directions for updating your shell's config.

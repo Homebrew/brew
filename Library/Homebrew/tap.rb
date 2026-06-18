@@ -120,34 +120,110 @@ class Tap
     [tap, token.downcase]
   end
 
-  sig { returns(T::Set[Tap]) }
+  sig { returns(T::Array[String]) }
   def self.allowed_taps
     cache_key = :"allowed_taps_#{Homebrew::EnvConfig.allowed_taps.to_s.tr(" ", "_")}"
-    cache[cache_key] ||= begin
-      allowed_tap_list = Homebrew::EnvConfig.allowed_taps.to_s.split
-
-      Set.new(allowed_tap_list.filter_map do |tap|
-        Tap.fetch(tap)
-      rescue Tap::InvalidNameError
-        opoo "Invalid tap name in `$HOMEBREW_ALLOWED_TAPS`: #{tap}"
-        nil
-      end).freeze
-    end
+    cache[cache_key] ||= tap_list_references(Homebrew::EnvConfig.allowed_taps.to_s, "HOMEBREW_ALLOWED_TAPS")
   end
 
-  sig { returns(T::Set[Tap]) }
+  sig { returns(T::Array[String]) }
   def self.forbidden_taps
     cache_key = :"forbidden_taps_#{Homebrew::EnvConfig.forbidden_taps.to_s.tr(" ", "_")}"
-    cache[cache_key] ||= begin
-      forbidden_tap_list = Homebrew::EnvConfig.forbidden_taps.to_s.split
+    cache[cache_key] ||= tap_list_references(Homebrew::EnvConfig.forbidden_taps.to_s, "HOMEBREW_FORBIDDEN_TAPS")
+  end
 
-      Set.new(forbidden_tap_list.filter_map do |tap|
-        Tap.fetch(tap)
-      rescue Tap::InvalidNameError
-        opoo "Invalid tap name in `$HOMEBREW_FORBIDDEN_TAPS`: #{tap}"
-        nil
-      end).freeze
+  # Whether an allow/forbid/trust list reference is a remote URL or local path rather than a
+  # `user/repository` tap name (which can only match a tap on its default GitHub remote).
+  # A genuine remote reference is a URL (contains `://`), scp-like syntax (`[user@]host:path`,
+  # i.e. a non-empty path after a `:` before any `/`, the same way Git itself detects scp syntax)
+  # or a local path (starts with `/`, `.` or `~`). A bare `foo@bar` or `host:` is not one.
+  sig { params(reference: String).returns(T::Boolean) }
+  def self.remote_reference?(reference)
+    reference.match?(%r{\A[^/]+:.}) || reference.start_with?("/", ".", "~")
+  end
+
+  # Hosts where a `.git` suffix and trailing slashes are known not to change which repository a
+  # remote identifies, so we can safely strip them. We don't assume this for arbitrary hosts
+  # (including self-hosted GitLab and GitHub Enterprise) where `repo.git` and `repo` may differ.
+  NORMALIZE_REMOTE_HOSTS = %w[github.com gitlab.com].freeze
+
+  # An optional RFC 3986-ish `scheme://` (e.g. `https://`, `ssh://` or `git+https://`) followed by
+  # optional `user@` userinfo: the part of a remote URL that can precede the host.
+  REMOTE_SCHEME_USERINFO_REGEX = %r{(?:[a-z][a-z0-9+.-]*://)?(?:[^@/]+@)?}
+  # The leading `<scheme>://<user>@github.com/` of a GitHub URL or the SCP-style `<user>@github.com:`
+  # shorthand. The `:` form is only SCP syntax when there is no scheme; with a scheme a `:` starts a
+  # port rather than the path, so it must not be rewritten.
+  GITHUB_REMOTE_PREFIX_REGEX =
+    %r{\A(?:[a-z][a-z0-9+.-]*://(?:[^@/]+@)?github\.com/|(?:[^@/]+@)?github\.com:)}
+  # The host of a remote: the first `/`- or `:`-delimited segment after any scheme and userinfo.
+  REMOTE_HOST_REGEX = %r{\A#{REMOTE_SCHEME_USERINFO_REGEX.source}([^/:]+)}
+  GIT_REDIRECT_REMOTE_REGEX = /redirecting to (?<remote>\S+)/i
+  private_constant :GIT_REDIRECT_REMOTE_REGEX
+
+  # On GitHub the scheme and userinfo are insignificant (any of HTTPS, SSH SCP syntax, `ssh://` or
+  # `git://` identify the same repository), so those forms are canonicalised to HTTPS. For hosts in
+  # {NORMALIZE_REMOTE_HOSTS} a `.git` suffix and trailing slashes are also insignificant, so we
+  # strip them; we don't assume that for other hosts.
+  sig { params(remote: T.nilable(String)).returns(T.nilable(String)) }
+  def self.normalize_remote(remote)
+    return if remote.blank?
+
+    remote = remote.strip.downcase
+
+    # Canonicalise every GitHub remote form to `https://github.com/<owner>/<repo>` so SSH and
+    # HTTPS remotes for the same repository compare equal.
+    remote = remote.sub(GITHUB_REMOTE_PREFIX_REGEX, "https://github.com/")
+
+    # Only strip `.git`/trailing slashes for hosts where this is known to be safe.
+    host = remote[REMOTE_HOST_REGEX, 1]
+    return remote unless NORMALIZE_REMOTE_HOSTS.include?(host)
+
+    remote.sub(%r{/+\z}, "").delete_suffix(".git")
+  end
+
+  # Converts a remote URL to the canonical trust-list reference for the tap it identifies.
+  # A default-style GitHub remote canonicalises to the `owner/repo` name form (matching how
+  # {#reference} works for an installed tap); any other remote is stored as the normalised URL.
+  # Returns `nil` if the URL is blank or otherwise invalid.
+  sig { params(url: String).returns(T.nilable(String)) }
+  def self.remote_to_reference(url)
+    normalised = normalize_remote(url)
+    return if normalised.blank?
+
+    match = normalised.match(HOMEBREW_TAP_REPOSITORY_REGEX)
+    return normalised unless match
+
+    remote_repository = match[:remote_repository]
+    return normalised unless remote_repository
+
+    tap = fetch(remote_repository)
+    if same_remote?(normalised, tap.default_remote)
+      tap.name
+    else
+      normalised
     end
+  rescue InvalidNameError
+    normalised
+  end
+
+  sig { params(first: T.nilable(String), second: T.nilable(String)).returns(T::Boolean) }
+  def self.same_remote?(first, second)
+    first = normalize_remote(first)
+    first.present? && first == normalize_remote(second)
+  end
+
+  # Normalise `user/repository` entries in a tap allow/forbid list to canonical tap names,
+  # warning about invalid ones, while preserving remote URL or path entries verbatim.
+  sig { params(env_taps: String, env_var: String).returns(T::Array[String]) }
+  def self.tap_list_references(env_taps, env_var)
+    env_taps.split.filter_map do |reference|
+      next reference if remote_reference?(reference)
+
+      Tap.fetch(reference).name
+    rescue Tap::InvalidNameError
+      opoo "Invalid tap name in `$#{env_var}`: #{reference}"
+      nil
+    end.freeze
   end
 
   class << self
@@ -459,6 +535,69 @@ class Tap
     false
   end
 
+  sig { params(output: String, quiet: T::Boolean).void }
+  def update_remote_from_git_redirect!(output, quiet: false)
+    output.each_line do |line|
+      next unless (match = line.match(GIT_REDIRECT_REMOTE_REGEX))
+
+      apply_redirected_remote!(T.must(match[:remote]), quiet:)
+      break
+    end
+  end
+
+  sig { params(redirected_remote: String, quiet: T::Boolean).void }
+  def apply_redirected_remote!(redirected_remote, quiet: false)
+    old_name = name
+    old_remote = remote
+    return if old_remote.present? && self.class.same_remote?(old_remote, redirected_remote)
+
+    redirected_reference = self.class.remote_to_reference(redirected_remote)
+    if redirected_reference.present? && !self.class.remote_reference?(redirected_reference)
+      redirected_tap = self.class.fetch(redirected_reference)
+      if redirected_tap.name != name && !redirected_tap.installed?
+        old_path = path
+        redirected_tap.path.dirname.mkpath
+        FileUtils.mv(old_path, redirected_tap.path)
+        old_path.parent.rmdir_if_possible
+
+        @user = redirected_tap.user
+        @repository = redirected_tap.repository
+        @name = redirected_tap.name
+        @full_repository = redirected_tap.full_repository
+        @full_name = redirected_tap.full_name
+        @path = redirected_tap.path
+        @git_repository = GitRepository.new(@path)
+        clear_cache
+      end
+    end
+
+    safe_system "git", "-C", path, "remote", "set-url", "origin", redirected_remote
+    clear_cache
+    Tap.clear_cache
+
+    require "trust"
+    trust_invalidated = Homebrew::Trust.invalidate_tap_references!(old_name, remote: old_remote)
+
+    return if quiet
+
+    $stderr.ohai(
+      if old_name == name
+        "Redirected tap #{name} remote to #{redirected_remote}"
+      else
+        "Redirected tap #{old_name} to tap #{name}"
+      end,
+    )
+    $stderr.puts "#{trust_invalidated ? "Untrusted" : "Not trusted"} tap: #{old_name}"
+  end
+
+  sig { params(args: T::Array[T.any(String, Pathname)], chdir: T.nilable(Pathname)).returns(T.untyped) }
+  def git_command!(args, chdir: nil)
+    require "system_command"
+
+    SystemCommand.run!("git", args:, chdir:, print_stderr: true)
+  end
+  private :git_command!
+
   # Install this {Tap}.
   #
   # @param clone_target If passed, it will be used as the clone remote.
@@ -498,16 +637,18 @@ class Tap
       raise TapAlreadyTappedError, name unless shallow?
     end
 
-    if !allowed_by_env? || forbidden_by_env?
+    tap_allowed = allowed_by_env?(remote: requested_remote)
+    tap_forbidden = forbidden_by_env?(remote: requested_remote)
+    if !tap_allowed || tap_forbidden
       owner = Homebrew::EnvConfig.forbidden_owner
       owner_contact = if (contact = Homebrew::EnvConfig.forbidden_owner_contact.presence)
         "\n#{contact}"
       end
 
       error_message = "The installation of the #{full_name} was requested but #{owner}\n"
-      error_message << "has not allowed this tap in `$HOMEBREW_ALLOWED_TAPS`" unless allowed_by_env?
-      error_message << " and\n" if !allowed_by_env? && forbidden_by_env?
-      error_message << "has forbidden this tap in `$HOMEBREW_FORBIDDEN_TAPS`" if forbidden_by_env?
+      error_message << "has not allowed this tap in `$HOMEBREW_ALLOWED_TAPS`" unless tap_allowed
+      error_message << " and\n" if !tap_allowed && tap_forbidden
+      error_message << "has forbidden this tap in `$HOMEBREW_FORBIDDEN_TAPS`" if tap_forbidden
       error_message << ".#{owner_contact}"
 
       odie error_message
@@ -531,7 +672,8 @@ class Tap
       # Git throws an error when attempting to unshallow a full clone
       args << "--unshallow" if shallow?
       args << "-q" if quiet
-      path.cd { safe_system "git", *args }
+      result = git_command!(args, chdir: path)
+      update_remote_from_git_redirect!(result.stderr, quiet:)
       return
     elsif (core_tap? || core_cask_tap?) && !Homebrew::EnvConfig.no_install_from_api? && !force &&
           worktree_source_tap_path.blank?
@@ -543,7 +685,7 @@ class Tap
     Tap.clear_cache
 
     $stderr.ohai "Tapping #{name}" unless quiet
-    args =  %W[clone #{requested_remote} #{path}]
+    args = %W[clone #{requested_remote} #{path}]
 
     # Override possible user configs like:
     #   git config --global clone.defaultRemoteName notorigin
@@ -563,7 +705,8 @@ class Tap
         worktree_args += ["--detach", path, "HEAD"]
         safe_system "git", *worktree_args
       else
-        safe_system "git", *args
+        result = git_command!(args)
+        update_remote_from_git_redirect!(result.stderr, quiet:)
       end
 
       if verify && !Homebrew::EnvConfig.developer? && !Readall.valid_tap?(self, aliases: true)
@@ -662,7 +805,8 @@ class Tap
     args << "--quiet" if quiet
     args << "origin"
     args << "+refs/heads/*:refs/remotes/origin/*"
-    safe_system "git", "-C", path, *args
+    result = git_command!(args, chdir: path)
+    update_remote_from_git_redirect!(result.stderr, quiet:)
     git_repository.set_head_origin_auto
 
     current_upstream_head ||= T.must(git_repository.origin_branch_name)
@@ -732,7 +876,35 @@ class Tap
   def custom_remote?
     return true unless (remote = self.remote)
 
-    !T.must(remote.casecmp(default_remote)).zero?
+    !self.class.same_remote?(remote, default_remote)
+  end
+
+  # Unlike {#custom_remote?} this is false when no remote is set, so a remote-less
+  # local tap is still matched by its {#name} rather than requiring a URL.
+  sig { returns(T::Boolean) }
+  def uses_custom_remote?
+    remote.present? && custom_remote?
+  end
+
+  # The canonical allow/forbid/trust list reference for this {Tap}.
+  sig { returns(String) }
+  def reference
+    remote = self.remote
+    return name if remote.nil? || !custom_remote?
+
+    remote
+  end
+
+  # A `user/repository` reference matches only a tap on its default GitHub remote; a tap with a
+  # custom remote must be referenced by URL. The `remote` keyword matches a not-yet-installed remote.
+  sig { params(reference: String, remote: T.nilable(String)).returns(T::Boolean) }
+  def matches_reference?(reference, remote: self.remote)
+    if self.class.remote_reference?(reference)
+      self.class.same_remote?(reference, remote)
+    else
+      uses_custom_remote = remote.present? && !self.class.same_remote?(remote, default_remote)
+      !uses_custom_remote && name == reference.downcase
+    end
   end
 
   # Path to the directory of all {Formula} files for this {Tap}.
@@ -980,6 +1152,7 @@ class Tap
       "path"          => path.to_s,
       "installed"     => installed?,
       "official"      => official?,
+      "trusted"       => Homebrew::Trust.trusted_tap?(self),
       "formula_names" => formula_names,
       "cask_tokens"   => cask_tokens,
     }
@@ -1062,7 +1235,7 @@ class Tap
         # Only include renames:
         # + `homebrew/cask/water-buffalo`
         # - `homebrew/cask`
-        next if new_name.count("/") != 2
+        next unless Utils.full_name?(new_name)
 
         hash[new_name] ||= []
         hash[new_name] << old_name
@@ -1198,7 +1371,7 @@ class Tap
 
   sig { returns(T::Array[Tap]) }
   def self.core_taps
-    [CoreTap.instance].freeze
+    [CoreTap.instance, CoreCaskTap.instance].freeze
   end
 
   # Enumerate all available {Tap}s.
@@ -1254,18 +1427,30 @@ class Tap
     end
   end
 
-  sig { returns(T::Boolean) }
-  def allowed_by_env?
-    @allowed_by_env ||= T.let(begin
-      allowed_taps = self.class.allowed_taps
+  sig { params(remote: T.nilable(String)).returns(T::Boolean) }
+  def allowed_by_env?(remote: self.remote)
+    allowed_taps = self.class.allowed_taps
 
-      official? || allowed_taps.blank? || allowed_taps.include?(self)
-    end, T.nilable(T::Boolean))
+    implicitly_trusted?(remote:) || allowed_taps.blank? ||
+      allowed_taps.any? { |reference| matches_reference?(reference, remote:) }
   end
 
-  sig { returns(T::Boolean) }
-  def forbidden_by_env?
-    @forbidden_by_env ||= T.let(self.class.forbidden_taps.include?(self), T.nilable(T::Boolean))
+  sig { params(remote: T.nilable(String)).returns(T::Boolean) }
+  def forbidden_by_env?(remote: self.remote)
+    self.class.forbidden_taps.any? { |reference| matches_reference?(reference, remote:) }
+  end
+
+  # Whether to implicitly allow/trust this tap as an official one without it appearing in an
+  # allow/trust list. Only when its formulae come from the API or it is a Git checkout of an
+  # official remote, so an official-named tap on an untrusted custom remote is not implicitly trusted.
+  sig { overridable.params(remote: T.nilable(String)).returns(T::Boolean) }
+  def implicitly_trusted?(remote: self.remote)
+    official? && canonical_remote?(remote)
+  end
+
+  sig { overridable.params(remote: T.nilable(String)).returns(T::Boolean) }
+  def canonical_remote?(remote = self.remote)
+    remote.blank? || self.class.same_remote?(remote, default_remote)
   end
 
   private
@@ -1300,5 +1485,3 @@ require "tap/abstract_core_tap"
 require "tap/core_tap"
 require "tap/core_cask_tap"
 require "tap/tap_config"
-
-require "extend/os/tap"

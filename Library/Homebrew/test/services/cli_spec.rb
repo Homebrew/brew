@@ -544,7 +544,7 @@ RSpec.describe Homebrew::Services::Cli do
           nil,
           enable: true,
         )
-      end.to output(/name must be run as non-root to start at user login!/).to_stderr
+      end.to output(/`name` must be run as non-root to start at user login!/).to_stderr
     end
 
     it "does not warn root for login when given `--sudo-service-user`" do
@@ -552,6 +552,7 @@ RSpec.describe Homebrew::Services::Cli do
       expect(Homebrew::Services::System).to receive(:systemctl?).once.and_return(false)
       expect(Homebrew::Services::System).to receive(:root?).twice.and_return(true)
       allow(services_cli).to receive(:sudo_service_user).and_return("_serviced")
+      allow(Homebrew::Services::System).to receive(:user_exists?).with("_serviced").and_return(true)
       expect do
         services_cli.service_load(
           instance_double(
@@ -564,6 +565,46 @@ RSpec.describe Homebrew::Services::Cli do
           enable: true,
         )
       end.not_to output(/must be run as non-root to start at user login!/).to_stderr
+    end
+
+    it "errors then exits when given a `--sudo-service-user` which does not exist" do
+      allow(services_cli).to receive(:sudo_service_user).and_return("not_a_real_user")
+      expect(Homebrew::Services::System).to receive(:user_exists?).with("not_a_real_user").and_return(false)
+      expect do
+        services_cli.service_load(
+          instance_double(
+            Homebrew::Services::FormulaWrapper,
+            name:             "name",
+            service_name:     "service.name",
+            service_startup?: false,
+          ),
+          nil,
+          enable: true,
+        )
+      end.to output(/Error: Cannot start `name` as `not_a_real_user` is not a user!/).to_stderr
+                                                                                     .and raise_error(SystemExit)
+    end
+
+    it "continues loading when given a `--sudo-service-user` which exists" do
+      expect(Homebrew::Services::System).to receive(:launchctl?).once.and_return(false)
+      expect(Homebrew::Services::System).to receive(:systemctl?).once.and_return(false)
+      expect(Homebrew::Services::System).to receive(:root?).twice.and_return(true)
+      allow(services_cli).to receive(:sudo_service_user).and_return("_serviced")
+      expect(Homebrew::Services::System).to receive(:user_exists?).with("_serviced").and_return(true)
+      expect do
+        services_cli.service_load(
+          instance_double(
+            Homebrew::Services::FormulaWrapper,
+            name:             "name",
+            service_name:     "service.name",
+            service_startup?: false,
+            service_file:     instance_double(Pathname, exist?: false),
+            path_dirs:        [],
+          ),
+          nil,
+          enable: true,
+        )
+      end.to output("==> Successfully started `name` (label: service.name)\n").to_stdout
     end
 
     it "triggers launchctl" do

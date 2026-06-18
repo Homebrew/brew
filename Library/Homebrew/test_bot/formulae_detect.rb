@@ -229,14 +229,7 @@ module Homebrew
         Homebrew.with_no_api_env do
           Formulary.factory(formula_name).full_name
         end
-      rescue TapFormulaUnavailableError => e
-        raise if e.tap.installed?
-
-        test "brew", "tap", e.tap.name
-        retry unless steps.fetch(-1).failed?
-        onoe e
-        puts e.backtrace if args.debug?
-      rescue FormulaUnavailableError, TapFormulaAmbiguityError => e
+      rescue FormulaUnavailableError, TapFormulaUnavailableError, TapFormulaAmbiguityError => e
         onoe e
         puts e.backtrace if args.debug?
       end

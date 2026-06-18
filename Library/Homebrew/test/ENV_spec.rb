@@ -186,6 +186,43 @@ RSpec.describe "ENV" do
         expect(subject).not_to include("OTHER_TOKEN")
       end
     end
+
+    describe "#clear_sensitive_environment_for_eval!" do
+      it "defers HOMEBREW_ secrets to a placeholder that expands to the real value" do
+        subject["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+
+        deferred = subject.clear_sensitive_environment_for_eval! { subject["HOMEBREW_PRIVATE_TOKEN"] }
+
+        expect(deferred).not_to eq("glpat-secret")
+        expect(deferred).not_to be_empty
+        expect(subject.expand_deferred_environment("PRIVATE-TOKEN: #{deferred}")).to eq("PRIVATE-TOKEN: glpat-secret")
+      end
+
+      it "never expands a non-HOMEBREW_ secret back to its real value" do
+        subject["SECRET_TOKEN"] = "password"
+        deferred = subject.clear_sensitive_environment_for_eval! { subject["SECRET_TOKEN"] }
+        expect(subject.expand_deferred_environment("X: #{deferred}")).not_to include("password")
+      end
+
+      it "keeps HOMEBREW_GITHUB_API_TOKEN readable during eval" do
+        subject["HOMEBREW_GITHUB_API_TOKEN"] = "gh-token"
+        expect(subject.clear_sensitive_environment_for_eval! do
+          subject["HOMEBREW_GITHUB_API_TOKEN"]
+        end).to eq("gh-token")
+      end
+
+      it "restores the environment after yielding" do
+        subject["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+        subject.clear_sensitive_environment_for_eval! { nil }
+        expect(subject["HOMEBREW_PRIVATE_TOKEN"]).to eq("glpat-secret")
+      end
+    end
+
+    describe "#expand_deferred_environment" do
+      it "leaves values without a deferred placeholder unchanged" do
+        expect(subject.expand_deferred_environment("PRIVATE-TOKEN: plain")).to eq("PRIVATE-TOKEN: plain")
+      end
+    end
   end
 
   describe Stdenv do

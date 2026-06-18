@@ -11,7 +11,7 @@ module Homebrew
 
       cmd_args do
         usage_banner <<~EOS
-          `exec`, `x` [`--formulae=`<formulae>] [`--`] <command> [<args> ...]
+          `exec`, `x` [`--formulae=`<formulae>] [`--sandbox=`<path>] [`--deny-network`] [`--`] <command> [<args> ...]
 
           Run <command> in an environment populated by Homebrew formulae.
 
@@ -32,6 +32,12 @@ module Homebrew
         comma_array "--formulae",
                     description: "Comma-separated formulae to install and add to `PATH` before running " \
                                  "<command>."
+        flag "--sandbox=",
+             description: "Run <command> in Homebrew's sandbox, allowing writes to <path> and Homebrew's " \
+                          "temporary and cache directories."
+        switch "--deny-network",
+               description: "Deny network access from inside the sandbox.",
+               depends_on:  "--sandbox="
 
         named_args min: 1
       end

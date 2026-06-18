@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 module Utils
+  # @api internal
   sig {
     params(binary: T.any(String, Pathname), library: T.any(String, Pathname)).returns(T::Boolean)
   }

@@ -15,6 +15,7 @@ RSpec.describe InstalledDependents do
 
   def stub_formula(name, version = "1.0", &block)
     f = formula(name) do
+      T.bind(self, T.class_of(Formula))
       url "#{name}-#{version}"
 
       instance_eval(&block) if block

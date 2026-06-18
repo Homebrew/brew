@@ -47,7 +47,9 @@ module Homebrew
       HOMEBREW_ALLOWED_TAPS:                     {
         description: "A space-separated list of taps. Homebrew will refuse to install a " \
                      "formula unless it and all of its dependencies are in an official tap " \
-                     "or in a tap on this list.",
+                     "or in a tap on this list. Each entry is a `user/repository` name " \
+                     "(which matches only taps using the default GitHub remote) or a remote " \
+                     "URL (required to match taps with a custom remote).",
       },
       HOMEBREW_API_AUTO_UPDATE_SECS:             {
         description: "Check Homebrew's API for new formulae or cask data every " \
@@ -91,6 +93,7 @@ module Homebrew
         boolean:     :set,
         disabled_by: :HOMEBREW_NO_ASK,
         default:     true,
+        replacement: "the default behaviour",
         odeprecated: true,
       },
       HOMEBREW_AUTO_UPDATE_SECS:                 {
@@ -139,6 +142,8 @@ module Homebrew
         boolean:     true,
         disabled_by: :HOMEBREW_BUNDLE_NO_DESCRIBE,
         default:     true,
+        replacement: "the default behaviour",
+        odeprecated: true,
       },
       HOMEBREW_BUNDLE_DUMP_DESCRIBE:             {
         description: "If set, add a description comment above each line in `brew bundle dump` " \
@@ -179,10 +184,12 @@ module Homebrew
         boolean:     true,
         disabled_by: :HOMEBREW_BUNDLE_SECRETS,
         default:     true,
+        replacement: "the default behaviour",
+        odeprecated: true,
       },
       HOMEBREW_BUNDLE_SECRETS:                   {
-        description: "If set, do not enable secret scrubbing from `$HOMEBREW_BUNDLE_NO_SECRETS` or the " \
-                     "default. This does not disable an explicit `--no-secrets`.",
+        description: "If set, do not enable the default secret scrubbing. " \
+                     "This does not disable an explicit `--no-secrets`.",
         boolean:     true,
       },
       HOMEBREW_BUNDLE_USER_CACHE:                {
@@ -347,7 +354,10 @@ module Homebrew
       },
       HOMEBREW_FORBIDDEN_TAPS:                   {
         description: "A space-separated list of taps. Homebrew will refuse to install a " \
-                     "formula if it or any of its dependencies is in a tap on this list.",
+                     "formula if it or any of its dependencies is in a tap on this list. " \
+                     "Each entry is a `user/repository` name (which matches only taps using " \
+                     "the default GitHub remote) or a remote URL (required to match taps " \
+                     "with a custom remote).",
       },
       HOMEBREW_FORBID_CASKS:                     {
         description: "If set, Homebrew will refuse to install any casks.",
@@ -697,6 +707,8 @@ module Homebrew
         boolean:     :set,
         disabled_by: :HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS,
         default:     true,
+        replacement: "the default behaviour",
+        odeprecated: true,
       },
       HOMEBREW_UPGRADE_GREEDY:                   {
         description: "If set, pass `--greedy` to all cask upgrade commands.",
@@ -705,6 +717,12 @@ module Homebrew
       HOMEBREW_UPGRADE_GREEDY_CASKS:             {
         description: "A space-separated list of casks. Homebrew will act as " \
                      "if `--greedy` was passed when upgrading any cask on this list.",
+      },
+      HOMEBREW_USE_INTERNAL_API:                 {
+        description: "If set, fetch formula and cask data from Homebrew's internal API. This is now the default.",
+        boolean:     :set,
+        replacement: "the default behaviour",
+        odeprecated: true,
       },
       HOMEBREW_VERBOSE:                          {
         description: "If set, always assume `--verbose` when running commands.",
@@ -811,7 +829,9 @@ module Homebrew
       env_value = ENV.fetch(env, nil)
       return if env_value.nil?
 
-      odeprecated_env(env, hash) if env_value.present?
+      if env_value.present? && (hash[:default] != true || FALSY_VALUES.exclude?(env_value.downcase))
+        odeprecated_env(env, hash)
+      end
       if (replacement = hash[:replacement]).is_a?(Symbol)
         ENV[replacement.to_s] ||= env_value
       end
@@ -898,8 +918,11 @@ module Homebrew
         return
       end
 
-      ENV["HOMEBREW_BUNDLE_JOBS"].presence ||
-        ENVS.fetch(:HOMEBREW_BUNDLE_JOBS).fetch(:default).to_s
+      default = ENVS.fetch(:HOMEBREW_BUNDLE_JOBS).fetch(:default).to_s
+      jobs = ENV["HOMEBREW_BUNDLE_JOBS"].presence
+      opoo "HOMEBREW_BUNDLE_JOBS=#{default} is now the default and no longer needs to be set." if jobs == default
+
+      jobs || default
     end
 
     sig { returns(T::Boolean) }

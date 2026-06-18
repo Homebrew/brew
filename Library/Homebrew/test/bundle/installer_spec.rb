@@ -5,6 +5,7 @@ require "bundle"
 require "bundle/dsl"
 require "bundle/installer"
 require "bundle/parallel_installer"
+require "trust"
 
 RSpec.describe Homebrew::Bundle::Installer do
   let(:formula_entry) { Homebrew::Bundle::Dsl::Entry.new(:brew, "mysql") }
@@ -77,6 +78,61 @@ RSpec.describe Homebrew::Bundle::Installer do
     expect(Homebrew::Bundle).not_to receive(:brew).with("fetch", any_args)
 
     described_class.install!([tap_entry, tapped_formula_entry], quiet: true)
+  end
+
+  it "trusts `trusted: true` formulae before fetching them" do
+    trusted_formula_entry = Homebrew::Bundle::Dsl::Entry.new(:brew, "thirdparty/tap/bar", { trusted: true })
+
+    allow(Homebrew::Bundle::Tap).to receive(:installed_taps).and_return(["thirdparty/tap"])
+
+    expect(Homebrew::Trust).to receive(:trust!).with(:formula, "thirdparty/tap/bar").ordered.and_return(true)
+    expect(Homebrew::Bundle).to receive(:brew)
+      .with("fetch", "thirdparty/tap/bar", verbose: false)
+      .ordered
+      .and_return(true)
+
+    described_class.install!([trusted_formula_entry], quiet: true)
+  end
+
+  it "trusts `trusted: true` casks before fetching them" do
+    options = { args: {}, full_name: "thirdparty/tap/baz", trusted: true }
+    trusted_cask_entry = Homebrew::Bundle::Dsl::Entry.new(:cask, "baz", options)
+
+    allow(Homebrew::Bundle::Tap).to receive(:installed_taps).and_return(["thirdparty/tap"])
+
+    expect(Homebrew::Trust).to receive(:trust!).with(:cask, "thirdparty/tap/baz").ordered.and_return(true)
+    expect(Homebrew::Bundle).to receive(:brew)
+      .with("fetch", "thirdparty/tap/baz", verbose: false)
+      .ordered
+      .and_return(true)
+
+    described_class.install!([trusted_cask_entry], quiet: true)
+  end
+
+  it "trusts `trusted: true` taps by name" do
+    tap_entry = Homebrew::Bundle::Dsl::Entry.new(:tap, "thirdparty/tap", { trusted: true })
+
+    expect(Homebrew::Trust).to receive(:trust!).with(:tap, "thirdparty/tap").and_return(true)
+
+    described_class.install!([tap_entry], quiet: true)
+  end
+
+  it "trusts `trusted: true` taps with a clone target by their remote reference" do
+    tap_entry = Homebrew::Bundle::Dsl::Entry.new(
+      :tap, "thirdparty/custom", { clone_target: "https://github.com/thirdparty/homebrew-custom", trusted: true }
+    )
+
+    expect(Homebrew::Trust).to receive(:trust!).with(:tap, "thirdparty/custom").and_return(true)
+
+    described_class.install!([tap_entry], quiet: true)
+  end
+
+  it "does not trust unqualified `trusted: true` names" do
+    trusted_formula_entry = Homebrew::Bundle::Dsl::Entry.new(:brew, "mysql", { trusted: true })
+
+    expect(Homebrew::Trust).not_to receive(:trust!)
+
+    described_class.install!([trusted_formula_entry], quiet: true)
   end
 
   it "skips fetching formulae from fully qualified untapped taps" do
@@ -231,10 +287,11 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with("alpha").and_return(Set["shared-build-dep"])
       allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with("beta").and_return(Set["shared-build-dep"])
 
+      entries = [alpha_entry, beta_entry]
       dependency_map = Homebrew::Bundle::ParallelInstaller.new(
-        [alpha_entry, beta_entry],
+        entries,
         jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
-      ).send(:build_dependency_map)
+      ).send(:build_dependency_map, entries)
 
       expect(dependency_map.fetch("beta")).to eq(Set["alpha"])
     end
@@ -273,6 +330,54 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(success).to eq(2)
       expect(failure).to eq(0)
       expect(install_order).to eq(["homebrew/foo", "bar"])
+    end
+
+    it "reads fully qualified formulae after installing their Brewfile taps" do
+      tap_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name:    "thirdparty/rootformula",
+        options: {},
+        verb:    "Tapping",
+        cls:     Homebrew::Bundle::Tap,
+      )
+      tapped_formula_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name:    "thirdparty/rootformula/foo",
+        options: {},
+        verb:    "Installing",
+        cls:     Homebrew::Bundle::Brew,
+      )
+      install_order = []
+      event_order = []
+
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names) do |name|
+        event_order << :formula_dep_names
+        expect(name).to eq("thirdparty/rootformula/foo")
+        []
+      end
+      allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names) do |name|
+        event_order << :recursive_dep_names
+        expect(name).to eq("thirdparty/rootformula/foo")
+        Set.new
+      end
+      allow(Homebrew::Bundle::Tap).to receive(:install!) do |name, **_options|
+        install_order << name
+        event_order << :tap_install
+        true
+      end
+      allow(Homebrew::Bundle::Brew).to receive(:install!) do |name, **_options|
+        install_order << name
+        event_order << :formula_install
+        true
+      end
+
+      success, failure = Homebrew::Bundle::ParallelInstaller.new(
+        [tap_entry, tapped_formula_entry],
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      ).run!
+
+      expect(success).to eq(2)
+      expect(failure).to eq(0)
+      expect(install_order).to eq(["thirdparty/rootformula", "thirdparty/rootformula/foo"])
+      expect(event_order).to eq([:tap_install, :formula_dep_names, :recursive_dep_names, :formula_install])
     end
 
     it "installs unqualified casks after Brewfile taps" do

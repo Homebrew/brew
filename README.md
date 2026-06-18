@@ -64,7 +64,7 @@ First, please read our [Contribution Guide](CONTRIBUTING.md) and [Code of Conduc
 A good starting point for contributing is:
 
 - `brew tap --force homebrew/core` or `brew tap --force homebrew/cask` (depending on whether you'd rather work on formulae or casks)
-- perform a strict audit on a package you use e.g. `brew audit --strict ffempg` for FFmpeg
+- perform a strict audit on a package you use e.g. `brew audit --strict ffmpeg` for FFmpeg
 - if no warnings, run `brew audit --strict` to run on all packages and pick one to fix
 - read through the warnings and fix them until `brew audit --strict <package>` shows no results
 - [submit a pull request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request) with your fixes
@@ -112,6 +112,6 @@ Secure password storage and syncing is provided by [1Password for Teams](https:/
 [![DNSimple](https://cdn.dnsimple.com/assets/resolving-with-us/logo-light.png)](https://dnsimple.com/resolving/homebrew#gh-light-mode-only)
 [![DNSimple](https://cdn.dnsimple.com/assets/resolving-with-us/logo-dark.png)](https://dnsimple.com/resolving/homebrew#gh-dark-mode-only)
 
-Homebrew is generously supported by [Joshua Baer](https://github.com/joshuabaer), [Randy Reddig](https://github.com/ydnar), [Codecademy](https://github.com/Codecademy), [b.well](https://github.com/icanbwell), [Workbrew](https://github.com/Workbrew), [GitHub](https://github.com/github), [Custom Ink](https://github.com/customink), [SAP](https://github.com/SAP), [ZachryWilsn](https://github.com/ZachryWilsn), [mikadelbert](https://github.com/mikadelbert) and many other users and organisations via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
+Homebrew is generously supported by [Joshua Baer](https://github.com/joshuabaer), [Randy Reddig](https://github.com/ydnar), [Codecademy](https://github.com/Codecademy), [b.well](https://github.com/icanbwell), [Workbrew](https://github.com/Workbrew), [GitHub](https://github.com/github), [Custom Ink](https://github.com/customink), [Naveen Nathan](https://github.com/nnathan), [SAP](https://github.com/SAP), [mikadelbert](https://github.com/mikadelbert) and many other users and organisations via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
 
 [![GitHub](https://github.com/github.png?size=64)](https://github.com/github)

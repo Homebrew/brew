@@ -44,11 +44,16 @@ module Homebrew
         /\ANvidia\.PhysX\z/i,
       ].freeze, T::Array[Regexp])
 
-      PACKAGE_TYPE = :winget
-      PACKAGE_TYPE_NAME = "WinGet Package"
-      BANNER_NAME = "WinGet packages"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :winget
+
+        sig { override.returns(String) }
+        def check_label = "WinGet Package"
+
+        sig { override.returns(String) }
+        def banner_name = "WinGet packages"
+
         sig { override.params(description: String).returns(String) }
         def switch_description(description)
           "#{super} Note: WSL only."

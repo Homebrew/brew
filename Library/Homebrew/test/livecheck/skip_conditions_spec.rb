@@ -10,6 +10,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
   let(:formulae) do
     {
       basic:               formula("test") do
+        T.bind(self, T.class_of(Formula))
         desc "Test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
@@ -21,38 +22,45 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         end
       end,
       deprecated:          formula("test_deprecated") do
+        T.bind(self, T.class_of(Formula))
         desc "Deprecated test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
         deprecate! date: "2020-06-25", because: :unmaintained
       end,
       disabled:            formula("test_disabled") do
+        T.bind(self, T.class_of(Formula))
         desc "Disabled test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
         disable! date: "2020-06-25", because: :unmaintained
       end,
       head_only:           formula("test_head_only") do
+        T.bind(self, T.class_of(Formula))
         desc "HEAD-only test formula"
         homepage "https://brew.sh"
         head "https://github.com/Homebrew/brew.git", branch: "main"
       end,
       gist:                formula("test_gist") do
+        T.bind(self, T.class_of(Formula))
         desc "Gist test formula"
         homepage "https://brew.sh"
         url "https://gist.github.com/Homebrew/0000000000"
       end,
       google_code_archive: formula("test_google_code_archive") do
+        T.bind(self, T.class_of(Formula))
         desc "Google Code Archive test formula"
         homepage "https://brew.sh"
         url "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/brew/brew-1.0.0.tar.gz"
       end,
       internet_archive:    formula("test_internet_archive") do
+        T.bind(self, T.class_of(Formula))
         desc "Internet Archive test formula"
         homepage "https://brew.sh"
         url "https://web.archive.org/web/20200101000000/https://brew.sh/test-0.0.1.tgz"
       end,
       skip:                formula("test_skip") do
+        T.bind(self, T.class_of(Formula))
         desc "Skipped test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
@@ -62,6 +70,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         end
       end,
       skip_with_message:   formula("test_skip_with_message") do
+        T.bind(self, T.class_of(Formula))
         desc "Skipped test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
@@ -71,6 +80,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         end
       end,
       versioned:           formula("test@0.0.1") do
+        T.bind(self, T.class_of(Formula))
         desc "Versioned test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"

@@ -138,14 +138,7 @@ module Homebrew
           end
 
           if args.missing?
-            deps.reject! do |dep|
-              case dep
-              when Formula
-                dep.any_version_installed?
-              when Cask::Cask
-                dep.installed?
-              end
-            end
+            deps.reject!(&:any_version_installed?)
             ignores.delete(:satisfied?)
           end
 

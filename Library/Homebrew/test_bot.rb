@@ -110,6 +110,7 @@ module Homebrew
         ENV["HOMEBREW_LOGS"] = logs
         FileUtils.mkdir_p home
         FileUtils.mkdir_p ENV.fetch("HOMEBREW_USER_CONFIG_HOME")
+        FileUtils.chmod 0700, ENV.fetch("HOMEBREW_USER_CONFIG_HOME")
         FileUtils.mkdir_p logs
         FileUtils.cp gitconfig, home if File.exist?(gitconfig)
         FileUtils.cp trust_file, ENV.fetch("HOMEBREW_USER_CONFIG_HOME") if trust_file.exist?

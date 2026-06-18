@@ -6,6 +6,75 @@ require "sandbox"
 RSpec.describe Sandbox do
   subject(:sandbox) { described_class.new }
 
+  describe "::run_command" do
+    let(:command_sandbox) { instance_double(described_class) }
+    let(:writable_path) { mktmpdir }
+
+    before do
+      allow(described_class).to receive_messages(
+        ensure_sandbox_installed!: nil,
+        available?:                true,
+        new:                       command_sandbox,
+      )
+      allow(command_sandbox).to receive_messages(
+        allow_write_temp_and_cache: nil,
+        allow_write_path:           nil,
+        deny_read_home:             nil,
+        deny_all_network:           nil,
+        run:                        nil,
+      )
+    end
+
+    it "runs a command with the requested writable path" do
+      expect(command_sandbox).to receive(:allow_write_temp_and_cache).ordered
+      expect(command_sandbox).to receive(:allow_write_path).with(writable_path.realpath).ordered
+      expect(command_sandbox).to receive(:deny_read_home).ordered
+      expect(command_sandbox).not_to receive(:deny_all_network)
+      expect(command_sandbox).to receive(:run).with(
+        "/bin/sh",
+        "-c",
+        "cd \"$1\" && shift && exec \"$@\"",
+        "brew-sandbox-exec",
+        writable_path.realpath,
+        "make",
+        "test",
+      ).ordered
+
+      described_class.run_command("make", "test", writable_path:)
+    end
+
+    it "can deny network access" do
+      expect(command_sandbox).to receive(:deny_all_network)
+
+      described_class.run_command("make", writable_path:, deny_network: true)
+    end
+
+    it "does not run unsandboxed when sandboxing is unavailable" do
+      allow(described_class).to receive_messages(available?: false, failure_reason: "sandbox unavailable")
+      expect(command_sandbox).not_to receive(:run)
+
+      expect { described_class.run_command("make", writable_path:) }
+        .to raise_error(RuntimeError, "sandbox unavailable")
+    end
+
+    it "raises a usage error when the writable path does not exist" do
+      missing_path = writable_path/"missing"
+      expect(command_sandbox).not_to receive(:run)
+
+      expect { described_class.run_command("make", writable_path: missing_path) }
+        .to raise_error(UsageError, "Invalid usage: `#{missing_path}` is not a writable directory.")
+    end
+
+    it "raises a usage error when the writable path is not a directory" do
+      file_path = writable_path/"file"
+      FileUtils.touch file_path
+      expect(command_sandbox).not_to receive(:run)
+
+      expect { described_class.run_command("make", writable_path: file_path) }
+        .to raise_error(UsageError, "Invalid usage: `#{file_path}` is not a writable directory.")
+    end
+  end
+
   describe "::failure_reason" do
     let(:sandbox_class) { Class.new(described_class) }
 
@@ -107,11 +176,10 @@ RSpec.describe Sandbox do
   end
 
   describe "#path_filter" do
-    ["'", '"', "(", ")", "\n", "\\"].each do |char|
-      it "fails if the path contains #{char}" do
-        expect do
-          sandbox.path_filter("foo#{char}bar", :subpath)
-        end.to raise_error(ArgumentError)
+    # The OS-specific renderer quotes paths safely, so no character is rejected.
+    ["'", '"', "(", ")", "\\", " ", ";", "#", "\n"].each do |char|
+      it "allows paths containing #{char.inspect}" do
+        expect { sandbox.path_filter(mktmpdir/"foo#{char}bar", :subpath) }.not_to raise_error
       end
     end
   end
@@ -189,7 +257,10 @@ RSpec.describe Sandbox do
     ].each do |constant, directory|
       it "skips the deny when #{constant} is inside the real home" do
         stub_const(constant.to_s, home/directory)
+        # The constant under test is chosen dynamically per example.
+        # rubocop:disable Sorbet/ConstantsFromStrings
         Object.const_get(constant).mkpath
+        # rubocop:enable Sorbet/ConstantsFromStrings
 
         sandbox.deny_read_home
 
@@ -225,24 +296,131 @@ RSpec.describe Sandbox do
       expect(sandbox.send(:profile).rules).to be_empty
     end
 
-    it "denies sensitive home paths when the real home cannot be denied" do
-      [".ssh", "Documents", "Library/Keychains", "Library/Mobile Documents", "Dropbox"].each do |directory|
-        (home/directory).mkpath
+    it "denies known sensitive home paths when Homebrew needs home access" do
+      cache = home/"Library/Caches/Homebrew"
+      stub_const("HOMEBREW_CACHE", cache)
+      allowed_dirs = [
+        cache,
+        home/"Library/Preferences",
+        home/".config",
+        home/".config/homebrew",
+        home/"src",
+      ]
+      sensitive_dirs = [
+        home/".claude",
+        home/".config/gcloud",
+        home/".config/gh",
+        home/".config/fish",
+        home/".config/huggingface",
+        home/".config/pip",
+        home/".config/pypoetry",
+        home/".config/rclone",
+        home/".kiro",
+        home/".pip",
+        home/".ssh",
+        home/"Documents",
+      ]
+      sensitive_files = [
+        home/".bash_login",
+        home/".bash_logout",
+        home/".bash_profile",
+        home/".bashrc",
+        home/".bash_history",
+        home/".cache/huggingface/token",
+        home/".claude.json",
+        home/".config/composer/auth.json",
+        home/".config/containers/auth.json",
+        home/".config/sops/age/keys.txt",
+        home/".cargo/credentials.toml",
+        home/".gem/credentials",
+        home/".git-credentials",
+        home/".mysql_history",
+        home/".netrc",
+        home/".npmrc",
+        home/".profile",
+        home/".psql_history",
+        home/".pypirc",
+        home/".python_history",
+        home/".terraform.d/credentials.tfrc.json",
+        home/".zlogin",
+        home/".zlogout",
+        home/".zprofile",
+        home/".zshenv",
+        home/".zshrc",
+        home/".zsh_history",
+      ]
+
+      [*allowed_dirs, *sensitive_dirs].each(&:mkpath)
+      sensitive_files.each do |path|
+        path.dirname.mkpath
+        FileUtils.touch path
       end
 
-      with_env(GITHUB_WORKSPACE: (home/"workspace").to_s) do
+      sandbox.deny_read_home
+
+      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      expect(denied).to include(*(sensitive_dirs + sensitive_files).map { |path| path.realpath.to_s })
+      expect(denied).not_to include(*allowed_dirs.map { |path| path.realpath.to_s })
+    end
+
+    it "does not deny arbitrary home entries whose names contain parentheses or backslashes" do
+      stub_const("HOMEBREW_LOGS", home/"Library/Logs/Homebrew")
+      teams_log = home/"Library/Logs/Microsoft Teams Helper (Renderer)"
+      backslash_dir = home/"I:\\"
+      [home/"Library/Logs/Homebrew", teams_log, backslash_dir, home/".ssh"].each(&:mkpath)
+
+      sandbox.deny_read_home
+
+      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      expect(denied).to include((home/".ssh").realpath.to_s)
+      expect(denied).not_to include(teams_log.realpath.to_s, backslash_dir.realpath.to_s)
+    end
+
+    it "keeps the trust store readable so sandboxed builds can re-check tap trust" do
+      stub_const("HOMEBREW_CACHE", home/"Library/Caches/Homebrew")
+      config_home = home/".homebrew"
+      [home/"Library/Caches/Homebrew", config_home, home/".ssh"].each(&:mkpath)
+      trust_file = config_home/"trust.json"
+      FileUtils.touch trust_file
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: config_home.to_s) do
         sandbox.deny_read_home
       end
 
-      expect(sandbox.send(:profile).rules.map { |rule| rule.filter&.path }).to eq(
-        [
-          home/".ssh",
-          home/"Documents",
-          home/"Library/Keychains",
-          home/"Library/Mobile Documents",
-          home/"Dropbox",
-        ].map { |path| path.realpath.to_s },
-      )
+      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      expect(denied).to include((home/".ssh").realpath.to_s)
+      expect(denied).not_to include(trust_file.realpath.to_s)
+    end
+
+    it "keeps the XDG trust store readable so sandboxed builds can re-check tap trust" do
+      stub_const("HOMEBREW_CACHE", home/"Library/Caches/Homebrew")
+      config_home = home/".config/homebrew"
+      gh_config = home/".config/gh"
+      [home/"Library/Caches/Homebrew", config_home, gh_config, home/".ssh"].each(&:mkpath)
+      trust_file = config_home/"trust.json"
+      FileUtils.touch trust_file
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: config_home.to_s) do
+        sandbox.deny_read_home
+      end
+
+      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      expect(denied).to include(gh_config.realpath.to_s)
+      expect(denied).to include((home/".ssh").realpath.to_s)
+      expect(denied).not_to include((home/".config").realpath.to_s)
+      expect(denied).not_to include(trust_file.realpath.to_s)
+    end
+
+    it "keeps the Xcode directories readable so builds can use them", :needs_macos do
+      developer = home/"Library/Developer"
+      swiftpm = home/"Library/Caches/org.swift.swiftpm"
+      [developer, swiftpm, home/".ssh"].each(&:mkpath)
+
+      sandbox.deny_read_home
+
+      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      expect(denied).not_to include(developer.realpath.to_s, swiftpm.realpath.to_s)
+      expect(denied).to include((home/".ssh").realpath.to_s)
     end
   end
 
@@ -268,40 +446,6 @@ RSpec.describe Sandbox do
       sandbox.allow_write_path_if_exists nil
 
       expect(sandbox.send(:profile).rules).to be_empty
-    end
-  end
-
-  describe "#allow_write_cellar" do
-    it "fails when the formula has a name including )" do
-      f = formula do
-        url "https://brew.sh/foo-1.0.tar.gz"
-        version "1.0"
-
-        def initialize(*, **)
-          super
-          @name = "foo)bar"
-        end
-      end
-
-      expect do
-        sandbox.allow_write_cellar f
-      end.to raise_error(ArgumentError)
-    end
-
-    it "fails when the formula has a name including \"" do
-      f = formula do
-        url "https://brew.sh/foo-1.0.tar.gz"
-        version "1.0"
-
-        def initialize(*, **)
-          super
-          @name = "foo\"bar"
-        end
-      end
-
-      expect do
-        sandbox.allow_write_cellar f
-      end.to raise_error(ArgumentError)
     end
   end
 end

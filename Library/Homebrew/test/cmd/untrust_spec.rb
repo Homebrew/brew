@@ -5,7 +5,7 @@ require "cmd/shared_examples/args_parse"
 require "cmd/untrust"
 require "trust"
 
-RSpec.describe Homebrew::Cmd::Untrust do
+RSpec.describe Homebrew::Cmd::Untrust, :trust_store do
   it_behaves_like "parseable arguments"
 
   it "untrusts a given tap", :integration_test do
@@ -38,6 +38,23 @@ RSpec.describe Homebrew::Cmd::Untrust do
 
     expect { described_class.new(["--commands", "thirdparty/foo/hello"]).run }
       .to output("Untrusted command: thirdparty/foo/hello\n").to_stdout
+  end
+
+  it "untrusts legacy and remote-qualified entries for custom-remote tap items" do
+    tap = Tap.fetch("thirdparty", "custom")
+    tap.path.mkpath
+    system "git", "-C", tap.path.to_s, "init"
+    system "git", "-C", tap.path.to_s, "remote", "add", "origin", "https://gitlab.com/other/repo"
+    Homebrew::Trust.trust!(:formula, "thirdparty/custom/bar")
+    Homebrew::Trust.trust!(:formula, "https://gitlab.com/other/repo/bar")
+
+    expect { described_class.new(["--formula", "thirdparty/custom/bar"]).run }
+      .to output("Untrusted formula: thirdparty/custom/bar\n").to_stdout
+    expect(Homebrew::Trust.trusted_entries(:formula)).to be_empty
+    expect(Homebrew::Trust.trusted?(:formula, "thirdparty/custom/bar")).to be(false)
+  ensure
+    Homebrew::Trust.clear!(:formula)
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
   end
 
   it "untrusts trusted items from a tap" do

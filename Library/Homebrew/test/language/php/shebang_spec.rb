@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "language/php"
@@ -11,20 +11,24 @@ RSpec.describe Language::PHP::Shebang do
     f = {}
 
     f[:php81] = formula "php@8.1" do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/node-18.0.0.tgz"
     end
 
     f[:versioned_php_dep] = formula "foo" do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/foo-1.0.tgz"
 
       depends_on "php@8.1"
     end
 
     f[:no_deps] = formula "foo" do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/foo-1.0.tgz"
     end
 
     f[:multiple_deps] = formula "foo" do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/foo-1.0.tgz"
 
       depends_on "php"

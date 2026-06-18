@@ -144,6 +144,17 @@ RSpec.describe Commands do
         expect(commands).not_to include("rbcmd")
       end
     end
+
+    it "does not load external command files" do
+      mktmpdir do |cache|
+        stub_const("HOMEBREW_CACHE", cache)
+        allow(described_class).to receive(:external_commands).and_return(["external"])
+
+        expect(described_class).not_to receive(:external_ruby_v2_cmd_path)
+
+        described_class.rebuild_commands_completion_list
+      end
+    end
   end
 
   describe "::path" do

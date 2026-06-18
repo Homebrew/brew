@@ -9,8 +9,15 @@ RSpec.describe Utils::Svn do
     instance_double(SystemCommand::Result, to_a: [stdout, stderr, status])
   end
 
+  def clear_version_cache
+    return unless described_class.instance_variable_defined?(:@version)
+
+    described_class.send(:remove_instance_variable,
+                         :@version)
+  end
+
   before do
-    described_class.clear_version_cache
+    clear_version_cache
   end
 
   describe "::available?" do
@@ -33,7 +40,7 @@ RSpec.describe Utils::Svn do
 
       expect(described_class.version).to eq("1.14.5")
 
-      described_class.clear_version_cache
+      clear_version_cache
       expect(described_class).to receive(:system_command)
         .with(HOMEBREW_SHIMS_PATH/"shared/svn", args: ["--version"], print_stderr: false)
         .and_return(svn_result("", success: false))

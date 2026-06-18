@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "bundle"
@@ -278,10 +278,17 @@ RSpec.describe Homebrew::Bundle::Brew do
     let(:installer) { described_class.new(formula_name, options) }
 
     before do
+      # Clear the class-level formula cache so a hash memoised by an earlier
+      # example (e.g. without conflicts) doesn't leak into this one.
+      described_class.reset!
+
       # don't try to load gcc/glibc
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
-      stub_formula_loader formula(formula_name) { url "mysql-1.0" }
+      stub_formula_loader formula(formula_name) {
+        T.bind(self, T.class_of(Formula))
+        url "mysql-1.0"
+      }
     end
 
     context "when the formula is installed" do
@@ -451,6 +458,7 @@ RSpec.describe Homebrew::Bundle::Brew do
       context "when the conflicts_with option is provided" do
         before do
           stub_formula_loader formula(formula_name) {
+            T.bind(self, T.class_of(Formula))
             url "mysql-1.0"
             conflicts_with "mysql55"
           }
@@ -578,6 +586,31 @@ RSpec.describe Homebrew::Bundle::Brew do
       end
     end
 
+    context "when the trusted option is true" do
+      let(:tapped_name) { "foo/bar/baz" }
+
+      before do
+        allow_any_instance_of(described_class).to receive_messages(installed?: false, resolve_conflicts!: true,
+                                                                   install_formula!: true)
+      end
+
+      it "trusts the formula before installing the tap that loads it" do
+        order = []
+        tap = instance_double(Tap, ensure_installed!: nil)
+        allow(Tap).to receive(:with_formula_name).with(tapped_name).and_return([tap, "baz"])
+        allow(tap).to receive(:ensure_installed!) { order << :tap }
+        allow(Homebrew::Trust).to receive(:trust!).with(:formula, tapped_name) { order << :trust }
+        described_class.install!(tapped_name, trusted: true)
+        expect(order).to eq([:trust, :tap])
+      end
+
+      it "does not trust an unqualified formula name" do
+        allow(Tap).to receive(:with_formula_name).and_return(nil)
+        expect(Homebrew::Trust).not_to receive(:trust!)
+        described_class.install!("baz", trusted: true)
+      end
+    end
+
     describe ".outdated_formulae" do
       it "calls Homebrew" do
         described_class.reset!
@@ -631,8 +664,14 @@ RSpec.describe Homebrew::Bundle::Brew do
             requirements: [],
           },
         ])
-        stub_formula_loader formula("foo") { url "foo-1.0" }
-        stub_formula_loader formula("bar") { url "bar-1.0" }
+        stub_formula_loader formula("foo") {
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        }
+        stub_formula_loader formula("bar") {
+          T.bind(self, T.class_of(Formula))
+          url "bar-1.0"
+        }
       end
 
       it "returns result" do

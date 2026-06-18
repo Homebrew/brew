@@ -46,9 +46,6 @@ module GitHub
     class Error < RuntimeError
       include Utils::Output::Mixin
 
-      sig { returns(T.nilable(String)) }
-      attr_reader :github_message
-
       sig { params(message: T.nilable(String), github_message: String).void }
       def initialize(message = nil, github_message = T.unsafe(nil))
         @github_message = T.let(github_message, T.nilable(String))

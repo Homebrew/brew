@@ -32,7 +32,7 @@ module Homebrew
           ENV["HOMEBREW_ASK"] = nil
           ENV["HOMEBREW_NO_ASK"] = "1"
 
-          Homebrew::EnvConfig.bundle_dump_describe? unless args.describe?
+          Homebrew::EnvConfig.bundle_dump_describe? if !args.describe? && !args.no_describe?
 
           context = context(args, extensions:, ask:)
           Homebrew::Bundle.upgrade_formulae = args.upgrade_formulae

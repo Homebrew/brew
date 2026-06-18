@@ -38,11 +38,6 @@ module Utils
                                                                print_stderr: false).to_a
         odie "#{path} is not a valid tar file!" if !status.success? || stdout.blank?
       end
-
-      sig { void }
-      def clear_executable_cache
-        remove_instance_variable(:@executable) if defined?(@executable)
-      end
     end
   end
 end

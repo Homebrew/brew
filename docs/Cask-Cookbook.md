@@ -592,6 +592,7 @@ Relative paths default to `staged_path` for `base:`, `source_base:` and `target_
 * `symlink`: create a symlink; example: `symlink "Shared/payload", "Payload", source_base: :relative`.
 * `ln_s`: alias for `symlink`; example: `ln_s "Shared/payload", "Payload", source_base: :relative`.
 * `ln_sf`: create or replace a symlink; example: `ln_sf "Shared/payload", "Payload", source_base: :relative, uninstall: true`.
+* `write`: write literal content to a file unless it already exists; example: `write "Shared/foo.conf", "key = value"`. Pass `overwrite: true` to always replace the file. A trailing newline is appended unless the content already ends with one. Content may use the `{{staged_path}}`, `{{appdir}}` and `{{version}}` tokens, which are expanded at install time; any other `{{...}}` is left verbatim.
 
 Flight blocks are not currently run in the cask sandbox. They should be written as though they may be sandboxed in the future: prefer the mini-DSL helpers below and keep filesystem writes limited to paths owned by the cask.
 
@@ -753,19 +754,7 @@ The first argument to the `pkg` stanza should be a relative path to the `.pkg` f
 pkg "Unity.pkg"
 ```
 
-Subsequent arguments to `pkg` are key-value pairs which modify the install process. Currently supported keys are `allow_untrusted:` and `choices:`.
-
-#### `pkg` *allow_untrusted*
-
-`pkg allow_untrusted: true` can be used to install a `.pkg` containing an untrusted certificate by passing `-allowUntrusted` to `/usr/sbin/installer`.
-
-This option is not permitted in official Homebrew Cask taps; it is only provided for use in third-party taps or local casks.
-
-Historical example (from [alinof-timer.rb](https://github.com/Homebrew/homebrew-cask/blob/312ae841f1f1b2ec07f4d88b7dfdd7fbdf8d4f94/Casks/alinof-timer.rb#L10)):
-
-```ruby
-pkg "AlinofTimer.pkg", allow_untrusted: true
-```
+Subsequent arguments to `pkg` are key-value pairs which modify the install process. The only currently supported key is `choices:`.
 
 #### `pkg` *choices*
 

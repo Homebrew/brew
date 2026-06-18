@@ -20,12 +20,9 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
       end
 
       it "skips relative paths" do
-        result = nil
         expect do
-          result = artifact.send(:each_resolved_path, :delete, ["relative/path"]).to_a
+          expect(artifact.send(:each_resolved_path, :delete, ["relative/path"]).to_a).to be_empty
         end.to output(%r{Skipping delete for relative path 'relative/path'\.}).to_stderr
-
-        expect(result).to be_empty
       end
 
       it "skips absolute paths containing relative segments" do
@@ -38,14 +35,11 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
           tmpdir/"nested/../#{valid_path.basename}",
           tmpdir/"nested/./#{valid_path.basename}",
         ].each do |invalid_path|
-          result = nil
           expect do
-            result = artifact.send(:each_resolved_path, :delete, [invalid_path.to_s]).to_a
+            expect(artifact.send(:each_resolved_path, :delete, [invalid_path.to_s]).to_a).to be_empty
           end.to output(
             /Skipping delete for path with relative segments '#{Regexp.escape(invalid_path.to_s)}'\./,
           ).to_stderr
-
-          expect(result).to be_empty
         end
       ensure
         FileUtils.rm_f valid_path
@@ -54,14 +48,11 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
       it "skips tilde paths containing relative segments" do
         invalid_path = "~/../each_resolved_path_#{artifact_dsl_key}"
 
-        result = nil
         expect do
-          result = artifact.send(:each_resolved_path, :delete, [invalid_path]).to_a
+          expect(artifact.send(:each_resolved_path, :delete, [invalid_path]).to_a).to be_empty
         end.to output(
           /Skipping delete for path with relative segments '#{Regexp.escape(invalid_path)}'\./,
         ).to_stderr
-
-        expect(result).to be_empty
       end
 
       it "skips undeletable glob matches after expansion" do
@@ -74,14 +65,12 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
 
         allow(artifact).to receive(:undeletable?) { |target| target == undeletable_path }
 
-        result = nil
         expect do
-          result = artifact.send(:each_resolved_path, :delete, ["#{glob_dir}/*.plist"]).to_a
+          expect(artifact.send(:each_resolved_path, :delete, ["#{glob_dir}/*.plist"]).to_a)
+            .to eq([["#{glob_dir}/*.plist", [safe_path]]])
         end.to output(
           /Skipping delete for undeletable path '#{Regexp.escape(undeletable_path.to_s)}'\./,
         ).to_stderr
-
-        expect(result).to eq([["#{glob_dir}/*.plist", [safe_path]]])
       ensure
         FileUtils.rm_rf glob_dir
       end

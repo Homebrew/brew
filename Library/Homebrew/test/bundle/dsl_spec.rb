@@ -66,6 +66,13 @@ RSpec.describe Homebrew::Bundle::Dsl do
     end
   end
 
+  context "with tap entries" do
+    it "processes trusted options without a clone target" do
+      dsl = dsl_from_string 'tap "thirdparty/tap", trusted: true'
+      expect(dsl.entries[0].options).to eql(clone_target: nil, trusted: true)
+    end
+  end
+
   context "with multiple cask_args" do
     subject(:dsl) do
       dsl_from_string <<~RUBY

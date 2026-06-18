@@ -25,6 +25,30 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy
     super
   end
 
+  sig { override.returns(Pathname) }
+  def cached_location
+    return super unless immutable_bottle_blob?
+
+    cached_location = @cached_location
+    return cached_location unless cached_location.nil?
+
+    @cached_location = HOMEBREW_CACHE/"downloads/#{Digest::SHA256.hexdigest(url)}--#{Utils.safe_filename(@resolved_basename.to_s)}"
+  end
+
+  sig { returns(T::Boolean) }
+  def immutable_bottle_blob?
+    return false if meta[:bottle] != true
+    return false unless mirrors.empty?
+    return false if @resolved_basename.blank?
+
+    !bottle_blob_sha256.nil?
+  end
+
+  sig { returns(T.nilable(String)) }
+  def bottle_blob_sha256
+    url[%r{/blobs/sha256:([0-9a-f]{64})(?:[?#]|$)}i, 1]&.downcase
+  end
+
   private
 
   sig { override.params(url: String, timeout: T.nilable(T.any(Float, Integer))).returns(URLMetadata) }

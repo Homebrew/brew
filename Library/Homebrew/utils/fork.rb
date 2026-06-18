@@ -7,7 +7,10 @@ require "utils/socket"
 module Utils
   sig { params(child_error: T::Hash[String, T.untyped]).returns(Exception) }
   def self.rewrite_child_error(child_error)
+    # The error class name comes from the forked child's serialised JSON.
+    # rubocop:disable Sorbet/ConstantsFromStrings
     inner_class = Object.const_get(child_error["json_class"])
+    # rubocop:enable Sorbet/ConstantsFromStrings
     error = if child_error["cmd"] && inner_class == ErrorDuringExecution
       ErrorDuringExecution.new(child_error["cmd"],
                                status: child_error["status"],

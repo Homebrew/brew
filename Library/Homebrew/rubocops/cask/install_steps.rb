@@ -43,10 +43,10 @@ module RuboCop
             next unless stanza.method_node.block_type?
             next unless (offense_node = install_step_block_offense_node(
               T.cast(stanza.method_node, RuboCop::AST::BlockNode),
-              allowed_methods: FILE_PREPARATION_STEP_METHODS,
+              allowed_methods: CASK_ALLOWED_STEP_METHODS,
             ))
 
-            add_offense(offense_node, message: step_block_msg(FILE_PREPARATION_STEP_METHODS))
+            add_offense(offense_node, message: step_block_msg(CASK_ALLOWED_STEP_METHODS))
           end
         end
 

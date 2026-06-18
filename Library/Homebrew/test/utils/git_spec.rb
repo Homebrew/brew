@@ -96,6 +96,20 @@ RSpec.describe Utils::Git do
     end
   end
 
+  describe "::changed_files" do
+    it "diffs against the `origin/HEAD` merge-base, ignoring a stale local default branch" do
+      git = HOMEBREW_SHIMS_PATH/"shared/git"
+      HOMEBREW_CACHE.cd do
+        system git, "checkout", "--quiet", "-b", "feature"
+        system git, "update-ref", "refs/remotes/origin/HEAD", "HEAD" # up-to-date upstream
+        system git, "branch", "--force", "main", "HEAD~2" # stale local default branch
+        File.write("README.md", "changed")
+      end
+
+      expect(described_class.changed_files(HOMEBREW_CACHE)).to eq(["README.md"])
+    end
+  end
+
   describe "#last_revision_commit_of_files" do
     context "when before_commit is nil" do
       it "gives last revision commit" do

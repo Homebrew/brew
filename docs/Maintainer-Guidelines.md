@@ -44,6 +44,7 @@ Relatedly:
   If you don't have time or can't be bothered: you probably don't have the time to review the PR properly.
 - We're a globally distributed team and this helps us move faster.
 - The PR review process is primarily a security measure, not a way to get consensus on the perfect code style before merging.
+- When reviewing or creating AI-assisted contributions, follow [Responsible AI Usage](Responsible-AI-Usage.md); you are responsible for the output you submit and must review it before asking others to.
 - It is easy to make changes on a PR after approval, make follow-up PRs to address comments or revert PRs before a tag.
 - It is (nearly) impossible to merge a PR without approval.
 - Using `gh pr checkout <URL>` is a super easy way to check out a PR branch using the GitHub CLI.

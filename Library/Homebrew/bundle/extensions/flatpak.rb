@@ -8,11 +8,16 @@ module Homebrew
     class Flatpak < Extension
       Package = T.type_alias { { name: String, remote: String, remote_url: T.nilable(String) } }
 
-      PACKAGE_TYPE = :flatpak
-      PACKAGE_TYPE_NAME = "Flatpak"
-      BANNER_NAME = "Flatpak packages"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :flatpak
+
+        sig { override.returns(String) }
+        def check_label = "Flatpak"
+
+        sig { override.returns(String) }
+        def banner_name = "Flatpak packages"
+
         sig { override.params(description: String).returns(String) }
         def switch_description(description)
           "#{super} Note: Linux only."

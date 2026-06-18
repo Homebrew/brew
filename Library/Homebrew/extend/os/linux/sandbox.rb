@@ -36,6 +36,8 @@ module OS
         const :description, T::Array[String]
         const :optional, T::Boolean, default: false
       end
+      # These settings mirror the `sysctl` assignments in
+      # Library/Homebrew/cmd/setup-sandbox.sh; keep both in sync.
       SANDBOX_SYSCTL_SETTINGS = T.let([
         SysctlSetting.new(
           assignment:  "kernel.unprivileged_userns_clone=1",
@@ -63,8 +65,18 @@ module OS
       ].freeze, T::Array[SysctlSetting])
       # `TIOCSCTTY` from `<asm-generic/ioctls.h>`; Ruby does not expose it.
       TIOCSCTTY = 0x540E
+      # Per-distro Bubblewrap install commands, detected by package manager and
+      # checked in priority order. Mirrors the build tools instructions in
+      # `Homebrew/install`'s `install.sh`.
+      BUBBLEWRAP_INSTALL_COMMANDS = T.let({
+        "apt-get" => "sudo apt-get install bubblewrap",
+        "dnf"     => "sudo dnf install bubblewrap",
+        "yum"     => "sudo yum install bubblewrap",
+        "pacman"  => "sudo pacman -S bubblewrap",
+        "apk"     => "sudo apk add bubblewrap",
+      }.freeze, T::Hash[String, String])
       private_constant :BUBBLEWRAP, :BUBBLEWRAP_TEST_ARGS, :SYSTEM_BUBBLEWRAP_PATHS, :HOMEBREW_BUBBLEWRAP_PATHS,
-                       :SysctlSetting, :SANDBOX_SYSCTL_SETTINGS, :TIOCSCTTY
+                       :SysctlSetting, :SANDBOX_SYSCTL_SETTINGS, :TIOCSCTTY, :BUBBLEWRAP_INSTALL_COMMANDS
 
       sig { returns(::PATH) }
       def self.bubblewrap_candidate_paths
@@ -222,14 +234,10 @@ module OS
           end
 
           ohai "Configuring Bubblewrap..."
-          SANDBOX_SYSCTL_SETTINGS.each do |setting|
-            command = ["sudo", "sysctl", "-w", setting.assignment]
-            puts "  #{command.join(" ")}"
-            next if system(*command)
-            next if setting.optional
+          command = [HOMEBREW_BREW_FILE, "setup-sandbox"]
+          command.unshift("sudo") unless Process.euid.zero?
+          raise ErrorDuringExecution.new(command, status: $CHILD_STATUS || 1) unless system(*command)
 
-            raise ErrorDuringExecution.new(command, status: $CHILD_STATUS)
-          end
           reset_state!
         end
 
@@ -248,6 +256,11 @@ module OS
           else
             "The Linux sandbox is not available."
           end
+        end
+
+        sig { returns(T.nilable(String)) }
+        def sandbox_install_command
+          BUBBLEWRAP_INSTALL_COMMANDS.find { |package_manager, _| which(package_manager) }&.last
         end
 
         # `ioctl` request used to attach the sandboxed child to a controlling TTY.

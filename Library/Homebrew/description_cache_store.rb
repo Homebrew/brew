@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cache_store"
+require "formula_versions"
 
 #
 # {DescriptionCacheStore} provides methods to fetch and mutate formula descriptions used
@@ -79,7 +80,7 @@ class DescriptionCacheStore < CacheStore
 
     formula_names.each do |name|
       update!(name, Formula[name].desc)
-    rescue FormulaUnavailableError, *FormulaVersions::IGNORED_EXCEPTIONS
+    rescue FormulaUnavailableError, Homebrew::UntrustedTapError, *FormulaVersions::IGNORED_EXCEPTIONS
       delete!(name)
     end
   end

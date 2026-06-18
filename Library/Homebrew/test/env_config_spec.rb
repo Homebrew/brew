@@ -170,6 +170,13 @@ RSpec.describe Homebrew::EnvConfig do
         expect(env_config.bundle_describe?).to be(false)
       end
     end
+
+    it "deprecates HOMEBREW_BUNDLE_DESCRIBE" do
+      with_env(HOMEBREW_BUNDLE_DESCRIBE: "1") do
+        expect { env_config.bundle_describe? }
+          .to raise_error(MethodDeprecatedError, /HOMEBREW_BUNDLE_DESCRIBE.*deprecated/)
+      end
+    end
   end
 
   describe ".bundle_jobs" do
@@ -184,6 +191,12 @@ RSpec.describe Homebrew::EnvConfig do
         expect(env_config.bundle_jobs).to be_nil
       end
     end
+
+    it "warns if HOMEBREW_BUNDLE_JOBS is explicitly set to the default" do
+      with_env(HOMEBREW_BUNDLE_JOBS: "auto", HOMEBREW_BUNDLE_NO_JOBS: nil) do
+        expect { env_config.bundle_jobs }.to output(/HOMEBREW_BUNDLE_JOBS=auto is now the default/).to_stderr
+      end
+    end
   end
 
   describe ".bundle_no_secrets?" do
@@ -196,6 +209,22 @@ RSpec.describe Homebrew::EnvConfig do
     it "returns false if HOMEBREW_BUNDLE_SECRETS is set" do
       with_env(HOMEBREW_BUNDLE_NO_SECRETS: "1", HOMEBREW_BUNDLE_SECRETS: "1") do
         expect(env_config.bundle_no_secrets?).to be(false)
+      end
+    end
+
+    it "deprecates HOMEBREW_BUNDLE_NO_SECRETS" do
+      with_env(HOMEBREW_BUNDLE_NO_SECRETS: "1", HOMEBREW_BUNDLE_SECRETS: nil) do
+        expect { env_config.bundle_no_secrets? }
+          .to raise_error(MethodDeprecatedError, /HOMEBREW_BUNDLE_NO_SECRETS.*deprecated/)
+      end
+    end
+  end
+
+  describe ".use_internal_api?" do
+    it "deprecates HOMEBREW_USE_INTERNAL_API" do
+      with_env(HOMEBREW_USE_INTERNAL_API: "1") do
+        expect { env_config.use_internal_api? }
+          .to raise_error(MethodDeprecatedError, /HOMEBREW_USE_INTERNAL_API.*deprecated/)
       end
     end
   end

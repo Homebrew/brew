@@ -46,6 +46,26 @@ Before opening follow-up PRs, run `bundle exec rake lint` from `docs/` to catch
 markdown lint issues and run `brew style homebrew/core homebrew/cask` to catch
 tap-wide formula or cask opportunities exposed by the new DSLs.
 
+## Per-DSL Pull Request Workflow
+
+From PR 5 onwards each new DSL step type ships as four separate
+commits/branches/PRs rather than one combined change:
+
+1. Add the new DSL in `Homebrew/brew`: the step method(s), runner execution,
+   shared step block allow-list entries so tap syntax checks accept the method,
+   JSON API round-tripping, tests and docs. No legacy-to-steps autocorrection.
+2. Add the new RuboCops in `Homebrew/brew` that enforce and audit the DSL:
+   conflict checks against legacy blocks and conservative autocorrection from
+   the matching legacy Ruby pattern.
+3. Tap `homebrew/core`: convert formulae to the new DSL.
+4. Tap `homebrew/cask`: convert casks to the new DSL.
+
+Merge order is `1`, `3`, `4`, `2`. PR `1` ships the DSL and its allow-list so
+taps can adopt it; PR `2` (the enforcing/autocorrecting cops) merges last so it
+does not flag formulae or casks before the DSL is widely available. After PR `1`
+is merged and before PRs `3` and `4` are merged, cut a new `Homebrew/brew`
+stable release so `homebrew/core` and `homebrew/cask` CI have the new DSL.
+
 ## Formula Patterns
 
 Local scan source: `homebrew/core` at `fb0ca6682b4`.
@@ -185,7 +205,7 @@ be resolved before the download can be enqueued.
   non-Homebrew code and should be ready for future sandboxing. Land RuboCop
   autocorrection and tap-wide conversions in a separate follow-up after the
   new DSL methods are available in a stable Homebrew release.
-- [ ] PR 5, default config and template writes.
+- PR 5, default config and template writes (four-PR workflow above).
   Estimated existing formulae/casks affected: about `71` formulae write or
   patch default configuration/data files, and a subset of the `78` file-prep
   cask flight blocks write small files.
@@ -193,6 +213,36 @@ be resolved before the download can be enqueued.
   Ruby interpolation; require literal templates or API-safe template data;
   define overwrite, `unless_exists` and upgrade semantics before adding
   autocorrection.
+  - [x] PR 5.1, add the `write` DSL in `Homebrew/brew`.
+    Commit: `Add install step config writes`.
+    Scope: shared `write` step method with `base:` and `overwrite:`, runner
+    execution that skips existing files unless `overwrite` is set, formula and
+    cask step block allow-list entries, non-interpolated heredoc (`dstr`)
+    support so `write` content can use heredocs, runner tests and cookbook
+    docs. Default behaviour preserves existing files so user edits survive
+    upgrades. Content stays a literal template in the JSON API but supports a
+    fixed `{{...}}` token allow-list (`HOMEBREW_PREFIX`, `prefix`, `opt_prefix`,
+    `bin`, `var`, `etc`, `pkgetc`, `version`, `version.major_minor`; casks add
+    `staged_path` and `appdir`) expanded at install time; any other `{{...}}`
+    is left verbatim. Dynamic interpolation (random cookies, `popen`-derived
+    paths, `File.read` rewrites) is intentionally out of scope and stays as
+    legacy Ruby.
+  - [ ] PR 5.2, add the `write` enforcing RuboCops in `Homebrew/brew`.
+  - [x] PR 5.3, convert `homebrew/core` formulae to `write`.
+    Branch `install-steps-config-write`, commits
+    `tronbyt-server: use post_install_steps` and `node@18: use
+    post_install_steps`. `tronbyt-server` mapped with literal content;
+    `node@18` became convertible once `{{HOMEBREW_PREFIX}}` token expansion
+    landed (its whole `post_install` was one `atomic_write`). All other
+    `.write` formulae interpolate paths, interpolate unsupported values, or
+    run unsupported Ruby (`cp_r`, `inreplace`, `safe_popen_read`, loops).
+  - [x] PR 5.4, convert `homebrew/cask` casks to `write`.
+    Branch `install-steps-config-write`, commit
+    `dnsmonitor: use postflight_steps`. Only `dnsmonitor` had a flight block
+    with literal content. Token expansion does not unblock more casks: the
+    `{{appdir}}`-content flight writes all target a `shimscript` local that is
+    also wired to a `binary` stanza, and the literal-path LibreOffice packs
+    interpolate an unsupported language `token` and run `system_command`.
 - [ ] PR 6, database and service data directory initialisation.
   Estimated existing formulae/casks affected: about `27` formulae initialise
   service data directories.

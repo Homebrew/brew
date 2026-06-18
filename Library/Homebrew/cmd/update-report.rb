@@ -66,6 +66,33 @@ module Homebrew
           install_from_api_message
         end
 
+        if (redirected_remotes_file = ENV.fetch("HOMEBREW_REDIRECTED_REMOTES_FILE", nil)).present?
+          redirected_remotes_path = Pathname(redirected_remotes_file)
+          if redirected_remotes_path.file?
+            begin
+              redirected_remotes_path.each_line do |line|
+                tap_path, redirected_remote = line.chomp.split("\t", 2)
+                next if tap_path.blank? || redirected_remote.blank?
+                next unless (tap = Tap.from_path(tap_path))
+
+                old_repository_var_suffix = tap.repository_var_suffix
+                tap.apply_redirected_remote!(redirected_remote, quiet: args.quiet?)
+                new_repository_var_suffix = tap.repository_var_suffix
+                next if old_repository_var_suffix == new_repository_var_suffix
+
+                ["HOMEBREW_UPDATE_BEFORE", "HOMEBREW_UPDATE_AFTER"].each do |prefix|
+                  old_var = "#{prefix}#{old_repository_var_suffix}"
+                  old_value = ENV.fetch(old_var, nil)
+                  next if old_value.blank?
+
+                  ENV["#{prefix}#{new_repository_var_suffix}"] ||= old_value
+                end
+              end
+            ensure
+              redirected_remotes_path.unlink if redirected_remotes_path.exist?
+            end
+          end
+        end
         tap_or_untap_core_taps_if_necessary
 
         updated = false

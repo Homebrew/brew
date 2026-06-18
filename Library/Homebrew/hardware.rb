@@ -268,6 +268,22 @@ module Hardware
 
       "--codegen target-cpu=#{@target_cpu}"
     end
+
+    # Returns the closest Zig target CPU for the requested brew-supported
+    # architecture symbol. See `zig targets` for available CPUs.
+    #
+    # @see https://github.com/Homebrew/homebrew-core/issues/92282
+    sig { params(arch: Symbol).returns(Symbol) }
+    def zig_cpu(arch)
+      case arch
+      when :arm_vortex_tempest then :apple_m1
+      when :armv6 then :arm1136j_s
+      when :armv8 then :xgene1
+      when :core  then :prescott
+      when :dunno then :baseline
+      else arch.to_s.tr("-", "_").to_sym
+      end
+    end
   end
 end
 

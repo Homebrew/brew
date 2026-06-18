@@ -39,6 +39,7 @@ RSpec.describe Homebrew::TestBot do
     end
 
     it "trusts a third-party tap in the local test-bot config home" do
+      old_umask = T.let(nil, T.nilable(Integer))
       tap = Tap.fetch("thirdparty", "foo")
       tap.path.mkpath
       args = double(
@@ -67,15 +68,19 @@ RSpec.describe Homebrew::TestBot do
             HOME:                      "#{workdir}/original",
             XDG_CONFIG_HOME:           "#{workdir}/xdg",
           ) do
+            old_umask = File.umask(0002)
+
             expect { described_class.run!(args) }.to output(%r{==> Trusted tap: thirdparty/foo}).to_stdout
 
             trust_file = workdir/"home/.homebrew/trust.json"
             expect(trust_file).to exist
+            expect(trust_file.dirname.stat.mode & 0777).to eq(0700)
             expect(JSON.parse(trust_file.read).fetch("trustedtaps")).to include("thirdparty/foo")
           end
         end
       end
     ensure
+      File.umask(old_umask) if old_umask
       Homebrew::Trust.clear!(:tap)
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end

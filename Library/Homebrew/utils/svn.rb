@@ -46,11 +46,6 @@ module Utils
         end
         args
       end
-
-      sig { void }
-      def clear_version_cache
-        remove_instance_variable(:@version) if defined?(@version)
-      end
     end
   end
 end

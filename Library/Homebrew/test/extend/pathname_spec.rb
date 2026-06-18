@@ -17,7 +17,9 @@ RSpec.describe Pathname do
 
     it "creates script without arguments" do
       mktmpdir do |tmpdir|
-        (tmpdir/"wrapper_script").write_env_script "test", TEST: "bar", TEST2: tmpdir/"baz"
+        env = { TEST: "bar" }
+        env["TEST2"] = tmpdir/"baz"
+        (tmpdir/"wrapper_script").write_env_script "test", env
         expect((tmpdir/"wrapper_script").read).to eq(<<~BASH)
           #!/bin/bash
           TEST="bar" TEST2="#{tmpdir}/baz" exec "test"  "$@"

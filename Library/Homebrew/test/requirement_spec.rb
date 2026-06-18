@@ -220,7 +220,10 @@ RSpec.describe Requirement do
 
   describe "#name and #option_names" do
     let(:const) { :FooRequirement }
+    # The stubbed requirement class is resolved by name at runtime.
+    # rubocop:disable Sorbet/ConstantsFromStrings
     let(:klass) { self.class.const_get(const) }
+    # rubocop:enable Sorbet/ConstantsFromStrings
 
     before do
       stub_const const.to_s, Class.new(described_class)

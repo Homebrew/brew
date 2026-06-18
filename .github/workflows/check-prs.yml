@@ -36,7 +36,6 @@ jobs:
       pull-requests: write
     env:
       GH_TOKEN: ${{ github.token }}
-      INCOMPLETE_TEMPLATE_COMMENT_MARKER: "<!-- incomplete-pr-template -->"
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_TEMPLATE_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/.github/PULL_REQUEST_TEMPLATE.md
     steps:
@@ -103,7 +102,7 @@ jobs:
         run: |
           comment_ids="$(
             gh api --paginate "repos/${GITHUB_REPOSITORY:?}/issues/${PR_NUMBER:?}/comments" \
-              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | contains(\"${INCOMPLETE_TEMPLATE_COMMENT_MARKER:?}\"))) | .id"
+              --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- incomplete-pr-template -->"))) | .id'
           )"
           if [[ -n "${comment_ids}" ]]
           then
@@ -140,7 +139,7 @@ jobs:
           gh api --method POST "repos/${GITHUB_REPOSITORY:?}/issues/${PR_NUMBER:?}/comments" \
             --raw-field body="$(
               cat <<COMMENT
-          ${INCOMPLETE_TEMPLATE_COMMENT_MARKER}
+          <!-- incomplete-pr-template -->
           Thanks for your pull request. This has been closed because it appears to use an incomplete or outdated pull request template.
 
           Please edit this pull request to fill in the current [pull request template](${PR_TEMPLATE_URL:?}). This workflow will reopen this pull request automatically once the template is complete. **Do not open a new pull request for this.**

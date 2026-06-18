@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
@@ -16,6 +16,7 @@ RSpec.describe Homebrew::DevCmd::Linkage do
 
   it "accepts no_linkage dependency tag" do
     expect(formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
       sha256 TESTBALL_SHA256
 

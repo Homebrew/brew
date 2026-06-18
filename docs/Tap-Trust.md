@@ -1,5 +1,5 @@
 ---
-last_review_date: "2026-06-01"
+last_review_date: "2026-06-10"
 ---
 
 # Tap Trust
@@ -28,6 +28,8 @@ repository ownership changes, name collisions with packages from other taps and
 commands that are loaded just because their tap is present. It also makes
 automation clearer: scripts can trust exactly the tap, formula, cask or command
 they intend to use instead of relying on every tapped repository being loaded.
+
+Tap trust is one part of Homebrew's wider approach to [Software Supply Chain Security](Supply-Chain-Security.md).
 
 Prefer trusting the specific formula, cask or command you need. Trust a whole
 tap only when you are comfortable with all current and future formulae, casks
@@ -67,6 +69,22 @@ formula, cask and external command from that tap. This may be appropriate for a
 tap you administer or rely on heavily, but for one-off installs, automation or
 software from a vendor you do not fully control, prefer trusting only the item
 you need.
+
+## Trusting in a `Brewfile`
+
+You can declare trust in a [`Brewfile`](Brew-Bundle-and-Brewfile.md) with
+`trusted: true` on `tap`, `brew` and `cask` entries:
+
+```ruby
+tap "user/repo", trusted: true
+brew "user/repo/formula", trusted: true
+cask "user/repo/cask", trusted: true
+```
+
+`brew bundle` trusts each entry before installing it, so non-official taps,
+formulae and casks load even when tap trust is required. As on the command line,
+prefer trusting the specific formula or cask you need over the whole tap.
+`brew bundle dump` writes `trusted: true` for entries you have already trusted.
 
 ## Managing trust
 

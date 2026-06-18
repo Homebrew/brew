@@ -13,11 +13,16 @@ module Homebrew
       end
       CheckablePackages = T.type_alias { T.any(T::Array[Object], T::Hash[Integer, String]) }
 
-      PACKAGE_TYPE = :mas
-      PACKAGE_TYPE_NAME = "App"
-      BANNER_NAME = "Mac App Store dependencies"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :mas
+
+        sig { override.returns(String) }
+        def check_label = "App"
+
+        sig { override.returns(String) }
+        def banner_name = "Mac App Store dependencies"
+
         sig { override.returns(Symbol) }
         def legacy_check_step
           :apps_to_install

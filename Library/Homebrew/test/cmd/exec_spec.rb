@@ -144,6 +144,13 @@ RSpec.describe Homebrew::Cmd::Exec do
       )
 
       expect do
+        expect(brew_sh("exec", "--sandbox=", executable_name, brew_sh_env)).to be_a_failure
+      end.to(
+        output("").to_stdout
+          .and(output("Error: `--sandbox` requires a writable path.\n").to_stderr),
+      )
+
+      expect do
         expect(brew_sh("exec", installable_executable_name, "arg",
                        brew_sh_env)).to be_a_success
       end.to(

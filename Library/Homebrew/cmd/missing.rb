@@ -37,21 +37,12 @@ module Homebrew
         package_count = formulae.size + casks.size
         missing_deps = Homebrew::Missing.deps(formulae, casks, hide)
 
-        formulae.each do |formula|
-          missing = missing_deps[formula.full_name]
+        (formulae + casks).each do |formula_or_cask|
+          missing = missing_deps[formula_or_cask.full_name]
           next if missing.blank?
 
           Homebrew.failed = true
-          print "#{formula}: " if package_count > 1
-          puts missing.join(" ")
-        end
-
-        casks.each do |cask|
-          missing = missing_deps[cask.full_name]
-          next if missing.blank?
-
-          Homebrew.failed = true
-          print "#{cask}: " if package_count > 1
+          print "#{formula_or_cask}: " if package_count > 1
           puts missing.join(" ")
         end
       end

@@ -70,6 +70,10 @@ module Homebrew
             info = "#{tap}: "
             if tap.installed?
               info += "Installed"
+              if Homebrew::EnvConfig.require_tap_trust?
+                require "trust"
+                info += "\n#{Homebrew::Trust.trusted_tap?(tap) ? "Trusted" : "Untrusted"}"
+              end
               info += if (contents = tap.contents).blank?
                 "\nNo commands/casks/formulae"
               else

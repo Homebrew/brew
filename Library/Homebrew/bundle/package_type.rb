@@ -23,10 +23,11 @@ module Homebrew
         Homebrew::Bundle.register_package_type(subclass)
       end
 
-      sig { returns(Symbol) }
-      def self.type
-        T.cast(const_get(:PACKAGE_TYPE), Symbol)
-      end
+      sig { abstract.returns(Symbol) }
+      def self.type; end
+
+      sig { abstract.returns(String) }
+      def self.check_label; end
 
       sig { returns(T::Boolean) }
       def self.dump_supported?
@@ -122,7 +123,7 @@ module Homebrew
         else
           "needs to be installed or updated."
         end
-        "#{self.class.const_get(:PACKAGE_TYPE_NAME)} #{name} #{reason}"
+        "#{self.class.check_label} #{name} #{reason}"
       end
 
       sig { params(packages: T::Array[Object], no_upgrade: T::Boolean).returns(T::Array[String]) }
@@ -136,7 +137,7 @@ module Homebrew
         require "bundle/skipper"
         all_entries.filter_map do |entry|
           entry = T.cast(entry, Dsl::Entry)
-          next if entry.type != self.class.const_get(:PACKAGE_TYPE)
+          next if entry.type != self.class.type
           next if Bundle::Skipper.skip?(entry)
 
           entry

@@ -64,9 +64,9 @@ RSpec.describe Cask::Uninstall, :cask do
       described_class.uninstall_casks(caffeine, transmission)
 
       expect(caffeine).not_to be_installed
-      expect(caffeine.config.appdir.join("Transmission.app")).not_to exist
+      expect(Pathname(caffeine.config.appdir).join("Transmission.app")).not_to exist
       expect(transmission).not_to be_installed
-      expect(transmission.config.appdir.join("Caffeine.app")).not_to exist
+      expect(Pathname(transmission.config.appdir).join("Caffeine.app")).not_to exist
     end
 
     it "can uninstall Casks when the uninstall script is missing, but only when using `--force`" do
@@ -76,7 +76,7 @@ RSpec.describe Cask::Uninstall, :cask do
 
       expect(cask).to be_installed
 
-      FileUtils.rm_r(cask.config.appdir.join("MyFancyApp.app"))
+      FileUtils.rm_r(Pathname(cask.config.appdir).join("MyFancyApp.app"))
 
       expect { described_class.uninstall_casks(cask) }
         .to raise_error(Cask::CaskError, /uninstall script .* does not exist/)

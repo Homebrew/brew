@@ -4,6 +4,8 @@
 require "abstract_command"
 require "formula"
 require "fetch"
+require "api/cask_download"
+require "api/formula_bottle"
 require "cask/config"
 require "cask/download"
 require "download_queue"
@@ -77,6 +79,11 @@ module Homebrew
       def run
         Formulary.enable_factory_cache!
 
+        if enqueue_api_formula_bottles? || enqueue_api_cask_downloads?
+          download_queue.fetch
+          return
+        end
+
         bucket = if args.deps?
           args.named.to_formulae_and_casks.flat_map do |formula_or_cask|
             case formula_or_cask
@@ -98,7 +105,7 @@ module Homebrew
           case formula_or_cask
           when Formula
             formula = formula_or_cask
-            ref = formula.loaded_from_api? ? formula.full_name : formula.path
+            ref = formula.reloadable_ref
 
             os_arch_combinations.each do |os, arch|
               SimulateSystem.with(os:, arch:) do
@@ -118,11 +125,7 @@ module Homebrew
                   begin
                     formula.clear_cache if args.force?
 
-                    bottle_tag = if (bottle_tag = args.bottle_tag&.to_sym)
-                      Utils::Bottles::Tag.from_symbol(bottle_tag)
-                    else
-                      Utils::Bottles::Tag.new(system: os, arch:)
-                    end
+                    bottle_tag = Utils::Bottles::Tag.from_arg(args.bottle_tag&.to_sym, os:, arch:)
 
                     bottle = formula.bottle_for_tag(bottle_tag)
 
@@ -171,10 +174,123 @@ module Homebrew
 
       private
 
+      sig { returns(T::Boolean) }
+      def enqueue_api_formula_bottles?
+        return false unless api_fetchable?
+        return false if args.only_formula_or_cask == :cask
+        return false if args.deps? || args.HEAD?
+        return false if args.build_from_source? || args.build_bottle?
+        return false if args.bottle_tag.present?
+
+        names = api_fetch_names(
+          regex:   HOMEBREW_DEFAULT_TAP_FORMULA_REGEX,
+          capture: :name,
+          hashes:  Homebrew::API::Internal.formula_hashes,
+          aliases: Homebrew::API::Internal.formula_aliases,
+          renames: Homebrew::API::Internal.formula_renames,
+        )
+        return false if names.nil?
+
+        bottles = T.let([], T::Array[[String, Bottle]])
+        bottle_tag = Utils::Bottles.tag
+        names.each do |name|
+          formula_struct = Homebrew::API::Internal.formula_struct(name)
+          return false if formula_struct.pour_bottle?
+
+          bottle = Homebrew::API::FormulaBottle.bottle(name:, formula_struct:, bottle_tag:)
+          return false if bottle.nil?
+          return false if !args.force_bottle? && !bottle.compatible_locations?
+
+          bottles << [name, bottle]
+        end
+
+        puts "Fetching: #{names * ", "}" if names.size > 1
+        bottles.each do |name, bottle|
+          ohai "Fetching #{name} from #{CoreTap.instance}"
+          bottle.clear_cache if args.force?
+
+          if (manifest_resource = bottle.github_packages_manifest_resource)
+            download_queue.enqueue(manifest_resource)
+          end
+          download_queue.enqueue(bottle)
+        end
+        true
+      end
+
+      sig { returns(T::Boolean) }
+      def enqueue_api_cask_downloads?
+        return false unless api_fetchable?
+        return false if args.only_formula_or_cask != :cask
+
+        tokens = api_fetch_names(
+          regex:   HOMEBREW_DEFAULT_TAP_CASK_REGEX,
+          capture: :token,
+          hashes:  Homebrew::API::Internal.cask_hashes,
+          aliases: {},
+          renames: Homebrew::API::Internal.cask_renames,
+        )
+        return false if tokens.nil?
+
+        downloads = T.let([], T::Array[[String, Cask::Download]])
+        tokens.each do |token|
+          download = Homebrew::API::CaskDownload.download(
+            token:,
+            cask_struct: Homebrew::API::Internal.cask_struct(token),
+            quarantine:  true,
+            require_sha: Homebrew::EnvConfig.cask_opts_require_sha?,
+          )
+          return false if download.nil?
+
+          downloads << [token, download]
+        end
+
+        puts "Fetching: #{tokens * ", "}" if tokens.size > 1
+        downloads.each do |token, download|
+          ohai "Fetching #{token} from #{CoreCaskTap.instance}"
+          download_queue.enqueue(download)
+        end
+        true
+      end
+
+      sig { returns(T::Boolean) }
+      def api_fetchable?
+        return false if Homebrew::EnvConfig.no_install_from_api?
+        return false if args.all_platforms? || args.os.present? || args.arch.present?
+        return false if ENV["HOMEBREW_TEST_GENERIC_OS"].present?
+
+        true
+      end
+
+      sig {
+        params(
+          regex:   Regexp,
+          capture: Symbol,
+          hashes:  T::Hash[String, T::Hash[String, T.untyped]],
+          aliases: T::Hash[String, String],
+          renames: T::Hash[String, String],
+        ).returns(T.nilable(T::Array[String]))
+      }
+      def api_fetch_names(regex:, capture:, hashes:, aliases:, renames:)
+        requested_names = args.named.downcased_unique_named
+        names = T.let(requested_names.filter_map do |requested_name|
+          name = requested_name[regex, capture]
+          next if name.blank?
+
+          name = name.downcase
+          name = aliases.fetch(name, name)
+          name = renames.fetch(name, name)
+          next unless hashes.key?(name)
+
+          name
+        end, T::Array[String])
+        return if names.length != requested_names.length
+
+        names
+      end
+
       sig { params(cask: Cask::Cask).returns(T::Array[Cask::Download]) }
       def cask_downloads(cask)
-        ref = cask.loaded_from_api? ? cask.full_name : cask.sourcefile_path
-        odie "unexpected nil cask sourcefile_path" unless ref
+        ref = cask.reloadable_ref
 
         if args.all_platforms? && cask.loaded_from_api?
           opoo "Cask #{cask} was loaded from the API; cannot fetch all operating system and " \

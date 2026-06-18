@@ -11,12 +11,16 @@
 # HOMEBREW_FORCE_BREWED_CURL, HOMEBREW_FORCE_BREWED_GIT,
 # HOMEBREW_SYSTEM_CURL_TOO_OLD, HOMEBREW_USER_AGENT_CURL are set by brew.sh
 # shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/cmd.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/api.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/lock.sh"
 
 macos_version_name() {
   # NOTE: Changes to this list must match `SYMBOLS` in `macos_version.rb`.
-  if [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -ge "260000" ]]
+  if [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -ge "270000" ]]
+  then
+    echo "golden_gate"
+  elif [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -ge "260000" ]]
   then
     echo "tahoe"
   elif [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -ge "150000" ]]
@@ -420,7 +424,7 @@ fetch_api_file() {
     echo "Checking if we need to fetch ${filename}..."
   fi
 
-  local arg json_url
+  local arg json_url last_json_url
   while read -r json_url
   do
     time_cond=()
@@ -437,6 +441,7 @@ fetch_api_file() {
       --user-agent "${HOMEBREW_USER_AGENT_CURL}" \
       "${json_url}"
     curl_exit_code=$?
+    last_json_url="${json_url}"
     [[ ${curl_exit_code} -eq 0 ]] && break
   done < <(api_urls "${filename}")
 
@@ -469,7 +474,7 @@ fetch_api_file() {
       fi
     fi
   else
-    echo "Failed to download ${json_url}!" >>"${update_failed_file}"
+    echo "Failed to download ${last_json_url}!" >>"${update_failed_file}"
   fi
 }
 
@@ -481,14 +486,16 @@ homebrew-update() {
 
   for option in "$@"
   do
+    if homebrew-command-help update "${option}"
+    then
+      exit $?
+    fi
+    if homebrew-command-common-option "${option}"
+    then
+      continue
+    fi
+
     case "${option}" in
-      -\? | -h | --help | --usage)
-        brew help update
-        exit $?
-        ;;
-      --verbose) HOMEBREW_VERBOSE=1 ;;
-      --debug) HOMEBREW_DEBUG=1 ;;
-      --quiet) HOMEBREW_QUIET=1 ;;
       --merge)
         shift
         HOMEBREW_MERGE=1
@@ -505,9 +512,7 @@ homebrew-update() {
         exit 1
         ;;
       -*)
-        [[ "${option}" == *v* ]] && HOMEBREW_VERBOSE=1
-        [[ "${option}" == *q* ]] && HOMEBREW_QUIET=1
-        [[ "${option}" == *d* ]] && HOMEBREW_DEBUG=1
+        homebrew-command-common-short-options "${option}"
         [[ "${option}" == *f* ]] && HOMEBREW_UPDATE_FORCE=1
         ;;
       *)
@@ -517,10 +522,7 @@ homebrew-update() {
     esac
   done
 
-  if [[ -n "${HOMEBREW_DEBUG}" ]]
-  then
-    set -x
-  fi
+  homebrew-command-enable-debug
 
   if [[ -z "${HOMEBREW_UPDATE_TO_TAG}" ]]
   then
@@ -696,8 +698,10 @@ EOS
 
   local update_failed_file="${HOMEBREW_REPOSITORY}/.git/UPDATE_FAILED"
   local missing_remote_ref_dirs_file="${HOMEBREW_REPOSITORY}/.git/FAILED_FETCH_DIRS"
+  local redirected_remotes_file="${HOMEBREW_REPOSITORY}/.git/REDIRECTED_REMOTES"
   rm -f "${update_failed_file}"
   rm -f "${missing_remote_ref_dirs_file}"
+  rm -f "${redirected_remotes_file}"
 
   for DIR in "${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*
   do
@@ -804,7 +808,8 @@ EOS
         declare UPSTREAM_BRANCH"${TAP_VAR}"="main"
       fi
 
-      if [[ -n "${UPSTREAM_REPOSITORY}" ]]
+      if [[ -n "${UPSTREAM_REPOSITORY}" ]] &&
+         [[ -z "${HOMEBREW_UPDATE_FORCE}" || "${DIR}" == "${HOMEBREW_LIBRARY}"/Taps/*/* ]]
       then
         # UPSTREAM_REPOSITORY_TOKEN is parsed (if exists) from UPSTREAM_REPOSITORY_URL
         # HOMEBREW_GITHUB_API_TOKEN is optionally defined in the user environment.
@@ -834,25 +839,58 @@ EOS
           GITHUB_API_ENDPOINT="commits/${UPSTREAM_BRANCH_DIR}"
         fi
 
+        local upstream_api_url="https://api.github.com/repos/${UPSTREAM_REPOSITORY}/${GITHUB_API_ENDPOINT}"
+
         # HOMEBREW_CURL is set by brew.sh (and isn't misspelt here)
         # shellcheck disable=SC2153
-        UPSTREAM_SHA_HTTP_CODE="$(
+        UPSTREAM_SHA_HTTP_RESPONSE="$(
           curl \
             "${CURL_DISABLE_CURLRC_ARGS[@]}" \
             "${CURL_GITHUB_API_ARGS[@]}" \
             --silent --max-time 3 \
-            --location --no-remote-time --output /dev/null --write-out "%{http_code}" \
+            --location --no-remote-time --output /dev/null --write-out "%{http_code} %{url_effective}" \
             --dump-header "${DIR}/.git/GITHUB_HEADERS" \
             --user-agent "${HOMEBREW_USER_AGENT_CURL}" \
             --header "X-GitHub-Api-Version:2022-11-28" \
             --header "Accept: ${GITHUB_API_ACCEPT}" \
             --header "If-None-Match: \"${GITHUB_API_ETAG}\"" \
-            "https://api.github.com/repos/${UPSTREAM_REPOSITORY}/${GITHUB_API_ENDPOINT}"
+            "${upstream_api_url}"
         )"
+        UPSTREAM_SHA_HTTP_CODE="${UPSTREAM_SHA_HTTP_RESPONSE%% *}"
+        UPSTREAM_SHA_HTTP_EFFECTIVE_URL="${UPSTREAM_SHA_HTTP_RESPONSE#* }"
+
+        if [[ "${DIR}" == "${HOMEBREW_LIBRARY}"/Taps/*/* ]] &&
+           [[ -n "${UPSTREAM_SHA_HTTP_EFFECTIVE_URL}" ]] &&
+           [[ "${UPSTREAM_SHA_HTTP_EFFECTIVE_URL}" != "${upstream_api_url}" ]]
+        then
+          redirected_remote="$(
+            curl \
+              "${CURL_DISABLE_CURLRC_ARGS[@]}" \
+              "${CURL_GITHUB_API_ARGS[@]}" \
+              --silent --max-time 3 \
+              --location --no-remote-time \
+              --user-agent "${HOMEBREW_USER_AGENT_CURL}" \
+              --header "X-GitHub-Api-Version:2022-11-28" \
+              --header "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${UPSTREAM_REPOSITORY}" |
+              sed -n 's/^[[:space:]]*"clone_url": "\(.*\)",$/\1/p' |
+              head -n1
+          )"
+          if [[ -n "${redirected_remote}" ]]
+          then
+            printf "%s\t%s\n" "${DIR}" "${redirected_remote}" >>"${redirected_remotes_file}"
+          fi
+        fi
 
         # Touch FETCH_HEAD to confirm we've checked for an update.
         [[ -f "${DIR}/.git/FETCH_HEAD" ]] && touch "${DIR}/.git/FETCH_HEAD"
-        [[ -z "${HOMEBREW_UPDATE_FORCE}" ]] && [[ "${UPSTREAM_SHA_HTTP_CODE}" == "304" ]] && exit
+        if [[ -z "${HOMEBREW_UPDATE_FORCE}" ]] &&
+           [[ "${UPSTREAM_SHA_HTTP_CODE}" == "304" ]] &&
+           [[ "${DIR}" != "${HOMEBREW_LIBRARY}"/Taps/*/* ||
+              "${UPSTREAM_SHA_HTTP_EFFECTIVE_URL}" == "${upstream_api_url}" ]]
+        then
+          exit
+        fi
       fi
 
       # HOMEBREW_VERBOSE isn't modified here so ignore subshell warning.
@@ -913,6 +951,14 @@ EOS
             echo "${DIR}" >>"${missing_remote_ref_dirs_file}"
           fi
         fi
+      elif [[ "${DIR}" == "${HOMEBREW_LIBRARY}"/Taps/*/* ]] &&
+           [[ -s "${tmp_failure_file}" ]]
+      then
+        redirected_remote="$(sed -n 's/.*redirecting to //p' "${tmp_failure_file}" | tail -n1)"
+        if [[ -n "${redirected_remote}" ]]
+        then
+          printf "%s\t%s\n" "${DIR}" "${redirected_remote}" >>"${redirected_remotes_file}"
+        fi
       fi
 
       if [[ -n "${MAIN_MIGRATION_REQUIRED}" ]]
@@ -932,6 +978,11 @@ EOS
     HOMEBREW_MISSING_REMOTE_REF_DIRS="$(cat "${missing_remote_ref_dirs_file}")"
     rm -f "${missing_remote_ref_dirs_file}"
     export HOMEBREW_MISSING_REMOTE_REF_DIRS
+  fi
+
+  if [[ -f "${redirected_remotes_file}" ]]
+  then
+    export HOMEBREW_REDIRECTED_REMOTES_FILE="${redirected_remotes_file}"
   fi
 
   for DIR in "${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*
@@ -1026,6 +1077,7 @@ EOS
   if [[ -n "${HOMEBREW_UPDATED}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FAILED}" ]] ||
      [[ -n "${HOMEBREW_MISSING_REMOTE_REF_DIRS}" ]] ||
+     [[ -n "${HOMEBREW_REDIRECTED_REMOTES_FILE}" ]] ||
      [[ -n "${HOMEBREW_UPDATE_FORCE}" ]] ||
      [[ -d "${HOMEBREW_LIBRARY}/LinkedKegs" ]] ||
      [[ ! -f "${HOMEBREW_CACHE}/all_commands_list.txt" ]] ||

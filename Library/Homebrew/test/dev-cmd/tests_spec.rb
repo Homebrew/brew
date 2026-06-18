@@ -62,8 +62,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
       let(:changed_file) { "Library/Homebrew/test/cmd/help_spec.rb\n" }
 
       before do
-        allow(Utils).to receive(:popen_read).with("git", "diff", "--name-only", "main")
-                                            .and_return(changed_file)
+        allow(Utils::Git).to receive(:changed_files).and_return(changed_file.split("\n"))
       end
 
       it "includes the changed spec file" do
@@ -75,8 +74,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
       let(:changed_file) { "Library/Homebrew/cmd/help.rb\n" }
 
       before do
-        allow(Utils).to receive(:popen_read).with("git", "diff", "--name-only", "main")
-                                            .and_return(changed_file)
+        allow(Utils::Git).to receive(:changed_files).and_return(changed_file.split("\n"))
       end
 
       it "maps the file to its corresponding spec" do
@@ -90,8 +88,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
       end
 
       before do
-        allow(Utils).to receive(:popen_read).with("git", "diff", "--name-only", "main")
-                                            .and_return(changed_file)
+        allow(Utils::Git).to receive(:changed_files).and_return(changed_file.split("\n"))
       end
 
       it "includes integration tests and excludes unrelated tests", :aggregate_failures do
@@ -106,8 +103,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
       end
 
       before do
-        allow(Utils).to receive(:popen_read).with("git", "diff", "--name-only", "main")
-                                            .and_return(changed_file)
+        allow(Utils::Git).to receive(:changed_files).and_return(changed_file.split("\n"))
       end
 
       it "includes cask tests and excludes non-cask tests", :aggregate_failures do

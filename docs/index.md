@@ -1,12 +1,13 @@
 ---
-last_review_date: "2026-04-25"
+last_review_date: "2026-06-08"
 ---
 
-# Documentation
+Start with [installation](Installation.md),
+[`man brew`](Manpage.md),
+[troubleshooting](Troubleshooting.md) and
+[FAQ (Frequently Asked Questions)](FAQ.md) guides if you are new to Homebrew.
 
-Start with the `brew` manual, installation, troubleshooting and FAQ (Frequently
-Asked Questions) guides if you are using Homebrew. Formulae, cask and tap
-documentation is grouped below for contributors and maintainers.
+Documentation is grouped below by audience: users, contributors, maintainers and those interested in Homebrew's governance.
 
 ## Users
 
@@ -26,6 +27,7 @@ documentation is grouped below for contributors and maintainers.
 - [Bottles (binary packages)](Bottles.md)
 - [Taps (third-party repositories)](Taps.md)
 - [Trusting Taps](Tap-Trust.md)
+- [Software Supply Chain Security](Supply-Chain-Security.md)
 - [Interesting Taps and Forks](Interesting-Taps-and-Forks.md)
 - [Tips and Tricks](Tips-and-Tricks.md)
 - [Anonymous Analytics](Analytics.md)
@@ -50,6 +52,7 @@ documentation is grouped below for contributors and maintainers.
 ## Contributors
 
 - [How to Open a Pull Request (and get it merged)](How-To-Open-a-Homebrew-Pull-Request.md)
+- [Responsible AI Usage](Responsible-AI-Usage.md)
 - [Working with Homebrew as an Upstream Project](Working-with-Homebrew-as-an-Upstream-Project.md)
 - [Formula Cookbook](Formula-Cookbook.md)
 - [Cask Cookbook](Cask-Cookbook.md)
@@ -71,7 +74,7 @@ documentation is grouped below for contributors and maintainers.
 - [Type Checking with Sorbet](Typechecking.md)
 - [Reproducible Builds](Reproducible-Builds.md)
 
-- [Ruby API Documentation](/rubydoc/index.html) (e.g. for `Formula` etc.)
+- [Ruby API Documentation](/rubydoc/index.html) (e.g. for `Formula`, `Cask` etc.)
 
 ## Maintainers
 

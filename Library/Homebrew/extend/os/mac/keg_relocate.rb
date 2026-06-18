@@ -228,10 +228,8 @@ module OS
         relocation = super
 
         brewed_perl = runtime_dependencies&.any? do |dep|
-          T.cast(dep,
-                 T::Hash[String,
-                         T.untyped])["full_name"] == "perl" && T.cast(dep,
-                                                                      T::Hash[String, T.untyped])["declared_directly"]
+          dep = T.cast(dep, T::Hash[String, T.untyped])
+          dep["full_name"] == "perl" && dep["declared_directly"]
         end
         perl_path = if brewed_perl || name == "perl"
           "#{HOMEBREW_PREFIX}/opt/perl/bin/perl"

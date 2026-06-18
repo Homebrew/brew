@@ -10,7 +10,7 @@ RSpec.describe Cask::Artifact::App, :cask do
   let(:app) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
   let(:source_path) { cask.staged_path.join("Caffeine.app") }
-  let(:target_path) { cask.config.appdir.join("Caffeine.app") }
+  let(:target_path) { Pathname(cask.config.appdir).join("Caffeine.app") }
 
   let(:install_phase) { app.install_phase(command:, adopt:, force:, auto_updates:) }
   let(:uninstall_phase) { app.uninstall_phase(command:, force:) }
@@ -60,7 +60,7 @@ RSpec.describe Cask::Artifact::App, :cask do
       expect(target_path).to be_a_directory
       expect(source_path).to be_a_symlink
 
-      expect(cask.config.appdir.join("Caffeine Deluxe.app")).not_to exist
+      expect(Pathname(cask.config.appdir).join("Caffeine Deluxe.app")).not_to exist
       expect(cask.staged_path.join("Caffeine Deluxe.app")).to exist
     end
 

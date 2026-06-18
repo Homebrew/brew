@@ -29,23 +29,27 @@ RSpec.describe Utils::TopologicalHash do
   describe "::graph_package_dependencies" do
     it "returns a topological hash" do
       formula1 = formula "homebrew-test-formula1" do
+        T.bind(self, T.class_of(Formula))
         url "foo"
         version "0.5"
       end
 
       formula2 = formula "homebrew-test-formula2" do
+        T.bind(self, T.class_of(Formula))
         url "foo"
         version "0.5"
         depends_on "homebrew-test-formula1"
       end
 
       formula3 = formula "homebrew-test-formula3" do
+        T.bind(self, T.class_of(Formula))
         url "foo"
         version "0.5"
         depends_on "homebrew-test-formula4"
       end
 
       formula4 = formula "homebrew-test-formula4" do
+        T.bind(self, T.class_of(Formula))
         url "foo"
         version "0.5"
         depends_on "homebrew-test-formula3"

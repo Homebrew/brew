@@ -163,13 +163,6 @@ RSpec.describe Sandbox, :needs_linux do
       with_env(GITHUB_ACTIONS: nil, HOMEBREW_GITHUB_HOSTED_RUNNER: nil) { example.run }
     end
 
-    def expect_sandbox_configuration_command(sandbox_class, assignment, result:)
-      command = ["sudo", "sysctl", "-w", assignment]
-
-      expect(sandbox_class).to receive(:puts).with("  #{command.join(" ")}").ordered
-      expect(sandbox_class).to receive(:system).with(*command).and_return(result).ordered
-    end
-
     it "lists Linux sandbox sysctl commands" do
       expect(sandbox_class.configuration_commands).to eq([
         "sudo sysctl -w kernel.unprivileged_userns_clone=1",
@@ -180,12 +173,11 @@ RSpec.describe Sandbox, :needs_linux do
 
     it "uses system Bubblewrap when configuring Linux sandbox sysctls" do
       allow(sandbox_class).to receive(:bubblewrap_executable).and_return(Pathname("/usr/bin/bwrap"))
+      allow(Process).to receive(:euid).and_return(1000)
       expect(sandbox_class).not_to receive(:ensure_sandbox_installed!)
       expect(sandbox_class).to receive(:ohai).with("Configuring Bubblewrap...").ordered
-      expect_sandbox_configuration_command(sandbox_class, "kernel.unprivileged_userns_clone=1", result: true)
-      expect_sandbox_configuration_command(sandbox_class, "user.max_user_namespaces=28633", result: true)
-      expect_sandbox_configuration_command(sandbox_class, "kernel.apparmor_restrict_unprivileged_userns=0",
-                                           result: false)
+      expect(sandbox_class).to receive(:system)
+        .with("sudo", HOMEBREW_BREW_FILE, "setup-sandbox").and_return(true).ordered
 
       sandbox_class.configure!
     end
@@ -199,19 +191,43 @@ RSpec.describe Sandbox, :needs_linux do
       sandbox_class.configure!
     end
 
-    it "installs Bubblewrap and configures Linux sandbox sysctls" do
+    it "installs Bubblewrap and configures Linux sandbox sysctls as root" do
       expect(sandbox_class).to receive(:bubblewrap_executable)
         .twice
         .and_return(nil, Pathname(HOMEBREW_PREFIX/"bin/bwrap"))
+      allow(Process).to receive(:euid).and_return(0)
       expect(sandbox_class).to receive(:ensure_sandbox_installed!)
         .with(install_from_tests: true)
       expect(sandbox_class).to receive(:ohai).with("Configuring Bubblewrap...").ordered
-      expect_sandbox_configuration_command(sandbox_class, "kernel.unprivileged_userns_clone=1", result: true)
-      expect_sandbox_configuration_command(sandbox_class, "user.max_user_namespaces=28633", result: true)
-      expect_sandbox_configuration_command(sandbox_class, "kernel.apparmor_restrict_unprivileged_userns=0",
-                                           result: false)
+      expect(sandbox_class).to receive(:system)
+        .with(HOMEBREW_BREW_FILE, "setup-sandbox").and_return(true).ordered
 
       sandbox_class.configure!
+    end
+
+    it "raises when configuring Linux sandbox sysctls fails" do
+      allow(sandbox_class).to receive(:bubblewrap_executable).and_return(Pathname("/usr/bin/bwrap"))
+      allow(Process).to receive(:euid).and_return(0)
+      allow(sandbox_class).to receive(:ohai)
+      expect(sandbox_class).to receive(:system)
+        .with(HOMEBREW_BREW_FILE, "setup-sandbox").and_return(false)
+
+      expect { sandbox_class.configure! }.to raise_error(ErrorDuringExecution)
+    end
+  end
+
+  describe "::sandbox_install_command" do
+    let(:sandbox_class) { Class.new(described_class) }
+
+    it "returns the distro-specific install command for the detected package manager" do
+      allow(sandbox_class).to receive(:which).with("apt-get").and_return(nil)
+      allow(sandbox_class).to receive(:which).with("dnf").and_return(Pathname("/usr/bin/dnf"))
+      expect(sandbox_class.sandbox_install_command).to eq("sudo dnf install bubblewrap")
+    end
+
+    it "returns nil when no known package manager is found" do
+      allow(sandbox_class).to receive(:which).and_return(nil)
+      expect(sandbox_class.sandbox_install_command).to be_nil
     end
   end
 

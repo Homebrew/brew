@@ -107,6 +107,14 @@ RSpec.describe Utils::Shell do
     end
   end
 
+  describe "::set_variable_in_profile" do
+    it "supports mksh" do
+      ENV["SHELL"] = "/bin/mksh"
+      expect(described_class.set_variable_in_profile("HOMEBREW_FOO", "bar"))
+        .to eq("echo 'export HOMEBREW_FOO=bar' >> #{described_class.profile}")
+    end
+  end
+
   describe "::shell_with_prompt" do
     let(:home) { HOMEBREW_TEMP }
     let(:notice) { "" }

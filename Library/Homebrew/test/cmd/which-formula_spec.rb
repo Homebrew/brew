@@ -88,6 +88,30 @@ RSpec.describe Homebrew::Cmd::WhichFormula do
           HOMEBREW_NO_EMOJI=1 check "non-emoji output" 0 $'foo\\n' "" homebrew-which-formula foo2
           check "missing executable" 1 "" "" homebrew-which-formula bar
 
+          long_verbose_option() {
+            unset HOMEBREW_VERBOSE
+            homebrew-which-formula --verbose bar
+            local status="$?"
+            [[ -n "${HOMEBREW_VERBOSE}" ]] || {
+              echo "long verbose option: HOMEBREW_VERBOSE was not set" >&2
+              return 2
+            }
+            return "${status}"
+          }
+          check "long verbose option" 1 "" "" long_verbose_option
+
+          short_verbose_option() {
+            unset HOMEBREW_VERBOSE
+            homebrew-which-formula -v bar
+            local status="$?"
+            [[ -n "${HOMEBREW_VERBOSE}" ]] || {
+              echo "short verbose option: HOMEBREW_VERBOSE was not set" >&2
+              return 2
+            }
+            return "${status}"
+          }
+          check "short verbose option" 1 "" "" short_verbose_option
+
           rm -f "$(executables_txt_cache_file)"
           HOMEBREW_NO_INSTALL_FROM_API=1 check "disabled API without database" 1 "" \\
             $'Error: HOMEBREW_NO_INSTALL_FROM_API must be unset to use `brew which-formula` or `brew exec`.\\n' \\

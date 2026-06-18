@@ -38,7 +38,12 @@ RSpec.describe Tab do
   let(:unused_options) { Options.create(%w[--with-baz --without-qux]) }
   let(:used_options) { Options.create(%w[--with-foo --without-bar]) }
   let(:git_repo) { HOMEBREW_CACHE/"tab-spec-git-repo" }
-  let(:f) { formula { url "foo-1.0" } }
+  let(:f) do
+    formula do
+      T.bind(self, T.class_of(Formula))
+      url "foo-1.0"
+    end
+  end
   let(:f_tab_path) { f.prefix/"INSTALL_RECEIPT.json" }
   let(:f_tab_content) { (TEST_FIXTURE_DIR/"receipt.json").read }
 
@@ -184,7 +189,10 @@ RSpec.describe Tab do
   describe "::runtime_deps_hash" do
     it "handles older Homebrew versions correctly" do
       runtime_deps = [Dependency.new("foo")]
-      foo = formula("foo") { url "foo-1.0" }
+      foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
       stub_formula_loader foo
       runtime_deps_hash = described_class.runtime_deps_hash(foo, runtime_deps)
       tab = described_class.new
@@ -197,7 +205,10 @@ RSpec.describe Tab do
     end
 
     it "include declared dependencies" do
-      foo = formula("foo") { url "foo-1.0" }
+      foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
       stub_formula_loader foo
 
       runtime_deps = [Dependency.new("foo")]
@@ -216,8 +227,14 @@ RSpec.describe Tab do
     end
 
     it "includes recursive dependencies" do
-      foo = formula("foo") { url "foo-1.0" }
-      bar = formula("bar") { url "bar-2.0" }
+      foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
+      bar = formula("bar") do
+        T.bind(self, T.class_of(Formula))
+        url "bar-2.0"
+      end
       stub_formula_loader foo
       stub_formula_loader bar
 
@@ -247,6 +264,7 @@ RSpec.describe Tab do
 
     it "includes compatibility_version when set" do
       foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
         compatibility_version 1
       end
@@ -367,6 +385,7 @@ RSpec.describe Tab do
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
       f = formula do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
         depends_on "bar"
         depends_on "user/repo/from_tap"
@@ -375,13 +394,24 @@ RSpec.describe Tab do
 
       tap = Tap.fetch("user", "repo")
       from_tap = formula("from_tap", path: tap.path/"Formula/from_tap.rb") do
+        T.bind(self, T.class_of(Formula))
         url "from_tap-1.0"
         revision 1
       end
       stub_formula_loader from_tap
 
-      stub_formula_loader formula("bar") { url "bar-2.0" }
-      stub_formula_loader formula("baz") { url "baz-3.0" }
+      stub_formula_loader(
+        formula("bar") do
+          T.bind(self, T.class_of(Formula))
+          url "bar-2.0"
+        end,
+      )
+      stub_formula_loader(
+        formula("baz") do
+          T.bind(self, T.class_of(Formula))
+          url "baz-3.0"
+        end,
+      )
 
       compiler = DevelopmentTools.default_compiler
       stdlib = :libcxx
@@ -401,7 +431,10 @@ RSpec.describe Tab do
 
     it "can create a formula Tab from an alias" do
       alias_path = CoreTap.instance.alias_dir/"bar"
-      f = formula(alias_path:) { url "foo-1.0" }
+      f = formula(alias_path:) do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
       compiler = DevelopmentTools.default_compiler
       stdlib = :libcxx
       tab = described_class.create(f, compiler, stdlib)
@@ -415,6 +448,7 @@ RSpec.describe Tab do
       commit = git_repo.cd { Utils.popen_read("git", "rev-parse", "HEAD").chomp }
       repo = git_repo
       f = formula("tab-spec-git") do
+        T.bind(self, T.class_of(Formula))
         url "file://#{repo}", using: :git, branch: "master"
         version "1.0"
       end
@@ -451,7 +485,10 @@ RSpec.describe Tab do
 
     it "can create a Tab for for a Formula from an alias" do
       alias_path = CoreTap.instance.alias_dir/"bar"
-      f = formula(alias_path:) { url "foo-1.0" }
+      f = formula(alias_path:) do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
 
       tab = described_class.for_formula(f)
       expect(tab.source["path"]).to eq(alias_path.to_s)
@@ -476,7 +513,10 @@ RSpec.describe Tab do
       f.prefix.mkpath
       f_tab_path.write f_tab_content
 
-      f2 = formula { url "foo-2.0" }
+      f2 = formula do
+        T.bind(self, T.class_of(Formula))
+        url "foo-2.0"
+      end
       f2.prefix.mkpath
 
       expect(f2.rack).to eq(f.rack)
@@ -490,7 +530,10 @@ RSpec.describe Tab do
       f.prefix.mkpath
       f_tab_path.write f_tab_content
 
-      f2 = formula { url "foo-2.0" }
+      f2 = formula do
+        T.bind(self, T.class_of(Formula))
+        url "foo-2.0"
+      end
 
       expect(f2.rack).to eq(f.rack)
       expect(f.installed_prefixes.length).to eq(1)

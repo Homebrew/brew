@@ -30,6 +30,7 @@ module Test
           :no_cleanup_vscode?,
           :no_cleanup_winget?,
           :describe?,
+          :no_describe?,
           :no_dump_brew?,
           :no_dump_cargo?,
           :no_dump_cask?,

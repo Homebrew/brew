@@ -455,6 +455,127 @@ module RuboCop
         EOS
       end
 
+      # This cop makes sure that Java versions are consistent.
+      class JavaVersions < FormulaCop
+        extend AutoCorrector
+
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          return if formula_tap != "homebrew-core"
+          return if (body_node = formula_nodes.body_node).nil?
+
+          openjdk_dependency_matches = find_every_method_call_by_name(body_node, :depends_on).filter_map do |method|
+            dep = parameters(method).first
+            dep = dep.keys.first if dep.is_a?(RuboCop::AST::HashNode)
+            string_content(dep).match(/^openjdk(?:@(\d+(?:\.\d+)*))?$/)
+          end
+
+          # Only handle single OpenJDK dependency scenario
+          return if openjdk_dependency_matches.count != 1
+
+          openjdk_dependency_match = openjdk_dependency_matches.fetch(0)
+          openjdk_version = openjdk_dependency_match[1]
+          openjdk_version = "1.8" if openjdk_version == "8"
+          message = "Java version argument should match the specified dependency (`#{openjdk_dependency_match[0]}`)"
+          variables = []
+
+          # e.g. Language::Java.overridable_java_home_env("25")
+          java_home_method_call(body_node) do |java_home_node, method, args|
+            java_version_node = args.first
+            java_version = nil
+
+            case java_version_node
+            when nil
+              java_version = nil
+            when RuboCop::AST::StrNode
+              java_version = string_content(java_version_node)
+            when RuboCop::AST::VarNode
+              variables << java_version_node.name
+              next
+            else
+              next unless java_version_node.nil_type?
+
+              if openjdk_version.nil?
+                offending_node(java_version_node)
+                problem "Argument is unnecessary when using unversioned OpenJDK" do |corrector|
+                  corrector.replace(java_home_node.source_range, "Language::Java.#{method}")
+                end
+              end
+            end
+            next if java_version == openjdk_version
+
+            correct = "Language::Java.#{method}"
+            correct += "(\"#{openjdk_version}\")" if openjdk_version
+            offending_node(java_version_node || java_home_node)
+            problem message do |corrector|
+              corrector.replace(java_home_node.source_range, correct)
+            end
+          end
+
+          # e.g. bin.write_jar_script libexec/"<name>.jar", "<name>", java_version: "25"
+          find_instance_method_call(body_node, :bin, :write_jar_script) do |method|
+            params = parameters(method)
+            next unless (last_param = params.last)
+
+            java_version = nil
+            java_version_node = nil
+            if last_param.is_a?(RuboCop::AST::HashNode)
+              java_version_arg_node = last_param.pairs.find { |pair| pair.key.value == :java_version }
+              java_version_node = java_version_arg_node&.value
+
+              case java_version_node
+              when nil
+                java_version = nil
+              when RuboCop::AST::StrNode
+                java_version = string_content(java_version_node)
+              when RuboCop::AST::VarNode
+                variables << java_version_node.name
+                next
+              else
+                next unless java_version_node.nil_type?
+              end
+            end
+            next if openjdk_version == java_version
+
+            offending_node(java_version_node || method)
+            problem message do |corrector|
+              if java_version_node.nil?
+                corrector.insert_after(last_param.source_range, ", java_version: \"#{openjdk_version}\"")
+              elsif openjdk_version.nil?
+                range = range_with_surrounding_space(range: last_param.source_range, side: :left)
+                corrector.remove(range_with_surrounding_comma(range, :left))
+              else
+                corrector.replace(java_version_node.source_range, "\"#{openjdk_version}\"")
+              end
+            end
+          end
+
+          # e.g. java_version = "25"; Language::Java.overridable_java_home_env(java_version)
+          variables.uniq!
+          variables.each do |variable|
+            java_version_assignment(body_node, variable:) do |java_version_node|
+              java_version = nil
+              java_version = string_content(java_version_node) if java_version_node.str_type?
+              next if java_version == openjdk_version
+
+              correct = openjdk_version ? "\"#{openjdk_version}\"" : "nil"
+              offending_node(java_version_node)
+              problem message do |corrector|
+                corrector.replace(java_version_node.source_range, correct)
+              end
+            end
+          end
+        end
+
+        def_node_search :java_home_method_call, <<~PATTERN
+          $(send (const (const nil? :Language) :Java) ${:java_home :java_home_env :overridable_java_home_env} $...)
+        PATTERN
+
+        def_node_search :java_version_assignment, <<~PATTERN
+          (lvasgn %variable ${nil | str})
+        PATTERN
+      end
+
       # This cop makes sure that Python versions are consistent.
       class PythonVersions < FormulaCop
         extend AutoCorrector

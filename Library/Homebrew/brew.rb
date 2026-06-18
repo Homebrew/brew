@@ -89,8 +89,15 @@ begin
   # - no arguments are passed
   if empty_argv || help_flag
     require "help"
+    # `Homebrew::Help.help` may defer to a self-documenting external command's own
+    # `--help` (e.g. `brew help <cmd>`). Pass `--help`, not the Homebrew help flag
+    # that triggered this (`-h`, `--usage`, `-?`), which the command may not know.
+    if external_cmd_path
+      ARGV.reject! { |arg| help_flag_list.include?(arg) }
+      ARGV.push("--help")
+    end
     Homebrew::Help.help cmd, remaining_args: args.remaining, empty_argv:
-    # `Homebrew::Help.help` never returns, except for unknown commands.
+    # `Homebrew::Help.help` never returns, except for unknown and deferred commands.
   end
 
   if cmd.nil?
@@ -132,9 +139,8 @@ begin
     Homebrew.require?(external_ruby_cmd_path)
     exit Homebrew.failed? ? 1 : 0
   elsif external_cmd_path
-    %w[CACHE LIBRARY_PATH].each do |env|
-      ENV["HOMEBREW_#{env}"] = Object.const_get(:"HOMEBREW_#{env}").to_s
-    end
+    ENV["HOMEBREW_CACHE"] = HOMEBREW_CACHE.to_s
+    ENV["HOMEBREW_LIBRARY_PATH"] = HOMEBREW_LIBRARY_PATH.to_s
     exec external_cmd_path.to_s, *ARGV
   else
     raise UsageError, "Unknown command: brew #{cmd}"

@@ -1,6 +1,6 @@
 ---
 name: sorbet-runtime
-version: 0.6.13261
+version: 0.6.13284
 type: bundler
 summary: Sorbet runtime
 homepage: https://sorbet.org

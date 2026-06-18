@@ -27,6 +27,12 @@ class CoreTap < AbstractCoreTap
     Homebrew::EnvConfig.core_git_remote
   end
 
+  # The configured `HOMEBREW_CORE_GIT_REMOTE` is the official remote for this tap.
+  sig { override.params(remote: T.nilable(String)).returns(T::Boolean) }
+  def canonical_remote?(remote = self.remote)
+    remote.blank? || self.class.same_remote?(remote, Homebrew::EnvConfig.core_git_remote)
+  end
+
   # CoreTap never allows shallow clones (on request from GitHub).
   sig {
     override.params(quiet: T::Boolean, clone_target: T.nilable(T.any(Pathname, String)),

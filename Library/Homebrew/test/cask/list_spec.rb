@@ -114,9 +114,9 @@ RSpec.describe Cask::List, :cask do
         described_class.list_casks(transmission, caffeine)
       end.to output(<<~EOS).to_stdout
         ==> App
-        #{transmission.config.appdir.join("Transmission.app")} (#{transmission.config.appdir.join("Transmission.app").abv})
+        #{Pathname(transmission.config.appdir).join("Transmission.app")} (#{Pathname(transmission.config.appdir).join("Transmission.app").abv})
         ==> App
-        Missing App: #{caffeine.config.appdir.join("Caffeine.app")}
+        Missing App: #{Pathname(caffeine.config.appdir).join("Caffeine.app")}
       EOS
     end
   end

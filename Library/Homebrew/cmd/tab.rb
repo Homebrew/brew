@@ -42,15 +42,15 @@ module Homebrew
         raise UsageError, "No marking option specified." if installed_on_request.nil?
 
         formulae, casks = T.cast(args.named.to_formulae_to_casks, [T::Array[Formula], T::Array[Cask::Cask]])
-        formulae_not_installed = formulae.reject(&:any_version_installed?)
-        casks_not_installed = casks.reject(&:installed?)
-        if formulae_not_installed.any? || casks_not_installed.any?
-          names = formulae_not_installed.map(&:name) + casks_not_installed.map(&:token)
+        packages = formulae + casks
+        not_installed = packages.reject(&:any_version_installed?)
+        if not_installed.any?
+          names = not_installed.map(&:to_s)
           is_or_are = (names.length == 1) ? "is" : "are"
           odie "#{names.to_sentence} #{is_or_are} not installed."
         end
 
-        [*formulae, *casks].each do |formula_or_cask|
+        packages.each do |formula_or_cask|
           update_tab formula_or_cask, installed_on_request:
         end
       end

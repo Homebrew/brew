@@ -11,10 +11,13 @@ module Homebrew
     class Cask < Homebrew::Bundle::PackageType
       extend ::Utils::Output::Mixin
 
-      PACKAGE_TYPE = :cask
-      PACKAGE_TYPE_NAME = "Cask"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :cask
+
+        sig { override.returns(String) }
+        def check_label = "Cask"
+
         sig { override.void }
         def reset!
           @casks = T.let(nil, T.nilable(T::Array[::Cask::Cask]))
@@ -95,7 +98,11 @@ module Homebrew
         def install!(name, preinstall: true, no_upgrade: false, verbose: false, force: false, **options)
           return true unless preinstall
 
-          full_name = options.fetch(:full_name, name)
+          full_name = T.cast(options.fetch(:full_name, name), String)
+
+          # Only fully-qualified names map to a tap, so unqualified tokens
+          # cannot be meaningfully trusted.
+          Homebrew::Trust.trust!(:cask, full_name) if options[:trusted] && Utils.full_name?(full_name)
 
           install_result = if cask_installed?(name) && upgrading?(no_upgrade, name, options)
             status = "#{options[:greedy] ? "may not be" : "not"} up-to-date"

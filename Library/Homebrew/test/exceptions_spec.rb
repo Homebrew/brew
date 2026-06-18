@@ -117,7 +117,10 @@ RSpec.describe "Exception" do
     end
 
     context "when the class is not derived from Formula" do
+      # The constant lives on the dynamically built test module.
+      # rubocop:disable Sorbet/ConstantsFromStrings
       let(:list) { [mod.const_get(:Bar)] }
+      # rubocop:enable Sorbet/ConstantsFromStrings
 
       it(:to_s) do
         expect(error.to_s).to match(/Expected to find class Foo, but only found: Bar \(not derived from Formula!\)\./)
@@ -125,7 +128,10 @@ RSpec.describe "Exception" do
     end
 
     context "when the class is derived from Formula" do
+      # The constant lives on the dynamically built test module.
+      # rubocop:disable Sorbet/ConstantsFromStrings
       let(:list) { [mod.const_get(:Baz)] }
+      # rubocop:enable Sorbet/ConstantsFromStrings
 
       it(:to_s) { expect(error.to_s).to match(/Expected to find class Foo, but only found: Baz\./) }
     end

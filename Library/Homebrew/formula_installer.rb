@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "formula"
+require "api/formula_bottle"
 require "keg"
 require "tab"
 require "utils/bottles"
@@ -140,6 +141,8 @@ class FormulaInstaller
     @show_summary_heading = T.let(false, T::Boolean)
     @etc_var_preinstall = T.let([], T::Array[Pathname])
     @download_queue = T.let(Homebrew.default_download_queue, Homebrew::DownloadQueue)
+    @api_bottle = T.let(nil, T.nilable(Bottle))
+    @api_bottle_loaded = T.let(false, T::Boolean)
 
     # Take the original formula instance, which might have been swapped from an API instance to a source instance
     @formula = T.let(T.must(previously_fetched_formula), Formula) if previously_fetched_formula
@@ -267,7 +270,7 @@ class FormulaInstaller
 
     return true if formula.local_bottle_path.present?
 
-    bottle = formula.bottle_for_tag(Utils::Bottles.tag)
+    bottle = api_bottle || formula.bottle_for_tag(Utils::Bottles.tag)
     return false if bottle.nil?
 
     unless bottle.compatible_locations?
@@ -300,6 +303,8 @@ class FormulaInstaller
 
   sig { void }
   def prelude_fetch
+    return if @ran_prelude_fetch
+
     deprecate_disable_type = DeprecateDisable.type(formula)
     if deprecate_disable_type.present?
       message = "#{formula.full_name} has been #{DeprecateDisable.message(formula)}"
@@ -435,7 +440,20 @@ class FormulaInstaller
     if Homebrew::EnvConfig.developer?
       # `recursive_dependencies` trims cyclic dependencies, so we do one level and take the recursive deps of that.
       # Mapping direct dependencies to deeper dependencies in a hash is also useful for the cyclic output below.
-      recursive_dep_map = formula.deps.to_h { |dep| [dep, dep.to_formula.recursive_dependencies] }
+      recursive_dep_map = formula.deps.to_h do |dep|
+        # We cheat a bit with bubblewrap. We eagerly add it to build dependencies on tier-one systems.
+        # But this cyclic dependency check is (intentionally) overly strict and forbids cyclic build dependencies,
+        # to help prevent cases that would break, for example, mass bottling.
+        recursive_deps = if dep.name == "bubblewrap" && dep.implicit?
+          []
+        else
+          dep.to_formula.recursive_dependencies do |_dependent, recursive_dep|
+            Dependable::PRUNE if recursive_dep.name == "bubblewrap" && recursive_dep.implicit?
+          end
+        end
+
+        [dep, recursive_deps]
+      end
 
       cyclic_dependencies = []
       recursive_dep_map.each do |dep, recursive_deps|
@@ -633,8 +651,12 @@ on_request: installed_on_request?, options:)
   sig { void }
   def check_conflicts
     return if force?
+    return if skip_link?
+    return unless link_keg
 
     conflicts = formula.conflicts.select do |c|
+      next false if c.name == formula.name || c.name == formula.full_name
+
       f = Formulary.factory(c.name)
     rescue TapFormulaUnavailableError
       # If the formula name is a fully-qualified name let's silently
@@ -802,19 +824,17 @@ on_request: installed_on_request?, options:)
     if deps.empty? && only_deps?
       puts "All dependencies for #{formula.full_name} are satisfied."
     elsif !deps.empty?
+      deps_with_formulae = deps.map { |dep| [dep, dep.to_formula] }
       if deps.length > 1
-        oh1 "Installing dependencies for #{formula.full_name}: " \
-            "#{deps.map { Formatter.identifier(it) }.to_sentence}",
-            truncate: false
-      end
-      bubblewrap_dependency_index = deps.index { |dep| dep.name == "bubblewrap" && dep.implicit? }
-      deps.each_with_index do |dep, index|
-        if formula.name == "bubblewrap" || (bubblewrap_dependency_index && index <= bubblewrap_dependency_index)
-          with_env(HOMEBREW_INSTALLING_BUBBLEWRAP: "1") { install_dependency(dep) }
-        else
-          install_dependency(dep)
+        names = deps_with_formulae.map do |dep, dep_formula|
+          installed = dep_formula.any_version_installed?
+          pretty_install_status(Formatter.identifier(dep), installed:,
+                                outdated: installed && dep_formula.outdated?, mark_uninstalled: false,
+                                bold: false)
         end
+        oh1 "Installing dependencies for #{formula.full_name}: #{names.to_sentence}", truncate: false
       end
+      deps_with_formulae.each { |dep, dep_formula| install_dependency(dep, dep_formula) }
     end
 
     @show_header = true if deps.length > 1
@@ -845,12 +865,10 @@ on_request: installed_on_request?, options:)
     fi.enqueue_fetch
   end
 
-  sig { params(dep: Dependency).void }
-  def install_dependency(dep)
-    df = dep.to_formula
-
-    if df.linked_keg.directory?
-      linked_keg = Keg.new(df.linked_keg.resolved_path)
+  sig { params(dep: Dependency, dep_formula: Formula).void }
+  def install_dependency(dep, dep_formula = dep.to_formula)
+    if dep_formula.linked_keg.directory?
+      linked_keg = Keg.new(dep_formula.linked_keg.resolved_path)
       tab = linked_keg.tab
       keg_had_linked_keg = true
       keg_was_linked = linked_keg.linked?
@@ -859,31 +877,31 @@ on_request: installed_on_request?, options:)
       keg_had_linked_keg = false
     end
 
-    if df.latest_version_installed?
-      installed_keg = Keg.new(df.prefix)
+    if dep_formula.latest_version_installed?
+      installed_keg = Keg.new(dep_formula.prefix)
       tab ||= installed_keg.tab
       tmp_keg = Pathname.new("#{installed_keg}.tmp")
       installed_keg.rename(tmp_keg) unless tmp_keg.directory?
     end
 
-    if df.tap.present? && tab.present? && (tab_tap = tab.source["tap"].presence) &&
-       df.tap.to_s != tab_tap.to_s
+    if dep_formula.tap.present? && tab.present? && (tab_tap = tab.source["tap"].presence) &&
+       dep_formula.tap.to_s != tab_tap.to_s
       odie <<~EOS
-        #{df} is already installed from #{tab_tap}!
-        Please `brew uninstall #{df}` first."
+        #{dep_formula} is already installed from #{tab_tap}!
+        Please `brew uninstall #{dep_formula}` first."
       EOS
     end
 
     options = Options.new
     options |= tab.used_options if tab.present?
-    options |= Tab.remap_deprecated_options(df.deprecated_options, dep.options)
-    options &= df.options
+    options |= Tab.remap_deprecated_options(dep_formula.deprecated_options, dep.options)
+    options &= dep_formula.options
 
-    installed_on_request = df.any_version_installed? && tab.present? && tab.installed_on_request
+    installed_on_request = dep_formula.any_version_installed? && tab.present? && tab.installed_on_request
     installed_on_request ||= false
 
     fi = FormulaInstaller.new(
-      df,
+      dep_formula,
       options:,
       link_keg:                   keg_had_linked_keg && keg_was_linked,
       installed_on_request:,
@@ -962,17 +980,9 @@ on_request: installed_on_request?, options:)
     ohai "Finishing up" if verbose?
 
     keg = Keg.new(formula.prefix)
-    if skip_link?
-      unless quiet?
-        ohai "Skipping 'link' on request"
-        puts "You can run it manually using:"
-        puts "  brew link #{formula.full_name}"
-      end
-    else
-      link(keg)
-      warning = link_manual_command_warning
-      opoo warning if !quiet? && warning.present?
-    end
+    link(keg)
+    warning = link_manual_command_warning
+    opoo warning if !quiet? && warning.present?
 
     install_service
 
@@ -1128,10 +1138,13 @@ on_request: installed_on_request?, options:)
       formula_path,
     ].concat(build_argv)
 
-    Sandbox.ensure_sandbox_installed!
     if Sandbox.available?
       sandbox = Sandbox.new
       sandbox.allow_read_if_exists path: formula_path
+      if Homebrew::EnvConfig.require_tap_trust?
+        require "trust"
+        sandbox.allow_read_if_exists path: Homebrew::Trust.trust_file
+      end
       formula.logs.mkpath
       sandbox.record_log(formula.logs/"build.sandbox.log")
       if interactive?
@@ -1148,6 +1161,7 @@ on_request: installed_on_request?, options:)
       sandbox.deny_all_network unless formula.network_access_allowed?(:build)
       sandbox.run(*args)
     else
+      opoo "Sandbox unavailable: building without sandboxing!"
       Utils.safe_fork do
         exec(*args)
       end
@@ -1186,9 +1200,13 @@ on_request: installed_on_request?, options:)
     if cask_installed_with_formula_name
       ohai "#{formula.name} cask is installed, skipping link."
       @link_keg = false
+    elsif skip_link? && !quiet?
+      ohai "Skipping 'link' on request"
+      puts "You can run it manually using:"
+      puts "  brew link #{formula.full_name}"
     end
 
-    unless link_keg
+    if !link_keg || skip_link?
       begin
         keg.optlink(verbose: verbose?, overwrite: overwrite?)
       rescue Keg::LinkError => e
@@ -1376,7 +1394,6 @@ on_request: installed_on_request?, options:)
 
     args << post_install_formula_path
 
-    Sandbox.ensure_sandbox_installed!
     if Sandbox.available?
       sandbox = Sandbox.new
       formula.logs.mkpath
@@ -1393,6 +1410,7 @@ on_request: installed_on_request?, options:)
       end
       sandbox.run(*args)
     else
+      opoo "Sandbox unavailable: running post-install without sandboxing!"
       Utils.safe_fork do
         exec(*args)
       end
@@ -1441,7 +1459,7 @@ on_request: installed_on_request?, options:)
     return if @fetch_bottle_tab
     return if formula.local_bottle_path.present?
 
-    if (bottle = formula.bottle) &&
+    if (bottle = api_bottle || formula.bottle) &&
        (manifest_resource = bottle.github_packages_manifest_resource) &&
        enqueue
       download_queue.enqueue(manifest_resource) unless manifest_resource.downloaded_and_valid?
@@ -1510,10 +1528,30 @@ on_request: installed_on_request?, options:)
     if (bottle_path = formula.local_bottle_path)
       Resource::Local.new(bottle_path.to_s)
     elsif pour_bottle?
-      T.must(formula.bottle)
+      bottle = api_bottle || formula.bottle
+      odie "Bottle for #{formula.full_name} is unavailable." if bottle.nil?
+
+      bottle
     else
-      T.must(formula.resource)
+      resource = formula.resource
+      odie "Resource for #{formula.full_name} is unavailable." if resource.nil?
+
+      resource
     end
+  end
+
+  sig { returns(T.nilable(Bottle)) }
+  def api_bottle
+    return @api_bottle if @api_bottle_loaded
+
+    @api_bottle_loaded = true
+    return unless formula.loaded_from_internal_api?
+    return unless formula.core_formula?
+
+    @api_bottle = Homebrew::API::FormulaBottle.bottle(
+      name:           formula.name,
+      formula_struct: Homebrew::API::Internal.formula_struct(formula.name),
+    )
   end
 
   sig { void }
@@ -1566,7 +1604,7 @@ on_request: installed_on_request?, options:)
     keg.replace_placeholders_with_locations(tab.changed_files, skip_linkage:)
 
     cellar = formula.bottle_specification.tag_to_cellar(Utils::Bottles.tag)
-    return if [:any, :any_skip_relocation].include?(cellar)
+    return if BottleSpecification::RELOCATABLE_CELLARS.include?(cellar)
 
     prefix = Pathname(cellar).parent.to_s
     return if cellar == HOMEBREW_CELLAR.to_s && prefix == HOMEBREW_PREFIX.to_s

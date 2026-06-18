@@ -107,17 +107,6 @@ module Homebrew
 
       private
 
-      sig { params(deps: T::Array[Dependency]).void }
-      def tap_needed_taps(deps)
-        deps.each { |d| d.to_formula.recursive_dependencies }
-      rescue TapFormulaUnavailableError => e
-        raise if e.tap.installed?
-
-        e.tap.clear_cache
-        safe_system "brew", "tap", e.tap.name
-        retry
-      end
-
       sig { void }
       def install_ca_certificates_if_needed
         return if DevelopmentTools.ca_file_handles_most_https_certificates?
@@ -616,7 +605,6 @@ module Homebrew
           deps |= formula.deps.to_a.reject(&:optional?)
           reqs |= formula.requirements.to_a.reject(&:optional?)
 
-          tap_needed_taps(deps)
           install_curl_if_needed(formula)
           install_mercurial_if_needed(deps, reqs)
           install_subversion_if_needed(deps, reqs)

@@ -21,21 +21,24 @@ class MacOSVersion < Version
   #       to `DEPRECATED_MACOS_VERSIONS` in `MacOSRequirement`.
   # NOTE: Changes to this list must match `macos_version_name` in `cmd/update.sh`.
   SYMBOLS = T.let({
-    tahoe:    "26",
-    sequoia:  "15",
-    sonoma:   "14",
-    ventura:  "13",
-    monterey: "12",
+    golden_gate: "27",
+    tahoe:       "26",
+    sequoia:     "15",
+    sonoma:      "14",
+    ventura:     "13",
+    monterey:    "12",
     # odisabled: remove support for Big Sur and macOS x86_64 September (or later) 2027
-    big_sur:  "11",
+    big_sur:     "11",
     # odisabled: remove support for Catalina September (or later) 2026
-    catalina: "10.15",
+    catalina:    "10.15",
   }.freeze, T::Hash[Symbol, String])
 
   sig { params(macos_version: MacOSVersion).returns(Version) }
   def self.kernel_major_version(macos_version)
     version_major = macos_version.major.to_i
-    if version_major >= 26
+    if version_major >= 27
+      Version.new(version_major.to_s)
+    elsif version_major == 26
       Version.new((version_major - 1).to_s)
     elsif version_major > 10
       Version.new((version_major + 9).to_s)

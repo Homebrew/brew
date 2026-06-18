@@ -100,7 +100,7 @@ Temporarily start services while running the shell\. Enabled by default if \fB$H
 Check that all dependencies in the Brewfile are installed before starting the shell\. Enabled by default if \fB$HOMEBREW_BUNDLE_CHECK\fP is set\.
 .TP
 \fB\-\-no\-secrets\fP
-Attempt to remove secrets from the environment before starting the shell\. Enabled by default if \fB$HOMEBREW_BUNDLE_NO_SECRETS\fP is set\.
+Attempt to remove secrets from the environment before starting the shell\.
 .TP
 \fBbrew bundle remove\fP \fIname\fP [\.\.\.]
 Remove entries that match \fBname\fP from your \fBBrewfile\fP\&\. Use \fB\-\-formula\fP, \fB\-\-cask\fP, \fB\-\-tap\fP, \fB\-\-mas\fP, \fB\-\-vscode\fP, \fB\-\-go\fP, \fB\-\-cargo\fP, \fB\-\-uv\fP, \fB\-\-flatpak\fP, \fB\-\-winget\fP, \fB\-\-krew\fP and \fB\-\-npm\fP to remove only entries of the corresponding type\. Passing \fB\-\-formula\fP also removes matches against formula aliases and old formula names\.
@@ -226,7 +226,7 @@ Perform cleanup after installing dependencies without asking\. Enabled by defaul
 \fB\-\-zap\fP
 Use \fBzap\fP instead of \fBuninstall\fP when cleaning up casks after installing dependencies\.
 .TP
-\fBbrew bundle exec\fP [\fB\-\-check\fP] [\fB\-\-no\-secrets\fP] \fIcommand\fP
+\fBbrew bundle exec\fP [\fB\-\-check\fP] [\fB\-\-no\-secrets\fP] [\fB\-\-sandbox=\fP\fIpath\fP] [\fB\-\-deny\-network\fP] \fIcommand\fP
 Run an external command in an isolated build environment based on the \fBBrewfile\fP dependencies\.
 .P
 This sanitized build environment ignores unrequested dependencies, which makes sure that things you didn\[u2019]t specify in your \fBBrewfile\fP won\[u2019]t get picked up by commands like \fBbundle install\fP, \fBnpm install\fP, etc\. It will also add compiler flags which will help with finding keg\-only dependencies like \fBopenssl\fP, \fBicu4c\fP, etc\.
@@ -241,7 +241,13 @@ Temporarily start services while executing the command\. Enabled by default if \
 Check that all dependencies in the Brewfile are installed before executing the command\. Enabled by default if \fB$HOMEBREW_BUNDLE_CHECK\fP is set\.
 .TP
 \fB\-\-no\-secrets\fP
-Attempt to remove secrets from the environment before executing the command\. Enabled by default if \fB$HOMEBREW_BUNDLE_NO_SECRETS\fP is set\.
+Attempt to remove secrets from the environment before executing the command\.
+.TP
+\fB\-\-sandbox\fP
+Run \fIcommand\fP in Homebrew\[u2019]s sandbox, allowing writes to \fIpath\fP and Homebrew\[u2019]s temporary and cache directories\.
+.TP
+\fB\-\-deny\-network\fP
+Deny network access from inside the sandbox\.
 .TP
 \fBbrew bundle env\fP [\fB\-\-check\fP] [\fB\-\-no\-secrets\fP]
 Print the environment variables that would be set in a \fBbrew bundle exec\fP environment\.
@@ -253,7 +259,7 @@ Run \fBinstall\fP before printing the environment\.
 Check that all dependencies in the Brewfile are installed before printing the environment\. Enabled by default if \fB$HOMEBREW_BUNDLE_CHECK\fP is set\.
 .TP
 \fB\-\-no\-secrets\fP
-Attempt to remove secrets from the environment before printing it\. Enabled by default if \fB$HOMEBREW_BUNDLE_NO_SECRETS\fP is set\.
+Attempt to remove secrets from the environment before printing it\.
 .TP
 \fBbrew bundle edit\fP
 Edit the \fBBrewfile\fP in your editor\.
@@ -378,8 +384,8 @@ Dump npm packages\.
 \fB\-\-no\-dump\-npm\fP
 \fBdump\fP without npm packages\. Enabled by default if \fB$HOMEBREW_BUNDLE_DUMP_NO_NPM\fP is set\.
 .TP
-\fB\-\-describe\fP
-Add a description comment above each line, unless the dependency does not have a description\. Enabled by default if \fB$HOMEBREW_BUNDLE_DESCRIBE\fP is set\.
+\fB\-\-no\-describe\fP
+Do not add description comments above each line\. Description comments are the default\. Enabled by default if \fB$HOMEBREW_BUNDLE_NO_DESCRIBE\fP is set\.
 .TP
 \fB\-\-no\-restart\fP
 Do not add \fBrestart_service\fP to formula lines\.
@@ -561,8 +567,8 @@ Add entries for Krew plugins\.
 \fB\-\-npm\fP
 Add entries for npm packages\.
 .TP
-\fB\-\-describe\fP
-Add a description comment above each line, unless the dependency does not have a description\. Enabled by default if \fB$HOMEBREW_BUNDLE_DESCRIBE\fP is set\.
+\fB\-\-no\-describe\fP
+Do not add description comments above each line\. Description comments are the default\. Enabled by default if \fB$HOMEBREW_BUNDLE_NO_DESCRIBE\fP is set\.
 .SS "\fBcasks\fP"
 List all locally installable casks including short names\.
 .SS "\fBcleanup\fP \fR[\fIoptions\fP] \fR[\fIformula\fP|\fIcask\fP \.\.\.]"
@@ -726,7 +732,7 @@ List all audit methods, which can be run individually if provided as arguments\.
 .TP
 \fB\-D\fP, \fB\-\-audit\-debug\fP
 Enable debugging and profiling of audit methods\.
-.SS "\fBexec\fP, \fBx\fP \fR[\fB\-\-formulae=\fP\fIformulae\fP] \fR[\fB\-\-\fP] \fIcommand\fP \fR[\fIargs\fP \.\.\.]"
+.SS "\fBexec\fP, \fBx\fP \fR[\fB\-\-formulae=\fP\fIformulae\fP] \fR[\fB\-\-sandbox=\fP\fIpath\fP] \fR[\fB\-\-deny\-network\fP] \fR[\fB\-\-\fP] \fIcommand\fP \fR[\fIargs\fP \.\.\.]"
 Run \fIcommand\fP in an environment populated by Homebrew formulae\.
 .P
 If \fB\-\-formulae\fP is passed, Homebrew installs those comma\-separated formulae if needed, prepends their executable directories and those of their dependencies to \fBPATH\fP and runs \fIcommand\fP\&\. This allows \fIcommand\fP to be a script path such as \fB\&\./script\.sh\fP\&\.
@@ -739,6 +745,12 @@ Scripts can also use a shebang on systems with \fBenv \-S\fP: \fB#!/usr/bin/env 
 .TP
 \fB\-\-formulae\fP
 Comma\-separated formulae to install and add to \fBPATH\fP before running \fIcommand\fP\&\.
+.TP
+\fB\-\-sandbox\fP
+Run \fIcommand\fP in Homebrew\[u2019]s sandbox, allowing writes to \fIpath\fP and Homebrew\[u2019]s temporary and cache directories\.
+.TP
+\fB\-\-deny\-network\fP
+Deny network access from inside the sandbox\.
 .SS "\fBfetch\fP \fR[\fIoptions\fP] \fIformula\fP|\fIcask\fP \fR[\.\.\.]"
 Download a bottle (if available) or source packages for \fIformula\fPe and binaries for \fIcask\fPs\. For files, also print SHA\-256 checksums\.
 .TP
@@ -864,8 +876,8 @@ Print the verification and post\-install steps\.
 \fB\-n\fP, \fB\-\-dry\-run\fP
 Show what would be installed, but do not actually install anything\.
 .TP
-\fB\-\-ask\fP
-Ask for confirmation before downloading and installing\. Print the same plan as \fB\-\-dry\-run\fP before prompting\. Only prompts if the plan includes dependencies or dependants; if the requested formulae or casks are the only things to install, it only prints the plan\. The confirmation prompt is skipped without a TTY\.
+\fB\-y\fP, \fB\-\-no\-ask\fP
+Do not ask for confirmation before downloading and installing\. Ask mode is the default\. Enabled by default if \fB$HOMEBREW_NO_ASK\fP is set\.
 .TP
 \fB\-\-formula\fP
 Treat all named arguments as formulae\.
@@ -1154,8 +1166,8 @@ Install without checking for previously installed keg\-only or non\-migrated ver
 \fB\-v\fP, \fB\-\-verbose\fP
 Print the verification and post\-install steps\.
 .TP
-\fB\-\-ask\fP
-Ask for confirmation before downloading and reinstalling\. Print what would be reinstalled before prompting\. Only prompts if the plan includes dependencies or dependants; if the requested formulae or casks are the only things to reinstall, it only prints the plan\. The confirmation prompt is skipped without a TTY\.
+\fB\-y\fP, \fB\-\-no\-ask\fP
+Do not ask for confirmation before downloading and reinstalling\. Ask mode is the default\. Enabled by default if \fB$HOMEBREW_NO_ASK\fP is set\.
 .TP
 \fB\-\-formula\fP
 Treat all named arguments as formulae\.
@@ -1195,6 +1207,13 @@ Skip installing cask dependencies\.
 .TP
 \fB\-\-zap\fP
 For use with \fBbrew reinstall \-\-cask\fP\&\. Remove all files associated with a cask\. \fIMay remove files which are shared between applications\.\fP
+.SS "\fBsandbox\-exec\fP \fR[\fB\-\-deny\-network\fP] \fIwritable\-path\fP \fR[\fB\-\-\fP] \fIcommand\fP \fR[\fIargs\fP \.\.\.]"
+Run \fIcommand\fP in Homebrew\[u2019]s sandbox, allowing writes to \fIwritable\-path\fP and Homebrew\[u2019]s temporary and cache directories\.
+.P
+Example: \fBbrew sandbox\-exec \. \-\- make test\fP
+.TP
+\fB\-\-deny\-network\fP
+Deny network access from inside the sandbox\.
 .SS "\fBsearch\fP, \fB\-S\fP \fR[\fIoptions\fP] \fItext\fP|\fB/\fP\fIregex\fP\fB/\fP \fR[\.\.\.]"
 Perform a substring search of cask tokens and formula names for \fItext\fP\&\. If \fItext\fP is flanked by slashes, it is interpreted as a regular expression\.
 .TP
@@ -1317,6 +1336,8 @@ Output as JSON\.
 Remove all unused services\.
 .SS "\fBsetup\-ruby\fP \fR[\fIcommand\fP \.\.\.]"
 Installs and configures Homebrew\[u2019]s Ruby\. If \fBcommand\fP is passed, it will only run Bundler if necessary for that command\.
+.SS "\fBsetup\-sandbox\fP"
+Run any necessary commands to setup the Homebrew sandbox\. Must be run with \fBsudo\fP\&\. Currently a no\-op on non\-Linux\.
 .SS "\fBshellenv\fP \fR[\fIshell\fP \.\.\.]"
 Valid shells: bash|csh|fish|pwsh|sh|tcsh|zsh
 .P
@@ -1384,6 +1405,9 @@ Trust the named cask\.
 .TP
 \fB\-\-command\fP
 Trust the named external command\.
+.TP
+\fB\-\-json\fP
+Print trusted entries as JSON\. A \fIversion\fP number is required\. The only accepted value for \fIversion\fP is \fBv1\fP\&\.
 .SS "\fBunalias\fP \fIalias\fP \fR[\.\.\.]"
 Remove aliases\.
 .SS "\fBuninstall\fP, \fBremove\fP, \fBrm\fP \fR[\fIoptions\fP] \fIinstalled_formula\fP|\fIinstalled_cask\fP \fR[\.\.\.]"
@@ -1480,8 +1504,8 @@ Show what would be upgraded, but do not actually upgrade anything\.
 \fB\-\-minimum\-version\fP
 Only upgrade a named formula or cask with an installed version below the given minimum version\.
 .TP
-\fB\-\-ask\fP
-Ask for confirmation before downloading and upgrading\. Print the same plan as \fB\-\-dry\-run\fP, including available download sizes\. When named arguments are provided, only prompts if the plan includes packages other than those arguments; if the requested formulae or casks are the only things to upgrade, it only prints the plan\. With no named arguments, prompts if anything would be upgraded\. The confirmation prompt is skipped without a TTY\.
+\fB\-y\fP, \fB\-\-no\-ask\fP
+Do not ask for confirmation before downloading and upgrading\. Ask mode is the default\. Enabled by default if \fB$HOMEBREW_NO_ASK\fP is set\.
 .TP
 \fB\-\-formula\fP
 Treat all named arguments as formulae\. If no named arguments are specified, upgrade only outdated formulae\.
@@ -2658,7 +2682,7 @@ User\-specific environment files take precedence over prefix\-specific files and
 Note that these files do not support shell variable expansion (e\.g\. \fB$HOME\fP) or command execution (e\.g\. \fB$(cat file)\fP)\.
 .TP
 \fBHOMEBREW_ALLOWED_TAPS\fP
-A space\-separated list of taps\. Homebrew will refuse to install a formula unless it and all of its dependencies are in an official tap or in a tap on this list\.
+A space\-separated list of taps\. Homebrew will refuse to install a formula unless it and all of its dependencies are in an official tap or in a tap on this list\. Each entry is a \fBuser/repository\fP name (which matches only taps using the default GitHub remote) or a remote URL (required to match taps with a custom remote)\.
 .TP
 \fBHOMEBREW_API_AUTO_UPDATE_SECS\fP
 Check Homebrew\[u2019]s API for new formulae or cask data every \fB$HOMEBREW_API_AUTO_UPDATE_SECS\fP seconds\. Alternatively, disable API auto\-update checks entirely with \fB$HOMEBREW_NO_AUTO_UPDATE\fP\&\.
@@ -2768,13 +2792,6 @@ If set, \fBbrew bundle cleanup\fP will not clean up VSCode (and forks/variants) 
 \fBHOMEBREW_BUNDLE_CLEANUP_NO_WINGET\fP
 If set, \fBbrew bundle cleanup\fP will not clean up WinGet packages\.
 .TP
-\fBHOMEBREW_BUNDLE_DESCRIBE\fP
-If set, add a description comment above each line in \fBbrew bundle dump\fP and \fBbrew bundle add\fP, unless the dependency does not have a description\. This is the default unless \fB$HOMEBREW_BUNDLE_NO_DESCRIBE\fP is set\.
-.RS
-.P
-\fIDefault:\fP \fBtrue\fP\&\.
-.RE
-.TP
 \fBHOMEBREW_BUNDLE_DUMP_NO_BREW\fP
 If set, \fBbrew bundle dump\fP will not dump formula dependencies\.
 .TP
@@ -2827,15 +2844,8 @@ If set, do not enable bundle description comments from \fB$HOMEBREW_BUNDLE_DESCR
 \fBHOMEBREW_BUNDLE_NO_JOBS\fP
 If set, do not enable parallel jobs from \fB$HOMEBREW_BUNDLE_JOBS\fP or its default\. This does not disable an explicit \fB\-\-jobs\fP\&\.
 .TP
-\fBHOMEBREW_BUNDLE_NO_SECRETS\fP
-If set, \fBbrew bundle exec\fP, \fBbrew bundle env\fP and \fBbrew bundle sh\fP will attempt to remove secrets from the environment\. This is the default unless \fB$HOMEBREW_BUNDLE_SECRETS\fP is set\.
-.RS
-.P
-\fIDefault:\fP \fBtrue\fP\&\.
-.RE
-.TP
 \fBHOMEBREW_BUNDLE_SECRETS\fP
-If set, do not enable secret scrubbing from \fB$HOMEBREW_BUNDLE_NO_SECRETS\fP or the default\. This does not disable an explicit \fB\-\-no\-secrets\fP\&\.
+If set, do not enable the default secret scrubbing\. This does not disable an explicit \fB\-\-no\-secrets\fP\&\.
 .TP
 \fBHOMEBREW_BUNDLE_USER_CACHE\fP
 If set, use this directory as the \fBbundle\fP(1) user cache\.
@@ -2975,7 +2985,7 @@ The person who has set any \fB$HOMEBREW_FORBIDDEN_*\fP variables\.
 How to contact the \fB$HOMEBREW_FORBIDDEN_OWNER\fP, if set and necessary\.
 .TP
 \fBHOMEBREW_FORBIDDEN_TAPS\fP
-A space\-separated list of taps\. Homebrew will refuse to install a formula if it or any of its dependencies is in a tap on this list\.
+A space\-separated list of taps\. Homebrew will refuse to install a formula if it or any of its dependencies is in a tap on this list\. Each entry is a \fBuser/repository\fP name (which matches only taps using the default GitHub remote) or a remote URL (required to match taps with a custom remote)\.
 .TP
 \fBHOMEBREW_FORBID_CASKS\fP
 If set, Homebrew will refuse to install any casks\.
@@ -3227,13 +3237,6 @@ Use this path as the temporary directory for building packages\. Changing this m
 .TP
 \fBHOMEBREW_UPDATE_TO_TAG\fP
 If set, always use the latest stable tag (even if developer commands have been run)\.
-.TP
-\fBHOMEBREW_UPGRADE_AUTO_UPDATES_CASKS\fP
-If set, \fBbrew upgrade\fP will automatically upgrade casks with \fBauto_updates true\fP when Homebrew detects that the version in the app bundle is older than the version in the tap\. Does not affect \fB\-\-greedy\fP or \fB\-\-greedy\-auto\-updates\fP upgrades\. This is the default unless \fB$HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS\fP is set\.
-.RS
-.P
-\fIDefault:\fP \fBtrue\fP\&\.
-.RE
 .TP
 \fBHOMEBREW_UPGRADE_GREEDY\fP
 If set, pass \fB\-\-greedy\fP to all cask upgrade commands\.

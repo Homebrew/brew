@@ -127,19 +127,51 @@ RSpec.describe Homebrew::CLI::Parser do
   describe "ask environment variable precedence" do
     subject(:parser) do
       described_class.new(Cmd) do
-        switch "--ask", env: :ask
+        switch "--no-ask", "--yes", "-y", env: :no_ask
+        switch "--ask",    env: :ask
+        conflicts "--ask", "--no-ask"
       end
     end
 
     it "lets HOMEBREW_NO_ASK override default ask mode" do
       with_env(HOMEBREW_NO_ASK: "1") do
-        expect(parser.parse([]).ask?).to be(false)
+        expect(parser.parse([]).no_ask?).to be(true)
       end
     end
 
     it "lets --ask override HOMEBREW_NO_ASK" do
       with_env(HOMEBREW_NO_ASK: "1") do
-        expect(parser.parse(["--ask"]).ask?).to be(true)
+        args = parser.parse(["--ask"])
+        expect(args.ask?).to be(true)
+        expect(args.no_ask?).to be(false)
+      end
+    end
+
+    it "lets --no-ask, --yes and -y override default ask mode" do
+      expect(parser.parse(["--no-ask"]).no_ask?).to be(true)
+      expect(described_class.new(Cmd) do
+        switch "--no-ask", "--yes", "-y", env: :no_ask
+      end.parse(["--yes"]).no_ask?).to be(true)
+      expect(described_class.new(Cmd) do
+        switch "--no-ask", "--yes", "-y", env: :no_ask
+      end.parse(["-y"]).no_ask?).to be(true)
+    end
+  end
+
+  describe "describe environment variable precedence" do
+    subject(:parser) do
+      described_class.new(Cmd) do
+        switch "--no-describe", env: :bundle_no_describe
+        switch "--describe",    env: :bundle_describe
+        conflicts "--describe", "--no-describe"
+      end
+    end
+
+    it "lets --describe override HOMEBREW_BUNDLE_NO_DESCRIBE" do
+      with_env(HOMEBREW_BUNDLE_NO_DESCRIBE: "1") do
+        args = parser.parse(["--describe"])
+        expect(args.describe?).to be(true)
+        expect(args.no_describe?).to be(false)
       end
     end
   end

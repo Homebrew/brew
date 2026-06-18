@@ -28,7 +28,12 @@ RSpec.describe Cask::Tab, :cask do
   end
 
   let(:time) { Time.now.to_i }
-  let(:f) { formula { url "foo-1.0" } }
+  let(:f) do
+    formula do
+      T.bind(self, T.class_of(Formula))
+      url "foo-1.0"
+    end
+  end
 
   matcher :be_installed_on_request do
     match do |actual|

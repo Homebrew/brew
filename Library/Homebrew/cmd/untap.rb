@@ -26,7 +26,10 @@ module Homebrew
         end
 
         taps.each do |tap|
-          odie "Untapping #{tap} is not allowed" if tap.core_tap? && Homebrew::EnvConfig.no_install_from_api?
+          if tap.core_tap? && Homebrew::EnvConfig.no_install_from_api?
+            ofail "Untapping #{tap} is not allowed"
+            next
+          end
 
           if Homebrew::EnvConfig.no_install_from_api? || (!tap.core_tap? && !tap.core_cask_tap?)
             installed_tap_formulae = installed_formulae_for(tap:)
@@ -40,10 +43,11 @@ module Homebrew
                   #{installed_names}
                 EOS
               else
-                odie <<~EOS
+                ofail <<~EOS
                   Refusing to untap #{tap} because it contains the following installed formulae or casks:
                   #{installed_names}
                 EOS
+                next
               end
             end
           end
@@ -79,8 +83,8 @@ module Homebrew
 
           cask = begin
             Cask::CaskLoader.load(cask_token)
-          rescue Cask::CaskUnavailableError
-            # Don't blow up because of a single unavailable cask.
+          rescue Cask::CaskUnavailableError, MethodDeprecatedError
+            # Don't blow up because of a single unavailable cask or a deprecated method.
             next
           end
 

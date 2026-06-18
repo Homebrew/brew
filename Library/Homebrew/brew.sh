@@ -243,6 +243,10 @@ check-run-command-as-root() {
   # can immediately dispatch the requested Homebrew command as the console user.
   [[ "${HOMEBREW_COMMAND}" == "as-console-user" ]] && return
 
+  # `brew setup-sandbox` is intended to be run with `sudo` to prepare the
+  # Homebrew sandbox.
+  [[ "${HOMEBREW_COMMAND}" == "setup-sandbox" ]] && return
+
   # `brew services` may need `sudo` for system-wide daemons.
   if [[ "${HOMEBREW_COMMAND}" == "services" ]]
   then

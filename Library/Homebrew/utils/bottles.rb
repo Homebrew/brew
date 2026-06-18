@@ -177,6 +177,15 @@ module Utils
         new(system:, arch:)
       end
 
+      sig { params(arg: T.nilable(Symbol), os: Symbol, arch: Symbol).returns(T.attached_class) }
+      def self.from_arg(arg, os:, arch:)
+        if arg
+          from_symbol(arg)
+        else
+          new(system: os, arch:)
+        end
+      end
+
       sig { params(system: Symbol, arch: Symbol).void }
       def initialize(system:, arch:)
         @system = system

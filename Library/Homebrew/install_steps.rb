@@ -168,6 +168,22 @@ module Homebrew
         symlink(source, target, source_base:, target_base:, source_formula:, target_formula:, force: true, uninstall:)
       end
 
+      sig {
+        params(
+          path:      ::T.any(::String, ::Pathname),
+          content:   ::String,
+          base:      ::T.nilable(::T.any(::String, ::Symbol)),
+          overwrite: ::T::Boolean,
+        ).void
+      }
+      def write(path, content, base: nil, overwrite: false)
+        content = "#{content}\n" unless content.end_with?("\n")
+        add_step("write",
+                 "path"      => path_spec(path, base:, default_base: @default_base),
+                 "content"   => content,
+                 "overwrite" => overwrite)
+      end
+
       sig { void }
       def compile_gsettings_schemas
         add_rebuild_action("compile_gsettings_schemas", "share/glib-2.0/schemas")
@@ -243,6 +259,14 @@ module Homebrew
     end
 
     class Runner
+      # Path tokens reuse the step base resolution; `HOMEBREW_PREFIX`, `version`
+      # and `version.major_minor` are resolved separately. Anything else is left
+      # verbatim so literal braces in templates are never rewritten.
+      CONTENT_PATH_TOKENS = T.let(
+        %w[prefix opt_prefix bin var etc pkgetc staged_path appdir].freeze,
+        T::Array[String],
+      )
+
       sig { params(context: T.untyped).void }
       def initialize(context:)
         @context = context
@@ -290,6 +314,15 @@ module Homebrew
           target.dirname.mkpath
           FileUtils.rm_f target if step["force"] == true
           File.symlink link_source(step.fetch("source")), target
+        when "write"
+          content = step["content"]
+          raise ArgumentError, "install step write requires non-empty content" if content.blank?
+
+          path = resolve_path(step.fetch("path"))
+          if step["overwrite"] == true || !path.exist?
+            path.dirname.mkpath
+            path.write(expand_content_tokens(content))
+          end
         when "compile_gsettings_schemas"
           run_formula_tool("glib", "glib-compile-schemas", resolve_path(step.fetch("path")))
         when "gio_querymodules"
@@ -314,6 +347,33 @@ module Homebrew
 
         target = resolve_path(step.fetch("target"))
         FileUtils.rm_f target if target.symlink?
+      end
+
+      sig { params(content: String).returns(String) }
+      def expand_content_tokens(content)
+        content.gsub(/\{\{([A-Za-z_][\w.]*)\}\}/) do |match|
+          value = content_token_value(T.must(Regexp.last_match(1)))
+          value.nil? ? match : value.to_s
+        end
+      end
+
+      sig { params(token: String).returns(T.untyped) }
+      def content_token_value(token)
+        case token
+        when "HOMEBREW_PREFIX"
+          HOMEBREW_PREFIX
+        when "version"
+          context_version
+        when "version.major_minor"
+          context_version&.major_minor
+        else
+          root_path(token, nil) if CONTENT_PATH_TOKENS.include?(token)
+        end
+      end
+
+      sig { returns(T.untyped) }
+      def context_version
+        @context.version if @context.respond_to?(:version)
       end
 
       sig { params(spec: T.untyped).returns(Pathname) }

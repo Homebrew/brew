@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "formula_versions"
+
 #
 # {CaskDescriptionCacheStore} provides methods to fetch and mutate cask descriptions used
 # by the `brew desc` and `brew search` commands.
@@ -56,8 +58,8 @@ class CaskDescriptionCacheStore < DescriptionCacheStore
     cask_tokens.each do |token|
       c = Cask::CaskLoader.load(token)
       update!(c.full_name, [c.name.join(", "), c.desc.presence])
-    rescue Cask::CaskUnavailableError, *FormulaVersions::IGNORED_EXCEPTIONS
-      delete!(c.full_name) if c.present?
+    rescue Cask::CaskUnavailableError, Homebrew::UntrustedTapError, *FormulaVersions::IGNORED_EXCEPTIONS
+      delete!(token)
     end
   end
 end

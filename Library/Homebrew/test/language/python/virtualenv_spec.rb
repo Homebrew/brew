@@ -12,6 +12,7 @@ RSpec.describe Language::Python::Virtualenv, :needs_python do
       formula "foo" do
         include virtualenv_module
 
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/foo-1.0.tgz"
 
         resource "resource-a" do

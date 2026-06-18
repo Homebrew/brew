@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "api"
@@ -154,7 +154,7 @@ RSpec.describe Homebrew::API do
       target.write "stale:stale-bin\n"
       stub_const("Homebrew::API::HOMEBREW_CACHE_API", cache_dir)
 
-      removed = false
+      removed = T.let(false, T::Boolean)
       allow_any_instance_of(Pathname).to receive(:read).and_wrap_original do |method, *args|
         if !removed && method.receiver == target
           removed = true

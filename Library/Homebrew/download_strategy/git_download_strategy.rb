@@ -29,7 +29,15 @@ class GitDownloadStrategy < VCSDownloadStrategy
   # @api public
   sig { override.returns(Time) }
   def source_modified_time
-    Time.parse(silent_command("git", args: ["--git-dir", git_dir, "show", "-s", "--format=%cD"]).stdout)
+    # This runs while staging inside the sandbox, where reading the user Git
+    # config is denied and makes Git exit; null the global config here, unlike
+    # the download-time commands that read it for credential helpers.
+    require "utils/git"
+    result = system_command("git", args: ["--git-dir", git_dir, "show", "-s", "--format=%cD"],
+                                   env:  env.merge(Utils::Git.no_global_config_env), print_stderr: false)
+    raise "Failed to read the Git commit time:\n#{result.stderr}" unless result.success?
+
+    Time.parse(result.stdout)
   end
 
   sig { override.returns(T.nilable(String)) }
@@ -46,6 +54,13 @@ class GitDownloadStrategy < VCSDownloadStrategy
   end
 
   private
+
+  # Read user Git config so credential helpers work for private downloads,
+  # but never block on an interactive credential prompt.
+  sig { override.returns(T::Hash[String, String]) }
+  def env
+    { "GIT_TERMINAL_PROMPT" => "0" }
+  end
 
   sig { override.returns(String) }
   def cache_tag

@@ -376,9 +376,14 @@ module Homebrew
       sig { params(service: Services::FormulaWrapper, file: T.nilable(Pathname), enable: T::Boolean).void }
       def self.service_load(service, file, enable:)
         if System.root? && !service.service_startup? && !sudo_service_user
-          opoo "#{service.name} must be run as non-root to start at user login!"
+          opoo "`#{service.name}` must be run as non-root to start at user login!"
         elsif !System.root? && service.service_startup?
-          opoo "#{service.name} must be run as root to start at system startup!"
+          opoo "`#{service.name}` must be run as root to start at system startup!"
+        end
+
+        if (service_user = sudo_service_user) && !System.user_exists?(service_user)
+          function = enable ? "start" : "run"
+          odie "Cannot #{function} `#{service.name}` as `#{service_user}` is not a user!"
         end
 
         if System.launchctl?

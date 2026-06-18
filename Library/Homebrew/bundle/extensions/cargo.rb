@@ -6,11 +6,16 @@ require "bundle/extensions/extension"
 module Homebrew
   module Bundle
     class Cargo < Extension
-      PACKAGE_TYPE = :cargo
-      PACKAGE_TYPE_NAME = "Cargo Package"
-      BANNER_NAME = "Cargo packages"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :cargo
+
+        sig { override.returns(String) }
+        def check_label = "Cargo Package"
+
+        sig { override.returns(String) }
+        def banner_name = "Cargo packages"
+
         sig { override.void }
         def reset!
           @packages = T.let(nil, T.nilable(T::Array[String]))

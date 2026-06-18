@@ -262,25 +262,15 @@ module Utils
         end
       end
 
-      sig { params(string: String).returns(String) }
-      def pretty_outdated(string)
+      sig { params(string: String, bold: T::Boolean).returns(String) }
+      def pretty_upgradable(string, bold: true)
+        weight = bold ? Tty.bold : ""
         if !$stdout.tty?
           string
         elsif Homebrew::EnvConfig.no_emoji?
-          Formatter.error("#{Tty.bold}#{string} (outdated)#{Tty.reset}")
+          "#{weight}#{string} (upgradable)#{Tty.reset}"
         else
-          "#{Tty.bold}#{string} #{Formatter.warning("⚠")}#{Tty.reset}"
-        end
-      end
-
-      sig { params(string: String).returns(String) }
-      def pretty_upgradable(string)
-        if !$stdout.tty?
-          string
-        elsif Homebrew::EnvConfig.no_emoji?
-          "#{Tty.bold}#{string} (upgradable)#{Tty.reset}"
-        else
-          "#{Tty.bold}#{string} #{Formatter.success("↑")}#{Tty.reset}"
+          "#{weight}#{string} #{Formatter.success("↑")}#{Tty.reset}"
         end
       end
 
@@ -317,12 +307,12 @@ module Utils
 
       sig {
         params(string: String, installed: T::Boolean, outdated: T::Boolean, deprecated: T::Boolean,
-               disabled: T::Boolean, mark_uninstalled: T::Boolean).returns(String)
+               disabled: T::Boolean, mark_uninstalled: T::Boolean, bold: T::Boolean).returns(String)
       }
       def pretty_install_status(string, installed:, outdated: false, deprecated: false, disabled: false,
-                                mark_uninstalled: true)
+                                mark_uninstalled: true, bold: true)
         status = if installed && outdated
-          pretty_upgradable(string)
+          pretty_upgradable(string, bold:)
         elsif installed
           pretty_installed(string)
         elsif mark_uninstalled

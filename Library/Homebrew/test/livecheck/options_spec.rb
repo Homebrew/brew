@@ -19,6 +19,7 @@ RSpec.describe Homebrew::Livecheck::Options do
   end
   let(:args) do
     {
+      compressed:    false,
       cookies:       cookies,
       header:        header_string,
       homebrew_curl: true,
@@ -41,6 +42,7 @@ RSpec.describe Homebrew::Livecheck::Options do
   describe "#url_options" do
     it "returns a Hash of the options that are provided as arguments to the `url` DSL method" do
       expect(options.new.url_options).to eq({
+        compressed:    nil,
         cookies:       nil,
         header:        nil,
         homebrew_curl: nil,

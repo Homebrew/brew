@@ -74,8 +74,15 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
         end
         @last_modified = last_modified
 
-        # Authorization is no longer valid after redirects
-        meta[:headers]&.delete_if { |header| header.start_with?("Authorization") } if is_redirection
+        # Caller-supplied headers (e.g. tokens) are no longer valid after a
+        # redirect to another host, and `Authorization` after any redirect.
+        if is_redirection
+          if resolved_url && URI(url).host != URI(resolved_url).host
+            meta.delete(:headers)
+          else
+            meta[:headers]&.delete_if { |header| header.start_with?("Authorization") }
+          end
+        end
 
         # The cached location is no longer fresh if either:
         # - Last-Modified value is newer than the file's timestamp
@@ -266,7 +273,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
 
     args += ["--user", meta.fetch(:user)] if meta.key?(:user)
 
-    args += meta.fetch(:headers, []).flat_map { |h| ["--header", h.strip] }
+    args += meta.fetch(:headers, []).flat_map { |h| ["--header", ENV.expand_deferred_environment(h).strip] }
 
     args
   end

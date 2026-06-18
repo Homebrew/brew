@@ -11,11 +11,16 @@ module Homebrew
       Checkable = T.type_alias { { name: String, options: WithOptions } }
       ToolEntry = T.type_alias { T.any(Tool, Checkable) }
 
-      PACKAGE_TYPE = :uv
-      PACKAGE_TYPE_NAME = "uv Tool"
-      BANNER_NAME = "uv tools"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :uv
+
+        sig { override.returns(String) }
+        def check_label = "uv Tool"
+
+        sig { override.returns(String) }
+        def banner_name = "uv tools"
+
         sig { override.params(name: String, options: Homebrew::Bundle::EntryInputOptions).returns(Dsl::Entry) }
         def entry(name, options = {})
           unknown_options = options.keys - [:with]

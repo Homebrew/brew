@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "language/python"
@@ -11,20 +11,24 @@ RSpec.describe Language::Python::Shebang do
     f = {}
 
     f[:python311] = formula "python@3.11" do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/python-1.0.tgz"
     end
 
     f[:versioned_python_dep] = formula "foo" do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/foo-1.0.tgz"
 
       depends_on "python@3.11"
     end
 
     f[:no_deps] = formula "foo" do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/foo-1.0.tgz"
     end
 
     f[:multiple_deps] = formula "foo" do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/foo-1.0.tgz"
 
       depends_on "python"

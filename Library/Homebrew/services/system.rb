@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "etc"
 require_relative "system/systemctl"
 require "utils/output"
 
@@ -54,6 +55,18 @@ module Homebrew
         else
           Utils.safe_popen_read("ps", "-o", "user", "-p", pid.to_s).lines.second&.chomp
         end
+      end
+
+      sig { params(username: String).returns(T::Boolean) }
+      def self.user_exists?(username)
+        # Current user must be present
+        return true if username == user
+
+        # Check other users
+        Etc.getpwnam(username)
+        true
+      rescue ArgumentError
+        false
       end
 
       # Run at boot.

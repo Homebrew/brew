@@ -253,17 +253,9 @@ module Homebrew
             if skip_recursive_dependents
               f.deps.reject(&:implicit?)
             else
-              begin
-                Dependency.expand(f, cache_key: "test-bot-dependents") do |_, dependency|
-                  next Dependable::SKIP if dependency.implicit?
-                  next Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS if dependency.build? || dependency.test?
-                end
-              rescue TapFormulaUnavailableError => e
-                raise if e.tap.installed?
-
-                e.tap.clear_cache
-                safe_system "brew", "tap", e.tap.name
-                retry
+              Dependency.expand(f, cache_key: "test-bot-dependents") do |_, dependency|
+                next Dependable::SKIP if dependency.implicit?
+                next Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS if dependency.build? || dependency.test?
               end
             end.reject(&:optional?)
           end)
@@ -525,15 +517,7 @@ module Homebrew
         return if formula.linked_keg.exist?
 
         conflicts = formula.conflicts.map { |c| Formulary.factory(c.name) }.select(&:any_version_installed?)
-        formula_recursive_dependencies = begin
-          formula.recursive_dependencies
-        rescue TapFormulaUnavailableError => e
-          raise if e.tap.installed?
-
-          e.tap.clear_cache
-          safe_system "brew", "tap", e.tap.name
-          retry
-        end
+        formula_recursive_dependencies = formula.recursive_dependencies
         formula_recursive_dependencies.each do |dependency|
           conflicts += dependency.to_formula.conflicts.map do |c|
             Formulary.factory(c.name)

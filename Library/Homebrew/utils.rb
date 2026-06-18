@@ -60,6 +60,12 @@ module Utils
     "#{user}/#{repository}"
   end
 
+  # Whether `full_name` is fully-qualified with a tap prefix, e.g. `user/tap/name`.
+  sig { params(full_name: String).returns(T::Boolean) }
+  def self.full_name?(full_name)
+    full_name.count("/") == 2
+  end
+
   # A lightweight alternative to `ActiveSupport::Inflector.pluralize`:
   # Combines `stem` with the `singular` or `plural` suffix based on `count`.
   # Adds a prefix of the count value if `include_count` is set to true.

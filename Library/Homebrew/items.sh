@@ -1,3 +1,9 @@
+# `opoo` is defined in utils.sh, which the early `formulae`/`casks` dispatch in
+# brew.sh runs before sourcing, so source it here for these commands.
+# HOMEBREW_LIBRARY is set by bin/brew
+# shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils.sh"
+
 homebrew-items() {
   local items
   local find_include_filter="$1"
@@ -45,10 +51,12 @@ homebrew-trusted-items() {
     select(. != null) |
     "\(.user)/\(.tap)/\(.name)" as $item |
     ($item | split("/") | .[0:2] | join("/")) as $tap |
+    ($tap_references[$tap] // $tap) as $tap_reference |
+    "\($tap_reference)/\(.name)" as $remote_item |
     select(
       $tap == $official_tap or
-      (($store.trustedtaps // []) | index($tap)) or
-      (($store[$trust_key] // []) | index($item))
+      (($store.trustedtaps // []) | (index($tap) or index($tap_reference))) or
+      (($store[$trust_key] // []) | (index($item) or index($remote_item)))
     ) |
     $item
   '
@@ -59,10 +67,12 @@ homebrew-trusted-items() {
     select(. != null) |
     "\(.user)/\(.tap)/\(.name)" as $item |
     ($item | split("/") | .[0:2] | join("/")) as $tap |
+    ($tap_references[$tap] // $tap) as $tap_reference |
+    "\($tap_reference)/\(.name)" as $remote_item |
     select(
       $tap != $official_tap and
-      (($store.trustedtaps // []) | index($tap) | not) and
-      (($store[$trust_key] // []) | index($item) | not)
+      (($store.trustedtaps // []) | (index($tap) or index($tap_reference)) | not) and
+      (($store[$trust_key] // []) | (index($item) or index($remote_item)) | not)
     ) |
     $tap
   '
@@ -82,6 +92,35 @@ homebrew-trusted-items() {
     store="$("${jq}" -c 'if type == "object" then . else {} end' "${trust_file}")" || store='{}'
   fi
 
+  local tap_references
+  # The JQ programs below need literal `$...` variables for JQ, not shell expansions.
+  # shellcheck disable=SC2016
+  tap_references="$(
+    while IFS=$'\t' read -r tap tap_path
+    do
+      [[ -n "${tap}" && -d "${tap_path}" ]] || continue
+
+      local remote
+      if remote="$(git -C "${tap_path}" config --get remote.origin.url 2>/dev/null)"
+      then
+        printf "%s\t%s\n" "${tap}" "${remote}" | tr "[:upper:]" "[:lower:]"
+      else
+        printf "%s\t%s\n" "${tap}" "${tap}"
+      fi
+    done < <(
+      echo "${items}" | "${jq}" -Rr --arg item_dir "${item_dir}" '
+        capture("(?<path>.*/Taps/(?<user>[^/]+)/(?:home|linux)brew-(?<tap>[^/]+))/" + $item_dir + "/.*")? |
+        select(. != null) |
+        "\(.user)/\(.tap)\t\(.path)"
+      ' | sort -u
+    ) | "${jq}" -Rnc '
+      reduce inputs as $line ({};
+        ($line | split("\t")) as $parts |
+        .[$parts[0]] = $parts[1]
+      )
+    '
+  )"
+
   if [[ -z "${HOMEBREW_COMPLETION:-}" ]]
   then
     local tap
@@ -90,12 +129,14 @@ homebrew-trusted-items() {
       [[ -n "${tap}" ]] || continue
       opoo "Skipping ${tap} because it is not trusted. Run \`brew trust ${tap}\` to trust it."
     done < <(echo "${items}" | "${jq}" -Rr --argjson store "${store}" --arg trust_key "${trust_key}" \
-      --arg official_tap "${official_tap}" --arg item_dir "${item_dir}" "${untrusted_tap_filter}" | sort -u)
+      --arg official_tap "${official_tap}" --arg item_dir "${item_dir}" \
+      --argjson tap_references "${tap_references}" "${untrusted_tap_filter}" | sort -u)
   fi
 
   local trusted
   trusted="$(echo "${items}" | "${jq}" -Rr --argjson store "${store}" --arg trust_key "${trust_key}" \
-    --arg official_tap "${official_tap}" --arg item_dir "${item_dir}" "${trust_filter}")"
+    --arg official_tap "${official_tap}" --arg item_dir "${item_dir}" \
+    --argjson tap_references "${tap_references}" "${trust_filter}")"
   local shortnames
   shortnames="$(echo "${trusted}" | cut -d "/" -f 3)"
   echo -e "${trusted}\n${shortnames}" | sort -uf

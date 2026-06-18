@@ -12,7 +12,10 @@ RSpec.shared_examples "parseable arguments" do |command_name: nil|
     else
       # for tests of remote taps, we need to load the command class
       require(Commands.external_ruby_v2_cmd_path(command_name))
+      # The command class name is only known at runtime.
+      # rubocop:disable Sorbet/ConstantsFromStrings
       klass = Object.const_get(command)
+      # rubocop:enable Sorbet/ConstantsFromStrings
     end
     argv = klass.parser.instance_variable_get(:@min_named_args)&.times&.map { "argument" } || []
     cmd = klass.new(argv)

@@ -18,20 +18,8 @@ module Homebrew
         Homebrew::Bundle.register_extension(T.cast(subclass, T.class_of(Homebrew::Bundle::Extension)))
       end
 
-      sig { returns(Symbol) }
-      def self.type
-        T.cast(const_get(:PACKAGE_TYPE), Symbol)
-      end
-
-      sig { returns(String) }
-      def self.check_label
-        T.cast(const_get(:PACKAGE_TYPE_NAME), String)
-      end
-
-      sig { returns(String) }
-      def self.banner_name
-        T.cast(const_get(:BANNER_NAME), String)
-      end
+      sig { abstract.returns(String) }
+      def self.banner_name; end
 
       sig { params(description: String).returns(String) }
       def self.switch_description(description)

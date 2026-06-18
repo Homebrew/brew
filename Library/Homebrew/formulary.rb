@@ -165,6 +165,8 @@ module Formulary
 
     class_name = class_s(name)
 
+    # The formula's class name and module constants are only known at runtime.
+    # rubocop:disable Sorbet/ConstantsFromStrings
     begin
       mod.const_get(class_name)
     rescue NameError => e
@@ -175,6 +177,7 @@ module Formulary
       remove_const(namespace)
       raise new_exception, "", e.backtrace
     end
+    # rubocop:enable Sorbet/ConstantsFromStrings
   ensure
     # TODO: Make printing to stdout an error so that we can print a tap name.
     #       See discussion at https://github.com/Homebrew/brew/pull/20226#discussion_r2195886888
@@ -1135,8 +1138,15 @@ module Formulary
 
   sig { params(ref: String).returns(Pathname) }
   def self.to_rack(ref)
-    # If using a fully-scoped reference, check if the formula can be resolved.
-    factory(ref) if ref.include? "/"
+    # If using a fully-scoped reference, check the formula can be resolved to
+    # reject a bogus reference like `fake/tap/hello`. An untrusted tap is no
+    # barrier to uninstalling an installed formula: this error only fires once
+    # the formula file exists and is raised before the file is evaluated.
+    begin
+      factory(ref) if ref.include? "/"
+    rescue Homebrew::UntrustedTapError
+      nil
+    end
 
     # Check whether the rack with the given name exists.
     if (rack = HOMEBREW_CELLAR/File.basename(ref, ".rb")).directory?

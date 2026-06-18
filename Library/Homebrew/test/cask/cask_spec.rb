@@ -87,6 +87,14 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "#any_version_installed?" do
+    it "matches #installed?" do
+      allow(cask).to receive(:installed?).and_return(true)
+
+      expect(cask.any_version_installed?).to be true
+    end
+  end
+
   context "when multiple versions are installed" do
     describe "#installed_version" do
       context "when there are duplicate versions" do
@@ -321,6 +329,24 @@ RSpec.describe Cask::Cask, :cask do
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
         write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+
+        expect(cask.outdated_version).to be_nil
+      end
+
+      it "is not outdated when the installed short and bundle versions combine to the tap version" do
+        tap_version = "2.61-2057"
+        cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
+        allow(cask).to receive(:installed_version).and_return("2.57-2056")
+        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+
+        expect(cask.outdated_version).to be_nil
+      end
+
+      it "is not outdated when the combined installed version is higher than the tap version" do
+        tap_version = "2.61-2057"
+        cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
+        allow(cask).to receive(:installed_version).and_return("2.57-2056")
+        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2058")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -647,6 +673,9 @@ RSpec.describe Cask::Cask, :cask do
     let(:expected_versions_variations) do
       <<~JSON
         {
+          "golden_gate": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.2.3/intel.zip"
+          },
           "tahoe": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.2.3/intel.zip"
           },
@@ -683,6 +712,10 @@ RSpec.describe Cask::Cask, :cask do
     let(:expected_sha256_variations) do
       <<~JSON
         {
+          "golden_gate": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
           "tahoe": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
@@ -717,6 +750,10 @@ RSpec.describe Cask::Cask, :cask do
     let(:expected_sha256_variations_os) do
       <<~JSON
         {
+          "golden_gate": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
+            "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
           "tahoe": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel-darwin.zip",
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
@@ -796,6 +833,13 @@ RSpec.describe Cask::Cask, :cask do
 
       expect(h["variations"]).to include(:x86_64_linux)
       expect(h["variations"]).not_to include(:arm64_linux)
+    end
+
+    it "emits Linux variations for a cask with Linux checksums but no `os` stanza" do
+      c = Cask::CaskLoader.load("sha256-linux")
+      h = c.to_hash_with_variations
+
+      expect(h["variations"]).to include(:x86_64_linux, :arm64_linux)
     end
 
     # NOTE: The calls to `Cask.generating_hash!` and `Cask.generated_hash!`

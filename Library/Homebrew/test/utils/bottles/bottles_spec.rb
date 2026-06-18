@@ -34,7 +34,7 @@ RSpec.describe Utils::Bottles do
             version "0.1"
           end
         RUBY
-        Formulary.cache.delete(dep_path)
+        Formulary.cache.delete(dep_path.to_s)
 
         # setup a testball2, that depends on testball1
         formula_name = "testball2"
@@ -46,7 +46,7 @@ RSpec.describe Utils::Bottles do
             depends_on "testball1"
           end
         RUBY
-        Formulary.cache.delete(formula_path)
+        Formulary.cache.delete(formula_path.to_s)
       end
 
       it "includes runtime_dependencies" do

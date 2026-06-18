@@ -36,6 +36,7 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
         homebrew-as-console-user
       SH
       "HOMEBREW_BREW_FILE" => "brew",
+      "HOMEBREW_LIBRARY"   => (repository_root/"Library").to_s,
     )
 
     expect(status.exitstatus).to eq 1
@@ -83,6 +84,7 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
         homebrew-as-console-user install wget
       SH
       "HOMEBREW_BREW_FILE" => "brew",
+      "HOMEBREW_LIBRARY"   => (repository_root/"Library").to_s,
     )
 
     expect(status.exitstatus).to eq 1

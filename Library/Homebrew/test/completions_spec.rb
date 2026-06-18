@@ -395,13 +395,18 @@ RSpec.describe Homebrew::Completions do
         expect(file).to match(/^complete -o bashdefault -o default -F _brew brew$/)
       end
 
-      it "doesn't add aliases to command completions" do
+      it "doesn't add internal aliases to command completions" do
         file = described_class.generate_bash_completion_file(%w[install missing up update])
         expect(file).not_to include("cmd_aliases")
+        expect(file).to include('user_aliases="$(__brew_list_aliases)"')
+        expect(file).to include('local pattern="alias: brew ([^[:space:]]+)"')
+        expect(file).to include('alias_name="${file##*/}"')
+        expect(file).to include("if read -r line && [[ ${line} =~ ${pattern} ]]; then")
         expect(file).not_to match(/^_brew_up\(\) {$/)
         expect(file).not_to match(/^ {4}up\) _brew_up ;;/)
         expect(file).to include('[[ $(__brew_internal_command_alias "${line}") == "${line}" ]] || continue')
         expect(file).to include('cmd="$(__brew_internal_command_alias "${cmd}")"')
+        expect(file).to include('compgen -W "${cmds} ${maintainer_cmds} ${user_aliases}" -- "${cur}"')
         expect(file).to match(/^ {4}up\) echo "update" ;;$/)
         expect(file).to match(/^ {4}update\) _brew_update ;;$/)
       end
@@ -481,11 +486,16 @@ RSpec.describe Homebrew::Completions do
         expect(completion).to include("*:service:__brew_services")
       end
 
-      it "doesn't generate alias completion functions" do
+      it "doesn't generate internal alias completion functions" do
         file = described_class.generate_zsh_completion_file(%w[up update])
         expect(file).not_to match(/^# brew up$/)
         expect(file).not_to match(/^_brew_up\(\) {$/)
         expect(file).to match(/^    up update$/)
+        expect(file).to match(/^__brew_user_aliases\(\) {$/)
+        expect(file).to include('local pattern="alias: brew ([^[:space:]]+)"')
+        expect(file).to include('alias_name="${file:t}"')
+        expect(file).to include("if read -r line && [[ ${line} =~ ${pattern} ]]; then")
+        expect(file).to include("'user-aliases:alias:__brew_user_aliases'")
         expect(file).to include('command="${aliases[$command_or_alias]:-$command_or_alias}"')
         expect(file).to include('local completion_func="_brew_${command//-/_}"')
       end
@@ -591,10 +601,14 @@ RSpec.describe Homebrew::Completions do
         expect(file).to match(/^__fish_brew_complete_cmd 'update' 'Fetch the newest version of Homebrew .*'$/)
       end
 
-      it "omits aliases from command completions" do
+      it "omits internal aliases from command completions" do
         file = described_class.generate_fish_completion_file(%w[up update])
         expect(file).not_to match(/^__fish_brew_complete_cmd 'up'/)
         expect(file).not_to match(/^__fish_brew_complete_arg 'up'/)
+        expect(file).to match(/^function __fish_brew_suggest_aliases/)
+        expect(file).to include("set -l alias_name (string replace -r '^.*/' '' -- $file)")
+        expect(file).to include("set -l match (string match -rg 'alias: brew ([^[:space:]]+)' -- $line)")
+        expect(file).to include("    __fish_brew_suggest_aliases\nend")
         expect(file).to match(/^        case 'up'$/)
         expect(file).to match(/^            echo 'update'$/)
         expect(file).to include("set -l cmd (__fish_brew_expand_alias $args[1])")

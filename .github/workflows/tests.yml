@@ -320,13 +320,6 @@ jobs:
           disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
-      - uses: actions/upload-code-coverage@abb5995db9e0199b0e2bb9dbd136fce4cb1ec4d3 # v1.3.0
-        if: github.event_name == 'pull_request' || matrix.name != 'tests (online)'
-        with:
-          file: ${{ steps.set-up-homebrew.outputs.repository-path }}/Library/Homebrew/test/coverage/coverage.xml
-          language: Ruby
-          label: code-coverage/simplecov
-
   test-bot:
     name: ${{ matrix.name }}
     needs: syntax
@@ -405,13 +398,12 @@ jobs:
           uninstall: true
 
       - name: Setup environment variables
+        if: matrix.name == 'test-bot (Linux Homebrew glibc)'
         run: |
-          # Set environment variables to bypass `brew doctor` failures on Tier >=2 configurations
-          if [[ "${MATRIX_NAME}" == "test-bot (Linux Homebrew glibc)" ]]; then
-            echo "HOMEBREW_GLIBC_TESTING=1" >> "$GITHUB_ENV"
-          fi
-        env:
-          MATRIX_NAME: ${{ matrix.name }}
+          # Set environment variables to bypass `brew doctor` failures and disable
+          # recursive Sorbet runtime checks for speed on Tier >=2 configurations
+          echo "HOMEBREW_GLIBC_TESTING=1" >> "$GITHUB_ENV"
+          echo "HOMEBREW_SORBET_RECURSIVE=0" >> "$GITHUB_ENV"
 
       - run: brew test-bot --only-cleanup-before
 
@@ -450,7 +442,7 @@ jobs:
             brew "postgresql@15", restart_service: true
             cask "rectangle"
             cask "1password-cli"
-            cask "google-chrome"
+            cask "firefox"
             # VSCode cask is not available on Linux.
             vscode "shopify.ruby-lsp" if OS.mac?
           EOS
@@ -464,7 +456,7 @@ jobs:
           brew bundle env | grep PATH | grep git
           brew bundle env --install
           brew bundle exec --services true
-          brew bundle dump --force --describe
+          brew bundle dump --force
           brew services list
           brew services info memcached postgresql@15
           brew services info --json memcached postgresql@15

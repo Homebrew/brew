@@ -292,15 +292,6 @@ RSpec/Output:
   Exclude:
     - "**/fixtures/**/*.rb"
 
-# These are legacy violations that we should try to fix.
-Sorbet/AllowIncompatibleOverride:
-  Exclude:
-    - "Homebrew/livecheck/strategy/*.rb"
-
-# Try getting rid of these.
-Sorbet/ConstantsFromStrings:
-  Enabled: false
-
 # This is already the default
 Sorbet/FalseSigil:
   Enabled: false

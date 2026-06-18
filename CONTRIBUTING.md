@@ -24,7 +24,7 @@ First time contributing to Homebrew? Read our [Code of Conduct](https://github.c
 
 ### "Artificial Intelligence"/Large Language Model (AI/LLM) usage
 
-We allow you to create issues and pull requests with AI/LLM with the following requirements:
+We allow you to create issues and pull requests with AI/LLM with the following requirements (see [Responsible AI Usage](https://docs.brew.sh/Responsible-AI-Usage) for the principles behind them):
 
 * You must disclose in the initial issue or pull request that you used AI/LLM and what tool/model/etc. you used.
 * You must review all AI/LLM generated code, prose, etc. content before you ask anyone in Homebrew to review it for you.

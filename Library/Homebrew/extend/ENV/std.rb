@@ -136,12 +136,7 @@ module Stdenv
   def clang
     super
     replace_in_cflags(/-Xarch_#{Hardware::CPU.arch_32_bit} (-march=\S*)/, '\1')
-    map = Hardware::CPU.optimization_flags.dup
-    if DevelopmentTools.clang_build_version < 700
-      # Clang mistakenly enables AES-NI on plain Nehalem
-      map[:nehalem] = "-march=nehalem -Xclang -target-feature -Xclang -aes"
-    end
-    set_cpu_cflags(map)
+    set_cpu_cflags
   end
 
   sig { void }

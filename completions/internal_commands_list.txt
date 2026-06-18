@@ -71,9 +71,11 @@ reinstall
 rubocop
 ruby
 rubydoc
+sandbox-exec
 search
 services
 setup-ruby
+setup-sandbox
 sh
 shellenv
 source

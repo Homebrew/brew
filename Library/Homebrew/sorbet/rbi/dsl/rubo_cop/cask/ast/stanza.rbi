@@ -103,6 +103,9 @@ class RuboCop::Cask::AST::Stanza
   def on_catalina?; end
 
   sig { returns(T::Boolean) }
+  def on_golden_gate?; end
+
+  sig { returns(T::Boolean) }
   def on_intel?; end
 
   sig { returns(T::Boolean) }

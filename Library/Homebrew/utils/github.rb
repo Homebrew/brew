@@ -71,11 +71,6 @@ module GitHub
     @user ||= T.let(API.open_rest("#{API_URL}/user"), T.nilable(T::Hash[String, T.untyped]))
   end
 
-  sig { params(repo: String, user: String).returns(T::Hash[String, T.untyped]) }
-  def self.permission(repo, user)
-    API.open_rest("#{API_URL}/repos/#{repo}/collaborators/#{user}/permission")
-  end
-
   sig { params(query: String, only: T.nilable(T.any(Symbol, String))).void }
   def self.print_pull_requests_matching(query, only = nil)
     open_or_closed_prs = search_issues(query, is: only, type: "pr", user: "Homebrew")
@@ -379,21 +374,6 @@ module GitHub
     end
 
     matching_artifacts.map { |art| art["archive_download_url"] }
-  end
-
-  sig { params(org: String, per_page: Integer).returns(T::Array[String]) }
-  def self.public_member_usernames(org, per_page: MAX_PER_PAGE)
-    url = "#{API_URL}/orgs/#{org}/public_members"
-    members = []
-
-    API.paginate_rest(url, per_page:) do |result|
-      result = result.map { |member| member["login"] }
-      members.concat(result)
-
-      return members if result.length < per_page
-    end
-
-    members
   end
 
   sig { params(org: String, team: String).returns(T::Hash[String, String]) }

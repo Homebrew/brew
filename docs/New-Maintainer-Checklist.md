@@ -56,6 +56,7 @@ A few requests:
 - If still in doubt please ask for help and we'll help you out.
 - Please read:
     - https://docs.brew.sh/Maintainer-Guidelines
+    - https://docs.brew.sh/Responsible-AI-Usage if you use AI/LLM tools
     - the team-specific guides linked above and in the maintainer guidelines
     - anything else you haven't read on https://docs.brew.sh
 

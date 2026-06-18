@@ -15,7 +15,7 @@ module Homebrew
       class ExecSubcommand < Homebrew::AbstractSubcommand
         subcommand_args do
           usage_banner <<~EOS
-            `brew bundle exec` [`--check`] [`--no-secrets`] <command>:
+            `brew bundle exec` [`--check`] [`--no-secrets`] [`--sandbox=`<path>] [`--deny-network`] <command>:
             Run an external command in an isolated build environment based on the `Brewfile` dependencies.
 
             This sanitized build environment ignores unrequested dependencies, which makes sure that things you didn't specify in your `Brewfile` won't get picked up by commands like `bundle install`, `npm install`, etc. It will also add compiler flags which will help with finding keg-only dependencies like `openssl`, `icu4c`, etc.
@@ -33,6 +33,12 @@ module Homebrew
           switch "--no-secrets",
                  description: "Attempt to remove secrets from the environment before executing the command.",
                  env:         :bundle_no_secrets
+          flag "--sandbox=",
+               description: "Run <command> in Homebrew's sandbox, allowing writes to <path> and Homebrew's " \
+                            "temporary and cache directories."
+          switch "--deny-network",
+                 description: "Deny network access from inside the sandbox.",
+                 depends_on:  "--sandbox="
         end
 
         sig { override.void }
@@ -42,6 +48,13 @@ module Homebrew
 
         sig { params(named_args: String, args: T.untyped, context: Homebrew::Cmd::Bundle::SubcommandContext).void }
         def self.run_command(*named_args, args:, context:)
+          sandbox_path = args.sandbox
+          sandbox_options = {}
+          if sandbox_path
+            sandbox_options[:sandbox_path] = sandbox_path
+            sandbox_options[:deny_network] = args.deny_network?
+          end
+
           run_external_command(
             *named_args,
             global:     context.global,
@@ -50,6 +63,7 @@ module Homebrew
             services:   args.services?,
             check:      args.check?,
             no_secrets: args.no_secrets?,
+            **sandbox_options,
           )
         end
 
@@ -59,13 +73,15 @@ module Homebrew
 
         sig {
           params(
-            args:       String,
-            global:     T::Boolean,
-            file:       T.nilable(String),
-            subcommand: String,
-            services:   T::Boolean,
-            check:      T::Boolean,
-            no_secrets: T::Boolean,
+            args:         String,
+            global:       T::Boolean,
+            file:         T.nilable(String),
+            subcommand:   String,
+            services:     T::Boolean,
+            check:        T::Boolean,
+            no_secrets:   T::Boolean,
+            sandbox_path: T.nilable(String),
+            deny_network: T::Boolean,
           ).void
         }
         def self.run_external_command(
@@ -75,7 +91,9 @@ module Homebrew
           subcommand: "",
           services: false,
           check: false,
-          no_secrets: false
+          no_secrets: false,
+          sandbox_path: nil,
+          deny_network: false
         )
           if check
             require "bundle/subcommand/check"
@@ -104,6 +122,8 @@ module Homebrew
 
           command = args.first
           raise UsageError, "No command to execute was specified!" if command.blank?
+          raise UsageError, "`--sandbox` requires a writable path." if sandbox_path == ""
+          raise UsageError, "`--deny-network` requires `--sandbox`." if deny_network && sandbox_path.blank?
 
           require "bundle/brewfile"
           @dsl ||= T.let(nil, T.nilable(Homebrew::Bundle::Dsl))
@@ -258,17 +278,29 @@ module Homebrew
             args = [Utils::Shell.shell_with_prompt("brew bundle", preferred_path:, notice:)]
           end
 
+          require "sandbox" if sandbox_path
+
           if services
             require "bundle/brew_services"
 
             exit_code = T.let(0, Integer)
             run_services(@dsl.entries) do
-              Kernel.system(*args)
-              if (system_exit_code = $CHILD_STATUS&.exitstatus)
-                exit_code = system_exit_code
+              if sandbox_path
+                begin
+                  Sandbox.run_command(*args, writable_path: sandbox_path, deny_network:)
+                rescue ErrorDuringExecution => e
+                  exit_code = e.exitstatus || 1
+                end
+              else
+                Kernel.system(*args)
+                if (system_exit_code = $CHILD_STATUS&.exitstatus)
+                  exit_code = system_exit_code
+                end
               end
             end
             exit!(exit_code)
+          elsif sandbox_path
+            Sandbox.run_command(*args, writable_path: sandbox_path, deny_network:)
           else
             exec(*args)
           end

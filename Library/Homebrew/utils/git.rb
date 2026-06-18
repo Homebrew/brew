@@ -15,10 +15,21 @@ module Utils
       !version.null?
     end
 
+    sig { returns(T::Hash[String, String]) }
+    def self.no_global_config_env
+      { "GIT_CONFIG_GLOBAL" => no_global_config_file }
+    end
+
+    sig { returns(String) }
+    def self.no_global_config_file
+      File::NULL
+    end
+
     sig { returns(Version) }
     def self.version
       @version ||= T.let(begin
-        stdout, _, status = system_command(git, args: ["--version"], verbose: false, print_stderr: false).to_a
+        stdout, _, status = system_command(git, args: ["--version"], env: no_global_config_env,
+                                                verbose: false, print_stderr: false).to_a
         version_str = status.success? ? stdout.chomp[/git version (\d+(?:\.\d+)*)/, 1] : nil
         version_str.nil? ? Version::NULL : Version.new(version_str)
       end, T.nilable(Version))
@@ -108,6 +119,18 @@ module Utils
       relative_file = Pathname(file)
       relative_file = relative_file.relative_path_from(repo) if relative_file.absolute?
       Utils.popen_read(git, "-C", repo, "show", "#{commit}:#{relative_file}")
+    end
+
+    # The paths (relative to `repository`'s root) changed in its working tree
+    # since it diverged from the upstream default branch. The base is the
+    # `origin/HEAD` merge-base rather than the local default branch ref, which
+    # is often stale (e.g. in worktrees and freshly-cloned taps); it falls back
+    # to `main` when `origin/HEAD` is unavailable.
+    sig { params(repository: T.any(Pathname, String)).returns(T::Array[String]) }
+    def self.changed_files(repository)
+      base_ref = Utils.popen_read(git, "-C", repository, "merge-base", "origin/HEAD", "HEAD").chomp.presence
+      base_ref ||= "main"
+      Utils.popen_read(git, "-C", repository, "diff", "--name-only", "--no-relative", base_ref).split("\n")
     end
 
     sig { void }

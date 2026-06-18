@@ -110,6 +110,16 @@ RSpec.describe Homebrew::Services::System do
     end
   end
 
+  describe "#user_exists?" do
+    it "returns true when a specified user exists" do
+      expect(described_class.user_exists?(ENV.fetch("USER"))).to be(true)
+    end
+
+    it "returns false when a specified user does not exist" do
+      expect(described_class.user_exists?("not_a_real_user_#{SecureRandom.hex(4)}")).to be(false)
+    end
+  end
+
   describe "#domain_target" do
     it "returns the current domain target" do
       allow(described_class).to receive(:root?).and_return(false)

@@ -42,7 +42,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
   end
 
   specify "#fatal_build_from_source_checks" do
-    expect(checks.fatal_build_from_source_checks).to include("check_linux_sandbox")
+    expect(checks.fatal_build_from_source_checks).not_to include("check_linux_sandbox")
   end
 
   specify "#check_linux_sandbox returns nil when Linux sandboxing is disabled" do
@@ -73,8 +73,9 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
   specify "#check_linux_sandbox describes missing Bubblewrap" do
     allow(Sandbox).to receive_messages(
-      state:          :missing,
-      failure_reason: "Bubblewrap is required to use the Linux sandbox but was not found.",
+      state:                   :missing,
+      failure_reason:          "Bubblewrap is required to use the Linux sandbox but was not found.",
+      sandbox_install_command: "sudo apt-get install bubblewrap",
     )
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
@@ -84,6 +85,8 @@ RSpec.describe Homebrew::Diagnostic::Checks do
         .to include(
           "Bubblewrap is required to use the Linux sandbox but was not found.",
           "Install Bubblewrap and ensure a rootless `bwrap` executable is available on `PATH`.",
+          "On this system, install it with:",
+          "  sudo apt-get install bubblewrap",
           "export HOMEBREW_NO_SANDBOX_LINUX=1",
         )
       expect(message).not_to include("sysctl")

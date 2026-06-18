@@ -9,6 +9,7 @@ RSpec.describe Homebrew::Cmd::Link do
 
   it "uses formula-aware conflict handling when linking a Formula" do
     formula = formula "testball" do
+      T.bind(self, T.class_of(Formula))
       url "foo-1.0"
     end
     keg = instance_double(Keg, rack: HOMEBREW_CELLAR/"testball", linked?: false, name: "testball")
@@ -43,6 +44,7 @@ RSpec.describe Homebrew::Cmd::Link do
   }.each do |formula_type, formula_name|
     it "does not print keg-only output when linking a #{formula_type} formula" do
       test_formula = formula(formula_name) do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/#{formula_name}-1.0"
         keg_only :versioned_formula
 

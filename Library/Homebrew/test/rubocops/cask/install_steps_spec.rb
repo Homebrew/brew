@@ -30,7 +30,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
 
         preflight_steps do
           system "true"
-          ^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`.
+          ^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `write`.
         end
       end
     CASK
@@ -44,7 +44,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
 
         preflight_steps do
           update_desktop_database
-          ^^^^^^^^^^^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`.
+          ^^^^^^^^^^^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `write`.
         end
       end
     CASK

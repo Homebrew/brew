@@ -367,8 +367,8 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
   context "when a new checker fails to implement installed_and_up_to_date" do
     it "raises an exception" do
       stub_const("TestChecker", Class.new(Homebrew::Bundle::PackageType) do
-        class_eval("PACKAGE_TYPE = :test", __FILE__, __LINE__)
-        class_eval("PACKAGE_TYPE_NAME = 'Test'", __FILE__, __LINE__)
+        def self.type = :test
+        def self.check_label = "Test"
 
         def self.reset!; end
 

@@ -79,10 +79,14 @@ module Homebrew
         odie "Need to download #{url} but cannot as root! Run `brew update` without `sudo` first then try again."
       end
 
-      curl_args = Utils::Curl.curl_args(retries: 0) + %W[
-        --compressed
-        --speed-limit #{ENV.fetch("HOMEBREW_CURL_SPEED_LIMIT")}
-        --speed-time #{ENV.fetch("HOMEBREW_CURL_SPEED_TIME")}
+      curl_args = Utils::Curl.curl_args(retries: 0) + [
+        "--compressed",
+        "--speed-limit", ENV.fetch("HOMEBREW_CURL_SPEED_LIMIT"),
+        "--speed-time", ENV.fetch("HOMEBREW_CURL_SPEED_TIME"),
+        # This is a Curl format token, not a Ruby one.
+        # rubocop:disable Style/FormatStringToken
+        "--write-out", "%{stderr}HTTP status: %{http_code}"
+        # rubocop:enable Style/FormatStringToken
       ]
 
       insecure_download = DevelopmentTools.ca_file_substitution_required? ||
@@ -194,6 +198,8 @@ module Homebrew
         DEFAULT_API_STALE_SECONDS
       end
 
+      # The internal API is now always used; read this only to surface its deprecation.
+      Homebrew::EnvConfig.use_internal_api?
       Homebrew::API::Internal.fetch_packages_api!(download_queue:, stale_seconds:, enqueue: true)
 
       ENV["HOMEBREW_API_UPDATED"] = "1"

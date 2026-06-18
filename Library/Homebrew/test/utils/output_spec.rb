@@ -41,6 +41,28 @@ RSpec.describe Utils::Output do
     end
   end
 
+  describe "#pretty_upgradable" do
+    context "when $stdout is a TTY" do
+      before { allow($stdout).to receive(:tty?).and_return(true) }
+
+      it "returns a bold string with a colored up arrow by default" do
+        expect(described_class.pretty_upgradable("foo")).to match(/#{esc 1}foo #{esc 32}↑#{esc 0}/)
+      end
+
+      it "omits the bold escape when bold is false" do
+        expect(described_class.pretty_upgradable("foo", bold: false)).to match(/\Afoo #{esc 32}↑#{esc 0}/)
+      end
+    end
+
+    context "when $stdout is not a TTY" do
+      before { allow($stdout).to receive(:tty?).and_return(false) }
+
+      it "returns plain text" do
+        expect(described_class.pretty_upgradable("foo", bold: false)).to eq("foo")
+      end
+    end
+  end
+
   describe "#pretty_uninstalled" do
     subject(:pretty_uninstalled_output) { described_class.pretty_uninstalled("foo") }
 

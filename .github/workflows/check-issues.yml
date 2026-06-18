@@ -4,6 +4,8 @@ on:
   issues:
     types:
       - opened
+      - edited
+      - reopened
 
 permissions: {}
 
@@ -31,6 +33,7 @@ jobs:
       issues: write
     env:
       GH_TOKEN: ${{ github.token }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
     steps:
       - name: Verify no checkout
         run: |
@@ -51,14 +54,20 @@ jobs:
 
       - name: Fetch issue templates
         run: |
-          gh api "repos/${GITHUB_REPOSITORY:?}/contents/.github/ISSUE_TEMPLATE?ref=main" \
-            --jq '.[] | select(.type == "file" and (.name | test("\\.ya?ml$")) and .name != "config.yml") | .path' |
-            while IFS= read -r template_path
-            do
-              gh api "repos/${GITHUB_REPOSITORY:?}/contents/${template_path}?ref=main" \
-                --jq ".content" |
-                base64 --decode >"${RUNNER_TEMP}/check-issues/templates/${template_path##*/}"
-            done
+          # Validate against the brew, homebrew-core and homebrew-cask templates so
+          # issues transferred between these repositories are not closed for using a
+          # sibling repository's (valid) template.
+          for repo in "${GITHUB_REPOSITORY:?}" Homebrew/homebrew-core Homebrew/homebrew-cask
+          do
+            gh api "repos/${repo}/contents/.github/ISSUE_TEMPLATE?ref=main" \
+              --jq '.[] | select(.type == "file" and (.name | test("\\.ya?ml$")) and .name != "config.yml") | .path' |
+              while IFS= read -r template_path
+              do
+                gh api "repos/${repo}/contents/${template_path}?ref=main" \
+                  --jq ".content" |
+                  base64 --decode >"${RUNNER_TEMP}/check-issues/templates/${repo//\//-}-${template_path##*/}"
+              done
+          done
 
       - name: Fetch template checker
         run: |
@@ -72,7 +81,8 @@ jobs:
           complete_template="$(
             ruby "${RUNNER_TEMP:?}/check_template.rb" issue \
               "${RUNNER_TEMP}/check-issues/body" \
-              "${RUNNER_TEMP}/check-issues/templates"
+              "${RUNNER_TEMP}/check-issues/templates" \
+              2>"${RUNNER_TEMP}/check-issues/missing-checkboxes"
           )"
           case "${complete_template}" in
             true | false) ;;
@@ -84,18 +94,69 @@ jobs:
 
           echo "complete_template=${complete_template}" >>"${GITHUB_OUTPUT:?}"
 
-      - name: Close incomplete issue
-        if: steps.template.outputs.complete_template == 'false'
+      - name: Find incomplete template comment
+        id: comments
+        if: >-
+          (github.event.issue.state == 'closed' &&
+          steps.template.outputs.complete_template == 'true') ||
+          (github.event.issue.state != 'closed' &&
+          steps.template.outputs.complete_template == 'false')
         run: |
-          gh api --method POST "repos/${GITHUB_REPOSITORY:?}/issues/${{ github.event.issue.number }}/comments" \
+          comment_ids="$(
+            gh api --paginate "repos/${GITHUB_REPOSITORY:?}/issues/${ISSUE_NUMBER:?}/comments" \
+              --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- incomplete-issue-template -->"))) | .id'
+          )"
+          if [[ -n "${comment_ids}" ]]
+          then
+            echo "has_incomplete_template_comment=true" >>"${GITHUB_OUTPUT:?}"
+          else
+            echo "has_incomplete_template_comment=false" >>"${GITHUB_OUTPUT:?}"
+          fi
+
+      - name: Find issue closer
+        id: closer
+        if: >-
+          github.event.issue.state == 'closed' &&
+          steps.template.outputs.complete_template == 'true'
+        run: |
+          closed_by="$(gh api "repos/${GITHUB_REPOSITORY:?}/issues/${ISSUE_NUMBER:?}" --jq ".closed_by.login // \"\"")"
+          echo "closed_by=${closed_by}" >>"${GITHUB_OUTPUT:?}"
+
+      - name: Reopen completed issue
+        if: >-
+          github.event.issue.state == 'closed' &&
+          steps.template.outputs.complete_template == 'true' &&
+          steps.closer.outputs.closed_by == 'github-actions[bot]' &&
+          steps.comments.outputs.has_incomplete_template_comment == 'true'
+        run: |
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY:?}/issues/${ISSUE_NUMBER:?}" \
+            -f state=open
+
+      - name: Comment on incomplete issue
+        if: >-
+          github.event.issue.state != 'closed' &&
+          steps.template.outputs.complete_template == 'false' &&
+          steps.comments.outputs.has_incomplete_template_comment != 'true'
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY:?}/issues/${ISSUE_NUMBER:?}/comments" \
             --raw-field body="$(
               cat <<COMMENT
+          <!-- incomplete-issue-template -->
           Thanks for your issue. This has been closed because it appears to use an incomplete or outdated issue template.
 
-          Please edit and reopen this issue once you have filled in the current issue template. **Do not create a new issue for this.**
+          Please edit this issue to restore the following sections and checkboxes from the current issue template (you do not need to tick the checkboxes):
+
+          $(cat "${RUNNER_TEMP:?}/check-issues/missing-checkboxes")
+
+          This workflow will reopen this issue automatically once they are present. **Do not create a new issue for this.**
           COMMENT
             )"
 
-          gh api --method PATCH "repos/${GITHUB_REPOSITORY:?}/issues/${{ github.event.issue.number }}" \
+      - name: Close incomplete issue
+        if: >-
+          github.event.issue.state != 'closed' &&
+          steps.template.outputs.complete_template == 'false'
+        run: |
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY:?}/issues/${ISSUE_NUMBER:?}" \
             -f state=closed \
             -f state_reason=not_planned

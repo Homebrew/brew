@@ -13,10 +13,13 @@ module Homebrew
     class Brew < Homebrew::Bundle::PackageType
       extend Utils::Output::Mixin
 
-      PACKAGE_TYPE = :brew
-      PACKAGE_TYPE_NAME = "Formula"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :brew
+
+        sig { override.returns(String) }
+        def check_label = "Formula"
+
         sig { override.params(subclass: T.class_of(Homebrew::Bundle::PackageType)).void }
         def inherited(subclass)
           return if subclass.name == "Homebrew::Bundle::Brew::Services"
@@ -134,7 +137,7 @@ module Homebrew
         def formula_installed?(formula)
           # Fully qualified tap formulae can be checked by their Cellar rack name
           # without loading the formula from an untrusted tap.
-          return installed_formulae.include?(Utils.name_from_full_name(formula)) if formula.count("/") == 2
+          return installed_formulae.include?(Utils.name_from_full_name(formula)) if Utils.full_name?(formula)
 
           formula_in_array?(formula, installed_formulae)
         end
@@ -145,7 +148,7 @@ module Homebrew
 
           # Reading the formula is needed for authoritative outdated state, so
           # report trust problems before the upgrade check tries to load it.
-          if formula.count("/") == 2 && Homebrew::EnvConfig.require_tap_trust?
+          if Utils.full_name?(formula) && Homebrew::EnvConfig.require_tap_trust?
             require "trust"
 
             unless Homebrew::Trust.trusted?(:formula, formula)
@@ -456,6 +459,7 @@ module Homebrew
         @link = T.let(options.fetch(:link, nil), T.nilable(T.any(Symbol, T::Boolean)))
         @postinstall = T.let(options.fetch(:postinstall, nil), T.nilable(String))
         @version_file = T.let(options.fetch(:version_file, nil), T.nilable(String))
+        @trusted = T.let(options.fetch(:trusted, false), T::Boolean)
         @changed = T.let(nil, T.nilable(T::Boolean))
       end
 
@@ -552,6 +556,13 @@ module Homebrew
       sig { params(no_upgrade: T::Boolean, verbose: T::Boolean, force: T::Boolean).returns(T::Boolean) }
       def install_change_state!(no_upgrade:, verbose:, force:)
         require "tap"
+
+        # Trust before tapping: installing the tap loads the formula, which
+        # triggers the trust check before any later step could grant trust.
+        # Only fully-qualified names map to a tap, so unqualified names cannot
+        # be meaningfully trusted.
+        Homebrew::Trust.trust!(:formula, @full_name) if @trusted && Utils.full_name?(@full_name)
+
         if (tap_with_name = ::Tap.with_formula_name(@full_name))
           tap, = tap_with_name
           tap.ensure_installed!

@@ -213,7 +213,7 @@ module Cask
       cask_upgrades = upgradable_casks.map do |(old_cask, new_cask)|
         "#{new_cask.full_name} #{old_cask.version} -> #{new_cask.version}"
       end
-      summary_upgrades&.concat(cask_upgrades)
+      summary_upgrades&.concat(cask_upgrades) if dry_run
       summary_deprecated&.concat(upgradable_casks.filter_map do |(_, new_cask)|
         new_cask.full_name if new_cask.deprecated?
       end)
@@ -255,12 +255,13 @@ module Cask
 
       download_queue ||= Homebrew.default_download_queue
 
-      upgradable_casks.each do |(old_cask, new_cask)|
+      upgradable_casks.each_with_index do |(old_cask, new_cask), index|
         upgrade_cask(
           old_cask, new_cask,
           binaries:, force:, skip_cask_deps:, verbose:,
           quarantine:, require_sha:, quit:, download_queue:
         )
+        summary_upgrades&.push(cask_upgrades.fetch(index))
       rescue => e
         new_exception = e.exception("#{new_cask.full_name}: #{e}")
         new_exception.set_backtrace(e.backtrace)

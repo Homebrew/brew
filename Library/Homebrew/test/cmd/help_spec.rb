@@ -144,6 +144,40 @@ RSpec.describe Homebrew::Cmd::HelpCmd, :integration_test do
       expect { brew "help", "hello-tap" }
         .not_to output(/^From tap:/).to_stdout
     end
+
+    it "runs an external command's own `--help` when it has no `#:` comments" do
+      tap_path = setup_test_tap
+      cmd_path = tap_path/"cmd/brew-selfdoc"
+      cmd_path.dirname.mkpath
+      cmd_path.write <<~SH
+        #!/bin/bash
+        [[ "$*" == *--help* ]] || { echo "expected --help, got: $*" >&2; exit 1; }
+        echo "Usage: brew selfdoc [options]"
+      SH
+      cmd_path.chmod(0755)
+
+      expect { brew "help", "selfdoc" }
+        .to output(/^Usage: brew selfdoc/).to_stdout
+        .and be_a_success
+    end
+
+    it "renders `#:` help for an external command rather than running it" do
+      tap_path = setup_test_tap
+      cmd_path = tap_path/"cmd/brew-commented"
+      cmd_path.dirname.mkpath
+      cmd_path.write <<~SH
+        #!/bin/bash
+        #:  * `commented`:
+        #:    Documented via comments.
+        echo "the command body should not have run" >&2
+        exit 1
+      SH
+      cmd_path.chmod(0755)
+
+      expect { brew "help", "commented" }
+        .to output(/Documented via comments\./).to_stdout
+        .and be_a_success
+    end
   end
 
   describe "cat" do

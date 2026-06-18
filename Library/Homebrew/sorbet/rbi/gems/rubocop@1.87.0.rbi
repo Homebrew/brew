@@ -407,6 +407,7 @@ class RuboCop::ConfigLoader
     def add_loaded_features(loaded_features); end
     def add_loaded_plugins(loaded_plugins); end
     def add_missing_namespaces(path, hash); end
+    def apply_default_overrides(config); end
     def cache_root(cache_root_override = T.unsafe(nil)); end
     def cache_root=(_arg0); end
     def clear_options; end
@@ -419,8 +420,12 @@ class RuboCop::ConfigLoader
     def default_configuration=(_arg0); end
     def disable_pending_cops; end
     def disable_pending_cops=(_arg0); end
+    def disabled_by_default; end
+    def disabled_by_default=(_arg0); end
     def enable_pending_cops; end
     def enable_pending_cops=(_arg0); end
+    def enabled_by_default; end
+    def enabled_by_default=(_arg0); end
     def ignore_parent_exclusion; end
     def ignore_parent_exclusion=(_arg0); end
     def ignore_parent_exclusion?; end
@@ -475,6 +480,7 @@ class RuboCop::ConfigLoaderResolver
   def inherited_file(path, inherit_from, file); end
   def merge_hashes?(base_hash, derived_hash, key); end
   def remote_config?(file); end
+  def resolve_default_overrides(config); end
   def should_merge?(mode, key); end
   def should_override?(mode, key); end
   def should_union?(derived_hash, base_hash, root_mode, key); end
@@ -809,6 +815,8 @@ class RuboCop::Cop::Base
   def parse(source, path = T.unsafe(nil)); end
   def parser_engine; end
   def processed_source; end
+  def project_index; end
+  def project_index=(_arg0); end
   def ready; end
   def relevant_file?(file); end
   def string_literals_frozen_by_default?; end
@@ -1140,7 +1148,7 @@ RuboCop::Cop::Layout::EmptyLineAfterGuardClause::END_OF_HEREDOC_LINE = T.let(T.u
 
 RuboCop::Cop::Layout::EmptyLineAfterGuardClause::MSG = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Layout::EmptyLineAfterGuardClause::SIMPLE_DIRECTIVE_COMMENT_PATTERN = T.let(T.unsafe(nil), Regexp)
+RuboCop::Cop::Layout::EmptyLineAfterGuardClause::SIMPLECOV_COMMENT_PATTERN = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Layout::EmptyLineAfterMagicComment::MSG = T.let(T.unsafe(nil), String)
 
@@ -1457,6 +1465,8 @@ RuboCop::Cop::Lint::CircularArgumentReference::MSG = T.let(T.unsafe(nil), String
 RuboCop::Cop::Lint::ConstantDefinitionInBlock::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::ConstantOverwrittenInRescue::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::ConstantReassignment::CROSS_FILE_MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::ConstantReassignment::MSG = T.let(T.unsafe(nil), String)
 
@@ -2252,6 +2262,12 @@ RuboCop::Cop::PrecedingFollowingAlignment::ASSIGNMENT_OR_COMPARISON_TOKENS = T.l
 
 RuboCop::Cop::PreferredDelimiters::PERCENT_LITERAL_TYPES = T.let(T.unsafe(nil), Array)
 
+RuboCop::Cop::ProjectIndexHelp::BUILTIN_DOCUMENT_URI = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::ProjectIndexHelp::FILE_URI_PREFIX = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::ProjectIndexHelp::WINDOWS_DRIVE_PREFIX = T.let(T.unsafe(nil), Regexp)
+
 module RuboCop::Cop::RangeHelp
   private
 
@@ -2299,6 +2315,7 @@ class RuboCop::Cop::Registry
   def find_by_cop_name(cop_name); end
   def find_cops_by_directive(directive); end
   def freeze; end
+  def lazy_load(cop_name, constant_name); end
   def length; end
   def names; end
   def names_for_department(department); end
@@ -2320,6 +2337,8 @@ class RuboCop::Cop::Registry
   def clear_enrollment_queue; end
   def emit_warning(path, message); end
   def initialize_copy(reg); end
+  def load_all_lazy_cops; end
+  def load_lazy_cop(badge); end
   def registered?(badge); end
   def resolve_badge(given_badge, real_badge, source_path, warn: T.unsafe(nil)); end
   def with(cops); end
@@ -4039,9 +4058,9 @@ RuboCop::Formatter::PacmanFormatter::FALLBACK_TERMINAL_WIDTH = T.let(T.unsafe(ni
 
 RuboCop::Formatter::PacmanFormatter::GHOST = T.let(T.unsafe(nil), String)
 
-RuboCop::Formatter::PacmanFormatter::PACDOT = T.let(T.unsafe(nil), Rainbow::Presenter)
+RuboCop::Formatter::PacmanFormatter::PACDOT = T.let(T.unsafe(nil), Rainbow::NullPresenter)
 
-RuboCop::Formatter::PacmanFormatter::PACMAN = T.let(T.unsafe(nil), Rainbow::Presenter)
+RuboCop::Formatter::PacmanFormatter::PACMAN = T.let(T.unsafe(nil), Rainbow::NullPresenter)
 
 RuboCop::Formatter::ProgressFormatter::DOT = T.let(T.unsafe(nil), String)
 
@@ -4144,6 +4163,7 @@ class RuboCop::OptionsValidator
   def validate_display_only_correctable_and_autocorrect; end
   def validate_display_only_failed; end
   def validate_display_only_failed_and_display_only_correctable; end
+  def validate_enable_all_cops_and_disable_all_cops; end
   def validate_exclude_limit_option; end
   def validate_lsp_and_editor_mode; end
 
@@ -4169,6 +4189,8 @@ RuboCop::Plugin::Loader::DEFAULT_PLUGIN_CONFIG = T.let(T.unsafe(nil), Hash)
 RuboCop::Plugin::OBSOLETE_INTERNAL_AFFAIRS_PLUGIN_NAME = T.let(T.unsafe(nil), String)
 
 RuboCop::ProcessedSource = RuboCop::AST::ProcessedSource
+
+RuboCop::ProjectIndexLoader::MINIMUM_RUBY_VERSION = T.let(T.unsafe(nil), String)
 
 module RuboCop::RSpec::ExpectOffense
   def expect_correction(correction, loop: T.unsafe(nil), source: T.unsafe(nil)); end
@@ -4294,6 +4316,8 @@ class RuboCop::Runner
   def process_file(file); end
   def process_remaining_report_queue; end
   def process_report_queue_entry(index); end
+  def project_index_disables_parallel?; end
+  def project_index_enabled?; end
   def qualify_option_cop_names; end
   def redundant_cop_disable_directive(file); end
   def run_in_parallel?(files); end
@@ -4381,6 +4405,8 @@ module RuboCop::Version
     def extension_versions(env); end
     def feature_version(feature); end
     def parser_version(target_ruby_version); end
+    def rubydex_enabled?(env); end
+    def rubydex_indicator(env); end
     def server_mode; end
     def target_ruby_version(env); end
     def verbose(env: T.unsafe(nil)); end

@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "cask/upgrade"
@@ -6,20 +6,20 @@ require "cask/upgrade"
 RSpec.describe Cask::Upgrade, :cask do
   let(:version_latest_paths) do
     [
-      version_latest.config.appdir.join("Caffeine Mini.app"),
-      version_latest.config.appdir.join("Caffeine Pro.app"),
+      Pathname(version_latest.config.appdir).join("Caffeine Mini.app"),
+      Pathname(version_latest.config.appdir).join("Caffeine Pro.app"),
     ]
   end
   let(:version_latest) { Cask::CaskLoader.load("version-latest") }
-  let(:auto_updates_path) { auto_updates.config.appdir.join("MyFancyApp.app") }
+  let(:auto_updates_path) { Pathname(auto_updates.config.appdir).join("MyFancyApp.app") }
   let(:auto_updates) { Cask::CaskLoader.load("auto-updates") }
-  let(:local_transmission_path) { local_transmission.config.appdir.join("Transmission.app") }
+  let(:local_transmission_path) { Pathname(local_transmission.config.appdir).join("Transmission.app") }
   let(:local_transmission) { Cask::CaskLoader.load("local-transmission-zip") }
-  let(:local_caffeine_path) { local_caffeine.config.appdir.join("Caffeine.app") }
+  let(:local_caffeine_path) { Pathname(local_caffeine.config.appdir).join("Caffeine.app") }
   let(:local_caffeine) { Cask::CaskLoader.load("local-caffeine") }
   let(:renamed_app) { Cask::CaskLoader.load("renamed-app") }
-  let(:renamed_app_old_path) { renamed_app.config.appdir.join("OldApp.app") }
-  let(:renamed_app_new_path) { renamed_app.config.appdir.join("NewApp.app") }
+  let(:renamed_app_old_path) { Pathname(renamed_app.config.appdir).join("OldApp.app") }
+  let(:renamed_app_new_path) { Pathname(renamed_app.config.appdir).join("NewApp.app") }
   let(:args) do
     parser = Homebrew::CLI::Parser.new(Homebrew::Cmd::Brew)
     parser.cask_options
@@ -591,7 +591,7 @@ RSpec.describe Cask::Upgrade, :cask do
 
     it "restores the old Cask if the upgrade failed" do
       will_fail_if_upgraded = Cask::CaskLoader.load("will-fail-if-upgraded")
-      will_fail_if_upgraded_path = will_fail_if_upgraded.config.appdir.join("container")
+      will_fail_if_upgraded_path = Pathname(will_fail_if_upgraded.config.appdir).join("container")
 
       expect(will_fail_if_upgraded).to be_installed
       expect(will_fail_if_upgraded_path).to be_a_file
@@ -609,7 +609,7 @@ RSpec.describe Cask::Upgrade, :cask do
 
     it "does not restore the old Cask if the upgrade failed pre-install" do
       bad_checksum = Cask::CaskLoader.load("bad-checksum")
-      bad_checksum_path = bad_checksum.config.appdir.join("Caffeine.app")
+      bad_checksum_path = Pathname(bad_checksum.config.appdir).join("Caffeine.app")
 
       expect(bad_checksum).to be_installed
       expect(bad_checksum_path).to be_a_directory
@@ -637,18 +637,19 @@ RSpec.describe Cask::Upgrade, :cask do
         InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask)))
       end
 
-      bad_checksum_2_path = Cask::CaskLoader.load("bad-checksum2").config.appdir.join("container")
+      bad_checksum_2_path = Pathname(Cask::CaskLoader.load("bad-checksum2").config.appdir).join("container")
       FileUtils.rm_rf(bad_checksum_2_path)
       FileUtils.touch(bad_checksum_2_path)
     end
 
     it "does not end the upgrade process" do
+      summary_upgrades = []
       upgraded_tokens = []
       bad_checksum = Cask::CaskLoader.load("bad-checksum")
-      bad_checksum_path = bad_checksum.config.appdir.join("Caffeine.app")
+      bad_checksum_path = Pathname(bad_checksum.config.appdir).join("Caffeine.app")
 
       bad_checksum_2 = Cask::CaskLoader.load("bad-checksum2")
-      bad_checksum_2_path = bad_checksum_2.config.appdir.join("container")
+      bad_checksum_2_path = Pathname(bad_checksum_2.config.appdir).join("container")
 
       expect(bad_checksum).to be_installed
       expect(bad_checksum_path).to be_a_directory
@@ -670,10 +671,11 @@ RSpec.describe Cask::Upgrade, :cask do
       end
 
       expect do
-        described_class.upgrade_casks!(args:, skip_prefetch: true)
+        described_class.upgrade_casks!(args:, skip_prefetch: true, summary_upgrades:)
       end.to raise_error(Cask::MultipleCaskErrors)
 
       expect(upgraded_tokens).to contain_exactly("bad-checksum", "bad-checksum2", "local-transmission-zip")
+      expect(summary_upgrades).to contain_exactly("local-transmission-zip 2.60 -> 2.61")
 
       expect(bad_checksum).to be_installed
       expect(bad_checksum_path).to be_a_directory

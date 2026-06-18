@@ -96,6 +96,67 @@ RSpec.describe Homebrew::InstallSteps do
     )
   end
 
+  specify "expands a scoped set of content tokens and leaves others verbatim", :aggregate_failures do
+    root_path = root
+    versioned_context = Class.new do
+      define_method(:prefix) { root_path/"prefix" }
+      define_method(:version) { Version.new("1.2.3") }
+    end.new
+
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :prefix) do
+      write "config.ini", <<~EOS
+        prefix = {{prefix}}
+        cellar = {{HOMEBREW_PREFIX}}
+        series = {{version.major_minor}} ({{version}})
+        literal = {{unknown}} {single}
+      EOS
+    end
+
+    Homebrew::InstallSteps::Runner.new(context: versioned_context).run(steps)
+
+    written = (root/"prefix/config.ini").read
+    expect(written).to include("prefix = #{root}/prefix")
+    expect(written).to include("cellar = #{HOMEBREW_PREFIX}")
+    expect(written).to include("series = 1.2 (1.2.3)")
+    expect(written).to include("literal = {{unknown}} {single}")
+  end
+
+  specify "writes a default config file and preserves existing ones", :aggregate_failures do
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
+      write "config/new.conf", "fresh"
+      write "config/kept.conf", "default"
+      write "config/replaced.conf", "default", overwrite: true
+    end
+
+    (root/"var/config").mkpath
+    (root/"var/config/kept.conf").write "user edit"
+    (root/"var/config/replaced.conf").write "user edit"
+
+    Homebrew::InstallSteps::Runner.new(context:).run(steps)
+
+    expect((root/"var/config/new.conf").read).to eq("fresh\n")
+    expect((root/"var/config/kept.conf").read).to eq("user edit")
+    expect((root/"var/config/replaced.conf").read).to eq("default\n")
+  end
+
+  specify "appends a trailing newline unless already present", :aggregate_failures do
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
+      write "missing-newline", "value"
+      write "has-newline", "value\n"
+    end
+
+    Homebrew::InstallSteps::Runner.new(context:).run(steps)
+
+    expect((root/"var/missing-newline").read).to eq("value\n")
+    expect((root/"var/has-newline").read).to eq("value\n")
+  end
+
+  specify "raises when a write step has missing or blank content" do
+    expect do
+      Homebrew::InstallSteps::Runner.new(context:).run([{ "type" => "write", "path" => "config/new.conf" }])
+    end.to raise_error(ArgumentError, /non-empty content/)
+  end
+
   specify "runs named desktop and cache rebuild actions" do
     steps = Homebrew::InstallSteps::DSL.build do
       compile_gsettings_schemas

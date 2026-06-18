@@ -128,7 +128,10 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         tap_name = Utils.tap_from_full_name(full_name)
         name = Utils.name_from_full_name(full_name)
         tap = (Tap.fetch(tap_name) if tap_name.present?)
-        f = formula(name, tap:) { url "#{name}-1.0" }
+        f = formula(name, tap:) do
+          T.bind(self, T.class_of(Formula))
+          url "#{name}-1.0"
+        end
         stub_formula_loader f, full_name
       end
     end
@@ -175,7 +178,10 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         full_name = hash_formula[:full_name]
         tap_name = Utils.tap_from_full_name(full_name) || "homebrew/core"
         tap = Tap.fetch(tap_name)
-        f = formula(name, tap:) { url "#{name}-1.0" }
+        f = formula(name, tap:) do
+          T.bind(self, T.class_of(Formula))
+          url "#{name}-1.0"
+        end
         stub_formula_loader f, full_name
       end
 
@@ -203,7 +209,10 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       allow(Homebrew::Bundle::Brew).to receive(:formulae).and_return([
         { name: "foo", full_name: "homebrew/tap/foo", dependencies: [], build_dependencies: [] },
       ])
-      stub_formula_loader formula("foo", tap: Tap.fetch("homebrew/tap")) { url "foo-1.0" }, "homebrew/tap/foo"
+      stub_formula_loader formula("foo", tap: Tap.fetch("homebrew/tap")) {
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      }, "homebrew/tap/foo"
       allow(Homebrew::Bundle::Tap).to \
         receive(:tap_names).and_return(%w[homebrew/core homebrew/tap])
 
@@ -244,7 +253,10 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     it "ignores formulae with .keepme references when computing which formulae to uninstall" do
       name = full_name ="c"
       allow(Homebrew::Bundle::Brew).to receive(:formulae).and_return([{ name:, full_name: }])
-      f = formula(name) { url "#{name}-1.0" }
+      f = formula(name) do
+        T.bind(self, T.class_of(Formula))
+        url "#{name}-1.0"
+      end
       stub_formula_loader f, name
 
       keg = instance_double(Keg)

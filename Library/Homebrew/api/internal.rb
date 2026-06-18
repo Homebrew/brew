@@ -20,9 +20,19 @@ module Homebrew
 
       private_class_method :cache
 
+      sig { returns(Utils::Bottles::Tag) }
+      private_class_method def self.effective_tag
+        @effective_tag ||= T.let(SimulateSystem.current_tag, T.nilable(Utils::Bottles::Tag))
+      end
+
+      sig { returns(Utils::Bottles::Tag) }
+      private_class_method def self.fallback_tag
+        effective_tag
+      end
+
       sig { returns(String) }
-      def self.packages_endpoint
-        "internal/packages.#{SimulateSystem.current_tag}.jws.json"
+      private_class_method def self.packages_endpoint
+        "internal/packages.#{effective_tag}.jws.json"
       end
 
       sig { params(name: String).returns(Homebrew::API::FormulaStruct) }
@@ -32,7 +42,7 @@ module Homebrew
         hash = formula_hashes[name]
         raise "No formula found for #{name}" unless hash
 
-        struct = Homebrew::API::FormulaStruct.deserialize(hash, bottle_tag: SimulateSystem.current_tag)
+        struct = Homebrew::API::FormulaStruct.deserialize(hash, bottle_tag: effective_tag)
 
         cache["formula_structs"] ||= {}
         cache["formula_structs"][name] = struct
@@ -66,8 +76,17 @@ module Homebrew
       }
       def self.fetch_packages_api!(download_queue: Homebrew.default_download_queue, stale_seconds: nil,
                                    enqueue: false)
-        json_contents, updated = Homebrew::API.fetch_json_api_file(packages_endpoint, stale_seconds:, download_queue:,
-                                                                   enqueue:)
+        old_failed = Homebrew.failed?
+        json_contents, updated = begin
+          Homebrew::API.fetch_json_api_file(packages_endpoint, stale_seconds:, download_queue:, enqueue:)
+        rescue ErrorDuringExecution => e
+          raise if e.stderr.exclude?("HTTP status: 404") || effective_tag == fallback_tag
+
+          @effective_tag = fallback_tag
+          Homebrew.failed = old_failed
+          retry
+        end
+
         [T.cast(json_contents, T::Hash[String, T.untyped]), updated]
       end
 
@@ -198,3 +217,5 @@ module Homebrew
     end
   end
 end
+
+require "extend/os/api/internal"

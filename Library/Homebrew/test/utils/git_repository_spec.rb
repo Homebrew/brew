@@ -83,17 +83,4 @@ RSpec.describe Utils do
       end
     end
   end
-
-  describe "::git_commit_message" do
-    include_examples "git_repository helper function", :git_commit_message
-
-    it "returns the commit message of HEAD" do
-      expect(described_class.git_commit_message(HOMEBREW_CACHE)).to eq(commit_message)
-      expect(described_class.git_commit_message(HOMEBREW_CACHE, commit: head_revision)).to eq(commit_message)
-      HOMEBREW_CACHE.cd do
-        expect(described_class.git_commit_message).to eq(commit_message)
-        expect(described_class.git_commit_message(commit: head_revision)).to eq(commit_message)
-      end
-    end
-  end
 end

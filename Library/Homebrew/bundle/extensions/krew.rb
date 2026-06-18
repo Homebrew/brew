@@ -6,11 +6,16 @@ require "bundle/extensions/extension"
 module Homebrew
   module Bundle
     class Krew < Extension
-      PACKAGE_TYPE = :krew
-      PACKAGE_TYPE_NAME = "Krew Plugin"
-      BANNER_NAME = "Krew plugins"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :krew
+
+        sig { override.returns(String) }
+        def check_label = "Krew Plugin"
+
+        sig { override.returns(String) }
+        def banner_name = "Krew plugins"
+
         sig { override.void }
         def reset!
           @packages = T.let(nil, T.nilable(T::Array[String]))

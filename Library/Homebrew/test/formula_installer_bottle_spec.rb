@@ -22,8 +22,18 @@ RSpec.describe FormulaInstaller do
     expect(formula).to be_bottled
     expect(formula).to pour_bottle
 
-    stub_formula_loader formula("gcc") { url "gcc-1.0" }
-    stub_formula_loader formula("glibc") { url "glibc-1.0" }
+    stub_formula_loader(
+      formula("gcc") do
+        T.bind(self, T.class_of(Formula))
+        url "gcc-1.0"
+      end,
+    )
+    stub_formula_loader(
+      formula("glibc") do
+        T.bind(self, T.class_of(Formula))
+        url "glibc-1.0"
+      end,
+    )
     stub_formula_loader formula
 
     fi = FormulaInstaller.new(formula)

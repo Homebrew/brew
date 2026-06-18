@@ -65,6 +65,20 @@ RSpec.describe Utils do
     end
   end
 
+  describe ".full_name?" do
+    it "is true for a fully-qualified name" do
+      expect(described_class.full_name?("homebrew/core/wget")).to be(true)
+    end
+
+    it "is false for an unqualified name" do
+      expect(described_class.full_name?("wget")).to be(false)
+    end
+
+    it "is false for a tap name" do
+      expect(described_class.full_name?("homebrew/core")).to be(false)
+    end
+  end
+
   specify ".parse_author!" do
     parse_error_msg = /Unable to parse name and email/
 

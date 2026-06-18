@@ -12,7 +12,7 @@ RSpec.describe Cask::Artifact::Suite, :cask do
     end
   end
 
-  let(:target_path) { cask.config.appdir.join("Caffeine") }
+  let(:target_path) { Pathname(cask.config.appdir).join("Caffeine") }
   let(:source_path) { cask.staged_path.join("Caffeine") }
 
   before do

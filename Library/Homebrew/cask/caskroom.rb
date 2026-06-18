@@ -90,9 +90,19 @@ module Cask
     sig { params(config: T.nilable(Config)).returns(T::Array[Cask]) }
     def self.casks(config: nil)
       tokens.sort.filter_map do |token|
-        CaskLoader.load_prefer_installed(token, config:, warn: false)
-      rescue TapCaskAmbiguityError => e
-        e.loaders.fetch(0).load(config:)
+        # This is nested so that the rescue can catch errors from both branches
+        begin
+          CaskLoader.load_prefer_installed(token, config:, warn: false)
+        rescue TapCaskAmbiguityError => e
+          e.loaders.fetch(0).load(config:)
+        end
+      rescue Homebrew::UntrustedTapError
+        # If the tap is untrusted the only place we can load the cask from is the installed cask file, if it exists.
+        begin
+          CaskLoader::FromInstalledPathLoader.try_new(token, warn: false)&.load(config:)
+        rescue
+          nil
+        end
       rescue
         # Don't blow up because of a single unavailable cask.
         nil

@@ -1,5 +1,5 @@
 ---
-last_review_date: "2026-04-10"
+last_review_date: "2026-06-10"
 ---
 
 # FAQ (Frequently Asked Questions)
@@ -136,6 +136,7 @@ Homebrew refuses to work using sudo.
 You should only ever sudo a tool you trust. Of course, you can trust Homebrew 😉 — but do you trust the multi-megabyte Makefile that Homebrew runs? Developers often understand C++ far better than they understand `make` syntax. It’s too high a risk to sudo such stuff. It could modify (or upload) any files on your system. And indeed, we’ve seen some build scripts try to modify `/usr` even when the prefix was specified as something else entirely.
 
 We use the macOS sandbox to stop this but this doesn't work when run as the `root` user (which also has read and write access to almost everything on the system).
+The sandbox is part of Homebrew's wider [Software Supply Chain Security](Supply-Chain-Security.md) measures.
 
 Did you `chown root /Applications/TextMate.app`? Probably not. So is it that important to `chown root wget`?
 
@@ -214,24 +215,6 @@ You can [modify a tool's build configuration](How-to-Build-Software-Outside-Home
 
 `brew edit <formula>` and edit the formula directly. Currently there is no other way to do this.
 
-## Why can’t I open a Mac app from an "unidentified developer"?
-
-Chances are that certain apps will give you a popup message like this:
-
-<img src="assets/img/docs/gatekeeper-unidentified-message.png" width="532" alt="Gatekeeper unidentified developer message">
-
-This is a [security feature from Apple](https://support.apple.com/en-us/HT202491). The single most important thing to know is that __you can allow individual apps to be exempt from this feature.__ This allows the app to run while the rest of the system remains under protection.
-
-__Always leave system-wide protection enabled,__ and disable it only for specific apps as needed.
-
-If you're sure you want to trust the app, you can disable protection for it by right-clicking its icon and choosing *Open*:
-
-<img src="assets/img/docs/right-click-choose-open.png" width="312" style="margin-left:60px" alt="Right-click the app and choose Open">
-
-In the resulting dialog, click the *Open* button to have macOS permanently allow the app to run on this Mac. __Don’t do this unless you’re sure you trust the app.__
-
-<img src="assets/img/docs/gatekeeper-unidentified-open.png" width="532" alt="Gatekeeper unidentified developer open prompt">
-
 ## Why aren’t some apps included during `brew upgrade`?
 
 After running `brew upgrade`, you may notice some casks you think should be upgrading, aren’t.
@@ -249,7 +232,7 @@ There are a few ideas to fix this problem:
 * Try to prevent the software’s automated updates. `brew pin <cask>` can prevent Homebrew from upgrading a cask, but it does not disable an app’s own updater. Most software on Homebrew Cask is closed-source, so trying to control that for every app would be guesswork.
 * Try to extract the installed software’s version and compare it to the cask, deciding what to do at that time. It’d be a complicated solution that would break other parts of our methodology, such as using versions to interpolate `url` values (a definite win for maintainability). This solution also isn’t universal, as many software developers are inconsistent in their versioning schemes (and app bundles are meant to have two version strings) and it doesn’t work for all types of software we support.
 
-So we let software be. Anything installed with Homebrew Cask should behave the same as if it were installed manually. But since we also want to support software that doesn’t self-upgrade, we add [`auto_updates true`](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/a/alfred.rb#L18) to casks for software that does. These casks may still be skipped by `brew upgrade` unless you explicitly include them. You can also set `HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS=1` so Homebrew will try to upgrade them automatically when it can detect that the version currently installed in the user’s `appdir` is older than the latest version in the tap. This will become the default behavior in Homebrew 5.2.0.
+So we let software be. Anything installed with Homebrew Cask should behave the same as if it were installed manually. But since we also want to support software that doesn’t self-upgrade, we add [`auto_updates true`](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/a/alfred.rb#L18) to casks for software that does. When Homebrew can detect that the version currently installed in the user’s `appdir` is older than the latest version in the tap, `brew upgrade` will try to upgrade these casks automatically. To disable this default behaviour, set `HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1`.
 
 Casks which use [`version :latest`](Cask-Cookbook.md#special-value-latest) are also excluded, because we have no way to track their installed version. It helps to ask the developers of such software to provide versioned releases (i.e. include the version in the path of the download `url`).
 
@@ -262,6 +245,20 @@ Or use the `--greedy` switch:
     brew upgrade --greedy
 
 Refer to the `upgrade` section of the [`brew` manual page](Manpage.md) for more details.
+
+## Why don't you rewrite Homebrew in Rust to make it faster?
+
+[We tried](https://github.com/Homebrew/brew-rs/blob/main/README.md).
+We built `brew-rs`, a Rust frontend, and benchmarked it against Ruby with zero delegation back to Ruby and cold-cache I/O included.
+Rust did win some narrow operations: it was faster at fetching batches of bottles, especially with a warm archive cache.
+But fetching is not where users spend their time.
+
+For `brew install`, the operation people actually care about, Ruby was faster on representative comparisons.
+A real install does far more than fetch a file: it resolves metadata, pours bottles, links files, writes tabs, runs postinstall and preserves Homebrew's existing semantics.
+The Rust frontend only looked faster when it skipped that work or delegated it back to Ruby, and delegating defeats the point.
+
+So a rewrite would mean reimplementing the Cellar layout, tabs, links, caveats, postinstall, cask behaviour, source fallback and tap logic in another language for little or no gain on the path that matters.
+The performance work that does help is happening in Ruby: starting useful network and disk I/O sooner, using API-backed bottle metadata earlier and trimming overhead in simple bottle fetch paths without duplicating install semantics in a second frontend.
 
 ## Why do my cask apps lose their Dock position / Launchpad position / permission settings when I run `brew upgrade`?
 

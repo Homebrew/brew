@@ -57,10 +57,18 @@ module Homebrew
                    description: extension.dump_disable_description,
                    env:         extension.dump_disable_env
           end
+          switch "--no-describe",
+                 description: "Do not add description comments above each line. Description comments are " \
+                              "the default.",
+                 env:         :bundle_no_describe
           switch "--describe",
                  description: "Add a description comment above each line, unless the " \
-                              "dependency does not have a description.",
-                 env:         :bundle_describe
+                              "dependency does not have a description. This is the default unless " \
+                              "`$HOMEBREW_BUNDLE_NO_DESCRIBE` is set.",
+                 env:         :bundle_describe,
+                 replacement: "the default behaviour",
+                 odeprecated: true
+          conflicts "--describe", "--no-describe"
           switch "--no-restart",
                  description: "Do not add `restart_service` to formula lines."
         end
@@ -71,7 +79,7 @@ module Homebrew
           Homebrew::Bundle::Dumper.dump_brewfile(
             global:          context.global,
             file:            context.file,
-            describe:        args.describe?,
+            describe:        args.describe? && !args.no_describe?,
             force:           context.force,
             no_restart:      args.no_restart?,
             taps:            core_type_options.fetch(:taps),

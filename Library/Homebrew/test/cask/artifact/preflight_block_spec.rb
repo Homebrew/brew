@@ -4,8 +4,8 @@
 RSpec.describe Cask::Artifact::PreflightBlock, :cask do
   describe "install_phase" do
     it "calls the specified block before installing, passing a Cask mini-dsl" do
-      called = false
-      yielded_arg = nil
+      called = T.let(false, T::Boolean)
+      yielded_arg = T.let(nil, T.nilable(Cask::DSL::Preflight))
 
       cask = Cask::Cask.new("with-preflight") do
         preflight do |c|
@@ -25,8 +25,8 @@ RSpec.describe Cask::Artifact::PreflightBlock, :cask do
 
   describe "uninstall_phase" do
     it "calls the specified block before uninstalling, passing a Cask mini-dsl" do
-      called = false
-      yielded_arg = nil
+      called = T.let(false, T::Boolean)
+      yielded_arg = T.let(nil, T.nilable(Cask::DSL::UninstallPreflight))
 
       cask = Cask::Cask.new("with-uninstall-preflight") do
         uninstall_preflight do |c|

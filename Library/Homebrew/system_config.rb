@@ -158,13 +158,10 @@ module SystemConfig
     sig { params(out: T.any(File, StringIO, IO)).void }
     def homebrew_env_config(out = $stdout)
       out.puts "HOMEBREW_PREFIX: #{HOMEBREW_PREFIX}"
-      {
-        HOMEBREW_REPOSITORY: Homebrew::DEFAULT_REPOSITORY,
-        HOMEBREW_CELLAR:     Homebrew::DEFAULT_CELLAR,
-      }.freeze.each do |key, default|
-        value = Object.const_get(key)
-        out.puts "#{key}: #{value}" if value.to_s != default.to_s
-      end
+      repository = HOMEBREW_REPOSITORY
+      cellar = HOMEBREW_CELLAR
+      out.puts "HOMEBREW_REPOSITORY: #{repository}" if repository.to_s != Homebrew::DEFAULT_REPOSITORY.to_s
+      out.puts "HOMEBREW_CELLAR: #{cellar}" if cellar.to_s != Homebrew::DEFAULT_CELLAR.to_s
 
       Homebrew::EnvConfig::ENVS.each do |env, hash|
         next if Homebrew::EnvConfig.hidden?(hash) && !ENV.key?(env.to_s)

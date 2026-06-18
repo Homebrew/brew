@@ -6,12 +6,18 @@ require "bundle/extensions/extension"
 module Homebrew
   module Bundle
     class VscodeExtension < Extension
-      PACKAGE_TYPE = :vscode
-      PACKAGE_TYPE_NAME = "VSCode Extension"
-      BANNER_NAME = "VSCode (and forks/variants) extensions"
       EXTENSION_ID_REGEX = /\A[a-z0-9][a-z0-9-]*\.[a-z0-9][a-z0-9._-]*\z/i
 
       class << self
+        sig { override.returns(Symbol) }
+        def type = :vscode
+
+        sig { override.returns(String) }
+        def check_label = "VSCode Extension"
+
+        sig { override.returns(String) }
+        def banner_name = "VSCode (and forks/variants) extensions"
+
         sig { override.void }
         def reset!
           @extensions = T.let(nil, T.nilable(T::Array[String]))

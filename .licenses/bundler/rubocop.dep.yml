@@ -1,6 +1,6 @@
 ---
 name: rubocop
-version: 1.86.2
+version: 1.87.0
 type: bundler
 summary: Automatic Ruby code style checking tool.
 homepage: https://github.com/rubocop/rubocop

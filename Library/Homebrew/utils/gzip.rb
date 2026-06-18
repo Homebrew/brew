@@ -53,6 +53,14 @@ module Utils
       Pathname.new(output)
     end
 
+    # Compress one or more files with `gzip`, reproducibly by default.
+    #
+    # Unlike the system `gzip`, this avoids recording the build-time modification
+    # time so that the output is deterministic (see {https://docs.brew.sh/Reproducible-Builds}).
+    # Each file is compressed in place, placing the result next to the original
+    # with a `.gz` suffix, and the resulting paths are returned.
+    #
+    # @api public
     sig {
       params(
         paths:        T.any(String, Pathname),

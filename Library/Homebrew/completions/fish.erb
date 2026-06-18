@@ -156,6 +156,25 @@ function __fish_brew_suggest_taps_installed -d "List all available taps"
     | string replace (brew --repo)/Library/Taps/ ""
 end
 
+function __fish_brew_suggest_aliases -d "Lists user-defined aliases"
+    set -l aliases_dir "$HOME/.config/brew-aliases"
+    test -d $aliases_dir; or set aliases_dir "$HOME/.brew-aliases"
+    test -d $aliases_dir; or return
+
+    for file in $aliases_dir/*
+        test -f $file; and not string match -q '*~' -- $file; or continue
+        set -l alias_name (string replace -r '^.*/' '' -- $file)
+        begin
+            read -l line
+            if read -l line
+                set -l match (string match -rg 'alias: brew ([^[:space:]]+)' -- $line)
+                test -n "$match"; and set alias_name $match[1]
+            end
+        end < $file
+        echo $alias_name
+    end
+end
+
 function __fish_brew_suggest_commands -d "Lists all command names"
     set -l commands
     if test -f (brew --cache)/all_commands_list.txt
@@ -167,6 +186,7 @@ function __fish_brew_suggest_commands -d "Lists all command names"
         set -l expanded_command (__fish_brew_expand_alias $command)
         test "$expanded_command" = "$command"; and echo $command
     end
+    __fish_brew_suggest_aliases
 end
 
 function __fish_brew_suggest_diagnostic_checks -d "List available diagnostic checks"

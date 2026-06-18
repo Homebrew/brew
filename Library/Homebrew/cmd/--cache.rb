@@ -53,40 +53,30 @@ module Homebrew
           return
         end
 
-        formulae_or_casks = args.named.to_formulae_and_casks
+        formulae_or_casks = T.cast(
+          args.named.to_formulae_and_casks,
+          T::Array[T.any(Formula, Cask::Cask)],
+        )
         os_arch_combinations = args.os_arch_combinations
 
         formulae_or_casks.each do |formula_or_cask|
+          ref = formula_or_cask.reloadable_ref
+
           case formula_or_cask
           when Formula
-            formula = formula_or_cask
-            ref = formula.loaded_from_api? ? formula.full_name : formula.path
-
             os_arch_combinations.each do |os, arch|
               SimulateSystem.with(os:, arch:) do
-                formula = Formulary.factory(ref)
-                print_formula_cache(formula, os:, arch:)
+                print_formula_cache(Formulary.factory(ref), os:, arch:)
               end
             end
           when Cask::Cask
-            cask = formula_or_cask
-            if cask.loaded_from_api?
-              ref = cask.full_name
-            else
-              ref = cask.sourcefile_path
-              raise "unexpected nil cask sourcefile_path" unless ref
-            end
-
             os_arch_combinations.each do |os, arch|
               next if os == :linux
 
               SimulateSystem.with(os:, arch:) do
-                loaded_cask = Cask::CaskLoader.load(ref)
-                print_cask_cache(loaded_cask)
+                print_cask_cache(Cask::CaskLoader.load(ref))
               end
             end
-          else
-            raise "Invalid type: #{formula_or_cask.class}"
           end
         end
       end
@@ -103,11 +93,7 @@ module Homebrew
           os:                         args.os&.to_sym,
           arch:                       args.arch&.to_sym,
         )
-          bottle_tag = if (bottle_tag = args.bottle_tag&.to_sym)
-            Utils::Bottles::Tag.from_symbol(bottle_tag)
-          else
-            Utils::Bottles::Tag.new(system: os, arch:)
-          end
+          bottle_tag = Utils::Bottles::Tag.from_arg(args.bottle_tag&.to_sym, os:, arch:)
 
           bottle = formula.bottle_for_tag(bottle_tag)
 

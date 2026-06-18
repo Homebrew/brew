@@ -37,13 +37,19 @@ module Homebrew
 
       sig { returns([Integer, Integer]) }
       def run!
-        dependency_map = build_dependency_map
-
         success = 0
         failure = 0
-        pending_entries = T.let(@entries.dup, T::Array[Installer::InstallableEntry])
-        completed = T.let(Set.new, T::Set[String])
 
+        tap_entries, pending_entries = @entries.partition { |entry| entry.cls == Homebrew::Bundle::Tap }
+        tap_entries.each_slice(@jobs) do |batch|
+          tap_success, tap_failure = install_entries_parallel!(batch)
+          success += tap_success
+          failure += tap_failure
+        end
+        ::Tap.clear_cache if tap_entries.present?
+
+        dependency_map = build_dependency_map(pending_entries)
+        completed = T.let(Set.new, T::Set[String])
         until pending_entries.empty?
           ready_entries = pending_entries.select do |entry|
             dependency_map.fetch(entry.name, Set.new).all? { |dependency| completed.include?(dependency) }
@@ -63,29 +69,12 @@ module Homebrew
           end
 
           batch = ready_entries.take(@jobs)
-          futures = batch.to_h do |entry|
-            [entry, Concurrent::Promises.future_on(@pool, entry) do |install_entry|
-              install_entry!(install_entry)
-            end]
-          end
+          batch_success, batch_failure = install_entries_parallel!(batch)
+          success += batch_success
+          failure += batch_failure
 
-          batch.each do |entry|
-            installed = begin
-              !futures.fetch(entry).value!.nil?
-            rescue => e
-              write_output(Formatter.error("Installing #{entry.name} has failed!"), stream: $stderr)
-              write_output("[#{entry.name}] #{e.message}", stream: $stderr) if @verbose
-              false
-            end
-
-            pending_entries.delete(entry)
-            completed << entry.name
-            if installed
-              success += 1
-            else
-              failure += 1
-            end
-          end
+          pending_entries -= batch
+          completed.merge(batch.map(&:name))
         end
 
         [success, failure]
@@ -96,12 +85,12 @@ module Homebrew
 
       private
 
-      sig { returns(T::Hash[String, T::Set[String]]) }
-      def build_dependency_map
+      sig { params(entries: T::Array[Installer::InstallableEntry]).returns(T::Hash[String, T::Set[String]]) }
+      def build_dependency_map(entries)
         installed_taps = Homebrew::Bundle::Tap.installed_taps
 
         # Phase 1: Map both full and short names so dep lookups work either way.
-        entry_name_map = @entries.each_with_object({}) do |entry, map|
+        entry_name_map = entries.each_with_object({}) do |entry, map|
           map[entry.name] = entry.name
           map[normalize_formula_name(entry.name)] = entry.name
         end
@@ -109,7 +98,7 @@ module Homebrew
         # Phase 2: Direct dependencies declared in the Brewfile. Determines
         # install ordering (entry A must finish before entry B starts).
         brewfile_deps = T.let({}, T::Hash[String, T::Array[String]])
-        @entries.each do |entry|
+        entries.each do |entry|
           deps = case entry.cls.name
           when "Homebrew::Bundle::Brew"
             Homebrew::Bundle::Brew.formula_dep_names(entry.name)
@@ -120,7 +109,7 @@ module Homebrew
           end
 
           # Entries from non-default taps depend on the tap being installed first.
-          deps += Homebrew::Bundle::Installer.tap_dependencies(entry, entries: @entries, installed_taps:)
+          deps += Homebrew::Bundle::Installer.tap_dependencies(entry, entries:, installed_taps:)
 
           brewfile_deps[entry.name] = deps
         end
@@ -128,9 +117,9 @@ module Homebrew
         # Phase 3: Recursive dependency sets for lock conflict detection.
         # `FormulaInstaller#lock` locks all recursive dependencies before
         # installing, even when pouring bottles.
-        cask_names = T.let(@entries.select { |e| e.cls == Homebrew::Bundle::Cask }.to_set(&:name), T::Set[String])
+        cask_names = T.let(entries.select { |e| e.cls == Homebrew::Bundle::Cask }.to_set(&:name), T::Set[String])
         recursive_deps = T.let({}, T::Hash[String, T::Set[String]])
-        @entries.each do |entry|
+        entries.each do |entry|
           recursive_deps[entry.name] = case entry.cls.name
           when "Homebrew::Bundle::Brew"
             Homebrew::Bundle::Brew.recursive_dep_names(entry.name)
@@ -142,7 +131,7 @@ module Homebrew
         end
 
         # Phase 4: Merge explicit ordering and implicit lock conflicts.
-        @entries.each_with_object({}) do |entry, map|
+        entries.each_with_object({}) do |entry, map|
           depends_on = brewfile_deps.fetch(entry.name).each_with_object(Set.new) do |dep, set|
             name = entry_name_map[dep] || entry_name_map[normalize_formula_name(dep)]
             set << name if name.present? && name != entry.name
@@ -150,7 +139,7 @@ module Homebrew
 
           # Later entries wait for earlier ones when they share any recursive dep.
           entry_rdeps = recursive_deps.fetch(entry.name)
-          @entries.each do |earlier|
+          entries.each do |earlier|
             break if earlier.name == entry.name
             next if depends_on.include?(earlier.name)
 
@@ -180,6 +169,35 @@ module Homebrew
         direct & cask_names
       rescue ::Cask::CaskUnavailableError
         Set.new
+      end
+
+      sig { params(entries: T::Array[Installer::InstallableEntry]).returns([Integer, Integer]) }
+      def install_entries_parallel!(entries)
+        futures = entries.to_h do |entry|
+          [entry, Concurrent::Promises.future_on(@pool, entry) do |install_entry|
+            install_entry!(install_entry)
+          end]
+        end
+
+        success = 0
+        failure = 0
+        entries.each do |entry|
+          installed = begin
+            !futures.fetch(entry).value!.nil?
+          rescue => e
+            write_output(Formatter.error("Installing #{entry.name} has failed!"), stream: $stderr)
+            write_output("[#{entry.name}] #{e.message}", stream: $stderr) if @verbose
+            false
+          end
+
+          if installed
+            success += 1
+          else
+            failure += 1
+          end
+        end
+
+        [success, failure]
       end
 
       sig { params(entry: Installer::InstallableEntry).returns(T::Boolean) }
@@ -239,7 +257,7 @@ module Homebrew
       sig { void }
       def clear_tty_line
         File.open("/dev/tty", "w") { |f| f.print("\r\e[K") }
-      rescue Errno::ENXIO, Errno::ENOENT
+      rescue Errno::ENXIO, Errno::ENOENT, Errno::EACCES, Errno::EPERM
         # No TTY available (CI, piped output) - nothing to clean up.
         nil
       end

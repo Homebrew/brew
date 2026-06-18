@@ -20,6 +20,10 @@ RSpec.describe Homebrew::FormulaAuditor do
   include FileUtils
   include Test::Helper::Formula
 
+  # These specs audit formula content loaded from fixture taps cloned over local
+  # paths, not tap trust, so treat those taps as trusted when loading formulae.
+  before { allow(Homebrew::Trust).to receive(:trusted_tap?).and_return(true) }
+
   def formula_auditor(name, text, options = {})
     path = Pathname.new "#{dir}/#{name}.rb"
     path.open("w") do |f|
@@ -1035,6 +1039,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
         let(:f_openssl) do
           formula do
+            T.bind(self, T.class_of(Formula))
             url "https://brew.sh/openssl-1.0.tgz"
             homepage "https://brew.sh"
 
@@ -1067,6 +1072,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
         let(:f_bc) do
           formula do
+            T.bind(self, T.class_of(Formula))
             url "https://brew.sh/bc-1.0.tgz"
             homepage "https://brew.sh"
 
@@ -1103,6 +1109,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       end
       let(:f_bar) do
         formula do
+          T.bind(self, T.class_of(Formula))
           url "https://brew.sh/bar-1.0.tgz"
           homepage "https://brew.sh"
         end
@@ -1169,6 +1176,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         let(:tag) { "with-debug" }
         let(:f_bar) do
           formula do
+            T.bind(self, T.class_of(Formula))
             url "https://brew.sh/bar-1.0.tgz"
             homepage "https://brew.sh"
             option "with-debug"
@@ -1429,9 +1437,8 @@ RSpec.describe Homebrew::FormulaAuditor do
       foo_path.write(test_formula_source(name: "foo"))
       allow(tap).to receive(:formula_files_by_name)
         .and_return({ "foo" => foo_path, "bar" => tap_path/"Formula/bar.rb" })
-      allow(Utils::Git).to receive(:git).and_return("git")
       allow(Utils).to receive(:popen_read).and_call_original
-      allow(Utils).to receive(:popen_read).with("git", "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+      allow(Utils).to receive(:popen_read).with(Utils::Git.git, "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
                                           .and_return("merge-base-sha\n")
       allow(Utils).to receive(:safe_popen_read).and_return("Formula/f/foo.rb\n")
 
@@ -1444,11 +1451,11 @@ RSpec.describe Homebrew::FormulaAuditor do
       foo_path.dirname.mkpath
       foo_path.write(test_formula_source(name: "foo"))
       allow(tap).to receive(:formula_files_by_name).and_return({ "foo" => foo_path })
-      allow(Utils::Git).to receive(:git).and_return("git")
       allow(Utils).to receive(:popen_read).and_call_original
-      allow(Utils).to receive(:popen_read).with("git", "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+      allow(Utils).to receive(:popen_read).with(Utils::Git.git, "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
                                           .and_return("merge-base-sha\n")
-      expect(Utils).to receive(:safe_popen_read).with("git", "-C", tap.path, "diff", "--name-only", "merge-base-sha")
+      expect(Utils).to receive(:safe_popen_read).with(Utils::Git.git, "-C", tap.path, "diff", "--name-only",
+                                                      "merge-base-sha")
                                                 .and_return("Formula/f/foo.rb\n")
 
       expect(auditor.send(:changed_formulae_paths, tap, only_names: ["foo"])).to eq([foo_path])
@@ -1478,9 +1485,8 @@ RSpec.describe Homebrew::FormulaAuditor do
     let(:formula_versions) { instance_double(FormulaVersions) }
 
     it "walks history from the merge-base with origin/HEAD" do
-      allow(Utils::Git).to receive(:git).and_return("git")
       allow(Utils).to receive(:popen_read).and_call_original
-      allow(Utils).to receive(:popen_read).with("git", "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+      allow(Utils).to receive(:popen_read).with(Utils::Git.git, "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
                                           .and_return("merge-base-sha\n")
       allow(FormulaVersions).to receive(:new).with(target_formula).and_return(formula_versions)
       expect(formula_versions).to receive(:rev_list).with("merge-base-sha")
@@ -1833,6 +1839,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
     specify "it warns when conflicting with non-existing formula", :no_api do
       foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/bar-1.0.tgz"
 
         conflicts_with "bar"
@@ -1847,6 +1854,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
     specify "it warns when conflicting with itself", :no_api do
       foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/bar-1.0.tgz"
 
         conflicts_with "foo"
@@ -1861,15 +1869,27 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     specify "it warns when another formula does not have a symmetric conflict", :no_api do
-      stub_formula_loader formula("gcc") { url "gcc-1.0" }
-      stub_formula_loader formula("glibc") { url "glibc-1.0" }
+      stub_formula_loader(
+        formula("gcc") do
+          T.bind(self, T.class_of(Formula))
+          url "gcc-1.0"
+        end,
+      )
+      stub_formula_loader(
+        formula("glibc") do
+          T.bind(self, T.class_of(Formula))
+          url "glibc-1.0"
+        end,
+      )
 
       foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/foo-1.0.tgz"
       end
       stub_formula_loader foo
 
       bar = formula("bar") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/bar-1.0.tgz"
 
         conflicts_with "foo"

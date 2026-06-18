@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
@@ -46,6 +46,20 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       RUBY
       CoreTap.instance.clear_cache
     end
+  end
+
+  def setup_pinned_dependency_upgrade
+    write_formula "pinned-dep", <<~RUBY
+      url "https://brew.sh/pinned-dep-2.0"
+    RUBY
+    install_formula_version "pinned-dep", "1.0", optlinked: true
+    Formula["pinned-dep"].pin
+
+    write_formula "needs-pinned-dep", <<~RUBY
+      url "https://brew.sh/needs-pinned-dep-2.0"
+      depends_on "pinned-dep"
+    RUBY
+    install_formula_version "needs-pinned-dep", "1.0", optlinked: true
   end
 
   it "upgrades a Formula and Cask", :cask, :integration_test do
@@ -148,6 +162,37 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       ).to_stderr
   end
 
+  it "does not summarize dry-run formula upgrades blocked by pinned dependencies" do
+    setup_pinned_dependency_upgrade
+
+    expect do
+      described_class.new(["--dry-run", "--yes", "--formula"]).run
+    end
+      .to not_to_output(/Pinned formula|needs-pinned-dep/).to_stdout
+      .and output(/You must `brew unpin pinned-dep` as installing needs-pinned-dep requires the latest version/)
+      .to_stderr
+
+    expect(Homebrew).to have_failed
+  ensure
+    Formula["pinned-dep"].unpin if Formula["pinned-dep"].pinned?
+  end
+
+  it "does not warn about pinned formulae before ask-mode pinned dependency failures" do
+    setup_pinned_dependency_upgrade
+
+    expect do
+      described_class.new(["--formula"]).run
+    end
+      .to not_to_output(/Pinned formula|needs-pinned-dep/).to_stdout
+      .and output(a_string_matching(
+                    /\A(?=.*You must `brew unpin pinned-dep`)(?!.*Not upgrading \d+ pinned package).*\z/m,
+                  )).to_stderr
+
+    expect(Homebrew).to have_failed
+  ensure
+    Formula["pinned-dep"].unpin if Formula["pinned-dep"].pinned?
+  end
+
   it "requires one named argument with --minimum-version" do
     expect { described_class.new(["--minimum-version=1.2.3"]).run }
       .to raise_error(UsageError, /`--minimum-version` requires exactly one formula or cask argument/)
@@ -203,7 +248,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "does not ask again when upgrading discovered outdated casks" do
-    cmd = described_class.new(["--ask", "--cask"])
+    cmd = described_class.new(["--cask"])
 
     expect(Homebrew::Install).not_to receive(:ask_casks)
     expect(Cask::Upgrade).to receive(:upgrade_casks!).and_return(true)
@@ -237,7 +282,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   # upgrades with asking for user prompts
   it "prints formula and cask ask plans before upgrading" do
-    cmd = described_class.new(["--ask"])
+    cmd = described_class.new([])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, fetch_failed: false, shutdown: nil)
 
     expect(cmd).to receive(:upgrade_outdated_formulae!)
@@ -297,7 +342,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "does not ask before upgrading when nothing would upgrade" do
-    cmd = described_class.new(["--ask"])
+    cmd = described_class.new([])
 
     expect(cmd).to receive(:upgrade_outdated_formulae!)
       .with([], dry_run: true, show_upgrade_summary: false)
@@ -323,6 +368,25 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd.run
   end
 
+  it "does not prompt for confirmation in dry-run mode" do
+    cmd = described_class.new(["--dry-run"])
+
+    expect(Homebrew::Install).not_to receive(:ask)
+    expect(cmd).to receive(:upgrade_outdated_formulae!)
+      .with([], use_prefetched: false, show_upgrade_summary: false)
+      .ordered
+      .and_return(false)
+    expect(cmd).to receive(:upgrade_outdated_casks!)
+      .with([], skip_prefetch: false, show_upgrade_summary: false, download_queue: nil)
+      .ordered
+      .and_return(false)
+    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+    allow(Homebrew::Reinstall).to receive(:reinstall_pkgconf_if_needed!)
+    allow(Homebrew.messages).to receive(:display_messages)
+
+    cmd.run
+  end
+
   it "does not ask before upgrading only explicitly named formulae" do
     expect(Homebrew::Install.ask_prompt_needed?(
              planned_names:   ["testball"],
@@ -332,9 +396,10 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it "asks before upgrading formulae that resolve from a different name" do
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.2"
     end
-    cmd = described_class.new(["--ask", "oldtestball"])
+    cmd = described_class.new(["oldtestball"])
     allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable)
       .with(method: :resolve)
       .and_return([formula])
@@ -362,6 +427,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   it "prints formula download sizes in dry-run upgrade summaries" do
     cmd = described_class.new(["--dry-run"])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.2"
     end
     bottle = instance_double(Bottle, fetch_tab: nil, bottle_size: 500)
@@ -376,9 +442,11 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it "prints dry-run cleanup output from one formula cleanup run" do
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.2"
     end
     other_formula = formula("otherball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/otherball-0.2"
     end
 
@@ -404,9 +472,11 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it "omits dry-run dependencies already listed in the final summary" do
     formula = formula("yt-dlp") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/yt-dlp-2026.3.17_2.tar.gz"
     end
     dependency_formula = formula("python@3.14") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/python@3.14-3.14.5.tar.gz"
     end
     formula_installer = FormulaInstaller.new(formula)
@@ -426,9 +496,11 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it "omits dry-run dependents already listed in the final summary" do
     formula = formula("sqlite") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/sqlite-3.53.1.tar.gz"
     end
     dependent = formula("python@3.14") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/python@3.14-3.14.5.tar.gz"
     end
     dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [dependent], pinned: [], skipped: [])
@@ -460,7 +532,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "uses the final summary for dry-run upgrade lists" do
-    cmd = described_class.new(["--dry-run"])
+    cmd = described_class.new(["--dry-run", "--yes"])
 
     expect(cmd).to receive(:upgrade_outdated_formulae!)
       .with([], use_prefetched: false, show_upgrade_summary: false)
@@ -476,7 +548,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "prints a combined upgrade summary before fetching combined downloads" do
-    cmd = described_class.new([])
+    cmd = described_class.new(["-y"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, fetch_failed: false, shutdown: nil)
     cask = instance_double(
       Cask::Cask,
@@ -522,7 +594,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "asks before fetching formulae and casks in the same download queue" do
-    cmd = described_class.new(["--ask"])
+    cmd = described_class.new([])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, fetch_failed: false, shutdown: nil)
     cask = instance_double(
       Cask::Cask,
@@ -571,7 +643,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "prefetches language cask files before fetching combined downloads" do
-    cmd = described_class.new([])
+    cmd = described_class.new(["--yes"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch_failed: false, shutdown: nil)
     cask = instance_double(
       Cask::Cask,
@@ -621,7 +693,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "omits the cask file heading for cached language cask files" do
-    cmd = described_class.new([])
+    cmd = described_class.new(["-y"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch_failed: false, shutdown: nil)
     cask = instance_double(
       Cask::Cask,
@@ -669,6 +741,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   it "prints a bottle manifest heading before formula prefetches" do
     cmd = described_class.new([])
     formula = formula("deno") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/deno-2.7.11.tar.gz"
 
       bottle do
@@ -690,6 +763,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   it "omits the bottle manifest heading for cached formula manifests" do
     cmd = described_class.new([])
     formula = formula("deno") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/deno-2.7.11.tar.gz"
 
       bottle do
@@ -811,20 +885,25 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it "records final formula upgrade summary details" do
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.2"
     end
     pinned = formula("pinnedball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/pinnedball-1.0"
     end
     deprecated = formula("oldball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/oldball-1.0"
       deprecate! date: "2020-01-01", because: :unmaintained
     end
     disabled = formula("disabledball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/disabledball-1.0"
       disable! date: "2020-01-01", because: :unsupported
     end
     source_build = formula("sourceball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/sourceball-1.0"
     end
     old_keg = HOMEBREW_CELLAR/"testball/0.1"
@@ -856,6 +935,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it "records formula upgrade versions before upgrading" do
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.2"
     end
     old_keg = HOMEBREW_CELLAR/"testball/0.1"
@@ -863,23 +943,63 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     old_keg.mkpath
     new_keg.mkpath
     allow(formula).to receive_messages(optlinked?: true, opt_prefix: old_keg)
+    formula_installer = FormulaInstaller.new(formula)
     cmd = described_class.new([])
 
     allow(cmd).to receive(:formulae_upgrade_context).and_return(
       Homebrew::Cmd::UpgradeCmd::FormulaeUpgradeContext.new(
         formulae_to_install: [formula],
-        formulae_installer:  [FormulaInstaller.new(formula)],
+        formulae_installer:  [formula_installer],
         dependants:          Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: []),
       ),
     )
     allow(Homebrew::Upgrade).to receive(:upgrade_formulae) do
       allow(formula).to receive(:opt_prefix).and_return(new_keg)
+      [formula_installer]
     end
     allow(Homebrew::Upgrade).to receive(:upgrade_dependents)
 
     cmd.send(:upgrade_outdated_formulae!, [])
 
     expect(cmd.send(:final_upgrade_summary).version_changes).to include("testball 0.1 -> 0.2")
+  end
+
+  it "omits failed formula version changes from the final summary" do
+    successful_formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.2"
+    end
+    failed_formula = formula("failball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/failball-0.2"
+      deprecate! date: "2020-01-01", because: :unmaintained
+    end
+    successful_formula_installer = FormulaInstaller.new(successful_formula)
+    failed_formula_installer = FormulaInstaller.new(failed_formula)
+    old_successful_keg = HOMEBREW_CELLAR/"testball/0.1"
+    old_failed_keg = HOMEBREW_CELLAR/"failball/0.1"
+    old_successful_keg.mkpath
+    old_failed_keg.mkpath
+    allow(successful_formula).to receive_messages(optlinked?: true, opt_prefix: old_successful_keg)
+    allow(failed_formula).to receive_messages(optlinked?: true, opt_prefix: old_failed_keg)
+    cmd = described_class.new([])
+
+    allow(cmd).to receive(:formulae_upgrade_context).and_return(
+      Homebrew::Cmd::UpgradeCmd::FormulaeUpgradeContext.new(
+        formulae_to_install: [successful_formula, failed_formula],
+        formulae_installer:  [successful_formula_installer, failed_formula_installer],
+        dependants:          Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: []),
+      ),
+    )
+    allow(Homebrew::Upgrade).to receive(:upgrade_formulae).and_return([successful_formula_installer])
+    allow(Homebrew::Upgrade).to receive(:upgrade_dependents)
+
+    cmd.send(:upgrade_outdated_formulae!, [])
+
+    expect(cmd.send(:final_upgrade_summary)).to have_attributes(
+      version_changes: contain_exactly("testball 0.1 -> 0.2"),
+      deprecated:      contain_exactly("failball"),
+    )
   end
 
   it_behaves_like "reinstall_pkgconf_if_needed"

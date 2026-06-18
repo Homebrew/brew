@@ -1,5 +1,5 @@
 ---
-last_review_date: "2025-02-08"
+last_review_date: "2026-06-10"
 ---
 
 # Interesting Taps and Forks
@@ -9,6 +9,10 @@ A [tap](Taps.md) is Homebrew-speak for a Git repository containing additional fo
 Homebrew has the capability to add (and remove) multiple taps to your local installation with the `brew tap` and `brew untap` commands; run `man brew` in your terminal for usage information.
 
 Your taps are Git repositories located at `$(brew --repository)/Library/Taps`. As a normal user, you usually won't see `homebrew/core` here anymore and that's OK - [normal usage is via the JSON API](https://brew.sh/2023/02/16/homebrew-4.0.0/).
+
+The taps and forks below are third-party repositories that are not maintained, reviewed or trusted by Homebrew.
+Tapping or installing from them runs their code with your user's privileges, so only add ones you trust.
+See [Tap Trust](Tap-Trust.md) for how to trust only the specific formula, cask or command you need and [Software Supply Chain Security](Supply-Chain-Security.md) for why this matters.
 
 ## Unsupported interesting taps
 

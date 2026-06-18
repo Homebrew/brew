@@ -1,4 +1,4 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/caskroom"
@@ -98,6 +98,81 @@ RSpec.describe Cask::Caskroom do
       allow(Etc).to receive(:getgrnam).with("missing").and_return(nil)
 
       expect(described_class.caskroom_group_correct?(Pathname("/tmp/Caskroom"))).to be false
+    end
+  end
+
+  describe ".casks" do
+    sig { params(dir: Pathname, token: String, tap: T.nilable(Tap), version: String).void }
+    def setup_cask_metadata(dir, token, tap: nil, version: "1.0")
+      casks_dir = dir/token/".metadata"/version/"20250101000000.000"/"Casks"
+      casks_dir.mkpath
+      (casks_dir/"#{token}.rb").write <<~RUBY
+        cask "#{token}" do
+          version "#{version}"
+        end
+      RUBY
+
+      receipt = dir/token/".metadata"/AbstractTab::FILENAME
+      receipt.write JSON.generate({
+        source: {
+          tap:     tap&.name,
+          version: version,
+        },
+      })
+    end
+
+    it "includes casks installed from untrusted taps without loading cask files" do
+      token = "untrusted-cask"
+      tap = Tap.fetch("thirdparty", "foo")
+      cask_path = tap.cask_dir/"#{token}.rb"
+      cask_path.dirname.mkpath
+      cask_path.write <<~RUBY
+        raise "untrusted cask evaluated"
+      RUBY
+
+      Dir.mktmpdir do |dir|
+        allow(described_class).to receive(:path).and_return(Pathname(dir))
+
+        setup_cask_metadata(Pathname(dir), token, tap:, version: "1.0")
+
+        with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+          casks = described_class.casks
+          expect(casks.map(&:token)).to eq([token])
+
+          cask = casks.first
+          expect(cask&.installed_version).to eq("1.0")
+          expect(cask&.tap).to eq(tap)
+        end
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+
+    it "does not error for ambiguous installed casks when an ambiguous tap is untrusted" do
+      token = "ambiguous-untrusted-cask"
+      taps = [Tap.fetch("thirdparty", "foo"), Tap.fetch("thirdparty", "bar")]
+      taps.each do |tap|
+        cask_path = tap.cask_dir/"#{token}.rb"
+        cask_path.dirname.mkpath
+        cask_path.write <<~RUBY
+          cask "#{token}" do
+            version "2.0"
+          end
+        RUBY
+      end
+      Dir.mktmpdir do |dir|
+        allow(described_class).to receive(:path).and_return(Pathname(dir))
+
+        setup_cask_metadata(Pathname(dir), token, version: "1.0")
+
+        with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+          casks = described_class.casks
+          expect(casks.map(&:token)).to eq([token])
+          expect(casks.first&.installed_version).to eq("1.0")
+        end
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
   end
 

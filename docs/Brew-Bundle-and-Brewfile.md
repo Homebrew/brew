@@ -117,10 +117,10 @@ You can do this with `brew bundle dump --global --force` to write to e.g. `~/.Br
 brew bundle dump --global --force
 ```
 
-If you also pass `--describe`, you can also get the `Brewfile` to contain descriptions of each of the packages:
+By default, the generated `Brewfile` also contains descriptions of each of the packages:
 
 ```console
-brew bundle dump --global --force --describe
+brew bundle dump --global --force
 ```
 
 might add something like the following:
@@ -304,6 +304,12 @@ brew "postgresql@16",
 # Runs `brew install ruby` and, afterwards, writes the installed version to the '.ruby-version` file.
 brew "ruby", version_file: ".ruby-version"
 
+# Trusts the tap, formula or cask so Homebrew loads it when tap trust is required.
+# This works on `tap`, `brew` and `cask` entries.
+tap "user/repo", trusted: true
+brew "user/repo/formula", trusted: true
+cask "user/repo/cask", trusted: true
+
 # Runs `brew install gnupg` or `brew install glibc` only on the specified OS.
 # Note: `brew bundle list` will not output `gnupg` on Linux or `glibc` on macOS` in this case:
 # the Ruby logic means they are "hidden" on other platforms.
@@ -339,6 +345,22 @@ This is useful when a project wants Homebrew to install a runtime and keep a con
 ```ruby
 brew "ruby", version_file: ".ruby-version"
 ```
+
+### `trusted`
+
+`tap`, `brew` and `cask` entries support `trusted: true` to declaratively
+[trust](Tap-Trust.md) a non-official tap, formula or cask. Homebrew trusts the
+entry before installing it, so it loads even when tap trust is required.
+
+```ruby
+tap "user/repo", trusted: true
+brew "user/repo/formula", trusted: true
+cask "user/repo/cask", trusted: true
+```
+
+As with `brew trust`, prefer trusting the specific formula or cask you need over
+trusting a whole tap. `brew bundle dump` writes `trusted: true` for entries you
+have already trusted.
 
 ## Versions
 

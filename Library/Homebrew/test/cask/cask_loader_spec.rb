@@ -273,7 +273,7 @@ RSpec.describe Cask::CaskLoader, :cask do
   end
 
   describe "FromPathLoader" do
-    it "clears sensitive environment variables while evaluating casks" do
+    it "masks sensitive environment variables while evaluating casks" do
       cask_token = "sensitive-env"
       cask_file = mktmpdir/"#{cask_token}.rb"
       cask_file.write <<~RUBY
@@ -283,18 +283,18 @@ RSpec.describe Cask::CaskLoader, :cask do
 
           url "https://example.com/app.dmg"
           name "Sensitive Env"
-          desc ENV.key?("SECRET_TOKEN") ? "Secret present" : "Secret absent"
+          desc ENV.fetch("HOMEBREW_SECRET_TOKEN", "") == "password" ? "Secret leaked" : "Secret masked"
           homepage "https://example.com"
 
           app "App.app"
         end
       RUBY
 
-      with_env(SECRET_TOKEN: "password") do
+      with_env(HOMEBREW_SECRET_TOKEN: "password") do
         cask = Cask::CaskLoader::FromPathLoader.new(cask_file).load(config: nil)
 
-        expect(cask.desc).to eq("Secret absent")
-        expect(ENV.fetch("SECRET_TOKEN", nil)).to eq("password")
+        expect(cask.desc).to eq("Secret masked")
+        expect(ENV.fetch("HOMEBREW_SECRET_TOKEN", nil)).to eq("password")
       end
     end
 

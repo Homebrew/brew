@@ -6,11 +6,16 @@ require "bundle/extensions/extension"
 module Homebrew
   module Bundle
     class Go < Extension
-      PACKAGE_TYPE = :go
-      PACKAGE_TYPE_NAME = "Go Package"
-      BANNER_NAME = "Go packages"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :go
+
+        sig { override.returns(String) }
+        def check_label = "Go Package"
+
+        sig { override.returns(String) }
+        def banner_name = "Go packages"
+
         sig { override.void }
         def reset!
           @packages = T.let(nil, T.nilable(T::Array[String]))

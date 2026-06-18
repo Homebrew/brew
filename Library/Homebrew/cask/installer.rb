@@ -7,6 +7,7 @@ require "utils/topological_hash"
 require "utils/analytics"
 require "utils/output"
 
+require "api/cask_download"
 require "cask/config"
 require "cask/download"
 require "cask/migrator"
@@ -239,7 +240,14 @@ on_request: true)
     sig { returns(Download) }
     def downloader
       @downloader ||= T.let(
-        Download.new(@cask, quarantine: quarantine?, require_sha: require_sha? && !force?),
+        (if @cask.loaded_from_internal_api? && !@cask.caskfile_only?
+           Homebrew::API::CaskDownload.download(
+             token:       @cask.token,
+             cask_struct: Homebrew::API::Internal.cask_struct(@cask.token),
+             quarantine:  quarantine?,
+             require_sha: require_sha? && !force?,
+           )
+        end) || Download.new(@cask, quarantine: quarantine?, require_sha: require_sha? && !force?),
         T.nilable(Download),
       )
     end

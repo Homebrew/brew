@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "utils/autoremove"
@@ -7,6 +7,7 @@ RSpec.describe Utils::Autoremove do
   shared_context "with formulae for dependency testing" do
     let(:formula_with_deps) do
       formula "zero" do
+        T.bind(self, T.class_of(Formula))
         url "zero-1.0"
 
         depends_on "three" => :build
@@ -15,18 +16,21 @@ RSpec.describe Utils::Autoremove do
 
     let(:first_formula_dep) do
       formula "one" do
+        T.bind(self, T.class_of(Formula))
         url "one-1.1"
       end
     end
 
     let(:second_formula_dep) do
       formula "two" do
+        T.bind(self, T.class_of(Formula))
         url "two-1.1"
       end
     end
 
     let(:formula_is_build_dep) do
       formula "three" do
+        T.bind(self, T.class_of(Formula))
         url "three-1.1"
       end
     end

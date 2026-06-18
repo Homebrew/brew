@@ -28,10 +28,18 @@ module Homebrew
             switch "--#{extension.flag}",
                    description: extension.switch_description("Add entries for #{extension.banner_name}.")
           end
+          switch "--no-describe",
+                 description: "Do not add description comments above each line. Description comments are " \
+                              "the default.",
+                 env:         :bundle_no_describe
           switch "--describe",
                  description: "Add a description comment above each line, unless the " \
-                              "dependency does not have a description.",
-                 env:         :bundle_describe
+                              "dependency does not have a description. This is the default unless " \
+                              "`$HOMEBREW_BUNDLE_NO_DESCRIBE` is set.",
+                 env:         :bundle_describe,
+                 replacement: "the default behaviour",
+                 odeprecated: true
+          conflicts "--describe", "--no-describe"
         end
 
         sig { override.void }
@@ -56,7 +64,7 @@ module Homebrew
             type:,
             global:   context.global,
             file:     context.file,
-            describe: args.describe?,
+            describe: args.describe? && !args.no_describe?,
           )
         end
       end

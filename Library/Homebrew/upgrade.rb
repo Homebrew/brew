@@ -112,17 +112,28 @@ module Homebrew
         installers.filter_map do |fi|
           fi.determine_bottle_tab_attributes
 
-          all_runtime_deps_installed = fi.bottle_tab_runtime_dependencies.presence&.all? do |dependency, hash|
-            minimum_version = if (version = hash["version"])
-              Version.new(version)
+          if !dry_run && dependents
+            all_runtime_deps_installed = fi.bottle_tab_runtime_dependencies.presence&.all? do |dependency, hash|
+              minimum_version = if (version = hash["version"])
+                Version.new(version)
+              end
+              Dependency.new(dependency).installed?(minimum_version:, minimum_revision: hash["revision"].to_i)
             end
-            Dependency.new(dependency).installed?(minimum_version:, minimum_revision: hash["revision"].to_i)
+
+            if all_runtime_deps_installed
+              # Don't need to install this bottle if all of the runtime
+              # dependencies have the same or newer version already installed.
+              next
+            end
           end
 
-          if !dry_run && dependents && all_runtime_deps_installed
-            # Don't need to install this bottle if all of the runtime
-            # dependencies have the same or newer version already installed.
-            next
+          if dry_run
+            begin
+              fi.check_install_sanity
+            rescue CannotInstallFormulaError => e
+              ofail e.message
+              next
+            end
           end
 
           fi
@@ -131,7 +142,7 @@ module Homebrew
 
       sig {
         params(formula_installers: T::Array[FormulaInstaller], dry_run: T::Boolean, verbose: T::Boolean,
-               fetch: T::Boolean, skip_formula_names: T::Array[String]).void
+               fetch: T::Boolean, skip_formula_names: T::Array[String]).returns(T::Array[FormulaInstaller])
       }
       def upgrade_formulae(formula_installers, dry_run: false, verbose: false, fetch: true, skip_formula_names: [])
         valid_formula_installers = if dry_run || !fetch
@@ -140,17 +151,19 @@ module Homebrew
           Install.fetch_formulae(formula_installers)
         end
 
-        valid_formula_installers.each do |fi|
-          upgrade_formula(fi, dry_run:, verbose:, skip_formula_names:)
-          Cleanup.install_formula_clean!(fi.formula) unless dry_run
+        upgraded_formula_installers = valid_formula_installers.select do |fi|
+          upgraded = upgrade_formula(fi, dry_run:, verbose:, skip_formula_names:)
+          Cleanup.install_formula_clean!(fi.formula) if upgraded && !dry_run
+          upgraded
         end
-        return unless dry_run
+        return upgraded_formula_installers unless dry_run
 
-        formulae_to_clean = Cleanup.install_cleanup_formulae(valid_formula_installers.map(&:formula))
+        formulae_to_clean = Cleanup.install_cleanup_formulae(upgraded_formula_installers.map(&:formula))
         if formulae_to_clean.present? &&
            Cleanup.printed_dry_run_output?(Cleanup.dry_run_output(formulae: formulae_to_clean), ohai: true)
           Cleanup.puts_no_install_cleanup_disable_message_if_not_already!
         end
+        upgraded_formula_installers
       end
 
       sig { params(formula: Formula).returns(T::Array[Keg]) }
@@ -406,7 +419,7 @@ module Homebrew
 
       sig {
         params(formula_installer: FormulaInstaller, dry_run: T::Boolean, verbose: T::Boolean,
-               skip_formula_names: T::Array[String]).void
+               skip_formula_names: T::Array[String]).returns(T::Boolean)
       }
       def upgrade_formula(formula_installer, dry_run: false, verbose: false, skip_formula_names: [])
         formula = formula_installer.formula
@@ -421,14 +434,16 @@ module Homebrew
               "#{name} #{f.pkg_version}"
             end
           end
-          return
+          return true
         end
 
         Install.install_formula(formula_installer, upgrade: true)
+        true
       rescue BuildError => e
         e.dump(verbose:)
         puts
         Homebrew.failed = true
+        false
       end
 
       sig { params(installed_formulae: T::Array[Formula]).returns(T::Array[Formula]) }

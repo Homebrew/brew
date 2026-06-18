@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "hardware"
 require "macos_version"
 require "utils/bottles"
 

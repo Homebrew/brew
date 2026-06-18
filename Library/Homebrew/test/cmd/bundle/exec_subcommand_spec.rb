@@ -5,6 +5,7 @@ require "bundle"
 require "bundle/subcommand/exec"
 require "bundle/brewfile"
 require "bundle/brew_services"
+require "sandbox"
 
 RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
   context "when a Brewfile is not found" do
@@ -23,8 +24,14 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
       # don't try to load gcc/glibc
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
-      stub_formula_loader formula("openssl") { url "openssl-1.0" }
-      stub_formula_loader formula("pkgconf") { url "pkgconf-1.0" }
+      stub_formula_loader formula("openssl") {
+        T.bind(self, T.class_of(Formula))
+        url "openssl-1.0"
+      }
+      stub_formula_loader formula("pkgconf") {
+        T.bind(self, T.class_of(Formula))
+        url "pkgconf-1.0"
+      }
       ENV.extend(Superenv)
       allow(ENV).to receive(:setup_build_environment)
     end
@@ -57,6 +64,13 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
       it "is able to run without bundle arguments" do
         allow(described_class).to receive(:exec).with("bundle", "install").and_return(nil)
         expect { described_class.run_external_command("bundle", "install") }.not_to raise_error
+      end
+
+      it "runs commands in the requested sandbox" do
+        expect(Sandbox).to receive(:run_command)
+          .with("/usr/bin/true", writable_path: ".", deny_network: true)
+
+        described_class.run_external_command("/usr/bin/true", sandbox_path: ".", deny_network: true)
       end
 
       it "raises an exception if called without a command" do
@@ -123,7 +137,10 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
       let(:brewfile_contents) { "brew 'zlib'" }
 
       before do
-        stub_formula_loader formula("zlib") { url "zlib-1.0" }
+        stub_formula_loader formula("zlib") {
+          T.bind(self, T.class_of(Formula))
+          url "zlib-1.0"
+        }
       end
 
       shared_examples "allows command execution" do |command|
@@ -144,7 +161,10 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
       let(:brewfile_contents) { "brew 'rbenv'" }
 
       before do
-        stub_formula_loader formula("rbenv") { url "rbenv-1.0" }
+        stub_formula_loader formula("rbenv") {
+          T.bind(self, T.class_of(Formula))
+          url "rbenv-1.0"
+        }
         ENV["HOMEBREW_RBENV_ROOT"] = rbenv_root.to_s
       end
 
@@ -212,7 +232,10 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
         stub_formula_loader(nginx_formula, "nginx")
         stub_formula_loader(redis_formula, "redis")
 
-        pkgconf = formula("pkgconf") { url "pkgconf-1.0" }
+        pkgconf = formula("pkgconf") do
+          T.bind(self, T.class_of(Formula))
+          url "pkgconf-1.0"
+        end
         stub_formula_loader(pkgconf)
         allow(pkgconf).to receive(:any_version_installed?).and_return(false)
 

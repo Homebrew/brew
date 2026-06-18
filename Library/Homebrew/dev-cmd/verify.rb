@@ -51,11 +51,7 @@ module Homebrew
         bucket.each do |formula|
           os_arch_combinations.each do |os, arch|
             SimulateSystem.with(os:, arch:) do
-              bottle_tag = if (bottle_tag = args.bottle_tag&.to_sym)
-                Utils::Bottles::Tag.from_symbol(bottle_tag)
-              else
-                Utils::Bottles::Tag.new(system: os, arch:)
-              end
+              bottle_tag = Utils::Bottles::Tag.from_arg(args.bottle_tag&.to_sym, os:, arch:)
 
               bottle = formula.bottle_for_tag(bottle_tag)
 

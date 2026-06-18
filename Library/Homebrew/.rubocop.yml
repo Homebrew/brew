@@ -93,6 +93,7 @@ Style/Documentation:
     - os/mac.rb
     - resource.rb
     - startup/config.rb
+    - utils/gzip.rb
     - utils/inreplace.rb
     - utils/output.rb
     - utils/shebang.rb

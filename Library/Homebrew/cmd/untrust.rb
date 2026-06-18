@@ -80,7 +80,7 @@ module Homebrew
         args.named.each do |name|
           item_types = [:formula, :cask, :command]
           type, trust_name = Homebrew::Trust.target(name, type: selected_type, include_existing: true)
-          if type == :tap && Tap.fetch(trust_name).official?
+          if type == :tap && !Tap.remote_reference?(trust_name) && Tap.fetch(trust_name).official?
             puts "Official tap #{trust_name} is always trusted."
             next
           end

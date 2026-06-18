@@ -22,6 +22,16 @@ RSpec.describe Sandbox, :needs_macos do
     expect(file).to exist
   end
 
+  it "writes to a path containing the seatbelt string delimiters \\ and \"" do
+    delimiter_dir = dir/"I:\\ and \"quote\""
+    delimiter_dir.mkpath
+    target = delimiter_dir/"foo"
+    sandbox.allow_write path: target
+    sandbox.run "touch", target
+
+    expect(target).to exist
+  end
+
   describe "#run" do
     it "fails when writing to file not specified with ##allow_write" do
       expect do

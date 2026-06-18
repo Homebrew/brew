@@ -147,7 +147,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
     it "generates only for the specified shell with the correct format" do
       artifact = cask.artifacts.grep(described_class).first
-      captured_args = nil
+      captured_args = T.let([], T::Array[String])
 
       allow(Sandbox).to receive_messages(ensure_sandbox_installed!: nil, available?: true)
       allow(Sandbox).to receive(:new) do
@@ -157,7 +157,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
           allow(sandbox).to receive(:deny_read_home)
           allow(sandbox).to receive(:deny_all_network)
           allow(sandbox).to receive(:run) do |*args|
-            captured_args = args
+            captured_args = args.map(&:to_s)
             Pathname(args.fetch(7)).write("zsh completion")
           end
         end

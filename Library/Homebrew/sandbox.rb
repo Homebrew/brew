@@ -4,6 +4,7 @@
 require "io/console"
 require "pty"
 require "tempfile"
+require "exceptions"
 require "utils/fork"
 require "utils/output"
 
@@ -98,10 +99,33 @@ class Sandbox
   sig { returns(T::Array[String]) }
   def self.configuration_command_messages = []
 
+  sig { returns(T.nilable(String)) }
+  def self.sandbox_install_command = nil
+
   sig { void }
   def self.configure!
     ensure_sandbox_installed!
     reset_state!
+  end
+
+  sig { params(command: T.any(String, Pathname), writable_path: T.any(String, Pathname), deny_network: T::Boolean).void }
+  def self.run_command(*command, writable_path:, deny_network: false)
+    ensure_sandbox_installed!
+    raise failure_reason || "The sandbox is not available." unless available?
+
+    writable_path = Pathname(writable_path).expand_path
+    if !writable_path.directory? || !writable_path.writable?
+      raise UsageError,
+            "`#{writable_path}` is not a writable directory."
+    end
+
+    writable_path = writable_path.realpath
+    sandbox = new
+    sandbox.allow_write_temp_and_cache
+    sandbox.allow_write_path writable_path
+    sandbox.deny_read_home
+    sandbox.deny_all_network if deny_network
+    sandbox.run "/bin/sh", "-c", "cd \"$1\" && shift && exec \"$@\"", "brew-sandbox-exec", writable_path, *command
   end
 
   sig { returns(String) }
@@ -189,6 +213,8 @@ class Sandbox
 
   sig { void }
   def deny_read_home
+    require "trust"
+
     home = Pathname(Dir.home(ENV.fetch("USER"))).realpath
     if [
       HOMEBREW_PREFIX,
@@ -199,22 +225,80 @@ class Sandbox
       ENV.fetch("GITHUB_WORKSPACE", nil),
       ENV.fetch("RUNNER_WORKSPACE", nil),
       ENV.fetch("RUNNER_TEMP", nil),
+      Homebrew::Trust.trust_file,
+      *home_write_paths.select { |path| File.exist?(path) },
     ].compact.any? do |path|
       path = Pathname(path)
-      [path.expand_path, path.exist? ? path.realpath : nil].compact.any? { |pathname| pathname.ascend.include?(home) }
+      [path.expand_path, (path.realpath if path.exist?)].compact.any? { |pathname| pathname.ascend.include?(home) }
     end
+      # When Homebrew or CI needs some `$HOME` paths to stay readable, deny only
+      # well-known credential and personal-data paths instead of enumerating all
+      # of `$HOME`.
       [
         ".ssh",
         ".aws",
         ".azure",
-        ".config/gcloud",
+        ".boto",
         ".docker",
+        ".config/fish",
+        ".config/gh",
+        ".config/gcloud",
+        ".config/huggingface",
+        ".config/pip",
+        ".config/pypoetry",
+        ".config/rclone",
+        ".config/containers/auth.json",
+        ".config/composer/auth.json",
+        ".config/sops/age/keys.txt",
         ".gnupg",
+        ".git-credentials",
+        ".gitconfig",
+        ".gsutil",
         ".kube",
         ".netrc",
         ".npmrc",
+        ".yarnrc",
+        ".yarnrc.yml",
+        ".pnpmrc",
+        ".bunfig.toml",
         ".pypirc",
+        ".pip",
+        ".poetry",
+        ".local/share/pypoetry",
         ".gem/credentials",
+        ".bundle/config",
+        ".cargo/credentials",
+        ".cargo/credentials.toml",
+        ".composer/auth.json",
+        ".condarc",
+        ".m2/settings.xml",
+        ".gradle/gradle.properties",
+        ".sbt/1.0/credentials.sbt",
+        ".terraform.d/credentials.tfrc.json",
+        ".pulumi/credentials.json",
+        ".oci/config",
+        ".huggingface/token",
+        ".cache/huggingface/token",
+        ".claude",
+        ".claude.json",
+        ".kiro",
+        ".bash_login",
+        ".bash_logout",
+        ".bash_profile",
+        ".bashrc",
+        ".bash_history",
+        ".profile",
+        ".zlogin",
+        ".zlogout",
+        ".zprofile",
+        ".zshenv",
+        ".zshrc",
+        ".zsh_history",
+        ".python_history",
+        ".mysql_history",
+        ".psql_history",
+        ".env",
+        ".env.local",
         "Documents",
         "Movies",
         "Music",
@@ -425,11 +509,10 @@ class Sandbox
   # @api private
   sig { params(path: T.any(String, Pathname), type: Symbol).returns(SandboxPathFilter) }
   def path_filter(path, type)
-    invalid_char = ['"', "'", "(", ")", "\n", "\\"].find do |c|
-      path.to_s.include?(c)
-    end
-    raise ArgumentError, "Invalid character '#{invalid_char}' in path: #{path}" if invalid_char
-
+    # Any character is allowed: the OS-specific renderer quotes paths safely
+    # (the seatbelt renderer escapes the `"` and `\` string delimiters; the
+    # Linux sandbox passes each path as a separate argument), so even paths
+    # with spaces, parentheses, quotes, backslashes or newlines are expressible.
     filter_path = case type
     when :regex   then path.to_s
     when :subpath, :literal
@@ -453,6 +536,11 @@ class Sandbox
 
   sig { returns(T.nilable(Time)) }
   attr_reader :start
+
+  # Home directories a build needs to write to, and so must also read;
+  # overridden per-OS (e.g. the Xcode directories on macOS).
+  sig { returns(T::Array[String]) }
+  def home_write_paths = []
 
   sig { params(_args: T::Array[T.any(String, Pathname)], _tmpdir: String).returns(T::Array[T.any(String, Pathname)]) }
   def sandbox_command(_args, _tmpdir)

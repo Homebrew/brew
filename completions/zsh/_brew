@@ -38,6 +38,29 @@ __brew_list_aliases() {
   echo "${aliases}"
 }
 
+__brew_user_aliases() {
+  local aliases_dir="${HOME}/.config/brew-aliases"
+  local pattern="alias: brew ([^[:space:]]+)"
+  local file line alias_name
+  local -a aliases
+
+  [[ ! -d ${aliases_dir} ]] && aliases_dir="${HOME}/.brew-aliases"
+  [[ ! -d ${aliases_dir} ]] && return
+
+  for file in "${aliases_dir}"/*(N); do
+    [[ ! -f ${file} || ${file} == *~ ]] && continue
+    alias_name="${file:t}"
+    {
+      read -r line
+      if read -r line && [[ ${line} =~ ${pattern} ]]; then
+        alias_name="${match[1]}"
+      fi
+    } < "${file}"
+    aliases+=("${alias_name}")
+  done
+  (( ${#aliases} )) && _describe -t user-aliases 'user aliases' aliases
+}
+
 __brew_formulae_or_ruby_files() {
   _alternative 'files:files:{_files -g "*.rb"}'
 }
@@ -206,9 +229,11 @@ __brew_internal_commands() {
     'rubocop:Installs, configures and runs Homebrew'\''s `rubocop`'
     'ruby:Run a Ruby instance with Homebrew'\''s libraries loaded'
     'rubydoc:Generate Homebrew'\''s RubyDoc documentation'
+    'sandbox-exec:Run command in Homebrew'\''s sandbox, allowing writes to writable-path and Homebrew'\''s temporary and cache directories'
     'search:Perform a substring search of cask tokens and formula names for text'
     'services:Manage background services with macOS'\'' `launchctl`(1) daemon manager or Linux'\''s `systemctl`(1) service manager'
     'setup-ruby:Installs and configures Homebrew'\''s Ruby'
+    'setup-sandbox:Run any necessary commands to setup the Homebrew sandbox'
     'sh:Enter an interactive shell for Homebrew'\''s build environment'
     'shellenv:Valid shells: bash|csh|fish|pwsh|sh|tcsh|zsh  Print export statements'
     'source:Open a formula'\''s source repository in a browser, or open Homebrew'\''s own repository if no argument is provided'
@@ -286,7 +311,8 @@ __brew_external_commands() {
 __brew_commands() {
   _alternative \
     'internal-commands:command:__brew_internal_commands' \
-    'external-commands:command:__brew_external_commands'
+    'external-commands:command:__brew_external_commands' \
+    'user-aliases:alias:__brew_user_aliases'
 }
 
 __brew_diagnostic_checks() {
@@ -704,7 +730,7 @@ sh)
           '(--file)--global[Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set), `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise]' \
           '--help[Show this message]' \
           '--install[Run `install` before starting the shell]' \
-          '--no-secrets[Attempt to remove secrets from the environment before starting the shell. Enabled by default if `$HOMEBREW_BUNDLE_NO_SECRETS` is set]' \
+          '--no-secrets[Attempt to remove secrets from the environment before starting the shell]' \
           '--quiet[Make some output more quiet]' \
           '--services[Temporarily start services while running the shell. Enabled by default if `$HOMEBREW_BUNDLE_SERVICES` is set]' \
           '--verbose[Make some output more verbose]'
@@ -774,12 +800,14 @@ exec)
         _arguments \
           '--check[Check that all dependencies in the Brewfile are installed before executing the command. Enabled by default if `$HOMEBREW_BUNDLE_CHECK` is set]' \
           '--debug[Display any debugging information]' \
+          '--deny-network[Deny network access from inside the sandbox]' \
           '(--global)--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
           '(--file)--global[Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set), `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise]' \
           '--help[Show this message]' \
           '--install[Run `install` before executing the command]' \
-          '--no-secrets[Attempt to remove secrets from the environment before executing the command. Enabled by default if `$HOMEBREW_BUNDLE_NO_SECRETS` is set]' \
+          '--no-secrets[Attempt to remove secrets from the environment before executing the command]' \
           '--quiet[Make some output more quiet]' \
+          '--sandbox[Run command in Homebrew'\''s sandbox, allowing writes to path and Homebrew'\''s temporary and cache directories]' \
           '--services[Temporarily start services while executing the command. Enabled by default if `$HOMEBREW_BUNDLE_SERVICES` is set]' \
           '--verbose[Make some output more verbose]' \
           - command \
@@ -793,7 +821,7 @@ env)
           '(--file)--global[Read from or write to the `Brewfile` from `$HOMEBREW_BUNDLE_FILE_GLOBAL` (if set), `${XDG_CONFIG_HOME}/homebrew/Brewfile` (if `$XDG_CONFIG_HOME` is set), `~/.homebrew/Brewfile` or `~/.Brewfile` otherwise]' \
           '--help[Show this message]' \
           '--install[Run `install` before printing the environment]' \
-          '--no-secrets[Attempt to remove secrets from the environment before printing it. Enabled by default if `$HOMEBREW_BUNDLE_NO_SECRETS` is set]' \
+          '--no-secrets[Attempt to remove secrets from the environment before printing it]' \
           '--quiet[Make some output more quiet]' \
           '--verbose[Make some output more verbose]'
         ;;
@@ -812,7 +840,6 @@ dump)
           '(--no-cargo --no-cleanup-cargo --no-dump-cargo)--cargo[Dump Cargo packages]' \
           '(--no-cask --no-casks --no-cleanup-cask --no-dump-cask)--cask[Dump Homebrew cask dependencies]' \
           '--debug[Display any debugging information]' \
-          '--describe[Add a description comment above each line, unless the dependency does not have a description. Enabled by default if `$HOMEBREW_BUNDLE_DESCRIBE` is set]' \
           '(--global)--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
           '(--no-flatpak --no-cleanup-flatpak --no-dump-flatpak)--flatpak[Dump Flatpak packages. Note: Linux only]' \
           '--force[Overwrite an existing `Brewfile`]' \
@@ -825,6 +852,7 @@ dump)
           '(--no-mas --no-cleanup-mas --no-dump-mas)--mas[Dump Mac App Store dependencies]' \
           '(--cargo)--no-cargo[`dump` without Cargo packages. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_CARGO` is set]' \
           '(--cask --casks)--no-cask[Dump without Homebrew cask dependencies. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_CASK` is set]' \
+          '--no-describe[Do not add description comments above each line. Description comments are the default. Enabled by default if `$HOMEBREW_BUNDLE_NO_DESCRIBE` is set]' \
           '(--formula --formulae --brews)--no-dump-brew[Dump without Homebrew formula dependencies. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_BREW` is set]' \
           '(--cargo)--no-dump-cargo[`dump` without Cargo packages. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_CARGO` is set]' \
           '(--cask --casks)--no-dump-cask[Dump without Homebrew cask dependencies. Enabled by default if `$HOMEBREW_BUNDLE_DUMP_NO_CASK` is set]' \
@@ -921,7 +949,6 @@ add)
           '(--no-cargo --no-cleanup-cargo --no-dump-cargo)--cargo[Add entries for Cargo packages]' \
           '(--no-cask --no-casks --no-cleanup-cask --no-dump-cask)--cask[Add Homebrew cask entries]' \
           '--debug[Display any debugging information]' \
-          '--describe[Add a description comment above each line, unless the dependency does not have a description. Enabled by default if `$HOMEBREW_BUNDLE_DESCRIBE` is set]' \
           '(--global)--file[Read from or write to the `Brewfile` from this location. Use `--file=-` to pipe to stdin/stdout]' \
           '(--no-flatpak --no-cleanup-flatpak --no-dump-flatpak)--flatpak[Add entries for Flatpak packages. Note: Linux only]' \
           '(--no-formula --no-formulae --no-brews --no-cleanup-brew --no-dump-brew)--formula[Add Homebrew formula entries]' \
@@ -930,6 +957,7 @@ add)
           '--help[Show this message]' \
           '--install[Run `install` before adding entries]' \
           '(--no-krew --no-cleanup-krew --no-dump-krew)--krew[Add entries for Krew plugins]' \
+          '--no-describe[Do not add description comments above each line. Description comments are the default. Enabled by default if `$HOMEBREW_BUNDLE_NO_DESCRIBE` is set]' \
           '(--no-npm --no-cleanup-npm --no-dump-npm)--npm[Add entries for npm packages]' \
           '--quiet[Make some output more quiet]' \
           '(--no-tap --no-taps --no-cleanup-tap --no-dump-tap)--tap[Add Homebrew tap entries]' \
@@ -1312,9 +1340,11 @@ _brew_edit() {
 _brew_exec() {
   _arguments \
     '--debug[Display any debugging information]' \
+    '--deny-network[Deny network access from inside the sandbox]' \
     '--formulae[Comma-separated formulae to install and add to `PATH` before running command]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
+    '--sandbox[Run command in Homebrew'\''s sandbox, allowing writes to path and Homebrew'\''s temporary and cache directories]' \
     '--verbose[Make some output more verbose]'
 }
 
@@ -1539,7 +1569,6 @@ _brew_install() {
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
     '(--formula)--appimagedir[Target location for AppImages (default: `~/Applications`)]' \
     '(--cask)--as-dependency[Install but mark as installed as a dependency and not installed on request]' \
-    '--ask[Ask for confirmation before downloading and installing. Print the same plan as `--dry-run` before prompting. Only prompts if the plan includes dependencies or dependants; if the requested formulae or casks are the only things to install, it only prints the plan. The confirmation prompt is skipped without a TTY]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
@@ -1567,6 +1596,7 @@ _brew_install() {
     '(--formula)--keyboard-layoutdir[Target location for Keyboard Layouts (default: `/Library/Keyboard Layouts`)]' \
     '(--formula)--language[Comma-separated list of language codes to prefer for cask installation. The first matching language is used, otherwise it reverts to the cask'\''s default language. The default value is the language of your system]' \
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
+    '--no-ask[Do not ask for confirmation before downloading and installing. Ask mode is the default. Enabled by default if `$HOMEBREW_NO_ASK` is set]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --ignore-dependencies)--only-dependencies[Install the dependencies with specified options but do not install the formula itself]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \
@@ -1971,7 +2001,6 @@ _brew_reinstall() {
     '(--formula)--adopt[Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
     '(--formula)--appimagedir[Target location for AppImages (default: `~/Applications`)]' \
-    '--ask[Ask for confirmation before downloading and reinstalling. Print what would be reinstalled before prompting. Only prompts if the plan includes dependencies or dependants; if the requested formulae or casks are the only things to reinstall, it only prints the plan. The confirmation prompt is skipped without a TTY]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --force-bottle)--build-from-source[Compile formula from source even if a bottle is available]' \
@@ -1992,6 +2021,7 @@ _brew_reinstall() {
     '(--formula)--keyboard-layoutdir[Target location for Keyboard Layouts (default: `/Library/Keyboard Layouts`)]' \
     '(--formula)--language[Comma-separated list of language codes to prefer for cask installation. The first matching language is used, otherwise it reverts to the cask'\''s default language. The default value is the language of your system]' \
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
+    '--no-ask[Do not ask for confirmation before downloading and reinstalling. Ask mode is the default. Enabled by default if `$HOMEBREW_NO_ASK` is set]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--formula)--prefpanedir[Target location for Preference Panes (default: `~/Library/PreferencePanes`)]' \
     '(--formula)--qlplugindir[Target location for Quick Look Plugins (default: `~/Library/QuickLook`)]' \
@@ -2053,6 +2083,16 @@ _brew_rubydoc() {
     '--help[Show this message]' \
     '--only-public[Only generate public API documentation]' \
     '--open[Open generated documentation in a browser]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
+# brew sandbox-exec
+_brew_sandbox_exec() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--deny-network[Deny network access from inside the sandbox]' \
+    '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
     '--verbose[Make some output more verbose]'
 }
@@ -2234,6 +2274,15 @@ _brew_setup_ruby() {
     '--verbose[Make some output more verbose]' \
     - command \
     '*:command:__brew_commands'
+}
+
+# brew setup-sandbox
+_brew_setup_sandbox() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
 }
 
 # brew sh
@@ -2447,6 +2496,7 @@ _brew_trust() {
     '--debug[Display any debugging information]' \
     '(--tap --cask --command)--formula[Trust the named formula]' \
     '--help[Show this message]' \
+    '--json[Print trusted entries as JSON. A version number is required. The only accepted value for version is `v1`]' \
     '--quiet[Make some output more quiet]' \
     '(--formula --cask --command)--tap[Trust the named tap]' \
     '--verbose[Make some output more verbose]'
@@ -2710,7 +2760,6 @@ _brew_upgrade() {
   _arguments \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
     '(--formula)--appimagedir[Target location for AppImages (default: `~/Applications`)]' \
-    '--ask[Ask for confirmation before downloading and upgrading. Print the same plan as `--dry-run`, including available download sizes. When named arguments are provided, only prompts if the plan includes packages other than those arguments; if the requested formulae or casks are the only things to upgrade, it only prints the plan. With no named arguments, prompts if anything would be upgraded. The confirmation prompt is skipped without a TTY]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask --force-bottle)--build-from-source[Compile formula from source even if a bottle is available]' \
@@ -2736,6 +2785,7 @@ _brew_upgrade() {
     '(--formula)--language[Comma-separated list of language codes to prefer for cask installation. The first matching language is used, otherwise it reverts to the cask'\''s default language. The default value is the language of your system]' \
     '(--formula)--mdimporterdir[Target location for Spotlight Plugins (default: `~/Library/Spotlight`)]' \
     '--minimum-version[Only upgrade a named formula or cask with an installed version below the given minimum version]' \
+    '--no-ask[Do not ask for confirmation before downloading and upgrading. Ask mode is the default. Enabled by default if `$HOMEBREW_NO_ASK` is set]' \
     '--no-binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--formula)--no-quit[Prevent running cask applications from being quit during upgrade. Enabled by default if `$HOMEBREW_NO_UPGRADE_QUIT_CASKS` is set]' \
     '(--cask)--overwrite[Delete files that already exist in the prefix while linking]' \

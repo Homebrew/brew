@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "cmd/readall"
@@ -52,7 +52,7 @@ RSpec.describe Homebrew::Cmd::ReadallCmd do
       end
     RUBY
 
-    success = nil
+    success = T.let(false, T::Boolean)
     expect do
       success = Homebrew::SimulateSystem.with(os: :linux) do
         Readall.valid_tap?(
@@ -81,7 +81,7 @@ RSpec.describe Homebrew::Cmd::ReadallCmd do
       end
     RUBY
 
-    success = nil
+    success = T.let(false, T::Boolean)
     expect do
       success = Homebrew::SimulateSystem.with(os: :linux) do
         Readall.valid_tap?(

@@ -12,7 +12,7 @@ RSpec.describe Cask::Artifact::App, :cask do
     end
 
     let(:source_path) { cask.staged_path.join("Caffeine.app") }
-    let(:target_path) { cask.config.appdir.join("AnotherName.app") }
+    let(:target_path) { Pathname(cask.config.appdir).join("AnotherName.app") }
 
     before do
       InstallHelper.install_without_artifacts(cask)
@@ -59,7 +59,7 @@ RSpec.describe Cask::Artifact::App, :cask do
       expect(target_path).to be_a_directory
       expect(source_path).to be_a_symlink
 
-      expect(cask.config.appdir.join("Caffeine Deluxe.app")).not_to exist
+      expect(Pathname(cask.config.appdir).join("Caffeine Deluxe.app")).not_to exist
       expect(cask.staged_path.join("Caffeine Deluxe.app")).to be_a_directory
     end
 

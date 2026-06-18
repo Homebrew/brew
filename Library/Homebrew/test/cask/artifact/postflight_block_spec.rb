@@ -4,8 +4,8 @@
 RSpec.describe Cask::Artifact::PostflightBlock, :cask do
   describe "install_phase" do
     it "calls the specified block after installing, passing a Cask mini-dsl" do
-      called = false
-      yielded_arg = nil
+      called = T.let(false, T::Boolean)
+      yielded_arg = T.let(nil, T.nilable(Cask::DSL::Postflight))
 
       cask = Cask::Cask.new("with-postflight") do
         postflight do |c|
@@ -25,8 +25,8 @@ RSpec.describe Cask::Artifact::PostflightBlock, :cask do
 
   describe "uninstall_phase" do
     it "calls the specified block after uninstalling, passing a Cask mini-dsl" do
-      called = false
-      yielded_arg = nil
+      called = T.let(false, T::Boolean)
+      yielded_arg = T.let(nil, T.nilable(Cask::DSL::UninstallPostflight))
 
       cask = Cask::Cask.new("with-uninstall-postflight") do
         uninstall_postflight do |c|

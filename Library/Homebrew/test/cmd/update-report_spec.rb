@@ -12,6 +12,34 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
   it_behaves_like "reinstall_pkgconf_if_needed"
 
+  it "copies update revisions for redirected tap names" do
+    redirected_remotes_file = mktmpdir/"redirected-remotes"
+    redirected_remotes_file.write("/tmp/homebrew-foo\thttps://github.com/new/homebrew-foo.git\n")
+
+    tap = instance_double(Tap, repository_var_suffix: "_OLD_HOMEBREW_FOO")
+    allow(Tap).to receive(:from_path).with("/tmp/homebrew-foo").and_return(tap)
+    allow(tap).to receive(:apply_redirected_remote!)
+      .with("https://github.com/new/homebrew-foo.git", quiet: true) do
+        allow(tap).to receive(:repository_var_suffix).and_return("_NEW_HOMEBREW_FOO")
+      end
+    allow(Homebrew::EnvConfig).to receive_messages(disable_load_formula?: true, no_install_from_api?: true)
+    update_report = described_class.new(["--quiet"])
+    allow(update_report).to receive(:tap_or_untap_core_taps_if_necessary)
+
+    with_env(
+      HOMEBREW_REDIRECTED_REMOTES_FILE:        redirected_remotes_file.to_s,
+      HOMEBREW_UPDATE_BEFORE:                  "abc",
+      HOMEBREW_UPDATE_AFTER:                   "abc",
+      HOMEBREW_UPDATE_BEFORE_OLD_HOMEBREW_FOO: "123",
+      HOMEBREW_UPDATE_AFTER_OLD_HOMEBREW_FOO:  "456",
+    ) do
+      update_report.run
+
+      expect(ENV.fetch("HOMEBREW_UPDATE_BEFORE_NEW_HOMEBREW_FOO")).to eq("123")
+      expect(ENV.fetch("HOMEBREW_UPDATE_AFTER_NEW_HOMEBREW_FOO")).to eq("456")
+    end
+  end
+
   describe Reporter do
     let(:tap) { CoreTap.instance }
     let(:reporter_class) do
@@ -151,6 +179,29 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
         # Verify the migration would be detected as formula-to-cask migration
         expect(tap.tap_migrations).to eq({ "old-formula" => "foo/bar/new-cask" })
         expect(tap.cask_tokens).to include("new-cask")
+      end
+    end
+
+    describe "#ensure_trusted_tap_installed!" do
+      let(:other_tap) { Tap.fetch("foo", "bar") }
+
+      before { allow(other_tap).to receive(:installed?).and_return(false) }
+
+      it "recommends trusting just the migrated package then migrating a rename" do
+        expect(other_tap).not_to receive(:ensure_installed!)
+        expect { reporter.send(:ensure_trusted_tap_installed!, "oldfoo", "newfoo", other_tap) }
+          .to output(%r{brew trust foo/bar/newfoo.*brew migrate oldfoo}m).to_stderr
+      end
+
+      it "recommends a reinstall for an unchanged-name tap migration" do
+        expect { reporter.send(:ensure_trusted_tap_installed!, "foo", "foo", other_tap) }
+          .to output(/brew reinstall foo/).to_stderr
+      end
+
+      it "taps a trusted tap" do
+        allow(other_tap).to receive(:official?).and_return(true)
+        expect(other_tap).to receive(:ensure_installed!)
+        reporter.send(:ensure_trusted_tap_installed!, "foo", "foo", other_tap)
       end
     end
 

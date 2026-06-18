@@ -1,6 +1,7 @@
 # Documentation defined in Library/Homebrew/cmd/which-formula.rb
 
 # shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/cmd.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/executables.sh"
 
 homebrew-which-formula() {
@@ -8,22 +9,32 @@ homebrew-which-formula() {
 
   while [[ "$#" -gt 0 ]]
   do
+    if homebrew-command-help which-formula "$1"
+    then
+      return $?
+    fi
+    if homebrew-command-common-option "$1"
+    then
+      shift
+      continue
+    fi
+
     case "$1" in
       --explain)
         HOMEBREW_EXPLAIN=1
-        shift
         ;;
       --*)
-        echo "Unknown option: $1" >&2
+        onoe "Unknown option: $1"
         brew help which-formula
         return 1
         ;;
-      *)
-        args+=("$1")
-        shift
-        ;;
+      -*) homebrew-command-common-short-options "$1" ;;
+      *) args+=("$1") ;;
     esac
+    shift
   done
+
+  homebrew-command-enable-debug
 
   if [[ ${#args[@]} -eq 0 ]]
   then

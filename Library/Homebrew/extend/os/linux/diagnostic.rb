@@ -28,13 +28,6 @@ module OS
         end
 
         sig { returns(T::Array[String]) }
-        def fatal_build_from_source_checks
-          (super + %w[
-            check_linux_sandbox
-          ]).freeze
-        end
-
-        sig { returns(T::Array[String]) }
         def supported_configuration_checks
           %w[
             check_glibc_minimum_version
@@ -183,11 +176,15 @@ module OS
           reason = ::Sandbox.failure_reason || "The Linux sandbox is not available."
           lines = case state
           when :missing
-            [
+            missing_lines = [
               reason,
               "",
               "Install Bubblewrap and ensure a rootless `bwrap` executable is available on `PATH`.",
             ]
+            if (install_command = ::Sandbox.sandbox_install_command)
+              missing_lines.push("", "On this system, install it with:", "  #{install_command}")
+            end
+            missing_lines
           when :setuid
             [
               reason,
@@ -200,7 +197,7 @@ module OS
               reason,
               "",
               "Homebrew's Linux sandbox requires rootless Bubblewrap and unprivileged",
-              "user namespaces. Check and update this system configuration:",
+              "user namespaces. Run `sudo brew setup-sandbox` or check and update this system configuration:",
               *::Sandbox.configuration_command_messages,
             ]
           else

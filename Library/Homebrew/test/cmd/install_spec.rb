@@ -89,6 +89,30 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     EOS
   end
 
+  it "marks an outdated dependency as upgradable in the dry-run plan" do
+    formula = formula("changed") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/changed-2.0.tar.gz"
+    end
+    dependency = formula("dependency") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/dependency-1.0.tar.gz"
+    end
+    allow(dependency).to receive_messages(any_version_installed?: true, outdated?: true)
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    allow(Homebrew::EnvConfig).to receive(:no_emoji?).and_return(true)
+    formula_installer = FormulaInstaller.new(formula)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+    allow(formula_installer).to receive(:compute_dependencies)
+      .and_return([instance_double(Dependency, to_formula: dependency)])
+    allow(Homebrew::Install).to receive(:ask_input)
+
+    expect do
+      Homebrew::Install.ask_formulae([formula_installer], dependants)
+    end.to output(/dependency \(upgradable\)/).to_stdout
+  end
+
   it "prompts again for return ask input" do
     ["\r", "\n"].each do |input|
       allow($stdin).to receive(:tty?).and_return(true)
@@ -278,6 +302,40 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     expect(Homebrew).to have_failed
   end
 
+  it "starts formula prelude fetches before dependant checks when not asking" do
+    cmd = described_class.new(["--yes", "testball"])
+    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil)
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+    end
+    formula_installer = instance_double(FormulaInstaller, formula:)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula])
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Install).to receive_messages(install_formula?: true, formula_installers: [formula_installer])
+    allow(Homebrew::Install).to receive(:install_formulae)
+    allow(Homebrew::Upgrade).to receive(:upgrade_dependents)
+    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+    allow(Homebrew.messages).to receive(:display_messages)
+    expect(Homebrew::DownloadQueue).to receive(:new).ordered.and_return(download_queue)
+    expect(formula_installer).to receive(:download_queue=).with(download_queue).ordered
+    expect(formula_installer).to receive(:prelude_fetch).ordered
+    expect(Homebrew::Upgrade).to receive(:dependants).ordered.and_return(dependants)
+    expect(Homebrew::Install).to receive(:enqueue_formulae)
+      .with([formula_installer], download_queue:)
+      .ordered
+      .and_return([formula_installer])
+    expect(download_queue).to receive(:fetch).ordered
+    expect(download_queue).to receive(:shutdown).ordered
+
+    cmd.run
+  end
+
   it "does not install `homebrew/cask` when a cask remains unavailable" do
     cmd = described_class.new(["foo"])
     cask_tap = CoreCaskTap.instance
@@ -316,10 +374,9 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
         keg_only "test reason"
       RUBY
 
-      with_env(HOMEBREW_NO_ASK: "1", HOMEBREW_NO_INSTALL_FROM_API: "1") do
+      with_env(HOMEBREW_NO_INSTALL_FROM_API: "1") do
         expect do
-          brew "install", source_formula_name, bottle_formula_name,
-               "HOMEBREW_NO_ASK"              => "1",
+          brew "install", "--yes", source_formula_name, bottle_formula_name,
                "HOMEBREW_NO_INSTALL_FROM_API" => "1"
         end
           .to output(/#{Regexp.escape(source_formula_prefix)}.*#{Regexp.escape(bottle_formula_prefix)}/m).to_stdout
@@ -360,11 +417,10 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
         end
       RUBY
 
-      with_env(HOMEBREW_NO_ASK: "1", HOMEBREW_NO_INSTALL_FROM_API: "1") do
+      with_env(HOMEBREW_NO_INSTALL_FROM_API: "1") do
         expect do
-          brew "install", formula_name, "--HEAD",
+          brew "install", "-y", formula_name, "--HEAD",
                "HOMEBREW_DOWNLOAD_CONCURRENCY" => "1",
-               "HOMEBREW_NO_ASK"               => "1",
                "HOMEBREW_NO_INSTALL_FROM_API"  => "1"
         end
           .to output(/#{Regexp.escape(testball1_prefix)}/o).to_stdout
@@ -377,7 +433,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
   end
 
   it "prints a shared fetch heading and correct upgrade count", :cask do
-    cmd = described_class.new(["codex"])
+    cmd = described_class.new(["--yes", "codex"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil)
     formula = formula("testball_bottle") do
       T.bind(self, T.class_of(Formula))
@@ -409,6 +465,8 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       formula_installers: [formula_installer],
       enqueue_formulae:   [formula_installer],
     )
+    allow(formula_installer).to receive(:download_queue=)
+    allow(formula_installer).to receive(:prelude_fetch)
     allow(Cask::Installer).to receive(:new).and_return(installer)
     allow(Homebrew::Install).to receive(:install_formulae)
     allow(Homebrew::Upgrade).to receive(:upgrade_dependents)

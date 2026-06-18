@@ -76,7 +76,10 @@ end
 parser.parse
 
 UNDEFINED_CONSTANTS.each do |constant_name|
+  # The constant name is iterated from the list above.
+  # rubocop:disable Sorbet/ConstantsFromStrings
   Object.const_get(constant_name)
+  # rubocop:enable Sorbet/ConstantsFromStrings
   Utils::Output.ofail "#{constant_name} should not be defined at startup"
 rescue NameError
   # We expect this to error as it should not be defined.

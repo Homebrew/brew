@@ -39,6 +39,28 @@ RSpec.describe GitDownloadStrategy do
       end
       expect(strategy.source_modified_time.to_i).to eq(1_485_115_153)
     end
+
+    it "nulls the global Git config so sandboxed staging reads do not fail" do
+      expect(strategy).to receive(:system_command)
+        .with(
+          "git",
+          args:         ["--git-dir", cached_location/".git", "show", "-s", "--format=%cD"],
+          env:          { "GIT_TERMINAL_PROMPT" => "0", "GIT_CONFIG_GLOBAL" => File::NULL },
+          print_stderr: false,
+        )
+        .and_return(instance_double(SystemCommand::Result, success?: true,
+                                                           stdout:   "Fri, 12 Jun 2026 06:12:11 -0700"))
+
+      expect(strategy.source_modified_time).to eq(Time.parse("Fri, 12 Jun 2026 06:12:11 -0700"))
+    end
+
+    it "raises the underlying Git error instead of a Time parsing error on failure" do
+      allow(strategy).to receive(:system_command)
+        .and_return(instance_double(SystemCommand::Result, success?: false,
+                                                           stdout: "", stderr: "fatal: unable to access"))
+
+      expect { strategy.source_modified_time }.to raise_error(/fatal: unable to access/)
+    end
   end
 
   specify "#last_commit" do

@@ -45,7 +45,7 @@ module InstallHelper
     cask.artifacts.each do |artifact|
       next unless artifact.is_a?(Cask::Artifact::App)
 
-      target_path = cask.config.appdir.join(artifact.target.basename)
+      target_path = Pathname(cask.config.appdir).join(artifact.target.basename)
       target_path.mkpath
     end
   end

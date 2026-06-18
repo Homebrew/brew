@@ -46,7 +46,10 @@ module Cask
       sig { params(dsl_key: Symbol).returns(T::Class[::Cask::DSL::Base]) }
       def class_for_dsl_key(dsl_key)
         namespace = self.class.name.to_s.sub(/::.*::.*$/, "")
+        # The DSL class name is derived dynamically from the flight block's key.
+        # rubocop:disable Sorbet/ConstantsFromStrings
         self.class.const_get("#{namespace}::DSL::#{dsl_key.to_s.split("_").map(&:capitalize).join}")
+        # rubocop:enable Sorbet/ConstantsFromStrings
       end
 
       sig { params(dsl_key: Symbol).void }

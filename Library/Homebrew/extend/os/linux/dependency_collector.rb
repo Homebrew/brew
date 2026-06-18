@@ -59,7 +59,10 @@ module OS
                   (!build_formulae_tree_needed || (global_dep_tree.key?(GLIBC) && global_dep_tree.key?(GCC)))
 
         building_global_dep_tree!
-        global_dep_tree[BUBBLEWRAP] = Set.new(global_deps_for(BUBBLEWRAP)) if sandbox_tree_needed
+        if sandbox_tree_needed
+          include_build = OS.not_tier_one_configuration? || build_formulae_tree_needed
+          global_dep_tree[BUBBLEWRAP] = Set.new(global_deps_for(BUBBLEWRAP, include_build:))
+        end
         if build_formulae_tree_needed
           global_dep_tree[GLIBC] = Set.new(global_deps_for(GLIBC))
           # gcc depends on glibc
@@ -86,16 +89,19 @@ module OS
         ::Sandbox.executable.blank?
       end
 
-      sig { params(name: String).returns(T::Array[String]) }
-      def global_deps_for(name)
+      sig { params(name: String, include_build: T::Boolean).returns(T::Array[String]) }
+      def global_deps_for(name, include_build: true)
         @global_deps_for ||= T.let({}, T.nilable(T::Hash[String, T::Array[String]]))
         # Always strip out glibc and gcc from all parts of dependency tree when
         # we're calculating their dependency trees. Other parts of Homebrew will
         # catch any circular dependencies.
-        @global_deps_for[name] ||= if (formula = formula_for(name))
-          formula.deps.map(&:name).flat_map do |dep|
-            [dep, *global_deps_for(dep)].compact
-          end.uniq
+        @global_deps_for["#{name}|#{include_build}"] ||= if (formula = formula_for(name))
+          formula.deps.filter_map do |dep|
+            next if dep.test? && !dep.build?
+            next if dep.build? && !include_build
+
+            [dep.name, *global_deps_for(dep.name, include_build:)].compact
+          end.flatten.uniq
         else
           []
         end

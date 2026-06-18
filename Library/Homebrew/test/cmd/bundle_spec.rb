@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "cmd/bundle"
@@ -100,6 +100,8 @@ RSpec.describe Homebrew::Cmd::Bundle do
     expect(subcommand_options.call("cleanup")["--no-mas"])
       .to include("`cleanup` without Mac App Store dependencies.")
     expect(subcommand_options.call("cleanup")["--all"]).to eq("Clean up all supported dependencies.")
+    expect(subcommand_options.call("dump")["--no-describe"]).to include("Description comments are the default")
+    expect(subcommand_options.call("add")["--no-describe"]).to include("Description comments are the default")
     expect(subcommand_options.call("add")["--vscode"])
       .to eq("Add entries for VSCode (and forks/variants) extensions.")
     expect(subcommand_options.call("remove")["--vscode"])
@@ -136,29 +138,6 @@ RSpec.describe Homebrew::Cmd::Bundle do
     end
   end
 
-  [
-    ["exec", ["exec", "--check", "/usr/bin/true"], "/usr/bin/true"],
-    ["sh", ["sh", "--check"], "sh"],
-    ["env", ["env", "--check"], "env"],
-  ].each do |subcommand, args, command|
-    it "passes --check through to #{subcommand}" do
-      with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil, "HOMEBREW_BUNDLE_SECRETS" => nil) do
-        expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
-          .with(
-            command,
-            global:     false,
-            file:       nil,
-            subcommand:,
-            services:   false,
-            check:      true,
-            no_secrets: true,
-          )
-
-        described_class.new(args).run
-      end
-    end
-  end
-
   it "passes HOMEBREW_BUNDLE_CHECK through to exec" do
     with_env("HOMEBREW_BUNDLE_CHECK" => "1", "HOMEBREW_BUNDLE_NO_SECRETS" => nil,
              "HOMEBREW_BUNDLE_SECRETS" => nil) do
@@ -174,6 +153,57 @@ RSpec.describe Homebrew::Cmd::Bundle do
         )
 
       described_class.new(["exec", "/usr/bin/true"]).run
+    end
+  end
+
+  it "passes --check through to exec" do
+    with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil, "HOMEBREW_BUNDLE_SECRETS" => nil) do
+      expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
+        .with(
+          "/usr/bin/true",
+          global:     false,
+          file:       nil,
+          subcommand: "exec",
+          services:   false,
+          check:      true,
+          no_secrets: true,
+        )
+
+      described_class.new(["exec", "--check", "/usr/bin/true"]).run
+    end
+  end
+
+  it "passes --check through to sh" do
+    with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil, "HOMEBREW_BUNDLE_SECRETS" => nil) do
+      expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
+        .with(
+          "sh",
+          global:     false,
+          file:       nil,
+          subcommand: "sh",
+          services:   false,
+          check:      true,
+          no_secrets: true,
+        )
+
+      described_class.new(["sh", "--check"]).run
+    end
+  end
+
+  it "passes --check through to env" do
+    with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil, "HOMEBREW_BUNDLE_SECRETS" => nil) do
+      expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
+        .with(
+          "env",
+          global:     false,
+          file:       nil,
+          subcommand: "env",
+          services:   false,
+          check:      true,
+          no_secrets: true,
+        )
+
+      described_class.new(["env", "--check"]).run
     end
   end
 

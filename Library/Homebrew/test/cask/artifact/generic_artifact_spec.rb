@@ -13,7 +13,7 @@ RSpec.describe Cask::Artifact::Artifact, :cask do
   end
 
   let(:source_path) { cask.staged_path.join("Caffeine.app") }
-  let(:target_path) { cask.config.appdir.join("Caffeine.app") }
+  let(:target_path) { Pathname(cask.config.appdir).join("Caffeine.app") }
 
   before do
     InstallHelper.install_without_artifacts(cask)

@@ -39,13 +39,19 @@ module Homebrew
                             "non-migrated versions."
         switch "-v", "--verbose",
                description: "Print the verification and post-install steps."
+        switch "--no-ask", "--yes", "-y",
+               description: "Do not ask for confirmation before downloading and reinstalling. " \
+                            "Ask mode is the default.",
+               env:         :no_ask
         switch "--ask",
                description: "Ask for confirmation before downloading and reinstalling. " \
                             "Print what would be reinstalled before prompting. Only prompts if the plan " \
                             "includes dependencies or dependants; if the requested formulae or casks are the " \
                             "only things to reinstall, it only prints the plan. The confirmation prompt is " \
-                            "skipped without a TTY.",
-               env:         :ask
+                            "skipped without a TTY. This is the default unless `$HOMEBREW_NO_ASK` is set.",
+               env:         :ask,
+               replacement: "the default behaviour",
+               odeprecated: true
         [
           [:switch, "--formula", "--formulae", {
             description: "Treat all named arguments as formulae.",
@@ -109,6 +115,7 @@ module Homebrew
         cask_options
 
         conflicts "--build-from-source", "--force-bottle"
+        conflicts "--ask", "--no-ask"
 
         named_args [:formula, :cask], min: 1
       end
@@ -122,6 +129,7 @@ module Homebrew
           T::Array[T.any(FormulaOrCaskUnavailableError, NoSuchKegError)],
         )
         Homebrew::Trust.trust_fully_qualified_items!(args.named, type: args.only_formula_or_cask)
+        ask = !args.no_ask?
 
         args.named.to_formulae_and_casks_and_unavailable(method: :resolve).each do |item|
           case item
@@ -158,7 +166,7 @@ module Homebrew
         shared_download_queue = T.let(nil, T.nilable(Homebrew::DownloadQueue))
         casks_prefetched = T.let(false, T::Boolean)
 
-        Install.ask_casks casks, action: "reinstallation", skip_cask_deps: args.skip_cask_deps? if args.ask?
+        Install.ask_casks casks, action: "reinstallation", skip_cask_deps: args.skip_cask_deps? if ask
 
         unless formulae.empty?
           Install.perform_preinstall_checks_once
@@ -185,25 +193,36 @@ module Homebrew
             )
           end
 
-          dependants = Upgrade.dependants(
-            formulae,
-            flags:                      args.flags_only,
-            ask:                        args.ask?,
-            force_bottle:               args.force_bottle?,
-            build_from_source_formulae: args.build_from_source_formulae,
-            interactive:                args.interactive?,
-            keep_tmp:                   args.keep_tmp?,
-            debug_symbols:              args.debug_symbols?,
-            force:                      args.force?,
-            debug:                      args.debug?,
-            quiet:                      args.quiet?,
-            verbose:                    args.verbose?,
-          )
-
           formulae_installers = reinstall_contexts.map(&:formula_installer)
+          if !ask && formulae_installers.any?
+            download_queue = Homebrew::DownloadQueue.new(pour: true)
+            shared_download_queue = download_queue
+            formulae_installers = Install.prelude_fetch_formulae(formulae_installers, download_queue:)
+          end
+
+          dependants = begin
+            Upgrade.dependants(
+              formulae,
+              flags:                      args.flags_only,
+              ask:                        ask,
+              force_bottle:               args.force_bottle?,
+              build_from_source_formulae: args.build_from_source_formulae,
+              interactive:                args.interactive?,
+              keep_tmp:                   args.keep_tmp?,
+              debug_symbols:              args.debug_symbols?,
+              force:                      args.force?,
+              debug:                      args.debug?,
+              quiet:                      args.quiet?,
+              verbose:                    args.verbose?,
+            )
+          # Ensure the early download queue is shut down on interrupts.
+          rescue Exception # rubocop:disable Lint/RescueException
+            shared_download_queue&.shutdown
+            raise
+          end
 
           # Main block: if asking the user is enabled, show dry-run information.
-          if args.ask?
+          if ask
             Install.ask_formulae(
               formulae_installers,
               dependants,
@@ -222,7 +241,8 @@ module Homebrew
           end
 
           valid_formula_installers = if casks.any?
-            shared_download_queue = Homebrew::DownloadQueue.new(pour: true)
+            shared_download_queue ||= Homebrew::DownloadQueue.new(pour: true)
+            download_queue = shared_download_queue
             begin
               Install.show_combined_fetch_downloads_heading(
                 formula_names: formulae_installers.map { |fi| fi.formula.name },
@@ -230,7 +250,7 @@ module Homebrew
               )
 
               valid_formula_installers = Install.enqueue_formulae(formulae_installers,
-                                                                  download_queue: shared_download_queue)
+                                                                  download_queue:)
 
               require "cask/installer"
               fetch_cask_installers = casks.map do |cask|
@@ -243,16 +263,25 @@ module Homebrew
                   require_sha:    args.require_sha?,
                   reinstall:      true,
                   zap:            args.zap?,
-                  download_queue: shared_download_queue,
+                  download_queue:,
                   defer_fetch:    true,
                 )
               end
-              Install.enqueue_cask_installers(fetch_cask_installers, download_queue: shared_download_queue)
-              shared_download_queue.fetch
+              Install.enqueue_cask_installers(fetch_cask_installers, download_queue:)
+              download_queue.fetch
               casks_prefetched = true
               valid_formula_installers
             ensure
-              shared_download_queue.shutdown
+              download_queue.shutdown
+            end
+          elsif shared_download_queue
+            download_queue = shared_download_queue
+            begin
+              Install.fetch_formulae(formulae_installers,
+                                     download_queue:,
+                                     shutdown_download_queue: false)
+            ensure
+              download_queue.shutdown
             end
           else
             Install.fetch_formulae(formulae_installers)

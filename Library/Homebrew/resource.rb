@@ -350,25 +350,6 @@ class Resource
     def download_queue_name = "#{T.must(owner).name} (#{version})"
   end
 
-  # A resource containing a Go package.
-  class Go < Resource
-    # This is a legacy override that should be refactored for compatibility with the parent class.
-    # rubocop:disable Sorbet/AllowIncompatibleOverride
-    sig {
-      override(allow_incompatible: true).params(
-        target: Pathname,
-        block:  T.nilable(T.proc.params(arg0: ResourceStageContext).void),
-      ).void
-    }
-    # rubocop:enable Sorbet/AllowIncompatibleOverride
-    def stage(target, &block)
-      resource_name = name
-      raise "Resource name is nil" if resource_name.nil?
-
-      super(target/resource_name, &block)
-    end
-  end
-
   # A resource for a bottle manifest.
   class BottleManifest < Resource
     class Error < RuntimeError; end

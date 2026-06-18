@@ -82,49 +82,4 @@ RSpec.describe Utils::Inreplace do
       EOS
     end
   end
-
-  describe ".inreplace_pairs" do
-    it "raises error if there is no old value" do
-      inreplace = T.let(described_class, T.untyped)
-      expect { inreplace.inreplace_pairs(file.path, [[nil, "f"]]) }.to raise_error(TypeError)
-    end
-
-    it "substitutes returned string but not file when `read_only_run: true`" do
-      expect(described_class.inreplace_pairs(file.path, [["a", "foo"]], read_only_run: true)).to eq <<~EOS
-        foo
-        b
-        c
-        foofoo
-      EOS
-      expect(File.binread(file)).to eq <<~EOS
-        a
-        b
-        c
-        aa
-      EOS
-    end
-
-    it "substitutes both returned string and file when `read_only_run: false`" do
-      replace_result = <<~TEXT
-        foo
-        b
-        c
-        foofoo
-      TEXT
-      expect(described_class.inreplace_pairs(file.path, [["a", "foo"]])).to eq replace_result
-      expect(File.binread(file)).to eq replace_result
-    end
-
-    it "substitutes multiple pairs in order" do
-      pairs = [["a", "b"], ["bb", "test"], ["b", "z"]]
-      replace_result = <<~TEXT
-        z
-        z
-        c
-        test
-      TEXT
-      expect(described_class.inreplace_pairs(file.path, pairs)).to eq replace_result
-      expect(File.binread(file)).to eq replace_result
-    end
-  end
 end

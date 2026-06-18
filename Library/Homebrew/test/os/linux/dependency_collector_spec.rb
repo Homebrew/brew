@@ -54,6 +54,10 @@ RSpec.describe DependencyCollector do
   end
 
   describe "#bubblewrap_dep_if_needed" do
+    let(:formulae) do
+      Hash.new { |hash, name| hash[name] = instance_double(Formula, deps: []) }
+    end
+
     around do |example|
       with_env(HOMEBREW_TESTS: nil) { example.run }
     end
@@ -62,12 +66,17 @@ RSpec.describe DependencyCollector do
       allow(Homebrew::EnvConfig).to receive(:sandbox_linux?).and_return(true)
       allow(DevelopmentTools).to receive(:needs_build_formulae?).and_return(false)
       allow(Sandbox).to receive(:executable)
-      allow(Formula).to receive(:[]).with("bubblewrap").and_return(instance_double(Formula, deps: []))
-      collector.send(:global_dep_tree).clear
+      allow(OS).to receive(:not_tier_one_configuration?).and_return(false)
+      allow(Formula).to receive(:[]) { |name| formulae[name] }
+      global_dep_tree.clear
     end
 
     after do
-      collector.send(:global_dep_tree).clear
+      global_dep_tree.clear
+    end
+
+    def global_dep_tree
+      OS::Linux::DependencyCollector.module_eval { class_variable_get(:@@global_dep_tree) }
     end
 
     it "returns a Bubblewrap implicit dependency when the Linux sandbox needs one" do
@@ -85,6 +94,36 @@ RSpec.describe DependencyCollector do
 
       expect(collector.bubblewrap_dep_if_needed(Set["bubblewrap"])).to be_nil
       expect(collector.bubblewrap_dep_if_needed(Set["libcap"])).to be_nil
+    end
+
+    it "returns nil when Bubblewrap is already in the dependency tree" do
+      expect(collector.bubblewrap_dep_if_needed(Set["bubblewrap"])).to be_nil
+    end
+
+    it "returns nil when a Bubblewrap runtime dependency is already in the dependency tree" do
+      formulae["bubblewrap"] = instance_double(Formula, deps: [Dependency.new("libcap")])
+
+      expect(collector.bubblewrap_dep_if_needed(Set["libcap"])).to be_nil
+    end
+
+    it "ignores Bubblewrap build dependencies when build formulae are not needed" do
+      formulae["bubblewrap"] = instance_double(Formula, deps: [
+        Dependency.new("libcap"),
+        Dependency.new("pkgconf", [:build]),
+      ])
+
+      expect(collector.bubblewrap_dep_if_needed(Set["pkgconf"])).to eq(Dependency.new("bubblewrap", [:implicit]))
+    end
+
+    it "includes Bubblewrap build dependencies when build formulae are needed" do
+      allow(DevelopmentTools).to receive(:needs_build_formulae?).and_return(true)
+      formulae["bubblewrap"] = instance_double(Formula, deps: [
+        Dependency.new("pkgconf", [:build]),
+      ])
+      formulae["glibc"]
+      formulae[OS::LINUX_PREFERRED_GCC_RUNTIME_FORMULA]
+
+      expect(collector.bubblewrap_dep_if_needed(Set["pkgconf"])).to be_nil
     end
   end
 end

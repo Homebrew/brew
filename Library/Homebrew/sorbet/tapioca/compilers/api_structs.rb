@@ -16,9 +16,12 @@ module Tapioca
       sig { override.void }
       def decorate
         root.create_class(T.must(constant.name)) do |klass|
+          # `constant` is one of the gathered structs, resolved at runtime.
+          # rubocop:disable Sorbet/ConstantsFromStrings
           constant.const_get(:PREDICATES).each do |predicate_name|
             klass.create_method("#{predicate_name}?", return_type: "T::Boolean")
           end
+          # rubocop:enable Sorbet/ConstantsFromStrings
         end
       end
     end

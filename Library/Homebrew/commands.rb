@@ -227,8 +227,9 @@ module Commands
     # Ensure that the cache exists so we can build the commands list
     HOMEBREW_CACHE.mkpath
 
+    # Don't reject `command_hidden_from_manpage?` commands here: internal ones
+    # are already excluded and checking externals loads every tap command file.
     cmds = commands - Homebrew::Completions::COMPLETIONS_EXCLUSION_LIST
-    cmds.reject! { |cmd| Homebrew::Completions.command_hidden_from_manpage?(cmd) }
 
     all_commands_file = HOMEBREW_CACHE/"all_commands_list.txt"
     external_commands_file = HOMEBREW_CACHE/"external_commands_list.txt"

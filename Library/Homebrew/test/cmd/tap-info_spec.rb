@@ -25,6 +25,62 @@ RSpec.describe Homebrew::Cmd::TapInfo do
       .and not_to_output.to_stderr
   end
 
+  it "prints trusted tap status when tap trust is required" do
+    require "trust"
+
+    tap_path = mktmpdir/"thirdparty/foo"
+    tap_path.mkpath
+    tap = instance_double(
+      Tap,
+      to_s:            "thirdparty/foo",
+      installed?:      true,
+      contents:        [],
+      private?:        false,
+      path:            tap_path,
+      remote:          "https://github.com/thirdparty/homebrew-foo",
+      default_remote:  "https://github.com/thirdparty/homebrew-foo",
+      git_head:        "abc123",
+      git_last_commit: "1 second ago",
+      git_branch:      "main",
+    )
+    tap_info = described_class.new([])
+    allow(tap_info).to receive(:print_tap_listings).with(tap)
+    allow(Homebrew::Trust).to receive(:trusted_tap?).with(tap).and_return(true)
+
+    with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+      expect { tap_info.send(:print_tap_info, [tap]) }
+        .to output(%r{thirdparty/foo: Installed\nTrusted\nNo commands/casks/formulae}).to_stdout
+    end
+  end
+
+  it "prints untrusted tap status when tap trust is required" do
+    require "trust"
+
+    tap_path = mktmpdir/"thirdparty/foo"
+    tap_path.mkpath
+    tap = instance_double(
+      Tap,
+      to_s:            "thirdparty/foo",
+      installed?:      true,
+      contents:        [],
+      private?:        false,
+      path:            tap_path,
+      remote:          "https://github.com/thirdparty/homebrew-foo",
+      default_remote:  "https://github.com/thirdparty/homebrew-foo",
+      git_head:        "abc123",
+      git_last_commit: "1 second ago",
+      git_branch:      "main",
+    )
+    tap_info = described_class.new([])
+    allow(tap_info).to receive(:print_tap_listings).with(tap)
+    allow(Homebrew::Trust).to receive(:trusted_tap?).with(tap).and_return(false)
+
+    with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+      expect { tap_info.send(:print_tap_info, [tap]) }
+        .to output(%r{thirdparty/foo: Installed\nUntrusted\nNo commands/casks/formulae}).to_stdout
+    end
+  end
+
   describe "#decorate_formula" do
     let(:tap_info) { described_class.new([]) }
     let(:tap) { instance_double(Tap, name: "homebrew/foo") }

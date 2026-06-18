@@ -170,7 +170,6 @@ Note: Flatpak support is only available on Linux.
 `--no-secrets`
 
 : Attempt to remove secrets from the environment before starting the shell.
-  Enabled by default if `$HOMEBREW_BUNDLE_NO_SECRETS` is set.
 
 `brew bundle remove` *`name`* \[...\]
 
@@ -351,7 +350,7 @@ to one or more of the following environment variables:
 : Use `zap` instead of `uninstall` when cleaning up casks after installing
   dependencies.
 
-`brew bundle exec` \[`--check`\] \[`--no-secrets`\] *`command`*
+`brew bundle exec` \[`--check`\] \[`--no-secrets`\] \[`--sandbox=`*`path`*\] \[`--deny-network`\] *`command`*
 
 : Run an external command in an isolated build environment based on the
   `Brewfile` dependencies.
@@ -379,7 +378,15 @@ flags which will help with finding keg-only dependencies like `openssl`,
 `--no-secrets`
 
 : Attempt to remove secrets from the environment before executing the command.
-  Enabled by default if `$HOMEBREW_BUNDLE_NO_SECRETS` is set.
+
+`--sandbox`
+
+: Run *`command`* in Homebrew's sandbox, allowing writes to *`path`* and
+  Homebrew's temporary and cache directories.
+
+`--deny-network`
+
+: Deny network access from inside the sandbox.
 
 `brew bundle env` \[`--check`\] \[`--no-secrets`\]
 
@@ -397,8 +404,7 @@ flags which will help with finding keg-only dependencies like `openssl`,
 
 `--no-secrets`
 
-: Attempt to remove secrets from the environment before printing it. Enabled by
-  default if `$HOMEBREW_BUNDLE_NO_SECRETS` is set.
+: Attempt to remove secrets from the environment before printing it.
 
 `brew bundle edit`
 
@@ -591,10 +597,10 @@ flags which will help with finding keg-only dependencies like `openssl`,
 : `dump` without npm packages. Enabled by default if
   `$HOMEBREW_BUNDLE_DUMP_NO_NPM` is set.
 
-`--describe`
+`--no-describe`
 
-: Add a description comment above each line, unless the dependency does not have
-  a description. Enabled by default if `$HOMEBREW_BUNDLE_DESCRIBE` is set.
+: Do not add description comments above each line. Description comments are the
+  default. Enabled by default if `$HOMEBREW_BUNDLE_NO_DESCRIBE` is set.
 
 `--no-restart`
 
@@ -865,10 +871,10 @@ useful for scripting. Use `--verbose` to list unmet dependencies.
 
 : Add entries for npm packages.
 
-`--describe`
+`--no-describe`
 
-: Add a description comment above each line, unless the dependency does not have
-  a description. Enabled by default if `$HOMEBREW_BUNDLE_DESCRIBE` is set.
+: Do not add description comments above each line. Description comments are the
+  default. Enabled by default if `$HOMEBREW_BUNDLE_NO_DESCRIBE` is set.
 
 ### `casks`
 
@@ -1124,7 +1130,7 @@ working fine: please don't worry or file an issue; just ignore this.
 
 : Enable debugging and profiling of audit methods.
 
-### `exec`, `x` \[`--formulae=`*`formulae`*\] \[`--`\] *`command`* \[*`args`* ...\]
+### `exec`, `x` \[`--formulae=`*`formulae`*\] \[`--sandbox=`*`path`*\] \[`--deny-network`\] \[`--`\] *`command`* \[*`args`* ...\]
 
 Run *`command`* in an environment populated by Homebrew formulae.
 
@@ -1145,6 +1151,15 @@ exec --formulae=jq,yq --`
 
 : Comma-separated formulae to install and add to `PATH` before running
   *`command`*.
+
+`--sandbox`
+
+: Run *`command`* in Homebrew's sandbox, allowing writes to *`path`* and
+  Homebrew's temporary and cache directories.
+
+`--deny-network`
+
+: Deny network access from inside the sandbox.
 
 ### `fetch` \[*`options`*\] *`formula`*\|*`cask`* \[...\]
 
@@ -1350,13 +1365,10 @@ upgrade *`formula`* if it is already installed but outdated.
 
 : Show what would be installed, but do not actually install anything.
 
-`--ask`
+`-y`, `--no-ask`
 
-: Ask for confirmation before downloading and installing. Print the same plan as
-  `--dry-run` before prompting. Only prompts if the plan includes dependencies
-  or dependants; if the requested formulae or casks are the only things to
-  install, it only prints the plan. The confirmation prompt is skipped without a
-  TTY.
+: Do not ask for confirmation before downloading and installing. Ask mode is the
+  default. Enabled by default if `$HOMEBREW_NO_ASK` is set.
 
 `--formula`
 
@@ -1830,13 +1842,10 @@ for the reinstalled formulae or, every 30 days, for all formulae.
 
 : Print the verification and post-install steps.
 
-`--ask`
+`-y`, `--no-ask`
 
-: Ask for confirmation before downloading and reinstalling. Print what would be
-  reinstalled before prompting. Only prompts if the plan includes dependencies
-  or dependants; if the requested formulae or casks are the only things to
-  reinstall, it only prints the plan. The confirmation prompt is skipped without
-  a TTY.
+: Do not ask for confirmation before downloading and reinstalling. Ask mode is
+  the default. Enabled by default if `$HOMEBREW_NO_ASK` is set.
 
 `--formula`
 
@@ -1894,6 +1903,17 @@ for the reinstalled formulae or, every 30 days, for all formulae.
 
 : For use with `brew reinstall --cask`. Remove all files associated with a cask.
   *May remove files which are shared between applications.*
+
+### `sandbox-exec` \[`--deny-network`\] *`writable-path`* \[`--`\] *`command`* \[*`args`* ...\]
+
+Run *`command`* in Homebrew's sandbox, allowing writes to *`writable-path`* and
+Homebrew's temporary and cache directories.
+
+Example: `brew sandbox-exec . -- make test`
+
+`--deny-network`
+
+: Deny network access from inside the sandbox.
 
 ### `search`, `-S` \[*`options`*\] *`text`*\|`/`*`regex`*`/` \[...\]
 
@@ -2076,6 +2096,11 @@ If `sudo` is passed, operate on `/Library/LaunchDaemons` or
 Installs and configures Homebrew's Ruby. If `command` is passed, it will only
 run Bundler if necessary for that command.
 
+### `setup-sandbox`
+
+Run any necessary commands to setup the Homebrew sandbox. Must be run with
+`sudo`. Currently a no-op on non-Linux.
+
 ### `shellenv` \[*`shell`* ...\]
 
 Valid shells: bash\|csh\|fish\|pwsh\|sh\|tcsh\|zsh
@@ -2194,6 +2219,11 @@ when `$HOMEBREW_REQUIRE_TAP_TRUST` is set. Trusted entries are stored in
 `--command`
 
 : Trust the named external command.
+
+`--json`
+
+: Print trusted entries as JSON. A *`version`* number is required. The only
+  accepted value for *`version`* is `v1`.
 
 ### `unalias` *`alias`* \[...\]
 
@@ -2357,14 +2387,10 @@ for the upgraded formulae or, every 30 days, for all formulae.
 : Only upgrade a named formula or cask with an installed version below the given
   minimum version.
 
-`--ask`
+`-y`, `--no-ask`
 
-: Ask for confirmation before downloading and upgrading. Print the same plan as
-  `--dry-run`, including available download sizes. When named arguments are
-  provided, only prompts if the plan includes packages other than those
-  arguments; if the requested formulae or casks are the only things to upgrade,
-  it only prints the plan. With no named arguments, prompts if anything would be
-  upgraded. The confirmation prompt is skipped without a TTY.
+: Do not ask for confirmation before downloading and upgrading. Ask mode is the
+  default. Enabled by default if `$HOMEBREW_NO_ASK` is set.
 
 `--formula`
 
@@ -4174,7 +4200,9 @@ command execution (e.g. `$(cat file)`).
 
 : A space-separated list of taps. Homebrew will refuse to install a formula
   unless it and all of its dependencies are in an official tap or in a tap on
-  this list.
+  this list. Each entry is a `user/repository` name (which matches only taps
+  using the default GitHub remote) or a remote URL (required to match taps with
+  a custom remote).
 
 `HOMEBREW_API_AUTO_UPDATE_SECS`
 
@@ -4313,14 +4341,6 @@ command execution (e.g. `$(cat file)`).
 
 : If set, `brew bundle cleanup` will not clean up WinGet packages.
 
-`HOMEBREW_BUNDLE_DESCRIBE`
-
-: If set, add a description comment above each line in `brew bundle dump` and
-  `brew bundle add`, unless the dependency does not have a description. This is
-  the default unless `$HOMEBREW_BUNDLE_NO_DESCRIBE` is set.
-  
-  *Default:* `true`.
-
 `HOMEBREW_BUNDLE_DUMP_NO_BREW`
 
 : If set, `brew bundle dump` will not dump formula dependencies.
@@ -4392,18 +4412,10 @@ command execution (e.g. `$(cat file)`).
 : If set, do not enable parallel jobs from `$HOMEBREW_BUNDLE_JOBS` or its
   default. This does not disable an explicit `--jobs`.
 
-`HOMEBREW_BUNDLE_NO_SECRETS`
-
-: If set, `brew bundle exec`, `brew bundle env` and `brew bundle sh` will
-  attempt to remove secrets from the environment. This is the default unless
-  `$HOMEBREW_BUNDLE_SECRETS` is set.
-  
-  *Default:* `true`.
-
 `HOMEBREW_BUNDLE_SECRETS`
 
-: If set, do not enable secret scrubbing from `$HOMEBREW_BUNDLE_NO_SECRETS` or
-  the default. This does not disable an explicit `--no-secrets`.
+: If set, do not enable the default secret scrubbing. This does not disable an
+  explicit `--no-secrets`.
 
 `HOMEBREW_BUNDLE_USER_CACHE`
 
@@ -4584,7 +4596,9 @@ command execution (e.g. `$(cat file)`).
 `HOMEBREW_FORBIDDEN_TAPS`
 
 : A space-separated list of taps. Homebrew will refuse to install a formula if
-  it or any of its dependencies is in a tap on this list.
+  it or any of its dependencies is in a tap on this list. Each entry is a
+  `user/repository` name (which matches only taps using the default GitHub
+  remote) or a remote URL (required to match taps with a custom remote).
 
 `HOMEBREW_FORBID_CASKS`
 
@@ -4947,16 +4961,6 @@ command execution (e.g. `$(cat file)`).
 
 : If set, always use the latest stable tag (even if developer commands have been
   run).
-
-`HOMEBREW_UPGRADE_AUTO_UPDATES_CASKS`
-
-: If set, `brew upgrade` will automatically upgrade casks with `auto_updates
-  true` when Homebrew detects that the version in the app bundle is older than
-  the version in the tap. Does not affect `--greedy` or `--greedy-auto-updates`
-  upgrades. This is the default unless `$HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS`
-  is set.
-  
-  *Default:* `true`.
 
 `HOMEBREW_UPGRADE_GREEDY`
 

@@ -1,6 +1,7 @@
 # Documentation defined in Library/Homebrew/cmd/exec.rb
 
 # shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/cmd.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/executables.sh"
 
 exec-formula-name() {
@@ -80,9 +81,22 @@ homebrew-exec() {
   local formulae=()
   local formulae_arg=""
   local formulae_seen=0
+  local sandbox_path=""
+  local sandbox_seen=0
+  local deny_network=0
 
   while [[ "$#" -gt 0 ]]
   do
+    if homebrew-command-help exec "$1"
+    then
+      return $?
+    fi
+    if homebrew-command-common-option "$1"
+    then
+      shift
+      continue
+    fi
+
     case "$1" in
       --formulae=*)
         formulae_arg="${1#--formulae=}"
@@ -96,9 +110,21 @@ homebrew-exec() {
         formulae_seen=1
         shift
         ;;
-      --help | -h)
-        "${HOMEBREW_BREW_FILE}" help exec
-        return
+      --sandbox=*)
+        sandbox_path="${1#--sandbox=}"
+        sandbox_seen=1
+        shift
+        ;;
+      --sandbox)
+        shift
+        [[ "$#" -gt 0 && "$1" != -* ]] || odie "\`--sandbox\` requires a writable path."
+        sandbox_path="$1"
+        sandbox_seen=1
+        shift
+        ;;
+      --deny-network)
+        deny_network=1
+        shift
         ;;
       --)
         shift
@@ -114,6 +140,11 @@ homebrew-exec() {
         ;;
     esac
   done
+
+  [[ "${sandbox_seen}" -eq 0 || -n "${sandbox_path}" ]] || odie "\`--sandbox\` requires a writable path."
+  [[ "${sandbox_seen}" -eq 1 || "${deny_network}" -eq 0 ]] || odie "\`--deny-network\` requires \`--sandbox\`."
+
+  homebrew-command-enable-debug
 
   if [[ "${formulae_seen}" -eq 1 ]]
   then
@@ -258,5 +289,13 @@ homebrew-exec() {
   export PATH
   # Replace the shell with the target command so signals and exit status behave
   # as if the executable had been run directly.
+  if [[ -n "${sandbox_path}" ]]
+  then
+    local -a sandbox_args=("sandbox-exec")
+    [[ "${deny_network}" -eq 1 ]] && sandbox_args+=("--deny-network")
+    sandbox_args+=("${sandbox_path}" "--" "${executable_path}" "$@")
+    exec "${HOMEBREW_BREW_FILE}" "${sandbox_args[@]}"
+  fi
+
   exec "${executable_path}" "$@"
 }

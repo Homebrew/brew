@@ -9,6 +9,9 @@ module Homebrew
     # Option values use a `nil` default to indicate that the value has not been
     # set.
     class Options < T::Struct
+      # Whether to request a compressed response.
+      prop :compressed, T.nilable(T::Boolean)
+
       # Cookies for curl to use when making a request.
       prop :cookies, T.nilable(T::Hash[String, String])
 
@@ -35,6 +38,7 @@ module Homebrew
       sig { returns(T::Hash[Symbol, T.untyped]) }
       def url_options
         {
+          compressed:,
           cookies:,
           header:,
           homebrew_curl:,
@@ -104,7 +108,8 @@ module Homebrew
       def ==(other)
         return false unless other.is_a?(Options)
 
-        @cookies == other.cookies &&
+        @compressed == other.compressed &&
+          @cookies == other.cookies &&
           @header == other.header &&
           @homebrew_curl == other.homebrew_curl &&
           @post_form == other.post_form &&

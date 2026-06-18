@@ -7,11 +7,16 @@ require "language/node"
 module Homebrew
   module Bundle
     class Npm < Extension
-      PACKAGE_TYPE = :npm
-      PACKAGE_TYPE_NAME = "npm Package"
-      BANNER_NAME = "npm packages"
-
       class << self
+        sig { override.returns(Symbol) }
+        def type = :npm
+
+        sig { override.returns(String) }
+        def check_label = "npm Package"
+
+        sig { override.returns(String) }
+        def banner_name = "npm packages"
+
         sig { override.void }
         def reset!
           @packages = T.let(nil, T.nilable(T::Array[String]))

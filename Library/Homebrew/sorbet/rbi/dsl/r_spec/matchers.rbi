@@ -397,6 +397,9 @@ module RSpec::Matchers
   def have_valid_bash_syntax(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def match_json(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def miss_apply(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }

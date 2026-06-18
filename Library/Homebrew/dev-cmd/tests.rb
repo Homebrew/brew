@@ -5,6 +5,7 @@ require "abstract_command"
 require "fileutils"
 require "hardware"
 require "system_command"
+require "utils/git"
 
 module Homebrew
   module DevCmd
@@ -235,15 +236,14 @@ module Homebrew
 
       sig { returns(T::Array[String]) }
       def changed_test_files
-        changed_files = Utils.popen_read("git", "diff", "--name-only", "main")
+        changed_files = Utils::Git.changed_files(HOMEBREW_REPOSITORY)
 
-        odebug "No files have been changed from the `main` branch." if changed_files.blank?
-        return [] if changed_files.blank?
+        odebug "No files have been changed from the default branch." if changed_files.empty?
+        return [] if changed_files.empty?
 
         filestub_regex = %r{Library/Homebrew/([\w/-]+).rb}
-        T.cast(changed_files.scan(filestub_regex), T::Array[T::Array[String]])
-         .map { it.fetch(-1) }
-         .flat_map do |filestub|
+        changed_files.filter_map { |file| file[filestub_regex, 1] }
+                     .flat_map do |filestub|
           shared_context_tests = shared_context_test_files(filestub)
           next shared_context_tests if shared_context_tests.present?
 
@@ -331,7 +331,6 @@ module Homebrew
 
         ENV["HOMEBREW_TESTS"] = "1"
         ENV.delete("HOMEBREW_ASK")
-        ENV["HOMEBREW_NO_ASK"] = "1"
         ENV["HOMEBREW_NO_AUTO_UPDATE"] = "1"
         ENV["HOMEBREW_NO_ANALYTICS_THIS_RUN"] = "1"
         ENV["HOMEBREW_TEST_GENERIC_OS"] = "1" if args.generic?
@@ -344,6 +343,8 @@ module Homebrew
         # Avoid local configuration messing with tests, e.g. git being configured
         # to use GPG to sign by default
         ENV["HOME"] = "#{HOMEBREW_LIBRARY_PATH}/test"
+        # Sandbox the config home too, so the spec teardown can't delete the real `trust.json`.
+        ENV["HOMEBREW_USER_CONFIG_HOME"] = "#{Dir.home}/.homebrew"
 
         # Print verbose output when requesting debug or verbose output.
         ENV["HOMEBREW_VERBOSE_TESTS"] = "1" if args.debug? || args.verbose?

@@ -1,5 +1,5 @@
 ---
-last_review_date: "2026-04-05"
+last_review_date: "2026-06-10"
 ---
 
 # Agent Instructions for Homebrew/brew docs
@@ -14,6 +14,17 @@ These instructions apply when working in `docs/`.
   CI workflow.
 - Install or refresh the docs Ruby environment with
   `brew bundle exec bundle install`.
+
+## Markdown style
+
+- Write prose with one sentence per line (semantic line breaks) rather than wrapping paragraphs at a fixed column.
+  This keeps diffs small and readable.
+- Format tables so the raw Markdown is readable: pad each column with spaces so the cell borders line up vertically.
+- Use UK spelling and punctuation.
+- Avoid em-dashes (prefer semicolons, colons and commas) and Oxford commas.
+- Do not use bare URLs; use Markdown links.
+  Internal links must point at the `.md` file (for example `[Bottles](Bottles.md)`), not a `docs.brew.sh` URL.
+- Indent nested unordered lists by 2 spaces.
 
 ## Verification
 

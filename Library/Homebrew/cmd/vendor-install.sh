@@ -7,6 +7,7 @@
 # HOMEBREW_CURL, HOMEBREW_GITHUB_PACKAGES_AUTH, HOMEBREW_LINUX, HOMEBREW_LINUX_MINIMUM_GLIBC_VERSION, HOMEBREW_MACOS,
 # HOMEBREW_PHYSICAL_PROCESSOR, HOMEBREW_PROCESSOR, HOMEBREW_USER_AGENT_CURL are set by brew.sh
 # shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/cmd.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/lock.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/ruby.sh"
 
@@ -319,20 +320,18 @@ homebrew-vendor-install() {
 
   for option in "$@"
   do
+    if homebrew-command-help vendor-install "${option}"
+    then
+      exit $?
+    fi
+    if homebrew-command-common-option "${option}"
+    then
+      continue
+    fi
+
     case "${option}" in
-      -\? | -h | --help | --usage)
-        brew help vendor-install
-        exit $?
-        ;;
-      --verbose) HOMEBREW_VERBOSE=1 ;;
-      --quiet) HOMEBREW_QUIET=1 ;;
-      --debug) HOMEBREW_DEBUG=1 ;;
       --*) ;;
-      -*)
-        [[ "${option}" == *v* ]] && HOMEBREW_VERBOSE=1
-        [[ "${option}" == *q* ]] && HOMEBREW_QUIET=1
-        [[ "${option}" == *d* ]] && HOMEBREW_DEBUG=1
-        ;;
+      -*) homebrew-command-common-short-options "${option}" ;;
       *)
         if [[ -n "${VENDOR_NAME}" ]]
         then
@@ -356,7 +355,7 @@ homebrew-vendor-install() {
   done
 
   [[ -z "${VENDOR_NAME}" ]] && odie "This command requires a vendor target!"
-  [[ -n "${HOMEBREW_DEBUG}" ]] && set -x
+  homebrew-command-enable-debug
 
   if [[ "${VENDOR_NAME}" == "brew-rs" ]]
   then

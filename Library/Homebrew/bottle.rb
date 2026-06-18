@@ -81,24 +81,44 @@ class Bottle
   def_delegators :resource, :url, :verify_download_integrity
   def_delegators :resource, :cached_download, :downloader
 
-  sig { params(formula: Formula, spec: BottleSpecification, tag: T.nilable(Utils::Bottles::Tag)).void }
-  def initialize(formula, spec, tag = nil)
+  sig {
+    params(
+      formula:     T.nilable(Formula),
+      spec:        BottleSpecification,
+      tag:         T.nilable(Utils::Bottles::Tag),
+      name:        T.nilable(String),
+      pkg_version: T.nilable(PkgVersion),
+    ).void
+  }
+  def initialize(formula, spec, tag = nil, name: nil, pkg_version: nil)
     super()
 
-    @name = T.let(formula.name, String)
-    @resource = T.let(Resource.new, Resource)
-    @resource.owner = formula
+    resource_name = T.let(nil, T.nilable(String))
+    if formula
+      name = formula.name
+      pkg_version = formula.pkg_version
+    else
+      raise ArgumentError, "Bottle name is required" if name.nil?
+      raise ArgumentError, "Bottle version is required" if pkg_version.nil?
+
+      resource_name = name
+    end
+
+    @name = T.let(name, String)
+    @pkg_version = T.let(pkg_version, PkgVersion)
+    @resource = T.let(Resource.new(resource_name), Resource)
+    @resource.owner = formula if formula
     @spec = spec
 
     tag_spec = spec.tag_specification_for(Utils::Bottles.tag(tag))
 
-    odie "#{formula.name} tag specification for tag #{tag} is nil" if tag_spec.nil?
+    odie "#{@name} tag specification for tag #{tag} is nil" if tag_spec.nil?
 
     @tag = T.let(tag_spec.tag, Utils::Bottles::Tag)
     @cellar = T.let(tag_spec.cellar, T.any(String, Symbol))
     @rebuild = T.let(spec.rebuild, Integer)
 
-    @resource.version(formula.pkg_version.to_s)
+    @resource.version(@pkg_version.to_s)
     @resource.checksum = tag_spec.checksum
 
     @fetch_tab_retried = T.let(false, T::Boolean)
@@ -120,6 +140,20 @@ class Bottle
 
     fetch_tab
     retry
+  end
+
+  sig { override.returns(T::Boolean) }
+  def downloaded_and_valid?
+    return false unless cached_download.file?
+
+    resource_checksum = resource.checksum
+    return false if resource_checksum.nil?
+
+    downloader = resource.downloader
+    return false unless downloader.is_a?(CurlGitHubPackagesDownloadStrategy)
+    return false unless downloader.immutable_bottle_blob?
+
+    downloader.bottle_blob_sha256 == resource_checksum.hexdigest
   end
 
   sig { override.returns(T.nilable(Integer)) }
@@ -203,9 +237,7 @@ class Bottle
   end
 
   sig { returns(Filename) }
-  def filename
-    Filename.create(T.cast(resource.owner, Formula), @tag, @spec.rebuild)
-  end
+  def filename = Filename.new(@name, @pkg_version, @tag, @spec.rebuild)
 
   sig { returns(T.nilable(Resource::BottleManifest)) }
   def github_packages_manifest_resource
@@ -215,7 +247,10 @@ class Bottle
       begin
         resource = Resource::BottleManifest.new(self)
 
-        version_rebuild = GitHubPackages.version_rebuild(T.must(@resource.version), rebuild)
+        resource_version = @resource.version
+        odie "resource version is nil" if resource_version.nil?
+
+        version_rebuild = GitHubPackages.version_rebuild(resource_version, rebuild)
         resource.version(version_rebuild)
 
         image_name = GitHubPackages.image_formula_name(@name)
@@ -269,7 +304,7 @@ class Bottle
 
     @root_url = T.let(val, T.nilable(String))
 
-    filename = Filename.create(T.cast(resource.owner, Formula), @tag, @spec.rebuild)
+    filename = self.filename
     resource_checksum = resource.checksum
     odie "resource checksum is nil" if resource_checksum.nil?
 

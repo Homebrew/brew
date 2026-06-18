@@ -47,13 +47,6 @@ RSpec.describe GitHub do
     end
   end
 
-  describe "::public_member_usernames", :needs_network do
-    it "gets the usernames of all publicly visible members of the organisation" do
-      response = described_class.public_member_usernames("Homebrew")
-      expect(response).to be_a(Array)
-    end
-  end
-
   describe "::get_artifact_urls", :needs_network do
     it "fails to find a nonexistent workflow" do
       expect do

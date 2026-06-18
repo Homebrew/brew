@@ -16,6 +16,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
   def installed_info_formula
     test_formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
     end
@@ -38,6 +39,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
   it "prints as json with the --json=v1 flag" do
     test_formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
     end
@@ -200,6 +202,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "prints quiet formula information in the slim inventory format" do
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
     end
@@ -217,6 +220,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
   it "uses slim formula information when quiet is passed" do
     test_formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
     end
@@ -233,6 +237,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -282,6 +287,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
       deprecate! date: "2024-01-01", because: :versioned_formula
@@ -299,6 +305,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
       disable! date: "2024-01-01", because: :unmaintained
@@ -376,6 +383,7 @@ RSpec.describe Homebrew::Cmd::Info do
     shadowing_tap = Tap.fetch("homebrew/core")
     allow(formula).to receive(:tap).and_return(shadowing_tap)
     keg_formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
     end
     allow(Formulary).to receive(:factory).with("ataraxy-labs/tap/testball").and_return(keg_formula)
@@ -424,6 +432,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "warns about a shadowing tap when info_formula is given one" do
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
     end
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
@@ -437,6 +446,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "treats a `tap/name` input as user-qualified" do
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
     end
     allow(formula).to receive(:tap).and_return(Tap.fetch("homebrew/core"))
@@ -448,6 +458,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "treats a bare unqualified input as not user-qualified" do
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
     end
 
@@ -466,6 +477,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     allow(shadowed_formula).to receive(:tap).and_return(Tap.fetch("homebrew/core"))
     installed_formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
     end
     allow(installed_formula).to receive(:tap).and_return(Tap.fetch("ataraxy-labs/tap"))
@@ -506,6 +518,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -561,6 +574,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new(["--verbose"])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -597,6 +611,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -633,6 +648,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -659,6 +675,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -695,6 +712,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -731,6 +749,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -760,6 +779,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -789,6 +809,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -818,6 +839,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -837,6 +859,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -863,6 +886,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       desc "Some test"
 
@@ -895,6 +919,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -922,6 +947,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "shows the installed and stable versions in the headline when outdated" do
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -945,6 +971,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -966,6 +993,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -985,6 +1013,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "prints a Binaries section listing executables in bin and sbin with --verbose" do
     info = described_class.new(["--verbose"])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -1013,6 +1042,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "prints a Binaries section from the bottle manifest when the formula is not installed with --verbose" do
     info = described_class.new(["--verbose"])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -1036,6 +1066,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "omits the Binaries section without --verbose" do
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -1061,6 +1092,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "omits the Binaries section when no executables are installed" do
     info = described_class.new(["--verbose"])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       homepage "https://brew.sh/testball"
       desc "Some test"
@@ -1172,6 +1204,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
     it "returns summary lines for pinned formulae" do
       test_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0"
       end
       allow(test_formula).to receive_messages(any_version_installed?: true, pinned?: true, pinned_version: "1.0")
@@ -1232,6 +1265,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "lists aliases on their own row when the formula has any" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
       allow(main_formula).to receive_messages(aliases: ["testball@1.0", "tball", "googleball"], oldnames: [])
@@ -1246,6 +1280,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "renders aliases and old names on separate rows when both exist" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
       allow(main_formula).to receive_messages(aliases: ["testball@1.0", "tball"], oldnames: ["foo", "bar"])
@@ -1259,6 +1294,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "renders only an Old Names row when there are no aliases" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
       allow(main_formula).to receive_messages(aliases: [], oldnames: ["foo"])
@@ -1273,6 +1309,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "omits both rows when there are none" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
       allow(main_formula).to receive_messages(aliases: [], oldnames: [])
@@ -1289,9 +1326,11 @@ RSpec.describe Homebrew::Cmd::Info do
     it "lists this formula alongside installed sibling versioned formulae" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
       versioned = formula("testball@0.9") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-0.9.tar.gz"
         keg_only :versioned_formula
       end
@@ -1323,6 +1362,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "shows installed → latest only on the newest installed keg of an outdated formula" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-2.0.tar.gz"
         version "2.0"
       end
@@ -1351,9 +1391,11 @@ RSpec.describe Homebrew::Cmd::Info do
     it "marks the currently linked version with `*`" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
       versioned = formula("testball@0.9") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-0.9.tar.gz"
         keg_only :versioned_formula
       end
@@ -1384,10 +1426,12 @@ RSpec.describe Homebrew::Cmd::Info do
     it "includes the unversioned parent when run on a versioned formula" do
       info = described_class.new([])
       versioned = formula("testball@0.9") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-0.9.tar.gz"
         keg_only :versioned_formula
       end
       parent = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
 
@@ -1419,6 +1463,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "renders the section even when only the current formula is installed" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
 
@@ -1439,10 +1484,12 @@ RSpec.describe Homebrew::Cmd::Info do
     it "renders the section when the queried formula is uninstalled but a sibling is installed" do
       info = described_class.new([])
       versioned = formula("testball@0.9") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-0.9.tar.gz"
         keg_only :versioned_formula
       end
       parent = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
 
@@ -1465,6 +1512,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "lists every installed keg of a formula, newest first" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
 
@@ -1492,6 +1540,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "omits the section when nothing in the family is installed" do
       info = described_class.new([])
       main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
       end
       allow(main_formula).to receive(:versioned_formulae).and_return([])
@@ -1511,6 +1560,7 @@ RSpec.describe Homebrew::Cmd::Info do
       # so it gets loaded from the keg's `.brew/` directory by `FromKegLoader`.
       keg_formula_path = HOMEBREW_CELLAR/"testball/0.1/.brew/testball.rb"
       formula_instance = formula("testball", path: keg_formula_path, tap:) do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-0.1.tar.gz"
       end
 
@@ -1521,6 +1571,7 @@ RSpec.describe Homebrew::Cmd::Info do
     it "returns a GitHub URL for a formula whose file lives inside its tap" do
       formula_path = tap.new_formula_path("testball")
       formula_instance = formula("testball", path: formula_path, tap:) do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-0.1.tar.gz"
       end
 

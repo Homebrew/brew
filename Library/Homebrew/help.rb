@@ -46,6 +46,15 @@ module Homebrew
       # Resume execution in `brew.rb` for unknown commands.
       return if path.nil?
 
+      # An external command with no `#:` comments documents itself by running its
+      # own `--help`, so resume execution in `brew.rb` to do that. Internal commands
+      # and Ruby commands (`*.rb`, which generate their own help) are excluded.
+      undocumented_external_cmd = !Commands.valid_internal_cmd?(cmd) &&
+                                  !Commands.valid_internal_dev_cmd?(cmd) &&
+                                  path.extname != ".rb" &&
+                                  command_help_lines(path).blank?
+      return if undocumented_external_cmd
+
       # Display help for internal command (or generic help if undocumented).
       puts command_help(cmd, path, remaining_args:, usage_error: false)
       exit 0

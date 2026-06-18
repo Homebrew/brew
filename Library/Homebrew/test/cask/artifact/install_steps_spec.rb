@@ -49,7 +49,7 @@ RSpec.describe Cask::Artifact::AbstractInstallSteps, :cask do
   end
 
   it "ignores a flight block when matching steps are defined" do
-    cask = nil
+    cask = T.let(nil, T.nilable(Cask::Cask))
     expect do
       cask = Cask::Cask.new("with-install-steps-conflict") do
         version "1.2.3"

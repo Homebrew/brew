@@ -104,9 +104,8 @@ module Homebrew
         def self.cask_with_url(cask, url, url_options)
           # Collect the `Cask::URL` initializer keyword parameter symbols
           @cask_url_kw_params ||= T.let(
-            T::Utils.signature_for_method(
-              Cask::URL.instance_method(:initialize),
-            ).parameters.filter_map { |type, sym| sym if type == :key },
+            (T::Utils.signature_for_method(Cask::URL.instance_method(:initialize))&.parameters ||
+             Cask::URL.instance_method(:initialize).parameters).filter_map { |type, sym| sym if type == :key },
             T.nilable(T::Array[Symbol]),
           )
 
@@ -152,6 +151,9 @@ module Homebrew
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
+          # `find_versions` requires a `cask`, unlike the `Strategic` interface,
+          # so `Livecheck` passes it via reflection on the strategy's parameters.
+          # rubocop:disable Sorbet/AllowIncompatibleOverride
           override(allow_incompatible: true).params(
             cask:    Cask::Cask,
             url:     T.nilable(String),
@@ -160,6 +162,7 @@ module Homebrew
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
+          # rubocop:enable Sorbet/AllowIncompatibleOverride
         }
         def self.find_versions(cask:, url: nil, regex: nil, content: nil, options: Options.new, &block)
           if regex.present? && !block_given?

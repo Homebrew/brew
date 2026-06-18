@@ -9,6 +9,7 @@ RSpec.describe Homebrew::Service do
 
   def stub_formula(&block)
     formula(name) do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/test-1.0.tbz"
 
       instance_eval(&block) if block

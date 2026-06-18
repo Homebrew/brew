@@ -23,7 +23,7 @@ class GitRepository
   # Gets the URL of the Git origin remote.
   sig { returns(T.nilable(String)) }
   def origin_url
-    popen_git("config", "--get", "remote.origin.url")
+    popen_git("config", "--local", "--get", "remote.origin.url", no_global_config: true)
   end
 
   # Gets the full commit hash of the HEAD commit.
@@ -116,8 +116,11 @@ class GitRepository
 
   private
 
-  sig { params(args: T.untyped, safe: T::Boolean, err: T.nilable(Symbol)).returns(T.nilable(String)) }
-  def popen_git(*args, safe: false, err: nil)
+  sig {
+    params(args: T.untyped, safe: T::Boolean, err: T.nilable(Symbol), no_global_config: T::Boolean)
+      .returns(T.nilable(String))
+  }
+  def popen_git(*args, safe: false, err: nil, no_global_config: false)
     unless git_repository?
       return unless safe
 
@@ -130,6 +133,8 @@ class GitRepository
       raise "Git is unavailable"
     end
 
-    Utils.popen_read(Utils::Git.git, *args, safe:, chdir: pathname, err:).chomp.presence
+    command = [Utils::Git.git, *args]
+    command.unshift(Utils::Git.no_global_config_env) if no_global_config
+    Utils.popen_read(*command, safe:, chdir: pathname, err:).chomp.presence
   end
 end

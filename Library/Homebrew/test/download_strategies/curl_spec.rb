@@ -27,6 +27,20 @@ RSpec.describe CurlDownloadStrategy do
     expect(strategy.send(:_curl_args)).to eq(["--user", "download:123456"])
   end
 
+  context "with a deferred HOMEBREW_ secret in a header" do
+    let(:specs) { { headers: [header] } }
+    let(:header) do
+      ENV["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+      ENV.clear_sensitive_environment_for_eval! { "PRIVATE-TOKEN: #{ENV.fetch("HOMEBREW_PRIVATE_TOKEN", nil)}" }
+    end
+
+    after { ENV.delete("HOMEBREW_PRIVATE_TOKEN") }
+
+    it "expands the placeholder to the real value at download time" do
+      expect(strategy.send(:_curl_args)).to include("PRIVATE-TOKEN: glpat-secret")
+    end
+  end
+
   describe "#fetch" do
     before do
       allow(Homebrew::EnvConfig).to receive(:artifact_domain).and_return(artifact_domain)
@@ -140,6 +154,24 @@ RSpec.describe CurlDownloadStrategy do
           )
           .at_least(:once)
           .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+        strategy.fetch
+      end
+    end
+
+    context "when a redirect crosses to another host" do
+      let(:specs) { { headers: ["PRIVATE-TOKEN: glpat-secret"] } }
+
+      before do
+        allow(strategy).to receive(:resolve_url_basename_time_file_size)
+          .and_return(["https://other.example.org/foo.tar.gz", "foo.tar.gz", nil, 0, nil, true])
+      end
+
+      it "does not forward caller-supplied headers to the new host" do
+        expect(strategy).to receive(:system_command) do |_command, options|
+          expect(options[:args]).not_to include("PRIVATE-TOKEN: glpat-secret")
+          instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil)
+        end.at_least(:once)
 
         strategy.fetch
       end

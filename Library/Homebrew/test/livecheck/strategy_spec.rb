@@ -282,6 +282,30 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       expect(strategy.page_content(url)).to eq({ content: body })
     end
 
+    it "handles `compressed` `url` option" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+      allow_any_instance_of(Utils::Curl).to receive(:curl_output).and_return(
+        [response_text[:ok], nil, success_status],
+      )
+
+      expect_any_instance_of(Utils::Curl).to receive(:curl_output).with(
+        *Homebrew::Livecheck::Strategy::PAGE_CONTENT_CURL_ARGS,
+        url,
+        **Homebrew::Livecheck::Strategy::DEFAULT_CURL_OPTIONS,
+        use_homebrew_curl: false,
+        cookies:           nil,
+        header:            nil,
+        referer:           nil,
+        user_agent:        :default,
+      )
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(compressed: false),
+        ),
+      ).to eq({ content: body })
+    end
+
     it "handles `cookies` `url` option" do
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
       allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])

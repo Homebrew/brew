@@ -20,7 +20,8 @@ end
 
 desc "Run Markdownlint to validate the Markdown style."
 task :lint do
-  sh "mdl $(git ls-files '*.md' | grep -v 'Manpage.md')"
+  sh "mdl $(git ls-files '*.md' | grep -v 'Manpage.md' | grep -v '^docs/index.md$' | grep -v '^index.md$')"
+  cd(__dir__) { sh "mdl --style index.mdl_style.rb index.md" } if File.exist?("#{__dir__}/index.md")
   sh "grep -L '^last_review_date:' $(git ls-files '*.md' | grep -v 'Manpage.md') | " \
      "xargs -I {} echo 'File {} is missing last_review_date frontmatter.'"
 end
@@ -60,6 +61,7 @@ task test: :build do
       "https://metacpan.org/pod/local::lib",
       "https://www.gnu.org/software/bash/",
       %r{https://www\.virustotal\.com/?},
+      %r{https://pypi.org/?},
       "https://itunes.apple.com/us/app/xcode/id497799835",
     ],
     cache:               {

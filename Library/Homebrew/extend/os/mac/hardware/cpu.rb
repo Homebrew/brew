@@ -20,7 +20,7 @@ module OS
             when MachO::Headers::CPU_TYPE_ARM64
               :arm
             else
-              :dunno
+              super
             end
           end
 

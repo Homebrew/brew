@@ -38,16 +38,4 @@ module Utils
   def self.git_branch(repo = Pathname.pwd, safe: true)
     GitRepository.new(Pathname(repo)).branch_name(safe:)
   end
-
-  # Gets the full commit message of the specified commit, or of the HEAD commit if unspecified.
-  sig {
-    params(
-      repo:   T.any(String, Pathname),
-      commit: String,
-      safe:   T::Boolean,
-    ).returns(T.nilable(String))
-  }
-  def self.git_commit_message(repo = Pathname.pwd, commit: "HEAD", safe: true)
-    GitRepository.new(Pathname(repo)).commit_message(commit, safe:)
-  end
 end

@@ -4,8 +4,15 @@
 require "utils/tar"
 
 RSpec.describe Utils::Tar do
+  def clear_executable_cache
+    return unless described_class.instance_variable_defined?(:@executable)
+
+    described_class.send(:remove_instance_variable,
+                         :@executable)
+  end
+
   before do
-    described_class.clear_executable_cache
+    clear_executable_cache
   end
 
   describe ".available?" do

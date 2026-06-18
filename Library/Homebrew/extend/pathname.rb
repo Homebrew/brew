@@ -325,10 +325,9 @@ class Pathname
       args_or_env: T.any(
         String, Pathname,
         T::Array[T.any(String, Pathname)],
-        T::Hash[String, T.any(String, Pathname)],
-        T::Hash[Symbol, T.any(String, Pathname)]
+        T::Hash[T.any(String, Symbol), T.any(String, Pathname)]
       ),
-      env:         T.any(T::Hash[String, T.any(String, Pathname)], T::Hash[Symbol, T.any(String, Pathname)]),
+      env:         T::Hash[T.any(String, Symbol), T.any(String, Pathname)],
     ).void
   }
   def write_env_script(target, args_or_env, env = T.unsafe(nil))

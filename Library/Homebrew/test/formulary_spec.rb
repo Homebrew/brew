@@ -56,14 +56,14 @@ RSpec.describe Formulary do
   end
 
   describe "::load_formula" do
-    it "clears sensitive environment variables while evaluating formulae" do
-      with_env(SECRET_TOKEN: "password") do
+    it "masks sensitive environment variables while evaluating formulae" do
+      with_env(HOMEBREW_SECRET_TOKEN: "password") do
         formula_class = described_class.load_formula(
           "sensitive-env",
           mktmpdir/"sensitive-env.rb",
           <<~RUBY,
             class SensitiveEnv < Formula
-              SECRET_TOKEN_PRESENT = ENV.key?("SECRET_TOKEN")
+              SECRET_TOKEN_VALUE = ENV.fetch("HOMEBREW_SECRET_TOKEN", nil)
               url "https://brew.sh/sensitive-env-1.0.tar.gz"
             end
           RUBY
@@ -72,8 +72,8 @@ RSpec.describe Formulary do
           ignore_errors: false,
         )
 
-        expect(formula_class::SECRET_TOKEN_PRESENT).to be(false)
-        expect(ENV.fetch("SECRET_TOKEN", nil)).to eq("password")
+        expect(formula_class::SECRET_TOKEN_VALUE).not_to eq("password")
+        expect(ENV.fetch("HOMEBREW_SECRET_TOKEN", nil)).to eq("password")
       end
     end
 
@@ -836,6 +836,27 @@ RSpec.describe Formulary do
       expect do
         described_class.to_rack("a/b/#{formula_name}")
       end.to raise_error(TapFormulaUnavailableError)
+    end
+
+    it "locates an installed Rack from an untrusted tap without evaluating its formula" do
+      tap = Tap.fetch("untrustedrack", "foo")
+      formula_path = tap.formula_dir/"#{formula_name}.rb"
+      formula_path.dirname.mkpath
+      eval_marker = mktmpdir/"evaluated"
+      formula_path.write <<~RUBY
+        class #{described_class.class_s(formula_name)} < Formula
+          url "https://brew.sh/#{formula_name}-1.0.tar.gz"
+          File.write("#{eval_marker}", "evaluated")
+        end
+      RUBY
+      rack_path.mkpath
+
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1", HOMEBREW_USER_CONFIG_HOME: mktmpdir) do
+        expect(described_class.to_rack("#{tap.name}/#{formula_name}")).to eq(rack_path)
+        expect(eval_marker).not_to exist
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"untrustedrack"
     end
   end
 

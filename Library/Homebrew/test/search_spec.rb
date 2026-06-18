@@ -139,6 +139,10 @@ RSpec.describe Homebrew::Search do
       expect(described_class.search_casks(/testball/)).to eq([])
     end
 
+    it "shows Linux-compatible casks on Linux", :needs_linux do
+      expect(described_class.search_casks(/testball/)).to eq(["testball"])
+    end
+
     it "shows only the installed icon for installed casks", :needs_macos do
       allow(cask).to receive(:installed?).and_return(true)
 
