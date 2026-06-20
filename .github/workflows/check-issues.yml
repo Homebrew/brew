@@ -1,3 +1,4 @@
+# This file is synced from the `.github` repository, do not modify it directly.
 name: Check issues
 
 on:
@@ -19,10 +20,10 @@ concurrency:
 
 jobs:
   manage:
-    # Restrict this write-token workflow to Homebrew/brew. The first step also
-    # fails if a repository checkout has occurred.
+    # Restrict this write-token workflow to repositories with supported templates.
+    # The first step also fails if a repository checkout has occurred.
     if: >-
-      github.repository == 'Homebrew/brew' &&
+      contains(fromJSON('["Homebrew/brew", "Homebrew/homebrew-core", "Homebrew/homebrew-cask"]'), github.repository) &&
       github.event.issue.user.login != 'BrewTestBot' &&
       github.event.issue.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -57,7 +58,7 @@ jobs:
           # Validate against the brew, homebrew-core and homebrew-cask templates so
           # issues transferred between these repositories are not closed for using a
           # sibling repository's (valid) template.
-          for repo in "${GITHUB_REPOSITORY:?}" Homebrew/homebrew-core Homebrew/homebrew-cask
+          for repo in Homebrew/brew Homebrew/homebrew-core Homebrew/homebrew-cask
           do
             gh api "repos/${repo}/contents/.github/ISSUE_TEMPLATE?ref=main" \
               --jq '.[] | select(.type == "file" and (.name | test("\\.ya?ml$")) and .name != "config.yml") | .path' |
