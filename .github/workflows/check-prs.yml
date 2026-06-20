@@ -1,3 +1,4 @@
+# This file is synced from the `.github` repository, do not modify it directly.
 name: Check pull requests
 
 on:
@@ -21,10 +22,10 @@ concurrency:
 
 jobs:
   manage:
-    # Restrict this write-token workflow to Homebrew/brew. The first step also
-    # fails if a repository checkout has occurred.
+    # Restrict this write-token workflow to repositories with supported templates.
+    # The first step also fails if a repository checkout has occurred.
     if: >-
-      github.repository == 'Homebrew/brew' &&
+      contains(fromJSON('["Homebrew/brew", "Homebrew/homebrew-core", "Homebrew/homebrew-cask"]'), github.repository) &&
       github.event.pull_request.user.login != 'BrewTestBot' &&
       github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
