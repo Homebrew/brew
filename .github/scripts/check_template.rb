@@ -36,14 +36,13 @@ when "pull-request"
   # either the template's AI disclosure checkbox (whose label mentions AI) or any
   # mention of AI/LLM in the text. This blocks bodies that strip out the template
   # (e.g. AI-generated pull requests) without caring whether boxes are ticked.
-  body_lines = lines.call(ARGV.fetch(1))
   normalised_body = normalised_lines.call(ARGV.fetch(1))
   template_items = normalised_lines.call(ARGV.fetch(2)).select do |line|
     line.start_with?(NORMALISED_CHECKBOX_MARKER) || line.match?(MARKDOWN_HEADING)
   end
   present_count = template_items.count { |item| normalised_body.include?(item) }
   preserves_template = present_count * PERCENTAGE_SCALE >= template_items.count * REQUIRED_TEMPLATE_PERCENTAGE
-  discloses_ai = body_lines.any? { |line| line.match?(AI_MENTION) }
+  discloses_ai = normalised_body.any? { |line| line.match?(AI_MENTION) }
 
   puts preserves_template && discloses_ai
 when "issue"
