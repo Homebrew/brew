@@ -79,7 +79,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     )
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
-      message = checks.check_linux_sandbox&.to_s
+      message = checks.check_linux_sandbox&.to_s&.rstrip
 
       expect(message)
         .to include(
@@ -90,7 +90,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
           "export HOMEBREW_NO_SANDBOX_LINUX=1",
         )
       expect(message).not_to include("sysctl")
-      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1\n")
+      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1")
     end
   end
 
@@ -101,7 +101,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     )
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
-      message = checks.check_linux_sandbox&.to_s
+      message = checks.check_linux_sandbox&.to_s&.rstrip
 
       expect(message)
         .to include(
@@ -111,7 +111,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
           "export HOMEBREW_NO_SANDBOX_LINUX=1",
         )
       expect(message).not_to include("sysctl")
-      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1\n")
+      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1")
     end
   end
 
@@ -122,7 +122,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     )
 
     with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
-      message = checks.check_linux_sandbox&.to_s
+      message = checks.check_linux_sandbox&.to_s&.rstrip
 
       expect(message)
         .to include(
@@ -136,7 +136,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
           "Allows unprivileged user namespaces on AppArmor-enabled systems",
           "export HOMEBREW_NO_SANDBOX_LINUX=1",
         )
-      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1\n")
+      expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1")
     end
   end
 

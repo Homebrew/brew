@@ -71,6 +71,7 @@ module Homebrew
           next if return_findings.empty?
 
           if args.json?
+            Homebrew.failed = true
             findings.concat(return_findings.compact.map(&:to_h))
             next
           end
@@ -92,6 +93,7 @@ module Homebrew
         if args.json?
           tier = findings.max_by { |f| f[:tier] }&.fetch(:tier, 1)
           puts JSON.pretty_generate({ tier: tier, findings: findings }).gsub(/\[\n\n\s*\]/, "[]")
+
           return
         end
 
