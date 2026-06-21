@@ -38,10 +38,10 @@ module OS
 
         sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_tmpdir_sticky_bit
-          message = super
-          return if message.nil?
+          finding = super
+          return if finding.nil?
 
-          message + <<~EOS
+          finding.remediation.text += <<~EOS
             If you don't have administrative privileges on this machine,
             create a directory and set the `$HOMEBREW_TEMP` environment variable,
             for example:
@@ -59,16 +59,19 @@ module OS
           return if system T.must(f.path)
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               The directory #{HOMEBREW_TEMP} does not permit executing
               programs. It is likely mounted as "noexec".
             EOS
-            remediation: <<~EOS,
-              Please set `$HOMEBREW_TEMP`
-              in your #{Utils::Shell.profile} to a different directory, for example:
-                export HOMEBREW_TEMP=~/tmp
-                echo 'export HOMEBREW_TEMP=~/tmp' >> #{Utils::Shell.profile}
-            EOS
+            remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(
+              commands: ["export HOMEBREW_TEMP=~/tmp", "echo 'export HOMEBREW_TEMP=~/tmp' >> #{Utils::Shell.profile}"],
+              text:     <<~EOS,
+                Please set `$HOMEBREW_TEMP`
+                in your #{Utils::Shell.profile} to a different directory, for example:
+                  export HOMEBREW_TEMP=~/tmp
+                  echo 'export HOMEBREW_TEMP=~/tmp' >> #{Utils::Shell.profile}
+              EOS
+            ),
           )
         ensure
           f&.unlink
@@ -79,7 +82,7 @@ module OS
           return unless File.umask.zero?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               umask is currently set to 000. Directories created by Homebrew cannot
               be world-writable.
             EOS
@@ -99,8 +102,8 @@ module OS
           return if ::Hardware::CPU.arm64?
 
           ::Homebrew::Diagnostic::Finding.new(
-            tier:  2,
-            issue: <<~EOS,
+            tier: 2,
+            text: <<~EOS,
               Your CPU architecture (#{::Hardware::CPU.arch}) is not supported. We only support
               x86_64 or ARM64/AArch64 CPU architectures. You will be unable to use binary packages (bottles).
             EOS
@@ -113,7 +116,7 @@ module OS
 
           ::Homebrew::Diagnostic::Finding.new(
             tier:        :unsupported,
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Your system glibc #{OS::Linux::Glibc.system_version} is too old.
               We only support glibc #{OS::Linux::Glibc.minimum_version} or later.
             EOS
@@ -134,7 +137,7 @@ module OS
 
           ::Homebrew::Diagnostic::Finding.new(
             tier:        2,
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Your system glibc #{OS::Linux::Glibc.system_version} is too old.
               We will need to automatically install a newer version.
             EOS
@@ -156,14 +159,14 @@ module OS
           return if ENV["HOMEBREW_GLIBC_TESTING"] || ENV["CI"] || ENV["HOMEBREW_TEST_BOT"].present?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue: <<~EOS,
-                Your system glibc #{OS::Linux::Glibc.system_version} is older than #{OS::LINUX_GLIBC_NEXT_CI_VERSION}.
-                An upcoming brew release will automatically install a newer version.
-              EOS,
-              remediation: <<~EOS
-                We recommend updating to a newer version via your distribution's
-                package manager, upgrading your distribution to the latest version,
-                or changing distributions.
+            text:        <<~EOS,
+              Your system glibc #{OS::Linux::Glibc.system_version} is older than #{OS::LINUX_GLIBC_NEXT_CI_VERSION}.
+              An upcoming brew release will automatically install a newer version.
+            EOS
+            remediation: <<~EOS,
+              We recommend updating to a newer version via your distribution's
+              package manager, upgrading your distribution to the latest version,
+              or changing distributions.
             EOS
           )
         end
@@ -173,16 +176,16 @@ module OS
           return unless OS::Linux::Kernel.below_minimum_version?
 
           ::Homebrew::Diagnostic::Finding.new(
-            tier:  3,
-            issue: <<~EOS,
-                Your Linux kernel #{OS.kernel_version} is too old.
-                We only support kernel #{OS::Linux::Kernel.minimum_version} or later.
-                You will be unable to use binary packages (bottles).
-              EOS,
-              remediation: <<~EOS
-                We recommend updating to a newer version via your distribution's
-                package manager, upgrading your distribution to the latest version,
-                or changing distributions.
+            tier:        3,
+            text:        <<~EOS,
+              Your Linux kernel #{OS.kernel_version} is too old.
+              We only support kernel #{OS::Linux::Kernel.minimum_version} or later.
+              You will be unable to use binary packages (bottles).
+            EOS
+            remediation: <<~EOS,
+              We recommend updating to a newer version via your distribution's
+              package manager, upgrading your distribution to the latest version,
+              or changing distributions.
             EOS
           )
         end
@@ -234,7 +237,7 @@ module OS
           end
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       reason,
+            text:        reason,
             remediation: [
               *fix_lines,
               "",
@@ -256,7 +259,7 @@ module OS
           EOS
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       issue,
+            text:        issue,
             remediation: <<~EOS,
               You can unset `$HOMEBREW_NO_INSTALL_FROM_API` or set
               the repository's remote to homebrew-core to update core formulae.
@@ -270,7 +273,7 @@ module OS
 
           ::Homebrew::Diagnostic::Finding.new(
             remediation: "You can unset `$HOMEBREW_BOTTLE_DOMAIN` or adjust it to not contain \"linuxbrew\".",
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Your `$HOMEBREW_BOTTLE_DOMAIN` still contains "linuxbrew".
               You must unset it (or adjust it to not contain linuxbrew
               e.g. by using homebrew instead).
@@ -292,7 +295,7 @@ module OS
           EOS
           ::Homebrew::Diagnostic::Finding.new(
             tier:        2,
-            issue:       issue,
+            text:        issue,
             links:       ["https://github.com/Homebrew/brew/issues/18036"],
             remediation: <<~EOS,
               If you encounter linking issues, you may need to manually create conflicting
@@ -339,7 +342,7 @@ module OS
           )
           ::Homebrew::Diagnostic::Finding.new(
             remediation: remediation,
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Formulae which link to GCC through a versioned path were found. These formulae
               are prone to breaking when GCC is updated.
             EOS

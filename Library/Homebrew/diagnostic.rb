@@ -49,7 +49,7 @@ module Homebrew
       end
 
       sig { returns(T.nilable(String)) }
-      attr_reader :issue
+      attr_reader :text
 
       sig { returns(T.any(Integer, Symbol)) }
       attr_reader :tier
@@ -63,9 +63,9 @@ module Homebrew
       sig { returns(T.nilable(Remediation)) }
       attr_reader :remediation
 
-      sig { params(issue: String, tier: T.any(Integer, Symbol), affects: T::Array[String], links: T::Array[String], remediation: T.any(T.nilable(Remediation), String)).void }
-      def initialize(issue:, tier: 1, affects: [], links: [], remediation: nil)
-        @issue = issue
+      sig { params(text: String, tier: T.any(Integer, Symbol), affects: T::Array[String], links: T::Array[String], remediation: T.any(T.nilable(Remediation), String)).void }
+      def initialize(text:, tier: 1, affects: [], links: [], remediation: nil)
+        @text = text
         @tier = tier
         @affects = affects
         @links = links
@@ -82,7 +82,7 @@ module Homebrew
       }
       def to_h
         {
-          issue:       @issue,
+          text:        @text,
           tier:        @tier,
           affects:     @affects,
           links:       @links,
@@ -93,7 +93,7 @@ module Homebrew
       sig { returns(String) }
       def to_s
         <<~EOS.rstrip
-          #{issue}
+          #{text}
           #{remediation.to_s.strip}
           #{support_tier_message(tier: tier)}
         EOS
@@ -247,7 +247,7 @@ module Homebrew
 
         if current_origin.nil?
           Finding.new(
-            issue:       "Without a correctly configured origin, Homebrew won't update
+            text:        "Without a correctly configured origin, Homebrew won't update
             properly.",
             remediation: Finding::Remediation.new(text: "You can solve this by adding the remote", commands: [
               "git -C \"#{repository_path}\" remote add origin #{Formatter.url(desired_origin)}",
@@ -261,7 +261,7 @@ module Homebrew
             With a non-standard origin, Homebrew won't update properly.
           EOS
           Finding.new(
-            issue:       issue,
+            text:        issue,
             remediation: Finding::Remediation.new(text: "You can solve this by setting the origin remote", commands: [
               "git -C \"#{repository_path}\" remote set-url origin #{Formatter.url(desired_origin)}",
             ]),
@@ -277,7 +277,7 @@ module Homebrew
         return unless repo.git_repository?
 
         finding = Finding.new(
-          issue:       "#{tap.full_name} was not tapped properly!",
+          text:        "#{tap.full_name} was not tapped properly!",
           remediation: Finding::Remediation.new(text: "You can solve this by tapping again", commands: [
             "rm -rf \"#{tap.path}\"",
             "brew tap #{tap.name}",
@@ -298,7 +298,7 @@ module Homebrew
         return if DevelopmentTools.installed?
 
         Finding.new(
-          issue:       "",
+          text:        "",
           remediation: Finding::Remediation.new(text: DevelopmentTools.installation_instructions),
         )
       end
@@ -354,7 +354,7 @@ module Homebrew
 
           Unexpected dylibs:
         EOS
-        Finding.new(issue: msg) if msg.present?
+        Finding.new(text: msg) if msg.present?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -384,7 +384,7 @@ module Homebrew
           Unexpected static libraries:
         EOS
 
-        Finding.new(issue: msg) if msg.present?
+        Finding.new(text: msg) if msg.present?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -409,7 +409,7 @@ module Homebrew
           Unexpected '.pc' files:
         EOS
         )
-        Finding.new(issue: msg) if msg.present?
+        Finding.new(text: msg) if msg.present?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -433,7 +433,7 @@ module Homebrew
           Unexpected '.la' files:
         EOS
         )
-        Finding.new(issue: msg) if msg.present?
+        Finding.new(text: msg) if msg.present?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -456,7 +456,7 @@ module Homebrew
           Unexpected header files:
         EOS
 
-        Finding.new(issue: msg) if msg.present?
+        Finding.new(text: msg) if msg.present?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -473,7 +473,7 @@ module Homebrew
         return if broken_symlinks.empty?
 
         Finding.new(
-          issue:       inject_file_list(broken_symlinks, <<~EOS
+          text:        inject_file_list(broken_symlinks, <<~EOS
             Broken symlinks were found:
           EOS
           ),
@@ -489,13 +489,16 @@ module Homebrew
         return if !world_writable || HOMEBREW_TEMP.sticky?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             #{HOMEBREW_TEMP} is world-writable but does not have the sticky bit set.
           EOS
-          remediation: <<~EOS,
-            To set it, run the following command:
-              sudo chmod +t #{HOMEBREW_TEMP}
-          EOS
+          remediation: Finding::Remediation.new(
+            text:     <<~EOS,
+              To set it, run the following command:
+                sudo chmod +t #{HOMEBREW_TEMP}
+            EOS
+            commands: ["sudo chmod +t #{HOMEBREW_TEMP}"],
+          ),
         )
       end
 
@@ -507,7 +510,7 @@ module Homebrew
         return if not_exist_dirs.empty?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             The following directories do not exist:
             #{not_exist_dirs.join("\n")}
           EOS
@@ -527,7 +530,7 @@ module Homebrew
         return if not_writable_dirs.empty?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             The following directories are not writable by your user:
             #{not_writable_dirs.join("\n")}
           EOS
@@ -548,7 +551,7 @@ module Homebrew
         return unless (HOMEBREW_PREFIX/"Cellar").exist?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             You have multiple Cellars.
           EOS
           remediation: <<~EOS,
@@ -599,7 +602,7 @@ module Homebrew
         end
 
         @user_path_1_done = true
-        Finding.new(issue: message, remediation: remediation) if message.present?
+        Finding.new(text: message, remediation: remediation) if message.present?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -608,7 +611,7 @@ module Homebrew
         return if @seen_prefix_bin
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Homebrew's "bin" was not found in your PATH.
           EOS
           remediation: <<~EOS,
@@ -630,7 +633,7 @@ module Homebrew
         return if sbin.children.one? && sbin.children.first.basename.to_s == ".keepme"
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Homebrew's "sbin" was not found in your PATH but you have installed
             formulae that put executables in #{HOMEBREW_PREFIX}/sbin.
           EOS
@@ -647,7 +650,7 @@ module Homebrew
         return unless HOMEBREW_CELLAR.symlink?
 
         Finding.new(
-          issue: <<~EOS,
+          text: <<~EOS,
             Symlinked Cellars can cause problems.
             Your Homebrew Cellar is a symlink: #{HOMEBREW_CELLAR}
                             which resolves to: #{HOMEBREW_CELLAR.realpath}
@@ -672,7 +675,7 @@ module Homebrew
         git = Formula["git"]
         git_upgrade_cmd = git.any_version_installed? ? "upgrade" : "install"
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             An outdated version (#{Utils::Git.version}) of Git was detected in your PATH.
             Git #{minimum_version} or newer is required for Homebrew.
           EOS
@@ -688,7 +691,7 @@ module Homebrew
         return if Utils::Git.available?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Git could not be found in your PATH.
             Homebrew uses Git for several internal functions and some formulae use Git
             checkouts instead of stable tarballs.
@@ -708,7 +711,7 @@ module Homebrew
         return if autocrlf != "true"
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Suspicious Git newline settings found.
 
             The detected Git newline settings will cause checkout problems:
@@ -736,7 +739,7 @@ module Homebrew
         return if found.empty?
 
         Finding.new(
-          issue:       inject_file_list(found, <<~EOS
+          text:        inject_file_list(found, <<~EOS
             Git hooks or a repository-local `.gitconfig` were found in your Homebrew repository.
             Homebrew does not use these, and they can break Homebrew operations.
 
@@ -760,7 +763,7 @@ module Homebrew
       def check_for_nix_homebrew
         return unless OS.nix_managed_homebrew?
 
-        Finding.new(tier: :nix, issue: <<~EOS,
+        Finding.new(tier: :nix, text: <<~EOS,
           Your Homebrew installation is managed by Nix.
           Homebrew does not support Nix-managed installations.
         EOS
@@ -830,7 +833,7 @@ module Homebrew
           EOS
         end
 
-        Finding.new(issue: message, remediation: remediation) if message.present?
+        Finding.new(text: message, remediation: remediation) if message.present?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -844,7 +847,7 @@ module Homebrew
         return if tapped_deprecated_taps.empty?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             You have the following deprecated, official taps tapped:
               Homebrew/homebrew-#{tapped_deprecated_taps.join("\n  Homebrew/homebrew-")}
           EOS
@@ -944,7 +947,7 @@ module Homebrew
         EOS
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             The following taps are not trusted:
               #{untrusted_tap_names.join("\n  ")}
 
@@ -982,7 +985,7 @@ module Homebrew
         return if frameworks_found.empty?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Some frameworks can be picked up by CMake's build system and will likely
             cause the build to fail.
           EOS
@@ -999,7 +1002,7 @@ module Homebrew
         return if tmpdir.nil? || File.directory?(tmpdir)
 
         Finding.new(
-          issue: <<~EOS,
+          text: <<~EOS,
             TMPDIR #{tmpdir.inspect} doesn't exist.
           EOS
         )
@@ -1016,7 +1019,7 @@ module Homebrew
         return if missing.empty?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Some installed formulae or casks are missing dependencies.
             Run `brew missing` for more details.
           EOS
@@ -1036,7 +1039,7 @@ module Homebrew
 
         Finding.new(
           affects:     deprecated_or_disabled.map(&:full_name),
-          issue:       "Some installed formulae are deprecated or disabled.",
+          text:        "Some installed formulae are deprecated or disabled.",
           remediation: <<~EOS,
             You should find replacements for the following formulae:
             #{deprecated_or_disabled.sort_by(&:full_name).uniq * "\n  "}
@@ -1052,7 +1055,7 @@ module Homebrew
 
         Finding.new(
           affects:     deprecated_or_disabled.map(&:full_name),
-          issue:       "Some installed casks are deprecated or disabled.",
+          text:        "Some installed casks are deprecated or disabled.",
           remediation: <<~EOS,
             You should find replacements for the following casks:
             #{deprecated_or_disabled.sort_by(&:token).uniq * "\n  "}
@@ -1110,7 +1113,7 @@ module Homebrew
           Uncommitted files:
         EOS
 
-        Finding.new(issue: message, affects: modified) if message.present?
+        Finding.new(text: message, affects: modified) if message.present?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -1122,7 +1125,7 @@ module Homebrew
         return unless paths.intersect?(gnubin)
 
         Finding.new(
-          issue: <<~EOS,
+          text: <<~EOS,
             Putting non-prefixed coreutils in your path can cause GMP builds to fail.
           EOS
         )
@@ -1139,7 +1142,7 @@ module Homebrew
             "https://bugs.python.org/issue6138",
             "https://bugs.python.org/issue4655",
           ],
-          issue: <<~EOS,
+          text:  <<~EOS,
             A '.pydistutils.cfg' file was found in $HOME, which may cause Python
             builds to fail. See:
               #{Formatter.url("https://bugs.python.org/issue6138")}
@@ -1163,7 +1166,7 @@ module Homebrew
 
         Finding.new(
           affects: formula_unavailable_exceptions,
-          issue:   <<~EOS,
+          text:    <<~EOS,
             Some installed formulae are not readable:
               #{formula_unavailable_exceptions.join("\n\n  ")}
           EOS
@@ -1187,7 +1190,7 @@ module Homebrew
 
         Finding.new(
           affects:     unlinked.map(&:to_s),
-          issue:       <<~EOS,
+          text:        <<~EOS,
             You have unlinked kegs in your Cellar.
             Leaving kegs unlinked can lead to build-trouble and cause formulae that depend on
             those kegs to fail to run properly once built.
@@ -1224,7 +1227,7 @@ module Homebrew
           EOS
         end
 
-        Finding.new(issue: message)
+        Finding.new(text: message)
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -1246,7 +1249,7 @@ module Homebrew
         return if bad_tap_files.empty?
 
         Finding.new(
-          issue: bad_tap_files.keys.map do |tap|
+          text: bad_tap_files.keys.map do |tap|
             <<~EOS
               Found Ruby file outside #{tap} tap formula directory.
               (#{tap.formula_dir}):
@@ -1263,7 +1266,7 @@ module Homebrew
         Finding.new(
           tier:        3,
           remediation: "Consider uninstalling Homebrew and reinstalling into the default prefix.",
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Your Homebrew's prefix is not #{Homebrew::DEFAULT_PREFIX}.
 
             Most of Homebrew's bottles (binary packages) can only be used with the default prefix.
@@ -1300,7 +1303,7 @@ module Homebrew
 
         Finding.new(
           affects:     deleted_formulae,
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Some installed kegs have no formulae!
             This means they were either deleted or installed manually.
 
@@ -1323,7 +1326,7 @@ module Homebrew
           Please remove it by running:
            brew untap #{CoreTap.instance.name}
         EOS
-        Finding.new(remediation: remediation, issue: <<~EOS,
+        Finding.new(remediation: remediation, text: <<~EOS,
           You have an unnecessary local Core tap!
           This can cause problems installing up-to-date formulae.
         EOS
@@ -1343,7 +1346,7 @@ module Homebrew
           Please remove it by running:
            brew untap #{cask_tap.name}
         EOS
-        Finding.new(remediation: remediation, issue: <<~EOS,
+        Finding.new(remediation: remediation, text: <<~EOS,
           You have an unnecessary local Cask tap.
           This can cause problems installing up-to-date casks.
         EOS
@@ -1362,7 +1365,7 @@ module Homebrew
                                                   brew untap #{tapped_caskroom_taps.join(" ")}
                                                EOS
                                               )
-        Finding.new(remediation: remediation, issue: <<~EOS,
+        Finding.new(remediation: remediation, text: <<~EOS,
           You have the following deprecated Cask taps installed:
             #{tapped_caskroom_taps.join("\n  ")}
         EOS
@@ -1382,7 +1385,7 @@ module Homebrew
         return if locations.empty?
 
         Finding.new(
-          issue:       locations.map do |l|
+          text:        locations.map do |l|
             "Legacy install at #{l}."
           end.join("\n"),
           remediation: <<~EOS,
@@ -1408,7 +1411,7 @@ module Homebrew
                                                    sudo chown -R #{current_user} #{user_tilde(path.to_s)}
                                                EOS
                                               )
-        Finding.new(remediation: remediation, issue: <<~EOS,
+        Finding.new(remediation: remediation, text: <<~EOS,
           The staging path #{user_tilde(path.to_s)} is not writable by the current user.
         EOS
         )
@@ -1420,7 +1423,7 @@ module Homebrew
         return if corrupt.empty?
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             Some directories in the Caskroom do not have valid metadata.
               #{corrupt.map { |token| "#{Cask::Caskroom.path}/#{token}" }.join("\n  ")}
             The following #{Utils.pluralize("cask", corrupt.count)} cannot be upgraded as-is.
@@ -1454,7 +1457,7 @@ module Homebrew
         taps_string = Utils.pluralize("tap", error_tap_paths.count)
         return unless error_tap_paths.present?
 
-        Finding.new(issue: "Unable to read from cask #{taps_string}: #{error_tap_paths.to_sentence}")
+        Finding.new(text: "Unable to read from cask #{taps_string}: #{error_tap_paths.to_sentence}")
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -1463,7 +1466,7 @@ module Homebrew
 
         add_info "$LOAD_PATHS", paths.presence || none_string
 
-        Finding.new(issue: "$LOAD_PATH is empty") if paths.blank?
+        Finding.new(text: "$LOAD_PATH is empty") if paths.blank?
       end
 
       sig { returns(T.nilable(Finding)) }
@@ -1498,7 +1501,7 @@ module Homebrew
       def check_cask_xattr
         # If quarantine is not available, a warning is already shown by check_cask_quarantine_support so just return
         return unless Cask::Quarantine.available?
-        return Finding.new(issue: "Unable to find `xattr`.") unless File.exist?("/usr/bin/xattr")
+        return Finding.new(text: "Unable to find `xattr`.") unless File.exist?("/usr/bin/xattr")
 
         result = system_command "/usr/bin/xattr", args: ["-h"]
 
@@ -1509,7 +1512,7 @@ module Homebrew
 
           if result.include? "Python 2.7"
             Finding.new(
-              issue:       <<~EOS,
+              text:        <<~EOS,
                 Your Python installation has a broken version of setuptools.
               EOS
               remediation: <<~EOS,
@@ -1519,7 +1522,7 @@ module Homebrew
             )
           else
             Finding.new(
-              issue:       <<~EOS,
+              text:        <<~EOS,
                 The system Python version is wrong.
               EOS
               remediation: <<~EOS,
@@ -1529,9 +1532,9 @@ module Homebrew
             )
           end
         elsif result.stderr.include? "pkg_resources.DistributionNotFound"
-          Finding.new(issue: "Your Python installation is unable to find `xattr`.")
+          Finding.new(text: "Your Python installation is unable to find `xattr`.")
         else
-          Finding.new(issue: "unknown xattr error: #{result.stderr.split("\n").last}")
+          Finding.new(text: "unknown xattr error: #{result.stderr.split("\n").last}")
         end
       end
 
@@ -1562,7 +1565,7 @@ module Homebrew
         end
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             The following formulae have the same name as core formulae:
               #{shadowed_formula_full_names.join("\n  ")}
           EOS
@@ -1595,7 +1598,7 @@ module Homebrew
         end
 
         Finding.new(
-          issue:       <<~EOS,
+          text:        <<~EOS,
             The following casks have the same name as core casks:
               #{shadowed_cask_full_names.join("\n  ")}
           EOS

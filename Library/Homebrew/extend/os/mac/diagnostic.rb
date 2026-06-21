@@ -117,7 +117,7 @@ module OS
           return if !default_names && !paths.intersect?(gnubin)
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue: <<~EOS,
+            text: <<~EOS,
               Putting non-prefixed findutils in your path can cause python builds to fail."
             EOS
           )
@@ -151,7 +151,7 @@ module OS
           ::Homebrew::Diagnostic::Finding.new(
             remediation: remediation,
             tier:        tier,
-            issue:       <<~EOS,
+            text:        <<~EOS,
               You are using macOS #{MacOS.version}.
               #{who} do not provide support for this #{what}
             EOS
@@ -180,11 +180,11 @@ module OS
           end
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue: <<~EOS,
+            text: <<~EOS,
               You have booted macOS using OpenCore Legacy Patcher.
               We do not provide support for this configuration.
             EOS
-            tier:  oclp_support_tier,
+            tier: oclp_support_tier,
           )
         end
 
@@ -218,7 +218,7 @@ module OS
 
           ::Homebrew::Diagnostic::Finding.new(
             tier:        2,
-            issue:       "Your Xcode (#{MacOS::Xcode.version}) is outdated.",
+            text:        "Your Xcode (#{MacOS::Xcode.version}) is outdated.",
             remediation: remediation,
           )
         end
@@ -237,7 +237,7 @@ module OS
           return if GitHub::Actions.env_set?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       "A newer Command Line Tools release is available.",
+            text:        "A newer Command Line Tools release is available.",
             tier:        2,
             remediation: MacOS::CLT.update_instructions,
           )
@@ -251,7 +251,7 @@ module OS
           xcode += " => #{MacOS::Xcode.prefix}" unless MacOS::Xcode.default_prefix?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Your Xcode (#{xcode}) at #{MacOS::Xcode.bundle_path} is too outdated.
             EOS
             remediation: <<~EOS,
@@ -266,7 +266,7 @@ module OS
           return unless MacOS::CLT.below_minimum_version?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Your Command Line Tools are too outdated.
             EOS
             remediation: MacOS::CLT.update_instructions,
@@ -278,7 +278,7 @@ module OS
           return unless MacOS::Xcode.needs_clt_installed?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Xcode alone is not sufficient on #{MacOS.version.pretty_name}.
             EOS
             remediation: ::DevelopmentTools.installation_instructions,
@@ -292,7 +292,7 @@ module OS
           return unless prefix.to_s.include?(" ")
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue: <<~EOS,
+            text: <<~EOS,
               Xcode is installed to a directory with a space in the name.
               This will cause some formulae to fail to build.
             EOS
@@ -305,7 +305,7 @@ module OS
           return if prefix.nil? || prefix.exist?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               The directory Xcode is reportedly installed to doesn't exist:
               #{prefix}
             EOS
@@ -325,7 +325,7 @@ module OS
           path = "/Developer" if path.nil? || !path.directory?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Your Xcode is configured with an invalid path.
             EOS
             remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(
@@ -346,7 +346,7 @@ module OS
           return if $CHILD_STATUS.success?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               You have not agreed to the Xcode license.
             EOS
             remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(
@@ -388,7 +388,7 @@ module OS
           case_sensitive_vols.uniq!
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue: <<~EOS,
+            text: <<~EOS,
               The filesystem on #{case_sensitive_vols.join(",")} appears to be case-sensitive.
               The default macOS filesystem is case-insensitive. Please report any apparent problems.
             EOS
@@ -425,7 +425,7 @@ module OS
           end
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               gettext files detected at a system prefix.
               These files can cause compilation and link failures, especially if they
               are compiled with improper architectures.
@@ -450,7 +450,7 @@ module OS
           if libiconv&.linked_keg&.directory?
             unless libiconv&.keg_only?
               ::Homebrew::Diagnostic::Finding.new(
-                issue: <<~EOS,
+                text: <<~EOS,
                   A libiconv formula is installed and linked.
                   This will break stuff. For serious. Unlink it.
                 EOS
@@ -458,7 +458,7 @@ module OS
             end
           else
             ::Homebrew::Diagnostic::Finding.new(
-              issue:       <<~EOS,
+              text:        <<~EOS,
                 libiconv files detected at a system prefix other than /usr.
                 Homebrew doesn't provide a libiconv formula and expects to link against
                 the system version in /usr. libiconv in other prefixes can cause
@@ -504,7 +504,7 @@ module OS
             exists. Formulae known to be affected by this are Git and Narwhal.
           EOS
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       issue,
+            text:        issue,
             tier:        2,
             remediation: <<~EOS,
               You should set the `$HOMEBREW_TEMP` environment variable to a suitable
@@ -533,7 +533,7 @@ module OS
           end
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       <<~EOS,
+            text:        <<~EOS,
               Your #{source} does not support macOS #{MacOS.version}.\nIt is either outdated or was modified.
             EOS
             remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(text: <<~EOS,
@@ -574,7 +574,7 @@ module OS
           )
           ::Homebrew::Diagnostic::Finding.new(
             remediation: remediation,
-            issue:       <<~EOS,
+            text:        <<~EOS,
               The contents of the SDKs in your #{source} installation do not match the SDK folder names.
               A clean reinstall of #{source} should fix this.
             EOS
@@ -660,7 +660,7 @@ module OS
           return unless messages.first.present?
 
           ::Homebrew::Diagnostic::Finding.new(
-            issue:       T.must(messages.first),
+            text:        T.must(messages.first),
             remediation: messages.last,
           )
         end

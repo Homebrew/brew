@@ -45,7 +45,7 @@ module Homebrew
           EOS
           commands: ["brew reinstall pkgconf"],
         ),
-        issue:       <<~EOS,
+        text:        <<~EOS,
           You have pkgconf installed that was built on macOS #{mismatch[0]},
                  but you are running macOS #{mismatch[1]}.
 
