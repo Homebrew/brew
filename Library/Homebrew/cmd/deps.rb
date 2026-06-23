@@ -44,7 +44,8 @@ module Homebrew
         switch "--include-implicit",
                description: "Include implicit dependencies used to download and unpack source files."
         switch "--include-build",
-               description: "Include `:build` dependencies for <formula>."
+               description: "Include `:build` dependencies for <formula> (non-recursive for dependencies with " \
+                            "compatible bottles unless `--graph` or `--tree`)"
         switch "--include-optional",
                description: "Include `:optional` dependencies for <formula>."
         switch "--include-test",

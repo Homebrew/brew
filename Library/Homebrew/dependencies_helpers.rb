@@ -49,8 +49,12 @@ module DependenciesHelpers
     klass.expand(root_dependent, cache_key:) do |dependent, dep|
       next Dependable::PRUNE if ignores.any? { |ignore| dep.public_send(ignore) }
       next Dependable::PRUNE if includes.none? do |include|
-        # Ignore indirect test dependencies
-        next if include == :test? && dependent != root_dependent
+        if dependent != root_dependent
+          # Ignore indirect test dependencies
+          next if include == :test?
+          # Ignore indirect build dependencies of formulae with compatible bottles
+          next if include == :build? && !dependent.is_a?(CaskDependent) && dependent.bottled?
+        end
 
         dep.public_send(include)
       end
