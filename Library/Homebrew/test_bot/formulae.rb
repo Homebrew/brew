@@ -150,14 +150,16 @@ module Homebrew
         end
 
         info_header "Determining dependencies..."
-        installed = Utils.safe_popen_read("brew", "list", "--formula", "--full-name").split("\n")
-        dependencies =
-          Utils.safe_popen_read("brew", "deps", "--formula",
-                                "--include-build",
-                                "--include-test",
-                                "--full-name",
-                                formula_name)
-               .split("\n")
+        installed = Formula.installed.map(&:full_name).sort!
+        cache_key = "test-bot-#{formula_name}-dependencies"
+        dependencies = Dependency.expand(formula, cache_key:) do |dependent, dep|
+          if dep.required? || dep.recommended? || ((dep.build? || dep.test?) && dependent == formula)
+            # Avoid an exception if tap isn't installed yet and defer handling to a later step
+            Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS if (tap = dep.tap) && !tap.installed?
+          else
+            Dependable::PRUNE
+          end
+        end.map(&:name).sort!
         installed_dependencies = installed & dependencies
         installed_dependencies.each do |name|
           link_formula = Formulary.factory(name)
