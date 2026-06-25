@@ -37,14 +37,17 @@ class SystemCommand
         chdir:           T.any(String, Pathname),
         reset_uid:       T::Boolean,
         run_as_real_uid: T::Boolean,
+        interactive:     T::Boolean,
         timeout:         T.nilable(T.any(Integer, Float)),
       ).returns(SystemCommand::Result)
     }
     def system_command(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [],
                        must_succeed: false, print_stdout: false, print_stderr: true, debug: nil, verbose: nil,
-                       secrets: [], chdir: T.unsafe(nil), reset_uid: false, run_as_real_uid: false, timeout: nil)
+                       secrets: [], chdir: T.unsafe(nil), reset_uid: false, run_as_real_uid: false,
+                       interactive: false, timeout: nil)
       SystemCommand.run(executable, args:, sudo:, sudo_as_root:, env:, input:, must_succeed:, print_stdout:,
-                        print_stderr:, debug:, verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:, timeout:)
+                        print_stderr:, debug:, verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:,
+                        interactive:, timeout:)
     end
 
     # Run an infallible system command.
@@ -66,14 +69,17 @@ class SystemCommand
         chdir:           T.any(String, Pathname),
         reset_uid:       T::Boolean,
         run_as_real_uid: T::Boolean,
+        interactive:     T::Boolean,
         timeout:         T.nilable(T.any(Integer, Float)),
       ).returns(SystemCommand::Result)
     }
     def system_command!(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [],
                         print_stdout: false, print_stderr: true, debug: nil, verbose: nil, secrets: [],
-                        chdir: T.unsafe(nil), reset_uid: false, run_as_real_uid: false, timeout: nil)
+                        chdir: T.unsafe(nil), reset_uid: false, run_as_real_uid: false, interactive: false,
+                        timeout: nil)
       SystemCommand.run!(executable, args:, sudo:, sudo_as_root:, env:, input:, print_stdout:,
-                         print_stderr:, debug:, verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:, timeout:)
+                         print_stderr:, debug:, verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:,
+                         interactive:, timeout:)
     end
   end
 
@@ -96,14 +102,15 @@ class SystemCommand
       chdir:           T.nilable(T.any(String, Pathname)),
       reset_uid:       T::Boolean,
       run_as_real_uid: T::Boolean,
+      interactive:     T::Boolean,
       timeout:         T.nilable(T.any(Integer, Float)),
     ).returns(SystemCommand::Result)
   }
   def self.run(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [], must_succeed: false,
                print_stdout: false, print_stderr: true, debug: nil, verbose: nil, secrets: [], chdir: nil,
-               reset_uid: false, run_as_real_uid: false, timeout: nil)
+               reset_uid: false, run_as_real_uid: false, interactive: false, timeout: nil)
     new(executable, args:, sudo:, sudo_as_root:, env:, input:, must_succeed:, print_stdout:, print_stderr:, debug:,
-        verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:, timeout:).run!
+        verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:, interactive:, timeout:).run!
   end
 
   sig {
@@ -123,14 +130,15 @@ class SystemCommand
       chdir:           T.nilable(T.any(String, Pathname)),
       reset_uid:       T::Boolean,
       run_as_real_uid: T::Boolean,
+      interactive:     T::Boolean,
       timeout:         T.nilable(T.any(Integer, Float)),
     ).returns(SystemCommand::Result)
   }
   def self.run!(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [], must_succeed: true,
                 print_stdout: false, print_stderr: true, debug: nil, verbose: nil, secrets: [], chdir: nil,
-                reset_uid: false, run_as_real_uid: false, timeout: nil)
+                reset_uid: false, run_as_real_uid: false, interactive: false, timeout: nil)
     run(executable, args:, sudo:, sudo_as_root:, env:, input:, must_succeed:, print_stdout:, print_stderr:,
-        debug:, verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:, timeout:)
+        debug:, verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:, interactive:, timeout:)
   end
 
   sig { returns(SystemCommand::Result) }
@@ -183,12 +191,13 @@ class SystemCommand
       chdir:           T.nilable(T.any(String, Pathname)),
       reset_uid:       T::Boolean,
       run_as_real_uid: T::Boolean,
+      interactive:     T::Boolean,
       timeout:         T.nilable(T.any(Integer, Float)),
     ).void
   }
   def initialize(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [], must_succeed: false,
                  print_stdout: false, print_stderr: true, debug: nil, verbose: nil, secrets: [], chdir: nil,
-                 reset_uid: false, run_as_real_uid: false, timeout: nil)
+                 reset_uid: false, run_as_real_uid: false, interactive: false, timeout: nil)
     require "extend/ENV"
     @executable = executable
     @args = args
@@ -221,6 +230,7 @@ class SystemCommand
     @chdir = chdir
     @reset_uid = reset_uid
     @run_as_real_uid = run_as_real_uid
+    @interactive = interactive
     @timeout = timeout
   end
 
@@ -260,6 +270,9 @@ class SystemCommand
 
   sig { returns(T::Boolean) }
   def sudo_as_root? = @sudo_as_root
+
+  sig { returns(T::Boolean) }
+  def interactive? = @interactive
 
   sig { returns(T::Boolean) }
   def debug?
@@ -339,9 +352,10 @@ class SystemCommand
   def each_output_line(&block)
     executable, *args = command
     options = {
-      # Create a new process group so that we can send `SIGINT` from
-      # parent to child rather than the child receiving `SIGINT` directly.
-      pgroup: sudo? ? nil : true,
+      # Create a new process group so we can forward `SIGINT` from parent to
+      # child. Interactive commands and `sudo` stay in the caller's group so
+      # they can read the controlling terminal (e.g. credential prompts).
+      pgroup: (sudo? || interactive?) ? nil : true,
     }
     options[:chdir] = chdir if chdir
 
@@ -371,7 +385,7 @@ class SystemCommand
 
     @status = T.let(raw_wait_thr.value, T.nilable(Process::Status))
   rescue Interrupt
-    Process.kill("INT", raw_wait_thr.pid) if raw_wait_thr && !sudo?
+    Process.kill("INT", raw_wait_thr.pid) if raw_wait_thr && !sudo? && !interactive?
     raise Interrupt
   ensure
     if line_thread

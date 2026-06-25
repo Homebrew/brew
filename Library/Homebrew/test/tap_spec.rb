@@ -637,15 +637,6 @@ RSpec.describe Tap do
   end
 
   describe "#install" do
-    it "disables terminal prompts for git commands" do
-      require "system_command"
-
-      expect(SystemCommand).to receive(:run!)
-        .with("git", args: %w[fetch], chdir: path, env: { "GIT_TERMINAL_PROMPT" => "0" }, print_stderr: true)
-
-      homebrew_foo_tap.send(:git_command!, %w[fetch], chdir: path)
-    end
-
     it "raises an error when the Tap is already tapped" do
       setup_git_repo
       already_tapped_tap = described_class.fetch("Homebrew", "foo")
@@ -834,6 +825,17 @@ RSpec.describe Tap do
 
       expect(tap).not_to be_installed
       expect(HOMEBREW_TAP_DIRECTORY/"user").not_to exist
+    end
+
+    it "runs Git in the foreground so credential prompts don't hang" do
+      require "system_command"
+      tap = described_class.fetch("user", "repo")
+
+      expect(SystemCommand).to receive(:run!)
+        .with("git", args: ["--version"], chdir: nil, interactive: true, print_stderr: true)
+        .and_return(instance_double(SystemCommand::Result))
+
+      tap.send(:git_command!, ["--version"])
     end
   end
 

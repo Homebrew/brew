@@ -13,6 +13,7 @@ RSpec.describe SystemCommand do
         must_succeed: true,
         sudo:,
         sudo_as_root:,
+        interactive:,
       )
     end
 
@@ -20,6 +21,7 @@ RSpec.describe SystemCommand do
     let(:env) { { "A" => "1", "B" => "2", "C" => "3" } }
     let(:sudo) { false }
     let(:sudo_as_root) { false }
+    let(:interactive) { false }
 
     context "when given some environment variables" do
       it("run!.stdout") { expect(command.run!.stdout).to eq("123") }
@@ -86,6 +88,25 @@ RSpec.describe SystemCommand do
             .and_wrap_original do |original_exec3, *_, &block|
               original_exec3.call({}, "true", &block)
             end
+
+          command.run!
+        end
+      end
+    end
+
+    context "when interactive: true" do
+      let(:interactive) { true }
+
+      describe "the resulting command line" do
+        it "keeps the command in the caller's process group" do
+          expect(command)
+            .to receive(:exec3)
+            .with(
+              an_instance_of(Hash), "/usr/bin/env", "A=1", "B=2", "C=3",
+              "env", *env_args,
+              pgroup: nil
+            )
+            .and_call_original
 
           command.run!
         end

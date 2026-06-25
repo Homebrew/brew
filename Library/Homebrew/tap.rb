@@ -594,7 +594,10 @@ class Tap
   def git_command!(args, chdir: nil)
     require "system_command"
 
-    SystemCommand.run!("git", args:, chdir:, env: { "GIT_TERMINAL_PROMPT" => "0" }, print_stderr: true)
+    # Run Git in the caller's process group so it can prompt for credentials on
+    # the controlling terminal; a new process group would be stopped by
+    # `SIGTTIN` when Git reads the prompt, hanging `brew tap`.
+    SystemCommand.run!("git", args:, chdir:, interactive: true, print_stderr: true)
   end
   private :git_command!
 
