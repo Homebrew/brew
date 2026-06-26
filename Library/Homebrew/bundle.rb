@@ -29,17 +29,9 @@ module Homebrew
           env["PATH"] = "#{ENV.fetch("PATH")}:#{node_bin}"
         end
 
-        logs = []
-        success = T.let(false, T::Boolean)
-        IO.popen(env, [cmd, *args], err: [:child, :out]) do |pipe|
-          while (buf = pipe.gets)
-            logs << buf
-          end
-          Process.wait(pipe.pid)
-          success = $CHILD_STATUS.success?
-          pipe.close
-        end
-        puts logs.join unless success
+        output = Utils.popen_read(env, cmd.to_s, *args, err: [:child, :out])
+        success = $CHILD_STATUS.success?
+        puts output unless success
         success
       end
 
