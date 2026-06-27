@@ -411,6 +411,14 @@ module Homebrew
               else
                 candidate_cask
               end
+            rescue Homebrew::UntrustedTapError
+              # The tap is untrusted, but an already-installed cask can still be
+              # removed by loading its installed cask file, which lives outside
+              # the tap and is therefore not subject to tap trust.
+              raise unless want_keg_like_cask
+
+              Cask::CaskLoader::FromInstalledPathLoader.try_new(name, warn:)&.load(config:) ||
+                Cask::Cask.new(name, config:)
             rescue Cask::CaskUnreadableError, Cask::CaskInvalidError => e
               # If we're trying to get a keg-like Cask, do our best to handle it
               # not being readable and return something that can be used.

@@ -177,6 +177,18 @@ RSpec.describe Homebrew::CLI::NamedArgs do
     end
   end
 
+  describe "#to_formulae_and_casks_and_unavailable" do
+    it "falls back to the installed cask file when a keg-like cask's tap is untrusted", :needs_macos do
+      allow(Cask::CaskLoader).to receive(:load).with("foo", any_args)
+                                               .and_raise(Homebrew::UntrustedTapError.new("untrusted"))
+      installed_loader = instance_double(Cask::CaskLoader::FromInstalledPathLoader, load: foo_cask)
+      allow(Cask::CaskLoader::FromInstalledPathLoader).to receive(:try_new)
+        .with("foo", any_args).and_return(installed_loader)
+
+      expect(described_class.new("foo").to_formulae_and_casks_and_unavailable(method: :kegs)).to eq [foo_cask]
+    end
+  end
+
   describe "#to_resolved_formulae" do
     it "returns resolved formulae" do
       allow(Formulary).to receive(:resolve).and_return(foo, bar)
