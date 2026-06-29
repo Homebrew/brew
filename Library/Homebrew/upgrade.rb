@@ -26,12 +26,12 @@ module Homebrew
       def format_upgrade_summary(upgrades)
         return upgrades if upgrades.size < 2
 
-        upgrades = upgrades.sort_by { |upgrade| upgrade.split(" ", 2).fetch(0) }
+        upgrades = upgrades.map { |upgrade| upgrade.split(" ", 2) }.sort_by { |upgrade| upgrade.fetch(0) }
 
-        name_width = upgrades.map { |upgrade| upgrade.split(" ", 2).fetch(0).length }.max
+        name_width = upgrades.map { |upgrade| upgrade.fetch(0).length }.max
         name_width ||= 0
         old_version_width = upgrades.filter_map do |upgrade|
-          versions = upgrade.split(" ", 2).fetch(1, "")
+          versions = upgrade.fetch(1, "")
           next unless versions.include?(" -> ")
 
           versions.split(" -> ", 2).fetch(0).length
@@ -39,9 +39,8 @@ module Homebrew
         old_version_width ||= 0
 
         upgrades.map do |upgrade|
-          parts = upgrade.split(" ", 2)
-          name = parts.fetch(0)
-          versions = parts.fetch(1, "")
+          name = upgrade.fetch(0)
+          versions = upgrade.fetch(1, "")
           next name if versions.blank?
 
           if versions.include?(" -> ")
