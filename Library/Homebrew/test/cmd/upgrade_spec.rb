@@ -601,8 +601,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
     expect { cmd.send(:show_final_upgrade_summary) }.to output(<<~EOS).to_stdout
       ==> Would upgrade 2 outdated packages
-      testball  0.1 -> 0.2 (500B)
       codex     1.0 -> 2.0
+      testball  0.1 -> 0.2 (500B)
     EOS
   end
 
@@ -662,8 +662,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
     expect { cmd.run }.to output(<<~EOS).to_stdout
       ==> Upgrading 2 outdated packages:
-      deno   2.7.10  -> 2.7.11
       codex  0.117.0 -> 0.118.0
+      deno   2.7.10  -> 2.7.11
       ==> Fetching downloads for: deno and codex
     EOS
   end
@@ -761,8 +761,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     expect { cmd.run }.to output(<<~EOS).to_stdout
       ==> Downloading Cask files
       ==> Upgrading 2 outdated packages:
-      deno   2.7.10  -> 2.7.11
       codex  0.117.0 -> 0.118.0
+      deno   2.7.10  -> 2.7.11
       ==> Fetching downloads for: deno and codex
     EOS
   end
@@ -807,8 +807,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
     expect { cmd.run }.to output(<<~EOS).to_stdout
       ==> Upgrading 2 outdated packages:
-      deno   2.7.10  -> 2.7.11
       codex  0.117.0 -> 0.118.0
+      deno   2.7.10  -> 2.7.11
       ==> Fetching downloads for: deno and codex
     EOS
   end
