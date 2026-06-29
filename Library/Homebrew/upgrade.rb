@@ -24,6 +24,7 @@ module Homebrew
     class << self
       sig { params(upgrades: T::Array[String]).returns(T::Array[String]) }
       def format_upgrade_summary(upgrades)
+        upgrades = upgrades.sort_by { |upgrade| upgrade.split(" ", 2).fetch(0) }
         return upgrades if upgrades.size < 2
 
         name_width = upgrades.map { |upgrade| upgrade.split(" ", 2).fetch(0).length }.max
