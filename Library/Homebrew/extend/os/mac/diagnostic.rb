@@ -107,7 +107,7 @@ module OS
           ].freeze
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_for_non_prefixed_findutils
           findutils = ::Formula["findutils"]
           return unless findutils.any_version_installed?
@@ -116,44 +116,46 @@ module OS
           default_names = Tab.for_name("findutils").with? "default-names"
           return if !default_names && !paths.intersect?(gnubin)
 
-          <<~EOS
-            Putting non-prefixed findutils in your path can cause python builds to fail.
+          ::Homebrew::Diagnostic::Finding.new(<<~EOS,
+            Putting non-prefixed findutils in your path can cause python builds to fail."
           EOS
+                                             )
         rescue FormulaUnavailableError
           nil
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_for_unsupported_macos
           return if Homebrew::EnvConfig.developer?
           return if ENV["HOMEBREW_INTEGRATION_TEST"]
 
           tier = 2
           who = +"We"
+          remediation = nil
           what = if OS::Mac.version.prerelease?
             "pre-release version."
           elsif OS::Mac.version.outdated_release?
             tier = 3
             who << " (and Apple)"
-            <<~EOS.chomp
-              old version.
+            remediation = <<~EOS
               You may have better luck with MacPorts which supports older versions of macOS:
-                #{Formatter.url("https://www.macports.org")}
+              #{Formatter.url("https://www.macports.org")}
             EOS
+            "old version."
           end
           return if what.blank?
 
           who.freeze
 
-          <<~EOS
+          ::Homebrew::Diagnostic::Finding.new(<<~EOS,
             You are using macOS #{MacOS.version}.
             #{who} do not provide support for this #{what}
-
-            #{support_tier_message(tier:)}
           EOS
+                                              remediation: remediation,
+                                              tier:        tier)
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_for_opencore
           return if ::Hardware::CPU.physical_cpu_arm64?
 
@@ -174,15 +176,14 @@ module OS
             3
           end
 
-          <<~EOS
+          ::Homebrew::Diagnostic::Finding.new(<<~EOS,
             You have booted macOS using OpenCore Legacy Patcher.
             We do not provide support for this configuration.
-
-            #{support_tier_message(tier: oclp_support_tier)}
           EOS
+                                              tier: oclp_support_tier)
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_xcode_up_to_date
           return unless MacOS::Xcode.outdated?
 
@@ -195,27 +196,27 @@ module OS
           # Homebrew/brew is currently using.
           return if GitHub::Actions.env_set?
 
-          message = <<~EOS
-            Your Xcode (#{MacOS::Xcode.version}) is outdated.
+          remediation = <<~EOS
             Please update to Xcode #{MacOS::Xcode.latest_version} (or delete it).
             #{MacOS::Xcode.update_instructions}
-
-            #{support_tier_message(tier: 2)}
           EOS
 
           if OS::Mac.version.prerelease?
             current_path = Utils.popen_read("/usr/bin/xcode-select", "-p")
-            message += <<~EOS
+            remediation += <<~EOS
               If #{MacOS::Xcode.latest_version} is installed, you may need to:
                 sudo xcode-select --switch /Applications/Xcode.app
               Current developer directory is:
                 #{current_path}
             EOS
           end
-          message
+
+          ::Homebrew::Diagnostic::Finding.new("Your Xcode (#{MacOS::Xcode.version}) is outdated.",
+                                              tier:        2,
+                                              remediation: remediation)
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_clt_up_to_date
           return unless MacOS::CLT.outdated?
 
@@ -228,73 +229,86 @@ module OS
           # Homebrew/brew is currently using.
           return if GitHub::Actions.env_set?
 
-          <<~EOS
-            A newer Command Line Tools release is available.
-            #{MacOS::CLT.update_instructions}
-
-            #{support_tier_message(tier: 2)}
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            "A newer Command Line Tools release is available.",
+            tier:        2,
+            remediation: MacOS::CLT.update_instructions,
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_xcode_minimum_version
           return unless MacOS::Xcode.below_minimum_version?
 
           xcode = MacOS::Xcode.version.to_s
           xcode += " => #{MacOS::Xcode.prefix}" unless MacOS::Xcode.default_prefix?
 
-          <<~EOS
-            Your Xcode (#{xcode}) at #{MacOS::Xcode.bundle_path} is too outdated.
-            Please update to Xcode #{MacOS::Xcode.latest_version} (or delete it).
-            #{MacOS::Xcode.update_instructions}
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              Your Xcode (#{xcode}) at #{MacOS::Xcode.bundle_path} is too outdated.
+            EOS
+            remediation: <<~EOS,
+              Please update to Xcode #{MacOS::Xcode.latest_version} (or delete it).
+              #{MacOS::Xcode.update_instructions}
+            EOS
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_clt_minimum_version
           return unless MacOS::CLT.below_minimum_version?
 
-          <<~EOS
-            Your Command Line Tools are too outdated.
-            #{MacOS::CLT.update_instructions}
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              Your Command Line Tools are too outdated.
+            EOS
+            remediation: MacOS::CLT.update_instructions,
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_if_xcode_needs_clt_installed
           return unless MacOS::Xcode.needs_clt_installed?
 
-          <<~EOS
-            Xcode alone is not sufficient on #{MacOS.version.pretty_name}.
-            #{::DevelopmentTools.installation_instructions}
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              Xcode alone is not sufficient on #{MacOS.version.pretty_name}.
+            EOS
+            remediation: ::DevelopmentTools.installation_instructions,
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_xcode_prefix
           prefix = MacOS::Xcode.prefix
           return if prefix.nil?
           return unless prefix.to_s.include?(" ")
 
-          <<~EOS
-            Xcode is installed to a directory with a space in the name.
-            This will cause some formulae to fail to build.
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              Xcode is installed to a directory with a space in the name.
+              This will cause some formulae to fail to build.
+            EOS
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_xcode_prefix_exists
           prefix = MacOS::Xcode.prefix
           return if prefix.nil? || prefix.exist?
 
-          <<~EOS
-            The directory Xcode is reportedly installed to doesn't exist:
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              The directory Xcode is reportedly installed to doesn't exist:
               #{prefix}
-            You may need to `xcode-select` the proper path if you have moved Xcode.
-          EOS
+            EOS
+            remediation: <<~EOS,
+              You may need to `xcode-select` the proper path if you have moved Xcode.
+            EOS
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_xcode_select_path
           return if MacOS::CLT.installed?
           return unless MacOS::Xcode.installed?
@@ -302,28 +316,43 @@ module OS
 
           path = MacOS::Xcode.bundle_path
           path = "/Developer" if path.nil? || !path.directory?
-          <<~EOS
-            Your Xcode is configured with an invalid path.
-            You should change it to the correct path:
-              sudo xcode-select --switch #{path}
-          EOS
+
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              Your Xcode is configured with an invalid path.
+            EOS
+            remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(
+              commands: ["sudo xcode-select --switch #{path}"],
+              text:     <<~EOS,
+                You should change it to the correct path:
+                  sudo xcode-select --switch #{path}
+              EOS
+            ),
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_xcode_license_approved
           # If the user installs Xcode-only, they have to approve the
           # license or no "xc*" tool will work.
           return unless `/usr/bin/xcrun --find clang 2>&1`.include?("license")
           return if $CHILD_STATUS.success?
 
-          <<~EOS
-            You have not agreed to the Xcode license.
-            Agree to the license by opening Xcode.app or running:
-              sudo xcodebuild -license
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              You have not agreed to the Xcode license.
+            EOS
+            remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(
+              commands: ["sudo xcodebuild -license"],
+              text:     <<~EOS,
+                Agree to the license by opening Xcode.app or running:
+                  sudo xcodebuild -license
+              EOS
+            ),
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_filesystem_case_sensitive
           dirs_to_check = [
             HOMEBREW_PREFIX,
@@ -351,13 +380,15 @@ module OS
           end
           case_sensitive_vols.uniq!
 
-          <<~EOS
-            The filesystem on #{case_sensitive_vols.join(",")} appears to be case-sensitive.
-            The default macOS filesystem is case-insensitive. Please report any apparent problems.
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              The filesystem on #{case_sensitive_vols.join(",")} appears to be case-sensitive.
+              The default macOS filesystem is case-insensitive. Please report any apparent problems.
+            EOS
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_for_gettext
           find_relative_paths("lib/libgettextlib.dylib",
                               "lib/libintl.dylib",
@@ -386,14 +417,20 @@ module OS
             end
           end
 
-          inject_file_list @found, <<~EOS
-            gettext files detected at a system prefix.
-            These files can cause compilation and link failures, especially if they
-            are compiled with improper architectures. Consider removing these files:
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              gettext files detected at a system prefix.
+              These files can cause compilation and link failures, especially if they
+              are compiled with improper architectures.
+            EOS
+            remediation: <<~EOS,
+              Consider removing these files:
+                #{@found.join(" ")}
+            EOS
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_for_iconv
           find_relative_paths("lib/libiconv.dylib", "include/iconv.h")
           return if @found.empty?
@@ -405,26 +442,32 @@ module OS
           end
           if libiconv&.linked_keg&.directory?
             unless libiconv&.keg_only?
-              <<~EOS
-                A libiconv formula is installed and linked.
-                This will break stuff. For serious. Unlink it.
-              EOS
+              ::Homebrew::Diagnostic::Finding.new(
+                <<~EOS,
+                  A libiconv formula is installed and linked.
+                  This will break stuff. For serious. Unlink it.
+                EOS
+              )
             end
           else
-            inject_file_list @found, <<~EOS
-              libiconv files detected at a system prefix other than /usr.
-              Homebrew doesn't provide a libiconv formula and expects to link against
-              the system version in /usr. libiconv in other prefixes can cause
-              compile or link failure, especially if compiled with improper
-              architectures. macOS itself never installs anything to /usr/local so
-              it was either installed by a user or some other third party software.
-
-              tl;dr: delete these files:
-            EOS
+            ::Homebrew::Diagnostic::Finding.new(
+              <<~EOS,
+                libiconv files detected at a system prefix other than /usr.
+                Homebrew doesn't provide a libiconv formula and expects to link against
+                the system version in /usr. libiconv in other prefixes can cause
+                compile or link failure, especially if compiled with improper
+                architectures. macOS itself never installs anything to /usr/local so
+                it was either installed by a user or some other third party software.
+              EOS
+              remediation: <<~EOS,
+                tl;dr: delete these files:
+                  #{@found.join("\n")}
+              EOS
+            )
           end
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_for_multiple_volumes
           return unless HOMEBREW_CELLAR.exist?
 
@@ -448,19 +491,22 @@ module OS
 
           return if where_cellar == where_tmp
 
-          <<~EOS
+          issue = <<~EOS
             Your Cellar and TEMP directories are on different volumes.
             macOS won't move relative symlinks across volumes unless the target file already
             exists. Formulae known to be affected by this are Git and Narwhal.
-
-            You should set the `$HOMEBREW_TEMP` environment variable to a suitable
-            directory on the same volume as your Cellar.
-
-            #{support_tier_message(tier: 2)}
           EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            issue,
+            tier:        2,
+            remediation: <<~EOS,
+              You should set the `$HOMEBREW_TEMP` environment variable to a suitable
+              directory on the same volume as your Cellar.
+            EOS
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_if_supported_sdk_available
           return unless ::DevelopmentTools.installed?
           return if MacOS.sdk
@@ -479,18 +525,22 @@ module OS
             "Xcode"
           end
 
-          <<~EOS
-            Your #{source} does not support macOS #{MacOS.version}.
-            It is either outdated or was modified.
-            Please update your #{source} or delete it if no updates are available.
-            #{update_instructions}
-          EOS
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              Your #{source} does not support macOS #{MacOS.version}.\nIt is either outdated or was modified.
+            EOS
+            remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(text: <<~EOS,
+              Please update your #{source} or delete it if no updates are available.
+              #{update_instructions}
+            EOS
+                                                                         ),
+          )
         end
 
         # The CLT 10.x -> 11.x upgrade process on 10.14 contained a bug which broke the SDKs.
         # Notably, MacOSX10.14.sdk would indirectly symlink to MacOSX10.15.sdk.
         # This diagnostic was introduced to check for this and recommend a full reinstall.
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_broken_sdks
           locator = MacOS.sdk_locator
 
@@ -511,18 +561,20 @@ module OS
             installation_instructions = MacOS::Xcode.installation_instructions
           end
 
-          <<~EOS
-            The contents of the SDKs in your #{source} installation do not match the SDK folder names.
-            A clean reinstall of #{source} should fix this.
-
-            Remove the broken installation before reinstalling:
-              sudo rm -rf #{path_to_remove}
-
-            #{installation_instructions}
-          EOS
+          remediation = ::Homebrew::Diagnostic::Finding::Remediation.new(
+            commands: ["sudo rm -rf #{path_to_remove}"],
+            text:     "Remove the broken installation before reinstalling\n #{installation_instructions}",
+          )
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              The contents of the SDKs in your #{source} installation do not match the SDK folder names.
+              A clean reinstall of #{source} should fix this.
+            EOS
+            remediation: remediation,
+          )
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_cask_software_versions
           super
           add_info "macOS", MacOS.full_version
@@ -545,7 +597,7 @@ module OS
           nil
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_pkgconf_macos_sdk_mismatch
           mismatch = Homebrew::Pkgconf.macos_sdk_mismatch
           return unless mismatch
@@ -553,51 +605,57 @@ module OS
           Homebrew::Pkgconf.mismatch_warning_message(mismatch)
         end
 
-        sig { returns(T.nilable(String)) }
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_cask_quarantine_support
           status, check_output = ::Cask::Quarantine.check_quarantine_support
 
-          case status
+          messages = case status
           when :quarantine_available
-            nil
+            [nil, nil]
           when :xattr_broken
-            "No Cask quarantine support available: there's no working version of `xattr` on this system."
+            ["No Cask quarantine support available: there's no working version of `xattr` on this system.", nil]
           when :no_swift
-            "No Cask quarantine support available: there's no available version of `swift` on this system."
+            ["No Cask quarantine support available: there's no available version of `swift` on this system.", nil]
           when :swift_broken_clt
-            <<~EOS
-              No Cask quarantine support available: Swift is not working due to missing Command Line Tools.
-              #{MacOS::CLT.installation_then_reinstall_instructions}
-            EOS
+            ["No Cask quarantine support available: Swift is not working due to missing Command Line Tools.", MacOS::CLT.installation_then_reinstall_instructions]
           when :swift_compilation_failed
-            <<~EOS
+            msg = <<~EOS
               No Cask quarantine support available: Swift compilation failed.
               This is usually due to a broken or incompatible Command Line Tools installation.
-              #{MacOS::CLT.installation_then_reinstall_instructions}
             EOS
+            [msg, MacOS::CLT.installation_then_reinstall_instructions]
           when :swift_runtime_error
-            <<~EOS
+            msg = <<~EOS
               No Cask quarantine support available: Swift runtime error.
               Your Command Line Tools installation may be broken or incomplete.
-              #{MacOS::CLT.installation_then_reinstall_instructions}
             EOS
+            [msg, MacOS::CLT.installation_then_reinstall_instructions]
           when :swift_not_executable
-            <<~EOS
+            msg = <<~EOS
               No Cask quarantine support available: Swift is not executable.
               Your Command Line Tools installation may be incomplete.
-              #{MacOS::CLT.installation_then_reinstall_instructions}
             EOS
+            [msg, MacOS::CLT.installation_then_reinstall_instructions]
           when :swift_unexpected_error
-            <<~EOS
+            msg = <<~EOS
               No Cask quarantine support available: Swift returned an unexpected error:
               #{check_output}
             EOS
+            [msg, nil]
           else
-            <<~EOS
+            msg = <<~EOS
               No Cask quarantine support available: unknown reason: #{status.inspect}:
               #{check_output}
             EOS
+            [msg, nil]
           end
+
+          return unless messages.first.present?
+
+          ::Homebrew::Diagnostic::Finding.new(
+            T.must(messages.first),
+            remediation: messages.last,
+          )
         end
       end
     end

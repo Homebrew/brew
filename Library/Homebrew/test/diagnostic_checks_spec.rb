@@ -25,7 +25,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       dirs.each do |dir|
         modes[dir] = dir.stat.mode & 0777
         dir.chmod 0555
-        expect(checks.check_access_directories).to match(dir.to_s)
+        expect(checks.check_access_directories&.to_s).to match(dir.to_s)
       end
     ensure
       modes.each do |dir, mode|
@@ -45,7 +45,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     # HOMEBREW_PREFIX/bin/
     (bin/File.basename(Dir["/usr/bin/*"].first)).mkpath
 
-    expect(checks.check_user_path_1)
+    expect(checks.check_user_path_1&.to_s)
       .to match("/usr/bin occurs before #{HOMEBREW_PREFIX}/bin")
   end
 
@@ -53,8 +53,8 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     ENV["PATH"] = ENV["PATH"].gsub \
       %r{(?:^|#{File::PATH_SEPARATOR})#{HOMEBREW_PREFIX}/bin}o, ""
 
-    expect(checks.check_user_path_1).to be_nil
-    expect(checks.check_user_path_2)
+    expect(checks.check_user_path_1&.to_s).to be_nil
+    expect(checks.check_user_path_2&.to_s)
       .to match("Homebrew's \"bin\" was not found in your PATH.")
   end
 
@@ -67,9 +67,9 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       ENV["HOMEBREW_PATH"].gsub(/(?:^|#{Regexp.escape(File::PATH_SEPARATOR)})#{Regexp.escape(sbin)}/, "")
     stub_const("ORIGINAL_PATHS", PATH.new(homebrew_path).filter_map { |path| Pathname.new(path).expand_path })
 
-    expect(checks.check_user_path_1).to be_nil
-    expect(checks.check_user_path_2).to be_nil
-    expect(checks.check_user_path_3)
+    expect(checks.check_user_path_1&.to_s).to be_nil
+    expect(checks.check_user_path_2&.to_s).to be_nil
+    expect(checks.check_user_path_3&.to_s)
       .to match("Homebrew's \"sbin\" was not found in your PATH")
   ensure
     FileUtils.rm_rf(sbin)
@@ -81,7 +81,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     mktmpdir do |path|
       FileUtils.ln_s path, HOMEBREW_CELLAR
 
-      expect(checks.check_for_symlinked_cellar).to match(path)
+      expect(checks.check_for_symlinked_cellar&.to_s).to match(path)
     end
   ensure
     HOMEBREW_CELLAR.unlink
@@ -98,15 +98,16 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       gitconfig = path/".gitconfig"
       gitconfig.write("[safe]\n")
 
-      expect(checks.check_homebrew_repository_git_hooks).to eq <<~EOS
+      expect(checks.check_homebrew_repository_git_hooks&.to_s).to eq <<~EOS.rstrip
         Git hooks or a repository-local `.gitconfig` were found in your Homebrew repository.
         Homebrew does not use these, and they can break Homebrew operations.
-        Remove them with:
-          rm -rf "#{path}/.git/hooks" "#{path}/.gitconfig"
 
         Paths found:
           #{hook}
           #{gitconfig}
+
+        Remove them with:
+          rm -rf "#{path}/.git/hooks" "#{path}/.gitconfig"
       EOS
     end
   end
@@ -119,7 +120,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       hook.dirname.mkpath
       hook.write("#!/bin/sh\n")
 
-      expect(checks.check_homebrew_repository_git_hooks).to be_nil
+      expect(checks.check_homebrew_repository_git_hooks&.to_s).to be_nil
     end
   end
 
@@ -139,13 +140,14 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     allow(Cask::Caskroom).to receive(:casks).and_return([foo_cask, bar_cask])
 
     with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
-      check_untrusted_taps = checks.check_untrusted_taps
-      expect(check_untrusted_taps).to eq <<~EOS
+      check_untrusted_taps = checks.check_untrusted_taps&.to_s
+      expect(check_untrusted_taps).to eq <<~EOS.rstrip
         The following taps are not trusted:
           thirdparty/foo
           thirdparty/bar
 
         Homebrew is currently ignoring formulae, casks and commands from these taps because tap trust is required.
+
         Prefer trusting only the specific formulae, casks or commands you need.
         Trust installed formulae from these taps with:
           brew trust --formula thirdparty/bar/bar-formula
@@ -182,12 +184,13 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     allow(Cask::Caskroom).to receive(:casks).and_return([])
 
     with_env(HOMEBREW_REQUIRE_TAP_TRUST: nil, HOMEBREW_NO_REQUIRE_TAP_TRUST: nil) do
-      check_untrusted_taps = checks.check_untrusted_taps
-      expect(check_untrusted_taps).to eq <<~EOS
+      check_untrusted_taps = checks.check_untrusted_taps&.to_s
+      expect(check_untrusted_taps).to eq <<~EOS.rstrip
         The following taps are not trusted:
           thirdparty/foo
 
         Homebrew is currently ignoring formulae, casks and commands from these taps because tap trust is required.
+
         Untap them with:
           brew untap thirdparty/foo
         Trust specific formulae, casks and commands with:
@@ -213,7 +216,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     allow(Cask::Caskroom).to receive(:casks).and_return([])
 
     with_env(HOMEBREW_NO_ENV_HINTS: "1") do
-      check_untrusted_taps = checks.check_untrusted_taps
+      check_untrusted_taps = checks.check_untrusted_taps&.to_s
       expect(check_untrusted_taps).to include(Formatter.url("https://docs.brew.sh/Tap-Trust"))
       expect(check_untrusted_taps).not_to include("export HOMEBREW_NO_REQUIRE_TAP_TRUST=1")
     end
@@ -223,19 +226,19 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     with_env(HOMEBREW_NO_REQUIRE_TAP_TRUST: "1") do
       expect(Homebrew::Trust).not_to receive(:wholly_untrusted_taps)
 
-      expect(checks.check_untrusted_taps).to be_nil
+      expect(checks.check_untrusted_taps&.to_s).to be_nil
     end
   end
 
   specify "#check_tmpdir" do
     ENV["TMPDIR"] = "/i/don/t/exis/t"
-    expect(checks.check_tmpdir).to match("doesn't exist")
+    expect(checks.check_tmpdir&.to_s).to match("doesn't exist")
   end
 
   specify "#check_for_nix_homebrew" do
     stub_const("HOMEBREW_REPOSITORY", HOMEBREW_PREFIX/"Library/.homebrew-is-managed-by-nix")
 
-    expect(checks.check_for_nix_homebrew)
+    expect(checks.check_for_nix_homebrew&.to_s)
       .to include("This is a Tier 3 configuration", "https://github.com/zhaofengli/nix-homebrew/issues")
   end
 
@@ -250,7 +253,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
         allow(Commands).to receive(:tap_cmd_directories).and_return([path1, path2])
 
-        expect(checks.check_for_external_cmd_name_conflict)
+        expect(checks.check_for_external_cmd_name_conflict&.to_s)
           .to match("brew-foo")
       end
     end
@@ -258,7 +261,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
   specify "#check_homebrew_prefix" do
     allow(Homebrew).to receive(:default_prefix?).and_return(false)
-    expect(checks.check_homebrew_prefix)
+    expect(checks.check_homebrew_prefix&.to_s)
       .to match("Your Homebrew's prefix is not #{Homebrew::DEFAULT_PREFIX}")
   end
 
@@ -267,7 +270,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
     expect_any_instance_of(CoreTap).to receive(:installed?).and_return(true)
 
-    expect(checks.check_for_unnecessary_core_tap).to match("You have an unnecessary local Core tap")
+    expect(checks.check_for_unnecessary_core_tap&.to_s).to match("You have an unnecessary local Core tap")
   end
 
   specify "#check_for_unnecessary_cask_tap" do
@@ -275,17 +278,18 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
     expect_any_instance_of(CoreCaskTap).to receive(:installed?).and_return(true)
 
-    expect(checks.check_for_unnecessary_cask_tap).to match("unnecessary local Cask tap")
+    expect(checks.check_for_unnecessary_cask_tap&.to_s).to match("unnecessary local Cask tap")
   end
 
   specify "#check_cask_corrupt_dirs" do
     allow(Cask::Caskroom).to receive(:corrupt_cask_dirs).and_return(["google-chrome", "docker-desktop"])
 
-    expect(checks.check_cask_corrupt_dirs).to eq <<~EOS
+    expect(checks.check_cask_corrupt_dirs&.to_s).to eq <<~EOS.rstrip
       Some directories in the Caskroom do not have valid metadata.
         #{Cask::Caskroom.path}/google-chrome
         #{Cask::Caskroom.path}/docker-desktop
       The following casks cannot be upgraded as-is.
+
       To fix this, run:
         brew reinstall --cask --force google-chrome
         brew reinstall --cask --force docker-desktop

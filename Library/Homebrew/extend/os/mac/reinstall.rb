@@ -32,7 +32,7 @@ module OS
             T.unsafe(self).reinstall_formula(context)
             ohai "Reinstalled pkgconf due to macOS version mismatch"
           rescue
-            ofail Homebrew::Pkgconf.mismatch_warning_message(mismatch)
+            ofail Homebrew::Pkgconf.mismatch_warning_message(mismatch).to_s
           end
         end
       end
