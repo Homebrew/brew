@@ -53,7 +53,8 @@ module RuboCop
           to_sort.sort! do |a, b|
             a_non_comment = a.split("\n").reject { |line| line.strip.start_with?("#") }.fetch(0)
             b_non_comment = b.split("\n").reject { |line| line.strip.start_with?("#") }.fetch(0)
-            a_non_comment.downcase <=> b_non_comment.downcase || raise("Expected non-comment lines to be present")
+            a_non_comment.strip.downcase <=> b_non_comment.strip.downcase ||
+              raise("Expected non-comment lines to be present")
           end
 
           # Merge the sorted lines and the unsorted lines, preserving the original positions of the unsorted lines
