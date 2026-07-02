@@ -275,6 +275,21 @@ RSpec.describe "ENV" do
       end
     end
 
+    describe "#llvm_clang" do
+      before { env.llvm_clang }
+
+      it "sets HOMEBREW_CC to shim name" do
+        expect(env["HOMEBREW_CC"]).to eq "llvm_clang"
+      end
+
+      it "sets CC/CXX to real names" do
+        expect(env["CC"]).to eq "clang"
+        expect(env["CXX"]).to eq "clang++"
+        expect(env["OBJC"]).to eq "clang"
+        expect(env["OBJCXX"]).to eq "clang++"
+      end
+    end
+
     describe "when using versioned GCC" do
       let(:gcc) { "gcc-#{CompilerConstants::GNU_GCC_VERSIONS.last}" }
 

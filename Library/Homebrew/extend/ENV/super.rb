@@ -147,6 +147,13 @@ module Superenv
     # a - apply fix for apr-1-config path
   end
 
+  sig { void }
+  def llvm_clang
+    super
+    self["CC"] = self["OBJC"] = "clang"
+    self["CXX"] = self["OBJCXX"] = "clang++"
+  end
+
   private
 
   sig { params(val: T.any(String, Pathname)).returns(String) }

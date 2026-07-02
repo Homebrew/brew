@@ -91,10 +91,10 @@ class Cmd
     when "ld" then "ld"
     when "gold", "ld.gold" then "ld.gold"
     when "cpp" then "cpp"
-    when /llvm_(clang(\+\+)?)/
-      "#{ENV["HOMEBREW_PREFIX"]}/opt/llvm/bin/#{Regexp.last_match(1)}"
     when /\w\+\+(-\d+(\.\d)?)?$/
       case ENV["HOMEBREW_CC"]
+      when "llvm_clang"
+        "#{ENV["HOMEBREW_PREFIX"]}/opt/llvm/bin/clang++"
       when "swift_clang"
         "#{ENV["HOMEBREW_PREFIX"]}/opt/swift/libexec/bin/clang++"
       when /clang/
