@@ -90,6 +90,16 @@ module Tty
       "\033[?25h"
     end
 
+    sig { returns(String) }
+    def begin_synchronized_output
+      "\033[?2026h"
+    end
+
+    sig { returns(String) }
+    def end_synchronized_output
+      "\033[?2026l"
+    end
+
     sig { returns(T.nilable([Integer, Integer])) }
     def size
       return @size if defined?(@size)

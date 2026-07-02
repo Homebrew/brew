@@ -161,6 +161,8 @@ module Homebrew
                 finished_states.include?(future.state)
               end
 
+              stdout_print_and_flush_if_tty Tty.begin_synchronized_output
+
               finished_downloads.each do |downloadable, future|
                 previous_pending_line_count -= 1
                 output_message.call(downloadable, future, false)
@@ -185,11 +187,15 @@ module Homebrew
                 end
               end
 
+              stdout_print_and_flush_if_tty Tty.end_synchronized_output
+
               sleep 0.05
             # We want to catch all exceptions to ensure we can cancel any
             # running downloads and flush the TTY.
             rescue Exception # rubocop:disable Lint/RescueException
               cancel
+
+              stdout_print_and_flush_if_tty Tty.end_synchronized_output
 
               if previous_pending_line_count.positive?
                 stdout_print_and_flush_if_tty Tty.move_cursor_down(previous_pending_line_count - 1)

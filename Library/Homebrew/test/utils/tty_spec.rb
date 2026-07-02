@@ -8,6 +8,18 @@ RSpec.describe Tty do
     end
   end
 
+  describe "::begin_synchronized_output" do
+    it "returns the synchronized output begin escape sequence" do
+      expect(described_class.begin_synchronized_output).to eq("\033[?2026h")
+    end
+  end
+
+  describe "::end_synchronized_output" do
+    it "returns the synchronized output end escape sequence" do
+      expect(described_class.end_synchronized_output).to eq("\033[?2026l")
+    end
+  end
+
   describe "::width" do
     specify do
       expect(described_class.width).to be_a(Integer)
