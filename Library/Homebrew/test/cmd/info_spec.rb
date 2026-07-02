@@ -1151,6 +1151,81 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  describe "#print_sizes_with_deps" do
+    it "prints direct size for a formula with no dependencies" do
+      testball = formula("testball") { url "https://brew.sh/testball-0.1.tar.gz" }
+      keg = instance_double(Keg, disk_usage: 1_000_000, runtime_dependencies: [])
+      allow(testball).to receive_messages(installed_kegs: [keg], any_installed_keg: keg)
+      allow(Formula).to receive(:installed).and_return([testball])
+
+      info = described_class.new(["--sizes", "--deps", "testball"])
+
+      expect { info.send(:print_sizes_with_deps, [testball]) }
+        .to output(/testball: 1MB\n/).to_stdout
+        .and not_to_output.to_stderr
+    end
+
+    it "shows exclusive dependency breakdown in footprint" do
+      testball = formula("testball") { url "https://brew.sh/testball-0.1.tar.gz" }
+      libfoo = formula("libfoo") { url "https://brew.sh/libfoo-1.0.tar.gz" }
+
+      testball_keg = instance_double(Keg,
+                                     disk_usage:           1_000_000,
+                                     runtime_dependencies: [{ "full_name" => "libfoo", "version" => "1.0" }])
+      libfoo_keg = instance_double(Keg, disk_usage: 500_000, runtime_dependencies: [])
+
+      allow(testball).to receive_messages(installed_kegs: [testball_keg], any_installed_keg: testball_keg)
+      allow(libfoo).to receive_messages(installed_kegs: [libfoo_keg], any_installed_keg: libfoo_keg)
+      allow(Formula).to receive(:installed).and_return([testball])
+      allow(Formulary).to receive(:factory).with("libfoo").and_return(libfoo)
+
+      info = described_class.new(["--sizes", "--deps", "testball"])
+
+      expect { info.send(:print_sizes_with_deps, [testball]) }
+        .to output(/testball: 1MB \(direct\) \+ 500KB \(1 exclusive dep\) = 1\.5MB total/).to_stdout
+        .and not_to_output.to_stderr
+    end
+
+    it "shows shared dependency info when a dep is needed by multiple formulae" do
+      testball = formula("testball") { url "https://brew.sh/testball-0.1.tar.gz" }
+      other = formula("other") { url "https://brew.sh/other-0.1.tar.gz" }
+      libbar = formula("libbar") { url "https://brew.sh/libbar-1.0.tar.gz" }
+
+      testball_keg = instance_double(Keg,
+                                     disk_usage:           1_000_000,
+                                     runtime_dependencies: [{ "full_name" => "libbar", "version" => "1.0" }])
+      other_keg = instance_double(Keg,
+                                  disk_usage:           800_000,
+                                  runtime_dependencies: [{ "full_name" => "libbar", "version" => "1.0" }])
+      libbar_keg = instance_double(Keg, disk_usage: 500_000, runtime_dependencies: [])
+
+      allow(testball).to receive_messages(installed_kegs: [testball_keg], any_installed_keg: testball_keg)
+      allow(other).to receive_messages(installed_kegs: [other_keg], any_installed_keg: other_keg)
+      allow(libbar).to receive_messages(installed_kegs: [libbar_keg], any_installed_keg: libbar_keg)
+      allow(Formula).to receive(:installed).and_return([testball, other])
+      allow(Formulary).to receive(:factory).with("libbar").and_return(libbar)
+
+      info = described_class.new(["--sizes", "--deps", "testball"])
+
+      expect { info.send(:print_sizes_with_deps, [testball]) }
+        .to output(/testball: 1MB \(direct\), no exclusive deps\n\s+500KB in shared deps/).to_stdout
+        .and not_to_output.to_stderr
+    end
+
+    it "prints a table when no formulae are named" do
+      testball = formula("testball") { url "https://brew.sh/testball-0.1.tar.gz" }
+      keg = instance_double(Keg, disk_usage: 2_000_000, runtime_dependencies: [])
+      allow(testball).to receive_messages(installed_kegs: [keg], any_installed_keg: keg)
+      allow(Formula).to receive(:installed).and_return([testball])
+
+      info = described_class.new(["--sizes", "--deps"])
+
+      expect { info.send(:print_sizes_with_deps, [testball]) }
+        .to output(/Formulae footprint:.*Name\s+Direct\s+Excl\.Deps\s+Total.*testball/m).to_stdout
+        .and not_to_output.to_stderr
+    end
+  end
+
   describe "::installation_status" do
     it "prints on-request installs explicitly" do
       expect(described_class.installation_status(instance_double(Tab, installed_on_request: true)))
