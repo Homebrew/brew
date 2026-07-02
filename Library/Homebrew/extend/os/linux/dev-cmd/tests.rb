@@ -35,11 +35,7 @@ module OS
           else
             ::Sandbox.ensure_sandbox_installed!(install_from_tests: true)
           end
-          return if ::Sandbox.available?
-
-          reason = ::Sandbox.failure_reason ||
-                   "`HOMEBREW_SANDBOX_LINUX` requires a working rootless Bubblewrap sandbox."
-          raise UsageError, reason
+          ::Sandbox.ensure_sandbox_available!
         end
       end
     end

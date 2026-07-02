@@ -56,8 +56,10 @@ module Homebrew
 
       return if configure_sandbox!
 
-      ENV["HOMEBREW_NO_SANDBOX_LINUX"] = "1"
       require "sandbox"
+      Sandbox.ensure_sandbox_available! if ENV["GITHUB_REPOSITORY_OWNER"] == "Homebrew"
+
+      ENV["HOMEBREW_NO_SANDBOX_LINUX"] = "1"
       Sandbox.reset_state!
     end
 

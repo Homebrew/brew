@@ -120,6 +120,13 @@ class Sandbox
   sig { params(install_from_tests: T::Boolean).void }
   def self.ensure_sandbox_installed!(install_from_tests: false); end
 
+  sig { void }
+  def self.ensure_sandbox_available!
+    return if available?
+
+    raise failure_reason || "The sandbox is not available."
+  end
+
   sig { returns(Symbol) }
   def self.state
     available? ? :available : :unavailable
@@ -153,7 +160,7 @@ class Sandbox
   sig { params(command: T.any(String, Pathname), writable_path: T.any(String, Pathname), deny_network: T::Boolean).void }
   def self.run_command(*command, writable_path:, deny_network: false)
     ensure_sandbox_installed!
-    raise failure_reason || "The sandbox is not available." unless available?
+    ensure_sandbox_available!
 
     writable_path = Pathname(writable_path).expand_path
     if !writable_path.directory? || !writable_path.writable?

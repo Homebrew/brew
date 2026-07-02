@@ -325,7 +325,9 @@ jobs:
     needs: syntax
     if: github.repository_owner == 'Homebrew' && github.event_name != 'push'
     runs-on: ${{ matrix.runs-on }}
-    container: ${{ matrix.container }}
+    container:
+      image: ${{ matrix.container }}
+      options: ${{ matrix.container != '' && '--privileged' }}
     strategy:
       fail-fast: false
       matrix:

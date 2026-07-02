@@ -209,8 +209,17 @@ RSpec.describe Homebrew::TestBot do
       described_class.setup_github_actions_sandbox!
     end
 
-    it "disables the Linux sandbox if GitHub Actions cannot configure it" do
+    it "raises when GitHub Actions cannot configure the Linux sandbox for Homebrew repositories" do
       allow(described_class).to receive(:configure_sandbox!).and_return(false)
+      allow(ENV).to receive(:[]).with("GITHUB_REPOSITORY_OWNER").and_return("Homebrew")
+      allow(Sandbox).to receive(:available?).and_return(false)
+
+      expect { described_class.setup_github_actions_sandbox! }.to raise_error(RuntimeError)
+    end
+
+    it "disables the Linux sandbox if GitHub Actions cannot configure it for external repositories" do
+      allow(described_class).to receive(:configure_sandbox!).and_return(false)
+      allow(ENV).to receive(:[]).with("GITHUB_REPOSITORY_OWNER").and_return("foo")
 
       described_class.setup_github_actions_sandbox!
 

@@ -33,7 +33,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
       expect(Sandbox).to receive(:ensure_sandbox_installed!).with(install_from_tests: true)
 
       expect { tests.send(:check_test_environment!) }
-        .to raise_error(UsageError, "Invalid usage: Bubblewrap is not working.")
+        .to raise_error(RuntimeError, "Bubblewrap is not working.")
     end
 
     it "installs and probes sandbox availability when Linux sandboxing is enabled" do

@@ -107,12 +107,15 @@ class GitHubRunnerMatrix
     else raise "Unknown Linux architecture: #{arch}"
     end
 
+    options = %w[--user linuxbrew --env GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED]
+    options << "--privileged" if Homebrew::EnvConfig.sandbox_linux?
+
     LinuxRunnerSpec.new(
       name:      "Linux #{arch}",
       runner:    linux_runner,
       container: {
         image:   "ghcr.io/homebrew/brew:main",
-        options: "--user=linuxbrew -e GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED",
+        options: options.join(" "),
       },
       workdir:   "/github/home",
       timeout:   GITHUB_ACTIONS_LONG_TIMEOUT,
