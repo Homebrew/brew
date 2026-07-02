@@ -163,22 +163,17 @@ module Cask
       Cache.path
     end
 
+    # Use the cask token as the download name so that the cache symlink is named
+    # `<token>--<version>`. `Cleanup` resolves a cached cask from that prefix
+    # (`stale_cask?` / `cleanup_cask`'s `Cask/#{token}--*` glob); a vendor URL
+    # basename (e.g. `Docker.dmg`) is not loadable as a cask, so superseded
+    # downloads would never be pruned. The cached file itself is unaffected: it is
+    # named from the URL (`resolved_basename`), not from `download_name`. A token
+    # is always short, so this also removes the need to guard against overlong
+    # symlink names.
     sig { override.returns(String) }
     def download_name
-      url_basename = super
-      version = self.version
-      url = self.url
-      return url_basename if version.nil? || url.nil?
-
-      temp_downloader = download_strategy.new(url.to_s, url_basename, version, mirrors: [], cache:, **url.specs)
-      return url_basename unless temp_downloader.is_a?(AbstractFileDownloadStrategy)
-
-      potential_symlink_length = temp_downloader.symlink_location.basename.to_s.length
-      max_filesystem_symlink_length = 255
-
-      return url_basename if potential_symlink_length < max_filesystem_symlink_length
-
-      cask.full_token.gsub("/", "--")
+      cask.token
     end
   end
 end
