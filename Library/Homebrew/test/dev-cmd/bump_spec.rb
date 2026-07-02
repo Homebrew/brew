@@ -224,6 +224,71 @@ RSpec.describe Homebrew::DevCmd::Bump do
     end
   end
 
+  describe "::retrieve_versions_by_arch" do
+    before do
+      allow(bump).to receive(:retrieve_pull_requests)
+    end
+
+    let(:c_arm_only) do
+      Cask::CaskLoader.load(+<<-RUBY)
+        cask "arm_only_cask" do
+          arch arm: "arm64", intel: "x64"
+
+          version "1.2.3"
+          sha256 :no_check
+
+          url "https://brew.sh/test-\#{arch}.dmg"
+          name "Arm Only Cask"
+          desc "Arm only cask"
+          homepage "https://brew.sh"
+
+          depends_on arch: :arm64
+        end
+      RUBY
+    end
+    let(:c_intel_only) do
+      Cask::CaskLoader.load(+<<-RUBY)
+        cask "intel_only_cask" do
+          arch arm: "arm64", intel: "x64"
+
+          version "1.2.3"
+          sha256 :no_check
+
+          url "https://brew.sh/test-\#{arch}.dmg"
+          name "Intel Only Cask"
+          desc "Intel only cask"
+          homepage "https://brew.sh"
+
+          depends_on arch: :x86_64
+        end
+      RUBY
+    end
+
+    it "simulates only arm and consolidates to a general version when `depends_on arch:` restricts to arm-only" do
+      allow(c_arm_only).to receive(:sourcefile_path).and_return(Pathname("arm_only_cask.rb"))
+      allow(Cask::CaskLoader).to receive(:load).and_return(c_arm_only)
+      expect(bump).to receive(:livecheck_result).once.and_return(Version.new("1.2.4"))
+
+      version_info = bump.send(
+        :retrieve_versions_by_arch, formula_or_cask: c_arm_only, repositories: [], name: "arm-only-cask"
+      )
+
+      expect(version_info.new_version).to eq(Homebrew::BumpVersionParser.new(general: Version.new("1.2.4")))
+    end
+
+    it "simulates only intel and consolidates to a general version when `depends_on arch:` restricts to intel-only" do
+      allow(c_intel_only).to receive(:sourcefile_path).and_return(Pathname("intel_only_cask.rb"))
+      allow(Cask::CaskLoader).to receive(:load).and_return(c_intel_only)
+      expect(bump).to receive(:livecheck_result).once.and_return(Version.new("1.2.4"))
+
+      version_info = bump.send(
+        :retrieve_versions_by_arch, formula_or_cask: c_intel_only, repositories: [], name: "intel-only-cask"
+      )
+
+      expect(version_info.new_version).to eq(Homebrew::BumpVersionParser.new(general: Version.new("1.2.4")))
+    end
+  end
+
   describe "::message?" do
     let(:version) { Version.new("1.2.3") }
     let(:cask_version) { Cask::DSL::Version.new("1.2.3,4") }
