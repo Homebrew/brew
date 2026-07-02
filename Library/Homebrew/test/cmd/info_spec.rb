@@ -1316,7 +1316,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
       expect { info.send(:info_formula, main_formula) }
         .to output(Regexp.new(
-                     "==> Installed Kegs and Versions\n" \
+                     "==> Installed Versions\n" \
                      ".*testball\\b.*\\s+1\\.0\\s+\\(.*\\)\n" \
                      ".*testball@0\\.9\\b.*\\s+0\\.9\\s+\\(",
                    )).to_stdout
@@ -1343,12 +1343,32 @@ RSpec.describe Homebrew::Cmd::Info do
       allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
 
       expect { info.send(:info_formula, main_formula) }
-        .to output(Regexp.new(
-                     "==> Installed Kegs and Versions\n" \
-                     ".*testball\\b.*\\s+1\\.0 → 2\\.0\\s+\\(.*\\)\n" \
-                     ".*testball\\b.*\\s+0\\.9\\s+\\(",
-                   )).to_stdout
+        .to output(/==> Installed Versions\n.*testball\b.*\s+1\.0 → 2\.0\s+\(/).to_stdout
         .and not_to_output(/0\.9 →/).to_stdout
+        .and not_to_output.to_stderr
+    end
+
+    it "hides older non-linked kegs by default" do
+      info = described_class.new([])
+      main_formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/testball-1.0.tar.gz"
+      end
+
+      ["1.0", "0.9"].each do |version|
+        keg_path = HOMEBREW_CELLAR/"testball/#{version}"
+        keg_path.mkpath
+        tab = Tab.empty
+        tab.tabfile = keg_path/AbstractTab::FILENAME
+        tab.write
+      end
+
+      allow(main_formula).to receive(:versioned_formulae).and_return([])
+      allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
+
+      expect { info.send(:info_formula, main_formula) }
+        .to output(/==> Installed Versions\n.*testball\b.*\s+1\.0\s+\(/).to_stdout
+        .and not_to_output(/\s+0\.9\s+\(/).to_stdout
         .and not_to_output.to_stderr
     end
 
@@ -1417,7 +1437,7 @@ RSpec.describe Homebrew::Cmd::Info do
 
       expect { info.send(:info_formula, versioned) }
         .to output(Regexp.new(
-                     "==> Installed Kegs and Versions\n" \
+                     "==> Installed Versions\n" \
                      ".*testball\\b.*\\s+1\\.0\\s+\\(.*\\)\n" \
                      ".*testball@0\\.9\\b.*\\s+0\\.9\\s+\\(",
                    )).to_stdout
@@ -1441,7 +1461,7 @@ RSpec.describe Homebrew::Cmd::Info do
       allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
 
       expect { info.send(:info_formula, main_formula) }
-        .to output(/==> Installed Kegs and Versions\n.*testball\b.*\s+1\.0\s+\(/).to_stdout
+        .to output(/==> Installed Versions\n.*testball\b.*\s+1\.0\s+\(/).to_stdout
         .and not_to_output.to_stderr
     end
 
@@ -1468,13 +1488,13 @@ RSpec.describe Homebrew::Cmd::Info do
       allow(info).to receive(:github_info).with(versioned).and_return("https://example.com/testball.rb")
 
       expect { info.send(:info_formula, versioned) }
-        .to output(/==> Installed Kegs and Versions\n.*testball\b.*\s+1\.0\s+\(/).to_stdout
+        .to output(/==> Installed Versions\n.*testball\b.*\s+1\.0\s+\(/).to_stdout
         .and not_to_output(/testball@0\.9 \(0\.9\)/).to_stdout
         .and not_to_output.to_stderr
     end
 
-    it "lists every installed keg of a formula, newest first" do
-      info = described_class.new([])
+    it "lists every installed keg of a formula, newest first, with --verbose" do
+      info = described_class.new(["--verbose"])
       main_formula = formula("testball") do
         T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
@@ -1495,7 +1515,9 @@ RSpec.describe Homebrew::Cmd::Info do
         .to output(Regexp.new(
                      "==> Installed Kegs and Versions\n" \
                      ".*testball\\b.*\\s+1\\.0\\b.*\\(.*\\)\n" \
+                     "(?: .*\n)*" \
                      ".*testball\\b.*\\s+0\\.10\\s+\\(.*\\)\n" \
+                     "(?: .*\n)*" \
                      ".*testball\\b.*\\s+0\\.9\\s+\\(",
                    )).to_stdout
         .and not_to_output.to_stderr
@@ -1511,7 +1533,7 @@ RSpec.describe Homebrew::Cmd::Info do
       allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
 
       expect { info.send(:info_formula, main_formula) }
-        .to not_to_output(/==> Installed Kegs and Versions\b/).to_stdout
+        .to not_to_output(/==> Installed Versions\b/).to_stdout
         .and not_to_output.to_stderr
     end
   end

@@ -735,7 +735,7 @@ module Homebrew
 
         installed_lines = installed_section_lines(shadowing_formula || formula, verbose: args.verbose?)
         unless installed_lines.empty?
-          ohai "Installed Kegs and Versions"
+          ohai(args.verbose? ? "Installed Kegs and Versions" : "Installed Versions")
           installed_lines.each { |line| puts line }
         end
 
@@ -855,6 +855,7 @@ module Homebrew
           ]
           ordered_kegs.each_with_index.map { |keg, index| [other, keg, index.zero?] }
         end
+        with_kegs = with_kegs.select { |_other, keg, newest| newest || keg.linked? } unless verbose
         rows = with_kegs.map do |other, keg, newest|
           name_status = pretty_install_status(other.full_name, installed: true, outdated: other.outdated?)
           version = keg.version.to_s
