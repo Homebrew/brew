@@ -94,7 +94,10 @@ module OS
 
       sig { returns(::Pathname) }
       def self.bubblewrap_executable!
-        bubblewrap_executable || raise("Bubblewrap is required to use the Linux sandbox.")
+        bubblewrap_executable || raise(
+          "Bubblewrap is required to use the Linux sandbox. " \
+          "Try installing it with `brew install bubblewrap`.",
+        )
       end
 
       sig { void }
@@ -157,7 +160,10 @@ module OS
 
         sig { returns(::Pathname) }
         def bubblewrap_executable!
-          bubblewrap_executable || raise("Bubblewrap is required to use the Linux sandbox.")
+          bubblewrap_executable || raise(
+            "Bubblewrap is required to use the Linux sandbox. " \
+            "Try installing it with `brew install bubblewrap`.",
+          )
         end
 
         sig { params(install_from_tests: T::Boolean).void }
@@ -265,7 +271,8 @@ module OS
           when :disabled, :available
             nil
           when :missing
-            "Bubblewrap is required to use the Linux sandbox but was not found."
+            "Bubblewrap is required to use the Linux sandbox but was not found. " \
+            "Try installing it with `brew install bubblewrap`."
           when :setuid
             "A rootless Bubblewrap executable is required to use the Linux sandbox, " \
             "but all found `bwrap` executables are setuid."
