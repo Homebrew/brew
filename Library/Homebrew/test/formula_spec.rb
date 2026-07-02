@@ -3043,6 +3043,34 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#skip_patchelf" do
+    it "defaults to false" do
+      f = formula do
+        url "foo-1.0"
+      end
+
+      expect(f.class.skip_patchelf?).to be(false)
+    end
+
+    it "can be enabled" do
+      f = formula do
+        url "foo-1.0"
+        skip_patchelf
+      end
+
+      expect(f.class.skip_patchelf?).to be(true)
+    end
+
+    it "can be explicitly disabled" do
+      f = formula do
+        url "foo-1.0"
+        skip_patchelf value: false
+      end
+
+      expect(f.class.skip_patchelf?).to be(false)
+    end
+  end
+
   describe "#deprecate! and #disable!" do
     let(:deprecation_date) { "2020-01-01" }
     let(:disable_date) { "2021-01-01" }

@@ -15,6 +15,9 @@ module OS
         # Patching the dynamic linker of glibc breaks it.
         return if name.match? Version.formula_optionally_versioned_regex(:glibc)
 
+        # Skip running patchelf.rb on formulae where resulting binaries are broken
+        return if formula_skip_patchelf?
+
         old_prefix, new_prefix = relocation.replacement_pair_for(:prefix)
 
         elf_files.each do |file|
@@ -105,6 +108,13 @@ module OS
           elf_files << pn
         end
         elf_files
+      end
+
+      sig { returns(T::Boolean) }
+      def formula_skip_patchelf?
+        to_formula.skip_patchelf?
+      rescue FormulaUnavailableError
+        false
       end
     end
   end
