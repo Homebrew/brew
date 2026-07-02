@@ -51,7 +51,7 @@ module Homebrew
           methods = args.named
         end
 
-        findings = []
+        finding_collection = []
         first_warning = T.let(true, T::Boolean)
         methods.each do |method|
           $stderr.puts Formatter.headline("Checking #{method}", color: :magenta) if args.debug?
@@ -62,17 +62,13 @@ module Homebrew
 
           finding = checks.send(method)
 
-          return_findings = if finding.is_a?(Array)
-            T.let(finding.compact, T::Array[Diagnostic::Finding])
-          else
-            T.let([finding].compact, T::Array[Diagnostic::Finding])
-          end
+          method_findings = T.let(Array(finding).compact, T::Array[Diagnostic::Finding])
 
-          next if return_findings.empty?
+          next if method_findings.empty?
 
           if args.json?
             Homebrew.failed = true
-            findings.concat(return_findings.compact.map(&:to_h))
+            finding_collection.concat(method_findings.compact)
             next
           end
 
@@ -85,14 +81,15 @@ module Homebrew
           end
 
           $stderr.puts
-          opoo return_findings.each(&:to_s).join("\n")
+          opoo method_findings.each(&:to_s).join("\n")
           Homebrew.failed = true
           first_warning = false
         end
 
         if args.json?
-          tier = findings.max_by { |f| f[:tier] }&.fetch(:tier, 1)
-          puts JSON.pretty_generate({ tier: tier, findings: findings }).gsub(/\[\n\n\s*\]/, "[]")
+          finding_maps = finding_collection.map(&:to_h)
+          tier = finding_maps.max_by { |f| f[:tier] }&.fetch(:tier, 1)
+          puts JSON.pretty_generate({ tier: tier, findings: finding_maps }).gsub(/\[\n\n\s*\]/, "[]")
 
           return
         end

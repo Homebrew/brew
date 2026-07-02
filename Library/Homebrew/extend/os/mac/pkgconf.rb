@@ -34,6 +34,12 @@ module Homebrew
     sig { params(mismatch: [String, String]).returns(Diagnostic::Finding) }
     def mismatch_warning_message(mismatch)
       Diagnostic::Finding.new(
+        <<~EOS,
+          You have pkgconf installed that was built on macOS #{mismatch[0]},
+                 but you are running macOS #{mismatch[1]}.
+
+          This can cause issues with packages that depend on system libraries, such as libffi.
+        EOS
         links:       [
           "https://github.com/Homebrew/brew/issues/16137",
         ],
@@ -45,12 +51,6 @@ module Homebrew
           EOS
           commands: ["brew reinstall pkgconf"],
         ),
-        text:        <<~EOS,
-          You have pkgconf installed that was built on macOS #{mismatch[0]},
-                 but you are running macOS #{mismatch[1]}.
-
-          This can cause issues with packages that depend on system libraries, such as libffi.
-        EOS
       )
     end
   end

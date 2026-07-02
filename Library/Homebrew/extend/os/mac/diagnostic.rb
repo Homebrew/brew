@@ -116,11 +116,10 @@ module OS
           default_names = Tab.for_name("findutils").with? "default-names"
           return if !default_names && !paths.intersect?(gnubin)
 
-          ::Homebrew::Diagnostic::Finding.new(
-            text: <<~EOS,
-              Putting non-prefixed findutils in your path can cause python builds to fail."
-            EOS
-          )
+          ::Homebrew::Diagnostic::Finding.new(<<~EOS,
+            Putting non-prefixed findutils in your path can cause python builds to fail."
+          EOS
+                                             )
         rescue FormulaUnavailableError
           nil
         end
@@ -148,14 +147,12 @@ module OS
 
           who.freeze
 
-          ::Homebrew::Diagnostic::Finding.new(
-            remediation: remediation,
-            tier:        tier,
-            text:        <<~EOS,
-              You are using macOS #{MacOS.version}.
-              #{who} do not provide support for this #{what}
-            EOS
-          )
+          ::Homebrew::Diagnostic::Finding.new(<<~EOS,
+            You are using macOS #{MacOS.version}.
+            #{who} do not provide support for this #{what}
+          EOS
+                                              remediation: remediation,
+                                              tier:        tier)
         end
 
         sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
@@ -179,13 +176,11 @@ module OS
             3
           end
 
-          ::Homebrew::Diagnostic::Finding.new(
-            text: <<~EOS,
-              You have booted macOS using OpenCore Legacy Patcher.
-              We do not provide support for this configuration.
-            EOS
-            tier: oclp_support_tier,
-          )
+          ::Homebrew::Diagnostic::Finding.new(<<~EOS,
+            You have booted macOS using OpenCore Legacy Patcher.
+            We do not provide support for this configuration.
+          EOS
+                                              tier: oclp_support_tier)
         end
 
         sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
@@ -216,11 +211,9 @@ module OS
             EOS
           end
 
-          ::Homebrew::Diagnostic::Finding.new(
-            tier:        2,
-            text:        "Your Xcode (#{MacOS::Xcode.version}) is outdated.",
-            remediation: remediation,
-          )
+          ::Homebrew::Diagnostic::Finding.new("Your Xcode (#{MacOS::Xcode.version}) is outdated.",
+                                              tier:        2,
+                                              remediation: remediation)
         end
 
         sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
@@ -237,7 +230,7 @@ module OS
           return if GitHub::Actions.env_set?
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        "A newer Command Line Tools release is available.",
+            "A newer Command Line Tools release is available.",
             tier:        2,
             remediation: MacOS::CLT.update_instructions,
           )
@@ -251,7 +244,7 @@ module OS
           xcode += " => #{MacOS::Xcode.prefix}" unless MacOS::Xcode.default_prefix?
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        <<~EOS,
+            <<~EOS,
               Your Xcode (#{xcode}) at #{MacOS::Xcode.bundle_path} is too outdated.
             EOS
             remediation: <<~EOS,
@@ -266,7 +259,7 @@ module OS
           return unless MacOS::CLT.below_minimum_version?
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        <<~EOS,
+            <<~EOS,
               Your Command Line Tools are too outdated.
             EOS
             remediation: MacOS::CLT.update_instructions,
@@ -278,7 +271,7 @@ module OS
           return unless MacOS::Xcode.needs_clt_installed?
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        <<~EOS,
+            <<~EOS,
               Xcode alone is not sufficient on #{MacOS.version.pretty_name}.
             EOS
             remediation: ::DevelopmentTools.installation_instructions,
@@ -292,7 +285,7 @@ module OS
           return unless prefix.to_s.include?(" ")
 
           ::Homebrew::Diagnostic::Finding.new(
-            text: <<~EOS,
+            <<~EOS,
               Xcode is installed to a directory with a space in the name.
               This will cause some formulae to fail to build.
             EOS
@@ -305,7 +298,7 @@ module OS
           return if prefix.nil? || prefix.exist?
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        <<~EOS,
+            <<~EOS,
               The directory Xcode is reportedly installed to doesn't exist:
               #{prefix}
             EOS
@@ -325,7 +318,7 @@ module OS
           path = "/Developer" if path.nil? || !path.directory?
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        <<~EOS,
+            <<~EOS,
               Your Xcode is configured with an invalid path.
             EOS
             remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(
@@ -346,7 +339,7 @@ module OS
           return if $CHILD_STATUS.success?
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        <<~EOS,
+            <<~EOS,
               You have not agreed to the Xcode license.
             EOS
             remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(
@@ -388,7 +381,7 @@ module OS
           case_sensitive_vols.uniq!
 
           ::Homebrew::Diagnostic::Finding.new(
-            text: <<~EOS,
+            <<~EOS,
               The filesystem on #{case_sensitive_vols.join(",")} appears to be case-sensitive.
               The default macOS filesystem is case-insensitive. Please report any apparent problems.
             EOS
@@ -425,7 +418,7 @@ module OS
           end
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        <<~EOS,
+            <<~EOS,
               gettext files detected at a system prefix.
               These files can cause compilation and link failures, especially if they
               are compiled with improper architectures.
@@ -450,7 +443,7 @@ module OS
           if libiconv&.linked_keg&.directory?
             unless libiconv&.keg_only?
               ::Homebrew::Diagnostic::Finding.new(
-                text: <<~EOS,
+                <<~EOS,
                   A libiconv formula is installed and linked.
                   This will break stuff. For serious. Unlink it.
                 EOS
@@ -458,7 +451,7 @@ module OS
             end
           else
             ::Homebrew::Diagnostic::Finding.new(
-              text:        <<~EOS,
+              <<~EOS,
                 libiconv files detected at a system prefix other than /usr.
                 Homebrew doesn't provide a libiconv formula and expects to link against
                 the system version in /usr. libiconv in other prefixes can cause
@@ -504,7 +497,7 @@ module OS
             exists. Formulae known to be affected by this are Git and Narwhal.
           EOS
           ::Homebrew::Diagnostic::Finding.new(
-            text:        issue,
+            issue,
             tier:        2,
             remediation: <<~EOS,
               You should set the `$HOMEBREW_TEMP` environment variable to a suitable
@@ -533,7 +526,7 @@ module OS
           end
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        <<~EOS,
+            <<~EOS,
               Your #{source} does not support macOS #{MacOS.version}.\nIt is either outdated or was modified.
             EOS
             remediation: ::Homebrew::Diagnostic::Finding::Remediation.new(text: <<~EOS,
@@ -573,11 +566,11 @@ module OS
             text:     "Remove the broken installation before reinstalling\n #{installation_instructions}",
           )
           ::Homebrew::Diagnostic::Finding.new(
-            remediation: remediation,
-            text:        <<~EOS,
+            <<~EOS,
               The contents of the SDKs in your #{source} installation do not match the SDK folder names.
               A clean reinstall of #{source} should fix this.
             EOS
+            remediation: remediation,
           )
         end
 
@@ -660,7 +653,7 @@ module OS
           return unless messages.first.present?
 
           ::Homebrew::Diagnostic::Finding.new(
-            text:        T.must(messages.first),
+            T.must(messages.first),
             remediation: messages.last,
           )
         end

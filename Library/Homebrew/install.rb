@@ -30,7 +30,7 @@ module Homebrew
       def check_cc_argv(cc)
         return unless cc
 
-        @checks ||= T.let(Diagnostic::Finding.new(text: "", tier: 3), T.nilable(Homebrew::Diagnostic::Finding))
+        @checks ||= T.let(Diagnostic::Finding.new("", tier: 3), T.nilable(Homebrew::Diagnostic::Finding))
         opoo <<~EOS
           You passed `--cc=#{cc}`.
 

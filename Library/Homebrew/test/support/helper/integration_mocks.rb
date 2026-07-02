@@ -5,7 +5,7 @@ module Homebrew
   module Diagnostic
     class Checks
       def check_integration_test
-        Finding.new(text: "This is an integration test") if ENV["HOMEBREW_INTEGRATION_TEST"]
+        Finding.new("This is an integration test") if ENV["HOMEBREW_INTEGRATION_TEST"]
       end
     end
   end
