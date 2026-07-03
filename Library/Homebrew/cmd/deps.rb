@@ -37,6 +37,8 @@ module Homebrew
                description: "Sort dependencies in topological order."
         switch "-1", "--direct", "--declared", "--1",
                description: "Show only the direct dependencies declared in the formula."
+        switch "-v", "--verbose",
+               description: "Show description for each dependency."
         switch "--union",
                description: "Show the union of dependencies for multiple <formula>, instead of the intersection."
         switch "--full-name",
@@ -56,8 +58,6 @@ module Homebrew
         switch "--tree",
                description: "Show dependencies as a tree. When given multiple formula arguments, " \
                             "show individual trees for each formula."
-        switch "-v", "--verbose",
-               description: "Show description for each dependency."
         switch "--prune",
                depends_on:  "--tree",
                description: "Prune parts of tree already seen."
@@ -274,15 +274,17 @@ module Homebrew
       sig { params(dep: T.any(Requirement, Dependency)).returns(String) }
       def dep_display_name_with_description(dep)
         name = dep_display_name(dep)
-        return name unless args.verbose? && dep.is_a?(Dependency)
+        return name unless dep.is_a?(Dependency)
 
         begin
           formula = Formulary.factory(dep.name)
           description = formula.desc
-          "#{name}: #{description}" if description.present?
+          return "#{name}: #{description}" if description.present?
         rescue FormulaUnavailableError, Cask::CaskUnavailableError
-          name
-        end || name
+          # Fall through to return name without description
+        end
+
+        name
       end
 
       sig {
@@ -423,7 +425,11 @@ module Homebrew
             "├──"
           end
 
-          display_s = "#{tree_lines} #{dep_display_name(dep)}"
+          display_s = if args.verbose?
+            "#{tree_lines} #{dep_display_name_with_description(dep)}"
+          else
+            "#{tree_lines} #{dep_display_name(dep)}"
+          end
 
           # Detect circular dependencies and consider them a failure if present.
           is_circular = deps_seen.fetch(dep.name, false)
