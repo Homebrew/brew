@@ -37,8 +37,8 @@ module Homebrew
                description: "Sort dependencies in topological order."
         switch "-1", "--direct", "--declared", "--1",
                description: "Show only the direct dependencies declared in the formula."
-        switch "-v", "--verbose",
-               description: "Show description for each dependency."
+        switch "-i", "--info",
+               description: "Show description with each dependency."
         switch "--union",
                description: "Show the union of dependencies for multiple <formula>, instead of the intersection."
         switch "--full-name",
@@ -217,7 +217,7 @@ module Homebrew
           deps_combine_mode = args.union? ? DepsCombineMode::Union : DepsCombineMode::Intersection
           all_deps = deps_for_dependents(dependents, deps_combine_mode:, recursive:)
           condense_requirements(all_deps)
-          if args.verbose?
+          if args.info?
             all_deps.map! { dep_display_name_with_description(it) }
           else
             all_deps.map! { dep_display_name(it) }
@@ -274,7 +274,7 @@ module Homebrew
       sig { params(dep: T.any(Requirement, Dependency)).returns(String) }
       def dep_display_name_with_description(dep)
         name = dep_display_name(dep)
-        return name unless dep.is_a?(Dependency)
+        return name unless args.info? && dep.is_a?(Dependency)
 
         begin
           formula = Formulary.factory(dep.name)
@@ -333,7 +333,7 @@ module Homebrew
           deps = deps_for_dependent(dependent, recursive:)
           condense_requirements(deps)
           deps.sort_by!(&:name)
-          if args.verbose?
+          if args.info?
             deps.map! { dep_display_name_with_description(it) }
           else
             deps.map! { dep_display_name(it) }
@@ -425,7 +425,7 @@ module Homebrew
             "├──"
           end
 
-          display_s = if args.verbose?
+          display_s = if args.info?
             "#{tree_lines} #{dep_display_name_with_description(dep)}"
           else
             "#{tree_lines} #{dep_display_name(dep)}"
