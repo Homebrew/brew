@@ -322,7 +322,7 @@ class GitHubRunnerMatrix
         compatible_dependents = formula.dependents(platform:, arch:, macos_version: macos_version&.to_sym)
                                        .select do |dependent_f|
           Homebrew::SimulateSystem.with(os: platform, arch: Homebrew::SimulateSystem.arch_symbols.fetch(arch)) do
-            simulated_dependent_f = TestRunnerFormula.new(Formulary.factory(dependent_f.name))
+            simulated_dependent_f = dependent_f
             next false if macos_version && !simulated_dependent_f.compatible_with?(macos_version)
 
             simulated_dependent_f.public_send(:"#{platform}_compatible?") &&

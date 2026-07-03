@@ -149,7 +149,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       .to output(/minimum-version-formula 1\.2\.2 -> 1\.2\.3/).to_stdout
   end
 
-  it "aligns formula-only no-ask upgrade summaries" do
+  it "aligns formula-only no-ask upgrade summaries", :no_api do
     write_formula "gh", <<~RUBY
       url "https://brew.sh/gh-2.95.0"
     RUBY

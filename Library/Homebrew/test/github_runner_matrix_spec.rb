@@ -239,14 +239,9 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
           it "activates no runners" do
             testball_depender_disabled = setup_test_runner_formula("testball-depender-disabled", ["testball"])
 
-            allow(Formulary).to receive(:factory).and_call_original
-            allow(Formulary).to receive(:factory).with("testball-depender-disabled") do
-              formula = testball_depender_disabled.formula
-              allow(formula).to receive(:disabled?).and_return(true)
-              formula
-            end
-
-            allow(Formula).to receive(:all).and_return([testball, testball_depender_disabled].map(&:formula))
+            disabled_formula = testball_depender_disabled.formula
+            allow(disabled_formula).to receive(:disabled?).and_return(true)
+            allow(Formula).to receive(:all).and_return([testball.formula, disabled_formula])
 
             runner_matrix = described_class.new([testball], [], all_supported: false, dependent_matrix: true)
             expect(runner_matrix.runners.any?(&:active)).to be(false)
@@ -257,14 +252,9 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
           it "activates no runners" do
             testball_depender_deprecated = setup_test_runner_formula("testball-depender-deprecated", ["testball"])
 
-            allow(Formulary).to receive(:factory).and_call_original
-            allow(Formulary).to receive(:factory).with("testball-depender-deprecated") do
-              formula = testball_depender_deprecated.formula
-              allow(formula).to receive(:deprecated?).and_return(true)
-              formula
-            end
-
-            allow(Formula).to receive(:all).and_return([testball, testball_depender_deprecated].map(&:formula))
+            deprecated_formula = testball_depender_deprecated.formula
+            allow(deprecated_formula).to receive(:deprecated?).and_return(true)
+            allow(Formula).to receive(:all).and_return([testball.formula, deprecated_formula])
 
             runner_matrix = described_class.new([testball], [], all_supported: false, dependent_matrix: true)
             expect(runner_matrix.runners.any?(&:active)).to be(false)

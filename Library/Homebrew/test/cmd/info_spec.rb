@@ -5,6 +5,10 @@ require "cmd/info"
 require "cmd/shared_examples/args_parse"
 
 RSpec.describe Homebrew::Cmd::Info do
+  before do
+    allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
+  end
+
   RSpec::Matchers.define :a_json_string do
     match do |actual|
       JSON.parse(actual)
