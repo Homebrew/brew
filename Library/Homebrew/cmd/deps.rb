@@ -56,6 +56,8 @@ module Homebrew
         switch "--tree",
                description: "Show dependencies as a tree. When given multiple formula arguments, " \
                             "show individual trees for each formula."
+        switch "-v", "--verbose",
+               description: "Show description for each dependency."
         switch "--prune",
                depends_on:  "--tree",
                description: "Prune parts of tree already seen."
@@ -215,7 +217,11 @@ module Homebrew
           deps_combine_mode = args.union? ? DepsCombineMode::Union : DepsCombineMode::Intersection
           all_deps = deps_for_dependents(dependents, deps_combine_mode:, recursive:)
           condense_requirements(all_deps)
-          all_deps.map! { dep_display_name(it) }
+          if args.verbose?
+            all_deps.map! { dep_display_name_with_description(it) }
+          else
+            all_deps.map! { dep_display_name(it) }
+          end
           all_deps.uniq!
           all_deps.sort! unless args.topological?
           puts all_deps
@@ -265,6 +271,20 @@ module Homebrew
         str
       end
 
+      sig { params(dep: T.any(Requirement, Dependency)).returns(String) }
+      def dep_display_name_with_description(dep)
+        name = dep_display_name(dep)
+        return name unless args.verbose? && dep.is_a?(Dependency)
+
+        begin
+          formula = Formulary.factory(dep.name)
+          description = formula.desc
+          "#{name}: #{description}" if description.present?
+        rescue FormulaUnavailableError, Cask::CaskUnavailableError
+          name
+        end || name
+      end
+
       sig {
         params(dependency: T.any(Formula, CaskDependent), recursive: T::Boolean)
           .returns(T::Array[T.any(Dependency, Requirement)])
@@ -311,7 +331,11 @@ module Homebrew
           deps = deps_for_dependent(dependent, recursive:)
           condense_requirements(deps)
           deps.sort_by!(&:name)
-          deps.map! { dep_display_name(it) }
+          if args.verbose?
+            deps.map! { dep_display_name_with_description(it) }
+          else
+            deps.map! { dep_display_name(it) }
+          end
           puts "#{dependent.full_name}: #{deps.join(" ")}"
         end
       end
