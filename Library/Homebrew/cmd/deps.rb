@@ -274,7 +274,7 @@ module Homebrew
       sig { params(dep: T.any(Requirement, Dependency)).returns(String) }
       def dep_display_name_with_description(dep)
         name = dep_display_name(dep)
-        return name unless args.info? && dep.is_a?(Dependency)
+        return name unless dep.is_a?(Dependency)
 
         begin
           formula = Formulary.factory(dep.name)
