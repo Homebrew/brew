@@ -230,7 +230,7 @@ module Homebrew
         end
 
         return false if cask.blank?
-        return true unless basename.to_s.match?(/\A#{Regexp.escape(name)}--#{Regexp.escape(cask.version)}\b/)
+        return true unless basename.to_s.match?(/\A#{Regexp.escape(name)}--#{Regexp.escape(cask.version)}(?:\.|\z)/)
         return true if scrub && cask.installed_version != cask.version
 
         if cask.version.latest?

@@ -351,6 +351,26 @@ RSpec.describe Homebrew::Cleanup do
         expect(stale).not_to exist
       end
     end
+
+    context "when the cask version ends in a non-word character" do
+      # Versions assembled from `version.csv` can end in a trailing comma (an
+      # empty final field), e.g. `free-gpgmail`. Now that such casks produce a
+      # token-prefixed download (see above), `stale_cask?` matches them, but it
+      # anchored the version with `\b`, which cannot match between the trailing
+      # comma and the download's `.` extension. That judged the *current*
+      # download stale and pruned it on every cleanup.
+      let(:cask) { Cask::CaskLoader.load("local-comma-version") }
+
+      it "keeps the current download" do
+        current = Cask::Download.new(cask).downloader.symlink_location
+        FileUtils.mkpath current.dirname
+        FileUtils.touch current
+
+        cleanup.cleanup_cask(cask)
+
+        expect(current).to exist
+      end
+    end
   end
 
   describe "::cleanup_logs" do
