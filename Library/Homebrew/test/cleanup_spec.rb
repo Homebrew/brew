@@ -5,6 +5,7 @@ require "test/support/fixtures/testball"
 require "cleanup"
 require "utils/autoremove"
 require "cask/cache"
+require "cask/download"
 require "uninstall"
 require "fileutils"
 
@@ -321,6 +322,33 @@ RSpec.describe Homebrew::Cleanup do
         cleanup.cleanup_cask(cask)
 
         expect(download).not_to exist
+      end
+    end
+
+    context "when the cask token differs from the download URL's basename" do
+      # `local-transmission`'s URL points at `transmission-2.61.dmg`, so the
+      # URL's basename ("transmission") doesn't match the cask token
+      # ("local-transmission"). This is the exact pattern that made superseded
+      # cask downloads unprunable before `Cask::Download#download_name` was
+      # changed to return `cask.token`: `stale_cask?` takes the text before
+      # the download's first `--` and tries to load it as a cask token, so a
+      # URL-basename-derived prefix was never recognised as one.
+      let(:cask) { Cask::CaskLoader.load("local-transmission") }
+      let(:old_cask) { Cask::CaskLoader.load(cask_path("outdated/local-transmission")) }
+
+      it "prunes a stale download at the path the real downloader computes" do
+        stale = Cask::Download.new(old_cask).downloader.symlink_location
+        FileUtils.mkpath stale.dirname
+        FileUtils.touch stale
+
+        # Uses the actual production naming logic, rather than a hardcoded
+        # `"#{cask.token}--..."` string, so a regression back to URL-basename
+        # naming would show up here as a name mismatch.
+        expect(stale.basename.to_s).to start_with("#{cask.token}--")
+
+        cleanup.cleanup_cask(cask)
+
+        expect(stale).not_to exist
       end
     end
   end
