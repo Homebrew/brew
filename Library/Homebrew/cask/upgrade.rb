@@ -434,6 +434,16 @@ module Cask
         # If successful, wipe the old cask from staging.
         old_cask_installer.finalize_upgrade
 
+        # Update the install receipt to the new version. The next upgrade
+        # resolves the old cask through it (the installed caskfile carries no
+        # version), so leaving it stale makes that upgrade back up and rename
+        # Caskroom paths that were purged here and abort with `Errno::ENOENT`.
+        # Written only after `finalize_upgrade` so a reverted upgrade never
+        # leaves a new-version receipt over a restored old install.
+        tab = Tab.create(new_cask)
+        tab.installed_on_request = Tab.for_cask(new_cask).installed_on_request
+        tab.write
+
         reopen_apps_after_upgrade(old_cask, new_cask) if quit
       rescue => e
         new_cask_installer.uninstall_artifacts(successor: old_cask, quit:) if new_artifacts_installed
