@@ -642,6 +642,57 @@ RSpec.describe Cask::Upgrade, :cask do
     end
   end
 
+  context "when upgrading the same cask twice" do
+    # These tests perform real installs and upgrades: the bug under test is in
+    # the on-disk bookkeeping (INSTALL_RECEIPT.json), which stubs would bypass.
+    before do
+      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/local-caffeine"))).install
+    end
+
+    it "updates the install receipt on upgrade" do
+      expect(Cask::Tab.for_cask(local_caffeine).source["version"]).to eq "1.2.2"
+
+      described_class.upgrade_casks!(local_caffeine, args:)
+
+      expect(local_caffeine.installed_version).to eq "1.2.3"
+      expect(Cask::Tab.for_cask(local_caffeine).source["version"]).to eq "1.2.3"
+    end
+
+    it "resolves the old cask's version from the installed caskfile after an upgrade" do
+      described_class.upgrade_casks!(local_caffeine, args:)
+      expect(local_caffeine.installed_version).to eq "1.2.3"
+
+      # This is how the next upgrade builds its "old cask": a stale version
+      # here means that upgrade backs up and purges Caskroom paths that no
+      # longer exist and aborts mid-flight.
+      old_cask = Cask::CaskLoader.load_from_installed_caskfile(local_caffeine.installed_caskfile)
+      expect(old_cask.version.to_s).to eq "1.2.3"
+    end
+
+    it "upgrades a second time" do
+      described_class.upgrade_casks!(local_caffeine, args:)
+      expect(local_caffeine.installed_version).to eq "1.2.3"
+
+      newer = Cask::CaskLoader::FromContentLoader.new(<<~RUBY).load(config: nil)
+        cask "local-caffeine" do
+          version "1.2.4"
+          sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+
+          url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+          homepage "https://brew.sh/"
+
+          app "Caffeine.app"
+        end
+      RUBY
+
+      expect do
+        described_class.upgrade_casks!(newer, args:)
+      end.not_to raise_error
+
+      expect(newer.installed_version).to eq "1.2.4"
+    end
+  end
+
   context "when there were multiple failures" do
     # This test exercises upgrade error handling, so it needs installed Casks.
     before do
