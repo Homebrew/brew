@@ -327,7 +327,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     container:
       image: ${{ matrix.container }}
-      options: ${{ matrix.container != '' && '--privileged' }}
+      options: ${{ matrix.container != '' && '--cap-add SYS_ADMIN --security-opt systempaths=unconfined --security-opt apparmor=unconfined --security-opt seccomp=unconfined' }}
     strategy:
       fail-fast: false
       matrix:
