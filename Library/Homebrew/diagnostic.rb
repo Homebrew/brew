@@ -859,31 +859,37 @@ module Homebrew
         EOS
       end
 
-      sig { returns(T.nilable(String)) }
+      sig { returns(T.nilable(Diagnostic::Finding)) }
       def check_deprecated_disabled
         return unless HOMEBREW_CELLAR.exist?
 
         deprecated_or_disabled = Formula.installed.select { |f| f.deprecated? || f.disabled? }
         return if deprecated_or_disabled.empty?
 
-        <<~EOS
-          Some installed formulae are deprecated or disabled.
-          You should find replacements for the following formulae:
-            #{deprecated_or_disabled.sort_by(&:full_name).uniq * "\n  "}
-        EOS
+        Finding.new(
+          "Some installed formulae are deprecated or disabled.",
+          affects:     deprecated_or_disabled.map(&:full_name),
+          remediation: <<~EOS,
+            You should find replacements for the following formulae:
+                #{deprecated_or_disabled.sort_by(&:full_name).uniq * "\n  "}
+          EOS
+        )
       end
 
-      sig { returns(T.nilable(String)) }
+      sig { returns(T.nilable(Diagnostic::Finding)) }
       def check_cask_deprecated_disabled
         deprecated_or_disabled = Cask::Caskroom.casks.select(&:deprecated?)
         deprecated_or_disabled += Cask::Caskroom.casks.select(&:disabled?)
         return if deprecated_or_disabled.empty?
 
-        <<~EOS
-          Some installed casks are deprecated or disabled.
-          You should find replacements for the following casks:
-            #{deprecated_or_disabled.sort_by(&:token).uniq * "\n  "}
-        EOS
+        Finding.new(
+          "Some installed casks are deprecated or disabled.",
+          affects:     deprecated_or_disabled.map(&:token),
+          remediation: <<~EOS,
+            You should find replacements for the following casks:
+                #{deprecated_or_disabled.sort_by(&:token).uniq * "\n  "}
+          EOS
+        )
       end
 
       sig { returns(T.nilable(String)) }
