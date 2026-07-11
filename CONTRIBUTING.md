@@ -13,6 +13,8 @@ First time contributing to Homebrew? Read our [Code of Conduct](https://github.c
 * Run and read `brew doctor`.
 * Read the [Troubleshooting checklist](https://docs.brew.sh/Troubleshooting).
 * Ideally, open a pull request to fix it, describing both your problem and your proposed solution.
+* **Linux users:** When reporting GPU-related issues, include output from `ldd --version` and your graphics driver version.
+
 * If not, open an issue on the formula's repository or on Homebrew/brew if it's not a formula-specific issue, but do not open both an issue and a pull request.
 
 ### Propose a feature
