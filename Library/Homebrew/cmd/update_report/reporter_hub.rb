@@ -103,13 +103,14 @@ class ReporterHub
     else
       true
     end
-    formulae.each do |formula|
+    items = formulae.map do |formula|
       if should_display_descriptions && (desc = description(formula))
-        puts "#{formula}: #{desc}"
+        [formula, desc]
       else
-        puts formula
+        [formula, ""]
       end
     end
+    print_table(items)
   end
 
   sig { void }
@@ -125,14 +126,15 @@ class ReporterHub
     else
       true
     end
-    casks.each do |cask|
+    items = casks.map do |cask|
       cask_token = Utils.name_from_full_name(cask)
       if should_display_descriptions && (desc = cask_description(cask))
-        puts "#{cask_token}: #{desc}"
+        [cask_token, desc]
       else
-        puts cask_token
+        [cask_token, ""]
       end
     end
+    print_table(items)
   end
 
   sig { void }
@@ -226,6 +228,20 @@ class ReporterHub
       all_cask_json.find { |f| f["token"] == cask }
                    &.fetch("desc", nil)
                    &.presence
+    end
+  end
+
+  sig { params(items: T::Array[[String, String]]).void }
+  def print_table(items)
+    return if items.blank?
+
+    name_width = (items.map { |name, _| name.length }.max || 0) + 2
+    items.each do |name, desc|
+      if desc.present?
+        puts format("%-#{name_width}s %s", name, desc)
+      else
+        puts name
+      end
     end
   end
 end

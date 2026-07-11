@@ -447,8 +447,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       expect { hub.dump }.to output(<<~EOS).to_stdout
         ==> New Formulae
         bar
-        baz: baz desc
-        foo: foobly things
+        baz   baz desc
+        foo   foobly things
       EOS
     end
 
@@ -461,7 +461,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       allow(Cask::Caskroom).to receive(:any_casks_installed?).and_return(true)
       expect { hub.dump }.to output(<<~EOS).to_stdout
         ==> New Casks
-        cask1: desc1
+        cask1   desc1
         cask2
         cask3
       EOS
