@@ -4249,7 +4249,11 @@ command execution (e.g. `$(cat file)`).
   have their domain replaced with this prefix. This results in e.g.
   `https://ghcr.io/v2/homebrew/core/gettext/manifests/0.21` to instead be
   downloaded from
-  `http://localhost:8080/v2/homebrew/core/gettext/manifests/0.21`
+  `http://localhost:8080/v2/homebrew/core/gettext/manifests/0.21`. If the value
+  contains a path (e.g. an OCI registry proxy cache such as
+  `https://mirror.example.com/ghcr-io`), it is instead inserted after `/v2/` as
+  a repository prefix, e.g.
+  `https://mirror.example.com/v2/ghcr-io/homebrew/core/gettext/manifests/0.21`.
 
 `HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK`
 

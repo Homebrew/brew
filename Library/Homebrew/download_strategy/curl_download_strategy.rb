@@ -44,8 +44,21 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
       urls = [url, *mirrors]
 
       if (domain = Homebrew::EnvConfig.artifact_domain)
+        domain = domain.chomp("/")
+        # An artifact domain with a path (e.g. a Harbor proxy cache for ghcr.io)
+        # is an OCI registry where that path is a repository prefix: the OCI
+        # Distribution API requires `/v2/` at the root of the host, so the path
+        # must be inserted after `/v2/` rather than prepended to it.
+        # Keep this in sync with the portable-ruby URL handling in
+        # Library/Homebrew/cmd/vendor-install.sh.
+        domain_match = domain.match(%r{\A(https?://[^/]+)/(.+)\z})
+
         artifact_urls = urls.map do |u|
-          u.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain.chomp("/")}/")
+          if domain_match
+            u.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/v2/}o, "#{domain_match[1]}/v2/#{domain_match[2]}/")
+          else
+            u.sub(%r{^https?://#{GitHubPackages::URL_DOMAIN}/}o, "#{domain}/")
+          end
         end
 
         urls = if Homebrew::EnvConfig.artifact_domain_no_fallback?
