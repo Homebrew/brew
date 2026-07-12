@@ -47,6 +47,19 @@ RSpec.describe GitRepository do
     end
   end
 
+  describe "#head_info" do
+    it "returns the HEAD commit hash, relative commit time and branch name in one Git invocation" do
+      expect(git_repo.head_info).to eq([git_repo.head_ref, git_repo.last_committed, branch_name])
+
+      clone_path.cd do
+        safe_system Utils::Git.git, "checkout", "--quiet", "--detach"
+      end
+      expect(git_repo.head_info[2]).to eq("HEAD")
+
+      expect(described_class.new(repo_root/"nonexistent").head_info).to eq([nil, nil, nil])
+    end
+  end
+
   describe "when the origin has a branch and tag with the same name" do
     it "disambiguates branch_name, origin_branch_name, and default_origin_branch?" do
       expect(git_repo.branch_name).to eq(branch_name)

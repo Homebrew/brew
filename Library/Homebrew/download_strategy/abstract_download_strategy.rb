@@ -40,7 +40,7 @@ class AbstractDownloadStrategy
     @name = name
     @version = version
     @cache = T.let(meta.fetch(:cache, HOMEBREW_CACHE), Pathname)
-    @meta = T.let(meta, T::Hash[Symbol, T.untyped])
+    @meta = meta
     @quiet = T.let(false, T.nilable(T::Boolean))
   end
 

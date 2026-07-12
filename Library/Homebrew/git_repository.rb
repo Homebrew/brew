@@ -45,6 +45,19 @@ class GitRepository
     popen_git("show", "-s", "--format=%cr", "HEAD")
   end
 
+  # Gets the full commit hash of the HEAD commit, the relative date of the
+  # last commit and the currently checked-out branch (or HEAD if the
+  # repository is in a detached HEAD state) in a single Git invocation.
+  sig { returns([T.nilable(String), T.nilable(String), T.nilable(String)]) }
+  def head_info
+    output = popen_git("show", "-s", "--format=%H%n%cr%n%D", "HEAD")
+    return [nil, nil, nil] if output.nil?
+
+    head, last_committed, refs = output.lines(chomp: true)
+    branch = refs&.[](/\AHEAD -> ([^,\n]+)/, 1) || "HEAD"
+    [head, last_committed, branch]
+  end
+
   # Gets the name of the currently checked-out branch, or HEAD if the repository is in a detached HEAD state.
   sig { params(safe: T::Boolean).returns(T.nilable(String)) }
   def branch_name(safe: false)

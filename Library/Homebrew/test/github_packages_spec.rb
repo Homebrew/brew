@@ -42,6 +42,11 @@ RSpec.describe GitHubPackages do
                                            "os_version" => "macOS 15",
                                          },
                                        },
+                                       "sbom"           => {
+                                         "documentDescribes" => ["SPDXRef-Compiler"],
+                                         "packages"          => [{ "SPDXID" => "SPDXRef-Compiler" }],
+                                         "relationships"     => [],
+                                       },
                                        "installed_size" => 100,
                                      },
                                      "arm64_sonoma" => {
@@ -71,6 +76,19 @@ RSpec.describe GitHubPackages do
         expect(manifests_by_tag.fetch("1.0.all")).not_to have_key("platform")
         expect(JSON.parse(manifests_by_tag.fetch("1.0.all").fetch("annotations").fetch("sh.brew.tab")))
           .not_to include("arch", "built_on")
+        all_annotations = manifests_by_tag.fetch("1.0.all").fetch("annotations")
+        all_supplement = JSON.parse(all_annotations.fetch("sh.brew.sbom.supplement"))
+        all_package_ids = all_supplement.fetch("packages").map { |package| package.fetch("SPDXID") }
+        expect(all_package_ids).to include("SPDXRef-Compiler", "SPDXRef-Bottle-testball")
+        expect(all_supplement.fetch("documentDescribes")).to include("SPDXRef-Bottle-testball")
+        expect(all_supplement.fetch("packages").find do |package|
+          package.fetch("SPDXID") == "SPDXRef-Bottle-testball"
+        end.fetch("checksums")).to eq([
+          {
+            "algorithm"     => "SHA256",
+            "checksumValue" => all_annotations.fetch("sh.brew.bottle.digest"),
+          },
+        ])
         expect(manifests_by_tag.fetch("1.0.arm64_sonoma"))
           .to include("platform" => include("architecture" => "arm64", "os" => "darwin"))
         expect(JSON.parse(manifests_by_tag.fetch("1.0.arm64_sonoma").fetch("annotations").fetch("sh.brew.tab")))

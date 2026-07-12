@@ -13,7 +13,7 @@ module Cask
   module Artifact
     # Artifact corresponding to the `generate_completions_from_executable` stanza.
     class GeneratedCompletion < AbstractArtifact
-      SUPPORTED_SHELLS = T.let([:bash, :zsh, :fish, :pwsh].freeze, T::Array[Symbol])
+      SUPPORTED_SHELLS = [:bash, :zsh, :fish, :pwsh].freeze
 
       sig { override.returns(Symbol) }
       def self.dsl_key

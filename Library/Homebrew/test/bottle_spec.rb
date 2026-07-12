@@ -36,4 +36,23 @@ RSpec.describe Bottle do
       expect(bottle.downloaded_and_valid?).to be true
     end
   end
+
+  describe "#sbom_supplement" do
+    it "reads the supplement from a valid bottle manifest" do
+      bottle_spec = BottleSpecification.new
+      bottle_spec.sha256(arm64_big_sur: "deadbeef" * 8)
+      bottle = described_class.new(nil, bottle_spec, Utils::Bottles::Tag.from_symbol(:arm64_big_sur),
+                                   name: "foo", pkg_version: PkgVersion.new(Version.new("1.2.3"), 0))
+      supplement = { "packages" => [{ "SPDXID" => "SPDXRef-Compiler" }] }
+      manifest_resource = instance_double(
+        Resource::BottleManifest,
+        downloaded_and_valid?: true,
+        sbom_supplement:       supplement,
+      )
+
+      allow(bottle).to receive(:github_packages_manifest_resource).and_return(manifest_resource)
+
+      expect(bottle.sbom_supplement).to eq(supplement)
+    end
+  end
 end

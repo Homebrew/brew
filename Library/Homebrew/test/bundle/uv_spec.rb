@@ -21,12 +21,25 @@ RSpec.describe Homebrew::Bundle::Uv do
 
       it "returns true when package and options match" do
         expect(described_class).to receive(:package_installed?)
-          .with("mkdocs", with: ["mkdocs-material<10"])
+          .with("mkdocs", with: ["mkdocs-material<10"], source: nil)
           .and_return(true)
 
         expect(
           checker.installed_and_up_to_date?(
             { name: "mkdocs", options: { with: ["mkdocs-material<10"] } },
+          ),
+        ).to be(true)
+      end
+
+      it "passes the source through when checking a tool installed from a source" do
+        expect(described_class).to receive(:package_installed?)
+          .with("ruff", with: [], source: "git+https://github.com/astral-sh/ruff.git")
+          .and_return(true)
+
+        expect(
+          checker.installed_and_up_to_date?(
+            { name:    "ruff",
+              options: { source: "git+https://github.com/astral-sh/ruff.git" } },
           ),
         ).to be(true)
       end
@@ -51,10 +64,10 @@ RSpec.describe Homebrew::Bundle::Uv do
 
       it "checks uv entries and passes normalized options to installer checks" do
         expect(described_class).to receive(:package_installed?)
-          .with("ruff", with: [])
+          .with("ruff", with: [], source: nil)
           .and_return(true)
         expect(described_class).to receive(:package_installed?)
-          .with("mkdocs", with: ["mkdocs-material<10"])
+          .with("mkdocs", with: ["mkdocs-material<10"], source: nil)
           .and_return(true)
 
         actionable = checker.find_actionable(entries, exit_on_first_error: false, no_upgrade: false, verbose: false)
@@ -80,6 +93,7 @@ RSpec.describe Homebrew::Bundle::Uv do
         "uv tool list",
         "--show-with",
         "--show-extras",
+        "--show-version-specifiers",
         "2>/dev/null",
       ].join(" ")
     end
@@ -112,14 +126,53 @@ RSpec.describe Homebrew::Bundle::Uv do
 
         expect(dumper.packages).to eql([
           {
-            name: "mkdocs",
-            with: ["mkdocs-material<10"],
+            name:   "mkdocs",
+            with:   ["mkdocs-material<10"],
+            source: nil,
           },
           {
-            name: "ruff",
-            with: [],
+            name:   "ruff",
+            with:   [],
+            source: nil,
           },
         ])
+      end
+
+      it "parses a git source from the version specifier and dumps it" do
+        allow(described_class).to receive(:`).with(uv_tool_list_command).and_return(<<~OUTPUT)
+          ruff v0.14.14 [required:  git+https://github.com/astral-sh/ruff.git]
+          - ruff
+        OUTPUT
+
+        expect(dumper.packages).to eql([
+          {
+            name:   "ruff",
+            with:   [],
+            source: "git+https://github.com/astral-sh/ruff.git",
+          },
+        ])
+        expect(dumper.dump).to eql('uv "ruff", source: "git+https://github.com/astral-sh/ruff.git"')
+      end
+
+      it "ignores a bare version constraint in the version specifier" do
+        allow(described_class).to receive(:`).with(uv_tool_list_command).and_return(<<~OUTPUT)
+          ruff v0.14.14 [required: >=0.1]
+          - ruff
+        OUTPUT
+
+        expect(dumper.packages.first&.dig(:source)).to be_nil
+        expect(dumper.dump).to eql('uv "ruff"')
+      end
+
+      it "dumps both with and source segments" do
+        allow(described_class).to receive(:`).with(uv_tool_list_command).and_return(<<~OUTPUT)
+          ruff v0.14.14 [with: httpx>=0.27] [required: git+https://github.com/astral-sh/ruff.git]
+          - ruff
+        OUTPUT
+
+        expect(dumper.dump).to eql(
+          'uv "ruff", with: ["httpx>=0.27"], source: "git+https://github.com/astral-sh/ruff.git"',
+        )
       end
 
       it "dumps correct Brewfile entries" do
@@ -202,8 +255,9 @@ RSpec.describe Homebrew::Bundle::Uv do
         before do
           allow(described_class).to receive(:installed_packages).and_return([
             {
-              name: "mkdocs",
-              with: ["mkdocs-material<10"],
+              name:   "mkdocs",
+              with:   ["mkdocs-material<10"],
+              source: nil,
             },
           ])
         end
@@ -216,8 +270,9 @@ RSpec.describe Homebrew::Bundle::Uv do
         it "skips install for package with no options" do
           allow(described_class).to receive(:installed_packages).and_return([
             {
-              name: "ruff",
-              with: [],
+              name:   "ruff",
+              with:   [],
+              source: nil,
             },
           ])
 
@@ -228,8 +283,9 @@ RSpec.describe Homebrew::Bundle::Uv do
         it "treats matching with requirements as installed" do
           allow(described_class).to receive(:installed_packages).and_return([
             {
-              name: "ruff",
-              with: ["httpx>=0.27"],
+              name:   "ruff",
+              with:   ["httpx>=0.27"],
+              source: nil,
             },
           ])
 
@@ -241,11 +297,29 @@ RSpec.describe Homebrew::Bundle::Uv do
           ).to be(true)
         end
 
+        it "treats a matching source as installed" do
+          allow(described_class).to receive(:installed_packages).and_return([
+            {
+              name:   "ruff",
+              with:   [],
+              source: "git+https://github.com/astral-sh/ruff.git",
+            },
+          ])
+
+          expect(
+            described_class.package_installed?(
+              "ruff",
+              source: "git+https://github.com/astral-sh/ruff.git",
+            ),
+          ).to be(true)
+        end
+
         it "treats extras with different ordering as installed" do
           allow(described_class).to receive(:installed_packages).and_return([
             {
-              name: "fastapi[all,standard]",
-              with: [],
+              name:   "fastapi[all,standard]",
+              with:   [],
+              source: nil,
             },
           ])
 
@@ -261,14 +335,33 @@ RSpec.describe Homebrew::Bundle::Uv do
         before do
           allow(described_class).to receive(:installed_packages).and_return([
             {
-              name: "mkdocs",
-              with: ["mkdocs-material<10"],
+              name:   "mkdocs",
+              with:   ["mkdocs-material<10"],
+              source: nil,
             },
           ])
         end
 
         it "does not treat mismatched with dependencies as installed" do
           expect(described_class.package_installed?("mkdocs", with: ["mkdocs-material<9"])).to be(false)
+        end
+      end
+
+      context "when package is installed from a different source" do
+        before do
+          allow(described_class).to receive(:installed_packages).and_return([
+            {
+              name:   "ruff",
+              with:   [],
+              source: "git+https://github.com/astral-sh/ruff.git",
+            },
+          ])
+        end
+
+        it "does not treat a different source as installed" do
+          expect(
+            described_class.package_installed?("ruff", source: "ruff"),
+          ).to be(false)
         end
       end
 
@@ -294,6 +387,15 @@ RSpec.describe Homebrew::Bundle::Uv do
 
           expect(described_class.preinstall!("mkdocs", with: ["mkdocs-material<10"])).to be(true)
           expect(described_class.install!("mkdocs", with: ["mkdocs-material<10"])).to be(true)
+        end
+
+        it "installs a package from its source" do
+          source = "git+https://github.com/astral-sh/ruff.git"
+          expect(Homebrew::Bundle).to receive(:system)
+            .with("/tmp/uv/bin/uv", "tool", "install", source, verbose: false).and_return(true)
+
+          expect(described_class.preinstall!("ruff", source:)).to be(true)
+          expect(described_class.install!("ruff", source:)).to be(true)
         end
 
         it "updates dump output after install in the same process" do

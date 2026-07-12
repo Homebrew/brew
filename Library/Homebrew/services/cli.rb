@@ -146,7 +146,7 @@ module Homebrew
 
           install_service_file(service, file)
 
-          if file.blank? && verbose
+          if !file && verbose
             ohai "Generated service file for #{service.formula.name}:"
             puts "   #{service.dest.read.gsub("\n", "\n   ")}"
             puts
@@ -412,7 +412,7 @@ module Homebrew
         end
 
         temp = Tempfile.new(service.service_name)
-        temp << if file.blank?
+        temp << if file.nil?
           contents = service.service_file.read
 
           if sudo_service_user && System.launchctl?

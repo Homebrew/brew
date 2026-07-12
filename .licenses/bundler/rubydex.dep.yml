@@ -1,6 +1,6 @@
 ---
 name: rubydex
-version: 0.2.5
+version: 0.2.7
 type: bundler
 summary: A high-performance static analysis suite for Ruby
 homepage: https://github.com/Shopify/rubydex
@@ -45,8 +45,8 @@ licenses:
     class=\"intro\">\n            <h1>Third Party Licenses</h1>\n            <p>This
     page lists the licenses of the projects used in Rubydex.</p>\n        </div>\n\n
     \       <h2>Overview of licenses:</h2>\n        <ul class=\"licenses-overview\">\n
-    \           <li><a href=\"#Apache-2.0\">Apache License 2.0</a> (147)</li>\n            <li><a
-    href=\"#MIT\">MIT License</a> (29)</li>\n            <li><a href=\"#Unicode-3.0\">Unicode
+    \           <li><a href=\"#Apache-2.0\">Apache License 2.0</a> (157)</li>\n            <li><a
+    href=\"#MIT\">MIT License</a> (30)</li>\n            <li><a href=\"#Unicode-3.0\">Unicode
     License v3</a> (19)</li>\n            <li><a href=\"#BSD-2-Clause\">BSD 2-Clause
     &quot;Simplified&quot; License</a> (2)</li>\n            <li><a href=\"#BSD-3-Clause\">BSD
     3-Clause &quot;New&quot; or &quot;Revised&quot; License</a> (1)</li>\n            <li><a
@@ -722,15 +722,25 @@ licenses:
     https://github.com/polyfill-rs/once_cell_polyfill \">once_cell_polyfill\n                            1.70.1</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/toml-rs/toml
     \">serde_spanned\n                            0.6.9</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/toml-rs/toml \">serde_spanned\n
+    \                           1.1.1</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/tikv/jemallocator \">tikv-jemalloc-ctl\n                            0.7.0</a></li>\n
+    \                   <li><a\n                            href=\" https://github.com/toml-rs/toml
+    \">toml\n                            0.8.23</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/toml-rs/toml \">toml\n
-    \                           0.8.23</a></li>\n                    <li><a\n                            href=\"
-    https://github.com/toml-rs/toml \">toml_datetime\n                            0.6.11</a></li>\n
+    \                           1.1.2+spec-1.1.0</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/toml-rs/toml \">toml_datetime\n
+    \                           0.6.11</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/toml-rs/toml \">toml_datetime\n                            1.1.1+spec-1.1.0</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/toml-rs/toml
     \">toml_edit\n                            0.22.27</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/toml-rs/toml \">toml_parser\n
+    \                           1.1.2+spec-1.1.0</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/toml-rs/toml \">toml_write\n
-    \                           0.1.2</a></li>\n                </ul>\n                <pre
-    class=\"license-text\">                                 Apache License\n                           Version
-    2.0, January 2004\n                        http://www.apache.org/licenses/\n\n
+    \                           0.1.2</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/toml-rs/toml \">toml_writer\n                            1.1.1+spec-1.1.0</a></li>\n
+    \               </ul>\n                <pre class=\"license-text\">                                 Apache
+    License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n
     \  TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n
     \     &quot;License&quot; shall mean the terms and conditions for use, reproduction,\n
     \     and distribution as defined by Sections 1 through 9 of this document.\n\n
@@ -1350,13 +1360,13 @@ licenses:
     \                   <li><a\n                            href=\" https://github.com/rust-lang/glob
     \">glob\n                            0.3.2</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/rust-lang/hashbrown \">hashbrown\n
-    \                           0.15.4</a></li>\n                    <li><a\n                            href=\"
+    \                           0.17.1</a></li>\n                    <li><a\n                            href=\"
     https://github.com/withoutboats/heck \">heck\n                            0.5.0</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/servo/rust-url/
     \">idna\n                            1.0.3</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/hsivonen/idna_adapter \">idna_adapter\n
     \                           1.2.1</a></li>\n                    <li><a\n                            href=\"
-    https://github.com/indexmap-rs/indexmap \">indexmap\n                            2.10.0</a></li>\n
+    https://github.com/indexmap-rs/indexmap \">indexmap\n                            2.14.0</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/rust-itertools/itertools
     \">itertools\n                            0.13.0</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/wasm-bindgen/wasm-bindgen/tree/master/crates/js-sys
@@ -1382,6 +1392,10 @@ licenses:
     https://github.com/storyyeller/stable_deref_trait \">stable_deref_trait\n                            1.2.0</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/Stebalien/tempfile
     \">tempfile\n                            3.20.0</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/tikv/jemallocator \">tikv-jemalloc-sys\n
+    \                           0.7.1+5.3.1-0-g81034ce1f1373e37dc865038e1bc8eeecf559ce8</a></li>\n
+    \                   <li><a\n                            href=\" https://github.com/tikv/jemallocator
+    \">tikv-jemallocator\n                            0.7.0</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/servo/rust-url \">url\n
     \                           2.5.4</a></li>\n                    <li><a\n                            href=\"
     https://github.com/alexcrichton/wait-timeout \">wait-timeout\n                            0.2.1</a></li>\n
@@ -1969,20 +1983,22 @@ licenses:
     https://github.com/rust-lang/libc \">libc\n                            0.2.174</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/rust-lang/rust-analyzer/tree/master/lib/line-index
     \">line-index\n                            0.1.2</a></li>\n                    <li><a\n
-    \                           href=\" https://github.com/as1100k/pastey \">pastey\n
-    \                           0.2.1</a></li>\n                    <li><a\n                            href=\"
-    https://github.com/taiki-e/pin-project-lite \">pin-project-lite\n                            0.2.16</a></li>\n
-    \                   <li><a\n                            href=\" https://github.com/dtolnay/prettyplease
-    \">prettyplease\n                            0.2.36</a></li>\n                    <li><a\n
-    \                           href=\" https://github.com/dtolnay/proc-macro2 \">proc-macro2\n
-    \                           1.0.95</a></li>\n                    <li><a\n                            href=\"
-    https://github.com/dtolnay/quote \">quote\n                            1.0.40</a></li>\n
-    \                   <li><a\n                            href=\" https://github.com/r-efi/r-efi
-    \">r-efi\n                            5.3.0</a></li>\n                    <li><a\n
-    \                           href=\" https://github.com/dtolnay/ref-cast \">ref-cast-impl\n
-    \                           1.0.25</a></li>\n                    <li><a\n                            href=\"
-    https://github.com/dtolnay/ref-cast \">ref-cast\n                            1.0.25</a></li>\n
-    \                   <li><a\n                            href=\" https://github.com/modelcontextprotocol/rust-sdk/
+    \                           href=\" https://github.com/dtolnay/paste \">paste\n
+    \                           1.0.15</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/as1100k/pastey \">pastey\n                            0.2.1</a></li>\n
+    \                   <li><a\n                            href=\" https://github.com/taiki-e/pin-project-lite
+    \">pin-project-lite\n                            0.2.16</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/dtolnay/prettyplease \">prettyplease\n
+    \                           0.2.36</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/dtolnay/proc-macro2 \">proc-macro2\n                            1.0.95</a></li>\n
+    \                   <li><a\n                            href=\" https://github.com/dtolnay/quote
+    \">quote\n                            1.0.40</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/r-efi/r-efi \">r-efi\n
+    \                           5.3.0</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/dtolnay/ref-cast \">ref-cast-impl\n                            1.0.25</a></li>\n
+    \                   <li><a\n                            href=\" https://github.com/dtolnay/ref-cast
+    \">ref-cast\n                            1.0.25</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/modelcontextprotocol/rust-sdk/
     \">rmcp-macros\n                            1.6.0</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/modelcontextprotocol/rust-sdk/
     \">rmcp\n                            1.4.0</a></li>\n                    <li><a\n
@@ -1992,16 +2008,18 @@ licenses:
     \                   <li><a\n                            href=\" https://github.com/dtolnay/ryu
     \">ryu\n                            1.0.20</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/serde-rs/serde \">serde\n
-    \                           1.0.219</a></li>\n                    <li><a\n                            href=\"
-    https://github.com/serde-rs/serde \">serde_derive\n                            1.0.219</a></li>\n
+    \                           1.0.228</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/serde-rs/serde \">serde_core\n                            1.0.228</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/serde-rs/serde
-    \">serde_derive_internals\n                            0.29.1</a></li>\n                    <li><a\n
-    \                           href=\" https://github.com/serde-rs/json \">serde_json\n
-    \                           1.0.141</a></li>\n                    <li><a\n                            href=\"
-    https://github.com/dtolnay/serde-yaml \">serde_yaml\n                            0.9.34+deprecated</a></li>\n
-    \                   <li><a\n                            href=\" https://github.com/comex/rust-shlex
-    \">shlex\n                            1.3.0</a></li>\n                    <li><a\n
-    \                           href=\" https://github.com/dtolnay/syn \">syn\n                            2.0.104</a></li>\n
+    \">serde_derive\n                            1.0.228</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/serde-rs/serde \">serde_derive_internals\n
+    \                           0.29.1</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/serde-rs/json \">serde_json\n                            1.0.141</a></li>\n
+    \                   <li><a\n                            href=\" https://github.com/dtolnay/serde-yaml
+    \">serde_yaml\n                            0.9.34+deprecated</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/comex/rust-shlex \">shlex\n
+    \                           1.3.0</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/dtolnay/syn \">syn\n                            2.0.104</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/dtolnay/thiserror
     \">thiserror-impl\n                            2.0.18</a></li>\n                    <li><a\n
     \                           href=\" https://github.com/dtolnay/thiserror \">thiserror\n
@@ -2614,11 +2632,11 @@ licenses:
     WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n</pre>\n            </li>\n
     \           <li class=\"license\">\n                <h3 id=\"MIT\">MIT License</h3>\n
     \               <h4>Used by:</h4>\n                <ul class=\"license-used-by\">\n
-    \                   <li><a\n                            href=\" https://crates.io/crates/rubydex
-    \">rubydex\n                            0.1.0</a></li>\n                    <li><a\n
-    \                           href=\" https://crates.io/crates/rubydex-mcp \">rubydex-mcp\n
-    \                           0.1.0</a></li>\n                    <li><a\n                            href=\"
-    https://crates.io/crates/rubydex-sys \">rubydex-sys\n                            0.1.0</a></li>\n
+    \                   <li><a\n                            href=\" https://github.com/Shopify/rubydex
+    \">rubydex\n                            0.2.6</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/Shopify/rubydex \">rubydex-mcp\n
+    \                           0.2.6</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/Shopify/rubydex \">rubydex-sys\n                            0.2.6</a></li>\n
     \                   <li><a\n                            href=\" https://github.com/DimaKudosh/difflib
     \">difflib\n                            0.4.0</a></li>\n                </ul>\n
     \               <pre class=\"license-text\">MIT License\n\nCopyright (c) &lt;year&gt;
@@ -2676,66 +2694,67 @@ licenses:
     class=\"license\">\n                <h3 id=\"MIT\">MIT License</h3>\n                <h4>Used
     by:</h4>\n                <ul class=\"license-used-by\">\n                    <li><a\n
     \                           href=\" https://github.com/winnow-rs/winnow \">winnow\n
-    \                           0.7.12</a></li>\n                </ul>\n                <pre
-    class=\"license-text\">Permission is hereby granted, free of charge, to any person
-    obtaining\na copy of this software and associated documentation files (the\n&quot;Software&quot;),
-    to deal in the Software without restriction, including\nwithout limitation the
-    rights to use, copy, modify, merge, publish,\ndistribute, sublicense, and/or sell
-    copies of the Software, and to\npermit persons to whom the Software is furnished
-    to do so, subject to\nthe following conditions:\n\nThe above copyright notice
-    and this permission notice shall be\nincluded in all copies or substantial portions
-    of the Software.\n\nTHE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY
-    OF ANY KIND,\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-    OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\nNONINFRINGEMENT. IN
-    NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE\nLIABLE FOR ANY CLAIM, DAMAGES
-    OR OTHER LIABILITY, WHETHER IN AN ACTION\nOF CONTRACT, TORT OR OTHERWISE, ARISING
-    FROM, OUT OF OR IN CONNECTION\nWITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-    IN THE SOFTWARE.\n</pre>\n            </li>\n            <li class=\"license\">\n
-    \               <h3 id=\"MIT\">MIT License</h3>\n                <h4>Used by:</h4>\n
-    \               <ul class=\"license-used-by\">\n                    <li><a\n                            href=\"
-    https://github.com/BurntSushi/aho-corasick \">aho-corasick\n                            1.1.3</a></li>\n
-    \                   <li><a\n                            href=\" https://github.com/BurntSushi/memchr
-    \">memchr\n                            2.7.5</a></li>\n                </ul>\n
+    \                           0.7.12</a></li>\n                    <li><a\n                            href=\"
+    https://github.com/winnow-rs/winnow \">winnow\n                            1.0.3</a></li>\n
+    \               </ul>\n                <pre class=\"license-text\">Permission
+    is hereby granted, free of charge, to any person obtaining\na copy of this software
+    and associated documentation files (the\n&quot;Software&quot;), to deal in the
+    Software without restriction, including\nwithout limitation the rights to use,
+    copy, modify, merge, publish,\ndistribute, sublicense, and/or sell copies of the
+    Software, and to\npermit persons to whom the Software is furnished to do so, subject
+    to\nthe following conditions:\n\nThe above copyright notice and this permission
+    notice shall be\nincluded in all copies or substantial portions of the Software.\n\nTHE
+    SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND,\nEXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF\nMERCHANTABILITY, FITNESS
+    FOR A PARTICULAR PURPOSE AND\nNONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+    COPYRIGHT HOLDERS BE\nLIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+    IN AN ACTION\nOF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION\nWITH
+    THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n</pre>\n            </li>\n
+    \           <li class=\"license\">\n                <h3 id=\"MIT\">MIT License</h3>\n
+    \               <h4>Used by:</h4>\n                <ul class=\"license-used-by\">\n
+    \                   <li><a\n                            href=\" https://github.com/BurntSushi/aho-corasick
+    \">aho-corasick\n                            1.1.3</a></li>\n                    <li><a\n
+    \                           href=\" https://github.com/BurntSushi/memchr \">memchr\n
+    \                           2.7.5</a></li>\n                </ul>\n                <pre
+    class=\"license-text\">The MIT License (MIT)\n\nCopyright (c) 2015 Andrew Gallant\n\nPermission
+    is hereby granted, free of charge, to any person obtaining a copy\nof this software
+    and associated documentation files (the &quot;Software&quot;), to deal\nin the
+    Software without restriction, including without limitation the rights\nto use,
+    copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the
+    Software, and to permit persons to whom the Software is\nfurnished to do so, subject
+    to the following conditions:\n\nThe above copyright notice and this permission
+    notice shall be included in\nall copies or substantial portions of the Software.\n\nTHE
+    SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS
+    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR
+    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER
+    IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION
+    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n</pre>\n            </li>\n
+    \           <li class=\"license\">\n                <h3 id=\"MIT\">MIT License</h3>\n
+    \               <h4>Used by:</h4>\n                <ul class=\"license-used-by\">\n
+    \                   <li><a\n                            href=\" https://github.com/rapidfuzz/strsim-rs
+    \">strsim\n                            0.11.1</a></li>\n                </ul>\n
     \               <pre class=\"license-text\">The MIT License (MIT)\n\nCopyright
-    (c) 2015 Andrew Gallant\n\nPermission is hereby granted, free of charge, to any
+    (c) 2015 Danny Guo\nCopyright (c) 2016 Titus Wormer &lt;tituswormer@gmail.com&gt;\nCopyright
+    (c) 2018 Akash Kurdekar\n\nPermission is hereby granted, free of charge, to any
     person obtaining a copy\nof this software and associated documentation files (the
     &quot;Software&quot;), to deal\nin the Software without restriction, including
     without limitation the rights\nto use, copy, modify, merge, publish, distribute,
     sublicense, and/or sell\ncopies of the Software, and to permit persons to whom
     the Software is\nfurnished to do so, subject to the following conditions:\n\nThe
-    above copyright notice and this permission notice shall be included in\nall copies
+    above copyright notice and this permission notice shall be included in all\ncopies
     or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED &quot;AS
     IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT
     LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE
     AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE
     FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT,
     TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-    THE USE OR OTHER DEALINGS IN\nTHE SOFTWARE.\n</pre>\n            </li>\n            <li
-    class=\"license\">\n                <h3 id=\"MIT\">MIT License</h3>\n                <h4>Used
-    by:</h4>\n                <ul class=\"license-used-by\">\n                    <li><a\n
-    \                           href=\" https://github.com/rapidfuzz/strsim-rs \">strsim\n
-    \                           0.11.1</a></li>\n                </ul>\n                <pre
-    class=\"license-text\">The MIT License (MIT)\n\nCopyright (c) 2015 Danny Guo\nCopyright
-    (c) 2016 Titus Wormer &lt;tituswormer@gmail.com&gt;\nCopyright (c) 2018 Akash
-    Kurdekar\n\nPermission is hereby granted, free of charge, to any person obtaining
-    a copy\nof this software and associated documentation files (the &quot;Software&quot;),
-    to deal\nin the Software without restriction, including without limitation the
-    rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies
-    of the Software, and to permit persons to whom the Software is\nfurnished to do
-    so, subject to the following conditions:\n\nThe above copyright notice and this
-    permission notice shall be included in all\ncopies or substantial portions of
-    the Software.\n\nTHE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY
-    OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-    OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-    NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
-    OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-    FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-    IN THE\nSOFTWARE.\n</pre>\n            </li>\n            <li class=\"license\">\n
-    \               <h3 id=\"MPL-2.0\">Mozilla Public License 2.0</h3>\n                <h4>Used
-    by:</h4>\n                <ul class=\"license-used-by\">\n                    <li><a\n
-    \                           href=\" https://github.com/mozilla/cbindgen \">cbindgen\n
-    \                           0.29.0</a></li>\n                </ul>\n                <pre
-    class=\"license-text\">Mozilla Public License Version 2.0\n&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;\n\n1.
+    THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n</pre>\n            </li>\n            <li
+    class=\"license\">\n                <h3 id=\"MPL-2.0\">Mozilla Public License
+    2.0</h3>\n                <h4>Used by:</h4>\n                <ul class=\"license-used-by\">\n
+    \                   <li><a\n                            href=\" https://github.com/mozilla/cbindgen
+    \">cbindgen\n                            0.29.0</a></li>\n                </ul>\n
+    \               <pre class=\"license-text\">Mozilla Public License Version 2.0\n&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;\n\n1.
     Definitions\n--------------\n\n1.1. &quot;Contributor&quot;\n    means each individual
     or legal entity that creates, contributes to\n    the creation of, or owns Covered
     Software.\n\n1.2. &quot;Contributor Version&quot;\n    means the combination of

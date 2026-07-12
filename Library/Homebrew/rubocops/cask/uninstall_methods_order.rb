@@ -16,10 +16,7 @@ module RuboCop
 
         # These keys are ignored when checking method order.
         # Mirrors AbstractUninstall::METADATA_KEYS.
-        METADATA_KEYS = T.let(
-          [:on_upgrade].freeze,
-          T::Array[Symbol],
-        )
+        METADATA_KEYS = [:on_upgrade].freeze
 
         USELESS_METADATA_MSG =
           "`on_upgrade` has no effect without matching `uninstall signal:` directive"

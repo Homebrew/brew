@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "unpack_strategy"
+
 class Bottle
   include Downloadable
 
@@ -236,8 +238,65 @@ class Bottle
     resource.path_exec_files
   end
 
+  sig { returns(T.nilable(T::Hash[String, Object])) }
+  def sbom_supplement
+    resource = github_packages_manifest_resource
+    return unless resource&.downloaded_and_valid?
+
+    resource.sbom_supplement
+  end
+
   sig { returns(Filename) }
   def filename = Filename.new(@name, @pkg_version, @tag, @spec.rebuild)
+
+  sig { returns(Pathname) }
+  def staged_path_from_download_queue
+    bottle_filename = filename
+    HOMEBREW_TEMP_CELLAR/bottle_filename.name/bottle_filename.version.to_s
+  end
+
+  sig { returns(Pathname) }
+  def staged_path_from_download_queue_marker
+    Pathname("#{staged_path_from_download_queue}.poured")
+  end
+
+  sig { override.params(_download: Pathname, pour: T::Boolean).returns(T::Boolean) }
+  def stage_from_download_queue?(_download, pour:)
+    pour
+  end
+
+  sig { override.params(download: Pathname, pour: T::Boolean).void }
+  def stage_from_download_queue(download, pour:)
+    return unless pour
+
+    bottle_tmp_keg = staged_path_from_download_queue
+    bottle_poured_file = staged_path_from_download_queue_marker
+
+    begin
+      HOMEBREW_TEMP_CELLAR.mkpath
+
+      return if bottle_poured_file.exist?
+
+      FileUtils.rm(bottle_poured_file) if bottle_poured_file.symlink?
+      FileUtils.rm_r(bottle_tmp_keg) if bottle_tmp_keg.directory?
+
+      UnpackStrategy.detect(download, prioritize_extension: true)
+                    .extract_nestedly(to: HOMEBREW_TEMP_CELLAR)
+
+      # Create a separate file to mark a completed extraction. This avoids
+      # a potential race condition if a user interrupts the install.
+      # We use a symlink to easily check that both this extra status file
+      # and the real extracted directory exist via `Pathname#exist?`.
+      FileUtils.ln_s(bottle_tmp_keg, bottle_poured_file)
+    # Catch any exception type here to clean up partial queued extractions.
+    rescue Exception # rubocop:disable Lint/RescueException
+      ignore_interrupts do
+        FileUtils.rm_r(bottle_tmp_keg) if bottle_tmp_keg.directory?
+        bottle_tmp_keg.parent.rmdir_if_possible
+      end
+      raise
+    end
+  end
 
   sig { returns(T.nilable(Resource::BottleManifest)) }
   def github_packages_manifest_resource

@@ -19,14 +19,13 @@ module Homebrew
     sig { override.returns(T::Array[String]) }
     def mirrors = downloadable.mirrors
 
-    sig { params(downloadable: Downloadable, tries: Integer, pour: T::Boolean).void }
-    def initialize(downloadable, tries:, pour: false)
+    sig { params(downloadable: Downloadable, tries: Integer).void }
+    def initialize(downloadable, tries:)
       super()
 
       @downloadable = downloadable
       @try = T.let(0, Integer)
       @tries = tries
-      @pour = pour
     end
 
     sig { override.returns(String) }
@@ -58,8 +57,6 @@ module Homebrew
       ).returns(Pathname)
     }
     def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
-      bottle_tmp_keg = nil
-
       @try += 1
 
       downloadable.downloading!
@@ -84,41 +81,12 @@ module Homebrew
       json_download = downloadable.is_a?(API::JSONDownload)
       downloadable.verify_download_integrity(download) if verify_download_integrity && !json_download
 
-      if pour && downloadable.is_a?(Bottle)
-        downloadable.extracting!
-
-        HOMEBREW_TEMP_CELLAR.mkpath
-
-        bottle_filename = T.cast(downloadable, Bottle).filename
-        bottle_tmp_keg = HOMEBREW_TEMP_CELLAR/bottle_filename.name/bottle_filename.version.to_s
-        bottle_poured_file = Pathname("#{bottle_tmp_keg}.poured")
-
-        unless bottle_poured_file.exist?
-          FileUtils.rm(bottle_poured_file) if bottle_poured_file.symlink?
-          FileUtils.rm_r(bottle_tmp_keg) if bottle_tmp_keg.directory?
-
-          UnpackStrategy.detect(download, prioritize_extension: true)
-                        .extract_nestedly(to: HOMEBREW_TEMP_CELLAR)
-
-          # Create a separate file to mark a completed extraction. This avoids
-          # a potential race condition if a user interrupts the install.
-          # We use a symlink to easily check that both this extra status file
-          # and the real extracted directory exist via `Pathname#exist?`.
-          FileUtils.ln_s(bottle_tmp_keg, bottle_poured_file)
-        end
-
-        downloadable.downloaded!
-      elsif json_download
-        FileUtils.touch(download, mtime: Time.now)
-      end
+      FileUtils.touch(download, mtime: Time.now) if json_download
 
       download
     rescue DownloadError, ChecksumMismatchError, Resource::BottleManifest::Error => e
       tries_remaining = @tries - @try
-      if tries_remaining.zero?
-        cleanup_partial_installation_on_error!(bottle_tmp_keg)
-        raise
-      end
+      raise if tries_remaining.zero?
 
       wait = 2 ** @try
       unless quiet
@@ -132,10 +100,6 @@ module Homebrew
       # fully-downloaded file is known-bad (checksum or manifest mismatch).
       downloadable.clear_cache unless e.is_a?(DownloadError)
       retry
-    # Catch any other types of exceptions as they leave us with partial installations.
-    rescue Exception # rubocop:disable Lint/RescueException
-      cleanup_partial_installation_on_error!(bottle_tmp_keg)
-      raise
     end
 
     sig { override.params(filename: Pathname).void }
@@ -145,19 +109,5 @@ module Homebrew
 
     sig { returns(Downloadable) }
     attr_reader :downloadable
-
-    sig { returns(T::Boolean) }
-    attr_reader :pour
-
-    sig { params(path: T.nilable(Pathname)).void }
-    def cleanup_partial_installation_on_error!(path)
-      return if path.nil?
-      return unless path.directory?
-
-      ignore_interrupts do
-        FileUtils.rm_r(path)
-        path.parent.rmdir_if_possible
-      end
-    end
   end
 end

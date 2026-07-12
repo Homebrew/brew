@@ -214,13 +214,13 @@ module Homebrew
               if formula_path.exist? ||
                  (!Homebrew::EnvConfig.no_install_from_api? &&
                  !CoreTap.instance.installed? &&
-                 Homebrew::API.formula_names.include?(path.basename.to_s))
+                 Homebrew::API.formula_name?(path.basename.to_s))
                 paths << formula_path
               end
               if cask_path.exist? ||
                  (!Homebrew::EnvConfig.no_install_from_api? &&
                  !CoreCaskTap.instance.installed? &&
-                 Homebrew::API.cask_tokens.include?(path.basename.to_s))
+                 Homebrew::API.cask_token?(path.basename.to_s))
                 paths << cask_path
               end
 
@@ -381,7 +381,13 @@ module Homebrew
             cask = begin
               config = Cask::Config.from_args(@parent) if @cask_options
               options = { warn: }.compact
-              candidate_cask = Cask::CaskLoader.load(name, config:, **options)
+              untrusted_installed_cask = (load_untrusted_installed_cask(name, config:) if want_keg_like_cask)
+              candidate_cask = untrusted_installed_cask || Cask::CaskLoader.load(name, config:, **options)
+              skip_installed_caskfile_load = if untrusted_installed_cask
+                !untrusted_installed_cask.loaded_from_api?
+              else
+                false
+              end
 
               if unreadable_error
                 onoe <<~EOS
@@ -393,7 +399,7 @@ module Homebrew
 
               # If we're trying to get a keg-like Cask, do our best to use the same cask
               # file that was used for installation, if possible.
-              if want_keg_like_cask &&
+              if want_keg_like_cask && !skip_installed_caskfile_load &&
                  (installed_caskfile = candidate_cask.installed_caskfile) &&
                  installed_caskfile.exist?
                 cask = Cask::CaskLoader.load_from_installed_caskfile(installed_caskfile)
@@ -411,6 +417,12 @@ module Homebrew
               else
                 candidate_cask
               end
+            rescue Homebrew::UntrustedTapError
+              raise unless want_keg_like_cask
+
+              raise unless (untrusted_installed_cask = load_untrusted_installed_cask(name, config:))
+
+              untrusted_installed_cask
             rescue Cask::CaskUnreadableError, Cask::CaskInvalidError => e
               # If we're trying to get a keg-like Cask, do our best to handle it
               # not being readable and return something that can be used.
@@ -458,6 +470,38 @@ module Homebrew
           end
 
           raise NoSuchKegError, name if resolve_formula(name)
+        end
+      end
+
+      sig {
+        params(name: String, config: T.nilable(Cask::Config))
+          .returns(T.nilable(Cask::Cask))
+      }
+      def load_untrusted_installed_cask(name, config: nil)
+        return unless Homebrew::EnvConfig.require_tap_trust?
+
+        require "trust"
+
+        requested_tap, token = Tap.with_cask_token(name) || [nil, name]
+        token = ::Utils.name_from_full_name(token)
+        installed_cask = Cask::Cask.new(token, config:)
+        installed_caskfile = installed_cask.installed_caskfile
+        return unless installed_caskfile&.exist?
+
+        installed_tap = installed_cask.tab.tap
+        return unless installed_tap
+        return if requested_tap && requested_tap != installed_tap
+        return if Homebrew::Trust.trusted?(:cask, "#{installed_tap.name}/#{token}")
+
+        if installed_caskfile.extname == ".json"
+          return Cask::CaskLoader.load_from_installed_caskfile(installed_caskfile,
+                                                               config:)
+        end
+
+        return unless (cask_version = Cask::Caskroom.cask_installed_version(token))
+
+        Cask::Cask.new(token, tap: installed_tap, config:) do
+          version cask_version
         end
       end
 

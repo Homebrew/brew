@@ -5,7 +5,7 @@ GEM
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
     afm (1.0.0)
-    async (2.39.0)
+    async (2.42.0)
       console (~> 1.29)
       fiber-annotation
       io-event (~> 1.11)
@@ -23,7 +23,6 @@ GEM
       fiber-local (~> 1.1)
       json
     csv (3.3.5)
-    date (3.5.1)
     em-websocket (0.5.3)
       eventmachine (>= 0.12.9)
       http_parser.rb (~> 0)
@@ -81,7 +80,7 @@ GEM
     i18n (1.15.2)
       concurrent-ruby (~> 1.0)
     io-console (0.8.2)
-    io-event (1.16.4)
+    io-event (1.19.1)
     irb (1.18.0)
       pp (>= 0.6.0)
       prism (>= 1.3.0)
@@ -122,7 +121,7 @@ GEM
       jekyll (>= 3.3, < 5.0)
     jekyll-watch (2.2.1)
       listen (~> 3.0)
-    json (2.19.9)
+    json (2.20.0)
     kramdown (2.5.2)
       rexml (>= 3.4.4)
     kramdown-parser-gfm (1.1.0)
@@ -170,13 +169,10 @@ GEM
       hashery (~> 2.0)
       ruby-rc4
       ttfunk
-    pp (0.6.3)
+    pp (0.6.4)
       prettyprint
     prettyprint (0.2.0)
     prism (1.9.0)
-    psych (5.4.0)
-      date
-      stringio
     public_suffix (7.0.5)
     racc (1.8.1)
     rainbow (3.1.1)
@@ -184,9 +180,14 @@ GEM
     rb-fsevent (0.11.2)
     rb-inotify (0.11.1)
       ffi (~> 1.0)
-    rdoc (7.2.0)
+    rbs (4.0.3)
+      logger
+      prism (>= 1.6.0)
+      tsort
+    rdoc (8.0.0)
       erb
-      psych (>= 4.0.0)
+      prism (>= 1.6.0)
+      rbs (>= 4.0.0)
       tsort
     redcarpet (3.6.1)
     reline (0.6.3)
@@ -211,8 +212,7 @@ GEM
       google-protobuf (~> 4.31)
     sass-embedded (1.101.0-x86_64-linux-musl)
       google-protobuf (~> 4.31)
-    sorbet-runtime (0.6.13316)
-    stringio (3.2.0)
+    sorbet-runtime (0.6.13333)
     terminal-table (3.0.2)
       unicode-display_width (>= 1.1.1, < 3)
     tomlrb (2.0.4)

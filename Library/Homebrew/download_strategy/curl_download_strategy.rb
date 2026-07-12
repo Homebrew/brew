@@ -288,6 +288,10 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
 
     args += ["--user", meta.fetch(:user)] if meta.key?(:user)
 
+    if meta.fetch(:headers, []).any? { |header| header.include?(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX) }
+      args += ["--max-redirs", "0"]
+    end
+
     args += expand_deferred_environment_args(meta.fetch(:headers, [])).flat_map { |h| ["--header", h.strip] }
 
     args

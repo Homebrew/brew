@@ -60,23 +60,26 @@ if ENV["HOMEBREW_SORBET_RUNTIME"]
     end
   end
 else
-  # Redefine `T.let`, etc. to make the `checked` parameter default to `false` rather than `true`.
+  # Redefine `T.let`, etc. to return the value without dispatching to
+  # sorbet-runtime at all: these methods are called often enough (e.g. for
+  # every `Pathname` allocation) that even the disabled-check dispatch is
+  # measurable.
   # @private
   module TNoChecks
-    def cast(value, type, checked: false)
-      super
+    def cast(value, _type, checked: false)
+      value
     end
 
-    def let(value, type, checked: false)
-      super
+    def let(value, _type, checked: false)
+      value
     end
 
-    def bind(value, type, checked: false)
-      super
+    def bind(value, _type, checked: false)
+      value
     end
 
-    def assert_type!(value, type, checked: false)
-      super
+    def assert_type!(value, _type, checked: false)
+      value
     end
   end
 

@@ -26,7 +26,7 @@ Formulae for apps that require Python 3 **must** declare an unconditional depend
 
 Starting with Python@3.12, Homebrew follows [PEP 668](https://peps.python.org/pep-0668/#marking-an-interpreter-as-using-an-external-package-manager). Applications must be installed into a Python [virtual environment](https://docs.python.org/3/library/venv.html) rooted in `libexec`. This prevents the app's Python modules from contaminating the system `site-packages` and vice versa.
 
-All the Python module dependencies of the application (and their dependencies, recursively) should be [declared as `resource`s](Formula-Cookbook.md#python-dependencies) in the formula and installed into the virtual environment as well. Each dependency should be explicitly specified; please do not rely on `setup.py` or `pip` to perform automatic dependency resolution, for the [reasons described here](Acceptable-Formulae.md#we-dont-like-install-scripts-that-download-unversioned-things).
+All the Python module dependencies of the application (and their dependencies, recursively) should be [declared as `resource`s](Formula-Cookbook.md#python-dependencies) in the formula and installed into the virtual environment as well. Each dependency should be explicitly specified; please do not rely on `pip` to perform automatic dependency resolution, for the [reasons described here](Acceptable-Formulae.md#we-dont-like-install-scripts-that-download-unversioned-things).
 
 You can use `brew update-python-resources` to help you write resource stanzas. To use it, simply run `brew update-python-resources <formula>`. Sometimes, `brew update-python-resources` won't be able to automatically update the resources. If this happens, try running `brew update-python-resources --print-only <formula>` to print the resource stanzas instead of applying the changes directly to the file. You can then copy and paste resources as needed.
 
@@ -124,7 +124,7 @@ class Foo < Formula
 end
 ```
 
-You can also use the more verbose form and request that specific resources be installed:
+In case you need to do different things for different resources, you can also use the more verbose form and request that specific resources be installed:
 
 ```ruby
 class Foo < Formula
@@ -144,8 +144,6 @@ class Foo < Formula
 end
 ```
 
-in case you need to do different things for different resources.
-
 ## Bindings
 
 To add bindings for Python 3, please add `depends_on "python@3.y"` to work with the current Homebrew Python 3.y formula.
@@ -156,7 +154,7 @@ Bindings should follow the same advice for Python module dependencies as librari
 
 ### Installing bindings
 
-If the bindings are installed by invoking a `setup.py`, do something like:
+If the bindings are defined as a standard Python package (with either a `pyproject.toml` or a `setup.py`), do something like:
 
 ```ruby
 system "python3.y", "-m", "pip", "install", *std_pip_args(build_isolation: true), "./source/python"
@@ -217,52 +215,11 @@ Library dependencies must be installed so that they are importable. To minimise 
 
 Formulae with general Python library dependencies (e.g. `setuptools`, `six`) should not use this approach as it will contaminate the system `site-packages` with all libraries installed inside `libexec/<vendor>`.
 
-## Further down the rabbit hole
+## Historical context
 
-Additional commentary that explains why Homebrew does some of the things it does.
+Over time, the Python packaging ecosystem has evolved from storing package metadata in a dynamic `setup.py` script to a static, declarative `pyproject.toml` file. At the same time, frontend installers (like `pip`) were decoupled from build backends (like `setuptools`), allowing the community to experiment and grow beyond a single tool.
 
-### Setuptools vs. Distutils vs. pip
-
-Distutils was a module in the Python standard library that provided developers a basic package management API until its removal in Python 3.12. Setuptools is a module distributed outside the standard library that extends and replaces Distutils. It is a convention that Python packages provide a `setup.py` that calls the `setup()` function from either Distutils or Setuptools.
-
-Setuptools used to provide the `easy_install` command, which was an end-user package management tool that fetched and installed packages from PyPI, the Python Package Index. The `easy_install` console script was removed in Setuptools v52.0.0 and direct usage has been deprecated since v58.3.0. `pip` is another, newer end-user package management tool, which is also provided outside the standard library. While `pip` supplants `easy_install`, it does not replace the other functionality of the Setuptools module.
-
-Distutils and pip use a "flat" installation hierarchy that installs modules as individual files under `site-packages` while `easy_install` installs zipped eggs to `site-packages` instead.
-
-Distribute (not to be confused with Distutils) is an obsolete fork of Setuptools. Distlib is a package maintained outside the standard library which is used by pip for some low-level packaging operations and is not relevant to most `setup.py` users.
-
-### Running `setup.py`
-
-For when a formula needs to interact with `setup.py` instead of calling `pip`, Homebrew provides the helper method `Language::Python.setup_install_args` which returns useful arguments for invoking `setup.py`. Your formula should use this instead of invoking `setup.py` explicitly. The syntax is:
-
-```ruby
-system formula_opt_bin("python@3.y")/"python3.y", *Language::Python.setup_install_args(prefix)
-```
-
-where `prefix` is the destination prefix (usually `libexec` or `prefix`).
-
-### What is `--single-version-externally-managed`?
-
-`--single-version-externally-managed` ("SVEM") is a [Setuptools](https://setuptools.readthedocs.io/en/latest/setuptools.html)-only argument to `setup.py install`. The primary effect of SVEM is using Distutils to perform the install instead of Setuptools' `easy_install`.
-
-`easy_install` does a few things that we need to avoid:
-
-* fetches and installs dependencies
-* upgrades dependencies in `sys.path` in-place
-* writes `.pth` and `site.py` files which aren't useful for us and cause link conflicts
-
-Setuptools requires that SVEM be used in conjunction with `--record`, which provides a list of files that can later be used to uninstall the package. We don't need or want this because Homebrew can manage uninstallation, but since Setuptools demands it we comply. The Homebrew convention is to name the record file "installed.txt".
-
-Detecting whether a `setup.py` uses `setup()` from Setuptools or Distutils is difficult, but we always need to pass this flag to Setuptools-based scripts. `pip` faces the same problem that we do and forces `setup()` to use the Setuptools version by loading a shim around `setup.py` that imports Setuptools before doing anything else. Since Setuptools monkey-patches Distutils and replaces its `setup` function, this provides a single, consistent interface. We have borrowed this code and use it in `Language::Python.setup_install_args`.
-
-### `--prefix` vs `--root`
-
-`setup.py` accepts a slightly bewildering array of installation options. The correct switch for Homebrew is `--prefix`, which automatically sets the `--install-foo` family of options with sane POSIX-y values.
-
-`--root` [is used](https://mail.python.org/pipermail/distutils-sig/2010-November/017099.html) when installing into a prefix that will not become part of the final installation location of the files, like when building a RPM or binary distribution. When using a `setup.py`-based Setuptools, `--root` has the side effect of activating `--single-version-externally-managed`. It is not safe to use `--root` with an empty `--prefix` because the `root` is removed from paths when byte-compiling modules.
-
-It is probably safe to use `--prefix` with `--root=/`, which should work with either Setuptools- or Distutils-based `setup.py`'s, but it's kinda ugly.
-
-### `pip` vs. `setup.py`
-
-[PEP 453](https://legacy.python.org/dev/peps/pep-0453/#recommendations-for-downstream-distributors) makes a recommendation to downstream distributors (us) that sdist tarballs should be installed with `pip` instead of by invoking `setup.py` directly. For historical reasons we did not follow PEP 453, so some formulae still use `setup.py` installs. Nowadays, most core formulae use `pip` as we have migrated them to this preferred method of installation.
+1. **The `setup.py` era:** Historically, package installations relied on executing `python setup.py install`. This `setup.py` script imported either `distutils` (originally part of the standard library until its removal in Python 3.12) or its extended replacement `setuptools`. Package installers like `easy_install` and later `pip` were then [developed](https://packaging.python.org/en/latest/discussions/pip-vs-easy-install/) on top of this execution model.
+2. **Python adopts `pip`:** In 2013, [PEP 453](https://peps.python.org/pep-0453/) officially adopted `pip` as Python's default installer and bundled it with Python 3.4. It also explicitly [recommended](https://peps.python.org/pep-0453/#recommendations-for-downstream-distributors) downstream distributors (such as Homebrew) to install packages using `pip` rather than invoking `setup.py` directly. For historical reasons, Homebrew did not originally follow this advice.
+3. **The `pyproject.toml` standard:** In 2016, to decouple from specific tools, [PEP 518](https://peps.python.org/pep-0518/) introduced `pyproject.toml` for declaring explicit build-time dependencies while [PEP 517](https://peps.python.org/pep-0517/) standardized an API allowing frontend installers to interact with *any* compliant build backend. This allowed the development of new tools such as `poetry`, `pdm`, and `hatch`.
+4. **Homebrew transition:** In 2021, `setuptools` officially [deprecated](https://packaging.python.org/en/latest/discussions/setup-py-deprecated/) executing `setup.py` directly in favor of the new standard. Homebrew then migrated all core formulae to use a standard `pip` installation method.

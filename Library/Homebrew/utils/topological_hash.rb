@@ -4,10 +4,32 @@
 require "tsort"
 
 module Utils
+  # Cycle-tolerant ordering for graphs that include TSort.
+  module CycleTolerantTSort
+    extend T::Helpers
+
+    requires_ancestor { TSort }
+
+    # Orders nodes dependency-first like tsort but, unlike tsort, does not
+    # raise on a cycle: yields cyclic components (size > 1) to the block and
+    # returns the flattened component order.
+    sig {
+      params(on_cycle: T.proc.params(arg0: T::Array[T::Array[T.untyped]]).void)
+        .returns(T::Array[T.untyped])
+    }
+    def tsort_with_cycles(&on_cycle)
+      components = each_strongly_connected_component.to_a
+      cycles = components.select { |component| component.size > 1 }
+      yield(cycles) if cycles.any?
+      components.flatten
+    end
+  end
+
   # Topologically sortable hash map.
   class TopologicalHash < Hash
     extend T::Generic
     include TSort
+    include CycleTolerantTSort
 
     CaskOrFormula = T.type_alias { T.any(Cask::Cask, Formula) }
 

@@ -38,6 +38,34 @@ RSpec.describe Homebrew::API do
     end
   end
 
+  describe "::formula_name?" do
+    before do
+      allow(Homebrew::API::Internal).to receive(:formula_hashes).and_return({ "foo" => {} })
+    end
+
+    it "returns true for a core formula name" do
+      expect(described_class.formula_name?("foo")).to be true
+    end
+
+    it "returns false for an unknown name" do
+      expect(described_class.formula_name?("bar")).to be false
+    end
+  end
+
+  describe "::cask_token?" do
+    before do
+      allow(Homebrew::API::Internal).to receive(:cask_hashes).and_return({ "foo" => {} })
+    end
+
+    it "returns true for a core cask token" do
+      expect(described_class.cask_token?("foo")).to be true
+    end
+
+    it "returns false for an unknown token" do
+      expect(described_class.cask_token?("bar")).to be false
+    end
+  end
+
   describe "::fetch_json_api_file" do
     let!(:cache_dir) { mktmpdir }
 

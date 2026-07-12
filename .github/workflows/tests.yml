@@ -34,13 +34,13 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-syntax-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -50,13 +50,13 @@ jobs:
         run: brew install-bundler-gems --groups=style,typecheck
 
       - name: Install actionlint, shellcheck and shfmt
-        uses: Homebrew/actions/cache-homebrew-prefix@main
+        uses: Homebrew/actions/cache-homebrew-prefix@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           install: actionlint shellcheck shfmt
           workflow-key: tests-syntax
 
       - name: Cache style cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/Homebrew/style
           key: syntax-style-cache-${{ github.sha }}
@@ -74,13 +74,13 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: true
           cask: true
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-tap-syntax-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -90,7 +90,7 @@ jobs:
         run: brew install-bundler-gems --groups=style,typecheck
 
       - name: Cache style cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/Library/Caches/Homebrew/style
           key: tap-syntax-style-cache-${{ github.sha }}
@@ -112,7 +112,7 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: true
           cask: false
@@ -134,7 +134,7 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: true
           cask: true
@@ -156,13 +156,13 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
 
       - name: Configure Git user
-        uses: Homebrew/actions/git-user-config@main
+        uses: Homebrew/actions/git-user-config@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           username: BrewTestBot
 
@@ -197,7 +197,7 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
@@ -236,7 +236,7 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           # We only test needs_homebrew_core tests on macOS because
           # homebrew/core is not available by default on GitHub-hosted Ubuntu
@@ -245,7 +245,7 @@ jobs:
           cask: false
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ matrix.runs-on }}-tests-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -260,7 +260,7 @@ jobs:
         run: mkdir tests
 
       - name: Cache parallel tests log
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: tests
           key: ${{ runner.os }}-${{ matrix.test-flags }}-parallel_runtime_rspec-${{ github.sha }}
@@ -268,14 +268,14 @@ jobs:
 
       - name: Install brew tests --online dependencies
         if: matrix.name == 'tests (online)'
-        uses: Homebrew/actions/cache-homebrew-prefix@main
+        uses: Homebrew/actions/cache-homebrew-prefix@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           install: curl subversion
           workflow-key: tests-tests-online
 
       - name: Install brew tests macOS dependencies
         if: runner.os != 'Linux'
-        uses: Homebrew/actions/cache-homebrew-prefix@main
+        uses: Homebrew/actions/cache-homebrew-prefix@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           install: subversion gnupg
           workflow-key: tests-tests-macos
@@ -325,7 +325,9 @@ jobs:
     needs: syntax
     if: github.repository_owner == 'Homebrew' && github.event_name != 'push'
     runs-on: ${{ matrix.runs-on }}
-    container: ${{ matrix.container }}
+    container:
+      image: ${{ matrix.container }}
+      options: ${{ matrix.container != '' && '--privileged' }}
     strategy:
       fail-fast: false
       matrix:
@@ -386,12 +388,12 @@ jobs:
 
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: true
           cask: false
 
-      - uses: Homebrew/actions/cache-homebrew-prefix@main
+      - uses: Homebrew/actions/cache-homebrew-prefix@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           install: gnu-tar
           workflow-key: test-bot
@@ -427,7 +429,7 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
@@ -479,16 +481,16 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
 
       - name: Setup Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version-file: ${{ steps.set-up-homebrew.outputs.repository-path }}/Library/Homebrew/formula-analytics/.python-version
 
       - name: Cache Homebrew Bundler RubyGems
         id: cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}

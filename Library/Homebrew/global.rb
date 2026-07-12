@@ -26,7 +26,7 @@ HOMEBREW_SYSTEM = T.let(ENV.fetch("HOMEBREW_SYSTEM").freeze, String)
 HOMEBREW_PROCESSOR = T.let(ENV.fetch("HOMEBREW_PROCESSOR").freeze, String)
 HOMEBREW_PHYSICAL_PROCESSOR = T.let(ENV.fetch("HOMEBREW_PHYSICAL_PROCESSOR").freeze, String)
 
-HOMEBREW_BREWED_CURL_PATH = T.let(Pathname(ENV.fetch("HOMEBREW_BREWED_CURL_PATH")).freeze, Pathname)
+HOMEBREW_BREWED_CURL_PATH = Pathname.new(ENV.fetch("HOMEBREW_BREWED_CURL_PATH")).freeze
 HOMEBREW_USER_AGENT_CURL = T.let(ENV.fetch("HOMEBREW_USER_AGENT_CURL").freeze, String)
 HOMEBREW_USER_AGENT_FAKE_SAFARI =
   # Don't update this beyond 10.15.7 until Safari actually updates their

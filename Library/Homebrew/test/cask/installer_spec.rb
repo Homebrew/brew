@@ -10,6 +10,99 @@ RSpec.describe Cask::Installer, :cask do
     end
   end
 
+  describe "#save_caskfile" do
+    it "stores casks loaded from Ruby source as JSON metadata" do
+      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+
+      described_class.new(cask).save_caskfile
+
+      expect([
+        cask.installed_caskfile&.basename&.to_s,
+        Cask::CaskLoader.load_from_installed_caskfile(cask.installed_caskfile).token,
+        JSON.parse(cask.installed_caskfile.read).keys.sort,
+      ]).to eq(["local-caffeine.json", "local-caffeine", []])
+    end
+
+    it "stores URL only_path metadata needed to reconstruct artifact sources" do
+      cask = Cask::Cask.new("only-path", source: "{}") do
+        version "1.0"
+        sha256 :no_check
+        url "https://example.com/only-path.git", only_path: "nested"
+        app "Only Path.app"
+      end
+
+      described_class.new(cask).save_caskfile
+      Cask::Tab.create(cask).write
+
+      loaded_cask = Cask::CaskLoader.load_from_installed_caskfile(cask.installed_caskfile)
+      expect([
+        JSON.parse(cask.installed_caskfile.read).keys.sort,
+        loaded_cask.artifacts.grep(Cask::Artifact::App).first.source,
+      ]).to eq([
+        %w[url_specs],
+        Cask::Caskroom.path/"only-path/1.0/nested/Only Path.app",
+      ])
+    end
+
+    it "strips legacy install flight blocks from JSON metadata" do
+      cask = Cask::CaskLoader.load(cask_path("with-preflight"))
+
+      described_class.new(cask).save_caskfile
+
+      expect(JSON.parse(cask.installed_caskfile.read).keys).to be_empty
+    end
+
+    it "stores legacy uninstall flight block casks as Ruby metadata" do
+      expect(%w[with-uninstall-preflight with-uninstall-postflight].map do |token|
+        cask = Cask::CaskLoader.load(cask_path(token))
+
+        described_class.new(cask).save_caskfile
+
+        [
+          cask.installed_caskfile&.basename&.to_s,
+          Cask::CaskLoader.load_from_installed_caskfile(cask.installed_caskfile).uninstall_flight_blocks?,
+        ]
+      end).to eq([
+        ["with-uninstall-preflight.rb", true],
+        ["with-uninstall-postflight.rb", true],
+      ])
+    end
+
+    it "stores casks loaded from the internal API as JSON metadata" do
+      cask = Cask::Cask.new(
+        "api-cask",
+        source:                   "{}",
+        loaded_from_api:          true,
+        loaded_from_internal_api: true,
+        api_source:               {
+          "homepage"      => "https://example.com/api-cask",
+          "names"         => ["API Cask"],
+          "raw_artifacts" => [[":app", ["API Cask.app"]]],
+          "sha256"        => "no_check",
+          "url_args"      => ["https://example.com/api-cask.zip"],
+          "version"       => "1.0",
+        },
+      ) do
+        version "1.0"
+        sha256 :no_check
+        url "https://example.com/api-cask.zip"
+        name "API Cask"
+        homepage "https://example.com/api-cask"
+        app "API Cask.app"
+      end
+
+      described_class.new(cask).save_caskfile
+
+      loaded_cask = Cask::CaskLoader.load_from_installed_caskfile(cask.installed_caskfile)
+      expect([
+        cask.installed_caskfile&.basename&.to_s,
+        loaded_cask.token,
+        loaded_cask.loaded_from_internal_api?,
+        JSON.parse(cask.installed_caskfile.read).keys.sort,
+      ]).to eq(["api-cask.json", "api-cask", false, []])
+    end
+  end
+
   describe "install" do
     it "downloads and installs a nice fresh Cask" do
       caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
@@ -331,6 +424,21 @@ RSpec.describe Cask::Installer, :cask do
     end
   end
 
+  describe "#backup" do
+    it "does not raise when the staged version directory is already missing" do
+      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      installer = described_class.new(caffeine)
+      installer.install
+
+      FileUtils.rm_rf(caffeine.staged_path)
+      FileUtils.rm_rf(caffeine.metadata_versioned_path)
+
+      expect { installer.backup }.not_to raise_error
+      expect(installer.backup_path).not_to exist
+      expect(installer.backup_metadata_path).not_to exist
+    end
+  end
+
   describe "uninstall" do
     it "fully uninstalls a Cask" do
       caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
@@ -628,6 +736,56 @@ RSpec.describe Cask::Installer, :cask do
       expect(download_queue).to receive(:enqueue).with(instance_of(Cask::Download))
 
       installer.enqueue_downloads
+    end
+
+    it "stages the main cask download outside Caskroom before install" do
+      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      download_queue = Homebrew::DownloadQueue.new(pour: true)
+      installer = described_class.new(cask, download_queue:, defer_fetch: true)
+      queued_staged_path = installer.downloader.staged_path_from_download_queue
+      queued_staged_marker = installer.downloader.staged_path_from_download_queue_marker
+
+      begin
+        installer.enqueue_downloads
+        download_queue.fetch
+      ensure
+        download_queue.shutdown
+      end
+
+      expect(cask.staged_path).not_to exist
+      expect(cask).not_to be_installed
+      expect(queued_staged_path/"Caffeine.app").to be_a_directory
+      expect(queued_staged_marker).to exist
+
+      expect(installer).not_to receive(:extract_primary_container)
+
+      installer.stage
+
+      expect(cask.staged_path/"Caffeine.app").to be_a_directory
+      expect(cask).to be_installed
+    end
+
+    it "does not stage queued downloads with missing unpack dependencies" do
+      cask = Cask::CaskLoader.load(cask_path("container-bzip2"))
+      download_queue = Homebrew::DownloadQueue.new(pour: true)
+      installer = described_class.new(cask, download_queue:, defer_fetch: true)
+      queued_staged_path = installer.downloader.staged_path_from_download_queue
+      queued_staged_marker = installer.downloader.staged_path_from_download_queue_marker
+
+      allow_any_instance_of(Formula).to receive(:any_version_installed?).and_return(false)
+      expect(installer).not_to receive(:extract_primary_container)
+
+      begin
+        installer.enqueue_downloads
+        download_queue.fetch
+      ensure
+        download_queue.shutdown
+      end
+
+      expect(cask.staged_path).not_to exist
+      expect(cask).not_to be_installed
+      expect(queued_staged_path).not_to exist
+      expect(queued_staged_marker).not_to exist
     end
   end
 

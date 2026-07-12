@@ -187,6 +187,25 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       expect(strategy.page_headers(url)).to eq([responses.first[:headers]])
     end
 
+    it "only allows HTTPS redirects" do
+      expect(strategy).to receive(:curl_headers).with(
+        "--max-redirs",
+        "5",
+        "--proto-redir",
+        "=https",
+        url,
+        wanted_headers:    ["location", "content-disposition"],
+        use_homebrew_curl: false,
+        cookies:           nil,
+        header:            nil,
+        referer:           nil,
+        user_agent:        :default,
+        **Homebrew::Livecheck::Strategy::DEFAULT_CURL_OPTIONS,
+      ).and_return({ responses:, body: })
+
+      expect(strategy.page_headers(url)).to eq([responses.first[:headers]])
+    end
+
     it "handles `cookies` `url` options" do
       allow(strategy).to receive(:curl_headers).and_return({ responses:, body: })
 
@@ -278,6 +297,31 @@ RSpec.describe Homebrew::Livecheck::Strategy do
     it "returns hash including fetched content" do
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
       allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])
+
+      expect(strategy.page_content(url)).to eq({ content: body })
+    end
+
+    it "only allows HTTPS redirects" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+
+      expect(strategy).to receive(:curl_output).with(
+        "--fail-with-body",
+        "--include",
+        "--location",
+        "--max-redirs",
+        "5",
+        "--proto-redir",
+        "=https",
+        "--silent",
+        "--compressed",
+        url,
+        **Homebrew::Livecheck::Strategy::DEFAULT_CURL_OPTIONS,
+        use_homebrew_curl: false,
+        cookies:           nil,
+        header:            nil,
+        referer:           nil,
+        user_agent:        :default,
+      ).and_return([response_text[:ok], nil, success_status])
 
       expect(strategy.page_content(url)).to eq({ content: body })
     end

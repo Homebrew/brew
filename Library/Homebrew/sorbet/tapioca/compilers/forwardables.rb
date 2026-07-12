@@ -9,9 +9,9 @@ module Tapioca
   module Compilers
     class Forwardables < Tapioca::Dsl::Compiler
       FORWARDABLE_FILENAME = "forwardable.rb"
-      ARRAY_METHODS = T.let(["to_a", "to_ary"].freeze, T::Array[String])
-      HASH_METHODS = T.let(["to_h", "to_hash"].freeze, T::Array[String])
-      STRING_METHODS = T.let(["to_s", "to_str", "to_json"].freeze, T::Array[String])
+      ARRAY_METHODS = ["to_a", "to_ary"].freeze
+      HASH_METHODS = ["to_h", "to_hash"].freeze
+      STRING_METHODS = ["to_s", "to_str", "to_json"].freeze
       # Use this to override the default return type of a forwarded method:
       RETURN_TYPE_OVERRIDES = T.let({
         "::Cask::Cask" => {

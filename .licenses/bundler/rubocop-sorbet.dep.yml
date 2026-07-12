@@ -1,6 +1,6 @@
 ---
 name: rubocop-sorbet
-version: 0.12.0
+version: 0.13.0
 type: bundler
 summary: Automatic Sorbet code style checking tool.
 homepage: https://github.com/shopify/rubocop-sorbet

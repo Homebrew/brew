@@ -41,6 +41,23 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       .to match(/Your Linux kernel .+ is too old/)
   end
 
+  specify "#check_for_installed_developer_tools explains system build tools" do
+    allow(DevelopmentTools).to receive(:installed?).and_return(false)
+
+    expect(checks.check_for_installed_developer_tools)
+      .to include(
+        "No developer tools installed.",
+        "Install a system C compiler and the standard development tools",
+        "https://docs.brew.sh/Homebrew-on-Linux#requirements",
+      )
+  end
+
+  describe ".custom_installation_instructions" do
+    it "points at brew install gcc" do
+      expect(DevelopmentTools.custom_installation_instructions).to include("brew install gcc")
+    end
+  end
+
   specify "#fatal_build_from_source_checks" do
     expect(checks.fatal_build_from_source_checks).not_to include("check_linux_sandbox")
   end

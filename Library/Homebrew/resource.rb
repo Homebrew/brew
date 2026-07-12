@@ -49,7 +49,7 @@ class Resource
     super()
     # Generally ensure this is synced with `initialize_dup` and `freeze`
     # (excluding simple objects like integers & booleans, weak refs like `owner` or permafrozen objects)
-    @name = T.let(name, T.nilable(String))
+    @name = name
     @source_modified_time = T.let(nil, T.nilable(Time))
     @patches = T.let([], T::Array[T.any(EmbeddedPatch, ExternalPatch)])
     @owner = T.let(nil, T.nilable(Owner))
@@ -361,7 +361,7 @@ class Resource
     def initialize(bottle)
       super("#{bottle.name}_bottle_manifest")
       @bottle = bottle
-      @manifest_annotations = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
+      @manifest_annotations = T.let(nil, T.nilable(T::Hash[String, String]))
     end
 
     sig { override.void }
@@ -414,6 +414,26 @@ class Resource
       manifest_annotations["sh.brew.path_exec_files"]&.split(",")
     end
 
+    sig { returns(T.nilable(T::Hash[String, Object])) }
+    def sbom_supplement
+      supplement = manifest_annotations["sh.brew.sbom.supplement"]
+      return if supplement.blank?
+
+      parsed_supplement = JSON.parse(supplement)
+      return unless parsed_supplement.is_a?(Hash)
+
+      if (tags = parsed_supplement["tags"]).is_a?(Hash)
+        tag_supplement = tags[Utils::Bottles.tag.to_s]
+        return tag_supplement if tag_supplement.is_a?(Hash)
+
+        return
+      end
+
+      parsed_supplement
+    rescue JSON::ParserError
+      nil
+    end
+
     sig { override.returns(String) }
     def download_queue_type = "Bottle Manifest"
 
@@ -422,7 +442,7 @@ class Resource
 
     private
 
-    sig { returns(T::Hash[String, T.untyped]) }
+    sig { returns(T::Hash[String, String]) }
     def manifest_annotations
       cached = @manifest_annotations
       return cached unless cached.nil?
@@ -455,7 +475,7 @@ class Resource
       end
       raise Error, "Couldn't find manifest matching bottle checksum." if manifests_annotation.blank?
 
-      @manifest_annotations = manifests_annotation
+      @manifest_annotations = manifests_annotation.to_h { |key, value| [key.to_s, value.to_s] }
     end
   end
 

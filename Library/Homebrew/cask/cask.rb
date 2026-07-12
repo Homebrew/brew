@@ -574,7 +574,7 @@ module Cask
       }
     end
 
-    HASH_KEYS_TO_SKIP = T.let(%w[outdated installed pinned pinned_version versions].freeze, T::Array[String])
+    HASH_KEYS_TO_SKIP = %w[outdated installed pinned pinned_version versions].freeze
     private_constant :HASH_KEYS_TO_SKIP
 
     AUTO_UPDATES_BAD_BUNDLE_VERSIONS = %w[0 0.0].freeze
@@ -621,6 +621,14 @@ module Cask
 
       hash["variations"] = variations
       hash
+    end
+
+    sig { returns(T::Hash[String, T.untyped]) }
+    def to_installed_json_hash
+      cask_url = url
+      return {} if cask_url.nil? || cask_url.only_path.blank?
+
+      { "url_specs" => { "only_path" => cask_url.only_path } }
     end
 
     sig { params(uninstall_only: T::Boolean).returns(T::Array[T::Hash[Symbol, T.untyped]]) }

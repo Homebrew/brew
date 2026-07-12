@@ -67,7 +67,8 @@ module Homebrew
 
         # If we have a cached event payload, then we failed to get the artifact we wanted
         # from `GITHUB_EVENT_PATH`, so use the cached payload to check for a SHA1.
-        event_payload = JSON.parse(T.must(cached_event_json).read) if cached_event_json.present?
+        cached_json = cached_event_json
+        event_payload = JSON.parse(cached_json.read) if cached_json
         event_payload ||= payload
 
         event_payload.fetch("before", nil)
@@ -236,7 +237,7 @@ module Homebrew
 
       sig { params(formula: String, bottle_dir: Pathname).returns(T.nilable(T::Hash[String, T.untyped])) }
       def local_bottle_hash(formula, bottle_dir:)
-        return if (local_bottle_json = bottle_glob(formula, bottle_dir, ".json").first).blank?
+        return unless (local_bottle_json = bottle_glob(formula, bottle_dir, ".json").first)
 
         JSON.parse(local_bottle_json.read)
       end

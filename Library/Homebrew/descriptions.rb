@@ -57,11 +57,8 @@ class Descriptions
     ).void
   }
   def initialize(descriptions, status_data: {})
-    @descriptions = T.let(
-      descriptions,
-      T.any(T::Hash[String, T.nilable(String)], T::Hash[String, T::Array[T.nilable(String)]]),
-    )
-    @status_data = T.let(status_data, T::Hash[String, T::Hash[Symbol, T::Boolean]])
+    @descriptions = descriptions
+    @status_data = status_data
   end
 
   # Take search results -- a hash mapping formula names to descriptions -- and

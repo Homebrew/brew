@@ -45,16 +45,14 @@ module Homebrew
       sig { params(taps: T::Array[Tap]).void }
       def print_tap_info(taps)
         if taps.none?
-          tap_count = 0
-          formula_count = 0
-          command_count = 0
-          private_count = 0
-          Tap.installed.each do |tap|
-            tap_count += 1
-            formula_count += tap.formula_files.size
-            command_count += tap.command_files.size
-            private_count += 1 if tap.private?
+          # Tap#private? queries the GitHub API for each non-core tap.
+          tap_stats = Utils.parallel_map(Tap.installed) do |tap|
+            [tap.formula_files.size, tap.command_files.size, tap.private?]
           end
+          tap_count = tap_stats.count
+          formula_count = tap_stats.sum(&:first)
+          command_count = tap_stats.sum { |_, command_files_count, _| command_files_count }
+          private_count = tap_stats.count { |_, _, private_tap| private_tap }
           info = Utils.pluralize("tap", tap_count, include_count: true)
           info += ", #{private_count} private"
           info += ", #{Utils.pluralize("formula", formula_count, include_count: true)}"
@@ -184,7 +182,10 @@ module Homebrew
 
       sig { params(taps: T::Array[Tap]).void }
       def print_tap_json(taps)
-        puts JSON.pretty_generate(taps.map(&:to_hash))
+        # Tap#to_hash shells out to Git and queries the GitHub API.
+        hashes = Utils.parallel_map(taps, &:to_hash)
+
+        puts JSON.pretty_generate(hashes)
       end
     end
   end

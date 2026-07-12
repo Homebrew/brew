@@ -67,6 +67,23 @@ class GitHubRunnerMatrix
     @compatible_testing_formulae = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
     @formulae_with_untested_dependents = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
 
+    # gracefully handle non-GitHub Actions environments
+    @github_run_id = T.let(
+      if ENV.key?("GITHUB_ACTIONS")
+        ENV.fetch("GITHUB_RUN_ID")
+      else
+        ENV.fetch("GITHUB_RUN_ID", "")
+      end, String
+    )
+    @linux_self_hosted = T.let(ENV.fetch("HOMEBREW_LINUX_SELF_HOSTED", "false") == "true", T::Boolean)
+    @runner_timeout = T.let(
+      if ENV.fetch("HOMEBREW_MACOS_LONG_TIMEOUT", "false") == "true"
+        GITHUB_ACTIONS_LONG_TIMEOUT
+      else
+        GITHUB_ACTIONS_SHORT_TIMEOUT
+      end, Integer
+    )
+
     @runners = T.let([], T::Array[GitHubRunner])
     generate_runners!
 
@@ -84,6 +101,7 @@ class GitHubRunnerMatrix
       (1..@dependent_shards).map do |shard|
         spec.merge(
           name:                      "#{spec.fetch(:name)} shard #{shard}/#{@dependent_shards}",
+          runner:                    spec.fetch(:runner).sub("-deps", "-deps#{shard}").to_s,
           formulae_dependents_shard: "#{shard}/#{@dependent_shards}",
         )
       end
@@ -92,52 +110,56 @@ class GitHubRunnerMatrix
 
   private
 
-  SELF_HOSTED_LINUX_RUNNER = "linux-self-hosted-1"
   # ARM macOS timeout, keep this under 1/2 of GitHub's job execution time limit for self-hosted runners.
   # https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners#usage-limits
   GITHUB_ACTIONS_LONG_TIMEOUT = 2160 # 36 hours
   GITHUB_ACTIONS_SHORT_TIMEOUT = 60
-  private_constant :SELF_HOSTED_LINUX_RUNNER, :GITHUB_ACTIONS_LONG_TIMEOUT, :GITHUB_ACTIONS_SHORT_TIMEOUT
+  private_constant :GITHUB_ACTIONS_LONG_TIMEOUT, :GITHUB_ACTIONS_SHORT_TIMEOUT
 
-  sig { params(arch: Symbol).returns(LinuxRunnerSpec) }
-  def linux_runner_spec(arch)
+  sig { params(arch: Symbol, self_hosted: T::Boolean).returns(LinuxRunnerSpec) }
+  def linux_runner_spec(arch, self_hosted:)
     linux_runner = case arch
-    when :arm64 then OS::LINUX_CI_ARM_RUNNER
-    when :x86_64 then ENV.fetch("HOMEBREW_LINUX_RUNNER", "ubuntu-latest")
+    when :arm64 then self_hosted ? "linux-arm64#{ephemeral_suffix}" : OS::LINUX_CI_ARM_RUNNER
+    when :x86_64 then self_hosted ? "linux-x86_64#{ephemeral_suffix}" : "ubuntu-latest"
     else raise "Unknown Linux architecture: #{arch}"
+    end
+
+    unless self_hosted
+      options = %w[--user linuxbrew]
+      options << "--privileged" if Homebrew::EnvConfig.sandbox_linux?
+      container = {
+        image:   "ghcr.io/homebrew/brew:main",
+        options: options.join(" "),
+      }
+      workdir = "/github/home"
     end
 
     LinuxRunnerSpec.new(
       name:      "Linux #{arch}",
       runner:    linux_runner,
-      container: {
-        image:   "ghcr.io/homebrew/brew:main",
-        options: "--user=linuxbrew -e GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED",
-      },
-      workdir:   "/github/home",
+      container:,
+      workdir:,
       timeout:   GITHUB_ACTIONS_LONG_TIMEOUT,
-      cleanup:   linux_runner == SELF_HOSTED_LINUX_RUNNER,
+      cleanup:   false,
     )
   end
 
-  VALID_PLATFORMS = T.let([:macos, :linux].freeze, T::Array[Symbol])
-  VALID_ARCHES = T.let([:arm64, :x86_64].freeze, T::Array[Symbol])
+  VALID_PLATFORMS = [:macos, :linux].freeze
+  VALID_ARCHES = [:arm64, :x86_64].freeze
   private_constant :VALID_PLATFORMS, :VALID_ARCHES
 
   sig {
     params(
       platform:      Symbol,
       arch:          Symbol,
-      spec:          T.nilable(RunnerSpec),
+      spec:          RunnerSpec,
       macos_version: T.nilable(MacOSVersion),
     ).returns(GitHubRunner)
   }
-  def create_runner(platform, arch, spec = nil, macos_version = nil)
+  def create_runner(platform, arch, spec, macos_version = nil)
     raise "Unexpected platform: #{platform}" if VALID_PLATFORMS.exclude?(platform)
     raise "Unexpected arch: #{arch}" if VALID_ARCHES.exclude?(arch)
-    raise "Missing `spec` argument" if spec.nil? && platform != :linux
 
-    spec ||= linux_runner_spec(arch)
     runner = GitHubRunner.new(platform:, arch:, spec:, macos_version:)
     runner.spec.testing_formulae += testable_formulae(runner)
     runner.active = active_runner?(runner)
@@ -147,6 +169,16 @@ class GitHubRunnerMatrix
   sig { params(macos_version: MacOSVersion).returns(T::Boolean) }
   def runner_enabled?(macos_version)
     macos_version.between?(OLDEST_HOMEBREW_CORE_MACOS_RUNNER, NEWEST_HOMEBREW_CORE_MACOS_RUNNER)
+  end
+
+  sig { returns(String) }
+  def ephemeral_suffix
+    @ephemeral_suffix ||= T.let(begin
+      suffix = "-#{@github_run_id}"
+      suffix << "-deps" if @dependent_matrix
+      suffix << "-long" if @runner_timeout == GITHUB_ACTIONS_LONG_TIMEOUT
+      suffix.freeze
+    end, T.nilable(String))
   end
 
   NEWEST_GITHUB_ACTIONS_INTEL_MACOS_RUNNER = :ventura
@@ -162,21 +194,17 @@ class GitHubRunnerMatrix
   def generate_runners!
     return if @runners.present?
 
-    # gracefully handle non-GitHub Actions environments
-    github_run_id = if ENV.key?("GITHUB_ACTIONS")
-      ENV.fetch("GITHUB_RUN_ID")
-    else
-      ENV.fetch("GITHUB_RUN_ID", "")
+    if !@all_supported || @linux_self_hosted
+      VALID_ARCHES.each do |arch|
+        @runners << create_runner(:linux, arch, linux_runner_spec(arch, self_hosted: @linux_self_hosted))
+      end
     end
 
     # Portable Ruby logic
     if @testing_formulae.any? { |tf| tf.name.start_with?("portable-") }
-      @runners << create_runner(:linux, :x86_64)
-      @runners << create_runner(:linux, :arm64)
-
       x86_64_spec = MacOSRunnerSpec.new(
         name:    "macOS 10.15-cross x86_64",
-        runner:  "10.15-cross-#{github_run_id}",
+        runner:  "10.15-cross-#{@github_run_id}",
         timeout: GITHUB_ACTIONS_LONG_TIMEOUT,
         cleanup: true,
       )
@@ -186,7 +214,7 @@ class GitHubRunnerMatrix
       # odisabled: remove support for Big Sur September (or later) 2027
       arm64_spec = MacOSRunnerSpec.new(
         name:    "macOS 11-cross arm64",
-        runner:  "11-arm64-cross-#{github_run_id}",
+        runner:  "11-arm64-cross-#{@github_run_id}",
         timeout: GITHUB_ACTIONS_LONG_TIMEOUT,
         cleanup: true,
       )
@@ -195,25 +223,10 @@ class GitHubRunnerMatrix
       return
     end
 
-    if !@all_supported || ENV.key?("HOMEBREW_LINUX_RUNNER")
-      self_hosted_deps = @dependent_matrix && ENV["HOMEBREW_LINUX_RUNNER"] == SELF_HOSTED_LINUX_RUNNER
-      @runners << create_runner(:linux, :x86_64)
-      @runners << create_runner(:linux, :arm64) unless self_hosted_deps
-    end
-
-    long_timeout       = ENV.fetch("HOMEBREW_MACOS_LONG_TIMEOUT", "false") == "true"
-    use_github_runner  = ENV.fetch("HOMEBREW_MACOS_BUILD_ON_GITHUB_RUNNER", "false") == "true"
-
-    runner_timeout = long_timeout ? GITHUB_ACTIONS_LONG_TIMEOUT : GITHUB_ACTIONS_SHORT_TIMEOUT
-
     # Use GitHub Actions macOS Runner for testing dependents if compatible with timeout.
+    use_github_runner = ENV.fetch("HOMEBREW_MACOS_BUILD_ON_GITHUB_RUNNER", "false") == "true"
     use_github_runner ||= @dependent_matrix
-    use_github_runner &&= runner_timeout <= GITHUB_ACTIONS_RUNNER_TIMEOUT
-
-    ephemeral_suffix = "-#{github_run_id}"
-    ephemeral_suffix << "-deps" if @dependent_matrix
-    ephemeral_suffix << "-long" if runner_timeout == GITHUB_ACTIONS_LONG_TIMEOUT
-    ephemeral_suffix.freeze
+    use_github_runner &&= @runner_timeout <= GITHUB_ACTIONS_RUNNER_TIMEOUT
 
     MacOSVersion::SYMBOLS.each_value do |version|
       macos_version = MacOSVersion.new(version)
@@ -225,9 +238,9 @@ class GitHubRunnerMatrix
       runner, timeout = if use_github_runner && github_runner_available
         ["macos-#{version}", GITHUB_ACTIONS_RUNNER_TIMEOUT]
       elsif macos_version >= :monterey
-        ["#{version}-arm64#{ephemeral_suffix}", runner_timeout]
+        ["#{version}-arm64#{ephemeral_suffix}", @runner_timeout]
       else
-        ["#{version}-arm64", runner_timeout]
+        ["#{version}-arm64", @runner_timeout]
       end
 
       # We test recursive dependents on ARM macOS, so they can be slower than our Intel runners.
@@ -254,7 +267,7 @@ class GitHubRunnerMatrix
       runner, timeout = if use_github_runner && github_runner_available
         ["macos-#{version}", GITHUB_ACTIONS_RUNNER_TIMEOUT]
       else
-        ["#{version}-x86_64#{ephemeral_suffix}", runner_timeout]
+        ["#{version}-x86_64#{ephemeral_suffix}", @runner_timeout]
       end
 
       # macOS 12-x86_64 is usually slower.

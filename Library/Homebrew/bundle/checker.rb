@@ -16,14 +16,14 @@ module Homebrew
 
       CheckStep = T.type_alias { Symbol }
 
-      CORE_CHECKS = T.let([
+      CORE_CHECKS = [
         :taps_to_tap,
         :casks_to_install,
         :registered_extensions_to_install,
         :apps_to_install,
         :formulae_to_install,
         :formulae_to_start,
-      ].freeze, T::Array[CheckStep])
+      ].freeze
 
       sig {
         params(

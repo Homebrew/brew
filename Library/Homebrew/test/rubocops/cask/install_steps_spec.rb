@@ -30,7 +30,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
 
         preflight_steps do
           system "true"
-          ^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `write`.
+          ^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `write`, `delete_keychain_certificate`, `set_permissions`, `set_ownership`.
         end
       end
     CASK
@@ -44,7 +44,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
 
         preflight_steps do
           update_desktop_database
-          ^^^^^^^^^^^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `write`.
+          ^^^^^^^^^^^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `write`, `delete_keychain_certificate`, `set_permissions`, `set_ownership`.
         end
       end
     CASK
@@ -62,6 +62,11 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
           mv "source", "target"
           move_children "source", "target"
           ln_sf "source", "target", source_base: :relative, uninstall: true
+          write "foo.conf", "key = value\n"
+          set_permissions "Foo.app", "0755"
+          set_ownership "Foo.app", user: "root", group: "wheel"
+          delete_keychain_certificate "Charles"
+          delete_keychain_certificate "NodeMITMProxyCA", matching_certificate: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"
         end
       end
     CASK
@@ -93,6 +98,44 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
           touch "Prepared/touched"
           mv "source", "target"
           ln_s "target", "Linked", source_base: :relative
+        end
+      end
+    CASK
+  end
+
+  it "autocorrects simple flight block config writes" do
+    expect_offense <<~'CASK'
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        postflight do
+        ^^^^^^^^^^^^^ Use `postflight_steps` for simple file preparation.
+          File.write staged_path/"Prepared/foo.conf", "key = value\n"
+        end
+      end
+    CASK
+
+    expect_correction <<~'CASK'
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        postflight_steps do
+          write "Prepared/foo.conf", "key = value\n", overwrite: true
+        end
+      end
+    CASK
+  end
+
+  it "does not autocorrect config writes without trailing newlines" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        postflight do
+          File.write staged_path/"Prepared/foo.conf", "key = value"
         end
       end
     CASK

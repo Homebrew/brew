@@ -4,41 +4,37 @@
 module RuboCop
   module Cop
     module InstallStepsHelper
-      FILE_PREPARATION_STEP_METHODS = T.let(
-        [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :symlink, :ln_s, :ln_sf].freeze,
-        T::Array[Symbol],
-      )
-      CONFIG_WRITE_STEP_METHODS = T.let(
-        [:write].freeze,
-        T::Array[Symbol],
-      )
-      REBUILD_ACTION_STEP_METHODS = T.let(
+      FILE_PREPARATION_STEP_METHODS =
+        [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :symlink, :ln_s, :ln_sf].freeze
+      LINK_STEP_METHODS = [:link_dir, :link_children].freeze
+      CONFIG_WRITE_STEP_METHODS = [:write].freeze
+      SERVICE_DATA_STEP_METHODS = [:init_data_dir].freeze
+      REBUILD_ACTION_STEP_METHODS =
         [:compile_gsettings_schemas, :gio_querymodules, :gdk_pixbuf_query_loaders, :gtk_update_icon_cache,
-         :update_mime_database, :update_desktop_database].freeze,
-        T::Array[Symbol],
-      )
+         :update_mime_database, :update_desktop_database].freeze
+      KEYCHAIN_STEP_METHODS = [:delete_keychain_certificate].freeze
+      PERMISSION_STEP_METHODS = [:set_permissions, :set_ownership].freeze
       ALLOWED_STEP_METHODS = T.let(
-        [*FILE_PREPARATION_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *REBUILD_ACTION_STEP_METHODS].freeze,
+        [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
+         *REBUILD_ACTION_STEP_METHODS].freeze,
         T::Array[Symbol],
       )
       CASK_ALLOWED_STEP_METHODS = T.let(
-        [*FILE_PREPARATION_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS].freeze,
+        [*FILE_PREPARATION_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *KEYCHAIN_STEP_METHODS,
+         *PERMISSION_STEP_METHODS].freeze,
         T::Array[Symbol],
       )
 
-      # `dstr` covers non-interpolated heredocs such as `write` content; any
-      # interpolation adds `begin`/`send` descendants that remain disallowed.
-      ALLOWED_STEP_ARGUMENT_NODE_TYPES = T.let(
-        [:array, :dstr, :hash, :nil, :pair, :str, :sym].freeze,
-        T::Array[Symbol],
-      )
+      # `dstr` covers heredocs such as `write` content; interpolation is limited
+      # to known template values below.
+      ALLOWED_STEP_ARGUMENT_NODE_TYPES = [:array, :dstr, :hash, :nil, :pair, :str, :sym].freeze
 
       STEP_BLOCK_MSG = T.let(
         "Steps blocks may only contain install step DSL calls: " \
         "#{ALLOWED_STEP_METHODS.map { |method| "`#{method}`" }.join(", ")}.".freeze,
         String,
       )
-      SIMPLE_STEP_CONVERSION_MSG = T.let("Use `%<steps_block>s` for simple file preparation.", String)
+      SIMPLE_STEP_CONVERSION_MSG = "Use `%<steps_block>s` for simple file preparation."
       REBUILD_ACTION_STEP_LINES = T.let(
         T.let([
           [
@@ -104,9 +100,7 @@ module RuboCop
           return node if send_node.receiver.present? || !allowed_methods.include?(send_node.method_name)
 
           invalid_argument_node = send_node.each_descendant.find do |descendant|
-            next false if descendant.false_type? || descendant.true_type?
-
-            !ALLOWED_STEP_ARGUMENT_NODE_TYPES.include?(descendant.type)
+            !allowed_step_argument_node?(descendant)
           end
           return T.cast(invalid_argument_node, RuboCop::AST::Node) if invalid_argument_node
         end
@@ -149,6 +143,37 @@ module RuboCop
 
       private
 
+      sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
+      def allowed_step_argument_node?(node)
+        return true if node.false_type? || node.true_type?
+        return true if ALLOWED_STEP_ARGUMENT_NODE_TYPES.include?(node.type)
+
+        allowed_step_template_node?(node)
+      end
+
+      sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
+      def allowed_step_template_node?(node)
+        if node.begin_type?
+          return false if node.child_nodes.length != 1
+
+          return allowed_step_template_node?(node.child_nodes.first)
+        end
+        return false unless node.send_type?
+
+        send_node = T.cast(node, RuboCop::AST::SendNode)
+        return false if send_node.arguments.present?
+        return [:name, :version].include?(send_node.method_name) if send_node.receiver.nil?
+
+        return false unless (receiver = send_node.receiver)&.send_type?
+
+        receiver_node = T.cast(receiver, RuboCop::AST::SendNode)
+        return false if receiver_node.receiver.present?
+        return false if receiver_node.arguments.present?
+        return false if receiver_node.method_name != :version
+
+        [:major, :major_minor].include?(send_node.method_name)
+      end
+
       sig {
         params(
           node:                RuboCop::AST::Node,
@@ -169,6 +194,22 @@ module RuboCop
         if send_node.method_name == :mkpath && send_node.arguments.empty? && send_node.receiver
           path = install_step_path(send_node.receiver)
           return mkdir_step_line(:mkdir_p, path, default_base)
+        end
+
+        if [:write, :atomic_write].include?(send_node.method_name)
+          if send_node.receiver&.const_type? && send_node.receiver&.const_name == "File"
+            return if send_node.method_name != :write || send_node.arguments.length != 2
+
+            return write_step_line(
+              install_step_path(send_node.arguments.fetch(0)),
+              send_node.arguments.fetch(1),
+              default_base,
+            )
+          end
+
+          return if send_node.receiver.nil? || send_node.arguments.length != 1
+
+          return write_step_line(install_step_path(send_node.receiver), send_node.arguments.fetch(0), default_base)
         end
 
         return unless fileutils_or_no_receiver?(send_node)
@@ -268,6 +309,42 @@ module RuboCop
         ].compact
         "#{method_name} #{install_step_path_source(source)}, #{install_step_path_source(target)}" \
           "#{install_step_kwargs(kwargs)}"
+      end
+
+      sig {
+        params(
+          path:         T.nilable(InstallStepPath),
+          content_node: RuboCop::AST::Node,
+          default_base: Symbol,
+        ).returns(T.nilable(String))
+      }
+      def write_step_line(path, content_node, default_base)
+        return if path.nil? || relative_install_step_path?(path)
+
+        kwargs = [
+          install_step_path_keyword(path, base: default_base, keyword: :base),
+          "overwrite: true",
+        ].compact
+        return unless (content_source = write_content_source(content_node, kwargs))
+
+        "write #{install_step_path_source(path)}, #{content_source}"
+      end
+
+      sig { params(content_node: RuboCop::AST::Node, kwargs: T::Array[String]).returns(T.nilable(String)) }
+      def write_content_source(content_node, kwargs)
+        return unless content_node.str_type?
+        return unless T.cast(content_node, RuboCop::AST::StrNode).str_content.end_with?("\n")
+
+        unless content_node.loc.respond_to?(:heredoc_end)
+          return "#{content_node.source}#{install_step_kwargs(kwargs)}"
+        end
+
+        heredoc_end = content_node.loc.heredoc_end
+        return "#{content_node.source}#{install_step_kwargs(kwargs)}" if heredoc_end.nil?
+
+        "#{content_node.loc.expression.source}#{install_step_kwargs(kwargs)}" \
+          "#{::Parser::Source::Range.new(content_node.loc.expression.source_buffer,
+                                         content_node.loc.expression.end_pos, heredoc_end.end_pos).source}"
       end
 
       sig { params(send_node: RuboCop::AST::SendNode).returns(T::Boolean) }

@@ -81,6 +81,18 @@ RSpec.describe Homebrew::Cmd::TapInfo do
     end
   end
 
+  describe "#print_tap_json" do
+    it "prints tap hashes as JSON in the given order" do
+      taps = [
+        instance_double(Tap, to_hash: { "name" => "user/a" }),
+        instance_double(Tap, to_hash: { "name" => "user/b" }),
+      ]
+
+      expect { described_class.new([]).send(:print_tap_json, taps) }
+        .to output(%r{"name":\s*"user/a".*"name":\s*"user/b"}m).to_stdout
+    end
+  end
+
   describe "#decorate_formula" do
     let(:tap_info) { described_class.new([]) }
     let(:tap) { instance_double(Tap, name: "homebrew/foo") }

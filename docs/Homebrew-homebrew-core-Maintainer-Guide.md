@@ -182,37 +182,6 @@ The following checklist is intended to help maintainers decide on whether to mer
   - celebrate any first-time contributors
 - suggest using `brew bump-formula-pr` next time if this was not the case
 
-## Common build failures and how to handle them
-
-### Test errors
-
-#### "undefined reference to ..."
-
-This error might pop up when parameters passed to `gcc` are in the wrong order.
-
-An example from `libmagic` formula:
-
-    ==> brew test libmagic --verbose
-    Testing libmagic
-    ==> /usr/bin/gcc -I/home/linuxbrew/.linuxbrew/Cellar/libmagic/5.38/include -L/home/linuxbrew/.linuxbrew/Cellar/libmagic/5.38/lib -lmagic test.c -o test
-    /tmp/ccNeDVRt.o: In function `main':
-    test.c:(.text+0x15): undefined reference to `magic_open'
-    test.c:(.text+0x4a): undefined reference to `magic_load'
-    test.c:(.text+0x81): undefined reference to `magic_file'
-    collect2: error: ld returned 1 exit status
-
-Solution:
-
-```ruby
-if OS.mac?
-  system ENV.cc, "-I#{include}", "-L#{lib}", "-lmagic", "test.c", "-o", "test"
-else
-  system ENV.cc, "test.c", "-I#{include}", "-L#{lib}", "-lmagic", "-o", "test"
-end
-```
-
-For an explanation of why this happens, read the [Ubuntu 11.04 Toolchain documentation](https://wiki.ubuntu.com/NattyNarwhal/ToolchainTransition).
-
 ## Staging Branches
 
 ### Summary

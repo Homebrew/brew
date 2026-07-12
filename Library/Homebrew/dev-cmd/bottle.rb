@@ -14,6 +14,7 @@ require "utils/gzip"
 require "api"
 require "extend/hash/deep_merge"
 require "metafiles"
+require "utils/github"
 
 module Homebrew
   module DevCmd
@@ -390,7 +391,7 @@ module Homebrew
 
       sig { params(formula: Formula).void }
       def bottle_formula(formula)
-        local_bottle_json = args.json? && formula.local_bottle_path.present?
+        local_bottle_json = args.json? && formula.local_bottle_path
 
         unless local_bottle_json
           unless formula.latest_version_installed?
@@ -458,7 +459,7 @@ module Homebrew
 
         if local_bottle_json
           bottle_path = formula.local_bottle_path
-          return if bottle_path.blank?
+          return unless bottle_path
 
           local_filename = bottle_path.basename.to_s
 
@@ -659,6 +660,9 @@ module Homebrew
           installed_size = keg.disk_usage
         end
 
+        bottle_tab = tab
+        odie "Cannot generate bottle JSON without an installation receipt." if bottle_tab.nil?
+
         json = {
           formula.full_name => {
             "formula" => {
@@ -688,7 +692,8 @@ module Homebrew
                   "filename"        => filename.url_encode,
                   "local_filename"  => filename.to_s,
                   "sha256"          => sha256,
-                  "tab"             => T.must(tab).to_bottle_hash,
+                  "tab"             => bottle_tab.to_bottle_hash,
+                  "sbom"            => SBOM.create(formula, bottle_tab).to_spdx_supplement,
                   "path_exec_files" => path_exec_files,
                   "all_files"       => all_files,
                   "installed_size"  => installed_size,
@@ -739,11 +744,25 @@ module Homebrew
                        tag_hashes.uniq { |tag_hash| "#{tag_hash["cellar"]}-#{tag_hash["sha256"]}" }.one?
 
           old_all_bottle = old_bottle_spec.tag?(Utils::Bottles.tag(:all))
-          if !all_bottle && old_all_bottle && !args.no_all_checks?
-            odie <<~ERROR
-              #{formula} should have an `:all` bottle but one cannot be created:
-              #{JSON.pretty_generate(tag_hashes)}
-            ERROR
+          github_event_path = ENV.fetch("GITHUB_EVENT_PATH", nil)
+          if !all_bottle && old_all_bottle && !args.no_all_checks? && github_event_path.present?
+            begin
+              github_event = JSON.parse(File.read(github_event_path))
+              repository = github_event.dig("repository", "full_name")
+              pull_request_number = github_event.dig("pull_request", "number")
+              if repository.present? && pull_request_number.present?
+                GitHub.create_issue_comment(repository, pull_request_number, <<~MARKDOWN)
+                  Warning: #{formula} should have had an `:all` bottle but one could not be created.
+                  #{Utils::Bottles.missing_all_bottle_publish_note.capitalize}.
+
+                  ```json
+                  #{JSON.pretty_generate(tag_hashes)}
+                  ```
+                MARKDOWN
+              end
+            rescue GitHub::API::Error, JSON::ParserError, Errno::ENOENT => e
+              opoo "Failed to post missing `:all` bottle warning to pull request: #{e.message}"
+            end
           end
 
           bottle_hash["bottle"]["tags"].each do |tag, tag_hash|
@@ -804,6 +823,10 @@ module Homebrew
               all_bottle_tag_hash["filename"] = all_filename.url_encode
               all_bottle_tag_hash["local_filename"] = all_filename.to_s
               cellar = all_bottle_tag_hash.delete("cellar")
+              sbom_tags = bottle_hash["bottle"]["tags"].filter_map do |tag, tag_hash|
+                [tag, tag_hash["sbom"]] if tag_hash["sbom"].present?
+              end.to_h
+              all_bottle_tag_hash["sbom"] = { "tags" => sbom_tags } if sbom_tags.present?
 
               all_bottle_formula_hash = bottle_hash.dup
               all_bottle_formula_hash["bottle"]["cellar"] = cellar

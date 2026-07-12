@@ -20,8 +20,8 @@ class ResourceStageContext
 
   sig { params(resource: Resource, staging: Mktemp).void }
   def initialize(resource, staging)
-    @resource = T.let(resource, Resource)
-    @staging = T.let(staging, Mktemp)
+    @resource = resource
+    @staging = staging
   end
 
   sig { returns(String) }

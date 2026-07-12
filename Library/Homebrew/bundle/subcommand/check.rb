@@ -42,7 +42,7 @@ module Homebrew
                                       .split
 
           if check_result.work_to_be_done
-            puts "brew bundle can't satisfy your Brewfile's dependencies." if check_missing_formulae.blank?
+            $stderr.puts "brew bundle can't satisfy your Brewfile's dependencies." if check_missing_formulae.blank?
 
             if output_errors
               check_result.errors.each do |error|
@@ -51,13 +51,13 @@ module Homebrew
                   next
                 end
 
-                puts "→ #{error}"
+                $stderr.puts "→ #{error}"
               end
             else
-              puts "Run `brew bundle check --verbose` to list unmet dependencies."
+              $stderr.puts "Run `brew bundle check --verbose` to list unmet dependencies."
             end
 
-            puts "Satisfy missing dependencies with `brew bundle install`."
+            $stderr.puts "Satisfy missing dependencies with `brew bundle install`."
             exit 1
           end
 

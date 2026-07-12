@@ -9,14 +9,14 @@ require "os/mac/xcode"
 module Homebrew
   module DevCmd
     class Unbottled < AbstractCommand
-      PORTABLE_FORMULAE = T.let(%w[
+      PORTABLE_FORMULAE = %w[
         portable-libffi
         portable-libxcrypt
         portable-libyaml
         portable-openssl
         portable-ruby
         portable-zlib
-      ].freeze, T::Array[String])
+      ].freeze
 
       cmd_args do
         description <<~EOS

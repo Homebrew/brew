@@ -66,6 +66,31 @@ module Utils
     full_name.count("/") == 2
   end
 
+  # Maps `items` to `block` results with one thread per item, so that
+  # blocking waits (subprocesses, network requests) overlap instead of
+  # accumulating serially. Results keep the order of `items`. If multiple
+  # blocks raise, the exception re-raised by `Thread#value` is the earliest
+  # in `items` order (not necessarily the chronologically first failure) and
+  # other blocks may still run to completion. Only worthwhile when each block
+  # spends its time waiting: the GVL serializes Ruby execution.
+  sig {
+    type_parameters(:Item, :Result)
+      .params(
+        items: T::Enumerable[T.type_parameter(:Item)],
+        block: T.proc.params(item: T.type_parameter(:Item)).returns(T.type_parameter(:Result)),
+      ).returns(T::Array[T.type_parameter(:Result)])
+  }
+  def self.parallel_map(items, &block)
+    threads = items.map do |item|
+      Thread.new do
+        # The exception is re-raised by `Thread#value`; don't also report it.
+        Thread.current.report_on_exception = false
+        yield(item)
+      end
+    end
+    threads.map { |thread| T.cast(thread.value, T.type_parameter(:Result)) }
+  end
+
   # A lightweight alternative to `ActiveSupport::Inflector.pluralize`:
   # Combines `stem` with the `singular` or `plural` suffix based on `count`.
   # Adds a prefix of the count value if `include_count` is set to true.

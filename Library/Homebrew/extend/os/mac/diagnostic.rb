@@ -64,15 +64,14 @@ module OS
             check_access_directories
           ]
 
-          # We need the developer tools for `codesign`.
-          checks << "check_for_installed_developer_tools" if ::Hardware::CPU.arm?
-
+          # Developer tools are checked when building from source.
           checks.freeze
         end
 
         sig { returns(T::Array[String]) }
         def fatal_build_from_source_checks
           %w[
+            check_for_installed_developer_tools
             check_xcode_license_approved
             check_xcode_minimum_version
             check_clt_minimum_version

@@ -150,6 +150,22 @@ RSpec.describe Utils::Analytics do
     end
   end
 
+  describe "::deferred_curl" do
+    it "forwards args and silences subprocess output outside debug mode" do
+      ENV.delete("HOMEBREW_ANALYTICS_DEBUG")
+
+      allow(Utils::Curl).to receive(:curl_executable).and_return("/usr/bin/curl")
+      allow(Utils::Curl).to receive(:curl_args) { |*args, **| args }
+      expect(described_class).to receive(:spawn)
+        .with("/usr/bin/curl", "--max-time", "3", "--silent", "--output", File::NULL, "https://example.com",
+              out: File::NULL, err: File::NULL)
+        .and_return(123)
+      expect(Process).to receive(:detach).with(123)
+
+      described_class.deferred_curl("https://example.com", ["--max-time", "3"])
+    end
+  end
+
   describe "::report_build_error" do
     context "when tap is installed" do
       let(:err) { BuildError.new(f, "badprg", %w[arg1 arg2], {}) }

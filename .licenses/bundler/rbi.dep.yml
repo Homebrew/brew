@@ -1,6 +1,6 @@
 ---
 name: rbi
-version: 0.3.13
+version: 0.3.14
 type: bundler
 summary: RBI generation framework
 homepage: https://github.com/Shopify/rbi

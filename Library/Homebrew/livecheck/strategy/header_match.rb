@@ -22,7 +22,7 @@ module Homebrew
         URL_MATCH_REGEX = %r{^https?://}i
 
         # The header fields to check when a `strategy` block isn't provided.
-        DEFAULT_HEADERS_TO_CHECK = T.let(["content-disposition", "location"].freeze, T::Array[String])
+        DEFAULT_HEADERS_TO_CHECK = ["content-disposition", "location"].freeze
 
         # Whether the strategy can be applied to the provided URL.
         #

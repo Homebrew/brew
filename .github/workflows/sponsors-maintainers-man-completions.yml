@@ -33,23 +33,23 @@ jobs:
     steps:
       - name: Setup Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
 
       - name: Configure Git user
-        uses: Homebrew/actions/git-user-config@main
+        uses: Homebrew/actions/git-user-config@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           username: BrewTestBot
 
       - name: Set up commit signing
-        uses: Homebrew/actions/setup-commit-signing@main
+        uses: Homebrew/actions/setup-commit-signing@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           signing_key: ${{ secrets.BREWTESTBOT_SSH_SIGNING_KEY }}
 
       - name: Cache Bundler RubyGems
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ runner.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Push commits
         if: steps.update.outputs.committed == 'true'
-        uses: Homebrew/actions/git-try-push@main
+        uses: Homebrew/actions/git-try-push@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           token: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
           directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -149,7 +149,7 @@ jobs:
       issues: write
     steps:
       - name: Open, update, or close sponsors, maintainers, manpage and completions issue
-        uses: Homebrew/actions/create-or-update-issue@main
+        uses: Homebrew/actions/create-or-update-issue@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           title: Failed to update sponsors, maintainers, manpage and completions
           body: >

@@ -167,11 +167,11 @@ module Homebrew
 
         case entry.cls.name
         when "Homebrew::Bundle::Brew"
-          Homebrew::API.formula_names.exclude?(entry.name) &&
+          !Homebrew::API.formula_name?(entry.name) &&
             Homebrew::API.formula_aliases.exclude?(entry.name) &&
             Homebrew::API.formula_renames.exclude?(entry.name)
         when "Homebrew::Bundle::Cask"
-          Homebrew::API.cask_tokens.exclude?(entry.name) &&
+          !Homebrew::API.cask_token?(entry.name) &&
             Homebrew::API.cask_renames.exclude?(entry.name)
         else
           false

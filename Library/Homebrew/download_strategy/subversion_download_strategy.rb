@@ -88,7 +88,7 @@ class SubversionDownloadStrategy < VCSDownloadStrategy
     if target.directory?
       command! "svn", args: ["update", *args], chdir: target.to_s, timeout: Utils::Timer.remaining(timeout)
     else
-      command! "svn", args: ["checkout", url, target, *args], timeout: Utils::Timer.remaining(timeout)
+      command! "svn", args: ["checkout", *args, "--", url, target], timeout: Utils::Timer.remaining(timeout)
     end
   end
 

@@ -112,6 +112,49 @@ RSpec.describe Dependency do
     expect(deps).to eq([foo, baz])
   end
 
+  it "reuses formulae from the provided formula cache" do
+    shared_formula = instance_double(Formula, deps: [], name: "shared", full_name: "shared")
+    shared_dep = described_class.new("shared")
+    repeated_shared_dep = described_class.new("shared")
+    expect(shared_dep).to receive(:to_formula).once.and_return(shared_formula)
+    expect(repeated_shared_dep).not_to receive(:to_formula)
+    f = instance_double(
+      Formula,
+      name:      "f",
+      full_name: "f",
+      deps:      [
+        build_dep(:foo, [], [shared_dep]),
+        build_dep(:bar, [], [repeated_shared_dep]),
+      ],
+    )
+
+    deps = described_class.expand(f, cache_key: "formula-cache-spec", formula_cache: {})
+
+    expect(deps.map(&:name)).to eq(%w[shared foo bar])
+  end
+
+  it "does not reuse formulae for uses_from_macos dependencies with different bounds" do
+    first_formula = instance_double(Formula, deps: [], name: "shared", full_name: "shared")
+    second_formula = instance_double(Formula, deps: [], name: "shared", full_name: "shared")
+    first_dep = UsesFromMacOSDependency.new("shared", [], bounds: { since: :ventura })
+    second_dep = UsesFromMacOSDependency.new("shared", [], bounds: { since: :sonoma })
+    expect(first_dep).to receive(:to_formula).once.and_return(first_formula)
+    expect(second_dep).to receive(:to_formula).once.and_return(second_formula)
+    f = instance_double(
+      Formula,
+      name:      "f",
+      full_name: "f",
+      deps:      [
+        build_dep(:foo, [], [first_dep]),
+        build_dep(:bar, [], [second_dep]),
+      ],
+    )
+
+    deps = described_class.expand(f, cache_key: "uses-from-macos-formula-cache-spec", formula_cache: {})
+
+    expect(deps.map(&:name)).to eq(%w[shared foo bar])
+  end
+
   it "returns only the dependencies given as a collection as second argument" do
     expect(formula.deps).to eq([foo, bar, baz, qux])
     expect(described_class.expand(formula, [bar, baz])).to eq([bar, baz])

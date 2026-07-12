@@ -293,24 +293,7 @@ module Homebrew
       def self.preinstall!(name, with: nil, no_upgrade: false, verbose: false, **_options)
         _ = no_upgrade
 
-        unless package_manager_installed?
-          puts "Installing #{package_manager_name}. It is not currently installed." if verbose
-          Bundle.system(HOMEBREW_BREW_FILE, "install", "--formula", package_manager_name, verbose:)
-          # `formula_versions_from_env` consumes the env vars once at startup, so
-          # keep the cached values across reset when bootstrapping a manager.
-          formula_versions_from_env = T.let(
-            Bundle.formula_versions_from_env_cache,
-            T.nilable(T::Hash[String, String]),
-          )
-          upgrade_formulae = Bundle.upgrade_formulae
-          Bundle.reset!
-          Bundle.formula_versions_from_env_cache = formula_versions_from_env
-          Bundle.upgrade_formulae = upgrade_formulae.join(",")
-          unless package_manager_installed?
-            raise "Unable to install #{name} #{package_description}. " \
-                  "#{package_manager_name} installation failed."
-          end
-        end
+        ensure_package_manager_installed!(name, verbose:)
 
         if package_installed?(name, with:)
           puts "Skipping install of #{name} #{package_description}. It is already installed." if verbose
@@ -318,6 +301,28 @@ module Homebrew
         end
 
         true
+      end
+
+      sig { params(name: String, verbose: T::Boolean).void }
+      def self.ensure_package_manager_installed!(name, verbose: false)
+        return if package_manager_installed?
+
+        puts "Installing #{package_manager_name}. It is not currently installed." if verbose
+        Bundle.system(HOMEBREW_BREW_FILE, "install", "--formula", package_manager_name, verbose:)
+        # `formula_versions_from_env` consumes the env vars once at startup, so
+        # keep the cached values across reset when bootstrapping a manager.
+        formula_versions_from_env = T.let(
+          Bundle.formula_versions_from_env_cache,
+          T.nilable(T::Hash[String, String]),
+        )
+        upgrade_formulae = Bundle.upgrade_formulae
+        Bundle.reset!
+        Bundle.formula_versions_from_env_cache = formula_versions_from_env
+        Bundle.upgrade_formulae = upgrade_formulae.join(",")
+        return if package_manager_installed?
+
+        raise "Unable to install #{name} #{package_description}. " \
+              "#{package_manager_name} installation failed."
       end
 
       sig {

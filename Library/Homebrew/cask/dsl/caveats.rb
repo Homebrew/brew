@@ -17,7 +17,7 @@ module Cask
     class Caveats < Base
       # Built-in caveats that have runtime conditions (arch, prefix, etc.)
       # and should not be pre-serialized into the API JSON string.
-      CONDITIONAL_CAVEATS = T.let([:requires_rosetta, :files_in_usr_local].freeze, T::Array[Symbol])
+      CONDITIONAL_CAVEATS = [:requires_rosetta, :files_in_usr_local].freeze
 
       sig { params(args: T.anything).void }
       def initialize(*args)

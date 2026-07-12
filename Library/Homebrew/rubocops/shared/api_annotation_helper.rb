@@ -8,18 +8,18 @@ module RuboCop
     # level so each file is parsed at most once per RuboCop invocation.
     module ApiAnnotationHelper
       # Taps that enforce stricter public API rules.
-      OFFICIAL_TAPS = T.let(%w[
+      OFFICIAL_TAPS = %w[
         homebrew-core
         homebrew-cask
-      ].freeze, T::Array[String])
+      ].freeze
 
       # Source files whose `@api` annotations define the public API surface.
-      API_SOURCE_FILES = T.let(%w[
+      API_SOURCE_FILES = %w[
         formula.rb
         cask/cask.rb
         cask/dsl.rb
         utils/path.rb
-      ].freeze, T::Array[String])
+      ].freeze
 
       # Methods documented in docs/Formula-Cookbook.md mapped to their
       # defining source files (relative to Library/Homebrew/).

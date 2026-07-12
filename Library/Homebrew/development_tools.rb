@@ -28,7 +28,7 @@ class DevelopmentTools
 
     sig { returns(T::Boolean) }
     def installed?
-      locate("clang").present? || locate("gcc").present?
+      !!(locate("clang") || locate("gcc"))
     end
 
     sig { returns(String) }
@@ -62,14 +62,22 @@ class DevelopmentTools
       Version::NULL
     end
 
+    sig { returns(T.nilable(String)) }
+    def clang_version_output
+      @clang_version_output ||= T.let(
+        if (path = locate("clang"))
+          `#{path} --version`
+        end, T.nilable(String)
+      )
+    end
+
     # Get the Clang version.
     #
     # @api public
     sig { returns(Version) }
     def clang_version
       @clang_version ||= T.let(
-        if (path = locate("clang")) &&
-           (build_version = `#{path} --version`[/(?:clang|LLVM) version (\d+\.\d(?:\.\d)?)/, 1])
+        if (build_version = clang_version_output&.[](/(?:clang|LLVM) version (\d+\.\d(?:\.\d)?)/, 1))
           Version.new(build_version)
         else
           Version::NULL
@@ -83,8 +91,7 @@ class DevelopmentTools
     sig { returns(Version) }
     def clang_build_version
       @clang_build_version ||= T.let(
-        if (path = locate("clang")) &&
-          (build_version = `#{path} --version`[%r{clang(-| version [^ ]+ \(tags/RELEASE_)(\d{2,})}, 2])
+        if (build_version = clang_version_output&.[](%r{clang(-| version [^ ]+ \(tags/RELEASE_)(\d{2,})}, 2))
           Version.new(build_version)
         else
           Version::NULL
@@ -134,6 +141,7 @@ class DevelopmentTools
 
     sig { void }
     def clear_version_cache
+      @clang_version_output = T.let(nil, T.nilable(String))
       @clang_version = @clang_build_version = T.let(nil, T.nilable(Version))
       @gcc_version = T.let({}, T.nilable(T::Hash[String, Version]))
     end

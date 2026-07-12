@@ -12,7 +12,10 @@ module RuboCop
         extend AutoCorrector
         include InstallStepsHelper
 
-        CONFLICT_MSG = "`post_install` and `post_install_steps` cannot both be used."
+        # TODO: Re-enable when formula `post_install` and `post_install_steps`
+        # cannot coexist after the incremental conversion bridge is removed.
+        # CONFLICT_MSG = "`post_install` and `post_install_steps` cannot both be used."
+        POST_INSTALL_STEPS_ORDER_MSG = "`post_install_steps` must appear before `post_install` to match run order."
         REDUNDANT_SERVICE_PATH_DIRS_MSG = "`%<block>s` only creates directories created by `brew services`."
 
         sig { override.params(formula_nodes: FormulaNodes).void }
@@ -22,11 +25,16 @@ module RuboCop
           service_path_dirs = service_path_dirs(find_block(body_node, :service))
           post_install_steps_block = find_block(body_node, :post_install_steps)
           post_install_method = find_method_def(body_node, :post_install)
-          if post_install_steps_block && post_install_method
-            offending_node(post_install_steps_block)
-            problem CONFLICT_MSG
-          end
 
+          # TODO: Re-enable when formula `post_install` and
+          # `post_install_steps` cannot coexist after the incremental
+          # conversion bridge is removed.
+          # if post_install_steps_block && post_install_method
+          #   offending_node(post_install_steps_block)
+          #   problem CONFLICT_MSG
+          # end
+
+          add_post_install_steps_order_offense(post_install_steps_block, post_install_method)
           audit_step_block(post_install_steps_block)
           add_redundant_service_path_dirs_offense(post_install_steps_block, service_path_dirs, :post_install_steps)
           redundant_post_install = post_install_method.present? &&
@@ -37,6 +45,20 @@ module RuboCop
         end
 
         private
+
+        sig {
+          params(
+            post_install_steps_block: T.nilable(RuboCop::AST::BlockNode),
+            post_install_method:      T.nilable(RuboCop::AST::Node),
+          ).void
+        }
+        def add_post_install_steps_order_offense(post_install_steps_block, post_install_method)
+          return if post_install_steps_block.nil? || post_install_method.nil?
+          return if post_install_steps_block.loc.line < post_install_method.loc.line
+
+          offending_node(post_install_steps_block)
+          problem POST_INSTALL_STEPS_ORDER_MSG
+        end
 
         sig { params(block_node: T.nilable(RuboCop::AST::BlockNode)).void }
         def audit_step_block(block_node)

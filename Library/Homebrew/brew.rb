@@ -77,7 +77,7 @@ begin
       # External commands expect a normal PATH
       ENV["PATH"] = homebrew_path.to_s
 
-      external_ruby_v2_cmd = Commands.external_ruby_v2_cmd_path(cmd).present?
+      external_ruby_v2_cmd = !Commands.external_ruby_v2_cmd_path(cmd).nil?
       external_ruby_cmd_path = Commands.external_ruby_cmd_path(cmd) unless external_ruby_v2_cmd
       external_cmd_path = Commands.external_cmd_path(cmd) if !external_ruby_v2_cmd && external_ruby_cmd_path.nil?
     end

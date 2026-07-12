@@ -33,9 +33,12 @@ module T::Private::RuntimeLevels
     if !@check_tests && @wrapped_tests_with_validation
       all_checked_tests_sigs = T::Private::Methods.all_checked_tests_sigs
       locations = all_checked_tests_sigs.map { |sig| sig.method.source_location&.join(':') }.join("\n- ")
-      raise "Toggle `:tests`-level runtime type checking earlier. " \
-        "There are already some methods wrapped with `sig.checked(:tests)`:\n" \
-        "- #{locations}"
+      msg = "Toggle `:tests`-level runtime type checking earlier. " \
+        "There are already some methods or type aliases wrapped with `.checked(:tests)`"
+      if !locations.empty?
+        msg += ":\n- #{locations}"
+      end
+      raise msg
     end
 
     _toggle_checking_tests(true)

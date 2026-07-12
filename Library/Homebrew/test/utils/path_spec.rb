@@ -86,6 +86,16 @@ RSpec.describe Utils::Path do
       expect(described_class.formula_installed_prefixes(["foo", "old-foo"]))
         .to eq([tmpdir/"old-foo/1.0", tmpdir/"foo/2.0"])
     end
+
+    it "does not list kegs twice when a name is a symlink to another rack" do
+      tmpdir = mktmpdir
+      stub_const("HOMEBREW_CELLAR", tmpdir)
+      (tmpdir/"foo/1.0").mkpath
+      FileUtils.ln_s(tmpdir/"foo", tmpdir/"foo-alias")
+
+      expect(described_class.formula_installed_prefixes(["foo", "foo-alias"]))
+        .to eq([tmpdir/"foo/1.0"])
+    end
   end
 
   describe "::formula_any_version_installed?" do

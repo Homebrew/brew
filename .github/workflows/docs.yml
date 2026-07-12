@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
@@ -54,7 +54,7 @@ jobs:
         run: vale docs/
 
       - name: Setup Ruby
-        uses: Homebrew/actions/setup-ruby@main
+        uses: Homebrew/actions/setup-ruby@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           bundler-cache: true
           portable-ruby: true
@@ -73,7 +73,7 @@ jobs:
         run: ../script/generate-api-samples.rb --template
 
       - name: Cache HTML Proofer
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: tmp/.htmlproofer
           key: ${{ runner.os }}-htmlproofer
@@ -128,7 +128,7 @@ jobs:
       issues: write # for Homebrew/actions/create-or-update-issue
     steps:
       - name: Open, update, or close deploy issue
-        uses: Homebrew/actions/create-or-update-issue@main
+        uses: Homebrew/actions/create-or-update-issue@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}

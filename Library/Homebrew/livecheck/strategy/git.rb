@@ -43,17 +43,17 @@ module Homebrew
         # regex isn't provided.
         DEFAULT_REGEX = /\D*(.+)/
 
-        GITEA_INSTANCES = T.let(%w[
+        GITEA_INSTANCES = %w[
           codeberg.org
           gitea.com
           opendev.org
           tildegit.org
-        ].freeze, T::Array[String])
+        ].freeze
         private_constant :GITEA_INSTANCES
 
-        GOGS_INSTANCES = T.let(%w[
+        GOGS_INSTANCES = %w[
           lolg.it
-        ].freeze, T::Array[String])
+        ].freeze
         private_constant :GOGS_INSTANCES
 
         # Processes and returns the URL used by livecheck.

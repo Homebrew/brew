@@ -21,10 +21,6 @@ RSpec.describe SBOM do
       expect(sbom.schema_validation_errors).to be_empty
     end
 
-    it "returns true if valid when bottling" do
-      expect(sbom.schema_validation_errors(bottling: true)).to be_empty
-    end
-
     context "with a maximal SBOM" do
       let(:f) do
         formula do
@@ -40,6 +36,7 @@ RSpec.describe SBOM do
           end
 
           bottle do
+            root_url "https://brew.sh/bottles"
             sha256 all: "9befdad158e59763fb0622083974a6252878019702d8c961e1bec3a5f5305339"
           end
 
@@ -93,12 +90,8 @@ RSpec.describe SBOM do
         expect(sbom.schema_validation_errors).to be_empty
       end
 
-      it "returns true if valid when bottling" do
-        expect(sbom.schema_validation_errors(bottling: true)).to be_empty
-      end
-
       it "only emits relationships with defined SPDX IDs" do
-        spdx = sbom.send(:to_spdx_sbom, bottling: false)
+        spdx = sbom.to_spdx_sbom
         spdx_ids = Set.new(["SPDXRef-DOCUMENT"] + spdx[:packages].map { |package| package[:SPDXID] } +
                            spdx[:files].map { |file| file[:SPDXID] })
 
@@ -108,7 +101,7 @@ RSpec.describe SBOM do
       end
 
       it "emits external patches as packages" do
-        spdx = sbom.send(:to_spdx_sbom, bottling: false)
+        spdx = sbom.to_spdx_sbom
 
         expect(spdx[:packages]).to include(
           hash_including(
@@ -117,6 +110,145 @@ RSpec.describe SBOM do
             checksums:        [{ algorithm: "SHA256", checksumValue: TEST_SHA256 }],
           ),
         )
+      end
+
+      it "emits reproducible creation info" do
+        expect(sbom.to_spdx_sbom[:creationInfo]).to eq(
+          created:  Time.at(tab.source_modified_time.to_i).utc.iso8601,
+          creators: ["Tool: https://github.com/Homebrew/brew"],
+        )
+      end
+
+      it "emits bottle metadata when bottle filenames are available" do
+        expect(sbom.to_spdx_sbom[:packages]).to include(
+          hash_including(
+            SPDXID:           "SPDXRef-Bottle-formula_name",
+            downloadLocation: "https://brew.sh/bottles/formula_name-0.1.all.bottle.tar.gz",
+            checksums:        [{
+              algorithm:     "SHA256",
+              checksumValue: "9befdad158e59763fb0622083974a6252878019702d8c961e1bec3a5f5305339",
+            }],
+          ),
+        )
+      end
+
+      it "omits host-specific packages when bottling" do
+        spdx = sbom.to_spdx_sbom(bottling: true)
+        package_ids = spdx[:packages].map { |package| package[:SPDXID] }
+
+        expect(package_ids).to contain_exactly(
+          "SPDXRef-Archive-formula_name-src",
+          "SPDXRef-Patch-formula_name-0",
+        )
+        expect(spdx[:relationships].flat_map do |relation|
+          [relation[:spdxElementId], relation[:relatedSpdxElement]]
+        end).to all(
+          satisfy do |spdx_id|
+            package_ids.include?(spdx_id) || spdx_id == "SPDXRef-File-formula_name"
+          end,
+        )
+      end
+
+      it "emits host-specific packages in a pour supplement" do
+        package_ids = sbom.to_spdx_supplement.fetch("packages").map { |package| package.fetch(:SPDXID) }
+
+        expect(package_ids).to include(
+          "SPDXRef-Compiler",
+          "SPDXRef-Stdlib",
+          "SPDXRef-Package-SPDXRef-beanstalkd-1.1",
+          "SPDXRef-Package-SPDXRef-zlib-1.1",
+        )
+        expect(package_ids).not_to include(
+          "SPDXRef-Archive-formula_name-src",
+          "SPDXRef-Patch-formula_name-0",
+        )
+      end
+
+      it "builds a GitHub Packages manifest annotation supplement" do
+        annotation = described_class.github_packages_sbom_supplement_annotation(
+          {
+            "documentDescribes" => ["SPDXRef-Compiler"],
+            "packages"          => [{ "SPDXID" => "SPDXRef-Compiler" }],
+            "relationships"     => [],
+          },
+          formula_full_name: "formula_name",
+          formula_name:      "formula_name",
+          version:           Version.new("0.1"),
+          tar_gz_sha256:     TEST_SHA256,
+          root_url:          "https://ghcr.io/v2/homebrew/core",
+          license:           "MIT",
+          created_date:      "2026-05-10T00:00:00Z",
+        )
+        raise "missing annotation" if annotation.nil?
+
+        supplement = JSON.parse(annotation)
+        bottle_package = supplement.fetch("packages").find do |package|
+          package.fetch("SPDXID") == "SPDXRef-Bottle-formula_name"
+        end
+
+        expect(bottle_package).to include(
+          "checksums"        => [{ "algorithm" => "SHA256", "checksumValue" => TEST_SHA256 }],
+          "downloadLocation" => "https://ghcr.io/v2/homebrew/core/formula_name/blobs/sha256:#{TEST_SHA256}",
+        )
+      end
+
+      it "updates only pour-time creation metadata" do
+        spdxfile = mktmpdir/SBOM::FILENAME
+        spdxfile.write(JSON.pretty_generate(sbom.to_spdx_sbom))
+        original_spdx = JSON.parse(spdxfile.read)
+
+        described_class.update_pour_metadata(spdxfile, homebrew_version: "1.2.3", time: 1_720_189_863)
+
+        updated_spdx = JSON.parse(spdxfile.read)
+        expect(updated_spdx.fetch("creationInfo")).to eq(
+          "created"  => "2024-07-05T14:31:03Z",
+          "creators" => ["Tool: https://github.com/Homebrew/brew@1.2.3"],
+        )
+        expect(updated_spdx.except("creationInfo")).to eq(original_spdx.except("creationInfo"))
+      end
+
+      it "merges pour supplements without validating full SBOMs" do
+        spdxfile = mktmpdir/SBOM::FILENAME
+        spdxfile.write(JSON.pretty_generate(
+                         "creationInfo"      => {},
+                         "documentDescribes" => [],
+                         "packages"          => [],
+                         "relationships"     => [],
+                       ))
+        supplement = {
+          "documentDescribes" => ["SPDXRef-Compiler"],
+          "packages"          => [{ "SPDXID" => "SPDXRef-Compiler" }],
+          "relationships"     => [{ "spdxElementId" => "SPDXRef-Compiler" }],
+        }
+
+        described_class.update_pour_metadata(spdxfile, homebrew_version: "1.2.3", time: 1_720_189_863,
+                                                       supplement:)
+
+        updated_spdx = JSON.parse(spdxfile.read)
+        expect(updated_spdx.fetch("documentDescribes")).to eq(supplement.fetch("documentDescribes"))
+        expect(updated_spdx.fetch("packages")).to eq(supplement.fetch("packages"))
+        expect(updated_spdx.fetch("relationships")).to eq(supplement.fetch("relationships"))
+      end
+
+      it "skips malformed pour metadata SBOMs" do
+        spdxfile = mktmpdir/SBOM::FILENAME
+        spdxfile.write("{")
+
+        expect do
+          described_class.update_pour_metadata(spdxfile, homebrew_version: "1.2.3", time: 1_720_189_863)
+        end.not_to raise_error
+        expect(spdxfile.read).to eq("{")
+      end
+
+      it "skips pour metadata SBOMs without creation info objects" do
+        spdxfile = mktmpdir/SBOM::FILENAME
+        spdxfile.write(JSON.pretty_generate("creationInfo" => []))
+        original_spdx = spdxfile.read
+
+        expect do
+          described_class.update_pour_metadata(spdxfile, homebrew_version: "1.2.3", time: 1_720_189_863)
+        end.not_to raise_error
+        expect(spdxfile.read).to eq(original_spdx)
       end
     end
 
@@ -127,10 +259,6 @@ RSpec.describe SBOM do
 
       it "returns false" do
         expect(sbom.schema_validation_errors).not_to be_empty
-      end
-
-      it "returns false when bottling" do
-        expect(sbom.schema_validation_errors(bottling: true)).not_to be_empty
       end
     end
   end

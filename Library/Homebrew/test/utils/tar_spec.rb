@@ -17,7 +17,7 @@ RSpec.describe Utils::Tar do
 
   describe ".available?" do
     it "returns true if tar or gnu-tar is available" do
-      if described_class.executable.present?
+      if described_class.executable
         expect(described_class).to be_available
       else
         expect(described_class).not_to be_available

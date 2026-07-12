@@ -61,7 +61,7 @@ module Homebrew
       @using    = T.let(resource.using, T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol)))
       @specs    = T.let(resource.specs, T::Hash[Symbol, T.untyped])
       @owner    = T.let(resource.owner, T.nilable(T.any(Cask::Cask, Resource::Owner)))
-      @spec_name = T.let(spec_name, Symbol)
+      @spec_name = spec_name
       @online    = online
       @strict    = strict
       @only      = only

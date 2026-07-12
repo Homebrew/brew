@@ -11,7 +11,7 @@ module RuboCop
         extend AutoCorrector
 
         # Keep in sync with `Patch::TYPES` in `Library/Homebrew/patch.rb`.
-        PATCH_TYPES = T.let([:unofficial, :backport, :cherry_pick].freeze, T::Array[Symbol])
+        PATCH_TYPES = [:unofficial, :backport, :cherry_pick].freeze
 
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)

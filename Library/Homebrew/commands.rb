@@ -242,7 +242,7 @@ module Commands
     return if command == "help"
 
     path = self.path(command)
-    return if path.blank?
+    return unless path
 
     if (cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path))
       processed_options = if subcommand.nil? && cmd_parser.subcommands.present?
@@ -275,7 +275,7 @@ module Commands
   sig { params(command: String, short: T::Boolean).returns(T.nilable(String)) }
   def self.command_description(command, short: false)
     path = self.path(command)
-    return if path.blank?
+    return unless path
 
     if (cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path))
       if short
@@ -305,7 +305,7 @@ module Commands
   sig { params(command: String).returns(T::Array[Homebrew::CLI::Parser::Subcommand]) }
   def self.command_subcommands(command)
     path = self.path(command)
-    return [] if path.blank?
+    return [] unless path
 
     cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path)
     return [] if cmd_parser.blank?
@@ -319,7 +319,7 @@ module Commands
   }
   def self.named_args_type(command, subcommand: nil)
     path = self.path(command)
-    return if path.blank?
+    return unless path
 
     cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path)
     return if cmd_parser.blank?
@@ -336,7 +336,7 @@ module Commands
   sig { params(command: String, option: String).returns(T.nilable(T::Array[String])) }
   def self.option_conflicts(command, option)
     path = self.path(command)
-    return if path.blank?
+    return unless path
 
     cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path)
     return if cmd_parser.blank?

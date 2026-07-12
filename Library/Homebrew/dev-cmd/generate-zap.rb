@@ -32,7 +32,7 @@ module Homebrew
         named_args :cask_or_name, number: 1
       end
 
-      USER_TRASH_PATHS = T.let([
+      USER_TRASH_PATHS = [
         "Desktop",
         "Documents",
         "Library",
@@ -58,9 +58,9 @@ module Homebrew
         "Library/Saved Application State",
         "Library/WebKit",
         "Music",
-      ].freeze, T::Array[String])
+      ].freeze
 
-      SYSTEM_DELETE_PATHS = T.let([
+      SYSTEM_DELETE_PATHS = [
         "/Library/Application Support",
         "/Library/Caches",
         "/Library/Frameworks",
@@ -75,16 +75,18 @@ module Homebrew
         "/Library/Services",
         "/Users/Shared",
         "/etc/newsyslog.d",
-      ].freeze, T::Array[String])
+      ].freeze
 
-      RMDIR_EXCLUSIONS = T.let([
+      RMDIR_EXCLUSIONS = [
         "Library/Application Support/CrashReporter",
+        "Library/Application Support/com.apple.sharedfilelist/" \
+        "com.apple.LSSharedFileList.ApplicationRecentDocuments",
         "/Library/Application Support",
         "/Library/Caches",
         "/Library/Preferences",
-      ].freeze, T::Array[String])
+      ].freeze
 
-      UUID_PATTERN = T.let(/[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}/i, Regexp)
+      UUID_PATTERN = /[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}/i
 
       sig { override.void }
       def run

@@ -104,6 +104,11 @@ module Cask
             ],
             Binary,
             Manpage,
+            [
+              BashCompletion,
+              FishCompletion,
+              ZshCompletion,
+            ],
             PostflightSteps,
             UninstallPostflightSteps,
             PostflightBlock,

@@ -5,6 +5,7 @@ require "settings"
 
 RSpec.describe Homebrew::Settings do
   before do
+    described_class.clear_cache
     HOMEBREW_REPOSITORY.cd do
       system "git", "init"
     end
@@ -34,6 +35,16 @@ RSpec.describe Homebrew::Settings do
 
     it "runs on a repo without a configuration file" do
       expect { described_class.read("foo", repo: HOMEBREW_REPOSITORY/"bar") }.not_to raise_error
+    end
+
+    it "reads all settings with a single git invocation per repository" do
+      setup_setting
+      expect(Utils).to receive(:popen_read)
+        .with("git", "-C", HOMEBREW_REPOSITORY.to_s, "config", "--null", "--get-regexp", "^homebrew\\.")
+        .once.and_call_original
+
+      described_class.read(:foo)
+      described_class.read(:bar)
     end
   end
 

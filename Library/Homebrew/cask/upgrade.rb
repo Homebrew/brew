@@ -119,6 +119,7 @@ module Cask
         summary_pinned:       T.nilable(T::Array[String]),
         summary_deprecated:   T.nilable(T::Array[String]),
         summary_disabled:     T.nilable(T::Array[String]),
+        prefetched_errors:    T.nilable(T::Array[StandardError]),
       ).returns(T::Boolean)
     }
     def self.upgrade_casks!(
@@ -142,10 +143,9 @@ module Cask
       summary_upgrades: nil,
       summary_pinned: nil,
       summary_deprecated: nil,
-      summary_disabled: nil
+      summary_disabled: nil,
+      prefetched_errors: nil
     )
-      quarantine = true if quarantine.nil?
-
       outdated_casks =
         self.outdated_casks(casks, args:, greedy:, greedy_latest:, greedy_auto_updates:, force:, quiet:,
                                    summary_pinned:, summary_disabled:)
@@ -189,16 +189,15 @@ module Cask
       end
 
       upgradable_casks = outdated_casks.filter_map do |c|
-        invalid_cask = !c.installed?
-
-        invalid_cask ||= begin
-          loaded_cask = CaskLoader.load(T.must(c.installed_caskfile))
-          false
-        rescue CaskInvalidError, CaskUnavailableError, MethodDeprecatedError
-          true
+        loaded_cask = if c.installed? && (installed_caskfile = c.installed_caskfile)
+          begin
+            CaskLoader.load_from_installed_caskfile(installed_caskfile)
+          rescue CaskInvalidError, CaskUnavailableError, MethodDeprecatedError
+            nil
+          end
         end
 
-        if invalid_cask
+        if loaded_cask.nil?
           opoo <<~EOS
             The cask '#{c.token}' cannot be upgraded as-is. To fix this, run:
             brew reinstall --cask --force #{c.token}
@@ -211,13 +210,8 @@ module Cask
 
       return false if upgradable_casks.empty?
 
-      cask_upgrades = upgradable_casks.map do |(old_cask, new_cask)|
-        "#{new_cask.full_name} #{old_cask.version} -> #{new_cask.version}"
-      end
-      summary_upgrades&.concat(cask_upgrades) if dry_run
-      summary_deprecated&.concat(upgradable_casks.filter_map do |(_, new_cask)|
-        new_cask.full_name if new_cask.deprecated?
-      end)
+      caught_exceptions = []
+      caught_exceptions.concat(prefetched_errors) if prefetched_errors
 
       created_download_queue = T.let(false, T::Boolean)
       download_queue ||= if !dry_run && !skip_prefetch
@@ -228,31 +222,51 @@ module Cask
       if !dry_run && !skip_prefetch
         prefetch_download_queue = download_queue || Homebrew.default_download_queue
         begin
-          fetchable_casks = upgradable_casks.map(&:last)
-          fetchable_cask_installers = fetchable_casks.map do |cask|
+          fetchable_cask_installers = []
+          upgradable_casks.select! do |(_, cask)|
             # This is significantly easier given the weird difference in Sorbet signatures here.
             # rubocop:disable Style/DoubleNegation
-            Installer.new(cask, binaries: !!binaries, verbose: !!verbose, force: !!force,
-                                    skip_cask_deps: !!skip_cask_deps, require_sha: !!require_sha,
-                                    upgrade: true, quarantine: quarantine != false,
-                                    download_queue: prefetch_download_queue, defer_fetch: true)
+            installer = Installer.new(cask, binaries: !!binaries, verbose: !!verbose, force: !!force,
+                                             skip_cask_deps: !!skip_cask_deps, require_sha: !!require_sha,
+                                             upgrade: true, quarantine: quarantine != false,
+                                             download_queue: prefetch_download_queue, defer_fetch: true)
             # rubocop:enable Style/DoubleNegation
+            begin
+              installer.check_requirements
+            rescue CaskError => e
+              caught_exceptions << e
+              next false
+            end
+
+            fetchable_cask_installers << installer
+            true
           end
 
+          fetchable_casks = upgradable_casks.map(&:last)
           fetchable_casks_sentence = fetchable_casks.map { |cask| Formatter.identifier(cask.full_name) }.to_sentence
           Homebrew::Install.enqueue_cask_installers(fetchable_cask_installers,
                                                     download_queue: prefetch_download_queue)
-          oh1 "Fetching downloads for: #{fetchable_casks_sentence}", truncate: false
-          prefetch_download_queue.fetch
+          if fetchable_casks.any?
+            oh1 "Fetching downloads for: #{fetchable_casks_sentence}", truncate: false
+            prefetch_download_queue.fetch
+          end
         ensure
           prefetch_download_queue.shutdown if created_download_queue
         end
       end
 
+      return false if upgradable_casks.empty? && caught_exceptions.empty?
+
+      cask_upgrades = upgradable_casks.map do |(old_cask, new_cask)|
+        "#{new_cask.full_name} #{old_cask.version} -> #{new_cask.version}"
+      end
+      summary_upgrades&.concat(cask_upgrades) if dry_run
+      summary_deprecated&.concat(upgradable_casks.filter_map do |(_, new_cask)|
+        new_cask.full_name if new_cask.deprecated?
+      end)
+
       show_upgrade_summary(cask_upgrades, dry_run:) if show_upgrade_summary
       return true if dry_run
-
-      caught_exceptions = []
 
       download_queue ||= Homebrew.default_download_queue
 
@@ -271,6 +285,7 @@ module Cask
       end
 
       return true if caught_exceptions.empty?
+
       raise MultipleCaskErrors, caught_exceptions if caught_exceptions.count > 1
       raise caught_exceptions.fetch(0) if caught_exceptions.one?
 
@@ -283,28 +298,28 @@ module Cask
         new_cask:               Cask,
         old_signing_identities: T::Hash[String, T.nilable(Quarantine::SigningIdentity)],
         old_user_approved:      T::Hash[String, T::Boolean],
-      ).returns(T::Boolean)
+      ).returns(Symbol)
     }
-    def self.release_app_upgrade_quarantine?(old_cask, new_cask, old_signing_identities, old_user_approved)
+    def self.quarantine_release_decision(old_cask, new_cask, old_signing_identities, old_user_approved)
       old_app_artifacts = old_cask.artifacts.grep(Artifact::App)
       new_app_artifacts = new_cask.artifacts.grep(Artifact::App)
-      return false if old_app_artifacts.empty? || old_app_artifacts.length != new_app_artifacts.length
-
-      old_app_artifacts.each_with_index.all? do |artifact, index|
-        next false unless old_user_approved.fetch(artifact.target.to_s, false)
-
-        old_identity = old_signing_identities[artifact.target.to_s]
-        new_identity = Quarantine.signing_identity(new_app_artifacts.fetch(index).target)
-
-        [
-          [old_identity&.identifier, new_identity&.identifier],
-          [old_identity&.team_identifier, new_identity&.team_identifier],
-        ].none? do |old_value, new_value|
-          !old_value.nil? && !new_value.nil? && old_value != new_value
-        end
+      return :skip if old_app_artifacts.empty? || old_app_artifacts.length != new_app_artifacts.length
+      return :unapproved unless old_app_artifacts.all? do |artifact|
+        old_user_approved.fetch(artifact.target.to_s, false)
       end
+
+      old_app_artifacts.each_with_index do |artifact, index|
+        old_identity = old_signing_identities[artifact.target.to_s]
+        return :signer_unverified if old_identity.nil?
+
+        identity_matches = Quarantine.signing_identity_match(new_app_artifacts.fetch(index).target, old_identity)
+        return :signer_unverified if identity_matches.nil?
+        return :signer_changed unless identity_matches
+      end
+
+      :release
     rescue
-      false
+      :skip
     end
 
     sig { params(old_cask: Cask, new_cask: Cask).void }
@@ -367,6 +382,7 @@ module Cask
 
       old_cask_installer =
         Installer.new(old_cask, **old_options)
+      old_tab = old_cask.tab
 
       new_cask.config = new_cask.default_config.merge(old_config)
 
@@ -424,11 +440,24 @@ module Cask
         new_cask_installer.install_artifacts(predecessor: old_cask)
         new_artifacts_installed = true
 
-        if quarantine.nil? &&
-           Quarantine.available? &&
-           release_app_upgrade_quarantine?(old_cask, new_cask, old_signing_identities, old_user_approved)
-          new_cask.artifacts.grep(Artifact::App).each do |artifact|
-            Quarantine.release!(download_path: artifact.target)
+        if quarantine.nil? && Quarantine.available?
+          case quarantine_release_decision(old_cask, new_cask, old_signing_identities, old_user_approved)
+          when :release
+            new_cask.artifacts.grep(Artifact::App).each do |artifact|
+              Quarantine.inherit_user_approval!(download_path: artifact.target)
+            end
+          when :signer_changed
+            opoo "#{new_cask.token}'s signer changed so macOS will prompt at next launch."
+          when :signer_unverified
+            opoo "Homebrew couldn't verify #{new_cask.token}'s signer so macOS will prompt at next launch."
+          when :unapproved
+            message = "#{new_cask.token} wasn't quarantine approved so not approving now. " \
+                      "macOS will prompt at next launch."
+            if verbose
+              ohai message
+            else
+              odebug message
+            end
           end
         end
 
@@ -437,11 +466,25 @@ module Cask
 
         reopen_apps_after_upgrade(old_cask, new_cask) if quit
       rescue => e
-        new_cask_installer.uninstall_artifacts(successor: old_cask, quit:) if new_artifacts_installed
-        new_cask_installer.purge_versioned_files
-        old_cask_installer.revert_upgrade(predecessor: new_cask) if started_upgrade
+        begin
+          new_cask_installer.uninstall_artifacts(successor: old_cask, quit:) if new_artifacts_installed
+          new_cask_installer.purge_versioned_files
+          old_cask_installer.revert_upgrade(predecessor: new_cask) if started_upgrade
+        rescue => rollback_error
+          opoo "Rolling back the failed upgrade of #{old_cask.token} also failed: " \
+               "#{rollback_error.class}: #{rollback_error.message}"
+          if (rollback_backtrace = rollback_error.backtrace)
+            odebug "Rollback backtrace:", rollback_backtrace
+          end
+        end
         raise e
       end
+
+      # Wait until rollback is no longer possible so failures keep the old
+      # receipt, while successful upgrades can load artifacts next time.
+      tab = Tab.create(new_cask)
+      tab.installed_on_request = old_tab.tabfile.nil? || old_tab.installed_on_request
+      tab.write
 
       end_time = Time.now
       Homebrew.messages.package_installed(new_cask.token, end_time - start_time)

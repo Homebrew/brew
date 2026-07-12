@@ -141,7 +141,7 @@ class Version
   private_constant :NullToken
 
   # Represents the absence of a token.
-  NULL_TOKEN = T.let(NullToken.new.freeze, NullToken)
+  NULL_TOKEN = NullToken.new.freeze
 
   # A token string.
   class StringToken < Token

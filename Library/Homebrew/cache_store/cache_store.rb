@@ -11,10 +11,8 @@ class CacheStore
 
   abstract!
 
-  # Sorbet type members are mutable by design and cannot be frozen.
-  Key = type_member # rubocop:disable Style/MutableConstant
-  # Sorbet type members are mutable by design and cannot be frozen.
-  Value = type_member # rubocop:disable Style/MutableConstant
+  Key = type_member
+  Value = type_member
 
   sig { params(database: CacheStoreDatabase[Key, Value]).void }
   def initialize(database)

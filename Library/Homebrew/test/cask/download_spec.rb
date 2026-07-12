@@ -5,28 +5,25 @@ RSpec.describe Cask::Download, :cask do
   describe "#download_name" do
     subject(:download_name) { described_class.new(cask).send(:download_name) }
 
-    let(:download) { described_class.new(cask) }
     let(:token) { "example-cask" }
     let(:full_token) { token }
     let(:url) { instance_double(URL, to_s: url_to_s, specs: {}) }
     let(:url_to_s) { "https://example.com/app.dmg" }
     let(:cask) { instance_double(Cask::Cask, token:, full_token:, version:, url:) }
 
-    before { allow(download).to receive(:determine_url).and_return(url) }
-
     context "when cask has no version" do
       let(:version) { nil }
 
-      it "returns the URL basename" do
-        expect(download_name).to eq "app.dmg"
+      it "returns the cask token" do
+        expect(download_name).to eq "example-cask"
       end
     end
 
     context "when the URL basename would create a short symlink name" do
       let(:version) { "1.0.0" }
 
-      it "returns the URL basename" do
-        expect(download_name).to eq "app.dmg"
+      it "returns the cask token" do
+        expect(download_name).to eq "example-cask"
       end
     end
 
@@ -36,15 +33,15 @@ RSpec.describe Cask::Download, :cask do
       end
       let(:url_to_s) { "https://example.com/app.dmg?#{Array.new(50) { |i| "param#{i}=value#{i}" }.join("&")}" }
 
-      it "returns the cask token when symlink would be too long" do
+      it "returns the cask token" do
         expect(download_name).to eq "example-cask"
       end
 
       context "when the cask is in a third-party tap" do
         let(:full_token) { "third-party/tap/example-cask" }
 
-        it "returns the full token with slashes replaced by dashes" do
-          expect(download_name).to eq "third-party--tap--example-cask"
+        it "returns the cask token" do
+          expect(download_name).to eq "example-cask"
         end
       end
     end
@@ -57,6 +54,35 @@ RSpec.describe Cask::Download, :cask do
 
       expect(download).not_to receive(:downloader)
       expect { download.fetch }.to raise_error(/--require-sha/)
+    end
+  end
+
+  describe "#stage_from_download_queue?" do
+    it "does not mutate download state" do
+      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      download = described_class.new(cask)
+
+      expect(download).not_to receive(:primary_container)
+
+      expect(download.stage_from_download_queue?(TEST_FIXTURE_DIR/"cask/caffeine.zip", pour: true)).to be(true)
+      expect(cask.download).to be_nil
+    end
+  end
+
+  describe "#purge_staged_from_download_queue" do
+    it "removes stale markers with permission-aware removal" do
+      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      download = described_class.new(cask)
+      staged_marker = download.staged_path_from_download_queue_marker
+      staged_marker.dirname.mkpath
+      FileUtils.ln_s(download.staged_path_from_download_queue, staged_marker)
+
+      expect(Cask::Utils).to receive(:gain_permissions_remove).with(staged_marker,
+                                                                    command: SystemCommand).and_call_original
+
+      download.purge_staged_from_download_queue
+
+      expect(staged_marker).not_to exist
     end
   end
 

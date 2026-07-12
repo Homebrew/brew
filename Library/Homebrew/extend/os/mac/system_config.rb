@@ -62,8 +62,7 @@ module OS
         end
 
         sig { params(out: T.any(File, StringIO, IO)).void }
-        def dump_verbose_config(out = $stdout)
-          super
+        def macos_config(out = $stdout)
           out.puts "macOS: #{MacOS.full_version}-#{kernel}"
           out.puts "CLT: #{clt || "N/A"}"
           out.puts "Xcode: #{xcode || "N/A"}"
@@ -72,6 +71,11 @@ module OS
             out.puts "Metal Toolchain: #{metal_toolchain || "N/A"}"
           end
           out.puts "Rosetta 2: #{::Hardware::CPU.in_rosetta2?}" if ::Hardware::CPU.physical_cpu_arm64?
+        end
+
+        sig { returns(T::Array[Symbol]) }
+        def config_sections
+          super + [:macos_config]
         end
       end
     end

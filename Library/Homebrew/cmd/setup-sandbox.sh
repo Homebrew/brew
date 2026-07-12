@@ -37,16 +37,30 @@ homebrew-setup-sandbox() {
 
   # These settings mirror SANDBOX_SYSCTL_SETTINGS in
   # Library/Homebrew/extend/os/linux/sandbox.rb; keep both in sync.
-  if [[ $(sysctl -n "kernel.unprivileged_userns_clone" || echo 0) != "1" ]]
+  local proc_sys_root="${HOMEBREW_PROC_SYS:-/proc/sys}"
+  local sysctl_value
+  local unprivileged_userns_clone_sysctl="${proc_sys_root}/kernel/unprivileged_userns_clone"
+  if [[ -e "${unprivileged_userns_clone_sysctl}" ]] &&
+     sysctl_value="$(sysctl -n "kernel.unprivileged_userns_clone")" &&
+     [[ "${sysctl_value}" != "1" ]] &&
+     [[ -w "${unprivileged_userns_clone_sysctl}" ]]
   then
-    sysctl -w kernel.unprivileged_userns_clone=1
+    sysctl -w kernel.unprivileged_userns_clone=1 || true
   fi
-  if [[ $(sysctl -n "user.max_user_namespaces" || echo 0) -lt 28633 ]]
+  local max_user_namespaces_sysctl="${proc_sys_root}/user/max_user_namespaces"
+  if [[ -e "${max_user_namespaces_sysctl}" ]] &&
+     sysctl_value="$(sysctl -n "user.max_user_namespaces")" &&
+     [[ "${sysctl_value}" -lt 28633 ]] &&
+     [[ -w "${max_user_namespaces_sysctl}" ]]
   then
-    sysctl -w user.max_user_namespaces=28633
+    sysctl -w user.max_user_namespaces=28633 || true
   fi
 
-  if [[ $(sysctl -n "kernel.apparmor_restrict_unprivileged_userns" || echo 0) != "0" ]]
+  local apparmor_restrict_unprivileged_userns_sysctl="${proc_sys_root}/kernel/apparmor_restrict_unprivileged_userns"
+  if [[ -e "${apparmor_restrict_unprivileged_userns_sysctl}" ]] &&
+     sysctl_value="$(sysctl -n "kernel.apparmor_restrict_unprivileged_userns")" &&
+     [[ "${sysctl_value}" != "0" ]] &&
+     [[ -w "${apparmor_restrict_unprivileged_userns_sysctl}" ]]
   then
     sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
   fi

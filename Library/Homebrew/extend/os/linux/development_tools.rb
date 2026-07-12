@@ -30,6 +30,23 @@ module OS
         sig { returns(Symbol) }
         def default_compiler = :gcc
 
+        sig { returns(String) }
+        def installation_instructions
+          <<~EOS
+            Install a system C compiler and the standard development tools for
+            your Linux distribution. See:
+              https://docs.brew.sh/Homebrew-on-Linux#requirements
+          EOS
+        end
+
+        sig { returns(String) }
+        def custom_installation_instructions
+          <<~EOS
+            Install GNU's GCC:
+              brew install gcc
+          EOS
+        end
+
         sig { returns(T::Boolean) }
         def needs_libc_formula?
           return @needs_libc_formula unless @needs_libc_formula.nil?

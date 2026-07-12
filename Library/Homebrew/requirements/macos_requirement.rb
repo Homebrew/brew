@@ -8,10 +8,7 @@ require "utils/output"
 class MacOSRequirement < Requirement
   extend Utils::Output::Mixin
 
-  # Sorbet type members are mutable by design and cannot be frozen.
-  # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
-  # rubocop:enable Style/MutableConstant
 
   fatal true
 
@@ -23,12 +20,12 @@ class MacOSRequirement < Requirement
 
   # Keep these around as empty arrays so we can keep the deprecation/disabling code the same.
   # Treat these like odeprecated/odisabled in terms of deprecation/disabling.
-  DISABLED_MACOS_VERSIONS = T.let([
+  DISABLED_MACOS_VERSIONS = [
     :mojave,
     :high_sierra,
     :sierra,
     :el_capitan,
-  ].freeze, T::Array[Symbol])
+  ].freeze
   DEPRECATED_MACOS_VERSIONS = T.let([].freeze, T::Array[Symbol])
 
   sig { params(args: T::Array[T.any(String, Symbol)], comparator: String).returns(MacOSRequirement) }
@@ -88,7 +85,7 @@ class MacOSRequirement < Requirement
       MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED) if comparator == ">="
     end, T.nilable(T.any(MacOSVersion, T::Array[MacOSVersion])))
 
-    @comparator = T.let(comparator, String)
+    @comparator = comparator
     super(tags.drop(1))
   end
 

@@ -12,7 +12,7 @@ module Tapioca
       # Dirs defined in `OS::Linux::Cask::Config::ClassMethods::DEFAULT_DIRS`
       # that aren't visible to `Cask::Config.defaults` when this compiler is
       # run on macOS, but still need accessor methods generated in the RBI.
-      LINUX_ONLY_DIRS = T.let([:appimagedir].freeze, T::Array[Symbol])
+      LINUX_ONLY_DIRS = [:appimagedir].freeze
 
       sig { override.returns(T::Enumerable[T::Module[T.anything]]) }
       def self.gather_constants = [Cask::Config]

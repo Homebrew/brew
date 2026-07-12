@@ -53,12 +53,10 @@ module Kernel
     ).void
   }
   def safe_system(cmd, argv0 = nil, *args, **options)
-    # TODO: migrate to utils.rb Homebrew.safe_system
-    require "utils"
+    # odeprecated: remove this method in a later release, use `Homebrew.safe_system` directly instead
+    require "homebrew"
 
-    return if Homebrew.system(cmd, argv0, *args, **options)
-
-    raise ErrorDuringExecution.new([cmd, argv0, *args], status: $CHILD_STATUS)
+    Homebrew.safe_system(cmd, argv0, *args, **options)
   end
 
   # Run a system command without any output.
@@ -72,15 +70,10 @@ module Kernel
     ).returns(T::Boolean)
   }
   def quiet_system(cmd, argv0 = nil, *args)
-    # TODO: migrate to utils.rb Homebrew.quiet_system
-    require "utils"
+    # odeprecated: remove this method in a later release, use `Homebrew.quiet_system` directly instead
+    require "homebrew"
 
-    Homebrew._system(cmd, argv0, *args) do
-      # Redirect output streams to `/dev/null` instead of closing as some programs
-      # will fail to execute if they can't write to an open stream.
-      $stdout.reopen(File::NULL)
-      $stderr.reopen(File::NULL)
-    end
+    Homebrew.quiet_system(cmd, argv0, *args)
   end
 
   # Find a command.
@@ -143,7 +136,7 @@ module Kernel
     end
   end
 
-  IGNORE_INTERRUPTS_MUTEX = T.let(Thread::Mutex.new.freeze, Thread::Mutex)
+  IGNORE_INTERRUPTS_MUTEX = Thread::Mutex.new.freeze
 
   sig { type_parameters(:U).params(_block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
   def ignore_interrupts(&_block)

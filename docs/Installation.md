@@ -84,6 +84,6 @@ Uninstallation is documented in the [FAQ](FAQ.md#how-do-i-uninstall-homebrew).
 
 <a data-proofer-ignore name="2"><sup>2</sup></a> macOS 14 (Sonoma) or higher is best and supported, 10.15 (Catalina) – 13 (Ventura) are unsupported but may work and 10.14 (Mojave) and older will not run Homebrew at all. Using OpenCore Legacy Patcher is a [Tier 2](Support-Tiers.md#tier-2) or [Tier 3](Support-Tiers.md#tier-3) configuration depending on CPU generation.
 
-<a data-proofer-ignore name="3"><sup>3</sup></a> You may need to install Xcode, the CLT, or both depending on the formula, to install a bottle (binary package) which is the only supported configuration. Downloading Xcode may require an Apple Developer account on older versions of Mac OS X. Sign up for free at [Apple's website](https://developer.apple.com/account/).
+<a data-proofer-ignore name="3"><sup>3</sup></a> Xcode or the CLT is required to build formulae from source and remains a requirement for a supported installation. Casks can be installed without developer tools, but some bottles currently need them for relocation. Downloading Xcode may require an Apple Developer account on older versions of Mac OS X. Sign up for free at [Apple's website](https://developer.apple.com/account/).
 
 <a data-proofer-ignore name="4"><sup>4</sup></a> The one-liner installation method found on [brew.sh](https://brew.sh/) uses the Bourne-again shell at `/bin/bash`. Notably, `zsh`, `fish`, `tcsh` and `csh` will not work.

@@ -198,6 +198,27 @@ RSpec.describe SPDX do
     end
   end
 
+  describe ".truncate_license" do
+    it "returns the license unchanged when within the limit" do
+      expect(described_class.truncate_license("MIT AND Apache-2.0")).to eq "MIT AND Apache-2.0"
+    end
+
+    it "truncates an over-long conjunction to a valid prefix with a marker" do
+      license = "MIT AND Apache-2.0 AND BSD-3-Clause AND GPL-2.0-only"
+      expect(described_class.truncate_license(license, limit: 40)).to eq "MIT AND LicenseRef-Homebrew-truncated"
+    end
+
+    it "falls back to :cannot_represent for over-long disjunctions" do
+      license = "MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only"
+      expect(described_class.truncate_license(license, limit: 40)).to eq "LicenseRef-Homebrew-cannot-represent"
+    end
+
+    it "falls back to :cannot_represent when even the first term does not fit" do
+      license = "Apache-2.0 AND MIT AND BSD-3-Clause AND ISC"
+      expect(described_class.truncate_license(license, limit: 20)).to eq "LicenseRef-Homebrew-cannot-represent"
+    end
+  end
+
   describe ".string_to_license_expression" do
     it "returns the correct result for 'and', 'or' and 'with'" do
       expr_string = "Apache-2.0 and (Apache-2.0 with LLVM-exception) and (MIT or NCSA)"

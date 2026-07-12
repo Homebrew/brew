@@ -30,7 +30,7 @@ module Homebrew
     # malicious backfilled signatures.
     #
     # @api private
-    BACKFILL_CUTOFF = T.let(DateTime.new(2024, 3, 14).freeze, DateTime)
+    BACKFILL_CUTOFF = DateTime.new(2024, 3, 14).freeze
 
     # Raised when the attestation was not found.
     #
@@ -66,7 +66,7 @@ module Homebrew
     sig { returns(Pathname) }
     def self.gh_executable
       @gh_executable ||= T.let(nil, T.nilable(Pathname))
-      return @gh_executable if @gh_executable.present?
+      return @gh_executable if @gh_executable
 
       # NOTE: We set HOMEBREW_NO_VERIFY_ATTESTATIONS when installing `gh` itself,
       #       to prevent a cycle during bootstrapping. This can eventually be resolved

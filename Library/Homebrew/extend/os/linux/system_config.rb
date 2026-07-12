@@ -104,10 +104,8 @@ module OS
         end
 
         sig { params(out: T.any(File, StringIO, IO)).void }
-        def dump_verbose_config(out = $stdout)
-          kernel = Utils.safe_popen_read("uname", "-mors").chomp
-          super
-          out.puts "Kernel: #{kernel}"
+        def linux_config(out = $stdout)
+          out.puts "Kernel: #{Utils.safe_popen_read("uname", "-mors").chomp}"
           out.puts "OS: #{OS::Linux.os_version}"
           if OS.wsl?
             out.puts "WSL: #{OS::Linux.wsl_version}"
@@ -121,6 +119,11 @@ module OS
           ["glibc", ::CompilerSelector.preferred_gcc, OS::LINUX_PREFERRED_GCC_RUNTIME_FORMULA, "xorg"].each do |f|
             out.puts "#{f}: #{formula_linked_version(f)}"
           end
+        end
+
+        sig { returns(T::Array[Symbol]) }
+        def config_sections
+          super + [:linux_config]
         end
       end
     end

@@ -60,9 +60,10 @@ RSpec.describe Sandbox, :needs_linux do
     let(:bubblewrap) { bubblewrap_dir/"bwrap" }
     let(:fallback_bubblewrap_dir) { mktmpdir }
     let(:fallback_bubblewrap) { fallback_bubblewrap_dir/"bwrap" }
-    let(:bubblewrap_test_args) do
+    let(:successful_result) { instance_double(SystemCommand::Result, success?: true) }
+    let(:failed_result) { instance_double(SystemCommand::Result, success?: false, merged_output: "") }
+    let(:bubblewrap_probe_args) do
       [
-        bubblewrap.to_s,
         "--unshare-user",
         "--unshare-ipc",
         "--unshare-pid",
@@ -71,8 +72,14 @@ RSpec.describe Sandbox, :needs_linux do
         "--ro-bind", "/", "/",
         "--proc", "/proc",
         "--dev", "/dev",
-        "true",
-        { err: :out }
+        "true"
+      ]
+    end
+    let(:bubblewrap_test_args) do
+      [
+        bubblewrap.to_s,
+        *bubblewrap_probe_args,
+        { err: :out },
       ]
     end
 
@@ -97,20 +104,11 @@ RSpec.describe Sandbox, :needs_linux do
     end
 
     it "probes unprivileged namespace support once" do
-      expect(sandbox_class).to receive(:system).once.with(
-        bubblewrap.to_s,
-        "--unshare-user",
-        "--unshare-ipc",
-        "--unshare-pid",
-        "--unshare-uts",
-        "--unshare-cgroup-try",
-        "--ro-bind", "/", "/",
-        "--proc", "/proc",
-        "--dev", "/dev",
-        "true",
-        out: File::NULL,
-        err: File::NULL
-      ).and_return(true)
+      expect(sandbox_class).to receive(:system_command).once.with(
+        bubblewrap,
+        args:         bubblewrap_probe_args,
+        print_stderr: false,
+      ).and_return(successful_result)
 
       expect(sandbox_class.available?).to be(true)
       expect(sandbox_class.state).to eq(:available)
@@ -122,34 +120,16 @@ RSpec.describe Sandbox, :needs_linux do
       FileUtils.chmod "+x", fallback_bubblewrap
       sandbox_class.test_executable_candidate_paths = PATH.new(bubblewrap_dir, fallback_bubblewrap_dir)
 
-      expect(sandbox_class).to receive(:system).with(
-        bubblewrap.to_s,
-        "--unshare-user",
-        "--unshare-ipc",
-        "--unshare-pid",
-        "--unshare-uts",
-        "--unshare-cgroup-try",
-        "--ro-bind", "/", "/",
-        "--proc", "/proc",
-        "--dev", "/dev",
-        "true",
-        out: File::NULL,
-        err: File::NULL
-      ).and_return(false)
-      expect(sandbox_class).to receive(:system).with(
-        fallback_bubblewrap.to_s,
-        "--unshare-user",
-        "--unshare-ipc",
-        "--unshare-pid",
-        "--unshare-uts",
-        "--unshare-cgroup-try",
-        "--ro-bind", "/", "/",
-        "--proc", "/proc",
-        "--dev", "/dev",
-        "true",
-        out: File::NULL,
-        err: File::NULL
-      ).and_return(true)
+      expect(sandbox_class).to receive(:system_command).with(
+        bubblewrap,
+        args:         bubblewrap_probe_args,
+        print_stderr: false,
+      ).and_return(failed_result)
+      expect(sandbox_class).to receive(:system_command).with(
+        fallback_bubblewrap,
+        args:         bubblewrap_probe_args,
+        print_stderr: false,
+      ).and_return(successful_result)
 
       expect(sandbox_class.available?).to be(true)
     end
@@ -164,11 +144,21 @@ RSpec.describe Sandbox, :needs_linux do
     end
 
     it "reports bubblewrap sandbox probe failures" do
-      allow(sandbox_class).to receive(:system).and_return(false)
+      allow(sandbox_class).to receive(:system_command).and_return(failed_result)
 
       expect(sandbox_class.available?).to be(false)
       expect(sandbox_class.state).to eq(:unavailable)
       expect(sandbox_class.failure_reason).to include("cannot create a rootless sandbox")
+    end
+
+    it "prints bubblewrap sandbox probe failure output" do
+      expect(sandbox_class).to receive(:system_command)
+        .and_return(instance_double(SystemCommand::Result, success?:      false,
+                                                           merged_output: "bwrap stdout\nbwrap stderr\n"))
+      expect(sandbox_class).to receive(:opoo).with("bubblewrap test probe failed")
+
+      expect { sandbox_class.available? }
+        .to output("bwrap stdout\nbwrap stderr\n").to_stderr
     end
 
     it "does not treat generic bubblewrap sandbox probe failures as nested" do

@@ -5,6 +5,7 @@ require "abstract_command"
 require "migrator"
 require "formulary"
 require "cask/cask_loader"
+require "cask/caskroom"
 require "cask/migrator"
 require "descriptions"
 require "cleanup"
@@ -149,6 +150,7 @@ module Homebrew
         Homebrew::API.write_names_and_aliases unless Homebrew::EnvConfig.no_install_from_api?
 
         Homebrew.failed = true if ENV["HOMEBREW_UPDATE_FAILED"]
+        migrate_caskroom_caskfiles_to_json
         return if Homebrew::EnvConfig.disable_load_formula?
 
         migrate_gcc_dependents_if_needed
@@ -349,6 +351,22 @@ module Homebrew
       sig { void }
       def migrate_gcc_dependents_if_needed
         # do nothing
+      end
+
+      sig { void }
+      def migrate_caskroom_caskfiles_to_json
+        return unless Homebrew::EnvConfig.developer?
+        return unless Cask::Caskroom.path.directory?
+
+        Cask::Caskroom.path.glob("*/.metadata/*/*/Casks/*.{internal.json,rb}").each do |caskfile|
+          cask = Cask::CaskLoader.load(caskfile, warn: false)
+          next if cask.uninstall_flight_blocks?
+
+          (caskfile.dirname/"#{cask.token}.json").atomic_write(JSON.pretty_generate(cask.to_installed_json_hash))
+          caskfile.unlink
+        rescue => e
+          opoo "Failed to migrate #{caskfile} to JSON metadata: #{e}"
+        end
       end
 
       sig { void }

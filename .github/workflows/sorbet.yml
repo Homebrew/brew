@@ -30,20 +30,20 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
 
       - name: Configure Git user
         if: github.event_name != 'pull_request'
-        uses: Homebrew/actions/git-user-config@main
+        uses: Homebrew/actions/git-user-config@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           username: BrewTestBot
 
       - name: Set up commit signing
         if: github.event_name != 'pull_request'
-        uses: Homebrew/actions/setup-commit-signing@main
+        uses: Homebrew/actions/setup-commit-signing@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           signing_key: ${{ secrets.BREWTESTBOT_SSH_SIGNING_KEY }}
 
@@ -99,7 +99,7 @@ jobs:
 
       - name: Push commits
         if: steps.commit.outputs.committed == 'true'
-        uses: Homebrew/actions/git-try-push@main
+        uses: Homebrew/actions/git-try-push@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           token: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
           directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -125,7 +125,7 @@ jobs:
       issues: write
     steps:
       - name: Open, update, or close Sorbet issue
-        uses: Homebrew/actions/create-or-update-issue@main
+        uses: Homebrew/actions/create-or-update-issue@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           title: Failed to update RBI files
           body: >

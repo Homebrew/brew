@@ -181,7 +181,7 @@ RSpec.describe Homebrew::Bundle::Installer do
     tap_entry = Homebrew::Bundle::Dsl::Entry.new(:tap, "homebrew/foo")
     untapped_formula_entry = Homebrew::Bundle::Dsl::Entry.new(:brew, "bar")
 
-    allow(Homebrew::API).to receive_messages(formula_names: [], formula_aliases: {}, formula_renames: {})
+    allow(Homebrew::API).to receive_messages(formula_name?: false, formula_aliases: {}, formula_renames: {})
 
     expect(Homebrew::Bundle).not_to receive(:brew).with("fetch", any_args)
 
@@ -192,7 +192,7 @@ RSpec.describe Homebrew::Bundle::Installer do
     tap_entry = Homebrew::Bundle::Dsl::Entry.new(:tap, "homebrew/foo")
     untapped_formula_entry = Homebrew::Bundle::Dsl::Entry.new(:brew, "bar")
 
-    allow(Homebrew::API).to receive(:formula_names).and_raise("API unavailable")
+    allow(Homebrew::API).to receive(:formula_name?).and_raise("API unavailable")
 
     expect(described_class).to receive(:opoo).with(/could not check API metadata: API unavailable/)
     expect(Homebrew::Bundle).not_to receive(:brew).with("fetch", any_args)
@@ -204,7 +204,7 @@ RSpec.describe Homebrew::Bundle::Installer do
     tap_entry = Homebrew::Bundle::Dsl::Entry.new(:tap, "homebrew/foo")
     formula_entry = Homebrew::Bundle::Dsl::Entry.new(:brew, "mysql")
 
-    allow(Homebrew::API).to receive_messages(formula_names: ["mysql"], formula_aliases: {}, formula_renames: {})
+    allow(Homebrew::API).to receive_messages(formula_name?: true, formula_aliases: {}, formula_renames: {})
     allow(Homebrew::Bundle::Brew).to receive(:formula_installed_and_up_to_date?)
       .with("mysql", no_upgrade: false).and_return(false)
 
@@ -228,7 +228,7 @@ RSpec.describe Homebrew::Bundle::Installer do
     untapped_cask_entry = Homebrew::Bundle::Dsl::Entry.new(:cask, "flux-markdown",
                                                            args: {}, full_name: "flux-markdown")
 
-    allow(Homebrew::API).to receive_messages(cask_tokens: [], cask_renames: {})
+    allow(Homebrew::API).to receive_messages(cask_token?: false, cask_renames: {})
 
     expect(Homebrew::Bundle).not_to receive(:brew).with("fetch", any_args)
 
@@ -239,7 +239,7 @@ RSpec.describe Homebrew::Bundle::Installer do
     tap_entry = Homebrew::Bundle::Dsl::Entry.new(:tap, "xykong/tap")
     cask_entry = Homebrew::Bundle::Dsl::Entry.new(:cask, "google-chrome", args: {}, full_name: "google-chrome")
 
-    allow(Homebrew::API).to receive_messages(cask_tokens: ["google-chrome"], cask_renames: {})
+    allow(Homebrew::API).to receive_messages(cask_token?: true, cask_renames: {})
     allow(Homebrew::Bundle::Cask).to receive(:installable_or_upgradable?)
       .with("google-chrome", no_upgrade: false, args: {}, full_name: "google-chrome").and_return(true)
 
@@ -266,6 +266,41 @@ RSpec.describe Homebrew::Bundle::Installer do
         verb:    "Installing",
         cls:     Homebrew::Bundle::Brew,
       )
+    end
+
+    describe "output" do
+      subject(:parallel_installer) do
+        Homebrew::Bundle::ParallelInstaller.new(
+          [],
+          jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: false,
+        )
+      end
+
+      it "uses CRLF for terminal output" do
+        output = IO.pipe do |reader, writer|
+          allow(writer).to receive(:tty?).and_return(true)
+
+          parallel_installer.send(:write_output, "Installing alpha", stream: writer)
+          writer.close
+
+          reader.read
+        end
+
+        expect(output).to eq("Installing alpha\r\n")
+      end
+
+      it "uses LF for redirected output" do
+        output = IO.pipe do |reader, writer|
+          allow(writer).to receive(:tty?).and_return(false)
+
+          parallel_installer.send(:write_output, "Installing alpha", stream: writer)
+          writer.close
+
+          reader.read
+        end
+
+        expect(output).to eq("Installing alpha\n")
+      end
     end
 
     it "installs independent formulae in parallel with jobs > 1" do
@@ -329,6 +364,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with("alpha").and_return(Set.new)
       allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).with(["tmuxpack/tpack/tpack"])
                                                                      .and_return([])
+      allow(Tap).to receive(:with_cask_token).with("tmuxpack/tpack/tpack").and_return(nil)
       allow(Homebrew::Bundle::Brew).to receive(:install!) do |name, **_options|
         install_order << name
         true
@@ -423,6 +459,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with("alpha").and_return(Set.new)
       allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).with(["tmuxpack/tpack/tpack"])
                                                                      .and_return(["alpha"])
+      allow(Tap).to receive(:with_cask_token).with("tmuxpack/tpack/tpack").and_return(nil)
       allow(Homebrew::Bundle::Brew).to receive(:install!) do |name, **_options|
         install_order << name
         true
@@ -442,6 +479,48 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(install_order).to eq(["alpha", "tpack"])
     end
 
+    it "taps fully qualified casks before resolving dependencies" do
+      tpack_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name:    "tpack",
+        options: { args: {}, full_name: "tmuxpack/tpack/tpack" },
+        verb:    "Installing",
+        cls:     Homebrew::Bundle::Cask,
+      )
+      install_order = []
+      event_order = []
+      tap = instance_double(Tap, name: "tmuxpack/tpack", ensure_installed!: nil)
+
+      allow(Homebrew::Bundle::Tap).to receive(:installed_taps).and_return([])
+      allow(Tap).to receive(:with_formula_name).with("alpha").and_return(nil)
+      allow(Tap).to receive(:with_cask_token).with("tmuxpack/tpack/tpack").and_return([tap, "tpack"])
+      allow(tap).to receive(:ensure_installed!) { event_order << :tap_install }
+      allow(Homebrew::Bundle).to receive(:cask_installed?).and_return(false)
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("alpha").and_return([])
+      allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with("alpha").and_return(Set.new)
+      allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).with(["tmuxpack/tpack/tpack"]) do
+        event_order << :cask_deps
+        ["alpha"]
+      end
+      allow(Homebrew::Bundle::Brew).to receive(:install!) do |name, **_options|
+        install_order << name
+        true
+      end
+      allow(Homebrew::Bundle::Cask).to receive(:install!) do |name, **_options|
+        install_order << name
+        true
+      end
+
+      success, failure = Homebrew::Bundle::ParallelInstaller.new(
+        [alpha_entry, tpack_entry],
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      ).run!
+
+      expect(success).to eq(2)
+      expect(failure).to eq(0)
+      expect(install_order).to eq(["alpha", "tpack"])
+      expect(event_order).to eq([:tap_install, :cask_deps])
+    end
+
     it "installs unqualified formulae after Brewfile taps" do
       tap_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
         name:    "homebrew/foo",
@@ -457,7 +536,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       )
       install_order = []
 
-      allow(Homebrew::API).to receive_messages(formula_names: [], formula_aliases: {}, formula_renames: {})
+      allow(Homebrew::API).to receive_messages(formula_name?: false, formula_aliases: {}, formula_renames: {})
       allow(Homebrew::Bundle::Brew).to receive_messages(formula_dep_names: [], recursive_dep_names: Set.new)
       allow(Homebrew::Bundle::Tap).to receive(:install!) do |name, **_options|
         install_order << name
@@ -541,7 +620,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       )
       install_order = []
 
-      allow(Homebrew::API).to receive_messages(cask_tokens: [], cask_renames: {})
+      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_renames: {})
       allow(Homebrew::Bundle).to receive(:cask_installed?).and_return(false)
       allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).with(["flux-markdown"]).and_return([])
       allow(Homebrew::Bundle::Tap).to receive(:install!) do |name, **_options|

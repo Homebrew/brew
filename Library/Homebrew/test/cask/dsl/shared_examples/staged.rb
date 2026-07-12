@@ -89,6 +89,37 @@ RSpec.shared_examples Cask::Staged do
     staged.set_ownership(fake_pathname.to_s, user: "other_user", group: "other_group")
   end
 
+  it "sets the ownership of an app when App Management permissions are granted" do
+    fake_pathname = existing_path
+
+    allow(User).to receive(:current).and_return(User.new("fake_user"))
+    allow(staged).to receive(:Pathname).and_return(fake_pathname)
+    allow(Cask::Quarantine).to receive(:app_management_permissions_granted?)
+      .with(app: fake_pathname, command: fake_system_command)
+      .and_return(true)
+
+    expect(fake_system_command).to receive(:run!)
+      .with("chown", args: ["-R", "--", "fake_user:staff", fake_pathname], sudo: true)
+
+    staged.set_ownership(fake_pathname.to_s)
+  end
+
+  it "does not set the ownership of an app when App Management permissions are missing" do
+    fake_pathname = existing_path
+
+    allow(User).to receive(:current).and_return(User.new("fake_user"))
+    allow(staged).to receive(:Pathname).and_return(fake_pathname)
+    allow(Cask::Quarantine).to receive(:app_management_permissions_granted?)
+      .with(app: fake_pathname, command: fake_system_command)
+      .and_return(false)
+
+    expect(fake_system_command).not_to receive(:run!)
+
+    expect do
+      staged.set_ownership(fake_pathname.to_s)
+    end.to raise_error(Cask::CaskError, /App Management permissions/)
+  end
+
   it "cannot set the ownership of a file that does not exist" do
     allow(User).to receive(:current).and_return(User.new("fake_user"))
     fake_pathname = non_existent_path

@@ -2,6 +2,5 @@
 # frozen_string_literal: true
 
 module Homebrew
-  RELEASE_COOLDOWN_DAYS = T.let(1, Integer)
-  RELEASE_COOLDOWN_SECONDS = T.let(RELEASE_COOLDOWN_DAYS * 24 * 60 * 60, Integer)
+  RELEASE_COOLDOWN_DAYS = 1
 end

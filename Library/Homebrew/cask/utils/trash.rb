@@ -16,37 +16,7 @@ module Cask
           .returns([T::Array[String], T::Array[String]])
       }
       def self.trash(*paths, command: nil)
-        swift_trash(*paths, command:)
-      end
-
-      sig {
-        params(paths: Pathname, command: T.nilable(T.class_of(SystemCommand)))
-          .returns([T::Array[String], T::Array[String]])
-      }
-      def self.swift_trash(*paths, command: nil)
-        return [[], []] if paths.empty?
-
-        stdout = system_command(HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
-                                args:         paths,
-                                print_stderr: Homebrew::EnvConfig.developer?).stdout
-
-        trashed, _, untrashable = stdout.partition("\n")
-        trashed = trashed.split(":")
-        untrashable = untrashable.split(":")
-
-        trashed_with_permissions, untrashable = untrashable.partition do |path|
-          Utils.gain_permissions(Pathname(path), ["-R"], SystemCommand) do
-            system_command! HOMEBREW_LIBRARY_PATH/"cask/utils/trash.swift",
-                            args:         [path],
-                            print_stderr: Homebrew::EnvConfig.developer?
-          end
-
-          true
-        rescue
-          false
-        end
-
-        [trashed + trashed_with_permissions, untrashable]
+        freedesktop_trash(*paths)
       end
 
       sig { params(paths: Pathname).returns([T::Array[String], T::Array[String]]) }
@@ -114,7 +84,7 @@ module Cask
           return
         end
       end
-      private_class_method :swift_trash, :freedesktop_trash, :trash_path
+      private_class_method :trash_path
     end
   end
 end

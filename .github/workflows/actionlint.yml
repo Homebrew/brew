@@ -34,12 +34,12 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: setup-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
 
-      - uses: Homebrew/actions/cache-homebrew-prefix@main
+      - uses: Homebrew/actions/cache-homebrew-prefix@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         # Don't cache the prefix for the formulae.brew.sh repository as it won't download its own JSON API files
         if: github.repository != 'Homebrew/formulae.brew.sh'
         with:
@@ -101,7 +101,7 @@ jobs:
           path: results.sarif
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        uses: github/codeql-action/upload-sarif@54f647b7e1bb85c95cddabcd46b0c578ec92bc1a # v4.36.3
         with:
           sarif_file: results.sarif
           category: zizmor

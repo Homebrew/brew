@@ -330,11 +330,13 @@ module Homebrew
                                                               quiet:                    args.quiet?,
                                                               ignore_non_pypi_packages: true
 
+            resource_versions = parse_resource_versions_arg
             resource_update_results.merge!(
-              update_matching_version_resources!(commit_formula, version: new_formula_version.to_s),
+              update_matching_version_resources!(commit_formula,
+                                                 version:           new_formula_version.to_s,
+                                                 resource_versions:),
             )
 
-            resource_versions = parse_resource_versions_arg
             if resource_versions.present?
               resource_update_results.merge!(
                 update_resources!(commit_formula, resource_versions:),
@@ -733,16 +735,16 @@ module Homebrew
 
       sig {
         params(
-          formula: Formula,
-          version: String,
+          formula:           Formula,
+          version:           String,
+          resource_versions: T.nilable(T::Hash[String, T::Hash[Symbol, T.nilable(String)]]),
         ).returns(T::Hash[String, Symbol])
       }
-      def update_matching_version_resources!(formula, version:)
-        results = {}
-        formula.resources.select { |r| r.livecheck.formula == :parent }.each do |resource|
-          results[resource.name] = update_resource_block!(formula, resource, version)
-        end
-        results
+      def update_matching_version_resources!(formula, version:, resource_versions: nil)
+        resource_versions ||= {}
+        formula.resources
+               .select { |r| r.livecheck.formula == :parent && resource_versions[r.name].blank? }
+               .to_h { |resource| [resource.name, update_resource_block!(formula, resource, version)] }
       end
 
       sig {
@@ -775,8 +777,12 @@ module Homebrew
           is_downgraded = Version.new(current_version) > Version.new(latest_version)
 
           begin
-            update_resource_block!(formula, resource, latest_version)
-            results[resource.name] = is_downgraded ? :downgraded : :success
+            result = update_resource_block!(formula, resource, latest_version)
+            results[resource.name] = if result == :success && is_downgraded
+              :downgraded
+            else
+              result
+            end
           rescue => e
             opoo "Failed to update resource \"#{resource.name}\": #{e}"
             results[resource.name] = :fetch_failed

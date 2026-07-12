@@ -2,10 +2,7 @@
 # frozen_string_literal: true
 
 class Failball < Formula
-  # Sorbet type members are mutable by design and cannot be frozen.
-  # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
-  # rubocop:enable Style/MutableConstant
 
   def initialize(name = "failball", path = Pathname.new(__FILE__).expand_path, spec = :stable,
                  alias_path: nil, tap: nil, force_bottle: false)

@@ -21,7 +21,7 @@ module Homebrew
     NO_CURRENT_VERSION_MSG = "Unable to identify current version"
     NO_VERSIONS_MSG = "Unable to get versions"
 
-    UNSTABLE_VERSION_KEYWORDS = T.let(%w[
+    UNSTABLE_VERSION_KEYWORDS = %w[
       alpha
       beta
       bpo
@@ -30,7 +30,7 @@ module Homebrew
       prerelease
       preview
       rc
-    ].freeze, T::Array[String])
+    ].freeze
     private_constant :UNSTABLE_VERSION_KEYWORDS
 
     sig { params(strategy_class: T::Class[Strategic]).returns(String) }

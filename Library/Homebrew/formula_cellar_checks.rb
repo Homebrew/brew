@@ -215,7 +215,7 @@ module FormulaCellarChecks
                       .filter_map { |d| Formula[d].version.to_s[/^\d+\.\d+/] }
 
     return if python_deps.blank?
-    return if pythons.any? { |v| python_deps.include? v }
+    return if pythons.intersect?(python_deps)
 
     pythons = pythons.map { |v| "Python #{v}" }
     python_deps = python_deps.map { |v| "Python #{v}" }

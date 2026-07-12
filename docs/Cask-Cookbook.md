@@ -574,6 +574,13 @@ end
 postflight_steps do
   mv "payload", "Shared/payload"
   ln_s "Shared/payload", "Payload", source_base: :relative
+  set_permissions "Shared/payload", "0755"
+end
+
+uninstall_postflight_steps do
+  delete_keychain_certificate "Charles"
+  delete_keychain_certificate "NodeMITMProxyCA",
+                              matching_certificate: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"
 end
 ```
 
@@ -582,6 +589,8 @@ A steps block may only contain supported step calls with literal arguments; it c
 #### File preparation steps
 
 Relative paths default to `staged_path` for `base:`, `source_base:` and `target_base:`. Symlink steps can use `uninstall: true` to remove the symlink during uninstall.
+
+{% raw %}
 
 * `mkdir`: create one directory; example: `mkdir "Shared"`.
 * `mkdir_p`: create a directory and any missing parents; example: `mkdir_p "Shared"`.
@@ -593,6 +602,12 @@ Relative paths default to `staged_path` for `base:`, `source_base:` and `target_
 * `ln_s`: alias for `symlink`; example: `ln_s "Shared/payload", "Payload", source_base: :relative`.
 * `ln_sf`: create or replace a symlink; example: `ln_sf "Shared/payload", "Payload", source_base: :relative, uninstall: true`.
 * `write`: write literal content to a file unless it already exists; example: `write "Shared/foo.conf", "key = value"`. Pass `overwrite: true` to always replace the file. A trailing newline is appended unless the content already ends with one. Content may use the `{{staged_path}}`, `{{appdir}}` and `{{version}}` tokens, which are expanded at install time; any other `{{...}}` is left verbatim.
+* `delete_keychain_certificate`: delete macOS keychain certificates whose common name matches the argument; example: `delete_keychain_certificate "Charles"`. Pass `matching_certificate:` with a local certificate path to delete only the matching SHA-256 fingerprint; example:
+  `delete_keychain_certificate "NodeMITMProxyCA", matching_certificate: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"`.
+* `set_permissions`: recursively change existing path permissions with `chmod`; example: `set_permissions "Shared/payload", "0755"`.
+* `set_ownership`: recursively change existing path ownership with `sudo chown`; example: `set_ownership "Shared/payload", user: "root", group: "wheel"`. Missing paths are ignored. When `user:` is omitted, the current user is used. When `group:` is omitted, `staff` is used.
+
+{% endraw %}
 
 Flight blocks are not currently run in the cask sandbox. They should be written as though they may be sandboxed in the future: prefer the mini-DSL helpers below and keep filesystem writes limited to paths owned by the cask.
 

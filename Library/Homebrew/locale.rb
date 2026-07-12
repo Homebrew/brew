@@ -88,7 +88,7 @@ class Locale
     regex = REGION_REGEX
     raise ParserError, "'region' does not match #{regex}" unless region.match?(regex)
 
-    @region = T.let(region, T.nilable(String))
+    @region = region
   end
 
   sig { params(other: T.any(String, Locale)).returns(T::Boolean) }

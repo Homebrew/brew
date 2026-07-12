@@ -313,6 +313,25 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".sbom?" do
+    around do |example|
+      with_env(HOMEBREW_SBOM: nil) { example.run }
+    end
+
+    it "returns true by default" do
+      expect(env_config.sbom?).to be(true)
+    end
+
+    it "returns true if set to a falsey value" do
+      ENV["HOMEBREW_SBOM"] = "0"
+      expect(env_config.sbom?).to be(true)
+    end
+
+    it "is hidden" do
+      expect(env_config.hidden?(Homebrew::EnvConfig::ENVS.fetch(:HOMEBREW_SBOM))).to be(true)
+    end
+  end
+
   describe ".no_sandbox_cask?" do
     it "deprecates HOMEBREW_NO_SANDBOX_CASK" do
       ENV["HOMEBREW_NO_SANDBOX_CASK"] = "1"

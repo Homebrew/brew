@@ -44,7 +44,7 @@ then
   #   /usr/bin/<tool> will be a popup stub under such configuration.
   # xcrun hangs if xcode-select is set to "/"
   xcode_path="$(/usr/bin/xcode-select -print-path 2>/dev/null)"
-  if [[ -z "${xcode_path}" ]]
+  if [[ -z "${xcode_path}" || ! -d "${xcode_path}" ]]
   then
     popup_stub=1
   fi

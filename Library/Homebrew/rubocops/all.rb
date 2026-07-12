@@ -3,6 +3,7 @@
 
 require_relative "../extend/array"
 require_relative "../extend/blank"
+require_relative "api_name_membership"
 require_relative "blank"
 require_relative "compact_blank"
 require_relative "disable_comment"

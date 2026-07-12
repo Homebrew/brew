@@ -102,7 +102,7 @@ module Homebrew
               steps:
                 - name: Set up Homebrew
                   id: set-up-homebrew
-                  uses: Homebrew/actions/setup-homebrew@main
+                  uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
                   with:
                     token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -170,12 +170,12 @@ module Homebrew
                 pull-requests: write
               steps:
                 - name: Set up Homebrew
-                  uses: Homebrew/actions/setup-homebrew@main
+                  uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
                   with:
                     token: ${{ secrets.GITHUB_TOKEN }}
 
                 - name: Set up git
-                  uses: Homebrew/actions/git-user-config@main
+                  uses: Homebrew/actions/git-user-config@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
 
                 - name: Pull bottles
                   env:
@@ -195,7 +195,7 @@ module Homebrew
                     fi
 
                 - name: Push commits
-                  uses: Homebrew/actions/git-try-push@main
+                  uses: Homebrew/actions/git-try-push@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
                   with:
                     branch: <%= branch %>
         ERB

@@ -306,8 +306,9 @@ module Homebrew
           end
         end
 
-        seen = T.let([], T::Array[String])
+        seen = T.let(Set.new, T::Set[String])
         groups = T.let([], T::Array[T::Array[DependentWithDependencies]])
+        max_group_size = (dependents.size + shard_count - 1) / shard_count
 
         dependents.map(&:first).each do |dependent|
           next if seen.include?(dependent.full_name)
@@ -322,6 +323,8 @@ module Homebrew
 
             seen << name
             group << dependents_by_name.fetch(name)
+            break if group.size >= max_group_size
+
             queue.concat(edges.fetch(name).reject { |edge| seen.include?(edge) })
           end
 
@@ -503,7 +506,7 @@ module Homebrew
 
       sig { params(_formula: Formula, args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
       def skip_recursive_dependents?(_formula, args:)
-        args.skip_recursive_dependents?
+        args.skip_recursive_dependents? != false
       end
 
       sig { params(_dependent: Formula).returns(T::Boolean) }

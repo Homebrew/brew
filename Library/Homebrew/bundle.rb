@@ -150,7 +150,7 @@ module Homebrew
 
           tab = Tab.for_name(name)
           tabfile = tab.tabfile
-          next if tabfile.blank? || !tabfile.exist?
+          next unless tabfile&.exist?
           next if tab.installed_on_request
 
           next name if use_brew_tab

@@ -4,6 +4,7 @@
 require "json"
 require "tsort"
 require "utils"
+require "utils/topological_hash"
 require "utils/output"
 require "bundle/package_type"
 require "trust"
@@ -426,24 +427,27 @@ module Homebrew
           raise "formulae_by_full_name is nil" if @formulae_by_full_name.nil?
           raise "formulae_by_name is nil" if @formulae_by_name.nil?
 
-          @formulae = topo.tsort
-                          .map { |name| @formulae_by_full_name[name] || @formulae_by_name[name] }
-                          .uniq { |f| f[:full_name] }
-        rescue TSort::Cyclic => e
-          e.message =~ /\["([^"]*)".*"([^"]*)"\]/
-          cycle_first = Regexp.last_match(1)
-          cycle_last = Regexp.last_match(2)
-          odie e.message if !cycle_first || !cycle_last
+          # Stale keg-tab dependency data can form a cycle the live graph does not
+          # have (Homebrew/homebrew-bundle#1513), so warn and continue rather than
+          # aborting the whole bundle.
+          sorted = topo.tsort_with_cycles do |cycles|
+            cyclic = cycles.flatten
+                           .filter_map { |name| @formulae_by_full_name[name] || @formulae_by_name[name] }
+                           .uniq { |f| f[:full_name] }
+                           .map { |f| f[:full_name] }
+            opoo <<~EOS
+              Formulae dependency graph sorting found a circular dependency:
+                #{cyclic.join(", ")}
+              This is usually caused by stale dependency data in installed keg tabs.
+              If it persists, run the following commands and try again:
+                brew update
+                brew uninstall --ignore-dependencies --force #{cyclic.join(" ")}
+                brew install #{cyclic.join(" ")}
+            EOS
+          end
 
-          odie <<~EOS
-            Formulae dependency graph sorting failed (likely due to a circular dependency):
-            #{cycle_first}: #{topo[cycle_first] if topo}
-            #{cycle_last}: #{topo[cycle_last] if topo}
-            Please run the following commands and try again:
-              brew update
-              brew uninstall --ignore-dependencies --force #{cycle_first} #{cycle_last}
-              brew install #{cycle_first} #{cycle_last}
-          EOS
+          @formulae = sorted.filter_map { |name| @formulae_by_full_name[name] || @formulae_by_name[name] }
+                            .uniq { |f| f[:full_name] }
         end
       end
 
@@ -773,6 +777,7 @@ module Homebrew
       class Topo < Hash
         extend T::Generic
         include TSort
+        include Utils::CycleTolerantTSort
 
         K = type_member { { fixed: String } }
         V = type_member { { fixed: T::Array[String] } }

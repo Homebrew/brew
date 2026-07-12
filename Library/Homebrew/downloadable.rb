@@ -168,6 +168,14 @@ module Downloadable
     download
   end
 
+  sig { overridable.params(_download: Pathname, pour: T::Boolean).returns(T::Boolean) }
+  def stage_from_download_queue?(_download, pour:)
+    false
+  end
+
+  sig { overridable.params(_download: Pathname, pour: T::Boolean).void }
+  def stage_from_download_queue(_download, pour:); end
+
   sig { overridable.params(filename: Pathname).void }
   def verify_download_integrity(filename)
     verifying!

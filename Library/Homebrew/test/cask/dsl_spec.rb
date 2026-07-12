@@ -588,6 +588,57 @@ RSpec.describe Cask::DSL, :cask, :no_api do
 
       expect(with_conflicts_with).not_to be_installed
     end
+
+    it "ignores an uninstalled conflicting cask from an untrusted tap", :trust_store do
+      tap = Tap.fetch("thirdparty", "foo")
+      cask_file = tap.cask_dir/"conflicting-cask.rb"
+      cask_file.dirname.mkpath
+      cask_file.write <<~RUBY
+        cask "conflicting-cask" do
+          version "1.0"
+        end
+      RUBY
+
+      cask = Cask::Cask.new("requested-cask", tap:) do
+        version "1.0"
+        conflicts_with cask: "#{tap}/conflicting-cask"
+      end
+      Homebrew::Trust.trust!(:cask, "#{tap}/requested-cask")
+
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+        expect { Cask::Installer.new(cask).check_conflicts }.not_to raise_error
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+
+    it "raises for an installed conflicting cask from an untrusted tap without loading it", :trust_store do
+      tap = Tap.fetch("thirdparty", "foo")
+      cask_file = tap.cask_dir/"conflicting-cask.rb"
+      cask_file.dirname.mkpath
+      cask_file.write <<~RUBY
+        raise "untrusted tap cask evaluated"
+      RUBY
+
+      installed_cask_dir = Cask::Caskroom.path/"conflicting-cask/.metadata/1.0/20250101000000.000/Casks"
+      installed_cask_dir.mkpath
+      (installed_cask_dir/"conflicting-cask.rb").write <<~RUBY
+        raise "untrusted installed cask evaluated"
+      RUBY
+
+      cask = Cask::Cask.new("requested-cask", tap:) do
+        version "1.0"
+        conflicts_with cask: "#{tap}/conflicting-cask"
+      end
+      Homebrew::Trust.trust!(:cask, "#{tap}/requested-cask")
+
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1") do
+        expect { Cask::Installer.new(cask).check_conflicts }
+          .to raise_error(Cask::CaskConflictError, "Cask 'requested-cask' conflicts with 'conflicting-cask'.")
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
   end
 
   describe "conflicts_with stanza" do

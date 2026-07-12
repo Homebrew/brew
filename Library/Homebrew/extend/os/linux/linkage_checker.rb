@@ -12,7 +12,7 @@ module OS
       requires_ancestor { ::LinkageChecker }
 
       # Libraries provided by glibc and gcc.
-      SYSTEM_LIBRARY_ALLOWLIST = T.let(%W[
+      SYSTEM_LIBRARY_ALLOWLIST = %W[
         ld-linux-x86-64.so.2
         ld-linux-aarch64.so.1
         libanl.so.1
@@ -31,7 +31,7 @@ module OS
         libgomp.so.1
         #{OS::Linux::Libstdcxx::SONAME}
         libquadmath.so.0
-      ].freeze, T::Array[String])
+      ].freeze
 
       private
 

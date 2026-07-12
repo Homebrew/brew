@@ -113,7 +113,7 @@ RSpec.describe FormulaInstaller do
 
     expect do
       described_class.new(formula).install
-    end.to raise_error(UnbottledError)
+    end.to raise_error(SystemExit)
 
     expect(formula).not_to be_latest_version_installed
   end

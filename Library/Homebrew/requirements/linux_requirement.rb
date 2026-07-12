@@ -3,10 +3,7 @@
 
 # A requirement on Linux.
 class LinuxRequirement < Requirement
-  # Sorbet type members are mutable by design and cannot be frozen.
-  # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
-  # rubocop:enable Style/MutableConstant
 
   fatal true
 

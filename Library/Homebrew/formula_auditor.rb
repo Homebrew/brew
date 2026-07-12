@@ -248,20 +248,20 @@ module Homebrew
     }.freeze, T::Hash[String, T::Array[String]])
 
     # The following licenses are non-free/open based on multiple sources (e.g. Debian, Fedora, FSF, OSI, ...)
-    INCOMPATIBLE_LICENSES = T.let([
+    INCOMPATIBLE_LICENSES = [
       "Aladdin",    # https://www.gnu.org/licenses/license-list.html#Aladdin
       "CPOL-1.02",  # https://www.gnu.org/licenses/license-list.html#cpol
       "gSOAP-1.3b", # https://salsa.debian.org/ellert/gsoap/-/blob/HEAD/debian/copyright
       "JSON",       # https://wiki.debian.org/DFSGLicenses#JSON_evil_license
       "MS-LPL",     # https://github.com/spdx/license-list-XML/issues/1432#issuecomment-1077680709
       "OPL-1.0",    # https://wiki.debian.org/DFSGLicenses#Open_Publication_License_.28OPL.29_v1.0
-    ].freeze, T::Array[String])
-    INCOMPATIBLE_LICENSE_PREFIXES = T.let([
+    ].freeze
+    INCOMPATIBLE_LICENSE_PREFIXES = [
       "BUSL",     # https://spdx.org/licenses/BUSL-1.1.html#notes
       "CC-BY-NC", # https://people.debian.org/~bap/dfsg-faq.html#no_commercial
       "Elastic",  # https://www.elastic.co/licensing/elastic-license#Limitations
       "SSPL",     # https://fedoraproject.org/wiki/Licensing/SSPL#License_Notes
-    ].freeze, T::Array[String])
+    ].freeze
 
     sig { void }
     def audit_license
@@ -325,7 +325,7 @@ module Homebrew
         github_license = GitHub.get_repo_license(user, repo, ref: tag)
         return unless github_license
         return if (licenses + ["NOASSERTION"]).include?(github_license)
-        return if PERMITTED_LICENSE_MISMATCHES[github_license]&.any? { |license| licenses.include? license }
+        return if PERMITTED_LICENSE_MISMATCHES[github_license]&.intersect?(licenses)
         return if formula.tap&.audit_exception :permitted_formula_license_mismatches, formula.name
 
         problem "Formula license #{licenses} does not match GitHub license #{Array(github_license)}."
@@ -422,6 +422,19 @@ module Homebrew
               un-disable '#{dep.name}' or disable it and all of its dependents.
             EOS
           end
+
+          # we can only verify the OS requirement of the currently running platform
+          os_req = if Homebrew::SimulateSystem.simulating_or_running_on_linux? &&
+                      !dep_f.supports_linux? && !spec.depends_on_macos_set_top_level?
+            "macOS"
+          elsif Homebrew::SimulateSystem.simulating_or_running_on_macos? &&
+                !dep_f.supports_macos? && !spec.depends_on_linux_set_top_level?
+            "Linux"
+          end
+          problem <<~EOS if os_req
+            Dependency '#{dep.name}' has a #{os_req} requirement. Either move the
+            dependency inside an `on_#{os_req.downcase}` block or add `depends_on :#{os_req.downcase}`.
+          EOS
 
           # we want to allow uses_from_macos for aliases but not bare dependencies.
           # we also allow `pkg-config` for backwards compatibility in external taps.
@@ -653,7 +666,7 @@ module Homebrew
       return unless @new_formula
 
       # Using internal API here as using `Formulary.factory` is too slow
-      return if !@online && Homebrew::API::Internal.cached_packages_json_file_path.blank?
+      return if !@online && !Homebrew::API::Internal.cached_packages_json_file_path.exist?
 
       formula_url = formula.stable&.url
       return unless formula_url

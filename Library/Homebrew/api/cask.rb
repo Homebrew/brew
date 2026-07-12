@@ -14,10 +14,7 @@ module Homebrew
       extend T::Generic
       extend Cachable
 
-      # Sorbet type members are mutable by design and cannot be frozen.
-      # rubocop:disable Style/MutableConstant
       Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
-      # rubocop:enable Style/MutableConstant
 
       DEFAULT_API_FILENAME = "cask.jws.json"
 

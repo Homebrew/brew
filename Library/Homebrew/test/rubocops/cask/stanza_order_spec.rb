@@ -42,6 +42,40 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
     CASK
   end
 
+  it "orders legacy flight blocks after matching install step blocks" do
+    expect_offense <<~CASK
+      cask 'foo' do
+        version :latest
+        sha256 :no_check
+
+        postflight do
+        ^^^^^^^^^^^^^ `postflight` stanza out of order
+          next
+        end
+
+        postflight_steps do
+        ^^^^^^^^^^^^^^^^^^^ `postflight_steps` stanza out of order
+          touch "foo"
+        end
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask 'foo' do
+        version :latest
+        sha256 :no_check
+
+        postflight_steps do
+          touch "foo"
+        end
+
+        postflight do
+          next
+        end
+      end
+    CASK
+  end
+
   it "reports an offense when an `arch` stanza is out of order" do
     expect_offense <<~CASK
       cask 'foo' do

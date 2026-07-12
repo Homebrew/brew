@@ -5,7 +5,7 @@ redirect_from:
   - /linux
   - /Linux
   - /Linuxbrew
-last_review_date: "2026-04-03"
+last_review_date: "2026-07-02"
 ---
 
 # Homebrew on Linux
@@ -47,6 +47,8 @@ If you're using an older distribution of Linux, installing your first package wi
 ## Requirements
 
 See [Support Tiers](Support-Tiers.md#linux) for the full list of Linux requirements.
+
+Homebrew expects a working system C compiler and the standard Linux development tools. Homebrew can install its own current version of *gcc* when needed, but this does not replace the system compiler required for bootstrap and post-install steps.
 
 To install build tools, paste at a terminal prompt:
 

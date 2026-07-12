@@ -11,6 +11,15 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(checks.inject_file_list(%w[/a /b], "foo:\n")).to eq("foo:\n  /a\n  /b\n")
   end
 
+  specify "#check_for_installed_developer_tools uses installation instructions" do
+    allow(DevelopmentTools).to receive_messages(installed?: false, installation_instructions: "Install build tools.")
+
+    expect(checks.check_for_installed_developer_tools).to eq <<~EOS
+      No developer tools installed.
+      Install build tools.
+    EOS
+  end
+
   specify "#check_access_directories" do
     skip "User is root so everything is writable." if Process.euid.zero?
     begin

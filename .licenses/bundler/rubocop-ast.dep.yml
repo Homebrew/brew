@@ -1,6 +1,6 @@
 ---
 name: rubocop-ast
-version: 1.49.1
+version: 1.50.0
 type: bundler
 summary: RuboCop tools to deal with Ruby code AST.
 homepage: https://github.com/rubocop/rubocop-ast

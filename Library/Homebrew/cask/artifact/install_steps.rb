@@ -28,47 +28,47 @@ module Cask
 
       private
 
-      sig { returns(Homebrew::InstallSteps::Runner) }
-      def runner
-        Homebrew::InstallSteps::Runner.new(context: cask)
+      sig { params(command: T.class_of(SystemCommand)).returns(Homebrew::InstallSteps::Runner) }
+      def runner(command)
+        Homebrew::InstallSteps::Runner.new(context: cask, command:)
       end
     end
 
     class PreflightSteps < AbstractInstallSteps
-      sig { params(_options: T.anything).void }
-      def install_phase(**_options)
-        runner.run(steps)
+      sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
+      def install_phase(command: SystemCommand, **_options)
+        runner(command).run(steps)
       end
 
-      sig { params(_options: T.anything).void }
-      def uninstall_phase(**_options)
-        runner.run(steps, phase: :uninstall)
+      sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
+      def uninstall_phase(command: SystemCommand, **_options)
+        runner(command).run(steps, phase: :uninstall)
       end
     end
 
     class PostflightSteps < AbstractInstallSteps
-      sig { params(_options: T.anything).void }
-      def install_phase(**_options)
-        runner.run(steps)
+      sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
+      def install_phase(command: SystemCommand, **_options)
+        runner(command).run(steps)
       end
 
-      sig { params(_options: T.anything).void }
-      def uninstall_phase(**_options)
-        runner.run(steps, phase: :uninstall)
+      sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
+      def uninstall_phase(command: SystemCommand, **_options)
+        runner(command).run(steps, phase: :uninstall)
       end
     end
 
     class UninstallPreflightSteps < AbstractInstallSteps
-      sig { params(_options: T.anything).void }
-      def uninstall_phase(**_options)
-        runner.run(steps)
+      sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
+      def uninstall_phase(command: SystemCommand, **_options)
+        runner(command).run(steps)
       end
     end
 
     class UninstallPostflightSteps < AbstractInstallSteps
-      sig { params(_options: T.anything).void }
-      def uninstall_phase(**_options)
-        runner.run(steps)
+      sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
+      def uninstall_phase(command: SystemCommand, **_options)
+        runner(command).run(steps)
       end
     end
   end

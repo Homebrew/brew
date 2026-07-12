@@ -321,6 +321,17 @@ RSpec.describe Homebrew::DevCmd::GenerateZap do
       expect(result).to be_empty
     end
 
+    it "does not suggest rmdir for application recent documents directory" do
+      application_recent_documents =
+        "~/Library/Application Support/com.apple.sharedfilelist/" \
+        "com.apple.LSSharedFileList.ApplicationRecentDocuments"
+      paths = [
+        "#{application_recent_documents}/org.example.foo.sfl2",
+      ]
+      result = generate_zap.send(:derive_rmdir_candidates, paths)
+      expect(result).not_to include(application_recent_documents)
+    end
+
     it "does not suggest rmdir for system-level shared directories" do
       paths = ["/Library/Application Support/Foo"]
       result = generate_zap.send(:derive_rmdir_candidates, paths)

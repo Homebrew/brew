@@ -6,10 +6,7 @@ require "utils/topological_hash"
 
 module Cask
   class Tab < ::AbstractTab
-    # Sorbet type members are mutable by design and cannot be frozen.
-    # rubocop:disable Style/MutableConstant
     Cache = type_template { { fixed: T::Hash[T.any(Pathname, String), T.untyped] } }
-    # rubocop:enable Style/MutableConstant
 
     sig { returns(T.nilable(T::Boolean)) }
     attr_accessor :uninstall_flight_blocks

@@ -177,11 +177,14 @@ class Dependency
         deps:            T::Array[Dependency],
         cache_key:       T.nilable(String),
         cache_timestamp: T.nilable(Time),
+        formula_cache:   T.nilable(T::Hash[Dependency, Formula]),
         block:           T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent),
                                                  arg1: Dependency).returns(T.nilable(Symbol))),
       ).returns(T::Array[Dependency])
     }
-    def expand(dependent, deps = dependent.deps, cache_key: nil, cache_timestamp: nil, &block)
+    def expand(dependent, deps = dependent.deps, cache_key: nil, cache_timestamp: nil, formula_cache: nil, &block)
+      raise ArgumentError, "formula_cache requires cache_key" if formula_cache && cache_key.blank?
+
       # Keep track dependencies to avoid infinite cyclic dependency recursion.
       @expand_stack ||= T.let([], T.nilable(T::Array[T.any(String, Symbol)]))
       @expand_stack.push dependent.name
@@ -206,14 +209,15 @@ class Dependency
           when Dependable::SKIP
             next if @expand_stack.include? dep.name
 
-            expanded_deps.concat(expand(dep.to_formula, cache_key:, &block))
+            expanded_deps.concat(expand(formula_for_dependency(dep, formula_cache), cache_key:, formula_cache:,
+                                        &block))
           when Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS
             expanded_deps << dep
           else
             next if @expand_stack.include? dep.name
 
-            dep_formula = dep.to_formula
-            expanded_deps.concat(expand(dep_formula, cache_key:, &block))
+            dep_formula = formula_for_dependency(dep, formula_cache)
+            expanded_deps.concat(expand(dep_formula, cache_key:, formula_cache:, &block))
 
             # Fixes names for renamed/aliased formulae.
             dep = dep.dup_with_formula_name(dep_formula)
@@ -299,6 +303,13 @@ class Dependency
     T::Sig::WithoutRuntime.sig { params(dependent: T.any(Formula, CaskDependent)).returns(String) }
     def cache_id(dependent)
       "#{dependent.full_name}_#{dependent.class}"
+    end
+
+    sig { params(dep: Dependency, formula_cache: T.nilable(T::Hash[Dependency, Formula])).returns(Formula) }
+    def formula_for_dependency(dep, formula_cache)
+      return dep.to_formula unless formula_cache
+
+      formula_cache[dep] ||= dep.to_formula
     end
 
     sig { params(deps: T::Array[Dependency]).returns(T::Array[T.any(String, Symbol)]) }

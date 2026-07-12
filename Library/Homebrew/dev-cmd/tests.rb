@@ -343,6 +343,8 @@ module Homebrew
         # Avoid local configuration messing with tests, e.g. git being configured
         # to use GPG to sign by default
         ENV["HOME"] = "#{HOMEBREW_LIBRARY_PATH}/test"
+        # Keep generic tool caches (e.g. RuboCop) out of the sandboxed test home.
+        ENV["XDG_CACHE_HOME"] = "#{HOMEBREW_CACHE}/tests"
         # Sandbox the config home too, so the spec teardown can't delete the real `trust.json`.
         ENV["HOMEBREW_USER_CONFIG_HOME"] = "#{Dir.home}/.homebrew"
 

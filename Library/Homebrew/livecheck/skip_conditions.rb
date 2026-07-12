@@ -195,30 +195,30 @@ module Homebrew
       end
 
       # Skip conditions for formulae.
-      FORMULA_CHECKS = T.let([
+      FORMULA_CHECKS = [
         :package_or_resource_skip,
         :formula_head_only,
         :formula_disabled,
         :formula_deprecated,
         :formula_versioned,
-      ].freeze, T::Array[Symbol])
+      ].freeze
       private_constant :FORMULA_CHECKS
 
       # Skip conditions for casks.
-      CASK_CHECKS = T.let([
+      CASK_CHECKS = [
         :package_or_resource_skip,
         :cask_disabled,
         :cask_deprecated,
         :cask_extract_plist,
         :cask_version_latest,
         :cask_url_unversioned,
-      ].freeze, T::Array[Symbol])
+      ].freeze
       private_constant :CASK_CHECKS
 
       # Skip conditions for resources.
-      RESOURCE_CHECKS = T.let([
+      RESOURCE_CHECKS = [
         :package_or_resource_skip,
-      ].freeze, T::Array[Symbol])
+      ].freeze
       private_constant :RESOURCE_CHECKS
 
       # If a formula/cask/resource should be skipped, we return a hash from

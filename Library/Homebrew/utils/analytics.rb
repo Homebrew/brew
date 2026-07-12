@@ -20,10 +20,7 @@ module Utils
     extend T::Generic
     extend Cachable
 
-    # Sorbet type members are mutable by design and cannot be frozen.
-    # rubocop:disable Style/MutableConstant
     Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
-    # rubocop:enable Style/MutableConstant
 
     class << self
       include Context
@@ -68,7 +65,7 @@ module Utils
           puts "#{curl} #{args.join(" ")} \"#{url}\""
           puts Utils.popen_read(curl, *args, url)
         else
-          pid = spawn curl, *args, url
+          pid = spawn curl, *args, url, out: File::NULL, err: File::NULL
           Process.detach(pid)
         end
       end
@@ -338,7 +335,7 @@ module Utils
 
         require "api"
 
-        return unless Homebrew::API.formula_names.include? formula.name
+        return unless Homebrew::API.formula_name? formula.name
 
         json = Homebrew::API::Formula.formula_json formula.name
         return if json.blank? || json["analytics"].blank?
@@ -356,7 +353,7 @@ module Utils
 
         require "api"
 
-        return unless Homebrew::API.cask_tokens.include? cask.token
+        return unless Homebrew::API.cask_token?(cask.token)
 
         json = Homebrew::API::Cask.cask_json cask.token
         return if json.blank? || json["analytics"].blank?

@@ -310,6 +310,7 @@ module Homebrew
         bottle_merge_args << "--keep-old" if args.keep_old? && !new_formula
 
         test "brew", "bottle", *bottle_merge_args
+        annotate_missing_all_bottle(formula) if steps.fetch(-1).passed?
         test "brew", "uninstall", "--formula", "--force", "--ignore-dependencies", formula.full_name
 
         @testing_formulae.delete(formula.name)
@@ -357,9 +358,13 @@ module Homebrew
         Utils.name_from_full_name(dependency.name) == Utils.name_from_full_name(dependency_name)
       end
 
-      sig { params(formula: Formula, dependencies: T::Array[Dependency]).returns(T::Array[String]) }
-      def recursive_runtime_dependency_names(formula, dependencies)
-        Dependency.expand(formula, dependencies).map { |dependency| dependency.to_formula.full_name }.uniq
+      sig { params(_formula: Formula, dependencies: T::Array[Dependency]).returns(T::Array[String]) }
+      def recursive_runtime_dependency_names(_formula, dependencies)
+        dependencies.each_with_object(Set.new) do |dep, set|
+          dep_f = dep.to_formula
+          set.add(dep_f.full_name)
+          set.merge(dep_f.runtime_dependencies(read_from_tab: false, undeclared: false).map(&:name))
+        end.to_a
       end
 
       sig { params(formula: Formula).void }
@@ -448,6 +453,91 @@ module Homebrew
         end
       rescue => e
         opoo "Failed to determine dependency impact for #{formula.full_name}: #{e}"
+      end
+
+      sig { params(formula: Formula, bottle_dir: Pathname).void }
+      def annotate_missing_all_bottle(formula, bottle_dir: Pathname.pwd)
+        return unless formula.bottle_specification.tag?(Utils::Bottles.tag(:all))
+
+        require "utils/ast"
+
+        bottle_tag = Utils::Bottles.tag
+        bottle_sha256_node_tag = lambda do |sha256_node, tag|
+          sha256_node.arguments.grep(RuboCop::AST::HashNode).any? do |hash_node|
+            hash_node.pairs.any? do |pair|
+              Utils::AST.literal_value(pair.key) == tag ||
+                Utils::AST.literal_value(pair.value) == tag
+            end
+          end
+        end
+        bottle_node = Utils::AST::FormulaAST.new(formula.path.read).bottle_block
+        sha256_nodes = Utils::AST.body_children(
+          bottle_node.is_a?(RuboCop::AST::BlockNode) ? bottle_node.body : nil,
+        ).filter_map do |node|
+          next unless node.is_a?(RuboCop::AST::SendNode)
+          next if node.method_name != :sha256
+
+          node
+        end
+        return if sha256_nodes.any? { |sha256_node| bottle_sha256_node_tag.call(sha256_node, :all) }
+
+        # This predictor only has local JSONs, so mirror the merge-time tag count
+        # and cellar/checksum dedupe gates; final merge handles version/rebuild.
+        local_tag_hashes = local_bottle_tag_hashes(formula.name, bottle_dir:)
+        return if local_tag_hashes.key?("all")
+        return if local_tag_hashes.count < 2
+        return if local_tag_hashes.values.uniq { |tag_hash| [tag_hash["cellar"], tag_hash["sha256"]] }.one?
+
+        tag_hash = local_tag_hashes[bottle_tag.to_s]
+        line = sha256_nodes.find do |sha256_node|
+          bottle_sha256_node_tag.call(sha256_node, bottle_tag.to_sym)
+        end&.source_range&.line
+        bottle_details = if tag_hash.present?
+          " (cellar `#{tag_hash["cellar"]}`, sha256 `#{tag_hash["sha256"]}`)"
+        else
+          ""
+        end
+        message = "This formula had an `:all` bottle but the #{bottle_tag} test-bot bottle is " \
+                  "platform-specific#{bottle_details}. If the final bottle merge cannot create a new " \
+                  "`:all` bottle, expect #{Utils::Bottles.missing_all_bottle_publish_note}; this is for " \
+                  "information only and should not block merge."
+
+        if GitHub::Actions.env_set?
+          puts GitHub::Actions::Annotation.new(
+            :warning,
+            message,
+            file:  formula.path.to_s.delete_prefix("#{repository}/"),
+            line:,
+            title: "#{formula}: missing :all bottle",
+          )
+        else
+          opoo message
+        end
+      rescue => e
+        opoo "Failed to determine missing `:all` bottle impact for #{formula.full_name}: #{e}"
+      end
+
+      sig {
+        params(formula_name: String, bottle_dir: Pathname)
+          .returns(T::Hash[String, T::Hash[String, T.anything]])
+      }
+      def local_bottle_tag_hashes(formula_name, bottle_dir:)
+        tag_hashes = T.let({}, T::Hash[String, T::Hash[String, T.anything]])
+        bottle_glob(formula_name, bottle_dir, ".json", bottle_tag: "*").each do |local_bottle_json|
+          bottle_hash = JSON.parse(local_bottle_json.read).dig(formula_name, "bottle")
+          next unless bottle_hash.is_a?(Hash)
+
+          cellar = bottle_hash["cellar"]
+          tags = bottle_hash["tags"]
+          next unless tags.is_a?(Hash)
+
+          tags.each do |tag, tag_hash|
+            next if !tag.is_a?(String) || !tag_hash.is_a?(Hash)
+
+            tag_hashes[tag] = tag_hash.merge("cellar" => tag_hash["cellar"] || cellar)
+          end
+        end
+        tag_hashes
       end
 
       sig { params(formula: Formula).void }

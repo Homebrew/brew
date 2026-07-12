@@ -3004,7 +3004,6 @@ _brew_test_bot() {
       --skip-new
       --skip-new-strict
       --skip-online-checks
-      --skip-recursive-dependents
       --skip-relocation
       --skip-revision-audit
       --skip-setup

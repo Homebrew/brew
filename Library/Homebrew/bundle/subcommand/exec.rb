@@ -169,7 +169,7 @@ module Homebrew
 
           # For commands which aren't either absolute or relative
           # Add the command directory to PATH, since it may get blown away by superenv
-          if command.exclude?("/") && (which_command = which(command)).present?
+          if command.exclude?("/") && (which_command = which(command))
             ENV.prepend_path "PATH", which_command.dirname.to_s
           end
 

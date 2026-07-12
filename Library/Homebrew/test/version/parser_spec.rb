@@ -46,19 +46,11 @@ RSpec.describe Version::Parser do
   end
 
   describe Version::StemParser do
-    before { Pathname("#{TEST_TMPDIR}/testdir-0.1.test").mkpath }
-
-    after { Pathname("#{TEST_TMPDIR}/testdir-0.1.test").unlink }
-
     specify "::new" do
       expect { described_class.new(/[._-](\d+(?:\.\d+)+)/) }.not_to raise_error
     end
 
     describe "::process_spec" do
-      it "works with directories" do
-        expect(described_class.process_spec(Pathname("#{TEST_TMPDIR}/testdir-0.1.test"))).to eq("testdir-0.1.test")
-      end
-
       it "works with SourceForge URLs with /download suffix" do
         expect(described_class.process_spec(Pathname("https://sourceforge.net/foo_bar-1.21.tar.gz/download")))
           .to eq("foo_bar-1.21")

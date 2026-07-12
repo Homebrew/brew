@@ -95,10 +95,7 @@ class Formula
   extend T::Helpers
   extend Utils::Output::Mixin
 
-  # Sorbet type members are mutable by design and cannot be frozen.
-  # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
-  # rubocop:enable Style/MutableConstant
 
   abstract!
 
@@ -499,7 +496,7 @@ class Formula
 
     return @unresolved_path if @unresolved_path.exist?
 
-    return local_bottle_path if local_bottle_path.presence&.exist?
+    return local_bottle_path if local_bottle_path&.exist?
 
     alias_path || @unresolved_path
   end
@@ -875,13 +872,13 @@ class Formula
   # @api internal
   sig { returns(T::Array[String]) }
   def oldnames
-    @oldnames ||= T.let(
-      if (tap = self.tap)
-        Tap.tap_migration_oldnames(tap, name) + tap.formula_reverse_renames.fetch(name, [])
-      else
-        []
-      end, T.nilable(T::Array[String])
-    )
+    @oldnames ||= T.let(nil, T.nilable(T::Array[String]))
+    @oldnames ||= if (tap = self.tap)
+      oldnames = Tap.tap_migration_oldnames(tap, name) + tap.formula_reverse_renames.fetch(name, [])
+      oldnames.reject { |oldname| Utils.name_from_full_name(oldname) == name }
+    else
+      []
+    end
   end
 
   # All aliases for the formula.
@@ -962,9 +959,7 @@ class Formula
   def linked_keg
     linked_keg = possible_names.map { |name| HOMEBREW_LINKED_KEGS/name }
                                .find(&:directory?)
-    return linked_keg if linked_keg.present?
-
-    HOMEBREW_LINKED_KEGS/name
+    linked_keg || (HOMEBREW_LINKED_KEGS/name)
   end
 
   sig { returns(T.nilable(PkgVersion)) }
@@ -1585,16 +1580,6 @@ class Formula
   sig { returns(T::Boolean) }
   def post_install_steps_defined? = self.class.post_install_steps_defined?
 
-  sig { returns(T::Boolean) }
-  def post_install_steps_conflict?
-    post_install_steps_defined? && post_install_defined?
-  end
-
-  sig { void }
-  def warn_on_post_install_steps_conflict
-    opoo "#{full_name}: `post_install` is ignored because `post_install_steps` are defined!"
-  end
-
   sig { void }
   def install_etc_var
     etc_var_dirs = [bottle_prefix/"etc", bottle_prefix/"var"]
@@ -2125,6 +2110,7 @@ class Formula
       -DCMAKE_PROJECT_TOP_LEVEL_INCLUDES=#{HOMEBREW_LIBRARY_PATH}/cmake/trap_fetchcontent_provider.cmake
       -Wno-dev
       -DBUILD_TESTING=OFF
+      -DCCACHE_FOUND=OFF
     ]
   end
 
@@ -2194,7 +2180,7 @@ class Formula
     args = ["--verbose", "--no-deps", "--no-binary=:all:", "--ignore-installed", "--no-compile"]
     # Delay packages published in the last day so builds are less likely to
     # install a freshly compromised PyPI release.
-    args << "--uploaded-prior-to=#{(Time.now.utc - Homebrew::RELEASE_COOLDOWN_SECONDS).iso8601(0)}"
+    args << "--uploaded-prior-to=P#{Homebrew::RELEASE_COOLDOWN_DAYS}D"
     args << "--prefix=#{prefix}" if prefix
     args << "--no-build-isolation" unless build_isolation
     args

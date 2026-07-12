@@ -52,8 +52,6 @@ class Version
 
     sig { override.params(spec: Pathname).returns(String) }
     def self.process_spec(spec)
-      return spec.basename.to_s if spec.directory?
-
       spec_s = spec.to_s
       return spec.dirname.stem if spec_s.match?(SOURCEFORGE_DOWNLOAD_REGEX)
       return spec.basename.to_s if spec_s.match?(NO_FILE_EXTENSION_REGEX)

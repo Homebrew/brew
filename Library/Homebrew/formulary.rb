@@ -26,10 +26,7 @@ module Formulary
   extend Utils::Output::Mixin
   include Utils::Output::Mixin
 
-  # Sorbet type members are mutable by design and cannot be frozen.
-  # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
-  # rubocop:enable Style/MutableConstant
 
   ALLOWED_URL_SCHEMES = %w[file].freeze
   private_constant :ALLOWED_URL_SCHEMES
@@ -913,7 +910,7 @@ module Formulary
       return if Homebrew::EnvConfig.no_install_from_api?
       return unless ref.is_a?(String)
       return unless (name = ref[HOMEBREW_DEFAULT_TAP_FORMULA_REGEX, :name])
-      if Homebrew::API.formula_names.exclude?(name) &&
+      if !Homebrew::API.formula_name?(name) &&
          !Homebrew::API.formula_aliases.key?(name) &&
          !Homebrew::API.formula_renames.key?(name)
         return
@@ -1219,7 +1216,7 @@ module Formulary
     if warn && old_name && new_name
       destination_exists = find_formula_in_tap(name, tap).exist? ||
                            (tap.core_tap? && !Homebrew::EnvConfig.no_install_from_api? &&
-                            Homebrew::API.formula_names.include?(name))
+                            Homebrew::API.formula_name?(name))
       opoo "Formula #{old_name} was renamed to #{new_name}." if destination_exists
     end
 

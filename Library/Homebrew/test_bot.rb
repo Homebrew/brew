@@ -56,8 +56,10 @@ module Homebrew
 
       return if configure_sandbox!
 
-      ENV["HOMEBREW_NO_SANDBOX_LINUX"] = "1"
       require "sandbox"
+      Sandbox.ensure_sandbox_available! if ENV["GITHUB_REPOSITORY_OWNER"] == "Homebrew"
+
+      ENV["HOMEBREW_NO_SANDBOX_LINUX"] = "1"
       Sandbox.reset_state!
     end
 
@@ -104,7 +106,6 @@ module Homebrew
       ENV["HOMEBREW_GIT"] = ENV["HOMEBREW_GIT_PATH"] = GIT
       ENV["HOMEBREW_DISALLOW_LIBNSL1"] = "1"
       ENV["HOMEBREW_NO_ENV_HINTS"] = "1"
-      ENV["HOMEBREW_SBOM"] = "1"
       ENV["HOMEBREW_PATH"] = ENV["PATH"] =
         "#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:#{ENV.fetch("PATH")}"
 

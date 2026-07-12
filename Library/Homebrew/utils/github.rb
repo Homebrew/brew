@@ -46,6 +46,12 @@ module GitHub
     API.open_rest(url, data:, scopes: CREATE_ISSUE_FORK_OR_PR_SCOPES)["html_url"]
   end
 
+  sig { params(repo: String, issue: T.any(String, Integer), body: String).returns(T::Hash[String, T.untyped]) }
+  def self.create_issue_comment(repo, issue, body)
+    url = "#{API_URL}/repos/#{repo}/issues/#{issue}/comments"
+    API.open_rest(url, data: { body: }, scopes: CREATE_ISSUE_FORK_OR_PR_SCOPES)
+  end
+
   sig { params(user: String, repo: String).returns(T::Hash[String, T.untyped]) }
   def self.repository(user, repo)
     API.open_rest(url_to("repos", user, repo))

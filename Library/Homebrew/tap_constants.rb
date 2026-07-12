@@ -26,7 +26,7 @@ HOMEBREW_DEFAULT_TAP_CASK_REGEX =
 HOMEBREW_TAP_DIR_REGEX =
   %r{#{Regexp.escape(HOMEBREW_LIBRARY.to_s)}/Taps/(?<user>[^/]+)/(?<repository>[^/]+)}
 # Match taps' formula paths, e.g. `HOMEBREW_LIBRARY/Taps/someuser/sometap/someformula`.
-HOMEBREW_TAP_PATH_REGEX = T.let(Regexp.new(HOMEBREW_TAP_DIR_REGEX.source + %r{(?:/.*)?\Z}.source).freeze, Regexp)
+HOMEBREW_TAP_PATH_REGEX = Regexp.new(HOMEBREW_TAP_DIR_REGEX.source + %r{(?:/.*)?\Z}.source).freeze
 # Match official cask taps, e.g `homebrew/cask`.
 HOMEBREW_CASK_TAP_REGEX =
   %r{(?:([Cc]askroom)/(cask)|([Hh]omebrew)/(?:homebrew-)?(cask|cask-[\w-]+))}

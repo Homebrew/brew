@@ -44,14 +44,21 @@ module Homebrew
       # redirections, followed by a final `200 OK` response.
       MAX_PARSE_ITERATIONS = T.let(MAX_REDIRECTIONS + 1, Integer)
 
+      # `curl` arguments used when following redirections in {Strategy}
+      # methods.
+      REDIRECTION_CURL_ARGS = T.let([
+        "--max-redirs", MAX_REDIRECTIONS.to_s,
+        *https_redirect_curl_args
+      ].freeze, T::Array[String])
+
       # Baseline `curl` arguments used in {Strategy} methods.
       DEFAULT_CURL_ARGS = T.let([
         # Follow redirections to handle mirrors, relocations, etc.
         "--location",
-        "--max-redirs", MAX_REDIRECTIONS.to_s,
+        *REDIRECTION_CURL_ARGS,
         # Avoid progress bar text, so we can reliably identify `curl` error
         # messages in output
-        "--silent"
+        "--silent",
       ].freeze, T::Array[String])
 
       # `curl` arguments used in `Strategy#page_content` method.
@@ -236,8 +243,7 @@ module Homebrew
           begin
             parsed_output = curl_headers(
               *curl_post_args,
-              "--max-redirs",
-              MAX_REDIRECTIONS.to_s,
+              *REDIRECTION_CURL_ARGS,
               url,
               wanted_headers:    ["location", "content-disposition"],
               use_homebrew_curl: options.homebrew_curl || false,

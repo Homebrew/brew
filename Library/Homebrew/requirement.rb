@@ -17,10 +17,7 @@ class Requirement
   extend Cachable
   extend T::Helpers
 
-  # Sorbet type members are mutable by design and cannot be frozen.
-  # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
-  # rubocop:enable Style/MutableConstant
 
   # This base class enforces no constraints on its own.
   # Individual subclasses use the `satisfy` DSL to define those constraints.
@@ -51,7 +48,7 @@ class Requirement
       @cask ||= tag[:cask]
       @download ||= tag[:download]
     end
-    @tags = T.let(tags, T::Array[T.untyped])
+    @tags = tags
     @tags << :build if self.class.build
     inferred_name = infer_name
     @name = T.let(inferred_name, String)
@@ -284,7 +281,7 @@ class Requirement
       else
         @satisfied = T.let(options, T.anything)
       end
-      @proc = T.let(block, T.nilable(T.proc.returns(T.anything)))
+      @proc = block
     end
 
     sig {

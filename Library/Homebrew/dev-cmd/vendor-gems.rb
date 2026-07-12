@@ -74,7 +74,7 @@ module Homebrew
                           "--no-document", "--no-wrappers", "--ignore-dependencies", "--force"
               (HOMEBREW_LIBRARY_PATH/"vendor/gems").cd do
                 source = Pathname.glob("#{gem}-*/").first
-                next if source.blank?
+                next unless source
 
                 # We cannot use `#ln_sf` here because that has unintended consequences when
                 # the symlink we want to create exists and points to an existing directory.

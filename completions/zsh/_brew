@@ -1563,7 +1563,7 @@ _brew_info() {
     '--github[Open the GitHub source page for formula and cask in a browser. To view the history locally: `brew log -p` formula or cask]' \
     '--help[Show this message]' \
     '--installed[Output a human-readable inventory of installed formulae and casks. If `--json` is passed, print JSON for installed formulae and, with `--json=v2`, installed casks]' \
-    '--json[Print a JSON representation. Currently the default value for version is `v1` for formula. For formula and cask use `v2`. See the docs for examples of using the JSON output: https://docs.brew.sh/Querying-Brew]' \
+    '--json[Print a JSON representation. Currently the default value for version is `v1`.`v1` is valid for formula only. `v2` is valid for both formula and cask.See the docs for examples of using the JSON output: https://docs.brew.sh/Querying-Brew]' \
     '--quiet[Make some output more quiet]' \
     '--sizes[Show the size of installed formulae and casks]' \
     '--variations[Include the variations hash in each formula'\''s JSON output]' \
@@ -2469,7 +2469,6 @@ _brew_test_bot() {
     '--skip-new[Don'\''t pass `--new` to `brew audit` for new formulae]' \
     '--skip-new-strict[Don'\''t pass `--strict` to `brew audit` for new formulae]' \
     '--skip-online-checks[Don'\''t pass `--online` to `brew audit` and skip `brew livecheck`]' \
-    '--skip-recursive-dependents[Only test the direct dependents]' \
     '--skip-relocation[Run `brew bottle --skip-relocation` to build new bottles that don'\''t require relocation]' \
     '--skip-revision-audit[Don'\''t audit the revision]' \
     '(--only-cleanup-before --only-setup --only-tap-syntax --only-formulae --only-formulae-detect --only-formulae-dependents --only-cleanup-after)--skip-setup[Don'\''t check if the local system is set up correctly]' \

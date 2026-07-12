@@ -119,6 +119,11 @@ RSpec.describe Homebrew::Bundle::Dsl do
       expect(dsl.entries[0].name).to eql("mkdocs")
       expect(dsl.entries[0].options).to eql(with: ["mkdocs-material<10"])
     end
+
+    it "accepts a uv source option" do
+      dsl = dsl_from_string 'uv "ruff", source: "git+https://github.com/astral-sh/ruff.git"'
+      expect(dsl.entries[0].options).to eql(source: "git+https://github.com/astral-sh/ruff.git")
+    end
   end
 
   context "with invalid input" do
@@ -156,6 +161,15 @@ RSpec.describe Homebrew::Bundle::Dsl do
       expect do
         dsl_from_string 'uv "mkdocs", with: false'
       end.to raise_error(RuntimeError, /options\[:with\].*Array of String objects/)
+    end
+
+    it "errors on invalid uv source options" do
+      expect do
+        dsl_from_string 'uv "ruff", source: 123'
+      end.to raise_error(RuntimeError, /options\[:source\].*String object/)
+      expect do
+        dsl_from_string 'uv "ruff", branch: "main"'
+      end.to raise_error(RuntimeError, /unknown options\(\[:branch\]\) for uv/)
     end
 
     it "errors on invalid winget options" do

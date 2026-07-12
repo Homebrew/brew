@@ -42,11 +42,14 @@ module Utils
     # the status code and any following descriptive text (e.g. `Not Found`).
     HTTP_STATUS_LINE_REGEX = %r{^HTTP/.* (?<code>\d+)(?: (?<text>[^\r\n]+))?}
 
+    HTTPS_REDIRECT_CURL_ARGS = ["--proto-redir", "=https"].freeze
+
     private_constant :CURL_WEIRD_SERVER_REPLY_EXIT_CODE,
                      :CURL_HTTP_RETURNED_ERROR_EXIT_CODE,
                      :CURL_RECV_ERROR_EXIT_CODE,
                      :ETAG_VALUE_REGEX, :HTTP_RESPONSE_BODY_SEPARATOR,
-                     :HTTP_STATUS_LINE_REGEX
+                     :HTTP_STATUS_LINE_REGEX,
+                     :HTTPS_REDIRECT_CURL_ARGS
 
     module_function
 
@@ -172,6 +175,11 @@ module Utils
         url.start_with?("https://") && !resolved_url.start_with?("https://")
     end
 
+    sig { returns(T::Array[String]) }
+    def https_redirect_curl_args
+      HTTPS_REDIRECT_CURL_ARGS
+    end
+
     sig { params(args: T::Array[String]).returns(T::Array[String]) }
     def no_insecure_redirect_curl_args(args)
       return args unless Homebrew::EnvConfig.no_insecure_redirect?
@@ -191,7 +199,7 @@ module Utils
       # This blocks an HTTPS request from following a redirect to HTTP at the
       # curl layer, including cases where a preflight request saw a different
       # redirect chain than the real download.
-      ["--proto-redir", "=https", *args]
+      [*https_redirect_curl_args, *args]
     end
 
     sig {

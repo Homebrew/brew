@@ -299,24 +299,44 @@ RSpec.configure do |config|
     @__stdin = $stdin.clone
 
     # Link original API cache files to test cache directory.
-    Pathname("#{ENV.fetch("HOMEBREW_CACHE")}/api").glob("*.json").each do |path|
-      FileUtils.ln_s path, HOMEBREW_CACHE/"api/#{path.basename}"
-    end
-    Pathname("#{ENV.fetch("HOMEBREW_CACHE")}/api").glob("*.txt").each do |path|
-      FileUtils.cp path, HOMEBREW_CACHE/"api/#{path.basename}"
-    end
-    Pathname("#{ENV.fetch("HOMEBREW_CACHE")}/api/internal").glob("*.{json,txt}").each do |path|
-      target = HOMEBREW_CACHE/"api/internal/#{path.basename}"
-      target.dirname.mkpath
-      (path.extname == ".txt") ? FileUtils.cp(path, target) : FileUtils.ln(path, target)
-      next unless path.basename.to_s.start_with?("packages.")
+    source_api_cache = Pathname("#{ENV.fetch("HOMEBREW_CACHE")}/api")
 
+    source_api_cache.glob("*.json").each do |path|
+      target = HOMEBREW_CACHE/"api/#{path.basename}"
+      FileUtils.ln_s path, target unless target.exist?
+    end
+    source_api_cache.glob("*.txt").each do |path|
+      target = HOMEBREW_CACHE/"api/#{path.basename}"
+      FileUtils.cp path, target unless target.exist?
+    end
+
+    source_api_internal_cache = source_api_cache/"internal"
+    target_api_internal_cache = HOMEBREW_CACHE/"api/internal"
+    target_api_internal_cache.mkpath
+
+    # The real cache can hold package API files for multiple OS tags. Fan out
+    # from one source so generated test-cache aliases do not collide.
+    package_paths = source_api_internal_cache.glob("packages.*.jws.json")
+    package_path = package_paths.find do |path|
+      path.basename.to_s == "packages.#{Homebrew::SimulateSystem.current_tag}.jws.json"
+    end || package_paths.first
+
+    source_api_internal_cache.glob("*.{json,txt}").each do |path|
+      next if path.basename.to_s.start_with?("packages.")
+
+      target = target_api_internal_cache/path.basename
+      next if target.exist?
+
+      (path.extname == ".txt") ? FileUtils.cp(path, target) : FileUtils.ln(path, target)
+    end
+
+    if package_path
       [:generic, :linux, :macos, *MacOSVersion::SYMBOLS.keys].product([:arm, :intel]).each do |system, arch|
         tag = Utils::Bottles::Tag.new(system:, arch:)
         next unless tag.valid_combination?
 
-        target = HOMEBREW_CACHE/"api/internal/packages.#{tag}.jws.json"
-        FileUtils.ln path, target unless target.exist?
+        target = target_api_internal_cache/"packages.#{tag}.jws.json"
+        FileUtils.ln package_path, target unless target.exist?
       end
     end
 

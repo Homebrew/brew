@@ -11,7 +11,7 @@ module Cask
     extend ::Utils::Output::Mixin
 
     BUG_REPORTS_URL = "https://github.com/Homebrew/homebrew-cask#reporting-bugs"
-    FULL_DISK_ACCESS_TCC_PATH = T.let("~/Library/Application Support/com.apple.TCC", String)
+    FULL_DISK_ACCESS_TCC_PATH = "~/Library/Application Support/com.apple.TCC"
 
     sig { params(access: String).returns(String) }
     def self.privacy_security_preference_pane(access)

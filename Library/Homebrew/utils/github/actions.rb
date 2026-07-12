@@ -107,7 +107,7 @@ module GitHub
       # the `GITHUB_WORKSPACE` directory or if no `file` is specified.
       sig { returns(T::Boolean) }
       def relevant?
-        return true if @file.blank?
+        return true unless @file
 
         @file.descend.next.to_s != ".."
       end

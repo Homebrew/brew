@@ -3,6 +3,7 @@
 
 require "fileutils"
 require "env_config"
+require "system_command"
 require "utils/popen"
 require "utils/github/actions"
 
@@ -14,7 +15,7 @@ module OS
       requires_ancestor { ::Sandbox }
 
       BUBBLEWRAP = "bwrap"
-      BUBBLEWRAP_TEST_ARGS = T.let([
+      BUBBLEWRAP_TEST_ARGS = [
         "--unshare-user",
         "--unshare-ipc",
         "--unshare-pid",
@@ -24,14 +25,14 @@ module OS
         "--proc", "/proc",
         "--dev", "/dev",
         "true"
-      ].freeze, T::Array[String])
-      SYSTEM_BUBBLEWRAP_PATHS = T.let(%w[
+      ].freeze
+      SYSTEM_BUBBLEWRAP_PATHS = %w[
         /usr/bin
         /bin
-      ].freeze, T::Array[String])
-      HOMEBREW_BUBBLEWRAP_PATHS = T.let([
+      ].freeze
+      HOMEBREW_BUBBLEWRAP_PATHS = [
         "#{HOMEBREW_PREFIX}/bin",
-      ].freeze, T::Array[String])
+      ].freeze
       NESTED_BUBBLEWRAP_ERROR = "Creating new namespace failed: nesting depth or /proc/sys/user/max_*_namespaces " \
                                 "exceeded"
       class SysctlSetting < T::Struct
@@ -121,6 +122,7 @@ module OS
 
       module ClassMethods
         extend T::Helpers
+        include SystemCommand::Mixin
         include Utils::Output::Mixin
 
         requires_ancestor { T.class_of(::Sandbox) }
@@ -317,12 +319,16 @@ module OS
 
         sig { params(bubblewrap: ::Pathname).returns(T::Boolean) }
         def bubblewrap_sandbox_available?(bubblewrap)
-          system(
-            bubblewrap.to_s,
-            *BUBBLEWRAP_TEST_ARGS,
-            out: File::NULL,
-            err: File::NULL,
-          ) == true
+          result = system_command(
+            bubblewrap,
+            args:         BUBBLEWRAP_TEST_ARGS,
+            print_stderr: false,
+          )
+          return true if result.success?
+
+          opoo "bubblewrap test probe failed"
+          $stderr.print result.merged_output
+          false
         end
       end
 

@@ -336,13 +336,8 @@ class GitHubPackages
       formula_annotations_hash = image_index["annotations"]
       manifests = image_index["manifests"]
     else
-      image_license = if license.length <= 256
-        license
-      else
-        # TODO: Consider generating a truncated license when over the limit
-        require "utils/spdx"
-        SPDX.license_expression_to_string(:cannot_represent)
-      end
+      require "utils/spdx"
+      image_license = SPDX.truncate_license(license)
 
       formula_annotations_hash = {
         "com.github.package.type"                => GITHUB_PACKAGE_TYPE,
@@ -365,6 +360,8 @@ class GitHubPackages
     manifests.each do |manifest|
       processed_image_refs << manifest["annotations"]["org.opencontainers.image.ref.name"]
     end
+
+    require "sbom"
 
     manifests += bottle_hash["bottle"]["tags"].map do |bottle_tag, tag_hash|
       bottle_tag = Utils::Bottles::Tag.from_symbol(bottle_tag.to_sym)
@@ -431,6 +428,16 @@ class GitHubPackages
       path_exec_files_string = if (path_exec_files = tag_hash["path_exec_files"].presence)
         path_exec_files.join(",")
       end
+      sbom_supplement_annotation = SBOM.github_packages_sbom_supplement_annotation(
+        tag_hash["sbom"],
+        formula_full_name:,
+        formula_name:,
+        version:,
+        tar_gz_sha256:,
+        root_url:          bottle_hash["bottle"]["root_url"],
+        license:,
+        created_date:,
+      )
 
       descriptor_annotations_hash = {
         "org.opencontainers.image.ref.name" => tag,
@@ -441,6 +448,7 @@ class GitHubPackages
         "sh.brew.bottle.installed_size"     => tag_hash["installed_size"].to_s,
         "sh.brew.license"                   => license,
         "sh.brew.tab"                       => (all_bottle ? tab.except("arch", "built_on") : tab).to_json,
+        "sh.brew.sbom.supplement"           => sbom_supplement_annotation,
         "sh.brew.path_exec_files"           => path_exec_files_string,
       }.compact_blank
 

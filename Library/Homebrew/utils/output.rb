@@ -307,6 +307,15 @@ module Utils
       end
 
       sig { params(string: String, bold: T::Boolean).returns(String) }
+      def pretty_unmarked(string, bold: true)
+        if bold && $stdout.tty?
+          "#{Tty.bold}#{string}#{Tty.reset}"
+        else
+          string
+        end
+      end
+
+      sig { params(string: String, bold: T::Boolean).returns(String) }
       def pretty_warning(string, bold: true)
         weight = bold ? Tty.bold.to_s : ""
         if !$stdout.tty?
@@ -321,10 +330,11 @@ module Utils
       sig {
         params(string: String, installed: T::Boolean, warning: T::Boolean, outdated: T::Boolean,
                deprecated: T::Boolean, disabled: T::Boolean, mark_uninstalled: T::Boolean,
-               bold: T::Boolean).returns(String)
+               bold: T.nilable(T::Boolean)).returns(String)
       }
       def pretty_install_status(string, installed:, warning: false, outdated: false, deprecated: false,
-                                disabled: false, mark_uninstalled: true, bold: true)
+                                disabled: false, mark_uninstalled: true, bold: nil)
+        bold = installed if bold.nil?
         status = if warning
           pretty_warning(string, bold:)
         elsif installed && outdated
@@ -334,7 +344,7 @@ module Utils
         elsif mark_uninstalled
           pretty_uninstalled(string, bold:)
         else
-          string
+          pretty_unmarked(string, bold:)
         end
         if disabled
           pretty_disabled(status)
@@ -348,13 +358,24 @@ module Utils
       sig { params(seconds: T.nilable(T.any(Integer, Float))).returns(String) }
       def pretty_duration(seconds)
         seconds = seconds.to_i
+        hide_seconds = seconds > 300
+
+        minutes, seconds = seconds.divmod(60)
+        hours, minutes = minutes.divmod(60)
+
         res = +""
 
-        if seconds > 59
-          minutes = seconds / 60
-          seconds %= 60
-          res = +Utils.pluralize("minute", minutes, include_count: true)
-          return res.freeze if seconds.zero?
+        if hours.positive?
+          res << Utils.pluralize("hour", hours, include_count: true)
+          return res.freeze if minutes.zero?
+
+          res << " " << Utils.pluralize("minute", minutes, include_count: true)
+          return res.freeze
+        end
+
+        if minutes.positive?
+          res << Utils.pluralize("minute", minutes, include_count: true)
+          return res.freeze if hide_seconds || seconds.zero?
 
           res << " "
         end

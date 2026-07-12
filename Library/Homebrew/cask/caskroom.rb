@@ -11,7 +11,7 @@ module Cask
   module Caskroom
     extend ::Utils::Output::Mixin
 
-    CASKFILE_EXTENSIONS = %w[internal.json json rb].freeze
+    CASKFILE_EXTENSIONS = %w[json internal.json rb].freeze
 
     sig { returns(Pathname) }
     def self.path

@@ -57,9 +57,9 @@ module Homebrew
                description: "Fetch GitHub Packages manifest for extra information when <formula> is not installed.",
                odeprecated: true
         flag   "--json",
-               description: "Print a JSON representation. Currently the default value for <version> is `v1` for " \
-                            "<formula>. For <formula> and <cask> use `v2`. See the docs for examples of using the " \
-                            "JSON output: <https://docs.brew.sh/Querying-Brew>"
+               description: "Print a JSON representation. Currently the default value for <version> is `v1`." \
+                            "`v1` is valid for <formula> only. `v2` is valid for both <formula> and <cask>." \
+                            "See the docs for examples of using the JSON output: <https://docs.brew.sh/Querying-Brew>"
         switch "--installed",
                description: "Output a human-readable inventory of installed formulae and casks. If `--json` is " \
                             "passed, print JSON for installed formulae and, with `--json=v2`, installed casks."
@@ -581,7 +581,7 @@ module Homebrew
           return cask.sourcefile_path.to_s if tap.blank? || tap.remote.blank?
 
           sourcefile_path = cask.sourcefile_path
-          if sourcefile_path.blank? || sourcefile_path.extname != ".rb"
+          if !sourcefile_path || sourcefile_path.extname != ".rb"
             return "#{tap.default_remote}/blob/HEAD/#{tap.relative_cask_path(cask.token)}"
           end
 
@@ -664,6 +664,7 @@ module Homebrew
           outdated:,
           deprecated: formula.deprecated?,
           disabled:   formula.disabled?,
+          bold:       true,
         )
 
         puts "#{oh1_title(name_with_status)}: #{specs * ", "}#{" [#{attrs * ", "}]" unless attrs.empty?}"
@@ -735,7 +736,7 @@ module Homebrew
 
         installed_lines = installed_section_lines(shadowing_formula || formula, verbose: args.verbose?)
         unless installed_lines.empty?
-          ohai "Installed Kegs and Versions"
+          ohai(args.verbose? ? "Installed Kegs and Versions" : "Installed Versions")
           installed_lines.each { |line| puts line }
         end
 
@@ -855,6 +856,7 @@ module Homebrew
           ]
           ordered_kegs.each_with_index.map { |keg, index| [other, keg, index.zero?] }
         end
+        with_kegs = with_kegs.select { |_other, keg, newest| newest || keg.linked? } unless verbose
         rows = with_kegs.map do |other, keg, newest|
           name_status = pretty_install_status(other.full_name, installed: true, outdated: other.outdated?)
           version = keg.version.to_s
@@ -902,7 +904,7 @@ module Homebrew
           installed ||= formula.any_version_installed? if !installed && formula
           outdated = T.let(installed && formula&.outdated? == true, T::Boolean)
           warning = missing_library_deps.include?(Utils.name_from_full_name(dep.name))
-          pretty_install_status(display, warning:, installed:, outdated:, mark_uninstalled:)
+          pretty_install_status(display, warning:, installed:, outdated:, mark_uninstalled:, bold: true)
         end.join(", ")
       end
 
@@ -910,7 +912,7 @@ module Homebrew
       def decorate_requirements(requirements, mark_uninstalled: true)
         req_status = requirements.map do |req|
           req_s = req.display_s
-          pretty_install_status(req_s, installed: req.satisfied?, mark_uninstalled:)
+          pretty_install_status(req_s, installed: req.satisfied?, mark_uninstalled:, bold: true)
         end
         req_status.join(", ")
       end

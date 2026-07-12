@@ -372,7 +372,7 @@ module Homebrew
 
         sig { params(cmd: T.any(Pathname, String), args: T.anything).returns(String) }
         def self.system_output_no_stderr(cmd, *args)
-          IO.popen([cmd, *args], err: :close).read
+          Utils.safe_popen_read(cmd, *args, err: File::NULL)
         end
       end
     end

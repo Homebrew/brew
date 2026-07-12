@@ -51,4 +51,80 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
 
     cmd.run
   end
+
+  it "does not read an untrusted installed cask when uninstalling", :cask, :trust_store do
+    tap = Tap.fetch("untrusted", "tap")
+    full_name = "untrusted/tap/local-caffeine"
+    cask_file = tap.cask_dir/"local-caffeine.rb"
+    cask_file.dirname.mkpath
+    FileUtils.cp cask_path("local-caffeine"), cask_file
+    tap.clear_cache
+
+    cask = with_env(HOMEBREW_NO_REQUIRE_TAP_TRUST: "1") do
+      Cask::CaskLoader.load(full_name).tap { |cask| Cask::Installer.new(cask).install }
+    end
+    cask_file.write <<~RUBY
+      raise "untrusted tap cask evaluated"
+    RUBY
+    installed_caskfile = cask.installed_caskfile
+    (installed_caskfile.dirname/"local-caffeine.rb").write <<~RUBY
+      raise "untrusted installed cask evaluated"
+    RUBY
+    installed_caskfile.unlink
+    allow(Homebrew::Cleanup).to receive(:autoremove)
+
+    original_argv = ARGV.dup
+    begin
+      ARGV.replace(["--cask", "--force", full_name])
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1", HOMEBREW_NO_REQUIRE_TAP_TRUST: nil) do
+        expect { described_class.new(["--cask", "--force", full_name]).run }
+          .to output(/Uninstalling Cask local-caffeine/).to_stdout
+          .and output(/Skipping loading untrusted Cask #{full_name}; uninstalling recorded artifacts only/).to_stderr
+          .and not_to_output(/untrusted .* cask evaluated/).to_stderr
+      end
+    ensure
+      ARGV.replace(original_argv)
+      FileUtils.rm_rf tap.path.parent
+    end
+
+    expect(Pathname(cask.config.appdir).join("Caffeine.app")).not_to exist
+    expect(cask).not_to be_installed
+  end
+
+  it "reads installed JSON cask metadata when uninstalling from an untrusted tap", :cask, :trust_store do
+    tap = Tap.fetch("untrusted", "json")
+    full_name = "untrusted/json/local-caffeine"
+    cask_file = tap.cask_dir/"local-caffeine.rb"
+    cask_file.dirname.mkpath
+    FileUtils.cp cask_path("local-caffeine"), cask_file
+    tap.clear_cache
+
+    cask = with_env(HOMEBREW_NO_REQUIRE_TAP_TRUST: "1") do
+      Cask::CaskLoader.load(full_name).tap { |cask| Cask::Installer.new(cask).install }
+    end
+    cask_file.write <<~RUBY
+      raise "untrusted tap cask evaluated"
+    RUBY
+    (cask.installed_caskfile.dirname/"local-caffeine.rb").write <<~RUBY
+      raise "untrusted installed cask evaluated"
+    RUBY
+    allow(Homebrew::Cleanup).to receive(:autoremove)
+
+    original_argv = ARGV.dup
+    begin
+      ARGV.replace(["--cask", "--force", full_name])
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1", HOMEBREW_NO_REQUIRE_TAP_TRUST: nil) do
+        expect { described_class.new(["--cask", "--force", full_name]).run }
+          .to output(/Uninstalling Cask local-caffeine/).to_stdout
+          .and not_to_output(/Skipping loading untrusted Cask/).to_stderr
+          .and not_to_output(/untrusted .* cask evaluated/).to_stderr
+      end
+    ensure
+      ARGV.replace(original_argv)
+      FileUtils.rm_rf tap.path.parent
+    end
+
+    expect(Pathname(cask.config.appdir).join("Caffeine.app")).not_to exist
+    expect(cask).not_to be_installed
+  end
 end

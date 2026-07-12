@@ -1296,8 +1296,9 @@ Display brief statistics for your Homebrew installation. If a *`formula`* or
 `--json`
 
 : Print a JSON representation. Currently the default value for *`version`* is
-  `v1` for *`formula`*. For *`formula`* and *`cask`* use `v2`. See the docs for
-  examples of using the JSON output: <https://docs.brew.sh/Querying-Brew>
+  `v1`.`v1` is valid for *`formula`* only. `v2` is valid for both *`formula`*
+  and *`cask`*.See the docs for examples of using the JSON output:
+  <https://docs.brew.sh/Querying-Brew>
 
 `--installed`
 
@@ -2117,9 +2118,8 @@ are also exported to avoid querying them multiple times. To help guarantee
 idempotence, this command produces no output when Homebrew's `bin` and `sbin`
 directories are first and second respectively in your `$PATH`. Consider adding
 evaluation of this command's output to your dotfiles (e.g. `~/.bash_profile` or
-~/.zprofile` on macOS and ~/.bashrc` or ~/.zshrc` on Linux)
-with e.g.:
-  `eval "$(brew shellenv zsh)"` or `eval "$(brew shellenv bash)"\`
+`~/.zprofile` on macOS and `~/.bashrc` or `~/.zshrc` on Linux) with e.g.: `eval
+"$(brew shellenv zsh)"` or `eval "$(brew shellenv bash)"`
 
 The shell should be specified explicitly with a supported shell name parameter
 but will be detected automatically if not provided (but this may not be
@@ -3697,10 +3697,6 @@ and Linux workers.
 
 : Don't test livecheck.
 
-`--skip-recursive-dependents`
-
-: Only test the direct dependents.
-
 `--skip-checksum-only-audit`
 
 : Don't audit checksum-only changes.
@@ -4921,11 +4917,6 @@ command execution (e.g. `$(cat file)`).
   all formulae and casks.
   
   *Default:* `true`.
-
-`HOMEBREW_SBOM`
-
-: If set, Homebrew will write SBOM files and run SBOM-related installation
-  logic.
 
 `HOMEBREW_SIMULATE_MACOS_ON_LINUX`
 

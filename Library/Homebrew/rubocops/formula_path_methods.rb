@@ -15,14 +15,14 @@ module RuboCop
           opt_include: "formula_opt_include",
           opt_prefix:  "formula_opt_prefix",
         }.freeze, T::Hash[Symbol, String])
-        SCOPED_FORMULA_HELPERS = T.let([
+        SCOPED_FORMULA_HELPERS = [
           :formula_any_version_installed?,
           :formula_opt_bin,
           :formula_opt_include,
           :formula_opt_lib,
           :formula_opt_libexec,
           :formula_opt_prefix,
-        ].freeze, T::Array[Symbol])
+        ].freeze
 
         MSG = "Use `%<preferred>s` instead of `%<current>s`."
         RESTRICT_ON_SEND = T.let([

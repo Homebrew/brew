@@ -39,6 +39,7 @@ RSpec.describe CurlDownloadStrategy do
     it "does not expand the placeholder outside Downloadable#fetch" do
       expect(header).to include(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX)
       expect(strategy.send(:_curl_args)).to include(header)
+      expect(strategy.send(:_curl_args)).to include("--max-redirs", "0")
     end
   end
 
@@ -181,6 +182,32 @@ RSpec.describe CurlDownloadStrategy do
           )
           .at_least(:once)
           .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+        strategy.fetch
+      end
+    end
+
+    context "with a deferred HOMEBREW_ secret in a header" do
+      let(:specs) { { headers: [header] } }
+      let(:header) do
+        ENV["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+        ENV.clear_sensitive_environment_for_eval! { "PRIVATE-TOKEN: #{ENV.fetch("HOMEBREW_PRIVATE_TOKEN", nil)}" }
+      end
+
+      before do
+        strategy.send(:allow_deferred_environment_expansion!)
+      end
+
+      after { ENV.delete("HOMEBREW_PRIVATE_TOKEN") }
+
+      it "keeps location handling but refuses redirects while sending caller-supplied headers" do
+        expect(strategy).to receive(:system_command) do |_command, options|
+          if options[:args].include?("PRIVATE-TOKEN: glpat-secret")
+            expect(options[:args]).to include("--location", "--max-redirs", "0")
+          end
+
+          instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil)
+        end.at_least(:once)
 
         strategy.fetch
       end

@@ -651,8 +651,10 @@ module Homebrew
         odeprecated: true,
       },
       HOMEBREW_SBOM:                             {
-        description: "If set, Homebrew will write SBOM files and run SBOM-related installation logic.",
-        boolean:     true,
+        description: "Write SBOM files for source installs.",
+        boolean:     :set,
+        default:     true,
+        hidden:      true,
       },
       HOMEBREW_SIMULATE_MACOS_ON_LINUX:          {
         description: "If set, running Homebrew on Linux will simulate certain macOS code paths. This is useful " \
@@ -799,7 +801,7 @@ module Homebrew
     # `false`. Use `boolean: :set` for toggles used by Bash or with inverse
     # `_NO_` variants, where any non-empty value must mean enabled. Use
     # `disabled_by:` when one boolean env var should override another.
-    FALSY_VALUES = T.let(%w[false no off nil 0].freeze, T::Array[String])
+    FALSY_VALUES = %w[false no off nil 0].freeze
 
     ENVS.each do |env, hash|
       # Needs a custom implementation.

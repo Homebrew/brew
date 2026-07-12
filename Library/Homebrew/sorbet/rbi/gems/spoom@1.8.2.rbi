@@ -1156,7 +1156,14 @@ Spoom::Deadcode::Plugins::ActiveJob::CALLBACKS = T.let(T.unsafe(nil), Array)
 class Spoom::Deadcode::Plugins::ActiveModel < ::Spoom::Deadcode::Plugins::Base
   sig { override.params(send: ::Spoom::Deadcode::Send).void }
   def on_send(send); end
+
+  private
+
+  sig { params(hash_node: ::Prism::HashNode, location: ::Spoom::Location).void }
+  def reference_nested_symbol_options(hash_node, location); end
 end
+
+Spoom::Deadcode::Plugins::ActiveModel::NESTED_METHOD_REFERENCE_KEYS = T.let(T.unsafe(nil), Array)
 
 class Spoom::Deadcode::Plugins::ActiveRecord < ::Spoom::Deadcode::Plugins::Base
   sig { override.params(send: ::Spoom::Deadcode::Send).void }
@@ -1281,7 +1288,21 @@ end
 class Spoom::Deadcode::Plugins::GraphQL < ::Spoom::Deadcode::Plugins::Base
   sig { override.params(send: ::Spoom::Deadcode::Send).void }
   def on_send(send); end
+
+  private
+
+  sig { params(send: ::Spoom::Deadcode::Send).void }
+  def on_argument(send); end
+
+  sig { params(send: ::Spoom::Deadcode::Send).void }
+  def on_builds(send); end
+
+  sig { params(send: ::Spoom::Deadcode::Send).void }
+  def on_field(send); end
 end
+
+Spoom::Deadcode::Plugins::GraphQL::ARGUMENT_SYMBOL_OPTION_KEYS = T.let(T.unsafe(nil), Array)
+Spoom::Deadcode::Plugins::GraphQL::FIELD_SYMBOL_OPTION_KEYS = T.let(T.unsafe(nil), Array)
 
 class Spoom::Deadcode::Plugins::Minitest < ::Spoom::Deadcode::Plugins::Base
   sig { override.params(definition: ::Spoom::Model::Method).void }
@@ -1503,6 +1524,9 @@ class Spoom::Deadcode::Remover::NodeRemover
     ).void
   end
   def insert_accessor(node, send_context, was_removed:); end
+
+  sig { params(def_node: ::Prism::DefNode).returns(T.nilable(::Spoom::Deadcode::Remover::NodeContext)) }
+  def modifier_call_context(def_node); end
 
   sig { params(start_char: ::Integer, end_char: ::Integer, replacement: ::String).void }
   def replace_chars(start_char, end_char, replacement); end
@@ -2557,8 +2581,14 @@ class Spoom::Printer
   def printt; end
 end
 
+module Spoom::PrismTypes; end
+Spoom::PrismTypes::AnyScopeNode = T.type_alias { T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode) }
 module Spoom::RBS; end
-class Spoom::RBS::Annotation < ::Spoom::RBS::Comment; end
+
+class Spoom::RBS::Annotation < ::Spoom::RBS::Comment
+  sig { returns(T::Boolean) }
+  def abstract?; end
+end
 
 class Spoom::RBS::Comment
   sig { params(string: ::String, location: ::Prism::Location).void }
@@ -2596,7 +2626,20 @@ module Spoom::RBS::ExtractRBSComments
   def node_rbs_comments(node); end
 end
 
-class Spoom::RBS::Signature < ::Spoom::RBS::Comment; end
+class Spoom::RBS::Signature < ::Spoom::RBS::Comment
+  sig do
+    params(
+      string: ::String,
+      location: ::Prism::Location,
+      continuation_locations: T::Array[::Prism::Location]
+    ).void
+  end
+  def initialize(string, location, continuation_locations: T.unsafe(nil)); end
+
+  sig { returns(T::Array[::Prism::Location]) }
+  def continuation_locations; end
+end
+
 class Spoom::RBS::TypeAlias < ::Spoom::RBS::Comment; end
 Spoom::SPOOM_PATH = T.let(T.unsafe(nil), String)
 module Spoom::Sorbet; end
@@ -2903,18 +2946,73 @@ end
 
 class Spoom::Sorbet::Translate::Error < ::Spoom::Error; end
 
-class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs < ::Spoom::Sorbet::Translate::Translator
+class Spoom::Sorbet::Translate::LandmarkFinder < ::Prism::Visitor
+  sig { void }
+  def initialize; end
+
+  sig { returns(T::Hash[::String, T::Array[::Integer]]) }
+  def landmarks; end
+
+  sig { override.params(node: ::Prism::ClassNode).void }
+  def visit_class_node(node); end
+
+  sig { override.params(node: ::Prism::DefNode).void }
+  def visit_def_node(node); end
+
+  sig { override.params(node: ::Prism::ModuleNode).void }
+  def visit_module_node(node); end
+
+  sig { override.params(node: ::Prism::SingletonClassNode).void }
+  def visit_singleton_class_node(node); end
+
+  sig { override.params(node: ::Prism::SourceLineNode).void }
+  def visit_source_line_node(node); end
+
+  private
+
+  sig { params(landmark_id: ::String, node: ::Prism::Node).void }
+  def record(landmark_id, node); end
+
+  class << self
+    sig { params(source: ::String).returns(T::Hash[::String, T::Array[::Integer]]) }
+    def find_landmarks_in(source); end
+  end
+end
+
+module Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs
+  class << self
+    sig { params(source: ::String).returns(T::Boolean) }
+    def contains_rbs_syntax?(source); end
+
+    sig do
+      params(
+        ruby_contents: ::String,
+        file: ::String,
+        max_line_length: T.nilable(::Integer),
+        overloads_strategy: ::Symbol
+      ).returns(::String)
+    end
+    def rewrite_if_needed(ruby_contents, file:, max_line_length: T.unsafe(nil), overloads_strategy: T.unsafe(nil)); end
+  end
+end
+
+class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseRBIFormat
+  abstract!
+end
+
+class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseTranslator < ::Spoom::Sorbet::Translate::Translator
   include ::Spoom::RBS::ExtractRBSComments
+
+  abstract!
 
   sig do
     params(
       ruby_contents: ::String,
       file: ::String,
-      max_line_length: T.nilable(::Integer),
-      overloads_strategy: ::Symbol
+      options: ::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::Options
     ).void
   end
-  def initialize(ruby_contents, file:, max_line_length: T.unsafe(nil), overloads_strategy: T.unsafe(nil)); end
+  def initialize(ruby_contents, file:, options: T.unsafe(nil)); end
 
   sig { override.params(node: ::Prism::CallNode).void }
   def visit_call_node(node); end
@@ -2944,10 +3042,26 @@ class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs < ::Spoom::Sorbet::Trans
   end
   def already_extends?(node, constant_regex); end
 
+  sig do
+    abstract
+      .params(
+        annotation: ::Spoom::RBS::Annotation,
+        parent_node: T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode),
+        insert_pos: ::Integer,
+        sorbet_replacement: T.nilable(::String)
+      ).void
+  end
+  def apply_class_annotation(annotation, parent_node:, insert_pos:, sorbet_replacement:); end
+
   sig { params(node: T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode)).void }
   def apply_class_annotations(node); end
 
-  sig { params(annotations: T::Array[::Spoom::RBS::Annotation], sig: ::RBI::Sig).void }
+  sig do
+    params(
+      annotations: T::Array[::Spoom::RBS::Annotation],
+      sig: ::RBI::Sig
+    ).returns(T::Array[::Spoom::RBS::Annotation])
+  end
   def apply_member_annotations(annotations, sig); end
 
   sig do
@@ -2965,31 +3079,168 @@ class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs < ::Spoom::Sorbet::Trans
   sig { params(comments: T::Array[::Prism::Comment]).returns(T::Array[::Spoom::RBS::TypeAlias]) }
   def collect_type_aliases(comments); end
 
+  sig do
+    abstract
+      .params(
+        mixin_name: ::String,
+        into: T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode),
+        at: ::Integer
+      ).void
+  end
+  def extend_with(mixin_name, into:, at:); end
+
+  sig do
+    abstract
+      .params(
+        type_member: ::String,
+        parent_node: T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode),
+        insert_pos: ::Integer
+      ).void
+  end
+  def insert_type_member(type_member, parent_node:, insert_pos:); end
+
+  sig { overridable.params(of: ::String, to_height_of: ::Spoom::RBS::Comment).returns(::String) }
+  def pad_out_line_count(of:, to_height_of:); end
+
+  sig { overridable.params(annotation: ::Spoom::RBS::Annotation, is_known: T::Boolean).void }
+  def rewrite_annotation(annotation, is_known:); end
+
   sig { params(def_node: ::Prism::DefNode, comments: ::Spoom::RBS::Comments).void }
   def rewrite_def(def_node, comments); end
 
+  sig { abstract.params(signature: ::Spoom::RBS::Signature).void }
+  def rewrite_discarded_overload(signature); end
+
+  sig { params(annotations: T::Array[::Spoom::RBS::Annotation], known: T::Array[::Spoom::RBS::Annotation]).void }
+  def rewrite_member_annotations(annotations, known:); end
+
+  sig { abstract.params(signature: ::Spoom::RBS::Signature, type_params: T::Array[::RBS::AST::TypeParam]).void }
+  def rewrite_type_params_signature(signature, type_params:); end
+
   sig { params(node: ::Prism::CallNode).void }
   def visit_attr(node); end
+end
+
+class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::HumanReadableRBIFormat < ::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseRBIFormat
+  sig { params(max_line_length: T.nilable(::Integer)).void }
+  def initialize(max_line_length: T.unsafe(nil)); end
+
+  sig { returns(T.nilable(::Integer)) }
+  def max_line_length; end
 
   class << self
-    sig { params(source: ::String).returns(T::Boolean) }
-    def contains_rbs_syntax?(source); end
-
-    sig do
-      params(
-        ruby_contents: ::String,
-        file: ::String,
-        max_line_length: T.nilable(::Integer),
-        overloads_strategy: ::Symbol
-      ).returns(::String)
-    end
-    def rewrite_if_needed(ruby_contents, file:, max_line_length: T.unsafe(nil), overloads_strategy: T.unsafe(nil)); end
+    sig { returns(::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::HumanReadableRBIFormat) }
+    def default; end
   end
 end
 
-Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::ALLOWED_OVERLOAD_STRATEGIES = T.let(T.unsafe(nil), Array)
-Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::RBS_ANNOTATION_MARKERS = T.let(T.unsafe(nil), Array)
-Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::RBS_REWRITE_PATTERN = T.let(T.unsafe(nil), Regexp)
+class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::HumanReadableTranslator < ::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseTranslator
+  private
+
+  sig do
+    override
+      .params(
+        annotation: ::Spoom::RBS::Annotation,
+        parent_node: T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode),
+        insert_pos: ::Integer,
+        sorbet_replacement: T.nilable(::String)
+      ).void
+  end
+  def apply_class_annotation(annotation, parent_node:, insert_pos:, sorbet_replacement:); end
+
+  sig { override.params(mixin_name: ::String, into: ::Prism::Node, at: ::Integer).void }
+  def extend_with(mixin_name, into:, at:); end
+
+  sig do
+    override
+      .params(
+        type_member: ::String,
+        parent_node: T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode),
+        insert_pos: ::Integer
+      ).void
+  end
+  def insert_type_member(type_member, parent_node:, insert_pos:); end
+
+  sig { override.params(signature: ::Spoom::RBS::Signature).void }
+  def rewrite_discarded_overload(signature); end
+
+  sig { override.params(signature: ::Spoom::RBS::Signature, type_params: T::Array[::RBS::AST::TypeParam]).void }
+  def rewrite_type_params_signature(signature, type_params:); end
+end
+
+class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::LineMatchedRBIFormat < ::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseRBIFormat
+  class << self
+    sig { returns(::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::LineMatchedRBIFormat) }
+    def default; end
+  end
+end
+
+class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::LineMatchingTranslator < ::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseTranslator
+  private
+
+  sig do
+    override
+      .params(
+        annotation: ::Spoom::RBS::Annotation,
+        parent_node: T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode),
+        insert_pos: ::Integer,
+        sorbet_replacement: T.nilable(::String)
+      ).void
+  end
+  def apply_class_annotation(annotation, parent_node:, insert_pos:, sorbet_replacement:); end
+
+  sig { override.params(mixin_name: ::String, into: ::Prism::Node, at: ::Integer).void }
+  def extend_with(mixin_name, into:, at:); end
+
+  sig do
+    override
+      .params(
+        type_member: ::String,
+        parent_node: T.any(::Prism::ClassNode, ::Prism::ModuleNode, ::Prism::SingletonClassNode),
+        insert_pos: ::Integer
+      ).void
+  end
+  def insert_type_member(type_member, parent_node:, insert_pos:); end
+
+  sig { override.params(of: ::String, to_height_of: ::Spoom::RBS::Comment).returns(::String) }
+  def pad_out_line_count(of:, to_height_of:); end
+
+  sig { override.params(annotation: ::Spoom::RBS::Annotation, is_known: T::Boolean).void }
+  def rewrite_annotation(annotation, is_known:); end
+
+  sig { override.params(signature: ::Spoom::RBS::Signature).void }
+  def rewrite_discarded_overload(signature); end
+
+  sig { override.params(signature: ::Spoom::RBS::Signature, type_params: T::Array[::RBS::AST::TypeParam]).void }
+  def rewrite_type_params_signature(signature, type_params:); end
+end
+
+class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::Options
+  sig do
+    params(
+      overloads_strategy: ::Symbol,
+      output_format: ::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseRBIFormat,
+      translate_abstract_methods: T::Boolean
+    ).void
+  end
+  def initialize(overloads_strategy: T.unsafe(nil), output_format: T.unsafe(nil), translate_abstract_methods: T.unsafe(nil)); end
+
+  sig { returns(::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseRBIFormat) }
+  def output_format; end
+
+  sig { returns(::Symbol) }
+  def overloads_strategy; end
+
+  sig { returns(T::Boolean) }
+  def translate_abstract_methods; end
+
+  class << self
+    sig { returns(::Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::Options) }
+    def default; end
+  end
+end
+
+Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::Options::ALLOWED_OVERLOAD_STRATEGIES = T.let(T.unsafe(nil), Array)
 
 class Spoom::Sorbet::Translate::SorbetAssertionsToRBSComments < ::Spoom::Sorbet::Translate::Translator
   sig do
@@ -3028,8 +3279,17 @@ class Spoom::Sorbet::Translate::SorbetAssertionsToRBSComments < ::Spoom::Sorbet:
   sig { params(node: ::Prism::Node).returns(T::Boolean) }
   def has_rbs_annotation?(node); end
 
+  sig { params(node: ::Prism::Node, replace_end_offset: ::Integer).returns(T.nilable(::String)) }
+  def heredoc_body_within_range(node, replace_end_offset); end
+
+  sig { params(node: ::Prism::Node).returns(T::Array[::Integer]) }
+  def heredoc_end_offsets(node); end
+
   sig { params(node: ::Prism::Node).returns(T::Boolean) }
   def maybe_translate_assertion(node); end
+
+  sig { params(node: ::Prism::Node).returns(T::Boolean) }
+  def string_literal?(node); end
 
   sig { params(node: T.nilable(::Prism::Node)).returns(T::Boolean) }
   def t?(node); end
@@ -3147,6 +3407,52 @@ class Spoom::Sorbet::Translate::Translator < ::Spoom::Visitor
   def sorbet_sig?(node); end
 end
 
+class Spoom::Sorbet::Translate::ValidationResult
+  sig do
+    params(
+      missing_from_rewritten_output: T::Array[{landmark_id: ::String, line: ::Integer}],
+      excess_in_rewritten_output: T::Array[{landmark_id: ::String, line: ::Integer}],
+      on_wrong_line: T::Array[{landmark_id: ::String, expected: T::Array[::Integer], actual: T::Array[::Integer]}]
+    ).void
+  end
+  def initialize(missing_from_rewritten_output:, excess_in_rewritten_output:, on_wrong_line:); end
+
+  sig { returns(T::Array[::String]) }
+  def errors; end
+
+  sig { returns(T::Array[{landmark_id: ::String, line: ::Integer}]) }
+  def excess_in_rewritten_output; end
+
+  sig { returns(T::Array[{landmark_id: ::String, line: ::Integer}]) }
+  def missing_from_rewritten_output; end
+
+  sig { returns(T::Array[{landmark_id: ::String, expected: T::Array[::Integer], actual: T::Array[::Integer]}]) }
+  def on_wrong_line; end
+
+  sig { params(printer: T.untyped).void }
+  def pretty_print(printer); end
+
+  sig { returns(T::Boolean) }
+  def valid?; end
+
+  private
+
+  sig { params(lines: T::Array[::Integer]).returns(::String) }
+  def format_lines(lines); end
+end
+
+Spoom::Sorbet::Translate::ValidationResult::LandmarkLocation = T.type_alias { {landmark_id: ::String, line: ::Integer} }
+Spoom::Sorbet::Translate::ValidationResult::MovedLandmark = T.type_alias { {landmark_id: ::String, expected: T::Array[::Integer], actual: T::Array[::Integer]} }
+
+module Spoom::Sorbet::Translate::Validator
+  class << self
+    sig { params(original: ::String, rewritten: ::String).returns(::Spoom::Sorbet::Translate::ValidationResult) }
+    def validate(original, rewritten); end
+  end
+end
+
+Spoom::Sorbet::Translate::Validator::LandmarkID = T.type_alias { ::String }
+Spoom::Sorbet::Translate::Validator::Landmarks = T.type_alias { T::Hash[::String, T::Array[::Integer]] }
 module Spoom::Source; end
 
 class Spoom::Source::Delete < ::Spoom::Source::Edit

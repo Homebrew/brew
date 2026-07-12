@@ -82,7 +82,7 @@ Starting with Python 3.12, we highly recommend you to use a separate virtualenv 
 
 ## Brewed Python modules
 
-For brewed Python, modules installed with `pip` or `python3 setup.py install` will be installed to the `$(brew --prefix)/lib/pythonX.Y/site-packages` directory (explained above). Executable Python scripts will be in `$(brew --prefix)/bin`.
+For brewed Python, modules installed with `pip` will be installed to the `$(brew --prefix)/lib/pythonX.Y/site-packages` directory (explained above). Executable Python scripts will be in `$(brew --prefix)/bin`.
 
 Since the system Python may not know which compiler flags to set when building bindings for software installed by Homebrew, you may need to run:
 

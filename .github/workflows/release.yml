@@ -47,13 +47,13 @@ jobs:
 
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           core: false
           cask: false
 
       - name: Install Pandoc
-        uses: Homebrew/actions/cache-homebrew-prefix@main
+        uses: Homebrew/actions/cache-homebrew-prefix@1f8e202ffddf94def7f42f6fa3a482e821489f9c # 2026.07.10.1
         with:
           install: pandoc
           workflow-key: release
@@ -182,7 +182,7 @@ jobs:
           fi
 
       - name: Generate build provenance
-        uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
         with:
           subject-path: Homebrew-${{ steps.homebrew-version.outputs.version }}.pkg
 

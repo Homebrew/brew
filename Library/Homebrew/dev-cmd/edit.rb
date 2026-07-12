@@ -55,10 +55,10 @@ module Homebrew
         else
           args.named.each do |name|
             if !args.cask? && !CoreTap.instance.installed? &&
-               Homebrew::API.formula_names.include?(name.delete_prefix("#{CoreTap.instance.name}/"))
+               Homebrew::API.formula_name?(name.delete_prefix("#{CoreTap.instance.name}/"))
               CoreTap.instance.install(force: true)
             elsif !args.formula? && !CoreCaskTap.instance.installed? &&
-                  Homebrew::API.cask_tokens.include?(name.delete_prefix("#{CoreCaskTap.instance.name}/"))
+                  Homebrew::API.cask_token?(name.delete_prefix("#{CoreCaskTap.instance.name}/"))
               CoreCaskTap.instance.install(force: true)
             end
           end
@@ -125,7 +125,7 @@ module Homebrew
 
           raise TapUnavailableError, "#{tap_match[:user]}/#{tap_match[:repo]}"
         elsif cask || core_cask_path?(path)
-          if !CoreCaskTap.instance.installed? && Homebrew::API.cask_tokens.include?(name)
+          if !CoreCaskTap.instance.installed? && Homebrew::API.cask_token?(name)
             command = "brew tap --force #{CoreCaskTap.instance.name}"
             action = "tap #{CoreCaskTap.instance.name}"
           else
@@ -134,7 +134,7 @@ module Homebrew
           end
         elsif core_formula_path?(path) &&
               !CoreTap.instance.installed? &&
-              Homebrew::API.formula_names.include?(name)
+              Homebrew::API.formula_name?(name)
           command = "brew tap --force #{CoreTap.instance.name}"
           action = "tap #{CoreTap.instance.name}"
         else

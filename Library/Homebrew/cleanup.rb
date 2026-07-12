@@ -62,23 +62,39 @@ module Homebrew
         return false unless pathname.resolved_path.file?
 
         case entry[:type]
+        when :api_package
+          scrub
         when :api_source
           stale_api_source?(pathname, scrub)
         when :cask
           stale_cask?(pathname, scrub)
         when :gh_actions_artifact
-          stale_gh_actions_artifact?(pathname, scrub)
+          scrub || prune?(pathname, GH_ACTIONS_ARTIFACT_CLEANUP_DAYS)
         else
           stale_formula?(pathname, scrub)
         end
       end
 
-      private
-
-      sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
-      def stale_gh_actions_artifact?(pathname, scrub)
-        scrub || prune?(pathname, GH_ACTIONS_ARTIFACT_CLEANUP_DAYS)
+      sig { params(pathname: Pathname, cask: Cask::Cask, name: String).returns(T::Boolean) }
+      def cask_cache_file_current?(pathname, cask, name)
+        pathname.basename.to_s.match?(/\A#{Regexp.escape(name)}--#{Regexp.escape(cask.version)}(?:\.|\z)/)
       end
+
+      sig { params(pathname: Pathname, cask: Cask::Cask, name: String, scrub: T::Boolean).returns(T::Boolean) }
+      def stale_cask_download?(pathname, cask, name, scrub:)
+        return true unless pathname.exist?
+        return true unless cask_cache_file_current?(pathname, cask, name)
+        return true if scrub && cask.installed_version != cask.version
+
+        if cask.version.latest?
+          cleanup_threshold = (DateTime.now - CLEANUP_DEFAULT_DAYS).to_time
+          return pathname.mtime < cleanup_threshold && pathname.ctime < cleanup_threshold
+        end
+
+        false
+      end
+
+      private
 
       sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
       def stale_api_source?(pathname, scrub)
@@ -230,15 +246,8 @@ module Homebrew
         end
 
         return false if cask.blank?
-        return true unless basename.to_s.match?(/\A#{Regexp.escape(name)}--#{Regexp.escape(cask.version)}\b/)
-        return true if scrub && cask.installed_version != cask.version
 
-        if cask.version.latest?
-          cleanup_threshold = (DateTime.now - CLEANUP_DEFAULT_DAYS).to_time
-          return pathname.mtime < cleanup_threshold && pathname.ctime < cleanup_threshold
-        end
-
-        false
+        stale_cask_download?(pathname, cask, name, scrub:)
       end
     end
 
@@ -455,11 +464,26 @@ module Homebrew
       @unremovable_kegs ||= T.let([], T.nilable(T::Array[Keg]))
     end
 
+    sig {
+      params(paths: T::Array[Pathname], type: T.nilable(Symbol))
+        .returns(T::Array[{ path: Pathname, type: T.nilable(Symbol) }])
+    }
+    def cache_entries(paths, type:)
+      paths.map { |path| { path:, type: } }
+    end
+
+    sig {
+      params(paths: T::Array[Pathname], type: T.nilable(Symbol), cleanup_unreferenced: T::Boolean).void
+    }
+    def cleanup_cache_entries(paths, type:, cleanup_unreferenced: true)
+      cleanup_cache(cache_entries(paths, type:), cleanup_unreferenced:)
+    end
+
     sig { params(formula: Formula, quiet: T::Boolean, ds_store: T::Boolean, cache_db: T::Boolean).void }
     def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true)
       formula.eligible_kegs_for_cleanup(quiet:)
              .each { |keg| cleanup_keg(keg) }
-      cleanup_cache(Pathname.glob(cache/"#{formula.name}{_bottle_manifest,}--*").map { |path| { path:, type: nil } })
+      cleanup_cache_entries(Pathname.glob(cache/"#{formula.name}{_bottle_manifest,}--*"), type: nil)
       rm_ds_store([formula.rack]) if ds_store
       cleanup_cache_db(formula.rack) if cache_db
       cleanup_lockfiles(FormulaLock.new(formula.name).path)
@@ -467,9 +491,39 @@ module Homebrew
 
     sig { params(cask: Cask::Cask, ds_store: T::Boolean).void }
     def cleanup_cask(cask, ds_store: true)
-      cleanup_cache(Pathname.glob(cache/"Cask/#{cask.token}--*").map { |path| { path:, type: :cask } })
+      cleanup_cache_entries(Pathname.glob(cache/"Cask/#{cask.token}--*"), type: :cask, cleanup_unreferenced: false)
+      cleanup_legacy_cask_downloads([cask])
+      cleanup_unreferenced_downloads
+
       rm_ds_store([cask.caskroom_path]) if ds_store
       cleanup_lockfiles(CaskLock.new(cask.token).path)
+    end
+
+    # Added 2026-07-05 for legacy cask cache symlinks named after URL basenames.
+    # Remove after 2026-11-02, once the 120-day fallback stale-file sweep has
+    # had time to prune stale files created before cask downloads were token-named.
+    sig { params(casks: T::Array[Cask::Cask]).void }
+    def cleanup_legacy_cask_downloads(casks)
+      cask_cache = cache/"Cask"
+      return unless cask_cache.directory?
+
+      cask_cache_paths = cask_cache.children.select { |path| path.file? || path.symlink? }
+
+      casks.each do |cask|
+        next unless (url = cask.url)
+
+        legacy_download_name = Utils.safe_filename(File.basename(url.to_s))
+        next if legacy_download_name.blank? || legacy_download_name == cask.token
+
+        cask_cache_paths.each do |path|
+          next unless path.basename.to_s.start_with?("#{legacy_download_name}--")
+          next if !self.class.stale_cask_download?(path, cask, legacy_download_name, scrub: scrub?) &&
+                  (!self.class.cask_cache_file_current?(path, cask, legacy_download_name) ||
+                   !(cask_cache/Utils.safe_filename("#{cask.token}--#{cask.version}#{path.extname}")).exist?)
+
+          cleanup_path(path) { path.unlink }
+        end
+      end
     end
 
     sig { params(keg: Keg).void }
@@ -513,13 +567,20 @@ module Homebrew
     def cache_files
       files = cache.directory? ? cache.children : []
       cask_files = (cache/"Cask").directory? ? (cache/"Cask").children : []
+      api_internal = cache/"api/internal"
+      api_package_files = if scrub? && api_internal.directory?
+        api_internal.glob("packages.*.jws.json")
+      else
+        []
+      end
       api_source_files = (cache/"api-source").glob("*/*/*/**/*").select { |path| path.file? || path.symlink? }
       gh_actions_artifacts = (cache/"gh-actions-artifact").directory? ? (cache/"gh-actions-artifact").children : []
 
-      files.map { |path| { path:, type: nil } } +
-        cask_files.map { |path| { path:, type: :cask } } +
-        api_source_files.map { |path| { path:, type: :api_source } } +
-        gh_actions_artifacts.map { |path| { path:, type: :gh_actions_artifact } }
+      cache_entries(files, type: nil) +
+        cache_entries(cask_files, type: :cask) +
+        cache_entries(api_package_files, type: :api_package) +
+        cache_entries(api_source_files, type: :api_source) +
+        cache_entries(gh_actions_artifacts, type: :gh_actions_artifact)
     end
 
     sig { params(directory: Pathname).void }
@@ -562,8 +623,12 @@ module Homebrew
       end
     end
 
-    sig { params(entries: T.nilable(T::Array[{ path: Pathname, type: T.nilable(Symbol) }])).void }
-    def cleanup_cache(entries = nil)
+    sig {
+      params(entries:              T.nilable(T::Array[{ path: Pathname, type: T.nilable(Symbol) }]),
+             cleanup_unreferenced: T::Boolean).void
+    }
+    def cleanup_cache(entries = nil, cleanup_unreferenced: true)
+      full_cache_cleanup = entries.nil?
       entries ||= cache_files
 
       entries.each do |entry|
@@ -587,12 +652,13 @@ module Homebrew
         cleanup_path(path) { path.unlink } if !prune? && self.class.stale?(entry, scrub: scrub?)
       end
 
-      cleanup_unreferenced_downloads
+      cleanup_legacy_cask_downloads(Cask::Caskroom.casks) if full_cache_cleanup
+      cleanup_unreferenced_downloads if cleanup_unreferenced
     end
 
     sig { params(path: Pathname, _block: T.proc.void).void }
     def cleanup_path(path, &_block)
-      return unless path.exist?
+      return if !path.exist? && !path.symlink?
       return unless @cleaned_up_paths.add?(path)
 
       @disk_cleanup_size += path.disk_usage
@@ -693,7 +759,7 @@ module Homebrew
 
         db.each_key do |keg|
           keg = T.cast(keg, String)
-          next if rack.present? && !keg.start_with?("#{rack}/")
+          next if rack && !keg.start_with?("#{rack}/")
           next if File.directory?(keg)
 
           LinkageCacheStore.new(

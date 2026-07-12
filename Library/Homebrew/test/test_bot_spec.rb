@@ -5,7 +5,7 @@ require "dev-cmd/test-bot"
 
 RSpec.describe Homebrew::TestBot do
   describe "::run!" do
-    it "trusts a third-party tap before running test-bot" do
+    it "trusts a third-party tap before running test-bot", :trust_store do
       tap = Tap.fetch("thirdparty", "foo")
       tap.path.mkpath
       args = double(
@@ -38,7 +38,7 @@ RSpec.describe Homebrew::TestBot do
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
 
-    it "trusts a custom-remote third-party tap by its remote URL" do
+    it "trusts a custom-remote third-party tap by its remote URL", :trust_store do
       tap = Tap.fetch("thirdparty", "custom")
       tap.path.mkpath
       system "git", "-C", tap.path.to_s, "init"
@@ -73,7 +73,7 @@ RSpec.describe Homebrew::TestBot do
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
 
-    it "trusts a third-party tap in the local test-bot config home" do
+    it "trusts a third-party tap in the local test-bot config home", :trust_store do
       old_umask = T.let(nil, T.nilable(Integer))
       tap = Tap.fetch("thirdparty", "foo")
       tap.path.mkpath
@@ -209,8 +209,17 @@ RSpec.describe Homebrew::TestBot do
       described_class.setup_github_actions_sandbox!
     end
 
-    it "disables the Linux sandbox if GitHub Actions cannot configure it" do
+    it "raises when GitHub Actions cannot configure the Linux sandbox for Homebrew repositories" do
       allow(described_class).to receive(:configure_sandbox!).and_return(false)
+      allow(ENV).to receive(:[]).with("GITHUB_REPOSITORY_OWNER").and_return("Homebrew")
+      allow(Sandbox).to receive(:available?).and_return(false)
+
+      expect { described_class.setup_github_actions_sandbox! }.to raise_error(RuntimeError)
+    end
+
+    it "disables the Linux sandbox if GitHub Actions cannot configure it for external repositories" do
+      allow(described_class).to receive(:configure_sandbox!).and_return(false)
+      allow(ENV).to receive(:[]).with("GITHUB_REPOSITORY_OWNER").and_return("foo")
 
       described_class.setup_github_actions_sandbox!
 

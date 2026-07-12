@@ -56,12 +56,13 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
   context "when formulae are not installed" do
     let(:verbose) { true }
 
-    it "raises an error and outputs to stdout" do
+    it "raises an error and outputs to stderr" do
       allow(Homebrew::Bundle::Cask).to receive(:casks).and_return([])
       allow(Homebrew::Bundle::Brew).to receive(:upgradable_formulae).and_return([])
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
       expect { do_check }.to raise_error(SystemExit).and \
-        output(/brew bundle can't satisfy your Brewfile's dependencies/).to_stdout
+        output(/brew bundle can't satisfy your Brewfile's dependencies/).to_stderr.and \
+          not_to_output(/brew bundle can't satisfy your Brewfile's dependencies/).to_stdout
     end
 
     it "partially outputs when HOMEBREW_BUNDLE_CHECK_ALREADY_OUTPUT_FORMULAE_ERRORS is set" do
@@ -70,7 +71,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
       ENV["HOMEBREW_BUNDLE_CHECK_ALREADY_OUTPUT_FORMULAE_ERRORS"] = "abc"
       expect { do_check }.to raise_error(SystemExit).and \
-        output("Satisfy missing dependencies with `brew bundle install`.\n").to_stdout
+        output("Satisfy missing dependencies with `brew bundle install`.\n").to_stderr
     end
 
     it "does not raise error on skippable formula" do
@@ -97,7 +98,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
       allow(Formula["abc"]).to receive_messages(linked?: false, keg_only?: false)
 
       expect { do_check }.to raise_error(SystemExit).and \
-        output(/Run `brew bundle check --verbose` to list unmet dependencies\./).to_stdout
+        output(/Run `brew bundle check --verbose` to list unmet dependencies\./).to_stderr
     end
 
     it "raises an error for an implicitly unlinked non-keg-only formula" do
@@ -106,7 +107,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
       allow(Formula["abc"]).to receive(:linked?).and_return(false)
 
       expect { do_check }.to raise_error(SystemExit).and \
-        output(/Run `brew bundle check --verbose` to list unmet dependencies\./).to_stdout
+        output(/Run `brew bundle check --verbose` to list unmet dependencies\./).to_stderr
     end
 
     it "does not raise an error when live link status satisfies an implicit check" do
@@ -125,7 +126,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
         allow(Formula["abc"]).to receive_messages(linked?: true, keg_only?: false)
 
         expect { do_check }.to raise_error(SystemExit).and \
-          output(/Formula abc needs to be unlinked\./).to_stdout
+          output(/Formula abc needs to be unlinked\./).to_stderr
       end
 
       it "outputs the implicit link status error" do
@@ -134,7 +135,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
         allow(Formula["abc"]).to receive(:linked?).and_return(true)
 
         expect { do_check }.to raise_error(SystemExit).and \
-          output(/Formula abc needs to be unlinked\./).to_stdout
+          output(/Formula abc needs to be unlinked\./).to_stderr
       end
     end
 
@@ -149,7 +150,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
 
         expect { Homebrew::Cmd::Bundle.dispatch(args, extensions: Homebrew::Bundle.extensions) }
           .to raise_error(SystemExit).and \
-            output(/Run `brew bundle check --verbose` to list unmet dependencies\./).to_stdout
+            output(/Run `brew bundle check --verbose` to list unmet dependencies\./).to_stderr
       end
     end
   end
@@ -210,7 +211,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
           .to receive(:read).and_return("brew 'abc', restart_service: true\nbrew 'def', restart_service: true")
         allow_any_instance_of(Homebrew::Bundle::MacAppStore)
           .to receive(:format_checkable).and_return(1 => "foo")
-        expect { do_check }.to raise_error(SystemExit).and output(expected_output).to_stdout
+        expect { do_check }.to raise_error(SystemExit).and output(expected_output).to_stderr
       end
     end
 
@@ -220,7 +221,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
           .to receive(:read).and_return("brew 'abc', start_service: true\nbrew 'def', start_service: true")
         allow_any_instance_of(Homebrew::Bundle::MacAppStore)
           .to receive(:format_checkable).and_return(1 => "foo")
-        expect { do_check }.to raise_error(SystemExit).and output(expected_output).to_stdout
+        expect { do_check }.to raise_error(SystemExit).and output(expected_output).to_stderr
       end
     end
   end
@@ -247,7 +248,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
       allow_any_instance_of(Homebrew::Bundle::MacAppStore).to \
         receive(:format_checkable).and_return(1 => "foo")
-      expect { do_check }.to raise_error(SystemExit).and output(expected_output).to_stdout
+      expect { do_check }.to raise_error(SystemExit).and output(expected_output).to_stderr
     end
   end
 
@@ -269,7 +270,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
 
     it "raises an error that doesn't mention upgrade" do
       allow_any_instance_of(Pathname).to receive(:read).and_return("vscode 'foo'")
-      expect { do_check }.to raise_error(SystemExit).and output(expected_output).to_stdout
+      expect { do_check }.to raise_error(SystemExit).and output(expected_output).to_stderr
     end
   end
 

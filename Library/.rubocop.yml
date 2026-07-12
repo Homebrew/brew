@@ -334,6 +334,12 @@ Style/AndOr:
 Style/ArgumentsForwarding:
   Enabled: false
 
+# Autocorrects `include?`/`member?` block patterns to `intersect?` even when the second operand
+# isn't actually an `Array` (e.g. `String`, `Set`, `Enumerator`), which can raise at runtime.
+# Re-enable once a rubocop version with https://github.com/rubocop/rubocop/pull/15442 is released.
+Style/ArrayIntersect:
+  Enabled: false
+
 # Avoid leaking resources.
 Style/AutoResourceCleanup:
   Enabled: true

@@ -62,6 +62,26 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       .to match("Xcode alone is not sufficient on Big Sur")
   end
 
+  describe "#fatal_preinstall_checks" do
+    it "doesn't require developer tools on Apple Silicon" do
+      allow(Hardware::CPU).to receive(:arm?).and_return(true)
+
+      expect(checks.fatal_preinstall_checks).not_to include("check_for_installed_developer_tools")
+    end
+  end
+
+  describe "#fatal_build_from_source_checks" do
+    it "requires developer tools" do
+      expect(checks.fatal_build_from_source_checks).to include("check_for_installed_developer_tools")
+    end
+  end
+
+  describe "#build_from_source_checks" do
+    it "warns about missing developer tools" do
+      expect(checks.build_from_source_checks).to include("check_for_installed_developer_tools")
+    end
+  end
+
   describe "#check_if_supported_sdk_available" do
     let(:macos_version) { MacOSVersion.new("11") }
 

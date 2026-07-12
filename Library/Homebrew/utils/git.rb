@@ -213,7 +213,7 @@ module Utils
              to: T.nilable(String)).returns(Integer)
     }
     def self.count_coauthors(repository_path, person, from:, to:)
-      return 0 if repository_path.blank?
+      return 0 unless repository_path
 
       cmd = [git.to_s, "-C", repository_path.to_s, "log", "--oneline"]
       cmd << "--format='%(trailers:key=Co-authored-by:)''"

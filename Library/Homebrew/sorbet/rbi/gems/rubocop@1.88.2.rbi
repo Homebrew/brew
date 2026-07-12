@@ -734,6 +734,7 @@ module RuboCop::Cop::AllowedPattern
   private
 
   def allowed_line?(line); end
+  def allowed_pattern_regexps; end
   def allowed_patterns; end
   def cop_config_deprecated_methods_values; end
   def cop_config_patterns_values; end
@@ -4294,6 +4295,7 @@ class RuboCop::Runner
   def considered_failure?(offense); end
   def default_config(cop_name); end
   def do_inspection_loop(file); end
+  def emulate_write_read_cycle(source); end
   def except_redundant_cop_disable_directive?; end
   def extract_ruby_sources(processed_source); end
   def file_iterator(files, &block); end
@@ -4303,8 +4305,10 @@ class RuboCop::Runner
   def find_target_files(paths); end
   def finished_report(file, index, offenses); end
   def formatter_set; end
+  def in_memory_corrections_possible?; end
   def inspect_file(processed_source, team = T.unsafe(nil)); end
   def inspect_files(files); end
+  def inspect_iteration(processed_source); end
   def iterate_until_no_changes(source, offenses_by_iteration); end
   def list_files(paths); end
   def mark_as_safe_by_config?(config); end

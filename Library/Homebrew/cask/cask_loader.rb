@@ -171,8 +171,9 @@ module Cask
         @config = config
 
         if !self.class.invalid_path?(path, valid_extnames: %w[.json]) &&
-           (from_json = JSON.parse(@content).presence) &&
-           from_json.is_a?(Hash)
+           (from_json = JSON.parse(@content)) &&
+           from_json.is_a?(Hash) &&
+           (@from_installed_caskfile || from_json.present?)
           begin
             from_internal_json = path.to_s.end_with?(".internal.json")
             return FromAPILoader.new(
@@ -390,7 +391,7 @@ module Cask
         return if Homebrew::EnvConfig.no_install_from_api?
         return unless ref.is_a?(String)
         return unless (token = ref[HOMEBREW_DEFAULT_TAP_CASK_REGEX, :token])
-        if Homebrew::API.cask_tokens.exclude?(token) &&
+        if !Homebrew::API.cask_token?(token) &&
            !Homebrew::API.cask_renames.key?(token)
           return
         end
@@ -456,6 +457,15 @@ module Cask
 
       sig { params(config: T.nilable(Config), api_source: T::Hash[String, T.untyped]).returns(Cask) }
       def load_from_json(config:, api_source:)
+        if @from_installed_caskfile
+          api_source = api_source.dup
+          installed_tab = Cask.new(token).tab
+          api_source["version"] = api_source["version"].presence ||
+                                  @sourcefile_path.dirname.dirname.dirname.basename.to_s.presence ||
+                                  installed_tab.version.presence
+          api_source["artifacts"] ||= installed_tab.uninstall_artifacts || []
+        end
+
         tap_git_head = api_source["tap_git_head"]
         cask_struct = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(
           api_source, ignore_types: @from_installed_caskfile
@@ -708,7 +718,7 @@ module Cask
       if warn && old_token && new_token
         destination_exists = find_cask_in_tap(token, tap).exist? ||
                              (tap.core_cask_tap? && !Homebrew::EnvConfig.no_install_from_api? &&
-                              Homebrew::API.cask_tokens.include?(token))
+                              Homebrew::API.cask_token?(token))
         opoo "Cask #{old_token} was renamed to #{new_token}." if destination_exists
       end
 

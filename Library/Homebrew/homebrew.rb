@@ -53,8 +53,7 @@ module Homebrew
     Process.wait(pid)
     $CHILD_STATUS.success? || false
   end
-  # TODO: make private_class_method when possible
-  # private_class_method :_system
+  private_class_method :_system
   # rubocop:enable Naming/PredicateMethod
 
   sig {
@@ -72,6 +71,36 @@ module Homebrew
                                      .gsub($LOAD_PATH.join(File::PATH_SEPARATOR).to_s, "$LOAD_PATH")
     end
     _system(cmd, argv0, *args, **options)
+  end
+
+  sig {
+    params(
+      cmd:     T.nilable(T.any(Pathname, String, [String, String], T::Hash[String, T.nilable(String)])),
+      argv0:   T.nilable(T.any(Pathname, String, [String, String])),
+      args:    T.nilable(T.any(Pathname, String)),
+      options: T.untyped,
+    ).void
+  }
+  def self.safe_system(cmd, argv0 = nil, *args, **options)
+    return if system(cmd, argv0, *args, **options)
+
+    raise ErrorDuringExecution.new([cmd, argv0, *args], status: $CHILD_STATUS)
+  end
+
+  sig {
+    params(
+      cmd:   T.nilable(T.any(Pathname, String, [String, String], T::Hash[String, T.nilable(String)])),
+      argv0: T.nilable(T.any(String, [String, String])),
+      args:  T.any(Pathname, String),
+    ).returns(T::Boolean)
+  }
+  def self.quiet_system(cmd, argv0 = nil, *args)
+    _system(cmd, argv0, *args) do
+      # Redirect output streams to `/dev/null` instead of closing as some programs
+      # will fail to execute if they can't write to an open stream.
+      $stdout.reopen(File::NULL)
+      $stderr.reopen(File::NULL)
+    end
   end
 
   # Uses $times global to share timing data between wrapped methods and the at_exit reporter.

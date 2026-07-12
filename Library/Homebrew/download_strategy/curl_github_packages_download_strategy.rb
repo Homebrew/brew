@@ -16,10 +16,10 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy
     # If using a private GHCR mirror with no Authentication set or HOMEBREW_GITHUB_PACKAGES_AUTH is empty
     # then do not add the header. In all other cases add it.
     if HOMEBREW_GITHUB_PACKAGES_AUTH.presence && (
-       !Homebrew::EnvConfig.artifact_domain.presence ||
-       Homebrew::EnvConfig.docker_registry_basic_auth_token.presence ||
-       Homebrew::EnvConfig.docker_registry_token.presence
-     )
+      !Homebrew::EnvConfig.artifact_domain.presence ||
+      Homebrew::EnvConfig.docker_registry_basic_auth_token.presence ||
+      Homebrew::EnvConfig.docker_registry_token.presence
+    )
       meta[:headers] << "Authorization: #{HOMEBREW_GITHUB_PACKAGES_AUTH}"
     end
     super

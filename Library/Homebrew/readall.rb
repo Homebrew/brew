@@ -13,13 +13,7 @@ module Readall
   extend SystemCommand::Mixin
   extend Utils::Output::Mixin
 
-  # Sorbet type members are mutable by design and cannot be frozen.
-  # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
-  # rubocop:enable Style/MutableConstant
-  # TODO: remove this once the `MacOS` module is undefined on Linux
-  MACOS_MODULE_REGEX = /\b(MacOS|OS::Mac)(\.|::)\b/
-  private_constant :MACOS_MODULE_REGEX
 
   private_class_method :cache
 
@@ -72,9 +66,7 @@ module Readall
                                                      flags: [], ignore_errors: false)
       readall_formula = readall_formula_class.new(formula_name, file, :stable, tap:)
       readall_formula.to_hash
-      # TODO: Remove check for MACOS_MODULE_REGEX once the `MacOS` module is undefined on Linux
-      cache[:valid_formulae][file] = if readall_formula.on_system_blocks_exist? ||
-                                        formula_contents.match?(MACOS_MODULE_REGEX)
+      cache[:valid_formulae][file] = if readall_formula.on_system_blocks_exist?
         [bottle_tag, *cache[:valid_formulae][file]]
       else
         true

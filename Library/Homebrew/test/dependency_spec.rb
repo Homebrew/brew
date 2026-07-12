@@ -96,6 +96,11 @@ RSpec.describe Dependency do
     foo3 = described_class.new("foo", [:build])
     expect(foo1).not_to eq(foo3)
     expect(foo1).not_to eql(foo3)
+
+    uses_from_macos_ventura = UsesFromMacOSDependency.new("foo", [], bounds: { since: :ventura })
+    uses_from_macos_sonoma = UsesFromMacOSDependency.new("foo", [], bounds: { since: :sonoma })
+    expect(uses_from_macos_ventura).not_to eq(uses_from_macos_sonoma)
+    expect(uses_from_macos_ventura).not_to eql(uses_from_macos_sonoma)
   end
 
   describe "#tap" do

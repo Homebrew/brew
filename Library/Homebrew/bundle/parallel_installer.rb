@@ -48,6 +48,23 @@ module Homebrew
         end
         ::Tap.clear_cache if tap_entries.present?
 
+        require "tap"
+        installed_taps = Homebrew::Bundle::Tap.installed_taps
+        pending_entries.each do |entry|
+          tap_with_name = if entry.cls == Homebrew::Bundle::Brew
+            ::Tap.with_formula_name(entry.full_name)
+          elsif entry.cls == Homebrew::Bundle::Cask
+            ::Tap.with_cask_token(entry.full_name)
+          end
+          next unless tap_with_name
+
+          tap = tap_with_name.first
+          next if installed_taps.include?(tap.name) || tap_entries.any? { |tap_entry| tap_entry.name == tap.name }
+
+          tap.ensure_installed!
+          installed_taps << tap.name
+        end
+
         prepare_attestation_verification!(pending_entries)
         dependency_map = build_dependency_map(pending_entries)
         completed = T.let(Set.new, T::Set[String])
@@ -270,7 +287,15 @@ module Homebrew
 
       sig { params(message: String, stream: IO).void }
       def write_output(message, stream: $stdout)
-        @output_mutex.synchronize { stream.puts(message) }
+        @output_mutex.synchronize do
+          # Interactive installers can leave ONLCR disabled, so use CRLF to
+          # ensure terminal status output returns to column 0.
+          if stream.tty?
+            stream.write(message, "\r\n")
+          else
+            stream.puts(message)
+          end
+        end
       end
 
       sig { void }

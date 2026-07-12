@@ -9,10 +9,12 @@ require "utils/output"
 
 require "api/cask_download"
 require "cask/config"
+require "cask/dsl"
 require "cask/download"
 require "cask/migrator"
 require "cask/quarantine"
 require "cask/tab"
+require "trust"
 
 module Cask
   # Installer for a {Cask}.
@@ -56,6 +58,7 @@ module Cask
       @download_queue = download_queue
       @defer_fetch = defer_fetch
       @source_download = T.let(nil, T.nilable(Homebrew::API::SourceDownload))
+      @default_uninstall_artifacts = T.let(nil, T.nilable(ArtifactSet))
       @ran_prelude_fetch = T.let(false, T::Boolean)
       @ran_prelude = T.let(false, T::Boolean)
       @cask_and_formula_dependencies = T.let(nil, T.nilable(T::Array[T.any(Formula, ::Cask::Cask)]))
@@ -129,10 +132,20 @@ module Cask
 
       Caskroom.ensure_caskroom_exists
 
-      extract_primary_container
-      process_rename_operations
+      queued_staged_path = downloader.staged_path_from_download_queue
+      queued_staged_marker = downloader.staged_path_from_download_queue_marker
+      if @defer_fetch && queued_staged_marker.exist? && !@cask.staged_path.exist?
+        @cask.staged_path.dirname.mkpath
+        FileUtils.mv(queued_staged_path, @cask.staged_path)
+        downloader.purge_staged_from_download_queue(command: @command)
+      else
+        downloader.purge_staged_from_download_queue(command: @command) if @defer_fetch
+        extract_primary_container
+        process_rename_operations
+      end
       save_caskfile
     rescue => e
+      downloader.purge_staged_from_download_queue(command: @command) if @defer_fetch
       purge_versioned_files
       raise e
     end
@@ -213,10 +226,17 @@ on_request: true)
           next unless conflicting_cask_tap.installed?
         end
 
+        if (installed_caskfile = Caskroom.cask_installed_caskfile(conflicting_cask))
+          raise CaskConflictError.new(
+            @cask,
+            ::Cask::Cask.new(installed_caskfile.basename(installed_caskfile.extname).basename(".internal").to_s),
+          )
+        end
+
         conflicting_cask = CaskLoader.load(conflicting_cask)
         raise CaskConflictError.new(@cask, conflicting_cask) if conflicting_cask.installed?
-      rescue CaskUnavailableError
-        next # Ignore conflicting Casks that do not exist.
+      rescue CaskUnavailableError, Homebrew::UntrustedTapError
+        next # Ignore conflicting Casks that are unavailable or untrusted.
       end
     end
 
@@ -261,62 +281,24 @@ on_request: true)
 
     sig { returns(UnpackStrategy) }
     def primary_container
-      @primary_container ||= T.let(
-        begin
-          downloaded_path = download(quiet: true)
-          UnpackStrategy.detect(downloaded_path, type: @cask.container&.type, merge_xattrs: true)
-        end,
-        T.nilable(UnpackStrategy),
-      )
+      download(quiet: true) if @cask.download.nil?
+
+      downloader.primary_container
     end
 
     sig { returns(ArtifactSet) }
     def artifacts
-      @cask.artifacts
+      @default_uninstall_artifacts || @cask.artifacts
     end
 
     sig { params(to: Pathname).void }
     def extract_primary_container(to: @cask.staged_path)
-      odebug "Extracting primary container"
-
-      container = primary_container
-      raise "unexpected nil primary_container" unless container
-
-      odebug "Using container class #{container.class} for #{container.path}"
-
-      basename = downloader.basename
-
-      if (nested_container = @cask.container&.nested)
-        Dir.mktmpdir("cask-installer", HOMEBREW_TEMP) do |tmpdir|
-          tmpdir = Pathname(tmpdir)
-          container.extract(to: tmpdir, basename:, verbose: verbose?)
-
-          FileUtils.chmod_R "+rw", tmpdir/nested_container, force: true, verbose: verbose?
-
-          UnpackStrategy.detect(tmpdir/nested_container, merge_xattrs: true)
-                        .extract_nestedly(to:, verbose: verbose?)
-        end
-      else
-        container.extract_nestedly(to:, basename:, verbose: verbose?)
-      end
-
-      return unless quarantine?
-      return unless Quarantine.available?
-
-      Quarantine.propagate(from: container.path, to:)
+      downloader.extract_primary_container(to:, verbose: verbose?)
     end
 
     sig { params(target_dir: T.nilable(Pathname)).void }
     def process_rename_operations(target_dir: nil)
-      return if @cask.rename.empty?
-
-      working_dir = target_dir || @cask.staged_path
-      odebug "Processing rename operations in #{working_dir}"
-
-      @cask.rename.each do |rename_operation|
-        odebug "Renaming #{rename_operation.from} to #{rename_operation.to}"
-        rename_operation.perform_rename(working_dir)
-      end
+      downloader.process_rename_operations(target_dir: target_dir || @cask.staged_path)
     end
 
     sig { params(predecessor: T.nilable(Cask)).void }
@@ -429,13 +411,10 @@ on_request: true)
 
       ::Utils::TopologicalHash.graph_package_dependencies(pc.dependencies, graph)
 
-      begin
-        @cask_and_formula_dependencies = graph.tsort - [@cask]
-      rescue TSort::Cyclic
-        strongly_connected_components = graph.strongly_connected_components.sort_by(&:count)
-        cyclic_dependencies = strongly_connected_components.last - [@cask]
+      @cask_and_formula_dependencies = graph.tsort_with_cycles do |cycles|
+        cyclic_dependencies = cycles.sort_by(&:count).fetch(-1) - [@cask]
         raise CaskCyclicDependencyError.new(@cask.token, cyclic_dependencies.to_sentence)
-      end
+      end - [@cask]
     end
 
     sig { returns(T::Array[T.any(Formula, ::Cask::Cask)]) }
@@ -534,22 +513,12 @@ on_request: true)
 
       return if @cask.source.blank?
 
-      extension = if @cask.loaded_from_internal_api?
-        "internal.json"
-      elsif @cask.loaded_from_api?
-        "json"
+      if @cask.uninstall_flight_blocks?
+        (metadata_subdir/"#{@cask.token}.rb").write @cask.source.to_s
       else
-        "rb"
+        (metadata_subdir/"#{@cask.token}.json").write JSON.pretty_generate(@cask.to_installed_json_hash)
       end
 
-      source = if @cask.loaded_from_internal_api? && (api_source = @cask.api_source)
-        api_source = api_source.merge({ "tap_git_head" => @cask.tap_git_head })
-        JSON.pretty_generate(api_source)
-      else
-        @cask.source
-      end
-
-      (metadata_subdir/"#{@cask.token}.#{extension}").write source
       FileUtils.rm_r(old_savedir) if old_savedir
     end
 
@@ -612,8 +581,10 @@ on_request: true)
       bmp = backup_metadata_path
       raise "unexpected nil backup_metadata_path" unless bmp
 
-      @cask.staged_path.rename bp.to_s
-      @cask.metadata_versioned_path.rename bmp.to_s
+      # The staged files may already be gone (e.g. an out-of-band cask update);
+      # skip the rename rather than raising and aborting the upgrade.
+      @cask.staged_path.rename bp.to_s if @cask.staged_path.exist?
+      @cask.metadata_versioned_path.rename bmp.to_s if @cask.metadata_versioned_path.exist?
     end
 
     sig { void }
@@ -1000,6 +971,44 @@ on_request: true)
       installed_caskfile = @cask.installed_caskfile
 
       if installed_caskfile&.exist?
+        tab = @cask.tab
+        tap = tab.tap
+        if installed_caskfile.extname == ".rb" &&
+           Homebrew::EnvConfig.require_tap_trust? &&
+           tap &&
+           !Homebrew::Trust.trusted?(:cask, "#{tap.name}/#{@cask.token}")
+          opoo "Skipping loading untrusted Cask #{tap.name}/#{@cask.token}; uninstalling recorded artifacts only."
+
+          dsl = DSL.new(@cask)
+          default_uninstall_artifact_keys = DSL::ACTIVATABLE_ARTIFACT_CLASSES.filter_map do |klass|
+            next if [Artifact::Uninstall, Artifact::Zap].include?(klass)
+            next if !klass.method_defined?(:uninstall_phase) && !klass.method_defined?(:post_uninstall_phase)
+
+            klass.dsl_key
+          end.to_set
+          Array(tab.uninstall_artifacts).each do |artifact_entry|
+            next unless artifact_entry.is_a?(Hash)
+
+            artifact_entry.each do |raw_key, raw_args|
+              dsl_key = raw_key.to_sym
+              next unless default_uninstall_artifact_keys.include?(dsl_key)
+
+              args = Array(raw_args)
+              if args.last.is_a?(Hash)
+                dsl.public_send(
+                  dsl_key,
+                  *args[...-1],
+                  **T.cast(args.last, T::Hash[T.any(Symbol, String), T.anything]).transform_keys(&:to_sym),
+                )
+              else
+                dsl.public_send(dsl_key, *args)
+              end
+            end
+          end
+          @default_uninstall_artifacts = dsl.artifacts
+          return
+        end
+
         begin
           @cask = CaskLoader.load_from_installed_caskfile(installed_caskfile)
           return

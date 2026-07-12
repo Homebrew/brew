@@ -53,8 +53,8 @@ module Homebrew
 
             if replacement &&
                (replacement_method_name = replacement[/\A`([^`]*)`\Z/, 1]) && (
-               (replacement_method_name.count(".") + replacement_method_name.count("#")) <= 1
-             )
+                 (replacement_method_name.count(".") + replacement_method_name.count("#")) <= 1
+               )
               replacement_method_name = replacement_method_name.delete_prefix(object.namespace.to_s)
               replacement = "{#{replacement_method_name}}"
             end

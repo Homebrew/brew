@@ -10,6 +10,7 @@ module Homebrew
       const :keg, T.nilable(Keg)
       const :formula, Formula
       const :options, Options
+      const :link_keg, T::Boolean, default: false
     end
 
     class << self
@@ -41,7 +42,6 @@ module Homebrew
           link_keg = keg.linked?
           installed_on_request = tab.installed_on_request == true
           build_bottle = tab.built_bottle?
-          backup keg
         else
           link_keg = nil
           installed_on_request = true
@@ -72,7 +72,7 @@ module Homebrew
             verbose:,
           }.compact,
         )
-        InstallationContext.new(formula_installer:, keg:, formula:, options:)
+        InstallationContext.new(formula_installer:, keg:, formula:, options:, link_keg: link_keg == true)
       end
 
       sig { params(install_context: InstallationContext).void }
@@ -81,11 +81,14 @@ module Homebrew
         keg = install_context.keg
         formula = install_context.formula
         options = install_context.options
-        link_keg = keg&.linked?
+        link_keg = install_context.link_keg
         verbose = formula_installer.verbose?
+
+        formula_installer.check_installation_already_attempted
 
         oh1 "Reinstalling #{Formatter.identifier(formula.full_name)} #{options.to_a.join " "}"
 
+        backup keg if keg
         formula_installer.install
         formula_installer.finish
       rescue FormulaInstallationAlreadyAttemptedError

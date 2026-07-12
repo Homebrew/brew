@@ -150,6 +150,49 @@ RSpec.describe Homebrew::Cmd::Source do
     end
   end
 
+  describe "#npm_repo_url" do
+    it "finds repository for npm URL" do
+      ["vite", "@org/vite"].each do |package|
+        encoded_package = URI.encode_uri_component(package)
+        expect(Utils::Curl).to receive(:curl_output)
+          .with(*Utils::Curl.curl_args(show_error: false, retries: 2), "https://registry.npmjs.org/#{encoded_package}/latest")
+          .and_return([
+            <<~JSON,
+              {
+                "repository": {
+                  "url": "git+https://github.com/vitejs/vite.git"
+                }
+              }
+            JSON
+            "",
+            instance_double(Process::Status, success?: true),
+          ])
+
+        expect(described_class.new([]).send(:npm_repo_url, "https://registry.npmjs.org/#{package}/-/vite-1.2.3.tgz"))
+          .to eq("https://github.com/vitejs/vite.git")
+      end
+    end
+
+    it "returns nil for npm package without repository information" do
+      expect(Utils::Curl).to receive(:curl_output)
+        .with(*Utils::Curl.curl_args(show_error: false, retries: 2), "https://registry.npmjs.org/vite/latest")
+        .and_return([
+          "{}",
+          "",
+          instance_double(Process::Status, success?: true),
+        ])
+
+      expect(described_class.new([])
+        .send(:npm_repo_url, "https://registry.npmjs.org/vite/-/vite-1.2.3.tgz"))
+        .to be_nil
+    end
+
+    it "returns nil for non-npm URLs" do
+      expect(described_class.new([]).send(:npm_repo_url, "https://example.com/repo.git"))
+        .to be_nil
+    end
+  end
+
   describe "#url_to_repo" do
     it "returns GitHub repo URL for GitHub URLs" do
       expect(described_class.new([]).send(:url_to_repo, "https://github.com/Homebrew/brew"))

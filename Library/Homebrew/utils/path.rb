@@ -108,6 +108,7 @@ module Utils
     def self.formula_installed_prefixes(formula_names)
       Array(formula_names).map { |formula_name| HOMEBREW_CELLAR/Utils.name_from_full_name(formula_name) }
                           .select(&:directory?)
+                          .uniq(&:realpath)
                           .flat_map(&:subdirs)
                           .sort_by(&:basename)
     end

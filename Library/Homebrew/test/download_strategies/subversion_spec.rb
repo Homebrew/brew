@@ -44,5 +44,28 @@ RSpec.describe SubversionDownloadStrategy do
         strategy.fetch
       end
     end
+
+    context "with :revisions set" do
+      let(:specs) { { revisions: { trunk: "10", "external" => "11" } } }
+
+      it "keeps checkout operands after options" do
+        external_url = "-example"
+
+        allow(strategy).to receive(:silent_command)
+          .with("svn", args: ["propget", "svn:externals", url])
+          .and_return(instance_double(SystemCommand::Result, stdout: "external #{external_url}\n"))
+
+        expect(strategy).to receive(:system_command!)
+          .with("svn", hash_including(args: ["checkout", "--quiet", "-r", "10", "--ignore-externals", "--", url,
+                                             strategy.cached_location]))
+          .and_return(instance_double(SystemCommand::Result))
+        expect(strategy).to receive(:system_command!)
+          .with("svn", hash_including(args: ["checkout", "--quiet", "-r", "11", "--ignore-externals", "--",
+                                             external_url, strategy.cached_location/"external"]))
+          .and_return(instance_double(SystemCommand::Result))
+
+        strategy.fetch
+      end
+    end
   end
 end

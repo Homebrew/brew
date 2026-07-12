@@ -192,6 +192,27 @@ RSpec.describe Homebrew::Trust, :trust_store do
     trust_file.unlink if trust_file&.exist?
   end
 
+  it "uses the provided home when the trust file path is home-based" do
+    root_home = Pathname(TEST_TMPDIR)/"root-home"
+    sudo_home = Pathname(TEST_TMPDIR)/"sudo-home"
+    allow(Dir).to receive(:home).with(ENV.fetch("USER")).and_return(root_home.to_s)
+
+    with_env(HOMEBREW_USER_CONFIG_HOME: root_home/".homebrew") do
+      expect(described_class.trust_file(home: sudo_home)).to eq(sudo_home/".homebrew/trust.json")
+    end
+  end
+
+  it "keeps the configured trust file path when it is not home-based" do
+    root_home = Pathname(TEST_TMPDIR)/"root-home"
+    sudo_home = Pathname(TEST_TMPDIR)/"sudo-home"
+    config_home = Pathname(TEST_TMPDIR)/"xdg-config/homebrew"
+    allow(Dir).to receive(:home).with(ENV.fetch("USER")).and_return(root_home.to_s)
+
+    with_env(HOMEBREW_USER_CONFIG_HOME: config_home) do
+      expect(described_class.trust_file(home: sudo_home)).to eq(config_home/"trust.json")
+    end
+  end
+
   it "trusts a GitHub SSH-remote tap by its name" do
     tap = Tap.fetch("thirdparty", "foo")
     tap.path.mkpath
@@ -387,6 +408,89 @@ RSpec.describe Homebrew::Trust, :trust_store do
     expect(described_class.trusted?(:tap, "thirdparty/foo")).to be(false)
   ensure
     described_class.clear!(:tap)
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+  end
+
+  it "reads the invoking user's trust store for sudoed services" do
+    root_home = Pathname(TEST_TMPDIR)/"root-home"
+    sudo_home = Pathname(TEST_TMPDIR)/"sudo-home"
+    (sudo_home/".homebrew").mkpath
+    (sudo_home/".homebrew/trust.json").write(JSON.generate({ trustedtaps: ["thirdparty/foo"] }))
+    tap = Tap.fetch("thirdparty", "foo")
+    formula_path = tap.formula_dir/"default-trust.rb"
+    formula_path.dirname.mkpath
+
+    allow(Homebrew).to receive(:running_as_root?).and_return(true)
+    allow(Dir).to receive(:home).with(ENV.fetch("USER")).and_return(root_home.to_s)
+    allow(Etc).to receive(:getpwnam).with("brewuser").and_return(double(dir: sudo_home.to_s))
+
+    with_env(HOME: root_home, HOMEBREW_SUDO_USER: "brewuser", HOMEBREW_USER_CONFIG_HOME: root_home/".homebrew") do
+      expect { described_class.require_trusted_formula!("default-trust", formula_path) }.not_to raise_error
+    end
+  ensure
+    FileUtils.rm_rf root_home if root_home
+    FileUtils.rm_rf sudo_home if sudo_home
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+  end
+
+  it "reads the invoking user's XDG trust store under sudo" do
+    xdg_config_home = Pathname(TEST_TMPDIR)/"sudo-xdg-config"
+    (xdg_config_home/"homebrew").mkpath
+    (xdg_config_home/"homebrew/trust.json").write(JSON.generate({ trustedtaps: ["thirdparty/foo"] }))
+    tap = Tap.fetch("thirdparty", "foo")
+    formula_path = tap.formula_dir/"default-trust.rb"
+    formula_path.dirname.mkpath
+
+    allow(Homebrew).to receive(:running_as_root?).and_return(true)
+    allow(Etc).to receive(:getpwnam).with("brewuser").and_return(double(dir: "/nonexistent"))
+
+    with_env(HOMEBREW_SUDO_USER:        "brewuser",
+             HOMEBREW_USER_CONFIG_HOME: xdg_config_home/"homebrew",
+             XDG_CONFIG_HOME:           xdg_config_home) do
+      expect { described_class.require_trusted_formula!("default-trust", formula_path) }.not_to raise_error
+    end
+  ensure
+    FileUtils.rm_rf xdg_config_home if xdg_config_home
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+  end
+
+  it "reads the invoking user's Homebrew XDG trust store under sudo" do
+    xdg_config_home = Pathname(TEST_TMPDIR)/"sudo-homebrew-xdg-config"
+    (xdg_config_home/"homebrew").mkpath
+    (xdg_config_home/"homebrew/trust.json").write(JSON.generate({ trustedtaps: ["thirdparty/foo"] }))
+    tap = Tap.fetch("thirdparty", "foo")
+    formula_path = tap.formula_dir/"default-trust.rb"
+    formula_path.dirname.mkpath
+
+    allow(Homebrew).to receive(:running_as_root?).and_return(true)
+    allow(Etc).to receive(:getpwnam).with("brewuser").and_return(double(dir: "/nonexistent"))
+
+    with_env(HOMEBREW_SUDO_USER:        "brewuser",
+             HOMEBREW_USER_CONFIG_HOME: xdg_config_home/"homebrew",
+             XDG_CONFIG_HOME:           nil,
+             HOMEBREW_XDG_CONFIG_HOME:  xdg_config_home) do
+      expect { described_class.require_trusted_formula!("default-trust", formula_path) }.not_to raise_error
+    end
+  ensure
+    FileUtils.rm_rf xdg_config_home if xdg_config_home
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+  end
+
+  it "warns when the sudo user cannot be looked up" do
+    allow(Homebrew).to receive(:running_as_root?).and_return(true)
+    allow(Etc).to receive(:getpwnam).with("brewuser").and_raise(ArgumentError)
+
+    with_env(HOMEBREW_SUDO_USER: "brewuser") do
+      expect { expect(described_class.trusted?(:tap, "thirdparty/foo")).to be(false) }
+        .to output(
+          Regexp.new(
+            "Could not determine home directory for `\\$HOMEBREW_SUDO_USER` " \
+            "\\(brewuser\\); falling back to " \
+            "#{Regexp.escape(described_class.trust_file.to_s)}\\.",
+          ),
+        ).to_stderr
+    end
+  ensure
     FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
   end
 

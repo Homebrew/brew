@@ -29,7 +29,6 @@ class Module
   def autoload(const_name, path); end
   def const_added(cname); end
   def extend_object(obj); end
-  def method_added(method_name); end
   def prepend_features(constant); end
 end
 
@@ -125,6 +124,16 @@ module T::Helpers
   def requires_ancestor(&block); end
 end
 
+module T::Private::Casts
+  class << self
+    def cast(value, type, cast_method); end
+  end
+end
+
+module T::Private::Casts::TapiocaGenericTypeCastPatch
+  def cast(value, type, cast_method); end
+end
+
 module T::Private::Methods
   class << self
     def finalize_proc(decl); end
@@ -165,7 +174,7 @@ module T::Utils::Private
   end
 end
 
-module T::Utils::Private::PrivateCoercePatch
+module T::Utils::Private::TapiocaGenericTypeCoercePatch
   def coerce_and_check_module_types(val, check_val, check_module_type); end
 end
 
@@ -612,6 +621,9 @@ class Tapioca::Commands::DslCompilerList < ::Tapioca::Commands::AbstractDsl
 end
 
 class Tapioca::Commands::DslGenerate < ::Tapioca::Commands::AbstractDsl
+  sig { params(only_bootsnap_rbs_cache: T::Boolean, kwargs: T.untyped).void }
+  def initialize(only_bootsnap_rbs_cache: T.unsafe(nil), **kwargs); end
+
   private
 
   sig { override.void }
@@ -915,7 +927,7 @@ class Tapioca::Dsl::Pipeline
   def abort_if_pending_migrations!; end
 
   sig { params(constants: T::Set[T::Module[T.anything]]).returns(T::Set[T::Module[T.anything]]) }
-  def filter_anonymous_and_reloaded_constants(constants); end
+  def filter_anonymous_constants(constants); end
 
   sig do
     params(
@@ -1982,6 +1994,14 @@ module Tapioca::RBIHelper
 end
 
 Tapioca::RBIHelper::TYPE_PARAMETER_MATCHER = T.let(T.unsafe(nil), Regexp)
+module Tapioca::RBS; end
+
+module Tapioca::RBS::BootsnapGuard
+  sig { params(_kwargs: T.untyped).void }
+  def setup(**_kwargs); end
+end
+
+class Tapioca::RBS::HostBootsnapSetupError < ::StandardError; end
 
 class Tapioca::RepoIndex
   sig { void }
@@ -2043,7 +2063,6 @@ module Tapioca::Runtime::GenericTypeRegistry
 
     def create_generic_type(constant, name); end
     def create_safe_subclass(constant); end
-    def lookup_or_initialize_type_variables(constant); end
   end
 end
 

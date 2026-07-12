@@ -1,9 +1,42 @@
 # typed: true
 # frozen_string_literal: true
 
+require "timeout"
 require "utils"
 
 RSpec.describe Utils do
+  describe ".parallel_map" do
+    it "runs all blocks concurrently" do
+      # A barrier no block passes until every block has started: this
+      # deadlocks (and times out) if the blocks run serially.
+      mutex = Mutex.new
+      condvar = ConditionVariable.new
+      started = 0
+      results = Timeout.timeout(5) do
+        described_class.parallel_map([1, 2, 3]) do |i|
+          mutex.synchronize do
+            started += 1
+            condvar.broadcast
+            condvar.wait(mutex) while started < 3
+          end
+          i * 10
+        end
+      end
+      expect(results).to eq [10, 20, 30]
+    end
+
+    it "returns results in input order, not completion order" do
+      expect(described_class.parallel_map([3, 1, 2]) do |i|
+        sleep(0.05 - (i * 0.01))
+        i * 10
+      end).to eq [30, 10, 20]
+    end
+
+    it "re-raises an exception from a block" do
+      expect { described_class.parallel_map([1]) { raise "boom" } }.to raise_error("boom")
+    end
+  end
+
   describe ".deconstantize" do
     it "removes the rightmost segment from the constant expression in the string" do
       expect(described_class.deconstantize("Net::HTTP")).to eq("Net")

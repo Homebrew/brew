@@ -505,20 +505,21 @@ module Homebrew
       def print_dry_run_dependencies(formula, dependencies, skip_formula_names: [], &_block)
         return if dependencies.empty?
 
-        formula_names = dependencies.filter_map do |dep|
+        entries = dependencies.filter_map do |dep|
           dependency = dep.to_formula
           next if skip_formula_names.include?(dependency.full_name)
 
-          name = yield dependency
-          installed = dependency.any_version_installed?
-          pretty_install_status(name, installed:, outdated: installed && dependency.outdated?,
-                                mark_uninstalled: false, bold: false)
+          [dependency.any_version_installed?, yield(dependency)]
         end
-        return if formula_names.empty?
 
-        ohai "Would install #{Utils.pluralize("dependency", formula_names.count, include_count: true)} " \
-             "for #{formula.name}:"
-        puts formula_names.join("\n")
+        upgrade, install = entries.partition(&:first)
+        { install:, upgrade: }.each do |verb, group|
+          next if group.empty?
+
+          ohai "Would #{verb} #{Utils.pluralize("dependency", group.count, include_count: true)} " \
+               "for #{formula.name}:"
+          puts Upgrade.format_upgrade_summary(group.map(&:last))
+        end
       end
 
       # If asking the user is enabled, show dry-run information.

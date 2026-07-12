@@ -578,9 +578,23 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
   end
 
   describe "#system_output_no_stderr" do
-    it "shells out" do
-      expect(IO).to receive(:popen).and_return(StringIO.new("true"))
-      described_class.system_output_no_stderr("true")
+    it "discards stderr without closing it" do
+      stdout = nil
+      expect do
+        stdout = described_class.system_output_no_stderr(
+          RUBY_PATH,
+          "-e",
+          '$stderr.puts "warning"; $stdout.puts "cleaned"',
+        )
+      end.not_to output.to_stderr_from_any_process
+
+      expect(stdout).to eq("cleaned\n")
+    end
+
+    it "raises when the command fails" do
+      expect do
+        described_class.system_output_no_stderr(RUBY_PATH, "-e", "exit 1")
+      end.to raise_error(ErrorDuringExecution)
     end
   end
 

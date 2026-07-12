@@ -9,6 +9,7 @@
 # typed: strict
 
 module Rubydex; end
+class Rubydex::AliasCycleError < ::Rubydex::Error; end
 class Rubydex::AttrAccessorDefinition < ::Rubydex::Definition; end
 class Rubydex::AttrReaderDefinition < ::Rubydex::Definition; end
 class Rubydex::AttrWriterDefinition < ::Rubydex::Definition; end
@@ -44,6 +45,8 @@ class Rubydex::Comment
   sig { returns(String) }
   def string; end
 end
+
+class Rubydex::ConfigError < ::Rubydex::Error; end
 
 class Rubydex::Constant < ::Rubydex::Declaration
   include ::Rubydex::Visibility
@@ -170,6 +173,11 @@ class Rubydex::DisplayLocation < ::Rubydex::Location
 
   sig { returns(String) }
   def to_s; end
+
+  class << self
+    sig { params(prism_location: Prism::Location, uri: String).returns(T.noreturn) }
+    def from_prism(prism_location, uri:); end
+  end
 end
 
 class Rubydex::Document
@@ -177,6 +185,9 @@ class Rubydex::Document
 
   sig { returns(T::Enumerable[Rubydex::Definition]) }
   def definitions; end
+
+  sig { returns(T::Enumerable[Rubydex::MethodReference]) }
+  def method_references; end
 
   sig { returns(String) }
   def uri; end
@@ -188,7 +199,7 @@ class Rubydex::Document
   end
 end
 
-class Rubydex::Error < StandardError; end
+class Rubydex::Error < ::StandardError; end
 class Rubydex::Extend < ::Rubydex::Mixin; end
 
 class Rubydex::Failure
@@ -258,11 +269,12 @@ class Rubydex::Graph
   sig { params(uri: String, source: String, language_id: String).void }
   def index_source(uri, source, language_id); end
 
-  # Index all files and dependencies of the workspace that exists in `@workspace_path`
+  # Index all files and dependencies of the workspace that exists in `workspace_path`
   sig { returns(T::Array[String]) }
   def index_workspace; end
 
   def keyword(_arg0); end
+  def load_config(*_arg0); end
 
   sig { returns(T::Enumerable[Rubydex::MethodReference]) }
   def method_references; end
@@ -300,7 +312,6 @@ class Rubydex::Graph
   def add_workspace_dependency_paths(paths); end
 end
 
-Rubydex::Graph::IGNORED_DIRECTORIES = T.let(T.unsafe(nil), Array)
 Rubydex::Graph::INDEXABLE_EXTENSIONS = T.let(T.unsafe(nil), Array)
 class Rubydex::Include < ::Rubydex::Mixin; end
 
@@ -366,6 +377,11 @@ class Rubydex::Location
 
   sig { returns(String) }
   def uri; end
+
+  class << self
+    sig { params(prism_location: Prism::Location, uri: String).returns(Rubydex::Location) }
+    def from_prism(prism_location, uri:); end
+  end
 end
 
 class Rubydex::Location::NotFileUriError < ::StandardError; end
@@ -381,6 +397,9 @@ end
 
 class Rubydex::MethodAliasDefinition < ::Rubydex::Definition
   def signatures; end
+
+  sig { returns(T.nilable(Rubydex::Method)) }
+  def target; end
 end
 
 class Rubydex::MethodDefinition < ::Rubydex::Definition

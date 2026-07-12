@@ -11,14 +11,14 @@ require "utils/repology"
 module Homebrew
   module DevCmd
     class Bump < AbstractCommand
-      DEFAULT_CURL_ARGS = T.let([
+      DEFAULT_CURL_ARGS = [
         "--compressed",
         "--fail-with-body",
         "--location",
         "--max-redirs",
         "5",
         "--silent",
-      ].freeze, T::Array[String])
+      ].freeze
       DEFAULT_CURL_OPTIONS = T.let({
         connect_timeout: 15,
         max_time:        55,
@@ -936,7 +936,7 @@ module Homebrew
           url = version_info.dig(:meta, :url, :strategy)&.delete_suffix("/latest")
           return unless url
 
-          stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS)
+          stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
           return unless status.success?
           return if (content = stdout.scrub).blank?
 
@@ -968,7 +968,7 @@ module Homebrew
 
           content = version_info[:content]
           unless content
-            stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS)
+            stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
             return unless status.success?
 
             content = stdout.scrub
@@ -1004,7 +1004,7 @@ module Homebrew
           match = Homebrew::Livecheck::Strategy::RubyGems::URL_MATCH_REGEX.match(original_url)
           return unless match
 
-          stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS)
+          stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
           return unless status.success?
           return if (content = stdout.scrub).blank?
 

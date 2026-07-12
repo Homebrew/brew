@@ -124,7 +124,7 @@ module OS
     else
       "https://docs.brew.sh/Troubleshooting"
     end.freeze
-    PATH_OPEN = if wsl? && (wslview = which("wslview").presence)
+    PATH_OPEN = if wsl? && (wslview = which("wslview"))
       wslview.to_s
     else
       "xdg-open"

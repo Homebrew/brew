@@ -42,19 +42,27 @@ module SystemConfig
       GitRepository.new(HOMEBREW_REPOSITORY)
     end
 
+    sig { returns([T.nilable(String), T.nilable(String), T.nilable(String)]) }
+    def homebrew_head_info
+      @homebrew_head_info ||= T.let(
+        homebrew_repo.head_info,
+        T.nilable([T.nilable(String), T.nilable(String), T.nilable(String)]),
+      )
+    end
+
     sig { returns(String) }
     def branch
-      homebrew_repo.branch_name || "(none)"
+      homebrew_head_info[2] || "(none)"
     end
 
     sig { returns(String) }
     def head
-      homebrew_repo.head_ref || "(none)"
+      homebrew_head_info[0] || "(none)"
     end
 
     sig { returns(String) }
     def last_commit
-      homebrew_repo.last_committed || "never"
+      homebrew_head_info[1] || "never"
     end
 
     sig { returns(String) }
@@ -127,10 +135,11 @@ module SystemConfig
 
       if tap.installed?
         out.puts "#{tap_name} origin: #{tap.remote}" if tap.remote != tap.default_remote
-        out.puts "#{tap_name} HEAD: #{tap.git_head || "(none)"}"
-        out.puts "#{tap_name} last commit: #{tap.git_last_commit || "never"}"
+        head, last_commit, branch = tap.git_repository.head_info
+        out.puts "#{tap_name} HEAD: #{head || "(none)"}"
+        out.puts "#{tap_name} last commit: #{last_commit || "never"}"
         default_branches = %w[main master].freeze
-        out.puts "#{tap_name} branch: #{tap.git_branch || "(none)"}" if default_branches.exclude?(tap.git_branch)
+        out.puts "#{tap_name} branch: #{branch || "(none)"}" if default_branches.exclude?(branch)
       end
 
       json_file = Homebrew::API::HOMEBREW_CACHE_API/json_file_name
@@ -194,12 +203,26 @@ module SystemConfig
     end
 
     sig { params(out: T.any(File, StringIO, IO)).void }
-    def dump_verbose_config(out = $stdout)
-      homebrew_config(out)
-      core_tap_config(out)
-      homebrew_env_config(out)
+    def hardware_config(out = $stdout)
+      hardware = self.hardware
       out.puts hardware if hardware
-      host_software_config(out)
+    end
+
+    sig { returns(T::Array[Symbol]) }
+    def config_sections
+      [:homebrew_config, :core_tap_config, :homebrew_env_config, :hardware_config, :host_software_config]
+    end
+
+    sig { params(out: T.any(File, StringIO, IO)).void }
+    def dump_verbose_config(out = $stdout)
+      # Most sections shell out for their values (Git, compilers, curl,
+      # etc.), so render them concurrently and print them in order.
+      sections = Utils.parallel_map(config_sections) do |section|
+        io = StringIO.new
+        public_send(section, io)
+        io.string
+      end
+      sections.each { |section| out.print section }
     end
   end
 end

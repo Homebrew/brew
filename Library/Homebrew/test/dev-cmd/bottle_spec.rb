@@ -23,6 +23,7 @@ RSpec.describe Homebrew::DevCmd::Bottle do
                     "filename":"#{parameters[:filename]}",
                     "local_filename":"#{parameters[:local_filename]}",
                     "sha256":"#{parameters[:sha256]}"
+                    #{",\"sbom\":#{parameters[:sbom].to_json}" if parameters[:sbom]}
                  }
               }
            }
@@ -330,6 +331,7 @@ RSpec.describe Homebrew::DevCmd::Bottle do
               filename:       "testball-1.0.#{tag}.bottle.tar.gz",
               local_filename: "testball--1.0.#{tag}.bottle.tar.gz",
               sha256:,
+              sbom:           { "packages" => [{ "SPDXID" => "SPDXRef-#{tag}" }] },
             )
           end
         end
@@ -353,9 +355,40 @@ RSpec.describe Homebrew::DevCmd::Bottle do
           "local_filename" => "testball--1.0.all.bottle.tar.gz",
           "sha256"         => sha256,
         )
+        expect(all_bottle_tag_hash.dig("sbom", "tags").keys).to contain_exactly("arm64_big_sur", "big_sur")
         expect(all_bottle_tag_hash).not_to have_key("cellar")
         expect(Pathname("testball--1.0.all.bottle.tar.gz")).to exist
       end
+    end
+
+    it "merges when an all bottle cannot be created" do
+      core_tap.path.cd do
+        system "git", "-c", "init.defaultBranch=master", "init"
+        setup_test_formula "testball", bottle_block: <<~RUBY
+
+          bottle do
+            sha256 cellar: :any_skip_relocation, all: "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
+          end
+        RUBY
+        system "git", "add", "--all"
+        system "git", "commit", "-m", "testball 0.1"
+      end
+
+      expect do
+        brew "bottle",
+             "--merge",
+             "--write",
+             "--no-commit",
+             "#{TEST_TMPDIR}/testball-1.0.arm64_big_sur.bottle.json",
+             "#{TEST_TMPDIR}/testball-1.0.big_sur.bottle.json",
+             { "GITHUB_EVENT_PATH" => nil }
+      end.to output(/sha256 cellar: :any_skip_relocation, arm64_big_sur:/).to_stdout
+                                                                          .and not_to_output.to_stderr
+                                                                                            .and be_a_success
+
+      formula_contents = (core_tap.path/"Formula/testball.rb").read
+      expect(formula_contents).to include("big_sur:")
+      expect(formula_contents).not_to include("all:")
     end
   end
 

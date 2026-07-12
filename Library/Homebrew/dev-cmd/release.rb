@@ -135,6 +135,15 @@ module Homebrew
 
         # Get the current commit SHA
         current_sha = Utils.safe_popen_read("git", "-C", HOMEBREW_REPOSITORY, "rev-parse", "origin/main").strip
+        upstream_sha = begin
+          GitHub::API.commit("Homebrew", "brew")["sha"].to_s
+        rescue *GitHub::API::ERRORS => e
+          odie "Unable to check upstream Homebrew/brew main: #{e.message}!"
+        end
+        if current_sha != upstream_sha
+          odie "Local Homebrew/brew `origin/main` is not up-to-date with upstream `main`. " \
+               "Run `brew update` before `brew release --force`."
+        end
         release_workflow = "release.yml"
 
         dispatch_time = Time.now

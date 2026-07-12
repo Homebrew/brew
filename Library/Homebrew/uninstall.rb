@@ -85,7 +85,7 @@ module Homebrew
                 Formula.names
               else
                 Homebrew::API.formula_names
-              end
+              end.to_set
               maybe_paths = maybe_paths.reject do |path|
                 # Remove extension only if a file
                 # (e.g. directory with name "openssl@1.1" will be trimmed to "openssl@1")

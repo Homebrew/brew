@@ -6,17 +6,31 @@ require "rubocops/install_steps"
 RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
   subject(:cop) { described_class.new }
 
-  it "reports an offense when `post_install` and `post_install_steps` are both present" do
-    expect_offense(<<~RUBY)
+  it "allows `post_install` and `post_install_steps` during incremental conversion" do
+    expect_no_offenses(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
-        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: `post_install` and `post_install_steps` cannot both be used.
           touch "foo/state"
         end
 
         def post_install; end
+      end
+    RUBY
+  end
+
+  it "reports an offense when `post_install_steps` appears after `post_install`" do
+    expect_offense(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        def post_install; end
+
+        post_install_steps do
+        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: `post_install_steps` must appear before `post_install` to match run order.
+          touch "foo/state"
+        end
       end
     RUBY
   end
@@ -28,14 +42,14 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           system "true"
-          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `write`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`.
+          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`.
         end
       end
     RUBY
   end
 
   it "accepts install step DSL calls" do
-    expect_no_offenses(<<~RUBY)
+    expect_no_offenses(<<~'RUBY')
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
 
@@ -49,6 +63,9 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
           write "foo/banner", <<~TEXT
             literal banner
           TEXT
+          init_data_dir name, using: :postgresql_initdb
+          link_dir "source", "#{name}"
+          link_children "source", suffix: "-#{version.major}"
           compile_gsettings_schemas
           gio_querymodules
           gdk_pixbuf_query_loaders
@@ -67,7 +84,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           write "foo.conf", "prefix = #{prefix}"
-                                      ^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `write`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`.
+                                      ^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`.
         end
       end
     RUBY
@@ -97,6 +114,47 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
           touch "foo/state"
           mv "move-source", "move-target"
           ln_sf "move-target", "linked-target", source_base: :relative
+        end
+      end
+    RUBY
+  end
+
+  it "autocorrects simple `post_install` config writes" do
+    expect_offense(<<~'RUBY')
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        def post_install
+        ^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Use `post_install_steps` for simple file preparation.
+          (etc/"foo/foo.conf").write "key = value\n"
+          (var/"foo/banner").atomic_write <<~TEXT
+            literal banner
+          TEXT
+        end
+      end
+    RUBY
+
+    expect_correction(<<~'RUBY')
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        post_install_steps do
+          write "foo/foo.conf", "key = value\n", base: :etc, overwrite: true
+          write "foo/banner", <<~TEXT, overwrite: true
+            literal banner
+          TEXT
+        end
+      end
+    RUBY
+  end
+
+  it "does not autocorrect config writes without trailing newlines" do
+    expect_no_offenses(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        def post_install
+          (var/"foo.conf").write "key = value"
         end
       end
     RUBY

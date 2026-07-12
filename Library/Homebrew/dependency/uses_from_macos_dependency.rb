@@ -21,6 +21,7 @@ class UsesFromMacOSDependency < Dependency
     else false
     end
   end
+  alias eql? ==
 
   sig { override.returns(Integer) }
   def hash

@@ -19,10 +19,7 @@ module Dependable
 
   # `:run` and `:linked` are no longer used but keep them here to avoid their
   # misuse in future.
-  RESERVED_TAGS = T.let(
-    [:build, :optional, :recommended, :run, :test, :linked, :implicit, :no_linkage].freeze,
-    T::Array[Symbol],
-  )
+  RESERVED_TAGS = [:build, :optional, :recommended, :run, :test, :linked, :implicit, :no_linkage].freeze
 
   abstract!
 

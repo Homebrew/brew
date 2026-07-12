@@ -15,7 +15,7 @@ module Utils
 
       sig { returns(T::Boolean) }
       def available?
-        executable.present?
+        !!executable
       end
 
       sig { returns(T.nilable(Pathname)) }

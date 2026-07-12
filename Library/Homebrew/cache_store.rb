@@ -10,10 +10,8 @@ require "json"
 class CacheStoreDatabase
   extend T::Generic
 
-  # Sorbet type members are mutable by design and cannot be frozen.
-  Key = type_member # rubocop:disable Style/MutableConstant
-  # Sorbet type members are mutable by design and cannot be frozen.
-  Value = type_member # rubocop:disable Style/MutableConstant
+  Key = type_member
+  Value = type_member
 
   # Yields the cache store database.
   # Closes the database after use if it has been loaded.

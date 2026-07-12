@@ -40,9 +40,10 @@ module Homebrew
       params(
         downloadable:      Downloadable,
         check_attestation: T::Boolean,
+        stage:             T::Boolean,
       ).void
     }
-    def enqueue(downloadable, check_attestation: false)
+    def enqueue(downloadable, check_attestation: false, stage: pour)
       @cancelled.make_false
       cached_location = downloadable.cached_download
 
@@ -50,8 +51,8 @@ module Homebrew
       targets = @symlink_targets.fetch(cached_location)
       targets << downloadable
 
-      @downloads_by_location[cached_location] ||= Concurrent::Promises.future_on(
-        pool, RetryableDownload.new(downloadable, tries:, pour:),
+      download = @downloads_by_location[cached_location] ||= Concurrent::Promises.future_on(
+        pool, RetryableDownload.new(downloadable, tries:),
         @cancelled, force, quiet, check_attestation
       ) do |download, cancelled, force, quiet, check_attestation|
         raise CancelledDownloadError if cancelled.true?
@@ -70,6 +71,7 @@ module Homebrew
 
           check_bottle_attestation(downloadable, check_attestation:)
           create_symlinks_for_shared_download(cached_location)
+          cached_location
         rescue Interrupt
           raise CancelledDownloadError
         ensure
@@ -77,7 +79,20 @@ module Homebrew
         end
       end
 
-      downloads[downloadable] = @downloads_by_location.fetch(cached_location)
+      downloads[downloadable] = if stage
+        download.then_on(
+          pool, downloadable, pour
+        ) do |downloaded_path, queued_downloadable, queue_pour|
+          if queued_downloadable.stage_from_download_queue?(downloaded_path, pour: queue_pour)
+            queued_downloadable.extracting!
+            queued_downloadable.stage_from_download_queue(downloaded_path, pour: queue_pour)
+            queued_downloadable.downloaded!
+          end
+          downloaded_path
+        end
+      else
+        download
+      end
     end
 
     sig { void }

@@ -10,6 +10,7 @@ RSpec.describe Cask::Artifact::AbstractInstallSteps, :cask do
 
       preflight_steps do
         mkdir_p "Prepared"
+        set_permissions "Prepared", "0755"
         touch "Prepared/touched"
       end
 
@@ -35,9 +36,15 @@ RSpec.describe Cask::Artifact::AbstractInstallSteps, :cask do
     (cask.staged_path/"move-source").write "moved"
 
     installer = Cask::Installer.new(cask, command: NeverSudoSystemCommand)
-    installer.install_artifacts
+    previous_umask = File.umask(077)
+    begin
+      installer.install_artifacts
+    ensure
+      File.umask(previous_umask)
+    end
 
     expect(cask.staged_path/"Prepared").to be_a_directory
+    expect((cask.staged_path/"Prepared").stat.mode & 0777).to eq(0755)
     expect(cask.staged_path/"Prepared/touched").to exist
     expect(cask.staged_path/"Prepared/moved").to exist
     expect(cask.staged_path/"PreparedLink").to be_a_symlink

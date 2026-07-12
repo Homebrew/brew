@@ -14,6 +14,7 @@ cask "with-install-steps" do
 
   preflight_steps do
     mkdir_p "Prepared"
+    set_permissions "Prepared", "0755"
     touch "Prepared/touched"
   end
 
@@ -24,6 +25,7 @@ cask "with-install-steps" do
 
   uninstall_preflight_steps do
     mkdir "UninstallPrepared"
+    set_ownership "UninstallPrepared", user: "root", group: "wheel"
     touch "UninstallPrepared/touched"
   end
 

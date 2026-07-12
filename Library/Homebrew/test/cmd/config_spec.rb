@@ -69,6 +69,21 @@ RSpec.describe Homebrew::Cmd::Config do
     expect(output.string).to include("Windows: Windows 11 Pro (25H2) [26200.8457]\n")
   end
 
+  it "prints config sections in order" do
+    output = StringIO.new
+
+    allow(SystemConfig).to receive(:config_sections).and_return([:homebrew_config, :host_software_config])
+    allow(SystemConfig).to receive(:homebrew_config) do |io|
+      sleep(0.01)
+      io.puts "first"
+    end
+    allow(SystemConfig).to receive(:host_software_config) { |io| io.puts "second" }
+
+    SystemConfig.dump_verbose_config(output)
+
+    expect(output.string).to eq("first\nsecond\n")
+  end
+
   it "does not print HOMEBREW_EVAL_ALL unless it is directly set" do
     output = StringIO.new
 

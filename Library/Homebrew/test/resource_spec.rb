@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 require "resource"
+require "bottle"
+require "github_packages"
 require "livecheck"
 
 RSpec.describe Resource do
@@ -260,6 +262,48 @@ RSpec.describe Resource do
       resource.patch(:p1, :DATA)
       expect(resource.patches.count).to eq(1)
       expect(resource.patches.first.strip).to eq(:p1)
+    end
+  end
+
+  describe Resource::BottleManifest do
+    describe "#sbom_supplement" do
+      it "returns the current platform supplement from an all bottle manifest" do
+        bottle_resource = Resource.new("testball")
+        bottle_resource.version("1.0")
+        bottle_resource.sha256(TEST_SHA256)
+
+        bottle = instance_double(
+          Bottle,
+          name:     "testball",
+          rebuild:  0,
+          resource: bottle_resource,
+          tag:      Utils::Bottles.tag(:all),
+        )
+        manifest = described_class.new(bottle)
+
+        current_tag_supplement = { "packages" => [{ "SPDXID" => "SPDXRef-current" }] }
+        manifest_json = {
+          "manifests" => [
+            {
+              "annotations" => {
+                "org.opencontainers.image.ref.name" => "1.0.all",
+                "sh.brew.bottle.digest"             => TEST_SHA256,
+                "sh.brew.sbom.supplement"           => {
+                  "tags" => {
+                    Utils::Bottles.tag.to_s => current_tag_supplement,
+                    "other"                 => { "packages" => [{ "SPDXID" => "SPDXRef-other" }] },
+                  },
+                }.to_json,
+              },
+            },
+          ],
+        }
+        cached_download = mktmpdir/"manifest.json"
+        cached_download.write(JSON.generate(manifest_json))
+        allow(manifest).to receive(:cached_download).and_return(cached_download)
+
+        expect(manifest.sbom_supplement).to eq(current_tag_supplement)
+      end
     end
   end
 

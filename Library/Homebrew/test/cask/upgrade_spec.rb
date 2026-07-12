@@ -400,10 +400,11 @@ RSpec.describe Cask::Upgrade, :cask do
     end
 
     it "warns and skips when the installed caskfile raises CaskInvalidError" do
-      allow(Cask::CaskLoader).to receive(:load).and_call_original
-      allow(Cask::CaskLoader).to receive(:load).with(auto_updates.installed_caskfile)
-                                               .and_raise(Cask::CaskInvalidError.new(auto_updates.token,
-                                                                                     "broken DSL"))
+      allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_call_original
+      allow(Cask::CaskLoader)
+        .to receive(:load_from_installed_caskfile)
+        .with(auto_updates.installed_caskfile)
+        .and_raise(Cask::CaskInvalidError.new(auto_updates.token, "broken DSL"))
 
       expect do
         described_class.upgrade_casks!(dry_run: true, args:)
@@ -411,10 +412,11 @@ RSpec.describe Cask::Upgrade, :cask do
     end
 
     it "warns and skips when the installed caskfile raises CaskUnreadableError" do
-      allow(Cask::CaskLoader).to receive(:load).and_call_original
-      allow(Cask::CaskLoader).to receive(:load).with(auto_updates.installed_caskfile)
-                                               .and_raise(Cask::CaskUnreadableError.new(auto_updates.token,
-                                                                                        "syntax error"))
+      allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_call_original
+      allow(Cask::CaskLoader)
+        .to receive(:load_from_installed_caskfile)
+        .with(auto_updates.installed_caskfile)
+        .and_raise(Cask::CaskUnreadableError.new(auto_updates.token, "syntax error"))
 
       expect do
         described_class.upgrade_casks!(dry_run: true, args:)
@@ -422,9 +424,11 @@ RSpec.describe Cask::Upgrade, :cask do
     end
 
     it "warns and skips when the installed caskfile raises MethodDeprecatedError" do
-      allow(Cask::CaskLoader).to receive(:load).and_call_original
-      allow(Cask::CaskLoader).to receive(:load).with(auto_updates.installed_caskfile)
-                                               .and_raise(MethodDeprecatedError.new)
+      allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_call_original
+      allow(Cask::CaskLoader)
+        .to receive(:load_from_installed_caskfile)
+        .with(auto_updates.installed_caskfile)
+        .and_raise(MethodDeprecatedError.new)
 
       expect do
         described_class.upgrade_casks!(dry_run: true, args:)
@@ -450,16 +454,14 @@ RSpec.describe Cask::Upgrade, :cask do
     let(:outdated_auto_updates) { Cask::CaskLoader.load(cask_path("outdated/auto-updates")) }
     let(:outdated_local_caffeine) { Cask::CaskLoader.load(cask_path("outdated/local-caffeine")) }
     let(:auto_updates_identity) do
-      Cask::Quarantine::SigningIdentity.new(identifier: "sh.brew.auto-updates", team_identifier: "ABCDE12345")
-    end
-    let(:auto_updates_changed_team_identity) do
-      Cask::Quarantine::SigningIdentity.new(identifier: "sh.brew.auto-updates", team_identifier: "VWXYZ98765")
-    end
-    let(:auto_updates_changed_identifier_identity) do
-      Cask::Quarantine::SigningIdentity.new(identifier: "sh.brew.auto-updates-renamed", team_identifier: "ABCDE12345")
+      Cask::Quarantine::SigningIdentity.new(
+        requirement: 'identifier "sh.brew.auto-updates" and certificate leaf[subject.OU] = "ABCDE12345"',
+      )
     end
     let(:local_caffeine_identity) do
-      Cask::Quarantine::SigningIdentity.new(identifier: "sh.brew.local-caffeine", team_identifier: "ABCDE12345")
+      Cask::Quarantine::SigningIdentity.new(
+        requirement: 'identifier "sh.brew.local-caffeine" and certificate leaf[subject.OU] = "ABCDE12345"',
+      )
     end
 
     before do
@@ -472,7 +474,8 @@ RSpec.describe Cask::Upgrade, :cask do
     end
 
     it 'prefetches "auto_updates true" casks with quarantine until signed identity is checked' do
-      installer = instance_double(Cask::Installer, enqueue_downloads: nil, source_download_requires_pre_fetch?: false)
+      installer = instance_double(Cask::Installer, check_requirements: nil, enqueue_downloads: nil,
+                                                   source_download_requires_pre_fetch?: false)
 
       expect(Cask::Installer).to receive(:new) do |cask, **options|
         expect(cask).to eq(auto_updates)
@@ -485,87 +488,135 @@ RSpec.describe Cask::Upgrade, :cask do
     end
 
     it "releases quarantine when Gatekeeper was already approved and identity matches" do
-      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path).and_return(auto_updates_identity)
+      allow(Cask::Quarantine).to receive(:signing_identity_match)
+        .with(auto_updates_path, auto_updates_identity).and_return(true)
 
-      expect(described_class.release_app_upgrade_quarantine?(
+      expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
                auto_updates,
                { auto_updates_path.to_s => auto_updates_identity },
                { auto_updates_path.to_s => true },
-             )).to be(true)
+             )).to eq(:release)
     end
 
-    it "still keeps quarantine when the Team ID changes" do
-      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path)
-                                                           .and_return(auto_updates_changed_team_identity)
+    it "reports a changed signer when the new app does not satisfy the old designated requirement" do
+      allow(Cask::Quarantine).to receive(:signing_identity_match)
+        .with(auto_updates_path, auto_updates_identity).and_return(false)
 
-      expect(described_class.release_app_upgrade_quarantine?(
+      expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
                auto_updates,
                { auto_updates_path.to_s => auto_updates_identity },
                { auto_updates_path.to_s => true },
-             )).to be(false)
+             )).to eq(:signer_changed)
     end
 
-    it "still keeps quarantine when the signed identifier changes" do
-      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path)
-                                                           .and_return(auto_updates_changed_identifier_identity)
+    it "reports an unverified signer when the old signing identity is missing" do
+      expect(described_class.quarantine_release_decision(
+               outdated_auto_updates,
+               auto_updates,
+               { auto_updates_path.to_s => nil },
+               { auto_updates_path.to_s => true },
+             )).to eq(:signer_unverified)
+    end
 
-      expect(described_class.release_app_upgrade_quarantine?(
+    it "reports an unverified signer when the new signing identity is missing" do
+      allow(Cask::Quarantine).to receive(:signing_identity_match)
+        .with(auto_updates_path, auto_updates_identity).and_return(nil)
+
+      expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
                auto_updates,
                { auto_updates_path.to_s => auto_updates_identity },
                { auto_updates_path.to_s => true },
-             )).to be(false)
+             )).to eq(:signer_unverified)
     end
 
-    it "releases quarantine when signed fields are unset before or after the upgrade" do
-      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path)
-                                                           .and_return(auto_updates_identity)
-
-      expect(described_class.release_app_upgrade_quarantine?(
-               outdated_auto_updates,
-               auto_updates,
-               { auto_updates_path.to_s => Cask::Quarantine::SigningIdentity.new(identifier:      nil,
-                                                                                 team_identifier: nil) },
-               { auto_updates_path.to_s => true },
-             )).to be(true)
-    end
-
-    it "still keeps quarantine when Gatekeeper was not approved" do
-      allow(Cask::Quarantine).to receive(:signing_identity).with(auto_updates_path).and_return(auto_updates_identity)
-
-      expect(described_class.release_app_upgrade_quarantine?(
+    it "reports missing approval when Gatekeeper was not approved" do
+      expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
                auto_updates,
                { auto_updates_path.to_s => auto_updates_identity },
                { auto_updates_path.to_s => false },
-             )).to be(false)
+             )).to eq(:unapproved)
     end
 
     it "releases quarantine for casks without auto_updates when Gatekeeper was already approved " \
        "and identity matches" do
-      allow(Cask::Quarantine).to receive(:signing_identity).with(local_caffeine_path)
-                                                           .and_return(local_caffeine_identity)
+      allow(Cask::Quarantine).to receive(:signing_identity_match)
+        .with(local_caffeine_path, local_caffeine_identity).and_return(true)
 
-      expect(described_class.release_app_upgrade_quarantine?(
+      expect(described_class.quarantine_release_decision(
                outdated_local_caffeine,
                local_caffeine,
                { local_caffeine_path.to_s => local_caffeine_identity },
                { local_caffeine_path.to_s => true },
-             )).to be(true)
+             )).to eq(:release)
     end
 
-    it "still keeps quarantine for casks without auto_updates when Gatekeeper was not approved" do
-      allow(Cask::Quarantine).to receive(:signing_identity).with(local_caffeine_path)
-                                                           .and_return(local_caffeine_identity)
-
-      expect(described_class.release_app_upgrade_quarantine?(
+    it "reports missing approval for casks without auto_updates when Gatekeeper was not approved" do
+      expect(described_class.quarantine_release_decision(
                outdated_local_caffeine,
                local_caffeine,
                { local_caffeine_path.to_s => local_caffeine_identity },
                { local_caffeine_path.to_s => false },
-             )).to be(false)
+             )).to eq(:unapproved)
+    end
+  end
+
+  context "when an upgrade decides on quarantine after install" do
+    before do
+      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/local-caffeine"))).install
+      allow(Cask::Quarantine).to receive(:available?).and_return(true)
+    end
+
+    it "inherits quarantine approval when the previous version was already approved" do
+      identity = Cask::Quarantine::SigningIdentity.new(requirement: 'identifier "sh.brew.local-caffeine"')
+      allow(Cask::Quarantine).to receive_messages(
+        user_approved?:         true,
+        signing_identity:       identity,
+        signing_identity_match: true,
+      )
+
+      expect(Cask::Quarantine).to receive(:inherit_user_approval!).with(download_path: local_caffeine_path)
+
+      described_class.upgrade_casks!(local_caffeine, args:)
+    end
+
+    it "reports the skipped quarantine release under --verbose when approval is missing" do
+      allow(Cask::Quarantine).to receive_messages(user_approved?: false, inherit_user_approval!: nil)
+
+      expect do
+        described_class.upgrade_casks!(local_caffeine, verbose: true, args:)
+      end.to output(/local-caffeine wasn't quarantine approved/).to_stdout
+    end
+
+    it "reports a changed signer by default so the returning Gatekeeper prompt is explained" do
+      identity = Cask::Quarantine::SigningIdentity.new(requirement: 'identifier "sh.brew.local-caffeine"')
+      allow(Cask::Quarantine).to receive_messages(
+        user_approved?:         true,
+        signing_identity:       identity,
+        signing_identity_match: false,
+        inherit_user_approval!: nil,
+      )
+
+      expect do
+        described_class.upgrade_casks!(local_caffeine, args:)
+      end.to output(/local-caffeine's signer changed so macOS will prompt/).to_stderr
+    end
+
+    it "reports an unverified signer by default so the returning Gatekeeper prompt is explained" do
+      identity = Cask::Quarantine::SigningIdentity.new(requirement: 'identifier "sh.brew.local-caffeine"')
+      allow(Cask::Quarantine).to receive_messages(
+        user_approved?:         true,
+        signing_identity:       identity,
+        signing_identity_match: nil,
+        inherit_user_approval!: nil,
+      )
+
+      expect do
+        described_class.upgrade_casks!(local_caffeine, args:)
+      end.to output(/couldn't verify local-caffeine's signer/).to_stderr
     end
   end
 
@@ -581,6 +632,89 @@ RSpec.describe Cask::Upgrade, :cask do
       described_class.upgrade_casks!(cask, dry_run: true, summary_disabled:, args:)
     end.to output(/Not upgrading livecheck-disabled, it is disabled/).to_stderr
     expect(summary_disabled).to eq(["livecheck-disabled"])
+  end
+
+  context "when upgrading the same cask twice" do
+    before do
+      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/local-caffeine"))).install
+    end
+
+    it "uses the installed metadata version for the second upgrade" do
+      described_class.upgrade_casks!(local_caffeine, args:)
+      newer_cask = Cask::CaskLoader::FromContentLoader.new(<<~RUBY).load(config: nil)
+        cask "local-caffeine" do
+          version "1.2.4"
+          sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+
+          url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+          homepage "https://brew.sh/"
+
+          app "Caffeine.app"
+        end
+      RUBY
+
+      expect do
+        described_class.upgrade_casks!(newer_cask, args:)
+      end.to change(newer_cask, :installed_version).from("1.2.3").to("1.2.4")
+    end
+  end
+
+  context "when upgrading after a forced upgrade without a cask receipt" do
+    before do
+      InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("outdated/local-caffeine")))
+    end
+
+    it "uses the forced upgrade metadata for the next upgrade" do
+      receipt_path = local_caffeine.metadata_main_container_path/AbstractTab::FILENAME
+
+      expect(receipt_path).not_to exist
+      expect(Cask::CaskLoader.load_from_installed_caskfile(local_caffeine.installed_caskfile).artifacts)
+        .to be_empty
+
+      described_class.upgrade_casks!(local_caffeine, force: true, args:)
+
+      expect(receipt_path).to exist
+      expect(local_caffeine.tab.installed_on_request).to be(true)
+      expect(Cask::CaskLoader.load_from_installed_caskfile(local_caffeine.installed_caskfile).artifacts)
+        .to include(an_instance_of(Cask::Artifact::App))
+
+      newer_cask = Cask::CaskLoader::FromContentLoader.new(<<~RUBY).load(config: nil)
+        cask "local-caffeine" do
+          version "1.2.4"
+          sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+
+          url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+          homepage "https://brew.sh/"
+
+          app "Caffeine.app"
+        end
+      RUBY
+
+      expect do
+        described_class.upgrade_casks!(newer_cask, args:)
+      end.to change(newer_cask, :installed_version).from("1.2.3").to("1.2.4")
+    end
+  end
+
+  context "when an upgrade fails after installing artifacts" do
+    before do
+      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/local-caffeine"))).install
+    end
+
+    it "keeps the old cask receipt" do
+      receipt_path = local_caffeine.metadata_main_container_path/AbstractTab::FILENAME
+
+      expect(JSON.parse(receipt_path.read).dig("source", "version")).to eq("1.2.2")
+
+      allow_any_instance_of(Cask::Installer).to receive(:finalize_upgrade)
+        .and_raise(Cask::CaskError, "finalize failed")
+
+      expect do
+        described_class.upgrade_casks!(local_caffeine, args:)
+      end.to raise_error(Cask::CaskError)
+
+      expect(JSON.parse(receipt_path.read).dig("source", "version")).to eq("1.2.2")
+    end
   end
 
   context "when an upgrade failed" do
@@ -635,6 +769,15 @@ RSpec.describe Cask::Upgrade, :cask do
       expect(bad_checksum_path).to be_a_directory
       expect(bad_checksum.installed_version).to eq "1.2.2"
       expect(bad_checksum.staged_path).not_to exist
+    end
+
+    it "raises the original upgrade error, not a failure that occurs while rolling back" do
+      will_fail_if_upgraded = Cask::CaskLoader.load("will-fail-if-upgraded")
+      allow_any_instance_of(Cask::Installer).to receive(:revert_upgrade).and_raise("rollback failed")
+
+      expect do
+        described_class.upgrade_casks!(will_fail_if_upgraded, args:)
+      end.to raise_error(Cask::CaskError)
     end
   end
 
@@ -702,6 +845,75 @@ RSpec.describe Cask::Upgrade, :cask do
       expect(bad_checksum_2_path).to be_a_file
       expect(bad_checksum_2.installed_version).to eq "1.2.2"
       expect(bad_checksum_2.staged_path).not_to exist
+    end
+  end
+
+  context "when an outdated cask is incompatible" do
+    before do
+      [
+        "outdated/local-caffeine",
+        "outdated/local-transmission-zip",
+      ].each do |cask|
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask)))
+      end
+    end
+
+    it "continues upgrading compatible casks" do
+      summary_upgrades = []
+      upgraded_tokens = []
+      incompatible_installer = instance_double(Cask::Installer, source_download_requires_pre_fetch?: false)
+      compatible_installer = instance_double(Cask::Installer, source_download_requires_pre_fetch?: false)
+
+      allow(incompatible_installer).to receive(:check_requirements)
+        .and_raise(Cask::CaskError, "local-caffeine: This cask does not run on macOS versions older than Tahoe.")
+      allow(compatible_installer).to receive_messages(check_requirements: nil, enqueue_downloads: nil)
+      allow(Cask::Installer).to receive(:new) do |cask, **|
+        (cask.token == "local-caffeine") ? incompatible_installer : compatible_installer
+      end
+      allow(described_class).to receive(:upgrade_cask) do |_, new_cask, **|
+        upgraded_tokens << new_cask.token
+      end
+
+      expect do
+        described_class.upgrade_casks!(
+          local_caffeine, local_transmission,
+          show_upgrade_summary: false,
+          summary_upgrades:,
+          args:
+        )
+      end.to raise_error(
+        Cask::CaskError,
+        "local-caffeine: This cask does not run on macOS versions older than Tahoe.",
+      )
+
+      expect(upgraded_tokens).to eq(["local-transmission-zip"])
+      expect(summary_upgrades).to eq(["local-transmission-zip 2.60 -> 2.61"])
+    end
+
+    it "raises prefetched requirement errors after compatible casks" do
+      summary_upgrades = []
+      upgraded_tokens = []
+      cask_error = Cask::CaskError.new(
+        "local-caffeine: This cask does not run on macOS versions older than Tahoe.",
+      )
+
+      allow(described_class).to receive(:upgrade_cask) do |_, new_cask, **|
+        upgraded_tokens << new_cask.token
+      end
+
+      expect do
+        described_class.upgrade_casks!(
+          local_transmission,
+          skip_prefetch:        true,
+          show_upgrade_summary: false,
+          summary_upgrades:,
+          prefetched_errors:    [cask_error],
+          args:,
+        )
+      end.to raise_error(Cask::CaskError, cask_error.message)
+
+      expect(upgraded_tokens).to eq(["local-transmission-zip"])
+      expect(summary_upgrades).to eq(["local-transmission-zip 2.60 -> 2.61"])
     end
   end
 end

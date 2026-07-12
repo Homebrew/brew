@@ -2,6 +2,11 @@
 # frozen_string_literal: true
 
 require "upgrade"
+require "formula_installer"
+require "dependency"
+require "keg"
+require "pkg_version"
+require "test/support/fixtures/testball"
 
 RSpec.describe Homebrew::Upgrade do
   describe "::format_upgrade_summary" do
@@ -43,6 +48,26 @@ RSpec.describe Homebrew::Upgrade do
         "spotify             1.2.84.476 -> 1.2.92.148",
         "visual-studio-code  1.111.0    -> 1.125.1",
       ])
+    end
+  end
+
+  describe "::upgrade_formula" do
+    it "shows the version transition for an unlinked dependency installed at an older version" do
+      python = formula("python@3.14") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/python-3.14.6.tgz"
+      end
+      kegs = ["2.7.14_2", "3.6.1", "3.6.4_4", "3.7.1"].map do |v|
+        instance_double(Keg, version: PkgVersion.parse(v))
+      end
+      allow(python).to receive_messages(any_version_installed?: true, optlinked?: false, installed_kegs: kegs)
+      dependency = instance_double(Dependency, to_formula: python)
+      formula_installer = instance_double(
+        FormulaInstaller, formula: Testball.new, compute_dependencies: [dependency]
+      )
+
+      expect { described_class.send(:upgrade_formula, formula_installer, dry_run: true) }
+        .to output(/Would upgrade.*python@3.14 3.7.1 -> 3.14.6/m).to_stdout
     end
   end
 end

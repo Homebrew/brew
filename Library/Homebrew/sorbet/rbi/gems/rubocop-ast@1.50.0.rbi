@@ -371,7 +371,9 @@ module RuboCop::AST::Descendence
 
   protected
 
+  def visit_all_descendants(&block); end
   def visit_descendants(types, &block); end
+  def visit_descendants_of_types(types, &block); end
 end
 
 class RuboCop::AST::DstrNode < ::RuboCop::AST::StrNode
@@ -439,9 +441,9 @@ end
 
 class RuboCop::AST::HashNode < ::RuboCop::AST::Node
   def braces?; end
-  def each_key(&block); end
+  def each_key; end
   def each_pair; end
-  def each_value(&block); end
+  def each_value; end
   def empty?; end
   def keys; end
   def mixed_delimiters?; end
@@ -864,6 +866,7 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   def true_type?; end
   def truthy_literal?; end
   def type?(*types); end
+  def type_in?(types); end
   def undef_type?; end
   def unless_guard_type?; end
   def until_post_type?; end
@@ -924,6 +927,7 @@ RuboCop::AST::Node::POST_CONDITION_LOOP_TYPES = T.let(T.unsafe(nil), Set)
 RuboCop::AST::Node::REFERENCES = T.let(T.unsafe(nil), Set)
 RuboCop::AST::Node::SHORTHAND_ASSIGNMENTS = T.let(T.unsafe(nil), Set)
 RuboCop::AST::Node::SPECIAL_KEYWORDS = T.let(T.unsafe(nil), Set)
+RuboCop::AST::Node::SPECIAL_KEYWORD_TYPES = T.let(T.unsafe(nil), Set)
 RuboCop::AST::Node::TRUTHY_LITERALS = T.let(T.unsafe(nil), Set)
 RuboCop::AST::Node::VARIABLES = T.let(T.unsafe(nil), Set)
 
@@ -1533,7 +1537,6 @@ RuboCop::AST::NodePattern::Sets::SET_GSUB_GSUB = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_GSUB_GSUB_SUB_SUB = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_IF_UNLESS = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_INCLUDE_EXTEND_PREPEND = T.let(T.unsafe(nil), Set)
-RuboCop::AST::NodePattern::Sets::SET_INCLUDE_MEMBER = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_INCLUDE_PREPEND = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_INSTANCE_EVAL_CLASS_EVAL_MODULE_EVAL = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_INSTANCE_EXEC_CLASS_EXEC_MODULE_EXEC = T.let(T.unsafe(nil), Set)
@@ -1555,6 +1558,7 @@ RuboCop::AST::NodePattern::Sets::SET_MATCH_MATCH_ = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MATCH__MATCH = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MATCH___MATCH = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MAX_BY_MIN_BY_MINMAX_BY = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_MEMBER_INCLUDE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MODULE_FUNCTION_RUBY2_KEYWORDS = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_NEW_ = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_NEW_COMPILE = T.let(T.unsafe(nil), Set)
@@ -1605,6 +1609,7 @@ RuboCop::AST::NodePattern::Sets::SET_TO_H_TO_HASH_MERGE_ETC = T.let(T.unsafe(nil
 RuboCop::AST::NodePattern::Sets::SET_TO_I_TO_F_TO_C_TO_R = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_TO_TO_NOT_NOT_TO = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_TRUE_FALSE = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_TYPE_MEMBER_TYPE_TEMPLATE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_ZERO_POSITIVE_NEGATIVE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET__ = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET__AT_SLICE = T.let(T.unsafe(nil), Set)
@@ -1716,6 +1721,14 @@ RuboCop::AST::PredicateOperatorNode::SEMANTIC_AND = T.let(T.unsafe(nil), String)
 RuboCop::AST::PredicateOperatorNode::SEMANTIC_OPERATORS = T.let(T.unsafe(nil), Array)
 RuboCop::AST::PredicateOperatorNode::SEMANTIC_OR = T.let(T.unsafe(nil), String)
 
+module RuboCop::AST::PrismLazyTokens
+  def tokenize_deferred(source_buffer); end
+
+  private
+
+  def deferred_tokens(source_buffer, tokens, offset_cache); end
+end
+
 class RuboCop::AST::PrismPreparsed
   def initialize(prism_result); end
 
@@ -1776,12 +1789,18 @@ class RuboCop::AST::ProcessedSource
   def first_token_index(range_or_node); end
   def last_token_index(range_or_node); end
   def normalize_parser_engine(parser_engine, ruby_version); end
+  def parse_and_lex(parser); end
   def parser_class(ruby_version, parser_engine); end
+  def parser_tokens; end
   def source_range(range_or_node); end
+  def store_tokens(tokens); end
   def tokenize(parser); end
+  def tokens_sorted?; end
+  def trim_lines_after_data_marker(all_lines); end
 
   class << self
     def from_file(path, ruby_version, parser_engine: T.unsafe(nil)); end
+    def lazy_tokens_parser_class(base); end
   end
 end
 

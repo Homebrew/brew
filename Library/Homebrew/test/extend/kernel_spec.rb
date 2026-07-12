@@ -87,4 +87,18 @@ RSpec.describe Kernel do
       expect(path).not_to eq("/bin")
     end
   end
+
+  describe "#quiet_system" do
+    it "delegates to Homebrew.quiet_system" do
+      expect(Homebrew).to receive(:quiet_system).with("true", nil).and_return(true)
+      expect(quiet_system("true")).to be true
+    end
+  end
+
+  describe "#safe_system" do
+    it "delegates to Homebrew.safe_system" do
+      expect(Homebrew).to receive(:safe_system).with("true", nil)
+      safe_system("true")
+    end
+  end
 end

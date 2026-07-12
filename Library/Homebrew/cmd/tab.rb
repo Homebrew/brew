@@ -65,15 +65,15 @@ module Homebrew
           cask = formula_or_cask
           cask_tab = cask.tab
           cask_tabfile = cask_tab.tabfile
-          if cask_tabfile.blank? || !cask_tabfile.exist?
-            [cask.token, Cask::Tab.create(cask), true]
-          else
+          if cask_tabfile&.exist?
             [cask.token, cask_tab, false]
+          else
+            [cask.token, Cask::Tab.create(cask), true]
           end
         end
 
         tabfile = tab.tabfile
-        if !created_tab && (tabfile.blank? || !tabfile.exist?)
+        if !created_tab && !tabfile&.exist?
           raise ArgumentError,
                 "Tab file for #{name} does not exist."
         end

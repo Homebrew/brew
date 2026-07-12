@@ -13,10 +13,7 @@ class AbstractTab
   extend Cachable
   extend T::Helpers
 
-  # Sorbet type members are mutable by design and cannot be frozen.
-  # rubocop:disable Style/MutableConstant
   Cache = type_template { { fixed: T::Hash[T.any(Pathname, String), T.untyped] } }
-  # rubocop:enable Style/MutableConstant
 
   FILENAME = "INSTALL_RECEIPT.json"
 

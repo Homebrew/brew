@@ -499,7 +499,7 @@ module PyPI
       Utils::Path.formula_opt_libexec(python_name)/"bin/python",
       "-m", "pip", "install", "-q", "--disable-pip-version-check",
       "--dry-run", "--ignore-installed",
-      "--uploaded-prior-to=#{(Time.now.utc - Homebrew::RELEASE_COOLDOWN_SECONDS).iso8601(0)}",
+      "--uploaded-prior-to=P#{Homebrew::RELEASE_COOLDOWN_DAYS}D",
       "--report=/dev/stdout", *packages.map(&:to_s)
     ]
     options = {}

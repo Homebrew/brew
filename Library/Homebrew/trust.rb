@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "env_config"
+require "etc"
 require "json"
 require "tap"
 require "utils"
@@ -22,9 +23,14 @@ module Homebrew
     }.freeze, T::Hash[Symbol, Symbol])
     private_constant :SETTING_KEYS
 
-    sig { returns(Pathname) }
-    def self.trust_file
-      Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME"))/"trust.json"
+    sig { params(home: T.any(String, Pathname)).returns(Pathname) }
+    def self.trust_file(home: Dir.home(ENV.fetch("USER")))
+      user_config_home = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME"))
+      if user_config_home == Pathname.new(Dir.home(ENV.fetch("USER")))/".homebrew"
+        Pathname.new(home.to_s)/".homebrew/trust.json"
+      else
+        user_config_home/"trust.json"
+      end
     end
 
     sig { params(type: Symbol, name: T.any(String, Tap)).returns(T::Boolean) }
@@ -411,7 +417,25 @@ module Homebrew
 
     sig { returns(T::Hash[String, T::Array[String]]) }
     def self.trust_store
-      trust_path = trust_file
+      trust_path = if Homebrew.running_as_root? &&
+                      (sudo_user = ENV.fetch("HOMEBREW_SUDO_USER", nil).presence) &&
+                      sudo_user != "root"
+        passwd = begin
+          Etc.getpwnam(sudo_user)
+        rescue ArgumentError
+          nil
+        end
+
+        if passwd
+          trust_file(home: passwd.dir)
+        else
+          opoo "Could not determine home directory for `$HOMEBREW_SUDO_USER` (#{sudo_user}); " \
+               "falling back to #{trust_file}."
+          trust_file
+        end
+      else
+        trust_file
+      end
       return {} unless trust_path.exist?
 
       parsed_store = JSON.parse(trust_path.read)

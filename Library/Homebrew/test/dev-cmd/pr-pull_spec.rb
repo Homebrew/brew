@@ -130,6 +130,49 @@ RSpec.describe Homebrew::DevCmd::PrPull do
         expect(git_repo.commit_message).to include("Co-authored-by: #{secondary_author}")
       end
     end
+
+    context "when squashing raises an error" do
+      let!(:original_hash) do
+        (tap.path/"Formula").mkpath
+        formula_file.write(formula)
+        cd(tap.path) do
+          safe_system Utils::Git.git, "init"
+          safe_system Utils::Git.git, "add", formula_file
+          safe_system Utils::Git.git, "commit", "-m", "foo 1.0 (new formula)"
+          `git rev-parse HEAD`.chomp
+        end
+      end
+
+      before do
+        cd tap.path do
+          File.write(formula_file, formula_revision)
+          safe_system Utils::Git.git, "commit", formula_file, "-m", "revision"
+        end
+        allow(Utils::Git).to receive(:cherry_pick!).and_raise(
+          ErrorDuringExecution.new(["git", "cherry-pick"], status: 1),
+        )
+      end
+
+      it "aborts the cherry-pick when cherry_picked is true" do
+        cd(tap.path) do
+          allow(pr_pull).to receive(:system).and_call_original
+          expect(pr_pull).to receive(:system).with("git", "-C", tap.path.to_s, "cherry-pick", "--abort")
+          expect do
+            pr_pull.autosquash!(original_hash, tap:, cherry_picked: true)
+          end.to raise_error(ErrorDuringExecution)
+        end
+      end
+
+      it "does not abort the cherry-pick when cherry_picked is false" do
+        cd(tap.path) do
+          allow(pr_pull).to receive(:system).and_call_original
+          expect(pr_pull).not_to receive(:system).with("git", "-C", tap.path.to_s, "cherry-pick", "--abort")
+          expect do
+            pr_pull.autosquash!(original_hash, tap:, cherry_picked: false)
+          end.to raise_error(ErrorDuringExecution)
+        end
+      end
+    end
   end
 
   describe "#signoff!" do

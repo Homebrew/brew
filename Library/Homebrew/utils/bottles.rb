@@ -142,6 +142,11 @@ module Utils
         tab
       end
 
+      sig { returns(String) }
+      def missing_all_bottle_publish_note
+        "publishing without one anyway"
+      end
+
       private
 
       sig { params(bottle_file: Pathname).returns(T::Array[String]) }

@@ -1,6 +1,6 @@
 ---
 name: language_server-protocol
-version: 3.17.0.5
+version: 3.17.0.6
 type: bundler
 summary: A Language Server Protocol SDK
 homepage: https://github.com/mtsmfm/language_server-protocol-ruby

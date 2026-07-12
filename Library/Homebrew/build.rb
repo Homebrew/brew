@@ -238,7 +238,7 @@ class Build
     elsif formula.prefix.directory?
       formula.prefix
     elsif (children = formula.rack.children.presence) && children.size == 1 &&
-          (first_child = children.first.presence) && first_child.directory?
+          (first_child = children.first) && first_child.directory?
       first_child
     else
       raise

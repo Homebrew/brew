@@ -13,6 +13,7 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
     it "runs the system installer on the specified pkgs" do
       pkg = cask.artifacts.find { |a| a.is_a?(described_class) }
 
+      current_user = User.current&.to_s
       expect(fake_system_command).to receive(:run!).with(
         "/usr/sbin/installer",
         args:         ["-pkg", cask.staged_path.join("MyFancyPkg", "Fancy.pkg"), "-target", "/"],
@@ -20,9 +21,9 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
         sudo_as_root: true,
         print_stdout: true,
         env:          {
-          "LOGNAME"  => ENV.fetch("USER"),
-          "USER"     => ENV.fetch("USER"),
-          "USERNAME" => ENV.fetch("USER"),
+          "LOGNAME"  => an_instance_of(String).and(eq(current_user)),
+          "USER"     => an_instance_of(String).and(eq(current_user)),
+          "USERNAME" => an_instance_of(String).and(eq(current_user)),
         },
       )
 
@@ -59,6 +60,7 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
       expect(file).to receive(:unlink)
       expect(Tempfile).to receive(:open).and_yield(file)
 
+      current_user = User.current&.to_s
       expect(fake_system_command).to receive(:run!).with(
         "/usr/sbin/installer",
         args:         [
@@ -70,9 +72,9 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
         sudo_as_root: true,
         print_stdout: true,
         env:          {
-          "LOGNAME"  => ENV.fetch("USER"),
-          "USER"     => ENV.fetch("USER"),
-          "USERNAME" => ENV.fetch("USER"),
+          "LOGNAME"  => an_instance_of(String).and(eq(current_user)),
+          "USER"     => an_instance_of(String).and(eq(current_user)),
+          "USERNAME" => an_instance_of(String).and(eq(current_user)),
         },
       )
 

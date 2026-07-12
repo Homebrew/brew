@@ -26,7 +26,7 @@ RSpec.describe Homebrew::DevCmd::Edit do
     allow(CoreTap.instance).to receive(:installed?).and_return(false)
 
     require "api"
-    allow(Homebrew::API).to receive(:formula_names).and_return(["testball"])
+    allow(Homebrew::API).to receive(:formula_name?).with("testball").and_return(true)
     allow(Homebrew::API::Formula).to receive(:all_formulae).and_return("testball" => {})
 
     expect(CoreTap.instance).to receive(:install).with(force: true) do

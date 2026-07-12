@@ -155,14 +155,13 @@ RSpec.describe PyPI do
 
   describe ".pip_report" do
     it "filters packages uploaded within the last day" do
-      allow(Time).to receive(:now).and_return(Time.utc(2026, 4, 4, 12, 0, 0))
       `true`
 
       expect(Utils).to receive(:popen_read).with(
         { "PIP_REQUIRE_VIRTUALENV" => "false" },
         Utils::Path.formula_opt_libexec("python")/"bin/python", "-m", "pip", "install", "-q",
         "--disable-pip-version-check", "--dry-run", "--ignore-installed",
-        "--uploaded-prior-to=2026-04-03T12:00:00Z", "--report=/dev/stdout", "snakemake"
+        "--uploaded-prior-to=P1D", "--report=/dev/stdout", "snakemake"
       ).and_return('{"install":[]}')
 
       expect(described_class.pip_report([PyPI::Package.new("snakemake")])).to eq([])
