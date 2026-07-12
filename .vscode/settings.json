@@ -24,6 +24,7 @@
   ],
   "spellright.documentTypes": [
     "markdown",
+    "log"
   ],
   "rubyLsp.customRubyCommand": "source ../../.vscode/ruby-lsp-activate.sh",
   "rubyLsp.bundleGemfile": "Library/Homebrew/Gemfile",
@@ -67,5 +68,13 @@
   },
   "simplecov-vscode.path": "Library/Homebrew/test/coverage/.resultset.json",
   "simplecov-vscode.enabled": false,
-  "specstory.cloudSync.enabled": "never"
+  "specstory.cloudSync.enabled": "never",
+  "githubPullRequests.neverIgnoreDefaultBranch": true,
+  "githubPullRequests.notifications": "pullRequests",
+  "githubPullRequests.showPullRequestNumberInTree": true,
+  "spellright.parserByClass": {
+    "log": {
+      "parser": "plain"
+    }
+  }
 }

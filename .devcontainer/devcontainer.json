@@ -22,7 +22,8 @@
         "ban.spellright",
         "redhat.vscode-yaml",
         "koichisasada.vscode-rdbg",
-        "editorconfig.editorconfig"
+        "editorconfig.editorconfig",
+        "swiftlang.swift-vscode"
       ]
     }
   },
