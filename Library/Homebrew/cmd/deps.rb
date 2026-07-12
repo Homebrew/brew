@@ -37,7 +37,7 @@ module Homebrew
                description: "Sort dependencies in topological order."
         switch "-1", "--direct", "--declared", "--1",
                description: "Show only the direct dependencies declared in the formula."
-        switch "-i", "--info",
+        switch "--desc",
                description: "Show description with each dependency."
         switch "--union",
                description: "Show the union of dependencies for multiple <formula>, instead of the intersection."
