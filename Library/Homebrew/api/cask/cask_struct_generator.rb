@@ -39,7 +39,12 @@ module Homebrew
             hash["disable_args"] = disable_args
           end
 
-          hash["names"] = hash["name"]
+          # Use explicit defaults rather than `nil` for absent keys: when runtime
+          # type checking is disabled, `CaskStruct.from_hash` does not apply the
+          # struct's prop defaults, so `nil` values would survive into the struct
+          # and crash consumers that iterate them (installed cask JSON files omit
+          # most keys).
+          hash["names"] = hash["name"] || []
 
           if (artifacts = hash["artifacts"])
             hash["raw_artifacts"] = process_artifacts(artifacts)
@@ -49,7 +54,7 @@ module Homebrew
 
           hash["renames"] = hash["rename"]&.map do |operation|
             [operation[:from], operation[:to]]
-          end
+          end || []
 
           hash["ruby_source_checksum"] = {
             sha256: hash.dig("ruby_source_checksum", :sha256),

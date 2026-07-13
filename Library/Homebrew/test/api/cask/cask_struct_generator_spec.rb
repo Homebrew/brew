@@ -4,6 +4,19 @@
 require "api"
 
 RSpec.describe Homebrew::API::Cask::CaskStructGenerator do
+  describe "::generate_cask_struct_hash" do
+    it "passes explicit array defaults for keys absent from minimal installed caskfiles" do
+      # `CaskStruct.from_hash` only applies prop defaults when runtime type
+      # checking is enabled (it always is under RSpec, never for users), so
+      # `nil` here means `nil` props in production and crashes cask loading.
+      expect(Homebrew::API::CaskStruct).to receive(:from_hash)
+        .with(hash_including("names" => [], "renames" => []), ignore_types: true)
+        .and_call_original
+
+      described_class.generate_cask_struct_hash({ "version" => "1.0" }, ignore_types: true)
+    end
+  end
+
   describe ":process_depends_on" do
     let(:depends_on_non_macos) do
       {
