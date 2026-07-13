@@ -40,13 +40,15 @@ module Homebrew
         flag   "--only=",
                description: "Run only `<test_script>_spec.rb`. Appending `:<line_number>` will start at a " \
                             "specific line."
+        flag   "--except=",
+               description: "Skip running `<test_script>_spec.rb` or tests in `<test_script>/`."
         flag   "--profile=",
                description: "Output the <n> slowest tests. When run without `--no-parallel` this will output " \
                             "the slowest tests for each parallel test process."
         flag   "--seed=",
                description: "Randomise tests with the specified <value> instead of a random seed."
 
-        conflicts "--changed", "--only"
+        conflicts "--changed", "--only", "--except"
         conflicts "--stackprof", "--vernier", "--ruby-prof"
 
         named_args :none
@@ -89,6 +91,16 @@ module Homebrew
             changed_test_files
           else
             Dir.glob("test/**/*_spec.rb")
+          end
+
+          if (except = args.except)
+            except_tests = except.split(",").flat_map do |test_name|
+              tests = Dir.glob("test/{#{test_name},#{test_name}/**/*}_spec.rb")
+              raise UsageError, "Invalid `--except` argument: #{test_name}" if tests.blank?
+
+              tests
+            end
+            files -= except_tests
           end
 
           if files.blank?

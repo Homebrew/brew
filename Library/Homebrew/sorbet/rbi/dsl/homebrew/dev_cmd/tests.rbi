@@ -17,6 +17,9 @@ class Homebrew::DevCmd::Tests::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def coverage?; end
 
+  sig { returns(T.nilable(String)) }
+  def except; end
+
   sig { returns(T::Boolean) }
   def fail_fast?; end
 
