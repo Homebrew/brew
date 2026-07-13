@@ -105,6 +105,7 @@ module Homebrew
 
           if files.blank?
             raise UsageError, "The `--only` argument requires a valid file or folder name!" if only
+            raise UsageError, "The `--except` argument excluded all tests!" if except
 
             if args.changed?
               opoo "No tests are directly associated with the changed files!"
