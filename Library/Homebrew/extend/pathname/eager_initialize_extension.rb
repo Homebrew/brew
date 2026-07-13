@@ -13,12 +13,12 @@ module EagerInitializeExtension
 
   sig { params(args: T.untyped).void }
   def initialize(*args)
-    @magic_number = T.let(nil, T.nilable(String))
-    @file_type = T.let(nil, T.nilable(String))
-    @zipinfo = T.let(nil, T.nilable(T::Array[String]))
-    @which_install_info = T.let(nil, T.nilable(String))
-    @disk_usage = T.let(nil, T.nilable(Integer))
-    @file_count = T.let(nil, T.nilable(Integer))
+    @magic_number = T.let(nil, NilClass)
+    @file_type = T.let(nil, NilClass)
+    @zipinfo = T.let(nil, NilClass)
+    @which_install_info = T.let(nil, NilClass)
+    @disk_usage = T.let(nil, NilClass)
+    @file_count = T.let(nil, NilClass)
     super
   end
 end
