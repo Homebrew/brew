@@ -2485,15 +2485,16 @@ _brew_test_bot() {
 # brew tests
 _brew_tests() {
   _arguments \
-    '(--only)--changed[Only runs tests on files that were changed from the `main` branch]' \
+    '(--only --except)--changed[Only runs tests on files that were changed from the `main` branch]' \
     '--coverage[Generate code coverage reports]' \
     '--debug[Enable debugging using `ruby/debug`, or surface the standard `odebug` output]' \
+    '(--changed --only)--except[Skip running `test_script_spec.rb` or tests in `test_script/`]' \
     '--fail-fast[Exit early on the first failing test]' \
     '--generic[Run only OS-agnostic tests]' \
     '--help[Show this message]' \
     '--no-parallel[Run tests serially]' \
     '--online[Include tests that use the GitHub API and tests that use any of the taps for official external commands]' \
-    '(--changed)--only[Run only `test_script_spec.rb`. Appending `:line_number` will start at a specific line]' \
+    '(--changed --except)--only[Run only `test_script_spec.rb`. Appending `:line_number` will start at a specific line]' \
     '--profile[Output the n slowest tests. When run without `--no-parallel` this will output the slowest tests for each parallel test process]' \
     '--quiet[Make some output more quiet]' \
     '(--stackprof --vernier)--ruby-prof[Use `ruby-prof` to profile tests]' \

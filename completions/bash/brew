@@ -3030,6 +3030,7 @@ _brew_tests() {
       --changed
       --coverage
       --debug
+      --except
       --fail-fast
       --generic
       --help

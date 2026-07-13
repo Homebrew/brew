@@ -3819,6 +3819,10 @@ Run Homebrew's unit and integration tests.
 : Run only `<test_script>_spec.rb`. Appending `:<line_number>` will start at a
   specific line.
 
+`--except`
+
+: Skip running `<test_script>_spec.rb` or tests in `<test_script>/`.
+
 `--profile`
 
 : Output the *`n`* slowest tests. When run without `--no-parallel` this will
