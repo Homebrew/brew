@@ -3,8 +3,6 @@
 
 require "cachable"
 require "api"
-require "api/source_download"
-require "download_queue"
 
 module Homebrew
   module API
@@ -32,13 +30,14 @@ module Homebrew
         "internal/packages.#{effective_tag}.jws.json"
       end
 
-      sig { params(name: String).returns(Homebrew::API::FormulaStruct) }
+      T::Sig::WithoutRuntime.sig { params(name: String).returns(Homebrew::API::FormulaStruct) }
       def self.formula_struct(name)
         return cache["formula_structs"][name] if cache.key?("formula_structs") && cache["formula_structs"].key?(name)
 
         hash = formula_hashes[name]
         raise "No formula found for #{name}" unless hash
 
+        ::Kernel.require "api/formula_struct"
         struct = Homebrew::API::FormulaStruct.deserialize(hash, bottle_tag: effective_tag)
 
         cache["formula_structs"] ||= {}
@@ -47,13 +46,14 @@ module Homebrew
         struct
       end
 
-      sig { params(name: String).returns(Homebrew::API::CaskStruct) }
+      T::Sig::WithoutRuntime.sig { params(name: String).returns(Homebrew::API::CaskStruct) }
       def self.cask_struct(name)
         return cache["cask_structs"][name] if cache.key?("cask_structs") && cache["cask_structs"].key?(name)
 
         hash = cask_hashes[name]
         raise "No cask found for #{name}" unless hash
 
+        ::Kernel.require "api/cask_struct"
         struct = Homebrew::API::CaskStruct.deserialize(hash)
 
         cache["cask_structs"] ||= {}
@@ -67,7 +67,7 @@ module Homebrew
         HOMEBREW_CACHE_API/packages_endpoint
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(download_queue: Homebrew::DownloadQueue, stale_seconds: T.nilable(Integer), enqueue: T::Boolean)
           .returns([T::Hash[String, T.untyped], T::Boolean])
       }
@@ -89,6 +89,8 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def self.download_and_cache_data!
+        ::Kernel.require "download_queue"
+
         json_contents, updated = fetch_packages_api!
         cache["formula_structs"] = {}
         cache["cask_structs"] = {}

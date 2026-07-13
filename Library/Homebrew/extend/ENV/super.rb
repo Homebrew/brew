@@ -19,13 +19,13 @@ module Superenv
   include SharedEnvExtension
   include Utils::Output::Mixin
 
-  sig { returns(T::Array[Formula]) }
+  T::Sig::WithoutRuntime.sig { returns(T::Array[Formula]) }
   attr_accessor :keg_only_deps
 
-  sig { returns(T::Array[Formula]) }
+  T::Sig::WithoutRuntime.sig { returns(T::Array[Formula]) }
   attr_accessor :deps
 
-  sig { returns(T::Array[Formula]) }
+  T::Sig::WithoutRuntime.sig { returns(T::Array[Formula]) }
   attr_accessor :run_time_deps
 
   sig { params(base: Superenv).void }
@@ -48,6 +48,8 @@ module Superenv
 
   sig { void }
   def initialize
+    ::Kernel.require "formula"
+
     @keg_only_deps = T.let([], T::Array[Formula])
     @deps = T.let([], T::Array[Formula])
     @run_time_deps = T.let([], T::Array[Formula])
@@ -63,7 +65,7 @@ module Superenv
     delete("as_nl")
   end
 
-  sig {
+  T::Sig::WithoutRuntime.sig {
     params(
       formula:         T.nilable(Formula),
       cc:              T.nilable(String),

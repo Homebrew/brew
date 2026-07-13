@@ -17,7 +17,7 @@ module OS
       end
       private :homebrew_extra_pkg_config_paths
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(
           formula:         T.nilable(Formula),
           cc:              T.nilable(String),
@@ -70,7 +70,9 @@ module OS
         remove "CMAKE_FRAMEWORK_PATH", "#{sdk}/System/Library/Frameworks"
       end
 
-      sig { params(version: T.nilable(MacOSVersion), formula: T.nilable(Formula), testing_formula: T::Boolean).void }
+      T::Sig::WithoutRuntime.sig {
+        params(version: T.nilable(MacOSVersion), formula: T.nilable(Formula), testing_formula: T::Boolean).void
+      }
       def macosxsdk(version = nil, formula: nil, testing_formula: false)
         # Sets all needed `lib` and `include` dirs to `CFLAGS`, `CPPFLAGS`, `LDFLAGS`.
         remove_macosxsdk
@@ -85,6 +87,7 @@ module OS
           MacOS.sdk(version)
         end
 
+        require "diagnostic"
         Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
         sdk = T.must(sdk).path
 

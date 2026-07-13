@@ -337,6 +337,7 @@ module Utils
 
         return unless Homebrew::API.formula_name? formula.name
 
+        ::Kernel.require "api/formula"
         json = Homebrew::API::Formula.formula_json formula.name
         return if json.blank? || json["analytics"].blank?
 
@@ -355,6 +356,7 @@ module Utils
 
         return unless Homebrew::API.cask_token?(cask.token)
 
+        ::Kernel.require "api/cask"
         json = Homebrew::API::Cask.cask_json cask.token
         return if json.blank? || json["analytics"].blank?
 

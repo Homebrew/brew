@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cmd/--env"
+require "extend/ENV/super"
 require "cmd/shared_examples/args_parse"
 
 RSpec.describe Homebrew::Cmd::Env do

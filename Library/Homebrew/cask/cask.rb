@@ -491,7 +491,7 @@ module Cask
       nil
     end
 
-    sig { params(cask_struct: Homebrew::API::CaskStruct, tap_git_head: T.nilable(String)).void }
+    T::Sig::WithoutRuntime.sig { params(cask_struct: Homebrew::API::CaskStruct, tap_git_head: T.nilable(String)).void }
     def populate_from_api!(cask_struct, tap_git_head:)
       raise ArgumentError, "Expected cask to be loaded from the API" unless loaded_from_api?
 

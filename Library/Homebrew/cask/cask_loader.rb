@@ -418,7 +418,12 @@ module Cask
           if path
             path
           elsif from_json
-            from_internal_json ? Homebrew::API::Internal.cached_packages_json_file_path : Homebrew::API::Cask.cached_json_file_path
+            if from_internal_json
+              Homebrew::API::Internal.cached_packages_json_file_path
+            else
+              ::Kernel.require "api/cask"
+              Homebrew::API::Cask.cached_json_file_path
+            end
           else
             Homebrew::API.cached_cask_json_file_path
           end,
@@ -478,12 +483,13 @@ module Cask
       def load_from_internal_json(config:, api_source:)
         api_source = api_source.dup
         tap_git_head = api_source.delete("tap_git_head")
+        ::Kernel.require "api/cask_struct"
         cask_struct = Homebrew::API::CaskStruct.deserialize(api_source)
 
         load_from_struct(config:, cask_struct:, api_source:, tap_git_head:, internal_api: true)
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(
           config:       T.nilable(Config),
           cask_struct:  Homebrew::API::CaskStruct,

@@ -10,7 +10,7 @@ module Stdenv
   SAFE_CFLAGS_FLAGS = "-w -pipe"
   private_constant :SAFE_CFLAGS_FLAGS
 
-  sig {
+  T::Sig::WithoutRuntime.sig {
     params(
       formula:         T.nilable(Formula),
       cc:              T.nilable(String),
@@ -109,7 +109,10 @@ module Stdenv
   def determine_cc
     s = super
     begin
-      return Formula["llvm"].opt_bin/"clang" if s == "llvm_clang"
+      if s == "llvm_clang"
+        ::Kernel.require "formula"
+        return Formula["llvm"].opt_bin/"clang"
+      end
     rescue FormulaUnavailableError
       # Don't fail and just let callee handle Pathname("llvm_clang")
     end

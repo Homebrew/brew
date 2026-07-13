@@ -2,11 +2,8 @@
 # frozen_string_literal: true
 
 require "hardware"
-require "diagnostic"
 require "extend/ENV/sensitive"
 require "extend/ENV/shared"
-require "extend/ENV/std"
-require "extend/ENV/super"
 
 # <!-- vale off -->
 # @!parse
@@ -23,6 +20,9 @@ module EnvActivation
 
   sig { params(env: T.nilable(String)).void }
   def activate_extensions!(env: nil)
+    require "extend/ENV/std"
+    require "extend/ENV/super"
+
     if superenv?(env)
       extend(Superenv)
     else

@@ -11,6 +11,7 @@ module Kernel
   def superenv?(env)
     return false if env == "std"
 
+    require "extend/ENV/super"
     !Superenv.bin.nil?
   end
   private :superenv?

@@ -8,7 +8,7 @@ module OS
 
       requires_ancestor { ::SharedEnvExtension }
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(
           formula:         T.nilable(::Formula),
           cc:              T.nilable(String),
@@ -35,6 +35,7 @@ module OS
 
       sig { void }
       def libxml2
+        ::Kernel.require "formula"
         append "CPPFLAGS", "-I#{::Formula["libxml2"].include/"libxml2"}"
       rescue FormulaUnavailableError
         nil

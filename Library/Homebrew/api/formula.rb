@@ -5,7 +5,6 @@ require "cachable"
 require "api"
 require "api/source_download"
 require "local_patch"
-require "download_queue"
 require "api/formula/formula_struct_generator"
 
 module Homebrew
@@ -39,7 +38,7 @@ module Homebrew
         cache["formula_json"][name] = json_formula
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(
           formula:        ::Formula,
           path:           String,
@@ -74,7 +73,7 @@ module Homebrew
         download
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(
           formula:        ::Formula,
           download_queue: Homebrew::DownloadQueue,
@@ -120,7 +119,7 @@ module Homebrew
         HOMEBREW_CACHE_API/DEFAULT_API_FILENAME
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(download_queue: Homebrew::DownloadQueue, stale_seconds: T.nilable(Integer), enqueue: T::Boolean)
           .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
       }
@@ -128,7 +127,7 @@ module Homebrew
         Homebrew::API.fetch_json_api_file DEFAULT_API_FILENAME, stale_seconds:, download_queue:, enqueue:
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(download_queue: Homebrew::DownloadQueue, stale_seconds: T.nilable(Integer), enqueue: T::Boolean)
           .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
       }

@@ -4,6 +4,7 @@
 require "compilers"
 require "os/linux/glibc"
 require "os/linux/libstdcxx"
+require "pkg_version"
 require "system_command"
 
 module OS
@@ -41,6 +42,8 @@ module OS
         sig { params(formula: T.any(::Pathname, String)).returns(T.any(String, PkgVersion)) }
         def formula_linked_version(formula)
           return "N/A" if Homebrew::EnvConfig.no_install_from_api? && !CoreTap.instance.installed?
+
+          ::Kernel.require "formulary"
 
           Formulary.factory(formula).any_installed_version || "N/A"
         rescue FormulaUnavailableError

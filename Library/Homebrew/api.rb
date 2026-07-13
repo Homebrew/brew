@@ -2,13 +2,8 @@
 # frozen_string_literal: true
 
 require "api/analytics"
-require "api/cask"
-require "api/formula"
 require "api/internal"
-require "api/formula_struct"
-require "api/cask_struct"
 require "base64"
-require "download_queue"
 require "utils/output"
 
 module Homebrew
@@ -52,7 +47,7 @@ module Homebrew
       (Time.now - stale_seconds) < target.mtime
     end
 
-    sig {
+    T::Sig::WithoutRuntime.sig {
       params(
         endpoint:       String,
         target:         Pathname,
@@ -184,6 +179,7 @@ module Homebrew
 
     sig { void }
     def self.fetch_api_files!
+      ::Kernel.require "download_queue"
       download_queue = Homebrew::DownloadQueue.new
 
       stale_seconds = if ENV["HOMEBREW_API_UPDATED"].present? ||

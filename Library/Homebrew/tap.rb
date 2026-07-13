@@ -1279,8 +1279,10 @@ class Tap
   sig { overridable.returns(T::Array[String]) }
   def autobump
     autobump_packages = if core_cask_tap?
+      ::Kernel.require "api/cask"
       Homebrew::API::Cask.all_casks
     elsif core_tap?
+      ::Kernel.require "api/formula"
       Homebrew::API::Formula.all_formulae
     else
       {}

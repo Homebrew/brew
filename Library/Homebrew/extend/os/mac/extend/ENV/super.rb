@@ -98,7 +98,7 @@ module OS
       end
 
       # @private
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(
           formula:         T.nilable(Formula),
           cc:              T.nilable(String),
@@ -113,6 +113,7 @@ module OS
         sdk = formula ? MacOS.sdk_for_formula(formula) : MacOS.sdk
         is_xcode_sdk = sdk&.source == :xcode
 
+        require "diagnostic"
         Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
         self["HOMEBREW_SDKROOT"] = sdk.path.to_s if sdk
 

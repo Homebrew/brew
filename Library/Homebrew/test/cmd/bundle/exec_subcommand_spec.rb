@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "bundle"
+require "extend/ENV/super"
 require "bundle/subcommand/exec"
 require "bundle/brewfile"
 require "bundle/brew_services"

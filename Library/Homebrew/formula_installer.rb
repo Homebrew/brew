@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "api/formula"
 require "formula"
 require "api/formula_bottle"
 require "keg"

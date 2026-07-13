@@ -45,6 +45,7 @@ begin
     formula.extend(Debrew::Formula)
   end
 
+  require "extend/ENV/std"
   ENV.extend(Stdenv)
   ENV.setup_build_environment(formula:, testing_formula: true)
   Pathname.activate_extensions!

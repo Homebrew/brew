@@ -22,7 +22,7 @@ module OS
         end
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(
           formula:         T.nilable(Formula),
           cc:              T.nilable(String),
@@ -58,6 +58,8 @@ module OS
 
       sig { returns(T::Array[::Pathname]) }
       def homebrew_extra_paths
+        ::Kernel.require "formula"
+
         paths = super
         paths += %w[binutils make].filter_map do |f|
           bin = ::Formula[f].opt_bin
@@ -80,7 +82,7 @@ module OS
         paths.map { |p| ::Pathname.new(p) }
       end
 
-      sig { params(formula: T.nilable(Formula)).returns(PATH) }
+      T::Sig::WithoutRuntime.sig { params(formula: T.nilable(Formula)).returns(PATH) }
       def determine_rpath_paths(formula)
         PATH.new(
           *formula&.lib,

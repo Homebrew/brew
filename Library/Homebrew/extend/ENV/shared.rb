@@ -42,7 +42,7 @@ module SharedEnvExtension
   sig { returns(T.nilable(String)) }
   attr_reader :bottle_arch
 
-  sig {
+  T::Sig::WithoutRuntime.sig {
     params(
       formula:         T.nilable(Formula),
       cc:              T.nilable(String),
@@ -54,7 +54,7 @@ module SharedEnvExtension
   }
   def setup_build_environment(formula: nil, cc: nil, build_bottle: false, bottle_arch: nil, testing_formula: false,
                               debug_symbols: false)
-    @formula = T.let(formula, T.nilable(Formula))
+    self.formula = formula
     @cc = T.let(cc, T.nilable(String))
     @build_bottle = T.let(build_bottle, T.nilable(T::Boolean))
     @bottle_arch = T.let(bottle_arch, T.nilable(String))
@@ -68,6 +68,13 @@ module SharedEnvExtension
     SANITIZED_VARS.each { |k| delete(k) }
   end
   private :reset
+
+  # A typed writer rather than an inline `T.let`, so that assigning `@formula`
+  # never evaluates the `Formula` constant: this file must stay loadable and
+  # runnable without `formula.rb` for commands that don't reference a formula.
+  T::Sig::WithoutRuntime.sig { params(formula: T.nilable(Formula)).returns(T.nilable(Formula)) }
+  attr_writer :formula
+  private :formula=
 
   sig { returns(T::Hash[String, T.nilable(String)]) }
   def remove_cc_etc
@@ -300,8 +307,10 @@ module SharedEnvExtension
     end
   end
 
-  sig { params(name: String).returns(Formula) }
+  T::Sig::WithoutRuntime.sig { params(name: String).returns(Formula) }
   def gcc_version_formula(name)
+    ::Kernel.require "formulary"
+
     version = name[GNU_GCC_REGEXP, 1]
     gcc_version_name = "gcc@#{version}"
 

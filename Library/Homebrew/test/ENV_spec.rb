@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 require "extend/ENV"
+require "extend/ENV/std"
+require "extend/ENV/super"
 
 RSpec.describe "ENV" do
   subject(:env) { {}.extend(EnvActivation).extend(described_class) }

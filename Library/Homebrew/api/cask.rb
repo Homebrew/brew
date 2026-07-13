@@ -4,7 +4,6 @@
 require "cachable"
 require "api"
 require "api/source_download"
-require "download_queue"
 require "api/cask/cask_struct_generator"
 
 module Homebrew
@@ -38,7 +37,7 @@ module Homebrew
         cache["cask_json"][name] = json_cask
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(
           cask:           ::Cask::Cask,
           download_queue: Homebrew::DownloadQueue,
@@ -88,7 +87,7 @@ module Homebrew
         HOMEBREW_CACHE_API/DEFAULT_API_FILENAME
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(download_queue: ::Homebrew::DownloadQueue, stale_seconds: T.nilable(Integer), enqueue: T::Boolean)
           .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
       }
@@ -96,7 +95,7 @@ module Homebrew
         Homebrew::API.fetch_json_api_file DEFAULT_API_FILENAME, stale_seconds:, download_queue:, enqueue:
       end
 
-      sig {
+      T::Sig::WithoutRuntime.sig {
         params(download_queue: ::Homebrew::DownloadQueue, stale_seconds: T.nilable(Integer), enqueue: T::Boolean)
           .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
       }

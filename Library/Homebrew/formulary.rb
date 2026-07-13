@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "digest/sha2"
+require "formula"
 require "uri"
 require "cachable"
 require "tab"
@@ -125,7 +126,6 @@ module Formulary
 
     Homebrew::Trust.require_trusted_formula!(name, path)
 
-    require "formula"
     require "ignorable"
     require "stringio"
 
@@ -212,7 +212,7 @@ module Formulary
     platform_cache.fetch(:path)[path.to_s] = klass
   end
 
-  sig {
+  T::Sig::WithoutRuntime.sig {
     params(
       name:           String,
       formula_struct: Homebrew::API::FormulaStruct,
