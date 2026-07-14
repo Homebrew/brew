@@ -87,15 +87,19 @@ else
   # results are only consumed by runtime checking, which is disabled.
   # @private
   module TNoOpTypeConstructors
-    # A union with NilClass rather than plain untyped: `prop`/`const` infer
-    # optionality from their type argument, so nilable props must still look
-    # nilable or serialising them while nil raises.
-    # Not frozen: `Union` memoises internally on first use.
+    # Not frozen: `Untyped`/`Union` memoise internally on first use.
     # rubocop:disable Style/MutableConstant
-    UNTYPED = T::Types::Union.new([T::Types::Untyped.new, T::Types::Simple.new(NilClass)])
+    UNTYPED = T::Types::Untyped.new
+    # Only `nilable` may return a type containing `NilClass`: `prop`/`const`
+    # infer optionality from their type argument, so a nilable prop must still
+    # look nilable or serialising it while nil raises. Every other
+    # constructor here (including generic container element types like
+    # `T::Array[...]`) must stay non-nilable, or props declared with them
+    # silently lose their `default:` on deserialization.
+    NILABLE_UNTYPED = T::Types::Union.new([T::Types::Untyped.new, T::Types::Simple.new(NilClass)])
     # rubocop:enable Style/MutableConstant
 
-    def nilable(_type) = UNTYPED
+    def nilable(_type) = NILABLE_UNTYPED
     def any(*_types) = UNTYPED
     def all(*_types) = UNTYPED
     def class_of(_klass) = UNTYPED
