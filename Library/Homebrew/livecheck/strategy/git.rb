@@ -211,9 +211,6 @@ module Homebrew
           return match_data if content.blank?
 
           versions_from_content(content, regex, &block).each do |match_text|
-            # `Version::new` only raises `TypeError` for non-string values
-            # when runtime type checking is enabled (never for users), so
-            # guard explicitly instead of rescuing.
             next unless match_text.is_a?(String)
 
             match_data[:matches][match_text] = Version.new(match_text)
