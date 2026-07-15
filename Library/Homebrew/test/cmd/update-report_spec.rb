@@ -191,6 +191,18 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       "source"              => { "version" => "1.0" },
       "uninstall_artifacts" => [{ "app" => ["Caffeine.app"] }],
     })
+    no_receipt_caskfile = caskroom/"no-receipt/.metadata/1.0/20250101000000.000/Casks/no-receipt.rb"
+    no_receipt_caskfile.dirname.mkpath
+    no_receipt_caskfile.write <<~RUBY
+      cask "no-receipt" do
+        version "1.0"
+        sha256 :no_check
+        url "https://example.com/no-receipt.zip"
+        name "No Receipt"
+        homepage "https://example.com/no-receipt"
+        app "No Receipt.app"
+      end
+    RUBY
     internal_json_caskfile.dirname.mkpath
     internal_json_caskfile.write JSON.pretty_generate({
       "homepage"      => "https://example.com/api-cask",
@@ -217,6 +229,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
     loaded_cask = Cask::CaskLoader.load_from_installed_caskfile(json_caskfile)
     loaded_api_cask = Cask::CaskLoader.load_from_installed_caskfile(api_caskfile)
+    no_receipt_json_caskfile = no_receipt_caskfile.sub_ext(".json")
+    loaded_no_receipt_cask = Cask::CaskLoader.load_from_installed_caskfile(no_receipt_json_caskfile)
     expect([
       rb_caskfile.exist?,
       JSON.parse(json_caskfile.read).keys,
@@ -229,7 +243,34 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       JSON.parse(api_caskfile.read).keys,
       loaded_api_cask.loaded_from_internal_api?,
       loaded_api_cask.artifacts.grep(Cask::Artifact::App).count,
-    ]).to eq([false, [], "1.0", 1, true, false, true, false, [], false, 1])
+      no_receipt_caskfile.exist?,
+      JSON.parse(no_receipt_json_caskfile.read).keys,
+      loaded_no_receipt_cask.artifacts.grep(Cask::Artifact::App).count,
+    ]).to eq([false, [], "1.0", 1, true, false, true, false, [], false, 1, false, ["artifacts"], 1])
+  end
+
+  it "keeps the original caskfile when the migrated metadata does not match" do
+    caskroom = mktmpdir/"Caskroom"
+    rb_caskfile = caskroom/"local-caffeine/.metadata/1.0/20250101000000.000/Casks/local-caffeine.rb"
+    rb_caskfile.dirname.mkpath
+    rb_caskfile.write <<~RUBY
+      cask "local-caffeine" do
+        version "1.0"
+        sha256 :no_check
+        url "https://example.com/local-caffeine.zip"
+        app "Caffeine.app"
+      end
+    RUBY
+
+    allow(Cask::Caskroom).to receive(:path).and_return(caskroom)
+    artifact_less_cask = Cask::Cask.new("local-caffeine") { version "1.0" }
+    allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_return(artifact_less_cask)
+
+    expect do
+      described_class.new(["--quiet"]).send(:migrate_caskroom_caskfiles_to_json)
+    end.to output(/does not match/).to_stderr
+
+    expect([rb_caskfile.exist?, rb_caskfile.sub_ext(".json").exist?]).to eq([true, false])
   end
 
   describe Reporter do

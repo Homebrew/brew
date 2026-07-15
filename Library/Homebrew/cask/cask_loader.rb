@@ -463,7 +463,7 @@ module Cask
           api_source["version"] = api_source["version"].presence ||
                                   @sourcefile_path.dirname.dirname.dirname.basename.to_s.presence ||
                                   installed_tab.version.presence
-          api_source["artifacts"] ||= installed_tab.uninstall_artifacts || []
+          api_source["artifacts"] ||= installed_tab.uninstall_artifacts.presence || api_artifacts || []
         end
 
         tap_git_head = api_source["tap_git_head"]
@@ -472,6 +472,17 @@ module Cask
         )
 
         load_from_struct(config:, cask_struct:, api_source:, tap_git_head:)
+      end
+
+      # Casks installed before install receipts existed lost their artifact
+      # data when their caskfiles were migrated to stubs; fall back to the
+      # API's current artifact definition so upgrades can still move the old
+      # artifacts aside.
+      sig { returns(T.nilable(T::Array[T::Hash[String, T.untyped]])) }
+      def api_artifacts
+        Homebrew::API::Cask.cask_json(token)["artifacts"].presence
+      rescue
+        nil
       end
 
       sig { params(config: T.nilable(Config), api_source: T::Hash[String, T.untyped]).returns(Cask) }

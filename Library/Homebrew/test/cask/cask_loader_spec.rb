@@ -472,6 +472,27 @@ RSpec.describe Cask::CaskLoader, :cask do
     end
   end
 
+  describe "loading a stub installed caskfile with no receipt artifact data" do
+    let(:tmpdir) { mktmpdir }
+    let(:cask_token) { "stub-cask" }
+    let(:cask_file) { tmpdir/"#{cask_token}.json" }
+
+    before do
+      tmpdir.mkpath
+      cask_file.write("{}")
+      allow(Homebrew::API::Cask).to receive(:cask_json).with(cask_token).and_return(
+        { "artifacts" => [{ "app" => ["Stub.app"] }] },
+      )
+    end
+
+    it "falls back to the API artifact definition" do
+      loader = Cask::CaskLoader::FromPathLoader.new(cask_file)
+      loader.instance_variable_set(:@from_installed_caskfile, true)
+      cask = loader.load(config: nil)
+      expect(cask.artifacts.grep(Cask::Artifact::App).map { |a| a.source.basename.to_s }).to eq(["Stub.app"])
+    end
+  end
+
   describe "FromPathLoader with symlinked taps" do
     let(:cask_token) { "testcask" }
     let(:tmpdir) { mktmpdir }

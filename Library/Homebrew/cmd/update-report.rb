@@ -372,8 +372,22 @@ module Homebrew
           cask = Cask::CaskLoader.load(caskfile, warn: false)
           next if cask.uninstall_flight_blocks?
 
-          (caskfile.dirname/"#{cask.token}.json").atomic_write(JSON.pretty_generate(cask.to_installed_json_hash))
-          caskfile.unlink
+          json_hash = cask.to_installed_json_hash
+          # Casks installed before install receipts existed have no other
+          # record of their artifacts, so keep them in the caskfile.
+          json_hash["artifacts"] = cask.artifacts_list unless cask.tab.tabfile&.exist?
+          json_caskfile = caskfile.dirname/"#{cask.token}.json"
+          json_caskfile.atomic_write(JSON.pretty_generate(json_hash))
+
+          # Never delete metadata the rewritten caskfile fails to reproduce.
+          reloaded = Cask::CaskLoader.load_from_installed_caskfile(json_caskfile, warn: false)
+          if reloaded.version == cask.version &&
+             reloaded.artifacts_list(uninstall_only: true) == cask.artifacts_list(uninstall_only: true)
+            caskfile.unlink
+          else
+            json_caskfile.unlink
+            opoo "Not migrating #{caskfile} to JSON metadata: the migrated metadata does not match."
+          end
         rescue => e
           opoo "Failed to migrate #{caskfile} to JSON metadata: #{e}"
         end
