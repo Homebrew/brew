@@ -1,0 +1,12 @@
+{
+  "source": {
+    "version": "1.0"
+  },
+  "uninstall_artifacts": [
+    {
+      "app": [
+        "Internal JSON.app"
+      ]
+    }
+  ]
+}
