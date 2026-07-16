@@ -8,6 +8,8 @@ require "cmd/shared_examples/args_parse"
 require "cmd/shared_examples/reinstall_pkgconf_if_needed"
 
 RSpec.describe Homebrew::Cmd::UpdateReport do
+  include Context
+
   it_behaves_like "parseable arguments"
 
   it_behaves_like "reinstall_pkgconf_if_needed"
@@ -266,10 +268,11 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     artifact_less_cask = Cask::Cask.new("local-caffeine") { version "1.0" }
     allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_return(artifact_less_cask)
 
-    Context.current = Context::ContextStruct.new(debug: true)
-    expect do
-      described_class.new(["--quiet"]).send(:migrate_caskroom_caskfiles_to_json)
-    end.to output(/does not match/).to_stderr
+    with_context(debug: true) do
+      expect do
+        described_class.new(["--quiet"]).send(:migrate_caskroom_caskfiles_to_json)
+      end.to output(/does not match/).to_stderr
+    end
 
     expect([rb_caskfile.exist?, rb_caskfile.sub_ext(".json").exist?]).to eq([true, false])
   end
