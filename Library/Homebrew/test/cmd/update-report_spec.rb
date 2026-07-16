@@ -266,6 +266,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     artifact_less_cask = Cask::Cask.new("local-caffeine") { version "1.0" }
     allow(Cask::CaskLoader).to receive(:load_from_installed_caskfile).and_return(artifact_less_cask)
 
+    Context.current = Context::ContextStruct.new(debug: true)
     expect do
       described_class.new(["--quiet"]).send(:migrate_caskroom_caskfiles_to_json)
     end.to output(/does not match/).to_stderr

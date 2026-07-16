@@ -388,7 +388,7 @@ module Homebrew
             caskfile.unlink
           else
             json_caskfile.unlink
-            opoo "Not migrating #{caskfile} to JSON metadata: the migrated metadata does not match."
+            odebug "Not migrating #{caskfile} to JSON metadata: the migrated metadata does not match."
           end
         rescue => e
           opoo "Failed to migrate #{caskfile} to JSON metadata: #{e}"
