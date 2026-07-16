@@ -265,6 +265,7 @@ class Formula
   def initialize(name, path, spec, alias_path: nil, tap: nil, force_bottle: false)
     # Only allow instances of subclasses. The base class does not hold any spec information (URLs etc).
     raise "Do not call `Formula.new' directly without a subclass." unless self.class < Formula
+    raise "Formula subclasses cannot override `brew`." if self.class.instance_method(:brew).owner != Formula
 
     # Stop any subsequent modification of a formula's definition.
     # Changes do not propagate to existing instances of formulae.

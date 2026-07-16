@@ -1,0 +1,22 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "spdxVersion": "SPDX-2.3",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Bottle-act",
+      "name": "act",
+      "downloadLocation": "https://ghcr.io/v2/homebrew/core/act/blobs/sha256:abc"
+    },
+    {
+      "SPDXID": "SPDXRef-Archive-act-src",
+      "name": "act",
+      "versionInfo": "0.2.80",
+      "downloadLocation": "https://github.com/nektos/act/archive/refs/tags/v0.2.80.tar.gz"
+    },
+    {
+      "SPDXID": "SPDXRef-Compiler",
+      "name": "clang",
+      "downloadLocation": "NOASSERTION"
+    }
+  ]
+}

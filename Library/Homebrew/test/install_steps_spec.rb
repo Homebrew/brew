@@ -24,6 +24,12 @@ RSpec.describe Homebrew::InstallSteps do
     FileUtils.rm_rf root
   end
 
+  around do |example|
+    with_env(HOMEBREW_GITHUB_ACTIONS: nil) do
+      example.run
+    end
+  end
+
   specify "runs mkdir, touch, move and symlink steps", :aggregate_failures do
     steps = Homebrew::InstallSteps::DSL.build(default_base: :var, default_source_base: :staged_path,
                                               default_target_base: :staged_path) do

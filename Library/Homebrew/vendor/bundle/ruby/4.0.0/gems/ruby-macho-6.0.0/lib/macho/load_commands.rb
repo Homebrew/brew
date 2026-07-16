@@ -69,6 +69,7 @@ module MachO
       0x37 => :LC_FUNCTION_VARIANTS,
       0x38 => :LC_FUNCTION_VARIANT_FIXUPS,
       0x39 => :LC_TARGET_TRIPLE,
+      0x3a => :LC_LAZY_LOAD_DYLIB_INFO,
     }.freeze
 
     # association of symbol representations to load command constants
@@ -91,6 +92,7 @@ module MachO
       LC_ID_DYLIB
       LC_RPATH
       LC_LOAD_DYLINKER
+      LC_CODE_SIGNATURE
     ].freeze
 
     # association of load command symbols to string representations of classes
@@ -161,6 +163,7 @@ module MachO
       :LC_FUNCTION_VARIANTS => "LinkeditDataCommand",
       :LC_FUNCTION_VARIANT_FIXUPS => "LinkeditDataCommand",
       :LC_TARGET_TRIPLE => "TargetTripleCommand",
+      :LC_LAZY_LOAD_DYLIB_INFO => "LinkeditDataCommand",
     }.freeze
 
     # association of segment name symbols to names
@@ -330,6 +333,8 @@ module MachO
           view = lc.view
 
           if view
+            raise LCStrMalformedError, lc if lc_str < lc.class.bytesize || lc_str >= lc.cmdsize
+
             lc_str_abs = view.offset + lc_str
             lc_end = view.offset + lc.cmdsize - 1
             raw_string = view.raw_data.slice(lc_str_abs..lc_end)
@@ -1078,13 +1083,32 @@ module MachO
     # LC_SEGMENT_SPLIT_INFO, LC_FUNCTION_STARTS, LC_DATA_IN_CODE,
     # LC_DYLIB_CODE_SIGN_DRS, LC_LINKER_OPTIMIZATION_HINT, LC_DYLD_EXPORTS_TRIE,
     # LC_DYLD_CHAINED_FIXUPS, LC_ATOM_INFO, LC_FUNCTION_VARIANTS,
-    # or LC_FUNCTION_VARIANT_FIXUPS.
+    # LC_FUNCTION_VARIANT_FIXUPS, or LC_LAZY_LOAD_DYLIB_INFO.
     class LinkeditDataCommand < LoadCommand
       # @return [Integer] offset to the data in the __LINKEDIT segment
       field :dataoff, :uint32
 
       # @return [Integer] size of the data in the __LINKEDIT segment
       field :datasize, :uint32
+
+      # @param context [SerializationContext] the context
+      # @return [String] the serialized fields of the load command
+      # @api private
+      def serialize(context)
+        raise LoadCommandNotSerializableError, type unless serializable?
+
+        format = Utils.specialize_format(self.class.format, context.endianness)
+        [cmd, self.class.bytesize, dataoff, datasize].pack(format)
+      end
+
+      # The embedded signature referenced by this command.
+      # @return [CodeSigning::SuperBlob]
+      # @raise [CodeSigningError] if this is not an LC_CODE_SIGNATURE command
+      def superblob
+        raise CodeSigningError, "#{type} does not contain a code signature" unless type == :LC_CODE_SIGNATURE
+
+        CodeSigning::SuperBlob.new(view.raw_data.byteslice(dataoff, datasize))
+      end
 
       # @return [Hash] a hash representation of this {LinkeditDataCommand}
       def to_h

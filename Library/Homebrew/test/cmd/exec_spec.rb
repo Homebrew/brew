@@ -10,13 +10,7 @@ RSpec.describe Homebrew::Cmd::Exec do
   describe "exec" do
     let(:formula_name) { "test-executable" }
     let(:executable_name) { "test-executable-tool" }
-    let(:shell_cellar) do
-      if (HOMEBREW_LIBRARY_PATH.parent.parent/"Cellar").directory?
-        HOMEBREW_LIBRARY_PATH.parent.parent/"Cellar"
-      else
-        HOMEBREW_CELLAR
-      end
-    end
+    let(:shell_cellar) { HOMEBREW_CELLAR }
     let(:db) { HOMEBREW_CACHE/"api/internal/executables.txt" }
     let(:active_executable) { shell_cellar/"#{formula_name}/2.10/bin/#{executable_name}" }
     let(:env_formula_name) { "test-env" }

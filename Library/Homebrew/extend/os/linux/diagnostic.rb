@@ -168,7 +168,9 @@ module OS
         sig { returns(T.nilable(String)) }
         def check_linux_sandbox
           return unless Homebrew::EnvConfig.sandbox_linux?
-          return if OS::Linux.inside_docker?
+
+          inside_docker = OS::Linux.inside_docker?
+          return if inside_docker && !GitHub::Actions.env_set?
 
           state = ::Sandbox.state
           return if [:disabled, :available].include?(state)
@@ -202,6 +204,11 @@ module OS
             ]
           else
             [reason]
+          end
+          if state == :unavailable && inside_docker && GitHub::Actions.env_set?
+            lines.push("",
+                       "If this is a GitHub Actions container, add `options: --privileged` to the job's " \
+                       "`container` configuration.")
           end
 
           "#{[

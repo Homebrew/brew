@@ -1,6 +1,0 @@
-# This file is synced from the `.github` repository, do not modify it directly.
-rules:
-  unpinned-uses:
-    config:
-      policies:
-        Homebrew/actions/*: ref-pin

@@ -132,7 +132,7 @@ module RuboCop
           end
 
           add_offense(on_upgrade_pair.key, message: USELESS_METADATA_MSG) do |corrector|
-            first_pair = T.must(remaining_pairs.first)
+            first_pair = remaining_pairs.fetch(0)
             indentation = " " * (start_column(first_pair.key) - line_start_column(first_pair.key))
 
             new_code = build_uninstall_body(remaining_pairs, comments, indentation)

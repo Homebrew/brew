@@ -20,28 +20,6 @@ module Cask
     # https://github.com/apple-oss-distributions/WebKit/blob/WebKit-7618.2.12.11.6/Source/WebCore/PAL/pal/spi/mac/QuarantineSPI.h#L40-L45
     USER_APPROVED_FLAG = 0x0040
 
-    QUARANTINE_SCRIPT = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/quarantine.swift").freeze, Pathname)
-    COPY_XATTRS_SCRIPT = T.let((HOMEBREW_LIBRARY_PATH/"cask/utils/copy-xattrs.swift").freeze, Pathname)
-
-    sig { returns(T.nilable(T.any(String, Pathname))) }
-    def self.swift
-      @swift ||= T.let(
-        begin
-          # /usr/bin/swift (which runs via xcrun) adds `/usr/local/include` to the top of the include path,
-          # which allows really broken local setups to break our Swift usage here. Using the underlying
-          # Swift executable directly however (returned by `xcrun -find`) avoids this CPATH mess.
-          xcrun_swift = ::Utils.popen_read("/usr/bin/xcrun", "-find", "swift", err: :close).chomp
-          if $CHILD_STATUS.success? && File.executable?(xcrun_swift)
-            xcrun_swift
-          else
-            DevelopmentTools.locate("swift")
-          end
-        end,
-        T.nilable(T.any(String, Pathname)),
-      )
-    end
-    private_class_method :swift
-
     sig { returns(T.nilable(Pathname)) }
     def self.xattr
       @xattr ||= T.let(DevelopmentTools.locate("xattr"), T.nilable(Pathname))
@@ -56,57 +34,9 @@ module Cask
       system_command(xattr, args: ["-h"], print_stderr: false).success?
     end
 
-    sig { returns(T::Array[String]) }
-    def self.swift_target_args
-      ["-target", "#{Hardware::CPU.arch}-apple-macosx#{MacOS.version}"]
-    end
-    private_class_method :swift_target_args
-
     sig { returns([Symbol, T.nilable(String)]) }
     def self.check_quarantine_support
-      odebug "Checking quarantine support"
-
-      check_output = nil
-      swift = self.swift
-      status = if !xattr_available?
-        odebug "There's no working version of `xattr` on this system."
-        :xattr_broken
-      elsif swift.nil?
-        odebug "Swift is not available on this system."
-        :no_swift
-      else
-        api_check = system_command(swift,
-                                   args:         [*swift_target_args, QUARANTINE_SCRIPT],
-                                   print_stderr: false)
-
-        exit_status = api_check.exit_status
-        check_output = api_check.merged_output.to_s.strip
-        error_output = api_check.stderr.to_s.strip
-
-        case exit_status
-        when 2
-          odebug "Quarantine is available."
-          :quarantine_available
-        when 1
-          # Swift script ran but failed (likely due to CLT issues)
-          odebug "Swift quarantine script failed: #{error_output}"
-          if error_output.include?("does not exist") || error_output.include?("No such file")
-            :swift_broken_clt
-          elsif error_output.include?("compiler") || error_output.include?("SDK")
-            :swift_compilation_failed
-          else
-            :swift_runtime_error
-          end
-        when 127
-          # Command not found or execution failed
-          odebug "Swift execution failed with exit status 127"
-          :swift_not_executable
-        else
-          odebug "Swift returned unexpected exit status: #{exit_status}"
-          :swift_unexpected_error
-        end
-      end
-      [status, check_output]
+      [:quarantine_unavailable, nil]
     end
 
     sig { returns(T::Boolean) }
@@ -224,33 +154,7 @@ module Cask
 
     sig { params(cask: T.nilable(Cask), download_path: T.nilable(Pathname), action: T::Boolean).void }
     def self.cask!(cask: nil, download_path: nil, action: true)
-      return if cask.nil? || download_path.nil?
-
-      return if detect(download_path)
-
-      odebug "Quarantining #{download_path}"
-
-      swift = self.swift
-      raise "unexpected nil swift" if swift.nil?
-
-      quarantiner = system_command(swift,
-                                   args:         [
-                                     *swift_target_args,
-                                     QUARANTINE_SCRIPT,
-                                     download_path,
-                                     cask.url.to_s,
-                                     cask.homepage.to_s,
-                                   ],
-                                   print_stderr: false)
-
-      return if quarantiner.success?
-
-      case quarantiner.exit_status
-      when 2
-        raise CaskQuarantineError.new(download_path, "Insufficient parameters")
-      else
-        raise CaskQuarantineError.new(download_path, quarantiner.stderr)
-      end
+      raise NotImplementedError
     end
 
     sig { params(from: T.nilable(Pathname), to: T.nilable(Pathname)).void }
@@ -297,21 +201,7 @@ module Cask
 
     sig { params(from: Pathname, to: Pathname, command: T.class_of(SystemCommand)).void }
     def self.copy_xattrs(from, to, command:)
-      odebug "Copying xattrs from #{from} to #{to}"
-
-      swift = self.swift
-      raise "unexpected nil swift" if swift.nil?
-
-      command.run!(
-        swift,
-        args: [
-          *swift_target_args,
-          COPY_XATTRS_SCRIPT,
-          from,
-          to,
-        ],
-        sudo: !to.writable?,
-      )
+      raise NotImplementedError
     end
 
     # Ensures that Homebrew has permission to update apps on macOS Ventura.

@@ -230,6 +230,9 @@ jobs:
           - name: tests (Linux)
             test-flags: --coverage --profile 3
             runs-on: ubuntu-24.04
+          - name: tests (no Sorbet)
+            test-flags: --coverage --profile 3
+            runs-on: ubuntu-24.04
           - name: tests (macOS)
             test-flags: --coverage --profile 3
             runs-on: macos-26
@@ -286,6 +289,10 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo chmod -R g-w,o-w /home/linuxbrew/.linuxbrew/Homebrew
 
+      - name: Disable Sorbet runtime
+        if: matrix.name == 'tests (no Sorbet)'
+        run: echo "HOMEBREW_TESTS_NO_SORBET_RUNTIME=1" >> "$GITHUB_ENV"
+
       - name: Run brew tests
         if: github.event_name == 'pull_request' || matrix.name != 'tests (online)'
         run: brew tests ${{ matrix.test-flags }}
@@ -336,6 +343,9 @@ jobs:
             runs-on: ubuntu-24.04-arm
             container: ghcr.io/homebrew/ubuntu24.04:latest
           - name: test-bot (Linux x86_64)
+            runs-on: ubuntu-latest
+            container: ghcr.io/homebrew/ubuntu24.04:main
+          - name: test-bot (no Sorbet)
             runs-on: ubuntu-latest
             container: ghcr.io/homebrew/ubuntu24.04:main
           - name: test-bot (Linux containerless)
@@ -398,6 +408,10 @@ jobs:
           install: gnu-tar
           workflow-key: test-bot
           uninstall: true
+
+      - name: Disable Sorbet runtime
+        if: matrix.name == 'test-bot (no Sorbet)'
+        run: echo "HOMEBREW_TESTS_NO_SORBET_RUNTIME=1" >> "$GITHUB_ENV"
 
       - name: Setup environment variables
         if: matrix.name == 'test-bot (Linux Homebrew glibc)'

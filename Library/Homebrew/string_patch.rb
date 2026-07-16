@@ -12,6 +12,9 @@ class StringPatch < EmbeddedPatch
   end
 
   sig { override.returns(String) }
+  def filename = "embedded string patch"
+
+  sig { override.returns(String) }
   def contents
     @str
   end

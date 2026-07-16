@@ -668,6 +668,8 @@ module Homebrew
 
       sig { params(formula: Formula).returns(String) }
       def formula_upgrade_size(formula)
+        return "" if args.build_from_source_formulae.include?(formula.name)
+
         bottle = formula.bottle
         return "" unless bottle
 

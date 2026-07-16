@@ -20,6 +20,9 @@ class Homebrew::Cmd::Deps::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def arch; end
 
+  sig { returns(T.nilable(String)) }
+  def brewfile; end
+
   sig { returns(T::Boolean) }
   def cask?; end
 

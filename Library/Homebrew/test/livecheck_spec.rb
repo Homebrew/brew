@@ -47,12 +47,6 @@ RSpec.describe Livecheck do
       livecheck_f.formula("other-formula")
       expect(livecheck_f.formula).to eq("other-formula")
     end
-
-    it "raises a TypeError if the argument isn't a String" do
-      expect do
-        livecheck_f.formula(123)
-      end.to raise_error TypeError
-    end
   end
 
   describe "#cask" do

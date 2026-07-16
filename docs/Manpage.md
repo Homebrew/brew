@@ -1033,6 +1033,11 @@ passed, this command displays their actual runtime dependencies (similar to
 : List dependencies for formulae that are currently installed. If *`formula`* is
   specified, list only its dependencies that are currently installed.
 
+`--brewfile`
+
+: Use formulae and casks listed in a Brewfile as inputs. Defaults to
+  `./Brewfile`; use `--brewfile=`*`path`* to specify another.
+
 `--missing`
 
 : Show only missing dependencies.
@@ -2527,6 +2532,39 @@ Extract a specific *`version`* of *`formula`* into a personal tap and install
 it. The default tap is *`user`*/versions. *`user`* uses the GitHub username if
 available and the local username otherwise.
 
+### `vulns` \[*`options`*\] \[*`formula`* ...\]
+
+Check *`formula`* for known security vulnerabilities using the OSV.dev database.
+
+With no arguments, installed formulae are checked unless tap trust is
+configured, in which case all formulae permitted by the trust configuration are
+checked.
+
+`-d`, `--deps`
+
+: Also check the dependencies of named formulae.
+
+`--no-ignore-patches`
+
+: Report vulnerabilities even when a formula patch resolves them.
+
+`--brewfile`
+
+: Check formulae listed in a Brewfile. Defaults to `./Brewfile`; use
+  `--brewfile=`*`path`* to specify another.
+
+`-s`, `--severity`
+
+: Only report findings at or above: `low`, `medium`, `high`, `critical`.
+
+`-m`, `--max-summary`
+
+: Truncate summaries to *`n`* characters (default 60, 0 for no limit).
+
+`-j`, `--json`
+
+: Output JSON.
+
 ### `which-formula` \[`--explain`\] *`command`* \[...\]
 
 Show which formula(e) provides the given command.
@@ -3948,6 +3986,12 @@ Update versions for PyPI resource blocks in *`formula`*.
 
 : Don't fail if *`formula`* is not a PyPI package.
 
+`--ignore-main-package-cooldown`
+
+: Bypass the release cooldown for *`formula`*'s own package when resolving
+  resources. Its dependencies still respect the cooldown. This option is ignored
+  for official taps.
+
 `--install-dependencies`
 
 : Install missing dependencies required to update resources.
@@ -5063,9 +5107,9 @@ Cabrera, Dustin Rodrigues, FX Coudert, Issy Long, Justin Krehel, Michael Cho,
 Michka Popoff, Mike McQuaid, Nanda H Krishna, Patrick Linnane, Rui Chen, Ruoyu
 Zhong, Sam Ford, Sean Molenaar and Thierry Moisan.
 
-Homebrew's other Maintainers are Anton Melnikov, Caleb Xu, Daeho Ro, Douglas
-Eichelberger, Eric Knibbe, Klaus Hipp, Markus Reiter, Rylan Polster, Štefan
-Baebler and William Woodruff.
+Homebrew's other Maintainers are Andrew Nesbitt, Anton Melnikov, Caleb Xu, Daeho
+Ro, Douglas Eichelberger, Eric Knibbe, Klaus Hipp, Markus Reiter, Rylan Polster,
+Štefan Baebler and William Woodruff.
 
 ## BUGS
 

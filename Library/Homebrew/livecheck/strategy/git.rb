@@ -211,9 +211,9 @@ module Homebrew
           return match_data if content.blank?
 
           versions_from_content(content, regex, &block).each do |match_text|
+            next unless match_text.is_a?(String)
+
             match_data[:matches][match_text] = Version.new(match_text)
-          rescue TypeError
-            next
           end
 
           match_data

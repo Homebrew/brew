@@ -351,7 +351,7 @@ module Cask
 
     sig { returns(T::Boolean) }
     def checksumable?
-      return false if (url = self.url).nil?
+      return false if (url = self.url).nil? || url.to_s.blank?
 
       DownloadStrategyDetector.detect(url.to_s, url.using) <= AbstractFileDownloadStrategy || false
     end

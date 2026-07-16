@@ -137,6 +137,17 @@ module Commands
     cmds.sort
   end
 
+  sig { params(cmd: String).returns(String) }
+  def self.suggestion_message(cmd)
+    require "did_you_mean"
+
+    suggestions = DidYouMean::SpellChecker.new(dictionary: commands(external: false, aliases: true)).correct(cmd)
+    suggestions = DidYouMean::SpellChecker.new(dictionary: commands(aliases: true)).correct(cmd) if suggestions.empty?
+    return "" if suggestions.empty?
+
+    "\nDid you mean #{suggestions.to_sentence(two_words_connector: " or ", last_word_connector: " or ")}?"
+  end
+
   # An array of all tap cmd directory {Pathname}s.
   sig { returns(T::Array[Pathname]) }
   def self.tap_cmd_directories

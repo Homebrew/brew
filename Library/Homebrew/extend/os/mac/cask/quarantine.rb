@@ -18,8 +18,6 @@ module OS
 
           sig { returns([Symbol, T.nilable(String)]) }
           def check_quarantine_support
-            return super unless ffi_quarantine?
-
             odebug "Checking quarantine support"
 
             status = if ::Cask::Quarantine.xattr_available?
@@ -55,7 +53,6 @@ module OS
 
           sig { params(cask: T.nilable(::Cask::Cask), download_path: T.nilable(::Pathname), action: T::Boolean).void }
           def cask!(cask: nil, download_path: nil, action: true)
-            return super unless ffi_quarantine?
             return if cask.nil? || download_path.nil?
 
             return if ::Cask::Quarantine.detect(download_path)
@@ -106,7 +103,6 @@ module OS
           sig { params(from: ::Pathname, to: ::Pathname, command: T.class_of(::SystemCommand)).void }
           def copy_xattrs(from, to, command:)
             odebug "Copying xattrs from #{from} to #{to}"
-            return super unless ffi_quarantine?
 
             if to.writable?
               MacOS::FFI.copy_xattrs(from.to_s, to.to_s)
@@ -125,14 +121,6 @@ module OS
               ],
               sudo: true,
             )
-          end
-
-          private
-
-          sig { returns(T::Boolean) }
-          def ffi_quarantine?
-            # TODO: Expand FFI quarantine and xattr copying to all users when fully working.
-            Homebrew::EnvConfig.developer?
           end
         end
       end

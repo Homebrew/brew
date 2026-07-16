@@ -80,7 +80,7 @@ class Descriptions
         names = description[0]
         next if description[1].nil?
 
-        description = T.must(description[1])
+        description = description.fetch(1)
         puts names.present? ? "#{display_name}: (#{names}) #{description}" : "#{display_name}: #{description}"
       else
         puts "#{display_name}: #{description}"

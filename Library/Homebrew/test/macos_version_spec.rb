@@ -19,6 +19,7 @@ RSpec.describe MacOSVersion do
     end
 
     it "matches the major version returned by OS.kernel_version", :needs_macos do
+      ENV["HOMEBREW_FAKE_MACOS"] = nil
       expect(described_class.kernel_major_version(OS::Mac.version)).to eq OS.kernel_version.major
     end
   end

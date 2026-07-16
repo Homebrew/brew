@@ -87,6 +87,29 @@ RSpec.describe Homebrew::Cmd::Deps, :integration_test, :no_api do
         .and output(stdout).to_stdout
     end
 
+    it "reads inputs from a Brewfile alongside named arguments" do
+      setup_test_formula "installed"
+      brewfile = HOMEBREW_TEMP/"deps.Brewfile"
+      brewfile.write <<~BREWFILE
+        brew "baz"
+        tap "ignored/tap"
+      BREWFILE
+      stdout = <<~EOS
+        bar
+        └── foo
+
+        baz
+        ├── bar
+        │   └── foo
+        ├── recommended_test
+        └── installed
+
+      EOS
+      expect { brew "deps", "--tree", "bar", "--brewfile=#{brewfile}" }
+        .to be_a_success
+        .and output(stdout).to_stdout
+    end
+
     it "detects circular dependencies" do
       setup_test_formula "installed", <<~RUBY
         url "https://brew.sh/installed-1.0"

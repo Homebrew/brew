@@ -238,7 +238,7 @@ module RuboCop
         return false if @tap_style_exceptions.nil? || @tap_style_exceptions.none?
         return false unless @tap_style_exceptions.key? list
 
-        T.must(@tap_style_exceptions[list]).include?(formula || @formula_name)
+        @tap_style_exceptions.fetch(list).include?(formula || @formula_name)
       end
 
       private

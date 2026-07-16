@@ -109,6 +109,15 @@ RSpec.describe MachOShim do
     end
   end
 
+  describe "#delete_rpath" do
+    specify "returns nil without rewriting the binary when no rpath matches" do
+      pn = dylib_path("x86_64")
+      contents = pn.read
+      expect(pn.delete_rpath("/nonexistent", strict: false)).to be_nil
+      expect(pn.read).to eq(contents)
+    end
+  end
+
   describe "text executables" do
     let(:pn) { MachOPathname.wrap(HOMEBREW_PREFIX/"an_executable") }
 

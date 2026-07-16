@@ -74,6 +74,8 @@ module Homebrew
 
       sig { params(name: String, options: Homebrew::Bundle::EntryOptions).void }
       def brew(name, options = {})
+        validate_type!(options, Hash, "brew options")
+
         name = Homebrew::Bundle::Dsl.sanitize_brew_name(name)
         @entries << Entry.new(:brew, name, options)
       end
@@ -96,11 +98,19 @@ module Homebrew
         ).void
       }
       def tap(name, clone_target = nil, options = {}, **keyword_options)
+        validate_type!(clone_target, String, "tap clone target") if clone_target
+
         options.merge!(keyword_options)
         options[:clone_target] = clone_target
         name = Homebrew::Bundle::Dsl.sanitize_tap_name(name)
         @entries << Entry.new(:tap, name, options)
       end
+
+      sig { params(value: Object, type: T.any(T.class_of(Hash), T.class_of(String)), description: String).void }
+      def validate_type!(value, type, description)
+        raise "#{description} must be a #{type}" unless value.is_a?(type)
+      end
+      private :validate_type!
 
       HOMEBREW_TAP_ARGS_REGEX = %r{^([\w-]+)/(homebrew-)?([\w-]+)$}
       HOMEBREW_CORE_FORMULA_REGEX = %r{^homebrew/homebrew/([\w+-.@]+)$}i

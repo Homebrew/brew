@@ -30,18 +30,6 @@ RSpec.describe PkgVersion do
     it "returns true if the left version is HEAD" do
       expect(described_class.parse("HEAD")).to be > described_class.parse("1.0")
     end
-
-    it "raises an error if the other side isn't of the same class" do
-      expect do
-        described_class.new(Version.new("1.0"), 0) > Object.new
-      end.to raise_error(TypeError)
-    end
-
-    it "is not compatible with Version" do
-      expect do
-        described_class.new(Version.new("1.0"), 0) > Version.new("1.0")
-      end.to raise_error(TypeError)
-    end
   end
 
   describe "#<" do

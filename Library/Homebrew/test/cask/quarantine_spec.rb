@@ -9,21 +9,13 @@ RSpec.describe Cask::Quarantine do
       klass.remove_instance_variable(:@quarantine_support) if klass.instance_variable_defined?(:@quarantine_support)
     end
 
-    it "uses the Swift support check by default" do
-      allow(klass).to receive(:check_quarantine_support).and_return([:no_swift, nil])
-
-      with_env(HOMEBREW_DEVELOPER: nil) do
-        expect(klass.available?).to be(false)
-      end
-    end
-
-    it "uses FFI quarantine support in developer mode when xattr works" do
+    it "uses FFI quarantine support when xattr works" do
       allow(klass).to receive(:xattr).and_return(Pathname("/usr/bin/xattr"))
       allow(klass).to receive(:system_command)
         .with(Pathname("/usr/bin/xattr"), args: ["-h"], print_stderr: false)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
-      with_env(HOMEBREW_DEVELOPER: "1") do
+      with_env(HOMEBREW_DEVELOPER: nil) do
         expect(klass.available?).to be(true)
       end
     end
@@ -63,37 +55,11 @@ RSpec.describe Cask::Quarantine do
           with_env(HOMEBREW_DEVELOPER: nil) do
             klass.cask!(cask:, download_path:)
           end
-        end.to raise_error(Cask::CaskQuarantineError, /couldn.t be opened/)
+        end.to raise_error(Cask::CaskQuarantineError, /Failed to set quarantine properties/)
       end
     end
 
-    it "uses Swift quarantining by default" do
-      download_path = Pathname("/tmp/Test.dmg")
-      swift = Pathname("/usr/bin/swift")
-
-      allow(klass).to receive_messages(detect: false, swift:)
-      allow(klass).to receive(:swift_target_args).and_return(["-target", "arm64-apple-macosx15"])
-      expect(klass).to receive(:system_command)
-        .with(
-          swift,
-          args:         [
-            "-target",
-            "arm64-apple-macosx15",
-            Cask::Quarantine::QUARANTINE_SCRIPT,
-            download_path,
-            "https://example.com/download",
-            "https://example.com",
-          ],
-          print_stderr: false,
-        )
-        .and_return(instance_double(SystemCommand::Result, success?: true))
-
-      with_env(HOMEBREW_DEVELOPER: nil) do
-        klass.cask!(cask:, download_path:)
-      end
-    end
-
-    it "uses FFI quarantining in developer mode" do
+    it "uses FFI quarantining by default" do
       require "os/mac/ffi"
 
       download_path = Pathname("/tmp/Test.dmg")
@@ -132,14 +98,14 @@ RSpec.describe Cask::Quarantine do
         .with(url, quarantine_properties_key, dictionary)
         .and_return(true)
 
-      with_env(HOMEBREW_DEVELOPER: "1") do
+      with_env(HOMEBREW_DEVELOPER: nil) do
         klass.cask!(cask:, download_path:)
       end
     end
   end
 
   describe ".copy_xattrs", :needs_macos do
-    it "uses FFI in developer mode when the destination is writable" do
+    it "uses FFI when the destination is writable" do
       require "os/mac/ffi"
 
       source = Pathname("/tmp/Source.app")
@@ -149,37 +115,12 @@ RSpec.describe Cask::Quarantine do
       allow(destination).to receive(:writable?).and_return(true)
       expect(MacOS::FFI).to receive(:copy_xattrs).with(source.to_s, destination.to_s)
 
-      with_env(HOMEBREW_DEVELOPER: "1") do
-        klass.copy_xattrs(source, destination, command:)
-      end
-    end
-
-    it "uses Swift by default when the destination needs sudo" do
-      source = Pathname("/tmp/Source.app")
-      destination = Pathname("/tmp/Destination.app")
-      swift = Pathname("/usr/bin/swift")
-      command = class_double(SystemCommand)
-
-      allow(destination).to receive(:writable?).and_return(false)
-      allow(klass).to receive_messages(swift: swift, swift_target_args: ["-target", "arm64-apple-macosx15"])
-      expect(command).to receive(:run!).with(
-        swift,
-        args: [
-          "-target",
-          "arm64-apple-macosx15",
-          Cask::Quarantine::COPY_XATTRS_SCRIPT,
-          source,
-          destination,
-        ],
-        sudo: true,
-      )
-
       with_env(HOMEBREW_DEVELOPER: nil) do
         klass.copy_xattrs(source, destination, command:)
       end
     end
 
-    it "uses FFI through brew ruby in developer mode when the destination needs sudo" do
+    it "uses FFI through brew ruby when the destination needs sudo" do
       require "os/mac/ffi"
 
       source = Pathname("/tmp/Source.app")
@@ -200,7 +141,7 @@ RSpec.describe Cask::Quarantine do
         sudo: true,
       )
 
-      with_env(HOMEBREW_DEVELOPER: "1") do
+      with_env(HOMEBREW_DEVELOPER: nil) do
         klass.copy_xattrs(source, destination, command:)
       end
     end

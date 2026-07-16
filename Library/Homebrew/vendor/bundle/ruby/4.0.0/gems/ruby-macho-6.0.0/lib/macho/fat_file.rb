@@ -96,7 +96,12 @@ module MachO
 
       @filename = filename
       @options = opts
-      @raw_data = File.binread(@filename)
+      File.open(@filename, "rb") do |file|
+        @raw_data = file.read(Headers::FatHeader.bytesize)
+        @raw_data ||= ""
+        populate_fat_header
+        @raw_data << file.read.to_s
+      end
       populate_fields
     end
 
@@ -165,7 +170,7 @@ module MachO
     # All load commands responsible for loading dylibs in the file's Mach-O's.
     # @return [Array<LoadCommands::DylibCommand>] an array of DylibCommands
     def dylib_load_commands
-      machos.map(&:dylib_load_commands).flatten
+      machos.flat_map(&:dylib_load_commands)
     end
 
     # Changes the file's dylib ID to `new_id`. If the file is not a dylib,
@@ -199,7 +204,7 @@ module MachO
       # Individual architectures in a fat binary can link to different subsets
       # of libraries, but at this point we want to have the full picture, i.e.
       # the union of all libraries used by all architectures.
-      machos.map(&:linked_dylibs).flatten.uniq
+      machos.flat_map(&:linked_dylibs).uniq
     end
 
     # Changes all dependent shared library install names from `old_name` to
@@ -229,7 +234,7 @@ module MachO
     # @see MachOFile#rpaths
     def rpaths
       # Can individual architectures have different runtime paths?
-      machos.map(&:rpaths).flatten.uniq
+      machos.flat_map(&:rpaths).uniq
     end
 
     # Change the runtime path `old_path` to `new_path` in the file's Mach-Os.
@@ -281,6 +286,16 @@ module MachO
       end
 
       repopulate_raw_machos
+    end
+
+    # Replaces every embedded signature with a pure-Ruby ad-hoc signature.
+    # @param identifier [String, nil] the signing identifier
+    # @return [void]
+    def codesign!(identifier: nil)
+      identifier ||= CodeSigning.identifier(canonical_macho, filename)
+      machos.each { |macho| macho.codesign!(:identifier => identifier) }
+      repopulate_resized_raw_machos
+      nil
     end
 
     # Extract a Mach-O with the given CPU type from the file.
@@ -400,6 +415,37 @@ module MachO
 
         @raw_data[arch.offset, arch.size] = macho.serialize
       end
+    end
+
+    # Rebuild the fat header and slice layout after internal Mach-Os change size.
+    # {#repopulate_raw_machos} assumes slice lengths are unchanged and writes at
+    # their recorded ranges. Signing appends data, so every architecture's size
+    # and each following aligned offset must be recalculated.
+    # @return [void]
+    # @api private
+    def repopulate_resized_raw_machos
+      fat_arch_class = Utils.fat_magic32?(header.magic) ? Headers::FatArch : Headers::FatArch64
+      header_size = Headers::FatHeader.bytesize + (fat_archs.size * fat_arch_class.bytesize)
+      header_data = @raw_data.byteslice(0, header_size)
+      slices = +"".b
+      offset = header_size
+
+      fat_archs.zip(machos).each_with_index do |(arch, macho), index|
+        macho_offset = Utils.round(offset, 2**arch.align)
+        slices << Utils.nullpad(macho_offset - offset) << macho.serialize
+        arch_offset = Headers::FatHeader.bytesize + (index * fat_arch_class.bytesize)
+        if fat_arch_class == Headers::FatArch
+          raise FatArchOffsetOverflowError, macho_offset if macho_offset > 0xffffffff
+
+          header_data[arch_offset + 8, 8] = [macho_offset, macho.serialize.bytesize].pack("N2")
+        else
+          header_data[arch_offset + 8, 16] = [macho_offset, macho.serialize.bytesize].pack("Q>2")
+        end
+        offset = macho_offset + macho.serialize.bytesize
+      end
+
+      @raw_data = header_data + slices
+      populate_fields
     end
 
     # Yield each Mach-O object in the file, rescuing and accumulating errors.

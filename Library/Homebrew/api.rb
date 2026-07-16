@@ -385,11 +385,6 @@ module Homebrew
       Homebrew::API::Internal.formula_tap_migrations
     end
 
-    sig { returns(Pathname) }
-    def self.cached_formula_json_file_path
-      Homebrew::API::Internal.cached_packages_json_file_path
-    end
-
     sig { returns(T::Array[String]) }
     def self.cask_tokens
       Homebrew::API::Internal.cask_hashes.keys

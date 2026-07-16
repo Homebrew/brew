@@ -166,6 +166,60 @@ RSpec.describe PyPI do
 
       expect(described_class.pip_report([PyPI::Package.new("snakemake")])).to eq([])
     end
+
+    it "passes the ignored-cooldown package to pip by its direct URL" do
+      `true`
+
+      main = PyPI::Package.new("snakemake==5.29.0")
+      dependency = PyPI::Package.new("pyyaml==6.0")
+      sdist_url = "https://files.pythonhosted.org/packages/snakemake-5.29.0.tar.gz"
+      allow(main).to receive(:pypi_info).and_return(["snakemake", sdist_url, "a" * 64, "5.29.0"])
+
+      expect(Utils).to receive(:popen_read).with(
+        { "PIP_REQUIRE_VIRTUALENV" => "false" },
+        Utils::Path.formula_opt_libexec("python")/"bin/python", "-m", "pip", "install", "-q",
+        "--disable-pip-version-check", "--dry-run", "--ignore-installed",
+        "--uploaded-prior-to=P1D", "--report=/dev/stdout",
+        sdist_url, "pyyaml==6.0"
+      ).and_return('{"install":[]}')
+
+      expect(described_class.pip_report([main, dependency], ignore_cooldown_package: main)).to eq([])
+    end
+
+    it "preserves extras on the ignored-cooldown package's direct URL" do
+      `true`
+
+      main = PyPI::Package.new("snakemake[foo]==5.29.0")
+      sdist_url = "https://files.pythonhosted.org/packages/snakemake-5.29.0.tar.gz"
+      allow(main).to receive(:pypi_info).and_return(["snakemake", sdist_url, "a" * 64, "5.29.0"])
+
+      expect(Utils).to receive(:popen_read).with(
+        { "PIP_REQUIRE_VIRTUALENV" => "false" },
+        Utils::Path.formula_opt_libexec("python")/"bin/python", "-m", "pip", "install", "-q",
+        "--disable-pip-version-check", "--dry-run", "--ignore-installed",
+        "--uploaded-prior-to=P1D", "--report=/dev/stdout",
+        "snakemake[foo] @ #{sdist_url}"
+      ).and_return('{"install":[]}')
+
+      expect(described_class.pip_report([main], ignore_cooldown_package: main)).to eq([])
+    end
+
+    it "keeps the ignored-cooldown package cooled when its sdist URL is unavailable" do
+      `true`
+
+      main = PyPI::Package.new("snakemake==5.29.0")
+      allow(main).to receive(:pypi_info).and_return(nil)
+
+      expect(Utils).to receive(:popen_read).with(
+        { "PIP_REQUIRE_VIRTUALENV" => "false" },
+        Utils::Path.formula_opt_libexec("python")/"bin/python", "-m", "pip", "install", "-q",
+        "--disable-pip-version-check", "--dry-run", "--ignore-installed",
+        "--uploaded-prior-to=P1D", "--report=/dev/stdout",
+        "snakemake==5.29.0"
+      ).and_return('{"install":[]}')
+
+      expect(described_class.pip_report([main], ignore_cooldown_package: main)).to eq([])
+    end
   end
 
   describe ".update_python_resources!" do
@@ -231,6 +285,43 @@ RSpec.describe PyPI do
           end
         end
       RUBY
+    end
+
+    it "exempts the main package from the cooldown when requested" do
+      path = mktmpdir/"foo.rb"
+      contents = <<~RUBY
+        class Foo < Formula
+          url "https://files.pythonhosted.org/packages/foo-1.0.tar.gz"
+          sha256 "#{"a" * 64}"
+
+          resource "bar" do
+            url "https://files.pythonhosted.org/packages/bar-0.9.tar.gz"
+            sha256 "#{"b" * 64}"
+          end
+
+          def install
+            bin.install "foo"
+          end
+        end
+      RUBY
+      path.write(contents)
+      bar = PyPI::Package.new("bar==1.0")
+
+      allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
+      allow(bar).to receive(:pypi_info).and_return(
+        ["bar", "https://files.pythonhosted.org/packages/bar-1.0.tar.gz", "d" * 64, "1.0", nil],
+      )
+      exempted = T.let(nil, T.nilable(PyPI::Package))
+      allow(described_class).to receive(:pip_report) do |_packages, **kwargs|
+        exempted = kwargs[:ignore_cooldown_package] if kwargs.key?(:ignore_cooldown_package)
+        [PyPI::Package.new("foo==1.0"), bar]
+      end
+
+      described_class.update_python_resources!(Formulary.from_contents("foo", path, contents),
+                                               package_name: "foo", quiet: true,
+                                               ignore_main_package_cooldown: true)
+
+      expect(exempted&.name).to eq "foo"
     end
   end
 

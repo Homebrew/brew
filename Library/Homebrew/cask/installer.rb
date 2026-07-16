@@ -31,7 +31,8 @@ module Cask
         skip_cask_deps: T::Boolean, binaries: T::Boolean, verbose: T::Boolean, zap: T::Boolean,
         require_sha: T::Boolean, upgrade: T::Boolean, reinstall: T::Boolean,
         installed_on_request: T::Boolean, quarantine: T::Boolean, verify_download_integrity: T::Boolean,
-        quiet: T::Boolean, download_queue: Homebrew::DownloadQueue, defer_fetch: T::Boolean
+        quiet: T::Boolean, download_queue: Homebrew::DownloadQueue, defer_fetch: T::Boolean,
+        default_uninstall_artifacts: T.nilable(ArtifactSet)
       ).void
     }
     def initialize(cask, command: SystemCommand, force: false, adopt: false,
@@ -39,7 +40,8 @@ module Cask
                    zap: false, require_sha: false, upgrade: false, reinstall: false,
                    installed_on_request: true,
                    quarantine: true, verify_download_integrity: true, quiet: false,
-                   download_queue: Homebrew.default_download_queue, defer_fetch: false)
+                   download_queue: Homebrew.default_download_queue, defer_fetch: false,
+                   default_uninstall_artifacts: nil)
       @cask = cask
       @command = command
       @force = force
@@ -58,7 +60,9 @@ module Cask
       @download_queue = download_queue
       @defer_fetch = defer_fetch
       @source_download = T.let(nil, T.nilable(Homebrew::API::SourceDownload))
-      @default_uninstall_artifacts = T.let(nil, T.nilable(ArtifactSet))
+      # Restricts what `#uninstall` removes, for artifacts that are shared with a cask
+      # which must be kept installed.
+      @default_uninstall_artifacts = default_uninstall_artifacts
       @ran_prelude_fetch = T.let(false, T::Boolean)
       @ran_prelude = T.let(false, T::Boolean)
       @cask_and_formula_dependencies = T.let(nil, T.nilable(T::Array[T.any(Formula, ::Cask::Cask)]))
@@ -1005,7 +1009,7 @@ on_request: true)
               end
             end
           end
-          @default_uninstall_artifacts = dsl.artifacts
+          @default_uninstall_artifacts ||= dsl.artifacts
           return
         end
 

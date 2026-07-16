@@ -456,6 +456,7 @@ class SystemCommand
       sources[0] => :stdout,
       sources[1] => :stderr,
     }
+    readers = T.let({}, T::Hash[IO, ReadlineNonblock])
 
     pending_interrupt = T.let(false, T::Boolean)
 
@@ -471,8 +472,9 @@ class SystemCommand
       end
 
       readable_sources.each do |source|
+        reader = readers[source] ||= ReadlineNonblock.new(source)
         loop do
-          line = ReadlineNonblock.read(source)
+          line = reader.read
           yield(sources.fetch(source), line)
         end
       rescue EOFError

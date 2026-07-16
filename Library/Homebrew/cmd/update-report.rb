@@ -252,6 +252,17 @@ module Homebrew
         link_completions_manpages_and_docs
         Tap.installed.each(&:link_completions_and_manpages)
 
+        # Only prewarm when the update changed `Library/Homebrew/vendor`:
+        # portable Ruby bumps rotate the whole Bootsnap cache key and
+        # vendored gem bumps rewrite gem trees this run never loads, while
+        # for code-only updates this run has already recompiled most of
+        # what the next command needs.
+        if !args.auto_update? && initial_revision != current_revision &&
+           !quiet_system("git", "-C", HOMEBREW_REPOSITORY.to_s, "diff", "--quiet",
+                         initial_revision, current_revision, "--", "Library/Homebrew/vendor")
+          Homebrew::Bootsnap.prewarm!
+        end
+
         failed_fetch_dirs = ENV["HOMEBREW_MISSING_REMOTE_REF_DIRS"]&.split("\n")
         if failed_fetch_dirs.present?
           failed_fetch_taps = failed_fetch_dirs.map { |dir| Tap.from_path(dir) }
@@ -355,7 +366,6 @@ module Homebrew
 
       sig { void }
       def migrate_caskroom_caskfiles_to_json
-        return unless Homebrew::EnvConfig.developer?
         return unless Cask::Caskroom.path.directory?
 
         Cask::Caskroom.path.glob("*/.metadata/*/*/Casks/*.{internal.json,rb}").each do |caskfile|
@@ -404,7 +414,7 @@ module Homebrew
         return if Settings.read("donationmessage") == "true"
 
         ohai "Homebrew is run entirely by unpaid volunteers. Please consider donating:"
-        puts "  #{Formatter.url("https://github.com/Homebrew/brew#donations")}\n\n"
+        puts "  #{Formatter.url("https://github.com/Homebrew/brew#-donations")}\n\n"
 
         # Consider the message possibly missed if not a TTY.
         Settings.write "donationmessage", true if $stdout.tty?

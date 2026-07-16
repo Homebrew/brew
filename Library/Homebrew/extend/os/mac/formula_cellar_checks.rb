@@ -124,6 +124,8 @@ module OS
           This can cause linker errors due to name collisions and
           is often due to a bug in detecting the macOS version.
             #{flat_namespace_files * "\n  "}
+           Learn more about this in:
+            #{Formatter.url("https://developer.apple.com/forums/thread/689991?answerId=687895022#687895022")}
         EOS
       end
 

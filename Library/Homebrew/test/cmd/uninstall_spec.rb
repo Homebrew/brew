@@ -7,7 +7,14 @@ require "cmd/shared_examples/args_parse"
 RSpec.describe Homebrew::Cmd::UninstallCmd do
   it_behaves_like "parseable arguments"
 
-  it "uninstalls a given Formula", :integration_test do
+  it "uninstalls a given Formula and Cask path", :cask, :integration_test do
+    tap = CoreCaskTap.instance
+    cask_file = tap.cask_dir/"l/local-caffeine.rb"
+    cask_file.dirname.mkpath
+    FileUtils.cp cask_path("local-caffeine"), cask_file
+    tap.clear_cache
+    appdir = mktmpdir
+
     setup_test_formula "testball", tab_attributes: { installed_on_request: true }
 
     expect(HOMEBREW_CELLAR/"testball").to exist
@@ -16,6 +23,28 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       .and not_to_output.to_stderr
       .and be_a_success
     expect(HOMEBREW_CELLAR/"testball").not_to exist
+
+    Dir.chdir(tap.path) do
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
+      ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+      ENV["HOMEBREW_NO_INSTALL_FROM_API"] = nil
+      brew_env = { "HOMEBREW_SORBET_RUNTIME" => nil, "HOMEBREW_SORBET_RECURSIVE" => nil }
+      expect do
+        brew "install", "--cask", "--no-ask", "--appdir=#{appdir}", "./Casks/l/local-caffeine.rb", brew_env
+      end
+        .to output(/local-caffeine was successfully installed/).to_stdout
+        .and be_a_success
+
+      expect { brew "uninstall", "--cask", "./Casks/l/local-caffeine.rb", brew_env }
+        .to output(/Uninstalling Cask local-caffeine/).to_stdout
+        .and not_to_output.to_stderr
+        .and be_a_success
+    end
+
+    expect(appdir/"Caffeine.app").not_to exist
+    expect(Cask::Caskroom.cask_installed?("local-caffeine")).to be(false)
+  ensure
+    FileUtils.rm_rf tap.path if tap
   end
 
   it "catches cask uninstall errors and sets Homebrew.failed" do

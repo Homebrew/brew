@@ -69,9 +69,8 @@ module MachOShim
   end
   private :mach_data
 
-  # TODO: See if the `#write!` call can be delayed until
-  #       we know we're not making any changes to the rpaths.
-  sig { params(rpath: String, strict: T::Boolean).void }
+  # Returns the deleted rpath, or nil when there's nothing to delete.
+  sig { params(rpath: String, strict: T::Boolean).returns(T.nilable(String)) }
   def delete_rpath(rpath, strict: true)
     candidates = rpaths(resolve_variable_references: false).select do |r|
       resolve_variable_name(r) == resolve_variable_name(rpath)
@@ -79,9 +78,12 @@ module MachOShim
 
     # Delete the last instance to avoid changing the order in which rpaths are searched.
     rpath_to_delete = candidates.last
+    # Avoid writing the whole binary back to disk when there's nothing to delete.
+    return if rpath_to_delete.nil?
 
     macho.delete_rpath(rpath_to_delete, { last: true, strict: })
     macho.write!
+    rpath_to_delete
   end
 
   sig { params(old: String, new: String, uniq: T::Boolean, last: T::Boolean, strict: T::Boolean).void }

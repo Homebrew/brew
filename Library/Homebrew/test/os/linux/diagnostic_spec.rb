@@ -79,11 +79,11 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     end
   end
 
-  specify "#check_linux_sandbox returns nil inside Docker" do
+  specify "#check_linux_sandbox returns nil inside Docker outside GitHub Actions" do
     allow(OS::Linux).to receive(:inside_docker?).and_return(true)
     expect(Sandbox).not_to receive(:state)
 
-    with_env(HOMEBREW_NO_SANDBOX_LINUX: nil) do
+    with_env(GITHUB_ACTIONS: nil, HOMEBREW_NO_SANDBOX_LINUX: nil) do
       expect(checks.check_linux_sandbox).to be_nil
     end
   end
@@ -154,6 +154,20 @@ RSpec.describe Homebrew::Diagnostic::Checks do
           "export HOMEBREW_NO_SANDBOX_LINUX=1",
         )
       expect(message).to end_with("  export HOMEBREW_NO_SANDBOX_LINUX=1\n")
+    end
+  end
+
+  specify "#check_linux_sandbox suggests privileged GitHub Actions containers" do
+    allow(OS::Linux).to receive(:inside_docker?).and_return(true)
+    allow(Sandbox).to receive_messages(
+      state:          :unavailable,
+      failure_reason: "Bubblewrap is installed but cannot create a rootless sandbox.",
+    )
+
+    with_env(GITHUB_ACTIONS: "true", HOMEBREW_NO_SANDBOX_LINUX: nil) do
+      expect(checks.check_linux_sandbox).to include(
+        "If this is a GitHub Actions container, add `options: --privileged` to the job's `container` configuration.",
+      )
     end
   end
 

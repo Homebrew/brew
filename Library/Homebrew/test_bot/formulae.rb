@@ -870,6 +870,7 @@ module Homebrew
         # We only do full testing on `portable-ruby` itself.
         return if formula_name != "portable-ruby"
         return if args.dry_run?
+        return unless integration_test_portable_ruby?
 
         bottle_file = bottle_glob(formula_name).first
         if bottle_file.nil?
@@ -910,22 +911,32 @@ module Homebrew
 
         test "brew", "vendor-install", "ruby"
 
+        no_github_actions_env = { "GITHUB_ACTIONS" => nil }
         bundler_version = Utils::PortableRuby.sync_bundler_version!(pkg_version)
-        test "brew", "vendor-gems", "--no-commit", "--update=--ruby,--bundler=#{bundler_version}"
+        test "brew", "vendor-gems", "--no-commit", "--update=--ruby,--bundler=#{bundler_version}",
+             env: no_github_actions_env
         test "brew", "typecheck", "--update"
 
         # Run the checks that gate a Homebrew/brew pull request.
-        test "brew", "style"
+        test "brew", "style" unless OS.not_tier_one_configuration?
         test "brew", "typecheck"
         test "brew", "install-bundler-gems", "--groups=all"
-        test "brew", "vendor-gems", "--non-bundler-gems", "--no-commit"
-        test "brew", "tests", "--online", "--coverage"
-        test "brew", "tests", "--generic", "--coverage"
+        test "brew", "vendor-gems", "--non-bundler-gems", "--no-commit",
+             env: no_github_actions_env
+        if OS.not_tier_one_configuration?
+          test "brew", "tests", "--online", "--coverage", "--only=cask,formula"
+        else
+          test "brew", "tests", "--online", "--coverage"
+        end
         test "brew", "update-test"
         test "brew", "update-test", "--to-tag"
         test "brew", "update-test", "--commit=HEAD"
-        test "brew", "test-bot", "--only-formulae", "--only-json-tab", "--test-default-formula",
-             env: { "GITHUB_ACTIONS" => nil }
+
+        require "mktemp"
+        Mktemp.new("homebrew-test-bot").run do |_|
+          test "brew", "test-bot", "--only-formulae", "--only-json-tab", "--test-default-formula",
+               env: no_github_actions_env
+        end
       end
 
       sig { params(formula_name: String).void }
@@ -945,6 +956,9 @@ module Homebrew
       def testing_portable_ruby?
         !!tap&.core_tap? && @testing_formulae.include?("portable-ruby")
       end
+
+      sig { returns(T::Boolean) }
+      def integration_test_portable_ruby? = true
     end
   end
 end

@@ -85,7 +85,6 @@ module Cask
       _, _, cask_token = token.split("/", 3)
       cask_token || token
     end
-    private_class_method :token_from_full_token
 
     sig { void }
     def self.ensure_caskroom_exists
@@ -125,6 +124,9 @@ module Cask
 
     # Get all installed casks.
     #
+    # A Caskroom directory for a cask that has been renamed but not yet migrated loads
+    # as the cask it was renamed to, so deduplicate to avoid listing it twice.
+    #
     # @api internal
     sig { params(config: T.nilable(Config)).returns(T::Array[Cask]) }
     def self.casks(config: nil)
@@ -145,7 +147,7 @@ module Cask
       rescue
         # Don't blow up because of a single unavailable cask.
         nil
-      end.select(&:installed?)
+      end.select(&:installed?).uniq(&:full_name)
     end
   end
 end

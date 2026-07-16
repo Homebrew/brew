@@ -107,12 +107,6 @@ RSpec.describe Resource do
       expect(resource.version).to be_detected_from_url
     end
 
-    it "rejects non-string versions" do
-      expect { resource.version(1) }.to raise_error(TypeError)
-      expect { resource.version(2.0) }.to raise_error(TypeError)
-      expect { resource.version(Object.new) }.to raise_error(TypeError)
-    end
-
     it "returns nil if unset" do
       expect(resource.version).to be_nil
     end
@@ -307,6 +301,21 @@ RSpec.describe Resource do
     end
   end
 
+  specify "#verify_download_integrity skips files already verified in this process" do
+    fn = mktmpdir/"test.tar.gz"
+    fn.write "content"
+    digest = Digest::SHA256.hexdigest("content")
+    resource.sha256(digest)
+
+    other_resource = described_class.new("other")
+    other_resource.sha256(digest)
+
+    expect(fn).to receive(:verify_checksum).once.and_call_original
+
+    resource.verify_download_integrity(fn)
+    other_resource.verify_download_integrity(fn)
+  end
+
   specify "#verify_download_integrity_missing" do
     fn = Pathname.new("test")
 
@@ -318,7 +327,8 @@ RSpec.describe Resource do
   end
 
   specify "#verify_download_integrity_mismatch" do
-    fn = instance_double(Pathname, file?: true, basename: "foo")
+    fn = Pathname.new("foo")
+    allow(fn).to receive(:file?).and_return(true)
     checksum = resource.sha256(TEST_SHA256)
 
     expect(fn).to receive(:verify_checksum)

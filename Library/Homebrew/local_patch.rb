@@ -47,6 +47,9 @@ class LocalPatch < EmbeddedPatch
   end
 
   sig { override.returns(String) }
+  def filename = file.to_s.delete_prefix("Patches/")
+
+  sig { override.returns(String) }
   def contents
     owner = self.owner
     raise ArgumentError, "LocalPatch#contents called before owner was set!" unless owner

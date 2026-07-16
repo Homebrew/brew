@@ -63,10 +63,21 @@ RSpec.describe Homebrew::DevCmd::Tests do
     end
 
     it "keeps generic cache files out of the sandboxed test home" do
-      tests.send(:setup_environment!)
+      tests.setup_environment!
 
       expect(ENV.fetch("XDG_CACHE_HOME")).to eq("#{HOMEBREW_CACHE}/tests")
       expect(ENV.fetch("XDG_CACHE_HOME")).not_to start_with("#{Dir.home}/")
+    end
+
+    it "can disable Sorbet runtime" do
+      ENV["HOMEBREW_TESTS_NO_SORBET_RUNTIME"] = "1"
+      tests.setup_environment!
+
+      expect([
+        ENV.fetch("HOMEBREW_TESTS_NO_SORBET_RUNTIME", nil),
+        ENV.fetch("HOMEBREW_SORBET_RUNTIME", nil),
+        ENV.fetch("HOMEBREW_SORBET_RECURSIVE", nil),
+      ]).to eq(["1", nil, nil])
     end
   end
 

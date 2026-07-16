@@ -177,6 +177,31 @@ RSpec.describe Cask::Caskroom do
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
 
+    it "does not list a cask twice when it is also installed under an old token", :trust_store do
+      tap = Tap.fetch("thirdparty", "foo")
+      cask_path = tap.cask_dir/"new-cask.rb"
+      cask_path.dirname.mkpath
+      cask_path.write <<~RUBY
+        cask "new-cask" do
+          version "2.0"
+        end
+      RUBY
+      (tap.path/"cask_renames.json").write JSON.generate("old-cask" => "new-cask")
+      tap.clear_cache
+      Homebrew::Trust.trust!(:tap, tap.name)
+
+      Dir.mktmpdir do |dir|
+        allow(described_class).to receive(:path).and_return(Pathname(dir))
+
+        setup_cask_metadata(Pathname(dir), "new-cask", tap:, version: "2.0")
+        setup_cask_metadata(Pathname(dir), "old-cask", tap:, version: "1.0")
+
+        expect(described_class.casks.map(&:token)).to eq(["new-cask"])
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+
     it "does not error for ambiguous installed casks when an ambiguous tap is untrusted" do
       token = "ambiguous-untrusted-cask"
       taps = [Tap.fetch("thirdparty", "foo"), Tap.fetch("thirdparty", "bar")]

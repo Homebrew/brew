@@ -111,7 +111,7 @@ module Homebrew
         else
           PRIMARY_REPOS
         end
-        organisation ||= T.must(repositories.fetch(0).split("/").first)
+        organisation ||= repositories.fetch(0).split("/").fetch(0)
 
         users.each do |username|
           # TODO: Using the GitHub username to scan the `git log` undercounts some

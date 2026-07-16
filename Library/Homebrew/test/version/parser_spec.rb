@@ -17,8 +17,8 @@ RSpec.describe Version::Parser do
 
     specify "::process_spec" do
       expect { described_class.process_spec(Pathname(TEST_TMPDIR)) }
-        .to raise_error("The method `process_spec` on #<Class:Version::RegexParser> is declared as `abstract`. " \
-                        "It does not have an implementation.")
+        .to raise_error(NotImplementedError,
+                        "Version::RegexParser.process_spec must be implemented for #{TEST_TMPDIR}")
     end
   end
 

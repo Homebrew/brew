@@ -12,6 +12,13 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
   it_behaves_like "reinstall_pkgconf_if_needed"
 
+  it "links to the donations section" do
+    allow(Homebrew::Settings).to receive(:read).with("donationmessage").and_return("false")
+
+    expect { described_class.new([]).send(:donation_message) }
+      .to output(include("https://github.com/Homebrew/brew#-donations")).to_stdout
+  end
+
   # Simulate update.sh after a redirected fetch has advanced HEAD and origin/<branch>.
   def setup_redirected_tap(name)
     tap = Tap.fetch("allowed", name)
@@ -146,7 +153,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"allowed"
   end
 
-  it "migrates supported Caskroom Ruby and internal JSON metadata to JSON for developers" do
+  it "migrates supported Caskroom Ruby and internal JSON metadata to JSON for all users" do
     caskroom = mktmpdir/"Caskroom"
     rb_caskfile = caskroom/"local-caffeine/.metadata/1.0/20250101000000.000/Casks/local-caffeine.rb"
     json_caskfile = rb_caskfile.sub_ext(".json")
@@ -199,7 +206,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     })
 
     allow(Cask::Caskroom).to receive(:path).and_return(caskroom)
-    allow(Homebrew::EnvConfig).to receive_messages(developer?: true, disable_load_formula?: true,
+    allow(Homebrew::EnvConfig).to receive_messages(developer?: false, disable_load_formula?: true,
                                                    no_install_from_api?: true)
 
     with_env(

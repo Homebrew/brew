@@ -74,11 +74,12 @@ class StringInreplaceExtension
     end
   end
 
-  # Finds the specified variable.
+  # Finds the specified variable, or raises an `ArgumentError` if it is not present.
   #
   # @api public
   sig { params(flag: String).returns(String) }
   def get_make_var(flag)
-    T.must(inreplace_string[/^#{Regexp.escape(flag)}[ \t]*[\\?+:!]?=[ \t]*((?:.*\\\n)*.*)$/, 1])
+    inreplace_string[/^#{Regexp.escape(flag)}[ \t]*[\\?+:!]?=[ \t]*((?:.*\\\n)*.*)$/, 1] ||
+      raise(ArgumentError, "expected to find make variable #{flag.inspect}")
   end
 end

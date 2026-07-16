@@ -1,6 +1,6 @@
 ---
 name: bundler
-version: 4.0.11
+version: 4.0.16
 type: bundler
 summary: The best way to manage your application's dependencies
 homepage: https://bundler.io

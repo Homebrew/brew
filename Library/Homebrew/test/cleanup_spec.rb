@@ -541,14 +541,15 @@ RSpec.describe Homebrew::Cleanup do
       expect(api_package_files.map(&:exist?)).to eq([true, true])
     end
 
-    it "cleans up internal package API files with scrub" do
-      api_package_files = [
-        HOMEBREW_CACHE/"api/internal/packages.arm64_golden_gate.jws.json",
-        HOMEBREW_CACHE/"api/internal/packages.arm64_tahoe.jws.json",
-      ]
+    it "cleans up non-current internal package API files with scrub" do
+      cache = mktmpdir/"cache"
+      api_internal = cache/"api/internal"
+      current_api_package_file = api_internal/Homebrew::API::Internal.cached_packages_json_file_path.basename
+      stale_api_package_file = api_internal/"packages.stale.jws.json"
+      api_package_files = [current_api_package_file, stale_api_package_file]
       api_jws_files = [
-        HOMEBREW_CACHE/"api/formula.jws.json",
-        HOMEBREW_CACHE/"api/cask.jws.json",
+        cache/"api/formula.jws.json",
+        cache/"api/cask.jws.json",
       ]
       api_package_files.each do |api_package_file|
         api_package_file.dirname.mkpath
@@ -559,10 +560,9 @@ RSpec.describe Homebrew::Cleanup do
         FileUtils.touch api_jws_file
       end
 
-      described_class.new(scrub: true).cleanup_cache
+      described_class.new(scrub: true, cache:).cleanup_cache
 
-      expect(api_package_files.map(&:exist?)).to eq([false, false])
-      expect(api_jws_files.map(&:exist?)).to eq([true, true])
+      expect([*api_package_files, *api_jws_files].map(&:exist?)).to eq([true, false, true, true])
     end
 
     it "cleans up API source files and symlinks at any depth without cleaning directories" do

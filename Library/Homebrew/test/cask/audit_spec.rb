@@ -1116,7 +1116,7 @@ RSpec.describe Cask::Audit, :cask do
           homepage "https://brew.sh/"
 
           on_arm do
-            depends_on macos: :big_sur
+            depends_on macos: :sequoia
           end
 
           depends_on :macos
@@ -1126,11 +1126,29 @@ RSpec.describe Cask::Audit, :cask do
       end
 
       before do
-        allow(audit).to receive_messages(cask_bundle_min_os:  MacOSVersion.from_symbol(:big_sur),
+        allow(audit).to receive_messages(cask_bundle_min_os:  MacOSVersion.from_symbol(:sequoia),
                                          cask_sparkle_min_os: nil)
       end
 
-      it { is_expected.to pass }
+      context "when running on arm" do
+        around do |example|
+          Homebrew::SimulateSystem.with(arch: :arm) do
+            example.run
+          end
+        end
+
+        it { is_expected.to pass }
+      end
+
+      context "when running on intel" do
+        around do |example|
+          Homebrew::SimulateSystem.with(arch: :intel) do
+            example.run
+          end
+        end
+
+        it { is_expected.to error_with(/cask declared no minimum macOS version/) }
+      end
 
       it "normalizes 10.16.0 minimum macOS to Big Sur" do
         expect(audit.send(:normalize_min_os, "10.16.0")).to eq(MacOSVersion.from_symbol(:big_sur))

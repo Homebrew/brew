@@ -445,7 +445,7 @@ module Utils
         groups = T.let([], T::Array[T::Array[BlockNode]])
         resource_nodes.each do |resource_node|
           previous_group = groups.last
-          if previous_group.nil? || !resource_stanzas_contiguous?(T.must(previous_group.last), resource_node)
+          if previous_group.nil? || !resource_stanzas_contiguous?(previous_group.fetch(-1), resource_node)
             groups << [resource_node]
           else
             previous_group << resource_node
@@ -465,8 +465,8 @@ module Utils
 
       sig { params(group: T::Array[BlockNode]).returns(Parser::Source::Range) }
       def resource_stanza_group_range(group)
-        first_range = source_range_with_leading_resource_error_comments(T.must(group.first).source_range)
-        last_range = whole_line_range(T.must(group.last).source_range, include_following_blank_lines: true)
+        first_range = source_range_with_leading_resource_error_comments(group.fetch(0).source_range)
+        last_range = whole_line_range(group.fetch(-1).source_range, include_following_blank_lines: true)
         first_range.with(
           begin_pos: first_range.begin_pos - first_range.column,
           end_pos:   last_range.end_pos,

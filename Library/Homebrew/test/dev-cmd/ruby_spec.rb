@@ -7,8 +7,25 @@ require "dev-cmd/ruby"
 RSpec.describe Homebrew::DevCmd::Ruby do
   it_behaves_like "parseable arguments"
 
-  it "executes ruby code with Homebrew's libraries loaded", :integration_test do
-    expect { brew "ruby", "-e", "exit 0" }
+  it "can execute Ruby code without Sorbet runtime", :integration_test do
+    ruby = <<~RUBY
+      class SorbetRuntimeTest
+        extend T::Sig
+
+        sig { void }
+        def check; end
+      end
+
+      abort if T::Utils.signature_for_method(SorbetRuntimeTest.instance_method(:check))
+    RUBY
+    env = {
+      "HOMEBREW_DEV_CMD_RUN"             => "1",
+      "HOMEBREW_TESTS_NO_SORBET_RUNTIME" => "1",
+      "HOMEBREW_SORBET_RUNTIME"          => "1",
+      "HOMEBREW_SORBET_RECURSIVE"        => "1",
+    }
+
+    expect { brew_sh "ruby", "--", "-e", ruby, env }
       .to be_a_success
       .and not_to_output.to_stdout
       .and not_to_output.to_stderr
