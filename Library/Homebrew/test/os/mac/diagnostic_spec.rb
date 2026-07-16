@@ -206,38 +206,8 @@ RSpec.describe Homebrew::Diagnostic::Checks do
         .to match("there's no working version of `xattr` on this system")
     end
 
-    it "returns error when swift is not available" do
-      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:no_swift, nil])
-      expect(checks.check_cask_quarantine_support)
-        .to match("there's no available version of `swift` on this system")
-    end
-
-    it "returns error when swift is broken due to missing CLT" do
-      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_broken_clt, nil])
-      expect(checks.check_cask_quarantine_support)
-        .to match("Swift is not working due to missing Command Line Tools")
-    end
-
-    it "returns error when swift compilation failed" do
-      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_compilation_failed, nil])
-      expect(checks.check_cask_quarantine_support)
-        .to match("Swift compilation failed")
-    end
-
-    it "returns error when swift runtime error occurs" do
-      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_runtime_error, nil])
-      expect(checks.check_cask_quarantine_support)
-        .to match("Swift runtime error")
-    end
-
-    it "returns error when swift is not executable" do
-      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_not_executable, nil])
-      expect(checks.check_cask_quarantine_support)
-        .to match("Swift is not executable")
-    end
-
-    it "returns error when swift returns unexpected error" do
-      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:swift_unexpected_error, "whoopsie"])
+    it "returns error for an unknown status" do
+      allow(Cask::Quarantine).to receive(:check_quarantine_support).and_return([:unknown, "whoopsie"])
       expect(checks.check_cask_quarantine_support)
         .to match("whoopsie")
     end

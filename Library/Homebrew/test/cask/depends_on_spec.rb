@@ -63,6 +63,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
       let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-failure")) }
 
       it "raises an error" do
+        allow(OS::Mac).to receive(:version).and_return(MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED))
         expect { install }.to raise_error(Cask::CaskError)
       end
     end

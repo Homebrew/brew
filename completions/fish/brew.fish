@@ -906,6 +906,7 @@ __fish_brew_complete_cmd 'deps' 'Show dependencies for formula'
 __fish_brew_complete_arg 'deps' -l HEAD -d 'Show dependencies for HEAD version instead of stable version'
 __fish_brew_complete_arg 'deps' -l annotate -d 'Mark any build, test, implicit, optional, or recommended dependencies as such in the output'
 __fish_brew_complete_arg 'deps' -l arch -d 'Show dependencies for the given CPU architecture'
+__fish_brew_complete_arg 'deps' -l brewfile -d 'Use formulae and casks listed in a Brewfile as inputs. Defaults to `./Brewfile`; use `--brewfile=`path to specify another'
 __fish_brew_complete_arg 'deps' -l cask -d 'Treat all named arguments as casks'
 __fish_brew_complete_arg 'deps' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'deps' -l direct -d 'Show only the direct dependencies declared in the formula'
@@ -1158,6 +1159,14 @@ __fish_brew_complete_arg 'generate-man-completions' -l help -d 'Show this messag
 __fish_brew_complete_arg 'generate-man-completions' -l no-exit-code -d 'Exit with code 0 even if no changes were made'
 __fish_brew_complete_arg 'generate-man-completions' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'generate-man-completions' -l verbose -d 'Make some output more verbose'
+
+
+complete -f -c brew -n 'not __fish_brew_command; and set -q HOMEBREW_DEVELOPER' -a 'generate-vulns-advisories' -d 'Generate OSV-schema advisory records for the `Homebrew` ecosystem from `homebrew/core` formula patch `resolves` annotations, for https://github.com/Homebrew/advisory-database'
+__fish_brew_complete_arg 'generate-vulns-advisories' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'generate-vulns-advisories' -l dry-run -d 'List the records that would be generated without writing files or querying OSV.dev'
+__fish_brew_complete_arg 'generate-vulns-advisories' -l help -d 'Show this message'
+__fish_brew_complete_arg 'generate-vulns-advisories' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'generate-vulns-advisories' -l verbose -d 'Make some output more verbose'
 
 
 __fish_brew_complete_cmd 'generate-zap' 'Generate a `zap` stanza for a cask by scanning the system for associated files and directories'
@@ -2121,6 +2130,7 @@ __fish_brew_complete_arg 'update-python-resources' -l exclude-packages -d 'Exclu
 __fish_brew_complete_arg 'update-python-resources' -l extra-packages -d 'Include these additional packages when finding resources'
 __fish_brew_complete_arg 'update-python-resources' -l help -d 'Show this message'
 __fish_brew_complete_arg 'update-python-resources' -l ignore-errors -d 'Record all discovered resources, even those that can\'t be resolved successfully. This option is ignored for homebrew/core formulae'
+__fish_brew_complete_arg 'update-python-resources' -l ignore-main-package-cooldown -d 'Bypass the release cooldown for formula\'s own package when resolving resources. Its dependencies still respect the cooldown. This option is ignored for official taps'
 __fish_brew_complete_arg 'update-python-resources' -l ignore-non-pypi-packages -d 'Don\'t fail if formula is not a PyPI package'
 __fish_brew_complete_arg 'update-python-resources' -l install-dependencies -d 'Install missing dependencies required to update resources'
 __fish_brew_complete_arg 'update-python-resources' -l package-name -d 'Use the specified package-name when finding resources for formula. If no package name is specified, it will be inferred from the formula\'s stable URL'
@@ -2266,6 +2276,20 @@ __fish_brew_complete_arg 'version-install' -l help -d 'Show this message'
 __fish_brew_complete_arg 'version-install' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'version-install' -l verbose -d 'Make some output more verbose'
 __fish_brew_complete_arg 'version-install' -a '(__fish_brew_suggest_formulae_all)'
+
+
+__fish_brew_complete_cmd 'vulns' 'Check formula for known security vulnerabilities using the OSV.dev database'
+__fish_brew_complete_arg 'vulns' -l brewfile -d 'Check formulae listed in a Brewfile. Defaults to `./Brewfile`; use `--brewfile=`path to specify another'
+__fish_brew_complete_arg 'vulns' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'vulns' -l deps -d 'Also check the dependencies of named formulae'
+__fish_brew_complete_arg 'vulns' -l help -d 'Show this message'
+__fish_brew_complete_arg 'vulns' -l json -d 'Output JSON'
+__fish_brew_complete_arg 'vulns' -l max-summary -d 'Truncate summaries to n characters (default 60, 0 for no limit)'
+__fish_brew_complete_arg 'vulns' -l no-ignore-patches -d 'Report vulnerabilities even when a formula patch resolves them'
+__fish_brew_complete_arg 'vulns' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'vulns' -l severity -d 'Only report findings at or above: `low`, `medium`, `high`, `critical`'
+__fish_brew_complete_arg 'vulns' -l verbose -d 'Make some output more verbose'
+__fish_brew_complete_arg 'vulns' -a '(__fish_brew_suggest_formulae_all)'
 
 
 __fish_brew_complete_cmd 'which-formula' 'Show which formula(e) provides the given command'

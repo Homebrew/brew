@@ -227,24 +227,26 @@ module PyPI
   # Return true if resources were checked (even if no change).
   sig {
     params(
-      formula:                  Formula,
-      version:                  T.nilable(String),
-      package_name:             T.nilable(String),
-      extra_packages:           T.nilable(T::Array[String]),
-      exclude_packages:         T.nilable(T::Array[String]),
-      dependencies:             T.nilable(T::Array[String]),
-      install_dependencies:     T.nilable(T::Boolean),
-      print_only:               T.nilable(T::Boolean),
-      quiet:                    T.nilable(T::Boolean),
-      verbose:                  T.nilable(T::Boolean),
-      ignore_errors:            T.nilable(T::Boolean),
-      ignore_non_pypi_packages: T.nilable(T::Boolean),
+      formula:                      Formula,
+      version:                      T.nilable(String),
+      package_name:                 T.nilable(String),
+      extra_packages:               T.nilable(T::Array[String]),
+      exclude_packages:             T.nilable(T::Array[String]),
+      dependencies:                 T.nilable(T::Array[String]),
+      install_dependencies:         T.nilable(T::Boolean),
+      print_only:                   T.nilable(T::Boolean),
+      quiet:                        T.nilable(T::Boolean),
+      verbose:                      T.nilable(T::Boolean),
+      ignore_errors:                T.nilable(T::Boolean),
+      ignore_non_pypi_packages:     T.nilable(T::Boolean),
+      ignore_main_package_cooldown: T.nilable(T::Boolean),
     ).returns(T.nilable(T::Boolean))
   }
   def self.update_python_resources!(formula, version: nil, package_name: nil, extra_packages: nil,
                                     exclude_packages: nil, dependencies: nil, install_dependencies: false,
                                     print_only: false, quiet: false, verbose: false,
-                                    ignore_errors: false, ignore_non_pypi_packages: false)
+                                    ignore_errors: false, ignore_non_pypi_packages: false,
+                                    ignore_main_package_cooldown: false)
     if [package_name, extra_packages, exclude_packages, dependencies].all?(&:blank?)
       list_entry = formula.pypi_packages_info
 
@@ -353,7 +355,9 @@ module PyPI
     print_stderr = verbose && show_info
     print_stderr ||= false
 
-    found_packages = pip_report(input_packages, python_name:, print_stderr:)
+    ignore_cooldown_package = main_package if ignore_main_package_cooldown
+    found_packages = pip_report(input_packages, python_name:, print_stderr:,
+                                ignore_cooldown_package:)
     # Resolve the dependency tree of excluded packages to prune the above
     exclude_packages.delete_if { |package| found_packages.exclude? package }
     if exclude_packages.present?
@@ -488,19 +492,38 @@ module PyPI
   sig {
     params(
       packages: T::Array[Package], python_name: String, print_stderr: T::Boolean,
+      ignore_cooldown_package: T.nilable(Package)
     ).returns(T::Array[Package])
   }
-  def self.pip_report(packages, python_name: "python", print_stderr: false)
+  def self.pip_report(packages, python_name: "python", print_stderr: false, ignore_cooldown_package: nil)
     return [] if packages.blank?
 
     # Delay packages published in the last day so resource resolution is less
-    # likely to pick a freshly compromised PyPI release.
+    # likely to pick a freshly compromised PyPI release. A cooldown-exempt main
+    # package (third-party taps only) is passed by its direct sdist URL so pip's
+    # index upload-time filter cannot hide a just-published release; its
+    # dependencies stay index-resolved and cooled.
+    requirements = packages.map do |package|
+      exempt = ignore_cooldown_package && package == ignore_cooldown_package && package.valid_pypi_package?
+      next package.to_s unless exempt
+
+      name, sdist_url = package.pypi_info
+      next package.to_s if sdist_url.blank?
+
+      # PEP 508 direct reference. Any extras are preserved so their dependencies
+      # still resolve, while the URL bypasses the index upload-time filter.
+      extras = package.extras.presence
+      next sdist_url unless extras
+
+      "#{name}[#{extras.join(",")}] @ #{sdist_url}"
+    end
+
     command = [
       Utils::Path.formula_opt_libexec(python_name)/"bin/python",
       "-m", "pip", "install", "-q", "--disable-pip-version-check",
       "--dry-run", "--ignore-installed",
       "--uploaded-prior-to=P#{Homebrew::RELEASE_COOLDOWN_DAYS}D",
-      "--report=/dev/stdout", *packages.map(&:to_s)
+      "--report=/dev/stdout", *requirements
     ]
     options = {}
     options[:err] = :err if print_stderr

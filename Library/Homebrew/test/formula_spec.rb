@@ -180,9 +180,11 @@ RSpec.describe Formula do
       # don't try to load/fetch gcc/glibc
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
-      allow(Formulary).to receive(:load_formula_from_path).with(f2.name, f2.path).and_return(f2)
+      allow(Formulary).to receive(:load_formula_from_path)
+        .with(f2.name, f2.path, flags: [], ignore_errors: false).and_return(f2)
       allow(Formulary).to receive(:factory).with(f2.name).and_return(f2)
-      allow(Formulary).to receive(:load_formula_from_path).with(f_full2.name, f_full2.path).and_return(f_full2)
+      allow(Formulary).to receive(:load_formula_from_path)
+        .with(f_full2.name, f_full2.path, flags: [], ignore_errors: false).and_return(f_full2)
       allow(Formulary).to receive(:factory).with(f_full2.name).and_return(f_full2)
       allow(f).to receive(:versioned_formulae_names).and_return([f2.name])
     end
@@ -356,7 +358,8 @@ RSpec.describe Formula do
 
     before do
       [f, f_full, f_versioned, f_versioned_full].each do |formula|
-        allow(Formulary).to receive(:load_formula_from_path).with(formula.name, formula.path).and_return(formula)
+        allow(Formulary).to receive(:load_formula_from_path)
+          .with(formula.name, formula.path, flags: [], ignore_errors: false).and_return(formula)
         allow(Formulary).to receive(:factory).with(formula.name).and_return(formula)
         FileUtils.touch formula.path
       end

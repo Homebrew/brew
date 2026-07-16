@@ -226,7 +226,7 @@ module Homebrew
           basenames = entries.map { |e| File.basename(e) }
           wildcarded = find_wildcard_groups(basenames)
 
-          dir = File.dirname(T.must(entries.first))
+          dir = File.dirname(entries.fetch(0))
           wildcarded.each do |name|
             result << File.join(dir, name)
           end

@@ -134,16 +134,6 @@ module Homebrew
         cache.fetch("casks")
       end
 
-      sig { returns(T::Hash[String, String]) }
-      def self.all_renames
-        unless cache.key?("renames")
-          json_updated = download_and_cache_data!
-          write_names(regenerate: json_updated)
-        end
-
-        cache.fetch("renames")
-      end
-
       sig { returns(T::Hash[String, T.untyped]) }
       def self.tap_migrations
         unless cache.key?("tap_migrations")

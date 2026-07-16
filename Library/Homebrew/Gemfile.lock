@@ -121,7 +121,7 @@ GEM
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
-    ruby-macho (5.0.0)
+    ruby-macho (6.0.0)
     ruby-prof (2.0.5)
       base64
       ostruct
@@ -236,7 +236,7 @@ DEPENDENCIES
   yard-sorbet
 
 RUBY VERSION
-  ruby 4.0.5
+  ruby 4.0.6
 
 BUNDLED WITH
-  4.0.10
+  4.0.16

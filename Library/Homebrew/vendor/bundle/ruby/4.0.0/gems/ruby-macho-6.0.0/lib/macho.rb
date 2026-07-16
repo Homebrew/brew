@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
-require "open3"
-
 require_relative "macho/utils"
 require_relative "macho/structure"
 require_relative "macho/view"
 require_relative "macho/headers"
+require_relative "macho/code_signing"
 require_relative "macho/load_commands"
 require_relative "macho/sections"
 require_relative "macho/macho_file"
@@ -16,7 +15,7 @@ require_relative "macho/tools"
 # The primary namespace for ruby-macho.
 module MachO
   # release version
-  VERSION = "5.0.0"
+  VERSION = "6.0.0"
 
   # Opens the given filename as a MachOFile or FatFile, depending on its magic.
   # @param filename [String] the file being opened
@@ -42,20 +41,20 @@ module MachO
     file
   end
 
-  # Signs the dylib using an ad-hoc identity.
-  # Necessary after making any changes to a dylib, since otherwise
-  # changing a signed file invalidates its signature.
+  # Signs a thin or fat Mach-O using an ad-hoc identity.
+  # Necessary after changing signed Mach-O data because the signature covers
+  # the header, load commands and all bytes preceding the signature.
   # @param filename [String] the file being opened
   # @return [void]
-  # @raise [ModificationError] if the operation fails
+  # @raise [CodeSigningError] if the operation fails
   def self.codesign!(filename)
-    raise ArgumentError, "codesign binary is not available on Linux" if RUBY_PLATFORM !~ /darwin/
     raise ArgumentError, "#{filename}: no such file" unless File.file?(filename)
 
-    _, _, status = Open3.capture3("codesign", "--sign", "-", "--force",
-                                  "--preserve-metadata=entitlements,requirements,flags,runtime",
-                                  filename)
-
-    raise CodeSigningError, "#{filename}: signing failed!" unless status.success?
+    file = MachO.open(filename)
+    file.codesign!
+    file.write!
+    nil
+  rescue MachOError => e
+    raise CodeSigningError, "#{filename}: signing failed: #{e.message}"
   end
 end

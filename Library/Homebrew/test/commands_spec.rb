@@ -86,6 +86,32 @@ RSpec.describe Commands do
     end
   end
 
+  describe "::suggestion_message" do
+    let(:internal_commands) { %w[doctor up upgrade] }
+    let(:all_commands) { %w[doctor external-command up upgrade] }
+
+    before do
+      allow(described_class).to receive(:commands).with(external: false, aliases: true).and_return(internal_commands)
+      allow(described_class).to receive(:commands).with(aliases: true).and_return(all_commands)
+    end
+
+    it "suggests a command for a typo" do
+      expect(described_class.suggestion_message("upgrde")).to eq("\nDid you mean upgrade?")
+    end
+
+    it "suggests a command alias for a typo" do
+      expect(described_class.suggestion_message("upp")).to eq("\nDid you mean up?")
+    end
+
+    it "falls back to external command suggestions" do
+      expect(described_class.suggestion_message("external-comand")).to eq("\nDid you mean external-command?")
+    end
+
+    it "does not suggest a command without a close match" do
+      expect(described_class.suggestion_message("zzzzzz")).to be_empty
+    end
+  end
+
   describe "::rebuild_internal_commands_completion_list" do
     it "omits internal command aliases" do
       mktmpdir do |repository|

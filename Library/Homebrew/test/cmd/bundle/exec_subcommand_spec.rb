@@ -183,9 +183,11 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
       let(:brewfile_contents) { "brew 'nginx'\nbrew 'redis'" }
 
       let(:nginx_formula) do
-        instance_double(
-          Formula,
-          name:                     "nginx",
+        nginx = formula("nginx") do
+          T.bind(self, T.class_of(Formula))
+          url "nginx-1.0"
+        end
+        allow(nginx).to receive_messages(
           any_version_installed?:   true,
           any_installed_prefix:     HOMEBREW_PREFIX/"opt/nginx",
           plist_name:               "homebrew.mxcl.nginx",
@@ -194,12 +196,15 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
           conflicts:                [instance_double(Formula::FormulaConflict, name: "httpd")],
           keg_only?:                false,
         )
+        nginx
       end
 
       let(:redis_formula) do
-        instance_double(
-          Formula,
-          name:                     "redis",
+        redis = formula("redis") do
+          T.bind(self, T.class_of(Formula))
+          url "redis-1.0"
+        end
+        allow(redis).to receive_messages(
           any_version_installed?:   true,
           any_installed_prefix:     HOMEBREW_PREFIX/"opt/redis",
           plist_name:               "homebrew.mxcl.redis",
@@ -208,6 +213,7 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
           conflicts:                [],
           keg_only?:                false,
         )
+        redis
       end
 
       let(:services_info_pre) do

@@ -40,6 +40,13 @@ module OS
           # We use gnu-tar with sparse files disabled when --only-json-tab is passed.
           ENV["HOMEBREW_BOTTLE_SUDO_PURGE"] = "1" if MacOS.version >= :catalina && !args.only_json_tab?
         end
+
+        sig { returns(T::Boolean) }
+        def integration_test_portable_ruby?
+          # tests fail on macOS when currently running portable Ruby is replaced using same path
+          portable_ruby_version = (HOMEBREW_LIBRARY_PATH/"vendor/portable-ruby-version").read.chomp
+          portable_ruby_version != ::Formula["portable-ruby"].pkg_version.to_s
+        end
       end
 
       module FormulaeDependents

@@ -1,6 +1,6 @@
 ---
 name: ruby-macho
-version: 5.0.0
+version: 6.0.0
 type: bundler
 summary: ruby-macho - Mach-O file analyzer.
 homepage: https://github.com/Homebrew/ruby-macho

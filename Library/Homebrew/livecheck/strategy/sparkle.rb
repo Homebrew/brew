@@ -210,7 +210,7 @@ module Homebrew
           items = sort_items(filter_items(items_from_content(content)))
           return [] if items.empty?
 
-          item = T.must(items.first)
+          item = items.fetch(0)
 
           if block
             block_return_value = case block.parameters[0]

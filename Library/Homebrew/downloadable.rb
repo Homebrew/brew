@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "concurrent/set"
 require "url"
 require "checksum"
 require "download_strategy"
@@ -13,6 +14,57 @@ module Downloadable
 
   abstract!
   requires_ancestor { Kernel }
+
+  # Remembers which files have already been checksum-verified in this process,
+  # so the same unchanged file is not hashed once per download object that
+  # references it.
+  class VerificationCache
+    include Context
+    include Utils::Output::Mixin
+
+    sig { void }
+    def initialize
+      @verified = T.let(Concurrent::Set.new, Concurrent::Set)
+    end
+
+    # Verifies the file against the checksum unless this file, in this
+    # state, has already been verified against it in this process.
+    sig { params(filename: Pathname, checksum: T.nilable(Checksum)).void }
+    def verify(filename, checksum)
+      key = key_for(filename, checksum)
+
+      if key && @verified.include?(key)
+        odebug "Skipping checksum verification for '#{filename.basename}' (already verified in this run)"
+        return
+      end
+
+      ohai "Verifying checksum for '#{filename.basename}'" if verbose?
+      filename.verify_checksum(checksum)
+
+      @verified.add(key) if key
+    end
+
+    private
+
+    # The size and modification time ensure a file downloaded again to the
+    # same path (e.g. after `--force` cleared the cache) is verified again.
+    sig { params(filename: Pathname, checksum: T.nilable(Checksum)).returns(T.nilable(String)) }
+    def key_for(filename, checksum)
+      return if checksum.nil?
+
+      stat = filename.stat
+      "#{filename.expand_path}|#{checksum.hexdigest}|#{stat.size}|#{stat.mtime.to_f}"
+    rescue SystemCallError
+      nil
+    end
+  end
+
+  class << self
+    sig { returns(VerificationCache) }
+    def verification_cache
+      @verification_cache ||= T.let(VerificationCache.new, T.nilable(VerificationCache))
+    end
+  end
 
   sig { overridable.returns(T.nilable(T.any(String, URL))) }
   attr_reader :url
@@ -181,8 +233,7 @@ module Downloadable
     verifying!
 
     if filename.file?
-      ohai "Verifying checksum for '#{filename.basename}'" if verbose?
-      filename.verify_checksum(checksum)
+      Downloadable.verification_cache.verify(filename, checksum)
       verified!
     end
   rescue ChecksumMissingError

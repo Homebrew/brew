@@ -765,6 +765,42 @@ RSpec.describe Cask::Installer, :cask do
       expect(cask).to be_installed
     end
 
+    it "stages nested containers for API-loaded casks" do
+      container_dir = mktmpdir
+      FileUtils.cp(TEST_FIXTURE_DIR/"cask/caffeine.zip", container_dir/"NestedApp.zip")
+      (container_dir/"README").write("NestedApp.zip contains the application")
+      download = mktmpdir/"api-nested-cask.tar.gz"
+      system "tar", "--create", "--gzip", "--file", download, "--directory", container_dir, "."
+      sha256 = download.sha256
+      cask = Cask::Cask.new("api-nested-cask", loaded_from_api: true, loaded_from_internal_api: true) do
+        version "1.2.3"
+        sha256 sha256
+        url "file://#{download}"
+        container nested: "NestedApp.zip"
+        app "Caffeine.app"
+      end
+      cask_struct = Homebrew::API::CaskStruct.new(
+        container_args:    { nested: "NestedApp.zip", type: nil },
+        container_present: true,
+        sha256:,
+        url_args:          ["file://#{download}"],
+        version:           "1.2.3",
+      )
+      allow(Homebrew::API::Internal).to receive(:cask_struct).with("api-nested-cask").and_return(cask_struct)
+      download_queue = Homebrew::DownloadQueue.new(pour: true)
+      installer = described_class.new(cask, download_queue:, defer_fetch: true)
+
+      begin
+        installer.enqueue_downloads
+        download_queue.fetch
+      ensure
+        download_queue.shutdown
+      end
+      installer.stage
+
+      expect(cask.staged_path/"Caffeine.app").to be_a_directory
+    end
+
     it "does not stage queued downloads with missing unpack dependencies" do
       cask = Cask::CaskLoader.load(cask_path("container-bzip2"))
       download_queue = Homebrew::DownloadQueue.new(pour: true)

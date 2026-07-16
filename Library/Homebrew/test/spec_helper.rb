@@ -48,6 +48,7 @@ require_relative "../global"
 require "debug" if ENV["HOMEBREW_DEBUG"]
 
 require "test/support/quiet_progress_formatter"
+require "test/support/helper/api_hashable"
 require "test/support/helper/cask"
 require "test/support/helper/files"
 require "test/support/helper/fixtures"
@@ -170,6 +171,10 @@ RSpec.configure do |config|
 
   config.before(:each, :needs_java) do
     skip "Java is not installed." unless which("java")
+  end
+
+  config.before(:each, :needs_jq) do
+    skip "jq is not installed." unless which("jq")
   end
 
   config.before(:each, :needs_python) do

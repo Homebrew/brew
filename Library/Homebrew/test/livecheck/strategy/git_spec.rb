@@ -329,11 +329,10 @@ RSpec.describe Homebrew::Livecheck::Strategy::Git do
         .to eq(match_data[:cached_default])
     end
 
-    it "omits tag values that produce a `TypeError` when creating a `Version` object" do
+    it "omits non-string tag values" do
       # This overrides the `versions_from_content` return value to also include
-      # non-string values that will produce a `TypeError` for `Version::new`.
-      # This shouldn't happen under normal circumstances but this allows us
-      # to test this safeguard.
+      # non-string values. This shouldn't happen under normal circumstances
+      # but this allows us to test this safeguard.
       allow(git).to receive(:versions_from_content).and_return([1, *matches[:brew_regex], nil])
 
       expect(git.find_versions(url: git_url, regex: regexes[:brew], content: content[:normal]))

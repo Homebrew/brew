@@ -20,6 +20,8 @@ RSpec.describe Homebrew::DevCmd::TapNew do
     expect(HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo/.github/workflows/tests.yml").to exist
     expect((HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo/.github/workflows/tests.yml").read)
       .not_to include("HOMEBREW_DEVELOPER")
+    expect((HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo/.github/workflows/tests.yml").read)
+      .to include("options: ${{ matrix.container != '' && '--privileged' }}")
     publish_yml = (HOMEBREW_LIBRARY/"Taps/homebrew/homebrew-foo/.github/workflows/publish.yml").read
     expect(publish_yml).not_to include("HOMEBREW_DEVELOPER")
     expect(publish_yml).not_to include("pull_request_target")

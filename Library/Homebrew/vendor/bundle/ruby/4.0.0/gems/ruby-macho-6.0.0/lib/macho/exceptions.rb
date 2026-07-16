@@ -126,6 +126,14 @@ module MachO
     end
   end
 
+  # Raised when a load command has an invalid size.
+  class LoadCommandSizeError < NotAMachOError
+    # @param size [Integer] the invalid size
+    def initialize(size)
+      super("Invalid Mach-O load command size: #{size}")
+    end
+  end
+
   # Raised when a load command can't be created manually.
   class LoadCommandNotCreatableError < MachOError
     # @param cmd_sym [Symbol] the uncreatable load command's symbol

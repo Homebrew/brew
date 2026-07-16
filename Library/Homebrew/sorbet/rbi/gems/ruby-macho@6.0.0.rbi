@@ -24,6 +24,156 @@ class MachO::CPUTypeMismatchError < ::MachO::NotAMachOError
   def initialize(fat_cputype, fat_cpusubtype, macho_cputype, macho_cpusubtype); end
 end
 
+module MachO::CodeSigning
+  class << self
+    def identifier(macho, filename); end
+    def info_plist(macho); end
+  end
+end
+
+class MachO::CodeSigning::AdhocSigner
+  def initialize(macho, identifier); end
+
+  def sign!; end
+
+  private
+
+  def add_signature_command; end
+  def default_metadata; end
+  def hash_types; end
+  def metadata_from(signature_command); end
+  def remove_signature(signature_command); end
+  def signature_entries(metadata, hashes: T.unsafe(nil)); end
+  def update_linkedit_data_command(command, dataoff, datasize); end
+  def update_linkedit_segment(segment, final_size); end
+end
+
+class MachO::CodeSigning::Blob
+  def initialize(data); end
+
+  def length; end
+  def magic; end
+  def magic_sym; end
+  def serialize; end
+  def to_h; end
+
+  class << self
+    def parse(data); end
+  end
+end
+
+class MachO::CodeSigning::BlobIndex < ::Struct
+  def offset; end
+  def offset=(_); end
+  def type; end
+  def type=(_); end
+
+  class << self
+    def [](*_arg0); end
+    def inspect; end
+    def keyword_init?; end
+    def members; end
+    def new(*_arg0); end
+  end
+end
+
+MachO::CodeSigning::CSMAGIC_BLOBWRAPPER = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_CODEDIRECTORY = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_DETACHED_SIGNATURE = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_EMBEDDED_DER_ENTITLEMENTS = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_EMBEDDED_ENTITLEMENTS = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_EMBEDDED_LAUNCH_CONSTRAINT = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_EMBEDDED_SIGNATURE = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_ENTITLEMENT = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_ENTITLEMENTDER = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_REQUIREMENT = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSMAGIC_REQUIREMENTS = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSSLOT_ALTERNATE_CODEDIRECTORIES = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSSLOT_CODEDIRECTORY = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSSLOT_DER_ENTITLEMENTS = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSSLOT_ENTITLEMENTS = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSSLOT_INFOSLOT = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSSLOT_REQUIREMENTS = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CSSLOT_SIGNATURESLOT = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_ADHOC = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_EXECSEG_JIT = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_EXECSEG_MAIN_BINARY = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_HARD = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_HASHTYPES = T.let(T.unsafe(nil), Hash)
+MachO::CodeSigning::CS_HASHTYPE_SHA1 = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_HASHTYPE_SHA256 = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_HASHTYPE_SHA256_TRUNCATED = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_HASHTYPE_SHA384 = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_LINKER_SIGNED = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_MAGICS = T.let(T.unsafe(nil), Hash)
+MachO::CodeSigning::CS_RUNTIME = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_SUPPORTSCODELIMIT64 = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_SUPPORTSEXECSEG = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_SUPPORTSLINKAGE = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::CS_SUPPORTSRUNTIME = T.let(T.unsafe(nil), Integer)
+
+class MachO::CodeSigning::CodeDirectory < ::MachO::CodeSigning::Blob
+  def initialize(data); end
+
+  def code_hash(slot); end
+  def code_limit; end
+  def code_limit64; end
+  def exec_seg_base; end
+  def exec_seg_flags; end
+  def exec_seg_limit; end
+  def flags; end
+  def hash_offset; end
+  def hash_size; end
+  def hash_type; end
+  def hash_type_sym; end
+  def ident_offset; end
+  def identifier; end
+  def linkage_application_subtype; end
+  def linkage_application_type; end
+  def linkage_hash_type; end
+  def linkage_offset; end
+  def linkage_size; end
+  def n_code_slots; end
+  def n_special_slots; end
+  def page_size; end
+  def platform; end
+  def pre_encrypt_offset; end
+  def runtime; end
+  def scatter_offset; end
+  def special_hash(slot); end
+  def team_offset; end
+  def to_h; end
+  def version; end
+
+  private
+
+  def unpack_uint32(offset); end
+
+  class << self
+    def build(source, identifier:, hash_type:, flags:, special_slots:, exec_seg_base:, exec_seg_limit:, exec_seg_flags:, runtime:, hashes: T.unsafe(nil)); end
+  end
+end
+
+MachO::CodeSigning::HASHES = T.let(T.unsafe(nil), Hash)
+MachO::CodeSigning::PAGE_SIZE = T.let(T.unsafe(nil), Integer)
+MachO::CodeSigning::PRESERVED_COMPONENT_SLOTS = T.let(T.unsafe(nil), Array)
+
+class MachO::CodeSigning::SuperBlob < ::MachO::CodeSigning::Blob
+  def initialize(data); end
+
+  def blob(type); end
+  def blobs; end
+  def count; end
+  def each_blob(&block); end
+  def each_blob_index(&block); end
+  def indices; end
+  def to_h; end
+
+  class << self
+    def build(entries); end
+  end
+end
+
 class MachO::CodeSigningError < ::MachO::MachOError; end
 class MachO::CompressedMachOError < ::MachO::MachOError; end
 class MachO::DecompressionError < ::MachO::MachOError; end
@@ -50,37 +200,38 @@ class MachO::FatFile
   def initialize(filename, **opts); end
 
   def add_rpath(path, options = T.unsafe(nil)); end
-  def bundle?(*args, **_arg1, &block); end
+  def bundle?(*_arg0, **_arg1, &_arg2); end
   def change_dylib(old_name, new_name, options = T.unsafe(nil)); end
   def change_dylib_id(new_id, options = T.unsafe(nil)); end
   def change_install_name(old_name, new_name, options = T.unsafe(nil)); end
   def change_rpath(old_path, new_path, options = T.unsafe(nil)); end
-  def core?(*args, **_arg1, &block); end
+  def codesign!(identifier: T.unsafe(nil)); end
+  def core?(*_arg0, **_arg1, &_arg2); end
   def delete_rpath(path, options = T.unsafe(nil)); end
-  def dsym?(*args, **_arg1, &block); end
-  def dylib?(*args, **_arg1, &block); end
-  def dylib_id(*args, **_arg1, &block); end
+  def dsym?(*_arg0, **_arg1, &_arg2); end
+  def dylib?(*_arg0, **_arg1, &_arg2); end
+  def dylib_id(*_arg0, **_arg1, &_arg2); end
   def dylib_id=(new_id, options = T.unsafe(nil)); end
   def dylib_load_commands; end
-  def dylinker?(*args, **_arg1, &block); end
-  def executable?(*args, **_arg1, &block); end
+  def dylinker?(*_arg0, **_arg1, &_arg2); end
+  def executable?(*_arg0, **_arg1, &_arg2); end
   def extract(cputype); end
   def fat_archs; end
   def filename; end
   def filename=(_arg0); end
-  def filetype(*args, **_arg1, &block); end
-  def fvmlib?(*args, **_arg1, &block); end
+  def filetype(*_arg0, **_arg1, &_arg2); end
+  def fvmlib?(*_arg0, **_arg1, &_arg2); end
   def header; end
   def initialize_from_bin(bin, opts); end
-  def kext?(*args, **_arg1, &block); end
+  def kext?(*_arg0, **_arg1, &_arg2); end
   def linked_dylibs; end
   def machos; end
-  def magic(*args, **_arg1, &block); end
+  def magic(*_arg0, **_arg1, &_arg2); end
   def magic_string; end
-  def object?(*args, **_arg1, &block); end
+  def object?(*_arg0, **_arg1, &_arg2); end
   def options; end
   def populate_fields; end
-  def preload?(*args, **_arg1, &block); end
+  def preload?(*_arg0, **_arg1, &_arg2); end
   def rpaths; end
   def serialize; end
   def to_h; end
@@ -95,6 +246,7 @@ class MachO::FatFile
   def populate_fat_header; end
   def populate_machos; end
   def repopulate_raw_machos; end
+  def repopulate_resized_raw_machos; end
 
   class << self
     def new_from_bin(bin, **opts); end
@@ -303,6 +455,10 @@ class MachO::LoadCommandNotSerializableError < ::MachO::MachOError
   def initialize(cmd_sym); end
 end
 
+class MachO::LoadCommandSizeError < ::MachO::NotAMachOError
+  def initialize(size); end
+end
+
 module MachO::LoadCommands; end
 
 class MachO::LoadCommands::BuildVersionCommand < ::MachO::LoadCommands::LoadCommand
@@ -452,6 +608,8 @@ MachO::LoadCommands::LOAD_COMMAND_CONSTANTS = T.let(T.unsafe(nil), Hash)
 class MachO::LoadCommands::LinkeditDataCommand < ::MachO::LoadCommands::LoadCommand
   def dataoff; end
   def datasize; end
+  def serialize(context); end
+  def superblob; end
   def to_h; end
 end
 
@@ -677,61 +835,64 @@ class MachO::MachOFile
   def [](name); end
   def add_command(lc, options = T.unsafe(nil)); end
   def add_rpath(path, _options = T.unsafe(nil)); end
-  def alignment(*args, **_arg1, &block); end
-  def bundle?(*args, **_arg1, &block); end
+  def alignment(*_arg0, **_arg1, &_arg2); end
+  def bundle?(*_arg0, **_arg1, &_arg2); end
   def change_dylib(old_name, new_name, _options = T.unsafe(nil)); end
   def change_dylib_id(new_id, _options = T.unsafe(nil)); end
   def change_install_name(old_name, new_name, _options = T.unsafe(nil)); end
   def change_rpath(old_path, new_path, options = T.unsafe(nil)); end
+  def codesign!(identifier: T.unsafe(nil)); end
   def command(name); end
-  def core?(*args, **_arg1, &block); end
+  def core?(*_arg0, **_arg1, &_arg2); end
   def cpusubtype; end
   def cputype; end
   def delete_command(lc, options = T.unsafe(nil)); end
   def delete_rpath(path, options = T.unsafe(nil)); end
-  def dsym?(*args, **_arg1, &block); end
-  def dylib?(*args, **_arg1, &block); end
+  def dsym?(*_arg0, **_arg1, &_arg2); end
+  def dylib?(*_arg0, **_arg1, &_arg2); end
   def dylib_id; end
   def dylib_id=(new_id, _options = T.unsafe(nil)); end
   def dylib_load_commands; end
-  def dylinker?(*args, **_arg1, &block); end
+  def dylinker?(*_arg0, **_arg1, &_arg2); end
   def endianness; end
-  def executable?(*args, **_arg1, &block); end
+  def executable?(*_arg0, **_arg1, &_arg2); end
   def filename; end
   def filename=(_arg0); end
   def filetype; end
-  def flags(*args, **_arg1, &block); end
-  def fvmlib?(*args, **_arg1, &block); end
+  def flags(*_arg0, **_arg1, &_arg2); end
+  def fvmlib?(*_arg0, **_arg1, &_arg2); end
   def header; end
   def initialize_from_bin(bin, opts); end
   def insert_command(offset, lc, options = T.unsafe(nil)); end
-  def kext?(*args, **_arg1, &block); end
+  def kext?(*_arg0, **_arg1, &_arg2); end
   def linked_dylibs; end
   def load_commands; end
-  def magic(*args, **_arg1, &block); end
-  def magic32?(*args, **_arg1, &block); end
-  def magic64?(*args, **_arg1, &block); end
+  def magic(*_arg0, **_arg1, &_arg2); end
+  def magic32?(*_arg0, **_arg1, &_arg2); end
+  def magic64?(*_arg0, **_arg1, &_arg2); end
   def magic_string; end
-  def ncmds(*args, **_arg1, &block); end
-  def object?(*args, **_arg1, &block); end
+  def ncmds(*_arg0, **_arg1, &_arg2); end
+  def object?(*_arg0, **_arg1, &_arg2); end
   def options; end
   def populate_fields; end
-  def preload?(*args, **_arg1, &block); end
+  def preload?(*_arg0, **_arg1, &_arg2); end
   def replace_command(old_lc, new_lc); end
   def rpaths; end
   def segment_alignment; end
   def segments; end
   def serialize; end
-  def sizeofcmds(*args, **_arg1, &block); end
+  def sizeofcmds(*_arg0, **_arg1, &_arg2); end
   def to_h; end
   def write(filename); end
   def write!; end
 
   private
 
+  def calculate_segment_alignment; end
   def check_cpusubtype(cputype, cpusubtype); end
   def check_cputype(cputype); end
   def check_filetype(filetype); end
+  def clear_memoization_cache; end
   def decompress_macho_lzvn; end
   def low_fileoff; end
   def populate_and_check_magic; end

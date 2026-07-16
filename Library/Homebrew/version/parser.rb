@@ -35,8 +35,10 @@ class Version
       version
     end
 
-    sig { abstract.params(spec: Pathname).returns(String) }
-    def self.process_spec(spec); end
+    sig { params(spec: Pathname).returns(String) }
+    def self.process_spec(spec)
+      raise NotImplementedError, "#{name}.process_spec must be implemented for #{spec}"
+    end
   end
 
   class UrlParser < RegexParser

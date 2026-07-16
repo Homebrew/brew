@@ -100,10 +100,6 @@ RSpec.describe DependencyCollector do
       expect { collector.add(:codesign) }.to raise_error(ArgumentError, "Unsupported special dependency: :codesign")
     end
 
-    it "raises a TypeError for unknown Types" do
-      expect { collector.add(Object.new) }.to raise_error(TypeError)
-    end
-
     it "raises a TypeError for a Resource with an unknown download strategy" do
       resource = Resource.new
       resource.download_strategy = Class.new

@@ -69,6 +69,25 @@ module Homebrew
       # The compile cache doesn't get unloaded so we don't need to load it again!
       load!(compile_cache: false)
     end
+
+    # Compile caches for the load graphs of common commands in a detached
+    # background process, so the next `brew` command doesn't pay the cost of
+    # compiling caches for Ruby files changed by e.g. `brew update`.
+    def self.prewarm!
+      return unless enabled?
+      return if ENV["HOMEBREW_TESTS"]
+
+      pid = Process.spawn(
+        *HOMEBREW_RUBY_EXEC_ARGS,
+        "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
+        "-rglobal", "-rcmd/install", "-rcmd/fetch", "-rcmd/upgrade",
+        "-e", "",
+        in: File::NULL, out: File::NULL, err: File::NULL, pgroup: true
+      )
+      Process.detach(pid)
+    rescue SystemCallError
+      nil
+    end
   end
 end
 

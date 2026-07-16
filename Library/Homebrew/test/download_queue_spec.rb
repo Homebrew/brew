@@ -41,6 +41,37 @@ RSpec.describe Homebrew::DownloadQueue do
     expect(Homebrew).to have_failed
   end
 
+  it "raises and clears queue state on a bottle manifest failure in parallel mode" do
+    allow(retryable_download).to receive(:fetch).and_raise(Resource::BottleManifest::Error.new("manifest missing"))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch }.to raise_error(Resource::BottleManifest::Error, /manifest missing/)
+    expect(download_queue.send(:downloads)).to be_empty
+  end
+
+  it "cancels remaining downloads and raises on a bottle manifest failure in serial mode" do
+    allow(Homebrew::EnvConfig).to receive(:download_concurrency).and_return(1)
+    allow(retryable_download).to receive(:fetch).and_raise(Resource::BottleManifest::Error.new("manifest missing"))
+
+    download_queue.enqueue(downloadable)
+
+    expect(download_queue).to receive(:cancel)
+    expect { download_queue.fetch }.to raise_error(Resource::BottleManifest::Error, /manifest missing/)
+  end
+
+  it "wakes when downloads complete instead of polling with sleep" do
+    allow($stdout).to receive(:tty?).and_return(false)
+    allow(retryable_download).to receive(:fetch) { sleep(0.1) }
+
+    expect(download_queue).not_to receive(:sleep)
+
+    expect do
+      download_queue.enqueue(downloadable)
+      download_queue.fetch
+    end.to output(/✔︎ Bottle testball/).to_stderr
+  end
+
   it "skips fetching already downloaded files with a valid checksum" do
     cached_download.dirname.mkpath
     cached_download.write("already downloaded")
@@ -62,6 +93,18 @@ RSpec.describe Homebrew::DownloadQueue do
     expect(downloadable).to receive(:stage_from_download_queue).with(cached_download, pour: false).ordered
     expect(downloadable).to receive(:downloaded!).ordered
 
+    download_queue.enqueue(downloadable, stage: true)
+    download_queue.fetch
+  end
+
+  it "promotes an in-flight download to queued staging" do
+    expect(retryable_download).to receive(:fetch).once.and_return(cached_download)
+    expect(downloadable).to receive(:stage_from_download_queue?).with(cached_download, pour: false).and_return(true)
+    expect(downloadable).to receive(:extracting!).ordered
+    expect(downloadable).to receive(:stage_from_download_queue).with(cached_download, pour: false).ordered
+    expect(downloadable).to receive(:downloaded!).ordered
+
+    download_queue.enqueue(downloadable)
     download_queue.enqueue(downloadable, stage: true)
     download_queue.fetch
   end

@@ -91,7 +91,7 @@ module Cask
 
       sig { params(_options: T.untyped).void }
       def install_phase(**_options)
-        executable = staged_path_join_executable(T.must(commands.first))
+        executable = staged_path_join_executable(commands.fetch(0))
 
         shells.each do |shell|
           popen_read_env = { "SHELL" => shell.to_s }
@@ -159,7 +159,7 @@ module Cask
       sig { returns(String) }
       def resolved_base_name
         @resolved_base_name ||= T.let(begin
-          executable = staged_path_join_executable(T.must(commands.first))
+          executable = staged_path_join_executable(commands.fetch(0))
           name = base_name || File.basename(executable.to_s)
           name = cask.token if name.empty?
           name

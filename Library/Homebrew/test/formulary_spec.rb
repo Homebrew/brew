@@ -558,7 +558,7 @@ RSpec.describe Formulary do
           )
         end
         allow(Homebrew::API::Internal).to receive(:formula_tap_git_head).and_return("")
-        allow(Homebrew::API::Formula).to receive_messages(all_aliases: {}, all_renames: {})
+        allow(Homebrew::API::Formula).to receive(:all_aliases).and_return({})
         allow(CoreTap.instance).to receive(:tap_migrations).and_return({})
         allow(CoreCaskTap.instance).to receive(:tap_migrations).and_return({})
 
@@ -619,16 +619,23 @@ RSpec.describe Formulary do
         allow(Homebrew::API::Formula).to receive(:all_formulae).and_return formula_json_contents(
           "patches" => [
             {
-              "strip"  => "p1",
-              "url"    => "https://example.com/test.patch",
-              "sha256" => TEST_SHA256,
+              "strip"    => "p1",
+              "url"      => "https://example.com/test.patch",
+              "sha256"   => TEST_SHA256,
+              "resolves" => [
+                { "type" => "security", "id" => "CVE-2024-1234" },
+                { "type" => "defect", "id" => "https://github.com/foo/bar/issues/1" },
+              ],
             },
           ],
         )
 
         formula = described_class.factory(formula_name)
 
-        expect(formula.patchlist.first).to be_a(ExternalPatch)
+        expect(formula.patchlist.first).to be_a(ExternalPatch).and have_attributes(resolves: [
+          "CVE-2024-1234",
+          "https://github.com/foo/bar/issues/1",
+        ])
       end
 
       it "returns a deprecated Formula when given a name" do

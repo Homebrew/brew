@@ -87,20 +87,19 @@ RSpec.describe FormulaInstaller do
     end
   end
 
-  specify "relocated bottle install requires developer tools on Apple Silicon", :needs_macos do
+  specify "relocated bottle install does not require developer tools on Apple Silicon", :needs_macos do
     formula = TestballBottle.new
     installer = described_class.new(formula)
 
-    allow(installer).to receive_messages(lock: nil, pour_bottle?: true)
+    allow(installer).to receive_messages(lock: nil, pour_bottle?: true, quiet?: true)
     allow(Hardware::CPU).to receive(:arm?).and_return(true)
     allow(formula.bottle_specification).to receive(:skip_relocation?).and_return(false)
-    allow_any_instance_of(Homebrew::Diagnostic::Checks)
-      .to receive(:check_for_installed_developer_tools)
-      .and_return("No developer tools installed.")
+    expect(Homebrew::Diagnostic::Checks).not_to receive(:new)
+    allow(installer).to receive(:check_conflicts).and_raise("stopped after preinstall checks")
 
     expect do
       installer.install
-    end.to raise_error(SystemExit)
+    end.to raise_error("stopped after preinstall checks")
   end
 
   describe "#finish" do
@@ -249,6 +248,44 @@ RSpec.describe FormulaInstaller do
       installer.fetch_bottle_tab(enqueue: true)
 
       expect(manifest_resource&.instance_variable_get(:@manifest_annotations)).to be_nil
+    end
+  end
+
+  describe "#enqueue_fetch" do
+    let(:formula) { TestballBottle.new }
+    let(:installer) { described_class.new(formula) }
+    let(:download_queue) { instance_double(Homebrew::DownloadQueue) }
+    let(:bottle) { instance_double(Bottle, cached_download: HOMEBREW_CACHE/"downloads/testball-bottle") }
+
+    before do
+      installer.download_queue = download_queue
+
+      allow(Homebrew::EnvConfig).to receive(:verify_attestations?).and_return(false)
+      allow(installer).to receive(:previously_fetched_formula)
+      allow(installer).to receive(:pour_bottle?).with(output_warning: true).and_return(true)
+      allow(installer).to receive(:downloadable).and_return(bottle)
+      allow(installer).to receive(:fetch_bottle_tab)
+    end
+
+    it "starts a bottle download before enqueueing dependencies after the prelude" do
+      installer.instance_variable_set(:@ran_prelude, true)
+
+      expect(download_queue).to receive(:enqueue)
+        .with(bottle, check_attestation: false, stage: false).ordered
+      expect(installer).to receive(:fetch_dependencies).ordered
+      expect(download_queue).to receive(:enqueue)
+        .with(bottle, check_attestation: false).ordered
+
+      installer.enqueue_fetch
+    end
+
+    it "resolves dependencies before enqueueing a bottle without the prelude" do
+      expect(installer).to receive(:fetch_dependencies).ordered
+      expect(installer).to receive(:fetch_bottle_tab).with(enqueue: true).ordered
+      expect(download_queue).to receive(:enqueue)
+        .with(bottle, check_attestation: false).ordered
+
+      installer.enqueue_fetch
     end
   end
 

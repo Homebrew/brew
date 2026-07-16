@@ -113,7 +113,7 @@ __brew_complete_commands() {
   fi
   if [[ -n ${HOMEBREW_DEVELOPER:-} ]]
   then
-    maintainer_cmds="analytics determine-test-runners dispatch-build-bottle formula-analytics generate-analytics-api generate-cask-api generate-cask-ci-matrix generate-formula-api generate-internal-api pr-automerge pr-publish pr-pull pr-upload release update-license-data update-maintainers update-portable-ruby update-report update-sponsors vendor-install"
+    maintainer_cmds="analytics determine-test-runners dispatch-build-bottle formula-analytics generate-analytics-api generate-cask-api generate-cask-ci-matrix generate-formula-api generate-internal-api generate-vulns-advisories pr-automerge pr-publish pr-pull pr-upload release update-license-data update-maintainers update-portable-ruby update-report update-sponsors vendor-install"
   fi
   user_aliases="$(__brew_list_aliases)"
   while read -r line
@@ -1278,6 +1278,7 @@ _brew_deps() {
       --HEAD
       --annotate
       --arch
+      --brewfile
       --cask
       --debug
       --direct
@@ -1734,6 +1735,23 @@ _brew_generate_man_completions() {
       --debug
       --help
       --no-exit-code
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+}
+
+_brew_generate_vulns_advisories() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --debug
+      --dry-run
+      --help
       --quiet
       --verbose
       "
@@ -3367,6 +3385,7 @@ _brew_update_python_resources() {
       --extra-packages
       --help
       --ignore-errors
+      --ignore-main-package-cooldown
       --ignore-non-pypi-packages
       --install-dependencies
       --package-name
@@ -3610,6 +3629,29 @@ _brew_version_install() {
   __brew_complete_formulae
 }
 
+_brew_vulns() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --brewfile
+      --debug
+      --deps
+      --help
+      --json
+      --max-summary
+      --no-ignore-patches
+      --quiet
+      --severity
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+  __brew_complete_formulae
+}
+
 _brew_which_formula() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -3733,6 +3775,7 @@ _brew() {
     generate-formula-api) _brew_generate_formula_api ;;
     generate-internal-api) _brew_generate_internal_api ;;
     generate-man-completions) _brew_generate_man_completions ;;
+    generate-vulns-advisories) _brew_generate_vulns_advisories ;;
     generate-zap) _brew_generate_zap ;;
     gist-logs) _brew_gist_logs ;;
     home) _brew_home ;;
@@ -3811,6 +3854,7 @@ _brew() {
     vendor-install) _brew_vendor_install ;;
     verify) _brew_verify ;;
     version-install) _brew_version_install ;;
+    vulns) _brew_vulns ;;
     which-formula) _brew_which_formula ;;
     which-update) _brew_which_update ;;
     *) ;;

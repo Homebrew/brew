@@ -143,7 +143,7 @@ begin
     ENV["HOMEBREW_LIBRARY_PATH"] = HOMEBREW_LIBRARY_PATH.to_s
     exec external_cmd_path.to_s, *ARGV
   else
-    raise UsageError, "Unknown command: brew #{cmd}"
+    raise UsageError, "Unknown command: brew #{cmd}#{Commands.suggestion_message(cmd)}"
   end
 rescue UsageError => e
   require "help"

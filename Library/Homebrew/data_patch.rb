@@ -15,6 +15,9 @@ class DATAPatch < EmbeddedPatch
   end
 
   sig { override.returns(String) }
+  def filename = "embedded DATA patch"
+
+  sig { override.returns(String) }
   def contents
     path = self.path
     raise ArgumentError, "DATAPatch#contents called before path was set!" unless path

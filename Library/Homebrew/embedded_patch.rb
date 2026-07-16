@@ -33,6 +33,9 @@ class EmbeddedPatch
   end
 
   sig { abstract.returns(String) }
+  def filename; end
+
+  sig { abstract.returns(String) }
   def contents; end
 
   sig { void }
@@ -43,6 +46,7 @@ class EmbeddedPatch
     if (subdirectory = directory.presence)
       dir /= subdirectory
     end
+    ohai "Applying #{filename}"
     Patch.ensure_targets_within!(data, strip:, base: dir)
     dir.cd do
       Utils.safe_popen_write("patch", *args) { |p| p.write(data) }

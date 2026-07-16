@@ -564,6 +564,24 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       .to eq(["testball 0.1 -> 0.2 (500B)"])
   end
 
+  it "omits formula download sizes in dry-run source build upgrade summaries" do
+    write_formula "testball", <<~RUBY
+      url "https://brew.sh/testball-0.2"
+    RUBY
+
+    cmd = described_class.new(["--dry-run", "--build-from-source", "testball"])
+    formula = Formula["testball"]
+    bottle = instance_double(Bottle)
+    keg = instance_double(Keg, version: PkgVersion.parse("0.1"), disk_usage: 1000)
+
+    allow(formula).to receive_messages(optlinked?: true, opt_prefix: HOMEBREW_PREFIX/"opt/testball", bottle:)
+    allow(Keg).to receive(:new).with(HOMEBREW_PREFIX/"opt/testball").and_return(keg)
+    expect(bottle).not_to receive(:fetch_tab)
+
+    expect(cmd.send(:formula_upgrade_descriptions, [formula], include_sizes: true))
+      .to eq(["testball 0.1 -> 0.2"])
+  end
+
   it "prints dry-run cleanup output from one formula cleanup run" do
     formula = formula("testball") do
       T.bind(self, T.class_of(Formula))

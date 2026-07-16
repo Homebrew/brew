@@ -669,6 +669,9 @@ Mark any build, test, implicit, optional, or recommended dependencies as such in
 \fB\-\-installed\fP
 List dependencies for formulae that are currently installed\. If \fIformula\fP is specified, list only its dependencies that are currently installed\.
 .TP
+\fB\-\-brewfile\fP
+Use formulae and casks listed in a Brewfile as inputs\. Defaults to \fB\&\./Brewfile\fP; use \fB\-\-brewfile=\fP\fIpath\fP to specify another\.
+.TP
 \fB\-\-missing\fP
 Show only missing dependencies\.
 .TP
@@ -1593,6 +1596,28 @@ Include only formulae\.
 Include only casks\.
 .SS "\fBversion\-install\fP \fIformula\fP[@\fIversion\fP] \fR[\fIversion\fP]"
 Extract a specific \fIversion\fP of \fIformula\fP into a personal tap and install it\. The default tap is \fIuser\fP/versions\. \fIuser\fP uses the GitHub username if available and the local username otherwise\.
+.SS "\fBvulns\fP \fR[\fIoptions\fP] \fR[\fIformula\fP \.\.\.]"
+Check \fIformula\fP for known security vulnerabilities using the OSV\.dev database\.
+.P
+With no arguments, installed formulae are checked unless tap trust is configured, in which case all formulae permitted by the trust configuration are checked\.
+.TP
+\fB\-d\fP, \fB\-\-deps\fP
+Also check the dependencies of named formulae\.
+.TP
+\fB\-\-no\-ignore\-patches\fP
+Report vulnerabilities even when a formula patch resolves them\.
+.TP
+\fB\-\-brewfile\fP
+Check formulae listed in a Brewfile\. Defaults to \fB\&\./Brewfile\fP; use \fB\-\-brewfile=\fP\fIpath\fP to specify another\.
+.TP
+\fB\-s\fP, \fB\-\-severity\fP
+Only report findings at or above: \fBlow\fP, \fBmedium\fP, \fBhigh\fP, \fBcritical\fP\&\.
+.TP
+\fB\-m\fP, \fB\-\-max\-summary\fP
+Truncate summaries to \fIn\fP characters (default 60, 0 for no limit)\.
+.TP
+\fB\-j\fP, \fB\-\-json\fP
+Output JSON\.
 .SS "\fBwhich\-formula\fP \fR[\fB\-\-explain\fP] \fIcommand\fP \fR[\.\.\.]"
 Show which formula(e) provides the given command\.
 .TP
@@ -2518,6 +2543,9 @@ Record all discovered resources, even those that can\[u2019]t be resolved succes
 \fB\-\-ignore\-non\-pypi\-packages\fP
 Don\[u2019]t fail if \fIformula\fP is not a PyPI package\.
 .TP
+\fB\-\-ignore\-main\-package\-cooldown\fP
+Bypass the release cooldown for \fIformula\fP\[u2019]s own package when resolving resources\. Its dependencies still respect the cooldown\. This option is ignored for official taps\.
+.TP
 \fB\-\-install\-dependencies\fP
 Install missing dependencies required to update resources\.
 .TP
@@ -3313,7 +3341,7 @@ Homebrew\[u2019]s Project Leader is Mike McQuaid\.
 .P
 Homebrew\[u2019]s Lead Maintainers are Bevan Kay, Bo Anderson, Branch Vincent, Carlo Cabrera, Dustin Rodrigues, FX Coudert, Issy Long, Justin Krehel, Michael Cho, Michka Popoff, Mike McQuaid, Nanda H Krishna, Patrick Linnane, Rui Chen, Ruoyu Zhong, Sam Ford, Sean Molenaar and Thierry Moisan\.
 .P
-Homebrew\[u2019]s other Maintainers are Anton Melnikov, Caleb Xu, Daeho Ro, Douglas Eichelberger, Eric Knibbe, Klaus Hipp, Markus Reiter, Rylan Polster, Štefan Baebler and William Woodruff\.
+Homebrew\[u2019]s other Maintainers are Andrew Nesbitt, Anton Melnikov, Caleb Xu, Daeho Ro, Douglas Eichelberger, Eric Knibbe, Klaus Hipp, Markus Reiter, Rylan Polster, Štefan Baebler and William Woodruff\.
 .SH "BUGS"
 See our issues on GitHub:
 .TP

@@ -13,7 +13,7 @@ This is a list of commonly encountered problems, known issues, and their solutio
 
 ### `brew` complains about absence of "Command Line Tools"
 
-You need the Xcode Command Line Utilities installed and updated for a supported Homebrew configuration and to build formulae from source: run `xcode-select --install` in the terminal. Cask installs do not require them, but some bottles currently need them for relocation.
+You need the Xcode Command Line Utilities installed and updated for a supported Homebrew configuration and to build formulae from source: run `xcode-select --install` in the terminal. Casks and bottles can be installed without developer tools.
 
 ### Ruby: `bad interpreter: /usr/bin/ruby^M: no such file or directory`
 

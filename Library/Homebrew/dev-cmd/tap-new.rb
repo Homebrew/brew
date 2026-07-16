@@ -91,6 +91,7 @@ module Homebrew
                       container: ghcr.io/homebrew/brew:main
               runs-on: ${{ matrix.os }}
               container: ${{ matrix.container }}
+              options: ${{ matrix.container != '' && '--privileged' }}
               permissions:
                 actions: read
                 checks: read

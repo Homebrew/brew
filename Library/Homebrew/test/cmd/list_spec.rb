@@ -158,7 +158,7 @@ RSpec.describe Homebrew::Cmd::List do
     end
   end
 
-  it "covers Bash list output and errors", :cask do
+  it "covers Bash list output and errors", :cask, :needs_jq do
     install_formula_version "testball", "0.1"
     install_formula_version "testball", "0.2"
     (HOMEBREW_PREFIX/"var/homebrew/linked").mkpath

@@ -55,8 +55,7 @@ module Formulary
   sig {
     returns({
       api:               T.nilable(T::Hash[String, T.class_of(Formula)]),
-      # TODO: the hash values should be Formula instances, but the linux tests were failing
-      formulary_factory: T.nilable(T::Hash[String, T.untyped]),
+      formulary_factory: T.nilable(T::Hash[String, Formula]),
       path:              T.nilable(T::Hash[String, T.class_of(Formula)]),
     })
   }
@@ -269,6 +268,10 @@ module Formulary
                 end
               elsif (patch_file = patch_hash.fetch("file", patch_hash[:file]))
                 file patch_file
+              end
+
+              if (patch_resolves = patch_hash.fetch("resolves", patch_hash[:resolves]))
+                resolves(*patch_resolves.map { |resolved| resolved.fetch("id", resolved[:id]) })
               end
             end
           end

@@ -164,6 +164,8 @@ module Homebrew
         modified_formulae += added_and_deleted_formulae
 
         if args.test_default_formula?
+          @added_formulae.reject! { |formula| formula.start_with?("portable-") }
+          modified_formulae.reject! { |formula| formula.start_with?("portable-") }
           # Build the default test formulae.
           modified_formulae += DEFAULT_TEST_FORMULAE
         elsif @added_formulae.present? &&

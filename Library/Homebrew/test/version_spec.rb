@@ -301,12 +301,6 @@ RSpec.describe Version do
   end
 
   describe "::new" do
-    it "raises a TypeError for non-string objects" do
-      expect { described_class.new(1.1) }.to raise_error(TypeError)
-      expect { described_class.new(1) }.to raise_error(TypeError)
-      expect { described_class.new(:symbol) }.to raise_error(TypeError)
-    end
-
     it "parses a version from a string" do
       v = described_class.new("1.20")
       expect(v).not_to be_head

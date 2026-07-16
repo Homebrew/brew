@@ -569,7 +569,8 @@ module Homebrew
       cask_files = (cache/"Cask").directory? ? (cache/"Cask").children : []
       api_internal = cache/"api/internal"
       api_package_files = if scrub? && api_internal.directory?
-        api_internal.glob("packages.*.jws.json")
+        current_api_package_basename = Homebrew::API::Internal.cached_packages_json_file_path.basename
+        api_internal.glob("packages.*.jws.json").reject { |path| path.basename == current_api_package_basename }
       else
         []
       end

@@ -1059,10 +1059,14 @@ then
   :
 fi
 
+# Keep in sync with `Homebrew::DevCmd::Tests#setup_environment!`.
+if [[ -n "${HOMEBREW_TESTS_NO_SORBET_RUNTIME}" ]]
+then
+  unset HOMEBREW_SORBET_RUNTIME HOMEBREW_SORBET_RECURSIVE
 # Only enable runtime typechecking for commands where correctness matters more
 # than performance.
-if [[ "${HOMEBREW_COMMAND}" == "test" || "${HOMEBREW_COMMAND}" == "test-bot" ||
-      "${HOMEBREW_COMMAND}" == "tests" ]]
+elif [[ "${HOMEBREW_COMMAND}" == "test" || "${HOMEBREW_COMMAND}" == "test-bot" ||
+        "${HOMEBREW_COMMAND}" == "tests" ]]
 then
   export HOMEBREW_SORBET_RUNTIME="1"
 fi

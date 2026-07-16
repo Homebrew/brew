@@ -37,6 +37,7 @@ jobs:
       pull-requests: write
     env:
       GH_TOKEN: ${{ github.token }}
+      PR_AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_TEMPLATE_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/.github/PULL_REQUEST_TEMPLATE.md
     steps:
@@ -78,11 +79,19 @@ jobs:
       - name: Check pull request template
         id: template
         run: |
-          # homebrew-core and homebrew-cask allow a condensed PR body when opened by brew bump.
+          case "${PR_AUTHOR_ASSOCIATION}" in
+            OWNER | MEMBER | COLLABORATOR | CONTRIBUTOR)
+              echo "complete_template=true" >>"${GITHUB_OUTPUT:?}"
+              exit 0
+              ;;
+          esac
+
+          # homebrew-core and homebrew-cask allow condensed PR bodies from recognised bump tools.
           if [[ "${GITHUB_REPOSITORY}" == "Homebrew/homebrew-core" ||
                 "${GITHUB_REPOSITORY}" == "Homebrew/homebrew-cask" ]]
           then
-            if grep -qE "Created (with|by) \`brew bump(-cask-pr|-formula-pr)?\`" "${RUNNER_TEMP}/check-prs/body"
+            if grep -qE "Created (with|by) \`brew bump(-cask-pr|-formula-pr)?\`" "${RUNNER_TEMP}/check-prs/body" ||
+               grep -qF "Created by https://github.com/mislav/bump-homebrew-formula-action" "${RUNNER_TEMP}/check-prs/body"
             then
               echo "complete_template=true" >>"${GITHUB_OUTPUT:?}"
               exit 0
