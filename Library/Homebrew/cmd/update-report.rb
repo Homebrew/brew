@@ -380,7 +380,9 @@ module Homebrew
           json_caskfile.atomic_write(JSON.pretty_generate(json_hash))
 
           # Never delete metadata the rewritten caskfile fails to reproduce.
-          reloaded = Cask::CaskLoader.load_from_installed_caskfile(json_caskfile, warn: false)
+          # Only durable on-disk data counts here: the API fallback could
+          # mask a caskfile that lost its artifacts.
+          reloaded = Cask::CaskLoader.load_from_installed_caskfile(json_caskfile, warn: false, api_fallback: false)
           if reloaded.version == cask.version &&
              reloaded.artifacts_list(uninstall_only: true) == cask.artifacts_list(uninstall_only: true)
             caskfile.unlink

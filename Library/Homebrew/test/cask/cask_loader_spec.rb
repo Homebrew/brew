@@ -491,6 +491,14 @@ RSpec.describe Cask::CaskLoader, :cask do
       cask = loader.load(config: nil)
       expect(cask.artifacts.grep(Cask::Artifact::App).map { |a| a.source.basename.to_s }).to eq(["Stub.app"])
     end
+
+    it "keeps the artifacts empty when the API fallback is disabled" do
+      loader = Cask::CaskLoader::FromPathLoader.new(cask_file)
+      loader.instance_variable_set(:@from_installed_caskfile, true)
+      loader.api_fallback = false
+      cask = loader.load(config: nil)
+      expect(cask.artifacts.grep(Cask::Artifact::App)).to be_empty
+    end
   end
 
   describe "FromPathLoader with symlinked taps" do
