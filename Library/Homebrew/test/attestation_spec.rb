@@ -157,6 +157,24 @@ RSpec.describe Homebrew::Attestation do
       end.to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
+    it "raises a missing attestation error when gh returns a 404" do
+      expect(GitHub::API).to receive(:credentials)
+        .and_return(fake_gh_creds)
+
+      expect(described_class).to receive(:system_command!)
+        .with(fake_gh, args: ["attestation", "verify", cached_download, "--repo",
+                              Homebrew::Attestation::HOMEBREW_CORE_REPO, "--format", "json"],
+              env: { "GH_TOKEN" => fake_gh_creds, "GH_HOST" => "github.com" }, secrets: [fake_gh_creds],
+              print_stderr: false, chdir: HOMEBREW_TEMP)
+        .and_raise(ErrorDuringExecution.new(["gh"], status: fake_error_status,
+                                                    output: [[:stderr, "HTTP 404: Not Found\n"]]))
+
+      expect do
+        described_class.check_attestation fake_bottle,
+                                          Homebrew::Attestation::HOMEBREW_CORE_REPO
+      end.to raise_error(Homebrew::Attestation::MissingAttestationError)
+    end
+
     it "raises auth error when gh subprocess fails with auth exit code" do
       expect(GitHub::API).to receive(:credentials)
         .and_return(fake_gh_creds)
@@ -261,7 +279,8 @@ RSpec.describe Homebrew::Attestation do
               env: { "GH_TOKEN" => fake_gh_creds, "GH_HOST" => "github.com" }, secrets: [fake_gh_creds],
               print_stderr: false, chdir: HOMEBREW_TEMP)
         .once
-        .and_raise(Homebrew::Attestation::MissingAttestationError)
+        .and_raise(ErrorDuringExecution.new(["gh"], status: fake_error_status,
+                                                    output: [[:stderr, "Error: no attestations found\n"]]))
 
       expect(described_class).to receive(:system_command!)
         .with(fake_gh, args: ["attestation", "verify", cached_download, "--repo",
@@ -269,6 +288,23 @@ RSpec.describe Homebrew::Attestation do
               env: { "GH_TOKEN" => fake_gh_creds, "GH_HOST" => "github.com" }, secrets: [fake_gh_creds],
               print_stderr: false, chdir: HOMEBREW_TEMP)
         .and_return(fake_result_json_resp_backfill)
+
+      described_class.check_core_attestation fake_bottle
+    end
+
+    it "retries homebrew-core when the backfilled attestation is also missing" do
+      expect(described_class).to receive(:check_attestation)
+        .with(fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO)
+        .ordered
+        .and_raise(Homebrew::Attestation::MissingAttestationError)
+      expect(described_class).to receive(:check_attestation)
+        .with(fake_bottle, Homebrew::Attestation::BACKFILL_REPO, nil, anything)
+        .ordered
+        .and_raise(Homebrew::Attestation::MissingAttestationError)
+      expect(described_class).to receive(:check_attestation)
+        .with(fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO)
+        .ordered
+        .and_return({})
 
       described_class.check_core_attestation fake_bottle
     end

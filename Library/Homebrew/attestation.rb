@@ -137,7 +137,9 @@ module Homebrew
           raise GhAuthInvalid, "invalid credentials"
         end
 
-        raise MissingAttestationError, "attestation not found: #{e}" if e.stderr.include?("HTTP 404: Not Found")
+        missing_attestation = e.stderr.include?("HTTP 404: Not Found") ||
+                              e.stderr.include?("no attestations found")
+        raise MissingAttestationError, "attestation not found: #{e}" if missing_attestation
 
         raise InvalidAttestationError, "attestation verification failed: #{e}"
       end
@@ -254,7 +256,7 @@ module Homebrew
       end
 
       backfill_attestation
-    rescue InvalidAttestationError
+    rescue InvalidAttestationError, MissingAttestationError
       @attestation_retry_count ||= T.let(Hash.new(0), T.nilable(T::Hash[Bottle, Integer]))
       raise if @attestation_retry_count[bottle] >= ATTESTATION_MAX_RETRIES
 
