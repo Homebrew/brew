@@ -137,7 +137,11 @@ module Homebrew
           raise GhAuthInvalid, "invalid credentials"
         end
 
-        raise MissingAttestationError, "attestation not found: #{e}" if e.stderr.include?("HTTP 404: Not Found")
+        # The API used to return 404 but now can return 200 with an empty array.
+        # We match the no attestation case precisely as there are similarly worded errors.
+        if e.stderr.include?("HTTP 404: Not Found") || e.stderr.match?(/: no attestations found\R/)
+          raise MissingAttestationError, "attestation not found: #{e}"
+        end
 
         raise InvalidAttestationError, "attestation verification failed: #{e}"
       end
