@@ -13,4 +13,7 @@ end
 class Homebrew::DevCmd::Deadcode::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def dry_run?; end
+
+  sig { returns(T::Boolean) }
+  def n?; end
 end
