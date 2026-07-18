@@ -27,6 +27,9 @@ class Homebrew::DevCmd::Typecheck::Args < Homebrew::CLI::Args
   def lsp?; end
 
   sig { returns(T::Boolean) }
+  def rank_untyped?; end
+
+  sig { returns(T::Boolean) }
   def suggest_typed?; end
 
   sig { returns(T::Boolean) }
