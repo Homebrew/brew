@@ -99,5 +99,23 @@ RSpec.describe Homebrew::DevCmd::Deadcode do
       content = "# An ordinary comment.\ndef foo; end\n"
       expect(deadcode.send(:persisted?, location_for(content, "def foo"))).to be(false)
     end
+
+    it "keeps `AbstractCommand` command classes but not their methods" do
+      cmd_dir = mktmpdir/"dev-cmd"
+      cmd_dir.mkpath
+      cmd_file = cmd_dir/"vendor-install.rb"
+      cmd_file.write(<<~RUBY)
+        module Homebrew
+          module Cmd
+            class VendorInstall < AbstractCommand
+              def helper; end
+            end
+          end
+        end
+      RUBY
+
+      expect(deadcode.send(:persisted?, "#{cmd_file}:3:4-6:7")).to be(true)
+      expect(deadcode.send(:persisted?, "#{cmd_file}:4:6-4:20")).to be(false)
+    end
   end
 end
