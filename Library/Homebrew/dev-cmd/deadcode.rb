@@ -30,6 +30,16 @@ module Homebrew
       # `private_methods.grep(/^audit_/).each { |m| send(m) }`.
       KEEP_MATCHING_REGEX = /^\s*#\s*deadcode:keep-matching\s+(\S.*?)\s*$/
 
+      # A command entry point: a subclass of `AbstractCommand`. These are
+      # invoked by name (and `ShellCommand` ones are backed by Bash), so Spoom
+      # sees no Ruby callers and reports the whole class as dead. Keep the class
+      # definition itself; its methods and constants can still be removed.
+      COMMAND_CLASS_REGEX = /\A\s*class\s+\w+\s*<\s*(?:\w+::)*AbstractCommand\b/
+
+      # The `cmd/` and `dev-cmd/` directories (relative to `HOMEBREW_LIBRARY_PATH`,
+      # where Spoom runs) holding those command entry points.
+      COMMAND_PATH_REGEX = %r{(?:\A|/)(?:dev-)?cmd/[^/]+\.rb\z}
+
       cmd_args do
         description <<~EOS
           Find and remove dead code identified by Spoom. Test code is excluded
@@ -38,7 +48,8 @@ module Homebrew
           or `# @api internal`, defined with an `override` signature, marked
           with a `# deadcode:keep` (or file-scoped `# deadcode:keep-matching
           <pattern>`) comment, or deprecated with `odeprecated`/`odisabled`, are
-          always kept.
+          always kept, as are command classes (subclasses of `AbstractCommand`
+          under `cmd/` or `dev-cmd/`).
         EOS
         switch "-n", "--dry-run",
                description: "List the dead code that would be removed without removing it."
@@ -121,6 +132,10 @@ module Homebrew
         return false unless path.file?
 
         lines = path.read.lines
+
+        # A command entry point class under `cmd/`/`dev-cmd/`: keep the class
+        # itself (its methods and constants remain removable).
+        return true if file.match?(COMMAND_PATH_REGEX) && lines[start_line - 1].to_s.match?(COMMAND_CLASS_REGEX)
 
         # The definition's own body, e.g. a deprecation call.
         return true if lines[(start_line - 1)...end_line]&.any? { |line| line.match?(DEPRECATION_REGEX) }
