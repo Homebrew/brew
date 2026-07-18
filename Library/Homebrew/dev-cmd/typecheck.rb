@@ -24,6 +24,10 @@ module Homebrew
         switch "--suggest-typed",
                depends_on:  "--update",
                description: "Try upgrading `typed` sigils."
+        switch "--rank-untyped",
+               description: "Type check all `typed: false` files as if they were `typed: true`, then list " \
+                            "the files ordered by fewest type errors first (files with zero errors can be " \
+                            "bumped immediately)."
         switch "--lsp",
                description: "Start the Sorbet LSP server."
         flag   "--dir=",
@@ -38,6 +42,12 @@ module Homebrew
         conflicts "--lsp", "--update"
         conflicts "--lsp", "--update-all"
         conflicts "--lsp", "--fix"
+        conflicts "--rank-untyped", "--update"
+        conflicts "--rank-untyped", "--update-all"
+        conflicts "--rank-untyped", "--fix"
+        conflicts "--rank-untyped", "--lsp"
+        conflicts "--rank-untyped", "--dir"
+        conflicts "--rank-untyped", "--file"
 
         named_args :tap
       end
@@ -48,6 +58,8 @@ module Homebrew
           raise UsageError, "Cannot use `--dir` or `--file` when specifying a tap."
         elsif args.fix? && args.named.present?
           raise UsageError, "Cannot use `--fix` when specifying a tap."
+        elsif args.rank_untyped? && args.named.present?
+          raise UsageError, "Cannot use `--rank-untyped` when specifying a tap."
         end
 
         update = args.update? || args.update_all?
@@ -58,6 +70,11 @@ module Homebrew
         Process::UID.change_privilege(Process.euid) if Process.euid != Process.uid
 
         HOMEBREW_LIBRARY_PATH.cd do
+          if args.rank_untyped?
+            rank_untyped
+            return
+          end
+
           if update
             workers = args.debug? ? ["--workers=1"] : []
             safe_system "bundle", "exec", "tapioca", "annotations"
@@ -138,6 +155,57 @@ module Homebrew
                        "more information on how to resolve these errors."
           Homebrew.failed = true
         end
+      end
+
+      # Type check every `typed: false` file as if it were `typed: true` (without modifying the files on
+      # disk, using Sorbet's `--typed-override`), then list the files ordered by fewest type errors first so
+      # the easiest sigil bumps can be tackled first.
+      sig { void }
+      def rank_untyped
+        require "spoom"
+        require "tempfile"
+        require "yaml"
+
+        context = Spoom::Context.new(HOMEBREW_LIBRARY_PATH.to_s)
+        files = context.srb_files_with_strictness(Spoom::Sorbet::Sigils::STRICTNESS_FALSE, include_rbis: false)
+        if files.empty?
+          ohai "No `typed: false` files found."
+          return
+        end
+
+        ohai "Type checking #{files.length} `typed: false` files as if they were `typed: true`..."
+
+        error_url_base = Spoom::Sorbet::Errors::DEFAULT_ERROR_URL_BASE
+        override = Tempfile.new(["brew-typed-override", ".yml"])
+        output = begin
+          override.write(YAML.dump({ Spoom::Sorbet::Sigils::STRICTNESS_TRUE => files.map { |file| "./#{file}" } }))
+          override.flush
+          Utils.popen_read(
+            "bundle", "exec", "srb", "tc",
+            "--typed-override=#{override.path}",
+            "--error-url-base=#{error_url_base}",
+            err: :out
+          )
+        ensure
+          override.close!
+        end
+
+        errors = Spoom::Sorbet::Errors::Parser.parse_string(output, error_url_base:)
+
+        counts = files.to_h { |file| [file, 0] }
+        errors.each do |error|
+          file = error.file&.delete_prefix("./")
+          next unless file && counts.key?(file)
+
+          counts[file] = counts.fetch(file) + 1
+        end
+
+        ranked = counts.sort_by { |file, count| [count, file] }.reject { |_file, count| count.zero? }
+
+        return if ranked.empty?
+
+        ohai "Remaining files by ascending error count:"
+        ranked.each { |file, count| puts "  #{count.to_s.rjust(4)}  #{file}" }
       end
 
       sig { params(path: T.any(String, Pathname)).void }
