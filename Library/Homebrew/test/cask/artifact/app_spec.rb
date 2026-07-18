@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::App, :cask do
@@ -32,6 +32,7 @@ RSpec.describe Cask::Artifact::App, :cask do
     describe "when app is in a subdirectory" do
       let(:cask) do
         Cask::Cask.new("subdir") do
+          T.bind(self, Cask::Cask)
           url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
           homepage "https://brew.sh/local-caffeine"
           version "1.2.3"
