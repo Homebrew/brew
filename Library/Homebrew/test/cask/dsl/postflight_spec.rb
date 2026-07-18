@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "test/cask/dsl/shared_examples/base"
@@ -8,10 +8,9 @@ RSpec.describe Cask::DSL::Postflight, :cask do
   let(:cask) { Cask::CaskLoader.load(cask_path("basic-cask")) }
   let(:fake_system_command) { class_double(SystemCommand) }
   let(:dsl) { described_class.new(cask, fake_system_command) }
+  let(:staged) { dsl }
 
   it_behaves_like Cask::DSL::Base
 
-  it_behaves_like Cask::Staged do
-    let(:staged) { dsl }
-  end
+  it_behaves_like Cask::Staged
 end
