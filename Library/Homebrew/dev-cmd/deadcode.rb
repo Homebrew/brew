@@ -40,6 +40,11 @@ module Homebrew
       # where Spoom runs) holding those command entry points.
       COMMAND_PATH_REGEX = %r{(?:\A|/)(?:dev-)?cmd/[^/]+\.rb\z}
 
+      # A monkey-patch preloaded into the `spoom deadcode remove` subprocess to
+      # backport two upstream removal fixes not yet in a released gem. Remove it
+      # (and this constant) once the vendored Spoom includes both.
+      SPOOM_PATCHES = T.let((HOMEBREW_LIBRARY_PATH/"dev-cmd/deadcode/spoom_patches.rb").freeze, Pathname)
+
       cmd_args do
         description <<~EOS
           Find and remove dead code identified by Spoom. Test code is excluded
@@ -178,7 +183,8 @@ module Homebrew
           # Spoom fails on code it can't safely rewrite (e.g. methods wrapped in
           # `begin`/`rescue` or files it cannot parse). Capture its output so a
           # failure doesn't dump a backtrace, and skip that location instead.
-          Utils.safe_popen_read("bundle", "exec", "spoom", "deadcode", "remove", location, err: :out)
+          Utils.safe_popen_read("bundle", "exec", "ruby", "-r", SPOOM_PATCHES.to_s,
+                                "-S", "spoom", "deadcode", "remove", location, err: :out)
           removed += 1
         rescue ErrorDuringExecution
           skipped << location
