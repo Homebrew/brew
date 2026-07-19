@@ -253,27 +253,6 @@ module Homebrew
         metadata
       end
 
-      sig { params(cask: Cask::Cask).returns(T::Array[String]) }
-      def self.cask_requirements_lines(cask)
-        macos_requirements = [cask.depends_on.macos, cask.depends_on.maximum_macos].compact
-        requirement = if macos_requirements.present?
-          requirement = macos_requirements.filter_map do |macos_requirement|
-            macos_requirement.display_s.delete_suffix(" (or Linux)").delete_prefix("macOS").strip.presence
-          end
-          requirement = requirement.present? ? "macOS #{requirement.join(", ")}" : "macOS"
-          requirement += " or Linux" if cask.supports_linux?
-          requirement
-        elsif cask.supports_macos? && cask.supports_linux?
-          "macOS or Linux"
-        elsif cask.supports_macos?
-          "macOS"
-        elsif cask.supports_linux?
-          "Linux"
-        end
-
-        requirement ? [requirement] : []
-      end
-
       sig { params(time: T.any(Integer, Time)).returns(String) }
       def self.formatted_time(time)
         time = Time.at(time) if time.is_a?(Integer)
@@ -333,7 +312,7 @@ module Homebrew
       end
 
       private_class_method :formula_metadata_lines, :formatted_time, :pin_path_mtime,
-                           :formula_installs_from_source?, :cask_requirements_lines
+                           :formula_installs_from_source?
 
       private
 

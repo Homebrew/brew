@@ -3,8 +3,11 @@
 
 require "services/system"
 require "services/system/systemctl"
+require "test/support/helper/services"
 
 RSpec.describe Homebrew::Services::System::Systemctl do
+  include Test::Helper::Services
+
   let(:bindir) { mktmpdir }
 
   describe ".scope" do
@@ -27,7 +30,7 @@ RSpec.describe Homebrew::Services::System::Systemctl do
         exit 0
       SH
       systemctl.chmod 0755
-      described_class.reset_executable!
+      reset_services_memoization!
 
       with_env(PATH: bindir.to_s) do
         expect(described_class.executable).to eq(systemctl)

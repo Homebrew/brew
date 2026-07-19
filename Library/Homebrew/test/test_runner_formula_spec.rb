@@ -38,29 +38,6 @@ RSpec.describe TestRunnerFormula do
     end
   end
 
-  describe "#macos_only?" do
-    context "when a formula requires macOS" do
-      it "returns true" do
-        expect(described_class.new(xcode_helper).macos_only?).to be(true)
-      end
-    end
-
-    context "when a formula does not require macOS" do
-      it "returns false" do
-        expect(described_class.new(testball).macos_only?).to be(false)
-        expect(described_class.new(linux_kernel_requirer).macos_only?).to be(false)
-        expect(described_class.new(old_non_portable_software).macos_only?).to be(false)
-        expect(described_class.new(fancy_new_software).macos_only?).to be(false)
-      end
-    end
-
-    context "when a formula requires only a minimum version of macOS" do
-      it "returns true" do
-        expect(described_class.new(needs_modern_compiler).macos_only?).to be(true)
-      end
-    end
-  end
-
   describe "#macos_compatible?" do
     context "when a formula is compatible with macOS" do
       it "returns true" do
@@ -80,24 +57,6 @@ RSpec.describe TestRunnerFormula do
     context "when a formula is not compatible with macOS" do
       it "returns false" do
         expect(described_class.new(linux_kernel_requirer).macos_compatible?).to be(false)
-      end
-    end
-  end
-
-  describe "#linux_only?" do
-    context "when a formula requires Linux" do
-      it "returns true" do
-        expect(described_class.new(linux_kernel_requirer).linux_only?).to be(true)
-      end
-    end
-
-    context "when a formula does not require Linux" do
-      it "returns false" do
-        expect(described_class.new(testball).linux_only?).to be(false)
-        expect(described_class.new(xcode_helper).linux_only?).to be(false)
-        expect(described_class.new(old_non_portable_software).linux_only?).to be(false)
-        expect(described_class.new(fancy_new_software).linux_only?).to be(false)
-        expect(described_class.new(needs_modern_compiler).linux_only?).to be(false)
       end
     end
   end

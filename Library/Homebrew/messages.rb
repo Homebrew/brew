@@ -11,6 +11,10 @@ class Messages
   sig { returns(T::Array[{ package: String, caveats: T.any(String, Caveats) }]) }
   attr_reader :caveats
 
+  # @api internal
+  sig { returns(Integer) }
+  attr_reader :package_count
+
   sig { returns(T::Array[{ package: String, time: Float }]) }
   attr_reader :install_times
 

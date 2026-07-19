@@ -68,7 +68,7 @@ RSpec.shared_context "Homebrew Cask", :needs_macos do # rubocop:disable RSpec/Co
       example.run
     ensure
       FileUtils.rm_rf Cask::Config::DEFAULT_DIRS_PATHNAMES.values
-      FileUtils.rm_rf [Cask::Config.new.binarydir, Cask::Caskroom.path, Cask::Cache.path]
+      FileUtils.rm_rf [HOMEBREW_PREFIX/"bin", Cask::Caskroom.path, Cask::Cache.path]
       FileUtils.rm_rf CoreCaskTap.instance.path
       FileUtils.rm_rf third_party_tap.path
       FileUtils.rm_rf third_party_tap.path.parent

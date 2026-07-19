@@ -311,14 +311,6 @@ module OS
         EOS
       end
 
-      sig { returns(String) }
-      def self.installation_then_reinstall_instructions
-        <<~EOS
-          #{installation_instructions}
-          #{reinstall_instructions}
-        EOS
-      end
-
       # Bump these when the new version is distributed through Software Update
       # and our CI systems have been updated.
       sig { returns(String) }

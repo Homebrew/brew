@@ -206,6 +206,9 @@ module SystemConfig
       out.puts hardware if hardware
     end
 
+    # deadcode:keep-matching _config$
+    # The `*_config` section methods are invoked only via `public_send(section)`
+    # in `dump_verbose_config`, so `brew deadcode` finds no static callers.
     sig { returns(T::Array[Symbol]) }
     def config_sections
       [:homebrew_config, :core_tap_config, :homebrew_env_config, :hardware_config, :host_software_config]

@@ -19,11 +19,6 @@ module Homebrew
         @launchctl ||= T.let(which("launchctl"), T.nilable(Pathname))
       end
 
-      sig { void }
-      def self.reset_launchctl!
-        @launchctl = nil
-      end
-
       # Is this a launchctl system
       sig { returns(T::Boolean) }
       def self.launchctl?
@@ -46,15 +41,6 @@ module Homebrew
       sig { returns(T.nilable(String)) }
       def self.user
         @user ||= T.let(ENV["USER"].presence || Utils.safe_popen_read("/usr/bin/whoami").chomp, T.nilable(String))
-      end
-
-      sig { params(pid: T.nilable(Integer)).returns(T.nilable(String)) }
-      def self.user_of_process(pid)
-        if pid.nil? || pid.zero?
-          user
-        else
-          Utils.safe_popen_read("ps", "-o", "user", "-p", pid.to_s).lines.second&.chomp
-        end
       end
 
       sig { params(username: String).returns(T::Boolean) }

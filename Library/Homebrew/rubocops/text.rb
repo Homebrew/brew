@@ -174,6 +174,8 @@ module RuboCop
           path.match?(/^#{Regexp.escape(starts_with)}(#{ending})/)
         end
 
+        # deadcode:keep called via the `#path_starts_with_bin?` predicate in the
+        # `interpolated_bin_path_starts_with` node-search pattern below
         sig { params(path: String, starts_with: String).returns(T::Boolean) }
         def path_starts_with_bin?(path, starts_with)
           return false if path.include?(" ")

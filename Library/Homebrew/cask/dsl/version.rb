@@ -86,6 +86,18 @@ module Cask
       end
 
       sig { returns(T::Boolean) }
+      def unstable?
+        return false if latest?
+
+        s = downcase.delete(".").gsub(/[^a-z\d]+/, "-")
+
+        return true if s.match?(/(\d+|\b)(alpha|beta|preview|rc|dev|canary|snapshot)(\d+|\b)/i)
+        return true if s.match?(/\A[a-z\d]+(-\d+)*-?(a|b|pre)(\d+|\b)/i)
+
+        false
+      end
+
+      sig { returns(T::Boolean) }
       def latest?
         to_s == "latest"
       end

@@ -373,19 +373,6 @@ module RuboCop
         nil
       end
 
-      # Check if a block method is called inside a block.
-      sig { params(node: RuboCop::AST::BlockNode, method_name: Symbol).returns(T::Boolean) }
-      def block_method_called_in_block?(node, method_name)
-        node.body.each_child_node do |call_node|
-          next if !call_node.block_type? && !call_node.send_type?
-          next if call_node.method_name != method_name
-
-          @offensive_node = call_node
-          return true
-        end
-        false
-      end
-
       # Check if method_name is called among the direct children nodes in the given node.
       # Check if the node itself is the method.
       sig { params(node: RuboCop::AST::Node, method_name: Symbol).returns(T::Boolean) }

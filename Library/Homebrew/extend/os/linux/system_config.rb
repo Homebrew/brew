@@ -121,6 +121,10 @@ module OS
           end
         end
 
+        # deadcode:keep-matching _config$
+        # The `*_config` section methods are invoked only via
+        # `public_send(section)` in `dump_verbose_config`, so `brew deadcode`
+        # finds no static callers.
         sig { returns(T::Array[Symbol]) }
         def config_sections
           super + [:linux_config]

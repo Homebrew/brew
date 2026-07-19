@@ -59,6 +59,7 @@ class Locale
   sig { returns(T.nilable(String)) }
   attr_reader :script
 
+  # deadcode:keep read via `public_send(var)` over `[:language, :script, :region]` in `#eql?`
   sig { returns(T.nilable(String)) }
   attr_reader :region
 

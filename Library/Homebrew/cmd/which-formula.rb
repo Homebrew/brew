@@ -12,7 +12,6 @@ module Homebrew
   module Cmd
     class WhichFormula < AbstractCommand
       ENDPOINT = "internal/executables.txt"
-      DATABASE_FILE = T.let((Homebrew::API::HOMEBREW_CACHE_API/ENDPOINT).freeze, Pathname)
 
       include ShellCommand
 

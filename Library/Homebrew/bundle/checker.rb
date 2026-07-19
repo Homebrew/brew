@@ -81,6 +81,7 @@ module Homebrew
         )
       end
 
+      # @api internal
       sig {
         params(
           exit_on_first_error: T::Boolean,
@@ -114,6 +115,7 @@ module Homebrew
         package_type_errors(:brew, exit_on_first_error:, no_upgrade:, verbose:)
       end
 
+      # @api internal
       sig {
         params(
           exit_on_first_error: T::Boolean,

@@ -213,16 +213,6 @@ module Cask
     sig { returns(DSL::Caveats) }
     def caveats_object = dsl!.caveats_object
 
-    sig { params(caskroom_path: Pathname).returns(T::Array[[String, String]]) }
-    def timestamped_versions(caskroom_path: self.caskroom_path)
-      pattern = metadata_timestamped_path(version: "*", timestamp: "*", caskroom_path:).to_s
-      relative_paths = Pathname.glob(pattern)
-                               .map { |p| p.relative_path_from(p.parent.parent) }
-      # Sorbet is unaware that Pathname is sortable: https://github.com/sorbet/sorbet/issues/6844
-      T.unsafe(relative_paths).sort_by(&:basename) # sort by timestamp
-       .map { |p| p.split.map(&:to_s) }
-    end
-
     # The fully-qualified token of this {Cask}.
     #
     # @api internal

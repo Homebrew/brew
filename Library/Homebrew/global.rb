@@ -64,9 +64,11 @@ module Homebrew
     sig { params(failed: T::Boolean).returns(T::Boolean) }
     attr_writer :failed
 
+    # deadcode:keep set via `Homebrew.raise_deprecation_exceptions =`, an assignment Spoom cannot resolve
     sig { params(raise_deprecation_exceptions: T::Boolean).returns(T::Boolean) }
     attr_writer :raise_deprecation_exceptions
 
+    # deadcode:keep set via `Homebrew.auditing =`, an assignment Spoom cannot resolve
     sig { params(auditing: T::Boolean).returns(T::Boolean) }
     attr_writer :auditing
 

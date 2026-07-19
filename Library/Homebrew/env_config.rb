@@ -922,6 +922,7 @@ module Homebrew
       Shellwords.shellsplit(ENV.fetch("HOMEBREW_CASK_OPTS", ""))
     end
 
+    # @api internal
     sig { returns(T::Boolean) }
     def cask_opts_binaries?
       cask_opts.reverse_each do |opt|
@@ -936,6 +937,7 @@ module Homebrew
       true
     end
 
+    # @api internal
     sig { returns(T::Boolean) }
     def cask_opts_quarantine?
       cask_opts.reverse_each do |opt|

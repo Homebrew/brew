@@ -10,7 +10,6 @@ module Cask
   module Utils
     extend ::Utils::Output::Mixin
 
-    BUG_REPORTS_URL = "https://github.com/Homebrew/homebrew-cask#reporting-bugs"
     FULL_DISK_ACCESS_TCC_PATH = "~/Library/Application Support/com.apple.TCC"
 
     sig { params(access: String).returns(String) }

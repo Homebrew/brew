@@ -56,7 +56,7 @@ RSpec.describe Homebrew::Reinstall do
       expect(keg.linked?).to be(true)
       expect(Pathname.new("#{keg}.reinstall")).not_to exist
     ensure
-      FormulaInstaller.clear_attempted
+      FormulaInstaller.attempted.clear
     end
   end
 

@@ -209,29 +209,14 @@ class FormulaInstaller
     @attempted ||= T.let(Set.new, T.nilable(T::Set[Formula]))
   end
 
-  sig { void }
-  def self.clear_attempted
-    @attempted = T.let(Set.new, T.nilable(T::Set[Formula]))
-  end
-
   sig { returns(T::Set[Formula]) }
   def self.installed
     @installed ||= T.let(Set.new, T.nilable(T::Set[Formula]))
   end
 
-  sig { void }
-  def self.clear_installed
-    @installed = T.let(Set.new, T.nilable(T::Set[Formula]))
-  end
-
   sig { returns(T::Set[Formula]) }
   def self.fetched
     @fetched ||= T.let(Set.new, T.nilable(T::Set[Formula]))
-  end
-
-  sig { void }
-  def self.clear_fetched
-    @fetched = T.let(Set.new, T.nilable(T::Set[Formula]))
   end
 
   sig { returns(T::Boolean) }

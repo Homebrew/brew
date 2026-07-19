@@ -155,6 +155,18 @@ module OS
             end
           end
 
+          # @api internal
+          sig { returns(T::Boolean) }
+          def sse3?
+            flags.include?("pni") || flags.include?("sse3")
+          end
+
+          # @api internal
+          sig { returns(T::Boolean) }
+          def sse4?
+            flags.include? "sse4_1"
+          end
+
           private
 
           sig { returns(String) }

@@ -137,6 +137,18 @@ module Homebrew
       end
     end
 
+    # Set whether the service should be kept alive.
+    #
+    # @api public
+    sig { params(path: T.any(String, Pathname)).returns(T.nilable(String)) }
+    def input_path(path = T.unsafe(nil))
+      if path
+        @input_path = path.to_s
+      else
+        @input_path
+      end
+    end
+
     sig { params(path: T.any(String, Pathname)).returns(T.nilable(String)) }
     def log_path(path = T.unsafe(nil))
       if path
@@ -155,7 +167,28 @@ module Homebrew
       end
     end
 
-    # @api internal
+    # Set the sockets the service listens on.
+    #
+    # @api public
+    sig {
+      params(value: T.any(T::Boolean, T::Hash[Symbol, T.untyped]))
+        .returns(T.nilable(T::Hash[Symbol, T.untyped]))
+    }
+    def keep_alive(value = T.unsafe(nil))
+      case value
+      when nil
+        @keep_alive
+      when true, false
+        @keep_alive = { always: value }
+      when Hash
+        unless (value.keys - KEEP_ALIVE_KEYS).empty?
+          raise TypeError, "Service#keep_alive only allows: #{KEEP_ALIVE_KEYS}"
+        end
+
+        @keep_alive = value
+      end
+    end
+
     sig { params(value: T::Boolean).returns(T::Boolean) }
     def require_root(value = T.unsafe(nil))
       if value.nil?
@@ -171,10 +204,65 @@ module Homebrew
       @require_root.present? && @require_root == true
     end
 
+    # Set whether the service runs when loaded.
+    #
+    # @api public
+    sig { params(value: T::Boolean).returns(T.nilable(T::Boolean)) }
+    def run_at_load(value = T.unsafe(nil))
+      if value.nil?
+        @run_at_load
+      else
+        @run_at_load = value
+      end
+    end
+
+    # Set the sockets the service listens on.
+    #
+    # @api public
+    sig {
+      params(value: T.any(String, T::Hash[Symbol, String]))
+        .returns(T::Hash[Symbol, T::Hash[Symbol, String]])
+    }
+    def sockets(value = T.unsafe(nil))
+      return @sockets if value.nil?
+
+      value_hash = case value
+      when String
+        { listeners: value }
+      when Hash
+        value
+      end
+
+      @sockets = T.must(value_hash).transform_values do |socket_string|
+        match = socket_string.match(SOCKET_STRING_REGEX)
+        raise TypeError, "Service#sockets a formatted socket definition as <type>://<host>:<port>" unless match
+
+        begin
+          IPAddr.new(match[:host])
+        rescue IPAddr::InvalidAddressError
+          raise TypeError, "Service#sockets expects a valid ipv4 or ipv6 host address"
+        end
+
+        { host: match[:host], port: match[:port], type: match[:type] }
+      end
+    end
+
     # Returns a `Boolean` describing if a service is set to be kept alive.
     sig { returns(T::Boolean) }
     def keep_alive?
       !@keep_alive.empty? && @keep_alive[:always] != false
+    end
+
+    # Set whether the service should only run once.
+    #
+    # @api public
+    sig { params(value: T::Boolean).returns(T::Boolean) }
+    def launch_only_once(value = T.unsafe(nil))
+      if value.nil?
+        @launch_only_once
+      else
+        @launch_only_once = value
+      end
     end
 
     sig { params(value: Integer).returns(T.nilable(Integer)) }
@@ -183,6 +271,46 @@ module Homebrew
         @restart_delay = value
       else
         @restart_delay
+      end
+    end
+
+    # Set the minimum interval between service restarts.
+    #
+    # @api public
+    sig { params(value: Integer).returns(T.nilable(Integer)) }
+    def throttle_interval(value = T.unsafe(nil))
+      return @throttle_interval if value.nil?
+
+      @throttle_interval = value
+    end
+
+    # Set the service process type.
+    #
+    # @api public
+    sig { params(value: Symbol).returns(T.nilable(Symbol)) }
+    def process_type(value = T.unsafe(nil))
+      case value
+      when nil
+        @process_type
+      when :background, :standard, :interactive, :adaptive
+        @process_type = value
+      when Symbol
+        raise TypeError, "Service#process_type allows: " \
+                         "'#{PROCESS_TYPE_BACKGROUND}'/'#{PROCESS_TYPE_STANDARD}'/" \
+                         "'#{PROCESS_TYPE_INTERACTIVE}'/'#{PROCESS_TYPE_ADAPTIVE}'"
+      end
+    end
+
+    # @api internal
+    sig { params(value: Symbol).returns(T.nilable(Symbol)) }
+    def run_type(value = T.unsafe(nil))
+      case value
+      when nil
+        @run_type
+      when :immediate, :interval, :cron
+        @run_type = value
+      when Symbol
+        raise TypeError, "Service#run_type allows: '#{RUN_TYPE_IMMEDIATE}'/'#{RUN_TYPE_INTERVAL}'/'#{RUN_TYPE_CRON}'"
       end
     end
 
@@ -255,7 +383,37 @@ module Homebrew
       @environment_variables = variables.transform_values(&:to_s)
     end
 
+    # Set whether to use legacy timers on macOS.
+    #
+    # @api public
+    sig { params(value: T::Boolean).returns(T::Boolean) }
+    def macos_legacy_timers(value = T.unsafe(nil))
+      if value.nil?
+        @macos_legacy_timers
+      else
+        @macos_legacy_timers = value
+      end
+    end
+
+    # Set the scheduling niceness of the service.
+    #
+    # @api public
+    sig { params(value: Integer).returns(T.nilable(Integer)) }
+    def nice(value = T.unsafe(nil))
+      return @nice if value.nil?
+
+      raise TypeError, "Service#nice value should be in #{NICE_RANGE}" unless NICE_RANGE.cover?(value)
+
+      @nice = value
+    end
+
     delegate [:bin, :etc, :libexec, :opt_bin, :opt_libexec, :opt_pkgshare, :opt_prefix, :opt_sbin, :var] => :@formula
+
+    # @api internal
+    sig { returns(String) }
+    def std_service_path_env
+      "#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+    end
 
     sig { returns(T::Array[String]) }
     def command

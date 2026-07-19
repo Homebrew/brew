@@ -162,6 +162,7 @@ module Cask
       )
     end
 
+    # @api internal
     sig { returns(Pathname) }
     def binarydir
       @binarydir ||= T.let(HOMEBREW_PREFIX/"bin", T.nilable(Pathname))

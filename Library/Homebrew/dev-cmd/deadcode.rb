@@ -40,6 +40,16 @@ module Homebrew
       # where Spoom runs) holding those command entry points.
       COMMAND_PATH_REGEX = %r{(?:\A|/)(?:dev-)?cmd/[^/]+\.rb\z}
 
+      # A RuboCop cop entry point dispatched by the framework rather than by Ruby:
+      # `on_*`/`after_*` node callbacks, and the `RESTRICT_ON_SEND`/
+      # `RESTRICT_ON_CSEND` constants that scope which sends trigger them.
+      # RuboCop reads these reflectively, so Spoom sees no callers and reports
+      # them as dead. Keep them so the cops that rely on them keep working.
+      RUBOCOP_CALLBACK_REGEX = /\A\s*(?:def\s+(?:on|after)_\w|RESTRICT_ON_\w+\s*=)/
+
+      # The `rubocops/` directory holding those cops.
+      RUBOCOP_PATH_REGEX = %r{(?:\A|/)rubocops/}
+
       # A monkey-patch preloaded into the `spoom deadcode remove` subprocess to
       # backport two upstream removal fixes not yet in a released gem. Remove it
       # (and this constant) once the vendored Spoom includes both.
@@ -54,7 +64,8 @@ module Homebrew
           with a `# deadcode:keep` (or file-scoped `# deadcode:keep-matching
           <pattern>`) comment, or deprecated with `odeprecated`/`odisabled`, are
           always kept, as are command classes (subclasses of `AbstractCommand`
-          under `cmd/` or `dev-cmd/`).
+          under `cmd/` or `dev-cmd/`) and RuboCop cop callbacks (`on_*`/`after_*`
+          methods under `rubocops/`).
         EOS
         switch "-n", "--dry-run",
                description: "List the dead code that would be removed without removing it."
@@ -141,6 +152,11 @@ module Homebrew
         # A command entry point class under `cmd/`/`dev-cmd/`: keep the class
         # itself (its methods and constants remain removable).
         return true if file.match?(COMMAND_PATH_REGEX) && lines[start_line - 1].to_s.match?(COMMAND_CLASS_REGEX)
+
+        # A RuboCop cop callback or `RESTRICT_ON_*` scope constant under
+        # `rubocops/`: dispatched/read by the framework, so keep it even though
+        # Spoom sees no callers.
+        return true if file.match?(RUBOCOP_PATH_REGEX) && lines[start_line - 1].to_s.match?(RUBOCOP_CALLBACK_REGEX)
 
         # The definition's own body, e.g. a deprecation call.
         return true if lines[(start_line - 1)...end_line]&.any? { |line| line.match?(DEPRECATION_REGEX) }

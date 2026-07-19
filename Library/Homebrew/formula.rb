@@ -506,6 +506,8 @@ class Formula
   def reloadable_ref = loaded_from_api? ? full_name : path
 
   # The name specified to find this formula.
+  #
+  # @api public
   sig { returns(String) }
   def specified_name
     alias_name || name

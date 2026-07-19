@@ -303,6 +303,14 @@ class Tab < AbstractTab
     @runtime_dependencies if parsed_homebrew_version >= "1.1.6"
   end
 
+  # @api internal
+  sig { returns(CxxStdlib) }
+  def cxxstdlib
+    # Older tabs won't have these values, so provide sensible defaults
+    lib = stdlib&.to_sym
+    CxxStdlib.create(lib, compiler.to_sym)
+  end
+
   sig { returns(T::Boolean) }
   def built_bottle?
     !!built_as_bottle && !poured_from_bottle
@@ -326,6 +334,12 @@ class Tab < AbstractTab
   sig { returns(T.nilable(Version)) }
   def stable_version
     versions["stable"]&.then { Version.new(it) }
+  end
+
+  # @api internal
+  sig { returns(T.nilable(Version)) }
+  def head_version
+    versions["head"]&.then { Version.new(it) }
   end
 
   sig { returns(Integer) }
