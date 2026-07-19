@@ -22,6 +22,7 @@ class LazyObject < Delegator
     @__getobj__
   end
 
+  # deadcode:keep part of the `Delegator` interface, called by its `#initialize`
   sig { params(callable: T.nilable(Proc)).void }
   def __setobj__(callable)
     @__callable__ = callable

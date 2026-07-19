@@ -250,6 +250,7 @@ module Homebrew
 
       alias mv move
 
+      # @api internal
       sig {
         params(
           source:      ::T.any(::String, ::Pathname),
@@ -414,6 +415,7 @@ module Homebrew
                  "target" => path_spec(target, base: target_base, default_base: @default_target_base))
       end
 
+      # @api internal
       sig {
         params(
           source:      ::T.any(::String, ::Pathname),
@@ -448,6 +450,7 @@ module Homebrew
                  "overwrite" => overwrite)
       end
 
+      # @api internal
       sig {
         params(
           path:   ::T.any(::String, ::Pathname),
@@ -463,6 +466,7 @@ module Homebrew
                  "locale" => locale)
       end
 
+      # @api internal
       sig { void }
       def compile_gsettings_schemas
         add_rebuild_action("compile_gsettings_schemas", "share/glib-2.0/schemas")
@@ -474,26 +478,31 @@ module Homebrew
         add_rebuild_action("gio_querymodules", "lib/gio/modules")
       end
 
+      # @api internal
       sig { void }
       def gdk_pixbuf_query_loaders
         add_step("gdk_pixbuf_query_loaders")
       end
 
+      # @api internal
       sig { void }
       def gtk_update_icon_cache
         add_rebuild_action("gtk_update_icon_cache", "share/icons/hicolor")
       end
 
+      # @api internal
       sig { void }
       def update_mime_database
         add_rebuild_action("update_mime_database", "share/mime")
       end
 
+      # @api internal
       sig { void }
       def update_desktop_database
         add_rebuild_action("update_desktop_database", "share/applications")
       end
 
+      # @api internal
       sig {
         params(
           name:                 ::String,
@@ -508,6 +517,7 @@ module Homebrew
                    matching_certificate))
       end
 
+      # @api internal
       sig {
         params(
           paths:       Paths,
@@ -523,6 +533,7 @@ module Homebrew
                  "non_recursive" => !recursive)
       end
 
+      # @api internal
       sig {
         params(
           paths:     Paths,

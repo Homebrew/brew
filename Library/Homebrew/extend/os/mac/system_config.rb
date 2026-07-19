@@ -73,6 +73,10 @@ module OS
           out.puts "Rosetta 2: #{::Hardware::CPU.in_rosetta2?}" if ::Hardware::CPU.physical_cpu_arm64?
         end
 
+        # deadcode:keep-matching _config$
+        # The `*_config` section methods are invoked only via
+        # `public_send(section)` in `dump_verbose_config`, so `brew deadcode`
+        # finds no static callers.
         sig { returns(T::Array[Symbol]) }
         def config_sections
           super + [:macos_config]

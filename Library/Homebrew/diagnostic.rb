@@ -911,20 +911,6 @@ module Homebrew
         )
       end
 
-      sig { params(formula: Formula).returns(T::Boolean) }
-      def __check_linked_brew!(formula)
-        formula.installed_prefixes.each do |prefix|
-          prefix.find do |src|
-            next if src == prefix
-
-            dst = HOMEBREW_PREFIX + src.relative_path_from(prefix)
-            return true if dst.symlink? && src == dst.resolved_path
-          end
-        end
-
-        false
-      end
-
       sig { returns(T.nilable(Finding)) }
       def check_for_other_frameworks
         # Other frameworks that are known to cause problems when present
@@ -1579,9 +1565,11 @@ module Homebrew
       end
 
       # deadcode:keep-matching ^check_
+      # deadcode:keep-matching _checks$
       # `check_*` methods (here and in the OS-specific `Checks` modules) are
-      # invoked dynamically by name, so they have no static callers for
-      # `brew deadcode` to find.
+      # invoked dynamically by name, and `*_checks` methods listing them are
+      # invoked via `Diagnostic.checks(:name)` (`public_send`), so neither has
+      # static callers for `brew deadcode` to find.
       sig { returns(T::Array[String]) }
       def all
         methods.map(&:to_s).grep(/^check_/).sort

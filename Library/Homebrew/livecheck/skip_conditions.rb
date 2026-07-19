@@ -5,6 +5,11 @@ module Homebrew
   module Livecheck
     # The `Livecheck::SkipConditions` module primarily contains methods that
     # check for various formula/cask/resource conditions where a check should be skipped.
+    #
+    # deadcode:keep-matching ^(cask|formula|package_or_resource)_
+    # The check methods are invoked only via `send(method_name)` over the
+    # `FORMULA_CHECKS`/`CASK_CHECKS`/`RESOURCE_CHECKS` lists, so `brew deadcode`
+    # finds no static callers.
     module SkipConditions
       sig {
         params(

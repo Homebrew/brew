@@ -19,6 +19,7 @@ module OS
         requires_ancestor { Homebrew::Diagnostic::Checks }
 
         # deadcode:keep-matching ^check_
+        # deadcode:keep-matching _checks$
         # `check_*` methods are invoked dynamically by name (see
         # `Homebrew::Diagnostic::Checks#all`), so they have no static callers
         # for `brew deadcode` to find.

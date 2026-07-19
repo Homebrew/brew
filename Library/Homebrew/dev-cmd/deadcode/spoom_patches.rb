@@ -127,6 +127,7 @@ module Homebrew
     # Shopify/spoom#981: when removing a whole constant assignment, also remove
     # the `private_constant`/`public_constant` call that references it, matching
     # the two branches upstream that delete the whole assign.
+    # deadcode:keep (overrides a host method reached only via `super` dispatch)
     def delete_constant_assignment(context)
       const_context = if context.node.is_a?(Prism::ConstantWriteNode)
         context

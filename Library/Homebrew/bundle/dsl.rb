@@ -37,6 +37,9 @@ module Homebrew
       sig { returns(T::Array[Entry]) }
       attr_reader :entries
 
+      sig { returns(T::Hash[Symbol, T.untyped]) }
+      attr_reader :cask_arguments
+
       sig { returns(String) }
       attr_reader :input
 
@@ -62,6 +65,12 @@ module Homebrew
       sig { void }
       def process
         instance_eval(@input, @path.to_s)
+      end
+
+      # @api internal
+      sig { params(args: T::Hash[Symbol, T.untyped]).void }
+      def cask_args(args)
+        @cask_arguments.merge!(args)
       end
 
       sig { params(name: String, options: Homebrew::Bundle::EntryOptions).void }

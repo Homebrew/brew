@@ -19,26 +19,6 @@ class FormulaInfo
     info["bottle"]["stable"]["files"].keys
   end
 
-  sig {
-    params(my_bottle_tag: T.any(Utils::Bottles::Tag, T.nilable(String))).returns(T.nilable(T::Hash[String, String]))
-  }
-  def bottle_info(my_bottle_tag = Utils::Bottles.tag)
-    tag_s = my_bottle_tag.to_s
-    return unless info["bottle"]["stable"]
-
-    btl_info = info["bottle"]["stable"]["files"][tag_s]
-    return unless btl_info
-
-    { "url" => btl_info["url"], "sha256" => btl_info["sha256"] }
-  end
-
-  sig { returns(T.nilable(String)) }
-  def any_bottle_tag
-    tag = Utils::Bottles.tag.to_s
-    # Prefer native bottles as a convenience for download caching
-    bottle_tags.include?(tag) ? tag : bottle_tags.first
-  end
-
   sig { params(spec_type: Symbol).returns(Version) }
   def version(spec_type)
     version_str = info["versions"][spec_type.to_s]
@@ -53,10 +33,5 @@ class FormulaInfo
   sig { returns(Integer) }
   def revision
     info["revision"]
-  end
-
-  sig { params(str: String).void }
-  def self.force_utf8!(str)
-    str.force_encoding("UTF-8") if str.respond_to?(:force_encoding)
   end
 end

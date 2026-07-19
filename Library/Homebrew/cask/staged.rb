@@ -15,6 +15,9 @@ module Cask
 
     Paths = T.type_alias { T.any(String, Pathname, T::Array[T.any(String, Pathname)]) }
 
+    # Recursively set the permissions of existing `paths` with `chmod`.
+    #
+    # @api public
     sig { params(paths: Paths, permissions_str: String).void }
     def set_permissions(paths, permissions_str)
       full_paths = remove_nonexistent(paths)
@@ -24,6 +27,9 @@ module Cask
                             sudo: false)
     end
 
+    # Recursively set the user and group ownership of existing `paths` with `chown`.
+    #
+    # @api public
     sig { params(paths: Paths, user: T.any(String, User), group: String).void }
     def set_ownership(paths, user: T.must(User.current), group: "staff")
       full_paths = remove_nonexistent(paths)

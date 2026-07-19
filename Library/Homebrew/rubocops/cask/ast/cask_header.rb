@@ -24,11 +24,6 @@ module RuboCop
         def cask_token
           @cask_token ||= T.let(method_node.first_argument.str_content, T.nilable(String))
         end
-
-        sig { returns(T.all(RuboCop::AST::Node, RuboCop::AST::ParameterizedNode::RestArguments)) }
-        def hash_node
-          @hash_node ||= T.let(method_node.each_child_node(:hash).first, T.nilable(RuboCop::AST::Node))
-        end
       end
     end
   end

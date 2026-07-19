@@ -50,6 +50,13 @@ module OS
       end
     end
 
+    # @api internal
+    sig { params(version: String).void }
+    def self.full_version=(version)
+      @full_version = MacOSVersion.new(version.chomp)
+      @version = nil
+    end
+
     sig { returns(::Version) }
     def self.latest_sdk_version
       # TODO: bump version when new Xcode macOS SDK is released

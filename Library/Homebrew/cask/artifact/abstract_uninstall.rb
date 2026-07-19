@@ -540,11 +540,6 @@ module Cask
         [trashed, untrashable]
       end
 
-      sig { params(directories: Pathname).returns(T::Boolean) }
-      def all_dirs?(*directories)
-        directories.all?(&:directory?)
-      end
-
       sig { params(directories: Pathname, command: T.class_of(SystemCommand), _kwargs: T.anything).void }
       def recursive_rmdir(*directories, command:, **_kwargs)
         directories.all? do |resolved_path|
