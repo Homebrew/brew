@@ -43,6 +43,7 @@ module Cask
       Artifact::Artifact,
       Artifact::AudioUnitPlugin,
       Artifact::Binary,
+      Artifact::CommandWrapper,
       Artifact::Colorpicker,
       Artifact::Dictionary,
       Artifact::Font,
