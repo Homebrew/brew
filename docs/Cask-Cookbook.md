@@ -143,6 +143,7 @@ Each cask must declare one or more [artifacts](/rubydoc/Cask/Artifact.html) (i.e
 | [`installer`](#stanza-installer) | yes                           | Describes an executable which must be run to complete the installation. |
 | [`binary`](#stanza-binary)       | yes                           | Relative path to a Binary that should be linked into the `$(brew --prefix)/bin` folder on installation. |
 | [`command_wrapper`](#stanza-command_wrapper) | yes                  | Generates a command wrapper and links it into the `$(brew --prefix)/bin` folder. |
+| [`generated_executable`](#stanza-generated_executable) | yes          | Generates an executable for another artifact or install step to use. |
 | `manpage`                        | yes                           | Relative path to a Man Page that should be linked into the respective man page folder on installation, e.g. `/opt/homebrew/share/man/man3` for `my_app.3`. |
 | `bash_completion`                | yes                           | Relative path to a Bash completion file that should be linked into the `$(brew --prefix)/etc/bash_completion.d` folder on installation. |
 | `fish_completion`                | yes                           | Relative path to a fish completion file that should be linked into the `$(brew --prefix)/share/fish/vendor_completions.d` folder on installation. |
@@ -284,6 +285,18 @@ command_wrapper "example.wrapper.sh",
                   #!/bin/sh
                   exec '#{appdir}/Example.app/Contents/MacOS/example' "$@"
                 SH
+```
+
+### Stanza: `generated_executable`
+
+`generated_executable` writes literal content to an executable path in the staged cask. It does not link or run the file. Use it when a later `installer`, `uninstall` or install step needs a generated script.
+
+```ruby
+generated_executable "installer.sh", content: <<~SH
+  #!/bin/sh
+  exec "#{staged_path}/payload/install" "$@"
+SH
+installer script: "installer.sh"
 ```
 
 ### Stanza: `rename`
