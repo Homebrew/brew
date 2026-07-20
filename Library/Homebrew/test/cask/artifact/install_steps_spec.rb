@@ -17,6 +17,7 @@ RSpec.describe Cask::Artifact::AbstractInstallSteps, :cask do
       postflight_steps do
         mv "move-source", "Prepared/moved"
         ln_s "Prepared/moved", "PreparedLink", source_base: :relative, uninstall: true
+        run "/usr/bin/true"
       end
 
       uninstall_preflight_steps do
@@ -53,6 +54,13 @@ RSpec.describe Cask::Artifact::AbstractInstallSteps, :cask do
 
     expect(cask.staged_path/"PreparedLink").not_to exist
     expect(cask.staged_path/"UninstallMoved/touched").to exist
+  end
+
+  it "omits cask command output defaults" do
+    artifact = cask.artifacts.find { |candidate| candidate.is_a?(Cask::Artifact::PostflightSteps) }
+    run_step = artifact.steps.find { |step| step["type"] == "run" }
+
+    expect(run_step).not_to include("print_stdout", "suppress_stderr")
   end
 
   it "ignores a flight block when matching steps are defined" do

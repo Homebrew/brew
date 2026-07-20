@@ -11,6 +11,7 @@ RSpec.describe Homebrew::InstallSteps do
     Class.new do
       define_method(:prefix) { root_path/"prefix" }
       define_method(:bin) { root_path/"prefix/bin" }
+      define_method(:libexec) { root_path/"prefix/libexec" }
       define_method(:var) { root_path/"var" }
       define_method(:staged_path) { root_path/"stage" }
     end.new
@@ -405,6 +406,49 @@ RSpec.describe Homebrew::InstallSteps do
     expect((root/"var/pattern.txt").read).to eq("replaced")
   end
 
+  specify "runs serialised commands" do
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
+      run "helper", args: ["--path={{var}}"], base: :libexec, env: { "EXAMPLE" => "value" }
+    end
+
+    command = class_double(SystemCommand)
+    expect(command).to receive(:run!)
+      .with(root/"prefix/libexec/helper", args: ["--path=#{root}/var"], sudo: false,
+                                           env: { "EXAMPLE" => "value" }, input: [], print_stdout: false,
+                                           print_stderr: true, reset_uid: true, chdir: nil)
+
+    Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
+  end
+
+  specify "serialises command environments as JSON objects" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      run "helper", env: { "EXAMPLE" => "{{formula_name}}" }
+    end
+
+    expect(steps).to include(a_hash_including(
+                               "type" => "run", "env" => { "EXAMPLE" => "{{formula_name}}" },
+                             ))
+  end
+
+  specify "runs commands with serialised input and output paths" do
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
+      run "filter", base: :bin, stdin_path: "input.txt", stdout_path: "output.txt", chdir: "work"
+    end
+
+    (root/"var/work").mkpath
+    (root/"var/input.txt").write "input"
+    result = instance_double(SystemCommand::Result, stdout: "output")
+    command = class_double(SystemCommand)
+    expect(command).to receive(:run!)
+      .with(root/"prefix/bin/filter", args: [], sudo: false, env: {}, input: "input", print_stdout: false,
+                                      print_stderr: true, reset_uid: true, chdir: root/"var/work")
+      .and_return(result)
+
+    Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
+
+    expect((root/"var/output.txt").read).to eq("output")
+  end
+
   specify "appends a trailing newline unless already present", :aggregate_failures do
     steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
       write "missing-newline", "value"
@@ -556,7 +600,6 @@ RSpec.describe Homebrew::InstallSteps do
   specify "runs named desktop and cache rebuild actions" do
     steps = Homebrew::InstallSteps::DSL.build do
       compile_gsettings_schemas
-      gio_querymodules
       gdk_pixbuf_query_loaders
       update_mime_database
       update_desktop_database
@@ -571,8 +614,6 @@ RSpec.describe Homebrew::InstallSteps do
     runner = Homebrew::InstallSteps::Runner.new(context:)
     expect(runner).to receive(:run_command).with(root/"opt/bin/glib-compile-schemas",
                                                  HOMEBREW_PREFIX/"share/glib-2.0/schemas").ordered
-    expect(runner).to receive(:run_command).with(root/"opt/bin/gio-querymodules",
-                                                 HOMEBREW_PREFIX/"lib/gio/modules").ordered
     expect(runner).to receive(:run_command).with(root/"opt/bin/gdk-pixbuf-query-loaders", "--update-cache").ordered
     expect(runner).to receive(:run_command).with(root/"opt/bin/update-mime-database",
                                                  HOMEBREW_PREFIX/"share/mime").ordered
