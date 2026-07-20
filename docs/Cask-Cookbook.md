@@ -637,6 +637,7 @@ Relative paths default to `staged_path` for `base:`, `source_base:` and `target_
 * `set_permissions`: recursively change existing path permissions with `chmod`; example: `set_permissions "Shared/payload", "0755"`.
 * `set_ownership`: recursively change existing path ownership with `sudo chown`; example: `set_ownership "Shared/payload", user: "root", group: "wheel"`. Missing paths are ignored. When `user:` is omitted, the current user is used. When `group:` is omitted, `staff` is used.
 * `run`: run one executable with literal arguments; example: `run "Example.app/Contents/MacOS/helper", args: ["--repair"], base: :appdir`.
+* `terminate_process`: terminate a process by name; example: `terminate_process "Example", must_succeed: false`. It supports retries, `notices:` shown before the first attempt and a `failure_message:` warning.
 
 File mutation and command steps accept `if_exists:` and `unless_exists:` guards where supported. `copy`, `move` and symlink steps accept `source_glob: true`; path collections used by `remove`, `set_permissions` and `set_ownership` expand globs automatically. Give related guarded `mkdir`, `mkdir_p` and `run` steps the same `guard_group:` to evaluate their guards once for the group. Symlink removal can additionally match the serialised source during uninstall, while `remove` can restrict removal with `symlink_target_contains:` or `content_contains:`.
 

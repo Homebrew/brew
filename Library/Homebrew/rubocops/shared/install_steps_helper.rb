@@ -15,7 +15,7 @@ module RuboCop
          :update_mime_database, :update_desktop_database].freeze
       KEYCHAIN_STEP_METHODS = [:delete_keychain_certificate].freeze
       PERMISSION_STEP_METHODS = [:set_permissions, :set_ownership].freeze
-      COMMAND_STEP_METHODS = [:run].freeze
+      COMMAND_STEP_METHODS = [:run, :terminate_process].freeze
       ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
          *REBUILD_ACTION_STEP_METHODS, :set_permissions, *COMMAND_STEP_METHODS].freeze,
@@ -29,7 +29,7 @@ module RuboCop
 
       # `dstr` covers heredocs such as `write` content; interpolation is limited
       # to known template values below.
-      ALLOWED_STEP_ARGUMENT_NODE_TYPES = [:array, :dstr, :hash, :nil, :pair, :str, :sym].freeze
+      ALLOWED_STEP_ARGUMENT_NODE_TYPES = [:array, :dstr, :hash, :int, :nil, :pair, :str, :sym].freeze
 
       STEP_BLOCK_MSG = T.let(
         "Steps blocks may only contain install step DSL calls: " \
