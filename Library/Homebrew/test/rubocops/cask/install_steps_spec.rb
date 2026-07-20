@@ -30,7 +30,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
 
         preflight_steps do
           system "true"
-          ^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `copy`, `remove`, `symlink`, `ln_s`, `ln_sf`, `write`, `delete_keychain_certificate`, `set_permissions`, `set_ownership`.
+          ^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `write`, `delete_keychain_certificate`, `set_permissions`, `set_ownership`.
         end
       end
     CASK
@@ -44,7 +44,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
 
         preflight_steps do
           update_desktop_database
-          ^^^^^^^^^^^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `copy`, `remove`, `symlink`, `ln_s`, `ln_sf`, `write`, `delete_keychain_certificate`, `set_permissions`, `set_ownership`.
+          ^^^^^^^^^^^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `write`, `delete_keychain_certificate`, `set_permissions`, `set_ownership`.
         end
       end
     CASK
@@ -61,6 +61,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
           touch "foo/state"
           mv "source", "target"
           move_children "source", "target"
+          inreplace "foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"
           ln_sf "source", "target", source_base: :relative, uninstall: true
           write "foo.conf", "key = value\n"
           set_permissions "Foo.app", "0755"

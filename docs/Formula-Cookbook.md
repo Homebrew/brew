@@ -1200,6 +1200,7 @@ represented by structured steps.
 * `move_children`: move the contents of one directory into another; example: `move_children "defaults", "foo/defaults"`.
 * `copy`: copy a file or, with `recursive: true`, a directory; example: `copy "default.conf", "foo/default.conf"`.
 * `remove`: remove one or more paths; example: `remove ["old.conf", "foo/*.bak"]`. Use `recursive: true` for directories.
+* `inreplace`: replace text in a file; example: `inreplace "foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"`. Pass a regular expression as `before` for pattern matching.
 * `symlink`: create a symlink; example: `symlink "cert.pem", "foo/cert.pem", source_base: :relative`.
 * `ln_s`: alias for `symlink`; example: `ln_s "cert.pem", "foo/cert.pem", source_base: :relative`.
 * `ln_sf`: create or replace a symlink; example: `ln_sf "cert.pem", "foo/cert.pem", source_base: :relative`.

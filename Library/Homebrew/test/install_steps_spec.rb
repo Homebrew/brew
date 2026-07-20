@@ -389,6 +389,22 @@ RSpec.describe Homebrew::InstallSteps do
     Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
   end
 
+  specify "replaces literal and regular expression matches", :aggregate_failures do
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
+      inreplace "literal.txt", "before", "after"
+      inreplace "pattern.txt", /before.+after/i, "replaced"
+    end
+
+    (root/"var").mkpath
+    (root/"var/literal.txt").write "before"
+    (root/"var/pattern.txt").write "BEFORE and AFTER"
+
+    Homebrew::InstallSteps::Runner.new(context:).run(steps)
+
+    expect((root/"var/literal.txt").read).to eq("after")
+    expect((root/"var/pattern.txt").read).to eq("replaced")
+  end
+
   specify "appends a trailing newline unless already present", :aggregate_failures do
     steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
       write "missing-newline", "value"

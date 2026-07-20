@@ -10,13 +10,14 @@ module Homebrew
   module InstallSteps
     PathSpec = T.type_alias { T::Hash[String, String] }
     PathSpecs = T.type_alias { T::Array[PathSpec] }
-    StepValue = T.type_alias { T.any(String, T::Boolean, PathSpec, PathSpecs) }
+    StepValue = T.type_alias { T.any(String, Integer, T::Boolean, PathSpec, PathSpecs) }
     Step = T.type_alias { T::Hash[String, StepValue] }
     Steps = T.type_alias { T::Array[Step] }
     Paths = T.type_alias { T.any(String, Pathname, T::Array[T.any(String, Pathname)]) }
     RawPathSpec = T.type_alias { T::Hash[T.any(String, Symbol), T.nilable(T.any(String, Symbol, Pathname))] }
     RawPathSpecs = T.type_alias { T::Array[T.any(String, Symbol, Pathname, RawPathSpec)] }
-    RawStepValue = T.type_alias { T.nilable(T.any(String, Symbol, T::Boolean, Pathname, RawPathSpec, RawPathSpecs)) }
+    RawStepValue =
+      T.type_alias { T.nilable(T.any(String, Symbol, Integer, T::Boolean, Pathname, RawPathSpec, RawPathSpecs)) }
     RawStep = T.type_alias { T::Hash[T.any(String, Symbol), RawStepValue] }
     SystemCommandArg = T.type_alias { T.any(String, Pathname) }
     TemplateTokenValue = T.type_alias { T.any(String, Pathname) }
@@ -311,6 +312,27 @@ module Homebrew
                  "sudo"                    => sudo.is_a?(::Symbol) ? sudo.to_s : sudo,
                  "symlink_target_contains" => symlink_target_contains,
                  "content_contains"        => content_contains)
+      end
+
+      sig {
+        params(
+          path:         ::T.any(::String, ::Pathname),
+          before:       ::T.any(::String, ::Regexp),
+          after:        ::String,
+          base:         ::T.nilable(::T.any(::String, ::Symbol)),
+          audit_result: ::T::Boolean,
+          global:       ::T::Boolean,
+        ).void
+      }
+      def inreplace(path, before, after, base: nil, audit_result: true, global: true)
+        add_step("inreplace",
+                 "path"           => path_spec(path, base:, default_base: @default_base),
+                 "before"         => before.is_a?(::Regexp) ? before.source : before,
+                 "after"          => after,
+                 "regexp"         => before.is_a?(::Regexp),
+                 "regexp_options" => (before.options if before.is_a?(::Regexp)),
+                 "skip_audit"     => !audit_result,
+                 "first_only"     => !global)
       end
 
       sig {
@@ -689,7 +711,18 @@ module Homebrew
               FileUtils.rm_f path
             end
           end
-        when "link_dir"
+        when "inreplace"
+          require "utils/inreplace"
+
+          path = resolve_path(step_path(step, "path"))
+          before = expand_template_tokens(step_string(step, "before"))
+          after = expand_template_tokens(step_string(step, "after"))
+          regexp_options = T.cast(step["regexp_options"], T.nilable(Integer))
+          before = Regexp.new(before, regexp_options || 0) if step["regexp"] == true
+          Utils::Inreplace.inreplace(path, before, after,
+                                     audit_result: step["skip_audit"] != true,
+                                     global:       step["first_only"] != true)
+        when "link_dir", "symlink_tree"
           source_dir = resolve_path(step_path(step, "source"))
           target_dir = resolve_path(step_path(step, "target"))
           source_dir.find do |source|

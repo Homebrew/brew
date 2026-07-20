@@ -5,7 +5,8 @@ module RuboCop
   module Cop
     module InstallStepsHelper
       FILE_PREPARATION_STEP_METHODS =
-        [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :copy, :remove, :symlink, :ln_s, :ln_sf].freeze
+        [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :copy, :remove, :inreplace, :symlink,
+         :ln_s, :ln_sf].freeze
       LINK_STEP_METHODS = [:link_dir, :link_children].freeze
       CONFIG_WRITE_STEP_METHODS = [:write].freeze
       SERVICE_DATA_STEP_METHODS = [:init_data_dir].freeze
