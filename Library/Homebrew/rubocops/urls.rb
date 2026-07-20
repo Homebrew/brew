@@ -41,7 +41,7 @@ module RuboCop
           audit_urls(filenames, /(darwin|macos|osx)/i) do |match, filename|
             extname = File.extname(filename)
             next if T.must(@formula_name).include?(match.to_s.downcase)
-            next if %w(patch diff).include?(extname)
+            next if %w[patch diff].include?(extname)
             next if tap_style_exception? :not_a_binary_url_prefix_allowlist
             next if tap_style_exception? :binary_bootstrap_formula_urls_allowlist
 
