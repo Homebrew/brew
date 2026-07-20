@@ -1175,9 +1175,9 @@ RSpec.describe Formula do
       post_install_steps do
         mkdir_p "log/foo"
         touch "foo/marker"
-        mv "move-source", "move-target"
-        move_children "children-source", "children-target"
-        ln_s "move-target", "linked-target", source_base: :relative, uninstall: true
+        move "move-source", "move-target"
+        move_contents "children-source", "children-target"
+        symlink "move-target", "linked-target", source_base: :relative, remove_on_uninstall: true
       end
     end
 
@@ -1185,20 +1185,22 @@ RSpec.describe Formula do
       { "type" => "mkdir_p", "path" => { "base" => "var", "path" => "log/foo" } },
       { "type" => "touch", "path" => { "base" => "var", "path" => "foo/marker" } },
       {
-        "type"   => "move",
-        "source" => { "base" => "prefix", "path" => "move-source" },
-        "target" => { "base" => "prefix", "path" => "move-target" },
+        "type"      => "move",
+        "source"    => { "base" => "prefix", "path" => "move-source" },
+        "target"    => { "base" => "prefix", "path" => "move-target" },
+        "overwrite" => true,
       },
       {
-        "type"   => "move_children",
+        "type"   => "move_contents",
         "source" => { "base" => "prefix", "path" => "children-source" },
         "target" => { "base" => "prefix", "path" => "children-target" },
       },
       {
-        "type"      => "symlink",
-        "source"    => { "base" => "relative", "path" => "move-target" },
-        "target"    => { "base" => "prefix", "path" => "linked-target" },
-        "uninstall" => true,
+        "type"                => "symlink",
+        "source"              => { "base" => "relative", "path" => "move-target" },
+        "target"              => { "base" => "prefix", "path" => "linked-target" },
+        "overwrite"           => false,
+        "remove_on_uninstall" => true,
       },
     ])
     expect(f.post_install_steps_defined?).to be(true)
@@ -1244,7 +1246,7 @@ RSpec.describe Formula do
       url "foo-1.0"
 
       post_install_steps do
-        ln_s "source", "linked"
+        symlink "source", "linked"
       end
     end
 
