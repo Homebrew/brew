@@ -36,9 +36,9 @@ The final target is not to keep legacy hooks and structured steps side by side.
 Once `homebrew/core` and `homebrew/cask` have been converted, all
 `homebrew/core` `post_install` blocks and all `homebrew/cask` legacy
 `preflight`, `postflight`, `uninstall_preflight` and `uninstall_postflight`
-blocks should be removed for cases covered by structured steps. After that,
-`Homebrew/brew` should reject side-by-side usage again and deprecate
-`post_install` and legacy cask flight blocks for third-party tap usage.
+blocks should be removed. Only after all five legacy hook counts reach zero at
+the current tap heads should `Homebrew/brew` reject side-by-side usage again or
+deprecate the legacy hooks for third-party taps.
 
 During the temporary bridge, structured steps must appear before the matching
 legacy block to make the runtime order obvious: `post_install_steps` before
@@ -127,94 +127,135 @@ include the remaining repeated behaviour as named steps for the same case or
 document the remaining legacy work with filenames and use the bridge only while
 the follow-up named step is being built.
 
-## Formula Patterns
+## Legacy Hook Removal Gate
 
-Local all-file scan source: `homebrew/core` at `ced17121766b`. The scan read
-all `8,459` files under `Formula/`. Pattern buckets overlap because one
-`post_install` can create directories, write files and run commands.
+The zero-hook gate is stricter than a scan for side-by-side legacy and steps
+blocks. At the latest tapped heads used for this audit:
 
-- `144` of `8,459` formulae define `post_install`.
-- `post_install_defined` is the only install-time Ruby execution flag exposed
-  through the formula JSON API for bottle installs. I did not find a
-  caskfile-only-style source download gate for other formula DSL at bottle
-  install time; formula source downloads for API-loaded formulae are used for
-  source builds, local patches and resources rather than post-install metadata
-  gaps.
-- `79` create shared directories in `var`, `etc` or `HOMEBREW_PREFIX`.
-  Examples: `Formula/g/glib.rb`, `Formula/l/languagetool.rb` and
-  `Formula/m/mecab.rb`.
-- `112` write or patch default configuration/data files.
-  Examples: `Formula/n/node@24.rb`, `Formula/w/wemux.rb` and
-  `Formula/p/php.rb`.
-- `27` rebuild desktop/cache databases.
-  Examples: `Formula/g/gjs.rb`, `Formula/g/geocode-glib.rb` and
-  `Formula/e/efl.rb`.
-- `19` initialise service data directories.
-  Examples: `Formula/m/mariadb.rb`, `Formula/m/mysql.rb`,
-  `Formula/p/postgresql@12.rb` and `Formula/p/percona-server.rb`.
-- `17` update certificate/trust state.
-  Examples: `Formula/o/openssl@3.rb`, `Formula/lib/libressl.rb` and
-  `Formula/g/gnutls.rb`.
-- Marker/touch-only conversion surfaces are now smaller because
-  `Formula/i/icecast.rb` already uses `post_install_steps`. Remaining touch
-  examples such as `Formula/r/r.rb` and `Formula/n/nethack.rb` also contain
-  symlink or permission work, so they need full-hook coverage before
-  conversion.
+- `homebrew/core` at `2603b0ce7788` contains `8,470` formula files, `82`
+  `post_install` methods and `78` formulae using `post_install_steps`. No file
+  uses both forms, but all `82` methods still block removal of the bridge.
+- `homebrew/cask` at `892cff1a33bb` contains `7,701` cask files and `146`
+  legacy flight blocks in `124` casks: `79` `preflight`, `42` `postflight`,
+  `10` `uninstall_preflight` and `15` `uninstall_postflight` blocks. The tap
+  also has `16`, `20`, `22` and `8` matching steps blocks respectively, with
+  no cask using both matching forms.
 
-Refresh the formula buckets with:
+Do not add conflict enforcement, change runtime precedence or deprecate a
+legacy hook while any of these searches returns a result:
 
 ```sh
-rg -n 'def post_install|\.mkpath|mkdir_p|FileUtils\.mkdir|\bmkdir\b' Library/Taps/homebrew/homebrew-core/Formula
-rg -n 'def post_install|\.write\b|\.atomic_write\b|File\.write|\binreplace\b' Library/Taps/homebrew/homebrew-core/Formula
-rg -n 'glib-compile-schemas|gio-querymodules|gdk-pixbuf-query-loaders|gtk.*update-icon-cache|update-mime-database|update-desktop-database' Library/Taps/homebrew/homebrew-core/Formula
-rg -n 'initdb|mysqld.*initialize-insecure|mysql_install_db|PG_VERSION|general_log\.CSM|mysql/user\.frm' Library/Taps/homebrew/homebrew-core/Formula
-rg -n 'c_rehash|cert\.pem|openssl.*rehash|\btrust\b|certifi|ca-certificates' Library/Taps/homebrew/homebrew-core/Formula
-rg -n 'FileUtils\.touch|\.touch\b|\btouch\b' Library/Taps/homebrew/homebrew-core/Formula
+rg -n '^\s+def post_install\b' Library/Taps/homebrew/homebrew-core/Formula
+for hook in preflight postflight uninstall_preflight uninstall_postflight; do
+  rg -n "^\s+${hook}\b" Library/Taps/homebrew/homebrew-cask/Casks
+done
 ```
 
-## Cask Patterns
+Refresh the counts against current tap heads in every DSL operation. Keep a
+residual ledger that assigns every matching file to an existing conversion, a
+planned DSL operation or a deliberate refactor into another serialised
+artifact. New legacy hooks added while migration is in progress must be added
+to that ledger. Closing the bridge requires all five searches to be empty, tap
+`readall` and style checks to pass and the zero result to be recorded here.
 
-Local all-file scan source: `homebrew/cask` at `4eee0394c96c`. The scan read
-all `7,741` files under `Casks/`. Pattern buckets overlap because one flight
-block can prepare files, change permissions and run commands.
+## Remaining Formula DSL Work
 
-- Before language variations were serialised, `193` of `7,741` casks required
-  the Ruby source at install time through `Cask#caskfile_only?`: `170` because
-  of legacy `*flight` blocks and `23` because of language blocks only. `27`
-  casks had language blocks in total, so `4` had both language blocks and
-  legacy `*flight` blocks. Language variation API data removes language blocks
-  as a source download gate; the `4` overlapping casks still need source for
-  their legacy flight blocks.
-- I did not find other current cask install-time Ruby source download gates.
-  Ordinary artifacts, uninstall/zap directives, caveats, dependencies and
-  `on_*` variations are serialised through API data. `*_steps` artifacts are
-  also serialised and should not make `caskfile_only?` true.
-- `68` flight blocks create directories, touch files or write small files.
-  Examples: `Casks/a/android-ndk.rb`, `Casks/b/blender.rb` and
-  `Casks/c/chromium.rb`.
-- `13` move, copy or symlink files during install or uninstall.
-  Examples: `Casks/g/gcloud-cli.rb`, `Casks/l/libcblite.rb` and
-  `Casks/m/miniconda.rb`.
-- `21` change permissions and `36` change ownership.
-  Examples: `Casks/b/bitcoin-core.rb`, `Casks/a/anaconda.rb` and
-  `Casks/p/parallels.rb`.
-- `8` legacy flight blocks directly invoke `/usr/bin/security` for keychain
-  certificate cleanup.
-  Examples: `Casks/c/charles.rb`, `Casks/a/autofirma.rb` and
-  `Casks/b/betwixt.rb`.
-- `27` casks use language blocks. Large examples include
-  `Casks/f/firefox.rb`, `Casks/l/libreoffice-language-pack.rb` and
-  `Casks/t/thunderbird.rb`.
+The `82` remaining formula hooks were inspected as syntax trees. These buckets
+overlap because a hook can use several kinds of operation:
 
-Refresh the cask buckets with:
+- `63` hooks make `119` command or command-output calls.
+- `31` create directories, `23` remove paths, `26` create or maintain links,
+  `17` change permissions, `17` replace file content, `16` write files, `13`
+  copy or install paths, `5` touch files and `3` move paths.
+- Existing actions should be re-applied to cache work in `easy-tag`, `gtk+3`
+  and `sysprof`, and the existing MySQL initialiser should cover the bootstrap
+  portion of both Percona hooks. Any unsupported remainder stays behind the
+  formula bridge until the whole hook can be removed.
 
-```sh
-rg -n 'preflight|postflight|FileUtils\.mkdir|mkdir_p|\.mkpath|FileUtils\.touch|\.touch\b|\.write\b|File\.write|atomic_write' Library/Taps/homebrew/homebrew-cask/Casks
-rg -n 'FileUtils\.(mv|cp|cp_r|ln_s|ln_sf)|\b(mv|cp|cp_r|ln_s|ln_sf)\b|make_symlink|File\.symlink' Library/Taps/homebrew/homebrew-cask/Casks
-rg -n 'set_permissions|chmod|FileUtils\.chmod|set_ownership|chown|FileUtils\.chown' Library/Taps/homebrew/homebrew-cask/Casks
-rg -n '/usr/bin/security|system_command\s+"/usr/bin/security"|security\s+(delete|add|find)-' Library/Taps/homebrew/homebrew-cask/Casks
-rg -n '^\s*language\b' Library/Taps/homebrew/homebrew-cask/Casks
-```
+The repeated formula families justify named, data-only operations:
+
+- `8` GCC formulae generate runtime links and specs files.
+- `8` formulae unpack a compressed executable and then install it with the
+  required mode.
+- `7` GHC formulae refresh the package cache.
+- `5` PHP formulae configure shared PEAR and PECL state.
+- `5` Python-family formulae bootstrap packaging state: `3` CPython and `2`
+  PyPy formulae.
+- `4` LLVM formulae generate platform configuration files.
+- `3` glibc formulae generate locales and maintain host timezone links.
+
+The remaining individual hooks include XML catalogue registration, CA bundle
+generation, GTK input-module and font/info caches, package or keystore
+initialisation, path migration, Mach-O relocation and service start/stop
+transactions. They should use generic guarded file or command steps where
+possible. Complex one-off logic should be moved into a deterministic helper
+installed into the bottle and invoked by a structured command step instead of
+adding a formula-specific DSL action that does not meet the usage threshold.
+
+## Remaining Cask DSL Work
+
+The `146` remaining cask flight blocks were also inspected as syntax trees.
+The overlapping capability buckets are:
+
+- `70` blocks make `75` file writes. `66` of those writes generate command
+  wrappers in `63` casks, `5` generate installer or uninstaller scripts in `4`
+  casks and `4` rewrite other files in `3` casks.
+- `53` blocks make `69` command calls. Repeated groups include `10` `pkill`
+  calls, `4` `killall` calls, `8` Parallels `inittool` calls, `7` Parallels
+  `chflags` calls, `7` Parallels `xattr` calls and `4` `gcloud` calls.
+- `16` blocks remove paths, `8` create links, `8` enumerate globs or children,
+  `6` move paths, `6` change permissions or ownership and `1` copies paths.
+
+The uninstall hooks also need serialised predicates and state preservation.
+Current repeated examples include conditional GPG launcher cleanup in `4`
+casks, Conda environment preservation across `4` hooks in `2` casks and
+paired symlink installation/removal in `distroav` and the `2` `libcblite`
+casks. Other hooks unload dynamic launch agents, remove matching IDE launchers
+or screen savers and invoke an app-bundled uninstaller.
+
+## Remaining Migration Workstreams
+
+The following capabilities are required before the zero-hook gate can pass:
+
+1. Convert hooks already expressible with the current steps, including partial
+   formula conversions that preserve ordering through the bridge. Do this
+   before inventing another operation for the same behaviour.
+2. Add common path mutation and predicate data: `copy`/`copy_children`,
+   `remove`, literal or token-based `replace`, formula permission support,
+   path arrays and globs and `if_exists`, `unless_exists` and symlink-target
+   guards. Add only the template values demonstrated by the residual ledger,
+   including the current user, selected architecture or language and caskroom
+   or temporary paths.
+3. Add a cask command-wrapper artifact that owns both a serialised wrapper
+   template and its binary target. This removes the local `shimscript` and
+   `wrapper` variables that prevent the existing `write` step from covering
+   the `63` wrapper casks. It must support executable mode and the existing
+   fixed template tokens without evaluating Ruby.
+4. Add a constrained `run` step with an executable selected from an enumerated
+   base, a literal argument array, a fixed environment map, optional stdin,
+   accepted exit statuses, sudo policy and declarative path guards, retries and
+   timeouts. It must not accept shell command strings, command substitution or
+   Ruby callbacks. Cask commands from `staged_path` or `appdir` must run in the
+   cask sandbox; formula-installed helpers must run in a formula post-install
+   sandbox. Fixed system executables can use a separate system base.
+5. Add shared lifecycle actions on top of `run`, led by process termination
+   and retry handling. There are `16` current termination calls across the
+   taps: the `10` cask `pkill` calls, `4` cask `killall` calls and `2` formula
+   `killall` calls. Keep service transactions inside packaged helpers rather
+   than turning steps blocks into an arbitrary command language.
+6. Add the repeated formula actions listed above. Command-output-dependent
+   GCC, PHP, Python and platform configuration work should stay inside these
+   typed actions or packaged helpers, not expose captured command output as an
+   unrestricted template language.
+7. Add serialised uninstall cleanup and preservation primitives for matching
+   symlinks/files, temporary path preservation and launch-agent unloading.
+   Prefer existing `uninstall`, `zap`, `binary` and symlink cleanup artifacts
+   whenever they already preserve the required behaviour.
+8. After each workstream lands, convert both taps and refresh the residual
+   ledger. The final long-tail pass packages any remaining formula helper,
+   converts app-bundled cask helpers to sandboxed `run` steps and records why
+   each hook disappeared. Only the subsequent zero-count PR may close the
+   bridge and add conflicts or deprecations.
 
 ## API Source Download Gates
 
@@ -291,9 +332,9 @@ is stripped during metadata serialisation.
   This PR does not wire formula or cask JSON API output or run steps from
   install phases.
   Estimated existing formulae/casks affected: `0` runtime behaviour changes.
-  It creates the guardrails for the later `144` formulae with `post_install`
-  blocks and `170` casks with flight blocks, but no existing formula or cask
-  opts into the new DSL yet.
+  It created the guardrails for the then-current `144` formulae with
+  `post_install` blocks and `170` casks with flight blocks, but no existing
+  formula or cask opted into the new DSL yet.
   Notes for the next PRs: keep the step payload as an ordered array; keep
   `_steps` blocks literal-only; for formulae, steps run before a remaining
   `post_install` hook during the temporary bridge; for casks, steps win over
@@ -303,12 +344,12 @@ is stripped during metadata serialisation.
   Commit: `Add formula install steps`.
   Scope: formula DSL, formula JSON API data, API formula loading, installer and
   `brew postinstall` execution, formula cookbook docs and formula fixture.
-  Estimated existing formulae affected: `144` formulae currently define
-  `post_install`. The first useful conversion surface is roughly `79` formulae
-  creating shared directories; parts of the `19` service data directory and
-  `17` certificate/trust formulae may also
-  move once their operations fit the supported step set. Runtime behaviour
-  changes only for formulae that opt into `post_install_steps`.
+  Estimated existing formulae affected: at implementation time, `144` formulae
+  defined `post_install`. The first useful conversion surface was roughly `79`
+  formulae creating shared directories; parts of the `19` service data
+  directory and `17` certificate/trust formulae could also move once their
+  operations fit the supported step set. Runtime behaviour changes only for
+  formulae that opt into `post_install_steps`.
   Notes for implementation: default `mkdir`/`touch` to `var` and source/target
   paths to `prefix`; expose the ordered array through `FormulaStruct`; make
   `post_install_steps` run before any remaining `post_install`; document that
@@ -321,11 +362,11 @@ is stripped during metadata serialisation.
   `uninstall_preflight_steps` and `uninstall_postflight_steps`, cask API
   serialisation through artifact data, installer casts, cask cookbook docs,
   cask fixture/API loader coverage.
-  Estimated existing casks affected: `170` casks currently use flight blocks.
-  The first useful conversion surface is roughly `68` casks that create/touch
-  files or directories and the supported subset of `13` casks that move or
-  symlink files. Runtime behaviour changes only for casks that opt into the
-  new `*_steps` stanzas.
+  Estimated existing casks affected: at implementation time, `170` casks used
+  flight blocks. The first useful conversion surface was roughly `68` casks
+  that created or touched files or directories and the supported subset of
+  `13` casks that moved or symlinked files. Runtime behaviour changed only for
+  casks that opted into the new `*_steps` stanzas.
   Notes for implementation: default all relative cask paths to `staged_path`;
   keep steps as normal cask artifacts so API loader round-trips work; make
   steps remove/override the matching Ruby flight artifact with a warning; keep
@@ -495,3 +536,46 @@ is stripped during metadata serialisation.
   selected URL and checksum directly, while older API data still falls back to
   source. Artifact differences are included so all `27` current language casks,
   including `cave-story` and `wondershare-edrawmax`, can use API data.
+- [x] PR 10, audit the legacy hook removal gate.
+  Commit: `Plan remaining install hook migration`.
+  Scope: retain the formula incremental bridge, record exact residual counts
+  at `homebrew/core` `2603b0ce7788` and `homebrew/cask` `892cff1a33bb`, assign
+  the remaining behaviour to migration workstreams and make zero legacy hooks
+  a hard prerequisite for conflicts or deprecations. The absence of matching
+  legacy and steps blocks in one file is not a completion signal.
+- [ ] PR 11, guarded path mutation and formula permissions.
+  Scope: add copy, remove and replace operations, path collections and globs,
+  declarative path predicates, the residual template tokens and formula use of
+  permission steps. Convert both taps through the four-PR workflow and refresh
+  the residual ledger.
+- [ ] PR 12, serialised cask command wrappers.
+  Scope: replace the `66` wrapper writes in `63` casks with a wrapper artifact
+  that owns the generated executable and binary target. Cover installer script
+  generation only where the same literal-template model is sufficient.
+- [ ] PR 13, constrained and sandboxed command execution.
+  Scope: add the enumerated-base `run` step, its argument, environment, stdin,
+  result, guard, retry and timeout data and sandbox profiles. Use packaged
+  formula helpers for complex one-off work and app-bundled cask helpers for
+  upstream integration without admitting arbitrary shell or Ruby.
+- [ ] PR 14, process lifecycle actions.
+  Scope: migrate the `16` current termination calls with a shared action and
+  preserve retry, output and failure behaviour. Keep multi-command service
+  transactions in packaged helpers invoked by `run`.
+- [ ] PR 15, repeated formula toolchain actions.
+  Scope: migrate the GCC, compressed executable, GHC, PHP, Python, LLVM and
+  glibc families recorded above. Treat each named action as its own four-PR
+  operation and update the tap ledger before starting the next action.
+- [ ] PR 16, uninstall cleanup and state preservation.
+  Scope: add matching-path removal, temporary path preservation and dynamic
+  launch-agent cleanup where existing cask artifacts cannot express the same
+  behaviour. Convert install and uninstall halves together.
+- [ ] PR 17, residual tap conversion.
+  Scope: convert every remaining ledger entry with an existing step, a
+  packaged helper and `run`, or a refactor into another serialised artifact.
+  Re-scan current tap heads and do not complete this item until all five legacy
+  hook searches are empty.
+- [ ] PR 18, close the bridges and deprecate legacy hooks.
+  Hard prerequisite: `homebrew/core` has no `post_install` methods and
+  `homebrew/cask` has no legacy `preflight`, `postflight`,
+  `uninstall_preflight` or `uninstall_postflight` blocks. Only this PR restores
+  conflicts, structured-step precedence and third-party tap deprecations.
