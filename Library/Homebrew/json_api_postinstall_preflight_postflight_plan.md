@@ -92,15 +92,102 @@ The delivery order is now:
 1. Review and merge the `Homebrew/brew` capability commits in order. Every
    commit is below `300` insertions and includes tests, documentation and a
    description suitable for an independent pull request.
-2. Cut a stable `Homebrew/brew` release containing the complete DSL stack.
-3. Refresh and merge the committed `homebrew/core` and `homebrew/cask` stacks
+1. Cut a stable `Homebrew/brew` release containing the complete DSL stack.
+1. Refresh and merge the committed `homebrew/core` and `homebrew/cask` stacks
    in their recorded order. A tap file containing several step types is
    assigned to the latest brew capability it needs so every intermediate tap
    commit remains loadable.
-4. Add sandbox hardening, conservative autocorrection and audit cops after the
+1. Add sandbox hardening, conservative autocorrection and audit cops after the
    taps can consume every new DSL method.
-5. Add conflicts or legacy-hook deprecations only after the merged tap heads,
+1. Add conflicts or legacy-hook deprecations only after the merged tap heads,
    rather than only local branches, pass the zero-hook gate.
+
+The `Homebrew/brew` implementation stack is:
+
+| Commit | Capability |
+| --- | --- |
+| `df477ca13b` | scoped path and platform guards |
+| `55190efb93` | shared path, token and privilege handling |
+| `51093bf43d` | copies |
+| `9f4a8c9e19` | removals |
+| `8ed34862ff` | `inreplace` steps |
+| `643b30919e` | cask command wrappers |
+| `b329c8fe29` | generated cask scripts |
+| `5a16a0dcd0` | formula permission steps |
+| `9691e2ef46` | constrained commands |
+| `c88074e73a` | process termination |
+| `5fd023983d` | scoped warnings |
+| `914009af6a` | GCC runtime configuration |
+| `c9ae082fe4` | gzipped executable installation |
+| `e73ab6ac7c` | glibc runtime setup |
+| `15194fcf2b` | Clang system configuration |
+| `fca9f6a64c` | PHP configuration |
+| `fc3eb158b4` | Python bootstrap |
+| `6039daa6be` | compatibility and canonical interface alignment |
+| `7eb72984c0` | temporary cask flight migration bridge |
+| `898f4ca2b8` | canonical autocorrection and validation |
+| `a1aaae0107` | canonical cookbook documentation |
+
+### Compatibility bridge
+
+Step methods and values already released from `origin/main` remain accepted by
+the Ruby DSL and by serialised API payloads during the migration. Their public
+cookbook entries have been removed and their source definitions are marked
+with `# odeprecated` so a later release can emit deprecations without combining
+that change with this capability stack. This includes the former short file
+operation names, cache action names, broad `name` token, keychain certificate
+name and database initialiser values.
+
+Canonical calls preserve shipped behaviour where the method name remains the
+same. In particular, `move` replaces an existing destination by default, like
+`FileUtils.mv`; `copy` follows the same convention and both accept
+`overwrite: false` to reject replacement. Compatibility-only names remain
+valid in literal-block checks but are omitted from their public error message.
+Spellings introduced only on this unmerged branch are changed directly rather
+than retained as aliases.
+
+The `homebrew/core` branch `install-step-migrations` is split into this stack:
+
+| Commit | Migration | Brew dependency |
+| --- | --- | --- |
+| `a4d27c0a7d3` | copies | `51093bf43d` |
+| `0a5fd80246e` | removals | `9f4a8c9e19` |
+| `3098abae5b5` | `inreplace` steps | `8ed34862ff` |
+| `8297e32175e` | formula permissions | `5a16a0dcd0` |
+| `07a19aa272c` | commands | `9691e2ef46` |
+| `13bb140cfa7` | process termination | `c88074e73a` |
+| `f71f12a10b6` | config warnings | `5fd023983d` |
+| `80f37ea151e` | GCC runtimes | `914009af6a` |
+| `b060b49e823` | gzipped executables | `c9ae082fe4` |
+| `940bfe3f73e` | glibc runtime setup | `e73ab6ac7c` |
+| `e18748ffe2b` | Clang configs | `15194fcf2b` |
+| `83efe9bdf97` | PHP configuration | `fca9f6a64c` |
+| `0f543e878e1` | Python bootstrap | `fc3eb158b4` |
+| `fa082bc30d3` | existing rebuild actions | `6039daa6be` |
+| `cf95bceae00` | canonical names | `6039daa6be` |
+
+The `homebrew/cask` branch `install-step-migrations` is split into this stack:
+
+| Commit | Migration | Brew dependency |
+| --- | --- | --- |
+| `3e957eee42f` | removals | `9f4a8c9e19` |
+| `6fae48e341f` | `inreplace` steps | `8ed34862ff` |
+| `05909bdc346` | command wrappers | `643b30919e` |
+| `8fb6b5f6ed3` | generated scripts | `b329c8fe29` |
+| `93d0cb31536` | commands and mixed steps | `9691e2ef46` |
+| `f6b55427fd5` | process termination | `c88074e73a` |
+| `f28b5f45b45` | existing structured flight steps | `6039daa6be` |
+| `be5fdeb828f` | canonical names | `6039daa6be` |
+
+`gcloud-cli` is the only cask copy user, but its matching flight blocks also
+need removal, linking and command steps. It therefore lands in the command
+commit rather than an earlier cask-only copy commit. The generic `copy` step is
+not single-package DSL because three formulae use it too.
+
+Verify each local tap pass with tap-wide `./bin/brew style` and
+`./bin/brew readall`. Run targeted audits when the tap changes are split into
+their own review branches. Before opening a follow-up PR, run the documentation
+lint and the full `Homebrew/brew` verification described in `AGENTS.md`.
 
 ## Legacy Hook Removal Gate
 
@@ -110,16 +197,18 @@ formula files and `82` `post_install` methods, and `homebrew/cask` at
 `892cff1a33bb`, with `7,701` cask files and `146` legacy flight blocks in `124`
 casks.
 
-The committed local tap migrations based on those heads now pass the gate:
+The refreshed local tap migrations at `homebrew/core` `6e23a533d3e4` and
+`homebrew/cask` `215a345b6b40` now pass the gate:
 
-- `homebrew/core` has `0` `post_install` methods after changes to `83` files.
+- `homebrew/core` has `0` `post_install` methods after converting all `86`
+  hook-bearing files.
 - `homebrew/cask` has `0` `preflight`, `postflight`, `uninstall_preflight` or
-  `uninstall_postflight` blocks after changes to `124` files.
+  `uninstall_postflight` blocks after converting all `121` hook-bearing files.
 - Tap-wide style and `readall` checks pass for both migrations.
 
 The compatibility naming pass also updates structured-step users that did not
 have a legacy hook. The complete local stacks therefore differ from their tap
-heads in `136` formula files and `137` cask files.
+heads in `140` formula files and `137` cask files.
 
 This proves that the implemented DSL is sufficient, but it does not authorise
 bridge conflicts yet. The tap stacks must first be reviewed and merged against
@@ -174,8 +263,8 @@ formula-specific one-use DSL actions.
 
 ## Completed Cask DSL Work
 
-The `146` cask flight blocks in the baseline were also inspected as syntax trees.
-The overlapping capability buckets are:
+The `146` cask flight blocks in the baseline were also inspected as syntax
+trees. The overlapping capability buckets are:
 
 - `70` blocks make `75` file writes. `66` of those writes generate command
   wrappers in `63` casks, `5` generate installer or uninstaller scripts in `4`
@@ -198,18 +287,18 @@ The zero-hook local tap result uses these capabilities:
 
 1. Guarded path mutation with `copy`, `remove`, `inreplace`,
    globs, collections, ownership, permissions and serialised predicates.
-2. Cask `command_wrapper` and `generated_script` artifacts for owned
+1. Cask `command_wrapper` and `generated_script` artifacts for owned
    wrapper and helper scripts.
-3. Literal command execution with arguments, environment, standard input and
-   output paths, working directory, platform and path guards. Sandbox and advanced
-   runner controls remain later non-DSL changes.
-4. `terminate_process` for the `16` repeated termination calls and packaged
+1. Literal command execution with arguments, environment, standard input and
+   output paths, working directory, platform and path guards. Sandbox and
+   advanced runner controls remain later non-DSL changes.
+1. `terminate_process` for the `16` repeated termination calls and packaged
    helpers for multi-command service transactions.
-5. Shared GCC, compressed-executable, glibc, Clang, PHP and Python formula
+1. Shared GCC, compressed-executable, glibc, Clang, PHP and Python formula
    actions, with generic commands or packaged helpers for the long tail.
-6. Matching cleanup, state preservation and uninstall-aware symlinks using the
+1. Matching cleanup, state preservation and uninstall-aware symlinks using the
    generic path primitives.
-7. Repeated rescans and conversions until all five legacy-hook searches became
+1. Repeated rescans and conversions until all five legacy-hook searches became
    empty.
 
 The final syntax-tree usage audit found no specialised install-step method or
@@ -292,8 +381,8 @@ is stripped during metadata serialisation.
   `mkdir_p "log/languagetool", base: :var`.
 - `Formula/i/icecast.rb`: `post_install_steps` with one `mkdir_p` and two
   `touch` steps under `var/"log/icecast"`.
-- `Formula/o/openssl@3.rb`: `post_install_steps` with an overwriting `symlink` from
-  `ca-certificates` `pkgetc/"cert.pem"` into the formula `pkgetc`.
+- `Formula/o/openssl@3.rb`: `post_install_steps` with an overwriting `symlink`
+  from `ca-certificates` `pkgetc/"cert.pem"` into the formula `pkgetc`.
 - `Casks/8/86box.rb`: `preflight_steps` with a home-directory `mkdir_p` for
   the shared ROM directory.
 - `Casks/k/klayout.rb`: `preflight_steps` with `move_contents` from the
@@ -349,9 +438,9 @@ is stripped during metadata serialisation.
   Notes for implementation: default all relative cask paths to `staged_path`;
   keep steps as normal cask artifacts so API loader round-trips work; run steps
   before a matching Ruby flight artifact during migration; keep
-  `remove_on_uninstall: true` symlink cleanup available for install-phase steps. Keep
-  the tap-wide autocorrect audit in a follow-up commit so the implementation
-  can land before converted casks.
+  `remove_on_uninstall: true` symlink cleanup available for install-phase
+  steps. Keep the tap-wide autocorrect audit in a follow-up commit so the
+  implementation can land before converted casks.
 - [x] PR 4, desktop and cache rebuild actions.
   Estimated existing formulae/casks affected: about `27` formulae run rebuild
   tools such as `glib-compile-schemas`, `gtk*-update-icon-cache`,
@@ -384,30 +473,30 @@ is stripped during metadata serialisation.
   - [x] PR 5.1, add the `write_file` DSL in `Homebrew/brew`.
     Commit: `Add install step config writes`.
     Scope: shared `write_file` step method with `base:`, exact atomic overwrite
-    behaviour matching `Pathname#atomic_write`, formula and
-    cask step block allow-list entries, non-interpolated heredoc (`dstr`)
-    support so `write_file` content can use heredocs, runner tests and cookbook
-    docs. `unless_path_exists` preserves user-edited files across upgrades.
-    Content stays a literal template in the JSON API but supports a
-    fixed `{{...}}` token allow-list (`HOMEBREW_PREFIX`, `prefix`, `opt_prefix`,
-    `bin`, `var`, `etc`, `pkgetc`, `version`, `version.major_minor`; casks add
-    `staged_path` and `appdir`) expanded at install time; any other `{{...}}`
-    is left verbatim. Dynamic interpolation (random cookies, `popen`-derived
-    paths, `File.read` rewrites) is intentionally out of scope and stays as
-    legacy Ruby.
+    behaviour matching `Pathname#atomic_write`, formula and cask step block
+    allow-list entries, non-interpolated heredoc (`dstr`) support so
+    `write_file` content can use heredocs, runner tests and cookbook docs.
+    `unless_path_exists` preserves user-edited files across upgrades. Content
+    stays a literal template in the JSON API but supports a fixed `{{...}}`
+    token allow-list (`HOMEBREW_PREFIX`, `prefix`, `opt_prefix`, `bin`, `var`,
+    `etc`, `pkgetc`, `version`, `version.major_minor`; casks add `staged_path`
+    and `appdir`) expanded at install time; any other `{{...}}` is left
+    verbatim. Dynamic interpolation (random cookies, `popen`-derived paths,
+    `File.read` rewrites) is intentionally out of scope and stays as legacy
+    Ruby.
   - [x] PR 5.2, add the `write_file` enforcing RuboCops in `Homebrew/brew`.
     Commit: `Add install step write cops`.
     Scope: formula and cask RuboCops conservatively autocorrect literal,
-    newline-terminated `.write`, `.atomic_write` and `File.write` legacy
-    blocks to `*_steps` `write_file` calls. Content is preserved exactly.
+    newline-terminated `.write`, `.atomic_write` and `File.write` legacy blocks
+    to `*_steps` `write_file` calls. Content is preserved exactly.
   - [x] PR 5.3, convert `homebrew/core` formulae to `write_file`.
     Branch `install-steps-config-write`, commits
     `tronbyt-server: use post_install_steps` and `node@18: use
     post_install_steps`. `tronbyt-server` mapped with literal content;
     `node@18` became convertible once `{{HOMEBREW_PREFIX}}` token expansion
-    landed (its whole `post_install` was one `atomic_write`). All other
-    `.write` formulae interpolate paths, interpolate unsupported values, or
-    run unsupported Ruby (`cp_r`, `inreplace`, `safe_popen_read`, loops).
+    landed (its whole `post_install` was one `atomic_write`). All other `.write`
+    formulae interpolate paths, interpolate unsupported values, or run
+    unsupported Ruby (`cp_r`, `inreplace`, `safe_popen_read`, loops).
   - [x] PR 5.4, convert `homebrew/cask` casks to `write_file`.
     Branch `install-steps-config-write`, commit
     `dnsmonitor: use postflight_steps`. Only `dnsmonitor` had a flight block
@@ -455,11 +544,11 @@ is stripped during metadata serialisation.
   Commit: `Add install step enforcement cops`.
   Scope: the formula install-step cop conservatively autocorrects recognised
   PostgreSQL, MySQL and MariaDB bootstrap statements to `init_data_dir`, and
-  recognised PostgreSQL link maintenance to `symlink_tree` or `symlink_children`.
-  Partial conversions preserve existing `post_install_steps` ordering and
-  leave unsupported warning or maintenance work in `post_install`. Matching
-  Percona bootstrap hooks remain unchanged because they were not part of the
-  recorded MySQL formula conversion.
+  recognised PostgreSQL link maintenance to `symlink_tree` or
+  `symlink_children`. Partial conversions preserve existing
+  `post_install_steps` ordering and leave unsupported warning or maintenance
+  work in `post_install`. Matching Percona bootstrap hooks remain unchanged
+  because they were not part of the recorded MySQL formula conversion.
 - [x] PR 7.1, certificate and trust store actions.
   Commit: `Add install step keychain cleanup`.
   Estimated existing formulae/casks affected: about `17` formulae update
@@ -532,49 +621,49 @@ is stripped during metadata serialisation.
 - [x] PR 13, removal steps, `d7361407f5`.
   Scope: add recursive, privileged and matching removals for install and
   uninstall phases.
-- [x] PR 14, `inreplace` steps, `c1d64e3f87`.
+- [x] PR 14, `inreplace` steps, `8ed34862ff`.
   Scope: add literal and regular-expression replacements with Formula-compatible
   audit and global defaults plus scoped path guards.
-- [x] PR 15, command wrappers, `54f0613331`.
+- [x] PR 15, command wrappers, `643b30919e`.
   Scope: serialise owned cask launchers as normal binary artifacts.
-- [x] PR 16, generated scripts, `7b5953863f`.
+- [x] PR 16, generated scripts, `b329c8fe29`.
   Scope: serialise fixed executable scripts consumed by installers or steps.
-- [x] PR 17, formula permissions, `ff6ff2a50a`.
+- [x] PR 17, formula permissions, `5a16a0dcd0`.
   Scope: allow formula `set_permissions`; keep ownership cask-only because no
   formula conversion needs it.
-- [x] PR 18, constrained commands, `59ea6aff23`.
+- [x] PR 18, constrained commands, `9691e2ef46`.
   Scope: add `run` with `SystemCommand`-aligned arguments, environment,
   standard input and output paths, working directory and output defaults.
   Package complex one-off formula logic as deterministic helpers.
-- [x] PR 19, process termination, `cb41c7a9c2`.
+- [x] PR 19, process termination, `c88074e73a`.
   Scope: add name or full-command matching, a total attempts count, notices,
   privilege and a non-fatal default failure policy.
-- [x] PR 20, path warnings, `818795c8d2`.
+- [x] PR 20, path warnings, `5fd023983d`.
   Scope: combine generic `warn` with `if_path_exists` for the shared Percona
   configuration warning without adding a database-specific action.
-- [x] PR 21, GCC runtime action, `9d7961ca06`.
+- [x] PR 21, GCC runtime action, `914009af6a`.
   Scope: share the Linux runtime-link and specs generation used by eight GCC
   formulae.
-- [x] PR 22, gzipped executable action, `8eec09ba26`.
+- [x] PR 22, gzipped executable action, `c9ae082fe4`.
   Scope: share staged gzip decompression and fixed-mode executable installation
   across eight formulae.
-- [x] PR 23, glibc runtime action, `5b2f81c3d3`.
+- [x] PR 23, glibc runtime action, `e73ab6ac7c`.
   Scope: share locale generation and timezone-link maintenance across three
   glibc formulae.
-- [x] PR 24, Clang system config action, `fadf536f9a`.
+- [x] PR 24, Clang system config action, `15194fcf2b`.
   Scope: extract the existing LLVM SDK and architecture configuration into a
   shared utility used by both installation and four LLVM post-install steps.
-- [x] PR 25, PHP configuration action, `f05c74eb5d`.
+- [x] PR 25, PHP configuration action, `fca9f6a64c`.
   Scope: share PEAR, PECL and versioned extension setup across five formulae.
-- [x] PR 26, Python bootstrap action, `7a3842db2b`.
+- [x] PR 26, Python bootstrap action, `fc3eb158b4`.
   Scope: share CPython and PyPy packaging state across five formulae while
   reusing `Language::Python.homebrew_site_packages` for CPython paths.
-- [x] PRs 27.1-27.14, prepare the `homebrew/core` migration stack.
-  Scope: the `14` committed capability layers listed above remove all `83`
+- [x] PRs 27.1-27.15, prepare the `homebrew/core` migration stack.
+  Scope: the `15` committed capability layers listed above remove all `86`
   remaining formula hooks and carry independent review descriptions.
-- [x] PRs 28.1-28.7, prepare the `homebrew/cask` migration stack.
-  Scope: the `7` committed capability layers listed above remove all legacy
-  flight blocks from `124` casks and carry independent review descriptions.
+- [x] PRs 28.1-28.8, prepare the `homebrew/cask` migration stack.
+  Scope: the `8` committed capability layers listed above remove all legacy
+  flight blocks from `121` casks and carry independent review descriptions.
 - [ ] PR 29, refresh and merge both tap stacks.
   Scope: after the brew DSL ships in a stable release, rebase each stack onto
   the current tap head, repeat the zero-hook gate and merge in order.
