@@ -611,6 +611,11 @@ module Homebrew
                  "target" => path_spec(target, base: target_base, default_base: @default_target_base))
       end
 
+      sig { void }
+      def configure_glibc_runtime
+        add_step("configure_glibc_runtime")
+      end
+
       private
 
       sig { params(guard: PathSpec, block: ::T.proc.void).void }
@@ -857,6 +862,8 @@ module Homebrew
           run_configure_gcc_runtime
         when "install_gzipped_executable"
           run_install_gzipped_executable(step)
+        when "configure_glibc_runtime"
+          run_configure_glibc_runtime
         when "set_permissions"
           run_set_permissions(step)
         when "set_ownership"
