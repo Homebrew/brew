@@ -18,7 +18,8 @@ module RuboCop
       COMMAND_STEP_METHODS = [:run, :terminate_process].freeze
       NOTICE_STEP_METHODS = [:warn_if_exists].freeze
       FORMULA_ACTION_STEP_METHODS =
-        [:configure_gcc_runtime, :install_compressed_executable, :install_glibc_locales].freeze
+        [:configure_gcc_runtime, :install_compressed_executable, :install_glibc_locales,
+         :configure_clang_system].freeze
       ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
          *REBUILD_ACTION_STEP_METHODS, :set_permissions, *COMMAND_STEP_METHODS, *NOTICE_STEP_METHODS,
