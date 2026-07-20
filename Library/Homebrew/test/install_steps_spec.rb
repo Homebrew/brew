@@ -743,6 +743,35 @@ RSpec.describe Homebrew::InstallSteps do
     runner.run(steps)
   end
 
+  specify "dispatches CPython and PyPy bootstrap" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      bootstrap_cpython
+      bootstrap_pypy abi_version: "3.10"
+    end
+
+    runner = Homebrew::InstallSteps::Runner.new(context:)
+    expect(runner).to receive(:run_bootstrap_cpython).ordered
+    expect(runner).to receive(:run_bootstrap_pypy).with("3.10").ordered
+
+    runner.run(steps)
+  end
+
+  specify "makes CPython venv activation script templates writable", :aggregate_failures do
+    script = root/"lib/venv/scripts/common/activate"
+    directory = root/"lib/venv/scripts/directory"
+    script.dirname.mkpath
+    directory.mkpath
+    script.write "activate"
+    FileUtils.chmod 0444, script
+    FileUtils.chmod 0555, directory
+
+    Homebrew::InstallSteps::Runner.new(context:)
+                                  .send(:make_cpython_venv_activation_scripts_writable, root/"lib")
+
+    expect(script.stat.mode & 0200).to eq(0200)
+    expect(directory.stat.mode & 0200).to be_zero
+  end
+
   describe "runs gtk_update_icon_cache rebuild action" do
     let(:formula) { instance_double(Formula, opt_bin: root/"opt/bin") }
     let(:steps) do

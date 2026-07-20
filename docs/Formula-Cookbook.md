@@ -1242,6 +1242,8 @@ Use the named actions below for formula families that share post-install algorit
 * `install_glibc_locales`: generate requested glibc locales and timezone links.
 * `configure_clang_system`: generate macOS Clang system configuration files.
 * `configure_php`: configure shared PEAR and PECL state.
+* `bootstrap_cpython`: bootstrap CPython packaging state.
+* `bootstrap_pypy`: bootstrap PyPy packaging state.
 
 #### Service data directory steps
 

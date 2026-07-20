@@ -19,7 +19,7 @@ module RuboCop
       NOTICE_STEP_METHODS = [:warn_if_exists].freeze
       FORMULA_ACTION_STEP_METHODS =
         [:configure_gcc_runtime, :install_compressed_executable, :install_glibc_locales,
-         :configure_clang_system, :configure_php].freeze
+         :configure_clang_system, :configure_php, :bootstrap_cpython, :bootstrap_pypy].freeze
       ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
          *REBUILD_ACTION_STEP_METHODS, :set_permissions, *COMMAND_STEP_METHODS, *NOTICE_STEP_METHODS,

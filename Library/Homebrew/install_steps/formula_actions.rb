@@ -188,6 +188,129 @@ module Homebrew
           INI
         end
       end
+
+      sig { void }
+      def run_bootstrap_cpython
+        formula = @context
+        raise ArgumentError, "CPython bootstrap requires a formula" unless formula.is_a?(Formula)
+
+        ENV.delete("PYTHONPATH")
+        version_string = context_version
+        raise ArgumentError, "CPython bootstrap requires a version" if version_string.nil?
+
+        version_major_minor = Version.new(version_string).major_minor.to_s
+        require "language/python"
+        site_packages = Language::Python.homebrew_site_packages(context_path("bin")/"python#{version_major_minor}")
+        lib_cellar = if Homebrew::SimulateSystem.simulating_or_running_on_macos?
+          context_path("frameworks")/"Python.framework/Versions/#{version_major_minor}/lib/python#{version_major_minor}"
+        else
+          context_path("lib")/"python#{version_major_minor}"
+        end
+        site_packages_cellar = lib_cellar/"site-packages"
+        site_packages.mkpath
+        site_packages_cellar.unlink if site_packages_cellar.exist?
+        site_packages_cellar.parent.install_symlink site_packages
+        FileUtils.rm_r Dir[site_packages/"sitecustomize.py[co]"], force: true
+        %w[setuptools distribute pip wheel].each do |package|
+          FileUtils.rm_r Dir[site_packages/"#{package}[-_.][0-9]*", site_packages/package], force: true
+        end
+
+        python = context_path("bin")/"python#{version_major_minor}"
+        run_command python, "-Im", "ensurepip"
+        bundled = lib_cellar/"ensurepip/_bundled"
+        setuptools = formula.resource("setuptools")
+        pip = formula.resource("pip")
+        wheel = formula.resource("wheel")
+        raise ArgumentError, "CPython bootstrap resources are missing" if setuptools.nil? || pip.nil? || wheel.nil?
+
+        run_command python, "-Im", "pip", "install", "-v", "--no-deps", "--no-index", "--upgrade", "--isolated",
+                    "--target=#{site_packages}",
+                    bundled/"setuptools-#{setuptools.version}-py3-none-any.whl",
+                    bundled/"pip-#{pip.version}-py3-none-any.whl",
+                    context_path("libexec")/"wheel-#{wheel.version}-py3-none-any.whl"
+        FileUtils.mv (site_packages/"bin").children, context_path("bin")
+        (site_packages/"bin").rmdir
+        FileUtils.rm_r context_path("bin").glob("pip{,3}"), force: true
+        FileUtils.mv context_path("bin")/"wheel", context_path("bin")/"wheel#{version_major_minor}"
+        {
+          "pip"    => "pip#{version_major_minor}",
+          "pip3"   => "pip#{version_major_minor}",
+          "wheel"  => "wheel#{version_major_minor}",
+          "wheel3" => "wheel#{version_major_minor}",
+        }.each do |short_name, long_name|
+          (context_path("libexec")/"bin").install_symlink (context_path("bin")/long_name).realpath => short_name
+        end
+        (HOMEBREW_PREFIX/"bin").install_symlink [context_path("bin")/"wheel#{version_major_minor}",
+                                                 context_path("bin")/"pip#{version_major_minor}"]
+        make_cpython_venv_activation_scripts_writable(lib_cellar)
+        return if version_major_minor != "3.9"
+
+        include_dirs = [HOMEBREW_PREFIX/"include", Utils::Path.formula_opt_prefix("openssl@3")/"include",
+                        Utils::Path.formula_opt_prefix("sqlite")/"include"]
+        library_dirs = [HOMEBREW_PREFIX/"lib", Utils::Path.formula_opt_prefix("openssl@3")/"lib",
+                        Utils::Path.formula_opt_prefix("sqlite")/"lib"]
+        (lib_cellar/"distutils/distutils.cfg").atomic_write <<~INI
+          [install]
+          prefix=#{HOMEBREW_PREFIX}
+          [build_ext]
+          include_dirs=#{include_dirs.join(":")}
+          library_dirs=#{library_dirs.join(":")}
+        INI
+        framework_compat = site_packages/"setuptools/_distutils/command/_framework_compat.py"
+        framework_compat.write framework_compat.read.gsub(/^(\s+homebrew_prefix\s+=\s+).*/, "\\1'#{HOMEBREW_PREFIX}'")
+      end
+
+      sig { params(lib_cellar: Pathname).void }
+      def make_cpython_venv_activation_scripts_writable(lib_cellar)
+        FileUtils.chmod "u+w", lib_cellar.glob("venv/scripts/**/*").select(&:file?)
+      end
+
+      sig { params(abi_version: String).void }
+      def run_bootstrap_pypy(abi_version)
+        formula = @context
+        raise ArgumentError, "PyPy bootstrap requires a formula" unless formula.is_a?(Formula)
+
+        pypy = context_path("bin")/"pypy#{abi_version}"
+        %w[_sqlite3 _curses syslog gdbm _tkinter].each do |module_name|
+          @command.run(pypy, args: ["-c", "import #{module_name}"], print_stdout: false, print_stderr: false)
+        end
+        site_packages = HOMEBREW_PREFIX/"lib/pypy#{abi_version}/site-packages"
+        libexec_site_packages = context_path("libexec")/"lib/pypy#{abi_version}/site-packages"
+        scripts_folder = HOMEBREW_PREFIX/"share/pypy#{abi_version}"
+        site_packages.mkpath
+        FileUtils.touch site_packages/".keepme"
+        FileUtils.rm_rf libexec_site_packages
+        libexec_site_packages.parent.install_symlink site_packages
+        if abi_version == "3.9"
+          if scripts_folder.symlink?
+            scripts_folder.unlink
+            scripts_folder.install_symlink context_path("pkgshare").children
+          end
+          unless (context_path("libexec")/"bin").exist?
+            context_path("libexec").install_symlink scripts_folder => "bin"
+          end
+        end
+        scripts_folder.mkpath
+        (libexec_site_packages.parent/"distutils/distutils.cfg").atomic_write <<~INI
+          [install]
+          install-scripts=#{scripts_folder}
+        INI
+        %w[setuptools pip].each do |package|
+          resource = formula.resource(package)
+          raise ArgumentError, "PyPy bootstrap resource #{package} is missing" if resource.nil?
+
+          resource.stage do
+            run_command pypy, "-s", "setup.py", "--no-user-cfg", "install", "--force", "--verbose"
+          end
+        end
+        context_path("bin").install_symlink scripts_folder/"pip#{abi_version}" => "pip_pypy#{abi_version}"
+        prefix_links = [context_path("bin")/"pip_pypy#{abi_version}"]
+        if formula == Formula["pypy3"]
+          context_path("bin").install_symlink "pip_pypy#{abi_version}" => "pip_pypy3"
+          prefix_links << (context_path("bin")/"pip_pypy3")
+        end
+        (HOMEBREW_PREFIX/"bin").install_symlink prefix_links
+      end
     end
   end
 end
