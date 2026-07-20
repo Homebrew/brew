@@ -210,7 +210,7 @@ module RuboCop
           step_nodes[log_node] = ["mkdir_p \"log\""]
           step_nodes[datadir_node] = []
           step_nodes[guard_node] = []
-          init_step_line = "init_data_dir name, using: :postgresql_initdb"
+          init_step_line = "init_data_dir formula_name, using: :postgresql"
           init_step_line += ', locale: "C"' if locale == "C"
           step_nodes[init_node] = [init_step_line]
           pg_version_calls = formula_body.each_descendant(:send).count do |node|
@@ -231,7 +231,7 @@ module RuboCop
           return if datadir_method.nil?
           return if normalised_install_step_source(datadir_method) != MYSQL_DATADIR_METHOD_SOURCE
 
-          add_mysql_data_step_nodes(direct_nodes, step_nodes, MYSQL_INITIALISE_SOURCE, :mysql_initialize)
+          add_mysql_data_step_nodes(direct_nodes, step_nodes, MYSQL_INITIALISE_SOURCE, :mysql)
         end
 
         sig {
@@ -241,7 +241,7 @@ module RuboCop
           ).void
         }
         def add_mariadb_step_nodes(direct_nodes, step_nodes)
-          add_mysql_data_step_nodes(direct_nodes, step_nodes, MARIADB_INITIALISE_SOURCE, :mariadb_install_db)
+          add_mysql_data_step_nodes(direct_nodes, step_nodes, MARIADB_INITIALISE_SOURCE, :mariadb)
         end
 
         sig {
@@ -279,12 +279,12 @@ module RuboCop
             case normalised_install_step_source(node)
             when POSTGRESQL_LINK_DIR_SOURCE
               step_nodes[node] = [
-                "link_dir \"include/postgresql\", \"include/\#{name}\"",
-                "link_dir \"lib/postgresql\", \"lib/\#{name}\"",
-                "link_dir \"share/postgresql\", \"share/\#{name}\"",
+                "symlink_tree \"include/postgresql\", \"include/\#{formula_name}\"",
+                "symlink_tree \"lib/postgresql\", \"lib/\#{formula_name}\"",
+                "symlink_tree \"share/postgresql\", \"share/\#{formula_name}\"",
               ]
             when POSTGRESQL_LINK_CHILDREN_SOURCE
-              step_nodes[node] = ["link_children \"bin\", suffix: \"-\#{version.major}\""]
+              step_nodes[node] = ["symlink_children \"bin\", suffix: \"-\#{version.major}\""]
             end
           end
         end
@@ -308,7 +308,7 @@ module RuboCop
                       source_formula: "ca-certificates",
                       source_base: :formula_pkgetc,
                       target_base: :pkgetc,
-                      force: true
+                      overwrite: true
             RUBY
           end
         end

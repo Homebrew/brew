@@ -19,17 +19,17 @@ cask "with-install-steps" do
   end
 
   postflight_steps do
-    mv "move-source", "Prepared/moved"
-    ln_s "Prepared/moved", "PreparedLink", source_base: :relative, uninstall: true
+    move "move-source", "Prepared/moved"
+    symlink "Prepared/moved", "PreparedLink", source_base: :relative, remove_on_uninstall: true
   end
 
   uninstall_preflight_steps do
-    mkdir "UninstallPrepared"
+    mkdir_p "UninstallPrepared"
     set_ownership "UninstallPrepared", user: "root", group: "wheel"
     touch "UninstallPrepared/touched"
   end
 
   uninstall_postflight_steps do
-    move_children "UninstallPrepared", "UninstallMoved"
+    move_contents "UninstallPrepared", "UninstallMoved"
   end
 end

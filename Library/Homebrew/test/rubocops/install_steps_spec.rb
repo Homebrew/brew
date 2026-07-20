@@ -42,7 +42,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           system "true"
-          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn_if_exists`, `configure_gcc_runtime`, `install_compressed_executable`, `install_glibc_locales`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`.
+          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `symlink_tree`, `symlink_children`, `write_file`, `init_data_dir`, `compile_gsettings_schemas`, `update_gdk_pixbuf_loaders_cache`, `update_gtk_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn`, `configure_gcc_runtime`, `install_gzipped_executable`, `configure_glibc_runtime`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
         end
       end
     RUBY
@@ -56,46 +56,53 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         post_install_steps do
           mkdir_p "foo"
           touch "foo/state"
-          mv "source", "target"
-          move_children "source", "target"
-          inreplace "foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"
-          ln_sf "source", "target", source_base: :relative, uninstall: true
-          write "foo.conf", "key = value\n", base: :etc
+          move "source", "target"
+          move_contents "source", "target"
+          inreplace "foo.conf", %r{{{HOMEBREW_CELLAR}}/foo/[^/]+}, "{{opt_prefix}}", audit_result: false
+          symlink "source", "target", source_base: :relative, overwrite: true, remove_on_uninstall: true
+          write_file "foo.conf", "key = value\n", base: :etc
           set_permissions "foo", "0755"
           run "foo", args: ["--repair"]
-          terminate_process "foo", retries: 2
-          warn_if_exists "foo", "foo exists"
+          terminate_process "foo", attempts: 3
+          if_path_exists "foo" do
+            warn "foo exists"
+          end
           configure_gcc_runtime
-          install_compressed_executable "compressed", "bin/executable"
-          install_glibc_locales
+          install_gzipped_executable "compressed.gz", "bin/executable"
+          configure_glibc_runtime
           configure_clang_system
           configure_php
           bootstrap_cpython
           bootstrap_pypy abi_version: "3.10"
-          write "foo/banner", <<~TEXT
+          write_file "foo/banner", <<~TEXT
             literal banner
           TEXT
-          init_data_dir name, using: :postgresql_initdb
-          link_dir "source", "#{name}"
-          link_children "source", suffix: "-#{version.major}"
+          init_data_dir formula_name, using: :postgresql
+          symlink_tree "source", "#{formula_name}"
+          symlink_children "source", suffix: "-#{version.major}"
           compile_gsettings_schemas
-          gdk_pixbuf_query_loaders
-          gtk_update_icon_cache
+          update_gdk_pixbuf_loaders_cache
+          update_gtk_icon_cache
           update_mime_database
           update_desktop_database
+          on_linux do
+            unless_path_exists "foo.conf", base: :etc do
+              write_file "foo.conf", "key = value\n", base: :etc
+            end
+          end
         end
       end
     RUBY
   end
 
-  it "reports an offense when write content is interpolated" do
+  it "reports an offense when write_file content is interpolated" do
     expect_offense(<<~'RUBY')
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
-          write "foo.conf", "prefix = #{prefix}"
-                                      ^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn_if_exists`, `configure_gcc_runtime`, `install_compressed_executable`, `install_glibc_locales`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`.
+          write_file "foo.conf", "prefix = #{prefix}"
+                                           ^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `symlink_tree`, `symlink_children`, `write_file`, `init_data_dir`, `compile_gsettings_schemas`, `update_gdk_pixbuf_loaders_cache`, `update_gtk_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn`, `configure_gcc_runtime`, `install_gzipped_executable`, `configure_glibc_runtime`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
         end
       end
     RUBY
@@ -123,8 +130,8 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         post_install_steps do
           mkdir_p "log/foo"
           touch "foo/state"
-          mv "move-source", "move-target"
-          ln_sf "move-target", "linked-target", source_base: :relative
+          move "move-source", "move-target"
+          symlink "move-target", "linked-target", source_base: :relative, overwrite: true
         end
       end
     RUBY
@@ -150,8 +157,8 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
-          write "foo/foo.conf", "key = value\n", base: :etc, overwrite: true
-          write "foo/banner", <<~TEXT, overwrite: true
+          write_file "foo/foo.conf", "key = value\n", base: :etc
+          write_file "foo/banner", <<~TEXT
             literal banner
           TEXT
         end
@@ -159,13 +166,24 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
     RUBY
   end
 
-  it "does not autocorrect config writes without trailing newlines" do
-    expect_no_offenses(<<~RUBY)
+  it "autocorrects config writes without trailing newlines" do
+    expect_offense(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
 
         def post_install
+        ^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Use `post_install_steps` for simple file preparation.
           (var/"foo.conf").write "key = value"
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        post_install_steps do
+          write_file "foo.conf", "key = value"
         end
       end
     RUBY
@@ -193,8 +211,8 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           compile_gsettings_schemas
-          gdk_pixbuf_query_loaders
-          gtk_update_icon_cache
+          update_gdk_pixbuf_loaders_cache
+          update_gtk_icon_cache
           update_mime_database
           update_desktop_database
         end
@@ -257,11 +275,11 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         post_install_steps do
           touch "postgresql/state"
           mkdir_p "log"
-          link_dir "include/postgresql", "include/#{name}"
-          link_dir "lib/postgresql", "lib/#{name}"
-          link_dir "share/postgresql", "share/#{name}"
-          link_children "bin", suffix: "-#{version.major}"
-          init_data_dir name, using: :postgresql_initdb
+          symlink_tree "include/postgresql", "include/#{formula_name}"
+          symlink_tree "lib/postgresql", "lib/#{formula_name}"
+          symlink_tree "share/postgresql", "share/#{formula_name}"
+          symlink_children "bin", suffix: "-#{version.major}"
+          init_data_dir formula_name, using: :postgresql
         end
 
         def post_install
@@ -308,7 +326,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
-          init_data_dir "mysql", using: :mysql_initialize
+          init_data_dir "mysql", using: :mysql
         end
 
         def post_install
@@ -348,7 +366,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
-          init_data_dir "mysql", using: :mariadb_install_db
+          init_data_dir "mysql", using: :mariadb
         end
       end
     RUBY
@@ -416,14 +434,14 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
-          link_dir "include/postgresql", "include/#{name}"
-          link_children "bin", suffix: "-#{version.major}"
-          init_data_dir name, using: :postgresql_initdb
+          symlink_tree "include/postgresql", "include/#{formula_name}"
+          symlink_children "bin", suffix: "-#{version.major}"
+          init_data_dir formula_name, using: :postgresql
           symlink "cert.pem", "cert.pem",
                   source_formula: "ca-certificates",
                   source_base:    :formula_pkgetc,
                   target_base:    :pkgetc,
-                  force:          true
+                  overwrite:      true
         end
       end
     RUBY
@@ -452,7 +470,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
                   source_formula: "ca-certificates",
                   source_base: :formula_pkgetc,
                   target_base: :pkgetc,
-                  force: true
+                  overwrite: true
         end
 
         def post_install

@@ -60,13 +60,7 @@ module RuboCop
             next unless (flight_stanza = stanzas.find { |stanza| stanza.stanza_name == flight_block })
 
             steps_stanza = stanzas.find { |stanza| stanza.stanza_name == steps_block }
-
-            if steps_stanza
-              add_offense(steps_stanza.source_range,
-                          message: "`#{flight_stanza.stanza_name}` and `#{steps_block}` cannot both be used.")
-            else
-              audit_flight_block(flight_stanza, steps_block)
-            end
+            audit_flight_block(flight_stanza, steps_block) if steps_stanza.nil?
           end
 
           stanzas.each do |stanza|
@@ -112,7 +106,7 @@ module RuboCop
           return fingerprint_keychain_step_lines(direct_nodes) if direct_nodes.length == 7
 
           if (name_node = keychain_delete_sequence_name(direct_nodes))&.str_type?
-            return ["delete_keychain_certificate #{T.cast(name_node, RuboCop::AST::StrNode).str_content.inspect}"]
+            return ["delete_keychain_certificates #{T.cast(name_node, RuboCop::AST::StrNode).str_content.inspect}"]
           end
 
           return if body_node.nil? || !body_node.block_type?
@@ -133,7 +127,7 @@ module RuboCop
           return if sequence_name_node.children != [:cert_name]
 
           name_nodes.map do |name|
-            "delete_keychain_certificate #{T.cast(name, RuboCop::AST::StrNode).str_content.inspect}"
+            "delete_keychain_certificates #{T.cast(name, RuboCop::AST::StrNode).str_content.inspect}"
           end
         end
 
@@ -169,8 +163,8 @@ module RuboCop
           name = T.cast(name_node, RuboCop::AST::StrNode).str_content.inspect
           path = T.cast(path_node, RuboCop::AST::StrNode).str_content.inspect
           source = <<~RUBY.chomp
-            delete_keychain_certificate #{name},
-                                        matching_certificate: #{path}
+            delete_keychain_certificates #{name},
+                                         fingerprint_of: #{path}
           RUBY
           [source]
         end
