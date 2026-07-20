@@ -62,7 +62,8 @@ module Cask
     sig { params(file: T.any(String, Pathname)).returns(String) }
     def self.status(file)
       xattr = self.xattr
-      raise "unexpected nil xattr" if xattr.nil?
+      # No `xattr` executable (e.g. on Linux) means nothing can be quarantined.
+      return "" if xattr.nil?
 
       system_command(xattr,
                      args:         ["-p", QUARANTINE_ATTRIBUTE, file],
