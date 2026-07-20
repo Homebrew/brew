@@ -1238,6 +1238,7 @@ warn_if_exists "foo.conf", "Remove the old foo.conf before continuing", base: :e
 Use the named actions below for formula families that share post-install algorithms. Unique complex logic should be installed as a packaged helper and invoked with `run` instead of adding a formula-specific action.
 
 * `configure_gcc_runtime`: generate the Linux GCC runtime links and specs.
+* `install_compressed_executable`: unpack and install a gzipped executable.
 
 #### Service data directory steps
 
