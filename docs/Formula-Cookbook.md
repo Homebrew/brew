@@ -1042,8 +1042,8 @@ class Foo < Formula
   post_install_steps do
     mkdir_p "log/foo"
     touch "foo/state"
-    mv "default.conf", "foo/default.conf"
-    ln_s "cert.pem", "foo/cert.pem", source_base: :relative
+    move "default.conf", "foo/default.conf"
+    symlink "cert.pem", "foo/cert.pem", source_base: :relative
   end
   # ...
 end
@@ -1056,60 +1056,70 @@ represented by structured steps.
 
 #### File preparation steps
 
-`mkdir`, `mkdir_p` and `touch` default to paths relative to `var`. Other file steps default their source and target paths to `prefix`. Use `base:`, `source_base:` or `target_base:` when a step needs another formula path such as `pkgetc`; use `source_base: :relative` for relative symlink sources.
+`mkdir_p`, `touch`, `remove`, `inreplace`, `write_file`, `set_permissions` and guard paths default to paths relative to `var`. File steps with separate sources and targets default both to `prefix`. Use `base:`, `source_base:` or `target_base:` when a step needs another formula path such as `pkgetc`; use `source_base: :relative` for relative symlink sources.
 
-* `mkdir`: create one directory; example: `mkdir "log/foo"`.
 * `mkdir_p`: create a directory and any missing parents; example: `mkdir_p "log/foo"`.
 * `touch`: create or update a file timestamp; example: `touch "foo/state"`.
 * `move`: move one file or directory; example: `move "default.conf", "foo/default.conf"`.
-* `mv`: alias for `move`; example: `mv "default.conf", "foo/default.conf"`.
-* `move_children`: move the contents of one directory into another; example: `move_children "defaults", "foo/defaults"`.
+* `move_contents`: move the contents of one directory into another; example: `move_contents "defaults", "foo/defaults"`.
 * `copy`: copy a file or, with `recursive: true`, a directory; example: `copy "default.conf", "foo/default.conf"`.
 * `remove`: remove one or more paths; example: `remove ["old.conf", "foo/*.bak"]`. Use `recursive: true` for directories.
-* `inreplace`: replace text in a file; example: `inreplace "foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"`. Pass a regular expression as `before` for pattern matching.
+* `inreplace`: replace a string or regular expression in a file; example: `inreplace "foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"`. Its `audit_result:` and `global:` options match the formula `inreplace` helper.
 * `symlink`: create a symlink; example: `symlink "cert.pem", "foo/cert.pem", source_base: :relative`.
-* `ln_s`: alias for `symlink`; example: `ln_s "cert.pem", "foo/cert.pem", source_base: :relative`.
-* `ln_sf`: create or replace a symlink; example: `ln_sf "cert.pem", "foo/cert.pem", source_base: :relative`.
+* `symlink_tree`: recursively symlink a directory's contents while preserving real target directories.
+* `symlink_children`: symlink each direct child of a directory, optionally adding a `prefix:` or `suffix:`.
 * `set_permissions`: change existing path permissions; example: `set_permissions "foo", "0755"`.
 
-File mutation and command steps accept `if_exists:` and `unless_exists:` guards where supported. `copy`, `move` and symlink steps accept `source_glob: true`; path collections used by `remove` and `set_permissions` expand globs automatically. Give related guarded `mkdir`, `mkdir_p` and `run` steps the same `guard_group:` to evaluate their guards once for the group. Removals may additionally be restricted with `symlink_target_contains:` or `content_contains:`.
+`move` and `copy` replace an existing target by default, matching the corresponding file helpers; pass `overwrite: false` to reject replacement. `symlink` preserves an existing target by default, so pass `overwrite: true` when replacement is intentional. `move` and `copy` accept `source_glob: true` when the glob must resolve to exactly one source; `symlink` accepts one or more matching sources. Path collections used by `remove` and `set_permissions` expand globs automatically. `remove` ignores missing paths and may additionally be restricted with `symlink_target_contains:` or `content_contains:`. It accepts `sudo: true` or `sudo: :if_needed` for paths requiring elevated permissions.
+
+Use `if_path_exists`, `unless_path_exists`, `on_macos` and `on_linux` blocks to guard one or more steps. A condition is evaluated once when its scope begins, so related steps make the same decision:
+
+```ruby
+unless_path_exists "foo/default.conf" do
+  mkdir_p "foo"
+  copy "default.conf", "foo/default.conf"
+end
+```
 
 #### Default config and template steps
 
-`write` creates a default configuration or data file from literal content. It defaults to the same base as the other file preparation steps; pass `base:` (such as `base: :etc`) to target another formula path. By default `write` does not overwrite an existing file, so user edits are preserved across upgrades; pass `overwrite: true` to always replace the file.
+`write_file` atomically writes its exact literal content, replacing an existing file. It defaults to the same base as the other file preparation steps; pass `base:` (such as `base: :etc`) to target another formula path. Use `unless_path_exists` when a default file should preserve user edits across upgrades:
 
-* `write`: write literal content to a file unless it already exists; example: `write "foo.conf", "key = value", base: :etc`.
-* `write` with `overwrite: true`: always replace the file; example: `write "foo/version", "1.0", overwrite: true`.
-
-A trailing newline is appended unless the content already ends with one, so written files end in a newline as POSIX expects.
+```ruby
+unless_path_exists "foo.conf", base: :etc do
+  write_file "foo.conf", "key = value\n", base: :etc
+end
+```
 
 {% raw %}
-Content, replacements, command arguments and command environments may use a fixed set of `{{...}}` tokens that are expanded at install time so values are not hardcoded into the JSON API: `{{HOMEBREW_BREW_FILE}}`, `{{HOMEBREW_CELLAR}}`, `{{HOMEBREW_PREFIX}}`, `{{name}}`, `{{user}}`, `{{prefix}}`, `{{opt_prefix}}`, `{{bin}}`, `{{sbin}}`, `{{lib}}`, `{{libexec}}`, `{{share}}`, `{{pkgshare}}`, `{{rack}}`, `{{var}}`, `{{etc}}`, `{{pkgetc}}`, `{{version}}`, `{{version.major}}` and `{{version.major_minor}}`. Completion directory tokens are also available. Any other `{{...}}` is left verbatim, so literal braces are never rewritten. Use tokens instead of Ruby interpolation, for example `write "foo.conf", "prefix = {{HOMEBREW_PREFIX}}", base: :etc`.
+Content, replacements, command arguments and command environments may use a fixed set of `{{...}}` tokens that are expanded at install time so values are not hardcoded into the JSON API: `{{HOMEBREW_BREW_FILE}}`, `{{HOMEBREW_CELLAR}}`, `{{HOMEBREW_PREFIX}}`, `{{formula_name}}`, `{{user}}`, `{{prefix}}`, `{{opt_prefix}}`, `{{bin}}`, `{{sbin}}`, `{{lib}}`, `{{libexec}}`, `{{share}}`, `{{pkgshare}}`, `{{rack}}`, `{{var}}`, `{{etc}}`, `{{pkgetc}}`, `{{version}}`, `{{version.major}}` and `{{version.major_minor}}`. Completion directory tokens are also available. Any other `{{...}}` is left verbatim, so literal braces are never rewritten. Use tokens instead of Ruby interpolation, for example `write_file "foo.conf", "prefix = {{HOMEBREW_PREFIX}}\n", base: :etc`.
 {% endraw %}
 
 #### Command and lifecycle steps
 
-`run` executes one command with a literal argument array; it does not evaluate a shell command string. Select the executable with `base:`, such as `:bin`, `:libexec` or `:homebrew_prefix`, or pass an absolute system executable. The step also supports a literal `environment:`, `input_path:`, `output_path:`, `working_directory:`, `sudo:`, platform selection with `on:` and the path guards described above.
+`run` executes one command with a literal argument array; it does not evaluate a shell command string. Select the executable with `base:`, such as `:bin`, `:libexec` or `:homebrew_prefix`, or pass an absolute system executable. The step also supports a literal `env:`, `stdin_path:`, `stdout_path:`, `chdir:` and `sudo:`. Standard output is hidden by default and standard error is printed, matching `SystemCommand`; use `print_stdout: true` or `print_stderr: false` to change that behaviour.
 
 ```ruby
 run "foo-helper", args: ["--prefix", "{{HOMEBREW_PREFIX}}"], base: :libexec
-terminate_process "foo", must_succeed: false
-warn_if_exists "foo.conf", "Remove the old foo.conf before continuing", base: :etc
+terminate_process "foo", match: :full, attempts: 3
+if_path_exists "foo.conf", base: :etc do
+  warn "Remove the old foo.conf before continuing"
+end
 ```
 
-`terminate_process` terminates a process by name or, with `matching: :full`, by its full command line. It supports retries, `notices:` shown before the first attempt and a `failure_message:` warning. `warn_if_exists` emits a warning when any listed path exists.
+`terminate_process` terminates a process by name or, with `match: :full`, by its full command line. `attempts:` is the total number of attempts and defaults to one. Failure is ignored by default; pass `must_succeed: true` when it should abort. The step also supports `notices:` shown before the first attempt and a `failure_message:` warning.
 
 #### Repeated formula actions
 
 Use the named actions below for formula families that share post-install algorithms. Unique complex logic should be installed as a packaged helper and invoked with `run` instead of adding a formula-specific action.
 
 * `configure_gcc_runtime`: generate the Linux GCC runtime links and specs.
-* `install_compressed_executable`: unpack and install a gzipped executable.
-* `install_glibc_locales`: generate requested glibc locales and timezone links.
+* `install_gzipped_executable`: unpack and install a gzipped executable.
+* `configure_glibc_runtime`: generate requested glibc locales and timezone links.
 * `configure_clang_system`: generate macOS Clang system configuration files.
 * `configure_php`: configure shared PEAR and PECL state.
 * `bootstrap_cpython`: bootstrap CPython packaging state.
-* `bootstrap_pypy`: bootstrap PyPy packaging state.
+* `bootstrap_pypy`: bootstrap PyPy packaging state for an `abi_version:`.
 
 #### Service data directory steps
 
@@ -1118,25 +1128,25 @@ bootstrap command unless the directory already contains the default marker
 file. It defaults to paths relative to `var` and skips the bootstrap command in
 Homebrew's GitHub Actions jobs. It does not change permissions or ownership.
 
-* `init_data_dir` with `using: :postgresql_initdb`: initialise PostgreSQL with
-  `initdb`; example: `init_data_dir "postgresql@16", using: :postgresql_initdb`.
+* `init_data_dir` with `using: :postgresql`: initialise PostgreSQL with
+  `initdb`; example: `init_data_dir "postgresql@16", using: :postgresql`.
   PostgreSQL defaults to `locale: "en_US.UTF-8"` and can set another locale,
-  for example `init_data_dir "postgresql@12", using: :postgresql_initdb, locale: "C"`.
-* `init_data_dir` with `using: :mysql_initialize`: initialise MySQL with
+  for example `init_data_dir "postgresql@12", using: :postgresql, locale: "C"`.
+* `init_data_dir` with `using: :mysql`: initialise MySQL with
   `mysqld --initialize-insecure`; example:
-  `init_data_dir "mysql", using: :mysql_initialize`.
-* `init_data_dir` with `using: :mariadb_install_db`: initialise MariaDB with
-  `mysql_install_db`; example: `init_data_dir "mysql", using: :mariadb_install_db`.
+  `init_data_dir "mysql", using: :mysql`.
+* `init_data_dir` with `using: :mariadb`: initialise MariaDB with
+  `mysql_install_db`; example: `init_data_dir "mysql", using: :mariadb`.
 
-`link_dir` recursively links a source directory's contents into a target
+`symlink_tree` recursively links a source directory's contents into a target
 directory, preserving existing real directories and skipping `.DS_Store` files.
-`link_children` links each direct child of a source directory into a target
+`symlink_children` links each direct child of a source directory into a target
 directory, defaulting the target to the same path as the source, and can add a
 `prefix` or `suffix` to each linked name. For example:
 
 ```ruby
-link_dir "share/postgresql", "share/#{name}"
-link_children "bin", suffix: "-#{version.major}"
+symlink_tree "share/postgresql", "share/#{formula_name}"
+symlink_children "bin", suffix: "-#{version.major}"
 ```
 
 #### Desktop and cache rebuild steps
@@ -1144,8 +1154,8 @@ link_children "bin", suffix: "-#{version.major}"
 These steps rebuild shared desktop and cache state using Homebrew-owned tools.
 
 * `compile_gsettings_schemas`: compile GSettings schemas in `share/glib-2.0/schemas`.
-* `gdk_pixbuf_query_loaders`: update the GDK Pixbuf loader cache.
-* `gtk_update_icon_cache`: refresh the `hicolor` GTK icon cache.
+* `update_gdk_pixbuf_loaders_cache`: update the GDK Pixbuf loader cache.
+* `update_gtk_icon_cache`: refresh the `hicolor` GTK icon cache.
 * `update_mime_database`: rebuild the shared MIME database in `share/mime`.
 * `update_desktop_database`: rebuild the desktop entry database in `share/applications`.
 
@@ -1155,10 +1165,11 @@ class Foo < Formula
   url "https://example.com/foo-1.0.tar.gz"
 
   post_install_steps do
-    ln_sf "cert.pem", "cert.pem",
-          source_formula: "ca-certificates",
-          source_base:    :formula_pkgetc,
-          target_base:    :pkgetc
+    symlink "cert.pem", "cert.pem",
+            source_formula: "ca-certificates",
+            source_base:    :formula_pkgetc,
+            target_base:    :pkgetc,
+            overwrite:      true
   end
   # ...
 end
