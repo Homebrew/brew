@@ -16,8 +16,9 @@ module Homebrew
     Paths = T.type_alias { T.any(String, Pathname, T::Array[T.any(String, Pathname)]) }
     RawPathSpec = T.type_alias { T::Hash[T.any(String, Symbol), T.nilable(T.any(String, Symbol, Pathname))] }
     RawPathSpecs = T.type_alias { T::Array[T.any(String, Symbol, Pathname, RawPathSpec)] }
-    RawStepValue =
-      T.type_alias { T.nilable(T.any(String, Symbol, Integer, T::Boolean, Pathname, RawPathSpec, RawPathSpecs)) }
+    RawStepValue = T.type_alias do
+      T.nilable(T.any(String, Symbol, Integer, T::Boolean, Pathname, RawPathSpec, RawPathSpecs))
+    end
     RawStep = T.type_alias { T::Hash[T.any(String, Symbol), RawStepValue] }
     SystemCommandArg = T.type_alias { T.any(String, Pathname) }
     TemplateTokenValue = T.type_alias { T.any(String, Pathname) }
@@ -561,6 +562,31 @@ module Homebrew
                  "chdir"           => optional_path_spec(chdir, default_base: @default_base))
       end
 
+      sig {
+        params(
+          name:            ::String,
+          match:           ::T.any(::String, ::Symbol),
+          sudo:            ::T::Boolean,
+          attempts:        ::Integer,
+          must_succeed:    ::T::Boolean,
+          notices:         ::T::Array[::String],
+          failure_message: ::T.nilable(::String),
+        ).void
+      }
+      def terminate_process(name, match: :name, sudo: false, attempts: 1, must_succeed: false,
+                            notices: [], failure_message: nil)
+        raise ::ArgumentError, "terminate_process attempts must be positive" if attempts < 1
+
+        add_step("terminate_process",
+                 "name"            => name,
+                 "match"           => match.to_s,
+                 "sudo"            => sudo,
+                 "attempts"        => attempts,
+                 "must_succeed"    => must_succeed,
+                 "notices"         => notices,
+                 "failure_message" => failure_message)
+      end
+
       private
 
       sig { params(guard: PathSpec, block: ::T.proc.void).void }
@@ -799,6 +825,8 @@ module Homebrew
           end
         when "run"
           run_serialised_command(step)
+        when "terminate_process"
+          run_terminate_process(step)
         when "set_permissions"
           run_set_permissions(step)
         when "set_ownership"
@@ -903,6 +931,38 @@ module Homebrew
         output_path = resolve_path(step_path(step, "stdout_path"))
         output_path.dirname.mkpath
         output_path.write(result.stdout)
+      end
+
+      sig { params(step: Step).void }
+      def run_terminate_process(step)
+        T.cast(step["notices"], T.nilable(T::Array[String]))&.each do |notice|
+          ohai expand_template_tokens(notice)
+        end
+        name = expand_template_tokens(step_string(step, "name"))
+        if step_string(step, "match") == "full"
+          command = "/usr/bin/pkill"
+          args = ["-f", name]
+        else
+          command = "/usr/bin/killall"
+          args = [name]
+        end
+        attempts = T.cast(step["attempts"] || 1, Integer)
+
+        begin
+          run_command command, *args, sudo: step["sudo"] == true
+        rescue ErrorDuringExecution
+          attempts -= 1
+          if attempts <= 0
+            failure_message = T.cast(step["failure_message"], T.nilable(String))
+            opoo expand_template_tokens(failure_message) if failure_message
+            raise if step["must_succeed"] == true
+
+            return
+          end
+
+          sleep 1
+          retry
+        end
       end
 
       sig { params(source: SystemCommandArg, target: Pathname, step: Step).void }
