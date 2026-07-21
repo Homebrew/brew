@@ -143,6 +143,7 @@ RSpec.describe Homebrew::Cmd::List do
     install_formula_version "testball", "0.1"
     install_cask "local-caffeine"
     FileUtils.ln_s "missing-cask", Cask::Caskroom.path/"dangling-alias"
+    FileUtils.ln_s "local-caffeine", Cask::Caskroom.path/"healthy-alias"
 
     variants = [[], ["-1"], ["--formula"], ["--cask"]]
     bash_results = variants.map do |argv|
@@ -218,6 +219,7 @@ RSpec.describe Homebrew::Cmd::List do
     FileUtils.ln_s Cask::Caskroom.path/"local-caffeine/1.2.3",
                    HOMEBREW_PREFIX/"var/homebrew/pinned_casks/local-caffeine"
     FileUtils.ln_s "missing-cask", Cask::Caskroom.path/"dangling-alias"
+    FileUtils.ln_s "local-caffeine", Cask::Caskroom.path/"healthy-alias"
 
     empty_cellar = mktmpdir
     empty_caskroom = mktmpdir
@@ -240,7 +242,7 @@ RSpec.describe Homebrew::Cmd::List do
                "EXPECTED_EMPTY_JSON"   => list_versions_json,
                "EXPECTED_FORMULA_JSON" => list_versions_json(formulae: formulae_json),
                "EXPECTED_JSON"         => list_versions_json(formulae: formulae_json, casks: casks_json),
-               "EXPECTED_PLAIN"        => "testball\ndangling-alias\nlocal-caffeine\n",
+               "EXPECTED_PLAIN"        => "testball\nlocal-caffeine\n",
                "EXPECTED_PLAIN_STDERR" => "Warning: Broken Caskroom symlinks " \
                                           "(`brew cleanup` removes them): dangling-alias\n",
                "NO_JQ_CASKROOM"        => no_jq_caskroom.to_s,
@@ -277,12 +279,15 @@ RSpec.describe Homebrew::Cmd::List do
     cask.unpin
   end
 
-  it "warns about broken Caskroom symlinks" do
-    Cask::Caskroom.path.mkpath
-    FileUtils.ln_s "missing-cask", Cask::Caskroom.path/"dangling-alias"
+  it "lists only real cask directories and warns about broken Caskroom symlinks" do
+    caskroom = Cask::Caskroom.path
+    (caskroom/"real-cask").mkpath
+    FileUtils.ln_s "real-cask", caskroom/"healthy-alias"
+    FileUtils.ln_s "missing-cask", caskroom/"dangling-alias"
 
     expect { described_class.new(["--cask"]).run }
-      .to output(/Broken Caskroom symlinks \(`brew cleanup` removes them\): dangling-alias/).to_stderr
+      .to output("real-cask\n").to_stdout
+      .and output(/Broken Caskroom symlinks \(`brew cleanup` removes them\): dangling-alias/).to_stderr
   end
 
   it "fails only for explicitly named missing pinned packages", :cask do

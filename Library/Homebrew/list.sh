@@ -246,27 +246,40 @@ homebrew-list() {
 
   if [[ -z "${formula}" && -d "${HOMEBREW_CASKROOM}" ]]
   then
-    local cask_output
-    cask_output="$(/usr/bin/env "${ls_env[@]}" ls "${ls_args[@]}" "${HOMEBREW_CASKROOM}")" || exit 1
-    if [[ -n "${cask_output}" ]]
-    then
-      if [[ -n "${tty}" && -z "${cask}" ]]
-      then
-        ohai "Casks"
-      fi
-
-      echo "${cask_output}"
-    fi
-
+    # List only real cask directories, not alias symlinks from cask renames, so a
+    # renamed cask lists once under its real name. Keep in sync with the cask
+    # listing in Homebrew::Cmd::List#run in Library/Homebrew/cmd/list.rb.
+    local cask_tokens=()
     # Keep in sync with Homebrew::Cmd::List#warn_about_broken_caskroom_symlinks
     # in Library/Homebrew/cmd/list.rb.
     local broken_cask_symlinks=()
     local cask_path
     for cask_path in "${HOMEBREW_CASKROOM}"/*
     do
-      [[ -L "${cask_path}" && ! -e "${cask_path}" ]] || continue
-      broken_cask_symlinks+=("${cask_path##*/}")
+      if [[ -L "${cask_path}" && ! -e "${cask_path}" ]]
+      then
+        broken_cask_symlinks+=("${cask_path##*/}")
+      elif [[ -d "${cask_path}" && ! -L "${cask_path}" ]]
+      then
+        cask_tokens+=("${cask_path##*/}")
+      fi
     done
+
+    if ((${#cask_tokens[@]} > 0))
+    then
+      local cask_output
+      cask_output="$(cd "${HOMEBREW_CASKROOM}" &&
+        /usr/bin/env "${ls_env[@]}" ls "${ls_args[@]}" -d "${cask_tokens[@]}")" || exit 1
+      if [[ -n "${cask_output}" ]]
+      then
+        if [[ -n "${tty}" && -z "${cask}" ]]
+        then
+          ohai "Casks"
+        fi
+
+        echo "${cask_output}"
+      fi
+    fi
     if ((${#broken_cask_symlinks[@]} > 0))
     then
       source "${HOMEBREW_LIBRARY}/Homebrew/utils.sh"

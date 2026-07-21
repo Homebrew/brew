@@ -230,9 +230,14 @@ module Homebrew
             puts if $stdout.tty? && !args.formula?
           end
           unless args.formula?
-            if Cask::Caskroom.any_casks_installed?
+            # List only real cask directories, not alias symlinks from cask renames, so
+            # a renamed cask lists once under its real name. Keep in sync with the cask
+            # listing in `homebrew-list` in Library/Homebrew/list.sh.
+            cask_tokens = Cask::Caskroom.tokens
+            if cask_tokens.any?
               ohai "Casks" if $stdout.tty? && !args.cask?
-              system_command! "ls", args: [*ls_args, Cask::Caskroom.path], print_stdout: true
+              system_command! "ls", args: [*ls_args, "-d", *cask_tokens], print_stdout: true,
+                              chdir: Cask::Caskroom.path
             end
             warn_about_broken_caskroom_symlinks
           end
