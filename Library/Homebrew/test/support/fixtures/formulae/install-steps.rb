@@ -11,9 +11,9 @@ class InstallSteps < Formula
   post_install_steps do
     mkdir_p "log/install-steps"
     touch "install-steps/state"
-    mv "move-source", "move-target"
-    move_children "move-children-source", "move-children-target"
-    ln_sf "move-target", "linked-target", source_base: :relative, uninstall: true
-    init_data_dir "lib/install-steps", using: :postgresql_initdb
+    move "move-source", "move-target"
+    move_contents "move-children-source", "move-children-target"
+    symlink "move-target", "linked-target", source_base: :relative, overwrite: true, remove_on_uninstall: true
+    init_data_dir "lib/install-steps", using: :postgresql
   end
 end

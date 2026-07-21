@@ -160,6 +160,27 @@ RSpec.describe Homebrew::InstallSteps do
     )
   end
 
+  specify "keeps shipped step names serialisable for compatibility" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      mkdir "directory"
+      mv "source", "target"
+      move_children "source", "target"
+      ln_sf "source", "target"
+      link_dir "source", "target"
+      link_children "source", "target"
+      write "config", "content"
+      gio_querymodules
+      gdk_pixbuf_query_loaders
+      gtk_update_icon_cache
+      delete_keychain_certificate "Example"
+    end
+
+    expect(steps.map { |step| step.fetch("type") }).to eq(%w[
+      mkdir move move_children symlink link_dir link_children write gio_querymodules
+      gdk_pixbuf_query_loaders gtk_update_icon_cache delete_keychain_certificate
+    ])
+  end
+
   specify "expands a scoped set of content tokens and leaves others verbatim", :aggregate_failures do
     root_path = root
     versioned_context = Class.new do
