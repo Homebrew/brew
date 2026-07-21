@@ -102,7 +102,10 @@ module Cask
               Vst3Plugin,
               ScreenSaver,
             ],
-            Binary,
+            [
+              Binary,
+              CommandWrapper,
+            ],
             Manpage,
             [
               BashCompletion,
