@@ -621,6 +621,11 @@ module Homebrew
         add_step("configure_clang_system")
       end
 
+      sig { void }
+      def configure_php
+        add_step("configure_php")
+      end
+
       private
 
       sig { params(guard: PathSpec, block: ::T.proc.void).void }
@@ -871,6 +876,8 @@ module Homebrew
           run_configure_glibc_runtime
         when "configure_clang_system"
           run_configure_clang_system
+        when "configure_php"
+          run_configure_php
         when "set_permissions"
           run_set_permissions(step)
         when "set_ownership"
