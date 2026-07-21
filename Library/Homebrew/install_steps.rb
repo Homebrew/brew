@@ -587,6 +587,11 @@ module Homebrew
                  "failure_message" => failure_message)
       end
 
+      sig { params(message: ::String).void }
+      def warn(message)
+        add_step("warn", "message" => message)
+      end
+
       private
 
       sig { params(guard: PathSpec, block: ::T.proc.void).void }
@@ -827,6 +832,8 @@ module Homebrew
           run_serialised_command(step)
         when "terminate_process"
           run_terminate_process(step)
+        when "warn"
+          opoo expand_template_tokens(step_string(step, "message"))
         when "set_permissions"
           run_set_permissions(step)
         when "set_ownership"
