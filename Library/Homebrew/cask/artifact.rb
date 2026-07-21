@@ -7,6 +7,7 @@ require "cask/artifact/artifact" # generic 'artifact' stanza
 require "cask/artifact/audio_unit_plugin"
 require "cask/artifact/binary"
 require "cask/artifact/colorpicker"
+require "cask/artifact/command_wrapper"
 require "cask/artifact/dictionary"
 require "cask/artifact/install_steps"
 require "cask/artifact/font"

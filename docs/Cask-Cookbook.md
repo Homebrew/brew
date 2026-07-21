@@ -144,6 +144,7 @@ The `appimage` stanza is Linux-only, macOS integration stanzas such as `app` and
 | [`pkg`](#stanza-pkg)             | yes                           | Relative path to a `.pkg` file containing the distribution. |
 | [`installer`](#stanza-installer) | yes                           | Describes an executable which must be run to complete the installation. |
 | [`binary`](#stanza-binary)       | yes                           | Relative path to a Binary that should be linked into the `$(brew --prefix)/bin` folder on installation. |
+| [`command_wrapper`](#stanza-command_wrapper) | yes                  | Generates a command wrapper and links it into the `$(brew --prefix)/bin` folder. |
 | `manpage`                        | yes                           | Relative path to a Man Page that should be linked into the respective man page folder on installation, e.g. `/opt/homebrew/share/man/man3` for `my_app.3`. |
 | `bash_completion`                | yes                           | Relative path to a Bash completion file that should be linked into the `$(brew --prefix)/etc/bash_completion.d` folder on installation. |
 | `fish_completion`                | yes                           | Relative path to a fish completion file that should be linked into the `$(brew --prefix)/share/fish/vendor_completions.d` folder on installation. |
@@ -282,6 +283,19 @@ binary "#{appdir}/Atom.app/Contents/Resources/app/atom.sh", target: "atom"
 ```
 
 Behaviour and usage of `target:` is [the same as with `app`](#renaming-the-target). However, for `binary` the select cases don’t apply as rigidly. It’s fine to take extra liberties with `target:` to be consistent with other command-line tools, like [changing case](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/g/godot.rb#L19), [removing an extension](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/f/filebot.rb#L19), or [cleaning up the name](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/f/fig.rb#L21).
+
+### Stanza: `command_wrapper`
+
+`command_wrapper` writes literal wrapper content into the staged cask, makes it executable and links it like a [`binary`](#stanza-binary). Use it when a command needs to invoke an executable inside an application bundle with fixed arguments or environment setup.
+
+```ruby
+command_wrapper "example.wrapper.sh",
+                target:  "example",
+                content: <<~SH
+                  #!/bin/sh
+                  exec '#{appdir}/Example.app/Contents/MacOS/example' "$@"
+                SH
+```
 
 ### Stanza: `rename`
 
