@@ -449,6 +449,38 @@ RSpec.describe Homebrew::InstallSteps do
     expect((root/"var/output.txt").read).to eq("output")
   end
 
+  specify "can ignore process termination failure after retries" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      terminate_process "/Applications/Example.app", match: :full, attempts: 3,
+                                                       notices: ["Closing {{name}}"],
+                                                       failure_message: "Unable to close {{name}}"
+    end
+
+    named_context = context
+    named_context.define_singleton_method(:name) { "Example" }
+    command = class_double(SystemCommand)
+    runner = Homebrew::InstallSteps::Runner.new(context: named_context, command:)
+    allow(runner).to receive(:sleep)
+    expect(runner).to receive(:ohai).with("Closing Example")
+    expect(runner).to receive(:opoo).with("Unable to close Example")
+    expect(command).to receive(:run!).exactly(3).times.and_raise(ErrorDuringExecution.new([], status: 1))
+
+    expect { runner.run(steps) }.not_to raise_error
+  end
+
+  specify "uses killall for exact process names" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      terminate_process "Example", must_succeed: true
+    end
+
+    command = class_double(SystemCommand)
+    expect(command).to receive(:run!)
+      .with("/usr/bin/killall", args: ["Example"], sudo: false,
+                                print_stdout: true, print_stderr: true, reset_uid: true)
+
+    Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
+  end
+
   specify "appends a trailing newline unless already present", :aggregate_failures do
     steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
       write "missing-newline", "value"
