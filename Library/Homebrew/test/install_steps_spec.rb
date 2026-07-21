@@ -721,6 +721,17 @@ RSpec.describe Homebrew::InstallSteps do
     runner.run(steps)
   end
 
+  specify "dispatches Clang system configuration" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      configure_clang_system
+    end
+
+    runner = Homebrew::InstallSteps::Runner.new(context:)
+    expect(runner).to receive(:run_configure_clang_system)
+
+    runner.run(steps)
+  end
+
   describe "runs gtk_update_icon_cache rebuild action" do
     let(:formula) { instance_double(Formula, opt_bin: root/"opt/bin") }
     let(:steps) do

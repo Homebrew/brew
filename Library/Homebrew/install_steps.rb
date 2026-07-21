@@ -616,6 +616,11 @@ module Homebrew
         add_step("configure_glibc_runtime")
       end
 
+      sig { void }
+      def configure_clang_system
+        add_step("configure_clang_system")
+      end
+
       private
 
       sig { params(guard: PathSpec, block: ::T.proc.void).void }
@@ -864,6 +869,8 @@ module Homebrew
           run_install_gzipped_executable(step)
         when "configure_glibc_runtime"
           run_configure_glibc_runtime
+        when "configure_clang_system"
+          run_configure_clang_system
         when "set_permissions"
           run_set_permissions(step)
         when "set_ownership"
