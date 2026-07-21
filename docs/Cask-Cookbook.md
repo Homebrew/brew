@@ -642,13 +642,18 @@ Relative paths default to `staged_path` for `base:`, `source_base:` and `target_
 * `symlink`: create a symlink; example: `symlink "Shared/payload", "Payload", source_base: :relative`.
 * `ln_s`: alias for `symlink`; example: `ln_s "Shared/payload", "Payload", source_base: :relative`.
 * `ln_sf`: create or replace a symlink; example: `ln_sf "Shared/payload", "Payload", source_base: :relative, uninstall: true`.
-* `write`: write literal content to a file unless it already exists; example: `write "Shared/foo.conf", "key = value"`. Pass `overwrite: true` to always replace the file. A trailing newline is appended unless the content already ends with one. Content may use the `{{staged_path}}`, `{{appdir}}` and `{{version}}` tokens, which are expanded at install time; any other `{{...}}` is left verbatim.
+* `write`: write literal content to a file unless it already exists; example: `write "Shared/foo.conf", "key = value"`. Pass `overwrite: true` to always replace the file. A trailing newline is appended unless the content already ends with one.
 * `delete_keychain_certificate`: delete macOS keychain certificates whose common name matches the argument; example: `delete_keychain_certificate "Charles"`. Pass `matching_certificate:` with a local certificate path to delete only the matching SHA-256 fingerprint; example:
   `delete_keychain_certificate "NodeMITMProxyCA", matching_certificate: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"`.
 * `set_permissions`: recursively change existing path permissions with `chmod`; example: `set_permissions "Shared/payload", "0755"`.
 * `set_ownership`: recursively change existing path ownership with `sudo chown`; example: `set_ownership "Shared/payload", user: "root", group: "wheel"`. Missing paths are ignored. When `user:` is omitted, the current user is used. When `group:` is omitted, `staff` is used.
+* `run`: run one executable with literal arguments; example: `run "Example.app/Contents/MacOS/helper", args: ["--repair"], base: :appdir`.
 
-Path collections passed to `remove` expand globs automatically. Removals may be restricted with `symlink_target_contains:` or `content_contains:`.
+File mutation and command steps accept `if_exists:` and `unless_exists:` guards where supported. `copy`, `move` and symlink steps accept `source_glob: true`; path collections used by `remove`, `set_permissions` and `set_ownership` expand globs automatically. Give related guarded `mkdir`, `mkdir_p` and `run` steps the same `guard_group:` to evaluate their guards once for the group. Symlink removal can additionally match the serialised source during uninstall, while `remove` can restrict removal with `symlink_target_contains:` or `content_contains:`.
+
+`run` does not evaluate a shell command string. It supports a literal `environment:`, `input_path:`, `output_path:`, `working_directory:`, `sudo:`, platform selection with `on:` and standard-error suppression with `print_stderr: false`.
+
+Content, replacements, command arguments and command environments may use fixed install-time tokens. These include `{{HOMEBREW_BREW_FILE}}`, `{{HOMEBREW_CELLAR}}`, `{{HOMEBREW_PREFIX}}`, `{{name}}`, `{{user}}`, `{{staged_path}}`, `{{appdir}}`, `{{caskroom_path}}`, `{{temp}}`, `{{version}}`, `{{version.major}}` and `{{version.major_minor}}`. Any other `{{...}}` is left verbatim.
 
 {% endraw %}
 

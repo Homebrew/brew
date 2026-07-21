@@ -15,15 +15,16 @@ module RuboCop
          :update_mime_database, :update_desktop_database].freeze
       KEYCHAIN_STEP_METHODS = [:delete_keychain_certificate].freeze
       PERMISSION_STEP_METHODS = [:set_permissions, :set_ownership].freeze
+      COMMAND_STEP_METHODS = [:run].freeze
       STEP_SCOPE_METHODS = [:if_path_exists, :unless_path_exists, :on_macos, :on_linux].freeze
       ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
-         *REBUILD_ACTION_STEP_METHODS, :set_permissions, *STEP_SCOPE_METHODS].freeze,
+         *REBUILD_ACTION_STEP_METHODS, :set_permissions, *COMMAND_STEP_METHODS, *STEP_SCOPE_METHODS].freeze,
         T::Array[Symbol],
       )
       CASK_ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *KEYCHAIN_STEP_METHODS,
-         *PERMISSION_STEP_METHODS, *STEP_SCOPE_METHODS].freeze,
+         *PERMISSION_STEP_METHODS, *COMMAND_STEP_METHODS, *STEP_SCOPE_METHODS].freeze,
         T::Array[Symbol],
       )
 
@@ -43,11 +44,6 @@ module RuboCop
             "system Formula[\"glib\"].opt_bin/\"glib-compile-schemas\", " \
             "HOMEBREW_PREFIX/\"share/glib-2.0/schemas\"",
             "compile_gsettings_schemas",
-          ],
-          [
-            "system Formula[\"glib\"].opt_bin/\"gio-querymodules\", " \
-            "HOMEBREW_PREFIX/\"lib/gio/modules\"",
-            "gio_querymodules",
           ],
           [
             "system Formula[\"gdk-pixbuf\"].opt_bin/\"gdk-pixbuf-query-loaders\", " \
