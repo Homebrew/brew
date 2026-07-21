@@ -38,14 +38,14 @@ module RuboCop
 
           # Check for binary URLs
           audit_urls(urls, /(darwin|macos|osx)/i) do |match, url|
-            path = URI.parse(url).path || ""
-            filename = File.basename(path)
-            extname = File.extname(filename)
-            next if filename.present? && !filename.include?(match.to_s)
             next if T.must(@formula_name).include?(match.to_s.downcase)
-            next if %w[patch diff].include?(extname)
             next if tap_style_exception? :not_a_binary_url_prefix_allowlist
             next if tap_style_exception? :binary_bootstrap_formula_urls_allowlist
+
+            path = URI.parse(url).path || ""
+            filename = File.basename(path)
+            next if filename.present? && !filename.include?(match.to_s)
+            next if %w[.patch .diff].include?(File.extname(filename))
 
             problem "#{url} looks like a binary package, not a source archive; " \
                     "homebrew/core is source-only."
