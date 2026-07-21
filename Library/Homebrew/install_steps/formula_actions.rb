@@ -84,6 +84,36 @@ module Homebrew
         end
         target.chmod 0755
       end
+
+      sig { void }
+      def run_configure_glibc_runtime
+        (context_path("lib")/"locale").mkpath
+        legacy_formula = context_name != "glibc"
+        locales = ENV.filter_map do |key, value|
+          next unless key.match?(legacy_formula ? /^LANG$|^LC_/ : /^HOMEBREW_LANG$|^LANG$|^LC_/)
+          next if value == "C" || (legacy_formula && value.start_with?("C."))
+
+          value
+        end
+        locales = (locales + ["en_US.UTF-8"]).sort.uniq
+        ohai "Installing locale data for #{locales.join(" ")}"
+        locales.each do |locale|
+          lang, charmap = locale.split(".", 2)
+          next if lang.nil?
+
+          if charmap.present?
+            charmap = "UTF-8" if charmap == "utf8"
+            run_command context_path("bin")/"localedef", "-i", lang, "-f", charmap, locale
+          else
+            run_command context_path("bin")/"localedef", "-i", lang, locale
+          end
+        end
+
+        [[Pathname("/etc/localtime"), context_path("etc")/"localtime"],
+         [Pathname("/usr/share/zoneinfo"), context_path("share")/"zoneinfo"]].each do |source, target|
+          File.symlink source, target if source.exist? && !target.exist?
+        end
+      end
     end
   end
 end
