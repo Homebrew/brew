@@ -41,7 +41,7 @@ module RuboCop
             path = URI.parse(url).path || ""
             filename = File.basename(path)
             extname = File.extname(filename)
-            next if !filename.blank? && !filename.include?(match.to_s)
+            next if filename.present? && !filename.include?(match.to_s)
             next if T.must(@formula_name).include?(match.to_s.downcase)
             next if %w[patch diff].include?(extname)
             next if tap_style_exception? :not_a_binary_url_prefix_allowlist
