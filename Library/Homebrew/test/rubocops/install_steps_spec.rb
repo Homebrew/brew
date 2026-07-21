@@ -42,7 +42,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           system "true"
-          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`.
+          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
         end
       end
     RUBY
@@ -56,8 +56,10 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         post_install_steps do
           mkdir_p "foo"
           touch "foo/state"
+          touch "foo/#{formula_name}"
           mv "source", "target"
           move_children "source", "target"
+          move_contents "source", "target"
           inreplace "foo.conf", /@PREFIX@/, "{{HOMEBREW_PREFIX}}"
           ln_sf "source", "target", source_base: :relative, uninstall: true
           write "foo.conf", "key = value\n", base: :etc
@@ -73,6 +75,31 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
           gtk_update_icon_cache
           update_mime_database
           update_desktop_database
+          on_macos do
+            if_path_exists "foo" do
+              touch "foo/scoped-state"
+            end
+          end
+          on_linux do
+            unless_path_exists "foo.conf", base: :etc do
+              write "foo.conf", "key = value\n", base: :etc
+            end
+          end
+        end
+      end
+    RUBY
+  end
+
+  it "reports an offense when a scope contains Ruby code" do
+    expect_offense(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        post_install_steps do
+          on_macos do
+            system "true"
+            ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
+          end
         end
       end
     RUBY
@@ -85,7 +112,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           write "foo.conf", "prefix = #{prefix}"
-                                      ^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`.
+                                      ^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls: `mkdir`, `mkdir_p`, `touch`, `move`, `mv`, `move_children`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `ln_s`, `ln_sf`, `link_dir`, `link_children`, `write`, `init_data_dir`, `compile_gsettings_schemas`, `gio_querymodules`, `gdk_pixbuf_query_loaders`, `gtk_update_icon_cache`, `update_mime_database`, `update_desktop_database`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
         end
       end
     RUBY

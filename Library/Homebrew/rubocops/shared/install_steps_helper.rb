@@ -5,7 +5,7 @@ module RuboCop
   module Cop
     module InstallStepsHelper
       FILE_PREPARATION_STEP_METHODS =
-        [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :copy, :remove, :inreplace, :symlink,
+        [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :move_contents, :copy, :remove, :inreplace, :symlink,
          :ln_s, :ln_sf].freeze
       LINK_STEP_METHODS = [:link_dir, :link_children].freeze
       CONFIG_WRITE_STEP_METHODS = [:write].freeze
@@ -15,14 +15,15 @@ module RuboCop
          :update_mime_database, :update_desktop_database].freeze
       KEYCHAIN_STEP_METHODS = [:delete_keychain_certificate].freeze
       PERMISSION_STEP_METHODS = [:set_permissions, :set_ownership].freeze
+      STEP_SCOPE_METHODS = [:if_path_exists, :unless_path_exists, :on_macos, :on_linux].freeze
       ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
-         *REBUILD_ACTION_STEP_METHODS].freeze,
+         *REBUILD_ACTION_STEP_METHODS, *STEP_SCOPE_METHODS].freeze,
         T::Array[Symbol],
       )
       CASK_ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *KEYCHAIN_STEP_METHODS,
-         *PERMISSION_STEP_METHODS].freeze,
+         *PERMISSION_STEP_METHODS, *STEP_SCOPE_METHODS].freeze,
         T::Array[Symbol],
       )
 
@@ -96,15 +97,8 @@ module RuboCop
 
         direct_nodes = body.begin_type? ? body.child_nodes : [body]
         direct_nodes.each do |node|
-          return node unless node.send_type?
-
-          send_node = T.cast(node, RuboCop::AST::SendNode)
-          return node if send_node.receiver.present? || !allowed_methods.include?(send_node.method_name)
-
-          invalid_argument_node = send_node.each_descendant.find do |descendant|
-            !allowed_step_argument_node?(descendant)
-          end
-          return T.cast(invalid_argument_node, RuboCop::AST::Node) if invalid_argument_node
+          offense_node = install_step_offense_node(node, allowed_methods)
+          return offense_node if offense_node
         end
 
         nil
@@ -174,6 +168,45 @@ module RuboCop
 
       private
 
+      sig {
+        params(
+          node:            RuboCop::AST::Node,
+          allowed_methods: T::Array[Symbol],
+        ).returns(T.nilable(RuboCop::AST::Node))
+      }
+      def install_step_offense_node(node, allowed_methods)
+        if node.block_type?
+          block_node = T.cast(node, RuboCop::AST::BlockNode)
+          send_node = block_node.send_node
+          return node if send_node.receiver.present? || !STEP_SCOPE_METHODS.include?(send_node.method_name)
+          return node unless allowed_methods.include?(send_node.method_name)
+
+          invalid_argument = invalid_step_argument_node(send_node)
+          return invalid_argument if invalid_argument
+
+          direct_install_step_nodes(block_node.body).each do |child|
+            offense_node = install_step_offense_node(child, allowed_methods)
+            return offense_node if offense_node
+          end
+          return
+        end
+        return node unless node.send_type?
+
+        send_node = T.cast(node, RuboCop::AST::SendNode)
+        return node if send_node.receiver.present? || !allowed_methods.include?(send_node.method_name)
+        return node if STEP_SCOPE_METHODS.include?(send_node.method_name)
+
+        invalid_step_argument_node(send_node)
+      end
+
+      sig { params(send_node: RuboCop::AST::SendNode).returns(T.nilable(RuboCop::AST::Node)) }
+      def invalid_step_argument_node(send_node)
+        invalid_argument_node = send_node.each_descendant.find do |descendant|
+          !allowed_step_argument_node?(descendant)
+        end
+        T.cast(invalid_argument_node, T.nilable(RuboCop::AST::Node))
+      end
+
       sig { params(step_lines: T::Array[String], indent: Integer).returns(T::Array[String]) }
       def indented_install_step_lines(step_lines, indent)
         step_lines.flat_map do |step_line|
@@ -204,7 +237,7 @@ module RuboCop
 
         send_node = T.cast(node, RuboCop::AST::SendNode)
         return false if send_node.arguments.present?
-        return [:name, :version].include?(send_node.method_name) if send_node.receiver.nil?
+        return [:formula_name, :name, :token, :version].include?(send_node.method_name) if send_node.receiver.nil?
 
         return false unless (receiver = send_node.receiver)&.send_type?
 
