@@ -47,6 +47,7 @@ module Cask
       Artifact::Colorpicker,
       Artifact::Dictionary,
       Artifact::Font,
+      Artifact::GeneratedScript,
       Artifact::InputMethod,
       Artifact::InternetPlugin,
       Artifact::KeyboardLayout,

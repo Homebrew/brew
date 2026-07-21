@@ -77,6 +77,7 @@ module Cask
             # The `uninstall` stanza should be run first, as it may
             # depend on other artifacts still being installed.
             Uninstall,
+            GeneratedScript,
             Installer,
             # `pkg` should be run before `binary`, so
             # targets are created prior to linking.
