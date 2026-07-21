@@ -597,6 +597,20 @@ module Homebrew
         add_step("configure_gcc_runtime")
       end
 
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def install_gzipped_executable(source, target, source_base: nil, target_base: nil)
+        add_step("install_gzipped_executable",
+                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target" => path_spec(target, base: target_base, default_base: @default_target_base))
+      end
+
       private
 
       sig { params(guard: PathSpec, block: ::T.proc.void).void }
@@ -841,6 +855,8 @@ module Homebrew
           opoo expand_template_tokens(step_string(step, "message"))
         when "configure_gcc_runtime"
           run_configure_gcc_runtime
+        when "install_gzipped_executable"
+          run_install_gzipped_executable(step)
         when "set_permissions"
           run_set_permissions(step)
         when "set_ownership"

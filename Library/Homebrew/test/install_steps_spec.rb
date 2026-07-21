@@ -682,6 +682,34 @@ RSpec.describe Homebrew::InstallSteps do
     runner.run(steps)
   end
 
+  specify "dispatches gzipped executable installation" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      install_gzipped_executable "compressed.gz", "bin/executable"
+    end
+
+    runner = Homebrew::InstallSteps::Runner.new(context:)
+    expect(runner).to receive(:run_install_gzipped_executable)
+
+    runner.run(steps)
+  end
+
+  specify "installs a gzipped executable with a fixed mode" do
+    require "zlib"
+
+    source = root/"prefix/bin/executable.gz"
+    source.dirname.mkpath
+    Zlib::GzipWriter.open(source.to_s) { |gzip| gzip.write "executable" }
+    steps = Homebrew::InstallSteps::DSL.build(default_source_base: :prefix, default_target_base: :prefix) do
+      install_gzipped_executable "bin/executable.gz", "bin/executable"
+    end
+
+    Homebrew::InstallSteps::Runner.new(context:).run(steps)
+
+    target = root/"prefix/bin/executable"
+    expect(target).to be_executable.and have_attributes(read: "executable")
+    expect(source).not_to exist
+  end
+
   describe "runs gtk_update_icon_cache rebuild action" do
     let(:formula) { instance_double(Formula, opt_bin: root/"opt/bin") }
     let(:steps) do
