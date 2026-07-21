@@ -87,20 +87,6 @@ module Cask
       Artifact::UninstallPostflightSteps,
     ].freeze
 
-    InstallStepFlightBlockClasses = T.type_alias do
-      T::Hash[
-        T.class_of(Artifact::AbstractInstallSteps),
-        [T.class_of(Artifact::AbstractFlightBlock), Symbol],
-      ]
-    end
-
-    INSTALL_STEP_FLIGHT_BLOCK_CLASSES = T.let({
-      Artifact::PreflightSteps           => [Artifact::PreflightBlock, :preflight],
-      Artifact::PostflightSteps          => [Artifact::PostflightBlock, :postflight],
-      Artifact::UninstallPreflightSteps  => [Artifact::PreflightBlock, :uninstall_preflight],
-      Artifact::UninstallPostflightSteps => [Artifact::PostflightBlock, :uninstall_postflight],
-    }.freeze, InstallStepFlightBlockClasses)
-
     DSL_METHODS = T.let(Set.new([
       :arch,
       :artifacts,
@@ -856,11 +842,7 @@ module Cask
       [klass.dsl_key, klass.uninstall_dsl_key].each do |dsl_key|
         define_method(dsl_key) do |&block|
           T.bind(self, DSL)
-          if install_step_artifact_defined?(dsl_key)
-            warn_on_install_step_conflict(dsl_key, T.must(install_step_artifact_class(dsl_key)).dsl_key)
-          else
-            artifacts.add(klass.new(cask, dsl_key => block))
-          end
+          artifacts.add(klass.new(cask, dsl_key => block))
         end
       end
     end
@@ -874,43 +856,8 @@ module Cask
         else
           Homebrew::InstallSteps::DSL.normalise_steps([kwargs[:steps] || steps].flatten.compact)
         end
-        remove_conflicting_flight_blocks(klass)
         artifacts.add(klass.new(cask, steps))
       end
-    end
-
-    sig { params(dsl_key: Symbol).returns(T::Boolean) }
-    def install_step_artifact_defined?(dsl_key)
-      return false unless (klass = install_step_artifact_class(dsl_key))
-
-      artifacts.any?(klass)
-    end
-
-    sig { params(dsl_key: Symbol).returns(T.nilable(T.class_of(Artifact::AbstractInstallSteps))) }
-    def install_step_artifact_class(dsl_key)
-      INSTALL_STEP_FLIGHT_BLOCK_CLASSES.find do |_step_class, (_block_class, block_dsl_key)|
-        block_dsl_key == dsl_key
-      end&.first
-    end
-
-    sig { params(klass: T.class_of(Artifact::AbstractInstallSteps)).void }
-    def remove_conflicting_flight_blocks(klass)
-      flight_block_class, dsl_key = INSTALL_STEP_FLIGHT_BLOCK_CLASSES.fetch(klass)
-      conflicting_flight_blocks = artifacts.select do |artifact|
-        next false unless artifact.is_a?(flight_block_class)
-
-        artifact.directives.key?(dsl_key)
-      end
-
-      conflicting_flight_blocks.each do |artifact|
-        warn_on_install_step_conflict(dsl_key, klass.dsl_key)
-        artifacts.delete(artifact)
-      end
-    end
-
-    sig { params(dsl_key: Symbol, steps_key: Symbol).void }
-    def warn_on_install_step_conflict(dsl_key, steps_key)
-      opoo "#{token}: `#{dsl_key}` is ignored because `#{steps_key}` is defined!"
     end
 
     sig { override.params(method: Symbol, _args: T.anything).returns(T.noreturn) }
