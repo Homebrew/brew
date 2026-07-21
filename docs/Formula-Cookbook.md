@@ -1099,6 +1099,12 @@ warn_if_exists "foo.conf", "Remove the old foo.conf before continuing", base: :e
 
 `terminate_process` terminates a process by name or, with `matching: :full`, by its full command line. It supports retries, `notices:` shown before the first attempt and a `failure_message:` warning. `warn_if_exists` emits a warning when any listed path exists.
 
+#### Repeated formula actions
+
+Use the named actions below for formula families that share post-install algorithms. Unique complex logic should be installed as a packaged helper and invoked with `run` instead of adding a formula-specific action.
+
+* `configure_gcc_runtime`: generate the Linux GCC runtime links and specs.
+
 #### Service data directory steps
 
 `init_data_dir` creates a database service data directory and runs a supported
