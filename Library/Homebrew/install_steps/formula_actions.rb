@@ -114,6 +114,25 @@ module Homebrew
           File.symlink source, target if source.exist? && !target.exist?
         end
       end
+
+      sig { void }
+      def run_configure_clang_system
+        return unless Homebrew::SimulateSystem.simulating_or_running_on_macos?
+
+        macos_version = MacOS.version
+        kernel_version = OS.kernel_version.major
+        raise ArgumentError, "Clang system configuration requires a kernel version" if kernel_version.nil?
+
+        kernel_version = kernel_version.to_s
+        arch = Hardware::CPU.arch
+        config_dir = context_path("etc")/"clang"
+        return if ["darwin#{kernel_version}", "macosx#{macos_version}"].all? do |system|
+          (config_dir/"#{arch}-apple-#{system}.cfg").exist?
+        end
+
+        require "utils/clang"
+        Utils::Clang.write_system_config_files(config_dir:, macos_version:, kernel_version:, arch:)
+      end
     end
   end
 end
