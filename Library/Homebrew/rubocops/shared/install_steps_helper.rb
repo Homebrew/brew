@@ -5,7 +5,8 @@ module RuboCop
   module Cop
     module InstallStepsHelper
       FILE_PREPARATION_STEP_METHODS =
-        [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :move_contents, :copy, :remove, :inreplace, :symlink,
+        [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :move_contents, :copy, :remove, :inreplace,
+         :symlink,
          :ln_s, :ln_sf].freeze
       LINK_STEP_METHODS = [:link_dir, :link_children, :symlink_tree, :symlink_children].freeze
       CONFIG_WRITE_STEP_METHODS = [:write, :write_file].freeze
@@ -22,6 +23,10 @@ module RuboCop
         [:configure_gcc_runtime, :install_gzipped_executable, :configure_glibc_runtime,
          :configure_clang_system, :configure_php, :bootstrap_cpython, :bootstrap_pypy].freeze
       STEP_SCOPE_METHODS = [:if_path_exists, :unless_path_exists, :on_macos, :on_linux].freeze
+      # odeprecated
+      COMPATIBILITY_STEP_METHODS =
+        [:mkdir, :mv, :move_children, :ln_s, :ln_sf, :link_dir, :link_children, :write, :gio_querymodules,
+         :gdk_pixbuf_query_loaders, :gtk_update_icon_cache, :delete_keychain_certificate].freeze
       ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
          *REBUILD_ACTION_STEP_METHODS, :set_permissions, *COMMAND_STEP_METHODS, *NOTICE_STEP_METHODS,
@@ -41,7 +46,7 @@ module RuboCop
 
       STEP_BLOCK_MSG = T.let(
         "Steps blocks may only contain install step DSL calls: " \
-        "#{ALLOWED_STEP_METHODS.map { |method| "`#{method}`" }.join(", ")}.".freeze,
+        "#{(ALLOWED_STEP_METHODS - COMPATIBILITY_STEP_METHODS).map { |method| "`#{method}`" }.join(", ")}.".freeze,
         String,
       )
       SIMPLE_STEP_CONVERSION_MSG = "Use `%<steps_block>s` for simple file preparation."
@@ -55,12 +60,12 @@ module RuboCop
           [
             "system Formula[\"gdk-pixbuf\"].opt_bin/\"gdk-pixbuf-query-loaders\", " \
             "\"--update-cache\"",
-            "gdk_pixbuf_query_loaders",
+            "update_gdk_pixbuf_loaders_cache",
           ],
           [
             "system Formula[\"gtk+3\"].opt_bin/\"gtk3-update-icon-cache\", " \
             "\"-q\", \"-t\", \"-f\", HOMEBREW_PREFIX/\"share/icons/hicolor\"",
-            "gtk_update_icon_cache",
+            "update_gtk_icon_cache",
           ],
           [
             "system Formula[\"shared-mime-info\"].opt_bin/\"update-mime-database\", " \
@@ -79,7 +84,7 @@ module RuboCop
       sig { params(allowed_methods: T::Array[Symbol]).returns(String) }
       def step_block_msg(allowed_methods)
         "Steps blocks may only contain install step DSL calls: " \
-          "#{allowed_methods.map { |method| "`#{method}`" }.join(", ")}."
+          "#{(allowed_methods - COMPATIBILITY_STEP_METHODS).map { |method| "`#{method}`" }.join(", ")}."
       end
 
       class InstallStepPath < T::Struct
@@ -273,7 +278,7 @@ module RuboCop
 
         if send_node.method_name == :mkpath && send_node.arguments.empty? && send_node.receiver
           path = install_step_path(send_node.receiver)
-          return mkdir_step_line(:mkdir_p, path, default_base)
+          return mkdir_step_line(path, default_base)
         end
 
         if [:write, :atomic_write].include?(send_node.method_name)
@@ -307,7 +312,7 @@ module RuboCop
         when :mkdir, :mkdir_p
           return if send_node.arguments.length != 1
 
-          mkdir_step_line(send_node.method_name, install_step_path(send_node.arguments.first), default_base)
+          mkdir_step_line(install_step_path(send_node.arguments.first), default_base)
         when :touch
           return if send_node.arguments.length != 1
 
@@ -321,7 +326,7 @@ module RuboCop
         when :ln_s, :ln_sf
           return if send_node.arguments.length != 2
 
-          symlink_step_line(send_node.method_name,
+          symlink_step_line(send_node.method_name == :ln_sf,
                             install_step_path(send_node.arguments.fetch(0)),
                             install_step_path(send_node.arguments.fetch(1)),
                             default_source_base, default_target_base)
@@ -330,15 +335,14 @@ module RuboCop
 
       sig {
         params(
-          method_name:  Symbol,
           path:         T.nilable(InstallStepPath),
           default_base: Symbol,
         ).returns(T.nilable(String))
       }
-      def mkdir_step_line(method_name, path, default_base)
+      def mkdir_step_line(path, default_base)
         return if path.nil? || relative_install_step_path?(path)
 
-        "mkdir#{"_p" if method_name == :mkdir_p} #{install_step_path_source(path)}" \
+        "mkdir_p #{install_step_path_source(path)}" \
           "#{install_step_path_keywords(path, base: default_base, keyword: :base)}"
       end
 
@@ -371,19 +375,19 @@ module RuboCop
           install_step_path_keyword(source, base: default_source_base, keyword: :source_base),
           install_step_path_keyword(target, base: default_target_base, keyword: :target_base),
         ].compact
-        "mv #{install_step_path_source(source)}, #{install_step_path_source(target)}#{install_step_kwargs(kwargs)}"
+        "move #{install_step_path_source(source)}, #{install_step_path_source(target)}#{install_step_kwargs(kwargs)}"
       end
 
       sig {
         params(
-          method_name:         Symbol,
+          overwrite:           T::Boolean,
           source:              T.nilable(InstallStepPath),
           target:              T.nilable(InstallStepPath),
           default_source_base: Symbol,
           default_target_base: Symbol,
         ).returns(T.nilable(String))
       }
-      def symlink_step_line(method_name, source, target, default_source_base, default_target_base)
+      def symlink_step_line(overwrite, source, target, default_source_base, default_target_base)
         return if source.nil? || target.nil?
         return if relative_install_step_path?(target)
 
@@ -395,8 +399,9 @@ module RuboCop
         kwargs = [
           source_keyword,
           install_step_path_keyword(target, base: default_target_base, keyword: :target_base),
+          ("overwrite: true" if overwrite),
         ].compact
-        "#{method_name} #{install_step_path_source(source)}, #{install_step_path_source(target)}" \
+        "symlink #{install_step_path_source(source)}, #{install_step_path_source(target)}" \
           "#{install_step_kwargs(kwargs)}"
       end
 
@@ -412,18 +417,15 @@ module RuboCop
 
         kwargs = [
           install_step_path_keyword(path, base: default_base, keyword: :base),
-          "overwrite: true",
         ].compact
         return unless (content_source = write_content_source(content_node, kwargs))
 
-        "write #{install_step_path_source(path)}, #{content_source}"
+        "write_file #{install_step_path_source(path)}, #{content_source}"
       end
 
       sig { params(content_node: RuboCop::AST::Node, kwargs: T::Array[String]).returns(T.nilable(String)) }
       def write_content_source(content_node, kwargs)
         return unless content_node.str_type?
-        return unless T.cast(content_node, RuboCop::AST::StrNode).str_content.end_with?("\n")
-
         unless content_node.loc.respond_to?(:heredoc_end)
           return "#{content_node.source}#{install_step_kwargs(kwargs)}"
         end
