@@ -61,6 +61,29 @@ module Homebrew
         EOS
         specs.write(specs.read.gsub(" %o ", "\\0%(homebrew_rpath) ")) if homebrew_rpath
       end
+
+      sig { params(step: Step).void }
+      def run_install_gzipped_executable(step)
+        source = resolve_path(step_path(step, "source"))
+        return unless source.exist?
+
+        require "unpack_strategy"
+
+        target = resolve_path(step_path(step, "target"))
+        target.dirname.mkpath
+        temporary_target = target.dirname/".#{target.basename}.install-step"
+        temporary_gzip = Pathname("#{temporary_target}.gz")
+        FileUtils.rm_f [temporary_target, temporary_gzip]
+        begin
+          UnpackStrategy::Gzip.new(source).extract(to: target.dirname, basename: temporary_gzip.basename)
+          FileUtils.rm_f target
+          FileUtils.mv temporary_target, target
+          source.unlink
+        ensure
+          FileUtils.rm_f [temporary_target, temporary_gzip]
+        end
+        target.chmod 0755
+      end
     end
   end
 end

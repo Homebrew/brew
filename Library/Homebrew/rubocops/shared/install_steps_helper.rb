@@ -17,7 +17,7 @@ module RuboCop
       PERMISSION_STEP_METHODS = [:set_permissions, :set_ownership].freeze
       COMMAND_STEP_METHODS = [:run, :terminate_process].freeze
       NOTICE_STEP_METHODS = [:warn].freeze
-      FORMULA_ACTION_STEP_METHODS = [:configure_gcc_runtime].freeze
+      FORMULA_ACTION_STEP_METHODS = [:configure_gcc_runtime, :install_gzipped_executable].freeze
       STEP_SCOPE_METHODS = [:if_path_exists, :unless_path_exists, :on_macos, :on_linux].freeze
       ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
