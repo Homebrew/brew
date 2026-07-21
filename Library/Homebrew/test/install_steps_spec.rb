@@ -406,6 +406,22 @@ RSpec.describe Homebrew::InstallSteps do
     expect((root/"var/pattern.txt").read).to eq("replaced")
   end
 
+  specify "warns inside a matching path scope" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      if_path_exists "{{var}}/{missing,conflict}" do
+        warn "{{token}} conflict"
+      end
+    end
+    named_context = context
+    named_context.define_singleton_method(:name) { ["Example"] }
+    named_context.define_singleton_method(:token) { "example" }
+    (root/"var/conflict").mkpath
+    runner = Homebrew::InstallSteps::Runner.new(context: named_context)
+    expect(runner).to receive(:opoo).with("example conflict")
+
+    runner.run(steps)
+  end
+
   specify "runs serialised commands" do
     steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
       run "helper", args: ["--path={{var}}"], base: :libexec, env: { "EXAMPLE" => "value" }

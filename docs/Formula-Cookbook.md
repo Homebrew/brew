@@ -1094,9 +1094,10 @@ Content, replacements, command arguments and command environments may use a fixe
 ```ruby
 run "foo-helper", args: ["--prefix", "{{HOMEBREW_PREFIX}}"], base: :libexec
 terminate_process "foo", must_succeed: false
+warn_if_exists "foo.conf", "Remove the old foo.conf before continuing", base: :etc
 ```
 
-`terminate_process` terminates a process by name or, with `matching: :full`, by its full command line. It supports retries, `notices:` shown before the first attempt and a `failure_message:` warning.
+`terminate_process` terminates a process by name or, with `matching: :full`, by its full command line. It supports retries, `notices:` shown before the first attempt and a `failure_message:` warning. `warn_if_exists` emits a warning when any listed path exists.
 
 #### Service data directory steps
 
