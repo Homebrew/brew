@@ -105,8 +105,15 @@ module Homebrew
            !(args.installed_on_request? || installed_as_dependency ||
              args.poured_from_bottle? || args.built_from_source?)
           unless args.cask?
-            formula_names = args.no_named? ? Formula.installed : args.named.to_resolved_formulae
-            full_formula_names = formula_names.map(&:full_name).sort(&Cask::List::TAP_AND_NAME_COMPARISON)
+            # For the unnamed case, read the names from installed keg metadata
+            # rather than loading each formula: this avoids evaluating formula
+            # files from untrusted taps, which would otherwise be omitted.
+            full_formula_names = if args.no_named?
+              Formula.installed_full_names
+            else
+              args.named.to_resolved_formulae.map(&:full_name)
+            end
+            full_formula_names = full_formula_names.sort(&Cask::List::TAP_AND_NAME_COMPARISON)
             full_formula_names = Formatter.columns(full_formula_names) unless args.public_send(:"1?")
             puts full_formula_names if full_formula_names.present?
           end

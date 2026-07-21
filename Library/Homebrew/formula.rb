@@ -2582,6 +2582,23 @@ class Formula
     end.uniq(&:name)
   end
 
+  # An array of the fully-qualified names of all installed formulae.
+  #
+  # Unlike {installed}, this reads the name and tap from on-disk keg metadata
+  # (the rack and the install receipt) without loading (and thus evaluating)
+  # any formula files, so formulae installed from untrusted taps are still
+  # included even when tap trust is enforced.
+  sig { returns(T::Array[String]) }
+  def self.installed_full_names
+    racks.filter_map do |rack|
+      next unless (keg = Keg.from_rack(rack))
+
+      name = rack.basename.to_s
+      tap = Tab.for_keg(keg).tap
+      (tap.nil? || tap.core_tap?) ? name : "#{tap}/#{name}"
+    end
+  end
+
   sig { params(alias_path: T.nilable(Pathname)).returns(T::Array[Formula]) }
   def self.installed_with_alias_path(alias_path)
     return [] if alias_path.nil?

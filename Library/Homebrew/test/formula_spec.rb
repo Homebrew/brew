@@ -3214,6 +3214,33 @@ RSpec.describe Formula do
     end
   end
 
+  describe ".installed_full_names" do
+    it "includes formulae installed from untrusted taps without loading their formula files" do
+      name = "untrusted-installed"
+      version = "1.0"
+      tap = Tap.fetch("thirdparty", "foo")
+
+      # A formula file that fails loudly if it is ever evaluated: reading the
+      # full name from metadata must never load it.
+      tap_formula_path = tap.formula_dir/"#{name}.rb"
+      tap_formula_path.dirname.mkpath
+      tap_formula_path.write <<~RUBY
+        raise "untrusted formula evaluated"
+      RUBY
+
+      # An installed keg with a receipt pointing at the tap.
+      keg_path = HOMEBREW_CELLAR/name/version
+      keg_path.mkpath
+      (keg_path/AbstractTab::FILENAME).write JSON.generate(source: { tap: tap.name, version: version })
+
+      with_env(HOMEBREW_REQUIRE_TAP_TRUST: "1", HOMEBREW_USER_CONFIG_HOME: mktmpdir) do
+        expect(described_class.installed_full_names).to include("#{tap.name}/#{name}")
+      end
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+  end
+
   describe "#std_pip_args" do
     let(:f) do
       formula do
