@@ -144,7 +144,7 @@ The `appimage` stanza is Linux-only, macOS integration stanzas such as `app` and
 | [`installer`](#stanza-installer) | yes                           | Describes an executable which must be run to complete the installation. |
 | [`binary`](#stanza-binary)       | yes                           | Relative path to a Binary that should be linked into the `$(brew --prefix)/bin` folder on installation. |
 | [`command_wrapper`](#stanza-command_wrapper) | yes                  | Generates a command wrapper and links it into the `$(brew --prefix)/bin` folder. |
-| [`generated_executable`](#stanza-generated_executable) | yes          | Generates an executable for another artifact or install step to use. |
+| [`generated_script`](#stanza-generated_script) | yes              | Generates a script for another artifact or install step to use. |
 | `manpage`                        | yes                           | Relative path to a Man Page that should be linked into the respective man page folder on installation, e.g. `/opt/homebrew/share/man/man3` for `my_app.3`. |
 | `bash_completion`                | yes                           | Relative path to a Bash completion file that should be linked into the `$(brew --prefix)/etc/bash_completion.d` folder on installation. |
 | `fish_completion`                | yes                           | Relative path to a fish completion file that should be linked into the `$(brew --prefix)/share/fish/vendor_completions.d` folder on installation. |
@@ -297,12 +297,12 @@ command_wrapper "example.wrapper.sh",
                 SH
 ```
 
-### Stanza: `generated_executable`
+### Stanza: `generated_script`
 
-`generated_executable` writes literal content to an executable path in the staged cask. It does not link or run the file. Use it when a later `installer`, `uninstall` or install step needs a generated script.
+`generated_script` writes literal content to a script in the staged cask and makes it executable. It does not link or run the file. Use it when a later `installer`, `uninstall` or install step needs a generated script.
 
 ```ruby
-generated_executable "installer.sh", content: <<~SH
+generated_script "installer.sh", content: <<~SH
   #!/bin/sh
   exec "#{staged_path}/payload/install" "$@"
 SH
@@ -610,51 +610,49 @@ preflight_steps do
 end
 
 postflight_steps do
-  mv "payload", "Shared/payload"
-  ln_s "Shared/payload", "Payload", source_base: :relative
+  move "payload", "Shared/payload"
+  symlink "Shared/payload", "Payload", source_base: :relative
   set_permissions "Shared/payload", "0755"
 end
 
 uninstall_postflight_steps do
-  delete_keychain_certificate "Charles"
-  delete_keychain_certificate "NodeMITMProxyCA",
-                              matching_certificate: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"
+  delete_keychain_certificates "Charles"
+  delete_keychain_certificates "NodeMITMProxyCA",
+                               fingerprint_of: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"
 end
 ```
 
-A steps block may only contain supported step calls with literal arguments; it cannot call the wider cask DSL or arbitrary Ruby code. Each phase may define either its Ruby flight block or its matching steps block, not both.
+A steps block may only contain supported step calls with literal arguments; it cannot call the wider cask DSL or arbitrary Ruby code. During migration, a phase may define both forms. Its structured steps run before the matching Ruby flight block. Remove the Ruby block once all of its behaviour is represented by structured steps.
 
 #### File preparation steps
 
-Relative paths default to `staged_path` for `base:`, `source_base:` and `target_base:`. Symlink steps can use `uninstall: true` to remove the symlink during uninstall.
+Relative paths default to `staged_path` for `base:`, `source_base:` and `target_base:`. Symlink steps can use `remove_on_uninstall: true` to remove the symlink during uninstall.
 
 {% raw %}
 
-* `mkdir`: create one directory; example: `mkdir "Shared"`.
 * `mkdir_p`: create a directory and any missing parents; example: `mkdir_p "Shared"`.
 * `touch`: create or update a file timestamp; example: `touch "Shared/state"`.
 * `move`: move one file or directory; example: `move "payload", "Shared/payload"`.
-* `mv`: alias for `move`; example: `mv "payload", "Shared/payload"`.
-* `move_children`: move the contents of one directory into another; example: `move_children "payload", "Shared/payload"`.
+* `move_contents`: move the contents of one directory into another; example: `move_contents "payload", "Shared/payload"`.
 * `copy`: copy a file or, with `recursive: true`, a directory; example: `copy "payload", "Shared/payload"`.
 * `remove`: remove one or more paths; example: `remove ["Shared/old", "Shared/*.bak"], recursive: true`.
-* `inreplace`: replace text in a file; example: `inreplace "Shared/foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"`. Pass a regular expression as `before` for pattern matching.
+* `inreplace`: replace a string or regular expression in a file; example: `inreplace "Shared/foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"`.
 * `symlink`: create a symlink; example: `symlink "Shared/payload", "Payload", source_base: :relative`.
-* `ln_s`: alias for `symlink`; example: `ln_s "Shared/payload", "Payload", source_base: :relative`.
-* `ln_sf`: create or replace a symlink; example: `ln_sf "Shared/payload", "Payload", source_base: :relative, uninstall: true`.
-* `write`: write literal content to a file unless it already exists; example: `write "Shared/foo.conf", "key = value"`. Pass `overwrite: true` to always replace the file. A trailing newline is appended unless the content already ends with one.
-* `delete_keychain_certificate`: delete macOS keychain certificates whose common name matches the argument; example: `delete_keychain_certificate "Charles"`. Pass `matching_certificate:` with a local certificate path to delete only the matching SHA-256 fingerprint; example:
-  `delete_keychain_certificate "NodeMITMProxyCA", matching_certificate: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"`.
+* `write_file`: atomically write exact literal content, replacing an existing file; example: `write_file "Shared/foo.conf", "key = value\n"`.
+* `delete_keychain_certificates`: delete macOS keychain certificates whose common name matches the argument; example: `delete_keychain_certificates "Charles"`. Pass `fingerprint_of:` with a local certificate path to delete only the matching SHA-256 fingerprint; example:
+  `delete_keychain_certificates "NodeMITMProxyCA", fingerprint_of: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"`.
 * `set_permissions`: recursively change existing path permissions with `chmod`; example: `set_permissions "Shared/payload", "0755"`.
 * `set_ownership`: recursively change existing path ownership with `sudo chown`; example: `set_ownership "Shared/payload", user: "root", group: "wheel"`. Missing paths are ignored. When `user:` is omitted, the current user is used. When `group:` is omitted, `staff` is used.
 * `run`: run one executable with literal arguments; example: `run "Example.app/Contents/MacOS/helper", args: ["--repair"], base: :appdir`.
-* `terminate_process`: terminate a process by name; example: `terminate_process "Example", must_succeed: false`. It supports retries, `notices:` shown before the first attempt and a `failure_message:` warning.
+* `terminate_process`: terminate a process by name; example: `terminate_process "Example"`. It supports `match: :full`, a total `attempts:` count, `notices:` shown before the first attempt and a `failure_message:` warning. Failure is ignored by default; pass `must_succeed: true` when it should abort.
 
-File mutation and command steps accept `if_exists:` and `unless_exists:` guards where supported. `copy`, `move` and symlink steps accept `source_glob: true`; path collections used by `remove`, `set_permissions` and `set_ownership` expand globs automatically. Give related guarded `mkdir`, `mkdir_p` and `run` steps the same `guard_group:` to evaluate their guards once for the group. Symlink removal can additionally match the serialised source during uninstall, while `remove` can restrict removal with `symlink_target_contains:` or `content_contains:`.
+`move` and `copy` replace an existing target by default, matching the corresponding file helpers; pass `overwrite: false` to reject replacement. `symlink` preserves an existing target by default, so pass `overwrite: true` when replacement is intentional. `copy`, `move` and symlink steps accept `source_glob: true`; path collections used by `remove`, `set_permissions` and `set_ownership` expand globs automatically. Symlink removal matches the serialised source during uninstall, while `remove` can restrict removal with `symlink_target_contains:` or `content_contains:` and accepts `sudo: true` or `sudo: :if_needed`.
 
-`run` does not evaluate a shell command string. It supports a literal `environment:`, `input_path:`, `output_path:`, `working_directory:`, `sudo:`, platform selection with `on:` and standard-error suppression with `print_stderr: false`.
+Use `if_path_exists`, `unless_path_exists`, `on_macos` and `on_linux` blocks to guard one or more steps. A condition is evaluated once when its scope begins, so related steps make the same decision. Use `unless_path_exists` around `write_file` when an existing file must be preserved.
 
-Content, replacements, command arguments and command environments may use fixed install-time tokens. These include `{{HOMEBREW_BREW_FILE}}`, `{{HOMEBREW_CELLAR}}`, `{{HOMEBREW_PREFIX}}`, `{{name}}`, `{{user}}`, `{{staged_path}}`, `{{appdir}}`, `{{caskroom_path}}`, `{{temp}}`, `{{version}}`, `{{version.major}}` and `{{version.major_minor}}`. Any other `{{...}}` is left verbatim.
+`run` does not evaluate a shell command string. It supports a literal `env:`, `stdin_path:`, `stdout_path:`, `chdir:` and `sudo:`. Standard output is hidden by default and standard error is printed; use `print_stdout: true` or `print_stderr: false` to change that behaviour.
+
+Content, replacements, command arguments and command environments may use fixed install-time tokens. These include `{{HOMEBREW_BREW_FILE}}`, `{{HOMEBREW_CELLAR}}`, `{{HOMEBREW_PREFIX}}`, `{{token}}`, `{{user}}`, `{{staged_path}}`, `{{appdir}}`, `{{caskroom_path}}`, `{{temp}}`, `{{version}}`, `{{version.major}}` and `{{version.major_minor}}`. Any other `{{...}}` is left verbatim.
 
 {% endraw %}
 
