@@ -1626,6 +1626,11 @@ on_request: installed_on_request?, options:)
 
     keg = Keg.new(formula.prefix)
     skip_linkage = formula.bottle_specification.skip_relocation?(tab:)
+    # Homebrew doesn't download bottle manifests from 3rd-party domains,
+    # including user-specified preferred homebrew-bottle mirror sites.
+    # Until Homebrew/brew#12759 has been properly fixed,
+    # this can be worked around by forcing relocation upon manifests missing.
+    skip_linkage = false if tab.changed_files.nil?
     keg.replace_placeholders_with_locations(tab.changed_files, skip_linkage:)
 
     cellar = formula.bottle_specification.tag_to_cellar(Utils::Bottles.tag)
