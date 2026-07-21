@@ -7,13 +7,14 @@ module RuboCop
       FILE_PREPARATION_STEP_METHODS =
         [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :move_contents, :copy, :remove, :inreplace, :symlink,
          :ln_s, :ln_sf].freeze
-      LINK_STEP_METHODS = [:link_dir, :link_children].freeze
-      CONFIG_WRITE_STEP_METHODS = [:write].freeze
+      LINK_STEP_METHODS = [:link_dir, :link_children, :symlink_tree, :symlink_children].freeze
+      CONFIG_WRITE_STEP_METHODS = [:write, :write_file].freeze
       SERVICE_DATA_STEP_METHODS = [:init_data_dir].freeze
       REBUILD_ACTION_STEP_METHODS =
-        [:compile_gsettings_schemas, :gio_querymodules, :gdk_pixbuf_query_loaders, :gtk_update_icon_cache,
+        [:compile_gsettings_schemas, :gio_querymodules, :gdk_pixbuf_query_loaders, :update_gdk_pixbuf_loaders_cache,
+         :gtk_update_icon_cache, :update_gtk_icon_cache,
          :update_mime_database, :update_desktop_database].freeze
-      KEYCHAIN_STEP_METHODS = [:delete_keychain_certificate].freeze
+      KEYCHAIN_STEP_METHODS = [:delete_keychain_certificate, :delete_keychain_certificates].freeze
       PERMISSION_STEP_METHODS = [:set_permissions, :set_ownership].freeze
       COMMAND_STEP_METHODS = [:run, :terminate_process].freeze
       NOTICE_STEP_METHODS = [:warn].freeze
