@@ -1105,6 +1105,7 @@ Use the named actions below for formula families that share post-install algorit
 
 * `configure_gcc_runtime`: generate the Linux GCC runtime links and specs.
 * `install_compressed_executable`: unpack and install a gzipped executable.
+* `install_glibc_locales`: generate requested glibc locales and timezone links.
 
 #### Service data directory steps
 
