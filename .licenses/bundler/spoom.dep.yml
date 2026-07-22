@@ -1,6 +1,6 @@
 ---
 name: spoom
-version: 1.8.3
+version: 1.8.4
 type: bundler
 summary: Useful tools for Sorbet enthusiasts.
 homepage: https://github.com/Shopify/spoom
