@@ -2550,6 +2550,18 @@ With no arguments, all installed formulae are checked.
 : Check formulae listed in a Brewfile. Defaults to `./Brewfile`; use
   `--brewfile=`*`path`* to specify another.
 
+`--fix-available`
+
+: Only report vulnerabilities that have a fix available. Note that this may
+  exclude vulnerabilities with fixes available if we cannot determine that the
+  fix is included in the version under consideration.
+
+`--no-fix-available`
+
+: Only report vulnerabilities that do not have a fix available. Note that this
+  may include vulnerabilities with fixes available if we cannot determine that
+  the fix is included in the version under consideration.
+
 `-s`, `--severity`
 
 : Only report findings at or above: `low`, `medium`, `high`, `critical`.

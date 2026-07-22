@@ -2914,9 +2914,11 @@ _brew_vulns() {
     '--brewfile[Check formulae listed in a Brewfile. Defaults to `./Brewfile`; use `--brewfile=`path to specify another]' \
     '--debug[Display any debugging information]' \
     '--deps[Also check the dependencies of named formulae]' \
+    '(--no-fix-available)--fix-available[Only report vulnerabilities that have a fix available. Note that this may exclude vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration]' \
     '--help[Show this message]' \
     '--json[Output JSON]' \
     '--max-summary[Truncate summaries to n characters (default 60, 0 for no limit)]' \
+    '(--fix-available)--no-fix-available[Only report vulnerabilities that do not have a fix available. Note that this may include vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration]' \
     '--no-ignore-patches[Report vulnerabilities even when a formula patch resolves them]' \
     '--quiet[Make some output more quiet]' \
     '--severity[Only report findings at or above: `low`, `medium`, `high`, `critical`]' \

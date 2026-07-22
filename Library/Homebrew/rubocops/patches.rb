@@ -143,13 +143,14 @@ module RuboCop
         def resolves_problems(node)
           unless node.str_type?
             offending_node(node)
-            problem "`resolves` should be passed identifier strings (CVE/GHSA id or issue URL)"
+            problem "`resolves` should be passed identifier strings (CVE/GHSA/OSV id or issue URL)"
             return
           end
 
           value = string_content(node)
           return if value.match?(/\ACVE-\d{4}-\d{4,}\z/)
           return if value.match?(/\AGHSA(-[23456789cfghjmpqrvwx]{4}){3}\z/)
+          return if value.match?(/\AOSV-\d{4}-\d+\z/)
           return if value.match?(%r{\Ahttps?://})
 
           offending_node(node)
@@ -159,7 +160,7 @@ module RuboCop
               corrector.replace(node.source_range, corrected.inspect)
             end
           else
-            problem "`resolves` should be a CVE/GHSA identifier or issue URL, got: #{value.inspect}"
+            problem "`resolves` should be a CVE/GHSA/OSV identifier or issue URL, got: #{value.inspect}"
           end
         end
 

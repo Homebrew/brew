@@ -1610,6 +1610,12 @@ Report vulnerabilities even when a formula patch resolves them\.
 \fB\-\-brewfile\fP
 Check formulae listed in a Brewfile\. Defaults to \fB\&\./Brewfile\fP; use \fB\-\-brewfile=\fP\fIpath\fP to specify another\.
 .TP
+\fB\-\-fix\-available\fP
+Only report vulnerabilities that have a fix available\. Note that this may exclude vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration\.
+.TP
+\fB\-\-no\-fix\-available\fP
+Only report vulnerabilities that do not have a fix available\. Note that this may include vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration\.
+.TP
 \fB\-s\fP, \fB\-\-severity\fP
 Only report findings at or above: \fBlow\fP, \fBmedium\fP, \fBhigh\fP, \fBcritical\fP\&\.
 .TP

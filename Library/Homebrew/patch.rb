@@ -13,6 +13,7 @@ require "utils/popen"
 module Patch
   CVE_PATTERN = /CVE-?(\d{4})-(\d{4,})/i
   GHSA_PATTERN = /\AGHSA(-[23456789cfghjmpqrvwx]{4}){3}\z/
+  OSV_PATTERN = /\AOSV-\d{4}-\d+\z/
   # CycloneDX `pedigree.patches.type` values applicable to source diffs.
   # `monkey` is omitted: it describes runtime modification, which `patch do` cannot express.
   # Keep in sync with `PATCH_TYPES` in `Library/Homebrew/rubocops/patches.rb`.
@@ -35,7 +36,7 @@ module Patch
 
   sig { params(id: String).returns(String) }
   def self.resolves_type(id)
-    return "security" if id.match?(/\ACVE-\d{4}-\d{4,}\z/) || id.match?(GHSA_PATTERN)
+    return "security" if id.match?(/\ACVE-\d{4}-\d{4,}\z/) || id.match?(GHSA_PATTERN) || id.match?(OSV_PATTERN)
 
     "defect"
   end
