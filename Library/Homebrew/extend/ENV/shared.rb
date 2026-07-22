@@ -342,6 +342,7 @@ module SharedEnvExtension
   end
   private :warn_about_non_apple_gcc
 
+  # @api internal
   sig { void }
   def permit_arch_flags; end
 

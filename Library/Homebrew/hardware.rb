@@ -118,6 +118,7 @@ module Hardware
         end, T.nilable(Integer))
       end
 
+      # @api internal
       sig { returns(T::Boolean) }
       def sse4?
         RUBY_PLATFORM.to_s.include?("x86_64")

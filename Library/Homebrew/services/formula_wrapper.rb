@@ -144,19 +144,6 @@ module Homebrew
         formula.any_version_installed?
       end
 
-      # Returns `true` if the plist file exists.
-      sig { returns(T::Boolean) }
-      def plist?
-        return false unless installed?
-        return true if service_file.file?
-        return false unless formula.opt_prefix.exist?
-        return true if Keg.for(formula.opt_prefix).plist_installed?
-
-        false
-      rescue NotAKegError
-        false
-      end
-
       sig { void }
       def reset_cache!
         @status_output_success_type = nil

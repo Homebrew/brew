@@ -34,6 +34,7 @@ module Language
       end
     end
 
+    # @api internal
     sig {
       params(
         build: T.any(BuildOptions, Tab),
@@ -60,6 +61,7 @@ module Language
       ENV["PYTHONPATH"] = original_pythonpath
     end
 
+    # @api internal
     sig { params(python: T.any(String, Pathname)).returns(T::Boolean) }
     def self.reads_brewed_pth_files?(python)
       return false unless homebrew_site_packages(python).directory?
@@ -74,11 +76,13 @@ module Language
       end
     end
 
+    # @api internal
     sig { params(python: T.any(String, Pathname)).returns(Pathname) }
     def self.user_site_packages(python)
       Pathname.new(`#{python} -c "import site; print(site.getusersitepackages())"`.chomp)
     end
 
+    # @api internal
     sig { params(python: T.any(String, Pathname), path: T.any(String, Pathname)).returns(T::Boolean) }
     def self.in_sys_path?(python, path)
       script = <<~PYTHON
@@ -112,6 +116,7 @@ module Language
         )
       end
 
+      # @api internal
       sig { params(formula: Formula, use_python_from_path: T::Boolean).returns(Utils::Shebang::RewriteInfo) }
       def detected_python_shebang(formula = T.cast(self, Formula), use_python_from_path: false)
         python_path = if use_python_from_path

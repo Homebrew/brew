@@ -189,6 +189,7 @@ module Homebrew
       end
     end
 
+    # @api internal
     sig { params(value: T::Boolean).returns(T::Boolean) }
     def require_root(value = T.unsafe(nil))
       if value.nil?

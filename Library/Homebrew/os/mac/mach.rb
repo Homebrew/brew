@@ -166,16 +166,19 @@ module MachOShim
     arch == :universal
   end
 
+  # @api internal
   sig { returns(T::Boolean) }
   def i386?
     arch == :i386
   end
 
+  # @api internal
   sig { returns(T::Boolean) }
   def x86_64?
     arch == :x86_64
   end
 
+  # @api internal
   sig { returns(T::Boolean) }
   def ppc7400?
     arch == :ppc7400

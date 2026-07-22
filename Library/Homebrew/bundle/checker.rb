@@ -14,8 +14,6 @@ module Homebrew
         const :errors, T::Array[String]
       end
 
-      CheckStep = T.type_alias { Symbol }
-
       CORE_CHECKS = [
         :taps_to_tap,
         :casks_to_install,
@@ -54,6 +52,7 @@ module Homebrew
         CheckResult.new(work_to_be_done:, errors:)
       end
 
+      # @api internal
       sig {
         params(
           exit_on_first_error: T::Boolean,
@@ -65,6 +64,7 @@ module Homebrew
         extension_errors(:apps_to_install, exit_on_first_error:, no_upgrade:, verbose:)
       end
 
+      # @api internal
       sig {
         params(
           exit_on_first_error: T::Boolean,
@@ -93,6 +93,7 @@ module Homebrew
         package_type_errors(:tap, exit_on_first_error:, no_upgrade:, verbose:)
       end
 
+      # @api internal
       sig {
         params(
           exit_on_first_error: T::Boolean,

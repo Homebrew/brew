@@ -787,51 +787,6 @@ module GitHub
     output != "200"
   end
 
-  sig {
-    params(repository_name_with_owner: String, user: String, filter: String, from: T.nilable(String),
-           to: T.nilable(String), max: Integer, verbose: T::Boolean).returns(T::Array[String])
-  }
-  def self.repo_commits_for_user(repository_name_with_owner, user, filter, from, to, max, verbose)
-    return [] if Homebrew::EnvConfig.no_github_api?
-
-    params = ["#{filter}=#{user}"]
-    params << "since=#{DateTime.parse(from).iso8601}" if from.present?
-    params << "until=#{DateTime.parse(to).iso8601}" if to.present?
-
-    commits = []
-    API.paginate_rest("#{API_URL}/repos/#{repository_name_with_owner}/commits",
-                      additional_query_params: params.join("&")) do |result|
-      commits.concat(result.map { |c| c["sha"] })
-      if commits.length >= max
-        if verbose
-          opoo "#{user} exceeded #{max} #{repository_name_with_owner} commits as #{filter}, stopped counting!"
-        end
-        break
-      end
-    end
-    commits
-  rescue GitHub::API::GitRepositoryIsEmptyError
-    []
-  end
-
-  sig {
-    params(repository_name_with_owner: String, user: String, max: Integer, verbose: T::Boolean,
-           from: T.nilable(String), to: T.nilable(String)).returns(Integer)
-  }
-  def self.count_repository_commits(repository_name_with_owner, user, max:, verbose:, from: nil, to: nil)
-    odie "Cannot count commits as `$HOMEBREW_NO_GITHUB_API` is set!" if Homebrew::EnvConfig.no_github_api?
-
-    author_shas = repo_commits_for_user(repository_name_with_owner, user, "author", from, to, max, verbose)
-    committer_shas = repo_commits_for_user(repository_name_with_owner, user, "committer", from, to, max, verbose)
-    return 0 if author_shas.blank? && committer_shas.blank?
-
-    author_count = author_shas.count
-    # Only count commits where the author and committer are different.
-    committer_count = committer_shas.difference(author_shas).count
-
-    author_count + committer_count
-  end
-
   MAXIMUM_OPEN_PRS = 15
 
   sig { params(tap: T.nilable(Tap)).returns(T::Boolean) }
@@ -934,17 +889,6 @@ module GitHub
 
       full_name
     end
-  end
-
-  sig {
-    params(user: String, author: String, from: T.nilable(String), to: T.nilable(String))
-      .returns(T::Array[T::Hash[String, T.untyped]])
-  }
-  def self.search_merged_pull_requests_in_user_or_organisation(user, author, from:, to:)
-    search_issues("", is: "merged", user:, author:, from:, to:)
-  rescue GitHub::API::ValidationFailedError
-    opoo "Couldn't search GitHub for PRs authored by #{author}. Their profile might be private. Defaulting to 0."
-    []
   end
 
   sig {

@@ -33,6 +33,7 @@ module OS
         prepend_path "LD_RUN_PATH", formula.lib
       end
 
+      # @api internal
       sig { void }
       def libxml2
         append "CPPFLAGS", "-I#{::Formula["libxml2"].include/"libxml2"}"

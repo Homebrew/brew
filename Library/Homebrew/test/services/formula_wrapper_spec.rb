@@ -170,28 +170,6 @@ RSpec.describe Homebrew::Services::FormulaWrapper, :needs_daemon_manager do
     end
   end
 
-  describe "#plist?" do
-    it "false if not installed" do
-      allow(service).to receive(:installed?).and_return(false)
-      expect(service.plist?).to be(false)
-    end
-
-    it "true if installed and file" do
-      tempfile = File.new("/tmp/foo", File::CREAT)
-      allow(service).to receive_messages(installed?: true, service_file: tempfile_path = Pathname.new(tempfile))
-      expect(service.plist?).to be(true)
-      File.delete(tempfile_path)
-    end
-
-    it "false if opt_prefix missing" do
-      allow(service).to receive_messages(installed?:   true,
-                                         service_file: Pathname.new(File::NULL),
-                                         formula:      instance_double(Formula,
-                                                                       opt_prefix: Pathname.new("/dfslkfhjdsolshlk")))
-      expect(service.plist?).to be(false)
-    end
-  end
-
   describe "#owner" do
     it "root if file present" do
       allow(service).to receive(:boot_path_service_file_present?).and_return(true)

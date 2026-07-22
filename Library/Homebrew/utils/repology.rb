@@ -11,26 +11,6 @@ module Repology
   HOMEBREW_CORE = "homebrew"
   HOMEBREW_CASK = "homebrew_casks"
 
-  sig { params(last_package_in_response: T.nilable(String), repository: String).returns(T::Hash[String, T.untyped]) }
-  def self.query_api(last_package_in_response = "", repository:)
-    last_package_in_response += "/" if last_package_in_response.present?
-    url = "https://repology.org/api/v1/projects/#{last_package_in_response}?inrepo=#{repository}&outdated=1"
-
-    result = Utils::Curl.curl_output(
-      "--silent", url.to_s,
-      use_homebrew_curl: !Utils::Curl.curl_supports_tls13?
-    )
-    JSON.parse(result.stdout)
-  rescue
-    if Homebrew::EnvConfig.developer?
-      $stderr.puts result&.stderr
-    else
-      odebug result&.stderr.to_s
-    end
-
-    raise
-  end
-
   sig { params(name: String, repository: String).returns(T.nilable(T::Hash[String, T.untyped])) }
   def self.single_package_query(name, repository:)
     url = "https://repology.org/api/v1/project/#{name}"

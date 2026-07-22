@@ -147,6 +147,7 @@ module Superenv
     # a - apply fix for apr-1-config path
   end
 
+  # @api internal
   sig { void }
   def llvm_clang
     super
@@ -376,6 +377,7 @@ module Superenv
     append_to_cccfg "d"
   end
 
+  # @api internal
   sig { void }
   def cxx11
     append_to_cccfg "x"
@@ -397,6 +399,7 @@ module Superenv
     append_to_cccfg "O"
   end
 
+  # @api internal
   # This is an exception where we want to use this method name format.
   # rubocop: disable Naming/MethodName
   sig { params(block: T.nilable(T.proc.void)).void }
@@ -408,6 +411,7 @@ module Superenv
     end
   end
 
+  # @api internal
   sig { params(block: T.nilable(T.proc.void)).void }
   def O1(&block)
     if block
@@ -417,6 +421,7 @@ module Superenv
     end
   end
 
+  # @api internal
   sig { params(block: T.nilable(T.proc.void)).void }
   def O3(&block)
     if block
