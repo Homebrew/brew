@@ -36,16 +36,14 @@ module RuboCop
 
           return if formula_tap != "homebrew-core"
 
+          github_pattern = %r{^https://github\.com/[\w-]+/[\w.-]+/(.*)$}
           # Check for binary URLs
           audit_urls(urls, /(darwin|macos|osx)/i) do |match, url|
             next if T.must(@formula_name).include?(match.to_s.downcase)
+            next if url.match?(/.(patch|diff)(\?full_index=1)?$/)
+            next if url.match(github_pattern)&.[](1)&.then { !it.include?(match.to_s) }
             next if tap_style_exception? :not_a_binary_url_prefix_allowlist
             next if tap_style_exception? :binary_bootstrap_formula_urls_allowlist
-
-            path = URI.parse(url).path || ""
-            filename = File.basename(path)
-            next if filename.present? && !filename.include?(match.to_s)
-            next if %w[.patch .diff].include?(File.extname(filename))
 
             problem "#{url} looks like a binary package, not a source archive; " \
                     "homebrew/core is source-only."
