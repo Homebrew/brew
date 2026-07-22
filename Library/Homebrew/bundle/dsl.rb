@@ -37,6 +37,7 @@ module Homebrew
       sig { returns(T::Array[Entry]) }
       attr_reader :entries
 
+      # @api internal
       sig { returns(T::Hash[Symbol, T.untyped]) }
       attr_reader :cask_arguments
 

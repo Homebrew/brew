@@ -28,21 +28,25 @@ module Hardware
         sysctl_bool!("hw.optional.avx1_0")
       end
 
+      # @api internal
       sig { returns(T::Boolean) }
       def avx2?
         sysctl_bool!("hw.optional.avx2_0")
       end
 
+      # @api internal
       sig { returns(T::Boolean) }
       def sse3?
         sysctl_bool!("hw.optional.sse3")
       end
 
+      # @api internal
       sig { returns(T::Boolean) }
       def ssse3?
         sysctl_bool!("hw.optional.supplementalsse3")
       end
 
+      # @api internal
       sig { returns(T::Boolean) }
       def sse4_2?
         sysctl_bool!("hw.optional.sse4_2")

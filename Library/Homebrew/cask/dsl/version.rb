@@ -85,6 +85,7 @@ module Cask
         raw_version.to_s.scan(INVALID_CHARACTERS)
       end
 
+      # @api internal
       sig { returns(T::Boolean) }
       def unstable?
         return false if latest?

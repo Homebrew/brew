@@ -12,13 +12,6 @@ class FormulaInfo
     @info = info
   end
 
-  sig { returns(T::Array[String]) }
-  def bottle_tags
-    return [] unless info["bottle"]["stable"]
-
-    info["bottle"]["stable"]["files"].keys
-  end
-
   sig { params(spec_type: Symbol).returns(Version) }
   def version(spec_type)
     version_str = info["versions"][spec_type.to_s]

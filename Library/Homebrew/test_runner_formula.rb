@@ -23,11 +23,13 @@ class TestRunnerFormula
     freeze
   end
 
+  # @api internal
   sig { returns(T::Boolean) }
   def macos_compatible?
     formula.supports_macos?
   end
 
+  # @api internal
   sig { returns(T::Boolean) }
   def linux_compatible?
     formula.supports_linux?

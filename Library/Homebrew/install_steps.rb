@@ -112,6 +112,7 @@ module Homebrew
         dsl.steps
       end
 
+      # @api internal
       sig {
         params(
           path:  ::T.any(::String, ::Pathname),
@@ -123,6 +124,7 @@ module Homebrew
         with_guard(path_spec(path, base:, default_base: @default_base).merge("condition" => "if_exists"), &block)
       end
 
+      # @api internal
       sig {
         params(
           path:  ::T.any(::String, ::Pathname),
@@ -139,6 +141,7 @@ module Homebrew
         with_guard({ "condition" => "on", "value" => "macos" }, &block)
       end
 
+      # @api internal
       sig { params(block: ::T.proc.void).void }
       def on_linux(&block)
         with_guard({ "condition" => "on", "value" => "linux" }, &block)
@@ -265,6 +268,7 @@ module Homebrew
                  "target" => path_spec(target, base: target_base, default_base: @default_target_base))
       end
 
+      # @api internal
       sig {
         params(
           source:      ::T.any(::String, ::Pathname),
@@ -279,6 +283,7 @@ module Homebrew
                  "target" => path_spec(target, base: target_base, default_base: @default_target_base))
       end
 
+      # @api internal
       sig {
         params(
           source:      ::T.any(::String, ::Pathname),
@@ -697,6 +702,7 @@ module Homebrew
         paths.map { |path| path_spec(path, base:, default_base:) }
       end
 
+      # @api internal
       sig {
         params(
           path:         ::T.nilable(::T.any(::String, ::Pathname)),

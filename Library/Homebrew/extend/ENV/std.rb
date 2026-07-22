@@ -140,6 +140,7 @@ module Stdenv
     set_cpu_cflags
   end
 
+  # @api internal
   sig { void }
   def cxx11
     append "CXX", "-std=c++11"
