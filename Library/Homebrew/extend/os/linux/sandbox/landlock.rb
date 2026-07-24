@@ -337,10 +337,27 @@ class Sandbox
         pty_access = ACCESS_FS_WRITE_FILE
         pty_access |= ACCESS_FS_IOCTL_DEV if abi >= 5
         pty_access |= ACCESS_FS_READ_FILE if @deny_read
-        ["/dev/ptmx", "/dev/pts"].each do |path|
+
+        # `/dev/full` is Linux's standard ENOSPC test device. Opening it with
+        # `fopen(..., "w")` also requires Landlock's truncate right:
+        # https://github.com/torvalds/linux/blob/master/drivers/char/mem.c
+        # POSIX shared memory and message queues use `/dev/shm` and
+        # `/dev/mqueue`. These grants retain normal kernel permissions but do
+        # not provide Bubblewrap's private IPC namespace:
+        # https://github.com/bminor/glibc/blob/master/sysdeps/posix/shm-directory.c
+        # https://www.kernel.org/doc/html/latest/filesystems/mqueue.html
+        device_path_rules = T.let({
+          "/dev/full"   => FILE_WRITE_ACCESS_FS,
+          "/dev/mqueue" => allowed_write_access_fs,
+          "/dev/ptmx"   => pty_access,
+          "/dev/pts"    => pty_access,
+          "/dev/shm"    => allowed_write_access_fs,
+          "/dev/tty"    => pty_access,
+        }, T::Hash[String, Integer])
+        device_path_rules.each do |path, allowed_access|
           next unless File.exist?(path)
 
-          add_path_rule(ruleset_fd, path, pty_access)
+          add_path_rule(ruleset_fd, path, allowed_access)
         end
 
         error_pipe_path = @error_pipe_path

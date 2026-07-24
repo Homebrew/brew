@@ -451,9 +451,13 @@ RSpec.describe Sandbox, :needs_linux do
     end
   end
 
-  describe "#run" do
+  describe "#run with Bubblewrap" do
+    around do |example|
+      with_env(HOMEBREW_SANDBOX_LINUX_LANDLOCK: nil) { example.run }
+    end
+
     before do
-      skip "Sandbox not implemented." if !ENV["CI"] && !described_class.available?
+      skip "Sandbox not available." unless described_class.available?
     end
 
     it "allows writing to an allowed path" do
@@ -504,6 +508,38 @@ RSpec.describe Sandbox, :needs_linux do
 
       expect { sandbox.run "/bin/sh", "-c", 'exec "$1"', "brew-test", executable }
         .to raise_error(ErrorDuringExecution)
+    end
+  end
+
+  describe "#run with Landlock" do
+    it "allows standard devices and shared memory" do
+      skip "Landlock not available." unless Sandbox::Landlock.available?
+
+      with_env(HOMEBREW_SANDBOX_LINUX_LANDLOCK: "1") do
+        landlock_sandbox = described_class.new
+        landlock_sandbox.run RUBY_PATH, "-rio/console", "-e", <<~'RUBY'
+          begin
+            File.open("/dev/tty", "r+") { |tty| tty.winsize }
+          rescue Errno::ENXIO, Errno::ENOENT, Errno::EACCES, Errno::EPERM
+            nil
+          end
+
+          if File.exist?("/dev/full")
+            begin
+              File.write("/dev/full", "test")
+              raise "/dev/full accepted a write"
+            rescue Errno::ENOSPC
+              nil
+            end
+          end
+
+          if Dir.exist?("/dev/shm")
+            path = "/dev/shm/homebrew-landlock-#{Process.pid}"
+            File.write(path, "test")
+            File.unlink(path)
+          end
+        RUBY
+      end
     end
   end
 end
