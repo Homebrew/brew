@@ -562,6 +562,94 @@ RSpec.describe Homebrew::Vulns::Scanner do
         expect(queried).to eq [{ repo_url: "https://github.com/nektos/act", version: "v0.2.84" }]
         expect(results.outdated_without_sbom).to eq ["act"]
       end
+
+      it "filters out vulnerabilities that do not have a fix available when only_fixed is true" do
+        no_fix_vuln = osv_record("CVE-NO-FIX", "affected" => [{
+          "ranges" => [{
+            "type"   => "SEMVER",
+            "events" => [{ "introduced" => "0" }],
+          }],
+        }])
+        with_fix_vuln = osv_record("CVE-WITH-FIX", "affected" => [{
+          "ranges" => [{
+            "type"   => "SEMVER",
+            "events" => [{ "introduced" => "0" }, { "fixed" => "1.2.3" }],
+          }],
+        }])
+
+        allow(Homebrew::Vulns::OSV).to receive(:query_batch)
+          .and_return([[{ "id" => "CVE-NO-FIX" }, { "id" => "CVE-WITH-FIX" }]])
+        allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-NO-FIX").and_return(no_fix_vuln)
+        allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-WITH-FIX").and_return(with_fix_vuln)
+
+        results = described_class.new([act], only_fixed: true).scan
+
+        expect(results.findings.first.open.map(&:id)).to eq ["CVE-WITH-FIX"]
+      end
+
+      it "filters out vulnerabilities that do have a fix available when except_fixed is true" do
+        no_fix_vuln = osv_record("CVE-NO-FIX", "affected" => [{
+          "ranges" => [{
+            "type"   => "SEMVER",
+            "events" => [{ "introduced" => "0" }],
+          }],
+        }])
+        with_fix_vuln = osv_record("CVE-WITH-FIX", "affected" => [{
+          "ranges" => [{
+            "type"   => "SEMVER",
+            "events" => [{ "introduced" => "0" }, { "fixed" => "1.2.3" }],
+          }],
+        }])
+
+        allow(Homebrew::Vulns::OSV).to receive(:query_batch)
+          .and_return([[{ "id" => "CVE-NO-FIX" }, { "id" => "CVE-WITH-FIX" }]])
+        allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-NO-FIX").and_return(no_fix_vuln)
+        allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-WITH-FIX").and_return(with_fix_vuln)
+
+        results = described_class.new([act], except_fixed: true).scan
+
+        expect(results.findings.first.open.map(&:id)).to eq ["CVE-NO-FIX"]
+      end
+
+      it "filters out vulnerabilities that are matched in an open-ended interval when only_fixed is true" do
+        reopened_vuln = osv_record("CVE-REOPENED", "affected" => [{
+          "ranges" => [{
+            "type"   => "SEMVER",
+            "events" => [
+              { "introduced" => "0" },
+              { "fixed" => "0.2.80" },
+              { "introduced" => "0.2.83" },
+            ],
+          }],
+        }])
+
+        allow(Homebrew::Vulns::OSV).to receive(:query_batch).and_return([[{ "id" => "CVE-REOPENED" }]])
+        allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-REOPENED").and_return(reopened_vuln)
+
+        results = described_class.new([act], only_fixed: true).scan
+
+        expect(results.findings).to be_empty
+      end
+
+      it "treats a reopened GIT range with no closing fixed event as no fix available" do
+        reopened_git_vuln = osv_record("CVE-GIT-REOPENED", "affected" => [{
+          "ranges" => [{
+            "type"   => "GIT",
+            "events" => [
+              { "introduced" => "abc1234" },
+              { "fixed" => "def5678" },
+              { "introduced" => "ghi9012" },
+            ],
+          }],
+        }])
+
+        allow(Homebrew::Vulns::OSV).to receive(:query_batch).and_return([[{ "id" => "CVE-GIT-REOPENED" }]])
+        allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-GIT-REOPENED").and_return(reopened_git_vuln)
+
+        results = described_class.new([act], only_fixed: true).scan
+
+        expect(results.findings).to be_empty
+      end
     end
   end
 end

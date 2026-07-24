@@ -147,9 +147,10 @@ RSpec.describe Patch do
   end
 
   describe ".resolves_type" do
-    it "classifies CVE and GHSA identifiers as security and everything else as defect" do
+    it "classifies CVE, GHSA and OSV identifiers as security and everything else as defect" do
       expect(described_class.resolves_type("CVE-2024-1234")).to eq("security")
       expect(described_class.resolves_type("GHSA-xr7r-f8xq-vfvv")).to eq("security")
+      expect(described_class.resolves_type("OSV-2023-298")).to eq("security")
       expect(described_class.resolves_type("https://github.com/foo/bar/issues/1")).to eq("defect")
     end
   end

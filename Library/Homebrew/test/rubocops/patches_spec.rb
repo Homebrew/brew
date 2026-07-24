@@ -454,14 +454,14 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
   end
 
   context "when auditing patch resolves" do
-    it "reports no offenses for CVE ids, GHSA ids and issue URLs" do
+    it "reports no offenses for CVE ids, GHSA ids, OSV ids and issue URLs" do
       expect_no_offenses(<<~RUBY)
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           patch do
             url "https://brew.sh/foo.diff"
             sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
-            resolves "CVE-2024-1234", "GHSA-xr7r-f8xq-vfvv", "https://github.com/foo/bar/issues/1"
+            resolves "CVE-2024-1234", "GHSA-xr7r-f8xq-vfvv", "OSV-2023-298", "https://github.com/foo/bar/issues/1"
           end
         end
       RUBY
@@ -500,7 +500,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
             url "https://brew.sh/foo.diff"
             sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
             resolves "issue-123"
-                     ^^^^^^^^^^^ FormulaAudit/Patches: `resolves` should be a CVE/GHSA identifier or issue URL, got: "issue-123"
+                     ^^^^^^^^^^^ FormulaAudit/Patches: `resolves` should be a CVE/GHSA/OSV identifier or issue URL, got: "issue-123"
           end
         end
       RUBY
@@ -514,7 +514,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Patches do
             url "https://brew.sh/foo.diff"
             sha256 "63376b8fdd6613a91976106d9376069274191860cd58f039b29ff16de1925621"
             resolves :CVE_2024_1234
-                     ^^^^^^^^^^^^^^ FormulaAudit/Patches: `resolves` should be passed identifier strings (CVE/GHSA id or issue URL)
+                     ^^^^^^^^^^^^^^ FormulaAudit/Patches: `resolves` should be passed identifier strings (CVE/GHSA/OSV id or issue URL)
           end
         end
       RUBY

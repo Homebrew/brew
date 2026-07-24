@@ -134,12 +134,15 @@ module Homebrew
       private_constant :SEVERITY_LEVELS
 
       sig {
-        params(formulae: T::Array[Formula], ignore_patches: T::Boolean, min_severity: T.nilable(Symbol)).void
+        params(formulae: T::Array[Formula], ignore_patches: T::Boolean, min_severity: T.nilable(Symbol),
+               only_fixed: T::Boolean, except_fixed: T::Boolean).void
       }
-      def initialize(formulae, ignore_patches: true, min_severity: nil)
+      def initialize(formulae, ignore_patches: true, min_severity: nil, only_fixed: false, except_fixed: false)
         @formulae = formulae
         @ignore_patches = ignore_patches
         @min_severity_level = T.let(min_severity ? SEVERITY_LEVELS.fetch(min_severity) : 0, Integer)
+        @only_fixed = only_fixed
+        @except_fixed = except_fixed
       end
 
       Target = Struct.new(:repo_url, :tag, :version, :from_installed_sbom, :current_recipe_applies,
@@ -165,6 +168,8 @@ module Homebrew
           vulns = fetch_vulnerabilities(ids)
                   .select { |v| v.affects_version?(target.tag) }
                   .select { |v| v.severity_level >= @min_severity_level }
+          vulns = vulns.select { |v| v.fix_available?(target.tag, target.repo_url) } if @only_fixed
+          vulns = vulns.reject { |v| v.fix_available?(target.tag, target.repo_url) } if @except_fixed
           next if vulns.empty?
 
           open, patched = partition_patched(formula, target, vulns)

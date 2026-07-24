@@ -157,6 +157,34 @@ RSpec.describe Homebrew::Cmd::Vulns do
       described_class.new(["--no-ignore-patches", "--json"]).run
     end
 
+    it "passes --fix-available to the scanner" do
+      expect(Homebrew::Vulns::Scanner).to receive(:new)
+        .with(anything, hash_including(only_fixed: true))
+        .and_return(
+          instance_double(Homebrew::Vulns::Scanner,
+                          scan: Homebrew::Vulns::Scanner::Results.new(findings: [], checked: 0, skipped: 0)),
+        )
+      described_class.new(["--fix-available", "--json"]).run
+    end
+
+    it "passes --no-fix-available to the scanner" do
+      expect(Homebrew::Vulns::Scanner).to receive(:new)
+        .with(anything, hash_including(except_fixed: true))
+        .and_return(
+          instance_double(Homebrew::Vulns::Scanner,
+                          scan: Homebrew::Vulns::Scanner::Results.new(findings: [], checked: 0, skipped: 0)),
+        )
+      described_class.new(["--no-fix-available", "--json"]).run
+    end
+
+    it "rejects passing both --fix-available and --no-fix-available" do
+      expect { described_class.new(["--fix-available", "--no-fix-available"]).run }
+        .to raise_error(
+          UsageError,
+          /only_fixed and except_fixed cannot be both true|conflicts|conflicts with|mutually exclusive/,
+        )
+    end
+
     context "with an installed keg from an untrusted tap" do
       let(:trusted_rack) { HOMEBREW_CELLAR/"act" }
       let(:untrusted_rack) { HOMEBREW_CELLAR/"foo" }

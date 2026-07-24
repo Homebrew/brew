@@ -18,6 +18,9 @@ class Homebrew::Cmd::Vulns::Args < Homebrew::CLI::Args
   def deps?; end
 
   sig { returns(T::Boolean) }
+  def fix_available?; end
+
+  sig { returns(T::Boolean) }
   def j?; end
 
   sig { returns(T::Boolean) }
@@ -28,6 +31,9 @@ class Homebrew::Cmd::Vulns::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def max_summary; end
+
+  sig { returns(T::Boolean) }
+  def no_fix_available?; end
 
   sig { returns(T::Boolean) }
   def no_ignore_patches?; end
