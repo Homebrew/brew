@@ -298,6 +298,7 @@ jobs:
         run: brew tests ${{ matrix.test-flags }}
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_SANDBOX_LINUX_LANDLOCK: 1
           # These cannot be queried at the macOS level on GitHub Actions.
           HOMEBREW_LANGUAGES: en-GB
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

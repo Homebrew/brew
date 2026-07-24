@@ -108,8 +108,12 @@ RSpec.describe Sandbox::Landlock do
 
     before do
       allow(File).to receive(:exist?).and_call_original
+      allow(File).to receive(:exist?).with("/dev/full").and_return(false)
+      allow(File).to receive(:exist?).with("/dev/mqueue").and_return(false)
       allow(File).to receive(:exist?).with("/dev/ptmx").and_return(true)
       allow(File).to receive(:exist?).with("/dev/pts").and_return(true)
+      allow(File).to receive(:exist?).with("/dev/shm").and_return(false)
+      allow(File).to receive(:exist?).with("/dev/tty").and_return(false)
     end
 
     it "rejects an ABI without complete write restrictions" do
@@ -225,18 +229,55 @@ RSpec.describe Sandbox::Landlock do
       landlock.apply!
     end
 
-    it "skips unavailable pseudo-terminal device paths" do
+    it "allows standard device and POSIX IPC paths" do
+      denied_dir = mktmpdir
+      sandbox.deny_read_path denied_dir
+      allow(landlock).to receive(:readable_paths).with([denied_dir]).and_return([])
       landlock.command(["true"], tmpdir.to_s)
 
-      allow(File).to receive(:exist?).with("/dev/ptmx").and_return(false)
-      allow(File).to receive(:exist?).with("/dev/pts").and_return(false)
+      allow(File).to receive(:exist?).with("/dev/full").and_return(true)
+      allow(File).to receive(:exist?).with("/dev/mqueue").and_return(true)
+      allow(File).to receive(:exist?).with("/dev/shm").and_return(true)
+      allow(File).to receive(:exist?).with("/dev/tty").and_return(true)
       allow(described_class).to receive_messages(abi_version: 10, landlock_create_ruleset: 17,
                                                  landlock_add_rule: 0, set_no_new_privileges: 0,
                                                  landlock_restrict_self: 0)
       allow(landlock).to receive(:open_path).and_return(18)
       allow(landlock).to receive(:close_file_descriptor)
+      {
+        "/dev/full"   => [16_386, 19],
+        "/dev/mqueue" => [32_754, 20],
+        "/dev/shm"    => [32_754, 21],
+        "/dev/tty"    => [32_774, 22],
+      }.each do |path, (access, file_descriptor)|
+        expect(landlock).to receive(:open_path).with(path).and_return(file_descriptor)
+        expect(described_class).to receive(:landlock_add_rule)
+          .with(17, 1, [access, file_descriptor].pack("Ql"), 0).and_return(0)
+      end
+
+      landlock.apply!
+    end
+
+    it "skips unavailable device and IPC paths" do
+      landlock.command(["true"], tmpdir.to_s)
+
+      allow(File).to receive(:exist?).with("/dev/full").and_return(false)
+      allow(File).to receive(:exist?).with("/dev/mqueue").and_return(false)
+      allow(File).to receive(:exist?).with("/dev/ptmx").and_return(false)
+      allow(File).to receive(:exist?).with("/dev/pts").and_return(false)
+      allow(File).to receive(:exist?).with("/dev/shm").and_return(false)
+      allow(File).to receive(:exist?).with("/dev/tty").and_return(false)
+      allow(described_class).to receive_messages(abi_version: 10, landlock_create_ruleset: 17,
+                                                 landlock_add_rule: 0, set_no_new_privileges: 0,
+                                                 landlock_restrict_self: 0)
+      allow(landlock).to receive(:open_path).and_return(18)
+      allow(landlock).to receive(:close_file_descriptor)
+      expect(landlock).not_to receive(:open_path).with("/dev/full")
+      expect(landlock).not_to receive(:open_path).with("/dev/mqueue")
       expect(landlock).not_to receive(:open_path).with("/dev/ptmx")
       expect(landlock).not_to receive(:open_path).with("/dev/pts")
+      expect(landlock).not_to receive(:open_path).with("/dev/shm")
+      expect(landlock).not_to receive(:open_path).with("/dev/tty")
 
       landlock.apply!
     end
