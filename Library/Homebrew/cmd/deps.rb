@@ -37,6 +37,8 @@ module Homebrew
                description: "Sort dependencies in topological order."
         switch "-1", "--direct", "--declared", "--1",
                description: "Show only the direct dependencies declared in the formula."
+        switch "--desc",
+               description: "Show description with each dependency."
         switch "--union",
                description: "Show the union of dependencies for multiple <formula>, instead of the intersection."
         switch "--full-name",
@@ -221,7 +223,11 @@ module Homebrew
           deps_combine_mode = args.union? ? DepsCombineMode::Union : DepsCombineMode::Intersection
           all_deps = deps_for_dependents(dependents, deps_combine_mode:, recursive:)
           condense_requirements(all_deps)
-          all_deps.map! { dep_display_name(it) }
+          if args.info?
+            all_deps.map! { dep_display_name_with_description(it) }
+          else
+            all_deps.map! { dep_display_name(it) }
+          end
           all_deps.uniq!
           all_deps.sort! unless args.topological?
           puts all_deps
@@ -297,6 +303,22 @@ module Homebrew
         str
       end
 
+      sig { params(dep: T.any(Requirement, Dependency)).returns(String) }
+      def dep_display_name_with_description(dep)
+        name = dep_display_name(dep)
+        return name unless dep.is_a?(Dependency)
+
+        begin
+          formula = Formulary.factory(dep.name)
+          description = formula.desc
+          return "#{name}: #{description}" if description.present?
+        rescue FormulaUnavailableError, Cask::CaskUnavailableError
+          # Fall through to return name without description
+        end
+
+        name
+      end
+
       sig {
         params(dependency: T.any(Formula, CaskDependent), recursive: T::Boolean)
           .returns(T::Array[T.any(Dependency, Requirement)])
@@ -343,7 +365,11 @@ module Homebrew
           deps = deps_for_dependent(dependent, recursive:)
           condense_requirements(deps)
           deps.sort_by!(&:name)
-          deps.map! { dep_display_name(it) }
+          if args.info?
+            deps.map! { dep_display_name_with_description(it) }
+          else
+            deps.map! { dep_display_name(it) }
+          end
           puts "#{dependent.full_name}: #{deps.join(" ")}"
         end
       end
@@ -431,7 +457,11 @@ module Homebrew
             "├──"
           end
 
-          display_s = "#{tree_lines} #{dep_display_name(dep)}"
+          display_s = if args.info?
+            "#{tree_lines} #{dep_display_name_with_description(dep)}"
+          else
+            "#{tree_lines} #{dep_display_name(dep)}"
+          end
 
           # Detect circular dependencies and consider them a failure if present.
           is_circular = deps_seen.fetch(dep.name, false)
