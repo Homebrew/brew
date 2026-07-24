@@ -585,6 +585,20 @@ class SimpleCov::Formatter::Base
   def stats_line(criterion, stat); end
 end
 
+class SimpleCov::Formatter::HTMLFormatter < ::SimpleCov::Formatter::Base
+  def format(result); end
+  def format_from_json(json_path, output_dir); end
+
+  private
+
+  def atomic_write(dest, content); end
+  def copy_static_assets(dest_dir = T.unsafe(nil)); end
+  def entry_point_filename; end
+  def public_dir; end
+end
+
+SimpleCov::Formatter::HTMLFormatter::DATA_FILENAME = T.let(T.unsafe(nil), String)
+
 class SimpleCov::Formatter::JSONFormatter < ::SimpleCov::Formatter::Base
   def format(result); end
 
