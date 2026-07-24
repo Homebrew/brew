@@ -13,6 +13,7 @@ RSpec.describe Homebrew::DevCmd::Release do
 
       allow(Homebrew::EnvConfig).to receive(:no_auto_update?).and_return(false)
       allow(GitHub).to receive_messages(
+        issues:                 [],
         get_latest_release:     { "tag_name" => "1.2.3" },
         generate_release_notes: { "body" => "Release notes" },
       )
@@ -30,6 +31,35 @@ RSpec.describe Homebrew::DevCmd::Release do
       expect { command.run }
         .to raise_error(SystemExit)
         .and output(/Run `brew update` before `brew release --force`\./).to_stderr
+    end
+
+    it "refuses to release when open release blockers exist" do
+      command = described_class.new([])
+
+      allow(Homebrew::EnvConfig).to receive(:no_auto_update?).and_return(false)
+      allow(GitHub).to receive(:issues)
+        .with(repo: "Homebrew/brew", state: "open", labels: "release blocker")
+        .and_return([{ "html_url" => "https://github.com/Homebrew/brew/issues/12345" }])
+
+      expect { command.run }
+        .to raise_error(SystemExit)
+        .and output(%r{issues/12345}).to_stderr
+    end
+
+    it "refuses to release when open major/minor release blockers exist for a major release" do
+      command = described_class.new(["--major"])
+
+      allow(Homebrew::EnvConfig).to receive(:no_auto_update?).and_return(false)
+      allow(GitHub).to receive(:issues)
+        .with(repo: "Homebrew/brew", state: "open", labels: "release blocker")
+        .and_return([])
+      allow(GitHub).to receive(:issues)
+        .with(repo: "Homebrew/brew", state: "open", labels: "major/minor release blocker")
+        .and_return([{ "html_url" => "https://github.com/Homebrew/brew/pull/54321" }])
+
+      expect { command.run }
+        .to raise_error(SystemExit)
+        .and output(%r{pull/54321}).to_stderr
     end
   end
 
