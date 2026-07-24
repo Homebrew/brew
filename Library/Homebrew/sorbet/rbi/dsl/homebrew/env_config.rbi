@@ -31,7 +31,7 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def ask?; end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(Proc) }
     def auto_update_secs; end
 
     sig { returns(T::Boolean) }
@@ -403,7 +403,7 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def no_verify_attestations?; end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(String) }
     def pip_index_url; end
 
     sig { returns(T::Boolean) }
@@ -430,7 +430,7 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def sorbet_runtime?; end
 
-    sig { returns(T.nilable(::String)) }
+    sig { returns(Proc) }
     def ssh_config_path; end
 
     sig { returns(T.nilable(::String)) }
