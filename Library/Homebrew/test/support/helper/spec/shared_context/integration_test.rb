@@ -103,7 +103,7 @@ module Test
               end
             end
             specs.flat_map(&:full_require_paths).each { |lib| ruby_args << "-I" << lib }
-            ruby_args << "-rsimplecov"
+            ruby_args << "-r#{HOMEBREW_LIBRARY_PATH}/test/support/helper/simplecov_start"
           end
           ruby_args << "-r#{HOMEBREW_LIBRARY_PATH}/test/support/helper/integration_mocks"
           ruby_args << "-e" << "$0 = ARGV.shift; load($0)"

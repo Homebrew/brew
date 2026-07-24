@@ -68,9 +68,9 @@ module Homebrew
             when Array
               match.first
             else
-              # :nocov:
+              # simplecov:disable
               T.absurd(match)
-              # :nocov:
+              # simplecov:enable
             end
           end.uniq
         end

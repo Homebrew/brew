@@ -4,6 +4,7 @@
 if ENV["HOMEBREW_TESTS_COVERAGE"]
   require "simplecov"
   require "simplecov-cobertura"
+  SimpleCov.start
 
   formatters = [
     SimpleCov::Formatter::HTMLFormatter,
