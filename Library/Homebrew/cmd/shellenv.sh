@@ -3,6 +3,7 @@
 # HOMEBREW_CELLAR and HOMEBREW_PREFIX are set by extend/ENV/super.rb
 # HOMEBREW_REPOSITORY is set by bin/brew
 # Leading colon in MANPATH prepends default man dirs to search path in Linux and macOS.
+# Trailing colon in INFOPATH appends the default info dirs to the search path.
 # Please do not submit PRs to remove it!
 # shellcheck disable=SC2154
 homebrew-shellenv() {
@@ -51,7 +52,7 @@ homebrew-shellenv() {
       echo "set --global --export HOMEBREW_REPOSITORY \"${HOMEBREW_REPOSITORY}\";"
       echo "fish_add_path --global --move --path \"${HOMEBREW_PREFIX}/bin\" \"${HOMEBREW_PREFIX}/sbin\";"
       echo "if test -n \"\$MANPATH[1]\"; set --global --export MANPATH '' \$MANPATH; end;"
-      echo "if not contains \"${HOMEBREW_PREFIX}/share/info\" \$INFOPATH; set --global --export INFOPATH \"${HOMEBREW_PREFIX}/share/info\" \$INFOPATH; end;"
+      echo "if not set --query INFOPATH; set INFOPATH ''; end; if not contains \"${HOMEBREW_PREFIX}/share/info\" \$INFOPATH; set --global --export INFOPATH \"${HOMEBREW_PREFIX}/share/info\" \$INFOPATH; end;"
       ;;
     csh | -csh | tcsh | -tcsh)
       echo "setenv HOMEBREW_PREFIX ${HOMEBREW_PREFIX};"
