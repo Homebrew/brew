@@ -1,6 +1,6 @@
 ---
 name: test-prof
-version: 1.6.1
+version: 1.6.2
 type: bundler
 summary: Ruby applications tests profiling tools
 homepage: http://github.com/test-prof/test-prof

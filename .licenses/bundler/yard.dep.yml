@@ -1,6 +1,6 @@
 ---
 name: yard
-version: 0.9.44
+version: 0.9.45
 type: bundler
 summary: Documentation tool for consistent and usable documentation in Ruby.
 homepage: https://yardoc.org

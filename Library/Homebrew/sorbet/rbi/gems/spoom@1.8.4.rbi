@@ -1039,6 +1039,7 @@ class Spoom::Deadcode::ERB < ::Erubi::Engine
   sig { override.params(indicator: T.untyped, code: T.untyped).void }
   def add_expression(indicator, code); end
 
+  sig { override.params(_: T.untyped).void }
   def add_postamble(_); end
 
   sig { override.params(text: T.untyped).void }
@@ -2759,6 +2760,17 @@ class Spoom::Sorbet::Errors::Error
   def to_s; end
 end
 
+class Spoom::Sorbet::Errors::ParseResult
+  sig { params(errors: T::Array[::Spoom::Sorbet::Errors::Error], warnings: T::Array[::String]).void }
+  def initialize(errors, warnings); end
+
+  sig { returns(T::Array[::Spoom::Sorbet::Errors::Error]) }
+  def errors; end
+
+  sig { returns(T::Array[::String]) }
+  def warnings; end
+end
+
 class Spoom::Sorbet::Errors::Parser
   sig { params(error_url_base: ::String).void }
   def initialize(error_url_base: T.unsafe(nil)); end
@@ -2766,10 +2778,16 @@ class Spoom::Sorbet::Errors::Parser
   sig { params(output: ::String).returns(T::Array[::Spoom::Sorbet::Errors::Error]) }
   def parse(output); end
 
+  sig { params(output: ::String).returns(::Spoom::Sorbet::Errors::ParseResult) }
+  def parse_result(output); end
+
   private
 
   sig { params(line: ::String).void }
   def append_error(line); end
+
+  sig { params(warning: ::String).void }
+  def append_warning(warning); end
 
   sig { void }
   def close_error; end
@@ -2784,6 +2802,9 @@ class Spoom::Sorbet::Errors::Parser
   def open_error(error); end
 
   class << self
+    sig { params(output: ::String, error_url_base: ::String).returns(::Spoom::Sorbet::Errors::ParseResult) }
+    def parse_result(output, error_url_base: T.unsafe(nil)); end
+
     sig { params(output: ::String, error_url_base: ::String).returns(T::Array[::Spoom::Sorbet::Errors::Error]) }
     def parse_string(output, error_url_base: T.unsafe(nil)); end
   end
@@ -2935,13 +2956,14 @@ module Spoom::Sorbet::Translate
         ruby_contents: ::String,
         file: ::String,
         positional_names: T::Boolean,
+        preserve_multiline_signatures: T::Boolean,
         max_line_length: T.nilable(::Integer),
         translate_generics: T::Boolean,
         translate_helpers: T::Boolean,
         translate_abstract_methods: T::Boolean
       ).returns(::String)
     end
-    def sorbet_sigs_to_rbs_comments(ruby_contents, file:, positional_names: T.unsafe(nil), max_line_length: T.unsafe(nil), translate_generics: T.unsafe(nil), translate_helpers: T.unsafe(nil), translate_abstract_methods: T.unsafe(nil)); end
+    def sorbet_sigs_to_rbs_comments(ruby_contents, file:, positional_names: T.unsafe(nil), preserve_multiline_signatures: T.unsafe(nil), max_line_length: T.unsafe(nil), translate_generics: T.unsafe(nil), translate_helpers: T.unsafe(nil), translate_abstract_methods: T.unsafe(nil)); end
 
     sig { params(ruby_contents: ::String, file: ::String).returns(::String) }
     def strip_sorbet_sigs(ruby_contents, file:); end
@@ -3310,13 +3332,14 @@ class Spoom::Sorbet::Translate::SorbetSigsToRBSComments < ::Spoom::Sorbet::Trans
       ruby_contents: ::String,
       file: ::String,
       positional_names: T::Boolean,
+      preserve_multiline_signatures: T::Boolean,
       max_line_length: T.nilable(::Integer),
       translate_generics: T::Boolean,
       translate_helpers: T::Boolean,
       translate_abstract_methods: T::Boolean
     ).void
   end
-  def initialize(ruby_contents, file:, positional_names:, max_line_length: T.unsafe(nil), translate_generics: T.unsafe(nil), translate_helpers: T.unsafe(nil), translate_abstract_methods: T.unsafe(nil)); end
+  def initialize(ruby_contents, file:, positional_names:, preserve_multiline_signatures: T.unsafe(nil), max_line_length: T.unsafe(nil), translate_generics: T.unsafe(nil), translate_helpers: T.unsafe(nil), translate_abstract_methods: T.unsafe(nil)); end
 
   sig { override.params(node: ::Prism::CallNode).void }
   def visit_call_node(node); end
@@ -3361,8 +3384,14 @@ class Spoom::Sorbet::Translate::SorbetSigsToRBSComments < ::Spoom::Sorbet::Trans
   sig { void }
   def delete_extend_t_helpers; end
 
-  sig { params(indent: ::Integer, block: T.proc.params(arg0: ::RBI::RBSPrinter).void).returns(::String) }
-  def rbs_print(indent, &block); end
+  sig do
+    params(
+      indent: ::Integer,
+      preserve_multiline_signatures: T::Boolean,
+      block: T.proc.params(arg0: ::RBI::RBSPrinter).void
+    ).returns(::String)
+  end
+  def rbs_print(indent, preserve_multiline_signatures:, &block); end
 
   sig { params(node: ::Prism::CallNode).void }
   def visit_attr(node); end

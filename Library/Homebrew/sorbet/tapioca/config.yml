@@ -15,7 +15,6 @@ gem:
     # These aren't needed:
     - coderay
     - diff-lcs
-    - docile
     - hana
     - language_server-protocol
     - netrc
@@ -29,7 +28,6 @@ gem:
     - rubocop-performance
     - rubocop-sorbet
     - ruby-prof
-    - simplecov_json_formatter
     - simpleidn
     - unicode-display_width
     - unicode-emoji

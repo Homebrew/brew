@@ -1,6 +1,6 @@
 ---
 name: simplecov
-version: 0.22.0
+version: 1.0.1
 type: bundler
 summary: Code coverage for Ruby
 homepage: https://github.com/simplecov-ruby/simplecov
@@ -8,7 +8,7 @@ license: mit
 licenses:
 - sources: LICENSE
   text: |
-    Copyright (c) 2010-2017 Christoph Olszowka
+    Copyright (c) 2010-2026 Erik Berlin, Benjamin Fleischer, Akira Matsuda, Christoph Olszowka, Tobias Pfeiffer, David Rodríguez, and Xavier Shay
 
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the

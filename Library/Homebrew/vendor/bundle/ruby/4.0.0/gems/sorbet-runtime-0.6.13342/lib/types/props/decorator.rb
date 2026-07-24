@@ -591,10 +591,7 @@ class T::Props::Decorator
     @class.send(:define_method, force_fk_method) do |allow_direct_mutation: nil|
       loaded_foreign = send(fk_method, allow_direct_mutation: allow_direct_mutation)
       if !loaded_foreign
-        T::Configuration.hard_assert_handler(
-          'Failed to load foreign model',
-          storytime: {method: force_fk_method, class: self.class}
-        )
+        raise("Failed to load foreign model method=#{force_fk_method} class=#{self.class}")
       end
       loaded_foreign
     end

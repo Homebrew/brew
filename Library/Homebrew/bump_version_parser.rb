@@ -33,9 +33,9 @@ module Homebrew
       elsif version.is_a?(String)
         parse_cask_version(version)
       else
-        # :nocov:
+        # simplecov:disable
         T.absurd(version)
-        # :nocov:
+        # simplecov:enable
       end
     end
 
