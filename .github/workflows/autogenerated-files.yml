@@ -8,6 +8,11 @@ on:
       - completions/**
       - docs/Manpage.md
       - manpages/brew.1
+      - Library/Homebrew/cmd/**
+      - Library/Homebrew/dev-cmd/**
+      - Library/Homebrew/cli/parser.rb
+      - Library/Homebrew/completions.rb
+      - Library/Homebrew/env_config.rb
 
 permissions:
   contents: read
