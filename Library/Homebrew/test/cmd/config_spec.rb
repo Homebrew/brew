@@ -23,6 +23,7 @@ RSpec.describe Homebrew::Cmd::Config do
 
   it "prints HOMEBREW_CASK_OPTS_REQUIRE_SHA in env config output when set" do
     Homebrew.raise_deprecation_exceptions = false
+    ENV["HOMEBREW_USER_SET_VARS"] = "HOMEBREW_CASK_OPTS_REQUIRE_SHA"
     ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"] = "1"
     output = StringIO.new
 
@@ -35,10 +36,13 @@ RSpec.describe Homebrew::Cmd::Config do
 
   it "prints only environment variables with non-default values" do
     Homebrew::EnvConfig::ENVS.each_key { |env| ENV.delete(env.to_s) }
+    ENV["HOMEBREW_USER_SET_VARS"] = "HOMEBREW_API_AUTO_UPDATE_SECS HOMEBREW_BUNDLE_DESCRIBE " \
+                                    "HOMEBREW_CURL_RETRIES HOMEBREW_REQUIRE_TAP_TRUST"
     ENV["HOMEBREW_API_AUTO_UPDATE_SECS"] = "450"
     ENV["HOMEBREW_BUNDLE_DESCRIBE"] = "false"
     ENV["HOMEBREW_CURL_RETRIES"] = "4"
     ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+    ENV["HOMEBREW_EDITOR"] = "vim"
     output = StringIO.new
 
     SystemConfig.homebrew_env_config(output)

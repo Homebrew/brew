@@ -172,8 +172,10 @@ module Homebrew
             groups = [:devcmdrun, :developer]
           when :homebrew_env_config
             dimension_key = "env_config"
-            groups = [:env_config, :env_config_non_default]
-            additional_where += " AND env_config IS NOT NULL"
+            groups = [:env_config, :env_config_state]
+            # Events predating the user-set-aware `env_config_state` tag
+            # counted brew's own exports as configuration, so drop them.
+            additional_where += " AND env_config_state IS NOT NULL"
           when :homebrew_os_arch_ci
             dimension_key = "os_arch_ci"
             groups = [:os, :arch, :ci]
@@ -193,7 +195,6 @@ module Homebrew
           when :command_run_options
             dimension_key = "command_run_options"
             groups = [:command, :options, :devcmdrun, :developer]
-            additional_where += " AND ci = 'false'"
           when :test_bot_test
             dimension_key = "test_bot_test"
             groups = [:command, :passed, :arch, :os]
@@ -231,15 +232,22 @@ module Homebrew
           batches.each do |batch|
             batch.to_pylist.each do |record|
               if category == :homebrew_env_config
+                state = record["env_config_state"]
+                env_config_name = record["env_config"].to_s
+                # Drop malformed events from non-standard clients and events
+                # for variables Homebrew no longer supports.
+                next if %w[unset default non_default].exclude?(state)
+                next unless Homebrew::EnvConfig::ENVS.key?(env_config_name.to_sym)
+
                 count = record["count"]
-                non_default = record["env_config_non_default"] == "true"
                 json[:total_count] += count
                 json[:items] << {
                   number: nil,
-                  dimension_key => record["env_config"],
+                  dimension_key => env_config_name,
                   count:,
-                  non_default_count: non_default ? count : 0,
-                  default_count:     non_default ? 0 : count,
+                  non_default_count: (state == "non_default") ? count : 0,
+                  set_default_count: (state == "default") ? count : 0,
+                  unset_count:       (state == "unset") ? count : 0,
                 }
                 next
               end
@@ -326,7 +334,8 @@ module Homebrew
               deduped_items[key][:count] += item[:count]
               if category == :homebrew_env_config
                 deduped_items[key][:non_default_count] += item[:non_default_count]
-                deduped_items[key][:default_count] += item[:default_count]
+                deduped_items[key][:set_default_count] += item[:set_default_count]
+                deduped_items[key][:unset_count] += item[:unset_count]
               end
             else
               deduped_items[key] = item
@@ -376,10 +385,12 @@ module Homebrew
               end
               item[:percent] = format_percent(percent)
               item[:count] = format_count(item[:count])
-              if category == :homebrew_env_config
-                item[:non_default_count] = format_count(item[:non_default_count])
-                item[:default_count] = format_count(item[:default_count])
-              end
+              next if category != :homebrew_env_config
+
+              item[:non_default_count] = format_count(item[:non_default_count])
+              item[:set_default_count] = format_count(item[:set_default_count])
+              item[:unset_count] = format_count(item[:unset_count])
+              item[:default_value] = Homebrew::EnvConfig.default_description(item[dimension_key].to_sym)
             end
           end
 

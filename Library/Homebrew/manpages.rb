@@ -196,8 +196,7 @@ module Homebrew
         next if Homebrew::EnvConfig.hidden?(hash)
 
         entry = "`#{env}`\n\n: #{hash[:description]}\n"
-        default = hash[:default_text]
-        default ||= "`#{hash[:default]}`." if hash[:default]
+        default = Homebrew::EnvConfig.default_description(env)
         entry += "\n\n    *Default:* #{default}\n" if default
 
         entry

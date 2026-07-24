@@ -87,6 +87,63 @@ RSpec.describe Homebrew::EnvConfig do
 
       expect(env_config.non_default_variable?(:HOMEBREW_MAKE_JOBS)).to be(false)
     end
+
+    it "treats blank boolean values as default like their accessors" do
+      ENV["HOMEBREW_SBOM"] = ""
+
+      expect(env_config.non_default_variable?(:HOMEBREW_SBOM)).to be(false)
+    end
+
+    it "treats values matching computed defaults as default" do
+      ENV["HOMEBREW_PIP_INDEX_URL"] = "https://pypi.org/simple"
+      ENV["HOMEBREW_SSH_CONFIG_PATH"] = "#{Dir.home}/.ssh/config"
+      ENV["HOMEBREW_AUTO_UPDATE_SECS"] = "300"
+      ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+      ENV.delete("HOMEBREW_AUTO_UPDATE_TAP")
+      ENV.delete("HOMEBREW_DEV_CMD_RUN")
+
+      expect([
+        env_config.non_default_variable?(:HOMEBREW_PIP_INDEX_URL),
+        env_config.non_default_variable?(:HOMEBREW_SSH_CONFIG_PATH),
+        env_config.non_default_variable?(:HOMEBREW_AUTO_UPDATE_SECS),
+      ]).to eq([false, false, false])
+    end
+
+    it "compares boolean defaults computed at runtime" do
+      ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
+      ENV.delete("HOMEBREW_TESTS")
+      ENV.delete("HOMEBREW_DEVELOPER")
+
+      expect(env_config.non_default_variable?(:HOMEBREW_FORBID_PACKAGES_FROM_PATHS)).to be(false)
+    end
+  end
+
+  describe ".user_set_variable?" do
+    it "only counts HOMEBREW_* variables recorded by bin/brew as user-set" do
+      ENV["HOMEBREW_USER_SET_VARS"] = "HOMEBREW_CURL_RETRIES HOMEBREW_BAT"
+      ENV["HOMEBREW_CURL_RETRIES"] = "4"
+      ENV["HOMEBREW_EDITOR"] = "vim"
+      ENV["SUDO_ASKPASS"] = "/usr/bin/ssh-askpass"
+      ENV.delete("HOMEBREW_BAT")
+
+      expect([
+        env_config.user_set_variable?(:HOMEBREW_CURL_RETRIES),
+        env_config.user_set_variable?(:HOMEBREW_EDITOR),
+        env_config.user_set_variable?(:SUDO_ASKPASS),
+        env_config.user_set_variable?(:HOMEBREW_BAT),
+      ]).to eq([true, false, true, false])
+    end
+  end
+
+  describe ".default_description" do
+    it "prefers human default text over literal defaults" do
+      expect([
+        env_config.default_description(:HOMEBREW_MAKE_JOBS),
+        env_config.default_description(:HOMEBREW_API_AUTO_UPDATE_SECS),
+        env_config.default_description(:HOMEBREW_BAT),
+        env_config.default_description(:HOMEBREW_REMOVED_VARIABLE),
+      ]).to eq(["The number of available CPU cores.", "`450`.", nil, nil])
+    end
   end
 
   describe "ANALYTICS_VARIABLES" do
@@ -98,13 +155,16 @@ RSpec.describe Homebrew::EnvConfig do
   end
 
   describe ".non_default_variables" do
-    it "returns names of variables with non-default values" do
+    it "returns names of user-set variables with non-default values" do
       Homebrew::EnvConfig::ENVS.each_key { |env| ENV.delete(env.to_s) }
+      ENV["HOMEBREW_USER_SET_VARS"] = "HOMEBREW_CURL_RETRIES HOMEBREW_GITHUB_API_TOKEN " \
+                                      "HOMEBREW_NO_AUTO_UPDATE HOMEBREW_BAT HOMEBREW_REQUIRE_TAP_TRUST"
       ENV["HOMEBREW_CURL_RETRIES"] = "4"
       ENV["HOMEBREW_GITHUB_API_TOKEN"] = "secret"
       ENV["HOMEBREW_NO_AUTO_UPDATE"] = "1"
       ENV["HOMEBREW_BAT"] = "false"
       ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+      ENV["HOMEBREW_EDITOR"] = "vim"
 
       expect(env_config.non_default_variables).to eq(
         %w[HOMEBREW_CURL_RETRIES HOMEBREW_GITHUB_API_TOKEN HOMEBREW_NO_AUTO_UPDATE],

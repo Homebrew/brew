@@ -133,7 +133,11 @@ module Utils
           variables = Homebrew::EnvConfig::ANALYTICS_VARIABLES
           env_config = variables.fetch(Random.rand(variables.length))
           tags[:env_config] = env_config.to_s
-          tags[:env_config_non_default] = Homebrew::EnvConfig.non_default_variable?(env_config)
+          tags[:env_config_state] = if Homebrew::EnvConfig.user_set_variable?(env_config)
+            Homebrew::EnvConfig.non_default_variable?(env_config) ? "non_default" : "default"
+          else
+            "unset"
+          end
         end
 
         # Fields can have high cardinality.

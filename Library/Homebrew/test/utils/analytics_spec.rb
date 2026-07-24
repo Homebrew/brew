@@ -256,15 +256,35 @@ RSpec.describe Utils::Analytics do
       ENV.delete("HOMEBREW_NO_ANALYTICS")
       ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
       allow(command_instance.class).to receive(:command_name).and_return("update")
-      expect(Homebrew::EnvConfig).to receive(:non_default_variable?).with(kind_of(Symbol)).and_return(true)
+      stub_const("Homebrew::EnvConfig::ANALYTICS_VARIABLES", [:HOMEBREW_ALLOWED_TAPS])
+      ENV["HOMEBREW_ALLOWED_TAPS"] = "homebrew/core"
+      ENV["HOMEBREW_USER_SET_VARS"] = "HOMEBREW_ALLOWED_TAPS"
+      expect(Homebrew::EnvConfig).to receive(:non_default_variable?).with(:HOMEBREW_ALLOWED_TAPS).and_return(true)
 
       expect(described_class).to receive(:report_influx).with(
         :command_run,
         hash_including(
-          command:                "update",
-          env_config:             kind_of(String),
-          env_config_non_default: true,
+          command:          "update",
+          env_config:       "HOMEBREW_ALLOWED_TAPS",
+          env_config_state: "non_default",
         ),
+        hash_including(options:),
+      ).once
+      described_class.report_command_run(command_instance)
+    end
+
+    it "samples variables exported by brew itself as unset" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
+      allow(command_instance.class).to receive(:command_name).and_return("update")
+      stub_const("Homebrew::EnvConfig::ANALYTICS_VARIABLES", [:HOMEBREW_ALLOWED_TAPS])
+      ENV["HOMEBREW_ALLOWED_TAPS"] = "homebrew/core"
+      ENV["HOMEBREW_USER_SET_VARS"] = ""
+
+      expect(described_class).to receive(:report_influx).with(
+        :command_run,
+        hash_including(env_config: "HOMEBREW_ALLOWED_TAPS", env_config_state: "unset"),
         hash_including(options:),
       ).once
       described_class.report_command_run(command_instance)

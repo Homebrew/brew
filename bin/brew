@@ -187,6 +187,22 @@ then
   HOMEBREW_BREW_FILE="${HOMEBREW_FORCE_BREW_WRAPPER}"
 fi
 
+# Record which HOMEBREW_* variables the user set (including via brew.env
+# above) before brew exports more itself, e.g. HOMEBREW_EDITOR from
+# EDITOR/VISUAL below or HOMEBREW_UPDATE_TO_TAG in cmd/update.sh, so
+# analytics only samples user configuration. Sub-brews inherit the list.
+# The matching Ruby is Homebrew::EnvConfig.user_set_variable? in
+# Library/Homebrew/env_config.rb.
+if [[ -z "${HOMEBREW_USER_SET_VARS+set}" ]]
+then
+  for VAR in "${!HOMEBREW_@}"
+  do
+    HOMEBREW_USER_SET_VARS="${HOMEBREW_USER_SET_VARS:-} ${VAR}"
+  done
+  export HOMEBREW_USER_SET_VARS="${HOMEBREW_USER_SET_VARS:-}"
+  unset VAR
+fi
+
 # Copy and export all HOMEBREW_* variables previously mentioned in
 # manpage or used elsewhere by Homebrew.
 

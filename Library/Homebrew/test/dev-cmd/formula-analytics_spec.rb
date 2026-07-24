@@ -22,10 +22,14 @@ RSpec.describe Homebrew::DevCmd::FormulaAnalytics do
       ENV.delete("HOMEBREW_NO_ANALYTICS")
       ENV["HOMEBREW_INFLUXDB_TOKEN"] = "token"
       batch = double(to_pylist: [
-        { "env_config" => "HOMEBREW_BAT", "env_config_non_default" => "true", "count" => 2 },
-        { "env_config" => "HOMEBREW_BAT", "env_config_non_default" => "false", "count" => 8 },
-        { "env_config" => "HOMEBREW_NO_AUTO_UPDATE", "env_config_non_default" => "true", "count" => 1 },
-        { "env_config" => "HOMEBREW_NO_AUTO_UPDATE", "env_config_non_default" => "false", "count" => 1 },
+        { "env_config" => "HOMEBREW_BAT", "env_config_state" => "non_default", "count" => 2 },
+        { "env_config" => "HOMEBREW_BAT", "env_config_state" => "default", "count" => 3 },
+        { "env_config" => "HOMEBREW_BAT", "env_config_state" => "unset", "count" => 5 },
+        { "env_config" => "HOMEBREW_NO_AUTO_UPDATE", "env_config_state" => "non_default", "count" => 1 },
+        { "env_config" => "HOMEBREW_NO_AUTO_UPDATE", "env_config_state" => "unset", "count" => 1 },
+        { "env_config" => "HOMEBREW_MAKE_JOBS", "env_config_state" => "default", "count" => 4 },
+        { "env_config" => "HOMEBREW_TOTALLY_MADE_UP", "env_config_state" => "non_default", "count" => 100 },
+        { "env_config" => "HOMEBREW_BAT", "env_config_state" => "borked", "count" => 50 },
       ])
       query_result = double(to_batches: [batch])
       queries = []
@@ -40,18 +44,23 @@ RSpec.describe Homebrew::DevCmd::FormulaAnalytics do
       command = described_class.new(["--homebrew-env-config", "--json"])
       expected = {
         category:    :homebrew_env_config,
-        total_items: 2,
+        total_items: 3,
         start_date:  Date.today - 30,
         end_date:    Date.today,
-        total_count: 12,
+        total_count: 16,
         items:       [
           {
             number: 1, env_config: "HOMEBREW_NO_AUTO_UPDATE", count: "2", non_default_count: "1",
-            default_count: "1", percent: "50"
+            set_default_count: "0", unset_count: "1", percent: "50", default_value: nil
           },
           {
             number: 2, env_config: "HOMEBREW_BAT", count: "10", non_default_count: "2",
-            default_count: "8", percent: "20"
+            set_default_count: "3", unset_count: "5", percent: "20", default_value: nil
+          },
+          {
+            number: 3, env_config: "HOMEBREW_MAKE_JOBS", count: "4", non_default_count: "0",
+            set_default_count: "4", unset_count: "0", percent: "0",
+            default_value: "The number of available CPU cores."
           },
         ],
       }
@@ -59,8 +68,8 @@ RSpec.describe Homebrew::DevCmd::FormulaAnalytics do
       expect { command.influx_analytics(command.args) }
         .to output("#{JSON.pretty_generate(expected)}\n").to_stdout
       expect(queries).to contain_exactly(
-        query:    match(
-          /FROM "command_run".*env_config IS NOT NULL.*GROUP BY "env_config","env_config_non_default"/,
+        query:    match(/FROM "command_run".*env_config_state IS NOT NULL GROUP BY/).and(
+          include('GROUP BY "env_config","env_config_state"'),
         ),
         language: "sql",
       )

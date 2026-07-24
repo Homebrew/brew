@@ -345,6 +345,8 @@ auto-update() {
       [[ -n "${HOMEBREW_AUTO_UPDATE_SKIP_OUTDATED}" ]] && export HOMEBREW_AUTO_UPDATE_SKIP_OUTDATED
     fi
 
+    # Keep in sync with the HOMEBREW_AUTO_UPDATE_SECS default in
+    # Library/Homebrew/env_config.rb.
     if [[ -z "${HOMEBREW_AUTO_UPDATE_SECS}" ]]
     then
       if [[ -n "${HOMEBREW_NO_INSTALL_FROM_API}" || -n "${HOMEBREW_AUTO_UPDATE_TAP}" ]]

@@ -102,6 +102,16 @@ module Homebrew
                       "disable auto-update entirely with `$HOMEBREW_NO_AUTO_UPDATE`.",
         default_text: "`86400` (24 hours), `3600` (1 hour) if a developer command has been run " \
                       "or `300` (5 minutes) if `$HOMEBREW_NO_INSTALL_FROM_API` is set.",
+        # Keep in sync with the auto-update defaults in Library/Homebrew/brew.sh.
+        default:      lambda {
+          if ENV["HOMEBREW_NO_INSTALL_FROM_API"].present? || ENV["HOMEBREW_AUTO_UPDATE_TAP"].present?
+            300
+          elsif ENV["HOMEBREW_DEV_CMD_RUN"].present?
+            3600
+          else
+            86400
+          end
+        },
       },
       HOMEBREW_AVOID_NESTED_SANDBOXING:          {
         description: "If set, skip Homebrew's sandbox when it is itself running inside another " \
@@ -374,8 +384,10 @@ module Homebrew
       HOMEBREW_FORBID_PACKAGES_FROM_PATHS:       {
         description:  "If set, Homebrew will refuse to read formulae or casks provided from file paths, " \
                       "e.g. `brew install ./package.rb`.",
-        boolean:      true,
+        boolean:      :set,
         default_text: "true unless `$HOMEBREW_DEVELOPER` is set.",
+        # Keep in sync with forbid_packages_from_paths? below.
+        default:      -> { ENV["HOMEBREW_TESTS"].blank? && ENV["HOMEBREW_DEVELOPER"].blank? },
       },
       HOMEBREW_FORCE_API_AUTO_UPDATE:            {
         description: "If set, update the Homebrew API formula or cask data even if " \
@@ -627,6 +639,7 @@ module Homebrew
       HOMEBREW_PIP_INDEX_URL:                    {
         description:  "If set, `brew install` <formula> will use this URL to download PyPI package resources.",
         default_text: "`https://pypi.org/simple`.",
+        default:      "https://pypi.org/simple",
       },
       HOMEBREW_PRY:                              {
         description: "If set, use Pry for the `brew irb` command.",
@@ -680,6 +693,7 @@ module Homebrew
         description:  "If set, Homebrew will use the given config file instead of `~/.ssh/config` when " \
                       "fetching Git repositories over SSH.",
         default_text: "`~/.ssh/config`",
+        default:      -> { "#{Dir.home}/.ssh/config" },
       },
       HOMEBREW_SUDO_THROUGH_SUDO_USER:           {
         description: "If set, Homebrew will use the `$SUDO_USER` environment variable to define the user to " \
@@ -786,6 +800,20 @@ module Homebrew
       !!(hash[:hidden] || hash[:odeprecated] || hash[:odisabled])
     end
 
+    # The default value as human text, e.g. for the manpage or analytics:
+    # `default_text` summarises defaults that vary by platform or machine.
+    sig { params(env: Symbol).returns(T.nilable(String)) }
+    def default_description(env)
+      hash = ENVS[env]
+      return if hash.nil?
+
+      default_text = hash[:default_text]
+      return default_text if default_text
+
+      default = hash[:default]
+      "`#{default}`." if default
+    end
+
     # Defaults and parsing that cannot be expressed by the generated helpers.
     CUSTOM_IMPLEMENTATIONS = T.let(Set.new([
       :HOMEBREW_BUNDLE_JOBS,
@@ -808,26 +836,36 @@ module Homebrew
     sig { params(env: Symbol).returns(T::Boolean) }
     def non_default_variable?(env)
       value = ENV.fetch(env.to_s, nil)
-      return false unless value
+      # Blank values behave like unset in the generated accessors.
+      return false if value.blank?
 
       config = ENVS.fetch(env)
+      default = config.fetch(:default, config[:boolean] ? false : nil)
+      default = default.call if default.respond_to?(:call)
       if config[:boolean]
-        enabled = value.present? && (config[:boolean] == :set || FALSY_VALUES.exclude?(value.downcase))
-        enabled != config.fetch(:default, false)
+        enabled = config[:boolean] == :set || FALSY_VALUES.exclude?(value.downcase)
+        enabled != default
       else
-        return false if value.blank?
-
-        default = config[:default]
-        default = default.call if default.respond_to?(:call)
         value != default.to_s
       end
+    end
+
+    # Whether the user set this variable rather than Homebrew exporting
+    # it itself, e.g. `HOMEBREW_EDITOR` from `EDITOR`. The matching Bash
+    # records `HOMEBREW_USER_SET_VARS` in `bin/brew` before any exports.
+    sig { params(env: Symbol).returns(T::Boolean) }
+    def user_set_variable?(env)
+      return false if ENV.fetch(env.to_s, nil).blank?
+      return true unless env.to_s.start_with?("HOMEBREW_")
+
+      ENV.fetch("HOMEBREW_USER_SET_VARS", "").split.include?(env.to_s)
     end
 
     sig { returns(T::Array[String]) }
     def non_default_variables
       ENV.filter_map do |env, _value|
         env_symbol = env.to_sym
-        env if ENVS.key?(env_symbol) && non_default_variable?(env_symbol)
+        env if ENVS.key?(env_symbol) && user_set_variable?(env_symbol) && non_default_variable?(env_symbol)
       end.sort
     end
 
@@ -852,7 +890,12 @@ module Homebrew
         end
       elsif hash[:default].present?
         define_method(method_name) do
-          env_value(env, hash).presence || hash.fetch(:default).to_s
+          value = env_value(env, hash).presence
+          next value if value
+
+          default = hash.fetch(:default)
+          default = default.call if default.respond_to?(:call)
+          default.to_s
         end
       else
         define_method(method_name) do
@@ -977,6 +1020,7 @@ module Homebrew
 
       # Provide an opt-out for tests and developers.
       # Our testing framework installs formulae from file paths all over the place.
+      # Keep in sync with the HOMEBREW_FORBID_PACKAGES_FROM_PATHS default above.
       ENV["HOMEBREW_TESTS"].blank? && ENV["HOMEBREW_DEVELOPER"].blank?
     end
 
