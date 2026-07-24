@@ -24,6 +24,7 @@ module Tapioca
           end
 
           dynamic_methods.each do |method, default|
+            default = default.call if default.respond_to?(:call)
             return_type = if method.end_with?("?")
               T::Boolean
             elsif default
