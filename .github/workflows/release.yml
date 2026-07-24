@@ -41,7 +41,37 @@ jobs:
       contents: write # for creating tags and releases
       attestations: write # for actions/attest
       id-token: write # for actions/attest
+      issues: read # for checking release blocker labels
+      pull-requests: read # for checking release blocker labels
     steps:
+      - name: Check for release blockers
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        # Keep in sync with the release blocker check in
+        # Library/Homebrew/dev-cmd/release.rb.
+        run: |
+          labels=("release blocker")
+          if [[ "${TAG}" =~ ^[0-9]+\.[0-9]+\.0$ ]]
+          then
+            labels+=("major/minor release blocker")
+          fi
+
+          blockers="$(for label in "${labels[@]}"
+          do
+            gh api --method GET repos/Homebrew/brew/issues \
+              --raw-field state=open --raw-field labels="${label}" \
+              --jq '.[].html_url'
+          done | sort -u)"
+
+          if [[ -n "${blockers}" ]]
+          then
+            echo "Open issues or pull requests are blocking this release:"
+            echo "${blockers}"
+            exit 1
+          fi
+
       - name: Remove existing API cache (to force update)
         run: rm -rvf ~/Library/Caches/Homebrew/api
 

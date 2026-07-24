@@ -1,5 +1,5 @@
 ---
-last_review_date: "2026-07-18"
+last_review_date: "2026-07-24"
 ---
 
 # Releases
@@ -14,9 +14,11 @@ Only maintainers with write access to Homebrew/brew can create a release.
    - [`Homebrew/brew` issues](https://github.com/Homebrew/brew/issues)
    - [`Homebrew/homebrew-core` issues](https://github.com/Homebrew/homebrew-core/issues)
    - [Homebrew Discussions](https://github.com/orgs/Homebrew/discussions)
-2. Confirm that the workflows on Homebrew/brew's `main` branch are passing and that at least one recent Homebrew/homebrew-core pull request has completed CI successfully.
-3. Allow enough time after the last code change to detect regressions before releasing.
-4. Confirm that the current `main` branch is suitable for release.
+2. Label any Homebrew/brew issues or pull requests that must be resolved before any release with `release blocker`, or before the next major or minor release with `major/minor release blocker`.
+   While any open Homebrew/brew issue or pull request has a relevant label, `brew release` and the release workflow will refuse to create a release.
+3. Confirm that the workflows on Homebrew/brew's `main` branch are passing and that at least one recent Homebrew/homebrew-core pull request has completed CI successfully.
+4. Allow enough time after the last code change to detect regressions before releasing.
+5. Confirm that the current `main` branch is suitable for release.
 
 Do not create a release from an older commit on `main`.
 If unreleased changes must be excluded from an urgent patch release, revert those changes, complete the release process and then reapply them.
