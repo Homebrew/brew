@@ -33,7 +33,7 @@ Formula, cask and build-error events can include:
 - whether Homebrew uses its default prefix, with every other prefix reported only as `custom-prefix`
 
 Command events include the command and option names after option values have been removed.
-For selected common commands, Homebrew randomly samples one supported configuration variable and records its name and whether it differs from the default.
+For selected common commands, Homebrew randomly samples one supported configuration variable and records its name and whether the user left it unset, set it to its default or set it to a non-default value; variables Homebrew exports itself (e.g. `HOMEBREW_EDITOR` from `EDITOR`) count as unset.
 It does not record the variable's value.
 
 BrewTestBot can send CI-only test-step results when its analytics setting is enabled.
