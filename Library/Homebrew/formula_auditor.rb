@@ -1236,57 +1236,6 @@ module Homebrew
       end
     end
 
-    private
-
-    sig { params(message: String, location: T.nilable(Homebrew::SourceLocation), corrected: T::Boolean).void }
-    def problem(message, location: nil, corrected: false)
-      @problems << ({ message:, location:, corrected: })
-    end
-
-    sig { params(message: String, location: T.nilable(Homebrew::SourceLocation), corrected: T::Boolean).void }
-    def new_formula_problem(message, location: nil, corrected: false)
-      @new_formula_problems << ({ message:, location:, corrected: })
-    end
-
-    sig { params(repo_owner: String).returns(T::Boolean) }
-    def self_submission?(repo_owner)
-      return false if repo_owner.blank?
-
-      SharedAudits.self_submission_for_repo_owner?(repo_owner)
-    end
-
-    sig { params(formula: Formula).returns(T::Boolean) }
-    def head_only?(formula)
-      !!formula.head && formula.stable.nil?
-    end
-
-    sig { params(formula: Formula).returns(T::Boolean) }
-    def linux_only_gcc_dep?(formula)
-      odie "`#linux_only_gcc_dep?` works only on Linux!" if Homebrew::SimulateSystem.simulating_or_running_on_macos?
-      return false if formula.deps.none? { |dep| dep.name == "gcc" && !dep.implicit? }
-
-      variations = formula.to_hash_with_variations["variations"]
-      # The formula has no variations, so all OS-version-arch triples depend on GCC.
-      return false if variations.blank?
-
-      MacOSVersion::SYMBOLS.keys.product(OnSystem::ARCH_OPTIONS).each do |os, arch|
-        bottle_tag = Utils::Bottles::Tag.new(system: os, arch:)
-        next unless bottle_tag.valid_combination?
-
-        variation_dependencies = variations.dig(bottle_tag.to_sym, "dependencies")
-        # This variation either:
-        #   1. does not exist
-        #   2. has no variation-specific dependencies
-        # In either case, it matches Linux. We must check for `nil` because an empty
-        # array indicates that this variation does not depend on GCC.
-        return false if variation_dependencies.nil?
-        # We found a non-Linux variation that depends on GCC.
-        return false if variation_dependencies.include?("gcc")
-      end
-
-      true
-    end
-
     sig { params(tap: Tap, only_names: T::Array[String]).returns(T::Array[Pathname]) }
     def changed_formulae_paths(tap, only_names: [].freeze)
       return [] unless tap.git?
@@ -1367,6 +1316,57 @@ module Homebrew
       base_ref_version_info.compact!
 
       @committed_version_info_cache[formula.full_name] = [previous_version_info, base_ref_version_info]
+    end
+
+    private
+
+    sig { params(message: String, location: T.nilable(Homebrew::SourceLocation), corrected: T::Boolean).void }
+    def problem(message, location: nil, corrected: false)
+      @problems << ({ message:, location:, corrected: })
+    end
+
+    sig { params(message: String, location: T.nilable(Homebrew::SourceLocation), corrected: T::Boolean).void }
+    def new_formula_problem(message, location: nil, corrected: false)
+      @new_formula_problems << ({ message:, location:, corrected: })
+    end
+
+    sig { params(repo_owner: String).returns(T::Boolean) }
+    def self_submission?(repo_owner)
+      return false if repo_owner.blank?
+
+      SharedAudits.self_submission_for_repo_owner?(repo_owner)
+    end
+
+    sig { params(formula: Formula).returns(T::Boolean) }
+    def head_only?(formula)
+      !!formula.head && formula.stable.nil?
+    end
+
+    sig { params(formula: Formula).returns(T::Boolean) }
+    def linux_only_gcc_dep?(formula)
+      odie "`#linux_only_gcc_dep?` works only on Linux!" if Homebrew::SimulateSystem.simulating_or_running_on_macos?
+      return false if formula.deps.none? { |dep| dep.name == "gcc" && !dep.implicit? }
+
+      variations = formula.to_hash_with_variations["variations"]
+      # The formula has no variations, so all OS-version-arch triples depend on GCC.
+      return false if variations.blank?
+
+      MacOSVersion::SYMBOLS.keys.product(OnSystem::ARCH_OPTIONS).each do |os, arch|
+        bottle_tag = Utils::Bottles::Tag.new(system: os, arch:)
+        next unless bottle_tag.valid_combination?
+
+        variation_dependencies = variations.dig(bottle_tag.to_sym, "dependencies")
+        # This variation either:
+        #   1. does not exist
+        #   2. has no variation-specific dependencies
+        # In either case, it matches Linux. We must check for `nil` because an empty
+        # array indicates that this variation does not depend on GCC.
+        return false if variation_dependencies.nil?
+        # We found a non-Linux variation that depends on GCC.
+        return false if variation_dependencies.include?("gcc")
+      end
+
+      true
     end
 
     sig { params(tap: Tap).returns(String) }

@@ -63,21 +63,6 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
     FileUtils.ln_s target_cached_location.relative_path_from(symlink_location.dirname), symlink_location, force: true
   end
 
-  private
-
-  sig { returns(String) }
-  def resolved_basename
-    _, resolved_basename = resolved_url_and_basename
-    resolved_basename
-  end
-
-  sig { returns([String, String]) }
-  def resolved_url_and_basename
-    return T.must(@resolved_url_and_basename) if defined?(@resolved_url_and_basename)
-
-    T.must(@resolved_url_and_basename = T.let([url, parse_basename(url)], T.nilable([String, String])))
-  end
-
   sig { params(url: String, search_query: T::Boolean).returns(String) }
   def parse_basename(url, search_query: true)
     components = { path: T.let([], T::Array[String]), query: T.let([], T::Array[String]) }
@@ -124,5 +109,20 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
     return "" if filename.blank?
 
     File.basename(filename)
+  end
+
+  private
+
+  sig { returns(String) }
+  def resolved_basename
+    _, resolved_basename = resolved_url_and_basename
+    resolved_basename
+  end
+
+  sig { returns([String, String]) }
+  def resolved_url_and_basename
+    return T.must(@resolved_url_and_basename) if defined?(@resolved_url_and_basename)
+
+    T.must(@resolved_url_and_basename = T.let([url, parse_basename(url)], T.nilable([String, String])))
   end
 end

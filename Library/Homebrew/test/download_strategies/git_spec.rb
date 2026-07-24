@@ -18,7 +18,7 @@ RSpec.describe GitDownloadStrategy do
 
   describe "#clone_args" do
     it "terminates options before the URL" do
-      expect(strategy.send(:clone_args)).to end_with("--end-of-options", url, cached_location.to_s)
+      expect(strategy.clone_args).to end_with("--end-of-options", url, cached_location.to_s)
     end
   end
 
@@ -32,7 +32,7 @@ RSpec.describe GitDownloadStrategy do
         )
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
-      strategy.send(:ref?)
+      strategy.ref?
     end
   end
 

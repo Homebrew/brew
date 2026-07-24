@@ -12,6 +12,9 @@ module Homebrew
       sig { returns(Pathname) }
       attr_reader :artifact_cache
 
+      sig { returns(T::Hash[String, T::Array[String]]) }
+      attr_reader :downloaded_artifacts
+
       sig {
         params(
           tap:       T.nilable(Tap),
@@ -31,6 +34,80 @@ module Homebrew
         @downloaded_artifacts = T.let(Hash.new { |h, k| h[k] = [] }, T::Hash[String, T::Array[String]])
         @testing_formulae = T.let([], T::Array[String])
         @tested_formulae = T.let([], T::Array[String])
+      end
+
+      sig { params(artifact_pattern: String, dry_run: T::Boolean).void }
+      def download_artifacts_from_previous_run!(artifact_pattern, dry_run:)
+        return if dry_run
+        return if GitHub::API.credentials_type == :none
+        return if (sha = previous_github_sha).blank?
+
+        pull_number = github_event_payload&.dig("pull_request", "number")
+        return if pull_number.blank?
+
+        github_repository = ENV.fetch("GITHUB_REPOSITORY")
+        owner, repo = *github_repository.split("/")
+        raise "github_repository #{github_repository} is invalid" if owner.nil? || repo.nil?
+
+        pr_labels = GitHub.pull_request_labels(owner, repo, pull_number)
+        # Also disable bottle cache for PRs modifying workflows to avoid cache poisoning.
+        return if pr_labels.include?("CI-no-bottle-cache") || pr_labels.include?("workflows")
+
+        variables = {
+          owner:,
+          repo:,
+          commit: sha,
+        }
+
+        response = GitHub::API.open_graphql(GRAPHQL_QUERY, variables:)
+        check_suite_nodes = response.dig("repository", "object", "checkSuites", "nodes")
+        return if check_suite_nodes.blank?
+
+        wanted_artifacts = artifact_metadata(check_suite_nodes, github_repository, "pull_request",
+                                             "CI", "conclusion", artifact_pattern)
+        wanted_artifacts_pattern = artifact_pattern
+        if wanted_artifacts.empty?
+          # If we didn't find the artifacts that we wanted, fall back to the `event_payload` artifact.
+          wanted_artifacts = artifact_metadata(check_suite_nodes, github_repository, "pull_request_target",
+                                               "Triage tasks", "upload-metadata", "event_payload")
+          wanted_artifacts_pattern = "event_payload"
+        end
+        return if wanted_artifacts.empty?
+
+        if (attempted_artifact = wanted_artifacts.find do |artifact|
+              # Hash value must exist due to the hash having a default value of an empty array.
+              T.must(@downloaded_artifacts[sha]).include?(artifact.fetch("name"))
+            end)
+          opoo "Already tried #{attempted_artifact.fetch("name")} from #{sha}, giving up"
+          return
+        end
+
+        cached_event_json&.unlink if File.fnmatch?(wanted_artifacts_pattern, "event_payload", File::FNM_EXTGLOB)
+
+        require "utils/github/artifacts"
+
+        ohai "Downloading artifacts matching pattern #{wanted_artifacts_pattern} from #{sha}"
+        artifact_cache.mkpath
+        artifact_cache.cd do
+          wanted_artifacts.each do |artifact|
+            name = artifact.fetch("name")
+            ohai "Downloading artifact #{name} from #{sha}"
+            # Hash value must exist due to the hash having a default value of an empty array.
+            T.must(@downloaded_artifacts[sha]) << name
+
+            download_url = artifact.fetch("archive_download_url")
+            artifact_id = artifact.fetch("id")
+            GitHub.download_artifact(download_url, artifact_id.to_s)
+          end
+        end
+
+        return if wanted_artifacts_pattern == artifact_pattern
+
+        # If we made it here, then we downloaded an `event_payload` artifact.
+        # We can now use this `event_payload` artifact to attempt to download the artifact we wanted.
+        download_artifacts_from_previous_run!(artifact_pattern, dry_run:)
+      rescue GitHub::API::AuthenticationFailedError => e
+        opoo e
       end
 
       protected
@@ -145,80 +222,6 @@ module Homebrew
           }
         }
       GRAPHQL
-
-      sig { params(artifact_pattern: String, dry_run: T::Boolean).void }
-      def download_artifacts_from_previous_run!(artifact_pattern, dry_run:)
-        return if dry_run
-        return if GitHub::API.credentials_type == :none
-        return if (sha = previous_github_sha).blank?
-
-        pull_number = github_event_payload&.dig("pull_request", "number")
-        return if pull_number.blank?
-
-        github_repository = ENV.fetch("GITHUB_REPOSITORY")
-        owner, repo = *github_repository.split("/")
-        raise "github_repository #{github_repository} is invalid" if owner.nil? || repo.nil?
-
-        pr_labels = GitHub.pull_request_labels(owner, repo, pull_number)
-        # Also disable bottle cache for PRs modifying workflows to avoid cache poisoning.
-        return if pr_labels.include?("CI-no-bottle-cache") || pr_labels.include?("workflows")
-
-        variables = {
-          owner:,
-          repo:,
-          commit: sha,
-        }
-
-        response = GitHub::API.open_graphql(GRAPHQL_QUERY, variables:)
-        check_suite_nodes = response.dig("repository", "object", "checkSuites", "nodes")
-        return if check_suite_nodes.blank?
-
-        wanted_artifacts = artifact_metadata(check_suite_nodes, github_repository, "pull_request",
-                                             "CI", "conclusion", artifact_pattern)
-        wanted_artifacts_pattern = artifact_pattern
-        if wanted_artifacts.empty?
-          # If we didn't find the artifacts that we wanted, fall back to the `event_payload` artifact.
-          wanted_artifacts = artifact_metadata(check_suite_nodes, github_repository, "pull_request_target",
-                                               "Triage tasks", "upload-metadata", "event_payload")
-          wanted_artifacts_pattern = "event_payload"
-        end
-        return if wanted_artifacts.empty?
-
-        if (attempted_artifact = wanted_artifacts.find do |artifact|
-              # Hash value must exist due to the hash having a default value of an empty array.
-              T.must(@downloaded_artifacts[sha]).include?(artifact.fetch("name"))
-            end)
-          opoo "Already tried #{attempted_artifact.fetch("name")} from #{sha}, giving up"
-          return
-        end
-
-        cached_event_json&.unlink if File.fnmatch?(wanted_artifacts_pattern, "event_payload", File::FNM_EXTGLOB)
-
-        require "utils/github/artifacts"
-
-        ohai "Downloading artifacts matching pattern #{wanted_artifacts_pattern} from #{sha}"
-        artifact_cache.mkpath
-        artifact_cache.cd do
-          wanted_artifacts.each do |artifact|
-            name = artifact.fetch("name")
-            ohai "Downloading artifact #{name} from #{sha}"
-            # Hash value must exist due to the hash having a default value of an empty array.
-            T.must(@downloaded_artifacts[sha]) << name
-
-            download_url = artifact.fetch("archive_download_url")
-            artifact_id = artifact.fetch("id")
-            GitHub.download_artifact(download_url, artifact_id.to_s)
-          end
-        end
-
-        return if wanted_artifacts_pattern == artifact_pattern
-
-        # If we made it here, then we downloaded an `event_payload` artifact.
-        # We can now use this `event_payload` artifact to attempt to download the artifact we wanted.
-        download_artifacts_from_previous_run!(artifact_pattern, dry_run:)
-      rescue GitHub::API::AuthenticationFailedError => e
-        opoo e
-      end
 
       sig { params(formula: Formula, git_ref: String).returns(T::Boolean) }
       def no_diff?(formula, git_ref)

@@ -315,7 +315,7 @@ RSpec.describe Cask::Artifact::App, :cask do
 
       allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
 
-      expect(app.send(:backup_copy_args, target_path, source_path)).to eq(["-c", "-pR", target_path, source_path])
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-c", "-pR", target_path, source_path])
     end
 
     it "uses portable copy arguments on older macOS versions", :needs_macos do
@@ -323,7 +323,7 @@ RSpec.describe Cask::Artifact::App, :cask do
 
       allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:ventura))
 
-      expect(app.send(:backup_copy_args, target_path, source_path)).to eq(["-pR", target_path, source_path])
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-pR", target_path, source_path])
     end
 
     it "uses portable copy arguments across filesystems", :needs_macos do
@@ -335,7 +335,7 @@ RSpec.describe Cask::Artifact::App, :cask do
       allow(source_path).to receive(:dirname).and_return(source_dir)
       allow(source_dir).to receive(:stat).and_return(instance_double(File::Stat, dev: 2))
 
-      expect(app.send(:backup_copy_args, target_path, source_path)).to eq(["-pR", target_path, source_path])
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-pR", target_path, source_path])
     end
   end
 

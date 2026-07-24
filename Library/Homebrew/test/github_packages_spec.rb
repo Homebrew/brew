@@ -17,53 +17,53 @@ RSpec.describe GitHubPackages do
         end.new
 
         expect do
-          github_packages.send(:upload_bottle, "brewtest", "ghp_test", Pathname("skopeo"), "testball",
-                               {
-                                 "formula" => {
-                                   "name"             => "testball",
-                                   "pkg_version"      => "1.0",
-                                   "tap_git_path"     => "Formula/t/testball.rb",
-                                   "tap_git_revision" => "abcdef",
-                                   "desc"             => "Test formula",
-                                   "license"          => "MIT",
-                                   "homepage"         => "https://brew.sh/testball",
-                                 },
-                                 "bottle"  => {
-                                   "root_url" => "https://ghcr.io/v2/homebrew/core",
-                                   "rebuild"  => 0,
-                                   "date"     => "2026-05-10T00:00:00Z",
-                                   "tags"     => {
-                                     "all"          => {
-                                       "local_filename" => bottle.to_s,
-                                       "tab"            => {
-                                         "arch"     => "arm64",
-                                         "built_on" => {
-                                           "os"         => "Macintosh",
-                                           "os_version" => "macOS 15",
-                                         },
-                                       },
-                                       "sbom"           => {
-                                         "documentDescribes" => ["SPDXRef-Compiler"],
-                                         "packages"          => [{ "SPDXID" => "SPDXRef-Compiler" }],
-                                         "relationships"     => [],
-                                       },
-                                       "installed_size" => 100,
-                                     },
-                                     "arm64_sonoma" => {
-                                       "local_filename" => bottle.to_s,
-                                       "tab"            => {
-                                         "arch"     => "arm64",
-                                         "built_on" => {
-                                           "os"         => "Macintosh",
-                                           "os_version" => "macOS 14",
-                                         },
-                                       },
-                                       "installed_size" => 100,
-                                     },
-                                   },
-                                 },
-                               },
-                               keep_old: false, dry_run: true, warn_on_error: false)
+          github_packages.upload_bottle("brewtest", "ghp_test", Pathname("skopeo"), "testball",
+                                        {
+                                          "formula" => {
+                                            "name"             => "testball",
+                                            "pkg_version"      => "1.0",
+                                            "tap_git_path"     => "Formula/t/testball.rb",
+                                            "tap_git_revision" => "abcdef",
+                                            "desc"             => "Test formula",
+                                            "license"          => "MIT",
+                                            "homepage"         => "https://brew.sh/testball",
+                                          },
+                                          "bottle"  => {
+                                            "root_url" => "https://ghcr.io/v2/homebrew/core",
+                                            "rebuild"  => 0,
+                                            "date"     => "2026-05-10T00:00:00Z",
+                                            "tags"     => {
+                                              "all"          => {
+                                                "local_filename" => bottle.to_s,
+                                                "tab"            => {
+                                                  "arch"     => "arm64",
+                                                  "built_on" => {
+                                                    "os"         => "Macintosh",
+                                                    "os_version" => "macOS 15",
+                                                  },
+                                                },
+                                                "sbom"           => {
+                                                  "documentDescribes" => ["SPDXRef-Compiler"],
+                                                  "packages"          => [{ "SPDXID" => "SPDXRef-Compiler" }],
+                                                  "relationships"     => [],
+                                                },
+                                                "installed_size" => 100,
+                                              },
+                                              "arm64_sonoma" => {
+                                                "local_filename" => bottle.to_s,
+                                                "tab"            => {
+                                                  "arch"     => "arm64",
+                                                  "built_on" => {
+                                                    "os"         => "Macintosh",
+                                                    "os_version" => "macOS 14",
+                                                  },
+                                                },
+                                                "installed_size" => 100,
+                                              },
+                                            },
+                                          },
+                                        },
+                                        keep_old: false, dry_run: true, warn_on_error: false)
         end.to output.to_stdout
 
         index_json = JSON.parse(Pathname("testball--1.0/index.json").read)

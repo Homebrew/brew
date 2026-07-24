@@ -102,8 +102,6 @@ module Homebrew
         @pool.wait_for_termination
       end
 
-      private
-
       sig { params(entries: T::Array[Installer::InstallableEntry]).returns(T::Hash[String, T::Set[String]]) }
       def build_dependency_map(entries)
         installed_taps = Homebrew::Bundle::Tap.installed_taps
@@ -176,6 +174,21 @@ module Homebrew
           map[entry.name] = depends_on
         end
       end
+
+      sig { params(message: String, stream: IO).void }
+      def write_output(message, stream: $stdout)
+        @output_mutex.synchronize do
+          # Interactive installers can leave ONLCR disabled, so use CRLF to
+          # ensure terminal status output returns to column 0.
+          if stream.tty?
+            stream.write(message, "\r\n")
+          else
+            stream.puts(message)
+          end
+        end
+      end
+
+      private
 
       sig { params(name: String).returns(String) }
       def normalize_formula_name(name)
@@ -283,19 +296,6 @@ module Homebrew
         else
           write_output(Formatter.error("#{verb} #{name} has failed!"), stream: $stderr)
           false
-        end
-      end
-
-      sig { params(message: String, stream: IO).void }
-      def write_output(message, stream: $stdout)
-        @output_mutex.synchronize do
-          # Interactive installers can leave ONLCR disabled, so use CRLF to
-          # ensure terminal status output returns to column 0.
-          if stream.tty?
-            stream.write(message, "\r\n")
-          else
-            stream.puts(message)
-          end
         end
       end
 

@@ -45,26 +45,6 @@ module Homebrew
         exec_browser(*repo_urls)
       end
 
-      private
-
-      sig { params(formula: Formula).returns(T.nilable(String)) }
-      def extract_repo_url(formula)
-        urls_to_check = [
-          formula.head&.url,
-          formula.stable&.url,
-          formula.homepage,
-        ]
-
-        urls_to_check.each do |url|
-          next if url.nil?
-
-          repo_url = url_to_repo(url)
-          return repo_url if repo_url
-        end
-
-        nil
-      end
-
       sig { params(url: String).returns(T.nilable(String)) }
       def url_to_repo(url)
         github_repo_url(url) ||
@@ -205,6 +185,26 @@ module Homebrew
         url = JSON.parse(stdout).dig("repository", "url")
         url&.delete_prefix("git+")
       rescue JSON::ParserError
+        nil
+      end
+
+      private
+
+      sig { params(formula: Formula).returns(T.nilable(String)) }
+      def extract_repo_url(formula)
+        urls_to_check = [
+          formula.head&.url,
+          formula.stable&.url,
+          formula.homepage,
+        ]
+
+        urls_to_check.each do |url|
+          next if url.nil?
+
+          repo_url = url_to_repo(url)
+          return repo_url if repo_url
+        end
+
         nil
       end
     end

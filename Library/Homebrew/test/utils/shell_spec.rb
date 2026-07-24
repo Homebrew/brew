@@ -68,20 +68,20 @@ RSpec.describe Utils::Shell do
   end
 
   specify "::sh_quote" do
-    expect(described_class.send(:sh_quote, "")).to eq("''")
-    expect(described_class.send(:sh_quote, "\\")).to eq("\\\\")
-    expect(described_class.send(:sh_quote, "\n")).to eq("'\n'")
-    expect(described_class.send(:sh_quote, "$")).to eq("\\$")
-    expect(described_class.send(:sh_quote, "word")).to eq("word")
+    expect(described_class.sh_quote("")).to eq("''")
+    expect(described_class.sh_quote("\\")).to eq("\\\\")
+    expect(described_class.sh_quote("\n")).to eq("'\n'")
+    expect(described_class.sh_quote("$")).to eq("\\$")
+    expect(described_class.sh_quote("word")).to eq("word")
   end
 
   specify "::csh_quote" do
-    expect(described_class.send(:csh_quote, "")).to eq("''")
-    expect(described_class.send(:csh_quote, "\\")).to eq("\\\\")
+    expect(described_class.csh_quote("")).to eq("''")
+    expect(described_class.csh_quote("\\")).to eq("\\\\")
     # NOTE: This test is different than for `sh`.
-    expect(described_class.send(:csh_quote, "\n")).to eq("'\\\n'")
-    expect(described_class.send(:csh_quote, "$")).to eq("\\$")
-    expect(described_class.send(:csh_quote, "word")).to eq("word")
+    expect(described_class.csh_quote("\n")).to eq("'\\\n'")
+    expect(described_class.csh_quote("$")).to eq("\\$")
+    expect(described_class.csh_quote("word")).to eq("word")
   end
 
   describe "::prepend_path_in_profile" do

@@ -29,7 +29,7 @@ RSpec.describe Homebrew::Cmd::SearchCmd do
       before { allow_any_instance_of(StringIO).to receive(:tty?).and_return(false) }
 
       it "skips" do
-        expect { search_cmd.send(:print_missing_formula_help, "formula", false) }
+        expect { search_cmd.print_missing_formula_help("formula", false) }
           .not_to output.to_stdout
       end
     end
@@ -38,25 +38,25 @@ RSpec.describe Homebrew::Cmd::SearchCmd do
       before { allow_any_instance_of(StringIO).to receive(:tty?).and_return(true) }
 
       it "skips a regex query" do
-        expect { search_cmd.send(:print_missing_formula_help, "/formula/", false) }
+        expect { search_cmd.print_missing_formula_help("/formula/", false) }
           .not_to output.to_stdout
       end
 
       it "skips if there is not a reason" do
         allow(Homebrew::MissingFormula).to receive(:reason).and_return(nil)
-        expect { search_cmd.send(:print_missing_formula_help, "formula", false) }
+        expect { search_cmd.print_missing_formula_help("formula", false) }
           .not_to output.to_stdout
       end
 
       it "prints additional output if `found_matches` is true" do
         allow(Homebrew::MissingFormula).to receive(:reason).and_return("Reason")
-        expect { search_cmd.send(:print_missing_formula_help, "formula", true) }
+        expect { search_cmd.print_missing_formula_help("formula", true) }
           .to output("\nIf you meant \"formula\" specifically:\nReason\n").to_stdout
       end
 
       it "only prints reason if `found_matches` is false" do
         allow(Homebrew::MissingFormula).to receive(:reason).and_return("Reason")
-        expect { search_cmd.send(:print_missing_formula_help, "formula", false) }
+        expect { search_cmd.print_missing_formula_help("formula", false) }
           .to output("Reason\n").to_stdout
       end
     end

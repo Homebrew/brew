@@ -66,7 +66,7 @@ RSpec.describe Homebrew::Upgrade do
         FormulaInstaller, formula: Testball.new, compute_dependencies: [dependency]
       )
 
-      expect { described_class.send(:upgrade_formula, formula_installer, dry_run: true) }
+      expect { described_class.upgrade_formula(formula_installer, dry_run: true) }
         .to output(/Would upgrade.*python@3.14 3.7.1 -> 3.14.6/m).to_stdout
     end
   end

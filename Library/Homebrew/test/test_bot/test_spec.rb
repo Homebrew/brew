@@ -11,7 +11,7 @@ RSpec.describe Homebrew::TestBot::Test do
       # forwarding to Step.new, which expects T::Array[String].
       test_instance = described_class.new(dry_run: true)
 
-      step = test_instance.send(:test, "git", "-C", Pathname.new("/some/path"), "status")
+      step = test_instance.test("git", "-C", Pathname.new("/some/path"), "status")
 
       expect(step.command).to eq(["git", "-C", "/some/path", "status"])
       expect(step).to be_passed
@@ -20,7 +20,7 @@ RSpec.describe Homebrew::TestBot::Test do
     it "allows nil environment values" do
       test_instance = described_class.new(dry_run: true)
 
-      step = test_instance.send(:test, "brew", "install", env: { "HOMEBREW_DEVELOPER" => nil })
+      step = test_instance.test("brew", "install", env: { "HOMEBREW_DEVELOPER" => nil })
 
       expect(step).to be_passed
     end

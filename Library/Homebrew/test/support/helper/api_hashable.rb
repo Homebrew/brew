@@ -10,7 +10,8 @@ module APIHashable
   def generated_hash!
     return unless generating_hash?
 
-    Object.send(:remove_const, :HOMEBREW_PREFIX)
+    # `Module#remove_const` is private Ruby core API with no public alternative.
+    Object.send(:remove_const, :HOMEBREW_PREFIX) # rubocop:disable Homebrew/NoSendInTests
     Object.const_set(:HOMEBREW_PREFIX, @old_homebrew_prefix)
     ENV["HOME"] = @old_home
     ENV["GIT_CONFIG_GLOBAL"] = @old_git_config_global

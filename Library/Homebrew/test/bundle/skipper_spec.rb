@@ -13,8 +13,8 @@ RSpec.describe Homebrew::Bundle::Skipper do
     allow(ENV).to receive(:[]).with("HOMEBREW_BUNDLE_BREW_SKIP").and_return("mysql")
     allow(ENV).to receive(:[]).with("HOMEBREW_BUNDLE_TAP_SKIP").and_return("org/repo")
     allow(Formatter).to receive(:warning)
-    skipper.instance_variable_set(:@skipped_entries, nil)
-    skipper.instance_variable_set(:@failed_taps, nil)
+    skipper.skipped_entries = nil
+    skipper.failed_taps = nil
   end
 
   describe ".skip?" do

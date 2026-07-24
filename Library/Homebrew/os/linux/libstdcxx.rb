@@ -10,6 +10,11 @@ module OS
       SOVERSION = 6
       SONAME = T.let("libstdc++.so.#{SOVERSION}".freeze, String)
 
+      class << self
+        sig { params(system_version: T.nilable(Version)).returns(T.nilable(Version)) }
+        attr_writer :system_version
+      end
+
       sig { returns(T::Boolean) }
       def self.below_ci_version?
         system_version < LINUX_LIBSTDCXX_CI_VERSION

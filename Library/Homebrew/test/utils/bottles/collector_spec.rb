@@ -32,24 +32,24 @@ RSpec.describe Utils::Bottles::Collector do
 
     it "uses older tags when needed", :needs_macos do
       collector.add(sonoma, checksum: Checksum.new("foo_checksum"), cellar: "foo_cellar")
-      expect(collector.send(:find_matching_tag, sonoma)).to eq(sonoma)
-      expect(collector.send(:find_matching_tag, sequoia)).to eq(sonoma)
+      expect(collector.find_matching_tag(sonoma)).to eq(sonoma)
+      expect(collector.find_matching_tag(sequoia)).to eq(sonoma)
     end
 
     it "does not use older tags when requested not to", :needs_macos do
       allow(Homebrew::EnvConfig).to receive_messages(developer?: true, skip_or_later_bottles?: true)
       allow(OS::Mac.version).to receive(:prerelease?).and_return(true)
       collector.add(sonoma, checksum: Checksum.new("foo_checksum"), cellar: "foo_cellar")
-      expect(collector.send(:find_matching_tag, sonoma)).to eq(sonoma)
-      expect(collector.send(:find_matching_tag, sequoia)).to be_nil
+      expect(collector.find_matching_tag(sonoma)).to eq(sonoma)
+      expect(collector.find_matching_tag(sequoia)).to be_nil
     end
 
     it "ignores HOMEBREW_SKIP_OR_LATER_BOTTLES on release versions", :needs_macos do
       allow(Homebrew::EnvConfig).to receive(:skip_or_later_bottles?).and_return(true)
       allow(OS::Mac.version).to receive(:prerelease?).and_return(false)
       collector.add(sonoma, checksum: Checksum.new("foo_checksum"), cellar: "foo_cellar")
-      expect(collector.send(:find_matching_tag, sonoma)).to eq(sonoma)
-      expect(collector.send(:find_matching_tag, sequoia)).to eq(sonoma)
+      expect(collector.find_matching_tag(sonoma)).to eq(sonoma)
+      expect(collector.find_matching_tag(sequoia)).to eq(sonoma)
     end
   end
 end

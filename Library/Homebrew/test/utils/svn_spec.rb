@@ -12,8 +12,7 @@ RSpec.describe Utils::Svn do
   def clear_version_cache
     return unless described_class.instance_variable_defined?(:@version)
 
-    described_class.send(:remove_instance_variable,
-                         :@version)
+    described_class.remove_instance_variable(:@version)
   end
 
   before do

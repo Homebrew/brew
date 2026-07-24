@@ -37,7 +37,7 @@ RSpec.describe UnpackStrategy::Dmg, :needs_macos do
       expect(attach_result).to receive(:assert_success!).and_raise(attach_error)
       expect(unpack_strategy).not_to receive(:system_command!)
 
-      expect { unpack_strategy.send(:mount) { nil } }.to raise_error(attach_error)
+      expect { unpack_strategy.mount { nil } }.to raise_error(attach_error)
     end
   end
 end

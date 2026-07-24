@@ -54,6 +54,12 @@ class MacOSVersion < Version
     new(str)
   end
 
+  sig { returns(T::Hash[T.untyped, T.nilable(Integer)]) }
+  attr_reader :comparison_cache
+
+  sig { returns(T.nilable(Symbol)) }
+  attr_reader :sym
+
   sig { params(version: T.nilable(String)).void }
   def initialize(version)
     raise MacOSVersion::Error, version unless /\A\d{2,}(?:\.\d+){0,2}\z/.match?(version)

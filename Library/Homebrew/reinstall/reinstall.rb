@@ -116,8 +116,6 @@ module Homebrew
         nil
       end
 
-      private
-
       sig { params(keg: Keg).void }
       def backup(keg)
         keg.unlink
@@ -131,6 +129,8 @@ module Homebrew
           EOS
         end
       end
+
+      private
 
       sig { params(keg: Keg, keg_was_linked: T::Boolean, verbose: T::Boolean).void }
       def restore_backup(keg, keg_was_linked, verbose:)

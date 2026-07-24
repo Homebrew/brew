@@ -71,7 +71,7 @@ RSpec.describe Homebrew::Reinstall do
       (backup/"bin").mkpath
       (backup/"bin/test").write("stale")
 
-      described_class.send(:backup, keg)
+      described_class.backup(keg)
 
       expect(keg_path).not_to exist
       expect(backup/"bin/test").to exist

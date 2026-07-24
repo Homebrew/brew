@@ -19,7 +19,7 @@ RSpec.describe OS::Linux::Ld do
 
     before do
       allow(File).to receive(:executable?).and_return(false)
-      described_class.instance_variable_set(:@system_ld_so, nil)
+      described_class.system_ld_so = nil
     end
 
     it "returns the path to a known dynamic linker" do

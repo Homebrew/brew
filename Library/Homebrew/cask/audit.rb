@@ -36,6 +36,9 @@ module Cask
     sig { returns(T.nilable(Download)) }
     attr_reader :download
 
+    sig { params(livecheck_result: T.nilable(T.any(T::Boolean, Symbol))).void }
+    attr_writer :livecheck_result
+
     sig {
       params(
         cask: ::Cask::Cask, download: T::Boolean, quarantine: T::Boolean,
@@ -146,6 +149,127 @@ module Cask
       end
 
       summary.join("\n")
+    end
+
+    sig {
+      params(
+        include_manual_installers: T::Boolean,
+        _block:                    T.nilable(T.proc.params(
+          arg0: T::Array[T.any(Artifact::Installer, Artifact::Pkg, Artifact::Relocated)],
+          arg1: Pathname,
+        ).void),
+      ).void
+    }
+    def extract_artifacts(include_manual_installers: false, &_block)
+      return unless online?
+      return if (download = self.download).nil?
+
+      artifacts = cask.artifacts.select do |artifact|
+        artifact.is_a?(Artifact::Pkg) ||
+          artifact.is_a?(Artifact::App) ||
+          artifact.is_a?(Artifact::Binary) ||
+          (include_manual_installers &&
+            artifact.is_a?(Artifact::Installer) &&
+            artifact.manual_install &&
+            [".app", ".pkg"].include?(artifact.path.extname.downcase))
+      end
+
+      if @artifacts_extracted && @tmpdir
+        yield artifacts, @tmpdir if block_given?
+        return
+      end
+
+      return if artifacts.empty?
+
+      @tmpdir ||= T.let(Pathname(Dir.mktmpdir("cask-audit", HOMEBREW_TEMP)), T.nilable(Pathname))
+
+      # Clean up tmp dir when @tmpdir object is destroyed
+      ObjectSpace.define_finalizer(
+        @tmpdir,
+        proc { FileUtils.remove_entry(@tmpdir) },
+      )
+
+      ohai "Downloading and extracting artifacts"
+
+      downloaded_path = download.fetch
+
+      primary_container = UnpackStrategy.detect(downloaded_path, type: @cask.container&.type, merge_xattrs: true)
+      return if primary_container.nil?
+
+      # If the container has any dependencies we need to install them or unpacking will fail.
+      if primary_container.dependencies.any?
+
+        install_options = {
+          show_header:          true,
+          installed_on_request: false,
+          verbose:              false,
+        }.compact
+
+        Homebrew::Install.perform_preinstall_checks_once
+        formula_installers = primary_container.dependencies.filter_map do |dep|
+          next unless dep.is_a?(Formula)
+          next if dep.linked?
+
+          FormulaInstaller.new(
+            dep,
+            **install_options,
+          )
+        end
+        valid_formula_installers = Homebrew::Install.fetch_formulae(formula_installers)
+
+        formula_installers.each do |fi|
+          next unless valid_formula_installers.include?(fi)
+
+          fi.install
+          fi.finish
+        end
+      end
+
+      # Extract the container to the temporary directory.
+      primary_container.extract_nestedly(to: @tmpdir, basename: downloaded_path.basename, verbose: false)
+
+      if (nested_container = @cask.container&.nested)
+        FileUtils.chmod_R "+rw", @tmpdir/nested_container, force: true, verbose: false
+        UnpackStrategy.detect(@tmpdir/nested_container, merge_xattrs: true)
+                      .extract_nestedly(to: @tmpdir, verbose: false)
+      end
+
+      # Propagate quarantine attributes from the downloaded file to extracted contents.
+      # This is necessary because some extraction tools (like 7zr) don't preserve xattrs.
+      if Quarantine.available? && Quarantine.detect(downloaded_path)
+        Quarantine.propagate(from: downloaded_path, to: @tmpdir)
+      end
+
+      # Process rename operations after extraction
+      # Create a temporary installer to process renames in the audit directory
+      temp_installer = Installer.new(@cask)
+      temp_installer.process_rename_operations(target_dir: @tmpdir)
+
+      # Set the flag to indicate that extraction has occurred.
+      @artifacts_extracted = T.let(true, T.nilable(TrueClass))
+
+      # Yield the artifacts and temp directory to the block if provided.
+      yield artifacts, @tmpdir if block_given?
+    end
+
+    sig { params(min_os: T.nilable(T.any(String, MacOSVersion))).returns(T.nilable(MacOSVersion)) }
+    def normalize_min_os(min_os)
+      return if min_os.nil?
+      return if min_os.is_a?(String) && min_os.blank?
+
+      min_os = if min_os.is_a?(MacOSVersion)
+        min_os.strip_patch
+      else
+        MacOSVersion.new(min_os).strip_patch
+      end
+
+      # Big Sur is sometimes identified as 10.16, so we override it to the
+      # expected macOS version (11).
+      min_os = MacOSVersion.new("11") if min_os == "10.16"
+
+      min_os
+    rescue MacOSVersion::Error
+      nil
     end
 
     private
@@ -562,107 +686,6 @@ module Cask
       end
     end
 
-    sig {
-      params(
-        include_manual_installers: T::Boolean,
-        _block:                    T.nilable(T.proc.params(
-          arg0: T::Array[T.any(Artifact::Installer, Artifact::Pkg, Artifact::Relocated)],
-          arg1: Pathname,
-        ).void),
-      ).void
-    }
-    def extract_artifacts(include_manual_installers: false, &_block)
-      return unless online?
-      return if (download = self.download).nil?
-
-      artifacts = cask.artifacts.select do |artifact|
-        artifact.is_a?(Artifact::Pkg) ||
-          artifact.is_a?(Artifact::App) ||
-          artifact.is_a?(Artifact::Binary) ||
-          (include_manual_installers &&
-            artifact.is_a?(Artifact::Installer) &&
-            artifact.manual_install &&
-            [".app", ".pkg"].include?(artifact.path.extname.downcase))
-      end
-
-      if @artifacts_extracted && @tmpdir
-        yield artifacts, @tmpdir if block_given?
-        return
-      end
-
-      return if artifacts.empty?
-
-      @tmpdir ||= T.let(Pathname(Dir.mktmpdir("cask-audit", HOMEBREW_TEMP)), T.nilable(Pathname))
-
-      # Clean up tmp dir when @tmpdir object is destroyed
-      ObjectSpace.define_finalizer(
-        @tmpdir,
-        proc { FileUtils.remove_entry(@tmpdir) },
-      )
-
-      ohai "Downloading and extracting artifacts"
-
-      downloaded_path = download.fetch
-
-      primary_container = UnpackStrategy.detect(downloaded_path, type: @cask.container&.type, merge_xattrs: true)
-      return if primary_container.nil?
-
-      # If the container has any dependencies we need to install them or unpacking will fail.
-      if primary_container.dependencies.any?
-
-        install_options = {
-          show_header:          true,
-          installed_on_request: false,
-          verbose:              false,
-        }.compact
-
-        Homebrew::Install.perform_preinstall_checks_once
-        formula_installers = primary_container.dependencies.filter_map do |dep|
-          next unless dep.is_a?(Formula)
-          next if dep.linked?
-
-          FormulaInstaller.new(
-            dep,
-            **install_options,
-          )
-        end
-        valid_formula_installers = Homebrew::Install.fetch_formulae(formula_installers)
-
-        formula_installers.each do |fi|
-          next unless valid_formula_installers.include?(fi)
-
-          fi.install
-          fi.finish
-        end
-      end
-
-      # Extract the container to the temporary directory.
-      primary_container.extract_nestedly(to: @tmpdir, basename: downloaded_path.basename, verbose: false)
-
-      if (nested_container = @cask.container&.nested)
-        FileUtils.chmod_R "+rw", @tmpdir/nested_container, force: true, verbose: false
-        UnpackStrategy.detect(@tmpdir/nested_container, merge_xattrs: true)
-                      .extract_nestedly(to: @tmpdir, verbose: false)
-      end
-
-      # Propagate quarantine attributes from the downloaded file to extracted contents.
-      # This is necessary because some extraction tools (like 7zr) don't preserve xattrs.
-      if Quarantine.available? && Quarantine.detect(downloaded_path)
-        Quarantine.propagate(from: downloaded_path, to: @tmpdir)
-      end
-
-      # Process rename operations after extraction
-      # Create a temporary installer to process renames in the audit directory
-      temp_installer = Installer.new(@cask)
-      temp_installer.process_rename_operations(target_dir: @tmpdir)
-
-      # Set the flag to indicate that extraction has occurred.
-      @artifacts_extracted = T.let(true, T.nilable(TrueClass))
-
-      # Yield the artifacts and temp directory to the block if provided.
-      yield artifacts, @tmpdir if block_given?
-    end
-
     sig { void }
     def audit_rosetta
       return if (url = cask.url).nil?
@@ -953,26 +976,6 @@ module Cask
       end
 
       normalize_min_os(min_os)
-    end
-
-    sig { params(min_os: T.nilable(T.any(String, MacOSVersion))).returns(T.nilable(MacOSVersion)) }
-    def normalize_min_os(min_os)
-      return if min_os.nil?
-      return if min_os.is_a?(String) && min_os.blank?
-
-      min_os = if min_os.is_a?(MacOSVersion)
-        min_os.strip_patch
-      else
-        MacOSVersion.new(min_os).strip_patch
-      end
-
-      # Big Sur is sometimes identified as 10.16, so we override it to the
-      # expected macOS version (11).
-      min_os = MacOSVersion.new("11") if min_os == "10.16"
-
-      min_os
-    rescue MacOSVersion::Error
-      nil
     end
 
     sig { params(path: Pathname).returns(T.nilable(String)) }

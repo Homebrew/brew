@@ -43,6 +43,12 @@ module Homebrew
           @formula_oldnames = T.let(nil, T.nilable(T::Hash[String, String]))
         end
 
+        sig {
+          params(formulae_by_name: T.nilable(T::Hash[String, T::Hash[Symbol, T.untyped]]))
+            .returns(T.nilable(T::Hash[String, T::Hash[Symbol, T.untyped]]))
+        }
+        attr_writer :formulae_by_name
+
         sig { override.params(name: String, no_upgrade: T::Boolean, verbose: T::Boolean, options: T.untyped).returns(T::Boolean) }
         def preinstall!(name, no_upgrade: false, verbose: false, **options)
           new(name, options).preinstall!(no_upgrade:, verbose:)

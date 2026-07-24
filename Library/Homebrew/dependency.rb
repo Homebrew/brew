@@ -163,6 +163,9 @@ class Dependency
   end
 
   class << self
+    sig { returns(T.nilable(T::Array[T.any(String, Symbol)])) }
+    attr_reader :expand_stack
+
     # Expand the dependencies of each dependent recursively, optionally yielding
     # `[dependent, dep]` pairs to allow callers to apply arbitrary filters to
     # the list.

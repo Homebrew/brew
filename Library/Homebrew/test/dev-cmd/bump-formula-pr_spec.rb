@@ -108,7 +108,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
       it "outputs nothing" do
         allow(f).to receive(:tap).and_return(nil)
 
-        expect { bump_formula_pr.send(:check_throttle, f, "1.2.4") }.not_to output.to_stderr
+        expect { bump_formula_pr.check_throttle(f, "1.2.4") }.not_to output.to_stderr
       end
     end
 
@@ -116,7 +116,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
       it "does not throttle" do
         allow(f).to receive(:tap).and_return(tap)
 
-        expect { bump_formula_pr.send(:check_throttle, f, "1.2.4") }.not_to output.to_stderr
+        expect { bump_formula_pr.check_throttle(f, "1.2.4") }.not_to output.to_stderr
       end
     end
 
@@ -124,7 +124,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
       it "does not throttle" do
         allow(f_throttle).to receive(:tap).and_return(tap)
 
-        expect { bump_formula_pr.send(:check_throttle, f_throttle, "1.2.5") }.not_to output.to_stderr
+        expect { bump_formula_pr.check_throttle(f_throttle, "1.2.5") }.not_to output.to_stderr
       end
     end
 
@@ -133,7 +133,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         allow(f_throttle).to receive(:tap).and_return(tap)
 
         expect do
-          bump_formula_pr.send(:check_throttle, f_throttle, "1.2.4")
+          bump_formula_pr.check_throttle(f_throttle, "1.2.4")
         rescue SystemExit
           nil
         end.to output(throttle_error).to_stderr
@@ -149,7 +149,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
 
         expect do
-          bump_formula_pr.send(:check_throttle, f_throttle_rate_and_days, "1.2.4")
+          bump_formula_pr.check_throttle(f_throttle_rate_and_days, "1.2.4")
         rescue SystemExit
           nil
         end.to output(throttle_rate_days_error).to_stderr
@@ -158,7 +158,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
       it "does not throttle when throttle interval has elapsed" do
         allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
 
-        expect { bump_formula_pr.send(:check_throttle, f_throttle_rate_and_days, "1.2.4") }.not_to output.to_stderr
+        expect { bump_formula_pr.check_throttle(f_throttle_rate_and_days, "1.2.4") }.not_to output.to_stderr
       end
     end
 
@@ -171,7 +171,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
 
         expect do
-          bump_formula_pr.send(:check_throttle, f_throttle_days, "1.2.4")
+          bump_formula_pr.check_throttle(f_throttle_days, "1.2.4")
         rescue SystemExit
           next
         end.to output(throttle_days_error).to_stderr
@@ -181,7 +181,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
 
         expect do
-          bump_formula_pr.send(:check_throttle, f_throttle_days, "1.2.4")
+          bump_formula_pr.check_throttle(f_throttle_days, "1.2.4")
         end.not_to output.to_stderr
       end
     end
@@ -210,13 +210,13 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
 
     it "only updates `:parent` resource" do
       expect(bump_formula_pr).to receive(:update_resource_block!).with(f, resource, version).and_return(:success)
-      expect(bump_formula_pr.send(:update_matching_version_resources!, f, version:)).to eq({ "parent" => :success })
+      expect(bump_formula_pr.update_matching_version_resources!(f, version:)).to eq({ "parent" => :success })
     end
 
     it "does not update `:parent` resource if set in `--resource-versions`" do
       resource_versions = { "parent" => { current_version: "1.2.3", latest_version: version } }
       expect(bump_formula_pr).not_to receive(:update_resource_block!)
-      expect(bump_formula_pr.send(:update_matching_version_resources!, f, version:, resource_versions:)).to eq({})
+      expect(bump_formula_pr.update_matching_version_resources!(f, version:, resource_versions:)).to eq({})
     end
   end
 
@@ -237,21 +237,21 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
       version = "2.1.0"
       resource_versions = { "foo" => { current_version: "1.2.3", latest_version: version } }
       expect(bump_formula_pr).to receive(:update_resource_block!).with(f, r, version).and_return(:success)
-      expect(bump_formula_pr.send(:update_resources!, f, resource_versions:)).to eq({ "foo" => :success })
+      expect(bump_formula_pr.update_resources!(f, resource_versions:)).to eq({ "foo" => :success })
     end
 
     it "downgrades to requested version" do
       version = "0.1.2"
       resource_versions = { "foo" => { current_version: "1.2.3", latest_version: version } }
       expect(bump_formula_pr).to receive(:update_resource_block!).with(f, r, version).and_return(:success)
-      expect(bump_formula_pr.send(:update_resources!, f, resource_versions:)).to eq({ "foo" => :downgraded })
+      expect(bump_formula_pr.update_resources!(f, resource_versions:)).to eq({ "foo" => :downgraded })
     end
 
     it "returns update failures" do
       version = "0.1.2"
       resource_versions = { "foo" => { current_version: "1.2.3", latest_version: version } }
       expect(bump_formula_pr).to receive(:update_resource_block!).with(f, r, version).and_return(:url_unchanged)
-      expect(bump_formula_pr.send(:update_resources!, f, resource_versions:)).to eq({ "foo" => :url_unchanged })
+      expect(bump_formula_pr.update_resources!(f, resource_versions:)).to eq({ "foo" => :url_unchanged })
     end
   end
 end

@@ -68,7 +68,7 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
     it "is idempotent" do
       matrix = described_class.new([], [], all_supported: false, dependent_matrix: false)
       runners = matrix.runners.dup
-      matrix.send(:generate_runners!)
+      matrix.generate_runners!
 
       expect(matrix.runners).to eq(runners)
     end
@@ -378,7 +378,7 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
       dependencies.each { |dependency| depends_on dependency }
 
       kwargs.each do |k, v|
-        send(:"on_#{k}") do
+        public_send(:"on_#{k}") do
           v.each do |dep|
             depends_on dep
           end

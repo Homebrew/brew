@@ -80,7 +80,7 @@ RSpec.describe Sandbox do
       controller = instance_double(IO)
       allow(controller).to receive(:each_char).and_raise(Errno::EIO)
 
-      expect { sandbox.send(:copy_pty_output, controller) }.not_to raise_error
+      expect { sandbox.copy_pty_output(controller) }.not_to raise_error
     end
   end
 
@@ -200,7 +200,7 @@ RSpec.describe Sandbox do
 
       sandbox.allow_read_if_exists path: file
 
-      rule = sandbox.send(:profile).rules.fetch(-1)
+      rule = sandbox.profile.rules.fetch(-1)
       expect(rule).to have_attributes(allow: true, operation: "file-read*")
       expect(rule.filter).to have_attributes(path: file.realpath.to_s, type: :literal)
     end
@@ -208,13 +208,13 @@ RSpec.describe Sandbox do
     it "skips missing paths" do
       sandbox.allow_read_if_exists path: mktmpdir/"missing.rb"
 
-      expect(sandbox.send(:profile).rules).to be_empty
+      expect(sandbox.profile.rules).to be_empty
     end
 
     it "skips nil paths" do
       sandbox.allow_read_if_exists path: nil
 
-      expect(sandbox.send(:profile).rules).to be_empty
+      expect(sandbox.profile.rules).to be_empty
     end
   end
 
@@ -225,7 +225,7 @@ RSpec.describe Sandbox do
 
       sandbox.deny_read_path dir
 
-      rule = sandbox.send(:profile).rules.fetch(-1)
+      rule = sandbox.profile.rules.fetch(-1)
       expect(rule).to have_attributes(allow: false, operation: "file-read*")
       expect(rule.filter).to have_attributes(path: dir.realpath.to_s, type: :subpath)
     end
@@ -252,7 +252,7 @@ RSpec.describe Sandbox do
     it "denies reads from the real home" do
       sandbox.deny_read_home
 
-      rule = sandbox.send(:profile).rules.fetch(-1)
+      rule = sandbox.profile.rules.fetch(-1)
       expect(rule).to have_attributes(allow: false, operation: "file-read*")
       expect(rule.filter).to have_attributes(path: home.realpath.to_s, type: :subpath)
     end
@@ -273,7 +273,7 @@ RSpec.describe Sandbox do
 
         sandbox.deny_read_home
 
-        expect(sandbox.send(:profile).rules).to be_empty
+        expect(sandbox.profile.rules).to be_empty
       end
     end
 
@@ -289,7 +289,7 @@ RSpec.describe Sandbox do
           sandbox.deny_read_home
         end
 
-        expect(sandbox.send(:profile).rules).to be_empty
+        expect(sandbox.profile.rules).to be_empty
       end
     end
 
@@ -302,7 +302,7 @@ RSpec.describe Sandbox do
         sandbox.deny_read_home
       end
 
-      expect(sandbox.send(:profile).rules).to be_empty
+      expect(sandbox.profile.rules).to be_empty
     end
 
     it "denies known sensitive home paths when Homebrew needs home access" do
@@ -367,7 +367,7 @@ RSpec.describe Sandbox do
 
       sandbox.deny_read_home
 
-      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      denied = sandbox.profile.rules.map { |rule| rule.filter&.path }
       expect(denied).to include(*(sensitive_dirs + sensitive_files).map { |path| path.realpath.to_s })
       expect(denied).not_to include(*allowed_dirs.map { |path| path.realpath.to_s })
     end
@@ -378,7 +378,7 @@ RSpec.describe Sandbox do
 
       sandbox.deny_read_home
 
-      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      denied = sandbox.profile.rules.map { |rule| rule.filter&.path }
       expect(denied).to contain_exactly((home/".ssh").realpath.to_s)
     end
 
@@ -405,7 +405,7 @@ RSpec.describe Sandbox do
 
       sandbox.deny_read_home
 
-      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      denied = sandbox.profile.rules.map { |rule| rule.filter&.path }
       expect(denied).to include((home/".ssh").realpath.to_s)
       expect(denied).not_to include(teams_log.realpath.to_s, backslash_dir.realpath.to_s)
     end
@@ -417,7 +417,7 @@ RSpec.describe Sandbox do
 
       sandbox.deny_read_home
 
-      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      denied = sandbox.profile.rules.map { |rule| rule.filter&.path }
       expect(denied).not_to include(File::NULL)
     end
 
@@ -452,7 +452,7 @@ RSpec.describe Sandbox do
         sandbox.deny_read_home
       end
 
-      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      denied = sandbox.profile.rules.map { |rule| rule.filter&.path }
       expect(denied).to include((home/".ssh").realpath.to_s)
       expect(denied).not_to include(trust_file.realpath.to_s)
     end
@@ -469,7 +469,7 @@ RSpec.describe Sandbox do
         sandbox.deny_read_home
       end
 
-      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      denied = sandbox.profile.rules.map { |rule| rule.filter&.path }
       expect(denied).to include(gh_config.realpath.to_s)
       expect(denied).to include((home/".ssh").realpath.to_s)
       expect(denied).not_to include((home/".config").realpath.to_s)
@@ -483,7 +483,7 @@ RSpec.describe Sandbox do
 
       sandbox.deny_read_home
 
-      denied = sandbox.send(:profile).rules.map { |rule| rule.filter&.path }
+      denied = sandbox.profile.rules.map { |rule| rule.filter&.path }
       expect(denied).not_to include(developer.realpath.to_s, swiftpm.realpath.to_s)
       expect(denied).to include((home/".ssh").realpath.to_s)
     end
@@ -496,7 +496,7 @@ RSpec.describe Sandbox do
 
       sandbox.allow_write_path_if_exists dir
 
-      rule = sandbox.send(:profile).rules.fetch(0)
+      rule = sandbox.profile.rules.fetch(0)
       expect(rule).to have_attributes(allow: true, operation: "file-write*")
       expect(rule.filter).to have_attributes(path: dir.realpath.to_s, type: :subpath)
     end
@@ -504,13 +504,13 @@ RSpec.describe Sandbox do
     it "skips missing paths" do
       sandbox.allow_write_path_if_exists mktmpdir/"missing"
 
-      expect(sandbox.send(:profile).rules).to be_empty
+      expect(sandbox.profile.rules).to be_empty
     end
 
     it "skips nil paths" do
       sandbox.allow_write_path_if_exists nil
 
-      expect(sandbox.send(:profile).rules).to be_empty
+      expect(sandbox.profile.rules).to be_empty
     end
   end
 end

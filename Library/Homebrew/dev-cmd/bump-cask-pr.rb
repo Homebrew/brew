@@ -216,17 +216,6 @@ module Homebrew
         end
       end
 
-      private
-
-      sig { params(version: Cask::DSL::Version, cask: Cask::Cask).returns(Cask::DSL::Version) }
-      def shortened_version(version, cask:)
-        if version.before_comma == cask.version.before_comma
-          version
-        else
-          version.before_comma
-        end
-      end
-
       sig { params(cask: Cask::Cask, new_version: BumpVersionParser).returns(T::Array[[Symbol, Symbol]]) }
       def generate_system_options(cask, new_version)
         current_os = Homebrew::SimulateSystem.current_os
@@ -377,6 +366,63 @@ module Homebrew
 
       sig {
         params(
+          contents:  String,
+          name:      Symbol,
+          old_value: T.any(Numeric, String, Symbol),
+          new_value: T.any(Numeric, String, Symbol),
+          within:    T.nilable(Symbol),
+        ).returns(String)
+      }
+      def replace_cask_stanza_value(contents, name, old_value, new_value, within: nil)
+        return contents if old_value == new_value
+
+        cask_ast = Utils::AST::CaskAST.new(contents)
+        replacement_count = cask_ast.replace_stanza_value(name, old_value, new_value, within:)
+        if replacement_count.zero?
+          # Treat an already-applied replacement as a successful no-op so the
+          # per-(os, arch) loop in `replace_version_and_checksum` can yield the
+          # same general version more than once without raising.
+          return contents if cask_ast.replace_stanza_value(name, new_value, new_value, within:).positive?
+
+          raise "Could not find '#{name}' stanza with value #{old_value.inspect}!"
+        end
+
+        cask_ast.process
+      end
+
+      sig { params(cask: Cask::Cask, new_version: BumpVersionParser).void }
+      def check_throttle(cask, new_version:)
+        return unless cask.tap
+
+        throttle_rate = cask.livecheck.throttle
+        throttle_days = cask.livecheck.throttle_days
+        return if throttle_rate.nil? && throttle_days.nil?
+
+        version = new_version.arm || new_version.intel || new_version.general
+        return unless version.is_a?(Cask::DSL::Version)
+
+        return if Livecheck.throttle_allows_bump?(cask, version.to_s, throttle_rate:, throttle_days:)
+
+        throttle_items = []
+        throttle_items << "#{throttle_rate} releases on multiples of #{throttle_rate}" if throttle_rate
+        throttle_items << "#{throttle_days} #{Utils.pluralize("day", throttle_days)}" if throttle_days
+
+        odie "#{cask.token} should only be updated every #{throttle_items.join(" or ")}"
+      end
+
+      private
+
+      sig { params(version: Cask::DSL::Version, cask: Cask::Cask).returns(Cask::DSL::Version) }
+      def shortened_version(version, cask:)
+        if version.before_comma == cask.version.before_comma
+          version
+        else
+          version.before_comma
+        end
+      end
+
+      sig {
+        params(
           new_version: BumpVersionParser,
           contents:    String,
         ).returns(String)
@@ -432,52 +478,6 @@ module Homebrew
         return scope if Utils::AST::CaskAST.new(contents).stanza?(name, within: scope)
 
         nil
-      end
-
-      sig {
-        params(
-          contents:  String,
-          name:      Symbol,
-          old_value: T.any(Numeric, String, Symbol),
-          new_value: T.any(Numeric, String, Symbol),
-          within:    T.nilable(Symbol),
-        ).returns(String)
-      }
-      def replace_cask_stanza_value(contents, name, old_value, new_value, within: nil)
-        return contents if old_value == new_value
-
-        cask_ast = Utils::AST::CaskAST.new(contents)
-        replacement_count = cask_ast.replace_stanza_value(name, old_value, new_value, within:)
-        if replacement_count.zero?
-          # Treat an already-applied replacement as a successful no-op so the
-          # per-(os, arch) loop in `replace_version_and_checksum` can yield the
-          # same general version more than once without raising.
-          return contents if cask_ast.replace_stanza_value(name, new_value, new_value, within:).positive?
-
-          raise "Could not find '#{name}' stanza with value #{old_value.inspect}!"
-        end
-
-        cask_ast.process
-      end
-
-      sig { params(cask: Cask::Cask, new_version: BumpVersionParser).void }
-      def check_throttle(cask, new_version:)
-        return unless cask.tap
-
-        throttle_rate = cask.livecheck.throttle
-        throttle_days = cask.livecheck.throttle_days
-        return if throttle_rate.nil? && throttle_days.nil?
-
-        version = new_version.arm || new_version.intel || new_version.general
-        return unless version.is_a?(Cask::DSL::Version)
-
-        return if Livecheck.throttle_allows_bump?(cask, version.to_s, throttle_rate:, throttle_days:)
-
-        throttle_items = []
-        throttle_items << "#{throttle_rate} releases on multiples of #{throttle_rate}" if throttle_rate
-        throttle_items << "#{throttle_days} #{Utils.pluralize("day", throttle_days)}" if throttle_days
-
-        odie "#{cask.token} should only be updated every #{throttle_items.join(" or ")}"
       end
 
       sig { params(cask: Cask::Cask, new_version: BumpVersionParser).void }

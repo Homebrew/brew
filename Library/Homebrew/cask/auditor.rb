@@ -102,8 +102,6 @@ module Cask
       errors
     end
 
-    private
-
     sig { params(audit: T.nilable(Audit)).returns(T::Boolean) }
     def output_summary?(audit = nil)
       return true if @any_named_args
@@ -112,6 +110,8 @@ module Cask
 
       audit.errors?
     end
+
+    private
 
     sig { params(languages: T::Array[String]).returns(::Cask::Audit) }
     def audit_languages(languages)

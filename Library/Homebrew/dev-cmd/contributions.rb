@@ -227,8 +227,6 @@ module Homebrew
         puts generate_csv(grand_totals)
       end
 
-      private
-
       sig {
         params(repository_refs: T::Hash[String, [Pathname, String]], to: String)
           .returns([T::Hash[String, String], T::Hash[String, T::Boolean], T::Hash[String, T.nilable(String)]])
@@ -268,118 +266,6 @@ module Homebrew
         [user_names, lead_maintainers, maintainer_since_dates]
       end
 
-      sig {
-        params(
-          results:                T::Hash[String, T::Hash[String, T::Hash[Symbol, Integer]]],
-          grand_totals:           T::Hash[String, T::Hash[Symbol, Integer]],
-          user_names:             T::Hash[String, String],
-          lead_maintainers:       T::Hash[String, T::Boolean],
-          maintainer_since_dates: T::Hash[String, T.nilable(String)],
-          to:                     String,
-        ).returns(String)
-      }
-      def generate_maintainer_report_csv(results, grand_totals, user_names, lead_maintainers, maintainer_since_dates,
-                                         to)
-        require "csv"
-
-        rows = results.sort_by do |user, _|
-          qualifying_total = contribution_count(grand_totals.fetch(user).slice(*QUALIFYING_CONTRIBUTION_TYPES))
-          [-qualifying_total, user.downcase]
-        end
-        rows.map! do |user, user_repositories|
-          grand_total = grand_totals.fetch(user)
-          repository_qualifying_totals = user_repositories.transform_values do |counts|
-            contribution_count(counts.slice(*QUALIFYING_CONTRIBUTION_TYPES))
-          end
-          qualifying_total = contribution_count(grand_total.slice(*QUALIFYING_CONTRIBUTION_TYPES))
-          maintainer_activity_met = qualifying_total >= MAINTAINER_ACTIVITY_THRESHOLD
-          maintainer_since = maintainer_since_dates.fetch(user)
-          maintainer_since_date = Date.iso8601(maintainer_since) if maintainer_since
-          period_end = Date.iso8601(to)
-          lead_maintainer = lead_maintainers.key?(user.downcase)
-          lead_activity_met = lead_activity_met?(user_repositories)
-          new_role = if lead_activity_met &&
-                        (lead_maintainer ||
-                         (maintainer_since_date && maintainer_since_date <= period_end.prev_year(3)))
-            "Lead Maintainer"
-          elsif maintainer_activity_met
-            "Maintainer"
-          else
-            "None"
-          end
-
-          capped = grand_total.fetch(:merged_pr_author_hit_cap, 0).positive? ||
-                   grand_total.fetch(:approved_pr_review_hit_cap, 0).positive?
-          capped ||= user_repositories.any? do |_, counts|
-            counts.fetch(:approved_pr_review) >= MAX_PR_SEARCH ||
-              counts.except(:approved_pr_review).values.any? do |count|
-                count >= MAX_CONTRIBUTIONS
-              end
-          end
-
-          [
-            user,
-            user_names.fetch(user),
-            maintainer_since,
-            maintainer_since_date ? [(period_end - maintainer_since_date).to_i, 0].max : nil,
-            *PRIMARY_REPOS.flat_map do |repository|
-              counts = user_repositories.fetch(repository)
-              [*counts.values_at(*CONTRIBUTION_TYPES.keys), repository_qualifying_totals.fetch(repository)]
-            end,
-            qualifying_total,
-            maintainer_activity_met,
-            lead_activity_met,
-            capped,
-            lead_maintainer ? "Lead Maintainer" : "Maintainer",
-            new_role,
-          ]
-        end
-        CSV.generate do |csv|
-          csv << [
-            "username", "name", "since", "tenure days",
-            *PRIMARY_REPOS.flat_map do |repository|
-              repository = repository.delete_prefix("Homebrew/").delete_prefix("homebrew-")
-              [
-                "#{repository} authored", "#{repository} merged", "#{repository} PRs",
-                "#{repository} reviews", "#{repository} coauthored", "#{repository} total"
-              ]
-            end,
-            "total", "maintainer met", "lead met", "capped", "role", "new role"
-          ]
-          rows.each { |row| csv << row }
-        end
-      end
-
-      sig { params(repositories: T::Array[String], required: T::Boolean).returns(T::Hash[String, [Pathname, String]]) }
-      def prepare_contribution_repositories(repositories, required:)
-        require "utils/git"
-
-        repository_refs = T.let({}, T::Hash[String, [Pathname, String]])
-        repositories.each do |repository|
-          repository_path, tap = repository_path_and_tap(repository)
-          if repository_path && tap && !repository_path.exist?
-            opoo "Repository #{repository} not yet tapped! Tapping it now..."
-            tap.install(force: true)
-          end
-          unless repository_path&.exist?
-            odie "Could not find a local Git repository for #{repository}." if required
-            next
-          end
-
-          $stderr.puts "Fetching latest commits for #{repository}..."
-          system_command!(Utils::Git.git,
-                          args:         ["-C", repository_path, "fetch", "--quiet", "--force", "origin",
-                                         "+refs/heads/*:refs/remotes/origin/*"],
-                          print_stderr: false)
-          system_command!(Utils::Git.git,
-                          args:         ["-C", repository_path, "remote", "set-head", "origin", "--auto"],
-                          print_stderr: false)
-
-          repository_refs[repository] = [repository_path, "origin/HEAD"]
-        end
-        repository_refs
-      end
-
       sig { params(repository_path: Pathname, ref: String, user: String, name: String).returns(T.nilable(String)) }
       def maintainer_since(repository_path, ref, user, name)
         require "utils/git"
@@ -404,12 +290,6 @@ module Homebrew
         end
 
         nil
-      end
-
-      sig { params(readme: String, user: String, name: String).returns(T::Boolean) }
-      def readme_mentions?(readme, user, name)
-        readme = readme.dup.force_encoding(Encoding::UTF_8)
-        readme.include?("https://github.com/#{user}") || readme.include?(name)
       end
 
       sig {
@@ -559,38 +439,6 @@ module Homebrew
         results
       end
 
-      sig {
-        params(
-          pull_request:           T::Hash[String, T.untyped],
-          authored_pull_requests: T::Set[String],
-          merged_pull_requests:   T::Set[String],
-        ).void
-      }
-      def add_merged_pull_request_id(pull_request, authored_pull_requests, merged_pull_requests)
-        number = pull_request["number"]
-        return unless number.is_a?(Integer)
-
-        pull_request_id = number.to_s
-        authored_pull_requests << pull_request_id
-        merged_pull_requests << pull_request_id
-      end
-
-      sig {
-        params(
-          counts:                 T::Hash[Symbol, Integer],
-          authored_pull_requests: T::Set[String],
-          merged_pull_requests:   T::Set[String],
-        ).void
-      }
-      def update_merged_pull_request_counts(counts, authored_pull_requests, merged_pull_requests)
-        unless authored_pull_requests.empty?
-          counts[:merged_pr_author] = [authored_pull_requests.length, MAX_CONTRIBUTIONS].min
-        end
-        return if merged_pull_requests.empty?
-
-        counts[:merged_pr] = [merged_pull_requests.length, MAX_CONTRIBUTIONS].min
-      end
-
       sig { params(user: String, to: String).returns(T.nilable(String)) }
       def github_username_for(user, to:)
         return user unless user.include?("@")
@@ -729,6 +577,158 @@ module Homebrew
         end
 
         counts
+      end
+
+      private
+
+      sig {
+        params(
+          results:                T::Hash[String, T::Hash[String, T::Hash[Symbol, Integer]]],
+          grand_totals:           T::Hash[String, T::Hash[Symbol, Integer]],
+          user_names:             T::Hash[String, String],
+          lead_maintainers:       T::Hash[String, T::Boolean],
+          maintainer_since_dates: T::Hash[String, T.nilable(String)],
+          to:                     String,
+        ).returns(String)
+      }
+      def generate_maintainer_report_csv(results, grand_totals, user_names, lead_maintainers, maintainer_since_dates,
+                                         to)
+        require "csv"
+
+        rows = results.sort_by do |user, _|
+          qualifying_total = contribution_count(grand_totals.fetch(user).slice(*QUALIFYING_CONTRIBUTION_TYPES))
+          [-qualifying_total, user.downcase]
+        end
+        rows.map! do |user, user_repositories|
+          grand_total = grand_totals.fetch(user)
+          repository_qualifying_totals = user_repositories.transform_values do |counts|
+            contribution_count(counts.slice(*QUALIFYING_CONTRIBUTION_TYPES))
+          end
+          qualifying_total = contribution_count(grand_total.slice(*QUALIFYING_CONTRIBUTION_TYPES))
+          maintainer_activity_met = qualifying_total >= MAINTAINER_ACTIVITY_THRESHOLD
+          maintainer_since = maintainer_since_dates.fetch(user)
+          maintainer_since_date = Date.iso8601(maintainer_since) if maintainer_since
+          period_end = Date.iso8601(to)
+          lead_maintainer = lead_maintainers.key?(user.downcase)
+          lead_activity_met = lead_activity_met?(user_repositories)
+          new_role = if lead_activity_met &&
+                        (lead_maintainer ||
+                         (maintainer_since_date && maintainer_since_date <= period_end.prev_year(3)))
+            "Lead Maintainer"
+          elsif maintainer_activity_met
+            "Maintainer"
+          else
+            "None"
+          end
+
+          capped = grand_total.fetch(:merged_pr_author_hit_cap, 0).positive? ||
+                   grand_total.fetch(:approved_pr_review_hit_cap, 0).positive?
+          capped ||= user_repositories.any? do |_, counts|
+            counts.fetch(:approved_pr_review) >= MAX_PR_SEARCH ||
+              counts.except(:approved_pr_review).values.any? do |count|
+                count >= MAX_CONTRIBUTIONS
+              end
+          end
+
+          [
+            user,
+            user_names.fetch(user),
+            maintainer_since,
+            maintainer_since_date ? [(period_end - maintainer_since_date).to_i, 0].max : nil,
+            *PRIMARY_REPOS.flat_map do |repository|
+              counts = user_repositories.fetch(repository)
+              [*counts.values_at(*CONTRIBUTION_TYPES.keys), repository_qualifying_totals.fetch(repository)]
+            end,
+            qualifying_total,
+            maintainer_activity_met,
+            lead_activity_met,
+            capped,
+            lead_maintainer ? "Lead Maintainer" : "Maintainer",
+            new_role,
+          ]
+        end
+        CSV.generate do |csv|
+          csv << [
+            "username", "name", "since", "tenure days",
+            *PRIMARY_REPOS.flat_map do |repository|
+              repository = repository.delete_prefix("Homebrew/").delete_prefix("homebrew-")
+              [
+                "#{repository} authored", "#{repository} merged", "#{repository} PRs",
+                "#{repository} reviews", "#{repository} coauthored", "#{repository} total"
+              ]
+            end,
+            "total", "maintainer met", "lead met", "capped", "role", "new role"
+          ]
+          rows.each { |row| csv << row }
+        end
+      end
+
+      sig { params(repositories: T::Array[String], required: T::Boolean).returns(T::Hash[String, [Pathname, String]]) }
+      def prepare_contribution_repositories(repositories, required:)
+        require "utils/git"
+
+        repository_refs = T.let({}, T::Hash[String, [Pathname, String]])
+        repositories.each do |repository|
+          repository_path, tap = repository_path_and_tap(repository)
+          if repository_path && tap && !repository_path.exist?
+            opoo "Repository #{repository} not yet tapped! Tapping it now..."
+            tap.install(force: true)
+          end
+          unless repository_path&.exist?
+            odie "Could not find a local Git repository for #{repository}." if required
+            next
+          end
+
+          $stderr.puts "Fetching latest commits for #{repository}..."
+          system_command!(Utils::Git.git,
+                          args:         ["-C", repository_path, "fetch", "--quiet", "--force", "origin",
+                                         "+refs/heads/*:refs/remotes/origin/*"],
+                          print_stderr: false)
+          system_command!(Utils::Git.git,
+                          args:         ["-C", repository_path, "remote", "set-head", "origin", "--auto"],
+                          print_stderr: false)
+
+          repository_refs[repository] = [repository_path, "origin/HEAD"]
+        end
+        repository_refs
+      end
+
+      sig { params(readme: String, user: String, name: String).returns(T::Boolean) }
+      def readme_mentions?(readme, user, name)
+        readme = readme.dup.force_encoding(Encoding::UTF_8)
+        readme.include?("https://github.com/#{user}") || readme.include?(name)
+      end
+
+      sig {
+        params(
+          pull_request:           T::Hash[String, T.untyped],
+          authored_pull_requests: T::Set[String],
+          merged_pull_requests:   T::Set[String],
+        ).void
+      }
+      def add_merged_pull_request_id(pull_request, authored_pull_requests, merged_pull_requests)
+        number = pull_request["number"]
+        return unless number.is_a?(Integer)
+
+        pull_request_id = number.to_s
+        authored_pull_requests << pull_request_id
+        merged_pull_requests << pull_request_id
+      end
+
+      sig {
+        params(
+          counts:                 T::Hash[Symbol, Integer],
+          authored_pull_requests: T::Set[String],
+          merged_pull_requests:   T::Set[String],
+        ).void
+      }
+      def update_merged_pull_request_counts(counts, authored_pull_requests, merged_pull_requests)
+        unless authored_pull_requests.empty?
+          counts[:merged_pr_author] = [authored_pull_requests.length, MAX_CONTRIBUTIONS].min
+        end
+        return if merged_pull_requests.empty?
+
+        counts[:merged_pr] = [merged_pull_requests.length, MAX_CONTRIBUTIONS].min
       end
 
       sig {

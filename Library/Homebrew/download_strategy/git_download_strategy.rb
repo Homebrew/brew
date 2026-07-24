@@ -49,6 +49,30 @@ class GitDownloadStrategy < VCSDownloadStrategy
     @last_commit || ""
   end
 
+  sig { returns(T::Boolean) }
+  def ref?
+    silent_command("git",
+                   args: ["--git-dir", git_dir, "rev-parse", "-q", "--verify", "--end-of-options",
+                          "#{@ref}^{commit}"])
+      .success?
+  end
+
+  sig { returns(T::Array[String]) }
+  def clone_args
+    args = %w[clone]
+
+    case @ref_type
+    when :branch, :tag
+      args << "--branch" << @ref
+    end
+
+    args << "--no-checkout" << "--filter=blob:none" if partial_clone_sparse_checkout?
+
+    args << "--config" << "advice.detachedHead=false" # Silences “detached head” warning.
+    args << "--config" << "core.fsmonitor=false" # Prevent `fsmonitor` from watching this repository.
+    args << "--end-of-options" << @url << cached_location.to_s
+  end
+
   private
 
   # Read user Git config so credential helpers work for private downloads,
@@ -101,14 +125,6 @@ class GitDownloadStrategy < VCSDownloadStrategy
     cached_location/".git"
   end
 
-  sig { returns(T::Boolean) }
-  def ref?
-    silent_command("git",
-                   args: ["--git-dir", git_dir, "rev-parse", "-q", "--verify", "--end-of-options",
-                          "#{@ref}^{commit}"])
-      .success?
-  end
-
   sig { override.returns(String) }
   def current_revision
     system_command("git", args: ["--git-dir", git_dir, "rev-parse", "-q", "--verify", "HEAD"],
@@ -131,22 +147,6 @@ class GitDownloadStrategy < VCSDownloadStrategy
 
     require "utils/git"
     Utils::Git.supports_partial_clone_sparse_checkout?
-  end
-
-  sig { returns(T::Array[String]) }
-  def clone_args
-    args = %w[clone]
-
-    case @ref_type
-    when :branch, :tag
-      args << "--branch" << @ref
-    end
-
-    args << "--no-checkout" << "--filter=blob:none" if partial_clone_sparse_checkout?
-
-    args << "--config" << "advice.detachedHead=false" # Silences “detached head” warning.
-    args << "--config" << "core.fsmonitor=false" # Prevent `fsmonitor` from watching this repository.
-    args << "--end-of-options" << @url << cached_location.to_s
   end
 
   sig { returns(String) }

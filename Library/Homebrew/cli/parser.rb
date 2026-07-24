@@ -56,6 +56,9 @@ module Homebrew
       sig { returns(T::Array[Subcommand]) }
       attr_reader :subcommands
 
+      sig { returns(T.nilable(Integer)) }
+      attr_reader :min_named_args
+
       sig { params(cmd_path: Pathname).returns(T.nilable(CLI::Parser)) }
       def self.from_cmd_path(cmd_path)
         cmd_args_method_name = Commands.args_method_name(cmd_path)

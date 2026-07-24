@@ -73,7 +73,7 @@ RSpec.describe Cask::DSL::Version, :cask do
   end
 
   shared_examples "version expectations hash" do |method, hash|
-    subject { version.send(method) }
+    subject { version.public_send(method) }
 
     include_examples "expectations hash", :raw_version,
                      { :latest  => "latest",

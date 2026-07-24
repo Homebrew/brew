@@ -58,8 +58,8 @@ RSpec.describe Homebrew::API::CaskStruct do
       )
 
       Homebrew::API::CaskStruct::PREDICATES.each do |predicate|
-        expect(struct.send(:"#{predicate}?")).to be(false),
-                                                 "expected #{predicate}? to default to false"
+        expect(struct.public_send(:"#{predicate}?")).to be(false),
+                                                        "expected #{predicate}? to default to false"
       end
     end
 
@@ -76,8 +76,8 @@ RSpec.describe Homebrew::API::CaskStruct do
       )
 
       Homebrew::API::CaskStruct::PREDICATES.each do |predicate|
-        expect(struct.send(:"#{predicate}?")).to be(true),
-                                                 "expected #{predicate}? to be true"
+        expect(struct.public_send(:"#{predicate}?")).to be(true),
+                                                        "expected #{predicate}? to be true"
       end
     end
   end
@@ -232,7 +232,7 @@ RSpec.describe Homebrew::API::CaskStruct do
       struct = described_class.deserialize(hash)
 
       Homebrew::API::CaskStruct::PREDICATES.each do |predicate|
-        expect(struct.send(:"#{predicate}?")).to be false
+        expect(struct.public_send(:"#{predicate}?")).to be false
       end
     end
 
@@ -255,7 +255,7 @@ RSpec.describe Homebrew::API::CaskStruct do
       struct = described_class.deserialize(hash)
 
       Homebrew::API::CaskStruct::PREDICATES.each do |predicate|
-        expect(struct.send(:"#{predicate}?")).to be true
+        expect(struct.public_send(:"#{predicate}?")).to be true
       end
     end
   end

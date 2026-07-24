@@ -23,7 +23,7 @@ RSpec.describe OS::Linux::Libstdcxx do
 
     before do
       tmpdir.mkpath
-      described_class.instance_variable_set(:@system_version, nil)
+      described_class.system_version = nil
       allow(described_class).to receive(:system_path).and_return(libstdcxx)
     end
 

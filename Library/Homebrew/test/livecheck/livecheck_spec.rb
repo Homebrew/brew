@@ -78,8 +78,8 @@ RSpec.describe Homebrew::Livecheck do
     context "when provided with a strategy class" do
       it "returns demodulized class name" do
         # We run this twice with the same argument to exercise the caching logic
-        expect(livecheck.send(:livecheck_strategy_names, Homebrew::Livecheck::Strategy::PageMatch)).to eq("PageMatch")
-        expect(livecheck.send(:livecheck_strategy_names, Homebrew::Livecheck::Strategy::PageMatch)).to eq("PageMatch")
+        expect(livecheck.livecheck_strategy_names(Homebrew::Livecheck::Strategy::PageMatch)).to eq("PageMatch")
+        expect(livecheck.livecheck_strategy_names(Homebrew::Livecheck::Strategy::PageMatch)).to eq("PageMatch")
       end
     end
   end
@@ -96,8 +96,8 @@ RSpec.describe Homebrew::Livecheck do
         parameters = strategy_class.method(:find_versions).parameters.map(&:second)
 
         # We run this twice with the same argument to exercise the caching logic
-        expect(livecheck.send(:livecheck_find_versions_parameters, strategy_class)).to eq(parameters)
-        expect(livecheck.send(:livecheck_find_versions_parameters, strategy_class)).to eq(parameters)
+        expect(livecheck.livecheck_find_versions_parameters(strategy_class)).to eq(parameters)
+        expect(livecheck.livecheck_find_versions_parameters(strategy_class)).to eq(parameters)
       end
     end
   end
@@ -522,61 +522,61 @@ RSpec.describe Homebrew::Livecheck do
     let(:version) { Version.new("1.2.3") }
 
     it "returns true if `throttle_rate` and `throttle_days` are nil" do
-      expect(livecheck.send(:throttle_allows_bump?, f, version)).to be(true)
+      expect(livecheck.throttle_allows_bump?(f, version)).to be(true)
     end
 
     it "returns true if patch version is divisible by `throttle_rate`" do
-      expect(livecheck.send(:throttle_allows_bump?, f, version, throttle_rate: 3)).to be(true)
-      expect(livecheck.send(:throttle_allows_bump?, f, "1.2.3", throttle_rate: 3)).to be(true)
+      expect(livecheck.throttle_allows_bump?(f, version, throttle_rate: 3)).to be(true)
+      expect(livecheck.throttle_allows_bump?(f, "1.2.3", throttle_rate: 3)).to be(true)
     end
 
     it "returns false if patch version is not divisible by `throttle_rate` and `throttle_days` is not set" do
-      expect(livecheck.send(:throttle_allows_bump?, f, version, throttle_rate: 5)).to be(false)
+      expect(livecheck.throttle_allows_bump?(f, version, throttle_rate: 5)).to be(false)
     end
 
     it "returns false if patch version is not divisible by `throttle_rate` and throttle interval has not elapsed" do
       allow(livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
-      expect(livecheck.send(:throttle_allows_bump?, f, version, throttle_rate: 5, throttle_days: 1)).to be(false)
+      expect(livecheck.throttle_allows_bump?(f, version, throttle_rate: 5, throttle_days: 1)).to be(false)
     end
 
     it "returns true if patch version is not divisible by `throttle_rate` and throttle interval has elapsed" do
       allow(livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
-      expect(livecheck.send(:throttle_allows_bump?, f, version, throttle_rate: 5, throttle_days: 1)).to be(true)
+      expect(livecheck.throttle_allows_bump?(f, version, throttle_rate: 5, throttle_days: 1)).to be(true)
     end
 
     it "returns false if only `throttle_days` is provided and throttle interval has not elapsed" do
       allow(livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
-      expect(livecheck.send(:throttle_allows_bump?, f, version, throttle_days: 1)).to be(false)
+      expect(livecheck.throttle_allows_bump?(f, version, throttle_days: 1)).to be(false)
     end
 
     it "returns true if only `throttle_days` is provided and throttle interval has elapsed" do
       allow(livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
-      expect(livecheck.send(:throttle_allows_bump?, f, version, throttle_days: 1)).to be(true)
+      expect(livecheck.throttle_allows_bump?(f, version, throttle_days: 1)).to be(true)
     end
   end
 
   describe "::throttle_interval_elapsed" do
     it "returns false if days is not positive" do
-      expect(livecheck.send(:throttle_interval_elapsed?, f, 0)).to be(false)
-      expect(livecheck.send(:throttle_interval_elapsed?, f, -1)).to be(false)
+      expect(livecheck.throttle_interval_elapsed?(f, 0)).to be(false)
+      expect(livecheck.throttle_interval_elapsed?(f, -1)).to be(false)
     end
 
     it "returns false if last_updated_timestamp can't be determined" do
       allow(livecheck).to receive(:formula_or_cask_last_updated_timestamp).and_return(nil)
 
-      expect(livecheck.send(:throttle_interval_elapsed?, f, 4)).to be(false)
+      expect(livecheck.throttle_interval_elapsed?(f, 4)).to be(false)
     end
 
     it "returns false if throttle interval has not elapsed" do
       allow(livecheck).to receive(:formula_or_cask_last_updated_timestamp).and_return(Time.now.to_i)
 
-      expect(livecheck.send(:throttle_interval_elapsed?, f, 4)).to be(false)
+      expect(livecheck.throttle_interval_elapsed?(f, 4)).to be(false)
     end
 
     it "returns true if throttle interval has elapsed" do
       allow(livecheck).to receive(:formula_or_cask_last_updated_timestamp).and_return(Time.now.to_i - 518400)
 
-      expect(livecheck.send(:throttle_interval_elapsed?, f, 4)).to be(true)
+      expect(livecheck.throttle_interval_elapsed?(f, 4)).to be(true)
     end
   end
 
@@ -623,7 +623,7 @@ RSpec.describe Homebrew::Livecheck do
         .with(Utils::Git.git, "show", "-s", "--format=%ct", "bbb222", chdir: tap_path)
         .and_return("1711731600\n")
 
-      expect(livecheck.send(:formula_or_cask_last_updated_timestamp, f)).to eq(1711731600)
+      expect(livecheck.formula_or_cask_last_updated_timestamp(f)).to eq(1711731600)
     end
 
     it "falls back to latest file commit timestamp for casks" do
@@ -634,7 +634,7 @@ RSpec.describe Homebrew::Livecheck do
       allow(Utils::Git).to receive(:available?).and_return(true)
       allow(Utils).to receive(:popen_read).and_return("1711731600\n")
 
-      expect(livecheck.send(:formula_or_cask_last_updated_timestamp, c)).to eq(1711731600)
+      expect(livecheck.formula_or_cask_last_updated_timestamp(c)).to eq(1711731600)
     end
   end
 end

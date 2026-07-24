@@ -28,8 +28,7 @@ RSpec.describe Homebrew::TestBot::FormulaeDependents do
       stub_formula_loader dependent
       stub_formula_loader independent
 
-      shard = formulae_dependents.send(
-        :dependents_for_shard,
+      shard = formulae_dependents.dependents_for_shard(
         [
           [dependency, dependency.deps.to_a],
           [dependent, dependent.deps.to_a],
@@ -42,7 +41,7 @@ RSpec.describe Homebrew::TestBot::FormulaeDependents do
     end
 
     it "rejects invalid shard indexes" do
-      expect { formulae_dependents.send(:dependents_for_shard, [], "2/1") }
+      expect { formulae_dependents.dependents_for_shard([], "2/1") }
         .to raise_error(UsageError, /must not be greater/)
     end
 
@@ -52,7 +51,7 @@ RSpec.describe Homebrew::TestBot::FormulaeDependents do
         url "https://brew.sh/dependent-a-1.0.tar.gz"
       end
 
-      expect(formulae_dependents.send(:dependents_for_shard, [[dependent, dependent.deps.to_a]], "2/2")).to be_empty
+      expect(formulae_dependents.dependents_for_shard([[dependent, dependent.deps.to_a]], "2/2")).to be_empty
     end
   end
 end

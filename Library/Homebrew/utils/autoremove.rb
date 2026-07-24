@@ -18,8 +18,6 @@ module Utils
         unused_formulae.reject { |f| cask_dep_names.intersect?(f.possible_names) }
       end
 
-      private
-
       # A set of names for all installed {Formula} objects that are {Cask} formula
       # dependencies (direct or transitive).
       # @private

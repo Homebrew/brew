@@ -15,7 +15,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
   it "links to the donations section" do
     allow(Homebrew::Settings).to receive(:read).with("donationmessage").and_return("false")
 
-    expect { described_class.new([]).send(:donation_message) }
+    expect { described_class.new([]).donation_message }
       .to output(include("https://github.com/Homebrew/brew#-donations")).to_stdout
   end
 
@@ -471,7 +471,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
       expect(hub.select_formula_or_cask(:A)).to be_empty
       expect(hub.select_formula_or_cask(:D)).to be_empty
-      expect(hub.instance_variable_get(:@hash)[:R]).to eq([["cv", "progress"]])
+      expect(hub.renamed_formulae).to eq([["cv", "progress"]])
     end
 
     context "when updating a Tap other than the core Tap" do
@@ -490,7 +490,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
         expect(hub.select_formula_or_cask(:A)).to be_empty
         expect(hub.select_formula_or_cask(:D)).to be_empty
-        expect(hub.instance_variable_get(:@hash)[:R]).to be_nil
+        expect(hub.renamed_formulae).to be_empty
       end
 
       specify "with renamed Formula and restructured Tap" do
@@ -499,7 +499,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
         expect(hub.select_formula_or_cask(:A)).to be_empty
         expect(hub.select_formula_or_cask(:D)).to be_empty
-        expect(hub.instance_variable_get(:@hash)[:R]).to eq([%w[foo/bar/xchat foo/bar/xchat2]])
+        expect(hub.renamed_formulae).to eq([%w[foo/bar/xchat foo/bar/xchat2]])
       end
 
       specify "with simulated 'homebrew/php' restructuring" do
@@ -507,7 +507,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
         expect(hub.select_formula_or_cask(:A)).to be_empty
         expect(hub.select_formula_or_cask(:D)).to be_empty
-        expect(hub.instance_variable_get(:@hash)[:R]).to be_nil
+        expect(hub.renamed_formulae).to be_empty
       end
 
       specify "with Formula changes" do
@@ -515,7 +515,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
         expect(hub.select_formula_or_cask(:A)).to eq(%w[foo/bar/lua])
         expect(hub.select_formula_or_cask(:M)).to eq(%w[foo/bar/git])
-        expect(hub.instance_variable_get(:@hash)[:R]).to be_nil
+        expect(hub.renamed_formulae).to be_empty
       end
 
       specify "with formula migrated to cask in same tap" do
@@ -545,19 +545,19 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
       it "recommends trusting just the migrated package then migrating a rename" do
         expect(other_tap).not_to receive(:ensure_installed!)
-        expect { reporter.send(:ensure_trusted_tap_installed!, "oldfoo", "newfoo", other_tap) }
+        expect { reporter.ensure_trusted_tap_installed!("oldfoo", "newfoo", other_tap) }
           .to output(%r{brew trust foo/bar/newfoo.*brew migrate oldfoo}m).to_stderr
       end
 
       it "recommends a reinstall for an unchanged-name tap migration" do
-        expect { reporter.send(:ensure_trusted_tap_installed!, "foo", "foo", other_tap) }
+        expect { reporter.ensure_trusted_tap_installed!("foo", "foo", other_tap) }
           .to output(/brew reinstall foo/).to_stderr
       end
 
       it "taps a trusted tap" do
         allow(other_tap).to receive(:official?).and_return(true)
         expect(other_tap).to receive(:ensure_installed!)
-        reporter.send(:ensure_trusted_tap_installed!, "foo", "foo", other_tap)
+        reporter.ensure_trusted_tap_installed!("foo", "foo", other_tap)
       end
     end
 
@@ -577,7 +577,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
             -baz
           DIFF
 
-          expect(reporter.send(:diff)).to eq(<<~DIFF.strip)
+          expect(reporter.diff).to eq(<<~DIFF.strip)
             A api/bar.rb
             D api/baz.rb
           DIFF
@@ -593,7 +593,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
             -baz
           DIFF
 
-          expect(reporter.send(:diff)).to eq(<<~DIFF.strip)
+          expect(reporter.diff).to eq(<<~DIFF.strip)
             A api/baz.rb
           DIFF
         end
@@ -698,13 +698,14 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     end
 
     it "merges frozen report arrays" do
+      allow(hub).to receive(:select_formula_or_cask).and_call_original
       first_reporter = instance_double(Reporter, report: { A: ["foo"].freeze })
       second_reporter = instance_double(Reporter, report: { A: ["bar"] })
 
       hub.add(first_reporter)
       hub.add(second_reporter)
 
-      expect(hub.instance_variable_get(:@hash)[:A]).to eq(%w[foo bar])
+      expect(hub.select_formula_or_cask(:A)).to eq(%w[foo bar])
     end
   end
 end

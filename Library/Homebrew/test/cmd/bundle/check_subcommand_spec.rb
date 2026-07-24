@@ -102,7 +102,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
     end
 
     it "raises an error for an implicitly unlinked non-keg-only formula" do
-      Homebrew::Bundle::Brew.instance_variable_set(:@formulae_by_name, { "abc" => { link?: false } })
+      Homebrew::Bundle::Brew.formulae_by_name = { "abc" => { link?: false } }
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
       allow(Formula["abc"]).to receive(:linked?).and_return(false)
 
@@ -111,7 +111,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
     end
 
     it "does not raise an error when live link status satisfies an implicit check" do
-      Homebrew::Bundle::Brew.instance_variable_set(:@formulae_by_name, { "abc" => { link?: false } })
+      Homebrew::Bundle::Brew.formulae_by_name = { "abc" => { link?: false } }
       allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
       allow(Formula["abc"]).to receive(:linked?).and_return(true)
 
@@ -130,7 +130,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CheckSubcommand, :no_api do
       end
 
       it "outputs the implicit link status error" do
-        Homebrew::Bundle::Brew.instance_variable_set(:@formulae_by_name, { "abc" => { link?: true } })
+        Homebrew::Bundle::Brew.formulae_by_name = { "abc" => { link?: true } }
         allow_any_instance_of(Pathname).to receive(:read).and_return("brew 'abc'")
         allow(Formula["abc"]).to receive(:linked?).and_return(true)
 

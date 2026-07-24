@@ -21,7 +21,7 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
 
       it "skips relative paths" do
         expect do
-          expect(artifact.send(:each_resolved_path, :delete, ["relative/path"]).to_a).to be_empty
+          expect(artifact.each_resolved_path(:delete, ["relative/path"]).to_a).to be_empty
         end.to output(%r{Skipping delete for relative path 'relative/path'\.}).to_stderr
       end
 
@@ -36,7 +36,7 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
           tmpdir/"nested/./#{valid_path.basename}",
         ].each do |invalid_path|
           expect do
-            expect(artifact.send(:each_resolved_path, :delete, [invalid_path.to_s]).to_a).to be_empty
+            expect(artifact.each_resolved_path(:delete, [invalid_path.to_s]).to_a).to be_empty
           end.to output(
             /Skipping delete for path with relative segments '#{Regexp.escape(invalid_path.to_s)}'\./,
           ).to_stderr
@@ -49,7 +49,7 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
         invalid_path = "~/../each_resolved_path_#{artifact_dsl_key}"
 
         expect do
-          expect(artifact.send(:each_resolved_path, :delete, [invalid_path]).to_a).to be_empty
+          expect(artifact.each_resolved_path(:delete, [invalid_path]).to_a).to be_empty
         end.to output(
           /Skipping delete for path with relative segments '#{Regexp.escape(invalid_path)}'\./,
         ).to_stderr
@@ -66,7 +66,7 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
         allow(artifact).to receive(:undeletable?) { |target| target == undeletable_path }
 
         expect do
-          expect(artifact.send(:each_resolved_path, :delete, ["#{glob_dir}/*.plist"]).to_a)
+          expect(artifact.each_resolved_path(:delete, ["#{glob_dir}/*.plist"]).to_a)
             .to eq([["#{glob_dir}/*.plist", [safe_path]]])
         end.to output(
           /Skipping delete for undeletable path '#{Regexp.escape(undeletable_path.to_s)}'\./,
@@ -81,7 +81,7 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
         allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:ventura))
 
         expect do
-          artifact.send(:each_resolved_path, :delete, ["/tmp/each_resolved_path_#{artifact_dsl_key}"]).to_a
+          artifact.each_resolved_path(:delete, ["/tmp/each_resolved_path_#{artifact_dsl_key}"]).to_a
         end.to raise_error(SystemExit)
           .and output(/Full Disk Access/).to_stderr
       end

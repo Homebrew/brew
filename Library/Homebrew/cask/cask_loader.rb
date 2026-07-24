@@ -147,6 +147,9 @@ module Cask
       sig { returns(Pathname) }
       attr_reader :path
 
+      sig { params(from_installed_caskfile: T::Boolean).void }
+      attr_writer :from_installed_caskfile
+
       sig { params(path: T.any(Pathname, String), token: String).void }
       def initialize(path, token: T.unsafe(nil))
         super()

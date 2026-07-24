@@ -1605,7 +1605,7 @@ RSpec.describe Homebrew::FormulaAuditor do
                                           .and_return("merge-base-sha\n")
       allow(Utils).to receive(:safe_popen_read).and_return("Formula/f/foo.rb\n")
 
-      paths = auditor.send(:changed_formulae_paths, tap, only_names: ["foo"])
+      paths = auditor.changed_formulae_paths(tap, only_names: ["foo"])
 
       expect(paths).to eq([foo_path])
     end
@@ -1621,7 +1621,7 @@ RSpec.describe Homebrew::FormulaAuditor do
                                                       "merge-base-sha")
                                                 .and_return("Formula/f/foo.rb\n")
 
-      expect(auditor.send(:changed_formulae_paths, tap, only_names: ["foo"])).to eq([foo_path])
+      expect(auditor.changed_formulae_paths(tap, only_names: ["foo"])).to eq([foo_path])
     end
   end
 
@@ -1654,7 +1654,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       allow(FormulaVersions).to receive(:new).with(target_formula).and_return(formula_versions)
       expect(formula_versions).to receive(:rev_list).with("merge-base-sha")
 
-      auditor.send(:committed_version_info)
+      auditor.committed_version_info
     end
   end
 

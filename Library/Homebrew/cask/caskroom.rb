@@ -205,6 +205,13 @@ module Cask
       path.stat.gid == group.gid
     end
 
+    @expected_caskroom_group = T.let(nil, T.nilable(String))
+
+    class << self
+      sig { params(expected_caskroom_group: T.nilable(String)).void }
+      attr_writer :expected_caskroom_group
+    end
+
     sig { returns(String) }
     def self.expected_caskroom_group
       "admin"

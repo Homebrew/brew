@@ -336,51 +336,6 @@ module Homebrew
         show_final_upgrade_summary
       end
 
-      private
-
-      sig { returns(T.nilable(String)) }
-      def minimum_version = args.minimum_version || args.min_version
-
-      sig { params(formula: Formula).returns(T::Boolean) }
-      def formula_outdated?(formula)
-        outdated = formula.outdated?(fetch_head: args.fetch_HEAD?)
-        return false if outdated && fetched_head_formula_current?(formula)
-
-        version = minimum_version
-        return outdated if version.blank?
-
-        outdated && MinimumVersion.formula_outdated_kegs(formula, version, fetch_head: args.fetch_HEAD?).present?
-      end
-
-      sig { params(formula: Formula).returns(T::Boolean) }
-      def fetched_head_formula_current?(formula)
-        return false unless args.fetch_HEAD?
-        return false unless formula.head?
-        return false unless formula.optlinked?
-
-        old_version = Keg.new(formula.opt_prefix).version
-        return false unless old_version.head?
-
-        formula.latest_head_pkg_version(fetch_head: true).to_s == old_version.to_s
-      end
-
-      sig { params(casks: T::Array[Cask::Cask], quiet: T::Boolean).returns(T::Array[Cask::Cask]) }
-      def minimum_version_casks(casks, quiet: args.quiet?)
-        version = minimum_version
-        return casks if version.blank?
-
-        casks.select do |cask|
-          if MinimumVersion.cask_installed_below?(cask, version)
-            true
-          else
-            unless quiet
-              opoo "Not upgrading #{cask.token}, the installed version is not below the minimum version #{version}"
-            end
-            false
-          end
-        end
-      end
-
       sig {
         params(formulae: T::Array[Formula], show_upgrade_summary: T::Boolean,
                dry_run: T::Boolean).returns(T.nilable(FormulaeUpgradeContext))
@@ -624,15 +579,6 @@ module Homebrew
         end
       end
 
-      sig { params(title: String, items: T::Array[String]).void }
-      def show_final_upgrade_summary_section(title, items)
-        items = items.uniq
-        return if items.empty?
-
-        oh1 title
-        puts items.join("\n")
-      end
-
       sig { params(formulae: T::Array[Formula], include_sizes: T::Boolean).returns(T::Array[String]) }
       def formula_upgrade_descriptions(formulae, include_sizes: false)
         formulae.map do |formula|
@@ -652,31 +598,6 @@ module Homebrew
             "#{formula.full_specified_name} #{formula.pkg_version}"
           end
         end
-      end
-
-      sig { params(formula: Formula, old_version: PkgVersion).returns(String) }
-      def formula_upgrade_display_version(formula, old_version)
-        return formula.pkg_version.to_s if !old_version.head? || !formula.head?
-        return formula.pkg_version.to_s if formula.pkg_version.to_s != old_version.to_s
-        return "latest HEAD" unless args.fetch_HEAD?
-
-        latest_head_version = formula.latest_head_pkg_version(fetch_head: true)
-        return "latest HEAD" if latest_head_version.to_s == old_version.to_s
-
-        latest_head_version.to_s
-      end
-
-      sig { params(formula: Formula).returns(String) }
-      def formula_upgrade_size(formula)
-        return "" if args.build_from_source_formulae.include?(formula.name)
-
-        bottle = formula.bottle
-        return "" unless bottle
-
-        bottle.fetch_tab(quiet: !args.debug?)
-        return "" unless (download_size = bottle.bottle_size)
-
-        " (#{Formatter.disk_usage_readable(download_size.to_i)})"
       end
 
       sig {
@@ -918,6 +839,85 @@ module Homebrew
       rescue => e
         ofail e
         false
+      end
+
+      private
+
+      sig { returns(T.nilable(String)) }
+      def minimum_version = args.minimum_version || args.min_version
+
+      sig { params(formula: Formula).returns(T::Boolean) }
+      def formula_outdated?(formula)
+        outdated = formula.outdated?(fetch_head: args.fetch_HEAD?)
+        return false if outdated && fetched_head_formula_current?(formula)
+
+        version = minimum_version
+        return outdated if version.blank?
+
+        outdated && MinimumVersion.formula_outdated_kegs(formula, version, fetch_head: args.fetch_HEAD?).present?
+      end
+
+      sig { params(formula: Formula).returns(T::Boolean) }
+      def fetched_head_formula_current?(formula)
+        return false unless args.fetch_HEAD?
+        return false unless formula.head?
+        return false unless formula.optlinked?
+
+        old_version = Keg.new(formula.opt_prefix).version
+        return false unless old_version.head?
+
+        formula.latest_head_pkg_version(fetch_head: true).to_s == old_version.to_s
+      end
+
+      sig { params(casks: T::Array[Cask::Cask], quiet: T::Boolean).returns(T::Array[Cask::Cask]) }
+      def minimum_version_casks(casks, quiet: args.quiet?)
+        version = minimum_version
+        return casks if version.blank?
+
+        casks.select do |cask|
+          if MinimumVersion.cask_installed_below?(cask, version)
+            true
+          else
+            unless quiet
+              opoo "Not upgrading #{cask.token}, the installed version is not below the minimum version #{version}"
+            end
+            false
+          end
+        end
+      end
+
+      sig { params(title: String, items: T::Array[String]).void }
+      def show_final_upgrade_summary_section(title, items)
+        items = items.uniq
+        return if items.empty?
+
+        oh1 title
+        puts items.join("\n")
+      end
+
+      sig { params(formula: Formula, old_version: PkgVersion).returns(String) }
+      def formula_upgrade_display_version(formula, old_version)
+        return formula.pkg_version.to_s if !old_version.head? || !formula.head?
+        return formula.pkg_version.to_s if formula.pkg_version.to_s != old_version.to_s
+        return "latest HEAD" unless args.fetch_HEAD?
+
+        latest_head_version = formula.latest_head_pkg_version(fetch_head: true)
+        return "latest HEAD" if latest_head_version.to_s == old_version.to_s
+
+        latest_head_version.to_s
+      end
+
+      sig { params(formula: Formula).returns(String) }
+      def formula_upgrade_size(formula)
+        return "" if args.build_from_source_formulae.include?(formula.name)
+
+        bottle = formula.bottle
+        return "" unless bottle
+
+        bottle.fetch_tab(quiet: !args.debug?)
+        return "" unless (download_size = bottle.bottle_size)
+
+        " (#{Formatter.disk_usage_readable(download_size.to_i)})"
       end
     end
   end

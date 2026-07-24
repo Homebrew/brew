@@ -22,6 +22,36 @@ module Homebrew
       sig { returns(T::Array[Step]) }
       attr_reader :steps
 
+      sig {
+        params(
+          arguments:        T.any(String, Pathname),
+          named_args:       T.nilable(T.any(String, T::Array[String])),
+          env:              T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
+          verbose:          T::Boolean,
+          ignore_failures:  T::Boolean,
+          report_analytics: T::Boolean,
+        ).returns(Step)
+      }
+      def test(*arguments, named_args: nil, env: {}, verbose: @verbose, ignore_failures: false,
+               report_analytics: false)
+        step = Step.new(
+          arguments.map(&:to_s),
+          named_args:,
+          env:,
+          verbose:,
+          ignore_failures:,
+          repository:      @repository,
+        )
+        step.run(dry_run: @dry_run, fail_fast: @fail_fast)
+        @steps << step
+
+        if ENV["HOMEBREW_TEST_BOT_ANALYTICS"].present? && report_analytics
+          ::Utils::Analytics.report_test_bot_test(step.command_short, step.passed?)
+        end
+
+        step
+      end
+
       protected
 
       sig { params(args: Homebrew::Cmd::TestBotCmd::Args).returns(T::Boolean) }
@@ -76,36 +106,6 @@ module Homebrew
       sig { params(text: String).void }
       def info_header(text)
         puts Formatter.headline(text, color: :cyan)
-      end
-
-      sig {
-        params(
-          arguments:        T.any(String, Pathname),
-          named_args:       T.nilable(T.any(String, T::Array[String])),
-          env:              T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
-          verbose:          T::Boolean,
-          ignore_failures:  T::Boolean,
-          report_analytics: T::Boolean,
-        ).returns(Step)
-      }
-      def test(*arguments, named_args: nil, env: {}, verbose: @verbose, ignore_failures: false,
-               report_analytics: false)
-        step = Step.new(
-          arguments.map(&:to_s),
-          named_args:,
-          env:,
-          verbose:,
-          ignore_failures:,
-          repository:      @repository,
-        )
-        step.run(dry_run: @dry_run, fail_fast: @fail_fast)
-        @steps << step
-
-        if ENV["HOMEBREW_TEST_BOT_ANALYTICS"].present? && report_analytics
-          ::Utils::Analytics.report_test_bot_test(step.command_short, step.passed?)
-        end
-
-        step
       end
     end
   end

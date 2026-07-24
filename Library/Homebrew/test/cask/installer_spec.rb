@@ -921,7 +921,7 @@ RSpec.describe Cask::Installer, :cask do
       allow(cask).to receive(:staged_path).and_return(staged_path)
 
       installer = described_class.new(cask)
-      installer.send(:process_rename_operations)
+      installer.process_rename_operations
 
       expect(staged_path / "Renamed App.app").to be_a_directory
       expect(staged_path / "Original App.app").not_to exist
@@ -941,7 +941,7 @@ RSpec.describe Cask::Installer, :cask do
       allow(cask).to receive(:staged_path).and_return(staged_path)
 
       installer = described_class.new(cask)
-      installer.send(:process_rename_operations)
+      installer.process_rename_operations
 
       expect(staged_path / "Final Name.app").to be_a_directory
       expect(staged_path / "Original.app").not_to exist
@@ -961,7 +961,7 @@ RSpec.describe Cask::Installer, :cask do
       allow(cask).to receive(:staged_path).and_return(staged_path)
 
       installer = described_class.new(cask)
-      installer.send(:process_rename_operations)
+      installer.process_rename_operations
 
       expect(staged_path / "Test App.pkg").to be_a_file
       expect((staged_path / "Test App.pkg").read).to eq("test content")
@@ -982,7 +982,7 @@ RSpec.describe Cask::Installer, :cask do
 
       installer = described_class.new(cask)
 
-      expect { installer.send(:process_rename_operations) }.not_to raise_error
+      expect { installer.process_rename_operations }.not_to raise_error
       expect(staged_path / "Different.app").to be_a_directory
       expect(staged_path / "Target.app").not_to exist
     end

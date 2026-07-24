@@ -432,7 +432,7 @@ RSpec.describe Tap do
 
   describe "#prefix_to_versioned_formulae_names" do
     it "groups versioned full formulae with their matching full formula" do
-      homebrew_foo_tap.instance_variable_set(:@prefix_to_versioned_formulae_names, nil)
+      homebrew_foo_tap.clear_cache
       allow(homebrew_foo_tap).to receive(:formula_names).and_return(["foo@2.0", "foo-full", "foo@2.0-full"])
 
       expect(homebrew_foo_tap.prefix_to_versioned_formulae_names)
@@ -733,7 +733,7 @@ RSpec.describe Tap do
       expect(SystemCommand).to receive(:run!)
         .with("git", args: %w[fetch], chdir: path, env: { "GIT_TERMINAL_PROMPT" => "0" }, print_stderr: true)
 
-      homebrew_foo_tap.send(:git_command!, %w[fetch], chdir: path)
+      homebrew_foo_tap.git_command!(%w[fetch], chdir: path)
     end
 
     it "raises an error when the Tap is already tapped" do

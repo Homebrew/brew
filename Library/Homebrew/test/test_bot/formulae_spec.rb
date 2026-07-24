@@ -17,11 +17,11 @@ RSpec.describe Homebrew::TestBot::Formulae do
           output_paths:
         )
 
-        expect(formulae.send(:dependency_name_match?, Dependency.new("foo"), "foo")).to be(true)
-        expect(formulae.send(:dependency_name_match?, Dependency.new("homebrew/core/foo"), "homebrew/core/foo"))
+        expect(formulae.dependency_name_match?(Dependency.new("foo"), "foo")).to be(true)
+        expect(formulae.dependency_name_match?(Dependency.new("homebrew/core/foo"), "homebrew/core/foo"))
           .to be(true)
-        expect(formulae.send(:dependency_name_match?, Dependency.new("homebrew/core/foo"), "foo")).to be(false)
-        expect(formulae.send(:dependency_name_match?, Dependency.new("homebrew/core/foo"), "user/tap/foo"))
+        expect(formulae.dependency_name_match?(Dependency.new("homebrew/core/foo"), "foo")).to be(false)
+        expect(formulae.dependency_name_match?(Dependency.new("homebrew/core/foo"), "user/tap/foo"))
           .to be(false)
       end
     end
@@ -89,7 +89,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
         )
 
         with_env(GITHUB_ACTIONS: "true") do
-          expect { formulae.send(:annotate_added_dependencies, formula) }
+          expect { formulae.annotate_added_dependencies(formula) }
             .to output(
               "::warning file=#{formula.path.relative_path_from(CoreTap.instance.path)},line=7," \
               "title=foo: new dependency impact::Adding `bar` adds 3 new recursive dependencies " \
@@ -181,7 +181,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
         formulae = formulae_test_bot(tap_path, tmpdir)
 
         with_env(GITHUB_ACTIONS: "true", GITHUB_WORKSPACE: tap_path.to_s) do
-          expect { formulae.send(:annotate_missing_all_bottle, old_formula, bottle_dir: tap_path) }
+          expect { formulae.annotate_missing_all_bottle(old_formula, bottle_dir: tap_path) }
             .to output(
               "::warning file=Formula/foo.rb,line=8,title=foo: missing :all bottle::" \
               "This formula had an `:all` bottle but the #{tag} test-bot bottle is platform-specific " \
@@ -208,7 +208,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
         formulae = formulae_test_bot(tap_path, tmpdir)
 
         with_env(GITHUB_ACTIONS: "true", GITHUB_WORKSPACE: tap_path.to_s) do
-          expect { formulae.send(:annotate_missing_all_bottle, old_formula, bottle_dir: tap_path) }
+          expect { formulae.annotate_missing_all_bottle(old_formula, bottle_dir: tap_path) }
             .not_to output.to_stdout
         end
       end
@@ -227,7 +227,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
         formulae = formulae_test_bot(tap_path, tmpdir)
 
         with_env(GITHUB_ACTIONS: "true", GITHUB_WORKSPACE: tap_path.to_s) do
-          expect { formulae.send(:annotate_missing_all_bottle, old_formula, bottle_dir: tap_path) }
+          expect { formulae.annotate_missing_all_bottle(old_formula, bottle_dir: tap_path) }
             .not_to output.to_stdout
         end
       end
@@ -248,7 +248,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
         formulae = formulae_test_bot(tap_path, tmpdir)
 
         with_env(GITHUB_ACTIONS: "true", GITHUB_WORKSPACE: tap_path.to_s) do
-          expect { formulae.send(:annotate_missing_all_bottle, old_formula, bottle_dir: tap_path) }
+          expect { formulae.annotate_missing_all_bottle(old_formula, bottle_dir: tap_path) }
             .to output(/title=foo: missing :all bottle::.*sha256 `#{sha256}`/).to_stdout
         end
       end
@@ -268,7 +268,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
         formulae = formulae_test_bot(tap_path, tmpdir)
 
         with_env(GITHUB_ACTIONS: "true", GITHUB_WORKSPACE: tap_path.to_s) do
-          expect { formulae.send(:annotate_missing_all_bottle, old_formula, bottle_dir: tap_path) }
+          expect { formulae.annotate_missing_all_bottle(old_formula, bottle_dir: tap_path) }
             .not_to output.to_stdout
         end
       end
@@ -290,7 +290,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
           output_paths:
         )
 
-        result = formulae.send(:testing_portable_ruby?)
+        result = formulae.testing_portable_ruby?
         expect(result).to be(false)
       end
     end
@@ -312,7 +312,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
         )
         formulae.testing_formulae = ["portable-ruby"]
 
-        result = formulae.send(:verify_local_bottles)
+        result = formulae.verify_local_bottles
         expect(result).to be(false)
       end
     end
@@ -349,7 +349,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
               linkage:                    Pathname.new("#{tmpdir}/linkage.txt"),
               skipped_or_failed_formulae: Pathname.new("#{tmpdir}/skipped.txt"),
             }
-          ).send(:cleanup_bottle_etc_var, f)
+          ).cleanup_bottle_etc_var(f)
 
           expect([config_file.read, default_config_file.exist?]).to eq(["new\n", false])
         ensure

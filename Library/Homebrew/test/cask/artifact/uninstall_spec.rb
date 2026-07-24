@@ -149,7 +149,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
       allow(artifact).to receive(:quit).with(bundle_id)
                                        .and_return(instance_double(SystemCommand::Result, success?: true))
 
-      artifact.send(:uninstall_quit, bundle_id, upgrade: true, command: fake_system_command)
+      artifact.uninstall_quit(bundle_id, upgrade: true, command: fake_system_command)
 
       expect(artifact.bundle_ids_to_reopen).to eq [bundle_id]
     end
@@ -159,7 +159,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
       allow(artifact).to receive(:quit).with(bundle_id)
                                        .and_return(instance_double(SystemCommand::Result, success?: true))
 
-      artifact.send(:uninstall_quit, bundle_id, upgrade: false, command: fake_system_command)
+      artifact.uninstall_quit(bundle_id, upgrade: false, command: fake_system_command)
 
       expect(artifact.bundle_ids_to_reopen).to be_empty
     end
@@ -171,7 +171,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
       allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
 
       expect do
-        artifact.send(:uninstall_quit, bundle_id, upgrade: true, command: fake_system_command)
+        artifact.uninstall_quit(bundle_id, upgrade: true, command: fake_system_command)
       end.to output(/did not quit/).to_stderr
 
       expect(artifact.bundle_ids_to_reopen).to be_empty

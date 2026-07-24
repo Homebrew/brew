@@ -90,6 +90,77 @@ module Homebrew
         test "brew", "uninstall", "--formula", "--force", "bash"
       end
 
+      sig {
+        params(
+          dependents: T::Array[DependentWithDependencies],
+          shard:      String,
+        ).returns(T::Array[DependentWithDependencies])
+      }
+      def dependents_for_shard(dependents, shard)
+        unless shard.match?(%r{\A[1-9]\d*/[1-9]\d*\z})
+          raise UsageError, "`--formulae-dependents-shard` must use the format <SHARD/TOTAL>."
+        end
+
+        shard_parts = shard.split("/", 2)
+        shard_index = shard_parts.fetch(0).to_i
+        shard_count = shard_parts.fetch(1).to_i
+        if shard_index > shard_count
+          raise UsageError, "`--formulae-dependents-shard` must not be greater than the total shard count."
+        end
+
+        return dependents if shard_count == 1
+
+        dependents_by_name = dependents.to_h { |dependent, deps| [dependent.full_name, [dependent, deps]] }
+        edges = dependents.to_h { |dependent, _| [dependent.full_name, T.let([], T::Array[String])] }
+
+        dependents.each do |dependent, deps|
+          deps.each do |dep|
+            dep_name = dep.to_formula.full_name
+            next unless edges.key?(dep_name)
+
+            edges.fetch(dependent.full_name) << dep_name
+            edges.fetch(dep_name) << dependent.full_name
+          end
+        end
+
+        seen = T.let(Set.new, T::Set[String])
+        groups = T.let([], T::Array[T::Array[DependentWithDependencies]])
+        max_group_size = (dependents.size + shard_count - 1) / shard_count
+
+        dependents.map(&:first).each do |dependent|
+          next if seen.include?(dependent.full_name)
+
+          group = T.let([], T::Array[DependentWithDependencies])
+          queue = T.let([dependent.full_name], T::Array[String])
+
+          until queue.empty?
+            name = queue.fetch(0)
+            queue.shift
+            next if seen.include?(name)
+
+            seen << name
+            group << dependents_by_name.fetch(name)
+            break if group.size >= max_group_size
+
+            queue.concat(edges.fetch(name).reject { |edge| seen.include?(edge) })
+          end
+
+          groups << group
+        end
+
+        shards = Array.new(shard_count) { T.let([], T::Array[DependentWithDependencies]) }
+        groups.sort_by { |group| [-group.count, group.map { |dependent, _| dependent.full_name }.min.to_s] }
+              .each do |group|
+          group_shard_index = 0
+          shards.each_with_index do |current_shard, index|
+            group_shard_index = index if current_shard.count < shards.fetch(group_shard_index).count
+          end
+          shards.fetch(group_shard_index).concat(group)
+        end
+
+        shards.fetch(shard_index - 1).sort_by { |dependent, _| dependent.full_name }
+      end
+
       private
 
       sig { params(installable_bottles: T::Array[String], args: Homebrew::Cmd::TestBotCmd::Args).void }
@@ -271,77 +342,6 @@ module Homebrew
 
           dependents
         end
-      end
-
-      sig {
-        params(
-          dependents: T::Array[DependentWithDependencies],
-          shard:      String,
-        ).returns(T::Array[DependentWithDependencies])
-      }
-      def dependents_for_shard(dependents, shard)
-        unless shard.match?(%r{\A[1-9]\d*/[1-9]\d*\z})
-          raise UsageError, "`--formulae-dependents-shard` must use the format <SHARD/TOTAL>."
-        end
-
-        shard_parts = shard.split("/", 2)
-        shard_index = shard_parts.fetch(0).to_i
-        shard_count = shard_parts.fetch(1).to_i
-        if shard_index > shard_count
-          raise UsageError, "`--formulae-dependents-shard` must not be greater than the total shard count."
-        end
-
-        return dependents if shard_count == 1
-
-        dependents_by_name = dependents.to_h { |dependent, deps| [dependent.full_name, [dependent, deps]] }
-        edges = dependents.to_h { |dependent, _| [dependent.full_name, T.let([], T::Array[String])] }
-
-        dependents.each do |dependent, deps|
-          deps.each do |dep|
-            dep_name = dep.to_formula.full_name
-            next unless edges.key?(dep_name)
-
-            edges.fetch(dependent.full_name) << dep_name
-            edges.fetch(dep_name) << dependent.full_name
-          end
-        end
-
-        seen = T.let(Set.new, T::Set[String])
-        groups = T.let([], T::Array[T::Array[DependentWithDependencies]])
-        max_group_size = (dependents.size + shard_count - 1) / shard_count
-
-        dependents.map(&:first).each do |dependent|
-          next if seen.include?(dependent.full_name)
-
-          group = T.let([], T::Array[DependentWithDependencies])
-          queue = T.let([dependent.full_name], T::Array[String])
-
-          until queue.empty?
-            name = queue.fetch(0)
-            queue.shift
-            next if seen.include?(name)
-
-            seen << name
-            group << dependents_by_name.fetch(name)
-            break if group.size >= max_group_size
-
-            queue.concat(edges.fetch(name).reject { |edge| seen.include?(edge) })
-          end
-
-          groups << group
-        end
-
-        shards = Array.new(shard_count) { T.let([], T::Array[DependentWithDependencies]) }
-        groups.sort_by { |group| [-group.count, group.map { |dependent, _| dependent.full_name }.min.to_s] }
-              .each do |group|
-          group_shard_index = 0
-          shards.each_with_index do |current_shard, index|
-            group_shard_index = index if current_shard.count < shards.fetch(group_shard_index).count
-          end
-          shards.fetch(group_shard_index).concat(group)
-        end
-
-        shards.fetch(shard_index - 1).sort_by { |dependent, _| dependent.full_name }
       end
 
       sig {

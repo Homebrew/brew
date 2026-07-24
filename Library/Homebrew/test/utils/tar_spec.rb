@@ -7,8 +7,7 @@ RSpec.describe Utils::Tar do
   def clear_executable_cache
     return unless described_class.instance_variable_defined?(:@executable)
 
-    described_class.send(:remove_instance_variable,
-                         :@executable)
+    described_class.remove_instance_variable(:@executable)
   end
 
   before do

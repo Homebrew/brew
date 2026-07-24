@@ -5,13 +5,11 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
   let(:staged_path) { Pathname(Dir.mktmpdir) }
 
   let(:cask) do
-    tmp_staged = staged_path
     Cask::Cask.new("test-generated-completion") do
       version "1.0"
       sha256 :no_check
       url "file:///dev/null"
       generate_completions_from_executable "bin/foo", "completions"
-      instance_variable_set(:@staged_path, tmp_staged)
     end
   end
 
@@ -20,6 +18,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
   let(:fish_dir) { cask.config.fish_completion }
 
   before do
+    allow(cask).to receive(:staged_path).and_return(staged_path)
     (staged_path/"bin").mkpath
     (staged_path/"bin/foo").write("#!/bin/sh\necho \"$SHELL completion\"")
     (staged_path/"bin/foo").chmod(0755)
@@ -134,14 +133,12 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
   context "with specific shells and format" do
     let(:cask) do
-      tmp_staged = staged_path
       Cask::Cask.new("test-generated-completion") do
         version "1.0"
         sha256 :no_check
         url "file:///dev/null"
         generate_completions_from_executable "bin/foo", "completions",
                                              shells: [:zsh], shell_parameter_format: :arg, base_name: "bar"
-        instance_variable_set(:@staged_path, tmp_staged)
       end
     end
 
@@ -175,14 +172,12 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
   context "with string shells" do
     let(:cask) do
-      tmp_staged = staged_path
       Cask::Cask.new("test-generated-completion") do
         version "1.0"
         sha256 :no_check
         url "file:///dev/null"
         generate_completions_from_executable "bin/foo", "completions",
                                              shells: %w[bash zsh fish pwsh]
-        instance_variable_set(:@staged_path, tmp_staged)
       end
     end
 

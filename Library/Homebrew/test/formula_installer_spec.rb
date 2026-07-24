@@ -278,7 +278,7 @@ RSpec.describe FormulaInstaller do
 
       expect(tap).not_to receive(:ensure_installed!)
 
-      expect { installer.send(:verify_deps_exist) }
+      expect { installer.verify_deps_exist }
         .to raise_error(TapFormulaUnavailableError, /If you trust this tap/) { |error|
           expect(error.dependent).to eq(formula.full_name)
         }
@@ -328,7 +328,7 @@ RSpec.describe FormulaInstaller do
       manifest_resource = formula.bottle&.github_packages_manifest_resource
 
       allow(manifest_resource).to receive(:downloaded?).and_return(true)
-      manifest_resource&.instance_variable_set(:@manifest_annotations, {})
+      manifest_resource&.manifest_annotations = {}
       expect(manifest_resource).to receive(:verify_download_integrity) do
         expect(Context.current.quiet?).to be(true)
         raise Resource::BottleManifest::Error
@@ -337,7 +337,10 @@ RSpec.describe FormulaInstaller do
 
       installer.fetch_bottle_tab(enqueue: true)
 
+      # Read the raw ivar: the private memoising reader would re-parse the manifest.
+      # rubocop:disable Homebrew/NoInstanceVariableAccessInTests
       expect(manifest_resource&.instance_variable_get(:@manifest_annotations)).to be_nil
+      # rubocop:enable Homebrew/NoInstanceVariableAccessInTests
     end
   end
 
@@ -358,7 +361,7 @@ RSpec.describe FormulaInstaller do
     end
 
     it "starts a bottle download before enqueueing dependencies after the prelude" do
-      installer.instance_variable_set(:@ran_prelude, true)
+      installer.ran_prelude = true
 
       expect(download_queue).to receive(:enqueue)
         .with(bottle, check_attestation: false, stage: false).ordered
@@ -419,7 +422,7 @@ RSpec.describe FormulaInstaller do
         instance
       end
 
-      installer.send(:install_dependency, dependency)
+      installer.install_dependency(dependency)
 
       expect(child_installer).not_to be_installed_on_request
       expect(child_installer&.link_keg).to be true
@@ -825,7 +828,7 @@ RSpec.describe FormulaInstaller do
 
       installer = described_class.new(keg_only_formula, installed_on_request: true)
 
-      expect(installer.send(:link_manual_command_warning)).to eq <<~EOS
+      expect(installer.link_manual_command_warning).to eq <<~EOS
         #{formula_name} was installed but not linked because #{base_name} is already linked.
         To link this version, run:
           brew link #{formula_name}

@@ -146,6 +146,32 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     [time, T.must(file_size)]
   end
 
+  sig { void }
+  def allow_deferred_environment_expansion!
+    @expand_deferred_environment = true
+  end
+
+  # Curl options to be always passed to curl,
+  # with raw head calls (`curl --head`) or with actual `fetch`.
+  sig { returns(T::Array[String]) }
+  def _curl_args
+    args = []
+
+    args += ["-b", meta.fetch(:cookies).map { |k, v| "#{k}=#{v}" }.join(";")] if meta.key?(:cookies)
+
+    args += ["-e", meta.fetch(:referer)] if meta.key?(:referer)
+
+    args += ["--user", meta.fetch(:user)] if meta.key?(:user)
+
+    if meta.fetch(:headers, []).any? { |header| header.include?(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX) }
+      args += ["--max-redirs", "0"]
+    end
+
+    args += expand_deferred_environment_args(meta.fetch(:headers, [])).flat_map { |h| ["--header", h.strip] }
+
+    args
+  end
+
   private
 
   sig { params(timeout: T.nilable(T.any(Float, Integer))).returns([String, String]) }
@@ -262,11 +288,6 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     curl_download resolved_url, to:, try_partial: @try_partial, timeout:
   end
 
-  sig { void }
-  def allow_deferred_environment_expansion!
-    @expand_deferred_environment = true
-  end
-
   sig { params(args: T::Array[String]).returns(T::Array[String]) }
   def expand_deferred_environment_args(args)
     return args unless @expand_deferred_environment
@@ -274,27 +295,6 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     with_context(deferred_environment_expansion: true) do
       args.map { |arg| ENV.expand_deferred_environment(arg) }
     end
-  end
-
-  # Curl options to be always passed to curl,
-  # with raw head calls (`curl --head`) or with actual `fetch`.
-  sig { returns(T::Array[String]) }
-  def _curl_args
-    args = []
-
-    args += ["-b", meta.fetch(:cookies).map { |k, v| "#{k}=#{v}" }.join(";")] if meta.key?(:cookies)
-
-    args += ["-e", meta.fetch(:referer)] if meta.key?(:referer)
-
-    args += ["--user", meta.fetch(:user)] if meta.key?(:user)
-
-    if meta.fetch(:headers, []).any? { |header| header.include?(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX) }
-      args += ["--max-redirs", "0"]
-    end
-
-    args += expand_deferred_environment_args(meta.fetch(:headers, [])).flat_map { |h| ["--header", h.strip] }
-
-    args
   end
 
   sig { returns(T::Hash[Symbol, T.any(String, Symbol)]) }

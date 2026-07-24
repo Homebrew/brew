@@ -40,8 +40,6 @@ module Homebrew
         end
       end
 
-      private
-
       sig { params(taps: T::Array[Tap]).void }
       def print_tap_info(taps)
         if taps.none?
@@ -95,9 +93,6 @@ module Homebrew
         end
       end
 
-      LISTING_LIMIT = 30
-      private_constant :LISTING_LIMIT
-
       sig { params(tap: Tap).void }
       def print_tap_listings(tap)
         commands = tap.command_files
@@ -121,32 +116,6 @@ module Homebrew
         end
         print_section(tap, "Casks", cask_tokens, installed_casks, min_width:) do |token|
           decorate_cask(tap, token, installed: installed_cask_tokens.include?(token))
-        end
-      end
-
-      sig {
-        params(
-          tap:       Tap,
-          label:     String,
-          all:       T::Array[String],
-          installed: T::Array[String],
-          min_width: Integer,
-          block:     T.proc.params(name: String).returns(String),
-        ).void
-      }
-      def print_section(tap, label, all, installed, min_width:, &block)
-        return if all.none?
-
-        if all.size <= LISTING_LIMIT
-          ohai label, Formatter.columns(all.map(&block), min_width:)
-        elsif installed.any?
-          ohai label
-          opoo "Tap has more than #{LISTING_LIMIT} #{label.downcase}; showing only installed entries."
-          puts Formatter.columns(installed.map(&block), min_width:)
-        else
-          ohai label
-          opoo "Tap has more than #{LISTING_LIMIT} #{label.downcase} and none are installed."
-          puts "See: #{tap.remote}" if tap.remote.present?
         end
       end
 
@@ -186,6 +155,37 @@ module Homebrew
         hashes = Utils.parallel_map(taps, &:to_hash)
 
         puts JSON.pretty_generate(hashes)
+      end
+
+      private
+
+      LISTING_LIMIT = 30
+      private_constant :LISTING_LIMIT
+
+      sig {
+        params(
+          tap:       Tap,
+          label:     String,
+          all:       T::Array[String],
+          installed: T::Array[String],
+          min_width: Integer,
+          block:     T.proc.params(name: String).returns(String),
+        ).void
+      }
+      def print_section(tap, label, all, installed, min_width:, &block)
+        return if all.none?
+
+        if all.size <= LISTING_LIMIT
+          ohai label, Formatter.columns(all.map(&block), min_width:)
+        elsif installed.any?
+          ohai label
+          opoo "Tap has more than #{LISTING_LIMIT} #{label.downcase}; showing only installed entries."
+          puts Formatter.columns(installed.map(&block), min_width:)
+        else
+          ohai label
+          opoo "Tap has more than #{LISTING_LIMIT} #{label.downcase} and none are installed."
+          puts "See: #{tap.remote}" if tap.remote.present?
+        end
       end
     end
   end

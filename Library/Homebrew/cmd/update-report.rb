@@ -50,6 +50,17 @@ module Homebrew
         end
       end
 
+      sig { void }
+      def donation_message
+        return if Settings.read("donationmessage") == "true"
+
+        ohai "Homebrew is run entirely by unpaid volunteers. Please consider donating:"
+        puts "  #{Formatter.url("https://github.com/Homebrew/brew#-donations")}\n\n"
+
+        # Consider the message possibly missed if not a TTY.
+        Settings.write "donationmessage", true if $stdout.tty?
+      end
+
       private
 
       sig { void }
@@ -403,17 +414,6 @@ module Homebrew
 
         # Consider the messages possibly missed if not a TTY.
         Utils::Analytics.messages_displayed! if $stdout.tty?
-      end
-
-      sig { void }
-      def donation_message
-        return if Settings.read("donationmessage") == "true"
-
-        ohai "Homebrew is run entirely by unpaid volunteers. Please consider donating:"
-        puts "  #{Formatter.url("https://github.com/Homebrew/brew#-donations")}\n\n"
-
-        # Consider the message possibly missed if not a TTY.
-        Settings.write "donationmessage", true if $stdout.tty?
       end
 
       sig { void }

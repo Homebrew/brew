@@ -176,13 +176,6 @@ module OS
         implementation.run { super }
       end
 
-      private
-
-      sig { params(args: T::Array[T.any(String, ::Pathname)], tmpdir: String).returns(T::Array[T.any(String, ::Pathname)]) }
-      def sandbox_command(args, tmpdir)
-        implementation.command(args, tmpdir)
-      end
-
       sig { params(tmpdir: String).returns(T::Array[String]) }
       def bubblewrap_args(tmpdir)
         bubblewrap.arguments(tmpdir)
@@ -191,6 +184,13 @@ module OS
       sig { returns(T::Hash[String, Symbol]) }
       def writable_paths
         bubblewrap.writable_paths
+      end
+
+      private
+
+      sig { params(args: T::Array[T.any(String, ::Pathname)], tmpdir: String).returns(T::Array[T.any(String, ::Pathname)]) }
+      def sandbox_command(args, tmpdir)
+        implementation.command(args, tmpdir)
       end
 
       sig { void }

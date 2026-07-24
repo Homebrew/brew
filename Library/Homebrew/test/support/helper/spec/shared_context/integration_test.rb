@@ -221,7 +221,7 @@ module Test
         tab = Tab.for_name(name)
         tab.tabfile ||= keg/AbstractTab::FILENAME
         tab_attributes.each do |key, value|
-          tab.instance_variable_set(:"@#{key}", value)
+          tab.public_send(:"#{key}=", value)
         end
         tab.write
 

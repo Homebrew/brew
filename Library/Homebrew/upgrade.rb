@@ -445,8 +445,6 @@ module Homebrew
         end
       end
 
-      private
-
       sig {
         params(formula_installer: FormulaInstaller, dry_run: T::Boolean, verbose: T::Boolean,
                skip_formula_names: T::Array[String]).returns(T::Boolean)
@@ -480,6 +478,8 @@ module Homebrew
         Homebrew.failed = true
         false
       end
+
+      private
 
       sig { params(installed_formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def check_broken_dependents(installed_formulae)

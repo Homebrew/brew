@@ -34,6 +34,15 @@ module Homebrew
           @failed_taps << tap_name
         end
 
+        sig { params(failed_taps: T.nilable(T::Array[String])).returns(T.nilable(T::Array[String])) }
+        attr_writer :failed_taps
+
+        sig {
+          params(skipped_entries: T.nilable(T::Hash[Symbol, T.nilable(T::Array[String])]))
+            .returns(T.nilable(T::Hash[Symbol, T.nilable(T::Array[String])]))
+        }
+        attr_writer :skipped_entries
+
         private
 
         sig { returns(T::Hash[Symbol, T.nilable(T::Array[String])]) }

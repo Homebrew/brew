@@ -17,7 +17,7 @@ RSpec.shared_examples "parseable arguments" do |command_name: nil|
       klass = Object.const_get(command)
       # rubocop:enable Sorbet/ConstantsFromStrings
     end
-    argv = klass.parser.instance_variable_get(:@min_named_args)&.times&.map { "argument" } || []
+    argv = klass.parser.min_named_args&.times&.map { "argument" } || []
     cmd = klass.new(argv)
     expect(cmd.args).to be_a Homebrew::CLI::Args
   end

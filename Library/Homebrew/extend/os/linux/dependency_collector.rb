@@ -41,6 +41,11 @@ module OS
         Dependency.new(GLIBC, [:implicit])
       end
 
+      sig { returns(T::Hash[String, T::Set[String]]) }
+      def global_dep_tree
+        @@global_dep_tree
+      end
+
       private
 
       GLIBC = "glibc"
@@ -113,11 +118,6 @@ module OS
       # rubocop:disable Style/ClassVars
       @@global_dep_tree = T.let({}, T::Hash[String, T::Set[String]])
       @@building_global_dep_tree = T.let(false, T::Boolean)
-
-      sig { returns(T::Hash[String, T::Set[String]]) }
-      def global_dep_tree
-        @@global_dep_tree
-      end
 
       sig { void }
       def building_global_dep_tree!

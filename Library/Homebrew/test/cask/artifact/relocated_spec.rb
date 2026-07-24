@@ -29,7 +29,7 @@ RSpec.describe Cask::Artifact::Relocated, :cask do
         expect(command).not_to receive(:run)
         expect(command).not_to receive(:run!)
 
-        artifact.send(:add_altname_metadata, file, altname, command: command)
+        artifact.add_altname_metadata(file, altname, command: command)
       end
     end
 
@@ -46,7 +46,7 @@ RSpec.describe Cask::Artifact::Relocated, :cask do
                                               print_stderr: false)
         expect(command).to receive(:run!).twice
 
-        artifact.send(:add_altname_metadata, file, altname, command: command)
+        artifact.add_altname_metadata(file, altname, command: command)
       end
     end
   end

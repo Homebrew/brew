@@ -280,7 +280,7 @@ RSpec.describe Homebrew::Bundle::Installer do
         output = IO.pipe do |reader, writer|
           allow(writer).to receive(:tty?).and_return(true)
 
-          parallel_installer.send(:write_output, "Installing alpha", stream: writer)
+          parallel_installer.write_output("Installing alpha", stream: writer)
           writer.close
 
           reader.read
@@ -293,7 +293,7 @@ RSpec.describe Homebrew::Bundle::Installer do
         output = IO.pipe do |reader, writer|
           allow(writer).to receive(:tty?).and_return(false)
 
-          parallel_installer.send(:write_output, "Installing alpha", stream: writer)
+          parallel_installer.write_output("Installing alpha", stream: writer)
           writer.close
 
           reader.read
@@ -417,7 +417,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       dependency_map = Homebrew::Bundle::ParallelInstaller.new(
         entries,
         jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
-      ).send(:build_dependency_map, entries)
+      ).build_dependency_map(entries)
 
       expect(dependency_map.fetch("beta")).to eq(Set["alpha"])
     end
@@ -440,7 +440,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       dependency_map = Homebrew::Bundle::ParallelInstaller.new(
         entries,
         jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
-      ).send(:build_dependency_map, entries)
+      ).build_dependency_map(entries)
 
       expect(dependency_map.fetch("alpha")).to eq(Set["gh"])
     end

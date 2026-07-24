@@ -229,6 +229,9 @@ module Cask
     sig { override.returns(String) }
     def download_queue_type = "Cask"
 
+    sig { override.returns(String) }
+    def download_name = cask.token
+
     private
 
     sig { void }
@@ -280,8 +283,5 @@ module Cask
     def cache
       Cache.path
     end
-
-    sig { override.returns(String) }
-    def download_name = cask.token
   end
 end

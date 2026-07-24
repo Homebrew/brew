@@ -420,7 +420,7 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         runners.keys.find { |runner| runner.fetch(:symbol) == :linux } || runners.keys.first
       end
 
-      runners, multi_os = generate_matrix.send(:runners, cask: c)
+      runners, multi_os = generate_matrix.runners(cask: c)
 
       expect(runners.map { |runner| [(runner.fetch(:symbol) == :linux) ? :linux : :macos, runner.fetch(:arch)] })
         .to contain_exactly([:macos, :arm], [:macos, :intel], [:linux, :arm], [:linux, :intel])

@@ -39,35 +39,31 @@ RSpec.describe Cask::Auditor, :cask do
 
     it "returns true if @any_named_args is true" do
       auditor_obj = auditor.new(cask, any_named_args: true)
-      expect(auditor_obj.send(:output_summary?)).to be(true)
+      expect(auditor_obj.output_summary?).to be(true)
     end
 
     it "returns true if @audit_strict is true" do
       auditor_obj = auditor.new(cask, audit_strict: true)
-      expect(auditor_obj.send(:output_summary?)).to be(true)
+      expect(auditor_obj.output_summary?).to be(true)
     end
 
     it "returns false if the audit argument is nil" do
       auditor_obj = auditor.new(cask)
-      expect(auditor_obj.send(:output_summary?)).to be(false)
-      expect(auditor_obj.send(:output_summary?, nil)).to be(false)
+      expect(auditor_obj.output_summary?).to be(false)
+      expect(auditor_obj.output_summary?(nil)).to be(false)
     end
 
     it "returns false if there are no audit errors" do
       auditor_obj = auditor.new(cask)
       audit = Cask::Audit.new(cask)
-      expect(auditor_obj.send(:output_summary?, audit)).to be(false)
+      expect(auditor_obj.output_summary?(audit)).to be(false)
     end
 
     it "returns true if there are audit errors" do
       auditor_obj = auditor.new(cask)
       audit = Cask::Audit.new(cask)
-      audit.instance_variable_set(:@errors, [{
-        message:   nil,
-        location:  nil,
-        corrected: false,
-      }])
-      expect(auditor_obj.send(:output_summary?, audit)).to be(true)
+      audit.add_error(nil)
+      expect(auditor_obj.output_summary?(audit)).to be(true)
     end
   end
 end

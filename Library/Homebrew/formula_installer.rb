@@ -49,6 +49,9 @@ class FormulaInstaller
   sig { returns(Homebrew::DownloadQueue) }
   attr_accessor :download_queue
 
+  sig { params(ran_prelude: T::Boolean).void }
+  attr_writer :ran_prelude
+
   sig {
     params(
       formula:                    Formula,

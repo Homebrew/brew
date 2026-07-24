@@ -21,7 +21,7 @@ RSpec.describe Homebrew::Install do
       .with(:fatal_preinstall_checks)
       .ordered
 
-    described_class.send(:perform_preinstall_checks)
+    described_class.perform_preinstall_checks
   end
 
   describe "::print_dry_run_dependencies" do

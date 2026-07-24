@@ -504,6 +504,88 @@ module Homebrew
         end
       end
 
+      sig { params(formula: Formula, new_version: String).void }
+      def check_throttle(formula, new_version)
+        tap = formula.tap
+        return if tap.nil?
+
+        throttle_rate = formula.livecheck.throttle
+        throttle_days = formula.livecheck.throttle_days
+        return if throttle_rate.nil? && throttle_days.nil?
+
+        return if Livecheck.throttle_allows_bump?(
+          formula,
+          new_version,
+          throttle_rate: throttle_rate,
+          throttle_days: throttle_days,
+        )
+
+        throttle_items = []
+        throttle_items << "#{throttle_rate} releases on multiples of #{throttle_rate}" if throttle_rate
+        throttle_items << "#{throttle_days} #{Utils.pluralize("day", throttle_days)}" if throttle_days
+
+        odie "#{formula} should only be updated every #{throttle_items.join(" or ")}"
+      end
+
+      sig {
+        params(
+          formula:           Formula,
+          version:           String,
+          resource_versions: T.nilable(T::Hash[String, T::Hash[Symbol, T.nilable(String)]]),
+        ).returns(T::Hash[String, Symbol])
+      }
+      def update_matching_version_resources!(formula, version:, resource_versions: nil)
+        resource_versions ||= {}
+        formula.resources
+               .select { |r| r.livecheck.formula == :parent && resource_versions[r.name].blank? }
+               .to_h { |resource| [resource.name, update_resource_block!(formula, resource, version)] }
+      end
+
+      sig {
+        params(
+          formula:           Formula,
+          resource_versions: T::Hash[String, T::Hash[Symbol, T.nilable(String)]],
+        ).returns(T::Hash[String, Symbol])
+      }
+      def update_resources!(formula, resource_versions:)
+        results = {}
+
+        formula.resources.each do |resource|
+          version_data = resource_versions[resource.name]
+          next if version_data.blank?
+
+          current_version = version_data[:current_version]
+          latest_version = version_data[:latest_version]
+
+          if current_version.blank? || latest_version.blank?
+            opoo "Could not determine versions for resource \"#{resource.name}\""
+            results[resource.name] = :version_unknown
+            next
+          end
+
+          if current_version == latest_version
+            results[resource.name] = :up_to_date
+            next
+          end
+
+          is_downgraded = Version.new(current_version) > Version.new(latest_version)
+
+          begin
+            result = update_resource_block!(formula, resource, latest_version)
+            results[resource.name] = if result == :success && is_downgraded
+              :downgraded
+            else
+              result
+            end
+          rescue => e
+            opoo "Failed to update resource \"#{resource.name}\": #{e}"
+            results[resource.name] = :fetch_failed
+          end
+        end
+
+        results
+      end
+
       private
 
       sig { params(url: String).returns(T.nilable(String)) }
@@ -619,29 +701,6 @@ module Homebrew
         check_pull_requests(formula, tap_remote_repo, version:) unless args.write_only?
       end
 
-      sig { params(formula: Formula, new_version: String).void }
-      def check_throttle(formula, new_version)
-        tap = formula.tap
-        return if tap.nil?
-
-        throttle_rate = formula.livecheck.throttle
-        throttle_days = formula.livecheck.throttle_days
-        return if throttle_rate.nil? && throttle_days.nil?
-
-        return if Livecheck.throttle_allows_bump?(
-          formula,
-          new_version,
-          throttle_rate: throttle_rate,
-          throttle_days: throttle_days,
-        )
-
-        throttle_items = []
-        throttle_items << "#{throttle_rate} releases on multiples of #{throttle_rate}" if throttle_rate
-        throttle_items << "#{throttle_days} #{Utils.pluralize("day", throttle_days)}" if throttle_days
-
-        odie "#{formula} should only be updated every #{throttle_items.join(" or ")}"
-      end
-
       sig { params(formula: Formula, new_formula_version: Version).returns(T.nilable(T::Array[String])) }
       def alias_update_pair(formula, new_formula_version)
         versioned_alias = formula.aliases.grep(/^.*@\d+(\.\d+)?$/).first
@@ -731,65 +790,6 @@ module Homebrew
         formula.path.atomic_write(formula_ast.process)
 
         :success
-      end
-
-      sig {
-        params(
-          formula:           Formula,
-          version:           String,
-          resource_versions: T.nilable(T::Hash[String, T::Hash[Symbol, T.nilable(String)]]),
-        ).returns(T::Hash[String, Symbol])
-      }
-      def update_matching_version_resources!(formula, version:, resource_versions: nil)
-        resource_versions ||= {}
-        formula.resources
-               .select { |r| r.livecheck.formula == :parent && resource_versions[r.name].blank? }
-               .to_h { |resource| [resource.name, update_resource_block!(formula, resource, version)] }
-      end
-
-      sig {
-        params(
-          formula:           Formula,
-          resource_versions: T::Hash[String, T::Hash[Symbol, T.nilable(String)]],
-        ).returns(T::Hash[String, Symbol])
-      }
-      def update_resources!(formula, resource_versions:)
-        results = {}
-
-        formula.resources.each do |resource|
-          version_data = resource_versions[resource.name]
-          next if version_data.blank?
-
-          current_version = version_data[:current_version]
-          latest_version = version_data[:latest_version]
-
-          if current_version.blank? || latest_version.blank?
-            opoo "Could not determine versions for resource \"#{resource.name}\""
-            results[resource.name] = :version_unknown
-            next
-          end
-
-          if current_version == latest_version
-            results[resource.name] = :up_to_date
-            next
-          end
-
-          is_downgraded = Version.new(current_version) > Version.new(latest_version)
-
-          begin
-            result = update_resource_block!(formula, resource, latest_version)
-            results[resource.name] = if result == :success && is_downgraded
-              :downgraded
-            else
-              result
-            end
-          rescue => e
-            opoo "Failed to update resource \"#{resource.name}\": #{e}"
-            results[resource.name] = :fetch_failed
-          end
-        end
-
-        results
       end
 
       sig {

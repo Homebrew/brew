@@ -12,6 +12,11 @@ module Language
   module Node
     extend ::Utils::Output::Mixin
 
+    class << self
+      sig { returns(T.nilable(T::Boolean)) }
+      attr_accessor :env_set
+    end
+
     sig { returns(String) }
     def self.npm_cache_config
       "cache=#{HOMEBREW_CACHE}/npm_cache"

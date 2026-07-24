@@ -45,14 +45,13 @@ RSpec.describe Homebrew::TestBot::TestFormulae do
       Dir.mktmpdir do |tmpdir|
         Dir.chdir(tmpdir) do
           with_env("GITHUB_REPOSITORY" => "owner/repo") do
-            test_formulae.send(:download_artifacts_from_previous_run!, "bottles*", dry_run: false)
+            test_formulae.download_artifacts_from_previous_run!("bottles*", dry_run: false)
           end
         end
       end
 
       # Proves we passed the @downloaded_artifacts[sha] access for a new SHA without KeyError.
-      downloaded = test_formulae.instance_variable_get(:@downloaded_artifacts)
-      expect(downloaded[new_sha]).to include("bottles")
+      expect(test_formulae.downloaded_artifacts[new_sha]).to include("bottles")
     end
   end
 end

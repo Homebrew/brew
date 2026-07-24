@@ -8,7 +8,7 @@ RSpec.describe Language::Node do
 
   describe "#setup_npm_environment" do
     before do
-      described_class.instance_variable_set(:@env_set, false)
+      described_class.env_set = false
     end
 
     it "calls prepend_path when node formula exists only during the first call" do
@@ -22,7 +22,7 @@ RSpec.describe Language::Node do
       end
       described_class.setup_npm_environment
 
-      expect(described_class.instance_variable_get(:@env_set)).to be(true)
+      expect(described_class.env_set).to be(true)
       without_partial_double_verification do
         expect(ENV).not_to receive(:prepend_path)
       end

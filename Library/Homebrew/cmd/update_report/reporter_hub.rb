@@ -20,6 +20,11 @@ class ReporterHub
     T.cast(@hash.fetch(key, []), T::Array[String])
   end
 
+  sig { returns(T::Array[[String, String]]) }
+  def renamed_formulae
+    T.cast(@hash.fetch(:R, []), T::Array[[String, String]])
+  end
+
   sig { params(reporter: Reporter, auto_update: T::Boolean).void }
   def add(reporter, auto_update: false)
     @reporters << reporter

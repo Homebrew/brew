@@ -96,7 +96,7 @@ RSpec.describe DependencyCollector do
     end
 
     it "returns nil for Bubblewrap and its dependencies" do
-      collector.send(:global_dep_tree)["bubblewrap"] = Set["libcap"]
+      collector.global_dep_tree["bubblewrap"] = Set["libcap"]
 
       expect(collector.bubblewrap_dep_if_needed(Set["bubblewrap"])).to be_nil
       expect(collector.bubblewrap_dep_if_needed(Set["libcap"])).to be_nil

@@ -174,6 +174,6 @@ RSpec.describe Dependency do
     allow(foo).to receive(:to_formula).and_raise(FormulaUnavailableError, foo.name)
     f = instance_double(Formula, name: "f", deps: [foo])
     expect { described_class.expand(f) }.to raise_error(FormulaUnavailableError)
-    expect(described_class.instance_variable_get(:@expand_stack)).to be_empty
+    expect(described_class.expand_stack).to be_empty
   end
 end

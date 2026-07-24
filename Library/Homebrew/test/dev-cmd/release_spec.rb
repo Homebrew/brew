@@ -70,12 +70,12 @@ RSpec.describe Homebrew::DevCmd::Release do
     end
 
     it "filters releases by name or tag name" do
-      matching = command.send(:matching_releases, "1.2.3")
+      matching = command.matching_releases("1.2.3")
       expect(matching.map { |release| release["id"] }).to eq([1, 2, 4])
     end
 
     it "selects the latest matching release by creation time" do
-      latest = command.send(:latest_matching_release, "1.2.3")
+      latest = command.latest_matching_release("1.2.3")
       expect(latest["id"]).to eq(4)
     end
   end

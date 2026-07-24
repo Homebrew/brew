@@ -48,7 +48,7 @@ RSpec.describe Homebrew::Cmd::Outdated do
     expect(cask).to receive(:outdated?)
       .with(greedy: false, greedy_latest: false, greedy_auto_updates: false)
       .and_return(false)
-    expect(cmd.send(:select_outdated, [cask])).to be_empty
+    expect(cmd.select_outdated([cask])).to be_empty
   end
 
   it "checks auto-updating casks with --greedy-auto-updates", :cask do
@@ -58,7 +58,7 @@ RSpec.describe Homebrew::Cmd::Outdated do
     expect(cask).to receive(:outdated?)
       .with(greedy: false, greedy_latest: false, greedy_auto_updates: true)
       .and_return(true)
-    expect(cmd.send(:select_outdated, [cask])).to eq([cask])
+    expect(cmd.select_outdated([cask])).to eq([cask])
   end
 
   it "excludes auto-updating casks when auto-update upgrades are disabled", :cask do

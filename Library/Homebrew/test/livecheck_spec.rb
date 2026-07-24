@@ -74,14 +74,14 @@ RSpec.describe Livecheck do
   describe "#skip" do
     it "sets @skip to true when no argument is provided" do
       expect(livecheck_f.skip).to be true
-      expect(livecheck_f.instance_variable_get(:@skip)).to be true
-      expect(livecheck_f.instance_variable_get(:@skip_msg)).to be_nil
+      expect(livecheck_f.skip?).to be true
+      expect(livecheck_f.skip_msg).to be_nil
     end
 
     it "sets @skip to true and @skip_msg to the provided String" do
       expect(livecheck_f.skip("foo")).to be true
-      expect(livecheck_f.instance_variable_get(:@skip)).to be true
-      expect(livecheck_f.instance_variable_get(:@skip_msg)).to eq("foo")
+      expect(livecheck_f.skip?).to be true
+      expect(livecheck_f.skip_msg).to eq("foo")
     end
   end
 

@@ -595,10 +595,18 @@ class Sandbox
     SandboxPathFilter.new(path: filter_path, type:)
   end
 
-  private
-
   sig { returns(SandboxProfile) }
   attr_reader :profile
+
+  sig { params(controller: IO).void }
+  def copy_pty_output(controller)
+    controller.each_char { |c| print(c) }
+  rescue Errno::EIO
+    # Linux marks a PTY as an I/O error when its peer closes, so treat this as EOF:
+    # https://github.com/torvalds/linux/blob/master/drivers/tty/pty.c
+  end
+
+  private
 
   sig { returns(T::Boolean) }
   attr_reader :failed
@@ -629,14 +637,6 @@ class Sandbox
 
   sig { void }
   def apply_sandbox; end
-
-  sig { params(controller: IO).void }
-  def copy_pty_output(controller)
-    controller.each_char { |c| print(c) }
-  rescue Errno::EIO
-    # Linux marks a PTY as an I/O error when its peer closes, so treat this as EOF:
-    # https://github.com/torvalds/linux/blob/master/drivers/tty/pty.c
-  end
 
   sig { void }
   def record_sandbox_log; end

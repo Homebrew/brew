@@ -163,7 +163,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xorg do
       }
     end
 
-    before { xorg.instance_variable_set(:@page_data, {}) }
+    before { xorg.page_data = {} }
 
     it "finds versions in fetched content" do
       allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: })
@@ -172,10 +172,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Xorg do
     end
 
     it "finds versions in cached content" do
-      xorg.instance_variable_set(
-        :@page_data,
-        { generated[:app][:url] => content },
-      )
+      xorg.page_data = { generated[:app][:url] => content }
       expect(xorg.find_versions(url: xorg_urls[:app])).to eq(match_data[:cached])
     end
 

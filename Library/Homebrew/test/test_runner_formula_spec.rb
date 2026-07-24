@@ -403,7 +403,7 @@ RSpec.describe TestRunnerFormula do
       dependencies.each { |dependency| depends_on dependency }
 
       kwargs.each do |k, v|
-        send(:"on_#{k}") do
+        public_send(:"on_#{k}") do
           v.each do |dep|
             depends_on dep
           end

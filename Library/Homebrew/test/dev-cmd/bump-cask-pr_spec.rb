@@ -85,12 +85,12 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     context "when cask does not have on_system blocks/calls or `depends_on arch`" do
       it "returns an array only including macOS/ARM" do
         Homebrew::SimulateSystem.with(os: :linux) do
-          expect(bump_cask_pr.send(:generate_system_options, c, new_version))
+          expect(bump_cask_pr.generate_system_options(c, new_version))
             .to eq([[newest_macos, :arm]])
         end
 
         Homebrew::SimulateSystem.with(os: older_macos) do
-          expect(bump_cask_pr.send(:generate_system_options, c, new_version))
+          expect(bump_cask_pr.generate_system_options(c, new_version))
             .to eq([[older_macos, :arm]])
         end
       end
@@ -99,12 +99,12 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     context "when cask does not have on_system blocks/calls but has `depends_on arch`" do
       it "returns an array only including macOS/`depends_on arch` value" do
         Homebrew::SimulateSystem.with(os: :linux, arch: :arm) do
-          expect(bump_cask_pr.send(:generate_system_options, c_depends_on_intel, new_version))
+          expect(bump_cask_pr.generate_system_options(c_depends_on_intel, new_version))
             .to eq([[newest_macos, :intel]])
         end
 
         Homebrew::SimulateSystem.with(os: older_macos, arch: :arm) do
-          expect(bump_cask_pr.send(:generate_system_options, c_depends_on_intel, new_version))
+          expect(bump_cask_pr.generate_system_options(c_depends_on_intel, new_version))
             .to eq([[older_macos, :intel]])
         end
       end
@@ -113,7 +113,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     context "when cask has on_system blocks/calls but does not have `depends_on arch`" do
       it "returns an array with combinations of `OnSystem::BASE_OS_OPTIONS` and `OnSystem::ARCH_OPTIONS`" do
         Homebrew::SimulateSystem.with(os: :linux) do
-          expect(bump_cask_pr.send(:generate_system_options, c_on_system, new_version))
+          expect(bump_cask_pr.generate_system_options(c_on_system, new_version))
             .to eq([
               [newest_macos, :intel],
               [newest_macos, :arm],
@@ -123,7 +123,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
         end
 
         Homebrew::SimulateSystem.with(os: older_macos) do
-          expect(bump_cask_pr.send(:generate_system_options, c_on_system, new_version))
+          expect(bump_cask_pr.generate_system_options(c_on_system, new_version))
             .to eq([
               [older_macos, :intel],
               [older_macos, :arm],
@@ -137,7 +137,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     context "when cask has on_system blocks/calls and `depends_on arch`" do
       it "returns an array with combinations of `OnSystem::BASE_OS_OPTIONS` and `OnSystem::ARCH_OPTIONS`" do
         Homebrew::SimulateSystem.with(os: :linux, arch: :arm) do
-          expect(bump_cask_pr.send(:generate_system_options, c_on_system_depends_on_intel, new_version))
+          expect(bump_cask_pr.generate_system_options(c_on_system_depends_on_intel, new_version))
             .to eq([
               [newest_macos, :intel],
               [newest_macos, :arm],
@@ -147,7 +147,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
         end
 
         Homebrew::SimulateSystem.with(os: older_macos, arch: :arm) do
-          expect(bump_cask_pr.send(:generate_system_options, c_on_system_depends_on_intel, new_version))
+          expect(bump_cask_pr.generate_system_options(c_on_system_depends_on_intel, new_version))
             .to eq([
               [older_macos, :intel],
               [older_macos, :arm],
@@ -177,7 +177,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
           end
 
           expect(cask.depends_on.arch).to eq([{ type: :arm, bits: 64 }])
-          expect(bump_cask_pr.send(:generate_system_options, cask, new_version))
+          expect(bump_cask_pr.generate_system_options(cask, new_version))
             .to eq([
               [older_macos, :intel],
               [older_macos, :arm],
@@ -196,24 +196,24 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
 
       it "returns an array only using archs of arch-specific versions" do
         Homebrew::SimulateSystem.with(os: :linux) do
-          expect(bump_cask_pr.send(:generate_system_options, c_arm_intel, new_version_arm))
+          expect(bump_cask_pr.generate_system_options(c_arm_intel, new_version_arm))
             .to eq([
               [newest_macos, :arm],
               [:linux, :arm],
             ])
-          expect(bump_cask_pr.send(:generate_system_options, c_arm_intel, new_version_intel))
+          expect(bump_cask_pr.generate_system_options(c_arm_intel, new_version_intel))
             .to eq([
               [newest_macos, :intel],
               [:linux, :intel],
             ])
-          expect(bump_cask_pr.send(:generate_system_options, c_arm_intel, new_version_arm_intel))
+          expect(bump_cask_pr.generate_system_options(c_arm_intel, new_version_arm_intel))
             .to eq([
               [newest_macos, :arm],
               [newest_macos, :intel],
               [:linux, :arm],
               [:linux, :intel],
             ])
-          expect(bump_cask_pr.send(:generate_system_options, c_arm_intel, new_version_intel_arm))
+          expect(bump_cask_pr.generate_system_options(c_arm_intel, new_version_intel_arm))
             .to eq([
               [newest_macos, :intel],
               [newest_macos, :arm],
@@ -223,24 +223,24 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
         end
 
         Homebrew::SimulateSystem.with(os: older_macos) do
-          expect(bump_cask_pr.send(:generate_system_options, c_arm_intel, new_version_arm))
+          expect(bump_cask_pr.generate_system_options(c_arm_intel, new_version_arm))
             .to eq([
               [older_macos, :arm],
               [:linux, :arm],
             ])
-          expect(bump_cask_pr.send(:generate_system_options, c_arm_intel, new_version_intel))
+          expect(bump_cask_pr.generate_system_options(c_arm_intel, new_version_intel))
             .to eq([
               [older_macos, :intel],
               [:linux, :intel],
             ])
-          expect(bump_cask_pr.send(:generate_system_options, c_arm_intel, new_version_arm_intel))
+          expect(bump_cask_pr.generate_system_options(c_arm_intel, new_version_arm_intel))
             .to eq([
               [older_macos, :arm],
               [older_macos, :intel],
               [:linux, :arm],
               [:linux, :intel],
             ])
-          expect(bump_cask_pr.send(:generate_system_options, c_arm_intel, new_version_intel_arm))
+          expect(bump_cask_pr.generate_system_options(c_arm_intel, new_version_intel_arm))
             .to eq([
               [older_macos, :intel],
               [older_macos, :arm],
@@ -274,14 +274,14 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
     end
 
     it "is idempotent when the replacement has already been applied" do
-      bumped = bump_cask_pr.send(:replace_cask_stanza_value, contents, :version, "1.0", "2.0")
+      bumped = bump_cask_pr.replace_cask_stanza_value(contents, :version, "1.0", "2.0")
       expect(bumped).to include('version "2.0"')
-      expect { bump_cask_pr.send(:replace_cask_stanza_value, bumped, :version, "1.0", "2.0") }
+      expect { bump_cask_pr.replace_cask_stanza_value(bumped, :version, "1.0", "2.0") }
         .not_to raise_error
     end
 
     it "raises when the stanza is missing entirely" do
-      expect { bump_cask_pr.send(:replace_cask_stanza_value, contents, :version, "9.9", "2.0") }
+      expect { bump_cask_pr.replace_cask_stanza_value(contents, :version, "9.9", "2.0") }
         .to raise_error(/Could not find 'version' stanza/)
     end
   end
@@ -317,7 +317,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       cask = Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { cask_from_contents(contents) }
       new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
 
-      expect(bump_cask_pr.send(:replace_version_and_checksum, cask, new_hash, new_version, contents))
+      expect(bump_cask_pr.replace_version_and_checksum(cask, new_hash, new_version, contents))
         .to eq <<~RUBY
           cask "foo" do
             on_arm do
@@ -355,7 +355,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       cask = Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { cask_from_contents(contents) }
       new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
 
-      expect(bump_cask_pr.send(:replace_version_and_checksum, cask, new_hash, new_version, contents))
+      expect(bump_cask_pr.replace_version_and_checksum(cask, new_hash, new_version, contents))
         .to eq <<~RUBY
           cask "foo" do
             arch arm: "arm", intel: "intel"
@@ -388,7 +388,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       cask = cask_from_contents(contents)
       new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
 
-      expect(bump_cask_pr.send(:replace_version_and_checksum, cask, new_hash, new_version, contents))
+      expect(bump_cask_pr.replace_version_and_checksum(cask, new_hash, new_version, contents))
         .to eq <<~RUBY
           cask "foo" do
             on_arm do
@@ -419,7 +419,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       new_version = Homebrew::BumpVersionParser.new(arm: "2.0", intel: "1.5")
 
       expect(
-        bump_cask_pr.send(:replace_version_and_checksum, cask, :no_check, new_version, contents),
+        bump_cask_pr.replace_version_and_checksum(cask, :no_check, new_version, contents),
       ).to eq <<~RUBY
         cask "foo" do
           on_arm do
@@ -462,7 +462,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
 
       expect(
-        bump_cask_pr.send(:replace_version_and_checksum, cask, :no_check, new_version, contents),
+        bump_cask_pr.replace_version_and_checksum(cask, :no_check, new_version, contents),
       ).to eq <<~RUBY
         cask "foo" do
           on_arm do
@@ -502,7 +502,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       new_version = Homebrew::BumpVersionParser.new(general: "2.0")
 
       expect(
-        bump_cask_pr.send(:replace_version_and_checksum, cask, new_hash, new_version, contents),
+        bump_cask_pr.replace_version_and_checksum(cask, new_hash, new_version, contents),
       ).to eq <<~RUBY
         cask "foo" do
           on_arm do
@@ -544,7 +544,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       new_version = Homebrew::BumpVersionParser.new(arm: "2.0")
 
       expect(
-        bump_cask_pr.send(:replace_version_and_checksum, cask, :no_check, new_version, contents),
+        bump_cask_pr.replace_version_and_checksum(cask, :no_check, new_version, contents),
       ).to eq(contents)
     end
   end
@@ -602,14 +602,14 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
 
     context "when cask is not in a tap" do
       it "outputs nothing" do
-        expect { bump_cask_pr.send(:check_throttle, c, new_version:) }.not_to output.to_stderr
+        expect { bump_cask_pr.check_throttle(c, new_version:) }.not_to output.to_stderr
       end
     end
 
     context "when a livecheck throttle value isn't present" do
       it "does not throttle" do
         allow(c).to receive(:tap).and_return(tap)
-        expect { bump_cask_pr.send(:check_throttle, c, new_version:) }.not_to output.to_stderr
+        expect { bump_cask_pr.check_throttle(c, new_version:) }.not_to output.to_stderr
       end
     end
 
@@ -623,7 +623,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       it "does not throttle" do
         allow(c_throttle).to receive(:tap).and_return(tap)
         expect do
-          bump_cask_pr.send(:check_throttle, c_throttle, new_version: empty_version)
+          bump_cask_pr.check_throttle(c_throttle, new_version: empty_version)
         end.not_to output.to_stderr
       end
     end
@@ -632,7 +632,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       it "does not throttle" do
         allow(c_throttle).to receive(:tap).and_return(tap)
         expect do
-          bump_cask_pr.send(:check_throttle, c_throttle, new_version:)
+          bump_cask_pr.check_throttle(c_throttle, new_version:)
         end.not_to output.to_stderr
       end
     end
@@ -643,7 +643,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       it "throttles version" do
         allow(c_throttle).to receive(:tap).and_return(tap)
         expect do
-          bump_cask_pr.send(:check_throttle, c_throttle, new_version: new_version_indivisible)
+          bump_cask_pr.check_throttle(c_throttle, new_version: new_version_indivisible)
         rescue SystemExit
           next
         end.to output(throttle_error).to_stderr
@@ -661,7 +661,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
         allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
 
         expect do
-          bump_cask_pr.send(:check_throttle, c_throttle_rate_and_days, new_version: new_version_indivisible)
+          bump_cask_pr.check_throttle(c_throttle_rate_and_days, new_version: new_version_indivisible)
         rescue SystemExit
           next
         end.to output(throttle_rate_days_error).to_stderr
@@ -671,7 +671,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
         allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
 
         expect do
-          bump_cask_pr.send(:check_throttle, c_throttle_rate_and_days, new_version: new_version_indivisible)
+          bump_cask_pr.check_throttle(c_throttle_rate_and_days, new_version: new_version_indivisible)
         end.not_to output.to_stderr
       end
     end
@@ -685,7 +685,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
         allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
 
         expect do
-          bump_cask_pr.send(:check_throttle, c_throttle_days, new_version:)
+          bump_cask_pr.check_throttle(c_throttle_days, new_version:)
         rescue SystemExit
           next
         end.to output(throttle_days_error).to_stderr
@@ -695,7 +695,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
         allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
 
         expect do
-          bump_cask_pr.send(:check_throttle, c_throttle_days, new_version:)
+          bump_cask_pr.check_throttle(c_throttle_days, new_version:)
         end.not_to output.to_stderr
       end
     end

@@ -80,11 +80,6 @@ module Cask
         "#{@source_string}#{target_string}"
       end
 
-      private
-
-      ALT_NAME_ATTRIBUTE = "com.apple.metadata:kMDItemAlternateNames"
-      private_constant :ALT_NAME_ATTRIBUTE
-
       # Try to make the asset searchable under the target name. Spotlight
       # respects this attribute for many filetypes, but ignores it for App
       # bundles. Alfred 2.2 respects it even for App bundles.
@@ -111,6 +106,11 @@ module Cask
                      print_stderr: false,
                      sudo:         !file.writable?)
       end
+
+      private
+
+      ALT_NAME_ATTRIBUTE = "com.apple.metadata:kMDItemAlternateNames"
+      private_constant :ALT_NAME_ATTRIBUTE
 
       sig { returns(String) }
       def printable_target

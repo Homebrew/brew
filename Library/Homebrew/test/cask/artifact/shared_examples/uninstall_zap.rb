@@ -186,9 +186,8 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         .with("/bin/launchctl", args: ["list"])
         .and_return(instance_double(SystemCommand::Result, stdout: launchctl_list))
 
-      expect(subject.send(:find_launchctl_with_wildcard,
-                          "my.fancy.package.service.*")).to eq(["my.fancy.package.service.12345",
-                                                                "my.fancy.package.service.test"])
+      expect(subject.find_launchctl_with_wildcard("my.fancy.package.service.*"))
+        .to eq(["my.fancy.package.service.12345", "my.fancy.package.service.test"])
     end
   end
 

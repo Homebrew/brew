@@ -11,7 +11,7 @@ RSpec.describe GitHubGitDownloadStrategy do
   let(:version) { nil }
 
   it "parses the URL and sets the corresponding instance variables" do
-    expect(strategy.instance_variable_get(:@user)).to eq("homebrew")
-    expect(strategy.instance_variable_get(:@repo)).to eq("brew")
+    expect(strategy.user).to eq("homebrew")
+    expect(strategy.repo).to eq("brew")
   end
 end

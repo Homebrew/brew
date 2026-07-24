@@ -187,8 +187,9 @@ module Downloadable
 
       download_strategy.new(primary_url, download_name, version,
                             mirrors:, cache:, **T.must(@url).specs).tap do |downloader|
-        if AbstractDownloadStrategy.expand_deferred_environment_for?(downloader)
-          downloader.send(:allow_deferred_environment_expansion!)
+        if downloader.is_a?(CurlDownloadStrategy) &&
+           AbstractDownloadStrategy.expand_deferred_environment_for?(downloader)
+          downloader.allow_deferred_environment_expansion!
         end
       end
     end

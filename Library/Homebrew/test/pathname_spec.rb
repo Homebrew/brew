@@ -17,7 +17,10 @@ RSpec.describe Pathname do
       pathname = Pathname.new(file.to_s)
       [:@magic_number, :@file_type, :@zipinfo, :@which_install_info, :@disk_usage, :@file_count].each do |ivar|
         expect(pathname.instance_variable_defined?(ivar)).to be(true), "expected #{ivar} to be defined"
+        # Read the raw ivars: the names are dynamic and eager raw definition is under test.
+        # rubocop:disable Homebrew/NoInstanceVariableAccessInTests
         expect(pathname.instance_variable_get(ivar)).to be_nil
+        # rubocop:enable Homebrew/NoInstanceVariableAccessInTests
       end
     end
   end

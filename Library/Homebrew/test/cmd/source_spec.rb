@@ -16,85 +16,85 @@ RSpec.describe Homebrew::Cmd::Source do
 
   describe "#github_repo_url" do
     it "extracts repository URL from GitHub URL" do
-      expect(described_class.new([]).send(:github_repo_url, "https://github.com/Homebrew/brew.git"))
+      expect(described_class.new([]).github_repo_url("https://github.com/Homebrew/brew.git"))
         .to eq("https://github.com/Homebrew/brew")
     end
 
     it "handles GitHub archive URLs" do
-      expect(described_class.new([]).send(:github_repo_url, "https://github.com/Homebrew/testball/archive/refs/tags/v0.1.tar.gz"))
+      expect(described_class.new([]).github_repo_url("https://github.com/Homebrew/testball/archive/refs/tags/v0.1.tar.gz"))
         .to eq("https://github.com/Homebrew/testball")
     end
 
     it "returns nil for non-GitHub URLs" do
-      expect(described_class.new([]).send(:github_repo_url, "https://example.com/repo.git"))
+      expect(described_class.new([]).github_repo_url("https://example.com/repo.git"))
         .to be_nil
     end
   end
 
   describe "#gitlab_repo_url" do
     it "extracts repository URL from GitLab URL with nested groups" do
-      expect(described_class.new([]).send(:gitlab_repo_url, "https://gitlab.com/group/subgroup/project/-/archive/v1.0/project-v1.0.tar.gz"))
+      expect(described_class.new([]).gitlab_repo_url("https://gitlab.com/group/subgroup/project/-/archive/v1.0/project-v1.0.tar.gz"))
         .to eq("https://gitlab.com/group/subgroup/project")
     end
 
     it "handles GitLab .git URLs" do
-      expect(described_class.new([]).send(:gitlab_repo_url, "https://gitlab.com/user/repo.git"))
+      expect(described_class.new([]).gitlab_repo_url("https://gitlab.com/user/repo.git"))
         .to eq("https://gitlab.com/user/repo")
     end
 
     it "returns nil for non-GitLab URLs" do
-      expect(described_class.new([]).send(:gitlab_repo_url, "https://example.com/repo.git"))
+      expect(described_class.new([]).gitlab_repo_url("https://example.com/repo.git"))
         .to be_nil
     end
   end
 
   describe "#bitbucket_repo_url" do
     it "extracts repository URL from Bitbucket URL" do
-      expect(described_class.new([]).send(:bitbucket_repo_url, "https://bitbucket.org/user/repo/get/v1.0.tar.gz"))
+      expect(described_class.new([]).bitbucket_repo_url("https://bitbucket.org/user/repo/get/v1.0.tar.gz"))
         .to eq("https://bitbucket.org/user/repo")
     end
 
     it "handles Bitbucket .git URLs" do
-      expect(described_class.new([]).send(:bitbucket_repo_url, "https://bitbucket.org/user/repo.git"))
+      expect(described_class.new([]).bitbucket_repo_url("https://bitbucket.org/user/repo.git"))
         .to eq("https://bitbucket.org/user/repo")
     end
 
     it "returns nil for non-Bitbucket URLs" do
-      expect(described_class.new([]).send(:bitbucket_repo_url, "https://example.com/repo.git"))
+      expect(described_class.new([]).bitbucket_repo_url("https://example.com/repo.git"))
         .to be_nil
     end
   end
 
   describe "#codeberg_repo_url" do
     it "extracts repository URL from Codeberg URL" do
-      expect(described_class.new([]).send(:codeberg_repo_url, "https://codeberg.org/user/repo/archive/v1.0.tar.gz"))
+      expect(described_class.new([]).codeberg_repo_url("https://codeberg.org/user/repo/archive/v1.0.tar.gz"))
         .to eq("https://codeberg.org/user/repo")
     end
 
     it "handles Codeberg .git URLs" do
-      expect(described_class.new([]).send(:codeberg_repo_url, "https://codeberg.org/user/repo.git"))
+      expect(described_class.new([]).codeberg_repo_url("https://codeberg.org/user/repo.git"))
         .to eq("https://codeberg.org/user/repo")
     end
 
     it "returns nil for non-Codeberg URLs" do
-      expect(described_class.new([]).send(:codeberg_repo_url, "https://example.com/repo.git"))
+      expect(described_class.new([]).codeberg_repo_url("https://example.com/repo.git"))
         .to be_nil
     end
   end
 
   describe "#sourcehut_repo_url" do
     it "extracts repository URL from SourceHut URL" do
-      expect(described_class.new([]).send(:sourcehut_repo_url, "https://git.sr.ht/~user/repo/archive/v1.0.tar.gz"))
+      expect(described_class.new([]).sourcehut_repo_url("https://git.sr.ht/~user/repo/archive/v1.0.tar.gz"))
         .to eq("https://sr.ht/~user/repo")
     end
 
     it "handles sr.ht URLs without git subdomain" do
-      expect(described_class.new([]).send(:sourcehut_repo_url, "https://sr.ht/~user/repo"))
+      expect(described_class.new([]).sourcehut_repo_url("https://sr.ht/~user/repo"))
         .to eq("https://sr.ht/~user/repo")
     end
 
     it "returns nil for non-SourceHut URLs" do
-      expect(described_class.new([]).send(:sourcehut_repo_url, "https://example.com/repo.git"))
+      expect(described_class.new([]).sourcehut_repo_url("https://example.com/repo.git"))
         .to be_nil
     end
   end
@@ -118,8 +118,9 @@ RSpec.describe Homebrew::Cmd::Source do
         ])
 
       expect(described_class.new([])
-        .send(:pypi_repo_url,
-              "https://files.pythonhosted.org/packages/24/62/ae72ff66c0f1fd959925b4c11f8c2dea61f47f6acaea75a08512cdfe3fed/numpy-2.4.1.tar.gz"))
+        .pypi_repo_url(
+          "https://files.pythonhosted.org/packages/24/62/ae72ff66c0f1fd959925b4c11f8c2dea61f47f6acaea75a08512cdfe3fed/numpy-2.4.1.tar.gz",
+        ))
         .to eq("https://github.com/numpy/numpy")
     end
 
@@ -139,13 +140,14 @@ RSpec.describe Homebrew::Cmd::Source do
         ])
 
       expect(described_class.new([])
-        .send(:pypi_repo_url,
-              "https://files.pythonhosted.org/packages/00/00/000000000000000000000000000000000000000000000000000000000000/foobar-0.0.1.tar.gz"))
+        .pypi_repo_url(
+          "https://files.pythonhosted.org/packages/00/00/000000000000000000000000000000000000000000000000000000000000/foobar-0.0.1.tar.gz",
+        ))
         .to be_nil
     end
 
     it "returns nil for non-PyPI URLs" do
-      expect(described_class.new([]).send(:pypi_repo_url, "https://example.com/repo.git"))
+      expect(described_class.new([]).pypi_repo_url("https://example.com/repo.git"))
         .to be_nil
     end
   end
@@ -168,7 +170,7 @@ RSpec.describe Homebrew::Cmd::Source do
             instance_double(Process::Status, success?: true),
           ])
 
-        expect(described_class.new([]).send(:npm_repo_url, "https://registry.npmjs.org/#{package}/-/vite-1.2.3.tgz"))
+        expect(described_class.new([]).npm_repo_url("https://registry.npmjs.org/#{package}/-/vite-1.2.3.tgz"))
           .to eq("https://github.com/vitejs/vite.git")
       end
     end
@@ -183,29 +185,29 @@ RSpec.describe Homebrew::Cmd::Source do
         ])
 
       expect(described_class.new([])
-        .send(:npm_repo_url, "https://registry.npmjs.org/vite/-/vite-1.2.3.tgz"))
+        .npm_repo_url("https://registry.npmjs.org/vite/-/vite-1.2.3.tgz"))
         .to be_nil
     end
 
     it "returns nil for non-npm URLs" do
-      expect(described_class.new([]).send(:npm_repo_url, "https://example.com/repo.git"))
+      expect(described_class.new([]).npm_repo_url("https://example.com/repo.git"))
         .to be_nil
     end
   end
 
   describe "#url_to_repo" do
     it "returns GitHub repo URL for GitHub URLs" do
-      expect(described_class.new([]).send(:url_to_repo, "https://github.com/Homebrew/brew"))
+      expect(described_class.new([]).url_to_repo("https://github.com/Homebrew/brew"))
         .to eq("https://github.com/Homebrew/brew")
     end
 
     it "returns GitLab repo URL for GitLab URLs" do
-      expect(described_class.new([]).send(:url_to_repo, "https://gitlab.com/user/repo.git"))
+      expect(described_class.new([]).url_to_repo("https://gitlab.com/user/repo.git"))
         .to eq("https://gitlab.com/user/repo")
     end
 
     it "returns nil for unsupported URLs" do
-      expect(described_class.new([]).send(:url_to_repo, "https://example.com/repo.tar.gz"))
+      expect(described_class.new([]).url_to_repo("https://example.com/repo.tar.gz"))
         .to be_nil
     end
   end

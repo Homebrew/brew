@@ -76,6 +76,100 @@ module Cask
         @bundle_ids_to_reopen ||= T.let([], T.nilable(T::Array[String]))
       end
 
+      # :quit/:signal must come before :kext so the kext will not be in use by a running process
+      sig {
+        params(
+          bundle_ids: String,
+          command:    T.nilable(T.class_of(SystemCommand)),
+          upgrade:    T::Boolean,
+          _kwargs:    T.anything,
+        ).void
+      }
+      def uninstall_quit(*bundle_ids, command: nil, upgrade: false, **_kwargs)
+        bundle_ids.each do |bundle_id|
+          next unless running?(bundle_id)
+
+          unless T.must(User.current).gui?
+            opoo "Not logged into a GUI; skipping quitting application ID '#{bundle_id}'."
+            next
+          end
+
+          ohai "Quitting application '#{bundle_id}'..."
+
+          quit_succeeded = T.let(false, T::Boolean)
+          begin
+            Timeout.timeout(10) do
+              Kernel.loop do
+                next unless quit(bundle_id).success?
+
+                next if running?(bundle_id)
+
+                puts "Application '#{bundle_id}' quit successfully."
+                quit_succeeded = true
+                break
+              end
+            end
+          rescue Timeout::Error
+            opoo "Application '#{bundle_id}' did not quit. #{automation_access_instructions}"
+          end
+
+          bundle_ids_to_reopen << bundle_id if upgrade && quit_succeeded
+        end
+      end
+
+      # This returns T::Enumerable[[Pathname, T::Array[Pathname]]] when called without a block,
+      # but sorbet doesn't support overloads.
+      sig {
+        params(
+          action: Symbol,
+          paths:  T::Array[T.any(Pathname, String)],
+          _block: T.nilable(T.proc.params(path: T.any(Pathname, String), resolved_paths: T::Array[Pathname]).void),
+        ).returns(T.untyped)
+      }
+      def each_resolved_path(action, paths, &_block)
+        return enum_for(:each_resolved_path, action, paths) unless block_given?
+
+        paths.each do |path|
+          resolved_path = Pathname.new(path.to_s.sub(%r{^~(?=(/|$))}, Dir.home))
+
+          if resolved_path.relative?
+            opoo "Skipping #{Formatter.identifier(action)} for relative path '#{path}'."
+            next
+          end
+
+          if resolved_path.each_filename.any? { |part| [".", ".."].include?(part) }
+            opoo "Skipping #{Formatter.identifier(action)} for path with relative segments '#{path}'."
+            next
+          end
+
+          begin
+            resolved_paths = Pathname.glob(resolved_path).reject do |target|
+              next false unless undeletable?(target)
+
+              opoo "Skipping #{Formatter.identifier(action)} for undeletable path '#{target}'."
+              true
+            end
+            yield path, resolved_paths
+          rescue Errno::EPERM
+            raise if ::Cask::Utils.full_disk_access_enabled?
+
+            odie "Unable to remove some files. Please enable Full Disk Access for your terminal under " \
+                 "#{::Cask::Utils.privacy_security_preference_pane("Full Disk Access")}."
+          end
+        end
+      end
+
+      sig { params(search: String).returns(T::Array[String]) }
+      def find_launchctl_with_wildcard(search)
+        regex = Regexp.escape(search).gsub("\\*", ".*")
+        system_command!("/bin/launchctl", args: ["list"])
+          .stdout.lines.drop(1) # skip stdout column headers
+          .filter_map do |line|
+            pid, _state, id = line.chomp.split(/\s+/)
+            id if pid.to_i.nonzero? && T.must(id).match?(regex)
+          end
+      end
+
       private
 
       sig { params(options: DirectivesType).void }
@@ -189,17 +283,6 @@ module Cask
           end
       end
 
-      sig { params(search: String).returns(T::Array[String]) }
-      def find_launchctl_with_wildcard(search)
-        regex = Regexp.escape(search).gsub("\\*", ".*")
-        system_command!("/bin/launchctl", args: ["list"])
-          .stdout.lines.drop(1) # skip stdout column headers
-          .filter_map do |line|
-            pid, _state, id = line.chomp.split(/\s+/)
-            id if pid.to_i.nonzero? && T.must(id).match?(regex)
-          end
-      end
-
       sig { returns(String) }
       def automation_access_instructions
         <<~EOS
@@ -207,47 +290,6 @@ module Cask
             #{::Cask::Utils.privacy_security_preference_pane("Automation")}
           if you haven't already.
         EOS
-      end
-
-      # :quit/:signal must come before :kext so the kext will not be in use by a running process
-      sig {
-        params(
-          bundle_ids: String,
-          command:    T.nilable(T.class_of(SystemCommand)),
-          upgrade:    T::Boolean,
-          _kwargs:    T.anything,
-        ).void
-      }
-      def uninstall_quit(*bundle_ids, command: nil, upgrade: false, **_kwargs)
-        bundle_ids.each do |bundle_id|
-          next unless running?(bundle_id)
-
-          unless T.must(User.current).gui?
-            opoo "Not logged into a GUI; skipping quitting application ID '#{bundle_id}'."
-            next
-          end
-
-          ohai "Quitting application '#{bundle_id}'..."
-
-          quit_succeeded = T.let(false, T::Boolean)
-          begin
-            Timeout.timeout(10) do
-              Kernel.loop do
-                next unless quit(bundle_id).success?
-
-                next if running?(bundle_id)
-
-                puts "Application '#{bundle_id}' quit successfully."
-                quit_succeeded = true
-                break
-              end
-            end
-          rescue Timeout::Error
-            opoo "Application '#{bundle_id}' did not quit. #{automation_access_instructions}"
-          end
-
-          bundle_ids_to_reopen << bundle_id if upgrade && quit_succeeded
-        end
       end
 
       sig { params(bundle_id: String).returns(T::Boolean) }
@@ -448,48 +490,6 @@ module Cask
           ::Cask::Pkg.all_matching(regex, command).each do |pkg|
             puts pkg.package_id
             pkg.uninstall
-          end
-        end
-      end
-
-      # This returns T::Enumerable[[Pathname, T::Array[Pathname]]] when called without a block,
-      # but sorbet doesn't support overloads.
-      sig {
-        params(
-          action: Symbol,
-          paths:  T::Array[T.any(Pathname, String)],
-          _block: T.nilable(T.proc.params(path: T.any(Pathname, String), resolved_paths: T::Array[Pathname]).void),
-        ).returns(T.untyped)
-      }
-      def each_resolved_path(action, paths, &_block)
-        return enum_for(:each_resolved_path, action, paths) unless block_given?
-
-        paths.each do |path|
-          resolved_path = Pathname.new(path.to_s.sub(%r{^~(?=(/|$))}, Dir.home))
-
-          if resolved_path.relative?
-            opoo "Skipping #{Formatter.identifier(action)} for relative path '#{path}'."
-            next
-          end
-
-          if resolved_path.each_filename.any? { |part| [".", ".."].include?(part) }
-            opoo "Skipping #{Formatter.identifier(action)} for path with relative segments '#{path}'."
-            next
-          end
-
-          begin
-            resolved_paths = Pathname.glob(resolved_path).reject do |target|
-              next false unless undeletable?(target)
-
-              opoo "Skipping #{Formatter.identifier(action)} for undeletable path '#{target}'."
-              true
-            end
-            yield path, resolved_paths
-          rescue Errno::EPERM
-            raise if ::Cask::Utils.full_disk_access_enabled?
-
-            odie "Unable to remove some files. Please enable Full Disk Access for your terminal under " \
-                 "#{::Cask::Utils.privacy_security_preference_pane("Full Disk Access")}."
           end
         end
       end

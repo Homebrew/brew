@@ -50,7 +50,7 @@ RSpec.describe MacOSVersion do
     end
   end
 
-  specify "comparison with Symbol" do
+  specify "comparisons" do
     expect(version).to be >= :catalina
     expect(version).to eq :catalina
     # We're explicitly testing the `===` operator results here.
@@ -60,10 +60,8 @@ RSpec.describe MacOSVersion do
     # This should work like a normal comparison but the result won't be added
     # to the `@comparison_cache` hash because the object is frozen.
     expect(frozen_version).to eq :catalina
-    expect(frozen_version.instance_variable_get(:@comparison_cache)).to eq({})
-  end
+    expect(frozen_version.comparison_cache).to eq({})
 
-  specify do
     expect(version).to be > 10
     expect(version).to be < 11
     expect(version).to be > "10.3"
@@ -120,7 +118,7 @@ RSpec.describe MacOSVersion do
     # This should work like a normal but the symbol won't be stored as the
     # `@sym` instance variable because the object is frozen.
     expect(frozen_version.to_sym).to eq(version_symbol)
-    expect(frozen_version.instance_variable_get(:@sym)).to be_nil
+    expect(frozen_version.sym).to be_nil
 
     expect(MacOSVersion::NULL.to_sym).to eq(:dunno)
   end
@@ -137,7 +135,10 @@ RSpec.describe MacOSVersion do
     # This should work like a normal but the computed name won't be stored as
     # the `@pretty_name` instance variable because the object is frozen.
     expect(frozen_version.pretty_name).to eq(version_pretty_name)
+    # Read the raw ivar: a reader would collide with the memoising `pretty_name`.
+    # rubocop:disable Homebrew/NoInstanceVariableAccessInTests
     expect(frozen_version.instance_variable_get(:@pretty_name)).to be_nil
+    # rubocop:enable Homebrew/NoInstanceVariableAccessInTests
   end
 
   describe "#requires_nehalem_cpu?", :needs_macos do

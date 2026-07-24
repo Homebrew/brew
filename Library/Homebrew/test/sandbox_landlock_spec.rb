@@ -5,7 +5,7 @@ require "sandbox"
 require "extend/os/linux/sandbox/landlock"
 
 RSpec.describe Sandbox::Landlock do
-  subject(:landlock) { described_class.new(sandbox.send(:profile)) }
+  subject(:landlock) { described_class.new(sandbox.profile) }
 
   let(:sandbox) { Sandbox.new }
 
@@ -273,7 +273,7 @@ RSpec.describe Sandbox::Landlock do
         sandbox.deny_all_network
         landlock.command(["true"], tmpdir.to_s)
 
-        attributes, = landlock.send(:ruleset_attributes, 7)
+        attributes, = landlock.ruleset_attributes(7)
 
         expect(attributes.unpack("Q3")).to eq([65_522, 3, 1])
       end
@@ -308,7 +308,7 @@ RSpec.describe Sandbox::Landlock do
       denied_dir.mkpath
       allow(landlock).to receive(:root_path).and_return(root)
 
-      expect(landlock.send(:readable_paths, [denied_dir])).to eq([readable_dir.to_s])
+      expect(landlock.readable_paths([denied_dir])).to eq([readable_dir.to_s])
     end
 
     it "does not allow a symlink alias into a denied hierarchy" do
@@ -319,7 +319,7 @@ RSpec.describe Sandbox::Landlock do
       alias_path.make_symlink(denied_dir)
       allow(landlock).to receive(:root_path).and_return(root)
 
-      expect(landlock.send(:readable_paths, [denied_dir])).to be_empty
+      expect(landlock.readable_paths([denied_dir])).to be_empty
     end
 
     it "skips dangling symlinks" do
@@ -330,7 +330,7 @@ RSpec.describe Sandbox::Landlock do
       dangling_path.make_symlink(root/"missing")
       allow(landlock).to receive(:root_path).and_return(root)
 
-      expect(landlock.send(:readable_paths, [denied_dir])).to be_empty
+      expect(landlock.readable_paths([denied_dir])).to be_empty
     end
   end
 end

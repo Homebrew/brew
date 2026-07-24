@@ -99,7 +99,7 @@ RSpec.describe CacheStoreDatabase do
 
     context "without an open database" do
       before do
-        sample_db.instance_variable_set(:@db, nil)
+        sample_db.db = nil
       end
 
       it "does not raise an error when `close` is called on the database" do

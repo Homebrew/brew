@@ -66,7 +66,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
 
   describe "::skip_ineligible_formulae!" do
     it "prints a legible message for casks using `version :latest`" do
-      expect { expect(bump.send(:skip_ineligible_formulae!, c_latest)).to be(true) }
+      expect { expect(bump.skip_ineligible_formulae!(c_latest)).to be(true) }
         .to output(/Cask uses `version :latest` so `brew bump` cannot check it\./).to_stdout
         .and not_to_output.to_stderr
     end
@@ -101,52 +101,52 @@ RSpec.describe Homebrew::DevCmd::Bump do
       )
 
       # Compare the same version types when shared by current/new versions
-      expect(bump.send(:compare_versions, general_version, general_version, f_basic)).to eq({
+      expect(bump.compare_versions(general_version, general_version, f_basic)).to eq({
         multiple_versions:   { current: false, new: false },
         newer_than_upstream: { general: false },
       })
-      expect(bump.send(:compare_versions, general_version, general_version, c_basic)).to eq({
+      expect(bump.compare_versions(general_version, general_version, c_basic)).to eq({
         multiple_versions:   { current: false, new: false },
         newer_than_upstream: { general: false },
       })
-      expect(bump.send(:compare_versions, arm_intel_version, arm_intel_version, c_basic)).to eq({
+      expect(bump.compare_versions(arm_intel_version, arm_intel_version, c_basic)).to eq({
         multiple_versions:   { current: true, new: true },
         newer_than_upstream: { arm: false, intel: false },
       })
 
       # Compare current versions to new version when the current version differs
       # by arch but the new version does not
-      expect(bump.send(:compare_versions, arm_intel_version, general_version, c_basic)).to eq({
+      expect(bump.compare_versions(arm_intel_version, general_version, c_basic)).to eq({
         multiple_versions:   { current: true, new: false },
         newer_than_upstream: { arm: false, intel: false },
       })
 
       # Compare current version to the highest new version when the
       # current version does not differ by arch but the new version does
-      expect(bump.send(:compare_versions, general_version, arm_intel_version, c_basic)).to eq({
+      expect(bump.compare_versions(general_version, arm_intel_version, c_basic)).to eq({
         multiple_versions:   { current: false, new: true },
         newer_than_upstream: { general: false },
       })
-      expect(bump.send(:compare_versions, general_version, arm_intel_version_higher, c_basic)).to eq({
+      expect(bump.compare_versions(general_version, arm_intel_version_higher, c_basic)).to eq({
         multiple_versions:   { current: false, new: true },
         newer_than_upstream: { general: false },
       })
-      expect(bump.send(:compare_versions, general_version, arm_version_intel_skipped, c_basic)).to eq({
+      expect(bump.compare_versions(general_version, arm_version_intel_skipped, c_basic)).to eq({
         multiple_versions:   { current: false, new: true },
         newer_than_upstream: { general: false },
       })
 
       # Default to `false` when the new version is a message rather than a
       # version
-      expect(bump.send(:compare_versions, general_version, skipped, c_basic)).to eq({
+      expect(bump.compare_versions(general_version, skipped, c_basic)).to eq({
         multiple_versions:   { current: false, new: false },
         newer_than_upstream: { general: false },
       })
-      expect(bump.send(:compare_versions, general_version, unable_to_get_versions, c_basic)).to eq({
+      expect(bump.compare_versions(general_version, unable_to_get_versions, c_basic)).to eq({
         multiple_versions:   { current: false, new: false },
         newer_than_upstream: { general: false },
       })
-      expect(bump.send(:compare_versions, general_version, unable_to_get_throttled_versions, c_basic)).to eq({
+      expect(bump.compare_versions(general_version, unable_to_get_throttled_versions, c_basic)).to eq({
         multiple_versions:   { current: false, new: false },
         newer_than_upstream: { general: false },
       })
@@ -189,7 +189,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
         "--message=Created by `brew bump`",
       ).and_return(true)
 
-      bump.send(:retrieve_and_display_info_and_open_pr, c_basic, "basic-cask", [], ambiguous_cask: false)
+      bump.retrieve_and_display_info_and_open_pr(c_basic, "basic-cask", [], ambiguous_cask: false)
     end
 
     it "passes arch-specific version arguments when an arch-specific cask moves to one version" do
@@ -220,7 +220,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
         "--message=Created by `brew bump`",
       ).and_return(true)
 
-      bump.send(:retrieve_and_display_info_and_open_pr, c_basic, "basic-cask", [], ambiguous_cask: false)
+      bump.retrieve_and_display_info_and_open_pr(c_basic, "basic-cask", [], ambiguous_cask: false)
     end
   end
 
@@ -269,8 +269,8 @@ RSpec.describe Homebrew::DevCmd::Bump do
       allow(Cask::CaskLoader).to receive(:load).and_return(c_arm_only)
       expect(bump).to receive(:livecheck_result).once.and_return(Version.new("1.2.4"))
 
-      version_info = bump.send(
-        :retrieve_versions_by_arch, formula_or_cask: c_arm_only, repositories: [], name: "arm-only-cask"
+      version_info = bump.retrieve_versions_by_arch(
+        formula_or_cask: c_arm_only, repositories: [], name: "arm-only-cask",
       )
       expect(version_info.new_version).to eq(Homebrew::BumpVersionParser.new(general: Version.new("1.2.4")))
     end
@@ -280,8 +280,8 @@ RSpec.describe Homebrew::DevCmd::Bump do
       allow(Cask::CaskLoader).to receive(:load).and_return(c_intel_only)
       expect(bump).to receive(:livecheck_result).once.and_return(Version.new("1.2.4"))
 
-      version_info = bump.send(
-        :retrieve_versions_by_arch, formula_or_cask: c_intel_only, repositories: [], name: "intel-only-cask"
+      version_info = bump.retrieve_versions_by_arch(
+        formula_or_cask: c_intel_only, repositories: [], name: "intel-only-cask",
       )
       expect(version_info.new_version).to eq(Homebrew::BumpVersionParser.new(general: Version.new("1.2.4")))
     end
@@ -301,19 +301,19 @@ RSpec.describe Homebrew::DevCmd::Bump do
     end
 
     it "returns false when value is not a `Cask::DSL::Version` or string" do
-      expect(bump.send(:message?, version)).to be(false)
-      expect(bump.send(:message?, nil)).to be(false)
+      expect(bump.message?(version)).to be(false)
+      expect(bump.message?(nil)).to be(false)
     end
 
     it "returns false when `Cask::DSL::Version` or string is not a message" do
-      expect(bump.send(:message?, cask_version)).to be(false)
-      expect(bump.send(:message?, "Not a message string")).to be(false)
+      expect(bump.message?(cask_version)).to be(false)
+      expect(bump.message?("Not a message string")).to be(false)
     end
 
     it "returns true when `Cask::DSL::Version` or string is a message" do
       message_strings.each do |message_string|
-        expect(bump.send(:message?, Cask::DSL::Version.new(message_string))).to be(true)
-        expect(bump.send(:message?, message_string)).to be(true)
+        expect(bump.message?(Cask::DSL::Version.new(message_string))).to be(true)
+        expect(bump.message?(message_string)).to be(true)
       end
     end
   end
@@ -336,21 +336,19 @@ RSpec.describe Homebrew::DevCmd::Bump do
 
     it "emits only changed arch arguments when a general cask version becomes arch-specific" do
       expect(
-        bump.send(:version_args_for_bump,
-                  current_version:   current_general,
-                  new_version:       new_split,
-                  multiple_versions: { current: false, new: true },
-                  name:              "foo"),
+        bump.version_args_for_bump(current_version:   current_general,
+                                   new_version:       new_split,
+                                   multiple_versions: { current: false, new: true },
+                                   name:              "foo"),
       ).to eq(["--version-arm=1.2.6"])
     end
 
     it "emits arch arguments for both architectures when split cask versions merge" do
       expect(
-        bump.send(:version_args_for_bump,
-                  current_version:   current_split,
-                  new_version:       new_general,
-                  multiple_versions: { current: true, new: false },
-                  name:              "foo"),
+        bump.version_args_for_bump(current_version:   current_split,
+                                   new_version:       new_general,
+                                   multiple_versions: { current: true, new: false },
+                                   name:              "foo"),
       ).to eq(["--version-arm=1.2.4", "--version-intel=1.2.4"])
     end
 
@@ -361,21 +359,19 @@ RSpec.describe Homebrew::DevCmd::Bump do
       )
 
       expect(
-        bump.send(:version_args_for_bump,
-                  current_version:   current_split,
-                  new_version:       new_split,
-                  multiple_versions: { current: true, new: true },
-                  name:              "foo"),
+        bump.version_args_for_bump(current_version:   current_split,
+                                   new_version:       new_split,
+                                   multiple_versions: { current: true, new: true },
+                                   name:              "foo"),
       ).to eq(["--version-arm=1.2.4"])
     end
 
     it "keeps existing general version routing" do
       expect(
-        bump.send(:version_args_for_bump,
-                  current_version:   current_general,
-                  new_version:       new_general,
-                  multiple_versions: { current: false, new: false },
-                  name:              "foo"),
+        bump.version_args_for_bump(current_version:   current_general,
+                                   new_version:       new_general,
+                                   multiple_versions: { current: false, new: false },
+                                   name:              "foo"),
       ).to eq(["--version=1.2.4"])
     end
 
@@ -386,11 +382,10 @@ RSpec.describe Homebrew::DevCmd::Bump do
       )
 
       expect(
-        bump.send(:version_args_for_bump,
-                  current_version:   current_general,
-                  new_version:       new_split,
-                  multiple_versions: { current: false, new: true },
-                  name:              "foo"),
+        bump.version_args_for_bump(current_version:   current_general,
+                                   new_version:       new_split,
+                                   multiple_versions: { current: false, new: true },
+                                   name:              "foo"),
       ).to eq(["--version-arm=1.2.6"])
     end
   end
@@ -441,7 +436,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
         )
         .and_return([content, "", instance_double(Process::Status, success?: true)])
 
-      expect(bump.send(:version_with_cooldown, version_info, Version.new("1.2.2"))).to eq(Version.new("1.2.3"))
+      expect(bump.version_with_cooldown(version_info, Version.new("1.2.2"))).to eq(Version.new("1.2.3"))
     end
 
     it "uses platform-specific RubyGems releases for native gems" do
@@ -501,7 +496,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
         )
         .and_return([content, "", instance_double(Process::Status, success?: true)])
 
-      expect(bump.send(:version_with_cooldown, version_info, Version.new("1.2.2"))).to eq(Version.new("1.2.3"))
+      expect(bump.version_with_cooldown(version_info, Version.new("1.2.2"))).to eq(Version.new("1.2.3"))
     end
   end
 end

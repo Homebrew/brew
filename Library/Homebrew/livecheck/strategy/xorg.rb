@@ -63,6 +63,11 @@ module Homebrew
         # repeatedly.
         @page_data = T.let({}, T::Hash[String, String])
 
+        class << self
+          sig { params(page_data: T::Hash[String, String]).void }
+          attr_writer :page_data
+        end
+
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against

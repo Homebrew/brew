@@ -4,7 +4,7 @@
 require "cask/caskroom"
 
 RSpec.describe Cask::Caskroom do
-  before { described_class.instance_variable_set(:@expected_caskroom_group, nil) }
+  before { described_class.expected_caskroom_group = nil }
 
   describe ".ensure_caskroom_exists" do
     it "changes the group when sudo is unnecessary and the group is wrong" do

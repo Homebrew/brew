@@ -150,7 +150,7 @@ class Formula
   #
   # @api public
   sig { returns(T.nilable(Tap)) }
-  attr_reader :tap
+  attr_accessor :tap
 
   # The stable (and default) {SoftwareSpec} for this {Formula}.
   # This contains all the attributes (e.g. URL, checksum) that apply to the
@@ -175,8 +175,6 @@ class Formula
   # @see #determine_active_spec
   sig { returns(SoftwareSpec) }
   attr_reader :active_spec
-
-  protected :active_spec
 
   # A symbol to indicate currently active {SoftwareSpec}.
   # It's either `:stable` or `:head`.
@@ -215,7 +213,7 @@ class Formula
   #
   # @api public
   sig { returns(T.nilable(Pathname)) }
-  attr_reader :buildpath
+  attr_accessor :buildpath
 
   # The current working directory during tests.
   # Will only be non-`nil` inside {.test}.
@@ -881,6 +879,9 @@ class Formula
       []
     end
   end
+
+  sig { params(oldnames: T.nilable(T::Array[String])).void }
+  attr_writer :oldnames
 
   # All aliases for the formula.
   #
@@ -3669,6 +3670,27 @@ class Formula
     T.must(bottle).tab_attributes
   end
 
+  # Common environment variables used by sandboxed build, test and postinstall phases.
+  sig { params(home: Pathname).returns(T::Hash[Symbol, String]) }
+  def common_sandbox_env(home)
+    {
+      _JAVA_OPTIONS:           "-Duser.home=#{HOMEBREW_CACHE}/java_cache",
+      GOCACHE:                 "#{HOMEBREW_CACHE}/go_cache",
+      GIT_CONFIG_GLOBAL:       Utils::Git.no_global_config_file,
+      GIT_TERMINAL_PROMPT:     "0",
+      GOENV:                   "off",
+      GOPATH:                  "#{HOMEBREW_CACHE}/go_mod_cache",
+      CARGO_HOME:              "#{HOMEBREW_CACHE}/cargo_cache",
+      BUNDLE_COOLDOWN:         Homebrew::RELEASE_COOLDOWN_DAYS.to_s,
+      PIP_CACHE_DIR:           "#{HOMEBREW_CACHE}/pip_cache",
+      PIP_CONFIG_FILE:         File::NULL,
+      NPM_CONFIG_USERCONFIG:   File::NULL,
+      CURL_HOME:               ENV.fetch("CURL_HOME") { home.to_s },
+      PYTHONDONTWRITEBYTECODE: "1",
+      XDG_CONFIG_HOME:         "#{home}/.config",
+    }
+  end
+
   private
 
   sig { void }
@@ -3713,27 +3735,6 @@ class Formula
     end
     puts "Failed to execute: #{cmd}"
     exit! 1 # never gets here unless exec threw or failed
-  end
-
-  # Common environment variables used by sandboxed build, test and postinstall phases.
-  sig { params(home: Pathname).returns(T::Hash[Symbol, String]) }
-  def common_sandbox_env(home)
-    {
-      _JAVA_OPTIONS:           "-Duser.home=#{HOMEBREW_CACHE}/java_cache",
-      GOCACHE:                 "#{HOMEBREW_CACHE}/go_cache",
-      GIT_CONFIG_GLOBAL:       Utils::Git.no_global_config_file,
-      GIT_TERMINAL_PROMPT:     "0",
-      GOENV:                   "off",
-      GOPATH:                  "#{HOMEBREW_CACHE}/go_mod_cache",
-      CARGO_HOME:              "#{HOMEBREW_CACHE}/cargo_cache",
-      BUNDLE_COOLDOWN:         Homebrew::RELEASE_COOLDOWN_DAYS.to_s,
-      PIP_CACHE_DIR:           "#{HOMEBREW_CACHE}/pip_cache",
-      PIP_CONFIG_FILE:         File::NULL,
-      NPM_CONFIG_USERCONFIG:   File::NULL,
-      CURL_HOME:               ENV.fetch("CURL_HOME") { home.to_s },
-      PYTHONDONTWRITEBYTECODE: "1",
-      XDG_CONFIG_HOME:         "#{home}/.config",
-    }
   end
 
   sig { params(interactive: T::Boolean, debug_symbols: T::Boolean, _block: T.proc.params(arg0: Mktemp).void).void }

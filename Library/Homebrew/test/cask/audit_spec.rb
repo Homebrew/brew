@@ -542,7 +542,7 @@ RSpec.describe Cask::Audit, :cask do
         allow(Cask::Quarantine).to receive(:available?).and_return(false)
         expect(Cask::Quarantine).not_to receive(:detect)
 
-        audit.send(:extract_artifacts)
+        audit.extract_artifacts
       end
     end
 
@@ -555,9 +555,9 @@ RSpec.describe Cask::Audit, :cask do
         let(:cask_token) { "basic-cask" }
 
         it "returns existing `@livecheck_result` value" do
-          audit.instance_variable_set(:@livecheck_result, :auto_detected)
+          audit.livecheck_result = :auto_detected
           expect(run).not_to error_with(message)
-          audit.instance_variable_set(:@livecheck_result, nil)
+          audit.livecheck_result = nil
         end
       end
 
@@ -1237,7 +1237,7 @@ RSpec.describe Cask::Audit, :cask do
       end
 
       it "normalizes 10.16.0 minimum macOS to Big Sur" do
-        expect(audit.send(:normalize_min_os, "10.16.0")).to eq(MacOSVersion.from_symbol(:big_sur))
+        expect(audit.normalize_min_os("10.16.0")).to eq(MacOSVersion.from_symbol(:big_sur))
       end
     end
 

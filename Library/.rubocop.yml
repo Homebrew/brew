@@ -94,6 +94,20 @@ Homebrew/NegateInclude:
     - "Homebrew/rubocops/**/*"
     - "Homebrew/sorbet/tapioca/**/*"
 
+Homebrew/NoInstanceVariableAccessInTests:
+  Description: "Use public `attr_*` accessors instead of `instance_variable_get`/`instance_variable_set` in tests."
+  Include:
+    - "Homebrew/test/**/*.rb"
+  Exclude:
+    - "Homebrew/test/support/fixtures/**/*"
+
+Homebrew/NoSendInTests:
+  Description: "Make the target method public and call it directly instead of using `send` in tests."
+  Include:
+    - "Homebrew/test/**/*.rb"
+  Exclude:
+    - "Homebrew/test/support/fixtures/**/*"
+
 Homebrew/UnreferencedLet:
   Description: "Removes a lazy `let` whose name is never referenced (its block never runs)."
   Include:

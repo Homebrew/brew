@@ -613,7 +613,6 @@ class Tap
 
     SystemCommand.run!("git", args:, chdir:, env: { "GIT_TERMINAL_PROMPT" => "0" }, print_stderr: true)
   end
-  private :git_command!
 
   # Install this {Tap}.
   #

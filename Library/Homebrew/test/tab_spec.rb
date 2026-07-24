@@ -452,7 +452,7 @@ RSpec.describe Tab do
         url "file://#{repo}", using: :git, branch: "master"
         version "1.0"
       end
-      f.public_send(f.active_spec_sym).fetch
+      f.active_spec.fetch
 
       tab = described_class.create(f, DevelopmentTools.default_compiler, :libcxx)
 

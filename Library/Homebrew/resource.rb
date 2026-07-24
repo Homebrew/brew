@@ -357,6 +357,9 @@ class Resource
     sig { returns(Bottle) }
     attr_reader :bottle
 
+    sig { params(manifest_annotations: T.nilable(T::Hash[String, String])).void }
+    attr_writer :manifest_annotations
+
     sig { params(bottle: Bottle).void }
     def initialize(bottle)
       super("#{bottle.name}_bottle_manifest")

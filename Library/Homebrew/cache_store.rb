@@ -133,6 +133,9 @@ class CacheStoreDatabase
     db.each_key(&block)
   end
 
+  sig { params(db: T.nilable(T::Hash[Key, Value])).void }
+  attr_writer :db
+
   private
 
   # Lazily loaded database in read/write mode. If this method is called, a

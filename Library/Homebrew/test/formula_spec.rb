@@ -637,8 +637,8 @@ RSpec.describe Formula do
 
   specify "#migration_needed" do
     f = Testball.new("newname")
-    f.instance_variable_set(:@oldnames, ["oldname"])
-    f.instance_variable_set(:@tap, CoreTap.instance)
+    f.oldnames = ["oldname"]
+    f.tap = CoreTap.instance
 
     oldname_prefix = (HOMEBREW_CELLAR/"oldname/2.20")
     newname_prefix = (HOMEBREW_CELLAR/"newname/2.10")
@@ -953,7 +953,7 @@ RSpec.describe Formula do
     end
 
     expect(f.active_spec_sym).to eq(:stable)
-    expect(f.send(:active_spec)).to eq(f.stable)
+    expect(f.active_spec).to eq(f.stable)
     expect(f.pkg_version.to_s).to eq("1.0_1")
 
     expect { f.active_spec = :head }.to raise_error(FormulaSpecificationError)
@@ -2304,7 +2304,7 @@ RSpec.describe Formula do
     end
 
     example "greater same tap installed" do
-      f.instance_variable_set(:@tap, CoreTap.instance)
+      f.tap = CoreTap.instance
       setup_tab_for_prefix(greater_prefix, tap: "homebrew/core")
       expect(f.outdated_kegs).to be_empty
     end
@@ -2315,7 +2315,7 @@ RSpec.describe Formula do
     end
 
     example "outdated same tap installed" do
-      f.instance_variable_set(:@tap, CoreTap.instance)
+      f.tap = CoreTap.instance
       setup_tab_for_prefix(outdated_prefix, tap: "homebrew/core")
       expect(f.outdated_kegs).not_to be_empty
     end
@@ -2401,19 +2401,19 @@ RSpec.describe Formula do
     end
 
     example "outdated same head installed" do
-      f.instance_variable_set(:@tap, CoreTap.instance)
+      f.tap = CoreTap.instance
       setup_tab_for_prefix(head_prefix, tap: "homebrew/core")
       expect(f.outdated_kegs).to be_empty
     end
 
     example "outdated different head installed" do
-      f.instance_variable_set(:@tap, CoreTap.instance)
+      f.tap = CoreTap.instance
       setup_tab_for_prefix(head_prefix, tap: "user/repo")
       expect(f.outdated_kegs).to be_empty
     end
 
     example "outdated mixed taps greater version installed" do
-      f.instance_variable_set(:@tap, CoreTap.instance)
+      f.tap = CoreTap.instance
       setup_tab_for_prefix(outdated_prefix, tap: "homebrew/core")
       setup_tab_for_prefix(greater_prefix, tap: "user/repo")
 
@@ -2426,7 +2426,7 @@ RSpec.describe Formula do
     end
 
     example "outdated mixed taps outdated version installed" do
-      f.instance_variable_set(:@tap, CoreTap.instance)
+      f.tap = CoreTap.instance
 
       extra_outdated_prefix = HOMEBREW_CELLAR/f.name/"1.0"
 
@@ -2443,7 +2443,7 @@ RSpec.describe Formula do
     end
 
     example "outdated same version tap installed" do
-      f.instance_variable_set(:@tap, CoreTap.instance)
+      f.tap = CoreTap.instance
       setup_tab_for_prefix(same_prefix, tap: "homebrew/core")
 
       expect(f.outdated_kegs).to be_empty
@@ -2964,7 +2964,7 @@ RSpec.describe Formula do
       actions.each do |action|
         it "can #{action} network access for #{phase}" do
           f = Class.new(Testball) do
-            send(:"#{action}_network_access!", phase)
+            public_send(:"#{action}_network_access!", phase)
           end
 
           expect(f.network_access_allowed?(phase)).to be(action == "allow")
@@ -2975,7 +2975,7 @@ RSpec.describe Formula do
     actions.each do |action|
       it "can #{action} network access for all phases" do
         f = Class.new(Testball) do
-          send(:"#{action}_network_access!")
+          public_send(:"#{action}_network_access!")
         end
 
         PHASES.each do |phase|
@@ -3285,13 +3285,13 @@ RSpec.describe Formula do
     end
 
     it "sets Bundler cooldown for RubyGems dependencies" do
-      expect(f.send(:common_sandbox_env, mktmpdir)[:BUNDLE_COOLDOWN]).to eq("1")
+      expect(f.common_sandbox_env(mktmpdir)[:BUNDLE_COOLDOWN]).to eq("1")
     end
 
     it "prevents build tools from reading user configuration" do
       home = mktmpdir
 
-      expect(f.send(:common_sandbox_env, home)).to include(
+      expect(f.common_sandbox_env(home)).to include(
         GIT_CONFIG_GLOBAL:     Utils::Git.no_global_config_file,
         GIT_TERMINAL_PROMPT:   "0",
         GOENV:                 "off",

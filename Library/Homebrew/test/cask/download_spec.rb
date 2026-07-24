@@ -3,7 +3,7 @@
 
 RSpec.describe Cask::Download, :cask do
   describe "#download_name" do
-    subject(:download_name) { described_class.new(cask).send(:download_name) }
+    subject(:download_name) { described_class.new(cask).download_name }
 
     let(:token) { "example-cask" }
     let(:full_token) { token }

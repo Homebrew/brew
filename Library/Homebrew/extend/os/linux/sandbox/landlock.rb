@@ -369,8 +369,6 @@ class Sandbox
       end
     end
 
-    private
-
     sig { params(abi: Integer).returns([String, Integer, Integer]) }
     def ruleset_attributes(abi)
       allowed_access_fs = WRITE_ACCESS_FS
@@ -397,6 +395,17 @@ class Sandbox
       [attributes.pack("Q*"), handled_access_fs, allowed_access_fs]
     end
 
+    sig { params(denied_paths: T::Array[::Pathname]).returns(T::Array[String]) }
+    def readable_paths(denied_paths)
+      return [] if denied_paths.empty? || denied_paths.include?(root_path)
+
+      root_path.children.sort.each_with_object([]) do |path, paths|
+        add_readable_path(path, denied_paths, paths)
+      end
+    end
+
+    private
+
     sig { params(ruleset_fd: Integer, path: String, allowed_access: Integer).void }
     def add_path_rule(ruleset_fd, path, allowed_access)
       path_fd = open_path(path)
@@ -421,15 +430,6 @@ class Sandbox
         pathname
       rescue Errno::ENOENT
         nil
-      end
-    end
-
-    sig { params(denied_paths: T::Array[::Pathname]).returns(T::Array[String]) }
-    def readable_paths(denied_paths)
-      return [] if denied_paths.empty? || denied_paths.include?(root_path)
-
-      root_path.children.sort.each_with_object([]) do |path, paths|
-        add_readable_path(path, denied_paths, paths)
       end
     end
 

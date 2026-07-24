@@ -19,6 +19,11 @@ module OS
         /system/bin/linker
       ].freeze
 
+      class << self
+        sig { params(system_ld_so: T.nilable(::Pathname)).returns(T.nilable(::Pathname)) }
+        attr_writer :system_ld_so
+      end
+
       # The path to the system's dynamic linker or `nil` if not found
       sig { returns(T.nilable(::Pathname)) }
       def self.system_ld_so

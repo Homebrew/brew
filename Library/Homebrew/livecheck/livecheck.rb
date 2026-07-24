@@ -34,13 +34,13 @@ module Homebrew
     private_constant :UNSTABLE_VERSION_KEYWORDS
 
     sig { params(strategy_class: T::Class[Strategic]).returns(String) }
-    private_class_method def self.livecheck_strategy_names(strategy_class)
+    def self.livecheck_strategy_names(strategy_class)
       @livecheck_strategy_names ||= T.let({}, T.nilable(T::Hash[T::Class[Strategic], String]))
       @livecheck_strategy_names[strategy_class] ||= Utils.demodulize(strategy_class.name)
     end
 
     sig { params(strategy_class: T::Class[Strategic]).returns(T::Array[Symbol]) }
-    private_class_method def self.livecheck_find_versions_parameters(strategy_class)
+    def self.livecheck_find_versions_parameters(strategy_class)
       @livecheck_find_versions_parameters ||= T.let({}, T.nilable(T::Hash[T::Class[Strategic], T::Array[Symbol]]))
       @livecheck_find_versions_parameters[strategy_class] ||=
         (T::Utils.signature_for_method(strategy_class.method(:find_versions))&.parameters ||
@@ -1133,7 +1133,7 @@ module Homebrew
     end
 
     sig { params(package_or_resource: T.any(Formula, Cask::Cask)).returns(T.nilable(Integer)) }
-    private_class_method def self.formula_or_cask_last_updated_timestamp(package_or_resource)
+    def self.formula_or_cask_last_updated_timestamp(package_or_resource)
       tap = package_or_resource.tap
       return if tap.nil?
       return unless tap.git?
@@ -1261,7 +1261,7 @@ module Homebrew
     end
 
     sig { params(package_or_resource: T.any(Formula, Cask::Cask), days: Integer).returns(T::Boolean) }
-    private_class_method def self.throttle_interval_elapsed?(package_or_resource, days)
+    def self.throttle_interval_elapsed?(package_or_resource, days)
       return false if days <= 0
 
       last_updated_timestamp = formula_or_cask_last_updated_timestamp(package_or_resource)

@@ -338,8 +338,6 @@ class Reporter
     end
   end
 
-  private
-
   sig { params(name: String, new_name: String, new_tap: Tap).returns(T::Boolean) }
   def ensure_trusted_tap_installed!(name, new_name, new_tap)
     return true if new_tap.installed?
@@ -366,33 +364,6 @@ class Reporter
 
     new_tap.ensure_installed!
     true
-  end
-
-  sig { returns(Tap) }
-  attr_reader :tap
-
-  sig { returns(String) }
-  attr_reader :initial_revision
-
-  sig { returns(String) }
-  attr_reader :current_revision
-
-  sig { returns(T.nilable(Pathname)) }
-  attr_reader :api_names_txt
-
-  sig { returns(T.nilable(Pathname)) }
-  attr_reader :api_names_before_txt
-
-  sig { returns(T.nilable(Pathname)) }
-  attr_reader :api_dir_prefix
-
-  sig {
-    params(api_names_txt: T.nilable(Pathname), api_names_before_txt: T.nilable(Pathname),
-           api_dir_prefix: T.nilable(Pathname)).returns(T::Boolean)
-  }
-  def installed_from_api?(api_names_txt = @api_names_txt, api_names_before_txt = @api_names_before_txt,
-                          api_dir_prefix = @api_dir_prefix)
-    !api_names_txt.nil? && !api_names_before_txt.nil? && !api_dir_prefix.nil?
   end
 
   sig { returns(String) }
@@ -435,5 +406,34 @@ class Reporter
         "-M85%", initial_revision, current_revision
       )
     end
+  end
+
+  private
+
+  sig { returns(Tap) }
+  attr_reader :tap
+
+  sig { returns(String) }
+  attr_reader :initial_revision
+
+  sig { returns(String) }
+  attr_reader :current_revision
+
+  sig { returns(T.nilable(Pathname)) }
+  attr_reader :api_names_txt
+
+  sig { returns(T.nilable(Pathname)) }
+  attr_reader :api_names_before_txt
+
+  sig { returns(T.nilable(Pathname)) }
+  attr_reader :api_dir_prefix
+
+  sig {
+    params(api_names_txt: T.nilable(Pathname), api_names_before_txt: T.nilable(Pathname),
+           api_dir_prefix: T.nilable(Pathname)).returns(T::Boolean)
+  }
+  def installed_from_api?(api_names_txt = @api_names_txt, api_names_before_txt = @api_names_before_txt,
+                          api_dir_prefix = @api_dir_prefix)
+    !api_names_txt.nil? && !api_names_before_txt.nil? && !api_dir_prefix.nil?
   end
 end

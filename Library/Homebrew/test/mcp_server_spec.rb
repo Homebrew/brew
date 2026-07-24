@@ -203,7 +203,7 @@ RSpec.describe Homebrew::McpServer do
 
   describe "#respond_result" do
     it "returns nil if id is nil" do
-      expect(server.send(:respond_result, nil, {})).to be_nil
+      expect(server.respond_result(nil, {})).to be_nil
     end
 
     it "returns a result hash if id is present" do

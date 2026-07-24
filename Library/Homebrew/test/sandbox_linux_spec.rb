@@ -388,7 +388,7 @@ RSpec.describe Sandbox, :needs_linux do
     let(:dir) { mktmpdir }
     let(:denied_dir) { mktmpdir }
     let(:tmpdir) { mktmpdir }
-    let(:args) { sandbox.send(:bubblewrap_args, tmpdir.to_s) }
+    let(:args) { sandbox.bubblewrap_args(tmpdir.to_s) }
 
     it "maps allowed and denied writes to bind mounts" do
       sandbox.allow_write_path dir
@@ -441,7 +441,7 @@ RSpec.describe Sandbox, :needs_linux do
     it "does not add Xcode write paths" do
       sandbox.allow_write_xcode
 
-      expect(sandbox.send(:writable_paths)).to be_empty
+      expect(sandbox.writable_paths).to be_empty
     end
 
     it "rejects regex path filters" do

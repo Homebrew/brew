@@ -42,7 +42,7 @@ RSpec.describe Language::Python::Virtualenv, :needs_python do
     let(:r_d) { f.resource("resource-d") }
     let(:buildpath) { Pathname(TEST_TMPDIR) }
 
-    before { f.instance_variable_set(:@buildpath, buildpath) }
+    before { f.buildpath = buildpath }
 
     it "works with `using: \"python\"` and installs resources in order" do
       expect(f).to receive(:virtualenv_create).with(

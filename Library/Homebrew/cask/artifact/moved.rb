@@ -56,6 +56,11 @@ module Cask
         end
       end
 
+      sig { overridable.params(target: Pathname, source: Pathname).returns(T::Array[T.any(String, Pathname)]) }
+      def backup_copy_args(target, source)
+        ["-pR", target, source]
+      end
+
       private
 
       sig {
@@ -258,11 +263,6 @@ module Cask
       sig { params(target: Pathname).returns(T::Boolean) }
       def undeletable?(target)
         !target.parent.writable?
-      end
-
-      sig { overridable.params(target: Pathname, source: Pathname).returns(T::Array[T.any(String, Pathname)]) }
-      def backup_copy_args(target, source)
-        ["-pR", target, source]
       end
     end
   end

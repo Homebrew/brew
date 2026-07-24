@@ -264,46 +264,8 @@ module Homebrew
         end
       end
 
-      private
-
-      sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
-      def os_bundle_args(bundle_args)
-        # for generic tests, remove macOS or Linux specific tests
-        non_linux_bundle_args(non_macos_bundle_args(bundle_args))
-      end
-
-      sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
-      def non_macos_bundle_args(bundle_args)
-        bundle_args << "--tag" << "~needs_homebrew_core" if ENV["CI"]
-        bundle_args << "--tag" << "~needs_svnadmin" unless args.online?
-        bundle_args << "--tag" << "~needs_svn" unless args.online?
-
-        bundle_args << "--tag" << "~needs_macos" << "--tag" << "~cask"
-      end
-
-      sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
-      def non_linux_bundle_args(bundle_args)
-        bundle_args << "--tag" << "~needs_linux" << "--tag" << "~needs_systemd"
-      end
-
       sig { void }
       def check_test_environment!; end
-
-      sig { params(files: T::Array[String]).returns(T::Array[String]) }
-      def os_files(files)
-        # for generic tests, remove macOS or Linux specific files
-        non_linux_files(non_macos_files(files))
-      end
-
-      sig { params(files: T::Array[String]).returns(T::Array[String]) }
-      def non_macos_files(files)
-        files.grep_v(%r{^test/(os/mac|cask)(/.*|_spec\.rb)$})
-      end
-
-      sig { params(files: T::Array[String]).returns(T::Array[String]) }
-      def non_linux_files(files)
-        files.grep_v(%r{^test/os/linux(/.*|_spec\.rb)$})
-      end
 
       sig { returns(T::Array[String]) }
       def changed_test_files
@@ -329,6 +291,44 @@ module Homebrew
           .uniq
           .select(&:exist?)
           .map(&:to_s)
+      end
+
+      private
+
+      sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
+      def os_bundle_args(bundle_args)
+        # for generic tests, remove macOS or Linux specific tests
+        non_linux_bundle_args(non_macos_bundle_args(bundle_args))
+      end
+
+      sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
+      def non_macos_bundle_args(bundle_args)
+        bundle_args << "--tag" << "~needs_homebrew_core" if ENV["CI"]
+        bundle_args << "--tag" << "~needs_svnadmin" unless args.online?
+        bundle_args << "--tag" << "~needs_svn" unless args.online?
+
+        bundle_args << "--tag" << "~needs_macos" << "--tag" << "~cask"
+      end
+
+      sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
+      def non_linux_bundle_args(bundle_args)
+        bundle_args << "--tag" << "~needs_linux" << "--tag" << "~needs_systemd"
+      end
+
+      sig { params(files: T::Array[String]).returns(T::Array[String]) }
+      def os_files(files)
+        # for generic tests, remove macOS or Linux specific files
+        non_linux_files(non_macos_files(files))
+      end
+
+      sig { params(files: T::Array[String]).returns(T::Array[String]) }
+      def non_macos_files(files)
+        files.grep_v(%r{^test/(os/mac|cask)(/.*|_spec\.rb)$})
+      end
+
+      sig { params(files: T::Array[String]).returns(T::Array[String]) }
+      def non_linux_files(files)
+        files.grep_v(%r{^test/os/linux(/.*|_spec\.rb)$})
       end
 
       sig { params(filestub: String).returns(T::Array[Pathname]) }

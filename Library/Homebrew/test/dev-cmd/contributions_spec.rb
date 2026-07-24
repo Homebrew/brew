@@ -44,7 +44,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
             args: ["-C", repository_path, "show", "first-mention^:README.md"], print_stderr: false)
       .and_return(instance_double(SystemCommand::Result, stdout: ""))
 
-    expect(command.send(:maintainer_since, repository_path, "quarter-end-ref", "alice", "Alice"))
+    expect(command.maintainer_since(repository_path, "quarter-end-ref", "alice", "Alice"))
       .to eq("2020-01-02")
   end
 
@@ -64,7 +64,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       MARKDOWN
     allow(command).to receive(:maintainer_since).and_return("2020-01-02")
 
-    expect(command.send(:maintainer_report_users, repository_refs, "2025-09-01")).to eq([
+    expect(command.maintainer_report_users(repository_refs, "2025-09-01")).to eq([
       { "alice" => "Alice", "bob" => "Bob" }, {}, { "alice" => "2020-01-02", "bob" => "2020-01-02" }
     ])
   end
@@ -189,8 +189,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       .with("", is: "merged", user: "Homebrew", author: "alice", merged: "2026-01-01..2026-01-31")
       .and_return([{ "number" => 123, "repository_url" => "#{GitHub::API_URL}/repos/#{repository}" }])
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       [repository],
       {},
@@ -214,8 +213,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       .with("", is: "merged", user: "Homebrew", author: "alice", merged: "2026-01-01..2026-01-31")
       .and_return([{ "number" => 123, "repository_url" => "#{GitHub::API_URL}/repos/Homebrew/homebrew-core" }])
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       repositories,
       {},
@@ -251,8 +249,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       .and_return(Array.new(25) { |index| { "number" => index + 100 } })
     expect(GitHub).not_to receive(:search_approved_pull_requests_in_user_or_organisation)
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       repositories.keys,
       repositories,
@@ -281,8 +278,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       .with("Homebrew", "alice", from: "2026-01-01", to: "2026-02-01")
       .and_return([])
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       [repository],
       {},
@@ -302,7 +298,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
     command = described_class.new(["--user=39449589+krehel@users.noreply.github.com"])
 
     expect(GitHub).not_to receive(:search)
-    expect(command.send(:github_username_for, "39449589+krehel@users.noreply.github.com", to: "2026-02-01"))
+    expect(command.github_username_for("39449589+krehel@users.noreply.github.com", to: "2026-02-01"))
       .to eq("krehel")
   end
 
@@ -321,8 +317,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
         { "number" => 124, "repository_url" => "#{GitHub::API_URL}/repos/#{repository}" },
       ])
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       [repository],
       repository_refs,
@@ -356,8 +351,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       .with("", is: "merged", user: "Homebrew", author: "alice", merged: "2026-01-01..2026-01-31")
       .and_return([{ "number" => 123, "repository_url" => "#{GitHub::API_URL}/repos/#{repository}" }])
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       [repository],
       repository_refs,
@@ -391,8 +385,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       .with("", is: "merged", user: "Homebrew", author: "alice", merged: "2026-01-01..2026-01-31")
       .and_return([{ "number" => 123, "repository_url" => "#{GitHub::API_URL}/repos/#{repository}" }])
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       [repository],
       repository_refs,
@@ -425,8 +418,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       "Change another thing\n\nCo-authored-by: Bob Example <bob@example.com>"
     ].join(separator)
 
-    counts = command.send(
-      :parse_git_log,
+    counts = command.parse_git_log(
       "#{merge}#{record_separator}#{pull_request}#{record_separator}#{coauthored}#{record_separator}",
       { "alice" => "Alice Example", "bob" => "bob" },
     )
@@ -457,8 +449,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       .and_return([])
     expect(GitHub).not_to receive(:search_approved_pull_requests_in_user_or_organisation)
 
-    expect(command.send(
-             :scan_contributions,
+    expect(command.scan_contributions(
              "Homebrew",
              repositories.keys,
              repositories,
@@ -495,8 +486,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
             from: "2025-12-01", to: "2026-03-01")
       .and_return(Array.new(25) { {} })
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       repositories.keys,
       repositories,
@@ -534,8 +524,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
         { "repository_url" => "#{GitHub::API_URL}/repos/Homebrew/homebrew-core" },
       ])
 
-    results = command.send(
-      :scan_contributions,
+    results = command.scan_contributions(
       "Homebrew",
       repositories.keys,
       repositories,
@@ -560,7 +549,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
 
     2.times do
       cache_key = %w[approved Homebrew alice 2026-1].join("\0")
-      expect(command.send(:github_search_with_rate_limit, cache_key, to: "2026-03-01") do
+      expect(command.github_search_with_rate_limit(cache_key, to: "2026-03-01") do
         calls += 1
         results
       end).to eq(results)

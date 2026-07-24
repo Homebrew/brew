@@ -183,19 +183,6 @@ module UnpackStrategy
       (status.success? && !stdout.empty?) || false
     end
 
-    private
-
-    sig { override.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).void }
-    def extract_to_dir(unpack_dir, basename:, verbose:)
-      mount(verbose:) do |mounts|
-        raise "No mounts found in '#{path}'; perhaps this is a bad disk image?" if mounts.empty?
-
-        mounts.each do |mount|
-          mount.extract(to: unpack_dir, verbose:)
-        end
-      end
-    end
-
     sig { params(verbose: T::Boolean, _block: T.proc.params(arg0: T::Array[Mount]).void).void }
     def mount(verbose: false, &_block)
       Dir.mktmpdir("homebrew-dmg", HOMEBREW_TEMP) do |mount_dir|
@@ -260,6 +247,19 @@ module UnpackStrategy
           mounts.each do |mount|
             mount.eject(verbose:)
           end
+        end
+      end
+    end
+
+    private
+
+    sig { override.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).void }
+    def extract_to_dir(unpack_dir, basename:, verbose:)
+      mount(verbose:) do |mounts|
+        raise "No mounts found in '#{path}'; perhaps this is a bad disk image?" if mounts.empty?
+
+        mounts.each do |mount|
+          mount.extract(to: unpack_dir, verbose:)
         end
       end
     end

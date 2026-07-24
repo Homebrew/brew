@@ -106,8 +106,8 @@ RSpec.describe Homebrew::API::FormulaStruct do
       )
 
       Homebrew::API::FormulaStruct::PREDICATES.each do |predicate|
-        expect(struct.send(:"#{predicate}?")).to be(false),
-                                                 "expected #{predicate}? to default to false"
+        expect(struct.public_send(:"#{predicate}?")).to be(false),
+                                                        "expected #{predicate}? to default to false"
       end
     end
 
@@ -126,8 +126,8 @@ RSpec.describe Homebrew::API::FormulaStruct do
       )
 
       Homebrew::API::FormulaStruct::PREDICATES.each do |predicate|
-        expect(struct.send(:"#{predicate}?")).to be(true),
-                                                 "expected #{predicate}? to be true"
+        expect(struct.public_send(:"#{predicate}?")).to be(true),
+                                                        "expected #{predicate}? to be true"
       end
     end
   end

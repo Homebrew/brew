@@ -20,8 +20,6 @@ module OS
 
         requires_ancestor { Utils::Bottles::Collector }
 
-        private
-
         sig {
           params(tag:               Utils::Bottles::Tag,
                  no_older_versions: T::Boolean).returns(T.nilable(Utils::Bottles::Tag))
@@ -37,6 +35,8 @@ module OS
             super(tag) || find_older_compatible_tag(tag)
           end
         end
+
+        private
 
         # Find a bottle built for a previous version of macOS.
         sig { params(tag: Utils::Bottles::Tag).returns(T.nilable(Utils::Bottles::Tag)) }

@@ -47,7 +47,7 @@ RSpec.describe Homebrew::DownloadQueue do
     download_queue.enqueue(downloadable)
 
     expect { download_queue.fetch }.to raise_error(Resource::BottleManifest::Error, /manifest missing/)
-    expect(download_queue.send(:downloads)).to be_empty
+    expect(download_queue.downloads).to be_empty
   end
 
   it "cancels remaining downloads and raises on a bottle manifest failure in serial mode" do

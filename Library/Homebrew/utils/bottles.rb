@@ -386,13 +386,6 @@ module Utils
         @tag_specs[tag] if tag
       end
 
-      protected
-
-      sig { returns(T::Hash[Utils::Bottles::Tag, Utils::Bottles::TagSpecification]) }
-      attr_reader :tag_specs
-
-      private
-
       sig { params(tag: Utils::Bottles::Tag, no_older_versions: T::Boolean).returns(T.nilable(Utils::Bottles::Tag)) }
       def find_matching_tag(tag, no_older_versions: false)
         if @tag_specs.key?(tag)
@@ -402,6 +395,11 @@ module Utils
           all if @tag_specs.key?(all)
         end
       end
+
+      protected
+
+      sig { returns(T::Hash[Utils::Bottles::Tag, Utils::Bottles::TagSpecification]) }
+      attr_reader :tag_specs
     end
   end
 end

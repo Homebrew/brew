@@ -189,20 +189,19 @@ RSpec.describe Homebrew::Bundle::Dsl do
   end
 
   it ".sanitize_brew_name" do
-    expect(described_class.send(:sanitize_brew_name, "homebrew/homebrew/foo")).to eql("foo")
-    expect(described_class.send(:sanitize_brew_name, "homebrew/homebrew-bar/foo")).to eql("homebrew/bar/foo")
-    expect(described_class.send(:sanitize_brew_name, "homebrew/bar/foo")).to eql("homebrew/bar/foo")
-    expect(described_class.send(:sanitize_brew_name, "foo")).to eql("foo")
+    expect(described_class.sanitize_brew_name("homebrew/homebrew/foo")).to eql("foo")
+    expect(described_class.sanitize_brew_name("homebrew/homebrew-bar/foo")).to eql("homebrew/bar/foo")
+    expect(described_class.sanitize_brew_name("homebrew/bar/foo")).to eql("homebrew/bar/foo")
+    expect(described_class.sanitize_brew_name("foo")).to eql("foo")
   end
 
   it ".sanitize_tap_name" do
-    expect(described_class.send(:sanitize_tap_name, "homebrew/homebrew-foo")).to eql("homebrew/foo")
-    expect(described_class.send(:sanitize_tap_name, "homebrew/foo")).to eql("homebrew/foo")
+    expect(described_class.sanitize_tap_name("homebrew/homebrew-foo")).to eql("homebrew/foo")
+    expect(described_class.sanitize_tap_name("homebrew/foo")).to eql("homebrew/foo")
   end
 
   it ".sanitize_cask_name" do
-    expect(described_class.send(:sanitize_cask_name,
-                                "homebrew/cask-versions/adoptopenjdk8")).to eql("adoptopenjdk8")
-    expect(described_class.send(:sanitize_cask_name, "adoptopenjdk8")).to eql("adoptopenjdk8")
+    expect(described_class.sanitize_cask_name("homebrew/cask-versions/adoptopenjdk8")).to eql("adoptopenjdk8")
+    expect(described_class.sanitize_cask_name("adoptopenjdk8")).to eql("adoptopenjdk8")
   end
 end

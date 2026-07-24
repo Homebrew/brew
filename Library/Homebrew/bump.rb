@@ -147,7 +147,7 @@ module Homebrew
 
     # Redact any token `add_auth_token_to_url!` embedded, so dry-run output doesn't leak it.
     sig { params(url: T.nilable(String)).returns(String) }
-    private_class_method def self.redacted_url(url)
+    def self.redacted_url(url)
       Formatter.redact_secrets(url.to_s, [GitHub::API.credentials].compact)
     end
 
