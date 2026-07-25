@@ -314,9 +314,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
   end
 
-  [:delete, :trash].each do |directive|
-    next if directive == :trash && ENV["HOMEBREW_TESTS_COVERAGE"].nil?
-
+  shared_examples "delete or trash" do |directive:|
     context "when using :#{directive}" do
       let(:dir) { TEST_TMPDIR }
       let(:absolute_path) { Pathname.new("#{dir}/absolute_path") }
@@ -358,7 +356,10 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
   end
 
-  [:script, :early_script].each do |script_type|
+  include_examples "delete or trash", directive: :delete
+  include_examples "delete or trash", directive: :trash unless ENV["HOMEBREW_TESTS_COVERAGE"].nil?
+
+  shared_examples "uninstall script" do |script_type:|
     context "when using #{script_type.inspect}" do
       let(:fake_system_command) { NeverSudoSystemCommand }
       let(:token) { "with-#{artifact_dsl_key}-#{script_type}".tr("_", "-") }
@@ -382,6 +383,9 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       end
     end
   end
+
+  include_examples "uninstall script", script_type: :script
+  include_examples "uninstall script", script_type: :early_script
 
   context "when using :login_item" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-login-item")) }

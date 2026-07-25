@@ -265,28 +265,27 @@ RSpec.describe Cask::Cask, :cask do
 
       let(:cask) { described_class.new("basic-cask") }
 
-      shared_examples "versioned casks" do |tap_version, expectations|
-        expectations.each do |installed_version, expected_output|
-          context "when version #{installed_version.inspect} is installed and the tap version is #{tap_version}" do
-            it {
-              allow(cask).to receive_messages(installed_version:,
-                                              version:           Cask::DSL::Version.new(tap_version))
-              expect(cask).to receive(:outdated_version).and_call_original
-              expect(subject).to eq expected_output
-            }
-          end
+      shared_examples "versioned casks" do |tap_version:, installed_version:, expected_output:|
+        context "when version #{installed_version.inspect} is installed and the tap version is #{tap_version}" do
+          it {
+            allow(cask).to receive_messages(installed_version:,
+                                            version:           Cask::DSL::Version.new(tap_version))
+            expect(cask).to receive(:outdated_version).and_call_original
+            expect(subject).to eq expected_output
+          }
         end
       end
 
       describe "installed version is equal to tap version => not outdated" do
-        include_examples "versioned casks", "1.2.3",
-                         "1.2.3" => nil
+        include_examples "versioned casks", tap_version: "1.2.3",
+                         installed_version: "1.2.3", expected_output: nil
       end
 
       describe "installed version is different than tap version => outdated" do
-        include_examples "versioned casks", "1.2.4",
-                         "1.2.3" => "1.2.3",
-                         "1.2.4" => nil
+        include_examples "versioned casks", tap_version: "1.2.4",
+                         installed_version: "1.2.3", expected_output: "1.2.3"
+        include_examples "versioned casks", tap_version: "1.2.4",
+                         installed_version: "1.2.4", expected_output: nil
       end
     end
 
@@ -457,49 +456,47 @@ RSpec.describe Cask::Cask, :cask do
     describe ":latest casks" do
       let(:cask) { described_class.new("basic-cask") }
 
-      shared_examples ":latest cask" do |greedy, outdated_sha, tap_version, expectations|
-        expectations.each do |installed_version, expected_output|
-          context "when versions #{installed_version} are installed and the " \
-                  "tap version is #{tap_version}, #{"not " unless greedy}greedy " \
-                  "and sha is #{"not " unless outdated_sha}outdated" do
-            subject { cask.outdated_version(greedy:) }
+      shared_examples ":latest cask" do |greedy:, outdated_sha:, tap_version:, installed_version:, expected_output:|
+        context "when versions #{installed_version} are installed and the " \
+                "tap version is #{tap_version}, #{"not " unless greedy}greedy " \
+                "and sha is #{"not " unless outdated_sha}outdated" do
+          subject { cask.outdated_version(greedy:) }
 
-            it {
-              allow(cask).to receive_messages(installed_version:,
-                                              version:                Cask::DSL::Version.new(tap_version),
-                                              outdated_download_sha?: outdated_sha)
-              expect(cask).to receive(:outdated_version).and_call_original
-              expect(subject).to eq expected_output
-            }
-          end
+          it {
+            allow(cask).to receive_messages(installed_version:,
+                                            version:                Cask::DSL::Version.new(tap_version),
+                                            outdated_download_sha?: outdated_sha)
+            expect(cask).to receive(:outdated_version).and_call_original
+            expect(subject).to eq expected_output
+          }
         end
       end
 
       describe ":latest version installed, :latest version in tap" do
-        include_examples ":latest cask", false, false, "latest",
-                         "latest" => nil
-        include_examples ":latest cask", true, false, "latest",
-                         "latest" => nil
-        include_examples ":latest cask", true, true, "latest",
-                         "latest" => "latest"
+        include_examples ":latest cask", greedy: false, outdated_sha: false,
+                         tap_version: "latest", installed_version: "latest", expected_output: nil
+        include_examples ":latest cask", greedy: true, outdated_sha: false,
+                         tap_version: "latest", installed_version: "latest", expected_output: nil
+        include_examples ":latest cask", greedy: true, outdated_sha: true,
+                         tap_version: "latest", installed_version: "latest", expected_output: "latest"
       end
 
       describe "numbered version installed, :latest version in tap" do
-        include_examples ":latest cask", false, false, "latest",
-                         "1.2.3" => nil
-        include_examples ":latest cask", true, false, "latest",
-                         "1.2.3" => nil
-        include_examples ":latest cask", true, true, "latest",
-                         "1.2.3" => "1.2.3"
+        include_examples ":latest cask", greedy: false, outdated_sha: false,
+                         tap_version: "latest", installed_version: "1.2.3", expected_output: nil
+        include_examples ":latest cask", greedy: true, outdated_sha: false,
+                         tap_version: "latest", installed_version: "1.2.3", expected_output: nil
+        include_examples ":latest cask", greedy: true, outdated_sha: true,
+                         tap_version: "latest", installed_version: "1.2.3", expected_output: "1.2.3"
       end
 
       describe "latest version installed, numbered version in tap" do
-        include_examples ":latest cask", false, false, "1.2.3",
-                         "latest" => "latest"
-        include_examples ":latest cask", true, false, "1.2.3",
-                         "latest" => "latest"
-        include_examples ":latest cask", true, true, "1.2.3",
-                         "latest" => "latest"
+        include_examples ":latest cask", greedy: false, outdated_sha: false,
+                         tap_version: "1.2.3", installed_version: "latest", expected_output: "latest"
+        include_examples ":latest cask", greedy: true, outdated_sha: false,
+                         tap_version: "1.2.3", installed_version: "latest", expected_output: "latest"
+        include_examples ":latest cask", greedy: true, outdated_sha: true,
+                         tap_version: "1.2.3", installed_version: "latest", expected_output: "latest"
       end
     end
   end
