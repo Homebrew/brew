@@ -9,6 +9,7 @@ RSpec.describe Homebrew::DevCmd::GenerateVulnsAdvisories do
 
   it "writes advisories for core formulae with security patch resolves" do
     nvi = formula("nvi") do
+      T.bind(self, T.class_of(Formula))
       url "https://deb.debian.org/debian/pool/main/n/nvi/nvi_1.81.6.orig.tar.gz"
       version "1.81.6"
       revision 6
@@ -47,6 +48,7 @@ RSpec.describe Homebrew::DevCmd::GenerateVulnsAdvisories do
 
   it "writes nothing with --dry-run" do
     nvi = formula("nvi") do
+      T.bind(self, T.class_of(Formula))
       url "https://example.com/nvi-1.81.6.tar.gz"
       patch do
         url "https://example.com/fix.patch"

@@ -164,6 +164,7 @@ RSpec.describe Homebrew::Vulns::Scanner do
   describe "#build_target" do
     it "derives repo from head and tag from stable version for a non-forge tarball" do
       curl = formula("curl") do
+        T.bind(self, T.class_of(Formula))
         url "https://curl.se/download/curl-8.5.0.tar.bz2"
         head "https://github.com/curl/curl.git"
       end
@@ -177,6 +178,7 @@ RSpec.describe Homebrew::Vulns::Scanner do
 
     it "queries a non-forge head URL verbatim when no candidate is a supported forge" do
       bash = formula("bash") do
+        T.bind(self, T.class_of(Formula))
         homepage "https://www.gnu.org/software/bash/"
         url "https://ftpmirror.gnu.org/gnu/bash/bash-5.3.tar.gz"
         head "https://git.savannah.gnu.org/git/bash.git"
@@ -190,6 +192,7 @@ RSpec.describe Homebrew::Vulns::Scanner do
 
     it "queries a non-forge stable URL verbatim when its path yields a tag" do
       thing = formula("thing") do
+        T.bind(self, T.class_of(Formula))
         url "https://gitea.example.com/owner/thing/archive/v1.2.3.tar.gz"
       end
 
@@ -201,6 +204,7 @@ RSpec.describe Homebrew::Vulns::Scanner do
 
     it "prefers an explicit stable tag over the derived version" do
       aom = formula("aom") do
+        T.bind(self, T.class_of(Formula))
         homepage "https://github.com/AomediaOrg/aom"
         url "https://aomedia.googlesource.com/aom.git", tag: "v3.13.1"
       end
@@ -213,6 +217,7 @@ RSpec.describe Homebrew::Vulns::Scanner do
 
     it "queries the SBOM versionInfo when the SBOM downloadLocation has no extractable tag" do
       curl = formula("curl") do
+        T.bind(self, T.class_of(Formula))
         url "https://curl.se/download/curl-8.5.0.tar.bz2"
         head "https://github.com/curl/curl.git"
       end
@@ -238,6 +243,7 @@ RSpec.describe Homebrew::Vulns::Scanner do
 
     it "queries a non-forge head URL verbatim when the SBOM downloadLocation host is unsupported" do
       bash = formula("bash") do
+        T.bind(self, T.class_of(Formula))
         homepage "https://www.gnu.org/software/bash/"
         url "https://ftpmirror.gnu.org/gnu/bash/bash-5.3.tar.gz"
         head "https://git.savannah.gnu.org/git/bash.git"
@@ -266,24 +272,28 @@ RSpec.describe Homebrew::Vulns::Scanner do
   describe "#scan" do
     let(:act) do
       formula("act") do
+        T.bind(self, T.class_of(Formula))
         url "https://github.com/nektos/act/archive/refs/tags/v0.2.84.tar.gz"
       end
     end
 
     let(:openssl) do
       formula("openssl@3") do
+        T.bind(self, T.class_of(Formula))
         url "https://github.com/openssl/openssl/releases/download/openssl-3.0.0/openssl-3.0.0.tar.gz"
       end
     end
 
     let(:unsupported) do
       formula("aom") do
+        T.bind(self, T.class_of(Formula))
         url "https://aomedia.googlesource.com/aom.git", tag: "v3.13.1"
       end
     end
 
     let(:libquicktime) do
       formula("libquicktime") do
+        T.bind(self, T.class_of(Formula))
         url "https://github.com/owner/libquicktime/archive/refs/tags/v1.2.4.tar.gz"
         patch do
           url "https://deb.debian.org/debian/pool/main/libq/libquicktime/libquicktime_1.2.4-12.debian.tar.xz"
@@ -420,9 +430,11 @@ RSpec.describe Homebrew::Vulns::Scanner do
 
     it "does not conflate formulae with the same short name from different taps" do
       core_thing = formula("thing", tap: CoreTap.instance) do
+        T.bind(self, T.class_of(Formula))
         url "https://github.com/owner-a/thing/archive/refs/tags/v1.0.0.tar.gz"
       end
       tap_thing = formula("thing", tap: Tap.fetch("someone", "tap")) do
+        T.bind(self, T.class_of(Formula))
         url "https://github.com/owner-b/thing/archive/refs/tags/v2.0.0.tar.gz"
       end
       expect(core_thing.name).to eq tap_thing.name

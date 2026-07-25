@@ -13,6 +13,7 @@ RSpec.describe Formula do
 
     it "adds a macOS dependency to all specs if the OS version meets requirements" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
 
         uses_from_macos("foo", since: :big_sur)
@@ -28,6 +29,7 @@ RSpec.describe Formula do
 
     it "adds a dependency to any spec if the OS version doesn't meet requirements" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
 
         uses_from_macos("foo", since: :tahoe)
@@ -45,6 +47,7 @@ RSpec.describe Formula do
   describe "#on_macos" do
     it "adds a dependency on macos only" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"
@@ -68,6 +71,7 @@ RSpec.describe Formula do
 
     it "adds a patch on Mac only" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"
@@ -91,6 +95,7 @@ RSpec.describe Formula do
 
     it "uses on_macos within a resource block" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"

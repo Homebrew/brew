@@ -667,6 +667,7 @@ RSpec.describe Formula do
                                                   .and_return(["same-name-cask"])
 
     expect(formula("same-name-cask", tap:) do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/same-name-cask-1.0.tar.gz"
     end.oldnames).to be_empty
   end
@@ -1241,6 +1242,7 @@ RSpec.describe Formula do
 
   specify "#run_post_install_steps uses the versioned prefix" do
     f = formula "post-install-steps-prefix" do
+      T.bind(self, T.class_of(Formula))
       url "foo-1.0"
 
       post_install_steps do
@@ -1784,6 +1786,7 @@ RSpec.describe Formula do
 
     it "serialises type and explicit resolves on an external patch" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
         patch do
           url "https://example.com/foo.diff"
@@ -1809,6 +1812,7 @@ RSpec.describe Formula do
 
     it "serialises resolves inferred from url and apply paths" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
         patch do
           url "https://example.com/debian.tar.xz"
@@ -1825,6 +1829,7 @@ RSpec.describe Formula do
 
     it "serialises non-CVE resolves entries with the appropriate issue type" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
         patch do
           url "https://example.com/foo.diff"
@@ -1842,6 +1847,7 @@ RSpec.describe Formula do
 
     it "serialises type on a local file patch" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
         patch do
           file "Patches/foo.diff"
@@ -3259,6 +3265,7 @@ RSpec.describe Formula do
   describe "#std_zig_args" do
     let(:f) do
       formula do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
       end
     end
@@ -3280,6 +3287,7 @@ RSpec.describe Formula do
   describe "#common_sandbox_env" do
     let(:f) do
       formula do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
       end
     end

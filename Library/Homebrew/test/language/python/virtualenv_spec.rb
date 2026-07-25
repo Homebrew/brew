@@ -10,6 +10,7 @@ RSpec.describe Language::Python::Virtualenv, :needs_python do
     let(:f) do
       virtualenv_module = described_class
       formula "foo" do
+        T.bind(self, T.class_of(Formula))
         include virtualenv_module
 
         T.bind(self, T.class_of(Formula))

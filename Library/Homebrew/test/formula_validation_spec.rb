@@ -23,6 +23,7 @@ RSpec.describe Formula do
     it "can't override the `brew` method" do
       expect do
         formula do
+          T.bind(self, T.class_of(Formula))
           def brew; end
         end
       end.to raise_error(
@@ -92,6 +93,7 @@ RSpec.describe Formula do
     it "fails when Formula is empty" do
       expect do
         formula do
+          T.bind(self, T.class_of(Formula))
           # do nothing
         end
       end.to raise_error(FormulaSpecificationError)

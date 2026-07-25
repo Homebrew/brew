@@ -12,6 +12,7 @@ RSpec.describe Formula do
 
     it "acts like #depends_on" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
 
         uses_from_macos("foo")
@@ -23,6 +24,7 @@ RSpec.describe Formula do
 
     it "ignores OS version specifications" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
 
         uses_from_macos "foo", since: :sequoia
@@ -36,6 +38,7 @@ RSpec.describe Formula do
   describe "#on_linux" do
     it "adds a dependency on Linux only" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"
@@ -59,6 +62,7 @@ RSpec.describe Formula do
 
     it "adds a patch on Linux only" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"
@@ -82,6 +86,7 @@ RSpec.describe Formula do
 
     it "uses on_linux within a resource block" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"

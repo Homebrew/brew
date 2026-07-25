@@ -300,6 +300,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "shows a conflict by its resolved full name" do
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       conflicts_with "other"
     end
@@ -315,6 +316,7 @@ RSpec.describe Homebrew::Cmd::Info do
   it "omits a stale conflict that resolves to the formula itself" do
     info = described_class.new([])
     formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
       conflicts_with "testball"
     end

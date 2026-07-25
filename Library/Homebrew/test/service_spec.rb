@@ -18,6 +18,7 @@ RSpec.describe Homebrew::Service do
 
   def stub_formula_with_service_sockets(sockets_var)
     stub_formula do
+      T.bind(self, T.class_of(Formula))
       service do
         run opt_bin/"beanstalkd"
         sockets sockets_var
@@ -28,6 +29,7 @@ RSpec.describe Homebrew::Service do
   describe "#std_service_path_env" do
     it "returns valid std_service_path_env" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -47,6 +49,7 @@ RSpec.describe Homebrew::Service do
   describe "#formula_opt_bin" do
     it "is available in service blocks" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run formula_opt_bin("foo")/"foo"
         end
@@ -59,6 +62,7 @@ RSpec.describe Homebrew::Service do
   describe "#process_type" do
     it "throws for unexpected type" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           process_type :cow
@@ -74,6 +78,7 @@ RSpec.describe Homebrew::Service do
   describe "#throttle_interval" do
     it "accepts a valid throttle_interval value" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           throttle_interval 5
@@ -85,6 +90,7 @@ RSpec.describe Homebrew::Service do
 
     it "includes throttle_interval value in plist output" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           throttle_interval 15
@@ -100,6 +106,7 @@ RSpec.describe Homebrew::Service do
     # https://gist.github.com/dabrahams/4092951#:~:text=Set%20%3CThrottleInterval%3E%20to,than%2010%20seconds.
     it "includes throttle_interval value of zero in plist output" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           throttle_interval 0
@@ -113,6 +120,7 @@ RSpec.describe Homebrew::Service do
 
     it "does not include throttle_interval in plist when not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
         end
@@ -126,6 +134,7 @@ RSpec.describe Homebrew::Service do
   describe "#stop_timeout" do
     it "accepts a valid stop_timeout value" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           stop_timeout 10
@@ -138,6 +147,7 @@ RSpec.describe Homebrew::Service do
     it "throws for negative stop_timeout" do
       expect do
         stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run opt_bin/"beanstalkd"
             stop_timeout(-5)
@@ -148,6 +158,7 @@ RSpec.describe Homebrew::Service do
 
     it "includes ExitTimeOut in plist output" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           stop_timeout 15
@@ -160,6 +171,7 @@ RSpec.describe Homebrew::Service do
 
     it "does not include ExitTimeOut in plist when not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
         end
@@ -171,6 +183,7 @@ RSpec.describe Homebrew::Service do
 
     it "includes TimeoutStopSec in systemd unit output" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           stop_timeout 20
@@ -183,6 +196,7 @@ RSpec.describe Homebrew::Service do
 
     it "does not include TimeoutStopSec in systemd unit when not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
         end
@@ -196,6 +210,7 @@ RSpec.describe Homebrew::Service do
   describe "#nice" do
     it "accepts a valid nice level" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           nice 5
@@ -208,6 +223,7 @@ RSpec.describe Homebrew::Service do
     it "throws error for negative nice values without require_root" do
       expect do
         stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run opt_bin/"beanstalkd"
             nice(-10)
@@ -218,6 +234,7 @@ RSpec.describe Homebrew::Service do
 
     it "allows negative nice values when require_root is set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           require_root true
@@ -231,6 +248,7 @@ RSpec.describe Homebrew::Service do
 
     it "does not require require_root for positive nice values" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           nice 10
@@ -243,6 +261,7 @@ RSpec.describe Homebrew::Service do
 
     it "accepts nice value of zero" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           nice 0
@@ -255,6 +274,7 @@ RSpec.describe Homebrew::Service do
 
     it "includes nice value in plist output" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           nice 5
@@ -268,6 +288,7 @@ RSpec.describe Homebrew::Service do
 
     it "includes nice value in systemd unit output" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           require_root true
@@ -281,6 +302,7 @@ RSpec.describe Homebrew::Service do
 
     it "does not include nice in plist when not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
         end
@@ -292,6 +314,7 @@ RSpec.describe Homebrew::Service do
 
     it "does not include nice in systemd unit when not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
         end
@@ -304,6 +327,7 @@ RSpec.describe Homebrew::Service do
     it "throws for nice too low" do
       expect do
         stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run opt_bin/"beanstalkd"
             nice(-21)
@@ -315,6 +339,7 @@ RSpec.describe Homebrew::Service do
     it "throws for nice too high" do
       expect do
         stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run opt_bin/"beanstalkd"
             nice 20
@@ -327,6 +352,7 @@ RSpec.describe Homebrew::Service do
   describe "#keep_alive" do
     it "throws for unexpected keys" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive test: "key"
@@ -342,6 +368,7 @@ RSpec.describe Homebrew::Service do
   describe "#requires_root?" do
     it "returns status when set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           require_root true
@@ -353,6 +380,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns status when not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
         end
@@ -365,6 +393,7 @@ RSpec.describe Homebrew::Service do
   describe "#run_type" do
     it "throws for unexpected type" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :cow
@@ -422,6 +451,7 @@ RSpec.describe Homebrew::Service do
   describe "#manual_command" do
     it "returns valid manual_command" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run "#{HOMEBREW_PREFIX}/bin/beanstalkd"
           run_type :immediate
@@ -439,6 +469,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid manual_command without variables" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -458,6 +489,7 @@ RSpec.describe Homebrew::Service do
   describe "#path_dirs" do
     it "returns directories needed by service paths" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "-l", var/"run/beanstalkd.sock", "relative/path"]
           error_log_path var/"log/beanstalkd.error.log"
@@ -480,6 +512,7 @@ RSpec.describe Homebrew::Service do
   describe "#to_plist" do
     it "returns valid plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :immediate
@@ -615,6 +648,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid plist with multiple sockets" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           sockets socket: "tcp://0.0.0.0:80", socket_tls: "tcp://0.0.0.0:443"
@@ -673,6 +707,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid partial plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -709,6 +744,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid partial plist with run_at_load being false" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -746,6 +782,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid interval plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :interval
@@ -785,6 +822,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid cron plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :cron
@@ -829,6 +867,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid keepalive-exit plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive successful_exit: false
@@ -870,6 +909,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid keepalive-crashed plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive crashed: true
@@ -911,6 +951,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid keepalive-path plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive path: opt_pkgshare/"test-path"
@@ -952,6 +993,7 @@ RSpec.describe Homebrew::Service do
 
     it "expands paths" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_sbin/"sleepwatcher", "-V", "-s", "~/.sleep", "-w", "~/.wakeup"]
           working_dir "~"
@@ -997,6 +1039,7 @@ RSpec.describe Homebrew::Service do
   describe "#to_systemd_unit" do
     it "returns valid unit" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :immediate
@@ -1045,6 +1088,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid partial oneshot unit" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -1069,6 +1113,7 @@ RSpec.describe Homebrew::Service do
 
     it "expands paths" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           working_dir "~"
@@ -1093,6 +1138,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid unit with keep_alive crashed" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive crashed: true
@@ -1117,6 +1163,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid unit with keep_alive successful_exit" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive successful_exit: true
@@ -1141,6 +1188,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid unit with stop_timeout" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           stop_timeout 25
@@ -1165,6 +1213,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid unit without restart when keep_alive is false" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive false
@@ -1190,6 +1239,7 @@ RSpec.describe Homebrew::Service do
   describe "#to_systemd_timer" do
     it "returns valid timer" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :interval
@@ -1214,6 +1264,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid partial timer" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -1237,6 +1288,7 @@ RSpec.describe Homebrew::Service do
 
     it "throws on incomplete cron" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :cron
@@ -1262,6 +1314,7 @@ RSpec.describe Homebrew::Service do
 
       styles.each do |cron, calendar|
         f = stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run opt_bin/"beanstalkd"
             run_type :cron
@@ -1290,6 +1343,7 @@ RSpec.describe Homebrew::Service do
   describe "#timed?" do
     it "returns false for immediate" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :immediate
@@ -1301,6 +1355,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns true for interval" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :interval
@@ -1314,6 +1369,7 @@ RSpec.describe Homebrew::Service do
   describe "#keep_alive?" do
     it "returns true when keep_alive set to hash" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           keep_alive crashed: true
@@ -1325,6 +1381,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns true when keep_alive set to true" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           keep_alive true
@@ -1336,6 +1393,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns false when keep_alive not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
         end
@@ -1346,6 +1404,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns false when keep_alive set to false" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           keep_alive false
@@ -1359,6 +1418,7 @@ RSpec.describe Homebrew::Service do
   describe "#command" do
     it "returns @run data" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :immediate
@@ -1378,6 +1438,7 @@ RSpec.describe Homebrew::Service do
 
       it "returns @run data" do
         f = stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run linux: [opt_bin/"beanstalkd", "test"]
             run_type :immediate
@@ -1390,6 +1451,7 @@ RSpec.describe Homebrew::Service do
 
       it "returns empty for macOS-only commands" do
         f = stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run macos: [opt_bin/"beanstalkd", "test"]
             run_type :immediate
@@ -1402,6 +1464,7 @@ RSpec.describe Homebrew::Service do
 
       it "returns the Linux command when both OS commands are defined" do
         f = stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run macos: [opt_bin/"beanstalkd", "test", "macos"], linux: [opt_bin/"beanstalkd", "test", "linux"]
             run_type :immediate
@@ -1422,6 +1485,7 @@ RSpec.describe Homebrew::Service do
 
       it "returns @run data" do
         f = stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run macos: [opt_bin/"beanstalkd", "test"]
             run_type :immediate
@@ -1434,6 +1498,7 @@ RSpec.describe Homebrew::Service do
 
       it "returns empty for Linux-only commands" do
         f = stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run linux: [opt_bin/"beanstalkd", "test"]
             run_type :immediate
@@ -1446,6 +1511,7 @@ RSpec.describe Homebrew::Service do
 
       it "returns the macOS command when both OS commands are defined" do
         f = stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run macos: [opt_bin/"beanstalkd", "test", "macos"], linux: [opt_bin/"beanstalkd", "test", "linux"]
             run_type :immediate
@@ -1477,6 +1543,7 @@ RSpec.describe Homebrew::Service do
     #       are not idempotent so they can only be used in one test.
     it "replaces local paths with placeholders" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           environment_variables PATH: std_service_path_env

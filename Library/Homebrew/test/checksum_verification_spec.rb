@@ -16,6 +16,7 @@ RSpec.describe Formula do
     it "does not raise an error when the checksum matches" do
       expect do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           sha256 TESTBALL_SHA256
         end
 
@@ -28,6 +29,7 @@ RSpec.describe Formula do
     it "raises an error when the checksum doesn't match" do
       expect do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           sha256 "dcbf5f44743b74add648c7e35e414076632fa3b24463d68d1f6afc5be77024f8"
         end
 

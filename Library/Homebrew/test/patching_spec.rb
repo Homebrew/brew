@@ -102,6 +102,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch do
           url "file://#{patch_fixture("noop-a")}"
           sha256 patch_fixture_sha256("noop-a")
@@ -113,6 +114,7 @@ RSpec.describe "patching", type: :system do
   specify "local_patch_dsl_resolves_path_loaded_formulae_from_formula_directory" do
     expect(
       formula(path: fixture("testball.rb")) do
+        T.bind(self, T.class_of(Formula))
         patch do
           file "patches/noop-a.diff"
         end
@@ -123,6 +125,7 @@ RSpec.describe "patching", type: :system do
   specify "local_patch_dsl_with_directory" do
     expect(
       formula(path: fixture("testball.rb")) do
+        T.bind(self, T.class_of(Formula))
         patch do
           file "patches/noop-b.diff"
           directory "libexec"
@@ -134,6 +137,7 @@ RSpec.describe "patching", type: :system do
   specify "local_patch_dsl_with_strip" do
     expect(
       formula(path: fixture("testball.rb")) do
+        T.bind(self, T.class_of(Formula))
         patch :p0 do
           file "patches/noop-b.diff"
         end
@@ -144,6 +148,7 @@ RSpec.describe "patching", type: :system do
   specify "local_patch_dsl_with_homebrew_prefix" do
     expect(
       formula(path: fixture("testball.rb")) do
+        T.bind(self, T.class_of(Formula))
         patch do
           file "patches/noop-d.diff"
         end
@@ -159,6 +164,7 @@ RSpec.describe "patching", type: :system do
 
     expect(
       formula(path: tap.path/"Formula/testball.rb", tap:) do
+        T.bind(self, T.class_of(Formula))
         patch do
           file "patches/noop-a.diff"
         end
@@ -170,6 +176,7 @@ RSpec.describe "patching", type: :system do
 
   specify "local_patch_dsl_missing_file_fail" do
     f = formula(path: fixture("testball.rb")) do
+      T.bind(self, T.class_of(Formula))
       patch do
         file "patches/missing.diff"
       end
@@ -181,6 +188,7 @@ RSpec.describe "patching", type: :system do
 
   specify "local_patch_dsl_directory_fail" do
     f = formula(path: fixture("testball.rb")) do
+      T.bind(self, T.class_of(Formula))
       patch do
         file "patches"
       end
@@ -198,6 +206,7 @@ RSpec.describe "patching", type: :system do
       FileUtils.ln_s tmpdir/"outside.diff", repository/"escape.diff"
 
       f = formula(path: repository/"testball.rb") do
+        T.bind(self, T.class_of(Formula))
         patch do
           file "escape.diff"
         end
@@ -211,6 +220,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl_for_resource" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         resource "some_resource" do
           url "file://#{tarball_fixture("testball-0.1.tbz")}"
           sha256 tarball_fixture_sha256("testball-0.1.tbz")
@@ -227,6 +237,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl_with_apply" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch do
           url "file://#{tarball_fixture("testball-0.1-patches.tgz")}"
           sha256 tarball_fixture_sha256("testball-0.1-patches.tgz")
@@ -239,6 +250,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl_with_sequential_apply" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch do
           url "file://#{tarball_fixture("testball-0.1-patches.tgz")}"
           sha256 tarball_fixture_sha256("testball-0.1-patches.tgz")
@@ -251,6 +263,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl_with_strip" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch :p1 do
           url "file://#{patch_fixture("noop-a")}"
           sha256 patch_fixture_sha256("noop-a")
@@ -261,6 +274,7 @@ RSpec.describe "patching", type: :system do
 
   specify "single_patch_dsl_with_strip_with_apply" do
     external_patch = formula do
+      T.bind(self, T.class_of(Formula))
       patch :p1 do
         url "file://#{tarball_fixture("testball-0.1-patches.tgz")}"
         sha256 tarball_fixture_sha256("testball-0.1-patches.tgz")
@@ -278,6 +292,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl_with_incorrect_strip" do
     expect do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         patch :p0 do
           url "file://#{patch_fixture("noop-a")}"
           sha256 patch_fixture_sha256("noop-a")
@@ -291,6 +306,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl_with_incorrect_strip_with_apply" do
     expect do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         patch :p0 do
           url "file://#{tarball_fixture("testball-0.1-patches.tgz")}"
           sha256 tarball_fixture_sha256("testball-0.1-patches.tgz")
@@ -305,6 +321,7 @@ RSpec.describe "patching", type: :system do
   specify "patch_p0_dsl" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch :p0 do
           url "file://#{patch_fixture("noop-b")}"
           sha256 patch_fixture_sha256("noop-b")
@@ -316,6 +333,7 @@ RSpec.describe "patching", type: :system do
   specify "patch_p0_dsl_with_apply" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch :p0 do
           url "file://#{tarball_fixture("testball-0.1-patches.tgz")}"
           sha256 tarball_fixture_sha256("testball-0.1-patches.tgz")
@@ -328,6 +346,7 @@ RSpec.describe "patching", type: :system do
   specify "patch_string" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch File.read(patch_fixture("noop-a"))
       end,
     ).to be_patched
@@ -336,6 +355,7 @@ RSpec.describe "patching", type: :system do
   specify "patch_string_with_strip" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch :p0, File.read(patch_fixture("noop-b"))
       end,
     ).to be_patched
@@ -344,6 +364,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl_missing_apply_fail" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch do
           url "file://#{tarball_fixture("testball-0.1-patches.tgz")}"
           sha256 tarball_fixture_sha256("testball-0.1-patches.tgz")
@@ -355,6 +376,7 @@ RSpec.describe "patching", type: :system do
   specify "single_patch_dsl_with_apply_enoent_fail" do
     expect do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         patch do
           url "file://#{tarball_fixture("testball-0.1-patches.tgz")}"
           sha256 tarball_fixture_sha256("testball-0.1-patches.tgz")
@@ -369,6 +391,7 @@ RSpec.describe "patching", type: :system do
   specify "patch_dsl_with_homebrew_prefix" do
     expect(
       formula do
+        T.bind(self, T.class_of(Formula))
         patch do
           url "file://#{patch_fixture("noop-d")}"
           sha256 patch_fixture_sha256("noop-d")
