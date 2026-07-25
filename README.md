@@ -1,5 +1,7 @@
 # 🍺 Homebrew
 
+[![MCP Toplist](https://mcptoplist.com/badge/mcp.so%2Fhomebrew%2FHomebrew.svg)](https://mcptoplist.com/server/mcp.so%2Fhomebrew%2FHomebrew)
+
 [![Latest GitHub release](https://img.shields.io/github/release/Homebrew/brew.svg)](https://github.com/Homebrew/brew/releases)
 [![BSD-2-Clause License](https://img.shields.io/github/license/Homebrew/brew)](https://github.com/Homebrew/brew/blob/HEAD/LICENSE.txt)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/homebrew?label=GitHub%20Sponsors)](https://github.com/sponsors/Homebrew)
