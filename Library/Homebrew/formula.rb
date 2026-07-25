@@ -4008,7 +4008,12 @@ class Formula
     # ```
     #
     # @api public
-    sig { params(steps: T.untyped, block: T.nilable(T.proc.void)).returns(Homebrew::InstallSteps::Steps) }
+    sig {
+      params(
+        steps: Homebrew::InstallSteps::RawStep,
+        block: T.nilable(T.proc.bind(Homebrew::InstallSteps::DSL).void),
+      ).returns(Homebrew::InstallSteps::Steps)
+    }
     def post_install_steps(*steps, &block)
       current_steps = @post_install_steps || []
       return current_steps if steps.empty? && block.nil?
@@ -4281,7 +4286,7 @@ class Formula
     # ```
     #
     # @api public
-    sig { params(block: T.nilable(T.proc.void)).returns(T.untyped) }
+    sig { params(block: T.nilable(T.proc.bind(SoftwareSpec).void)).returns(T.untyped) }
     def stable(&block)
       return T.must(@stable) unless block
 
@@ -4314,7 +4319,9 @@ class Formula
     #
     # @api public
     sig {
-      params(val: T.nilable(String), specs: T::Hash[Symbol, T.untyped], block: T.nilable(T.proc.void))
+      params(val:   T.nilable(String),
+             specs: T::Hash[Symbol, T.untyped],
+             block: T.nilable(T.proc.bind(SoftwareSpec).void))
         .returns(T.untyped)
     }
     def head(val = nil, specs = {}, &block)
@@ -4570,7 +4577,11 @@ class Formula
     # @see https://docs.brew.sh/Formula-Cookbook#patches Patches
     # @api public
     sig {
-      params(strip: T.any(String, Symbol), src: T.nilable(T.any(String, Symbol)), block: T.nilable(T.proc.void)).void
+      params(
+        strip: T.any(String, Symbol),
+        src:   T.nilable(T.any(String, Symbol)),
+        block: T.nilable(T.proc.bind(Resource::Patch).void),
+      ).void
     }
     def patch(strip = :p1, src = nil, &block)
       specs.each { |spec| spec.patch(strip, src, &block) }
@@ -4825,7 +4836,13 @@ class Formula
     # ```
     #
     # @api public
-    sig { params(block: T.nilable(T.proc.returns(T.untyped))).returns(T.nilable(T.proc.returns(T.untyped))) }
+    sig {
+      params(
+        block: T.nilable(T.proc.bind(Homebrew::Service).void),
+      ).returns(
+        T.nilable(T.proc.returns(T.untyped)),
+      )
+    }
     def service(&block)
       return @service_block unless block
 
@@ -4860,7 +4877,7 @@ class Formula
     sig {
       params(
         only_if: T.nilable(Symbol),
-        block:   T.nilable(T.proc.params(arg0: T.untyped).returns(T.any(T::Boolean, Symbol))),
+        block:   T.nilable(T.proc.bind(PourBottleCheck).params(arg0: T.untyped).void),
       ).void
     }
     def pour_bottle?(only_if: nil, &block)

@@ -76,7 +76,7 @@ module Cask
         :built_in_caveat
       end
 
-      sig { params(block: T.proc.returns(T.nilable(T.any(Symbol, String)))).void }
+      sig { params(block: T.proc.bind(Caveats).returns(T.nilable(T.any(Symbol, String)))).void }
       def eval_caveats(&block)
         result = instance_eval(&block)
         return unless result

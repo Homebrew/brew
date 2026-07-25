@@ -102,7 +102,7 @@ module Homebrew
           default_base:        ::T.nilable(::T.any(::String, ::Symbol)),
           default_source_base: ::T.nilable(::T.any(::String, ::Symbol)),
           default_target_base: ::T.nilable(::T.any(::String, ::Symbol)),
-          block:               ::T.nilable(::T.proc.void),
+          block:               ::T.nilable(::T.proc.bind(DSL).void),
         ).returns(Steps)
       }
       def self.build(default_base: nil, default_source_base: nil, default_target_base: nil, &block)
@@ -536,7 +536,7 @@ module Homebrew
 
       private
 
-      sig { params(guard: PathSpec, block: ::T.proc.void).void }
+      sig { params(guard: PathSpec, block: ::T.proc.bind(DSL).void).void }
       def with_guard(guard, &block)
         previous_guards = ::T.let(nil, ::T.nilable(PathSpecs))
         previous_guards = @guards

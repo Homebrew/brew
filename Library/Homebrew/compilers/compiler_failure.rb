@@ -21,7 +21,8 @@ class CompilerFailure
   def cause(_); end
 
   sig {
-    params(spec: T.any(Symbol, T::Hash[Symbol, String]), block: T.nilable(T.proc.void)).returns(T.attached_class)
+    params(spec:  T.any(Symbol, T::Hash[Symbol, String]),
+           block: T.nilable(T.proc.bind(CompilerFailure).void)).returns(T.attached_class)
   }
   def self.create(spec, &block)
     # Non-Apple compilers are in the format fails_with compiler => version
@@ -65,7 +66,7 @@ class CompilerFailure
       type:              Symbol,
       version:           T.any(Integer, String),
       exact_major_match: T::Boolean,
-      block:             T.nilable(T.proc.void),
+      block:             T.nilable(T.proc.bind(CompilerFailure).void),
     ).void
   }
   def initialize(type, version, exact_major_match:, &block)

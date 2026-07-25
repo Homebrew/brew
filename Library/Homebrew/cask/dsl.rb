@@ -722,7 +722,7 @@ module Cask
     # Automatically fetch the latest version of a cask from changelogs.
     #
     # @api public
-    sig { params(block: T.nilable(T.proc.void)).returns(Livecheck) }
+    sig { params(block: T.nilable(T.proc.bind(Livecheck).void)).returns(Livecheck) }
     def livecheck(&block)
       return @livecheck unless block
 

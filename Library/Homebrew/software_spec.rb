@@ -390,7 +390,7 @@ class SoftwareSpec
 
   sig {
     params(strip: T.any(Symbol, String), src: T.nilable(T.any(String, Symbol)),
-           block: T.nilable(T.proc.bind(Patch).void)).void
+           block: T.nilable(T.proc.bind(Resource::Patch).void)).void
   }
   def patch(strip = :p1, src = T.unsafe(nil), &block)
     p = Patch.create(strip, src, &block)
