@@ -25,14 +25,14 @@ RSpec.describe Utils do
             int main() { foo(); return 0; }
           C
 
-          system "cc", "-c", "-fpic", dir/"foo.c", "-o", dir/"foo.o"
-          system "cc", "-c", "-fpic", dir/"bar.c", "-o", dir/"bar.o"
+          system "cc", "-c", "-fpic", "#{dir}/foo.c", "-o", "#{dir}/foo.o"
+          system "cc", "-c", "-fpic", "#{dir}/bar.c", "-o", "#{dir}/bar.o"
           dll_flag = OS.mac? ? "-dynamiclib" : "-shared"
           (HOMEBREW_PREFIX/"lib").mkdir
-          system "cc", dll_flag, "-o", HOMEBREW_PREFIX/"lib/libbrewfoo#{suffix}", dir/"foo.o"
-          system "cc", dll_flag, "-o", HOMEBREW_PREFIX/"lib/libbrewbar#{suffix}", dir/"bar.o"
+          system "cc", dll_flag, "-o", "#{HOMEBREW_PREFIX}/lib/libbrewfoo#{suffix}", "#{dir}/foo.o"
+          system "cc", dll_flag, "-o", "#{HOMEBREW_PREFIX}/lib/libbrewbar#{suffix}", "#{dir}/bar.o"
           rpath_flag = "-Wl,-rpath,#{HOMEBREW_PREFIX}/lib" if OS.linux?
-          system "cc", "-o", dir/"brewtest", dir/"test.c", *rpath_flag, "-L#{HOMEBREW_PREFIX/"lib"}", "-lbrewfoo"
+          system "cc", "-o", "#{dir}/brewtest", "#{dir}/test.c", *rpath_flag, "-L#{HOMEBREW_PREFIX}/lib", "-lbrewfoo"
           (HOMEBREW_PREFIX/"bin").install dir/"brewtest"
         end
       end

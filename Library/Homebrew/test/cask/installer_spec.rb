@@ -816,7 +816,7 @@ RSpec.describe Cask::Installer, :cask do
       FileUtils.cp(TEST_FIXTURE_DIR/"cask/caffeine.zip", container_dir/"NestedApp.zip")
       (container_dir/"README").write("NestedApp.zip contains the application")
       download = mktmpdir/"api-nested-cask.tar.gz"
-      system "tar", "--create", "--gzip", "--file", download, "--directory", container_dir, "."
+      system "tar", "--create", "--gzip", "--file", download.to_s, "--directory", container_dir.to_s, "."
       sha256 = download.sha256
       cask = Cask::Cask.new("api-nested-cask", loaded_from_api: true, loaded_from_internal_api: true) do
         version "1.2.3"

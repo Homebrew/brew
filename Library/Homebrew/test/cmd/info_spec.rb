@@ -1183,7 +1183,7 @@ RSpec.describe Homebrew::Cmd::Info do
         pin_path = Pathname(dir/"testball")
         pin_path.write("pin")
         pin_time = Time.at(1_720_189_900)
-        File.utime(pin_time, pin_time, pin_path)
+        File.utime(pin_time, pin_time, pin_path.to_s)
         allow(FormulaPin).to receive(:new).with(test_formula).and_return(instance_double(FormulaPin, path: pin_path))
 
         expect(described_class.metadata_lines(test_formula)).to eq([
@@ -1203,7 +1203,7 @@ RSpec.describe Homebrew::Cmd::Info do
         pin_path = Pathname(dir/"test-cask")
         pin_path.write("pin")
         pin_time = Time.at(1_720_189_900)
-        File.utime(pin_time, pin_time, pin_path)
+        File.utime(pin_time, pin_time, pin_path.to_s)
         allow(cask).to receive(:pin_path).and_return(pin_path)
 
         expect(described_class.metadata_lines(cask)).to eq([

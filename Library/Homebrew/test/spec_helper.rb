@@ -224,7 +224,7 @@ RSpec.configure do |config|
   config.before(:each, :needs_svn) do
     skip svn_client_skip_reason if svn_client_skip_reason
     if svn_client_path_dirs
-      ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_client_path_dirs)
+      ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_client_path_dirs).to_s
       next
     end
 
@@ -251,13 +251,13 @@ RSpec.configure do |config|
     end
 
     svn_client_path_dirs = [svn.dirname]
-    ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_client_path_dirs)
+    ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_client_path_dirs).to_s
   end
 
   config.before(:each, :needs_svnadmin) do
     skip svn_skip_reason if svn_skip_reason
     if svn_path_dirs
-      ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_path_dirs)
+      ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_path_dirs).to_s
       next
     end
 
@@ -268,11 +268,11 @@ RSpec.configure do |config|
     end
 
     svn_path_dirs = [svnadmin.dirname]
-    ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_path_dirs)
+    ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_path_dirs).to_s
   end
 
   config.before(:each, :needs_homebrew_curl) do
-    ENV["HOMEBREW_CURL"] = HOMEBREW_BREWED_CURL_PATH
+    ENV["HOMEBREW_CURL"] = HOMEBREW_BREWED_CURL_PATH.to_s
     skip "A `curl` with TLS 1.3 support is required." unless Utils::Curl.curl_supports_tls13?
   rescue FormulaUnavailableError
     skip "No `curl` formula is available."

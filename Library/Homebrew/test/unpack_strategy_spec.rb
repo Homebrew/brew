@@ -40,7 +40,7 @@ RSpec.describe UnpackStrategy do
 
             FileUtils.chmod "-w", dir/directories unless writable
             begin
-              system "tar", "--create", "--file", path, "--directory", dir, "A/"
+              system "tar", "--create", "--file", path.to_s, "--directory", dir.to_s, "A/"
             ensure
               FileUtils.chmod "+w", dir/directories unless writable
             end
@@ -78,7 +78,7 @@ RSpec.describe UnpackStrategy do
         (mktmpdir/basename).tap do |path|
           mktmpdir do |dir|
             FileUtils.touch dir/"file.txt"
-            system "tar", "--create", "--file", path, "--directory", dir, "file.txt"
+            system "tar", "--create", "--file", path.to_s, "--directory", dir.to_s, "file.txt"
           end
         end
       end
