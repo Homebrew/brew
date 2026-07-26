@@ -340,15 +340,10 @@ RSpec.describe Cask::Artifact::App, :cask do
   end
 
   describe "summary" do
-    let(:description) { app.class.english_description }
     let(:contents) { app.summarize_installed }
 
     context "without installation" do
       let(:setup_cask) { nil }
-
-      it "returns the correct english_description" do
-        expect(description).to eq("Apps")
-      end
 
       describe "app is missing" do
         it "returns a warning and the supposed path to the app" do

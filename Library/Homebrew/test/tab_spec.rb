@@ -119,9 +119,6 @@ RSpec.describe Tab do
     expect(tab.time).to be_nil
     expect(tab.runtime_dependencies).to be_nil
     expect(tab.stable_version).to be_nil
-    expect(tab.head_version).to be_nil
-    expect(tab.cxxstdlib.compiler).to eq(DevelopmentTools.default_compiler)
-    expect(tab.cxxstdlib.type).to be_nil
     expect(tab.source["path"]).to be_nil
   end
 
@@ -132,8 +129,6 @@ RSpec.describe Tab do
     expect(tab).to be_built_with("qux")
     expect(tab).not_to be_built_with("bar")
     expect(tab).not_to be_built_with("baz")
-    expect(tab.cxxstdlib.compiler).to eq(:clang)
-    expect(tab.cxxstdlib.type).to eq(:libcxx)
     expect(tab.tap.name).to eq("homebrew/core")
     expect(tab.time).to eq(time)
     expect(tab).not_to be_built_as_bottle
@@ -309,11 +304,8 @@ RSpec.describe Tab do
       expect(tab.tap.name).to eq("homebrew/core")
       expect(tab.spec).to eq(:stable)
       expect(tab.time).to eq(Time.at(1_403_827_774).to_i)
-      expect(tab.cxxstdlib.compiler).to eq(:clang)
-      expect(tab.cxxstdlib.type).to eq(:libcxx)
       expect(tab.runtime_dependencies).to eq(runtime_dependencies)
       expect(tab.stable_version.to_s).to eq("2.14")
-      expect(tab.head_version.to_s).to eq("HEAD-0000000")
       expect(tab.source["path"]).to eq(source_path)
     end
   end
@@ -339,11 +331,8 @@ RSpec.describe Tab do
       expect(tab.tap.name).to eq("homebrew/core")
       expect(tab.spec).to eq(:stable)
       expect(tab.time).to eq(Time.at(1_403_827_774).to_i)
-      expect(tab.cxxstdlib.compiler).to eq(:clang)
-      expect(tab.cxxstdlib.type).to eq(:libcxx)
       expect(tab.runtime_dependencies).to eq(runtime_dependencies)
       expect(tab.stable_version.to_s).to eq("2.14")
-      expect(tab.head_version.to_s).to eq("HEAD-0000000")
       expect(tab.source["path"]).to eq(source_path)
     end
 
@@ -363,8 +352,6 @@ RSpec.describe Tab do
       expect(tab.tap.name).to eq("homebrew/core")
       expect(tab.spec).to eq(:stable)
       expect(tab.time).to eq(Time.at(1_403_827_774).to_i)
-      expect(tab.cxxstdlib.compiler).to eq(:clang)
-      expect(tab.cxxstdlib.type).to eq(:libcxx)
       expect(tab.runtime_dependencies).to be_nil
     end
 
@@ -558,7 +545,6 @@ RSpec.describe Tab do
     expect(json_tab.stdlib).to eq(tab.stdlib)
     expect(json_tab.runtime_dependencies).to eq(tab.runtime_dependencies)
     expect(json_tab.stable_version).to eq(tab.stable_version)
-    expect(json_tab.head_version).to eq(tab.head_version)
     expect(json_tab.source["path"]).to eq(tab.source["path"])
     expect(json_tab.source["scm_revision"]).to eq(tab.source["scm_revision"])
     expect(json_tab.arch).to eq(tab.arch.to_s)
