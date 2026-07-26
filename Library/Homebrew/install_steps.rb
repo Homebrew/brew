@@ -584,6 +584,7 @@ module Homebrew
                  "chdir"           => optional_path_spec(chdir, default_base: @default_base))
       end
 
+      # @api internal
       sig {
         params(
           name:            ::String,
@@ -619,6 +620,7 @@ module Homebrew
         add_step("warn", "message" => message)
       end
 
+      # @api internal
       sig { void }
       def configure_gcc_runtime
         add_step("configure_gcc_runtime")

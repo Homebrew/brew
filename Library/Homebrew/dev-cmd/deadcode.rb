@@ -19,9 +19,11 @@ module Homebrew
       # API but must not be removed.
       PERSIST_REGEX = /^\s*#\s*@api\s+(?:public|internal)\b|^\s*#\s*deadcode:keep(?=\s|$)|\boverride\b/
 
-      # Calls within a definition's body that keep it: a definition on its way
-      # out via `odeprecated`/`odisabled` is intentionally retained through its
-      # deprecation cycle even once its callers are gone.
+      # An `odeprecated`/`odisabled` call in a definition's body, or an
+      # `# odeprecated`/`# odisabled` comment marker above it (used for
+      # declarative DSL methods with no runtime body to deprecate): a definition
+      # on its way out is intentionally retained through its deprecation cycle
+      # even once its callers are gone.
       DEPRECATION_REGEX = /\bod(?:eprecated|isabled)\b/
 
       # A file-scoped directive (e.g. `# deadcode:keep-matching ^audit_`) that
@@ -163,12 +165,13 @@ module Homebrew
 
         # The contiguous signature and documentation above the definition,
         # stopping at the first blank line (which separates it from any
-        # preceding definition).
+        # preceding definition). Honours `@api`/`deadcode:keep`/`override`
+        # markers as well as `# odeprecated`/`# odisabled` comment markers.
         index = start_line - 2
         while index >= 0
           text = lines[index].to_s
           break if text.strip.empty?
-          return true if text.match?(PERSIST_REGEX)
+          return true if text.match?(PERSIST_REGEX) || text.match?(DEPRECATION_REGEX)
 
           index -= 1
         end

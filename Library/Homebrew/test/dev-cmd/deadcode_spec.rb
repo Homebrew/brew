@@ -88,6 +88,11 @@ RSpec.describe Homebrew::DevCmd::Deadcode do
       expect(deadcode.send(:persisted?, "#{file.path}:1:0-3:3")).to be(true)
     end
 
+    it "keeps definitions marked with an `# odeprecated` comment" do
+      content = "# odeprecated\ndef foo; end\n"
+      expect(deadcode.send(:persisted?, location_for(content, "def foo"))).to be(true)
+    end
+
     it "keeps definitions matched by a `# deadcode:keep-matching` directive" do
       content = "# deadcode:keep-matching ^audit_\n\ndef audit_thing; end\n"
       file.write(content)
