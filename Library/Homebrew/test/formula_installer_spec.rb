@@ -493,11 +493,13 @@ RSpec.describe FormulaInstaller do
         conflicts_with "terraform"
       end
 
-      expect(Formulary).not_to receive(:factory)
+      begin
+        expect(Formulary).not_to receive(:factory)
 
-      described_class.new(f).check_conflicts
-    ensure
-      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+        described_class.new(f).check_conflicts
+      ensure
+        FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+      end
     end
   end
 

@@ -1250,18 +1250,20 @@ RSpec.describe Formula do
       end
     end
 
-    versioned_prefix = f.rack/f.pkg_version.to_s
-    FileUtils.rm_f f.opt_prefix
-    versioned_prefix.mkpath
-    f.opt_prefix.parent.mkpath
-    FileUtils.ln_s versioned_prefix, f.opt_prefix
+    begin
+      versioned_prefix = f.rack/f.pkg_version.to_s
+      FileUtils.rm_f f.opt_prefix
+      versioned_prefix.mkpath
+      f.opt_prefix.parent.mkpath
+      FileUtils.ln_s versioned_prefix, f.opt_prefix
 
-    f.run_post_install_steps
+      f.run_post_install_steps
 
-    expect((versioned_prefix/"linked").readlink).to eq(versioned_prefix/"source")
-  ensure
-    FileUtils.rm_f f.opt_prefix
-    FileUtils.rm_rf f.rack
+      expect((versioned_prefix/"linked").readlink).to eq(versioned_prefix/"source")
+    ensure
+      FileUtils.rm_f f.opt_prefix
+      FileUtils.rm_rf f.rack
+    end
   end
 
   describe "#install_etc_var" do
