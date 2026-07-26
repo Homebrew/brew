@@ -70,6 +70,12 @@ module Homebrew
       @new_formula_problems = T.let([], T::Array[T.any(String, T::Hash[Symbol, T.untyped])])
       @text = T.let(formula.path.open("rb", &:read), String)
       @specs = T.let(%w[stable head].filter_map { |s| formula.send(s) }, T::Array[SoftwareSpec])
+      # NOTE: `@spdx_license_data`/`@spdx_exception_data` are currently unused
+      # (assigned but never read). They are populated from `SPDX.license_data` and
+      # `SPDX.exception_data` in `brew audit` but not consulted here. Removing them
+      # would also drop these two constructor parameters and their `brew audit`
+      # call-site fetches, so they are kept pending a decision on whether this data
+      # should be wired into license auditing.
       @spdx_license_data = spdx_license_data
       @spdx_exception_data = spdx_exception_data
       @tap_audit = tap_audit

@@ -56,6 +56,11 @@ module GitHub
 
       sig { params(message: T.nilable(String), github_message: String).void }
       def initialize(message = nil, github_message = T.unsafe(nil))
+        # NOTE: `@github_message` is currently unused (assigned but never read). It
+        # captures the upstream GitHub API error message. Removing it would also
+        # orphan the `github_message` parameter that subclasses such as
+        # `GitRepositoryIsEmptyError` pass through, so it is kept pending a decision
+        # on whether to surface the message instead.
         @github_message = T.let(github_message, T.nilable(String))
         super(message)
       end

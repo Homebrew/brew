@@ -141,6 +141,9 @@ module Cask
       :autobump?,
       :no_autobump_message,
       :on_system_blocks_exist?,
+      # NOTE: unused. Delegated from `Cask` via `DSL_METHODS`, but no
+      # `on_os_blocks_exist?` reader exists for the `@on_os_blocks_exist` flag
+      # (see on_system.rb); nothing calls it, so the delegator is dead.
       :on_os_blocks_exist?,
       :on_system_block_min_os,
       :depends_on_set_in_block?,
