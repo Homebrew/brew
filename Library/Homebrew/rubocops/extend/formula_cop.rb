@@ -17,8 +17,6 @@ module RuboCop
       sig { returns(T.nilable(String)) }
       attr_accessor :file_path
 
-      @registry = T.let(Registry.global, RuboCop::Cop::Registry)
-
       class FormulaNodes < T::Struct
         prop :node, RuboCop::AST::ClassNode
         prop :class_node, RuboCop::AST::ConstNode

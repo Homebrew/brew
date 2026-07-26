@@ -85,7 +85,6 @@ class SoftwareSpec
     @depends_on_macos_bare_set_top_level = T.let(false, T::Boolean)
     @depends_on_macos_version_set_top_level = T.let(false, T::Boolean)
     @depends_on_maximum_macos_set_top_level = T.let(false, T::Boolean)
-    @depends_on_macos_set_in_block = T.let(false, T::Boolean)
     @depends_on_linux_set_top_level = T.let(false, T::Boolean)
   end
 
@@ -271,10 +270,7 @@ class SoftwareSpec
   def record_os_requirement(dep, set_in_block:)
     case dep
     when MacOSRequirement
-      if set_in_block
-        @depends_on_macos_set_in_block = true
-        return
-      end
+      return if set_in_block
 
       if @depends_on_linux_set_top_level
         raise ArgumentError,

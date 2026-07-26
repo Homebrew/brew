@@ -19,7 +19,6 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     @expand_deferred_environment = T.let(false, T::Boolean)
     @mirrors = T.let(meta.fetch(:mirrors, []), T::Array[String])
     @file_size = T.let(nil, T.nilable(Integer))
-    @last_modified = T.let(nil, T.nilable(Time))
 
     # Merge `:header` with `:headers`.
     if (header = meta.delete(:header))
@@ -73,7 +72,6 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
         rescue ErrorDuringExecution
           raise unless cached_location_valid
         end
-        @last_modified = last_modified
 
         # Caller-supplied headers (e.g. tokens) are no longer valid after a
         # redirect to another host, and `Authorization` after any redirect.

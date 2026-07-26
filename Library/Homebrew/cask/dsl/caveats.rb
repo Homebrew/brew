@@ -24,7 +24,6 @@ module Cask
         super
         @built_in_caveats = T.let({}, T::Hash[T::Array[T.any(String, Symbol)], String])
         @custom_caveats = T.let([], T::Array[String])
-        @discontinued = T.let(false, T::Boolean)
         @invoked_caveats = T.let(Set.new, T::Set[Symbol])
       end
 
