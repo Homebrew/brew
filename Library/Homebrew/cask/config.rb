@@ -162,7 +162,9 @@ module Cask
       )
     end
 
-    # @api internal
+    # deadcode:keep dispatched via `config.public_send(self.class.dirmethod)`
+    # in Cask::Artifact::Relocated, where `dirmethod` is `:"#{dsl_key}dir"`, so
+    # `brew deadcode` sees no static caller.
     sig { returns(Pathname) }
     def binarydir
       @binarydir ||= T.let(HOMEBREW_PREFIX/"bin", T.nilable(Pathname))
