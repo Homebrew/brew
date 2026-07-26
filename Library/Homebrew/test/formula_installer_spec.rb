@@ -848,7 +848,6 @@ RSpec.describe FormulaInstaller do
           depends_on "#{dep_name}"
         end
       RUBY
-      Formulary.cache.delete(dep_path.to_s)
       f = Formulary.factory(dep_name)
 
       fi = described_class.new(f)
@@ -871,7 +870,6 @@ RSpec.describe FormulaInstaller do
           depends_on "#{formula2_name}"
         end
       RUBY
-      Formulary.cache.delete(formula1_path.to_s)
       formula1 = Formulary.factory(formula1_name)
 
       formula2_path = CoreTap.instance.new_formula_path(formula2_name)
@@ -882,7 +880,6 @@ RSpec.describe FormulaInstaller do
           depends_on "#{formula1_name}"
         end
       RUBY
-      Formulary.cache.delete(formula2_path)
 
       fi = described_class.new(formula1)
 
@@ -973,7 +970,6 @@ RSpec.describe FormulaInstaller do
         end
       RUBY
 
-      Formulary.cache.delete(dep_path)
       dependency = Formulary.factory(dep_name)
 
       dependent = formula do
@@ -1014,7 +1010,6 @@ RSpec.describe FormulaInstaller do
           license "AGPL-3.0"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory(f_name)
       fi = described_class.new(f)
@@ -1038,7 +1033,6 @@ RSpec.describe FormulaInstaller do
           license "AGPL-3.0"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory(f_name)
       fi = described_class.new(f)
@@ -1060,7 +1054,6 @@ RSpec.describe FormulaInstaller do
           license "GPL-3.0"
         end
       RUBY
-      Formulary.cache.delete(dep_path)
 
       f_name = "homebrew-forbidden-dependent-license"
       f_path = CoreTap.instance.new_formula_path(f_name)
@@ -1071,7 +1064,6 @@ RSpec.describe FormulaInstaller do
           depends_on "#{dep_name}"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory(f_name)
       fi = described_class.new(f)
@@ -1093,7 +1085,6 @@ RSpec.describe FormulaInstaller do
           license :public_domain
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory(f_name)
       fi = described_class.new(f)
@@ -1127,7 +1118,6 @@ RSpec.describe FormulaInstaller do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory("#{f_tap}/#{f_name}")
       fi = described_class.new(f)
@@ -1150,7 +1140,6 @@ RSpec.describe FormulaInstaller do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory("#{f_tap}/#{f_name}")
       fi = described_class.new(f)
@@ -1173,7 +1162,6 @@ RSpec.describe FormulaInstaller do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory("#{f_tap}/#{f_name}")
       fi = described_class.new(f)
@@ -1194,7 +1182,6 @@ RSpec.describe FormulaInstaller do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(dep_path)
 
       f_name = "homebrew-forbidden-dependent-tap"
       f_path = CoreTap.instance.new_formula_path(f_name)
@@ -1205,7 +1192,6 @@ RSpec.describe FormulaInstaller do
           depends_on "#{dep_name}"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory(f_name)
       fi = described_class.new(f)
@@ -1228,7 +1214,6 @@ RSpec.describe FormulaInstaller do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory(f_name)
       fi = described_class.new(f)
@@ -1247,7 +1232,6 @@ RSpec.describe FormulaInstaller do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(dep_path)
 
       f_name = "homebrew-forbidden-dependent-formula"
       f_path = CoreTap.instance.new_formula_path(f_name)
@@ -1258,7 +1242,6 @@ RSpec.describe FormulaInstaller do
           depends_on "#{dep_name}"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory(f_name)
       fi = described_class.new(f)
@@ -1336,7 +1319,6 @@ RSpec.describe FormulaInstaller do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory("#{homebrew_forbidden}/#{f_name}")
       allow(f).to receive(:loaded_from_api?).and_return(true)
@@ -1358,7 +1340,6 @@ RSpec.describe FormulaInstaller do
           version "0.1"
         end
       RUBY
-      Formulary.cache.delete(f_path)
 
       f = Formulary.factory(f_name)
       allow(f).to receive(:loaded_from_api?).and_return(true)
