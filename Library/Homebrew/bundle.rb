@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "English"
+require "open3"
 
 module Homebrew
   module Bundle
@@ -31,13 +32,11 @@ module Homebrew
 
         logs = []
         success = T.let(false, T::Boolean)
-        IO.popen(env, [cmd, *args], err: [:child, :out]) do |pipe|
-          while (buf = pipe.gets)
+        Open3.popen2e(env, cmd.to_s, *args) do |_stdin, stdout_stderr, wait_thr|
+          while (buf = stdout_stderr.gets)
             logs << buf
           end
-          Process.wait(pipe.pid)
-          success = $CHILD_STATUS.success?
-          pipe.close
+          success = wait_thr.value.success?
         end
         puts logs.join unless success
         success
