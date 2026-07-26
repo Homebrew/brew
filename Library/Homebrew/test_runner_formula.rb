@@ -23,13 +23,15 @@ class TestRunnerFormula
     freeze
   end
 
-  # @api internal
+  # deadcode:keep invoked as `public_send(:"#{platform}_compatible?")` in
+  # github_runner_matrix.rb, so `brew deadcode` sees no static caller.
   sig { returns(T::Boolean) }
   def macos_compatible?
     formula.supports_macos?
   end
 
-  # @api internal
+  # deadcode:keep invoked as `public_send(:"#{platform}_compatible?")` in
+  # github_runner_matrix.rb, so `brew deadcode` sees no static caller.
   sig { returns(T::Boolean) }
   def linux_compatible?
     formula.supports_linux?
@@ -40,7 +42,8 @@ class TestRunnerFormula
     formula.requirements.any? { |r| r.is_a?(ArchRequirement) && (r.arch == :x86_64) }
   end
 
-  # @api internal
+  # deadcode:keep invoked as `public_send(:"#{arch}_compatible?")` in
+  # github_runner_matrix.rb, so `brew deadcode` sees no static caller.
   sig { returns(T::Boolean) }
   def x86_64_compatible?
     !arm64_only?
@@ -51,7 +54,8 @@ class TestRunnerFormula
     formula.requirements.any? { |r| r.is_a?(ArchRequirement) && (r.arch == :arm64) }
   end
 
-  # @api internal
+  # deadcode:keep invoked as `public_send(:"#{arch}_compatible?")` in
+  # github_runner_matrix.rb, so `brew deadcode` sees no static caller.
   sig { returns(T::Boolean) }
   def arm64_compatible?
     !x86_64_only?
