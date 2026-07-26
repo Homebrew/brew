@@ -12,7 +12,8 @@ module Homebrew
     def self.confirm?(action:)
       return false if !$stdin.tty? || !$stdout.tty?
 
-      ohai "Do you want to proceed with the #{action}? [y/n]"
+      safe_action = action.gsub(/[^a-zA-Z0-9 _\-]/, "")
+      ohai "Do you want to proceed with the #{safe_action}? [y/n]"
       loop do
         result = begin
           $stdin.getch
