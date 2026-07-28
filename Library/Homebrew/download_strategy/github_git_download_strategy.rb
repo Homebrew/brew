@@ -8,6 +8,8 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy
   sig { returns(T.nilable(String)) }
   attr_reader :user
 
+  # deadcode:keep exposed for test ergonomics: lets specs read or write this
+  # state through a public accessor instead of instance_variable_get.
   sig { returns(T.nilable(String)) }
   attr_reader :repo
 

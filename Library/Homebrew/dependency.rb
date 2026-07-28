@@ -163,6 +163,8 @@ class Dependency
   end
 
   class << self
+    # deadcode:keep exposed for test ergonomics: lets specs read or write this
+    # state through a public accessor instead of instance_variable_get.
     sig { returns(T.nilable(T::Array[T.any(String, Symbol)])) }
     attr_reader :expand_stack
 

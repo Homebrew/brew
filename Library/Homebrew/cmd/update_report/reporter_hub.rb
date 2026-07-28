@@ -20,6 +20,8 @@ class ReporterHub
     T.cast(@hash.fetch(key, []), T::Array[String])
   end
 
+  # deadcode:keep exposed for test ergonomics: lets specs read or write this
+  # state through a public accessor instead of instance_variable_get.
   sig { returns(T::Array[[String, String]]) }
   def renamed_formulae
     T.cast(@hash.fetch(:R, []), T::Array[[String, String]])

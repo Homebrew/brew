@@ -13,6 +13,8 @@ module Language
     extend ::Utils::Output::Mixin
 
     class << self
+      # deadcode:keep exposed for test ergonomics: lets specs read or write this
+      # state through a public accessor instead of instance_variable_get.
       sig { returns(T.nilable(T::Boolean)) }
       attr_accessor :env_set
     end

@@ -147,6 +147,8 @@ module Cask
       sig { returns(Pathname) }
       attr_reader :path
 
+      # deadcode:keep exposed for test ergonomics: lets specs read or write this
+      # state through a public accessor instead of instance_variable_get.
       sig { params(from_installed_caskfile: T::Boolean).void }
       attr_writer :from_installed_caskfile
 

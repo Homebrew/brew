@@ -64,6 +64,8 @@ module Homebrew
         @page_data = T.let({}, T::Hash[String, String])
 
         class << self
+          # deadcode:keep exposed for test ergonomics: lets specs read or write this
+          # state through a public accessor instead of instance_variable_get.
           sig { params(page_data: T::Hash[String, String]).void }
           attr_writer :page_data
         end

@@ -49,6 +49,8 @@ class FormulaInstaller
   sig { returns(Homebrew::DownloadQueue) }
   attr_accessor :download_queue
 
+  # deadcode:keep exposed for test ergonomics: lets specs read or write this
+  # state through a public accessor instead of instance_variable_get.
   sig { params(ran_prelude: T::Boolean).void }
   attr_writer :ran_prelude
 

@@ -4,6 +4,8 @@
 require "cmd/shared_examples/args_parse"
 require "dev-cmd/deadcode"
 
+# This spec unit-tests the command's internal methods, which stay private.
+# rubocop:disable Homebrew/NoSendInTests
 RSpec.describe Homebrew::DevCmd::Deadcode do
   let(:deadcode) { described_class.new([]) }
 
@@ -124,3 +126,4 @@ RSpec.describe Homebrew::DevCmd::Deadcode do
     end
   end
 end
+# rubocop:enable Homebrew/NoSendInTests

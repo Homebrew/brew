@@ -626,6 +626,7 @@ module Homebrew
         add_step("configure_gcc_runtime")
       end
 
+      # @api internal
       sig {
         params(
           source:      ::T.any(::String, ::Pathname),

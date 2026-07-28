@@ -34,6 +34,8 @@ module Homebrew
           @failed_taps << tap_name
         end
 
+        # deadcode:keep exposed for test ergonomics: lets specs read or write this
+        # state through a public accessor instead of instance_variable_get.
         sig { params(failed_taps: T.nilable(T::Array[String])).returns(T.nilable(T::Array[String])) }
         attr_writer :failed_taps
 

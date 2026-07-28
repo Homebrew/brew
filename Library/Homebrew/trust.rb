@@ -252,6 +252,20 @@ module Homebrew
       raise_untrusted!(:command, full_name, tap)
     end
 
+    # deadcode:keep exposed for test ergonomics: lets specs call the private
+    # `trusted_file?` through a public wrapper instead of `send`.
+    sig { params(path: Pathname).returns(T::Boolean) }
+    def self.trusted_formula_file?(path)
+      trusted_file?(:formula, path)
+    end
+
+    # deadcode:keep exposed for test ergonomics: lets specs call the private
+    # `trusted_file?` through a public wrapper instead of `send`.
+    sig { params(path: Pathname).returns(T::Boolean) }
+    def self.trusted_cask_file?(path)
+      trusted_file?(:cask, path)
+    end
+
     sig { params(files: T::Array[Pathname]).returns(T::Array[Pathname]) }
     def self.trusted_formula_files(files)
       trusted_files(:formula, files)

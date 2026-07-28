@@ -55,9 +55,13 @@ class MacOSVersion < Version
     new(str)
   end
 
+  # deadcode:keep exposed for test ergonomics: lets specs read or write this
+  # state through a public accessor instead of instance_variable_get.
   sig { returns(T::Hash[T.untyped, T.nilable(Integer)]) }
   attr_reader :comparison_cache
 
+  # deadcode:keep exposed for test ergonomics: lets specs read or write this
+  # state through a public accessor instead of instance_variable_get.
   sig { returns(T.nilable(Symbol)) }
   attr_reader :sym
 

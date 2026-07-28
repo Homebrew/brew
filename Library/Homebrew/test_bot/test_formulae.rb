@@ -12,6 +12,8 @@ module Homebrew
       sig { returns(Pathname) }
       attr_reader :artifact_cache
 
+      # deadcode:keep exposed for test ergonomics: lets specs read or write this
+      # state through a public accessor instead of instance_variable_get.
       sig { returns(T::Hash[String, T::Array[String]]) }
       attr_reader :downloaded_artifacts
 
