@@ -13,6 +13,7 @@ module Repology
   HOMEBREW_CORE = "homebrew"
   HOMEBREW_CASK = "homebrew_casks"
 
+  # deadcode:keep spec-covered on main; brew deadcode sees no production caller.
   sig { params(last_package_in_response: T.nilable(String), repository: String).returns(T::Hash[String, T.untyped]) }
   def self.query_api(last_package_in_response = "", repository:)
     cursor = last_package_in_response.present? ? "#{ERB::Util.url_encode(last_package_in_response)}/" : ""

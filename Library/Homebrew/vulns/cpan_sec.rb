@@ -42,6 +42,7 @@ module Homebrew
       sig { returns(T::Hash[String, T.untyped]) }
       attr_reader :meta
 
+      # deadcode:keep spec-covered on main; brew deadcode sees no production caller.
       sig { returns(T::Array[String]) }
       def distributions
         @dists.keys
