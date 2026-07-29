@@ -34,10 +34,10 @@ class AbstractTab
   sig { returns(T.nilable(Pathname)) }
   attr_accessor :tabfile
 
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   attr_accessor :loaded_from_api
 
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   attr_accessor :loaded_from_internal_api
 
   sig { returns(T.nilable(Integer)) }
@@ -65,8 +65,8 @@ class AbstractTab
     @installed_on_request_present = T.let(false, T::Boolean)
     @homebrew_version = T.let(nil, T.nilable(String))
     @tabfile = T.let(nil, T.nilable(Pathname))
-    @loaded_from_api = T.let(nil, T.nilable(T::Boolean))
-    @loaded_from_internal_api = T.let(nil, T.nilable(T::Boolean))
+    @loaded_from_api = T.let(false, T::Boolean)
+    @loaded_from_internal_api = T.let(false, T::Boolean)
     @time = T.let(nil, T.nilable(Integer))
     @arch = T.let(nil, T.nilable(T.any(String, Symbol)))
     @source = T.let({}, T::Hash[String, T.untyped])

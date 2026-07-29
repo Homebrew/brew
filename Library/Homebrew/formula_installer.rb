@@ -515,7 +515,7 @@ class FormulaInstaller
           "#{formula.full_name} requires the latest version of pinned dependencies."
   end
 
-  sig { params(_formula: Formula).returns(T.nilable(T::Boolean)) }
+  sig { params(_formula: Formula).returns(T::Boolean) }
   def fresh_install?(_formula) = false
 
   sig { void }

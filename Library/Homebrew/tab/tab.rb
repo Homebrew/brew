@@ -7,10 +7,10 @@ class Tab < AbstractTab
   # Check whether the formula was poured from a bottle.
   #
   # @api internal
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   attr_accessor :poured_from_bottle
 
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   attr_accessor :built_as_bottle
 
   sig { returns(T.nilable(T.any(String, Symbol))) }
@@ -39,8 +39,8 @@ class Tab < AbstractTab
 
   sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
   def initialize(attributes = {})
-    @poured_from_bottle = T.let(nil, T.nilable(T::Boolean))
-    @built_as_bottle = T.let(nil, T.nilable(T::Boolean))
+    @poured_from_bottle = T.let(false, T::Boolean)
+    @built_as_bottle = T.let(false, T::Boolean)
     @changed_files = T.let(nil, T.nilable(T::Array[Pathname]))
     @stdlib = T.let(nil, T.nilable(T.any(String, Symbol)))
     @aliases = T.let(nil, T.nilable(T::Array[String]))
@@ -69,7 +69,6 @@ class Tab < AbstractTab
     tab.unused_options = build.unused_options.as_flags
     tab.tabfile = formula.prefix/FILENAME
     tab.built_as_bottle = build.bottle?
-    tab.poured_from_bottle = false
     tab.source_modified_time = formula.source_modified_time.to_i
     tab.compiler = compiler
     tab.stdlib = stdlib
@@ -214,8 +213,6 @@ class Tab < AbstractTab
 
     tab.used_options = []
     tab.unused_options = []
-    tab.built_as_bottle = false
-    tab.poured_from_bottle = false
     tab.source_modified_time = 0
     tab.stdlib = nil
     tab.compiler = DevelopmentTools.default_compiler

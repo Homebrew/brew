@@ -84,11 +84,11 @@ module CPAN
   sig {
     params(
       formula:       Formula,
-      print_only:    T.nilable(T::Boolean),
-      quiet:         T.nilable(T::Boolean),
-      verbose:       T.nilable(T::Boolean),
-      ignore_errors: T.nilable(T::Boolean),
-    ).returns(T.nilable(T::Boolean))
+      print_only:    T::Boolean,
+      quiet:         T::Boolean,
+      verbose:       T::Boolean,
+      ignore_errors: T::Boolean,
+    ).returns(T::Boolean)
   }
   def self.update_perl_resources!(formula, print_only: false, quiet: false, verbose: false, ignore_errors: false)
     cpan_resources = formula.resources.select { |resource| resource.url.start_with?(METACPAN_URL_PREFIX) }

@@ -35,23 +35,23 @@ module Homebrew
     sig {
       params(
         formula:             Formula,
-        new_formula:         T.nilable(T::Boolean),
-        strict:              T.nilable(T::Boolean),
-        online:              T.nilable(T::Boolean),
-        git:                 T.nilable(T::Boolean),
-        display_cop_names:   T.nilable(T::Boolean),
+        new_formula:         T::Boolean,
+        strict:              T::Boolean,
+        online:              T::Boolean,
+        git:                 T::Boolean,
+        display_cop_names:   T::Boolean,
         only:                T.nilable(T::Array[String]),
         except:              T.nilable(T::Array[String]),
         style_offenses:      T.nilable(T::Array[Style::Offense]),
-        core_tap:            T.nilable(T::Boolean),
-        tap_audit:           T.nilable(T::Boolean),
+        core_tap:            T::Boolean,
+        tap_audit:           T::Boolean,
         spdx_license_data:   T.nilable(T::Hash[String, T.untyped]),
         spdx_exception_data: T.nilable(T::Hash[String, T.untyped]),
       ).void
     }
-    def initialize(formula, new_formula: nil, strict: nil, online: nil, git: nil, display_cop_names: nil, only: nil,
-                   except: nil, style_offenses: nil, core_tap: nil, tap_audit: nil, spdx_license_data: nil,
-                   spdx_exception_data: nil)
+    def initialize(formula, new_formula: false, strict: false, online: false, git: false, display_cop_names: false,
+                   only: nil, except: nil, style_offenses: nil, core_tap: false, tap_audit: false,
+                   spdx_license_data: nil, spdx_exception_data: nil)
       @formula = formula
       @versioned_formula = T.let(formula.versioned_formula?, T::Boolean)
       @new_formula_inclusive = new_formula
