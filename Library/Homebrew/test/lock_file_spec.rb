@@ -28,6 +28,13 @@ RSpec.describe LockFile do
         lock_file_copy.lock
       end.to raise_error(OperationInProgressError)
     end
+
+    it "releases the lock when interrupted after acquiring it" do
+      allow(lock_file.path).to receive(:exist?).and_raise(Interrupt)
+
+      expect { lock_file.lock }.to raise_error(Interrupt)
+      expect { lock_file_copy.lock }.not_to raise_error
+    end
   end
 
   describe "#unlock" do

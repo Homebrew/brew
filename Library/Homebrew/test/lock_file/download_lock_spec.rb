@@ -1,7 +1,7 @@
 # typed: true
 # frozen_string_literal: true
 
-require "lock_file/download_lock"
+require "lock_file"
 
 RSpec.describe DownloadLock do
   subject(:download_lock) { described_class.new(Pathname("foo-download")) }
@@ -20,23 +20,39 @@ RSpec.describe DownloadLock do
 
     it "waits for another instance's lock to release, then acquires it", timeout: 10 do
       download_lock.lock
+      waiting = Queue.new
+      # Release only once the blocking wait is about to start, so no `sleep` is needed.
+      # Releasing from another thread also covers the wait staying outside `ignore_interrupts`.
+      allow(download_lock_copy).to receive(:opoo).and_wrap_original do |original, *args|
+        original.call(*args)
+        waiting.push(true)
+      end
       releaser = Thread.new do
-        sleep 0.2
+        waiting.pop
         download_lock.unlock
       end
 
       expect { download_lock_copy.lock_or_wait }.to output(
         /Waiting for another Homebrew process to finish downloading/,
       ).to_stderr
+      expect { download_lock.lock }.to raise_error(OperationInProgressError)
     ensure
       releaser&.join(5)
     end
 
     it "gives up and raises once the maximum wait time passes", timeout: 10 do
-      stub_const("DownloadLock::MAX_WAIT_SECONDS", 0.1)
+      stub_const("DownloadLock::MAX_WAIT_SECONDS", 0.25)
       download_lock.lock
+      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       expect { download_lock_copy.lock_or_wait }.to raise_error(OperationInProgressError)
+      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be >= 0.25
+    end
+
+    it "retries until it locks the file that is on disk" do
+      expect(download_lock.path).to receive(:exist?).twice.and_return(false, true)
+
+      download_lock.lock_or_wait
     end
   end
 end

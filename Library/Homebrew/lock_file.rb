@@ -62,33 +62,38 @@ class LockFile
   private
 
   # Returns false when the lock file changed on disk and must be reacquired.
+  # Raises `OperationInProgressError` when a non-blocking `flock` finds it held.
   sig { params(flock_operation: Integer).returns(T::Boolean) }
   def acquired?(flock_operation)
     lockfile = open_lockfile
+    acquired = false
 
-    unless lockfile.flock(flock_operation)
-      lockfile.close
-      raise OperationInProgressError, @locked_path
+    begin
+      raise OperationInProgressError, @locked_path unless lockfile.flock(flock_operation)
+
+      # This prevents a race condition in case the file we locked doesn't exist on disk anymore, e.g.:
+      #
+      # 1. Process A creates and opens the file.
+      # 2. Process A locks the file.
+      # 3. Process B opens the file.
+      # 4. Process A unlinks the file.
+      # 5. Process A unlocks the file.
+      # 6. Process B locks the file.
+      # 7. Process C creates and opens the file.
+      # 8. Process C locks the file.
+      # 9. Process B and C hold locks to files with different inode numbers. 💥
+      acquired = path.exist? && lockfile.stat.ino == path.stat.ino
+    ensure
+      # Assign or close in an `ensure` so an interrupt raised out of a blocking
+      # `flock` can't leave the lock held with nothing left to release it.
+      if acquired
+        @lockfile = lockfile
+      else
+        lockfile.close
+      end
     end
 
-    # This prevents a race condition in case the file we locked doesn't exist on disk anymore, e.g.:
-    #
-    # 1. Process A creates and opens the file.
-    # 2. Process A locks the file.
-    # 3. Process B opens the file.
-    # 4. Process A unlinks the file.
-    # 5. Process A unlocks the file.
-    # 6. Process B locks the file.
-    # 7. Process C creates and opens the file.
-    # 8. Process C locks the file.
-    # 9. Process B and C hold locks to files with different inode numbers. 💥
-    if !path.exist? || lockfile.stat.ino != path.stat.ino
-      lockfile.close
-      return false
-    end
-
-    @lockfile = lockfile
-    true
+    acquired
   end
 
   sig { returns(File) }
