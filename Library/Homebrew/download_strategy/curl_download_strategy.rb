@@ -39,7 +39,7 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
 
     download_lock = DownloadLock.new(temporary_path)
     begin
-      download_lock.lock
+      download_lock.lock_or_wait
 
       urls = [url, *mirrors]
 
