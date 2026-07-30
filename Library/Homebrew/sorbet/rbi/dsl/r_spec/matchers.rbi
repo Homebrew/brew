@@ -310,9 +310,6 @@ module RSpec::Matchers
   def be_universal(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
-  def be_unstable(*args, &block); end
-
-  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def be_use_macos_install(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
