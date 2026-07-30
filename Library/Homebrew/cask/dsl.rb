@@ -141,10 +141,6 @@ module Cask
       :autobump?,
       :no_autobump_message,
       :on_system_blocks_exist?,
-      # NOTE: unused. Delegated from `Cask` via `DSL_METHODS`, but no
-      # `on_os_blocks_exist?` reader exists for the `@on_os_blocks_exist` flag
-      # (see on_system.rb); nothing calls it, so the delegator is dead.
-      :on_os_blocks_exist?,
       :on_system_block_min_os,
       :depends_on_set_in_block?,
       *ORDINARY_ARTIFACT_CLASSES.map(&:dsl_key),
@@ -247,7 +243,6 @@ module Cask
       @no_autobump_defined = T.let(false, T::Boolean)
       @no_autobump_message = T.let(nil, T.nilable(T.any(String, Symbol)))
       @on_system_blocks_exist = T.let(false, T::Boolean)
-      @on_os_blocks_exist = T.let(false, T::Boolean)
       @on_system_block_min_os = T.let(nil, T.nilable(MacOSVersion))
       @os = T.let(nil, T.nilable(String))
       @os_set_in_block = T.let(false, T::Boolean)
@@ -639,7 +634,6 @@ module Cask
 
       set_unique_stanza(:os, should_return) do
         @on_system_blocks_exist = true
-        @on_os_blocks_exist = true
 
         on_system_conditional(macos:, linux:)
       end

@@ -87,13 +87,6 @@ module OnSystem
     BASE_OS_OPTIONS.each do |base_os|
       base.define_method(:"on_#{base_os}") do |&block|
         @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
-        # NOTE: `@on_os_blocks_exist` is currently write-only (set here and in the
-        # other `on_*`/`on_system` methods, but never read). Unlike
-        # `@on_system_blocks_exist` it has no `on_os_blocks_exist?` reader; the
-        # `:on_os_blocks_exist?` entry in Cask's DSL method set (see cask/dsl.rb)
-        # points at a method that does not exist. Kept pending a decision on whether
-        # to add the reader or remove the flag and that dangling DSL entry.
-        @on_os_blocks_exist = T.let(true, T.nilable(TrueClass))
 
         return unless OnSystem.os_condition_met? OnSystem.condition_from_method_name(T.must(__method__))
 
@@ -107,7 +100,6 @@ module OnSystem
 
     base.define_method(:on_system) do |linux, macos:, &block|
       @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
-      @on_os_blocks_exist = T.let(true, T.nilable(TrueClass))
 
       raise ArgumentError, "The first argument to `on_system` must be `:linux`" if linux != :linux
 
@@ -141,7 +133,6 @@ module OnSystem
     MacOSVersion::SYMBOLS.each_key do |os_name|
       base.define_method(:"on_#{os_name}") do |or_condition = nil, &block|
         @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
-        @on_os_blocks_exist = T.let(true, T.nilable(TrueClass))
 
         os_condition = OnSystem.condition_from_method_name T.must(__method__)
         return unless OnSystem.os_condition_met? os_condition, or_condition
