@@ -641,11 +641,13 @@ module Homebrew
                  "target" => path_spec(target, base: target_base, default_base: @default_target_base))
       end
 
+      # @api internal
       sig { void }
       def configure_glibc_runtime
         add_step("configure_glibc_runtime")
       end
 
+      # @api internal
       sig { void }
       def configure_clang_system
         add_step("configure_clang_system")
