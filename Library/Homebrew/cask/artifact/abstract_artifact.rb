@@ -71,9 +71,9 @@ module Cask
       def sort_order
         @sort_order ||= T.let(
           [
-            PreflightBlock,
             PreflightSteps,
             UninstallPreflightSteps,
+            PreflightBlock,
             # The `uninstall` stanza should be run first, as it may
             # depend on other artifacts still being installed.
             Uninstall,
