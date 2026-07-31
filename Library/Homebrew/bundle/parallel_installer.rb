@@ -139,15 +139,17 @@ module Homebrew
           brewfile_deps[entry.name] = deps
         end
 
-        # Phase 3: Recursive dependency sets for lock conflict detection.
-        # `FormulaInstaller#lock` locks all recursive dependencies before
-        # installing, even when pouring bottles.
+        # Phase 3: The names each entry's install locks, for lock conflict detection.
+        # `FormulaInstaller#lock` locks the formula itself and all of its recursive
+        # dependencies before installing, even when pouring bottles, so a formula with
+        # no dependencies of its own (e.g. `xz`) still conflicts with every entry that
+        # depends on it.
         cask_names = T.let(entries.select { |e| e.cls == Homebrew::Bundle::Cask }.to_set(&:name), T::Set[String])
-        recursive_deps = T.let({}, T::Hash[String, T::Set[String]])
+        lock_names = T.let({}, T::Hash[String, T::Set[String]])
         entries.each do |entry|
-          recursive_deps[entry.name] = case entry.cls.name
+          lock_names[entry.name] = case entry.cls.name
           when "Homebrew::Bundle::Brew"
-            Homebrew::Bundle::Brew.recursive_dep_names(entry.name)
+            Homebrew::Bundle::Brew.lock_names(entry.name)
           when "Homebrew::Bundle::Cask"
             cask_dep_names(entry.name, cask_names)
           else
@@ -155,28 +157,48 @@ module Homebrew
           end
         end
 
-        # Phase 3.5: formulae racing for an undeclared implicit dependency (e.g. a
-        # Linux sandbox executable) wait on just the first one, not on each other.
-        implicit_pioneer = T.let(nil, T.nilable(String))
-        unless DependencyCollector.new.implicit_dependency_names.empty?
-          implicit_pioneer = entries.find { |entry| entry.cls == Homebrew::Bundle::Brew }&.name
-        end
-
-        # Phase 4: Merge explicit ordering and implicit lock conflicts.
-        entries.each_with_object({}) do |entry, map|
-          depends_on = brewfile_deps.fetch(entry.name).each_with_object(Set.new) do |dep, set|
+        # Phase 4: Resolve the declared dependencies to the entries providing them.
+        entry_deps = entries.to_h do |entry|
+          deps = brewfile_deps.fetch(entry.name).each_with_object(Set.new) do |dep, set|
             name = entry_name_map[dep] || entry_name_map[normalize_formula_name(dep)]
             set << name if name.present? && name != entry.name
           end
 
-          # Later entries wait for earlier ones when they share any recursive dep.
-          entry_rdeps = recursive_deps.fetch(entry.name)
+          [entry.name, deps]
+        end
+
+        # Phase 5: Order the entries dependency-first. Lock conflicts have to be
+        # serialized the same way round as the declared dependencies above, so a
+        # Brewfile that lists a dependent before its dependency (e.g. `python`
+        # before `xz`) does not end up with the two orderings disagreeing and
+        # stranding every entry in the sequential fallback in `run!`.
+        topo = Homebrew::Bundle::Brew::Topo.new
+        entries.each { |entry| topo[entry.name] = entry_deps.fetch(entry.name).to_a }
+        # A cycle here means the declared dependencies themselves disagree, which
+        # `run!` handles by installing serially; keep the rest of the order usable.
+        position = topo.tsort_with_cycles { nil }.each_with_index.to_h
+
+        # Phase 6: formulae racing for an undeclared implicit dependency (e.g. a
+        # Linux sandbox executable) wait on just the first one, not on each other.
+        # It has to be the first in dependency order rather than in Brewfile order
+        # so that its edges point the same way round as everything else.
+        implicit_pioneer = T.let(nil, T.nilable(String))
+        unless DependencyCollector.new.implicit_dependency_names.empty?
+          implicit_pioneer = entries.select { |entry| entry.cls == Homebrew::Bundle::Brew }
+                                    .min_by { |entry| position.fetch(entry.name) }&.name
+        end
+
+        # Phase 7: Merge declared ordering and lock conflicts.
+        entries.each_with_object({}) do |entry, map|
+          depends_on = entry_deps.fetch(entry.name).dup
+          entry_locks = lock_names.fetch(entry.name)
+          entry_position = position.fetch(entry.name)
+
           entries.each do |earlier|
-            break if earlier.name == entry.name
+            next if position.fetch(earlier.name) >= entry_position
             next if depends_on.include?(earlier.name)
 
-            earlier_rdeps = recursive_deps.fetch(earlier.name)
-            depends_on << earlier.name if entry_rdeps.intersect?(earlier_rdeps)
+            depends_on << earlier.name if entry_locks.intersect?(lock_names.fetch(earlier.name))
           end
 
           if implicit_pioneer && entry.name != implicit_pioneer && entry.cls == Homebrew::Bundle::Brew
