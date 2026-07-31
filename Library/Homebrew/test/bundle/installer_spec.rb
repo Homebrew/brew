@@ -465,6 +465,11 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:formulae_by_full_name).with("beta").and_return({ dependencies: [] })
       allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("alpha").and_return(Set["alpha", "beta"])
       allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("beta").and_return(Set["beta"])
+      # Isolate the conflict-edge orientation from the implicit pioneer path, which
+      # otherwise also adds edges on Linux.
+      allow(DependencyCollector).to receive(:new).and_return(
+        instance_double(DependencyCollector, implicit_dependency_names: Set.new),
+      )
 
       entries = [alpha_entry, beta_entry]
       dependency_map = Homebrew::Bundle::ParallelInstaller.new(
@@ -512,25 +517,48 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(dependency_map).to eq({ "alpha" => Set["beta"], "beta" => Set.new })
     end
 
-    it "names a dependency cycle and still returns a usable order" do
+    it "does not make `gh`'s own dependencies wait on it when verifying attestations" do
       gh_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
         name: "gh", options: {}, verb: "Installing", cls: Homebrew::Bundle::Brew,
       )
       allow(Homebrew::EnvConfig).to receive(:verify_attestations?).and_return(true)
       allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("gh").and_return(["alpha"])
       allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("alpha").and_return([])
-      allow(Homebrew::Bundle::Brew).to receive(:lock_names) { |name| Set[name] }
+      # `gh` locks alpha's rack too, because it depends on it.
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("gh").and_return(Set["gh", "alpha"])
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("alpha").and_return(Set["alpha"])
+      allow(DependencyCollector).to receive(:new).and_return(
+        instance_double(DependencyCollector, implicit_dependency_names: Set.new),
+      )
 
       entries = [alpha_entry, gh_entry]
       parallel_installer = Homebrew::Bundle::ParallelInstaller.new(
         entries,
         jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
       )
-      expect(parallel_installer).to receive(:odebug)
-        .with("Bundle entries have a circular dependency: alpha, gh")
+      expect(parallel_installer).not_to receive(:opoo)
 
       expect(parallel_installer.build_dependency_map(entries))
-        .to eq({ "alpha" => Set["gh"], "gh" => Set["alpha"] })
+        .to eq({ "alpha" => Set.new, "gh" => Set["alpha"] })
+    end
+
+    it "names a dependency cycle and still returns a usable order" do
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("alpha").and_return(["beta"])
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("beta").and_return(["alpha"])
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names) { |name| Set[name] }
+      allow(DependencyCollector).to receive(:new).and_return(
+        instance_double(DependencyCollector, implicit_dependency_names: Set.new),
+      )
+
+      entries = [alpha_entry, beta_entry]
+      parallel_installer = Homebrew::Bundle::ParallelInstaller.new(
+        entries,
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      )
+      expect(parallel_installer).to receive(:opoo).with(a_string_including("alpha, beta"))
+
+      expect(parallel_installer.build_dependency_map(entries))
+        .to eq({ "alpha" => Set["beta"], "beta" => Set["alpha"] })
     end
 
     it "only waits on the first formula racing for a shared implicit dependency, not on every other" do
@@ -572,6 +600,29 @@ RSpec.describe Homebrew::Bundle::Installer do
       ).build_dependency_map(entries)
 
       expect(dependency_map.fetch("google-chrome")).to eq(Set.new)
+    end
+
+    it "serializes a cask against a formula that locks the same rack as its formula dependencies" do
+      installable_cask_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name: "flux-markdown", options: {}, verb: "Installing", cls: Homebrew::Bundle::Cask,
+      )
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("alpha").and_return([])
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("alpha").and_return(Set["alpha", "xz"])
+      # `xz` is not itself a Brewfile entry, so only the lock sets can catch the clash.
+      allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).with(["flux-markdown"]).and_return([])
+      allow(Homebrew::Bundle::Cask).to receive(:cask_dependencies).with(["flux-markdown"]).and_return([])
+      allow(Homebrew::Bundle::Cask).to receive(:lock_names).with(["flux-markdown"]).and_return(Set["xz"])
+      allow(DependencyCollector).to receive(:new).and_return(
+        instance_double(DependencyCollector, implicit_dependency_names: Set.new),
+      )
+
+      entries = [alpha_entry, installable_cask_entry]
+      dependency_map = Homebrew::Bundle::ParallelInstaller.new(
+        entries,
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      ).build_dependency_map(entries)
+
+      expect(dependency_map.fetch("flux-markdown")).to eq(Set["alpha"])
     end
 
     it "installs a Brewfile `gh` before other entries when verifying attestations" do
@@ -649,10 +700,15 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle).to receive(:cask_installed?).and_return(false)
       allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("alpha").and_return([])
       allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("alpha").and_return(Set["alpha"])
+      allow(Homebrew::Bundle::Cask).to receive(:lock_names).with(["tmuxpack/tpack/tpack"]) do
+        event_order << :cask_locks
+        Set["alpha"]
+      end
       allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).with(["tmuxpack/tpack/tpack"]) do
         event_order << :cask_deps
         ["alpha"]
       end
+      allow(Homebrew::Bundle::Cask).to receive(:cask_dependencies).with(["tmuxpack/tpack/tpack"]).and_return([])
       allow(Homebrew::Bundle::Brew).to receive(:install!) do |name, **_options|
         install_order << name
         true
@@ -670,7 +726,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(success).to eq(2)
       expect(failure).to eq(0)
       expect(install_order).to eq(["alpha", "tpack"])
-      expect(event_order).to eq([:tap_install, :cask_deps])
+      expect(event_order).to eq([:tap_install, :cask_locks, :cask_deps])
     end
 
     it "installs unqualified formulae after Brewfile taps" do
@@ -755,7 +811,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(success).to eq(2)
       expect(failure).to eq(0)
       expect(install_order).to eq(["thirdparty/rootformula", "thirdparty/rootformula/foo"])
-      expect(event_order).to eq([:tap_install, :formula_dep_names, :lock_names, :formula_install])
+      expect(event_order).to eq([:tap_install, :lock_names, :formula_dep_names, :formula_install])
     end
 
     it "installs unqualified casks after Brewfile taps" do
