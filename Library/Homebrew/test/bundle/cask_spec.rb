@@ -7,6 +7,10 @@ require "cask"
 require "cask/cask_loader"
 
 RSpec.describe Homebrew::Bundle::Cask do
+  def depends_on_double(formula: [], cask: [])
+    instance_double(Cask::DSL::DependsOn, formula:, cask:)
+  end
+
   describe "dumping" do
     subject(:dumper) { described_class }
 
@@ -137,8 +141,9 @@ RSpec.describe Homebrew::Bundle::Cask do
       context "when multiple casks have the same dependency" do
         before do
           described_class.reset!
-          foo = instance_double(Cask::Cask, to_s: "foo", full_name: "foo", depends_on: { formula: ["baz", "qux"] })
-          bar = instance_double(Cask::Cask, to_s: "bar", full_name: "bar", depends_on: {})
+          foo = instance_double(Cask::Cask, to_s: "foo", full_name: "foo",
+                                depends_on: depends_on_double(formula: ["baz", "qux"]))
+          bar = instance_double(Cask::Cask, to_s: "bar", full_name: "bar", depends_on: depends_on_double)
           allow(Cask::Caskroom).to receive(:casks).and_return([foo, bar])
           allow(Homebrew::Bundle).to receive(:cask_installed?).and_return(true)
         end
@@ -159,13 +164,28 @@ RSpec.describe Homebrew::Bundle::Cask do
             Cask::Cask,
             to_s:       "tpack",
             full_name:  "tmuxpack/tpack/tpack",
-            depends_on: { formula: ["tmux"] },
+            depends_on: depends_on_double(formula: ["tmux"]),
           )
 
           expect(Cask::CaskLoader).to receive(:load).with("tmuxpack/tpack/tpack").and_return(cask)
 
           expect(dumper.formula_dependencies(["tmuxpack/tpack/tpack"])).to eql(["tmux"])
         end
+      end
+    end
+
+    describe "#cask_dependencies" do
+      before do
+        described_class.reset!
+        allow(Homebrew::Bundle).to receive(:cask_installed?).and_return(false)
+      end
+
+      it "returns the casks the given casks depend on" do
+        cask = instance_double(Cask::Cask, to_s: "foo", full_name: "foo",
+                               depends_on: depends_on_double(cask: ["bar"]))
+        expect(Cask::CaskLoader).to receive(:load).with("foo").and_return(cask)
+
+        expect(dumper.cask_dependencies(["foo"])).to eql(["bar"])
       end
     end
   end

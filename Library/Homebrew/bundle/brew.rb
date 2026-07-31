@@ -202,15 +202,36 @@ module Homebrew
 
         # Returns the Cellar racks `FormulaInstaller#lock` locks when installing this
         # formula: the formula itself plus all of its recursive dependencies. Racks are
-        # named after `Formula#name`, so resolve aliases (e.g. `python` to `python@3.14`)
-        # and strip tap prefixes from the full names `Dependency#name` reports.
+        # named after `Formula#name`, so resolve each dependency through its formula:
+        # `Dependency#name` is the string passed to `depends_on`, which may be an alias
+        # (`python` for `python@3.14`) or a full tapped name.
+        # Under-reporting a rack schedules a parallel install that then fails to take
+        # the lock, so fall back per-dependency rather than discarding the whole set.
         sig { params(name: String).returns(T::Set[String]) }
         def lock_names(name)
           require "formula"
-          formula = Formula[name]
-          Set[formula.name, *formula.recursive_dependencies.map { Utils.name_from_full_name(it.name) }]
-        rescue FormulaUnavailableError
-          Set[Utils.name_from_full_name(name)]
+          formula = begin
+            Formula[name]
+          rescue FormulaUnavailableError => e
+            opoo "'#{name}' formula is unreadable: #{e}"
+            nil
+          end
+          return Set[Utils.name_from_full_name(name)] if formula.nil?
+
+          dependencies = begin
+            formula.recursive_dependencies
+          rescue FormulaUnavailableError => e
+            opoo "'#{name}' dependencies are unreadable: #{e}"
+            []
+          end
+
+          dependencies.each_with_object(Set[formula.name]) do |dependency, names|
+            names << begin
+              dependency.to_formula.name
+            rescue FormulaUnavailableError
+              Utils.name_from_full_name(dependency.name)
+            end
+          end
         end
 
         sig { returns(T::Array[T::Hash[Symbol, T.untyped]]) }
@@ -423,7 +444,7 @@ module Homebrew
           end
 
           # Step 2: Sort by formula dependency topology.
-          topo = Topo.new
+          topo = Utils::StringTopologicalHash.new
           formulae.each do |f|
             topo[f[:name]] = topo[f[:full_name]] = f[:dependencies].filter_map do |dep|
               ff = formulae_by_name(dep)
@@ -440,7 +461,7 @@ module Homebrew
           # Stale keg-tab dependency data can form a cycle the live graph does not
           # have (Homebrew/homebrew-bundle#1513), so warn and continue rather than
           # aborting the whole bundle.
-          sorted = topo.tsort_with_cycles do |cycles|
+          sorted = topo.sorted_names do |cycles|
             cyclic = cycles.flatten
                            .filter_map { |name| @formulae_by_full_name[name] || @formulae_by_name[name] }
                            .uniq { |f| f[:full_name] }
@@ -782,32 +803,6 @@ module Homebrew
 
         @changed = true
         true
-      end
-
-      class Topo < Hash
-        extend T::Generic
-        include TSort
-        include Utils::CycleTolerantTSort
-
-        K = type_member { { fixed: String } }
-        V = type_member { { fixed: T::Array[String] } }
-        Elem = type_member(:out) { { fixed: [String, T::Array[String]] } }
-
-        # TSort interface requires a broader block return type than our implementation.
-        # rubocop:disable Sorbet/AllowIncompatibleOverride
-        sig {
-          override(allow_incompatible: true).params(block: T.proc.params(arg0: String).returns(BasicObject)).void
-        }
-        # rubocop:enable Sorbet/AllowIncompatibleOverride
-        def each_key(&block)
-          keys.each(&block)
-        end
-        alias tsort_each_node each_key
-
-        sig { override.params(node: String, block: T.proc.params(arg0: String).void).void }
-        def tsort_each_child(node, &block)
-          fetch(node, []).sort.each(&block)
-        end
       end
     end
   end
