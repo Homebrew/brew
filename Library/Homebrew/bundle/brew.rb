@@ -200,13 +200,17 @@ module Homebrew
           find_formula(name)&.fetch(:dependencies, []) || []
         end
 
-        # Returns recursive dependency names for lock conflict detection.
+        # Returns the Cellar racks `FormulaInstaller#lock` locks when installing this
+        # formula: the formula itself plus all of its recursive dependencies. Racks are
+        # named after `Formula#name`, so resolve aliases (e.g. `python` to `python@3.14`)
+        # and strip tap prefixes from the full names `Dependency#name` reports.
         sig { params(name: String).returns(T::Set[String]) }
-        def recursive_dep_names(name)
+        def lock_names(name)
           require "formula"
-          Formula[name].recursive_dependencies.to_set(&:name)
+          formula = Formula[name]
+          Set[formula.name, *formula.recursive_dependencies.map { Utils.name_from_full_name(it.name) }]
         rescue FormulaUnavailableError
-          Set.new
+          Set[Utils.name_from_full_name(name)]
         end
 
         sig { returns(T::Array[T::Hash[Symbol, T.untyped]]) }
