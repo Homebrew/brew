@@ -12,6 +12,8 @@ require "dependency_collector"
 module Homebrew
   module Bundle
     class ParallelInstaller
+      include ::Utils::Output::Mixin
+
       sig {
         params(
           entries:    T::Array[Installer::InstallableEntry],
@@ -111,7 +113,7 @@ module Homebrew
         end
 
         # Phase 1: Map both full and short names so dep lookups work either way.
-        entry_name_map = entries.each_with_object({}) do |entry, map|
+        entry_name_map = entries.each_with_object(T.let({}, T::Hash[String, String])) do |entry, map|
           map[entry.name] = entry.name
           map[normalize_formula_name(entry.name)] = entry.name
         end
@@ -159,9 +161,12 @@ module Homebrew
 
         # Phase 4: Resolve the declared dependencies to the entries providing them.
         entry_deps = entries.to_h do |entry|
-          deps = brewfile_deps.fetch(entry.name).each_with_object(Set.new) do |dep, set|
+          deps = brewfile_deps.fetch(entry.name)
+                              .each_with_object(T.let(Set.new, T::Set[String])) do |dep, set|
             name = entry_name_map[dep] || entry_name_map[normalize_formula_name(dep)]
-            set << name if name.present? && name != entry.name
+            next if name.nil? || name == entry.name
+
+            set << name
           end
 
           [entry.name, deps]
@@ -176,7 +181,10 @@ module Homebrew
         entries.each { |entry| topo[entry.name] = entry_deps.fetch(entry.name).to_a }
         # A cycle here means the declared dependencies themselves disagree, which
         # `run!` handles by installing serially; keep the rest of the order usable.
-        position = topo.tsort_with_cycles { nil }.each_with_index.to_h
+        order = topo.tsort_with_cycles do |cycles|
+          odebug "Bundle entries have a circular dependency: #{cycles.flatten.uniq.join(", ")}"
+        end
+        position = T.let(order.each_with_index.to_h, T::Hash[String, Integer])
 
         # Phase 6: formulae racing for an undeclared implicit dependency (e.g. a
         # Linux sandbox executable) wait on just the first one, not on each other.
@@ -194,11 +202,11 @@ module Homebrew
           entry_locks = lock_names.fetch(entry.name)
           entry_position = position.fetch(entry.name)
 
-          entries.each do |earlier|
-            next if position.fetch(earlier.name) >= entry_position
-            next if depends_on.include?(earlier.name)
+          entries.each do |other|
+            next if position.fetch(other.name) >= entry_position
+            next if depends_on.include?(other.name)
 
-            depends_on << earlier.name if entry_locks.intersect?(lock_names.fetch(earlier.name))
+            depends_on << other.name if entry_locks.intersect?(lock_names.fetch(other.name))
           end
 
           if implicit_pioneer && entry.name != implicit_pioneer && entry.cls == Homebrew::Bundle::Brew

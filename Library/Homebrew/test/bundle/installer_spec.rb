@@ -493,6 +493,24 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(dependency_map.fetch("beta")).to eq(Set["alpha"])
     end
 
+    it "picks the implicit dependency pioneer in dependency order rather than Brewfile order" do
+      allow(Homebrew::Bundle::Brew).to receive(:formulae_by_full_name).with("alpha")
+                                                                      .and_return({ dependencies: ["beta"] })
+      allow(Homebrew::Bundle::Brew).to receive(:formulae_by_full_name).with("beta").and_return({ dependencies: [] })
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names) { |name| Set[name] }
+      allow(DependencyCollector).to receive(:new).and_return(
+        instance_double(DependencyCollector, implicit_dependency_names: Set["bubblewrap"]),
+      )
+
+      entries = [alpha_entry, beta_entry]
+      dependency_map = Homebrew::Bundle::ParallelInstaller.new(
+        entries,
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      ).build_dependency_map(entries)
+
+      expect(dependency_map).to eq({ "alpha" => Set["beta"], "beta" => Set.new })
+    end
+
     it "only waits on the first formula racing for a shared implicit dependency, not on every other" do
       gamma_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
         name: "gamma", options: {}, verb: "Installing", cls: Homebrew::Bundle::Brew,
