@@ -475,7 +475,8 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:formulae_by_full_name).with("alpha")
                                                                       .and_return({ dependencies: ["beta"] })
       allow(Homebrew::Bundle::Brew).to receive(:formulae_by_full_name).with("beta").and_return({ dependencies: [] })
-      allow(Homebrew::Bundle::Brew).to receive(:lock_names) { |name| Set[name] }
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("alpha").and_return(Set["alpha", "beta"])
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("beta").and_return(Set["beta"])
       allow(DependencyCollector).to receive(:new).and_return(
         instance_double(DependencyCollector, implicit_dependency_names: Set["bubblewrap"]),
       )
@@ -487,6 +488,27 @@ RSpec.describe Homebrew::Bundle::Installer do
       ).build_dependency_map(entries)
 
       expect(dependency_map).to eq({ "alpha" => Set["beta"], "beta" => Set.new })
+    end
+
+    it "names a dependency cycle and still returns a usable order" do
+      gh_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name: "gh", options: {}, verb: "Installing", cls: Homebrew::Bundle::Brew,
+      )
+      allow(Homebrew::EnvConfig).to receive(:verify_attestations?).and_return(true)
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("gh").and_return(["alpha"])
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("alpha").and_return([])
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names) { |name| Set[name] }
+
+      entries = [alpha_entry, gh_entry]
+      parallel_installer = Homebrew::Bundle::ParallelInstaller.new(
+        entries,
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      )
+      expect(parallel_installer).to receive(:odebug)
+        .with("Bundle entries have a circular dependency: alpha, gh")
+
+      expect(parallel_installer.build_dependency_map(entries))
+        .to eq({ "alpha" => Set["gh"], "gh" => Set["alpha"] })
     end
 
     it "only waits on the first formula racing for a shared implicit dependency, not on every other" do

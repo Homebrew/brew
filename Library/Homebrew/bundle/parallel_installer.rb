@@ -197,7 +197,7 @@ module Homebrew
         end
 
         # Phase 7: Merge declared ordering and lock conflicts.
-        entries.each_with_object({}) do |entry, map|
+        entries.to_h do |entry|
           depends_on = entry_deps.fetch(entry.name).dup
           entry_locks = lock_names.fetch(entry.name)
           entry_position = position.fetch(entry.name)
@@ -213,7 +213,7 @@ module Homebrew
             depends_on << implicit_pioneer
           end
 
-          map[entry.name] = depends_on
+          [entry.name, depends_on]
         end
       end
 
