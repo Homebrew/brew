@@ -305,10 +305,11 @@ RSpec.describe Homebrew::Bundle::Brew do
       expect(described_class.lock_names("python")).to eq(Set["python@3.14", "xz", "mpdecimal"])
     end
 
-    it "falls back to the requested name for an unavailable formula" do
-      allow(Formula).to receive(:[]).with("missing").and_raise(FormulaUnavailableError, "missing")
+    it "falls back to the requested rack name for an unavailable formula" do
+      allow(Formula).to receive(:[]).with("qux/quuz/missing")
+                                    .and_raise(FormulaUnavailableError, "qux/quuz/missing")
 
-      expect(described_class.lock_names("missing")).to eq(Set["missing"])
+      expect(described_class.lock_names("qux/quuz/missing")).to eq(Set["missing"])
     end
   end
 
