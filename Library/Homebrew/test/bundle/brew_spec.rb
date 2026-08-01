@@ -4,6 +4,7 @@
 require "bundle"
 require "bundle/brew"
 require "bundle/brew_services"
+require "tsort"
 require "formula"
 require "tab"
 require "trust"
@@ -952,6 +953,26 @@ RSpec.describe Homebrew::Bundle::Brew do
                                      restart_service: :changed).restart_service_needed?).to be(true)
         end
       end
+    end
+  end
+
+  describe Homebrew::Bundle::Brew::Topo do
+    it "treats an edge to a missing node as a leaf" do
+      topo = described_class.new
+      topo["a"] = ["b"]
+      topo["b"] = ["libice"]
+
+      expect(topo.tsort).to eq(["libice", "b", "a"])
+    end
+
+    it "flattens a cyclic graph via strongly connected components without raising" do
+      topo = described_class.new
+      topo["a"] = ["b"]
+      topo["b"] = ["a"]
+
+      cycles = []
+      expect(topo.tsort_with_cycles { |c| cycles.concat(c) }).to contain_exactly("a", "b")
+      expect(cycles).to eq([["a", "b"]])
     end
   end
 end
