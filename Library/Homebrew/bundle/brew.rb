@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "json"
-require "tsort"
 require "utils"
 require "utils/topological_hash"
 require "utils/output"
@@ -202,11 +201,8 @@ module Homebrew
 
         # Returns the Cellar racks `FormulaInstaller#lock` locks when installing this
         # formula: the formula itself plus all of its recursive dependencies. Racks are
-        # named after `Formula#name`, so resolve each dependency through its formula:
-        # `Dependency#name` is the string passed to `depends_on`, which may be an alias
-        # (`python` for `python@3.14`) or a full tapped name.
-        # Under-reporting a rack schedules a parallel install that then fails to take
-        # the lock, so fall back per-dependency rather than discarding the whole set.
+        # named after `Formula#name`; `Dependency.expand` already canonicalises aliases
+        # and renames, so only the tap prefix has to come off the expanded names.
         sig { params(name: String).returns(T::Set[String]) }
         def lock_names(name)
           require "formula"
@@ -218,6 +214,9 @@ module Homebrew
           end
           return Set[Utils.name_from_full_name(name)] if formula.nil?
 
+          # An unresolvable transitive dependency makes the whole expansion raise, so
+          # keep the formula's own canonical rack rather than falling back to the
+          # requested name, which may be an alias that names no rack.
           dependencies = begin
             formula.recursive_dependencies
           rescue FormulaUnavailableError => e
@@ -226,11 +225,7 @@ module Homebrew
           end
 
           dependencies.each_with_object(Set[formula.name]) do |dependency, names|
-            names << begin
-              dependency.to_formula.name
-            rescue FormulaUnavailableError
-              Utils.name_from_full_name(dependency.name)
-            end
+            names << Utils.name_from_full_name(dependency.name)
           end
         end
 

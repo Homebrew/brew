@@ -242,11 +242,13 @@ module Homebrew
         # Returns the Cellar racks installing these casks locks. `Cask::Installer`
         # installs the formulae a cask depends on, recursively through its cask
         # dependencies, and each of those takes the same rack locks a `brew` entry
-        # would. Built from the same graph `Cask::Installer` resolves them with.
+        # would, so expand each through `Brew.lock_names`: the graph below prunes
+        # build and test dependencies, which `FormulaInstaller#lock` still locks.
         sig { params(cask_list: T::Array[String]).returns(T::Set[String]) }
         def lock_names(cask_list)
           return Set.new if cask_list.blank?
 
+          require "bundle/brew"
           require "utils/topological_hash"
 
           cask_list.each_with_object(T.let(Set.new, T::Set[String])) do |cask_name, names|
@@ -254,7 +256,9 @@ module Homebrew
             next if cask.nil?
 
             graph = ::Utils::TopologicalHash.graph_package_dependencies(cask)
-            graph.each_key { |package| names << package.name if package.is_a?(Formula) }
+            graph.each_key do |package|
+              names.merge(Homebrew::Bundle::Brew.lock_names(package.name)) if package.is_a?(Formula)
+            end
           rescue ::Cask::CaskError, FormulaUnavailableError => e
             opoo "'#{cask_name}' dependencies are unreadable: #{e}"
           end
