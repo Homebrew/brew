@@ -45,18 +45,14 @@ module Utils
       tsort_with_cycles(&on_cycle).map { String(it) }
     end
 
-    # TSort interface requires a broader block return type than our implementation.
-    # rubocop:disable Sorbet/AllowIncompatibleOverride
-    sig {
-      override(allow_incompatible: true).params(block: T.proc.params(arg0: String).returns(BasicObject)).void
-    }
-    # rubocop:enable Sorbet/AllowIncompatibleOverride
-    def each_key(&block)
-      keys.each(&block)
-    end
-    alias tsort_each_node each_key
+    private
 
-    sig { override.params(node: String, block: T.proc.params(arg0: String).void).void }
+    sig { override.params(block: T.proc.params(arg0: K).void).void }
+    def tsort_each_node(&block)
+      each_key(&block)
+    end
+
+    sig { override.params(node: K, block: T.proc.params(arg0: String).void).void }
     def tsort_each_child(node, &block)
       fetch(node, []).sort.each(&block)
     end

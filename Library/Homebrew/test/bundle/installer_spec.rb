@@ -542,6 +542,84 @@ RSpec.describe Homebrew::Bundle::Installer do
         .to eq({ "alpha" => Set.new, "gh" => Set["alpha"] })
     end
 
+    # `gh`'s only dependency is a build dependency, so it never appears in
+    # `formula_dep_names` and no attestation edge can cycle through it. Deciding on lock
+    # closures instead would drop the edge here, because they cover build dependencies
+    # and so `gh`'s closure contains `go`'s, reversing the two.
+    it "still installs `gh` first when it only shares a rack with an entry" do
+      gh_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name: "gh", options: {}, verb: "Installing", cls: Homebrew::Bundle::Brew,
+      )
+      go_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name: "go", options: {}, verb: "Installing", cls: Homebrew::Bundle::Brew,
+      )
+      allow(Homebrew::EnvConfig).to receive(:verify_attestations?).and_return(true)
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).and_return([])
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("gh").and_return(Set["gh", "go"])
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("go").and_return(Set["go"])
+      allow(DependencyCollector).to receive(:new).and_return(
+        instance_double(DependencyCollector, implicit_dependency_names: Set.new),
+      )
+
+      entries = [go_entry, gh_entry]
+      dependency_map = Homebrew::Bundle::ParallelInstaller.new(
+        entries,
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      ).build_dependency_map(entries)
+
+      expect(dependency_map).to eq({ "go" => Set["gh"], "gh" => Set.new })
+    end
+
+    it "makes casks wait on `gh` when verifying attestations" do
+      gh_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name: "gh", options: {}, verb: "Installing", cls: Homebrew::Bundle::Brew,
+      )
+      installable_cask_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name: "flux-markdown", options: {}, verb: "Installing", cls: Homebrew::Bundle::Cask,
+      )
+      allow(Homebrew::EnvConfig).to receive(:verify_attestations?).and_return(true)
+      allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("gh").and_return([])
+      allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("gh").and_return(Set["gh"])
+      allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).with(["flux-markdown"]).and_return([])
+      allow(Homebrew::Bundle::Cask).to receive(:cask_dependencies).with(["flux-markdown"]).and_return([])
+      allow(Homebrew::Bundle::Cask).to receive(:lock_names).with(["flux-markdown"]).and_return(Set.new)
+      allow(DependencyCollector).to receive(:new).and_return(
+        instance_double(DependencyCollector, implicit_dependency_names: Set.new),
+      )
+
+      entries = [installable_cask_entry, gh_entry]
+      dependency_map = Homebrew::Bundle::ParallelInstaller.new(
+        entries,
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      ).build_dependency_map(entries)
+
+      expect(dependency_map.fetch("flux-markdown")).to eq(Set["gh"])
+    end
+
+    it "installs a cask before the cask that depends on it" do
+      dependent_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name: "flux-markdown", options: {}, verb: "Installing", cls: Homebrew::Bundle::Cask,
+      )
+      dependency_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        name: "flux-engine", options: {}, verb: "Installing", cls: Homebrew::Bundle::Cask,
+      )
+      allow(Homebrew::Bundle::Cask).to receive(:cask_dependencies).with(["flux-markdown"])
+                                                                  .and_return(["flux-engine"])
+      allow(Homebrew::Bundle::Cask).to receive(:cask_dependencies).with(["flux-engine"]).and_return([])
+      allow(Homebrew::Bundle::Cask).to receive_messages(formula_dependencies: [], lock_names: Set.new)
+      allow(DependencyCollector).to receive(:new).and_return(
+        instance_double(DependencyCollector, implicit_dependency_names: Set.new),
+      )
+
+      entries = [dependent_entry, dependency_entry]
+      dependency_map = Homebrew::Bundle::ParallelInstaller.new(
+        entries,
+        jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
+      ).build_dependency_map(entries)
+
+      expect(dependency_map.fetch("flux-markdown")).to eq(Set["flux-engine"])
+    end
+
     it "names a dependency cycle and still returns a usable order" do
       allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("alpha").and_return(["beta"])
       allow(Homebrew::Bundle::Brew).to receive(:formula_dep_names).with("beta").and_return(["alpha"])
@@ -555,7 +633,8 @@ RSpec.describe Homebrew::Bundle::Installer do
         entries,
         jobs: 2, no_upgrade: false, verbose: false, force: false, quiet: true,
       )
-      expect(parallel_installer).to receive(:opoo).with(a_string_including("alpha, beta"))
+      expect(parallel_installer).to receive(:opoo)
+        .with("Installing these bundle entries one at a time, they depend on each other: alpha, beta")
 
       expect(parallel_installer.build_dependency_map(entries))
         .to eq({ "alpha" => Set["beta"], "beta" => Set["alpha"] })
@@ -726,7 +805,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(success).to eq(2)
       expect(failure).to eq(0)
       expect(install_order).to eq(["alpha", "tpack"])
-      expect(event_order).to eq([:tap_install, :cask_locks, :cask_deps])
+      expect(event_order).to eq([:tap_install, :cask_deps, :cask_locks])
     end
 
     it "installs unqualified formulae after Brewfile taps" do
@@ -811,7 +890,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(success).to eq(2)
       expect(failure).to eq(0)
       expect(install_order).to eq(["thirdparty/rootformula", "thirdparty/rootformula/foo"])
-      expect(event_order).to eq([:tap_install, :lock_names, :formula_dep_names, :formula_install])
+      expect(event_order).to eq([:tap_install, :formula_dep_names, :lock_names, :formula_install])
     end
 
     it "installs unqualified casks after Brewfile taps" do

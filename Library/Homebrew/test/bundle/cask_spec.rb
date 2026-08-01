@@ -188,6 +188,32 @@ RSpec.describe Homebrew::Bundle::Cask do
         expect(dumper.cask_dependencies(["foo"])).to eql(["bar"])
       end
     end
+
+    describe "#lock_names" do
+      before do
+        described_class.reset!
+        allow(Homebrew::Bundle).to receive(:cask_installed?).and_return(false)
+      end
+
+      # `graph_package_dependencies` prunes build and test dependencies, but
+      # `FormulaInstaller#lock` still locks them, so each formula in the graph has to be
+      # expanded through `Brew.lock_names` rather than contributing only its own rack.
+      it "expands each formula dependency to every rack its install locks" do
+        dependency = formula "ripgrep" do
+          T.bind(self, T.class_of(Formula))
+          url "foo"
+          version "1.0"
+        end
+        cask = instance_double(Cask::Cask, to_s: "foo", full_name: "foo")
+        allow(Cask::CaskLoader).to receive(:load).with("foo").and_return(cask)
+        allow(Utils::TopologicalHash).to receive(:graph_package_dependencies)
+          .with(cask).and_return({ dependency => [] })
+        allow(Homebrew::Bundle::Brew).to receive(:lock_names).with("ripgrep")
+                                                             .and_return(Set["ripgrep", "rust", "xz"])
+
+        expect(dumper.lock_names(["foo"])).to eq(Set["ripgrep", "rust", "xz"])
+      end
+    end
   end
 
   describe "installing" do

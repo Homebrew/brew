@@ -4,7 +4,6 @@
 require "bundle"
 require "bundle/brew"
 require "bundle/brew_services"
-require "tsort"
 require "formula"
 require "tab"
 require "trust"
@@ -294,46 +293,23 @@ RSpec.describe Homebrew::Bundle::Brew do
   end
 
   describe "#lock_names" do
-    def dependency_double(name, resolves_to: name)
-      instance_double(Dependency, name:, to_formula: instance_double(Formula, name: resolves_to))
-    end
-
     it "includes the formula's canonical name alongside its recursive dependency rack names" do
       formula = instance_double(Formula, name:                   "python@3.14",
                                          recursive_dependencies: [
-                                           dependency_double("xz"),
-                                           dependency_double("qux/quuz/mpdecimal", resolves_to: "mpdecimal"),
+                                           instance_double(Dependency, name: "xz"),
+                                           instance_double(Dependency, name: "qux/quuz/mpdecimal"),
                                          ])
       allow(Formula).to receive(:[]).with("python").and_return(formula)
 
       expect(described_class.lock_names("python")).to eq(Set["python@3.14", "xz", "mpdecimal"])
     end
 
-    it "resolves an aliased dependency to the rack it actually locks" do
-      formula = instance_double(Formula, name:                   "ipython",
-                                         recursive_dependencies: [
-                                           dependency_double("python", resolves_to: "python@3.14"),
-                                         ])
-      allow(Formula).to receive(:[]).with("ipython").and_return(formula)
+    it "keeps the formula's canonical rack when its dependency tree cannot be expanded" do
+      formula = instance_double(Formula, name: "python@3.14")
+      allow(formula).to receive(:recursive_dependencies).and_raise(FormulaUnavailableError, "xz")
+      allow(Formula).to receive(:[]).with("python").and_return(formula)
 
-      expect(described_class.lock_names("ipython")).to eq(Set["ipython", "python@3.14"])
-    end
-
-    it "falls back to the tap-stripped name for a dependency that cannot be loaded" do
-      dependency = instance_double(Dependency, name: "qux/quuz/gone")
-      allow(dependency).to receive(:to_formula).and_raise(FormulaUnavailableError, "qux/quuz/gone")
-      formula = instance_double(Formula, name: "alpha", recursive_dependencies: [dependency])
-      allow(Formula).to receive(:[]).with("alpha").and_return(formula)
-
-      expect(described_class.lock_names("alpha")).to eq(Set["alpha", "gone"])
-    end
-
-    it "keeps the formula's own rack when its dependency tree cannot be expanded" do
-      formula = instance_double(Formula, name: "alpha")
-      allow(formula).to receive(:recursive_dependencies).and_raise(FormulaUnavailableError, "beta")
-      allow(Formula).to receive(:[]).with("alpha").and_return(formula)
-
-      expect(described_class.lock_names("alpha")).to eq(Set["alpha"])
+      expect(described_class.lock_names("python")).to eq(Set["python@3.14"])
     end
 
     it "falls back to the requested rack name for an unavailable formula" do
