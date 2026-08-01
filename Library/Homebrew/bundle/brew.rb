@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "tsort"
 require "utils"
 require "utils/topological_hash"
 require "utils/output"
@@ -439,7 +440,7 @@ module Homebrew
           end
 
           # Step 2: Sort by formula dependency topology.
-          topo = Utils::StringTopologicalHash.new
+          topo = Topo.new
           formulae.each do |f|
             topo[f[:name]] = topo[f[:full_name]] = f[:dependencies].filter_map do |dep|
               ff = formulae_by_name(dep)
@@ -456,7 +457,7 @@ module Homebrew
           # Stale keg-tab dependency data can form a cycle the live graph does not
           # have (Homebrew/homebrew-bundle#1513), so warn and continue rather than
           # aborting the whole bundle.
-          sorted = topo.sorted_names do |cycles|
+          sorted = topo.tsort_with_cycles do |cycles|
             cyclic = cycles.flatten
                            .filter_map { |name| @formulae_by_full_name[name] || @formulae_by_name[name] }
                            .uniq { |f| f[:full_name] }
@@ -798,6 +799,32 @@ module Homebrew
 
         @changed = true
         true
+      end
+
+      class Topo < Hash
+        extend T::Generic
+        include TSort
+        include Utils::CycleTolerantTSort
+
+        K = type_member { { fixed: String } }
+        V = type_member { { fixed: T::Array[String] } }
+        Elem = type_member(:out) { { fixed: [String, T::Array[String]] } }
+
+        # TSort interface requires a broader block return type than our implementation.
+        # rubocop:disable Sorbet/AllowIncompatibleOverride
+        sig {
+          override(allow_incompatible: true).params(block: T.proc.params(arg0: String).returns(BasicObject)).void
+        }
+        # rubocop:enable Sorbet/AllowIncompatibleOverride
+        def each_key(&block)
+          keys.each(&block)
+        end
+        alias tsort_each_node each_key
+
+        sig { override.params(node: String, block: T.proc.params(arg0: String).void).void }
+        def tsort_each_child(node, &block)
+          fetch(node, []).sort.each(&block)
+        end
       end
     end
   end

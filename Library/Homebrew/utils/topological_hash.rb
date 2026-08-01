@@ -25,39 +25,6 @@ module Utils
     end
   end
 
-  # Topologically sortable hash map of names to the names they depend on.
-  class StringTopologicalHash < Hash
-    extend T::Generic
-    include TSort
-    include CycleTolerantTSort
-
-    K = type_member { { fixed: String } }
-    V = type_member { { fixed: T::Array[String] } }
-    Elem = type_member(:out) { { fixed: [String, T::Array[String]] } }
-
-    # `tsort_with_cycles` is declared over untyped nodes because TSort's own
-    # interface is untyped. Nodes here only ever come from `each_key`, so
-    # convert rather than assert to recover the type callers rely on.
-    sig {
-      params(on_cycle: T.proc.params(arg0: T::Array[T::Array[String]]).void).returns(T::Array[String])
-    }
-    def sorted_names(&on_cycle)
-      tsort_with_cycles(&on_cycle).map { String(it) }
-    end
-
-    private
-
-    sig { override.params(block: T.proc.params(arg0: K).void).void }
-    def tsort_each_node(&block)
-      each_key(&block)
-    end
-
-    sig { override.params(node: K, block: T.proc.params(arg0: String).void).void }
-    def tsort_each_child(node, &block)
-      fetch(node, []).sort.each(&block)
-    end
-  end
-
   # Topologically sortable hash map.
   class TopologicalHash < Hash
     extend T::Generic
