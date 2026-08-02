@@ -38,6 +38,9 @@ module Homebrew
                description: "Run additional, slower style checks that navigate the Git repository."
         switch "--online",
                description: "Run additional, slower style checks that require a network connection."
+        switch "--security",
+               description: "Run deterministic security checks for dangerous patterns (remote code execution, " \
+                            "insecure sources, privilege escalation, missing integrity checks)."
         switch "--installed",
                description: "Only check formulae and casks that are currently installed."
         switch "--eval-all",
@@ -228,6 +231,7 @@ module Homebrew
             strict:,
             online:,
             git:                 args.git?,
+            security:            args.security?,
             only:,
             except:              args.except,
             spdx_license_data:,

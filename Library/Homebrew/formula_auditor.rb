@@ -39,6 +39,7 @@ module Homebrew
         strict:              T.nilable(T::Boolean),
         online:              T.nilable(T::Boolean),
         git:                 T.nilable(T::Boolean),
+        security:            T.nilable(T::Boolean),
         display_cop_names:   T.nilable(T::Boolean),
         only:                T.nilable(T::Array[String]),
         except:              T.nilable(T::Array[String]),
@@ -49,7 +50,8 @@ module Homebrew
         spdx_exception_data: T.nilable(T::Hash[String, T.untyped]),
       ).void
     }
-    def initialize(formula, new_formula: nil, strict: nil, online: nil, git: nil, display_cop_names: nil, only: nil,
+    def initialize(formula, new_formula: nil, strict: nil, online: nil, git: nil, security: nil,
+                   display_cop_names: nil, only: nil,
                    except: nil, style_offenses: nil, core_tap: nil, tap_audit: nil, spdx_license_data: nil,
                    spdx_exception_data: nil)
       @formula = formula
@@ -59,6 +61,7 @@ module Homebrew
       @strict = strict
       @online = online
       @git = git
+      @security = security
       @display_cop_names = display_cop_names
       @only = only
       @except = except
@@ -1222,6 +1225,64 @@ module Homebrew
     sig { override.params(output: T.nilable(String)).void }
     def problem_if_output(output)
       problem(output) if output
+    end
+
+    sig { void }
+    def audit_security
+      return if @security != true && @only&.exclude?("security")
+
+      text = @text.to_s
+      return if text.empty?
+
+      if text.match?(%r{curl\s+[^\n|]*\|\s*(?:sudo\s+)?(?:/bin/)?(?:ba)?sh\b}i) ||
+         text.match?(%r{wget\s+[^\n|]*\|\s*(?:sudo\s+)?(?:/bin/)?(?:ba)?sh\b}i)
+        problem "Security: piping network content into a shell (`curl | sh` / `wget | bash`) " \
+                "executes untrusted, mutable code at install time"
+      end
+      if text.match?(/eval\s*\(?\s*["']?\s*(?:curl|wget)\b/i) ||
+         text.match?(/eval\s*\(?\s*["']?\s*\$\(\s*(?:curl|wget)\b/i)
+        problem "Security: `eval` of remote content executes untrusted code"
+      end
+      if text.match?(%r{base64\s+(?:-d|--decode)[^\n]*\|\s*(?:/bin/)?(?:ba)?sh\b}i)
+        problem "Security: base64-decoding content into a shell is an obfuscation-execution pattern"
+      end
+      if text.match?(%r{url\s+["']http://}i)
+        problem "Security: `http://` source is vulnerable to man-in-the-middle tampering"
+      end
+      if text.match?(%r{url\s+["']https?://\d{1,3}(?:\.\d{1,3}){3}}i)
+        problem "Security: raw IP source URL provides no domain identity to verify"
+      end
+      if text.match?(/url\s+["'][^"']*(?:bit\.ly|tinyurl\.com|goo\.gl|t\.co|is\.gd|rb\.gy|0x0\.st)/i) ||
+         text.match?(/url\s+["'][^"']*(?:transfer\.sh|pastebin\.com|ptpb\.pw|file\.io|tmpfiles\.org)/i)
+        problem "Security: URL shortener / pastebin-style source is mutable and unauditable"
+      end
+      if text.match?(/url\s+["']/) && !text.match?(/^\s*sha256\s+["']/m)
+        problem "Security: `url` present without a `sha256` checksum (no integrity pinning)" \
+      end
+      if text.match?(/chmod\s+[^\n]*(?:u\+s|4755|4777)|chown\s+[^\n]*root/i)
+        problem "Security: SUID/SGID or root ownership assignment is a privilege escalation vector"
+      end
+      if text.match?(%r{rm\s+-rf\s+["']?(?:/|~|\$HOME|\$\{HOME\})})
+        problem "Security: `rm -rf` on an absolute or home path risks data loss"
+      end
+      if text.match?(/system\s+["']sudo|doas\s+["']/i)
+        problem "Security: build/install phase must not require `sudo`/`doas`"
+      end
+      if text.match?(%r{(?:\.ssh|\.gnupg|\.netrc|\.aws[/\s]|/etc/shadow|Keychain|kube/config)})
+        problem "Security: references credential/sensitive paths"
+      end
+      if text.match?(/sha256\s+:no_check/i) && !text.match?(/head do|HEAD/i)
+        problem_if_output "Security: `sha256 :no_check` skips integrity verification"
+      end
+      if text.match?(/homepage\s+""|desc\s+""/)
+        problem_if_output "Security: empty `homepage`/`desc` prevents verifying upstream identity"
+      end
+      if text.match?(/url\s+["'][^"']*#\{/)
+        problem_if_output "Security: dynamically-constructed URL cannot be statically audited"
+      end
+      return unless text.match?(%r{depends_on\s+["'][^"']*/[^"']*["']})
+
+      problem_if_output "Security: dependency on another third-party tap extends the supply chain"
     end
 
     sig { void }
