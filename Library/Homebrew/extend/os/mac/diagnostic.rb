@@ -157,6 +157,25 @@ module OS
           )
         end
 
+        # TODO: Merge this into check_for_unsupported_macos when officially Tier 3
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
+        def check_for_future_unsupported_macos
+          return if Homebrew::EnvConfig.developer?
+          return if ENV["HOMEBREW_INTEGRATION_TEST"]
+          return if ::Hardware::CPU.physical_cpu_arm64?
+          return unless ::Hardware::CPU.intel?
+
+          # Avoid breaking CI workflows while macOS Intel is still Tier 1
+          return if ENV["CI"] || GitHub::Actions.env_set?
+
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              You are using macOS Intel which will be Tier 3 in or after September 2026.
+              See planned timeline at #{Formatter.url("https://docs.brew.sh/Support-Tiers#future-macos-support")}
+            EOS
+          )
+        end
+
         sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
         def check_for_opencore
           return if ::Hardware::CPU.physical_cpu_arm64?
