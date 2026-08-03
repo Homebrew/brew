@@ -339,6 +339,7 @@ RSpec.describe Homebrew::Services::Cli do
         name:             "name",
         service_name:     "homebrew.name",
         installed?:       true,
+        command?:         true,
         service_file:,
         service_contents: "service",
         dest:             dest_dir/service_file.basename,
@@ -351,6 +352,29 @@ RSpec.describe Homebrew::Services::Cli do
       services_cli.install_service_file(service, nil)
 
       expect(service.timer_dest.read).to eq("timer")
+    end
+
+    it "uses the installed service file when the formula does not define a run command" do
+      allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
+
+      source_dir = mktmpdir
+      dest_dir = mktmpdir
+      service_file = source_dir/"homebrew.name.plist"
+      service_file.write("bundled plist")
+      service = instance_double(
+        Homebrew::Services::FormulaWrapper,
+        name:         "name",
+        service_name: "homebrew.name",
+        installed?:   true,
+        command?:     false,
+        service_file:,
+        dest:         dest_dir/"homebrew.name.plist",
+        dest_dir:,
+      )
+
+      services_cli.install_service_file(service, nil)
+
+      expect(service.dest.read).to eq("bundled plist")
     end
 
     context "when given `--sudo-service-user`" do
@@ -380,6 +404,7 @@ RSpec.describe Homebrew::Services::Cli do
           name:             "name",
           service_name:     "homebrew.test",
           installed?:       true,
+          command?:         true,
           service_file:,
           service_contents: plist_xml,
           dest:             dest_dir/"homebrew.test.plist",

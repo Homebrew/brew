@@ -49,6 +49,15 @@ module Homebrew
         @service ||= T.let(formula.service?, T.nilable(T::Boolean))
       end
 
+      # Delegate access to `formula.service.command?`.
+      sig { returns(T::Boolean) }
+      def command?
+        return @command unless @command.nil?
+
+        @command = T.let(service? && load_service.command?, T.nilable(T::Boolean))
+        @command ||= false
+      end
+
       # Delegate access to `formula.service.timed?`.
       sig { returns(T::Boolean) }
       def timed?

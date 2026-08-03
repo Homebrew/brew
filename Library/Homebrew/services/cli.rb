@@ -414,7 +414,11 @@ module Homebrew
 
         temp = Tempfile.new(service.service_name)
         temp << if file.nil?
-          contents = service.service_contents
+          contents = if service.command?
+            service.service_contents
+          else
+            service.service_file.read
+          end
 
           if sudo_service_user && System.launchctl?
             # set the username in the new plist file
