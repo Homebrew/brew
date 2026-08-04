@@ -401,7 +401,7 @@ module Homebrew
                .sort_by(&:name)
                .reject { |f| Cleanup.skip_clean_formula?(f) }
                .each do |formula|
-          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
+          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false, cleanup_unreferenced: false)
         end
 
         if ENV["HOMEBREW_AUTOREMOVE"].present?
@@ -479,11 +479,39 @@ module Homebrew
       cleanup_cache(cache_entries(paths, type:), cleanup_unreferenced:)
     end
 
-    sig { params(formula: Formula, quiet: T::Boolean, ds_store: T::Boolean, cache_db: T::Boolean).void }
-    def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true)
+    sig { returns(T::Hash[String, T::Array[Pathname]]) }
+    def cache_children_by_prefix
+      @cache_children_by_prefix ||= T.let(begin
+        index = {}
+        if cache.directory?
+          cache.children.each do |path|
+            basename = path.basename.to_s
+            next if basename.start_with?(".")
+
+            prefix, separator, = basename.partition("--")
+            next if separator.empty?
+
+            (index[prefix] ||= []) << path
+          end
+        end
+        index
+      end, T.nilable(T::Hash[String, T::Array[Pathname]]))
+    end
+
+    sig { params(formula: Formula).returns(T::Array[Pathname]) }
+    def formula_cache_paths(formula)
+      index = cache_children_by_prefix
+      (index.fetch(formula.name, []) + index.fetch("#{formula.name}_bottle_manifest", [])).sort
+    end
+
+    sig {
+      params(formula: Formula, quiet: T::Boolean, ds_store: T::Boolean, cache_db: T::Boolean,
+             cleanup_unreferenced: T::Boolean).void
+    }
+    def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true, cleanup_unreferenced: true)
       formula.eligible_kegs_for_cleanup(quiet:)
              .each { |keg| cleanup_keg(keg) }
-      cleanup_cache_entries(Pathname.glob(cache/"#{formula.name}{_bottle_manifest,}--*"), type: nil)
+      cleanup_cache_entries(formula_cache_paths(formula), type: nil, cleanup_unreferenced:)
       rm_ds_store([formula.rack]) if ds_store
       cleanup_cache_db(formula.rack) if cache_db
       cleanup_lockfiles(FormulaLock.new(formula.name).path)
