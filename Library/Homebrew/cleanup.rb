@@ -277,6 +277,7 @@ module Homebrew
       @days = T.let(days || Homebrew::EnvConfig.cleanup_max_age_days.to_i, Integer)
       @cache = cache
       @cleaned_up_paths = T.let(Set.new, T::Set[Pathname])
+      @formula_cache_paths = T.let(nil, T.nilable(T::Hash[String, T::Array[Pathname]]))
     end
 
     sig { returns(T::Boolean) }
@@ -479,6 +480,21 @@ module Homebrew
       cleanup_cache(cache_entries(paths, type:), cleanup_unreferenced:)
     end
 
+    sig { params(formula: Formula).returns(T::Array[Pathname]) }
+    def formula_cache_paths(formula)
+      index = @formula_cache_paths ||= begin
+        children = cache.directory? ? cache.children : []
+        children.each_with_object({}) do |path, hash|
+          prefix, separator, = path.basename.to_s.partition("--")
+          next if separator.empty? || prefix.start_with?(".")
+
+          (hash[prefix] ||= []) << path
+        end
+      end
+
+      (index.fetch(formula.name, []) + index.fetch("#{formula.name}_bottle_manifest", [])).sort
+    end
+
     sig {
       params(formula: Formula, quiet: T::Boolean, ds_store: T::Boolean, cache_db: T::Boolean,
              cleanup_unreferenced: T::Boolean).void
@@ -486,10 +502,7 @@ module Homebrew
     def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true, cleanup_unreferenced: true)
       formula.eligible_kegs_for_cleanup(quiet:)
              .each { |keg| cleanup_keg(keg) }
-      cleanup_cache_entries(
-        Pathname.glob(cache/"#{formula.name}{_bottle_manifest,}--*"),
-        type: nil, cleanup_unreferenced:,
-      )
+      cleanup_cache_entries(formula_cache_paths(formula), type: nil, cleanup_unreferenced:)
       rm_ds_store([formula.rack]) if ds_store
       cleanup_cache_db(formula.rack) if cache_db
       cleanup_lockfiles(FormulaLock.new(formula.name).path)
