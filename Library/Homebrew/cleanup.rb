@@ -401,7 +401,7 @@ module Homebrew
                .sort_by(&:name)
                .reject { |f| Cleanup.skip_clean_formula?(f) }
                .each do |formula|
-          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
+          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false, cleanup_unreferenced: false)
         end
 
         if ENV["HOMEBREW_AUTOREMOVE"].present?
@@ -479,11 +479,17 @@ module Homebrew
       cleanup_cache(cache_entries(paths, type:), cleanup_unreferenced:)
     end
 
-    sig { params(formula: Formula, quiet: T::Boolean, ds_store: T::Boolean, cache_db: T::Boolean).void }
-    def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true)
+    sig {
+      params(formula: Formula, quiet: T::Boolean, ds_store: T::Boolean, cache_db: T::Boolean,
+             cleanup_unreferenced: T::Boolean).void
+    }
+    def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true, cleanup_unreferenced: true)
       formula.eligible_kegs_for_cleanup(quiet:)
              .each { |keg| cleanup_keg(keg) }
-      cleanup_cache_entries(Pathname.glob(cache/"#{formula.name}{_bottle_manifest,}--*"), type: nil)
+      cleanup_cache_entries(
+        Pathname.glob(cache/"#{formula.name}{_bottle_manifest,}--*"),
+        type: nil, cleanup_unreferenced:,
+      )
       rm_ds_store([formula.rack]) if ds_store
       cleanup_cache_db(formula.rack) if cache_db
       cleanup_lockfiles(FormulaLock.new(formula.name).path)
