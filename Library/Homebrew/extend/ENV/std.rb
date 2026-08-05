@@ -31,7 +31,7 @@ module Stdenv
 
     # Set the default pkg-config search path, overriding the built-in paths
     # Anything in PKG_CONFIG_PATH is searched before paths in this variable
-    self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir
+    self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir&.to_s
 
     self["MAKEFLAGS"] = "-j#{make_jobs}"
     self["RUSTC_WRAPPER"] = "#{HOMEBREW_SHIMS_PATH}/shared/rustc_wrapper"

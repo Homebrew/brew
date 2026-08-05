@@ -25,7 +25,7 @@ module RuboCop
         ].freeze
 
         MSG = "Use `%<preferred>s` instead of `%<current>s`."
-        RESTRICT_ON_SEND = T.let([
+        RESTRICT_ON_SEND = [
           :any_version_installed?,
           :installed?,
           :installed_version,
@@ -35,7 +35,7 @@ module RuboCop
           :opt_libexec,
           :opt_prefix,
           *SCOPED_FORMULA_HELPERS,
-        ].freeze, T::Array[Symbol])
+        ].freeze
 
         def_node_matcher :formula_lookup_name_node, <<~PATTERN
           (send (const {nil? cbase} :Formula) :[] $_)

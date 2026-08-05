@@ -111,7 +111,7 @@ module Homebrew
 
     sig { params(message: String).void }
     def problem(message)
-      @problems << ({ message:, location: nil, corrected: false })
+      @problems << { message:, location: nil, corrected: false }
     end
 
     private

@@ -299,6 +299,7 @@ class RuboCop::Config
   def disabled_new_cops?; end
   def each(*_arg0, **_arg1, &_arg2); end
   def each_key(*_arg0, **_arg1, &_arg2); end
+  def enabled_new_cop?(qualified_cop_name); end
   def enabled_new_cops?; end
   def fetch(*_arg0, **_arg1, &_arg2); end
   def file_to_exclude?(file); end
@@ -340,10 +341,14 @@ class RuboCop::Config
 
   private
 
+  def comparable_version(value); end
   def department_of(qualified_cop_name); end
   def enable_cop?(qualified_cop_name, cop_options); end
   def gem_version_to_major_minor_float(gem_version); end
   def match_relative_or_absolute_path?(pattern, relative_file_path, absolute_file_path); end
+  def new_cops_covered?(qualified_cop_name); end
+  def new_cops_setting_for(qualified_cop_name); end
+  def new_cops_version_covers?(new_cops_version, qualified_cop_name); end
   def read_gem_versions_from_target_lockfile; end
   def read_rails_version_from_bundler_lock_file; end
   def target_rails_version_from_bundler_lock_file; end
@@ -691,11 +696,15 @@ class RuboCop::ConfigValidator
   def check_target_ruby; end
   def each_invalid_parameter(cop_name); end
   def list_unknown_cops(invalid_cop_names); end
+  def new_cops_value_for_department(name, section); end
+  def new_cops_version_value?(value); end
   def param_error_message(parent, key, value, supposed_values); end
   def reject_conflicting_safe_settings; end
   def reject_mutually_exclusive_defaults; end
   def suggestion(name); end
   def target_ruby; end
+  def validate_all_cops_new_cops_parameter; end
+  def validate_department_new_cops_parameters; end
   def validate_enforced_styles(valid_cop_names); end
   def validate_new_cops_parameter; end
   def validate_parameter_names(valid_cop_names); end
@@ -715,6 +724,8 @@ RuboCop::ConfigValidator::CONFIG_CHECK_KEYS = T.let(T.unsafe(nil), Set)
 RuboCop::ConfigValidator::INTERNAL_PARAMS = T.let(T.unsafe(nil), Array)
 
 RuboCop::ConfigValidator::NEW_COPS_VALUES = T.let(T.unsafe(nil), Array)
+
+RuboCop::ConfigValidator::NEW_COPS_VERSION_PATTERN = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Alignment::SPACE = T.let(T.unsafe(nil), String)
 
@@ -1057,6 +1068,12 @@ RuboCop::Cop::Gemspec::RubyVersionGlobalsUsage::MSG = T.let(T.unsafe(nil), Strin
 RuboCop::Cop::Generator::CONFIGURATION_ADDED_MESSAGE = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Generator::ConfigurationInjector::TEMPLATE = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Generator::RegistrationInjector::DEPARTMENT_REQUIRE_PATTERN = T.let(T.unsafe(nil), Regexp)
+
+RuboCop::Cop::Generator::RegistrationInjector::ENTRY_PATTERN = T.let(T.unsafe(nil), Regexp)
+
+RuboCop::Cop::Generator::RegistrationInjector::EXTEND_PATTERN = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Generator::RequireFileInjector::REQUIRE_PATH = T.let(T.unsafe(nil), Regexp)
 
@@ -1420,9 +1437,11 @@ RuboCop::Cop::Lint::AmbiguousAssignment::MISTAKES = T.let(T.unsafe(nil), Hash)
 
 RuboCop::Cop::Lint::AmbiguousAssignment::MSG = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Lint::AmbiguousAssignment::SIMPLE_ASSIGNMENT_TYPES = T.let(T.unsafe(nil), Array)
+RuboCop::Cop::Lint::AmbiguousBlockAssociation::BLOCK_METHODS = T.let(T.unsafe(nil), Set)
 
 RuboCop::Cop::Lint::AmbiguousBlockAssociation::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::AmbiguousBlockAssociation::MSG_DO_END_BLOCK = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::AmbiguousOperator::AMBIGUITIES = T.let(T.unsafe(nil), Hash)
 
@@ -1514,6 +1533,14 @@ RuboCop::Cop::Lint::DeprecatedOpenSSLConstant::NO_ARG_ALGORITHM = T.let(T.unsafe
 
 RuboCop::Cop::Lint::DeprecatedOpenSSLConstant::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
+RuboCop::Cop::Lint::DeprecatedReference::CONSTANT_MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::DeprecatedReference::DEPRECATED_TAG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::DeprecatedReference::DEPRECATION_DETAIL = T.let(T.unsafe(nil), Regexp)
+
+RuboCop::Cop::Lint::DeprecatedReference::METHOD_MSG = T.let(T.unsafe(nil), String)
+
 RuboCop::Cop::Lint::DisjunctiveAssignmentInConstructor::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::DuplicateBranch::MSG = T.let(T.unsafe(nil), String)
@@ -1528,9 +1555,9 @@ RuboCop::Cop::Lint::DuplicateMagicComment::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::DuplicateMatchPattern::MSG = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Lint::DuplicateMethods::MSG = T.let(T.unsafe(nil), String)
+RuboCop::Cop::Lint::DuplicateMethods::INDEXABLE_METHOD_NAME = T.let(T.unsafe(nil), Regexp)
 
-RuboCop::Cop::Lint::DuplicateMethods::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+RuboCop::Cop::Lint::DuplicateMethods::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::DuplicateRegexpCharacterClassElement::MSG_REPEATED_ELEMENT = T.let(T.unsafe(nil), String)
 
@@ -1642,6 +1669,8 @@ RuboCop::Cop::Lint::IneffectiveAccessModifier::ALTERNATIVE_PROTECTED = T.let(T.u
 
 RuboCop::Cop::Lint::IneffectiveAccessModifier::MSG = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Lint::InheritException::INDIRECT_MSG = T.let(T.unsafe(nil), String)
+
 RuboCop::Cop::Lint::InheritException::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::InheritException::PREFERRED_BASE_CLASS = T.let(T.unsafe(nil), Hash)
@@ -1699,6 +1728,14 @@ RuboCop::Cop::Lint::MultipleComparison::MSG = T.let(T.unsafe(nil), String)
 RuboCop::Cop::Lint::MultipleComparison::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Lint::MultipleComparison::SET_OPERATION_OPERATORS = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Lint::NameTypo::CONSTANT_MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::NameTypo::LITERAL_IDENTIFIER_PATTERN = T.let(T.unsafe(nil), Regexp)
+
+RuboCop::Cop::Lint::NameTypo::METHOD_MEMBER_REGEXP = T.let(T.unsafe(nil), Regexp)
+
+RuboCop::Cop::Lint::NameTypo::METHOD_MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::NestedMethodDefinition::MSG = T.let(T.unsafe(nil), String)
 
@@ -1979,6 +2016,12 @@ RuboCop::Cop::Lint::UnreachableLoop::MSG = T.let(T.unsafe(nil), String)
 RuboCop::Cop::Lint::UnreachablePatternBranch::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::UnreachablePatternBranch::MSG_ELSE = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::UnusedPrivateMethod::IDENTIFIER_PATTERN = T.let(T.unsafe(nil), Regexp)
+
+RuboCop::Cop::Lint::UnusedPrivateMethod::IMPLICITLY_INVOKED_METHODS = T.let(T.unsafe(nil), Set)
+
+RuboCop::Cop::Lint::UnusedPrivateMethod::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::UriEscapeUnescape::ALTERNATE_METHODS_OF_URI_ESCAPE = T.let(T.unsafe(nil), Array)
 
@@ -2308,16 +2351,18 @@ class RuboCop::Cop::Registry
   def department_missing?(badge, name); end
   def departments; end
   def disabled(config); end
+  def disabled_names(config); end
   def dismiss(cop); end
   def each(&block); end
   def enabled(config); end
   def enabled?(cop, config); end
-  def enabled_pending_cop?(cop_cfg, config); end
+  def enabled_pending_cop?(cop_cfg, config, cop = T.unsafe(nil)); end
   def enlist(cop); end
+  def filter_by_badge(options = T.unsafe(nil)); end
   def find_by_cop_name(cop_name); end
   def find_cops_by_directive(directive); end
   def freeze; end
-  def lazy_load(cop_name, constant_name); end
+  def lazy_load(badge, constant_name); end
   def length; end
   def names; end
   def names_for_department(department); end
@@ -2334,16 +2379,21 @@ class RuboCop::Cop::Registry
   def with_department(department); end
   def without_department(department); end
 
+  protected
+
+  def add_entry(badge, cop_or_name); end
+
   private
 
   def clear_enrollment_queue; end
   def emit_warning(path, message); end
+  def enabled_cop_name?(cop_name, config); end
   def initialize_copy(reg); end
   def load_all_lazy_cops; end
   def load_lazy_cop(badge); end
   def registered?(badge); end
+  def registered_badges; end
   def resolve_badge(given_badge, real_badge, source_path, warn: T.unsafe(nil)); end
-  def with(cops); end
 
   class << self
     def all; end
@@ -2354,6 +2404,8 @@ class RuboCop::Cop::Registry
     def with_temporary_global(temp_global = T.unsafe(nil)); end
   end
 end
+
+RuboCop::Cop::ReparsedEquivalence::MAX_VERIFICATION_FRAGMENT_SIZE = T.let(T.unsafe(nil), Integer)
 
 RuboCop::Cop::RequireLibrary::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
@@ -2647,6 +2699,8 @@ RuboCop::Cop::Style::DocumentDynamicEvalDefinition::MSG = T.let(T.unsafe(nil), S
 
 RuboCop::Cop::Style::DocumentDynamicEvalDefinition::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
 
+RuboCop::Cop::Style::Documentation::DIRECTIVE_COMMENT_REGEXP = T.let(T.unsafe(nil), Regexp)
+
 RuboCop::Cop::Style::Documentation::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::DocumentationMethod::MSG = T.let(T.unsafe(nil), String)
@@ -2864,6 +2918,8 @@ RuboCop::Cop::Style::IdenticalConditionalBranches::MSG = T.let(T.unsafe(nil), St
 RuboCop::Cop::Style::IfInsideElse::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::IfUnlessModifier::MSG_USE_MODIFIER = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::IfUnlessModifier::MSG_USE_MODIFIER_PARENS = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::IfUnlessModifier::MSG_USE_NORMAL = T.let(T.unsafe(nil), String)
 
@@ -3317,21 +3373,17 @@ RuboCop::Cop::Style::RedundantInterpolation::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantInterpolationUnfreeze::MSG = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Style::RedundantLineContinuation::ALLOWED_STRING_TOKENS = T.let(T.unsafe(nil), Array)
-
-RuboCop::Cop::Style::RedundantLineContinuation::ARGUMENT_TAKING_FLOW_TOKEN_TYPES = T.let(T.unsafe(nil), Array)
-
-RuboCop::Cop::Style::RedundantLineContinuation::ARGUMENT_TYPES = T.let(T.unsafe(nil), Array)
-
-RuboCop::Cop::Style::RedundantLineContinuation::ARITHMETIC_OPERATOR_TOKENS = T.let(T.unsafe(nil), Array)
-
 RuboCop::Cop::Style::RedundantLineContinuation::LINE_CONTINUATION = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantLineContinuation::LINE_CONTINUATION_PATTERN = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Style::RedundantLineContinuation::MSG = T.let(T.unsafe(nil), String)
 
-RuboCop::Cop::Style::RedundantLineContinuation::STRING_LITERAL_BEGIN_TOKENS = T.let(T.unsafe(nil), Array)
+RuboCop::Cop::Style::RedundantLineContinuation::STRING_LITERAL_BEGINNING_TOKEN_TYPES = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Style::RedundantLineContinuation::STRING_LITERAL_ENDING_TOKEN_TYPES = T.let(T.unsafe(nil), Array)
+
+RuboCop::Cop::Style::RedundantLineContinuation::STRING_TOKEN_TYPES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::RedundantMinMaxBy::MSG_BLOCK = T.let(T.unsafe(nil), String)
 
@@ -3964,6 +4016,8 @@ RuboCop::DirectiveComment::MALFORMED_DIRECTIVE_WITHOUT_COP_NAME_REGEXP = T.let(T
 
 RuboCop::DirectiveComment::PUSH_POP_ARGS_PATTERN = T.let(T.unsafe(nil), String)
 
+RuboCop::DirectiveComment::STYLE_DISABLE_COPS_DIRECTIVE_COP = T.let(T.unsafe(nil), String)
+
 RuboCop::DirectiveComment::TRAILING_COMMENT_MARKER = T.let(T.unsafe(nil), String)
 
 class RuboCop::Error < ::StandardError; end
@@ -4288,6 +4342,8 @@ class RuboCop::Runner
   private
 
   def add_redundant_disables(file, offenses, source); end
+  def build_project_index(target_files); end
+  def bundled_gem_files; end
   def cached_result(file, team); end
   def cached_run?; end
   def check_for_infinite_loop(processed_source, offenses_by_iteration); end
@@ -4301,7 +4357,6 @@ class RuboCop::Runner
   def file_iterator(files, &block); end
   def file_offenses(file); end
   def file_started(file); end
-  def filter_cop_classes(cop_classes, config); end
   def find_target_files(paths); end
   def finished_report(file, index, offenses); end
   def formatter_set; end
@@ -4313,6 +4368,7 @@ class RuboCop::Runner
   def list_files(paths); end
   def mark_as_safe_by_config?(config); end
   def minimum_severity_to_fail; end
+  def mobilize_cop_badge?(badge, config); end
   def mobilize_team(processed_source); end
   def mobilized_cop_classes(config); end
   def offense_displayed?(offense); end
@@ -4323,6 +4379,7 @@ class RuboCop::Runner
   def process_report_queue_entry(index); end
   def project_index_disables_parallel?; end
   def project_index_enabled?; end
+  def project_index_files(target_files); end
   def qualify_option_cop_names; end
   def redundant_cop_disable_directive(file); end
   def run_in_parallel?(files); end

@@ -323,7 +323,7 @@ RSpec.describe Homebrew::InstallSteps do
     end
 
     expect(steps).to all(satisfy do |step|
-      (step.keys & %w[attempts force group match overwrite uninstall]).empty?
+      !step.keys.intersect?(%w[attempts force group match overwrite uninstall])
     end)
   end
 

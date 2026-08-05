@@ -538,8 +538,7 @@ class Formula
     !!head && !stable
   end
 
-  # Stop RuboCop from erroneously indenting hash target
-  delegate [ # rubocop:disable Layout/HashAlignment
+  delegate [
     :bottle_defined?,
     :bottle_tag?,
     :bottled?,
@@ -618,8 +617,7 @@ class Formula
   # @see .version
   delegate version: :active_spec
 
-  # Stop RuboCop from erroneously indenting hash target
-  delegate [ # rubocop:disable Layout/HashAlignment
+  delegate [
     :allow_network_access!,
     :deny_network_access!,
     :network_access_allowed?,

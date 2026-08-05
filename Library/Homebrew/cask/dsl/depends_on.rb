@@ -79,12 +79,13 @@ module Cask
           raise "invalid depends_on key: '#{key.inspect}'" unless VALID_KEYS.include?(key)
 
           previous_macos = @macos if key == :macos
-          __getobj__[key] = case key
+          case key
           when :macos, :maximum_macos
             send(:"#{key}=", *value, set_in_block:)
           else
             send(:"#{key}=", *value)
           end
+          __getobj__[key] = public_send(key)
           record_os_requirement(key, set_in_block:, os_scoped:)
           next if key != :macos
           next if value != :any
@@ -95,24 +96,24 @@ module Cask
         end
       end
 
-      sig { params(args: String).returns(T::Array[String]) }
+      sig { params(args: String).void }
       def formula=(*args)
         formula.concat(args)
       end
 
-      sig { params(args: String).returns(T::Array[String]) }
+      sig { params(args: String).void }
       def cask=(*args)
         cask.concat(args)
       end
 
-      sig { params(args: T.any(String, Symbol), set_in_block: T::Boolean).returns(T.nilable(MacOSRequirement)) }
+      sig { params(args: T.any(String, Symbol), set_in_block: T::Boolean).void }
       def macos=(*args, set_in_block: false)
         @macos = MacOSRequirement.parse(args, comparator: ">=")
       rescue MacOSVersion::Error, TypeError => e
         raise "invalid 'depends_on macos' value: #{e}"
       end
 
-      sig { params(args: T.any(String, Symbol), set_in_block: T::Boolean).returns(T.nilable(MacOSRequirement)) }
+      sig { params(args: T.any(String, Symbol), set_in_block: T::Boolean).void }
       def maximum_macos=(*args, set_in_block: false)
         raise "invalid 'depends_on maximum_macos' value: only a single macOS version is allowed" if args.count != 1
 
@@ -128,7 +129,7 @@ module Cask
         @maximum_macos = maximum_macos
       end
 
-      sig { params(args: T.any(String, Symbol)).returns(T.nilable(LinuxRequirement)) }
+      sig { params(args: T.any(String, Symbol)).void }
       def linux=(*args)
         raise "Only a single 'depends_on linux' is allowed." if @linux
         raise "invalid 'depends_on linux' value: #{args.first.inspect}" if args.first != :any
@@ -136,7 +137,7 @@ module Cask
         @linux = LinuxRequirement.new
       end
 
-      sig { params(args: Symbol).returns(T::Array[T::Hash[Symbol, T.any(Symbol, Integer)]]) }
+      sig { params(args: Symbol).void }
       def arch=(*args)
         @arch ||= []
         arches = args.map do |elt|

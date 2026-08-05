@@ -1324,12 +1324,12 @@ module Homebrew
 
     sig { params(message: String, location: T.nilable(Homebrew::SourceLocation), corrected: T::Boolean).void }
     def problem(message, location: nil, corrected: false)
-      @problems << ({ message:, location:, corrected: })
+      @problems << { message:, location:, corrected: }
     end
 
     sig { params(message: String, location: T.nilable(Homebrew::SourceLocation), corrected: T::Boolean).void }
     def new_formula_problem(message, location: nil, corrected: false)
-      @new_formula_problems << ({ message:, location:, corrected: })
+      @new_formula_problems << { message:, location:, corrected: }
     end
 
     sig { params(repo_owner: String).returns(T::Boolean) }
