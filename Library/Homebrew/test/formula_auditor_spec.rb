@@ -841,6 +841,34 @@ RSpec.describe Homebrew::FormulaAuditor do
       expect(fa.problems).to be_empty
     end
 
+    it "does not allow an external patch to miss a checksum" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          patch do
+            url "https://brew.sh/patch.patch"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems.first[:message]).to match "Stable patch: Checksum is missing"
+    end
+
+    it "allows file patches without a checksum" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          patch :p1, "file.patch"
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
     it "accepts a curl dependency with a working HTTP mirror" do
       sha256 = "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
       mirror_url = "http://brew.sh/mirror/foo-1.0.tgz"

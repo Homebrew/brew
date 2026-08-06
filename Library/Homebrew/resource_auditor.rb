@@ -139,6 +139,7 @@ module Homebrew
     sig { void }
     def audit_checksum
       return if spec_name == :head
+      return if url.blank?
       # This condition is non-invertible.
       # rubocop:disable Style/InvertibleUnlessCondition
       return unless DownloadStrategyDetector.detect(url.to_s, using) <= CurlDownloadStrategy

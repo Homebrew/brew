@@ -885,6 +885,19 @@ module Homebrew
           end
         end
 
+        spec.patches.each do |patch|
+          next unless patch.external?
+
+          ra = ResourceAuditor.new(
+            patch.resource, spec_name,
+            online: @online, strict: @strict, only: @only, except: @except,
+            use_homebrew_curl: patch.resource.using == :homebrew_curl
+          ).audit
+          ra.problems.each do |message|
+            problem "#{name} patch: #{message}"
+          end
+        end
+
         next if spec.patches.empty?
         next if !@new_formula || !@core_tap
 
