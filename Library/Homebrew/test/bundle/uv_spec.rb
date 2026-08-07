@@ -6,6 +6,23 @@ require "bundle/dsl"
 require "bundle/extensions/uv"
 
 RSpec.describe Homebrew::Bundle::Uv do
+  describe "entries" do
+    it "accepts a source that resolves on another machine" do
+      entry = described_class.entry("ruff", source: "git+https://github.com/astral-sh/ruff.git")
+      expect(entry.options).to eql({ source: "git+https://github.com/astral-sh/ruff.git" })
+    end
+
+    it "rejects a local path" do
+      expect { described_class.entry("probetool", source: "/Users/test/src/probetool") }
+        .to raise_error(RuntimeError, /local to this machine/)
+    end
+
+    it "rejects the file:// URL uv reports for a directory install" do
+      expect { described_class.entry("probetool", source: "file:///Users/test/src/probetool") }
+        .to raise_error(RuntimeError, /local to this machine/)
+    end
+  end
+
   describe "checking" do
     subject(:checker) { described_class.new }
 
@@ -152,6 +169,15 @@ RSpec.describe Homebrew::Bundle::Uv do
           },
         ])
         expect(dumper.dump).to eql('uv "ruff", source: "git+https://github.com/astral-sh/ruff.git"')
+      end
+
+      it "dumps a tool installed from a directory without a source" do
+        allow(described_class).to receive(:`).with(uv_tool_list_command).and_return(<<~OUTPUT)
+          probetool v0.1.0 [required: file:///Users/test/src/probetool]
+          - probetool
+        OUTPUT
+
+        expect(dumper.dump).to eql('uv "probetool"')
       end
 
       it "ignores a bare version constraint in the version specifier" do

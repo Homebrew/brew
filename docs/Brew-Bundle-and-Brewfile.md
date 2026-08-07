@@ -81,6 +81,8 @@ flatpak "io.github.dvlv.boxbuddyrs", remote: "flathub-beta"
 
 WinGet installs run with installer interactivity disabled. If WinGet reports that elevation is required, `brew bundle` retries through Windows UAC.
 
+A uv tool's `source:` must resolve on another machine, so a local path and the `file://` URL that `uv tool list` reports for one are both rejected when the `Brewfile` is parsed. A tool installed from either is dumped without a `source:`.
+
 Run `brew bundle` again and this outputs:
 
 ```console
