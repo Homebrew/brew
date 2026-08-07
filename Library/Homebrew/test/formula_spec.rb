@@ -1193,8 +1193,8 @@ RSpec.describe Formula do
       url "foo-1.0"
 
       post_install_steps do
-        mkdir_p "log/foo"
-        touch "foo/marker"
+        mkdir_p "log/foo", base: :var
+        touch "foo/marker", base: :var
         move "move-source", "move-target"
         move_contents "children-source", "children-target"
         symlink "move-target", "linked-target", source_base: :relative, remove_on_uninstall: true
@@ -1224,6 +1224,21 @@ RSpec.describe Formula do
     ])
     expect(f.post_install_steps_defined?).to be(true)
     expect(f.to_hash["post_install_steps"]).to eq(f.post_install_steps)
+  end
+
+  specify "#post_install_steps does not default paths to var" do
+    f = formula do
+      T.bind(self, T.class_of(Formula))
+      url "foo-1.0"
+
+      post_install_steps do
+        touch "foo/marker"
+      end
+    end
+
+    expect(f.post_install_steps).to eq([
+      { "type" => "touch", "path" => { "path" => "foo/marker" } },
+    ])
   end
 
   specify "#post_install_steps_defined? with an empty block" do

@@ -12,9 +12,8 @@ RSpec.describe Sandbox do
 
     before do
       allow(described_class).to receive_messages(
-        ensure_sandbox_installed!: nil,
-        available?:                true,
-        new:                       command_sandbox,
+        available?: true,
+        new:        command_sandbox,
       )
       allow(command_sandbox).to receive_messages(
         allow_write_temp_and_cache: nil,

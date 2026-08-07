@@ -31,6 +31,9 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def ask?; end
 
+    sig { returns(T::Boolean) }
+    def auto_update_quiet?; end
+
     sig { returns(String) }
     def auto_update_secs; end
 

@@ -38,7 +38,7 @@ module Homebrew
         Homebrew.with_no_api_env do
           if args.syntax? && args.no_named?
             scan_files = "#{HOMEBREW_LIBRARY_PATH}/**/*.rb"
-            ruby_files = Dir.glob(scan_files).grep_v(%r{/(vendor)/})
+            ruby_files = Dir.glob(scan_files).grep_v(%r{/(vendor)/}).map { Pathname(it) }
 
             Homebrew.failed = true unless Readall.valid_ruby_syntax?(ruby_files)
           end

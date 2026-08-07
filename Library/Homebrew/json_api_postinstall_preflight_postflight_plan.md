@@ -65,9 +65,11 @@ Once an install step DSL method has shipped in a stable `Homebrew/brew`
 release, keep accepting and executing it throughout this migration. A better
 replacement may stop being documented and become the target of tap migrations,
 but the old method must remain marked with `# odeprecated` until it can be
-deprecated in a later release. Each `Homebrew/brew` PR must continue to pass
+deprecated in a later release. Each capability PR must continue to pass
 tap-wide syntax checks against the default branches of `homebrew/core` and
-`homebrew/cask`; paired tap branches cannot provide atomic compatibility.
+`homebrew/cask`; paired tap branches cannot provide atomic compatibility. The
+final official-hook enforcement PR is the deliberate exception: keep it at the
+top of the stack and red until both tap migrations have landed.
 
 RuboCop autocorrection converts the simplest existing `post_install` and
 `*flight` Ruby blocks to steps blocks when every statement is a supported file
@@ -105,37 +107,40 @@ The delivery order is now:
    in their recorded order. A tap file containing several step types is
    assigned to the latest brew capability it needs so every intermediate tap
    commit remains loadable.
-1. Add sandbox hardening, conservative autocorrection and audit cops after the
-   taps can consume every new DSL method.
+1. Keep the official-tap enforcement PR at the top of the stack. Its tap syntax
+   job is expected to fail until both tap stacks reach zero legacy hooks, then
+   it can merge without changing runtime compatibility.
 1. Add conflicts or legacy-hook deprecations only after the merged tap heads,
    rather than only local branches, pass the zero-hook gate.
 
 The `Homebrew/brew` implementation stack is:
 
-| Commit | Capability |
+| Commit, PR or branch | Capability |
 | --- | --- |
-| `df477ca13b` | scoped path and platform guards |
-| `55190efb93` | shared path, token and privilege handling |
-| `51093bf43d` | copies |
-| `9f4a8c9e19` | removals |
-| `8ed34862ff` | `inreplace` steps |
-| `7bfe8cf697` | recursive install-step validation |
-| `82e7898974` | cask command wrappers |
-| `053658e0fb` | generated cask scripts |
-| `516d7e209e` | formula permission steps |
-| `f4b8adfc25` | constrained commands |
-| `996b7168a3` | process termination |
-| `b312195625` | scoped warnings |
-| `644eae48d6` | GCC runtime configuration |
-| `9b45d57aca` | gzipped executable installation |
-| `c315929071` | glibc runtime setup |
-| `39956d5347` | Clang system configuration |
-| `8714d6873d` | PHP configuration |
-| `3e52a3efda` | Python bootstrap |
-| `3d8f2c5c5c` | compatibility and canonical interface alignment |
-| `81180c1ec5` | temporary cask flight migration bridge |
-| `50829a2e04` | canonical autocorrection and validation |
-| `138ae14570` | canonical cookbook documentation |
+| `3f237af118` | scoped path and platform guards |
+| `a51ad058fa` | shared path, token and privilege handling |
+| `f98b955d42` | copies |
+| `af66235c7e` | removals |
+| `390c74bd49` | `inreplace` steps |
+| `e05c08f986` | recursive install-step validation |
+| `c33846e9da` | cask command wrappers with declared names |
+| `eeaae4a0dc` | generated cask scripts |
+| `677dad25a5` | formula permission steps |
+| `cf5bc21c6b` | constrained commands |
+| `2c2089fc74` | process termination |
+| `46b43d57d0` | scoped warnings |
+| `7dc5f2bbaf` | GCC runtime configuration and idempotence |
+| `a959228644` | gzipped executable installation |
+| `d39b823008` | glibc runtime setup |
+| `b312752fc0` | Clang system configuration |
+| `Homebrew/brew#23191` | PHP configuration |
+| `Homebrew/brew#23192` | Python bootstrap |
+| `Homebrew/brew#23193` | compatibility and canonical interface alignment |
+| `Homebrew/brew#23194` | temporary cask flight migration bridge |
+| `Homebrew/brew#23195` | canonical autocorrection and validation |
+| `Homebrew/brew#23196` | canonical cookbook documentation |
+| `install-step-25-compact-json` | compact structured step payloads |
+| `install-step-26-official-hook-enforcement` | reject new legacy hooks in official taps |
 
 ### Compatibility bridge
 
@@ -159,34 +164,34 @@ The `homebrew/core` branch `install-step-migrations` is split into this stack:
 
 | Commit | Migration | Brew dependency |
 | --- | --- | --- |
-| `0b9bd868455` | copies | `7bfe8cf697` |
-| `051113f88ab` | removals | `7bfe8cf697` |
-| `249f4350d30` | `inreplace` steps | `7bfe8cf697` |
-| `0f7ceca3561` | formula permissions | `516d7e209e` |
-| `c5ef325490e` | commands | `f4b8adfc25` |
-| `6a27ffeb425` | process termination | `996b7168a3` |
-| `cc9fa35cb13` | config warnings | `b312195625` |
-| `b710256aded` | GCC runtimes | `644eae48d6` |
-| `ed9c245477f` | gzipped executables | `9b45d57aca` |
-| `8de30da8919` | glibc runtime setup | `c315929071` |
-| `15220c281ec` | Clang configs | `39956d5347` |
-| `ccb800cfe2e` | PHP configuration | `8714d6873d` |
-| `424452ca1d2` | Python bootstrap | `3e52a3efda` |
-| `c5181e26c9c` | existing rebuild actions | `3d8f2c5c5c` |
-| `c63aad69e25` | canonical names | `3d8f2c5c5c` |
+| `8b2a3736ad2` | copies | `e05c08f986` |
+| `a410f86f0e5` | removals | `e05c08f986` |
+| `8fff4cfe6ac` | `inreplace` steps | `e05c08f986` |
+| `36a86e4cd3` | formula permissions | `677dad25a5` |
+| `b737b6ddfc5` | commands | `cf5bc21c6b` |
+| `de01d0cb71f` | process termination | `2c2089fc74` |
+| `99f7e7ee196` | config warnings | `46b43d57d0` |
+| `954c3eeb0e1` | GCC runtimes | `7dc5f2bbaf` |
+| `60b9fd667cb` | gzipped executables | `a959228644` |
+| `12494317fea` | glibc runtime setup | `d39b823008` |
+| `1ae21b8bacc` | Clang configs | `b312752fc0` |
+| `b1363e7f414` | PHP configuration | `Homebrew/brew#23191` |
+| `54b3a12d201` | Python bootstrap | `Homebrew/brew#23192` |
+| `b6f242bc378` | existing rebuild actions | `Homebrew/brew#23193` |
+| `fba7166ace8` | canonical names | `Homebrew/brew#23193` |
 
 The `homebrew/cask` branch `install-step-migrations` is split into this stack:
 
 | Commit | Migration | Brew dependency |
 | --- | --- | --- |
-| `759984cd350` | removals | `7bfe8cf697` |
-| `b970d628f53` | `inreplace` steps | `7bfe8cf697` |
-| `6827cc8f6b5` | command wrappers | `82e7898974` |
-| `3421d25b25d` | generated scripts | `053658e0fb` |
-| `985a8dc24f7` | commands and mixed steps | `f4b8adfc25` |
-| `1951737bab1` | process termination | `996b7168a3` |
-| `c5d23bfe585` | existing structured flight steps | `3d8f2c5c5c` |
-| `8581c70e3a9` | canonical names | `3d8f2c5c5c` |
+| `98460ee76f7` | removals | `e05c08f986` |
+| `c4600c11d1c` | `inreplace` steps | `e05c08f986` |
+| `cc918a9697d` | command wrappers | `c33846e9da` |
+| `1010ee37a29` | generated scripts | `eeaae4a0dc` |
+| `a6dda33a841` | commands and mixed steps | `cf5bc21c6b` |
+| `e6787710ae2` | process termination | `2c2089fc74` |
+| `46ac0e3034b` | existing structured flight steps | `Homebrew/brew#23193` |
+| `79ac6f5fc5c` | canonical names | `Homebrew/brew#23193` |
 
 `gcloud-cli` is the only cask copy user, but its matching flight blocks also
 need removal, linking and command steps. It therefore lands in the command
@@ -206,8 +211,8 @@ formula files and `82` `post_install` methods, and `homebrew/cask` at
 `892cff1a33bb`, with `7,701` cask files and `146` legacy flight blocks in `124`
 casks.
 
-The refreshed local tap migrations at `homebrew/core` `6e23a533d3e4` and
-`homebrew/cask` `215a345b6b40` now pass the gate:
+The refreshed local tap migrations at `homebrew/core` `fba7166ace8` and
+`homebrew/cask` `79ac6f5fc5c` now pass the gate:
 
 - `homebrew/core` has `0` `post_install` methods after converting all `86`
   hook-bearing files.
@@ -218,6 +223,13 @@ The refreshed local tap migrations at `homebrew/core` `6e23a533d3e4` and
 The compatibility naming pass also updates structured-step users that did not
 have a legacy hook. The complete local stacks therefore differ from their tap
 heads in `140` formula files and `137` cask files.
+
+The final brew-only audit on 30 July 2026 found `21` formula hooks at
+`homebrew/core` `2927a618306` and `12` cask flight blocks at `homebrew/cask`
+`13de0293aa0`. Every remaining file is already covered by the prepared
+migration stacks, but those stacks now conflict with their moving tap heads and
+must be rebased during PR 29. Until that happens, the official-hook enforcement
+PR is expected to fail tap syntax.
 
 This proves that the implemented DSL is sufficient, but it does not authorise
 bridge conflicts yet. The tap stacks must first be reviewed and merged against
@@ -335,11 +347,11 @@ less consistent with Formula syntax without reducing the runner surface.
 
 ## API Source Download Gates
 
-Formula JSON API installs need to preserve `post_install` because it is the
-only install-time Ruby hook recorded for bottle installs. The hook runs from
-the formula stored in the installed keg, while source builds and local patch
-handling use `Homebrew::API::Formula.source_download_formula` for build-time
-reasons outside this post-install DSL work.
+Formula JSON API installs load `post_install_steps` through `FormulaStruct` and
+run them without downloading formula Ruby. Bottles retain the formula stored in
+the keg only for legacy `post_install` compatibility. Source builds and local
+patch handling still use `Homebrew::API::Formula.source_download_formula` for
+build-time reasons outside this post-install DSL work.
 
 Cask JSON API installs use `Homebrew::API::Cask.source_download_cask` when
 `Cask#caskfile_only?` is true. Legacy `preflight`, `postflight`,
@@ -348,7 +360,15 @@ API data only records that a block exists, not the Ruby body. Current API data
 stores each language block's locale group, default marker, return value and
 resulting stanza differences, so language-specific URLs can be resolved before
 the download is enqueued. Older API data with only the flat `languages` array
-continues to download source as a compatibility fallback.
+continues to download source as a compatibility fallback. Once the official tap
+contains only structured flight steps, those artifacts do not make
+`Cask#caskfile_only?` true and cask Ruby is not downloaded.
+
+Formula structs omit empty steps and false legacy-hook markers. Cask structs
+store artifacts as compact positional arrays and omit blank fields. Individual
+steps omit values supplied by runner defaults while retaining values, such as
+the canonical `move` overwrite default, that are required to distinguish them
+from already released payloads.
 
 ## Installed Cask Metadata Format
 
@@ -470,7 +490,7 @@ is stripped during metadata serialisation.
 - [x] PR 4.1, formula install-step sandboxing.
   Commit: `Sandbox formula install steps`.
   Scope: run structured formula steps inside the existing post-install child
-  process so macOS Seatbelt and Linux Bubblewrap apply the same filesystem and
+  process so macOS Seatbelt and Linux Landlock apply the same filesystem and
   network policy as legacy `post_install` hooks. This must land before any tap
   migrations use filesystem-mutating steps.
 - PR 5, default config and template writes (historical split workflow).
@@ -681,14 +701,20 @@ is stripped during metadata serialisation.
 - [ ] PR 29, refresh and merge both tap stacks.
   Scope: after the brew DSL ships in a stable release, rebase each stack onto
   the current tap head, repeat the zero-hook gate and merge in order.
-- [ ] PR 30, sandbox and runner hardening.
-  Scope: sandbox eligible helpers and commands without adding migration DSL.
-- [ ] PR 31, enforcement and migration cops.
-  Scope: add conservative autocorrection and audits after both taps consume the
-  complete DSL. Do not introduce conflicts here.
+- [x] PR 30, compact structured step payloads.
+  Scope: omit runner defaults from internal JSON while preserving explicit
+  values needed to distinguish released compatibility behaviour.
+- [ ] PR 31, official-tap enforcement.
+  Scope: reject `post_install` and legacy flight blocks in taps owned by the
+  Homebrew organisation, remove their authoring documentation and mark the
+  runtime call sites with commented `odeprecated` calls. Keep this PR at the
+  top of the stack and expect tap syntax to fail until PR 29 reaches zero
+  hooks. Do not introduce runtime conflicts or warnings here; third-party
+  compatibility remains intact.
 - [ ] PR 32, close the bridges and deprecate legacy hooks.
   Hard prerequisite: the merged `homebrew/core` head has no `post_install`
-  methods and the merged `homebrew/cask` head has no legacy flight blocks.
+  methods and the merged `homebrew/cask` head has no legacy flight blocks. Add
+  actual `odeprecated` calls in the next major or minor Homebrew release.
 - [ ] PR 33, remove the documented formula `var` default while retaining it
   temporarily as a runtime compatibility fallback.
 - [ ] PR 34, migrate every implicit `var` path in `homebrew/core` to an

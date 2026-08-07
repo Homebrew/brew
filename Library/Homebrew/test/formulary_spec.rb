@@ -652,6 +652,19 @@ RSpec.describe Formulary do
         expect(formula.loaded_from_internal_api?).to be true
       end
 
+      it "runs post-install steps loaded from the internal API without source Ruby" do
+        step = { "type" => "warn", "message" => "loaded from internal API" }
+        allow(Homebrew::API::Formula).to receive(:all_formulae)
+          .and_return formula_json_contents("post_install_steps" => [step])
+        expect(Homebrew::API::Formula).not_to receive(:source_download_formula)
+
+        formula = described_class.factory(formula_name)
+        runner = Homebrew::InstallSteps::Runner.new(context: formula)
+        expect(runner).to receive(:opoo).with("loaded from internal API")
+
+        runner.run(formula.post_install_steps)
+      end
+
       it "loads patches from API JSON" do
         allow(Homebrew::API::Formula).to receive(:all_formulae).and_return formula_json_contents(
           "patches" => [

@@ -154,6 +154,9 @@ module RSpec::Matchers
   def be_installed_on_request(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def be_installed_on_request_present(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def be_latest_version_installed(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }

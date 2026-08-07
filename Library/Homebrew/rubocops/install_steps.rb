@@ -15,7 +15,17 @@ module RuboCop
         # TODO: Re-enable when formula `post_install` and `post_install_steps`
         # cannot coexist after the incremental conversion bridge is removed.
         # CONFLICT_MSG = "`post_install` and `post_install_steps` cannot both be used."
+        LEGACY_POST_INSTALL_MSG =
+          "Formulae in official Homebrew taps must use `post_install_steps` instead of `post_install`."
         REDUNDANT_SERVICE_PATH_DIRS_MSG = "`%<block>s` only creates directories created by `brew services`."
+        EXPLICIT_BASE_MSG = "Formula install-step paths must specify their base explicitly."
+        EXPLICIT_BASE_STEP_METHODS = [:if_path_exists, :unless_path_exists, :mkdir, :mkdir_p, :touch, :remove,
+                                      :inreplace, :write, :write_file, :init_data_dir, :set_permissions].freeze
+        RUN_PATH_KEYWORDS = [:stdin_path, :stdout_path, :chdir].freeze
+        ABSOLUTE_PATH_TEMPLATE_TOKENS = %w[
+          HOMEBREW_PREFIX HOMEBREW_CELLAR prefix opt_prefix bin sbin lib libexec share pkgshare var etc pkgetc rack
+          staged_path appdir caskroom_path temp bash_completion zsh_completion fish_completion pwsh_completion
+        ].freeze
         CERTIFICATE_REMOVE_SOURCE = 'rm(pkgetc/"cert.pem") if (pkgetc/"cert.pem").exist?'
         CERTIFICATE_INSTALL_SYMLINK_SOURCE =
           'pkgetc.install_symlink Formula["ca-certificates"].pkgetc/"cert.pem"'
@@ -89,7 +99,11 @@ module RuboCop
           #   problem CONFLICT_MSG
           # end
 
-          audit_step_block(post_install_steps_block)
+          redundant_post_install_steps = post_install_steps_block.present? &&
+                                         redundant_service_path_dirs_block?(post_install_steps_block,
+                                                                            service_path_dirs,
+                                                                            :post_install_steps)
+          audit_step_block(post_install_steps_block) unless redundant_post_install_steps
           add_redundant_service_path_dirs_offense(post_install_steps_block, service_path_dirs, :post_install_steps)
           redundant_post_install = post_install_method.present? &&
                                    redundant_service_path_dirs_block?(post_install_method, service_path_dirs,
@@ -97,18 +111,114 @@ module RuboCop
           add_redundant_service_path_dirs_offense(post_install_method, service_path_dirs, :post_install)
           return if redundant_post_install
 
-          audit_post_install_method(post_install_method, post_install_steps_block,
-                                    body_node, formula_nodes.class_node.const_name)
+          converted_post_install = autocorrect_post_install_method?(post_install_method, post_install_steps_block,
+                                                                    body_node, formula_nodes.class_node.const_name)
+          # odeprecated: remove the official-tap scope in the next major or minor release.
+          return unless official_homebrew_tap?(processed_source.file_path)
+          return if post_install_method.nil? || converted_post_install
+
+          add_offense(post_install_method, message: LEGACY_POST_INSTALL_MSG)
         end
 
         private
 
         sig { params(block_node: T.nilable(RuboCop::AST::BlockNode)).void }
         def audit_step_block(block_node)
-          return unless (offense_node = install_step_block_offense_node(block_node))
+          return if block_node.nil?
 
-          offending_node(offense_node)
-          problem STEP_BLOCK_MSG
+          if (offense_node = brew_ruby_step_node(block_node))
+            offending_node(offense_node)
+            problem BREW_RUBY_STEP_MSG
+            return
+          end
+
+          if (offense_node = install_step_block_offense_node(block_node))
+            offending_node(offense_node)
+            problem STEP_BLOCK_MSG
+            return
+          end
+
+          add_implicit_var_path_offenses(block_node)
+        end
+
+        sig { params(block_node: RuboCop::AST::BlockNode).void }
+        def add_implicit_var_path_offenses(block_node)
+          block_node.each_descendant(:send) do |node|
+            send_node = T.cast(node, RuboCop::AST::SendNode)
+            next if send_node.receiver
+
+            if EXPLICIT_BASE_STEP_METHODS.include?(send_node.method_name)
+              add_implicit_var_base_offense(send_node)
+            elsif send_node.method_name == :run
+              add_implicit_var_run_path_offenses(send_node)
+            end
+          end
+        end
+
+        sig { params(send_node: RuboCop::AST::SendNode).void }
+        def add_implicit_var_base_offense(send_node)
+          path_node = send_node.arguments.first
+          return if path_node.nil? || explicit_formula_step_path?(path_node)
+
+          options = send_node.arguments.last
+          options = nil unless options&.hash_type?
+          return if options && T.cast(options, RuboCop::AST::HashNode).pairs.any? do |pair|
+            pair.key.sym_type? && pair.key.value == :base
+          end
+
+          add_offense(send_node, message: EXPLICIT_BASE_MSG) do |corrector|
+            if options
+              options = T.cast(options, RuboCop::AST::HashNode)
+              pair = options.pairs.last
+              if pair
+                corrector.insert_after(pair.source_range, ", base: :var")
+              else
+                corrector.replace(options, "base: :var")
+              end
+            else
+              argument = send_node.arguments.last
+              next if argument.nil?
+
+              range = if argument.loc.respond_to?(:heredoc_end) && argument.loc.heredoc_end
+                argument.loc.expression
+              else
+                argument.source_range
+              end
+              corrector.insert_after(range, ", base: :var")
+            end
+          end
+        end
+
+        sig { params(send_node: RuboCop::AST::SendNode).void }
+        def add_implicit_var_run_path_offenses(send_node)
+          options = send_node.arguments.last
+          return unless options&.hash_type?
+
+          T.cast(options, RuboCop::AST::HashNode).pairs.each do |pair|
+            next if !pair.key.sym_type? || !RUN_PATH_KEYWORDS.include?(pair.key.value)
+            next if explicit_formula_step_path?(pair.value)
+
+            add_offense(pair.value, message: EXPLICIT_BASE_MSG) do |corrector|
+              next unless pair.value.str_type?
+
+              path = T.cast(pair.value, RuboCop::AST::StrNode).str_content
+              corrector.replace(pair.value, "{{var}}/#{path}".dump)
+            end
+          end
+        end
+
+        sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
+        def explicit_formula_step_path?(node)
+          if node.array_type?
+            paths = node.child_nodes
+            return paths.present? && paths.all? { |path| explicit_formula_step_path?(path) }
+          end
+          return false unless node.str_type?
+
+          path = T.cast(node, RuboCop::AST::StrNode).str_content
+          return true if path.start_with?("/", "~")
+
+          ABSOLUTE_PATH_TEMPLATE_TOKENS.any? { |token| path.start_with?("{{#{token}}}") }
         end
 
         sig {
@@ -117,14 +227,15 @@ module RuboCop
             post_install_steps_block: T.nilable(RuboCop::AST::BlockNode),
             formula_body:             RuboCop::AST::Node,
             formula_class:            String,
-          ).void
+          ).returns(T::Boolean)
         }
-        def audit_post_install_method(post_install_method, post_install_steps_block, formula_body, formula_class)
-          return if post_install_method.nil?
-          return unless post_install_method.def_type?
+        def autocorrect_post_install_method?(post_install_method, post_install_steps_block, formula_body,
+                                             formula_class)
+          return false if post_install_method.nil?
+          return false unless post_install_method.def_type?
 
           post_install_def = T.cast(post_install_method, RuboCop::AST::DefNode)
-          return if post_install_steps_block && post_install_steps_block.loc.line > post_install_def.loc.line
+          return false if post_install_steps_block && post_install_steps_block.loc.line > post_install_def.loc.line
 
           step_nodes = T.let({}, T::Hash[RuboCop::AST::Node, T::Array[String]])
           removable_methods = T.let([], T::Array[RuboCop::AST::Node])
@@ -139,16 +250,16 @@ module RuboCop
           unless step_nodes.empty?
             add_formula_step_conversion_offense(post_install_def, post_install_steps_block, direct_nodes, step_nodes,
                                                 removable_methods)
-            return
+            return true
           end
 
-          return if post_install_steps_block
+          return false if post_install_steps_block
 
           step_lines = simple_install_step_lines(post_install_def.body,
                                                  default_base:        :var,
                                                  default_source_base: :prefix,
                                                  default_target_base: :prefix)
-          return if step_lines.blank?
+          return false if step_lines.blank?
 
           add_offense(post_install_method,
                       message: format(SIMPLE_STEP_CONVERSION_MSG, steps_block: "post_install_steps")) do |corrector|
@@ -157,6 +268,7 @@ module RuboCop
               install_steps_block_source(:post_install_steps, step_lines, post_install_method.source_range.column),
             )
           end
+          true
         end
 
         sig {

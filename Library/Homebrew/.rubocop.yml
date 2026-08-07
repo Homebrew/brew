@@ -4,6 +4,35 @@ inherit_from:
 Homebrew/MoveToExtendOS:
   Enabled: true
 
+# The project index does not model explicit removal or isolated entry points.
+Lint/ConstantReassignment:
+  Exclude:
+    # Replaced or bypassed by isolated test environments.
+    - "cask/config.rb"
+    - "startup/config.rb"
+    - "test/support/helper/spec/shared_context/homebrew_cask.rb"
+    - "test/support/lib/startup/config.rb"
+    # Defined by mutually exclusive application entry points.
+    - "global.rb"
+    - "utils/ruby_check_version_script.rb"
+
+Lint/DuplicateMethods:
+  Exclude:
+    # OS-specific implementations intentionally override shared fallbacks. The
+    # project index reports both definitions, so both files must be excluded.
+    - "formula_installer.rb"
+    - "extend/os/linux/formula_installer.rb"
+    - "requirements/xcode_requirement.rb"
+    - "extend/os/linux/requirements/xcode_requirement.rb"
+    - "hardware.rb"
+    - "extend/os/mac/hardware/cpu/hardware.rb"
+    - "keg_only_reason.rb"
+    - "extend/os/mac/keg_only_reason.rb"
+
+# Detect unreferenced private methods across Homebrew's project index.
+Lint/UnusedPrivateMethod:
+  Enabled: true
+
 # Want to preserve our own API for these methods for now.
 Naming/PredicatePrefix:
   inherit_mode:

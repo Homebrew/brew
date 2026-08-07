@@ -58,52 +58,53 @@ class AbstractTab
   sig { returns(RuntimeDependencies) }
   attr_accessor :runtime_dependencies
 
-  # TODO: Update attributes to only accept symbol keys (kwargs style).
-  sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
-  def initialize(attributes = {})
-    @installed_on_request = T.let(false, T::Boolean)
-    @installed_on_request_present = T.let(false, T::Boolean)
-    @homebrew_version = T.let(nil, T.nilable(String))
-    @tabfile = T.let(nil, T.nilable(Pathname))
-    @loaded_from_api = T.let(false, T::Boolean)
-    @loaded_from_internal_api = T.let(false, T::Boolean)
-    @time = T.let(nil, T.nilable(Integer))
-    @arch = T.let(nil, T.nilable(T.any(String, Symbol)))
-    @source = T.let({}, T::Hash[String, T.untyped])
-    @built_on = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
-    @runtime_dependencies = T.let(nil, RuntimeDependencies)
-
-    attributes.each do |key, value|
-      case key.to_sym
-      when :installed_on_request
-        @installed_on_request = value.nil? ? false : value
-        @installed_on_request_present = true
-      when :changed_files
-        @changed_files = T.let(value&.map { |f| Pathname(f) }, T.nilable(T::Array[Pathname]))
-      else
-        instance_variable_set(:"@#{key}", value)
-      end
-    end
+  # Unrecognised attributes are ignored so that receipts written by other
+  # Homebrew versions (e.g. the long-removed `installed_as_dependency`) still load.
+  sig {
+    params(homebrew_version:         T.nilable(String),
+           tabfile:                  T.nilable(T.any(Pathname, String)),
+           loaded_from_api:          T::Boolean,
+           loaded_from_internal_api: T::Boolean,
+           installed_on_request:     T.nilable(T::Boolean),
+           time:                     T.nilable(Integer),
+           arch:                     T.nilable(T.any(String, Symbol)),
+           source:                   T.nilable(T::Hash[String, T.untyped]),
+           built_on:                 T.nilable(T::Hash[String, T.untyped]),
+           runtime_dependencies:     RuntimeDependencies,
+           _unknown:                 T.anything).void
+  }
+  def initialize(homebrew_version: nil, tabfile: nil, loaded_from_api: false, loaded_from_internal_api: false,
+                 installed_on_request: nil, time: nil, arch: nil, source: nil, built_on: nil,
+                 runtime_dependencies: nil, **_unknown)
+    @installed_on_request = T.let(installed_on_request || false, T::Boolean)
+    @installed_on_request_present = T.let(!installed_on_request.nil?, T::Boolean)
+    @homebrew_version = homebrew_version
+    @tabfile = T.let(tabfile.nil? ? nil : Pathname(tabfile), T.nilable(Pathname))
+    @loaded_from_api = loaded_from_api
+    @loaded_from_internal_api = loaded_from_internal_api
+    @time = time
+    @arch = arch
+    @source = T.let(source || {}, T::Hash[String, T.untyped])
+    @built_on = built_on
+    @runtime_dependencies = runtime_dependencies
   end
 
   # Instantiates a {Tab} for a new installation of a formula or cask.
   sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(T.attached_class) }
   def self.create(formula_or_cask)
-    attributes = {
-      "homebrew_version"         => HOMEBREW_VERSION,
-      "installed_on_request"     => false,
-      "loaded_from_api"          => formula_or_cask.loaded_from_api?,
-      "loaded_from_internal_api" => formula_or_cask.loaded_from_internal_api?,
-      "time"                     => Time.now.to_i,
-      "arch"                     => Hardware::CPU.arch,
-      "source"                   => {
+    new(
+      homebrew_version:         HOMEBREW_VERSION,
+      installed_on_request:     false,
+      loaded_from_api:          formula_or_cask.loaded_from_api?,
+      loaded_from_internal_api: formula_or_cask.loaded_from_internal_api?,
+      time:                     Time.now.to_i,
+      arch:                     Hardware::CPU.arch,
+      source:                   {
         "tap"          => formula_or_cask.tap&.name,
         "tap_git_head" => formula_or_cask.tap_git_head,
       },
-      "built_on"                 => DevelopmentTools.build_system_info,
-    }
-
-    new(attributes)
+      built_on:                 DevelopmentTools.build_system_info,
+    )
   end
 
   # Returns the {Tab} for a formula or cask install receipt at `path`.
@@ -129,28 +130,26 @@ class AbstractTab
     end
     attributes["tabfile"] = path
 
-    new(attributes)
+    new(**attributes.transform_keys(&:to_sym))
   end
 
   sig { returns(T.attached_class) }
   def self.empty
-    attributes = {
-      "homebrew_version"         => HOMEBREW_VERSION,
-      "installed_on_request"     => false,
-      "loaded_from_api"          => false,
-      "loaded_from_internal_api" => false,
-      "time"                     => nil,
-      "runtime_dependencies"     => nil,
-      "arch"                     => nil,
-      "source"                   => {
+    new(
+      homebrew_version:         HOMEBREW_VERSION,
+      installed_on_request:     false,
+      loaded_from_api:          false,
+      loaded_from_internal_api: false,
+      time:                     nil,
+      runtime_dependencies:     nil,
+      arch:                     nil,
+      source:                   {
         "path"         => nil,
         "tap"          => nil,
         "tap_git_head" => nil,
       },
-      "built_on"                 => DevelopmentTools.build_system_info,
-    }
-
-    new(attributes)
+      built_on:                 DevelopmentTools.build_system_info,
+    )
   end
 
   sig { params(formula: Formula, declared_deps: T::Array[String]).returns(T::Hash[String, T.untyped]) }

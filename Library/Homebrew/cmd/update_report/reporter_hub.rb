@@ -39,6 +39,8 @@ class ReporterHub
 
   sig { params(auto_update: T::Boolean).void }
   def dump(auto_update: false)
+    return if auto_update && Homebrew::EnvConfig.auto_update_quiet?
+
     unless Homebrew::EnvConfig.no_update_report_new?
       dump_new_formula_report
       dump_new_cask_report

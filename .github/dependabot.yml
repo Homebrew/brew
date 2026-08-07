@@ -65,6 +65,8 @@ updates:
   - dependency-type: all
   cooldown:
     default-days: 7
+    exclude:
+    - Homebrew/actions/*
 - package-ecosystem: uv
   directories:
   - "/Library/Homebrew/formula-analytics/"

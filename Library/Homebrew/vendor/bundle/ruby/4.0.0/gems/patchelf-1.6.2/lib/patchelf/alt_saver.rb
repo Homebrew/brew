@@ -58,7 +58,7 @@ module PatchELF
       @out_file = out_file
       @set = set
 
-      f = File.open(in_file, 'rb')
+      f = File.open(in_file, 'rb') # rubocop:disable Style/FileOpen
       # the +@buffer+ and +@elf+ both could work on same +StringIO+ stream,
       # the updating of @buffer in place blocks us from looking up old values.
       # TODO: cache the values needed later, use same stream for +@buffer+ and +@elf+.
@@ -130,14 +130,12 @@ module PatchELF
       find_section '.dynstr'
     end
 
-    # yields dynamic tag, and offset in buffer
+    # Yields dynamic tag, and its offset in @buffer.
+    # @yieldparam [ELFTools::Structs::ELF_Dyn] dyn
+    # @yieldparam [Integer] offset The offset of this dynamic tag within +@buffer+.
     def each_dynamic_tags
-      return unless block_given?
-
-      sec = find_section '.dynamic'
-      return unless sec
-
-      return if sec.header.sh_type == ELFTools::Constants::SHT_NOBITS
+      sec = find_section('.dynamic')
+      return if sec.nil? || sec.header.sh_type == ELFTools::Constants::SHT_NOBITS
 
       shdr = sec.header
       with_buf_at(shdr.sh_offset) do |buf|
@@ -149,8 +147,8 @@ module PatchELF
           break if dyn.d_tag == ELFTools::Constants::DT_NULL
 
           yield dyn, buf_dyn_offset
-          # there's a possibility for caller to modify @buffer.pos, seek to avoid such issues
-          buf.seek buf_dyn_offset + dyn.num_bytes
+          # It's possible the caller may modify @buffer.pos, seek to ensure it points to the next tag.
+          buf.seek(buf_dyn_offset + dyn.num_bytes)
         end
       end
     end
@@ -675,18 +673,13 @@ module PatchELF
       new_phdrs = []
 
       while curr_off < end_off
-        size = 0
-        sections_at_aligned_offset(curr_off) do |sec|
-          next if sec.type != ELFTools::Constants::SHT_NOTE
+        section = sections_at_aligned_offset(curr_off).find { |sec| sec.type == ELFTools::Constants::SHT_NOTE }
+        raise PatchError, 'cannot normalize PT_NOTE segment: non-contiguous SHT_NOTE sections' if section.nil?
 
-          size = sec.header.sh_size.to_i
-          curr_off = sec.header.sh_offset.to_i
-          break
-        end
+        size = section.header.sh_size.to_i
+        curr_off = section.header.sh_offset.to_i
 
-        raise PatchError, 'cannot normalize PT_NOTE segment: non-contiguous SHT_NOTE sections' if size.zero?
-
-        if curr_off + size > end_off
+        if size.zero? || curr_off + size > end_off
           raise PatchError, 'cannot normalize PT_NOTE segment: partially mapped SHT_NOTE section'
         end
 
@@ -710,6 +703,8 @@ module PatchELF
     end
 
     def sections_at_aligned_offset(offset)
+      return to_enum(__method__, offset) unless block_given?
+
       @sections.each do |sec|
         shdr = sec.header
 
@@ -743,7 +738,6 @@ module PatchELF
       phdr.p_vaddr -= shift if phdr.p_vaddr > shift
     end
 
-    # rubocop:disable Metrics/PerceivedComplexity
     def shift_segments(shift, start_offset)
       split_index = -1
       split_shift = 0
@@ -752,9 +746,8 @@ module PatchELF
         phdr = seg.header
         p_start = phdr.p_offset
 
-        if p_start <= start_offset && p_start + phdr.p_filesz > start_offset &&
-           phdr.p_type == ELFTools::Constants::PT_LOAD
-          raise PatchError, "split_index(#{split_index}) != -1" if split_index != -1
+        if (p_start...(p_start + phdr.p_filesz)).cover?(start_offset) && phdr.p_type == ELFTools::Constants::PT_LOAD
+          raise PatchError, 'PT_LOAD segments overlapped, unable to shift segments' if split_index != -1
 
           split_index = idx
           split_shift = start_offset - p_start
@@ -775,11 +768,10 @@ module PatchELF
         end
       end
 
-      raise PatchError, "split_index(#{split_index}) == -1" if split_index == -1
+      raise PatchError, "No PT_LOAD found covers offset 0x#{start_offset.to_s(16)}" if split_index == -1
 
       [split_index, split_shift]
     end
-    # rubocop:enable Metrics/PerceivedComplexity
 
     def shift_file(extra_pages, start_offset, extra_bytes)
       raise PatchError, "start_offset(#{start_offset}) < ehdr.num_bytes" if start_offset < ehdr.num_bytes
@@ -865,9 +857,9 @@ module PatchELF
       sec_name
     end
 
-    # given a +dyn.d_tag+, returns the section name it must be synced to.
-    # it may return nil, when given tag maps to no section,
-    # or when its okay to skip if section is not found.
+    # Given a +dyn.d_tag+, returns the section name it must be synced to.
+    # Returns +nil+ when given tag maps to no section, or when its okay to skip if section is not found.
+    # @return [String?]
     def dyn_tag_to_section_name(d_tag)
       case d_tag
       when ELFTools::Constants::DT_STRTAB, ELFTools::Constants::DT_STRSZ
@@ -901,31 +893,36 @@ module PatchELF
       end
     end
 
+    # @return [ELFTools::Structs::ELF_Shdr?]
+    def dyn_tag_to_shdr(d_tag)
+      sec_name = dyn_tag_to_section_name(d_tag)
+      return if sec_name.nil?
+
+      find_section(sec_name)&.header
+    end
+
     # updates dyn tags by syncing it with @section values
     def sync_dyn_tags!
+      # Position of the fist dynamic tag.
       dyn_table_offset = nil
       each_dynamic_tags do |dyn, buf_off|
         dyn_table_offset ||= buf_off
 
-        sec_name = dyn_tag_to_section_name(dyn.d_tag)
+        if dyn.d_tag == ELFTools::Constants::DT_MIPS_RLD_MAP_REL
+          rld_map = find_section('.rld_map')
+          dyn.d_val = if rld_map
+                        rld_map.header.sh_addr.to_i - (buf_off - dyn_table_offset) -
+                          find_section('.dynamic').header.sh_addr.to_i
+                      else
+                        Logger.warn 'DT_MIPS_RLD_MAP_REL entry is present, but .rld_map section is not'
+                        0
+                      end
+        else
+          shdr = dyn_tag_to_shdr(dyn.d_tag)
+          next if shdr.nil?
 
-        unless sec_name
-          if dyn.d_tag == ELFTools::Constants::DT_MIPS_RLD_MAP_REL && ehdr.e_machine == ELFTools::Constants::EM_MIPS
-            rld_map = find_section('.rld_map')
-            dyn.d_val = if rld_map
-                          rld_map.header.sh_addr.to_i - (buf_off - dyn_table_offset) -
-                            find_section('.dynamic').header.sh_addr.to_i
-                        else
-                          Logger.warn 'DT_MIPS_RLD_MAP_REL entry is present, but .rld_map section is not'
-                          0
-                        end
-          end
-
-          next
+          dyn.d_val = dyn.d_tag == ELFTools::Constants::DT_STRSZ ? shdr.sh_size.to_i : shdr.sh_addr.to_i
         end
-
-        shdr = find_section(sec_name).header
-        dyn.d_val = dyn.d_tag == ELFTools::Constants::DT_STRSZ ? shdr.sh_size.to_i : shdr.sh_addr.to_i
 
         with_buf_at(buf_off) { |wbuf| dyn.write(wbuf) }
       end
@@ -945,6 +942,8 @@ module PatchELF
       nil
     end
 
+    # Some sections have their corresponding segment.
+    # Use this utility when a section is being patched so its segment should be updated with the same values.
     def sync_sec_to_seg(shdr, phdr)
       phdr.p_offset = shdr.sh_offset.to_i
       phdr.p_vaddr = phdr.p_paddr = shdr.sh_addr.to_i
@@ -962,6 +961,8 @@ module PatchELF
     end
 
     # Returns a blank shdr if the section doesn't exist.
+    #
+    # @return [ELFTools::Structs::ELF_Shdr]
     def find_or_create_section_header(rsec_name)
       shdr = find_section(rsec_name)&.header
       shdr ||= ELFTools::Structs::ELF_Shdr.new(endian: endian, elf_class: elf_class)
@@ -991,10 +992,53 @@ module PatchELF
       (s_start >= p_start && s_start < p_end) || (s_end > p_start && s_end <= p_end)
     end
 
+    # Used when patching sections.
+    # For sections with a correspondence segment, update the segment values.
+    # @return [void]
+    def section_sync_correspondence_segment(sec_name, shdr)
+      seg_type = {
+        '.interp' => ELFTools::Constants::PT_INTERP,
+        '.dynamic' => ELFTools::Constants::PT_DYNAMIC,
+        '.MIPS.abiflags' => ELFTools::Constants::PT_MIPS_ABIFLAGS,
+        '.note.gnu.property' => ELFTools::Constants::PT_GNU_PROPERTY
+      }[sec_name]
+      return if seg_type.nil?
+
+      phdrs_by_type(seg_type) { |phdr| sync_sec_to_seg(shdr, phdr) }
+    end
+
+    # Similar to +section_sync_correspondence_segment+ but dedicate for note sections as it is allowed to have multiple
+    # note segments.
+    # This function searches all note segments and only sync the one matched with the section values before patching.
+    #
+    # NOTE: This function is no-op if +shdr+ does not have section type +ELFTools::Constants::SHT_NOTE+.
+    #
+    # @param [Integer] orig_sh_offset The original section offset value.
+    # @param [Integer] orig_sh_size The original section size value.
+    # @param [ELFTools::Structs::ELF_Shdr] shdr The section header with values after patched.
+    #
+    # @return [void]
+    def sync_note_segment(orig_sh_offset, orig_sh_size, shdr)
+      return if shdr.sh_type != ELFTools::Constants::SHT_NOTE
+
+      phdrs_by_type(ELFTools::Constants::PT_NOTE) do |phdr|
+        s_start = orig_sh_offset
+        s_end = s_start + orig_sh_size
+        p_start = phdr.p_offset
+        p_end = p_start + phdr.p_filesz
+
+        # Skip if no overlap.
+        next unless section_bounds_within_segment?(s_start, s_end, p_start, p_end)
+
+        # Only support exact matches.
+        raise PatchError, 'unsupported overlap of SHT_NOTE and PT_NOTE' unless [p_start, p_end] == [s_start, s_end]
+
+        sync_sec_to_seg(shdr, phdr)
+      end
+    end
+
     def write_replaced_sections(cur_off, start_addr, start_offset)
       overwrite_replaced_sections
-
-      noted_phdrs = Set.new
 
       # the sort is necessary, the strategy in ruby and Cpp to iterate map/hash
       # is different, patchelf v0.10 iterates the replaced_sections sorted by
@@ -1018,34 +1062,8 @@ module PatchELF
         shdr.sh_size = rsec_data.size
 
         write_section_alignment(shdr)
-
-        seg_type = {
-          '.interp' => ELFTools::Constants::PT_INTERP,
-          '.dynamic' => ELFTools::Constants::PT_DYNAMIC,
-          '.MIPS.abiflags' => ELFTools::Constants::PT_MIPS_ABIFLAGS,
-          '.note.gnu.property' => ELFTools::Constants::PT_GNU_PROPERTY
-        }[rsec_name]
-
-        phdrs_by_type(seg_type) { |phdr| sync_sec_to_seg(shdr, phdr) }
-
-        if shdr.sh_type == ELFTools::Constants::SHT_NOTE
-          phdrs_by_type(ELFTools::Constants::PT_NOTE) do |phdr, idx|
-            next if noted_phdrs.include?(idx)
-
-            s_start = orig_sh_offset
-            s_end = s_start + orig_sh_size
-            p_start = phdr.p_offset
-            p_end = p_start + phdr.p_filesz
-
-            next unless section_bounds_within_segment?(s_start, s_end, p_start, p_end)
-
-            raise PatchError, 'unsupported overlap of SHT_NOTE and PT_NOTE' if p_start != s_start || p_end != s_end
-
-            sync_sec_to_seg(shdr, phdr)
-
-            noted_phdrs << idx
-          end
-        end
+        section_sync_correspondence_segment(rsec_name, shdr)
+        sync_note_segment(orig_sh_offset, orig_sh_size, shdr)
 
         cur_off += Helper.alignup(rsec_data.size, @section_alignment)
       end

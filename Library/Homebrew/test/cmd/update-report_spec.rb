@@ -638,6 +638,22 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       EOS
     end
 
+    it "does not dump update details when HOMEBREW_AUTO_UPDATE_QUIET is set during auto-update" do
+      ENV["HOMEBREW_AUTO_UPDATE_QUIET"] = "1"
+      allow(hub).to receive(:select_formula_or_cask).with(:A).and_return(["foo"])
+      allow(hub).to receive(:installed?).and_return(false)
+
+      expect { hub.dump(auto_update: true) }.not_to output.to_stdout
+    end
+
+    it "dumps update details when HOMEBREW_AUTO_UPDATE_QUIET is set during an explicit update" do
+      ENV["HOMEBREW_AUTO_UPDATE_QUIET"] = "1"
+      allow(hub).to receive(:select_formula_or_cask).with(:A).and_return(["foo"])
+      allow(hub).to receive_messages(installed?: false, description: nil)
+
+      expect { hub.dump }.to output("==> New Formulae\nfoo\n").to_stdout
+    end
+
     it "dumps deleted installed formulae and casks report" do
       allow(hub).to receive(:select_formula_or_cask).with(:D).and_return(["baz", "foo", "bar"])
       allow(hub).to receive(:installed?).with("baz").and_return(true)

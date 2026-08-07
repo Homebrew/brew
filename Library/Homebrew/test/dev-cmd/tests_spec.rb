@@ -15,61 +15,34 @@ RSpec.describe Homebrew::DevCmd::Tests do
       require "sandbox"
 
       allow(Homebrew::EnvConfig).to receive(:sandbox_linux?).and_return(true)
-      allow(OS::Linux::Sandbox).to receive(:landlock?).and_return(false)
       allow(GitHub::Actions).to receive(:env_set?).and_return(false)
     end
 
     it "does not require the Linux sandbox when Linux sandboxing is disabled" do
       allow(Homebrew::EnvConfig).to receive(:sandbox_linux?).and_return(false)
       allow(Sandbox).to receive_messages(available?: false, failure_reason: "sandbox unavailable")
-      expect(Sandbox).not_to receive(:ensure_sandbox_installed!)
-      expect(Sandbox).not_to receive(:configure!)
+      expect(Sandbox).not_to receive(:ensure_sandbox_available!)
 
       expect { tests.check_test_environment! }.not_to raise_error
     end
 
-    it "does not fail on GitHub Actions when requested Landlock is unavailable" do
-      allow(OS::Linux::Sandbox).to receive(:landlock?).and_return(true)
+    it "does not fail on GitHub Actions when the Linux sandbox is unavailable" do
       allow(Sandbox).to receive(:available?).and_return(false)
       allow(GitHub::Actions).to receive(:env_set?).and_return(true)
-      expect(Sandbox).not_to receive(:ensure_sandbox_installed!)
-      expect(Sandbox).not_to receive(:configure!)
+      expect(Sandbox).not_to receive(:ensure_sandbox_available!)
 
       expect { tests.check_test_environment! }.not_to raise_error
     end
 
-    it "fails outside GitHub Actions when requested Landlock is unavailable" do
-      allow(OS::Linux::Sandbox).to receive(:landlock?).and_return(true)
+    it "fails outside GitHub Actions when the Linux sandbox is unavailable" do
       allow(Sandbox).to receive_messages(available?: false, failure_reason: "Landlock is not available.")
-      expect(Sandbox).not_to receive(:ensure_sandbox_installed!)
-      expect(Sandbox).not_to receive(:configure!)
 
       expect { tests.check_test_environment! }
         .to raise_error(RuntimeError, "Landlock is not available.")
     end
 
-    it "configures requested Landlock when it is available" do
-      allow(OS::Linux::Sandbox).to receive(:landlock?).and_return(true)
+    it "passes when the Linux sandbox is available" do
       allow(Sandbox).to receive(:available?).and_return(true)
-      expect(Sandbox).not_to receive(:ensure_sandbox_installed!)
-      expect(Sandbox).to receive(:configure!)
-
-      expect { tests.check_test_environment! }.not_to raise_error
-    end
-
-    it "installs and checks Bubblewrap outside GitHub Actions" do
-      allow(Sandbox).to receive(:available?).and_return(true)
-      expect(Sandbox).to receive(:ensure_sandbox_installed!).with(install_from_tests: true)
-      expect(Sandbox).not_to receive(:configure!)
-
-      expect { tests.check_test_environment! }.not_to raise_error
-    end
-
-    it "configures and checks Bubblewrap on GitHub Actions" do
-      allow(GitHub::Actions).to receive(:env_set?).and_return(true)
-      allow(Sandbox).to receive(:available?).and_return(true)
-      expect(Sandbox).not_to receive(:ensure_sandbox_installed!)
-      expect(Sandbox).to receive(:configure!)
 
       expect { tests.check_test_environment! }.not_to raise_error
     end

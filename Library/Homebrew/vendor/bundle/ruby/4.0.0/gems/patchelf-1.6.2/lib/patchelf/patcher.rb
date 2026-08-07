@@ -29,7 +29,7 @@ module PatchELF
     #     :silent = ignore the errors
     def initialize(filename, on_error: :log, logging: true)
       @in_file = filename
-      f = File.open(filename)
+      f = File.open(filename) # rubocop:disable Style/FileOpen
       @elf = ELFTools::ELFFile.new(f)
       @set = {}
       @rpath_sym = :runpath

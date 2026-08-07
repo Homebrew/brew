@@ -22,21 +22,6 @@ RSpec.describe "Bash" do
     subject(:brew) { HOMEBREW_LIBRARY_PATH.parent.parent/"bin/brew" }
 
     it { is_expected.to have_valid_bash_syntax }
-
-    it "selects Landlock on self-hosted Linux GitHub Actions runners", :needs_linux do
-      stdout, stderr, status = Open3.capture3(
-        {
-          "CI"                                  => "1",
-          "GITHUB_ACTIONS"                      => "true",
-          "GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED" => "1",
-          "HOMEBREW_DEV_CMD_RUN"                => "1",
-          "HOMEBREW_SANDBOX_LINUX_LANDLOCK"     => nil,
-        },
-        brew.to_s, "ruby", "--", "-e", "print OS::Linux::Sandbox.sandbox_implementation"
-      )
-
-      expect([stdout, stderr, status.success?]).to eq(["Sandbox::Landlock", "", true])
-    end
   end
 
   describe "setup-locale" do

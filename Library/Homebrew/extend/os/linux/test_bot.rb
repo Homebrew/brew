@@ -22,10 +22,7 @@ module OS
         sig { returns(T::Boolean) }
         def configure_sandbox!
           require "sandbox"
-          ::Sandbox.configure!
           ::Sandbox.available?
-        rescue ::ErrorDuringExecution
-          false
         end
       end
 

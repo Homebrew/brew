@@ -21,6 +21,7 @@ module RuboCop
           }.freeze,
           T::Hash[Symbol, Symbol],
         )
+        LEGACY_FLIGHT_MSG = "Casks in official Homebrew taps must use `%<steps>s` instead of `%<flight>s`."
         KEYCHAIN_HASHES_SOURCE =
           'hashes = stdout.lines.grep(/^SHA-256 hash:/) { |l| l.split(":").second.strip }'
         KEYCHAIN_DELETE_SOURCE = T.let(
@@ -60,14 +61,27 @@ module RuboCop
             next unless (flight_stanza = stanzas.find { |stanza| stanza.stanza_name == flight_block })
 
             steps_stanza = stanzas.find { |stanza| stanza.stanza_name == steps_block }
-            audit_flight_block(flight_stanza, steps_block) if steps_stanza.nil?
+            converted_flight = autocorrect_flight_block?(flight_stanza, steps_block) if steps_stanza.nil?
+
+            # odeprecated: remove the official-tap scope in the next major or minor release.
+            next unless official_homebrew_tap?(processed_source.file_path)
+            next if converted_flight
+
+            add_offense(flight_stanza.method_node,
+                        message: format(LEGACY_FLIGHT_MSG, steps: steps_block, flight: flight_block))
           end
 
           stanzas.each do |stanza|
             next unless INSTALL_STEP_PAIRS.value?(stanza.stanza_name)
             next unless stanza.method_node.block_type?
+
+            block_node = T.cast(stanza.method_node, RuboCop::AST::BlockNode)
+            if (offense_node = brew_ruby_step_node(block_node))
+              add_offense(offense_node, message: BREW_RUBY_STEP_MSG)
+              next
+            end
             next unless (offense_node = install_step_block_offense_node(
-              T.cast(stanza.method_node, RuboCop::AST::BlockNode),
+              block_node,
               allowed_methods: CASK_ALLOWED_STEP_METHODS,
             ))
 
@@ -77,9 +91,9 @@ module RuboCop
 
         private
 
-        sig { params(flight_stanza: RuboCop::Cask::AST::Stanza, steps_block: Symbol).void }
-        def audit_flight_block(flight_stanza, steps_block)
-          return unless flight_stanza.method_node.block_type?
+        sig { params(flight_stanza: RuboCop::Cask::AST::Stanza, steps_block: Symbol).returns(T::Boolean) }
+        def autocorrect_flight_block?(flight_stanza, steps_block)
+          return false unless flight_stanza.method_node.block_type?
 
           block_node = T.cast(flight_stanza.method_node, RuboCop::AST::BlockNode)
           step_lines = keychain_certificate_step_lines(block_node.body) ||
@@ -89,7 +103,7 @@ module RuboCop
                                                  default_target_base: :staged_path,
                                                  rebuild_actions:     false,
                                                  permission_actions:  true)
-          return if step_lines.blank?
+          return false if step_lines.blank?
 
           add_offense(block_node.source_range,
                       message: format(SIMPLE_STEP_CONVERSION_MSG, steps_block:)) do |corrector|
@@ -98,6 +112,7 @@ module RuboCop
               install_steps_block_source(steps_block, step_lines, block_node.source_range.column),
             )
           end
+          true
         end
 
         sig { params(body_node: T.nilable(RuboCop::AST::Node)).returns(T.nilable(T::Array[String])) }

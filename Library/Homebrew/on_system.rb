@@ -25,7 +25,9 @@ module OnSystem
 
   sig { params(os_name: Symbol, or_condition: T.nilable(Symbol)).returns(T::Boolean) }
   def self.os_condition_met?(os_name, or_condition = nil)
-    return Homebrew::SimulateSystem.send(:"simulating_or_running_on_#{os_name}?") if BASE_OS_OPTIONS.include?(os_name)
+    if BASE_OS_OPTIONS.include?(os_name)
+      return Homebrew::SimulateSystem.public_send(:"simulating_or_running_on_#{os_name}?")
+    end
 
     raise ArgumentError, "Invalid OS condition: #{os_name.inspect}" unless MacOSVersion::SYMBOLS.key?(os_name)
 
@@ -92,8 +94,10 @@ module OnSystem
         return unless OnSystem.os_condition_met? OnSystem.condition_from_method_name(T.must(__method__))
 
         @called_in_on_system_block = true
+        @called_in_on_os_block = T.let(true, T.nilable(T::Boolean))
         result = block.call
         @called_in_on_system_block = false
+        @called_in_on_os_block = false
 
         result
       end
@@ -113,8 +117,10 @@ module OnSystem
       return if !OnSystem.os_condition_met?(os_version, or_condition) && !OnSystem.os_condition_met?(:linux)
 
       @called_in_on_system_block = true
+      @called_in_on_os_block = T.let(true, T.nilable(T::Boolean))
       result = block.call
       @called_in_on_system_block = false
+      @called_in_on_os_block = false
 
       result
     end
@@ -149,8 +155,10 @@ module OnSystem
           T.nilable(MacOSVersion),
         )
         @called_in_on_system_block = T.let(true, T.nilable(T::Boolean))
+        @called_in_on_os_block = T.let(true, T.nilable(T::Boolean))
         result = block.call
         @called_in_on_system_block = false
+        @called_in_on_os_block = false
 
         result
       end

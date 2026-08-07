@@ -364,6 +364,10 @@ RSpec.configure do |config|
       ENV.replace(@__env)
       Homebrew::SimulateSystem.clear
       Context.current = Context::ContextStruct.new
+      # Shut down and drop any memoized download queue so an example that
+      # stubbed `DownloadQueue.new` cannot leak a double into later examples
+      # or the `at_exit` shutdown hook.
+      Homebrew.reset_default_download_queue if Homebrew.respond_to?(:reset_default_download_queue)
 
       $stdout.reopen(@__stdout)
       $stderr.reopen(@__stderr)

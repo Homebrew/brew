@@ -248,9 +248,10 @@ module SharedAudits
              "<#{notability_thresholds.fetch(:stars)} stars)"
     end
 
-    return if Date.parse(metadata["created_at"]) <= (Date.today - 30)
+    age_days = (Date.today - Date.parse(metadata["created_at"])).to_i
+    return if age_days >= 30
 
-    "GitHub repository too new (<30 days old)"
+    "GitHub repository too new (#{age_days} days old, 30 days required)"
   end
 
   sig { params(user: String, repo: String, self_submission: T::Boolean).returns(T.nilable(String)) }
@@ -273,9 +274,10 @@ module SharedAudits
              "<#{notability_thresholds.fetch(:stars)} stars)"
     end
 
-    return if Date.parse(metadata["created_at"]) <= (Date.today - 30)
+    age_days = (Date.today - Date.parse(metadata["created_at"])).to_i
+    return if age_days >= 30
 
-    "GitLab repository too new (<30 days old)"
+    "GitLab repository too new (#{age_days} days old, 30 days required)"
   end
 
   sig { params(user: String, repo: String, self_submission: T::Boolean).returns(T.nilable(String)) }
@@ -291,7 +293,8 @@ module SharedAudits
 
     return "Bitbucket fork (not canonical repository)" unless metadata["parent"].nil?
 
-    return "Bitbucket repository too new (<30 days old)" if Date.parse(metadata["created_on"]) >= (Date.today - 30)
+    age_days = (Date.today - Date.parse(metadata["created_on"])).to_i
+    return "Bitbucket repository too new (#{age_days} days old, 30 days required)" if age_days < 30
 
     forks_result = Utils::Curl.curl_output("--request", "GET", "#{api_url}/forks")
     return unless forks_result.status.success?
@@ -339,9 +342,10 @@ module SharedAudits
              "<#{notability_thresholds.fetch(:stars)} stars)"
     end
 
-    return if Date.parse(metadata["created_at"]) <= (Date.today - 30)
+    age_days = (Date.today - Date.parse(metadata["created_at"])).to_i
+    return if age_days >= 30
 
-    "Forgejo repository too new (<30 days old)"
+    "Forgejo repository too new (#{age_days} days old, 30 days required)"
   end
 
   sig { params(url: String).returns(T.nilable(String)) }

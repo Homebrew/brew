@@ -79,6 +79,9 @@ module Cask
              (target.realpath == source.realpath || target.realpath.to_s.start_with?("#{cask.caskroom_path}/"))
             opoo "#{message}; overwriting."
             Utils.gain_permissions_remove(target, command:)
+          elsif target_links_to_source?
+            ohai "#{self.class.english_name} '#{source.basename}' is already linked to '#{target}'"
+            return
           elsif (formula = conflicting_formula)
             opoo "#{message} from formula #{formula}; skipping link."
             return
@@ -111,6 +114,14 @@ module Cask
 
         command.run! "/bin/ln", args: ["--no-dereference", "--force", "--symbolic", source, target],
                                 sudo: !target.dirname.writable?
+      end
+
+      sig { returns(T::Boolean) }
+      def target_links_to_source?
+        target.symlink? && target.realpath == source.realpath
+      rescue => e
+        odebug "Error checking whether #{target} links to #{source}: #{e}"
+        false
       end
 
       # Check if the target file is a symlink that originates from a formula

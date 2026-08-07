@@ -80,6 +80,25 @@ RSpec.describe Homebrew::SimulateSystem do
     end
   end
 
+  describe "::simulating?" do
+    it "returns false without any simulation" do
+      described_class.clear
+      expect(described_class.simulating?).to be false
+    end
+
+    it "returns true when simulating an OS" do
+      described_class.clear
+      described_class.os = :linux
+      expect(described_class.simulating?).to be true
+    end
+
+    it "returns true when simulating an architecture" do
+      described_class.clear
+      described_class.arch = :arm
+      expect(described_class.simulating?).to be true
+    end
+  end
+
   describe "::current_arch" do
     it "returns the current architecture" do
       described_class.clear

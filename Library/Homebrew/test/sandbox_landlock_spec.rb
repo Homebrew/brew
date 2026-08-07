@@ -77,13 +77,6 @@ RSpec.describe Sandbox::Landlock do
       expect(described_class.abi_version).to eq(1)
       expect(described_class.failure_reason).to eq("Landlock ABI 2 or later is required; found ABI 1.")
     end
-
-    it "only raises when explicitly configuring unavailable Landlock" do
-      allow(described_class).to receive_messages(available?: false, failure_reason: "Landlock is not available.")
-
-      expect { described_class.ensure_installed! }.not_to raise_error
-      expect { described_class.configure! }.to raise_error(RuntimeError, "Landlock is not available.")
-    end
   end
 
   describe "::kernel_abi_version" do

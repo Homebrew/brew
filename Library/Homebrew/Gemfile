@@ -45,6 +45,7 @@ group :style, optional: true do
   gem "rubocop-performance", require: false
   gem "rubocop-rspec", require: false
   gem "rubocop-sorbet", require: false
+  gem "rubydex", require: false
 end
 group :style, :tests, optional: true do
   gem "test-prof", require: false
@@ -79,7 +80,6 @@ group :audit, :bump_unversioned_casks, :livecheck, optional: true do
 end
 
 # vendored gems (no group)
-gem "base64"
 gem "concurrent-ruby"
 gem "patchelf"
 gem "plist"

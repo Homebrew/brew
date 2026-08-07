@@ -82,7 +82,6 @@ module Homebrew
 
             exec_args << "--HEAD" if f.head?
 
-            Sandbox.ensure_sandbox_installed!
             if Sandbox.available?
               sandbox = Sandbox.new
               f.logs.mkpath

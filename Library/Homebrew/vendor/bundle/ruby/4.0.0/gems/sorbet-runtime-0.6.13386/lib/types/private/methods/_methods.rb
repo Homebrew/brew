@@ -358,11 +358,22 @@ module T::Private::Methods
     key = method_owner_and_name_to_key(mod, method_name)
     T::Private::ClassUtils.replace_method(original_method, mod, method_name) do |*args, &blk|
       method_sig = T::Private::Methods.maybe_run_sig_block_for_key(key)
-      method_sig ||= T::Private::Methods._handle_missing_method_signature(
-        self,
-        original_method,
-        __callee__ || raise("Unknown __callee__ for method without a signature"),
-      )
+      if !method_sig
+        callee = __callee__ || raise("Unknown __callee__ for method without a signature")
+        method_sig = T::Private::Methods.signature_for_method(original_method)
+        if !method_sig
+          raise "`sig` not present for method `#{callee}` on #{self.inspect} but you're trying to run it anyways. " \
+            "This should only be executed if you used `alias_method` to grab a handle to a method after `sig`ing it, but that clearly isn't what you are doing. " \
+            "Maybe look to see if an exception was thrown in your `sig` lambda or somehow else your `sig` wasn't actually applied to the method."
+        end
+
+        method_sig = T::Private::Methods._unwrap_alias(
+          method_sig,
+          self,
+          original_method,
+          callee,
+        )
+      end
 
       # Should be the same logic as CallValidation.wrap_method_if_needed but we
       # don't want that extra layer of indirection in the callstack
@@ -388,14 +399,8 @@ module T::Private::Methods
     end
   end
 
-  def self._handle_missing_method_signature(receiver, original_method, callee)
-    method_sig = T::Private::Methods.signature_for_method(original_method)
-    if !method_sig
-      raise "`sig` not present for method `#{callee}` on #{receiver.inspect} but you're trying to run it anyways. " \
-        "This should only be executed if you used `alias_method` to grab a handle to a method after `sig`ing it, but that clearly isn't what you are doing. " \
-        "Maybe look to see if an exception was thrown in your `sig` lambda or somehow else your `sig` wasn't actually applied to the method."
-    end
-
+  # Only public so that it can be accessed in the closure for _on_method_added
+  def self._unwrap_alias(method_sig, receiver, original_method, callee)
     if receiver.class <= original_method.owner
       receiving_class = receiver.class
     elsif receiver.singleton_class <= original_method.owner

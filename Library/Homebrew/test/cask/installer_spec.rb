@@ -231,6 +231,41 @@ RSpec.describe Cask::Installer, :cask do
       end.to raise_error(Cask::CaskError, /\Awith-depends-on-arch: This cask depends on hardware architecture/)
     end
 
+    it "names the cask when it has nothing to install on this system" do
+      no_artifacts_cask = Cask::Cask.new("with-no-artifacts", loaded_from_api: true) do
+        version "1.0"
+        sha256 :no_check
+        url "https://brew.sh/x.zip"
+      end
+      expect do
+        described_class.new(no_artifacts_cask).check_supported_system
+      end.to raise_error(Cask::CaskError, "with-no-artifacts: This cask is not available on macOS.")
+    end
+
+    it "treats uninstall-only artifacts as nothing to install" do
+      zap_only_cask = Cask::Cask.new("with-zap-only", loaded_from_api: true) do
+        version "1.0"
+        sha256 :no_check
+        url "https://brew.sh/x.zip"
+        zap trash: "~/Library/Caches/brew-test"
+      end
+      expect do
+        described_class.new(zap_only_cask).check_supported_system
+      end.to raise_error(Cask::CaskError, "with-zap-only: This cask is not available on macOS.")
+    end
+
+    it "does not treat stage_only casks as having nothing to install" do
+      stage_only_cask = Cask::Cask.new("with-stage-only", loaded_from_api: true) do
+        version "1.0"
+        sha256 :no_check
+        url "https://brew.sh/x.zip"
+        stage_only true
+      end
+      expect do
+        described_class.new(stage_only_cask).check_supported_system
+      end.not_to raise_error
+    end
+
     it "installs fine if sha256 :no_check is used with --require-sha and --force" do
       no_checksum = Cask::CaskLoader.load(cask_path("no-checksum"))
 
@@ -385,7 +420,7 @@ RSpec.describe Cask::Installer, :cask do
         expect(Homebrew::API::Cask).to receive(:source_download_cask).once.and_return(source_caffeine)
 
         caffeine = Cask::CaskLoader.load(path)
-        expect(caffeine).to receive(:loaded_from_api?).once.and_return(true)
+        allow(caffeine).to receive(:loaded_from_api?).and_return(true)
         expect(caffeine).to receive(:caskfile_only?).once.and_return(true)
 
         described_class.new(caffeine).install
@@ -511,7 +546,7 @@ RSpec.describe Cask::Installer, :cask do
         expect(Homebrew::API::Cask).to receive(:source_download_cask).twice.and_return(source_caffeine)
 
         caffeine = Cask::CaskLoader.load(path)
-        expect(caffeine).to receive(:loaded_from_api?).twice.and_return(true)
+        allow(caffeine).to receive(:loaded_from_api?).and_return(true)
         expect(caffeine).to receive(:caskfile_only?).twice.and_return(true)
         expect(caffeine).to receive(:installed_caskfile).once.and_return(invalid_path)
 
@@ -693,6 +728,7 @@ RSpec.describe Cask::Installer, :cask do
       ENV["HOMEBREW_FORBIDDEN_CASKS"] = cask_name = "homebrew-forbidden-cask"
       cask = Cask::Cask.new(cask_name) do
         url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        app "Fake.app"
       end
       allow(cask).to receive_messages(loaded_from_api?: true, caskfile_only?: true)
       installer = described_class.new(cask)
@@ -710,6 +746,7 @@ RSpec.describe Cask::Installer, :cask do
         url "https://example.com/source-cask.zip"
         version "0.9"
         sha256 "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
+        app "Fake.app"
       end
       cask_struct = Homebrew::API::CaskStruct.new(
         sha256:   "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97",
@@ -755,6 +792,7 @@ RSpec.describe Cask::Installer, :cask do
     it "enqueues source API caskfiles before the main cask download" do
       cask = Cask::Cask.new("source-api-cask") do
         url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        app "Fake.app"
       end
       allow(cask).to receive_messages(loaded_from_api?: true, caskfile_only?: true, languages: ["en"])
       download_queue = instance_double(Homebrew::DownloadQueue)
@@ -772,6 +810,7 @@ RSpec.describe Cask::Installer, :cask do
     it "leaves source API caskfiles in the main queue when their URL is known" do
       cask = Cask::Cask.new("source-api-cask") do
         url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+        app "Fake.app"
       end
       allow(cask).to receive_messages(loaded_from_api?: true, caskfile_only?: true, languages: [])
       download_queue = instance_double(Homebrew::DownloadQueue)

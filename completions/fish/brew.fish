@@ -1804,13 +1804,6 @@ __fish_brew_complete_arg 'setup-ruby' -l verbose -d 'Make some output more verbo
 __fish_brew_complete_arg 'setup-ruby' -a '(__fish_brew_suggest_commands)'
 
 
-__fish_brew_complete_cmd 'setup-sandbox' 'Run any necessary commands to setup the Homebrew sandbox'
-__fish_brew_complete_arg 'setup-sandbox' -l debug -d 'Display any debugging information'
-__fish_brew_complete_arg 'setup-sandbox' -l help -d 'Show this message'
-__fish_brew_complete_arg 'setup-sandbox' -l quiet -d 'Make some output more quiet'
-__fish_brew_complete_arg 'setup-sandbox' -l verbose -d 'Make some output more verbose'
-
-
 __fish_brew_complete_cmd 'sh' 'Enter an interactive shell for Homebrew\'s build environment'
 __fish_brew_complete_arg 'sh' -l cmd -d 'Execute commands in a non-interactive shell'
 __fish_brew_complete_arg 'sh' -l debug -d 'Display any debugging information'
@@ -2297,9 +2290,11 @@ __fish_brew_complete_cmd 'vulns' 'Check formula for known security vulnerabiliti
 __fish_brew_complete_arg 'vulns' -l brewfile -d 'Check formulae listed in a Brewfile. Defaults to `./Brewfile`; use `--brewfile=`path to specify another'
 __fish_brew_complete_arg 'vulns' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'vulns' -l deps -d 'Also check the dependencies of named formulae'
+__fish_brew_complete_arg 'vulns' -l fix-available -d 'Only report vulnerabilities that have a fix available. Note that this may exclude vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration'
 __fish_brew_complete_arg 'vulns' -l help -d 'Show this message'
 __fish_brew_complete_arg 'vulns' -l json -d 'Output JSON'
 __fish_brew_complete_arg 'vulns' -l max-summary -d 'Truncate summaries to n characters (default 60, 0 for no limit)'
+__fish_brew_complete_arg 'vulns' -l no-fix-available -d 'Only report vulnerabilities that do not have a fix available. Note that this may include vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration'
 __fish_brew_complete_arg 'vulns' -l no-ignore-patches -d 'Report vulnerabilities even when a formula patch resolves them'
 __fish_brew_complete_arg 'vulns' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'vulns' -l severity -d 'Only report findings at or above: `low`, `medium`, `high`, `critical`'

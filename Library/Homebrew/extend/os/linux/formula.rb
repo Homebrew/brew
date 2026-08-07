@@ -37,7 +37,6 @@ module OS
             related_formula_names.merge(versioned_formulae_names)
           end
           [
-            dependency_collector.bubblewrap_dep_if_needed(related_formula_names),
             dependency_collector.gcc_dep_if_needed(related_formula_names),
             dependency_collector.glibc_dep_if_needed(related_formula_names),
           ].compact.freeze

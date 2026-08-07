@@ -28,9 +28,11 @@ module RuboCop
           :vst_plugin,
           :vst3_plugin,
         ].freeze
+        LINUX_ONLY_CASK_STANZAS = [:app_image].freeze
 
         CASK_STANZA_ORDER = T.let(RuboCop::Cask::Constants::STANZA_ORDER, T::Array[Symbol])
         MACOS_DEPENDENCY_STANZAS = [:macos, :maximum_macos].freeze
+        LINUX_DEPENDENCY_STANZAS = [:linux].freeze
 
         RESTRICT_ON_SEND = [:depends_on].freeze
 
@@ -41,6 +43,7 @@ module RuboCop
           return if send_node.method_name != :cask
 
           add_missing_macos_dependency(node)
+          add_missing_linux_dependency(node)
         end
 
         sig { params(node: RuboCop::AST::SendNode).void }
@@ -114,19 +117,14 @@ module RuboCop
           return if os_depends_on?(body)
 
           macos_stanza = stanzas.find do |stanza|
-            case stanza.method_name
-            when :installer
+            if stanza.method_name == :installer
               stanza.arguments.any? do |argument|
-                argument.hash_type? && argument.pairs.any? { |pair| symbol_key(pair) == :manual }
+                argument.hash_type? && argument.pairs.any? do |pair|
+                  symbol_key(pair) == :manual
+                end
               end
-            when :os
-              pairs = depends_on_pairs(stanza)
-              pairs.any? { |pair| symbol_key(pair) == :macos } &&
-                pairs.none? { |pair| symbol_key(pair) == :linux }
-            when *MACOS_ONLY_CASK_STANZAS
-              true
             else
-              false
+              MACOS_ONLY_CASK_STANZAS.include?(stanza.method_name)
             end
           end
           return unless macos_stanza
@@ -145,18 +143,50 @@ module RuboCop
                 range_by_whole_lines(following_stanza.source_range, include_final_newline: false),
                 "  depends_on :macos\n\n",
               )
-            elsif (preceding_stanza = stanzas.rfind do |stanza|
-              stanza_index = CASK_STANZA_ORDER.index(stanza.method_name)
-              stanza_index && stanza_index <= depends_on_stanza_index
-            end)
-              corrector.insert_after(
-                range_by_whole_lines(preceding_stanza.source_range, include_final_newline: true),
-                "\n  depends_on :macos\n",
-              )
             else
               corrector.insert_before(
                 range_by_whole_lines(macos_stanza.source_range, include_final_newline: false),
                 "  depends_on :macos\n\n",
+              )
+            end
+          end
+        end
+
+        sig { params(node: RuboCop::AST::BlockNode).void }
+        def add_missing_linux_dependency(node)
+          body = node.body
+          return unless body
+
+          stanzas = (body.begin_type? ? body.child_nodes : [body]).filter_map do |child|
+            if child.send_type?
+              T.cast(child, RuboCop::AST::SendNode)
+            elsif child.block_type?
+              T.cast(child, RuboCop::AST::BlockNode).send_node
+            end
+          end
+          return if os_depends_on?(body)
+
+          linux_stanza = stanzas.find { |stanza| LINUX_ONLY_CASK_STANZAS.include?(stanza.method_name) }
+          return unless linux_stanza
+
+          add_offense(linux_stanza.source_range,
+                      message: "Add `depends_on :linux` for Linux-only casks.") do |corrector|
+            depends_on_stanza_index = CASK_STANZA_ORDER.index(:depends_on) ||
+                                      raise("unexpected nil value for depends_on stanza index")
+            following_stanza = stanzas.find do |stanza|
+              stanza_index = CASK_STANZA_ORDER.index(stanza.method_name)
+              stanza_index && stanza_index > depends_on_stanza_index
+            end
+
+            if following_stanza
+              corrector.insert_before(
+                range_by_whole_lines(following_stanza.source_range, include_final_newline: false),
+                "  depends_on :linux\n\n",
+              )
+            else
+              corrector.insert_before(
+                range_by_whole_lines(linux_stanza.source_range, include_final_newline: false),
+                "  depends_on :linux\n\n",
               )
             end
           end
@@ -198,8 +228,7 @@ module RuboCop
             next false if send_node.method_name != :depends_on
 
             bare_os_depends_on?(send_node, :macos) || bare_os_depends_on?(send_node, :linux) ||
-              top_level_macos_depends_on?(send_node) ||
-              depends_on_pairs(send_node).any? { |pair| symbol_key(pair) == :linux }
+              top_level_macos_depends_on?(send_node) || top_level_linux_depends_on?(send_node)
           end
         end
 
@@ -211,6 +240,11 @@ module RuboCop
         sig { params(node: RuboCop::AST::SendNode).returns(T::Boolean) }
         def top_level_macos_depends_on?(node)
           depends_on_pairs(node).any? { |pair| MACOS_DEPENDENCY_STANZAS.include?(symbol_key(pair)) }
+        end
+
+        sig { params(node: RuboCop::AST::SendNode).returns(T::Boolean) }
+        def top_level_linux_depends_on?(node)
+          depends_on_pairs(node).any? { |pair| LINUX_DEPENDENCY_STANZAS.include?(symbol_key(pair)) }
         end
       end
     end

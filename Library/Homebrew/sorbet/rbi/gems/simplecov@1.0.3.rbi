@@ -578,7 +578,11 @@ class SimpleCov::Filter
   end
 end
 
-module SimpleCov::Formatter; end
+module SimpleCov::Formatter
+  class << self
+    def instance_for(formatter); end
+  end
+end
 
 class SimpleCov::Formatter::Base
   def initialize(silent: T.unsafe(nil), output_dir: T.unsafe(nil)); end
@@ -886,8 +890,10 @@ class SimpleCov::ResultAdapter
   def adapt_oneshot_lines_if_needed(file_name, cover_statistic); end
   def aggregate_duplicated_branches(cover_statistic); end
   def build_line_stub(file_name, oneshot_lines); end
+  def class_display_name(klass); end
   def normalize_method_key(key); end
   def normalize_method_keys(cover_statistic); end
+  def singleton_wrapper_name(klass); end
 
   class << self
     def call(*_arg0); end
@@ -1119,6 +1125,7 @@ module SimpleCov::SourceFile::RubyDataParser
 
   def call(structure); end
   def parse_array_string(str); end
+  def parse_cache; end
   def parse_element(node); end
   def parse_integer_node(node); end
   def parse_symbol_node(node); end
@@ -1129,6 +1136,7 @@ module SimpleCov::SourceFile::RubyDataParser
   class << self
     def call(structure); end
     def parse_array_string(str); end
+    def parse_cache; end
     def parse_element(node); end
     def parse_integer_node(node); end
     def parse_symbol_node(node); end

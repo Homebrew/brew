@@ -94,8 +94,8 @@ class Sandbox
 
     class << self
       # Landlock cannot restrict chmod, chown, extended attributes or timestamp
-      # changes. Callers requiring Bubblewrap-equivalent write isolation must
-      # compensate for these limitations:
+      # changes. Callers requiring full write isolation must compensate for
+      # these limitations:
       # https://www.kernel.org/doc/html/latest/userspace-api/landlock.html#filesystem-flags
       sig { returns(T::Boolean) }
       def full_write_isolation? = false
@@ -158,26 +158,6 @@ class Sandbox
         @state = T.let(nil, T.nilable(Symbol))
         @abi_version = T.let(nil, T.nilable(Integer))
       end
-
-      sig { params(install_from_tests: T::Boolean).void }
-      def ensure_installed!(install_from_tests: false); end
-
-      sig { void }
-      def configure!
-        ensure_available!
-      end
-
-      sig { returns(T::Array[String]) }
-      def configuration_commands = []
-
-      sig { returns(T::Array[String]) }
-      def configuration_command_messages = []
-
-      sig { returns(T.nilable(String)) }
-      def install_command = nil
-
-      sig { returns(T::Boolean) }
-      def nested_sandbox? = false
 
       sig { params(attributes: T.nilable(String), size: Integer, flags: Integer).returns(Integer) }
       def landlock_create_ruleset(attributes, size, flags)
@@ -263,13 +243,6 @@ class Sandbox
       end
 
       private
-
-      sig { void }
-      def ensure_available!
-        return if available?
-
-        raise failure_reason || "Landlock is not available."
-      end
 
       sig { returns(Symbol) }
       def compute_state
@@ -357,7 +330,7 @@ class Sandbox
         # https://github.com/torvalds/linux/blob/master/drivers/char/mem.c
         # POSIX shared memory and message queues use `/dev/shm` and
         # `/dev/mqueue`. These grants retain normal kernel permissions but do
-        # not provide Bubblewrap's private IPC namespace:
+        # not provide a private IPC namespace:
         # https://github.com/bminor/glibc/blob/master/sysdeps/posix/shm-directory.c
         # https://www.kernel.org/doc/html/latest/filesystems/mqueue.html
         device_path_rules = T.let({

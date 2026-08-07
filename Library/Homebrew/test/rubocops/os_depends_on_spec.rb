@@ -157,7 +157,102 @@ RSpec.describe RuboCop::Cop::Homebrew::OSDependsOn, :config do
     RUBY
   end
 
-  it "accepts casks without macOS-only stanzas" do
+  it "autocorrects missing bare Linux dependencies for Linux-only cask stanzas" do
+    expect_offense(<<~RUBY)
+      cask "basic" do
+        version "1.0"
+        sha256 "abc"
+        url "https://example.com/basic.zip"
+        homepage "https://example.com"
+
+        app_image "Basic.AppImage"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^ Add `depends_on :linux` for Linux-only casks.
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      cask "basic" do
+        version "1.0"
+        sha256 "abc"
+        url "https://example.com/basic.zip"
+        homepage "https://example.com"
+
+        depends_on :linux
+
+        app_image "Basic.AppImage"
+      end
+    RUBY
+  end
+
+  it "autocorrects missing bare Linux dependencies using cask stanza order" do
+    expect_offense(<<~RUBY)
+      cask "ordered" do
+        version "1.0"
+        sha256 "abc"
+        url "https://example.com/ordered.zip"
+        name "Ordered"
+        desc "Ordered"
+        homepage "https://example.com"
+
+        livecheck do
+          skip "example"
+        end
+
+        auto_updates true
+        conflicts_with cask: "old-ordered"
+        container nested: "Ordered"
+
+        app_image "Ordered.AppImage"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Add `depends_on :linux` for Linux-only casks.
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      cask "ordered" do
+        version "1.0"
+        sha256 "abc"
+        url "https://example.com/ordered.zip"
+        name "Ordered"
+        desc "Ordered"
+        homepage "https://example.com"
+
+        livecheck do
+          skip "example"
+        end
+
+        auto_updates true
+        conflicts_with cask: "old-ordered"
+        depends_on :linux
+
+        container nested: "Ordered"
+
+        app_image "Ordered.AppImage"
+      end
+    RUBY
+  end
+
+  it "autocorrects missing bare Linux dependencies before Linux-only cask stanzas" do
+    expect_offense(<<~RUBY)
+      cask "basic" do
+        version "1.0"
+
+        app_image "Basic.AppImage"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^ Add `depends_on :linux` for Linux-only casks.
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      cask "basic" do
+        version "1.0"
+
+        depends_on :linux
+
+        app_image "Basic.AppImage"
+      end
+    RUBY
+  end
+
+  it "accepts casks without macOS-only or Linux-only stanzas" do
     expect_no_offenses(<<~RUBY)
       cask "basic" do
         version "1.0"

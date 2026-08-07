@@ -86,6 +86,27 @@ RSpec.describe Cask::Artifact::Binary, :cask do
     expect(File.readlink(expected_path)).to eq("/tmp")
   end
 
+  it "skips linking when the target is already a symlink to the source" do
+    artifact = artifacts.first
+    expected_path.make_symlink(artifact.source)
+
+    expect do
+      artifact.install_phase(command: NeverSudoSystemCommand, force: false)
+    end.to output(/is already linked/).to_stdout
+
+    expect(expected_path.readlink).to eq(artifact.source)
+  end
+
+  it "raises a clean error when the target symlink cannot be resolved" do
+    artifact = artifacts.first
+    expected_path.make_symlink(artifact.source)
+    allow(artifact.target).to receive(:realpath).and_raise(Errno::EACCES)
+
+    expect do
+      artifact.install_phase(command: NeverSudoSystemCommand, force: false)
+    end.to raise_error(Cask::CaskError, /already a Binary/)
+  end
+
   it "creates parent directory if it doesn't exist" do
     FileUtils.rmdir binarydir
 

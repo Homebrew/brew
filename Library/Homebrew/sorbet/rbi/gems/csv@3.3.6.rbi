@@ -19,12 +19,12 @@ class CSV
 
   def <<(row); end
   def add_row(row); end
-  def binmode(*args, **_arg1, &block); end
+  def binmode(*_arg0, **_arg1, &_arg2); end
   def binmode?; end
-  def close(*args, **_arg1, &block); end
-  def close_read(*args, **_arg1, &block); end
-  def close_write(*args, **_arg1, &block); end
-  def closed?(*args, **_arg1, &block); end
+  def close(*_arg0, **_arg1, &_arg2); end
+  def close_read(*_arg0, **_arg1, &_arg2); end
+  def close_write(*_arg0, **_arg1, &_arg2); end
+  def closed?(*_arg0, **_arg1, &_arg2); end
   def col_sep; end
   def convert(name = T.unsafe(nil), &converter); end
   def converters; end
@@ -32,53 +32,53 @@ class CSV
   def encoding; end
   def eof; end
   def eof?; end
-  def external_encoding(*args, **_arg1, &block); end
-  def fcntl(*args, **_arg1, &block); end
+  def external_encoding(*_arg0, **_arg1, &_arg2); end
+  def fcntl(*_arg0, **_arg1, &_arg2); end
   def field_size_limit; end
-  def fileno(*args, **_arg1, &block); end
+  def fileno(*_arg0, **_arg1, &_arg2); end
   def flock(*args); end
-  def flush(*args, **_arg1, &block); end
+  def flush(*_arg0, **_arg1, &_arg2); end
   def force_quotes?; end
-  def fsync(*args, **_arg1, &block); end
+  def fsync(*_arg0, **_arg1, &_arg2); end
   def gets; end
   def header_convert(name = T.unsafe(nil), &converter); end
   def header_converters; end
   def header_row?; end
   def headers; end
   def inspect; end
-  def internal_encoding(*args, **_arg1, &block); end
+  def internal_encoding(*_arg0, **_arg1, &_arg2); end
   def ioctl(*args); end
-  def isatty(*args, **_arg1, &block); end
+  def isatty(*_arg0, **_arg1, &_arg2); end
   def liberal_parsing?; end
   def line; end
   def lineno; end
   def max_field_size; end
   def path; end
-  def pid(*args, **_arg1, &block); end
-  def pos(*args, **_arg1, &block); end
-  def pos=(*args, **_arg1, &block); end
+  def pid(*_arg0, **_arg1, &_arg2); end
+  def pos(*_arg0, **_arg1, &_arg2); end
+  def pos=(*_arg0, **_arg1, &_arg2); end
   def puts(row); end
   def quote_char; end
   def read; end
   def readline; end
   def readlines; end
-  def reopen(*args, **_arg1, &block); end
+  def reopen(*_arg0, **_arg1, &_arg2); end
   def return_headers?; end
   def rewind; end
   def row_sep; end
-  def seek(*args, **_arg1, &block); end
+  def seek(*_arg0, **_arg1, &_arg2); end
   def shift; end
   def skip_blanks?; end
   def skip_lines; end
   def stat(*args); end
-  def string(*args, **_arg1, &block); end
-  def sync(*args, **_arg1, &block); end
-  def sync=(*args, **_arg1, &block); end
-  def tell(*args, **_arg1, &block); end
+  def string(*_arg0, **_arg1, &_arg2); end
+  def sync(*_arg0, **_arg1, &_arg2); end
+  def sync=(*_arg0, **_arg1, &_arg2); end
+  def tell(*_arg0, **_arg1, &_arg2); end
   def to_i; end
   def to_io; end
-  def truncate(*args, **_arg1, &block); end
-  def tty?(*args, **_arg1, &block); end
+  def truncate(*_arg0, **_arg1, &_arg2); end
+  def tty?(*_arg0, **_arg1, &_arg2); end
   def unconverted_fields?; end
   def write_headers?; end
 
@@ -93,7 +93,6 @@ class CSV
   def header_fields_converter; end
   def normalize_converters(converters); end
   def parser; end
-  def parser_enumerator; end
   def parser_fields_converter; end
   def parser_options; end
   def raw_encoding; end
@@ -103,22 +102,22 @@ class CSV
 
   class << self
     def filter(input = T.unsafe(nil), output = T.unsafe(nil), **options); end
-    def foreach(path, mode = T.unsafe(nil), **options, &block); end
+    def foreach(path_or_io, mode = T.unsafe(nil), **options, &block); end
     def generate(str = T.unsafe(nil), **options); end
     def generate_line(row, **options); end
     def generate_lines(rows, **options); end
     def instance(data = T.unsafe(nil), **options); end
-    def open(filename_or_io, mode = T.unsafe(nil), **options); end
+    def open(path_or_io, mode = T.unsafe(nil), **options); end
     def parse(str, **options, &block); end
     def parse_line(line, **options); end
-    def read(path, **options); end
-    def readlines(path, **options); end
-    def table(path, **options); end
+    def read(path_or_io, **options); end
+    def readlines(path_or_io, **options); end
+    def table(path_or_io, **options); end
 
     private
 
     def create_stringio(str, mode, opts); end
-    def may_enable_bom_detection_automatically(filename_or_io, mode, options, file_opts); end
+    def may_enable_bom_detection_automatically(path_or_io, mode, options, file_opts); end
   end
 end
 
@@ -187,6 +186,7 @@ class CSV::Parser
   def initialize(input, options); end
 
   def column_separator; end
+  def eof?; end
   def field_size_limit; end
   def header_row?; end
   def headers; end
@@ -310,7 +310,7 @@ class CSV::Row
   def dig(index_or_header, *indexes); end
   def each(&block); end
   def each_pair(&block); end
-  def empty?(*args, **_arg1, &block); end
+  def empty?(*_arg0, **_arg1, &_arg2); end
   def fetch(header, *varargs); end
   def field(header_or_index, minimum_index = T.unsafe(nil)); end
   def field?(data); end
@@ -324,10 +324,10 @@ class CSV::Row
   def index(header, minimum_index = T.unsafe(nil)); end
   def inspect; end
   def key?(header); end
-  def length(*args, **_arg1, &block); end
+  def length(*_arg0, **_arg1, &_arg2); end
   def member?(header); end
   def push(*args); end
-  def size(*args, **_arg1, &block); end
+  def size(*_arg0, **_arg1, &_arg2); end
   def to_ary(*_arg0); end
   def to_csv(**options); end
   def to_h; end
@@ -368,13 +368,13 @@ class CSV::Table
   def delete_if(&block); end
   def dig(index_or_header, *index_or_headers); end
   def each(&block); end
-  def empty?(*args, **_arg1, &block); end
+  def empty?(*_arg0, **_arg1, &_arg2); end
   def headers; end
   def inspect; end
-  def length(*args, **_arg1, &block); end
+  def length(*_arg0, **_arg1, &_arg2); end
   def mode; end
   def push(*rows); end
-  def size(*args, **_arg1, &block); end
+  def size(*_arg0, **_arg1, &_arg2); end
   def to_a; end
   def to_csv(write_headers: T.unsafe(nil), limit: T.unsafe(nil), **options); end
   def to_s(write_headers: T.unsafe(nil), limit: T.unsafe(nil), **options); end

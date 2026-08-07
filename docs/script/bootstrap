@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+bundle_bootstrap() {
+  if [[ "${HOMEBREW_INSIDE_BUNDLE:-}" != "1" ]]; then
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    eval "$(brew bundle --check --install env)"
+  fi
+
+  # Share installed gems between worktrees belonging to the same repository.
+  local shared_bundle_path
+  shared_bundle_path="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/vendor/bundle"
+  export BUNDLE_AUTO_INSTALL=1
+  export BUNDLE_CLEAN=false
+  export BUNDLE_PATH="${shared_bundle_path}"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  set -euo pipefail
+  bundle_bootstrap
+  bundle check || bundle install
+fi

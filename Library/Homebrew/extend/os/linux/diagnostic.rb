@@ -196,64 +196,24 @@ module OS
         def check_linux_sandbox
           return unless Homebrew::EnvConfig.sandbox_linux?
 
-          inside_docker = OS::Linux.inside_docker?
-          return if inside_docker && !GitHub::Actions.env_set?
+          return if OS::Linux.inside_docker? && !GitHub::Actions.env_set?
 
           state = ::Sandbox.state
           return if state == :available
 
-          reason = ::Sandbox.failure_reason || "The Linux sandbox is not available."
-          state = :landlock if OS::Linux::Sandbox.landlock?
-          reason_append = case state
-          when :setuid
-            "\n\nHomebrew's Linux sandbox requires a rootless `bwrap` executable."
-          when :unavailable
-            "\n\nHomebrew's Linux sandbox requires rootless Bubblewrap and unprivileged user namespaces."
+          fix = if state == :missing_fiddle
+            "Run Homebrew with its vendored Ruby, which includes Fiddle."
           else
-            ""
-          end
-          reason += reason_append
-
-          fix_lines = case state
-          when :missing
-            missing_lines = [
-              reason,
-              "",
-              "Install Bubblewrap and ensure a rootless `bwrap` executable is available on `PATH`.",
-            ]
-            if (install_command = ::Sandbox.sandbox_install_command)
-              missing_lines.push("", "On this system, install it with:", "  #{install_command}")
-            end
-            missing_lines
-          when :setuid
-            [
-              "Install a non-setuid Bubblewrap or put it earlier on `PATH`.",
-            ]
-          when :unavailable
-            [
-              reason,
-              "",
-              "Homebrew's Linux sandbox requires rootless Bubblewrap and unprivileged",
-              "user namespaces. Run `sudo brew setup-sandbox` or check and update this system configuration:",
-              *::Sandbox.configuration_command_messages,
-            ]
-          else
-            []
-          end
-          if state == :unavailable && inside_docker && GitHub::Actions.env_set?
-            fix_lines.push("",
-                           "If this is a GitHub Actions container, add `options: --privileged` to the job's " \
-                           "`container` configuration.")
+            "Homebrew's Linux sandbox requires a kernel with Landlock enabled."
           end
 
           ::Homebrew::Diagnostic::Finding.new(
-            reason,
-            remediation: [
-              *fix_lines,
-              "",
-              "As a final workaround, disable the Linux sandbox:",
-              "  export HOMEBREW_NO_SANDBOX_LINUX=1",
-            ].join("\n").to_s,
+            ::Sandbox.failure_reason || "The Linux sandbox is not available.",
+            remediation: <<~EOS.chomp,
+              #{fix}
+              As a final workaround, disable the Linux sandbox:
+                export HOMEBREW_NO_SANDBOX_LINUX=1
+            EOS
           )
         end
 

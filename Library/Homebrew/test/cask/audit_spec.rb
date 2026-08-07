@@ -1530,6 +1530,55 @@ RSpec.describe Cask::Audit, :cask do
       end
     end
 
+    describe "checking verified" do
+      let(:only) { %w[unnecessary_verified] }
+      let(:cask_token) { "with-verified" }
+      let(:cask) do
+        tmp_cask cask_token.to_s, <<~RUBY
+          cask "#{cask_token}" do
+            version "1.8.0_72,8.13.0.5"
+            sha256 "8dd95daa037ac02455435446ec7bc737b34567afe9156af7d20b2a83805c1d8a"
+            url "https://brew.sh/foo-\#{version.after_comma}.zip", verified: "brew.sh/"
+            name "Audit"
+            desc "Audit Description"
+            homepage "https://foo.example.org"
+            app "Audit.app"
+          end
+        RUBY
+      end
+
+      context "when `new_cask` is true" do
+        let(:new_cask) { true }
+
+        it { is_expected.to error_with(/the `verified` parameter has been deprecated/) }
+      end
+
+      context "when `new_cask` is false" do
+        let(:new_cask) { false }
+
+        it { is_expected.to pass }
+      end
+
+      context "without verified" do
+        let(:cask_token) { "without-verified" }
+        let(:cask) do
+          tmp_cask cask_token.to_s, <<~RUBY
+            cask "#{cask_token}" do
+              version "1.8.0_72,8.13.0.5"
+              sha256 "8dd95daa037ac02455435446ec7bc737b34567afe9156af7d20b2a83805c1d8a"
+              url "https://brew.sh/foo-\#{version.after_comma}.zip"
+              name "Audit"
+              desc "Audit Description"
+              homepage "https://foo.example.org"
+              app "Audit.app"
+            end
+          RUBY
+        end
+
+        it { is_expected.to pass }
+      end
+    end
+
     describe "checking deprecate/disable" do
       let(:only) { ["deprecate_disable"] }
       let(:cask_token) { "deprecated-cask" }

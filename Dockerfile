@@ -29,7 +29,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   && retry apt-get update --error-on=any \
   && apt-get install -y --no-install-recommends \
   acl \
-  bubblewrap \
   bzip2 \
   ca-certificates \
   curl \

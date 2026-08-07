@@ -560,6 +560,14 @@ module Homebrew
   end
 
   sig { void }
+  def self.reset_default_download_queue
+    # Skip `shutdown` for a leaked RSpec double, which cannot receive
+    # messages outside the per-example rspec-mocks lifecycle.
+    @default_download_queue.shutdown if @default_download_queue.is_a?(DownloadQueue)
+    @default_download_queue = nil
+  end
+
+  sig { void }
   def self.shutdown_default_download_queue
     @default_download_queue&.shutdown
   end

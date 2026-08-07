@@ -64,7 +64,10 @@ module OS
             check_access_directories
           ]
 
-          # Developer tools are checked when building from source.
+          # We need the developer tools for `codesign` on Intel:
+          # https://github.com/Homebrew/brew/issues/23418
+          checks << "check_for_installed_developer_tools" unless ::Hardware::CPU.arm?
+
           checks.freeze
         end
 

@@ -12,8 +12,15 @@ module OS
 
         requires_ancestor { Kernel }
 
-        sig { params(tap: ::Tap, os_name: T.nilable(Symbol), arch: T.nilable(Symbol)).returns(T::Boolean) }
-        def valid_casks?(tap, os_name: nil, arch: ::Hardware::CPU.type)
+        sig {
+          params(
+            tap:     ::Tap,
+            os_name: T.nilable(Symbol),
+            arch:    T.nilable(Symbol),
+            files:   T.nilable(T::Array[::Pathname]),
+          ).returns(T::Boolean)
+        }
+        def valid_casks?(tap, os_name: nil, arch: ::Hardware::CPU.type, files: nil)
           return super if os_name == :linux
 
           current_macos_version = if os_name.is_a?(Symbol)
@@ -23,7 +30,7 @@ module OS
           end
 
           success = T.let(true, T::Boolean)
-          tap.cask_files.each do |file|
+          (files || tap.cask_files).each do |file|
             cask = ::Cask::CaskLoader.load(file)
 
             # Fine to have missing URLs for unsupported macOS

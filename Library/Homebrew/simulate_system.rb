@@ -77,6 +77,11 @@ module Homebrew
       end
 
       sig { returns(T::Boolean) }
+      def simulating?
+        os.present? || arch.present?
+      end
+
+      sig { returns(T::Boolean) }
       def simulating_or_running_on_macos?
         [:macos, *MacOSVersion::SYMBOLS.keys].include?(os)
       end

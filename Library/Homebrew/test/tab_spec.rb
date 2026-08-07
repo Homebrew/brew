@@ -7,19 +7,19 @@ require "formula"
 RSpec.describe Tab do
   subject(:tab) do
     described_class.new(
-      "homebrew_version"     => HOMEBREW_VERSION,
-      "used_options"         => used_options.as_flags,
-      "unused_options"       => unused_options.as_flags,
-      "built_as_bottle"      => false,
-      "poured_from_bottle"   => true,
-      "installed_on_request" => true,
-      "changed_files"        => [],
-      "time"                 => time,
-      "source_modified_time" => 0,
-      "compiler"             => "clang",
-      "stdlib"               => "libcxx",
-      "runtime_dependencies" => [],
-      "source"               => {
+      homebrew_version:     HOMEBREW_VERSION,
+      used_options:         used_options.as_flags,
+      unused_options:       unused_options.as_flags,
+      built_as_bottle:      false,
+      poured_from_bottle:   true,
+      installed_on_request: true,
+      changed_files:        [],
+      time:,
+      source_modified_time: 0,
+      compiler:             "clang",
+      stdlib:               "libcxx",
+      runtime_dependencies: [],
+      source:               {
         "tap"          => CoreTap.instance.to_s,
         "path"         => CoreTap.instance.path.to_s,
         "spec"         => "stable",
@@ -29,8 +29,8 @@ RSpec.describe Tab do
           "head"   => "HEAD-1111111",
         },
       },
-      "arch"                 => Hardware::CPU.arch,
-      "built_on"             => DevelopmentTools.build_system_info,
+      arch:                 Hardware::CPU.arch,
+      built_on:             DevelopmentTools.build_system_info,
     )
   end
 
@@ -141,6 +141,17 @@ RSpec.describe Tab do
     expect(tab).to be_installed_on_request
     expect(tab).not_to be_loaded_from_api
     expect(tab).not_to be_loaded_from_internal_api
+  end
+
+  specify "#initialize" do
+    # Receipts written by other Homebrew versions carry attributes we no longer know about.
+    tab = described_class.new(installed_as_dependency: true, homebrew_version: "1.2.3")
+    expect(tab.homebrew_version).to eq("1.2.3")
+  end
+
+  specify "#installed_on_request_present?" do
+    expect(described_class.new).not_to be_installed_on_request_present
+    expect(described_class.new(installed_on_request: false)).to be_installed_on_request_present
   end
 
   specify "#parsed_homebrew_version" do
@@ -544,7 +555,7 @@ RSpec.describe Tab do
   end
 
   specify "#to_json" do
-    json_tab = described_class.new(JSON.parse(tab.to_json))
+    json_tab = described_class.new(**JSON.parse(tab.to_json).transform_keys(&:to_sym))
     expect(json_tab.homebrew_version).to eq(tab.homebrew_version)
     expect(json_tab.used_options.sort).to eq(tab.used_options.sort)
     expect(json_tab.unused_options.sort).to eq(tab.unused_options.sort)
@@ -566,7 +577,7 @@ RSpec.describe Tab do
   end
 
   specify "#to_bottle_hash" do
-    json_tab = described_class.new(JSON.parse(tab.to_bottle_hash.to_json))
+    json_tab = described_class.new(**JSON.parse(tab.to_bottle_hash.to_json).transform_keys(&:to_sym))
     expect(json_tab.homebrew_version).to eq(tab.homebrew_version)
     expect(json_tab.changed_files).to eq(tab.changed_files)
     expect(json_tab.source_modified_time).to eq(tab.source_modified_time)

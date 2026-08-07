@@ -234,7 +234,6 @@ __brew_internal_commands() {
     'search:Perform a substring search of cask tokens and formula names for text'
     'services:Manage background services with macOS'\'' `launchctl`(1) daemon manager or Linux'\''s `systemctl`(1) service manager'
     'setup-ruby:Installs and configures Homebrew'\''s Ruby'
-    'setup-sandbox:Run any necessary commands to setup the Homebrew sandbox'
     'sh:Enter an interactive shell for Homebrew'\''s build environment'
     'shellenv:Valid shells: bash|csh|fish|pwsh|sh|tcsh|zsh  Print export statements'
     'source:Open a formula'\''s source repository in a browser, or open Homebrew'\''s own repository if no argument is provided'
@@ -2325,15 +2324,6 @@ _brew_setup_ruby() {
     '*:command:__brew_commands'
 }
 
-# brew setup-sandbox
-_brew_setup_sandbox() {
-  _arguments \
-    '--debug[Display any debugging information]' \
-    '--help[Show this message]' \
-    '--quiet[Make some output more quiet]' \
-    '--verbose[Make some output more verbose]'
-}
-
 # brew sh
 _brew_sh() {
   _arguments \
@@ -2930,9 +2920,11 @@ _brew_vulns() {
     '--brewfile[Check formulae listed in a Brewfile. Defaults to `./Brewfile`; use `--brewfile=`path to specify another]' \
     '--debug[Display any debugging information]' \
     '--deps[Also check the dependencies of named formulae]' \
+    '(--no-fix-available)--fix-available[Only report vulnerabilities that have a fix available. Note that this may exclude vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration]' \
     '--help[Show this message]' \
     '--json[Output JSON]' \
     '--max-summary[Truncate summaries to n characters (default 60, 0 for no limit)]' \
+    '(--fix-available)--no-fix-available[Only report vulnerabilities that do not have a fix available. Note that this may include vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration]' \
     '--no-ignore-patches[Report vulnerabilities even when a formula patch resolves them]' \
     '--quiet[Make some output more quiet]' \
     '--severity[Only report findings at or above: `low`, `medium`, `high`, `critical`]' \

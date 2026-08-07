@@ -44,11 +44,11 @@ RSpec.describe InstalledDependents do
     def setup_test_keg(name, version, &block)
       keg = super
       tab = Tab.new(
-        "homebrew_version"         => HOMEBREW_VERSION,
-        "installed_on_request"     => false,
-        "loaded_from_api"          => false,
-        "loaded_from_internal_api" => false,
-        "source"                   => {
+        homebrew_version:         HOMEBREW_VERSION,
+        installed_on_request:     false,
+        loaded_from_api:          false,
+        loaded_from_internal_api: false,
+        source:                   {
           "path"         => nil,
           "tap"          => "homebrew/core",
           "tap_git_head" => nil,
@@ -60,7 +60,7 @@ RSpec.describe InstalledDependents do
             "compatibility_version" => nil,
           },
         },
-        "built_on"                 => {},
+        built_on:                 {},
       )
       tab.tabfile = keg/AbstractTab::FILENAME
       tab.stdlib = :libcxx

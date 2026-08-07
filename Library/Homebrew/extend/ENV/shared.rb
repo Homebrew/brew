@@ -121,7 +121,7 @@ module SharedEnvExtension
 
   sig { params(key: String, path: T.any(String, Pathname)).void }
   def append_path(key, path)
-    self[key] = PATH.new(self[key]).append(path)
+    self[key] = PATH.new(self[key]).append(path).to_s
   end
 
   sig { params(rustflags: String).void }
@@ -140,7 +140,7 @@ module SharedEnvExtension
   def prepend_path(key, path)
     return if %w[/usr/bin /bin /usr/sbin /sbin].include? path.to_s
 
-    self[key] = PATH.new(self[key]).prepend(path)
+    self[key] = PATH.new(self[key]).prepend(path).to_s
   end
 
   sig { params(key: String, path: T.any(String, Pathname)).void }
@@ -285,7 +285,7 @@ module SharedEnvExtension
       end
       if gfortran
         puts "This may be changed by setting the `$FC` environment variable."
-        self["FC"] = self["F77"] = gfortran
+        self["FC"] = self["F77"] = gfortran.to_s
         flags = FC_FLAG_VARS
       end
     end
@@ -352,12 +352,12 @@ module SharedEnvExtension
   sig { params(_flags: T::Array[String], _map: T::Hash[Symbol, String]).void }
   def set_cpu_flags(_flags, _map = {}); end
 
-  sig { params(val: T.any(String, Pathname)).returns(String) }
+  sig { params(val: T.any(String, Pathname)).void }
   def cc=(val)
     self["CC"] = self["OBJC"] = val.to_s
   end
 
-  sig { params(val: T.any(String, Pathname)).returns(String) }
+  sig { params(val: T.any(String, Pathname)).void }
   def cxx=(val)
     self["CXX"] = self["OBJCXX"] = val.to_s
   end

@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require "dependency_collector"
-require "sandbox"
 
 RSpec.describe DependencyCollector do
   subject(:collector) { described_class.new }
@@ -53,100 +52,13 @@ RSpec.describe DependencyCollector do
     end
   end
 
-  describe "#bubblewrap_dep_if_needed" do
-    let(:formulae) do
-      Hash.new { |hash, name| hash[name] = instance_double(Formula, deps: []) }
-    end
-
-    around do |example|
-      with_env(HOMEBREW_SANDBOX_LINUX_LANDLOCK: nil, HOMEBREW_TESTS: nil) { example.run }
-    end
-
-    before do
-      allow(Homebrew::EnvConfig).to receive(:sandbox_linux?).and_return(true)
-      allow(DevelopmentTools).to receive(:needs_build_formulae?).and_return(false)
-      allow(Sandbox).to receive(:executable)
-      allow(OS).to receive(:not_tier_one_configuration?).and_return(false)
-      allow(Formula).to receive(:[]) { |name| formulae[name] }
-      global_dep_tree.clear
-    end
-
-    after do
-      global_dep_tree.clear
-    end
-
-    def global_dep_tree
-      OS::Linux::DependencyCollector.module_eval { class_variable_get(:@@global_dep_tree) }
-    end
-
-    it "returns a Bubblewrap implicit dependency when the Linux sandbox needs one" do
-      expect(collector.bubblewrap_dep_if_needed(Set.new)).to eq(Dependency.new("bubblewrap", [:implicit]))
-    end
-
-    it "returns nil when Bubblewrap is already available" do
-      allow(Sandbox).to receive(:executable).and_return(Pathname("/usr/bin/bwrap"))
-
-      expect(collector.bubblewrap_dep_if_needed(Set.new)).to be_nil
-    end
-
-    it "returns nil when using Landlock" do
-      with_env(HOMEBREW_SANDBOX_LINUX_LANDLOCK: "1") do
-        expect(collector.bubblewrap_dep_if_needed(Set.new)).to be_nil
-      end
-    end
-
-    it "returns nil for Bubblewrap and its dependencies" do
-      collector.global_dep_tree["bubblewrap"] = Set["libcap"]
-
-      expect(collector.bubblewrap_dep_if_needed(Set["bubblewrap"])).to be_nil
-      expect(collector.bubblewrap_dep_if_needed(Set["libcap"])).to be_nil
-    end
-
-    it "returns nil when Bubblewrap is already in the dependency tree" do
-      expect(collector.bubblewrap_dep_if_needed(Set["bubblewrap"])).to be_nil
-    end
-
-    it "returns nil when a Bubblewrap runtime dependency is already in the dependency tree" do
-      formulae["bubblewrap"] = instance_double(Formula, deps: [Dependency.new("libcap")])
-
-      expect(collector.bubblewrap_dep_if_needed(Set["libcap"])).to be_nil
-    end
-
-    it "ignores Bubblewrap build dependencies when build formulae are not needed" do
-      formulae["bubblewrap"] = instance_double(Formula, deps: [
-        Dependency.new("libcap"),
-        Dependency.new("pkgconf", [:build]),
-      ])
-
-      expect(collector.bubblewrap_dep_if_needed(Set["pkgconf"])).to eq(Dependency.new("bubblewrap", [:implicit]))
-    end
-
-    it "includes Bubblewrap build dependencies when build formulae are needed" do
-      allow(DevelopmentTools).to receive(:needs_build_formulae?).and_return(true)
-      formulae["bubblewrap"] = instance_double(Formula, deps: [
-        Dependency.new("pkgconf", [:build]),
-      ])
-      formulae["glibc"]
-      formulae[OS::LINUX_PREFERRED_GCC_RUNTIME_FORMULA]
-
-      expect(collector.bubblewrap_dep_if_needed(Set["pkgconf"])).to be_nil
-    end
-  end
-
   describe "#implicit_dependency_names" do
     let(:formulae) do
       Hash.new { |hash, name| hash[name] = instance_double(Formula, deps: []) }
     end
 
-    around do |example|
-      with_env(HOMEBREW_SANDBOX_LINUX_LANDLOCK: nil, HOMEBREW_TESTS: nil) { example.run }
-    end
-
     before do
-      allow(Homebrew::EnvConfig).to receive(:sandbox_linux?).and_return(true)
       allow(DevelopmentTools).to receive_messages(needs_build_formulae?: false, needs_libc_formula?: false)
-      allow(Sandbox).to receive(:executable).and_return(nil)
-      allow(OS).to receive(:not_tier_one_configuration?).and_return(false)
       allow(Formula).to receive(:[]) { |name| formulae[name] }
       global_dep_tree.clear
     end
@@ -159,13 +71,7 @@ RSpec.describe DependencyCollector do
       OS::Linux::DependencyCollector.module_eval { class_variable_get(:@@global_dep_tree) }
     end
 
-    it "includes bubblewrap when the sandbox needs it" do
-      expect(collector.implicit_dependency_names).to eq(Set["bubblewrap"])
-    end
-
-    it "is empty when bubblewrap is already available and build formulae aren't needed" do
-      allow(Sandbox).to receive(:executable).and_return(Pathname("/usr/bin/bwrap"))
-
+    it "is empty when build formulae and a libc formula aren't needed" do
       expect(collector.implicit_dependency_names).to eq(Set.new)
     end
 

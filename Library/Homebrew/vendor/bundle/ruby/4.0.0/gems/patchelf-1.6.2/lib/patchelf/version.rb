@@ -2,5 +2,5 @@
 
 module PatchELF
   # Current gem version.
-  VERSION = '1.5.2'.freeze
+  VERSION = '1.6.2'
 end

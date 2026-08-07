@@ -1346,8 +1346,6 @@ Output as JSON\.
 Remove all unused services\.
 .SS "\fBsetup\-ruby\fP \fR[\fIcommand\fP \.\.\.]"
 Installs and configures Homebrew\[u2019]s Ruby\. If \fBcommand\fP is passed, it will only run Bundler if necessary for that command\.
-.SS "\fBsetup\-sandbox\fP"
-Run any necessary commands to setup the Homebrew sandbox\. Must be run with \fBsudo\fP\&\. Currently a no\-op on non\-Linux\.
 .SS "\fBshellenv\fP \fR[\fIshell\fP \.\.\.]"
 Valid shells: bash|csh|fish|pwsh|sh|tcsh|zsh
 .P
@@ -1613,6 +1611,12 @@ Report vulnerabilities even when a formula patch resolves them\.
 .TP
 \fB\-\-brewfile\fP
 Check formulae listed in a Brewfile\. Defaults to \fB\&\./Brewfile\fP; use \fB\-\-brewfile=\fP\fIpath\fP to specify another\.
+.TP
+\fB\-\-fix\-available\fP
+Only report vulnerabilities that have a fix available\. Note that this may exclude vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration\.
+.TP
+\fB\-\-no\-fix\-available\fP
+Only report vulnerabilities that do not have a fix available\. Note that this may include vulnerabilities with fixes available if we cannot determine that the fix is included in the version under consideration\.
 .TP
 \fB\-s\fP, \fB\-\-severity\fP
 Only report findings at or above: \fBlow\fP, \fBmedium\fP, \fBhigh\fP, \fBcritical\fP\&\.
@@ -2753,6 +2757,9 @@ Prefix all download URLs, including those for bottles, with this value\. For exa
 .TP
 \fBHOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK\fP
 When \fB$HOMEBREW_ARTIFACT_DOMAIN\fP and \fB$HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK\fP are both set, if the request to \fB$HOMEBREW_ARTIFACT_DOMAIN\fP fails then Homebrew will error rather than trying any other/default URLs\.
+.TP
+\fBHOMEBREW_AUTO_UPDATE_QUIET\fP
+If set, the auto\-update run before commands like \fBbrew install\fP, \fBbrew upgrade\fP or \fBbrew tap\fP will not show information about new, outdated or deleted formulae and casks\.
 .TP
 \fBHOMEBREW_AUTO_UPDATE_SECS\fP
 Run \fBbrew update\fP once every \fB$HOMEBREW_AUTO_UPDATE_SECS\fP seconds before some commands, e\.g\. \fBbrew install\fP, \fBbrew upgrade\fP or \fBbrew tap\fP\&\. Alternatively, disable auto\-update entirely with \fB$HOMEBREW_NO_AUTO_UPDATE\fP\&\.

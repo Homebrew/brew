@@ -32,7 +32,7 @@ module PatchELF
       @set = set
       # [{Integer => String}]
       @inline_patch = {}
-      f = File.open(in_file)
+      f = File.open(in_file) # rubocop:disable Style/FileOpen
       @elf = ELFTools::ELFFile.new(f)
       @mm = PatchELF::MM.new(@elf)
       @strtab_extend_requests = []

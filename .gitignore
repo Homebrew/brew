@@ -77,6 +77,7 @@
 
 # Ignore dependencies we don't wish to vendor
 **/vendor/bundle/ruby/*/gems/ast-*/
+**/vendor/bundle/ruby/*/gems/base64-*/
 **/vendor/bundle/ruby/*/gems/benchmark-*/
 **/vendor/bundle/ruby/*/gems/bigdecimal-*/
 **/vendor/bundle/ruby/*/gems/bootsnap-*/

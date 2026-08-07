@@ -32,7 +32,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
     it "generates completion scripts for default shells" do
       artifact = cask.artifacts.grep(described_class).first
 
-      allow(Sandbox).to receive_messages(ensure_sandbox_installed!: nil, available?: true)
+      allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
         instance_double(Sandbox).tap do |sandbox|
           allow(sandbox).to receive(:allow_read)
@@ -61,7 +61,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       calls = []
       homes = []
 
-      allow(Sandbox).to receive_messages(ensure_sandbox_installed!: nil, available?: true)
+      allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
         instance_double(Sandbox).tap do |sandbox|
           expect(sandbox).to receive(:allow_read).with(path: staged_path, type: :subpath)
@@ -89,7 +89,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       it "warns and continues generating other shells" do
         artifact = cask.artifacts.grep(described_class).first
 
-        allow(Sandbox).to receive_messages(ensure_sandbox_installed!: nil, available?: true)
+        allow(Sandbox).to receive(:available?).and_return(true)
         allow(Sandbox).to receive(:new) do
           instance_double(Sandbox).tap do |sandbox|
             allow(sandbox).to receive(:allow_read)
@@ -146,7 +146,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       artifact = cask.artifacts.grep(described_class).first
       captured_args = T.let([], T::Array[String])
 
-      allow(Sandbox).to receive_messages(ensure_sandbox_installed!: nil, available?: true)
+      allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
         instance_double(Sandbox).tap do |sandbox|
           allow(sandbox).to receive(:allow_read)

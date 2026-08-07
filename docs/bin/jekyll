@@ -6,10 +6,8 @@
 
 set -euo pipefail
 
-if [[ "${HOMEBREW_INSIDE_BUNDLE:-}" != "1" ]]; then
-  export HOMEBREW_NO_AUTO_UPDATE=1
-  eval "$(brew bundle --check --install env)"
-fi
+source "$(dirname "${BASH_SOURCE[0]}")/../script/bootstrap"
+bundle_bootstrap
 
 export JEKYLL_ENV="${JEKYLL_ENV:-development}"
 

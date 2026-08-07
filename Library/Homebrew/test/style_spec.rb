@@ -52,11 +52,14 @@ RSpec.describe Homebrew::Style do
   end
 
   describe ".run_actionlint!" do
+    let(:actionlint_result) do
+      instance_double(SystemCommand::Result, success?: true, stdout: "", stderr: "")
+    end
+
     before do
       allow(described_class).to receive_messages(actionlint: "actionlint", shellcheck: "shellcheck")
-      # Run a trivial command so $CHILD_STATUS is non-nil after the stubbed `system` call.
-      system("true")
-      allow(described_class).to receive(:system).and_return(true)
+      allow(Tty).to receive(:color?).and_return(false)
+      allow(described_class).to receive(:system_command).and_return(actionlint_result)
     end
 
     it "uses a tap's actionlint config when present" do
@@ -69,13 +72,15 @@ RSpec.describe Homebrew::Style do
       tap_config = tap_path/".github/actionlint.yaml"
       tap_config.write "self-hosted-runner:\n  labels: []\n"
 
-      expect(described_class).to receive(:system).with(
-        "actionlint", "-shellcheck", "shellcheck",
-        "-config-file", tap_config,
-        "-ignore", "image: string; options: string",
-        "-ignore", "label .* is unknown",
-        workflow
-      )
+      expect(described_class).to receive(:system_command).with(
+        "actionlint",
+        args:         ["-shellcheck", "shellcheck",
+                       "-config-file", tap_config,
+                       "-ignore", "image: string; options: string",
+                       "-ignore", "label .* is unknown",
+                       workflow],
+        print_stderr: false,
+      ).and_return(actionlint_result)
 
       described_class.run_actionlint!([workflow])
     end
@@ -87,13 +92,15 @@ RSpec.describe Homebrew::Style do
       workflow = workflows_dir/"ci.yml"
       workflow.write "name: CI"
 
-      expect(described_class).to receive(:system).with(
-        "actionlint", "-shellcheck", "shellcheck",
-        "-config-file", HOMEBREW_REPOSITORY/".github/actionlint.yaml",
-        "-ignore", "image: string; options: string",
-        "-ignore", "label .* is unknown",
-        workflow
-      )
+      expect(described_class).to receive(:system_command).with(
+        "actionlint",
+        args:         ["-shellcheck", "shellcheck",
+                       "-config-file", HOMEBREW_REPOSITORY/".github/actionlint.yaml",
+                       "-ignore", "image: string; options: string",
+                       "-ignore", "label .* is unknown",
+                       workflow],
+        print_stderr: false,
+      ).and_return(actionlint_result)
 
       described_class.run_actionlint!([workflow])
     end
@@ -111,13 +118,15 @@ RSpec.describe Homebrew::Style do
       workflow2 = tap2_path/".github/workflows/ci.yml"
       workflow2.write "name: CI"
 
-      expect(described_class).to receive(:system).with(
-        "actionlint", "-shellcheck", "shellcheck",
-        "-config-file", HOMEBREW_REPOSITORY/".github/actionlint.yaml",
-        "-ignore", "image: string; options: string",
-        "-ignore", "label .* is unknown",
-        workflow1, workflow2
-      )
+      expect(described_class).to receive(:system_command).with(
+        "actionlint",
+        args:         ["-shellcheck", "shellcheck",
+                       "-config-file", HOMEBREW_REPOSITORY/".github/actionlint.yaml",
+                       "-ignore", "image: string; options: string",
+                       "-ignore", "label .* is unknown",
+                       workflow1, workflow2],
+        print_stderr: false,
+      ).and_return(actionlint_result)
 
       described_class.run_actionlint!([workflow1, workflow2])
     end
@@ -162,15 +171,47 @@ RSpec.describe Homebrew::Style do
                                                          reason:     "formatting shell scripts",
                                                          executable: "shfmt")
                                                    .and_return(Pathname.new("/usr/bin/shfmt"))
-      system("true")
 
-      expect(described_class).to receive(:system).with(
-        { "HOMEBREW_SHFMT" => "/usr/bin/shfmt" },
+      shfmt_result = instance_double(SystemCommand::Result, success?: true, stdout: "", stderr: "")
+      expect(described_class).to receive(:system_command).with(
         HOMEBREW_LIBRARY/"Homebrew/utils/shfmt.sh",
-        "--language-dialect", "bash", "--indent", "2", "--case-indent", "--", shell_file
-      ).and_return(true)
+        args:         ["--language-dialect", "bash", "--indent", "2", "--case-indent", "--", shell_file],
+        env:          { "HOMEBREW_SHFMT" => "/usr/bin/shfmt" },
+        print_stderr: false,
+      ).and_return(shfmt_result)
 
-      described_class.run_shfmt!([shell_file])
+      expect(described_class.run_shfmt!([shell_file])).to be true
+    end
+  end
+
+  describe ".run_shellcheck" do
+    it "runs shellcheck in parallel chunks and merges their JSON results" do
+      dir = mktmpdir
+      log = dir/"shellcheck-args.log"
+      fake_shellcheck = dir/"shellcheck"
+      fake_shellcheck.write <<~SCRIPT
+        #!/bin/bash
+        echo "$*" >> "#{log}"
+        echo "[]"
+      SCRIPT
+      fake_shellcheck.chmod 0755
+
+      files = (1..3).map do |i|
+        file = dir/"script#{i}.sh"
+        file.write "#!/bin/bash\n"
+        file
+      end
+
+      allow(Hardware::CPU).to receive(:cores).and_return(2)
+
+      offenses = described_class.run_shellcheck(files, :json, shellcheck_path: fake_shellcheck)
+
+      expect(offenses).to eq []
+      chunks = log.read.lines
+      expect(chunks.length).to eq 2
+      first_chunk = chunks.find { |chunk| chunk.include?("script1.sh") }
+      expect(first_chunk).to include("script2.sh")
+      expect(first_chunk).not_to include("script3.sh")
     end
   end
 

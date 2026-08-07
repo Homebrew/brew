@@ -199,7 +199,7 @@ class GitHubRunnerMatrix
     unless self_hosted
       container = {
         image:   "ghcr.io/homebrew/brew:main",
-        options: "--init --user linuxbrew --env HOMEBREW_SANDBOX_LINUX_LANDLOCK=1",
+        options: "--init --user linuxbrew",
       }
       workdir = "/github/home"
     end

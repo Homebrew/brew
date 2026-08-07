@@ -37,7 +37,6 @@ jobs:
       pull-requests: write
     env:
       GH_TOKEN: ${{ github.token }}
-      PR_AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_TEMPLATE_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/.github/PULL_REQUEST_TEMPLATE.md
     steps:
@@ -78,14 +77,9 @@ jobs:
 
       - name: Check pull request template
         id: template
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          case "${PR_AUTHOR_ASSOCIATION}" in
-            OWNER | MEMBER | COLLABORATOR | CONTRIBUTOR)
-              echo "complete_template=true" >>"${GITHUB_OUTPUT:?}"
-              exit 0
-              ;;
-          esac
-
           # homebrew-core and homebrew-cask allow condensed PR bodies from recognised bump tools.
           if [[ "${GITHUB_REPOSITORY}" == "Homebrew/homebrew-core" ||
                 "${GITHUB_REPOSITORY}" == "Homebrew/homebrew-cask" ]]
@@ -101,7 +95,9 @@ jobs:
           complete_template="$(
             ruby "${RUNNER_TEMP:?}/check_template.rb" pull-request \
               "${RUNNER_TEMP}/check-prs/body" \
-              "${RUNNER_TEMP}/check-prs/template"
+              "${RUNNER_TEMP}/check-prs/template" \
+              "${PR_TITLE}" \
+              "${GITHUB_REPOSITORY:?}"
           )"
           case "${complete_template}" in
             true | false) ;;
@@ -161,7 +157,7 @@ jobs:
             --raw-field body="$(
               cat <<COMMENT
           <!-- incomplete-pr-template -->
-          Thanks for your pull request. This has been closed because it appears to use an incomplete or outdated pull request template.
+          Thanks for your pull request. This has been closed because it appears to be missing the pull request template, perhaps because this was written by an AI not a human. We require humans to read and fill in these templates.
 
           Please edit this pull request to fill in the current [pull request template](${PR_TEMPLATE_URL:?}). This workflow will reopen this pull request automatically once the template is complete. **Do not open a new pull request for this.**
           COMMENT

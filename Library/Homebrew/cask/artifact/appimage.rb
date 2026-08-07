@@ -5,6 +5,7 @@ require "cask/artifact/symlinked"
 
 module Cask
   module Artifact
+    # Artifact corresponding to the `app_image` stanza.
     class AppImage < Symlinked
       sig { override.params(target: T.any(String, Pathname), base_dir: T.nilable(Pathname)).returns(Pathname) }
       def resolve_target(target, base_dir: nil)

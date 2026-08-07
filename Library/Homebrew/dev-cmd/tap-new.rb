@@ -44,8 +44,7 @@ module Homebrew
         titleized_repository = tap.repository.dup
         titleized_user[0] = T.must(titleized_user[0]).upcase
         titleized_repository[0] = T.must(titleized_repository[0]).upcase
-        # Duplicate assignment to silence `assigned but unused variable` warning
-        root_url = root_url = GitHubPackages.root_url(tap.user, "homebrew-#{tap.repository}") if args.github_packages?
+        root_url = GitHubPackages.root_url(tap.user, "homebrew-#{tap.repository}") if args.github_packages?
 
         (tap.path/"Formula").mkpath
 
@@ -163,8 +162,8 @@ module Homebrew
           YAML
         end
         # Pick a random 5 minute block in which to execute the autobump action to avoid peak GitHub loads
-        hour = Random.rand(23)
-        minute = Random.rand(11) * 5
+        hour = Random.rand(24)
+        minute = Random.rand(12) * 5
         workflow.gsub!("this will be changed later and randomised by brew tap-new") do
           "Every day at #{hour}:#{minute} UTC"
         end

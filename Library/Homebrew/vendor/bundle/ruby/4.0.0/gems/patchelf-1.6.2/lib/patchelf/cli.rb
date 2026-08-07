@@ -9,7 +9,7 @@ module PatchELF
   # For command line interface to parsing arguments.
   module CLI
     # Name of binary.
-    SCRIPT_NAME = 'patchelf.rb'.freeze
+    SCRIPT_NAME = 'patchelf.rb'
     # CLI usage string.
     USAGE = format('Usage: %s <commands> FILENAME [OUTPUT_FILE]', SCRIPT_NAME).freeze
 

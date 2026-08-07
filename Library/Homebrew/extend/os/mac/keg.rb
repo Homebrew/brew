@@ -108,6 +108,43 @@ module OS
       def codesign_patched_binary(file)
         return if MacOS.version < :big_sur
 
+        unless ::Hardware::CPU.arm?
+          # Intel macOS rejects ruby-macho's ad-hoc signatures on larger
+          # binaries and does not require unsigned binaries to be signed,
+          # so use `codesign` to re-sign only the binaries whose existing
+          # signature our modifications have just broken:
+          # https://github.com/Homebrew/brew/issues/23418
+          result = system_command("codesign", args: ["--verify", file], print_stderr: false)
+          return unless result.stderr.match?(/invalid signature/i)
+
+          odebug "Codesigning #{file}"
+          return if quiet_system("codesign", "--sign", "-", "--force",
+                                 "--preserve-metadata=entitlements,requirements,flags,runtime",
+                                 file)
+
+          # If the codesigning fails, it may be a bug in Apple's codesign utility.
+          # A known workaround is to copy the file to another inode, then move it back
+          # erasing the previous file. Then sign again.
+          Dir::Tmpname.create("workaround") do |tmppath|
+            FileUtils.cp file, tmppath
+            FileUtils.mv tmppath, file, force: true
+          end
+
+          odebug "Codesigning (2nd try) #{file}"
+          result = system_command("codesign", args: [
+            "--sign", "-", "--force",
+            "--preserve-metadata=entitlements,requirements,flags,runtime",
+            file
+          ], print_stderr: false)
+          return if result.success?
+
+          onoe <<~EOS
+            Failed applying an ad-hoc signature to #{file}:
+            #{result.stderr}
+          EOS
+          return
+        end
+
         require "macho"
 
         odebug "Codesigning #{file}"

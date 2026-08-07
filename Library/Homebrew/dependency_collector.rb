@@ -99,15 +99,11 @@ class DependencyCollector
   sig { params(related_formula_names: T::Set[String]).returns(T.nilable(Dependency)) }
   def glibc_dep_if_needed(related_formula_names); end
 
-  sig { params(related_formula_names: T::Set[String]).returns(T.nilable(Dependency)) }
-  def bubblewrap_dep_if_needed(related_formula_names); end
-
   # Names implicitly added to any formula's deps right now, reusing the same checks
   # `Formula#add_global_deps_to_spec` uses to inject them onto a real formula.
   sig { returns(T::Set[String]) }
   def implicit_dependency_names
     [
-      bubblewrap_dep_if_needed(Set.new),
       gcc_dep_if_needed(Set.new),
       glibc_dep_if_needed(Set.new),
     ].compact.to_set(&:name)

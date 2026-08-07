@@ -241,13 +241,6 @@ then
   export HOMEBREW_COLOR="1"
 fi
 
-# This is set by Homebrew's self-hosted runner environment.
-# shellcheck disable=SC2154
-if [[ -n "${HOMEBREW_LINUX}" && -n "${GITHUB_ACTIONS_HOMEBREW_SELF_HOSTED}" ]]
-then
-  export HOMEBREW_SANDBOX_LINUX_LANDLOCK="1"
-fi
-
 setup-locale
 
 #####

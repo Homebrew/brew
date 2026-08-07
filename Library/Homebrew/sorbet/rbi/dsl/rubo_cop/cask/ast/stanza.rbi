@@ -10,10 +10,10 @@ class RuboCop::Cask::AST::Stanza
   def app?; end
 
   sig { returns(T::Boolean) }
-  def appcast?; end
+  def app_image?; end
 
   sig { returns(T::Boolean) }
-  def appimage?; end
+  def appcast?; end
 
   sig { returns(T::Boolean) }
   def arch?; end

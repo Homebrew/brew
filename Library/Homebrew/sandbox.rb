@@ -120,9 +120,6 @@ class Sandbox
     true
   end
 
-  sig { params(install_from_tests: T::Boolean).void }
-  def self.ensure_sandbox_installed!(install_from_tests: false); end
-
   sig { void }
   def self.ensure_sandbox_available!
     return if available?
@@ -145,24 +142,8 @@ class Sandbox
   sig { void }
   def self.reset_state!; end
 
-  sig { returns(T::Array[String]) }
-  def self.configuration_commands = []
-
-  sig { returns(T::Array[String]) }
-  def self.configuration_command_messages = []
-
-  sig { returns(T.nilable(String)) }
-  def self.sandbox_install_command = nil
-
-  sig { void }
-  def self.configure!
-    ensure_sandbox_installed!
-    reset_state!
-  end
-
   sig { params(command: T.any(String, Pathname), writable_path: T.any(String, Pathname), deny_network: T::Boolean).void }
   def self.run_command(*command, writable_path:, deny_network: false)
-    ensure_sandbox_installed!
     ensure_sandbox_available!
 
     writable_path = Pathname(writable_path).expand_path

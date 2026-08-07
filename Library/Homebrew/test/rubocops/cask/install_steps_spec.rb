@@ -4,8 +4,8 @@
 require "rubocops/rubocop-cask"
 
 RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
-  it "allows a flight block after matching steps during migration" do
-    expect_no_offenses <<~CASK
+  it "allows a flight block after matching steps in third-party taps during migration" do
+    expect_no_offenses <<~CASK, "/Taps/example/homebrew-cask/Casks/f/foo.rb"
       cask "foo" do
         version :latest
         sha256 :no_check
@@ -21,6 +21,24 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
     CASK
   end
 
+  it "rejects flight blocks in official Homebrew taps" do
+    expect_offense <<~CASK, "/Taps/homebrew/homebrew-example/Casks/f/foo.rb"
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        postflight_steps do
+          touch "foo"
+        end
+
+        postflight do
+        ^^^^^^^^^^^^^ Casks in official Homebrew taps must use `postflight_steps` instead of `postflight`.
+          touch "foo"
+        end
+      end
+    CASK
+  end
+
   it "reports an offense when a steps block contains Ruby code" do
     expect_offense <<~CASK
       cask "foo" do
@@ -30,6 +48,20 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
         preflight_steps do
           system "true"
           ^^^^^^^^^^^^^ Steps blocks may only contain install step DSL calls. Prefer canonical calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `write_file`, `delete_keychain_certificates`, `set_permissions`, `set_ownership`, `run`, `terminate_process`, `change_dylib_id`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
+        end
+      end
+    CASK
+  end
+
+  it "rejects `brew ruby` in steps blocks" do
+    expect_offense <<~CASK
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        preflight_steps do
+          run "{{HOMEBREW_BREW_FILE}}", args: ["ruby", "--", "{{staged_path}}/post-install.rb"]
+              ^^^^^^^^^^^^^^^^^^^^^^^^ Install steps must not use `brew ruby` because it enables developer mode.
         end
       end
     CASK
@@ -119,7 +151,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
   end
 
   it "autocorrects simple flight block file preparation" do
-    expect_offense <<~CASK
+    expect_offense <<~CASK, "/Taps/homebrew/homebrew-cask/Casks/f/foo.rb"
       cask "foo" do
         version :latest
         sha256 :no_check

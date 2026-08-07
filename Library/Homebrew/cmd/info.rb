@@ -552,7 +552,7 @@ module Homebrew
                     (formula.requirements.any? { |requirement| self.class.requirement_for_other_os?(requirement) } ||
                      (stable.present? ? stable.bottled? && formula.pour_bottle? : formula.head.blank?))))
 
-          deps = formula.deps.send(type).uniq
+          deps = formula.deps.public_send(type).uniq
           next if deps.empty?
 
           tab_deps = (kegs.any? && type != "build") ? tab_runtime_deps : nil

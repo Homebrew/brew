@@ -29,7 +29,7 @@ Each cask contains a series of stanzas (or “fields”) which *declare* how the
 
 To make maintenance easier, the most-frequently-updated stanzas are usually placed at the top. But that’s a convention, not a rule.
 
-Exception: `do` blocks such as `postflight` may enclose a block of pure Ruby code. Lines within that block follow a procedural (order-dependent) paradigm.
+Exception: `*_steps` blocks contain an ordered sequence of constrained operations.
 
 ## Header line details
 
@@ -49,7 +49,7 @@ Having a common order for stanzas makes casks easier to update and parse. Below 
     version
     sha256
 
-    on_<system> # <system> blocks may be any supported macOS release (descending from oldest), `macos`, or `linux`
+    on_<system> # arm, intel, supported macOS releases (oldest first), macos, then linux
 
     language
 
@@ -74,7 +74,7 @@ Having a common order for stanzas makes casks easier to update and parse. Below 
 
     suite
     app
-    appimage
+    app_image
     pkg
     generated_script
     installer
@@ -102,16 +102,12 @@ Having a common order for stanzas makes casks easier to update and parse. Below 
     stage_only
 
     preflight_steps
-    preflight
 
     postflight_steps
-    postflight
 
     uninstall_preflight_steps
-    uninstall_preflight
 
     uninstall_postflight_steps
-    uninstall_postflight
 
     uninstall
 
@@ -149,13 +145,13 @@ This skips automated homepage availability audits for one year. Do not use a fut
 
 Each cask must declare one or more [artifacts](/rubydoc/Cask/Artifact.html) (i.e. something to install).
 Not every artifact type is supported on every operating system and a cask does not need to support both macOS and Linux.
-The `appimage` stanza is Linux-only, macOS integration stanzas such as `app` and `pkg` are macOS-only and portable stanzas such as `binary` can be used on either operating system.
+The `app_image` stanza is Linux-only, macOS integration stanzas such as `app` and `pkg` are macOS-only and portable stanzas such as `binary` can be used on either operating system.
 
 | name                                                                                   | multiple occurrences allowed? | value                                                                                                                                                                                                                                                                                                                                                                      |
 | -------------------------------------------------------------------------------------- | :---------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [`suite`](#stanza-suite)                                                               |              yes              | Relative path to a containing directory that should be moved into the `/Applications` folder on installation.                                                                                                                                                                                                                                                              |
 | [`app`](#stanza-app)                                                                   |              yes              | Relative path to an `.app` that should be moved into the `/Applications` folder on installation.                                                                                                                                                                                                                                                                           |
-| `appimage`                                                                             |              yes              | Relative path to an AppImage that should be linked into the configured AppImage directory on installation.                                                                                                                                                                                                                                                                 |
+| `app_image`                                                                            |              yes              | Relative path to an AppImage that should be linked into the configured AppImage directory on installation.                                                                                                                                                                                                                                                                 |
 | [`pkg`](#stanza-pkg)                                                                   |              yes              | Relative path to a `.pkg` file containing the distribution.                                                                                                                                                                                                                                                                                                                |
 | [`generated_script`](#stanza-generated_script)                                         |              yes              | Generates a script for another artifact or install step to use.                                                                                                                                                                                                                                                                                                       |
 | [`installer`](#stanza-installer)                                                       |              yes              | Describes an executable which must be run to complete the installation.                                                                                                                                                                                                                                                                                                    |
@@ -205,13 +201,9 @@ Generated completion artifacts are different: `generate_completions_from_executa
 | [`deprecate!`](#stanza-deprecate--disable) | no                            | Date as a string in `YYYY-MM-DD` format and a string or symbol providing a reason. |
 | [`disable!`](#stanza-deprecate--disable)   | no                            | Date as a string in `YYYY-MM-DD` format and a string or symbol providing a reason. |
 | `preflight_steps`                          | yes                           | Declarative file preparation steps run before artifact installation. |
-| `preflight`                                | no                            | Ruby block containing preflight install operations (needed only in very rare cases). |
 | `postflight_steps`                         | yes                           | Declarative file preparation steps run after artifact installation. |
-| [`postflight`](#stanza-flight)             | no                            | Ruby block containing postflight install operations. |
 | `uninstall_preflight_steps`                | yes                           | Declarative file preparation steps run before artifact uninstallation. |
-| `uninstall_preflight`                      | no                            | Ruby block containing preflight uninstall operations (needed only in very rare cases). |
 | `uninstall_postflight_steps`               | yes                           | Declarative file preparation steps run after artifact uninstallation. |
-| `uninstall_postflight`                     | no                            | Ruby block containing postflight uninstall operations. |
 | [`language`](#stanza-language)             | yes                           | Ruby block, called with language code parameters, containing other stanzas and/or a return value. |
 | `container nested:`                        | no                            | Relative path to an inner container that must be extracted before moving on with the installation. This allows for support of `.dmg` inside `.tar`, `.zip` inside `.dmg`, etc. (Example: [blocs.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/b/blocs.rb#L17-L19)) |
 | `container type:`                          | no                            | Symbol to override container-type autodetect. May be one of: `:air`, `:bzip2`, `:cab`, `:dmg`, `:generic_unar`, `:gzip`, `:otf`, `:pkg`, `:rar`, `:seven_zip`, `:sit`, `:tar`, `:ttf`, `:xar`, `:zip`, `:naked`. (Example: [parse.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/p/parse.rb#L10)) |
@@ -613,11 +605,11 @@ Refer to [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removin
   + desc "Sound and music editor"
   ```
 
-### Stanza: `*flight`
+### Stanza: `*flight_steps`
 
-The stanzas `preflight`, `postflight`, `uninstall_preflight`, and `uninstall_postflight` define operations to be run before or after installation or uninstallation.
+The stanzas `preflight_steps`, `postflight_steps`, `uninstall_preflight_steps` and `uninstall_postflight_steps` define operations to be run before or after installation or uninstallation. Casks in official Homebrew taps must use these structured stanzas; legacy Ruby flight blocks are rejected. The legacy forms remain available temporarily for third-party tap compatibility.
 
-For simple file preparation, prefer `preflight_steps`, `postflight_steps`, `uninstall_preflight_steps` or `uninstall_postflight_steps`. These steps are stored in the JSON API and avoid loading cask Ruby for common operations.
+These steps are stored in the JSON API and avoid loading cask Ruby.
 
 ```ruby
 preflight_steps do
@@ -638,7 +630,7 @@ uninstall_postflight_steps do
 end
 ```
 
-A steps block may only contain supported step calls with literal arguments; it cannot call the wider cask DSL or arbitrary Ruby code. During migration, a phase may define both forms. Its structured steps run before the matching Ruby flight block. Remove the Ruby block once all of its behaviour is represented by structured steps.
+A steps block may only contain supported step calls with literal arguments; it cannot call the wider cask DSL or arbitrary Ruby code.
 
 #### File preparation steps
 
@@ -680,25 +672,6 @@ The runtime steps DSL retains compatibility helpers for `token`, `name`, `versio
 Content, replacements, command arguments and command environments may use fixed install-time tokens. These include `{{HOMEBREW_BREW_FILE}}`, `{{HOMEBREW_CELLAR}}`, `{{HOMEBREW_PREFIX}}`, `{{token}}`, `{{name}}`, `{{user}}`, `{{staged_path}}`, `{{appdir}}`, `{{caskroom_path}}`, `{{temp}}`, `{{version}}`, `{{version.major}}` and `{{version.major_minor}}`. `{{name}}` is retained for compatibility; prefer `{{token}}`. Any other `{{...}}` is left verbatim. For example: `write_file "settings.conf", "application = {{appdir}}/Example.app"`.
 
 {% endraw %}
-
-Flight blocks are not currently run in the cask sandbox. They should be written as though they may be sandboxed in the future: prefer the mini-DSL helpers below and keep filesystem writes limited to paths owned by the cask.
-
-#### Evaluation of blocks is always deferred
-
-The Ruby blocks defined by these stanzas are not evaluated until install time or uninstall time. Within a block you may refer to the `@cask` instance variable, and invoke [any method available on `@cask`](/rubydoc/Cask/Cask.html).
-
-#### `*flight` mini-DSL
-
-There is a mini-DSL available within these blocks.
-
-The following methods may be called to perform standard tasks:
-
-| method                                    | availability                                     | description |
-| ----------------------------------------- | ------------------------------------------------ | ----------- |
-| `set_ownership(paths)`                    | `preflight`, `postflight`, `uninstall_preflight` | Set user and group ownership of `paths`. (Example: [docker-toolbox.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/d/docker-toolbox.rb#L42)) |
-| `set_permissions(paths, permissions_str)` | `preflight`, `postflight`, `uninstall_preflight` | Set permissions in `paths` to `permissions_str`. (Example: [ngrok.rb](https://github.com/Homebrew/homebrew-cask/blob/41d91ff669d85343175202adf568e2328486205f/Casks/n/ngrok.rb#L30)) |
-
-`set_ownership(paths)` defaults to setting user and group ownership to the current user and `staff`. These can be changed by passing in extra options: `set_ownership(paths, user: "user", group: "group")`. (Example: [hummingbird.rb](https://github.com/Homebrew/homebrew-cask/blob/aa461148bbb5119af26b82cccf5003e2b4e50d95/Casks/h/hummingbird.rb#L24))
 
 ### Stanza: `generate_completions_from_executable`
 

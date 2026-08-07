@@ -14,12 +14,16 @@ module Cask
     sig { returns(T.nilable(T::Array[T.untyped])) }
     attr_accessor :uninstall_artifacts
 
-    sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
-    def initialize(attributes = {})
-      @uninstall_flight_blocks = T.let(nil, T.nilable(T::Boolean))
-      @uninstall_artifacts = T.let(nil, T.nilable(T::Array[T.untyped]))
+    sig {
+      params(uninstall_flight_blocks: T.nilable(T::Boolean),
+             uninstall_artifacts:     T.nilable(T::Array[T.untyped]),
+             rest:                    T.untyped).void
+    }
+    def initialize(uninstall_flight_blocks: nil, uninstall_artifacts: nil, **rest)
+      @uninstall_flight_blocks = uninstall_flight_blocks
+      @uninstall_artifacts = uninstall_artifacts
 
-      super
+      super(**rest)
     end
 
     # Instantiates a {Tab} for a new installation of a cask.

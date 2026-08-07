@@ -181,6 +181,35 @@ RSpec.describe FormulaInstaller do
     end
   end
 
+  describe "#post_install_formula_path" do
+    it "uses the API formula for structured-only post-installs" do
+      formula = formula("api-install-steps") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
+      installer = described_class.new(formula)
+
+      allow(formula).to receive_messages(any_installed_prefix: mktmpdir, loaded_from_api?: true,
+                                         post_install_defined?: false)
+
+      expect(installer.post_install_formula_path).to eq(formula.full_name)
+    end
+
+    it "uses the keg formula for API post-installs with Ruby hooks" do
+      formula = formula("api-post-install-hook") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
+      installer = described_class.new(formula)
+      installed_prefix = mktmpdir
+
+      allow(formula).to receive_messages(any_installed_prefix: installed_prefix, loaded_from_api?: true,
+                                         post_install_defined?: true)
+
+      expect(installer.post_install_formula_path).to eq(installed_prefix/".brew/api-post-install-hook.rb")
+    end
+  end
+
   describe "#pour" do
     let(:f) do
       formula("missing-bottle-tab") do
@@ -900,78 +929,6 @@ RSpec.describe FormulaInstaller do
       end.to raise_error(CannotInstallFormulaError)
     end
 
-    it "does not raise on cyclic dependency through direct implicit Bubblewrap" do
-      ENV["HOMEBREW_DEVELOPER"] = "1"
-
-      formula_name = "homebrew-test-formula"
-      f = formula formula_name do
-        T.bind(self, T.class_of(Formula))
-        url "foo-1.0"
-      end
-      dep = Dependency.new("bubblewrap", [:implicit])
-
-      allow(f).to receive_messages(deps: [dep], recursive_dependencies: [])
-
-      fi = described_class.new(f)
-
-      expect do
-        fi.check_install_sanity
-      end.not_to raise_error
-    end
-
-    it "does not raise on cyclic dependency through recursive implicit Bubblewrap" do
-      ENV["HOMEBREW_DEVELOPER"] = "1"
-
-      formula_name = "homebrew-test-formula"
-      f = formula formula_name do
-        T.bind(self, T.class_of(Formula))
-        url "foo-1.0"
-      end
-      dep = Dependency.new("cmake", [:build])
-      implicit_bubblewrap = Dependency.new("bubblewrap", [:implicit])
-      recursive_dep = Dependency.new(formula_name)
-      dep_formula = instance_double(Formula)
-
-      allow(f).to receive_messages(deps: [dep], recursive_dependencies: [])
-      allow(dep).to receive(:to_formula).and_return(dep_formula)
-      allow(dep_formula).to receive(:recursive_dependencies) do |&block|
-        (block&.call(dep_formula, implicit_bubblewrap) == Dependable::PRUNE) ? [] : [recursive_dep]
-      end
-
-      fi = described_class.new(f)
-
-      expect do
-        fi.check_install_sanity
-      end.not_to raise_error
-    end
-
-    it "raises on cyclic dependency through recursive explicit Bubblewrap" do
-      ENV["HOMEBREW_DEVELOPER"] = "1"
-
-      formula_name = "homebrew-test-formula"
-      f = formula formula_name do
-        T.bind(self, T.class_of(Formula))
-        url "foo-1.0"
-      end
-      dep = Dependency.new("cmake", [:build])
-      explicit_bubblewrap = Dependency.new("bubblewrap")
-      recursive_dep = Dependency.new(formula_name)
-      dep_formula = instance_double(Formula)
-
-      allow(f).to receive_messages(deps: [dep], recursive_dependencies: [])
-      allow(dep).to receive(:to_formula).and_return(dep_formula)
-      allow(dep_formula).to receive(:recursive_dependencies) do |&block|
-        block&.call(dep_formula, explicit_bubblewrap)
-        [recursive_dep]
-      end
-
-      fi = described_class.new(f)
-
-      expect do
-        fi.check_install_sanity
-      end.to raise_error(CannotInstallFormulaError)
-    end
-
     it "raises on pinned dependency" do
       dep_name = "homebrew-test-dependency"
       dep_path = CoreTap.instance.new_formula_path(dep_name)
@@ -1552,7 +1509,7 @@ RSpec.describe FormulaInstaller do
       sandbox = instance_double(Sandbox)
 
       allow(installer).to receive(:build_argv).and_return([])
-      allow(Sandbox).to receive_messages(ensure_sandbox_installed!: nil, available?: true, new: sandbox)
+      allow(Sandbox).to receive_messages(available?: true, new: sandbox)
       allow(sandbox).to receive_messages(record_log: nil, allow_read_if_exists: nil, allow_write_temp_and_cache: nil,
                                          allow_write_log: nil, allow_cvs: nil, allow_fossil: nil,
                                          allow_write_xcode: nil, allow_write_cellar: nil, deny_read_home: nil,

@@ -50,7 +50,7 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
       ).to be(true)
     end
 
-    it "uses Landlock in unprivileged Linux containers" do
+    it "uses unprivileged Linux containers" do
       linux_containers = described_class.new([], ["deleted"], all_supported: false, dependent_matrix: false)
                                         .active_runner_specs_hash
                                         .filter_map { |runner| runner[:container] }
@@ -58,7 +58,7 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
       expect(linux_containers).to eq(Array.new(2) do
         {
           image:   "ghcr.io/homebrew/brew:main",
-          options: "--init --user linuxbrew --env HOMEBREW_SANDBOX_LINUX_LANDLOCK=1",
+          options: "--init --user linuxbrew",
         }
       end)
     end

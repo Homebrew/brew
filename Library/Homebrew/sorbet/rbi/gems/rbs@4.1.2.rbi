@@ -494,6 +494,21 @@ class RBS::AST::Ruby::Annotations::ModuleAliasAnnotation < ::RBS::AST::Ruby::Ann
   def type_fingerprint; end
 end
 
+class RBS::AST::Ruby::Annotations::ModuleSelfAnnotation < ::RBS::AST::Ruby::Annotations::Base
+  def initialize(location:, prefix_location:, keyword_location:, colon_location:, name:, args:, open_bracket_location:, close_bracket_location:, args_comma_locations:, comment_location:); end
+
+  def args; end
+  def args_comma_locations; end
+  def close_bracket_location; end
+  def colon_location; end
+  def comment_location; end
+  def keyword_location; end
+  def map_type_name; end
+  def name; end
+  def open_bracket_location; end
+  def type_fingerprint; end
+end
+
 class RBS::AST::Ruby::Annotations::NodeTypeAssertion < ::RBS::AST::Ruby::Annotations::Base
   def initialize(location:, prefix_location:, type:); end
 
@@ -723,9 +738,11 @@ class RBS::AST::Ruby::Members::Base
 end
 
 class RBS::AST::Ruby::Members::DefMember < ::RBS::AST::Ruby::Members::Base
-  def initialize(buffer, name, node, method_type, leading_comment); end
+  def initialize(buffer, name, node, method_type, leading_comment, kind: T.unsafe(nil)); end
 
   def annotations; end
+  def instance?; end
+  def kind; end
   def leading_comment; end
   def location; end
   def method_type; end
@@ -734,6 +751,7 @@ class RBS::AST::Ruby::Members::DefMember < ::RBS::AST::Ruby::Members::Base
   def node; end
   def overloading?; end
   def overloads; end
+  def singleton?; end
   def type_fingerprint; end
 end
 
@@ -801,6 +819,16 @@ class RBS::AST::Ruby::Members::MixinMember < ::RBS::AST::Ruby::Members::Base
   def name_location; end
   def node; end
   def type_args; end
+  def type_fingerprint; end
+end
+
+class RBS::AST::Ruby::Members::ModuleSelfMember < ::RBS::AST::Ruby::Members::Base
+  def initialize(buffer, annotation); end
+
+  def annotation; end
+  def args; end
+  def location; end
+  def name; end
   def type_fingerprint; end
 end
 
@@ -908,6 +936,7 @@ class RBS::Buffer
   def initialize(content:, name: T.unsafe(nil), parent: T.unsafe(nil)); end
 
   def absolute_position(position); end
+  def character_offset(byte_offset); end
   def content; end
   def detach; end
   def inspect; end
@@ -922,7 +951,7 @@ class RBS::Buffer
   def pos_to_loc(pos); end
   def ranges; end
   def rbs_location(location, loc2 = T.unsafe(nil)); end
-  def sub_buffer(lines:); end
+  def sub_buffer(lines:, byte_lines_hint: T.unsafe(nil)); end
   def top_buffer; end
 end
 
@@ -1069,6 +1098,7 @@ class RBS::Collection::Config::LockfileGenerator::GemfileLockMismatchError < ::S
   def message; end
 end
 
+RBS::Collection::Config::LockfileGenerator::NONGEM_STDLIBS = T.let(T.unsafe(nil), Set)
 RBS::Collection::Config::PATH = T.let(T.unsafe(nil), Pathname)
 
 class RBS::Collection::Installer
@@ -1863,6 +1893,7 @@ class RBS::InlineParser::Parser < ::Prism::Visitor
   def skip_node?(node); end
   def visit_call_node(node); end
   def visit_class_node(node); end
+  def visit_class_or_module_body(decl, node); end
   def visit_constant_path_write_node(node); end
   def visit_constant_write_node(node); end
   def visit_def_node(node); end
@@ -2056,11 +2087,14 @@ class RBS::Namespace
   def to_type_name; end
 
   class << self
+    def [](path, absolute); end
     def empty; end
     def parse(string); end
     def root; end
   end
 end
+
+module RBS::Namespace::INTERN_LEAF; end
 
 class RBS::NoMixinFoundError < ::RBS::DefinitionError
   include ::RBS::DetailedMessageable
@@ -2128,9 +2162,12 @@ class RBS::Parser
     def _parse_inline_leading_annotation(_arg0, _arg1, _arg2, _arg3); end
     def _parse_inline_trailing_annotation(_arg0, _arg1, _arg2, _arg3); end
     def _parse_method_type(_arg0, _arg1, _arg2, _arg3, _arg4); end
+    def _parse_method_type_to_bytes(_arg0, _arg1, _arg2, _arg3, _arg4); end
     def _parse_signature(_arg0, _arg1, _arg2); end
+    def _parse_signature_to_bytes(_arg0, _arg1, _arg2); end
     def _parse_type(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7); end
     def _parse_type_params(_arg0, _arg1, _arg2, _arg3); end
+    def _parse_type_to_bytes(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7); end
     def buffer(source); end
     def byte_range(char_range, content); end
     def lex(source); end
@@ -2247,30 +2284,45 @@ class RBS::Prototype::RBI
 
   def initialize; end
 
+  def append_decl(decl); end
+  def attribute_type(kind, sigs); end
   def call_node?(node, name:, receiver: T.unsafe(nil), args: T.unsafe(nil)); end
   def const_to_name(node); end
+  def current_context; end
+  def current_context!; end
   def current_module; end
   def current_module!; end
-  def current_namespace; end
   def decls; end
   def each_arg(array, &block); end
   def each_child(node); end
   def join_comments(nodes, comments); end
   def last_sig; end
+  def member_visibility(context); end
   def method_type(args_node, type_node, variables:, overloads:); end
   def modules; end
-  def nested_name(name); end
   def node_to_hash(node); end
   def parse(string); end
   def parse_params(args_node, args, method_type, variables:, overloads:); end
   def pop_sig; end
   def proc_type?(type_node); end
   def process(node, comments:, outer: T.unsafe(nil)); end
+  def process_attribute(node, comments:); end
+  def process_visibility(node, outer:, comments:); end
   def push_class(name, super_class, comment:); end
   def push_module(name, comment:); end
   def push_sig(node); end
+  def sync_visibility(visibility); end
   def type_of(type_node, variables:); end
   def type_of0(type_node, variables:); end
+end
+
+class RBS::Prototype::RBI::Context
+  def initialize(singleton:, visibility:); end
+
+  def singleton; end
+  def singleton=(_arg0); end
+  def visibility; end
+  def visibility=(_arg0); end
 end
 
 class RBS::Prototype::Runtime
@@ -2509,11 +2561,26 @@ class RBS::Resolver::TypeNameResolver
   def resolve_namespace(type_name, context:); end
   def resolve_namespace0(type_name, context, visited); end
   def resolve_type_name(type_name, context); end
-  def try_cache(query); end
+  def try_cache(type_name, context); end
 
   class << self
     def build(env); end
   end
+end
+
+class RBS::Rewriter
+  def initialize(buffer); end
+
+  def add_comment(*locations, content:); end
+  def buffer; end
+  def delete_comment(comment); end
+  def replace_comment(comment, content:); end
+  def rewrite(location, string); end
+  def string; end
+
+  private
+
+  def format_comment(content, indent); end
 end
 
 module RBS::Source; end
@@ -2652,6 +2719,7 @@ class RBS::TypeName
   def with_prefix(namespace); end
 
   class << self
+    def [](namespace, name); end
     def parse(string); end
   end
 end

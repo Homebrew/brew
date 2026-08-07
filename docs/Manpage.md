@@ -2116,11 +2116,6 @@ line; lines starting with `#` are comments. Changes take effect on the next
 Installs and configures Homebrew's Ruby. If `command` is passed, it will only
 run Bundler if necessary for that command.
 
-### `setup-sandbox`
-
-Run any necessary commands to setup the Homebrew sandbox. Must be run with
-`sudo`. Currently a no-op on non-Linux.
-
 ### `shellenv` \[*`shell`* ...\]
 
 Valid shells: bash\|csh\|fish\|pwsh\|sh\|tcsh\|zsh
@@ -2560,6 +2555,18 @@ With no arguments, all installed formulae are checked.
 
 : Check formulae listed in a Brewfile. Defaults to `./Brewfile`; use
   `--brewfile=`*`path`* to specify another.
+
+`--fix-available`
+
+: Only report vulnerabilities that have a fix available. Note that this may
+  exclude vulnerabilities with fixes available if we cannot determine that the
+  fix is included in the version under consideration.
+
+`--no-fix-available`
+
+: Only report vulnerabilities that do not have a fix available. Note that this
+  may include vulnerabilities with fixes available if we cannot determine that
+  the fix is included in the version under consideration.
 
 `-s`, `--severity`
 
@@ -4327,6 +4334,12 @@ command execution (e.g. `$(cat file)`).
 : When `$HOMEBREW_ARTIFACT_DOMAIN` and `$HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK`
   are both set, if the request to `$HOMEBREW_ARTIFACT_DOMAIN` fails then
   Homebrew will error rather than trying any other/default URLs.
+
+`HOMEBREW_AUTO_UPDATE_QUIET`
+
+: If set, the auto-update run before commands like `brew install`, `brew
+  upgrade` or `brew tap` will not show information about new, outdated or
+  deleted formulae and casks.
 
 `HOMEBREW_AUTO_UPDATE_SECS`
 

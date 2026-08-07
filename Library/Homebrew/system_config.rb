@@ -153,6 +153,7 @@ module SystemConfig
     sig { params(out: T.any(File, StringIO, IO)).void }
     def core_tap_config(out = $stdout)
       dump_tap_config(CoreTap.instance, out)
+      dump_tap_config(CoreCaskTap.instance, out)
     end
 
     sig { params(out: T.any(File, StringIO, IO)).void }

@@ -76,8 +76,6 @@ module Utils
       accumulator
     end
 
-    private
-
     sig { override.params(block: T.proc.params(arg0: K).void).void }
     def tsort_each_node(&block)
       each_key(&block)

@@ -701,9 +701,22 @@ RSpec.describe Cask::Cask, :cask do
       expect(cask.refresh_for_tag(tag) { cask.url.to_s }).to include("caffeine-intel-darwin")
     end
 
-    it "returns nil for a tag the cask does not support" do
+    it "yields for a Linux architecture whose checksum is missing" do
       tag = Utils::Bottles::Tag.new(system: :linux, arch: :arm)
-      expect(cask.refresh_for_tag(tag) { cask.url }).to be_nil
+      expect(cask.refresh_for_tag(tag) { cask.url.to_s }).to include("caffeine-arm-linux")
+    end
+
+    it "returns nil for a tag the cask cannot be refreshed for" do
+      invalid_on_linux_cask = described_class.new("on-linux-invalid") do
+        on_macos do
+          version "1.2.3"
+        end
+        sha256 :no_check
+        url "https://brew.sh/foo-#{version.major_minor}.zip"
+      end
+
+      tag = Utils::Bottles::Tag.new(system: :linux, arch: :arm)
+      expect(invalid_on_linux_cask.refresh_for_tag(tag) { invalid_on_linux_cask.url }).to be_nil
     end
   end
 
@@ -744,6 +757,16 @@ RSpec.describe Cask::Cask, :cask do
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin/1.0.0/intel.zip",
             "version": "1.0.0",
             "sha256": "1866dfa833b123bb8fe7fa7185ebf24d28d300d0643d75798bc23730af734216"
+          },
+          "x86_64_linux": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin//intel.zip",
+            "version": null,
+            "sha256": null
+          },
+          "arm64_linux": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine/darwin-arm64//arm.zip",
+            "version": null,
+            "sha256": null
           }
         }
       JSON
@@ -782,6 +805,13 @@ RSpec.describe Cask::Cask, :cask do
           "catalina": {
             "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
             "sha256": "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+          },
+          "x86_64_linux": {
+            "url": "file://#{TEST_FIXTURE_DIR}/cask/caffeine-intel.zip",
+            "sha256": null
+          },
+          "arm64_linux": {
+            "sha256": null
           }
         }
       JSON
@@ -900,12 +930,14 @@ RSpec.describe Cask::Cask, :cask do
       expect(JSON.pretty_generate(h["variations"])).to eq expected_sha256_variations_os.strip
     end
 
-    it "omits tags a cask intentionally doesn't define in on_system blocks" do
+    it "emits variations without checksums for Linux architectures a cask omits" do
       c = Cask::CaskLoader.load("on-linux-asymmetric")
-      h = c.to_hash_with_variations
+      h = JSON.parse(JSON.generate(c.to_hash_with_variations))
 
-      expect(h["variations"]).to include(:x86_64_linux)
-      expect(h["variations"]).not_to include(:arm64_linux)
+      expect(h["variations"]["arm64_linux"]).to include(
+        "depends_on" => { "arch" => [{ "type" => "intel", "bits" => 64 }] },
+        "sha256"     => nil,
+      )
     end
 
     it "emits Linux variations for a cask with Linux checksums but no `os` stanza" do
@@ -922,6 +954,28 @@ RSpec.describe Cask::Cask, :cask do
       expect(h["variations"].slice(:x86_64_linux, :arm64_linux).transform_values { |v| v["sha256"].to_s }).to eq(
         x86_64_linux: "244d413861cecb3707cfbcc5c4346d5367daa827da5ea08fb3f3bc2b6276d239",
         arm64_linux:  "9a1c0967baa46828930ccbbc88668d1b0db07e6edf778800ed4da073c00054f8",
+      )
+    end
+
+    it "emits Linux variations for a cask with `on_linux` content but no `os` stanza" do
+      c = Cask::CaskLoader.load("on-linux-blocks")
+      h = JSON.parse(JSON.generate(c.to_hash_with_variations))
+
+      app_image_artifacts = [{
+        "app_image" => ["Caffeine.AppImage"],
+        "target"    => "#{TEST_TMPDIR}/cask-appimagedir/Caffeine.AppImage",
+      }]
+      expect(h["variations"].slice("x86_64_linux", "arm64_linux").transform_values do |v|
+        v.slice("sha256", "artifacts")
+      end).to eq(
+        "x86_64_linux" => {
+          "sha256"    => "244d413861cecb3707cfbcc5c4346d5367daa827da5ea08fb3f3bc2b6276d239",
+          "artifacts" => app_image_artifacts,
+        },
+        "arm64_linux"  => {
+          "sha256"    => "9a1c0967baa46828930ccbbc88668d1b0db07e6edf778800ed4da073c00054f8",
+          "artifacts" => app_image_artifacts,
+        },
       )
     end
 

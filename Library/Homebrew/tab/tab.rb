@@ -37,20 +37,34 @@ class Tab < AbstractTab
   sig { returns(T.nilable(T::Array[Pathname])) }
   attr_accessor :changed_files
 
-  sig { params(attributes: T.any(T::Hash[String, T.untyped], T::Hash[Symbol, T.untyped])).void }
-  def initialize(attributes = {})
-    @poured_from_bottle = T.let(false, T::Boolean)
-    @built_as_bottle = T.let(false, T::Boolean)
-    @changed_files = T.let(nil, T.nilable(T::Array[Pathname]))
-    @stdlib = T.let(nil, T.nilable(T.any(String, Symbol)))
-    @aliases = T.let(nil, T.nilable(T::Array[String]))
-    @used_options = T.let(nil, T.nilable(T::Array[String]))
-    @unused_options = T.let(nil, T.nilable(T::Array[String]))
-    @compiler = T.let(nil, T.nilable(T.any(String, Symbol)))
-    @source_modified_time = T.let(nil, T.nilable(Integer))
-    @tapped_from = T.let(nil, T.nilable(String))
+  sig {
+    params(poured_from_bottle:   T::Boolean,
+           built_as_bottle:      T::Boolean,
+           changed_files:        T.nilable(T::Array[T.any(Pathname, String)]),
+           stdlib:               T.nilable(T.any(String, Symbol)),
+           aliases:              T.nilable(T::Array[String]),
+           used_options:         T.nilable(T::Array[String]),
+           unused_options:       T.nilable(T::Array[String]),
+           compiler:             T.nilable(T.any(String, Symbol)),
+           source_modified_time: T.nilable(Integer),
+           tapped_from:          T.nilable(String),
+           rest:                 T.untyped).void
+  }
+  def initialize(poured_from_bottle: false, built_as_bottle: false, changed_files: nil, stdlib: nil, aliases: nil,
+                 used_options: nil, unused_options: nil, compiler: nil, source_modified_time: nil,
+                 tapped_from: nil, **rest)
+    @poured_from_bottle = poured_from_bottle
+    @built_as_bottle = built_as_bottle
+    @changed_files = T.let(changed_files&.map { |f| Pathname(f) }, T.nilable(T::Array[Pathname]))
+    @stdlib = stdlib
+    @aliases = aliases
+    @used_options = used_options
+    @unused_options = unused_options
+    @compiler = compiler
+    @source_modified_time = source_modified_time
+    @tapped_from = tapped_from
 
-    super
+    super(**rest)
   end
 
   # Instantiates a {Tab} for a new installation of a formula.

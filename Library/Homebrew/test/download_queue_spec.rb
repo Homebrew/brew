@@ -361,4 +361,24 @@ RSpec.describe Homebrew::DownloadQueue do
     download_queue.enqueue(bottle, check_attestation: true)
     download_queue.fetch
   end
+
+  describe "Homebrew.default_download_queue", order: :defined do
+    it "memoizes the queue created on first use" do
+      queue = instance_double(described_class, shutdown: nil)
+      allow(described_class).to receive(:new).and_return(queue)
+
+      expect(Homebrew.default_download_queue).to be(queue)
+    end
+
+    it "does not leak a queue stubbed by an earlier example" do
+      expect(Homebrew.default_download_queue).to be_an_instance_of(described_class)
+    end
+
+    it "shuts down a memoized real queue when reset" do
+      queue = Homebrew.default_download_queue
+      expect(queue).to receive(:shutdown)
+
+      Homebrew.reset_default_download_queue
+    end
+  end
 end

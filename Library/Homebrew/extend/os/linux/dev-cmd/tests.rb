@@ -17,20 +17,8 @@ module OS
           return unless Homebrew::EnvConfig.sandbox_linux?
 
           require "sandbox"
+          return if !::Sandbox.available? && GitHub::Actions.env_set?
 
-          if OS::Linux::Sandbox.landlock?
-            unless ::Sandbox.available?
-              return if GitHub::Actions.env_set?
-
-              ::Sandbox.ensure_sandbox_available!
-            end
-
-            ::Sandbox.configure!
-          elsif GitHub::Actions.env_set?
-            ::Sandbox.configure!
-          else
-            ::Sandbox.ensure_sandbox_installed!(install_from_tests: true)
-          end
           ::Sandbox.ensure_sandbox_available!
         end
 

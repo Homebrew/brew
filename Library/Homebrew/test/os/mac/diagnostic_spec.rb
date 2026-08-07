@@ -68,6 +68,12 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
       expect(checks.fatal_preinstall_checks).not_to include("check_for_installed_developer_tools")
     end
+
+    it "requires developer tools on Intel" do
+      allow(Hardware::CPU).to receive(:arm?).and_return(false)
+
+      expect(checks.fatal_preinstall_checks).to include("check_for_installed_developer_tools")
+    end
   end
 
   describe "#fatal_build_from_source_checks" do

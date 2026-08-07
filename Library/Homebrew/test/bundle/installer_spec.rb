@@ -428,7 +428,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with("alpha").and_return(Set.new)
       allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with("beta").and_return(Set.new)
       allow(DependencyCollector).to receive(:new).and_return(
-        instance_double(DependencyCollector, implicit_dependency_names: Set["bubblewrap"]),
+        instance_double(DependencyCollector, implicit_dependency_names: Set["glibc"]),
       )
 
       entries = [alpha_entry, beta_entry]
@@ -447,7 +447,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:formulae_by_full_name).with(any_args).and_return({ dependencies: [] })
       allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with(any_args).and_return(Set.new)
       allow(DependencyCollector).to receive(:new).and_return(
-        instance_double(DependencyCollector, implicit_dependency_names: Set["bubblewrap"]),
+        instance_double(DependencyCollector, implicit_dependency_names: Set["glibc"]),
       )
 
       entries = [alpha_entry, beta_entry, gamma_entry]
@@ -469,7 +469,7 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:recursive_dep_names).with("alpha").and_return(Set.new)
       allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).with(["google-chrome"]).and_return([])
       allow(DependencyCollector).to receive(:new).and_return(
-        instance_double(DependencyCollector, implicit_dependency_names: Set["bubblewrap"]),
+        instance_double(DependencyCollector, implicit_dependency_names: Set["glibc"]),
       )
 
       entries = [alpha_entry, installable_cask_entry]

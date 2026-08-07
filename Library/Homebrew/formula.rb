@@ -538,8 +538,7 @@ class Formula
     !!head && !stable
   end
 
-  # Stop RuboCop from erroneously indenting hash target
-  delegate [ # rubocop:disable Layout/HashAlignment
+  delegate [
     :bottle_defined?,
     :bottle_tag?,
     :bottled?,
@@ -618,8 +617,7 @@ class Formula
   # @see .version
   delegate version: :active_spec
 
-  # Stop RuboCop from erroneously indenting hash target
-  delegate [ # rubocop:disable Layout/HashAlignment
+  delegate [
     :allow_network_access!,
     :deny_network_access!,
     :network_access_allowed?,
@@ -1574,7 +1572,7 @@ class Formula
 
   delegate pour_bottle_check_unsatisfied_reason: :"self.class"
 
-  # Can be overridden to run commands on both source and bottle installation.
+  # odeprecated
   sig { overridable.void }
   def post_install; end
 
@@ -1646,7 +1644,10 @@ class Formula
 
           with_logging("post_install") do
             run_post_install_steps if post_install_steps_defined?
-            post_install if post_install_defined?
+            if post_install_defined?
+              # odeprecated "`post_install`", "`post_install_steps`"
+              post_install
+            end
           end
         end
       end
@@ -4083,9 +4084,6 @@ class Formula
       current_steps.concat(
         if block
           Homebrew::InstallSteps::DSL.build(
-            # TODO: Remove the undocumented `default_base: :var` compatibility default after official taps use
-            # explicit bases.
-            default_base:        :var,
             default_source_base: :prefix,
             default_target_base: :prefix,
             &block

@@ -13,16 +13,17 @@ module OS
 
         sig { void }
         def initialize
+          super
           @xcode = T.let(nil, T.nilable(String))
           @clt = T.let(nil, T.nilable(Version))
         end
 
         sig { returns(String) }
         def describe_clang
-          return "N/A" if ::SystemConfig.clang.null?
+          return "N/A" if clang.null?
 
-          clang_build_info = ::SystemConfig.clang_build.null? ? "(parse error)" : ::SystemConfig.clang_build
-          "#{::SystemConfig.clang} build #{clang_build_info}"
+          clang_build_info = clang_build.null? ? "(parse error)" : clang_build
+          "#{clang} build #{clang_build_info}"
         end
 
         sig { returns(T.nilable(String)) }
@@ -37,12 +38,6 @@ module OS
         sig { returns(T.nilable(Version)) }
         def clt
           @clt ||= MacOS::CLT.version if MacOS::CLT.installed?
-        end
-
-        sig { params(out: T.any(File, StringIO, IO)).void }
-        def core_tap_config(out = $stdout)
-          dump_tap_config(CoreTap.instance, out)
-          dump_tap_config(CoreCaskTap.instance, out)
         end
 
         sig { returns(T.nilable(String)) }
@@ -81,4 +76,5 @@ module OS
     end
   end
 end
+
 SystemConfig.singleton_class.prepend(OS::Mac::SystemConfig::ClassMethods)

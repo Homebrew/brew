@@ -22,12 +22,24 @@ module Homebrew
         flag   "--brewfile",
                description: "Check formulae listed in a Brewfile. " \
                             "Defaults to `./Brewfile`; use `--brewfile=`<path> to specify another."
+        switch "--fix-available",
+               description: "Only report vulnerabilities that have a fix available. " \
+                            "Note that this may exclude vulnerabilities with fixes available " \
+                            "if we cannot determine that the fix is included in the version " \
+                            "under consideration."
+        switch "--no-fix-available",
+               description: "Only report vulnerabilities that do not have a fix available. " \
+                            "Note that this may include vulnerabilities with fixes available " \
+                            "if we cannot determine that the fix is included in the version " \
+                            "under consideration."
         flag   "-s", "--severity=",
                description: "Only report findings at or above: `low`, `medium`, `high`, `critical`."
         flag   "-m", "--max-summary=",
                description: "Truncate summaries to <n> characters (default 60, 0 for no limit)."
         switch "-j", "--json",
                description: "Output JSON."
+
+        conflicts "--fix-available", "--no-fix-available"
 
         named_args :formula
       end
@@ -43,6 +55,8 @@ module Homebrew
           formulae,
           ignore_patches: !args.no_ignore_patches?,
           min_severity:   severity,
+          only_fixed:     args.fix_available?,
+          except_fixed:   args.no_fix_available?,
         ).scan
 
         if args.json?

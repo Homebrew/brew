@@ -35,7 +35,7 @@ module Cask
     attr_reader :using
 
     sig { returns(T.nilable(String)) }
-    attr_reader :tag, :branch, :revision, :only_path
+    attr_reader :tag, :branch, :revision, :only_path, :verified
 
     extend Forwardable
 
@@ -73,6 +73,7 @@ module Cask
       header = Array(header) unless header.nil?
 
       specs = {}
+      specs[:verified]   = @verified   = T.let(verified, T.nilable(String))
       specs[:using]      = @using      = T.let(using, T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol)))
       specs[:tag]        = @tag        = T.let(tag, T.nilable(String))
       specs[:branch]     = @branch     = T.let(branch, T.nilable(String))

@@ -69,7 +69,7 @@ module Homebrew
       @problems = T.let([], T::Array[T.any(String, T::Hash[Symbol, T.untyped])])
       @new_formula_problems = T.let([], T::Array[T.any(String, T::Hash[Symbol, T.untyped])])
       @text = T.let(formula.path.open("rb", &:read), String)
-      @specs = T.let(%w[stable head].filter_map { |s| formula.send(s) }, T::Array[SoftwareSpec])
+      @specs = T.let(%w[stable head].filter_map { |s| formula.public_send(s) }, T::Array[SoftwareSpec])
       @spdx_license_data = spdx_license_data
       @spdx_exception_data = spdx_exception_data
       @tap_audit = tap_audit
@@ -644,7 +644,7 @@ module Homebrew
       return if homepage.match?(%r{^https?://www\.(?:non)?gnu\.org/.+}) && github_runner
 
       use_homebrew_curl = [:stable, :head].any? do |spec_name|
-        next false unless (spec = formula.send(spec_name))
+        next false unless (spec = formula.public_send(spec_name))
 
         spec.using == :homebrew_curl
       end
@@ -855,7 +855,7 @@ module Homebrew
 
       %w[Stable HEAD].each do |name|
         spec_name = name.downcase.to_sym
-        next unless (spec = formula.send(spec_name))
+        next unless (spec = formula.public_send(spec_name))
 
         except = @except.to_a
         if spec_name == :head &&
@@ -1324,12 +1324,12 @@ module Homebrew
 
     sig { params(message: String, location: T.nilable(Homebrew::SourceLocation), corrected: T::Boolean).void }
     def problem(message, location: nil, corrected: false)
-      @problems << ({ message:, location:, corrected: })
+      @problems << { message:, location:, corrected: }
     end
 
     sig { params(message: String, location: T.nilable(Homebrew::SourceLocation), corrected: T::Boolean).void }
     def new_formula_problem(message, location: nil, corrected: false)
-      @new_formula_problems << ({ message:, location:, corrected: })
+      @new_formula_problems << { message:, location:, corrected: }
     end
 
     sig { params(repo_owner: String).returns(T::Boolean) }

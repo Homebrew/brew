@@ -38,7 +38,7 @@ module OS
 
         self["HOMEBREW_OPTIMIZATION_LEVEL"] = "O2"
         self["HOMEBREW_DYNAMIC_LINKER"] = determine_dynamic_linker_path
-        self["HOMEBREW_RPATH_PATHS"] = determine_rpath_paths(formula)
+        self["HOMEBREW_RPATH_PATHS"] = determine_rpath_paths(formula).to_s
         m4_path_deps = ["libtool", "bison"]
         self["M4"] = "#{HOMEBREW_PREFIX}/opt/m4/bin/m4" if deps.any? { m4_path_deps.include?(it.name) }
         return unless ::Hardware::CPU.arm64?

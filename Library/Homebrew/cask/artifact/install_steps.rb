@@ -6,6 +6,7 @@ require "install_steps"
 
 module Cask
   module Artifact
+    # Abstract superclass for install steps artifacts.
     class AbstractInstallSteps < AbstractArtifact
       abstract!
 
@@ -34,6 +35,7 @@ module Cask
       end
     end
 
+    # Artifact corresponding to the `preflight_steps` stanza.
     class PreflightSteps < AbstractInstallSteps
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def install_phase(command: SystemCommand, **_options)
@@ -46,6 +48,7 @@ module Cask
       end
     end
 
+    # Artifact corresponding to the `postflight_steps` stanza.
     class PostflightSteps < AbstractInstallSteps
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def install_phase(command: SystemCommand, **_options)
@@ -58,6 +61,7 @@ module Cask
       end
     end
 
+    # Artifact corresponding to the `uninstall_preflight_steps` stanza.
     class UninstallPreflightSteps < AbstractInstallSteps
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def uninstall_phase(command: SystemCommand, **_options)
@@ -65,6 +69,7 @@ module Cask
       end
     end
 
+    # Artifact corresponding to the `uninstall_postflight_steps` stanza.
     class UninstallPostflightSteps < AbstractInstallSteps
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def uninstall_phase(command: SystemCommand, **_options)

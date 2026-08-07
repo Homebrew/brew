@@ -203,7 +203,6 @@ module Cask
 
       sig { returns(T.nilable(Sandbox)) }
       def cask_sandbox
-        Sandbox.ensure_sandbox_installed!
         return unless Sandbox.available?
 
         Sandbox.new.tap do |sandbox|
