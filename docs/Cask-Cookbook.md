@@ -182,7 +182,7 @@ The `app_image` stanza is Linux-only, macOS integration stanzas such as `app` an
 
 Homebrew treats cask installation artifacts as trusted vendor installation actions once the cask has been accepted. Artifact stanzas such as [`app`](#stanza-app), [`pkg`](#stanza-pkg) and [`installer script`](#installer-script) are expected to install software and may write outside the Caskroom through Homebrew-managed moves, macOS installer services or vendor installer code.
 
-Generated completion artifacts are different: `generate_completions_from_executable` runs an installed executable only to produce shell completion text. That execution is sandboxed where Homebrew has an available sandbox. The sandbox allows reading the staged cask, writing temporary/cache files and blocks network access. This limits side effects from commands that should only print completion data.
+Generated completion artifacts are different: `generate_completions_from_executable` runs an installed executable only to produce shell completion text. The complete generation operation, including writing the completion, runs in an isolated Ruby subprocess where Homebrew has an available sandbox. The sandbox allows reading the staged cask, writing the completion and temporary/cache files and blocks network access. This limits side effects from commands that should only print completion data.
 
 `installer script:` is not sandboxed. Many installer scripts are vendor installers that require broad filesystem writes, macOS services or `sudo`; macOS sandboxing does not work for root processes, and narrowing the write allowlist to the Caskroom plus uninstall or zap paths would break installers that legitimately write elsewhere. It would also change documented `SystemCommand` behaviours such as `sudo:`, `must_succeed:` and output handling.
 
@@ -659,7 +659,7 @@ Relative paths default to `staged_path` for `base:`, `source_base:` and `target_
 
 Use `if_path_exists`, `unless_path_exists`, `on_macos` and `on_linux` blocks to guard one or more steps. A condition is evaluated once when its scope begins, so related steps make the same decision. Use `unless_path_exists` around `write_file` when an existing file must be preserved.
 
-`run` does not evaluate a shell command string. It supports a literal `env:`, `stdin_path:`, `stdout_path:`, `chdir:` and `sudo:`. Standard output is hidden by default and standard error is printed; use `print_stdout: true` or `print_stderr: false` to change that behaviour.
+`run` does not evaluate a shell command string. It supports a literal `env:`, `stdin_path:`, `stdout_path:`, `chdir:` and `sudo:`. Standard output is hidden by default and standard error is printed; use `print_stdout: true` or `print_stderr: false` to change that behaviour. The complete steps block runs in an isolated Ruby subprocess without network or general home-directory access where Homebrew has an available sandbox. The sandbox permits writes to declared step destinations, the caskroom, app directory, temporary and cache directories and Homebrew's link directories. Ruby file operations and system or cask-provided commands therefore share the same restrictions. Use `writable_paths:` with directory roots, and `writable_base:` for relative roots, when an opaque command needs another declared write location.
 
 #### Interpolation in steps blocks
 

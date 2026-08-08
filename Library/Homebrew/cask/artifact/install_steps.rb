@@ -3,6 +3,7 @@
 
 require "cask/artifact/abstract_artifact"
 require "install_steps"
+require "keg"
 
 module Cask
   module Artifact
@@ -29,9 +30,40 @@ module Cask
 
       private
 
-      sig { params(command: T.class_of(SystemCommand)).returns(Homebrew::InstallSteps::Runner) }
-      def runner(command)
-        Homebrew::InstallSteps::Runner.new(context: cask, command:)
+      sig { params(command: T.class_of(SystemCommand), phase: Symbol).void }
+      def run_steps(command, phase: :install)
+        runner = Homebrew::InstallSteps::Runner.new(context: cask, command:)
+        sandbox = cask_sandbox
+        unless sandbox
+          runner.run(steps, phase:)
+          return
+        end
+
+        sandbox.allow_write_path cask.caskroom_path
+        sandbox.allow_write_path cask.config.appdir
+        Keg.keg_link_directories.each { |directory| sandbox.allow_write_path HOMEBREW_PREFIX/directory }
+        original_home = Pathname(Dir.home).expand_path
+        runner.sandbox_write_paths(steps, phase:).each do |path|
+          sandbox.allow_write_path path
+          sandbox.allow_read(path:, type: :subpath) if path.expand_path.ascend.include?(original_home)
+        end
+        run_cask_sandbox(
+          sandbox,
+          {
+            "action"  => "install_steps",
+            "context" => {
+              "name"          => cask.name,
+              "token"         => cask.token,
+              "version"       => cask.version.to_s,
+              "staged_path"   => cask.staged_path.to_s,
+              "caskroom_path" => cask.caskroom_path.to_s,
+              "home"          => Dir.home,
+              "config"        => cask.config.to_json,
+            },
+            "phase"   => phase.to_s,
+            "steps"   => steps,
+          },
+        )
       end
     end
 
@@ -39,12 +71,12 @@ module Cask
     class PreflightSteps < AbstractInstallSteps
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def install_phase(command: SystemCommand, **_options)
-        runner(command).run(steps)
+        run_steps(command)
       end
 
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def uninstall_phase(command: SystemCommand, **_options)
-        runner(command).run(steps, phase: :uninstall)
+        run_steps(command, phase: :uninstall)
       end
     end
 
@@ -52,12 +84,12 @@ module Cask
     class PostflightSteps < AbstractInstallSteps
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def install_phase(command: SystemCommand, **_options)
-        runner(command).run(steps)
+        run_steps(command)
       end
 
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def uninstall_phase(command: SystemCommand, **_options)
-        runner(command).run(steps, phase: :uninstall)
+        run_steps(command, phase: :uninstall)
       end
     end
 
@@ -65,7 +97,7 @@ module Cask
     class UninstallPreflightSteps < AbstractInstallSteps
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def uninstall_phase(command: SystemCommand, **_options)
-        runner(command).run(steps)
+        run_steps(command)
       end
     end
 
@@ -73,7 +105,7 @@ module Cask
     class UninstallPostflightSteps < AbstractInstallSteps
       sig { params(command: T.class_of(SystemCommand), _options: T.anything).void }
       def uninstall_phase(command: SystemCommand, **_options)
-        runner(command).run(steps)
+        run_steps(command)
       end
     end
   end

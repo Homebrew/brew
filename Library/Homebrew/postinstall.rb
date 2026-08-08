@@ -7,11 +7,9 @@ old_trap = trap("INT") { exit! 130 }
 
 require_relative "global"
 
-require "fcntl"
-require "utils/socket"
 require "cli/parser"
 require "cmd/postinstall"
-require "json/add/exception"
+require "utils/fork"
 require "extend/pathname/write_mkpath_extension"
 
 begin
@@ -20,8 +18,7 @@ begin
   ENV["HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS"] = "1"
 
   args = Homebrew::Cmd::Postinstall.new.args
-  error_pipe = Utils::UNIXSocketExt.open(ENV.fetch("HOMEBREW_ERROR_PIPE"), &:recv_io)
-  error_pipe.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+  error_pipe = Utils.forked_child_error_pipe
 
   trap("INT", old_trap)
 
@@ -36,7 +33,6 @@ begin
 
 # Handle all possible exceptions.
 rescue Exception => e # rubocop:disable Lint/RescueException
-  error_pipe&.puts e.to_json
-  error_pipe&.close
+  Utils.report_forked_child_error(error_pipe, e)
   exit! 1
 end

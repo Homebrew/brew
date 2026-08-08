@@ -22,8 +22,6 @@ module Cachable
   end
 
   module Inherited
-    private
-
     def inherited(klass)
       # A class might inherit Cachable at the instance level
       # and in that case we just want to skip registering it.

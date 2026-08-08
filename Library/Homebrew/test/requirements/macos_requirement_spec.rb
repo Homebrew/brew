@@ -11,18 +11,30 @@ RSpec.describe MacOSRequirement do
   let(:tahoe_major) { MacOSVersion.new("26.0") }
 
   describe "#satisfied?" do
-    it "returns true on macOS" do
-      expect(requirement.satisfied?).to eq OS.mac?
+    context "when running on macOS", :needs_macos do
+      it "returns true" do
+        expect(requirement.satisfied?).to be true
+      end
+
+      it "supports version symbols" do
+        requirement = described_class.new([MacOS.version.to_sym])
+        expect(requirement).to be_satisfied
+      end
+
+      it "supports maximum versions" do
+        requirement = described_class.new([:catalina], comparator: "<=")
+        expect(requirement.satisfied?).to eq MacOS.version <= :catalina
+      end
     end
 
-    it "supports version symbols", :needs_macos do
-      requirement = described_class.new([MacOS.version.to_sym])
-      expect(requirement).to be_satisfied
-    end
-
-    it "supports maximum versions", :needs_macos do
-      requirement = described_class.new([:catalina], comparator: "<=")
-      expect(requirement.satisfied?).to eq MacOS.version <= :catalina
+    context "when running on Linux", :needs_linux do
+      it "returns false" do
+        expect(requirement.satisfied?).to be false
+        requirement = described_class.new([macos_newest_allowed.to_sym])
+        expect(requirement.satisfied?).to be false
+        requirement = described_class.new([macos_newest_allowed.to_sym], comparator: "<=")
+        expect(requirement.satisfied?).to be false
+      end
     end
   end
 
@@ -65,17 +77,32 @@ RSpec.describe MacOSRequirement do
     expect(range_requirement.allows?(tahoe_major)).to be true
   end
 
-  specify "#message reflects the dependent type" do
-    min_requirement = described_class.new([:tahoe], comparator: ">=")
-    max_requirement = described_class.new([:monterey], comparator: "<=")
-    no_requirement = described_class.new
-    expect(min_requirement.message)
-      .to eq "This formula does not run on macOS versions older than Tahoe."
-    expect(min_requirement.message(type: :cask))
-      .to eq "This cask does not run on macOS versions older than Tahoe."
-    expect(max_requirement.message(type: :cask))
-      .to eq "This cask does not run on macOS versions newer than Monterey."
-    expect(no_requirement.message).to eq "This formula requires macOS."
-    expect(no_requirement.message(type: :cask)).to eq "This cask requires macOS."
+  describe "#message" do
+    let(:min_requirement) { described_class.new([:tahoe], comparator: ">=") }
+    let(:max_requirement) { described_class.new([:monterey], comparator: "<=") }
+    let(:no_requirement) { described_class.new }
+
+    context "when running on macOS", :needs_macos do
+      it "reflects the dependent type" do
+        expect(min_requirement.message)
+          .to eq "This formula does not run on macOS versions older than Tahoe."
+        expect(min_requirement.message(type: :cask))
+          .to eq "This cask does not run on macOS versions older than Tahoe."
+        expect(max_requirement.message(type: :cask))
+          .to eq "This cask does not run on macOS versions newer than Monterey."
+        expect(no_requirement.message).to eq "This formula requires macOS."
+        expect(no_requirement.message(type: :cask)).to eq "This cask requires macOS."
+      end
+    end
+
+    context "when running on Linux", :needs_linux do
+      it "always outputs incompatible OS" do
+        expect(min_requirement.message).to eq "This formula requires macOS."
+        expect(min_requirement.message(type: :cask)).to eq "This cask requires macOS."
+        expect(max_requirement.message(type: :cask)).to eq "This cask requires macOS."
+        expect(no_requirement.message).to eq "This formula requires macOS."
+        expect(no_requirement.message(type: :cask)).to eq "This cask requires macOS."
+      end
+    end
   end
 end

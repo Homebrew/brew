@@ -12,10 +12,8 @@ require_relative "global"
 require "build_options"
 require "keg"
 require "extend/ENV"
-require "fcntl"
-require "utils/socket"
 require "cmd/install"
-require "json/add/exception"
+require "utils/fork"
 require "utils/output"
 require "extend/pathname/write_mkpath_extension"
 
@@ -264,8 +262,7 @@ begin
   args = Homebrew::Cmd::InstallCmd.new.args
   Context.current = args.context
 
-  error_pipe = Utils::UNIXSocketExt.open(ENV.fetch("HOMEBREW_ERROR_PIPE"), &:recv_io)
-  error_pipe.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+  error_pipe = Utils.forked_child_error_pipe
 
   trap("INT", old_trap)
 
@@ -283,32 +280,6 @@ begin
 # Any exception means the build did not complete.
 # The `case` for what to do per-exception class is further down.
 rescue Exception => e # rubocop:disable Lint/RescueException
-  error_hash = JSON.parse e.to_json
-
-  # Special case: need to recreate BuildErrors in full
-  # for proper analytics reporting and error messages.
-  # BuildErrors are specific to build processes and not other
-  # children, which is why we create the necessary state here
-  # and not in Utils.safe_fork.
-  case e
-  when BuildError
-    error_hash["cmd"] = e.cmd
-    error_hash["args"] = e.args
-    error_hash["env"] = e.env
-  when ErrorDuringExecution
-    error_hash["cmd"] = e.cmd
-    error_hash["status"] = if e.status.is_a?(Process::Status)
-      {
-        exitstatus: e.exitstatus,
-        termsig:    e.termsig,
-      }
-    else
-      e.status
-    end
-    error_hash["output"] = e.output
-  end
-
-  error_pipe&.puts error_hash.to_json
-  error_pipe&.close
+  Utils.report_forked_child_error(error_pipe, e)
   exit! 1
 end

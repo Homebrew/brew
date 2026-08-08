@@ -201,7 +201,7 @@ module Homebrew
         return component unless component.include?("%")
 
         component.b.gsub(/%[0-9A-Fa-f]{2}/) { |m| Integer(m[1, 2], 16).chr }
-                   .force_encoding(component.encoding)
+                 .force_encoding(component.encoding)
       end
 
       sig { params(basename: String, name: String).returns(T.nilable(String)) }

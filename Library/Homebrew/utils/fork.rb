@@ -5,6 +5,44 @@ require "fcntl"
 require "utils/socket"
 
 module Utils
+  sig { returns(IO) }
+  def self.forked_child_error_pipe
+    UNIXSocketExt.open(ENV.fetch("HOMEBREW_ERROR_PIPE"), &:recv_io).tap do |error_pipe|
+      error_pipe.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+    end
+  end
+
+  sig { params(error: Exception).returns(T::Hash[String, T.untyped]) }
+  def self.child_error_hash(error)
+    require "json/add/exception"
+
+    error_hash = T.cast(JSON.parse(error.to_json), T::Hash[String, T.untyped])
+    case error
+    when BuildError
+      error_hash["cmd"] = error.cmd
+      error_hash["args"] = error.args
+      error_hash["env"] = error.env
+    when ErrorDuringExecution
+      error_hash["cmd"] = error.cmd
+      error_hash["status"] = if error.status.is_a?(Process::Status)
+        {
+          exitstatus: error.exitstatus,
+          termsig:    error.termsig,
+        }
+      else
+        error.status
+      end
+      error_hash["output"] = error.output
+    end
+    error_hash
+  end
+
+  sig { params(error_pipe: T.nilable(IO), error: Exception).void }
+  def self.report_forked_child_error(error_pipe, error)
+    error_pipe&.puts child_error_hash(error).to_json
+    error_pipe&.close
+  end
+
   sig { params(child_error: T::Hash[String, T.untyped]).returns(Exception) }
   def self.rewrite_child_error(child_error)
     # The error class name comes from the forked child's serialised JSON.
@@ -42,8 +80,6 @@ module Utils
            _blk: T.proc.params(arg0: T.nilable(String)).void).void
   }
   def self.safe_fork(directory: nil, yield_parent: false, &_blk)
-    require "json/add/exception"
-
     block = proc do |tmpdir|
       UNIXServerExt.open("#{tmpdir}/socket") do |server|
         read, write = IO.pipe
@@ -62,26 +98,7 @@ module Utils
           yield(error_pipe)
         # This could be any type of exception, so rescue them all.
         rescue Exception => e # rubocop:disable Lint/RescueException
-          error_hash = JSON.parse e.to_json
-
-          # Special case: We need to recreate ErrorDuringExecutions
-          # for proper error messages and because other code expects
-          # to rescue them further down.
-          if e.is_a?(ErrorDuringExecution)
-            error_hash["cmd"] = e.cmd
-            error_hash["status"] = if e.status.is_a?(Process::Status)
-              {
-                exitstatus: e.exitstatus,
-                termsig:    e.termsig,
-              }
-            else
-              e.status
-            end
-            error_hash["output"] = e.output
-          end
-
-          write.puts error_hash.to_json
-          write.close
+          report_forked_child_error(write, e)
 
           exit!
         else

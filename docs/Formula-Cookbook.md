@@ -1137,7 +1137,7 @@ Content, replacements, command arguments and command environments may use a fixe
 
 #### Command and lifecycle steps
 
-`run` executes one command with a literal argument array; it does not evaluate a shell command string. Select the executable with `base:`, such as `:bin`, `:libexec` or `:homebrew_prefix`, or pass an absolute system executable. The step also supports a literal `env:`, `stdin_path:`, `stdout_path:`, `chdir:` and `sudo:`. Standard output is hidden by default and standard error is printed, matching `SystemCommand`; use `print_stdout: true` or `print_stderr: false` to change that behaviour.
+`run` executes one command with a literal argument array; it does not evaluate a shell command string. Select the executable with `base:`, such as `:bin`, `:libexec` or `:homebrew_prefix`, or pass an absolute system executable. The step also supports a literal `env:`, `stdin_path:`, `stdout_path:`, `chdir:` and `sudo:`. Standard output is hidden by default and standard error is printed, matching `SystemCommand`; use `print_stdout: true` or `print_stderr: false` to change that behaviour. Like all formula post-install steps, the command runs inside the formula post-install sandbox.
 
 ```ruby
 run "foo-helper", args: ["--prefix", "{{HOMEBREW_PREFIX}}"], base: :libexec
@@ -1152,7 +1152,7 @@ end
 
 #### Repeated formula actions
 
-Use the named actions below for formula families that share post-install algorithms. Unique complex logic should be installed as a packaged helper and invoked with `run` instead of adding a formula-specific action.
+Use the named actions below for formula families that share post-install algorithms. Unique complex logic should be installed as a packaged helper and invoked with `run` instead of adding a formula-specific action. Any static formula inputs needed by a named action must be installed into the bottle rather than fetched from formula resources after pouring.
 
 * `configure_gcc_runtime`: generate the Linux GCC runtime links and specs.
 * `install_gzipped_executable`: unpack and install a gzipped executable.

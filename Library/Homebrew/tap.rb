@@ -722,9 +722,26 @@ class Tap
       if worktree_source_tap_path
         # Keep core and cask taps connected to the same local source checkout as brew.
         # Disable Git hooks as in `git_command!`.
+        require "system_command"
+        worktree_head = "HEAD"
+        if SystemCommand.run(
+          "git",
+          args:         ["-c", "core.hooksPath=#{File::NULL}", "-C", worktree_source_tap_path, "fetch",
+                         *(quiet ? ["--quiet"] : []), "origin", "HEAD"],
+          env:          { "GIT_TERMINAL_PROMPT" => "0" },
+          print_stderr: false,
+        ).success?
+          result = SystemCommand.run(
+            "git", args:         ["-C", worktree_source_tap_path, "rev-parse", "--verify", "FETCH_HEAD^{commit}"],
+                   print_stderr: false
+          )
+          if result.success? && (fetched_head = result.stdout.chomp.presence)
+            worktree_head = fetched_head
+          end
+        end
         worktree_args = ["-c", "core.hooksPath=#{File::NULL}", "-C", worktree_source_tap_path, "worktree", "add"]
         worktree_args << "--quiet" if quiet
-        worktree_args += ["--detach", path, "HEAD"]
+        worktree_args += ["--detach", path, worktree_head]
         safe_system "git", *worktree_args
       else
         result = git_command!(args)

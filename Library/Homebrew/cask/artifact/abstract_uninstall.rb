@@ -137,7 +137,7 @@ module Cask
             next
           end
 
-          if resolved_path.each_filename.any? { |part| [".", ".."].include?(part) }
+          if resolved_path.each_filename.to_a.intersect?([".", ".."])
             opoo "Skipping #{Formatter.identifier(action)} for path with relative segments '#{path}'."
             next
           end

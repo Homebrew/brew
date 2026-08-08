@@ -100,7 +100,7 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
           write_file "foo.conf", "key = value\n"
           set_permissions "Foo.app", "0755"
           set_ownership "Foo.app", user: "root", group: "wheel"
-          run "foo", args: ["--repair"]
+          run "foo", args: ["--repair"], writable_paths: ["Library/Application Support/Foo"], writable_base: :home
           terminate_process "foo", attempts: 3
           change_dylib_id "Foo.app/Contents/Frameworks/libfoo.dylib", "@rpath/libfoo.dylib"
           delete_keychain_certificates "Charles"

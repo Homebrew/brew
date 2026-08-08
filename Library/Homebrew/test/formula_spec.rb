@@ -1160,6 +1160,7 @@ RSpec.describe Formula do
 
     allow(Tab).to receive(:for_formula).with(f).and_return(f.build)
     allow(f).to receive(:post_install) { env = ENV.to_hash }
+    expect(Dir).to receive(:mktmpdir).with("#{f.name}-postinstall-", HOMEBREW_TEMP).and_call_original
 
     f.run_post_install
 

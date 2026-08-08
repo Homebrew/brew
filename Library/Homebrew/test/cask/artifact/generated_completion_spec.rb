@@ -16,8 +16,12 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
   let(:bash_dir) { cask.config.bash_completion }
   let(:zsh_dir) { cask.config.zsh_completion }
   let(:fish_dir) { cask.config.fish_completion }
+  let(:run_sandboxed_payload) do
+    proc { |args| Utils.safe_fork { exec(*args.map(&:to_s)) } }
+  end
 
   before do
+    allow(Sandbox).to receive(:with_preserved_brew_file).and_yield
     allow(cask).to receive(:staged_path).and_return(staged_path)
     (staged_path/"bin").mkpath
     (staged_path/"bin/foo").write("#!/bin/sh\necho \"$SHELL completion\"")
@@ -36,11 +40,10 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       allow(Sandbox).to receive(:new) do
         instance_double(Sandbox).tap do |sandbox|
           allow(sandbox).to receive(:allow_read)
-          allow(sandbox).to receive(:allow_write_temp_and_cache)
-          allow(sandbox).to receive(:deny_read_home)
-          allow(sandbox).to receive(:deny_all_network)
+          allow(sandbox).to receive(:add_install_hook_rules)
+          allow(sandbox).to receive(:allow_write_path)
           allow(sandbox).to receive(:run) do |*args|
-            Pathname(args.fetch(7)).write("#{args.grep(/^SHELL=/).first.delete_prefix("SHELL=")} completion output")
+            run_sandboxed_payload.call(args)
           end
         end
       end
@@ -48,11 +51,11 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       artifact.install_phase
 
       expect(bash_dir/"foo").to be_a_file
-      expect((bash_dir/"foo").read).to eq("bash completion output")
+      expect((bash_dir/"foo").read).to eq("bash completion\n")
       expect(zsh_dir/"_foo").to be_a_file
-      expect((zsh_dir/"_foo").read).to eq("zsh completion output")
+      expect((zsh_dir/"_foo").read).to eq("zsh completion\n")
       expect(fish_dir/"foo.fish").to be_a_file
-      expect((fish_dir/"foo.fish").read).to eq("fish completion output")
+      expect((fish_dir/"foo.fish").read).to eq("fish completion\n")
     end
 
     it "sandboxes completion generation without network access" do
@@ -64,14 +67,16 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
         instance_double(Sandbox).tap do |sandbox|
+          allow(sandbox).to receive(:allow_read)
           expect(sandbox).to receive(:allow_read).with(path: staged_path, type: :subpath)
-          expect(sandbox).to receive(:allow_write_temp_and_cache)
-          expect(sandbox).to receive(:deny_read_home)
-          expect(sandbox).to receive(:deny_all_network) { calls << :deny_all_network }
+          expect(sandbox).to receive(:add_install_hook_rules).with(network_access_allowed: false) do
+            calls << :add_install_hook_rules
+          end
+          allow(sandbox).to receive(:allow_write_path)
           allow(sandbox).to receive(:run) do |*args|
             calls << :run
             homes << Pathname(args.grep(/^HOME=/).first.delete_prefix("HOME="))
-            Pathname(args.fetch(7)).write("completion")
+            run_sandboxed_payload.call(args)
           end
           sandboxes << sandbox
         end
@@ -79,27 +84,29 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
       artifact.install_phase
 
-      expect(sandboxes.length).to eq(3)
-      expect(calls).to eq([:deny_all_network, :run, :deny_all_network, :run, :deny_all_network, :run])
-      expect(homes.uniq.length).to eq(3)
+      expect(sandboxes.length).to eq(1)
+      expect(calls).to eq([:add_install_hook_rules, :run])
+      expect(homes.uniq.length).to eq(1)
       expect(homes).to all(satisfy { |home| !home.exist? })
     end
 
     context "when generation fails for one shell" do
       it "warns and continues generating other shells" do
         artifact = cask.artifacts.grep(described_class).first
+        (staged_path/"bin/foo").write <<~SH
+          #!/bin/sh
+          [ "$SHELL" = bash ] && exit 1
+          echo "$SHELL completion"
+        SH
 
         allow(Sandbox).to receive(:available?).and_return(true)
         allow(Sandbox).to receive(:new) do
           instance_double(Sandbox).tap do |sandbox|
             allow(sandbox).to receive(:allow_read)
-            allow(sandbox).to receive(:allow_write_temp_and_cache)
-            allow(sandbox).to receive(:deny_read_home)
-            allow(sandbox).to receive(:deny_all_network)
+            allow(sandbox).to receive(:add_install_hook_rules)
+            allow(sandbox).to receive(:allow_write_path)
             allow(sandbox).to receive(:run) do |*args|
-              raise "boom" if args.include?("SHELL=bash")
-
-              Pathname(args.fetch(7)).write("zsh completion")
+              run_sandboxed_payload.call(args)
             end
           end
         end
@@ -144,26 +151,24 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
     it "generates only for the specified shell with the correct format" do
       artifact = cask.artifacts.grep(described_class).first
-      captured_args = T.let([], T::Array[String])
+      captured_payload = T.let({}, T::Hash[String, T.untyped])
 
       allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
         instance_double(Sandbox).tap do |sandbox|
           allow(sandbox).to receive(:allow_read)
-          allow(sandbox).to receive(:allow_write_temp_and_cache)
-          allow(sandbox).to receive(:deny_read_home)
-          allow(sandbox).to receive(:deny_all_network)
+          allow(sandbox).to receive(:add_install_hook_rules)
+          allow(sandbox).to receive(:allow_write_path)
           allow(sandbox).to receive(:run) do |*args|
-            captured_args = args.map(&:to_s)
-            Pathname(args.fetch(7)).write("zsh completion")
+            captured_payload = JSON.parse(Pathname(args.last).read)
+            run_sandboxed_payload.call(args)
           end
         end
       end
 
       artifact.install_phase
 
-      expect(captured_args).to include("--shell=zsh")
-      expect(captured_args.fetch(5)).to end_with(" 2>/dev/null")
+      expect(captured_payload.fetch("completions").fetch(0).fetch("shell_parameter")).to eq("--shell=zsh")
       expect(zsh_dir/"_bar").to be_a_file
       expect(bash_dir/"bar").not_to exist
       expect(fish_dir/"bar.fish").not_to exist

@@ -44,8 +44,7 @@ module Homebrew
         titleized_repository = tap.repository.dup
         titleized_user[0] = T.must(titleized_user[0]).upcase
         titleized_repository[0] = T.must(titleized_repository[0]).upcase
-        # Duplicate assignment to silence `assigned but unused variable` warning
-        root_url = root_url = GitHubPackages.root_url(tap.user, "homebrew-#{tap.repository}") if args.github_packages?
+        root_url = GitHubPackages.root_url(tap.user, "homebrew-#{tap.repository}") if args.github_packages?
 
         (tap.path/"Formula").mkpath
 

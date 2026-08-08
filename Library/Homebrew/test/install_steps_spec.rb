@@ -2,7 +2,9 @@
 # frozen_string_literal: true
 
 require "install_steps"
+require "api/formula_struct"
 require "cask/quarantine"
+require "formulary"
 require "macho"
 
 RSpec.describe Homebrew::InstallSteps do
@@ -30,6 +32,34 @@ RSpec.describe Homebrew::InstallSteps do
     with_env(HOMEBREW_GITHUB_ACTIONS: nil) do
       example.run
     end
+  end
+
+  def api_formula(name, version)
+    formula_struct = Homebrew::API::FormulaStruct.from_hash({
+      "desc"                 => "API formula",
+      "homepage"             => "https://example.com",
+      "license"              => "MIT",
+      "ruby_source_checksum" => "checksum",
+      "stable_present"       => true,
+      "stable_url_args"      => ["https://example.com/#{name}-#{version}.tar.gz", {}],
+      "stable_version"       => version,
+    })
+    api_source = formula_struct.serialize
+    formula_class = Formulary.load_formula_from_struct!(
+      name,
+      Homebrew::API::FormulaStruct.deserialize(api_source),
+      api_source:,
+      tap_git_head: "",
+      flags:        [],
+      internal_api: true,
+    )
+    formula_class.new(name, root/"#{name}.rb", :stable)
+  end
+
+  def create_executable(path)
+    path.dirname.mkpath
+    path.write ""
+    path.chmod 0755
   end
 
   specify "changes the resolved dylib ID and restores its mode" do
@@ -67,6 +97,32 @@ RSpec.describe Homebrew::InstallSteps do
     expect(root/"stage/move-target").to exist
     expect(root/"stage/linked-target").to be_a_symlink
     expect((root/"stage/linked-target").readlink).to eq(Pathname("move-target"))
+  end
+
+  specify "allows directory creation through parent sandbox paths" do
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :prefix) do
+      mkdir "one"
+      mkdir_p "two/three"
+    end
+
+    paths = Homebrew::InstallSteps::Runner.new(context:).sandbox_write_paths(steps)
+
+    expect(paths).to contain_exactly(root/"prefix", root/"prefix/two")
+  end
+
+  specify "resolves formula configuration paths without loading formula source" do
+    stub_const("HOMEBREW_PREFIX", root/"homebrew")
+    source = HOMEBREW_PREFIX/"etc/test-source/cert.pem"
+    source.dirname.mkpath
+    source.write "certificate"
+    steps = Homebrew::InstallSteps::DSL.build(default_target_base: :prefix) do
+      symlink "cert.pem", "cert.pem", source_base:    :formula_pkgetc,
+                                      source_formula: "example/tap/test-source"
+    end
+
+    Homebrew::InstallSteps::Runner.new(context:).run(steps)
+
+    expect(root/"prefix/cert.pem").to be_a_symlink
   end
 
   specify "changes an explicit Mach-O dylib ID" do
@@ -323,7 +379,7 @@ RSpec.describe Homebrew::InstallSteps do
     end
 
     expect(steps).to all(satisfy do |step|
-      (step.keys & %w[attempts force group match overwrite uninstall]).empty?
+      !step.keys.intersect?(%w[attempts force group match overwrite uninstall])
     end)
   end
 
@@ -603,11 +659,16 @@ RSpec.describe Homebrew::InstallSteps do
 
   specify "serialises command environments as JSON objects" do
     steps = Homebrew::InstallSteps::DSL.build do
-      run "helper", env: { "EXAMPLE" => "{{formula_name}}" }
+      run "helper", env: { "EXAMPLE" => "{{formula_name}}" },
+                    writable_paths: ["Library/Application Support/Example"], writable_base: :home
     end
 
     expect(steps).to include(a_hash_including(
-                               "type" => "run", "env" => { "EXAMPLE" => "{{formula_name}}" },
+                               "type"           => "run",
+                               "env"            => { "EXAMPLE" => "{{formula_name}}" },
+                               "writable_paths" => [
+                                 { "base" => "home", "path" => "Library/Application Support/Example" },
+                               ],
                              ))
   end
 
@@ -831,6 +892,16 @@ RSpec.describe Homebrew::InstallSteps do
   end
 
   specify "runs named desktop and cache rebuild actions" do
+    stub_const("HOMEBREW_PREFIX", root/"homebrew")
+    %w[
+      opt/glib/bin/glib-compile-schemas
+      opt/glib/bin/gio-querymodules
+      opt/gdk-pixbuf/bin/gdk-pixbuf-query-loaders
+      opt/shared-mime-info/bin/update-mime-database
+      opt/desktop-file-utils/bin/update-desktop-database
+    ].each do |path|
+      create_executable HOMEBREW_PREFIX/path
+    end
     steps = Homebrew::InstallSteps::DSL.build do
       compile_gsettings_schemas
       gio_querymodules
@@ -839,24 +910,30 @@ RSpec.describe Homebrew::InstallSteps do
       update_desktop_database
     end
 
-    formula = instance_double(Formula, opt_bin: root/"opt/bin")
-    allow(Formula).to receive(:[]).with("glib").and_return(formula)
-    allow(Formula).to receive(:[]).with("gdk-pixbuf").and_return(formula)
-    allow(Formula).to receive(:[]).with("shared-mime-info").and_return(formula)
-    allow(Formula).to receive(:[]).with("desktop-file-utils").and_return(formula)
-
     runner = Homebrew::InstallSteps::Runner.new(context:)
-    expect(runner).to receive(:run_command).with(root/"opt/bin/glib-compile-schemas",
+    expect(runner).to receive(:run_command).with(root/"homebrew/opt/glib/bin/glib-compile-schemas",
                                                  HOMEBREW_PREFIX/"share/glib-2.0/schemas").ordered
-    expect(runner).to receive(:run_command).with(root/"opt/bin/gio-querymodules",
+    expect(runner).to receive(:run_command).with(root/"homebrew/opt/glib/bin/gio-querymodules",
                                                  HOMEBREW_PREFIX/"lib/gio/modules").ordered
-    expect(runner).to receive(:run_command).with(root/"opt/bin/gdk-pixbuf-query-loaders", "--update-cache").ordered
-    expect(runner).to receive(:run_command).with(root/"opt/bin/update-mime-database",
+    expect(runner).to receive(:run_command)
+      .with(root/"homebrew/opt/gdk-pixbuf/bin/gdk-pixbuf-query-loaders", "--update-cache").ordered
+    expect(runner).to receive(:run_command).with(root/"homebrew/opt/shared-mime-info/bin/update-mime-database",
                                                  HOMEBREW_PREFIX/"share/mime").ordered
-    expect(runner).to receive(:run_command).with(root/"opt/bin/update-desktop-database",
-                                                 HOMEBREW_PREFIX/"share/applications").ordered
+    expect(runner).to receive(:run_command)
+      .with(root/"homebrew/opt/desktop-file-utils/bin/update-desktop-database",
+            HOMEBREW_PREFIX/"share/applications").ordered
 
     runner.run(steps)
+  end
+
+  specify "reports missing formula helper executables" do
+    stub_const("HOMEBREW_PREFIX", root/"homebrew")
+    steps = Homebrew::InstallSteps::DSL.build do
+      compile_gsettings_schemas
+    end
+
+    expect { Homebrew::InstallSteps::Runner.new(context:).run(steps) }
+      .to raise_error(ArgumentError, %r{glib is missing required executable: .*/opt/glib/bin/glib-compile-schemas})
   end
 
   specify "dispatches GCC runtime configuration" do
@@ -1141,19 +1218,21 @@ RSpec.describe Homebrew::InstallSteps do
   end
 
   specify "bootstraps CPython 3.9 configuration", :aggregate_failures do
-    python = formula do
-      T.bind(self, T.class_of(Formula))
-      url "foo-3.9.1"
-    end
+    python = api_formula("python@3.9", "3.9.1")
     allow(python).to receive(:prefix).and_return(root/"prefix")
     stub_const("HOMEBREW_PREFIX", root/"homebrew")
     allow(Homebrew::SimulateSystem).to receive(:simulating_or_running_on_macos?).and_return(false)
     site_packages = root/"homebrew/lib/python3.9/site-packages"
-    resources = %w[setuptools pip wheel].to_h do |name|
-      [name, instance_double(Resource, version: Version.new("1.0"))]
-    end
-    allow(python).to receive(:resource) { |name| resources[name] }
     site_packages_cellar = root/"prefix/lib/python3.9/site-packages"
+    bundled = root/"prefix/lib/python3.9/ensurepip/_bundled"
+    bundled.mkpath
+    setuptools_wheel = bundled/"setuptools-1.0-py3-none-any.whl"
+    pip_wheel = bundled/"pip-1.0-py3-none-any.whl"
+    wheel = root/"prefix/libexec/wheel-1.0-py3-none-any.whl"
+    [setuptools_wheel, pip_wheel, wheel].each do |path|
+      path.dirname.mkpath
+      path.write "wheel"
+    end
     (site_packages_cellar/"old.pth").tap do |path|
       path.dirname.mkpath
       path.write "old"
@@ -1165,9 +1244,11 @@ RSpec.describe Homebrew::InstallSteps do
     (root/"prefix/lib/python3.9/distutils").mkpath
     (root/"homebrew/bin").mkpath
     runner = Homebrew::InstallSteps::Runner.new(context: python)
+    pip_install_args = []
     allow(runner).to receive(:run_command) do |*args|
       next unless args.include?("--target=#{site_packages}")
 
+      pip_install_args.concat(args)
       framework_compat = site_packages/"setuptools/_distutils/command/_framework_compat.py"
       framework_compat.dirname.mkpath
       framework_compat.write "    homebrew_prefix = None\n"
@@ -1190,33 +1271,45 @@ RSpec.describe Homebrew::InstallSteps do
     INI
     expect((site_packages/"setuptools/_distutils/command/_framework_compat.py").read)
       .to eq("    homebrew_prefix = '#{root}/homebrew'\n")
+    expect(pip_install_args).to include(setuptools_wheel, pip_wheel, wheel)
+    expect(python).to be_loaded_from_api
   end
 
   specify "bootstraps PyPy 3.10 configuration", :aggregate_failures do
-    pypy = formula do
-      T.bind(self, T.class_of(Formula))
-      url "foo-7.3.20"
-    end
+    require "rubygems/package"
+    require "zlib"
+
+    pypy = api_formula("pypy3.10", "7.3.20")
     allow(pypy).to receive_messages(
       prefix:   root/"prefix",
       libexec:  root/"prefix/libexec",
       pkgshare: root/"prefix/share/pypy3",
     )
     stub_const("HOMEBREW_PREFIX", root/"homebrew")
-    resources = %w[setuptools pip].to_h do |name|
-      resource = instance_double(Resource)
-      allow(resource).to receive(:stage).and_yield
-      [name, resource]
+    post_install_resources = root/"prefix/libexec/post-install-resources"
+    %w[setuptools pip].each do |package|
+      archive = post_install_resources/"#{package}.tar.gz"
+      archive.dirname.mkpath
+      Zlib::GzipWriter.open(archive.to_s) do |gzip|
+        Gem::Package::TarWriter.new(gzip) do |tar|
+          contents = package
+          tar.mkdir "#{package}-1.0", 0755
+          tar.add_file_simple "#{package}-1.0/setup.py", 0644, contents.bytesize do |file|
+            file.write contents
+          end
+        end
+      end
     end
-    allow(pypy).to receive(:resource) { |name| resources[name] }
-    allow(Formula).to receive(:[]).with("pypy3").and_return(instance_double(Formula))
     scripts_folder = root/"homebrew/share/pypy3.10"
     scripts_folder.mkpath
     (scripts_folder/"pip3.10").write "pip"
     (root/"prefix/libexec/lib/pypy3.10/distutils").mkpath
     command = class_double(SystemCommand, run: nil)
     runner = Homebrew::InstallSteps::Runner.new(context: pypy, command:)
-    allow(runner).to receive(:run_command)
+    installed_packages = []
+    allow(runner).to receive(:run_command) do |_, *args|
+      installed_packages << (Pathname.pwd/"setup.py").read if args.include?("setup.py")
+    end
     steps = Homebrew::InstallSteps::DSL.build do
       bootstrap_pypy abi_version: "3.10"
     end
@@ -1234,6 +1327,8 @@ RSpec.describe Homebrew::InstallSteps do
     INI
     expect(root/"prefix/bin/pip_pypy3.10").to be_a_symlink
     expect(root/"homebrew/bin/pip_pypy3.10").to be_a_symlink
+    expect(installed_packages).to contain_exactly("setuptools", "pip")
+    expect(pypy).to be_loaded_from_api
   end
 
   specify "makes CPython venv activation script templates writable", :aggregate_failures do
@@ -1252,7 +1347,6 @@ RSpec.describe Homebrew::InstallSteps do
   end
 
   describe "runs update_gtk_icon_cache rebuild action" do
-    let(:formula) { instance_double(Formula, opt_bin: root/"opt/bin") }
     let(:steps) do
       Homebrew::InstallSteps::DSL.build do
         update_gtk_icon_cache
@@ -1260,20 +1354,24 @@ RSpec.describe Homebrew::InstallSteps do
     end
 
     it "with gtk4" do
-      allow(Formula).to receive(:[]).with("gtk4").and_return(formula)
+      stub_const("HOMEBREW_PREFIX", root/"homebrew")
+      create_executable HOMEBREW_PREFIX/"opt/gtk4/bin/gtk4-update-icon-cache"
       allow(Utils::Path).to receive(:formula_any_version_installed?).with("gtk4").and_return(true)
       runner = Homebrew::InstallSteps::Runner.new(context:)
-      expect(runner).to receive(:run_command).with(root/"opt/bin/gtk4-update-icon-cache", "-q", "-t", "-f",
-                                                   HOMEBREW_PREFIX/"share/icons/hicolor").ordered
+      expect(runner).to receive(:run_command)
+        .with(root/"homebrew/opt/gtk4/bin/gtk4-update-icon-cache", "-q", "-t", "-f",
+              HOMEBREW_PREFIX/"share/icons/hicolor").ordered
       runner.run(steps)
     end
 
     it "with gtk+3" do
-      allow(Formula).to receive(:[]).with("gtk+3").and_return(formula)
+      stub_const("HOMEBREW_PREFIX", root/"homebrew")
+      create_executable HOMEBREW_PREFIX/"opt/gtk+3/bin/gtk3-update-icon-cache"
       allow(Utils::Path).to receive(:formula_any_version_installed?).with("gtk4").and_return(false)
       runner = Homebrew::InstallSteps::Runner.new(context:)
-      expect(runner).to receive(:run_command).with(root/"opt/bin/gtk3-update-icon-cache", "-q", "-t", "-f",
-                                                   HOMEBREW_PREFIX/"share/icons/hicolor").ordered
+      expect(runner).to receive(:run_command)
+        .with(root/"homebrew/opt/gtk+3/bin/gtk3-update-icon-cache", "-q", "-t", "-f",
+              HOMEBREW_PREFIX/"share/icons/hicolor").ordered
       runner.run(steps)
     end
   end

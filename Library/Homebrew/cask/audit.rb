@@ -89,12 +89,12 @@ module Cask
       only_audits = @only
       except_audits = @except
 
-      private_methods.map(&:to_s).grep(/^audit_/).each do |audit_method_name|
+      public_methods.map(&:to_s).grep(/^audit_/).each do |audit_method_name|
         name = audit_method_name.delete_prefix("audit_")
         next if !only_audits.empty? && only_audits.exclude?(name)
         next if except_audits.include?(name)
 
-        send(audit_method_name)
+        public_send(audit_method_name)
       end
 
       self
@@ -271,8 +271,6 @@ module Cask
     rescue MacOSVersion::Error
       nil
     end
-
-    private
 
     sig { void }
     def audit_untrusted_pkg
@@ -918,141 +916,6 @@ module Cask
                 "but the cask declared #{min_os_definition}"
     end
 
-    sig { returns(T.nilable(MacOSVersion)) }
-    def cask_sparkle_min_os
-      return unless online?
-      return unless cask.livecheck_defined?
-      return if cask.livecheck.strategy != :sparkle
-
-      # `Sparkle` strategy blocks that use the `items` argument (instead of
-      # `item`) contain arbitrary logic that ignores/overrides the strategy's
-      # sorting, so we can't identify which item would be first/newest here.
-      return if cask.livecheck.strategy_block.present? &&
-                cask.livecheck.strategy_block.parameters[0] == [:opt, :items]
-
-      content = Homebrew::Livecheck::Strategy.page_content(cask.livecheck.url)[:content]
-      return if content.blank?
-
-      begin
-        items = Homebrew::Livecheck::Strategy::Sparkle.sort_items(
-          Homebrew::Livecheck::Strategy::Sparkle.filter_items(
-            Homebrew::Livecheck::Strategy::Sparkle.items_from_content(content),
-          ),
-        )
-      rescue
-        return
-      end
-      return if items.blank?
-
-      normalize_min_os(items[0]&.minimum_system_version)
-    end
-
-    sig { returns(T.nilable(MacOSVersion)) }
-    def cask_bundle_min_os
-      return unless online?
-
-      min_os = T.let(nil, T.untyped)
-      @staged_path ||= T.let(cask.staged_path, T.nilable(Pathname))
-
-      extract_artifacts do |artifacts, tmpdir|
-        artifacts.each do |artifact|
-          next if artifact.is_a?(Artifact::Installer)
-
-          artifact_path = artifact.is_a?(Artifact::Pkg) ? artifact.path : artifact.source
-          path = tmpdir/artifact_path.relative_path_from(cask.staged_path)
-
-          # Handle .pkg artifacts by expanding and checking Distribution file
-          if artifact.is_a?(Artifact::Pkg)
-            pkg_expanded_dir = tmpdir/"pkg-expanded"
-            begin
-              system_command!("pkgutil", args: ["--expand", path.to_s, pkg_expanded_dir.to_s])
-
-              distribution_file = pkg_expanded_dir/"Distribution"
-              if File.exist?(distribution_file)
-                distribution_content = File.read(distribution_file)
-                if (match = distribution_content.match(/<os-version\s+min="(?<version>[^"]+)"/))
-                  min_os = match[:version]
-                  break if min_os
-                end
-              end
-            rescue
-              break
-            end
-          end
-
-          info_plist_paths = Dir.glob("#{path}/**/Contents/Info.plist")
-
-          # Ensure the main `Info.plist` file is checked first, as this can
-          # sometimes use the min_os version from a framework instead
-          if info_plist_paths.delete("#{path}/Contents/Info.plist")
-            info_plist_paths.insert(0, "#{path}/Contents/Info.plist")
-          end
-
-          info_plist_paths.each do |plist_path|
-            next unless File.exist?(plist_path)
-
-            plist = system_command!("plutil", args: ["-convert", "xml1", "-o", "-", plist_path]).plist
-            min_os = plist["LSMinimumSystemVersion"].presence
-            break if min_os
-
-            # Get the app bundle path from the plist path
-            app_bundle_path = Pathname(plist_path).dirname.dirname
-            next unless (main_binary = get_plist_main_binary(app_bundle_path))
-            next if !File.exist?(main_binary) || File.open(main_binary, "rb") { |f| f.read(2) == "#!" }
-
-            require "macho"
-            macho = MachO.open(main_binary)
-            min_os = case macho
-            when MachO::MachOFile
-              [
-                macho[:LC_VERSION_MIN_MACOSX].first&.version_string,
-                macho[:LC_BUILD_VERSION].first&.minos_string,
-              ]
-            when MachO::FatFile
-              # Collect requirements by architecture
-              arch_min_os = { arm: [], intel: [] }
-              macho.machos.each do |slice|
-                macos_reqs = [
-                  slice[:LC_VERSION_MIN_MACOSX].first&.version_string,
-                  slice[:LC_BUILD_VERSION].first&.minos_string,
-                ]
-
-                case slice.cputype
-                when *Hardware::CPU::ARM_ARCHS
-                  arch_min_os[:arm].concat(macos_reqs)
-                when *Hardware::CPU::INTEL_ARCHS
-                  arch_min_os[:intel].concat(macos_reqs)
-                end
-              end
-
-              # Only use the requirements for the current architecture
-              arch_min_os.fetch(Homebrew::SimulateSystem.current_arch, [])
-            end.compact.max
-            break if min_os
-          end
-          break if min_os
-        end
-      end
-
-      normalize_min_os(min_os)
-    end
-
-    sig { params(path: Pathname).returns(T.nilable(String)) }
-    def get_plist_main_binary(path)
-      return unless online?
-
-      plist_path = "#{path}/Contents/Info.plist"
-      return unless File.exist?(plist_path)
-
-      plist = system_command!("plutil", args: ["-convert", "xml1", "-o", "-", plist_path]).plist
-      binary = plist["CFBundleExecutable"].presence
-      return unless binary
-
-      binary_path = "#{path}/Contents/MacOS/#{binary}"
-
-      binary_path if File.exist?(binary_path) && File.executable?(binary_path)
-    end
-
     sig { void }
     def audit_github_prerelease_version
       return if (url = cask.url).nil?
@@ -1308,6 +1171,143 @@ module Cask
     def audit_deprecate_disable
       error = SharedAudits.check_deprecate_disable_reason(cask)
       add_error error if error
+    end
+
+    private
+
+    sig { returns(T.nilable(MacOSVersion)) }
+    def cask_sparkle_min_os
+      return unless online?
+      return unless cask.livecheck_defined?
+      return if cask.livecheck.strategy != :sparkle
+
+      # `Sparkle` strategy blocks that use the `items` argument (instead of
+      # `item`) contain arbitrary logic that ignores/overrides the strategy's
+      # sorting, so we can't identify which item would be first/newest here.
+      return if cask.livecheck.strategy_block.present? &&
+                cask.livecheck.strategy_block.parameters[0] == [:opt, :items]
+
+      content = Homebrew::Livecheck::Strategy.page_content(cask.livecheck.url)[:content]
+      return if content.blank?
+
+      begin
+        items = Homebrew::Livecheck::Strategy::Sparkle.sort_items(
+          Homebrew::Livecheck::Strategy::Sparkle.filter_items(
+            Homebrew::Livecheck::Strategy::Sparkle.items_from_content(content),
+          ),
+        )
+      rescue
+        return
+      end
+      return if items.blank?
+
+      normalize_min_os(items[0]&.minimum_system_version)
+    end
+
+    sig { returns(T.nilable(MacOSVersion)) }
+    def cask_bundle_min_os
+      return unless online?
+
+      min_os = T.let(nil, T.untyped)
+      @staged_path ||= T.let(cask.staged_path, T.nilable(Pathname))
+
+      extract_artifacts do |artifacts, tmpdir|
+        artifacts.each do |artifact|
+          next if artifact.is_a?(Artifact::Installer)
+
+          artifact_path = artifact.is_a?(Artifact::Pkg) ? artifact.path : artifact.source
+          path = tmpdir/artifact_path.relative_path_from(cask.staged_path)
+
+          # Handle .pkg artifacts by expanding and checking Distribution file
+          if artifact.is_a?(Artifact::Pkg)
+            pkg_expanded_dir = tmpdir/"pkg-expanded"
+            begin
+              system_command!("pkgutil", args: ["--expand", path.to_s, pkg_expanded_dir.to_s])
+
+              distribution_file = pkg_expanded_dir/"Distribution"
+              if File.exist?(distribution_file)
+                distribution_content = File.read(distribution_file)
+                if (match = distribution_content.match(/<os-version\s+min="(?<version>[^"]+)"/))
+                  min_os = match[:version]
+                  break if min_os
+                end
+              end
+            rescue
+              break
+            end
+          end
+
+          info_plist_paths = Dir.glob("#{path}/**/Contents/Info.plist")
+
+          # Ensure the main `Info.plist` file is checked first, as this can
+          # sometimes use the min_os version from a framework instead
+          if info_plist_paths.delete("#{path}/Contents/Info.plist")
+            info_plist_paths.insert(0, "#{path}/Contents/Info.plist")
+          end
+
+          info_plist_paths.each do |plist_path|
+            next unless File.exist?(plist_path)
+
+            plist = system_command!("plutil", args: ["-convert", "xml1", "-o", "-", plist_path]).plist
+            min_os = plist["LSMinimumSystemVersion"].presence
+            break if min_os
+
+            # Get the app bundle path from the plist path
+            app_bundle_path = Pathname(plist_path).dirname.dirname
+            next unless (main_binary = get_plist_main_binary(app_bundle_path))
+            next if !File.exist?(main_binary) || File.open(main_binary, "rb") { |f| f.read(2) == "#!" }
+
+            require "macho"
+            macho = MachO.open(main_binary)
+            min_os = case macho
+            when MachO::MachOFile
+              [
+                macho[:LC_VERSION_MIN_MACOSX].first&.version_string,
+                macho[:LC_BUILD_VERSION].first&.minos_string,
+              ]
+            when MachO::FatFile
+              # Collect requirements by architecture
+              arch_min_os = { arm: [], intel: [] }
+              macho.machos.each do |slice|
+                macos_reqs = [
+                  slice[:LC_VERSION_MIN_MACOSX].first&.version_string,
+                  slice[:LC_BUILD_VERSION].first&.minos_string,
+                ]
+
+                case slice.cputype
+                when *Hardware::CPU::ARM_ARCHS
+                  arch_min_os[:arm].concat(macos_reqs)
+                when *Hardware::CPU::INTEL_ARCHS
+                  arch_min_os[:intel].concat(macos_reqs)
+                end
+              end
+
+              # Only use the requirements for the current architecture
+              arch_min_os.fetch(Homebrew::SimulateSystem.current_arch, [])
+            end.compact.max
+            break if min_os
+          end
+          break if min_os
+        end
+      end
+
+      normalize_min_os(min_os)
+    end
+
+    sig { params(path: Pathname).returns(T.nilable(String)) }
+    def get_plist_main_binary(path)
+      return unless online?
+
+      plist_path = "#{path}/Contents/Info.plist"
+      return unless File.exist?(plist_path)
+
+      plist = system_command!("plutil", args: ["-convert", "xml1", "-o", "-", plist_path]).plist
+      binary = plist["CFBundleExecutable"].presence
+      return unless binary
+
+      binary_path = "#{path}/Contents/MacOS/#{binary}"
+
+      binary_path if File.exist?(binary_path) && File.executable?(binary_path)
     end
 
     sig {

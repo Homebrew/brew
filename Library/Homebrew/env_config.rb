@@ -973,7 +973,7 @@ module Homebrew
     end
 
     sig { returns(T::Boolean) }
-    def cask_opts_binaries?
+    def self.cask_opts_binaries?
       cask_opts.reverse_each do |opt|
         return true if opt == "--binaries"
         return false if opt == "--no-binaries"

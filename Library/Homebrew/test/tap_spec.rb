@@ -796,6 +796,61 @@ RSpec.describe Tap do
       end.to raise_error(TapCoreRemoteMismatchError)
     end
 
+    it "creates an official tap worktree from the fetched remote HEAD" do
+      tap = CoreCaskTap.instance
+      source_repository = HOMEBREW_PREFIX.parent/"source-repository"
+      source_tap = source_repository/"Library/Taps/#{tap.full_name.downcase}"
+      remote = HOMEBREW_PREFIX.parent/"tap-remote"
+      publisher = HOMEBREW_PREFIX.parent/"tap-publisher"
+
+      allow(Commands).to receive(:rebuild_commands_completion_list)
+      allow(CacheStoreDatabase).to receive(:use).and_call_original
+      allow(CacheStoreDatabase).to receive(:use).with(:descriptions)
+      allow(CacheStoreDatabase).to receive(:use).with(:cask_descriptions)
+      allow(tap).to receive_messages(command_files: [], formula_files: [], cask_files: [],
+                                     formula_names: [], cask_tokens: [], link_completions_and_manpages: nil)
+
+      FileUtils.rm_rf tap.path
+      remote.mkpath
+      system "git", "-C", remote, "init", "--bare"
+      system "git", "-C", remote, "symbolic-ref", "HEAD", "refs/heads/main"
+      system "git", "clone", remote, publisher
+      (publisher/"README.md").write "source\n"
+      system "git", "-C", publisher, "add", "README.md"
+      system "git", "-C", publisher, "commit", "-m", "source"
+      system "git", "-C", publisher, "push", "origin", "main"
+      source_tap.parent.mkpath
+      system "git", "clone", remote, source_tap
+      (publisher/"README.md").write "remote\n"
+      system "git", "-C", publisher, "commit", "-am", "remote"
+      system "git", "-C", publisher, "push"
+      system "git", "-C", source_tap, "fetch", "origin"
+      (source_tap/"README.md").write "local\n"
+
+      FileUtils.mkdir_p (HOMEBREW_REPOSITORY/".git").dirname
+      (HOMEBREW_REPOSITORY/".git")
+        .write "gitdir: #{source_repository}/.git/worktrees/#{HOMEBREW_REPOSITORY.basename}\n"
+      remote_head = Utils.popen_read("git", "-C", publisher, "rev-parse", "HEAD").chomp
+      source_head = Utils.popen_read("git", "-C", source_tap, "rev-parse", "HEAD").chomp
+      source_branch = Utils.popen_read("git", "-C", source_tap, "branch", "--show-current").chomp
+      source_status = Utils.popen_read("git", "-C", source_tap, "status", "--short")
+
+      tap.install quiet: true
+
+      expect([
+        Utils.popen_read("git", "-C", tap.path, "rev-parse", "HEAD").chomp,
+        Utils.popen_read("git", "-C", source_tap, "rev-parse", "HEAD").chomp,
+        Utils.popen_read("git", "-C", source_tap, "branch", "--show-current").chomp,
+        Utils.popen_read("git", "-C", source_tap, "status", "--short"),
+        (source_tap/"README.md").read,
+      ]).to eq([remote_head, source_head, source_branch, source_status, "local\n"])
+    ensure
+      FileUtils.rm_rf source_repository
+      FileUtils.rm_rf remote
+      FileUtils.rm_rf publisher
+      FileUtils.rm_rf CoreCaskTap.instance.path
+    end
+
     it "creates core and cask taps as worktrees when the brew source repository has them" do
       source_repository = HOMEBREW_PREFIX.parent/"source-repository"
       worktree_git_dir = HOMEBREW_REPOSITORY/".git"
@@ -865,6 +920,12 @@ RSpec.describe Tap do
       allow(Utils).to receive(:popen_read)
         .with("git", "-C", HOMEBREW_REPOSITORY, "worktree", "list", "--porcelain")
         .and_return("worktree #{source_worktree}\n")
+      allow(Utils::Git).to receive(:ensure_installed!)
+      expect(SystemCommand).to receive(:run)
+        .with("git", args: ["-c", "core.hooksPath=#{File::NULL}", "-C", source_tap,
+                            "fetch", "origin", "HEAD"],
+                     env: { "GIT_TERMINAL_PROMPT" => "0" }, print_stderr: false)
+        .and_call_original
       allow(tap).to receive_messages(command_files: [], formula_files: [], cask_files: [],
                                      formula_names: [], cask_tokens: [], link_completions_and_manpages: nil)
       expect(tap).to receive(:safe_system)

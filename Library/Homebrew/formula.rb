@@ -538,8 +538,7 @@ class Formula
     !!head && !stable
   end
 
-  # Stop RuboCop from erroneously indenting hash target
-  delegate [ # rubocop:disable Layout/HashAlignment
+  delegate [
     :bottle_defined?,
     :bottle_tag?,
     :bottled?,
@@ -618,8 +617,7 @@ class Formula
   # @see .version
   delegate version: :active_spec
 
-  # Stop RuboCop from erroneously indenting hash target
-  delegate [ # rubocop:disable Layout/HashAlignment
+  delegate [
     :allow_network_access!,
     :deny_network_access!,
     :network_access_allowed?,
@@ -1631,7 +1629,9 @@ class Formula
         PATH:          PATH.new(ORIGINAL_PATHS),
       }
 
-      Dir.mktmpdir("#{name}-postinstall-") do |home|
+      # Formula post-install creates its isolated HOME inside the child because
+      # the entire `postinstall.rb` process is already sandboxed by its parent.
+      Dir.mktmpdir("#{name}-postinstall-", HOMEBREW_TEMP) do |home|
         postinstall_home = Pathname(home)
         new_env[:HOME] = postinstall_home.to_s
         new_env.merge!(common_sandbox_env(postinstall_home))

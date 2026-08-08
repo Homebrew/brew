@@ -256,16 +256,23 @@ module T::Private::Methods::SignatureValidation
     #
     # An index loop avoids allocating a pair array per positional arg.
     # Iterating to super's length is deliberate: extra override positionals
-    # go unchecked, and when the override has a rest param and fewer named
-    # args than the base, the missing positions are checked as nil name/type.
+    # go unchecked, and when the override folds the remaining base positionals
+    # into a rest param, each is checked against the rest param's type
+    # (validate_override_shape guarantees such a rest param exists here).
     super_arg_types = super_signature.arg_types
     arg_types = signature.arg_types
+    rest_type = signature.rest_type
     index = 0
     while index < super_arg_types.length
       super_type = super_arg_types.fetch(index)[1]
       pair = arg_types[index]
-      name = pair && pair[0]
-      type = pair && pair[1]
+      if pair
+        name = pair[0]
+        type = pair[1]
+      else
+        name = signature.rest_name
+        type = rest_type
+      end
       if !super_type.subtype_of?(type)
         raise "Incompatible type for arg ##{index + 1} (`#{name}`) in signature for #{mode_noun} of method " \
               "`#{signature.method_name}`:\n" \

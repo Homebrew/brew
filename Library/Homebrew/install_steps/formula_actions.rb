@@ -198,9 +198,6 @@ module Homebrew
 
       sig { void }
       def run_bootstrap_cpython
-        formula = @context
-        raise ArgumentError, "CPython bootstrap requires a formula" unless formula.is_a?(Formula)
-
         ENV.delete("PYTHONPATH")
         version_major_minor = context_version_major_minor
         raise ArgumentError, "CPython bootstrap requires a version" if version_major_minor.nil?
@@ -223,16 +220,19 @@ module Homebrew
         python = context_path("bin")/"python#{version_major_minor}"
         run_command python, "-Im", "ensurepip"
         bundled = lib_cellar/"ensurepip/_bundled"
-        setuptools = formula.resource("setuptools")
-        pip = formula.resource("pip")
-        wheel = formula.resource("wheel")
-        raise ArgumentError, "CPython bootstrap resources are missing" if setuptools.nil? || pip.nil? || wheel.nil?
+        wheels = [
+          bundled/"setuptools-*-py3-none-any.whl",
+          bundled/"pip-*-py3-none-any.whl",
+          context_path("libexec")/"wheel-*-py3-none-any.whl",
+        ].map do |pattern|
+          matches = Pathname.glob(pattern)
+          raise ArgumentError, "CPython bootstrap wheel must match exactly one path: #{pattern}" unless matches.one?
+
+          matches.fetch(0)
+        end
 
         run_command python, "-Im", "pip", "install", "-v", "--no-deps", "--no-index", "--upgrade", "--isolated",
-                    "--target=#{site_packages}",
-                    bundled/"setuptools-#{setuptools.version}-py3-none-any.whl",
-                    bundled/"pip-#{pip.version}-py3-none-any.whl",
-                    context_path("libexec")/"wheel-#{wheel.version}-py3-none-any.whl"
+                    "--target=#{site_packages}", *wheels
         FileUtils.mv (site_packages/"bin").children, context_path("bin")
         (site_packages/"bin").rmdir
         FileUtils.rm_r context_path("bin").glob("pip{,3}"), force: true
@@ -278,9 +278,6 @@ module Homebrew
 
       sig { params(abi_version: String).void }
       def run_bootstrap_pypy(abi_version)
-        formula = @context
-        raise ArgumentError, "PyPy bootstrap requires a formula" unless formula.is_a?(Formula)
-
         pypy = context_path("bin")/"pypy#{abi_version}"
         %w[_sqlite3 _curses syslog gdbm _tkinter].each do |module_name|
           @command.run(pypy, args: ["-c", "import #{module_name}"], print_stdout: false, print_stderr: false)
@@ -306,17 +303,24 @@ module Homebrew
           [install]
           install-scripts=#{scripts_folder}
         INI
+        require "unpack_strategy"
         %w[setuptools pip].each do |package|
-          resource = formula.resource(package)
-          raise ArgumentError, "PyPy bootstrap resource #{package} is missing" if resource.nil?
+          archive = context_path("libexec")/"post-install-resources/#{package}.tar.gz"
+          raise ArgumentError, "PyPy bootstrap archive is missing: #{archive}" unless archive.file?
 
-          resource.stage do
-            run_command pypy, "-s", "setup.py", "--no-user-cfg", "install", "--force", "--verbose"
+          Dir.mktmpdir("homebrew-pypy-#{package}", HOMEBREW_TEMP) do |temporary_directory|
+            temporary_path = Pathname(temporary_directory)
+            UnpackStrategy.detect(archive).extract(to: temporary_path)
+            children = temporary_path.children
+            source_path = (children.one? && children.fetch(0).directory?) ? children.fetch(0) : temporary_path
+            Dir.chdir(source_path) do
+              run_command pypy, "-s", "setup.py", "--no-user-cfg", "install", "--force", "--verbose"
+            end
           end
         end
         context_path("bin").install_symlink scripts_folder/"pip#{abi_version}" => "pip_pypy#{abi_version}"
         prefix_links = [context_path("bin")/"pip_pypy#{abi_version}"]
-        if formula == Formula["pypy3"]
+        if context_name == "pypy3"
           context_path("bin").install_symlink "pip_pypy#{abi_version}" => "pip_pypy3"
           prefix_links << (context_path("bin")/"pip_pypy3")
         end

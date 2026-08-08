@@ -160,14 +160,14 @@ module GitHub
       end
     end
 
-    ERRORS = T.let([
+    ERRORS = [
       AuthenticationFailedError,
       GitRepositoryIsEmptyError,
       HTTPNotFoundError,
       RateLimitExceededError,
       Error,
       JSON::ParserError,
-    ].freeze, T::Array[T.any(T.class_of(Error), T.class_of(JSON::ParserError))])
+    ].freeze
 
     # Gets the token from the GitHub CLI for github.com.
     sig { returns(T.nilable(String)) }

@@ -6,6 +6,107 @@ require "sandbox"
 RSpec.describe Sandbox do
   subject(:sandbox) { described_class.new }
 
+  describe "::use_for?" do
+    it "uses an available non-nested sandbox" do
+      allow(described_class).to receive_messages(available?: true, avoid_nested_sandboxing?: false)
+
+      expect(described_class.use_for?("running install hooks")).to be(true)
+    end
+
+    it "warns when the sandbox is unavailable" do
+      allow(described_class).to receive(:available?).and_return(false)
+      expect(described_class).to receive(:opoo).with("Sandbox unavailable: running install hooks without sandboxing!")
+
+      expect(described_class.use_for?("running install hooks")).to be(false)
+    end
+
+    it "can quietly fall back when the sandbox is unavailable" do
+      allow(described_class).to receive(:available?).and_return(false)
+      expect(described_class).not_to receive(:opoo)
+
+      expect(described_class.use_for?("testing a formula", warn_without_sandbox: false)).to be(false)
+    end
+
+    it "warns when relying on an outer sandbox" do
+      allow(described_class).to receive_messages(available?: true, avoid_nested_sandboxing?: true)
+      expect(described_class).to receive(:opoo)
+        .with("Running install hooks without Homebrew's sandbox; relying on the outer sandbox.")
+
+      expect(described_class.use_for?("running install hooks")).to be(false)
+    end
+  end
+
+  describe "::run_or_fork" do
+    let(:command_sandbox) { instance_double(described_class) }
+
+    it "configures and uses the sandbox when available" do
+      allow(described_class).to receive_messages(new: command_sandbox, use_for?: true)
+      expect(command_sandbox).to receive(:run).with("command", "argument")
+
+      described_class.run_or_fork("command", "argument", step: "running a command") do |configured|
+        expect(configured).to eq(command_sandbox)
+      end
+    end
+
+    it "forks without configuring a sandbox when unavailable" do
+      allow(described_class).to receive(:use_for?).and_return(false)
+      expect(described_class).not_to receive(:new)
+      expect(Utils).to receive(:safe_fork)
+
+      described_class.run_or_fork("command", step: "running a command") do
+        raise "sandbox should not be configured"
+      end
+    end
+  end
+
+  describe "::with_preserved_brew_file" do
+    it "restores bin/brew after a sandboxed process replaces it" do
+      prefix = mktmpdir
+      stub_const("HOMEBREW_PREFIX", prefix)
+      brew_file = prefix/"bin/brew"
+      original_brew_file = prefix/"Homebrew/bin/brew"
+      original_brew_file.dirname.mkpath
+      original_brew_file.write "#!/bin/sh\n"
+      brew_file.dirname.mkpath
+      brew_file.make_relative_symlink original_brew_file
+      original_target = brew_file.readlink
+      original_directory_mode = brew_file.dirname.stat.mode & 07777
+      allow(described_class).to receive(:full_write_isolation?).and_return(false)
+
+      described_class.with_preserved_brew_file do
+        FileUtils.rm_f brew_file
+        brew_file.write "malicious\n"
+        brew_file.dirname.chmod 0500
+      end
+
+      expect(brew_file).to be_a_symlink
+      expect(brew_file.readlink).to eq(original_target)
+      expect(brew_file.dirname.stat.mode & 07777).to eq(original_directory_mode)
+    end
+  end
+
+  describe "#add_install_hook_rules" do
+    it "applies common install hook restrictions" do
+      expect(sandbox).to receive(:allow_write_temp_and_cache).ordered
+      expect(sandbox).to receive(:deny_write_homebrew_repository).ordered
+      expect(sandbox).to receive(:deny_read_home).ordered
+      expect(sandbox).to receive(:deny_all_network).ordered
+
+      sandbox.add_install_hook_rules(network_access_allowed: false)
+    end
+
+    it "allows network access when requested" do
+      allow(sandbox).to receive_messages(
+        allow_write_temp_and_cache:     nil,
+        deny_write_homebrew_repository: nil,
+        deny_read_home:                 nil,
+      )
+      expect(sandbox).not_to receive(:deny_all_network)
+
+      sandbox.add_install_hook_rules(network_access_allowed: true)
+    end
+  end
+
   describe "::run_command" do
     let(:command_sandbox) { instance_double(described_class) }
     let(:writable_path) { mktmpdir }

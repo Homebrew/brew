@@ -3,8 +3,8 @@
 
 require "extend/object/deep_dup"
 require "env_config"
+require "json"
 require "sandbox"
-require "tempfile"
 require "tmpdir"
 require "utils/output"
 
@@ -203,50 +203,47 @@ module Cask
 
       sig { returns(T.nilable(Sandbox)) }
       def cask_sandbox
-        return unless Sandbox.available?
+        return unless Sandbox.use_for?("running cask artifact operations")
 
         Sandbox.new.tap do |sandbox|
           sandbox.allow_read(path: cask.staged_path, type: :subpath)
-          sandbox.allow_write_temp_and_cache
-          sandbox.deny_read_home
-          sandbox.deny_all_network
+          sandbox.add_install_hook_rules(network_access_allowed: false)
         end
       end
 
       sig {
         params(
-          env:  T::Hash[String, T.any(String, T::Boolean, PATH)],
-          args: T::Array[T.any(String, Pathname)],
-          home: String,
-        ).returns(T::Array[T.any(String, Pathname)])
-      }
-      def cask_sandbox_command(env, args, home:)
-        env = { "HOME" => home }.merge(env)
-        ["/usr/bin/env", *env.map { |key, value| "#{key}=#{value}" }, *args]
-      end
-
-      sig {
-        params(
           sandbox: Sandbox,
-          args:    T::Array[T.any(String, Pathname)],
-          input:   T.any(String, T::Array[String]),
+          payload: T::Hash[String, T.untyped],
         ).void
       }
-      def run_cask_sandbox(sandbox, args, input: [])
-        return sandbox.run(*args) if Array(input).empty?
+      def run_cask_sandbox(sandbox, payload)
+        # Formulae sandbox the complete `postinstall.rb` process. Do the same
+        # for cask operations so Ruby file changes and every command share one
+        # profile, instead of forwarding command input and output through files.
+        Dir.mktmpdir("homebrew-cask-sandbox", HOMEBREW_TEMP) do |temporary_directory|
+          temporary_path = Pathname(temporary_directory)
+          home = temporary_path/"home"
+          payload_path = temporary_path/"payload.json"
+          home.mkpath
+          payload_path.write(JSON.generate(payload))
+          sandbox.allow_read(path: payload_path)
 
-        Tempfile.create("homebrew-cask-script-input", HOMEBREW_TEMP) do |input_file|
-          input_file.write(Array(input).join)
-          input_file.close
-          sandbox.allow_read(path: input_file.path)
-          sandbox.run(
-            "/bin/sh",
-            "-c",
-            "input=$1; shift; exec \"$@\" < \"$input\"",
-            "sh",
-            input_file.path,
-            *args,
-          )
+          # The payload carries only structured data, not a cask `.rb` file.
+          # Set HOME before starting this child so its boot process and any
+          # commands it runs cannot discover the user's real home directory.
+          Sandbox.with_preserved_brew_file do
+            sandbox.run(
+              "/usr/bin/env",
+              "HOME=#{home}",
+              "nice",
+              *HOMEBREW_RUBY_EXEC_ARGS,
+              "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
+              "--",
+              HOMEBREW_LIBRARY_PATH/"cask_artifact.rb",
+              payload_path
+            )
+          end
         end
       end
 

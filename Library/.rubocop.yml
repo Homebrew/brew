@@ -24,6 +24,7 @@ AllCops:
   # otherwise taps will be prompted to use newer Ruby syntax too early.
   TargetRubyVersion: 4.0
   NewCops: enable
+  UseProjectIndex: true
   Include:
     - "**/*.rbi"
   Exclude:
@@ -70,6 +71,11 @@ Homebrew/CompactBlank:
   Exclude:
     # `blank?` is not necessarily available here:
     - "Homebrew/extend/enumerable.rb"
+
+Homebrew/InstallStepsSourceIndependence:
+  Include:
+    - "Homebrew/install_steps.rb"
+    - "Homebrew/install_steps/**/*.rb"
 
 Homebrew/NoBase64:
   Description: "Use `String#unpack1` or `Array#pack` instead of the `base64` gem."
@@ -205,6 +211,35 @@ Lint/DuplicateBranch:
     - "Taps/*/*/*.rb"
     - "/**/{Formula,Casks}/**/*.rb"
     - "**/{Formula,Casks}/**/*.rb"
+
+# Formula files are loaded independently, so constants with the same names do
+# not reassign each other. RBI constants declare their Ruby definitions.
+Lint/ConstantReassignment:
+  Exclude:
+    - "**/*.rbi"
+    - "Taps/*/*/*.rb"
+    - "/**/Formula/**/*.rb"
+    - "**/Formula/**/*.rb"
+
+# Detect references to project APIs marked with a YARD `@deprecated` tag.
+Lint/DeprecatedReference:
+  Enabled: true
+
+# Formula files from separate taps can define the same class without being
+# loaded together. RBI methods declare their Ruby implementations.
+Lint/DuplicateMethods:
+  Exclude:
+    - "**/*.rbi"
+    - "Taps/*/*/*.rb"
+    - "/**/Formula/**/*.rb"
+    - "**/Formula/**/*.rb"
+
+# The project-only index does not include Ruby core or gem APIs.
+Lint/NameTypo:
+  AllowedNames:
+    - "IfNode" # Defined by rubocop-ast.
+    - "instance_method" # Defined by Ruby core.
+    - "send" # Defined by Ruby core.
 
 # so many of these in formulae and can't be autocorrected
 Lint/ParenthesesAsGroupedExpression:
@@ -354,12 +389,6 @@ Style/AndOr:
 Style/ArgumentsForwarding:
   Enabled: false
 
-# Autocorrects `include?`/`member?` block patterns to `intersect?` even when the second operand
-# isn't actually an `Array` (e.g. `String`, `Set`, `Enumerator`), which can raise at runtime.
-# Re-enable once a rubocop version with https://github.com/rubocop/rubocop/pull/15442 is released.
-Style/ArrayIntersect:
-  Enabled: false
-
 # Avoid leaking resources.
 Style/AutoResourceCleanup:
   Enabled: true
@@ -446,6 +475,11 @@ Style/HashAsLastArrayItem:
     - "/**/Formula/**/*.rb"
     - "**/Formula/**/*.rb"
 
+# Restore when the fix for https://github.com/rubocop/rubocop/issues/15531
+# is released.
+Style/IfUnlessModifier:
+  Enabled: false
+
 Style/InverseMethods:
   InverseMethods:
     :blank?: :present?
@@ -490,6 +524,12 @@ Style/OptionalBooleanParameter:
 # Rescuing `StandardError` is an understood default.
 Style/RescueStandardError:
   EnforcedStyle: implicit
+
+# The project index compares lexical resolution but Ruby also searches class
+# ancestors, including formula subclasses. Removing `::` can therefore resolve
+# a different constant.
+Style/RedundantConstantBase:
+  Enabled: false
 
 # Returning `nil` is unnecessary.
 Style/ReturnNil:

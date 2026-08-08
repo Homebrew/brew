@@ -146,6 +146,30 @@ RSpec.describe FormulaInstaller do
   end
 
   describe "#post_install" do
+    it "runs structured post-install steps inside the formula sandbox" do
+      formula = formula("sandboxed-install-steps") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+
+        post_install_steps do
+          touch "state", base: :var
+        end
+      end
+      installer = described_class.new(formula)
+      sandbox = instance_double(Sandbox).as_null_object
+
+      allow(installer).to receive(:post_install_formula_path).and_return(formula.path)
+      allow(formula).to receive_messages(logs: mktmpdir, network_access_allowed?: false)
+      allow(Sandbox).to receive_messages(new: sandbox, use_for?: true)
+      expect(Sandbox).to receive(:with_preserved_brew_file).and_yield
+      expect(sandbox).to receive(:add_install_hook_rules).with(network_access_allowed: false)
+      expect(sandbox).to receive(:run) do |*args|
+        expect(args).to include(HOMEBREW_LIBRARY_PATH/"postinstall.rb", formula.path)
+      end
+
+      installer.post_install
+    end
+
     it "restores bin/brew after a Landlock-sandboxed post-install replaces it" do
       prefix = mktmpdir
       stub_const("HOMEBREW_PREFIX", prefix)
@@ -164,9 +188,9 @@ RSpec.describe FormulaInstaller do
       installer = described_class.new(formula)
       sandbox = instance_double(Sandbox).as_null_object
 
-      allow(installer).to receive_messages(post_install_formula_path: formula.path, use_sandbox?: true)
+      allow(installer).to receive(:post_install_formula_path).and_return(formula.path)
       allow(formula).to receive_messages(logs: mktmpdir, network_access_allowed?: true)
-      allow(Sandbox).to receive_messages(full_write_isolation?: false, new: sandbox)
+      allow(Sandbox).to receive_messages(full_write_isolation?: false, new: sandbox, use_for?: true)
       allow(sandbox).to receive(:run) do
         FileUtils.rm_f brew_file
         brew_file.write "malicious\n"
@@ -1472,7 +1496,7 @@ RSpec.describe FormulaInstaller do
 
       # Stub out the actual build subprocess since we only care about the guard
       allow(installer).to receive(:build_argv).and_return([])
-      allow(Utils).to receive(:safe_fork)
+      allow(Sandbox).to receive(:run_or_fork)
       allow(source_formula).to receive_messages(logs: mktmpdir, update_head_version: nil, prefix: mktmpdir,
                                                 network_access_allowed?: true)
       allow(Keg).to receive(:new).and_return(instance_double(Keg, empty_installation?: false))
