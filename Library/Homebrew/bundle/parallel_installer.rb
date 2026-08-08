@@ -6,12 +6,17 @@ require "concurrent/promises"
 require "monitor"
 require "utils"
 require "utils/tty"
+require "utils/topological_hash"
+require "bundle/brew"
+require "bundle/cask"
 require "bundle/package_types"
 require "dependency_collector"
 
 module Homebrew
   module Bundle
     class ParallelInstaller
+      include ::Utils::Output::Mixin
+
       sig {
         params(
           entries:    T::Array[Installer::InstallableEntry],
@@ -106,84 +111,85 @@ module Homebrew
       sig { params(entries: T::Array[Installer::InstallableEntry]).returns(T::Hash[String, T::Set[String]]) }
       def build_dependency_map(entries)
         installed_taps = Homebrew::Bundle::Tap.installed_taps
-        attestation_formula = if Homebrew::EnvConfig.verify_attestations?
-          entries.find { |entry| entry.cls == Homebrew::Bundle::Brew && entry.name == "gh" }
-        end
 
-        # Phase 1: Map both full and short names so dep lookups work either way.
-        entry_name_map = entries.each_with_object({}) do |entry, map|
+        # Map both full and short names so dep lookups work either way.
+        entry_name_map = entries.each_with_object(T.let({}, T::Hash[String, String])) do |entry, map|
           map[entry.name] = entry.name
-          map[normalize_formula_name(entry.name)] = entry.name
+          map[Utils.name_from_full_name(entry.name)] = entry.name
         end
 
-        # Phase 2: Direct dependencies declared in the Brewfile. Determines
-        # install ordering (entry A must finish before entry B starts).
-        brewfile_deps = T.let({}, T::Hash[String, T::Array[String]])
-        entries.each do |entry|
+        # Dependencies declared in the Brewfile, resolved to the entries providing them:
+        # entry A must finish before entry B starts.
+        entry_deps = entries.to_h do |entry|
           deps = case entry.cls.name
           when "Homebrew::Bundle::Brew"
             Homebrew::Bundle::Brew.formula_dep_names(entry.name)
           when "Homebrew::Bundle::Cask"
-            Homebrew::Bundle::Cask.formula_dependencies([entry.full_name])
+            Homebrew::Bundle::Cask.formula_dependencies([entry.full_name]) +
+            Homebrew::Bundle::Cask.cask_dependencies([entry.full_name])
           else
             []
           end
-
-          # Entries from non-default taps depend on the tap being installed first.
           deps += Homebrew::Bundle::Installer.tap_dependencies(entry, entries:, installed_taps:)
-          if attestation_formula && [Homebrew::Bundle::Brew, Homebrew::Bundle::Cask].include?(entry.cls) &&
-             entry.name != attestation_formula.name
-            deps << attestation_formula.name
-          end
 
-          brewfile_deps[entry.name] = deps
+          resolved = deps.each_with_object(T.let(Set.new, T::Set[String])) do |dep, set|
+            name = entry_name_map[dep] || entry_name_map[Utils.name_from_full_name(dep)]
+            next if name.nil? || name == entry.name
+
+            set << name
+          end
+          [entry.name, resolved]
         end
 
-        # Phase 3: Recursive dependency sets for lock conflict detection.
-        # `FormulaInstaller#lock` locks all recursive dependencies before
-        # installing, even when pouring bottles.
-        cask_names = T.let(entries.select { |e| e.cls == Homebrew::Bundle::Cask }.to_set(&:name), T::Set[String])
-        recursive_deps = T.let({}, T::Hash[String, T::Set[String]])
-        entries.each do |entry|
-          recursive_deps[entry.name] = case entry.cls.name
+        add_attestation_deps!(entries, entry_deps)
+
+        # `FormulaInstaller#lock` locks the formula and its recursive dependencies, so a
+        # formula with no dependencies of its own (e.g. `xz`) still conflicts with entries
+        # that depend on it. Cask installs take the same locks for their formulae.
+        lock_names = entries.to_h do |entry|
+          locks = case entry.cls.name
           when "Homebrew::Bundle::Brew"
-            Homebrew::Bundle::Brew.recursive_dep_names(entry.name)
+            Homebrew::Bundle::Brew.lock_names(entry.name)
           when "Homebrew::Bundle::Cask"
-            cask_dep_names(entry.name, cask_names)
+            Homebrew::Bundle::Cask.lock_names([entry.full_name])
           else
             Set.new
           end
+          [entry.name, locks]
         end
 
-        # Phase 3.5: formulae racing for an undeclared implicit dependency (e.g. a
-        # Linux sandbox executable) wait on just the first one, not on each other.
-        implicit_pioneer = T.let(nil, T.nilable(String))
-        unless DependencyCollector.new.implicit_dependency_names.empty?
-          implicit_pioneer = entries.find { |entry| entry.cls == Homebrew::Bundle::Brew }&.name
+        # Conflicts must serialize the same way round as the declared dependencies, or a
+        # Brewfile listing a dependent first strands every entry in `run!`'s serial path.
+        topo = Homebrew::Bundle::Brew::Topo.new
+        entries.each { |entry| topo[entry.name] = entry_deps.fetch(entry.name).to_a }
+        order = topo.tsort_with_cycles do |cycles|
+          opoo "Installing these bundle entries one at a time, they depend on each " \
+               "other: #{cycles.flatten.uniq.join(", ")}"
+        end
+        position = order.each_with_index.to_h
+
+        # Formulae racing for an undeclared implicit dependency (e.g. a Linux sandbox
+        # executable) wait on just the first one in dependency order, not on each other.
+        implicit_pioneer = unless DependencyCollector.new.implicit_dependency_names.empty?
+          entries.select { |entry| entry.cls == Homebrew::Bundle::Brew }
+                 .min_by { |entry| position.fetch(entry.name, 0) }&.name
         end
 
-        # Phase 4: Merge explicit ordering and implicit lock conflicts.
-        entries.each_with_object({}) do |entry, map|
-          depends_on = brewfile_deps.fetch(entry.name).each_with_object(Set.new) do |dep, set|
-            name = entry_name_map[dep] || entry_name_map[normalize_formula_name(dep)]
-            set << name if name.present? && name != entry.name
-          end
+        entries.to_h do |entry|
+          depends_on = entry_deps.fetch(entry.name, Set.new).dup
+          entry_locks = lock_names.fetch(entry.name, Set.new)
 
-          # Later entries wait for earlier ones when they share any recursive dep.
-          entry_rdeps = recursive_deps.fetch(entry.name)
-          entries.each do |earlier|
-            break if earlier.name == entry.name
-            next if depends_on.include?(earlier.name)
+          order.take(position.fetch(entry.name, 0)).each do |earlier_name|
+            next if depends_on.include?(earlier_name)
 
-            earlier_rdeps = recursive_deps.fetch(earlier.name)
-            depends_on << earlier.name if entry_rdeps.intersect?(earlier_rdeps)
+            depends_on << earlier_name if entry_locks.intersect?(lock_names.fetch(earlier_name, Set.new))
           end
 
           if implicit_pioneer && entry.name != implicit_pioneer && entry.cls == Homebrew::Bundle::Brew
             depends_on << implicit_pioneer
           end
 
-          map[entry.name] = depends_on
+          [entry.name, depends_on]
         end
       end
 
@@ -202,11 +208,6 @@ module Homebrew
 
       private
 
-      sig { params(name: String).returns(String) }
-      def normalize_formula_name(name)
-        Utils.name_from_full_name(name)
-      end
-
       sig { params(entries: T::Array[Installer::InstallableEntry]).void }
       def prepare_attestation_verification!(entries)
         return unless Homebrew::EnvConfig.verify_attestations?
@@ -218,19 +219,36 @@ module Homebrew
         Homebrew::Attestation.gh_executable
       end
 
-      # Walk cask-on-cask dependencies transitively, returning the set of
-      # cask names (from the Brewfile) that this cask depends on.
-      sig { params(name: String, cask_names: T::Set[String]).returns(T::Set[String]) }
-      def cask_dep_names(name, cask_names)
-        return Set.new unless Bundle.cask_installed?
+      # Entries verifying an attestation wait for a Brewfile `gh`, except those `gh`
+      # reaches itself: that edge would point back against their own and close a cycle.
+      sig {
+        params(
+          entries:    T::Array[Installer::InstallableEntry],
+          entry_deps: T::Hash[String, T::Set[String]],
+        ).void
+      }
+      def add_attestation_deps!(entries, entry_deps)
+        return unless Homebrew::EnvConfig.verify_attestations?
 
-        require "cask/cask_loader"
-        cask = ::Cask::CaskLoader.load(name)
-        direct = Array(cask.depends_on[:cask]).to_set
-        # Only include deps that are also in the Brewfile.
-        direct & cask_names
-      rescue ::Cask::CaskUnavailableError
-        Set.new
+        attestation_formula = entries.find do |entry|
+          entry.cls == Homebrew::Bundle::Brew && entry.name == "gh"
+        end
+        return if attestation_formula.nil?
+
+        reached = T.let(Set.new, T::Set[String])
+        queue = entry_deps.fetch(attestation_formula.name, Set.new).to_a
+        while (name = queue.pop)
+          next unless reached.add?(name)
+
+          queue.concat(entry_deps.fetch(name, Set.new).to_a)
+        end
+
+        entries.each do |entry|
+          next unless [Homebrew::Bundle::Brew, Homebrew::Bundle::Cask].include?(entry.cls)
+          next if entry.name == attestation_formula.name || reached.include?(entry.name)
+
+          entry_deps.fetch(entry.name) << attestation_formula.name
+        end
       end
 
       sig { params(entries: T::Array[Installer::InstallableEntry]).returns([Integer, Integer]) }

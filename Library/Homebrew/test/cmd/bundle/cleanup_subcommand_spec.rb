@@ -228,7 +228,8 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       described_class.read_dsl_from_brewfile!
 
       allow(Homebrew::Bundle::Cask).to receive(:casks).and_return([
-        instance_double(Cask::Cask, to_s: "foo", old_tokens: [], depends_on: {}),
+        instance_double(Cask::Cask, to_s: "foo", old_tokens: [],
+                        depends_on: instance_double(Cask::DSL::DependsOn, formula: [], cask: [])),
       ])
       allow(Homebrew::Bundle::Brew).to receive(:formulae).and_return([])
       allow(Homebrew::Bundle::Tap).to \

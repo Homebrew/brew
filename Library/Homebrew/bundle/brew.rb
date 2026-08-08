@@ -200,13 +200,34 @@ module Homebrew
           find_formula(name)&.fetch(:dependencies, []) || []
         end
 
-        # Returns recursive dependency names for lock conflict detection.
+        # Returns the Cellar racks `FormulaInstaller#lock` locks when installing this
+        # formula: the formula itself plus all of its recursive dependencies. Racks are
+        # named after `Formula#name`; `Dependency.expand` already canonicalises aliases
+        # and renames, so only the tap prefix has to come off the expanded names.
         sig { params(name: String).returns(T::Set[String]) }
-        def recursive_dep_names(name)
+        def lock_names(name)
           require "formula"
-          Formula[name].recursive_dependencies.to_set(&:name)
-        rescue FormulaUnavailableError
-          Set.new
+          formula = begin
+            Formula[name]
+          rescue FormulaUnavailableError => e
+            opoo "'#{name}' formula is unreadable: #{e}"
+            nil
+          end
+          return Set[Utils.name_from_full_name(name)] if formula.nil?
+
+          # An unresolvable transitive dependency makes the whole expansion raise, so
+          # keep the formula's own canonical rack rather than falling back to the
+          # requested name, which may be an alias that names no rack.
+          dependencies = begin
+            formula.recursive_dependencies
+          rescue FormulaUnavailableError => e
+            opoo "'#{name}' dependencies are unreadable: #{e}"
+            []
+          end
+
+          dependencies.each_with_object(Set[formula.name]) do |dependency, names|
+            names << Utils.name_from_full_name(dependency.name)
+          end
         end
 
         sig { returns(T::Array[T::Hash[Symbol, T.untyped]]) }

@@ -229,25 +229,54 @@ module Homebrew
         def formula_dependencies(cask_list)
           return [] if cask_list.blank?
 
+          cask_list.flat_map { load_cask(it)&.depends_on&.formula }.compact
+        end
+
+        sig { params(cask_list: T::Array[String]).returns(T::Array[String]) }
+        def cask_dependencies(cask_list)
+          return [] if cask_list.blank?
+
+          cask_list.flat_map { load_cask(it)&.depends_on&.cask }.compact
+        end
+
+        # Returns the Cellar racks installing these casks locks. `Cask::Installer`
+        # installs the formulae a cask depends on, recursively through its cask
+        # dependencies, and each of those takes the same rack locks a `brew` entry
+        # would, so expand each through `Brew.lock_names`: the graph below prunes
+        # build and test dependencies, which `FormulaInstaller#lock` still locks.
+        sig { params(cask_list: T::Array[String]).returns(T::Set[String]) }
+        def lock_names(cask_list)
+          return Set.new if cask_list.blank?
+
+          require "bundle/brew"
+          require "utils/topological_hash"
+
+          cask_list.each_with_object(T.let(Set.new, T::Set[String])) do |cask_name, names|
+            cask = load_cask(cask_name)
+            next if cask.nil?
+
+            graph = ::Utils::TopologicalHash.graph_package_dependencies(cask)
+            graph.each_key do |package|
+              names.merge(Homebrew::Bundle::Brew.lock_names(package.name)) if package.is_a?(Formula)
+            end
+          rescue ::Cask::CaskError, FormulaUnavailableError => e
+            opoo "'#{cask_name}' dependencies are unreadable: #{e}"
+          end
+        end
+
+        private
+
+        sig { params(cask_name: String).returns(T.nilable(::Cask::Cask)) }
+        def load_cask(cask_name)
           require "cask/cask_loader"
 
-          installed_cask_objects = casks
-          cask_list.flat_map do |cask_name|
-            cask = installed_cask_objects.find do |installed_cask|
-              cask_name == installed_cask.to_s || cask_name == installed_cask.full_name
-            end
-            cask ||= begin
+          casks.find { |installed| cask_name == installed.to_s || cask_name == installed.full_name } ||
+            begin
               ::Cask::CaskLoader.load(cask_name)
             rescue ::Cask::CaskUnavailableError
               nil
             end
-            next unless cask
-
-            cask.depends_on[:formula]
-          end.compact
         end
-
-        private
 
         sig { params(no_upgrade: T::Boolean, name: String, options: Homebrew::Bundle::EntryOptions).returns(T::Boolean) }
         def upgrading?(no_upgrade, name, options)
