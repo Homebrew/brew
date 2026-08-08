@@ -63,8 +63,8 @@ module PyPI
     # This only works for packages from PyPI or from a PyPI URL; packages
     # derived from non-PyPI URLs will produce `nil` here.
     sig {
-      params(new_version:   T.nilable(T.any(String, Version)),
-             ignore_errors: T.nilable(T::Boolean)).returns(T.nilable(T::Array[String]))
+      params(new_version: T.nilable(T.any(String, Version)), ignore_errors: T::Boolean)
+        .returns(T.nilable(T::Array[String]))
     }
     def pypi_info(new_version: nil, ignore_errors: false)
       return unless valid_pypi_package?
@@ -233,14 +233,14 @@ module PyPI
       extra_packages:               T.nilable(T::Array[String]),
       exclude_packages:             T.nilable(T::Array[String]),
       dependencies:                 T.nilable(T::Array[String]),
-      install_dependencies:         T.nilable(T::Boolean),
-      print_only:                   T.nilable(T::Boolean),
-      quiet:                        T.nilable(T::Boolean),
-      verbose:                      T.nilable(T::Boolean),
-      ignore_errors:                T.nilable(T::Boolean),
-      ignore_non_pypi_packages:     T.nilable(T::Boolean),
-      ignore_main_package_cooldown: T.nilable(T::Boolean),
-    ).returns(T.nilable(T::Boolean))
+      install_dependencies:         T::Boolean,
+      print_only:                   T::Boolean,
+      quiet:                        T::Boolean,
+      verbose:                      T::Boolean,
+      ignore_errors:                T::Boolean,
+      ignore_non_pypi_packages:     T::Boolean,
+      ignore_main_package_cooldown: T::Boolean,
+    ).returns(T::Boolean)
   }
   def self.update_python_resources!(formula, version: nil, package_name: nil, extra_packages: nil,
                                     exclude_packages: nil, dependencies: nil, install_dependencies: false,
@@ -302,7 +302,7 @@ module PyPI
       if main_package.valid_pypi_package?
         main_package.version = version
       else
-        return if ignore_non_pypi_packages
+        return false if ignore_non_pypi_packages
 
         odie "The main package is not a PyPI package, meaning that version-only updates cannot be \
           performed. Please update its URL manually."
@@ -436,7 +436,7 @@ module PyPI
 
     if print_only
       puts resource_section.chomp
-      return
+      return true
     end
 
     odie <<~EOS unless non_pypi_resource_names.empty?
