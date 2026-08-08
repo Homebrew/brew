@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "benchmark"
+require "services/system"
 
 RSpec.shared_examples "#uninstall_phase or #zap_phase" do
   subject { artifact }
@@ -18,7 +19,6 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-launchctl")) }
     let(:launchctl_list_cmd) { %w[/bin/launchctl list my.fancy.package.service] }
     let(:launchctl_remove_cmd) { %w[/bin/launchctl remove my.fancy.package.service] }
-    let(:unknown_response) { "launchctl list returned unknown response\n" }
     let(:service_info) do
       <<~EOS
         {
@@ -35,24 +35,12 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
 
     it "works when job is owned by user" do
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         false,
-          sudo_as_root: false,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         true,
-          sudo_as_root: true,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: false)
+        .and_return([service_info, true, :launchctl_print])
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: true)
+        .and_return(["", false, :launchctl_list])
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
@@ -63,24 +51,12 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
 
     it "works when job is owned by system" do
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         false,
-          sudo_as_root: false,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         true,
-          sudo_as_root: true,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: false)
+        .and_return(["", false, :launchctl_list])
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: true)
+        .and_return([service_info, true, :launchctl_print])
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
@@ -91,24 +67,12 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
 
     it "does not fail when sudo removal fails" do
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         false,
-          sudo_as_root: false,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         true,
-          sudo_as_root: true,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: false)
+        .and_return(["", false, :launchctl_list])
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: true)
+        .and_return([service_info, true, :launchctl_print])
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
@@ -124,7 +88,6 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
   context "when using :launchctl with regex wildcard" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-launchctl-wildcard")) }
     let(:launchctl_regex) { "my.fancy.package.service.*" }
-    let(:unknown_response) { "launchctl list returned unknown response\n" }
     let(:service_info) do
       <<~EOS
         {
@@ -149,29 +112,20 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       EOS
     end
 
+    before do
+      allow(fake_system_command).to receive(:run)
+        .with("/bin/launchctl", hash_including(args: ["print", anything]))
+        .and_return(instance_double(SystemCommand::Result, success?: false))
+    end
+
     it "searches installed launchctl items" do
       expect(subject).to receive(:find_launchctl_with_wildcard)
         .with(launchctl_regex)
         .and_return(["my.fancy.package.service.12345"])
 
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service.12345"],
-          print_stderr: false,
-          sudo:         false,
-          sudo_as_root: false,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service.12345"],
-          print_stderr: false,
-          sudo:         true,
-          sudo_as_root: true,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service) do |_label, sudo:|
+        sudo ? [service_info, true, :launchctl_print] : ["", false, :launchctl_list]
+      end
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service.12345"],

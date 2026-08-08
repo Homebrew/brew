@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "etc"
+require "system_command"
 require_relative "system/systemctl"
 require "utils/output"
 
@@ -124,6 +125,57 @@ module Homebrew
         candidates += ["user/#{Process.euid}", "gui/#{Process.uid}"] unless root?
         candidates.uniq
       end
+
+      # Probe for a launchd service across all candidate domains.
+      # Returns output text, success flag, and the command type used
+      # (`:launchctl_print` or `:launchctl_list`). Pass `sudo: true` to run
+      # the probe with elevated privileges (e.g. for system-owned services).
+      sig { params(label: String, sudo: T::Boolean).returns([String, T::Boolean, Symbol]) }
+      def self.launchctl_find_service(label, sudo: false)
+        launchctl_path = launchctl
+        return ["", false, :launchctl_list] unless launchctl_path
+
+        candidate_domain_targets.each do |domain|
+          cmd = [launchctl_path.to_s, "print", "#{domain}/#{label}"]
+          output, success = launchctl_run(cmd, sudo:)
+          if success && output.present?
+            odebug cmd.join(" "), output
+            return [output, true, :launchctl_print]
+          end
+        end
+
+        cmd = [launchctl_path.to_s, "list", label]
+        output, success = launchctl_run(cmd, sudo:)
+        odebug cmd.join(" "), output
+        [output, success && output.present?, :launchctl_list]
+      end
+
+      # Check if a launchd service is running, given its label (e.g. `homebrew.mxcl.foo`).
+      # Tries domain-qualified lookups first, then falls back to a bare label search.
+      sig { params(label: String, sudo: T::Boolean).returns(T::Boolean) }
+      def self.launchctl_service_running?(label, sudo: false)
+        _, success, = launchctl_find_service(label, sudo:)
+        success
+      end
+
+      # Run a launchctl command, optionally via sudo, capturing its output.
+      sig { params(cmd: T::Array[String], sudo: T::Boolean).returns([String, T::Boolean]) }
+      def self.launchctl_run(cmd, sudo:)
+        if sudo
+          result = SystemCommand.run(
+            cmd.fetch(0),
+            args:         cmd.drop(1),
+            sudo:         true,
+            sudo_as_root: true,
+            print_stderr: false,
+          )
+          [result.stdout.chomp, result.success?]
+        else
+          output = Utils.popen_read(*cmd).chomp
+          [output, ($CHILD_STATUS.present? && $CHILD_STATUS.success?) || false]
+        end
+      end
+      private_class_method :launchctl_run
     end
   end
 end

@@ -3,6 +3,7 @@
 
 require "timeout"
 
+require "services/system"
 require "utils/user"
 require "cask/artifact/abstract_artifact"
 require "cask/pkg"
@@ -222,14 +223,8 @@ module Cask
         all_services.each do |service|
           ohai "Removing launchctl service #{service}"
           booleans.each do |sudo|
-            plist_status = command.run(
-              "/bin/launchctl",
-              args:         ["list", service],
-              sudo:,
-              sudo_as_root: sudo,
-              print_stderr: false,
-            ).stdout
-            if plist_status.start_with?("{")
+            _, found, = Homebrew::Services::System.launchctl_find_service(service, sudo:)
+            if found
               result = command.run(
                 "/bin/launchctl",
                 args:         ["remove", service],

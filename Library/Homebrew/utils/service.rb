@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "services/system"
+
 module Utils
   # Helpers for `brew services` related code.
   module Service
@@ -8,7 +10,7 @@ module Utils
     sig { params(formula: Formula).returns(T::Boolean) }
     def self.running?(formula)
       if launchctl?
-        quiet_system(launchctl, "list", formula.plist_name)
+        Homebrew::Services::System.launchctl_service_running?(formula.plist_name)
       elsif systemctl?
         quiet_system(systemctl, "is-active", "--quiet", formula.service_name)
       else

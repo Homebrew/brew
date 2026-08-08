@@ -154,6 +154,27 @@ RSpec.describe Homebrew::Services::System do
     end
   end
 
+  describe "#launchctl_find_service" do
+    let(:label) { "homebrew.mxcl.foo" }
+
+    it "returns failure when launchctl is not available" do
+      allow(described_class).to receive(:launchctl).and_return(nil)
+      _, success, type = described_class.launchctl_find_service(label)
+      expect(success).to be false
+      expect(type).to eq(:launchctl_list)
+    end
+  end
+
+  describe "#launchctl_service_running?" do
+    let(:label) { "homebrew.mxcl.foo" }
+
+    it "delegates to launchctl_find_service" do
+      allow(described_class).to receive(:launchctl_find_service)
+        .with(label, sudo: false).and_return(["output", true, :launchctl_print])
+      expect(described_class.launchctl_service_running?(label)).to be true
+    end
+  end
+
   describe "#path" do
     it "macOS - user - returns the current relevant path" do
       ENV["HOME"] = "/tmp_home"
