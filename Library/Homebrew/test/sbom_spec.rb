@@ -132,6 +132,43 @@ RSpec.describe SBOM do
         )
       end
 
+      it "emits pkg:brew purl in externalRefs for source archive package" do
+        spdx = sbom.to_spdx_sbom
+        packages = T.cast(spdx[:packages], T::Array[T::Hash[Symbol, Object]])
+        src_package = T.must(packages.find { |pkg| pkg[:SPDXID] == "SPDXRef-Archive-formula_name-src" })
+
+        expect(src_package[:externalRefs]).to include(
+          referenceCategory: "PACKAGE-MANAGER",
+          referenceLocator:  "pkg:brew/homebrew/core/formula_name@0.1",
+          referenceType:     "purl",
+        )
+      end
+
+      it "emits derived upstream registry purl in externalRefs when source URL is a registry URL" do
+        pypi_formula = formula "pypi_test" do
+          T.bind(self, T.class_of(Formula))
+
+          url "https://files.pythonhosted.org/packages/d6/5d/47f0d014022a106f235948924b17f54c9356a815a51086082eeef7f3747d/requests-2.25.1.tar.gz"
+        end
+        pypi_sbom = described_class.create(pypi_formula, Tab.new)
+        spdx = pypi_sbom.to_spdx_sbom
+        packages = T.cast(spdx[:packages], T::Array[T::Hash[Symbol, Object]])
+        src_package = T.must(packages.find { |pkg| pkg[:SPDXID] == "SPDXRef-Archive-pypi_test-src" })
+
+        expect(src_package[:externalRefs]).to contain_exactly(
+          {
+            referenceCategory: "PACKAGE-MANAGER",
+            referenceLocator:  "pkg:brew/homebrew/core/pypi_test@2.25.1",
+            referenceType:     "purl",
+          },
+          {
+            referenceCategory: "PACKAGE-MANAGER",
+            referenceLocator:  "pkg:pypi/requests@2.25.1",
+            referenceType:     "purl",
+          },
+        )
+      end
+
       it "omits host-specific packages when bottling" do
         spdx = sbom.to_spdx_sbom(bottling: true)
         package_ids = spdx[:packages].map { |package| package[:SPDXID] }

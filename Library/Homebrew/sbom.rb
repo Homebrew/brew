@@ -5,6 +5,7 @@ require "json"
 require "development_tools"
 require "utils/curl"
 require "utils/output"
+require "vulns/identify"
 
 # Rather than calling `new` directly, use one of the class methods like {SBOM.create}.
 class SBOM
@@ -535,6 +536,28 @@ class SBOM
       package
     end
 
+    source_purl = if (tap_name = source.tap_name)
+      "pkg:brew/#{tap_name}/#{name}@#{spec_version}"
+    else
+      "pkg:brew/#{name}@#{spec_version}"
+    end
+
+    external_refs = T.let([
+      {
+        referenceCategory: "PACKAGE-MANAGER",
+        referenceLocator:  source_purl,
+        referenceType:     "purl",
+      },
+    ], T::Array[SPDXSymbolHash])
+
+    if source.url.present? && (registry_pkg = Homebrew::Vulns::Identify.registry_package(source.url))
+      external_refs << {
+        referenceCategory: "PACKAGE-MANAGER",
+        referenceLocator:  registry_pkg.purl,
+        referenceType:     "purl",
+      }
+    end
+
     [
       {
         SPDXID:           "SPDXRef-Archive-#{name}-src",
@@ -546,7 +569,7 @@ class SBOM
         licenseConcluded: assert_value(license),
         downloadLocation: source.url,
         copyrightText:    assert_value(nil),
-        externalRefs:     [],
+        externalRefs:     external_refs,
         checksums:        [
           {
             algorithm:     "SHA256",
