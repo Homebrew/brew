@@ -227,7 +227,6 @@ jobs:
           outputs: type=image,name=ghcr.io/homebrew/ubuntu${{ matrix.version }},name-canonical=true,push=true,push-by-digest=true
 
       - name: Export the Docker image digest
-        if: fromJSON(steps.attributes.outputs.push)
         run: |
           mkdir -p "${RUNNER_TEMP}"/digests
           echo "${DIGEST#sha256:}" >"${RUNNER_TEMP}/digests/${VERSION}-${ARCH}"
@@ -237,11 +236,29 @@ jobs:
           ARCH: ${{ matrix.arch }}
 
       - name: Upload the Docker image digest
-        if: fromJSON(steps.attributes.outputs.push)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: digest-${{ matrix.version }}-${{ matrix.arch }}
           path: ${{ runner.temp }}/digests/*
+
+      - name: Export base image for long runner
+        if: matrix.version == '24.04'
+        run: |
+          mkdir -p "${RUNNER_TEMP}/long-runner-base"
+          image_name="long-runner-base:${VERSION}-${ARCH}"
+          docker tag brew "${image_name}"
+          docker save "${image_name}" | gzip >"${RUNNER_TEMP}/long-runner-base/image-${VERSION}-${ARCH}.tar.gz"
+        env:
+          VERSION: ${{ matrix.version }}
+          ARCH: ${{ matrix.arch }}
+          DIGEST: ${{ steps.digest.outputs.digest }}
+
+      - name: Upload base image artifact for long runner
+        if: matrix.version == '24.04'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: long-runner-base-24.04-${{ matrix.arch }}
+          path: ${{ runner.temp }}/long-runner-base/*
 
   merge:
     needs: [generate-tags, build]
@@ -298,3 +315,136 @@ jobs:
             echo "Push failed (attempt $attempts). Retrying in ${delay} seconds..."
             sleep ${delay}
           done
+
+  build-and-publish-long-runner:
+    name: Build runner Docker image (${{ matrix.platform }})
+    needs: [generate-tags, build]
+    if: github.repository_owner == 'Homebrew'
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+        include:
+          - platform: linux/amd64
+            platform_tag: linux-amd64
+            arch: x86_64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            platform_tag: linux-arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - env:
+          IMAGE_VALUE: ghcr.io/${{ github.repository_owner }}/runner
+        run: echo "IMAGE=${IMAGE_VALUE,,}" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Retrieve build attributes
+        id: attributes
+        env:
+          VERSION: 24.04
+          PUSH: ${{ needs.generate-tags.outputs.push }}
+        run: |
+          filter="$(printf '.["%s"]' "${VERSION}")"
+          echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
+
+      - name: Download long runner base image artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: long-runner-base-24.04-${{ matrix.arch }}
+          path: ${{ runner.temp }}/long-runner-base
+
+      - name: Load long runner base image
+        id: base_image
+        run: |
+          artifact_dir="${{ runner.temp }}/long-runner-base"
+          image_archive="${artifact_dir}/image-24.04-${ARCH}.tar.gz"
+          [[ -f "${image_archive}" ]] || {
+            echo "Missing brew image archive: ${image_archive}" >&2
+            exit 1
+          }
+          base_image="long-runner-base:24.04-${ARCH}"
+          gunzip --stdout "${image_archive}" | docker load
+          docker image inspect "${base_image}" >/dev/null
+          echo "image=${base_image}" >> "$GITHUB_OUTPUT"
+        env:
+          ARCH: ${{ matrix.arch }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+        with:
+          # Use the local Docker daemon so Buildx can resolve
+          # the base image loaded from the artifact tarball.
+          driver: docker
+
+      - name: Build ${{ matrix.platform }} runner Docker image
+        id: runner_build
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: .github/scripts/Dockerfile.long_runner
+          platforms: ${{ matrix.platform }}
+          build-args: HOMEBREW_BREW_IMAGE=${{ steps.base_image.outputs.image }}
+          tags: runner:build-${{ matrix.platform_tag }}
+
+      - name: Verify AWS deployment secrets
+        if: fromJSON(steps.attributes.outputs.push)
+        shell: bash
+        env:
+          AWS_PROJECT_ID: ${{ secrets.AWS_PROJECT_ID }}
+        run: |
+          missing=()
+          [ -z "$AWS_PROJECT_ID" ] && missing+=("AWS_PROJECT_ID")
+          if [ "${#missing[@]}" -ne 0 ]; then
+            printf 'Missing required deployment secrets: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+      - name: Configure AWS Credentials
+        if: fromJSON(steps.attributes.outputs.push)
+        id: aws_registry_credentials
+        uses: aws-actions/configure-aws-credentials@517a711dbcd0e402f90c77e7e2f81e849156e31d # v6.2.2
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_PROJECT_ID }}:role/GithubActionsRoleECRPush
+          aws-region: us-east-1
+
+      - name: AWS Elastic Container Registry Login
+        if: fromJSON(steps.attributes.outputs.push)
+        id: aws_registry_login
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
+
+      - name: Generate AWS image name
+        id: aws_image
+        env:
+          AWS_REGISTRY: ${{ steps.aws_registry_login.outputs.registry }}
+          LONG_RUNNER_IMAGE_DIGEST: ${{ steps.runner_build.outputs.digest }}
+        run: |
+          digest_without_prefix="${LONG_RUNNER_IMAGE_DIGEST#sha256:}"
+          [[ -n "${digest_without_prefix}" ]] || {
+            echo "Missing long runner image digest from build output" >&2
+            exit 1
+          }
+          echo "image=${AWS_REGISTRY}/runner-ecr:${digest_without_prefix}-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image_latest=${AWS_REGISTRY}/runner-ecr:latest" >> "$GITHUB_OUTPUT"
+
+      - name: Push image to AWS Elastic Container Registry
+        if: fromJSON(steps.attributes.outputs.push)
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: .github/scripts/Dockerfile.long_runner
+          platforms: ${{ matrix.platform }}
+          build-args: HOMEBREW_BREW_IMAGE=${{ steps.base_image.outputs.image }}
+          push: true
+          tags: |
+            ${{ steps.aws_image.outputs.image }}
+            ${{ steps.aws_image.outputs.image_latest }}
