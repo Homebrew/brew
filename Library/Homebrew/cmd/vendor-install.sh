@@ -48,7 +48,20 @@ set_ruby_variables() {
     ruby_URLs=()
     if [[ -n "${HOMEBREW_ARTIFACT_DOMAIN}" ]]
     then
-      ruby_URLs+=("${HOMEBREW_ARTIFACT_DOMAIN}/v2/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}")
+      # An artifact domain with a path (e.g. a Harbor proxy cache for ghcr.io)
+      # is an OCI registry where that path is a repository prefix: the OCI
+      # Distribution API requires /v2/ at the root of the host, so the path
+      # must be inserted after /v2/ rather than prepended to it.
+      # Keep this in sync with the HOMEBREW_ARTIFACT_DOMAIN handling in
+      # Library/Homebrew/download_strategy/curl_download_strategy.rb.
+      local artifact_domain="${HOMEBREW_ARTIFACT_DOMAIN%/}"
+      if [[ "${artifact_domain}" =~ ^(https?://[^/]+)/(.+)$ ]]
+      then
+        artifact_domain="${BASH_REMATCH[1]}/v2/${BASH_REMATCH[2]}"
+      else
+        artifact_domain="${artifact_domain}/v2"
+      fi
+      ruby_URLs+=("${artifact_domain}/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}")
       if [[ -n "${HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK}" ]]
       then
         ruby_URL="${ruby_URLs[0]}"
