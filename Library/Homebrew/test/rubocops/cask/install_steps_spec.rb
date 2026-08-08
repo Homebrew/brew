@@ -92,8 +92,6 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
           touch "foo/state"
           touch "#{token}/state"
           move "source", "target"
-          mv "source", "target"
-          move_children "source", "target"
           move_contents "source", "target"
           inreplace "foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"
           symlink "source", "target", source_base: :relative, overwrite: true, remove_on_uninstall: true
@@ -115,6 +113,84 @@ RSpec.describe RuboCop::Cop::Cask::InstallSteps, :config do
               write_file "foo.conf", "key = value\n"
             end
           end
+        end
+      end
+    CASK
+  end
+
+  it "autocorrects legacy install step names" do
+    expect_offense <<~CASK
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        preflight_steps do
+          mkdir "foo"
+          ^^^^^ Use `mkdir_p` instead of legacy install step `mkdir`.
+          mv "source", "target"
+          ^^ Use `move` instead of legacy install step `mv`.
+          move_children "source", "target"
+          ^^^^^^^^^^^^^ Use `move_contents` instead of legacy install step `move_children`.
+          ln_s "source", "target"
+          ^^^^ Use `symlink` instead of legacy install step `ln_s`.
+          ln_sf "source", "target"
+          ^^^^^ Use `symlink` instead of legacy install step `ln_sf`.
+          write "foo.conf", "content"
+          ^^^^^ Use `write_file` instead of legacy install step `write`.
+          write "banner", <<~TEXT
+          ^^^^^ Use `write_file` instead of legacy install step `write`.
+            banner
+          TEXT
+          delete_keychain_certificate "Charles", matching_certificate: "certificate.pem"
+                                                 ^^^^^^^^^^^^^^^^^^^^ Use `fingerprint_of:` instead of legacy install step keyword `matching_certificate:`.
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ Use `delete_keychain_certificates` instead of legacy install step `delete_keychain_certificate`.
+        end
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        preflight_steps do
+          mkdir_p "foo"
+          move "source", "target"
+          move_contents "source", "target"
+          symlink "source", "target"
+          symlink "source", "target", overwrite: true
+          write_file "foo.conf", "content", overwrite: false, append_newline: true
+          write_file "banner", <<~TEXT, overwrite: false, append_newline: true
+            banner
+          TEXT
+          delete_keychain_certificates "Charles", fingerprint_of: "certificate.pem"
+        end
+      end
+    CASK
+  end
+
+  it "autocorrects legacy install step keywords" do
+    expect_offense <<~CASK
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        preflight_steps do
+          delete_keychain_certificates "Charles",
+                                       matching_certificate: "certificate.pem"
+                                       ^^^^^^^^^^^^^^^^^^^^ Use `fingerprint_of:` instead of legacy install step keyword `matching_certificate:`.
+        end
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        version :latest
+        sha256 :no_check
+
+        preflight_steps do
+          delete_keychain_certificates "Charles",
+                                       fingerprint_of: "certificate.pem"
         end
       end
     CASK

@@ -76,6 +76,7 @@ module RuboCop
             next unless stanza.method_node.block_type?
 
             block_node = T.cast(stanza.method_node, RuboCop::AST::BlockNode)
+            add_compatibility_step_offenses(block_node, allowed_methods: CASK_ALLOWED_STEP_METHODS)
             if (offense_node = brew_ruby_step_node(block_node))
               add_offense(offense_node, message: BREW_RUBY_STEP_MSG)
               next

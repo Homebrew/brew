@@ -613,7 +613,6 @@ module Homebrew
         boolean:     :set,
       },
       HOMEBREW_NO_SANDBOX_CASK:                  {
-        # odeprecated: make cask executable sandboxing mandatory in a future release.
         description: "If set, disable sandboxing for cask artifacts that generate files by running " \
                      "executables.",
         boolean:     true,

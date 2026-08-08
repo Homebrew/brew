@@ -12,9 +12,7 @@ module RuboCop
         extend AutoCorrector
         include InstallStepsHelper
 
-        # TODO: Re-enable when formula `post_install` and `post_install_steps`
-        # cannot coexist after the incremental conversion bridge is removed.
-        # CONFLICT_MSG = "`post_install` and `post_install_steps` cannot both be used."
+        CONFLICT_MSG = "`post_install` and `post_install_steps` cannot both be used."
         LEGACY_POST_INSTALL_MSG =
           "Formulae in official Homebrew taps must use `post_install_steps` instead of `post_install`."
         REDUNDANT_SERVICE_PATH_DIRS_MSG = "`%<block>s` only creates directories created by `brew services`."
@@ -91,13 +89,10 @@ module RuboCop
           post_install_steps_block = find_block(body_node, :post_install_steps)
           post_install_method = find_method_def(body_node, :post_install)
 
-          # TODO: Re-enable when formula `post_install` and
-          # `post_install_steps` cannot coexist after the incremental
-          # conversion bridge is removed.
-          # if post_install_steps_block && post_install_method
-          #   offending_node(post_install_steps_block)
-          #   problem CONFLICT_MSG
-          # end
+          if post_install_steps_block && post_install_method
+            offending_node(post_install_steps_block)
+            problem CONFLICT_MSG
+          end
 
           redundant_post_install_steps = post_install_steps_block.present? &&
                                          redundant_service_path_dirs_block?(post_install_steps_block,
@@ -125,6 +120,8 @@ module RuboCop
         sig { params(block_node: T.nilable(RuboCop::AST::BlockNode)).void }
         def audit_step_block(block_node)
           return if block_node.nil?
+
+          add_compatibility_step_offenses(block_node)
 
           if (offense_node = brew_ruby_step_node(block_node))
             offending_node(offense_node)

@@ -646,7 +646,7 @@ Relative paths default to `staged_path` for `base:`, `source_base:` and `target_
 * `remove`: remove one or more paths; example: `remove ["Shared/old", "Shared/*.bak"], recursive: true`.
 * `inreplace`: replace a string or regular expression in a file; example: `inreplace "Shared/foo.conf", "@PREFIX@", "{{HOMEBREW_PREFIX}}"`.
 * `symlink`: create a symlink; example: `symlink "Shared/payload", "Payload", source_base: :relative`.
-* `write_file`: atomically write exact literal content, replacing an existing file; example: `write_file "Shared/foo.conf", "key = value\n"`.
+* `write_file`: atomically write literal content, replacing an existing file by default; pass `append_newline: true` to ensure a trailing newline or `overwrite: false` to preserve it; example: `write_file "Shared/foo.conf", "key = value\n"`.
 * `delete_keychain_certificates`: delete macOS keychain certificates whose common name matches the argument; example: `delete_keychain_certificates "Charles"`. Pass `fingerprint_of:` with a local certificate path to delete only the matching SHA-256 fingerprint; example:
   `delete_keychain_certificates "NodeMITMProxyCA", fingerprint_of: "~/Library/Application Support/betwixt/ssl/certs/ca.pem"`.
 * `set_permissions`: recursively change existing path permissions with `chmod`; example: `set_permissions "Shared/payload", "0755"`.

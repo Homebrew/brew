@@ -509,16 +509,19 @@ module Homebrew
 
       sig {
         params(
-          path:    ::T.any(::String, ::Pathname),
-          content: ::String,
-          base:    ::T.nilable(::T.any(::String, ::Symbol)),
+          path:           ::T.any(::String, ::Pathname),
+          content:        ::String,
+          base:           ::T.nilable(::T.any(::String, ::Symbol)),
+          overwrite:      ::T::Boolean,
+          append_newline: ::T::Boolean,
         ).void
       }
-      def write_file(path, content, base: nil)
+      def write_file(path, content, base: nil, overwrite: true, append_newline: false)
+        content = "#{content}\n" if append_newline && !content.end_with?("\n")
         add_step("write",
                  "path"      => path_spec(path, base:, default_base: @default_base),
                  "content"   => content,
-                 "overwrite" => true)
+                 "overwrite" => (true if overwrite))
       end
 
       sig {
@@ -550,6 +553,11 @@ module Homebrew
       # odeprecated
       sig { void }
       def gio_querymodules
+        add_rebuild_action("gio_querymodules", "lib/gio/modules")
+      end
+
+      sig { void }
+      def update_gio_modules_cache
         add_rebuild_action("gio_querymodules", "lib/gio/modules")
       end
 

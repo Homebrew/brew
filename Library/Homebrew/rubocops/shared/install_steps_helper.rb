@@ -13,8 +13,8 @@ module RuboCop
       CONFIG_WRITE_STEP_METHODS = [:write, :write_file].freeze
       SERVICE_DATA_STEP_METHODS = [:init_data_dir].freeze
       REBUILD_ACTION_STEP_METHODS =
-        [:compile_gsettings_schemas, :gio_querymodules, :gdk_pixbuf_query_loaders, :update_gdk_pixbuf_loaders_cache,
-         :gtk_update_icon_cache, :update_gtk_icon_cache,
+        [:compile_gsettings_schemas, :gio_querymodules, :update_gio_modules_cache, :gdk_pixbuf_query_loaders,
+         :update_gdk_pixbuf_loaders_cache, :gtk_update_icon_cache, :update_gtk_icon_cache,
          :update_mime_database, :update_desktop_database].freeze
       KEYCHAIN_STEP_METHODS = [:delete_keychain_certificate, :delete_keychain_certificates].freeze
       PERMISSION_STEP_METHODS = [:set_permissions, :set_ownership].freeze
@@ -25,10 +25,36 @@ module RuboCop
         [:configure_gcc_runtime, :install_gzipped_executable, :configure_glibc_runtime,
          :configure_clang_system, :configure_php, :bootstrap_cpython, :bootstrap_pypy].freeze
       STEP_SCOPE_METHODS = [:if_path_exists, :unless_path_exists, :on_macos, :on_linux].freeze
-      # odeprecated
-      COMPATIBILITY_STEP_METHODS =
-        [:mkdir, :mv, :move_children, :ln_s, :ln_sf, :link_dir, :link_children, :write, :gio_querymodules,
-         :gdk_pixbuf_query_loaders, :gtk_update_icon_cache, :delete_keychain_certificate].freeze
+      COMPATIBILITY_STEP_METHOD_REPLACEMENTS = T.let(
+        {
+          mkdir:                       :mkdir_p,
+          mv:                          :move,
+          move_children:               :move_contents,
+          ln_s:                        :symlink,
+          ln_sf:                       :symlink,
+          link_dir:                    :symlink_tree,
+          link_children:               :symlink_children,
+          write:                       :write_file,
+          gio_querymodules:            :update_gio_modules_cache,
+          gdk_pixbuf_query_loaders:    :update_gdk_pixbuf_loaders_cache,
+          gtk_update_icon_cache:       :update_gtk_icon_cache,
+          delete_keychain_certificate: :delete_keychain_certificates,
+        }.freeze,
+        T::Hash[Symbol, Symbol],
+      )
+      COMPATIBILITY_STEP_METHODS = T.let(COMPATIBILITY_STEP_METHOD_REPLACEMENTS.keys.freeze, T::Array[Symbol])
+      COMPATIBILITY_STEP_KEYWORD_REPLACEMENTS = T.let(
+        {
+          move:                         { force: :overwrite }.freeze,
+          mv:                           { force: :overwrite }.freeze,
+          symlink:                      { force: :overwrite, uninstall: :remove_on_uninstall }.freeze,
+          ln_s:                         { force: :overwrite, uninstall: :remove_on_uninstall }.freeze,
+          ln_sf:                        { uninstall: :remove_on_uninstall }.freeze,
+          delete_keychain_certificate:  { matching_certificate: :fingerprint_of }.freeze,
+          delete_keychain_certificates: { matching_certificate: :fingerprint_of }.freeze,
+        }.freeze,
+        T::Hash[Symbol, T::Hash[Symbol, Symbol]],
+      )
       ALLOWED_STEP_METHODS = T.let(
         [*FILE_PREPARATION_STEP_METHODS, *LINK_STEP_METHODS, *CONFIG_WRITE_STEP_METHODS, *SERVICE_DATA_STEP_METHODS,
          *REBUILD_ACTION_STEP_METHODS, :set_permissions, *COMMAND_STEP_METHODS, *NOTICE_STEP_METHODS,
@@ -52,6 +78,8 @@ module RuboCop
         String,
       )
       BREW_RUBY_STEP_MSG = "Install steps must not use `brew ruby` because it enables developer mode."
+      LEGACY_STEP_METHOD_MSG = "Use `%<replacement>s` instead of legacy install step `%<method>s`."
+      LEGACY_STEP_KEYWORD_MSG = "Use `%<replacement>s:` instead of legacy install step keyword `%<keyword>s:`."
       SIMPLE_STEP_CONVERSION_MSG = "Use `%<steps_block>s` for simple file preparation."
       REBUILD_ACTION_STEP_LINES = T.let(
         T.let([
@@ -93,6 +121,29 @@ module RuboCop
       def step_block_msg(allowed_methods)
         "Steps blocks may only contain install step DSL calls. Prefer canonical calls: " \
           "#{(allowed_methods - COMPATIBILITY_STEP_METHODS).map { |method| "`#{method}`" }.join(", ")}."
+      end
+
+      sig {
+        params(
+          block_node:      RuboCop::AST::BlockNode,
+          allowed_methods: T::Array[Symbol],
+        ).void
+      }
+      def add_compatibility_step_offenses(block_node, allowed_methods: ALLOWED_STEP_METHODS)
+        block_node.each_descendant(:send) do |node|
+          send_node = T.cast(node, RuboCop::AST::SendNode)
+          method = send_node.method_name
+          next if send_node.receiver || !allowed_methods.include?(method)
+
+          if (replacement = COMPATIBILITY_STEP_METHOD_REPLACEMENTS[method])
+            add_offense(send_node.loc.selector,
+                        message: Kernel.format(LEGACY_STEP_METHOD_MSG, method:, replacement:)) do |corrector|
+              corrector.replace(send_node.loc.selector, replacement.to_s)
+              add_compatibility_step_method_corrections(corrector, send_node)
+            end
+          end
+          add_compatibility_step_keyword_offenses(send_node)
+        end
       end
 
       class InstallStepPath < T::Struct
@@ -210,6 +261,114 @@ module RuboCop
       end
 
       private
+
+      sig { params(send_node: RuboCop::AST::SendNode).void }
+      def add_compatibility_step_keyword_offenses(send_node)
+        replacements = COMPATIBILITY_STEP_KEYWORD_REPLACEMENTS[send_node.method_name]
+        return if replacements.nil?
+
+        options = send_node.last_argument
+        return unless options&.hash_type?
+
+        options = T.cast(options, RuboCop::AST::HashNode)
+        options.pairs.each do |pair|
+          next unless pair.key.sym_type?
+          next unless (replacement = replacements[pair.key.value])
+
+          message = Kernel.format(LEGACY_STEP_KEYWORD_MSG, keyword: pair.key.value, replacement:)
+          add_offense(pair.key.source_range, message:) do |corrector|
+            correct_compatibility_step_keyword(corrector, send_node, options, pair, replacement)
+          end
+        end
+      end
+
+      sig {
+        params(
+          corrector:   RuboCop::Cop::Corrector,
+          send_node:   RuboCop::AST::SendNode,
+          options:     RuboCop::AST::HashNode,
+          legacy_pair: RuboCop::AST::PairNode,
+          replacement: Symbol,
+        ).void
+      }
+      def correct_compatibility_step_keyword(corrector, send_node, options, legacy_pair, replacement)
+        if replacement == :fingerprint_of
+          corrector.replace(legacy_pair.key.source_range, replacement.to_s)
+          return
+        end
+        return if !legacy_pair.value.true_type? && !legacy_pair.value.false_type?
+
+        canonical_pair = options.pairs.find do |pair|
+          pair != legacy_pair && pair.key.sym_type? && pair.key.value == replacement
+        end
+        if legacy_pair.value.true_type? && canonical_pair.nil?
+          corrector.replace(legacy_pair.key.source_range, replacement.to_s)
+          return
+        end
+
+        if legacy_pair.value.true_type? && canonical_pair && !canonical_pair.value.true_type?
+          corrector.replace(canonical_pair.value.source_range, "true")
+        end
+        pairs = options.pairs
+        index = pairs.index(legacy_pair)
+        return if index.nil?
+
+        range = if (next_pair = pairs[index + 1])
+          legacy_pair.source_range.begin.join(next_pair.source_range.begin)
+        elsif (previous_pair = pairs[index - 1]) && index.positive?
+          previous_pair.source_range.end.join(legacy_pair.source_range.end)
+        else
+          send_node.arguments.fetch(-2).source_range.end.join(legacy_pair.source_range.end)
+        end
+        corrector.remove(range)
+      end
+
+      sig {
+        params(
+          corrector: RuboCop::Cop::Corrector,
+          send_node: RuboCop::AST::SendNode,
+        ).void
+      }
+      def add_compatibility_step_method_corrections(corrector, send_node)
+        case send_node.method_name
+        when :ln_sf
+          add_step_keyword(corrector, send_node, "overwrite: true")
+        when :write
+          options = send_node.last_argument
+          overwrite = options&.hash_type? && T.cast(options, RuboCop::AST::HashNode).pairs.any? do |pair|
+            pair.key.sym_type? && pair.key.value == :overwrite
+          end
+          keyword = "append_newline: true"
+          keyword = "overwrite: false, #{keyword}" unless overwrite
+          add_step_keyword(corrector, send_node, keyword)
+        end
+      end
+
+      sig {
+        params(
+          corrector: RuboCop::Cop::Corrector,
+          send_node: RuboCop::AST::SendNode,
+          keyword:   String,
+        ).void
+      }
+      def add_step_keyword(corrector, send_node, keyword)
+        options = send_node.last_argument
+        if options&.hash_type?
+          options = T.cast(options, RuboCop::AST::HashNode)
+          if (pair = options.pairs.last)
+            corrector.insert_after(pair.source_range, ", #{keyword}")
+          else
+            corrector.replace(options, keyword)
+          end
+        elsif (argument = send_node.last_argument)
+          range = if argument.loc.respond_to?(:heredoc_end) && argument.loc.heredoc_end
+            argument.loc.expression
+          else
+            argument.source_range
+          end
+          corrector.insert_after(range, ", #{keyword}")
+        end
+      end
 
       sig {
         params(

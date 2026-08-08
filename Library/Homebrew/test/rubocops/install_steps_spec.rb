@@ -13,12 +13,13 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
     )
   end
 
-  it "allows `post_install` and `post_install_steps` in third-party taps during incremental conversion" do
-    expect_no_offenses(<<~RUBY, "/Taps/example/homebrew-core/Formula/f/foo.rb")
+  it "rejects `post_install` and `post_install_steps` in third-party taps" do
+    expect_offense(<<~RUBY, "/Taps/example/homebrew-core/Formula/f/foo.rb")
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
+        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: `post_install` and `post_install_steps` cannot both be used.
           touch "foo/state", base: :var
         end
 
@@ -27,12 +28,13 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
     RUBY
   end
 
-  it "rejects `post_install` in official Homebrew taps" do
+  it "rejects `post_install` and `post_install_steps` in official Homebrew taps" do
     expect_offense(<<~RUBY, "/Taps/homebrew/homebrew-example/Formula/f/foo.rb")
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
+        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: `post_install` and `post_install_steps` cannot both be used.
           touch "foo/state", base: :var
         end
 
@@ -42,14 +44,15 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
     RUBY
   end
 
-  it "leaves `post_install_steps` ordering to `ComponentsOrder`" do
-    expect_no_offenses(<<~RUBY)
+  it "rejects coexistence regardless of component order" do
+    expect_offense(<<~RUBY)
       class Foo < Formula
         url "https://brew.sh/foo-1.0.tgz"
 
         def post_install; end
 
         post_install_steps do
+        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: `post_install` and `post_install_steps` cannot both be used.
           touch "foo/state", base: :var
         end
       end
@@ -64,8 +67,8 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         post_install_steps do
           mkdir_p "log/foo"
           ^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Formula install-step paths must specify their base explicitly.
-          write "foo/state", "ready"
-          ^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Formula install-step paths must specify their base explicitly.
+          write_file "foo/state", "ready"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Formula install-step paths must specify their base explicitly.
           init_data_dir "foo", using: :postgresql_initdb
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Formula install-step paths must specify their base explicitly.
           if_path_exists "foo/state" do
@@ -85,7 +88,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           mkdir_p "log/foo", base: :var
-          write "foo/state", "ready", base: :var
+          write_file "foo/state", "ready", base: :var
           init_data_dir "foo", using: :postgresql_initdb, base: :var
           if_path_exists "foo/state", base: :var do
             touch "foo/checked", base: :var
@@ -128,7 +131,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
           mkdir_p "log/foo", base: :var
           touch "{{var}}/foo/state"
           if_path_exists "/etc/foo.conf" do
-            write "foo.conf", "ready", base: :etc
+            write_file "foo.conf", "ready", base: :etc
           end
           run "foo", base: :bin, chdir: "{{libexec}}/foo"
         end
@@ -143,7 +146,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           system "true"
-          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls. Prefer canonical calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `symlink_tree`, `symlink_children`, `write_file`, `init_data_dir`, `compile_gsettings_schemas`, `update_gdk_pixbuf_loaders_cache`, `update_gtk_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn`, `change_dylib_id`, `configure_gcc_runtime`, `install_gzipped_executable`, `configure_glibc_runtime`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
+          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls. Prefer canonical calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `symlink_tree`, `symlink_children`, `write_file`, `init_data_dir`, `compile_gsettings_schemas`, `update_gio_modules_cache`, `update_gdk_pixbuf_loaders_cache`, `update_gtk_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn`, `change_dylib_id`, `configure_gcc_runtime`, `install_gzipped_executable`, `configure_glibc_runtime`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
         end
       end
     RUBY
@@ -199,8 +202,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
           symlink_tree "source", "#{formula_name}"
           symlink_children "source", suffix: "-#{version.major}"
           compile_gsettings_schemas
-          gio_querymodules
-          gdk_pixbuf_query_loaders
+          update_gio_modules_cache
           update_gdk_pixbuf_loaders_cache
           update_gtk_icon_cache
           update_mime_database
@@ -220,6 +222,118 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
     RUBY
   end
 
+  it "autocorrects legacy install step names" do
+    expect_offense(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        post_install_steps do
+          mkdir "foo", base: :var
+          ^^^^^ FormulaAudit/InstallSteps: Use `mkdir_p` instead of legacy install step `mkdir`.
+          mv "source", "target",
+          ^^ FormulaAudit/InstallSteps: Use `move` instead of legacy install step `mv`.
+             force: true
+             ^^^^^ FormulaAudit/InstallSteps: Use `overwrite:` instead of legacy install step keyword `force:`.
+          move_children "source", "target"
+          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Use `move_contents` instead of legacy install step `move_children`.
+          ln_s "source", "target"
+          ^^^^ FormulaAudit/InstallSteps: Use `symlink` instead of legacy install step `ln_s`.
+          ln_sf "source", "target",
+          ^^^^^ FormulaAudit/InstallSteps: Use `symlink` instead of legacy install step `ln_sf`.
+                uninstall: true
+                ^^^^^^^^^ FormulaAudit/InstallSteps: Use `remove_on_uninstall:` instead of legacy install step keyword `uninstall:`.
+          link_dir "source", "target"
+          ^^^^^^^^ FormulaAudit/InstallSteps: Use `symlink_tree` instead of legacy install step `link_dir`.
+          link_children "source", "target"
+          ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Use `symlink_children` instead of legacy install step `link_children`.
+          write "foo.conf", "content", base: :var
+          ^^^^^ FormulaAudit/InstallSteps: Use `write_file` instead of legacy install step `write`.
+          gio_querymodules
+          ^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Use `update_gio_modules_cache` instead of legacy install step `gio_querymodules`.
+          gdk_pixbuf_query_loaders
+          ^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Use `update_gdk_pixbuf_loaders_cache` instead of legacy install step `gdk_pixbuf_query_loaders`.
+          gtk_update_icon_cache
+          ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Use `update_gtk_icon_cache` instead of legacy install step `gtk_update_icon_cache`.
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        post_install_steps do
+          mkdir_p "foo", base: :var
+          move "source", "target",
+             overwrite: true
+          move_contents "source", "target"
+          symlink "source", "target"
+          symlink "source", "target",
+                remove_on_uninstall: true, overwrite: true
+          symlink_tree "source", "target"
+          symlink_children "source", "target"
+          write_file "foo.conf", "content", base: :var, overwrite: false, append_newline: true
+          update_gio_modules_cache
+          update_gdk_pixbuf_loaders_cache
+          update_gtk_icon_cache
+        end
+      end
+    RUBY
+  end
+
+  it "autocorrects legacy install step keywords" do
+    expect_offense(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        post_install_steps do
+          move "source", "target",
+               force: true
+               ^^^^^ FormulaAudit/InstallSteps: Use `overwrite:` instead of legacy install step keyword `force:`.
+          symlink "source", "target",
+                  force: true,
+                  ^^^^^ FormulaAudit/InstallSteps: Use `overwrite:` instead of legacy install step keyword `force:`.
+                  uninstall: true
+                  ^^^^^^^^^ FormulaAudit/InstallSteps: Use `remove_on_uninstall:` instead of legacy install step keyword `uninstall:`.
+          move "redundant", "false",
+               force: false
+               ^^^^^ FormulaAudit/InstallSteps: Use `overwrite:` instead of legacy install step keyword `force:`.
+          move "combined", "options",
+               force: true,
+               ^^^^^ FormulaAudit/InstallSteps: Use `overwrite:` instead of legacy install step keyword `force:`.
+               overwrite: false
+          symlink "combined", "options",
+                  force: true,
+                  ^^^^^ FormulaAudit/InstallSteps: Use `overwrite:` instead of legacy install step keyword `force:`.
+                  overwrite: false,
+                  uninstall: true,
+                  ^^^^^^^^^ FormulaAudit/InstallSteps: Use `remove_on_uninstall:` instead of legacy install step keyword `uninstall:`.
+                  remove_on_uninstall: false
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        post_install_steps do
+          move "source", "target",
+               overwrite: true
+          symlink "source", "target",
+                  overwrite: true,
+                  remove_on_uninstall: true
+          move "redundant", "false"
+          move "combined", "options",
+               overwrite: true
+          symlink "combined", "options",
+                  overwrite: true,
+                  remove_on_uninstall: true
+        end
+      end
+    RUBY
+  end
+
   it "reports an offense when a scope contains Ruby code" do
     expect_offense(<<~RUBY)
       class Foo < Formula
@@ -228,7 +342,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         post_install_steps do
           on_macos do
             system "true"
-            ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls. Prefer canonical calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `symlink_tree`, `symlink_children`, `write_file`, `init_data_dir`, `compile_gsettings_schemas`, `update_gdk_pixbuf_loaders_cache`, `update_gtk_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn`, `change_dylib_id`, `configure_gcc_runtime`, `install_gzipped_executable`, `configure_glibc_runtime`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
+            ^^^^^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls. Prefer canonical calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `symlink_tree`, `symlink_children`, `write_file`, `init_data_dir`, `compile_gsettings_schemas`, `update_gio_modules_cache`, `update_gdk_pixbuf_loaders_cache`, `update_gtk_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn`, `change_dylib_id`, `configure_gcc_runtime`, `install_gzipped_executable`, `configure_glibc_runtime`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
           end
         end
       end
@@ -242,7 +356,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
 
         post_install_steps do
           write_file "foo.conf", "prefix = #{prefix}", base: :var
-                                           ^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls. Prefer canonical calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `symlink_tree`, `symlink_children`, `write_file`, `init_data_dir`, `compile_gsettings_schemas`, `update_gdk_pixbuf_loaders_cache`, `update_gtk_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn`, `change_dylib_id`, `configure_gcc_runtime`, `install_gzipped_executable`, `configure_glibc_runtime`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
+                                           ^^^^^^^^^ FormulaAudit/InstallSteps: Steps blocks may only contain install step DSL calls. Prefer canonical calls: `mkdir_p`, `touch`, `move`, `move_contents`, `copy`, `remove`, `inreplace`, `symlink`, `symlink_tree`, `symlink_children`, `write_file`, `init_data_dir`, `compile_gsettings_schemas`, `update_gio_modules_cache`, `update_gdk_pixbuf_loaders_cache`, `update_gtk_icon_cache`, `update_mime_database`, `update_desktop_database`, `set_permissions`, `run`, `terminate_process`, `warn`, `change_dylib_id`, `configure_gcc_runtime`, `install_gzipped_executable`, `configure_glibc_runtime`, `configure_clang_system`, `configure_php`, `bootstrap_cpython`, `bootstrap_pypy`, `if_path_exists`, `unless_path_exists`, `on_macos`, `on_linux`.
         end
       end
     RUBY
@@ -366,6 +480,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::InstallSteps do
         url "https://brew.sh/foo-1.0.tgz"
 
         post_install_steps do
+        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/InstallSteps: `post_install` and `post_install_steps` cannot both be used.
           touch "postgresql/state", base: :var
         end
 

@@ -349,6 +349,20 @@ RSpec.describe Homebrew::InstallSteps do
     expect([(root/"var/config/example.conf").read, (root/"var/empty").read]).to eq(["replacement", ""])
   end
 
+  specify "can append a newline without replacing existing files" do
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
+      write_file "existing", "replacement", overwrite: false, append_newline: true
+      write_file "missing", "new", overwrite: false, append_newline: true
+    end
+
+    (root/"var").mkpath
+    (root/"var/existing").write "original\n"
+
+    Homebrew::InstallSteps::Runner.new(context:).run(steps)
+
+    expect([(root/"var/existing").read, (root/"var/missing").read]).to eq(["original\n", "new\n"])
+  end
+
   specify "preserves meaningful blank values" do
     steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
       inreplace "remove.txt", "remove", ""
@@ -904,7 +918,7 @@ RSpec.describe Homebrew::InstallSteps do
     end
     steps = Homebrew::InstallSteps::DSL.build do
       compile_gsettings_schemas
-      gio_querymodules
+      update_gio_modules_cache
       update_gdk_pixbuf_loaders_cache
       update_mime_database
       update_desktop_database
