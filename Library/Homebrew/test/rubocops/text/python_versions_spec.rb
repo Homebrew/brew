@@ -220,5 +220,75 @@ RSpec.describe RuboCop::Cop::FormulaAudit::PythonVersions do
         end
       RUBY
     end
+
+    it "reports and corrects hardcoded `python = \"pythonX.Y\"` assignments" do
+      expect_offense(<<~'RUBY')
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = "python3.12"
+                     ^^^^^^^^^^^^ FormulaAudit/PythonVersions: `python = "pythonX.Y"` should use dynamic version detection: `python = "python#{python_major_minor(libexec/"bin/python)")}"`
+          end
+        end
+      RUBY
+
+      expect_correction(<<~'RUBY')
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = "python#{python_major_minor(libexec/"bin/python)")}"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for dynamic python assignments" do
+      expect_no_offenses(<<~'RUBY')
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = "python#{python_major_minor(libexec/"bin/python)")}"
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects hardcoded `python3 = \"pythonX.Y\"` assignments" do
+      expect_offense(<<~'RUBY')
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python3 = "python3.12"
+                      ^^^^^^^^^^^^ FormulaAudit/PythonVersions: `python = "pythonX.Y"` should use dynamic version detection: `python = "python#{python_major_minor(libexec/"bin/python)")}"`
+          end
+        end
+      RUBY
+
+      expect_correction(<<~'RUBY')
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python3 = "python#{python_major_minor(libexec/"bin/python)")}"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for hardcoded python version assigned to non-python local" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            interpreter = "python3.14"
+          end
+        end
+      RUBY
+    end
   end
 end
