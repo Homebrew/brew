@@ -37,11 +37,13 @@ RSpec.describe Homebrew::Cmd::Update do
 
   it "retries a failed conditional API download without the time condition" do
     cache_path = test_root/"cache/api/formula.jws.json"
+    last_checked_path = Pathname("#{cache_path}.last_checked")
     requests_file = test_root/"requests.txt"
     update_failed_file = test_root/"update_failed.txt"
     setup_update_utils
     cache_path.dirname.mkpath
     cache_path.write "cached"
+    FileUtils.touch last_checked_path
 
     _stdout, stderr, status = run_update_shell(
       <<~SH,
@@ -72,6 +74,40 @@ RSpec.describe Homebrew::Cmd::Update do
     expect([status.success?, stderr, requests_file.read, cache_path.read, update_failed_file.exist?]).to eq(
       [true, "", "conditional\nunconditional\n", "fresh", false],
     )
+  end
+
+  it "keeps the API response mtime when a conditional download succeeds" do
+    cache_path = test_root/"cache/api/formula.jws.json"
+    last_checked_path = Pathname("#{cache_path}.last_checked")
+    update_failed_file = test_root/"update_failed.txt"
+    response_mtime = Time.now - 7200
+    setup_update_utils
+    cache_path.dirname.mkpath
+    cache_path.write "cached"
+    FileUtils.touch cache_path, mtime: response_mtime
+    FileUtils.touch last_checked_path, mtime: response_mtime
+
+    _stdout, stderr, status = run_update_shell(
+      <<~SH,
+        source "#{update_script}"
+        curl() { :; }
+        fetch_api_file formula.jws.json "#{update_failed_file}"
+      SH
+      {
+        "HOMEBREW_API_DEFAULT_DOMAIN" => "https://formulae.example/api",
+        "HOMEBREW_API_DOMAIN"         => nil,
+        "HOMEBREW_CACHE"              => (test_root/"cache").to_s,
+        "HOMEBREW_CURL_SPEED_LIMIT"   => "100",
+        "HOMEBREW_CURL_SPEED_TIME"    => "5",
+        "HOMEBREW_LIBRARY"            => (test_root/"Library").to_s,
+        "HOMEBREW_USER_AGENT_CURL"    => "Homebrew/test",
+      },
+    )
+
+    expect([
+      status.success?, stderr, cache_path.mtime.to_i, last_checked_path.mtime > response_mtime,
+      update_failed_file.exist?
+    ]).to eq([true, "", response_mtime.to_i, true, false])
   end
 
   it "passes all arguments through to delegated upgrades" do
@@ -142,6 +178,56 @@ RSpec.describe Homebrew::Cmd::Update do
     expect(status.success?).to be true
     expect(stderr).to be_empty
     expect(args_file.read).to eq("update-report\n--auto-update\n")
+  end
+
+  it "removes obsolete API files and their last-checked sidecars" do
+    api_cache = test_root/"cache/api"
+    obsolete_api_files = %w[
+      formula.jws.json
+      cask.jws.json
+      formula_tap_migrations.jws.json
+      cask_tap_migrations.jws.json
+    ].flat_map { |name| [api_cache/name, api_cache/"#{name}.last_checked"] }
+    setup_update_utils
+    (test_root/"repository").mkpath
+    obsolete_api_files.each do |path|
+      path.dirname.mkpath
+      FileUtils.touch path
+    end
+
+    _stdout, stderr, status = run_update_shell(
+      <<~SH,
+        source "#{update_script}"
+        bottle_tag() { echo test; }
+        brew() { :; }
+        fetch_api_file() { :; }
+        git_init_if_necessary() { :; }
+        git() {
+          [[ "$1" == "--version" ]] && return 0
+          return 1
+        }
+        lock() { :; }
+        odie() { echo "Error: $*" >&2; exit 1; }
+        ohai() { :; }
+        onoe() { echo "Error: $*" >&2; }
+        safe_cd() { cd "$1" >/dev/null || exit 1; }
+        setup_ca_certificates() { :; }
+        setup_curl() { :; }
+        setup_git() { :; }
+        homebrew-update --auto-update
+      SH
+      {
+        "HOMEBREW_CACHE"      => (test_root/"cache").to_s,
+        "HOMEBREW_CELLAR"     => (test_root/"cellar").to_s,
+        "HOMEBREW_LIBRARY"    => (test_root/"Library").to_s,
+        "HOMEBREW_PREFIX"     => (test_root/"prefix").to_s,
+        "HOMEBREW_REPOSITORY" => (test_root/"repository").to_s,
+      },
+    )
+
+    expect([status.success?, stderr, obsolete_api_files.map(&:exist?)]).to eq(
+      [true, "", Array.new(obsolete_api_files.length, false)],
+    )
   end
 
   it "does not query redirected remote metadata for no-op tap updates" do

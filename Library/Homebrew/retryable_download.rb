@@ -81,8 +81,6 @@ module Homebrew
       json_download = downloadable.is_a?(API::JSONDownload)
       downloadable.verify_download_integrity(download) if verify_download_integrity && !json_download
 
-      FileUtils.touch(download, mtime: Time.now) if json_download
-
       download
     rescue DownloadError, ChecksumMismatchError, Resource::BottleManifest::Error => e
       tries_remaining = @tries - @try

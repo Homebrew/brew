@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "api"
+require "development_tools"
 require "openssl"
 
 RSpec.describe Homebrew::API do
@@ -93,11 +94,13 @@ RSpec.describe Homebrew::API do
       end.to raise_error(SystemExit)
     end
 
-    it "does not refresh the cache mtime when the download fails" do
+    it "does not refresh the last-checked mtime when the download fails" do
       target = cache_dir/"bar.json"
+      last_checked = Pathname("#{target}.last_checked")
       target.write json
       stale_mtime = Time.now - 7200
       FileUtils.touch(target, mtime: stale_mtime)
+      FileUtils.touch(last_checked, mtime: stale_mtime)
 
       allow(Utils::Curl).to receive(:curl_download).and_raise(ErrorDuringExecution.new(["curl"], status: 1))
 
@@ -109,14 +112,17 @@ RSpec.describe Homebrew::API do
         )
       end.to output(/update failed, falling back to cached version/).to_stderr
 
-      expect(target.mtime.to_i).to eq stale_mtime.to_i
+      expect([target.mtime.to_i, last_checked.mtime.to_i]).to eq([stale_mtime.to_i, stale_mtime.to_i])
     end
 
-    it "refreshes the cache mtime when a fallback to the default API domain succeeds" do
+    it "refreshes the last-checked mtime when a fallback to the default API domain succeeds" do
       target = cache_dir/"bar.json"
+      last_checked = Pathname("#{target}.last_checked")
       target.write json
       stale_mtime = Time.now - 7200
+      response_mtime = Time.now - 3600
       FileUtils.touch(target, mtime: stale_mtime)
+      FileUtils.touch(last_checked, mtime: stale_mtime)
 
       allow(Homebrew::EnvConfig).to receive(:api_domain).and_return("https://example.invalid/api")
 
@@ -126,6 +132,7 @@ RSpec.describe Homebrew::API do
         raise ErrorDuringExecution.new(["curl"], status: 1) if requested_urls.length == 1
 
         kwargs[:to].write json
+        FileUtils.touch(kwargs[:to], mtime: response_mtime)
       end
 
       described_class.fetch_json_api_file(
@@ -138,7 +145,80 @@ RSpec.describe Homebrew::API do
         "https://example.invalid/api/bar.json",
         "#{HOMEBREW_API_DEFAULT_DOMAIN}/bar.json",
       ])
-      expect(target.mtime.to_i).to be > stale_mtime.to_i
+      expect([target.mtime.to_i, last_checked.mtime > response_mtime]).to eq([response_mtime.to_i, true])
+    end
+
+    it "keeps the API response mtime when a conditional download succeeds" do
+      target = cache_dir/"bar.json"
+      last_checked = Pathname("#{target}.last_checked")
+      response_mtime = Time.now - 7200
+      target.write json
+      FileUtils.touch(target, mtime: response_mtime)
+      FileUtils.touch(last_checked, mtime: response_mtime)
+
+      expect(Utils::Curl).to receive(:curl_download).with(
+        "--time-cond", target.to_s, any_args,
+        hash_including(to: target)
+      )
+
+      described_class.fetch_json_api_file(
+        "bar.json",
+        target:,
+        stale_seconds: 3600,
+      )
+
+      expect([target.mtime.to_i, last_checked.mtime > response_mtime]).to eq([response_mtime.to_i, true])
+    end
+
+    it "unconditionally refreshes a cache without a last-checked file" do
+      target = cache_dir/"bar.json"
+      target.write json
+
+      expect(Utils::Curl).to receive(:curl_download) do |*args, **kwargs|
+        expect(args).not_to include("--time-cond")
+        expect(args.last).to eq("#{HOMEBREW_API_DEFAULT_DOMAIN}/bar.json")
+        expect(kwargs).to include(to: target)
+        kwargs[:to].write json
+      end
+
+      described_class.fetch_json_api_file(
+        "bar.json",
+        target:,
+        stale_seconds: 3600,
+      )
+
+      expect(Pathname("#{target}.last_checked")).to exist
+    end
+
+    it "does not conditionally reuse a cache for an insecure download" do
+      target = cache_dir/"bar.json"
+      last_checked = Pathname("#{target}.last_checked")
+      response_mtime = Time.now - 3600
+      target.write json
+      FileUtils.touch(target, mtime: response_mtime)
+      FileUtils.touch(last_checked, mtime: Time.new(1970, 1, 1))
+
+      allow(DevelopmentTools).to receive_messages(
+        ca_file_substitution_required?: true,
+        curl_substitution_required?:    false,
+      )
+      allow(described_class).to receive(:opoo)
+      expect(Utils::Curl).to receive(:curl_download) do |*args, **kwargs|
+        expect(args).to include("--insecure")
+        expect(args).not_to include("--time-cond")
+        kwargs[:to].write json
+        FileUtils.touch(kwargs[:to], mtime: response_mtime)
+      end
+
+      described_class.fetch_json_api_file(
+        "bar.json",
+        target:,
+        stale_seconds: 3600,
+      )
+
+      expect([target.mtime.to_i, last_checked.mtime.to_i]).to eq(
+        [response_mtime.to_i, Time.new(1970, 1, 1).to_i],
+      )
     end
   end
 
@@ -194,6 +274,7 @@ RSpec.describe Homebrew::API do
       allow(described_class).to receive(:jws_public_key_pem).and_return(private_key.public_key.to_pem)
       target.dirname.mkpath
       target.write envelope_json('{"foo":"bar"}')
+      FileUtils.touch "#{target}.last_checked"
     end
 
     it "verifies the envelope and writes a payload cache" do
@@ -204,6 +285,7 @@ RSpec.describe Homebrew::API do
     it "does not write a payload cache for endpoints without one" do
       other_target = cache_dir/"internal/other.jws.json"
       other_target.write envelope_json('{"foo":"bar"}')
+      FileUtils.touch "#{other_target}.last_checked"
 
       data, = described_class.fetch_json_api_file("internal/other.jws.json", target:        other_target,
                                                                              stale_seconds: 3600)
@@ -341,6 +423,15 @@ RSpec.describe Homebrew::API do
     it "rebuilds the executables database when the source is newer" do
       target.write "stale:stale-bin\n"
       FileUtils.touch source, mtime: target.mtime + 1
+
+      expect(write_executables_file!(regenerate: false)).to be true
+      expect(target.read).to eq("foo:foo-bin\n")
+    end
+
+    it "rebuilds the executables database when the source is revalidated" do
+      target.write "stale:stale-bin\n"
+      FileUtils.touch source, mtime: target.mtime - 1
+      FileUtils.touch "#{source}.last_checked", mtime: target.mtime + 1
 
       expect(write_executables_file!(regenerate: false)).to be true
       expect(target.read).to eq("foo:foo-bin\n")

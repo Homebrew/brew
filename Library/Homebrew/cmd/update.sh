@@ -420,6 +420,7 @@ fetch_api_file() {
   local api_cache="${HOMEBREW_CACHE}/api"
 
   local cache_path="${api_cache}/${filename}"
+  local last_checked_path="${cache_path}.last_checked"
   mkdir -p "$(dirname "${cache_path}")"
 
   if [[ "${filename}" == "formula.jws.json" ]] || [[ "${filename}" == "internal/packages.$(bottle_tag).jws.json" ]]
@@ -475,7 +476,9 @@ fetch_api_file() {
 
   if [[ ${curl_exit_code} -eq 0 ]]
   then
-    touch "${cache_path}"
+    # Preserve the response mtime for `--time-cond`; use the sidecar for freshness.
+    # Keep in sync with `Homebrew::API.fetch_json_api_file` in `api.rb`.
+    touch "${last_checked_path}"
 
     CURRENT_JSON_BYTESIZE="$(wc -c "${cache_path}")"
     if [[ "${INITIAL_JSON_BYTESIZE}" != "${CURRENT_JSON_BYTESIZE}" ]]
@@ -1059,22 +1062,27 @@ EOS
       fetch_api_file "${filename}" "${update_failed_file}"
     done
 
-    rm -f "${HOMEBREW_CACHE}/api/formula.jws.json" "${HOMEBREW_CACHE}/api/cask.jws.json"
-    rm -f "${HOMEBREW_CACHE}/api/formula_tap_migrations.jws.json" "${HOMEBREW_CACHE}/api/cask_tap_migrations.jws.json"
+    rm -f \
+      "${HOMEBREW_CACHE}/api/formula.jws.json" "${HOMEBREW_CACHE}/api/formula.jws.json.last_checked" \
+      "${HOMEBREW_CACHE}/api/cask.jws.json" "${HOMEBREW_CACHE}/api/cask.jws.json.last_checked"
+    rm -f \
+      "${HOMEBREW_CACHE}/api/formula_tap_migrations.jws.json" \
+      "${HOMEBREW_CACHE}/api/formula_tap_migrations.jws.json.last_checked" \
+      "${HOMEBREW_CACHE}/api/cask_tap_migrations.jws.json" \
+      "${HOMEBREW_CACHE}/api/cask_tap_migrations.jws.json.last_checked"
 
     # Not a typo, these are the files we used to download that no longer need so should cleanup.
     rm -f "${HOMEBREW_CACHE}/api/formula.json" "${HOMEBREW_CACHE}/api/cask.json"
     rm -f "${HOMEBREW_CACHE}"/api/internal/formula.*.jws.json
     rm -f "${HOMEBREW_CACHE}"/api/internal/cask.*.jws.json
 
-    # Remove API files (and their `.payload` and `.payload.index` sidecars)
-    # from previous OS versions, keeping the current OS's so `brew
-    # update-report`'s API data load stays or becomes prewarmed. Keep in
-    # sync with `cache_files` in Library/Homebrew/cleanup.rb.
+    # Remove previous OS API files and sidecars; keep the current OS for `update-report`.
+    # Keep in sync with `cache_files` in `cleanup.rb`.
     for f in "${HOMEBREW_CACHE}"/api/internal/packages.*.jws.json*
     do
       case "${f}" in
         "${HOMEBREW_CACHE}/api/internal/packages.$(bottle_tag).jws.json") ;;
+        "${HOMEBREW_CACHE}/api/internal/packages.$(bottle_tag).jws.json.last_checked") ;;
         "${HOMEBREW_CACHE}/api/internal/packages.$(bottle_tag).jws.json.payload") ;;
         "${HOMEBREW_CACHE}/api/internal/packages.$(bottle_tag).jws.json.payload.index") ;;
         *) rm -f "${f}" ;;

@@ -28,7 +28,8 @@ api_curlrc_args() {
 api_time_cond_args() {
   local cache_path="$1"
 
-  if [[ -s "${cache_path}" ]]
+  # Keep in sync with `Homebrew::API.fetch_json_api_file` in `api.rb`.
+  if [[ -s "${cache_path}" ]] && [[ -f "${cache_path}.last_checked" ]]
   then
     echo "--time-cond"
     echo "${cache_path}"

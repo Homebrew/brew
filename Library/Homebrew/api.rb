@@ -30,6 +30,11 @@ module Homebrew
     HOMEBREW_CACHE_API_SOURCE = T.let((HOMEBREW_CACHE/"api-source").freeze, Pathname)
     DEFAULT_API_STALE_SECONDS = T.let(7 * 24 * 60 * 60, Integer) # 7 days
 
+    sig { params(target: Pathname).returns(Pathname) }
+    private_class_method def self.last_checked_path(target)
+      Pathname("#{target}.last_checked")
+    end
+
     sig { params(endpoint: String).returns(T::Hash[String, T.untyped]) }
     def self.fetch(endpoint)
       return cache[endpoint] if cache.present? && cache.key?(endpoint)
@@ -54,7 +59,10 @@ module Homebrew
       return false if !target.exist? || target.empty?
       return true unless stale_seconds
 
-      (Time.now - stale_seconds) < target.mtime
+      last_checked = last_checked_path(target)
+      return false unless last_checked.exist?
+
+      (Time.now - stale_seconds) < last_checked.mtime
     end
 
     sig {
@@ -75,6 +83,7 @@ module Homebrew
       retry_count = 0
       url = "#{Homebrew::EnvConfig.api_domain}/#{endpoint}"
       default_url = "#{HOMEBREW_API_DEFAULT_DOMAIN}/#{endpoint}"
+      last_checked = last_checked_path(target)
 
       if Homebrew.running_as_root_but_not_owned_by_root? &&
          (!target.exist? || target.empty?)
@@ -110,7 +119,10 @@ module Homebrew
         download_succeeded = T.let(false, T::Boolean)
         begin
           args = curl_args.dup
-          args.prepend("--time-cond", target.to_s) if target.exist? && !target.empty?
+          # Keep in sync with `api_time_cond_args` in `utils/api.sh`.
+          if target.exist? && !target.empty? && last_checked.exist? && !insecure_download
+            args.prepend("--time-cond", target.to_s)
+          end
           if insecure_download
             opoo DevelopmentTools.insecure_download_warning(endpoint)
             args.append("--insecure")
@@ -138,12 +150,11 @@ module Homebrew
           opoo "#{target.basename}: update failed, falling back to cached version."
         end
 
-        # Only refresh the cache mtime after a successful curl revalidation/download.
-        # Touching after a failed download would mark a stale cache as fresh and
-        # cause `skip_download?` to short-circuit subsequent retries until cleanup.
+        # Preserve the response mtime for `--time-cond`; use the sidecar for freshness.
+        # Missing sidecars force one unconditional migration download.
         if download_succeeded
           mtime = insecure_download ? Time.new(1970, 1, 1) : Time.now
-          FileUtils.touch(target, mtime:)
+          FileUtils.touch(last_checked, mtime:)
         end
 
         payload_data = cached_jws_payload(target) if endpoint.end_with?(".jws.json") && !download_succeeded
@@ -175,8 +186,7 @@ module Homebrew
             Potential MITM attempt detected. Please run `brew update` and try again.
           EOS
         end
-        # Skip on insecure downloads: their pinned 1970 mtime would make the
-        # source fingerprint ambiguous (and they always re-download anyway).
+        # Insecure API data always re-downloads and should not seed the payload cache.
         if source_stat && !insecure_download
           write_jws_payload_cache(target, json_data, source_stat:)
           write_jws_payload_index_cache(target, json_data, parsed: data, source_stat:)
@@ -281,13 +291,17 @@ module Homebrew
     }
     def self.write_executables_file!(regenerate:, source:, &formulae)
       executables_path = HOMEBREW_CACHE_API/"internal/executables.txt"
-      # The file is derived only from the API data in `source`, so it stays
-      # current until that file next changes or is revalidated.
-      executables_mtime, source_mtime = [executables_path, source].map do |path|
-        path.mtime
+      # Rebuild after the source changes or is revalidated.
+      executables_mtime = begin
+        executables_path.mtime
       rescue Errno::ENOENT
         nil
       end
+      source_mtime = [source, last_checked_path(source)].filter_map do |path|
+        path.mtime
+      rescue Errno::ENOENT
+        nil
+      end.max
       return false if !regenerate && executables_mtime && source_mtime && source_mtime <= executables_mtime
 
       executables_lines = yield.filter_map do |name, hash|
@@ -403,7 +417,7 @@ module Homebrew
     end
 
     # Payload sidecars are only maintained for the internal packages files:
-    # `brew cleanup --scrub` and `update.sh` only prune sidecars matching
+    # `brew cleanup --scrub` and `update.sh` prune sidecars matching
     # `internal/packages.*.jws.json*` and the other `.jws.json` endpoints
     # are re-downloaded whenever they are used.
     sig { params(target: Pathname).returns(T::Boolean) }
