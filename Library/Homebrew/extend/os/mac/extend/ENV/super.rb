@@ -167,6 +167,15 @@ module OS
         odeprecated "ENV.no_fixup_chains"
         append_to_cccfg "f" if no_fixup_chains_support?
       end
+
+      # Work around superenv to avoid mixing `expat` usage in libraries across dependency tree.
+      # Brew `expat` usage in Python has low impact as it isn't loaded unless pyexpat is used.
+      sig { void }
+      def remove_brew_expat
+        env_vars = %w[CMAKE_PREFIX_PATH HOMEBREW_INCLUDE_PATHS HOMEBREW_LIBRARY_PATHS PATH PKG_CONFIG_PATH]
+        remove env_vars, /(^|:)#{Regexp.escape(Utils::Path.formula_opt_prefix("expat").to_s)}[^:]*/
+        remove "HOMEBREW_DEPENDENCIES", "expat"
+      end
     end
   end
 end
