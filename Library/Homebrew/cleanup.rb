@@ -570,14 +570,15 @@ module Homebrew
       api_internal = cache/"api/internal"
       api_package_files = if scrub? && api_internal.directory?
         current_api_package_basename = Homebrew::API::Internal.cached_packages_json_file_path.basename.to_s
-        # Keep only the current OS's envelope and its `.payload` and
-        # `.payload.index` sidecars and scrub the rest, including orphaned
-        # sidecars and temp files.
+        # Keep only the current OS's envelope and its `.payload`,
+        # `.payload.index` and `.etag` sidecars and scrub the rest, including
+        # orphaned sidecars and temp files.
         # Keep in sync with the previous-OS-version removal in cmd/update.sh.
         kept_basenames = [
           current_api_package_basename,
           "#{current_api_package_basename}.payload",
           "#{current_api_package_basename}.payload.index",
+          "#{current_api_package_basename}.etag",
         ]
         api_internal.glob("packages.*.jws.json*").reject do |path|
           kept_basenames.include?(path.basename.to_s)

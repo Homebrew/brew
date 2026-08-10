@@ -77,6 +77,112 @@ RSpec.describe "Bash" do
     end
   end
 
+  describe "utils/api.sh" do
+    def run_api_sh(body, env = {})
+      Open3.capture3(
+        env,
+        "/bin/bash", "-c", "source \"$1\"\n#{body}", "bash", (HOMEBREW_LIBRARY_PATH/"utils/api.sh").to_s
+      )
+    end
+
+    describe "api_conditional_args" do
+      it "prefers `--etag-compare` over `--time-cond` when an ETag is cached" do
+        mktmpdir do |dir|
+          cache = dir/"packages.jws.json"
+          cache.write "envelope"
+          (dir/"packages.jws.json.etag").write '"abc"'
+
+          stdout, stderr, status = run_api_sh(%Q(api_conditional_args "#{cache}"),
+                                              { "HOMEBREW_CURL_SUPPORTS_ETAG" => "1" })
+
+          expect(stderr).to be_empty
+          expect(status).to be_a_success
+          expect(stdout.lines.map(&:chomp))
+            .to eq(["--etag-compare", "#{cache}.etag", "--etag-save", "#{cache}.etag.incoming"])
+        end
+      end
+
+      it "falls back to `--time-cond` when no ETag has been cached yet" do
+        mktmpdir do |dir|
+          cache = dir/"packages.jws.json"
+          cache.write "envelope"
+
+          stdout, stderr, status = run_api_sh(%Q(api_conditional_args "#{cache}"),
+                                              { "HOMEBREW_CURL_SUPPORTS_ETAG" => "1" })
+
+          expect(stderr).to be_empty
+          expect(status).to be_a_success
+          expect(stdout.lines.map(&:chomp))
+            .to eq(["--time-cond", cache.to_s, "--etag-save", "#{cache}.etag.incoming"])
+        end
+      end
+
+      it "falls back to `--time-cond` when curl is too old for ETag options" do
+        mktmpdir do |dir|
+          cache = dir/"packages.jws.json"
+          cache.write "envelope"
+          (dir/"packages.jws.json.etag").write '"abc"'
+
+          stdout, stderr, status = run_api_sh(%Q(api_conditional_args "#{cache}"),
+                                              { "HOMEBREW_CURL_SUPPORTS_ETAG" => "0" })
+
+          expect(stderr).to be_empty
+          expect(status).to be_a_success
+          expect(stdout.lines.map(&:chomp)).to eq(["--time-cond", cache.to_s])
+        end
+      end
+
+      it "requests no validator when nothing is cached" do
+        mktmpdir do |dir|
+          cache = dir/"packages.jws.json"
+
+          stdout, stderr, status = run_api_sh(%Q(api_conditional_args "#{cache}"),
+                                              { "HOMEBREW_CURL_SUPPORTS_ETAG" => "1" })
+
+          expect(stderr).to be_empty
+          expect(status).to be_a_success
+          expect(stdout.lines.map(&:chomp)).to eq(["--etag-save", "#{cache}.etag.incoming"])
+        end
+      end
+    end
+
+    describe "api_promote_etag" do
+      it "keeps the previous ETag when curl emptied the incoming file on a 304" do
+        mktmpdir do |dir|
+          cache = dir/"packages.jws.json"
+          etag = dir/"packages.jws.json.etag"
+          incoming = dir/"packages.jws.json.etag.incoming"
+          etag.write '"kept"'
+          incoming.write ""
+
+          _, stderr, status = run_api_sh(%Q(api_promote_etag "#{cache}"))
+
+          expect(stderr).to be_empty
+          expect(status).to be_a_success
+          expect(etag.read).to eq('"kept"')
+          expect(incoming).not_to exist
+        end
+      end
+
+      it "promotes a newly received ETag" do
+        mktmpdir do |dir|
+          cache = dir/"packages.jws.json"
+          etag = dir/"packages.jws.json.etag"
+          incoming = dir/"packages.jws.json.etag.incoming"
+          etag.write '"old"'
+          incoming.write '"new"'
+
+          _, stderr, status = run_api_sh(%Q(api_promote_etag "#{cache}"))
+
+          expect(stderr).to be_empty
+          expect(status).to be_a_success
+          expect(etag.read).to eq('"new"')
+          expect(incoming).not_to exist
+        end
+      end
+    end
+  end
+
   describe "every `.sh` file" do
     it "has valid Bash syntax" do
       Pathname.glob("#{HOMEBREW_LIBRARY_PATH}/**/*.sh").each do |path|

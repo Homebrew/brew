@@ -443,21 +443,26 @@ fetch_api_file() {
   fi
 
   local arg curl_exit_code json_url last_json_url
-  local -a time_cond
+  local -a conditional_args etag_save_args
   while read -r json_url
   do
-    time_cond=()
+    conditional_args=()
     while read -r arg
     do
-      time_cond+=("${arg}")
-    done < <(api_time_cond_args "${cache_path}")
-    api_curl_download "${json_url}" "${cache_path}" "${time_cond[@]}"
+      conditional_args+=("${arg}")
+    done < <(api_conditional_args "${cache_path}")
+    api_curl_download "${json_url}" "${cache_path}" "${conditional_args[@]}"
     curl_exit_code=$?
     # A conditional request can fail with a receive error (curl exit code 56) when
     # an unconditional request for the same URL succeeds, so retry exactly once.
-    if [[ ${curl_exit_code} -eq 56 ]] && [[ ${#time_cond[@]} -gt 0 ]]
+    if [[ ${curl_exit_code} -eq 56 ]] && [[ ${#conditional_args[@]} -gt 0 ]]
     then
-      api_curl_download "${json_url}" "${cache_path}"
+      etag_save_args=()
+      while read -r arg
+      do
+        etag_save_args+=("${arg}")
+      done < <(api_etag_save_args "${cache_path}")
+      api_curl_download "${json_url}" "${cache_path}" "${etag_save_args[@]}"
       curl_exit_code=$?
     fi
     last_json_url="${json_url}"
@@ -472,6 +477,8 @@ fetch_api_file() {
   then
     mv -f "${api_cache}/cask_names.txt" "${api_cache}/cask_names.before.txt"
   fi
+
+  api_promote_etag "${cache_path}"
 
   if [[ ${curl_exit_code} -eq 0 ]]
   then
@@ -1067,8 +1074,8 @@ EOS
     rm -f "${HOMEBREW_CACHE}"/api/internal/formula.*.jws.json
     rm -f "${HOMEBREW_CACHE}"/api/internal/cask.*.jws.json
 
-    # Remove API files (and their `.payload` and `.payload.index` sidecars)
-    # from previous OS versions, keeping the current OS's so `brew
+    # Remove API files (and their `.payload`, `.payload.index` and `.etag`
+    # sidecars) from previous OS versions, keeping the current OS's so `brew
     # update-report`'s API data load stays or becomes prewarmed. Keep in
     # sync with `cache_files` in Library/Homebrew/cleanup.rb.
     for f in "${HOMEBREW_CACHE}"/api/internal/packages.*.jws.json*
@@ -1077,6 +1084,7 @@ EOS
         "${HOMEBREW_CACHE}/api/internal/packages.$(bottle_tag).jws.json") ;;
         "${HOMEBREW_CACHE}/api/internal/packages.$(bottle_tag).jws.json.payload") ;;
         "${HOMEBREW_CACHE}/api/internal/packages.$(bottle_tag).jws.json.payload.index") ;;
+        "${HOMEBREW_CACHE}/api/internal/packages.$(bottle_tag).jws.json.etag") ;;
         *) rm -f "${f}" ;;
       esac
     done
