@@ -77,11 +77,17 @@ module Cask
       config = JSON.parse(json, symbolize_names: true)
 
       new(
-        default:             config.fetch(:default,  {}),
-        env:                 config.fetch(:env,      {}),
-        explicit:            config.fetch(:explicit, {}),
+        default:             normalize_keys(config.fetch(:default,  {})),
+        env:                 normalize_keys(config.fetch(:env,      {})),
+        explicit:            normalize_keys(config.fetch(:explicit, {})),
         ignore_invalid_keys:,
       )
+    end
+
+    # saved configs can contain hyphenated option names written before these were normalized
+    sig { params(config: T::Hash[Symbol, T.untyped]).returns(T::Hash[Symbol, T.untyped]) }
+    def self.normalize_keys(config)
+      config.transform_keys { |key| key.to_s.tr("-", "_").to_sym }
     end
 
     # runtime recursive evaluation forces the LazyObject to be evaluated

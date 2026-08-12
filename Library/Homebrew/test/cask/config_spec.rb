@@ -38,6 +38,18 @@ RSpec.describe Cask::Config, :cask do
       EOS
     end
 
+    let(:legacy_keys_json) do
+      <<~EOS
+        {
+          "default": {},
+          "env": {
+            "input-methoddir": "/path/to/input/methods"
+          },
+          "explicit": {}
+        }
+      EOS
+    end
+
     it "deserializes a configuration in JSON format" do
       config = described_class.from_json <<~EOS
         {
@@ -67,6 +79,24 @@ RSpec.describe Cask::Config, :cask do
 
       expect { described_class.from_json(valid_json, ignore_invalid_keys: true) }
         .not_to output.to_stderr
+    end
+
+    it "normalizes hyphenated keys from a saved configuration" do
+      config = described_class.from_json(legacy_keys_json, ignore_invalid_keys: true)
+
+      expect(config.env).to eq(input_methoddir: Pathname("/path/to/input/methods"))
+      expect(config.input_methoddir).to eq(Pathname("/path/to/input/methods"))
+    end
+
+    it "does not warn about hyphenated keys from a saved configuration" do
+      expect { described_class.from_json(legacy_keys_json, ignore_invalid_keys: true) }
+        .not_to output.to_stderr
+    end
+
+    it "accepts hyphenated keys from a saved configuration without ignoring invalid keys" do
+      config = described_class.from_json(legacy_keys_json)
+
+      expect(config.input_methoddir).to eq(Pathname("/path/to/input/methods"))
     end
   end
 
