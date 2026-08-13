@@ -53,7 +53,7 @@ module Homebrew
           methods = args.named
         end
 
-        finding_collection = []
+        finding_collection = T.let([], T::Array[Diagnostic::Finding])
         first_warning = T.let(true, T::Boolean)
         methods.each do |method|
           $stderr.puts Formatter.headline("Checking #{method}", color: :magenta) if args.debug?
@@ -62,11 +62,17 @@ module Homebrew
             next
           end
 
-          finding         = checks.public_send(method)
+          finding = checks.public_send(method)
           method_findings = T.let(Array(finding).compact, T::Array[T.any(Diagnostic::Finding, String)])
           next if method_findings.empty?
 
-          finding_collection.concat(method_findings.compact)
+          finding_collection.concat(method_findings.map do |method_finding|
+            if method_finding.is_a?(Diagnostic::Finding)
+              method_finding
+            else
+              Diagnostic::Finding.new(method_finding)
+            end
+          end)
           Homebrew.failed = true
           next if args.json?
 
@@ -83,8 +89,7 @@ module Homebrew
           first_warning = false
         end
 
-        # TODO: Remove string filtering when all diagnostics are Finding objects
-        finding_maps = finding_collection.grep_v(String).map(&:to_h)
+        finding_maps = finding_collection.map(&:to_h)
         tier = (finding_maps.max_by { |f| f[:tier] } || {}).fetch(:tier, 1)
         if args.json?
           puts JSON.pretty_generate({ tier:, findings: finding_maps }).gsub(/\[\n\n\s*\]/, "[]")

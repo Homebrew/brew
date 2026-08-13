@@ -19,6 +19,19 @@ RSpec.describe Homebrew::Cmd::Doctor do
       .to output(/"tier": 1/).to_stdout
   end
 
+  specify "serializes legacy string diagnostics as finding objects in json output" do
+    checks = instance_double(Homebrew::Diagnostic::Checks)
+    allow(Homebrew::Diagnostic::Checks).to receive(:new).and_return(checks)
+    allow(checks).to receive(:respond_to?).with("check_legacy_warning").and_return(true)
+    allow(checks).to receive(:public_send).with("check_legacy_warning").and_return("legacy warning")
+    allow(checks).to receive(:all).and_return(["check_legacy_warning"])
+
+    cmd = described_class.new(["--json", "check_legacy_warning"])
+
+    expect { cmd.run }
+      .to output(/"text": "legacy warning"/).to_stdout
+  end
+
   specify "check_missing_deps reports formula and cask dependencies", :cask do
     formula = instance_double(Formula, full_name:            "needs-foo",
                                        missing_dependencies: [instance_double(Dependency, to_s: "foo")])
