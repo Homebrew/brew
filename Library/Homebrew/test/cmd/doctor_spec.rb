@@ -29,7 +29,15 @@ RSpec.describe Homebrew::Cmd::Doctor do
     cmd = described_class.new(["--json", "check_legacy_warning"])
 
     expect { cmd.run }
-      .to output(/"text": "legacy warning"/).to_stdout
+      .to output(
+        a_string_including(
+          '"tier": 1',
+          '"text": "legacy warning"',
+          '"affects": []',
+          '"links": []',
+          '"remediation": null',
+        ),
+      ).to_stdout
   end
 
   specify "check_missing_deps reports formula and cask dependencies", :cask do
