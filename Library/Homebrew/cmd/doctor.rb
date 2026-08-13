@@ -90,7 +90,7 @@ module Homebrew
         end
 
         finding_maps = finding_collection.map(&:to_h)
-        tier = (finding_maps.max_by { |f| f[:tier] } || {}).fetch(:tier, 1)
+        tier = finding_collection.map(&:tier).max || 1
         if args.json?
           puts JSON.pretty_generate({ tier:, findings: finding_maps }).gsub(/\[\n\n\s*\]/, "[]")
 
