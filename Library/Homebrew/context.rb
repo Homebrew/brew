@@ -11,13 +11,13 @@ module Context
   class ContextStruct
     sig {
       params(
-        debug:                          T.nilable(T::Boolean),
-        quiet:                          T.nilable(T::Boolean),
-        verbose:                        T.nilable(T::Boolean),
-        deferred_environment_expansion: T.nilable(T::Boolean),
+        debug:                          T::Boolean,
+        quiet:                          T::Boolean,
+        verbose:                        T::Boolean,
+        deferred_environment_expansion: T::Boolean,
       ).void
     }
-    def initialize(debug: nil, quiet: nil, verbose: nil, deferred_environment_expansion: nil)
+    def initialize(debug: false, quiet: false, verbose: false, deferred_environment_expansion: false)
       @debug = debug
       @quiet = quiet
       @verbose = verbose
@@ -89,10 +89,10 @@ module Context
 
   sig {
     params(
-      debug:                          T.nilable(T::Boolean),
-      quiet:                          T.nilable(T::Boolean),
-      verbose:                        T.nilable(T::Boolean),
-      deferred_environment_expansion: T.nilable(T::Boolean),
+      debug:                          T::Boolean,
+      quiet:                          T::Boolean,
+      verbose:                        T::Boolean,
+      deferred_environment_expansion: T::Boolean,
       _block:                         T.proc.void,
     ).returns(T.untyped)
   }
