@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "manpages"
@@ -33,11 +33,9 @@ RSpec.describe Homebrew::Manpages do
   end
 
   it "lists options under the root command and matching subcommands", :aggregate_failures do
-    root_section, install_and_info_sections = described_class
-                                              .cmd_parser_manpage_lines(subcommand_parser)
-                                              .join
-                                              .split("`test install`:")
-    install_section, info_section = install_and_info_sections.split("`test info` <service>:")
+    manpage = described_class.cmd_parser_manpage_lines(subcommand_parser).join
+    root_section, _, install_and_info_sections = manpage.partition("`test install`:")
+    install_section, _, info_section = install_and_info_sections.partition("`test info` <service>:")
 
     expect(root_section).to include("`--global`")
     expect(root_section).not_to include("`--force`")

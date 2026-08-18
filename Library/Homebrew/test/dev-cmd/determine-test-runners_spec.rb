@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "dev-cmd/determine-test-runners"
@@ -6,8 +6,10 @@ require "cmd/shared_examples/args_parse"
 
 RSpec.describe Homebrew::DevCmd::DetermineTestRunners do
   def get_runners(file)
-    runner_line = File.open(file, &:first)
+    runner_line = File.open(file, &:readline)
     json_text = runner_line[/runners=(.*)/, 1]
+    raise "No runners found in #{file}" if json_text.nil?
+
     runner_hash = JSON.parse(json_text)
     runner_hash.map { |item| item["runner"].delete_suffix(ephemeral_suffix) }
                .sort
