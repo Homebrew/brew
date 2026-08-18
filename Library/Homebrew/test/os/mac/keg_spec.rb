@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "keg"
@@ -7,11 +7,11 @@ require "macho"
 RSpec.describe Keg do
   subject(:keg) { described_class.new(keg_path) }
 
+  let(:keg_path) { HOMEBREW_CELLAR/"a/1.0" }
+
   include FileUtils
 
   describe "#mach_o_files" do
-    let(:keg_path) { HOMEBREW_CELLAR/"a/1.0" }
-
     before { (keg_path/"lib").mkpath }
 
     after { keg.unlink }
@@ -35,7 +35,6 @@ RSpec.describe Keg do
   end
 
   describe "#codesign_patched_binary" do
-    let(:keg_path) { HOMEBREW_CELLAR/"a/1.0" }
     let(:file) { "#{keg_path}/bin/test" }
 
     before do
