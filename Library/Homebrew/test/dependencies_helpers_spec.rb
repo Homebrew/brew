@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "dependencies_helpers"
@@ -38,7 +38,10 @@ RSpec.describe DependenciesHelpers do
       :any_version_installed?,
     ]
 
-    dependents = Class.new.extend(described_class).dependents([foo, foo_cask, bar, bar_cask])
+    helper = Class.new do
+      include DependenciesHelpers
+    end.new
+    dependents = helper.dependents([foo, foo_cask, bar, bar_cask])
 
     dependents.each do |dependent|
       methods.each do |method|
