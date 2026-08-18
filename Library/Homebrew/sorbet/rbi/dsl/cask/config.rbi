@@ -7,55 +7,55 @@
 
 module Cask
   class Config
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def appdir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def appimagedir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def audio_unit_plugindir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def colorpickerdir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def dictionarydir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def fontdir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def input_methoddir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def internet_plugindir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def keyboard_layoutdir; end
 
     sig { returns(T::Array[String]) }
     def languages; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def mdimporterdir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def prefpanedir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def qlplugindir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def screen_saverdir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def servicedir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def vst3_plugindir; end
 
-    sig { returns(String) }
+    sig { returns(Pathname) }
     def vst_plugindir; end
   end
 end

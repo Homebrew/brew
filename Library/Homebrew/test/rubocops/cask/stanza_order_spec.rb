@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
@@ -367,7 +367,7 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
     CASK
   end
 
-  shared_examples "caveats" do
+  shared_examples "caveats" do |caveats|
     it "reports an offense when a `caveats` stanza is out of order" do
       # Indent all except the first line.
       interpolated_caveats = caveats.lines.map { |l| "  #{l}" }.join.strip
@@ -404,44 +404,32 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
   end
 
   context "when caveats is a one-line string" do
-    let(:caveats) do
-      <<~CAVEATS
-        caveats 'This is a one-line caveat.'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `caveats` stanza out of order
-      CAVEATS
-    end
-
-    include_examples "caveats"
+    include_examples "caveats", <<~CAVEATS
+      caveats 'This is a one-line caveat.'
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `caveats` stanza out of order
+    CAVEATS
   end
 
   context "when caveats is a heredoc" do
-    let(:caveats) do
-      <<~CAVEATS
-        caveats <<~EOS
-        ^^^^^^^^^^^^^^ `caveats` stanza out of order
-          This is a multiline caveat.
+    include_examples "caveats", <<~CAVEATS
+      caveats <<~EOS
+      ^^^^^^^^^^^^^^ `caveats` stanza out of order
+        This is a multiline caveat.
 
-          Let's hope it doesn't cause any problems!
-        EOS
-      CAVEATS
-    end
-
-    include_examples "caveats"
+        Let's hope it doesn't cause any problems!
+      EOS
+    CAVEATS
   end
 
   context "when caveats is a block" do
-    let(:caveats) do
-      <<~CAVEATS
-        caveats do
-        ^^^^^^^^^^ `caveats` stanza out of order
-          puts 'This is a multiline caveat.'
+    include_examples "caveats", <<~CAVEATS
+      caveats do
+      ^^^^^^^^^^ `caveats` stanza out of order
+        puts 'This is a multiline caveat.'
 
-          puts "Let's hope it doesn't cause any problems!"
-        end
-      CAVEATS
-    end
-
-    include_examples "caveats"
+        puts "Let's hope it doesn't cause any problems!"
+      end
+    CAVEATS
   end
 
   it "reports an offense when the `postflight` stanza is out of order" do

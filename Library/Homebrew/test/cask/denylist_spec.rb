@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/denylist"
@@ -6,6 +6,7 @@ require "cask/denylist"
 RSpec.describe Cask::Denylist, :cask do
   describe "::reason" do
     matcher :disallow do |name|
+      T.bind(self, T.class_of(RSpec::Matchers::DSL::Matcher))
       match do |expected|
         expected.reason(name)
       end

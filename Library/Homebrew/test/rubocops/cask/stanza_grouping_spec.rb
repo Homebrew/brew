@@ -1,4 +1,4 @@
-# typed: false
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
@@ -211,7 +211,7 @@ RSpec.describe RuboCop::Cop::Cask::StanzaGrouping, :config do
     CASK
   end
 
-  shared_examples "caveats" do
+  shared_examples "caveats" do |caveats|
     it "reports an offense for an incorrectly grouped `caveats` stanza" do
       # Indent all except the first line.
       interpolated_caveats = caveats.strip
@@ -249,44 +249,32 @@ RSpec.describe RuboCop::Cop::Cask::StanzaGrouping, :config do
   end
 
   context "when `caveats` is a one-line string" do
-    let(:caveats) do
-      <<~CAVEATS
-          caveats 'This is a one-line caveat.'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ stanza groups should be separated by a single empty line
-      CAVEATS
-    end
-
-    include_examples "caveats"
+    include_examples "caveats", <<~CAVEATS
+        caveats 'This is a one-line caveat.'
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ stanza groups should be separated by a single empty line
+    CAVEATS
   end
 
   context "when `caveats` is a heredoc" do
-    let(:caveats) do
-      <<~CAVEATS
-          caveats <<~EOS
-        ^^^^^^^^^^^^^^^^ stanza groups should be separated by a single empty line
-            This is a multiline caveat.
+    include_examples "caveats", <<~CAVEATS
+        caveats <<~EOS
+      ^^^^^^^^^^^^^^^^ stanza groups should be separated by a single empty line
+          This is a multiline caveat.
 
-            Let's hope it doesn't cause any problems!
-          EOS
-      CAVEATS
-    end
-
-    include_examples "caveats"
+          Let's hope it doesn't cause any problems!
+        EOS
+    CAVEATS
   end
 
   context "when `caveats` is a block" do
-    let(:caveats) do
-      <<~CAVEATS
-          caveats do
-        ^^^^^^^^^^^^ stanza groups should be separated by a single empty line
-            puts 'This is a multiline caveat.'
+    include_examples "caveats", <<~CAVEATS
+        caveats do
+      ^^^^^^^^^^^^ stanza groups should be separated by a single empty line
+          puts 'This is a multiline caveat.'
 
-            puts "Let's hope it doesn't cause any problems!"
-          end
-      CAVEATS
-    end
-
-    include_examples "caveats"
+          puts "Let's hope it doesn't cause any problems!"
+        end
+    CAVEATS
   end
 
   it "reports an offense for an incorrectly grouped `postflight` stanza" do

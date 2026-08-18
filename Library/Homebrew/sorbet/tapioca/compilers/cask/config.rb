@@ -31,7 +31,7 @@ module Tapioca
               elsif key.end_with?("?")
                 "T::Boolean"
               else
-                "String"
+                "Pathname"
               end
 
               klass.create_method(key.to_s, return_type:, class_method: false)

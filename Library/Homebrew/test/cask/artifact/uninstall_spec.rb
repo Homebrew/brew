@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require_relative "shared_examples/uninstall_zap"
@@ -179,9 +179,9 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
   end
 
   describe "#post_uninstall_phase" do
-    subject(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
-
     context "when using :rmdir" do
+      subject(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
+
       let(:fake_system_command) { NeverSudoSystemCommand }
       let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-rmdir")) }
       let(:empty_directory) { Pathname.new("#{TEST_TMPDIR}/empty_directory_path") }

@@ -1,4 +1,4 @@
-# typed: false
+# typed: true
 # frozen_string_literal: true
 
 require "cask/utils/trash"
@@ -43,12 +43,8 @@ RSpec.describe Cask::Utils::Trash do
     let(:info_path) { trash_path/"info" }
     let(:path) { mktmpdir/"folder with spaces"/"example file.txt" }
 
-    around do |example|
-      old_xdg_data_home = ENV.fetch("XDG_DATA_HOME", nil)
+    before do
       ENV["XDG_DATA_HOME"] = xdg_data_home.to_s
-      example.run
-    ensure
-      ENV["XDG_DATA_HOME"] = old_xdg_data_home
     end
 
     it "moves files into the XDG trash and writes a trashinfo file" do
