@@ -3,6 +3,7 @@
 
 require "ast_constants"
 require "rubocop-ast"
+require "rubocops/cask/constants/stanza"
 
 module Utils
   # Helper functions for editing Ruby files.
@@ -659,6 +660,43 @@ module Utils
         tree_rewriter.replace(whole_line_range(stanza_node.source_range), replacement)
       end
 
+      # Removes a key from every matching stanza's options hash, e.g. `verified:`
+      # from `url`. Returns `false` when the key is absent from all of them or is
+      # a stanza's only argument.
+      sig { params(name: Symbol, key: Symbol).returns(T::Boolean) }
+      def remove_stanza_hash_pair!(name, key)
+        removed = T.let(false, T::Boolean)
+        stanzas(name).each do |stanza_node|
+          hash_node = stanza_node.arguments.grep(RuboCop::AST::HashNode).first
+          next if hash_node.nil?
+
+          pairs = hash_node.pairs
+          index = pairs.index { |pair| literal_value(pair.key) == key }
+          next if index.nil?
+
+          pair = pairs.fetch(index)
+          range = if pairs.length > 1
+            if (following_pair = pairs[index + 1])
+              pair.source_range.with(end_pos: following_pair.source_range.begin_pos)
+            else
+              pair.source_range.with(begin_pos: pairs.fetch(index - 1).source_range.end_pos)
+            end
+          else
+            # Take the preceding argument's separator with the pair, so that
+            # e.g. `url "...", verified: "..."` becomes `url "..."`.
+            preceding = stanza_node.arguments.find { |argument| !argument.hash_type? }
+            next if preceding.nil?
+
+            pair.source_range.with(begin_pos: preceding.source_range.end_pos)
+          end
+
+          tree_rewriter.remove(range)
+          removed = true
+        end
+
+        removed
+      end
+
       sig { returns(T::Boolean) }
       def depends_on_macos?
         stanzas(:depends_on).any? do |stanza_node|
@@ -669,6 +707,45 @@ module Utils
               end)
           end
         end
+      end
+
+      # Sets the minimum macOS version of the `depends_on macos:` stanza, adding
+      # the stanza when it is missing. Returns `false` when the minimum version
+      # cannot be expressed, e.g. an exact version list or a maximum.
+      sig { params(version: Symbol).returns(T::Boolean) }
+      def update_depends_on_macos_minimum!(version)
+        if (macos_pair = top_level_depends_on_macos_pair)
+          return false unless minimum_macos_value?(macos_pair.value)
+
+          tree_rewriter.replace(macos_pair.value.source_range, ruby_literal(version))
+          return true
+        end
+
+        # A second stanza alongside a bare `depends_on :macos` would be flagged
+        # as redundant by `Homebrew/OSDependsOn`.
+        if (bare_argument = top_level_bare_depends_on_macos_argument)
+          tree_rewriter.replace(bare_argument.source_range, "macos: #{ruby_literal(version)}")
+          return true
+        end
+
+        return false if depends_on_macos?
+
+        new_stanza = "depends_on macos: #{ruby_literal(version)}"
+
+        if (existing_stanza = top_level_stanzas(:depends_on).last)
+          indent = " " * existing_stanza.source_range.column
+          tree_rewriter.insert_after(whole_line_range(existing_stanza.source_range), "#{indent}#{new_stanza}\n")
+          return true
+        end
+
+        successor = stanza_successor(:depends_on)
+        return false if successor.nil?
+
+        indent = " " * successor.source_range.column
+        line_range = whole_line_range(successor.source_range)
+        separator = "\n" unless cask_contents[0...line_range.begin_pos].to_s.match?(/(\n\n|do\n)\z/)
+        tree_rewriter.insert_before(line_range, "#{separator}#{indent}#{new_stanza}\n\n")
+        true
       end
 
       private
@@ -707,6 +784,45 @@ module Utils
       def top_level_stanzas(name)
         body_children(cask_block.body).grep(SendNode).select do |node|
           node.method_name == name && node.receiver.nil? && node.first_argument.present?
+        end
+      end
+
+      # Only a bare symbol or a `>=` comparison states a minimum macOS version.
+      sig { params(node: Node).returns(T::Boolean) }
+      def minimum_macos_value?(node)
+        return true if node.sym_type?
+        return false unless node.str_type?
+
+        node.str_content&.match?(/\A\s*>=/) || false
+      end
+
+      sig { returns(T.nilable(RuboCop::AST::PairNode)) }
+      def top_level_depends_on_macos_pair
+        pairs = top_level_stanzas(:depends_on).flat_map do |stanza_node|
+          stanza_node.arguments.grep(RuboCop::AST::HashNode).flat_map(&:pairs)
+        end
+        pairs.find { |pair| literal_value(pair.key) == :macos }
+      end
+
+      sig { returns(T.nilable(Node)) }
+      def top_level_bare_depends_on_macos_argument
+        stanza_node = top_level_stanzas(:depends_on).find do |node|
+          argument = node.first_argument
+          argument&.sym_type? && literal_value(argument) == :macos
+        end
+        stanza_node&.first_argument
+      end
+
+      # The first top-level stanza which must be ordered after `name`.
+      sig { params(name: Symbol).returns(T.nilable(SendNode)) }
+      def stanza_successor(name)
+        stanza_order = RuboCop::Cask::Constants::STANZA_ORDER
+        index = stanza_order.index(name)
+        return if index.nil?
+
+        body_children(cask_block.body).grep(SendNode).find do |node|
+          successor_index = stanza_order.index(node.method_name)
+          successor_index.present? && successor_index > index
         end
       end
 

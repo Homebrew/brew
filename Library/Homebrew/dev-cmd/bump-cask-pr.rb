@@ -182,7 +182,10 @@ module Homebrew
         sourcefile_path.atomic_write(new_contents) unless args.dry_run?
 
         audit_exceptions = []
-        audit_exceptions << ["min_os", "rosetta", "signing"] if ENV["HOMEBREW_TEST_BOT_AUTOBUMP"].present?
+        if ENV["HOMEBREW_TEST_BOT_AUTOBUMP"].present?
+          audit_exceptions.push("min_os", "rosetta", "signing")
+          run_cask_audit_fix(cask)
+        end
         run_cask_audit(cask, old_contents, audit_exceptions)
         run_cask_style(cask, old_contents)
 
@@ -516,13 +519,28 @@ module Homebrew
         end
       end
 
+      # Corrects what `--fix` can for `min_os`, which `run_cask_audit` excepts.
+      sig { params(cask: Cask::Cask).void }
+      def run_cask_audit_fix(cask)
+        return if args.no_audit?
+
+        audit_args = ["audit", "--cask", "--online", "--fix", "--skip-style", "--only=min_os", cask.full_name]
+
+        if args.dry_run?
+          ohai "brew #{audit_args.join(" ")}"
+          return
+        end
+
+        system HOMEBREW_BREW_FILE.to_s, *audit_args
+      end
+
       sig { params(cask: Cask::Cask, old_contents: String, audit_exceptions: T::Array[String]).void }
       def run_cask_audit(cask, old_contents, audit_exceptions = [])
         if args.dry_run?
           if args.no_audit?
             ohai "Skipping `brew audit`"
           else
-            ohai "brew audit --cask --online #{cask.full_name}"
+            ohai "brew audit --cask --online --fix #{cask.full_name}"
           end
           return
         end
@@ -530,7 +548,8 @@ module Homebrew
         if args.no_audit?
           ohai "Skipping `brew audit`"
         else
-          system HOMEBREW_BREW_FILE.to_s, "audit", "--cask", "--online", cask.full_name,
+          # Corrected problems don't fail the audit or stop the pull request.
+          system HOMEBREW_BREW_FILE.to_s, "audit", "--cask", "--online", "--fix", cask.full_name,
                  "--except=#{audit_exceptions.join(",")}"
           failed_audit = !$CHILD_STATUS.success?
         end

@@ -1733,7 +1733,7 @@ Check files that were changed from the \fBmain\fP branch\.
 Check formulae and casks within the given tap, specified as \fIuser\fP\fB/\fP\fIrepo\fP\&\.
 .TP
 \fB\-\-fix\fP
-Fix style violations automatically using RuboCop\[u2019]s auto\-correct feature\.
+Fix style violations automatically using RuboCop\[u2019]s auto\-correct feature\. When passed with \fB\-\-online\fP for casks, also correct the \fBdepends_on macos:\fP stanza, the case of artifact stanzas and the deprecated \fBverified\fP parameter\.
 .TP
 \fB\-\-display\-filename\fP
 Prefix every line of output with the file or formula name being audited, to make output easy to grep\.

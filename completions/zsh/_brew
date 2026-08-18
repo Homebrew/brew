@@ -538,7 +538,7 @@ _brew_audit() {
     '--display-filename[Prefix every line of output with the file or formula name being audited, to make output easy to grep]' \
     '(--only)--except[Specify a comma-separated method list to skip running the methods named `audit_`method]' \
     '(--only-cops --strict --only-cops --only)--except-cops[Specify a comma-separated cops list to skip checking for violations of the listed RuboCop cops]' \
-    '--fix[Fix style violations automatically using RuboCop'\''s auto-correct feature]' \
+    '--fix[Fix style violations automatically using RuboCop'\''s auto-correct feature. When passed with `--online` for casks, also correct the `depends_on macos:` stanza, the case of artifact stanzas and the deprecated `verified` parameter]' \
     '--git[Run additional, slower style checks that navigate the Git repository]' \
     '--help[Show this message]' \
     '(--changed --tap)--installed[Only check formulae and casks that are currently installed]' \

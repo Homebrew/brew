@@ -56,7 +56,9 @@ module Homebrew
         flag   "--tap=",
                description: "Check formulae and casks within the given tap, specified as <user>`/`<repo>."
         switch "--fix",
-               description: "Fix style violations automatically using RuboCop's auto-correct feature."
+               description: "Fix style violations automatically using RuboCop's auto-correct feature. " \
+                            "When passed with `--online` for casks, also correct the `depends_on macos:` " \
+                            "stanza, the case of artifact stanzas and the deprecated `verified` parameter."
         switch "--display-cop-names",
                description: "Include the RuboCop cop name for each violation in the output. This is the default.",
                hidden:      true
@@ -288,6 +290,7 @@ module Homebrew
                 # because boolean switches are already `nil` if not passed
                 audit_signing:  args.signing?,
                 audit_new_cask: args.new? || nil,
+                audit_fix:      args.fix? || nil,
                 any_named_args: !no_named_args,
                 only:           args.only || [],
                 except:         args.except || [],
@@ -331,13 +334,18 @@ module Homebrew
               ", #{Utils.pluralize("problem", corrected_problem_count, include_count: true)} corrected"
           end
 
-          ofail "#{errors_summary}."
+          # Succeed when everything was corrected, as `brew style --fix` does.
+          if total_problems_count == corrected_problem_count
+            opoo "#{errors_summary}."
+          else
+            ofail "#{errors_summary}."
+          end
         end
 
         return unless GitHub::Actions.env_set?
 
         annotations = formula_problems.merge(cask_problems).flat_map do |(_, path), problems|
-          problems.map do |problem|
+          problems.reject { |problem| problem[:corrected] }.map do |problem|
             GitHub::Actions::Annotation.new(
               :error,
               problem[:message],
