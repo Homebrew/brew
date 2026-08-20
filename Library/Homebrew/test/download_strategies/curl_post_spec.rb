@@ -62,6 +62,51 @@ RSpec.describe CurlPostDownloadStrategy do
       end
     end
 
+    context "with :using and :json specified" do
+      let(:specs) do
+        {
+          using: :post,
+          json:  {
+            query: "a + b = c",
+          },
+        }
+      end
+
+      before do
+        allow(strategy).to receive(:curl_version).and_return(Version.new("7.41.0"))
+      end
+
+      it "adds the appropriate curl args" do
+        expect(strategy).to receive(:system_command)
+          .with(
+            /curl/,
+            hash_including(args: array_including_cons("--data", '{"query":"a + b = c"}')
+                                 .and(array_including_cons("--header", "Content-Type: application/json"))
+                                 .and(array_including_cons("--header", "Accept: application/json"))),
+          )
+          .at_least(:once)
+          .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+        strategy.fetch
+      end
+    end
+
+    context "with both :data and :json specified" do
+      let(:specs) do
+        {
+          using: :post,
+          data:  { form: "data" },
+          json:  { query: "value" },
+        }
+      end
+
+      it "raises an error" do
+        allow(strategy).to receive(:curl_download)
+
+        expect { strategy.fetch }.to raise_error(ArgumentError, "Only use `data` or `json`, not both")
+      end
+    end
+
     context "with :using but no :data" do
       let(:specs) { { using: :post } }
 

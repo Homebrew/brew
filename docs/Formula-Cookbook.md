@@ -805,7 +805,7 @@ Homebrew offers these anonymous download strategies.
 | `:hg`            | fetch from Mercurial repository  | `hg` installed |
 | `:homebrew_curl` | download using brewed `curl`     | `curl` installed |
 | `:nounzip`       | download without decompressing   | |
-| `:post`          | download using `curl` via POST   | `data:` [hash of parameters](Cask-Cookbook.md#additional-url-parameters) |
+| `:post`          | download using `curl` via POST   | `data:` or `json:` [hash of parameters](Cask-Cookbook.md#additional-url-parameters) |
 | `:svn`           | fetch from Subversion repository | `svn` installed |
 
 If you need more control over the way files are downloaded and staged, you can create a custom download strategy and specify it with the `:using` option:

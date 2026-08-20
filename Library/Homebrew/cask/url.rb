@@ -19,6 +19,9 @@ module Cask
     sig { returns(T.nilable(T::Hash[String, String])) }
     attr_reader :cookies, :data
 
+    sig { returns(T.nilable(T::Hash[Symbol, T.anything])) }
+    attr_reader :json
+
     sig { returns(T.nilable(T::Array[String])) }
     attr_reader :header
 
@@ -59,13 +62,14 @@ module Cask
         header:          T.nilable(T.any(String, T::Array[String])),
         user_agent:      T.nilable(T.any(Symbol, String)),
         data:            T.nilable(T::Hash[String, String]),
+        json:            T.nilable(T::Hash[Symbol, T.anything]),
         only_path:       T.nilable(String),
         caller_location: Thread::Backtrace::Location,
       ).void
     }
     def initialize(
       uri, verified: nil, using: nil, tag: nil, branch: nil, revisions: nil, revision: nil, trust_cert: nil,
-      cookies: nil, referer: nil, header: nil, user_agent: nil, data: nil, only_path: nil,
+      cookies: nil, referer: nil, header: nil, user_agent: nil, data: nil, json: nil, only_path: nil,
       caller_location: caller_locations.fetch(0)
     )
       @uri = T.let(URI(uri), URI::Generic)
@@ -86,6 +90,7 @@ module Cask
       specs[:headers]    = @header     = T.let(header, T.nilable(T::Array[String]))
       specs[:user_agent] = @user_agent = T.let(user_agent || :default, T.nilable(T.any(Symbol, String)))
       specs[:data]       = @data       = T.let(data, T.nilable(T::Hash[String, String]))
+      specs[:json]       = @json       = T.let(json, T.nilable(T::Hash[Symbol, T.anything]))
       specs[:only_path]  = @only_path  = T.let(only_path, T.nilable(String))
 
       @specs = T.let(specs.compact, T::Hash[Symbol, T.untyped])

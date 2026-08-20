@@ -1194,6 +1194,7 @@ When a plain URL string is insufficient to fetch a file, additional information 
 | `header:`          | string or array of strings holding the header(s) to set for the download request (Example: [pull-6545](https://github.com/Homebrew/brew/pull/6545#issue-503302353), [issue-15590](https://github.com/Homebrew/brew/issues/15590#issue-1774825542)) |
 | `user_agent:`      | string holding the user agent to set for the download request. Can also be set to the symbol `:fake`, which will use a generic browser-like user agent string. We prefer `:fake` when the server does not require a specific user agent. |
 | `data:`            | hash of parameters to be set for a POST request (Example: [segger-jlink.rb](https://github.com/Homebrew/homebrew-cask/blob/38ac55614f146d68ae317594f0c119e9acbd7c9e/Casks/s/segger-jlink.rb#L6-L11)) |
+| `json:`            | hash of parameters to be JSON encoded for a POST request |
 
 #### Difficulty finding a URL
 

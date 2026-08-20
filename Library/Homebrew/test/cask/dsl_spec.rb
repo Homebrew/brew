@@ -413,6 +413,14 @@ RSpec.describe Cask::DSL, :cask, :no_api do
     it "prevents defining multiple urls" do
       expect { cask }.to raise_error(Cask::CaskInvalidError, /'url' stanza may only appear once/)
     end
+
+    it "allows JSON data for POST requests" do
+      cask = Cask::Cask.new("post-json") do
+        url "https://example.com/download", using: :post, json: { query: "a + b = c" }
+      end
+
+      expect(cask.url.specs).to include(json: { query: "a + b = c" })
+    end
   end
 
   describe "homepage stanza" do
