@@ -240,7 +240,7 @@ __brew_internal_commands() {
     'source:Open a formula'\''s source repository in a browser, or open Homebrew'\''s own repository if no argument is provided'
     'style:Check formulae or files for conformance to Homebrew style guidelines'
     'tab:Edit tab information for installed formulae or casks'
-    'tap:Tap a formula repository'
+    'tap:Tap a repository containing formulae, casks, or external commands'
     'tap-info:Show detailed information about one or more taps'
     'tap-new:Generate the template files for a new tap'
     'test:Run the test method provided by an installed formula'

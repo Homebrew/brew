@@ -10,7 +10,7 @@ class CoreTap < AbstractCoreTap
 
   sig { void }
   def initialize
-    super "Homebrew", "core"
+    super nil, nil, "Homebrew", "core"
   end
 
   sig { override.void }

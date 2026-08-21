@@ -25,15 +25,16 @@ RSpec.describe Homebrew::Bundle::Tap do
       before do
         described_class.reset!
 
-        bar = instance_double(Tap, name: "bitbucket/bar", custom_remote?: true,
+        bar = instance_double(Tap, protocol: nil, host: nil, name: "bitbucket/bar", custom_remote?: true,
                               remote: "https://bitbucket.org/bitbucket/bar.git",
                               default_remote: "https://github.com/bitbucket/homebrew-bar")
-        baz = instance_double(Tap, name: "homebrew/baz", custom_remote?: false, remote: nil)
-        foo = instance_double(Tap, name: "homebrew/foo", custom_remote?: false, remote: nil)
+        baz = instance_double(Tap, protocol: nil, host: nil, name: "homebrew/baz", custom_remote?: false, remote: nil)
+        foo = instance_double(Tap, protocol: nil, host: nil, name: "homebrew/foo", custom_remote?: false, remote: nil)
 
         ENV["HOMEBREW_GITHUB_API_TOKEN_BEFORE"] = ENV.fetch("HOMEBREW_GITHUB_API_TOKEN", nil)
         ENV["HOMEBREW_GITHUB_API_TOKEN"] = "some-token"
-        private_tap = instance_double(Tap, name: "privatebrew/private", custom_remote?: true,
+        private_tap = instance_double(Tap, protocol: nil, host: nil, name: "privatebrew/private",
+          custom_remote?: true,
           remote: "https://#{ENV.fetch("HOMEBREW_GITHUB_API_TOKEN")}@github.com/privatebrew/homebrew-private",
           default_remote: "https://github.com/privatebrew/homebrew-private")
 
@@ -75,7 +76,7 @@ RSpec.describe Homebrew::Bundle::Tap do
 
       it "dumps GitHub clone targets matching a tap's default repository" do
         described_class.reset!
-        tap = instance_double(Tap, name: "alternatert/tap", custom_remote?: false,
+        tap = instance_double(Tap, protocol: nil, host: nil, name: "alternatert/tap", custom_remote?: false,
           remote: "git@github.com:AlternateRT/homebrew-tap.git",
           default_remote: "https://github.com/alternatert/homebrew-tap")
 

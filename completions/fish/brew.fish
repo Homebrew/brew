@@ -1878,7 +1878,7 @@ __fish_brew_complete_arg 'tab; and not __fish_seen_argument -l cask -l casks' -a
 __fish_brew_complete_arg 'tab; and not __fish_seen_argument -l formula -l formulae' -a '(__fish_brew_suggest_casks_installed)'
 
 
-__fish_brew_complete_cmd 'tap' 'Tap a formula repository'
+__fish_brew_complete_cmd 'tap' 'Tap a repository containing formulae, casks, or external commands'
 __fish_brew_complete_arg 'tap' -l custom-remote -d 'Install or change a tap with a custom remote. Useful for mirrors'
 __fish_brew_complete_arg 'tap' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'tap' -l force -d 'Force install core taps even under API mode'

@@ -101,6 +101,10 @@ RSpec.describe Tap do
     tap = described_class.fetch("Homebrew", "foo")
     expect(tap).to be_a(described_class)
     expect(tap.name).to eq("homebrew/foo")
+    tap_shorthand = described_class.fetch("ssh:gitlab.com@Homebrew/bar")
+    expect(tap_shorthand.protocol).to eq("ssh")
+    expect(tap_shorthand.host).to eq("gitlab.com")
+    expect(tap_shorthand.name).to eq("homebrew/bar")
 
     expect do
       described_class.fetch("foo")
@@ -113,6 +117,18 @@ RSpec.describe Tap do
     expect do
       described_class.fetch("homebrew", "homebrew/baz")
     end.to raise_error(Tap::InvalidNameError, /Invalid tap name/)
+
+    expect do
+      described_class.fetch("s-sh:homebrew/baz")
+    end.to raise_error(Tap::InvalidNameError, /Invalid tap name/)
+
+    expect do
+      described_class.fetch("git_hub.com@homebrew/baz")
+    end.to raise_error(Tap::InvalidNameError, /Invalid tap name/)
+
+    expect do
+      described_class.fetch("http:homebrew/baz")
+    end.to raise_error(Tap::InvalidShorthandError, /Invalid protocol shorthand/)
   end
 
   describe "::from_path" do
@@ -212,9 +228,19 @@ RSpec.describe Tap do
                                           "https://gitlab.com/other/repo")).to be true
     end
 
+    it "ignores a `.git` suffix on Codeberg remotes" do
+      expect(described_class.same_remote?("https://codeberg.org/other/repo.git",
+                                          "https://codeberg.org/other/repo")).to be true
+    end
+
     it "ignores a trailing slash on GitLab remotes" do
       expect(described_class.same_remote?("https://gitlab.com/other/repo/",
                                           "https://gitlab.com/other/repo")).to be true
+    end
+
+    it "ignores a trailing slash on Codeberg remotes" do
+      expect(described_class.same_remote?("https://codeberg.org/other/repo/",
+                                          "https://codeberg.org/other/repo")).to be true
     end
 
     it "keeps a `.git` suffix and trailing slash significant on a self-hosted remote" do
@@ -352,6 +378,8 @@ RSpec.describe Tap do
   end
 
   specify "attributes" do
+    expect(homebrew_foo_tap.protocol).to be_nil
+    expect(homebrew_foo_tap.host).to be_nil
     expect(homebrew_foo_tap.user).to eq("Homebrew")
     expect(homebrew_foo_tap.repository).to eq("foo")
     expect(homebrew_foo_tap.name).to eq("homebrew/foo")
@@ -404,6 +432,8 @@ RSpec.describe Tap do
     expect(homebrew_foo_tap.command_files).to eq([cmd_file])
     expect(homebrew_foo_tap.to_hash).to eq(
       {
+        "protocol"      => nil,
+        "host"          => nil,
         "name"          => "homebrew/foo",
         "user"          => "Homebrew",
         "repo"          => "foo",
@@ -504,6 +534,38 @@ RSpec.describe Tap do
       setup_git_repo
       allow(Utils::Git).to receive(:available?).and_return(false)
       expect(homebrew_foo_tap.remote_repository).to eq("Homebrew/homebrew-foo")
+    end
+  end
+
+  describe "#shorthand_remote" do
+    it "returns an SCP remote when SSH is the specified protocol" do
+      tap = described_class.fetch("ssh:third-party/foo")
+      expect(tap.shorthand_remote).to eq("git@github.com:third-party/homebrew-foo")
+    end
+
+    it "returns a remote with the specified protocol" do
+      tap = described_class.fetch("https:third-party/foo")
+      expect(tap.shorthand_remote).to eq("https://github.com/third-party/homebrew-foo")
+    end
+
+    it "returns a remote with the specified host" do
+      tap = described_class.fetch("codeberg.org@third-party/foo")
+      expect(tap.shorthand_remote).to eq("https://codeberg.org/third-party/homebrew-foo")
+    end
+
+    it "returns an SCP remote with the specified host when SSH is the specified protocol" do
+      tap = described_class.fetch("ssh:codeberg.org@third-party/foo")
+      expect(tap.shorthand_remote).to eq("git@codeberg.org:third-party/homebrew-foo")
+    end
+
+    it "returns a remote with the specified protocol and host" do
+      tap = described_class.fetch("https:codeberg.org@third-party/foo")
+      expect(tap.shorthand_remote).to eq("https://codeberg.org/third-party/homebrew-foo")
+    end
+
+    it "returns nil when no protocol or host has been specified" do
+      tap = described_class.fetch("third-party/foo")
+      expect(tap.shorthand_remote).to be_nil
     end
   end
 
@@ -1372,6 +1434,8 @@ RSpec.describe Tap do
     subject(:core_tap) { described_class.instance }
 
     specify "attributes" do
+      expect(core_tap.protocol).to be_nil
+      expect(core_tap.host).to be_nil
       expect(core_tap.user).to eq("Homebrew")
       expect(core_tap.repository).to eq("core")
       expect(core_tap.name).to eq("homebrew/core")

@@ -48,29 +48,58 @@ class Tap
   ].freeze
 
   class InvalidNameError < ArgumentError; end
+  class InvalidShorthandError < ArgumentError; end
+
+  SHORTHAND_PROTOCOLS = %w[git ftps ftp https ssh].freeze
+  private_constant :SHORTHAND_PROTOCOLS
+  SHORTHANDS_REGEX = /(?:(?:(?<protocol>\w+):)?(?:(?<host>[A-Za-z0-9\-.]+)@)?)/
+  private_constant :SHORTHANDS_REGEX
+  SHORTHANDS_USER_REGEX = /^#{SHORTHANDS_REGEX.source}?(?<user>[\w\-.]+)$/
+  private_constant :SHORTHANDS_USER_REGEX
+  SHORTHANDS_NAME_REGEX = %r{^#{SHORTHANDS_REGEX.source}?(?<user>[\w\-.]+)/(?<repository>[\w\-.]+)$}
+  private_constant :SHORTHANDS_NAME_REGEX
 
   # Fetch a {Tap} by name.
   #
   # @api public
-  sig { params(user: String, repository: String).returns(Tap) }
-  def self.fetch(user, repository = T.unsafe(nil))
-    user, repository = user.split("/", 2) if repository.nil?
+  sig { params(user_or_name: String, repository: String).returns(Tap) }
+  def self.fetch(user_or_name, repository = T.unsafe(nil))
+    if repository.nil? && (match = user_or_name.match(SHORTHANDS_NAME_REGEX))
+      protocol = match[:protocol]
+      host = match[:host]
+      user = match[:user]
+      repository = match[:repository]
+    elsif (match = user_or_name.match(SHORTHANDS_USER_REGEX))
+      protocol = match[:protocol]
+      host = match[:host]
+      user = match[:user]
+    end
+
+    if !protocol.nil? && SHORTHAND_PROTOCOLS.exclude?(protocol)
+      raise InvalidShorthandError,
+            "Invalid protocol shorthand. The accepted values are: #{SHORTHAND_PROTOCOLS.join(", ")}"
+    end
 
     if [user, repository].any? { |part| part.nil? || part.include?("/") }
-      raise InvalidNameError, "Invalid tap name: '#{[*user, *repository].join("/")}'"
+      raise InvalidNameError, "Invalid tap name: '#{[*user_or_name, *repository].join("/")}'"
     end
 
     user = T.must(user)
+    repository = T.cast(repository, String)
 
     # We special case homebrew and linuxbrew so that users don't have to shift in a terminal.
     user = user.capitalize if ["homebrew", "linuxbrew"].include?(user)
     repository = repository.sub(HOMEBREW_OFFICIAL_REPO_PREFIXES_REGEX, "")
 
+    # Downcase protocol and host if they have been declared
+    protocol = protocol.downcase unless protocol.nil?
+    host = host.downcase unless host.nil?
+
     return CoreTap.instance if ["Homebrew", "Linuxbrew"].include?(user) && ["core", "homebrew"].include?(repository)
     return CoreCaskTap.instance if user == "Homebrew" && repository == "cask"
 
     cache_key = "#{user}/#{repository}".downcase
-    cache.fetch(cache_key) { |key| cache[key] = new(user, repository) }
+    cache.fetch(cache_key) { |key| cache[key] = new(protocol, host, user, repository) }
   end
 
   # Get a {Tap} from its path or a path inside of it.
@@ -142,7 +171,7 @@ class Tap
   # Hosts where a `.git` suffix and trailing slashes are known not to change which repository a
   # remote identifies, so we can safely strip them. We don't assume this for arbitrary hosts
   # (including self-hosted GitLab and GitHub Enterprise) where `repo.git` and `repo` may differ.
-  NORMALIZE_REMOTE_HOSTS = %w[github.com gitlab.com].freeze
+  NORMALIZE_REMOTE_HOSTS = %w[codeberg.org github.com gitlab.com].freeze
 
   # An optional RFC 3986-ish `scheme://` (e.g. `https://`, `ssh://` or `git+https://`) followed by
   # optional `user@` userinfo: the part of a remote URL that can precede the host.
@@ -234,6 +263,18 @@ class Tap
     include Enumerable
   end
 
+  # The protocol used to fetch this {Tap}'s remote repository.
+  #
+  # @api public
+  sig { returns(T.nilable(String)) }
+  attr_reader :protocol
+
+  # The host of this {Tap}'s remote repository.
+  #
+  # @api public
+  sig { returns(T.nilable(String)) }
+  attr_reader :host
+
   # The user name of this {Tap}. Usually, it's the GitHub username of
   # this {Tap}'s remote repository.
   #
@@ -289,10 +330,12 @@ class Tap
   # Always use `Tap.fetch` instead of `Tap.new`.
   private_class_method :new
 
-  sig { params(user: String, repository: String).void }
-  def initialize(user, repository)
+  sig { params(protocol: T.nilable(String), host: T.nilable(String), user: String, repository: String).void }
+  def initialize(protocol, host, user, repository)
     require "git_repository"
 
+    @protocol = protocol
+    @host = host
     @user = user
     @repository = repository
     @name = T.let("#{@user}/#{@repository}".downcase, String)
@@ -401,6 +444,19 @@ class Tap
     return unless (match = remote.match(HOMEBREW_TAP_REPOSITORY_REGEX))
 
     @remote_repository ||= T.let(T.must(match[:remote_repository]), T.nilable(String))
+  end
+
+  # The remote path to this {Tap} when using the shorthand notations.
+  sig { returns(T.nilable(String)) }
+  def shorthand_remote
+    case [protocol, host]
+    when [nil, nil] then nil
+    when ["ssh", nil] then "git@github.com:#{full_name}"
+    when [protocol, nil] then "#{protocol}://github.com/#{full_name}"
+    when [nil, host] then "https://#{host}/#{full_name}"
+    when ["ssh", host] then "git@#{host}:#{full_name}"
+    when [protocol, host] then "#{protocol}://#{host}/#{full_name}"
+    end
   end
 
   # The default remote path to this {Tap}.
@@ -578,6 +634,8 @@ class Tap
       FileUtils.mv(old_path, redirected_tap.path)
       old_path.parent.rmdir_if_possible
 
+      @protocol = redirected_tap.protocol
+      @host = redirected_tap.host
       @user = redirected_tap.user
       @repository = redirected_tap.repository
       @name = redirected_tap.name
@@ -650,7 +708,7 @@ class Tap
 
     raise TapNoCustomRemoteError, name if custom_remote && clone_target.nil?
 
-    requested_remote = (clone_target || default_remote).to_s
+    requested_remote = (clone_target || shorthand_remote || default_remote).to_s
 
     if installed? && !custom_remote
       raise TapRemoteMismatchError.new(name, @remote, requested_remote) if clone_target && requested_remote != remote
@@ -1187,6 +1245,8 @@ class Tap
     require "trust"
 
     hash = {
+      "protocol"      => protocol,
+      "host"          => host,
       "name"          => name,
       "user"          => user,
       "repo"          => repository,

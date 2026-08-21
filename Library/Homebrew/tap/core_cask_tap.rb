@@ -10,7 +10,7 @@ class CoreCaskTap < AbstractCoreTap
 
   sig { void }
   def initialize
-    super "Homebrew", "cask"
+    super nil, nil, "Homebrew", "cask"
   end
 
   sig { override.returns(T::Boolean) }
