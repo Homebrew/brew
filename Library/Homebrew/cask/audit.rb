@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cask/cask_loader"
 require "cask/denylist"
 require "cask/download"
 require "cask/installer"
@@ -43,14 +44,15 @@ module Cask
       params(
         cask: ::Cask::Cask, download: T::Boolean,
         online: T.nilable(T::Boolean), strict: T.nilable(T::Boolean), signing: T.nilable(T::Boolean),
-        new_cask: T.nilable(T::Boolean), only: T::Array[String], except: T::Array[String]
+        new_cask: T.nilable(T::Boolean), fix: T.nilable(T::Boolean),
+        only: T::Array[String], except: T::Array[String]
       ).void
     }
     def initialize(
       cask,
       download: false,
       online: nil, strict: nil, signing: nil,
-      new_cask: nil, only: [], except: []
+      new_cask: nil, fix: nil, only: [], except: []
     )
       # `new_cask` implies `online`, `strict` and `signing`
       online = new_cask if online.nil?
@@ -67,6 +69,7 @@ module Cask
       @strict = strict
       @signing = signing
       @new_cask = new_cask
+      @fix = fix
       @only = only
       @except = except
       @livecheck_result = T.let(nil, T.nilable(T.any(T::Boolean, Symbol)))
@@ -83,6 +86,9 @@ module Cask
 
     sig { returns(T::Boolean) }
     def strict? = !!@strict
+
+    sig { returns(T::Boolean) }
+    def fix? = !!@fix
 
     sig { returns(::Cask::Audit) }
     def run!
@@ -124,13 +130,14 @@ module Cask
         message:     T.nilable(String),
         location:    T.nilable(Homebrew::SourceLocation),
         strict_only: T::Boolean,
+        corrected:   T::Boolean,
       ).void
     }
-    def add_error(message, location: nil, strict_only: false)
+    def add_error(message, location: nil, strict_only: false, corrected: false)
       # Only raise non-critical audits if the user specified `--strict`.
       return if strict_only && !@strict
 
-      errors << { message:, location:, corrected: false }
+      errors << { message:, location:, corrected: }
     end
 
     sig { returns(T.nilable(String)) }
@@ -504,7 +511,14 @@ module Cask
       return unless cask.url
       return unless verified_present?
 
-      add_error "the `verified` parameter has been deprecated; use the `url` stanza without it"
+      message = "the `verified` parameter has been deprecated; use the `url` stanza without it"
+
+      fixed = correct_error("#{message}; removed the `verified` parameter") do |cask_ast|
+        cask_ast.remove_stanza_hash_pair!(:url, :verified)
+      end
+      return if fixed
+
+      add_error message
     end
 
     sig { void }
@@ -744,9 +758,16 @@ module Cask
           next if on_disk.length != components.length
           next if on_disk == components
 
-          add_error "Artifact #{source} does not match the case of the extracted " \
-                    "#{File.join(on_disk)}; this fails on case-sensitive filesystems.",
-                    location: url.location
+          message = "Artifact #{source} does not match the case of the extracted " \
+                    "#{File.join(on_disk)}; this fails on case-sensitive filesystems"
+          dsl_key = artifact.class.dsl_key
+
+          fixed = correct_error("#{message}; corrected the `#{dsl_key}` stanza", location: url.location) do |cask_ast|
+            cask_ast.replace_stanza_value(dsl_key, source.to_s, File.join(on_disk)).positive?
+          end
+          next if fixed
+
+          add_error "#{message}.", location: url.location
         end
       end
     end
@@ -921,8 +942,21 @@ module Cask
         "no minimum macOS version"
       end
       source = T.must(bundle_min_os.to_s <=> sparkle_min_os.to_s).positive? ? "Artifact" : "Upstream"
-      add_error "#{source} defined #{app_min_os.to_sym.inspect} as the minimum macOS version " \
+      message = "#{source} defined #{app_min_os.to_sym.inspect} as the minimum macOS version " \
                 "but the cask declared #{min_os_definition}"
+
+      # A cask with `on_system` blocks may have a different minimum per OS or
+      # arch, so a top-level `depends_on macos:` stanza would be wrong.
+      maximum_macos = cask.depends_on.maximum_macos&.maximum_version
+      unsatisfiable_minimum = maximum_macos.present? && app_min_os > maximum_macos
+      if !cask.on_system_blocks_exist? && !unsatisfiable_minimum
+        fixed = correct_error("#{message}; set `depends_on macos:` to #{app_min_os.to_sym.inspect}") do |cask_ast|
+          cask_ast.update_depends_on_macos_minimum!(app_min_os.to_sym)
+        end
+        return if fixed
+      end
+
+      add_error message
     end
 
     sig { void }
@@ -1183,6 +1217,40 @@ module Cask
     end
 
     private
+
+    # Rewrites the cask's source file when `--fix` was passed, restoring it if
+    # the rewrite doesn't load. Returns whether the problem was corrected.
+    sig {
+      params(
+        message:  String,
+        location: T.nilable(Homebrew::SourceLocation),
+        _block:   T.proc.params(arg0: ::Utils::AST::CaskAST).returns(T::Boolean),
+      ).returns(T::Boolean)
+    }
+    def correct_error(message, location: nil, &_block)
+      return false unless fix?
+
+      # `utils/ast` needs the optional `ast` gem group, so only load it when fixing.
+      require "utils/ast"
+
+      sourcefile_path = cask.sourcefile_path
+      return false if sourcefile_path.nil? || !sourcefile_path.exist? || !sourcefile_path.writable?
+
+      old_contents = sourcefile_path.read
+      cask_ast = ::Utils::AST::CaskAST.new(old_contents)
+      return false unless yield(cask_ast)
+
+      sourcefile_path.atomic_write(cask_ast.process)
+      # Raises if the rewrite is invalid, which the `rescue` restores.
+      CaskLoader.load(sourcefile_path)
+      add_error message, location:, corrected: true
+      true
+    rescue => e
+      odebug e, ::Utils::Backtrace.clean(e)
+      opoo "Unable to fix #{cask}: #{e.message}"
+      sourcefile_path.atomic_write(old_contents) if sourcefile_path && old_contents
+      false
+    end
 
     sig { returns(T.nilable(MacOSVersion)) }
     def cask_sparkle_min_os

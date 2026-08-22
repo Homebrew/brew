@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "cask/audit"
+require "utils/ast"
 
 RSpec.describe Cask::Audit, :cask do
   let(:cask) { instance_double(Cask::Cask) }
@@ -11,11 +12,13 @@ RSpec.describe Cask::Audit, :cask do
   let(:except) { [] }
   let(:strict) { nil }
   let(:signing) { nil }
+  let(:fix) { nil }
   let(:audit) do
     described_class.new(cask, online:,
                               strict:,
                               new_cask:,
                               signing:,
+                              fix:,
                               only:,
                               except:)
   end
@@ -1323,6 +1326,30 @@ RSpec.describe Cask::Audit, :cask do
         it { is_expected.to error_with(/does not match the case of the extracted/) }
       end
 
+      context "when fixing" do
+        let(:fix) { true }
+        let(:cask) do
+          tmp_cask "fix-artifact-case", <<~RUBY
+            cask "fix-artifact-case" do
+              version "1.0"
+              sha256 :no_check
+              url "https://brew.sh/fix-artifact-case.zip"
+              name "Fix Artifact Case"
+              homepage "https://brew.sh/"
+
+              app "artifact case.app"
+            end
+          RUBY
+        end
+
+        before { (tmpdir/"Artifact Case.app").mkpath }
+
+        it "corrects the case of the artifact stanza and marks the problem corrected" do
+          expect(run.errors.map { |error| error[:corrected] }).to eq([true])
+          expect(cask.sourcefile_path.read).to include('app "Artifact Case.app"')
+        end
+      end
+
       context "when a manual installer has the wrong case" do
         let(:cask) do
           Cask::Cask.new("artifact-case") do
@@ -1408,6 +1435,142 @@ RSpec.describe Cask::Audit, :cask do
         end
 
         it { is_expected.to error_with(/cask declared no minimum macOS version/) }
+      end
+
+      context "when fixing" do
+        let(:fix) { true }
+        let(:cask) do
+          tmp_cask "fix-min-os", <<~RUBY
+            cask 'fix-min-os' do
+              version '1.0'
+              sha256 :no_check
+              url 'https://brew.sh/fix-min-os.zip'
+              name 'Fix Min OS'
+              homepage 'https://brew.sh/'
+
+              app 'Fix Min OS.app'
+            end
+          RUBY
+        end
+
+        it "sets the minimum macOS version in the cask and marks the problem corrected" do
+          expect(run.errors.map { |error| error[:corrected] }).to eq([true])
+          expect(cask.sourcefile_path.read).to include("depends_on macos: :sequoia")
+        end
+
+        it "restores the cask when the rewrite no longer loads" do
+          allow(Utils::AST::CaskAST).to receive(:new).and_return(
+            instance_double(Utils::AST::CaskAST,
+                            update_depends_on_macos_minimum!: true,
+                            process:                          "this is not a cask("),
+          )
+          old_contents = cask.sourcefile_path.read
+
+          expect(run.errors.map { |error| error[:corrected] }).to eq([false])
+          expect(cask.sourcefile_path.read).to eq(old_contents)
+        end
+
+        context "when the cask sets a lower `maximum_macos`" do
+          let(:cask) do
+            tmp_cask "maximum-min-os", <<~RUBY
+              cask 'maximum-min-os' do
+                version '1.0'
+                sha256 :no_check
+                url 'https://brew.sh/maximum-min-os.zip'
+                name 'Maximum Min OS'
+                homepage 'https://brew.sh/'
+
+                depends_on maximum_macos: :sonoma
+
+                app 'Maximum Min OS.app'
+              end
+            RUBY
+          end
+
+          it "leaves the cask unchanged" do
+            run
+
+            expect(cask.sourcefile_path.read).not_to include("depends_on macos:")
+          end
+        end
+
+        context "when the cask has `on_system` blocks" do
+          let(:cask) do
+            tmp_cask "on-system-fix-min-os", <<~RUBY
+              cask 'on-system-fix-min-os' do
+                version '1.0'
+                sha256 :no_check
+                url 'https://brew.sh/on-system-fix-min-os.zip'
+                name 'On System Fix Min OS'
+                homepage 'https://brew.sh/'
+
+                on_arm do
+                  version '1.0-arm'
+                end
+
+                app 'On System Fix Min OS.app'
+              end
+            RUBY
+          end
+
+          it "leaves the cask unchanged" do
+            run
+
+            expect(cask.sourcefile_path.read).not_to include("depends_on")
+          end
+        end
+
+        context "when the cask lists exact macOS versions" do
+          let(:cask) do
+            tmp_cask "exact-min-os", <<~RUBY
+              cask 'exact-min-os' do
+                version '1.0'
+                sha256 :no_check
+                url 'https://brew.sh/exact-min-os.zip'
+                name 'Exact Min OS'
+                homepage 'https://brew.sh/'
+
+                depends_on macos: [:ventura, :sonoma]
+
+                app 'Exact Min OS.app'
+              end
+            RUBY
+          end
+
+          it { is_expected.to error_with(/minimum macOS version of :ventura/) }
+
+          it "leaves the cask unchanged" do
+            run
+
+            expect(cask.sourcefile_path.read).to include("depends_on macos: [:ventura, :sonoma]")
+          end
+        end
+
+        context "when the minimum macOS version comes from an `on_system` block" do
+          let(:cask) do
+            tmp_cask "on-system-min-os", <<~RUBY
+              cask 'on-system-min-os' do
+                version '1.0'
+                sha256 :no_check
+                url 'https://brew.sh/on-system-min-os.zip'
+                name 'On System Min OS'
+                homepage 'https://brew.sh/'
+
+                on_ventura :or_older do
+                  version '0.9'
+                end
+
+                app 'On System Min OS.app'
+              end
+            RUBY
+          end
+
+          it "leaves the cask unchanged" do
+            run
+
+            expect(cask.sourcefile_path.read).not_to include("depends_on")
+          end
+        end
       end
 
       it "normalizes 10.16.0 minimum macOS to Big Sur" do
@@ -1601,6 +1764,15 @@ RSpec.describe Cask::Audit, :cask do
         let(:new_cask) { true }
 
         it { is_expected.to error_with(/the `verified` parameter has been deprecated/) }
+
+        context "when fixing" do
+          let(:fix) { true }
+
+          it "removes the `verified` parameter and marks the problem corrected" do
+            expect(run.errors.map { |error| error[:corrected] }).to eq([true])
+            expect(cask.sourcefile_path.read).not_to include("verified:")
+          end
+        end
       end
 
       context "when `new_cask` is false" do

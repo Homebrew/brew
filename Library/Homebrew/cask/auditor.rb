@@ -14,18 +14,18 @@ module Cask
       params(
         cask: ::Cask::Cask, audit_download: T::Boolean, audit_online: T.nilable(T::Boolean),
         audit_strict: T.nilable(T::Boolean), audit_signing: T.nilable(T::Boolean),
-        audit_new_cask: T.nilable(T::Boolean),
+        audit_new_cask: T.nilable(T::Boolean), audit_fix: T.nilable(T::Boolean),
         any_named_args: T::Boolean, language: T.nilable(String), only: T::Array[String], except: T::Array[String]
       ).returns(T::Set[Audit::Error])
     }
     def self.audit(
       cask, audit_download: false, audit_online: nil, audit_strict: nil, audit_signing: nil,
-      audit_new_cask: nil, any_named_args: false, language: nil,
+      audit_new_cask: nil, audit_fix: nil, any_named_args: false, language: nil,
       only: [], except: []
     )
       new(
         cask, audit_download:, audit_online:, audit_strict:, audit_signing:,
-        audit_new_cask:, any_named_args:, language:, only:, except:
+        audit_new_cask:, audit_fix:, any_named_args:, language:, only:, except:
       ).audit
     end
 
@@ -39,7 +39,7 @@ module Cask
       params(
         cask: ::Cask::Cask, audit_download: T::Boolean, audit_online: T.nilable(T::Boolean),
         audit_strict: T.nilable(T::Boolean), audit_signing: T.nilable(T::Boolean),
-        audit_new_cask: T.nilable(T::Boolean),
+        audit_new_cask: T.nilable(T::Boolean), audit_fix: T.nilable(T::Boolean),
         any_named_args: T::Boolean, language: T.nilable(String), only: T::Array[String], except: T::Array[String]
       ).void
     }
@@ -50,6 +50,7 @@ module Cask
       audit_strict: nil,
       audit_signing: nil,
       audit_new_cask: nil,
+      audit_fix: nil,
       any_named_args: false,
       language: nil,
       only: [],
@@ -59,6 +60,7 @@ module Cask
       @audit_download = audit_download
       @audit_online = audit_online
       @audit_new_cask = audit_new_cask
+      @audit_fix = audit_fix
       @audit_strict = audit_strict
       @audit_signing = audit_signing
       @any_named_args = any_named_args
@@ -132,6 +134,7 @@ module Cask
         strict:   @audit_strict,
         signing:  @audit_signing,
         new_cask: @audit_new_cask,
+        fix:      @audit_fix,
         download: @audit_download,
         only:     @only,
         except:   @except,
