@@ -293,6 +293,34 @@ RSpec.describe Homebrew::Bundle::Brew do
     end
   end
 
+  describe "#lock_names" do
+    it "includes the formula's canonical name alongside its recursive dependency rack names" do
+      formula = instance_double(Formula, name:                   "python@3.14",
+                                         recursive_dependencies: [
+                                           instance_double(Dependency, name: "xz"),
+                                           instance_double(Dependency, name: "qux/quuz/mpdecimal"),
+                                         ])
+      allow(Formula).to receive(:[]).with("python").and_return(formula)
+
+      expect(described_class.lock_names("python")).to eq(Set["python@3.14", "xz", "mpdecimal"])
+    end
+
+    it "keeps the formula's canonical rack when its dependency tree cannot be expanded" do
+      formula = instance_double(Formula, name: "python@3.14")
+      allow(formula).to receive(:recursive_dependencies).and_raise(FormulaUnavailableError, "xz")
+      allow(Formula).to receive(:[]).with("python").and_return(formula)
+
+      expect(described_class.lock_names("python")).to eq(Set["python@3.14"])
+    end
+
+    it "falls back to the requested rack name for an unavailable formula" do
+      allow(Formula).to receive(:[]).with("qux/quuz/missing")
+                                    .and_raise(FormulaUnavailableError, "qux/quuz/missing")
+
+      expect(described_class.lock_names("qux/quuz/missing")).to eq(Set["missing"])
+    end
+  end
+
   describe "installing" do
     let(:formula_name) { "mysql" }
     let(:options) { { args: ["with-option"] } }
