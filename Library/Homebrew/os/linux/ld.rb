@@ -19,6 +19,16 @@ module OS
         /system/bin/linker
       ].freeze
 
+      # Preferred over `DYNAMIC_LINKERS` so that a foreign-architecture linker
+      # (e.g. x86-64 on an ARM host with multiarch) is not picked first.
+      NATIVE_DYNAMIC_LINKERS = T.let({
+        x86_64:  ["/lib64/ld-linux-x86-64.so.2"],
+        i386:    ["/lib/ld-linux.so.2"],
+        arm64:   ["/lib/ld-linux-aarch64.so.1"],
+        arm:     ["/lib/ld-linux-armhf.so.3", "/lib/ld-linux.so.3"],
+        ppc64le: ["/lib64/ld64.so.2"],
+      }.freeze, T::Hash[Symbol, T::Array[String]])
+
       class << self
         sig { params(system_ld_so: T.nilable(::Pathname)).returns(T.nilable(::Pathname)) }
         attr_writer :system_ld_so
@@ -29,7 +39,8 @@ module OS
       def self.system_ld_so
         @system_ld_so ||= T.let(nil, T.nilable(::Pathname))
         @system_ld_so ||= begin
-          linker = DYNAMIC_LINKERS.find { |s| File.executable? s }
+          candidates = NATIVE_DYNAMIC_LINKERS.fetch(::Hardware::CPU.arch, []) + DYNAMIC_LINKERS
+          linker = candidates.uniq.find { |s| File.executable? s }
           Pathname(linker) if linker
         end
       end

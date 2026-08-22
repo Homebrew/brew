@@ -30,6 +30,14 @@ RSpec.describe OS::Linux::Ld do
     it "returns nil when there is no known dynamic linker" do
       expect(described_class.system_ld_so).to be_nil
     end
+
+    it "prefers the dynamic linker matching the host architecture" do
+      allow(Hardware::CPU).to receive(:arch).and_return(:arm64)
+      allow(File).to receive(:executable?).with("/lib64/ld-linux-x86-64.so.2").and_return(true)
+      allow(File).to receive(:executable?).with("/lib/ld-linux-aarch64.so.1").and_return(true)
+
+      expect(described_class.system_ld_so).to eq(Pathname("/lib/ld-linux-aarch64.so.1"))
+    end
   end
 
   describe "::sysconfdir" do
