@@ -7,6 +7,49 @@ require "dev-cmd/tests"
 RSpec.describe Homebrew::DevCmd::Tests do
   it_behaves_like "parseable arguments"
 
+  describe "#run" do
+    subject(:tests) { described_class.new(args) }
+
+    let(:args) { [] }
+
+    before do
+      allow(Homebrew).to receive_messages(valid_gem_groups: [], install_bundler_gems!: nil)
+      allow(tests).to receive_messages(setup_environment!: nil, check_test_environment!: nil)
+    end
+
+    context "when changed tests only run on another OS" do
+      let(:args) { ["--changed"] }
+      let(:changed_file) do
+        if OS.linux?
+          "Library/Homebrew/cask/cask.rb"
+        else
+          "Library/Homebrew/os/linux/ld.rb"
+        end
+      end
+
+      before do
+        allow(Utils::Git).to receive(:changed_files).and_return([changed_file])
+      end
+
+      it "does not invoke RSpec" do
+        expect(tests).not_to receive(:system)
+
+        expect { tests.run }.to output(/No tests are available to run on this operating system/).to_stderr
+      end
+    end
+
+    context "when an explicit test only runs on another OS" do
+      let(:args) { ["--only=#{test_name}"] }
+      let(:test_name) { OS.linux? ? "cask/cask" : "os/linux/ld" }
+
+      it "fails instead of reporting success without running the test" do
+        expect(tests).not_to receive(:system)
+
+        expect { tests.run }.to raise_error(UsageError, /No tests are available to run on this operating system/)
+      end
+    end
+  end
+
   describe "#check_test_environment!", :needs_linux do
     subject(:tests) { described_class.new([]) }
 

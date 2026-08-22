@@ -1,23 +1,40 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "hardware"
+
 module OS
   module Linux
     # Helper functions for querying `ld` information.
     module Ld
-      # This is a list of known paths to the host dynamic linker on Linux if
-      # the host glibc is new enough. Brew will fail to create a symlink for
-      # ld.so if the host linker cannot be found in this list.
-      DYNAMIC_LINKERS = %w[
-        /lib64/ld-linux-x86-64.so.2
-        /lib64/ld64.so.2
-        /lib/ld-linux.so.3
-        /lib/ld-linux.so.2
-        /lib/ld-linux-aarch64.so.1
-        /lib/ld-linux-armhf.so.3
-        /system/bin/linker64
-        /system/bin/linker
-      ].freeze
+      # These are known paths to the host dynamic linker on Linux if the host
+      # glibc is new enough. Brew will fail to create a symlink for ld.so if
+      # the host architecture's linker cannot be found in this list.
+      DYNAMIC_LINKERS = T.let({
+        arm:     %w[
+          /lib/ld-linux.so.3
+          /lib/ld-linux-armhf.so.3
+          /system/bin/linker
+        ].freeze,
+        arm64:   %w[
+          /lib/ld-linux-aarch64.so.1
+          /system/bin/linker64
+        ].freeze,
+        i386:    %w[
+          /lib/ld-linux.so.2
+          /system/bin/linker
+        ].freeze,
+        ppc64:   %w[
+          /lib64/ld64.so.2
+        ].freeze,
+        ppc64le: %w[
+          /lib64/ld64.so.2
+        ].freeze,
+        x86_64:  %w[
+          /lib64/ld-linux-x86-64.so.2
+          /system/bin/linker64
+        ].freeze,
+      }.freeze, T::Hash[Symbol, T::Array[String]])
 
       class << self
         sig { params(system_ld_so: T.nilable(::Pathname)).returns(T.nilable(::Pathname)) }
@@ -29,7 +46,7 @@ module OS
       def self.system_ld_so
         @system_ld_so ||= T.let(nil, T.nilable(::Pathname))
         @system_ld_so ||= begin
-          linker = DYNAMIC_LINKERS.find { |s| File.executable? s }
+          linker = DYNAMIC_LINKERS.fetch(::Hardware::CPU.arch, []).find { |s| File.executable? s }
           Pathname(linker) if linker
         end
       end

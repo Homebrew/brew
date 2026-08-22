@@ -15,16 +15,29 @@ RSpec.describe OS::Linux::Ld do
   end
 
   describe "::system_ld_so" do
-    let(:ld_so) { "/lib/ld-linux.so.3" }
+    let(:ld_so) { "/lib64/ld-linux-x86-64.so.2" }
 
     before do
+      allow(Hardware::CPU).to receive(:arch).and_return(:x86_64)
       allow(File).to receive(:executable?).and_return(false)
+      described_class.system_ld_so = nil
+    end
+
+    after do
       described_class.system_ld_so = nil
     end
 
     it "returns the path to a known dynamic linker" do
       allow(File).to receive(:executable?).with(ld_so).and_return(true)
       expect(described_class.system_ld_so).to eq(Pathname(ld_so))
+    end
+
+    it "prefers the native dynamic linker when a foreign architecture linker is installed" do
+      allow(Hardware::CPU).to receive(:arch).and_return(:arm64)
+      allow(File).to receive(:executable?).with("/lib64/ld-linux-x86-64.so.2").and_return(true)
+      allow(File).to receive(:executable?).with("/lib/ld-linux-aarch64.so.1").and_return(true)
+
+      expect(described_class.system_ld_so).to eq(Pathname("/lib/ld-linux-aarch64.so.1"))
     end
 
     it "returns nil when there is no known dynamic linker" do

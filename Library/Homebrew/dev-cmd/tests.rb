@@ -143,6 +143,14 @@ module Homebrew
 
           bundle_args = os_bundle_args(bundle_args)
           files = os_files(files)
+          if files.blank?
+            if args.changed?
+              opoo "No tests are available to run on this operating system."
+              return
+            end
+
+            raise UsageError, "No tests are available to run on this operating system."
+          end
 
           puts "Randomized with seed #{seed}"
 
