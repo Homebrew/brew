@@ -34,10 +34,10 @@ class AbstractTab
   sig { returns(T.nilable(Pathname)) }
   attr_accessor :tabfile
 
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   attr_accessor :loaded_from_api
 
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   attr_accessor :loaded_from_internal_api
 
   sig { returns(T.nilable(Integer)) }
@@ -63,8 +63,8 @@ class AbstractTab
   sig {
     params(homebrew_version:         T.nilable(String),
            tabfile:                  T.nilable(T.any(Pathname, String)),
-           loaded_from_api:          T.nilable(T::Boolean),
-           loaded_from_internal_api: T.nilable(T::Boolean),
+           loaded_from_api:          T::Boolean,
+           loaded_from_internal_api: T::Boolean,
            installed_on_request:     T.nilable(T::Boolean),
            time:                     T.nilable(Integer),
            arch:                     T.nilable(T.any(String, Symbol)),
@@ -73,7 +73,7 @@ class AbstractTab
            runtime_dependencies:     RuntimeDependencies,
            _unknown:                 T.anything).void
   }
-  def initialize(homebrew_version: nil, tabfile: nil, loaded_from_api: nil, loaded_from_internal_api: nil,
+  def initialize(homebrew_version: nil, tabfile: nil, loaded_from_api: false, loaded_from_internal_api: false,
                  installed_on_request: nil, time: nil, arch: nil, source: nil, built_on: nil,
                  runtime_dependencies: nil, **_unknown)
     @installed_on_request = T.let(installed_on_request || false, T::Boolean)

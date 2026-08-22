@@ -7,10 +7,10 @@ class Tab < AbstractTab
   # Check whether the formula was poured from a bottle.
   #
   # @api internal
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   attr_accessor :poured_from_bottle
 
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   attr_accessor :built_as_bottle
 
   sig { returns(T.nilable(T.any(String, Symbol))) }
@@ -38,8 +38,8 @@ class Tab < AbstractTab
   attr_accessor :changed_files
 
   sig {
-    params(poured_from_bottle:   T.nilable(T::Boolean),
-           built_as_bottle:      T.nilable(T::Boolean),
+    params(poured_from_bottle:   T::Boolean,
+           built_as_bottle:      T::Boolean,
            changed_files:        T.nilable(T::Array[T.any(Pathname, String)]),
            stdlib:               T.nilable(T.any(String, Symbol)),
            aliases:              T.nilable(T::Array[String]),
@@ -50,7 +50,7 @@ class Tab < AbstractTab
            tapped_from:          T.nilable(String),
            rest:                 T.untyped).void
   }
-  def initialize(poured_from_bottle: nil, built_as_bottle: nil, changed_files: nil, stdlib: nil, aliases: nil,
+  def initialize(poured_from_bottle: false, built_as_bottle: false, changed_files: nil, stdlib: nil, aliases: nil,
                  used_options: nil, unused_options: nil, compiler: nil, source_modified_time: nil,
                  tapped_from: nil, **rest)
     @poured_from_bottle = poured_from_bottle
@@ -83,7 +83,6 @@ class Tab < AbstractTab
     tab.unused_options = build.unused_options.as_flags
     tab.tabfile = formula.prefix/FILENAME
     tab.built_as_bottle = build.bottle?
-    tab.poured_from_bottle = false
     tab.source_modified_time = formula.source_modified_time.to_i
     tab.compiler = compiler
     tab.stdlib = stdlib
@@ -228,8 +227,6 @@ class Tab < AbstractTab
 
     tab.used_options = []
     tab.unused_options = []
-    tab.built_as_bottle = false
-    tab.poured_from_bottle = false
     tab.source_modified_time = 0
     tab.stdlib = nil
     tab.compiler = DevelopmentTools.default_compiler

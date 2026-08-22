@@ -96,7 +96,7 @@ class GitRepository
   end
 
   # Returns true if the repository's current branch matches the default origin branch.
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   def default_origin_branch?
     origin_branch_name == branch_name
   end

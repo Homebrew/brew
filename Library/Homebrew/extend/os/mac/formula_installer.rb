@@ -8,7 +8,7 @@ module OS
 
       requires_ancestor { ::FormulaInstaller }
 
-      sig { params(formula: Formula).returns(T.nilable(T::Boolean)) }
+      sig { params(formula: Formula).returns(T::Boolean) }
       def fresh_install?(formula)
         !::Homebrew::EnvConfig.developer? && !OS::Mac.version.outdated_release? &&
           (installed_on_request? || !formula.any_version_installed?)

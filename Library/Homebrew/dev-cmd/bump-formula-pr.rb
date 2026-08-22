@@ -359,7 +359,7 @@ module Homebrew
 
           formula_checkboxes = []
 
-          if failed_updates.any? || (resources_checked.nil? && unchecked_resources.any?)
+          if failed_updates.any? || (!resources_checked && unchecked_resources.any?)
             formula_checkboxes << "- [ ] `resource` blocks have been checked for updates."
 
             if failed_updates.any?

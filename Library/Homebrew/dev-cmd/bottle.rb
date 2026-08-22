@@ -314,7 +314,7 @@ module Homebrew
         cellar.present? && default_cellars.exclude?(cellar)
       end
 
-      sig { returns(T.nilable(T::Boolean)) }
+      sig { void }
       def sudo_purge
         return unless ENV["HOMEBREW_BOTTLE_SUDO_PURGE"]
 
