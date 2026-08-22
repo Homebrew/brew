@@ -145,7 +145,11 @@ RSpec.describe Utils::Analytics do
       ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
       ENV.delete("HOMEBREW_NO_ANALYTICS")
       ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
-      expect(described_class).to receive(:deferred_curl).once
+      expect(described_class).to receive(:deferred_curl).with(
+        "#{Utils::Analytics::INFLUX_HOST}/api/v3/write_lp?db=#{Utils::Analytics::INFLUX_BUCKET}" \
+        "&precision=s&no_sync=true",
+        anything,
+      ).once
       described_class.report_influx(:install, { on_request: }, { package:, tap_name: })
     end
 

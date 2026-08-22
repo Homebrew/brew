@@ -52,7 +52,7 @@ module Utils
         ]
 
         # Second precision is highest we can do and has the lowest performance cost.
-        url = "#{INFLUX_HOST}/api/v2/write?bucket=#{INFLUX_BUCKET}&precision=s"
+        url = "#{INFLUX_HOST}/api/v3/write_lp?db=#{INFLUX_BUCKET}&precision=s&no_sync=true"
         deferred_curl(url, args)
       end
 
