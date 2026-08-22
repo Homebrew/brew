@@ -52,6 +52,7 @@ module Utils
         ]
 
         # Second precision is highest we can do and has the lowest performance cost.
+        # no_sync=true skips fsync for better write performance.
         url = "#{INFLUX_HOST}/api/v3/write_lp?bucket=#{INFLUX_BUCKET}&precision=seconds&no_sync=true"
         deferred_curl(url, args)
       end
