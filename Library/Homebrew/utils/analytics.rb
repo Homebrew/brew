@@ -12,7 +12,7 @@ module Utils
   module Analytics
     INFLUX_BUCKET = "analytics"
     INFLUX_TOKEN = "iVdsgJ_OjvTYGAA79gOfWlA_fX0QCuj4eYUNdb-qVUTrC3tp3JTWCADVNE9HxV0kp2ZjIK9tuthy_teX4szr9A=="
-    INFLUX_HOST = "https://eu-central-1-1.aws.cloud2.influxdata.com"
+    INFLUX_HOST = "https://analytics.brew.sh"
     INFLUX_ORG = "d81a3e6d582d485f"
     WSL_SUFFIX = " [WSL]"
     ENV_CONFIG_COMMANDS = %w[config fetch install reinstall update update-report upgrade].freeze
@@ -52,7 +52,7 @@ module Utils
         ]
 
         # Second precision is highest we can do and has the lowest performance cost.
-        url = "#{INFLUX_HOST}/api/v2/write?bucket=#{INFLUX_BUCKET}&precision=s"
+        url = "#{INFLUX_HOST}/api/v3/write_lp?bucket=#{INFLUX_BUCKET}&precision=seconds&no_sync=true"
         deferred_curl(url, args)
       end
 
