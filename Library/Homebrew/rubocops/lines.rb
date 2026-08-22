@@ -581,9 +581,32 @@ module RuboCop
       class PythonVersions < FormulaCop
         extend AutoCorrector
 
+        PYTHON_VERSION_REFERENCE_REGEX = /^python(@)?(\d\.\d+)$/
+
+        HARDCODED_PYTHON_ASSIGNMENT_MSG =
+          "`python = \"pythonX.Y\"` should use dynamic version detection: " \
+          "`python = \"python\#{python_major_minor(libexec/\"bin/python)\")}\"`"
+
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
+
+          body_node.each_descendant(:lvasgn) do |assignment_node|
+            variable_name = assignment_node.children.first
+            next unless [:python, :python3].include?(variable_name)
+
+            value = assignment_node.children.last
+            next unless value.is_a?(RuboCop::AST::StrNode)
+            next unless PYTHON_VERSION_REFERENCE_REGEX.match?(string_content(value))
+
+            offending_node(value)
+            problem HARDCODED_PYTHON_ASSIGNMENT_MSG do |corrector|
+              corrector.replace(
+                value.source_range,
+                "\"python\#{python_major_minor(libexec/\"bin/python)\")}\"",
+              )
+            end
+          end
 
           python_formula_node = find_every_method_call_by_name(body_node, :depends_on).find do |dep|
             string_content(parameters(dep).fetch(0)).start_with? "python@"
@@ -605,7 +628,7 @@ module RuboCop
           find_strings(body_node).each do |str|
             content = string_content(str)
 
-            next unless (match = content.match(/^python(@)?(\d\.\d+)$/))
+            next unless (match = content.match(PYTHON_VERSION_REFERENCE_REGEX))
             next if python_version == match[2]
 
             fix = if match[1]
