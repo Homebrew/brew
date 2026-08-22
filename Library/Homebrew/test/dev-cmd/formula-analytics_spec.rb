@@ -4,6 +4,7 @@
 require "cmd/shared_examples/args_parse"
 require "dev-cmd/formula-analytics"
 require "json"
+require "uri"
 require "utils/analytics"
 
 RSpec.describe Homebrew::DevCmd::FormulaAnalytics do
@@ -82,7 +83,7 @@ RSpec.describe Homebrew::DevCmd::FormulaAnalytics do
       command.each_influx_record("SELECT 1") { |record| records << record }
 
       expect(records).to eq [{
-        "host"     => "eu-central-1-1.aws.cloud2.influxdata.com",
+        "host"     => URI.parse(Utils::Analytics::INFLUX_HOST).host,
         "org"      => Utils::Analytics::INFLUX_ORG,
         "database" => Utils::Analytics::INFLUX_BUCKET,
         "query"    => "SELECT 1",
