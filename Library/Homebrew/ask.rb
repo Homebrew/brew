@@ -23,6 +23,7 @@ module Homebrew
 
         result = result.chomp.strip.downcase
         if result == "y"
+          ohai "Proceeding..."
           return true
         # N, Escape, Ctrl-C and Ctrl-D.
         elsif ["n", "\e", "\u0003", "\u0004"].include?(result)

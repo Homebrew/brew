@@ -180,7 +180,10 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
       expect do
         Homebrew::Install.ask(action: "upgrade")
-      end.to output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+      end.to output(<<~EOS).to_stdout
+        ==> Do you want to proceed with the upgrade? [y/n]
+        ==> Proceeding...
+      EOS
     end
   end
 
