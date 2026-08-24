@@ -349,10 +349,17 @@ on_request: true)
           ),
         )
 
-        artifact.install_phase(
-          command: @command, verbose: verbose?, adopt: adopt?, auto_updates: @cask.auto_updates,
-          force: force?, predecessor:
-        )
+        if artifact.is_a?(Artifact::AppImage)
+          artifact.install_phase(
+            command: @command, verbose: verbose?, adopt: adopt?, auto_updates: @cask.auto_updates,
+            force: force?, predecessor:, binaries: binaries?
+          )
+        else
+          artifact.install_phase(
+            command: @command, verbose: verbose?, adopt: adopt?, auto_updates: @cask.auto_updates,
+            force: force?, predecessor:
+          )
+        end
         already_installed_artifacts.unshift(artifact)
       end
 
