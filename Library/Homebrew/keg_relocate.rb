@@ -257,25 +257,30 @@ class Keg
            files: T.nilable(T::Array[Pathname])).void
   }
   def relocate_build_prefix(keg, old_prefix, new_prefix, files: nil)
-    candidates = T.let([], T::Array[Pathname])
-    if files
-      # Metadata-driven pour: only the files recorded at bottle time carry raw
-      # prefix strings, so skip the whole-keg scan.
-      hardlinks = Set.new
-      files.each do |relative_path|
-        file = path/relative_path
-        next if !file.file? || file.symlink?
-        # Hardlinks share an inode, so patch each inode only once.
-        next unless hardlinks.add? file.stat.ino
-
-        candidates << file
-      end
-    else
-      each_unique_file_matching(old_prefix) { |file| candidates << file }
+    old_prefix = old_prefix.to_s
+    new_prefix = new_prefix.to_s
+    # A raw C string can only be replaced in place by an equal-or-shorter
+    # string, so refuse before touching any file rather than failing midway.
+    if new_prefix.bytesize > old_prefix.bytesize
+      raise ArgumentError, "Cannot relocate build prefix #{old_prefix} to longer prefix #{new_prefix}"
     end
 
-    patched_files = T.let([], T::Array[Pathname])
-    candidates.each do |file|
+    # Hardlinked names share one inode: patch it once through the first name
+    # and re-link the rest afterwards, as the patched file gets a new inode.
+    inode_groups = if files
+      # Metadata-driven pour: only the files recorded at bottle time carry raw
+      # prefix strings, so skip the whole-keg scan.
+      files.map { |relative_path| path/relative_path }
+           .select { |file| file.file? && !file.symlink? }
+           .group_by { |file| file.stat.ino }
+           .values
+    else
+      files_matching_by_inode(old_prefix)
+    end
+
+    patched_groups = T.let([], T::Array[T::Array[Pathname]])
+    inode_groups.each do |group|
+      file = group.fetch(0)
       # Skip files which are not binary, as they do not need null padding.
       next unless keg.binary_file?(file)
 
@@ -287,7 +292,7 @@ class Keg
       file.ensure_writable do
         binary = File.binread file
         binary_strings = binary.split(/#{NULL_BYTE}/o, -1)
-        match_indices = binary_strings.each_index.select { |i| binary_strings.fetch(i).include?(old_prefix.to_s) }
+        match_indices = binary_strings.each_index.select { |i| binary_strings.fetch(i).include?(old_prefix) }
 
         # Bottle metadata records files pinned by any prefix, cellar or
         # repository reference, so a recorded file may not contain this
@@ -296,31 +301,82 @@ class Keg
 
         odebug "Replacing build prefix in: #{file}"
 
-        # Only perform substitution on strings which match prefix regex.
+        # Linkers merge a string with the suffix of another, so a string in
+        # the dynamic string table can be referenced from its interior.
+        interior_references = Keg.elf_dynamic_string_references_in(file)
+        string_starts = T.let([], T::Array[Integer])
+        binary_strings.reduce(0) do |start, binary_string|
+          string_starts << start
+          start + binary_string.bytesize + 1
+        end
+
         match_indices.each do |i|
-          s = binary_strings.fetch(i)
-          binary_strings[i] = s.gsub(old_prefix.to_s, new_prefix.to_s)
-                               .ljust(s.size, NULL_BYTE)
+          binary_string = binary_strings.fetch(i)
+          start = string_starts.fetch(i)
+          preserve_suffix_offsets = interior_references.any? do |reference|
+            reference > start && reference < start + binary_string.bytesize
+          end
+          binary_strings[i] = Keg.replace_prefix_preserving_length(binary_string, old_prefix, new_prefix,
+                                                                   preserve_suffix_offsets:)
         end
 
         # Rejoin strings by null bytes.
         patched_binary = binary_strings.join(NULL_BYTE)
-        if patched_binary.size != binary.size
+        if patched_binary.bytesize != binary.bytesize
           raise <<~EOS
             Patching failed!  Original and patched binary sizes do not match.
-            Original size: #{binary.size}
-            Patched size: #{patched_binary.size}
+            Original size: #{binary.bytesize}
+            Patched size: #{patched_binary.bytesize}
           EOS
         end
 
         file.atomic_write patched_binary
-        patched_files << file
+        patched_groups << group
       end
     end
 
     # Each patch broke the file's signature, so re-sign each patched file
     # exactly once, parallelised across files.
-    codesign_patched_binaries(patched_files)
+    codesign_patched_binaries(patched_groups.map { |group| group.fetch(0) })
+
+    patched_groups.each do |group|
+      first = group.fetch(0)
+      group.drop(1).each { |file| FileUtils.ln(first, file, force: true) }
+    end
+  end
+
+  # Replaces the prefix in a NUL-terminated string without changing its
+  # length. Trailing NUL padding is invisible to C string readers but shifts
+  # any suffix-merged reference into the string, so when the string has such
+  # references and the prefix is followed by a path separator, pad with
+  # extra separators instead: path resolution treats `//` as `/`.
+  sig {
+    params(string: String, old_prefix: String, new_prefix: String, preserve_suffix_offsets: T::Boolean).returns(String)
+  }
+  def self.replace_prefix_preserving_length(string, old_prefix, new_prefix, preserve_suffix_offsets:)
+    if preserve_suffix_offsets
+      separators = "/" * (old_prefix.bytesize - new_prefix.bytesize + 1)
+      padded = string.gsub("#{old_prefix}/") { "#{new_prefix}#{separators}" }
+      return padded if padded.bytesize == string.bytesize
+    end
+
+    string.gsub(old_prefix) { new_prefix }.ljust(string.bytesize, NULL_BYTE)
+  end
+
+  # Absolute file offsets of the strings the dynamic loader references in
+  # the file's dynamic string table, or none for files that are not ELF or
+  # cannot be parsed.
+  sig { params(file: Pathname).returns(T::Array[Integer]) }
+  def self.elf_dynamic_string_references_in(file)
+    require "os/linux/elf"
+    return [] unless T.cast(Pathname.new(file.to_s).extend(ELFShim), ELFShim).elf?
+
+    require "elftools"
+    file.open("rb") do |stream|
+      elf_dynamic_string_references(ELFTools::ELFFile.new(stream))&.offsets || []
+    end
+  rescue ELFTools::ELFError, IOError, SystemCallError
+    []
   end
 
   sig { params(_options: T::Hash[Symbol, T::Boolean]).returns(T::Array[Symbol]) }
@@ -346,21 +402,26 @@ class Keg
     [grep_bin, grep_args]
   end
 
-  sig { params(string: T.any(String, Pathname), _block: T.proc.params(arg0: Pathname).void).void }
-  def each_unique_file_matching(string, &_block)
+  # Files containing the string, grouped by inode so that hardlinks to the
+  # same file appear together.
+  sig { params(string: T.any(String, Pathname)).returns(T::Array[T::Array[Pathname]]) }
+  def files_matching_by_inode(string)
+    files = T.let([], T::Array[Pathname])
     Utils.popen_read("fgrep", recursive_fgrep_args, string, to_s) do |io|
-      hardlinks = Set.new
-
       until io.eof?
         file = Pathname.new(io.readline.chomp)
         # Don't return symbolic links.
-        next if file.symlink?
-
-        # To avoid returning hardlinks, only return files with unique inodes.
-        # Hardlinks will have the same inode as the file they point to.
-        yield file if hardlinks.add? file.stat.ino
+        files << file unless file.symlink?
       end
     end
+    files.group_by { |file| file.stat.ino }.values
+  end
+
+  sig { params(string: T.any(String, Pathname), block: T.proc.params(arg0: Pathname).void).void }
+  def each_unique_file_matching(string, &block)
+    # Hardlinks share an inode with the file they point to, so only the first
+    # name of each inode is yielded.
+    files_matching_by_inode(string).map { |group| group.fetch(0) }.each(&block)
   end
 
   sig { params(file: Pathname).returns(T::Boolean) }
@@ -551,56 +612,16 @@ class Keg
       end
 
       string_table_range = T.let(nil, T.nilable(T::Range[Integer]))
-      if (dynamic = elf.segment_by_type(:dynamic))
-        # Dynamic tags whose value is an offset into the dynamic string
-        # table, i.e. the strings the loader can actually see.
-        string_tags = [
-          ELFTools::Constants::DT::DT_NEEDED,
-          ELFTools::Constants::DT::DT_SONAME,
-          ELFTools::Constants::DT::DT_RPATH,
-          ELFTools::Constants::DT::DT_RUNPATH,
-          ELFTools::Constants::DT::DT_AUXILIARY,
-          # elftools 1.3.1 mislabels `DT_USED` (0x7ffffffe) as `DT_FILTER`;
-          # both hold string-table offsets, so keep the mislabelled value
-          # and add the ELF ABI's real `DT_FILTER`.
-          ELFTools::Constants::DT::DT_FILTER,
-          0x7fffffff, # DT_FILTER
-          ELFTools::Constants::DT::DT_AUDIT,
-          ELFTools::Constants::DT::DT_DEPAUDIT,
-          ELFTools::Constants::DT::DT_CONFIG,
-        ]
-        string_table_vaddr = T.let(nil, T.nilable(Integer))
-        string_table_size = T.let(nil, T.nilable(Integer))
-        string_offsets = []
-        dynamic.tags.each do |tag|
-          case tag.header.d_tag.to_i
-          when ELFTools::Constants::DT::DT_STRTAB then string_table_vaddr = tag.header.d_val.to_i
-          when ELFTools::Constants::DT::DT_STRSZ then string_table_size = tag.header.d_val.to_i
-          when *string_tags then string_offsets << tag.header.d_val.to_i
-          end
-        end
-        if string_table_vaddr && (string_table_offset = elf.offset_from_vma(string_table_vaddr))
-          string_table_range = string_table_offset...(string_table_offset + string_table_size) if string_table_size
-
-          # Dynamic symbol names are loader-visible strings in the same
-          # table, referenced by `.dynsym` `st_name` rather than by dynamic
-          # tags. Version table strings also index the table but hold
-          # version names, never paths, so they are not collected.
-          elf.sections_by_type(ELFTools::Constants::SHT::SHT_DYNSYM).each do |section|
-            section.symbols.each do |symbol|
-              name_offset = symbol.header.st_name.to_i
-              string_offsets << name_offset unless name_offset.zero?
-            end
-          end
-
-          # A referenced string runs from its offset to the terminating NUL,
-          # so a suffix-merged reference to the interior `libfoo.so` of
-          # `/old/prefix/libfoo.so` never yields the dead prefix before it.
-          string_offsets.uniq.each do |offset|
-            stream.pos = string_table_offset + offset
-            referenced = stream.gets("\0")&.delete_suffix("\0")
-            strings << [string_table_offset + offset, referenced] if referenced
-          end
+      if (references = elf_dynamic_string_references(elf))
+        string_table_range = references.string_table_range
+        referenced_offsets = references.offsets
+        # A referenced string runs from its offset to the terminating NUL,
+        # so a suffix-merged reference to the interior `libfoo.so` of
+        # `/old/prefix/libfoo.so` never yields the dead prefix before it.
+        referenced_offsets.each do |offset|
+          stream.pos = offset
+          referenced = stream.gets("\0")&.delete_suffix("\0")
+          strings << [offset, referenced] if referenced
         end
       end
 
@@ -641,6 +662,68 @@ class Keg
     # pointing outside the file mid-parse (Linux raises `Errno::EINVAL`
     # for the resulting seek where macOS returns EOF).
     nil
+  end
+
+  class DynamicStringReferences < T::Struct
+    # The file range of the dynamic string table, when its size is known.
+    const :string_table_range, T.nilable(T::Range[Integer])
+    # Absolute file offsets of the strings the loader references in it.
+    const :offsets, T::Array[Integer]
+  end
+
+  # The strings the dynamic loader references in the file's dynamic string
+  # table, or nil without a dynamic segment or string table.
+  sig { params(elf: ELFTools::ELFFile).returns(T.nilable(DynamicStringReferences)) }
+  def self.elf_dynamic_string_references(elf)
+    dynamic = elf.segment_by_type(:dynamic)
+    return if dynamic.nil?
+
+    # Dynamic tags whose value is an offset into the dynamic string table,
+    # i.e. the strings the loader can actually see.
+    string_tags = [
+      ELFTools::Constants::DT::DT_NEEDED,
+      ELFTools::Constants::DT::DT_SONAME,
+      ELFTools::Constants::DT::DT_RPATH,
+      ELFTools::Constants::DT::DT_RUNPATH,
+      ELFTools::Constants::DT::DT_AUXILIARY,
+      # elftools 1.3.1 mislabels `DT_USED` (0x7ffffffe) as `DT_FILTER`;
+      # both hold string-table offsets, so keep the mislabelled value
+      # and add the ELF ABI's real `DT_FILTER`.
+      ELFTools::Constants::DT::DT_FILTER,
+      0x7fffffff, # DT_FILTER
+      ELFTools::Constants::DT::DT_AUDIT,
+      ELFTools::Constants::DT::DT_DEPAUDIT,
+      ELFTools::Constants::DT::DT_CONFIG,
+    ]
+    string_table_vaddr = T.let(nil, T.nilable(Integer))
+    string_table_size = T.let(nil, T.nilable(Integer))
+    string_offsets = []
+    dynamic.tags.each do |tag|
+      case tag.header.d_tag.to_i
+      when ELFTools::Constants::DT::DT_STRTAB then string_table_vaddr = tag.header.d_val.to_i
+      when ELFTools::Constants::DT::DT_STRSZ then string_table_size = tag.header.d_val.to_i
+      when *string_tags then string_offsets << tag.header.d_val.to_i
+      end
+    end
+    return if string_table_vaddr.nil?
+
+    string_table_offset = elf.offset_from_vma(string_table_vaddr)
+    return if string_table_offset.nil?
+
+    # Dynamic symbol names are loader-visible strings in the same table,
+    # referenced by `.dynsym` `st_name` rather than by dynamic tags. Version
+    # table strings also index the table but hold version names, never
+    # paths, so they are not collected.
+    elf.sections_by_type(ELFTools::Constants::SHT::SHT_DYNSYM).each do |section|
+      section.symbols.each do |symbol|
+        name_offset = symbol.header.st_name.to_i
+        string_offsets << name_offset unless name_offset.zero?
+      end
+    end
+
+    string_table_range = string_table_offset...(string_table_offset + string_table_size) if string_table_size
+    DynamicStringReferences.new(string_table_range:,
+                                offsets:            string_offsets.uniq.map { |offset| string_table_offset + offset })
   end
 
   sig { params(_file: Pathname, _string: String).returns(T::Array[String]) }

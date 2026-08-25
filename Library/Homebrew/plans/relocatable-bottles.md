@@ -83,7 +83,9 @@ Raw C strings are the only length-limited content at pour time:
 - ELF RPATHs and interpreters can grow because patchelf.rb rewrites them into
   a new segment.
 - A raw C string can only be replaced by an equal-or-shorter string, padded
-  with NUL bytes.
+  with NUL bytes; a string in an ELF dynamic string table that a linker has
+  suffix-merged (referenced from its interior) is instead padded with extra
+  path separators after the prefix so those references keep their offsets.
 
 `Keg#relocate_build_prefix` (`keg_relocate.rb`) implements that NUL-padded
 patching and re-signs patched Mach-O files, and
@@ -212,11 +214,6 @@ Whole dependency closures become pourable at prefixes up to the bottled
 default length (13 bytes arm64 macOS, 26 Linux), covering the hub formulae
 (`openssl@3`, `gettext`, `glib`, `python@3.x`) that Phase 1 cannot.
 
-8. Hardening tests and fixes for `Keg#relocate_build_prefix`:
-   multi-occurrence strings, several strings per file, hardlinks, the
-   sharball skip, the size-mismatch failure path, codesign on macOS and
-   no-op on Linux, suffix-merged string tables and prefix strings inside
-   load commands.
 9. Observability and diagnostics: the poured keg's tab records patched state
    and files; the pour decline message (`formula_installer.rb`) compares
    prefix lengths and states the actionable cause ("prefix 8 characters too

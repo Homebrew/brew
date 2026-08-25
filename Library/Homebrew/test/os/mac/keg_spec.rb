@@ -165,6 +165,27 @@ RSpec.describe Keg do
     end
   end
 
+  describe "#relocate_build_prefix" do
+    let(:keg_path) { HOMEBREW_CELLAR/"a/1.0" }
+    let(:file) { keg_path/"lib/libfoo.dylib" }
+
+    before do
+      file.dirname.mkpath
+      cp dylib_path("x86_64"), file
+      MachOPathname.wrap(file).change_install_name("/usr/lib/libSystem.B.dylib", "/old/pfx/libSys.B.dylib")
+      allow(keg).to receive(:codesign_patched_binaries)
+    end
+
+    after { keg.unlink }
+
+    it "patches prefix strings inside load commands" do
+      keg.relocate_build_prefix(keg, "/old/pfx", "/new", files: [Pathname("lib/libfoo.dylib")])
+
+      expect(MachOPathname.wrap(file).dynamically_linked_libraries(resolve_variable_references: false))
+        .to eq ["/new/libSys.B.dylib"]
+    end
+  end
+
   describe "#codesign_patched_binaries" do
     let(:keg_path) { HOMEBREW_CELLAR/"a/1.0" }
     let(:files) { [keg_path/"bin/a", keg_path/"bin/b"] }
