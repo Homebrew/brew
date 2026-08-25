@@ -67,8 +67,9 @@ RSpec.describe Keg do
       hardlink = dir/"hardlink.bin"
       FileUtils.ln binary_file, hardlink
 
-      keg.relocate_build_prefix(keg, dir, newdir)
+      patched = keg.relocate_build_prefix(keg, dir, newdir)
 
+      expect(patched).to contain_exactly(Pathname("file.bin"), Pathname("hardlink.bin"))
       expect(hardlink.stat.ino).to eq binary_file.stat.ino
       expect(hardlink.binread).to include newdir.to_s
     end

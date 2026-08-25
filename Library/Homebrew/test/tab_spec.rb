@@ -577,7 +577,11 @@ RSpec.describe Tab do
 
   specify "#to_json" do
     tab.built_prefix = "/custom/prefix"
+    tab.relocated_build_prefix = "/custom/prefix"
+    tab.relocated_files = [Pathname("bin/foo")]
     json_tab = described_class.new(**JSON.parse(tab.to_json).transform_keys(&:to_sym))
+    expect(json_tab.relocated_build_prefix).to eq(tab.relocated_build_prefix)
+    expect(json_tab.relocated_files).to eq(tab.relocated_files)
     expect(json_tab.homebrew_version).to eq(tab.homebrew_version)
     expect(json_tab.used_options.sort).to eq(tab.used_options.sort)
     expect(json_tab.unused_options.sort).to eq(tab.unused_options.sort)
@@ -603,7 +607,9 @@ RSpec.describe Tab do
 
   specify "#to_bottle_hash" do
     tab.built_prefix = "/custom/prefix"
+    tab.relocated_build_prefix = "/custom/prefix"
     json_tab = described_class.new(**JSON.parse(tab.to_bottle_hash.to_json).transform_keys(&:to_sym))
+    expect(json_tab.relocated_build_prefix).to be_nil
     expect(json_tab.homebrew_version).to eq(tab.homebrew_version)
     expect(json_tab.changed_files).to eq(tab.changed_files)
     expect(json_tab.linkage_files).to eq(tab.linkage_files)

@@ -45,6 +45,13 @@ RSpec.describe BottleSpecification do
     it "checks if the bottle cellar is relocatable" do
       expect(bottle_spec.compatible_locations?).to be false
     end
+
+    it "accepts a longer bottle cellar when build prefix relocation is enabled" do
+      ENV["HOMEBREW_RELOCATE_BUILD_PREFIX"] = "1"
+      bottle_spec.sha256(cellar: "#{HOMEBREW_CELLAR}-longer", Utils::Bottles.tag.to_sym => "deadbeef" * 8)
+
+      expect(bottle_spec.compatible_locations?).to be true
+    end
   end
 
   describe "#tag_to_cellar" do

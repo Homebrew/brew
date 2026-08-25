@@ -252,9 +252,10 @@ class Keg
     changed_files
   end
 
+  # Returns the patched files relative to the keg.
   sig {
     params(keg: Keg, old_prefix: T.any(String, Pathname), new_prefix: T.any(String, Pathname),
-           files: T.nilable(T::Array[Pathname])).void
+           files: T.nilable(T::Array[Pathname])).returns(T::Array[Pathname])
   }
   def relocate_build_prefix(keg, old_prefix, new_prefix, files: nil)
     old_prefix = old_prefix.to_s
@@ -343,6 +344,8 @@ class Keg
       first = group.fetch(0)
       group.drop(1).each { |file| FileUtils.ln(first, file, force: true) }
     end
+
+    patched_groups.flatten.map { |file| file.relative_path_from(path) }
   end
 
   # Replaces the prefix in a NUL-terminated string without changing its

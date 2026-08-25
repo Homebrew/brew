@@ -46,6 +46,13 @@ class Tab < AbstractTab
   sig { returns(T.nilable(T::Array[Pathname])) }
   attr_accessor :binary_relocation_files
 
+  # The prefix a poured bottle was built for, when it was patched in place.
+  sig { returns(T.nilable(String)) }
+  attr_accessor :relocated_build_prefix
+
+  sig { returns(T.nilable(T::Array[Pathname])) }
+  attr_accessor :relocated_files
+
   sig {
     params(poured_from_bottle:      T.nilable(T::Boolean),
            built_as_bottle:         T.nilable(T::Boolean),
@@ -53,6 +60,8 @@ class Tab < AbstractTab
            changed_files:           T.nilable(T::Array[T.any(Pathname, String)]),
            linkage_files:           T.nilable(T::Array[T.any(Pathname, String)]),
            binary_relocation_files: T.nilable(T::Array[T.any(Pathname, String)]),
+           relocated_build_prefix:  T.nilable(String),
+           relocated_files:         T.nilable(T::Array[T.any(Pathname, String)]),
            stdlib:                  T.nilable(T.any(String, Symbol)),
            aliases:                 T.nilable(T::Array[String]),
            used_options:            T.nilable(T::Array[String]),
@@ -63,8 +72,9 @@ class Tab < AbstractTab
            rest:                    T.untyped).void
   }
   def initialize(poured_from_bottle: nil, built_as_bottle: nil, built_prefix: nil, changed_files: nil,
-                 linkage_files: nil, binary_relocation_files: nil, stdlib: nil, aliases: nil, used_options: nil,
-                 unused_options: nil, compiler: nil, source_modified_time: nil, tapped_from: nil, **rest)
+                 linkage_files: nil, binary_relocation_files: nil, relocated_build_prefix: nil,
+                 relocated_files: nil, stdlib: nil, aliases: nil, used_options: nil, unused_options: nil,
+                 compiler: nil, source_modified_time: nil, tapped_from: nil, **rest)
     @poured_from_bottle = poured_from_bottle
     @built_as_bottle = built_as_bottle
     @built_prefix = built_prefix
@@ -74,6 +84,8 @@ class Tab < AbstractTab
       binary_relocation_files&.map { |f| Pathname(f) },
       T.nilable(T::Array[Pathname]),
     )
+    @relocated_build_prefix = relocated_build_prefix
+    @relocated_files = T.let(relocated_files&.map { |f| Pathname(f) }, T.nilable(T::Array[Pathname]))
     @stdlib = stdlib
     @aliases = aliases
     @used_options = used_options
@@ -398,6 +410,8 @@ class Tab < AbstractTab
       "changed_files"            => changed_files&.map(&:to_s),
       "linkage_files"            => linkage_files&.map(&:to_s),
       "binary_relocation_files"  => binary_relocation_files&.map(&:to_s),
+      "relocated_build_prefix"   => relocated_build_prefix,
+      "relocated_files"          => relocated_files&.map(&:to_s),
       "time"                     => time,
       "source_modified_time"     => source_modified_time.to_i,
       "stdlib"                   => stdlib&.to_s,
@@ -412,6 +426,8 @@ class Tab < AbstractTab
     attributes.delete("built_prefix") if attributes["built_prefix"].nil?
     attributes.delete("linkage_files") if attributes["linkage_files"].nil?
     attributes.delete("binary_relocation_files") if attributes["binary_relocation_files"].nil?
+    attributes.delete("relocated_build_prefix") if attributes["relocated_build_prefix"].nil?
+    attributes.delete("relocated_files") if attributes["relocated_files"].nil?
 
     JSON.pretty_generate(attributes, options)
   end

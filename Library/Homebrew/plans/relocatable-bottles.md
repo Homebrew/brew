@@ -31,6 +31,10 @@ Any benchmark quoted in a commit message must be the full hyperfine
 output from `brew benchmark` (using its `--exec` mode for bespoke
 workloads), never hand-summarised numbers.
 
+Changes to homebrew/core (re-marks, formula fixes, sweeps) use one commit
+per formula with the subject `<formula>: <change>`, never one commit
+spanning many formulae.
+
 Pull requests must always fill in the repository's pull request
 template (`.github/PULL_REQUEST_TEMPLATE.md`), never bypass it
 (e.g. with `gh pr create --fill`).
@@ -167,7 +171,8 @@ Replaying the exact `keg_contain?` logic over the contents of 17 pinned and
 9. `HOMEBREW_RELOCATE_BUILD_PREFIX` is added to `env_config.rb` with
    `hidden: true` until the feature is hardened and diagnosable, and is
    ultimately retired in favour of a `HOMEBREW_NO_RELOCATE_BUILD_PREFIX`
-   escape hatch.
+   escape hatch. Until it is unhidden and considered stable no
+   user-facing message mentions it.
 10. Non-intuitive logic must always be commented, especially relocation edge
     cases (NUL padding, string-table subtleties, codesign behaviour): this
     code is touched rarely and debugged under pressure.
@@ -214,13 +219,6 @@ Whole dependency closures become pourable at prefixes up to the bottled
 default length (13 bytes arm64 macOS, 26 Linux), covering the hub formulae
 (`openssl@3`, `gettext`, `glib`, `python@3.x`) that Phase 1 cannot.
 
-9. Observability and diagnostics: the poured keg's tab records patched state
-   and files; the pour decline message (`formula_installer.rb`) compares
-   prefix lengths and states the actionable cause ("prefix 8 characters too
-   long to patch, building from source" versus "patchable: enable
-   relocation").
-10. Add `HOMEBREW_RELOCATE_BUILD_PREFIX` to `env_config.rb` with
-    `hidden: true` so it is typed and testable but not yet public.
 11. Validation workflow: pour all pinned bottles into scratch prefixes with
     `brew linkage` and smoke tests.
 

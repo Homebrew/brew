@@ -322,6 +322,33 @@ RSpec.describe FormulaInstaller do
     end
   end
 
+  describe "#pour_bottle? with a bottle built for another prefix" do
+    def installer_for_cellar(cellar)
+      f = formula("pinned-bottle") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/pinned-bottle-1.0.tar.gz"
+
+        bottle do
+          sha256 cellar:,
+                 Utils::Bottles.tag.to_sym => "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
+        end
+      end
+      Class.new(described_class).new(f)
+    end
+
+    it "states how much longer the prefix is than the bottle's" do
+      installer = installer_for_cellar("/short/Cellar")
+
+      expect { installer.pour_bottle?(output_warning: true) }.to output(/characters longer than/).to_stderr
+    end
+
+    it "states how much shorter the prefix is than the bottle's" do
+      installer = installer_for_cellar("#{HOMEBREW_PREFIX}-longer/Cellar")
+
+      expect { installer.pour_bottle?(output_warning: true) }.to output(/7 characters shorter than/).to_stderr
+    end
+  end
+
   describe "#build_bottle_postinstall" do
     let(:f) do
       formula "bottle-config" do

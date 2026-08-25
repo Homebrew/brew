@@ -413,6 +413,9 @@ module Homebrew::EnvConfig
     def pry?; end
 
     sig { returns(T::Boolean) }
+    def relocate_build_prefix?; end
+
+    sig { returns(T::Boolean) }
     def require_tap_trust?; end
 
     sig { returns(T::Boolean) }

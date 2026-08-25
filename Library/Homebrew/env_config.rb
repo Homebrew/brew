@@ -656,6 +656,12 @@ module Homebrew
         odeprecated: true,
         replacement: "the default IRB backend (Pry is largely unmaintained upstream)",
       },
+      HOMEBREW_RELOCATE_BUILD_PREFIX:            {
+        description: "If set, pour bottles built for a longer prefix and patch the build prefix into their " \
+                     "binaries at install time.",
+        boolean:     true,
+        hidden:      true,
+      },
       HOMEBREW_REQUIRE_TAP_TRUST:                {
         # odeprecated: make tap trust checks default in a later release.
         description: "If set, require non-official tap formulae, casks and commands to be trusted with " \
