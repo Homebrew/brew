@@ -233,7 +233,7 @@ module Homebrew
 
     sig { params(string: String).returns(String) }
     def self.simplify_string(string)
-      string.downcase.gsub(/[^a-z\d@+]/i, "")
+      string.downcase.delete("^a-z0-9@+")
     end
 
     sig { params(selectable: SelectableType, regex: Regexp, _block: SearchBlockType).returns(SearchResultType) }
