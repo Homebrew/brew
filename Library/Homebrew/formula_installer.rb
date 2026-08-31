@@ -442,15 +442,7 @@ class FormulaInstaller
       end
 
       if message
-        message += <<~EOS
-          If you're feeling brave, you can try to install from source with:
-            brew install --build-from-source #{formula}
-
-          This is a Tier 3 configuration:
-            #{Formatter.url("https://docs.brew.sh/Support-Tiers#tier-3")}
-          #{Formatter.bold("Do not report any issues to Homebrew/* repositories!")}
-          Read the above document instead before opening any issues or PRs.
-        EOS
+        message += source_install_guidance(formula)
         raise CannotInstallFormulaError, message
       end
     end
@@ -516,6 +508,19 @@ class FormulaInstaller
 
   sig { params(_formula: Formula).returns(T.nilable(T::Boolean)) }
   def fresh_install?(_formula) = false
+
+  sig { params(formula: Formula).returns(String) }
+  def source_install_guidance(formula)
+    <<~EOS
+      If you're feeling brave, you can try to install from source with:
+        brew install --build-from-source #{formula}
+
+      This is a Tier 3 configuration:
+        #{Formatter.url("https://docs.brew.sh/Support-Tiers#tier-3")}
+      #{Formatter.bold("Do not report any issues to Homebrew/* repositories!")}
+      Read the above document instead before opening any issues or PRs.
+    EOS
+  end
 
   sig { void }
   def fetch_fetch_deps
