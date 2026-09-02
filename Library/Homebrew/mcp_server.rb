@@ -20,6 +20,10 @@ module Homebrew
     ERROR_CODE = -32601
 
     # Reject inline `cask ... do`/`cask(...) {}` blocks the cask loader would eval as Ruby.
+    #
+    # Must match everything `Cask::CaskLoader::FromContentLoader.try_new` accepts,
+    # since that is what would be `instance_eval`ed. `cask_loader_spec.rb` locks
+    # that relationship down.
     INLINE_CASK_DSL_REGEX = /\A\s*cask\s*['"(]/
 
     SERVER_INFO = T.let({

@@ -76,6 +76,18 @@ module Cask
 
         content = ref.to_str
 
+        # Anything this matches is `instance_eval`ed as Ruby by `#load` below, so
+        # `Homebrew::McpServer::INLINE_CASK_DSL_REGEX` must reject everything this
+        # accepts. That guard exists because the MCP server forwards a "name"
+        # argument here verbatim. The two patterns are separate, so widening this
+        # one without widening that one re-opens arbitrary code execution through
+        # tools that advertise themselves as read-only.
+        #
+        # In particular, do not make this accept a leading comment to fix
+        # `brew bump --open-pr` on casks whose file starts with one. Callers that
+        # know they hold cask source should use `FromContentLoader.new` directly,
+        # as `bump-cask-pr` does.
+        #
         # Cache compiled regex
         @regex ||= T.let(
           begin

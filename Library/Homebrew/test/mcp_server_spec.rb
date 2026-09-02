@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "mcp_server"
+require "cask/cask_loader"
 require "stringio"
 require "timeout"
 
@@ -181,6 +182,53 @@ RSpec.describe Homebrew::McpServer do
       }
       result = server.handle_request(request)
       expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid formula or cask argument", code: } })
+    end
+
+    # `Cask::CaskLoader::FromContentLoader#load` runs its content through
+    # `instance_eval`, so whatever `try_new` accepts is what the cask loader will
+    # execute as Ruby. This server forwards `formula_or_cask` to `brew` verbatim
+    # and relies on `INLINE_CASK_DSL_REGEX` to reject that set before spawning
+    # anything.
+    #
+    # The two patterns live in different files, so nothing stops one from being
+    # widened on its own. These examples lock the relationship down: widen the
+    # loader without widening the guard and they fail, rather than silently
+    # restoring arbitrary code execution through tools documented as read-only.
+    it "rejects every inline cask definition the cask loader would evaluate" do
+      [
+        %Q(cask "token" do\n  version "1.0"\nend),
+        %Q(cask 'token' do\n  version "1.0"\nend),
+        'cask "token" do; version "1.0"; end',
+        'cask("token") { version "1.0" }',
+        %Q(\n\n  cask "token" do\n  version "1.0"\nend\n),
+      ].each do |content|
+        expect(Cask::CaskLoader::FromContentLoader.try_new(content)).not_to be_nil
+        expect(Homebrew::McpServer::INLINE_CASK_DSL_REGEX.match?(content)).to be(true), content.inspect
+      end
+    end
+
+    it "does not reject a plain cask token" do
+      token = "token"
+
+      expect(Cask::CaskLoader::FromContentLoader.try_new(token)).to be_nil
+      expect(Homebrew::McpServer::INLINE_CASK_DSL_REGEX.match?(token)).to be(false)
+    end
+
+    # The other half of the same invariant, and the half with teeth. A leading
+    # comment stops `INLINE_CASK_DSL_REGEX` from matching, so this content
+    # reaches `brew` — which is only safe for as long as the cask loader refuses
+    # to evaluate it.
+    #
+    # `brew bump --open-pr` used to fail on casks whose file starts with a
+    # comment for exactly this reason (Homebrew/discussions#7043), and the
+    # tempting fix is to let `try_new` accept one. Doing that without widening
+    # the guard in the same commit restores arbitrary code execution through the
+    # MCP server, so this example fails first.
+    it "keeps the cask loader from evaluating content the guard lets through" do
+      content = %Q(# a comment\ncask "token" do\n  version "1.0"\nend)
+
+      expect(Homebrew::McpServer::INLINE_CASK_DSL_REGEX.match?(content)).to be(false)
+      expect(Cask::CaskLoader::FromContentLoader.try_new(content)).to be_nil
     end
 
     it "responds to tools/call for unknown tool" do
