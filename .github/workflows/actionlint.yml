@@ -39,7 +39,16 @@ jobs:
           core: false
           cask: false
 
+      - uses: Homebrew/actions/cache-homebrew-prefix@a657b8b0cd35d0f65cce41fce9b24cf054b49869 # 2026.08.24.1
+        # Don't cache the prefix for the formulae.brew.sh repository as it won't download its own JSON API files
+        if: github.repository != 'Homebrew/formulae.brew.sh'
+        with:
+          install: actionlint shellcheck zizmor
+          # Not needed in .github but required for other repositories with multiple uses of cache-homebrew-prefix.
+          workflow-key: actionlint
+
       - name: Install tools
+        if: github.repository == 'Homebrew/formulae.brew.sh'
         run: brew install actionlint shellcheck zizmor
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
