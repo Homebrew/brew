@@ -594,6 +594,30 @@ RSpec.describe Cask::Audit, :cask do
           expect(run).not_to error_with(/Signature verification failed/)
         end
       end
+
+      context "when auditing for Intel" do
+        let(:cask) do
+          tmp_cask "signing-cask-test", <<~RUBY
+            cask 'signing-cask-test' do
+              version '1.0'
+              url "https://brew.sh/"
+              app 'Audit.app'
+            end
+          RUBY
+        end
+
+        before do
+          allow(cask).to receive(:tap).and_return(tap)
+          allow(Cask::Quarantine).to receive(:available?).and_return(true)
+          allow(Homebrew::SimulateSystem).to receive(:current_arch).and_return(:intel)
+        end
+
+        it "skips signing audit" do
+          expect(audit).not_to receive(:extract_artifacts)
+          expect(audit).to receive(:odebug).with("Intel macOS is Tier 3, skipping signing audit")
+          expect(run).not_to error_with(/Signature verification failed/)
+        end
+      end
     end
 
     describe "homepage domain age" do

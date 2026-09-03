@@ -616,6 +616,11 @@ module Cask
         return
       end
 
+      if Homebrew::SimulateSystem.current_arch == :intel
+        odebug "Intel macOS is Tier 3, skipping signing audit"
+        return
+      end
+
       odebug "Auditing signing"
       is_in_skiplist = cask.tap&.audit_exception(:signing_audit_skiplist, cask.token,
                                                  Homebrew::SimulateSystem.current_arch.to_s) ||
