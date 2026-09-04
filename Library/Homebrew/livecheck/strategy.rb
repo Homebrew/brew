@@ -212,6 +212,15 @@ module Homebrew
         args
       end
 
+      sig { void }
+      def self.deprecate_user_agent_fallback
+        Utils::Output.odeprecated(
+          "the automatic livecheck user agent fallback",
+          "`user_agent` in a `livecheck` block",
+        )
+      end
+      private_class_method :deprecate_user_agent_fallback
+
       # Collects HTTP response headers, starting with the provided URL.
       # Redirections will be followed and all the response headers are
       # collected into an array of hashes.
@@ -241,7 +250,9 @@ module Homebrew
           [:default, :browser]
         end
 
-        user_agents.each do |user_agent|
+        user_agents.each_with_index do |user_agent, index|
+          deprecate_user_agent_fallback if index.positive?
+
           begin
             parsed_output = curl_headers(
               *curl_post_args,
@@ -296,7 +307,9 @@ module Homebrew
         end
 
         stderr = T.let(nil, T.nilable(String))
-        user_agents.each do |user_agent|
+        user_agents.each_with_index do |user_agent, index|
+          deprecate_user_agent_fallback if index.positive?
+
           stdout, stderr, status = curl_output(
             *curl_post_args,
             *args,
