@@ -672,6 +672,19 @@ RSpec.describe Homebrew::InstallSteps do
     Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
   end
 
+  specify "keeps the invoking user for privileged commands" do
+    steps = Homebrew::InstallSteps::DSL.build(default_base: :var) do
+      run "helper", sudo: true
+    end
+
+    command = class_double(SystemCommand)
+    expect(command).to receive(:run)
+      .with("helper", args: [], sudo: true, env: {}, input: [], must_succeed: true,
+                      print_stdout: false, print_stderr: true, reset_uid: false, chdir: nil)
+
+    Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
+  end
+
   specify "serialises command environments as JSON objects" do
     steps = Homebrew::InstallSteps::DSL.build do
       run "helper", env: { "EXAMPLE" => "{{formula_name}}" },
@@ -784,6 +797,19 @@ RSpec.describe Homebrew::InstallSteps do
     expect(command).to receive(:run!)
       .with("/usr/bin/killall", args: ["Example"], sudo: false,
                                 print_stdout: true, print_stderr: true, reset_uid: true)
+
+    Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
+  end
+
+  specify "keeps the invoking user when terminating a process with sudo" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      terminate_process "Example", sudo: true, must_succeed: true
+    end
+
+    command = class_double(SystemCommand)
+    expect(command).to receive(:run!)
+      .with("/usr/bin/killall", args: ["Example"], sudo: true,
+                                print_stdout: true, print_stderr: true, reset_uid: false)
 
     Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
   end
@@ -1439,6 +1465,23 @@ RSpec.describe Homebrew::InstallSteps do
       .with("/usr/bin/security", "delete-certificate", "-Z", "DEF456", sudo: true).ordered
 
     runner.run(steps)
+  end
+
+  specify "keeps the invoking user for privileged keychain commands" do
+    steps = Homebrew::InstallSteps::DSL.build do
+      delete_keychain_certificates "Example"
+    end
+
+    command = class_double(SystemCommand)
+    expect(command).to receive(:run!)
+      .with("/usr/bin/security", args: ["find-certificate", "-a", "-c", "Example", "-Z"],
+            sudo: true, print_stderr: true, reset_uid: false)
+      .and_return(instance_double(SystemCommand::Result, stdout: "SHA-256 hash: ABC123\n"))
+    expect(command).to receive(:run!)
+      .with("/usr/bin/security", args: ["delete-certificate", "-Z", "ABC123"],
+            sudo: true, print_stdout: true, print_stderr: true, reset_uid: false)
+
+    Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
   end
 
   specify "only deletes the keychain certificate matching a local certificate" do
