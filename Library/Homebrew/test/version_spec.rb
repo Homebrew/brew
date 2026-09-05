@@ -242,6 +242,11 @@ RSpec.describe Version do
     expect(described_class.new("1.2.3.post34")).to be > described_class.new("1.2.3alpha35")
     expect(described_class.new("1.2.3.post34")).to be > described_class.new("1.2.3beta35")
     expect(described_class.new("1.2.3.post34")).to be > described_class.new("1.2.3")
+
+    expect(described_class.new("1.2.3post34")).to be > described_class.new("1.2.3post33")
+    expect(described_class.new("1.2.3post34")).to be > described_class.new("1.2.3")
+    expect(described_class.new("1.2.3post34")).to be > described_class.new("1.2.2")
+    expect(described_class.new("1.2.3post34")).to be < described_class.new("1.2.4")
   end
 
   specify "comparing unevenly-padded versions" do
