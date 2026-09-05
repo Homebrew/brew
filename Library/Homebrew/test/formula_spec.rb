@@ -167,6 +167,33 @@ RSpec.describe Formula do
       expect(f.python3).to eq HOMEBREW_PREFIX/"opt/python@3.14/bin/python3.14"
     end
 
+    it "memoises the executable" do
+      f = formula "memoized-python-dependent" do
+        url "foo-1.0"
+        depends_on "python@3.14"
+      end
+
+      expect(f.python3).to equal(f.python3)
+    end
+
+    it "clears the memoised executable when the active spec changes" do
+      f = formula "python-stable-and-head-dependent" do
+        stable do
+          url "foo-1.0"
+          depends_on "python@3.13"
+        end
+        head do
+          url "foo.git"
+          depends_on "python@3.14"
+        end
+      end
+
+      f.python3
+      f.active_spec = :head
+
+      expect(f.python3).to eq HOMEBREW_PREFIX/"opt/python@3.14/bin/python3.14"
+    end
+
     it "includes build and test dependencies" do
       f = formula "python-build-test-dependent" do
         url "foo-1.0"

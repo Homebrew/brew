@@ -319,6 +319,7 @@ class Formula
 
     @active_spec = T.let(determine_active_spec(spec), SoftwareSpec)
     @active_spec_sym = T.let(head? ? :head : :stable, Symbol)
+    @python3 = T.let(nil, T.nilable(Pathname))
     validate_attributes!
     @build = T.let(active_spec.build, T.any(BuildOptions, Tab))
     @pin = T.let(FormulaPin.new(self), FormulaPin)
@@ -341,6 +342,7 @@ class Formula
 
     return if spec_sym == old_spec_sym
 
+    @python3 = nil
     Dependency.clear_cache
     Requirement.clear_cache
   end
@@ -931,6 +933,8 @@ class Formula
   # @api public
   sig { returns(Pathname) }
   def python3
+    return @python3 if @python3
+
     python_deps = Language::Python.direct_dependency_paths(self, pattern: /\Apython@3\.\d+\z/)
 
     if python_deps.length != 1
@@ -938,7 +942,7 @@ class Formula
       raise "`#{full_name}` must have exactly one `python@3.x` dependency to use `python3`; found #{found}."
     end
 
-    python_deps.values.fetch(0)
+    @python3 = python_deps.values.fetch(0)
   end
 
   # The declared {Dependency}s for the currently active {SoftwareSpec} (i.e. including those provided by macOS).

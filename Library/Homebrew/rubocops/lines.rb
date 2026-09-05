@@ -585,31 +585,47 @@ module RuboCop
       class PythonVersions < FormulaCop
         extend AutoCorrector
 
+        PYTHON_VERSION_REFERENCE_REGEX = /\Apython(@)?(\d\.\d+)\z/
+
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
 
-          python_formula_node = find_every_method_call_by_name(body_node, :depends_on).find do |dep|
-            string_content(parameters(dep).fetch(0)).start_with? "python@"
-          end
+          python_versions = find_every_method_call_by_name(body_node, :depends_on).filter_map do |dep|
+            first_param = parameters(dep).first
+            first_param = first_param.keys.first if first_param.is_a?(RuboCop::AST::HashNode)
+            match = string_content(first_param).rpartition("/").last.match(PYTHON_VERSION_REFERENCE_REGEX)
+            match[2] if match && match[1]
+          end.uniq
+          return if python_versions.size != 1
 
-          python_version = if python_formula_node.blank?
-            other_python_nodes = find_every_method_call_by_name(body_node, :depends_on).select do |dep|
-              first_param = parameters(dep).first
-              first_param.instance_of?(RuboCop::AST::HashNode) &&
-                string_content(first_param.keys.first).start_with?("python@")
+          python_version = python_versions.fetch(0)
+          if python_version.start_with?("3.") && !find_method_def(body_node, :python3)
+            hardcoded_python_assignment(body_node) do |value|
+              next unless (match = string_content(value).match(PYTHON_VERSION_REFERENCE_REGEX))
+              next if match[1]
+              next unless value.each_ancestor(:def, :block).any? do |node|
+                node.def_type? || (node.is_a?(RuboCop::AST::BlockNode) && node.method_name == :test)
+              end
+
+              assignment = value.parent
+              offending_node(value)
+              if assignment.children.first == :python
+                problem "Use `python = python3` instead of a hardcoded Python executable." do |corrector|
+                  corrector.replace(value.source_range, "python3")
+                end
+              else
+                problem "Use `python3` directly instead of assigning a hardcoded Python executable." do |corrector|
+                  corrector.remove(range_by_whole_lines(assignment.source_range, include_final_newline: true))
+                end
+              end
             end
-            return if other_python_nodes.size != 1
-
-            string_content(T.cast(parameters(other_python_nodes.fetch(0)).fetch(0), RuboCop::AST::HashNode).keys.first).split("@").last
-          else
-            string_content(parameters(python_formula_node).fetch(0)).split("@").last
           end
 
           find_strings(body_node).each do |str|
             content = string_content(str)
 
-            next unless (match = content.match(/^python(@)?(\d\.\d+)$/))
+            next unless (match = content.match(PYTHON_VERSION_REFERENCE_REGEX))
             next if python_version == match[2]
 
             fix = if match[1]
@@ -625,6 +641,10 @@ module RuboCop
             end
           end
         end
+
+        def_node_search :hardcoded_python_assignment, <<~PATTERN
+          (lvasgn {:python :python3} $str)
+        PATTERN
       end
 
       # This cop makes sure that OS conditionals are consistent.

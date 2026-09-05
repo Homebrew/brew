@@ -220,5 +220,229 @@ RSpec.describe RuboCop::Cop::FormulaAudit::PythonVersions do
         end
       RUBY
     end
+
+    it "reports and corrects hardcoded `python = \"pythonX.Y\"` assignments" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = "python3.12"
+                     ^^^^^^^^^^^^ FormulaAudit/PythonVersions: Use `python = python3` instead of a hardcoded Python executable.
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = python3
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for dynamic python assignments" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = python3
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects hardcoded `python3 = \"pythonX.Y\"` assignments" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python3 = "python3.12"
+                      ^^^^^^^^^^^^ FormulaAudit/PythonVersions: Use `python3` directly instead of assigning a hardcoded Python executable.
+            system python3, "--version"
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            system python3, "--version"
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects a hardcoded version matching the python dependency" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = "python3.14"
+                     ^^^^^^^^^^^^ FormulaAudit/PythonVersions: Use `python = python3` instead of a hardcoded Python executable.
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = python3
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for hardcoded python version assigned to non-python local" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            interpreter = "python3.14"
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects assignments with a tagged Python dependency" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14" => [:build, :test]
+
+          test do
+            python = "python3.14"
+                     ^^^^^^^^^^^^ FormulaAudit/PythonVersions: Use `python = python3` instead of a hardcoded Python executable.
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14" => [:build, :test]
+
+          test do
+            python = python3
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects assignments with duplicate Python dependencies" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          depends_on "homebrew/core/python@3.14" => :build
+          depends_on "python@3.14" => :test
+
+          def install
+            python = "python3.14"
+                     ^^^^^^^^^^^^ FormulaAudit/PythonVersions: Use `python = python3` instead of a hardcoded Python executable.
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          depends_on "homebrew/core/python@3.14" => :build
+          depends_on "python@3.14" => :test
+
+          def install
+            python = python3
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for assignments without a Python dependency" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          def install
+            python = "python3.14"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for assignments with multiple Python dependencies" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.13"
+          depends_on "python@3.14" => :test
+
+          def install
+            python = "python3.13"
+          end
+
+          test do
+            python3 = "python3.14"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for assignments of formula names or paths" do
+      expect_no_offenses(<<~'RUBY')
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def install
+            python = "python@3.14"
+            python3 = "bin/python3.14"
+            python = "python3.14\npython3.14"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for Python 2 assignments" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@2.7"
+
+          def install
+            python = "python2.7"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for assignments outside instance methods and tests" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+          python = "python3.14"
+
+          def self.foo
+            python3 = "python3.14"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses for assignments when the python3 method is overridden" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          depends_on "python@3.14"
+
+          def python3
+            "python3.14"
+          end
+
+          def install
+            python = "python3.14"
+          end
+        end
+      RUBY
+    end
   end
 end
