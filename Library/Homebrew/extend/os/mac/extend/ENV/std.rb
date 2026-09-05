@@ -108,6 +108,7 @@ module OS
       # This is a no-op with all supported macOS SDKs.
       sig { void }
       def libxml2
+        super
         sdk = self["SDKROOT"] || MacOS.sdk_path
         # Use the includes from the sdk
         append "CPPFLAGS", "-I#{sdk}/usr/include/libxml2" unless Pathname("#{sdk}/usr/include/libxml").directory?

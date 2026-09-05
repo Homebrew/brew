@@ -243,6 +243,15 @@ RSpec.describe "ENV" do
 
   describe Stdenv do
     include_examples EnvActivation
+
+    describe "#libxml2" do
+      it "is deprecated" do
+        expect(env).to receive(:odeprecated)
+          .with("ENV.libxml2", "`pkg-config` or explicit include paths")
+
+        env.libxml2
+      end
+    end
   end
 
   describe Superenv do

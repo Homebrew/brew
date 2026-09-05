@@ -283,10 +283,22 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       ).to eq([responses.first[:headers]])
     end
 
+    it "deprecates the automatic user agent fallback" do
+      allow(strategy).to receive(:curl_headers).and_raise(ErrorDuringExecution.new([], status: 1))
+
+      expect { strategy.page_headers(url) }
+        .to raise_error(MethodDeprecatedError, /automatic livecheck user agent fallback.*`user_agent`.*`livecheck`/)
+    end
+
     it "returns an empty array if `curl_headers` only raises an `ErrorDuringExecution` error" do
       allow(strategy).to receive(:curl_headers).and_raise(ErrorDuringExecution.new([], status: 1))
 
-      expect(strategy.page_headers(url)).to eq([])
+      expect(
+        strategy.page_headers(
+          url,
+          options: Homebrew::Livecheck::Options.new(user_agent: :default),
+        ),
+      ).to eq([])
     end
   end
 
@@ -433,6 +445,18 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       ).to eq({ content: body })
     end
 
+    it "deprecates the automatic user agent fallback" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+      allow(strategy).to receive(:curl_output).and_return([
+        nil,
+        nil,
+        instance_double(Process::Status, success?: false, exitstatus: 1),
+      ])
+
+      expect { strategy.page_content(url) }
+        .to raise_error(MethodDeprecatedError, /automatic livecheck user agent fallback.*`user_agent`.*`livecheck`/)
+    end
+
     it "returns error `messages` from `stderr` in the return hash on failure when `stderr` is not `nil`" do
       error_message = "curl: (6) Could not resolve host: brew.sh"
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
@@ -442,7 +466,12 @@ RSpec.describe Homebrew::Livecheck::Strategy do
         instance_double(Process::Status, success?: false, exitstatus: 6),
       ])
 
-      expect(strategy.page_content(url)).to eq({ messages: [error_message] })
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(user_agent: :default),
+        ),
+      ).to eq({ messages: [error_message] })
     end
 
     it "returns default error `messages` in the return hash on failure when `stderr` is `nil`" do
@@ -453,7 +482,12 @@ RSpec.describe Homebrew::Livecheck::Strategy do
         instance_double(Process::Status, success?: false, exitstatus: 1),
       ])
 
-      expect(strategy.page_content(url)).to eq({ messages: ["cURL failed without a detectable error"] })
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(user_agent: :default),
+        ),
+      ).to eq({ messages: ["cURL failed without a detectable error"] })
     end
 
     it "returns hash including `final_url` if it differs from initial `url`" do

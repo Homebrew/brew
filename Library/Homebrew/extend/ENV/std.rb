@@ -70,6 +70,11 @@ module Stdenv
     append_path "PATH", gcc_formula.opt_bin.to_s
   end
 
+  sig { void }
+  def libxml2
+    odeprecated "ENV.libxml2", "`pkg-config` or explicit include paths"
+  end
+
   sig { returns(T.nilable(PATH)) }
   def determine_pkg_config_libdir
     PATH.new(
