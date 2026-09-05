@@ -640,7 +640,7 @@ module Homebrew
       livecheck = formula_or_cask.livecheck
       referenced_livecheck = referenced_formula_or_cask&.livecheck
 
-      livecheck_options = livecheck.options || referenced_livecheck&.options
+      livecheck_options = referenced_livecheck&.options&.merge(livecheck.options) || livecheck.options
       livecheck_url_options = livecheck_options.url_options.compact
       livecheck_url = livecheck.url || referenced_livecheck&.url
       livecheck_regex = livecheck.regex || referenced_livecheck&.regex
@@ -681,6 +681,8 @@ module Homebrew
             puts "Formula Ref:      #{formula_name(ref_formula_or_cask, full_name:)}"
           when Cask::Cask
             puts "Cask Ref:         #{cask_name(ref_formula_or_cask, full_name:)}"
+          else
+            T.absurd(ref_formula_or_cask) # simplecov:disable
           end
         end
       end
@@ -855,6 +857,8 @@ module Homebrew
                 { formula: formula_name(ref_formula_or_cask, full_name:) }
               when Cask::Cask
                 { cask: cask_name(ref_formula_or_cask, full_name:) }
+              else
+                T.absurd(ref_formula_or_cask) # simplecov:disable
               end
             end
           end
