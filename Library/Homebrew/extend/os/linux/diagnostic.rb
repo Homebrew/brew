@@ -203,14 +203,16 @@ module OS
 
           ::Homebrew::Diagnostic::Finding.new(
             ::Sandbox.failure_reason || "The Linux sandbox is not available.",
-            remediation: if state == :missing_fiddle
-                           "Run Homebrew with its vendored Ruby, which includes Fiddle."
-                         else
-                           <<~EOS.chomp
-                             Homebrew's Linux sandbox requires a kernel with Landlock enabled.
-                             Upgrade to a Linux kernel with Landlock enabled.
-                           EOS
-            end,
+            remediation: (
+              if state == :missing_fiddle
+                "Run Homebrew with its vendored Ruby, which includes Fiddle."
+              else
+                <<~EOS.chomp
+                  Homebrew's Linux sandbox requires a kernel with Landlock enabled.
+                  Upgrade to a Linux kernel with Landlock enabled.
+                EOS
+              end
+            ),
           )
         end
 

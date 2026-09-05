@@ -33,18 +33,9 @@ module OS
         ].map { |p| ::Pathname.new(p) }
       end
 
-      sig { returns(T::Boolean) }
-      def libxml2_include_needed?
-        return false if deps.any? { |d| d.name == "libxml2" }
-        return false if ::Pathname.new("#{self["HOMEBREW_SDKROOT"]}/usr/include/libxml").directory?
-
-        true
-      end
-
       sig { returns(T::Array[::Pathname]) }
       def homebrew_extra_isystem_paths
         paths = []
-        paths << "#{self["HOMEBREW_SDKROOT"]}/usr/include/libxml2" if libxml2_include_needed?
         paths << "#{self["HOMEBREW_SDKROOT"]}/usr/include/apache2" if MacOS::Xcode.without_clt?
         paths << "#{self["HOMEBREW_SDKROOT"]}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Headers"
         paths.map { |p| ::Pathname.new(p) }
@@ -64,7 +55,6 @@ module OS
       sig { returns(T::Array[::Pathname]) }
       def homebrew_extra_cmake_include_paths
         paths = []
-        paths << "#{self["HOMEBREW_SDKROOT"]}/usr/include/libxml2" if libxml2_include_needed?
         paths << "#{self["HOMEBREW_SDKROOT"]}/usr/include/apache2" if MacOS::Xcode.without_clt?
         paths << "#{self["HOMEBREW_SDKROOT"]}/System/Library/Frameworks/OpenGL.framework/Versions/Current/Headers"
         paths.map { |p| ::Pathname.new(p) }
