@@ -1,12 +1,46 @@
 # typed: false
 # frozen_string_literal: true
 
+require "pty"
 require "system_command"
 
 RSpec.describe SystemCommand do
   describe ".safe_system" do
+    include Context
+
     it "raises when the command fails" do
       expect { described_class.safe_system("false") }.to raise_error(ErrorDuringExecution)
+    end
+
+    it "exits with 1 when the command cannot be run" do
+      expect { described_class.safe_system("brew-missing-command") }
+        .to raise_error(ErrorDuringExecution, /exited with 1\./)
+    end
+
+    it "runs the command attached to the terminal" do
+      PTY.open do |_control, terminal|
+        $stdin.reopen(terminal)
+
+        expect { described_class.safe_system("sh", "-c", "test -t 0") }.not_to raise_error
+      end
+    end
+
+    it "sets the given environment" do
+      expect do
+        described_class.safe_system("sh", "-c", 'test "$BREW_TEST_VARIABLE" = value',
+                                    env: { "BREW_TEST_VARIABLE" => "value" })
+      end.not_to raise_error
+    end
+
+    it "redirects standard output to standard error" do
+      expect { described_class.safe_system("echo", "redirected", out: :err) }
+        .to output("redirected\n").to_stderr_from_any_process
+    end
+
+    it "prints the command when verbose" do
+      with_context(verbose: true) do
+        expect { described_class.safe_system("true", "--version") }.to output("true --version\n").to_stdout
+      end
     end
   end
 
@@ -14,6 +48,20 @@ RSpec.describe SystemCommand do
     it "returns the command status" do
       expect(described_class.quiet_system("true")).to be true
       expect(described_class.quiet_system("false")).to be false
+    end
+
+    it "sets the child status" do
+      described_class.quiet_system("sh", "-c", "exit 3")
+
+      expect($CHILD_STATUS.exitstatus).to eq(3)
+    end
+
+    it "discards the command output" do
+      reader, writer = IO.pipe
+      Utils::Output.redirect_stdout(writer) { described_class.quiet_system("echo", "discarded") }
+      writer.close
+
+      expect(reader.read).to be_empty
     end
   end
 

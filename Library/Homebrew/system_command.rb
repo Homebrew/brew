@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "English"
 require "shellwords"
 require "stringio"
 
@@ -146,6 +147,9 @@ class SystemCommand
         debug:, verbose:, secrets:, chdir:, reset_uid:, run_as_real_uid:, timeout:)
   end
 
+  # Run a command attached to the caller's standard streams and terminal,
+  # raising if it fails. Unlike {SystemCommand.run!} nothing is captured, so
+  # interactive programs such as editors and pagers work.
   sig {
     params(
       executable: T.nilable(T.any(String, Pathname)),
@@ -155,22 +159,19 @@ class SystemCommand
     ).void
   }
   def self.safe_system(executable, *args, env: {}, out: nil)
-    raise ArgumentError, "Missing executable" if executable.nil?
-    raise ArgumentError, "Invalid nil command argument" if args.any?(&:nil?)
-
-    run = proc do
-      run!(executable, args: args.compact, env:, print_stdout: true, print_stderr: true, debug: true)
+    if Context.current.verbose?
+      output = (out == :err) ? $stderr : $stdout
+      output.puts "#{executable} #{args * " "}".gsub(RUBY_PATH.to_s, "ruby")
+                                               .gsub($LOAD_PATH.join(File::PATH_SEPARATOR), "$LOAD_PATH")
     end
+    return if attached_system(executable, args, env:, out:)
 
-    if out == :err
-      Utils::Output.redirect_stdout($stderr, &run)
-    else
-      run.call
-    end
+    raise ErrorDuringExecution.new([executable, *args], status: $CHILD_STATUS)
   end
 
+  # Run a command attached to the caller's standard input with its output
+  # discarded, returning whether it succeeded.
   # Preserve the existing Formula DSL method name.
-  # rubocop:disable Naming/PredicateMethod
   sig {
     params(
       executable: T.nilable(T.any(String, Pathname)),
@@ -179,10 +180,39 @@ class SystemCommand
     ).returns(T::Boolean)
   }
   def self.quiet_system(executable, *args, env: {})
-    return false if executable.nil? || args.any?(&:nil?)
+    attached_system(executable, args, env:) do
+      # Redirect output streams to `/dev/null` instead of closing as some programs
+      # will fail to execute if they can't write to an open stream.
+      $stdout.reopen(File::NULL)
+      $stderr.reopen(File::NULL)
+    end
+  end
 
-    run(executable, args: args.compact, env:, print_stdout: false, print_stderr: false, debug: false,
-                    verbose: false).success?
+  # Named after `Kernel#system`, whose boolean result it mirrors.
+  # rubocop:disable Naming/PredicateMethod
+  sig {
+    params(
+      executable: T.nilable(T.any(String, Pathname)),
+      args:       T::Array[T.nilable(T.any(String, Pathname))],
+      env:        T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
+      out:        T.nilable(Symbol),
+      _block:     T.nilable(T.proc.void),
+    ).returns(T::Boolean)
+  }
+  private_class_method def self.attached_system(executable, args, env:, out: nil, &_block)
+    options = {}
+    options[:out] = out if out
+    pid = fork do
+      yield if block_given?
+      begin
+        exec(env.transform_values { |value| value&.to_s }, executable.to_s, *args.map(&:to_s), **options)
+      rescue
+        nil
+      end
+      exit! 1 # never gets here unless exec failed
+    end
+    Process.wait(pid)
+    $CHILD_STATUS.success? || false
   end
   # rubocop:enable Naming/PredicateMethod
 
