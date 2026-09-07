@@ -206,7 +206,6 @@ fi
 
 # These variables are allowed to be set by the user as, e.g., `HOMEBREW_BROWSER`.
 MANPAGE_VARS=(
-  BAT_THEME
   BROWSER
   BUNDLE_USER_CACHE
   DISPLAY
@@ -308,7 +307,7 @@ PATH="/usr/bin:/bin:/usr/sbin:/sbin"
 
 FILTERED_ENV=()
 ENV_VAR_NAMES=(
-  BAT_CONFIG_PATH
+  BAT_CONFIG_PATH BAT_THEME
   HOME SHELL PATH TERM TERMINFO TERMINFO_DIRS COLUMNS DISPLAY LOGNAME USER CI SSH_AUTH_SOCK SUDO_ASKPASS
   http_proxy https_proxy ftp_proxy no_proxy all_proxy HTTPS_PROXY FTP_PROXY ALL_PROXY
 )

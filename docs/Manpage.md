@@ -4455,13 +4455,7 @@ command execution (e.g. `$(cat file)`).
 `HOMEBREW_BAT`
 
 : If set, use `bat` for the `brew cat` command. Set `$BAT_CONFIG_PATH` to use a
-  custom configuration file.
-
-`HOMEBREW_BAT_THEME`
-
-: Use this as the `bat` theme for syntax highlighting.
-  
-  *Default:* `$BAT_THEME`.
+  custom configuration file and `$BAT_THEME` to select a theme.
 
 `HOMEBREW_BOTTLE_DOMAIN`
 

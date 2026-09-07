@@ -133,7 +133,7 @@ module Homebrew
       },
       HOMEBREW_BAT:                              {
         description: "If set, use `bat` for the `brew cat` command. " \
-                     "Set `$BAT_CONFIG_PATH` to use a custom configuration file.",
+                     "Set `$BAT_CONFIG_PATH` to use a custom configuration file and `$BAT_THEME` to select a theme.",
         boolean:     true,
       },
       HOMEBREW_BAT_CONFIG_PATH:                  {
@@ -142,8 +142,9 @@ module Homebrew
         replacement: "$BAT_CONFIG_PATH",
       },
       HOMEBREW_BAT_THEME:                        {
-        description:  "Use this as the `bat` theme for syntax highlighting.",
-        default_text: "`$BAT_THEME`.",
+        description: "Use this as the `bat` theme for syntax highlighting.",
+        odeprecated: true,
+        replacement: "$BAT_THEME",
       },
       HOMEBREW_BOTTLE_DOMAIN:                    {
         description:  "Use this URL as the download mirror for bottles and their manifests. " \

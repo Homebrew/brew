@@ -2826,14 +2826,7 @@ Run \fBbrew update\fP once every \fB$HOMEBREW_AUTO_UPDATE_SECS\fP seconds before
 If set, skip Homebrew\[u2019]s sandbox when it is itself running inside another sandbox, for an unprivileged user outside the default prefix\. This trades Homebrew\[u2019]s build\-time network and filesystem denial for trust in the outer sandbox\. Homebrew errors out if the prefix or group makes skipping unsupported\.
 .TP
 \fBHOMEBREW_BAT\fP
-If set, use \fBbat\fP for the \fBbrew cat\fP command\. Set \fB$BAT_CONFIG_PATH\fP to use a custom configuration file\.
-.TP
-\fBHOMEBREW_BAT_THEME\fP
-Use this as the \fBbat\fP theme for syntax highlighting\.
-.RS
-.P
-\fIDefault:\fP \fB$BAT_THEME\fP\&\.
-.RE
+If set, use \fBbat\fP for the \fBbrew cat\fP command\. Set \fB$BAT_CONFIG_PATH\fP to use a custom configuration file and \fB$BAT_THEME\fP to select a theme\.
 .TP
 \fBHOMEBREW_BOTTLE_DOMAIN\fP
 Use this URL as the download mirror for bottles and their manifests\. If a bottle or manifest is unavailable at the mirror, the default bottle domain will be used as a fallback\. Prefer \fB$HOMEBREW_ARTIFACT_DOMAIN\fP for a mirror that transparently proxies all Homebrew downloads\. For example, \fBexport HOMEBREW_BOTTLE_DOMAIN=http://localhost:8080\fP will cause all bottles to download from the prefix \fBhttp://localhost:8080/\fP\&\.

@@ -64,6 +64,31 @@ RSpec.describe Homebrew::DevCmd::Cat do
 
       expect(ENV.fetch("BAT_CONFIG_PATH")).to eq("/tmp/legacy-bat.conf")
     end
+
+    it "preserves the native theme" do
+      ENV["BAT_THEME"] = "ansi"
+      ENV["HOMEBREW_BAT_THEME"] = nil
+
+      cat.run
+
+      expect(ENV.fetch("BAT_THEME", nil)).to eq("ansi")
+    end
+
+    it "deprecates the Homebrew theme" do
+      ENV["HOMEBREW_BAT_THEME"] = "ansi"
+
+      expect { cat.run }.to raise_error(MethodDeprecatedError, /HOMEBREW_BAT_THEME.*\$BAT_THEME/)
+    end
+
+    it "preserves the legacy theme override during deprecation" do
+      ENV["BAT_THEME"] = "ansi"
+      ENV["HOMEBREW_BAT_THEME"] = "Monokai Extended"
+      allow(Homebrew::EnvConfig).to receive(:odeprecated)
+
+      cat.run
+
+      expect(ENV.fetch("BAT_THEME")).to eq("Monokai Extended")
+    end
   end
 
   it "prints the content of a given Formula and Cask", :cask, :integration_test do
