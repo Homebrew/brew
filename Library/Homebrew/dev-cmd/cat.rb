@@ -29,7 +29,9 @@ module Homebrew
       def run
         cd HOMEBREW_REPOSITORY do
           pager = if Homebrew::EnvConfig.bat?
-            ENV["BAT_CONFIG_PATH"] = Homebrew::EnvConfig.bat_config_path
+            if (bat_config_path = Homebrew::EnvConfig.bat_config_path)
+              ENV["BAT_CONFIG_PATH"] = bat_config_path
+            end
             ENV["BAT_THEME"] = Homebrew::EnvConfig.bat_theme
             require "formula"
             T.cast(Formula["bat"].ensure_installed!(

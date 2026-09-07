@@ -2826,14 +2826,7 @@ Run \fBbrew update\fP once every \fB$HOMEBREW_AUTO_UPDATE_SECS\fP seconds before
 If set, skip Homebrew\[u2019]s sandbox when it is itself running inside another sandbox, for an unprivileged user outside the default prefix\. This trades Homebrew\[u2019]s build\-time network and filesystem denial for trust in the outer sandbox\. Homebrew errors out if the prefix or group makes skipping unsupported\.
 .TP
 \fBHOMEBREW_BAT\fP
-If set, use \fBbat\fP for the \fBbrew cat\fP command\.
-.TP
-\fBHOMEBREW_BAT_CONFIG_PATH\fP
-Use this as the \fBbat\fP configuration file\.
-.RS
-.P
-\fIDefault:\fP \fB$BAT_CONFIG_PATH\fP\&\.
-.RE
+If set, use \fBbat\fP for the \fBbrew cat\fP command\. Set \fB$BAT_CONFIG_PATH\fP to use a custom configuration file\.
 .TP
 \fBHOMEBREW_BAT_THEME\fP
 Use this as the \fBbat\fP theme for syntax highlighting\.

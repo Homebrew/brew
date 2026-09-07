@@ -132,12 +132,14 @@ module Homebrew
         boolean:     :set,
       },
       HOMEBREW_BAT:                              {
-        description: "If set, use `bat` for the `brew cat` command.",
+        description: "If set, use `bat` for the `brew cat` command. " \
+                     "Set `$BAT_CONFIG_PATH` to use a custom configuration file.",
         boolean:     true,
       },
       HOMEBREW_BAT_CONFIG_PATH:                  {
-        description:  "Use this as the `bat` configuration file.",
-        default_text: "`$BAT_CONFIG_PATH`.",
+        description: "Use this as the `bat` configuration file.",
+        odeprecated: true,
+        replacement: "$BAT_CONFIG_PATH",
       },
       HOMEBREW_BAT_THEME:                        {
         description:  "Use this as the `bat` theme for syntax highlighting.",
