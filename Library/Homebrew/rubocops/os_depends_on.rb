@@ -28,7 +28,7 @@ module RuboCop
           :vst_plugin,
           :vst3_plugin,
         ].freeze
-        LINUX_ONLY_CASK_STANZAS = [:app_image].freeze
+        LINUX_ONLY_CASK_STANZAS = [:app_image, :package].freeze
         PLATFORM_BLOCKS = [:on_arm, :on_intel, :on_system].freeze
 
         CASK_STANZA_ORDER = T.let(RuboCop::Cask::Constants::STANZA_ORDER, T::Array[Symbol])

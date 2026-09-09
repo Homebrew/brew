@@ -45,6 +45,7 @@ module Cask
       Artifact::Binary,
       Artifact::CommandWrapper,
       Artifact::Colorpicker,
+      Artifact::Package,
       Artifact::Dictionary,
       Artifact::Font,
       Artifact::GeneratedScript,
