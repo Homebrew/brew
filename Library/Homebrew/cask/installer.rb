@@ -345,6 +345,7 @@ on_request: true)
             Artifact::Installer,
             Artifact::KeyboardLayout,
             Artifact::Mdimporter,
+            Artifact::Deb,
             Artifact::Moved,
             Artifact::PostflightSteps,
             Artifact::PreflightSteps,

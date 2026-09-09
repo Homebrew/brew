@@ -44,6 +44,7 @@ module RuboCop
             :suite,
             :app,
             :app_image,
+            :deb,
             :pkg,
             :generated_script,
             :installer,

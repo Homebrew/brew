@@ -84,6 +84,7 @@ module Cask
             # `pkg` should be run before `app`, since an `app` could
             # contain a nested installer (e.g. `wireshark`).
             Pkg,
+            Deb,
             [
               App,
               AppImage,
