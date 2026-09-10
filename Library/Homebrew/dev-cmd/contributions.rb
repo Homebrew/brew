@@ -510,11 +510,11 @@ module Homebrew
       end
 
       sig {
-        params(
+        type_parameters(:U).params(
           cache_key: String,
           to:        String,
-          block:     T.proc.returns(T.any(T::Array[T::Hash[String, T.untyped]], T::Hash[String, T.untyped])),
-        ).returns(T::Hash[String, T.untyped])
+          block:     T.proc.returns(T.type_parameter(:U)),
+        ).returns(T.type_parameter(:U))
       }
       def github_search_with_rate_limit(cache_key, to:, &block)
         cache_path = if Date.iso8601(to) <= Date.today
