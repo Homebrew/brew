@@ -4,7 +4,7 @@
 require "benchmark"
 require "services/system"
 
-RSpec.shared_examples "#uninstall_phase or #zap_phase" do
+RSpec.shared_examples "uninstall/zap directive dispatch" do
   extend Test::Helper::TestEach
 
   subject { artifact }
@@ -16,6 +16,11 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
   before do
     allow(fake_system_command).to receive(:is_a?) { |val| SystemCommand.is_a?(val) }
     allow(Cask::Artifact::AbstractUninstall).to receive(:ancestor_bundle_ids).and_return([])
+  end
+
+  def dispatch_stanza(**options)
+    described_class.dispatch_directives([subject], **options)
+    described_class.dispatch_directives([subject], deferred: true, **options)
   end
 
   context "when using :launchctl" do
@@ -50,7 +55,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         must_succeed: false, sudo: false, sudo_as_root: false)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
-      subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      dispatch_stanza(command: fake_system_command)
     end
 
     it "works when job is owned by system" do
@@ -66,7 +71,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         must_succeed: false, sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
-      subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      dispatch_stanza(command: fake_system_command)
     end
 
     it "does not fail when sudo removal fails" do
@@ -83,7 +88,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         .and_return(instance_double(SystemCommand::Result, success?: false))
 
       expect do
-        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+        dispatch_stanza(command: fake_system_command)
       end.not_to raise_error
     end
   end
@@ -135,7 +140,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         must_succeed: false, sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
-      subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      dispatch_stanza(command: fake_system_command)
     end
 
     it "returns the matching launchctl services" do
@@ -168,7 +173,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       expect(main_pkg).to receive(:uninstall)
       expect(agent_pkg).to receive(:uninstall)
 
-      subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      dispatch_stanza(command: fake_system_command)
     end
   end
 
@@ -192,7 +197,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       expect(subject).to receive(:system_command!)
         .with("/bin/rm", args: ["-rf", "/Library/Extensions/FancyPackage.kext"], sudo: true, sudo_as_root: true)
 
-      subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      dispatch_stanza(command: fake_system_command)
     end
   end
 
@@ -205,7 +210,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       allow(subject).to receive(:running?).with(bundle_id).and_return(true)
 
       expect do
-        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+        dispatch_stanza(command: fake_system_command)
       end.to output(/Not logged into a GUI; skipping quitting application ID 'my.fancy.package.app'\./).to_stderr
     end
 
@@ -216,7 +221,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
 
       expect(subject).not_to receive(:quit)
       expect do
-        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+        dispatch_stanza(command: fake_system_command)
       end.to output(/Skipping quitting application 'my.fancy.package.app' as `brew` is running inside it\./)
         .to_stderr
     end
@@ -230,7 +235,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       expect(subject).to receive(:running?).with(bundle_id).ordered.and_return(false)
 
       expect do
-        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+        dispatch_stanza(command: fake_system_command)
       end.to output(/Application 'my.fancy.package.app' quit successfully\./).to_stdout
     end
 
@@ -244,7 +249,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
 
       expect do
-        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+        dispatch_stanza(command: fake_system_command)
       end.to output(/Application 'my.fancy.package.app' did not quit\./).to_stderr
     end
   end
@@ -267,12 +272,10 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         expect(Process).to receive(:kill).with(signal, *unix_pids).and_return(1)
       end
 
-      subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      dispatch_stanza(command: fake_system_command)
     end
 
     it "does not send signal when upgrading or reinstalling" do
-      skip "only uninstall has upgrade and reinstall phases" if artifact_dsl_key == :zap
-
       allow(subject).to receive(:running_processes).with(bundle_id)
                                                    .and_return(unix_pids.map { |pid| [pid, 0, bundle_id] })
 
@@ -280,8 +283,8 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         expect(Process).not_to receive(:kill)
       end
 
-      subject.public_send(:"#{artifact_dsl_key}_phase", upgrade: true, command: fake_system_command)
-      subject.public_send(:"#{artifact_dsl_key}_phase", reinstall: true, command: fake_system_command)
+      dispatch_stanza(upgrade: true, command: fake_system_command)
+      dispatch_stanza(reinstall: true, command: fake_system_command)
     end
   end
 
@@ -315,7 +318,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       it "is supported" do
         expect(paths).to all(exist)
 
-        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+        dispatch_stanza(command: fake_system_command)
 
         paths.each do |path|
           expect(path).not_to exist
@@ -344,7 +347,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
           )
 
         InstallHelper.install_without_artifacts(cask)
-        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+        dispatch_stanza(command: fake_system_command)
       end
     end
   end
@@ -360,7 +363,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         )
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
-      subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      dispatch_stanza(command: fake_system_command)
     end
   end
 end

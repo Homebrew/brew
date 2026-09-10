@@ -5,6 +5,8 @@ require "cask/installer"
 require "install"
 
 RSpec.describe Cask::Installer, :cask do
+  let(:rmdir_directory) { Pathname("#{TEST_TMPDIR}/rmdir_app_directory") }
+
   def stub_dmg_extraction
     allow(UnpackStrategy::Dmg).to receive(:can_extract?).and_return(true)
     allow_any_instance_of(UnpackStrategy::Dmg).to receive(:extract_nestedly) do |_strategy, to:, **|
@@ -512,6 +514,44 @@ RSpec.describe Cask::Installer, :cask do
       expect(caffeine).not_to be_installed
       expect(Pathname(caffeine.config.appdir).join("Caffeine.app")).not_to be_a_symlink
     end
+
+    it "zap method runs zap directives alongside uninstall ones, removing files last" do
+      cask = Cask::CaskLoader.load(cask_path("with-uninstall-and-zap"))
+      dispatched = []
+      allow_any_instance_of(Cask::Artifact::AbstractUninstall)
+        .to receive(:dispatch_uninstall_directive) do |artifact, directive, **|
+          dispatched << [artifact.class.dsl_key, directive] if artifact.directives[directive].present?
+        end
+      allow_any_instance_of(Cask::Artifact::UninstallPostflightSteps)
+        .to receive(:uninstall_phase) { dispatched << [:uninstall_postflight] }
+
+      described_class.new(cask, command: NeverSudoSystemCommand).zap
+
+      expect(dispatched).to eq [
+        [:uninstall, :quit], [:zap, :quit], [:zap, :script], [:uninstall, :delete],
+        [:uninstall_postflight], [:zap, :pkgutil], [:zap, :delete], [:zap, :trash]
+      ]
+    end
+
+    it "zap method tolerates an artifact target removed by an uninstall directive" do
+      cask = Cask::CaskLoader.load(cask_path("with-uninstall-delete-app"))
+      described_class.new(cask, command: NeverSudoSystemCommand).install
+
+      expect { described_class.new(cask, command: NeverSudoSystemCommand).zap }.not_to raise_error
+    end
+
+    context "when an `rmdir:` directory holds an artifact" do
+      after { FileUtils.rm_rf rmdir_directory }
+
+      it "zap method removes directories emptied by removing artifacts" do
+        cask = Cask::CaskLoader.load(cask_path("with-uninstall-rmdir-app"))
+        described_class.new(cask).install
+
+        described_class.new(cask).zap
+
+        expect(rmdir_directory).not_to exist
+      end
+    end
   end
 
   describe "#backup" do
@@ -530,6 +570,20 @@ RSpec.describe Cask::Installer, :cask do
   end
 
   describe "uninstall" do
+    context "with an `uninstall rmdir:` directory holding an artifact" do
+      after { FileUtils.rm_rf rmdir_directory }
+
+      it "removes the directory once the artifact is removed" do
+        cask = Cask::CaskLoader.load(cask_path("with-uninstall-rmdir-app"))
+        described_class.new(cask).install
+
+        described_class.new(cask).uninstall
+
+        expect(rmdir_directory/"nested").not_to exist
+        expect(rmdir_directory).to exist
+      end
+    end
+
     it "fully uninstalls a Cask" do
       caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
       installer = described_class.new(caffeine)

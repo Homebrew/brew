@@ -9,7 +9,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
   describe "#uninstall_phase" do
     let(:fake_system_command) { NeverSudoSystemCommand }
 
-    include_examples "#uninstall_phase or #zap_phase"
+    include_examples "uninstall/zap directive dispatch"
 
     context "when sudo is disabled" do
       let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-launchctl")) }
