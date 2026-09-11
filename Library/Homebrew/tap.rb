@@ -122,8 +122,8 @@ class Tap
 
   sig { returns(T::Array[String]) }
   def self.allowed_taps
-    cache_key = :"allowed_taps_#{Homebrew::EnvConfig.allowed_taps.to_s.tr(" ", "_")}"
-    cache[cache_key] ||= tap_list_references(Homebrew::EnvConfig.allowed_taps.to_s, "HOMEBREW_ALLOWED_TAPS")
+    allowed_taps = Homebrew::EnvConfig.allowed_taps.to_s
+    cache[:"allowed_taps_#{allowed_taps}"] ||= tap_list_references(allowed_taps, "HOMEBREW_ALLOWED_TAPS")
   end
 
   sig { returns(T::Array[String]) }

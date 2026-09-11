@@ -70,6 +70,15 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".allowed_taps" do
+    it "deprecates the tap allowlist" do
+      ENV["HOMEBREW_ALLOWED_TAPS"] = "user/repo"
+
+      expect { env_config.allowed_taps }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_ALLOWED_TAPS.*deprecated/)
+    end
+  end
+
   describe ".non_default_variable?" do
     it "detects whether a variable has a non-default value" do
       ENV["HOMEBREW_CURL_RETRIES"] = "4"

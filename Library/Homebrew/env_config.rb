@@ -50,6 +50,7 @@ module Homebrew
                      "or in a tap on this list. Each entry is a `user/repository` name " \
                      "(which matches only taps using the default GitHub remote) or a remote " \
                      "URL (required to match taps with a custom remote).",
+        odeprecated: true,
       },
       HOMEBREW_API_AUTO_UPDATE_SECS:             {
         description: "Check Homebrew's API for new formulae or cask data every " \

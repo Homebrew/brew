@@ -4377,14 +4377,6 @@ prefix-specific files take precedence over system-wide files (unless
 Note that these files do not support shell variable expansion (e.g. `$HOME`) or
 command execution (e.g. `$(cat file)`).
 
-`HOMEBREW_ALLOWED_TAPS`
-
-: A space-separated list of taps. Homebrew will refuse to install a formula
-  unless it and all of its dependencies are in an official tap or in a tap on
-  this list. Each entry is a `user/repository` name (which matches only taps
-  using the default GitHub remote) or a remote URL (required to match taps with
-  a custom remote).
-
 `HOMEBREW_API_AUTO_UPDATE_SECS`
 
 : Check Homebrew's API for new formulae or cask data every
