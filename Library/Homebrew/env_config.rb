@@ -372,6 +372,7 @@ module Homebrew
                      "`inputmethod`, `internetplugin`, `audiounitplugin`, `vstplugin`, `vst3plugin`, " \
                      "`screensaver`, `keyboardlayout`, `mdimporter`, `preflight`, `postflight`, " \
                      "`manpage`, `bashcompletion`, `fishcompletion`, `zshcompletion`, `stageonly`.",
+        odeprecated: true,
       },
       HOMEBREW_FORBIDDEN_FORMULAE:               {
         description: "A space-separated list of formulae. Homebrew will refuse to install a " \

@@ -79,6 +79,15 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".forbidden_cask_artifacts" do
+    it "deprecates the artifact denylist" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg installer"
+
+      expect { env_config.forbidden_cask_artifacts }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_FORBIDDEN_CASK_ARTIFACTS.*deprecated/)
+    end
+  end
+
   describe ".non_default_variable?" do
     it "detects whether a variable has a non-default value" do
       ENV["HOMEBREW_CURL_RETRIES"] = "4"

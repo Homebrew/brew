@@ -692,6 +692,11 @@ RSpec.describe Cask::Installer, :cask do
   end
 
   describe "#forbidden_cask_artifacts_check" do
+    before do
+      allow(Homebrew::EnvConfig).to receive(:odeprecated).with("HOMEBREW_FORBIDDEN_CASK_ARTIFACTS", nil,
+                                                               disable: false)
+    end
+
     it "raises when cask contains forbidden pkg artifact" do
       ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg"
       cask = Cask::Cask.new("homebrew-pkg-cask") do
