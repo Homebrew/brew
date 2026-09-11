@@ -347,7 +347,12 @@ module Homebrew
         # Real names/public emails, so commits under a maintainer's git identity are matched to their username.
         github_identities = users.keys.to_h do |user|
           github_user = github_users.fetch(user)
-          [user, github_user ? github_identity_for_username(github_user, to:) : [nil, nil]]
+          identity = if github_user
+            github_identity_for_username(github_user, to:)
+          else
+            [nil, nil]
+          end
+          [user, identity]
         end
         git_authored_pull_requests = users.keys.to_h do |user|
           [user, repositories.to_h { |repository| [repository, Set.new] }]
