@@ -88,6 +88,15 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".forbid_casks?" do
+    it "deprecates refusing all casks" do
+      ENV["HOMEBREW_FORBID_CASKS"] = "1"
+
+      expect { env_config.forbid_casks? }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_FORBID_CASKS.*deprecated/)
+    end
+  end
+
   describe ".non_default_variable?" do
     it "detects whether a variable has a non-default value" do
       ENV["HOMEBREW_CURL_RETRIES"] = "4"

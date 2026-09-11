@@ -399,6 +399,7 @@ module Homebrew
       HOMEBREW_FORBID_CASKS:                     {
         description: "If set, Homebrew will refuse to install any casks.",
         boolean:     true,
+        odeprecated: true,
       },
       HOMEBREW_FORBID_PACKAGES_FROM_PATHS:       {
         description:  "If set, Homebrew will refuse to read formulae or casks provided from file paths, " \

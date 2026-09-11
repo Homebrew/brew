@@ -4754,10 +4754,6 @@ command execution (e.g. `$(cat file)`).
   `user/repository` name (which matches only taps using the default GitHub
   remote) or a remote URL (required to match taps with a custom remote).
 
-`HOMEBREW_FORBID_CASKS`
-
-: If set, Homebrew will refuse to install any casks.
-
 `HOMEBREW_FORBID_PACKAGES_FROM_PATHS`
 
 : If set, Homebrew will refuse to read formulae or casks provided from file

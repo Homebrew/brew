@@ -659,6 +659,17 @@ RSpec.describe Cask::Installer, :cask do
   end
 
   describe "#forbidden_cask_and_formula_check" do
+    it "still refuses all casks during deprecation" do
+      ENV["HOMEBREW_FORBID_CASKS"] = "1"
+      allow(Homebrew::EnvConfig).to receive(:odeprecated).with("HOMEBREW_FORBID_CASKS", nil, disable: false)
+      cask = Cask::Cask.new("homebrew-forbidden-cask") do
+        url "file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz"
+      end
+
+      expect { described_class.new(cask).forbidden_cask_and_formula_check }
+        .to raise_error(Cask::CaskCannotBeInstalledError, /HOMEBREW_FORBID_CASKS/)
+    end
+
     it "raises on forbidden cask" do
       ENV["HOMEBREW_FORBIDDEN_CASKS"] = cask_name = "homebrew-forbidden-cask"
       cask = Cask::Cask.new(cask_name) do
