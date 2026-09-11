@@ -546,12 +546,37 @@ module Homebrew
         else
           [].freeze
         end
+
+        has_tab_runtime_deps = kegs.any? && tab_runtime_deps.present?
+        current_direct_dep_names = formula.deps.reject(&:build?).to_set(&:name)
+        direct_tab_deps, indirect_tab_deps = if has_tab_runtime_deps
+          tab_runtime_deps.partition do |dep|
+            dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
+            dep_name && current_direct_dep_names.include?(dep_name)
+          end
+        else
+          [[], []]
+        end
+        recursive_runtime_deps = has_tab_runtime_deps ? indirect_tab_deps : tab_runtime_deps
+
         dependency_lines = %w[build required recommended optional].filter_map do |type|
           next if type == "build" &&
                   (kegs.all? { |keg| keg.tab.poured_from_bottle } ||
                    (kegs.empty? &&
                     (formula.requirements.any? { |requirement| self.class.requirement_for_other_os?(requirement) } ||
                      (stable.present? ? stable.bottled? && formula.pour_bottle? : formula.head.blank?))))
+
+          if has_tab_runtime_deps
+            next if ["recommended", "optional"].include?(type)
+
+            if type == "required"
+              direct_deps = tab_deps_to_dependencies(direct_tab_deps)
+              next if direct_deps.empty?
+
+              next "Required (#{direct_deps.count}): " \
+                   "#{decorate_dependencies(direct_deps, mark_uninstalled: true, missing_library_deps:)}"
+            end
+          end
 
           deps = formula.deps.public_send(type).uniq
           next if deps.empty?
@@ -561,7 +586,7 @@ module Homebrew
             "#{decorate_dependencies(deps, tab_runtime_deps: tab_deps, mark_uninstalled: kegs.any?,
                                      missing_library_deps:)}"
         end
-        if dependency_lines.present? || tab_runtime_deps.present? || installed_dependents.any?
+        if dependency_lines.present? || recursive_runtime_deps.present? || installed_dependents.any?
           ohai "Dependencies"
           puts dependency_lines
           missing_library_names = missing_libraries.map { |lib| File.basename(lib) }.uniq
@@ -569,16 +594,18 @@ module Homebrew
             decorated = missing_library_names.map { |lib| pretty_uninstalled(lib, bold: false) }.join(", ")
             puts "Missing libraries (#{missing_library_names.count}): #{decorated}"
           end
-          if tab_runtime_deps.present?
-            installed_count = tab_runtime_deps.count do |dep|
-              dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
-              next false unless dep_name
-
-              rack = HOMEBREW_CELLAR/dep_name
-              rack.directory? && !rack.subdirs.empty?
+          if recursive_runtime_deps.present?
+            recursive_deps = tab_deps_to_dependencies(recursive_runtime_deps)
+            recursive_runtime_status = if args.verbose?
+              decorate_dependencies(recursive_deps, mark_uninstalled: true)
+            else
+              installed_count = recursive_deps.count do |dep|
+                rack = HOMEBREW_CELLAR/Utils.name_from_full_name(dep.name)
+                rack.directory? && !rack.subdirs.empty?
+              end
+              self.class.dependency_status_counts(installed_count, recursive_deps.count)
             end
-            puts "Recursive Runtime (#{tab_runtime_deps.count}): " \
-                 "#{self.class.dependency_status_counts(installed_count, tab_runtime_deps.count)}"
+            puts "Recursive Runtime (#{recursive_deps.count}): #{recursive_runtime_status}"
           end
           if installed_dependents.any?
             if args.verbose?
@@ -872,6 +899,11 @@ module Homebrew
           warning = missing_library_deps.include?(Utils.name_from_full_name(dep.name))
           pretty_install_status(display, warning:, installed:, outdated:, mark_uninstalled:, bold: true)
         end.join(", ")
+      end
+
+      sig { params(tab_deps: T::Array[T.untyped]).returns(T::Array[Dependency]) }
+      def tab_deps_to_dependencies(tab_deps)
+        tab_deps.filter_map { |dep| dep["full_name"]&.then { Dependency.new(it) } }
       end
 
       sig { params(requirements: T::Array[Requirement]).returns(String) }
