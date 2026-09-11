@@ -97,6 +97,28 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".arch" do
+    it "deprecates overriding the compiler architecture" do
+      ENV["HOMEBREW_ARCH"] = "haswell"
+
+      expect { env_config.arch }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_ARCH.*deprecated.*native/)
+    end
+
+    it "preserves the default native architecture" do
+      ENV.delete("HOMEBREW_ARCH")
+
+      expect(env_config.arch).to eq("native")
+    end
+
+    it "preserves an explicit architecture during deprecation" do
+      ENV["HOMEBREW_ARCH"] = "haswell"
+      allow(env_config).to receive(:odeprecated)
+
+      expect(env_config.arch).to eq("haswell")
+    end
+  end
+
   describe ".non_default_variable?" do
     it "detects whether a variable has a non-default value" do
       ENV["HOMEBREW_CURL_RETRIES"] = "4"

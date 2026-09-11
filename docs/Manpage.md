@@ -4393,13 +4393,6 @@ command execution (e.g. `$(cat file)`).
   
   *Default:* `https://formulae.brew.sh/api`.
 
-`HOMEBREW_ARCH`
-
-: Linux only: Pass this value to a type name representing the compiler's
-  `-march` option.
-  
-  *Default:* `native`.
-
 `HOMEBREW_ARTIFACT_DOMAIN`
 
 : Prefix all download URLs, including those for bottles, with this value. For

@@ -68,6 +68,8 @@ module Homebrew
       HOMEBREW_ARCH:                             {
         description: "Linux only: Pass this value to a type name representing the compiler's `-march` option.",
         default:     "native",
+        replacement: "the default native CPU optimisation",
+        odeprecated: true,
       },
       HOMEBREW_ARTIFACT_DOMAIN:                  {
         description: "Prefix all download URLs, including those for bottles, with this value. " \

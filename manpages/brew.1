@@ -2796,13 +2796,6 @@ Use this URL as the download mirror for Homebrew JSON API\. If metadata files at
 \fIDefault:\fP \fBhttps://formulae\.brew\.sh/api\fP\&\.
 .RE
 .TP
-\fBHOMEBREW_ARCH\fP
-Linux only: Pass this value to a type name representing the compiler\[u2019]s \fB\-march\fP option\.
-.RS
-.P
-\fIDefault:\fP \fBnative\fP\&\.
-.RE
-.TP
 \fBHOMEBREW_ARTIFACT_DOMAIN\fP
 Prefix all download URLs, including those for bottles, with this value\. For example, \fBexport HOMEBREW_ARTIFACT_DOMAIN=http://localhost:8080\fP will cause a formula with the URL \fBhttps://example\.com/foo\.tar\.gz\fP to instead download from \fBhttp://localhost:8080/https://example\.com/foo\.tar\.gz\fP\&\. Bottle URLs however, have their domain replaced with this prefix\. This results in e\.g\. \fBhttps://ghcr\.io/v2/homebrew/core/gettext/manifests/0\.21\fP to instead be downloaded from \fBhttp://localhost:8080/v2/homebrew/core/gettext/manifests/0\.21\fP\&\. If the value already contains a \fB/v2\fP path (e\.g\. an OCI registry proxying GitHub Packages under a repository prefix such as \fBhttps://mirror\.example\.com/v2/ghcr\-io\fP), the \fBv2\fP path is not duplicated, resulting in e\.g\. \fBhttps://mirror\.example\.com/v2/ghcr\-io/homebrew/core/gettext/manifests/0\.21\fP\&\.
 .TP
