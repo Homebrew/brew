@@ -37,6 +37,7 @@ RSpec.describe "brew shellenv", type: :system do
   sig { params(shell: String, shell_args: T::Array[String]).returns(T::Hash[String, String]) }
   def shellenv_environment(shell, shell_args)
     stdout, stderr, status = Open3.capture3(
+      { "HOMEBREW_PREFIX" => nil, "HOMEBREW_CELLAR" => nil, "HOMEBREW_REPOSITORY" => nil },
       (which(shell, ORIGINAL_PATHS) || skip("#{shell} is not installed")).to_s, *shell_args,
       "#{shellenv(shell)}\n/usr/bin/env"
     )
@@ -90,6 +91,19 @@ RSpec.describe "brew shellenv", type: :system do
       expect(shellenv_environment(shell, shell_args).fetch("PATH"))
         .to start_with("#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:")
         .and end_with("/custom path:/usr/bin:/bin")
+    end
+
+    it "ignores customised path_helper configuration in #{shell}" do
+      ENV["HOMEBREW_MACOS"] = "1"
+      ENV["HOMEBREW_MACOS_VERSION_NUMERIC"] = "140000"
+      ENV["PATH_HELPER_ROOT"] = HOMEBREW_PREFIX.to_s
+      ENV["PATH"] = "/usr/bin:/bin:/wrapper/bin"
+      (HOMEBREW_PREFIX/"etc/paths.d").mkpath
+      (HOMEBREW_PREFIX/"etc/paths").write("/wrapper/bin\n#{HOMEBREW_PREFIX}/bin\n#{HOMEBREW_PREFIX}/sbin\n")
+      (HOMEBREW_PREFIX/"etc/paths.d/wrapper").write("/another/wrapper/bin\n")
+
+      expect(shellenv_environment(shell, shell_args).fetch("PATH"))
+        .to eq("#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/wrapper/bin")
     end
 
     it "preserves existing FPATH entries and adds completions for #{shell}" do

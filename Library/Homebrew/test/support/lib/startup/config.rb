@@ -3,7 +3,6 @@
 
 raise "HOMEBREW_BREW_FILE was not exported! Please call bin/brew directly!" unless ENV["HOMEBREW_BREW_FILE"]
 
-HOMEBREW_ORIGINAL_BREW_FILE = Pathname.new(ENV.fetch("HOMEBREW_ORIGINAL_BREW_FILE")).freeze
 HOMEBREW_BREW_FILE = Pathname.new(ENV.fetch("HOMEBREW_BREW_FILE")).freeze
 
 TEST_TMPDIR = ENV.fetch("HOMEBREW_TEST_TMPDIR") do |k|

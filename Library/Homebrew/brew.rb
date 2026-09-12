@@ -122,6 +122,10 @@ begin
     # `Homebrew::Help.help` never returns, except for unknown and deferred commands.
   end
 
+  if !help_flag && (internal_cmd || external_ruby_v2_cmd || external_ruby_cmd_path || external_cmd_path)
+    Homebrew::EnvConfig.check_deprecated_bash_variables
+  end
+
   if cmd.nil?
     raise UsageError, "Unknown command: brew #{ARGV.join(" ")}"
   elsif internal_cmd || external_ruby_v2_cmd

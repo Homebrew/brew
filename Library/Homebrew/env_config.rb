@@ -431,12 +431,14 @@ module Homebrew
         boolean:     :set,
       },
       HOMEBREW_FORCE_BREW_WRAPPER:               {
-        description: "If set, require `brew` to be invoked by the value of " \
-                     "`$HOMEBREW_FORCE_BREW_WRAPPER` for non-trivial `brew` commands.",
+        description: "No longer used.",
+        replacement: "your wrapper directly",
+        odeprecated: true,
       },
       HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE:  {
-        description: "If set, appended to the `$HOMEBREW_FORCE_BREW_WRAPPER` error message to provide " \
-                     "additional help or context to the user.",
+        description: "No longer used.",
+        replacement: "custom help in your wrapper",
+        odeprecated: true,
       },
       HOMEBREW_FORCE_VENDOR_RUBY:                {
         description: "If set, always use Homebrew's vendored, relocatable Ruby version even if the system version " \
@@ -577,8 +579,10 @@ module Homebrew
         odisabled:   true,
       },
       HOMEBREW_NO_FORCE_BREW_WRAPPER:            {
-        description: "`Deprecated:` If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even if set.",
+        description: "No longer used.",
         boolean:     :set,
+        replacement: "an environment without $HOMEBREW_NO_FORCE_BREW_WRAPPER",
+        odeprecated: true,
       },
       HOMEBREW_NO_GITHUB_API:                    {
         description: "If set, do not use the GitHub API, e.g. for searches or fetching relevant issues " \
@@ -929,6 +933,15 @@ module Homebrew
           env_value(env, hash).presence
         end
       end
+    end
+
+    sig { void }
+    def self.check_deprecated_bash_variables
+      force_brew_wrapper
+      force_brew_wrapper_help_message
+      no_force_brew_wrapper?
+
+      nil
     end
 
     sig { params(env: T.any(String, Symbol), hash: T::Hash[Symbol, T.untyped]).returns(T.nilable(String)) }

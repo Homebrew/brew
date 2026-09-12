@@ -828,7 +828,7 @@ class Formula
   sig { params(path: Pathname).returns(T.nilable(T.any(String, Symbol))) }
   def link_overwrite_keg_name(path)
     # Don't overwrite files not created by Homebrew.
-    return if path.stat.uid != HOMEBREW_ORIGINAL_BREW_FILE.stat.uid
+    return if path.stat.uid != HOMEBREW_BREW_FILE.stat.uid
 
     keg = Keg.for(path)
     # This keg doesn't belong to any current core/tap formula, most likely coming from a DIY install.

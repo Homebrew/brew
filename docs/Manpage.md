@@ -4774,16 +4774,6 @@ command execution (e.g. `$(cat file)`).
 : If set, always use a Homebrew-installed `git`(1) rather than the system
   version. Automatically set if the system version of `git` is too old.
 
-`HOMEBREW_FORCE_BREW_WRAPPER`
-
-: If set, require `brew` to be invoked by the value of
-  `$HOMEBREW_FORCE_BREW_WRAPPER` for non-trivial `brew` commands.
-
-`HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE`
-
-: If set, appended to the `$HOMEBREW_FORCE_BREW_WRAPPER` error message to
-  provide additional help or context to the user.
-
 `HOMEBREW_FORCE_VENDOR_RUBY`
 
 : If set, always use Homebrew's vendored, relocatable Ruby version even if the
@@ -4940,11 +4930,6 @@ command execution (e.g. `$(cat file)`).
 
 : If set, do not print any hints about changing Homebrew's behaviour with
   environment variables.
-
-`HOMEBREW_NO_FORCE_BREW_WRAPPER`
-
-: `Deprecated:` If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even
-  if set.
 
 `HOMEBREW_NO_GITHUB_API`
 

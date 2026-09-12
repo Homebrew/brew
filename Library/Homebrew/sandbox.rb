@@ -237,7 +237,7 @@ class Sandbox
     executable_path = Pathname.new(executable_name)
     return PATH.new(executable_path.dirname) if executable_path.absolute?
 
-    PATH.new(ORIGINAL_PATHS, ENV.fetch("PATH"), HOMEBREW_ORIGINAL_BREW_FILE.dirname)
+    PATH.new(ORIGINAL_PATHS, ENV.fetch("PATH"), HOMEBREW_BREW_FILE.dirname)
   end
 
   sig { returns(T.nilable(Pathname)) }
@@ -541,7 +541,7 @@ class Sandbox
 
   sig { void }
   def deny_write_homebrew_repository
-    deny_write path: HOMEBREW_ORIGINAL_BREW_FILE
+    deny_write path: HOMEBREW_BREW_FILE
     if HOMEBREW_PREFIX.to_s == HOMEBREW_REPOSITORY.to_s
       deny_write_path HOMEBREW_LIBRARY
       deny_write_path HOMEBREW_REPOSITORY/".git"

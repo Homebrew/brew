@@ -3073,12 +3073,6 @@ If set, always use a Homebrew\-installed \fBcurl\fP(1) rather than the system ve
 \fBHOMEBREW_FORCE_BREWED_GIT\fP
 If set, always use a Homebrew\-installed \fBgit\fP(1) rather than the system version\. Automatically set if the system version of \fBgit\fP is too old\.
 .TP
-\fBHOMEBREW_FORCE_BREW_WRAPPER\fP
-If set, require \fBbrew\fP to be invoked by the value of \fB$HOMEBREW_FORCE_BREW_WRAPPER\fP for non\-trivial \fBbrew\fP commands\.
-.TP
-\fBHOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE\fP
-If set, appended to the \fB$HOMEBREW_FORCE_BREW_WRAPPER\fP error message to provide additional help or context to the user\.
-.TP
 \fBHOMEBREW_FORCE_VENDOR_RUBY\fP
 If set, always use Homebrew\[u2019]s vendored, relocatable Ruby version even if the system version of Ruby is new enough\.
 .TP
@@ -3193,9 +3187,6 @@ If set, do not print \fB$HOMEBREW_INSTALL_BADGE\fP on a successful build\.
 .TP
 \fBHOMEBREW_NO_ENV_HINTS\fP
 If set, do not print any hints about changing Homebrew\[u2019]s behaviour with environment variables\.
-.TP
-\fBHOMEBREW_NO_FORCE_BREW_WRAPPER\fP
-\fBDeprecated:\fP If set, disables \fB$HOMEBREW_FORCE_BREW_WRAPPER\fP behaviour, even if set\.
 .TP
 \fBHOMEBREW_NO_GITHUB_API\fP
 If set, do not use the GitHub API, e\.g\. for searches or fetching relevant issues after a failed install\.

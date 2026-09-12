@@ -114,7 +114,6 @@ BIN_BREW_EXPORTED_VARS=(
   HOMEBREW_REPOSITORY
   HOMEBREW_LIBRARY
   HOMEBREW_USER_CONFIG_HOME
-  HOMEBREW_ORIGINAL_BREW_FILE
 )
 printf -v BIN_BREW_EXPORTED_VARS_REGEX '%s|' "${BIN_BREW_EXPORTED_VARS[@]}"
 BIN_BREW_EXPORTED_VARS_REGEX="^(${BIN_BREW_EXPORTED_VARS_REGEX%|})(=|$)"
@@ -143,9 +142,6 @@ export_homebrew_env_file() {
     export "${line?}"
   done <"${env_file}"
 }
-
-# We only want to be able to set this in `brew.env` files.
-unset HOMEBREW_DISABLE_NO_FORCE_BREW_WRAPPER
 
 # First, load the system-wide configuration.
 export_homebrew_env_file "/etc/homebrew/brew.env"
@@ -176,13 +172,6 @@ export_homebrew_env_file "${HOMEBREW_USER_CONFIG_HOME}/brew.env"
 if [[ -n "${SYSTEM_ENV_TAKES_PRIORITY-}" ]]
 then
   export_homebrew_env_file "/etc/homebrew/brew.env"
-fi
-
-# Use HOMEBREW_FORCE_BREW_WRAPPER if set.
-export HOMEBREW_ORIGINAL_BREW_FILE="${HOMEBREW_BREW_FILE}"
-if [[ -n "${HOMEBREW_FORCE_BREW_WRAPPER:-}" ]]
-then
-  HOMEBREW_BREW_FILE="${HOMEBREW_FORCE_BREW_WRAPPER}"
 fi
 
 # Record which HOMEBREW_* variables the user set (including via brew.env
