@@ -577,6 +577,7 @@ RSpec.describe Homebrew::Cmd::Info do
     tab = Tab.empty
     tab.tabfile = keg_path/AbstractTab::FILENAME
     tab.runtime_dependencies = [
+      { "full_name" => "bar", "version" => "1.0" },
       { "full_name" => "installed-dep", "version" => "1.0" },
       { "full_name" => "missing-dep", "version" => "2.0" },
     ]
@@ -610,6 +611,85 @@ RSpec.describe Homebrew::Cmd::Info do
     expect { info.info_formula(formula) }
       .to output(expected_output).to_stdout
       .and not_to_output(/^Dependencies: /).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "prefers the installed keg's actual runtime dependency graph over the current recipe" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new(["--verbose"])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+
+      depends_on "old-dep"
+      depends_on "new-dep"
+    end
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = [
+      { "full_name" => "old-dep", "version" => "1.0" },
+      { "full_name" => "removed-dep", "version" => "2.0" },
+    ]
+    tab.write
+
+    old_dep_path = HOMEBREW_CELLAR/"old-dep/1.0"
+    old_dep_path.mkpath
+    old_dep_tab = Tab.empty
+    old_dep_tab.tabfile = old_dep_path/AbstractTab::FILENAME
+    old_dep_tab.write
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+
+    expect { info.info_formula(formula) }
+      .to output(/Required \(1\): .*old-dep.*✔\nRecursive Runtime \(1\): .*removed-dep.*✘/).to_stdout
+      .and not_to_output(/new-dep/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "lists recursive runtime dependency names inline under Dependencies with --verbose" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new(["--verbose"])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+
+      depends_on "bar"
+    end
+    direct_dependency = formula.deps.required.first
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = [
+      { "full_name" => "installed-dep", "version" => "1.0" },
+      { "full_name" => "missing-dep", "version" => "2.0" },
+    ]
+    tab.write
+
+    installed_dep_path = HOMEBREW_CELLAR/"installed-dep/1.0"
+    installed_dep_path.mkpath
+    installed_dep_tab = Tab.empty
+    installed_dep_tab.tabfile = installed_dep_path/AbstractTab::FILENAME
+    installed_dep_tab.write
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+    allow(direct_dependency).to receive(:satisfied?).and_return(true)
+
+    expect { info.info_formula(formula) }
+      .to output(/Recursive Runtime \(2\): .*installed-dep.*✔.*, .*missing-dep.*✘/).to_stdout
+      .and not_to_output(/\d+ installed/).to_stdout
       .and not_to_output.to_stderr
   end
 
@@ -725,7 +805,6 @@ RSpec.describe Homebrew::Cmd::Info do
 
       depends_on "bar"
     end
-    direct_dependency = formula.deps.required.first
 
     keg_path = HOMEBREW_CELLAR/"testball/0.1"
     keg_path.mkpath
@@ -741,7 +820,7 @@ RSpec.describe Homebrew::Cmd::Info do
     bar_tab.write
 
     bar_formula = instance_double(Formula, outdated?: false)
-    allow(direct_dependency).to receive(:to_formula).and_return(bar_formula)
+    allow_any_instance_of(Dependency).to receive(:to_formula).and_return(bar_formula)
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
     allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
@@ -762,7 +841,6 @@ RSpec.describe Homebrew::Cmd::Info do
 
       depends_on "bar"
     end
-    direct_dependency = formula.deps.required.first
 
     keg_path = HOMEBREW_CELLAR/"testball/0.1"
     keg_path.mkpath
@@ -778,7 +856,7 @@ RSpec.describe Homebrew::Cmd::Info do
     bar_tab.write
 
     bar_formula = instance_double(Formula, outdated?: true)
-    allow(direct_dependency).to receive(:to_formula).and_return(bar_formula)
+    allow_any_instance_of(Dependency).to receive(:to_formula).and_return(bar_formula)
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
     allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
