@@ -289,7 +289,7 @@ RSpec.describe Sandbox do
     before do
       sandbox_class.test_executable_name = executable_name
       sandbox_class.unsuitable_executables = []
-      stub_const("HOMEBREW_ORIGINAL_BREW_FILE", homebrew_bin/"brew")
+      stub_const("HOMEBREW_BREW_FILE", homebrew_bin/"brew")
     end
 
     it "uses the first suitable executable candidate" do

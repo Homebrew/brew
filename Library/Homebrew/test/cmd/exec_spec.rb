@@ -18,20 +18,44 @@ RSpec.describe Homebrew::Cmd::Exec do
     let(:env_executable) { shell_cellar/"#{env_formula_name}/1.0/bin/#{env_executable_name}" }
     let(:installable_formula_name) { "test-installable" }
     let(:installable_executable_name) { "test-installable-tool" }
-    let(:brew_wrapper) { HOMEBREW_TEMP/"brew-exec-wrapper/brew" }
-    let(:inline_script) { HOMEBREW_TEMP/"brew-exec-wrapper/script.sh" }
+    let(:fake_brew) { HOMEBREW_TEMP/"brew-exec-test/brew" }
+    let(:inline_script) { HOMEBREW_TEMP/"brew-exec-test/script.sh" }
     let(:brew_sh_env) do
       {
-        "HOMEBREW_BREW_SH"               => (HOMEBREW_PREFIX/"bin/brew").to_s,
-        "HOMEBREW_FORCE_BREW_WRAPPER"    => brew_wrapper.to_s,
-        "HOMEBREW_NO_FORCE_BREW_WRAPPER" => "1",
-        "HOMEBREW_TEMP"                  => HOMEBREW_TEMP.to_s,
-        "HOMEBREW_COLOR"                 => nil,
-        "GITHUB_ACTIONS"                 => nil,
+        "HOMEBREW_BREW_SH" => (HOMEBREW_PREFIX/"bin/brew").to_s,
+        "HOMEBREW_TEMP"    => HOMEBREW_TEMP.to_s,
+        "HOMEBREW_COLOR"   => nil,
+        "GITHUB_ACTIONS"   => nil,
       }
     end
 
+    sig { params(args: String).returns(SystemCommand::Result) }
+    def exec_command(*args)
+      result = SystemCommand.run("/bin/bash", args: [
+        "-c", <<~SH,
+          source "$HOMEBREW_LIBRARY/Homebrew/utils/os.sh"
+          source "$HOMEBREW_LIBRARY/Homebrew/utils.sh"
+          source "$1"
+          shift
+          homebrew-exec "$@"
+        SH
+        "bash", HOMEBREW_LIBRARY_PATH/"cmd/exec.sh", *args
+      ], print_stderr: false)
+      $stdout.print result.stdout
+      $stderr.print result.stderr
+      result
+    end
+
     before do
+      ENV["HOMEBREW_BREW_FILE"] = fake_brew.to_s
+      ENV["HOMEBREW_LIBRARY"] = HOMEBREW_LIBRARY_PATH.parent.to_s
+      ENV["HOMEBREW_PREFIX"] = HOMEBREW_PREFIX.to_s
+      ENV["HOMEBREW_CELLAR"] = shell_cellar.to_s
+      ENV["HOMEBREW_CACHE"] = HOMEBREW_CACHE.to_s
+      ENV["HOMEBREW_TEMP"] = HOMEBREW_TEMP.to_s
+      ENV.delete("HOMEBREW_COLOR")
+      ENV.delete("GITHUB_ACTIONS")
+      (HOMEBREW_PREFIX/"bin").mkpath
       FileUtils.ln_sf HOMEBREW_LIBRARY_PATH.parent.parent/"bin/brew", HOMEBREW_PREFIX/"bin/brew"
 
       db.dirname.mkpath
@@ -62,7 +86,7 @@ RSpec.describe Homebrew::Cmd::Exec do
       linked_executable.write("#!/bin/sh\necho linked-provider\n")
       FileUtils.chmod 0755, linked_executable
 
-      brew_wrapper.dirname.mkpath
+      fake_brew.dirname.mkpath
       inline_script.write(<<~SH)
         #!/bin/sh
         #{executable_name} "$@"
@@ -70,7 +94,7 @@ RSpec.describe Homebrew::Cmd::Exec do
       SH
       FileUtils.chmod 0755, inline_script
 
-      brew_wrapper.write(<<~SH)
+      fake_brew.write(<<~SH)
         #!/bin/sh
         case "$1" in
           deps)
@@ -88,12 +112,12 @@ RSpec.describe Homebrew::Cmd::Exec do
             ln -sfn "#{shell_cellar}/#{installable_formula_name}/1.0.0" "#{HOMEBREW_PREFIX}/opt/#{installable_formula_name}"
             ;;
           *)
-            echo "unexpected brew wrapper call: $*" >&2
+            echo "unexpected brew call: $*" >&2
             exit 1
             ;;
         esac
       SH
-      FileUtils.chmod 0755, brew_wrapper
+      FileUtils.chmod 0755, fake_brew
     end
 
     after do
@@ -104,49 +128,52 @@ RSpec.describe Homebrew::Cmd::Exec do
       FileUtils.rm_rf HOMEBREW_PREFIX/"opt/#{env_formula_name}"
       FileUtils.rm_rf HOMEBREW_PREFIX/"opt/#{installable_formula_name}"
       FileUtils.rm_f HOMEBREW_PREFIX/"bin/#{executable_name}"
-      FileUtils.rm_rf brew_wrapper.dirname
+      FileUtils.rm_rf fake_brew.dirname
     end
 
     it "runs commands in formula environments and supports the x alias", :aggregate_failures, :integration_test do
       expect do
-        expect(brew_sh("exec", executable_name, "arg", brew_sh_env)).to be_a_success
+        expect(brew_sh("exec", executable_name, "arg", brew_sh_env))
+          .to be_a_success
       end.to(
         output("active-version arg\n").to_stdout
           .and(output("").to_stderr),
       )
 
       expect do
-        expect(brew_sh("x", executable_name, brew_sh_env)).to be_a_success
+        expect(brew_sh("x", executable_name, brew_sh_env))
+          .to be_a_success
       end.to(
         output("active-version\n").to_stdout
           .and(output("").to_stderr),
       )
+    end
 
+    it "runs commands with explicit formulae and installs missing providers", :aggregate_failures do
       expect do
-        expect(brew_sh("exec", "--formulae=#{formula_name}, #{env_formula_name}", "--", inline_script.to_s, "arg",
-                       brew_sh_env)).to be_a_success
+        expect(exec_command("--formulae=#{formula_name}, #{env_formula_name}", "--", inline_script.to_s, "arg"))
+          .to be_a_success
       end.to(
         output("active-version arg\nenv-version arg\n").to_stdout
           .and(output("").to_stderr),
       )
 
       expect do
-        expect(brew_sh("exec", "--formulae=", executable_name, brew_sh_env)).to be_a_failure
+        expect(exec_command("--formulae=", executable_name)).to be_a_failure
       end.to(
         output("").to_stdout
           .and(output("Error: `--formulae` requires a comma-separated formula list.\n").to_stderr),
       )
 
       expect do
-        expect(brew_sh("exec", "--sandbox=", executable_name, brew_sh_env)).to be_a_failure
+        expect(exec_command("--sandbox=", executable_name)).to be_a_failure
       end.to(
         output("").to_stdout
           .and(output("Error: `--sandbox` requires a writable path.\n").to_stderr),
       )
 
       expect do
-        expect(brew_sh("exec", installable_executable_name, "arg",
-                       brew_sh_env)).to be_a_success
+        expect(exec_command(installable_executable_name, "arg")).to be_a_success
       end.to(
         output("installable-version arg\n").to_stdout
           .and(

@@ -2782,9 +2782,6 @@ User\-specific environment files take precedence over prefix\-specific files and
 .P
 Note that these files do not support shell variable expansion (e\.g\. \fB$HOME\fP) or command execution (e\.g\. \fB$(cat file)\fP)\.
 .TP
-\fBHOMEBREW_ALLOWED_TAPS\fP
-A space\-separated list of taps\. Homebrew will refuse to install a formula unless it and all of its dependencies are in an official tap or in a tap on this list\. Each entry is a \fBuser/repository\fP name (which matches only taps using the default GitHub remote) or a remote URL (required to match taps with a custom remote)\.
-.TP
 \fBHOMEBREW_API_AUTO_UPDATE_SECS\fP
 Check Homebrew\[u2019]s API for new formulae or cask data every \fB$HOMEBREW_API_AUTO_UPDATE_SECS\fP seconds\. Alternatively, disable API auto\-update checks entirely with \fB$HOMEBREW_NO_AUTO_UPDATE\fP\&\.
 .RS
@@ -2797,13 +2794,6 @@ Use this URL as the download mirror for Homebrew JSON API\. If metadata files at
 .RS
 .P
 \fIDefault:\fP \fBhttps://formulae\.brew\.sh/api\fP\&\.
-.RE
-.TP
-\fBHOMEBREW_ARCH\fP
-Linux only: Pass this value to a type name representing the compiler\[u2019]s \fB\-march\fP option\.
-.RS
-.P
-\fIDefault:\fP \fBnative\fP\&\.
 .RE
 .TP
 \fBHOMEBREW_ARTIFACT_DOMAIN\fP
@@ -2826,21 +2816,7 @@ Run \fBbrew update\fP once every \fB$HOMEBREW_AUTO_UPDATE_SECS\fP seconds before
 If set, skip Homebrew\[u2019]s sandbox when it is itself running inside another sandbox, for an unprivileged user outside the default prefix\. This trades Homebrew\[u2019]s build\-time network and filesystem denial for trust in the outer sandbox\. Homebrew errors out if the prefix or group makes skipping unsupported\.
 .TP
 \fBHOMEBREW_BAT\fP
-If set, use \fBbat\fP for the \fBbrew cat\fP command\.
-.TP
-\fBHOMEBREW_BAT_CONFIG_PATH\fP
-Use this as the \fBbat\fP configuration file\.
-.RS
-.P
-\fIDefault:\fP \fB$BAT_CONFIG_PATH\fP\&\.
-.RE
-.TP
-\fBHOMEBREW_BAT_THEME\fP
-Use this as the \fBbat\fP theme for syntax highlighting\.
-.RS
-.P
-\fIDefault:\fP \fB$BAT_THEME\fP\&\.
-.RE
+If set, use \fBbat\fP for the \fBbrew cat\fP command\. Set \fB$BAT_CONFIG_PATH\fP to use a custom configuration file and \fB$BAT_THEME\fP to select a theme\.
 .TP
 \fBHOMEBREW_BOTTLE_DOMAIN\fP
 Use this URL as the download mirror for bottles and their manifests\. If a bottle or manifest is unavailable at the mirror, the default bottle domain will be used as a fallback\. Prefer \fB$HOMEBREW_ARTIFACT_DOMAIN\fP for a mirror that transparently proxies all Homebrew downloads\. For example, \fBexport HOMEBREW_BOTTLE_DOMAIN=http://localhost:8080\fP will cause all bottles to download from the prefix \fBhttp://localhost:8080/\fP\&\.
@@ -3059,9 +3035,6 @@ Output this many lines of output on formula \fBsystem\fP failures\.
 \fBHOMEBREW_FORBIDDEN_CASKS\fP
 A space\-separated list of casks\. Homebrew will refuse to install a cask if it or any of its dependencies is on this list\.
 .TP
-\fBHOMEBREW_FORBIDDEN_CASK_ARTIFACTS\fP
-A space\-separated list of cask artifact types (e\.g\. \fBpkg installer\fP) that should be forbidden during cask installation\. Valid values: \fBpkg\fP, \fBinstaller\fP, \fBbinary\fP, \fBuninstall\fP, \fBzap\fP, \fBapp\fP, \fBsuite\fP, \fBartifact\fP, \fBprefpane\fP, \fBqlplugin\fP, \fBdictionary\fP, \fBfont\fP, \fBservice\fP, \fBcolorpicker\fP, \fBinputmethod\fP, \fBinternetplugin\fP, \fBaudiounitplugin\fP, \fBvstplugin\fP, \fBvst3plugin\fP, \fBscreensaver\fP, \fBkeyboardlayout\fP, \fBmdimporter\fP, \fBpreflight\fP, \fBpostflight\fP, \fBmanpage\fP, \fBbashcompletion\fP, \fBfishcompletion\fP, \fBzshcompletion\fP, \fBstageonly\fP\&\.
-.TP
 \fBHOMEBREW_FORBIDDEN_FORMULAE\fP
 A space\-separated list of formulae\. Homebrew will refuse to install a formula or cask if it or any of its dependencies is on this list\.
 .TP
@@ -3081,9 +3054,6 @@ How to contact the \fB$HOMEBREW_FORBIDDEN_OWNER\fP, if set and necessary\.
 \fBHOMEBREW_FORBIDDEN_TAPS\fP
 A space\-separated list of taps\. Homebrew will refuse to install a formula if it or any of its dependencies is in a tap on this list\. Each entry is a \fBuser/repository\fP name (which matches only taps using the default GitHub remote) or a remote URL (required to match taps with a custom remote)\.
 .TP
-\fBHOMEBREW_FORBID_CASKS\fP
-If set, Homebrew will refuse to install any casks\.
-.TP
 \fBHOMEBREW_FORBID_PACKAGES_FROM_PATHS\fP
 If set, Homebrew will refuse to read formulae or casks provided from file paths, e\.g\. \fBbrew install \./package\.rb\fP\&\.
 .RS
@@ -3102,12 +3072,6 @@ If set, always use a Homebrew\-installed \fBcurl\fP(1) rather than the system ve
 .TP
 \fBHOMEBREW_FORCE_BREWED_GIT\fP
 If set, always use a Homebrew\-installed \fBgit\fP(1) rather than the system version\. Automatically set if the system version of \fBgit\fP is too old\.
-.TP
-\fBHOMEBREW_FORCE_BREW_WRAPPER\fP
-If set, require \fBbrew\fP to be invoked by the value of \fB$HOMEBREW_FORCE_BREW_WRAPPER\fP for non\-trivial \fBbrew\fP commands\.
-.TP
-\fBHOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE\fP
-If set, appended to the \fB$HOMEBREW_FORCE_BREW_WRAPPER\fP error message to provide additional help or context to the user\.
 .TP
 \fBHOMEBREW_FORCE_VENDOR_RUBY\fP
 If set, always use Homebrew\[u2019]s vendored, relocatable Ruby version even if the system version of Ruby is new enough\.
@@ -3223,9 +3187,6 @@ If set, do not print \fB$HOMEBREW_INSTALL_BADGE\fP on a successful build\.
 .TP
 \fBHOMEBREW_NO_ENV_HINTS\fP
 If set, do not print any hints about changing Homebrew\[u2019]s behaviour with environment variables\.
-.TP
-\fBHOMEBREW_NO_FORCE_BREW_WRAPPER\fP
-\fBDeprecated:\fP If set, disables \fB$HOMEBREW_FORCE_BREW_WRAPPER\fP behaviour, even if set\.
 .TP
 \fBHOMEBREW_NO_GITHUB_API\fP
 If set, do not use the GitHub API, e\.g\. for searches or fetching relevant issues after a failed install\.

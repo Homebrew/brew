@@ -7,30 +7,88 @@ require "dev-cmd/cat"
 RSpec.describe Homebrew::DevCmd::Cat do
   it_behaves_like "parseable arguments"
 
-  it "uses a system bat when configured" do
-    formula_file = Formulary.find_formula_in_tap("testball", CoreTap.instance)
-    formula_file.dirname.mkpath
-    formula_file.write <<~RUBY
-      class Testball < Formula
-        url "https://brew.sh/testball-1.0"
-      end
-    RUBY
-    CoreTap.instance.clear_cache
+  context "when using bat" do
+    sig { returns(Homebrew::DevCmd::Cat) }
+    subject(:cat) { described_class.new(["testball"]) }
 
-    cat = described_class.new(["testball"])
-    formula = instance_double(Formula)
+    sig { returns(Pathname) }
+    let(:formula_file) { Formulary.find_formula_in_tap("testball", CoreTap.instance) }
 
-    allow(Homebrew::EnvConfig).to receive_messages(bat?: true, bat_config_path: "/tmp/bat.conf", bat_theme: "ansi")
-    allow(Formula).to receive(:[]).with("bat").and_return(formula)
-    allow(formula).to receive(:ensure_installed!).with(
-      reason:           "displaying <formula>/<cask> source",
-      output_to_stderr: true,
-      executable:       "bat",
-    ).and_return(Pathname.new("/usr/bin/bat"))
+    before do
+      formula_file.dirname.mkpath
+      formula_file.write <<~RUBY
+        class Testball < Formula
+          url "https://brew.sh/testball-1.0"
+        end
+      RUBY
+      CoreTap.instance.clear_cache
 
-    expect(SystemCommand).to receive(:safe_system).with(Pathname.new("/usr/bin/bat"), formula_file)
+      formula = instance_double(Formula)
+      allow(Homebrew::EnvConfig).to receive(:bat?).and_return(true)
+      allow(Formula).to receive(:[]).with("bat").and_return(formula)
+      allow(formula).to receive(:ensure_installed!).with(
+        reason:           "displaying <formula>/<cask> source",
+        output_to_stderr: true,
+        executable:       "bat",
+      ).and_return(Pathname.new("/usr/bin/bat"))
+      allow(SystemCommand).to receive(:safe_system)
+    end
 
-    cat.run
+    it "uses a system bat when configured" do
+      expect(SystemCommand).to receive(:safe_system).with(Pathname.new("/usr/bin/bat"), formula_file)
+
+      cat.run
+    end
+
+    it "preserves the native configuration path" do
+      ENV["BAT_CONFIG_PATH"] = "/tmp/bat.conf"
+      ENV["HOMEBREW_BAT_CONFIG_PATH"] = nil
+
+      cat.run
+
+      expect(ENV.fetch("BAT_CONFIG_PATH", nil)).to eq("/tmp/bat.conf")
+    end
+
+    it "deprecates the Homebrew configuration path" do
+      ENV["HOMEBREW_BAT_CONFIG_PATH"] = "/tmp/legacy-bat.conf"
+
+      expect { cat.run }.to raise_error(MethodDeprecatedError, /HOMEBREW_BAT_CONFIG_PATH.*\$BAT_CONFIG_PATH/)
+    end
+
+    it "preserves the legacy configuration override during deprecation" do
+      ENV["BAT_CONFIG_PATH"] = "/tmp/bat.conf"
+      ENV["HOMEBREW_BAT_CONFIG_PATH"] = "/tmp/legacy-bat.conf"
+      allow(Homebrew::EnvConfig).to receive(:odeprecated)
+
+      cat.run
+
+      expect(ENV.fetch("BAT_CONFIG_PATH")).to eq("/tmp/legacy-bat.conf")
+    end
+
+    it "preserves the native theme" do
+      ENV["BAT_THEME"] = "ansi"
+      ENV["HOMEBREW_BAT_THEME"] = nil
+
+      cat.run
+
+      expect(ENV.fetch("BAT_THEME", nil)).to eq("ansi")
+    end
+
+    it "deprecates the Homebrew theme" do
+      ENV["HOMEBREW_BAT_THEME"] = "ansi"
+
+      expect { cat.run }.to raise_error(MethodDeprecatedError, /HOMEBREW_BAT_THEME.*\$BAT_THEME/)
+    end
+
+    it "preserves the legacy theme override during deprecation" do
+      ENV["BAT_THEME"] = "ansi"
+      ENV["HOMEBREW_BAT_THEME"] = "Monokai Extended"
+      allow(Homebrew::EnvConfig).to receive(:odeprecated)
+
+      cat.run
+
+      expect(ENV.fetch("BAT_THEME")).to eq("Monokai Extended")
+    end
   end
 
   it "prints the content of a given Formula and Cask", :cask, :integration_test do

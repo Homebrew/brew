@@ -50,6 +50,7 @@ module Homebrew
                      "or in a tap on this list. Each entry is a `user/repository` name " \
                      "(which matches only taps using the default GitHub remote) or a remote " \
                      "URL (required to match taps with a custom remote).",
+        odeprecated: true,
       },
       HOMEBREW_API_AUTO_UPDATE_SECS:             {
         description: "Check Homebrew's API for new formulae or cask data every " \
@@ -67,6 +68,8 @@ module Homebrew
       HOMEBREW_ARCH:                             {
         description: "Linux only: Pass this value to a type name representing the compiler's `-march` option.",
         default:     "native",
+        replacement: "the default native CPU optimisation",
+        odeprecated: true,
       },
       HOMEBREW_ARTIFACT_DOMAIN:                  {
         description: "Prefix all download URLs, including those for bottles, with this value. " \
@@ -132,16 +135,19 @@ module Homebrew
         boolean:     :set,
       },
       HOMEBREW_BAT:                              {
-        description: "If set, use `bat` for the `brew cat` command.",
+        description: "If set, use `bat` for the `brew cat` command. " \
+                     "Set `$BAT_CONFIG_PATH` to use a custom configuration file and `$BAT_THEME` to select a theme.",
         boolean:     true,
       },
       HOMEBREW_BAT_CONFIG_PATH:                  {
-        description:  "Use this as the `bat` configuration file.",
-        default_text: "`$BAT_CONFIG_PATH`.",
+        description: "Use this as the `bat` configuration file.",
+        odeprecated: true,
+        replacement: "$BAT_CONFIG_PATH",
       },
       HOMEBREW_BAT_THEME:                        {
-        description:  "Use this as the `bat` theme for syntax highlighting.",
-        default_text: "`$BAT_THEME`.",
+        description: "Use this as the `bat` theme for syntax highlighting.",
+        odeprecated: true,
+        replacement: "$BAT_THEME",
       },
       HOMEBREW_BOTTLE_DOMAIN:                    {
         description:  "Use this URL as the download mirror for bottles and their manifests. " \
@@ -368,6 +374,7 @@ module Homebrew
                      "`inputmethod`, `internetplugin`, `audiounitplugin`, `vstplugin`, `vst3plugin`, " \
                      "`screensaver`, `keyboardlayout`, `mdimporter`, `preflight`, `postflight`, " \
                      "`manpage`, `bashcompletion`, `fishcompletion`, `zshcompletion`, `stageonly`.",
+        odeprecated: true,
       },
       HOMEBREW_FORBIDDEN_FORMULAE:               {
         description: "A space-separated list of formulae. Homebrew will refuse to install a " \
@@ -394,6 +401,7 @@ module Homebrew
       HOMEBREW_FORBID_CASKS:                     {
         description: "If set, Homebrew will refuse to install any casks.",
         boolean:     true,
+        odeprecated: true,
       },
       HOMEBREW_FORBID_PACKAGES_FROM_PATHS:       {
         description:  "If set, Homebrew will refuse to read formulae or casks provided from file paths, " \
@@ -423,12 +431,14 @@ module Homebrew
         boolean:     :set,
       },
       HOMEBREW_FORCE_BREW_WRAPPER:               {
-        description: "If set, require `brew` to be invoked by the value of " \
-                     "`$HOMEBREW_FORCE_BREW_WRAPPER` for non-trivial `brew` commands.",
+        description: "No longer used.",
+        replacement: "your wrapper directly",
+        odeprecated: true,
       },
       HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE:  {
-        description: "If set, appended to the `$HOMEBREW_FORCE_BREW_WRAPPER` error message to provide " \
-                     "additional help or context to the user.",
+        description: "No longer used.",
+        replacement: "custom help in your wrapper",
+        odeprecated: true,
       },
       HOMEBREW_FORCE_VENDOR_RUBY:                {
         description: "If set, always use Homebrew's vendored, relocatable Ruby version even if the system version " \
@@ -569,8 +579,10 @@ module Homebrew
         odisabled:   true,
       },
       HOMEBREW_NO_FORCE_BREW_WRAPPER:            {
-        description: "`Deprecated:` If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even if set.",
+        description: "No longer used.",
         boolean:     :set,
+        replacement: "an environment without $HOMEBREW_NO_FORCE_BREW_WRAPPER",
+        odeprecated: true,
       },
       HOMEBREW_NO_GITHUB_API:                    {
         description: "If set, do not use the GitHub API, e.g. for searches or fetching relevant issues " \
@@ -921,6 +933,15 @@ module Homebrew
           env_value(env, hash).presence
         end
       end
+    end
+
+    sig { void }
+    def self.check_deprecated_bash_variables
+      force_brew_wrapper
+      force_brew_wrapper_help_message
+      no_force_brew_wrapper?
+
+      nil
     end
 
     sig { params(env: T.any(String, Symbol), hash: T::Hash[Symbol, T.untyped]).returns(T.nilable(String)) }

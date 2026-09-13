@@ -4377,14 +4377,6 @@ prefix-specific files take precedence over system-wide files (unless
 Note that these files do not support shell variable expansion (e.g. `$HOME`) or
 command execution (e.g. `$(cat file)`).
 
-`HOMEBREW_ALLOWED_TAPS`
-
-: A space-separated list of taps. Homebrew will refuse to install a formula
-  unless it and all of its dependencies are in an official tap or in a tap on
-  this list. Each entry is a `user/repository` name (which matches only taps
-  using the default GitHub remote) or a remote URL (required to match taps with
-  a custom remote).
-
 `HOMEBREW_API_AUTO_UPDATE_SECS`
 
 : Check Homebrew's API for new formulae or cask data every
@@ -4400,13 +4392,6 @@ command execution (e.g. `$(cat file)`).
   as a fallback mirror.
   
   *Default:* `https://formulae.brew.sh/api`.
-
-`HOMEBREW_ARCH`
-
-: Linux only: Pass this value to a type name representing the compiler's
-  `-march` option.
-  
-  *Default:* `native`.
 
 `HOMEBREW_ARTIFACT_DOMAIN`
 
@@ -4454,19 +4439,8 @@ command execution (e.g. `$(cat file)`).
 
 `HOMEBREW_BAT`
 
-: If set, use `bat` for the `brew cat` command.
-
-`HOMEBREW_BAT_CONFIG_PATH`
-
-: Use this as the `bat` configuration file.
-  
-  *Default:* `$BAT_CONFIG_PATH`.
-
-`HOMEBREW_BAT_THEME`
-
-: Use this as the `bat` theme for syntax highlighting.
-  
-  *Default:* `$BAT_THEME`.
+: If set, use `bat` for the `brew cat` command. Set `$BAT_CONFIG_PATH` to use a
+  custom configuration file and `$BAT_THEME` to select a theme.
 
 `HOMEBREW_BOTTLE_DOMAIN`
 
@@ -4746,16 +4720,6 @@ command execution (e.g. `$(cat file)`).
 : A space-separated list of casks. Homebrew will refuse to install a cask if it
   or any of its dependencies is on this list.
 
-`HOMEBREW_FORBIDDEN_CASK_ARTIFACTS`
-
-: A space-separated list of cask artifact types (e.g. `pkg installer`) that
-  should be forbidden during cask installation. Valid values: `pkg`,
-  `installer`, `binary`, `uninstall`, `zap`, `app`, `suite`, `artifact`,
-  `prefpane`, `qlplugin`, `dictionary`, `font`, `service`, `colorpicker`,
-  `inputmethod`, `internetplugin`, `audiounitplugin`, `vstplugin`, `vst3plugin`,
-  `screensaver`, `keyboardlayout`, `mdimporter`, `preflight`, `postflight`,
-  `manpage`, `bashcompletion`, `fishcompletion`, `zshcompletion`, `stageonly`.
-
 `HOMEBREW_FORBIDDEN_FORMULAE`
 
 : A space-separated list of formulae. Homebrew will refuse to install a formula
@@ -4783,10 +4747,6 @@ command execution (e.g. `$(cat file)`).
   `user/repository` name (which matches only taps using the default GitHub
   remote) or a remote URL (required to match taps with a custom remote).
 
-`HOMEBREW_FORBID_CASKS`
-
-: If set, Homebrew will refuse to install any casks.
-
 `HOMEBREW_FORBID_PACKAGES_FROM_PATHS`
 
 : If set, Homebrew will refuse to read formulae or casks provided from file
@@ -4813,16 +4773,6 @@ command execution (e.g. `$(cat file)`).
 
 : If set, always use a Homebrew-installed `git`(1) rather than the system
   version. Automatically set if the system version of `git` is too old.
-
-`HOMEBREW_FORCE_BREW_WRAPPER`
-
-: If set, require `brew` to be invoked by the value of
-  `$HOMEBREW_FORCE_BREW_WRAPPER` for non-trivial `brew` commands.
-
-`HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE`
-
-: If set, appended to the `$HOMEBREW_FORCE_BREW_WRAPPER` error message to
-  provide additional help or context to the user.
 
 `HOMEBREW_FORCE_VENDOR_RUBY`
 
@@ -4980,11 +4930,6 @@ command execution (e.g. `$(cat file)`).
 
 : If set, do not print any hints about changing Homebrew's behaviour with
   environment variables.
-
-`HOMEBREW_NO_FORCE_BREW_WRAPPER`
-
-: `Deprecated:` If set, disables `$HOMEBREW_FORCE_BREW_WRAPPER` behaviour, even
-  if set.
 
 `HOMEBREW_NO_GITHUB_API`
 

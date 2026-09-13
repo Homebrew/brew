@@ -114,7 +114,7 @@ module Homebrew
 
     sig { returns(Integer) }
     def owner_uid
-      @owner_uid ||= T.let(HOMEBREW_ORIGINAL_BREW_FILE.stat.uid, T.nilable(Integer))
+      @owner_uid ||= T.let(HOMEBREW_BREW_FILE.stat.uid, T.nilable(Integer))
     end
 
     sig { returns(T::Boolean) }

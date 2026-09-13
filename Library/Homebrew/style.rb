@@ -505,7 +505,7 @@ module Homebrew
     sig { returns(T::Array[Pathname]) }
     def self.shell_scripts
       [
-        HOMEBREW_ORIGINAL_BREW_FILE.realpath,
+        HOMEBREW_BREW_FILE.realpath,
         HOMEBREW_REPOSITORY/"completions/bash/brew",
         HOMEBREW_REPOSITORY/"Dockerfile",
         *HOMEBREW_REPOSITORY.glob(".devcontainer/**/*.sh"),

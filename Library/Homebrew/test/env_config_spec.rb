@@ -70,6 +70,137 @@ RSpec.describe Homebrew::EnvConfig do
     end
   end
 
+  describe ".check_deprecated_bash_variables" do
+    before do
+      ENV.delete("HOMEBREW_FORCE_BREW_WRAPPER")
+      ENV.delete("HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE")
+      ENV.delete("HOMEBREW_NO_FORCE_BREW_WRAPPER")
+    end
+
+    test_each(%w[
+      HOMEBREW_FORCE_BREW_WRAPPER
+      HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE
+      HOMEBREW_NO_FORCE_BREW_WRAPPER
+    ]) do |variable|
+      it "deprecates the obsolete Bash setting #{variable}" do
+        ENV[variable] = "1"
+
+        expect { env_config.check_deprecated_bash_variables }
+          .to raise_error(MethodDeprecatedError, /#{variable}.*deprecated/)
+      end
+    end
+
+    it "leaves Ruby settings to their accessors" do
+      ENV["HOMEBREW_BAT_THEME"] = "GitHub"
+      ENV["HOMEBREW_PRY"] = "1"
+      ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+
+      expect { env_config.check_deprecated_bash_variables }.not_to raise_error
+    end
+
+    it "ignores blank values" do
+      ENV["HOMEBREW_FORCE_BREW_WRAPPER"] = ""
+
+      expect { env_config.check_deprecated_bash_variables }.not_to raise_error
+    end
+
+    it "warns once per variable even when checked or read again" do
+      ENV["HOMEBREW_FORCE_BREW_WRAPPER"] = "/wrapper/brew"
+      ENV["HOMEBREW_NO_FORCE_BREW_WRAPPER"] = "0"
+      ENV.delete("HOMEBREW_TESTS")
+      ENV.delete("HOMEBREW_DEVELOPER")
+      Homebrew.raise_deprecation_exceptions = false
+      stub_const("Homebrew::EnvConfig::WARNED_DEPRECATED_ENVS", Set.new)
+
+      expect do
+        env_config.check_deprecated_bash_variables
+        env_config.check_deprecated_bash_variables
+        env_config.force_brew_wrapper
+        env_config.no_force_brew_wrapper?
+      end.to output(
+        "Warning: Calling HOMEBREW_FORCE_BREW_WRAPPER is deprecated! Use your wrapper directly instead.\n" \
+        "Warning: Calling HOMEBREW_NO_FORCE_BREW_WRAPPER is deprecated! " \
+        "Use an environment without $HOMEBREW_NO_FORCE_BREW_WRAPPER instead.\n",
+      ).to_stderr
+    end
+  end
+
+  describe ".allowed_taps" do
+    it "deprecates the tap allowlist" do
+      ENV["HOMEBREW_ALLOWED_TAPS"] = "user/repo"
+
+      expect { env_config.allowed_taps }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_ALLOWED_TAPS.*deprecated/)
+    end
+  end
+
+  describe ".forbidden_cask_artifacts" do
+    it "deprecates the artifact denylist" do
+      ENV["HOMEBREW_FORBIDDEN_CASK_ARTIFACTS"] = "pkg installer"
+
+      expect { env_config.forbidden_cask_artifacts }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_FORBIDDEN_CASK_ARTIFACTS.*deprecated/)
+    end
+  end
+
+  describe ".forbid_casks?" do
+    it "deprecates refusing all casks" do
+      ENV["HOMEBREW_FORBID_CASKS"] = "1"
+
+      expect { env_config.forbid_casks? }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_FORBID_CASKS.*deprecated/)
+    end
+  end
+
+  describe ".force_brew_wrapper" do
+    it "deprecates requiring a wrapper" do
+      ENV["HOMEBREW_FORCE_BREW_WRAPPER"] = "/wrapper/brew"
+
+      expect { env_config.force_brew_wrapper }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_FORCE_BREW_WRAPPER.*deprecated/)
+    end
+  end
+
+  describe ".force_brew_wrapper_help_message" do
+    it "deprecates custom wrapper help" do
+      ENV["HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE"] = "Contact support."
+
+      expect { env_config.force_brew_wrapper_help_message }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE.*deprecated/)
+    end
+  end
+
+  describe ".no_force_brew_wrapper?" do
+    it "deprecates the wrapper opt-out" do
+      ENV["HOMEBREW_NO_FORCE_BREW_WRAPPER"] = "1"
+
+      expect { env_config.no_force_brew_wrapper? }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_NO_FORCE_BREW_WRAPPER.*deprecated/)
+    end
+  end
+
+  describe ".arch" do
+    it "deprecates overriding the compiler architecture" do
+      ENV["HOMEBREW_ARCH"] = "haswell"
+
+      expect { env_config.arch }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_ARCH.*deprecated.*native/)
+    end
+
+    it "preserves the default native architecture" do
+      ENV.delete("HOMEBREW_ARCH")
+
+      expect(env_config.arch).to eq("native")
+    end
+
+    it "preserves an explicit architecture during deprecation" do
+      ENV["HOMEBREW_ARCH"] = "haswell"
+      allow(env_config).to receive(:odeprecated)
+
+      expect(env_config.arch).to eq("haswell")
+    end
+  end
+
   describe ".non_default_variable?" do
     it "detects whether a variable has a non-default value" do
       ENV["HOMEBREW_CURL_RETRIES"] = "4"
