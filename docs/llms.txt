@@ -1,0 +1,70 @@
+# Homebrew
+
+> Homebrew is the missing package manager for macOS and Linux. It installs command-line software (formulae) and macOS apps (casks) from the command line. These docs cover installation, everyday usage, the `brew` command, writing and maintaining formulae and casks, taps, and project governance.
+
+## Getting started
+
+- [Installation](https://docs.brew.sh/Installation): Install Homebrew on macOS or Linux, including uninstall instructions
+- [FAQ](https://docs.brew.sh/FAQ): Frequently asked questions about updating, upgrading, and cleanup
+- [Common Issues](https://docs.brew.sh/Common-Issues): Common problems and how to fix them
+- [Troubleshooting](https://docs.brew.sh/Troubleshooting): The checklist to run through before filing an issue
+- [Support Tiers](https://docs.brew.sh/Support-Tiers): Which configurations receive full, limited, or no support
+- [Homebrew on Linux](https://docs.brew.sh/Homebrew-on-Linux): Linux-specific requirements and behavior
+
+## Using Homebrew
+
+- [Manpage (brew(1))](https://docs.brew.sh/Manpage): The complete `brew` command reference
+- [Brew Bundle and Brewfile](https://docs.brew.sh/Brew-Bundle-and-Brewfile): Declare and restore your installed packages with a Brewfile
+- [Shell Completion](https://docs.brew.sh/Shell-Completion): Enable bash, zsh, and fish completions
+- [Taps](https://docs.brew.sh/Taps): Third-party repositories of formulae and casks
+- [Tips and Tricks](https://docs.brew.sh/Tips-and-Tricks): Lesser-known but useful workflows
+- [Querying Brew](https://docs.brew.sh/Querying-Brew): Script against `brew info --json` output
+- [MCP Server](https://docs.brew.sh/MCP-Server): Homebrew's built-in Model Context Protocol server for AI tools
+- [Command Not Found](https://docs.brew.sh/Command-Not-Found): Suggest formulae when a command is missing
+- [Analytics](https://docs.brew.sh/Analytics): What anonymous analytics are collected and how to opt out
+- [External Commands](https://docs.brew.sh/External-Commands): Extend brew with your own subcommands
+- [Bottles](https://docs.brew.sh/Bottles): How binary packages are built and used
+
+## Contributing packages
+
+- [Formula Cookbook](https://docs.brew.sh/Formula-Cookbook): How to write a formula
+- [Cask Cookbook](https://docs.brew.sh/Cask-Cookbook): How to write a cask
+- [Adding Software to Homebrew](https://docs.brew.sh/Adding-Software-to-Homebrew): The path from new software to merged formula or cask
+- [Updating Software in Homebrew](https://docs.brew.sh/Updating-Software-in-Homebrew): Submit version bumps
+- [Acceptable Formulae](https://docs.brew.sh/Acceptable-Formulae): What homebrew/core will and will not accept
+- [Acceptable Casks](https://docs.brew.sh/Acceptable-Casks): What homebrew/cask will and will not accept
+- [Package Acceptance Policy](https://docs.brew.sh/Package-Acceptance-Policy): How acceptance decisions are made
+- [How To Open a Homebrew Pull Request](https://docs.brew.sh/How-To-Open-a-Homebrew-Pull-Request): Fork, branch, test, and submit changes
+- [Checksum Requirements](https://docs.brew.sh/Checksum-Requirements): SHA-256 requirements for packages
+- [Licence Guidelines](https://docs.brew.sh/Licence-Guidelines): License metadata requirements for formulae
+- [Deprecating, Disabling and Removing](https://docs.brew.sh/Deprecating-Disabling-and-Removing): Lifecycle of formulae and casks
+- [Versions](https://docs.brew.sh/Versions): When versioned formulae are acceptable
+- [Rename a Formula](https://docs.brew.sh/Rename-A-Formula): How formula renames work
+- [Brew Livecheck](https://docs.brew.sh/Brew-Livecheck): Write livecheck blocks so new versions are detected
+- [Autobump](https://docs.brew.sh/Autobump): Packages updated automatically by BrewTestBot
+- [Responsible AI Usage](https://docs.brew.sh/Responsible-AI-Usage): Homebrew's policy on AI-assisted contributions
+
+## Taps and advanced usage
+
+- [How to Create and Maintain a Tap](https://docs.brew.sh/How-to-Create-and-Maintain-a-Tap): Publish your own formulae
+- [Interesting Taps and Forks](https://docs.brew.sh/Interesting-Taps-and-Forks): Notable third-party taps
+- [Migrating a Formula to a Tap](https://docs.brew.sh/Migrating-A-Formula-To-A-Tap): Move formulae out of homebrew/core
+- [Building Against Non-Homebrew Dependencies](https://docs.brew.sh/Building-Against-Non-Homebrew-Dependencies): Mixing Homebrew and system libraries
+- [How to Build Software Outside Homebrew with Homebrew keg-only Dependencies](https://docs.brew.sh/How-to-Build-Software-Outside-Homebrew-with-Homebrew-keg-only-Dependencies): Use keg-only packages in your own builds
+- [Working with Homebrew as an Upstream Project](https://docs.brew.sh/Working-with-Homebrew-as-an-Upstream-Project): Guidance for software authors packaged in Homebrew
+- [C++ Standard Libraries](https://docs.brew.sh/C++-Standard-Libraries): C++ runtime considerations
+- [Custom GCC and Cross Compilers](https://docs.brew.sh/Custom-GCC-and-cross-compilers): Why custom toolchains are unsupported
+- [Xcode](https://docs.brew.sh/Xcode): Xcode and Command Line Tools requirements
+
+## Project
+
+- [Homebrew Governance](https://docs.brew.sh/Homebrew-Governance): How the project is governed
+- [Homebrew Security and Supply Chain](https://docs.brew.sh/Homebrew-Security-and-Supply-Chain): Security posture and supply-chain practices
+- [Reproducible Builds](https://docs.brew.sh/Reproducible-Builds): Homebrew's reproducibility efforts
+
+## Optional
+
+- [Maintainer Guidelines](https://docs.brew.sh/Maintainer-Guidelines): Expectations for Homebrew maintainers
+- [Homebrew/brew Maintainer Guide](https://docs.brew.sh/Homebrew-brew-Maintainer-Guide): Maintaining brew itself
+- [New Maintainer Checklist](https://docs.brew.sh/New-Maintainer-Checklist): Onboarding new maintainers
+- [Ruby API documentation](https://docs.brew.sh/rubydoc/): Generated API docs for brew's Ruby internals
