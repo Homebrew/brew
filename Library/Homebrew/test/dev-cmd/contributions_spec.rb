@@ -7,7 +7,10 @@ require "dev-cmd/contributions"
 require "utils/github"
 
 RSpec.describe Homebrew::DevCmd::Contributions do
-  before { stub_const("HOMEBREW_CACHE", mktmpdir) }
+  before do
+    stub_const("HOMEBREW_CACHE", mktmpdir)
+    allow(GitHub::API).to receive(:open_rest).and_return({})
+  end
 
   it_behaves_like "parseable arguments"
   it_behaves_like "a documented command", "contributions"
