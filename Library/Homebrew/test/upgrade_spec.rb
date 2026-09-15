@@ -58,10 +58,12 @@ RSpec.describe Homebrew::Upgrade do
         T.bind(self, T.class_of(Formula))
         url "https://brew.sh/python-3.14.6.tgz"
       end
-      kegs = ["2.7.14_2", "3.6.1", "3.6.4_4", "3.7.1"].map do |v|
-        instance_double(Keg, version: PkgVersion.parse(v))
+      ["2.7.14_2", "3.6.1", "3.6.4_4", "3.7.1"].each do |version|
+        (python.rack/version).mkpath
+        tab = Tab.empty
+        tab.tabfile = python.rack/version/AbstractTab::FILENAME
+        tab.write
       end
-      allow(python).to receive_messages(any_version_installed?: true, optlinked?: false, installed_kegs: kegs)
       dependency = instance_double(Dependency, to_formula: python)
       formula_installer = instance_double(
         FormulaInstaller, formula: Testball.new, compute_dependencies: [dependency]
@@ -108,10 +110,11 @@ RSpec.describe Homebrew::Upgrade do
         url "https://brew.sh/installed-dependency-2.0"
       end
       allow(fresh).to receive_messages(any_version_installed?: false, optlinked?: false, installed_kegs: [])
-      allow(installed).to receive_messages(any_version_installed?: true, optlinked?: true,
-                                           opt_prefix: HOMEBREW_PREFIX/"opt/installed-dependency")
-      allow(Keg).to receive(:new).with(HOMEBREW_PREFIX/"opt/installed-dependency")
-                                 .and_return(instance_double(Keg, version: PkgVersion.parse("1.0")))
+      (installed.rack/"1.0").mkpath
+      tab = Tab.empty
+      tab.tabfile = installed.rack/"1.0"/AbstractTab::FILENAME
+      tab.write
+      Keg.new(installed.rack/"1.0").optlink
       fresh_dependency = instance_double(Dependency, to_formula: fresh)
       installed_dependency = instance_double(Dependency, to_formula: installed)
       formula_installers = [

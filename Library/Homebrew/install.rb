@@ -365,13 +365,28 @@ module Homebrew
         skip_link: false,
         cleanup: true
       )
-        formulae_names_to_install = formula_installers.map { |fi| fi.formula.name }
-        return [] if formulae_names_to_install.empty?
+        return [] if formula_installers.empty?
 
         if dry_run
-          ohai "Would #{dry_run_action} #{Utils.pluralize("formula", formulae_names_to_install.count,
-                                                          include_count: true)}:"
-          puts formulae_names_to_install.join(" ")
+          groups = formula_installers.reject(&:only_deps?).map(&:formula).group_by do |formula|
+            installed_version = Upgrade.installed_version(formula) if dry_run_action == "install"
+            if installed_version && installed_version != formula.pkg_version
+              "upgrade"
+            else
+              dry_run_action
+            end
+          end
+          groups.keys.sort.each do |action|
+            group = groups.fetch(action)
+            ohai "Would #{action} #{Utils.pluralize("formula", group.count, include_count: true)}:"
+            puts Upgrade.format_upgrade_summary(group.map do |formula|
+              if action == "upgrade"
+                Upgrade.formula_upgrade_description(formula)
+              else
+                "#{formula.full_specified_name} #{formula.pkg_version}"
+              end
+            end)
+          end
 
           formula_installers.each do |fi|
             next if fi.ignore_deps?

@@ -24,6 +24,27 @@ module Homebrew
     end
 
     class << self
+      # The installed version used in upgrade summaries, preferring the active opt link.
+      sig { params(formula: Formula).returns(T.nilable(PkgVersion)) }
+      def installed_version(formula)
+        if formula.optlinked? && (formula.opt_prefix/AbstractTab::FILENAME).file?
+          Keg.new(formula.opt_prefix).version
+        else
+          formula.installed_kegs.filter_map { |keg| keg.version if (keg/AbstractTab::FILENAME).file? }.max
+        end
+      end
+
+      # Describe a formula's version change for an upgrade summary.
+      sig { params(formula: Formula).returns(String) }
+      def formula_upgrade_description(formula)
+        current_version = installed_version(formula)
+        if current_version && current_version != formula.pkg_version
+          "#{formula.full_specified_name} #{current_version} -> #{formula.pkg_version}"
+        else
+          "#{formula.full_specified_name} #{formula.pkg_version}"
+        end
+      end
+
       sig { params(upgrades: T::Array[String]).returns(T::Array[String]) }
       def format_upgrade_summary(upgrades)
         return upgrades if upgrades.size < 2
@@ -544,17 +565,7 @@ module Homebrew
         if dry_run
           Install.print_dry_run_dependencies(formula, formula_installer.compute_dependencies,
                                              skip_formula_names:, dependency_summary:) do |f|
-            name = f.full_specified_name
-            current_version = if f.optlinked?
-              Keg.new(f.opt_prefix).version
-            else
-              f.installed_kegs.map(&:version).max
-            end
-            if current_version && current_version != f.pkg_version
-              "#{name} #{current_version} -> #{f.pkg_version}"
-            else
-              "#{name} #{f.pkg_version}"
-            end
+            formula_upgrade_description(f)
           end
           return true
         end

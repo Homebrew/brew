@@ -26,7 +26,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     expect([stdout, stderr, status.success?]).to eq(["", "", true])
   end
 
-  it "prints a formula dry-run plan when asking" do
+  it "separates new formulae from upgrades when asking" do
     added = formula("added") do
       T.bind(self, T.class_of(Formula))
       url "https://brew.sh/added-1.0.tar.gz"
@@ -35,6 +35,10 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       T.bind(self, T.class_of(Formula))
       url "https://brew.sh/changed-2.0.tar.gz"
     end
+    (changed.rack/"1.0_1").mkpath
+    tab = Tab.empty
+    tab.tabfile = changed.rack/"1.0_1"/AbstractTab::FILENAME
+    tab.write
     added_installer = FormulaInstaller.new(added)
     changed_installer = FormulaInstaller.new(changed)
     dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
@@ -44,13 +48,15 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
     expect do
       Homebrew::Install.ask_formulae(
-        [added_installer, changed_installer],
+        [changed_installer, added_installer],
         dependants,
         prompt: false,
       )
     end.to output(<<~EOS).to_stdout
-      ==> Would install 2 formulae:
-      added changed
+      ==> Would install 1 formula:
+      added 1.0
+      ==> Would upgrade 1 formula:
+      changed 1.0_1 -> 2.0
     EOS
   end
 
@@ -72,7 +78,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       )
     end.to output(<<~EOS).to_stdout
       ==> Would install 1 formula:
-      testball
+      testball 0.1
     EOS
   end
 
@@ -96,7 +102,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       Homebrew::Install.ask_formulae([formula_installer], dependants)
     end.to output(<<~EOS).to_stdout
       ==> Would install 1 formula:
-      testball
+      testball 0.1
     EOS
   end
 
@@ -124,7 +130,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       )
     end.to output(<<~EOS).to_stdout
       ==> Would upgrade 1 formula:
-      changed
+      changed 2.0
       ==> Would install 1 dependency for changed:
       dependency
     EOS
@@ -151,7 +157,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       Homebrew::Install.ask_formulae([formula_installer], dependants)
     end.to output(<<~EOS).to_stdout
       ==> Would install 1 formula:
-      changed
+      changed 2.0
       ==> Would upgrade 1 dependency for changed:
       dependency
     EOS

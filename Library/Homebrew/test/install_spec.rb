@@ -122,6 +122,184 @@ RSpec.describe Homebrew::Install do
   end
 
   describe "::install_formulae" do
+    it "only prints the upgrade group for an installed keg-only formula" do
+      formula = formula("keg-only") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/keg-only-2.0.tar.gz"
+        keg_only :versioned_formula
+      end
+      (formula.rack/"1.0").mkpath
+      tab = Tab.empty
+      tab.tabfile = formula.rack/"1.0"/AbstractTab::FILENAME
+      tab.write
+      Keg.new(formula.rack/"1.0").optlink
+
+      expect do
+        described_class.install_formulae([FormulaInstaller.new(formula, ignore_deps: true)], dry_run: true)
+      end.to output(<<~EOS).to_stdout
+        ==> Would upgrade 1 formula:
+        keg-only 1.0 -> 2.0
+      EOS
+    end
+
+    it "preserves the requested reinstall action for an installed formula" do
+      formula = formula("installed") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/installed-2.0.tar.gz"
+      end
+      formula.prefix.mkpath
+      tab = Tab.empty
+      tab.tabfile = formula.prefix/AbstractTab::FILENAME
+      tab.write
+
+      expect do
+        described_class.install_formulae([FormulaInstaller.new(formula, ignore_deps: true)],
+                                         dry_run: true, dry_run_action: "reinstall")
+      end.to output(<<~EOS).to_stdout
+        ==> Would reinstall 1 formula:
+        installed 2.0
+      EOS
+    end
+
+    [nil, "1.0", "2.0"].each do |installed_version|
+      it "only lists dependencies with #{installed_version || "no"} version installed" do
+        T.bind(self, RSpec::Core::ExampleGroup)
+
+        requested = formula("requested") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/requested-2.0.tar.gz"
+        end
+        dependency = formula("dependency") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/dependency-1.0.tar.gz"
+        end
+        if installed_version
+          (requested.rack/installed_version).mkpath
+          tab = Tab.empty
+          tab.tabfile = requested.rack/installed_version/AbstractTab::FILENAME
+          tab.write
+        end
+        installer = FormulaInstaller.new(requested, only_deps: true)
+        allow(installer).to receive(:compute_dependencies)
+          .and_return([instance_double(Dependency, to_formula: dependency)])
+
+        expect do
+          described_class.install_formulae([installer], dry_run: true)
+        end.to output(<<~EOS).to_stdout
+          ==> Would install 1 dependency for requested:
+          dependency
+        EOS
+      end
+    end
+
+    it "does not describe installing the same version as an upgrade" do
+      formula = formula("current") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/current-2.0.tar.gz"
+      end
+      formula.prefix.mkpath
+      tab = Tab.empty
+      tab.tabfile = formula.prefix/AbstractTab::FILENAME
+      tab.write
+
+      expect do
+        described_class.install_formulae([FormulaInstaller.new(formula, ignore_deps: true)], dry_run: true)
+      end.to output(<<~EOS).to_stdout
+        ==> Would install 1 formula:
+        current 2.0
+      EOS
+    end
+
+    [false, true].each do |optlinked|
+      it "uses the #{optlinked ? "opt-linked" : "newest"} installed version in the upgrade summary" do
+        T.bind(self, RSpec::Core::ExampleGroup)
+
+        formula = formula("multiple") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/multiple-2.0.tar.gz"
+        end
+        versions = ["1.9", "1.10"]
+        versions.each do |version|
+          (formula.rack/version).mkpath
+          tab = Tab.empty
+          tab.tabfile = formula.rack/version/AbstractTab::FILENAME
+          tab.write
+        end
+        Keg.new(formula.rack/"1.9").optlink if optlinked
+
+        expect do
+          described_class.install_formulae([FormulaInstaller.new(formula, ignore_deps: true)], dry_run: true)
+        end.to output(<<~EOS).to_stdout
+          ==> Would upgrade 1 formula:
+          multiple #{optlinked ? "1.9" : "1.10"} -> 2.0
+        EOS
+      end
+    end
+
+    it "prints an install plan when the opt link is dangling" do
+      formula = formula("stale") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/stale-2.0.tar.gz"
+      end
+      formula.opt_prefix.dirname.mkpath
+      FileUtils.ln_s(formula.rack/"1.0", formula.opt_prefix)
+
+      expect do
+        described_class.install_formulae([FormulaInstaller.new(formula, ignore_deps: true)], dry_run: true)
+      end.to output(<<~EOS).to_stdout
+        ==> Would install 1 formula:
+        stale 2.0
+      EOS
+    end
+
+    [false, true].each do |optlinked|
+      it "prints an install plan for a receiptless keg with optlinked=#{optlinked}" do
+        T.bind(self, RSpec::Core::ExampleGroup)
+
+        formula = formula("incomplete") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/incomplete-2.0.tar.gz"
+        end
+        (formula.rack/"1.0").mkpath
+        if optlinked
+          formula.opt_prefix.dirname.mkpath
+          FileUtils.ln_s(formula.rack/"1.0", formula.opt_prefix)
+        end
+
+        expect do
+          described_class.install_formulae([FormulaInstaller.new(formula, ignore_deps: true)], dry_run: true)
+        end.to output(<<~EOS).to_stdout
+          ==> Would install 1 formula:
+          incomplete 2.0
+        EOS
+      end
+
+      it "uses the complete keg when a higher receiptless keg has optlinked=#{optlinked}" do
+        T.bind(self, RSpec::Core::ExampleGroup)
+
+        formula = formula("mixed") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/mixed-2.0.tar.gz"
+        end
+        (formula.rack/"1.0").mkpath
+        tab = Tab.empty
+        tab.tabfile = formula.rack/"1.0"/AbstractTab::FILENAME
+        tab.write
+        (formula.rack/"1.9").mkpath
+        if optlinked
+          formula.opt_prefix.dirname.mkpath
+          FileUtils.ln_s(formula.rack/"1.9", formula.opt_prefix)
+        end
+
+        expect do
+          described_class.install_formulae([FormulaInstaller.new(formula, ignore_deps: true)], dry_run: true)
+        end.to output(<<~EOS).to_stdout
+          ==> Would upgrade 1 formula:
+          mixed 1.0 -> 2.0
+        EOS
+      end
+    end
+
     it "returns installed formulae without cleaning them inline when cleanup is deferred" do
       formula = formula("good-bottle") do
         T.bind(self, T.class_of(Formula))
