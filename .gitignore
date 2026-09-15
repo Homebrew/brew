@@ -205,6 +205,8 @@
 !/CONTRIBUTING.md
 !/Dockerfile
 !/Dockerfile.test.yml
+!/Gemfile
+!/Gemfile.lock
 !/LICENSE.txt
 !/README.md
 

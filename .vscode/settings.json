@@ -15,6 +15,10 @@
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
+  // `rubyVersionManager` and `customRubyCommand` are "machine"-scoped, so VS
+  // Code never applies them from a workspace's settings.json. Copy these two
+  // lines into your own User settings.json for Ruby LSP's activation to
+  // actually work: https://github.com/Shopify/ruby-lsp/pull/4120
   "rubyLsp.rubyVersionManager": {
     "identifier": "custom"
   },
@@ -26,7 +30,6 @@
     "markdown",
   ],
   "rubyLsp.customRubyCommand": "source ../../.vscode/ruby-lsp-activate.sh",
-  "rubyLsp.bundleGemfile": "Library/Homebrew/Gemfile",
   "rubyLsp.formatter": "rubocop",
   "[ruby]": {
     "editor.defaultFormatter": "Shopify.ruby-lsp",
