@@ -7,6 +7,8 @@ module Homebrew
   module Cmd
     class Bundle < Homebrew::AbstractCommand
       class EnvSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandContextReader
+
         subcommand_args do
           usage_banner <<~EOS
             `brew bundle env` [`--check`] [`--no-secrets`]:

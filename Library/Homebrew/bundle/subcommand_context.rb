@@ -3,6 +3,7 @@
 
 require "bundle/extensions/extension"
 require "abstract_command"
+require "abstract_subcommand"
 
 module Homebrew
   module Cmd
@@ -78,6 +79,24 @@ module Homebrew
         sig { params(args: T.untyped, disabled_methods: Symbol).returns(T::Boolean) }
         def type_disabled?(args, *disabled_methods)
           disabled_methods.any? { |disabled_method| args.public_send(disabled_method) }
+        end
+      end
+
+      # `include`d by every `Bundle` subcommand to narrow `context` from `AbstractSubcommand`'s
+      # generic `T.anything`, since every `Bundle` subcommand is constructed with a real one.
+      module SubcommandContextReader
+        extend T::Helpers
+
+        requires_ancestor { Homebrew::AbstractSubcommand }
+
+        sig { returns(SubcommandContext) }
+        def context
+          context = super
+          unless context.is_a?(SubcommandContext)
+            raise TypeError, "#{self.class} has no `context`, but is not constructed through `Bundle.dispatch`"
+          end
+
+          context
         end
       end
     end

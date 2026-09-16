@@ -8,6 +8,8 @@ module Homebrew
   module Cmd
     class Bundle < Homebrew::AbstractCommand
       class CheckSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandContextReader
+
         subcommand_args do
           usage_banner <<~EOS
             `brew bundle check`:

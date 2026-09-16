@@ -8,6 +8,7 @@ require "cli/parser"
 require "services/cli"
 require "services/formulae"
 require "services/system"
+require "services/subcommand_targets"
 require "utils/output"
 
 Dir["#{__dir__}/subcommand/*.rb"].each do |subcommand|

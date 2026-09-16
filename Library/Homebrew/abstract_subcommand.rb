@@ -101,7 +101,10 @@ module Homebrew
     sig { returns(CLI::Args) }
     attr_reader :args
 
-    sig { params(args: CLI::Args, context: T.untyped, targets: T.untyped, quiet: T::Boolean, cleanup: T::Boolean).void }
+    sig {
+      params(args: CLI::Args, context: T.anything, targets: T.anything, quiet: T::Boolean,
+             cleanup: T::Boolean).void
+    }
     def initialize(args, context: nil, targets: nil, quiet: false, cleanup: true)
       # `args` is frozen by `CLI::Parser#parse`, so `extend` needs an unfrozen clone
       # (which, unlike `dup`, keeps the singleton methods the parser defined on it).
@@ -112,10 +115,12 @@ module Homebrew
       @cleanup = cleanup
     end
 
-    sig { returns(T.untyped) }
+    # Only commands with subcommands that use `context` (currently `Bundle`) narrow this.
+    sig { returns(T.anything) }
     attr_reader :context
 
-    sig { returns(T.untyped) }
+    # Only commands with subcommands that use `targets` (currently `Services`) narrow this.
+    sig { returns(T.anything) }
     attr_reader :targets
 
     sig { returns(T::Boolean) }

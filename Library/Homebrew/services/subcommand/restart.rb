@@ -8,6 +8,8 @@ module Homebrew
   module Cmd
     class Services < Homebrew::AbstractCommand
       class RestartSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandTargetsReader
+
         subcommand_args aliases: %w[relaunch reload r] do
           usage_banner <<~EOS
             [`sudo`] `brew services restart` (<formula>|`--all`) [`--file=`]:

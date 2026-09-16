@@ -8,6 +8,8 @@ module Homebrew
   module Cmd
     class Services < Homebrew::AbstractCommand
       class StopSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandTargetsReader
+
         subcommand_args aliases: %w[unload terminate term t u] do
           usage_banner <<~EOS
             [`sudo`] `brew services stop` [`--keep`] [`--no-wait`|`--max-wait=`] (<formula>|`--all`):

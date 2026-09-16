@@ -9,6 +9,8 @@ module Homebrew
   module Cmd
     class Bundle < Homebrew::AbstractCommand
       class InstallSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandContextReader
+
         subcommand_args alias_options: { "upgrade" => "--upgrade" }, default: true do
           usage_banner <<~EOS
             `brew bundle` [`install`|`upgrade`]:

@@ -8,6 +8,8 @@ module Homebrew
   module Cmd
     class Services < Homebrew::AbstractCommand
       class RunSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandTargetsReader
+
         subcommand_args do
           usage_banner <<~EOS
             [`sudo`] `brew services run` (<formula>|`--all`) [`--file=`]:

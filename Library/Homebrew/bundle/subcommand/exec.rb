@@ -15,6 +15,8 @@ module Homebrew
   module Cmd
     class Bundle < Homebrew::AbstractCommand
       class ExecSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandContextReader
+
         subcommand_args do
           usage_banner <<~EOS
             `brew bundle exec` [`--check`] [`--no-secrets`] [`--sandbox=`<path>] [`--deny-network`] <command>:

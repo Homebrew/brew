@@ -11,6 +11,8 @@ module Homebrew
   module Cmd
     class Bundle < Homebrew::AbstractCommand
       class AddSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandContextReader
+
         subcommand_args do
           extensions = Homebrew::Bundle.extensions
           usage_banner <<~EOS
@@ -49,7 +51,7 @@ module Homebrew
           selected_types = context.selected_types(args)
           raise UsageError, "`add` supports only one type of entry at a time." if selected_types.count != 1
 
-          type = case (t = selected_types.first)
+          type = case (t = selected_types.fetch(0))
           when :none then :brew
           when :mas then raise UsageError, "`add` does not support `--mas`."
           else t

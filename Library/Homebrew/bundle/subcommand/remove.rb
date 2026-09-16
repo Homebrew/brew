@@ -11,6 +11,8 @@ module Homebrew
   module Cmd
     class Bundle < Homebrew::AbstractCommand
       class RemoveSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandContextReader
+
         subcommand_args do
           extensions = Homebrew::Bundle.extensions
           usage_banner <<~EOS

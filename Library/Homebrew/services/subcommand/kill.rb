@@ -8,6 +8,8 @@ module Homebrew
   module Cmd
     class Services < Homebrew::AbstractCommand
       class KillSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandTargetsReader
+
         subcommand_args aliases: ["k"] do
           usage_banner <<~EOS
             [`sudo`] `brew services kill` (<formula>|`--all`):

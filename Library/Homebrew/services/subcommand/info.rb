@@ -8,6 +8,8 @@ module Homebrew
   module Cmd
     class Services < Homebrew::AbstractCommand
       class InfoSubcommand < Homebrew::AbstractSubcommand
+        include SubcommandTargetsReader
+
         subcommand_args aliases: ["i"] do
           usage_banner <<~EOS
             [`sudo`] `brew services info` (<formula>|`--all`) [`--json`]:
