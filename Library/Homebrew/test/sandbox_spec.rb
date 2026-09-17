@@ -31,7 +31,8 @@ RSpec.describe Sandbox, :needs_macos do
       expect(sandbox.seatbelt_profile).to include(
         "(deny mach-lookup)", "(deny lsopen)", "(deny appleevent-send)",
         "(deny network-outbound (to unix-socket))",
-        '(allow network-outbound (to unix-socket (path-literal "/private/var/run/mDNSResponder")))'
+        '(allow network-outbound (to unix-socket (path-literal "/private/var/run/mDNSResponder")))',
+        '(global-name "com.apple.FSEvents")'
       )
     end
 

@@ -54,6 +54,7 @@ module OS
             (global-name "com.apple.trustd.agent")
             (global-name "com.apple.SystemConfiguration.DNSConfiguration")
             (global-name "com.apple.SystemConfiguration.configd")
+            (global-name "com.apple.FSEvents")
             )
         (deny lsopen)
         (deny appleevent-send)
