@@ -16,12 +16,25 @@ module Homebrew
 
     # Checks style for a list of files, printing simple RuboCop output.
     # Returns true if violations were found, false otherwise.
-    sig { params(files: T::Array[Pathname], options: T.untyped).returns(T::Boolean) }
-    def self.check_style_and_print(files, **options)
-      success = check_style_impl(files, :print, **options)
+    sig {
+      params(files:       T::Array[Pathname],
+             fix:         T::Boolean,
+             todo:        T::Boolean,
+             except_cops: T.nilable(T::Array[String]),
+             only_cops:   T.nilable(T::Array[String]),
+             reset_cache: T::Boolean,
+             debug:       T::Boolean,
+             verbose:     T::Boolean).returns(T::Boolean)
+    }
+    def self.check_style_and_print(files, fix: false, todo: false, except_cops: nil, only_cops: nil,
+                                   reset_cache: false, debug: false, verbose: false)
+      success = check_style_impl(files, :print, fix:, todo:, except_cops:, only_cops:,
+                                 reset_cache:, debug:, verbose:)
 
       if GitHub::Actions.env_set? && !success
-        check_style_json(files, **options).each do |path, offenses|
+        check_style_json(
+          files, fix:, todo:, except_cops:, only_cops:, reset_cache:, debug:, verbose:
+        ).each do |path, offenses|
           offenses.each do |o|
             line = o.location.line
             column = o.location.line
@@ -37,30 +50,41 @@ module Homebrew
 
     # Checks style for a list of files, returning results as an {Offenses}
     # object parsed from its JSON output.
-    sig { params(files: T::Array[Pathname], options: T.untyped).returns(Offenses) }
-    def self.check_style_json(files, **options)
-      T.cast(check_style_impl(files, :json, **options), Offenses)
+    sig {
+      params(
+        files:       T::Array[Pathname],
+        fix:         T::Boolean,
+        todo:        T::Boolean,
+        except_cops: T.nilable(T::Array[String]),
+        only_cops:   T.nilable(T::Array[String]),
+        reset_cache: T::Boolean,
+        debug:       T::Boolean,
+        verbose:     T::Boolean,
+      ).returns(Offenses)
+    }
+    def self.check_style_json(files, fix: false, todo: false, except_cops: nil, only_cops: nil,
+                              reset_cache: false, debug: false, verbose: false)
+      T.cast(check_style_impl(files, :json, fix:, todo:, except_cops:, only_cops:,
+                              reset_cache:, debug:, verbose:), Offenses)
     end
 
     sig {
       params(
-        files:             T::Array[Pathname],
-        output_type:       Symbol,
-        fix:               T::Boolean,
-        todo:              T::Boolean,
-        except_cops:       T.nilable(T::Array[String]),
-        only_cops:         T.nilable(T::Array[String]),
-        display_cop_names: T::Boolean,
-        reset_cache:       T::Boolean,
-        debug:             T::Boolean,
-        verbose:           T::Boolean,
+        files:       T::Array[Pathname],
+        output_type: Symbol,
+        fix:         T::Boolean,
+        todo:        T::Boolean,
+        except_cops: T.nilable(T::Array[String]),
+        only_cops:   T.nilable(T::Array[String]),
+        reset_cache: T::Boolean,
+        debug:       T::Boolean,
+        verbose:     T::Boolean,
       ).returns(T.any(Offenses, T::Boolean))
     }
     def self.check_style_impl(files, output_type,
                               fix: false,
                               todo: false,
                               except_cops: nil, only_cops: nil,
-                              display_cop_names: false,
                               reset_cache: false,
                               debug: false, verbose: false)
       raise ArgumentError, "Invalid output type: #{output_type.inspect}" if [:print, :json].exclude?(output_type)
@@ -140,7 +164,6 @@ module Homebrew
                     fix:,
                     todo:,
                     except_cops:, only_cops:,
-                    display_cop_names:,
                     reset_cache:,
                     debug:, verbose:)
       elsif output_type == :json
@@ -175,20 +198,19 @@ module Homebrew
 
     sig {
       params(
-        files:             T::Array[Pathname],
-        output_type:       Symbol,
-        fix:               T::Boolean,
-        todo:              T::Boolean,
-        except_cops:       T.nilable(T::Array[String]),
-        only_cops:         T.nilable(T::Array[String]),
-        display_cop_names: T::Boolean,
-        reset_cache:       T::Boolean,
-        debug:             T::Boolean,
-        verbose:           T::Boolean,
+        files:       T::Array[Pathname],
+        output_type: Symbol,
+        fix:         T::Boolean,
+        todo:        T::Boolean,
+        except_cops: T.nilable(T::Array[String]),
+        only_cops:   T.nilable(T::Array[String]),
+        reset_cache: T::Boolean,
+        debug:       T::Boolean,
+        verbose:     T::Boolean,
       ).returns(T.any(T::Boolean, T::Array[T::Hash[String, T.untyped]]))
     }
     def self.run_rubocop(files, output_type,
-                         fix: false, todo: false, except_cops: nil, only_cops: nil, display_cop_names: false,
+                         fix: false, todo: false, except_cops: nil, only_cops: nil,
                          reset_cache: false,
                          debug: false, verbose: false)
       require "warnings"
