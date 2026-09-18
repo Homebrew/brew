@@ -416,7 +416,7 @@ module Formulary
     flags: []
   )
     if name.include?("/") || File.exist?(name)
-      f = factory(name, *spec, force_bottle:, flags:)
+      f = factory(name, spec || :stable, force_bottle:, flags:)
       if f.any_version_installed?
         tab = Tab.for_formula(f)
         resolved_spec = spec || tab.spec
@@ -430,7 +430,7 @@ module Formulary
     else
       rack = to_rack(name)
       alias_path = factory(name, force_bottle:, flags:).alias_path
-      f = from_rack(rack, *spec, alias_path:, force_bottle:, flags:)
+      f = from_rack(rack, spec, alias_path:, force_bottle:, flags:)
     end
 
     # If this formula was installed with an alias that has since changed,
@@ -1047,16 +1047,10 @@ module Formulary
     ).returns(Formula)
   }
   def self.from_rack(rack, spec = nil, alias_path: nil, force_bottle: false, flags: [], keg: Keg.from_rack(rack))
-    options = {
-      alias_path:,
-      force_bottle:,
-      flags:,
-    }.compact
-
     if keg
-      from_keg(keg, *spec, **options)
+      from_keg(keg, spec, alias_path:, force_bottle:, flags:)
     else
-      factory(rack.basename.to_s, *spec, from: :rack, warn: false, **options)
+      factory(rack.basename.to_s, spec || :stable, alias_path:, from: :rack, warn: false, force_bottle:, flags:)
     end
   end
 
@@ -1092,22 +1086,14 @@ module Formulary
 
     formula_name = keg.rack.basename.to_s
 
-    options = {
-      alias_path:,
-      from:         :keg,
-      warn:         false,
-      force_bottle:,
-      flags:,
-    }.compact
-
     f = if tap.nil?
-      factory(formula_name, spec, **options)
+      factory(formula_name, spec, alias_path:, from: :keg, warn: false, force_bottle:, flags:)
     else
       begin
-        factory("#{tap}/#{formula_name}", spec, **options)
+        factory("#{tap}/#{formula_name}", spec, alias_path:, from: :keg, warn: false, force_bottle:, flags:)
       rescue FormulaUnavailableError
         # formula may be migrated to different tap. Try to search in core and all taps.
-        factory(formula_name, spec, **options)
+        factory(formula_name, spec, alias_path:, from: :keg, warn: false, force_bottle:, flags:)
       end
     end
     f.build = tab
