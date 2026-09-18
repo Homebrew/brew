@@ -257,7 +257,7 @@ module Homebrew
 
             hub.dump(auto_update: args.auto_update?) unless args.quiet?
             hub.reporters.each(&:migrate_tap_migration)
-            hub.reporters.each(&:migrate_cask_rename)
+            hub.migrate_cask_renames
             hub.reporters.each { |r| r.migrate_formula_rename(force: args.force?, verbose: args.verbose?) }
 
             CacheStoreDatabase.use(:descriptions) do |db|

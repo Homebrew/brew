@@ -99,6 +99,13 @@ class ReporterHub
     EOS
   end
 
+  sig { void }
+  def migrate_cask_renames
+    Cask::Caskroom.casks.each do |cask|
+      Cask::Migrator.migrate_if_needed(cask)
+    end
+  end
+
   private
 
   sig { void }

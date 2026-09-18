@@ -619,6 +619,15 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       allow(hub).to receive(:select_formula_or_cask).and_return([])
     end
 
+    it "migrates installed cask renames once" do
+      cask = instance_double(Cask::Cask)
+
+      expect(Cask::Caskroom).to receive(:casks).once.and_return([cask])
+      expect(Cask::Migrator).to receive(:migrate_if_needed).with(cask).once
+
+      hub.migrate_cask_renames
+    end
+
     it "dumps new formulae report" do
       allow(hub).to receive(:select_formula_or_cask).with(:A).and_return(["foo", "bar", "baz"])
       allow(hub).to receive(:installed?).and_return(false)

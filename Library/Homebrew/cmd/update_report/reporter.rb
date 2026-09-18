@@ -316,13 +316,6 @@ class Reporter
     end
   end
 
-  sig { void }
-  def migrate_cask_rename
-    Cask::Caskroom.casks.each do |cask|
-      Cask::Migrator.migrate_if_needed(cask)
-    end
-  end
-
   sig { params(force: T::Boolean, verbose: T::Boolean).void }
   def migrate_formula_rename(force:, verbose:)
     Formula.installed.each do |formula|
