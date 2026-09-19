@@ -192,6 +192,10 @@ module Homebrew
           hash["#{name}_present"] = hash["#{name}_args"].present?
         end
 
+        # `service_args` only holds the block's extra arguments and `serialize` drops it when empty,
+        # so a `service do` block that only has `run` and/or `name` is still a service.
+        hash["service_present"] ||= hash["service_run_args"].present? || hash["service_name_args"].present?
+
         if (bottle_checksum = hash["bottle_checksum"])
           tag = hash.fetch("bottle_tag", bottle_tag.to_sym)
           cellar = hash.fetch("bottle_cellar", DEFAULT_CELLAR)

@@ -240,6 +240,43 @@ RSpec.describe Homebrew::API::FormulaStruct do
       expect(struct.service_args).to eq([[:run_type, :immediate]])
     end
 
+    it "sets service_present when only service_name_args is present" do
+      bottle_tag = Utils::Bottles::Tag.from_symbol(:arm64_sequoia)
+      hash = {
+        "desc"                 => "test formula",
+        "homepage"             => "https://example.com",
+        "license"              => "MIT",
+        "ruby_source_checksum" => "abc123",
+        "stable_version"       => "1.0.0",
+        "service_name_args"    => { ":macos" => "org.example.foo-session" },
+      }
+
+      struct = described_class.deserialize(hash, bottle_tag:)
+
+      expect(struct.service?).to be(true)
+      expect(struct.service_name?).to be(true)
+      expect(struct.service_name_args).to eq({ macos: "org.example.foo-session" })
+      expect(struct.service_args).to eq([])
+    end
+
+    it "sets service_present when only service_run_args is present" do
+      bottle_tag = Utils::Bottles::Tag.from_symbol(:arm64_sequoia)
+      hash = {
+        "desc"                 => "test formula",
+        "homepage"             => "https://example.com",
+        "license"              => "MIT",
+        "ruby_source_checksum" => "abc123",
+        "stable_version"       => "1.0.0",
+        "service_run_args"     => ["$HOMEBREW_PREFIX/opt/foo/bin/foo"],
+      }
+
+      struct = described_class.deserialize(hash, bottle_tag:)
+
+      expect(struct.service?).to be(true)
+      expect(struct.service_run?).to be(true)
+      expect(struct.service_args).to eq([])
+    end
+
     it "formats conflicts into arg pairs" do
       bottle_tag = Utils::Bottles::Tag.from_symbol(:arm64_sequoia)
       hash = {
