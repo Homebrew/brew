@@ -284,15 +284,22 @@ module PyPI
       (python_deps.find(&:any_version_installed?) || python_deps.first).name
     end
 
+    stable = formula.stable
+    stable_url = stable&.url
     main_package = if package_name.present?
       package_string = package_name
       package_string += "==#{formula.version}" if version.blank? && formula.version.present?
-      Package.new(package_string, python_name:)
+      package = Package.new(package_string, python_name:)
+      if stable && stable_url && package_string != package_name &&
+         !stable_url.start_with?(PYTHONHOSTED_URL_PREFIX) && !stable.downloader.is_a?(VCSDownloadStrategy) &&
+         package.pypi_info(ignore_errors: true).nil?
+        Package.new("#{package_name} @ #{stable_url}", is_url: true, python_name:)
+      else
+        package
+      end
     elsif package_name == ""
       nil
     else
-      stable = formula.stable
-      stable_url = stable&.url
       if stable.nil? || stable_url.nil?
         odie "#{formula.full_name} has no stable URL to determine the main Python package from."
       end

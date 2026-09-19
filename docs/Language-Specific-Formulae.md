@@ -56,6 +56,8 @@ pypi_packages package_name:     "upstream-name",
               dependencies:     "resolver-dependency"
 ```
 
+If the stable URL is not on PyPI and PyPI has no release matching the formula's version, `package_name` (including any extras such as `upstream-name[all]`) is resolved against the stable URL instead.
+
 ### Installing a Python application
 
 Include `Language::Python::Virtualenv` and use `virtualenv_install_with_resources` for the standard application layout.

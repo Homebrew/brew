@@ -346,6 +346,55 @@ RSpec.describe PyPI do
       expect(described_class.update_python_resources!(formula, quiet: true)).to be true
     end
 
+    context "with a package name and a non-PyPI stable URL" do
+      let(:url) { "https://github.com/example/foo/archive/refs/tags/v1.0.tar.gz" }
+      let(:formula) do
+        path = mktmpdir/"foo.rb"
+        path.write <<~RUBY
+          class Foo < Formula
+            url "#{url}"
+            sha256 "#{"a" * 64}"
+
+            def install
+              bin.install "foo"
+            end
+          end
+        RUBY
+        Formulary.from_contents("foo", path, path.read)
+      end
+      let(:report) { '{"install":[{"metadata":{"name":"foo","version":"1.0"}}]}' }
+
+      before do
+        allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
+        allow(described_class).to receive(:pip_output).and_return(report)
+      end
+
+      it "resolves the stable URL with the package's extras when PyPI lacks the formula version" do
+        allow(Utils::Curl).to receive(:curl_output)
+          .and_return(instance_double(SystemCommand::Result,
+                                      status: instance_double(Process::Status, success?: false)))
+        expect(described_class).to receive(:pip_output)
+          .with(array_including("--report=/dev/stdout", "foo[bar] @ #{url}"), any_args).and_return(report)
+
+        described_class.update_python_resources!(formula, package_name: "foo[bar]", quiet: true)
+      end
+
+      it "resolves the package from PyPI when it has the formula version" do
+        pypi_json = {
+          info: { name: "foo", version: "1.0" },
+          urls: [{ packagetype: "sdist", url: "https://files.pythonhosted.org/packages/foo-1.0.tar.gz",
+                   digests: { sha256: "b" * 64 } }],
+        }.to_json
+        allow(Utils::Curl).to receive(:curl_output)
+          .and_return(instance_double(SystemCommand::Result,
+                                      status: instance_double(Process::Status, success?: true), stdout: pypi_json))
+        expect(described_class).to receive(:pip_output)
+          .with(array_including("--report=/dev/stdout", "foo[bar]==1.0"), any_args).and_return(report)
+
+        described_class.update_python_resources!(formula, package_name: "foo[bar]", quiet: true)
+      end
+    end
+
     it "keeps resources with livecheck blocks" do
       path = mktmpdir/"foo.rb"
       livecheck_resource = <<~RUBY
