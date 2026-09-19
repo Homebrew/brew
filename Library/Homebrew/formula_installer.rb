@@ -1177,8 +1177,11 @@ on_request: installed_on_request?, options:)
         if staging_path
           # `fetch` has already downloaded everything, so `install` stays
           # offline and off the download cache apart from the package manager
-          # caches, which their offline modes still write to.
-          sandbox.allow_write_path(HOMEBREW_TEMP)
+          # caches, which their offline modes still write to. System temporary
+          # directories stay writable: macOS tooling (`mktemp`, clang's module
+          # cache, Xcode's build service) writes to the per-user
+          # `/private/var/folders` dirs via `confstr(3)`, ignoring `TMPDIR`.
+          sandbox.allow_write_system_temp
           sandbox.allow_write_path(staging_path)
           Homebrew::PackageManagerCache.paths.each { |path| sandbox.allow_write_path(path) }
           sandbox.deny_all_network

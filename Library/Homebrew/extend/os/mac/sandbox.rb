@@ -67,7 +67,7 @@ module OS
       private_constant :SANDBOX_EXEC, :TIOCSCTTY, :SEATBELT_ERB
 
       sig { void }
-      def allow_write_temp_and_cache
+      def allow_write_system_temp
         allow_write_path "/private/tmp"
         allow_write_path "/private/var/tmp"
         allow_write path: "^/private/var/folders/[^/]+/[^/]+/[C,T]/", type: :regex

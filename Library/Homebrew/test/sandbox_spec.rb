@@ -27,6 +27,14 @@ RSpec.describe Sandbox, :needs_macos do
       end.new
     end
 
+    it "keeps the per-user system temporary directories writable without the download cache" do
+      sandbox.allow_write_system_temp
+      allow_paths = sandbox.profile.rules.select { |rule| rule.operation == "file-write*" }
+                           .map { |rule| rule.filter&.path }
+      expect(allow_paths).to include("^/private/var/folders/[^/]+/[^/]+/[C,T]/")
+      expect(allow_paths).not_to include(HOMEBREW_CACHE.to_s)
+    end
+
     it "restricts macOS services even when network access is allowed" do
       expect(sandbox.seatbelt_profile).to include(
         "(deny mach-lookup)", "(deny lsopen)", "(deny appleevent-send)",
