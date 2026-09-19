@@ -106,12 +106,12 @@ module Utils
     def export_value(key, value, shell = preferred)
       case shell
       when :bash, :ksh, :mksh, :sh, :zsh
-        "export #{key}=\"#{sh_quote(value)}\""
+        "export #{key}=#{sh_quote(value)}"
       when :fish
         # fish quoting is mostly Bourne compatible except that
         # a single quote can be included in a single-quoted string via \'
         # and a literal \ can be included via \\
-        "set -gx #{key} \"#{sh_quote(value)}\""
+        "set -gx #{key} #{sh_quote(value)}"
       when :pwsh
         "$env:#{key} = #{pwsh_quote(value)}"
       when :rc
@@ -164,7 +164,7 @@ module Utils
     def prepend_path_in_profile(path)
       case preferred
       when :bash, :ksh, :mksh, :sh, :zsh, nil
-        "echo 'export PATH=\"#{sh_quote(path)}:$PATH\"' >> #{profile}"
+        "echo 'export PATH=#{sh_quote(path)}:$PATH' >> #{profile}"
       when :pwsh
         "#{pwsh_quote("$env:PATH = #{pwsh_quote(path)} + \":$env:PATH\"")} >> #{profile}"
       when :rc

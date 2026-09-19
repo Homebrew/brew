@@ -12,11 +12,11 @@ RSpec.describe Homebrew::Cmd::Env do
       setup_test_formula "testball"
       path = [Superenv.bin&.parent, HOMEBREW_PREFIX].compact.join(File::PATH_SEPARATOR)
       expect { brew "--env", "--shell=bash" }
-        .to output(/export CMAKE_PREFIX_PATH="#{Regexp.quote(path)}"/).to_stdout
+        .to output(/export CMAKE_PREFIX_PATH=#{Regexp.quote(path)}$/).to_stdout
         .and not_to_output.to_stderr
         .and be_a_success
       expect { brew "--env", "--shell=bash", "testball" }
-        .to output(/export CMAKE_PREFIX_PATH="#{Regexp.quote(path)}"/).to_stdout
+        .to output(/export CMAKE_PREFIX_PATH=#{Regexp.quote(path)}$/).to_stdout
         .and not_to_output.to_stderr
         .and be_a_success
     end

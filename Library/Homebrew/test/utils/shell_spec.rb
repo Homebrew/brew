@@ -116,7 +116,19 @@ RSpec.describe Utils::Shell do
     it "supports Bash" do
       ENV["SHELL"] = "/bin/bash"
       expect(described_class.export_value("HOMEBREW_FOO", "bar"))
-        .to eq("export HOMEBREW_FOO=\"bar\"")
+        .to eq("export HOMEBREW_FOO=bar")
+    end
+
+    it "escapes a Bash value that needs quoting" do
+      ENV["SHELL"] = "/bin/bash"
+      expect(described_class.export_value("HOMEBREW_FOO", "/opt/home brew"))
+        .to eq("export HOMEBREW_FOO=/opt/home\\ brew")
+    end
+
+    it "escapes a fish value that needs quoting" do
+      ENV["SHELL"] = "/usr/local/bin/fish"
+      expect(described_class.export_value("HOMEBREW_FOO", "/opt/home brew"))
+        .to eq("set -gx HOMEBREW_FOO /opt/home\\ brew")
     end
   end
 
@@ -132,7 +144,13 @@ RSpec.describe Utils::Shell do
     it "supports Bash" do
       ENV["SHELL"] = "/bin/bash"
       expect(described_class.prepend_path_in_profile(path))
-        .to eq("echo 'export PATH=\"#{path}:$PATH\"' >> #{described_class.profile}")
+        .to eq("echo 'export PATH=#{path}:$PATH' >> #{described_class.profile}")
+    end
+
+    it "escapes a Bash path that needs quoting" do
+      ENV["SHELL"] = "/bin/bash"
+      expect(described_class.prepend_path_in_profile("/opt/home brew/bin"))
+        .to eq("echo 'export PATH=/opt/home\\ brew/bin:$PATH' >> #{described_class.profile}")
     end
 
     it "supports fish" do
