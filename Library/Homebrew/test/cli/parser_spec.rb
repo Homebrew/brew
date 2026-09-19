@@ -437,6 +437,7 @@ RSpec.describe Homebrew::CLI::Parser do
     it "inflates API-backed formulae when commands access them" do
       (api_cache/"formula_names.txt").write("foo\n")
       full_formula = formula "foo", path: api_cache/"foo.rb", tap: Tap.fetch("user/repo") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/foo-1.0.tar.gz"
         version "1.0"
       end

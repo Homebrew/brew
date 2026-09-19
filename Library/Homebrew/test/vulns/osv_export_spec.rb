@@ -408,7 +408,10 @@ RSpec.describe Homebrew::Vulns::OsvExport do
     end
 
     it "reads the given patches list rather than the formula's own serialized_patches" do
-      f = formula("x") { url "https://example.com/x-1.0.tar.gz" }
+      f = formula("x") do
+        T.bind(self, T.class_of(Formula))
+        url "https://example.com/x-1.0.tar.gz"
+      end
       linux_only = [{ "url"      => "https://example.com/linux.patch",
                       "resolves" => [{ "type" => "security", "id" => "CVE-2024-0003" }] }]
 
@@ -593,8 +596,14 @@ RSpec.describe Homebrew::Vulns::OsvExport do
     it "fetches each upstream vuln id once, even when shared across formulae" do
       shared = [{ "url"      => "https://example.com/fix.patch",
                   "resolves" => [{ "type" => "security", "id" => "CVE-2024-9999" }] }]
-      a = formula("a") { url "https://example.com/a-1.0.tar.gz" }
-      b = formula("b") { url "https://example.com/b-1.0.tar.gz" }
+      a = formula("a") do
+        T.bind(self, T.class_of(Formula))
+        url "https://example.com/a-1.0.tar.gz"
+      end
+      b = formula("b") do
+        T.bind(self, T.class_of(Formula))
+        url "https://example.com/b-1.0.tar.gz"
+      end
 
       expect(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-2024-9999").once.and_return({})
 

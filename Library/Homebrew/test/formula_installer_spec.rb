@@ -1203,11 +1203,13 @@ RSpec.describe FormulaInstaller do
 
     it "checks current dependencies when the installed bottle had none" do
       dependency = formula "current-dependency" do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/current-dependency-1.0.tar.gz"
       end
       stub_formula_loader dependency
       allow(dependency).to receive(:pinned?).and_return(true)
       f = formula do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/testball-1.0.tar.gz"
         depends_on "current-dependency"
       end

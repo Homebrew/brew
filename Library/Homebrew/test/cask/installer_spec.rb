@@ -921,6 +921,7 @@ RSpec.describe Cask::Installer, :cask do
     it "reuses formula dependencies fetched before installation" do
       cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
       dependency = formula("cask-dependency") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/cask-dependency-1.0.tar.gz"
       end
       queue = instance_double(Homebrew::DownloadQueue, failed_downloads: [])

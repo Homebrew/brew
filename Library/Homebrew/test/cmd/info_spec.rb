@@ -304,7 +304,10 @@ RSpec.describe Homebrew::Cmd::Info do
       conflicts_with "other"
     end
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
-    other = formula("other") { url "https://brew.sh/other-0.1.tar.gz" }
+    other = formula("other") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/other-0.1.tar.gz"
+    end
     allow(other).to receive(:full_name).and_return("someuser/tap/other")
     allow(Formulary).to receive(:factory).with("other").and_return(other)
 
@@ -371,7 +374,10 @@ RSpec.describe Homebrew::Cmd::Info do
     tab.source["tap"] = "ataraxy-labs/tap"
     tab.write
     allow(core).to receive(:tap).and_return(Tap.fetch("homebrew/core"))
-    installed = formula("testball") { url "https://brew.sh/testball-0.1.tar.gz" }
+    installed = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+    end
     allow(installed).to receive_messages(tap: Tap.fetch("ataraxy-labs/tap"), full_name: "ataraxy-labs/tap/testball")
     allow(Formulary).to receive(:factory).with("ataraxy-labs/tap/testball").and_return(installed)
     allow(info).to receive(:github_info).and_return("https://example.com/testball.rb")
@@ -406,7 +412,10 @@ RSpec.describe Homebrew::Cmd::Info do
     tab.write
     allow(formula).to receive(:tap).and_return(Tap.fetch("homebrew/core"))
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
-    shadowing = formula("testball") { url "https://brew.sh/testball-0.1.tar.gz" }
+    shadowing = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+    end
     allow(shadowing).to receive_messages(tap: Tap.fetch("ataraxy-labs/tap"), full_name: "ataraxy-labs/tap/testball")
     allow(Formulary).to receive(:factory).with("ataraxy-labs/tap/testball").and_return(shadowing)
 
@@ -441,7 +450,10 @@ RSpec.describe Homebrew::Cmd::Info do
     tab = instance_double(Tab, tap: Tap.fetch("stripe/stripe-cli"))
     keg = instance_double(Keg, name: "stripe", tab:)
     allow(formula).to receive_messages(tap: Tap.fetch("homebrew/core"), installed_kegs: [keg])
-    keg_formula = formula("stripe") { url "https://brew.sh/stripe-1.0.tar.gz" }
+    keg_formula = formula("stripe") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/stripe-1.0.tar.gz"
+    end
     allow(Formulary).to receive(:factory).with("stripe/stripe-cli/stripe").and_return(keg_formula)
 
     expect(info.installed_resolution(formula)).to eq([keg_formula, Tap.fetch("homebrew/core")])
