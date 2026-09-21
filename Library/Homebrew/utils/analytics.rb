@@ -392,6 +392,13 @@ module Utils
         "#{value}#{WSL_SUFFIX}"
       end
 
+      sig { params(value: String).returns(String) }
+      def with_arch_version_suffix_if_needed(value)
+        return value if value != "x86_64"
+
+        "#{value}-#{HOMEBREW_PROCESSOR_ARCHITECTURE_VERSION}"
+      end
+
       sig { returns(T::Hash[Symbol, T.any(T::Boolean, String)]) }
       def default_package_tags
         cache[:default_package_tags] ||= begin
@@ -405,7 +412,7 @@ module Utils
             default_prefix: Homebrew.default_prefix?,
             developer:      Homebrew::EnvConfig.developer?,
             devcmdrun:      Homebrew::EnvConfig.devcmdrun?,
-            arch:           HOMEBREW_PHYSICAL_PROCESSOR,
+            arch:           with_arch_version_suffix_if_needed(HOMEBREW_PHYSICAL_PROCESSOR),
             os:             with_wsl_suffix_if_needed(HOMEBREW_SYSTEM),
           }
         end

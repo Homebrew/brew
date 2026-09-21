@@ -34,6 +34,13 @@ case "${OSTYPE}" in
 esac
 HOMEBREW_PHYSICAL_PROCESSOR="${HOMEBREW_PROCESSOR}"
 
+if [[ -n "${HOMEBREW_LINUX}" && "${HOMEBREW_PROCESSOR}" == "x86_64" ]]
+then
+  HOMEBREW_PROCESSOR_ARCHITECTURE_VERSION=$(/lib64/ld-linux-x86-64.so.2 --help | grep -o -m1 -E '(x86-64-v[0-9]) \(supported, searched\)' | grep -oe 'v[0-9]')
+else
+  HOMEBREW_PROCESSOR_ARCHITECTURE_VERSION=""
+fi
+
 HOMEBREW_MACOS_ARM_DEFAULT_PREFIX="/opt/homebrew"
 HOMEBREW_LINUX_DEFAULT_PREFIX="/home/linuxbrew/.linuxbrew"
 HOMEBREW_GENERIC_DEFAULT_PREFIX="/usr/local"
