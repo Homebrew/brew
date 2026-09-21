@@ -30,12 +30,12 @@ module Hardware
         @optimization_flags ||= T.let({
           dunno:              "",
           native:             arch_flag("native"),
-          ivybridge:          "-march=ivybridge",
-          sandybridge:        "-march=sandybridge",
-          westmere:           "-march=westmere",
-          nehalem:            "-march=nehalem",
-          core2:              "-march=core2",
-          core:               "-march=prescott",
+          ivybridge:          "-march=ivybridge -mtune=generic",
+          sandybridge:        "-march=sandybridge -mtune=generic",
+          westmere:           "-march=westmere -mtune=generic",
+          nehalem:            "-march=nehalem -mtune=generic",
+          core2:              "-march=core2 -mtune=generic",
+          core:               "-march=prescott -mtune=generic",
           arm_vortex_tempest: "", # TODO: -mcpu=apple-m1 when we've patched all our GCCs to support it
           armv6:              "-march=armv6",
           armv8:              "-march=armv8-a",
