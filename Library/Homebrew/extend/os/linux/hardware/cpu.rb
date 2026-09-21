@@ -21,9 +21,15 @@ module OS
 
           sig { returns(Symbol) }
           def family
-            return :arm if arm?
             return :ppc if ppc?
             return :dunno unless intel?
+
+            if arm?
+              name = lscpu[/^\s*Model name:\s*([A-Za-z\-0-9]*)$/, 1]
+              return :arm unless name.present?
+
+              return name.downcase.sub("-", "_").to_sym
+            end
 
             # See https://software.intel.com/en-us/articles/intel-architecture-and-processor-identification-with-cpuid-model-and-family-numbers
             # and https://github.com/llvm/llvm-project/blob/main/llvm/lib/TargetParser/Host.cpp
@@ -170,6 +176,11 @@ module OS
           sig { returns(String) }
           def cpuinfo
             @cpuinfo ||= T.let(File.read("/proc/cpuinfo"), T.nilable(String))
+          end
+
+          sig { returns(String) }
+          def lscpu
+            @lscpu ||= T.let(Utils.popen_read("/usr/bin/lscpu"), T.nilable(String))
           end
         end
       end
