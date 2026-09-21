@@ -21,9 +21,19 @@ module OS
 
           sig { returns(Symbol) }
           def family
-            return :arm if arm?
             return :ppc if ppc?
-            return :dunno unless intel?
+            if !intel? && !arm?
+              return :dunno
+            end
+
+            if arm?
+              # See https://en.wikipedia.org/wiki/ARM_architecture_family#Cores
+              # and https://github.com/llvm/llvm-project/blob/main/llvm/lib/TargetParser/Host.cpp
+              implementer = cpuinfo[/^cpu implementer\s*: ([a-z0-9]*)$/, 1].to_i
+              cpu_model = cpuinfo[/^cpu part\s*: ([a-z0-9]*)$/, 1].to_i
+
+              return arm_family(implementer, cpu_model)
+            end
 
             # See https://software.intel.com/en-us/articles/intel-architecture-and-processor-identification-with-cpuid-model-and-family-numbers
             # and https://github.com/llvm/llvm-project/blob/main/llvm/lib/TargetParser/Host.cpp
@@ -38,6 +48,31 @@ module OS
             when "AuthenticAMD"
               amd_family(cpu_family, cpu_model)
             end || unknown
+          end
+
+          sig { params(implementer: Integer, cpu_model: Integer).returns(Symbol) }
+          def arm_family(implementer, cpu_model)
+            unknown = :"unknown_#{implementer.to_s(16)}_#{cpu_model.to_s(16)}"
+            return unknown if implementer != 0x41
+
+            case cpu_model
+            when 0xc05, 0xc07, 0xc08, 0xc09, 0xc0f, 0xc0e
+              :armv7_a
+            when 0xd04, 0xd03, 0xd07, 0xd08, 0xd09, 0xd02
+              :armv8_0_a
+            when 0xd05, 0xd0a, 0xd0b, 0xd0d, 0xd41, 0xd44, 0xd0c, 0xd06, 0xd4a, 0xd43
+              :armv8_2_a
+            when 0xd40
+              :armv8_4_a
+            when 0xd46, 0xd47, 0xd4d, 0xd48, 0xd4e, 0xd49, 0xd4f
+              :armv9_0_a
+            when 0xd80, 0xd81, 0xd82, 0xd84, 0xd85, 0xd8e
+              :armv9_2_a
+            when 0xd8a, 0xd90, 0xd8b, 0xd8f, 0xd87
+              :armv9_3_a
+            else
+              unknown
+            end
           end
 
           sig { params(family: Integer, cpu_model: Integer).returns(T.nilable(Symbol)) }
