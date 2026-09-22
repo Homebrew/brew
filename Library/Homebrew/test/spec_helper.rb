@@ -236,6 +236,8 @@ RSpec.configure do |config|
     allow(DevelopmentTools).to receive_messages(needs_build_formulae?: false, needs_libc_formula?: false)
     # Worker boundaries are exercised separately in sandbox_operation_spec.rb.
     allow(Sandbox).to receive(:isolate_operation?).and_return(false)
+    # `opoo_once` remembers messages per process, so forget them between examples.
+    Utils::Output.reset_printed_once!
   end
 
   config.before(:each, :no_api) do

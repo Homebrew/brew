@@ -18,6 +18,20 @@ module Utils
       out.close
     end
 
+    @messages_printed_once = T.let(Set.new, T::Set[String])
+    @messages_printed_once_mutex = T.let(Thread::Mutex.new, Thread::Mutex)
+
+    # Returns `true` only for the first call with `message` in this process, including across threads.
+    sig { params(message: String).returns(T::Boolean) }
+    def self.print_once?(message)
+      @messages_printed_once_mutex.synchronize { !@messages_printed_once.add?(message).nil? }
+    end
+
+    sig { void }
+    def self.reset_printed_once!
+      @messages_printed_once_mutex.synchronize { @messages_printed_once.clear }
+    end
+
     # Mixin used to add these helpers to stdout and stderr.
     module Mixin
       extend T::Helpers
@@ -70,6 +84,12 @@ module Utils
         Tty.with($stderr) do |stderr|
           stderr.puts Formatter.warning(message, label: "Warning")
         end
+      end
+
+      # Print a warning message unless it was already printed by this process.
+      sig { params(message: String).void }
+      def opoo_once(message)
+        opoo message if Output.print_once?(message)
       end
 
       sig { params(message: T.any(String, Exception)).void }

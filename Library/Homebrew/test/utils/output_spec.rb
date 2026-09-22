@@ -9,6 +9,19 @@ RSpec.describe Utils::Output do
     /(?:\e\[\d+m)*\e\[#{code}m/
   end
 
+  describe "#opoo_once" do
+    it "prints a warning once per process" do
+      expect { 2.times { described_class.opoo_once("foo") } }.to output("Warning: foo\n").to_stderr
+    end
+
+    it "prints a warning again after printed messages are reset" do
+      described_class.opoo_once("foo")
+      described_class.reset_printed_once!
+
+      expect { described_class.opoo_once("foo") }.to output("Warning: foo\n").to_stderr
+    end
+  end
+
   describe "#pretty_installed" do
     subject(:pretty_installed_output) { described_class.pretty_installed("foo") }
 

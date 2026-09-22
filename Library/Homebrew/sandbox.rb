@@ -130,12 +130,12 @@ class Sandbox
     return false if inherited_sandbox?
 
     unless available?
-      opoo "Sandbox unavailable: #{step} without sandboxing!" if warn_without_sandbox
+      opoo_once "Sandbox unavailable: #{step} without sandboxing!" if warn_without_sandbox
       return false
     end
 
     if avoid_nested_sandboxing?
-      opoo "#{step.capitalize} without Homebrew's sandbox; relying on the outer sandbox." if warn_without_sandbox
+      opoo_once "#{step.capitalize} without Homebrew's sandbox; relying on the outer sandbox." if warn_without_sandbox
       return false
     end
 

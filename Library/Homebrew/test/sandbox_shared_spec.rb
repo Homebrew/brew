@@ -309,6 +309,14 @@ RSpec.describe Sandbox do
       expect(described_class.use_for?("running install hooks")).to be(false)
     end
 
+    it "warns once per process when the sandbox is unavailable" do
+      allow(described_class).to receive(:available?).and_return(false)
+      expect(described_class).to receive(:opoo)
+        .with("Sandbox unavailable: running install hooks without sandboxing!").once
+
+      2.times { described_class.use_for?("running install hooks") }
+    end
+
     it "can quietly fall back when the sandbox is unavailable" do
       allow(described_class).to receive(:available?).and_return(false)
       expect(described_class).not_to receive(:opoo)

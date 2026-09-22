@@ -332,6 +332,32 @@ RSpec.describe Sandbox::Landlock do
         expect { landlock.command(["true"], tmpdir.to_s) }.not_to output.to_stderr
       end
 
+      context "when the incomplete network denial warning was already printed" do
+        let(:second_landlock) { described_class.new(sandbox.profile) }
+
+        before do
+          allow(second_landlock).to receive(:open_path).and_return(18)
+          allow(second_landlock).to receive(:close_file_descriptor)
+          sandbox.deny_all_network
+          landlock.command(["true"], tmpdir.to_s)
+          allow(landlock).to receive(:opoo)
+          landlock.apply!
+          second_landlock.command(["true"], tmpdir.to_s)
+        end
+
+        it "does not warn again in the same process" do
+          expect { second_landlock.apply! }.not_to output.to_stderr
+        end
+
+        it "warns again after printed messages are reset" do
+          Utils::Output.reset_printed_once!
+          second_landlock.command(["true"], tmpdir.to_s)
+
+          expect { second_landlock.apply! }
+            .to output(/Landlock ABI 10 or later is required to deny all network access; found ABI 7/).to_stderr
+        end
+      end
+
       it "does not warn without network denial" do
         landlock.command(["true"], tmpdir.to_s)
 
