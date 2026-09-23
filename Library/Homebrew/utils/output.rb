@@ -8,11 +8,13 @@ module Utils
     class << self
       sig { returns(T::Set[String]) }
       attr_reader :printed_deprecations
+      
       sig { void }
       def clear_printed_deprecations
         printed_deprecations.clear
       end
     end
+    
     sig {
       type_parameters(:U)
         .params(file: T.any(IO, Pathname, String), _block: T.proc.returns(T.type_parameter(:U)))
