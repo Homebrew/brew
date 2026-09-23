@@ -13,7 +13,7 @@ module Utils
       def clear_printed_deprecations
         printed_deprecations.clear
       end
-    end   
+    end
     sig {
       type_parameters(:U)
         .params(file: T.any(IO, Pathname, String), _block: T.proc.returns(T.type_parameter(:U)))
