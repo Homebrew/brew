@@ -4,6 +4,15 @@
 module Utils
   # Helper methods for outputting messages in Homebrew's formats.
   module Output
+    @printed_deprecations = T.let(Set.new, T::Set[String])
+    class << self
+      sig { returns(T::Set[String]) }
+      attr_reader :printed_deprecations
+      sig { void }
+      def clear_printed_deprecations
+        printed_deprecations.clear
+      end
+    end
     sig {
       type_parameters(:U)
         .params(file: T.any(IO, Pathname, String), _block: T.proc.returns(T.type_parameter(:U)))
@@ -220,6 +229,8 @@ module Utils
         message = "Calling #{method} is #{verb}! #{replacement_message}"
         message << tap_message if tap_message
         message.freeze
+
+        return unless ::Utils::Output.printed_deprecations.add?(message)
 
         disable = true if disable_for_developers && Homebrew::EnvConfig.developer?
         if disable || Homebrew.raise_deprecation_exceptions?
