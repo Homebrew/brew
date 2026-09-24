@@ -2058,6 +2058,7 @@ _brew_pr_publish() {
     '--quiet[Make some output more quiet]' \
     '--tap[Target tap repository (default: `homebrew/core`)]' \
     '--verbose[Make some output more verbose]' \
+    '--warn-on-upload-failure[Warn instead of raising an error if the bottle upload fails. Useful for repairing bottle uploads that previously failed]' \
     '--workflow[Target workflow filename (default: `publish-commit-bottles.yml`)]'
 }
 

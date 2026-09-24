@@ -18,6 +18,9 @@ module Homebrew
                             "to our preferred format."
         switch "--large-runner",
                description: "Run the upload job on a large runner."
+        switch "--warn-on-upload-failure",
+               description: "Warn instead of raising an error if the bottle upload fails. " \
+                            "Useful for repairing bottle uploads that previously failed."
         flag   "--branch=",
                description: "Branch to use the workflow from (default: `main`)."
         flag   "--message=",
@@ -44,6 +47,7 @@ module Homebrew
           large_runner: args.large_runner?,
         }
         inputs[:message] = args.message if args.message.presence
+        inputs[:warn_on_upload_failure] = true if args.warn_on_upload_failure?
 
         args.named.uniq.each do |arg|
           arg = "#{tap.default_remote}/pull/#{arg}" if arg.to_i.positive?

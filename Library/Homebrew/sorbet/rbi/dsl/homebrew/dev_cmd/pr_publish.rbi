@@ -23,6 +23,9 @@ class Homebrew::DevCmd::PrPublish::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def message; end
 
+  sig { returns(T::Boolean) }
+  def warn_on_upload_failure?; end
+
   sig { returns(T.nilable(String)) }
   def workflow; end
 end

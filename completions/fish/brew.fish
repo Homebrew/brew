@@ -1594,6 +1594,7 @@ __fish_brew_complete_arg 'pr-publish' -l message -d 'Message to include when aut
 __fish_brew_complete_arg 'pr-publish' -l quiet -d 'Make some output more quiet'
 __fish_brew_complete_arg 'pr-publish' -l tap -d 'Target tap repository (default: `homebrew/core`)'
 __fish_brew_complete_arg 'pr-publish' -l verbose -d 'Make some output more verbose'
+__fish_brew_complete_arg 'pr-publish' -l warn-on-upload-failure -d 'Warn instead of raising an error if the bottle upload fails. Useful for repairing bottle uploads that previously failed'
 __fish_brew_complete_arg 'pr-publish' -l workflow -d 'Target workflow filename (default: `publish-commit-bottles.yml`)'
 
 
