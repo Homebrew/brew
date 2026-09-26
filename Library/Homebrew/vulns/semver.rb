@@ -42,6 +42,14 @@ module Homebrew
         compare_prerelease(a.fetch(:prerelease), b.fetch(:prerelease))
       end
 
+      sig { params(version: String).returns(T::Boolean) }
+      def self.prerelease?(version)
+        parsed = parse(version)
+        return false if parsed.nil?
+
+        parsed.fetch(:prerelease).any?
+      end
+
       sig { params(version: String).returns(T.nilable(String)) }
       def self.release_version(version)
         parsed = parse(version)

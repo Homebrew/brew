@@ -16,6 +16,18 @@ RSpec.describe Homebrew::Vulns::Semver do
     end
   end
 
+  describe ".prerelease?" do
+    it "detects a prerelease with a prefix and build metadata" do
+      expect(described_class.prerelease?("v2026.2.22-rc.1+build.2")).to be true
+    end
+
+    it "returns false for releases, metadata-only suffixes and invalid versions" do
+      expect(["2026.2.22", "2026.2.22+build-2", "not-a-version"].map do |version|
+        described_class.prerelease?(version)
+      end).to eq [false, false, false]
+    end
+  end
+
   describe ".compare" do
     # From vers gem: basic numeric ordering
     it "orders major versions numerically" do
