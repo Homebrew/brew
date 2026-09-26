@@ -65,7 +65,8 @@ module Homebrew
           }],
           [:switch, "--force-bottle", {
             description: "Install from a bottle if it exists for the current or newest version of " \
-                         "macOS, even if it would not normally be used for installation.",
+                         "macOS, even if it would not normally be used for installation. " \
+                         "Fail rather than build from source if a formula or dependency has no bottle.",
           }],
           [:switch, "--keep-tmp", {
             description: "Retain the temporary files created during installation.",

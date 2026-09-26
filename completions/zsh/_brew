@@ -1736,7 +1736,7 @@ _brew_install() {
     '(--cask)--fetch-HEAD[Fetch the upstream repository to detect if the HEAD installation of the formula is outdated. Otherwise, the repository'\''s HEAD will only be checked for updates when a new stable or development version has been released]' \
     '(--formula)--fontdir[Target location for Fonts (default: `~/Library/Fonts`)]' \
     '(--adopt)--force[Install formulae without checking for previously installed keg-only or non-migrated versions. When installing casks, overwrite existing files (binaries and symlinks are excluded, unless originally from the same cask)]' \
-    '(--cask --build-from-source --build-bottle)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
+    '(--cask --build-from-source --build-bottle)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation. Fail rather than build from source if a formula or dependency has no bottle]' \
     '(--cask)--git[Create a Git repository, useful for creating patches to the software]' \
     '--help[Show this message]' \
     '(--cask --only-dependencies)--ignore-dependencies[An unsupported Homebrew development option to skip installing any dependencies of any kind. If the dependencies are not already present, the formula will have issues. If you'\''re not developing Homebrew, consider adjusting your PATH rather than using this option]' \
@@ -2169,7 +2169,7 @@ _brew_reinstall() {
     '--display-times[Print install times for each package at the end of the run. Enabled by default if `$HOMEBREW_DISPLAY_INSTALL_TIMES` is set]' \
     '(--formula)--fontdir[Target location for Fonts (default: `~/Library/Fonts`)]' \
     '--force[Install without checking for previously installed keg-only or non-migrated versions]' \
-    '(--cask --build-from-source)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
+    '(--cask --build-from-source)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation. Fail rather than build from source if a formula or dependency has no bottle]' \
     '(--cask)--git[Create a Git repository, useful for creating patches to the software]' \
     '--help[Show this message]' \
     '(--formula)--input-methoddir[Target location for Input Methods (default: `~/Library/Input Methods`)]' \
@@ -2927,7 +2927,7 @@ _brew_upgrade() {
     '(--cask)--fetch-HEAD[Fetch the upstream repository to detect if the HEAD installation of the formula is outdated. Otherwise, the repository'\''s HEAD will only be checked for updates when a new stable or development version has been released]' \
     '(--formula)--fontdir[Target location for Fonts (default: `~/Library/Fonts`)]' \
     '--force[Install formulae without checking for previously installed keg-only or non-migrated versions. When installing casks, overwrite existing files (binaries and symlinks are excluded, unless originally from the same cask)]' \
-    '(--cask --build-from-source)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
+    '(--cask --build-from-source)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation. Fail rather than build from source if a formula or dependency has no bottle]' \
     '(--formula)--greedy[Also include casks with `version :latest` and `auto_updates true` casks that would otherwise be skipped. Enabled by default if `$HOMEBREW_UPGRADE_GREEDY` is set]' \
     '(--formula)--greedy-auto-updates[Also include `auto_updates true` casks that would otherwise be skipped]' \
     '(--formula)--greedy-latest[Also include casks with `version :latest`]' \

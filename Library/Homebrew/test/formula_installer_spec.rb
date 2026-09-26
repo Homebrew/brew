@@ -747,7 +747,64 @@ RSpec.describe FormulaInstaller do
     end
   end
 
+  describe "forced bottles for dependencies" do
+    let(:dependency_formula) do
+      formula "unbottled-dependency" do
+        url "https://example.com/unbottled-dependency-1.0.tar.gz"
+      end
+    end
+    let(:dependency) do
+      instance_double(Dependency, to_formula: dependency_formula, name: dependency_formula.name, options: Options.new)
+    end
+    let(:installer) { described_class.new(Testball.new, force_bottle: true) }
+
+    before do
+      allow(dependency_formula).to receive(:bottle_tag?).and_return(false)
+    end
+
+    it "refuses to fetch a dependency without a bottle" do
+      expect { installer.fetch_dependency(dependency) }
+        .to raise_error(CannotInstallFormulaError, /unbottled-dependency has no bottle/)
+    end
+
+    it "refuses to install a dependency without a bottle" do
+      expect { installer.install_dependency(dependency) }
+        .to raise_error(CannotInstallFormulaError, /unbottled-dependency has no bottle/)
+    end
+
+    it "selects a forced dependency bottle when its ordinary pour check fails" do
+      allow(dependency_formula).to receive_messages(bottle_tag?: true, pour_bottle?: false)
+
+      expect(installer.install_bottle_for?(dependency_formula, BuildOptions.new(Options.new, Options.new))).to be true
+    end
+
+    it "does not select a dependency bottle when none exists" do
+      expect(installer.install_bottle_for?(dependency_formula,
+                                           BuildOptions.new(Options.new, Options.new))).to be false
+    end
+
+    it "still honours the dependency pour check without forced bottles" do
+      allow(dependency_formula).to receive_messages(bottle: TestballBottle.new.bottle, pour_bottle?: false)
+      ordinary_installer = described_class.new(Testball.new)
+
+      expect(ordinary_installer.install_bottle_for?(dependency_formula, BuildOptions.new(Options.new, Options.new)))
+        .to be false
+    end
+  end
+
   describe "#install_dependency" do
+    it "installs a bottled dependency when bottles are forced" do
+      dependency_formula = TestballBottle.new
+      dependency = instance_double(Dependency, to_formula: dependency_formula, name: dependency_formula.name,
+                                               options: Options.new)
+      installer = described_class.new(Testball.new, force_bottle: true)
+
+      installer.fetch_dependency(dependency)
+      installer.install_dependency(dependency)
+
+      expect(Keg.new(dependency_formula.prefix).tab).to be_poured_from_bottle
+    end
+
     it "reports an outdated dependency as upgrading" do
       dependency_formula = formula "outdated-dependency" do
         T.bind(self, T.class_of(Formula))

@@ -914,7 +914,7 @@ Attempt to compile using the specified \fIcompiler\fP, which should be the name 
 Compile \fIformula\fP from source even if a bottle is provided\. Dependencies will still be installed from bottles if they are available\.
 .TP
 \fB\-\-force\-bottle\fP
-Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\.
+Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\. Fail rather than build from source if a formula or dependency has no bottle\.
 .TP
 \fB\-\-include\-test\fP
 Install testing dependencies required to run \fBbrew test\fP \fIformula\fP\&\.
@@ -1207,7 +1207,7 @@ Compile \fIformula\fP from source even if a bottle is available\.
 Download and patch \fIformula\fP, then open a shell\. This allows the user to run \fB\&\./configure \-\-help\fP and otherwise determine how to turn the software package into a Homebrew package\.
 .TP
 \fB\-\-force\-bottle\fP
-Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\.
+Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\. Fail rather than build from source if a formula or dependency has no bottle\.
 .TP
 \fB\-\-keep\-tmp\fP
 Retain the temporary files created during installation\.
@@ -1553,7 +1553,7 @@ Compile \fIformula\fP from source even if a bottle is available\.
 Download and patch \fIformula\fP, then open a shell\. This allows the user to run \fB\&\./configure \-\-help\fP and otherwise determine how to turn the software package into a Homebrew package\.
 .TP
 \fB\-\-force\-bottle\fP
-Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\.
+Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\. Fail rather than build from source if a formula or dependency has no bottle\.
 .TP
 \fB\-\-fetch\-HEAD\fP
 Fetch the upstream repository to detect if the HEAD installation of the formula is outdated\. Otherwise, the repository\[u2019]s HEAD will only be checked for updates when a new stable or development version has been released\.

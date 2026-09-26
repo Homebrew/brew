@@ -1433,7 +1433,8 @@ upgrade *`formula`* if it is already installed but outdated.
 `--force-bottle`
 
 : Install from a bottle if it exists for the current or newest version of macOS,
-  even if it would not normally be used for installation.
+  even if it would not normally be used for installation. Fail rather than build
+  from source if a formula or dependency has no bottle.
 
 `--include-test`
 
@@ -1907,7 +1908,8 @@ for the reinstalled formulae and casks or, every 30 days, for all packages.
 `--force-bottle`
 
 : Install from a bottle if it exists for the current or newest version of macOS,
-  even if it would not normally be used for installation.
+  even if it would not normally be used for installation. Fail rather than build
+  from source if a formula or dependency has no bottle.
 
 `--keep-tmp`
 
@@ -2463,7 +2465,8 @@ for the upgraded formulae and casks or, every 30 days, for all packages.
 `--force-bottle`
 
 : Install from a bottle if it exists for the current or newest version of macOS,
-  even if it would not normally be used for installation.
+  even if it would not normally be used for installation. Fail rather than build
+  from source if a formula or dependency has no bottle.
 
 `--fetch-HEAD`
 

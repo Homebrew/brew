@@ -303,6 +303,7 @@ class FormulaInstaller
   sig { params(dep: Formula, build: BuildOptions).returns(T::Boolean) }
   def install_bottle_for?(dep, build)
     return pour_bottle? if dep == formula
+    return dep.bottle_tag? || dep.local_bottle_path.present? if force_bottle?
 
     (
       @build_from_source_formulae.exclude?(dep.full_name) &&
@@ -866,7 +867,7 @@ on_request: installed_on_request?, options:)
     df = dep.to_formula
     fi = FormulaInstaller.new(
       df,
-      force_bottle:               false,
+      force_bottle:               force_bottle?,
       # When fetching we don't need to recurse the dependency tree as it's already
       # been done for us in `compute_dependencies` and there's no requirement to
       # fetch in a particular order.
@@ -926,7 +927,7 @@ on_request: installed_on_request?, options:)
       options:,
       link_keg:                   keg_had_linked_keg && keg_was_linked,
       installed_on_request:,
-      force_bottle:               false,
+      force_bottle:               force_bottle?,
       include_test_formulae:      @include_test_formulae,
       build_from_source_formulae: @build_from_source_formulae,
       keep_tmp:                   keep_tmp?,

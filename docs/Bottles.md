@@ -10,7 +10,9 @@ Bottles are produced by installing a formula with `brew install --build-bottle <
 
 When the formula being installed defines a bottle matching your system, it will be downloaded and installed automatically when you run `brew install <formula>`.
 
-Bottles are not used when:
+Use `--force-bottle` to require bottles for the requested formulae and their dependencies. If a required bottle is unavailable, Homebrew stops rather than compiling that formula from source. This also applies to `brew upgrade` and `brew reinstall`.
+
+Unless `--force-bottle` is specified, bottles are not used when:
 
 - the user requests it (by specifying `--build-from-source`),
 - the formula requests it (with `pour_bottle?`),
