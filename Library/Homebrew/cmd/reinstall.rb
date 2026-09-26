@@ -67,6 +67,9 @@ module Homebrew
             description: "Install from a bottle if it exists for the current or newest version of " \
                          "macOS, even if it would not normally be used for installation.",
           }],
+          [:switch, "--bottle-only", {
+            description: "Fail rather than build a formula or formula dependency from source.",
+          }],
           [:switch, "--keep-tmp", {
             description: "Retain the temporary files created during installation.",
           }],
@@ -113,7 +116,7 @@ module Homebrew
         end
         cask_options
 
-        conflicts "--build-from-source", "--force-bottle"
+        conflicts "--build-from-source", "--force-bottle", "--bottle-only"
         conflicts "--ask", "--no-ask"
 
         named_args [:formula, :cask], min: 1

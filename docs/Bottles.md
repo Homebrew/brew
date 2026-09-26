@@ -18,6 +18,11 @@ Bottles are not used when:
 - the bottle is not up to date (e.g. missing or mismatched checksum),
 - the bottle's `cellar` is neither relocatable nor compatible with the current `HOMEBREW_PREFIX` and `HOMEBREW_CELLAR`.
 
+For formula installations, pass `--bottle-only` to `brew install`,
+`brew reinstall` or `brew upgrade` to stop instead of building a formula or
+formula dependency from source. This does not override the normal bottle checks
+or select a bottle that Homebrew would not otherwise use.
+
 ## Creation
 
 Bottles for `homebrew/core` formulae are created by [BrewTestBot](BrewTestBot.md) when a pull request is submitted. If the formula builds successfully on each supported platform and a maintainer approves the change, BrewTestBot updates its `bottle do` block and uploads each bottle to [GitHub Packages](https://github.com/orgs/Homebrew/packages).

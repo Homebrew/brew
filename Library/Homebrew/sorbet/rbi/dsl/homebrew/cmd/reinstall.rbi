@@ -30,6 +30,9 @@ class Homebrew::Cmd::Reinstall::Args < Homebrew::CLI::Args
   def binaries?; end
 
   sig { returns(T::Boolean) }
+  def bottle_only?; end
+
+  sig { returns(T::Boolean) }
   def build_from_source?; end
 
   sig { returns(T::Boolean) }

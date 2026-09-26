@@ -7,6 +7,12 @@ require "dependency"
 require "test/support/fixtures/testball"
 
 RSpec.describe Homebrew::Install do
+  specify "::formula_installers enables bottle-only policy" do
+    installer = described_class.formula_installers([Testball.new], bottle_only: true).fetch(0)
+
+    expect(installer.bottle_only?).to be true
+  end
+
   specify "::perform_preinstall_checks runs non-fatal preinstall diagnostics" do
     allow(described_class).to receive(:check_prefix)
     allow(described_class).to receive(:check_cpu)

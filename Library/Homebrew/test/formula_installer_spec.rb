@@ -747,6 +747,44 @@ RSpec.describe FormulaInstaller do
     end
   end
 
+  describe "bottle-only installations" do
+    let(:dependency_formula) do
+      formula "unbottled-dependency" do
+        url "https://example.com/unbottled-dependency-1.0.tar.gz"
+      end
+    end
+    let(:dependency) do
+      instance_double(Dependency, to_formula: dependency_formula, name: dependency_formula.name, options: Options.new)
+    end
+    let(:installer) { described_class.new(Testball.new, bottle_only: true) }
+
+    it "refuses to install a requested formula that would build from source" do
+      allow(installer).to receive(:pour_bottle?).and_return(false)
+
+      expect { installer.check_install_sanity }
+        .to raise_error(CannotInstallFormulaError, /--bottle-only.*would build from source/)
+    end
+
+    it "does not check the requested formula when installing only dependencies" do
+      dependency_only_installer = described_class.new(Testball.new, bottle_only: true, only_deps: true)
+      allow(dependency_only_installer).to receive(:pour_bottle?).and_return(false)
+
+      expect { dependency_only_installer.check_install_sanity }.not_to raise_error
+    end
+
+    it "refuses to fetch a dependency that would build from source" do
+      expect { installer.fetch_dependency(dependency) }
+        .to raise_error(CannotInstallFormulaError, /--bottle-only.*would build from source/)
+    end
+
+    it "does not force a dependency bottle past its normal pour checks" do
+      allow(dependency_formula).to receive_messages(bottle: TestballBottle.new.bottle, pour_bottle?: false)
+
+      expect(installer.install_bottle_for?(dependency_formula,
+                                           BuildOptions.new(Options.new, Options.new))).to be false
+    end
+  end
+
   describe "#install_dependency" do
     it "reports an outdated dependency as upgrading" do
       dependency_formula = formula "outdated-dependency" do

@@ -136,6 +136,12 @@ RSpec.describe Homebrew::Upgrade do
   end
 
   describe "::formula_installers" do
+    it "keeps bottle-only out of formula build options" do
+      installer = described_class.formula_installers([Testball.new], flags: ["--bottle-only"]).fetch(0)
+
+      expect([installer.bottle_only?, installer.options.include?("--bottle-only")]).to eq([true, false])
+    end
+
     it "explains when installed dependencies satisfy the bottle metadata" do
       dependent = formula("dependent") do
         T.bind(self, T.class_of(Formula))

@@ -6,6 +6,13 @@ require "test/support/fixtures/testball"
 
 RSpec.describe Homebrew::Reinstall do
   describe ".build_install_context" do
+    it "keeps bottle-only out of formula build options" do
+      context = described_class.build_install_context(Testball.new, flags: ["--bottle-only"])
+      installer = context.formula_installer
+
+      expect([installer.bottle_only?, installer.options.include?("--bottle-only")]).to eq([true, false])
+    end
+
     it "leaves the current keg in place until reinstalling", :integration_test do
       setup_test_formula "testball", tab_attributes: { installed_on_request: true }
       formula = Formula["testball"]

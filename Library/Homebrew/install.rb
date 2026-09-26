@@ -57,7 +57,7 @@ module Homebrew
 
       sig {
         params(formulae_to_install: T::Array[Formula], installed_on_request: T::Boolean,
-               build_bottle: T::Boolean, force_bottle: T::Boolean,
+               build_bottle: T::Boolean, force_bottle: T::Boolean, bottle_only: T::Boolean,
                bottle_arch: T.nilable(String), ignore_deps: T::Boolean, only_deps: T::Boolean,
                include_test_formulae: T::Array[String], build_from_source_formulae: T::Array[String],
                cc: T.nilable(String), git: T::Boolean, interactive: T::Boolean, keep_tmp: T::Boolean,
@@ -70,6 +70,7 @@ module Homebrew
         installed_on_request: true,
         build_bottle: false,
         force_bottle: false,
+        bottle_only: false,
         bottle_arch: nil,
         ignore_deps: false,
         only_deps: false,
@@ -99,6 +100,7 @@ module Homebrew
             installed_on_request:,
             build_bottle:,
             force_bottle:,
+            bottle_only:,
             bottle_arch:,
             ignore_deps:,
             only_deps:,

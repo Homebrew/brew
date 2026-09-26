@@ -1724,8 +1724,9 @@ _brew_install() {
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
-    '(--cask --build-from-source --force-bottle)--build-bottle[Prepare the formula for eventual bottling during installation, skipping any post-install steps]' \
-    '(--cask --build-bottle --force-bottle)--build-from-source[Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available]' \
+    '(--cask --build-from-source --build-bottle --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source]' \
+    '(--cask --build-from-source --force-bottle --bottle-only)--build-bottle[Prepare the formula for eventual bottling during installation, skipping any post-install steps]' \
+    '(--cask --build-bottle --force-bottle --bottle-only)--build-from-source[Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available]' \
     '(--cask)--cc[Attempt to compile using the specified compiler, which should be the name of the compiler'\''s executable, e.g. `gcc-9` for GCC 9. In order to use LLVM'\''s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \
@@ -1736,7 +1737,7 @@ _brew_install() {
     '(--cask)--fetch-HEAD[Fetch the upstream repository to detect if the HEAD installation of the formula is outdated. Otherwise, the repository'\''s HEAD will only be checked for updates when a new stable or development version has been released]' \
     '(--formula)--fontdir[Target location for Fonts (default: `~/Library/Fonts`)]' \
     '(--adopt)--force[Install formulae without checking for previously installed keg-only or non-migrated versions. When installing casks, overwrite existing files (binaries and symlinks are excluded, unless originally from the same cask)]' \
-    '(--cask --build-from-source --build-bottle)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
+    '(--cask --build-from-source --build-bottle --bottle-only)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
     '(--cask)--git[Create a Git repository, useful for creating patches to the software]' \
     '--help[Show this message]' \
     '(--cask --only-dependencies)--ignore-dependencies[An unsupported Homebrew development option to skip installing any dependencies of any kind. If the dependencies are not already present, the formula will have issues. If you'\''re not developing Homebrew, consider adjusting your PATH rather than using this option]' \
@@ -1769,7 +1770,7 @@ _brew_install() {
     '(--casks --binaries --require-sha --adopt --skip-cask-deps --zap --appdir --appimagedir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae]' \
     '*:formula:__brew_formulae' \
     - cask \
-    '(--formulae --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --as-dependency --bottle-arch --interactive --git --overwrite)--cask[Treat all named arguments as casks]' \
+    '(--formulae --ignore-dependencies --only-dependencies --cc --build-from-source --force-bottle --bottle-only --include-test --HEAD --fetch-HEAD --keep-tmp --debug-symbols --build-bottle --skip-post-install --skip-link --as-dependency --bottle-arch --interactive --git --overwrite)--cask[Treat all named arguments as casks]' \
     '*:cask:__brew_casks'
 }
 
@@ -2161,7 +2162,8 @@ _brew_reinstall() {
     '(--formula)--appimagedir[Target location for AppImages (default: `~/Applications`)]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
-    '(--cask --force-bottle)--build-from-source[Compile formula from source even if a bottle is available]' \
+    '(--cask --build-from-source --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source]' \
+    '(--cask --force-bottle --bottle-only)--build-from-source[Compile formula from source even if a bottle is available]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \
     '(--cask)--debug-symbols[Generate debug symbols on build. Source will be retained in a cache directory]' \
@@ -2169,7 +2171,7 @@ _brew_reinstall() {
     '--display-times[Print install times for each package at the end of the run. Enabled by default if `$HOMEBREW_DISPLAY_INSTALL_TIMES` is set]' \
     '(--formula)--fontdir[Target location for Fonts (default: `~/Library/Fonts`)]' \
     '--force[Install without checking for previously installed keg-only or non-migrated versions]' \
-    '(--cask --build-from-source)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
+    '(--cask --build-from-source --bottle-only)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
     '(--cask)--git[Create a Git repository, useful for creating patches to the software]' \
     '--help[Show this message]' \
     '(--formula)--input-methoddir[Target location for Input Methods (default: `~/Library/Input Methods`)]' \
@@ -2196,7 +2198,7 @@ _brew_reinstall() {
     '(--casks --binaries --require-sha --adopt --skip-cask-deps --zap --appdir --appimagedir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae]' \
     '*:formula:__brew_formulae' \
     - cask \
-    '(--formulae --build-from-source --interactive --force-bottle --keep-tmp --debug-symbols --git)--cask[Treat all named arguments as casks]' \
+    '(--formulae --build-from-source --interactive --force-bottle --bottle-only --keep-tmp --debug-symbols --git)--cask[Treat all named arguments as casks]' \
     '*:cask:__brew_casks'
 }
 
@@ -2917,7 +2919,8 @@ _brew_upgrade() {
     '(--formula)--appimagedir[Target location for AppImages (default: `~/Applications`)]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
-    '(--cask --force-bottle)--build-from-source[Compile formula from source even if a bottle is available]' \
+    '(--cask --build-from-source --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source]' \
+    '(--cask --force-bottle --bottle-only)--build-from-source[Compile formula from source even if a bottle is available]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \
     '(--cask)--debug-symbols[Generate debug symbols on build. Source will be retained in a cache directory]' \
@@ -2927,7 +2930,7 @@ _brew_upgrade() {
     '(--cask)--fetch-HEAD[Fetch the upstream repository to detect if the HEAD installation of the formula is outdated. Otherwise, the repository'\''s HEAD will only be checked for updates when a new stable or development version has been released]' \
     '(--formula)--fontdir[Target location for Fonts (default: `~/Library/Fonts`)]' \
     '--force[Install formulae without checking for previously installed keg-only or non-migrated versions. When installing casks, overwrite existing files (binaries and symlinks are excluded, unless originally from the same cask)]' \
-    '(--cask --build-from-source)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
+    '(--cask --build-from-source --bottle-only)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
     '(--formula)--greedy[Also include casks with `version :latest` and `auto_updates true` casks that would otherwise be skipped. Enabled by default if `$HOMEBREW_UPGRADE_GREEDY` is set]' \
     '(--formula)--greedy-auto-updates[Also include `auto_updates true` casks that would otherwise be skipped]' \
     '(--formula)--greedy-latest[Also include casks with `version :latest`]' \
@@ -2958,7 +2961,7 @@ _brew_upgrade() {
     '(--casks --skip-cask-deps --no-quit --greedy --greedy-latest --greedy-auto-updates --binaries --require-sha --appdir --appimagedir --keyboard-layoutdir --colorpickerdir --prefpanedir --qlplugindir --mdimporterdir --dictionarydir --fontdir --servicedir --input-methoddir --internet-plugindir --audio-unit-plugindir --vst-plugindir --vst3-plugindir --screen-saverdir --language)--formula[Treat all named arguments as formulae. If no named arguments are specified, upgrade only outdated formulae]' \
     '*:installed_formula:__brew_installed_formulae' \
     - installed_cask \
-    '(--formulae --build-from-source --interactive --force-bottle --fetch-HEAD --keep-tmp --debug-symbols --overwrite)--cask[Treat all named arguments as casks. If no named arguments are specified, upgrade only outdated casks]' \
+    '(--formulae --build-from-source --interactive --force-bottle --bottle-only --fetch-HEAD --keep-tmp --debug-symbols --overwrite)--cask[Treat all named arguments as casks. If no named arguments are specified, upgrade only outdated casks]' \
     '*:installed_cask:__brew_installed_casks'
 }
 

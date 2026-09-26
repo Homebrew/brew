@@ -72,6 +72,7 @@ class FormulaInstaller
       skip_post_install:          T::Boolean,
       skip_link:                  T::Boolean,
       force_bottle:               T::Boolean,
+      bottle_only:                T::Boolean,
       bottle_arch:                T.nilable(String),
       ignore_deps:                T::Boolean,
       only_deps:                  T::Boolean,
@@ -101,6 +102,7 @@ class FormulaInstaller
     skip_post_install: false,
     skip_link: false,
     force_bottle: false,
+    bottle_only: false,
     bottle_arch: nil,
     ignore_deps: false,
     only_deps: false,
@@ -138,6 +140,7 @@ class FormulaInstaller
     @bottle_arch = bottle_arch
     @formula.force_bottle ||= force_bottle
     @force_bottle = T.let(@formula.force_bottle, T::Boolean)
+    @bottle_only = bottle_only
     @include_test_formulae = include_test_formulae
     @interactive = interactive
     @git = git
@@ -180,6 +183,9 @@ class FormulaInstaller
 
   sig { returns(T::Boolean) }
   def force_bottle? = @force_bottle
+
+  sig { returns(T::Boolean) }
+  def bottle_only? = @bottle_only
 
   sig { returns(T::Boolean) }
   def git? = @git
@@ -414,6 +420,10 @@ class FormulaInstaller
   sig { void }
   def check_install_sanity
     check_installation_already_attempted
+
+    if bottle_only? && !only_deps? && !pour_bottle?
+      raise CannotInstallFormulaError, "`--bottle-only` passed but #{formula.full_name} would build from source!"
+    end
 
     if force_bottle? && !pour_bottle?
       raise CannotInstallFormulaError, "`--force-bottle` passed but #{formula.full_name} has no bottle!"
@@ -868,6 +878,7 @@ on_request: installed_on_request?, options:)
     fi = FormulaInstaller.new(
       df,
       force_bottle:               false,
+      bottle_only:                bottle_only?,
       # When fetching we don't need to recurse the dependency tree as it's already
       # been done for us in `compute_dependencies` and there's no requirement to
       # fetch in a particular order.
@@ -928,6 +939,7 @@ on_request: installed_on_request?, options:)
       link_keg:                   keg_had_linked_keg && keg_was_linked,
       installed_on_request:,
       force_bottle:               false,
+      bottle_only:                bottle_only?,
       include_test_formulae:      @include_test_formulae,
       build_from_source_formulae: @build_from_source_formulae,
       keep_tmp:                   keep_tmp?,

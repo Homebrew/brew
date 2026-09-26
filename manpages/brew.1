@@ -916,6 +916,9 @@ Compile \fIformula\fP from source even if a bottle is provided\. Dependencies wi
 \fB\-\-force\-bottle\fP
 Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\.
 .TP
+\fB\-\-bottle\-only\fP
+Fail rather than build a formula or formula dependency from source\.
+.TP
 \fB\-\-include\-test\fP
 Install testing dependencies required to run \fBbrew test\fP \fIformula\fP\&\.
 .TP
@@ -1208,6 +1211,9 @@ Download and patch \fIformula\fP, then open a shell\. This allows the user to ru
 .TP
 \fB\-\-force\-bottle\fP
 Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\.
+.TP
+\fB\-\-bottle\-only\fP
+Fail rather than build a formula or formula dependency from source\.
 .TP
 \fB\-\-keep\-tmp\fP
 Retain the temporary files created during installation\.
@@ -1554,6 +1560,9 @@ Download and patch \fIformula\fP, then open a shell\. This allows the user to ru
 .TP
 \fB\-\-force\-bottle\fP
 Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation\.
+.TP
+\fB\-\-bottle\-only\fP
+Fail rather than build a formula or formula dependency from source\.
 .TP
 \fB\-\-fetch\-HEAD\fP
 Fetch the upstream repository to detect if the HEAD installation of the formula is outdated\. Otherwise, the repository\[u2019]s HEAD will only be checked for updates when a new stable or development version has been released\.

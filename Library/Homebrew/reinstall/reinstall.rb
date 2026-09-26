@@ -51,7 +51,8 @@ module Homebrew
           build_bottle = false
         end
 
-        build_options = BuildOptions.new(Options.create(flags), formula.options)
+        bottle_only = flags.include?("--bottle-only")
+        build_options = BuildOptions.new(Options.create(flags - ["--bottle-only"]), formula.options)
         options = build_options.used_options
         options |= formula.build.used_options
         options &= formula.options
@@ -64,6 +65,7 @@ module Homebrew
             installed_on_request:,
             build_bottle:,
             force_bottle:,
+            bottle_only:,
             build_from_source_formulae:,
             git:,
             interactive:,

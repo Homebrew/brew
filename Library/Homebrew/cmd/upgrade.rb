@@ -98,6 +98,9 @@ module Homebrew
             description: "Install from a bottle if it exists for the current or newest version of " \
                          "macOS, even if it would not normally be used for installation.",
           }],
+          [:switch, "--bottle-only", {
+            description: "Fail rather than build a formula or formula dependency from source.",
+          }],
           [:switch, "--fetch-HEAD", {
             description: "Fetch the upstream repository to detect if the HEAD installation of the " \
                          "formula is outdated. Otherwise, the repository's HEAD will only be checked for " \
@@ -157,7 +160,7 @@ module Homebrew
         end
         cask_options
 
-        conflicts "--build-from-source", "--force-bottle"
+        conflicts "--build-from-source", "--force-bottle", "--bottle-only"
         conflicts "--ask", "--no-ask"
 
         named_args [:installed_formula, :installed_cask]

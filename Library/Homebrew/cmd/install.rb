@@ -84,6 +84,9 @@ module Homebrew
             description: "Install from a bottle if it exists for the current or newest version of " \
                          "macOS, even if it would not normally be used for installation.",
           }],
+          [:switch, "--bottle-only", {
+            description: "Fail rather than build a formula or formula dependency from source.",
+          }],
           [:switch, "--include-test", {
             description: "Install testing dependencies required to run `brew test` <formula>.",
           }],
@@ -169,7 +172,7 @@ module Homebrew
 
         conflicts "--ignore-dependencies", "--only-dependencies"
         conflicts "--ask", "--no-ask"
-        conflicts "--build-from-source", "--build-bottle", "--force-bottle"
+        conflicts "--build-from-source", "--build-bottle", "--force-bottle", "--bottle-only"
         conflicts "--adopt", "--force"
 
         named_args [:formula, :cask], min: 1
@@ -283,6 +286,7 @@ module Homebrew
           installed_on_request:       !args.as_dependency?,
           build_bottle:               args.build_bottle?,
           force_bottle:               args.force_bottle?,
+          bottle_only:                args.bottle_only?,
           bottle_arch:                args.bottle_arch,
           ignore_deps:                args.ignore_dependencies?,
           only_deps:                  args.only_dependencies?,

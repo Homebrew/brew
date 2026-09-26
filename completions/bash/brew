@@ -2024,6 +2024,7 @@ _brew_install() {
       --audio-unit-plugindir
       --binaries
       --bottle-arch
+      --bottle-only
       --build-bottle
       --build-from-source
       --cask
@@ -2620,6 +2621,7 @@ _brew_reinstall() {
       --appimagedir
       --audio-unit-plugindir
       --binaries
+      --bottle-only
       --build-from-source
       --cask
       --colorpickerdir
@@ -3639,6 +3641,7 @@ _brew_upgrade() {
       --appimagedir
       --audio-unit-plugindir
       --binaries
+      --bottle-only
       --build-from-source
       --cask
       --colorpickerdir

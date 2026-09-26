@@ -39,6 +39,9 @@ class Homebrew::Cmd::InstallCmd::Args < Homebrew::CLI::Args
   def bottle_arch; end
 
   sig { returns(T::Boolean) }
+  def bottle_only?; end
+
+  sig { returns(T::Boolean) }
   def build_bottle?; end
 
   sig { returns(T::Boolean) }
