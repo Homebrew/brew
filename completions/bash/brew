@@ -2470,6 +2470,7 @@ _brew_pr_publish() {
       --quiet
       --tap
       --verbose
+      --warn-on-upload-failure
       --workflow
       "
       return
