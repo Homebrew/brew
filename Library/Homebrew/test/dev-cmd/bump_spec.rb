@@ -715,6 +715,49 @@ RSpec.describe Homebrew::DevCmd::Bump do
 
       expect(bump.version_with_cooldown(version_info, Version.new("1.2.2"))).to eq(Version.new("1.2.3"))
     end
+
+    it "uses semver precedence for npm prerelease versions" do
+      version_info = {
+        latest: "1.2.4",
+        meta:   {
+          strategy: "Npm",
+          url:      {
+            strategy: "https://registry.npmjs.org/example-package/latest",
+          },
+        },
+      }
+      content = <<~JSON
+        {
+          "time": {
+            "created": "2026-02-01T00:00:00.000Z",
+            "modified": "2026-04-04T00:00:00.000Z",
+            "1.2.3-next.1": "2026-02-01T00:00:00.000Z",
+            "1.2.4-next.2": "2026-03-01T00:00:00.000Z",
+            "1.2.4": "2026-04-04T00:00:00.000Z"
+          }
+        }
+      JSON
+
+      allow(DateTime).to receive(:now).and_return(DateTime.parse("2026-04-04T12:00:00Z"))
+      allow(Utils::Curl).to receive(:curl_output)
+        .with(
+          "--compressed",
+          "--fail-with-body",
+          "--location",
+          "--max-redirs",
+          "5",
+          "--silent",
+          "https://registry.npmjs.org/example-package",
+          connect_timeout: 15,
+          max_time:        55,
+          retries:         0,
+          timeout:         60,
+        )
+        .and_return([content, "", instance_double(Process::Status, success?: true)])
+
+      expect(bump.version_with_cooldown(version_info, Version.new("1.2.3-next.1")))
+        .to eq(Version.new("1.2.4-next.2"))
+    end
   end
 
   describe "::retrieve_pull_requests" do

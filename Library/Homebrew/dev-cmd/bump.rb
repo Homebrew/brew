@@ -8,6 +8,7 @@ require "livecheck/livecheck"
 require "release_cooldown"
 require "utils/curl"
 require "utils/repology"
+require "vulns/semver"
 
 module Homebrew
   module DevCmd
@@ -695,6 +696,16 @@ module Homebrew
         value.match?(LIVECHECK_MESSAGE_REGEX)
       end
 
+      # Compares semver versions, as `Version` orders prerelease and build
+      # metadata differently. Falls back to `Version` for invalid semver.
+      #
+      # @param left the version to compare
+      # @param right the version to compare against
+      sig { params(left: String, right: String).returns(Integer) }
+      def semver_compare(left, right)
+        Vulns::Semver.compare(left, right) || (Version.new(left) <=> Version.new(right)) || 0
+      end
+
       # Identifies the highest upstream version that has been released before
       # the cooldown interval.
       #
@@ -729,15 +740,15 @@ module Homebrew
           return unless release_dates.present?
 
           current_str = current.to_s
-          current_is_prerelease = current_str.include?("-")
+          latest_str = latest.to_s
+          current_is_prerelease = Vulns::Semver.prerelease?(current_str)
           cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
           release_dates.sort_by { |_, date| date }.reverse_each do |version_str, date|
             version = Version.new(version_str)
             return version if version_str == current_str
-            next if (version > latest) || (version < current)
-
-            # TODO: Properly handle prerelease version comparison
-            next if !current_is_prerelease && version_str.include?("-")
+            next if semver_compare(version_str, latest_str).positive?
+            next if semver_compare(version_str, current_str).negative?
+            next if !current_is_prerelease && Vulns::Semver.prerelease?(version_str)
 
             return version if date < cooldown_interval
           end
