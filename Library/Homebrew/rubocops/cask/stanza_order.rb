@@ -24,9 +24,6 @@ module RuboCop
 
           stanzas.zip(ordered_stanzas).each do |stanza_before, stanza_after|
             next if stanza_before == stanza_after
-            next if [stanza_before, stanza_after].compact.any? do |candidate|
-              [:zsh_completion, :fish_completion].include?(candidate.stanza_name)
-            end
 
             add_offense(
               stanza_before.method_node,
