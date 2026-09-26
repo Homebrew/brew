@@ -25,6 +25,19 @@ RSpec.describe Utils::Analytics do
     end
   end
 
+  describe "::with_arch_version_suffix_if_needed" do
+    it "does not add arch version suffix by default" do
+      stub_const("HOMEBREW_PROCESSOR_ARCHITECTURE_VERSION", "")
+
+      expect(described_class.with_arch_version_suffix_if_needed("aarch64")).to eq("aarch64")
+    end
+
+    it "does not add WSL with an explicit override" do
+      stub_const("HOMEBREW_PROCESSOR_ARCHITECTURE_VERSION", "v3")
+      expect(described_class.with_arch_version_suffix_if_needed("x86_64")).to eq("x86_64-v3")
+    end
+  end
+
   describe "::default_package_tags" do
     let(:ci) { ", CI" if ENV["CI"] }
 
