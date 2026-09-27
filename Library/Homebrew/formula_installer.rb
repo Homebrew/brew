@@ -418,12 +418,17 @@ class FormulaInstaller
   end
 
   sig { void }
+  def check_bottle_only
+    return unless bottle_only?
+    return if only_deps? || pour_bottle?
+
+    raise CannotInstallFormulaError, "`--bottle-only` passed but #{formula.full_name} would build from source!"
+  end
+
+  sig { void }
   def check_install_sanity
     check_installation_already_attempted
-
-    if bottle_only? && !only_deps? && !pour_bottle?
-      raise CannotInstallFormulaError, "`--bottle-only` passed but #{formula.full_name} would build from source!"
-    end
+    check_bottle_only
 
     if force_bottle? && !pour_bottle?
       raise CannotInstallFormulaError, "`--force-bottle` passed but #{formula.full_name} has no bottle!"
@@ -565,6 +570,8 @@ class FormulaInstaller
   sig { void }
   def install
     lock
+
+    check_bottle_only
 
     start_time = Time.now
     unless pour_bottle?

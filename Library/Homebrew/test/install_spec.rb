@@ -13,6 +13,14 @@ RSpec.describe Homebrew::Install do
     expect(installer.bottle_only?).to be true
   end
 
+  specify "a bottle-only installer refuses the top-level source-build path" do
+    installer = described_class.formula_installers([Testball.new], bottle_only: true).fetch(0)
+    allow(installer).to receive(:pour_bottle?).and_return(false)
+
+    expect { installer.install }
+      .to raise_error(CannotInstallFormulaError, /--bottle-only.*would build from source/)
+  end
+
   specify "::perform_preinstall_checks runs non-fatal preinstall diagnostics" do
     allow(described_class).to receive(:check_prefix)
     allow(described_class).to receive(:check_cpu)
