@@ -10,8 +10,13 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it_behaves_like "parseable arguments"
 
+  it "requires formula-only selection for bottle-only installations" do
+    expect { described_class.new(["--bottle-only"]) }
+      .to raise_error(Homebrew::CLI::OptionConstraintError, /`--bottle-only` cannot be passed without `--formula`/)
+  end
+
   it "normalizes abbreviated bottle-only arguments" do
-    cmd = described_class.new(["--bottle", "testball"])
+    cmd = described_class.new(["--formula", "--bottle", "testball"])
 
     expect(cmd.args.bottle_only?).to be true
     expect(cmd.args.flags_only).to include("--bottle-only")

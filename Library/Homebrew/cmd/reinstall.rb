@@ -68,7 +68,8 @@ module Homebrew
                          "macOS, even if it would not normally be used for installation.",
           }],
           [:switch, "--bottle-only", {
-            description: "Fail rather than build a formula or formula dependency from source.",
+            description: "Fail rather than build a formula or formula dependency from source. Requires `--formula`.",
+            depends_on:  "--formula",
           }],
           [:switch, "--keep-tmp", {
             description: "Retain the temporary files created during installation.",

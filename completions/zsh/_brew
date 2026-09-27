@@ -1724,7 +1724,7 @@ _brew_install() {
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
     '(--cask)--bottle-arch[Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on]' \
-    '(--cask --build-from-source --build-bottle --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source]' \
+    '(--cask --build-from-source --build-bottle --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source. Requires `--formula`]' \
     '(--cask --build-from-source --force-bottle --bottle-only)--build-bottle[Prepare the formula for eventual bottling during installation, skipping any post-install steps]' \
     '(--cask --build-bottle --force-bottle --bottle-only)--build-from-source[Compile formula from source even if a bottle is provided. Dependencies will still be installed from bottles if they are available]' \
     '(--cask)--cc[Attempt to compile using the specified compiler, which should be the name of the compiler'\''s executable, e.g. `gcc-9` for GCC 9. In order to use LLVM'\''s clang, specify `llvm_clang`. To use the Apple-provided clang, specify `clang`. This option will only accept compilers that are provided by Homebrew or bundled with macOS. Please do not file issues if you encounter errors while using this option]' \
@@ -2162,7 +2162,7 @@ _brew_reinstall() {
     '(--formula)--appimagedir[Target location for AppImages (default: `~/Applications`)]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
-    '(--cask --build-from-source --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source]' \
+    '(--cask --build-from-source --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source. Requires `--formula`]' \
     '(--cask --force-bottle --bottle-only)--build-from-source[Compile formula from source even if a bottle is available]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \
@@ -2919,7 +2919,7 @@ _brew_upgrade() {
     '(--formula)--appimagedir[Target location for AppImages (default: `~/Applications`)]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
     '(--formula)--binaries[Disable/enable linking of helper executables (default: enabled)]' \
-    '(--cask --build-from-source --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source]' \
+    '(--cask --build-from-source --force-bottle)--bottle-only[Fail rather than build a formula or formula dependency from source. Requires `--formula`]' \
     '(--cask --force-bottle --bottle-only)--build-from-source[Compile formula from source even if a bottle is available]' \
     '(--formula)--colorpickerdir[Target location for Color Pickers (default: `~/Library/ColorPickers`)]' \
     '--debug[If brewing fails, open an interactive debugging session with access to IRB or a shell inside the temporary build directory]' \

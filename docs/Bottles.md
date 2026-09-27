@@ -18,10 +18,11 @@ Bottles are not used when:
 - the bottle is not up to date (e.g. missing or mismatched checksum),
 - the bottle's `cellar` is neither relocatable nor compatible with the current `HOMEBREW_PREFIX` and `HOMEBREW_CELLAR`.
 
-For formula installations, pass `--bottle-only` to `brew install`,
+For formula installations, pass `--formula --bottle-only` to `brew install`,
 `brew reinstall` or `brew upgrade` to stop instead of building a formula or
 formula dependency from source. This does not override the normal bottle checks
-or select a bottle that Homebrew would not otherwise use.
+or select a bottle that Homebrew would not otherwise use. The `--formula` option
+is required: casks and their formula dependencies are not processed in this mode.
 
 An upgrade may finish upgrading a formula but fail when a dependent with broken
 linkage requires rebuilding from source. With `--bottle-only`, that rebuild is

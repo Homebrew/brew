@@ -1437,7 +1437,8 @@ upgrade *`formula`* if it is already installed but outdated.
 
 `--bottle-only`
 
-: Fail rather than build a formula or formula dependency from source.
+: Fail rather than build a formula or formula dependency from source. Requires
+  `--formula`.
 
 `--include-test`
 
@@ -1915,7 +1916,8 @@ for the reinstalled formulae and casks or, every 30 days, for all packages.
 
 `--bottle-only`
 
-: Fail rather than build a formula or formula dependency from source.
+: Fail rather than build a formula or formula dependency from source. Requires
+  `--formula`.
 
 `--keep-tmp`
 
@@ -2475,7 +2477,8 @@ for the upgraded formulae and casks or, every 30 days, for all packages.
 
 `--bottle-only`
 
-: Fail rather than build a formula or formula dependency from source.
+: Fail rather than build a formula or formula dependency from source. Requires
+  `--formula`.
 
 `--fetch-HEAD`
 
