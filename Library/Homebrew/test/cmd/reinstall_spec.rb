@@ -8,6 +8,13 @@ require "cmd/shared_examples/args_parse"
 RSpec.describe Homebrew::Cmd::Reinstall do
   it_behaves_like "parseable arguments"
 
+  it "normalizes abbreviated bottle-only arguments" do
+    cmd = described_class.new(["--bottle", "testball"])
+
+    expect(cmd.args.bottle_only?).to be true
+    expect(cmd.args.flags_only).to include("--bottle-only")
+  end
+
   it "reports unavailable names via ofail and continues reinstalling" do
     error = FormulaOrCaskUnavailableError.new("nonexistent")
     formula = instance_double(Formula, full_name: "testball", pinned?: false)

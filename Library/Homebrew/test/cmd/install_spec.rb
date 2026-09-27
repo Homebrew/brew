@@ -12,6 +12,13 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
   it_behaves_like "parseable arguments"
 
+  it "normalizes abbreviated bottle-only arguments" do
+    cmd = described_class.new(["--bottle-o", "testball"])
+
+    expect(cmd.args.bottle_only?).to be true
+    expect(cmd.args.flags_only).to include("--bottle-only")
+  end
+
   it "defers full installers and the cask implementation at command load" do
     stdout, stderr, status = Open3.capture3(
       *HOMEBREW_RUBY_EXEC_ARGS,

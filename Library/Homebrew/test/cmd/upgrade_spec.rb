@@ -10,6 +10,13 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it_behaves_like "parseable arguments"
 
+  it "normalizes abbreviated bottle-only arguments" do
+    cmd = described_class.new(["--bottle", "testball"])
+
+    expect(cmd.args.bottle_only?).to be true
+    expect(cmd.args.flags_only).to include("--bottle-only")
+  end
+
   it "trusts fully-qualified named items before resolving them" do
     cmd = described_class.new(["thirdparty/foo/bar"])
     allow(cmd.args.named).to receive(:present?).and_return(true)

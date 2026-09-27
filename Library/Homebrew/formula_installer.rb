@@ -321,6 +321,8 @@ class FormulaInstaller
 
   sig { params(metadata_only: T::Boolean).void }
   def prelude_fetch(metadata_only: false)
+    check_bottle_only
+
     unless @ran_prelude_fetch_metadata
       deprecate_disable_type = DeprecateDisable.type(formula)
       if deprecate_disable_type.present?

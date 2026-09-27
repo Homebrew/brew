@@ -6,6 +6,15 @@ require "test/support/fixtures/testball"
 
 RSpec.describe Homebrew::Reinstall do
   describe ".build_install_context" do
+    it "refuses a forced source rebuild under bottle-only policy" do
+      formula = Testball.new
+      context = described_class.build_install_context(formula, flags:                      ["--bottle-only"],
+                                                               build_from_source_formulae: [formula.full_name])
+
+      expect { context.formula_installer.prelude_fetch }
+        .to raise_error(CannotInstallFormulaError, /--bottle-only.*would build from source/)
+    end
+
     it "keeps bottle-only out of formula build options" do
       context = described_class.build_install_context(Testball.new, flags: ["--bottle-only"])
       installer = context.formula_installer

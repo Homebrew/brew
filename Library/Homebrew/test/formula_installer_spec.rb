@@ -777,6 +777,33 @@ RSpec.describe FormulaInstaller do
         .to raise_error(CannotInstallFormulaError, /--bottle-only.*would build from source/)
     end
 
+    it "refuses to install a dependency that would build from source" do
+      expect { installer.install_dependency(dependency) }
+        .to raise_error(CannotInstallFormulaError, /--bottle-only.*would build from source/)
+    end
+
+    it "refuses an API formula before enqueueing source downloads" do
+      allow(installer.formula).to receive(:loaded_from_api?).and_return(true)
+      allow(installer).to receive(:pour_bottle?).and_return(false)
+      expect(Homebrew::API::Formula).not_to receive(:source_download)
+
+      expect { installer.prelude_fetch }
+        .to raise_error(CannotInstallFormulaError, /--bottle-only.*would build from source/)
+    end
+
+    it "allows a formula whose normal bottle checks pass" do
+      allow(installer).to receive(:pour_bottle?).and_return(true)
+
+      expect { installer.check_bottle_only }.not_to raise_error
+    end
+
+    it "refuses unbottled dependencies when only dependencies are requested" do
+      dependency_only_installer = described_class.new(Testball.new, bottle_only: true, only_deps: true)
+
+      expect { dependency_only_installer.fetch_dependency(dependency) }
+        .to raise_error(CannotInstallFormulaError, /--bottle-only.*would build from source/)
+    end
+
     it "does not force a dependency bottle past its normal pour checks" do
       allow(dependency_formula).to receive_messages(bottle: TestballBottle.new.bottle, pour_bottle?: false)
 

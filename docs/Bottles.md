@@ -23,6 +23,11 @@ For formula installations, pass `--bottle-only` to `brew install`,
 formula dependency from source. This does not override the normal bottle checks
 or select a bottle that Homebrew would not otherwise use.
 
+An upgrade may finish upgrading a formula but fail when a dependent with broken
+linkage requires rebuilding from source. With `--bottle-only`, that rebuild is
+refused and the command exits unsuccessfully; already completed upgrades are not
+rolled back.
+
 ## Creation
 
 Bottles for `homebrew/core` formulae are created by [BrewTestBot](BrewTestBot.md) when a pull request is submitted. If the formula builds successfully on each supported platform and a maintainer approves the change, BrewTestBot updates its `bottle do` block and uploads each bottle to [GitHub Packages](https://github.com/orgs/Homebrew/packages).
