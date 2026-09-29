@@ -33,7 +33,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        Install.perform_preinstall_checks_once(all_fatal: true)
+        Install.perform_preinstall_checks_once(all_fatal: false)
         Install.perform_build_from_source_checks(all_fatal: true)
         return unless (formula = args.named.to_resolved_formulae.first)
 
