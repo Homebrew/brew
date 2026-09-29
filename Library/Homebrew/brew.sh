@@ -328,6 +328,8 @@ setup_curl
 HOMEBREW_API_DEFAULT_DOMAIN="https://formulae.brew.sh/api"
 HOMEBREW_BOTTLE_DEFAULT_DOMAIN="https://ghcr.io/v2/homebrew/core"
 
+# Check support policy consumers after changing these limits:
+# https://github.com/Homebrew/brew.sh#macos-support
 # TODO: bump version when new macOS is released or announced and update references in:
 # - docs/Installation.md
 # - https://github.com/Homebrew/install/blob/HEAD/install.sh

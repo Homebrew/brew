@@ -60,3 +60,7 @@ Edit the generated notes to explain the purpose and user impact of the changes, 
 
 After the release and post are published, announce them through the project communication channels currently maintained by Homebrew.
 Consider broader announcement channels only when their expected reach and moderation cost are appropriate for the release.
+
+## macOS support changes
+
+When changing the macOS support limits in `Library/Homebrew/brew.sh`, follow the [support policy inventory and consistency check](https://github.com/Homebrew/brew.sh#macos-support).
