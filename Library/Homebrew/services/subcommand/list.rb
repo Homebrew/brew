@@ -1,0 +1,102 @@
+# typed: strict
+# frozen_string_literal: true
+
+require "abstract_subcommand"
+
+require "services/cli"
+require "services/formulae"
+require "utils/output"
+module Homebrew
+  module Cmd
+    class Services < Homebrew::AbstractCommand
+      class ListSubcommand < Homebrew::AbstractSubcommand
+        subcommand_args aliases: ["ls"], default: true do
+          usage_banner <<~EOS
+            [`sudo`] `brew services` [`list`] [`--json`] [`--debug`]:
+            List information about all managed services for the current user (or root).
+            Provides more output from Homebrew and `launchctl`(1) or `systemctl`(1) if run with `--debug`.
+          EOS
+          named_args :none
+          switch "--json",
+                 description: "Output as JSON."
+        end
+
+        sig { override.void }
+        def run
+          formulae = Homebrew::Services::Formulae.services_list
+          if formulae.blank?
+            opoo "No services available to control with `#{Homebrew::Services::Cli.bin}`" if $stderr.tty?
+            puts "[]" if args.json?
+            return
+          end
+
+          if args.json?
+            self.class.print_json(formulae)
+          else
+            self.class.print_table(formulae)
+          end
+        end
+
+        extend Utils::Output::Mixin
+
+        JSON_FIELDS = [:name, :status, :user, :file, :exit_code].freeze
+
+        # Print the JSON representation in the CLI
+        # @private
+        sig { params(formulae: T::Array[T::Hash[Symbol, T.untyped]]).void }
+        def self.print_json(formulae)
+          services = formulae.map do |formula|
+            formula.slice(*JSON_FIELDS)
+          end
+
+          puts JSON.pretty_generate(services)
+        end
+
+        # Print the table in the CLI
+        # @private
+        sig { params(formulae: T::Array[T::Hash[Symbol, T.untyped]]).void }
+        def self.print_table(formulae)
+          services = formulae.map do |formula|
+            status = get_status_string(formula[:status])
+            status += formula[:exit_code].to_s if formula[:status] == :error
+            file    = formula[:file].to_s.gsub(Dir.home, "~").presence if formula[:loaded]
+
+            { name: formula[:name], status:, user: formula[:user], file: }
+          end
+
+          longest_name = [*services.map { |service| service[:name].length }, 4].max
+          longest_status = [*services.map { |service| service[:status].length }, 15].max
+          longest_user = [*services.map { |service| service[:user]&.length }, 4].compact.max
+
+          # `longest_status` includes 9 color characters from `Tty.color` and `Tty.reset`.
+          # We don't have these in the header row, so we don't need to add the extra padding.
+          headers = "#{Tty.bold}%-#{longest_name}.#{longest_name}<name>s " \
+                    "%-#{longest_status - 9}.#{longest_status - 9}<status>s " \
+                    "%-#{longest_user}.#{longest_user}<user>s %<file>s#{Tty.reset}"
+          row = "%-#{longest_name}.#{longest_name}<name>s " \
+                "%-#{longest_status}.#{longest_status}<status>s " \
+                "%-#{longest_user}.#{longest_user}<user>s %<file>s"
+
+          puts format(headers, name: "Name", status: "Status", user: "User", file: "File")
+          services.each do |service|
+            puts format(row, **service)
+          end
+        end
+
+        # Get formula status output
+        # @private
+        sig { params(status: Symbol).returns(String) }
+        def self.get_status_string(status)
+          case status
+          when :started, :scheduled then "#{Tty.green}#{status}#{Tty.reset}"
+          when :stopped, :none then "#{Tty.default}#{status}#{Tty.reset}"
+          when :error   then "#{Tty.red}error  #{Tty.reset}"
+          when :unknown then "#{Tty.yellow}unknown#{Tty.reset}"
+          when :other then "#{Tty.yellow}other#{Tty.reset}"
+          else raise ArgumentError, "Unknown service status: #{status.inspect}"
+          end
+        end
+      end
+    end
+  end
+end

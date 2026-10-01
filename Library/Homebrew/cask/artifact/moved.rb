@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/artifact/relocated"
@@ -13,14 +13,41 @@ module Cask
         "#{english_name}s"
       end
 
-      def install_phase(**options)
-        move(**options)
+      sig {
+        overridable.params(
+          adopt:        T::Boolean,
+          auto_updates: T.nilable(T::Boolean),
+          force:        T::Boolean,
+          verbose:      T::Boolean,
+          predecessor:  T.nilable(Cask),
+          successor:    T.nilable(Cask),
+          reinstall:    T::Boolean,
+          command:      T.class_of(SystemCommand),
+        ).void
+      }
+      def install_phase(adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil,
+                        successor: nil, reinstall: false, command: SystemCommand)
+        move(adopt:, auto_updates:, force:, verbose:, predecessor:, successor:, reinstall:, command:)
       end
 
-      def uninstall_phase(**options)
-        move_back(**options)
+      sig {
+        overridable.params(
+          skip:      T::Boolean,
+          force:     T::Boolean,
+          adopt:     T::Boolean,
+          verbose:   T::Boolean,
+          successor: T.nilable(Cask),
+          upgrade:   T::Boolean,
+          reinstall: T::Boolean,
+          command:   T.class_of(SystemCommand),
+        ).void
+      }
+      def uninstall_phase(skip: false, force: false, adopt: false, verbose: false, successor: nil, upgrade: false,
+                          reinstall: false, command: SystemCommand)
+        move_back(skip:, force:, adopt:, successor:, command:)
       end
 
+      sig { returns(String) }
       def summarize_installed
         if target.exist?
           "#{printable_target} (#{target.abv})"
@@ -29,10 +56,27 @@ module Cask
         end
       end
 
+      sig { overridable.params(target: Pathname, source: Pathname).returns(T::Array[T.any(String, Pathname)]) }
+      def backup_copy_args(target, source)
+        ["-pR", target, source]
+      end
+
       private
 
-      def move(adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil, reinstall: false,
-               command: nil, **options)
+      sig {
+        params(
+          adopt:        T::Boolean,
+          auto_updates: T.nilable(T::Boolean),
+          force:        T::Boolean,
+          verbose:      T::Boolean,
+          predecessor:  T.nilable(Cask),
+          successor:    T.nilable(Cask),
+          reinstall:    T::Boolean,
+          command:      T.class_of(SystemCommand),
+        ).returns(T.nilable(SystemCommand::Result))
+      }
+      def move(adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil, successor: nil,
+               reinstall: false, command: SystemCommand)
         unless source.exist?
           raise CaskError, "It seems the #{self.class.english_name} source '#{source}' is not there."
         end
@@ -98,7 +142,7 @@ module Cask
             raise CaskError, "#{message}." if !force && !adopt
 
             opoo "#{message}; overwriting."
-            delete(target, force:, command:, **options)
+            delete(target, force:, successor:, command:)
           end
         end
 
@@ -111,7 +155,7 @@ module Cask
             source.children.each { |child| FileUtils.move(child, target/child.basename) }
           else
             command.run!("/bin/cp", args: ["-pR", *source.children, target],
-                                    sudo: true)
+                                    sudo: nil)
           end
           Quarantine.copy_xattrs(source, target, command:)
           FileUtils.rm_r(source)
@@ -120,7 +164,7 @@ module Cask
         else
           # default sudo user isn't necessarily able to write to Homebrew's locations
           # e.g. with runas_default set in the sudoers (5) file.
-          command.run!("/bin/cp", args: ["-pR", source, target], sudo: true)
+          command.run!("/bin/cp", args: ["-pR", source, target], sudo: nil)
           FileUtils.rm_r(source)
         end
 
@@ -128,12 +172,14 @@ module Cask
       end
 
       # Performs any actions necessary after the source has been moved to the target location.
+      sig { params(command: T.class_of(SystemCommand)).returns(T.nilable(SystemCommand::Result)) }
       def post_move(command)
         FileUtils.ln_sf target, source
 
         add_altname_metadata(target, source.basename, command:)
       end
 
+      sig { params(cask: T.nilable(Cask)).returns(T::Boolean) }
       def matching_artifact?(cask)
         return false unless cask
 
@@ -142,7 +188,16 @@ module Cask
         end
       end
 
-      def move_back(skip: false, force: false, adopt: false, command: nil, **options)
+      sig {
+        params(
+          skip:      T::Boolean,
+          force:     T::Boolean,
+          adopt:     T::Boolean,
+          command:   T.class_of(SystemCommand),
+          successor: T.nilable(Cask),
+        ).void
+      }
+      def move_back(skip: false, force: false, adopt: false, command: SystemCommand, successor: nil)
         FileUtils.rm source if source.symlink? && source.dirname.join(source.readlink) == target
 
         if Utils.path_occupied?(source)
@@ -151,7 +206,7 @@ module Cask
           raise CaskError, "#{message}." if !force && !adopt
 
           opoo "#{message}; overwriting."
-          delete(source, force:, command:, **options)
+          delete(source, force:, successor:, command:)
         end
 
         unless target.exist?
@@ -160,25 +215,25 @@ module Cask
           raise CaskError, "It seems the #{self.class.english_name} source '#{target}' is not there."
         end
 
-        ohai "Backing #{self.class.english_name} '#{target.basename}' up to '#{source}'"
+        ohai "Backing up #{self.class.english_name} '#{target.basename}' to '#{source}'"
         source.dirname.mkpath
 
         # We need to preserve extended attributes between copies.
         # This may fail and need sudo if the source has files with restricted permissions.
-        [!source.parent.writable?, true].uniq.each do |sudo|
-          result = command.run(
-            "/bin/cp",
-            args:         ["-pR", target, source],
-            must_succeed: sudo,
-            sudo:,
-          )
-          break if result.success?
-        end
+        command.run!("/bin/cp", args: backup_copy_args(target, source), sudo: nil)
 
-        delete(target, force:, command:, **options)
+        delete(target, force:, successor:, command:)
       end
 
-      def delete(target, force: false, successor: nil, command: nil, **_)
+      sig {
+        params(
+          target:    Pathname,
+          force:     T::Boolean,
+          successor: T.nilable(Cask),
+          command:   T.class_of(SystemCommand),
+        ).void
+      }
+      def delete(target, force: false, successor: nil, command: SystemCommand)
         ohai "Removing #{self.class.english_name} '#{target}'"
         raise CaskError, "Cannot remove undeletable #{self.class.english_name}." if undeletable?(target)
 
@@ -197,7 +252,10 @@ module Cask
         end
       end
 
-      def undeletable?(target); end
+      sig { params(target: Pathname).returns(T::Boolean) }
+      def undeletable?(target)
+        !target.parent.writable?
+      end
     end
   end
 end

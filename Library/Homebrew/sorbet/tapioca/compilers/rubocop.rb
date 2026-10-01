@@ -1,7 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "method_source"
 require "rubocop"
 require_relative "../../../rubocops"
 
@@ -10,13 +9,16 @@ module Tapioca
     class RuboCop < Tapioca::Dsl::Compiler
       # This should be a module whose singleton class contains RuboCop::AST::NodePattern::Macros,
       #   but I don't know how to express that in Sorbet.
-      ConstantType = type_member { { fixed: Module } }
-      sig { override.returns(T::Enumerable[Module]) }
+      ConstantType = type_member { { fixed: T::Module[T.anything] } }
+      sig { override.returns(T::Enumerable[T::Module[T.anything]]) }
       def self.gather_constants
         all_modules.select do |klass|
           next unless klass.singleton_class < ::RuboCop::AST::NodePattern::Macros
 
-          path = T.must(Object.const_source_location(klass.to_s)).fetch(0).to_s
+          source_location = Object.const_source_location(klass.to_s)
+          next if source_location.nil?
+
+          path = source_location.fetch(0).to_s
           # exclude vendored code, to avoid contradicting their RBI files
           !path.include?("/vendor/bundle/ruby/") &&
             # exclude source code that already has an RBI file
@@ -30,11 +32,15 @@ module Tapioca
       def decorate
         root.create_path(constant) do |klass|
           constant.instance_methods(false).each do |method_name|
-            source = constant.instance_method(method_name).source.lstrip
+            source_location = constant.instance_method(method_name).source_location
+            next if source_location.nil?
+
+            source_file, source_line = source_location
+            source = File.readlines(source_file).fetch(source_line - 1).lstrip
             # For more info on these DSLs:
             #   https://www.rubydoc.info/gems/rubocop-ast/RuboCop/AST/NodePattern/Macros
-            #   https://github.com/rubocop/rubocop-ast/blob/master/lib/rubocop/ast/node_pattern.rb
-            #   https://github.com/rubocop/rubocop-ast/blob/master/lib/rubocop/ast/node_pattern/method_definer.rb
+            #   https://github.com/rubocop/rubocop-ast/blob/HEAD/lib/rubocop/ast/node_pattern.rb
+            #   https://github.com/rubocop/rubocop-ast/blob/HEAD/lib/rubocop/ast/node_pattern/method_definer.rb
             # The type signatures below could maybe be stronger, but I only wanted to avoid errors:
             case source
             when /\Adef_node_matcher/

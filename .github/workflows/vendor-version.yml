@@ -19,18 +19,22 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           core: false
           cask: false
-          test-bot: false
+
+      - name: Set up Ruby
+        uses: Homebrew/actions/setup-ruby@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+        with:
+          portable-ruby: true
 
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=all
 
       - name: Get Ruby ABI version
         id: ruby-abi
-        run: echo "version=$(brew ruby -e "puts Gem.ruby_api_version")" >> "${GITHUB_OUTPUT}"
+        run: echo "version=$(ruby -e 'puts Gem.ruby_api_version')" >> "${GITHUB_OUTPUT}"
 
       - name: Get gem info
         id: gem-info
@@ -53,7 +57,8 @@ jobs:
           git checkout "origin/${GITHUB_BASE_REF}"
           rm .homebrew_vendor_version
           brew install-bundler-gems --groups=all
-          if [[ "$(brew ruby -e "puts Gem.ruby_api_version")" == "${ABI_VERSION}" && \
+          # The install above re-points portable-ruby/current to the base ref's Ruby.
+          if [[ "$(ruby -e 'puts Gem.ruby_api_version')" == "${ABI_VERSION}" && \
                 "$(<.homebrew_vendor_version)" == "${VENDOR_VERSION}" ]]
           then
             while IFS= read -r gem; do
@@ -63,7 +68,7 @@ jobs:
               git check-ignore --quiet "${gem_dir}" || exit_code=$?
               if (( exit_code != 0 )); then
                 if (( exit_code == 1 )); then
-                  echo "::error::VENDOR_VERSION needs bumping in utils/gems.rb" >&2
+                  echo "::error::VENDOR_VERSION needs bumping in utils/gem_setup.rb" >&2
                 else
                   echo "::error::git check-ignore failed" >&2
                 fi

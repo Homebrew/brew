@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "utils/user"
@@ -8,10 +9,13 @@ RSpec.describe User do
   it { is_expected.to eq ENV.fetch("USER") }
 
   describe "#gui?" do
+    let(:who_output) { "" }
+
     before do
       allow(SystemCommand).to receive(:run)
         .with("who", any_args)
-        .and_return([who_output, "", instance_double(Process::Status, success?: true)])
+        .and_return(instance_double(SystemCommand::Result,
+                                    to_a: [who_output, "", instance_double(Process::Status, success?: true)]))
     end
 
     context "when the current user is in a console session" do

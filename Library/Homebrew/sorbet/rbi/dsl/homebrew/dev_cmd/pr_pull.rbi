@@ -26,11 +26,11 @@ class Homebrew::DevCmd::PrPull::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def clean?; end
 
-  sig { returns(T.nilable(String)) }
-  def committer; end
-
   sig { returns(T::Boolean) }
   def dry_run?; end
+
+  sig { returns(T.nilable(String)) }
+  def head_sha; end
 
   sig { returns(T.nilable(T::Array[String])) }
   def ignore_missing_artifacts; end

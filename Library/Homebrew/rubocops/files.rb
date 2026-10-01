@@ -24,14 +24,14 @@ module RuboCop
                            wanted: "a+r",
                            path:   file_path)
           end
-          # Check that the file is user-writeable.
+          # Check that the file is user-writable.
           if actual_mode & 0200 != 0200
             problem format("Incorrect file permissions (%03<actual>o): chmod %<wanted>s %<path>s",
                            actual: actual_mode & 0777,
                            wanted: "u+w",
                            path:   file_path)
           end
-          # Check that the file is *not* other-writeable.
+          # Check that the file is *not* other-writable.
           return if actual_mode & 0002 != 002
 
           problem format("Incorrect file permissions (%03<actual>o): chmod %<wanted>s %<path>s",

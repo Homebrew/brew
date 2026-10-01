@@ -22,6 +22,7 @@ module Hardware
     ].freeze, T::Array[Symbol])
 
     INTEL_64BIT_OLDEST_CPU = :core2
+    ROSETTA_RUNTIME_PATH = "/Library/Apple/usr/libexec/oah/libRosettaRuntime"
 
     class << self
       sig { returns(T::Hash[Symbol, String]) }
@@ -100,11 +101,13 @@ module Hardware
 
       sig { returns(Integer) }
       def cores
-        return @cores if @cores
-
-        @cores = Utils.popen_read("getconf", "_NPROCESSORS_ONLN").chomp.to_i
-        @cores = T.let(1, T.nilable(Integer)) unless $CHILD_STATUS.success?
-        @cores
+        @cores ||= T.let(
+          begin
+            cores = Utils.popen_read("getconf", "_NPROCESSORS_ONLN").chomp.to_i
+            $CHILD_STATUS.success? ? cores : 1
+          end,
+          T.nilable(Integer),
+        )
       end
 
       sig { returns(T.nilable(Integer)) }
@@ -163,6 +166,12 @@ module Hardware
         type == :arm
       end
 
+      # Check whether the CPU architecture is 64-bit ARM.
+      sig { returns(T::Boolean) }
+      def arm64?
+        arm? && is_64_bit?
+      end
+
       sig { returns(T::Boolean) }
       def little_endian?
         !big_endian?
@@ -173,7 +182,7 @@ module Hardware
         [1].pack("I") == [1].pack("N")
       end
 
-      sig { returns(FalseClass) }
+      sig { returns(T::Boolean) }
       def virtualized?
         false
       end
@@ -197,6 +206,11 @@ module Hardware
 
       sig { returns(T::Boolean) }
       def in_rosetta2?
+        false
+      end
+
+      sig { returns(T::Boolean) }
+      def rosetta_installed?
         false
       end
     end
@@ -259,6 +273,22 @@ module Hardware
       return if @target_cpu.blank?
 
       "--codegen target-cpu=#{@target_cpu}"
+    end
+
+    # Returns the closest Zig target CPU for the requested brew-supported
+    # architecture symbol. See `zig targets` for available CPUs.
+    #
+    # @see https://github.com/Homebrew/homebrew-core/issues/92282
+    sig { params(arch: Symbol).returns(Symbol) }
+    def zig_cpu(arch)
+      case arch
+      when :arm_vortex_tempest then :apple_m1
+      when :armv6 then :arm1136j_s
+      when :armv8 then :xgene1
+      when :core  then :prescott
+      when :dunno then :baseline
+      else arch.to_s.tr("-", "_").to_sym
+      end
     end
   end
 end

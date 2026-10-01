@@ -38,7 +38,7 @@ module RuboCop
             end
 
             if find_node_method_by_name(body_node, :keg_only)&.source&.include?("HOMEBREW_PREFIX")
-              problem "`keg_only` reason should not include `HOMEBREW_PREFIX` " \
+              problem "`keg_only` reason should not include `$HOMEBREW_PREFIX` " \
                       "as it creates confusing `brew info` output."
             end
           end
@@ -90,6 +90,30 @@ module RuboCop
             problem "Use separate `make` calls"
           end
 
+          find_every_method_call_by_name(body_node, :+).each do |plus_node|
+            next unless plus_node.receiver&.send_type?
+            next unless plus_node.first_argument&.str_type?
+
+            receiver_method = plus_node.receiver.method_name
+            path_arg = plus_node.first_argument.str_content
+
+            case receiver_method
+            when :prefix
+              next unless (match = path_arg.match(%r{^(bin|include|libexec|lib|sbin|share|Frameworks)(?:/| |$)}))
+
+              offending_node(plus_node)
+              problem "Use `#{match[1].downcase}` instead of `prefix + \"#{match[1]}\"`"
+            when :bin, :include, :libexec, :lib, :sbin, :share
+              next if path_arg.empty?
+
+              offending_node(plus_node)
+              good = "#{receiver_method}/\"#{path_arg}\""
+              problem "Use `#{good}` instead of `#{plus_node.source}`" do |corrector|
+                corrector.replace(plus_node.loc.expression, good)
+              end
+            end
+          end
+
           body_node.each_descendant(:dstr) do |dstr_node|
             dstr_node.each_descendant(:begin) do |interpolation_node|
               next unless interpolation_node.source.match?(/#\{\w+\s*\+\s*['"][^}]+\}/)
@@ -98,19 +122,7 @@ module RuboCop
               problem "Do not concatenate paths in string interpolation"
             end
           end
-
-          prefix_path(body_node) do |prefix_node, path|
-            next unless (match = path.match(%r{^(bin|include|libexec|lib|sbin|share|Frameworks)(?:/| |$)}))
-
-            offending_node(prefix_node)
-            problem "Use `#{match[1].downcase}` instead of `prefix + \"#{match[1]}\"`"
-          end
         end
-
-        # Find: prefix + "foo"
-        def_node_search :prefix_path, <<~EOS
-          $(send (send nil? :prefix) :+ (str $_))
-        EOS
       end
     end
 
@@ -123,15 +135,11 @@ module RuboCop
         def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
 
-          find_method_with_args(body_node, :go_resource) do
-            problem "`go_resource`s are deprecated. Please ask upstream to implement Go vendoring"
-          end
-
           find_method_with_args(body_node, :env, :userpaths) do
             problem "`env :userpaths` in homebrew/core formulae is deprecated"
           end
 
-          share_path_starts_with(body_node, T.must(@formula_name)) do |share_node|
+          share_path_starts_with(body_node, formula_name) do |share_node|
             offending_node(share_node)
             problem "Use `pkgshare` instead of `share/\"#{@formula_name}\"`"
           end
@@ -159,7 +167,7 @@ module RuboCop
         end
 
         # Check whether value starts with the formula name and then a "/", " " or EOS.
-        # If we're checking for "#{bin}", we also check for "-" since similar binaries also don't need interpolation.
+        # If we're checking for "#\\{bin}", we also check for "-" b/c similar binaries don't also need interpolation.
         sig { params(path: String, starts_with: String, bin: T::Boolean).returns(T::Boolean) }
         def path_starts_with?(path, starts_with, bin: false)
           ending = bin ? "/|-|$" : "/| |$"

@@ -34,6 +34,7 @@ We prefer:
 ### Style and usage
 
 * British/Commonwealth English over American English, in general
+* "licence" as a noun and "license" as a verb, while preserving literal interface names such as the `license` stanza
 * "e.g." and "i.e.": Go ahead and use "e.g." or "i.e." instead of spelling them out. Don't worry about putting a comma after them.
   * "e.g." means "for example"; "i.e." means "that is"
 * Offset nontrivial subordinate clauses with commas
@@ -52,6 +53,7 @@ We prefer:
 * Capitalise all list items if you want, even if they're not complete sentences; just be consistent within each list, and preferably, throughout the whole page
 * Use a subordinate list item instead of dropping a multi-sentence paragraph-long item into a list of sentence fragments
 * Prefer Markdown over other markup formats unless their specific features are needed
+* One sentence per source line in Markdown, without wrapping prose to a fixed width
   * GitHub Flavoured Markdown. GitHub's implementation is the standard, period.
 * Link to other documentation pages with relative links to the Markdown filename rather than the full URL
   * e.g. `FAQ.md` instead of `https://docs.brew.sh/FAQ`
@@ -65,6 +67,7 @@ We prefer:
 * No "$" with environment variables mentioned outside code snippets
   * e.g. "Set `BLAH` to 5", not "Set `$BLAH` to 5"
 * One space after periods, not two
+* Commas, colons or semicolons instead of em dashes
 * Capitalised proper nouns
 * We do not defer to extensive nonstandard capitalisation, typesetting, or other styling of brand names, aside from the normal capitalisation of proper nouns and simple internal capitalisation
 * No "TM", &trade;, <sup>SM</sup>, &copy;, &reg;, or other explicit indicators of rights ownership or trademarks; we take these as understood when the brand name is mentioned

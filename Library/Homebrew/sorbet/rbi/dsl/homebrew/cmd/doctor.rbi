@@ -18,5 +18,8 @@ class Homebrew::Cmd::Doctor::Args < Homebrew::CLI::Args
   def audit_debug?; end
 
   sig { returns(T::Boolean) }
+  def json?; end
+
+  sig { returns(T::Boolean) }
   def list_checks?; end
 end

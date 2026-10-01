@@ -27,12 +27,12 @@ module Homebrew
         groups = args.groups || args.add_groups || []
 
         if groups.delete("all")
-          groups |= Homebrew.valid_gem_groups
+          groups |= Utils::GemSetup.valid_gem_groups
         elsif args.groups # if we have been asked to replace
-          Homebrew.forget_user_gem_groups!
+          Utils::GemSetup.forget_user_gem_groups!
         end
 
-        Homebrew.install_bundler_gems!(groups:)
+        Utils::GemSetup.install_bundler_gems!(groups:)
       end
     end
   end

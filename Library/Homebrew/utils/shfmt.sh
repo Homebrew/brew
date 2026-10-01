@@ -16,9 +16,10 @@ then
   odie "${0##*/}: This program is internal and must be run via brew."
 fi
 
+# HOMEBREW_SHFMT is set by style.rb to the selected shfmt executable.
 # HOMEBREW_PREFIX is set by extend/ENV/super.rb
 # shellcheck disable=SC2154
-SHFMT="${HOMEBREW_PREFIX}/opt/shfmt/bin/shfmt"
+SHFMT="${HOMEBREW_SHFMT:-${HOMEBREW_PREFIX}/opt/shfmt/bin/shfmt}"
 if [[ ! -x "${SHFMT}" ]]
 then
   odie "${0##*/}: Please install shfmt by running \`brew install shfmt\`."
@@ -142,7 +143,7 @@ no_tabs() {
 # for var in ... \
 #            ...; do
 #
-# Use the followings instead (keep for statements only one line):
+# Use the following instead (keep for statements only one line):
 #   ARRAY=(
 #     ...
 #   )
@@ -156,7 +157,7 @@ no_multiline_for_statements() {
   local message
   message="$(
     cat <<EOMSG
-Use the followings instead (keep for statements only one line):
+Use the following instead (keep for statements only one line):
   ARRAY=(
     ...
   )
@@ -176,7 +177,7 @@ EOMSG
 # Check pattern:
 # IFS=$'\n'
 #
-# Use the followings instead:
+# Use the following instead:
 #   while IFS='' read -r line
 #   do
 #     ...
@@ -189,7 +190,7 @@ no_IFS_newline() {
   local message
   message="$(
     cat <<EOMSG
-Use the followings instead:
+Use the following instead:
   while IFS='' read -r line
   do
     ...

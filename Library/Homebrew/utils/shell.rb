@@ -1,6 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/path"
+require "utils/popen"
+
 module Utils
   module Shell
     extend T::Helpers
@@ -8,6 +11,69 @@ module Utils
     requires_ancestor { Kernel }
 
     module_function
+
+    sig { params(cmd: String, path: PATH::Elements).returns(T.nilable(Pathname)) }
+    def which(cmd, path = ENV.fetch("PATH"))
+      PATH.new(path).each do |entry|
+        begin
+          executable = File.expand_path(cmd, entry)
+        rescue ArgumentError
+          next
+        end
+        return Pathname.new(executable) if File.file?(executable) && File.executable?(executable)
+      end
+      nil
+    end
+
+    sig {
+      type_parameters(:U)
+        .params(
+          hash:   T::Hash[Object, T.nilable(T.any(PATH, Pathname, String))],
+          _block: T.proc.returns(T.type_parameter(:U)),
+        ).returns(T.type_parameter(:U))
+    }
+    def with_env(hash, &_block)
+      old_values = {}
+      begin
+        hash.each do |key, value|
+          key = key.to_s
+          old_values[key] = ENV.delete(key)
+          ENV[key] = value&.to_s
+        end
+
+        yield
+      ensure
+        ENV.update(old_values)
+      end
+    end
+
+    sig { type_parameters(:U).params(block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
+    def with_homebrew_path(&block)
+      with_env(PATH: PATH.new(ORIGINAL_PATHS).to_s, &block)
+    end
+
+    sig { params(formula: T.nilable(Formula)).void }
+    def interactive(formula = nil)
+      unless formula.nil?
+        ENV["HOMEBREW_DEBUG_PREFIX"] = formula.prefix.to_s
+        ENV["HOMEBREW_DEBUG_INSTALL"] = formula.full_name
+      end
+
+      if preferred == :zsh && (home = Dir.home).start_with?(Utils::Path.resolved_path(HOMEBREW_TEMP).to_s)
+        FileUtils.mkdir_p home
+        FileUtils.touch "#{home}/.zshrc"
+      end
+
+      term = ENV.fetch("HOMEBREW_TERM", ENV.fetch("TERM", nil))
+      with_env(TERM: term) do
+        Process.wait fork { exec preferred_path(default: "/bin/bash") }
+      end
+
+      return if $CHILD_STATUS.success?
+      raise "Aborted due to non-zero exit status (#{$CHILD_STATUS.exitstatus})" if $CHILD_STATUS.exited?
+
+      raise $CHILD_STATUS.inspect
+    end
 
     # Take a path and heuristically convert it to a shell name,
     # return `nil` if there's no match.
@@ -32,7 +98,7 @@ module Utils
 
     sig { returns(T.nilable(Symbol)) }
     def parent
-      from_path(`ps -p #{Process.ppid} -o ucomm=`.strip)
+      from_path(Utils.popen_read_text("ps", "-p", Process.ppid.to_s, "-o", "ucomm=", err: :err).strip)
     end
 
     # Quote values. Quoting keys is overkill.
@@ -40,14 +106,16 @@ module Utils
     def export_value(key, value, shell = preferred)
       case shell
       when :bash, :ksh, :mksh, :sh, :zsh
-        "export #{key}=\"#{sh_quote(value)}\""
+        "export #{key}=#{sh_quote(value)}"
       when :fish
         # fish quoting is mostly Bourne compatible except that
         # a single quote can be included in a single-quoted string via \'
         # and a literal \ can be included via \\
-        "set -gx #{key} \"#{sh_quote(value)}\""
+        "set -gx #{key} #{sh_quote(value)}"
+      when :pwsh
+        "$env:#{key} = #{pwsh_quote(value)}"
       when :rc
-        "#{key}=(#{sh_quote(value)})"
+        "#{key}=(#{rc_quote(value)})"
       when :csh, :tcsh
         "setenv #{key} #{csh_quote(value)};"
       end
@@ -79,16 +147,16 @@ module Utils
     sig { params(variable: String, value: String).returns(T.nilable(String)) }
     def set_variable_in_profile(variable, value)
       case preferred
-      when :bash, :ksh, :sh, :zsh, nil
-        "echo 'export #{variable}=#{sh_quote(value)}' >> #{profile}"
+      when :bash, :ksh, :mksh, :sh, :zsh, nil
+        "echo #{sh_single_quote("export #{variable}=#{sh_quote(value)}")} >> #{profile}"
       when :pwsh
-        "$env:#{variable}='#{value}' >> #{profile}"
+        "#{pwsh_quote("$env:#{variable} = #{pwsh_quote(value)}")} >> #{profile}"
       when :rc
-        "echo '#{variable}=(#{sh_quote(value)})' >> #{profile}"
+        "echo #{rc_quote("#{variable}=(#{rc_quote(value)})")} >> #{profile}"
       when :csh, :tcsh
-        "echo 'setenv #{variable} #{csh_quote(value)}' >> #{profile}"
+        "echo #{sh_single_quote("setenv #{variable} #{csh_quote(value)}")} >> #{profile}"
       when :fish
-        "echo 'set -gx #{variable} #{sh_quote(value)}' >> #{profile}"
+        "echo #{fish_quote("set -gx #{variable} #{sh_quote(value)}")} >> #{profile}"
       end
     end
 
@@ -96,13 +164,13 @@ module Utils
     def prepend_path_in_profile(path)
       case preferred
       when :bash, :ksh, :mksh, :sh, :zsh, nil
-        "echo 'export PATH=\"#{sh_quote(path)}:$PATH\"' >> #{profile}"
+        "echo #{sh_single_quote("export PATH=#{sh_quote(path)}:$PATH")} >> #{profile}"
       when :pwsh
-        "$env:PATH = '#{path}' + \":${env:PATH}\" >> #{profile}"
+        "#{pwsh_quote("$env:PATH = #{pwsh_quote(path)} + \":$env:PATH\"")} >> #{profile}"
       when :rc
-        "echo 'path=(#{sh_quote(path)} $path)' >> #{profile}"
+        "echo #{rc_quote("path=(#{rc_quote(path)} $path)")} >> #{profile}"
       when :csh, :tcsh
-        "echo 'setenv PATH #{csh_quote(path)}:$PATH' >> #{profile}"
+        "echo #{sh_single_quote("setenv PATH #{csh_quote(path)}:$PATH")} >> #{profile}"
       when :fish
         "fish_add_path #{sh_quote(path)}"
       end
@@ -134,10 +202,39 @@ module Utils
 
       str = str.dup
       # Anything that isn't a known safe character is padded.
-      str.gsub!(UNSAFE_SHELL_CHAR, "\\\\" + "\\1") # rubocop:disable Style/StringConcatenation
+      str.gsub!(UNSAFE_SHELL_CHAR, '\\\\\\1')
       # Newlines have to be specially quoted in `csh`.
       str.gsub!("\n", "'\\\n'")
       str
+    end
+
+    # A single-quoted string ends at the first `'`, so an embedded one has to
+    # close the string, escape the quote and reopen it. Nothing else is special
+    # inside single quotes, so one pass is enough.
+    sig { params(str: String).returns(String) }
+    def sh_single_quote(str)
+      "'#{str.gsub("'", "'\\\\''")}'"
+    end
+
+    # Inside fish single quotes `\'` and `\\` are escapes, so both have to be
+    # escaped rather than closing and reopening the string as in POSIX shells.
+    sig { params(str: String).returns(String) }
+    def fish_quote(str)
+      "'#{str.gsub("\\", "\\\\\\\\").gsub("'", "\\\\'")}'"
+    end
+
+    # PowerShell single-quoted strings take a literal `'` as `''` and expand
+    # nothing else, so one pass covers `$`, `"` and backticks too.
+    sig { params(str: String).returns(String) }
+    def pwsh_quote(str)
+      "'#{str.gsub("'", "''")}'"
+    end
+
+    # rc has no backslash escapes: only a single-quoted string is literal, and
+    # an embedded `'` is written `''`.
+    sig { params(str: String).returns(String) }
+    def rc_quote(str)
+      "'#{str.gsub("'", "''")}'"
     end
 
     sig { params(str: String).returns(String) }
@@ -148,7 +245,7 @@ module Utils
 
       str = str.dup
       # Anything that isn't a known safe character is padded.
-      str.gsub!(UNSAFE_SHELL_CHAR, "\\\\" + "\\1") # rubocop:disable Style/StringConcatenation
+      str.gsub!(UNSAFE_SHELL_CHAR, '\\\\\\1')
       str.gsub!("\n", "'\n'")
       str
     end
@@ -163,7 +260,7 @@ module Utils
         zdotdir.mkpath
         FileUtils.chmod_R(0700, zdotdir)
         FileUtils.cp(HOMEBREW_LIBRARY_PATH/"utils/zsh/brew-sh-prompt-zshrc.zsh", zdotdir/".zshrc")
-        %w[.zcompdump .zsh_history .zsh_sessions].each do |file|
+        %w[.zshenv .zcompdump .zsh_history .zsh_sessions].each do |file|
           FileUtils.ln_sf("#{home}/#{file}", zdotdir/file)
         end
         <<~ZSH.strip

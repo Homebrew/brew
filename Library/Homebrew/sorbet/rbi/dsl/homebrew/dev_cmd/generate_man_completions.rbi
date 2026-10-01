@@ -10,4 +10,7 @@ class Homebrew::DevCmd::GenerateManCompletions
   def args; end
 end
 
-class Homebrew::DevCmd::GenerateManCompletions::Args < Homebrew::CLI::Args; end
+class Homebrew::DevCmd::GenerateManCompletions::Args < Homebrew::CLI::Args
+  sig { returns(T::Boolean) }
+  def no_exit_code?; end
+end

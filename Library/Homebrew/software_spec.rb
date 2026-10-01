@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "resource"
@@ -20,37 +20,79 @@ class SoftwareSpec
   extend Forwardable
   include OnSystem::MacOSAndLinux
 
-  PREDEFINED_OPTIONS = {
-    universal: Option.new("universal", "Build a universal binary"),
-    cxx11:     Option.new("c++11",     "Build using C++11 mode"),
-  }.freeze
+  sig { returns(T.nilable(String)) }
+  attr_reader :name
 
-  attr_reader :name, :full_name, :owner, :build, :resources, :patches, :options, :deprecated_flags,
-              :deprecated_options, :dependency_collector, :bottle_specification, :compiler_failures
+  sig { returns(T.nilable(String)) }
+  attr_reader :full_name
 
-  def_delegators :@resource, :stage, :fetch, :verify_download_integrity, :source_modified_time, :download_name,
+  sig { returns(T.nilable(T.any(Formula, Cask::Cask))) }
+  attr_reader :owner
+
+  sig { returns(BuildOptions) }
+  attr_reader :build
+
+  sig { returns(T::Hash[String, Resource]) }
+  attr_reader :resources
+
+  sig { returns(T::Array[T.any(EmbeddedPatch, ExternalPatch)]) }
+  attr_reader :patches
+
+  sig { returns(Options) }
+  attr_reader :options
+
+  sig { returns(T::Array[DeprecatedOption]) }
+  attr_reader :deprecated_flags
+
+  sig { returns(T::Array[DeprecatedOption]) }
+  attr_reader :deprecated_options
+
+  sig { returns(DependencyCollector) }
+  attr_reader :dependency_collector
+
+  sig { returns(BottleSpecification) }
+  attr_reader :bottle_specification
+
+  sig { returns(T::Array[CompilerFailure]) }
+  attr_reader :compiler_failures
+
+  sig { returns(T::Boolean) }
+  attr_reader :depends_on_macos_set_in_block
+
+  def_delegators :@resource, :stage, :fetch, :verify_download_integrity, :source_modified_time,
                  :cached_download, :clear_cache, :checksum, :mirrors, :specs, :using, :version, :mirror,
-                 :downloader
+                 :downloader, :download_queue_name, :download_queue_type
 
   def_delegators :@resource, :sha256
 
+  sig { params(flags: T::Array[String]).void }
   def initialize(flags: [])
     super()
 
+    @name = T.let(nil, T.nilable(String))
+    @full_name = T.let(nil, T.nilable(String))
+    @owner = T.let(nil, T.nilable(T.any(Formula, Cask::Cask)))
+
     # Ensure this is synced with `initialize_dup` and `freeze` (excluding simple objects like integers and booleans)
     @resource = T.let(Resource::Formula.new, Resource::Formula)
-    @resources = {}
-    @dependency_collector = DependencyCollector.new
-    @bottle_specification = BottleSpecification.new
-    @patches = []
-    @options = Options.new
+    @resources = T.let({}, T::Hash[String, Resource])
+    @dependency_collector = T.let(DependencyCollector.new, DependencyCollector)
+    @bottle_specification = T.let(BottleSpecification.new, BottleSpecification)
+    @patches = T.let([], T::Array[T.any(EmbeddedPatch, ExternalPatch)])
+    @options = T.let(Options.new, Options)
     @flags = flags
-    @deprecated_flags = []
-    @deprecated_options = []
-    @build = BuildOptions.new(Options.create(@flags), options)
-    @compiler_failures = []
+    @deprecated_flags = T.let([], T::Array[DeprecatedOption])
+    @deprecated_options = T.let([], T::Array[DeprecatedOption])
+    @build = T.let(BuildOptions.new(Options.create(@flags), options), BuildOptions)
+    @compiler_failures = T.let([], T::Array[CompilerFailure])
+    @depends_on_macos_bare_set_top_level = T.let(false, T::Boolean)
+    @depends_on_macos_version_set_top_level = T.let(false, T::Boolean)
+    @depends_on_maximum_macos_set_top_level = T.let(false, T::Boolean)
+    @depends_on_macos_set_in_block = T.let(false, T::Boolean)
+    @depends_on_linux_set_top_level = T.let(false, T::Boolean)
   end
 
+  sig { override.params(other: T.any(SoftwareSpec, Downloadable)).void }
   def initialize_dup(other)
     super
     @resource = @resource.dup
@@ -66,6 +108,7 @@ class SoftwareSpec
     @compiler_failures = @compiler_failures.dup
   end
 
+  sig { override.returns(T.self_type) }
   def freeze
     @resource.freeze
     @resources.freeze
@@ -81,11 +124,7 @@ class SoftwareSpec
     super
   end
 
-  sig { override.returns(String) }
-  def download_type
-    "formula"
-  end
-
+  sig { params(owner: T.any(Formula, Cask::Cask)).void }
   def owner=(owner)
     @name = owner.name
     @full_name = owner.full_name
@@ -111,32 +150,44 @@ class SoftwareSpec
     @resource.url
   end
 
+  sig { returns(T::Boolean) }
   def bottle_defined?
     !bottle_specification.collector.tags.empty?
   end
 
+  sig { params(tag: T.nilable(T.any(Utils::Bottles::Tag, Symbol))).returns(T::Boolean) }
   def bottle_tag?(tag = nil)
     bottle_specification.tag?(Utils::Bottles.tag(tag))
   end
 
+  sig { params(tag: T.nilable(T.any(Utils::Bottles::Tag, Symbol))).returns(T::Boolean) }
   def bottled?(tag = nil)
-    bottle_tag?(tag) &&
-      (tag.present? || bottle_specification.compatible_locations? || owner.force_bottle)
+    return false unless bottle_tag?(tag)
+
+    return true if tag.present?
+    return true if bottle_specification.compatible_locations?
+
+    owner = self.owner
+    return false unless owner.is_a?(Formula)
+
+    owner.force_bottle || owner.bottle.present?
   end
 
+  sig { params(block: T.proc.bind(BottleSpecification).void).void }
   def bottle(&block)
     bottle_specification.instance_eval(&block)
   end
 
+  sig { params(name: String).returns(T::Boolean) }
   def resource_defined?(name)
     resources.key?(name)
   end
 
   sig {
-    params(name: String, klass: T.class_of(Resource), block: T.nilable(T.proc.bind(Resource).void))
+    params(name: T.nilable(String), klass: T.class_of(Resource), block: T.nilable(T.proc.bind(Resource).void))
       .returns(T.nilable(Resource))
   }
-  def resource(name = T.unsafe(nil), klass = Resource, &block)
+  def resource(name = nil, klass = Resource, &block)
     if block
       raise ArgumentError, "Resource must have a name." if name.nil?
       raise DuplicateResourceError, name if resource_defined?(name)
@@ -154,24 +205,21 @@ class SoftwareSpec
     end
   end
 
+  sig { params(name: T.any(Option, String)).returns(T::Boolean) }
   def option_defined?(name)
     options.include?(name)
   end
 
+  sig { params(name: String, description: String).void }
   def option(name, description = "")
-    opt = PREDEFINED_OPTIONS.fetch(name) do
-      unless name.is_a?(String)
-        raise ArgumentError, "option name must be string or symbol; got a #{name.class}: #{name}"
-      end
-      raise ArgumentError, "option name is required" if name.empty?
-      raise ArgumentError, "option name must be longer than one character: #{name}" if name.length <= 1
-      raise ArgumentError, "option name must not start with dashes: #{name}" if name.start_with?("-")
+    raise ArgumentError, "option name is required" if name.empty?
+    raise ArgumentError, "option name must be longer than one character: #{name}" if name.length <= 1
+    raise ArgumentError, "option name must not start with dashes: #{name}" if name.start_with?("-")
 
-      Option.new(name, description)
-    end
-    options << opt
+    options << Option.new(name, description)
   end
 
+  sig { params(hash: T::Hash[T.any(String, T::Array[String]), T.any(String, T::Array[String])]).void }
   def deprecated_option(hash)
     raise ArgumentError, "deprecated_option hash must not be empty" if hash.empty?
 
@@ -194,9 +242,92 @@ class SoftwareSpec
     @build = BuildOptions.new(Options.create(@flags), options)
   end
 
-  def depends_on(spec)
+  sig {
+    params(
+      spec:         T.nilable(T.any(String, Symbol,
+                                    T::Hash[T.any(String, Symbol, T::Class[Requirement]), T.untyped],
+                                    T::Class[Requirement], Dependable)),
+      set_in_block: T::Boolean,
+      spec_kwargs:  T.untyped,
+    ).void
+  }
+  def depends_on(spec = nil, set_in_block: false, **spec_kwargs)
+    spec = spec_kwargs if spec.nil? && spec_kwargs.present?
     dep = dependency_collector.add(spec)
+    record_os_requirement(dep, set_in_block:)
     add_dep_option(dep) if dep
+  end
+
+  sig { returns(T::Boolean) }
+  def depends_on_macos_set_top_level?
+    @depends_on_macos_bare_set_top_level ||
+      @depends_on_macos_version_set_top_level ||
+      @depends_on_maximum_macos_set_top_level
+  end
+
+  sig { returns(T::Boolean) }
+  def depends_on_linux_set_top_level?
+    @depends_on_linux_set_top_level
+  end
+
+  sig { params(dep: T.untyped, set_in_block: T::Boolean).void }
+  def record_os_requirement(dep, set_in_block:)
+    case dep
+    when MacOSRequirement
+      if set_in_block
+        @depends_on_macos_set_in_block = true
+        return
+      end
+
+      if @depends_on_linux_set_top_level
+        raise ArgumentError,
+              "`depends_on :linux` cannot be combined with `depends_on macos:`"
+      end
+
+      if !dep.version_specified?
+        if @depends_on_macos_bare_set_top_level
+          raise ArgumentError, "`depends_on :macos` cannot be combined with another macOS `depends_on`"
+        end
+
+        if @depends_on_macos_version_set_top_level || @depends_on_maximum_macos_set_top_level
+          odisabled "`depends_on :macos` with `depends_on macos:`",
+                    "`depends_on :macos` with `depends_on macos:` inside an `on_macos` block"
+        end
+
+        @depends_on_macos_bare_set_top_level = true
+      elsif dep.comparator == "<="
+        if @depends_on_macos_bare_set_top_level
+          odisabled "`depends_on :macos` with `depends_on maximum_macos:`",
+                    "`depends_on :macos` with `depends_on maximum_macos:` inside an `on_macos` block"
+        end
+
+        if @depends_on_maximum_macos_set_top_level
+          raise ArgumentError, "`depends_on maximum_macos:` cannot be combined with another macOS `depends_on`"
+        end
+
+        @depends_on_maximum_macos_set_top_level = true
+      else
+        if @depends_on_macos_bare_set_top_level
+          odisabled "`depends_on :macos` with `depends_on macos:`",
+                    "`depends_on :macos` with `depends_on macos:` inside an `on_macos` block"
+        end
+
+        if @depends_on_macos_version_set_top_level
+          raise ArgumentError, "`depends_on macos:` cannot be combined with another macOS `depends_on`"
+        end
+
+        @depends_on_macos_version_set_top_level = true
+      end
+    when LinuxRequirement
+      return if set_in_block
+
+      if depends_on_macos_set_top_level?
+        raise ArgumentError,
+              "`depends_on :linux` cannot be combined with `depends_on macos:`"
+      end
+
+      @depends_on_linux_set_top_level = true
+    end
   end
 
   sig {
@@ -219,14 +350,17 @@ class SoftwareSpec
     depends_on UsesFromMacOSDependency.new(dep, tags, bounds:)
   end
 
+  sig { returns(Dependencies) }
   def deps
     dependency_collector.deps.dup_without_system_deps
   end
 
+  sig { returns(Dependencies) }
   def declared_deps
     dependency_collector.deps
   end
 
+  sig { returns(T::Array[Dependency]) }
   def recursive_dependencies
     deps_f = []
     recursive_dependencies = deps.filter_map do |dep|
@@ -244,14 +378,20 @@ class SoftwareSpec
     recursive_dependencies
   end
 
+  sig { returns(Requirements) }
   def requirements
     dependency_collector.requirements
   end
 
+  sig { returns(Requirements) }
   def recursive_requirements
     Requirement.expand(self)
   end
 
+  sig {
+    params(strip: T.any(Symbol, String), src: T.nilable(T.any(String, Symbol)),
+           block: T.nilable(T.proc.bind(Resource::Patch).void)).void
+  }
   def patch(strip = :p1, src = nil, &block)
     p = Patch.create(strip, src, &block)
     return if p.is_a?(ExternalPatch) && p.url.blank?
@@ -260,16 +400,12 @@ class SoftwareSpec
     patches << p
   end
 
+  sig { params(compiler: T.any(T::Hash[Symbol, String], Symbol), block: T.nilable(T.proc.bind(CompilerFailure).void)).void }
   def fails_with(compiler, &block)
     compiler_failures << CompilerFailure.create(compiler, &block)
   end
 
-  def needs(*standards)
-    standards.each do |standard|
-      compiler_failures.concat CompilerFailure.for_standard(standard)
-    end
-  end
-
+  sig { params(dep: Dependable).void }
   def add_dep_option(dep)
     dep.option_names.each do |name|
       if dep.optional? && !option_defined?("with-#{name}")

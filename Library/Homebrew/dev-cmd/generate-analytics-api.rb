@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/brew_command"
+
 require "abstract_command"
 require "fileutils"
 
@@ -11,7 +13,7 @@ module Homebrew
         build-error install install-on-request
         core-build-error core-install core-install-on-request
         cask-install core-cask-install os-version
-        homebrew-devcmdrun-developer homebrew-os-arch-ci
+        homebrew-devcmdrun-developer homebrew-env-config homebrew-os-arch-ci
         homebrew-prefixes homebrew-versions
         brew-command-run brew-command-run-options brew-test-bot-test
       ].freeze
@@ -22,12 +24,13 @@ module Homebrew
 
       cmd_args do
         description <<~EOS
-          Generates analytics API data files for formulae.brew.sh.
-
+          Generates analytics API data files for <#{HOMEBREW_API_WWW}>.
           The generated files are written to the current directory.
         EOS
 
         named_args :none
+
+        hide_from_man_page!
       end
 
       sig { params(category_name: String, data_source: T.nilable(String)).returns(String) }
@@ -67,7 +70,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        safe_system HOMEBREW_BREW_FILE, "formula-analytics", "--setup"
+        Utils::BrewCommand.run! "formula-analytics", "--setup"
 
         directories = ["_data/analytics", "api/analytics"]
         FileUtils.rm_rf directories

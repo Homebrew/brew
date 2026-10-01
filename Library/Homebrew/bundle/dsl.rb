@@ -1,30 +1,57 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module Homebrew
   module Bundle
+    EntryOptionScalar = T.type_alias { T.nilable(T.any(String, Integer, Symbol, TrueClass, FalseClass)) }
+    NestedEntryOptionValue = T.type_alias { T.any(EntryOptionScalar, T::Array[String]) }
+    NestedEntryOptions = T.type_alias { T::Hash[Symbol, NestedEntryOptionValue] }
+    EntryOption = T.type_alias { T.any(EntryOptionScalar, T::Array[String], NestedEntryOptions) }
+    EntryOptions = T.type_alias { T::Hash[Symbol, EntryOption] }
+    EntryInputOptions = T.type_alias { T::Hash[Symbol, Object] }
+
     class Dsl
       class Entry
-        attr_reader :type, :name, :options
+        sig { returns(Symbol) }
+        attr_reader :type
 
+        sig { returns(String) }
+        attr_reader :name
+
+        sig { returns(Homebrew::Bundle::EntryOptions) }
+        attr_reader :options
+
+        sig { params(type: Symbol, name: String, options: Homebrew::Bundle::EntryOptions).void }
         def initialize(type, name, options = {})
           @type = type
           @name = name
           @options = options
         end
 
+        sig { returns(String) }
         def to_s
           name
         end
       end
 
-      attr_reader :entries, :cask_arguments, :input
+      sig { returns(T::Array[Entry]) }
+      attr_reader :entries
 
+      sig { returns(T::Hash[Symbol, T.untyped]) }
+      attr_reader :cask_arguments
+
+      sig { returns(String) }
+      attr_reader :input
+
+      sig { params(path: T.any(Pathname, StringIO)).void }
       def initialize(path)
         @path = path
-        @input = path.read
-        @entries = []
-        @cask_arguments = {}
+        path_read = path.read
+        raise "path_read is nil" unless path_read
+
+        @input = T.let(path_read, String)
+        @entries = T.let([], T::Array[Entry])
+        @cask_arguments = T.let({}, T::Hash[Symbol, T.untyped])
 
         begin
           process
@@ -35,83 +62,81 @@ module Homebrew
         end
       end
 
+      sig { void }
       def process
         instance_eval(@input, @path.to_s)
       end
 
+      sig { params(args: T::Hash[Symbol, T.untyped]).void }
       def cask_args(args)
-        raise "cask_args(#{args.inspect}) should be a Hash object" unless args.is_a? Hash
-
         @cask_arguments.merge!(args)
       end
 
+      sig { params(name: String, options: Homebrew::Bundle::EntryOptions).void }
       def brew(name, options = {})
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-        raise "options(#{options.inspect}) should be a Hash object" unless options.is_a? Hash
+        validate_type!(options, Hash, "brew options")
 
         name = Homebrew::Bundle::Dsl.sanitize_brew_name(name)
         @entries << Entry.new(:brew, name, options)
       end
 
+      sig { params(name: String, options: Homebrew::Bundle::EntryOptions).void }
       def cask(name, options = {})
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-        raise "options(#{options.inspect}) should be a Hash object" unless options.is_a? Hash
-
         options[:full_name] = name
         name = Homebrew::Bundle::Dsl.sanitize_cask_name(name)
-        options[:args] = @cask_arguments.merge options.fetch(:args, {})
+        options[:args] =
+          @cask_arguments.merge T.cast(options.fetch(:args, {}), T::Hash[Symbol, NestedEntryOptionValue])
         @entries << Entry.new(:cask, name, options)
       end
 
-      def mas(name, options = {})
-        id = options[:id]
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-        raise "options[:id](#{id}) should be an Integer object" unless id.is_a? Integer
+      sig {
+        params(
+          name:            String,
+          clone_target:    T.nilable(String),
+          options:         Homebrew::Bundle::EntryOptions,
+          keyword_options: Homebrew::Bundle::EntryOption,
+        ).void
+      }
+      def tap(name, clone_target = nil, options = {}, **keyword_options)
+        validate_type!(clone_target, String, "tap clone target") if clone_target
 
-        @entries << Entry.new(:mas, name, id:)
-      end
-
-      def whalebrew(name)
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-
-        @entries << Entry.new(:whalebrew, name)
-      end
-
-      def vscode(name)
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-
-        @entries << Entry.new(:vscode, name)
-      end
-
-      def tap(name, clone_target = nil, options = {})
-        raise "name(#{name.inspect}) should be a String object" unless name.is_a? String
-        if clone_target && !clone_target.is_a?(String)
-          raise "clone_target(#{clone_target.inspect}) should be nil or a String object"
-        end
-
+        options.merge!(keyword_options)
         options[:clone_target] = clone_target
         name = Homebrew::Bundle::Dsl.sanitize_tap_name(name)
         @entries << Entry.new(:tap, name, options)
       end
 
+      sig { params(value: Object, type: T.any(T.class_of(Hash), T.class_of(String)), description: String).void }
+      def validate_type!(value, type, description)
+        raise "#{description} must be a #{type}" unless value.is_a?(type)
+      end
+      private :validate_type!
+
       HOMEBREW_TAP_ARGS_REGEX = %r{^([\w-]+)/(homebrew-)?([\w-]+)$}
       HOMEBREW_CORE_FORMULA_REGEX = %r{^homebrew/homebrew/([\w+-.@]+)$}i
       HOMEBREW_TAP_FORMULA_REGEX = %r{^([\w-]+)/([\w-]+)/([\w+-.@]+)$}
 
+      sig { params(name: String).returns(String) }
       def self.sanitize_brew_name(name)
         name = name.downcase
         if name =~ HOMEBREW_CORE_FORMULA_REGEX
-          Regexp.last_match(1)
+          sanitized_name = Regexp.last_match(1)
+          raise "sanitized_name is nil" unless sanitized_name
+
+          sanitized_name
         elsif name =~ HOMEBREW_TAP_FORMULA_REGEX
           user = Regexp.last_match(1)
-          repo = T.must(Regexp.last_match(2))
+          repo = Regexp.last_match(2)
           name = Regexp.last_match(3)
+          raise "repo is nil" unless repo
+
           "#{user}/#{repo.sub("homebrew-", "")}/#{name}"
         else
           name
         end
       end
 
+      sig { params(name: String).returns(String) }
       def self.sanitize_tap_name(name)
         name = name.downcase
         if name =~ HOMEBREW_TAP_ARGS_REGEX
@@ -121,13 +146,46 @@ module Homebrew
         end
       end
 
+      sig { params(name: String).returns(String) }
       def self.sanitize_cask_name(name)
-        name = name.split("/").last if name.include?("/")
-        name.downcase
+        require "utils"
+        Utils.name_from_full_name(name).downcase
       end
 
-      def self.pluralize_dependency(installed_count)
-        (installed_count == 1) ? "dependency" : "dependencies"
+      sig {
+        override.params(method_name: Symbol, args: T.untyped, options: T.untyped,
+                        block: T.nilable(T.proc.void)).returns(T.untyped)
+      }
+      def method_missing(method_name, *args, **options, &block)
+        require "bundle/extensions"
+        extension = Homebrew::Bundle.extension(method_name)
+        return super if extension.nil?
+        raise ArgumentError, "blocks are not supported for #{method_name}" if block
+
+        # Extension DSL entries follow the existing Brewfile calling convention:
+        # a required name plus an optional options hash, passed positionally,
+        # with keywords, or both.
+        unless (1..2).cover?(args.length)
+          raise ArgumentError,
+                "wrong number of arguments (given #{args.length}, expected 1..2)"
+        end
+
+        positional_options = {}
+        if args.length == 2
+          positional_options = args[1]
+          unless positional_options.is_a? Hash
+            raise ArgumentError,
+                  "options(#{positional_options.inspect}) should be a Hash object"
+          end
+        end
+
+        @entries << extension.entry(args.first, positional_options.merge(options))
+      end
+
+      sig { override.params(method_name: T.any(String, Symbol), include_private: T::Boolean).returns(T::Boolean) }
+      def respond_to_missing?(method_name, include_private = false)
+        require "bundle/extensions"
+        !Homebrew::Bundle.extension(method_name).nil? || super
       end
     end
   end

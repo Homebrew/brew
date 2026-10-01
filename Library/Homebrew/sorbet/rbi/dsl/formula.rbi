@@ -9,6 +9,9 @@ class Formula
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def allow_network_access!(*args, &block); end
 
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def api_source(*args, &block); end
+
   sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
   def autobump?(*args, &block); end
 
@@ -39,6 +42,9 @@ class Formula
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def deny_network_access!(*args, &block); end
 
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def deprecate_args(*args, &block); end
+
   sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
   def deprecated?(*args, &block); end
 
@@ -67,6 +73,9 @@ class Formula
   def desc(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def disable_args(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def disable_date(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
@@ -91,6 +100,9 @@ class Formula
   def homepage(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def homepage_browsed(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def keg_only_reason(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
@@ -109,16 +121,139 @@ class Formula
   def loaded_from_api?(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
+  def loaded_from_internal_api?(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
   def network_access_allowed?(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def no_autobump!(*args, &block); end
 
-  sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
-  def no_autobump_defined?(*args, &block); end
-
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def no_autobump_message(*args, &block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        arm: T.nilable(T.type_parameter(:U)),
+        intel: T.nilable(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_arch_conditional(arm: nil, intel: nil); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_arm(&block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        or_condition: T.nilable(Symbol),
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_big_sur(or_condition = nil, &block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        or_condition: T.nilable(Symbol),
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_golden_gate(or_condition = nil, &block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_intel(&block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_linux(&block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_macos(&block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        or_condition: T.nilable(Symbol),
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_monterey(or_condition = nil, &block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        or_condition: T.nilable(Symbol),
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_sequoia(or_condition = nil, &block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        or_condition: T.nilable(Symbol),
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_sonoma(or_condition = nil, &block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        linux: Symbol,
+        macos: Symbol,
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_system(linux, macos:, &block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        macos: T.nilable(T.type_parameter(:U)),
+        linux: T.nilable(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_system_conditional(macos: nil, linux: nil); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        or_condition: T.nilable(Symbol),
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_tahoe(or_condition = nil, &block); end
+
+  sig do
+    type_parameters(:U)
+      .params(
+        or_condition: T.nilable(Symbol),
+        block: T.proc.returns(T.type_parameter(:U))
+      ).returns(T.nilable(T.type_parameter(:U)))
+  end
+  def on_ventura(or_condition = nil, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T::Boolean) }
   def option_defined?(*args, &block); end
@@ -142,6 +277,9 @@ class Formula
   def pinned_version(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def post_install_steps(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def pour_bottle_check_unsatisfied_reason(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
@@ -158,4 +296,129 @@ class Formula
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def version(*args, &block); end
+
+  class << self
+    sig do
+      type_parameters(:U)
+        .params(
+          arm: T.nilable(T.type_parameter(:U)),
+          intel: T.nilable(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_arch_conditional(arm: nil, intel: nil); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_arm(&block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          or_condition: T.nilable(Symbol),
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_big_sur(or_condition = nil, &block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          or_condition: T.nilable(Symbol),
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_golden_gate(or_condition = nil, &block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_intel(&block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_linux(&block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_macos(&block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          or_condition: T.nilable(Symbol),
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_monterey(or_condition = nil, &block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          or_condition: T.nilable(Symbol),
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_sequoia(or_condition = nil, &block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          or_condition: T.nilable(Symbol),
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_sonoma(or_condition = nil, &block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          linux: Symbol,
+          macos: Symbol,
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_system(linux, macos:, &block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          macos: T.nilable(T.type_parameter(:U)),
+          linux: T.nilable(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_system_conditional(macos: nil, linux: nil); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          or_condition: T.nilable(Symbol),
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_tahoe(or_condition = nil, &block); end
+
+    sig do
+      type_parameters(:U)
+        .params(
+          or_condition: T.nilable(Symbol),
+          block: T.proc.returns(T.type_parameter(:U))
+        ).returns(T.nilable(T.type_parameter(:U)))
+    end
+    def on_ventura(or_condition = nil, &block); end
+  end
 end

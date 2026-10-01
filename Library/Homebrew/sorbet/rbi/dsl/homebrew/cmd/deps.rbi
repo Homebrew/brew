@@ -20,6 +20,9 @@ class Homebrew::Cmd::Deps::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def arch; end
 
+  sig { returns(T.nilable(String)) }
+  def brewfile; end
+
   sig { returns(T::Boolean) }
   def cask?; end
 
@@ -79,6 +82,9 @@ class Homebrew::Cmd::Deps::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def os; end
+
+  sig { returns(T::Boolean) }
+  def prune?; end
 
   sig { returns(T::Boolean) }
   def skip_recommended?; end

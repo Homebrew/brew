@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/presence"
@@ -319,7 +320,7 @@ RSpec.describe RuboCop::Cop::Homebrew::Presence, :config do
   end
 
   context "when a right-hand side of the relational operator" do
-    %w[< > <= >= == !=].each do |operator|
+    test_each(%w[< > <= >= == !=]) do |operator|
       it "registers an offense and corrects when `#{operator}`" do
         expect_offense(<<~RUBY, operator:)
           a #{operator} if b.present?

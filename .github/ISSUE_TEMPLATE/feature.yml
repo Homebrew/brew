@@ -4,13 +4,15 @@ type: "Feature"
 body:
   - type: markdown
     attributes:
-      value: Please note we will close your issue without comment if you do not fill out the issue checklist below and provide ALL the requested information. If you repeatedly fail to use the issue template, we will block you from ever submitting issues to Homebrew again.
+      value: We will close your issue without comment if you don't fill out the checklist below and provide ALL requested information. If you repeatedly fail to use the issue template, we will block you from submitting issues to Homebrew again.
   - type: checkboxes
     attributes:
       label: Verification
-      description: Please verify that you've followed these steps.
+      description: Verify you've followed these steps. Don't delete these checkboxes or your issue will be closed automatically.
       options:
         - label: This issue's title and/or description do not reference a single formula e.g. `brew install wget`. If they do, open an issue at https://github.com/Homebrew/homebrew-core/issues/new/choose instead.
+          required: true
+        - label: I did not use AI/LLM to create this issue, or I disclosed the tool and model used; I will answer maintainer questions myself without AI/LLM.
           required: true
   - type: textarea
     attributes:
@@ -34,4 +36,4 @@ body:
       required: true
   - type: markdown
     attributes:
-      value: We will close this issue or ask you to create a pull-request if it's something the maintainers are not actively planning to work on.
+      value: We will close this issue or ask you to open a pull request if it's something the maintainers aren't actively planning to work on.

@@ -11,7 +11,7 @@ module UnpackStrategy
       [".rar"]
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       path.magic_number.match?(/\ARar!/n)
     end
@@ -27,7 +27,7 @@ module UnpackStrategy
     def extract_to_dir(unpack_dir, basename:, verbose:)
       system_command! "bsdtar",
                       args:    ["x", "-f", path, "-C", unpack_dir],
-                      env:     { "PATH" => PATH.new(Formula["libarchive"].opt_bin, ENV.fetch("PATH")) },
+                      env:     Utils::Path.formula_opt_bin_env("libarchive"),
                       verbose:
     end
   end

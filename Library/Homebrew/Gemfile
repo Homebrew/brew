@@ -2,13 +2,7 @@
 
 source "https://rubygems.org"
 
-# The default case (no envs), should always be a restrictive bound on the lowest supported minor version.
-# This is the branch that Dependabot will use.
-if ENV.fetch("HOMEBREW_USE_RUBY_FROM_PATH", "").empty?
-  ruby "~> 3.4.0"
-else
-  ruby ">= 3.4.0"
-end
+ruby ">= 4.0.0"
 
 # disallowed gems (should not be used)
 # * nokogiri - use rexml instead for XML parsing
@@ -16,7 +10,6 @@ end
 # installed gems (should all be require: false)
 # ALL gems that are not vendored should be in a group
 group :doc, optional: true do
-  gem "redcarpet", require: false
   gem "yard", require: false
   gem "yard-sorbet", require: false
 end
@@ -40,15 +33,16 @@ group :prof, optional: true do
   gem "stackprof", require: false
   gem "vernier", require: false
 end
-group :pry, optional: true do
-  gem "pry", require: false
-end
 group :style, optional: true do
   gem "rubocop", require: false
   gem "rubocop-md", require: false
   gem "rubocop-performance", require: false
   gem "rubocop-rspec", require: false
   gem "rubocop-sorbet", require: false
+  gem "rubydex", require: false
+end
+group :style, :tests, optional: true do
+  gem "test-prof", require: false
 end
 group :tests, optional: true do
   gem "parallel_tests", require: false
@@ -63,16 +57,12 @@ group :tests, optional: true do
   gem "simplecov-cobertura", require: false
 end
 group :typecheck, optional: true do
-  gem "method_source", require: false
   gem "sorbet-static-and-runtime", require: false
   gem "spoom", ">= 1.7.0", require: false
   gem "tapioca", ">= 0.17.0", require: false
 end
 group :vscode, optional: true do
   gem "ruby-lsp", require: false
-end
-group :formula_analytics, optional: true do
-  gem "pycall", require: false
 end
 group :contributions, optional: true do
   gem "csv", require: false
@@ -84,11 +74,8 @@ group :audit, :bump_unversioned_casks, :livecheck, optional: true do
 end
 
 # vendored gems (no group)
-gem "addressable"
-gem "base64"
 gem "concurrent-ruby"
 gem "patchelf"
 gem "plist"
 gem "ruby-macho"
 gem "sorbet-runtime"
-gem "warning"

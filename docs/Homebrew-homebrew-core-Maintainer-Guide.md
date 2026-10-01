@@ -1,12 +1,13 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
 # Homebrew/homebrew-core Maintainer Guide
 
 ## Quick merge checklist
 
-A detailed checklist can be found [below](#detailed-merge-checklist). This is all that really matters:
+A detailed checklist appears [below](#detailed-merge-checklist).
+Use this summary for routine reviews, then consult the detailed checklist when a change has unusual dependencies, build behaviour or release history:
 
 - Ensure the name seems reasonable.
 - Add aliases.
@@ -17,27 +18,38 @@ A detailed checklist can be found [below](#detailed-merge-checklist). This is al
 - Use `brew pr-publish` or `brew pr-pull` otherwise, which adds messages to auto-close pull requests and pull bottles built by BrewTestBot.
 - Thank people for contributing.
 
-Checking dependencies is important, because they will probably stick around forever. Nobody really checks if they are necessary or not.
+Review dependencies carefully because unnecessary dependencies impose an ongoing build, security and maintenance cost.
+Revisit existing dependencies when upstream changes its defaults or removes a feature.
 
-Depend on as little stuff as possible. Disable X11 functionality if possible. For example, we build Wireshark, but not the heavy GUI.
+Keep the dependency graph as small as practical while preserving the supported functionality users reasonably expect.
+Disable optional X11 functionality when it adds substantial dependencies and does not provide a suitable default macOS experience.
 
-Homebrew is about Unix software. Stuff that builds to an `.app` should be in Homebrew Cask instead.
+`homebrew/core` primarily packages command-line software and libraries.
+Software whose primary artifact is a native macOS `.app` belongs in `homebrew/cask` as a cask.
+
+## Dependencies and full variants
+
+Apply the contributor-facing [dependency and full-variant acceptance policy](Acceptable-Formulae.md#dependencies-and-full-variants).
+When reviewing an existing dependency, also consider whether removing it would cause surprising breakage in common workflows or force formulae to rely on a deprecated system component.
 
 ## Merging, rebasing, cherry-picking
 
 For most PRs that make formula modifications, you can simply approve the PR and an automatic merge (with bottles) will be performed by [@BrewTestBot](https://github.com/BrewTestBot). See [BrewTestBot for Maintainers](BrewTestBot-For-Maintainers.md) for more information.
 
-Certain PRs may not be merged automatically by [@BrewTestBot](https://github.com/BrewTestBot), even after they've been approved. This includes PRs with the `new formula` and `automerge-skip` labels. To trigger a merge for these PRs, run `brew pr-publish`.
+Some PRs may not be merged automatically by [@BrewTestBot](https://github.com/BrewTestBot), even after approval.
+Inspect the current workflow result and labels to determine why automation stopped, then run `brew pr-publish` when manual publication is appropriate.
 
 PRs modifying formulae that don't need bottles or making changes that don't require new bottles to be pulled should use GitHub's squash & merge or rebase & merge workflows.
 
 Otherwise, you should use `brew pr-pull` (or `rebase`/`cherry-pick` contributions).
 
-Don’t `rebase` until you finally `push`. Once `master` is pushed, you can’t `rebase`: **you’re a maintainer now!**
+Do not rebase commits after they have been pushed to `main`.
+Rewrite only unpublished commits and inspect the final history before pushing.
 
-Cherry-picking changes the date of the commit, which kind of sucks.
+Cherry-picking changes commit metadata, so preserve the original contribution and authorship information when using it.
 
-Don’t `merge` unclean branches. So if someone is still learning `git` and their branch is filled with nonsensical merges, then `rebase` and squash the commits. Our main branch history should be useful to other people, not confusing.
+Do not merge a branch whose history contains unrelated or accidental merge commits.
+Rebase or squash unpublished contributor commits when needed so the `main` branch records a clear, reviewable change history.
 
 Only one maintainer is necessary to approve and merge the addition of a new or updated formula which passes CI. However, if the formula addition or update proves controversial the maintainer who adds it will be expected to answer requests and fix problems that arise with it in future.
 
@@ -64,17 +76,36 @@ We now accept versioned formulae as long as they [meet the requirements](Version
 
 ## Testing
 
-We need to at least check that it builds. Use [BrewTestBot](BrewTestBot.md) for this.
+Every formula change must at least build successfully in the required BrewTestBot jobs.
+Use [BrewTestBot](BrewTestBot.md) for this validation.
 
-Verify the formula works if possible. If you can’t tell (e.g. if it’s a library) trust the original contributor; it worked for them, so chances are it is fine. If you aren’t an expert in the tool in question, you can’t really gauge if the formula installed the program correctly. At some point an expert will come along, cry blue murder that it doesn’t work, and fix it. This is how open source works. Ideally, request a `test do` block to test that functionality is consistently available.
+- Verify installed functionality rather than relying solely on the contributor's local result.
+- Require a meaningful `test do` block that exercises the installed software without network access.
+- For a library, compile and run a small program against the installed headers and library when practical.
+- If the reviewer cannot evaluate specialised behaviour, request reproducible validation from upstream documentation, an existing test suite or another reviewer with relevant knowledge.
 
-If the formula uses a repository, then the `url` parameter should have a tag or revision. `url`s have versions and are stable (not yet implemented!).
+If a formula uses a source-code repository, its `url` must identify an immutable tag or revision.
+Do not package a moving branch as a stable release.
 
-Don't merge any formula updates with failing `brew test`s. If a `test do` block is failing it needs to be fixed. This may involve replacing more involved tests with those that are more reliable. This is fine: false positives are better than false negatives as we don't want to teach maintainers to merge red PRs. If the test failure is believed to be due to a bug in `Homebrew/brew` or the CI system, that bug must be fixed, or worked around in the formula to yield a passing test, before the PR can be merged.
+- Do not merge a formula update with a failing `brew test`.
+- Fix the failure or replace a flaky test with a reliable test that still detects whether the installed software works.
+- If the failure comes from Homebrew or CI, fix that problem or add a narrowly scoped formula workaround before merging.
+- Do not normalise merging a red pull request.
+
+## Retagged formulae
+
+Upstream source archives and Git tags for released versions are expected to be immutable.
+If the checksum of a fixed-version source archive changes or a Git tag moves to a different commit, treat this as a potential upstream compromise or supply-chain attack rather than a routine update.
+
+Where possible, contact upstream through an official channel, preferably a public issue tracker, and ask them to confirm why the source changed and that it was not the result of a compromise.
+Do not open or merge a PR updating the formula's checksum, revision or source until upstream has confirmed the change was intentional.
+The PR should link to upstream's confirmation.
+
+If the change cannot be verified, deprecate the formula with `:checksum_mismatch` rather than packaging the changed source.
 
 ## Duplicates
 
-We now accept stuff that comes with macOS as long as it uses `keg_only :provided_by_macos` to be keg-only by default.
+Software that duplicates a macOS-provided tool or library may be accepted when it uses `keg_only :provided_by_macos` and otherwise meets the [formula acceptance criteria](Acceptable-Formulae.md).
 
 ## Removing formulae
 
@@ -87,7 +118,9 @@ Formulae that:
 
 should not be removed from Homebrew. The exception to this rule are [versioned formulae](Versions.md) for which there are higher standards of usage and a maximum number of versions for a given formula.
 
-For more information about deprecating, disabling and removing formulae, see the [Deprecating, Disabling and Removing Formulae](Deprecating-Disabling-and-Removing-Formulae.md) page.
+Apply the shared policy for [upstream removal requests](Deprecating-Disabling-and-Removing.md#upstream-removal-requests).
+
+For more information about deprecating, disabling and removing formulae, see the [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removing.md#formulae-and-casks) page.
 
 ## Detailed merge checklist
 
@@ -123,56 +156,26 @@ The following checklist is intended to help maintainers decide on whether to mer
   - due to other formulae needing revision bumps - suggest using the following command:
 
         # in this example: PR is for `libuv` formula and `urbit` needs revision bump
+        brew bump-compatibility-version --write-only libuv
         brew bump-revision --message 'for libuv' urbit
 
     - make sure it has one commit per revision bump
 - if CI is green and...
   - bottles need to be pulled, and...
-    - the commits are correct, don't need changes, and BrewTestBot can merge it (doesn't have the label `automerge-skip`): approve the PR to trigger an automatic merge (use `brew pr-publish $PR_ID` to trigger manually in case of a new formula)
+    - the commits are correct, don't need changes, and BrewTestBot can merge it: approve the PR to trigger an automatic merge (use `brew pr-publish $PR_ID` to trigger it manually when necessary)
     - the commits are correct and don't need changes, but BrewTestBot can't merge it (has the label `automerge-skip`): use `brew pr-publish $PR_ID`
     - the commits need to be amended: use `brew pr-pull $PR_ID`, make changes, and `git push`
 - don't forget to thank the contributor
   - celebrate any first-time contributors
 - suggest using `brew bump-formula-pr` next time if this was not the case
 
-## Common build failures and how to handle them
-
-### Test errors
-
-#### "undefined reference to ..."
-
-This error might pop up when parameters passed to `gcc` are in the wrong order.
-
-An example from `libmagic` formula:
-
-    ==> brew test libmagic --verbose
-    Testing libmagic
-    ==> /usr/bin/gcc -I/home/linuxbrew/.linuxbrew/Cellar/libmagic/5.38/include -L/home/linuxbrew/.linuxbrew/Cellar/libmagic/5.38/lib -lmagic test.c -o test
-    /tmp/ccNeDVRt.o: In function `main':
-    test.c:(.text+0x15): undefined reference to `magic_open'
-    test.c:(.text+0x4a): undefined reference to `magic_load'
-    test.c:(.text+0x81): undefined reference to `magic_file'
-    collect2: error: ld returned 1 exit status
-
-Solution:
-
-```ruby
-if OS.mac?
-  system ENV.cc, "-I#{include}", "-L#{lib}", "-lmagic", "test.c", "-o", "test"
-else
-  system ENV.cc, "test.c", "-I#{include}", "-L#{lib}", "-lmagic", "-o", "test"
-end
-```
-
-For an explanation of why this happens, read the [Ubuntu 11.04 Toolchain documentation](https://wiki.ubuntu.com/NattyNarwhal/ToolchainTransition).
-
-## Staging Branches
+## Staging branches
 
 ### Summary
 
 Some formulae (e.g. Python, OpenSSL, ICU, Boost) have a large number of dependents. This makes updating these formulae (or their dependents) difficult because the standard procedure involves updating a large number of formulae in a single pull request. An alternative procedure that can significantly simplify this process is to use a staging branch.
 
-The idea of using a staging branch is to merge updates and publish bottles for the affected formula to a non-default branch. This allows work to be done incrementally in smaller PRs, instead of in one giant PR that touches many formulae. When the staging branch is ready, it can be merged to the `master`/default branch.
+The idea of using a staging branch is to merge updates and publish bottles for the affected formula to a non-default branch. This allows work to be done incrementally in smaller PRs, instead of in one giant PR that touches many formulae. When the staging branch is ready, it can be merged to the `main`/default branch.
 
 Before making use of a staging branch, there is one important disadvantage to consider: once you have merged bottle updates to the staging branch, it is **very difficult** to take them back. This typically involves deleting uploaded bottles, which will occasionally require an owner of the Homebrew GitHub organisation to delete uploaded bottles one at a time.
 
@@ -184,15 +187,15 @@ Here is a rough outline of how to use a staging branch:
 
 1. Open an issue in homebrew-core inviting contributors to help. Be sure to include instructions for how to do so, and a checklist of formulae that need to be updated. See [Homebrew/homebrew-core#134251](https://github.com/Homebrew/homebrew-core/issues/134251) for an example.
 
-1. Open a _draft_ PR that merges the staging branch into the `master` branch. This allows you to keep track of the work done so far. You may wish to apply the [`no long build conflict`](https://github.com/Homebrew/homebrew-core/labels/no%20long%20build%20conflict) label to this PR to avoid conflicting changes from being merged to the `master` branch.
+1. Open a _draft_ PR that merges the staging branch into the `main` branch. This allows you to keep track of the work done so far. You may wish to apply the [`no long build conflict`](https://github.com/Homebrew/homebrew-core/labels/no%20long%20build%20conflict) label to this PR to avoid conflicting changes from being merged to the `main` branch.
 
-1. Open PRs targeting the staging branch that update the affected formulae. Each PR should touch as few formulae as possible. The typical PR that targets the staging branch will update only one formula at a time. Staging branch PRs can be merged using the same process as PRs that target the `master` branch. Ideally, these PRs should be opened in [topological order](https://en.wikipedia.org/wiki/Topological_sorting) according to the dependency graph, but we don't currently have good tooling for generating a topological sort. (Help wanted.)
+1. Open PRs targeting the staging branch that update the affected formulae. Each PR should touch as few formulae as possible. The typical PR that targets the staging branch will update only one formula at a time. Staging branch PRs can be merged using the same process as PRs that target the `main` branch. Ideally, these PRs should be opened in [topological order](https://en.wikipedia.org/wiki/Topological_sorting) according to the dependency graph, but we don't currently have good tooling for generating a topological sort. (Help wanted.)
 
 1. Label PRs that target the staging branch with the [`staging-branch-pr`](https://github.com/Homebrew/homebrew-core/labels/staging-branch-pr) label for ease of tracking and review. (TODO: Add some automation for this to homebrew-core.)
 
-1. Monitor the draft PR you created in step 3 above for merge conflicts. If you encounter a merge conflict, you must resolve those conflicts in a staging branch PR that merges the `master` branch into the staging branch.
+1. Monitor the draft PR you created in step 3 above for merge conflicts. If you encounter a merge conflict, you must resolve those conflicts in a staging branch PR that merges the `main` branch into the staging branch.
 
-1. When the staging branch is ready to be merged into `master`, mark the draft PR as ready for review and merge it into the `master` branch. Your PR may spend a long time in the merge queue waiting for the bottle fetch tests to run.
+1. When the staging branch is ready to be merged into `main`, mark the draft PR as ready for review and merge it into the `main` branch. Your PR may spend a long time in the merge queue waiting for the bottle fetch tests to run.
 
 For examples of uses of the staging branch, see homebrew-core PRs labelled [`openssl-3-migration-staging`](https://github.com/Homebrew/homebrew-core/labels/openssl-3-migration), [Homebrew/homebrew-core#134260](https://github.com/Homebrew/homebrew-core/pull/134260), or [Homebrew/homebrew-core#133611](https://github.com/Homebrew/homebrew-core/pull/133611).
 

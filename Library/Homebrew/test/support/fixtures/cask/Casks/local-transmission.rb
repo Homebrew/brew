@@ -1,3 +1,5 @@
+# typed: false
+
 cask "local-transmission" do
   version "2.61"
   sha256 "e44ffa103fbf83f55c8d0b1bea309a43b2880798dae8620b1ee8da5e1095ec68"
@@ -6,6 +8,8 @@ cask "local-transmission" do
   name "Transmission"
   desc "BitTorrent client"
   homepage "https://transmissionbt.com/"
+
+  depends_on macos: :big_sur
 
   app "Transmission.app"
 end

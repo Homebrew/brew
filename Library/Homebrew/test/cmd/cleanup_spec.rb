@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "cmd/cleanup"
@@ -15,14 +16,17 @@ RSpec.describe Homebrew::Cmd::CleanupCmd do
 
   it_behaves_like "parseable arguments"
 
-  describe "--prune=all", :integration_test do
+  describe "--prune=all", :cask, :integration_test do
     it "removes all files in Homebrew's cache" do
+      setup_test_formula "testball"
       (HOMEBREW_CACHE/"test").write "test"
 
       expect { brew "cleanup", "--prune=all" }
         .to output(%r{#{Regexp.escape(HOMEBREW_CACHE)}/test}o).to_stdout
         .and not_to_output.to_stderr
         .and be_a_success
+      expect { brew "cleanup", "--dry-run", "testball", cask_path("local-caffeine") }
+        .to be_a_success
     end
   end
 end

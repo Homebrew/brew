@@ -31,10 +31,11 @@ module Stdenv
 
     # Set the default pkg-config search path, overriding the built-in paths
     # Anything in PKG_CONFIG_PATH is searched before paths in this variable
-    self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir
+    self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir&.to_s
 
     self["MAKEFLAGS"] = "-j#{make_jobs}"
-    self["RUSTFLAGS"] = Hardware.rustflags_target_cpu(effective_arch)
+    self["RUSTC_WRAPPER"] = "#{HOMEBREW_SHIMS_PATH}/shared/rustc_wrapper"
+    self["HOMEBREW_RUSTFLAGS"] = Hardware.rustflags_target_cpu(effective_arch)
 
     if HOMEBREW_PREFIX.to_s != "/usr/local"
       # /usr/local is already an -isystem and -L directory so we skip it
@@ -67,6 +68,11 @@ module Stdenv
 
     gcc_formula = gcc_version_formula(cc)
     append_path "PATH", gcc_formula.opt_bin.to_s
+  end
+
+  sig { void }
+  def libxml2
+    odeprecated "ENV.libxml2", "`pkg-config` or explicit include paths"
   end
 
   sig { returns(T.nilable(PATH)) }
@@ -107,6 +113,12 @@ module Stdenv
   sig { returns(T.any(String, Pathname)) }
   def determine_cc
     s = super
+    begin
+      return Formula["llvm"].opt_bin/"clang" if s == "llvm_clang"
+    rescue FormulaUnavailableError
+      # Don't fail and just let callee handle Pathname("llvm_clang")
+    end
+
     DevelopmentTools.locate(s) || Pathname(s)
   end
   private :determine_cc
@@ -129,12 +141,7 @@ module Stdenv
   def clang
     super
     replace_in_cflags(/-Xarch_#{Hardware::CPU.arch_32_bit} (-march=\S*)/, '\1')
-    map = Hardware::CPU.optimization_flags.dup
-    if DevelopmentTools.clang_build_version < 700
-      # Clang mistakenly enables AES-NI on plain Nehalem
-      map[:nehalem] = "-march=nehalem -Xclang -target-feature -Xclang -aes"
-    end
-    set_cpu_cflags(map)
+    set_cpu_cflags
   end
 
   sig { void }
@@ -169,10 +176,10 @@ module Stdenv
   def set_cpu_flags(flags, map = Hardware::CPU.optimization_flags)
     cflags =~ /(-Xarch_#{Hardware::CPU.arch_32_bit} )-march=/
     xarch = Regexp.last_match(1).to_s
-    remove flags, /(-Xarch_#{Hardware::CPU.arch_32_bit} )?-march=\S*/
-    remove flags, /( -Xclang \S+)+/
+    remove flags, /(?:-Xarch_#{Hardware::CPU.arch_32_bit} )?-march=\S*/
+    remove flags, /(?: -Xclang \S+)+/
     remove flags, /-mssse3/
-    remove flags, /-msse4(\.\d)?/
+    remove flags, /-msse4(?:\.\d)?/
     append flags, xarch unless xarch.empty?
     append flags, map.fetch(effective_arch)
   end

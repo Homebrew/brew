@@ -24,9 +24,7 @@ module DependenciesHelpers
       .returns(T::Array[Dependency])
   }
   def recursive_dep_includes(root_dependent, includes, ignores)
-    # The use of T.unsafe is recommended by the Sorbet docs:
-    #   https://sorbet.org/docs/overloads#multiple-methods-but-sharing-a-common-implementation
-    T.unsafe(recursive_includes(Dependency, root_dependent, includes, ignores))
+    T.cast(recursive_includes(Dependency, root_dependent, includes, ignores), T::Array[Dependency])
   end
 
   sig {
@@ -34,9 +32,7 @@ module DependenciesHelpers
       .returns(Requirements)
   }
   def recursive_req_includes(root_dependent, includes, ignores)
-    # The use of T.unsafe is recommended by the Sorbet docs:
-    #   https://sorbet.org/docs/overloads#multiple-methods-but-sharing-a-common-implementation
-    T.unsafe(recursive_includes(Requirement, root_dependent, includes, ignores))
+    T.cast(recursive_includes(Requirement, root_dependent, includes, ignores), Requirements)
   end
 
   sig {
@@ -51,8 +47,8 @@ module DependenciesHelpers
     cache_key = "recursive_includes_#{includes}_#{ignores}"
 
     klass.expand(root_dependent, cache_key:) do |dependent, dep|
-      klass.prune if ignores.any? { |ignore| dep.public_send(ignore) }
-      klass.prune if includes.none? do |include|
+      next Dependable::PRUNE if ignores.any? { |ignore| dep.public_send(ignore) }
+      next Dependable::PRUNE if includes.none? do |include|
         # Ignore indirect test dependencies
         next if include == :test? && dependent != root_dependent
 
@@ -61,7 +57,7 @@ module DependenciesHelpers
 
       # If a tap isn't installed, we can't find the dependencies of one of
       # its formulae and an exception will be thrown if we try.
-      Dependency.keep_but_prune_recursive_deps if klass == Dependency && dep.tap && !dep.tap.installed?
+      next Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS if klass == Dependency && (tap = dep.tap) && !tap.installed?
     end
   end
 

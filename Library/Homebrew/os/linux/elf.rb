@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "os/linux/ld"
@@ -44,16 +44,33 @@ module ELFShim
 
   requires_ancestor { Pathname }
 
+  sig { params(path: T.anything).void }
+  def initialize(path)
+    @elf = T.let(nil, T.nilable(T::Boolean))
+    @arch = T.let(nil, T.nilable(Symbol))
+    @elf_type = T.let(nil, T.nilable(Symbol))
+    @rpath = T.let(nil, T.nilable(String))
+    @interpreter = T.let(nil, T.nilable(String))
+    @dynamic_elf = T.let(nil, T.nilable(T::Boolean))
+    @metadata = T.let(nil, T.nilable(Metadata))
+
+    super
+  end
+
+  sig { params(offset: Integer).returns(Integer) }
   def read_uint8(offset)
     read(1, offset).unpack1("C")
   end
 
+  sig { params(offset: Integer).returns(Integer) }
   def read_uint16(offset)
     read(2, offset).unpack1("v")
   end
 
+  sig { returns(T::Boolean) }
   def elf?
-    return @elf if defined? @elf
+    return @elf unless @elf.nil?
+
     return @elf = false if read(MAGIC_NUMBER_ASCII.size, MAGIC_NUMBER_OFFSET) != MAGIC_NUMBER_ASCII
 
     # Check that this ELF file is for Linux or System V.
@@ -61,6 +78,7 @@ module ELFShim
     @elf = [OS_ABI_LINUX, OS_ABI_SYSTEM_V].include? read_uint8(OS_ABI_OFFSET)
   end
 
+  sig { returns(Symbol) }
   def arch
     return :dunno unless elf?
 
@@ -75,6 +93,7 @@ module ELFShim
     end
   end
 
+  sig { params(wanted_arch: Symbol).returns(T::Boolean) }
   def arch_compatible?(wanted_arch)
     return true unless elf?
 
@@ -84,6 +103,7 @@ module ELFShim
     wanted_arch == arch
   end
 
+  sig { returns(Symbol) }
   def elf_type
     return :dunno unless elf?
 
@@ -94,88 +114,136 @@ module ELFShim
     end
   end
 
+  sig { returns(T::Boolean) }
   def dylib?
     elf_type == :dylib
   end
 
+  sig { returns(T::Boolean) }
   def binary_executable?
     elf_type == :executable
   end
 
   # The runtime search path, such as:
   # "/lib:/usr/lib:/usr/local/lib"
+  sig { returns(T.nilable(String)) }
   def rpath
-    return @rpath if defined? @rpath
-
-    @rpath = rpath_using_patchelf_rb
+    metadata.rpath
   end
 
   # An array of runtime search path entries, such as:
   # ["/lib", "/usr/lib", "/usr/local/lib"]
+  sig { returns(T::Array[String]) }
   def rpaths
     Array(rpath&.split(":"))
   end
 
+  sig { returns(T.nilable(String)) }
   def interpreter
-    return @interpreter if defined? @interpreter
-
-    @interpreter = patchelf_patcher.interpreter
+    metadata.interpreter
   end
 
+  sig { returns(T::Boolean) }
+  def pie?
+    metadata.pie?
+  end
+
+  sig { params(interpreter: T.nilable(String), rpath: T.nilable(String)).void }
   def patch!(interpreter: nil, rpath: nil)
     return if interpreter.blank? && rpath.blank?
 
     save_using_patchelf_rb interpreter, rpath
   end
 
+  sig { returns(T::Boolean) }
   def dynamic_elf?
-    return @dynamic_elf if defined? @dynamic_elf
+    metadata.dynamic_elf?
+  end
 
-    @dynamic_elf = patchelf_patcher.elf.segment_by_type(:DYNAMIC).present?
+  sig { returns(T::Array[String]) }
+  def section_names
+    metadata.section_names
   end
 
   # Helper class for reading metadata from an ELF file.
   class Metadata
-    attr_reader :path, :dylib_id, :dylibs
+    sig { returns(ELFShim) }
+    attr_reader :path
 
+    sig { returns(T.nilable(String)) }
+    attr_reader :dylib_id
+
+    sig { returns(T::Boolean) }
+    def dynamic_elf?
+      @dynamic_elf
+    end
+
+    sig { returns(T.nilable(String)) }
+    attr_reader :interpreter
+
+    sig { returns(T.nilable(String)) }
+    attr_reader :rpath
+
+    sig { returns(T::Array[String]) }
+    attr_reader :section_names
+
+    sig { params(path: ELFShim).void }
     def initialize(path)
-      @path = path
-      @dylibs = []
-      @dylib_id, needed = needed_libraries path
-      return if needed.empty?
+      require "patchelf"
+      patcher = path.patchelf_patcher
 
-      @dylibs = needed.map { |lib| find_full_lib_path(lib).to_s }
+      @path = path
+      @dylibs = T.let(nil, T.nilable(T::Array[String]))
+      @dylib_id = T.let(nil, T.nilable(String))
+      @needed = T.let([], T::Array[String])
+
+      dynamic_segment = patcher.elf.segment_by_type(:dynamic)
+      @dynamic_elf = T.let(dynamic_segment.present?, T::Boolean)
+      @dylib_id, @needed = if @dynamic_elf
+        [patcher.soname, patcher.needed]
+      else
+        [nil, []]
+      end
+
+      @interpreter = T.let(patcher.interpreter, T.nilable(String))
+      @rpath = T.let(patcher.runpath || patcher.rpath, T.nilable(String))
+      @section_names = T.let(patcher.elf.sections.map(&:name).compact_blank, T::Array[String])
+
+      @dt_flags_1 = T.let(dynamic_segment&.tag_by_type(:flags_1)&.value, T.nilable(Integer))
+    end
+
+    sig { returns(T::Boolean) }
+    def pie?
+      return false if @dt_flags_1.nil?
+
+      @dt_flags_1 & ELFTools::Constants::DF::DF_1_PIE != 0
+    end
+
+    sig { returns(T::Array[String]) }
+    def dylibs
+      @dylibs ||= @needed.map { |lib| find_full_lib_path(lib).to_s }
     end
 
     private
 
-    def needed_libraries(path)
-      return [nil, []] unless path.dynamic_elf?
-
-      needed_libraries_using_patchelf_rb path
-    end
-
-    def needed_libraries_using_patchelf_rb(path)
-      patcher = path.patchelf_patcher
-      [patcher.soname, patcher.needed]
-    end
-
+    sig { params(basename: String).returns(::Pathname) }
     def find_full_lib_path(basename)
-      local_paths = (path.patchelf_patcher.runpath || path.patchelf_patcher.rpath)&.split(":")
+      basename = ::Pathname.new(basename)
+      local_paths = rpath&.split(":")
 
       # Search for dependencies in the runpath/rpath first
       local_paths&.each do |local_path|
         local_path = OS::Linux::Elf.expand_elf_dst(local_path, "ORIGIN", path.parent)
-        candidate = Pathname(local_path)/basename
-        return candidate if candidate.exist? && candidate.elf?
+        candidate = ::Pathname.new(local_path)/basename
+        elf_candidate = ELFPathname.wrap(candidate)
+        return candidate if candidate.exist? && elf_candidate.elf?
       end
 
       # Check if DF_1_NODEFLIB is set
-      dt_flags_1 = path.patchelf_patcher.elf.segment_by_type(:dynamic)&.tag_by_type(:flags_1)
-      nodeflib_flag = if dt_flags_1.nil?
+      nodeflib_flag = if @dt_flags_1.nil?
         false
       else
-        dt_flags_1.value & ELFTools::Constants::DF::DF_1_NODEFLIB != 0
+        @dt_flags_1 & ELFTools::Constants::DF::DF_1_NODEFLIB != 0
       end
 
       linker_library_paths = OS::Linux::Ld.library_paths
@@ -193,14 +261,16 @@ module ELFShim
       # paths that are subdirectories of the system dirs if DF_1_NODEFLIB is set)
       linker_library_paths.each do |linker_library_path|
         candidate = Pathname(linker_library_path)/basename
-        return candidate if candidate.exist? && candidate.elf?
+        elf_candidate = ELFPathname.wrap(candidate)
+        return candidate if candidate.exist? && elf_candidate.elf?
       end
 
       # If not found, search in the system dirs, unless DF_1_NODEFLIB is set
       unless nodeflib_flag
         linker_system_dirs.each do |linker_system_dir|
           candidate = Pathname(linker_system_dir)/basename
-          return candidate if candidate.exist? && candidate.elf?
+          elf_candidate = ELFPathname.wrap(candidate)
+          return candidate if candidate.exist? && elf_candidate.elf?
         end
       end
 
@@ -209,6 +279,7 @@ module ELFShim
   end
   private_constant :Metadata
 
+  sig { params(new_interpreter: T.nilable(String), new_rpath: T.nilable(String)).void }
   def save_using_patchelf_rb(new_interpreter, new_rpath)
     patcher = patchelf_patcher
     patcher.interpreter = new_interpreter if new_interpreter.present?
@@ -216,59 +287,31 @@ module ELFShim
     patcher.save(patchelf_compatible: true)
   end
 
-  def rpath_using_patchelf_rb
-    patchelf_patcher.runpath || patchelf_patcher.rpath
-  end
-
+  # Don't cache the patcher; it keeps the ELF file open so long as it is alive.
+  # Instead, for read-only access to the ELF file's metadata, fetch it and cache
+  # it with {Metadata}.
+  # PatchELF is loaded lazily inside this method, so avoid evaluating its return
+  # type at runtime before the constant is defined.
+  T::Sig::WithoutRuntime.sig { returns(::PatchELF::Patcher) }
   def patchelf_patcher
     require "patchelf"
-    @patchelf_patcher ||= ::PatchELF::Patcher.new to_s, on_error: :silent
+    ::PatchELF::Patcher.new to_s, on_error: :silent
   end
 
+  sig { returns(Metadata) }
   def metadata
     @metadata ||= Metadata.new(self)
   end
   private :metadata
 
+  sig { returns(T.nilable(String)) }
   def dylib_id
     metadata.dylib_id
   end
 
-  def dynamically_linked_libraries(*)
+  sig { params(except: Symbol, resolve_variable_references: T::Boolean).returns(T::Array[String]) }
+  def dynamically_linked_libraries(except: :none, resolve_variable_references: true)
     metadata.dylibs
   end
 end
-
-module OS
-  module Linux
-    # Helper functions for working with ELF objects.
-    #
-    # @api private
-    module Elf
-      sig { params(str: String, ref: String, repl: T.any(String, Pathname)).returns(String) }
-      def self.expand_elf_dst(str, ref, repl)
-        # ELF gABI rules for DSTs:
-        #   - Longest possible sequence using the rules (greedy).
-        #   - Must start with a $ (enforced by caller).
-        #   - Must follow $ with one underscore or ASCII [A-Za-z] (caller
-        #     follows these rules for REF) or '{' (start curly quoted name).
-        #   - Must follow first two characters with zero or more [A-Za-z0-9_]
-        #     (enforced by caller) or '}' (end curly quoted name).
-        # (from https://github.com/bminor/glibc/blob/41903cb6f460d62ba6dd2f4883116e2a624ee6f8/elf/dl-load.c#L182-L228)
-
-        # In addition to capturing a token, also attempt to capture opening/closing braces and check that they are not
-        # mismatched before expanding.
-        str.gsub(/\$({?)([a-zA-Z_][a-zA-Z0-9_]*)(}?)/) do |orig_str|
-          has_opening_brace = ::Regexp.last_match(1).present?
-          matched_text = ::Regexp.last_match(2)
-          has_closing_brace = ::Regexp.last_match(3).present?
-          if (matched_text == ref) && (has_opening_brace == has_closing_brace)
-            repl
-          else
-            orig_str
-          end
-        end
-      end
-    end
-  end
-end
+require "os/linux/elf/os"

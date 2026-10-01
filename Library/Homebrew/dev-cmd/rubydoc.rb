@@ -1,6 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "system_command"
+require "utils/browser"
+
 require "abstract_command"
 
 module Homebrew
@@ -18,7 +21,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        Homebrew.install_bundler_gems!(groups: ["doc"])
+        Utils::GemSetup.install_bundler_gems!(groups: ["doc"])
 
         HOMEBREW_LIBRARY_PATH.cd do |dir|
           no_api_args = if args.only_public?
@@ -29,9 +32,10 @@ module Homebrew
 
           output_dir = dir/"doc"
 
-          safe_system "bundle", "exec", "yard", "doc", "--fail-on-warning", *no_api_args, "--output", output_dir
+          SystemCommand.safe_system "bundle", "exec", "yard", "doc", "--fail-on-warning", *no_api_args, "--output",
+                                    output_dir
 
-          exec_browser "file://#{output_dir}/index.html" if args.open?
+          Utils::Browser.open "file://#{output_dir}/index.html" if args.open?
         end
       end
     end

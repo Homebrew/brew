@@ -1,6 +1,6 @@
 ---
-logo: /assets/img/brewtestbot.png
-image: /assets/img/brewtestbot.png
+logo: https://brew.sh/assets/img/brewtestbot.png
+image: https://brew.sh/assets/img/brewtestbot.png
 redirect_from:
   - /Brew-Test-Bot
 last_review_date: "2025-02-08"
@@ -8,11 +8,11 @@ last_review_date: "2025-02-08"
 
 # BrewTestBot
 
-[`brew test-bot`](Manpage.md#test-bot-options-formula) is what runs the automated review and testing system funded by [our Kickstarter in 2013](https://www.kickstarter.com/projects/homebrew/brew-test-bot).
+[`brew test-bot`](Manpage.md#test-bot-options-formula) is Homebrew's continuous-integration orchestration command, originally funded by [our Kickstarter in 2013](https://www.kickstarter.com/projects/homebrew/brew-test-bot).
+Homebrew's GitHub Actions workflows run it on macOS and Linux runners to build bottles and test the lifecycle of changes to Homebrew and its taps.
+The workflow definitions are the authoritative description of the current runner and job configuration.
 
-It comprises three Mac Pros hosting virtual machines, several Intel and M1 Mac minis and some cloud Ubuntu instances that run the [`test-bot.rb`](https://github.com/Homebrew/homebrew-test-bot) external command to perform bottle builds and automated testing of the full lifecycle of any change to Homebrew or its taps.
-
-## Pull Requests
+## Pull requests
 
 The bot automatically builds pull requests and updates their status depending on the result of the job.
 

@@ -2,7 +2,8 @@
 # frozen_string_literal: true
 
 require "abstract_command"
-require "formula"
+require "fileutils"
+require "keg"
 
 module Homebrew
   module Cmd

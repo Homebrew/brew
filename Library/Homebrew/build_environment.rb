@@ -1,11 +1,11 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 # Settings for the build environment.
 class BuildEnvironment
   sig { params(settings: Symbol).void }
   def initialize(*settings)
-    @settings = Set.new(settings)
+    @settings = T.let(Set.new(settings), T::Set[Symbol])
   end
 
   sig { params(args: T::Enumerable[Symbol]).returns(T.self_type) }
@@ -29,22 +29,26 @@ class BuildEnvironment
   module DSL
     # Initialise @env for each class which may use this DSL (e.g. each formula subclass).
     # `env` may never be called and it needs to be initialised before the class is frozen.
+    sig { params(child: T.untyped).void }
     def inherited(child)
       super
       child.instance_eval do
-        @env = BuildEnvironment.new
+        @env = T.let(BuildEnvironment.new, T.nilable(BuildEnvironment))
       end
     end
 
-    sig { params(settings: Symbol).returns(BuildEnvironment) }
+    sig { overridable.params(settings: Symbol).returns(T.nilable(BuildEnvironment)) }
     def env(*settings)
-      @env.merge(settings)
+      env = @env
+      Kernel.raise ArgumentError, "#{self} has not been initialized with a BuildEnvironment" if env.nil?
+
+      env.merge(settings)
     end
   end
 
   KEYS = %w[
     CC CXX LD OBJC OBJCXX
-    HOMEBREW_CC HOMEBREW_CXX
+    HOMEBREW_CC
     CFLAGS CXXFLAGS CPPFLAGS LDFLAGS SDKROOT MAKEFLAGS
     CMAKE_PREFIX_PATH CMAKE_INCLUDE_PATH CMAKE_LIBRARY_PATH CMAKE_FRAMEWORK_PATH
     MACOSX_DEPLOYMENT_TARGET PKG_CONFIG_PATH PKG_CONFIG_LIBDIR
@@ -58,12 +62,12 @@ class BuildEnvironment
   ].freeze
   private_constant :KEYS
 
-  sig { params(env: T::Hash[String, T.nilable(T.any(String, Pathname))]).returns(T::Array[String]) }
+  sig { params(env: T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))]).returns(T::Array[String]) }
   def self.keys(env)
     KEYS & env.keys
   end
 
-  sig { params(env: T::Hash[String, T.nilable(T.any(String, Pathname))], out: IO).void }
+  sig { params(env: T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))], out: IO).void }
   def self.dump(env, out = $stdout)
     keys = self.keys(env)
     keys -= %w[CC CXX OBJC OBJCXX] if env["CC"] == env["HOMEBREW_CC"]
@@ -74,6 +78,7 @@ class BuildEnvironment
       string = "#{key}: #{value}"
       case key
       when "CC", "CXX", "LD"
+        value = T.cast(value, String)
         string << " => #{Pathname.new(value).realpath}" if value.present? && File.symlink?(value)
       end
       string.freeze

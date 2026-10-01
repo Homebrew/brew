@@ -1,14 +1,38 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "package_manager_cache"
+require "release_cooldown"
+require "utils/output"
+require "utils/path"
+
 module Language
   # Helper functions for Node formulae.
   #
   # @api public
   module Node
+    extend ::Utils::Output::Mixin
+
+    class << self
+      sig { returns(T.nilable(T::Boolean)) }
+      attr_accessor :env_set
+    end
+
     sig { returns(String) }
     def self.npm_cache_config
-      "cache=#{HOMEBREW_CACHE}/npm_cache"
+      "cache=#{Homebrew::PackageManagerCache.path("npm_cache")}"
+    end
+
+    sig { params(ignore_scripts: T::Boolean).returns(T::Array[String]) }
+    def self.npm_install_security_args(ignore_scripts: true)
+      args = %W[
+        --min-release-age=#{Homebrew::RELEASE_COOLDOWN_DAYS}
+        --#{npm_cache_config}
+      ]
+
+      args << "--ignore-scripts" if ignore_scripts
+
+      args
     end
 
     sig { returns(String) }
@@ -34,7 +58,7 @@ module Language
       output = Utils.popen_read("npm", "pack", "--ignore-scripts")
       raise "npm failed to pack #{Dir.pwd}" if !$CHILD_STATUS.exitstatus.zero? || output.lines.empty?
 
-      output.lines.last.chomp
+      output.lines.fetch(-1).chomp
     end
 
     sig { void }
@@ -52,8 +76,8 @@ module Language
       end
     end
 
-    sig { params(libexec: Pathname).returns(T::Array[String]) }
-    def self.std_npm_install_args(libexec)
+    sig { params(libexec: Pathname, ignore_scripts: T::Boolean).returns(T::Array[String]) }
+    def self.std_npm_install_args(libexec, ignore_scripts: true)
       setup_npm_environment
 
       pack = pack_for_installation
@@ -62,11 +86,13 @@ module Language
       (libexec/"lib").mkpath
 
       # npm install args for global style module format installed into libexec
-      args = %W[
-        -ddd
+      # Delay packages published in the last day so builds are less likely to
+      # install a freshly compromised npm release or dependency.
+      args = %w[
+        --loglevel=silly
         --global
         --build-from-source
-        --#{npm_cache_config}
+      ] + npm_install_security_args(ignore_scripts:) + %W[
         --prefix=#{libexec}
         #{Dir.pwd}/#{pack}
       ]
@@ -76,15 +102,16 @@ module Language
       args
     end
 
-    sig { returns(T::Array[String]) }
-    def self.local_npm_install_args
+    sig { params(ignore_scripts: T::Boolean).returns(T::Array[String]) }
+    def self.local_npm_install_args(ignore_scripts: true)
       setup_npm_environment
       # npm install args for local style module format
-      %W[
-        -ddd
+      # Delay packages published in the last day so builds are less likely to
+      # install a freshly compromised npm release or dependency.
+      %w[
+        --loglevel=silly
         --build-from-source
-        --#{npm_cache_config}
-      ]
+      ] + npm_install_security_args(ignore_scripts:)
     end
 
     # Mixin module for {Formula} adding shebang rewrite features.
@@ -96,7 +123,7 @@ module Language
       module_function
 
       # A regex to match potential shebang permutations.
-      NODE_SHEBANG_REGEX = %r{^#! ?(?:/usr/bin/(?:env )?)?node( |$)}
+      NODE_SHEBANG_REGEX = %r{\A#! ?(?:/usr/bin/(?:env )?)?node( |$)}
 
       # The length of the longest shebang matching `SHEBANG_REGEX`.
       NODE_SHEBANG_MAX_LENGTH = T.let("#! /usr/bin/env node ".length, Integer)
@@ -117,7 +144,7 @@ module Language
         raise ShebangDetectionError.new("Node", "formula does not depend on Node") if node_deps.empty?
         raise ShebangDetectionError.new("Node", "formula has multiple Node dependencies") if node_deps.length > 1
 
-        node_shebang_rewrite_info(Formula[node_deps.first].opt_bin/"node")
+        node_shebang_rewrite_info(Utils::Path.formula_opt_bin(node_deps.first)/"node")
       end
     end
   end

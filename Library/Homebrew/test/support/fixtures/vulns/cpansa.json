@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "repo": "https://github.com/briandfoy/cpan-security-advisory.git",
+    "commit": "abc123",
+    "epoch": 1784142497
+  },
+  "module2dist": {
+    "DBI": "DBI",
+    "Image::ExifTool": "Image-ExifTool"
+  },
+  "dists": {
+    "DBI": {
+      "main_module": "DBI",
+      "versions": [{"version": "1.643", "date": "2020-01-31T18:02:00"}],
+      "advisories": [
+        {
+          "id": "CPANSA-DBI-2020-01",
+          "cves": ["CVE-2020-14393"],
+          "affected_versions": ["<1.643"],
+          "fixed_versions": [">=1.643"],
+          "severity": "high",
+          "description": "Buffer overflow in DBI.xs.\n",
+          "references": ["https://metacpan.org/changes/distribution/DBI"],
+          "reported": "2020-09-16",
+          "distribution": "DBI"
+        },
+        {
+          "id": "CPANSA-DBI-2014-01",
+          "cves": ["CVE-2014-10402", "CVE-2014-10401"],
+          "affected_versions": [">=0.64,<1.632"],
+          "fixed_versions": [">=1.632"],
+          "severity": "medium",
+          "distribution": "DBI"
+        }
+      ]
+    },
+    "Image-ExifTool": {
+      "main_module": "Image::ExifTool",
+      "advisories": [
+        {
+          "id": "CPANSA-Image-ExifTool-2021-22204",
+          "cves": ["CVE-2021-22204"],
+          "affected_versions": [">=7.44,<12.24"],
+          "fixed_versions": [">=12.24"],
+          "severity": "critical",
+          "description": "Improper neutralization in DjVu.\n",
+          "references": [
+            "https://github.com/exiftool/exiftool/commit/cf0f4e7dcd024ca99615bfd1102a841a25dde031"
+          ],
+          "reported": "2021-04-23",
+          "distribution": "Image-ExifTool"
+        }
+      ]
+    }
+  }
+}

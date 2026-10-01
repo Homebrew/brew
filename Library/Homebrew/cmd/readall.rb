@@ -1,9 +1,11 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "api/env"
 require "abstract_command"
 require "readall"
 require "env_config"
+require "trust"
 
 module Homebrew
   module Cmd
@@ -24,8 +26,10 @@ module Homebrew
         switch "--syntax",
                description: "Syntax-check all of Homebrew's Ruby files (if no <tap> is passed)."
         switch "--eval-all",
-               description: "Evaluate all available formulae and casks, whether installed or not. " \
-                            "Implied if `$HOMEBREW_EVAL_ALL` is set."
+               description: "Evaluate all available formulae and casks, whether installed or not.",
+               env:         :eval_all,
+               replacement: "the default trusted-tap behaviour",
+               odisabled:   true
         switch "--no-simulate",
                description: "Don't simulate other system configurations when checking formulae and casks."
 
@@ -34,10 +38,10 @@ module Homebrew
 
       sig { override.void }
       def run
-        Homebrew.with_no_api_env do
+        Homebrew::API.with_no_api_env do
           if args.syntax? && args.no_named?
             scan_files = "#{HOMEBREW_LIBRARY_PATH}/**/*.rb"
-            ruby_files = Dir.glob(scan_files).grep_v(%r{/(vendor)/})
+            ruby_files = Dir.glob(scan_files).grep_v(%r{/(vendor)/}).map { Pathname(it) }
 
             Homebrew.failed = true unless Readall.valid_ruby_syntax?(ruby_files)
           end
@@ -49,17 +53,18 @@ module Homebrew
           options[:os_arch_combinations] = args.os_arch_combinations if args.os || args.arch
 
           taps = if args.no_named?
-            if !args.eval_all? && !Homebrew::EnvConfig.eval_all?
-              raise UsageError, "`brew readall` needs a tap or `--eval-all` passed or `$HOMEBREW_EVAL_ALL` set!"
-            end
-
             Tap.installed
           else
             args.named.to_installed_taps
           end
 
           taps.each do |tap|
-            Homebrew.failed = true unless Readall.valid_tap?(tap, **options)
+            Homebrew.failed = true unless Readall.valid_tap?(
+              tap,
+              **options,
+              formula_files: Homebrew::Trust.trusted_formula_files(tap.formula_files),
+              cask_files:    Homebrew::Trust.trusted_cask_files(tap.cask_files),
+            )
           end
         end
       end

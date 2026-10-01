@@ -1,11 +1,13 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
+
+require "utils/output"
 
 module OS
   module Mac
     # Helper module for querying Xcode information.
     module Xcode
-      DEFAULT_BUNDLE_PATH = Pathname("/Applications/Xcode.app").freeze
+      DEFAULT_BUNDLE_PATH = ::Pathname.new("/Applications/Xcode.app").freeze
       BUNDLE_ID = "com.apple.dt.Xcode"
       OLD_BUNDLE_ID = "com.apple.Xcode"
       APPLE_DEVELOPER_DOWNLOAD_URL = "https://developer.apple.com/download/all/"
@@ -17,16 +19,13 @@ module OS
       def self.latest_version(macos: MacOS.version)
         macos = macos.strip_patch
         case macos
-        when "15" then "16.4"
+        when "27" then "27.0"
+        when "26" then "26.6"
+        when "15" then "26.3"
         when "14" then "16.2"
         when "13" then "15.2"
         when "12" then "14.2"
         when "11" then "13.2.1"
-        when "10.15" then "12.4"
-        when "10.14" then "11.3.1"
-        when "10.13" then "10.1"
-        when "10.12" then "9.2"
-        when "10.11" then "8.2.1"
         else
           raise "macOS '#{macos}' is invalid" unless macos.prerelease?
 
@@ -48,11 +47,6 @@ module OS
         when "13" then "14.1"
         when "12" then "13.1"
         when "11" then "12.2"
-        when "10.15" then "11.0"
-        when "10.14" then "10.2"
-        when "10.13" then "9.0"
-        when "10.12" then "8.0"
-        when "10.11" then "7.3"
         else
           "#{macos}.0"
         end
@@ -74,11 +68,6 @@ module OS
       def self.needs_clt_installed?
         return false if latest_sdk_version?
 
-        # With fake El Capitan for Portable Ruby, we want the full 10.11 SDK so that we can link
-        # against the correct set of libraries in the SDK sysroot rather than the system's copies.
-        # We therefore do not use the CLT under this setup, which installs to /usr/include.
-        return false if ENV["HOMEBREW_FAKE_MACOS"]
-
         without_clt?
       end
 
@@ -96,9 +85,9 @@ module OS
 
       # Returns a Pathname object corresponding to Xcode.app's Developer
       # directory or nil if Xcode.app is not installed.
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(T.nilable(::Pathname)) }
       def self.prefix
-        @prefix ||= begin
+        @prefix ||= T.let(begin
           dir = MacOS.active_developer_dir
 
           if dir.empty? || dir == CLT::PKG_PATH || !File.directory?(dir)
@@ -106,17 +95,17 @@ module OS
             path/"Contents/Developer" if path
           else
             # Use cleanpath to avoid pathological trailing slash
-            Pathname.new(dir).cleanpath
+            ::Pathname.new(dir).cleanpath
           end
-        end
+        end, T.nilable(::Pathname))
       end
 
-      sig { returns(Pathname) }
+      sig { returns(::Pathname) }
       def self.toolchain_path
         Pathname("#{prefix}/Toolchains/XcodeDefault.xctoolchain")
       end
 
-      sig { returns(T.nilable(Pathname)) }
+      sig { returns(T.nilable(::Pathname)) }
       def self.bundle_path
         # Use the default location if it exists.
         return DEFAULT_BUNDLE_PATH if DEFAULT_BUNDLE_PATH.exist?
@@ -134,7 +123,7 @@ module OS
 
       sig { returns(XcodeSDKLocator) }
       def self.sdk_locator
-        @sdk_locator ||= XcodeSDKLocator.new
+        @sdk_locator ||= T.let(XcodeSDKLocator.new, T.nilable(OS::Mac::XcodeSDKLocator))
       end
 
       sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(SDK)) }
@@ -142,7 +131,7 @@ module OS
         sdk_locator.sdk_if_applicable(version)
       end
 
-      sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(Pathname)) }
+      sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(::Pathname)) }
       def self.sdk_path(version = nil)
         sdk(version)&.path
       end
@@ -183,7 +172,7 @@ module OS
         # may return a version string
         # that is guessed based on the compiler, so do not
         # use it in order to check if Xcode is installed.
-        if @version ||= detect_version
+        if @version ||= T.let(detect_version, T.nilable(String))
           ::Version.new @version
         else
           ::Version::NULL
@@ -196,10 +185,11 @@ module OS
         # if return is used in the middle, which we do many times in here.
         return if !MacOS::Xcode.installed? && !MacOS::CLT.installed?
 
-        if MacOS::Xcode.installed?
+        if (xcode_prefix = prefix)
           # Fast path that will probably almost always work unless `xcode-select -p` is misconfigured
-          version_plist = T.must(prefix).parent/"version.plist"
+          version_plist = xcode_prefix.parent/"version.plist"
           if version_plist.file?
+            require "plist"
             data = Plist.parse_xml(version_plist, marshal: false)
             version = data["CFBundleShortVersionString"] if data
             return version if version
@@ -214,14 +204,8 @@ module OS
             xcodebuild_output = Utils.popen_read(xcodebuild_path, "-version")
             next unless $CHILD_STATUS.success?
 
-            xcode_version = xcodebuild_output[/Xcode (\d+(\.\d+)*)/, 1]
+            xcode_version = xcodebuild_output[/Xcode (\d+(?:\.\d+)*)/, 1]
             return xcode_version if xcode_version
-
-            # Xcode 2.x's xcodebuild has a different version string
-            case xcodebuild_output[/DevToolsCore-(\d+\.\d)/, 1]
-            when "798.0" then return "2.5"
-            when "515.0" then return "2.0"
-            end
           end
         end
 
@@ -237,17 +221,6 @@ module OS
         # simultaneously so workarounds need to apply to both based on their
         # comparable version.
         case version
-        when "6.0.0"  then "6.2"
-        when "6.1.0"  then "6.4"
-        when "7.0.0"  then "7.1"
-        when "7.0.2"  then "7.2.1"
-        when "7.3.0"  then "7.3.1"
-        when "8.0.0"  then "8.2.1"
-        when "8.1.0"  then "8.3.3"
-        when "9.0.0"  then "9.2"
-        when "9.1.0"  then "9.4.1"
-        when "10.0.0" then "10.1"
-        when "10.0.1" then "10.3"
         when "11.0.0" then "11.3.1"
         when "11.0.3" then "11.7"
         when "12.0.0" then "12.4"
@@ -258,7 +231,8 @@ module OS
         when "14.0.3" then "14.3.1"
         when "15.0.0" then "15.4"
         when "16.0.0" then "16.2"
-        else               "26.0"
+        when "17.0.0" then "26.3"
+        else               "27.0"
         end
       end
 
@@ -270,9 +244,9 @@ module OS
 
     # Helper module for querying macOS Command Line Tools information.
     module CLT
-      # The original Mavericks CLT package ID
+      extend Utils::Output::Mixin
+
       EXECUTABLE_PKG_ID = "com.apple.pkg.CLTools_Executables"
-      MAVERICKS_NEW_PKG_ID = "com.apple.pkg.CLTools_Base" # obsolete
       PKG_PATH = "/Library/Developer/CommandLineTools"
 
       # Returns true even if outdated tools are installed.
@@ -281,19 +255,9 @@ module OS
         !version.null?
       end
 
-      sig { returns(T::Boolean) }
-      def self.separate_header_package?
-        version >= "10" && MacOS.version >= "10.14"
-      end
-
-      sig { returns(T::Boolean) }
-      def self.provides_sdk?
-        version >= "8"
-      end
-
       sig { returns(CLTSDKLocator) }
       def self.sdk_locator
-        @sdk_locator ||= CLTSDKLocator.new
+        @sdk_locator ||= T.let(CLTSDKLocator.new, T.nilable(OS::Mac::CLTSDKLocator))
       end
 
       sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(SDK)) }
@@ -301,20 +265,14 @@ module OS
         sdk_locator.sdk_if_applicable(version)
       end
 
-      sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(Pathname)) }
+      sig { params(version: T.nilable(MacOSVersion)).returns(T.nilable(::Pathname)) }
       def self.sdk_path(version = nil)
         sdk(version)&.path
       end
 
       sig { returns(String) }
       def self.installation_instructions
-        if MacOS.version == "10.14"
-          # This is not available from `xcode-select`
-          <<~EOS
-            Install the Command Line Tools for Xcode 11.3.1 from:
-              #{Formatter.url(MacOS::Xcode::APPLE_DEVELOPER_DOWNLOAD_URL)}
-          EOS
-        elsif OS::Mac.version.prerelease?
+        if OS::Mac.version.prerelease?
           <<~EOS
             Install the Command Line Tools for Xcode #{minimum_version.split(".").first} from:
               #{Formatter.url(MacOS::Xcode::APPLE_DEVELOPER_DOWNLOAD_URL)}
@@ -327,22 +285,10 @@ module OS
         end
       end
 
-      sig { returns(String) }
-      def self.update_instructions
-        return installation_instructions if OS::Mac.version.prerelease?
-
-        software_update_location = if MacOS.version >= "13"
-          "System Settings"
-        elsif MacOS.version >= "10.14"
-          "System Preferences"
-        else
-          "the App Store"
-        end
-
+      sig { params(reason: String).returns(String) }
+      def self.reinstall_instructions(reason: "resolve your issues")
         <<~EOS
-          Update them from Software Update in #{software_update_location}.
-
-          If that doesn't show you any updates, run:
+          If that doesn't #{reason}, run:
             sudo rm -rf /Library/Developer/CommandLineTools
             sudo xcode-select --install
 
@@ -352,22 +298,41 @@ module OS
         EOS
       end
 
+      sig { returns(String) }
+      def self.update_instructions
+        software_update_location = if MacOS.version >= "13"
+          "System Settings"
+        else
+          "System Preferences"
+        end
+
+        <<~EOS
+          Update them from Software Update in #{software_update_location}.
+
+          #{reinstall_instructions(reason: "show you any updates")}
+        EOS
+      end
+
+      sig { returns(String) }
+      def self.installation_then_reinstall_instructions
+        <<~EOS
+          #{installation_instructions}
+          #{reinstall_instructions}
+        EOS
+      end
+
       # Bump these when the new version is distributed through Software Update
       # and our CI systems have been updated.
       sig { returns(String) }
       def self.latest_clang_version
         case MacOS.version
-        when "26" then "1700.3.9.908"
-        when "15" then "1700.0.13.5"
+        when "27" then "2100.3.34.2"
+        when "26" then ::Hardware::CPU.physical_cpu_arm64? ? "2100.3.34.2" : "2100.1.1.101"
+        when "15" then "1700.6.4.2"
         when "14" then "1600.0.26.6"
         when "13" then "1500.1.0.2.5"
-        when "12"    then "1400.0.29.202"
-        when "11"    then "1300.0.29.30"
-        when "10.15" then "1200.0.32.29"
-        when "10.14" then "1100.0.33.17"
-        when "10.13" then "1000.10.44.2"
-        when "10.12" then "900.0.39.2"
-        else              "800.0.42.1"
+        when "12" then "1400.0.29.202"
+        else           "1300.0.29.30"
         end
       end
 
@@ -383,11 +348,6 @@ module OS
         when "13" then "14.0.0"
         when "12" then "13.0.0"
         when "11" then "12.5.0"
-        when "10.15" then "11.0.0"
-        when "10.14" then "10.0.0"
-        when "10.13" then "9.0.0"
-        when "10.12" then "8.0.0"
-        when "10.11" then "7.3.0"
         else
           "#{macos}.0.0"
         end
@@ -411,12 +371,12 @@ module OS
       sig { returns(T.nilable(String)) }
       def self.detect_clang_version
         version_output = Utils.popen_read("#{PKG_PATH}/usr/bin/clang", "--version")
-        version_output[/clang-(\d+(\.\d+)+)/, 1]
+        version_output[/clang-(\d+(?:\.\d+)+)/, 1]
       end
 
       sig { returns(T.nilable(String)) }
       def self.detect_version_from_clang_version
-        clang_version = detect_clang_version
+        clang_version = detect_clang_version&.sub(/\A(\d+)(\d)(\d)\..*/, "\\1.\\2.\\3")
         return if clang_version.nil?
 
         MacOS::Xcode.detect_version_from_clang_version(Version.new(clang_version))
@@ -429,7 +389,7 @@ module OS
       # @api internal
       sig { returns(::Version) }
       def self.version
-        if @version ||= detect_version
+        if @version ||= T.let(detect_version, T.nilable(String))
           ::Version.new @version
         else
           ::Version::NULL
@@ -439,10 +399,8 @@ module OS
       sig { returns(T.nilable(String)) }
       def self.detect_version
         version = T.let(nil, T.nilable(String))
-        [EXECUTABLE_PKG_ID, MAVERICKS_NEW_PKG_ID].each do |id|
-          next unless File.exist?("#{PKG_PATH}/usr/bin/clang")
-
-          version = MacOS.pkgutil_info(id)[/version: (.+)$/, 1]
+        if File.exist?("#{PKG_PATH}/usr/bin/clang")
+          version = MacOS.pkgutil_info(EXECUTABLE_PKG_ID)[/version: (.+)$/, 1]
           return version if version
         end
 

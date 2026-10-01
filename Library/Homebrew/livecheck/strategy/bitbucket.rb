@@ -63,7 +63,11 @@ module Homebrew
           match = url.match(URL_MATCH_REGEX)
           return values if match.blank?
 
-          regex_prefix = Regexp.escape(T.must(match[:prefix])).gsub("\\-", "-")
+          prefix = match[:prefix]
+          suffix = match[:suffix]
+          return values if prefix.nil? || suffix.nil?
+
+          regex_prefix = Regexp.escape(prefix).gsub("\\-", "-")
 
           # `/get/` archives are Git tag snapshots, so we need to check that tab
           # instead of the main `/downloads/` page
@@ -78,8 +82,7 @@ module Homebrew
             values[:url] = "https://bitbucket.org/#{match[:path]}/downloads/?iframe=true&spa=0"
 
             # Use `\.t` instead of specific tarball extensions (e.g. .tar.gz)
-            suffix = T.must(match[:suffix]).sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")
-            regex_suffix = Regexp.escape(suffix).gsub("\\-", "-")
+            regex_suffix = Regexp.escape(suffix.sub(Strategy::TARBALL_EXTENSION_REGEX, ".t")).gsub("\\-", "-")
 
             # Example file regexes:
             # * `/href=.*?v?(\d+(?:\.\d+)+)\.t/i`
@@ -94,23 +97,26 @@ module Homebrew
         # to {PageMatch.find_versions} to identify versions in the content.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
             regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           generated = generate_input_values(url)
 
           PageMatch.find_versions(
             url:     generated[:url],
             regex:   regex || generated[:regex],
+            content:,
             options:,
             &block
           )

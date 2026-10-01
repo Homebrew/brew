@@ -1,0 +1,116 @@
+# typed: strict
+# frozen_string_literal: true
+
+# A collection of formula options.
+class Options
+  include Enumerable
+  extend T::Generic
+
+  Elem = type_member(:out) { { fixed: Option } }
+
+  sig { params(array: T.nilable(T::Array[String])).returns(Options) }
+  def self.create(array)
+    new Array(array).map { |e| Option.new(e[/^--([^=]+=?).*$/, 1] || e) }
+  end
+
+  sig { params(options: T.nilable(T::Enumerable[Option])).void }
+  def initialize(options = nil)
+    # Ensure this is synced with `initialize_dup` and `freeze` (excluding simple objects like integers and booleans)
+    @options = T.let(Set.new(options), T::Set[Option])
+  end
+
+  sig { params(other: Options).void }
+  def initialize_dup(other)
+    super
+    @options = @options.dup
+  end
+
+  sig { returns(T.self_type) }
+  def freeze
+    @options.dup
+    super
+  end
+
+  sig { override.params(block: T.proc.params(arg0: Option).returns(BasicObject)).returns(T.self_type) }
+  def each(&block)
+    @options.each(&block)
+    self
+  end
+
+  sig { params(other: Option).returns(T.self_type) }
+  def <<(other)
+    @options << other
+    self
+  end
+
+  sig { params(other: T::Enumerable[Option]).returns(T.self_type) }
+  def +(other)
+    self.class.new(@options + other)
+  end
+
+  sig { params(other: T::Enumerable[Option]).returns(T.self_type) }
+  def -(other)
+    self.class.new(@options - other)
+  end
+
+  sig { params(other: T::Enumerable[Option]).returns(T.self_type) }
+  def &(other)
+    self.class.new(@options & other)
+  end
+
+  sig { params(other: T::Enumerable[Option]).returns(T.self_type) }
+  def |(other)
+    self.class.new(@options | other)
+  end
+
+  sig { params(other: String).returns(String) }
+  def *(other)
+    @options.to_a * other
+  end
+
+  sig { params(other: T.anything).returns(T::Boolean) }
+  def ==(other)
+    case other
+    when Options
+      instance_of?(other.class) && to_a == other.to_a
+    else
+      false
+    end
+  end
+  alias eql? ==
+
+  sig { returns(T::Boolean) }
+  def empty?
+    @options.empty?
+  end
+
+  sig { returns(T::Array[String]) }
+  def as_flags
+    map(&:flag)
+  end
+
+  sig { params(option: T.any(Option, String)).returns(T::Boolean) }
+  def include?(option)
+    any? { |opt| opt == option || opt.name == option || opt.flag == option }
+  end
+
+  alias to_ary to_a
+
+  sig { returns(String) }
+  def to_s
+    @options.join(" ")
+  end
+
+  sig { returns(String) }
+  def inspect
+    "#<#{self.class.name}: #{to_a.inspect}>"
+  end
+
+  sig { params(formula: Formula).void }
+  def self.dump_for_formula(formula)
+    formula.options.sort_by(&:flag).each do |opt|
+      puts "#{opt.flag}\n\t#{opt.description}"
+    end
+    puts "--HEAD\n\tInstall HEAD version" if formula.head
+  end
+end

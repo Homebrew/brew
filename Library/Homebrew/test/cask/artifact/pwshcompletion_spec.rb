@@ -1,0 +1,48 @@
+# typed: true
+# frozen_string_literal: true
+
+RSpec.describe Cask::Artifact::PwshCompletion, :cask do
+  let(:cask_token) { "basic-cask" }
+  let(:cask) { Cask::CaskLoader.load(cask_token) }
+
+  context "with install" do
+    let(:install_phase) do
+      lambda do
+        cask.artifacts.grep(described_class).each do |artifact|
+          artifact.install_phase(command: NeverSudoSystemCommand, force: false)
+        end
+      end
+    end
+
+    let(:source_path) { cask.staged_path.join("_test.ps1") }
+    let(:target_path) { cask.config.pwsh_completion.join("_test.ps1") }
+    let(:full_source_path) { cask.staged_path.join("test.pwsh-completion") }
+    let(:full_target_path) { cask.config.pwsh_completion.join("_test.ps1") }
+
+    context "with completion" do
+      let(:cask_token) { "with-shellcompletion" }
+
+      it "links the completion to the proper directory" do
+        source_path.dirname.mkpath
+        source_path.write ""
+
+        install_phase.call
+
+        expect(File).to be_identical target_path, source_path
+      end
+    end
+
+    context "with long completion" do
+      let(:cask_token) { "with-shellcompletion-long" }
+
+      it "links the completion to the proper directory" do
+        full_source_path.dirname.mkpath
+        full_source_path.write ""
+
+        install_phase.call
+
+        expect(File).to be_identical full_target_path, full_source_path
+      end
+    end
+  end
+end

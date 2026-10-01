@@ -11,7 +11,7 @@ module UnpackStrategy
       [".cab"]
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       path.magic_number.match?(/\AMSCF/n)
     end
@@ -25,7 +25,7 @@ module UnpackStrategy
     def extract_to_dir(unpack_dir, basename:, verbose:)
       system_command! "cabextract",
                       args:    ["-d", unpack_dir, "--", path],
-                      env:     { "PATH" => PATH.new(Formula["cabextract"].opt_bin, ENV.fetch("PATH")) },
+                      env:     Utils::Path.formula_opt_bin_env("cabextract"),
                       verbose:
     end
   end

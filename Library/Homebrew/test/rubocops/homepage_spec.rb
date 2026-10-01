@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/homepage"
@@ -80,12 +81,14 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Homepage do
     end
 
     describe "for SourceForge" do
-      correct_formula = <<~RUBY
-        class Foo < Formula
-          homepage "https://foo.sourceforge.io/"
-          url "https://brew.sh/foo-1.0.tgz"
-        end
-      RUBY
+      let(:correct_formula) do
+        <<~RUBY
+          class Foo < Formula
+            homepage "https://foo.sourceforge.io/"
+            url "https://brew.sh/foo-1.0.tgz"
+          end
+        RUBY
+      end
 
       it "reports and corrects [1]" do
         expect_offense(<<~RUBY)
@@ -159,11 +162,13 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Homepage do
           end
         RUBY
 
-        expected_offenses = [{  message:  "FormulaAudit/Homepage: Please use https:// for #{homepage}",
-                                severity: :convention,
-                                line:     2,
-                                column:   11,
-                                source: }]
+        expected_offenses = [{
+          message:  "FormulaAudit/Homepage: Please use https:// for #{homepage}",
+          severity: :convention,
+          line:     2,
+          column:   11,
+          source:,
+        }]
 
         expected_offenses.zip([inspect_source(source).last]).each do |expected, actual|
           expect(actual.message).to eq(expected[:message])

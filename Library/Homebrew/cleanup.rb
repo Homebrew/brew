@@ -1,17 +1,50 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
+require "find"
 require "utils/bottles"
+require "utils/output"
+require "utils/path"
+require "installed_dependents"
+require "package_manager_cache"
+require "stringio"
 
 require "formula"
-require "cask/cask_loader"
 
 module Homebrew
   # Helper class for cleaning up the Homebrew cache.
   class Cleanup
-    CLEANUP_DEFAULT_DAYS = Homebrew::EnvConfig.cleanup_periodic_full_days.to_i.freeze
+    extend Utils::Output::Mixin
+    extend Utils::Path
+    include Utils::Output::Mixin
+    include Utils::Path
+
+    CLEANUP_DEFAULT_DAYS = T.let(Homebrew::EnvConfig.cleanup_periodic_full_days.to_i.freeze, Integer)
     GH_ACTIONS_ARTIFACT_CLEANUP_DAYS = 3
     private_constant :CLEANUP_DEFAULT_DAYS, :GH_ACTIONS_ARTIFACT_CLEANUP_DAYS
+
+    class InstallCleanupOutput
+      sig { params(output: T.any(IO, StringIO), heading: String).void }
+      def initialize(output, heading)
+        @output = output
+        @heading = heading
+        @mutex = T.let(Thread::Mutex.new, Thread::Mutex)
+        @printed = T.let(false, T::Boolean)
+      end
+
+      sig { params(line: String).void }
+      def puts(line)
+        @mutex.synchronize do
+          @output.puts @heading unless @printed
+          @printed = true
+          @output.puts line
+        end
+      end
+
+      sig { returns(T::Boolean) }
+      def printed? = @printed
+    end
+    private_constant :InstallCleanupOutput
 
     class << self
       sig { params(pathname: Pathname).returns(T::Boolean) }
@@ -21,16 +54,13 @@ module Homebrew
 
       sig { params(pathname: Pathname).returns(T::Boolean) }
       def nested_cache?(pathname)
-        pathname.directory? && %w[
-          cargo_cache
-          go_cache
-          go_mod_cache
-          glide_home
-          java_cache
-          npm_cache
-          pip_cache
-          gclient_cache
-        ].include?(pathname.basename.to_s)
+        pathname.directory? && Homebrew::PackageManagerCache::DIRECTORIES.include?(pathname.basename.to_s)
+      end
+
+      sig { params(pathname: Pathname).returns(T::Boolean) }
+      def content_addressed_cache?(pathname)
+        pathname.directory? &&
+          Homebrew::PackageManagerCache::CONTENT_ADDRESSED_DIRECTORIES.include?(pathname.basename.to_s)
       end
 
       sig { params(pathname: Pathname).returns(T::Boolean) }
@@ -53,55 +83,75 @@ module Homebrew
       sig { params(entry: { path: Pathname, type: T.nilable(Symbol) }, scrub: T::Boolean).returns(T::Boolean) }
       def stale?(entry, scrub: false)
         pathname = entry[:path]
-        return false unless pathname.resolved_path.file?
+        return false unless resolved_path(pathname).file?
 
         case entry[:type]
+        when :api_package
+          scrub
         when :api_source
           stale_api_source?(pathname, scrub)
         when :cask
           stale_cask?(pathname, scrub)
         when :gh_actions_artifact
-          stale_gh_actions_artifact?(pathname, scrub)
+          scrub || prune?(pathname, GH_ACTIONS_ARTIFACT_CLEANUP_DAYS)
         else
           stale_formula?(pathname, scrub)
         end
       end
 
-      private
+      sig { params(pathname: Pathname, cask: Cask::Cask, name: String).returns(T::Boolean) }
+      def cask_cache_file_current?(pathname, cask, name)
+        # Casks that only define a version inside OS-specific blocks have none on other systems.
+        return false unless (version = cask.version)
 
-      sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
-      def stale_gh_actions_artifact?(pathname, scrub)
-        scrub || prune?(pathname, GH_ACTIONS_ARTIFACT_CLEANUP_DAYS)
+        pathname.basename.to_s.match?(/\A#{Regexp.escape(name)}--#{Regexp.escape(version)}(?:\.|\z)/)
       end
+
+      sig { params(pathname: Pathname, cask: Cask::Cask, name: String, scrub: T::Boolean).returns(T::Boolean) }
+      def stale_cask_download?(pathname, cask, name, scrub:)
+        return true unless pathname.exist?
+        return true unless cask_cache_file_current?(pathname, cask, name)
+        return true if scrub && cask.installed_version != cask.version
+
+        if cask.version.latest?
+          cleanup_threshold = (DateTime.now - CLEANUP_DEFAULT_DAYS).to_time
+          return pathname.mtime < cleanup_threshold && pathname.ctime < cleanup_threshold
+        end
+
+        false
+      end
+
+      private
 
       sig { params(pathname: Pathname, scrub: T::Boolean).returns(T::Boolean) }
       def stale_api_source?(pathname, scrub)
         return true if scrub
 
-        org, repo, git_head, type, basename = pathname.each_filename.to_a.last(5)
+        path_parts = pathname.each_filename.to_a
+        api_source_index = path_parts.rindex("api-source")
+        return false if api_source_index.nil?
 
-        name = "#{org}/#{repo}/#{File.basename(T.must(basename), ".rb")}"
-        package = if type == "Cask"
-          begin
-            Cask::CaskLoader.load(name)
-          rescue Cask::CaskError
-            nil
-          end
-        else
-          begin
-            Formulary.factory(name)
-          rescue FormulaUnavailableError
-            nil
-          end
-        end
-        return true if package.nil?
+        relative_path_parts = path_parts.drop(api_source_index + 1)
+        return false if relative_path_parts.length < 4
 
-        package.tap_git_head != git_head
+        org = relative_path_parts.fetch(0)
+        repo = relative_path_parts.fetch(1)
+        git_head = relative_path_parts.fetch(2)
+        type = relative_path_parts.fetch(3)
+        basename = relative_path_parts.fetch(-1)
+        return false unless basename.end_with?(".rb")
+        # Cask sources are no longer downloaded, so any cached ones are stale.
+        return true if type == "Cask"
+        return false if type != "Formula"
+
+        Formulary.factory("#{org}/#{repo}/#{File.basename(basename, ".rb")}").tap_git_head != git_head
+      rescue FormulaUnavailableError
+        true
       end
 
       sig { params(formula: Formula).returns(T::Set[String]) }
       def excluded_versions_from_cleanup(formula)
-        @excluded_versions_from_cleanup ||= {}
+        @excluded_versions_from_cleanup ||= T.let({}, T.nilable(T::Hash[String, T::Set[String]]))
         @excluded_versions_from_cleanup[formula.name] ||= begin
           eligible_kegs_for_cleanup = formula.eligible_kegs_for_cleanup(quiet: true)
           Set.new((formula.installed_kegs - eligible_kegs_for_cleanup).map { |keg| keg.version.to_s })
@@ -112,16 +162,9 @@ module Homebrew
       def stale_formula?(pathname, scrub)
         return false unless HOMEBREW_CELLAR.directory?
 
-        version = if HOMEBREW_BOTTLES_EXTNAME_REGEX.match?(to_s)
-          begin
-            Utils::Bottles.resolve_version(pathname).to_s
-          rescue
-            nil
-          end
-        end
         basename_str = pathname.basename.to_s
 
-        version ||= basename_str[/\A.*(?:--.*?)*--(.*?)#{Regexp.escape(pathname.extname)}\Z/, 1]
+        version = basename_str[/\A.*(?:--.*?)*--(.*?)#{Regexp.escape(pathname.extname)}\Z/, 1]
         version ||= basename_str[/\A.*--?(.*?)#{Regexp.escape(pathname.extname)}\Z/, 1]
 
         return false if version.blank?
@@ -134,6 +177,9 @@ module Homebrew
 
         formula = begin
           Formulary.from_rack(HOMEBREW_CELLAR/formula_name)
+        rescue Homebrew::UntrustedTapError
+          opoo "Skipping #{formula_name}: tap formula is not trusted"
+          nil
         rescue FormulaUnavailableError, TapFormulaAmbiguityError
           nil
         end
@@ -142,6 +188,9 @@ module Homebrew
         if formula.blank? && formula_name.delete_suffix!("_bottle_manifest")
           formula = begin
             Formulary.from_rack(HOMEBREW_CELLAR/formula_name)
+          rescue Homebrew::UntrustedTapError
+            opoo "Skipping #{formula_name}: tap formula is not trusted"
+            nil
           rescue FormulaUnavailableError, TapFormulaAmbiguityError
             nil
           end
@@ -162,7 +211,10 @@ module Homebrew
 
           return true if (bottle = formula.bottle).blank?
 
-          return version != GitHubPackages.version_rebuild(bottle.resource.version, bottle.rebuild)
+          resource_version = bottle.resource.version
+          return false unless resource_version
+
+          return version != GitHubPackages.version_rebuild(resource_version, bottle.rebuild)
         end
 
         return false if formula.blank?
@@ -171,7 +223,7 @@ module Homebrew
 
         stable = formula.stable
         if resource_name == "patch"
-          patch_hashes = stable&.patches&.filter_map { _1.resource.version if _1.external? }
+          patch_hashes = stable&.patches&.filter_map { T.cast(it, ExternalPatch).resource.version if it.external? }
           return true unless patch_hashes&.include?(Checksum.new(version.to_s))
         elsif resource_name && stable && (resource_version = stable.resources[resource_name]&.version)
           return true if resource_version != version
@@ -195,37 +247,52 @@ module Homebrew
         return false unless (name = basename.to_s[/\A(.*?)--/, 1])
 
         cask = begin
-          Cask::CaskLoader.load(name)
+          Cask::CaskLoader.load(name, warn: false)
         rescue Cask::CaskError
           nil
         end
 
         return false if cask.blank?
-        return true unless basename.to_s.match?(/\A#{Regexp.escape(name)}--#{Regexp.escape(cask.version)}\b/)
-        return true if scrub && cask.installed_version != cask.version
 
-        if cask.version.latest?
-          cleanup_threshold = (DateTime.now - CLEANUP_DEFAULT_DAYS).to_time
-          return pathname.mtime < cleanup_threshold && pathname.ctime < cleanup_threshold
-        end
-
-        false
+        stale_cask_download?(pathname, cask, name, scrub:)
       end
     end
 
-    PERIODIC_CLEAN_FILE = (HOMEBREW_CACHE/".cleaned").freeze
+    PERIODIC_CLEAN_FILE = T.let((HOMEBREW_CACHE/".cleaned").freeze, Pathname)
 
-    attr_reader :args, :days, :cache, :disk_cleanup_size
+    sig { returns(T::Array[String]) }
+    attr_reader :args
 
-    def initialize(*args, dry_run: false, scrub: false, days: nil, cache: HOMEBREW_CACHE)
-      @disk_cleanup_size = 0
+    sig { returns(Integer) }
+    attr_reader :days
+
+    sig { returns(Pathname) }
+    attr_reader :cache
+
+    sig { returns(Integer) }
+    attr_reader :disk_cleanup_size
+
+    sig {
+      params(
+        args:    String,
+        dry_run: T::Boolean,
+        scrub:   T::Boolean,
+        days:    T.nilable(Integer),
+        cache:   Pathname,
+        output:  T.any(IO, StringIO, InstallCleanupOutput),
+      ).void
+    }
+    def initialize(*args, dry_run: false, scrub: false, days: nil, cache: HOMEBREW_CACHE, output: $stdout)
+      @disk_cleanup_size = T.let(0, Integer)
       @args = args
       @dry_run = dry_run
       @scrub = scrub
-      @prune = days.present?
-      @days = days || Homebrew::EnvConfig.cleanup_max_age_days.to_i
+      @prune = T.let(days.present?, T::Boolean)
+      @days = T.let(days || Homebrew::EnvConfig.cleanup_max_age_days.to_i, Integer)
       @cache = cache
-      @cleaned_up_paths = Set.new
+      @output = output
+      @cleaned_up_paths = T.let(Set.new, T::Set[Pathname])
+      @formula_cache_paths = T.let(nil, T.nilable(T::Hash[String, T::Array[Pathname]]))
     end
 
     sig { returns(T::Boolean) }
@@ -237,46 +304,117 @@ module Homebrew
     sig { returns(T::Boolean) }
     def scrub? = @scrub
 
-    def self.install_formula_clean!(formula, dry_run: false)
-      return if Homebrew::EnvConfig.no_install_cleanup?
-      return unless formula.latest_version_installed?
-      return if skip_clean_formula?(formula)
+    sig { params(output: String, ohai: T::Boolean).returns(T::Boolean) }
+    def self.printed_dry_run_output?(output, ohai: false)
+      return false if output.blank?
 
-      if dry_run
-        ohai "Would run `brew cleanup #{formula}`"
+      if ohai
+        ohai "Would `brew cleanup`"
       else
-        ohai "Running `brew cleanup #{formula}`..."
+        puts "Would `brew cleanup`:"
       end
-
-      puts_no_install_cleanup_disable_message_if_not_already!
-      return if dry_run
-
-      Cleanup.new.cleanup_formula(formula)
+      print output
+      puts unless output.end_with?("\n")
+      true
     end
 
+    sig { params(args: String, formulae: T::Array[Formula], quiet: T::Boolean).returns(String) }
+    def self.dry_run_output(*args, formulae: [], quiet: false)
+      output = StringIO.new
+      old_stdout = $stdout
+      begin
+        $stdout = output
+        cleanup = Cleanup.new(*args, dry_run: true)
+        if formulae.empty?
+          cleanup.clean!(quiet:)
+        else
+          formulae.each { |formula| cleanup.cleanup_formula(formula, quiet:) }
+        end
+      ensure
+        $stdout = old_stdout
+      end
+      output.string
+    end
+
+    sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
+    def self.install_cleanup_formulae(formulae)
+      return [] if Homebrew::EnvConfig.no_install_cleanup?
+
+      formulae.select do |formula|
+        formula.latest_version_installed? && !skip_clean_formula?(formula)
+      end
+    end
+
+    sig { params(formula: Formula).void }
+    def self.install_formula_clean!(formula)
+      return if install_cleanup_formulae([formula]).blank?
+
+      output = StringIO.new
+      Cleanup.new(output:).cleanup_formula(formula, quiet: true)
+      return if output.string.empty?
+
+      ohai "Running `brew cleanup #{formula}`..."
+      puts_no_install_cleanup_disable_message_if_not_already!
+      print output.string
+    end
+
+    sig { params(formulae: T::Array[Formula], casks: T::Array[Cask::Cask]).void }
+    def self.install_clean!(formulae: [], casks: [])
+      return if Homebrew::EnvConfig.no_install_cleanup?
+
+      formulae = install_cleanup_formulae(formulae).uniq(&:full_name)
+      casks = casks.uniq(&:full_name)
+      packages = T.let(formulae + casks, T::Array[T.any(Formula, Cask::Cask)])
+      return if packages.empty?
+
+      output = InstallCleanupOutput.new($stdout, oh1_title("Cleanup"))
+      Utils.parallel_map(packages) do |package|
+        cleanup = Cleanup.new(output:)
+        case package
+        when Formula
+          cleanup.cleanup_formula(package, quiet: true, cache_db: false, cleanup_unreferenced: false)
+        when Cask::Cask
+          cleanup.cleanup_cask(package, cleanup_unreferenced: false)
+        else
+          T.absurd(package)
+        end
+      end
+
+      Cleanup.new.cleanup_cache_db if formulae.present?
+      Cleanup.new.cleanup_unreferenced_downloads
+
+      return unless output.printed?
+
+      puts_no_install_cleanup_disable_message_if_not_already!
+    end
+
+    sig { void }
     def self.puts_no_install_cleanup_disable_message
       return if Homebrew::EnvConfig.no_env_hints?
       return if Homebrew::EnvConfig.no_install_cleanup?
 
-      puts "Disable this behaviour by setting HOMEBREW_NO_INSTALL_CLEANUP."
-      puts "Hide these hints with HOMEBREW_NO_ENV_HINTS (see `man brew`)."
+      puts "Disable this behaviour by setting `HOMEBREW_NO_INSTALL_CLEANUP=1`."
+      puts "Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`)."
     end
 
+    sig { void }
     def self.puts_no_install_cleanup_disable_message_if_not_already!
       return if @puts_no_install_cleanup_disable_message_if_not_already
 
       puts_no_install_cleanup_disable_message
-      @puts_no_install_cleanup_disable_message_if_not_already = true
+      @puts_no_install_cleanup_disable_message_if_not_already = T.let(true, T.nilable(TrueClass))
     end
 
+    sig { params(formula: Formula).returns(T::Boolean) }
     def self.skip_clean_formula?(formula)
       no_cleanup_formula = Homebrew::EnvConfig.no_cleanup_formulae
       return false if no_cleanup_formula.blank?
 
-      @skip_clean_formulae ||= no_cleanup_formula.split(",")
+      @skip_clean_formulae ||= T.let(no_cleanup_formula.split(","), T.nilable(T::Array[String]))
       @skip_clean_formulae.include?(formula.name) || @skip_clean_formulae.intersect?(formula.aliases)
     end
 
+    sig { returns(T::Boolean) }
     def self.periodic_clean_due?
       return false if Homebrew::EnvConfig.no_install_cleanup?
 
@@ -289,6 +427,7 @@ module Homebrew
       PERIODIC_CLEAN_FILE.mtime < (DateTime.now - CLEANUP_DEFAULT_DAYS).to_time
     end
 
+    sig { params(dry_run: T::Boolean).void }
     def self.periodic_clean!(dry_run: false)
       return if Homebrew::EnvConfig.no_install_cleanup?
       return unless periodic_clean_due?
@@ -305,18 +444,29 @@ module Homebrew
       Cleanup.new.clean!(quiet: true, periodic: true)
     end
 
+    sig { params(quiet: T::Boolean, periodic: T::Boolean).void }
     def clean!(quiet: false, periodic: false)
+      require "cask/cask_loader"
+
       if args.empty?
         Formula.installed
                .sort_by(&:name)
                .reject { |f| Cleanup.skip_clean_formula?(f) }
                .each do |formula|
-          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false)
+          # Don't `cleanup_unreferenced` here for each formula.
+          # Instead, let it be run once `cleanup_cache` below.
+          cleanup_formula(formula, quiet:, ds_store: false, cache_db: false, cleanup_unreferenced: false)
+        end
+
+        if periodic
+          Cask::Caskroom.casks.sort_by(&:full_name).each do |cask|
+            cleanup_cask(cask, ds_store: false, cleanup_legacy_downloads: false, cleanup_unreferenced: false)
+          end
         end
 
         if ENV["HOMEBREW_AUTOREMOVE"].present?
-          opoo "HOMEBREW_AUTOREMOVE is now a no-op as it is the default behaviour. " \
-               "Set HOMEBREW_NO_AUTOREMOVE=1 to disable it."
+          opoo "`$HOMEBREW_AUTOREMOVE` is now a no-op as it is the default behaviour. " \
+               "Set `HOMEBREW_NO_AUTOREMOVE=1` to disable it."
         end
         Cleanup.autoremove(dry_run: dry_run?) unless Homebrew::EnvConfig.no_autoremove?
 
@@ -324,6 +474,8 @@ module Homebrew
         cleanup_empty_api_source_directories
         cleanup_bootsnap
         cleanup_logs
+        cleanup_temp_staging
+        cleanup_reinstall_kegs
         cleanup_lockfiles
         cleanup_python_site_packages
         prune_prefix_symlinks_and_directories
@@ -367,32 +519,110 @@ module Homebrew
       end
     end
 
+    sig { returns(T::Array[Keg]) }
     def unremovable_kegs
-      @unremovable_kegs ||= []
+      @unremovable_kegs ||= T.let([], T.nilable(T::Array[Keg]))
     end
 
-    def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true)
+    sig {
+      params(paths: T::Array[Pathname], type: T.nilable(Symbol))
+        .returns(T::Array[{ path: Pathname, type: T.nilable(Symbol) }])
+    }
+    def cache_entries(paths, type:)
+      paths.map { |path| { path:, type: } }
+    end
+
+    sig {
+      params(paths: T::Array[Pathname], type: T.nilable(Symbol), cleanup_unreferenced: T::Boolean).void
+    }
+    def cleanup_cache_entries(paths, type:, cleanup_unreferenced: true)
+      cleanup_cache(cache_entries(paths, type:), cleanup_unreferenced:)
+    end
+
+    # Returns the cached `<formula>--<version>` and
+    # `<formula>_bottle_manifest--<version>` downloads for a formula. Globbing
+    # these per formula rescans the entire cache each time, which is quadratic
+    # for `brew cleanup`, so index the cache by name prefix once instead.
+    sig { params(formula: Formula).returns(T::Array[Pathname]) }
+    def formula_cache_paths(formula)
+      return [] unless cache.directory?
+
+      index = @formula_cache_paths ||= cache.children.each_with_object({}) do |path, hash|
+        prefix, separator, = path.basename.to_s.partition("--")
+        next if prefix.start_with?(".") || separator.empty?
+
+        (hash[prefix] ||= []) << path
+      end
+
+      [*index.fetch(formula.name, []), *index.fetch("#{formula.name}_bottle_manifest", [])].sort
+    end
+
+    sig {
+      params(formula: Formula, quiet: T::Boolean, ds_store: T::Boolean, cache_db: T::Boolean,
+             cleanup_unreferenced: T::Boolean).void
+    }
+    def cleanup_formula(formula, quiet: false, ds_store: true, cache_db: true, cleanup_unreferenced: true)
       formula.eligible_kegs_for_cleanup(quiet:)
-             .each { cleanup_keg(_1) }
-      cleanup_cache(Pathname.glob(cache/"#{formula.name}{_bottle_manifest,}--*").map { |path| { path:, type: nil } })
+             .each { |keg| cleanup_keg(keg) }
+      cleanup_cache_entries(formula_cache_paths(formula), type: nil, cleanup_unreferenced:)
       rm_ds_store([formula.rack]) if ds_store
       cleanup_cache_db(formula.rack) if cache_db
       cleanup_lockfiles(FormulaLock.new(formula.name).path)
     end
 
-    def cleanup_cask(cask, ds_store: true)
-      cleanup_cache(Pathname.glob(cache/"Cask/#{cask.token}--*").map { |path| { path:, type: :cask } })
+    sig {
+      params(
+        cask:                     Cask::Cask,
+        ds_store:                 T::Boolean,
+        cleanup_legacy_downloads: T::Boolean,
+        cleanup_unreferenced:     T::Boolean,
+      ).void
+    }
+    def cleanup_cask(cask, ds_store: true, cleanup_legacy_downloads: true, cleanup_unreferenced: true)
+      cleanup_cache_entries(Pathname.glob(cache/"Cask/#{cask.token}--*"), type: :cask, cleanup_unreferenced: false)
+      cleanup_legacy_cask_downloads([cask]) if cleanup_legacy_downloads
+      cleanup_unreferenced_downloads if cleanup_unreferenced
+
       rm_ds_store([cask.caskroom_path]) if ds_store
       cleanup_lockfiles(CaskLock.new(cask.token).path)
     end
 
+    # Added 2026-07-05 for legacy cask cache symlinks named after URL basenames.
+    # Remove after 2026-11-02, once the 120-day fallback stale-file sweep has
+    # had time to prune stale files created before cask downloads were token-named.
+    sig { params(casks: T::Array[Cask::Cask]).void }
+    def cleanup_legacy_cask_downloads(casks)
+      cask_cache = cache/"Cask"
+      return unless cask_cache.directory?
+
+      cask_cache_paths = cask_cache.children.select { |path| path.file? || path.symlink? }
+
+      casks.each do |cask|
+        next unless (url = cask.url)
+
+        legacy_download_name = Utils.safe_filename(File.basename(url.to_s))
+        next if legacy_download_name.blank? || legacy_download_name == cask.token
+
+        cask_cache_paths.each do |path|
+          next unless path.basename.to_s.start_with?("#{legacy_download_name}--")
+          next if !self.class.stale_cask_download?(path, cask, legacy_download_name, scrub: scrub?) &&
+                  (!self.class.cask_cache_file_current?(path, cask, legacy_download_name) ||
+                   !(cask_cache/Utils.safe_filename("#{cask.token}--#{cask.version}#{path.extname}")).exist?)
+
+          cleanup_path(path) { path.unlink }
+        end
+      end
+    end
+
+    sig { params(keg: Keg).void }
     def cleanup_keg(keg)
-      cleanup_path(keg) { keg.uninstall(raise_failures: true) }
+      cleanup_path(Pathname.new(keg)) { keg.uninstall(raise_failures: true) }
     rescue Errno::EACCES, Errno::ENOTEMPTY => e
       opoo e.message
       unremovable_kegs << keg
     end
 
+    sig { void }
     def cleanup_logs
       return unless HOMEBREW_LOGS.directory?
 
@@ -403,18 +633,66 @@ module Homebrew
       end
     end
 
+    sig { void }
+    def cleanup_temp_staging
+      [HOMEBREW_TEMP_CELLAR, HOMEBREW_TEMP_CASKROOM].each do |temp_dir|
+        next unless temp_dir.directory?
+
+        temp_dir.each_child do |child|
+          cleanup_path(child) { FileUtils.rm_r(child) }
+        rescue Errno::EACCES, Errno::ENOTEMPTY => e
+          opoo e.message
+        end
+      end
+    end
+
+    sig { void }
+    def cleanup_reinstall_kegs
+      return unless HOMEBREW_CELLAR.directory?
+
+      HOMEBREW_CELLAR.glob("*/*.reinstall").each do |reinstall_keg|
+        cleanup_path(reinstall_keg) { FileUtils.rm_r(reinstall_keg) }
+      end
+    end
+
+    sig { returns(T::Array[{ path: Pathname, type: T.nilable(Symbol) }]) }
     def cache_files
       files = cache.directory? ? cache.children : []
       cask_files = (cache/"Cask").directory? ? (cache/"Cask").children : []
-      api_source_files = (cache/"api-source").glob("*/*/*/*/*") # `<org>/<repo>/<git_head>/<type>/<token>.rb`
+      api_internal = cache/"api/internal"
+      api_package_files = if scrub? && api_internal.directory?
+        current_api_package_basename = Homebrew::API::Internal.cached_packages_json_file_path.basename.to_s
+        # Keep only the current OS's envelope and its `.payload` and
+        # `.payload.index` sidecars and scrub the rest, including orphaned
+        # sidecars and temp files.
+        # Keep in sync with the previous-OS-version removal in cmd/update.sh.
+        kept_basenames = [
+          current_api_package_basename,
+          "#{current_api_package_basename}.payload",
+          "#{current_api_package_basename}.payload.index",
+        ]
+        api_internal.glob("packages.*.jws.json*").reject do |path|
+          kept_basenames.include?(path.basename.to_s)
+        end
+      else
+        []
+      end
+      api_resource_files = %w[cask formula].flat_map do |resource_type|
+        directory = cache/"api"/resource_type
+        directory.directory? ? directory.children : []
+      end
+      api_source_files = (cache/"api-source").glob("*/*/*/**/*").select { |path| path.file? || path.symlink? }
       gh_actions_artifacts = (cache/"gh-actions-artifact").directory? ? (cache/"gh-actions-artifact").children : []
 
-      files.map { |path| { path:, type: nil } } +
-        cask_files.map { |path| { path:, type: :cask } } +
-        api_source_files.map { |path| { path:, type: :api_source } } +
-        gh_actions_artifacts.map { |path| { path:, type: :gh_actions_artifact } }
+      cache_entries(files, type: nil) +
+        cache_entries(cask_files, type: :cask) +
+        cache_entries(api_package_files, type: :api_package) +
+        cache_entries(api_resource_files, type: :api_package) +
+        cache_entries(api_source_files, type: :api_source) +
+        cache_entries(gh_actions_artifacts, type: :gh_actions_artifact)
     end
 
+    sig { params(directory: Pathname).void }
     def cleanup_empty_api_source_directories(directory = cache/"api-source")
       return if dry_run?
       return unless directory.directory?
@@ -427,13 +705,15 @@ module Homebrew
       end
     end
 
+    sig { void }
     def cleanup_unreferenced_downloads
       return if dry_run?
       return unless (cache/"downloads").directory?
 
       downloads = (cache/"downloads").children
 
-      referenced_downloads = cache_files.map { |file| file[:path] }.select(&:symlink?).map(&:resolved_path)
+      referenced_downloads = cache_files.map { |file| file[:path] }.select(&:symlink?)
+                                        .map { |path| resolved_path(path) }
 
       (downloads - referenced_downloads).each do |download|
         if self.class.incomplete?(download)
@@ -453,7 +733,12 @@ module Homebrew
       end
     end
 
-    def cleanup_cache(entries = nil)
+    sig {
+      params(entries:              T.nilable(T::Array[{ path: Pathname, type: T.nilable(Symbol) }]),
+             cleanup_unreferenced: T::Boolean).void
+    }
+    def cleanup_cache(entries = nil, cleanup_unreferenced: true)
+      full_cache_cleanup = entries.nil?
       entries ||= cache_files
 
       entries.each do |entry|
@@ -462,7 +747,17 @@ module Homebrew
 
         FileUtils.chmod_R 0755, path if self.class.go_cache_directory?(path) && !dry_run?
         next cleanup_path(path) { path.unlink } if self.class.incomplete?(path)
-        next cleanup_path(path) { FileUtils.rm_rf path } if self.class.nested_cache?(path)
+
+        if self.class.nested_cache?(path)
+          # Caches that verify their contents on every read stay safe to reuse
+          # between builds, so only prune their old files rather than wiping them.
+          if self.class.content_addressed_cache?(path)
+            prune_content_addressed_cache(path)
+          else
+            cleanup_path(path) { FileUtils.rm_rf path }
+          end
+          next
+        end
 
         if self.class.prune?(path, days)
           if path.file? || path.symlink?
@@ -477,23 +772,44 @@ module Homebrew
         cleanup_path(path) { path.unlink } if !prune? && self.class.stale?(entry, scrub: scrub?)
       end
 
-      cleanup_unreferenced_downloads
+      cleanup_legacy_cask_downloads(Cask::Caskroom.casks) if full_cache_cleanup
+      cleanup_unreferenced_downloads if cleanup_unreferenced
     end
 
-    def cleanup_path(path)
-      return unless path.exist?
+    sig { params(path: Pathname).void }
+    def prune_content_addressed_cache(path)
+      files = Find.find(path.to_s).filter_map do |file|
+        file = Pathname(file)
+        file if file.file? && (scrub? || self.class.prune?(file, days))
+      end
+      return if files.empty?
+
+      @disk_cleanup_size += files.sum(&:disk_usage)
+      count = Utils.pluralize("file", files.count, include_count: true)
+      if dry_run?
+        @output.puts "Would prune #{count} from: #{path}"
+      else
+        @output.puts "Pruning #{count} from: #{path}..."
+        files.each(&:unlink)
+      end
+    end
+
+    sig { params(path: Pathname, _block: T.proc.void).void }
+    def cleanup_path(path, &_block)
+      return if !path.exist? && !path.symlink?
       return unless @cleaned_up_paths.add?(path)
 
       @disk_cleanup_size += path.disk_usage
 
       if dry_run?
-        puts "Would remove: #{path} (#{path.abv})"
+        @output.puts "Would remove: #{path} (#{path.abv})"
       else
-        puts "Removing: #{path}... (#{path.abv})"
+        @output.puts "Removing: #{path}... (#{path.abv})"
         yield
       end
     end
 
+    sig { params(lockfiles: Pathname).void }
     def cleanup_lockfiles(*lockfiles)
       return if dry_run?
 
@@ -501,16 +817,20 @@ module Homebrew
 
       lockfiles.each do |file|
         next unless file.readable?
-        next unless file.open(File::RDWR).flock(File::LOCK_EX | File::LOCK_NB)
 
-        begin
-          file.unlink
-        ensure
-          file.open(File::RDWR).flock(File::LOCK_UN) if file.exist?
+        file.open(File::RDWR) do |lockfile|
+          next unless lockfile.flock(File::LOCK_EX | File::LOCK_NB)
+
+          begin
+            file.unlink
+          ensure
+            lockfile.flock(File::LOCK_UN) if file.exist?
+          end
         end
       end
     end
 
+    sig { void }
     def cleanup_portable_ruby
       vendor_dir = HOMEBREW_LIBRARY/"Homebrew/vendor"
       portable_ruby_latest_version = (vendor_dir/"portable-ruby-version").read.chomp
@@ -549,10 +869,12 @@ module Homebrew
       end
     end
 
+    sig { returns(T::Boolean) }
     def use_system_ruby?
       false
     end
 
+    sig { void }
     def cleanup_bootsnap
       bootsnap = cache/"bootsnap"
       return unless bootsnap.directory?
@@ -562,6 +884,7 @@ module Homebrew
       end
     end
 
+    sig { params(rack: T.nilable(Pathname)).void }
     def cleanup_cache_db(rack = nil)
       FileUtils.rm_rf [
         cache/"desc_cache.json",
@@ -573,14 +896,19 @@ module Homebrew
         break unless db.created?
 
         db.each_key do |keg|
-          next if rack.present? && !keg.start_with?("#{rack}/")
+          keg = T.cast(keg, String)
+          next if rack && !keg.start_with?("#{rack}/")
           next if File.directory?(keg)
 
-          LinkageCacheStore.new(keg, db).delete!
+          LinkageCacheStore.new(
+            keg,
+            T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]]),
+          ).delete!
         end
       end
     end
 
+    sig { params(dirs: T.nilable(T::Array[Pathname])).void }
     def rm_ds_store(dirs = nil)
       dirs ||= Keg.must_exist_directories + [
         HOMEBREW_PREFIX/"Caskroom",
@@ -595,6 +923,7 @@ module Homebrew
           end
     end
 
+    sig { void }
     def cleanup_python_site_packages
       pyc_files = Hash.new { |h, k| h[k] = [] }
       seen_non_pyc_file = Hash.new { |h, k| h[k] = false }
@@ -644,6 +973,7 @@ module Homebrew
       end
     end
 
+    sig { void }
     def prune_prefix_symlinks_and_directories
       ObserverPathnameExtension.reset_counts!
 
@@ -656,8 +986,10 @@ module Homebrew
         dir.find do |path|
           path.extend(ObserverPathnameExtension)
           if path.symlink?
-            unless path.resolved_path_exists?
-              path.uninstall_info if path.to_s.match?(Keg::INFOFILE_RX) && !dry_run?
+            unless resolved_path_exists?(path)
+              if path.to_s.match?(Keg::INFOFILE_RX) && !dry_run?
+                Utils::Path.uninstall_info(path, verbose: ObserverPathnameExtension.verbose?)
+              end
 
               if dry_run?
                 puts "Would remove (broken link): #{path}"
@@ -675,7 +1007,7 @@ module Homebrew
 
       dirs.reverse_each do |d|
         if !dry_run?
-          d.rmdir_if_possible
+          rmdir_if_possible(d)
         elsif children_count[d].zero?
           puts "Would remove (empty directory): #{d}"
           children_count[d.dirname] -= 1 if children_count.key?(d.dirname)
@@ -686,7 +1018,7 @@ module Homebrew
       if Cask::Caskroom.path.directory?
         Cask::Caskroom.path.each_child do |path|
           path.extend(ObserverPathnameExtension)
-          next if !path.symlink? || path.resolved_path_exists?
+          next if !path.symlink? || resolved_path_exists?(path)
 
           if dry_run?
             puts "Would remove (broken link): #{path}"
@@ -706,6 +1038,7 @@ module Homebrew
       puts "from #{HOMEBREW_PREFIX}"
     end
 
+    sig { params(dry_run: T::Boolean).void }
     def self.autoremove(dry_run: false)
       require "utils/autoremove"
       require "cask/caskroom"
@@ -717,19 +1050,24 @@ module Homebrew
       formulae = Formula.installed
       # Remove formulae listed in HOMEBREW_NO_CLEANUP_FORMULAE and their dependencies.
       if Homebrew::EnvConfig.no_cleanup_formulae.present?
-        formulae -= formulae.select { skip_clean_formula?(_1) }
-                            .flat_map { |f| [f, *f.runtime_formula_dependencies] }
+        formulae -= formulae.select { skip_clean_formula?(it) }
+                            .flat_map { |f| [f, *f.installed_runtime_formula_dependencies] }
       end
       casks = Cask::Caskroom.casks
 
       removable_formulae = Utils::Autoremove.removable_formulae(formulae, casks)
+      if (candidate_kegs = removable_formulae.filter_map(&:any_installed_keg).presence) &&
+         (required_kegs, = InstalledDependents.find_some_installed_dependents(candidate_kegs)) &&
+         (required_names = Set.new(required_kegs.map(&:name)).presence)
+        removable_formulae.reject! { |formula| required_names.include?(formula.name) }
+      end
 
       return if removable_formulae.blank?
 
       formulae_names = removable_formulae.map(&:full_name).sort
 
       verb = dry_run ? "Would autoremove" : "Autoremoving"
-      oh1 "#{verb} #{formulae_names.count} unneeded #{Utils.pluralize("formula", formulae_names.count, plural: "e")}:"
+      oh1 "#{verb} #{formulae_names.count} unneeded #{Utils.pluralize("formula", formulae_names.count)}:"
       puts formulae_names.join("\n")
       return if dry_run
 

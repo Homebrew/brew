@@ -17,7 +17,7 @@ module RuboCop
 
           sha256_nodes = find_method_calls_by_name(bottle_node.body, :sha256)
           cellar_node = find_node_method_by_name(bottle_node.body, :cellar)
-          cellar_source = cellar_node&.first_argument&.source
+          cellar_source = T.cast(cellar_node, T.nilable(RuboCop::AST::SendNode))&.first_argument&.source
 
           if sha256_nodes.present? && cellar_node.present?
             offending_node(cellar_node)

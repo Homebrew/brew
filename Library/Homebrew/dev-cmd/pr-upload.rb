@@ -1,11 +1,14 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/brew_command"
+
 require "abstract_command"
 require "formula"
 require "github_packages"
 require "github_releases"
 require "extend/hash/deep_merge"
+require "bottle_transition"
 
 module Homebrew
   module DevCmd
@@ -28,7 +31,8 @@ module Homebrew
         switch "--upload-only",
                description: "Skip running `brew bottle` before uploading."
         flag   "--committer=",
-               description: "Specify a committer name and email in `git`'s standard author format."
+               description: "Specify a committer name and email in `git`'s standard author format.",
+               odisabled:   true
         flag   "--root-url=",
                description: "Use the specified <URL> as the root of the bottle's URL instead of Homebrew's default."
         flag   "--root-url-using=",
@@ -38,6 +42,8 @@ module Homebrew
         conflicts "--upload-only", "--no-commit"
 
         named_args :none
+
+        hide_from_man_page!
       end
 
       sig { override.void }
@@ -45,7 +51,7 @@ module Homebrew
         json_files = Dir["*.bottle.json"]
         odie "No bottle JSON files found in the current working directory" if json_files.blank?
 
-        Homebrew.install_bundler_gems!(groups: ["pr_upload"])
+        Utils::GemSetup.install_bundler_gems!(groups: ["pr_upload"])
 
         bottles_hash = bottles_hash_from_json_files(json_files, args)
 
@@ -55,7 +61,6 @@ module Homebrew
           bottle_args << "--debug" if args.debug?
           bottle_args << "--keep-old" if args.keep_old?
           bottle_args << "--root-url=#{args.root_url}" if args.root_url
-          bottle_args << "--committer=#{args.committer}" if args.committer
           bottle_args << "--no-commit" if args.no_commit?
           bottle_args << "--root-url-using=#{args.root_url_using}" if args.root_url_using
           bottle_args += json_files
@@ -82,7 +87,7 @@ module Homebrew
 
           check_bottled_formulae!(bottles_hash)
 
-          safe_system HOMEBREW_BREW_FILE, *bottle_args
+          Utils::BrewCommand.run!(*bottle_args)
 
           json_files = Dir["*.bottle.json"]
           if json_files.blank?
@@ -100,9 +105,11 @@ module Homebrew
             audit_args << "--verbose" if args.verbose?
             audit_args << "--debug" if args.debug?
             audit_args += bottles_hash.keys
-            safe_system HOMEBREW_BREW_FILE, *audit_args
+            Utils::BrewCommand.run!(*audit_args)
           end
         end
+
+        check_transition_bottles!(bottles_hash)
 
         if github_releases?(bottles_hash)
           github_releases = GitHubReleases.new
@@ -119,6 +126,43 @@ module Homebrew
       end
 
       private
+
+      sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
+      def check_transition_bottles!(bottles_hash)
+        # Reload the bottle block written by `brew bottle --merge`.
+        Formulary.clear_cache
+        transition = BottleTransition.new
+        bottles_hash.each_value do |bottle_hash|
+          formula_path = HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path")
+          formula = Formulary.factory(formula_path)
+          next unless transition.required?(formula)
+
+          spec = formula.bottle_specification
+          transition.check!(formula, tags: spec.collector.tags)
+          bottle = bottle_hash.fetch("bottle")
+          tags = bottle.fetch("tags").keys.map { |tag| Utils::Bottles.tag(tag.to_sym) }
+          if !args.keep_old? && tags.exclude?(BottleTransition.tag) && tags.exclude?(Utils::Bottles.tag(:all))
+            raise UsageError, <<~EOS
+              #{formula.full_name} #{formula.pkg_version}: upload set is missing
+              #{BottleTransition.tag} or `all` bottle artifacts.
+              Restore the matching bottle artifacts and JSON files before retrying.
+            EOS
+          end
+
+          root_url = bottle.fetch("root_url")
+          metadata_matches = bottle_hash.fetch("formula").fetch("pkg_version") == formula.pkg_version.to_s &&
+                             bottle.fetch("rebuild", 0).to_i == spec.rebuild &&
+                             (GitHubPackages.root_url_if_match(root_url) || root_url) == spec.root_url &&
+                             bottle.fetch("tags").all? do |tag, tag_hash|
+                               tag_spec = spec.collector.specification_for(Utils::Bottles.tag(tag.to_sym),
+                                                                           no_older_versions: true)
+                               tag_spec && tag_spec.checksum.hexdigest == tag_hash.fetch("sha256")
+                             end
+          next if metadata_matches
+
+          raise UsageError, "#{formula.full_name}: bottle metadata does not match the committed formula."
+        end
+      end
 
       sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
       def check_bottled_formulae!(bottles_hash)
@@ -155,7 +199,20 @@ module Homebrew
         puts "Reading JSON files: #{json_files.join(", ")}" if args.verbose?
 
         bottles_hash = json_files.reduce({}) do |hash, json_file|
-          hash.deep_merge(JSON.parse(File.read(json_file)))
+          incoming = JSON.parse(File.read(json_file))
+          incoming.each do |name, bottle_hash|
+            bottle = bottle_hash.fetch("bottle")
+            bottle["root_url"] = GitHubPackages.root_url_if_match(bottle["root_url"]) || bottle["root_url"]
+            previous = hash[name]
+            next unless previous
+            next if previous.fetch("formula").slice("path", "pkg_version") ==
+                    bottle_hash.fetch("formula").slice("path", "pkg_version") &&
+                    previous.fetch("bottle").slice("root_url", "rebuild") ==
+                    bottle_hash.fetch("bottle").slice("root_url", "rebuild")
+
+            raise UsageError, "Inconsistent bottle metadata for #{name} in #{json_file}."
+          end
+          hash.deep_merge(incoming)
         end
 
         if args.root_url

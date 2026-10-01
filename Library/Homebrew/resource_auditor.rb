@@ -1,6 +1,7 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
+require "utils/path"
 require "utils/svn"
 
 module Homebrew
@@ -8,26 +9,69 @@ module Homebrew
   class ResourceAuditor
     include Utils::Curl
 
-    attr_reader :name, :version, :checksum, :url, :mirrors, :using, :specs, :owner, :spec_name, :problems
+    sig { returns(T.nilable(String)) }
+    attr_reader :name
 
-    def initialize(resource, spec_name, options = {})
-      @name     = resource.name
-      @version  = resource.version
-      @checksum = resource.checksum
-      @url      = resource.url
-      @mirrors  = resource.mirrors
-      @using    = resource.using
-      @specs    = resource.specs
-      @owner    = resource.owner
+    sig { returns(T.nilable(Version)) }
+    attr_reader :version
+
+    sig { returns(T.nilable(Checksum)) }
+    attr_reader :checksum
+
+    sig { returns(T.nilable(String)) }
+    attr_reader :url
+
+    sig { returns(T::Array[String]) }
+    attr_reader :mirrors
+
+    sig { returns(T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol))) }
+    attr_reader :using
+
+    sig { returns(T::Hash[Symbol, T.untyped]) }
+    attr_reader :specs
+
+    sig { returns(T.nilable(Resource::Owner)) }
+    attr_reader :owner
+
+    sig { returns(Symbol) }
+    attr_reader :spec_name
+
+    sig { returns(T::Array[String]) }
+    attr_reader :problems
+
+    sig {
+      params(
+        resource:          T.any(Resource, SoftwareSpec),
+        spec_name:         Symbol,
+        online:            T.nilable(T::Boolean),
+        strict:            T.nilable(T::Boolean),
+        only:              T.nilable(T::Array[String]),
+        except:            T.nilable(T::Array[String]),
+        core_tap:          T.nilable(T::Boolean),
+        use_homebrew_curl: T::Boolean,
+      ).void
+    }
+    def initialize(resource, spec_name, online: nil, strict: nil, only: nil, except: nil, core_tap: nil,
+                   use_homebrew_curl: false)
+      @name     = T.let(resource.name, T.nilable(String))
+      @version  = T.let(resource.version, T.nilable(Version))
+      @checksum = T.let(resource.checksum, T.nilable(Checksum))
+      @url      = T.let(resource.url&.to_s, T.nilable(String))
+      @mirrors  = T.let(resource.mirrors, T::Array[String])
+      @using    = T.let(resource.using, T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol)))
+      @specs    = T.let(resource.specs, T::Hash[Symbol, T.untyped])
+      @owner    = T.let(resource.owner, T.nilable(T.any(Cask::Cask, Resource::Owner)))
       @spec_name = spec_name
-      @online    = options[:online]
-      @strict    = options[:strict]
-      @only      = options[:only]
-      @except    = options[:except]
-      @use_homebrew_curl = options[:use_homebrew_curl]
-      @problems = []
+      @online    = online
+      @strict    = strict
+      @only      = only
+      @except    = except
+      @core_tap  = core_tap
+      @use_homebrew_curl = use_homebrew_curl
+      @problems = T.let([], T::Array[String])
     end
 
+    sig { returns(ResourceAuditor) }
     def audit
       only_audits = @only
       except_audits = @except
@@ -43,24 +87,27 @@ module Homebrew
       self
     end
 
+    sig { void }
     def audit_version
-      if version.nil?
-        problem "missing version"
-      elsif owner.is_a?(Formula) && !version.to_s.match?(GitHubPackages::VALID_OCI_TAG_REGEX) &&
-            (owner.core_formula? ||
-            (owner.bottle_defined? && GitHubPackages::URL_REGEX.match?(owner.bottle_specification.root_url)))
-        problem "version #{version} does not match #{GitHubPackages::VALID_OCI_TAG_REGEX.source}"
-      elsif !version.detected_from_url?
-        version_text = version
-        version_url = Version.detect(url, **specs)
+      if (version_text = version).nil?
+        problem "Missing version"
+      elsif (formula_owner = owner).is_a?(::Formula) &&
+            !version_text.to_s.match?(GitHubPackages::VALID_OCI_TAG_REGEX) &&
+            (formula_owner.core_formula? ||
+            (formula_owner.bottle_defined? &&
+              GitHubPackages::URL_REGEX.match?(formula_owner.bottle_specification.root_url)))
+        problem "`version #{version}` does not match #{GitHubPackages::VALID_OCI_TAG_REGEX.source}"
+      elsif !version_text.detected_from_url?
+        version_url = Version.detect(url!, **specs)
         if version_url.to_s == version_text.to_s && version.instance_of?(Version)
-          problem "version #{version_text} is redundant with version scanned from URL"
+          problem "`version #{version_text}` is redundant with version scanned from URL"
         end
       end
     end
 
+    sig { void }
     def audit_download_strategy
-      url_strategy = DownloadStrategyDetector.detect(url)
+      url_strategy = DownloadStrategyDetector.detect(url!)
 
       if (using == :git || url_strategy == GitDownloadStrategy) && specs[:tag] && !specs[:revision]
         problem "Git should specify `revision:` when a `tag:` is specified."
@@ -73,8 +120,8 @@ module Homebrew
 
         problem "Redundant `module:` value in URL" if mod == name
 
-        if url.match?(%r{:[^/]+$})
-          mod = url.split(":").last
+        if url!.match?(%r{:[^/]+$})
+          mod = url!.split(":").last
 
           if mod == name
             problem "Redundant CVS module appended to URL"
@@ -89,55 +136,60 @@ module Homebrew
       problem "Redundant `using:` value in URL"
     end
 
+    sig { void }
     def audit_checksum
       return if spec_name == :head
       # This condition is non-invertible.
       # rubocop:disable Style/InvertibleUnlessCondition
-      return unless DownloadStrategyDetector.detect(url, using) <= CurlDownloadStrategy
+      return unless DownloadStrategyDetector.detect(url.to_s, using) <= CurlDownloadStrategy
       # rubocop:enable Style/InvertibleUnlessCondition
 
       problem "Checksum is missing" if checksum.blank?
     end
 
+    sig { returns(T::Array[String]) }
     def self.curl_deps
-      @curl_deps ||= begin
-        ["curl"] + Formula["curl"].recursive_dependencies.map(&:name).uniq
+      @curl_deps ||= T.let(begin
+        ["curl"] + ::Formula["curl"].recursive_dependencies.map(&:name).uniq
       rescue FormulaUnavailableError
         []
-      end
+      end, T.nilable(T::Array[String]))
     end
 
+    sig { void }
     def audit_resource_name_matches_pypi_package_name_in_url
-      return unless url.match?(%r{^https?://files\.pythonhosted\.org/packages/})
-      return if name == owner.name # Skip the top-level package name as we only care about `resource "foo"` blocks.
+      return unless url!.match?(%r{^https?://files\.pythonhosted\.org/packages/})
+      # Skip the top-level package name as we only care about `resource "foo"` blocks.
+      return if name == owner!.name
 
-      if url.end_with? ".whl"
-        path = URI(url).path
+      if url!.end_with? ".whl"
+        path = URI(url!).path
         return unless path.present?
 
-        pypi_package_name, = File.basename(path).split("-", 2)
+        pypi_package_name = File.basename(path).split("-", 2).fetch(0)
       else
         url =~ %r{/(?<package_name>[^/]+)-}
         pypi_package_name = Regexp.last_match(:package_name).to_s
       end
 
-      T.must(pypi_package_name).gsub!(/[_.]/, "-")
+      pypi_package_name = pypi_package_name.gsub(/[_.]/, "-")
 
-      return if name.casecmp(pypi_package_name).zero?
+      return if name.to_s.casecmp(pypi_package_name.to_s)&.zero?
 
       problem "`resource` name should be '#{pypi_package_name}' to match the PyPI package name"
     end
 
+    sig { void }
     def audit_urls
-      urls = [url] + mirrors
+      urls = [url.to_s] + mirrors
 
-      curl_dep = self.class.curl_deps.include?(owner.name)
+      curl_dep = curl_dep?
       # Ideally `ca-certificates` would not be excluded here, but sourcing a HTTP mirror was tricky.
       # Instead, we have logic elsewhere to pass `--insecure` to curl when downloading the certs.
       # TODO: try remove the OS/env conditional
       if Homebrew::SimulateSystem.simulating_or_running_on_macos? && spec_name == :stable &&
-         owner.name != "ca-certificates" && curl_dep && !urls.find { |u| u.start_with?("http://") }
-        problem "should always include at least one HTTP mirror"
+         owner!.name != "ca-certificates" && curl_dep && !urls.find { |u| u.start_with?("http://") }
+        problem "Should always include at least one HTTP mirror"
       end
 
       return unless @online
@@ -149,9 +201,14 @@ module Homebrew
         if strategy <= CurlDownloadStrategy && !url.start_with?("file")
 
           raise HomebrewCurlDownloadStrategyError, url if
-            strategy <= HomebrewCurlDownloadStrategy && !Formula["curl"].any_version_installed?
+            strategy <= HomebrewCurlDownloadStrategy && !Utils::Path.formula_any_version_installed?("curl")
 
-          if (http_content_problem = curl_check_http_content(
+          # Skip ftp.gnu.org audit, upstream has asked us to reduce load.
+          # See issue: https://github.com/Homebrew/brew/issues/20456
+          next if url.match?(%r{^https?://ftp\.gnu\.org/.+})
+
+          # Skip https audit for curl dependencies
+          if !curl_dep && (http_content_problem = curl_check_http_content(
             url,
             "source URL",
             specs:,
@@ -168,7 +225,6 @@ module Homebrew
           end
           problem "The URL #{url} is not a valid Git URL" unless remote_exists
         elsif strategy <= SubversionDownloadStrategy
-          next unless DevelopmentTools.subversion_handles_most_https_certificates?
           next unless Utils::Svn.available?
 
           problem "The URL #{url} is not a valid SVN URL" unless Utils::Svn.remote_exists? url
@@ -176,23 +232,89 @@ module Homebrew
       end
     end
 
-    def audit_head_branch
+    # `curl` dependencies must be fetchable before `ca-certificates`, so at least
+    # one mirror must serve the expected file over plain HTTP.
+    sig { void }
+    def audit_curl_dep_http_mirror
       return unless @online
-      return unless @strict
-      return if spec_name != :head
-      return unless Utils::Git.remote_exists?(url)
-      return if specs[:tag].present?
-      return if specs[:revision].present?
+      return if spec_name != :stable
+      # Only audit the formula's own source, not its `resource` blocks.
+      return if name != owner!.name
+      return unless curl_dep?
 
-      branch = Utils.popen_read("git", "ls-remote", "--symref", url, "HEAD")
-                    .match(%r{ref: refs/heads/(.*?)\s+HEAD})&.to_a&.second
-      return if branch.blank? || branch == specs[:branch]
+      checksum = self.checksum
+      return if checksum.nil?
 
-      problem "Specify the default branch as `branch: \"#{branch}\"`"
+      http_mirrors = mirrors.select { |mirror| mirror.start_with?("http://") }
+      return if http_mirrors.empty?
+
+      working_mirror = http_mirrors.find do |mirror|
+        details = curl_http_content_headers_and_checksum(
+          mirror,
+          hash_needed:       true,
+          use_homebrew_curl: @use_homebrew_curl,
+          # Fail rather than follow an HTTPS redirect, so a successful request
+          # with a matching checksum proves the bytes came over plain HTTP.
+          specs:             { proto_redir: "=http" },
+        )
+
+        # Reject an explicit HTTPS `final_url` as defence-in-depth; a relative or
+        # HTTP `Location` from an HTTP-to-HTTP redirect is fine.
+        http_status_ok?(details[:status_code]) &&
+          !details[:final_url].to_s.start_with?("https://") &&
+          details[:file_hash] == checksum.hexdigest
+      end
+      return if working_mirror
+
+      problem "`curl` dependencies must have a working HTTP mirror that serves " \
+              "the expected checksum over plain HTTP."
     end
 
+    sig { void }
+    def audit_head_branch
+      return unless @online
+      return if spec_name != :head
+      return if specs[:tag].present?
+      return if specs[:revision].present?
+      # Skip `resource` URLs as they use SHAs instead of branch specifiers.
+      return if name != owner!.name
+      return unless url.to_s.end_with?(".git")
+      return unless Utils::Git.remote_exists?(url.to_s)
+
+      detected_branch = Utils.popen_read("git", "ls-remote", "--symref", "--end-of-options", url.to_s, "HEAD")
+                             .match(%r{ref: refs/heads/(.*?)\s+HEAD})&.to_a&.second
+
+      if specs[:branch].blank?
+        problem "Git `head` URL must specify a branch name"
+        return
+      end
+
+      return unless @core_tap
+      return if specs[:branch] == detected_branch
+
+      problem "To use a non-default HEAD branch, add the formula to `head_non_default_branch_allowlist.json`."
+    end
+
+    sig { params(text: String).void }
     def problem(text)
       @problems << text
+    end
+
+    private
+
+    sig { returns(T::Boolean) }
+    def curl_dep?
+      self.class.curl_deps.include?(owner!.name)
+    end
+
+    sig { returns(Resource::Owner) }
+    def owner!
+      owner || raise("ResourceAuditor owner is nil")
+    end
+
+    sig { returns(String) }
+    def url!
+      url || raise("ResourceAuditor URL is nil")
     end
   end
 end

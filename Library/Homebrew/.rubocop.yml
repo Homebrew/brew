@@ -1,16 +1,45 @@
 inherit_from:
   - ../.rubocop.yml
 
-Bundler/GemFilename:
-  Enabled: false
-
 Homebrew/MoveToExtendOS:
   Enabled: true
-  Exclude:
-    - "{extend,test,requirements}/**/*"
-    - "os.rb"
 
-Naming/PredicateName:
+# This fixture intentionally exercises the deprecated flight-block DSL.
+Cask/InstallSteps:
+  Exclude:
+    - "test/support/fixtures/cask/Casks/many-artifacts.rb"
+
+# The project index does not model explicit removal or isolated entry points.
+Lint/ConstantReassignment:
+  Exclude:
+    # Replaced or bypassed by isolated test environments.
+    - "cask/config.rb"
+    - "startup/config.rb"
+    - "test/support/helper/spec/shared_context/homebrew_cask.rb"
+    - "test/support/lib/startup/config.rb"
+    # Defined by mutually exclusive application entry points.
+    - "global.rb"
+    - "utils/ruby_check_version_script.rb"
+
+Lint/DuplicateMethods:
+  Exclude:
+    # OS-specific implementations intentionally override shared fallbacks. The
+    # project index reports both definitions, so both files must be excluded.
+    - "formula_installer.rb"
+    - "extend/os/linux/formula_installer.rb"
+    - "requirements/xcode_requirement.rb"
+    - "extend/os/linux/requirements/xcode_requirement.rb"
+    - "hardware.rb"
+    - "extend/os/mac/hardware/cpu/hardware.rb"
+    - "keg_only_reason.rb"
+    - "extend/os/mac/keg_only_reason.rb"
+
+# Detect unreferenced private methods across Homebrew's project index.
+Lint/UnusedPrivateMethod:
+  Enabled: true
+
+# Want to preserve our own API for these methods for now.
+Naming/PredicatePrefix:
   inherit_mode:
     merge:
       - AllowedMethods
@@ -18,19 +47,49 @@ Naming/PredicateName:
     - is_32_bit?
     - is_64_bit?
 
+Naming/PredicateMethod:
+  inherit_mode:
+    merge:
+      - WaywardPredicates
+  WaywardPredicates:
+    - size?
+
+Naming/MethodParameterName:
+  AllowedNames:
+    - go
+    - uv
+
 # Only enforce documentation for public APIs.
-# Checked by the tests.yml syntax job
+# Include list checked by Homebrew/PublicApiDocumentation.
 Style/Documentation:
   AllowedConstants:
     - Homebrew
   Include:
     - abstract_command.rb
+    - abstract_subcommand.rb
+    - autobump_constants.rb
     - cask/cask.rb
     - cask/dsl.rb
     - cask/dsl/version.rb
     - cask/url.rb
     - development_tools.rb
-    - download_strategy.rb
+    - download_strategy/abstract_download_strategy.rb
+    - download_strategy/abstract_file_download_strategy.rb
+    - download_strategy/bazaar_download_strategy.rb
+    - download_strategy/curl_apache_mirror_download_strategy.rb
+    - download_strategy/curl_download_strategy.rb
+    - download_strategy/curl_github_packages_download_strategy.rb
+    - download_strategy/curl_post_download_strategy.rb
+    - download_strategy/cvs_download_strategy.rb
+    - download_strategy/fossil_download_strategy.rb
+    - download_strategy/git_download_strategy.rb
+    - download_strategy/github_git_download_strategy.rb
+    - download_strategy/homebrew_curl_download_strategy.rb
+    - download_strategy/mercurial_download_strategy.rb
+    - download_strategy/no_unzip_curl_download_strategy.rb
+    - download_strategy/pypi_download_strategy.rb
+    - download_strategy/subversion_download_strategy.rb
+    - download_strategy/vcs_download_strategy.rb
     - extend/ENV/super.rb
     - extend/kernel.rb
     - extend/pathname.rb
@@ -58,25 +117,40 @@ Style/Documentation:
     - livecheck/strategy/npm.rb
     - livecheck/strategy/page_match.rb
     - livecheck/strategy/pypi.rb
+    - livecheck/strategy/ruby_gems.rb
     - livecheck/strategy/sourceforge.rb
     - livecheck/strategy/sparkle.rb
     - livecheck/strategy/xml.rb
     - livecheck/strategy/xorg.rb
     - livecheck/strategy/yaml.rb
     - os.rb
+    - os/mac.rb
     - resource.rb
+    - service.rb
     - startup/config.rb
+    - utils/gzip.rb
     - utils/inreplace.rb
+    - utils/output.rb
+    - utils/path.rb
     - utils/shebang.rb
     - utils/string_inreplace_extension.rb
     - version.rb
     - tap.rb
 
-Homebrew/NegateInclude:
-  Exclude:
-    # YARD runs stand-alone.
-    - yard/docstring_parser.rb
-
 Style/DocumentationMethod:
   Include:
     - "formula.rb"
+
+# Ensure @api public methods have proper YARD documentation.
+# No Include needed: the cop self-selects by finding @api public comments.
+Homebrew/PublicApiDocumentation:
+  Enabled: true
+
+# Ensure cookbook-referenced methods are annotated @api public.
+# No Include needed: the cop self-selects from cookbook rubydoc links.
+Homebrew/PublicApiCookbook:
+  Enabled: true
+
+# Ensure official tap formulae don't use @api internal/@api private methods.
+FormulaAudit/NonPublicApiUsage:
+  Enabled: true

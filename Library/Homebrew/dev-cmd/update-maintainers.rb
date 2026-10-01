@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/text"
+
 require "abstract_command"
 require "utils/github"
 require "manpages"
@@ -17,45 +19,34 @@ module Homebrew
         EOS
 
         named_args :none
+
+        hide_from_man_page!
       end
 
       sig { override.void }
       def run
         # Needed for Manpages.regenerate_man_pages below
-        Homebrew.install_bundler_gems!(groups: ["man"])
+        Utils::GemSetup.install_bundler_gems!(groups: ["man"])
 
-        # We assume that only public members wish to be included in the README
-        public_members = GitHub.public_member_usernames("Homebrew")
+        lead_maintainers = GitHub.members_by_team("Homebrew", "lead-maintainers")
         maintainers = GitHub.members_by_team("Homebrew", "maintainers")
-
-        # Not all PLC members are Homebrew GitHub organisation members any more
-        non_maintainer_plc_members = {
-          colindean:   "Colin Dean",
-          mozzadrella: "Vanessa Gennarelli",
-        }.transform_keys(&:to_s)
-        public_members += non_maintainer_plc_members.keys
-
-        members = {
-          plc:         GitHub.members_by_team("Homebrew", "plc").merge(non_maintainer_plc_members),
-          tsc:         GitHub.members_by_team("Homebrew", "tsc"),
-          maintainers:,
-        }
+                            .reject { |login, _| lead_maintainers.key?(login) }
+        members = { lead_maintainers:, maintainers: }
 
         sentences = {}
         members.each do |group, hash|
-          hash.replace(hash.slice(*public_members))
           hash.each { |login, name| hash[login] = "[#{name}](https://github.com/#{login})" }
-          sentences[group] = hash.values.sort_by { |s| s.unicode_normalize(:nfd).gsub(/\P{L}+/, "") }.to_sentence
+          sentences[group] = Utils::Text.to_sentence(
+            hash.values.sort_by { |s| s.unicode_normalize(:nfd).gsub(/\P{L}+/, "") },
+          )
         end
 
         readme = HOMEBREW_REPOSITORY/"README.md"
 
         content = readme.read
-        content.gsub!(/(Homebrew's \[Project Leadership Committee.*) is .*\./,
-                      "\\1 is #{sentences[:plc]}.")
-        content.gsub!(/(Homebrew's \[Technical Steering Committee.*) is .*\./,
-                      "\\1 is #{sentences[:tsc]}.")
-        content.gsub!(/(Homebrew's maintainers are).*\./,
+        content.gsub!(/(Homebrew's \[Lead Maintainers.* (?:are|is)) .*\./,
+                      "\\1 #{sentences[:lead_maintainers]}.")
+        content.gsub!(/(Homebrew's other Maintainers (?:are|is)) .*\./,
                       "\\1 #{sentences[:maintainers]}.")
 
         File.write(readme, content)

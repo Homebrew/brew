@@ -1,17 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
-homebrew_pkg_user_plist="/var/tmp/.homebrew_pkg_user.plist"
-if [[ -f "${homebrew_pkg_user_plist}" ]] && [[ -n $(defaults read "${homebrew_pkg_user_plist}" HOMEBREW_PKG_USER) ]]
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)"
+if [[ -f "${script_dir}/macos_user.sh" ]]
+then
+  # `pkgbuild` stages this helper beside the package scripts.
+  # shellcheck disable=SC1091
+  source "${script_dir}/macos_user.sh"
+else
+  # This fallback keeps direct local execution from the repository working.
+  # shellcheck disable=SC1091
+  source "${script_dir}/../../Library/Homebrew/utils/macos_user.sh"
+fi
+
+if homebrew-package-user &>/dev/null
 then
   exit 0
 fi
 
-homebrew_pkg_user=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
-if [[ "${homebrew_pkg_user}" =~ _mbsetupuser|loginwindow|root ]] || [[ -z "${homebrew_pkg_user}" ]]
-then
-  echo "No valid user for Homebrew installation. Log in before install or specify an install user."
-  exit 1
-else
-  exit 0
-fi
+echo "No valid user for Homebrew installation. Log in before install or specify an install user."
+exit 1

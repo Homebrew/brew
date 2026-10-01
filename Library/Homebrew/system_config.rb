@@ -1,18 +1,26 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "hardware"
-require "software_spec"
+require "tap"
 require "development_tools"
 require "extend/ENV"
 require "system_command"
 require "git_repository"
+require "utils/popen"
 
 # Helper module for querying information about the system configuration.
 module SystemConfig
   class << self
     include SystemCommand::Mixin
 
+    sig { void }
+    def initialize
+      @clang = T.let(nil, T.nilable(Version))
+      @clang_build = T.let(nil, T.nilable(Version))
+    end
+
+    sig { returns(Version) }
     def clang
       @clang ||= if DevelopmentTools.installed?
         DevelopmentTools.clang_version
@@ -21,6 +29,7 @@ module SystemConfig
       end
     end
 
+    sig { returns(Version) }
     def clang_build
       @clang_build ||= if DevelopmentTools.installed?
         DevelopmentTools.clang_build_version
@@ -34,19 +43,27 @@ module SystemConfig
       GitRepository.new(HOMEBREW_REPOSITORY)
     end
 
+    sig { returns([T.nilable(String), T.nilable(String), T.nilable(String)]) }
+    def homebrew_head_info
+      @homebrew_head_info ||= T.let(
+        homebrew_repo.head_info,
+        T.nilable([T.nilable(String), T.nilable(String), T.nilable(String)]),
+      )
+    end
+
     sig { returns(String) }
     def branch
-      homebrew_repo.branch_name || "(none)"
+      homebrew_head_info[2] || "(none)"
     end
 
     sig { returns(String) }
     def head
-      homebrew_repo.head_ref || "(none)"
+      homebrew_head_info[0] || "(none)"
     end
 
     sig { returns(String) }
     def last_commit
-      homebrew_repo.last_committed || "never"
+      homebrew_head_info[1] || "never"
     end
 
     sig { returns(String) }
@@ -65,17 +82,6 @@ module SystemConfig
       end
     end
 
-    def describe_path(path)
-      return "N/A" if path.nil?
-
-      realpath = path.realpath
-      if realpath == path
-        path
-      else
-        "#{path} => #{realpath}"
-      end
-    end
-
     sig { returns(String) }
     def describe_homebrew_ruby
       "#{RUBY_VERSION} => #{RUBY_PATH}"
@@ -90,8 +96,11 @@ module SystemConfig
 
     sig { returns(String) }
     def kernel
-      `uname -m`.chomp
+      Utils.popen_read_text("uname", "-m", err: :err).chomp
     end
+
+    sig { returns(T.nilable(String)) }
+    def windows_version; end
 
     sig { returns(String) }
     def describe_git
@@ -102,7 +111,7 @@ module SystemConfig
 
     sig { returns(String) }
     def describe_curl
-      out, = system_command(Utils::Curl.curl_executable, args: ["--version"], verbose: false)
+      out = system_command(Utils::Curl.curl_executable, args: ["--version"], verbose: false).stdout
 
       match_data = /^curl (?<curl_version>[\d.]+)/.match(out)
       if match_data
@@ -112,6 +121,7 @@ module SystemConfig
       end
     end
 
+    sig { params(tap: Tap, out: T.any(File, StringIO, IO)).void }
     def dump_tap_config(tap, out = $stdout)
       case tap
       when CoreTap
@@ -126,10 +136,11 @@ module SystemConfig
 
       if tap.installed?
         out.puts "#{tap_name} origin: #{tap.remote}" if tap.remote != tap.default_remote
-        out.puts "#{tap_name} HEAD: #{tap.git_head || "(none)"}"
-        out.puts "#{tap_name} last commit: #{tap.git_last_commit || "never"}"
+        head, last_commit, branch = tap.git_repository.head_info
+        out.puts "#{tap_name} HEAD: #{head || "(none)"}"
+        out.puts "#{tap_name} last commit: #{last_commit || "never"}"
         default_branches = %w[main master].freeze
-        out.puts "#{tap_name} branch: #{tap.git_branch || "(none)"}" if default_branches.exclude?(tap.git_branch)
+        out.puts "#{tap_name} branch: #{branch || "(none)"}" if default_branches.exclude?(branch)
       end
 
       json_file = Homebrew::API::HOMEBREW_CACHE_API/json_file_name
@@ -140,10 +151,13 @@ module SystemConfig
       end
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def core_tap_config(out = $stdout)
       dump_tap_config(CoreTap.instance, out)
+      dump_tap_config(CoreCaskTap.instance, out)
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def homebrew_config(out = $stdout)
       out.puts "HOMEBREW_VERSION: #{HOMEBREW_VERSION}"
       out.puts "ORIGIN: #{origin}"
@@ -152,27 +166,25 @@ module SystemConfig
       out.puts "Branch: #{branch}"
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def homebrew_env_config(out = $stdout)
       out.puts "HOMEBREW_PREFIX: #{HOMEBREW_PREFIX}"
-      {
-        HOMEBREW_REPOSITORY: Homebrew::DEFAULT_REPOSITORY,
-        HOMEBREW_CELLAR:     Homebrew::DEFAULT_CELLAR,
-      }.freeze.each do |key, default|
-        value = Object.const_get(key)
-        out.puts "#{key}: #{value}" if value.to_s != default.to_s
-      end
+      repository = HOMEBREW_REPOSITORY
+      cellar = HOMEBREW_CELLAR
+      out.puts "HOMEBREW_REPOSITORY: #{repository}" if repository.to_s != Homebrew::DEFAULT_REPOSITORY.to_s
+      out.puts "HOMEBREW_CELLAR: #{cellar}" if cellar.to_s != Homebrew::DEFAULT_CELLAR.to_s
 
-      Homebrew::EnvConfig::ENVS.each do |env, hash|
-        method_name = Homebrew::EnvConfig.env_method_name(env, hash)
+      Homebrew::EnvConfig.non_default_variables.each do |env|
+        env_symbol = env.to_sym
+        hash = Homebrew::EnvConfig::ENVS.fetch(env_symbol)
+        value = Homebrew::EnvConfig.public_send(Homebrew::EnvConfig.env_method_name(env_symbol, hash))
 
         if hash[:boolean]
-          out.puts "#{env}: set" if Homebrew::EnvConfig.send(method_name)
+          out.puts "#{env}: #{value ? "set" : "false"}"
           next
         end
 
-        value = Homebrew::EnvConfig.send(method_name)
         next unless value
-        next if (default = hash[:default].presence) && value.to_s == default.to_s
 
         if ENV.sensitive?(env)
           out.puts "#{env}: set"
@@ -183,18 +195,34 @@ module SystemConfig
       out.puts "Homebrew Ruby: #{describe_homebrew_ruby}"
     end
 
+    sig { params(out: T.any(File, StringIO, IO)).void }
     def host_software_config(out = $stdout)
       out.puts "Clang: #{describe_clang}"
       out.puts "Git: #{describe_git}"
       out.puts "Curl: #{describe_curl}"
     end
 
-    def dump_verbose_config(out = $stdout)
-      homebrew_config(out)
-      core_tap_config(out)
-      homebrew_env_config(out)
+    sig { params(out: T.any(File, StringIO, IO)).void }
+    def hardware_config(out = $stdout)
+      hardware = self.hardware
       out.puts hardware if hardware
-      host_software_config(out)
+    end
+
+    sig { returns(T::Array[Symbol]) }
+    def config_sections
+      [:homebrew_config, :core_tap_config, :homebrew_env_config, :hardware_config, :host_software_config]
+    end
+
+    sig { params(out: T.any(File, StringIO, IO)).void }
+    def dump_verbose_config(out = $stdout)
+      # Most sections shell out for their values (Git, compilers, curl,
+      # etc.), so render them concurrently and print them in order.
+      sections = Utils.parallel_map(config_sections) do |section|
+        io = StringIO.new
+        public_send(section, io)
+        io.string
+      end
+      sections.each { |section| out.print section }
     end
   end
 end

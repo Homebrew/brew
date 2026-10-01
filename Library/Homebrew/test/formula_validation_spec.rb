@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -22,14 +23,22 @@ RSpec.describe Formula do
     it "can't override the `brew` method" do
       expect do
         formula do
+          T.bind(self, T.class_of(Formula))
           def brew; end
         end
-      end.to raise_error(RuntimeError, /\AThe method `brew` on #{described_class} was declared as final/)
+      end.to raise_error(
+        RuntimeError,
+        Regexp.union(
+          /\AFormula subclasses cannot override `brew`\.\z/,
+          /\AThe method `brew` on #{described_class} was declared as final/o,
+        ),
+      )
     end
 
     it "validates the `name`" do
       expect do
         formula "name with spaces" do
+          T.bind(self, T.class_of(Formula))
           url "foo"
           version "1.0"
         end
@@ -39,6 +48,7 @@ RSpec.describe Formula do
     it "validates the `url`" do
       expect do
         formula do
+          T.bind(self, T.class_of(Formula))
           url ""
           version "1"
         end
@@ -48,6 +58,7 @@ RSpec.describe Formula do
     it "validates the `version`" do
       expect do
         formula do
+          T.bind(self, T.class_of(Formula))
           url "foo"
           version "version with spaces"
         end
@@ -55,6 +66,7 @@ RSpec.describe Formula do
 
       expect do
         formula do
+          T.bind(self, T.class_of(Formula))
           url "foo"
           version ""
         end
@@ -62,14 +74,16 @@ RSpec.describe Formula do
 
       expect do
         formula do
+          T.bind(self, T.class_of(Formula))
           url "foo"
           version nil
         end
       end.to fail_with_invalid :version
     end
 
-    specify "head-only is valid" do
+    specify "HEAD-only is valid" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         head "foo"
       end
 
@@ -79,6 +93,7 @@ RSpec.describe Formula do
     it "fails when Formula is empty" do
       expect do
         formula do
+          T.bind(self, T.class_of(Formula))
           # do nothing
         end
       end.to raise_error(FormulaSpecificationError)

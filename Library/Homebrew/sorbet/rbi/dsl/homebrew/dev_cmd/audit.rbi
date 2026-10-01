@@ -27,6 +27,9 @@ class Homebrew::DevCmd::Audit::Args < Homebrew::CLI::Args
   def casks?; end
 
   sig { returns(T::Boolean) }
+  def changed?; end
+
+  sig { returns(T::Boolean) }
   def display_cop_names?; end
 
   sig { returns(T::Boolean) }
@@ -71,7 +74,7 @@ class Homebrew::DevCmd::Audit::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def os; end
 
-  sig { returns(T::Boolean) }
+  sig { returns(T.nilable(T::Boolean)) }
   def signing?; end
 
   sig { returns(T::Boolean) }
@@ -79,7 +82,4 @@ class Homebrew::DevCmd::Audit::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def strict?; end
-
-  sig { returns(T::Boolean) }
-  def token_conflicts?; end
 end

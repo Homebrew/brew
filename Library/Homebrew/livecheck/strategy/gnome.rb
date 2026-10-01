@@ -29,8 +29,6 @@ module Homebrew
       class Gnome
         extend Strategic
 
-        NICE_NAME = "GNOME"
-
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
           ^https?://download\.gnome\.org
@@ -59,11 +57,12 @@ module Homebrew
           values = {}
 
           match = url.match(URL_MATCH_REGEX)
-          return values if match.blank?
+          package_name = match[:package_name] if match
+          return values if package_name.nil?
 
-          values[:url] = "https://download.gnome.org/sources/#{match[:package_name]}/cache.json"
+          values[:url] = "https://download.gnome.org/sources/#{package_name}/cache.json"
 
-          regex_name = Regexp.escape(T.must(match[:package_name])).gsub("\\-", "-")
+          regex_name = Regexp.escape(package_name).gsub("\\-", "-")
 
           # GNOME archive files seem to use a standard filename format, so we
           # count on the delimiter between the package name and numeric
@@ -77,23 +76,26 @@ module Homebrew
         # to {PageMatch.find_versions} to identify versions in the content.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
             regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           generated = generate_input_values(url)
 
-          version_data = PageMatch.find_versions(
+          match_data = PageMatch.find_versions(
             url:     generated[:url],
             regex:   regex || generated[:regex],
+            content:,
             options:,
             &block
           )
@@ -101,7 +103,7 @@ module Homebrew
           if regex.blank?
             # Filter out unstable versions using the old version scheme where
             # the major version is below 40.
-            version_data[:matches].reject! do |_, version|
+            match_data[:matches].reject! do |_, version|
               next if version.major >= 40
               next if version.minor.blank?
 
@@ -110,7 +112,7 @@ module Homebrew
             end
           end
 
-          version_data
+          match_data
         end
       end
     end

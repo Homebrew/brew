@@ -11,7 +11,7 @@ module UnpackStrategy
       [".pkg", ".mkpg"]
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       path.extname.match?(/\A.m?pkg\Z/) &&
         (path.directory? || path.magic_number.match?(/\Axar!/n))

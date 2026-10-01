@@ -1,9 +1,10 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/no_autobump"
 
 RSpec.describe RuboCop::Cop::FormulaAudit::NoAutobump do
-  subject(:cop) { described_class.new }
+  subject(:cop) { RuboCop::Cop::FormulaAudit::NoAutobump.new }
 
   it "reports no offenses if `reason` is acceptable" do
     expect_no_offenses(<<~RUBY)

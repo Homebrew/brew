@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::CaskLoader::FromPathLoader do
@@ -48,6 +49,19 @@ RSpec.describe Cask::CaskLoader::FromPathLoader do
 
       it "loads a cask with a source file path" do
         cask = described_class.new(sourcefile_path).load(config: nil)
+        expect(cask.loaded_from_api?).to be true
+        expect(cask.loaded_from_internal_api?).to be false
+        expect(cask.sourcefile_path).to eq sourcefile_path
+      end
+    end
+
+    context "with an internal JSON cask file" do
+      let(:sourcefile_path) { TEST_FIXTURE_DIR/"cask/everything.internal.json" }
+
+      it "loads a cask with a source file path" do
+        cask = described_class.new(sourcefile_path).load(config: nil)
+        expect(cask.loaded_from_api?).to be true
+        expect(cask.loaded_from_internal_api?).to be true
         expect(cask.sourcefile_path).to eq sourcefile_path
       end
     end

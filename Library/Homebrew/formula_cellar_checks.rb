@@ -1,9 +1,14 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "digest"
+require "json"
+require "rubygems/package"
 require "utils/shell"
+require "utils/path"
+require "zlib"
 
-# Checks to perform on a formula's cellar.
+# Checks to perform on a formula's keg (versioned Cellar path).
 module FormulaCellarChecks
   extend T::Helpers
 
@@ -83,6 +88,11 @@ module FormulaCellarChecks
   sig { params(filename: Pathname).returns(T::Boolean) }
   def valid_library_extension?(filename)
     VALID_LIBRARY_EXTENSIONS.include? filename.extname
+  end
+
+  sig { params(file: Pathname).returns(T::Boolean) }
+  def binary_program?(file)
+    file.binary_executable?
   end
 
   sig { returns(T.nilable(String)) }
@@ -214,7 +224,7 @@ module FormulaCellarChecks
                       .filter_map { |d| Formula[d].version.to_s[/^\d+\.\d+/] }
 
     return if python_deps.blank?
-    return if pythons.any? { |v| python_deps.include? v }
+    return if pythons.intersect?(python_deps)
 
     pythons = pythons.map { |v| "Python #{v}" }
     python_deps = python_deps.map { |v| "Python #{v}" }
@@ -234,7 +244,7 @@ module FormulaCellarChecks
     keg = Keg.new(prefix)
 
     matches = []
-    keg.each_unique_file_matching(HOMEBREW_SHIMS_PATH) do |f|
+    keg.each_unique_file_matching(HOMEBREW_SHIMS_PATH.to_s) do |f|
       match = f.relative_path_from(keg.to_path)
 
       next if match.to_s.match? %r{^share/doc/.+?/INFO_BIN$}
@@ -255,6 +265,7 @@ module FormulaCellarChecks
   def check_plist(prefix, plist)
     return unless prefix.directory?
 
+    require "plist"
     plist = begin
       Plist.parse_xml(plist, marshal: false)
     rescue
@@ -306,7 +317,7 @@ module FormulaCellarChecks
     return unless formula.service?
     return unless formula.service.command?
 
-    "Service command does not exist" unless File.exist?(T.must(formula.service.command).first)
+    "Service command does not exist" unless File.exist?(formula.service.command.first)
   end
 
   sig { params(formula: Formula).returns(T.nilable(String)) }
@@ -323,8 +334,12 @@ module FormulaCellarChecks
 
     # macOS `objdump` is a bit slow, so we prioritise llvm's `llvm-objdump` (~5.7x faster)
     # or binutils' `objdump` (~1.8x faster) if they are installed.
-    objdump   = Formula["llvm"].opt_bin/"llvm-objdump" if Formula["llvm"].any_version_installed?
-    objdump ||= Formula["binutils"].opt_bin/"objdump" if Formula["binutils"].any_version_installed?
+    if Utils::Path.formula_any_version_installed?("llvm")
+      objdump = Utils::Path.formula_opt_bin("llvm")/"llvm-objdump"
+    end
+    if Utils::Path.formula_any_version_installed?("binutils")
+      objdump ||= Utils::Path.formula_opt_bin("binutils")/"objdump"
+    end
     objdump ||= which("objdump")
     objdump ||= which("objdump", ORIGINAL_PATHS)
 
@@ -358,6 +373,8 @@ module FormulaCellarChecks
     keg = Keg.new(formula.prefix)
     mismatches = {}
     keg.binary_executable_or_library_files.each do |file|
+      next if !file.is_a?(MachOShim) && !file.is_a?(ELFShim)
+
       farch = file.arch
       mismatches[file] = farch if farch != Hardware::CPU.arch
     end
@@ -371,7 +388,9 @@ module FormulaCellarChecks
     mismatches = mismatches.to_h
 
     universal_binaries_expected = if (formula_tap = formula.tap).present? && formula_tap.core_tap?
-      formula_tap.audit_exception(:universal_binary_allowlist, formula.name)
+      # Apply audit exception to versioned formulae too from the unversioned name.
+      formula_name = formula.unversioned_formula_name || formula.name
+      formula_tap.audit_exception(:universal_binary_allowlist, formula_name)
     else
       true
     end
@@ -413,9 +432,137 @@ module FormulaCellarChecks
     s
   end
 
+  sig { params(formula: Formula).returns(T.nilable(String)) }
+  def check_prebuilt_npm_binaries(formula)
+    return unless formula.prefix.directory?
+
+    formula_tap = formula.tap
+    return if formula_tap.blank? || !formula_tap.core_tap?
+
+    # Audit exceptions apply to a versioned formula from its unversioned name.
+    formula_name = formula.unversioned_formula_name || formula.name
+    expected = formula_tap.audit_exception(:prebuilt_binary_allowlist, formula_name)
+    return if expected == true
+
+    expected = [expected] if expected.is_a?(String)
+    glob_flags = File::FNM_DOTMATCH | File::FNM_EXTGLOB | File::FNM_PATHNAME
+    candidates = Keg.new(formula.prefix).binary_executable_or_library_files.select do |file|
+      # Prebuilt addons are a policy question of their own, but a downloaded
+      # one shows that the helpers shipped beside it could not be built.
+      next true if file.extname == ".node"
+      next false unless binary_program?(file)
+
+      if expected.is_a?(Array) &&
+         expected.any? { |pattern| file.fnmatch?("#{formula.prefix.realpath}/#{pattern}", glob_flags) }
+        next false
+      end
+
+      true
+    end
+    return if candidates.all? { |file| file.extname == ".node" }
+
+    cache = Homebrew::PackageManagerCache.path("npm_cache")/"_cacache"
+    return unless cache.directory?
+
+    # npm keys a cached response by where it came from: make-fetch-happen uses
+    # `request-cache:<url>` and pacote `tarball:<spec>`, so a key ending in an
+    # HTTP(S) URL is what it downloaded, while `npm pack` output installed from
+    # disk is keyed `file:` and is the formula's own build. Records are appended,
+    # so the last one for a key wins and a deletion appends a null integrity.
+    records = {}
+    (cache/"index-v5").glob("**/*").each do |index|
+      next unless index.file?
+
+      index.each_line do |line|
+        entry = JSON.parse(line.split("\t", 2).last.to_s)
+        next unless entry.is_a?(Hash)
+
+        key = entry["key"].to_s
+        url = key[%r{:(https?://\S+)\z}, 1]
+        next if url.nil?
+
+        integrity = entry["integrity"]
+        records[key] = integrity.is_a?(String) ? [integrity, url] : nil
+      rescue JSON::ParserError, TypeError
+        next
+      end
+    end
+
+    # An integrity is `<algorithm>-<base64 digest>` and names the content file,
+    # which is stored under the first two byte pairs of that digest in hex.
+    hashes = { "sha512" => Digest::SHA512, "sha256" => Digest::SHA256, "sha1" => Digest::SHA1 }
+    archives = {}
+    records.each_value do |record|
+      next if record.nil?
+
+      integrity, url = record
+      algorithm, _, encoded = integrity.partition("-")
+      hash = hashes[algorithm]
+      next if hash.nil?
+
+      hex = encoded.unpack1("m").to_s.unpack1("H*").to_s
+      archive = cache/"content-v2"/algorithm/hex.sub(/\A(\h{2})(\h{2})/, '\1/\2/')
+      next unless archive.file?
+
+      archives[archive] ||= [url[%r{https?://[^/]+/(.+)/-/}, 1] || File.basename(url), hash, hex]
+    end
+
+    # Sizes come from a `stat`, so nothing is hashed until a package carries a
+    # file that could match. A gzip stream opens with a magic number, closes
+    # with the uncompressed size of its contents, and is never shorter than
+    # that header and footer, so anything that cannot hold a candidate is
+    # skipped without decompressing it.
+    gzip_magic = [0x1F, 0x8B]
+    gzip_size_bytes = 4
+    smallest_gzip_stream = 18
+    by_size = candidates.group_by(&:size)
+    minimum_size = by_size.keys.min.to_i
+    digests = {}
+    prebuilt = {}
+    archives.each do |archive, (package, hash, hex)|
+      next if archive.size < smallest_gzip_stream
+      next if archive.binread(gzip_magic.length)&.unpack("C#{gzip_magic.length}") != gzip_magic
+
+      uncompressed_size = archive.binread(gzip_size_bytes, archive.size - gzip_size_bytes)
+      next if uncompressed_size.to_s.unpack1("V").to_i < minimum_size
+
+      # Retaining this cache is only safe because what reads it verifies the
+      # digest that named the file, so do that before trusting its contents.
+      next if hash.file(archive).hexdigest != hex
+
+      Zlib::GzipReader.open(archive.to_s) do |gzip|
+        Gem::Package::TarReader.new(gzip).each do |entry|
+          files = by_size[entry.header.size] if entry.file?
+          next if files.nil?
+
+          member = Digest::SHA256.hexdigest(entry.read.to_s)
+          files.each do |file|
+            next if (digests[file] ||= Digest::SHA256.file(file).hexdigest) != member
+
+            prebuilt[file.relative_path_from(formula.prefix)] = "#{entry.full_name} of #{package}"
+          end
+        end
+      end
+    rescue Zlib::Error, Gem::Package::Error
+      next
+    end
+    addon_dirs = prebuilt.keys.select { |file| file.extname == ".node" }.map(&:dirname)
+    prebuilt.reject! { |file, _source| file.extname == ".node" || addon_dirs.include?(file.dirname) }
+    return if prebuilt.empty?
+
+    <<~EOS
+      Prebuilt executables from npm packages were installed into #{formula}'s prefix.
+      Each is byte-identical to a file in a package npm recorded downloading,
+      so it was shipped rather than built from source.
+      The offending files are:
+        #{prebuilt.map { |file, source| "#{file}\t(#{source})" } * "\n  "}
+    EOS
+  end
+
   sig { void }
   def audit_installed
     @new_formula ||= T.let(false, T.nilable(T::Boolean))
+    @strict ||= T.let(false, T.nilable(T::Boolean))
 
     problem_if_output(check_manpages)
     problem_if_output(check_infopages)
@@ -435,6 +582,7 @@ module FormulaCellarChecks
     problem_if_output(check_python_symlinks(formula.name, formula.keg_only?))
     problem_if_output(check_cpuid_instruction(formula))
     problem_if_output(check_binary_arches(formula))
+    problem_if_output(check_prebuilt_npm_binaries(formula)) if @strict
   end
 
   private
@@ -447,21 +595,20 @@ module FormulaCellarChecks
   sig { params(file: T.any(Pathname, String), objdump: Pathname).returns(T::Boolean) }
   def cpuid_instruction?(file, objdump)
     @instruction_column_index ||= T.let({}, T.nilable(T::Hash[Pathname, Integer]))
-    @instruction_column_index[objdump] ||= begin
+    instruction_column_index_objdump = @instruction_column_index[objdump] ||= begin
       objdump_version = Utils.popen_read(objdump, "--version")
 
-      if (objdump_version.match?(/^Apple LLVM/) && MacOS.version <= :mojave) ||
-         objdump_version.exclude?("LLVM")
-        2 # Mojave `objdump` or GNU Binutils `objdump`
+      if objdump_version.include?("LLVM")
+        1 # `llvm-objdump` or macOS `objdump`
       else
-        1 # `llvm-objdump` or Catalina+ `objdump`
+        2 # GNU Binutils `objdump`
       end
     end
 
     has_cpuid_instruction = T.let(false, T::Boolean)
     Utils.popen_read(objdump, "--disassemble", file) do |io|
       until io.eof?
-        instruction = io.readline.split("\t")[@instruction_column_index[objdump]]&.strip
+        instruction = io.readline.split("\t")[instruction_column_index_objdump]&.strip
         has_cpuid_instruction = instruction == "cpuid" if instruction.present?
         break if has_cpuid_instruction
       end

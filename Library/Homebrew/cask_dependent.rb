@@ -7,8 +7,13 @@ require "requirement"
 class CaskDependent
   # Defines a dependency on another cask
   class Requirement < ::Requirement
+    Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
+
     satisfy(build_env: false) do
-      Cask::CaskLoader.load(cask).installed?
+      cask_token = cask
+      raise "unexpected nil cask" unless cask_token
+
+      Cask::CaskLoader.load(cask_token).installed?
     end
   end
 
@@ -17,7 +22,7 @@ class CaskDependent
 
   sig { params(cask: Cask::Cask).void }
   def initialize(cask)
-    @cask = T.let(cask, Cask::Cask)
+    @cask = cask
   end
 
   sig { returns(String) }
@@ -30,9 +35,11 @@ class CaskDependent
     @cask.full_name
   end
 
-  sig { returns(T::Array[Dependency]) }
-  def runtime_dependencies
-    deps.flat_map { |dep| [dep, *dep.to_formula.runtime_dependencies] }.uniq
+  sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean).returns(T::Array[Dependency]) }
+  def runtime_dependencies(read_from_tab: true, undeclared: true)
+    deps.flat_map do |dep|
+      [dep, *dep.to_installed_formula.runtime_dependencies(read_from_tab:, undeclared:)]
+    end.uniq
   end
 
   sig { returns(T::Array[Dependency]) }
@@ -45,7 +52,7 @@ class CaskDependent
     )
   end
 
-  sig { returns(T::Array[CaskDependent::Requirement]) }
+  sig { returns(T::Array[::Requirement]) }
   def requirements
     @requirements ||= T.let(
       begin
@@ -69,20 +76,32 @@ class CaskDependent
         dsl_reqs.cask.each do |cask_ref|
           requirements << CaskDependent::Requirement.new([{ cask: cask_ref }])
         end
+        requirements << dsl_reqs.linux if dsl_reqs.linux
         requirements << dsl_reqs.macos if dsl_reqs.macos
+        requirements << dsl_reqs.maximum_macos if dsl_reqs.maximum_macos
 
         requirements
       end,
-      T.nilable(T::Array[CaskDependent::Requirement]),
+      T.nilable(T::Array[::Requirement]),
     )
   end
 
-  sig { params(block: T.nilable(T.proc.returns(T::Array[Dependency]))).returns(T::Array[Dependency]) }
+  sig {
+    params(
+      block: T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent, SoftwareSpec),
+                                     arg1: ::Dependency).returns(T.nilable(Symbol))),
+    ).returns(T::Array[::Dependency])
+  }
   def recursive_dependencies(&block)
     Dependency.expand(self, &block)
   end
 
-  sig { params(block: T.nilable(T.proc.returns(CaskDependent::Requirement))).returns(Requirements) }
+  sig {
+    params(
+      block: T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent, SoftwareSpec),
+                                     arg1: ::Requirement).returns(T.nilable(Symbol))),
+    ).returns(Requirements)
+  }
   def recursive_requirements(&block)
     Requirement.expand(self, &block)
   end

@@ -1,16 +1,17 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
 # Reproducible Builds
 
-The Homebrew build environment is designed with [reproducible builds](https://reproducible-builds.org) as a goal where possible. Some convenience tools are also available to formula authors to help achieve deterministic builds.
+The Homebrew build environment is designed with [reproducible builds](https://reproducible-builds.org/) as a goal where possible. Some convenience tools are also available to formula authors to help achieve deterministic builds.
 
 ## Build time
 
 Some build tools embed or record the time at which the build occurs. This can cause build artifacts to differ between repeated builds of the same sources. To avoid this issue, the Homebrew build environment sets the [`SOURCE_DATE_EPOCH` environment variable](https://reproducible-builds.org/docs/source-date-epoch/) to the modification time of the source code for tools that consume it.
 
-In cases where a build time must be manually set, `time` is a Ruby `DateTime` object containing the same timestamp as the `SOURCE_DATE_EPOCH` environment variable. Methods provided by Ruby on `DateTime` objects can then be used to format this time into the desired format.
+In cases where a build time must be manually set, `time` is a Ruby `Time` object containing the same timestamp as the `SOURCE_DATE_EPOCH` environment variable.
+Methods provided by Ruby on `Time` objects can then be used to format this time into the desired format.
 
 ```ruby
 def install
@@ -21,7 +22,7 @@ def install
 end
 ```
 
-See the [`kustomize`](https://github.com/Homebrew/homebrew-core/blob/442f9cc511ce6dfe75b96b2c83749d90dde914d2/Formula/k/kustomize.rb#L32) formula for an example of using `time.iso8601` or the [`git-town`](https://github.com/Homebrew/homebrew-core/blob/442f9cc511ce6dfe75b96b2c83749d90dde914d2/Formula/g/git-town.rb#L25) formula for an example of using `time.strftime` with custom format specifiers.
+Use `time.iso8601` or `time.strftime` when upstream's build interface requires a formatted timestamp.
 
 ## Reproducible gzip compression
 
@@ -43,7 +44,7 @@ def install
 end
 ```
 
-See the [`par` formula](https://github.com/Homebrew/homebrew-core/blob/442f9cc511ce6dfe75b96b2c83749d90dde914d2/Formula/p/par.rb#L30) for an example with a single file or the [`pari-elldata` formula](https://github.com/Homebrew/homebrew-core/blob/442f9cc511ce6dfe75b96b2c83749d90dde914d2/Formula/p/pari-elldata.rb#L28) for an example with multiple files.
+Pass one path or multiple paths to the same helper rather than invoking the host's `gzip` directly.
 
 ## Relocatability
 

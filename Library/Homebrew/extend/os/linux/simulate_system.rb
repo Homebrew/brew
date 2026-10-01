@@ -8,7 +8,9 @@ module OS
         sig { returns(T.nilable(Symbol)) }
         def os
           @os ||= T.let(nil, T.nilable(Symbol))
-          return :macos if @os.blank? && Homebrew::EnvConfig.simulate_macos_on_linux?
+          if @os.blank? && Homebrew::EnvConfig.simulate_macos_on_linux?
+            return MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED).to_sym
+          end
 
           @os
         end

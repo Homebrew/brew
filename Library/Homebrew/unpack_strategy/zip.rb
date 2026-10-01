@@ -11,7 +11,7 @@ module UnpackStrategy
       [".zip"]
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       path.magic_number.match?(/\APK(\003\004|\005\006)/n)
     end
@@ -36,7 +36,7 @@ module UnpackStrategy
         quiet_flags = verbose ? [] : ["-qq"]
         result = system_command! "unzip",
                                  args:         [*quiet_flags, "-o", path, "-d", unpack_dir],
-                                 env:          { "PATH" => PATH.new(unzip&.opt_bin, ENV.fetch("PATH")) },
+                                 env:          { "PATH" => PATH.new(unzip&.opt_bin, ENV.fetch("PATH")).to_s },
                                  verbose:,
                                  print_stderr: false
 

@@ -1,7 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "cask/info"
 require "cask/cask_loader"
 require "cask/caskroom"
 
@@ -42,6 +41,8 @@ module OS
             cask = ::Cask::Caskroom.casks.find { |installed_cask| installed_cask.to_s == name }
             Kernel.raise ::Cask::CaskUnavailableError, name if cask.nil?
           when "info"
+            Kernel.require "cask/info"
+
             cask = ::Cask::CaskLoader.load(name)
             suggestion = <<~EOS
               Found a cask named "#{name}" instead.

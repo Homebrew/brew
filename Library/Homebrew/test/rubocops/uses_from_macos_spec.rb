@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/uses_from_macos"
@@ -46,7 +47,32 @@ RSpec.describe RuboCop::Cop::FormulaAudit::UsesFromMacos do
         end
       RUBY
     end
+
+    it "does not report an offense for a dependency name that is not a plain string" do
+      expect_no_offenses(<<~'RUBY')
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          uses_from_macos :postgresql
+          uses_from_macos "postgresql#{version}"
+        end
+      RUBY
+    end
+
+    it "still reports the Linux offense for a name that is not a plain string" do
+      expect_offense(<<~'RUBY')
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          depends_on :linux
+          uses_from_macos "postgresql#{version}"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/UsesFromMacos: `uses_from_macos` should not be used when Linux is required.
+        end
+      RUBY
+    end
   end
 
-  include_examples "formulae exist", described_class::ALLOWED_USES_FROM_MACOS_DEPS
+  include_examples "formulae exist", RuboCop::Cop::FormulaAudit::UsesFromMacos::ALLOWED_USES_FROM_MACOS_DEPS
 end

@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "macos_runner_spec"
@@ -6,7 +7,7 @@ RSpec.describe MacOSRunnerSpec do
   let(:spec) { described_class.new(name: "macOS 11-arm64", runner: "11-arm64", timeout: 90, cleanup: true) }
 
   it "has immutable attributes" do
-    [:name, :runner, :timeout, :cleanup].each do |attribute|
+    [:name, :runner, :timeout, :cleanup, :target_macos].each do |attribute|
       expect(spec.respond_to?(:"#{attribute}=")).to be(false)
     end
   end
@@ -14,6 +15,22 @@ RSpec.describe MacOSRunnerSpec do
   describe "#to_h" do
     it "returns an object that responds to `#to_json`" do
       expect(spec.to_h.respond_to?(:to_json)).to be(true)
+    end
+
+    it "includes a nil target for ordinary macOS runners" do
+      expect(spec.to_h).to include(target_macos: nil)
+    end
+
+    it "includes optional cross-compilation targets" do
+      cross_spec = described_class.new(
+        name:         "macOS 11-cross x86_64",
+        runner:       "macos-15-intel",
+        timeout:      360,
+        cleanup:      true,
+        target_macos: "11.7.10",
+      )
+
+      expect(cross_spec.to_h).to include(target_macos: "11.7.10")
     end
   end
 end

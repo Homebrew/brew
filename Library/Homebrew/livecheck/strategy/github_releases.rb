@@ -33,8 +33,6 @@ module Homebrew
       class GithubReleases
         extend Strategic
 
-        NICE_NAME = "GitHub - Releases"
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {GithubReleases} so we can selectively apply the strategy using
         # `strategy :github_releases` in a `livecheck` block.
@@ -50,11 +48,6 @@ module Homebrew
         # The default regex used to identify a version from a tag when a regex
         # isn't provided.
         DEFAULT_REGEX = /v?(\d+(?:\.\d+)+)/i
-
-        # Keys in the release JSON that could contain the version.
-        # The tag name is checked first, to better align with the {Git}
-        # strategy.
-        VERSION_KEYS = T.let(["tag_name", "name"].freeze, T::Array[String])
 
         # Whether the strategy can be applied to the provided URL.
         #
@@ -90,36 +83,32 @@ module Homebrew
         # provided, passes the JSON to the block to handle matching. With
         # either approach, an array of unique matches is returned.
         #
-        # @param content [Array, Hash] array of releases or a single release
-        # @param regex [Regexp] a regex used for matching versions in the
-        # content
-        # @param block [Proc, nil] a block to match the content
+        # @param content [Array, Hash] an array of releases or a single release
+        # @param regex [Regexp] a regex for matching versions in content
         # @return [Array]
         sig {
           params(
-            content: T.any(T::Array[T::Hash[String, T.untyped]], T::Hash[String, T.untyped]),
+            content: String,
             regex:   Regexp,
             block:   T.nilable(Proc),
           ).returns(T::Array[String])
         }
         def self.versions_from_content(content, regex, &block)
+          return [] if content.blank?
+
+          json = Json.parse_json(content)
+          return [] if json.blank?
+
           if block.present?
-            block_return_value = yield(content, regex)
+            block_return_value = yield(json, regex)
             return Strategy.handle_block_return(block_return_value)
           end
 
-          content = [content] unless content.is_a?(Array)
-          content.compact_blank.filter_map do |release|
+          json = [json] unless json.is_a?(Array)
+          json.compact_blank.filter_map do |release|
             next if release["draft"] || release["prerelease"]
 
-            value = T.let(nil, T.nilable(String))
-            VERSION_KEYS.find do |key|
-              match = release[key]&.match(regex)
-              next if match.blank?
-
-              value = match[1]
-            end
-            value
+            release["tag_name"]&.[](regex, 1)
           end.uniq
         end
 
@@ -127,27 +116,36 @@ module Homebrew
         # and identifies versions from the JSON response.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
+        # @param regex [Regexp] a regex for matching versions in content
+        # @param content [Hash, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
-            regex:   Regexp,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: DEFAULT_REGEX, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
+          regex ||= DEFAULT_REGEX
           match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if content
 
           generated = generate_input_values(url)
           return match_data if generated.blank?
 
           match_data[:url] = generated[:url]
 
-          releases = GitHub::API.open_rest(generated[:url])
-          versions_from_content(releases, regex, &block).each do |match_text|
+          unless match_data[:cached]
+            match_data[:content] = GitHub::API.open_rest(generated[:url], parse_json: false)
+            content = match_data[:content]
+          end
+          return match_data if content.blank?
+
+          versions_from_content(content, regex, &block).each do |match_text|
             match_data[:matches][match_text] = Version.new(match_text)
           end
 

@@ -1,0 +1,7 @@
+---
+# `brew style` passes this file as `--config` when every target is inside one
+# tap. RuboCop roots its project index at the directory of a `.rubocop*` config
+# file and at the working directory for any other name, so this file lets
+# `brew style` root the index at the tap it is checking instead of at every
+# tap under `Library/Taps`.
+inherit_from: .rubocop.yml

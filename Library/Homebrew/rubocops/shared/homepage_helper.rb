@@ -29,7 +29,7 @@ module RuboCop
           # To enable https Freedesktop change the URL from http://project.freedesktop.org/wiki to
           # https://wiki.freedesktop.org/project_name.
           # "Software" is redirected to https://wiki.freedesktop.org/www/Software/project_name
-        when %r{^http://((?:www|nice|libopenraw|liboil|telepathy|xorg)\.)?freedesktop\.org/(?:wiki/)?}
+        when %r{^http://(?:(?:www|nice|libopenraw|liboil|telepathy|xorg)\.)?freedesktop\.org/(?:wiki/)?}
           if content.include?("Software")
             problem "Freedesktop homepages should be styled: https://wiki.freedesktop.org/www/Software/project_name"
           else
@@ -42,7 +42,7 @@ module RuboCop
             corrector.replace(homepage_parameter_node.source_range, "\"#{content}/\"")
           end
 
-        when %r{^http://([^/]*)\.(sf|sourceforge)\.net(/|$)}
+        when %r{^http://([^/]*)\.(?:sf|sourceforge)\.net(?:/|$)}
           fixed = "https://#{Regexp.last_match(1)}.sourceforge.io/"
           problem "SourceForge homepages should be: #{fixed}" do |corrector|
             corrector.replace(homepage_parameter_node.source_range, "\"#{fixed}\"")
@@ -54,7 +54,7 @@ module RuboCop
             corrector.replace(homepage_parameter_node.source_range, "\"#{fixed}\"")
           end
 
-        when %r{^https://github.com.*\.git$}
+        when %r{^https://github\.com.*\.git$}
           problem "GitHub homepages should not end with .git" do |corrector|
             corrector.replace(homepage_parameter_node.source_range, "\"#{content.delete_suffix(".git")}\"")
           end
@@ -77,13 +77,13 @@ module RuboCop
                %r{^http://[^/]*\.sourceforge\.io/},
                # There's an auto-redirect here, but this mistake is incredibly common too.
                # Only applies to the homepage and subdomains for now, not the FTP URLs.
-               %r{^http://((?:build|cloud|developer|download|extensions|git|
-                               glade|help|library|live|nagios|news|people|
-                               projects|rt|static|wiki|www)\.)?gnome\.org}x,
+               %r{^http://(?:(?:build|cloud|developer|download|extensions|git|
+                                 glade|help|library|live|nagios|news|people|
+                                 projects|rt|static|wiki|www)\.)?gnome\.org}x,
                %r{^http://[^/]*\.apache\.org},
                %r{^http://packages\.debian\.org},
                %r{^http://wiki\.freedesktop\.org/},
-               %r{^http://((?:www)\.)?gnupg\.org/},
+               %r{^http://(?:www\.)?gnupg\.org/},
                %r{^http://ietf\.org},
                %r{^http://[^/.]+\.ietf\.org},
                %r{^http://[^/.]+\.tools\.ietf\.org},

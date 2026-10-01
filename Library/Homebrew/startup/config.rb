@@ -4,9 +4,7 @@
 raise "HOMEBREW_BREW_FILE was not exported! Please call bin/brew directly!" unless ENV["HOMEBREW_BREW_FILE"]
 
 # The path to the executable that should be used to run `brew`.
-# This may be HOMEBREW_ORIGINAL_BREW_FILE or HOMEBREW_BREW_WRAPPER depending on
-# the system configuration. Favour this instead of running `brew` and expecting
-# it to be in the `PATH`.
+# Favour this instead of running `brew` and expecting it to be in the `PATH`.
 # @api public
 HOMEBREW_BREW_FILE = Pathname(ENV.fetch("HOMEBREW_BREW_FILE")).freeze
 
@@ -32,10 +30,6 @@ HOMEBREW_TEMP = Pathname(ENV.fetch("HOMEBREW_TEMP")).then do |tmp|
   tmp.realpath
 end.freeze
 
-# Path to `bin/brew` main executable in `HOMEBREW_PREFIX`
-# Used for e.g. permissions checks.
-HOMEBREW_ORIGINAL_BREW_FILE = Pathname(ENV.fetch("HOMEBREW_ORIGINAL_BREW_FILE")).freeze
-
 # Where `.git` is found
 HOMEBREW_REPOSITORY = Pathname(ENV.fetch("HOMEBREW_REPOSITORY")).freeze
 
@@ -54,8 +48,17 @@ HOMEBREW_LINKED_KEGS = (HOMEBREW_PREFIX/"var/homebrew/linked").freeze
 # Where we store symlinks to currently version-pinned kegs
 HOMEBREW_PINNED_KEGS = (HOMEBREW_PREFIX/"var/homebrew/pinned").freeze
 
+# Where we store symlinks to currently version-pinned casks
+HOMEBREW_PINNED_CASKS = (HOMEBREW_PREFIX/"var/homebrew/pinned_casks").freeze
+
 # Where we store lock files
 HOMEBREW_LOCKS = (HOMEBREW_PREFIX/"var/homebrew/locks").freeze
+
+# Where we store temporary cellar files that must be in the prefix
+HOMEBREW_TEMP_CELLAR = (HOMEBREW_PREFIX/"var/homebrew/tmp/.cellar").freeze
+
+# Where we store temporary cask files that must be in the prefix
+HOMEBREW_TEMP_CASKROOM = (HOMEBREW_PREFIX/"var/homebrew/tmp/.caskroom").freeze
 
 # Where we store Casks
 HOMEBREW_CASKROOM = Pathname(ENV.fetch("HOMEBREW_CASKROOM")).freeze

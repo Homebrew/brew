@@ -1,9 +1,10 @@
+# typed: true
 # frozen_string_literal: true
 
 require_relative "shared_examples"
 
 RSpec.describe UnpackStrategy::P7Zip do
-  let(:path) { TEST_FIXTURE_DIR/"cask/container.7z" }
+  subject(:path) { TEST_FIXTURE_DIR/"cask/container.7z" }
 
   include_examples "UnpackStrategy::detect"
 end

@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./bin/brew lgtm",
+            "timeout": 360
+          }
+        ]
+      }
+    ]
+  }
+}

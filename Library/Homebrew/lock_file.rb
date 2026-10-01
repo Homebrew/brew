@@ -1,33 +1,42 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
+require "utils/interrupts"
+
 require "fcntl"
+require "utils/output"
 
 # A lock file to prevent multiple Homebrew processes from modifying the same path.
 class LockFile
+  include Utils::Output::Mixin
+
   class OpenFileChangedOnDisk < RuntimeError; end
   private_constant :OpenFileChangedOnDisk
 
+  sig { returns(Pathname) }
   attr_reader :path
+
+  sig { returns(Pathname) }
+  attr_reader :locked_path
 
   sig { params(type: Symbol, locked_path: Pathname).void }
   def initialize(type, locked_path)
     @locked_path = locked_path
     lock_name = locked_path.basename.to_s
-    @path = HOMEBREW_LOCKS/"#{lock_name}.#{type}.lock"
-    @lockfile = nil
+    @path = T.let(HOMEBREW_LOCKS/"#{lock_name}.#{type}.lock", Pathname)
+    @lockfile = T.let(nil, T.nilable(File))
   end
 
   sig { void }
   def lock
-    ignore_interrupts do
+    Utils::Interrupts.ignore do
       next if @lockfile.present?
 
       path.dirname.mkpath
 
       begin
         lockfile = begin
-          path.open(File::RDWR | File::CREAT)
+          File.open(path, File::RDWR | File::CREAT)
         rescue Errno::EMFILE
           odie "The maximum number of open files on this system has been reached. " \
                "Use `ulimit -n` to increase this limit."
@@ -65,7 +74,7 @@ class LockFile
 
   sig { params(unlink: T::Boolean).void }
   def unlock(unlink: false)
-    ignore_interrupts do
+    Utils::Interrupts.ignore do
       next if @lockfile.nil?
 
       @path.unlink if unlink
@@ -75,34 +84,14 @@ class LockFile
     end
   end
 
-  def with_lock
+  sig { params(_block: T.proc.void).void }
+  def with_lock(&_block)
     lock
     yield
   ensure
     unlock
   end
 end
-
-# A lock file for a formula.
-class FormulaLock < LockFile
-  sig { params(rack_name: String).void }
-  def initialize(rack_name)
-    super(:formula, HOMEBREW_CELLAR/rack_name)
-  end
-end
-
-# A lock file for a cask.
-class CaskLock < LockFile
-  sig { params(cask_token: String).void }
-  def initialize(cask_token)
-    super(:cask, HOMEBREW_PREFIX/"Caskroom/#{cask_token}")
-  end
-end
-
-# A lock file for a download.
-class DownloadLock < LockFile
-  sig { params(download_path: Pathname).void }
-  def initialize(download_path)
-    super(:download, download_path)
-  end
-end
+require "lock_file/formula_lock"
+require "lock_file/cask_lock"
+require "lock_file/download_lock"

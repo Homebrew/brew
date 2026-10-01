@@ -16,11 +16,6 @@ class Hash
   # ```
   def deep_transform_values(&block) = _deep_transform_values_in_object(self, &block)
 
-  # Destructively converts all values by using the block operation.
-  # This includes the values from the root hash and from all
-  # nested hashes and arrays.
-  def deep_transform_values!(&block) = _deep_transform_values_in_object!(self, &block)
-
   private
 
   # Support methods for deep transforming nested hashes and arrays.

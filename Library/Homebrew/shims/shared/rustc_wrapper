@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Prepend HOMEBREW_RUSTFLAGS to rustc arguments if set.
+# This allows Homebrew to pass optimization flags while still respecting
+# .cargo/config.toml (which sets RUSTFLAGS).
+
+# rustc is passed as the first argument to RUSTC_WRAPPER
+# https://doc.rust-lang.org/cargo/reference/environment-variables.html
+RUSTC="${1}"
+shift
+
+# Append HOMEBREW_RUSTFLAGS to the arguments if set.
+read -ra RUSTFLAGS <<<"${HOMEBREW_RUSTFLAGS:-}"
+exec "${RUSTC}" "$@" "${RUSTFLAGS[@]}"

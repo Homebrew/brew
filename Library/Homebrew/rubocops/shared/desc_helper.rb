@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/shared/helper_functions"
@@ -25,7 +25,8 @@ module RuboCop
           return
         end
 
-        @offensive_node = desc_call
+        @offensive_node = T.let(desc_call, T.nilable(RuboCop::AST::Node))
+        @name = T.let(name, T.nilable(String))
 
         desc = T.cast(desc_call, RuboCop::AST::SendNode).first_argument
 
@@ -43,13 +44,13 @@ module RuboCop
         desc_problem "Description shouldn't have trailing spaces." if regex_match_group(desc, /\s+$/)
 
         # Check if "command-line" is spelled incorrectly in the desc.
-        if (match = regex_match_group(desc, /(command ?line)/i))
+        if (match = regex_match_group(desc, /command ?line/i))
           c = match.to_s[0]
           desc_problem "Description should use \"#{c}ommand-line\" instead of \"#{match}\"."
         end
 
         # Check if the desc starts with an article.
-        desc_problem "Description shouldn't start with an article." if regex_match_group(desc, /^(the|an?)(?=\s)/i)
+        desc_problem "Description shouldn't start with an article." if regex_match_group(desc, /^(?:the|an?)(?=\s)/i)
 
         # Check if invalid lowercase words are at the start of a desc.
         if !VALID_LOWERCASE_WORDS.include?(string_content(desc).split.first) && regex_match_group(desc, /^[a-z]/)
@@ -57,13 +58,12 @@ module RuboCop
         end
 
         # Check if the desc starts with the formula's or cask's name.
-        name_regex = T.must(name).delete("-").chars.join('[\s\-]?')
-        if regex_match_group(desc, /^#{name_regex}\b/i)
+        if name && regex_match_group(desc, /^#{name.delete("-").chars.join('[\s\-]?')}\b/i)
           desc_problem "Description shouldn't start with the #{type} name."
         end
 
         if type == :cask &&
-           (match = regex_match_group(desc, /\b(macOS|Mac( ?OS( ?X)?)?|OS ?X)(?! virtual machines?)\b/i)) &&
+           (match = regex_match_group(desc, /\b(macOS|Mac(?: ?OS(?: ?X)?)?|OS ?X)(?! virtual machines?)\b/i)) &&
            match[1] != "MAC"
           add_offense(@offensive_source_range, message: "Description shouldn't contain the platform.")
         end
@@ -84,9 +84,13 @@ module RuboCop
       end
 
       # Auto correct desc problems. `regex_match_group` must be called before this to populate @offense_source_range.
+      sig { params(message: String).void }
       def desc_problem(message)
         add_offense(@offensive_source_range, message:) do |corrector|
-          match_data = @offensive_node.source.match(/\A(?<quote>["'])(?<correction>.*)(?:\k<quote>)\Z/)
+          offensive_node = @offensive_node
+          next if offensive_node.nil?
+
+          match_data = offensive_node.source.match(/\A(?<quote>["'])(?<correction>.*)(?:\k<quote>)\Z/)
           correction = match_data[:correction]
           quote = match_data[:quote]
 
@@ -95,7 +99,7 @@ module RuboCop
           correction.gsub!(/^\s+/, "")
           correction.gsub!(/\s+$/, "")
 
-          correction.sub!(/^(the|an?)\s+/i, "")
+          correction.sub!(/^(?:the|an?)\s+/i, "")
 
           first_word = correction.split.first
           unless VALID_LOWERCASE_WORDS.include?(first_word)
@@ -103,7 +107,7 @@ module RuboCop
             correction[0] = first_char.upcase if first_char
           end
 
-          correction.gsub!(/(ommand ?line)/i, "ommand-line")
+          correction.gsub!(/ommand ?line/i, "ommand-line")
           correction.gsub!(/(^|[^a-z])#{@name}([^a-z]|$)/i, "\\1\\2")
           correction.gsub!(/\s?\p{So}/, "")
           correction.gsub!(/^\s+/, "")
@@ -112,7 +116,7 @@ module RuboCop
 
           next if correction == match_data[:correction]
 
-          corrector.replace(@offensive_node.source_range, "#{quote}#{correction}#{quote}")
+          corrector.replace(offensive_node.source_range, "#{quote}#{correction}#{quote}")
         end
       end
     end

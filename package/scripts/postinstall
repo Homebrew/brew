@@ -5,6 +5,21 @@
 # $4 System root directory (unused)
 set -euo pipefail
 
+# Use system tools without triggering developer tool installation prompts.
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)"
+if [[ -f "${script_dir}/macos_user.sh" ]]
+then
+  # `pkgbuild` stages this helper beside the package scripts.
+  # shellcheck disable=SC1091
+  source "${script_dir}/macos_user.sh"
+else
+  # This fallback keeps direct local execution from the repository working.
+  # shellcheck disable=SC1091
+  source "${script_dir}/../../Library/Homebrew/utils/macos_user.sh"
+fi
+
 # disable analytics while installing
 export HOMEBREW_NO_ANALYTICS_THIS_RUN=1
 export HOMEBREW_NO_ANALYTICS_MESSAGE_OUTPUT=1
@@ -18,78 +33,146 @@ then
   exit 1
 fi
 
-# add Git to path
-export PATH="/Library/Developer/CommandLineTools/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:${PATH}"
-
-# avoid writing to user's global config file by overriding HOME
-# https://git-scm.com/docs/git-config#SCOPES
-unset XDG_CONFIG_HOME
-export HOME="${homebrew_directory}"
-
-# reset Git repository
 cd "${homebrew_directory}"
-git config --global --add safe.directory "${homebrew_directory}"
-git checkout --force -B stable
-git reset --hard "$(git tag --list --sort="-version:refname" | head -n1)"
-git clean -f -d
-rm "${homebrew_directory}/.gitconfig"
 
-# move to /usr/local if on x86_64
-if [[ $(uname -m) == "x86_64" ]]
-then
-  if [[ -f "/usr/local/bin/brew" && -d "/usr/local/Homebrew" ]]
+refuse_symlinked_directories() {
+  for dir in Caskroom Cellar Frameworks bin etc include lib opt sbin share var var/homebrew var/homebrew/linked
+  do
+    if [[ -L "${dir}" ]]
+    then
+      echo "Refusing to operate on symlinked ${dir} in ${homebrew_directory}." >&2
+      exit 1
+    fi
+  done
+}
+
+enter_managed_directory() {
+  local directory="$1"
+  local expected_path="$2"
+  local display_path="$3"
+
+  if [[ -L "${directory}" ]]
   then
-    cp -pRL "${homebrew_directory}/.git" "/usr/local/Homebrew/"
-    mv "${homebrew_directory}/cache_api" "/usr/local/Homebrew/"
-
-    export HOME="/usr/local/Homebrew"
-    git config --global --add safe.directory /usr/local/Homebrew
-    git -C /usr/local/Homebrew checkout --force -B stable
-    git -C /usr/local/Homebrew reset --hard
-    git -C /usr/local/Homebrew clean -f -d
-    rm /usr/local/Homebrew/.gitconfig
-  else
-    mkdir -vp /usr/local/bin
-    mv "${homebrew_directory}" "/usr/local/Homebrew/"
-
-    # create symlink to /usr/local/bin/brew
-    ln -svf "../Homebrew/bin/brew" "/usr/local/bin/brew"
+    echo "Refusing to operate on symlinked ${display_path} in ${homebrew_directory}." >&2
+    exit 1
   fi
 
-  rm -rf "${homebrew_directory}"
-  homebrew_directory="/usr/local/Homebrew"
-  cd /usr/local
+  cd -P "${directory}"
+  if [[ "$(pwd -P)" != "${expected_path}" ]]
+  then
+    echo "Refusing to operate on ${display_path} outside ${homebrew_directory}." >&2
+    exit 1
+  fi
+}
+
+prefix_directory="$(pwd -P)"
+
+# optionally define an install user at /var/tmp/.homebrew_pkg_user.plist
+# otherwise, get valid logged in user
+homebrew_pkg_user="$(homebrew-package-user)" ||
+  {
+    echo "No valid user for Homebrew installation. Log in before install or specify an install user."
+    exit 1
+  }
+
+if [[ "$(id -u "${homebrew_pkg_user}")" -eq 0 ]]
+then
+  echo "The Homebrew installation user must not be root."
+  exit 1
+fi
+
+homebrew_pkg_group="admin"
+if [[ " $(id -Gn "${homebrew_pkg_user}") " != *" admin "* ]]
+then
+  homebrew_pkg_group="$(id -gn "${homebrew_pkg_user}")"
+fi
+homebrew_pkg_mode="ug=rwx"
+if [[ "${homebrew_pkg_group}" == staff ]]
+then
+  # Keep in sync with brew.sh and Homebrew/install's install.sh.
+  umask go-w
+  homebrew_pkg_mode="u=rwx,go-w"
+  chmod -R go-w .
 fi
 
 # create missing directories
-mkdir -vp Caskroom Cellar Frameworks etc include lib opt sbin share var/homebrew/linked
+refuse_symlinked_directories
+mkdir -vp Caskroom Cellar Frameworks etc include lib opt sbin share var
+(
+  enter_managed_directory var "${prefix_directory}/var" var
+  mkdir -vp homebrew
+  enter_managed_directory homebrew "${prefix_directory}/var/homebrew" var/homebrew
+  mkdir -vp linked
+)
 
-# optionally define an install user at /var/tmp/.homebrew_pkg_user.plist
-homebrew_pkg_user_plist="/var/tmp/.homebrew_pkg_user.plist"
-if [[ -f "${homebrew_pkg_user_plist}" ]] && [[ -n $(defaults read "${homebrew_pkg_user_plist}" HOMEBREW_PKG_USER) ]]
+if [[ -z "${HOMEBREW_NO_SUDO:-}" ]] && command -v sudo &>/dev/null
 then
-  homebrew_pkg_user=$(defaults read /var/tmp/.homebrew_pkg_user HOMEBREW_PKG_USER)
-# otherwise, get valid logged in user
+  user_command=(sudo -u "${homebrew_pkg_user}")
+elif [[ "$(id -u)" == 0 ]]
+then
+  user_command=(homebrew-login "${homebrew_pkg_user}")
 else
-  homebrew_pkg_user=$(echo "show State:/Users/ConsoleUser" | scutil | awk '/Name :/ { print $3 }')
+  echo "Switching to the Homebrew installation user without sudo requires root." >&2
+  exit 1
+fi
+
+if [[ "${homebrew_pkg_group}" == staff ]]
+then
+  # Account-switching tools may reset the umask; retain both masks afterwards.
+  # shellcheck disable=SC2016
+  user_command+=(/bin/bash -c 'umask "$(printf "%03o" "$((8#$1 | 8#$(umask)))")"; shift; exec "$@"' -- "$(umask)")
 fi
 
 # set permissions
-chmod ug=rwx Caskroom Cellar Frameworks bin etc include lib opt sbin share var var/homebrew var/homebrew/linked
-if [[ "${homebrew_directory}" == "/usr/local/Homebrew" ]]
+refuse_symlinked_directories
+chmod -h "${homebrew_pkg_mode}" Caskroom Cellar Frameworks bin etc include lib opt sbin share var
+(
+  enter_managed_directory var "${prefix_directory}/var" var
+  enter_managed_directory homebrew "${prefix_directory}/var/homebrew" var/homebrew
+  chmod "${homebrew_pkg_mode}" .
+  enter_managed_directory linked "${prefix_directory}/var/homebrew/linked" var/homebrew/linked
+  chmod "${homebrew_pkg_mode}" .
+)
+chown -R "${homebrew_pkg_user}:${homebrew_pkg_group}" .
+
+rm -rf "${homebrew_directory}/.git/hooks" "${homebrew_directory}/.gitconfig" "${homebrew_directory}/.config/git"
+# The package already contains a stable checkout; reset it when Git is available.
+if developer_dir="$(xcode-select --print-path 2>/dev/null)" &&
+   [[ -n "${developer_dir}" && "${developer_dir}" != / && -x "${developer_dir}/usr/bin/git" ]]
 then
-  chown -h "${homebrew_pkg_user}:admin" bin bin/brew etc include lib opt sbin share var
-  chown -h -R "${homebrew_pkg_user}:admin" Caskroom Cellar Frameworks Homebrew var/homebrew
-  chown -h -R "${homebrew_pkg_user}" etc include share var
-else
-  chown -R "${homebrew_pkg_user}:admin" .
+  git_as_user() {
+    "${user_command[@]}" /usr/bin/env \
+      HOME="${homebrew_directory}" GIT_CONFIG_GLOBAL=/dev/null PATH="${PATH}" \
+      "${developer_dir}/usr/bin/git" -c core.hooksPath=/dev/null "$@"
+  }
+
+  latest_tag="$(git_as_user -C "${homebrew_directory}" tag --list --sort="-version:refname" | head -n1)"
+  git_as_user -C "${homebrew_directory}" checkout --force -B stable
+  git_as_user -C "${homebrew_directory}" reset --hard "${latest_tag}"
+  git_as_user -C "${homebrew_directory}" clean -f -d
 fi
 
 # move API cache to ~/Library/Caches/Homebrew
-user_home_dir=$(dscl . read /Users/"${homebrew_pkg_user}" NFSHomeDirectory | awk '{ print $2 }')
+user_home_dir="$(homebrew-user-home "${homebrew_pkg_user}")" ||
+  {
+    echo "No home directory for Homebrew installation user: ${homebrew_pkg_user}"
+    exit 1
+  }
 user_cache_dir="${user_home_dir}/Library/Caches/Homebrew"
 user_api_cache_dir="${user_cache_dir}/api"
-mkdir -vp "${user_api_cache_dir}"
-mv -v "${homebrew_directory}/cache_api/"* "${user_api_cache_dir}"
-chown -R "${homebrew_pkg_user}:staff" "${user_cache_dir}"
+# Seed the cache as the install user: as root, `cp` follows a symlink planted at the
+# destination, and the `chown -R` this removes would reach anything hard-linked into the tree.
+"${user_command[@]}" mkdir -vp "${user_api_cache_dir}"
+"${user_command[@]}" cp -vpR "${homebrew_directory}/cache_api/." "${user_api_cache_dir}"
+if [[ "${homebrew_pkg_group}" == staff ]]
+then
+  "${user_command[@]}" chmod -R go-w "${user_cache_dir}"
+fi
 rm -vrf "${homebrew_directory}/cache_api"
+
+# add Homebrew to the default PATH
+if [[ -d "/etc/paths.d" ]]
+then
+  echo "${homebrew_directory}/bin" >/etc/paths.d/homebrew
+  chown root:wheel /etc/paths.d/homebrew
+fi

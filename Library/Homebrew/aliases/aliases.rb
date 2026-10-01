@@ -1,16 +1,28 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/editor"
+
 require "aliases/alias"
+require "utils/output"
 
 module Homebrew
   module Aliases
-    RESERVED = T.let((
-        Commands.internal_commands +
-        Commands.internal_developer_commands +
-        Commands.internal_commands_aliases +
-        %w[alias unalias]
-      ).freeze, T::Array[String])
+    extend Utils::Output::Mixin
+
+    # Lazily computed to avoid a load-time cycle: `Commands.internal_commands`
+    # requires every `cmd/*.rb`, including `cmd/alias.rb`, which itself
+    # requires this file.
+    sig { returns(T::Array[String]) }
+    def self.reserved
+      @reserved ||= T.let(
+        (Commands.internal_commands +
+         Commands.internal_developer_commands +
+         Commands.internal_commands_aliases +
+         %w[alias unalias]).freeze,
+        T.nilable(T::Array[String]),
+      )
+    end
 
     sig { void }
     def self.init
@@ -29,36 +41,36 @@ module Homebrew
       Alias.new(name).remove
     end
 
-    sig { params(only: T::Array[String], block: T.proc.params(target: String, cmd: String).void).void }
+    sig { params(only: T::Array[String], block: T.proc.params(name: String, command: String).void).void }
     def self.each(only, &block)
       Dir["#{HOMEBREW_ALIASES}/*"].each do |path|
         next if path.end_with? "~" # skip Emacs-like backup files
         next if File.directory?(path)
 
-        _shebang, _meta, *lines = File.readlines(path)
-        target = File.basename(path)
-        next if !only.empty? && only.exclude?(target)
+        _shebang, meta, *lines = File.readlines(path)
+        name = meta.to_s[/alias: brew (\S+)/, 1] || File.basename(path)
+        next if !only.empty? && only.exclude?(name)
 
         lines.reject! { |line| line.start_with?("#") || line =~ /^\s*$/ }
-        first_line = T.must(lines.first)
-        cmd = first_line.chomp
-        cmd.sub!(/ \$\*$/, "")
+        first_line = lines.fetch(0)
+        command = first_line.chomp
+        command.sub!(/ \$\*$/, "")
 
-        if cmd.start_with? "brew "
-          cmd.sub!(/^brew /, "")
+        if command.start_with? "brew "
+          command.sub!(/^brew /, "")
         else
-          cmd = "!#{cmd}"
+          command = "!#{command}"
         end
 
-        yield target, cmd if block.present?
+        yield name, command if block.present?
       end
     end
 
     sig { params(aliases: String).void }
     def self.show(*aliases)
-      each([*aliases]) do |target, cmd|
-        puts "brew alias #{target}='#{cmd}'"
-        existing_alias = Alias.new(target, cmd)
+      each([*aliases]) do |name, command|
+        puts "brew alias #{name}='#{command}'"
+        existing_alias = Alias.new(name, command)
         existing_alias.link unless existing_alias.symlink.exist?
       end
     end
@@ -71,7 +83,7 @@ module Homebrew
 
     sig { void }
     def self.edit_all
-      exec_editor(*Dir[HOMEBREW_ALIASES])
+      Utils::Editor.open(*Dir[HOMEBREW_ALIASES])
     end
   end
 end

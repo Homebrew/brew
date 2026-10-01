@@ -8,9 +8,9 @@ module RuboCop
         include CaskHelp
 
         # These stanzas can be overridden by `on_*` blocks, so take them into account.
-        # TODO: Update this list if new stanzas are added to `Cask::DSL` that call `set_unique_stanza`.
+        # TODO: Update this list when stanzas in `Cask::DSL` start or stop calling `set_unique_stanza`.
         OVERRIDABLE_METHODS = [
-          :appcast, :arch, :auto_updates, :conflicts_with, :container,
+          :appcast, :arch, :auto_updates, :container,
           :desc, :homepage, :os, :sha256, :url, :version
         ].freeze
 
@@ -41,6 +41,26 @@ module RuboCop
                     "Add it once to specify the oldest macOS supported by any version in the cask."
           names = T.let(Set.new, T::Set[Symbol])
           method_nodes = on_system.map(&:method_node)
+
+          # Check if multiple `on_{system}` blocks have different `depends_on macos:` versions.
+          # If so, this indicates architecture-specific requirements and is allowed.
+          macos_versions = T.let([], T::Array[String])
+          method_nodes.select(&:block_type?).each do |node|
+            node.child_nodes.each do |child|
+              child.each_node(:send) do |send_node|
+                next if send_node.receiver || send_node.method_name != :depends_on
+
+                if (macos_pair = macos_dependency_pair(send_node))
+                  macos_versions << macos_pair.value.source
+                elsif (argument = send_node.first_argument)&.sym_type? && argument.value == :macos
+                  macos_versions << ":any"
+                end
+              end
+            end
+          end
+          # Allow if there are multiple different macOS versions specified
+          allow_macos_depends_in_blocks = macos_versions.size > 1 && macos_versions.uniq.size > 1
+
           method_nodes.select(&:block_type?).each do |node|
             node.child_nodes.each do |child|
               child.each_node(:send) do |send_node|
@@ -53,11 +73,14 @@ module RuboCop
                 end
                 next if RuboCop::Cask::Constants::ON_SYSTEM_METHODS.include?(send_node.method_name)
 
-                if send_node.method_name == :depends_on &&
-                   send_node.arguments.first.pairs.any? { |a| a.key.value == :macos } &&
+                macos_pair = macos_dependency_pair(send_node)
+                # `depends_on macos: :any` declares no minimum version to hoist.
+                if macos_pair && !(macos_pair.value.sym_type? && macos_pair.value.value == :any) &&
                    OnSystemConditionalsHelper::ON_SYSTEM_OPTIONS.map do |m|
                      :"on_#{m}"
-                   end.include?(T.cast(node, RuboCop::AST::BlockNode).method_name)
+                   end.include?(T.cast(node, RuboCop::AST::BlockNode).method_name) &&
+                   T.cast(node, RuboCop::AST::BlockNode).method_name != :on_macos && !allow_macos_depends_in_blocks
+                  # Allow `depends_on macos:` in multiple `on_{system}` blocks for architecture-specific requirements
                   add_offense(send_node.source_range, message:)
                 end
 
@@ -66,6 +89,14 @@ module RuboCop
             end
           end
           names
+        end
+
+        sig { params(send_node: RuboCop::AST::SendNode).returns(T.nilable(RuboCop::AST::PairNode)) }
+        def macos_dependency_pair(send_node)
+          return if send_node.method_name != :depends_on
+          return unless (hash = send_node.first_argument)&.hash_type?
+
+          hash.pairs.find { |pair| pair.key.sym_type? && pair.key.value == :macos }
         end
 
         sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }

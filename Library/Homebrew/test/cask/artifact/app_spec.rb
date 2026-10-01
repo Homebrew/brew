@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::App, :cask do
@@ -9,13 +10,19 @@ RSpec.describe Cask::Artifact::App, :cask do
   let(:app) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
   let(:source_path) { cask.staged_path.join("Caffeine.app") }
-  let(:target_path) { cask.config.appdir.join("Caffeine.app") }
+  let(:target_path) { Pathname(cask.config.appdir).join("Caffeine.app") }
 
   let(:install_phase) { app.install_phase(command:, adopt:, force:, auto_updates:) }
   let(:uninstall_phase) { app.uninstall_phase(command:, force:) }
 
+  let(:setup_cask) { InstallHelper.install_without_artifacts(cask) }
+
   before do
-    InstallHelper.install_without_artifacts(cask)
+    setup_cask
+    allow(command).to receive(:run).and_call_original
+    allow(SystemCommand).to receive(:run).and_call_original
+    allow(SystemCommand).to receive(:run).with("chgrp", any_args)
+                                         .and_return(instance_double(SystemCommand::Result, success?: true))
   end
 
   describe "install_phase" do
@@ -24,6 +31,61 @@ RSpec.describe Cask::Artifact::App, :cask do
 
       expect(target_path).to be_a_directory
       expect(source_path).to be_a_symlink
+    end
+
+    it "removes group and other write permissions from apps" do
+      modes = {
+        "."                       => 0777,
+        "Contents"                => 0770,
+        "Contents/MacOS/Caffeine" => 0777,
+        "Contents/Info.plist"     => 0666,
+        "Contents/PkgInfo"        => 0440,
+      }
+      modes.each { |path, mode| (source_path/path).chmod(mode) }
+
+      install_phase
+
+      expect(modes.keys.map { |path| (target_path/path).stat.mode & 0777 }).to eq([0755, 0755, 0755, 0644, 0444])
+    end
+
+    test_each(%w[admin root]) do |group|
+      it "changes the group recursively to the platform default of #{group}" do
+        allow(Cask::Caskroom).to receive(:expected_caskroom_group).and_return(group)
+
+        expect(command).to receive(:run)
+          .with("chgrp", args: ["-hR", group, target_path],
+                         sudo: nil, must_succeed: true, print_stderr: true)
+
+        install_phase
+      end
+    end
+
+    it "tries changing the app group in the home directory without sudo" do
+      allow(Cask::Caskroom).to receive(:expected_caskroom_group).and_return("admin")
+      allow(Dir).to receive(:home).and_return(target_path.parent.to_s)
+      expect(command).to receive(:run)
+        .with("chgrp", args: ["-hR", "admin", target_path],
+                       sudo: false, must_succeed: false, print_stderr: false)
+
+      install_phase
+    end
+
+    test_each_hash({
+      "/Applications/Caffeine.app"            => [0755, 0644],
+      "/Applications/Tools/Caffeine.app"      => [0755, 0644],
+      "/Caffeine.app"                         => [0755, 0644],
+      "/custom-apps/Caffeine.app"             => [0700, 0600],
+      "#{Dir.home}/Applications/Caffeine.app" => [0700, 0600],
+    }) do |path, modes|
+      it "sets permissions for #{path}" do
+        allow(app.target).to receive_messages(ascend: Pathname(path).ascend, parent: Pathname(path).parent)
+        source_path.chmod(0722)
+        (source_path/"Contents/Info.plist").chmod(0622)
+
+        install_phase
+
+        expect([target_path, target_path/"Contents/Info.plist"].map { it.stat.mode & 0777 }).to eq(modes)
+      end
     end
 
     describe "when app is in a subdirectory" do
@@ -57,7 +119,7 @@ RSpec.describe Cask::Artifact::App, :cask do
       expect(target_path).to be_a_directory
       expect(source_path).to be_a_symlink
 
-      expect(cask.config.appdir.join("Caffeine Deluxe.app")).not_to exist
+      expect(Pathname(cask.config.appdir).join("Caffeine Deluxe.app")).not_to exist
       expect(cask.staged_path.join("Caffeine Deluxe.app")).to exist
     end
 
@@ -270,12 +332,14 @@ RSpec.describe Cask::Artifact::App, :cask do
       end
     end
 
-    it "gives a warning if the source doesn't exist" do
-      FileUtils.rm_r(source_path)
+    context "when source doesn't exist" do
+      let(:setup_cask) { cask.staged_path.mkpath }
 
-      message = "It seems the App source '#{source_path}' is not there."
+      it "gives a warning if the source doesn't exist" do
+        message = "It seems the App source '#{source_path}' is not there."
 
-      expect { install_phase }.to raise_error(Cask::CaskError, message)
+        expect { install_phase }.to raise_error(Cask::CaskError, message)
+      end
     end
   end
 
@@ -304,14 +368,52 @@ RSpec.describe Cask::Artifact::App, :cask do
 
       expect(source_path).to be_a_directory
     end
+
+    it "uses clonefile copy arguments on supported macOS versions", :needs_macos do
+      install_phase
+
+      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
+
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-c", "-pR", target_path, source_path])
+    end
+
+    it "uses portable copy arguments on older macOS versions", :needs_macos do
+      install_phase
+
+      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:ventura))
+
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-pR", target_path, source_path])
+    end
+
+    it "uses portable copy arguments across filesystems", :needs_macos do
+      install_phase
+
+      source_dir = source_path.dirname
+      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
+      allow(target_path).to receive(:stat).and_return(instance_double(File::Stat, dev: 1))
+      allow(source_path).to receive(:dirname).and_return(source_dir)
+      allow(source_dir).to receive(:stat).and_return(instance_double(File::Stat, dev: 2))
+
+      expect(app.backup_copy_args(target_path, source_path)).to eq(["-pR", target_path, source_path])
+    end
   end
 
   describe "summary" do
     let(:description) { app.class.english_description }
     let(:contents) { app.summarize_installed }
 
-    it "returns the correct english_description" do
-      expect(description).to eq("Apps")
+    context "without installation" do
+      let(:setup_cask) { nil }
+
+      it "returns the correct english_description" do
+        expect(description).to eq("Apps")
+      end
+
+      describe "app is missing" do
+        it "returns a warning and the supposed path to the app" do
+          expect(contents).to match(/.*Missing App.*: #{target_path}/)
+        end
+      end
     end
 
     describe "app is correctly installed" do
@@ -321,17 +423,21 @@ RSpec.describe Cask::Artifact::App, :cask do
         expect(contents).to eq("#{target_path} (#{target_path.abv})")
       end
     end
-
-    describe "app is missing" do
-      it "returns a warning and the supposed path to the app" do
-        expect(contents).to match(/.*Missing App.*: #{target_path}/)
-      end
-    end
   end
 
   describe "upgrade" do
     before do
       install_phase
+    end
+
+    it "upgrades apps in the home directory without sudo" do
+      allow(Dir).to receive(:home).and_return(target_path.parent.to_s)
+      allow(command).to receive(:run).with("chgrp", hash_including(sudo: false))
+                                     .and_return(instance_double(SystemCommand::Result, success?: false))
+      expect(command).not_to receive(:run).with(anything, hash_including(sudo: true))
+
+      app.uninstall_phase(command:, successor: cask)
+      app.install_phase(command:, predecessor: cask)
     end
 
     # Fix for https://github.com/Homebrew/homebrew-cask/issues/102721
@@ -353,6 +459,18 @@ RSpec.describe Cask::Artifact::App, :cask do
       expect(target_path.stat.ino).to eq(inode)
 
       expect(contents_path).to exist
+    end
+
+    describe "when quarantine support is unavailable" do
+      it "reinstalls into the reused directory without copying xattrs" do
+        allow(Cask::Quarantine).to receive(:available?).and_return(false)
+        expect(MacOS::FFI).not_to receive(:copy_xattrs)
+
+        app.uninstall_phase(command:, force:, successor: cask)
+        app.install_phase(command:, adopt:, force:, predecessor: cask)
+
+        expect(target_path.join("Contents/Info.plist")).to exist
+      end
     end
 
     describe "when the system blocks modifying apps" do
@@ -383,7 +501,7 @@ RSpec.describe Cask::Artifact::App, :cask do
 
         expect(command).to receive(:run!)
           .with("/bin/cp", args: ["-pR", source_contents_path, target_path],
-                           sudo: true)
+                           sudo: nil)
           .and_call_original
         expect(FileUtils).not_to receive(:move).with(source_contents_path, an_instance_of(Pathname))
 
@@ -405,7 +523,7 @@ RSpec.describe Cask::Artifact::App, :cask do
           expect(command).to receive(:run!)
             .with("touch", args:         [target_path / ".homebrew-write-test"],
                            print_stderr: false,
-                           sudo:         true)
+                           sudo:         nil)
             .and_raise(ErrorDuringExecution.new([], status: 1,
 output: [[:stderr, "touch: #{target_path}/.homebrew-write-test: Operation not permitted\n"]], secrets: []))
 

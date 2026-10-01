@@ -31,16 +31,23 @@ module Homebrew
         switch "--versions",
                description: "Show the version number for installed formulae, or only the specified " \
                             "formulae if <formula> are provided."
+        switch "--json",
+               description: "Output installed formulae and casks with versions, linked and opt-linked formula " \
+                            "versions and pinned versions as JSON using the fast Bash command path. Requires " \
+                            "`--versions`, no named arguments and `jq`."
         switch "--multiple",
-               depends_on:  "--versions",
-               description: "Only show formulae with multiple versions installed."
+               description: "Only show formulae with multiple versions installed. Implies `--versions`."
         switch "--pinned",
-               description: "List only pinned formulae, or only the specified (pinned) " \
-                            "formulae if <formula> are provided. See also `pin`, `unpin`."
+               description: "List only pinned packages, or only the specified (pinned) packages if <formula> or " \
+                            "<cask> are provided. See also `pin`, `unpin`."
         switch "--installed-on-request",
                description: "List the formulae installed on request."
+        switch "--no-installed-on-request",
+               description: "List the formulae not installed on request (i.e. installed as dependencies)."
         switch "--installed-as-dependency",
-               description: "List the formulae installed as dependencies."
+               description: "List the formulae installed as dependencies.",
+               odisabled:   true,
+               replacement: "--no-installed-on-request"
         switch "--poured-from-bottle",
                description: "List the formulae installed from a bottle."
         switch "--built-from-source",
@@ -54,28 +61,29 @@ module Homebrew
                description: "List formulae and/or casks in long format. " \
                             "Has no effect when a formula or cask name is passed as an argument."
         switch "-r",
-               description: "Reverse the order of the formulae and/or casks sort to list the oldest entries first. " \
+               description: "Reverse the order of formula and/or cask sorting to list the oldest entries first. " \
                             "Has no effect when a formula or cask name is passed as an argument."
         switch "-t",
                description: "Sort formulae and/or casks by time modified, listing most recently modified first. " \
                             "Has no effect when a formula or cask name is passed as an argument."
 
         conflicts "--formula", "--cask"
-        conflicts "--pinned", "--cask"
         conflicts "--multiple", "--cask"
         conflicts "--pinned", "--multiple"
-        ["--installed-on-request", "--installed-as-dependency",
+        ["--installed-on-request", "--no-installed-on-request", "--installed-as-dependency",
          "--poured-from-bottle", "--built-from-source"].each do |flag|
           conflicts "--cask", flag
           conflicts "--versions", flag
+          conflicts "--multiple", flag
           conflicts "--pinned", flag
           conflicts "-l", flag
         end
         ["-1", "-l", "-r", "-t"].each do |flag|
           conflicts "--versions", flag
+          conflicts "--multiple", flag
           conflicts "--pinned", flag
         end
-        ["--versions", "--pinned", "-l", "-r", "-t"].each do |flag|
+        ["--versions", "--multiple", "--pinned", "-l", "-r", "-t"].each do |flag|
           conflicts "--full-name", flag
         end
 
@@ -84,12 +92,33 @@ module Homebrew
 
       sig { override.void }
       def run
+        if args.json?
+          raise UsageError, "`brew list --json` requires `--versions`." unless args.versions?
+          raise UsageError, "`brew list --versions --json` does not support named arguments." unless args.no_named?
+
+          raise UsageError, "`brew list --versions --json` is only supported by the fast Bash path with `jq`."
+        end
+
+        installed_as_dependency = args.no_installed_on_request?
+
         if args.full_name? &&
-           !(args.installed_on_request? || args.installed_as_dependency? ||
+           !(args.installed_on_request? || installed_as_dependency ||
              args.poured_from_bottle? || args.built_from_source?)
           unless args.cask?
-            formula_names = args.no_named? ? Formula.installed : args.named.to_resolved_formulae
-            full_formula_names = formula_names.map(&:full_name).sort(&tap_and_name_comparison)
+            full_formula_names = if args.no_named?
+              Formula.racks.map do |rack|
+                name = rack.basename.to_s
+                tap = begin
+                  Keg.from_rack(rack)&.tab&.tap
+                rescue JSON::ParserError, SystemCallError, Tap::InvalidNameError
+                  opoo "Could not identify the tap for #{name} from its installation receipt."
+                  nil
+                end
+                (tap.nil? || tap.core_tap?) ? name : "#{tap}/#{name}"
+              end
+            else
+              args.named.to_resolved_formulae.map(&:full_name)
+            end.sort(&Cask::List::TAP_AND_NAME_COMPARISON)
             full_formula_names = Formatter.columns(full_formula_names) unless args.public_send(:"1?")
             puts full_formula_names if full_formula_names.present?
           end
@@ -101,22 +130,72 @@ module Homebrew
             end
             # The cast is because `Keg`` does not define `full_name`
             full_cask_names = T.cast(cask_names, T::Array[T.any(Formula, Cask::Cask)])
-                               .map(&:full_name).sort(&tap_and_name_comparison)
+                               .map(&:full_name).sort(&Cask::List::TAP_AND_NAME_COMPARISON)
             full_cask_names = Formatter.columns(full_cask_names) unless args.public_send(:"1?")
             puts full_cask_names if full_cask_names.present?
           end
         elsif args.pinned?
-          filtered_list
-        elsif args.versions?
+          pinned = if args.no_named?
+            entries = T.let([], T::Array[String])
+            unless args.cask?
+              Formula.racks.each do |rack|
+                entry = pinned_formula_entry(rack.basename.to_s)
+                entries << entry if entry
+              end
+            end
+
+            if !args.formula? && Cask::Caskroom.path.directory?
+              Cask::Caskroom.path.children.reject(&:file?).each do |path|
+                entry = pinned_cask_entry(path.basename.to_s)
+                entries << entry if entry
+              end
+            end
+            entries
+          else
+            args.named.filter_map do |name|
+              entry = T.let(nil, T.nilable(String))
+              package_found = T.let(false, T::Boolean)
+              package_name = T.let(nil, T.nilable(String))
+
+              unless args.cask?
+                rack = Formulary.to_rack(name)
+                if rack.exist?
+                  package_found = true
+                  package_name = rack.basename.to_s
+                  entry ||= pinned_formula_entry(rack.basename.to_s)
+                end
+              end
+
+              unless args.formula?
+                token = ::Utils.name_from_full_name(name).to_s
+                caskroom_path = Cask::Caskroom.path/token
+                if caskroom_path.exist? || caskroom_path.symlink?
+                  package_found = true
+                  package_name ||= token
+                  entry ||= pinned_cask_entry(token)
+                end
+              end
+
+              if package_found && entry.nil?
+                opoo "#{package_name || name} not pinned"
+              elsif !package_found
+                Homebrew.failed = true
+              end
+              entry
+            end
+          end
+
+          puts pinned.sort(&Cask::List::TAP_AND_NAME_COMPARISON)
+        elsif args.versions? || args.multiple?
           filtered_list unless args.cask?
           list_casks if args.cask? || (!args.formula? && !args.multiple? && args.no_named?)
         elsif args.installed_on_request? ||
-              args.installed_as_dependency? ||
+              installed_as_dependency ||
               args.poured_from_bottle? ||
               args.built_from_source?
           flags = []
           flags << "`--installed-on-request`" if args.installed_on_request?
-          flags << "`--installed-as-dependency`" if args.installed_as_dependency?
+          flags << "`--no-installed-on-request`" if installed_as_dependency
           flags << "`--poured-from-bottle`" if args.poured_from_bottle?
           flags << "`--built-from-source`" if args.built_from_source?
 
@@ -126,7 +205,7 @@ module Homebrew
             # See https://ruby-doc.org/3.2/Kernel.html#method-i-test
             Formula.installed.sort_by { |formula| T.cast(test("M", formula.rack.to_s), Time) }.reverse!
           elsif args.full_name?
-            Formula.installed.sort { |a, b| tap_and_name_comparison.call(a.full_name, b.full_name) }
+            Formula.installed.sort { |a, b| Cask::List::TAP_AND_NAME_COMPARISON.call(a.full_name, b.full_name) }
           else
             Formula.installed.sort
           end
@@ -136,7 +215,7 @@ module Homebrew
 
             statuses = []
             statuses << "installed on request" if args.installed_on_request? && tab.installed_on_request
-            statuses << "installed as dependency" if args.installed_as_dependency? && tab.installed_as_dependency
+            statuses << "installed as dependency" if installed_as_dependency && !tab.installed_on_request
             statuses << "poured from bottle" if args.poured_from_bottle? && tab.poured_from_bottle
             statuses << "built from source" if args.built_from_source? && !tab.poured_from_bottle
             next if statuses.empty?
@@ -159,12 +238,15 @@ module Homebrew
 
           if !args.cask? && HOMEBREW_CELLAR.exist? && HOMEBREW_CELLAR.children.any?
             ohai "Formulae" if $stdout.tty? && !args.formula?
-            safe_system "ls", *ls_args, HOMEBREW_CELLAR
+            system_command! "ls", args: [*ls_args, HOMEBREW_CELLAR], print_stdout: true
             puts if $stdout.tty? && !args.formula?
           end
-          if !args.formula? && Cask::Caskroom.any_casks_installed?
-            ohai "Casks" if $stdout.tty? && !args.cask?
-            safe_system "ls", *ls_args, Cask::Caskroom.path
+          unless args.formula?
+            if Cask::Caskroom.any_casks_installed?
+              ohai "Casks" if $stdout.tty? && !args.cask?
+              system_command! "ls", args: [*ls_args, Cask::Caskroom.path], print_stdout: true
+            end
+            warn_about_broken_caskroom_symlinks
           end
         else
           kegs, casks = args.named.to_kegs_to_casks
@@ -182,6 +264,35 @@ module Homebrew
 
       private
 
+      # A broken symlink in the Caskroom (e.g. a dangling cask rename alias) lists
+      # like an installed cask but cannot load or uninstall, so flag it.
+      # Keep in sync with the broken-symlink warning in `homebrew-list` in
+      # Library/Homebrew/list.sh.
+      sig { void }
+      def warn_about_broken_caskroom_symlinks
+        broken_symlinks = Cask::Caskroom.path.glob("*").select { |child| child.symlink? && !child.exist? }
+        return if broken_symlinks.empty?
+
+        opoo "Broken Caskroom symlinks (`brew cleanup` removes them): " \
+             "#{broken_symlinks.map(&:basename).sort.join(", ")}"
+      end
+
+      sig { params(name: String).returns(T.nilable(String)) }
+      def pinned_formula_entry(name)
+        pin_path = HOMEBREW_PINNED_KEGS/name
+        return unless pin_path.symlink?
+
+        "#{name}#{" #{pin_path.readlink.basename}" if args.versions?}"
+      end
+
+      sig { params(token: String).returns(T.nilable(String)) }
+      def pinned_cask_entry(token)
+        pin_path = HOMEBREW_PINNED_CASKS/token
+        return if !pin_path.symlink? || !pin_path.exist?
+
+        "#{token}#{" #{Utils::Path.resolved_path(pin_path).basename}" if args.versions?}"
+      end
+
       sig { void }
       def filtered_list
         names = if args.no_named?
@@ -193,29 +304,20 @@ module Homebrew
             rack.exist?
           end
         end
-        if args.pinned?
-          pinned_versions = {}
-          names.sort.each do |d|
-            keg_pin = (HOMEBREW_PINNED_KEGS/d.basename.to_s)
-            pinned_versions[d] = keg_pin.readlink.basename.to_s if keg_pin.exist? || keg_pin.symlink?
-          end
-          pinned_versions.each do |d, version|
-            puts d.basename.to_s.concat(args.versions? ? " #{version}" : "")
-          end
-        else # --versions without --pinned
-          names.sort.each do |d|
-            versions = d.subdirs.map { |pn| pn.basename.to_s }
-            next if args.multiple? && versions.length < 2
+        names.sort.each do |d|
+          versions = d.subdirs.map { |pn| pn.basename.to_s }
+          next if args.multiple? && versions.length < 2
 
-            puts "#{d.basename} #{versions * " "}"
-          end
+          puts "#{d.basename} #{versions * " "}"
         end
       end
 
       sig { void }
       def list_casks
         casks = if args.no_named?
-          cask_paths = Cask::Caskroom.path.children.reject(&:file?).map do |path|
+          require "cask/cask_loader"
+
+          cask_paths = Cask::Caskroom.path.children.select(&:directory?).map do |path|
             if path.symlink?
               real_path = path.realpath
               real_path.basename.to_s
@@ -246,7 +348,7 @@ module Homebrew
     class PrettyListing
       sig { params(path: T.any(String, Pathname, Keg)).void }
       def initialize(path)
-        valid_lib_extensions = [".dylib", ".pc"]
+        valid_lib_extensions = [".cps", ".dylib", ".pc"]
         Pathname.new(path).children.sort_by { |p| p.to_s.downcase }.each do |pn|
           case pn.basename.to_s
           when "bin", "sbin"

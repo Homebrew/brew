@@ -1,8 +1,38 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cli/named_args"
 
 RSpec.describe Homebrew::CLI::NamedArgs do
+  let(:foo) do
+    formula "foo" do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh"
+      version "1.0"
+    end
+  end
+  let(:bar) do
+    formula "bar" do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh"
+      version "1.0"
+    end
+  end
+  let(:baz) do
+    Cask::CaskLoader::FromContentLoader.new(+<<~RUBY, tap: CoreCaskTap.instance).load(config: nil)
+      cask "baz" do
+        version "1.0"
+      end
+    RUBY
+  end
+  let(:foo_cask) do
+    Cask::CaskLoader::FromContentLoader.new(+<<~RUBY, tap: CoreCaskTap.instance).load(config: nil)
+      cask "foo" do
+        version "1.0"
+      end
+    RUBY
+  end
+
   def setup_unredable_formula(name)
     error = FormulaUnreadableError.new(name, RuntimeError.new("testing"))
     allow(Formulary).to receive(:factory).with(name, any_args).and_raise(error)
@@ -14,36 +44,6 @@ RSpec.describe Homebrew::CLI::NamedArgs do
 
     config = instance_double(Cask::Config)
     allow(Cask::Config).to receive(:from_args).and_return(config)
-  end
-
-  let(:foo) do
-    formula "foo" do
-      url "https://brew.sh"
-      version "1.0"
-    end
-  end
-
-  let(:bar) do
-    formula "bar" do
-      url "https://brew.sh"
-      version "1.0"
-    end
-  end
-
-  let(:baz) do
-    Cask::CaskLoader::FromContentLoader.new(+<<~RUBY, tap: CoreCaskTap.instance).load(config: nil)
-      cask "baz" do
-        version "1.0"
-      end
-    RUBY
-  end
-
-  let(:foo_cask) do
-    Cask::CaskLoader::FromContentLoader.new(+<<~RUBY, tap: CoreCaskTap.instance).load(config: nil)
-      cask "foo" do
-        version "1.0"
-      end
-    RUBY
   end
 
   describe "#to_formulae" do
@@ -93,6 +93,7 @@ RSpec.describe Homebrew::CLI::NamedArgs do
     context "when a non-core formula and a core cask are present" do
       let(:non_core_formula) do
         formula "foo", tap: Tap.fetch("some/tap") do
+          T.bind(self, T.class_of(Formula))
           url "https://brew.sh"
           version "1.0"
         end
@@ -138,7 +139,9 @@ RSpec.describe Homebrew::CLI::NamedArgs do
     end
 
     it "raises an error when neither formula nor cask is present" do
-      expect { described_class.new("foo").to_formulae_and_casks }.to raise_error(FormulaOrCaskUnavailableError)
+      expect do
+        described_class.new("foo").to_formulae_and_casks
+      end.to raise_error(FormulaOrCaskUnavailableError)
     end
 
     it "returns formula when formula is present and cask is unreadable", :needs_macos do
@@ -146,7 +149,9 @@ RSpec.describe Homebrew::CLI::NamedArgs do
       setup_unredable_cask "foo"
 
       expect(described_class.new("foo").to_formulae_and_casks).to eq [foo]
-      expect { described_class.new("foo").to_formulae_and_casks }.to output(/Failed to load cask: foo/).to_stderr
+      expect do
+        described_class.new("foo").to_formulae_and_casks
+      end.to output(/Failed to load cask: foo/).to_stderr
     end
 
     it "returns cask when formula is unreadable and cask is present", :needs_macos do
@@ -154,7 +159,9 @@ RSpec.describe Homebrew::CLI::NamedArgs do
       stub_cask_loader foo_cask
 
       expect(described_class.new("foo").to_formulae_and_casks).to eq [foo_cask]
-      expect { described_class.new("foo").to_formulae_and_casks }.to output(/Failed to load formula: foo/).to_stderr
+      expect do
+        described_class.new("foo").to_formulae_and_casks
+      end.to output(/Failed to load formula: foo/).to_stderr
     end
 
     it "raises an error when formula is absent and cask is unreadable", :needs_macos do
@@ -210,11 +217,8 @@ RSpec.describe Homebrew::CLI::NamedArgs do
       expect(described_class.new("foo", "bar").to_kegs.map(&:name)).to eq ["foo", "foo", "bar"]
     end
 
-    it "resolves kegs with multiple versions with #resolve_keg" do
+    specify do
       expect(described_class.new("foo").to_kegs.map { |k| k.version.version.to_s }.sort).to eq ["1.0", "2.0"]
-    end
-
-    it "when there are no matching kegs returns an empty array" do
       expect(described_class.new.to_kegs).to be_empty
     end
 
@@ -244,7 +248,9 @@ RSpec.describe Homebrew::CLI::NamedArgs do
       it "raises an error if there is no tap match" do
         stub_formula_loader bar, "other/tap/bar"
 
-        expect { described_class.new("other/tap/bar").to_kegs }.to raise_error(NoSuchKegError, %r{from tap other/tap})
+        expect do
+          described_class.new("other/tap/bar").to_kegs
+        end.to raise_error(NoSuchKegError, %r{from tap other/tap})
       end
     end
   end
@@ -309,12 +315,9 @@ RSpec.describe Homebrew::CLI::NamedArgs do
   end
 
   describe "#homebrew_tap_cask_names" do
-    it "returns an array of casks from homebrew-cask" do
+    specify do
       expect(described_class.new("foo", "homebrew/cask/local-caffeine").homebrew_tap_cask_names)
         .to eq ["homebrew/cask/local-caffeine"]
-    end
-
-    it "returns an empty array when there are no matching casks" do
       expect(described_class.new("foo").homebrew_tap_cask_names).to be_empty
     end
   end
@@ -350,13 +353,33 @@ RSpec.describe Homebrew::CLI::NamedArgs do
     it "returns only formulae when `only: :formula` is specified" do
       expect(Formulary).to receive(:path).with("foo").and_return(formula_path)
 
-      expect(described_class.new("foo", "baz").to_paths(only: :formula)).to eq [formula_path, Formulary.path("baz")]
+      expect(described_class.new("foo",
+                                 "baz").to_paths(only: :formula)).to eq [formula_path, Formulary.path("baz")]
     end
 
     it "returns only casks when `only: :cask` is specified" do
       expect(Cask::CaskLoader).to receive(:path).with("foo").and_return(cask_path)
 
       expect(described_class.new("foo", "baz").to_paths(only: :cask)).to eq [cask_path, Cask::CaskLoader.path("baz")]
+    end
+
+    context "when without_api: true" do
+      it "returns a bare path for an API-known formula when the tap is not installed" do
+        allow(CoreTap.instance).to receive(:installed?).and_return(false)
+
+        require "api"
+        allow(Homebrew::API).to receive(:formula_names).and_return(["foo"])
+        allow(Homebrew::API::Formula).to receive(:all_formulae).and_return("foo" => {})
+
+        named_args = described_class.new("foo", without_api: true)
+        paths = named_args.to_paths
+
+        # to_paths returns a bare expanded path (not the core formula path) because
+        # without_api: true sets HOMEBREW_NO_INSTALL_FROM_API=1 which defeats the
+        # API name fallback check. The brew edit command works around this by
+        # auto-tapping before calling to_paths.
+        expect(paths.first.to_s).not_to include("homebrew-core/Formula")
+      end
     end
   end
 

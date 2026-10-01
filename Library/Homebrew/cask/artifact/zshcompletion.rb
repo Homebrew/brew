@@ -7,8 +7,8 @@ module Cask
   module Artifact
     # Artifact corresponding to the `zsh_completion` stanza.
     class ZshCompletion < ShellCompletion
-      sig { params(target: T.any(String, Pathname)).returns(Pathname) }
-      def resolve_target(target)
+      sig { override.params(target: T.any(String, Pathname), base_dir: T.nilable(Pathname)).returns(Pathname) }
+      def resolve_target(target, base_dir: nil)
         name = if target.to_s.start_with? "_"
           target
         else

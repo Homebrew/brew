@@ -1,11 +1,16 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "api/env"
+require "utils/editor"
+
 require "formula"
 require "formula_creator"
 require "missing_formula"
-require "utils/pypi"
+require "cask/appcast"
 require "cask/cask_loader"
+require "cask/token_generator"
+require "downloadable"
 
 module Homebrew
   module DevCmd
@@ -16,7 +21,7 @@ module Homebrew
           and open it in the editor. Homebrew will attempt to automatically derive the
           formula name and version, but if it fails, you'll have to make your own template.
           The `wget` formula serves as a simple example. For the complete API, see:
-          <https://rubydoc.brew.sh/Formula>
+          <https://docs.brew.sh/rubydoc/Formula>
         EOS
         switch "--autotools",
                description: "Create a basic template for an Autotools-style build."
@@ -78,7 +83,7 @@ module Homebrew
           create_formula
         end
 
-        exec_editor path
+        Utils::Editor.open path
       end
 
       private
@@ -86,14 +91,16 @@ module Homebrew
       sig { returns(Pathname) }
       def create_cask
         url = args.named.fetch(0)
-        name = if args.set_name.blank?
+        set_name = args.set_name&.strip
+        name = if set_name.blank?
           stem = Pathname.new(url).stem.rpartition("=").last
           print "Cask name [#{stem}]: "
           __gets || stem
         else
-          args.set_name
+          set_name
         end
-        token = Cask::Utils.token_from(T.must(name))
+        token = Cask::Utils.token_from(name)
+        Cask::TokenGenerator.warnings(token).each { |warning| opoo warning }
 
         cask_tap = Tap.fetch(args.tap || "homebrew/cask")
         raise TapUnavailableError, cask_tap.name unless cask_tap.installed?
@@ -102,10 +109,11 @@ module Homebrew
         cask_path.dirname.mkpath unless cask_path.dirname.exist?
         raise Cask::CaskAlreadyCreatedError, token if cask_path.exist?
 
-        version = if args.set_version
-          Version.new(T.must(args.set_version))
+        set_version = args.set_version
+        version = if set_version
+          Version.new(set_version)
         else
-          Version.detect(url.gsub(token, "").gsub(/x86(_64)?/, ""))
+          Version.detect(url.gsub(token, "").gsub(/x86(?:_64)?/, ""))
         end
 
         interpolated_url, sha256 = if version.null?
@@ -117,15 +125,18 @@ module Homebrew
             strategy = DownloadStrategyDetector.detect(url)
             downloader = strategy.new(url, token, version.to_s, cache: Cask::Cache.path)
             downloader.fetch
-            downloader.cached_location.sha256
+            Downloadable.verification_cache.sha256(downloader.cached_location)
           end
 
           [url.gsub(version.to_s, "\#{version}"), sha256]
         end
 
+        appcast = find_appcast_for(name)
+        livecheck_url = appcast ? appcast.url.inspect : "\"\""
+        livecheck_strategy = appcast ? appcast.strategy.inspect : "\"\""
+
         cask_path.atomic_write <<~RUBY
           # Documentation: https://docs.brew.sh/Cask-Cookbook
-          #                https://docs.brew.sh/Adding-Software-to-Homebrew#cask-stanzas
           # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
           cask "#{token}" do
             version "#{version}"
@@ -138,8 +149,8 @@ module Homebrew
 
             # Documentation: https://docs.brew.sh/Brew-Livecheck
             livecheck do
-              url ""
-              strategy ""
+              url #{livecheck_url}
+              strategy #{livecheck_strategy}
             end
 
             depends_on macos: ""
@@ -154,6 +165,22 @@ module Homebrew
         puts "Please run `brew audit --cask --new #{token}` before submitting, thanks."
         cask_path
       end
+
+      public
+
+      # Scan an already-installed copy of the app for an appcast to prefill
+      # the `livecheck` block.
+      sig { params(name: String).returns(T.nilable(Cask::Appcast::Result)) }
+      def find_appcast_for(name)
+        app_path = Pathname("/Applications/#{name}.app")
+        return unless app_path.directory?
+
+        appcast = Cask::Appcast.find(app_path)
+        ohai "Found #{appcast.strategy.inspect} appcast: #{appcast.url}" if appcast
+        appcast
+      end
+
+      private
 
       sig { returns(Pathname) }
       def create_formula
@@ -214,7 +241,7 @@ module Homebrew
             EOS
           end
 
-          Homebrew.with_no_api_env do
+          Homebrew::API.with_no_api_env do
             if Formula.aliases.include?(formula_creator.name)
               realname = Formulary.canonical_name(formula_creator.name)
               odie <<~EOS
@@ -228,11 +255,16 @@ module Homebrew
 
         path = formula_creator.write_formula!
 
-        formula = Homebrew.with_no_api_env do
+        formula = Homebrew::API.with_no_api_env do
           CoreTap.instance.clear_cache
           Formula[formula_creator.name]
         end
-        PyPI.update_python_resources! formula, ignore_non_pypi_packages: true if args.python?
+
+        if args.python?
+          Utils::GemSetup.install_bundler_gems!(groups: ["ast"])
+          require "utils/pypi"
+          PyPI.update_python_resources! formula, ignore_non_pypi_packages: true
+        end
 
         puts <<~EOS
           Please audit and test formula before submitting:

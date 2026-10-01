@@ -9,9 +9,9 @@ module OS
 
         requires_ancestor { ::DevelopmentTools }
 
-        sig { params(tool: T.any(String, Symbol)).returns(T.nilable(Pathname)) }
+        sig { params(tool: T.any(String, Symbol)).returns(T.nilable(::Pathname)) }
         def locate(tool)
-          @locate ||= T.let({}, T.nilable(T::Hash[T.any(String, Symbol), Pathname]))
+          @locate ||= T.let({}, T.nilable(T::Hash[T.any(String, Symbol), ::Pathname]))
           @locate.fetch(tool) do |key|
             @locate[key] = if ::DevelopmentTools.needs_build_formulae? &&
                               (binutils_path = HOMEBREW_PREFIX/"opt/binutils/bin/#{tool}").executable?
@@ -22,7 +22,7 @@ module OS
             elsif (homebrew_path = HOMEBREW_PREFIX/"bin/#{tool}").executable?
               homebrew_path
             elsif File.executable?(system_path = "/usr/bin/#{tool}")
-              Pathname.new system_path
+              ::Pathname.new system_path
             end
           end
         end
@@ -30,33 +30,54 @@ module OS
         sig { returns(Symbol) }
         def default_compiler = :gcc
 
+        sig { returns(String) }
+        def installation_instructions
+          <<~EOS
+            Install a system C compiler and the standard development tools for
+            your Linux distribution. See:
+              https://docs.brew.sh/Homebrew-on-Linux#requirements
+          EOS
+        end
+
+        sig { returns(String) }
+        def custom_installation_instructions
+          <<~EOS
+            Install GNU's GCC:
+              brew install gcc
+          EOS
+        end
+
         sig { returns(T::Boolean) }
         def needs_libc_formula?
           return @needs_libc_formula unless @needs_libc_formula.nil?
 
-          @needs_libc_formula = T.let(OS::Linux::Glibc.below_ci_version?, T.nilable(T::Boolean))
-          @needs_libc_formula = !!@needs_libc_formula
+          @needs_libc_formula = T.let(nil, T.nilable(T::Boolean))
+
+          # Undocumented environment variable to make it easier to test libc
+          # formula automatic installation.
+          @needs_libc_formula = true if ENV["HOMEBREW_FORCE_LIBC_FORMULA"]
+          @needs_libc_formula ||= OS::Linux::Glibc.below_ci_version?
         end
 
-        # Keep this method around for now to make it easier to add this functionality later.
-        # rubocop:disable Lint/UselessMethodDefinition
-        sig { returns(Pathname) }
+        sig { returns(::Pathname) }
         def host_gcc_path
-          # TODO: override this if/when we to pick the GCC based on e.g. the Ubuntu version.
+          # Prioritise versioned path if installed
+          path = ::Pathname.new("/usr/bin/#{OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA.tr("@", "-")}")
+          return path if path.exist?
+
           super
         end
-        # rubocop:enable Lint/UselessMethodDefinition
 
         sig { returns(T::Boolean) }
         def needs_compiler_formula?
           return @needs_compiler_formula unless @needs_compiler_formula.nil?
 
           @needs_compiler_formula = T.let(nil, T.nilable(T::Boolean))
-          @needs_compiler_formula = if host_gcc_path.exist?
-            ::DevelopmentTools.gcc_version(host_gcc_path.to_s) < OS::LINUX_GCC_CI_VERSION
-          else
-            true
-          end
+
+          # Undocumented environment variable to make it easier to test compiler
+          # formula automatic installation.
+          @needs_compiler_formula = true if ENV["HOMEBREW_FORCE_COMPILER_FORMULA"]
+          @needs_compiler_formula ||= OS::Linux::Libstdcxx.below_ci_version?
         end
 
         sig { returns(T::Hash[String, T.nilable(String)]) }

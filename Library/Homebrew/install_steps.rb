@@ -1,0 +1,1639 @@
+# typed: strict
+# frozen_string_literal: true
+
+require "simulate_system"
+require "system_command"
+require "utils/output"
+
+module Homebrew
+  # Declarative install steps that can be serialised through the JSON APIs.
+  module InstallSteps
+    PathSpec = T.type_alias { T::Hash[String, String] }
+    PathSpecs = T.type_alias { T::Array[PathSpec] }
+    StepValue = T.type_alias { T.any(String, Integer, T::Boolean, T::Array[String], PathSpec, PathSpecs) }
+    Step = T.type_alias { T::Hash[String, StepValue] }
+    Steps = T.type_alias { T::Array[Step] }
+    Paths = T.type_alias { T.any(String, Pathname, T::Array[T.any(String, Pathname)]) }
+    RawPathSpec = T.type_alias { T::Hash[T.any(String, Symbol), T.nilable(T.any(String, Symbol, Pathname))] }
+    RawPathSpecs = T.type_alias { T::Array[T.any(String, Symbol, Pathname, RawPathSpec)] }
+    RawStepValue = T.type_alias do
+      T.nilable(T.any(String, Symbol, Integer, T::Boolean, Pathname, RawPathSpec, RawPathSpecs))
+    end
+    RawStep = T.type_alias { T::Hash[T.any(String, Symbol), RawStepValue] }
+    SystemCommandArg = T.type_alias { T.any(String, Pathname) }
+    TemplateTokenValue = T.type_alias { T.any(String, Pathname) }
+
+    sig { params(file: Pathname, id: T.any(String, Pathname), resolve_source: T::Boolean).void }
+    def self.change_dylib_id(file, id, resolve_source: false)
+      file = file.realpath if resolve_source
+
+      require "macho"
+      Utils::Path.ensure_writable(file) do
+        MachO::Tools.change_dylib_id file, id.to_s
+        MachO.codesign! file if Hardware::CPU.arm?
+      end
+    end
+
+    class DSL
+      ((instance_methods + private_instance_methods) -
+        (BasicObject.instance_methods + BasicObject.private_instance_methods) -
+        [:__callee__, :__method__, :class, :object_id]).each { |method| undef_method method }
+
+      class TemplateVersion
+        sig { returns(String) }
+        def to_s
+          "{{version}}"
+        end
+
+        sig { returns(String) }
+        def major
+          "{{version.major}}"
+        end
+
+        sig { returns(String) }
+        def major_minor
+          "{{version.major_minor}}"
+        end
+      end
+      private_constant :TemplateVersion
+
+      TEMPLATE_VERSION = TemplateVersion.new.freeze
+      private_constant :TEMPLATE_VERSION
+
+      ABSOLUTE_TEMPLATE_TOKENS = %w[
+        HOMEBREW_PREFIX HOMEBREW_CELLAR prefix opt_prefix bin sbin lib libexec share pkgshare var etc pkgetc
+        staged_path appdir caskroom_path temp rack bash_completion zsh_completion fish_completion pwsh_completion
+      ].freeze
+      private_constant :ABSOLUTE_TEMPLATE_TOKENS
+
+      PRESERVED_STEP_VALUE_KEYS = %w[after args before content env overwrite].freeze
+      private_constant :PRESERVED_STEP_VALUE_KEYS
+
+      sig {
+        params(
+          default_base:        ::T.nilable(::T.any(::String, ::Symbol)),
+          default_source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          default_target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def initialize(default_base: nil, default_source_base: nil, default_target_base: nil)
+        @default_base = default_base
+        @default_source_base = default_source_base
+        @default_target_base = default_target_base
+        @steps = ::T.let([], Steps)
+        @guards = ::T.let([], PathSpecs)
+        @next_guard_id = ::T.let(0, ::Integer)
+      end
+
+      sig { returns(Steps) }
+      attr_reader :steps
+
+      sig { returns(String) }
+      def name
+        ::Utils::Output.odeprecated "`name` in an install steps block", "`formula_name`"
+        "{{name}}"
+      end
+
+      sig { returns(String) }
+      def formula_name
+        "{{formula_name}}"
+      end
+
+      sig { returns(String) }
+      def token
+        "{{token}}"
+      end
+
+      sig { returns(String) }
+      def arch
+        "{{arch}}"
+      end
+
+      sig { returns(TemplateVersion) }
+      def version
+        TEMPLATE_VERSION
+      end
+
+      sig {
+        params(
+          default_base:        ::T.nilable(::T.any(::String, ::Symbol)),
+          default_source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          default_target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          block:               ::T.nilable(::T.proc.bind(DSL).void),
+        ).returns(Steps)
+      }
+      def self.build(default_base: nil, default_source_base: nil, default_target_base: nil, &block)
+        dsl = new(default_base:, default_source_base:, default_target_base:)
+        dsl.instance_eval(&block) if block
+        dsl.steps
+      end
+
+      sig {
+        params(
+          path:  ::T.any(::String, ::Pathname),
+          base:  ::T.nilable(::T.any(::String, ::Symbol)),
+          block: ::T.proc.void,
+        ).void
+      }
+      def if_path_exists(path, base: nil, &block)
+        with_guard(path_spec(path, base:, default_base: @default_base).merge("condition" => "if_exists"), &block)
+      end
+
+      sig {
+        params(
+          path:  ::T.any(::String, ::Pathname),
+          base:  ::T.nilable(::T.any(::String, ::Symbol)),
+          block: ::T.proc.void,
+        ).void
+      }
+      def unless_path_exists(path, base: nil, &block)
+        with_guard(path_spec(path, base:, default_base: @default_base).merge("condition" => "unless_exists"), &block)
+      end
+
+      sig { params(block: ::T.proc.void).void }
+      def on_macos(&block)
+        with_guard({ "condition" => "on", "value" => "macos" }, &block)
+      end
+
+      sig { params(block: ::T.proc.void).void }
+      def on_linux(&block)
+        with_guard({ "condition" => "on", "value" => "linux" }, &block)
+      end
+
+      sig { params(steps: ::T::Array[RawStep]).returns(Steps) }
+      def self.normalise_steps(steps)
+        steps.map do |step|
+          step = step.to_h do |key, value|
+            key = key.to_s
+            [key, normalise_step_value(key, value)]
+          end
+          compact_step(step)
+        end
+      end
+
+      sig { params(step: ::T::Hash[String, ::T.nilable(StepValue)]).returns(Step) }
+      def self.compact_step(step)
+        compacted_step = ::T.cast(
+          ::Utils.deep_compact_blank(step.except(*PRESERVED_STEP_VALUE_KEYS)) || {},
+          Step,
+        )
+        PRESERVED_STEP_VALUE_KEYS.each do |key|
+          value = step[key]
+          next if value.nil?
+          next if %w[args env].include?(key) && [[], {}].include?(value)
+
+          compacted_step[key] = value
+        end
+        compacted_step
+      end
+      private_class_method :compact_step
+
+      sig { params(key: String, obj: RawStepValue).returns(::T.nilable(StepValue)) }
+      def self.normalise_step_value(key, obj)
+        case obj
+        when Symbol
+          obj.to_s
+        when Array
+          if %w[guards paths writable_paths].include?(key)
+            obj.map { |value| normalise_path_value(value) }
+          else
+            obj.map(&:to_s)
+          end
+        when Hash
+          if key == "env"
+            ::T.cast(obj.to_h { |env_key, value| [env_key.to_s, value&.to_s] }.compact, PathSpec)
+          else
+            normalise_path_value(obj)
+          end
+        when String, Pathname
+          if %w[
+            path source target command matching_certificate stdin_path stdout_path chdir
+          ].include?(key)
+            normalise_path_value(obj)
+          else
+            obj.to_s
+          end
+        else
+          obj
+        end
+      end
+      private_class_method :normalise_step_value
+
+      sig { params(obj: T.any(String, Symbol, Pathname, RawPathSpec)).returns(PathSpec) }
+      def self.normalise_path_value(obj)
+        case obj
+        when Hash
+          ::T.cast(obj.to_h { |key, value| [key.to_s, value&.to_s] }.compact_blank, PathSpec)
+        else
+          { "path" => obj.to_s }
+        end
+      end
+      private_class_method :normalise_path_value
+
+      sig { params(path: ::T.any(::String, ::Pathname), base: ::T.nilable(::T.any(::String, ::Symbol))).void }
+      def mkdir(path, base: nil)
+        ::Utils::Output.odeprecated "`mkdir` in an install steps block", "`mkdir_p`"
+        add_step("mkdir", "path" => path_spec(path, base:, default_base: @default_base))
+      end
+
+      sig { params(path: ::T.any(::String, ::Pathname), base: ::T.nilable(::T.any(::String, ::Symbol))).void }
+      def mkdir_p(path, base: nil)
+        add_step("mkdir_p", "path" => path_spec(path, base:, default_base: @default_base))
+      end
+
+      sig { params(path: ::T.any(::String, ::Pathname), base: ::T.nilable(::T.any(::String, ::Symbol))).void }
+      def touch(path, base: nil)
+        add_step("touch", "path" => path_spec(path, base:, default_base: @default_base))
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          force:       ::T::Boolean,
+          overwrite:   ::T::Boolean,
+          source_glob: ::T::Boolean,
+        ).void
+      }
+      def move(source, target, source_base: nil, target_base: nil, force: false, overwrite: true, source_glob: false)
+        ::Utils::Output.odeprecated "`force:` in `move`", "`overwrite:` in `move`" if force
+
+        add_step("move",
+                 "source"      => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target"      => path_spec(target, base: target_base, default_base: @default_target_base),
+                 "force"       => force,
+                 "overwrite"   => overwrite,
+                 "source_glob" => source_glob)
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          force:       ::T::Boolean,
+          overwrite:   ::T::Boolean,
+          source_glob: ::T::Boolean,
+        ).void
+      }
+      def mv(source, target, source_base: nil, target_base: nil, force: false, overwrite: true, source_glob: false)
+        ::Utils::Output.odeprecated "`mv` in an install steps block", "`move`"
+        move(source, target, source_base:, target_base:, overwrite: overwrite || force, source_glob:)
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def move_children(source, target, source_base: nil, target_base: nil)
+        ::Utils::Output.odeprecated "`move_children` in an install steps block", "`move_contents`"
+        add_step("move_children",
+                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target" => path_spec(target, base: target_base, default_base: @default_target_base))
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def move_contents(source, target, source_base: nil, target_base: nil)
+        add_step("move_contents",
+                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target" => path_spec(target, base: target_base, default_base: @default_target_base))
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          recursive:   ::T::Boolean,
+          overwrite:   ::T::Boolean,
+          source_glob: ::T::Boolean,
+        ).void
+      }
+      def copy(source, target, source_base: nil, target_base: nil, recursive: false, overwrite: true,
+               source_glob: false)
+        add_step("copy",
+                 "source"      => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target"      => path_spec(target, base: target_base, default_base: @default_target_base),
+                 "recursive"   => recursive,
+                 "overwrite"   => (false unless overwrite),
+                 "source_glob" => source_glob)
+      end
+
+      sig {
+        params(
+          paths:                   Paths,
+          base:                    ::T.nilable(::T.any(::String, ::Symbol)),
+          recursive:               ::T::Boolean,
+          sudo:                    ::T.any(::T::Boolean, ::Symbol),
+          symlink_target_contains: ::T.nilable(::String),
+          content_contains:        ::T.nilable(::String),
+        ).void
+      }
+      def remove(paths, base: nil, recursive: false, sudo: false, symlink_target_contains: nil,
+                 content_contains: nil)
+        add_step("remove",
+                 "paths"                   => path_specs(paths, base:, default_base: @default_base),
+                 "recursive"               => recursive,
+                 "sudo"                    => sudo.is_a?(::Symbol) ? sudo.to_s : sudo,
+                 "symlink_target_contains" => symlink_target_contains,
+                 "content_contains"        => content_contains)
+      end
+
+      sig {
+        params(
+          path:         ::T.any(::String, ::Pathname),
+          before:       ::T.any(::String, ::Regexp),
+          after:        ::String,
+          base:         ::T.nilable(::T.any(::String, ::Symbol)),
+          audit_result: ::T::Boolean,
+          global:       ::T::Boolean,
+        ).void
+      }
+      def inreplace(path, before, after, base: nil, audit_result: true, global: true)
+        add_step("inreplace",
+                 "path"           => path_spec(path, base:, default_base: @default_base),
+                 "before"         => before.is_a?(::Regexp) ? before.source : before,
+                 "after"          => after,
+                 "regexp"         => before.is_a?(::Regexp),
+                 "regexp_options" => (before.options if before.is_a?(::Regexp)),
+                 "skip_audit"     => !audit_result,
+                 "first_only"     => !global)
+      end
+
+      sig {
+        params(
+          source:              ::T.any(::String, ::Pathname),
+          target:              ::T.any(::String, ::Pathname),
+          source_base:         ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base:         ::T.nilable(::T.any(::String, ::Symbol)),
+          source_formula:      ::T.nilable(::String),
+          target_formula:      ::T.nilable(::String),
+          force:               ::T::Boolean,
+          uninstall:           ::T::Boolean,
+          overwrite:           ::T::Boolean,
+          remove_on_uninstall: ::T::Boolean,
+          source_glob:         ::T::Boolean,
+          sudo:                ::T.any(::T::Boolean, ::Symbol),
+        ).void
+      }
+      def symlink(source, target, source_base: nil, target_base: nil, source_formula: nil, target_formula: nil,
+                  force: false, uninstall: false, overwrite: false, remove_on_uninstall: false,
+                  source_glob: false, sudo: false)
+        ::Utils::Output.odeprecated "`force:` in `symlink`", "`overwrite:` in `symlink`" if force
+        if uninstall
+          ::Utils::Output.odeprecated "`uninstall:` in `symlink`", "`remove_on_uninstall:` in `symlink`"
+        end
+
+        add_step("symlink",
+                 "source"      => path_spec(source, base: source_base, formula: source_formula,
+                                    default_base: @default_source_base),
+                 "target"      => path_spec(target, base: target_base, formula: target_formula,
+                                    default_base: @default_target_base),
+                 "force"       => (true if force || overwrite),
+                 "uninstall"   => (true if uninstall || remove_on_uninstall),
+                 "source_glob" => source_glob,
+                 "sudo"        => sudo.is_a?(::Symbol) ? sudo.to_s : sudo)
+      end
+
+      sig {
+        params(
+          source:         ::T.any(::String, ::Pathname),
+          target:         ::T.any(::String, ::Pathname),
+          source_base:    ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base:    ::T.nilable(::T.any(::String, ::Symbol)),
+          source_formula: ::T.nilable(::String),
+          target_formula: ::T.nilable(::String),
+          force:          ::T::Boolean,
+          uninstall:      ::T::Boolean,
+        ).void
+      }
+      def ln_s(source, target, source_base: nil, target_base: nil, source_formula: nil, target_formula: nil,
+               force: false, uninstall: false)
+        ::Utils::Output.odeprecated "`ln_s` in an install steps block", "`symlink`"
+        symlink(source, target, source_base:, target_base:, source_formula:, target_formula:,
+                overwrite: force, remove_on_uninstall: uninstall)
+      end
+
+      sig {
+        params(
+          source:         ::T.any(::String, ::Pathname),
+          target:         ::T.any(::String, ::Pathname),
+          source_base:    ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base:    ::T.nilable(::T.any(::String, ::Symbol)),
+          source_formula: ::T.nilable(::String),
+          target_formula: ::T.nilable(::String),
+          uninstall:      ::T::Boolean,
+        ).void
+      }
+      def ln_sf(source, target, source_base: nil, target_base: nil, source_formula: nil, target_formula: nil,
+                uninstall: false)
+        ::Utils::Output.odeprecated "`ln_sf` in an install steps block", "`symlink`"
+        symlink(source, target, source_base:, target_base:, source_formula:, target_formula:,
+                overwrite: true, remove_on_uninstall: uninstall)
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def link_dir(source, target, source_base: nil, target_base: :homebrew_prefix)
+        ::Utils::Output.odeprecated "`link_dir` in an install steps block", "`symlink_tree`"
+        add_step("link_dir",
+                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target" => path_spec(target, base: target_base, default_base: @default_target_base))
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def symlink_tree(source, target, source_base: nil, target_base: :homebrew_prefix)
+        add_step("link_dir",
+                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target" => path_spec(target, base: target_base, default_base: @default_target_base))
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.nilable(::T.any(::String, ::Pathname)),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          prefix:      ::String,
+          suffix:      ::String,
+        ).void
+      }
+      def link_children(source, target = nil, source_base: nil, target_base: :homebrew_prefix, prefix: "", suffix: "")
+        ::Utils::Output.odeprecated "`link_children` in an install steps block", "`symlink_children`"
+        add_step("link_children",
+                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target" => path_spec(target || source, base: target_base, default_base: @default_target_base),
+                 "prefix" => prefix,
+                 "suffix" => suffix)
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.nilable(::T.any(::String, ::Pathname)),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          prefix:      ::String,
+          suffix:      ::String,
+        ).void
+      }
+      def symlink_children(source, target = nil, source_base: nil, target_base: :homebrew_prefix, prefix: "",
+                           suffix: "")
+        add_step("link_children",
+                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target" => path_spec(target || source, base: target_base, default_base: @default_target_base),
+                 "prefix" => prefix,
+                 "suffix" => suffix)
+      end
+
+      sig {
+        params(
+          path:      ::T.any(::String, ::Pathname),
+          content:   ::String,
+          base:      ::T.nilable(::T.any(::String, ::Symbol)),
+          overwrite: ::T::Boolean,
+        ).void
+      }
+      def write(path, content, base: nil, overwrite: false)
+        ::Utils::Output.odeprecated "`write` in an install steps block", "`write_file`"
+        content = "#{content}\n" unless content.end_with?("\n")
+        add_step("write",
+                 "path"      => path_spec(path, base:, default_base: @default_base),
+                 "content"   => content,
+                 "overwrite" => (true if overwrite))
+      end
+
+      sig {
+        params(
+          path:           ::T.any(::String, ::Pathname),
+          content:        ::String,
+          base:           ::T.nilable(::T.any(::String, ::Symbol)),
+          overwrite:      ::T::Boolean,
+          append_newline: ::T::Boolean,
+        ).void
+      }
+      def write_file(path, content, base: nil, overwrite: true, append_newline: false)
+        content = "#{content}\n" if append_newline && !content.end_with?("\n")
+        add_step("write",
+                 "path"      => path_spec(path, base:, default_base: @default_base),
+                 "content"   => content,
+                 "overwrite" => (true if overwrite))
+      end
+
+      sig {
+        params(
+          path:   ::T.any(::String, ::Pathname),
+          using:  ::T.any(::String, ::Symbol),
+          base:   ::T.nilable(::T.any(::String, ::Symbol)),
+          locale: ::T.nilable(::String),
+        ).void
+      }
+      def init_data_dir(path, using:, base: nil, locale: nil)
+        using = case using.to_s
+        when "postgresql" then "postgresql_initdb"
+        when "mysql" then "mysql_initialize"
+        when "mariadb" then "mariadb_install_db"
+        else using.to_s
+        end
+        add_step("init_data_dir",
+                 "path"   => path_spec(path, base:, default_base: @default_base),
+                 "using"  => using,
+                 "locale" => locale)
+      end
+
+      sig { void }
+      def compile_gsettings_schemas
+        add_rebuild_action("compile_gsettings_schemas", "share/glib-2.0/schemas")
+      end
+
+      sig { void }
+      def gio_querymodules
+        ::Utils::Output.odeprecated "`gio_querymodules` in an install steps block", "`update_gio_modules_cache`"
+        add_rebuild_action("gio_querymodules", "lib/gio/modules")
+      end
+
+      sig { void }
+      def update_gio_modules_cache
+        add_rebuild_action("gio_querymodules", "lib/gio/modules")
+      end
+
+      sig { void }
+      def gdk_pixbuf_query_loaders
+        ::Utils::Output.odeprecated "`gdk_pixbuf_query_loaders` in an install steps block",
+                                    "`update_gdk_pixbuf_loaders_cache`"
+        add_step("gdk_pixbuf_query_loaders")
+      end
+
+      sig { void }
+      def update_gdk_pixbuf_loaders_cache
+        add_step("gdk_pixbuf_query_loaders")
+      end
+
+      sig { void }
+      def gtk_update_icon_cache
+        ::Utils::Output.odeprecated "`gtk_update_icon_cache` in an install steps block", "`update_gtk_icon_cache`"
+        add_rebuild_action("gtk_update_icon_cache", "share/icons/hicolor")
+      end
+
+      sig { void }
+      def update_gtk_icon_cache
+        add_rebuild_action("gtk_update_icon_cache", "share/icons/hicolor")
+      end
+
+      sig { void }
+      def update_mime_database
+        add_rebuild_action("update_mime_database", "share/mime")
+      end
+
+      sig { void }
+      def update_desktop_database
+        add_rebuild_action("update_desktop_database", "share/applications")
+      end
+
+      sig {
+        params(
+          name:                 ::String,
+          matching_certificate: ::T.nilable(::T.any(::String, ::Pathname)),
+          base:                 ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def delete_keychain_certificate(name, matching_certificate: nil, base: nil)
+        ::Utils::Output.odeprecated "`delete_keychain_certificate` in an install steps block",
+                                    "`delete_keychain_certificates`"
+        add_step("delete_keychain_certificate",
+                 "name"                 => name,
+                 "matching_certificate" => (path_spec(matching_certificate, base:, default_base: nil) if
+                   matching_certificate))
+      end
+
+      sig {
+        params(
+          name:           ::String,
+          fingerprint_of: ::T.nilable(::T.any(::String, ::Pathname)),
+          base:           ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def delete_keychain_certificates(name, fingerprint_of: nil, base: nil)
+        add_step("delete_keychain_certificate",
+                 "name"                 => name,
+                 "matching_certificate" => (path_spec(fingerprint_of, base:, default_base: nil) if fingerprint_of))
+      end
+
+      sig {
+        params(
+          paths:       Paths,
+          permissions: ::String,
+          base:        ::T.nilable(::T.any(::String, ::Symbol)),
+          recursive:   ::T::Boolean,
+        ).void
+      }
+      def set_permissions(paths, permissions, base: nil, recursive: true)
+        add_step("set_permissions",
+                 "paths"         => path_specs(paths, base:, default_base: @default_base),
+                 "permissions"   => permissions,
+                 "non_recursive" => !recursive)
+      end
+
+      sig {
+        params(
+          paths:     Paths,
+          user:      ::T.nilable(::String),
+          group:     ::String,
+          base:      ::T.nilable(::T.any(::String, ::Symbol)),
+          recursive: ::T::Boolean,
+        ).void
+      }
+      def set_ownership(paths, user: nil, group: "staff", base: nil, recursive: true)
+        add_step("set_ownership",
+                 "paths"         => path_specs(paths, base:, default_base: @default_base),
+                 "user"          => user,
+                 "group"         => (group if group != "staff"),
+                 "non_recursive" => !recursive)
+      end
+
+      sig {
+        params(
+          source:         ::T.any(::String, ::Pathname),
+          id:             ::T.any(::String, ::Pathname),
+          base:           ::T.nilable(::T.any(::String, ::Symbol)),
+          resolve_source: ::T::Boolean,
+        ).void
+      }
+      def change_dylib_id(source, id, base: nil, resolve_source: false)
+        add_step("change_dylib_id",
+                 "source"         => path_spec(source, base:, default_base: @default_source_base),
+                 "id"             => id.to_s,
+                 "resolve_source" => resolve_source)
+      end
+
+      sig {
+        params(
+          command:        ::T.any(::String, ::Pathname),
+          args:           ::T::Array[::T.any(::String, ::Pathname)],
+          base:           ::T.nilable(::T.any(::String, ::Symbol)),
+          env:            ::T::Hash[::String, ::String],
+          sudo:           ::T::Boolean,
+          must_succeed:   ::T::Boolean,
+          print_stdout:   ::T::Boolean,
+          print_stderr:   ::T::Boolean,
+          stdin_path:     ::T.nilable(::T.any(::String, ::Pathname)),
+          stdout_path:    ::T.nilable(::T.any(::String, ::Pathname)),
+          chdir:          ::T.nilable(::T.any(::String, ::Pathname)),
+          writable_paths: Paths,
+          writable_base:  ::T.nilable(::T.any(::String, ::Symbol)),
+          network_access: ::T::Boolean,
+        ).void
+      }
+      def run(command, args: [], base: nil, env: {}, sudo: false, must_succeed: true, print_stdout: false,
+              print_stderr: true, stdin_path: nil, stdout_path: nil, chdir: nil, writable_paths: [],
+              writable_base: nil, network_access: false)
+        add_step("run",
+                 "command"         => path_spec(command, base:, default_base: nil),
+                 "args"            => args.map(&:to_s),
+                 "env"             => env,
+                 "sudo"            => sudo,
+                 "allow_failure"   => !must_succeed,
+                 "print_stdout"    => print_stdout,
+                 "suppress_stderr" => !print_stderr,
+                 "stdin_path"      => optional_path_spec(stdin_path, default_base: @default_base),
+                 "stdout_path"     => optional_path_spec(stdout_path, default_base: @default_base),
+                 "chdir"           => optional_path_spec(chdir, default_base: @default_base),
+                 "writable_paths"  => path_specs(
+                   writable_paths,
+                   base:         writable_base,
+                   default_base: @default_base,
+                 ),
+                 "network_access"  => network_access)
+      end
+
+      sig {
+        params(
+          name:            ::String,
+          match:           ::T.any(::String, ::Symbol),
+          sudo:            ::T::Boolean,
+          attempts:        ::Integer,
+          must_succeed:    ::T::Boolean,
+          notices:         ::T::Array[::String],
+          failure_message: ::T.nilable(::String),
+        ).void
+      }
+      def terminate_process(name, match: :name, sudo: false, attempts: 1, must_succeed: false,
+                            notices: [], failure_message: nil)
+        ::Kernel.raise ::ArgumentError, "terminate_process attempts must be positive" if attempts < 1
+
+        match = match.to_s
+        unless %w[name full].include?(match)
+          ::Kernel.raise ::ArgumentError, "terminate_process match must be :name or :full"
+        end
+
+        add_step("terminate_process",
+                 "name"            => name,
+                 "match"           => (match if match != "name"),
+                 "sudo"            => sudo,
+                 "attempts"        => (attempts if attempts != 1),
+                 "must_succeed"    => must_succeed,
+                 "notices"         => notices,
+                 "failure_message" => failure_message)
+      end
+
+      sig { params(message: ::String).void }
+      def warn(message)
+        add_step("warn", "message" => message)
+      end
+
+      sig { void }
+      def configure_gcc_runtime
+        add_step("configure_gcc_runtime")
+      end
+
+      sig {
+        params(
+          source:      ::T.any(::String, ::Pathname),
+          target:      ::T.any(::String, ::Pathname),
+          source_base: ::T.nilable(::T.any(::String, ::Symbol)),
+          target_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).void
+      }
+      def install_gzipped_executable(source, target, source_base: nil, target_base: nil)
+        add_step("install_gzipped_executable",
+                 "source" => path_spec(source, base: source_base, default_base: @default_source_base),
+                 "target" => path_spec(target, base: target_base, default_base: @default_target_base))
+      end
+
+      sig { void }
+      def configure_glibc_runtime
+        add_step("configure_glibc_runtime")
+      end
+
+      sig { void }
+      def configure_clang_system
+        add_step("configure_clang_system")
+      end
+
+      sig { void }
+      def configure_php
+        add_step("configure_php")
+      end
+
+      sig { void }
+      def bootstrap_cpython
+        add_step("bootstrap_cpython")
+      end
+
+      sig { params(abi_version: ::String).void }
+      def bootstrap_pypy(abi_version:)
+        add_step("bootstrap_pypy", "abi_version" => abi_version)
+      end
+
+      private
+
+      sig { params(guard: PathSpec, block: ::T.proc.bind(DSL).void).void }
+      def with_guard(guard, &block)
+        previous_guards = ::T.let(nil, ::T.nilable(PathSpecs))
+        previous_guards = @guards
+        @next_guard_id += 1
+        @guards = [*@guards, guard.merge("id" => @next_guard_id.to_s)]
+        instance_eval(&block)
+      ensure
+        @guards = previous_guards if previous_guards
+      end
+
+      sig { params(type: ::String, fields: ::T.nilable(StepValue)).void }
+      def add_step(type, **fields)
+        step = fields.transform_keys(&:to_s)
+        step["guards"] = @guards unless @guards.empty?
+        step["type"] = type
+        @steps.concat(::Homebrew::InstallSteps::DSL.normalise_steps([step]))
+      end
+
+      sig { params(type: ::String, path: ::String).void }
+      def add_rebuild_action(type, path)
+        add_step(type, "path" => path_spec(path, base: :homebrew_prefix))
+      end
+
+      sig {
+        params(
+          path:         ::T.any(::String, ::Pathname),
+          base:         ::T.nilable(::T.any(::String, ::Symbol)),
+          formula:      ::T.nilable(::String),
+          default_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).returns(PathSpec)
+      }
+      def path_spec(path, base:, formula: nil, default_base: nil)
+        {
+          "base"    => (base || default_base_for(path, default_base))&.to_s,
+          "formula" => formula,
+          "path"    => path.to_s,
+        }.compact_blank
+      end
+
+      sig {
+        params(
+          paths:        Paths,
+          base:         ::T.nilable(::T.any(::String, ::Symbol)),
+          default_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).returns(PathSpecs)
+      }
+      def path_specs(paths, base:, default_base:)
+        paths = [paths] unless paths.is_a?(Array)
+        paths.map { |path| path_spec(path, base:, default_base:) }
+      end
+
+      sig {
+        params(
+          path:         ::T.nilable(::T.any(::String, ::Pathname)),
+          default_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).returns(::T.nilable(PathSpec))
+      }
+      def optional_path_spec(path, default_base:)
+        path_spec(path, base: nil, default_base:) if path
+      end
+
+      sig {
+        params(
+          path:         ::T.any(::String, ::Pathname),
+          default_base: ::T.nilable(::T.any(::String, ::Symbol)),
+        ).returns(::T.nilable(::T.any(::String, ::Symbol)))
+      }
+      def default_base_for(path, default_base)
+        path = path.to_s
+        return if path.start_with?("/", "~")
+        return if ABSOLUTE_TEMPLATE_TOKENS.any? { |token| path.start_with?("{{#{token}}}") }
+
+        default_base
+      end
+    end
+
+    class Runner
+      include SystemCommand::Mixin
+      include ::Utils::Output::Mixin
+
+      PRIVILEGED_STEP_REQUEST = "homebrew_cask_privileged_step"
+      PRIVILEGED_STEP_SUCCEEDED = "homebrew_cask_privileged_step_succeeded"
+
+      # Path tokens reuse the step base resolution; formula metadata tokens are
+      # resolved separately. Anything else is left verbatim so literal braces in
+      # templates are never rewritten.
+      CONTENT_PATH_TOKENS = %w[
+        prefix opt_prefix bin sbin lib libexec share pkgshare var etc pkgetc staged_path appdir caskroom_path
+        temp rack
+        bash_completion zsh_completion fish_completion pwsh_completion
+      ].freeze
+
+      sig { params(context: Object, command: T.class_of(SystemCommand)).void }
+      def initialize(context:, command: SystemCommand)
+        @context = context
+        @command = command
+        @guard_results = T.let({}, T::Hash[PathSpec, T::Boolean])
+      end
+
+      # `privileged_step_handler` delegates steps that may need `sudo` to the
+      # caller (the parent process broker for sandboxed cask steps), and
+      # `reset_guard_results: false` lets that broker run steps one at a time
+      # while keeping guard snapshots from earlier steps in the same plan.
+      sig {
+        params(
+          steps:                   Steps,
+          phase:                   Symbol,
+          privileged_step_handler: T.nilable(T.proc.params(index: Integer).void),
+          reset_guard_results:     T::Boolean,
+        ).void
+      }
+      def run(steps, phase: :install, privileged_step_handler: nil, reset_guard_results: true)
+        @guard_results.clear if reset_guard_results
+        DSL.normalise_steps(steps).each_with_index do |step, index|
+          next if phase != :uninstall && !step_guards_match?(step)
+
+          if privileged_step_handler && sudo_required?([step])
+            privileged_step_handler.call(index)
+          elsif phase == :uninstall
+            run_uninstall_step(step)
+          else
+            run_install_step(step)
+          end
+        end
+      end
+
+      sig { params(steps: Steps, phase: Symbol).returns(T::Array[Pathname]) }
+      def sandbox_write_paths(steps, phase: :install)
+        DSL.normalise_steps(steps).flat_map do |step|
+          if phase == :uninstall
+            next [] if step["type"] != "symlink" || step["uninstall"] != true
+
+            next [resolve_path(step_path(step, "target")).parent]
+          end
+
+          case step.fetch("type")
+          when "mkdir_p"
+            path = resolve_path(step_path(step, "path"))
+            [path.parent.directory? ? path : path.parent]
+          when "mkdir", "touch", "write"
+            [resolve_path(step_path(step, "path")).parent]
+          when "move"
+            [resolve_path(step_path(step, "source")).parent, resolve_path(step_path(step, "target")).parent]
+          when "move_children", "move_contents"
+            [resolve_path(step_path(step, "source")), resolve_path(step_path(step, "target"))]
+          when "copy", "symlink"
+            [resolve_path(step_path(step, "target")).parent]
+          when "remove"
+            step_paths(step, "paths").flat_map { |path| expand_path_glob(path) }.map(&:parent)
+          when "inreplace", "change_dylib_id"
+            path = resolve_path(step_path(step, (step["type"] == "inreplace") ? "path" : "source"))
+            [path.exist? ? path : path.parent]
+          when "link_dir", "link_children"
+            [resolve_path(step_path(step, "target"))]
+          when "run"
+            paths = step.key?("stdout_path") ? [resolve_path(step_path(step, "stdout_path")).parent] : []
+            if step.key?("writable_paths")
+              paths.concat(step_paths(step, "writable_paths").map do |path|
+                resolve_path(path)
+              end)
+            end
+            paths
+          when "set_permissions", "set_ownership"
+            existing_step_paths(step)
+          else
+            []
+          end
+        end.uniq
+      end
+
+      # Include optional elevation when routing steps out of the sandbox.
+      sig { params(steps: Steps, include_optional: T::Boolean).returns(T::Boolean) }
+      def sudo_required?(steps, include_optional: true)
+        DSL.normalise_steps(steps).any? do |step|
+          step["sudo"] == true || step["type"] == "delete_keychain_certificate" ||
+            (include_optional && (step["sudo"] == "if_needed" || step["type"] == "set_ownership"))
+        end
+      end
+
+      private
+
+      sig { params(step: Step).void }
+      def run_install_step(step)
+        case step.fetch("type")
+        when "mkdir"
+          resolve_path(step_path(step, "path")).mkdir
+        when "mkdir_p"
+          resolve_path(step_path(step, "path")).mkpath
+        when "init_data_dir"
+          run_init_data_dir(step)
+        when "touch"
+          path = resolve_path(step_path(step, "path"))
+          path.dirname.mkpath
+          FileUtils.touch path
+        when "move"
+          source = resolve_step_source(step)
+          target = resolve_path(step_path(step, "target"))
+          target.dirname.mkpath
+          destination = step_destination(source, target)
+          if step.key?("overwrite")
+            overwrite = step["overwrite"] == true || step["force"] == true
+            raise Errno::EEXIST, destination.to_s if destination.exist? && !overwrite
+
+            FileUtils.rm_rf destination if overwrite && destination != source && (source.exist? || source.symlink?)
+            FileUtils.mv source, target
+          else
+            FileUtils.mv source, target, force: step["force"] == true
+          end
+        when "move_children", "move_contents"
+          source = resolve_path(step_path(step, "source"))
+          target = resolve_path(step_path(step, "target"))
+          target.mkpath
+          children = source.children.reject { |child| child == target }
+          return if children.empty?
+
+          FileUtils.mv children, target
+        when "copy"
+          source = resolve_step_source(step)
+          target = resolve_path(step_path(step, "target"))
+          target.dirname.mkpath
+          destination = step_destination(source, target)
+          overwrite = step["overwrite"] != false
+          raise Errno::EEXIST, destination.to_s if destination.exist? && !overwrite
+
+          if step["recursive"] == true
+            FileUtils.cp_r source, target, remove_destination: overwrite
+          else
+            FileUtils.rm_f destination if overwrite && destination.symlink?
+            FileUtils.cp source, target
+          end
+        when "remove"
+          paths = step_paths(step, "paths").flat_map { |path| expand_path_glob(path) }
+          if step.key?("symlink_target_contains")
+            paths.select! do |path|
+              path.symlink? && path.readlink.to_s.include?(step_string(step, "symlink_target_contains"))
+            end
+          end
+          if step.key?("content_contains")
+            paths.select! do |path|
+              path.file? && path.readable? && path.read.include?(step_string(step, "content_contains"))
+            end
+          end
+          paths.each do |path|
+            if step["sudo"] == true || (step["sudo"] == "if_needed" && !path.dirname.writable?)
+              require "cask/utils"
+              ::Cask::Utils.gain_permissions_remove(path, command: @command)
+            elsif step["recursive"] == true
+              FileUtils.rm_rf path
+            else
+              FileUtils.rm_f path
+            end
+          end
+        when "inreplace"
+          require "utils/inreplace"
+
+          path = resolve_path(step_path(step, "path"))
+          before = expand_template_tokens(step_string(step, "before"))
+          after = expand_template_tokens(step_string(step, "after"))
+          regexp_options = T.cast(step["regexp_options"], T.nilable(Integer))
+          before = Regexp.new(before, regexp_options || 0) if step["regexp"] == true
+          Utils::Inreplace.inreplace(path, before, after,
+                                     audit_result: step["skip_audit"] != true,
+                                     global:       step["first_only"] != true)
+        when "link_dir"
+          source_dir = resolve_path(step_path(step, "source"))
+          target_dir = resolve_path(step_path(step, "target"))
+          source_dir.find do |source|
+            link_target = target_dir/source.relative_path_from(source_dir)
+            next if source.basename.to_s == ".DS_Store"
+            next if link_target.directory? && !link_target.symlink?
+
+            FileUtils.rm_f(link_target) if link_target.exist? || link_target.symlink?
+            if source.symlink? || source.file?
+              link_target.parent.install_symlink source
+            elsif source.directory?
+              link_target.mkpath
+            end
+          end
+        when "link_children"
+          target_dir = resolve_path(step_path(step, "target"))
+          target_dir.mkpath
+          link_prefix = expand_template_tokens(step["prefix"].to_s)
+          link_suffix = expand_template_tokens(step["suffix"].to_s)
+          resolve_path(step_path(step, "source")).each_child do |source|
+            target_dir.install_symlink source => "#{link_prefix}#{source.basename}#{link_suffix}"
+          end
+        when "symlink"
+          target = resolve_path(step_path(step, "target"))
+          if step["source_glob"] == true
+            sources = expand_path_glob(step_path(step, "source"))
+            return if sources.empty?
+
+            if sources.length > 1 || target.directory?
+              target.mkpath
+              sources.each { |source| create_symlink(source, target/source.basename, step) }
+            else
+              source = sources.first
+              create_symlink(source, target, step) if source
+            end
+          else
+            create_symlink(link_source(step_path(step, "source")), target, step)
+          end
+        when "write"
+          content = T.cast(step["content"], T.nilable(String))
+          raise ArgumentError, "install step write requires content" if content.nil?
+
+          path = resolve_path(step_path(step, "path"))
+          if step["overwrite"] == true || !path.exist?
+            path.dirname.mkpath
+            path.atomic_write(expand_template_tokens(content))
+          end
+        when "run"
+          run_serialised_command(step)
+        when "terminate_process"
+          run_terminate_process(step)
+        when "change_dylib_id"
+          Homebrew::InstallSteps.change_dylib_id(
+            resolve_path(step_path(step, "source")),
+            expand_template_tokens(step_string(step, "id")),
+            resolve_source: step["resolve_source"] == true,
+          )
+        when "warn"
+          opoo expand_template_tokens(step_string(step, "message"))
+        when "configure_gcc_runtime"
+          run_configure_gcc_runtime
+        when "install_gzipped_executable"
+          run_install_gzipped_executable(step)
+        when "configure_glibc_runtime"
+          run_configure_glibc_runtime
+        when "configure_clang_system"
+          run_configure_clang_system
+        when "configure_php"
+          run_configure_php
+        when "bootstrap_cpython"
+          run_bootstrap_cpython
+        when "bootstrap_pypy"
+          run_bootstrap_pypy(step_string(step, "abi_version"))
+        when "set_permissions"
+          run_set_permissions(step)
+        when "set_ownership"
+          run_set_ownership(step)
+        when "compile_gsettings_schemas"
+          run_formula_tool("glib", "glib-compile-schemas", resolve_path(step_path(step, "path")))
+        when "gio_querymodules"
+          run_formula_tool("glib", "gio-querymodules", resolve_path(step_path(step, "path")))
+        when "gdk_pixbuf_query_loaders"
+          run_formula_tool("gdk-pixbuf", "gdk-pixbuf-query-loaders", "--update-cache")
+        when "gtk_update_icon_cache"
+          require "utils/path"
+          if Utils::Path.formula_any_version_installed?("gtk4")
+            run_formula_tool("gtk4", "gtk4-update-icon-cache", "-q", "-t", "-f",
+                             resolve_path(step_path(step, "path")))
+          else
+            run_formula_tool("gtk+3", "gtk3-update-icon-cache", "-q", "-t", "-f",
+                             resolve_path(step_path(step, "path")))
+          end
+        when "update_mime_database"
+          run_formula_tool("shared-mime-info", "update-mime-database", resolve_path(step_path(step, "path")))
+        when "update_desktop_database"
+          run_formula_tool("desktop-file-utils", "update-desktop-database", resolve_path(step_path(step, "path")))
+        when "delete_keychain_certificate"
+          certificate_hash = nil
+          if step.key?("matching_certificate")
+            certificate = resolve_path(step_path(step, "matching_certificate"))
+            return unless certificate.exist?
+
+            certificate_hash = run_command_output("/usr/bin/openssl", "x509", "-fingerprint", "-sha256", "-noout",
+                                                  "-in", certificate)
+                               .lines
+                               .first
+                               .to_s
+                               .split("=", 2)[1]
+                               .to_s
+                               .delete(":")
+                               .strip
+                               .upcase
+            return if certificate_hash.blank?
+          end
+
+          certificate_hashes = run_command_output(
+            "/usr/bin/security", "find-certificate", "-a", "-c", step_string(step, "name"), "-Z",
+            sudo: true
+          ).lines.filter_map { |line| line[/\ASHA-256 hash:\s*(\S+)/, 1]&.upcase }
+
+          if certificate_hash
+            run_command "/usr/bin/security", "delete-certificate", "-Z", certificate_hash, sudo: true if
+              certificate_hashes.include?(certificate_hash)
+          else
+            certificate_hashes.each do |matching_certificate_hash|
+              run_command "/usr/bin/security", "delete-certificate", "-Z", matching_certificate_hash, sudo: true
+            end
+          end
+        else
+          raise ArgumentError, "unknown install step: #{step.fetch("type")}"
+        end
+      end
+
+      sig { params(step: Step).returns(T::Boolean) }
+      def step_guards_match?(step)
+        guards = T.cast(step["guards"], T.nilable(PathSpecs))
+        guards.nil? || guards.all? { |guard| guard_matches?(guard) }
+      end
+
+      sig { params(guard: PathSpec).returns(T::Boolean) }
+      def guard_matches?(guard)
+        return @guard_results.fetch(guard) if @guard_results.key?(guard)
+
+        matches = case guard.fetch("condition")
+        when "if_exists"
+          path_spec_exists?(guard)
+        when "unless_exists"
+          !path_spec_exists?(guard)
+        when "on"
+          case guard.fetch("value")
+          when "macos" then Homebrew::SimulateSystem.simulating_or_running_on_macos?
+          when "linux" then Homebrew::SimulateSystem.simulating_or_running_on_linux?
+          else false
+          end
+        else
+          false
+        end
+        @guard_results[guard] = matches
+      end
+
+      sig { params(step: Step).void }
+      def run_serialised_command(step)
+        command = resolve_command(step_path(step, "command"))
+        args = T.cast(step["args"], T.nilable(T::Array[String]))&.map { |arg| expand_template_tokens(arg) } || []
+        environment = T.cast(step["env"] || {}, PathSpec)
+                       .transform_values { |value| expand_template_tokens(value.to_s) }
+        input = step.key?("stdin_path") ? resolve_path(step_path(step, "stdin_path")).read : []
+        working_directory = resolve_path(step_path(step, "chdir")) if step.key?("chdir")
+        result = @command.run(command, args:, sudo: step["sudo"] == true, env: environment, input:,
+                                     must_succeed: step["allow_failure"] != true,
+                                     print_stdout: step["print_stdout"] == true,
+                                     print_stderr: step["suppress_stderr"] != true,
+                                     chdir: working_directory)
+
+        return unless step.key?("stdout_path")
+        return unless result.success?
+
+        output_path = resolve_path(step_path(step, "stdout_path"))
+        output_path.dirname.mkpath
+        output_path.write(result.stdout)
+      end
+
+      sig { params(step: Step).void }
+      def run_terminate_process(step)
+        T.cast(step["notices"], T.nilable(T::Array[String]))&.each do |notice|
+          ohai expand_template_tokens(notice)
+        end
+        name = expand_template_tokens(step_string(step, "name"))
+        if step["match"] == "full"
+          command = "/usr/bin/pkill"
+          args = ["-f", name]
+        else
+          command = "/usr/bin/killall"
+          args = [name]
+        end
+        attempts = T.cast(step["attempts"] || 1, Integer)
+
+        begin
+          run_command command, *args, sudo: step["sudo"] == true
+        rescue ErrorDuringExecution
+          attempts -= 1
+          if attempts <= 0
+            failure_message = T.cast(step["failure_message"], T.nilable(String))
+            opoo expand_template_tokens(failure_message) if failure_message
+            raise if step["must_succeed"] == true
+
+            return
+          end
+
+          sleep 1
+          retry
+        end
+      end
+
+      sig { params(source: SystemCommandArg, target: Pathname, step: Step).void }
+      def create_symlink(source, target, step)
+        target.dirname.mkpath
+        if step["sudo"] == true || (step["sudo"] == "if_needed" && !target.dirname.writable?)
+          args = ["-s"]
+          args << "-f" if step["force"] == true
+          @command.run!("/bin/ln", args: [*args, source, target], sudo: true)
+        else
+          FileUtils.rm_f target if step["force"] == true
+          File.symlink source, target
+        end
+      end
+
+      sig { params(step: Step).void }
+      def run_set_permissions(step)
+        paths = existing_step_paths(step)
+        return if paths.empty?
+
+        args = []
+        args << "-R" if step["non_recursive"] != true
+        @command.run!("chmod", args: [*args, "--", step_string(step, "permissions"), *paths], sudo: false)
+      end
+
+      sig { params(step: Step).void }
+      def run_set_ownership(step)
+        require "cask/quarantine"
+        require "utils/user"
+
+        paths = existing_step_paths(step)
+        return if paths.empty?
+
+        paths.each do |path|
+          next if ::Cask::Quarantine.app_management_permissions_granted?(app: path, command: @command)
+
+          raise ::Cask::CaskError, <<~EOS
+            Cannot change the ownership of '#{path}' because your terminal does not have App Management permissions.
+            macOS prevents modifying apps without these permissions, even when using `sudo`.
+            To fix this, approve the permissions prompt (if one was just shown) or go to
+            System Settings → Privacy & Security → App Management and add or enable your terminal.
+            Then run this command again.
+          EOS
+        end
+
+        ohai "Changing ownership of paths required by #{@context}..."
+        args = []
+        args << "-R" if step["non_recursive"] != true
+        @command.run!("chown", args: [*args, "--", "#{step["user"] || ::User.current}:#{step["group"] || "staff"}",
+                                      *paths],
+                               sudo: nil)
+      end
+
+      sig { params(step: Step).void }
+      def run_uninstall_step(step)
+        return if step.fetch("type") != "symlink"
+        return if step["uninstall"] != true
+
+        target = resolve_path(step_path(step, "target"))
+        return unless target.symlink?
+        return if target.readlink != Pathname(link_source(step_path(step, "source")))
+
+        if step["sudo"] == true || (step["sudo"] == "if_needed" && !target.dirname.writable?)
+          require "cask/utils"
+          ::Cask::Utils.gain_permissions_remove(target, command: @command)
+        else
+          FileUtils.rm_f target
+        end
+      end
+
+      sig { params(step: Step).void }
+      def run_init_data_dir(step)
+        using = step_string(step, "using")
+        marker = case using
+        when "postgresql_initdb"
+          "PG_VERSION"
+        when "mysql_initialize"
+          "mysql/general_log.CSM"
+        when "mariadb_install_db"
+          "mysql/user.frm"
+        else
+          raise ArgumentError, "unknown data directory initialiser: #{using}"
+        end
+
+        path = resolve_path(step_path(step, "path"))
+        path.mkpath
+        return if ENV["HOMEBREW_GITHUB_ACTIONS"].present?
+        return if (path/marker).exist?
+
+        bin = context_path("bin")
+        prefix = context_path("prefix")
+        case using
+        when "postgresql_initdb"
+          run_command bin/"initdb", "--locale=#{step["locale"] || "en_US.UTF-8"}", "-E", "UTF-8", path
+        when "mysql_initialize"
+          with_env(TMPDIR: nil) do
+            run_command bin/"mysqld", "--initialize-insecure", "--user=#{ENV.fetch("USER")}",
+                        "--basedir=#{prefix}", "--datadir=#{path}", "--tmpdir=/tmp"
+          end
+        when "mariadb_install_db"
+          with_env(TMPDIR: nil) do
+            run_command bin/"mysql_install_db", "--verbose", "--user=#{ENV.fetch("USER")}",
+                        "--basedir=#{prefix}", "--datadir=#{path}", "--tmpdir=/tmp"
+          end
+        end
+      end
+
+      sig { params(content: String).returns(String) }
+      def expand_template_tokens(content)
+        content.gsub(/\{\{([A-Za-z_][\w.]*)\}\}/) do |match|
+          value = template_token_value(match.delete_prefix("{{").delete_suffix("}}"))
+          value.nil? ? match : value.to_s
+        end
+      end
+
+      sig { params(token: String).returns(T.nilable(TemplateTokenValue)) }
+      def template_token_value(token)
+        case token
+        when "HOMEBREW_BREW_FILE"
+          HOMEBREW_BREW_FILE
+        when "HOMEBREW_CELLAR"
+          HOMEBREW_CELLAR
+        when "HOMEBREW_PREFIX"
+          HOMEBREW_PREFIX
+        when "formula_name"
+          context_value(:name)&.to_s
+        when "name"
+          context_name
+        when "arch"
+          context_arch
+        when "token"
+          context_value(:token)&.to_s
+        when "user"
+          ENV.fetch("USER")
+        when "version"
+          context_version
+        when "version.major"
+          context_version_major
+        when "version.major_minor"
+          context_version_major_minor
+        else
+          root_path(token, nil) if CONTENT_PATH_TOKENS.include?(token)
+        end
+      end
+
+      sig { params(step: Step, key: String).returns(PathSpec) }
+      def step_path(step, key)
+        T.cast(step.fetch(key), PathSpec)
+      end
+
+      sig { params(step: Step, key: String).returns(PathSpecs) }
+      def step_paths(step, key)
+        T.cast(step.fetch(key), PathSpecs)
+      end
+
+      sig { params(step: Step).returns(T::Array[Pathname]) }
+      def existing_step_paths(step)
+        step_paths(step, "paths").flat_map { |spec| expand_path_glob(spec) }.select(&:exist?)
+      end
+
+      sig { params(step: Step).returns(Pathname) }
+      def resolve_step_source(step)
+        source_spec = step_path(step, "source")
+        source = resolve_path(source_spec)
+        return source if step["source_glob"] != true
+
+        sources = expand_path_glob(source_spec).select { |path| path.exist? || path.symlink? }.uniq
+        raise ArgumentError, "install step source glob must match exactly one path: #{source}" if sources.length != 1
+
+        sources.fetch(0)
+      end
+
+      sig { params(source: Pathname, target: Pathname).returns(Pathname) }
+      def step_destination(source, target)
+        target.directory? ? target/source.basename : target
+      end
+
+      sig { params(spec: PathSpec).returns(T::Array[Pathname]) }
+      def expand_path_glob(spec)
+        base = spec["base"]
+        if base == "path"
+          odeprecated "`base: :path` in an install steps block", "`base: :search_path`"
+          base = "search_path"
+        end
+        if base == "search_path"
+          path = expand_template_tokens(spec.fetch("path"))
+          return ENV.fetch("PATH", "").split(File::PATH_SEPARATOR).flat_map do |directory|
+            candidate = Pathname(directory)/path
+            candidate.to_s.match?(/[?*\[{]/) ? Pathname.glob(candidate.to_s) : [candidate]
+          end
+        end
+
+        path = resolve_path(spec).expand_path
+        return [path] unless path.to_s.match?(/[?*\[{]/)
+
+        Pathname.glob(path.to_s)
+      end
+
+      sig { params(spec: PathSpec).returns(T::Boolean) }
+      def path_spec_exists?(spec)
+        expand_path_glob(spec).any?(&:exist?)
+      end
+
+      sig { params(step: Step, key: String).returns(String) }
+      def step_string(step, key)
+        T.cast(step.fetch(key), String)
+      end
+
+      sig { returns(T.nilable(String)) }
+      def context_name
+        value = context_value(:name) || context_value(:token)
+        value&.to_s
+      end
+
+      sig { returns(T.nilable(String)) }
+      def context_arch
+        # Casks without a matching `arch` stanza value expand to an empty
+        # string, matching the deprecated `postflight` block.
+        return unless @context.respond_to?(:arch)
+
+        context_value(:arch).to_s
+      end
+
+      sig { returns(T.nilable(String)) }
+      def context_version
+        context_value(:version)&.to_s
+      end
+
+      sig { returns(T.nilable(String)) }
+      def context_version_major
+        context_version_value = context_version
+        return if context_version_value.blank?
+
+        Version.new(context_version_value).major&.to_s
+      end
+
+      sig { returns(T.nilable(String)) }
+      def context_version_major_minor
+        context_version_value = context_version
+        return if context_version_value.blank?
+
+        Version.new(context_version_value).major_minor.to_s
+      end
+
+      sig { params(spec: PathSpec).returns(Pathname) }
+      def resolve_path(spec)
+        path = Pathname(expand_template_tokens(spec.fetch("path")))
+        base = spec["base"]
+
+        return path.expand_path if base.blank? || base == "absolute"
+        return path if base == "relative"
+
+        root_path(base, spec["formula"])/path
+      end
+
+      sig { params(spec: PathSpec).returns(SystemCommandArg) }
+      def resolve_command(spec)
+        return expand_template_tokens(spec.fetch("path")) if spec["base"].blank? || spec["base"] == "relative"
+
+        resolve_path(spec)
+      end
+
+      sig { params(spec: PathSpec).returns(String) }
+      def link_source(spec)
+        return expand_template_tokens(spec.fetch("path")) if spec["base"] == "relative"
+
+        resolve_path(spec).to_s
+      end
+
+      sig { params(formula: String, executable: String, args: SystemCommandArg).void }
+      def run_formula_tool(formula, executable, *args)
+        require "utils/path"
+
+        tool = Utils::Path.formula_opt_bin(formula)/executable
+        raise ArgumentError, "#{formula} is missing required executable: #{tool}" unless tool.executable?
+
+        run_command tool, *args
+      end
+
+      sig { params(base: String, formula: T.nilable(String)).returns(Pathname) }
+      def root_path(base, formula)
+        case base
+        when "home"
+          context_value(:home) ? context_path(base) : Pathname(Dir.home)
+        when "temp"
+          HOMEBREW_TEMP
+        when "homebrew_prefix"
+          HOMEBREW_PREFIX
+        when "formula_pkgetc"
+          formula_base(formula, :pkgetc)
+        when "formula_opt_prefix"
+          formula_base(formula, :opt_prefix)
+        else
+          context_path(base)
+        end
+      end
+
+      sig { params(base: String).returns(Pathname) }
+      def context_path(base)
+        method = base.to_sym
+        value = context_value(method) || context_config_value(method)
+        raise ArgumentError, "unknown install step base: #{base}" if value.nil?
+
+        Pathname(value.to_s)
+      end
+
+      sig { params(formula: T.nilable(String), method: Symbol).returns(Pathname) }
+      def formula_base(formula, method)
+        raise ArgumentError, "missing formula for install step base" if formula.blank?
+
+        case method
+        when :pkgetc
+          HOMEBREW_PREFIX/"etc"/Utils.name_from_full_name(formula)
+        when :opt_prefix
+          Utils::Path.formula_opt_prefix(formula)
+        else
+          raise ArgumentError, "unknown formula install step base: #{method}"
+        end
+      end
+
+      sig { params(method: Symbol).returns(T.nilable(Object)) }
+      def context_value(method)
+        @context.public_send(method) if @context.respond_to?(method)
+      end
+
+      sig { params(method: Symbol).returns(T.nilable(Object)) }
+      def context_config_value(method)
+        config = context_value(:config)
+        config.public_send(method) if config.respond_to?(method)
+      end
+
+      sig { params(command: SystemCommandArg, args: SystemCommandArg, sudo: T::Boolean).void }
+      def run_command(command, *args, sudo: false)
+        @command.run!(command, args: args, sudo:, print_stdout: true, print_stderr: true)
+      end
+
+      sig { params(command: SystemCommandArg, args: SystemCommandArg, sudo: T::Boolean).returns(String) }
+      def run_command_output(command, *args, sudo: false)
+        @command.run!(command, args: args, sudo:, print_stderr: true).stdout
+      end
+    end
+  end
+end
+
+require "install_steps/formula_actions"

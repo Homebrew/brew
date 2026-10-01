@@ -35,5 +35,5 @@ fi
 try_exec_non_system "${HOMEBREW_CURL:-curl}" "$@"
 safe_exec "/usr/bin/curl" "$@"
 
-echo "Could not execute curl. Try HOMEBREW_FORCE_BREWED_CURL=1" >&2
+echo "Could not execute curl. Try setting HOMEBREW_FORCE_BREWED_CURL=1" >&2
 exit 1

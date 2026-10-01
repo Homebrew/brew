@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 cask "with-depends-on-macos-comparison" do
@@ -7,7 +8,7 @@ cask "with-depends-on-macos-comparison" do
   url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
   homepage "https://brew.sh/with-depends-on-macos-comparison"
 
-  depends_on macos: ">= :el_capitan"
+  depends_on macos: :big_sur
 
   app "Caffeine.app"
 end

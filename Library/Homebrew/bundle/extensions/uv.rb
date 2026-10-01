@@ -1,0 +1,389 @@
+# typed: strict
+# frozen_string_literal: true
+
+require "bundle/extensions/extension"
+
+module Homebrew
+  module Bundle
+    class Uv < Extension
+      WithOptions = T.type_alias { T::Hash[Symbol, T.any(String, T::Array[String])] }
+      Tool = T.type_alias { { name: String, with: T::Array[String], source: T.nilable(String) } }
+      Checkable = T.type_alias { { name: String, options: WithOptions } }
+      ToolEntry = T.type_alias { T.any(Tool, Checkable) }
+
+      SOURCE_REQUIREMENT_REGEX = %r{\A(?:git\+|https?://)|\.git\z}
+      # `uv tool list` reports a tool installed from a directory as an absolute
+      # `file://` URL, and a hand-written Brewfile can name a path directly.
+      # `uv tool install` also takes either spelling behind a `git+` prefix.
+      # None of them resolves on another machine, so none is accepted, and a
+      # tool installed from one is dumped without a `source:` rather than with
+      # one that would then fail to parse.
+      LOCAL_SOURCE_REGEX = %r{\A(?:git\+)?(?:file://|\.{0,2}/)}
+
+      class << self
+        sig { override.returns(Symbol) }
+        def type = :uv
+
+        sig { override.returns(String) }
+        def check_label = "uv Tool"
+
+        sig { override.returns(String) }
+        def banner_name = "uv tools"
+
+        sig { override.params(name: String, options: Homebrew::Bundle::EntryInputOptions).returns(Dsl::Entry) }
+        def entry(name, options = {})
+          unknown_options = options.keys - [:with, :source]
+          raise "unknown options(#{unknown_options.inspect}) for uv" if unknown_options.present?
+
+          with = options[:with]
+          if !with.nil? && (!with.is_a?(Array) || with.any? { |requirement| !requirement.is_a?(String) })
+            raise "options[:with](#{with.inspect}) should be an Array of String objects"
+          end
+
+          source = options.fetch(:source, nil)
+          if !source.nil? && !source.is_a?(String)
+            raise "options[:source](#{source.inspect}) should be a String object"
+          end
+
+          normalized_options = {}
+          normalized_with = normalize_with(with || [])
+          normalized_options[:with] = normalized_with if normalized_with.present?
+          normalized_source = normalize_source(source)
+          if normalized_source&.match?(LOCAL_SOURCE_REGEX)
+            raise "options[:source](#{source.inspect}) is local to this machine so cannot be used in a Brewfile"
+          end
+
+          normalized_options[:source] = normalized_source if normalized_source.present?
+
+          Dsl::Entry.new(:uv, name, normalized_options)
+        end
+
+        sig { override.void }
+        def reset!
+          @packages = T.let(nil, T.nilable(T::Array[Tool]))
+          @installed_packages = T.let(nil, T.nilable(T::Array[Tool]))
+        end
+
+        sig { override.returns(T.nilable(String)) }
+        def cleanup_heading
+          banner_name
+        end
+
+        sig { override.returns(T::Array[Tool]) }
+        def packages
+          packages = @packages
+          return packages if packages
+
+          @packages = if (uv = package_manager_executable)
+            output = Utils.popen_read_text(uv, "tool", "list", "--show-with", "--show-extras",
+                                           "--show-version-specifiers", err: File::NULL)
+            parse_tool_list(output)
+          end
+          return [] if @packages.nil?
+
+          @packages
+        end
+
+        sig { override.params(package: Object).returns(String) }
+        def dump_name(package)
+          package_name(T.cast(package, ToolEntry))
+        end
+
+        sig { override.params(package: Object).returns(T.nilable(T::Array[String])) }
+        def dump_with(package)
+          package_with(T.cast(package, ToolEntry))
+        end
+
+        sig { params(package: Object).returns(T.nilable(String)) }
+        def dump_source(package)
+          package_source(T.cast(package, ToolEntry))
+        end
+
+        sig {
+          override.params(
+            name:    String,
+            with:    T.nilable(T::Array[String]),
+            source:  T.nilable(String),
+            verbose: T::Boolean,
+          ).returns(T::Boolean)
+        }
+        def install_package!(name, with: nil, source: nil, verbose: false)
+          require "formula"
+          require "utils/path"
+
+          args = ["tool", "install", source.presence || name]
+          # Find the newest installed Homebrew Python from opt/bin filenames without loading formulae.
+          python = Formula.installed_formula_names.grep(/\Apython(?:@.+)?\z/)
+                          .flat_map { |formula_name| Utils::Path.formula_opt_bin(formula_name).glob("python[0-9]*") }
+                          .select { |path| path.file? && path.basename.to_s.match?(/\Apython\d+\.\d+\z/) }
+                          .max_by { |path| Version.new(path.basename.to_s.delete_prefix("python")) }
+          ENV["UV_PYTHON"] = python.to_s if python
+
+          normalize_with(with || []).each do |requirement|
+            args << "--with"
+            args << requirement
+          end
+
+          Bundle.system(package_manager_executable!.to_s, *args, verbose:)
+        end
+
+        sig { override.returns(T::Array[Tool]) }
+        def installed_packages
+          installed_packages = @installed_packages
+          return installed_packages if installed_packages
+
+          @installed_packages = packages.dup
+        end
+
+        sig { params(output: String).returns(T::Array[Tool]) }
+        def parse_tool_list(output)
+          entries = T.let([], T::Array[Tool])
+
+          output.each_line do |line|
+            match = line.match(/\A([A-Za-z0-9]\S*)\s+v\S+/)
+            next unless match
+
+            name = match[1]
+            next if name.nil?
+
+            extras_raw = line[/\[extras:\s*([^\]]+)\]/, 1]
+            name = name_with_extras(name, extras_raw)
+            with_raw = line[/\[with:\s*([^\]]+)\]/, 1]
+            required_raw = line[/\[required:\s*([^\]]+)\]/, 1]
+
+            entries << {
+              name:   name,
+              with:   parse_with_requirements(with_raw),
+              source: parse_source(required_raw),
+            }
+          end
+
+          entries.sort_by { |entry| entry[:name].to_s }
+        end
+        private :parse_tool_list
+
+        sig { params(required_raw: T.nilable(String)).returns(T.nilable(String)) }
+        def parse_source(required_raw)
+          source = normalize_source(required_raw)
+          return if source.nil?
+          return if source.match?(LOCAL_SOURCE_REGEX)
+          return source if source.match?(SOURCE_REQUIREMENT_REGEX)
+
+          nil
+        end
+        private :parse_source
+
+        sig { params(name: String, extras_raw: T.nilable(String)).returns(String) }
+        def name_with_extras(name, extras_raw)
+          return name if extras_raw.blank?
+
+          extras = extras_raw.split(",").map(&:strip).reject(&:empty?).uniq.sort
+          return name if extras.empty?
+
+          "#{name}[#{extras.join(",")}]"
+        end
+        private :name_with_extras
+
+        sig { params(with_raw: T.nilable(String)).returns(T::Array[String]) }
+        def parse_with_requirements(with_raw)
+          return [] if with_raw.blank?
+
+          entries = T.let([], T::Array[String])
+          with_raw.split(", ").each do |token|
+            requirement = token.strip
+            next if requirement.empty?
+
+            if continuation_constraint?(requirement) && entries.any?
+              last_requirement = entries.pop
+              entries << "#{last_requirement}, #{normalize_constraint(requirement)}" if last_requirement
+            else
+              entries << requirement
+            end
+          end
+
+          entries.uniq.sort
+        end
+        private :parse_with_requirements
+
+        sig { params(requirement: String).returns(T::Boolean) }
+        def continuation_constraint?(requirement)
+          requirement.match?(/\A(?:<=|>=|!=|==|~=|<|>)\s*\S/)
+        end
+        private :continuation_constraint?
+
+        sig { params(requirement: String).returns(String) }
+        def normalize_constraint(requirement)
+          requirement.strip.sub(/\A(<=|>=|!=|==|~=|<|>)\s+/, "\\1")
+        end
+        private :normalize_constraint
+
+        sig { params(with: T::Array[String]).returns(T::Array[String]) }
+        def normalize_with(with)
+          with.map(&:strip).reject(&:empty?).uniq.sort
+        end
+        private :normalize_with
+
+        sig { params(source: T.nilable(String)).returns(T.nilable(String)) }
+        def normalize_source(source)
+          source.presence&.strip
+        end
+        private :normalize_source
+
+        sig { params(name: String).returns(String) }
+        def normalize_name(name)
+          match = name.strip.match(/\A(?<base>[^\[\]]+)(?:\[(?<extras>[^\]]+)\])?\z/)
+          return name.strip unless match
+
+          base = match[:base]
+          return name.strip if base.nil?
+
+          extras_raw = match[:extras]
+          return base.strip if extras_raw.blank?
+
+          extras = extras_raw.split(",").map(&:strip).reject(&:empty?).uniq.sort
+          return base.strip if extras.empty?
+
+          "#{base.strip}[#{extras.join(",")}]"
+        end
+        private :normalize_name
+
+        sig {
+          override.params(
+            name:   String,
+            with:   T.nilable(T::Array[String]),
+            source: T.nilable(String),
+          ).returns(Object)
+        }
+        def package_record(name, with: nil, source: nil)
+          normalized_options(name, with: with || [], source:)
+        end
+
+        sig { params(name: String, with: T::Array[String], source: T.nilable(String)).returns(Tool) }
+        def normalized_options(name, with:, source: nil)
+          {
+            name:   normalize_name(name),
+            with:   normalize_with(with),
+            source: normalize_source(source),
+          }
+        end
+        private :normalized_options
+
+        sig { params(package: ToolEntry).returns(String) }
+        def package_name(package)
+          package[:name]
+        end
+        private :package_name
+
+        sig { params(package: ToolEntry).returns(T.nilable(T::Array[String])) }
+        def package_with(package)
+          if package.key?(:with)
+            package[:with]
+          else
+            package[:options].fetch(:with, [])
+          end
+        end
+        private :package_with
+
+        sig { params(package: ToolEntry).returns(T.nilable(String)) }
+        def package_source(package)
+          return package[:source] if package.key?(:source)
+
+          T.cast(package[:options].fetch(:source, nil), T.nilable(String))
+        end
+        private :package_source
+
+        sig { override.params(package: Object).returns(String) }
+        def dump_entry(package)
+          line = super
+          source = dump_source(package)
+          line = "#{line}, source: #{quote(source)}" if source.present?
+
+          line
+        end
+
+        sig {
+          override.params(
+            name:       String,
+            with:       T.nilable(T::Array[String]),
+            source:     T.nilable(String),
+            no_upgrade: T::Boolean,
+            verbose:    T::Boolean,
+            _options:   Homebrew::Bundle::EntryOption,
+          ).returns(T::Boolean)
+        }
+        def preinstall!(name, with: nil, source: nil, no_upgrade: false, verbose: false, **_options)
+          _ = no_upgrade
+
+          ensure_package_manager_installed!(name, verbose:)
+
+          if package_installed?(name, with:, source:)
+            puts "Skipping install of #{name} #{package_description}. It is already installed." if verbose
+            return false
+          end
+
+          true
+        end
+
+        sig {
+          override.params(
+            name:       String,
+            with:       T.nilable(T::Array[String]),
+            source:     T.nilable(String),
+            preinstall: T::Boolean,
+            no_upgrade: T::Boolean,
+            verbose:    T::Boolean,
+            force:      T::Boolean,
+            _options:   Homebrew::Bundle::EntryOption,
+          ).returns(T::Boolean)
+        }
+        def install!(name, with: nil, source: nil, preinstall: true, no_upgrade: false, verbose: false, force: false,
+                     **_options)
+          _ = no_upgrade
+          _ = force
+
+          return true unless preinstall
+
+          puts "Installing #{name} #{package_description}. It is not currently installed." if verbose
+          return false unless install_package!(name, with:, source:, verbose:)
+
+          package = normalized_options(name, with: with || [], source:)
+          installed_packages << package unless installed_packages.include?(package)
+          packages << package unless packages.include?(package)
+          true
+        end
+
+        sig {
+          override.params(
+            name:   String,
+            with:   T.nilable(T::Array[String]),
+            source: T.nilable(String),
+          ).returns(T::Boolean)
+        }
+        def package_installed?(name, with: nil, source: nil)
+          installed_packages.include?(package_record(name, with:, source:))
+        end
+
+        sig { override.params(name: String, executable: Pathname).void }
+        def uninstall_package!(name, executable: Pathname.new(""))
+          Bundle.system(executable.to_s, "tool", "uninstall", name, verbose: false)
+        end
+      end
+
+      sig { override.params(entries: T::Array[Dsl::Entry]).returns(T::Array[Object]) }
+      def format_checkable(entries)
+        checkable_entries(entries).map do |entry|
+          { name: entry.name, options: entry.options }
+        end
+      end
+
+      sig { override.params(package: Object, no_upgrade: T::Boolean).returns(T::Boolean) }
+      def installed_and_up_to_date?(package, no_upgrade: false)
+        self.class.package_installed?(
+          self.class.dump_name(package),
+          with:   self.class.dump_with(package),
+          source: self.class.dump_source(package),
+        )
+      end
+    end
+  end
+end

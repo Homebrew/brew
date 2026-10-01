@@ -7,7 +7,7 @@ module Cask
     sig { params(name: String).returns(T.nilable(String)) }
     def self.reason(name)
       case name
-      when /^adobe-(after|illustrator|indesign|photoshop|premiere)/
+      when /^adobe-(?:after|illustrator|indesign|photoshop|premiere)/
         "Adobe casks were removed because they are too difficult to maintain."
       when /^pharo$/
         "Pharo developers maintain their own tap."

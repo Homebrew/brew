@@ -6,7 +6,7 @@ require_relative "directory"
 module UnpackStrategy
   # Strategy for unpacking Git repositories.
   class Git < Directory
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       !!(super && (path/".git").directory?)
     end

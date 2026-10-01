@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/bottle"
@@ -45,7 +46,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleFormat do
           rebuild 4
           sha256 "faceb00c" => :big_sur
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
-          sha256 "deadbeef" => :catalina
+          sha256 "deadbeef" => :monterey
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
         end
       end
@@ -58,7 +59,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleFormat do
         bottle do
           rebuild 4
           sha256 big_sur: "faceb00c"
-          sha256 catalina: "deadbeef"
+          sha256 monterey: "deadbeef"
         end
       end
     RUBY
@@ -75,7 +76,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleFormat do
           rebuild 4
           sha256 "faceb00c" => :big_sur
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
-          sha256 "deadbeef" => :catalina
+          sha256 "deadbeef" => :monterey
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
         end
       end
@@ -88,7 +89,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleFormat do
         bottle do
           rebuild 4
           sha256 cellar: :any, big_sur: "faceb00c"
-          sha256 cellar: :any, catalina: "deadbeef"
+          sha256 cellar: :any, monterey: "deadbeef"
         end
       end
     RUBY
@@ -126,7 +127,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleFormat do
           rebuild 4
           sha256 "faceb00c" => :big_sur
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
-          sha256 "deadbeef" => :catalina
+          sha256 "deadbeef" => :monterey
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleFormat: `sha256` should use new syntax
         end
       end
@@ -139,7 +140,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleFormat do
         bottle do
           rebuild 4
           sha256 cellar: "/usr/local/Cellar", big_sur: "faceb00c"
-          sha256 cellar: "/usr/local/Cellar", catalina: "deadbeef"
+          sha256 cellar: "/usr/local/Cellar", monterey: "deadbeef"
         end
       end
     RUBY

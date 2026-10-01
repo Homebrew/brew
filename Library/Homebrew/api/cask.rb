@@ -1,60 +1,47 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "cachable"
-require "api/download"
+require "cacheable"
+require "api"
+require "api/cask/cask_struct_generator"
 
 module Homebrew
   module API
     # Helper functions for using the cask JSON API.
     module Cask
-      extend Cachable
+      extend T::Generic
+      extend Cacheable
+
+      Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
 
       DEFAULT_API_FILENAME = "cask.jws.json"
 
-      sig { returns(String) }
-      def self.api_filename
-        return DEFAULT_API_FILENAME unless ENV.fetch("HOMEBREW_USE_INTERNAL_API", false)
-
-        "cask.#{SimulateSystem.current_tag}.jws.json"
-      end
-
       private_class_method :cache
-
-      sig { params(token: String).returns(T::Hash[String, T.untyped]) }
-      def self.fetch(token)
-        Homebrew::API.fetch "cask/#{token}.json"
-      end
-
-      sig { params(cask: ::Cask::Cask).returns(::Cask::Cask) }
-      def self.source_download(cask)
-        path = cask.ruby_source_path.to_s || "Casks/#{cask.token}.rb"
-        sha256 = cask.ruby_source_checksum[:sha256]
-        checksum = Checksum.new(sha256) if sha256
-        git_head = cask.tap_git_head || "HEAD"
-        tap = cask.tap&.full_name || "Homebrew/homebrew-cask"
-
-        download = Homebrew::API::Download.new(
-          "https://raw.githubusercontent.com/#{tap}/#{git_head}/#{path}",
-          checksum,
-          mirrors: [
-            "#{HOMEBREW_API_DEFAULT_DOMAIN}/cask-source/#{File.basename(path)}",
-          ],
-          cache:   HOMEBREW_CACHE_API_SOURCE/"#{tap}/#{git_head}/Cask",
-        )
-        download.fetch
-        ::Cask::CaskLoader::FromPathLoader.new(download.symlink_location)
-                                          .load(config: cask.config)
-      end
 
       sig { returns(Pathname) }
       def self.cached_json_file_path
-        HOMEBREW_CACHE_API/api_filename
+        HOMEBREW_CACHE_API/DEFAULT_API_FILENAME
+      end
+
+      sig {
+        params(download_queue: DownloadQueueType, stale_seconds: T.nilable(Integer), enqueue: T::Boolean)
+          .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
+      }
+      def self.fetch_api!(download_queue: nil, stale_seconds: nil, enqueue: false)
+        Homebrew::API.fetch_json_api_file DEFAULT_API_FILENAME, stale_seconds:, download_queue:, enqueue:
+      end
+
+      sig {
+        params(download_queue: DownloadQueueType, stale_seconds: T.nilable(Integer), enqueue: T::Boolean)
+          .returns([T.any(T::Array[T.untyped], T::Hash[String, T.untyped]), T::Boolean])
+      }
+      def self.fetch_tap_migrations!(download_queue: nil, stale_seconds: nil, enqueue: false)
+        Homebrew::API.fetch_json_api_file "cask_tap_migrations.jws.json", stale_seconds:, download_queue:, enqueue:
       end
 
       sig { returns(T::Boolean) }
       def self.download_and_cache_data!
-        json_casks, updated = Homebrew::API.fetch_json_api_file api_filename
+        json_casks, updated = fetch_api!
 
         cache["renames"] = {}
         cache["casks"] = json_casks.to_h do |json_cask|
@@ -81,21 +68,21 @@ module Homebrew
         cache.fetch("casks")
       end
 
-      sig { returns(T::Hash[String, String]) }
-      def self.all_renames
-        unless cache.key?("renames")
-          json_updated = download_and_cache_data!
-          write_names(regenerate: json_updated)
+      sig { returns(T::Hash[String, T.untyped]) }
+      def self.tap_migrations
+        unless cache.key?("tap_migrations")
+          json_migrations, = fetch_tap_migrations!
+          cache["tap_migrations"] = json_migrations
         end
 
-        cache.fetch("renames")
+        cache.fetch("tap_migrations")
       end
 
       sig { params(regenerate: T::Boolean).void }
       def self.write_names(regenerate: false)
         download_and_cache_data! unless cache.key?("casks")
 
-        Homebrew::API.write_names_file(all_casks.keys, "cask", regenerate:)
+        Homebrew::API.write_names_file!("cask", regenerate:) { all_casks.keys }
       end
     end
   end

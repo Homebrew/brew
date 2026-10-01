@@ -1,0 +1,19 @@
+{
+  "homepage": "https://example.com/internal-json",
+  "names": [
+    "Internal JSON"
+  ],
+  "raw_artifacts": [
+    [
+      ":app",
+      [
+        "Internal JSON.app"
+      ]
+    ]
+  ],
+  "sha256": "no_check",
+  "url_args": [
+    "https://example.com/internal-json.zip"
+  ],
+  "version": "1.0"
+}

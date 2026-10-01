@@ -26,14 +26,14 @@ module RuboCop
 
         if reason_string.start_with?("it ")
           problem "Do not start the reason with `it`" do |corrector|
-            corrector.replace(T.must(@offensive_node).source_range, "\"#{reason_string[3..]}\"")
+            corrector.replace(reason_node.source_range, "\"#{reason_string[3..]}\"")
           end
         end
 
         return unless PUNCTUATION_MARKS.include?(reason_string[-1])
 
         problem "Do not end the reason with a punctuation mark" do |corrector|
-          corrector.replace(T.must(@offensive_node).source_range, "\"#{reason_string.chop}\"")
+          corrector.replace(reason_node.source_range, "\"#{reason_string.chop}\"")
         end
       end
     end

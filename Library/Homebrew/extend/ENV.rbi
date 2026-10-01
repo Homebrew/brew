@@ -1,6 +1,9 @@
 # typed: strict
 
+module EnvSensitive; end
+
 module EnvActivation
+  include EnvSensitive
   include SharedEnvExtension
 end
 
@@ -10,6 +13,10 @@ class Sorbet
     module Static
       class ENVClass
         include EnvActivation
+        # NOTE: This is a bit misleading, as at most only one of these can be true
+        # See: EnvActivation#activate_extensions!
+        include Stdenv
+        include Superenv
       end
     end
   end

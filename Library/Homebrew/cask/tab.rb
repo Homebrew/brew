@@ -1,14 +1,35 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "tab"
+require "utils/topological_hash"
 
 module Cask
   class Tab < ::AbstractTab
-    attr_accessor :uninstall_flight_blocks, :uninstall_artifacts
+    Cache = type_template { { fixed: T::Hash[T.any(Pathname, String), T.untyped] } }
+
+    sig { returns(T.nilable(T::Boolean)) }
+    attr_accessor :uninstall_flight_blocks
+
+    sig { returns(T.nilable(T::Array[T.untyped])) }
+    attr_accessor :uninstall_artifacts
+
+    sig {
+      params(uninstall_flight_blocks: T.nilable(T::Boolean),
+             uninstall_artifacts:     T.nilable(T::Array[T.untyped]),
+             rest:                    T.untyped).void
+    }
+    def initialize(uninstall_flight_blocks: nil, uninstall_artifacts: nil, **rest)
+      @uninstall_flight_blocks = uninstall_flight_blocks
+      @uninstall_artifacts = uninstall_artifacts
+
+      super(**rest)
+    end
 
     # Instantiates a {Tab} for a new installation of a cask.
-    def self.create(cask)
+    sig { override.params(formula_or_cask: T.any(Formula, Cask)).returns(T.attached_class) }
+    def self.create(formula_or_cask)
+      cask = T.cast(formula_or_cask, Cask)
       tab = super
 
       tab.tabfile = cask.metadata_main_container_path/FILENAME
@@ -23,6 +44,7 @@ module Cask
 
     # Returns a {Tab} for an already installed cask,
     # or a fake one if the cask is not installed.
+    sig { params(cask: Cask).returns(T.attached_class) }
     def self.for_cask(cask)
       path = cask.metadata_main_container_path/FILENAME
 
@@ -40,6 +62,7 @@ module Cask
       tab
     end
 
+    sig { returns(T.attached_class) }
     def self.empty
       tab = super
       tab.uninstall_flight_blocks = false
@@ -49,11 +72,12 @@ module Cask
       tab
     end
 
+    sig { params(cask: Cask).returns(T::Hash[Symbol, T::Array[T::Hash[String, T.untyped]]]) }
     def self.runtime_deps_hash(cask)
       cask_and_formula_dep_graph = ::Utils::TopologicalHash.graph_package_dependencies(cask)
-      cask_deps, formula_deps = cask_and_formula_dep_graph.values.flatten.uniq.partition do |dep|
+      cask_deps, formula_deps = T.cast(cask_and_formula_dep_graph.values.flatten.uniq.partition do |dep|
         dep.is_a?(Cask)
-      end
+      end, [T::Array[Cask], T::Array[Formula]])
 
       runtime_deps = {}
 
@@ -76,32 +100,41 @@ module Cask
       runtime_deps
     end
 
+    sig { returns(T.nilable(String)) }
     def version
       source["version"]
     end
 
+    sig { params(_args: T.untyped).returns(String) }
     def to_json(*_args)
       attributes = {
-        "homebrew_version"        => homebrew_version,
-        "loaded_from_api"         => loaded_from_api,
-        "uninstall_flight_blocks" => uninstall_flight_blocks,
-        "installed_as_dependency" => installed_as_dependency,
-        "installed_on_request"    => installed_on_request,
-        "time"                    => time,
-        "runtime_dependencies"    => runtime_dependencies,
-        "source"                  => source,
-        "arch"                    => arch,
-        "uninstall_artifacts"     => uninstall_artifacts,
-        "built_on"                => built_on,
+        "homebrew_version"         => homebrew_version,
+        "loaded_from_api"          => loaded_from_api,
+        "loaded_from_internal_api" => loaded_from_internal_api,
+        "uninstall_flight_blocks"  => uninstall_flight_blocks,
+        "installed_on_request"     => installed_on_request,
+        "time"                     => time,
+        "runtime_dependencies"     => runtime_dependencies,
+        "source"                   => source,
+        "arch"                     => arch,
+        "uninstall_artifacts"      => uninstall_artifacts,
+        "built_on"                 => built_on,
       }
 
       JSON.pretty_generate(attributes)
     end
 
+    sig { returns(String) }
     def to_s
       s = ["Installed"]
-      s << "using the formulae.brew.sh API" if loaded_from_api
-      s << Time.at(time).strftime("on %Y-%m-%d at %H:%M:%S") if time
+      if loaded_from_internal_api
+        s << "using the internal formulae.brew.sh API"
+      elsif loaded_from_api
+        s << "using the formulae.brew.sh API"
+      end
+      if (t = time)
+        s << Time.at(t).strftime("on %Y-%m-%d at %H:%M:%S")
+      end
       s.join(" ")
     end
   end

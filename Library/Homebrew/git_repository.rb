@@ -20,25 +20,19 @@ class GitRepository
     pathname.join(".git").exist?
   end
 
+  # Check whether this repository is a shallow clone. A linked worktree keeps
+  # the shallow marker in the shared Git directory, so ask Git rather than
+  # looking for `.git/shallow`.
+  # Keep in sync with `shallow_repository` in `cmd/update.sh`.
   sig { returns(T::Boolean) }
-  def git_repo?
-    # delete this whole function when removing odisabled
-    odisabled "GitRepository#git_repo?", "GitRepository#git_repository?"
-    git_repository?
+  def shallow?
+    popen_git("rev-parse", "--is-shallow-repository") == "true"
   end
 
   # Gets the URL of the Git origin remote.
   sig { returns(T.nilable(String)) }
   def origin_url
-    popen_git("config", "--get", "remote.origin.url")
-  end
-
-  # Sets the URL of the Git origin remote.
-  sig { params(origin: String).returns(T.nilable(T::Boolean)) }
-  def origin_url=(origin)
-    return if !git_repository? || !Utils::Git.available?
-
-    safe_system Utils::Git.git, "remote", "set-url", "origin", origin, chdir: pathname
+    origin_url_from_config || popen_git("config", "--local", "--get", "remote.origin.url", no_global_config: true)
   end
 
   # Gets the full commit hash of the HEAD commit.
@@ -60,10 +54,30 @@ class GitRepository
     popen_git("show", "-s", "--format=%cr", "HEAD")
   end
 
+  # Gets the full commit hash of the HEAD commit, the relative date of the
+  # last commit and the currently checked-out branch (or HEAD if the
+  # repository is in a detached HEAD state) in a single Git invocation.
+  sig { returns([T.nilable(String), T.nilable(String), T.nilable(String)]) }
+  def head_info
+    output = popen_git("show", "-s", "--format=%H%n%cr%n%D", "HEAD")
+    return [nil, nil, nil] if output.nil?
+
+    head, last_committed, refs = output.lines(chomp: true)
+    branch = refs&.[](/\AHEAD -> ([^,\n]+)/, 1) || "HEAD"
+    [head, last_committed, branch]
+  end
+
   # Gets the name of the currently checked-out branch, or HEAD if the repository is in a detached HEAD state.
   sig { params(safe: T::Boolean).returns(T.nilable(String)) }
   def branch_name(safe: false)
-    popen_git("rev-parse", "--abbrev-ref", "HEAD", safe:)
+    ref = popen_git("rev-parse", "--symbolic-full-name", "HEAD", safe:)
+    return if ref.blank?
+    return "HEAD" if ref == "HEAD"
+
+    refs_format = "refs/heads/"
+    return ref.delete_prefix(refs_format) if ref.start_with?(refs_format)
+
+    raise "Unexpected HEAD ref format: #{ref}"
   end
 
   # Change the name of a local branch
@@ -81,11 +95,17 @@ class GitRepository
   # Gets the name of the default origin HEAD branch.
   sig { returns(T.nilable(String)) }
   def origin_branch_name
-    popen_git("symbolic-ref", "-q", "--short", "refs/remotes/origin/HEAD")&.split("/")&.last
+    ref = popen_git("symbolic-ref", "-q", "refs/remotes/origin/HEAD")
+    return if ref.blank?
+
+    refs_format = "refs/remotes/origin/"
+    return ref.delete_prefix(refs_format) if ref.start_with?(refs_format)
+
+    raise "Unexpected origin/HEAD ref format: #{ref}"
   end
 
   # Returns true if the repository's current branch matches the default origin branch.
-  sig { returns(T.nilable(T::Boolean)) }
+  sig { returns(T::Boolean) }
   def default_origin_branch?
     origin_branch_name == branch_name
   end
@@ -118,8 +138,49 @@ class GitRepository
 
   private
 
-  sig { params(args: T.untyped, safe: T::Boolean, err: T.nilable(Symbol)).returns(T.nilable(String)) }
-  def popen_git(*args, safe: false, err: nil)
+  # Reads `remote.origin.url` straight from `.git/config` to skip spawning
+  # Git on a hot path. Returns `nil` (so the caller falls back to Git) for
+  # anything the canonical form does not cover: a worktree/submodule `.git`
+  # file, an `include`/`includeIf` directive that can define the URL
+  # elsewhere, a non-canonical section header, more than one `url` value, or a
+  # value whose comments/quoting/escapes need Git's own config parser.
+  sig { returns(T.nilable(String)) }
+  def origin_url_from_config
+    config_file = pathname/".git/config"
+    return unless config_file.file?
+
+    content = config_file.read
+    return if content.match?(/^\s*\[include(?:If)?[\s"\]]/i)
+
+    urls = content.lines
+                  .slice_before { |line| line.lstrip.start_with?("[") }
+                  .select { |section| section.fetch(0).strip == '[remote "origin"]' }
+                  .flat_map do |section|
+      section.drop(1).filter_map do |line|
+        stripped = line.strip
+        next if stripped.empty? || stripped.start_with?("#", ";")
+
+        key, separator, value = stripped.partition("=")
+        next if separator.empty? || !key.strip.casecmp?("url")
+
+        value.strip
+      end
+    end
+    return if urls.length != 1
+
+    url = urls.fetch(0)
+    return if url.empty? || url.match?(/["#;\\]/)
+
+    url
+  rescue SystemCallError
+    nil
+  end
+
+  sig {
+    params(args: T.untyped, safe: T::Boolean, err: T.nilable(Symbol), no_global_config: T::Boolean)
+      .returns(T.nilable(String))
+  }
+  def popen_git(*args, safe: false, err: nil, no_global_config: false)
     unless git_repository?
       return unless safe
 
@@ -132,6 +193,8 @@ class GitRepository
       raise "Git is unavailable"
     end
 
-    Utils.popen_read(Utils::Git.git, *args, safe:, chdir: pathname, err:).chomp.presence
+    command = [Utils::Git.git, *args]
+    command.unshift(Utils::Git.no_global_config_env) if no_global_config
+    Utils.popen_read(*command, safe:, chdir: pathname, err:).chomp.presence
   end
 end

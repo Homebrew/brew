@@ -15,5 +15,8 @@ class Homebrew::DevCmd::Prof::Args < Homebrew::CLI::Args
   def stackprof?; end
 
   sig { returns(T::Boolean) }
+  def timings?; end
+
+  sig { returns(T::Boolean) }
   def vernier?; end
 end

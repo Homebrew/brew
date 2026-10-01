@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - master
   merge_group:
   release:
     types:
@@ -19,8 +18,7 @@ defaults:
     shell: bash -xeuo pipefail {0}
 
 env:
-  # odeprecated: remove 20.04 image in Homebrew >=4.7
-  VERSIONS: '["20.04", "22.04", "24.04"]'
+  VERSIONS: '["24.04", "26.04"]'
 
 jobs:
   generate-tags:
@@ -32,9 +30,10 @@ jobs:
       labels: ${{ steps.attributes.outputs.labels }}
       push: ${{ steps.attributes.outputs.push }}
       merge: ${{ steps.attributes.outputs.merge }}
+      core_revision: ${{ steps.attributes.outputs.core_revision }}
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -47,6 +46,7 @@ jobs:
         run: |
           date="$(date --rfc-3339=seconds --utc)"
           brew_version="$(git describe --tags --dirty --abbrev=7)"
+          core_revision="$(git ls-remote https://github.com/Homebrew/homebrew-core refs/heads/main | cut -f1)"
 
           DELIMITER="END_LABELS_$(uuidgen)"
           cat <<EOS | tee -a "${GITHUB_OUTPUT}"
@@ -72,30 +72,19 @@ jobs:
               tags+=(
                 "ghcr.io/homebrew/ubuntu${version}:${brew_version}"
                 "ghcr.io/homebrew/ubuntu${version}:latest"
-                "homebrew/ubuntu${version}:${brew_version}"
-                "homebrew/ubuntu${version}:latest"
               )
-              if [[ "${version}" == "22.04" ]]; then
+              if [[ "${version}" == "24.04" ]]; then
                 tags+=(
                   "ghcr.io/homebrew/brew:${brew_version}"
                   "ghcr.io/homebrew/brew:latest"
-                  "homebrew/brew:${brew_version}"
-                  "homebrew/brew:latest"
                 )
               fi
             elif [[ "${GITHUB_EVENT_NAME}" == "push" &&
-                    ("${GITHUB_REF}" == "refs/heads/master" || "${GITHUB_REF}" == "refs/heads/main") &&
-                    "${version}" == "22.04" ]]; then
-              tags+=(
-                "ghcr.io/homebrew/brew:main"
-                "ghcr.io/homebrew/brew:master"
-                "ghcr.io/homebrew/ubuntu${version}:main"
-                "ghcr.io/homebrew/ubuntu${version}:master"
-                "homebrew/brew:main"
-                "homebrew/brew:master"
-                "homebrew/ubuntu${version}:main"
-                "homebrew/ubuntu${version}:master"
-              )
+                    ("${GITHUB_REF}" == "refs/heads/main") ]]; then
+              if [[ "${version}" == "24.04" ]]; then
+                tags+=("ghcr.io/homebrew/brew:main")
+              fi
+              tags+=("ghcr.io/homebrew/ubuntu${version}:main")
             fi
 
             if [[ "${#tags[@]}" -ne 0 ]]; then
@@ -111,9 +100,12 @@ jobs:
             fi
           done <<<"$(jq --raw-output '.[]' <<<"${VERSIONS}")"
 
-          # Transform the `matrix` variable into a JSON array.
-          echo "matrix=$(jq --null-input --compact-output '$ARGS.positional' --args "${matrix[@]}")" >>"${GITHUB_OUTPUT}"
-          echo "merge=${merge}" >>"${GITHUB_OUTPUT}"
+          {
+            # Transform the `matrix` variable into a JSON array.
+            echo "matrix=$(jq --null-input --compact-output '$ARGS.positional' --args "${matrix[@]}")"
+            echo "merge=${merge}"
+            echo "core_revision=${core_revision}"
+          } >>"${GITHUB_OUTPUT}"
 
           {
             DELIMITER="END_TAGS_$(uuidgen)"
@@ -151,16 +143,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # odeprecated: remove 20.04 image in Homebrew >=4.7
-        version: ["20.04", "22.04", "24.04"]
+        version: ["24.04", "26.04"]
         arch: ["x86_64", "arm64"]
-        exclude:
-          # odeprecated: remove 20.04 image in Homebrew >=4.7
-          - version: "20.04"
-            arch: "arm64"
+
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -169,7 +157,7 @@ jobs:
         run: git fetch origin HEAD
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:
           cache-binary: false
 
@@ -179,51 +167,34 @@ jobs:
           VERSION: ${{ matrix.version }}
           PUSH: ${{ needs.generate-tags.outputs.push }}
         run: |
-          # odeprecated: remove 20.04 image in Homebrew >=4.7
-          if [[ "${VERSION}" == "20.04" ]]; then
-            echo "The homebrew/ubuntu20.04 image is deprecated and will soon be retired. Use homebrew/ubuntu24.04 or homebrew/brew." > .docker-deprecate
-          fi
-
           filter="$(printf '.["%s"]' "${VERSION}")"
           echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
 
       - name: Log in to GitHub Packages (github-actions[bot])
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: github-actions[bot]
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           load: true
           tags: brew
-          cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache
-          build-args: version=${{ matrix.version }}
+          cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache-${{ matrix.arch }}
+          build-args: |
+            version=${{ matrix.version }}
+            HOMEBREW_CORE_REVISION=${{ needs.generate-tags.outputs.core_revision }}
           labels: ${{ needs.generate-tags.outputs.labels }}
 
-      - name: Set environment variables
-        run: |
-          if [[ "${ARCH}" == "arm64" ]]; then
-            echo "HOMEBREW_ARM64_TESTING=1" >> "$GITHUB_ENV"
-          fi
-
-          # odeprecated: remove 20.04 in Homebrew >=4.7
-          if [[ "${VERSION}" == "20.04" ]]; then
-            echo "HOMEBREW_GLIBC_TESTING=1" >> "$GITHUB_ENV"
-          fi
-        env:
-          VERSION: ${{ matrix.version }}
-          ARCH: ${{ matrix.arch }}
-
       - name: Run brew test-bot --only-setup
-        run: docker run --env HOMEBREW_ARM64_TESTING --env HOMEBREW_GLIBC_TESTING --rm brew brew test-bot --only-setup
+        run: docker run --env HOMEBREW_GLIBC_TESTING --rm brew brew test-bot --only-setup
 
       - name: Log in to GitHub Packages (BrewTestBot)
         if: fromJSON(steps.attributes.outputs.push)
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: BrewTestBot
@@ -232,17 +203,18 @@ jobs:
       - name: Deploy the Docker image by digest
         id: digest
         if: fromJSON(steps.attributes.outputs.push)
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
-          cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache
-          cache-to: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache,mode=max
-          build-args: version=${{ matrix.version }}
+          cache-from: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache-${{ matrix.arch }}
+          cache-to: type=registry,ref=ghcr.io/homebrew/ubuntu${{ matrix.version }}:cache-${{ matrix.arch }},mode=max
+          build-args: |
+            version=${{ matrix.version }}
+            HOMEBREW_CORE_REVISION=${{ needs.generate-tags.outputs.core_revision }}
           labels: ${{ needs.generate-tags.outputs.labels }}
           outputs: type=image,name=ghcr.io/homebrew/ubuntu${{ matrix.version }},name-canonical=true,push=true,push-by-digest=true
 
       - name: Export the Docker image digest
-        if: fromJSON(steps.attributes.outputs.push)
         run: |
           mkdir -p "${RUNNER_TEMP}"/digests
           echo "${DIGEST#sha256:}" >"${RUNNER_TEMP}/digests/${VERSION}-${ARCH}"
@@ -252,11 +224,29 @@ jobs:
           ARCH: ${{ matrix.arch }}
 
       - name: Upload the Docker image digest
-        if: fromJSON(steps.attributes.outputs.push)
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: digest-${{ matrix.version }}-${{ matrix.arch }}
           path: ${{ runner.temp }}/digests/*
+
+      - name: Export base image for long runner
+        if: matrix.version == '24.04'
+        run: |
+          mkdir -p "${RUNNER_TEMP}/long-runner-base"
+          image_name="long-runner-base:${VERSION}-${ARCH}"
+          docker tag brew "${image_name}"
+          docker save "${image_name}" | gzip >"${RUNNER_TEMP}/long-runner-base/image-${VERSION}-${ARCH}.tar.gz"
+        env:
+          VERSION: ${{ matrix.version }}
+          ARCH: ${{ matrix.arch }}
+          DIGEST: ${{ steps.digest.outputs.digest }}
+
+      - name: Upload base image artifact for long runner
+        if: matrix.version == '24.04'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: long-runner-base-24.04-${{ matrix.arch }}
+          path: ${{ runner.temp }}/long-runner-base/*
 
   merge:
     needs: [generate-tags, build]
@@ -268,25 +258,19 @@ jobs:
         version: ${{ fromJSON(needs.generate-tags.outputs.matrix) }}
     steps:
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
         with:
           cache-binary: false
 
       - name: Download Docker image digests
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: ${{ runner.temp }}/digests
           pattern: digest-${{ matrix.version }}-*
           merge-multiple: true
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
-        with:
-          username: brewtestbot
-          password: ${{ secrets.HOMEBREW_BREW_DOCKER_TOKEN }}
-
       - name: Log in to GitHub Packages (BrewTestBot)
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: BrewTestBot
@@ -305,10 +289,7 @@ jobs:
           done <<<"$(jq --raw-output "${filter}" <<<"${TAGS}")"
 
           image_args=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-x86_64")")
-          # odeprecated: remove 20.04 image in Homebrew >=4.7
-          if [[ "${VERSION}" != 20.04 ]]; then
-            image_args+=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-arm64")")
-          fi
+          image_args+=("ghcr.io/homebrew/ubuntu${VERSION}@sha256:$(<"${RUNNER_TEMP}/digests/${VERSION}-arm64")")
 
           attempts=0
           until docker buildx imagetools create "${tag_args[@]}" "${image_args[@]}"; do
@@ -322,3 +303,170 @@ jobs:
             echo "Push failed (attempt $attempts). Retrying in ${delay} seconds..."
             sleep ${delay}
           done
+
+  build-and-publish-long-runner:
+    name: Build runner Docker image (${{ matrix.platform }})
+    needs: [generate-tags, build]
+    if: github.repository_owner == 'Homebrew'
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+        include:
+          - platform: linux/amd64
+            platform_tag: linux-amd64
+            arch: x86_64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            platform_tag: linux-arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - env:
+          IMAGE_VALUE: ghcr.io/${{ github.repository_owner }}/runner
+        run: echo "IMAGE=${IMAGE_VALUE,,}" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Retrieve build attributes
+        id: attributes
+        env:
+          VERSION: 24.04
+          PUSH: ${{ needs.generate-tags.outputs.push }}
+        run: |
+          filter="$(printf '.["%s"]' "${VERSION}")"
+          echo "push=$(jq --raw-output "${filter}" <<<"${PUSH}")" >>"${GITHUB_OUTPUT}"
+
+      - name: Download long runner base image artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: long-runner-base-24.04-${{ matrix.arch }}
+          path: ${{ runner.temp }}/long-runner-base
+
+      - name: Load long runner base image
+        id: base_image
+        run: |
+          artifact_dir="${{ runner.temp }}/long-runner-base"
+          image_archive="${artifact_dir}/image-24.04-${ARCH}.tar.gz"
+          [[ -f "${image_archive}" ]] || {
+            echo "Missing brew image archive: ${image_archive}" >&2
+            exit 1
+          }
+          base_image="long-runner-base:24.04-${ARCH}"
+          gunzip --stdout "${image_archive}" | docker load
+          docker image inspect "${base_image}" >/dev/null
+          echo "image=${base_image}" >> "$GITHUB_OUTPUT"
+        env:
+          ARCH: ${{ matrix.arch }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          # Use the local Docker daemon so Buildx can resolve
+          # the base image loaded from the artifact tarball.
+          driver: docker
+
+      - name: Build ${{ matrix.platform }} runner Docker image
+        id: runner_build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: .github/scripts/Dockerfile.long_runner
+          platforms: ${{ matrix.platform }}
+          build-args: HOMEBREW_BREW_IMAGE=${{ steps.base_image.outputs.image }}
+          tags: runner:build-${{ matrix.platform_tag }}
+
+      - name: Verify AWS deployment secrets
+        if: fromJSON(steps.attributes.outputs.push)
+        shell: bash
+        env:
+          AWS_PROJECT_ID: ${{ secrets.AWS_PROJECT_ID }}
+        run: |
+          missing=()
+          [ -z "$AWS_PROJECT_ID" ] && missing+=("AWS_PROJECT_ID")
+          if [ "${#missing[@]}" -ne 0 ]; then
+            printf 'Missing required deployment secrets: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+      - name: Configure AWS Credentials
+        if: fromJSON(steps.attributes.outputs.push)
+        id: aws_registry_credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_PROJECT_ID }}:role/GithubActionsRoleECRPushBrew
+          aws-region: us-east-1
+
+      - name: AWS Elastic Container Registry Login
+        if: fromJSON(steps.attributes.outputs.push)
+        id: aws_registry_login
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - name: Generate AWS image name
+        id: aws_image
+        env:
+          ARCH: ${{ matrix.arch }}
+          AWS_REGISTRY: ${{ steps.aws_registry_login.outputs.registry }}
+          LONG_RUNNER_IMAGE_DIGEST: ${{ steps.runner_build.outputs.digest }}
+        run: |
+          digest_without_prefix="${LONG_RUNNER_IMAGE_DIGEST#sha256:}"
+          [[ -n "${digest_without_prefix}" ]] || {
+            echo "Missing long runner image digest from build output" >&2
+            exit 1
+          }
+          echo "image=${AWS_REGISTRY}/runner-ecr:${digest_without_prefix}-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "image_arch=${AWS_REGISTRY}/runner-ecr:${GITHUB_SHA}-${ARCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Push image to AWS Elastic Container Registry
+        if: fromJSON(steps.attributes.outputs.push)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: .github/scripts/Dockerfile.long_runner
+          platforms: ${{ matrix.platform }}
+          build-args: HOMEBREW_BREW_IMAGE=${{ steps.base_image.outputs.image }}
+          push: true
+          tags: |
+            ${{ steps.aws_image.outputs.image }}
+            ${{ steps.aws_image.outputs.image_arch }}
+
+  publish-long-runner-manifest:
+    name: Publish multi-platform runner Docker image
+    needs: [generate-tags, build-and-publish-long-runner]
+    if: github.repository_owner == 'Homebrew' && fromJSON(needs.generate-tags.outputs.push)['24.04']
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_PROJECT_ID }}:role/GithubActionsRoleECRPushBrew
+          aws-region: us-east-1
+
+      - name: AWS Elastic Container Registry Login
+        id: aws_registry_login
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Publish multi-platform manifest
+        env:
+          AWS_REGISTRY: ${{ steps.aws_registry_login.outputs.registry }}
+        run: |
+          image="${AWS_REGISTRY}/runner-ecr"
+          docker buildx imagetools create \
+            --tag "${image}:latest" \
+            "${image}:${GITHUB_SHA}-x86_64" \
+            "${image}:${GITHUB_SHA}-arm64"
+          docker buildx imagetools inspect "${image}:latest"

@@ -1,8 +1,72 @@
+# typed: true
 # frozen_string_literal: true
 
 require "utils/popen"
+require "timeout"
+require "socket"
 
 RSpec.describe Utils do
+  describe "::popen" do
+    shared_examples "interruptible popen" do
+      it "kills an interrupted command and its descendants" do
+        error = Timeout::ExitException.new("test expired")
+
+        UNIXServer.open((mktmpdir/"socket").to_s) do |server|
+          connection = T.let(nil, T.nilable(UNIXSocket))
+          expect do
+            described_class.popen([RbConfig.ruby, "-rsocket", "-e", <<~RUBY, server.path], "r+") do
+              fork do
+                UNIXSocket.open(ARGV.fetch(0)) do |socket|
+                  $stdin.read
+                  socket.write("survived")
+                end
+              end
+              Process.wait
+            RUBY
+              connection = server.accept
+              raise error
+            end
+          end.to raise_error(error)
+
+          expect([$CHILD_STATUS.termsig, connection&.read]).to eq([Signal.list.fetch("KILL"), ""])
+        ensure
+          connection&.close
+        end
+      end
+
+      it "preserves an exception after closing the pipe" do
+        expect do
+          described_class.popen_read(RbConfig.ruby, "-e", "exit") do |pipe|
+            pipe.close
+            raise Interrupt
+          end
+        end.to raise_error(Interrupt)
+      end
+
+      it "waits normally inside a rescue" do
+        begin
+          raise "previous failure"
+        rescue RuntimeError
+          described_class.popen([RbConfig.ruby, "-e", '$stdout.sync = true; puts "ready"; $stdin.read'], "r+", &:gets)
+        end
+
+        expect($CHILD_STATUS).to be_a_success
+      end
+    end
+
+    context "when forking" do
+      before { ENV["HOMEBREW_SPAWN_SYSTEM"] = "0" }
+
+      include_examples "interruptible popen"
+    end
+
+    context "when spawning" do
+      before { ENV["HOMEBREW_SPAWN_SYSTEM"] = "1" }
+
+      include_examples "interruptible popen"
+    end
+  end
+
   describe "::popen_read" do
     it "reads the standard output of a given command" do
       expect(described_class.popen_read("sh", "-c", "echo success").chomp).to eq("success")
@@ -22,6 +86,20 @@ RSpec.describe Utils do
       expect(described_class.popen_read("./nonexistent", err: :out))
         .to eq("brew: command not found: ./nonexistent\n")
       expect($CHILD_STATUS).to be_a_failure
+    end
+
+    it "captures merged stderr when spawning instead of forking" do
+      ENV["HOMEBREW_SPAWN_SYSTEM"] = "1"
+
+      expect(described_class.popen_read("/bin/sh", "-c", "printf error >&2", err: :out)).to eq("error")
+    end
+  end
+
+  describe "::popen_read_text" do
+    it "returns output in the default external encoding" do
+      output = described_class.popen_read_text("/usr/bin/printf", "café")
+
+      expect([output, output.encoding, $CHILD_STATUS.success?]).to eq(["café", Encoding.default_external, true])
     end
   end
 
@@ -86,9 +164,9 @@ RSpec.describe Utils do
 
   describe "::safe_popen_write" do
     it "does not raise an error if the command succeeds" do
-      expect(
-        described_class.safe_popen_write("grep", "success") { |pipe| pipe.write "success\n" }.chomp,
-      ).to eq("success")
+      expect do
+        described_class.safe_popen_write("grep", "success") { |pipe| pipe.write "success\n" }
+      end.not_to raise_error
       expect($CHILD_STATUS).to be_a_success
     end
 

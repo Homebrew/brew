@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "bump_version_parser"
@@ -16,21 +17,35 @@ RSpec.describe Homebrew::BumpVersionParser do
     end
   end
 
-  context "when initializing with only an intel version" do
-    it "raises a UsageError" do
-      expect do
-        described_class.new(intel: intel_version)
-      end.to raise_error(UsageError,
-                         "Invalid usage: `--version-arm` must not be empty.")
+  context "when initializing with only an arm version" do
+    let(:new_version_arm) { described_class.new(arm: arm_version) }
+
+    it "correctly parses arm version" do
+      expect(new_version_arm.arm).to eq(Cask::DSL::Version.new(arm_version.to_s))
     end
   end
 
-  context "when initializing with only an arm version" do
-    it "raises a UsageError" do
-      expect do
-        described_class.new(arm: arm_version)
-      end.to raise_error(UsageError,
-                         "Invalid usage: `--version-intel` must not be empty.")
+  context "when initializing with only an intel version" do
+    let(:new_version_intel) { described_class.new(intel: intel_version) }
+
+    it "correctly parses intel version" do
+      expect(new_version_intel.intel).to eq(Cask::DSL::Version.new(intel_version.to_s))
+    end
+  end
+
+  context "when initializing with only a Linux ARM version" do
+    let(:new_version_linux_arm) { described_class.new(linux_arm: arm_version) }
+
+    it "correctly parses the Linux ARM version" do
+      expect(new_version_linux_arm.linux_arm).to eq(Cask::DSL::Version.new(arm_version.to_s))
+    end
+  end
+
+  context "when initializing with only a Linux Intel version" do
+    let(:new_version_linux_intel) { described_class.new(linux_intel: intel_version) }
+
+    it "correctly parses the Linux Intel version" do
+      expect(new_version_linux_intel.linux_intel).to eq(Cask::DSL::Version.new(intel_version.to_s))
     end
   end
 
@@ -53,17 +68,11 @@ RSpec.describe Homebrew::BumpVersionParser do
       )
     end
 
-    it "correctly parses general version" do
+    specify do
       expect(new_version.general).to eq(Cask::DSL::Version.new(general_version.to_s))
       expect(new_version_version.general).to eq(Cask::DSL::Version.new(general_version.to_s))
-    end
-
-    it "correctly parses arm version" do
       expect(new_version.arm).to eq(Cask::DSL::Version.new(arm_version.to_s))
       expect(new_version_version.arm).to eq(Cask::DSL::Version.new(arm_version.to_s))
-    end
-
-    it "correctly parses intel version" do
       expect(new_version.intel).to eq(Cask::DSL::Version.new(intel_version.to_s))
       expect(new_version_version.intel).to eq(Cask::DSL::Version.new(intel_version.to_s))
     end
@@ -101,19 +110,26 @@ RSpec.describe Homebrew::BumpVersionParser do
 
     context "when comparing objects with equal versions" do
       it "returns true" do
-        same_version = described_class.new(general: general_version, arm: arm_version, intel: intel_version)
+        same_version = described_class.new(general: general_version, arm: arm_version,
+                                           intel: intel_version)
         expect(new_version == same_version).to be(true)
       end
     end
 
     context "when comparing objects with different versions" do
       it "returns false" do
-        different_general_version = described_class.new(general: "3.2.1", arm: arm_version, intel: intel_version)
-        different_arm_version = described_class.new(general: general_version, arm: "4.3.2", intel: intel_version)
-        different_intel_version = described_class.new(general: general_version, arm: arm_version, intel: "5.4.3")
-        different_general_arm_versions = described_class.new(general: "3.2.1", arm: "4.3.2", intel: intel_version)
-        different_arm_intel_versions = described_class.new(general: general_version, arm: "4.3.2", intel: "5.4.3")
-        different_general_intel_versions = described_class.new(general: "3.2.1", arm: arm_version, intel: "5.4.3")
+        different_general_version = described_class.new(general: "3.2.1", arm: arm_version,
+                                                        intel: intel_version)
+        different_arm_version = described_class.new(general: general_version, arm: "4.3.2",
+                                                    intel: intel_version)
+        different_intel_version = described_class.new(general: general_version, arm: arm_version,
+                                                      intel: "5.4.3")
+        different_general_arm_versions = described_class.new(general: "3.2.1", arm: "4.3.2",
+                                                             intel: intel_version)
+        different_arm_intel_versions = described_class.new(general: general_version, arm: "4.3.2",
+                                                           intel: "5.4.3")
+        different_general_intel_versions = described_class.new(general: "3.2.1", arm: arm_version,
+                                                               intel: "5.4.3")
 
         expect(new_version == different_general_version).to be(false)
         expect(new_version == different_arm_version).to be(false)

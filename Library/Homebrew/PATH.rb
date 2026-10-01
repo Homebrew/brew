@@ -15,7 +15,6 @@ class PATH
   Element = T.type_alias { T.nilable(T.any(Pathname, String, PATH)) }
   private_constant :Element
   Elements = T.type_alias { T.any(Element, T::Array[Element]) }
-  private_constant :Elements
   sig { params(paths: Elements).void }
   def initialize(*paths)
     @paths = T.let(parse(paths), T::Array[String])
@@ -39,12 +38,12 @@ class PATH
     self
   end
 
-  sig { params(block: T.proc.params(arg0: String).returns(T::Boolean)).returns(T.self_type) }
+  sig { params(block: T.proc.params(arg0: String).returns(BasicObject)).returns(T.self_type) }
   def select(&block)
     self.class.new(@paths.select(&block))
   end
 
-  sig { params(block: T.proc.params(arg0: String).returns(T::Boolean)).returns(T.self_type) }
+  sig { params(block: T.proc.params(arg0: String).returns(BasicObject)).returns(T.self_type) }
   def reject(&block)
     self.class.new(@paths.reject(&block))
   end
@@ -77,7 +76,7 @@ class PATH
 
   sig { returns(T.nilable(T.self_type)) }
   def existing
-    existing_path = select { File.directory?(_1) }
+    existing_path = select { File.directory?(it) }
     # return nil instead of empty PATH, to unset environment variables
     existing_path unless existing_path.empty?
   end

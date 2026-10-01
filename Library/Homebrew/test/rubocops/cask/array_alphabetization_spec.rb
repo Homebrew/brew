@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
@@ -62,6 +63,33 @@ RSpec.describe RuboCop::Cop::Cask::ArrayAlphabetization, :config do
     CASK
   end
 
+  it "sorts by element content regardless of inconsistent indentation" do
+    expect_offense(<<~CASK)
+      cask "foo" do
+        url "https://example.com/foo.zip"
+
+        zap trash: [
+                   ^ The array elements should be ordered alphabetically
+             "~/Library/Caches/Foo",
+             "~/Library/HTTPStorages/Foo",
+          "~/Library/Application Support/Foo",
+        ]
+      end
+    CASK
+
+    expect_correction(<<~CASK)
+      cask "foo" do
+        url "https://example.com/foo.zip"
+
+        zap trash: [
+          "~/Library/Application Support/Foo",
+             "~/Library/Caches/Foo",
+             "~/Library/HTTPStorages/Foo",
+        ]
+      end
+    CASK
+  end
+
   it "autocorrects alphabetization in zap trash paths with interpolation" do
     expect_offense(<<~CASK)
       cask "foo" do
@@ -82,6 +110,71 @@ RSpec.describe RuboCop::Cop::Cask::ArrayAlphabetization, :config do
         zap trash: [
           "~/Library/Application Support/Bar\#{version.major}",
           "~/Library/Application Support/Foo",
+        ]
+      end
+    CASK
+  end
+
+  it "reports an offense when a single cask is specified in an array" do
+    expect_offense(<<~CASK)
+      cask "foo" do
+        url "https://example.com/foo.zip"
+
+        conflicts_with cask: ["bar"]
+                             ^^^^^^^ Avoid single-element arrays by removing the []
+      end
+    CASK
+
+    expect_correction(<<~CASK)
+      cask "foo" do
+        url "https://example.com/foo.zip"
+
+        conflicts_with cask: "bar"
+      end
+    CASK
+  end
+
+  it "reports an offense when a single cask is specified in a multi-line array" do
+    expect_offense(<<~CASK)
+      cask "foo" do
+        url "https://example.com/foo.zip"
+
+        conflicts_with cask: [
+                             ^ Avoid single-element arrays by removing the []
+          "bar"
+        ]
+      end
+    CASK
+
+    expect_correction(<<~CASK)
+      cask "foo" do
+        url "https://example.com/foo.zip"
+
+        conflicts_with cask: "bar"
+      end
+    CASK
+  end
+
+  it "autocorrects alphabetization in `conflicts_with` methods" do
+    expect_offense(<<~CASK)
+      cask "foo" do
+        url "https://example.com/foo.zip"
+
+        conflicts_with cask: [
+                             ^ The array elements should be ordered alphabetically
+          "something",
+          "other",
+        ]
+      end
+    CASK
+
+    expect_correction(<<~CASK)
+      cask "foo" do
+        url "https://example.com/foo.zip"
+
+        conflicts_with cask: [
+          "other",
+          "something",
         ]
       end
     CASK

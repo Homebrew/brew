@@ -4,23 +4,25 @@ last_review_date: 2025-05-28
 
 # `brew livecheck`
 
-The `brew livecheck` command finds the newest version of a formula or cask's software by checking upstream. Livecheck has [strategies](https://rubydoc.brew.sh/Homebrew/Livecheck/Strategy) to identify versions from various sources, such as Git repositories, websites, etc.
+The `brew livecheck` command finds the newest version of a formula or cask's software by checking upstream. Livecheck has [strategies](/rubydoc/Homebrew/Livecheck/Strategy.html) to identify versions from various sources, such as Git repositories, websites, etc.
 
 ## Behaviour
 
 When livecheck isn't given instructions for how to check for upstream versions, it does the following by default:
 
 1. Collect a list of URLs to check.
-  * For formulae: use their `stable`, `head`, and `homepage` URLs, in that order.
-  * For formula resources: use their `url`.
-  * For casks: use their `url` and `homepage` URLs, in that order.
+
+* For formulae: use their `stable`, `head`, and `homepage` URLs, in that order.
+* For formula resources: use their `url`.
+* For casks: use their `url` and `homepage` URLs, in that order.
+
 1. Determine if any strategies apply to the first URL. If not, try the next URL.
 1. If a strategy can be applied, use it to check for new versions.
 1. Return the newest version (or an error if versions could not be found at any available URLs).
 
 It's sometimes necessary to override this default behaviour to create a working check. If a source doesn't provide the newest version, we need to check a different one. If livecheck doesn't correctly match version text, we need to provide an appropriate regex or `strategy` block.
 
-This can be accomplished by adding a `livecheck` block to the formula/cask/resource. For more information on the available methods, please refer to the [`Livecheck` class](https://rubydoc.brew.sh/Livecheck) documentation.
+This can be accomplished by adding a `livecheck` block to the formula/cask/resource. For more information on the available methods, please refer to the [`Livecheck` class](/rubydoc/Livecheck.html) documentation.
 
 ## Creating a check
 
@@ -54,7 +56,7 @@ The `livecheck` block regex restricts matches to a subset of the fetched content
 
 * **Anchor the start/end of the regex to restrict its scope**. For example, on HTML pages we often match file names or version directories in `href` attribute URLs (e.g. `/href=.*?example[._-]v?(\d+(?:\.\d+)+)\.zip/i`). The general idea is that limiting scope will help exclude unwanted matches.
 
-* **Avoid generic catchalls like `.*` or `.+`** in favor of something non-greedy and/or contextually appropriate. For example, to match characters within the bounds of an HTML attribute, use `[^"' >]+?`.
+* **Avoid generic catchalls like `.*` or `.+`** in favour of something non-greedy and/or contextually appropriate. For example, to match characters within the bounds of an HTML attribute, use `[^"' >]+?`.
 
 * **Use `[._-]` in place of a period/underscore/hyphen between the software name and version in a file name**. For a file named `example-1.2.3.tar.gz`, `example[._-]v?(\d+(?:\.\d+)+)\.t` will continue matching if the upstream file name format changes to `example_1.2.3.tar.gz` or `example.1.2.3.tar.gz`.
 
@@ -348,7 +350,7 @@ end
 
 #### `Sparkle` `strategy` block
 
-A `strategy` block for `Sparkle` receives an `item` which has methods for the `version`, `short_version`, `nice_version`, `url`, `channel` and `title`. It expects a URL for an XML feed providing release information to a macOS application that self-updates using the Sparkle framework. This URL can be found within the app bundle as the `SUFeedURL` property in `Contents/Info.plist` or by using the [`find-appcast`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/cmd/find-appcast.rb) command. Run it with:
+A `strategy` block for `Sparkle` receives an `item` which has methods for the `version`, `short_version`, `nice_version`, `url`, `channel` and `title`. It expects a URL for an XML feed providing release information to a macOS application that self-updates using the Sparkle framework. This URL can be found within the app bundle as the `SUFeedURL` property in `Contents/Info.plist` or by using the `brew find-appcast` command. Run it with:
 
 ```bash
 brew find-appcast '/path/to/application.app'
@@ -437,6 +439,8 @@ livecheck do
   end
 end
 ```
+
+Note that if a package uses this livecheck strategy it will be excluded from [autobumping](Autobump.md) as this strategy has negative impact on CI time.
 
 ### `throttle`
 

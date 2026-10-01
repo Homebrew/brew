@@ -1,5 +1,9 @@
 # Documentation defined in Library/Homebrew/cmd/update-reset.rb
 
+# HOMEBREW_LIBRARY is set by bin/brew
+# shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/cmd.sh"
+
 # Replaces the function in Library/Homebrew/brew.sh to cache the Git executable to provide
 # speedup when using Git repeatedly and prevent errors if the shim changes mid-update.
 git() {
@@ -13,7 +17,10 @@ git() {
       odie "Can't find a working Git!"
     fi
   fi
-  "${GIT_EXECUTABLE}" "$@"
+  # Disable Git hooks (e.g. a core.hooksPath set by `git lfs install`),
+  # which can break Homebrew's Git operations.
+  # Keep in sync with `Tap#git_command!` in Library/Homebrew/tap.rb.
+  "${GIT_EXECUTABLE}" -c core.hooksPath=/dev/null "$@"
 }
 
 homebrew-update-reset() {
@@ -23,15 +30,17 @@ homebrew-update-reset() {
 
   for option in "$@"
   do
+    if homebrew-command-help update-reset "${option}"
+    then
+      exit $?
+    fi
+    if homebrew-command-common-option "${option}"
+    then
+      continue
+    fi
+
     case "${option}" in
-      -\? | -h | --help | --usage)
-        brew help update-reset
-        exit $?
-        ;;
-      --debug) HOMEBREW_DEBUG=1 ;;
-      -*)
-        [[ "${option}" == *d* ]] && HOMEBREW_DEBUG=1
-        ;;
+      -*) homebrew-command-common-short-options "${option}" ;;
       *)
         if [[ -d "${option}/.git" ]]
         then
@@ -45,13 +54,12 @@ homebrew-update-reset() {
     esac
   done
 
-  if [[ -n "${HOMEBREW_DEBUG}" ]]
-  then
-    set -x
-  fi
+  homebrew-command-enable-debug
 
   if [[ -z "${REPOS[*]}" ]]
   then
+    # HOMEBREW_REPOSITORY is set by bin/brew
+    # shellcheck disable=SC2154
     REPOS+=("${HOMEBREW_REPOSITORY}" "${HOMEBREW_LIBRARY}"/Taps/*/*)
   fi
 
@@ -71,7 +79,7 @@ homebrew-update-reset() {
     echo
 
     ohai "Resetting ${DIR}..."
-    # HOMEBREW_* variables here may all set by bin/brew or the user
+    # HOMEBREW_* variables here may all be set by bin/brew or the user
     # shellcheck disable=SC2154
     if [[ "${DIR}" == "${HOMEBREW_REPOSITORY}" &&
        (-n "${HOMEBREW_UPDATE_TO_TAG}" ||

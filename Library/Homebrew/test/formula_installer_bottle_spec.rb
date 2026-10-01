@@ -1,3 +1,4 @@
+# typed: false
 # frozen_string_literal: true
 
 require "formula"
@@ -21,8 +22,18 @@ RSpec.describe FormulaInstaller do
     expect(formula).to be_bottled
     expect(formula).to pour_bottle
 
-    stub_formula_loader formula("gcc") { url "gcc-1.0" }
-    stub_formula_loader formula("glibc") { url "glibc-1.0" }
+    stub_formula_loader(
+      formula("gcc") do
+        T.bind(self, T.class_of(Formula))
+        url "gcc-1.0"
+      end,
+    )
+    stub_formula_loader(
+      formula("glibc") do
+        T.bind(self, T.class_of(Formula))
+        url "glibc-1.0"
+      end,
+    )
     stub_formula_loader formula
 
     fi = FormulaInstaller.new(formula)
@@ -91,6 +102,35 @@ RSpec.describe FormulaInstaller do
     end
   end
 
+  specify "bottle install with a corrupt cached download", :aggregate_failures do
+    allow(DevelopmentTools).to receive(:installed?).and_return(false)
+    formula = TestballBottle.new
+    bottle = formula.bottle
+    stub_formula_loader formula
+
+    # Simulate a GitHub Packages bottle blob, which is trusted without being
+    # rehashed, so this corrupt download is only noticed when it fails to
+    # extract and must then be discarded and downloaded again.
+    bottle.cached_download.dirname.mkpath
+    bottle.cached_download.write("corrupt" * 1000)
+    allow(bottle).to receive(:downloaded_and_valid?).and_return(true)
+
+    formula_installer = described_class.new(formula)
+    begin
+      expect do
+        formula_installer.fetch
+        formula_installer.install
+      end.to output(/Removing corrupt cached download/).to_stderr
+
+      expect(formula).to be_latest_version_installed
+      expect(Homebrew).not_to have_failed
+    ensure
+      Keg.new(formula.prefix).uninstall if formula.prefix.directory?
+      formula.clear_cache
+      bottle.clear_cache
+    end
+  end
+
   specify "build tools error" do
     allow(DevelopmentTools).to receive(:installed?).and_return(false)
 
@@ -102,7 +142,7 @@ RSpec.describe FormulaInstaller do
 
     expect do
       described_class.new(formula).install
-    end.to raise_error(UnbottledError)
+    end.to raise_error(SystemExit)
 
     expect(formula).not_to be_latest_version_installed
   end

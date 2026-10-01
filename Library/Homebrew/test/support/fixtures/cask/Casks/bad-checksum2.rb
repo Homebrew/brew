@@ -1,3 +1,5 @@
+# typed: false
+
 cask "bad-checksum2" do
   version "1.2.3"
   sha256 "badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadb"

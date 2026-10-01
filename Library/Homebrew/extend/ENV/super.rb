@@ -1,8 +1,9 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "extend/ENV/shared"
 require "development_tools"
+require "utils/output"
 
 # ### Why `superenv`?
 #
@@ -16,8 +17,16 @@ require "development_tools"
 # 8. Build-system agnostic configuration of the toolchain
 module Superenv
   include SharedEnvExtension
+  include Utils::Output::Mixin
 
-  attr_accessor :keg_only_deps, :deps, :run_time_deps
+  sig { returns(T::Array[Formula]) }
+  attr_accessor :keg_only_deps
+
+  sig { returns(T::Array[Formula]) }
+  attr_accessor :deps
+
+  sig { returns(T::Array[Formula]) }
+  attr_accessor :run_time_deps
 
   sig { params(base: Superenv).void }
   def self.extended(base)
@@ -36,6 +45,22 @@ module Superenv
 
   sig { returns(T.nilable(Pathname)) }
   def self.bin; end
+
+  sig { params(env: T.nilable(String)).returns(T::Boolean) }
+  def self.enabled_for?(env)
+    return false if env == "std"
+
+    !bin.nil?
+  end
+
+  sig { void }
+  def initialize
+    @keg_only_deps = T.let([], T::Array[Formula])
+    @deps = T.let([], T::Array[Formula])
+    @run_time_deps = T.let([], T::Array[Formula])
+
+    @formula = T.let(nil, T.nilable(Formula))
+  end
 
   sig { void }
   def reset
@@ -62,42 +87,51 @@ module Superenv
 
     self["HOMEBREW_ENV"] = "super"
     self["MAKEFLAGS"] ||= "-j#{determine_make_jobs}"
-    self["RUSTFLAGS"] = Hardware.rustflags_target_cpu(effective_arch)
-    self["PATH"] = determine_path
-    self["PKG_CONFIG_PATH"] = determine_pkg_config_path
-    self["PKG_CONFIG_LIBDIR"] = determine_pkg_config_libdir || ""
+    self["RUSTC_WRAPPER"] = "#{HOMEBREW_SHIMS_PATH}/shared/rustc_wrapper"
+    self["HOMEBREW_RUSTFLAGS"] = Hardware.rustflags_target_cpu(effective_arch)
+    self["PATH"] = determine_path&.to_s
+    self["PKG_CONFIG_PATH"] = determine_pkg_config_path&.to_s
+    self["PKG_CONFIG_LIBDIR"] = (determine_pkg_config_libdir || "").to_s
     self["HOMEBREW_CCCFG"] = determine_cccfg
-    self["HOMEBREW_OPTIMIZATION_LEVEL"] = "Os"
+    self["HOMEBREW_OPTIMIZATION_LEVEL"] = compiler.match?(GNU_GCC_REGEXP) ? "O2" : "Os"
     self["HOMEBREW_BREW_FILE"] = HOMEBREW_BREW_FILE.to_s
     self["HOMEBREW_PREFIX"] = HOMEBREW_PREFIX.to_s
     self["HOMEBREW_CELLAR"] = HOMEBREW_CELLAR.to_s
     self["HOMEBREW_OPT"] = "#{HOMEBREW_PREFIX}/opt"
     self["HOMEBREW_TEMP"] = HOMEBREW_TEMP.to_s
     self["HOMEBREW_OPTFLAGS"] = determine_optflags
-    self["HOMEBREW_ARCHFLAGS"] = ""
     self["HOMEBREW_MAKE_JOBS"] = determine_make_jobs.to_s
-    self["CMAKE_PREFIX_PATH"] = determine_cmake_prefix_path
-    self["CMAKE_FRAMEWORK_PATH"] = determine_cmake_frameworks_path
-    self["CMAKE_INCLUDE_PATH"] = determine_cmake_include_path
-    self["CMAKE_LIBRARY_PATH"] = determine_cmake_library_path
-    self["ACLOCAL_PATH"] = determine_aclocal_path
+    self["CMAKE_PREFIX_PATH"] = determine_cmake_prefix_path&.to_s
+    self["CMAKE_FRAMEWORK_PATH"] = determine_cmake_frameworks_path&.to_s
+    self["CMAKE_INCLUDE_PATH"] = determine_cmake_include_path&.to_s
+    self["CMAKE_LIBRARY_PATH"] = determine_cmake_library_path&.to_s
+    self["ACLOCAL_PATH"] = determine_aclocal_path&.to_s
     self["M4"] = "#{HOMEBREW_PREFIX}/opt/m4/bin/m4" if deps.any? { |d| d.name == "libtool" }
-    self["HOMEBREW_ISYSTEM_PATHS"] = determine_isystem_paths
-    self["HOMEBREW_INCLUDE_PATHS"] = determine_include_paths
-    self["HOMEBREW_LIBRARY_PATHS"] = determine_library_paths
+    self["HOMEBREW_ISYSTEM_PATHS"] = determine_isystem_paths&.to_s
+    self["HOMEBREW_INCLUDE_PATHS"] = determine_include_paths&.to_s
+    self["HOMEBREW_LIBRARY_PATHS"] = determine_library_paths&.to_s
     self["HOMEBREW_DEPENDENCIES"] = determine_dependencies
-    self["HOMEBREW_FORMULA_PREFIX"] = @formula.prefix unless @formula.nil?
+    self["HOMEBREW_FORMULA_PREFIX"] = @formula.prefix.to_s unless @formula.nil?
     # Prevent the OpenSSL rust crate from building a vendored OpenSSL.
     # https://github.com/sfackler/rust-openssl/blob/994e5ff8c63557ab2aa85c85cc6956b0b0216ca7/openssl/src/lib.rs#L65
     self["OPENSSL_NO_VENDOR"] = "1"
     # Prevent Go from automatically downloading a newer toolchain than the one that we have.
     # https://tip.golang.org/doc/toolchain
     self["GOTOOLCHAIN"] = "local"
+    # Prevent maturin from automatically downloading its own rust
+    self["MATURIN_NO_INSTALL_RUST"] = "1"
     # Prevent Python packages from using bundled libraries by default.
     # Currently for hidapi, pyzmq and pynacl
     self["HIDAPI_SYSTEM_HIDAPI"] = "1"
     self["PYZMQ_NO_BUNDLE"] = "1"
     self["SODIUM_INSTALL"] = "system"
+    # Set defaults for Bundler installs
+    self["BUNDLE_FORCE_RUBY_PLATFORM"] = "true"
+    self["BUNDLE_VERSION"] = "system"
+    self["BUNDLE_WITHOUT"] = "development:test"
+    # Set defaults for opam
+    self["OPAMNODEPEXTS"] = "1"
+    self["OPAMYES"] = "1"
 
     set_debug_symbols if debug_symbols
 
@@ -117,25 +151,24 @@ module Superenv
     # w - Pass `-no_weak_imports` to the linker
     # f - Pass `-no_fixup_chains` to `ld` whenever it
     #     is invoked with `-undefined dynamic_lookup`
-    # o - Pass `-oso_prefix` to `ld` whenever it is invoked
     # c - Pass `-ld_classic` to `ld` whenever it is invoked
     #     with `-dead_strip_dylibs`
     # b - Pass `-mbranch-protection=standard` to the compiler
-    #
-    # These flags will also be present:
-    # a - apply fix for apr-1-config path
+  end
+
+  sig { void }
+  def llvm_clang
+    super
+    self["CC"] = self["OBJC"] = "clang"
+    self["CXX"] = self["OBJCXX"] = "clang++"
   end
 
   private
 
-  sig { params(val: T.any(String, Pathname)).returns(String) }
+  sig { params(val: T.any(String, Pathname)).void }
   def cc=(val)
-    self["HOMEBREW_CC"] = super
-  end
-
-  sig { params(val: T.any(String, Pathname)).returns(String) }
-  def cxx=(val)
-    self["HOMEBREW_CXX"] = super
+    super
+    self["HOMEBREW_CC"] = val.to_s
   end
 
   sig { returns(String) }
@@ -162,7 +195,9 @@ module Superenv
     path.append("/usr/bin", "/bin", "/usr/sbin", "/sbin")
 
     begin
-      path.append(gcc_version_formula(T.must(homebrew_cc)).opt_bin) if homebrew_cc&.match?(GNU_GCC_REGEXP)
+      if (cc = homebrew_cc) && cc.match?(GNU_GCC_REGEXP)
+        path.append(gcc_version_formula(cc).opt_bin)
+      end
     rescue FormulaUnavailableError
       # Don't fail and don't add these formulae to the path if they don't exist.
       nil
@@ -239,7 +274,7 @@ module Superenv
     end
 
     # Don't add `llvm` to library paths; this leads to undesired linkage to LLVM's `libunwind`
-    paths << keg_only_deps.reject { |dep| dep.name.match?(/^llvm(@\d+)?$/) }
+    paths += keg_only_deps.reject { |dep| dep.name.match?(/^llvm(@\d+)?$/) }
                           .map(&:opt_lib)
     paths << (HOMEBREW_PREFIX/"lib")
 
@@ -255,6 +290,7 @@ module Superenv
   sig { returns(T.nilable(PATH)) }
   def determine_cmake_prefix_path
     PATH.new(
+      Superenv.bin&.parent,
       keg_only_deps.map(&:opt_prefix),
       HOMEBREW_PREFIX.to_s,
     ).existing

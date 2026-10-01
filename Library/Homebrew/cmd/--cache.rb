@@ -29,8 +29,8 @@ module Homebrew
                description: "Show the cache file used when building from source."
         switch "--force-bottle",
                description: "Show the cache file used when pouring a bottle."
-        flag "--bottle-tag=",
-             description: "Show the cache file used when pouring a bottle for the given tag."
+        flag   "--bottle-tag=",
+               description: "Show the cache file used when pouring a bottle for the given tag."
         switch "--HEAD",
                description: "Show the cache file used when building from HEAD."
         switch "--formula", "--formulae",
@@ -53,35 +53,42 @@ module Homebrew
           return
         end
 
-        formulae_or_casks = args.named.to_formulae_and_casks
+        formulae_or_casks = T.cast(
+          args.named.to_formulae_and_casks,
+          T::Array[T.any(Formula, Cask::Cask)],
+        )
         os_arch_combinations = args.os_arch_combinations
 
         formulae_or_casks.each do |formula_or_cask|
+          ref = formula_or_cask.reloadable_ref
+
           case formula_or_cask
           when Formula
-            formula = formula_or_cask
-            ref = formula.loaded_from_api? ? formula.full_name : formula.path
-
             os_arch_combinations.each do |os, arch|
               SimulateSystem.with(os:, arch:) do
-                formula = Formulary.factory(ref)
-                print_formula_cache(formula, os:, arch:)
+                print_formula_cache(Formulary.factory(ref), os:, arch:)
               end
             end
           when Cask::Cask
-            cask = formula_or_cask
-            ref = cask.loaded_from_api? ? cask.full_name : cask.sourcefile_path
-
-            os_arch_combinations.each do |os, arch|
-              next if os == :linux
-
-              SimulateSystem.with(os:, arch:) do
-                loaded_cask = Cask::CaskLoader.load(ref)
-                print_cask_cache(loaded_cask)
+            combinations = os_arch_combinations
+            host = [SimulateSystem.current_os, SimulateSystem.current_arch]
+            if formula_or_cask.loaded_from_api? && combinations != [host]
+              opoo "Cask #{formula_or_cask} was loaded from the API; only showing the cache file for the " \
+                   "current platform. Set `HOMEBREW_NO_INSTALL_FROM_API=1` to show others."
+              combinations &= [host]
+            end
+            combinations.each do |os, arch|
+              tag = Utils::Bottles::Tag.new(system: os, arch:)
+              # Source loads may lack an installable artifact, e.g. naked containers.
+              supported = formula_or_cask.refresh_for_tag(tag) do
+                formula_or_cask.platform_supported?(tag, installable: formula_or_cask.loaded_from_api?)
+              end
+              if supported
+                print_cask_cache(formula_or_cask)
+              else
+                opoo "Cask #{formula_or_cask} is not supported on os #{os} and arch #{arch}"
               end
             end
-          else
-            raise "Invalid type: #{formula_or_cask.class}"
           end
         end
       end
@@ -98,11 +105,7 @@ module Homebrew
           os:                         args.os&.to_sym,
           arch:                       args.arch&.to_sym,
         )
-          bottle_tag = if (bottle_tag = args.bottle_tag&.to_sym)
-            Utils::Bottles::Tag.from_symbol(bottle_tag)
-          else
-            Utils::Bottles::Tag.new(system: os, arch:)
-          end
+          bottle_tag = Utils::Bottles::Tag.from_arg(args.bottle_tag&.to_sym, os:, arch:)
 
           bottle = formula.bottle_for_tag(bottle_tag)
 

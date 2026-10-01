@@ -31,6 +31,8 @@ module RuboCop
 
       sig { params(body_node: RuboCop::AST::Node, parent_name: Symbol).void }
       def audit_on_system_blocks(body_node, parent_name)
+        return unless body_node.source.include?("on_")
+
         parent_string = if body_node.def_type?
           "def #{parent_name}"
         else
@@ -68,16 +70,16 @@ module RuboCop
               end
             end
 
-            offending_node(on_system_node)
+            @offensive_node = on_system_node
             problem "Instead of using `#{on_system_node.source}` in `#{parent_string}`, " \
                     "use `#{if_statement_string}#{if_conditional}`." do |corrector|
-              block_node = offending_node.parent
+              block_node = @offensive_node.parent
               next if block_node.type != :block
 
               # TODO: could fix corrector to handle this but punting for now.
               next if block_node.single_line?
 
-              source_range = offending_node.source_range.join(offending_node.parent.loc.begin)
+              source_range = @offensive_node.source_range.join(@offensive_node.parent.loc.begin)
               corrector.replace(source_range, "#{if_statement_string}#{if_conditional}")
             end
           end
@@ -91,6 +93,8 @@ module RuboCop
         ).void
       }
       def audit_arch_conditionals(body_node, allowed_methods: [], allowed_blocks: [])
+        return unless body_node.source.include?("Hardware")
+
         ARCH_OPTIONS.each do |arch_option|
           else_method = (arch_option == :arm) ? :on_intel : :on_arm
           if_arch_node_search(body_node, arch: :"#{arch_option}?") do |if_node, else_node|
@@ -120,6 +124,8 @@ module RuboCop
         ).void
       }
       def audit_base_os_conditionals(body_node, allowed_methods: [], allowed_blocks: [])
+        return unless body_node.source.include?("OS")
+
         BASE_OS_OPTIONS.each do |base_os_option|
           os_method, else_method = if base_os_option == :macos
             [:mac?, :on_linux]
@@ -145,6 +151,8 @@ module RuboCop
       }
       def audit_macos_version_conditionals(body_node, allowed_methods: [], allowed_blocks: [],
                                            recommend_on_system: true)
+        return unless body_node.source.include?("MacOS")
+
         MACOS_VERSION_OPTIONS.each do |macos_version_option|
           if_macos_version_node_search(body_node, os_version: macos_version_option) do |if_node, operator, else_node|
             next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
@@ -184,6 +192,8 @@ module RuboCop
         ).void
       }
       def audit_macos_references(body_node, allowed_methods: [], allowed_blocks: [])
+        return if !body_node.source.include?("MacOS") && !body_node.source.include?("OS")
+
         MACOS_MODULE_NAMES.each do |macos_module_name|
           find_const(body_node, macos_module_name) do |node|
             next if node_is_allowed?(node, allowed_methods:, allowed_blocks:)

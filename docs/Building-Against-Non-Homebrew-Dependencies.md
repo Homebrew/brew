@@ -1,15 +1,29 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
 # Building Against Non-Homebrew Dependencies
 
-## History
+Homebrew formulae normally build in `superenv`, which filters the user's environment and exposes declared dependencies.
+This makes builds reproducible and prevents an undeclared program or library on one contributor's machine from silently changing the result.
 
-Originally Homebrew was a build-from-source package manager and all user environment variables and non-Homebrew-installed software were available to builds. Since then Homebrew added `Requirement`s to specify dependencies on non-Homebrew software (such as those provided by `brew cask` like X11/XQuartz), the `superenv` build system to strip out unspecified dependencies, environment filtering to stop the user environment leaking into Homebrew builds and `default_formula` to specify that a `Requirement` can be satisfied by a particular formula.
+## `homebrew/core`
 
-As Homebrew became primarily a binary package manager, most users were fulfilling `Requirement`s with the `default_formula`, not with arbitrary alternatives. To improve quality and reduce variation, Homebrew now exclusively supports using the default formula, as an ordinary dependency, and no longer supports using arbitrary alternatives.
+Formulae in `homebrew/core` must use declared Homebrew dependencies or supported platform facilities.
+They cannot depend on an arbitrary executable, library or language runtime from the user's `PATH` when a Homebrew dependency is the supported alternative.
 
-## Today
+Declare ordinary dependencies with `depends_on` and use the default formula for requirements that provide one.
+Do not use `env :std` in `homebrew/core` to expose undeclared user software.
 
-If you wish to build against custom non-Homebrew dependencies that are provided by Homebrew (e.g. a non-Homebrew, non-macOS `ruby`) then you must [create and maintain your own tap](How-to-Create-and-Maintain-a-Tap.md) as these formulae will not be accepted in Homebrew/homebrew-core. Once you have done that you can specify `env :std` in the formula which will allow e.g. `which ruby` to access your existing `PATH` variable and allow compilation to link against this Ruby. You can also [include a custom Requirement](https://github.com/Homebrew/brew/tree/HEAD/Library/Homebrew/requirements) in your formula that more accurately describes the non-Homebrew software you build against.
+## Third-party taps
+
+If software must build against a private, locally managed or otherwise non-Homebrew dependency, [maintain the formula in your own tap](How-to-Create-and-Maintain-a-Tap.md).
+Document the external dependency, supported versions and setup required by users of that tap.
+
+An external tap may use `env :std` when exposing the user's normal environment is an intentional part of the formula's contract.
+This reduces reproducibility and can make bottles unsuitable, so prefer a declared dependency whenever possible.
+
+A tap can also define a [custom `Requirement`](https://github.com/Homebrew/brew/tree/HEAD/Library/Homebrew/requirements) when it can validate the external software precisely.
+The requirement should explain how to satisfy it and should not accept versions or installations that the formula has not tested.
+
+Run the tap's formula audit and tests in a clean environment to ensure that undeclared software does not accidentally become mandatory.

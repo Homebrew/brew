@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "checksum"
@@ -10,13 +11,15 @@ RSpec.describe Checksum do
   end
 
   describe "#==" do
-    subject { described_class.new(TEST_SHA256) }
+    subject(:checksum) { described_class.new(TEST_SHA256) }
 
     let(:other) { described_class.new(TEST_SHA256) }
     let(:other_reversed) { described_class.new(TEST_SHA256.reverse) }
 
-    it { is_expected.to eq(other) }
-    it { is_expected.not_to eq(other_reversed) }
-    it { is_expected.not_to be_nil }
+    specify(:aggregate_failures) do
+      expect(checksum).to eq(other)
+      expect(checksum).not_to eq(other_reversed)
+      expect(checksum).not_to be_nil
+    end
   end
 end

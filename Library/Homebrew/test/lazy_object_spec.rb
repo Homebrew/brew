@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "lazy_object"
@@ -19,7 +20,7 @@ RSpec.describe LazyObject do
 
   describe "#!" do
     it "delegates to the underlying object" do
-      expect(!(described_class.new { false })).to be true
+      expect(!described_class.new { false }).to be true
     end
   end
 

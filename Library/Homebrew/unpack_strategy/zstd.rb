@@ -11,7 +11,7 @@ module UnpackStrategy
       [".zst"]
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       path.magic_number.match?(/\x28\xB5\x2F\xFD/n)
     end
@@ -29,7 +29,7 @@ module UnpackStrategy
       quiet_flags = verbose ? [] : ["-q"]
       system_command! "unzstd",
                       args:    [*quiet_flags, "-T0", "--rm", "--", unpack_dir/basename],
-                      env:     { "PATH" => PATH.new(Formula["zstd"].opt_bin, ENV.fetch("PATH")) },
+                      env:     Utils::Path.formula_opt_bin_env("zstd"),
                       verbose:
     end
   end

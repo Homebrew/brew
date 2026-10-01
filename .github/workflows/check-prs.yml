@@ -1,0 +1,178 @@
+# This file is synced from the `.github` repository, do not modify it directly.
+name: Check pull requests
+
+on:
+  # `pull_request_target` has a write token, so this workflow must only ever run trusted
+  # base-branch code and must never checkout or execute pull request head code.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] Required to manage fork PRs; no checkout or head code execution.
+    types:
+      - opened
+      - edited
+      - reopened
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+concurrency:
+  group: "check-pr-${{ github.event.pull_request.number }}"
+  cancel-in-progress: true
+
+jobs:
+  manage:
+    # Restrict this write-token workflow to repositories with supported templates.
+    # The first step also fails if a repository checkout has occurred.
+    if: >-
+      contains(fromJSON('["Homebrew/BrewUI", "Homebrew/brew", "Homebrew/homebrew-core", "Homebrew/homebrew-cask"]'), github.repository) &&
+      github.event.pull_request.user.login != 'BrewTestBot' &&
+      github.event.pull_request.user.login != 'brew-commit-app[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      # Read the trusted base-branch pull request template and checker through
+      # the API; write only the issue comment and pull request state needed here.
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_TEMPLATE_URL: ${{ github.server_url }}/${{ github.repository }}/blob/main/.github/PULL_REQUEST_TEMPLATE.md
+    steps:
+      - name: Verify no checkout
+        run: |
+          if git -C "${GITHUB_WORKSPACE:?}" rev-parse --is-inside-work-tree &>/dev/null
+          then
+            echo "Refusing to run after a repository checkout in ${GITHUB_WORKSPACE}." >&2
+            exit 1
+          fi
+
+      - name: Write pull request body
+        # Do not add a checkout here. `pull_request_target` has a write token, so this
+        # step must only use inline trusted code and API responses from `main`.
+        env:
+          # Bind PR-controlled strings as environment variables instead of interpolating
+          # them into shell code.
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # This workflow intentionally uses `pull_request_target` so it can close and
+          # reopen forked pull requests. Keep this self-contained and never execute
+          # pull request code from this step.
+
+          mkdir -p "${RUNNER_TEMP:?}/check-prs"
+          printf "%s" "${PR_BODY}" >"${RUNNER_TEMP}/check-prs/body"
+
+      - name: Fetch pull request template
+        run: |
+          gh api "repos/${GITHUB_REPOSITORY:?}/contents/.github/PULL_REQUEST_TEMPLATE.md?ref=main" \
+            --jq ".content" |
+            base64 --decode >"${RUNNER_TEMP:?}/check-prs/template"
+
+      - name: Fetch template checker
+        run: |
+          gh api "repos/Homebrew/.github/contents/.github/scripts/check_template.rb?ref=main" \
+            --jq ".content" |
+            base64 --decode >"${RUNNER_TEMP:?}/check_template.rb"
+
+      - name: Check pull request template
+        id: template
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # homebrew-core and homebrew-cask allow condensed PR bodies from recognised bump tools.
+          if [[ "${GITHUB_REPOSITORY}" == "Homebrew/homebrew-core" ||
+                "${GITHUB_REPOSITORY}" == "Homebrew/homebrew-cask" ]]
+          then
+            if grep -qE "Created (with|by) \`brew bump(-cask-pr|-formula-pr)?\`" "${RUNNER_TEMP}/check-prs/body" ||
+               grep -qF "Created by https://github.com/mislav/bump-homebrew-formula-action" "${RUNNER_TEMP}/check-prs/body"
+            then
+              echo "complete_template=true" >>"${GITHUB_OUTPUT:?}"
+              exit 0
+            fi
+          fi
+
+          complete_template="$(
+            ruby "${RUNNER_TEMP:?}/check_template.rb" pull-request \
+              "${RUNNER_TEMP}/check-prs/body" \
+              "${RUNNER_TEMP}/check-prs/template" \
+              "${PR_TITLE}" \
+              "${GITHUB_REPOSITORY:?}"
+          )"
+          case "${complete_template}" in
+            true | false) ;;
+            *)
+              echo "Unexpected template completion result: ${complete_template}" >&2
+              exit 1
+              ;;
+          esac
+
+          echo "complete_template=${complete_template}" >>"${GITHUB_OUTPUT:?}"
+
+      - name: Find incomplete template comment
+        id: comments
+        run: |
+          gh api --paginate "repos/${GITHUB_REPOSITORY:?}/issues/${PR_NUMBER:?}/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- incomplete-pr-template -->"))) | .id' \
+            >"${RUNNER_TEMP:?}/check-prs/incomplete-template-comment-ids"
+          if [[ -s "${RUNNER_TEMP}/check-prs/incomplete-template-comment-ids" ]]
+          then
+            echo "has_incomplete_template_comment=true" >>"${GITHUB_OUTPUT:?}"
+          else
+            echo "has_incomplete_template_comment=false" >>"${GITHUB_OUTPUT:?}"
+          fi
+
+      - name: Find pull request closer
+        id: closer
+        if: >-
+          github.event.pull_request.state == 'closed' &&
+          steps.template.outputs.complete_template == 'true'
+        run: |
+          closed_by="$(gh api "repos/${GITHUB_REPOSITORY:?}/issues/${PR_NUMBER:?}" --jq ".closed_by.login // \"\"")"
+          echo "closed_by=${closed_by}" >>"${GITHUB_OUTPUT:?}"
+
+      - name: Reopen completed pull request
+        if: >-
+          github.event.pull_request.state == 'closed' &&
+          steps.template.outputs.complete_template == 'true' &&
+          steps.closer.outputs.closed_by == 'github-actions[bot]' &&
+          steps.comments.outputs.has_incomplete_template_comment == 'true'
+        run: |
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY:?}/pulls/${PR_NUMBER:?}" \
+            -f state=open
+
+      - name: Remove resolved template comments
+        if: >-
+          steps.template.outputs.complete_template == 'true' &&
+          steps.comments.outputs.has_incomplete_template_comment == 'true'
+        run: |
+          # A later closure by another workflow must not reuse these markers.
+          while IFS= read -r comment_id
+          do
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY:?}/issues/comments/${comment_id}"
+          done <"${RUNNER_TEMP:?}/check-prs/incomplete-template-comment-ids"
+
+      - name: Comment on incomplete pull request
+        if: >-
+          github.event.pull_request.state != 'closed' &&
+          steps.template.outputs.complete_template == 'false' &&
+          steps.comments.outputs.has_incomplete_template_comment != 'true'
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY:?}/issues/${PR_NUMBER:?}/comments" \
+            --raw-field body="$(
+              cat <<COMMENT
+          <!-- incomplete-pr-template -->
+          Thanks for your pull request. This has been closed because it appears to be missing the pull request template, perhaps because this was written by an AI not a human. We require humans to read and fill in these templates.
+
+          Please edit this pull request to fill in the current [pull request template](${PR_TEMPLATE_URL:?}). This workflow will reopen this pull request automatically once the template is complete. **Do not open a new pull request for this.**
+          COMMENT
+            )"
+
+      - name: Close incomplete pull request
+        if: >-
+          github.event.pull_request.state != 'closed' &&
+          steps.template.outputs.complete_template == 'false'
+        run: |
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY:?}/pulls/${PR_NUMBER:?}" \
+            -f state=closed

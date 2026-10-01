@@ -2,32 +2,23 @@
 ---
 version: 2
 updates:
-- package-ecosystem: github-actions
-  directory: "/"
+- package-ecosystem: bundler
+  directories:
+  - "/docs"
+  - "/Library/Homebrew"
   schedule:
     interval: weekly
     day: friday
     time: '08:00'
     timezone: Etc/UTC
-  allow:
-  - dependency-type: all
   groups:
-    github-actions:
+    bundler:
       patterns:
       - "*"
-- package-ecosystem: docker
-  directory: "/"
-  schedule:
-    interval: weekly
-    day: friday
-    time: '08:00'
-    timezone: Etc/UTC
   allow:
   - dependency-type: all
-  groups:
-    docker:
-      patterns:
-      - "*"
+  cooldown:
+    default-days: 7
 - package-ecosystem: devcontainers
   directory: "/"
   schedule:
@@ -35,10 +26,61 @@ updates:
     day: friday
     time: '08:00'
     timezone: Etc/UTC
-  allow:
-  - dependency-type: all
   groups:
     devcontainers:
       patterns:
       - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    docker:
+      patterns:
+      - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
+- package-ecosystem: github-actions
+  directories:
+  - "/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    github-actions:
+      patterns:
+      - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
+    exclude:
+    - Homebrew/actions/*
+- package-ecosystem: uv
+  directories:
+  - "/Library/Homebrew/formula-analytics/"
+  schedule:
+    interval: weekly
+    day: friday
+    time: '08:00'
+    timezone: Etc/UTC
+  groups:
+    uv:
+      patterns:
+      - "*"
+  allow:
+  - dependency-type: all
+  cooldown:
+    default-days: 7
 

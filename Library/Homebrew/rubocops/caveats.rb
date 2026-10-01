@@ -48,6 +48,8 @@ module RuboCop
             problem "Don't use ANSI escape codes in the caveats." if regex_match_group(n, /\e/)
           end
 
+          return if formula_tap != "homebrew-core"
+
           # Forbid dynamic logic in caveats (only if/else/unless)
           caveats_method = find_method_def(@body, :caveats)
           return unless caveats_method

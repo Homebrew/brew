@@ -12,6 +12,7 @@ module DeprecateDisable
     repo_archived:       "has an archived upstream repository",
     repo_removed:        "has a removed upstream repository",
     unmaintained:        "is not maintained upstream",
+    unreachable:         "is no longer reliably reachable upstream",
     unsupported:         "is not supported upstream",
     deprecated_upstream: "is deprecated upstream",
     versioned_formula:   "is a versioned formula",
@@ -27,12 +28,26 @@ module DeprecateDisable
     no_longer_available:      "is no longer available upstream",
     no_longer_meets_criteria: "no longer meets the criteria for acceptable casks",
     unmaintained:             "is not maintained upstream",
-    unsigned:                 "is unsigned or does not meet signature requirements",
+    fails_gatekeeper_check:   "does not pass the macOS Gatekeeper check",
+    unreachable:              "is no longer reliably reachable upstream",
   }.freeze, T::Hash[Symbol, String])
 
   # One year when << or >> to Date.today.
+  # Keep in sync with RemoveDisabledPackages::REMOVE_DISABLED_MONTHS in
+  # Homebrew/actions/remove-disabled-packages/main.rb.
   REMOVE_DISABLED_TIME_WINDOW = 12
   REMOVE_DISABLED_BEFORE = T.let((Date.today << REMOVE_DISABLED_TIME_WINDOW).freeze, Date)
+
+  # Whether a formula or cask is disabled on every OS/architecture combination.
+  sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(T::Boolean) }
+  def disabled_on_all_platforms?(formula_or_cask)
+    return false unless formula_or_cask.disabled?
+    return true unless formula_or_cask.on_system_blocks_exist?
+
+    formula_or_cask.to_hash_with_variations.fetch("variations").each_value.all? do |variation|
+      variation.fetch("disabled", true)
+    end
+  end
 
   sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(T.nilable(Symbol)) }
   def type(formula_or_cask)

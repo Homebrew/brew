@@ -1,5 +1,7 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
+
+require "utils/formatter"
 
 module DiskUsageExtension
   extend T::Helpers
@@ -8,67 +10,70 @@ module DiskUsageExtension
 
   sig { returns(Integer) }
   def disk_usage
-    return @disk_usage if defined?(@disk_usage)
+    @disk_usage ||= T.let(nil, T.nilable(Integer))
+    return @disk_usage unless @disk_usage.nil?
 
-    compute_disk_usage
+    @file_count, @disk_usage = compute_disk_usage
     @disk_usage
   end
 
   sig { returns(Integer) }
   def file_count
-    return @file_count if defined?(@file_count)
+    @file_count ||= T.let(nil, T.nilable(Integer))
+    return @file_count unless @file_count.nil?
 
-    compute_disk_usage
+    @file_count, @disk_usage = compute_disk_usage
     @file_count
   end
 
   sig { returns(String) }
   def abv
     out = +""
-    compute_disk_usage
-    out << "#{number_readable(@file_count)} files, " if @file_count > 1
-    out << disk_usage_readable(@disk_usage).to_s
+    out << "#{Formatter.number_readable(file_count)} files, " if file_count > 1
+    out << Formatter.disk_usage_readable(disk_usage).to_s
     out.freeze
   end
 
   private
 
-  sig { void }
+  sig { returns([Integer, Integer]) }
   def compute_disk_usage
     if symlink? && !exist?
-      @file_count = 1
-      @disk_usage = 0
-      return
+      file_count = 1
+      disk_usage = 0
+      return [file_count, disk_usage]
     end
 
     path = if symlink?
-      resolved_path
+      Utils::Path.resolved_path(Pathname(to_path))
     else
       self
     end
 
     if path.directory?
       scanned_files = Set.new
-      @file_count = 0
-      @disk_usage = 0
+      file_count = 0
+      disk_usage = 0
       path.find do |f|
-        if f.directory?
-          @disk_usage += f.lstat.size
+        # use Pathname#lstat instead of Pathname#stat to get info of symlink itself.
+        stat = f.lstat
+        if stat.directory? || (stat.symlink? && f.directory?)
+          disk_usage += stat.size
         else
-          @file_count += 1 if f.basename.to_s != ".DS_Store"
-          # use Pathname#lstat instead of Pathname#stat to get info of symlink itself.
-          stat = f.lstat
+          file_count += 1 if File.basename(f.to_s) != ".DS_Store"
           file_id = [stat.dev, stat.ino]
           # count hardlinks only once.
           unless scanned_files.include?(file_id)
-            @disk_usage += stat.size
+            disk_usage += stat.size
             scanned_files.add(file_id)
           end
         end
       end
     else
-      @file_count = 1
-      @disk_usage = path.lstat.size
+      file_count = 1
+      disk_usage = path.lstat.size
     end
+
+    [file_count, disk_usage]
   end
 end

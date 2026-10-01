@@ -19,4 +19,10 @@ class Homebrew::DevCmd::Sh::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def env; end
+
+  sig { returns(T::Boolean) }
+  def r?; end
+
+  sig { returns(T::Boolean) }
+  def ruby?; end
 end

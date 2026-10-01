@@ -1,12 +1,12 @@
 #!/bin/bash -p
 
-# This script because we support $HOMEBREW_GIT, $HOMEBREW_SVN, etc., Xcode-only and
-# no Xcode/CLT configurations. Order is careful to be what the user would want.
+# This script exists because we support $HOMEBREW_GIT, $HOMEBREW_SVN etc., and Xcode-only
+# or no Xcode/CLT configurations. Order is careful to be what the user would want.
 
 # HOMEBREW_LIBRARY is set by bin/brew
 # SHIM_FILE is set by shims/utils.sh
 # HOMEBREW_GIT is set by brew.sh
-# HOMEBREW_SVN is from the user environment.
+# HOMEBREW_SVN is from the user environment
 # HOMEBREW_PREFIX is set by extend/ENV/super.rb
 # shellcheck disable=SC2154
 if [[ -z "${HOMEBREW_LIBRARY}" ]]
@@ -17,8 +17,9 @@ fi
 
 source "${HOMEBREW_LIBRARY}/Homebrew/shims/utils.sh"
 
+tool="$(lowercase "${SHIM_FILE}")"
 # shellcheck disable=SC2249
-case "$(lowercase "${SHIM_FILE}")" in
+case "${tool}" in
   git)
     if [[ -n "${HOMEBREW_GIT}" && "${HOMEBREW_GIT}" != git ]]
     then
@@ -38,30 +39,22 @@ safe_exec "${brew_prefix_version}" "$@"
 
 try_exec_non_system "${SHIM_FILE}" "$@"
 
-if executable "/usr/bin/xcode-select"
+# Xcode has not shipped svn since 11.4.
+if [[ "${tool}" == "git" ]] && executable "/usr/bin/xcode-select"
 then
-  # xcode-select will return empty on no Xcode/CLT configuration.
-  #   /usr/bin/<tool> will be a popup stub under such configuration.
-  # xcrun hangs if xcode-select is set to "/"
+  # /usr/bin/git is a popup stub when developer tools are not installed.
+  popup_stub=1
   xcode_path="$(/usr/bin/xcode-select -print-path 2>/dev/null)"
-  if [[ -z "${xcode_path}" ]]
+  if [[ -n "${xcode_path}" && "${xcode_path}" != "/" ]]
   then
-    if [[ "${HOMEBREW_MACOS_VERSION_NUMERIC}" -ge "100900" ]]
-    then
-      popup_stub=1
-    fi
-  fi
-  if [[ -z "${popup_stub}" && "${xcode_path}" != "/" ]]
-  then
-    path="$(/usr/bin/xcrun -find "${SHIM_FILE}" 2>/dev/null)"
-    safe_exec "${path}" "$@"
+    safe_exec "${xcode_path}/usr/bin/${SHIM_FILE}" "$@"
   fi
 fi
 
 path="/Applications/Xcode.app/Contents/Developer/usr/bin/${SHIM_FILE}"
 safe_exec "${path}" "$@"
 
-if [[ -z "${popup_stub}" && "${HOMEBREW_MACOS_VERSION_NUMERIC}" -lt "101500" ]]
+if [[ -z "${popup_stub}" ]]
 then
   path="/usr/bin/${SHIM_FILE}"
   safe_exec "${path}" "$@"

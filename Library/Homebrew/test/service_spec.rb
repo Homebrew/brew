@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "formula"
@@ -8,6 +9,7 @@ RSpec.describe Homebrew::Service do
 
   def stub_formula(&block)
     formula(name) do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/test-1.0.tbz"
 
       instance_eval(&block) if block
@@ -16,6 +18,7 @@ RSpec.describe Homebrew::Service do
 
   def stub_formula_with_service_sockets(sockets_var)
     stub_formula do
+      T.bind(self, T.class_of(Formula))
       service do
         run opt_bin/"beanstalkd"
         sockets sockets_var
@@ -26,6 +29,7 @@ RSpec.describe Homebrew::Service do
   describe "#std_service_path_env" do
     it "returns valid std_service_path_env" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -42,9 +46,23 @@ RSpec.describe Homebrew::Service do
     end
   end
 
+  describe "#formula_opt_bin" do
+    it "is available in service blocks" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run formula_opt_bin("foo")/"foo"
+        end
+      end
+
+      expect(f.service.run).to eq([(HOMEBREW_PREFIX/"opt/foo/bin/foo").to_s])
+    end
+  end
+
   describe "#process_type" do
     it "throws for unexpected type" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           process_type :cow
@@ -57,9 +75,284 @@ RSpec.describe Homebrew::Service do
     end
   end
 
+  describe "#throttle_interval" do
+    it "accepts a valid throttle_interval value" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          throttle_interval 5
+        end
+      end
+
+      expect(f.service.throttle_interval).to be(5)
+    end
+
+    it "includes throttle_interval value in plist output" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          throttle_interval 15
+        end
+      end
+
+      plist = f.service.to_plist
+      expect(plist).to include("<key>ThrottleInterval</key>")
+      expect(plist).to include("<integer>15</integer>")
+    end
+
+    # Launchd says that it ignores ThrottleInterval values of zero but it's not actually true.
+    # https://gist.github.com/dabrahams/4092951#:~:text=Set%20%3CThrottleInterval%3E%20to,than%2010%20seconds.
+    it "includes throttle_interval value of zero in plist output" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          throttle_interval 0
+        end
+      end
+
+      plist = f.service.to_plist
+      expect(plist).to include("<key>ThrottleInterval</key>")
+      expect(plist).to include("<integer>0</integer>")
+    end
+
+    it "does not include throttle_interval in plist when not set" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+        end
+      end
+
+      plist = f.service.to_plist
+      expect(plist).not_to include("<key>ThrottleInterval</key>")
+    end
+  end
+
+  describe "#stop_timeout" do
+    it "accepts a valid stop_timeout value" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          stop_timeout 10
+        end
+      end
+
+      expect(f.service.stop_timeout).to be(10)
+    end
+
+    it "throws for negative stop_timeout" do
+      expect do
+        stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run opt_bin/"beanstalkd"
+            stop_timeout(-5)
+          end
+        end.service
+      end.to raise_error TypeError, "Service#stop_timeout must be a non-negative integer"
+    end
+
+    it "includes ExitTimeOut in plist output" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          stop_timeout 15
+        end
+      end
+
+      plist = f.service.to_plist
+      expect(plist).to include("<key>ExitTimeOut</key>\n\t<integer>15</integer>")
+    end
+
+    it "does not include ExitTimeOut in plist when not set" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+        end
+      end
+
+      plist = f.service.to_plist
+      expect(plist).not_to include("<key>ExitTimeOut</key>")
+    end
+
+    it "includes TimeoutStopSec in systemd unit output" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          stop_timeout 20
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      expect(unit).to include("TimeoutStopSec=20")
+    end
+
+    it "does not include TimeoutStopSec in systemd unit when not set" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      expect(unit).not_to include("TimeoutStopSec=")
+    end
+  end
+
+  describe "#nice" do
+    it "accepts a valid nice level" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          nice 5
+        end
+      end
+
+      expect(f.service.nice).to be(5)
+    end
+
+    it "throws error for negative nice values without require_root" do
+      expect do
+        stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run opt_bin/"beanstalkd"
+            nice(-10)
+          end
+        end.service
+      end.to raise_error TypeError, "Service#nice: require_root true is required for negative nice values"
+    end
+
+    it "allows negative nice values when require_root is set" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          require_root true
+          nice(-10)
+        end
+      end
+
+      expect(f.service.requires_root?).to be(true)
+      expect { f.service.to_plist }.not_to raise_error
+    end
+
+    it "does not require require_root for positive nice values" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          nice 10
+        end
+      end
+
+      expect(f.service.requires_root?).to be(false)
+      expect { f.service.to_plist }.not_to raise_error
+    end
+
+    it "accepts nice value of zero" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          nice 0
+        end
+      end
+
+      expect(f.service.nice).to be(0)
+      expect(f.service.requires_root?).to be(false)
+    end
+
+    it "includes nice value in plist output" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          nice 5
+        end
+      end
+
+      plist = f.service.to_plist
+      expect(plist).to include("<key>Nice</key>")
+      expect(plist).to include("<integer>5</integer>")
+    end
+
+    it "includes nice value in systemd unit output" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          require_root true
+          nice(-5)
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      expect(unit).to include("Nice=-5")
+    end
+
+    it "does not include nice in plist when not set" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+        end
+      end
+
+      plist = f.service.to_plist
+      expect(plist).not_to include("<key>Nice</key>")
+    end
+
+    it "does not include nice in systemd unit when not set" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      expect(unit).not_to include("Nice=")
+    end
+
+    it "throws for nice too low" do
+      expect do
+        stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run opt_bin/"beanstalkd"
+            nice(-21)
+          end
+        end.service
+      end.to raise_error TypeError, "Service#nice value should be in -20..19"
+    end
+
+    it "throws for nice too high" do
+      expect do
+        stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run opt_bin/"beanstalkd"
+            nice 20
+          end
+        end.service
+      end.to raise_error TypeError, "Service#nice value should be in -20..19"
+    end
+  end
+
   describe "#keep_alive" do
     it "throws for unexpected keys" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive test: "key"
@@ -68,13 +361,14 @@ RSpec.describe Homebrew::Service do
 
       expect do
         f.service.manual_command
-      end.to raise_error TypeError, "Service#keep_alive allows only [:always, :successful_exit, :crashed, :path]"
+      end.to raise_error TypeError, "Service#keep_alive only allows: [:always, :successful_exit, :crashed, :path]"
     end
   end
 
   describe "#requires_root?" do
     it "returns status when set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           require_root true
@@ -86,6 +380,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns status when not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
         end
@@ -98,6 +393,7 @@ RSpec.describe Homebrew::Service do
   describe "#run_type" do
     it "throws for unexpected type" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :cow
@@ -155,6 +451,7 @@ RSpec.describe Homebrew::Service do
   describe "#manual_command" do
     it "returns valid manual_command" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run "#{HOMEBREW_PREFIX}/bin/beanstalkd"
           run_type :immediate
@@ -172,6 +469,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid manual_command without variables" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -188,9 +486,33 @@ RSpec.describe Homebrew::Service do
     end
   end
 
+  describe "#path_dirs" do
+    it "returns directories needed by service paths" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run [opt_bin/"beanstalkd", "-l", var/"run/beanstalkd.sock", "relative/path"]
+          error_log_path var/"log/beanstalkd.error.log"
+          log_path var/"log/beanstalkd.log"
+          input_path var/"in/beanstalkd"
+          root_dir var/"root"
+          working_dir var/"work"
+        end
+      end
+
+      expect(f.service.path_dirs).to contain_exactly(
+        HOMEBREW_PREFIX/"var/log",
+        HOMEBREW_PREFIX/"var/in",
+        HOMEBREW_PREFIX/"var/root",
+        HOMEBREW_PREFIX/"var/work",
+      )
+    end
+  end
+
   describe "#to_plist" do
     it "returns valid plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :immediate
@@ -205,13 +527,16 @@ RSpec.describe Homebrew::Service do
           launch_only_once true
           process_type :interactive
           restart_delay 30
+          throttle_interval 5
+          stop_timeout 60
+          nice 5
           interval 5
           macos_legacy_timers true
         end
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
@@ -225,10 +550,12 @@ RSpec.describe Homebrew::Service do
         \t\t<key>PATH</key>
         \t\t<string>#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:/usr/bin:/bin:/usr/sbin:/sbin</string>
         \t</dict>
+        \t<key>ExitTimeOut</key>
+        \t<integer>60</integer>
         \t<key>KeepAlive</key>
         \t<true/>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LaunchOnlyOnce</key>
         \t<true/>
         \t<key>LegacyTimers</key>
@@ -241,6 +568,8 @@ RSpec.describe Homebrew::Service do
         \t\t<string>StandardIO</string>
         \t\t<string>System</string>
         \t</array>
+        \t<key>Nice</key>
+        \t<integer>5</integer>
         \t<key>ProcessType</key>
         \t<string>Interactive</string>
         \t<key>ProgramArguments</key>
@@ -258,24 +587,26 @@ RSpec.describe Homebrew::Service do
         \t<string>#{HOMEBREW_PREFIX}/var/in/beanstalkd</string>
         \t<key>StandardOutPath</key>
         \t<string>#{HOMEBREW_PREFIX}/var/log/beanstalkd.log</string>
+        \t<key>ThrottleInterval</key>
+        \t<integer>5</integer>
         \t<key>TimeOut</key>
         \t<integer>30</integer>
         \t<key>WorkingDirectory</key>
         \t<string>#{HOMEBREW_PREFIX}/var</string>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "returns valid plist with socket" do
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -304,7 +635,7 @@ RSpec.describe Homebrew::Service do
         \t</dict>
         </dict>
         </plist>
-      EOS
+      XML
 
       [
         stub_formula_with_service_sockets("tcp://127.0.0.1:80"),
@@ -317,6 +648,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid plist with multiple sockets" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           sockets socket: "tcp://0.0.0.0:80", socket_tls: "tcp://0.0.0.0:443"
@@ -324,13 +656,13 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -369,12 +701,13 @@ RSpec.describe Homebrew::Service do
         \t</dict>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "returns valid partial plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -382,13 +715,13 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -405,12 +738,13 @@ RSpec.describe Homebrew::Service do
         \t<true/>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "returns valid partial plist with run_at_load being false" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -419,13 +753,13 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -442,12 +776,13 @@ RSpec.describe Homebrew::Service do
         \t<false/>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "returns valid interval plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :interval
@@ -456,13 +791,13 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -481,12 +816,13 @@ RSpec.describe Homebrew::Service do
         \t<integer>5</integer>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "returns valid cron plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :cron
@@ -495,13 +831,13 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -525,12 +861,13 @@ RSpec.describe Homebrew::Service do
         \t</dict>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "returns valid keepalive-exit plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive successful_exit: false
@@ -538,7 +875,7 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
@@ -549,7 +886,7 @@ RSpec.describe Homebrew::Service do
         \t\t<false/>
         \t</dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -566,12 +903,13 @@ RSpec.describe Homebrew::Service do
         \t<true/>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "returns valid keepalive-crashed plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive crashed: true
@@ -579,7 +917,7 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
@@ -590,7 +928,7 @@ RSpec.describe Homebrew::Service do
         \t\t<true/>
         \t</dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -607,12 +945,13 @@ RSpec.describe Homebrew::Service do
         \t<true/>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "returns valid keepalive-path plist" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           keep_alive path: opt_pkgshare/"test-path"
@@ -620,7 +959,7 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
@@ -631,7 +970,7 @@ RSpec.describe Homebrew::Service do
         \t\t<string>#{HOMEBREW_PREFIX}/opt/formula_name/share/formula_name/test-path</string>
         \t</dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -648,12 +987,13 @@ RSpec.describe Homebrew::Service do
         \t<true/>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
 
     it "expands paths" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_sbin/"sleepwatcher", "-V", "-s", "~/.sleep", "-w", "~/.wakeup"]
           working_dir "~"
@@ -661,13 +1001,13 @@ RSpec.describe Homebrew::Service do
       end
 
       plist = f.service.to_plist
-      plist_expect = <<~EOS
+      plist_expect = <<~XML
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
         \t<key>Label</key>
-        \t<string>homebrew.mxcl.formula_name</string>
+        \t<string>sh.brew.formula_name</string>
         \t<key>LimitLoadToSessionType</key>
         \t<array>
         \t\t<string>Aqua</string>
@@ -691,7 +1031,7 @@ RSpec.describe Homebrew::Service do
         \t<string>#{Dir.home}</string>
         </dict>
         </plist>
-      EOS
+      XML
       expect(plist).to eq(plist_expect)
     end
   end
@@ -699,6 +1039,7 @@ RSpec.describe Homebrew::Service do
   describe "#to_systemd_unit" do
     it "returns valid unit" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :immediate
@@ -712,6 +1053,8 @@ RSpec.describe Homebrew::Service do
           keep_alive true
           process_type :interactive
           restart_delay 30
+          stop_timeout 45
+          nice(-15)
           macos_legacy_timers true
         end
       end
@@ -728,8 +1071,10 @@ RSpec.describe Homebrew::Service do
         [Service]
         Type=simple
         ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd" "test"
-        Restart=always
+        Restart=on-failure
         RestartSec=30
+        TimeoutStopSec=45
+        Nice=-15
         WorkingDirectory=#{HOMEBREW_PREFIX}/var
         RootDirectory=#{HOMEBREW_PREFIX}/var
         StandardInput=file:#{HOMEBREW_PREFIX}/var/in/beanstalkd
@@ -743,6 +1088,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid partial oneshot unit" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -767,6 +1113,7 @@ RSpec.describe Homebrew::Service do
 
     it "expands paths" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           working_dir "~"
@@ -788,11 +1135,111 @@ RSpec.describe Homebrew::Service do
       SYSTEMD
       expect(unit).to eq(unit_expect)
     end
+
+    it "returns valid unit with keep_alive crashed" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          keep_alive crashed: true
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      unit_expect = <<~SYSTEMD
+        [Unit]
+        Description=Homebrew generated unit for formula_name
+
+        [Install]
+        WantedBy=default.target
+
+        [Service]
+        Type=simple
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
+        Restart=on-failure
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
+    end
+
+    it "returns valid unit with keep_alive successful_exit" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          keep_alive successful_exit: true
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      unit_expect = <<~SYSTEMD
+        [Unit]
+        Description=Homebrew generated unit for formula_name
+
+        [Install]
+        WantedBy=default.target
+
+        [Service]
+        Type=simple
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
+        Restart=on-success
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
+    end
+
+    it "returns valid unit with stop_timeout" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          stop_timeout 25
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      unit_expect = <<~SYSTEMD
+        [Unit]
+        Description=Homebrew generated unit for formula_name
+
+        [Install]
+        WantedBy=default.target
+
+        [Service]
+        Type=simple
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
+        TimeoutStopSec=25
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
+    end
+
+    it "returns valid unit without restart when keep_alive is false" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          keep_alive false
+        end
+      end
+
+      unit = f.service.to_systemd_unit
+      unit_expect = <<~SYSTEMD
+        [Unit]
+        Description=Homebrew generated unit for formula_name
+
+        [Install]
+        WantedBy=default.target
+
+        [Service]
+        Type=simple
+        ExecStart="#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd"
+      SYSTEMD
+      expect(unit).to eq(unit_expect)
+    end
   end
 
   describe "#to_systemd_timer" do
     it "returns valid timer" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :interval
@@ -809,7 +1256,7 @@ RSpec.describe Homebrew::Service do
         WantedBy=timers.target
 
         [Timer]
-        Unit=homebrew.formula_name
+        Unit=sh.brew.formula_name.service
         OnUnitActiveSec=5
       SYSTEMD
       expect(unit).to eq(unit_expect)
@@ -817,6 +1264,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid partial timer" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :immediate
@@ -832,7 +1280,7 @@ RSpec.describe Homebrew::Service do
         WantedBy=timers.target
 
         [Timer]
-        Unit=homebrew.formula_name
+        Unit=sh.brew.formula_name.service
 
       SYSTEMD
       expect(unit).to eq(unit_expect)
@@ -840,6 +1288,7 @@ RSpec.describe Homebrew::Service do
 
     it "throws on incomplete cron" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run opt_bin/"beanstalkd"
           run_type :cron
@@ -854,17 +1303,18 @@ RSpec.describe Homebrew::Service do
 
     it "returns valid cron timers" do
       styles = {
-        "@hourly":   "*-*-*-* *:00:00",
-        "@daily":    "*-*-*-* 00:00:00",
-        "@weekly":   "0-*-*-* 00:00:00",
-        "@monthly":  "*-*-*-1 00:00:00",
-        "@yearly":   "*-*-1-1 00:00:00",
-        "@annually": "*-*-1-1 00:00:00",
-        "5 5 5 5 5": "5-*-5-5 05:05:00",
+        "@hourly":   "*-*-* *:00:00",
+        "@daily":    "*-*-* 00:00:00",
+        "@weekly":   "Sun *-*-* 00:00:00",
+        "@monthly":  "*-*-1 00:00:00",
+        "@yearly":   "*-1-1 00:00:00",
+        "@annually": "*-1-1 00:00:00",
+        "5 5 5 5 5": "Fri *-5-5 05:05:00",
       }
 
       styles.each do |cron, calendar|
         f = stub_formula do
+          T.bind(self, T.class_of(Formula))
           service do
             run opt_bin/"beanstalkd"
             run_type :cron
@@ -881,7 +1331,7 @@ RSpec.describe Homebrew::Service do
           WantedBy=timers.target
 
           [Timer]
-          Unit=homebrew.formula_name
+          Unit=sh.brew.formula_name.service
           Persistent=true
           OnCalendar=#{calendar}
         SYSTEMD
@@ -893,6 +1343,7 @@ RSpec.describe Homebrew::Service do
   describe "#timed?" do
     it "returns false for immediate" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :immediate
@@ -904,6 +1355,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns true for interval" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :interval
@@ -917,6 +1369,7 @@ RSpec.describe Homebrew::Service do
   describe "#keep_alive?" do
     it "returns true when keep_alive set to hash" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           keep_alive crashed: true
@@ -928,6 +1381,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns true when keep_alive set to true" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           keep_alive true
@@ -939,6 +1393,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns false when keep_alive not set" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
         end
@@ -949,6 +1404,7 @@ RSpec.describe Homebrew::Service do
 
     it "returns false when keep_alive set to false" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           keep_alive false
@@ -962,6 +1418,7 @@ RSpec.describe Homebrew::Service do
   describe "#command" do
     it "returns @run data" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           run_type :immediate
@@ -972,76 +1429,98 @@ RSpec.describe Homebrew::Service do
       expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test"])
     end
 
-    it "returns @run data on Linux", :needs_linux do
-      f = stub_formula do
-        service do
-          run linux: [opt_bin/"beanstalkd", "test"]
-          run_type :immediate
+    context "when simulating Linux" do
+      around do |example|
+        Homebrew::SimulateSystem.with(os: :linux) do
+          example.run
         end
       end
 
-      command = f.service.command
-      expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test"])
+      it "returns @run data" do
+        f = stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run linux: [opt_bin/"beanstalkd", "test"]
+            run_type :immediate
+          end
+        end
+
+        command = f.service.command
+        expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test"])
+      end
+
+      it "returns empty for macOS-only commands" do
+        f = stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run macos: [opt_bin/"beanstalkd", "test"]
+            run_type :immediate
+          end
+        end
+
+        command = f.service.command
+        expect(command).to be_empty
+      end
+
+      it "returns the Linux command when both OS commands are defined" do
+        f = stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run macos: [opt_bin/"beanstalkd", "test", "macos"], linux: [opt_bin/"beanstalkd", "test", "linux"]
+            run_type :immediate
+          end
+        end
+
+        command = f.service.command
+        expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test", "linux"])
+      end
     end
 
-    it "returns nil on Linux", :needs_linux do
-      f = stub_formula do
-        service do
-          run macos: [opt_bin/"beanstalkd", "test"]
-          run_type :immediate
+    context "when simulating macOS" do
+      around do |example|
+        Homebrew::SimulateSystem.with(os: :macos) do
+          example.run
         end
       end
 
-      command = f.service.command
-      expect(command).to be_nil
-    end
-
-    it "returns @run data on macOS", :needs_macos do
-      f = stub_formula do
-        service do
-          run macos: [opt_bin/"beanstalkd", "test"]
-          run_type :immediate
+      it "returns @run data" do
+        f = stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run macos: [opt_bin/"beanstalkd", "test"]
+            run_type :immediate
+          end
         end
+
+        command = f.service.command
+        expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test"])
       end
 
-      command = f.service.command
-      expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test"])
-    end
-
-    it "returns nil on macOS", :needs_macos do
-      f = stub_formula do
-        service do
-          run linux: [opt_bin/"beanstalkd", "test"]
-          run_type :immediate
+      it "returns empty for Linux-only commands" do
+        f = stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run linux: [opt_bin/"beanstalkd", "test"]
+            run_type :immediate
+          end
         end
+
+        command = f.service.command
+        expect(command).to be_empty
       end
 
-      command = f.service.command
-      expect(command).to be_nil
-    end
-
-    it "returns appropriate @run data on Linux", :needs_linux do
-      f = stub_formula do
-        service do
-          run macos: [opt_bin/"beanstalkd", "test", "macos"], linux: [opt_bin/"beanstalkd", "test", "linux"]
-          run_type :immediate
+      it "returns the macOS command when both OS commands are defined" do
+        f = stub_formula do
+          T.bind(self, T.class_of(Formula))
+          service do
+            run macos: [opt_bin/"beanstalkd", "test", "macos"], linux: [opt_bin/"beanstalkd", "test", "linux"]
+            run_type :immediate
+          end
         end
+
+        command = f.service.command
+        expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test", "macos"])
       end
-
-      command = f.service.command
-      expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test", "linux"])
-    end
-
-    it "returns appropriate @run data on macOS", :needs_macos do
-      f = stub_formula do
-        service do
-          run macos: [opt_bin/"beanstalkd", "test", "macos"], linux: [opt_bin/"beanstalkd", "test", "linux"]
-          run_type :immediate
-        end
-      end
-
-      command = f.service.command
-      expect(command).to eq(["#{HOMEBREW_PREFIX}/opt/#{name}/bin/beanstalkd", "test", "macos"])
     end
   end
 
@@ -1055,6 +1534,7 @@ RSpec.describe Homebrew::Service do
         run_type:              :immediate,
         working_dir:           "/$HOME",
         cron:                  "0 0 * * 0",
+        stop_timeout:          15,
         sockets:               "tcp://0.0.0.0:80",
       }
     end
@@ -1063,11 +1543,13 @@ RSpec.describe Homebrew::Service do
     #       are not idempotent so they can only be used in one test.
     it "replaces local paths with placeholders" do
       f = stub_formula do
+        T.bind(self, T.class_of(Formula))
         service do
           run [opt_bin/"beanstalkd", "test"]
           environment_variables PATH: std_service_path_env
           working_dir Dir.home
           cron "@weekly"
+          stop_timeout 15
           sockets "tcp://0.0.0.0:80"
         end
       end
@@ -1144,6 +1626,248 @@ RSpec.describe Homebrew::Service do
             macos: ["#{HOMEBREW_PREFIX}/opt/formula_name/bin/beanstalkd", "--option"],
           },
         })
+      end
+
+      it "handles stop_timeout argument correctly" do
+        expect(described_class.from_hash({
+          "run"          => "$HOMEBREW_PREFIX/opt/formula_name/bin/beanstalkd",
+          "stop_timeout" => 30,
+        })).to eq({
+          run:          "#{HOMEBREW_PREFIX}/opt/formula_name/bin/beanstalkd",
+          stop_timeout: 30,
+        })
+      end
+    end
+  end
+
+  describe "#effective_environment_variables" do
+    it "returns formula vars when no env override file exists" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      vars = f.service.effective_environment_variables
+      expect(vars).to eq({ FOO: "BAR" })
+    end
+
+    it "merges user env overrides with formula vars" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        env_file = services_dir / "formula_name.env"
+        env_file.write <<~ENV
+          OLLAMA_HOST=0.0.0.0
+        ENV
+
+        vars = f.service.effective_environment_variables
+        expect(vars).to eq({ FOO: "BAR", OLLAMA_HOST: "0.0.0.0" })
+      end
+    end
+
+    it "user env overrides take precedence over formula vars" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        env_file = services_dir / "formula_name.env"
+        env_file.write <<~ENV
+          FOO=QUX
+        ENV
+
+        vars = f.service.effective_environment_variables
+        expect(vars).to eq({ FOO: "QUX" })
+      end
+    end
+
+    it "ignores comments and blank lines in env file" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        env_file = services_dir / "formula_name.env"
+        env_file.write <<~ENV
+          # This is a comment
+
+          OLLAMA_HOST=0.0.0.0
+          # Another comment
+          OLLAMA_ORIGINS=*
+        ENV
+
+        vars = f.service.effective_environment_variables
+        expect(vars).to eq({ FOO: "BAR", OLLAMA_HOST: "0.0.0.0", OLLAMA_ORIGINS: "*" })
+      end
+    end
+
+    it "skips lines without = and strips whitespace around =" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        env_file = services_dir / "formula_name.env"
+        env_file.write <<~ENV
+          # comment
+          MALFORMED_LINE
+          FOO = BAR
+          BLANK_KEY = value
+          KEY_WITH_NO_VALUE
+          NORMAL=BAZ
+          KEY_EMPTY_VALUE=
+        ENV
+
+        expect { f.service.effective_environment_variables }
+          .to output(/invalid line.*MALFORMED_LINE/).to_stderr
+        expect { f.service.effective_environment_variables }
+          .to output(/invalid line.*KEY_WITH_NO_VALUE/).to_stderr
+        vars = f.service.effective_environment_variables
+        expect(vars).to eq({ FOO: "BAR", BLANK_KEY: "value", NORMAL: "BAZ", KEY_EMPTY_VALUE: "" })
+      end
+    end
+
+    it "includes user env overrides in to_plist" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run [opt_bin/"beanstalkd", "test"]
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        env_file = services_dir / "formula_name.env"
+        env_file.write <<~ENV
+          OLLAMA_HOST=0.0.0.0
+        ENV
+
+        plist = f.service.to_plist
+        expect(plist).to include("<key>OLLAMA_HOST</key>")
+        expect(plist).to include("<string>0.0.0.0</string>")
+        expect(plist).to include("<key>FOO</key>")
+        expect(plist).to include("<string>BAR</string>")
+      end
+    end
+
+    it "includes user env overrides in to_systemd_unit" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        env_file = services_dir / "formula_name.env"
+        env_file.write <<~ENV
+          OLLAMA_HOST=0.0.0.0
+        ENV
+
+        unit = f.service.to_systemd_unit
+        expect(unit).to include("Environment=\"FOO=BAR\"")
+        expect(unit).to include("Environment=\"OLLAMA_HOST=0.0.0.0\"")
+      end
+    end
+
+    it "skips world-writable env files" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        env_file = services_dir / "formula_name.env"
+        env_file.write "OLLAMA_HOST=0.0.0.0"
+        File.chmod 0666, env_file.to_s
+
+        expect { f.service.effective_environment_variables }.to output(/world-writable/).to_stderr
+        vars = f.service.effective_environment_variables
+        expect(vars).to eq({ FOO: "BAR" })
+      end
+    end
+
+    it "skips group-writable env files" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        env_file = services_dir / "formula_name.env"
+        env_file.write "OLLAMA_HOST=0.0.0.0"
+        File.chmod 0664, env_file.to_s
+
+        expect { f.service.effective_environment_variables }.to output(/group-writable/).to_stderr
+        vars = f.service.effective_environment_variables
+        expect(vars).to eq({ FOO: "BAR" })
+      end
+    end
+
+    it "follows symlinks to a safe target" do
+      f = stub_formula do
+        T.bind(self, T.class_of(Formula))
+        service do
+          run opt_bin/"beanstalkd"
+          environment_variables FOO: "BAR"
+        end
+      end
+
+      with_env(HOMEBREW_USER_CONFIG_HOME: Dir.mktmpdir) do
+        services_dir = Pathname.new(ENV.fetch("HOMEBREW_USER_CONFIG_HOME")) / "services"
+        services_dir.mkpath
+        target = services_dir / "actual.env"
+        target.write "OLLAMA_HOST=0.0.0.0"
+        File.chmod 0644, target.to_s
+
+        symlink = services_dir / "formula_name.env"
+        File.symlink(target, symlink)
+
+        vars = f.service.effective_environment_variables
+        expect(vars).to eq({ FOO: "BAR", OLLAMA_HOST: "0.0.0.0" })
       end
     end
   end

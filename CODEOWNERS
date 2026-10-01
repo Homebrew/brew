@@ -6,6 +6,12 @@
 # To be explicit: we will never accept changes to this file adding people from outside the Homebrew GitHub
 # organisation. If you are not a Homebrew maintainer: you do not personally "own" or "maintain" any files.
 #
-# Note: @Homebrew/plc does not have write-access to this repository, and therefore cannot be listed in this file.
+# Note: teams without write-access to this repository cannot be listed in this file.
 
-docs/Support-Tiers.md  @Homebrew/tsc @MikeMcQuaid
+docs/Support-Tiers.md  @Homebrew/lead-maintainers @MikeMcQuaid
+
+Library/Homebrew/sandbox.rb                            @Homebrew/security
+Library/Homebrew/extend/os/mac/sandbox.rb              @Homebrew/security
+Library/Homebrew/extend/os/linux/sandbox.rb            @Homebrew/security
+Library/Homebrew/extend/os/linux/sandbox/backend.rb    @Homebrew/security
+Library/Homebrew/extend/os/linux/sandbox/landlock.rb   @Homebrew/security

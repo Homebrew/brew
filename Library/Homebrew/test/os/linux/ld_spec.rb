@@ -1,13 +1,82 @@
+# typed: true
 # frozen_string_literal: true
 
 require "os/linux/ld"
 require "tmpdir"
 
 RSpec.describe OS::Linux::Ld do
-  describe "::library_paths" do
-    ld_etc = Pathname("")
+  let(:diagnostics) do
+    <<~EOS
+      path.prefix="/usr"
+      path.sysconfdir="/usr/local/etc"
+      path.system_dirs[0x0]="/lib64"
+      path.system_dirs[0x1]="/var/lib"
+    EOS
+  end
+
+  describe "::system_ld_so" do
+    let(:ld_so) { "/lib64/ld-linux-x86-64.so.2" }
+
     before do
-      ld_etc = Pathname(Dir.mktmpdir("homebrew-tests-ld-etc-", Dir.tmpdir))
+      allow(Hardware::CPU).to receive(:arch).and_return(:x86_64)
+      allow(File).to receive(:executable?).and_return(false)
+      described_class.system_ld_so = nil
+    end
+
+    after do
+      described_class.system_ld_so = nil
+    end
+
+    it "returns the path to a known dynamic linker" do
+      allow(File).to receive(:executable?).with(ld_so).and_return(true)
+      expect(described_class.system_ld_so).to eq(Pathname(ld_so))
+    end
+
+    it "prefers the native dynamic linker when a foreign architecture linker is installed" do
+      allow(Hardware::CPU).to receive(:arch).and_return(:arm64)
+      allow(File).to receive(:executable?).with("/lib64/ld-linux-x86-64.so.2").and_return(true)
+      allow(File).to receive(:executable?).with("/lib/ld-linux-aarch64.so.1").and_return(true)
+
+      expect(described_class.system_ld_so).to eq(Pathname("/lib/ld-linux-aarch64.so.1"))
+    end
+
+    it "returns nil when there is no known dynamic linker" do
+      expect(described_class.system_ld_so).to be_nil
+    end
+  end
+
+  describe "::sysconfdir" do
+    it "returns path.sysconfdir" do
+      allow(described_class).to receive(:ld_so_diagnostics).and_return(diagnostics)
+      expect(described_class.sysconfdir).to eq("/usr/local/etc")
+      expect(described_class.sysconfdir(brewed: false)).to eq("/usr/local/etc")
+    end
+
+    it "returns fallback on blank diagnostics" do
+      allow(described_class).to receive(:ld_so_diagnostics).and_return("")
+      expect(described_class.sysconfdir).to eq("/etc")
+      expect(described_class.sysconfdir(brewed: false)).to eq("/etc")
+    end
+  end
+
+  describe "::system_dirs" do
+    it "returns all path.system_dirs" do
+      allow(described_class).to receive(:ld_so_diagnostics).and_return(diagnostics)
+      expect(described_class.system_dirs).to eq(["/lib64", "/var/lib"])
+      expect(described_class.system_dirs(brewed: false)).to eq(["/lib64", "/var/lib"])
+    end
+
+    it "returns an empty array on blank diagnostics" do
+      allow(described_class).to receive(:ld_so_diagnostics).and_return("")
+      expect(described_class.system_dirs).to eq([])
+      expect(described_class.system_dirs(brewed: false)).to eq([])
+    end
+  end
+
+  describe "::library_paths" do
+    let(:ld_etc) { Pathname(Dir.mktmpdir("homebrew-tests-ld-etc-", Dir.tmpdir)) }
+
+    before do
       FileUtils.mkdir [ld_etc/"subdir1", ld_etc/"subdir2"]
       (ld_etc/"ld.so.conf").write <<~EOS
         # This line is a comment

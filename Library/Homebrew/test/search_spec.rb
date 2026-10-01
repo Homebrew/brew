@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "search"
@@ -65,21 +66,151 @@ RSpec.describe Homebrew::Search do
     end
   end
 
+  describe "#search_formulae" do
+    let(:tab) { instance_double(Tab, installed_on_request: false) }
+    let(:formula) do
+      instance_double(Formula, full_name: "testball", any_version_installed?: false,
+                              valid_platform?: true, deprecated?: false, disabled?: false,
+                              pinned?: false, requirements: [], deps: [],
+                              runtime_installed_formula_dependents: [], stable: nil, head: nil, pour_bottle?: true)
+    end
+
+    before do
+      allow($stdout).to receive(:tty?).and_return(true)
+      allow(Formula).to receive_messages(full_names: ["testball"], alias_full_names: [])
+      allow(Formulary).to receive(:factory).with("testball").and_return(formula)
+      allow(Tab).to receive(:for_formula).with(formula).and_return(tab)
+    end
+
+    it "annotates deprecated formulae" do
+      allow(formula).to receive(:deprecated?).and_return(true)
+      expect(described_class.search_formulae(/testball/)).to contain_exactly(include("(deprecated)"))
+    end
+
+    it "annotates disabled formulae" do
+      allow(formula).to receive(:disabled?).and_return(true)
+      expect(described_class.search_formulae(/testball/)).to contain_exactly(include("(disabled)"))
+    end
+
+    it "does not show a red cross for disabled formulae" do
+      allow(formula).to receive(:disabled?).and_return(true)
+      expect(described_class.search_formulae(/testball/).join(" ")).not_to include("#{Tty.red}✘")
+    end
+
+    it "does not annotate normal formulae" do
+      expect(described_class.search_formulae(/testball/)).to eq(["testball"])
+    end
+
+    it "shows only the installed icon for installed formulae" do
+      allow(formula).to receive_messages(any_version_installed?: true, pinned?: true)
+
+      expect(described_class.search_formulae(/testball/))
+        .to eq([described_class.pretty_installed("testball")])
+    end
+  end
+
+  describe "#search_casks" do
+    let(:depends_on) { instance_double(Cask::DSL::DependsOn, formula: [], cask: []) }
+    let(:tab) { instance_double(Cask::Tab, installed_on_request: false) }
+    let(:cask) do
+      instance_double(Cask::Cask, full_name: "testball", installed?: false, deprecated?: false, disabled?: false,
+                                   supports_linux?: true, depends_on:)
+    end
+
+    before do
+      allow($stdout).to receive(:tty?).and_return(true)
+      allow(Tap).to receive(:each_with_object).and_return(["testball"])
+      allow(Cask::CaskLoader).to receive(:load).with("testball").and_return(cask)
+      allow(Cask::Tab).to receive(:for_cask).with(cask).and_return(tab)
+    end
+
+    it "annotates deprecated casks", :needs_macos do
+      allow(cask).to receive(:deprecated?).and_return(true)
+      expect(described_class.search_casks(/testball/)).to contain_exactly(include("(deprecated)"))
+    end
+
+    it "annotates disabled casks", :needs_macos do
+      allow(cask).to receive(:disabled?).and_return(true)
+      expect(described_class.search_casks(/testball/)).to contain_exactly(include("(disabled)"))
+    end
+
+    it "does not show a red cross for disabled casks", :needs_macos do
+      allow(cask).to receive(:disabled?).and_return(true)
+      expect(described_class.search_casks(/testball/).join(" ")).not_to include("#{Tty.red}✘")
+    end
+
+    it "does not annotate normal casks", :needs_macos do
+      expect(described_class.search_casks(/testball/)).to eq(["testball"])
+    end
+
+    it "skips casks from untrusted taps", :needs_macos do
+      allow(Cask::CaskLoader).to receive(:load).with("testball").and_raise(Homebrew::UntrustedTapError)
+
+      expect(described_class.search_casks(/testball/)).to be_empty
+    end
+
+    it "hides macOS-only casks on Linux", :needs_linux do
+      allow(cask).to receive(:supports_linux?).and_return(false)
+
+      expect(described_class.search_casks(/testball/)).to eq([])
+    end
+
+    it "shows Linux-compatible casks on Linux", :needs_linux do
+      expect(described_class.search_casks(/testball/)).to eq(["testball"])
+    end
+
+    it "shows only the installed icon for installed casks", :needs_macos do
+      allow(cask).to receive(:installed?).and_return(true)
+
+      expect(described_class.search_casks(/testball/))
+        .to eq([described_class.pretty_installed("testball")])
+    end
+
+    it "loads the cask loader itself" do
+      script = 'require "global"; require "search"; ' \
+               'print Homebrew::Search.search_casks("homebrew/cask/nonexistent-cask").inspect'
+      expect(Utils.popen_read({ "HOMEBREW_NO_INSTALL_FROM_API" => "1" },
+                              RUBY_PATH, "-I", HOMEBREW_LIBRARY_PATH.to_s, "-e", script, err: :out)).to eq("[]")
+    end
+  end
+
   describe "#search_descriptions" do
     let(:args) { Homebrew::Cmd::Desc.new(["min_arg_placeholder"]).args }
 
     context "with api" do
       let(:api_formulae) do
-        { "testball" => { "desc" => "Some test" } }
+        {
+          "testball" => {
+            "desc"                 => "Some test",
+            "homepage"             => "https://brew.sh/testball",
+            "license"              => "MIT",
+            "ruby_source_checksum" => "abc123",
+            "stable_url_args"      => ["https://brew.sh/testball-1.0.tar.gz", {}],
+            "stable_version"       => "1.0",
+          },
+        }
       end
 
       let(:api_casks) do
-        { "testball" => { "desc" => "Some test", "name" => ["Test Ball"] } }
+        {
+          "testball" => {
+            "desc"    => "Some test",
+            "names"   => ["Test Ball"],
+            "sha256"  => "abc123",
+            "url"     => "https://brew.sh/testball.zip",
+            "version" => "1.0",
+          },
+        }
       end
 
       before do
-        allow(Homebrew::API::Formula).to receive(:all_formulae).and_return(api_formulae)
-        allow(Homebrew::API::Cask).to receive(:all_casks).and_return(api_casks)
+        allow(Homebrew::API::Internal).to receive_messages(formula_hashes: api_formulae, cask_hashes: api_casks)
+        allow(Homebrew::API::Internal).to receive(:formula_names) { api_formulae.keys }
+        allow(Homebrew::API::Internal).to receive(:formula_name?) { |name| api_formulae.key?(name) }
+        allow(Homebrew::API::Internal).to receive(:formula_hash) { |name| api_formulae[name] }
+        allow(Homebrew::API::Internal).to receive(:cask_names) { api_casks.keys }
+        allow(Homebrew::API::Internal).to receive(:cask_name?) { |token| api_casks.key?(token) }
+        allow(Homebrew::API::Internal).to receive(:cask_hash) { |token| api_casks[token] }
       end
 
       it "searches formula descriptions" do
@@ -87,10 +218,31 @@ RSpec.describe Homebrew::Search do
           .to output(/testball: Some test/).to_stdout
       end
 
+      it "searches all trusted descriptions" do
+        cache_store = instance_double(DescriptionCacheStore)
+        allow(DescriptionCacheStore).to receive(:new).and_return(cache_store)
+        allow(CacheStoreDatabase).to receive(:use).with(:descriptions).and_yield(instance_double(CacheStoreDatabase))
+        expect(Descriptions).to receive(:search)
+          .with("some", Descriptions::SearchField::Description, cache_store)
+          .and_return(instance_double(Descriptions, print: nil))
+
+        args = Homebrew::Cmd::Desc.new(["--formula", "min_arg_placeholder"]).args
+        described_class.search_descriptions("some", args)
+      end
+
       it "searches cask descriptions", :needs_macos do
         expect { described_class.search_descriptions(described_class.query_regexp("ball"), args) }
           .to output(/testball: \(Test Ball\) Some test/).to_stdout
           .and not_to_output(/testball: Some test/).to_stdout
+      end
+
+      it "searches cask names without descriptions", :needs_macos do
+        api_casks["testball"]["desc"] = nil
+
+        expect do
+          described_class.search_descriptions(described_class.query_regexp("ball"), args, show_missing: true)
+        end
+          .to output(/testball: \(Test Ball\) \[no description\]/).to_stdout
       end
     end
   end

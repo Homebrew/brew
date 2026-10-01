@@ -1,10 +1,13 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/browser"
+
 require "abstract_command"
 require "fileutils"
 require "hardware"
 require "system_command"
+require "utils/git"
 
 module Homebrew
   module DevCmd
@@ -25,20 +28,32 @@ module Homebrew
         switch "--debug",
                description: "Enable debugging using `ruby/debug`, or surface the standard `odebug` output."
         switch "--changed",
-               description: "Only runs tests on files that were changed from the master branch."
+               description: "Only runs tests on files that were changed from the `main` branch."
         switch "--fail-fast",
                description: "Exit early on the first failing test."
+        switch "--load-only",
+               description: "Load each test file independently without running its examples."
         switch "--no-parallel",
                description: "Run tests serially."
+        switch "--stackprof",
+               description: "Use `stackprof` to profile tests."
+        switch "--vernier",
+               description: "Use `vernier` to profile tests."
+        switch "--ruby-prof",
+               description: "Use `ruby-prof` to profile tests."
         flag   "--only=",
                description: "Run only `<test_script>_spec.rb`. Appending `:<line_number>` will start at a " \
                             "specific line."
+        flag   "--shard=",
+               description: "Run only `<index>` of `<total>` test shards."
         flag   "--profile=",
-               description: "Run the test suite serially to find the <n> slowest tests."
+               description: "Output the <n> slowest tests. When run without `--no-parallel` this will output " \
+                            "the slowest tests for each parallel test process."
         flag   "--seed=",
                description: "Randomise tests with the specified <value> instead of a random seed."
 
-        conflicts "--changed", "--only"
+        conflicts "--changed", "--only", "--shard"
+        conflicts "--stackprof", "--vernier", "--ruby-prof"
 
         named_args :none
       end
@@ -46,7 +61,10 @@ module Homebrew
       sig { override.void }
       def run
         # Given we might be testing various commands, we probably want everything (except sorbet-static)
-        Homebrew.install_bundler_gems!(groups: Homebrew.valid_gem_groups - ["sorbet"])
+        groups = Utils::GemSetup.valid_gem_groups - ["sorbet"]
+        groups << "prof" if args.stackprof? || args.vernier? || args.ruby_prof?
+        Utils::GemSetup.install_bundler_gems!(groups:)
+        require "parallel_tests/rspec/runner"
 
         HOMEBREW_LIBRARY_PATH.cd do
           setup_environment!
@@ -56,17 +74,23 @@ module Homebrew
           # `return false`.
           require "extend/os/dev-cmd/tests"
 
+          check_test_environment!
+
           parallel = !args.no_parallel?
 
           only = args.only
           files = if only
-            test_name, line = only.split(":", 2)
+            only.split(",").flat_map do |test|
+              test_name, line = test.split(":", 2)
+              tests = if line.present?
+                parallel = false
+                ["test/#{test_name}_spec.rb:#{line}"]
+              else
+                Dir.glob("test/{#{test_name},#{test_name}/**/*}_spec.rb")
+              end
+              raise UsageError, "Invalid `--only` argument: #{test}" if tests.blank?
 
-            if line.nil?
-              Dir.glob("test/{#{test_name},#{test_name}/**/*}_spec.rb")
-            else
-              parallel = false
-              ["test/#{test_name}_spec.rb:#{line}"]
+              tests
             end
           elsif args.changed?
             changed_test_files
@@ -83,14 +107,6 @@ module Homebrew
             end
           end
 
-          # We use `ParallelTests.last_process?` in `test/spec_helper.rb` to
-          # handle SimpleCov output but, due to how the method is implemented,
-          # it doesn't work as expected if the number of processes is greater
-          # than one but lower than the number of CPU cores in the execution
-          # environment. Coverage information isn't saved in that scenario,
-          # so we disable parallel testing as a workaround in this case.
-          parallel = false if args.profile || (args.coverage? && files.length < Hardware::CPU.cores)
-
           parallel_rspec_log_name = "parallel_runtime_rspec"
           parallel_rspec_log_name = "#{parallel_rspec_log_name}.generic" if args.generic?
           parallel_rspec_log_name = "#{parallel_rspec_log_name}.online" if args.online?
@@ -101,31 +117,41 @@ module Homebrew
           else
             "#{HOMEBREW_CACHE}/#{parallel_rspec_log_name}"
           end
-          ENV["PARALLEL_RSPEC_LOG_PATH"] = parallel_rspec_log_path
+          # A run that may not record every file must not replace the log a full run
+          # reads: `--only`, `--changed` and `--shard` cover a subset by design, and
+          # `--fail-fast` stops its workers early.
+          ENV["PARALLEL_RSPEC_LOG_PATH"] = if only || args.changed? || args.shard || args.fail_fast?
+            "#{parallel_rspec_log_path}.partial"
+          else
+            parallel_rspec_log_path
+          end
 
           parallel_args = if ENV["CI"]
-            %W[
+            %w[
               --combine-stderr
               --serialize-stdout
-              --runtime-log #{parallel_rspec_log_path}
             ]
           else
             %w[
               --nice
             ]
           end
+          # Group by recorded runtime rather than source file size, which barely
+          # correlates with how long a file takes.
+          parallel_args += ["--runtime-log", parallel_rspec_log_path]
 
           # Generate seed ourselves and output later to avoid multiple different
           # seeds being output when running parallel tests.
           seed = args.seed || rand(0xFFFF).to_i
 
-          bundle_args = ["-I", HOMEBREW_LIBRARY_PATH/"test"]
+          bundle_args = ["-I", (HOMEBREW_LIBRARY_PATH/"test").to_s]
           bundle_args += %W[
             --seed #{seed}
             --color
             --require spec_helper
           ]
           bundle_args << "--fail-fast" if args.fail_fast?
+          bundle_args << "--dry-run" if args.load_only?
           bundle_args << "--profile" << args.profile if args.profile
           bundle_args << "--tag" << "~needs_arm" unless Hardware::CPU.arm?
           bundle_args << "--tag" << "~needs_intel" unless Hardware::CPU.intel?
@@ -134,24 +160,68 @@ module Homebrew
 
           bundle_args = os_bundle_args(bundle_args)
           files = os_files(files)
+          if (shard = args.shard)
+            match = shard.match(%r{\A(\d+)/(\d+)\z})
+            raise UsageError, "Invalid `--shard` argument: #{shard}" unless match
+
+            shard_index = match[1].to_i
+            shard_count = match[2].to_i
+            if shard_count <= 1 || shard_index < 1 || shard_index > shard_count
+              raise UsageError, "Invalid `--shard` argument: #{shard}"
+            end
+
+            files = ParallelTests::RSpec::Runner.tests_in_groups(
+              files, shard_count, runtime_log: parallel_rspec_log_path
+            ).fetch(shard_index - 1)
+          end
+          if files.blank?
+            if args.changed?
+              opoo "No tests are available to run on this operating system."
+              return
+            end
+
+            raise UsageError, "No tests are available to run on this operating system."
+          end
 
           puts "Randomized with seed #{seed}"
 
           ENV["HOMEBREW_DEBUG"] = "1" if args.debug? # Used in spec_helper.rb to require the "debug" gem.
 
-          # Workaround for:
-          #
-          # ```
-          # ruby: no -r allowed while running setuid (SecurityError)
-          # ```
-          Process::UID.change_privilege(Process.euid) if Process.euid != Process.uid
+          test_prof = "#{HOMEBREW_LIBRARY_PATH}/tmp/test_prof"
+          if args.stackprof?
+            ENV["TEST_STACK_PROF"] = "1"
+            prof_input_filename = "#{test_prof}/stack-prof-report-wall-raw-total.dump"
+            prof_filename = "#{test_prof}/stack-prof-report-wall-raw-total.html"
+          elsif args.vernier?
+            ENV["TEST_VERNIER"] = "1"
+          elsif args.ruby_prof?
+            ENV["TEST_RUBY_PROF"] = "call_stack"
+            prof_filename = "#{test_prof}/ruby-prof-report-call_stack-wall-total.html"
+          end
+
+          if args.load_only?
+            # RSpec line selectors do not affect dry runs, and parallel_tests
+            # only accepts file paths.
+            files = files.map { |file| file.sub(/:\d+\z/, "") }.uniq
+            parallel_args += ["--test-file-limit", "1"]
+            parallel_args += ["-n", "1"] unless parallel
+            parallel = true
+          end
 
           if parallel
-            system "bundle", "exec", "parallel_rspec", *parallel_args, "--", *bundle_args, "--", *files
+            system("bundle", "exec", "parallel_rspec", *parallel_args,
+                   "--", *bundle_args, "--", *files)
           else
-            system "bundle", "exec", "rspec", *bundle_args, "--", *files
+            system("bundle", "exec", "rspec", *bundle_args, "--", *files)
           end
           success = $CHILD_STATUS.success?
+
+          if args.stackprof?
+            SystemCommand.safe_system "/bin/sh", "-c",
+                                      "stackprof --d3-flamegraph #{prof_input_filename} > #{prof_filename}"
+          end
+
+          Utils::Browser.open prof_filename if prof_filename
 
           return if success
 
@@ -159,17 +229,122 @@ module Homebrew
         end
       end
 
+      sig { returns(T::Array[String]) }
+      def setup_environment!
+        # Cleanup any unwanted user configuration.
+        allowed_test_env = %w[
+          HOMEBREW_AVOID_NESTED_SANDBOXING
+          HOMEBREW_GITHUB_API_TOKEN
+          HOMEBREW_CACHE
+          HOMEBREW_LOGS
+          HOMEBREW_TEMP
+        ]
+        allowed_test_env << "HOMEBREW_USE_RUBY_FROM_PATH" if Homebrew::EnvConfig.developer?
+        Homebrew::EnvConfig::ENVS.keys.map(&:to_s).each do |env|
+          next if allowed_test_env.include?(env)
+
+          ENV.delete(env)
+        end
+
+        # Fetch JSON API files if needed.
+        require "api"
+        Homebrew::API.fetch_api_files!
+
+        # Codespaces HOMEBREW_PREFIX and /tmp are mounted 755 which makes Ruby warn constantly.
+        if (ENV["HOMEBREW_CODESPACES"] == "true") && (HOMEBREW_TEMP.to_s == "/tmp")
+          # Need to keep this fairly short to avoid socket paths being too long in tests.
+          homebrew_prefix_tmp = "/home/linuxbrew/tmp"
+          ENV["HOMEBREW_TEMP"] = homebrew_prefix_tmp
+          FileUtils.mkdir_p homebrew_prefix_tmp
+          system "chmod", "-R", "g-w,o-w", HOMEBREW_PREFIX, homebrew_prefix_tmp
+        end
+
+        ENV["HOMEBREW_TESTS"] = "1"
+        ENV.delete("HOMEBREW_ASK")
+        ENV["HOMEBREW_NO_AUTO_UPDATE"] = "1"
+        ENV["HOMEBREW_NO_ANALYTICS_THIS_RUN"] = "1"
+        ENV["HOMEBREW_TEST_GENERIC_OS"] = "1" if args.generic?
+        ENV["HOMEBREW_TEST_ONLINE"] = "1" if args.online?
+        # Keep in sync with `Library/Homebrew/brew.sh`.
+        if ENV["HOMEBREW_TESTS_NO_SORBET_RUNTIME"]
+          ENV.delete("HOMEBREW_SORBET_RUNTIME")
+          ENV.delete("HOMEBREW_SORBET_RECURSIVE")
+        else
+          ENV["HOMEBREW_SORBET_RUNTIME"] = "1"
+          ENV["HOMEBREW_SORBET_RECURSIVE"] = "1"
+        end
+
+        ENV["USER"] ||= system_command!("id", args: ["-nu"]).stdout.chomp
+
+        # Avoid local configuration messing with tests, e.g. git being configured
+        # to use GPG to sign by default
+        ENV["HOME"] = "#{HOMEBREW_LIBRARY_PATH}/test"
+        # Keep generic tool caches (e.g. RuboCop) out of the sandboxed test home.
+        ENV["XDG_CACHE_HOME"] = "#{HOMEBREW_CACHE}/tests"
+        # Same for tool state, e.g. `mise` writes `.local/state/mise` under `$HOME`.
+        ENV["XDG_STATE_HOME"] = "#{HOMEBREW_CACHE}/tests-state"
+        # Sandbox the config home too, so the spec teardown can't delete the real `trust.json`.
+        ENV["HOMEBREW_USER_CONFIG_HOME"] = "#{Dir.home}/.homebrew"
+
+        # Print verbose output when requesting debug or verbose output.
+        ENV["HOMEBREW_VERBOSE_TESTS"] = "1" if args.debug? || args.verbose?
+
+        if args.coverage?
+          ENV["HOMEBREW_TESTS_COVERAGE"] = "1"
+          FileUtils.rm_f "test/coverage/.resultset.json"
+        end
+
+        # Override author/committer as global settings might be invalid and thus
+        # will cause silent failure during the setup of dummy Git repositories.
+        %w[AUTHOR COMMITTER].each do |role|
+          ENV["GIT_#{role}_NAME"] = "brew tests"
+          ENV["GIT_#{role}_EMAIL"] = "brew-tests@localhost"
+          ENV["GIT_#{role}_DATE"]  = "Sun Jan 22 19:59:13 2017 +0000"
+        end
+      end
+
+      sig { void }
+      def check_test_environment!; end
+
+      sig { returns(T::Array[String]) }
+      def changed_test_files
+        changed_files = Utils::Git.changed_files(HOMEBREW_REPOSITORY)
+
+        odebug "No files have been changed from the default branch." if changed_files.empty?
+        return [] if changed_files.empty?
+
+        filestub_regex = %r{Library/Homebrew/([\w/-]+).rb}
+        changed_files.filter_map { |file| file[filestub_regex, 1] }
+                     .flat_map do |filestub|
+          shared_context_tests = shared_context_test_files(filestub)
+          next shared_context_tests if shared_context_tests.present?
+
+          if filestub.start_with?("test/")
+            # Only run tests on *_spec.rb files in test/ folder
+            filestub.end_with?("_spec") ? [Pathname("#{filestub}.rb")] : []
+          else
+            # For all other changed .rb files guess the associated test file name
+            [Pathname("test/#{filestub}_spec.rb")]
+          end
+        end
+          .uniq
+          .select(&:exist?)
+          .map(&:to_s)
+      end
+
       private
 
       sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
       def os_bundle_args(bundle_args)
         # for generic tests, remove macOS or Linux specific tests
+        bundle_args << "--tag" << "~needs_sandbox"
         non_linux_bundle_args(non_macos_bundle_args(bundle_args))
       end
 
       sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
       def non_macos_bundle_args(bundle_args)
         bundle_args << "--tag" << "~needs_homebrew_core" if ENV["CI"]
+        bundle_args << "--tag" << "~needs_svnadmin" unless args.online?
         bundle_args << "--tag" << "~needs_svn" unless args.online?
 
         bundle_args << "--tag" << "~needs_macos" << "--tag" << "~cask"
@@ -196,77 +371,43 @@ module Homebrew
         files.grep_v(%r{^test/os/linux(/.*|_spec\.rb)$})
       end
 
-      sig { returns(T::Array[String]) }
-      def changed_test_files
-        changed_files = Utils.popen_read("git", "diff", "--name-only", "master")
-
-        raise UsageError, "No files have been changed from the master branch!" if changed_files.blank?
-
-        filestub_regex = %r{Library/Homebrew/([\w/-]+).rb}
-        changed_files.scan(filestub_regex).map(&:last).filter_map do |filestub|
-          if filestub.start_with?("test/")
-            # Only run tests on *_spec.rb files in test/ folder
-            filestub.end_with?("_spec") ? Pathname("#{filestub}.rb") : nil
-          else
-            # For all other changed .rb files guess the associated test file name
-            Pathname("test/#{filestub}_spec.rb")
-          end
-        end.select(&:exist?)
+      sig { params(filestub: String).returns(T::Array[Pathname]) }
+      def shared_context_test_files(filestub)
+        case filestub
+        when "test/support/helper/spec/shared_context/integration_test"
+          tests_tagged_with("integration_test")
+        when "test/support/helper/spec/shared_context/homebrew_cask"
+          tests_tagged_with("cask")
+        else
+          []
+        end
       end
 
-      sig { returns(T::Array[String]) }
-      def setup_environment!
-        # Cleanup any unwanted user configuration.
-        allowed_test_env = %w[
-          HOMEBREW_GITHUB_API_TOKEN
-          HOMEBREW_CACHE
-          HOMEBREW_LOGS
-          HOMEBREW_TEMP
-        ]
-        allowed_test_env << "HOMEBREW_USE_RUBY_FROM_PATH" if Homebrew::EnvConfig.developer?
-        Homebrew::EnvConfig::ENVS.keys.map(&:to_s).each do |env|
-          next if allowed_test_env.include?(env)
+      sig { params(tag: String).returns(T::Array[Pathname]) }
+      def tests_tagged_with(tag)
+        Dir.glob("test/**/*_spec.rb").filter_map do |file|
+          path = Pathname(file)
+          next unless path.exist?
+          next unless file_uses_rspec_tag?(path, tag)
 
-          ENV.delete(env)
+          path
         end
+      end
 
-        # Codespaces HOMEBREW_PREFIX and /tmp are mounted 755 which makes Ruby warn constantly.
-        if (ENV["HOMEBREW_CODESPACES"] == "true") && (HOMEBREW_TEMP.to_s == "/tmp")
-          # Need to keep this fairly short to avoid socket paths being too long in tests.
-          homebrew_prefix_tmp = "/home/linuxbrew/tmp"
-          ENV["HOMEBREW_TEMP"] = homebrew_prefix_tmp
-          FileUtils.mkdir_p homebrew_prefix_tmp
-          system "chmod", "-R", "g-w,o-w", HOMEBREW_PREFIX, homebrew_prefix_tmp
-        end
+      sig { params(path: Pathname, tag: String).returns(T::Boolean) }
+      def file_uses_rspec_tag?(path, tag)
+        escaped_tag = Regexp.escape(tag)
+        rspec_declaration_methods = %w[describe context it specify example].join("|")
+        rspec_declaration_regex = /^\s*(?:RSpec\.)?(?:#{rspec_declaration_methods})\b/
+        # Match symbol tag syntax: `:tag_name`.
+        symbol_tag_regex = /(?:^|[,(])\s*:#{escaped_tag}\b/
+        # Match hash tag syntax: `tag_name: true/false/nil/value`.
+        hash_tag_regex = /(?:^|[,(])\s*#{escaped_tag}:\s*(?:true|false|nil|:[a-z_]\w*|[a-z_]\w*)?/i
 
-        ENV["HOMEBREW_TESTS"] = "1"
-        ENV["HOMEBREW_NO_AUTO_UPDATE"] = "1"
-        ENV["HOMEBREW_NO_ANALYTICS_THIS_RUN"] = "1"
-        ENV["HOMEBREW_TEST_GENERIC_OS"] = "1" if args.generic?
-        ENV["HOMEBREW_TEST_ONLINE"] = "1" if args.online?
-        ENV["HOMEBREW_SORBET_RUNTIME"] = "1"
-        ENV["HOMEBREW_NO_FORCE_BREW_WRAPPER"] = "1"
-
-        ENV["USER"] ||= system_command!("id", args: ["-nu"]).stdout.chomp
-
-        # Avoid local configuration messing with tests, e.g. git being configured
-        # to use GPG to sign by default
-        ENV["HOME"] = "#{HOMEBREW_LIBRARY_PATH}/test"
-
-        # Print verbose output when requesting debug or verbose output.
-        ENV["HOMEBREW_VERBOSE_TESTS"] = "1" if args.debug? || args.verbose?
-
-        if args.coverage?
-          ENV["HOMEBREW_TESTS_COVERAGE"] = "1"
-          FileUtils.rm_f "test/coverage/.resultset.json"
-        end
-
-        # Override author/committer as global settings might be invalid and thus
-        # will cause silent failure during the setup of dummy Git repositories.
-        %w[AUTHOR COMMITTER].each do |role|
-          ENV["GIT_#{role}_NAME"] = "brew tests"
-          ENV["GIT_#{role}_EMAIL"] = "brew-tests@localhost"
-          ENV["GIT_#{role}_DATE"]  = "Sun Jan 22 19:59:13 2017 +0000"
+        path.read.each_line.any? do |line|
+          is_rspec_declaration = line.match?(rspec_declaration_regex)
+          has_tag = line.match?(symbol_tag_regex) || line.match?(hash_tag_regex)
+          is_rspec_declaration && has_tag
         end
       end
     end

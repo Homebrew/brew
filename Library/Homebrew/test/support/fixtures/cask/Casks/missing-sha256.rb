@@ -1,3 +1,5 @@
+# typed: false
+
 cask "missing-sha256" do
   version "1.2.3"
 

@@ -5,4 +5,14 @@
 # Please instead update this file by running `bin/tapioca dsl RuboCop::Cop::FormulaAudit::PythonVersions`.
 
 
-class RuboCop::Cop::FormulaAudit::PythonVersions; end
+class RuboCop::Cop::FormulaAudit::PythonVersions
+  sig do
+    params(
+      node: RuboCop::AST::Node,
+      pattern: T.any(String, Symbol),
+      kwargs: T.untyped,
+      block: T.untyped
+    ).returns(T.untyped)
+  end
+  def hardcoded_python_assignment(node, *pattern, **kwargs, &block); end
+end

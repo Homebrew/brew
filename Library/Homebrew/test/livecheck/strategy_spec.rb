@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "livecheck/strategy"
@@ -7,7 +8,6 @@ RSpec.describe Homebrew::Livecheck::Strategy do
 
   let(:url) { "https://brew.sh/" }
   let(:redirection_url) { "https://brew.sh/redirection" }
-
   let(:post_hash) do
     {
       empty:   "",
@@ -18,7 +18,6 @@ RSpec.describe Homebrew::Livecheck::Strategy do
   end
   let(:form_string) { "empty=&boolean=true&number=1&string=a+%2B+b+%3D+c" }
   let(:json_string) { '{"empty":"","boolean":"true","number":"1","string":"a + b = c"}' }
-
   let(:response_hash) do
     response_hash = {}
 
@@ -26,7 +25,10 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       status_code: "200",
       status_text: "OK",
       headers:     {
-        "cache-control"  => "max-age=604800",
+        "cache-control"  => [
+          "max-age=604800, must-revalidate",
+          "public, no-transform",
+        ],
         "content-type"   => "text/html; charset=UTF-8",
         "date"           => "Wed, 1 Jan 2020 01:23:45 GMT",
         "expires"        => "Wed, 31 Jan 2020 01:23:45 GMT",
@@ -39,7 +41,10 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       status_code: "301",
       status_text: "Moved Permanently",
       headers:     {
-        "cache-control"  => "max-age=604800",
+        "cache-control"  => [
+          "max-age=604800, must-revalidate",
+          "public, no-transform",
+        ],
         "content-type"   => "text/html; charset=UTF-8",
         "date"           => "Wed, 1 Jan 2020 01:23:45 GMT",
         "expires"        => "Wed, 31 Jan 2020 01:23:45 GMT",
@@ -51,7 +56,6 @@ RSpec.describe Homebrew::Livecheck::Strategy do
 
     response_hash
   end
-
   let(:body) do
     <<~HTML
       <!DOCTYPE html>
@@ -68,7 +72,6 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       </html>
     HTML
   end
-
   let(:response_text) do
     response_text = {}
 
@@ -184,6 +187,76 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       expect(strategy.page_headers(url)).to eq([responses.first[:headers]])
     end
 
+    it "allows a slow HEAD request and GET fallback within their individual timeouts" do
+      start_time = Time.at(1_700_000_000)
+      allow(Time).to receive(:now).and_return(start_time)
+      allow(strategy).to receive(:curl_version).and_return(Version.new("8.10"))
+      allow(strategy).to receive(:curl_output) do |*args, **options|
+        raise Timeout::Error if options.fetch(:timeout) < 12
+
+        allow(Time).to receive(:now).and_return(Time.now + 12)
+        headers = "HTTP/1.1 200 OK\r\n"
+        headers += "Content-Disposition: attachment; filename=example-1.2.3.zip\r\n" if args.include?("GET")
+        instance_double(SystemCommand::Result, success?: true, stdout: "#{headers}\r\n")
+      end
+
+      expect(strategy.page_headers(url)).to eq([
+        { "content-disposition" => "attachment; filename=example-1.2.3.zip" },
+      ])
+    end
+
+    it "only allows HTTPS redirects" do
+      expect(strategy).to receive(:curl_headers).with(
+        "--max-redirs",
+        "5",
+        "--proto-redir",
+        "=https",
+        url,
+        wanted_headers:    ["location", "content-disposition"],
+        use_homebrew_curl: false,
+        cookies:           nil,
+        header:            nil,
+        referer:           nil,
+        user_agent:        :default,
+        **Homebrew::Livecheck::Strategy::DEFAULT_CURL_OPTIONS,
+      ).and_return({ responses:, body: })
+
+      expect(strategy.page_headers(url)).to eq([responses.first[:headers]])
+    end
+
+    it "handles `cookies` `url` options" do
+      allow(strategy).to receive(:curl_headers).and_return({ responses:, body: })
+
+      expect(
+        strategy.page_headers(
+          url,
+          options: Homebrew::Livecheck::Options.new(
+            cookies: { "cookie_key" => "cookie_value" },
+          ),
+        ),
+      ).to eq([responses.first[:headers]])
+    end
+
+    it "handles `header` `url` options" do
+      allow(strategy).to receive(:curl_headers).and_return({ responses:, body: })
+
+      expect(
+        strategy.page_headers(
+          url,
+          options: Homebrew::Livecheck::Options.new(header: "Accept: */*"),
+        ),
+      ).to eq([responses.first[:headers]])
+
+      expect(
+        strategy.page_headers(
+          url,
+          options: Homebrew::Livecheck::Options.new(
+            header: ["Accept: */*", "X-Requested-With: XMLHttpRequest"],
+          ),
+        ),
+      ).to eq([responses.first[:headers]])
+    end
+
     it "handles `post_form` `url` options" do
       allow(strategy).to receive(:curl_headers).and_return({ responses:, body: })
 
@@ -195,22 +268,194 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       ).to eq([responses.first[:headers]])
     end
 
+    it "handles `post_json` `url` options" do
+      allow(strategy).to receive(:curl_headers).and_return({ responses:, body: })
+
+      expect(
+        strategy.page_headers(
+          url,
+          options: Homebrew::Livecheck::Options.new(post_json: post_hash),
+        ),
+      ).to eq([responses.first[:headers]])
+    end
+
+    it "handles `referer` `url` option" do
+      allow(strategy).to receive(:curl_headers).and_return({ responses:, body: })
+
+      expect(
+        strategy.page_headers(
+          url,
+          options: Homebrew::Livecheck::Options.new(referer: "https://brew.sh/"),
+        ),
+      ).to eq([responses.first[:headers]])
+    end
+
+    it "handles `user_agent` `url` option" do
+      allow(strategy).to receive(:curl_headers).and_return({ responses:, body: })
+
+      expect(
+        strategy.page_headers(
+          url,
+          options: Homebrew::Livecheck::Options.new(user_agent: :browser),
+        ),
+      ).to eq([responses.first[:headers]])
+    end
+
     it "returns an empty array if `curl_headers` only raises an `ErrorDuringExecution` error" do
       allow(strategy).to receive(:curl_headers).and_raise(ErrorDuringExecution.new([], status: 1))
 
+      # TODO: Remove this line when removing the user agent fallback logic
+      expect(Utils::Output).not_to receive(:odeprecated)
+
       expect(strategy.page_headers(url)).to eq([])
+    end
+
+    it "returns an empty array if `curl_headers` returns a hash without responses" do
+      allow(strategy).to receive(:curl_headers).and_return({})
+
+      # TODO: Remove this line when removing the user agent fallback logic
+      expect(Utils::Output).not_to receive(:odeprecated)
+
+      expect(strategy.page_headers(url)).to eq([])
+    end
+
+    # TODO: Remove this block when removing the user agent fallback logic
+    context "when the `:default` user agent request fails" do
+      before do
+        allow(strategy).to receive(:curl_headers) do |*_args, user_agent:, **|
+          raise ErrorDuringExecution.new([], status: 1) if user_agent == :default
+
+          { responses:, body: }
+        end
+      end
+
+      it "deprecates the user agent fallback if the `:browser` user agent request succeeds" do
+        expect(Utils::Output).to receive(:odeprecated).with(
+          "the user agent fallback in `page_headers`",
+          "the `user_agent:` option in a `livecheck` block",
+        )
+
+        strategy.page_headers(url)
+      end
+
+      it "returns headers from the `:browser` user agent request" do
+        allow(Utils::Output).to receive(:odeprecated)
+
+        expect(strategy.page_headers(url)).to eq([responses.first[:headers]])
+      end
+    end
+
+    # TODO: Remove this block when removing the user agent fallback logic
+    it "deprecates the user agent fallback if `:default` doesn't return headers but `:browser` succeeds" do
+      allow(strategy).to receive(:curl_headers) do |*_args, user_agent:, **|
+        next { responses: [], body: } if user_agent == :default
+
+        { responses:, body: }
+      end
+
+      expect(Utils::Output).to receive(:odeprecated).with(
+        "the user agent fallback in `page_headers`",
+        "the `user_agent:` option in a `livecheck` block",
+      )
+
+      strategy.page_headers(url)
     end
   end
 
   describe "::page_content" do
     let(:curl_version) { Version.new("8.7.1") }
     let(:success_status) { instance_double(Process::Status, success?: true, exitstatus: 0) }
+    let(:failure_status) { instance_double(Process::Status, success?: false, exitstatus: 1) }
 
     it "returns hash including fetched content" do
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
       allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])
 
       expect(strategy.page_content(url)).to eq({ content: body })
+    end
+
+    it "only allows HTTPS redirects" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+
+      expect(strategy).to receive(:curl_output).with(
+        "--fail-with-body",
+        "--include",
+        "--location",
+        "--max-redirs",
+        "5",
+        "--proto-redir",
+        "=https",
+        "--silent",
+        "--compressed",
+        url,
+        **Homebrew::Livecheck::Strategy::DEFAULT_CURL_OPTIONS,
+        use_homebrew_curl: false,
+        cookies:           nil,
+        header:            nil,
+        referer:           nil,
+        user_agent:        :default,
+      ).and_return([response_text[:ok], nil, success_status])
+
+      expect(strategy.page_content(url)).to eq({ content: body })
+    end
+
+    it "handles `compressed` `url` option" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+      allow_any_instance_of(Utils::Curl).to receive(:curl_output).and_return(
+        [response_text[:ok], nil, success_status],
+      )
+
+      expect_any_instance_of(Utils::Curl).to receive(:curl_output).with(
+        *Homebrew::Livecheck::Strategy::PAGE_CONTENT_CURL_ARGS,
+        url,
+        **Homebrew::Livecheck::Strategy::DEFAULT_CURL_OPTIONS,
+        use_homebrew_curl: false,
+        cookies:           nil,
+        header:            nil,
+        referer:           nil,
+        user_agent:        :default,
+      )
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(compressed: false),
+        ),
+      ).to eq({ content: body })
+    end
+
+    it "handles `cookies` `url` option" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+      allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])
+
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(
+            cookies: { "cookie_key" => "cookie_value" },
+          ),
+        ),
+      ).to eq({ content: body })
+    end
+
+    it "handles `header` `url` option" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+      allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])
+
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(header: "Accept: */*"),
+        ),
+      ).to eq({ content: body })
+
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(
+            header: ["Accept: */*", "X-Requested-With: XMLHttpRequest"],
+          ),
+        ),
+      ).to eq({ content: body })
     end
 
     it "handles `post_form` `url` option" do
@@ -237,6 +482,30 @@ RSpec.describe Homebrew::Livecheck::Strategy do
       ).to eq({ content: body })
     end
 
+    it "handles `referer` `url` option" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+      allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])
+
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(referer: "https://brew.sh/"),
+        ),
+      ).to eq({ content: body })
+    end
+
+    it "handles `user_agent` `url` option" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+      allow(strategy).to receive(:curl_output).and_return([response_text[:ok], nil, success_status])
+
+      expect(
+        strategy.page_content(
+          url,
+          options: Homebrew::Livecheck::Options.new(user_agent: :browser),
+        ),
+      ).to eq({ content: body })
+    end
+
     it "returns error `messages` from `stderr` in the return hash on failure when `stderr` is not `nil`" do
       error_message = "curl: (6) Could not resolve host: brew.sh"
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
@@ -251,11 +520,10 @@ RSpec.describe Homebrew::Livecheck::Strategy do
 
     it "returns default error `messages` in the return hash on failure when `stderr` is `nil`" do
       allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
-      allow(strategy).to receive(:curl_output).and_return([
-        nil,
-        nil,
-        instance_double(Process::Status, success?: false, exitstatus: 1),
-      ])
+      allow(strategy).to receive(:curl_output).and_return([nil, nil, failure_status])
+
+      # TODO: Remove this line when removing the user agent fallback logic
+      expect(Utils::Output).not_to receive(:odeprecated)
 
       expect(strategy.page_content(url)).to eq({ messages: ["cURL failed without a detectable error"] })
     end
@@ -266,12 +534,42 @@ RSpec.describe Homebrew::Livecheck::Strategy do
 
       expect(strategy.page_content(url)).to eq({ content: body, final_url: redirection_url })
     end
+
+    # TODO: Remove this block when removing the user agent fallback logic
+    context "when the `:default` user agent request fails" do
+      before do
+        allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(curl_version)
+        allow(strategy).to receive(:curl_output) do |*_args, user_agent:, **|
+          next [nil, nil, failure_status] if user_agent == :default
+
+          [response_text[:ok], nil, success_status]
+        end
+      end
+
+      it "deprecates the user agent fallback if the `:browser` user agent request succeeds" do
+        expect(Utils::Output).to receive(:odeprecated).with(
+          "the user agent fallback in `page_content`",
+          "the `user_agent:` option in a `livecheck` block",
+        )
+
+        strategy.page_content(url)
+      end
+
+      it "returns hash including content from the `:browser` user agent request" do
+        allow(Utils::Output).to receive(:odeprecated)
+
+        expect(strategy.page_content(url)).to eq({ content: body })
+      end
+    end
   end
 
   describe "::handle_block_return" do
     it "returns an array of version strings when given a valid value" do
       expect(strategy.handle_block_return("1.2.3")).to eq(["1.2.3"])
       expect(strategy.handle_block_return(["1.2.3", "1.2.4"])).to eq(["1.2.3", "1.2.4"])
+      expect(strategy.handle_block_return([Version.new("1.2.3"), "1.2.4"])).to eq(["1.2.3", "1.2.4"])
+      expect(strategy.handle_block_return([Version.new("1.2.3"), nil, "1.2.4"])).to eq(["1.2.3", "1.2.4"])
+      expect(strategy.handle_block_return([Version.new("1.2.3"), "1.2.3", nil, "1.2.4"])).to eq(["1.2.3", "1.2.4"])
     end
 
     it "returns an empty array when given a nil value" do
@@ -280,7 +578,7 @@ RSpec.describe Homebrew::Livecheck::Strategy do
 
     it "errors when given an invalid value" do
       expect { strategy.handle_block_return(123) }
-        .to raise_error(TypeError, strategy::INVALID_BLOCK_RETURN_VALUE_MSG)
+        .to raise_error(TypeError, Homebrew::Livecheck::Strategy::INVALID_BLOCK_RETURN_VALUE_MSG)
     end
   end
 end

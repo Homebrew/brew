@@ -10,24 +10,76 @@ require "extend/module"
 # There are mechanisms to achieve a middle ground (`default_checked_level`).
 if ENV["HOMEBREW_SORBET_RUNTIME"]
   T::Configuration.enable_final_checks_on_hooks
+  if ENV["HOMEBREW_SORBET_RECURSIVE"] == "1"
+    module T
+      module Types
+        class FixedArray < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class FixedHash < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class Intersection < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedArray < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedEnumerable < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedEnumeratorChain < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedEnumeratorLazy < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedHash < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedRange < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class TypedSet < TypedEnumerable
+          def valid?(obj) = recursively_valid?(obj)
+        end
+
+        class Union < Base
+          def valid?(obj) = recursively_valid?(obj)
+        end
+      end
+    end
+  end
 else
-  # Redefine `T.let`, etc. to make the `checked` parameter default to `false` rather than `true`.
+  # Redefine `T.let`, etc. to return the value without dispatching to
+  # sorbet-runtime at all: these methods are called often enough (e.g. for
+  # every `Pathname` allocation) that even the disabled-check dispatch is
+  # measurable.
   # @private
   module TNoChecks
-    def cast(value, type, checked: false)
-      super
+    def cast(value, _type, checked: false)
+      value
     end
 
-    def let(value, type, checked: false)
-      super
+    def let(value, _type, checked: false)
+      value
     end
 
-    def bind(value, type, checked: false)
-      super
+    def bind(value, _type, checked: false)
+      value
     end
 
-    def assert_type!(value, type, checked: false)
-      super
+    def assert_type!(value, _type, checked: false)
+      value
     end
   end
 

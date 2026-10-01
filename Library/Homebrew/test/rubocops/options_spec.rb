@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/options"
@@ -6,31 +7,10 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Options do
   subject(:cop) { described_class.new }
 
   context "when auditing options" do
-    it "reports an offense when using the 32-bit option" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          url 'https://brew.sh/foo-1.0.tgz'
-          option "with-32-bit"
-                 ^^^^^^^^^^^^^ FormulaAudit/Options: macOS has been 64-bit only since 10.6 so 32-bit options are deprecated.
-        end
-      RUBY
-    end
-
-    it "reports an offense when using `:universal`" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          url 'https://brew.sh/foo-1.0.tgz'
-          option :universal
-          ^^^^^^^^^^^^^^^^^ FormulaAudit/Options: macOS has been 64-bit only since 10.6 so universal options are deprecated.
-        end
-      RUBY
-    end
-
     it "reports an offense when using bad option names" do
       expect_offense(<<~RUBY)
         class Foo < Formula
           url 'https://brew.sh/foo-1.0.tgz'
-          option :cxx11
           option "examples", "with-examples"
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Options: Options should begin with `with` or `without`. Migrate '--examples' with `deprecated_option`.
         end
@@ -43,6 +23,16 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Options do
           url 'https://brew.sh/foo-1.0.tgz'
           option "without-check"
           ^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Options: Use '--without-test' instead of '--without-check'. Migrate '--without-check' with `deprecated_option`.
+        end
+      RUBY
+    end
+
+    it "does not report an offense when `check` is an optional dependency given as an array value" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          depends_on "check" => [:optional, :test]
+          option "with-check"
         end
       RUBY
     end

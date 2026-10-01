@@ -1,3 +1,5 @@
+# typed: false
+
 cask "with-shellcompletion-long" do
   version "1.2.3"
   sha256 "957978d9b30adfda8e1f914ba8c8019e016545c8f7e16c6ab0234d189fac8146"
@@ -6,6 +8,7 @@ cask "with-shellcompletion-long" do
   homepage "https://brew.sh/with-autodetected-manpage-section"
 
   bash_completion "test.bash-completion"
-  fish_completion "test.fish-completion"
   zsh_completion "test.zsh-completion"
+  fish_completion "test.fish-completion"
+  pwsh_completion "test.pwsh-completion"
 end

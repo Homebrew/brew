@@ -10,6 +10,9 @@ class ResourceStageContext
   def mirrors(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
+  def quiet!(*args, &block); end
+
+  sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }
   def retain!(*args, &block); end
 
   sig { params(args: T.untyped, block: T.untyped).returns(T.untyped) }

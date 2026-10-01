@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cask/config"
@@ -10,6 +11,7 @@ module Cask
   class Config
     DEFAULT_DIRS_PATHNAMES = {
       appdir:               Pathname(TEST_TMPDIR)/"cask-appdir",
+      appimagedir:          Pathname(TEST_TMPDIR)/"cask-appimagedir",
       keyboard_layoutdir:   Pathname(TEST_TMPDIR)/"cask-keyboard-layoutdir",
       prefpanedir:          Pathname(TEST_TMPDIR)/"cask-prefpanedir",
       qlplugindir:          Pathname(TEST_TMPDIR)/"cask-qlplugindir",
@@ -33,6 +35,8 @@ end
 
 # These shared contexts starting with `when` don't make sense.
 RSpec.shared_context "Homebrew Cask", :needs_macos do # rubocop:disable RSpec/ContextWording
+  T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
+
   around do |example|
     third_party_tap = Tap.fetch("third-party", "tap")
 

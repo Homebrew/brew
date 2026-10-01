@@ -1,10 +1,11 @@
+# typed: false
 # frozen_string_literal: true
 
 require "formula_auditor"
+require "git_repository"
+require "securerandom"
 
 RSpec.describe Homebrew::FormulaAuditor do
-  include FileUtils
-
   let(:dir) { mktmpdir }
   let(:foo_version) do
     @count ||= 0
@@ -15,6 +16,13 @@ RSpec.describe Homebrew::FormulaAuditor do
   let(:origin_formula_path) { origin_tap_path/formula_subpath }
   let(:tap_path) { HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-bar" }
   let(:formula_path) { tap_path/formula_subpath }
+
+  include FileUtils
+  include Test::Helper::Formula
+
+  # These specs audit formula content loaded from fixture taps cloned over local
+  # paths, not tap trust, so treat those taps as trusted when loading formulae.
+  before { allow(Homebrew::Trust).to receive(:trusted_tap?).and_return(true) }
 
   def formula_auditor(name, text, options = {})
     path = Pathname.new "#{dir}/#{name}.rb"
@@ -31,7 +39,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       options.delete :tap_audit_exceptions
     end
 
-    described_class.new(formula, options)
+    Homebrew::FormulaAuditor.new(formula, **options)
   end
 
   def formula_gsub(before, after = "")
@@ -39,6 +47,26 @@ RSpec.describe Homebrew::FormulaAuditor do
     text.gsub! before, after
     formula_path.unlink
     formula_path.write text
+  end
+
+  def test_formula_source(name:, compatibility_version: nil, revision: 0, depends_on: [])
+    class_name = name.gsub(/[^0-9a-z]/i, "_").split("_").reject(&:empty?).map(&:capitalize).join
+    class_name = "TestFormula#{SecureRandom.hex(2)}" if class_name.empty?
+
+    lines = []
+    lines << "class #{class_name} < Formula"
+    lines << '  desc "Test formula"'
+    lines << '  homepage "https://brew.sh"'
+    lines << %Q(  url "https://brew.sh/#{name}-1.0.tar.gz")
+    lines << '  sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"'
+    lines << "  compatibility_version #{compatibility_version}" if compatibility_version
+    lines << "  revision #{revision}" if revision.positive?
+    Array(depends_on).each { |dep| lines << %Q(  depends_on "#{dep}") }
+    lines << "  def install"
+    lines << "    bin.mkpath"
+    lines << "  end"
+    lines << "end"
+    "#{lines.join("\n")}\n"
   end
 
   def formula_gsub_origin_commit(before, after = "")
@@ -66,6 +94,95 @@ RSpec.describe Homebrew::FormulaAuditor do
       RUBY
 
       expect(fa.problems).to be_empty
+    end
+  end
+
+  describe "#audit_homepage" do
+    before do
+      allow(Date).to receive(:today).and_return(Date.new(2026, 7, 26))
+      allow(DevelopmentTools).to receive(:curl_handles_most_https_certificates?).and_return(true)
+    end
+
+    it "skips homepages browsed by a human less than a year ago" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          homepage "https://brew.sh", browsed: "2025-07-27"
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      RUBY
+
+      expect(fa).not_to receive(:curl_check_http_content)
+      fa.audit_homepage
+    end
+
+    it "audits homepages browsed by a human a year ago" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          homepage "https://brew.sh", browsed: "2025-07-26"
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      RUBY
+
+      expect(fa).to receive(:curl_check_http_content)
+      fa.audit_homepage
+    end
+
+    it "audits homepages with a future browser check date" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          homepage "https://brew.sh", browsed: "2026-07-27"
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      RUBY
+
+      expect(fa).to receive(:curl_check_http_content)
+      fa.audit_homepage
+    end
+  end
+
+  describe "#audit_homepage_domain_age" do
+    let(:domain_problem) { "`homepage` domain `brew.sh` was registered on 2026-07-01" }
+
+    def homepage_auditor(**options)
+      formula_auditor "foo", <<~RUBY, { core_tap: true, new_formula: true }.merge(options)
+        class Foo < Formula
+          homepage "https://brew.sh"
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      RUBY
+    end
+
+    it "reports newly registered homepage domains" do
+      allow(SharedAudits).to receive(:new_domain_problem)
+        .with("https://brew.sh").and_return(domain_problem)
+
+      fa = homepage_auditor
+      fa.audit_homepage_domain_age
+
+      expect(fa.problems.first[:message]).to eq(domain_problem)
+    end
+
+    it "accepts established homepage domains" do
+      allow(SharedAudits).to receive(:new_domain_problem).and_return(nil)
+
+      fa = homepage_auditor
+      fa.audit_homepage_domain_age
+
+      expect(fa.problems).to be_empty
+    end
+
+    it "does not check existing formulae" do
+      fa = homepage_auditor new_formula: false
+
+      expect(SharedAudits).not_to receive(:new_domain_problem)
+      fa.audit_homepage_domain_age
+    end
+
+    it "does not check formulae outside homebrew/core" do
+      fa = homepage_auditor core_tap: false
+
+      expect(SharedAudits).not_to receive(:new_domain_problem)
+      fa.audit_homepage_domain_age
     end
   end
 
@@ -285,7 +402,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later"
         end
       RUBY
@@ -301,7 +418,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license all_of: ["GPL-3.0-or-later", "MIT"]
         end
       RUBY
@@ -317,7 +434,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later" => { with: "LLVM-exception" }
         end
       RUBY
@@ -332,7 +449,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later" => { with: "zzz" }
         end
       RUBY
@@ -351,7 +468,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later" => { with: "#{deprecated_spdx_exception}" }
         end
       RUBY
@@ -371,7 +488,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa = formula_auditor "cask", <<~RUBY, spdx_license_data:, online: true, new_formula: true
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "GPL-3.0-or-later"
         end
       RUBY
@@ -385,7 +502,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa = formula_auditor "cask", <<~RUBY, spdx_license_data:, online: true, new_formula: true
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license any_of: ["GPL-3.0-or-later", "MIT"]
         end
       RUBY
@@ -399,7 +516,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "0BSD"
         end
       RUBY
@@ -416,7 +533,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license "0BSD"
         end
       RUBY
@@ -433,7 +550,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license #{license_any_mismatch}
         end
       RUBY
@@ -450,7 +567,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
-          head "https://github.com/cask/cask.git"
+          head "https://github.com/cask/cask.git", branch: "main"
           license #{license_any}
         end
       RUBY
@@ -459,6 +576,60 @@ RSpec.describe Homebrew::FormulaAuditor do
 
       fa.audit_license
       expect(fa.problems).to be_empty
+    end
+  end
+
+  describe "#audit_node_modules" do
+    let(:fa) do
+      formula_auditor("foo", <<~RUBY, core_tap:)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+        end
+      RUBY
+    end
+    let(:node_modules) { fa.formula.libexec/"lib/node_modules" }
+    let(:reject_package) { "@anthropic-ai/claude-agent-sdk" }
+    let(:audit_message) { "uses #{reject_package} which has an incompatible license" }
+
+    context "when core tap" do
+      let(:core_tap) { true }
+
+      it "detects unacceptable npm packages" do
+        (node_modules/reject_package).mkpath
+        fa.audit_node_modules
+        expect(fa.problems.first[:message]).to match audit_message
+      end
+
+      it "detects unacceptable npm packages in nested node_modules" do
+        (node_modules/"foo/node_modules/bar/node_modules"/reject_package).mkpath
+        fa.audit_node_modules
+        expect(fa.problems.first[:message]).to match audit_message
+      end
+
+      it "detects unacceptable npm packages in .pnpm hoisted directory" do
+        (node_modules/".pnpm/node_modules"/reject_package).mkpath
+        fa.audit_node_modules
+        expect(fa.problems.first[:message]).to match audit_message
+      end
+
+      it "skips audit when no node_modules" do
+        fa.formula.libexec.mkpath
+        fa.audit_node_modules
+        expect(fa.problems).to be_empty
+      end
+    end
+
+    context "when non-core tap" do
+      let(:core_tap) { false }
+
+      it "skips audit" do
+        (node_modules/reject_package).mkpath
+        (node_modules/"foo/node_modules/bar/node_modules"/reject_package).mkpath
+        (node_modules/".pnpm/node_modules"/reject_package).mkpath
+        fa.audit_node_modules
+        expect(fa.problems).to be_empty
+      end
     end
   end
 
@@ -677,6 +848,8 @@ RSpec.describe Homebrew::FormulaAuditor do
 
   describe "#audit_specs" do
     let(:livecheck_throttle) { "livecheck do\n    throttle 10\n  end" }
+    let(:livecheck_throttle_days) { "livecheck do\n    throttle days: 1\n  end" }
+    let(:livecheck_throttle_rate_days) { "livecheck do\n    throttle 10, days: 1\n  end" }
     let(:versioned_head_spec_list) { { versioned_head_spec_allowlist: ["foo"] } }
 
     it "doesn't allow to miss a checksum" do
@@ -712,6 +885,176 @@ RSpec.describe Homebrew::FormulaAuditor do
 
       fa.audit_specs
       expect(fa.problems).to be_empty
+    end
+
+    it "accepts a curl dependency with a working HTTP mirror" do
+      sha256 = "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+      mirror_url = "http://brew.sh/mirror/foo-1.0.tgz"
+      allow(Homebrew::ResourceAuditor).to receive(:curl_deps).and_return(["foo"])
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          mirror "#{mirror_url}"
+          sha256 "#{sha256}"
+        end
+      RUBY
+      allow_any_instance_of(Homebrew::ResourceAuditor).to receive(:curl_http_content_headers_and_checksum)
+        .and_return(status_code: "200", final_url: nil, file_hash: sha256)
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "accepts a curl dependency whose HTTP mirror redirects to a relative path" do
+      sha256 = "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+      allow(Homebrew::ResourceAuditor).to receive(:curl_deps).and_return(["foo"])
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          mirror "http://brew.sh/mirror/foo-1.0.tgz"
+          sha256 "#{sha256}"
+        end
+      RUBY
+      allow_any_instance_of(Homebrew::ResourceAuditor).to receive(:curl_http_content_headers_and_checksum)
+        .and_return(status_code: "200", final_url: "/mirror/foo-1.0.tgz", file_hash: sha256)
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "reports a curl dependency whose HTTP mirror serves the wrong checksum" do
+      mirror_url = "http://brew.sh/mirror/foo-1.0.tgz"
+      allow(Homebrew::ResourceAuditor).to receive(:curl_deps).and_return(["foo"])
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          mirror "#{mirror_url}"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+        end
+      RUBY
+      allow_any_instance_of(Homebrew::ResourceAuditor).to receive(:curl_http_content_headers_and_checksum)
+        .and_return(status_code: "200", final_url: mirror_url, file_hash: "deadbeef")
+
+      fa.audit_specs
+      expect(fa.problems).to include(
+        a_hash_including(message: a_string_including("must have a working HTTP mirror")),
+      )
+    end
+
+    it "reports a curl dependency whose HTTP mirror is unreachable" do
+      mirror_url = "http://brew.sh/mirror/foo-1.0.tgz"
+      allow(Homebrew::ResourceAuditor).to receive(:curl_deps).and_return(["foo"])
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          mirror "#{mirror_url}"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+        end
+      RUBY
+      allow_any_instance_of(Homebrew::ResourceAuditor).to receive(:curl_http_content_headers_and_checksum)
+        .and_return(status_code: nil, final_url: nil, file_hash: nil)
+
+      fa.audit_specs
+      expect(fa.problems).to include(
+        a_hash_including(message: a_string_including("must have a working HTTP mirror")),
+      )
+    end
+
+    it "reports a curl dependency whose HTTP mirror redirects to HTTPS" do
+      sha256 = "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+      allow(Homebrew::ResourceAuditor).to receive(:curl_deps).and_return(["foo"])
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          mirror "http://brew.sh/mirror/foo-1.0.tgz"
+          sha256 "#{sha256}"
+        end
+      RUBY
+      allow_any_instance_of(Homebrew::ResourceAuditor).to receive(:curl_http_content_headers_and_checksum)
+        .and_return(status_code: "200", final_url: "https://brew.sh/mirror/foo-1.0.tgz", file_hash: sha256)
+
+      fa.audit_specs
+      expect(fa.problems).to include(
+        a_hash_including(message: a_string_including("must have a working HTTP mirror")),
+      )
+    end
+
+    it "requires `branch:` to be specified for Git head URLs" do
+      head_url = "https://github.com/Homebrew/homebrew-test-bot.git"
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          head "#{head_url}"
+        end
+      RUBY
+      allow(Utils::Git).to receive(:remote_exists?).and_return(true)
+      allow(Utils).to receive(:popen_read).and_call_original
+      expect(Utils).to receive(:popen_read)
+        .with("git", "ls-remote", "--symref", "--end-of-options", head_url, "HEAD")
+        .and_return("ref: refs/heads/main\tHEAD\n")
+
+      fa.audit_specs
+      # This is `.last` because the first problem is the unreachable stable URL.
+      expect(fa.problems.last[:message]).to match("Git `head` URL must specify a branch name")
+    end
+
+    it "suggests a detected default branch for Git head URLs" do
+      fa = formula_auditor "foo", <<~RUBY, online: true, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          head "https://github.com/Homebrew/homebrew-test-bot.git", branch: "master"
+        end
+      RUBY
+
+      message = "To use a non-default HEAD branch, add the formula to `head_non_default_branch_allowlist.json`."
+      fa.audit_specs
+      # This is `.last` because the first problem is the unreachable stable URL.
+      expect(fa.problems.last[:message]).to match(message)
+    end
+
+    it "can specify a default branch without an allowlist if not in a core tap" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          head "https://github.com/Homebrew/homebrew-test-bot.git", branch: "main"
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).not_to match("Git `head` URL must specify a branch name")
+    end
+
+    it "ignores `branch:` for non-Git head URLs" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          head "https://brew.sh/foo.tgz", branch: "develop"
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).not_to match("Git `head` URL must specify a branch name")
+    end
+
+    it "ignores `branch:` for `resource` URLs" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+
+          resource "bar" do
+            url "https://raw.githubusercontent.com/Homebrew/homebrew-core/HEAD/Formula/bar.rb"
+            sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems).not_to match("Git `head` URL must specify a branch name")
     end
 
     it "allows versions with no throttle rate" do
@@ -762,7 +1105,67 @@ RSpec.describe Homebrew::FormulaAuditor do
       RUBY
 
       fa.audit_specs
-      expect(fa.problems.first[:message]).to match "should only be updated every 10 releases on multiples of 10"
+      expect(fa.problems.first[:message]).to match "Should only be updated every 10 releases on multiples of 10"
+    end
+
+    it "allows patch versions that aren't multiples of the throttle rate when throttle interval has elapsed" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.1.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          #{livecheck_throttle_rate_days}
+        end
+      RUBY
+
+      allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "allows patch versions that aren't multiples when throttle interval has not elapsed" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.1.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          #{livecheck_throttle_rate_days}
+        end
+      RUBY
+
+      allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "allows throttle with only days when throttle interval has elapsed" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.1.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          #{livecheck_throttle_days}
+        end
+      RUBY
+
+      allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(true)
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
+    it "allows throttle with only days when throttle interval has not elapsed" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.1.tgz"
+          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
+          #{livecheck_throttle_days}
+        end
+      RUBY
+
+      allow(Homebrew::Livecheck).to receive(:throttle_interval_elapsed?).and_return(false)
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
     end
 
     it "allows non-versioned formulae to have a `HEAD` spec" do
@@ -770,7 +1173,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         class Bar < Formula
           url "https://brew.sh/foo-1.0.tgz"
           sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "develop"
         end
       RUBY
 
@@ -783,7 +1186,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         class BarAT1 < Formula
           url "https://brew.sh/foo-1.0.tgz"
           sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "develop"
         end
       RUBY
 
@@ -796,7 +1199,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         class Foo < Formula
           url "https://brew.sh/foo-1.0.tgz"
           sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          head "https://brew.sh/foo.git"
+          head "https://brew.sh/foo.git", branch: "develop"
         end
       RUBY
 
@@ -823,6 +1226,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
         let(:f_openssl) do
           formula do
+            T.bind(self, T.class_of(Formula))
             url "https://brew.sh/openssl-1.0.tgz"
             homepage "https://brew.sh"
 
@@ -855,6 +1259,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
         let(:f_bc) do
           formula do
+            T.bind(self, T.class_of(Formula))
             url "https://brew.sh/bc-1.0.tgz"
             homepage "https://brew.sh"
 
@@ -874,6 +1279,201 @@ RSpec.describe Homebrew::FormulaAuditor do
         end
       end
     end
+
+    describe "dependency tag" do
+      subject(:f_a) { fa }
+
+      let(:core_tap) { false }
+      let(:fa) do
+        formula_auditor "foo", <<~RUBY, core_tap:
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tgz"
+            homepage "https://brew.sh"
+
+            depends_on "bar" => #{tag.inspect}
+          end
+        RUBY
+      end
+      let(:f_bar) do
+        formula do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/bar-1.0.tgz"
+          homepage "https://brew.sh"
+        end
+      end
+
+      before do
+        allow(fa.formula.deps.first).to receive(:to_formula).and_return(f_bar)
+        fa.audit_deps
+      end
+
+      describe ":build" do
+        let(:tag) { :build }
+
+        it(:problems) { expect(f_a.problems).to be_empty }
+      end
+
+      describe ":run" do
+        let(:tag) { :run }
+
+        it(:problems) do
+          expect(f_a.problems).to include(a_hash_including(message: a_string_matching(/is a no-op/)))
+        end
+      end
+
+      describe ":linked" do
+        let(:tag) { :linked }
+
+        it(:problems) do
+          expect(f_a.problems).to include(a_hash_including(message: a_string_matching(/is a no-op/)))
+        end
+      end
+
+      describe ":optional" do
+        let(:tag) { :optional }
+
+        it(:problems) { expect(f_a.problems).to be_empty }
+
+        describe "in core tap" do
+          let(:core_tap) { true }
+
+          it(:problems) do
+            expect(f_a.problems).to include(a_hash_including(message: a_string_matching(/should not have optional/)))
+          end
+        end
+      end
+
+      describe "when invalid" do
+        let(:tag) { :foo }
+
+        it(:problems) do
+          expect(f_a.problems).to include(a_hash_including(message: a_string_matching(/is not a valid tag/)))
+        end
+      end
+
+      describe "when undefined option" do
+        let(:tag) { "with-debug" }
+
+        it(:problems) do
+          expect(f_a.problems).to include(a_hash_including(message: a_string_matching(/does not define option/)))
+        end
+      end
+
+      describe "when defined option" do
+        let(:tag) { "with-debug" }
+        let(:f_bar) do
+          formula do
+            T.bind(self, T.class_of(Formula))
+            url "https://brew.sh/bar-1.0.tgz"
+            homepage "https://brew.sh"
+            option "with-debug"
+          end
+        end
+
+        it(:problems) { expect(f_a.problems).to be_empty }
+      end
+    end
+
+    describe "when formula lacks OS requirement but has OS-specific dependency" do
+      subject(:f_a) { fa }
+
+      let(:fa) do
+        formula_auditor "foo", <<~RUBY, core_tap: true
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tgz"
+            homepage "https://brew.sh"
+
+            depends_on "os-only"
+          end
+        RUBY
+      end
+
+      before do
+        allow(fa.formula.deps.first).to receive(:to_formula).and_return(f_os_only)
+      end
+
+      describe "for macOS when running on Linux" do
+        let(:f_os_only) do
+          formula do
+            T.bind(self, T.class_of(Formula))
+            url "https://brew.sh/os-only-1.0.tgz"
+            homepage "https://brew.sh"
+
+            depends_on :macos
+          end
+        end
+
+        around do |example|
+          Homebrew::SimulateSystem.with(os: :linux) do
+            example.run
+          end
+        end
+
+        it "reports missing requirement" do
+          fa.audit_deps
+          expect(f_a.problems).to include(a_hash_including(message: a_string_matching(/has a macOS requirement/)))
+        end
+      end
+
+      describe "for Linux when running on macOS" do
+        let(:f_os_only) do
+          formula do
+            T.bind(self, T.class_of(Formula))
+            url "https://brew.sh/os-only-1.0.tgz"
+            homepage "https://brew.sh"
+
+            depends_on :linux
+          end
+        end
+
+        around do |example|
+          Homebrew::SimulateSystem.with(os: :macos) do
+            example.run
+          end
+        end
+
+        it "reports missing requirement" do
+          fa.audit_deps
+          expect(f_a.problems).to include(a_hash_including(message: a_string_matching(/has a Linux requirement/)))
+        end
+      end
+    end
+
+    describe "when a core formula has a libomp dependency" do
+      subject do
+        fa.audit_deps
+        fa.problems.first&.fetch(:message)
+      end
+
+      let(:fa) do
+        formula_auditor "foo", <<~RUBY, core_tap: true
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tgz"
+            homepage "https://brew.sh"
+
+            depends_on "libomp"
+          end
+        RUBY
+      end
+
+      around do |example|
+        Homebrew::SimulateSystem.with(os:) do
+          example.run
+        end
+      end
+
+      describe "on Linux" do
+        let(:os) { :linux }
+
+        it { is_expected.to include("should not use 'libomp' on Linux") }
+      end
+
+      describe "on macOS" do
+        let(:os) { :macos }
+
+        it { is_expected.to be_nil }
+      end
+    end
   end
 
   describe "#audit_stable_version" do
@@ -883,6 +1483,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa.problems.first&.fetch(:message)
     end
 
+    # Mock tap behaviour the Formula helper expects (e.g. PyPI lookups, audit exceptions).
     before do
       origin_formula_path.dirname.mkpath
       origin_formula_path.write <<~RUBY
@@ -908,6 +1509,12 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     describe "versions" do
+      context "when uncommitted should not change formatting" do
+        before { formula_gsub "foo-1.0.tar.gz", "foo-1.0.0.tar.gz" }
+
+        it { is_expected.to match("Stable: version should not change from 1.0 to 1.0.0") }
+      end
+
       context "when uncommitted should not decrease" do
         before { formula_gsub "foo-1.0.tar.gz", "foo-0.9.tar.gz" }
 
@@ -935,7 +1542,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
-  describe "#audit_revision" do
+  describe "#audit_revision dependency relationships" do
     subject do
       fa = described_class.new(Formulary.factory(formula_path), git: true)
       fa.audit_revision
@@ -1018,7 +1625,7 @@ RSpec.describe Homebrew::FormulaAuditor do
         it { is_expected.to match("`revision 2` should be removed") }
       end
 
-      describe "should not warn on an newer version revision removal" do
+      describe "should not warn on a newer version revision removal" do
         before do
           formula_gsub_origin_commit "revision 2", ""
           formula_gsub_origin_commit "foo-1.0.tar.gz", "foo-1.1.tar.gz"
@@ -1059,154 +1666,417 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
-  describe "#audit_version_scheme" do
-    subject do
-      fa = described_class.new(Formulary.factory(formula_path), git: true)
-      fa.audit_version_scheme
-      fa.problems.first&.fetch(:message)
+  def build_formula_for_audit(tap:, tap_path:, name:, compatibility_version: nil, revision: 0, depends_on: [])
+    path = tap_path/"Formula/#{name}.rb"
+    path.dirname.mkpath
+    path.write(test_formula_source(name:, compatibility_version:, revision:, depends_on:))
+
+    Formulary.clear_cache
+    formula = Formulary.factory(path)
+    allow(formula).to receive_messages(tap:, full_name: "#{tap.name}/#{name}")
+
+    formula
+  end
+
+  def dependency_stub(name)
+    instance_double(Dependency, name:)
+  end
+
+  def stub_committed_info(auditor, default:, overrides: {})
+    allow(auditor).to receive(:committed_version_info) do |*_args, **kwargs|
+      formula = kwargs.fetch(:formula, auditor.formula)
+      raw = overrides.fetch(formula, default)
+      committed = raw.map { |info| info ? info.dup : {} }
+      committed.each do |info|
+        info[:version] ||= formula.stable&.version
+        info[:revision] = info.fetch(:revision, formula.revision)
+        info[:compatibility_version] = info.fetch(:compatibility_version, formula.compatibility_version)
+        info[:version_scheme] = info.fetch(:version_scheme, formula.version_scheme)
+      end
+      committed.each(&:compact!)
+      committed
     end
+  end
+
+  def stub_changed_paths(auditor, all_paths:, filtered_paths: all_paths)
+    allow(auditor).to receive(:changed_formulae_paths) do |_tap_arg, only_names: nil|
+      only_names ? filtered_paths : all_paths
+    end
+  end
+
+  describe "#changed_formulae_paths" do
+    let(:tap_path) { Pathname("#{dir}/changed-paths-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:        true,
+        core_tap?:   false,
+        path:        tap_path,
+        formula_dir: tap_path/"Formula",
+        name:        "homebrew/core",
+      )
+    end
+    let(:target_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:     "bar",
+      )
+    end
+    let(:auditor) { described_class.new(target_formula, git: true) }
+    let(:foo_path) { tap_path/"Formula/f/foo.rb" }
+
+    it "resolves sharded formula paths when filtering by names" do
+      foo_path.dirname.mkpath
+      foo_path.write(test_formula_source(name: "foo"))
+      allow(tap).to receive(:formula_files_by_name)
+        .and_return({ "foo" => foo_path, "bar" => tap_path/"Formula/bar.rb" })
+      allow(Utils).to receive(:popen_read).and_call_original
+      allow(Utils).to receive(:popen_read).with(Utils::Git.git, "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+                                          .and_return("merge-base-sha\n")
+      allow(Utils).to receive(:safe_popen_read).and_return("Formula/f/foo.rb\n")
+
+      paths = auditor.changed_formulae_paths(tap, only_names: ["foo"])
+
+      expect(paths).to eq([foo_path])
+    end
+
+    it "diffs against the merge-base with origin/HEAD" do
+      foo_path.dirname.mkpath
+      foo_path.write(test_formula_source(name: "foo"))
+      allow(tap).to receive(:formula_files_by_name).and_return({ "foo" => foo_path })
+      allow(Utils).to receive(:popen_read).and_call_original
+      allow(Utils).to receive(:popen_read).with(Utils::Git.git, "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+                                          .and_return("merge-base-sha\n")
+      expect(Utils).to receive(:safe_popen_read).with(Utils::Git.git, "-C", tap.path, "diff", "--name-only",
+                                                      "merge-base-sha")
+                                                .and_return("Formula/f/foo.rb\n")
+
+      expect(auditor.changed_formulae_paths(tap, only_names: ["foo"])).to eq([foo_path])
+    end
+  end
+
+  describe "#committed_version_info" do
+    let(:tap_path) { Pathname("#{dir}/committed-version-info-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:        true,
+        core_tap?:   false,
+        path:        tap_path,
+        formula_dir: tap_path/"Formula",
+        name:        "homebrew/core",
+      )
+    end
+    let(:target_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:     "foo",
+      )
+    end
+    let(:auditor) { described_class.new(target_formula, git: true) }
+    let(:formula_versions) { instance_double(FormulaVersions) }
+
+    it "walks history from the merge-base with origin/HEAD" do
+      allow(Utils).to receive(:popen_read).and_call_original
+      allow(Utils).to receive(:popen_read).with(Utils::Git.git, "-C", tap.path, "merge-base", "origin/HEAD", "HEAD")
+                                          .and_return("merge-base-sha\n")
+      allow(FormulaVersions).to receive(:new).with(target_formula).and_return(formula_versions)
+      expect(formula_versions).to receive(:rev_list).with("merge-base-sha")
+
+      auditor.committed_version_info
+    end
+  end
+
+  describe "#audit_compatibility_version" do
+    let(:tap_path) { Pathname("#{dir}/compat-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:             true,
+        core_tap?:        false,
+        git_repository:   instance_double(GitRepository, origin_branch_name: "main"),
+        audit_exceptions: {},
+        formula_renames:  {},
+        path:             tap_path,
+        name:             "test/tap",
+      )
+    end
+    let(:current_compatibility_version) { 2 }
+    let(:target_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:                  "foo",
+        compatibility_version: current_compatibility_version,
+      )
+    end
+    let(:auditor) { described_class.new(target_formula, git: true) }
+    let(:foo_path) { tap_path/"Formula/foo.rb" }
+    let(:bar_path) { tap_path/"Formula/bar.rb" }
 
     before do
-      origin_formula_path.dirname.mkpath
-      origin_formula_path.write <<~RUBY
-        class Foo#{foo_version} < Formula
-          url "https://brew.sh/foo-1.0.tar.gz"
-          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          revision 2
-          version_scheme 1
-        end
-      RUBY
+      allow(tap).to receive_messages(formula_dir: tap_path/"Formula")
+      allow(target_formula).to receive_messages(full_name: "test/tap/foo", recursive_dependencies: [])
+      allow(Formulary).to receive(:factory).and_call_original
+      allow(Formulary).to receive(:factory).with(foo_path).and_return(target_formula)
+    end
 
-      origin_tap_path.mkpath
-      origin_tap_path.cd do
-        system "git", "init"
-        system "git", "add", "--all"
-        system "git", "commit", "-m", "init"
+    it "ignores formulae without a previous commit" do
+      stub_committed_info(auditor, default: [{}, {}])
+      stub_changed_paths(auditor, all_paths: [])
+
+      auditor.audit_compatibility_version
+
+      expect(auditor.problems).to be_empty
+    end
+
+    context "with existing committed compatibility_version" do
+      before do
+        stub_changed_paths(auditor, all_paths: [])
       end
 
-      tap_path.mkpath
-      tap_path.cd do
-        system "git", "clone", origin_tap_path, "."
+      it "flags decreases" do
+        stub_committed_info(
+          auditor,
+          default: [{ compatibility_version: 2 }, { compatibility_version: 2 }],
+        )
+        allow(target_formula).to receive(:compatibility_version).and_return(1)
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to include(
+          a_hash_including(message: a_string_matching(/should not decrease/)),
+        )
+      end
+
+      it "flags increments larger than one" do
+        allow(target_formula).to receive(:compatibility_version).and_return(3)
+        stub_committed_info(
+          auditor,
+          default: [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+        )
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to include(
+          a_hash_including(message: a_string_matching(/should only increment by 1/)),
+        )
+      end
+
+      it "allows unchanged compatibility_version" do
+        allow(target_formula).to receive(:compatibility_version).and_return(1)
+        stub_committed_info(
+          auditor,
+          default: [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+        )
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to be_empty
       end
     end
 
-    describe "version_schemes" do
-      describe "should not decrease with the same version" do
-        before { formula_gsub_origin_commit "version_scheme 1" }
-
-        it { is_expected.to match("`version_scheme` should not decrease (from 1 to 0)") }
+    context "when compatibility_version increments by one" do
+      let(:dependent_formula) do
+        build_formula_for_audit(
+          tap:,
+          tap_path:,
+          name:       "bar",
+          revision:   2,
+          depends_on: ["foo"],
+        )
       end
 
-      describe "should not decrease with a new version" do
-        before do
-          formula_gsub_origin_commit "foo-1.0.tar.gz", "foo-1.1.tar.gz"
-          formula_gsub_origin_commit "revision 2", ""
-          formula_gsub_origin_commit "version_scheme 1", ""
-        end
-
-        it { is_expected.to match("`version_scheme` should not decrease (from 1 to 0)") }
+      before do
+        allow(dependent_formula).to receive_messages(full_name:              "test/tap/bar",
+                                                     recursive_dependencies: [dependency_stub("foo")])
+        allow(Formulary).to receive(:factory).with(bar_path).and_return(dependent_formula)
+        stub_changed_paths(auditor, all_paths: [foo_path, bar_path])
       end
 
-      describe "should only increment by 1" do
-        before do
-          formula_gsub_origin_commit "version_scheme 1", "# no version_scheme"
-          formula_gsub_origin_commit "foo-1.0.tar.gz", "foo-1.1.tar.gz"
-          formula_gsub_origin_commit "revision 2", ""
-          formula_gsub_origin_commit "# no version_scheme", "version_scheme 3"
-        end
+      it "flags missing dependent revision bumps" do
+        stub_committed_info(
+          auditor,
+          default:   [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+          overrides: { dependent_formula => [{ revision: 2 }, { revision: 2 }] },
+        )
 
-        it { is_expected.to match("`version_scheme` should only increment by 1") }
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to include(
+          a_hash_including(
+            message: a_string_matching(
+              %r{no recursive dependent formulae increased `revision` by 1.*https://docs\.brew\.sh/Formula-Cookbook#compatibility_version},
+            ),
+          ),
+        )
+      end
+
+      it "accepts a dependent revision bump" do
+        stub_committed_info(
+          auditor,
+          default:   [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+          overrides: { dependent_formula => [{ revision: 1 }, { revision: 1 }] },
+        )
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to be_empty
+      end
+
+      it "ignores missing dependent revision bumps for unsupported platform" do
+        allow(target_formula).to receive(:valid_platform?).and_return(false)
+        stub_committed_info(
+          auditor,
+          default:   [{ compatibility_version: 1 }, { compatibility_version: 1 }],
+          overrides: { dependent_formula => [{ revision: 2 }, { revision: 2 }] },
+        )
+
+        auditor.audit_compatibility_version
+
+        expect(auditor.problems).to be_empty
       end
     end
   end
 
-  describe "#audit_unconfirmed_checksum_change" do
-    subject do
-      fa = described_class.new(Formulary.factory(formula_path), git: true)
-      fa.audit_unconfirmed_checksum_change
-      fa.problems.first&.fetch(:message)
+  describe "#audit_revision" do
+    let(:tap_path) { Pathname("#{dir}/revision-tap") }
+    let(:tap) do
+      instance_double(
+        Tap,
+        git?:             true,
+        core_tap?:        true,
+        git_repository:   instance_double(GitRepository, origin_branch_name: "main"),
+        audit_exceptions: {},
+        formula_renames:  {},
+        path:             tap_path,
+        name:             "test/tap",
+      )
+    end
+    let(:current_revision) { 2 }
+    let(:dependency_names) { ["foo"] }
+    let(:dependency_list) { dependency_names.map { |name| dependency_stub(name) } }
+    let(:target_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:       "bar",
+        revision:   current_revision,
+        depends_on: dependency_names,
+      )
+    end
+    let(:auditor) { described_class.new(target_formula, git: true) }
+    let(:bar_path) { tap_path/"Formula/bar.rb" }
+    let(:foo_path) { tap_path/"Formula/foo.rb" }
+    let(:current_dependency_compatibility) { 1 }
+    let(:dependency_revision) { 0 }
+    let(:dependency_formula) do
+      build_formula_for_audit(
+        tap:,
+        tap_path:,
+        name:                  "foo",
+        compatibility_version: current_dependency_compatibility,
+        revision:              dependency_revision,
+      )
     end
 
     before do
-      origin_formula_path.dirname.mkpath
-      origin_formula_path.write <<~RUBY
-        class Foo#{foo_version} < Formula
-          url "https://brew.sh/foo-1.0.tar.gz"
-          sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"
-          revision 2
-          version_scheme 1
-        end
-      RUBY
-
-      origin_tap_path.mkpath
-      origin_tap_path.cd do
-        system "git", "init"
-        system "git", "add", "--all"
-        system "git", "commit", "-m", "init"
-      end
-
-      tap_path.mkpath
-      tap_path.cd do
-        system "git", "clone", origin_tap_path, "."
-      end
+      allow(tap).to receive_messages(formula_dir: tap_path/"Formula")
+      allow(target_formula).to receive_messages(full_name: "test/tap/bar", recursive_dependencies: dependency_list)
+      allow(Formulary).to receive(:factory).and_call_original
+      allow(Formulary).to receive(:factory).with(bar_path).and_return(target_formula)
+      allow(Formulary).to receive(:factory).with(foo_path).and_return(dependency_formula)
     end
 
-    describe "checksums" do
-      describe "should not change with the same version" do
-        before do
-          formula_gsub(
-            'sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"',
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-          )
-        end
+    it "ignores revision changes when not incremented by one" do
+      stub_committed_info(
+        auditor,
+        default: [{ revision: current_revision }, { revision: current_revision }],
+      )
+      stub_changed_paths(auditor, all_paths: [], filtered_paths: [])
 
-        it { is_expected.to match("stable sha256 changed without the url/version also changing") }
+      auditor.audit_revision
+
+      expect(auditor.problems).to be_empty
+    end
+
+    context "with a revision increment" do
+      before do
+        stub_committed_info(
+          auditor,
+          default: [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
+        )
       end
 
-      describe "should not change with the same version when not the first commit" do
-        before do
-          formula_gsub_origin_commit(
-            'sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"',
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-          )
-          formula_gsub_origin_commit "revision 2"
-          formula_gsub_origin_commit "foo-1.0.tar.gz", "foo-1.1.tar.gz"
-          formula_gsub(
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-            'sha256 "e048c5e6144f5932d8672c2fade81d9073d5b3ca1517b84df006de3d25414fc1"',
-          )
-        end
+      it "allows revision increases when there are no recursive dependencies" do
+        allow(target_formula).to receive(:recursive_dependencies).and_return([])
+        stub_changed_paths(auditor, all_paths: [], filtered_paths: [])
 
-        it { is_expected.to match("stable sha256 changed without the url/version also changing") }
+        auditor.audit_revision
+
+        expect(auditor.problems).to be_empty
       end
 
-      describe "can change with the different version" do
-        before do
-          formula_gsub_origin_commit(
-            'sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"',
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-          )
-          formula_gsub "foo-1.0.tar.gz", "foo-1.1.tar.gz"
-          formula_gsub_origin_commit(
-            'sha256 "3622d2a53236ed9ca62de0616a7e80fd477a9a3f862ba09d503da188f53ca523"',
-            'sha256 "e048c5e6144f5932d8672c2fade81d9073d5b3ca1517b84df006de3d25414fc1"',
-          )
-        end
+      it "allows revision increases when dependencies are unchanged" do
+        stub_changed_paths(auditor, all_paths: [], filtered_paths: [])
 
-        it { is_expected.to be_nil }
+        auditor.audit_revision
+
+        expect(auditor.problems).to be_empty
       end
 
-      describe "can be removed when switching schemes" do
+      context "when dependencies change" do
         before do
-          formula_gsub_origin_commit(
-            'url "https://brew.sh/foo-1.0.tar.gz"',
-            'url "https://foo.com/brew/bar.git", tag: "1.0", revision: "f5e00e485e7aa4c5baa20355b27e3b84a6912790"',
-          )
-          formula_gsub_origin_commit('sha256 "31cccfc6630528db1c8e3a06f6decf2a370060b982841cfab2b8677400a5092e"',
-                                     "")
+          stub_changed_paths(auditor, all_paths: [foo_path], filtered_paths: [foo_path])
         end
 
-        it { is_expected.to be_nil }
+        it "ignores dependency changes without a version bump" do
+          stub_committed_info(
+            auditor,
+            default:   [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
+            overrides: { dependency_formula => [{ version: "1.0" }, { version: "1.0" }] },
+          )
+          allow(dependency_formula).to receive(:compatibility_version).and_return(0)
+
+          auditor.audit_revision
+
+          expect(auditor.problems).to be_empty
+        end
+
+        it "flags missing compatibility_version bumps" do
+          stub_committed_info(
+            auditor,
+            default:   [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
+            overrides: { dependency_formula => [{ version: "0.9", compatibility_version: 1 },
+                                                { version: "0.9", compatibility_version: 1 }] },
+          )
+          allow(dependency_formula).to receive(:compatibility_version).and_return(1)
+
+          auditor.audit_revision
+
+          expect(auditor.problems).to include(
+            a_hash_including(
+              message: a_string_matching(
+                %r{must increase `compatibility_version` by 1 in the same PR: foo \(1 to 2\).*https://docs\.brew\.sh/Formula-Cookbook#compatibility_version},
+              ),
+            ),
+          )
+        end
+
+        it "accepts compatibility_version bumps of one" do
+          stub_committed_info(
+            auditor,
+            default:   [{ revision: current_revision - 1 }, { revision: current_revision - 1 }],
+            overrides: { dependency_formula => [{ compatibility_version: 1 }, { compatibility_version: 1 }] },
+          )
+          allow(dependency_formula).to receive(:compatibility_version).and_return(2)
+
+          auditor.audit_revision
+
+          expect(auditor.problems).to be_empty
+        end
       end
     end
   end
@@ -1255,6 +2125,54 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
   end
 
+  describe "#audit_duplicate_formula" do
+    before do
+      allow(Homebrew::API::Internal).to receive(:formula_hashes).and_return(
+        { "foo" => { "stable_url_args" => ["https://brew.sh/foo-1.0.tgz"] },
+          "bar" => { "stable_url_args" => ["https://foo.com/bar-1.0.tgz"] } },
+      )
+    end
+
+    specify "it warns if new formula uses the same URL as already existing package" do
+      fa = formula_auditor "duplicate-foo", <<~RUBY, new_formula: true, core_tap: true, online: true
+        class DuplicateFoo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+        end
+      RUBY
+
+      fa.audit_duplicate_formula
+
+      expect(fa.new_formula_problems.first[:message])
+        .to match("Possible duplicate, this formula has the same stable URL as `foo`")
+    end
+
+    specify "it does not warn about duplicates if formula is not new" do
+      fa = formula_auditor "duplicate-foo", <<~RUBY, new_formula: false, core_tap: true, online: true
+        class DuplicateFoo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+        end
+      RUBY
+
+      fa.audit_duplicate_formula
+
+      expect(fa.new_formula_problems).to be_empty
+    end
+
+    specify "it skips the duplicate check offline when no packages data is cached" do
+      fa = formula_auditor "duplicate-foo", <<~RUBY, new_formula: true, core_tap: true, online: false
+        class DuplicateFoo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+        end
+      RUBY
+      allow(Homebrew::API::Internal).to receive(:cached_packages_json_file_path)
+        .and_return(Pathname("/nonexistent/packages.jws.json"))
+
+      fa.audit_duplicate_formula
+
+      expect(fa.new_formula_problems).to be_empty
+    end
+  end
+
   describe "#audit_conflicts" do
     before do
       # We don't really test the formula text retrieval here
@@ -1263,6 +2181,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
     specify "it warns when conflicting with non-existing formula", :no_api do
       foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/bar-1.0.tgz"
 
         conflicts_with "bar"
@@ -1277,6 +2196,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
     specify "it warns when conflicting with itself", :no_api do
       foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/bar-1.0.tgz"
 
         conflicts_with "foo"
@@ -1291,15 +2211,27 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     specify "it warns when another formula does not have a symmetric conflict", :no_api do
-      stub_formula_loader formula("gcc") { url "gcc-1.0" }
-      stub_formula_loader formula("glibc") { url "glibc-1.0" }
+      stub_formula_loader(
+        formula("gcc") do
+          T.bind(self, T.class_of(Formula))
+          url "gcc-1.0"
+        end,
+      )
+      stub_formula_loader(
+        formula("glibc") do
+          T.bind(self, T.class_of(Formula))
+          url "glibc-1.0"
+        end,
+      )
 
       foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/foo-1.0.tgz"
       end
       stub_formula_loader foo
 
       bar = formula("bar") do
+        T.bind(self, T.class_of(Formula))
         url "https://brew.sh/bar-1.0.tgz"
 
         conflicts_with "foo"
@@ -1341,6 +2273,81 @@ RSpec.describe Homebrew::FormulaAuditor do
       mkdir_p fa.formula.prefix
       fa.audit_deprecate_disable
       expect(fa.problems).to be_empty
+    end
+  end
+
+  describe "#audit_gcc_dependency" do
+    let(:formula_text) do
+      <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          on_linux do
+            depends_on "gcc"
+          end
+        end
+      RUBY
+    end
+
+    context "when running on macOS" do
+      before do
+        allow(Homebrew::SimulateSystem).to receive(:simulating_or_running_on_linux?).and_return(false)
+      end
+
+      it "skips the audit" do
+        fa = formula_auditor "foo", formula_text, new_formula: false, core_tap: true
+        fa.audit_gcc_dependency
+        expect(fa.problems).to be_empty
+      end
+    end
+
+    context "when running on Linux" do
+      around do |example|
+        Homebrew::SimulateSystem.with os: :linux do
+          example.run
+        end
+      end
+
+      it "detects a Linux-only GCC dependency" do
+        fa = formula_auditor "foo", formula_text, new_formula: false, core_tap: true
+        fa.audit_gcc_dependency
+        expect(fa.problems.first[:message])
+          .to match "Formulae in homebrew/core should not have a Linux-only dependency on GCC"
+      end
+
+      it "allows a Linux-only GCC dependency when formula has an audit exception" do
+        tap_audit_exceptions = { linux_only_gcc_dependency_allowlist: ["foo"] }
+        fa = formula_auditor("foo", formula_text, new_formula: false, core_tap: true, tap_audit_exceptions:)
+        fa.audit_gcc_dependency
+        expect(fa.problems).to be_empty
+      end
+
+      it "allows a Linux-only GCC dependency when implicit" do
+        fa = formula_auditor "foo", formula_text, new_formula: false, core_tap: true
+        allow(fa.formula).to receive(:deps).and_return([Dependency.new("gcc", [:implicit])])
+        fa.audit_gcc_dependency
+        expect(fa.problems).to be_empty
+      end
+
+      it "allows a Linux-only GCC dependency in a non-core tap" do
+        fa = formula_auditor "foo", formula_text, new_formula: false, core_tap: false
+        fa.audit_gcc_dependency
+        expect(fa.problems).to be_empty
+      end
+
+      it "allows a non-OS-specific GCC dependency" do
+        fa = formula_auditor "foo", <<~RUBY, new_formula: false, core_tap: true
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tgz"
+            homepage "https://brew.sh"
+
+            depends_on "gcc"
+          end
+        RUBY
+        fa.audit_gcc_dependency
+        expect(fa.problems).to be_empty
+      end
     end
   end
 end

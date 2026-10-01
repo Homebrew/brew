@@ -3,6 +3,7 @@
 
 require "abstract_command"
 require "formula"
+require "cask/cask"
 require "cask/caskroom"
 require "dependencies_helpers"
 
@@ -36,7 +37,10 @@ module Homebrew
                description: "Only list formulae and casks that are not currently installed."
         switch "--eval-all",
                description: "Evaluate all available formulae and casks, whether installed or not, to show " \
-                            "their dependents."
+                            "their dependents.",
+               env:         :eval_all,
+               replacement: "the default trusted-tap behaviour",
+               odisabled:   true
         switch "--include-implicit",
                description: "Include formulae that have <formula> as an implicit dependency for " \
                             "downloading and unpacking source files."
@@ -54,7 +58,7 @@ module Homebrew
                description: "Include only casks."
 
         conflicts "--formula", "--cask"
-        conflicts "--installed", "--all"
+        conflicts "--installed", "--eval-all"
         conflicts "--missing", "--installed"
 
         named_args :formula, min: 1
@@ -106,9 +110,11 @@ module Homebrew
           # We can only get here if `used_formulae_missing` is false, thus there are no UnavailableFormula.
           used_formulae = T.cast(used_formulae, T::Array[Formula])
           if show_formulae_and_casks || args.formula?
-            deps += T.must(used_formulae.map(&:runtime_installed_formula_dependents)
-                     .reduce(&:&))
-                     .select(&:any_version_installed?)
+            all_dependents = used_formulae.map(&:runtime_installed_formula_dependents)
+            common_dependents = all_dependents.drop(1).reduce(all_dependents.fetch(0)) do |common, dependents|
+              common & dependents
+            end
+            deps += common_dependents.select(&:any_version_installed?)
           end
           if show_formulae_and_casks || args.cask?
             deps += select_used_dependents(
@@ -119,28 +125,15 @@ module Homebrew
 
           deps
         else
-          all = args.eval_all?
-
-          if !args.installed? && !(all || Homebrew::EnvConfig.eval_all?)
-            raise UsageError, "`brew uses` needs `--installed` or `--eval-all` passed or `$HOMEBREW_EVAL_ALL` set!"
-          end
-
           if show_formulae_and_casks || args.formula?
-            deps += args.installed? ? Formula.installed : Formula.all(eval_all: args.eval_all?)
+            deps.concat(args.installed? ? Formula.installed : Formula.all)
           end
           if show_formulae_and_casks || args.cask?
-            deps += args.installed? ? Cask::Caskroom.casks : Cask::Cask.all(eval_all: args.eval_all?)
+            deps.concat(args.installed? ? Cask::Caskroom.casks : Cask::Cask.all)
           end
 
           if args.missing?
-            deps.reject! do |dep|
-              case dep
-              when Formula
-                dep.any_version_installed?
-              when Cask::Cask
-                dep.installed?
-              end
-            end
+            deps.reject!(&:any_version_installed?)
             ignores.delete(:satisfied?)
           end
 

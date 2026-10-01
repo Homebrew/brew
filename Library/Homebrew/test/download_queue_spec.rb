@@ -1,0 +1,499 @@
+# typed: true
+# frozen_string_literal: true
+
+require "download_queue"
+
+RSpec.describe Homebrew::DownloadQueue do
+  subject(:download_queue) { described_class.new }
+
+  let(:cached_download) { HOMEBREW_CACHE/"downloads/testball--0.1.tar.gz" }
+  let(:downloadable) do
+    instance_double(
+      Downloadable,
+      cached_download:,
+      checksum:                        nil,
+      downloaded_and_valid?:           false,
+      downloader:                      nil,
+      download_queue_message:          "Bottle testball",
+      download_queue_name:             "testball",
+      download_queue_type:             "Bottle",
+      staged_path_from_download_queue: nil,
+    )
+  end
+  let(:download_error) { DownloadError.new(downloadable, RuntimeError.new("network blew up")) }
+  let(:multi_line_download_error) { DownloadError.new(downloadable, RuntimeError.new("line one\nline two")) }
+  let(:retryable_download) { instance_double(Homebrew::RetryableDownload) }
+
+  before do
+    allow(Homebrew::EnvConfig).to receive(:download_concurrency).and_return(2)
+    allow(retryable_download).to receive(:fetch).and_raise(download_error)
+    allow(Homebrew::RetryableDownload).to receive(:new).and_return(retryable_download)
+  end
+
+  after do
+    download_queue.shutdown
+  end
+
+  it "reports rejected download errors in parallel mode and marks the fetch as failed" do
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch }.to output(/network blew up/).to_stderr
+
+    expect(download_queue.failed_downloads).to eq([downloadable])
+    expect(Homebrew).to have_failed
+  end
+
+  it "defers multi-line failure details on a TTY until the in-place redraw has finished" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    ENV["TERM"] = "xterm-256color"
+    allow(downloadable).to receive(:fetched_size).and_return(nil)
+    allow(retryable_download).to receive(:fetch).and_raise(multi_line_download_error)
+
+    download_queue.enqueue(downloadable)
+
+    # Stub the write methods (rather than reassigning $stdout/$stderr) so both
+    # streams append to one buffer in call order, the same way they'd interleave
+    # on a real terminal.
+    combined_output = +""
+    allow($stdout).to receive(:print) { |message| combined_output << message }
+    allow($stdout).to receive(:flush)
+    allow($stderr).to receive(:puts) { |message| combined_output << "#{message}\n" }
+
+    download_queue.fetch
+
+    show_cursor_index = combined_output.index(Tty.show_cursor)
+    failure_index = combined_output.index("line one\nline two")
+
+    expect(show_cursor_index).not_to be_nil
+    expect(failure_index).not_to be_nil
+    # The redraw loop assumes every line it prints in-place occupies exactly one
+    # terminal row, so a multi-line failure must be held back until the cursor is
+    # restored to normal scrolling, not printed while the redraw is still live.
+    expect(failure_index).to be > show_cursor_index
+  end
+
+  it "fetches only downloads of the given class and keeps others queued unreported" do
+    manifest = instance_double(
+      Resource::BottleManifest,
+      cached_download:        HOMEBREW_CACHE/"downloads/testball_manifest.json",
+      checksum:               nil,
+      downloaded_and_valid?:  true,
+      downloader:             nil,
+      download_queue_message: "Bottle Manifest testball",
+      download_queue_name:    "testball",
+      download_queue_type:    "Bottle Manifest",
+    )
+    allow(manifest).to receive(:is_a?) { |klass| klass == Resource::BottleManifest }
+
+    download_queue.enqueue(manifest)
+    download_queue.enqueue(downloadable)
+
+    expect do
+      download_queue.fetch(only: Resource::BottleManifest)
+    end.to output(/Bottle Manifest testball/).to_stderr
+    expect(download_queue.downloads.keys).to eq [downloadable]
+  end
+
+  it "raises and clears queue state on a bottle manifest failure in parallel mode" do
+    allow(retryable_download).to receive(:fetch).and_raise(Resource::BottleManifest::Error.new("manifest missing"))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch }.to raise_error(Resource::BottleManifest::Error, /manifest missing/)
+    expect(download_queue.downloads).to be_empty
+  end
+
+  it "reports but tolerates failed downloads when failures are allowed" do
+    allow(retryable_download).to receive(:fetch).and_raise(Resource::BottleManifest::Error.new("manifest missing"))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch(allow_failures: true) }.to output(/✘/).to_stderr
+    expect(download_queue.failed_downloads).to be_empty
+    expect(Homebrew).not_to have_failed
+  end
+
+  it "tolerates failed downloads in serial mode when failures are allowed" do
+    allow(Homebrew::EnvConfig).to receive(:download_concurrency).and_return(1)
+    allow(retryable_download).to receive(:fetch).and_raise(Resource::BottleManifest::Error.new("manifest missing"))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch(allow_failures: true) }.to output(/✘/).to_stderr
+    expect(Homebrew).not_to have_failed
+  end
+
+  it "removes known-bad cached files for checksum mismatch failures" do
+    cached_download.dirname.mkpath
+    cached_download.write("corrupt")
+    allow(retryable_download).to receive(:fetch)
+      .and_raise(ChecksumMismatchError.new(cached_download, Checksum.new("aa" * 32), Checksum.new("bb" * 32)))
+
+    download_queue.enqueue(downloadable)
+
+    # The reported checksum comes from the failed verification rather than
+    # rehashing the file, which the report itself has already removed.
+    expect { download_queue.fetch }
+      .to output(/reports different checksum: +#{"aa" * 32}/).to_stderr
+      .and output(/checksum of downloaded file: +#{"bb" * 32}/).to_stdout
+    expect(download_queue.failed_downloads).to eq([downloadable])
+    expect(cached_download).not_to exist
+    expect(Homebrew).to have_failed
+  end
+
+  it "removes known-bad cached files for checksum mismatch failures in serial mode" do
+    allow(Homebrew::EnvConfig).to receive(:download_concurrency).and_return(1)
+    cached_download.dirname.mkpath
+    cached_download.write("corrupt")
+    allow(retryable_download).to receive(:fetch)
+      .and_raise(ChecksumMismatchError.new(cached_download, Checksum.new("aa" * 32), Checksum.new("bb" * 32)))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch }.to output(/reports different checksum/).to_stderr
+    expect(download_queue.failed_downloads).to eq([downloadable])
+    expect(cached_download).not_to exist
+    expect(Homebrew).to have_failed
+  end
+
+  it "removes known-bad cached files for tolerated checksum mismatches" do
+    cached_download.dirname.mkpath
+    cached_download.write("corrupt")
+    allow(retryable_download).to receive(:fetch)
+      .and_raise(ChecksumMismatchError.new(cached_download, Checksum.new("aa" * 32), Checksum.new("bb" * 32)))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch(allow_failures: true) }.to output(/✘/).to_stderr
+    expect(cached_download).not_to exist
+    expect(Homebrew).not_to have_failed
+  end
+
+  it "removes known-bad cached files for tolerated checksum mismatches in serial mode" do
+    allow(Homebrew::EnvConfig).to receive(:download_concurrency).and_return(1)
+    cached_download.dirname.mkpath
+    cached_download.write("corrupt")
+    allow(retryable_download).to receive(:fetch)
+      .and_raise(ChecksumMismatchError.new(cached_download, Checksum.new("aa" * 32), Checksum.new("bb" * 32)))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch(allow_failures: true) }.to output(/✘/).to_stderr
+    expect(cached_download).not_to exist
+    expect(Homebrew).not_to have_failed
+  end
+
+  it "removes known-bad cached files for fatal checksum mismatches" do
+    cached_download.dirname.mkpath
+    cached_download.write("corrupt")
+    allow(retryable_download).to receive(:fetch)
+      .and_raise(ChecksumMismatchError.new(cached_download, Checksum.new("aa" * 32), Checksum.new("bb" * 32)))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch }.to output(/different checksum/).to_stderr
+    expect(cached_download).not_to exist
+    expect(download_queue.failed_downloads).to eq([downloadable])
+  end
+
+  it "reports every fatal checksum mismatch when downloads share a cached file" do
+    cached_download.dirname.mkpath
+    cached_download.write("corrupt")
+    shared_downloadable = instance_double(
+      Downloadable,
+      cached_download:,
+      checksum:                        nil,
+      downloaded_and_valid?:           false,
+      downloader:                      nil,
+      download_queue_message:          "API Source testball",
+      download_queue_name:             "testball",
+      download_queue_type:             "API Source",
+      staged_path_from_download_queue: nil,
+    )
+    allow(retryable_download).to receive(:fetch)
+      .and_raise(ChecksumMismatchError.new(cached_download, Checksum.new("aa" * 32), Checksum.new("bb" * 32)))
+
+    download_queue.enqueue(downloadable)
+    download_queue.enqueue(shared_downloadable)
+
+    expect { download_queue.fetch }.to output(/different checksum.*different checksum/m).to_stderr
+    expect(cached_download).not_to exist
+    expect(download_queue.failed_downloads).to contain_exactly(downloadable, shared_downloadable)
+  end
+
+  it "removes known-bad cached files for fatal checksum mismatches in serial mode" do
+    allow(Homebrew::EnvConfig).to receive(:download_concurrency).and_return(1)
+    cached_download.dirname.mkpath
+    cached_download.write("corrupt")
+    allow(retryable_download).to receive(:fetch)
+      .and_raise(ChecksumMismatchError.new(cached_download, Checksum.new("aa" * 32), Checksum.new("bb" * 32)))
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch }.to output(/different checksum/).to_stderr
+    expect(cached_download).not_to exist
+    expect(download_queue.failed_downloads).to eq([downloadable])
+  end
+
+  it "cancels remaining downloads and raises on a bottle manifest failure in serial mode" do
+    allow(Homebrew::EnvConfig).to receive(:download_concurrency).and_return(1)
+    allow(retryable_download).to receive(:fetch).and_raise(Resource::BottleManifest::Error.new("manifest missing"))
+
+    download_queue.enqueue(downloadable)
+
+    expect(download_queue).to receive(:cancel)
+    expect { download_queue.fetch }.to raise_error(Resource::BottleManifest::Error, /manifest missing/)
+  end
+
+  it "brackets TTY redraw frames in a DEC 2026 synchronized update" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    ENV["TERM"] = "xterm-256color"
+    allow(downloadable).to receive(:fetched_size).and_return(nil)
+    allow(retryable_download).to receive(:fetch).and_return(cached_download)
+
+    # Build the queue while stdout is a TTY so it captures the TTY render path,
+    # before the output matcher swaps $stdout to capture the redraw frames.
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch }.to output(
+      include("\e[?2026h").and(
+        satisfy("closes every synchronized update it opens") do |out|
+          last_open = out.rindex("\e[?2026h")
+          last_close = out.rindex("\e[?2026l")
+          out.scan("\e[?2026h").length <= out.scan("\e[?2026l").length &&
+            !last_open.nil? && !last_close.nil? && last_close > last_open
+        end,
+      ),
+    ).to_stdout
+  end
+
+  it "leaves the final terminal column empty when rendering progress" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    ENV["TERM"] = "xterm-256color"
+    allow(Tty).to receive(:width).and_return(80)
+    allow(downloadable).to receive_messages(fetched_size: 559_300_000, total_size: 559_300_000, phase: :downloading)
+    allow(retryable_download).to receive(:fetch).and_return(cached_download)
+
+    download_queue.enqueue(downloadable)
+
+    rendered_lines = []
+    allow(download_queue).to receive(:stdout_print_and_flush) do |message|
+      rendered_lines << message if message.include?("559.3MB")
+    end
+    download_queue.fetch
+
+    expect(Tty.strip_ansi(rendered_lines.fetch(0)).chomp.each_grapheme_cluster.count).to eq(Tty.width - 1)
+  end
+
+  it "emits no synchronized update sequences when stdout is not a TTY" do
+    allow($stdout).to receive(:tty?).and_return(false)
+    allow(retryable_download).to receive(:fetch).and_return(cached_download)
+
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch }.not_to output(/\e\[\?2026/).to_stdout
+  end
+
+  it "prints the heading to stderr when stdout is not a TTY" do
+    allow($stdout).to receive(:tty?).and_return(false)
+    allow(retryable_download).to receive(:fetch).and_return(cached_download)
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch(heading: "Downloading Homebrew API data") }
+      .to output(/^==> Downloading Homebrew API data$/).to_stderr
+  end
+
+  it "keeps the heading off stdout when stdout is not a TTY" do
+    allow($stdout).to receive(:tty?).and_return(false)
+    allow(retryable_download).to receive(:fetch).and_return(cached_download)
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch(heading: "Downloading Homebrew API data") }
+      .not_to output(/Downloading Homebrew API data/).to_stdout
+  end
+
+  it "prints the heading to stdout on a TTY" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    ENV["TERM"] = "xterm-256color"
+    allow(downloadable).to receive(:fetched_size).and_return(nil)
+    allow(retryable_download).to receive(:fetch).and_return(cached_download)
+
+    # Build the queue while stdout is a TTY so it captures the TTY render path,
+    # before the output matcher swaps $stdout to capture the heading.
+    download_queue.enqueue(downloadable)
+
+    expect { download_queue.fetch(heading: "Downloading Homebrew API data") }
+      .to output(/==>.*Downloading Homebrew API data/).to_stdout
+  end
+
+  it "wakes when downloads complete instead of polling with sleep" do
+    allow($stdout).to receive(:tty?).and_return(false)
+    allow(retryable_download).to receive(:fetch) do
+      sleep 0.1
+      cached_download
+    end
+
+    expect(download_queue).not_to receive(:sleep)
+
+    expect do
+      download_queue.enqueue(downloadable)
+      download_queue.fetch
+    end.to output(/✔︎ Bottle testball/).to_stderr
+  end
+
+  it "skips fetching already downloaded files with a valid checksum" do
+    cached_download.dirname.mkpath
+    cached_download.write("already downloaded")
+
+    allow(downloadable).to receive(:downloaded_and_valid?).and_return(true)
+
+    expect(retryable_download).not_to receive(:fetch)
+    expect(downloadable).to receive(:downloader).and_return(nil)
+
+    download_queue.enqueue(downloadable)
+    download_queue.fetch
+  end
+
+  it "runs queued staging before completing the fetch" do
+    allow(retryable_download).to receive(:fetch).and_return(cached_download)
+
+    expect(downloadable).to receive(:stage_from_download_queue?).with(cached_download, pour: false).and_return(true)
+    expect(downloadable).to receive(:extracting!).ordered
+    expect(downloadable).to receive(:stage_from_download_queue).with(cached_download, pour: false).ordered
+    expect(downloadable).to receive(:downloaded!).ordered
+
+    download_queue.enqueue(downloadable, stage: true)
+    download_queue.fetch
+  end
+
+  it "uses the fetched path for queued staging when it changes during fetch" do
+    fetched_download = HOMEBREW_CACHE/"downloads/fetched-testball--0.1.tar.gz"
+    allow(retryable_download).to receive(:fetch).and_return(fetched_download)
+
+    expect(downloadable).to receive(:stage_from_download_queue?).with(fetched_download, pour: false).and_return(true)
+    expect(downloadable).to receive(:extracting!).ordered
+    expect(downloadable).to receive(:stage_from_download_queue).with(fetched_download, pour: false).ordered
+    expect(downloadable).to receive(:downloaded!).ordered
+
+    download_queue.enqueue(downloadable, stage: true)
+    download_queue.fetch
+  end
+
+  it "interrupts queued staging when the fetch is interrupted", timeout: 5 do
+    allow(retryable_download).to receive(:fetch).and_return(cached_download)
+    allow(downloadable).to receive(:stage_from_download_queue?).and_return(true)
+    allow(downloadable).to receive_messages(extracting!: nil, downloaded!: nil)
+    fetch_started = Queue.new
+    staging_started = Queue.new
+    staging_interrupted = Queue.new
+    release_fetch = Queue.new
+    release_staging = Queue.new
+    allow(downloadable).to receive(:download_queue_message) do
+      fetch_started << true
+      release_fetch.pop
+      "Bottle testball"
+    end
+    allow(downloadable).to receive(:stage_from_download_queue) do
+      staging_started << true
+      release_staging.pop
+    rescue Interrupt
+      staging_interrupted << true
+      raise
+    end
+
+    download_queue.enqueue(downloadable, stage: true)
+    fetch_thread = Thread.current
+    interrupter = Thread.new do
+      next unless staging_started.pop(timeout: 1)
+      next unless fetch_started.pop(timeout: 1)
+
+      fetch_thread.raise(Interrupt)
+    end
+
+    expect { download_queue.fetch }.to raise_error(Interrupt)
+    expect(staging_interrupted.pop(timeout: 1)).to be(true)
+  ensure
+    release_fetch&.push(true)
+    release_staging&.push(true)
+    interrupter.kill if interrupter && !interrupter.join(1)
+  end
+
+  it "promotes an in-flight download to queued staging" do
+    expect(retryable_download).to receive(:fetch).once.and_return(cached_download)
+    expect(downloadable).to receive(:stage_from_download_queue?).with(cached_download, pour: false).and_return(true)
+    expect(downloadable).to receive(:extracting!).ordered
+    expect(downloadable).to receive(:stage_from_download_queue).with(cached_download, pour: false).ordered
+    expect(downloadable).to receive(:downloaded!).ordered
+
+    download_queue.enqueue(downloadable)
+    download_queue.enqueue(downloadable, stage: true)
+    download_queue.fetch
+  end
+
+  it "stages duplicate downloads with the same destination once" do
+    staged_path = HOMEBREW_TEMP_CELLAR/"testball/0.1"
+    bottles = Array.new(2) do
+      instance_double(
+        Bottle,
+        cached_download:,
+        downloaded_and_valid?:           false,
+        downloader:                      nil,
+        download_queue_message:          "Bottle testball",
+        download_queue_name:             "testball",
+        download_queue_type:             "Bottle",
+        staged_path_from_download_queue: staged_path,
+      )
+    end
+    bottles.each do |bottle|
+      allow(bottle).to receive_messages(
+        downloaded!:                nil,
+        extracting!:                nil,
+        stage_from_download_queue?: true,
+      )
+    end
+    expect(retryable_download).to receive(:fetch).once.and_return(cached_download)
+    expect(bottles.first).to receive(:stage_from_download_queue).once
+    expect(bottles.second).not_to receive(:stage_from_download_queue)
+
+    bottles.each { |bottle| download_queue.enqueue(bottle, stage: true) }
+    download_queue.fetch
+  end
+
+  it "checks attestations for valid cached bottles" do
+    bottle = Bottle.allocate
+    allow(bottle).to receive_messages(
+      cached_download:,
+      checksum:               nil,
+      downloaded_and_valid?:  true,
+      downloader:             nil,
+      download_queue_message: "Bottle testball",
+      download_queue_name:    "testball",
+      download_queue_type:    "Bottle",
+    )
+
+    expect(Utils::Attestation).to receive(:check_attestation).with(bottle, quiet: true)
+
+    download_queue.enqueue(bottle, check_attestation: true)
+    download_queue.fetch
+  end
+
+  describe "Homebrew::DownloadQueue.default", order: :defined do
+    it "memoizes the queue created on first use" do
+      queue = instance_double(described_class, shutdown: nil)
+      allow(described_class).to receive(:new).and_return(queue)
+
+      expect(described_class.default).to be(queue)
+    end
+
+    it "does not leak a queue stubbed by an earlier example" do
+      expect(described_class.default).to be_an_instance_of(described_class)
+    end
+
+    it "shuts down a memoized real queue when reset" do
+      queue = described_class.default
+      expect(queue).to receive(:shutdown)
+
+      described_class.reset_default
+    end
+  end
+end

@@ -13,6 +13,7 @@ module Homebrew
       #
       # * Archive file URLs:
       #   * `https://ftp.gnu.org/gnu/example/example-1.2.3.tar.gz`
+      #   * `https://ftpmirror.gnu.org/example/example-1.2.3.tar.gz`
       #   * `https://ftp.gnu.org/gnu/example/1.2.3/example-1.2.3.tar.gz`
       # * Homepage URLs:
       #   * `https://www.gnu.org/software/example/`
@@ -33,14 +34,13 @@ module Homebrew
       class Gnu
         extend Strategic
 
-        NICE_NAME = "GNU"
-
         # The `Regexp` used to determine if the strategy applies to the URL.
-        URL_MATCH_REGEX = T.let(%r{
+        URL_MATCH_REGEX = %r{
           ^https?://
           (?:(?:[^/]+?\.)*gnu\.org/(?:gnu|software)/(?<project_name>[^/]+)/
+          |ftpmirror\.gnu\.org/(?!non-gnu/)(?<project_name>[^/]+)/
           |(?<project_name>[^/]+)\.gnu\.org/?$)
-        }ix, Regexp)
+        }ix
 
         # Whether the strategy can be applied to the provided URL.
         #
@@ -65,10 +65,13 @@ module Homebrew
           match = url.match(URL_MATCH_REGEX)
           return values if match.blank?
 
-          # The directory listing page for the project's files
-          values[:url] = "https://ftp.gnu.org/gnu/#{match[:project_name]}/"
+          project_name = match[:project_name]
+          return values if project_name.blank?
 
-          regex_name = Regexp.escape(T.must(match[:project_name])).gsub("\\-", "-")
+          # The directory listing page for the project's files
+          values[:url] = "https://ftpmirror.gnu.org/#{project_name}/"
+
+          regex_name = Regexp.escape(project_name).gsub("\\-", "-")
 
           # The default regex consists of the following parts:
           # * `href=.*?`: restricts matching to URLs in `href` attributes
@@ -87,23 +90,26 @@ module Homebrew
         # to {PageMatch.find_versions} to identify versions in the content.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
             regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           generated = generate_input_values(url)
 
           PageMatch.find_versions(
             url:     generated[:url],
             regex:   regex || generated[:regex],
+            content:,
             options:,
             &block
           )

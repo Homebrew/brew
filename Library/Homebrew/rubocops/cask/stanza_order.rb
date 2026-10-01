@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "forwardable"
@@ -15,6 +15,7 @@ module RuboCop
 
         MESSAGE = "`%<stanza>s` stanza out of order"
 
+        sig { override.params(stanza_block: RuboCop::Cask::AST::StanzaBlock).void }
         def on_cask_stanza_block(stanza_block)
           stanzas = stanza_block.stanzas
           ordered_stanzas = sort_stanzas(stanzas)
@@ -23,12 +24,16 @@ module RuboCop
 
           stanzas.zip(ordered_stanzas).each do |stanza_before, stanza_after|
             next if stanza_before == stanza_after
+            next if [stanza_before, stanza_after].compact.any? do |candidate|
+              [:zsh_completion, :fish_completion].include?(candidate.stanza_name)
+            end
 
             add_offense(
               stanza_before.method_node,
               message: format(MESSAGE, stanza: stanza_before.stanza_name),
             ) do |corrector|
               next if part_of_ignored_node?(stanza_before.method_node)
+              raise "unexpected nil value for stanza_after" unless stanza_after
 
               corrector.replace(
                 stanza_before.source_range_with_comments,
@@ -41,6 +46,7 @@ module RuboCop
           end
         end
 
+        sig { override.void }
         def on_new_investigation
           super
 
@@ -49,23 +55,50 @@ module RuboCop
 
         private
 
+        sig { params(stanzas: T::Array[RuboCop::Cask::AST::Stanza]).returns(T::Array[RuboCop::Cask::AST::Stanza]) }
         def sort_stanzas(stanzas)
-          stanzas.sort do |stanza1, stanza2|
-            i1 = stanza1.stanza_index
-            i2 = stanza2.stanza_index
-
-            if i1 == i2
-              i1 = stanzas.index(stanza1)
-              i2 = stanzas.index(stanza2)
-            end
-
-            i1 - i2
+          sort_depends_on_stanzas = stanzas.all? do |stanza|
+            stanza.stanza_name != :depends_on || !depends_on_sort_key(stanza).nil?
           end
+          stanzas.each_with_index.sort_by do |stanza, index|
+            [
+              stanza.stanza_index || raise("unexpected nil stanza index"),
+              if sort_depends_on_stanzas && stanza.stanza_name == :depends_on
+                depends_on_sort_key(stanza)
+              else
+                ""
+              end,
+              index,
+            ]
+          end.map(&:first)
         end
 
-        def stanza_order_index(stanza)
-          stanza_name = stanza.respond_to?(:method_name) ? stanza.method_name : stanza.stanza_name
-          RuboCop::Cask::Constants::STANZA_ORDER.index(stanza_name)
+        sig { params(stanza: RuboCop::Cask::AST::Stanza).returns(T.nilable(String)) }
+        def depends_on_sort_key(stanza)
+          node = stanza.stanza_node
+          return unless node.is_a?(RuboCop::AST::SendNode)
+
+          argument = node.first_argument
+          return unless argument
+          return argument.value.to_s.downcase if argument.sym_type?
+          return unless argument.hash_type?
+
+          return unless argument.pairs.all? do |pair|
+            next false unless pair.key.sym_type?
+
+            values = pair.value.array_type? ? pair.value.values : [pair.value]
+            values.all? { |value| value.sym_type? || value.str_type? }
+          end
+
+          sort_key = []
+          argument.pairs.each do |pair|
+            sort_key << pair.key.value.to_s.downcase
+            values = pair.value.array_type? ? pair.value.values : [pair.value]
+            values.each do |value|
+              sort_key << value.value.to_s.downcase
+            end
+          end
+          sort_key.join("\0")
         end
       end
     end

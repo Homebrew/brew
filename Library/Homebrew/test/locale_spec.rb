@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "locale"
@@ -47,30 +48,36 @@ RSpec.describe Locale do
   end
 
   describe "#include?" do
-    subject { described_class.new("zh", "Hans", "CN") }
+    subject(:locale) { described_class.new("zh", "Hans", "CN") }
 
-    it { is_expected.to include("zh") }
-    it { is_expected.to include("zh-CN") }
-    it { is_expected.to include("CN") }
-    it { is_expected.to include("Hans-CN") }
-    it { is_expected.to include("Hans") }
-    it { is_expected.to include("zh-Hans-CN") }
+    specify(:aggregate_failures) do
+      expect(locale).to include("zh")
+      expect(locale).to include("zh-CN")
+      expect(locale).to include("CN")
+      expect(locale).to include("Hans-CN")
+      expect(locale).to include("Hans")
+      expect(locale).to include("zh-Hans-CN")
+    end
   end
 
   describe "#eql?" do
     subject(:locale) { described_class.new("zh", "Hans", "CN") }
 
     context "when all parts match" do
-      it { is_expected.to eql("zh-Hans-CN") }
-      it { is_expected.to eql(locale) }
+      specify(:aggregate_failures) do
+        expect(locale).to eql("zh-Hans-CN")
+        expect(locale).to eql(described_class.new("zh", "Hans", "CN"))
+      end
     end
 
     context "when only some parts match" do
-      it { is_expected.not_to eql("zh") }
-      it { is_expected.not_to eql("zh-CN") }
-      it { is_expected.not_to eql("CN") }
-      it { is_expected.not_to eql("Hans-CN") }
-      it { is_expected.not_to eql("Hans") }
+      specify(:aggregate_failures) do
+        expect(locale).not_to eql("zh")
+        expect(locale).not_to eql("zh-CN")
+        expect(locale).not_to eql("CN")
+        expect(locale).not_to eql("Hans-CN")
+        expect(locale).not_to eql("Hans")
+      end
     end
 
     it "does not raise if 'other' cannot be parsed" do

@@ -1,20 +1,27 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/data"
+
 require "json"
 
 require "lazy_object"
 require "locale"
 require "extend/hash/keys"
+require "utils/output"
 
 module Cask
   # Configuration for installing casks.
   #
   # @api internal
   class Config
+    include ::Utils::Output::Mixin
+
+    ConfigHash = T.type_alias { T::Hash[Symbol, T.any(LazyObject, String, Pathname, T::Array[String])] }
     DEFAULT_DIRS = T.let(
       {
         appdir:               "/Applications",
+        appimagedir:          "~/Applications",
         keyboard_layoutdir:   "/Library/Keyboard Layouts",
         colorpickerdir:       "~/Library/ColorPickers",
         prefpanedir:          "~/Library/PreferencePanes",
@@ -33,69 +40,56 @@ module Cask
       T::Hash[Symbol, String],
     )
 
-    sig { returns(T::Hash[Symbol, String]) }
+    # runtime recursive evaluation forces the LazyObject to be evaluated
+    T::Sig::WithoutRuntime.sig { returns(ConfigHash) }
     def self.defaults
       {
-        languages: LazyObject.new { ::OS::Mac.languages },
+        languages: T.let([], T::Array[String]),
       }.merge(DEFAULT_DIRS).freeze
     end
 
     sig { params(args: Homebrew::CLI::Args).returns(T.attached_class) }
     def self.from_args(args)
-      # FIXME: T.unsafe is a workaround for methods that are only defined when `cask_options`
-      # is invoked on the parser. (These could be captured by a DSL compiler instead.)
-      args = T.unsafe(args)
-      new(explicit: {
-        appdir:               args.appdir,
-        keyboard_layoutdir:   args.keyboard_layoutdir,
-        colorpickerdir:       args.colorpickerdir,
-        prefpanedir:          args.prefpanedir,
-        qlplugindir:          args.qlplugindir,
-        mdimporterdir:        args.mdimporterdir,
-        dictionarydir:        args.dictionarydir,
-        fontdir:              args.fontdir,
-        servicedir:           args.servicedir,
-        input_methoddir:      args.input_methoddir,
-        internet_plugindir:   args.internet_plugindir,
-        audio_unit_plugindir: args.audio_unit_plugindir,
-        vst_plugindir:        args.vst_plugindir,
-        vst3_plugindir:       args.vst3_plugindir,
-        screen_saverdir:      args.screen_saverdir,
-        languages:            args.language,
-      }.compact)
+      # The option methods are only defined on `args` when `cask_options` is invoked on the parser.
+      explicit = [*DEFAULT_DIRS.keys, :language].to_h do |option|
+        [option, (args.public_send(option) if args.respond_to?(option))]
+      end
+      explicit[:languages] = explicit.delete(:language)
+      new(explicit: explicit.compact)
     end
 
     sig { params(json: String, ignore_invalid_keys: T::Boolean).returns(T.attached_class) }
     def self.from_json(json, ignore_invalid_keys: false)
-      config = JSON.parse(json)
+      config = JSON.parse(json, symbolize_names: true)
 
       new(
-        default:             config.fetch("default",  {}),
-        env:                 config.fetch("env",      {}),
-        explicit:            config.fetch("explicit", {}),
+        default:             reject_legacy_keys(config.fetch(:default,  {})),
+        env:                 reject_legacy_keys(config.fetch(:env,      {})),
+        explicit:            reject_legacy_keys(config.fetch(:explicit, {})) || {},
         ignore_invalid_keys:,
       )
     end
 
-    sig {
-      params(
-        config: T::Enumerable[
-          [T.any(String, Symbol), T.any(String, Pathname, T::Array[String])],
-        ],
-      ).returns(
-        T::Hash[Symbol, T.any(String, Pathname, T::Array[String])],
-      )
-    }
+    # Saved configs can contain hyphenated option names that were never honored when read back,
+    # so drop them instead of warning about them or retroactively making them take effect.
+    sig { params(config: T.nilable(ConfigHash)).returns(T.nilable(ConfigHash)) }
+    def self.reject_legacy_keys(config)
+      return if config.nil?
+
+      valid_keys = defaults
+      config.reject { |key, _| key.to_s.include?("-") && valid_keys.key?(key.to_s.tr("-", "_").to_sym) }
+    end
+
+    # runtime recursive evaluation forces the LazyObject to be evaluated
+    T::Sig::WithoutRuntime.sig { params(config: ConfigHash).returns(ConfigHash) }
     def self.canonicalize(config)
       config.to_h do |k, v|
-        key = k.to_sym
-
-        if DEFAULT_DIRS.key?(key)
+        if DEFAULT_DIRS.key?(k)
           raise TypeError, "Invalid path for default dir #{k}: #{v.inspect}" if v.is_a?(Array)
 
-          [key, Pathname(v).expand_path]
+          [k, Pathname(v.to_s).expand_path]
         else
-          [key, v]
+          [k, v]
         end
       end
     end
@@ -103,92 +97,106 @@ module Cask
     # Get the explicit configuration.
     #
     # @api internal
-    sig { returns(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]) }
+    sig { returns(ConfigHash) }
     attr_accessor :explicit
 
     sig {
       params(
-        default:             T.nilable(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]),
-        env:                 T.nilable(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]),
-        explicit:            T::Hash[Symbol, T.any(String, Pathname, T::Array[String])],
+        default:             T.nilable(ConfigHash),
+        env:                 T.nilable(ConfigHash),
+        explicit:            ConfigHash,
         ignore_invalid_keys: T::Boolean,
       ).void
     }
     def initialize(default: nil, env: nil, explicit: {}, ignore_invalid_keys: false)
-      if default
-        @default = T.let(
-          self.class.canonicalize(self.class.defaults.merge(default)),
-          T.nilable(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]),
-        )
-      end
-      if env
-        @env = T.let(
-          self.class.canonicalize(env),
-          T.nilable(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]),
-        )
-      end
+      # Define all instance variables in a consistent order so every instance
+      # shares one object shape, avoiding Ruby's shape-variation warning.
+      @default = T.let(
+        default ? self.class.canonicalize(self.class.defaults.merge(default)) : nil,
+        T.nilable(ConfigHash),
+      )
+      @env = T.let(
+        env ? self.class.canonicalize(env) : nil,
+        T.nilable(ConfigHash),
+      )
       @explicit = T.let(
         self.class.canonicalize(explicit),
-        T::Hash[Symbol, T.any(String, Pathname, T::Array[String])],
+        ConfigHash,
       )
+      @binarydir = T.let(nil, T.nilable(Pathname))
+      @manpagedir = T.let(nil, T.nilable(Pathname))
+      @bash_completion = T.let(nil, T.nilable(Pathname))
+      @zsh_completion = T.let(nil, T.nilable(Pathname))
+      @fish_completion = T.let(nil, T.nilable(Pathname))
+      @pwsh_completion = T.let(nil, T.nilable(Pathname))
 
-      if ignore_invalid_keys
-        @env&.delete_if { |key, _| self.class.defaults.keys.exclude?(key) }
-        @explicit.delete_if { |key, _| self.class.defaults.keys.exclude?(key) }
+      if ignore_invalid_keys &&
+         (unknown_keys = ((Array(@env&.keys) + @explicit.keys).uniq - self.class.defaults.keys).presence)
+        opoo "Ignoring unknown cask configuration keys: #{unknown_keys.inspect}"
+
+        @env&.delete_if { |key, _| unknown_keys.include?(key) }
+        @explicit.delete_if { |key, _| unknown_keys.include?(key) }
         return
       end
 
-      @env&.assert_valid_keys(*self.class.defaults.keys)
-      @explicit.assert_valid_keys(*self.class.defaults.keys)
+      ::Utils::Data.assert_valid_keys(@env, *self.class.defaults.keys) if @env
+      ::Utils::Data.assert_valid_keys(@explicit, *self.class.defaults.keys)
     end
 
-    sig { returns(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]) }
+    # runtime recursive evaluation forces the LazyObject to be evaluated
+    T::Sig::WithoutRuntime.sig { returns(ConfigHash) }
     def default
       @default ||= self.class.canonicalize(self.class.defaults)
     end
 
-    sig { returns(T::Hash[Symbol, T.any(String, Pathname, T::Array[String])]) }
+    sig { returns(ConfigHash) }
     def env
       @env ||= self.class.canonicalize(
         Homebrew::EnvConfig.cask_opts
           .select { |arg| arg.include?("=") }
           .map { |arg| T.cast(arg.split("=", 2), [String, String]) }
-          .map do |(flag, value)|
-            key = flag.sub(/^--/, "")
+          .to_h do |(flag, value)|
+            # command-line flags are hyphenated (e.g. --input-methoddir) but config keys use underscores
+            key = flag.sub(/^--/, "").tr("-", "_")
             # converts --language flag to :languages config key
             if key == "language"
               key = "languages"
               value = value.split(",")
             end
 
-            [key, value]
+            [key.to_sym, value]
           end,
       )
     end
 
     sig { returns(Pathname) }
     def binarydir
-      @binarydir ||= T.let(HOMEBREW_PREFIX/"bin", T.nilable(Pathname))
+      @binarydir ||= HOMEBREW_PREFIX/"bin"
     end
 
     sig { returns(Pathname) }
     def manpagedir
-      @manpagedir ||= T.let(HOMEBREW_PREFIX/"share/man", T.nilable(Pathname))
+      @manpagedir ||= HOMEBREW_PREFIX/"share/man"
     end
 
     sig { returns(Pathname) }
     def bash_completion
-      @bash_completion ||= T.let(HOMEBREW_PREFIX/"etc/bash_completion.d", T.nilable(Pathname))
+      @bash_completion ||= HOMEBREW_PREFIX/"etc/bash_completion.d"
     end
 
     sig { returns(Pathname) }
     def zsh_completion
-      @zsh_completion ||= T.let(HOMEBREW_PREFIX/"share/zsh/site-functions", T.nilable(Pathname))
+      @zsh_completion ||= HOMEBREW_PREFIX/"share/zsh/site-functions"
     end
 
     sig { returns(Pathname) }
     def fish_completion
-      @fish_completion ||= T.let(HOMEBREW_PREFIX/"share/fish/vendor_completions.d", T.nilable(Pathname))
+      @fish_completion ||= HOMEBREW_PREFIX/"share/fish/vendor_completions.d"
+    end
+
+    sig { returns(Pathname) }
+    def pwsh_completion
+      @pwsh_completion ||= HOMEBREW_PREFIX/"share/pwsh/completions"
     end
 
     sig { returns(T::Array[String]) }

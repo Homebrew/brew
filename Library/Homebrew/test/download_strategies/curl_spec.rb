@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "download_strategy"
@@ -17,13 +18,88 @@ RSpec.describe CurlDownloadStrategy do
     }
   end
 
+  let(:responses) { [{ headers: }] }
+
   before do
     allow(strategy).to receive(:curl_headers).with(any_args)
-                                             .and_return({ responses: [{ headers: }] })
+                                             .and_return({ responses: })
   end
 
   it "parses the opts and sets the corresponding args" do
-    expect(strategy.send(:_curl_args)).to eq(["--user", "download:123456"])
+    expect(strategy._curl_args).to eq(["--user", "download:123456"])
+  end
+
+  context "with a deferred HOMEBREW_ secret in a header" do
+    let(:specs) { { headers: [header] } }
+    let(:header) do
+      ENV["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+      ENV.clear_sensitive_environment_for_eval! { "PRIVATE-TOKEN: #{ENV.fetch("HOMEBREW_PRIVATE_TOKEN", nil)}" }
+    end
+
+    after { ENV.delete("HOMEBREW_PRIVATE_TOKEN") }
+
+    it "does not expand the placeholder outside Downloadable#fetch" do
+      expect(header).to include(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX)
+      expect(strategy._curl_args).to include(header)
+      expect(strategy._curl_args).to include("--max-redirs", "0")
+    end
+  end
+
+  context "with a deferred HOMEBREW_ secret in the URL" do
+    let(:url) do
+      ENV["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+      ENV.clear_sensitive_environment_for_eval! do
+        "https://example.com/foo.tar.gz?private_token=#{ENV.fetch("HOMEBREW_PRIVATE_TOKEN", nil)}"
+      end
+    end
+
+    after { ENV.delete("HOMEBREW_PRIVATE_TOKEN") }
+
+    it "does not expand the placeholder outside Downloadable#fetch" do
+      expect(url).to include(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX)
+      expect(strategy).to receive(:system_command)
+        .with(
+          /curl/,
+          hash_including(args: array_including(url)),
+        )
+        .at_least(:once)
+        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+      strategy.temporary_path.dirname.mkpath
+      FileUtils.touch strategy.temporary_path
+      strategy.fetch
+    end
+  end
+
+  describe "#fetch with a timeout and no cached download" do
+    let(:start_time) { Time.at(1_700_000_000) }
+
+    before do
+      allow(Time).to receive(:now).and_return(start_time)
+      allow(strategy).to receive(:curl_headers).and_raise(Timeout::Error)
+    end
+
+    it "bounds the request used to resolve the cache filename" do
+      expect(strategy).to receive(:curl_headers)
+        .with(url, wanted_headers: ["content-disposition"], deadline: start_time + 1)
+        .and_raise(Timeout::Error)
+
+      expect { strategy.fetch(timeout: 1) }.to raise_error(Timeout::Error)
+    end
+
+    it "clears the deadline after a failed fetch" do
+      begin
+        strategy.fetch(timeout: 1)
+      rescue Timeout::Error
+        nil
+      end
+
+      expect(strategy).to receive(:curl_headers)
+        .with(url, wanted_headers: ["content-disposition"], deadline: nil)
+        .and_return({ responses: })
+
+      strategy.basename
+    end
   end
 
   describe "#fetch" do
@@ -144,6 +220,147 @@ RSpec.describe CurlDownloadStrategy do
       end
     end
 
+    context "with a deferred HOMEBREW_ secret in a header" do
+      let(:specs) { { headers: [header] } }
+      let(:header) do
+        ENV["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+        ENV.clear_sensitive_environment_for_eval! { "PRIVATE-TOKEN: #{ENV.fetch("HOMEBREW_PRIVATE_TOKEN", nil)}" }
+      end
+
+      before do
+        strategy.allow_deferred_environment_expansion!
+      end
+
+      after { ENV.delete("HOMEBREW_PRIVATE_TOKEN") }
+
+      it "keeps location handling but refuses redirects while sending caller-supplied headers" do
+        expect(strategy).to receive(:system_command) do |_command, options|
+          if options[:args].include?("PRIVATE-TOKEN: glpat-secret")
+            expect(options[:args]).to include("--location", "--max-redirs", "0")
+          end
+
+          instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil)
+        end.at_least(:once)
+
+        strategy.fetch
+      end
+    end
+
+    context "when a redirect crosses to another host" do
+      let(:specs) { { headers: ["PRIVATE-TOKEN: glpat-secret"] } }
+
+      before do
+        allow(strategy).to receive(:resolve_url_basename_time_file_size)
+          .and_return(["https://other.example.org/foo.tar.gz", "foo.tar.gz", nil, 0, nil, true])
+      end
+
+      it "does not forward caller-supplied headers to the new host" do
+        expect(strategy).to receive(:system_command) do |_command, options|
+          expect(options[:args]).not_to include("PRIVATE-TOKEN: glpat-secret")
+          instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil)
+        end.at_least(:once)
+
+        strategy.fetch
+      end
+    end
+
+    context "with an HTML redirect before the downloaded file" do
+      let(:final_headers) { headers }
+      let(:responses) do
+        [
+          { headers: { "content-type"   => "text/html; charset=UTF-8",
+                       "content-length" => "100",
+                       "location"       => "https://example.com/media/foo.tar.gz" } },
+          { headers: final_headers },
+        ]
+      end
+
+      before do
+        allow(strategy).to receive(:curl)
+
+        strategy.cached_location.dirname.mkpath
+        strategy.cached_location.write("cached")
+      end
+
+      it "ignores a cached download of a different size" do
+        expect { strategy.fetch }.to output(/differs from Content-Length header: 37182/).to_stdout
+      end
+
+      context "when the file is newer than the cached download" do
+        let(:final_headers) { { "last-modified" => (Time.now + 3600).httpdate } }
+
+        it "ignores the cached download" do
+          expect { strategy.fetch }.to output(/is before Last-Modified header/).to_stdout
+        end
+      end
+
+      context "when the redirect ends on a web page" do
+        let(:final_headers) { headers.merge("content-type" => "text/html; charset=UTF-8") }
+
+        it "keeps the cached download" do
+          expect { strategy.fetch }.to output(/Already downloaded/).to_stdout
+        end
+      end
+
+      context "when the file is sent without a size or a modification time" do
+        let(:final_headers) { { "transfer-encoding" => "chunked" } }
+
+        it "keeps the cached download" do
+          expect { strategy.fetch }.to output(/Already downloaded/).to_stdout
+        end
+      end
+    end
+
+    context "when a redirect target names a variable the download did not declare" do
+      let(:redirect_url) do
+        "https://example.com/elsewhere/foo.tar.gz?leak=" \
+          "#{EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX}HOMEBREW_GITHUB_API_TOKEN" \
+          "#{EnvSensitive::DEFERRED_PLACEHOLDER_SUFFIX}"
+      end
+
+      before do
+        ENV["HOMEBREW_GITHUB_API_TOKEN"] = "ghp-victim-token"
+        strategy.allow_deferred_environment_expansion!
+        allow(strategy).to receive(:resolve_url_basename_time_file_size)
+          .and_return([redirect_url, "foo.tar.gz", nil, 0, nil, true])
+      end
+
+      it "refuses to send a secret the download never named" do
+        expect { strategy.fetch }.to raise_error(CurlDownloadStrategyError, /did not declare/)
+      end
+    end
+
+    context "when a redirect target carries a secret the download declared" do
+      let(:url) do
+        "https://example.com/foo.tar.gz?t=" \
+          "#{EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX}HOMEBREW_PRIVATE_TOKEN" \
+          "#{EnvSensitive::DEFERRED_PLACEHOLDER_SUFFIX}"
+      end
+      let(:redirect_url) do
+        "https://cdn.example.org/foo.tar.gz?t=" \
+          "#{EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX}HOMEBREW_PRIVATE_TOKEN" \
+          "#{EnvSensitive::DEFERRED_PLACEHOLDER_SUFFIX}"
+      end
+
+      before do
+        ENV["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+        strategy.allow_deferred_environment_expansion!
+        allow(strategy).to receive(:resolve_url_basename_time_file_size)
+          .and_return([redirect_url, "foo.tar.gz", nil, 0, nil, true])
+      end
+
+      it "still expands it, as redirects carrying declared secrets are supported" do
+        seen = []
+        allow(strategy).to receive(:system_command) do |_command, options|
+          seen.concat(options[:args])
+          instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil)
+        end
+        strategy.fetch
+
+        expect(seen).to include(a_string_including("t=glpat-secret"))
+      end
+    end
+
     context "with artifact_domain set" do
       let(:artifact_domain) { "https://mirror.example.com/oci" }
 
@@ -173,7 +390,7 @@ RSpec.describe CurlDownloadStrategy do
               hash_including(args: array_including_cons("#{artifact_domain}/#{resource_path}")),
             )
             .at_least(:once)
-            .and_return(SystemCommand::Result.new(["curl"], [""], status, secrets: []))
+            .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
 
           strategy.fetch
         end
@@ -191,9 +408,194 @@ RSpec.describe CurlDownloadStrategy do
               hash_including(args: array_including_cons("#{artifact_domain}/#{resource_path}")),
             )
             .at_least(:once)
-            .and_return(SystemCommand::Result.new(["curl"], [""], status, secrets: []))
+            .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
 
           strategy.fetch
+        end
+
+        context "when the artifact domain already contains a /v2 path" do
+          let(:artifact_domain) { "https://mirror.example.com/v2/oci" }
+
+          it "does not duplicate the /v2/ API path" do
+            expect(strategy).to receive(:system_command)
+              .with(
+                /curl/,
+                hash_including(args: array_including_cons("https://mirror.example.com/v2/oci/homebrew/core/spec/manifests/0.0")),
+              )
+              .at_least(:once)
+              .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
+
+            strategy.fetch
+          end
+
+          context "with a trailing slash" do
+            let(:artifact_domain) { "https://mirror.example.com/v2/oci/" }
+
+            it "does not duplicate the /v2/ API path" do
+              expect(strategy).to receive(:system_command)
+                .with(
+                  /curl/,
+                  hash_including(args: array_including_cons("https://mirror.example.com/v2/oci/homebrew/core/spec/manifests/0.0")),
+                )
+                .at_least(:once)
+                .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
+
+              strategy.fetch
+            end
+          end
+
+          context "when the artifact domain is unreachable" do
+            let(:failed_status) { instance_double(Process::Status, success?: false, exitstatus: 6, termsig: nil) }
+
+            it "falls back to the original ghcr.io URL" do
+              artifact_url = "https://mirror.example.com/v2/oci/homebrew/core/spec/manifests/0.0"
+
+              # First call: artifact domain URL fails
+              expect(strategy).to receive(:_fetch)
+                .with(url: artifact_url, resolved_url: artifact_url,
+                      timeout: anything)
+                .once
+                .and_raise(ErrorDuringExecution.new(["curl", artifact_url], status: failed_status))
+
+              # Second call: original ghcr.io URL succeeds
+              expect(strategy).to receive(:_fetch)
+                .with(url: url, resolved_url: url,
+                      timeout: anything)
+                .once
+                .and_return(nil)
+
+              strategy.fetch
+            end
+          end
+        end
+
+        context "when the artifact domain is unreachable" do
+          let(:failed_status) { instance_double(Process::Status, success?: false, exitstatus: 6, termsig: nil) }
+
+          it "falls back to the original ghcr.io URL" do
+            artifact_url = "#{artifact_domain}/#{resource_path}"
+
+            # First call: artifact domain URL fails
+            expect(strategy).to receive(:_fetch)
+              .with(url: artifact_url, resolved_url: artifact_url,
+                    timeout: anything)
+              .once
+              .and_raise(ErrorDuringExecution.new(["curl", artifact_url], status: failed_status))
+
+            # Second call: original ghcr.io URL succeeds
+            expect(strategy).to receive(:_fetch)
+              .with(url: url, resolved_url: url,
+                    timeout: anything)
+              .once
+              .and_return(nil)
+
+            strategy.fetch
+          end
+        end
+
+        context "when artifact_domain_no_fallback is set" do
+          let(:failed_status) { instance_double(Process::Status, success?: false, exitstatus: 6, termsig: nil) }
+
+          before do
+            allow(Homebrew::EnvConfig).to receive(:artifact_domain_no_fallback?).and_return(true)
+          end
+
+          it "does not fall back to the original URL" do
+            artifact_url = "#{artifact_domain}/#{resource_path}"
+
+            expect(strategy).to receive(:_fetch)
+              .with(url: artifact_url, resolved_url: artifact_url,
+                    timeout: anything)
+              .once
+              .and_raise(ErrorDuringExecution.new(["curl", artifact_url], status: failed_status))
+
+            expect { strategy.fetch }.to raise_error(CurlDownloadStrategyError)
+          end
+        end
+      end
+    end
+  end
+
+  describe "#resolved_time_file_size" do
+    context "when content-length header is present" do
+      let(:headers) do
+        {
+          "content-length" => "1024",
+        }
+      end
+
+      it "returns the content-length value" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1024)
+      end
+    end
+
+    context "when only content-range header is present" do
+      let(:headers) do
+        {
+          "content-range" => "bytes 0-1023/1024",
+        }
+      end
+
+      it "returns the total size from content-range" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1024)
+      end
+    end
+
+    context "when content-length is zero and content-range is present" do
+      let(:headers) do
+        {
+          "content-length" => "0",
+          "content-range"  => "bytes 0-999/1000",
+        }
+      end
+
+      it "falls back to content-range" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(1000)
+      end
+    end
+
+    context "when content-range has unsatisfied range format (416 response)" do
+      let(:headers) do
+        {
+          "content-range" => "bytes */67589",
+        }
+      end
+
+      it "extracts size from unsatisfied range format" do
+        _, file_size = strategy.resolved_time_file_size
+        expect(file_size).to eq(67589)
+      end
+    end
+
+    context "when content-range has unknown size" do
+      let(:headers) do
+        {
+          "content-range" => "bytes 0-1023/*",
+        }
+      end
+
+      it "raises when size cannot be determined" do
+        expect { strategy.resolved_time_file_size }.to raise_error(RuntimeError, /Could not determine the file size/)
+      end
+    end
+
+    context "when content-range has invalid format" do
+      test_each(["invalid-format", "bytes 0-1023", "bytes 0-1023/abc", "bytes 0-1023/", ""]) do |invalid_value|
+        context "with value #{invalid_value.inspect}" do
+          let(:headers) do
+            {
+              "content-range" => invalid_value,
+            }
+          end
+
+          it "raises when size cannot be parsed" do
+            expect do
+              strategy.resolved_time_file_size
+            end.to raise_error(RuntimeError, /Could not determine the file size/)
+          end
         end
       end
     end

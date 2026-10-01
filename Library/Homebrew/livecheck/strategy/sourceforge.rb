@@ -25,7 +25,7 @@ module Homebrew
       # Usually we address this situation by adding a `livecheck` block to
       # the formula/cask that checks the page for the relevant directory in the
       # project instead. In this situation, it's necessary to use
-      # `strategy :page_match` to prevent the {Sourceforge} stratgy from
+      # `strategy :page_match` to prevent the {Sourceforge} strategy from
       # being used.
       #
       # The default regex matches within `url` attributes in the RSS feed
@@ -34,8 +34,6 @@ module Homebrew
       # @api public
       class Sourceforge
         extend Strategic
-
-        NICE_NAME = "SourceForge"
 
         # The `Regexp` used to determine if the strategy applies to the URL.
         URL_MATCH_REGEX = %r{
@@ -65,15 +63,15 @@ module Homebrew
         def self.generate_input_values(url)
           values = {}
 
-          match = url.match(URL_MATCH_REGEX)
-          return values if match.blank?
+          project_name = url[URL_MATCH_REGEX, :project_name]
+          return values if project_name.blank?
 
           # Don't generate a URL if the URL already points to the RSS feed
           unless url.match?(%r{/rss(?:/?$|\?)})
-            values[:url] = "https://sourceforge.net/projects/#{match[:project_name]}/rss"
+            values[:url] = "https://sourceforge.net/projects/#{project_name}/rss"
           end
 
-          regex_name = Regexp.escape(T.must(match[:project_name])).gsub("\\-", "-")
+          regex_name = Regexp.escape(project_name).gsub("\\-", "-")
 
           # It may be possible to improve the generated regex but there's quite
           # a bit of variation between projects and it can be challenging to
@@ -87,23 +85,26 @@ module Homebrew
         # to {PageMatch.find_versions} to identify versions in the content.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp] a regex used for matching versions in content
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
             regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           generated = generate_input_values(url)
 
           PageMatch.find_versions(
             url:     generated[:url] || url,
             regex:   regex || generated[:regex],
+            content:,
             options:,
             &block
           )

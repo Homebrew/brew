@@ -58,6 +58,7 @@ module RuboCop
           [nil, :safe_system],
           [nil, :quiet_system],
           [:Utils, :popen_read],
+          [:Utils, :popen_read_text],
           [:Utils, :safe_popen_read],
           [:Utils, :popen_write],
           [:Utils, :safe_popen_write],
@@ -87,6 +88,8 @@ module RuboCop
               first_arg = node.arguments.second
               arg_count -= 1
             end
+            last_arg = node.arguments.last
+            arg_count -= 1 if arg_count > 1 && last_arg.is_a?(RuboCop::AST::HashNode) && !last_arg.braces?
             next if first_arg.nil? || arg_count >= 2
 
             first_arg_str = string_content(first_arg)

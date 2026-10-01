@@ -9,6 +9,18 @@ homebrew-casks() {
   local sed_filter='s|/Casks/(.+/)?|/|'
   local grep_filter='^homebrew/cask'
 
+  if homebrew-tap-trust-required
+  then
+    if homebrew-trusted-items-with-api-names "${find_include_filter}" '^\b$' \
+       "trustedcasks" "homebrew/cask" "Casks" "cask_names.txt"
+    then
+      return
+    fi
+    opoo "jq is unavailable; falling back to Ruby to apply tap trust."
+    HOMEBREW_FORCE_RUBY_COMMAND=1 "${HOMEBREW_BREW_FILE}" casks
+    return
+  fi
+
   # HOMEBREW_CACHE is set by brew.sh
   # shellcheck disable=SC2154
   if [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" &&

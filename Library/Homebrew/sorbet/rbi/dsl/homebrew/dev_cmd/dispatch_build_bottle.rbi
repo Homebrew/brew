@@ -23,9 +23,6 @@ class Homebrew::DevCmd::DispatchBuildBottle::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def linux_self_hosted?; end
 
-  sig { returns(T::Boolean) }
-  def linux_wheezy?; end
-
   sig { returns(T.nilable(T::Array[String])) }
   def macos; end
 

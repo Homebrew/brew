@@ -20,9 +20,18 @@ module Homebrew
       def system(cmd, *args, verbose: false)
         return super cmd, *args if verbose
 
+        env = {}
+
+        # Make sure node's bin opt path is part of the PATH
+        # This is essential for the npm bundle extension that calls node directly
+        if Npm.package_manager_executable && cmd.to_s == Npm.package_manager_executable.to_s
+          node_bin = "#{HOMEBREW_PREFIX}/opt/node/bin"
+          env["PATH"] = "#{ENV.fetch("PATH")}:#{node_bin}"
+        end
+
         logs = []
         success = T.let(false, T::Boolean)
-        IO.popen([cmd, *args], err: [:child, :out]) do |pipe|
+        IO.popen(env, [cmd, *args], err: [:child, :out]) do |pipe|
           while (buf = pipe.gets)
             logs << buf
           end
@@ -40,66 +49,10 @@ module Homebrew
       end
 
       sig { returns(T::Boolean) }
-      def mas_installed?
-        @mas_installed ||= which_formula("mas")
-      end
-
-      sig { returns(T::Boolean) }
-      def vscode_installed?
-        @vscode_installed ||= which_vscode.present?
-      end
-
-      sig { returns(T.nilable(Pathname)) }
-      def which_vscode
-        @which_vscode ||= which("code", ORIGINAL_PATHS)
-        @which_vscode ||= which("codium", ORIGINAL_PATHS)
-        @which_vscode ||= which("cursor", ORIGINAL_PATHS)
-        @which_vscode ||= which("code-insiders", ORIGINAL_PATHS)
-      end
-
-      sig { returns(T::Boolean) }
-      def whalebrew_installed?
-        @whalebrew_installed ||= which_formula("whalebrew")
-      end
-
-      sig { returns(T::Boolean) }
       def cask_installed?
         @cask_installed ||= File.directory?("#{HOMEBREW_PREFIX}/Caskroom") &&
                             (File.directory?("#{HOMEBREW_LIBRARY}/Taps/homebrew/homebrew-cask") ||
                              !Homebrew::EnvConfig.no_install_from_api?)
-      end
-
-      sig { params(name: String).returns(T::Boolean) }
-      def which_formula(name)
-        formula = Formulary.factory(name)
-        ENV["PATH"] = "#{formula.opt_bin}:#{ENV.fetch("PATH", nil)}" if formula.any_version_installed?
-        which(name).present?
-      end
-
-      sig { params(block: T.proc.returns(T.anything)).returns(T.untyped) }
-      def exchange_uid_if_needed!(&block)
-        euid = Process.euid
-        uid = Process.uid
-        return yield if euid == uid
-
-        old_euid = euid
-        process_reexchangeable = Process::UID.re_exchangeable?
-        if process_reexchangeable
-          Process::UID.re_exchange
-        else
-          Process::Sys.seteuid(uid)
-        end
-
-        home = T.must(Etc.getpwuid(Process.uid)).dir
-        return_value = with_env("HOME" => home, &block)
-
-        if process_reexchangeable
-          Process::UID.re_exchange
-        else
-          Process::Sys.seteuid(old_euid)
-        end
-
-        return_value
       end
 
       sig { params(formula_name: String).returns(T.nilable(String)) }
@@ -130,18 +83,66 @@ module Homebrew
         @formula_versions_from_env[formula_env_name]
       end
 
+      sig { returns(T.nilable(T::Hash[String, String])) }
+      def formula_versions_from_env_cache
+        @formula_versions_from_env
+      end
+
+      sig { params(formula_versions: T.nilable(T::Hash[String, String])).void }
+      def formula_versions_from_env_cache=(formula_versions)
+        @formula_versions_from_env = formula_versions
+      end
+
       sig { void }
       def prepend_pkgconf_path_if_needed!; end
 
       sig { void }
       def reset!
-        @mas_installed = T.let(nil, T.nilable(T::Boolean))
-        @vscode_installed = T.let(nil, T.nilable(T::Boolean))
-        @which_vscode = T.let(nil, T.nilable(String))
-        @whalebrew_installed = T.let(nil, T.nilable(T::Boolean))
         @cask_installed = T.let(nil, T.nilable(T::Boolean))
         @formula_versions_from_env = T.let(nil, T.nilable(T::Hash[String, String]))
         @upgrade_formulae = T.let(nil, T.nilable(T::Array[String]))
+      end
+
+      # Marks Brewfile formulae as installed_on_request to prevent autoremove
+      # from removing them when their dependents are uninstalled.
+      sig { params(entries: T::Array[Dsl::Entry]).void }
+      def mark_as_installed_on_request!(entries)
+        return if entries.empty?
+
+        require "tab"
+
+        installed_formulae = Formula.installed_formula_names
+        return if installed_formulae.empty?
+
+        use_brew_tab = T.let(false, T::Boolean)
+
+        formulae_to_update = entries.filter_map do |entry|
+          next if entry.type != :brew
+
+          name = entry.name
+          next if installed_formulae.exclude?(name)
+
+          tab = Tab.for_name(name)
+          tabfile = tab.tabfile
+          next unless tabfile&.exist?
+          next if tab.installed_on_request
+
+          next name if use_brew_tab
+
+          tab.installed_on_request = true
+
+          begin
+            tab.write
+            nil
+          rescue Errno::EACCES
+            # Some wrappers might treat `brew bundle` with lower permissions due to its execution of user code.
+            # Running through `brew tab` ensures proper privilege escalation by going through the wrapper again.
+            use_brew_tab = true
+            name
+          end
+        end
+
+        brew "tab", "--installed-on-request", *formulae_to_update if use_brew_tab
       end
     end
   end

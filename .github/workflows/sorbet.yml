@@ -26,25 +26,24 @@ defaults:
 jobs:
   tapioca:
     if: github.repository == 'Homebrew/brew'
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           core: false
           cask: false
-          test-bot: false
 
       - name: Configure Git user
         if: github.event_name != 'pull_request'
-        uses: Homebrew/actions/git-user-config@main
+        uses: Homebrew/actions/git-user-config@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           username: BrewTestBot
 
       - name: Set up commit signing
-        if: github.event_name != 'pull_request'
-        uses: Homebrew/actions/setup-commit-signing@main
+        if: github.event_name != 'pull_request' && github.actor != 'dependabot[bot]'
+        uses: Homebrew/actions/setup-commit-signing@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           signing_key: ${{ secrets.BREWTESTBOT_SSH_SIGNING_KEY }}
 
@@ -99,8 +98,8 @@ jobs:
           fi
 
       - name: Push commits
-        if: steps.commit.outputs.committed == 'true'
-        uses: Homebrew/actions/git-try-push@main
+        if: steps.commit.outputs.committed == 'true' && github.actor != 'dependabot[bot]'
+        uses: Homebrew/actions/git-try-push@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           token: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
           directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
@@ -109,7 +108,7 @@ jobs:
           origin_branch: "HEAD"
 
       - name: Open a pull request
-        if: steps.commit.outputs.pull_request == 'true'
+        if: steps.commit.outputs.pull_request == 'true' && github.actor != 'dependabot[bot]'
         run: gh pr create --fill
         env:
           GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
@@ -117,8 +116,8 @@ jobs:
 
   issue:
     needs: tapioca
-    if: always() && github.event_name == 'schedule'
-    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'schedule' && github.repository == 'Homebrew/brew'
+    runs-on: ubuntu-slim
     env:
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     permissions:
@@ -126,7 +125,7 @@ jobs:
       issues: write
     steps:
       - name: Open, update, or close Sorbet issue
-        uses: Homebrew/actions/create-or-update-issue@main
+        uses: Homebrew/actions/create-or-update-issue@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           title: Failed to update RBI files
           body: >

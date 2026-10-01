@@ -19,7 +19,4 @@ class Homebrew::DevCmd::TapNew::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def no_git?; end
-
-  sig { returns(T.nilable(String)) }
-  def pull_label; end
 end

@@ -33,7 +33,7 @@ class FormulaPin
   sig { void }
   def unpin
     path.unlink if pinned?
-    HOMEBREW_PINNED_KEGS.rmdir_if_possible
+    Utils::Path.rmdir_if_possible(HOMEBREW_PINNED_KEGS)
   end
 
   sig { returns(T::Boolean) }
@@ -48,6 +48,6 @@ class FormulaPin
 
   sig { returns(T.nilable(PkgVersion)) }
   def pinned_version
-    Keg.new(path.resolved_path).version if pinned?
+    Keg.new(Utils::Path.resolved_path(path)).version if pinned?
   end
 end

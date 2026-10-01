@@ -5,6 +5,7 @@ require "abstract_command"
 require "json"
 require "open3"
 require "style"
+require "utils/git"
 
 module Homebrew
   module DevCmd
@@ -19,11 +20,17 @@ module Homebrew
         EOS
         switch "--fix",
                description: "Fix style violations automatically using RuboCop's auto-correct feature."
+        switch "--todo",
+               depends_on:  "--fix",
+               description: "Add `rubocop:todo` comments for RuboCop violations that remain after auto-correction. " \
+                            "Requires `--fix`."
         switch "--display-cop-names",
                description: "Include the RuboCop cop name for each violation in the output.",
                hidden:      true
         switch "--reset-cache",
                description: "Reset the RuboCop cache."
+        switch "--changed",
+               description: "Check files that were changed from the `main` branch."
         switch "--formula", "--formulae",
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",
@@ -43,32 +50,52 @@ module Homebrew
 
       sig { override.void }
       def run
-        Homebrew.install_bundler_gems!(groups: ["style"])
+        Utils::GemSetup.install_bundler_gems!(groups: ["style"])
 
-        target = if args.no_named?
+        if args.changed? && !args.no_named?
+          raise UsageError, "`--changed` and named arguments are mutually exclusive!"
+        end
+
+        target = if args.changed?
+          changed_ruby_or_shell_files
+        elsif args.no_named?
           nil
         else
           args.named.to_paths
         end
 
-        only_cops = args.only_cops
-        except_cops = args.except_cops
+        if target.blank? && args.changed?
+          opoo "No style checks are available for the changed files!"
+          return
+        end
 
-        options = {
+        only_cops = args.only_cops
+        # `--only-cops` takes precedence, so no cops are excluded when it is set.
+        except_cops = args.except_cops || %w[FormulaAuditStrict] unless only_cops
+
+        Homebrew.failed = !Style.check_style_and_print(
+          target || [],
           fix:         args.fix?,
+          todo:        args.todo?,
+          except_cops:,
+          only_cops:,
           reset_cache: args.reset_cache?,
           debug:       args.debug?,
           verbose:     args.verbose?,
-        }
-        if only_cops
-          options[:only_cops] = only_cops
-        elsif except_cops
-          options[:except_cops] = except_cops
-        else
-          options[:except_cops] = %w[FormulaAuditStrict]
-        end
+        )
+      end
 
-        Homebrew.failed = !Style.check_style_and_print(target, **options)
+      sig { returns(T::Array[Pathname]) }
+      def changed_ruby_or_shell_files
+        repository = Utils.popen_read("git", "rev-parse", "--show-toplevel").chomp
+        odie "`brew style --changed` must be run inside a git repository!" unless $CHILD_STATUS.success?
+
+        Utils::Git.changed_files(repository).filter_map do |file|
+          path = Pathname(file).expand_path(repository)
+          next if !file.end_with?(".rb", ".sh", ".yml", ".rbi") && Style.shell_scripts.exclude?(path)
+
+          path
+        end.select(&:exist?)
       end
     end
   end

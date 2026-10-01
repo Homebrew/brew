@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "settings"
@@ -79,6 +80,25 @@ RSpec.describe Homebrew::SimulateSystem do
     end
   end
 
+  describe "::simulating?" do
+    it "returns false without any simulation" do
+      described_class.clear
+      expect(described_class.simulating?).to be false
+    end
+
+    it "returns true when simulating an OS" do
+      described_class.clear
+      described_class.os = :linux
+      expect(described_class.simulating?).to be true
+    end
+
+    it "returns true when simulating an architecture" do
+      described_class.clear
+      described_class.arch = :arm
+      expect(described_class.simulating?).to be true
+    end
+  end
+
   describe "::current_arch" do
     it "returns the current architecture" do
       described_class.clear
@@ -132,10 +152,10 @@ RSpec.describe Homebrew::SimulateSystem do
       expect(described_class.current_os).to eq MacOS.version.to_sym
     end
 
-    it "returns `:macos` on Linux with HOMEBREW_SIMULATE_MACOS_ON_LINUX", :needs_linux do
+    it "returns the newest supported macOS symbol on Linux with HOMEBREW_SIMULATE_MACOS_ON_LINUX", :needs_linux do
       described_class.clear
       ENV["HOMEBREW_SIMULATE_MACOS_ON_LINUX"] = "1"
-      expect(described_class.current_os).to eq :macos
+      expect(described_class.current_os).to eq MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED).to_sym
     end
   end
 end

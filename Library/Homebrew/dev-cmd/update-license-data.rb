@@ -14,7 +14,10 @@ module Homebrew
         description <<~EOS
           Update SPDX license data in the Homebrew repository.
         EOS
+
         named_args :none
+
+        hide_from_man_page!
       end
 
       sig { override.void }

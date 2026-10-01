@@ -1,8 +1,12 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 module Utils
   module Backtrace
+    extend Utils::Output::Mixin
+
     @print_backtrace_message = T.let(false, T::Boolean)
 
     # Cleans `sorbet-runtime` gem paths from the backtrace unless...

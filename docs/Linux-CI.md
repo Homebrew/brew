@@ -1,10 +1,12 @@
 ---
-last_review_date: "2025-03-28"
+last_review_date: "2026-03-19"
 ---
 
 # Linux CI in `homebrew/core`
 
-We currently use Ubuntu 22.04 for bottling in `homebrew/core`.
+We currently use Ubuntu 24.04 for bottling in `homebrew/core`.
+
+We aim to use the oldest supported Ubuntu LTS version for our CI that provides the GCC version we need.
 
 ## Ubuntu vs. other Linux distributions
 
@@ -16,22 +18,14 @@ Our bottles are compatible with other distributions like Debian/CentOS, even whe
 
 ## Past and next versions
 
-We have moved our CI to Ubuntu 22.04
+| Distribution | Glibc | GCC | libstdc++ | LTS standard security maintenance |
+|---|---|---|---|---|
+| Ubuntu 22.04 | 2.35 | 11 | 6.0.30 (gcc-12) | From 2022 to 2027 |
+| Ubuntu 24.04 | 2.39 | 13 | 6.0.33 (gcc-14) | From 2024 to 2029 |
+| Ubuntu 26.04 | 2.43 | 15 | 6.0.35 (gcc-16) | From 2026 to 2031 |
+| Ubuntu 28.04 | ? | ? | ? | ? |
 
-Moving from Ubuntu 16.04 to Ubuntu 22.04 (and thus skipping version 18.04 and 20.04) took longer than expected.
-
-We plan to proceed with regular updates from 2022 onwards. We aim to use the oldest supported Ubuntu LTS version for our CI that provides the GCC version we need.
-
-| Distribution | Glibc | GCC | LTS standard security maintenance |
-|---|---|---|---|
-| Ubuntu 14.04 | 2.19 | 4 | From 2014 to 2017 |
-| Ubuntu 16.04 | 2.23 | 5 | From 2017 to 2022 |
-| Ubuntu 20.04 | 2.31 | 5 | From 2020 to 2025 |
-| Ubuntu 22.04 | 2.35 | 11 (provides 12) | From 2022 to 2027 |
-| Ubuntu 24.04 | 2.39 | 13 | From 2024 to 2029 |
-| Ubuntu 26.04 | ? | ? | ? |
-
-[Source](https://ubuntu.com/about/release-cycle)
+Here, the `libstdc++` column records the shared library SONAME version (for example, `libstdc++.so.6.0.30`). The GCC version in parentheses is the version of the Ubuntu GCC/libstdc++ runtime package that provides that SONAME; it may differ from the `GCC` column, which lists the default system compiler used in CI.
 
 ## Why upgrade to a newer version?
 

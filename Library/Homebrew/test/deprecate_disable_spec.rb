@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "deprecate_disable"
@@ -80,6 +81,63 @@ RSpec.describe DeprecateDisable do
     casks.each do |c|
       allow(c).to receive(:is_a?).with(Formula).and_return(false)
       allow(c).to receive(:is_a?).with(Cask::Cask).and_return(true)
+    end
+  end
+
+  describe "::disabled_on_all_platforms?" do
+    sig { params(disable_stanzas: String).returns(T::Array[T::Boolean]) }
+    def disable_statuses(disable_stanzas)
+      [:formula, :cask].product([:sonoma, :linux], [:arm, :intel]).map do |type, os, arch|
+        Homebrew::SimulateSystem.with(os:, arch:) do
+          path = mktmpdir/"test.rb"
+          path.write <<~RUBY
+            #{(type == :formula) ? "class Test < Formula" : 'cask "test" do'}
+              version "1.2.3"
+              url "https://brew.sh/test-1.2.3.tgz"
+              #{disable_stanzas}
+            end
+          RUBY
+          package = (type == :formula) ? Formulary.factory(path) : Cask::CaskLoader.load(path)
+          described_class.disabled_on_all_platforms?(package)
+        end
+      end
+    end
+
+    it "returns false for enabled packages" do
+      expect(disable_statuses("")).to all(be(false))
+    end
+
+    it "returns true for unconditional disables with unrelated system blocks" do
+      expect(disable_statuses(<<~RUBY)).to all(be(true))
+        disable! date: "2020-01-01", because: :unmaintained
+        on_arm do
+          url "https://brew.sh/test-arm-1.2.3.tgz"
+        end
+      RUBY
+    end
+
+    it "returns true when disabled on both operating systems" do
+      expect(disable_statuses(<<~RUBY)).to all(be(true))
+        on_macos do
+          disable! date: "2020-01-01", because: :unmaintained
+        end
+        on_linux do
+          disable! date: "2020-01-01", because: :unmaintained
+        end
+      RUBY
+    end
+
+    test_each([
+      %w[on_macos], %w[on_linux], %w[on_arm], %w[on_intel],
+      ["on_sonoma :or_older"], %w[on_macos on_arm]
+    ]) do |conditions|
+      it "returns false when disabled in #{conditions.join(" and ")}" do
+        expect(disable_statuses(<<~RUBY)).to all(be(false))
+          #{conditions.join(" do\n")} do
+            disable! date: "2020-01-01", because: :unmaintained
+          #{conditions.map { "end" }.join("\n")}
+        RUBY
+      end
     end
   end
 

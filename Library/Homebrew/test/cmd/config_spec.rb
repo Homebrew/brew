@@ -1,9 +1,17 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cmd/config"
 require "cmd/shared_examples/args_parse"
 
 RSpec.describe Homebrew::Cmd::Config do
+  let(:windows_cmd) do
+    cmd = mktmpdir/"cmd.exe"
+    cmd.write("")
+    cmd.chmod(0755)
+    cmd
+  end
+
   it_behaves_like "parseable arguments"
 
   it "prints information about the current Homebrew configuration", :integration_test do
@@ -11,5 +19,113 @@ RSpec.describe Homebrew::Cmd::Config do
       .to output(/HOMEBREW_VERSION: #{Regexp.escape HOMEBREW_VERSION}/o).to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
+  end
+
+  it "disables HOMEBREW_CASK_OPTS_REQUIRE_SHA" do
+    ENV["HOMEBREW_USER_SET_VARS"] = "HOMEBREW_CASK_OPTS_REQUIRE_SHA"
+    ENV["HOMEBREW_CASK_OPTS_REQUIRE_SHA"] = "1"
+
+    expect { SystemConfig.homebrew_env_config(StringIO.new) }
+      .to raise_error(MethodDeprecatedError, /HOMEBREW_CASK_OPTS_REQUIRE_SHA.*disabled/)
+  end
+
+  it "prints only environment variables with non-default values" do
+    Homebrew::EnvConfig::ENVS.each_key { |env| ENV.delete(env.to_s) }
+    ENV["HOMEBREW_USER_SET_VARS"] = "HOMEBREW_API_AUTO_UPDATE_SECS HOMEBREW_BUNDLE_DESCRIBE " \
+                                    "HOMEBREW_CURL_RETRIES HOMEBREW_REQUIRE_TAP_TRUST"
+    ENV["HOMEBREW_API_AUTO_UPDATE_SECS"] = "450"
+    ENV["HOMEBREW_BUNDLE_DESCRIBE"] = "false"
+    ENV["HOMEBREW_CURL_RETRIES"] = "4"
+    ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+    ENV["HOMEBREW_EDITOR"] = "vim"
+    output = StringIO.new
+
+    SystemConfig.homebrew_env_config(output)
+
+    env_config = output.string.lines.select do |line|
+      Homebrew::EnvConfig::ENVS.key?(line.partition(":").first.to_sym)
+    end
+    expect(env_config).to eq([
+      "HOMEBREW_BUNDLE_DESCRIBE: false\n",
+      "HOMEBREW_CURL_RETRIES: 4\n",
+    ])
+  end
+
+  it "reads the Windows version on WSL", :needs_linux do
+    allow(OS).to receive(:wsl?).and_return(true)
+    stub_const("ORIGINAL_PATHS", [windows_cmd.dirname])
+    allow(Utils).to receive(:popen_read)
+      .with(windows_cmd, "/d", "/c", "reg", "query", "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+            err: :close)
+      .and_return(<<~EOS)
+        HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion
+            ProductName    REG_SZ    Windows 10 Pro
+            DisplayVersion    REG_SZ    25H2
+            CurrentBuildNumber    REG_SZ    26200
+            UBR    REG_DWORD    0x2109
+      EOS
+
+    expect(SystemConfig.windows_version).to eq("Windows 11 Pro (25H2) [26200.8457]")
+  end
+
+  it "prints the Windows version in config output on WSL", :needs_linux do
+    output = StringIO.new
+
+    allow(OS).to receive(:wsl?).and_return(true)
+    allow(OS::Linux).to receive_messages(os_version: "Ubuntu 24.04.3 LTS", wsl_version: Version.new("2"))
+    allow(SystemConfig).to receive_messages(
+      homebrew_config:      nil,
+      core_tap_config:      nil,
+      homebrew_env_config:  nil,
+      hardware:             nil,
+      host_software_config: nil,
+      windows_version:      "Windows 11 Pro (25H2) [26200.8457]",
+    )
+
+    SystemConfig.dump_verbose_config(output)
+
+    expect(output.string).to include("Windows: Windows 11 Pro (25H2) [26200.8457]\n")
+  end
+
+  it "prints the Landlock ABI in config output", :needs_linux do
+    output = StringIO.new
+
+    allow(Sandbox::Landlock).to receive(:kernel_abi_version).and_return(6)
+    allow(SystemConfig).to receive_messages(
+      homebrew_config:      nil,
+      core_tap_config:      nil,
+      homebrew_env_config:  nil,
+      hardware:             nil,
+      host_software_config: nil,
+    )
+
+    SystemConfig.dump_verbose_config(output)
+
+    expect(output.string).to include("Landlock ABI: 6\n")
+  end
+
+  it "prints config sections in order" do
+    output = StringIO.new
+
+    allow(SystemConfig).to receive(:config_sections).and_return([:homebrew_config, :host_software_config])
+    allow(SystemConfig).to receive(:homebrew_config) do |io|
+      sleep(0.01)
+      io.puts "first"
+    end
+    allow(SystemConfig).to receive(:host_software_config) { |io| io.puts "second" }
+
+    SystemConfig.dump_verbose_config(output)
+
+    expect(output.string).to eq("first\nsecond\n")
+  end
+
+  it "does not print HOMEBREW_EVAL_ALL unless it is directly set" do
+    output = StringIO.new
+
+    with_env(HOMEBREW_REQUIRE_TAP_TRUST: nil, HOMEBREW_EVAL_ALL: nil) do
+      SystemConfig.homebrew_env_config(output)
+    end
+
+    expect(output.string).not_to include("HOMEBREW_EVAL_ALL")
   end
 end

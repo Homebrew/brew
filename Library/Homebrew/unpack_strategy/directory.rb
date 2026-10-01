@@ -11,24 +11,29 @@ module UnpackStrategy
       []
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       path.directory?
     end
 
     sig {
       params(
-        path:         T.any(String, Pathname),
-        ref_type:     T.nilable(Symbol),
-        ref:          T.nilable(String),
-        merge_xattrs: T::Boolean,
-        move:         T::Boolean,
+        path:                T.any(String, Pathname),
+        ref_type:            T.nilable(Symbol),
+        ref:                 T.nilable(String),
+        merge_xattrs:        T::Boolean,
+        move:                T::Boolean,
+        temporary_directory: Pathname,
       ).void
     }
-    def initialize(path, ref_type: nil, ref: nil, merge_xattrs: false, move: false)
-      super(path, ref_type:, ref:, merge_xattrs:)
+    def initialize(path, ref_type: nil, ref: nil, merge_xattrs: false, move: false,
+                   temporary_directory: HOMEBREW_TEMP)
+      super(path, ref_type:, ref:, merge_xattrs:, temporary_directory:)
       @move = move
     end
+
+    sig { returns(T::Boolean) }
+    def move? = @move
 
     private
 

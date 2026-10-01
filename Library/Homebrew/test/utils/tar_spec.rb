@@ -1,15 +1,22 @@
+# typed: true
 # frozen_string_literal: true
 
 require "utils/tar"
 
 RSpec.describe Utils::Tar do
+  def clear_executable_cache
+    return unless described_class.instance_variable_defined?(:@executable)
+
+    described_class.remove_instance_variable(:@executable)
+  end
+
   before do
-    described_class.clear_executable_cache
+    clear_executable_cache
   end
 
   describe ".available?" do
     it "returns true if tar or gnu-tar is available" do
-      if described_class.executable.present?
+      if described_class.executable
         expect(described_class).to be_available
       else
         expect(described_class).not_to be_available
@@ -43,6 +50,15 @@ RSpec.describe Utils::Tar do
         FileUtils.touch invalid_resource
         expect { described_class.validate_file invalid_resource }.to raise_error SystemExit
         FileUtils.rm_f invalid_resource
+      end
+
+      it "raises an error if a file with a compound extension is an invalid tar file" do
+        %w[.tar.bz2 .tar.gz .tar.lz .tar.xz .tar.Z].each do |extension|
+          invalid_compound_resource = "#{TEST_TMPDIR}/invalid#{extension}"
+          FileUtils.touch invalid_compound_resource
+          expect { described_class.validate_file invalid_compound_resource }.to raise_error SystemExit
+          FileUtils.rm_f invalid_compound_resource
+        end
       end
     end
   end

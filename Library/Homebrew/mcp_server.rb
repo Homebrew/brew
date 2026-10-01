@@ -15,9 +15,12 @@ module Homebrew
   class McpServer
     HOMEBREW_BREW_FILE = T.let(ENV.fetch("HOMEBREW_BREW_FILE").freeze, String)
     HOMEBREW_VERSION = T.let(ENV.fetch("HOMEBREW_VERSION").freeze, String)
-    JSON_RPC_VERSION = T.let("2.0", String)
-    MCP_PROTOCOL_VERSION = T.let("2025-03-26", String)
-    ERROR_CODE = T.let(-32601, Integer)
+    JSON_RPC_VERSION = "2.0"
+    MCP_PROTOCOL_VERSION = "2025-03-26"
+    ERROR_CODE = -32601
+
+    # Reject inline `cask ... do`/`cask(...) {}` blocks the cask loader would eval as Ruby.
+    INLINE_CASK_DSL_REGEX = /\A\s*cask\s*['"(]/
 
     SERVER_INFO = T.let({
       name:    "brew-mcp-server",
@@ -72,9 +75,9 @@ module Homebrew
       },
       upgrade:   {
         name:        "upgrade",
-        description: "Upgrade outdated casks and outdated, unpinned formulae using the same options they were " \
-                     "originally installed with, plus any appended brew formula options. If <cask> or <formula> " \
-                     "are specified, upgrade only the given <cask> or <formula> kegs (unless they are pinned).",
+        description: "Upgrade outdated, unpinned packages using the same options they were originally " \
+                     "installed with, plus any appended brew formula options. If <cask> or <formula> " \
+                     "are specified, upgrade only the given <cask> or <formula> (unless they are pinned).",
         command:     "brew upgrade",
         inputSchema: { type: "object", properties: FORMULA_OR_CASK_PROPERTIES },
       },
@@ -110,6 +113,61 @@ module Homebrew
         command:     "brew doctor",
         inputSchema: { type: "object", properties: {} },
       },
+      typecheck: {
+        name:        "typecheck",
+        description: "Check for typechecking errors using Sorbet.",
+        command:     "brew typecheck",
+        inputSchema: { type: "object", properties: {} },
+      },
+      style:     {
+        name:        "style",
+        description: "Check formulae or files for conformance to Homebrew style guidelines.",
+        command:     "brew style",
+        inputSchema: {
+          type:       "object",
+          properties: {
+            fix:     {
+              type:        "boolean",
+              description: "Fix style violations automatically using RuboCop's auto-correct feature",
+            },
+            files:   {
+              type:        "string",
+              description: "Specific files to check (space-separated)",
+            },
+            changed: {
+              type:        "boolean",
+              description: "Only check files that were changed from the `main` branch",
+            },
+          },
+        },
+      },
+      tests:     {
+        name:        "tests",
+        description: "Run Homebrew's unit and integration tests.",
+        command:     "brew tests",
+        inputSchema: {
+          type:       "object",
+          properties: {
+            only:      {
+              type:        "string",
+              description: "Specific tests to run (comma-separated) e.g. for `<file>_spec.rb` pass `<file>`. " \
+                           "Appending `:<line_number>` will start at a specific line",
+            },
+            fail_fast: {
+              type:        "boolean",
+              description: "Exit early on the first failing test",
+            },
+            changed:   {
+              type:        "boolean",
+              description: "Only runs tests on files that were changed from the `main` branch",
+            },
+            online:    {
+              type:        "boolean",
+              description: "Run online tests",
+            },
+          },
+        },
+      },
       commands:  {
         name:        "commands",
         description: "Show lists of built-in and external commands.",
@@ -136,9 +194,9 @@ module Homebrew
     def initialize(stdin: $stdin, stdout: $stdout, stderr: $stderr)
       @debug_logging = T.let(ARGV.include?("--debug") || ARGV.include?("-d"), T::Boolean)
       @ping_switch = T.let(ARGV.include?("--ping"), T::Boolean)
-      @stdin = T.let(stdin, T.any(IO, StringIO))
-      @stdout = T.let(stdout, T.any(IO, StringIO))
-      @stderr = T.let(stderr, T.any(IO, StringIO))
+      @stdin = stdin
+      @stdout = stdout
+      @stderr = stderr
     end
 
     sig { returns(T::Boolean) }
@@ -155,6 +213,8 @@ module Homebrew
         input = if ping_switch?
           { jsonrpc: JSON_RPC_VERSION, id: 1, method: "ping" }.to_json
         else
+          break if @stdin.eof?
+
           @stdin.gets
         end
         next if input.nil? || input.strip.empty?
@@ -231,27 +291,103 @@ module Homebrew
       when "tools/list"
         respond_result(id, { tools: TOOLS.values })
       when "tools/call"
-        if (tool = TOOLS.fetch(request["params"]["name"].to_sym, nil))
-          require "shellwords"
-
-          arguments = request["params"]["arguments"]
-          argument = arguments.fetch("formula_or_cask", "")
-          argument = arguments.fetch("text_or_regex", "") if argument.strip.empty?
-          argument = arguments.fetch("command", "") if argument.strip.empty?
-          argument = nil if argument.strip.empty?
-          brew_command = T.cast(tool.fetch(:command), String)
-                          .delete_prefix("brew ")
-          full_command = [HOMEBREW_BREW_FILE, brew_command, argument].compact
-                                                                     .map { |arg| Shellwords.escape(arg) }
-                                                                     .join(" ")
-          output = `#{full_command} 2>&1`.strip
-          respond_result(id, { content: [{ type: "text", text: output }] })
-        else
-          respond_error(id, "Unknown tool")
-        end
+        respond_to_tools_call(id, request)
       else
         respond_error(id, "Method not found")
       end
+    end
+
+    sig { params(id: Integer, request: T::Hash[String, T.untyped]).returns(T.nilable(T::Hash[Symbol, T.anything])) }
+    def respond_to_tools_call(id, request)
+      tool_name = request["params"]["name"].to_sym
+      tool = TOOLS.fetch tool_name do
+        return respond_error(id, "Unknown tool")
+      end
+
+      require "open3"
+
+      formula_or_cask = request.dig("params", "arguments", "formula_or_cask")
+      if formula_or_cask.is_a?(String) && INLINE_CASK_DSL_REGEX.match?(formula_or_cask)
+        return respond_error(id, "Invalid formula or cask argument")
+      end
+
+      command_args = tool_command_arguments(tool_name, request["params"]["arguments"])
+      progress_token = request["params"]["_meta"]&.fetch("progressToken", nil)
+      brew_command = T.cast(tool.fetch(:command), String)
+                      .delete_prefix("brew ")
+      buffer_size = 4096 # 4KB
+      progress = T.let(0, Integer)
+      done = T.let(false, T::Boolean)
+      new_output = T.let(false, T::Boolean)
+      output = +""
+
+      text = Open3.popen2e(HOMEBREW_BREW_FILE, brew_command, *command_args) do |stdin, io, _wait|
+        stdin.close
+
+        reader = Thread.new do
+          loop do
+            output << io.readpartial(buffer_size)
+            progress += 1
+            new_output = true
+          end
+        rescue EOFError
+          nil
+        ensure
+          done = true
+        end
+
+        until done
+          break unless progress_token
+
+          sleep 1
+          next unless new_output
+
+          response = {
+            jsonrpc: JSON_RPC_VERSION,
+            method:  "notifications/progress",
+            params:  { progressToken: progress_token, progress: },
+          }
+          progress_output = JSON.dump(response).strip
+          @stdout.puts(progress_output)
+          @stdout.flush
+
+          new_output = false
+        end
+
+        reader.join
+
+        output
+      end
+
+      respond_result(id, { content: [{ type: "text", text: }] })
+    end
+
+    sig { params(tool_name: Symbol, arguments: T::Hash[String, T.untyped]).returns(T::Array[String]) }
+    def tool_command_arguments(tool_name, arguments)
+      case tool_name
+      when :style
+        style_args = []
+        style_args << "--fix" if arguments["fix"]
+        style_args << "--changed" if arguments["changed"]
+        file_arguments = arguments.fetch("files", "").strip.split
+        style_args.concat(file_arguments) unless file_arguments.empty?
+        style_args
+      when :tests
+        tests_args = []
+        only_arguments = arguments.fetch("only", "").strip
+        tests_args << "--only=#{only_arguments}" unless only_arguments.empty?
+        tests_args << "--fail-fast" if arguments["fail_fast"]
+        tests_args << "--changed" if arguments["changed"]
+        tests_args << "--online" if arguments["online"]
+        tests_args
+      when :search
+        [arguments["text_or_regex"]]
+      when :help
+        [arguments["command"]]
+      else
+        [arguments["formula_or_cask"]]
+      end.compact
+        .reject(&:empty?)
     end
 
     sig {

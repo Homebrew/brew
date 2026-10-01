@@ -1,0 +1,81 @@
+# This file is synced from the `.github` repository, do not modify it directly.
+name: Manage stale issues and pull requests
+
+on:
+  push:
+    paths:
+      - .github/workflows/stale-issues-and-prs.yml
+    branches-ignore:
+      - dependabot/**
+  schedule:
+    # Once every day at midnight UTC
+    - cron: "0 0 * * *"
+  issue_comment:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+concurrency:
+  group: stale-issues-and-prs
+  cancel-in-progress: ${{ github.event_name != 'issue_comment' }}
+
+jobs:
+  stale:
+    if: >
+      github.repository_owner == 'Homebrew' && (
+        github.event_name != 'issue_comment' || (
+          contains(github.event.issue.labels.*.name, 'stale') ||
+          contains(github.event.pull_request.labels.*.name, 'stale')
+        )
+      )
+    runs-on: ubuntu-slim
+    permissions:
+      actions: write
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Mark/Close Stale Issues and Pull Requests
+        uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-stale: 21
+          days-before-close: 7
+          stale-issue-message: >
+            This issue has been automatically marked as stale because it has not had
+            recent activity. It will be closed if no further activity occurs.
+          stale-pr-message: >
+            This pull request has been automatically marked as stale because it has not had
+            recent activity. It will be closed if no further activity occurs.
+          exempt-issue-labels: "help wanted"
+          delete-branch: true
+
+  bump-pr-stale:
+    if: >
+      github.repository_owner == 'Homebrew' && (
+        github.event_name != 'issue_comment' || (
+          contains(github.event.issue.labels.*.name, 'stale') ||
+          contains(github.event.pull_request.labels.*.name, 'stale')
+        )
+      )
+    runs-on: ubuntu-slim
+    permissions:
+      actions: write
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Mark/Close Stale `bump-formula-pr` and `bump-cask-pr` Pull Requests
+        uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          days-before-stale: 2
+          days-before-close: 1
+          stale-pr-message: >
+            This pull request has been automatically marked as stale because it has not had
+            recent activity. It will be closed if no further activity occurs.
+          any-of-labels: "bump-formula-pr,bump-cask-pr"
+          delete-branch: true

@@ -14,25 +14,6 @@ module GitHub
             .gsub("\r", "%0D")
     end
 
-    sig { params(name: String, value: String).returns(String) }
-    def self.format_multiline_string(name, value)
-      # Format multiline strings for environment files
-      # See https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
-
-      require "securerandom"
-      delimiter = "ghadelimiter_#{SecureRandom.uuid}"
-
-      if name.include?(delimiter) || value.include?(delimiter)
-        raise "`name` and `value` must not contain the delimiter"
-      end
-
-      <<~EOS
-        #{name}<<#{delimiter}
-        #{value}
-        #{delimiter}
-      EOS
-    end
-
     sig { returns(T::Boolean) }
     def self.env_set?
       ENV.fetch("GITHUB_ACTIONS", false).present?
@@ -45,7 +26,7 @@ module GitHub
         line: T.nilable(Integer)
       ).returns(T::Boolean)
     }
-    def self.puts_annotation_if_env_set(type, message, file: nil, line: nil)
+    def self.puts_annotation_if_env_set!(type, message, file: nil, line: nil)
       # Don't print annotations during tests, too messy to handle these.
       return false if ENV.fetch("HOMEBREW_TESTS", false)
       return false unless env_set?
@@ -126,7 +107,7 @@ module GitHub
       # the `GITHUB_WORKSPACE` directory or if no `file` is specified.
       sig { returns(T::Boolean) }
       def relevant?
-        return true if @file.blank?
+        return true unless @file
 
         @file.descend.next.to_s != ".."
       end

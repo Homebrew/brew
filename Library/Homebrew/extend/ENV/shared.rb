@@ -1,5 +1,7 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
+
+require "utils/output"
 
 require "compilers"
 require "development_tools"
@@ -13,6 +15,7 @@ require "development_tools"
 module SharedEnvExtension
   extend T::Helpers
   include CompilerConstants
+  include Utils::Output::Mixin
 
   requires_ancestor { Sorbet::Private::Static::ENVClass }
 
@@ -35,6 +38,9 @@ module SharedEnvExtension
   ].freeze
   private_constant :SANITIZED_VARS
 
+  sig { returns(T.nilable(String)) }
+  attr_reader :bottle_arch
+
   sig {
     params(
       formula:         T.nilable(Formula),
@@ -47,13 +53,20 @@ module SharedEnvExtension
   }
   def setup_build_environment(formula: nil, cc: nil, build_bottle: false, bottle_arch: nil, testing_formula: false,
                               debug_symbols: false)
-    @formula = formula
-    @cc = cc
-    @build_bottle = build_bottle
-    @bottle_arch = bottle_arch
-    @debug_symbols = debug_symbols
+    @formula = T.let(formula, T.nilable(Formula))
+    @cc = T.let(cc, T.nilable(String))
+    @build_bottle = T.let(build_bottle, T.nilable(T::Boolean))
+    @bottle_arch = T.let(bottle_arch, T.nilable(String))
+    @debug_symbols = T.let(debug_symbols, T.nilable(T::Boolean))
+    @testing_formula = T.let(testing_formula, T.nilable(T::Boolean))
     reset
   end
+
+  sig { returns(T::Boolean) }
+  def build_bottle? = @build_bottle == true
+
+  sig { returns(T::Boolean) }
+  def debug_symbols? = @debug_symbols == true
 
   sig { void }
   def reset
@@ -110,7 +123,12 @@ module SharedEnvExtension
 
   sig { params(key: String, path: T.any(String, Pathname)).void }
   def append_path(key, path)
-    self[key] = PATH.new(self[key]).append(path)
+    self[key] = PATH.new(self[key]).append(path).to_s
+  end
+
+  sig { params(rustflags: String).void }
+  def append_to_rustflags(rustflags)
+    append("HOMEBREW_RUSTFLAGS", rustflags)
   end
 
   # Prepends a directory to `PATH`.
@@ -124,7 +142,7 @@ module SharedEnvExtension
   def prepend_path(key, path)
     return if %w[/usr/bin /bin /usr/sbin /sbin].include? path.to_s
 
-    self[key] = PATH.new(self[key]).prepend(path)
+    self[key] = PATH.new(self[key]).prepend(path).to_s
   end
 
   sig { params(key: String, path: T.any(String, Pathname)).void }
@@ -204,6 +222,7 @@ module SharedEnvExtension
   # end</pre>
   sig { returns(T.any(Symbol, String)) }
   def compiler
+    @compiler ||= T.let(nil, T.nilable(T.any(Symbol, String)))
     @compiler ||= if (cc = @cc)
       warn_about_non_apple_gcc(cc) if cc.match?(GNU_GCC_REGEXP)
 
@@ -215,12 +234,12 @@ module SharedEnvExtension
 
       if @formula
         compilers = [compiler] + CompilerSelector.compilers
-        compiler = CompilerSelector.select_for(@formula, compilers)
+        compiler = CompilerSelector.select_for(@formula, compilers, testing_formula: @testing_formula == true)
       end
 
       compiler
     elsif @formula
-      CompilerSelector.select_for(@formula)
+      CompilerSelector.select_for(@formula, testing_formula: @testing_formula == true)
     else
       DevelopmentTools.default_compiler
     end
@@ -228,13 +247,18 @@ module SharedEnvExtension
 
   sig { returns(T.any(String, Pathname)) }
   def determine_cc
-    COMPILER_SYMBOL_MAP.invert.fetch(compiler, compiler)
+    case (cc = compiler)
+    when Symbol
+      COMPILER_SYMBOL_MAP.invert.fetch(cc)
+    else
+      cc
+    end
   end
   private :determine_cc
 
   COMPILERS.each do |compiler|
     define_method(compiler) do
-      @compiler = compiler
+      @compiler = T.let(compiler, T.nilable(T.any(Symbol, String)))
 
       send(:cc=, send(:determine_cc))
       send(:cxx=, send(:determine_cxx))
@@ -248,12 +272,12 @@ module SharedEnvExtension
     # despite it often being the Homebrew-provided one set up in the first call.
     return if @fortran_setup_done
 
-    @fortran_setup_done = true
+    @fortran_setup_done = T.let(true, T.nilable(TrueClass))
 
     flags = []
 
     if fc
-      ohai "Building with an alternative Fortran compiler", "This is unsupported."
+      opoo "Building with an unsupported Fortran compiler"
       self["F77"] ||= fc
     else
       if (gfortran = which("gfortran", (HOMEBREW_PREFIX/"bin").to_s))
@@ -262,8 +286,8 @@ module SharedEnvExtension
         ohai "Using a Fortran compiler found at #{gfortran}"
       end
       if gfortran
-        puts "This may be changed by setting the FC environment variable."
-        self["FC"] = self["F77"] = gfortran
+        puts "This may be changed by setting the `$FC` environment variable."
+        self["FC"] = self["F77"] = gfortran.to_s
         flags = FC_FLAG_VARS
       end
     end
@@ -287,7 +311,8 @@ module SharedEnvExtension
     gcc_version_name = "gcc@#{version}"
 
     gcc = Formulary.factory("gcc")
-    if gcc.respond_to?(:version_suffix) && T.unsafe(gcc).version_suffix == version
+    # `version_suffix` is only defined by the `gcc` formula itself.
+    if gcc.respond_to?(:version_suffix) && gcc.public_send(:version_suffix) == version # rubocop:disable Style/SendWithLiteralMethodName
       gcc
     else
       Formulary.factory(gcc_version_name)
@@ -330,12 +355,12 @@ module SharedEnvExtension
   sig { params(_flags: T::Array[String], _map: T::Hash[Symbol, String]).void }
   def set_cpu_flags(_flags, _map = {}); end
 
-  sig { params(val: T.any(String, Pathname)).returns(String) }
+  sig { params(val: T.any(String, Pathname)).void }
   def cc=(val)
     self["CC"] = self["OBJC"] = val.to_s
   end
 
-  sig { params(val: T.any(String, Pathname)).returns(String) }
+  sig { params(val: T.any(String, Pathname)).void }
   def cxx=(val)
     self["CXX"] = self["OBJCXX"] = val.to_s
   end

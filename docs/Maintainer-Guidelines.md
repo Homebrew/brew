@@ -1,5 +1,5 @@
 ---
-last_review_date: "2025-02-08"
+last_review_date: "2026-04-25"
 ---
 
 # Maintainer Guidelines
@@ -17,7 +17,7 @@ All Homebrew maintainers are encouraged to contribute to all parts of the projec
 - Linux maintainers: this team maintains the [`Homebrew/homebrew-core`](https://github.com/Homebrew/homebrew-core) repository on Linux.
 - Cask maintainers: this team maintains the [`Homebrew/homebrew-cask`](https://github.com/Homebrew/homebrew-cask) repository. See the [Homebrew/homebrew-cask Maintainer Guide](Homebrew-homebrew-cask-Maintainer-Guide.md) for more details about being a cask maintainer.
 
-These documents are meant to serve as guiding principles. As a maintainer, you can make a call to either request changes from a contributor or help them out based on their comfort and previous contributions. Remember, as a team we [Prioritise Maintainers Over Users](Maintainers-Avoiding-Burnout.md) to avoid burnout. If you wish to change or discuss any of the guidelines: open a PR to suggest a change.
+These documents are meant to serve as guiding principles. As a maintainer, you can make a call to either request changes from a contributor or help them out based on their comfort and previous contributions. Remember, as a team we [prioritise maintainers over users](Maintainers-Avoiding-Burnout.md#3-prioritise-maintainers-over-users) to avoid burnout. If you wish to change or discuss any of the guidelines, open a PR to suggest a change.
 
 ## Reviewing PRs
 
@@ -32,7 +32,7 @@ When reviewing a PR, use "approve", "approve with comments", "comment" or "reque
 - 🚫 Request changes: a last resort.
   - When reviewing non-maintainers' PRs: this means "these changes must be made before this PR should be merged by anyone".
     Other maintainers can dismiss this review when these changes have been made.
-  - When reviewing others maintainers' PRs: this is to be avoided whenever possible.
+  - When reviewing other maintainers' PRs: this is to be avoided whenever possible.
     - Save it for "if this PR is merged before I personally have had a chance to ✅ approve it: it seems very likely to cause user-visible problems".
     - It may be used by the Project Leader for "this functionality is not acceptable in Homebrew".
       In that case: additional code changes should be held off until there's agreement that the functionality is acceptable.
@@ -40,27 +40,34 @@ When reviewing a PR, use "approve", "approve with comments", "comment" or "reque
 Relatedly:
 
 - The default option should be to ✅ approve, with or without comments.
+- The most valuable thing a maintainer can do is unblock the work of another maintainer.
 - Whenever possible, you should try to use the GitHub "suggestion" feature to edit the code how you would like it to be.
-  If you don't have time or can't be bothered: you probably don't have the time to review the PR properly.
+  If you only have time for a quick skim: that is still much better than leaving the PR unreviewed.
 - We're a globally distributed team and this helps us move faster.
-- The PR review process is primarily a security measure, not a way to get consensus on the perfect code style before merging.
+- The PR review process is primarily a security measure, not a way to catch all bugs before merging.
+  The goal is to prevent obvious account or commit compromise: does the PR broadly do what it says it does, and does it avoid unrelated or surprising changes such as weakening sandboxing or other security boundaries?
+  Reviews can also improve code quality, help maintainers learn and ask useful questions, but a PR that is otherwise ready is usually better merged and iterated on than left waiting for the perfect review that never comes.
+  The review process is a useful guardrail, not an absolute technical barrier, so use it to add practical scrutiny rather than ceremony.
+- Longer tenure as a maintainer should result in higher levels of assumed competence when reviewing PRs.
+- When reviewing or creating AI-assisted contributions, follow [Responsible AI Usage](Responsible-AI-Usage.md); you are responsible for the output you submit and must review it before asking others to.
 - It is easy to make changes on a PR after approval, make follow-up PRs to address comments or revert PRs before a tag.
 - It is (nearly) impossible to merge a PR without approval.
+- `Homebrew/brew` has a narrow automatic approval workflow for stale, non-draft lead maintainer PRs that have recent maintainer review activity, Copilot review, passing CI, at least 48 hours open with no human review, a weekday approval window and no changes to sensitive paths.
 - Using `gh pr checkout <URL>` is a super easy way to check out a PR branch using the GitHub CLI.
 
 ## Mission
 
-Homebrew aims to be the missing package manager for macOS (and Linux). Its primary goal is to be useful to as many people as possible, while remaining maintainable to a professional, high standard by a small group of volunteers. Where possible and sensible, it should seek to use features of macOS to blend in with the macOS and Apple ecosystems. On Linux and Windows, it should seek to be as self-contained as possible.
+Homebrew is the package manager for everywhere. Its primary goal is to be useful to as many people as possible, while remaining maintainable to a professional, high standard by a small group of volunteers. Where possible and sensible, it should seek to use features of macOS to blend in with the macOS and Apple ecosystems. On Linux and Windows, it should seek to be as self-contained as possible.
 
 ## Common “gotchas”
 
 1. [Ensure you have set your username and email address properly](https://help.github.com/articles/setting-your-email-in-git/)
-2. Sign off cherry-picks if you amended them (use `git -s`)
+2. Sign off cherry-picks if you amended them (use `git commit --amend --signoff`)
 3. If your commit fixes a bug, use [issue linking syntax](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue) (e.g. “Fixes \#104”) to close the bug report and link back to the commit
 
 ### Add comments
 
-It may be enough to refer to an issue ticket, but make sure changes and context are clear enough so that anyone reading them for the first time can make sense of them. You don't want code you wrote to be removed because the someone new doesn’t understand why it’s there. Regressions suck.
+It may be enough to refer to an issue ticket, but make sure changes and context are clear enough so that anyone reading them for the first time can make sense of them. You don't want code you wrote to be removed because someone new doesn’t understand why it’s there. Regressions are frustrating.
 
 This also applies to issue and PR bodies. Be as explicit as possible. If a pull request is part of a larger initiative: link to a relevant tracking issue. If there isn't a tracking issue yet: create one to improve communication and get consensus.
 
@@ -68,7 +75,8 @@ This also applies to issue and PR bodies. Be as explicit as possible. If a pull 
 
 Amend a cherry-pick to remove commits that are only changes in whitespace. They are not acceptable because our history is important and `git blame` should be useful.
 
-Whitespace corrections (to Ruby standard etc.) are allowed (in fact this is a good opportunity to do it) provided the line itself has some kind of modification that is more than just whitespace changes. But be careful about making changes to inline patches—make sure they still apply.
+Whitespace corrections to match Ruby style are allowed when the line already has a substantive modification.
+Be careful when changing inline patches; make sure they still apply.
 
 ### Closing issues/PRs
 
@@ -103,6 +111,8 @@ Maintainers have a variety of ways to communicate with each other:
 All communication should ideally occur in public on GitHub. Where this is not possible or appropriate (e.g. a security disclosure, interpersonal issue between two maintainers, urgent breakage that needs to be resolved) this can move to maintainers' private group communication and, if necessary, 1:1 communication. Technical decisions should not happen in 1:1 communications but if they do (or did in the past) they must end up back as something linkable on GitHub. For example, if a technical decision was made a year ago on Slack and another maintainer/contributor/user asks about it on GitHub, that's a good chance to explain it to them and have something that can be linked to in the future.
 
 This makes it easier for other maintainers, contributors and users to follow along with what we're doing (and, more importantly, why we're doing it) and means that decisions have a linkable URL.
+
+When an upstream developer or representative joins a discussion, remember they may be expecting a distribution model with a long-term package maintainer. Keep the discussion public on GitHub, point them to [Working with Homebrew as an Upstream Project](Working-with-Homebrew-as-an-Upstream-Project.md) when useful and encourage bigger-picture concerns to be discussed in an issue.
 
 All maintainers (and project leader) communication through any medium is bound by [Homebrew's Code of Conduct](https://github.com/Homebrew/.github/blob/HEAD/CODE_OF_CONDUCT.md#code-of-conduct). Abusive behaviour towards other maintainers, contributors or users will not be tolerated; the maintainer will be given a warning and if their behaviour continues they will be removed as a maintainer.
 

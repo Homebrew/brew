@@ -1,8 +1,44 @@
+# typed: false
 # frozen_string_literal: true
 
 require "cask/audit"
+require "utils/ast"
 
 RSpec.describe Cask::Audit, :cask do
+  let(:cask) { instance_double(Cask::Cask) }
+  let(:new_cask) { nil }
+  let(:online) { nil }
+  let(:only) { [] }
+  let(:except) { [] }
+  let(:strict) { nil }
+  let(:signing) { nil }
+  let(:fix) { nil }
+  let(:appcast) do
+    <<~XML
+      <?xml version="1.0" encoding="utf-8"?>
+      <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+        <channel>
+          <item>
+            <title>1.0</title>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://brew.sh/sparkle-min-os-1.0.zip"
+                       sparkle:shortVersionString="1.0"
+                       sparkle:version="100"/>
+          </item>
+        </channel>
+      </rss>
+    XML
+  end
+  let(:audit) do
+    described_class.new(cask, online:,
+                              strict:,
+                              new_cask:,
+                              signing:,
+                              fix:,
+                              only:,
+                              except:)
+  end
+
   def include_msg?(problems, msg)
     if msg.is_a?(Regexp)
       Array(problems).any? { |problem| msg.match?(problem[:message]) }
@@ -43,38 +79,19 @@ RSpec.describe Cask::Audit, :cask do
     end
   end
 
-  let(:cask) { instance_double(Cask::Cask) }
-  let(:new_cask) { nil }
-  let(:online) { nil }
-  let(:only) { [] }
-  let(:except) { [] }
-  let(:strict) { nil }
-  let(:token_conflicts) { nil }
-  let(:signing) { nil }
-  let(:audit) do
-    described_class.new(cask, online:,
-                              strict:,
-                              new_cask:,
-                              token_conflicts:,
-                              signing:,
-                              only:,
-                              except:)
+  describe "loading" do
+    it "loads the installation checks" do
+      expect(Homebrew::Install).to respond_to(:perform_preinstall_checks_once)
+    end
   end
 
   describe "#new" do
     context "when `new_cask` is specified" do
       let(:new_cask) { true }
 
-      it "implies `online`" do
+      specify do
         expect(audit).to be_online
-      end
-
-      it "implies `strict`" do
         expect(audit).to be_strict
-      end
-
-      it "implies `token_conflicts`" do
-        expect(audit.token_conflicts?).to be true
       end
     end
 
@@ -103,7 +120,7 @@ RSpec.describe Cask::Audit, :cask do
         audit.add_error("eh", strict_only: true)
       end
 
-      it { is_expected.not_to match(/failed/) }
+      it { is_expected.to be_nil }
     end
 
     context "when there are errors" do
@@ -111,7 +128,7 @@ RSpec.describe Cask::Audit, :cask do
         audit.add_error "bad"
       end
 
-      it { is_expected.to match(/failed/) }
+      it { is_expected.to include("failed") }
     end
 
     context "when there are errors and warnings" do
@@ -120,7 +137,7 @@ RSpec.describe Cask::Audit, :cask do
         audit.add_error("eh", strict_only: true)
       end
 
-      it { is_expected.to match(/failed/) }
+      it { is_expected.to include("failed") }
     end
 
     context "when there are errors and warnings and `--strict` is passed" do
@@ -131,7 +148,7 @@ RSpec.describe Cask::Audit, :cask do
         audit.add_error("a little bit bad", strict_only: true)
       end
 
-      it { is_expected.to match(/failed/) }
+      it { is_expected.to include("failed") }
     end
 
     context "when there are warnings and `--strict` is not passed" do
@@ -139,7 +156,7 @@ RSpec.describe Cask::Audit, :cask do
         audit.add_error("a little bit bad", strict_only: true)
       end
 
-      it { is_expected.not_to match(/failed/) }
+      it { is_expected.to be_nil }
     end
 
     context "when there are warnings and `--strict` is passed" do
@@ -149,7 +166,196 @@ RSpec.describe Cask::Audit, :cask do
         audit.add_error("a little bit bad", strict_only: true)
       end
 
-      it { is_expected.to match(/failed/) }
+      it { is_expected.to include("failed") }
+    end
+  end
+
+  describe "#cask_sparkle_min_os" do
+    subject { audit.cask_sparkle_min_os }
+
+    let(:online) { true }
+    let(:cask) do
+      Cask::Cask.new("test-sparkle-livecheck-with-user-agent") do
+        version "1.0"
+        sha256 :no_check
+
+        url "https://brew.sh/test-sparkle-livecheck-with-user-agent.zip"
+        name "Test Sparkle min OS"
+        homepage "https://brew.sh/"
+
+        livecheck do
+          url "https://brew.sh/appcast.xml",
+              user_agent: :browser
+          strategy :sparkle
+        end
+
+        app "Test Sparkle livecheck with User Agent.app"
+      end
+    end
+
+    before do
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: appcast })
+    end
+
+    it { is_expected.to eq(MacOSVersion.from_symbol(:sequoia)) }
+
+    it "passes the `livecheck` block options to `page_content`" do
+      expect(Homebrew::Livecheck::Strategy).to receive(:page_content)
+        .with(
+          "https://brew.sh/appcast.xml",
+          options: an_object_having_attributes(user_agent: :browser),
+        ).and_return({ content: appcast })
+
+      audit.cask_sparkle_min_os
+    end
+
+    context "when not auditing online" do
+      let(:online) { false }
+
+      it { is_expected.to be_nil }
+    end
+
+    context "when the cask has no `livecheck` block" do
+      let(:cask) do
+        Cask::Cask.new("test-no-livecheck") do
+          version "1.0"
+          sha256 :no_check
+
+          url "https://brew.sh/test-no-livecheck.zip"
+          name "Test no livecheck"
+          homepage "https://brew.sh/"
+
+          app "Test No livecheck.app"
+        end
+      end
+
+      it { is_expected.to be_nil }
+    end
+
+    context "when the `livecheck` block doesn't use the `sparkle` strategy" do
+      let(:cask) do
+        Cask::Cask.new("test-non-sparkle-livecheck") do
+          version "1.0"
+          sha256 :no_check
+
+          url "https://brew.sh/test-non-sparkle-livecheck.zip"
+          name "Test non-Sparkle livecheck block"
+          homepage "https://brew.sh/"
+
+          livecheck do
+            url "https://brew.sh/appcast.xml"
+            regex(/v?(\d+(?:\.\d+)+)/i)
+          end
+
+          app "Test non-Sparkle livecheck.app"
+        end
+      end
+
+      it { is_expected.to be_nil }
+    end
+
+    context "when the `livecheck` block has no `url`" do
+      let(:cask) do
+        Cask::Cask.new("test-sparkle-livecheck-with-no-url") do
+          version "1.0"
+          sha256 :no_check
+
+          url "https://brew.sh/test-sparkle-livecheck-with-no-url.zip"
+          name "Test Sparkle livecheck block with no URL"
+          homepage "https://brew.sh/"
+
+          livecheck do
+            strategy :sparkle
+          end
+
+          app "Test Sparkle livecheck with No URL.app"
+        end
+      end
+
+      it { is_expected.to be_nil }
+    end
+
+    context "when the `livecheck` block `url` is a symbol" do
+      let(:cask) do
+        Cask::Cask.new("test-sparkle-livecheck-with-symbol-url") do
+          version "1.0"
+          sha256 :no_check
+
+          url "https://brew.sh/test-sparkle-livecheck-with-symbol-url.zip"
+          name "Test Sparkle livecheck block with a symbol URL"
+          homepage "https://brew.sh/"
+
+          livecheck do
+            url :url
+            strategy :sparkle
+          end
+
+          app "Test Sparkle livecheck with Symbol URL.app"
+        end
+      end
+
+      it "resolves the symbol to a URL string" do
+        expect(Homebrew::Livecheck::Strategy).to receive(:page_content)
+          .with(
+            "https://brew.sh/test-sparkle-livecheck-with-symbol-url.zip",
+            options: anything,
+          ).and_return({ content: appcast })
+
+        audit.cask_sparkle_min_os
+      end
+    end
+
+    context "when the `strategy` block uses the `items` argument" do
+      let(:cask) do
+        Cask::Cask.new("test-sparkle-livecheck-with-items") do
+          version "1.0"
+          sha256 :no_check
+
+          url "https://brew.sh/test-sparkle-livecheck-with-items.zip"
+          name "Test Sparkle livecheck block with an items strategy block"
+          homepage "https://brew.sh/"
+
+          livecheck do
+            url "https://brew.sh/appcast.xml"
+            strategy :sparkle do |items|
+              items.map(&:nice_version)
+            end
+          end
+
+          app "Test Sparkle livecheck with Items.app"
+        end
+      end
+
+      it { is_expected.to be_nil }
+    end
+
+    context "when the content can't be fetched" do
+      before do
+        allow(Homebrew::Livecheck::Strategy).to receive(:page_content)
+          .and_return({ messages: ["cURL failed without a detectable error"] })
+      end
+
+      it { is_expected.to be_nil }
+    end
+
+    context "when the appcast can't be parsed" do
+      let(:appcast) { "<rss><channel><item></channel></rss>" }
+
+      it { is_expected.to be_nil }
+    end
+
+    context "when the appcast has no items" do
+      let(:appcast) do
+        <<~XML
+          <?xml version="1.0" encoding="utf-8"?>
+          <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+            <channel>
+            </channel>
+          </rss>
+        XML
+      end
+
+      it { is_expected.to be_nil }
     end
   end
 
@@ -171,11 +377,173 @@ RSpec.describe Cask::Audit, :cask do
     describe "required stanzas" do
       let(:only) { ["required_stanzas"] }
 
-      %w[version sha256 url name homepage].each do |stanza|
+      test_each(%w[version sha256 url name homepage]) do |stanza|
         context "when missing #{stanza}" do
           let(:cask_token) { "missing-#{stanza}" }
 
           it { is_expected.to error_with(/#{stanza} stanza is required/) }
+        end
+      end
+
+      context "when a cask has only uninstall artifacts" do
+        let(:cask) do
+          Cask::Cask.new("uninstall-only") do
+            version :latest
+            sha256 :no_check
+            url "https://brew.sh/foo.pkg"
+            name "Uninstall Only"
+            homepage "https://brew.sh/"
+            uninstall pkgutil: "org.example.foo"
+            zap trash: "~/Library/Caches/org.example.foo"
+          end
+        end
+
+        it { is_expected.to error_with("at least one installable artifact stanza is required") }
+      end
+
+      context "when a cask has an installable artifact only on Linux" do
+        let(:cask) do
+          Homebrew::SimulateSystem.with(os: :sequoia, arch: :arm) do
+            Cask::Cask.new("linux-only-artifact") do
+              version :latest
+              sha256 :no_check
+              url "https://brew.sh/foo"
+              name "Linux Only Artifact"
+              homepage "https://brew.sh/"
+
+              on_linux do
+                binary "foo"
+              end
+            end
+          end
+        end
+
+        it { is_expected.not_to error_with("at least one installable artifact stanza is required") }
+      end
+    end
+
+    describe "app_image versioned target" do
+      let(:only) { ["appimage_versioned_target"] }
+      let(:error) { /app_image target .* should not embed a version/ }
+
+      context "when the target embeds an X.Y.Z version via the source basename" do
+        let(:cask) do
+          Cask::Cask.new("appimage-versioned-source") do
+            version "1.2.3"
+            sha256 :no_check
+            url "https://brew.sh/foo"
+            name "AppImage Versioned Source"
+            homepage "https://brew.sh/"
+            app_image "foo_#{version}_linux.AppImage"
+          end
+        end
+
+        it { is_expected.to error_with(error) }
+      end
+
+      context "when an explicit target embeds an X.Y.Z version" do
+        let(:cask) do
+          Cask::Cask.new("appimage-versioned-target") do
+            version "1.2.3"
+            sha256 :no_check
+            url "https://brew.sh/foo"
+            name "AppImage Versioned Target"
+            homepage "https://brew.sh/"
+            app_image "foo.AppImage", target: "Foo-#{version}.AppImage"
+          end
+        end
+
+        it { is_expected.to error_with(error) }
+      end
+
+      context "when the target is version-less" do
+        let(:cask) do
+          Cask::Cask.new("appimage-versionless-target") do
+            version "1.2.3"
+            sha256 :no_check
+            url "https://brew.sh/foo"
+            name "AppImage Version-less Target"
+            homepage "https://brew.sh/"
+            app_image "foo_#{version}.AppImage", target: "Foo.AppImage"
+          end
+        end
+
+        it { is_expected.not_to error_with(error) }
+      end
+
+      context "when the target embeds only the major version" do
+        let(:cask) do
+          Cask::Cask.new("appimage-major-version-target") do
+            version "2.1.0"
+            sha256 :no_check
+            url "https://brew.sh/foo"
+            name "AppImage Major Version Target"
+            homepage "https://brew.sh/"
+            app_image "foo.AppImage", target: "Foo#{version.major}.AppImage"
+          end
+        end
+
+        it { is_expected.not_to error_with(error) }
+      end
+
+      context "when a versioned AppImage is scoped to on_linux and audited on macOS" do
+        let(:cask) do
+          Homebrew::SimulateSystem.with(os: :sequoia, arch: :arm) do
+            Cask::Cask.new("appimage-on-linux") do
+              version "1.2.3"
+              sha256 :no_check
+              url "https://brew.sh/foo"
+              name "AppImage On Linux"
+              homepage "https://brew.sh/"
+
+              on_macos do
+                app "Foo.app"
+              end
+
+              on_linux do
+                app_image "foo_#{version}_linux.AppImage"
+              end
+            end
+          end
+        end
+
+        it { is_expected.to error_with(error) }
+      end
+    end
+
+    describe "checking homepage availability" do
+      let(:online) { true }
+      let(:only) { ["homepage_https_availability"] }
+      let(:browsed) { "2025-07-27" }
+      let(:cask) do
+        browsed_ = browsed
+        Cask::Cask.new("browsed-homepage") do
+          homepage "https://brew.sh/", browsed: browsed_
+        end
+      end
+
+      before { allow(Date).to receive(:today).and_return(Date.new(2026, 7, 26)) }
+
+      it "skips homepages browsed by a human less than a year ago" do
+        expect(audit).not_to receive(:validate_url_for_https_availability)
+        run
+      end
+
+      context "when the homepage was browsed a year ago" do
+        let(:browsed) { "2025-07-26" }
+
+        it "audits the homepage" do
+          expect(audit).to receive(:validate_url_for_https_availability)
+          run
+        end
+      end
+
+      context "when the homepage browser check date is in the future" do
+        let(:browsed) { "2026-07-27" }
+
+        it "audits the homepage" do
+          expect(audit).to receive(:validate_url_for_https_availability)
+          run
         end
       end
     end
@@ -434,33 +802,10 @@ RSpec.describe Cask::Audit, :cask do
       end
     end
 
-    describe "pkg allow_untrusted checks" do
-      let(:only) { ["untrusted_pkg"] }
-      let(:message) { "allow_untrusted is not permitted in official Homebrew Cask taps" }
-
-      context "when the Cask has no pkg stanza" do
-        let(:cask_token) { "basic-cask" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask does not have allow_untrusted" do
-        let(:cask_token) { "with-uninstall-pkgutil" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has allow_untrusted" do
-        let(:cask_token) { "with-allow-untrusted" }
-
-        it { is_expected.to error_with(message) }
-      end
-    end
-
     describe "signing checks" do
       let(:only) { ["signing"] }
+      let(:tap) { CoreCaskTap.instance }
       let(:download_double) { instance_double(Cask::Download) }
-      let(:unpack_double) { instance_double(UnpackStrategy::Zip) }
 
       before do
         allow(audit).to receive_messages(download: download_double, signing?: true)
@@ -501,12 +846,212 @@ RSpec.describe Cask::Audit, :cask do
           expect(run).not_to error_with(/Audit\.app/)
         end
       end
+
+      context "when quarantine support is not available" do
+        let(:cask) do
+          tmp_cask "signing-cask-test", <<~RUBY
+            cask 'signing-cask-test' do
+              version '1.0'
+              url "https://brew.sh/"
+              app 'Audit.app'
+            end
+          RUBY
+        end
+
+        before do
+          allow(cask).to receive(:tap).and_return(tap)
+
+          allow(Cask::Quarantine).to receive(:available?).and_return(false)
+        end
+
+        it "skips signing audit with warning" do
+          allow(cask).to receive(:tap).and_return(tap)
+
+          expect(audit).to receive(:odebug).with("Quarantine support is not available, skipping signing audit")
+          expect(run).not_to error_with(/Signature verification failed/)
+        end
+      end
+
+      context "when cask is disabled because it fails Gatekeeper checks" do
+        let(:cask) do
+          tmp_cask "signing-cask-test", <<~RUBY
+            cask 'signing-cask-test' do
+              version '1.0'
+              url "https://brew.sh/"
+              pkg 'Audit.pkg'
+              disable! date: '2020-01-01', because: :fails_gatekeeper_check
+            end
+          RUBY
+        end
+        let(:failed_result) do
+          instance_double(SystemCommand::Result, success?: false, merged_output: "not notarized")
+        end
+
+        before do
+          allow(cask).to receive(:tap).and_return(tap)
+          allow(Cask::Quarantine).to receive_messages(available?: true, detect: true)
+          allow(audit).to receive(:system_command).and_return(failed_result)
+          allow(audit).to receive(:extract_artifacts).and_yield(cask.artifacts.to_a, mktmpdir)
+        end
+
+        it "tolerates the signature verification failure" do
+          expect(run).not_to error_with(/Signature verification failed/)
+        end
+      end
+
+      context "when cask is disabled for a reason other than Gatekeeper" do
+        let(:cask) do
+          tmp_cask "signing-cask-test", <<~RUBY
+            cask 'signing-cask-test' do
+              version '1.0'
+              url "https://brew.sh/"
+              app 'Audit.app'
+              disable! date: '2020-01-01', because: :discontinued
+            end
+          RUBY
+        end
+
+        before do
+          allow(cask).to receive(:tap).and_return(tap)
+        end
+
+        it "skips the signing audit" do
+          expect(Cask::Quarantine).not_to receive(:available?)
+          run
+        end
+      end
     end
 
-    describe "livecheck should be skipped", :no_api do
+    describe "homepage domain age" do
+      let(:only) { ["homepage_domain_age"] }
+      let(:new_cask) { true }
+      let(:domain_problem) { "`homepage` domain `brew.sh` was registered on 2026-07-01" }
+      let(:cask) do
+        Cask::Cask.new("homepage-domain-age", tap: CoreCaskTap.instance) do
+          version "1.0"
+          sha256 :no_check
+          url "https://brew.sh/homepage-domain-age.tar.gz"
+          homepage "https://brew.sh"
+        end
+      end
+
+      context "when the homepage domain is newly registered" do
+        before do
+          allow(SharedAudits).to receive(:new_domain_problem)
+            .with("https://brew.sh").and_return(domain_problem)
+        end
+
+        it { is_expected.to error_with(domain_problem) }
+      end
+
+      context "when the homepage domain is established" do
+        before { allow(SharedAudits).to receive(:new_domain_problem).and_return(nil) }
+
+        it { is_expected.to pass }
+      end
+
+      context "when the cask is not new" do
+        let(:new_cask) { false }
+
+        it "does not check the homepage domain" do
+          expect(SharedAudits).not_to receive(:new_domain_problem)
+          expect(run).to pass
+        end
+      end
+
+      context "when the cask is not in an official tap" do
+        let(:cask) do
+          Cask::Cask.new("homepage-domain-age") do
+            version "1.0"
+            sha256 :no_check
+            url "https://brew.sh/homepage-domain-age.tar.gz"
+            homepage "https://brew.sh"
+          end
+        end
+
+        it "does not check the homepage domain" do
+          expect(SharedAudits).not_to receive(:new_domain_problem)
+          expect(run).to pass
+        end
+      end
+    end
+
+    describe "artifact extraction" do
+      let(:online) { true }
+      let(:cask) do
+        Cask::Cask.new("artifact-extraction") do
+          version "1.0"
+          sha256 :no_check
+          url "https://brew.sh/artifact-extraction.tar.gz"
+          binary "artifact-extraction"
+        end
+      end
+
+      context "when the download times out" do
+        before do
+          allow(audit.download).to receive(:fetch).and_raise(Timeout::Error)
+          allow(ObjectSpace).to receive(:define_finalizer)
+        end
+
+        it "does not retry a failed download for extraction" do
+          expect(audit.download).to receive(:fetch).once.and_raise(Timeout::Error)
+
+          audit.audit_download
+          audit.extract_artifacts
+        end
+
+        it "continues auditing when extraction attempts the download first" do
+          allow(audit).to receive(:public_methods)
+            .and_return([:audit_artifact_case, :audit_download, :audit_version_special_characters])
+          expect(audit).to receive(:audit_version_special_characters)
+
+          audit.run!
+        end
+
+        it "reports the failure once when extraction attempts the download first" do
+          audit.extract_artifacts
+          audit.audit_download
+
+          expect(audit.errors.map { |error| error.fetch(:message) })
+            .to eq(["download not possible: Timeout::Error"])
+        end
+      end
+
+      it "does not read quarantine metadata when quarantine support is unavailable" do
+        downloaded_path = Pathname("/tmp/artifact-extraction.tar.gz")
+        container = instance_double(UnpackStrategy, dependencies: [], extract_nestedly: nil)
+        allow(audit.download).to receive(:fetch).with(timeout: 600).and_return(downloaded_path)
+        allow(UnpackStrategy).to receive(:detect).and_return(container)
+        allow(ObjectSpace).to receive(:define_finalizer)
+        allow(Cask::Installer).to receive(:new)
+          .and_return(instance_double(Cask::Installer, process_rename_operations: nil))
+        allow(Cask::Quarantine).to receive(:available?).and_return(false)
+        expect(Cask::Quarantine).not_to receive(:system_command)
+
+        audit.extract_artifacts
+      end
+    end
+
+    describe "livecheck version validation", :no_api do
       let(:only) { ["livecheck_version"] }
       let(:online) { true }
       let(:message) { /Version '[^']*' differs from '[^']*' retrieved by livecheck\./ }
+
+      context "when `@livecheck_result` is already set" do
+        let(:cask_token) { "basic-cask" }
+
+        it "returns existing `@livecheck_result` value" do
+          audit.livecheck_result = :auto_detected
+          expect(run).not_to error_with(message)
+          audit.livecheck_result = nil
+        end
+      end
+
+      context "when `cask.version` is not set" do
+        let(:cask_token) { "missing-version" }
+
+        it { is_expected.not_to error_with(message) }
+      end
 
       context "when the Cask has a `livecheck` block using skip" do
         let(:cask_token) { "livecheck-skip" }
@@ -567,6 +1112,133 @@ RSpec.describe Cask::Audit, :cask do
 
         it { is_expected.not_to error_with(message) }
       end
+
+      context "when `latest_version` returns `nil`" do
+        let(:cask_token) { "basic-cask" }
+
+        it do
+          allow(Homebrew::Livecheck).to receive(:latest_version).and_return(nil)
+          expect(run).to error_with(message)
+        end
+      end
+
+      context "when the Cask is not throttled" do
+        let(:cask_token) { "basic-cask" }
+
+        it do
+          allow(Homebrew::Livecheck).to receive(:latest_version).and_return({
+            latest: Version.new("1.2.3"),
+          })
+          expect(run).not_to error_with(message)
+        end
+      end
+
+      context "when the Cask has a `livecheck` block using `throttle`" do
+        let(:cask_token) { "livecheck-throttle" }
+
+        it do
+          allow(Homebrew::Livecheck).to receive(:latest_version).and_return({
+            latest:           Version.new("1.2.6"),
+            latest_throttled: Version.new("1.2.5"),
+          })
+          expect(run).not_to error_with(message)
+        end
+      end
+
+      context "when the Cask has a `livecheck` block using `throttle days:`" do
+        let(:cask_token) { "livecheck-throttle-days" }
+        let(:cask) do
+          tmp_cask cask_token.to_s, <<~RUBY
+            cask "#{cask_token}" do
+              version "1.2.5"
+              sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+
+              url "https://brew.sh/#{cask_token}-1.2.5.dmg"
+              name "Throttle Days"
+              homepage "https://brew.sh/#{cask_token}"
+
+              livecheck do
+                url :homepage
+                throttle days: 7
+              end
+
+              app "#{cask_token}.app"
+            end
+          RUBY
+        end
+
+        it do
+          allow(Homebrew::Livecheck).to receive(:latest_version).and_return({
+            latest:           Version.new("1.2.6"),
+            latest_throttled: Version.new("1.2.5"),
+          })
+          expect(run).not_to error_with(message)
+        end
+      end
+
+      context "when the Cask has a `livecheck` block referencing a Cask that uses `throttle`" do
+        let(:cask_token) { "livecheck-throttle-reference" }
+
+        it do
+          allow(Homebrew::Livecheck).to receive(:latest_version).and_return({
+            latest:           Version.new("1.2.6"),
+            latest_throttled: Version.new("1.2.5"),
+          })
+          expect(run).not_to error_with(message)
+        end
+      end
+
+      context "when the Cask has a `livecheck` block referencing a Cask that uses `throttle days:`" do
+        let(:cask_token) { "livecheck-throttle-days-reference" }
+        let(:referenced_cask) do
+          tmp_cask "livecheck-throttle-days-source", <<~RUBY
+            cask "livecheck-throttle-days-source" do
+              version "1.2.5"
+              sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+
+              url "https://brew.sh/livecheck-throttle-days-source-1.2.5.dmg"
+              name "Throttle Days Source"
+              homepage "https://brew.sh/livecheck-throttle-days-source"
+
+              livecheck do
+                url :homepage
+                throttle days: 7
+              end
+
+              app "livecheck-throttle-days-source.app"
+            end
+          RUBY
+        end
+        let(:cask) do
+          tmp_cask cask_token.to_s, <<~RUBY
+            cask "#{cask_token}" do
+              version "1.2.5"
+              sha256 "8c62a2b791cf5f0da6066a0a4b6e85f62949cd60975da062df44adf887f4370b"
+
+              url "https://brew.sh/#{cask_token}-1.2.5.dmg"
+              name "Throttle Days Reference"
+              homepage "https://brew.sh/#{cask_token}"
+
+              livecheck do
+                cask "livecheck-throttle-days-source"
+              end
+
+              app "#{cask_token}.app"
+            end
+          RUBY
+        end
+
+        it do
+          allow(Homebrew::Livecheck).to receive_messages(
+            resolve_livecheck_reference: [referenced_cask, nil],
+            latest_version:              {
+              latest:           Version.new("1.2.6"),
+              latest_throttled: Version.new("1.2.5"),
+            },
+          )
+          expect(run).not_to error_with(message)
+        end
+      end
     end
 
     describe "when the Cask stanza requires uninstall" do
@@ -599,94 +1271,6 @@ RSpec.describe Cask::Audit, :cask do
 
       context "when the pkg Cask does not have an uninstall" do
         let(:cask_token) { "pkg-without-uninstall" }
-
-        it { is_expected.to error_with(message) }
-      end
-    end
-
-    describe "preflight stanza checks" do
-      let(:message) { "only a single preflight stanza is allowed" }
-
-      context "when the Cask has no preflight stanza" do
-        let(:cask_token) { "with-zap-rmdir" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has only one preflight stanza" do
-        let(:cask_token) { "with-preflight" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has multiple preflight stanzas" do
-        let(:cask_token) { "with-preflight-multi" }
-
-        it { is_expected.to error_with(message) }
-      end
-    end
-
-    describe "postflight stanza checks" do
-      let(:message) { "only a single postflight stanza is allowed" }
-
-      context "when the Cask has no postflight stanza" do
-        let(:cask_token) { "with-zap-rmdir" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has only one postflight stanza" do
-        let(:cask_token) { "with-postflight" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has multiple postflight stanzas" do
-        let(:cask_token) { "with-postflight-multi" }
-
-        it { is_expected.to error_with(message) }
-      end
-    end
-
-    describe "uninstall_preflight stanza checks" do
-      let(:message) { "only a single uninstall_preflight stanza is allowed" }
-
-      context "when the Cask has no uninstall_preflight stanza" do
-        let(:cask_token) { "with-zap-rmdir" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has only one uninstall_preflight stanza" do
-        let(:cask_token) { "with-uninstall-preflight" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has multiple uninstall_preflight stanzas" do
-        let(:cask_token) { "with-uninstall-preflight-multi" }
-
-        it { is_expected.to error_with(message) }
-      end
-    end
-
-    describe "uninstall_postflight stanza checks" do
-      let(:message) { "only a single uninstall_postflight stanza is allowed" }
-
-      context "when the Cask has no uninstall_postflight stanza" do
-        let(:cask_token) { "with-zap-rmdir" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has only one uninstall_postflight stanza" do
-        let(:cask_token) { "with-uninstall-postflight" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the Cask has multiple uninstall_postflight stanzas" do
-        let(:cask_token) { "with-uninstall-postflight-multi" }
 
         it { is_expected.to error_with(message) }
       end
@@ -755,6 +1339,20 @@ RSpec.describe Cask::Audit, :cask do
         it { is_expected.to error_with("sha256 string must be of 64 hexadecimal characters") }
       end
 
+      context "when sha256 is 64 characters but contains a newline" do
+        let(:only) { ["sha256_actually_256"] }
+        let(:cask_token) { "invalid-sha256-newline" }
+
+        it { is_expected.to error_with("sha256 string must be of 64 hexadecimal characters") }
+      end
+
+      context "when sha256 is 64 characters but only one of them is hexadecimal" do
+        let(:only) { ["sha256_actually_256"] }
+        let(:cask_token) { "invalid-sha256-hex-fragment" }
+
+        it { is_expected.to error_with("sha256 string must be of 64 hexadecimal characters") }
+      end
+
       context "when sha256 is sha256 for empty string" do
         let(:only) { ["sha256_invalid"] }
         let(:cask_token) { "sha256-for-empty-string" }
@@ -786,6 +1384,13 @@ RSpec.describe Cask::Audit, :cask do
         it { is_expected.to error_with(message) }
       end
 
+      context "when the download only mentions SourceForge in its query and does not have a livecheck" do
+        let(:cask_token) { "sourceforge-lookalike-without-livecheck" }
+        let(:online) { true }
+
+        it { is_expected.not_to error_with(message) }
+      end
+
       context "when the download is hosted on DevMate and has a livecheck" do
         let(:cask_token) { "devmate-with-livecheck" }
 
@@ -794,18 +1399,6 @@ RSpec.describe Cask::Audit, :cask do
 
       context "when the download is hosted on DevMate and does not have a livecheck" do
         let(:cask_token) { "devmate-without-livecheck" }
-
-        it { is_expected.to error_with(message) }
-      end
-
-      context "when the download is hosted on HockeyApp and has a livecheck" do
-        let(:cask_token) { "hockeyapp-with-livecheck" }
-
-        it { is_expected.not_to error_with(message) }
-      end
-
-      context "when the download is hosted on HockeyApp and does not have a livecheck" do
-        let(:cask_token) { "hockeyapp-without-livecheck" }
 
         it { is_expected.to error_with(message) }
       end
@@ -834,6 +1427,59 @@ RSpec.describe Cask::Audit, :cask do
       end
     end
 
+    describe "conflicts with" do
+      let(:only) { ["conflicts_with"] }
+      let(:tap) { CoreCaskTap.instance }
+
+      context "when the Cask has no conflicts" do
+        let(:cask_token) { "basic-cask" }
+
+        it { is_expected.to pass }
+      end
+
+      context "when all conflicting casks exist" do
+        let(:cask) do
+          tmp_cask "test-conflicts-cask", <<~RUBY
+            cask 'test-conflicts-cask' do
+              version '1.0'
+              url "https://brew.sh/index.html"
+              artifact "example.pdf", target: "/Library/Application Support/example"
+
+              conflicts_with cask: ["foo", "bar"]
+            end
+          RUBY
+        end
+
+        before do
+          allow(audit).to receive(:core_cask_tokens).and_return(%w[foo bar baz qux])
+          allow(cask).to receive(:tap).and_return(tap)
+        end
+
+        it { is_expected.to pass }
+      end
+
+      context "when conflicting casks are missing" do
+        let(:cask) do
+          tmp_cask "test-conflicts-cask", <<~RUBY
+            cask 'test-conflicts-cask' do
+              version '1.0'
+              url "https://brew.sh/index.html"
+              artifact "example.pdf", target: "/Library/Application Support/example"
+
+              conflicts_with cask: ["foo", "foo@1", "bar", "baz"]
+            end
+          RUBY
+        end
+
+        before do
+          allow(audit).to receive(:core_cask_tokens).and_return(["foo", "baz"])
+          allow(cask).to receive(:tap).and_return(tap)
+        end
+
+        it { is_expected.to error_with(/cask conflicts with non-existing cask/) }
+      end
+    end
+
     describe "denylist checks" do
       let(:only) { ["denylist"] }
 
@@ -853,7 +1499,11 @@ RSpec.describe Cask::Audit, :cask do
         context "when it isn't in the official Homebrew tap" do
           let(:cask_token) { "pharo" }
 
-          it { is_expected.to pass }
+          it do
+            allow(Homebrew::Trust).to receive(:trusted?).and_return(true)
+
+            expect(run).to pass
+          end
         end
       end
     end
@@ -885,6 +1535,413 @@ RSpec.describe Cask::Audit, :cask do
 
         it { is_expected.to error_with(message) }
       end
+    end
+
+    describe "GitHub repository archived check" do
+      let(:online) { true }
+      let(:only) { ["github_repository_archived"] }
+      let(:cask) do
+        Cask::Cask.new("sourcegit") do
+          url "https://github.com/sourcegit-scm/sourcegit/releases/download/v1.0/sourcegit.zip"
+        end
+      end
+
+      it "keeps a repository name ending in git intact" do
+        allow(SharedAudits).to receive(:github_repo_data).with("sourcegit-scm", "sourcegit")
+                                                         .and_return({ "archived" => true })
+        expect(run).to error_with("GitHub repo is archived")
+      end
+    end
+
+    describe "Rosetta checks" do
+      let(:online) { true }
+      let(:only) { ["rosetta"] }
+      let(:cask) do
+        Cask::Cask.new("rosetta-audit") do
+          version "1.0"
+          sha256 :no_check
+          url "https://brew.sh/rosetta-audit.zip"
+          name "Rosetta Audit"
+          homepage "https://brew.sh/"
+          depends_on macos: :big_sur
+
+          binary "rosetta-audit"
+
+          caveats do
+            requires_rosetta
+          end
+        end
+      end
+
+      around do |example|
+        Homebrew::SimulateSystem.with(os: :sequoia, arch: :arm) do
+          example.run
+        end
+      end
+
+      before do
+        allow(Hardware::CPU).to receive(:rosetta_installed?).and_return(true)
+        allow(audit).to receive(:extract_artifacts).and_yield(cask.artifacts, cask.staged_path)
+        allow(audit).to receive(:system_command)
+          .and_return(instance_double(SystemCommand::Result, success?: true, merged_output: "x86_64"))
+      end
+
+      it "recognizes a suppressed requires_rosetta caveat" do
+        expect(run).to pass
+      end
+    end
+
+    describe "artifact case checks" do
+      let(:online) { true }
+      let(:only) { ["artifact_case"] }
+      let(:tmpdir) { mktmpdir }
+      let(:cask) do
+        Cask::Cask.new("artifact-case") do
+          version "1.0"
+          sha256 :no_check
+          url "https://brew.sh/artifact-case.zip"
+          name "Artifact Case"
+          homepage "https://brew.sh/"
+
+          app "artifact case.app"
+        end
+      end
+
+      before do
+        allow(audit).to receive(:extract_artifacts).and_yield(cask.artifacts, tmpdir)
+      end
+
+      context "when the case matches" do
+        before { (tmpdir/"artifact case.app").mkpath }
+
+        it { is_expected.to pass }
+      end
+
+      context "when the case does not match" do
+        before { (tmpdir/"Artifact Case.app").mkpath }
+
+        it { is_expected.to error_with(/does not match the case of the extracted/) }
+      end
+
+      context "when both cases are present on disk" do
+        # Both spellings cannot be created on a case-insensitive filesystem.
+        before do
+          allow(tmpdir).to receive(:children)
+            .and_return([tmpdir/"Artifact Case.app", tmpdir/"artifact case.app"])
+        end
+
+        it { is_expected.to pass }
+      end
+
+      context "when the artifact is missing" do
+        it { is_expected.to pass }
+      end
+
+      context "when a binary in the appdir has the wrong case" do
+        let(:cask) do
+          Cask::Cask.new("artifact-case") do
+            version "1.0"
+            sha256 :no_check
+            url "https://brew.sh/artifact-case.zip"
+            name "Artifact Case"
+            homepage "https://brew.sh/"
+
+            app "Artifact Case.app"
+            binary "#{appdir}/Artifact Case.app/Contents/MacOS/artifact"
+          end
+        end
+
+        before do
+          (tmpdir/"Artifact Case.app/Contents/MacOS").mkpath
+          FileUtils.touch tmpdir/"Artifact Case.app/Contents/MacOS/Artifact"
+        end
+
+        it { is_expected.to error_with(/does not match the case of the extracted/) }
+      end
+
+      context "when fixing" do
+        let(:fix) { true }
+        let(:cask) do
+          tmp_cask "fix-artifact-case", <<~RUBY
+            cask "fix-artifact-case" do
+              version "1.0"
+              sha256 :no_check
+              url "https://brew.sh/fix-artifact-case.zip"
+              name "Fix Artifact Case"
+              homepage "https://brew.sh/"
+
+              app "artifact case.app"
+            end
+          RUBY
+        end
+
+        before { (tmpdir/"Artifact Case.app").mkpath }
+
+        it "corrects the case of the artifact stanza and marks the problem corrected" do
+          expect(run.errors.map { |error| error[:corrected] }).to eq([true])
+          expect(cask.sourcefile_path.read).to include('app "Artifact Case.app"')
+        end
+      end
+
+      context "when a manual installer has the wrong case" do
+        let(:cask) do
+          Cask::Cask.new("artifact-case") do
+            version "1.0"
+            sha256 :no_check
+            url "https://brew.sh/artifact-case.zip"
+            name "Artifact Case"
+            homepage "https://brew.sh/"
+
+            installer manual: "Artifact Case.app"
+          end
+        end
+
+        before { (tmpdir/"Artifact Case.APP").mkpath }
+
+        it { is_expected.to error_with(/does not match the case of the extracted/) }
+      end
+    end
+
+    describe "minimum OS checks" do
+      let(:online) { true }
+      let(:only) { ["min_os"] }
+      let(:cask) do
+        Cask::Cask.new("arch-min-os") do
+          version "1.0"
+          sha256 :no_check
+          url "https://brew.sh/arch-min-os.zip"
+          name "Arch Min OS"
+          homepage "https://brew.sh/"
+
+          on_arm do
+            depends_on macos: :sequoia
+          end
+
+          depends_on :macos
+
+          app "Arch Min OS.app"
+        end
+      end
+
+      before do
+        allow(audit).to receive_messages(cask_bundle_min_os:  MacOSVersion.from_symbol(:sequoia),
+                                         cask_sparkle_min_os: nil)
+      end
+
+      context "when running on arm" do
+        around do |example|
+          Homebrew::SimulateSystem.with(arch: :arm) do
+            example.run
+          end
+        end
+
+        it { is_expected.to pass }
+      end
+
+      context "when running on intel" do
+        around do |example|
+          Homebrew::SimulateSystem.with(arch: :intel) do
+            example.run
+          end
+        end
+
+        it { is_expected.to error_with(/cask declared no minimum macOS version/) }
+      end
+
+      context "when the app requires a newer macOS but the cask declares no macOS dependency" do
+        let(:cask) do
+          tmp_cask "no-min-os", <<~RUBY
+            cask 'no-min-os' do
+              version '1.0'
+              sha256 :no_check
+              url 'https://brew.sh/no-min-os.zip'
+              name 'No Min OS'
+              homepage 'https://brew.sh/'
+
+              on_macos do
+                depends_on arch: :arm64
+
+                app 'No Min OS.app'
+              end
+            end
+          RUBY
+        end
+
+        it { is_expected.to error_with(/cask declared no minimum macOS version/) }
+      end
+
+      context "when fixing" do
+        let(:fix) { true }
+        let(:cask) do
+          tmp_cask "fix-min-os", <<~RUBY
+            cask 'fix-min-os' do
+              version '1.0'
+              sha256 :no_check
+              url 'https://brew.sh/fix-min-os.zip'
+              name 'Fix Min OS'
+              homepage 'https://brew.sh/'
+
+              app 'Fix Min OS.app'
+            end
+          RUBY
+        end
+
+        it "sets the minimum macOS version in the cask and marks the problem corrected" do
+          expect(run.errors.map { |error| error[:corrected] }).to eq([true])
+          expect(cask.sourcefile_path.read).to include("depends_on macos: :sequoia")
+        end
+
+        it "restores the cask when the rewrite no longer loads" do
+          allow(Utils::AST::CaskAST).to receive(:new).and_return(
+            instance_double(Utils::AST::CaskAST,
+                            update_depends_on_macos_minimum!: true,
+                            process:                          "this is not a cask("),
+          )
+          old_contents = cask.sourcefile_path.read
+
+          expect(run.errors.map { |error| error[:corrected] }).to eq([false])
+          expect(cask.sourcefile_path.read).to eq(old_contents)
+        end
+
+        context "when the cask sets a lower `maximum_macos`" do
+          let(:cask) do
+            tmp_cask "maximum-min-os", <<~RUBY
+              cask 'maximum-min-os' do
+                version '1.0'
+                sha256 :no_check
+                url 'https://brew.sh/maximum-min-os.zip'
+                name 'Maximum Min OS'
+                homepage 'https://brew.sh/'
+
+                depends_on maximum_macos: :sonoma
+
+                app 'Maximum Min OS.app'
+              end
+            RUBY
+          end
+
+          it "leaves the cask unchanged" do
+            run
+
+            expect(cask.sourcefile_path.read).not_to include("depends_on macos:")
+          end
+        end
+
+        context "when the cask has `on_system` blocks" do
+          let(:cask) do
+            tmp_cask "on-system-fix-min-os", <<~RUBY
+              cask 'on-system-fix-min-os' do
+                version '1.0'
+                sha256 :no_check
+                url 'https://brew.sh/on-system-fix-min-os.zip'
+                name 'On System Fix Min OS'
+                homepage 'https://brew.sh/'
+
+                on_arm do
+                  version '1.0-arm'
+                end
+
+                app 'On System Fix Min OS.app'
+              end
+            RUBY
+          end
+
+          it "leaves the cask unchanged" do
+            run
+
+            expect(cask.sourcefile_path.read).not_to include("depends_on")
+          end
+        end
+
+        context "when the cask lists exact macOS versions" do
+          let(:cask) do
+            tmp_cask "exact-min-os", <<~RUBY
+              cask 'exact-min-os' do
+                version '1.0'
+                sha256 :no_check
+                url 'https://brew.sh/exact-min-os.zip'
+                name 'Exact Min OS'
+                homepage 'https://brew.sh/'
+
+                depends_on macos: [:ventura, :sonoma]
+
+                app 'Exact Min OS.app'
+              end
+            RUBY
+          end
+
+          it { is_expected.to error_with(/minimum macOS version of :ventura/) }
+
+          it "leaves the cask unchanged" do
+            run
+
+            expect(cask.sourcefile_path.read).to include("depends_on macos: [:ventura, :sonoma]")
+          end
+        end
+
+        context "when the minimum macOS version comes from an `on_system` block" do
+          let(:cask) do
+            tmp_cask "on-system-min-os", <<~RUBY
+              cask 'on-system-min-os' do
+                version '1.0'
+                sha256 :no_check
+                url 'https://brew.sh/on-system-min-os.zip'
+                name 'On System Min OS'
+                homepage 'https://brew.sh/'
+
+                on_ventura :or_older do
+                  version '0.9'
+                end
+
+                app 'On System Min OS.app'
+              end
+            RUBY
+          end
+
+          it "leaves the cask unchanged" do
+            run
+
+            expect(cask.sourcefile_path.read).not_to include("depends_on")
+          end
+        end
+      end
+
+      it "normalizes 10.16.0 minimum macOS to Big Sur" do
+        expect(audit.normalize_min_os("10.16.0")).to eq(MacOSVersion.from_symbol(:big_sur))
+      end
+    end
+
+    describe "minimum OS from a Sparkle appcast" do
+      let(:online) { true }
+      let(:only) { ["min_os"] }
+      let(:cask) do
+        tmp_cask "sparkle-min-os", <<~RUBY
+          cask "sparkle-min-os" do
+            version "1.0"
+            sha256 :no_check
+
+            url "https://brew.sh/sparkle-min-os.zip"
+            name "Sparkle Min OS"
+            homepage "https://brew.sh/"
+
+            livecheck do
+              url "https://brew.sh/appcast.xml"
+              strategy :sparkle
+            end
+
+            depends_on macos: :ventura
+
+            app "Sparkle Min OS.app"
+          end
+        RUBY
+      end
+
+      before do
+        allow(audit).to receive(:cask_bundle_min_os).and_return(nil)
+        allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: appcast })
+      end
+
+      it { is_expected.to error_with(/Upstream defined :sequoia as the minimum macOS version/) }
     end
 
     describe "preferred download URL formats" do
@@ -949,34 +2006,15 @@ RSpec.describe Cask::Audit, :cask do
     end
 
     describe "token conflicts" do
-      let(:only) { ["token_conflicts"] }
       let(:cask_token) { "with-binary" }
-      let(:token_conflicts) { true }
 
       context "when cask token conflicts with a core formula" do
         let(:formula_names) { %w[with-binary other-formula] }
 
-        context "when `--strict` is passed" do
-          let(:strict) { true }
-
-          it "warns about duplicates" do
-            expect(audit).to receive(:core_formula_names).and_return(formula_names)
-            expect(run).to error_with(/possible duplicate/)
-          end
+        it "warns about conflicts" do
+          expect(audit).to receive(:core_formula_names).and_return(formula_names)
+          expect(run).to error_with(/cask token conflicts/)
         end
-
-        context "when `--strict` is not passed" do
-          it "does not warn about duplicates" do
-            expect(audit).to receive(:core_formula_names).and_return(formula_names)
-            expect(run).not_to error_with(/possible duplicate/)
-          end
-        end
-      end
-
-      context "when cask token does not conflict with a core formula" do
-        let(:formula_names) { %w[other-formula] }
-
-        it { is_expected.to pass }
       end
     end
 
@@ -992,14 +2030,28 @@ RSpec.describe Cask::Audit, :cask do
         allow(UnpackStrategy).to receive(:detect).and_return(nil)
       end
 
-      it "when download and verification succeed it does not fail" do
-        expect(download_double).to receive(:fetch).and_return(Pathname.new("/tmp/test.zip"))
-        expect(run).to pass
+      context "when the download succeeds" do
+        it "passes" do
+          expect(download_double).to receive(:fetch).with(timeout: 600).and_return(Pathname.new("/tmp/test.zip"))
+          expect(run).to pass
+        end
       end
 
-      it "when download fails it fails" do
-        expect(download_double).to receive(:fetch).and_raise(StandardError.new(message))
-        expect(run).to error_with(/#{message}/)
+      context "when the download fails" do
+        it "fails" do
+          expect(download_double).to receive(:fetch).and_raise(StandardError.new(message))
+          expect(run).to error_with(/#{message}/)
+        end
+      end
+
+      context "when the download times out" do
+        before do
+          allow(download_double).to receive(:fetch).with(timeout: 600).and_raise(Timeout::Error)
+        end
+
+        it "fails the audit" do
+          expect(run).to error_with(/download not possible: .*Timeout/)
+        end
       end
     end
 
@@ -1064,82 +2116,6 @@ RSpec.describe Cask::Audit, :cask do
         it "passes" do
           expect(run).to pass
         end
-      end
-    end
-
-    describe "checking verified" do
-      let(:only) { %w[unnecessary_verified missing_verified no_match required_stanzas] }
-      let(:cask_token) { "foo" }
-
-      context "when the url matches the homepage" do
-        let(:cask) do
-          tmp_cask cask_token.to_s, <<~RUBY
-            cask '#{cask_token}' do
-              version '1.0'
-              sha256 '8dd95daa037ac02455435446ec7bc737b34567afe9156af7d20b2a83805c1d8a'
-              url 'https://foo.brew.sh/foo.zip'
-              name 'Audit'
-              desc 'Audit Description'
-              homepage 'https://foo.brew.sh'
-              app 'Audit.app'
-            end
-          RUBY
-        end
-
-        it { is_expected.to pass }
-      end
-
-      context "when the url does not match the homepage" do
-        let(:cask) do
-          tmp_cask cask_token.to_s, <<~RUBY
-            cask '#{cask_token}' do
-              version "1.8.0_72,8.13.0.5"
-              sha256 "8dd95daa037ac02455435446ec7bc737b34567afe9156af7d20b2a83805c1d8a"
-              url "https://brew.sh/foo-\#{version.after_comma}.zip"
-              name "Audit"
-              desc "Audit Description"
-              homepage "https://foo.example.org"
-              app "Audit.app"
-            end
-          RUBY
-        end
-
-        it { is_expected.to error_with(/a 'verified' parameter has to be added/) }
-      end
-
-      context "when the url does not match the homepage with verified" do
-        let(:cask) do
-          tmp_cask cask_token.to_s, <<~RUBY
-            cask "#{cask_token}" do
-              version "1.8.0_72,8.13.0.5"
-              sha256 "8dd95daa037ac02455435446ec7bc737b34567afe9156af7d20b2a83805c1d8a"
-              url "https://brew.sh/foo-\#{version.after_comma}.zip", verified: "brew.sh"
-              name "Audit"
-              desc "Audit Description"
-              homepage "https://foo.example.org"
-              app "Audit.app"
-            end
-          RUBY
-        end
-
-        it { is_expected.to pass }
-      end
-
-      context "when there is no homepage" do
-        let(:cask) do
-          tmp_cask cask_token.to_s, <<~RUBY
-            cask '#{cask_token}' do
-              version '1.8.0_72,8.13.0.5'
-              sha256 '8dd95daa037ac02455435446ec7bc737b34567afe9156af7d20b2a83805c1d8a'
-              url 'https://brew.sh/foo.zip'
-              name 'Audit'
-              desc 'Audit Description'
-              app 'Audit.app'
-            end
-          RUBY
-        end
-
-        it { is_expected.to error_with(/a homepage stanza is required/) }
       end
     end
 

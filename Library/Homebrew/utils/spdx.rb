@@ -14,6 +14,7 @@ module SPDX
   ALLOWED_LICENSE_SYMBOLS = [
     :public_domain,
     :cannot_represent,
+    :truncated,
   ].freeze
 
   sig { returns(T::Hash[String, T.untyped]) }
@@ -34,7 +35,7 @@ module SPDX
 
   sig { params(to: Pathname).void }
   def download_latest_license_data!(to: DATA_PATH)
-    data_url = "https://raw.githubusercontent.com/spdx/license-list-data/#{latest_tag}/json/"
+    data_url = "https://raw.githubusercontent.com/spdx/license-list-data/refs/tags/#{latest_tag}/json/"
     Utils::Curl.curl_download("#{data_url}licenses.json", to: to/"spdx_licenses.json")
     Utils::Curl.curl_download("#{data_url}exceptions.json", to: to/"spdx_exceptions.json")
   end
@@ -154,19 +155,15 @@ module SPDX
     end
   end
 
-  sig {
-    params(
-      string: T.nilable(String),
-    ).returns(
-      T.nilable(
-        T.any(
-          String,
-          Symbol,
-          T::Hash[T.any(String, Symbol), T.untyped],
-        ),
-      ),
+  LicenseExpression = T.type_alias do
+    T.any(
+      String,
+      Symbol,
+      T::Hash[T.any(String, Symbol), T.anything],
     )
-  }
+  end
+
+  sig { params(string: T.nilable(String)).returns(T.nilable(LicenseExpression)) }
   def string_to_license_expression(string)
     return if string.blank?
 
@@ -204,6 +201,44 @@ module SPDX
     end
   end
 
+  # The `org.opencontainers.image.licenses` OCI annotation only accepts a limited
+  # length (`limit`). GHCR rejects 256-character values on OCI child manifests, so
+  # the default is 255. Shorten an over-long licence to a valid prefix rather than
+  # discarding it entirely. Only top-level `AND` expressions can be shortened safely:
+  # a prefix of "A AND B AND ..." still holds, whereas dropping `OR` alternatives
+  # would change the licence, so those fall back to `:cannot_represent`.
+  sig { params(license: String, limit: Integer).returns(String) }
+  def truncate_license(license, limit: 255)
+    return license if license.length <= limit
+
+    fallback = license_expression_to_string(:cannot_represent) || license
+
+    # Split on top-level `AND`, re-joining any segment split inside a bracketed
+    # sub-expression so each part stays a valid, balanced licence. A single part
+    # means a top-level `OR` (or a lone licence) that cannot be safely shortened.
+    parts = T.let([], T::Array[String])
+    license.split(" AND ").each do |segment|
+      previous = parts.last
+      if previous && previous.count("(") > previous.count(")")
+        parts[-1] = "#{previous} AND #{segment}"
+      else
+        parts << segment
+      end
+    end
+    return fallback if parts.length < 2
+
+    marker = license_expression_to_string(:truncated) || "truncated"
+    kept = T.let([], T::Array[String])
+    parts.each do |part|
+      break if [*kept, part, marker].join(" AND ").length > limit
+
+      kept << part
+    end
+    return fallback if kept.empty?
+
+    [*kept, marker].join(" AND ")
+  end
+
   sig {
     params(
       license: T.any(String, Symbol),
@@ -229,13 +264,13 @@ module SPDX
   end
 
   sig {
-    params(license_expression: T.any(String, Symbol, T::Hash[Symbol, T.untyped]),
-           forbidden_licenses: T::Hash[Symbol, T.untyped]).returns(T::Boolean)
+    params(license_expression: T.any(String, Symbol, T::Hash[T.any(Symbol, String), T.untyped]),
+           forbidden_licenses: T::Hash[T.any(Symbol, String), T.untyped]).returns(T::Boolean)
   }
   def licenses_forbid_installation?(license_expression, forbidden_licenses)
     case license_expression
     when String, Symbol
-      forbidden_licenses_include? license_expression.to_s, forbidden_licenses
+      forbidden_licenses_include? license_expression, forbidden_licenses
     when Hash
       key = license_expression.keys.first
       return false if key.nil?

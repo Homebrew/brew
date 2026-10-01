@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module OS
@@ -9,6 +9,7 @@ module OS
 
       sig { returns(Version) }
       def system_version
+        @system_version ||= T.let(nil, T.nilable(Version))
         @system_version ||= begin
           version = Utils.popen_read("/usr/bin/ldd", "--version")[/ (\d+\.\d+)/, 1]
           if version
@@ -21,6 +22,7 @@ module OS
 
       sig { returns(Version) }
       def version
+        @version ||= T.let(nil, T.nilable(Version))
         @version ||= begin
           version = Utils.popen_read(HOMEBREW_PREFIX/"opt/glibc/bin/ldd", "--version")[/ (\d+\.\d+)/, 1]
           if version

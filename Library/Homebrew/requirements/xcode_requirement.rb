@@ -5,6 +5,8 @@ require "requirement"
 
 # A requirement on Xcode.
 class XcodeRequirement < Requirement
+  Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
+
   fatal true
 
   sig { returns(T.nilable(String)) }
@@ -12,18 +14,18 @@ class XcodeRequirement < Requirement
 
   satisfy(build_env: false) do
     T.bind(self, XcodeRequirement)
-    xcode_installed_version
+    xcode_installed_version!
   end
 
-  sig { params(tags: T::Array[String]).void }
+  sig { params(tags: T::Array[T.any(String, Symbol)]).void }
   def initialize(tags = [])
     version = tags.shift if tags.first.to_s.match?(/(\d\.)+\d/)
-    @version = T.let(version, T.nilable(String))
+    @version = T.let(version&.to_s, T.nilable(String))
     super
   end
 
   sig { returns(T::Boolean) }
-  def xcode_installed_version
+  def xcode_installed_version!
     return false unless MacOS::Xcode.installed?
     return true unless @version
 

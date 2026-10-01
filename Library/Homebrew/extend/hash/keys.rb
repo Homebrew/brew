@@ -2,32 +2,6 @@
 # frozen_string_literal: true
 
 class Hash
-  # Validates all keys in a hash match `*valid_keys`, raising
-  # `ArgumentError` on a mismatch.
-  #
-  # Note that keys are treated differently than `HashWithIndifferentAccess`,
-  # meaning that string and symbol keys will not match.
-  #
-  # ### Example#
-  #
-  # ```ruby
-  # { name: 'Rob', years: '28' }.assert_valid_keys(:name, :age)
-  # # => raises "ArgumentError: Unknown key: :years. Valid keys are: :name, :age"
-  # { name: 'Rob', age: '28' }.assert_valid_keys('name', 'age')
-  # # => raises "ArgumentError: Unknown key: :name. Valid keys are: 'name', 'age'"
-  # { name: 'Rob', age: '28' }.assert_valid_keys(:name, :age)   # => passes, raises nothing
-  # ```
-  sig { params(valid_keys: T.untyped).void }
-  def assert_valid_keys(*valid_keys)
-    valid_keys.flatten!
-    each_key do |k|
-      next if valid_keys.include?(k)
-
-      raise ArgumentError,
-            "Unknown key: #{T.unsafe(k).inspect}. Valid keys are: #{valid_keys.map(&:inspect).join(", ")}"
-    end
-  end
-
   # Returns a new hash with all keys converted by the block operation.
   # This includes the keys from the root hash and from all
   # nested hashes and arrays.
@@ -59,12 +33,14 @@ class Hash
   # hash.deep_stringify_keys
   # # => {"person"=>{"name"=>"Rob", "age"=>"28"}}
   # ```
-  def deep_stringify_keys = T.unsafe(self).deep_transform_keys(&:to_s)
-
-  # Destructively converts all keys to strings.
-  # This includes the keys from the root hash and from all
-  # nested hashes and arrays.
-  def deep_stringify_keys! = T.unsafe(self).deep_transform_keys!(&:to_s)
+  def deep_stringify_keys
+    deep_transform_keys do |key|
+      case key
+      when Object then key.to_s
+      else raise TypeError, "Hash keys must be Objects"
+      end
+    end
+  end
 
   # Returns a new hash with all keys converted to symbols, as long as
   # they respond to `to_sym`. This includes the keys from the root hash
@@ -80,18 +56,12 @@ class Hash
   # ```
   def deep_symbolize_keys
     deep_transform_keys do |key|
-      T.unsafe(key).to_sym
-    rescue
-      key
-    end
-  end
-
-  # Destructively converts all keys to symbols, as long as they respond
-  # to `to_sym`. This includes the keys from the root hash and from all
-  # nested hashes and arrays.
-  def deep_symbolize_keys!
-    deep_transform_keys! do |key|
-      T.unsafe(key).to_sym
+      case key
+      when Object
+        # `to_sym` is duck-typed rather than defined on `Object`.
+        key.respond_to?(:to_sym) ? key.public_send(:to_sym) : key # rubocop:disable Style/SendWithLiteralMethodName
+      else key
+      end
     rescue
       key
     end

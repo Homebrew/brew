@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "cmd/alias"
@@ -7,13 +8,13 @@ RSpec.describe Homebrew::Cmd::Alias do
   it_behaves_like "parseable arguments"
 
   it "sets an alias", :integration_test do
-    expect { brew "alias", "foo=bar" }
+    expect { brew "alias", "foo-test=bar" }
       .to not_to_output.to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
-    expect { brew "alias" }
-      .to output(/brew alias foo='bar'/).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
+
+    alias_file = HOMEBREW_ALIASES/"foo_test"
+    expect([alias_file.read.include?("brew bar $*"), (HOMEBREW_PREFIX/"bin/brew-foo-test").realpath])
+      .to eq([true, alias_file])
   end
 end

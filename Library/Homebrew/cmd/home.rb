@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/browser"
+
 require "abstract_command"
 require "formula"
 
@@ -25,7 +27,7 @@ module Homebrew
       sig { override.void }
       def run
         if args.no_named?
-          exec_browser HOMEBREW_WWW
+          Utils::Browser.open HOMEBREW_WWW
           return
         end
 
@@ -36,7 +38,7 @@ module Homebrew
           formula_or_cask.homepage
         end
 
-        exec_browser(*homepages)
+        Utils::Browser.open(*homepages)
       end
 
       private

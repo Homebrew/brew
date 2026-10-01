@@ -1,3 +1,5 @@
+# typed: false
+
 cask "with-auto-updates" do
   version "1.0"
   sha256 "e5be907a51cd0d5b128532284afe1c913608c584936a5e55d94c75a9f48c4322"
@@ -7,6 +9,7 @@ cask "with-auto-updates" do
   homepage "https://brew.sh/autoupdates"
 
   auto_updates true
+  depends_on macos: :big_sur
 
   app "AutoUpdates.app"
 end

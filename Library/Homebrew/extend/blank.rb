@@ -19,7 +19,8 @@ class Object
   # ```
   sig { returns(T::Boolean) }
   def blank?
-    respond_to?(:empty?) ? !!T.unsafe(self).empty? : false
+    # `empty?` is not defined on `Object` so cannot be called directly here.
+    respond_to?(:empty?) ? !!public_send(:empty?) : false # rubocop:disable Style/SendWithLiteralMethodName
   end
 
   # An object is present if it's not blank.
@@ -48,152 +49,13 @@ class Object
     self if present?
   end
 end
-
-class NilClass
-  # `nil` is blank:
-  #
-  # ```ruby
-  # nil.blank? # => true
-  # ```
-  sig { returns(TrueClass) }
-  def blank? = true
-
-  sig { returns(FalseClass) }
-  def present? = false # :nodoc:
-end
-
-class FalseClass
-  # `false` is blank:
-  #
-  # ```ruby
-  # false.blank? # => true
-  # ```
-  sig { returns(TrueClass) }
-  def blank? = true
-
-  sig { returns(FalseClass) }
-  def present? = false # :nodoc:
-end
-
-class TrueClass
-  # `true` is not blank:
-  #
-  # ```ruby
-  # true.blank? # => false
-  # ```
-  sig { returns(FalseClass) }
-  def blank? = false
-
-  sig { returns(TrueClass) }
-  def present? = true # :nodoc:
-end
-
-class Array
-  # An array is blank if it's empty:
-  #
-  # ```ruby
-  # [].blank?      # => true
-  # [1,2,3].blank? # => false
-  # ```
-  sig { returns(T::Boolean) }
-  def blank? = empty?
-
-  sig { returns(T::Boolean) }
-  def present? = !empty? # :nodoc:
-end
-
-class Hash
-  # A hash is blank if it's empty:
-  #
-  #
-  # ```ruby
-  # {}.blank?                # => true
-  # { key: 'value' }.blank?  # => false
-  # ```
-  sig { returns(T::Boolean) }
-  def blank? = empty?
-
-  sig { returns(T::Boolean) }
-  def present? = !empty? # :nodoc:
-end
-
-class Symbol
-  # A Symbol is blank if it's empty:
-  #
-  # ```ruby
-  # :''.blank?     # => true
-  # :symbol.blank? # => false
-  # ```
-  sig { returns(T::Boolean) }
-  def blank? = empty?
-
-  sig { returns(T::Boolean) }
-  def present? = !empty? # :nodoc:
-end
-
-class String
-  BLANK_RE = /\A[[:space:]]*\z/
-  # This is a cache that is intentionally mutable
-  # rubocop:disable Style/MutableConstant
-  ENCODED_BLANKS_ = T.let(Hash.new do |h, enc|
-    h[enc] = Regexp.new(BLANK_RE.source.encode(enc), BLANK_RE.options | Regexp::FIXEDENCODING)
-  end, T::Hash[Encoding, Regexp])
-  # rubocop:enable Style/MutableConstant
-
-  # A string is blank if it's empty or contains whitespaces only:
-  #
-  # ```ruby
-  # ''.blank?       # => true
-  # '   '.blank?    # => true
-  # "\t\n\r".blank? # => true
-  # ' blah '.blank? # => false
-  # ```
-  #
-  # Unicode whitespace is supported:
-  #
-  # ```ruby
-  # "\u00a0".blank? # => true
-  # ```
-  sig { returns(T::Boolean) }
-  def blank?
-    # The regexp that matches blank strings is expensive. For the case of empty
-    # strings we can speed up this method (~3.5x) with an empty? call. The
-    # penalty for the rest of strings is marginal.
-    empty? ||
-      begin
-        BLANK_RE.match?(self)
-      rescue Encoding::CompatibilityError
-        T.must(ENCODED_BLANKS_[encoding]).match?(self)
-      end
-  end
-
-  sig { returns(T::Boolean) }
-  def present? = !blank? # :nodoc:
-end
-
-class Numeric # :nodoc:
-  # No number is blank:
-  #
-  # ```ruby
-  # 1.blank? # => false
-  # 0.blank? # => false
-  # ```
-  sig { returns(FalseClass) }
-  def blank? = false
-
-  sig { returns(TrueClass) }
-  def present? = true
-end
-
-class Time # :nodoc:
-  # No Time is blank:
-  #
-  # ```ruby
-  # Time.now.blank? # => false
-  # ```
-  sig { returns(FalseClass) }
-  def blank? = false
-
-  sig { returns(TrueClass) }
-  def present? = true
-end
+require "extend/blank/nil_class"
+require "extend/blank/false_class"
+require "extend/blank/true_class"
+require "extend/blank/array"
+require "extend/blank/hash"
+require "extend/blank/symbol"
+require "extend/blank/string"
+require "extend/blank/numeric"
+require "extend/blank/pathname"
+require "extend/blank/time"

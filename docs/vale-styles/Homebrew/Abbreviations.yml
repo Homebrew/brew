@@ -12,7 +12,7 @@ swap:
   'i\.e\.,': i.e.
   '(?<!^\{.*|\.|<)\borg\b': organisation
   '(?<!^\{.*)\borgs\b': organisations
-  '(?<!^\{.*|<|\{#)\brepo\b': repository # FIXME: https://github.com/errata-ai/vale/issues/818
+  '(?<!^\{.*|<|\{#)\brepo\b': repository
   '(?<!^\{.*)\brepos\b': repositories
   '\bivar\b': instance variable
   '\bivars\b': instance variables

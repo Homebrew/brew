@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/text"
+
 require "abstract_command"
 require "utils/github"
 require "system_command"
@@ -19,6 +21,8 @@ module Homebrew
         EOS
 
         named_args :none
+
+        hide_from_man_page!
       end
 
       sig { override.void }
@@ -44,7 +48,8 @@ module Homebrew
 
         readme = HOMEBREW_REPOSITORY/"README.md"
         content = readme.read
-        content.gsub!(/(Homebrew is generously supported by) .*\Z/m, "\\1 #{named_sponsors.to_sentence}.\n")
+        content.gsub!(/(Homebrew is generously supported by) .*\Z/m,
+                      "\\1 #{Utils::Text.to_sentence(named_sponsors)}.\n")
         content << "\n#{logo_sponsors.join}\n" if logo_sponsors.presence
 
         File.write(readme, content)

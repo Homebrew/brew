@@ -1,14 +1,15 @@
+# typed: true
 # frozen_string_literal: true
 
 require "dependency_collector"
 
 RSpec.describe DependencyCollector do
-  alias_matcher :be_a_build_requirement, :be_build
-
   subject(:collector) { described_class.new }
 
+  alias_matcher :be_a_build_requirement, :be_build
+
   describe "#add" do
-    resource = Resource.new
+    let(:resource) { Resource.new }
 
     context "when xz, unzip and bzip2 are not available" do
       it "creates a resource dependency from a '.xz' URL" do
@@ -48,6 +49,42 @@ RSpec.describe DependencyCollector do
         allow_any_instance_of(Object).to receive(:which).with("bzip2").and_return(Pathname.new("foo"))
         expect(collector.add(resource)).to be_nil
       end
+    end
+  end
+
+  describe "#implicit_dependency_names" do
+    let(:formulae) do
+      Hash.new { |hash, name| hash[name] = instance_double(Formula, deps: []) }
+    end
+
+    before do
+      allow(DevelopmentTools).to receive_messages(needs_build_formulae?: false, needs_libc_formula?: false)
+      allow(Formula).to receive(:[]) { |name| formulae[name] }
+      global_dep_tree.clear
+    end
+
+    after do
+      global_dep_tree.clear
+    end
+
+    def global_dep_tree
+      OS::Linux::DependencyCollector.module_eval { class_variable_get(:@@global_dep_tree) }
+    end
+
+    it "is empty when build formulae and a libc formula aren't needed" do
+      expect(collector.implicit_dependency_names).to eq(Set.new)
+    end
+
+    it "includes gcc when build formulae are needed" do
+      allow(DevelopmentTools).to receive(:needs_build_formulae?).and_return(true)
+
+      expect(collector.implicit_dependency_names).to include(OS::LINUX_PREFERRED_GCC_RUNTIME_FORMULA)
+    end
+
+    it "includes glibc when a libc formula is needed" do
+      allow(DevelopmentTools).to receive(:needs_libc_formula?).and_return(true)
+
+      expect(collector.implicit_dependency_names).to include("glibc")
     end
   end
 end

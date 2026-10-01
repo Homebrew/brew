@@ -22,24 +22,26 @@ module UnpackStrategy
       ]
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       return true if path.magic_number.match?(/\A.{257}ustar/n)
 
       return false unless [Bzip2, Gzip, Lzip, Xz, Zstd].any? { |s| s.can_extract?(path) }
 
       # Check if `tar` can list the contents, then it can also extract it.
-      stdout, _, status = system_command("tar", args: ["--list", "--file", path], print_stderr: false)
-      status.success? && !stdout.empty?
+      stdout, _, status = system_command("tar", args: ["--list", "--file", path], print_stderr: false).to_a
+      (status.success? && !stdout.empty?) || false
     end
 
     private
 
     sig { override.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).void }
     def extract_to_dir(unpack_dir, basename:, verbose:)
-      Dir.mktmpdir("homebrew-tar", HOMEBREW_TEMP) do |tmpdir|
+      Dir.mktmpdir("homebrew-tar", temporary_directory.to_s) do |tmpdir|
         tar_path = if DependencyCollector.tar_needs_xz_dependency? && Xz.can_extract?(path)
           subextract(Xz, Pathname(tmpdir), verbose)
+        elsif DependencyCollector.tar_needs_bzip2_dependency? && Bzip2.can_extract?(path)
+          subextract(Bzip2, Pathname(tmpdir), verbose)
         elsif Zstd.can_extract?(path)
           subextract(Zstd, Pathname(tmpdir), verbose)
         else
@@ -55,11 +57,12 @@ module UnpackStrategy
     end
 
     sig {
-      params(extractor: T.any(T.class_of(Xz), T.class_of(Zstd)), dir: Pathname, verbose: T::Boolean).returns(Pathname)
+      params(extractor: T.any(T.class_of(Bzip2), T.class_of(Xz), T.class_of(Zstd)), dir: Pathname,
+             verbose: T::Boolean).returns(Pathname)
     }
     def subextract(extractor, dir, verbose)
       extractor.new(path).extract(to: dir, verbose:)
-      T.must(dir.children.first)
+      dir.children.fetch(0)
     end
   end
 end

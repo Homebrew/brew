@@ -11,6 +11,7 @@ require "cask/exceptions"
 require "cask/installer"
 require "cask/uninstall"
 require "uninstall"
+require "trust"
 
 module Homebrew
   module Cmd
@@ -41,15 +42,35 @@ module Homebrew
 
       sig { override.void }
       def run
-        all_kegs, casks = args.named.to_kegs_to_casks(
-          ignore_unavailable: args.force?,
-          all_kegs:           args.force?,
-        )
+        method = args.force? ? :kegs : :default_kegs
+        results = args.named.to_formulae_and_casks_and_unavailable(method:)
 
-        # If ignore_unavailable is true and the named args
-        # are a series of invalid kegs and casks,
-        # #to_kegs_to_casks will return empty arrays.
-        return if all_kegs.blank? && casks.blank?
+        unavailable_errors = T.let([], T::Array[T.any(FormulaOrCaskUnavailableError, NoSuchKegError)])
+        all_kegs = T.let([], T::Array[Keg])
+        casks = T.let([], T::Array[Cask::Cask])
+        trusted_items_to_remove = T.let([], T::Array[[Symbol, String]])
+
+        results.each do |item|
+          case item
+          when FormulaOrCaskUnavailableError, NoSuchKegError
+            unavailable_errors << item
+          when Cask::Cask
+            casks << item
+            trusted_items_to_remove << [:cask, item.full_name]
+          when Keg
+            all_kegs << item
+            single_keg_tap = item.tab.tap
+            trusted_items_to_remove << [:formula, "#{single_keg_tap.name}/#{item.name}"] if single_keg_tap
+          when Array
+            all_kegs += item
+            item.each do |keg|
+              array_keg_tap = keg.tab.tap
+              trusted_items_to_remove << [:formula, "#{array_keg_tap.name}/#{keg.name}"] if array_keg_tap
+            end
+          end
+        end
+
+        return if all_kegs.blank? && casks.blank? && unavailable_errors.blank?
 
         kegs_by_rack = all_kegs.group_by(&:rack)
 
@@ -61,27 +82,60 @@ module Homebrew
           named_args:          args.named,
         )
 
-        if args.zap?
-          casks.each do |cask|
-            odebug "Zapping Cask #{cask}"
+        Cask::Uninstall.check_dependent_casks(*casks, named_args: args.named) unless args.ignore_dependencies?
 
-            raise Cask::CaskNotInstalledError, cask if !cask.installed? && !args.force?
+        return if Homebrew.failed?
 
-            Cask::Installer.new(cask, verbose: args.verbose?, force: args.force?).zap
+        begin
+          if args.zap?
+            caught_exceptions = []
+
+            casks.each do |cask|
+              odebug "Zapping Cask #{cask}"
+
+              raise Cask::CaskNotInstalledError, cask if !cask.installed? && !args.force?
+
+              next unless Cask::Uninstall.unpin_for_removal?(cask, force: args.force?)
+
+              Cask::Installer.new(cask, verbose: args.verbose?, force: args.force?).zap
+            rescue => e
+              caught_exceptions << e
+              next
+            end
+
+            if caught_exceptions.count > 1
+              raise Cask::MultipleCaskErrors, caught_exceptions
+            elsif caught_exceptions.one?
+              raise caught_exceptions.fetch(0)
+            end
+          else
+            Cask::Uninstall.uninstall_casks(
+              *casks,
+              verbose: args.verbose?,
+              force:   args.force?,
+            )
           end
-        else
-          Cask::Uninstall.uninstall_casks(
-            *casks,
-            verbose: args.verbose?,
-            force:   args.force?,
-          )
+        rescue => e
+          ofail e
+        end
+
+        trusted_items_to_remove.uniq.each do |type, name|
+          next unless (tap_name = Utils.tap_from_full_name(name))
+          next if Homebrew::Trust.trusted?(:tap, tap_name)
+
+          Homebrew::Trust.untrust!(type, name)
         end
 
         if ENV["HOMEBREW_AUTOREMOVE"].present?
-          opoo "HOMEBREW_AUTOREMOVE is now a no-op as it is the default behaviour. " \
-               "Set HOMEBREW_NO_AUTOREMOVE=1 to disable it."
+          opoo "`$HOMEBREW_AUTOREMOVE` is now a no-op as it is the default behaviour. " \
+               "Set `HOMEBREW_NO_AUTOREMOVE=1` to disable it."
         end
-        Cleanup.autoremove unless Homebrew::EnvConfig.no_autoremove?
+        unless Homebrew::EnvConfig.no_autoremove?
+          require "cleanup"
+          Cleanup.autoremove
+        end
+
+        unavailable_errors.each { |e| ofail e } unless args.force?
       end
     end
   end

@@ -1,11 +1,11 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "dependency"
 require "dependencies"
 require "requirement"
 require "requirements"
-require "cachable"
+require "cacheable"
 
 # A dependency is a formula that another formula needs to install.
 # A requirement is something other than a formula that another formula
@@ -18,31 +18,41 @@ require "cachable"
 # This class is used by `depends_on` in the formula DSL to turn dependency
 # specifications into the proper kinds of dependencies and requirements.
 class DependencyCollector
-  extend Cachable
+  extend T::Generic
+  extend Cacheable
 
-  attr_reader :deps, :requirements
+  Cache = type_template { { fixed: T::Hash[T.untyped, T.untyped] } }
+
+  sig { returns(Dependencies) }
+  attr_reader :deps
+
+  sig { returns(Requirements) }
+  attr_reader :requirements
 
   sig { void }
   def initialize
     # Ensure this is synced with `initialize_dup` and `freeze` (excluding simple objects like integers and booleans)
-    @deps = Dependencies.new
-    @requirements = Requirements.new
+    @deps = T.let(Dependencies.new, Dependencies)
+    @requirements = T.let(Requirements.new, Requirements)
 
     init_global_dep_tree_if_needed!
   end
 
+  sig { override.params(other: DependencyCollector).void }
   def initialize_dup(other)
     super
     @deps = @deps.dup
     @requirements = @requirements.dup
   end
 
+  sig { void }
   def freeze
     @deps.freeze
     @requirements.freeze
     super
   end
 
+  sig { params(spec: T.untyped).returns(T.untyped) }
   def add(spec)
     case dep = fetch(spec)
     when Array
@@ -60,14 +70,16 @@ class DependencyCollector
     dep
   end
 
+  sig { params(spec: T.untyped).returns(T.untyped) }
   def fetch(spec)
     self.class.cache.fetch(cache_key(spec)) { |key| self.class.cache[key] = build(spec) }
   end
 
+  sig { params(spec: T.untyped).returns(T.untyped) }
   def cache_key(spec)
     if spec.is_a?(Resource)
       if spec.download_strategy <= CurlDownloadStrategy
-        return "#{spec.download_strategy}#{File.extname(T.must(spec.url)).split("?").first}"
+        return "#{spec.download_strategy}#{File.extname(resource_url(spec)).split("?").first}"
       end
 
       return spec.download_strategy
@@ -75,17 +87,29 @@ class DependencyCollector
     spec
   end
 
+  sig { params(spec: T.untyped).returns(T.untyped) }
   def build(spec)
     spec, tags = spec.is_a?(Hash) ? spec.first : spec
     parse_spec(spec, Array(tags))
   end
 
-  sig { params(related_formula_names: T::Array[String]).returns(T.nilable(Dependency)) }
+  sig { params(related_formula_names: T::Set[String]).returns(T.nilable(Dependency)) }
   def gcc_dep_if_needed(related_formula_names); end
 
-  sig { params(related_formula_names: T::Array[String]).returns(T.nilable(Dependency)) }
+  sig { params(related_formula_names: T::Set[String]).returns(T.nilable(Dependency)) }
   def glibc_dep_if_needed(related_formula_names); end
 
+  # Names implicitly added to any formula's deps right now, reusing the same checks
+  # `Formula#add_global_deps_to_spec` uses to inject them onto a real formula.
+  sig { returns(T::Set[String]) }
+  def implicit_dependency_names
+    [
+      gcc_dep_if_needed(Set.new),
+      glibc_dep_if_needed(Set.new),
+    ].compact.to_set(&:name)
+  end
+
+  sig { params(tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(Dependency)) }
   def git_dep_if_needed(tags)
     require "utils/git"
     return if Utils::Git.available?
@@ -93,10 +117,12 @@ class DependencyCollector
     Dependency.new("git", [*tags, :implicit])
   end
 
+  sig { params(tags: T::Array[T.any(String, Symbol)]).returns(Dependency) }
   def curl_dep_if_needed(tags)
     Dependency.new("curl", [*tags, :implicit])
   end
 
+  sig { params(tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(Dependency)) }
   def subversion_dep_if_needed(tags)
     require "utils/svn"
     return if Utils::Svn.available?
@@ -104,28 +130,39 @@ class DependencyCollector
     Dependency.new("subversion", [*tags, :implicit])
   end
 
+  sig { params(tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(Dependency)) }
   def cvs_dep_if_needed(tags)
     Dependency.new("cvs", [*tags, :implicit]) unless which("cvs")
   end
 
+  sig { params(tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(Dependency)) }
   def xz_dep_if_needed(tags)
     Dependency.new("xz", [*tags, :implicit]) unless which("xz")
   end
 
+  sig { params(tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(Dependency)) }
   def zstd_dep_if_needed(tags)
     Dependency.new("zstd", [*tags, :implicit]) unless which("zstd")
   end
 
+  sig { params(tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(Dependency)) }
   def unzip_dep_if_needed(tags)
     Dependency.new("unzip", [*tags, :implicit]) unless which("unzip")
   end
 
+  sig { params(tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(Dependency)) }
   def bzip2_dep_if_needed(tags)
     Dependency.new("bzip2", [*tags, :implicit]) unless which("bzip2")
   end
 
+  sig { returns(T::Boolean) }
   def self.tar_needs_xz_dependency?
     !new.xz_dep_if_needed([]).nil?
+  end
+
+  sig { returns(T::Boolean) }
+  def self.tar_needs_bzip2_dependency?
+    !new.bzip2_dep_if_needed([]).nil?
   end
 
   private
@@ -134,8 +171,8 @@ class DependencyCollector
   def init_global_dep_tree_if_needed!; end
 
   sig {
-    params(spec: T.any(String, Resource, Symbol, Requirement, Dependency, Class),
-           tags: T::Array[Symbol]).returns(T.any(Dependency, Requirement, Array, NilClass))
+    params(spec: T.any(String, Resource, Symbol, Requirement, Dependency, T::Class[Requirement]),
+           tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(T.any(Dependency, Requirement, T::Array[T.untyped])))
   }
   def parse_spec(spec, tags)
     raise ArgumentError, "Implicit dependencies cannot be manually specified" if tags.include?(:implicit)
@@ -154,41 +191,45 @@ class DependencyCollector
     end
   end
 
+  sig { params(spec: String, tags: T::Array[T.any(String, Symbol)]).returns(Dependency) }
   def parse_string_spec(spec, tags)
     Dependency.new(spec, tags)
   end
 
+  sig { params(spec: Symbol, tags: T::Array[T.any(String, Symbol)]).returns(Requirement) }
   def parse_symbol_spec(spec, tags)
     # When modifying this list of supported requirements, consider
-    # whether `Formulary::API_SUPPORTED_REQUIREMENTS` should also be changed.
+    # whether `Homebrew::API::Formula::FormulaStructGenerator::API_SUPPORTED_REQUIREMENTS` should also be changed.
     case spec
-    when :arch          then ArchRequirement.new(tags)
-    when :codesign      then CodesignRequirement.new(tags)
+    when :arch          then ArchRequirement.new(T.cast(tags, T::Array[Symbol]))
     when :linux         then LinuxRequirement.new(tags)
     when :macos         then MacOSRequirement.new(tags)
     when :maximum_macos then MacOSRequirement.new(tags, comparator: "<=")
     when :xcode         then XcodeRequirement.new(tags)
     else
-      raise ArgumentError, "Unsupported special dependency #{spec.inspect}"
+      raise ArgumentError, "Unsupported special dependency: #{spec.inspect}"
     end
   end
 
+  sig { params(spec: T::Class[Requirement], tags: T::Array[T.any(String, Symbol)]).returns(Requirement) }
   def parse_class_spec(spec, tags)
     raise TypeError, "#{spec.inspect} is not a Requirement subclass" unless spec < Requirement
 
     spec.new(tags)
   end
 
+  sig { params(spec: Resource, tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(T.any(Dependency, T::Array[T.nilable(Dependency)]))) }
   def resource_dep(spec, tags)
     tags << :build << :test
     strategy = spec.download_strategy
+    return if strategy.nil?
 
     if strategy <= HomebrewCurlDownloadStrategy
-      [curl_dep_if_needed(tags), parse_url_spec(spec.url, tags)]
+      [curl_dep_if_needed(tags), parse_url_spec(resource_url(spec), tags)]
     elsif strategy <= NoUnzipCurlDownloadStrategy
       # ensure NoUnzip never adds any dependencies
     elsif strategy <= CurlDownloadStrategy
-      parse_url_spec(spec.url, tags)
+      parse_url_spec(resource_url(spec), tags)
     elsif strategy <= GitDownloadStrategy
       git_dep_if_needed(tags)
     elsif strategy <= SubversionDownloadStrategy
@@ -208,6 +249,15 @@ class DependencyCollector
     end
   end
 
+  sig { params(spec: Resource).returns(String) }
+  def resource_url(spec)
+    url = spec.url
+    raise ArgumentError, "Resource #{spec.name} has no URL" if url.nil?
+
+    url
+  end
+
+  sig { params(url: String, tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(Dependency)) }
   def parse_url_spec(url, tags)
     case File.extname(url)
     when ".xz"          then xz_dep_if_needed(tags)

@@ -1,8 +1,25 @@
+# typed: true
 # frozen_string_literal: true
 
 require "utils/shell"
 
 RSpec.describe Utils::Shell do
+  describe "::interactive" do
+    it "starts an interactive shell session" do
+      dir = mktmpdir
+      shell = dir/"myshell"
+      File.write shell, <<~SH
+        #!/bin/sh
+        echo called > "#{dir}/called"
+      SH
+      FileUtils.chmod 0755, shell
+      ENV["SHELL"] = shell.to_s
+
+      expect { described_class.interactive }.not_to raise_error
+      expect(dir/"called").to exist
+    end
+  end
+
   describe "::profile" do
     it "returns ~/.profile by default" do
       ENV["SHELL"] = "/bin/another_shell"
@@ -67,20 +84,58 @@ RSpec.describe Utils::Shell do
   end
 
   specify "::sh_quote" do
-    expect(described_class.send(:sh_quote, "")).to eq("''")
-    expect(described_class.send(:sh_quote, "\\")).to eq("\\\\")
-    expect(described_class.send(:sh_quote, "\n")).to eq("'\n'")
-    expect(described_class.send(:sh_quote, "$")).to eq("\\$")
-    expect(described_class.send(:sh_quote, "word")).to eq("word")
+    expect(described_class.sh_quote("")).to eq("''")
+    expect(described_class.sh_quote("\\")).to eq("\\\\")
+    expect(described_class.sh_quote("\n")).to eq("'\n'")
+    expect(described_class.sh_quote("$")).to eq("\\$")
+    expect(described_class.sh_quote("word")).to eq("word")
   end
 
   specify "::csh_quote" do
-    expect(described_class.send(:csh_quote, "")).to eq("''")
-    expect(described_class.send(:csh_quote, "\\")).to eq("\\\\")
+    expect(described_class.csh_quote("")).to eq("''")
+    expect(described_class.csh_quote("\\")).to eq("\\\\")
     # NOTE: This test is different than for `sh`.
-    expect(described_class.send(:csh_quote, "\n")).to eq("'\\\n'")
-    expect(described_class.send(:csh_quote, "$")).to eq("\\$")
-    expect(described_class.send(:csh_quote, "word")).to eq("word")
+    expect(described_class.csh_quote("\n")).to eq("'\\\n'")
+    expect(described_class.csh_quote("$")).to eq("\\$")
+    expect(described_class.csh_quote("word")).to eq("word")
+  end
+
+  describe "::export_value" do
+    it "supports PowerShell" do
+      ENV["SHELL"] = "/usr/bin/pwsh"
+      expect(described_class.export_value("HOMEBREW_FOO", "bar"))
+        .to eq("$env:HOMEBREW_FOO = 'bar'")
+    end
+
+    it "quotes a PowerShell value that contains a single quote" do
+      ENV["SHELL"] = "/usr/bin/pwsh"
+      expect(described_class.export_value("HOMEBREW_FOO", "it's"))
+        .to eq("$env:HOMEBREW_FOO = 'it''s'")
+    end
+
+    it "supports Bash" do
+      ENV["SHELL"] = "/bin/bash"
+      expect(described_class.export_value("HOMEBREW_FOO", "bar"))
+        .to eq("export HOMEBREW_FOO=bar")
+    end
+
+    it "escapes a Bash value that needs quoting" do
+      ENV["SHELL"] = "/bin/bash"
+      expect(described_class.export_value("HOMEBREW_FOO", "/opt/home brew"))
+        .to eq("export HOMEBREW_FOO=/opt/home\\ brew")
+    end
+
+    it "escapes a fish value that needs quoting" do
+      ENV["SHELL"] = "/usr/local/bin/fish"
+      expect(described_class.export_value("HOMEBREW_FOO", "/opt/home brew"))
+        .to eq("set -gx HOMEBREW_FOO /opt/home\\ brew")
+    end
+
+    it "single-quotes an rc value" do
+      ENV["SHELL"] = "/usr/bin/rc"
+      expect(described_class.export_value("HOMEBREW_FOO", "it's a value"))
+        .to eq("HOMEBREW_FOO=('it''s a value')")
+    end
   end
 
   describe "::prepend_path_in_profile" do
@@ -95,7 +150,19 @@ RSpec.describe Utils::Shell do
     it "supports Bash" do
       ENV["SHELL"] = "/bin/bash"
       expect(described_class.prepend_path_in_profile(path))
-        .to eq("echo 'export PATH=\"#{path}:$PATH\"' >> #{described_class.profile}")
+        .to eq("echo 'export PATH=#{path}:$PATH' >> #{described_class.profile}")
+    end
+
+    it "escapes a Bash path that needs quoting" do
+      ENV["SHELL"] = "/bin/bash"
+      expect(described_class.prepend_path_in_profile("/opt/home brew/bin"))
+        .to eq("echo 'export PATH=/opt/home\\ brew/bin:$PATH' >> #{described_class.profile}")
+    end
+
+    it "keeps the echo runnable when the path contains a single quote" do
+      ENV["SHELL"] = "/bin/bash"
+      expect(described_class.prepend_path_in_profile("/Users/o'brien/bin"))
+        .to eq("echo 'export PATH=/Users/o\\'\\''brien/bin:$PATH' >> #{described_class.profile}")
     end
 
     it "supports fish" do
@@ -104,6 +171,75 @@ RSpec.describe Utils::Shell do
       expect(described_class.prepend_path_in_profile(path))
         .to eq("fish_add_path #{path}")
     end
+
+    it "supports PowerShell" do
+      ENV["SHELL"] = "/usr/bin/pwsh"
+      expect(described_class.prepend_path_in_profile(path))
+        .to eq("'$env:PATH = ''#{path}'' + \":$env:PATH\"' >> #{described_class.profile}")
+    end
+
+    it "single-quotes an rc path" do
+      ENV["SHELL"] = "/usr/bin/rc"
+      expect(described_class.prepend_path_in_profile("/opt/home brew/bin"))
+        .to eq("echo 'path=(''/opt/home brew/bin'' $path)' >> #{described_class.profile}")
+    end
+  end
+
+  describe "::set_variable_in_profile" do
+    it "supports mksh" do
+      ENV["SHELL"] = "/bin/mksh"
+      expect(described_class.set_variable_in_profile("HOMEBREW_FOO", "bar"))
+        .to eq("echo 'export HOMEBREW_FOO=bar' >> #{described_class.profile}")
+    end
+
+    it "keeps the echo runnable when the value contains a single quote" do
+      ENV["SHELL"] = "/bin/bash"
+      expect(described_class.set_variable_in_profile("HOMEBREW_FOO", "it's"))
+        .to eq("echo 'export HOMEBREW_FOO=it\\'\\''s' >> #{described_class.profile}")
+    end
+
+    it "supports PowerShell" do
+      ENV["SHELL"] = "/usr/bin/pwsh"
+      expect(described_class.set_variable_in_profile("HOMEBREW_FOO", "bar"))
+        .to eq("'$env:HOMEBREW_FOO = ''bar''' >> #{described_class.profile}")
+    end
+
+    it "single-quotes an rc value" do
+      ENV["SHELL"] = "/usr/bin/rc"
+      expect(described_class.set_variable_in_profile("HOMEBREW_FOO", "a b"))
+        .to eq("echo 'HOMEBREW_FOO=(''a b'')' >> #{described_class.profile}")
+    end
+
+    it "keeps the fish echo runnable when the value contains a single quote" do
+      ENV["SHELL"] = "/usr/local/bin/fish"
+      expect(described_class.set_variable_in_profile("HOMEBREW_FOO", "it's"))
+        .to eq("echo 'set -gx HOMEBREW_FOO it\\\\\\'s' >> #{described_class.profile}")
+    end
+  end
+
+  specify "::sh_single_quote" do
+    expect(described_class.sh_single_quote("")).to eq("''")
+    expect(described_class.sh_single_quote("word")).to eq("'word'")
+    # `$`, backticks and double quotes are all literal inside single quotes.
+    expect(described_class.sh_single_quote("a $b `c`")).to eq("'a $b `c`'")
+    # An embedded single quote closes the string, is escaped, and reopens it.
+    expect(described_class.sh_single_quote("it's")).to eq("'it'\\''s'")
+  end
+
+  specify "::fish_quote" do
+    expect(described_class.fish_quote("")).to eq("''")
+    expect(described_class.fish_quote("word")).to eq("'word'")
+    # Inside fish single quotes a quote and a backslash are both escaped.
+    expect(described_class.fish_quote("it's")).to eq("'it\\'s'")
+    expect(described_class.fish_quote("back\\slash")).to eq("'back\\\\slash'")
+  end
+
+  specify "::pwsh_quote" do
+    expect(described_class.pwsh_quote("")).to eq("''")
+    expect(described_class.pwsh_quote("word")).to eq("'word'")
+    # A literal single quote is doubled; nothing else is special.
+    expect(described_class.pwsh_quote("it's")).to eq("'it''s'")
+    expect(described_class.pwsh_quote("$env:PATH")).to eq("'$env:PATH'")
   end
 
   describe "::shell_with_prompt" do

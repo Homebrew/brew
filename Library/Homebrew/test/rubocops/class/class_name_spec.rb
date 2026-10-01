@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/class"
@@ -5,11 +6,13 @@ require "rubocops/class"
 RSpec.describe RuboCop::Cop::FormulaAudit::ClassName do
   subject(:cop) { described_class.new }
 
-  corrected_source = <<~RUBY
-    class Foo < Formula
-      url 'https://brew.sh/foo-1.0.tgz'
-    end
-  RUBY
+  let(:corrected_source) do
+    <<~RUBY
+      class Foo < Formula
+        url 'https://brew.sh/foo-1.0.tgz'
+      end
+    RUBY
+  end
 
   it "reports and corrects an offense when using ScriptFileFormula" do
     expect_offense(<<~RUBY)

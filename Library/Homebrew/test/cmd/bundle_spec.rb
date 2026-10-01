@@ -1,10 +1,210 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "cmd/bundle"
+require "bundle"
 require "cmd/shared_examples/args_parse"
+require "commands"
 
 RSpec.describe Homebrew::Cmd::Bundle do
   it_behaves_like "parseable arguments"
+
+  it "handles default install subcommand options", :aggregate_failures do
+    with_env("HOMEBREW_BUNDLE_INSTALL_CLEANUP" => nil, "HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP" => nil) do
+      expect(described_class.new([]).args.subcommand).to eq("install")
+      expect(described_class.new(%w[--force-cleanup --zap]).args.subcommand).to eq("install")
+    end
+  end
+
+  it "deprecates HOMEBREW_BUNDLE_INSTALL_CLEANUP" do
+    with_env("HOMEBREW_BUNDLE_INSTALL_CLEANUP" => "1", "HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP" => nil) do
+      expect { described_class.new(["--global"]) }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_BUNDLE_INSTALL_CLEANUP.*`brew bundle cleanup`/)
+    end
+  end
+
+  it "deprecates HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP" do
+    with_env("HOMEBREW_BUNDLE_INSTALL_CLEANUP" => nil, "HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP" => "1") do
+      expect { described_class.new(["--global"]) }
+        .to raise_error(MethodDeprecatedError, /HOMEBREW_BUNDLE_FORCE_INSTALL_CLEANUP.*cleanup --force/)
+    end
+  end
+
+  it "deprecates the jobs option" do
+    expect { described_class.new(%w[exec --jobs=1 true]) }
+      .to raise_error(MethodDeprecatedError, /`--jobs` flag.*deprecated/)
+  end
+
+  it "disables the cleanup option" do
+    expect { described_class.new(%w[install --cleanup]) }
+      .to raise_error(MethodDeprecatedError, /`--cleanup` switch.*disabled/)
+  end
+
+  it "treats upgrade as install --upgrade", :aggregate_failures do
+    with_env("HOMEBREW_BUNDLE_NO_UPGRADE" => "1") do
+      args = described_class.new(%w[upgrade -fq]).args
+      context = described_class.context(args, extensions: Homebrew::Cmd::Bundle::BUNDLE_EXTENSIONS)
+      install_args = Homebrew::Cmd::Bundle::InstallSubcommand.new(args).args
+
+      expect(args.subcommand).to eq("install")
+      expect(install_args.upgrade?).to be(true)
+      expect(install_args.force?).to be(true)
+      expect(args.quiet?).to be(true)
+      expect(context.subcommand).to eq("install")
+      expect(context.no_upgrade).to be(false)
+    end
+  end
+
+  it "tracks ask mode in the subcommand context" do
+    args = described_class.new(%w[cleanup]).args
+    context = described_class.context(args, extensions: Homebrew::Cmd::Bundle::BUNDLE_EXTENSIONS, ask: true)
+
+    expect(context.ask).to be(true)
+  end
+
+  it "disables ask mode for subcommands" do
+    with_env(HOMEBREW_ASK: nil, HOMEBREW_NO_ASK: nil) do
+      args = described_class.new(%w[cleanup]).args
+      expect(Homebrew::Cmd::Bundle::CleanupSubcommand).to receive(:new) do |_, context:, **|
+        expect(context.ask).to be(true)
+        expect(ENV.fetch("HOMEBREW_ASK", nil)).to be_nil
+        expect(ENV.fetch("HOMEBREW_NO_ASK", nil)).to eq("1")
+        instance_double(Homebrew::Cmd::Bundle::CleanupSubcommand, run: nil)
+      end
+
+      described_class.dispatch(args, extensions: Homebrew::Cmd::Bundle::BUNDLE_EXTENSIONS)
+    end
+  end
+
+  it "accepts global flags on subcommands that do not re-declare them", :aggregate_failures do
+    expect(described_class.new(%w[cleanup --verbose]).args.verbose?).to be(true)
+    expect(described_class.new(%w[cleanup -v]).args.verbose?).to be(true)
+    expect(described_class.new(%w[dump --verbose]).args.subcommand).to eq("dump")
+    expect(described_class.new(%w[list --verbose]).args.subcommand).to eq("list")
+  end
+
+  it "uses subcommand-specific option descriptions", :aggregate_failures do
+    subcommand_options = ->(subcommand) { Commands.command_options("bundle", subcommand:).to_h }
+
+    expect(subcommand_options.call("install")).not_to have_key("--ask")
+    expect(subcommand_options.call("install")["--force-cleanup"])
+      .to eq("Perform cleanup after installing dependencies without asking.")
+    expect(subcommand_options.call("list")["--vscode"]).to eq("List VSCode (and forks/variants) extensions.")
+    expect(subcommand_options.call("dump")["--vscode"]).to eq("Dump VSCode (and forks/variants) extensions.")
+    expect(subcommand_options.call("dump")["--no-mas"])
+      .to include("`dump` without Mac App Store dependencies.")
+    expect(subcommand_options.call("cleanup")["--vscode"]).to eq("Clean up VSCode (and forks/variants) extensions.")
+    expect(subcommand_options.call("cleanup")["--no-mas"])
+      .to include("`cleanup` without Mac App Store dependencies.")
+    expect(subcommand_options.call("cleanup")["--all"]).to eq("Clean up all supported dependencies.")
+    expect(subcommand_options.call("cleanup")["--force"])
+      .to eq("Actually perform cleanup operations and reset Homebrew's global trust store to the `Brewfile` values.")
+    expect(subcommand_options.call("dump")["--no-describe"]).to include("Description comments are the default")
+    expect(subcommand_options.call("add")["--no-describe"]).to include("Description comments are the default")
+    expect(subcommand_options.call("add")["--vscode"])
+      .to eq("Add entries for VSCode (and forks/variants) extensions.")
+    expect(subcommand_options.call("remove")["--vscode"])
+      .to eq("Remove entries for VSCode (and forks/variants) extensions.")
+    expect(subcommand_options.call("upgrade")["--force"]).to eq("Run with `--force`/`--overwrite`.")
+  end
+
+  it "uses subcommand-specific descriptions in help output", :aggregate_failures do
+    help_text = described_class.parser.generate_help_text(remaining_args: ["list"])
+
+    expect(help_text).to include("List VSCode (and forks/variants) extensions.")
+    expect(help_text).not_to include("Clean up VSCode (and forks/variants) extensions.")
+  end
+
+  it "lets explicit dump type flags override environment disables", :aggregate_failures do
+    with_env("HOMEBREW_BUNDLE_DUMP_NO_BREW" => "1", "HOMEBREW_BUNDLE_DUMP_NO_MAS" => "1") do
+      args = Homebrew::Cmd::Bundle::DumpSubcommand.new(described_class.new(%w[dump --formula --mas]).args).args
+
+      expect(args.formulae?).to be(true)
+      expect(args.mas?).to be(true)
+      expect(args.no_dump_brew?).to be(false)
+      expect(args.no_dump_mas?).to be(false)
+    end
+  end
+
+  it "lets explicit cleanup type flags override environment disables", :aggregate_failures do
+    with_env("HOMEBREW_BUNDLE_CLEANUP_NO_BREW" => "1", "HOMEBREW_BUNDLE_CLEANUP_NO_MAS" => "1") do
+      args = Homebrew::Cmd::Bundle::CleanupSubcommand.new(described_class.new(%w[cleanup --formula --mas]).args).args
+
+      expect(args.formulae?).to be(true)
+      expect(args.mas?).to be(true)
+      expect(args.no_cleanup_brew?).to be(false)
+      expect(args.no_cleanup_mas?).to be(false)
+    end
+  end
+
+  it "passes HOMEBREW_BUNDLE_CHECK through to exec" do
+    with_env("HOMEBREW_BUNDLE_CHECK" => "1", "HOMEBREW_BUNDLE_NO_SECRETS" => nil,
+             "HOMEBREW_BUNDLE_SECRETS" => nil) do
+      expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
+        .with(
+          "/usr/bin/true",
+          global:     false,
+          file:       nil,
+          subcommand: "exec",
+          services:   false,
+          check:      true,
+          no_secrets: true,
+        )
+
+      described_class.new(["exec", "/usr/bin/true"]).run
+    end
+  end
+
+  it "passes --check through to exec" do
+    with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil, "HOMEBREW_BUNDLE_SECRETS" => nil) do
+      expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
+        .with(
+          "/usr/bin/true",
+          global:     false,
+          file:       nil,
+          subcommand: "exec",
+          services:   false,
+          check:      true,
+          no_secrets: true,
+        )
+
+      described_class.new(["exec", "--check", "/usr/bin/true"]).run
+    end
+  end
+
+  it "passes --check through to sh" do
+    with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil, "HOMEBREW_BUNDLE_SECRETS" => nil) do
+      expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
+        .with(
+          "sh",
+          global:     false,
+          file:       nil,
+          subcommand: "sh",
+          services:   false,
+          check:      true,
+          no_secrets: true,
+        )
+
+      described_class.new(["sh", "--check"]).run
+    end
+  end
+
+  it "passes --check through to env" do
+    with_env("HOMEBREW_BUNDLE_NO_SECRETS" => nil, "HOMEBREW_BUNDLE_SECRETS" => nil) do
+      expect(Homebrew::Cmd::Bundle::ExecSubcommand).to receive(:run_external_command)
+        .with(
+          "env",
+          global:     false,
+          file:       nil,
+          subcommand: "env",
+          services:   false,
+          check:      true,
+          no_secrets: true,
+        )
+
+      described_class.new(["env", "--check"]).run
+    end
+  end
 
   it "checks if a Brewfile's dependencies are satisfied", :integration_test do
     HOMEBREW_REPOSITORY.cd do

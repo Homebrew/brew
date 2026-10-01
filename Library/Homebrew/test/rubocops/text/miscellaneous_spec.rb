@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/lines"
@@ -38,7 +39,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Miscellaneous do
           bottle do
             rebuild 0
             ^^^^^^^^^ FormulaAudit/Miscellaneous: `rebuild 0` should be removed
-            sha256 "fe0679b932dd43a87fd415b609a7fbac7a069d117642ae8ebaac46ae1fb9f0b3" => :sierra
+            sha256 "fe0679b932dd43a87fd415b609a7fbac7a069d117642ae8ebaac46ae1fb9f0b3" => :sonoma
           end
         end
       RUBY
@@ -50,7 +51,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Miscellaneous do
           desc "foo"
           url 'https://brew.sh/foo-1.0.tgz'
           bottle do
-            sha256 "fe0679b932dd43a87fd415b609a7fbac7a069d117642ae8ebaac46ae1fb9f0b3" => :sierra
+            sha256 "fe0679b932dd43a87fd415b609a7fbac7a069d117642ae8ebaac46ae1fb9f0b3" => :sonoma
           end
           fails_with :llvm do
           ^^^^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: `fails_with :llvm` is now a no-op and should be removed
@@ -82,56 +83,6 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Miscellaneous do
           url 'https://brew.sh/foo-1.0.tgz'
           skip_clean :all
           ^^^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: `skip_clean :all` is deprecated; brew no longer strips symbols. Pass explicit paths to prevent Homebrew from removing empty folders.
-        end
-      RUBY
-    end
-
-    it "reports an offense when `build.universal?` is used" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          if build.universal?
-             ^^^^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: macOS has been 64-bit only since 10.6 so build.universal? is deprecated.
-             "foo"
-          end
-        end
-      RUBY
-    end
-
-    it "reports no offenses when `build.universal?` is used in an exempt formula" do
-      expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/wine.rb")
-        class Wine < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          if build.universal?
-             "foo"
-          end
-        end
-      RUBY
-    end
-
-    it "reports an offense when `ENV.universal_binary` is used" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          if build?
-             ENV.universal_binary
-             ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: macOS has been 64-bit only since 10.6 so ENV.universal_binary is deprecated.
-          end
-        end
-      RUBY
-    end
-
-    it "reports no offenses when `ENV.universal_binary` is used in an exempt formula" do
-      expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/wine.rb")
-        class Wine < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          if build?
-            ENV.universal_binary
-          end
         end
       RUBY
     end
@@ -381,17 +332,6 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Miscellaneous do
                    ^^^^ FormulaAudit/Miscellaneous: Use `build.with?` or `build.without?` instead of `ARGV` to check options
                    ^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: Use `if build.head?` instead
           end
-        end
-      RUBY
-    end
-
-    it "reports an offense when `needs :openmp` is used" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          desc "foo"
-          url 'https://brew.sh/foo-1.0.tgz'
-          needs :openmp
-          ^^^^^^^^^^^^^ FormulaAudit/Miscellaneous: `needs :openmp` should be replaced with `depends_on "gcc"`
         end
       RUBY
     end

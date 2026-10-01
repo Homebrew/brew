@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "mcp_server"
@@ -128,9 +129,9 @@ RSpec.describe Homebrew::McpServer do
       expect(result[:result][:tools]).to match_array(Homebrew::McpServer::TOOLS.values)
     end
 
-    Homebrew::McpServer::TOOLS.each do |tool_name, tool_definition|
+    test_each(Homebrew::McpServer::TOOLS) do |(tool_name, tool_definition)|
       it "responds to tools/call for #{tool_name}" do
-        allow(server).to receive(:`).and_return("output for #{tool_name}")
+        allow(Open3).to receive(:popen2e).and_return("output for #{tool_name}")
         arguments = {}
         Array(tool_definition[:required]).each do |required_key|
           arguments[required_key] = "dummy"
@@ -150,6 +151,36 @@ RSpec.describe Homebrew::McpServer do
           result:  { content: [{ type: "text", text: "output for #{tool_name}" }] },
         })
       end
+    end
+
+    it "passes tool arguments as argv when spawning brew" do
+      expect(Open3).to receive(:popen2e)
+        .with(Homebrew::McpServer::HOMEBREW_BREW_FILE, "search", "visual studio;beta")
+        .and_return("output")
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => {
+          "name"      => "search",
+          "arguments" => { "text_or_regex" => "visual studio;beta" },
+        },
+      }
+
+      server.handle_request(request)
+    end
+
+    it "rejects an inline cask definition argument without spawning brew" do
+      expect(Open3).not_to receive(:popen2e)
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => {
+          "name"      => "info",
+          "arguments" => { "formula_or_cask" => %Q(cask "evil" do\n  url "https://example.com"\nend) },
+        },
+      }
+      result = server.handle_request(request)
+      expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid formula or cask argument", code: } })
     end
 
     it "responds to tools/call for unknown tool" do
@@ -172,7 +203,7 @@ RSpec.describe Homebrew::McpServer do
 
   describe "#respond_result" do
     it "returns nil if id is nil" do
-      expect(server.send(:respond_result, nil, {})).to be_nil
+      expect(server.respond_result(nil, {})).to be_nil
     end
 
     it "returns a result hash if id is present" do
@@ -185,6 +216,14 @@ RSpec.describe Homebrew::McpServer do
     it "returns an error hash" do
       result = server.respond_error(id, "fail")
       expect(result).to eq({ jsonrpc:, id:, error: { message: "fail", code: } })
+    end
+  end
+
+  describe "#tool_command_arguments" do
+    it "preserves search text as a single raw argv argument" do
+      arguments = { "text_or_regex" => "visual studio;beta" }
+
+      expect(server.tool_command_arguments(:search, arguments)).to eq(["visual studio;beta"])
     end
   end
 
@@ -228,6 +267,8 @@ RSpec.describe Homebrew::McpServer do
     end
 
     it "exits on Interrupt" do
+      stdin.puts
+      stdin.rewind
       allow(stdin).to receive(:gets).and_raise(Interrupt)
       expect do
         server.run
@@ -237,13 +278,15 @@ RSpec.describe Homebrew::McpServer do
     end
 
     it "exits on error" do
+      stdin.puts
+      stdin.rewind
       allow(stdin).to receive(:gets).and_raise(StandardError, "fail")
       expect do
         server.run
       rescue
         SystemExit
       end.to raise_error(SystemExit)
-      expect(stderr.string).to match(/Error: fail/)
+      expect(stderr.string).to include("Error: fail")
     end
   end
 end

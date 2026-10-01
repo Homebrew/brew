@@ -8,6 +8,8 @@ plugins:
       plugin_class_name: RuboCop::RSpec::Plugin
   - rubocop-sorbet:
       plugin_class_name: RuboCop::Sorbet::Plugin
+  - test-prof:
+      plugin_class_name: RuboCop::TestProf::Plugin
 
 require:
   - ./Homebrew/rubocops.rb
@@ -18,11 +20,11 @@ inherit_mode:
     - Exclude
 
 AllCops:
-  # TODO: This is the default parser in Ruby >= 3.4
-  # https://github.com/rubocop/rubocop-ast/blob/6b9136235219e9448ee4f369e17cf69bcd9db621/lib/rubocop/ast/processed_source.rb#L385
-  ParserEngine: parser_prism
-  TargetRubyVersion: 3.3
+  # Only bump this after the first tagged brew release with a new Ruby version,
+  # otherwise taps will be prompted to use newer Ruby syntax too early.
+  TargetRubyVersion: 4.0
   NewCops: enable
+  UseProjectIndex: true
   Include:
     - "**/*.rbi"
   Exclude:
@@ -31,6 +33,7 @@ AllCops:
     - "Homebrew/bin/*"
     - "Homebrew/vendor/**/*"
     - "Taps/*/*/vendor/**/*"
+    - "**/.github/copilot-instructions.md" # This should be treated the same as the `docs/` files.
   SuggestExtensions:
     rubocop-minitest: false
 
@@ -69,10 +72,35 @@ Homebrew/CompactBlank:
     # `blank?` is not necessarily available here:
     - "Homebrew/extend/enumerable.rb"
 
+Homebrew/InstallStepsSourceIndependence:
+  Include:
+    - "Homebrew/install_steps.rb"
+    - "Homebrew/install_steps/**/*.rb"
+
+Homebrew/NoBase64:
+  Description: "Use `String#unpack1` or `Array#pack` instead of the `base64` gem."
+  Include:
+    - "/**/{Formula,Casks}/**/*.rb"
+    - "**/{Formula,Casks}/**/*.rb"
+  Exclude:
+    - "Homebrew/test/**/*.rb"
+
+Homebrew/NoCommandLiteral:
+  Description: "Use explicit process APIs instead of backticks or `%x`."
+  Include:
+    - "Homebrew/**/*.rb"
+
 Homebrew/NoFileutilsRmrf:
   Include:
     - "/**/{Formula,Casks}/**/*.rb"
     - "**/{Formula,Casks}/**/*.rb"
+
+Homebrew/OSDependsOn:
+  Include:
+    - "/**/{Formula,Casks}/**/*.rb"
+    - "**/{Formula,Casks}/**/*.rb"
+  Exclude:
+    - "Homebrew/test/**/*.rb"
 
 # only used internally
 Homebrew/MoveToExtendOS:
@@ -84,6 +112,28 @@ Homebrew/NegateInclude:
     - "Homebrew/standalone/init.rb"
     - "Homebrew/rubocops/**/*"
     - "Homebrew/sorbet/tapioca/**/*"
+
+Homebrew/NoInstanceVariableAccessInTests:
+  Description: "Use public `attr_*` accessors instead of `instance_variable_get`/`instance_variable_set` in tests."
+  Include:
+    - "Homebrew/test/**/*.rb"
+  Exclude:
+    - "Homebrew/test/support/fixtures/**/*"
+
+Homebrew/NoSendInTests:
+  Description: "Make the target method public and call it directly instead of using `send` in tests."
+  Include:
+    - "Homebrew/test/**/*.rb"
+  Exclude:
+    - "Homebrew/test/support/fixtures/**/*"
+
+Homebrew/UnreferencedLet:
+  Description: "Removes a lazy `let` whose name is never referenced (its block never runs)."
+  Include:
+    - "Homebrew/test/**/*_spec.rb"
+  # Deletion is unsafe (explicit -A required, never applied on a plain run): the cop is heuristic
+  # and cannot see references made across files via shared examples or included harnesses.
+  SafeAutoCorrect: false
 
 # `system` is a special case and aligns on second argument, so allow this for formulae.
 Layout/ArgumentAlignment:
@@ -143,7 +193,6 @@ Layout/LineLength:
       '"~/Library/Caches/',
       '"~/Library/Containers',
       '"~/Application Support',
-      " was verified as official when first introduced to the cask",
     ]
 
 # conflicts with DSL-style path concatenation with `/`
@@ -158,8 +207,19 @@ Layout/SpaceBeforeBrackets:
     - "/**/{Formula,Casks}/**/*.rb"
     - "**/{Formula,Casks}/**/*.rb"
 
+# Homebrew/NoCommandLiteral prohibits both command-literal styles in brew's own source.
+Style/CommandLiteral:
+  Exclude:
+    - "Homebrew/**/*.rb"
+
 # favour parens-less DSL-style arguments
 Lint/AmbiguousBlockAssociation:
+  Enabled: false
+
+# The project index models a `Hash` or `Array` constant as a `Rubydex::Todo`
+# placeholder rather than a namespace, so every `CONSTANT.fetch(key)` call
+# matches an unrelated zero-argument `fetch` defined elsewhere in the project.
+Lint/ArgumentMismatch:
   Enabled: false
 
 Lint/DuplicateBranch:
@@ -167,6 +227,35 @@ Lint/DuplicateBranch:
     - "Taps/*/*/*.rb"
     - "/**/{Formula,Casks}/**/*.rb"
     - "**/{Formula,Casks}/**/*.rb"
+
+# Formula files are loaded independently, so constants with the same names do
+# not reassign each other. RBI constants declare their Ruby definitions.
+Lint/ConstantReassignment:
+  Exclude:
+    - "**/*.rbi"
+    - "Taps/*/*/*.rb"
+    - "/**/Formula/**/*.rb"
+    - "**/Formula/**/*.rb"
+
+# Detect references to project APIs marked with a YARD `@deprecated` tag.
+Lint/DeprecatedReference:
+  Enabled: true
+
+# Formula files from separate taps can define the same class without being
+# loaded together. RBI methods declare their Ruby implementations.
+Lint/DuplicateMethods:
+  Exclude:
+    - "**/*.rbi"
+    - "Taps/*/*/*.rb"
+    - "/**/Formula/**/*.rb"
+    - "**/Formula/**/*.rb"
+
+# The project-only index does not include Ruby core or gem APIs.
+Lint/NameTypo:
+  AllowedNames:
+    - "IfNode" # Defined by rubocop-ast.
+    - "instance_method" # Defined by Ruby core.
+    - "send" # Defined by Ruby core.
 
 # so many of these in formulae and can't be autocorrected
 Lint/ParenthesesAsGroupedExpression:
@@ -215,6 +304,10 @@ Naming/MethodParameterName:
   inherit_mode:
     merge:
       - AllowedNames
+
+# Allows a nicer API for boolean methods with side effects.
+Naming/PredicateMethod:
+  AllowBangMethods: true
 
 # Both styles are used depending on context,
 # e.g. `sha256` and `something_countable_1`.
@@ -267,14 +360,9 @@ RSpec/Focus:
 RSpec/MessageSpies:
   EnforcedStyle: receive
 
-# These are legacy violations that we should try to fix.
-Sorbet/AllowIncompatibleOverride:
+RSpec/Output:
   Exclude:
-    - "Homebrew/livecheck/strategy/*.rb"
-
-# Try getting rid of these.
-Sorbet/ConstantsFromStrings:
-  Enabled: false
+    - "**/fixtures/**/*.rb"
 
 # This is already the default
 Sorbet/FalseSigil:
@@ -284,16 +372,25 @@ Sorbet/FalseSigil:
 Sorbet/ForbidRBIOutsideOfAllowedPaths:
   Enabled: false
 
+Sorbet/ForbidTMust:
+  Enabled: true
+  Exclude:
+    - "Taps/**/*"
+    - "/**/{Formula,Casks}/**/*.rb"
+    - "**/{Formula,Casks}/**/*.rb"
+    - "Homebrew/test/support/fixtures/**/*"
+
+Sorbet/ForbidTUnsafe:
+  Enabled: true
+  Exclude:
+    - "Taps/**/*"
+    - "/**/{Formula,Casks}/**/*.rb"
+    - "**/{Formula,Casks}/**/*.rb"
+    - "Homebrew/test/support/fixtures/**/*"
+
 # T::Sig is monkey-patched into Module
 Sorbet/RedundantExtendTSig:
   Enabled: true
-
-# We make limited and intentional use of refinements.
-# It's posssible this may change in the future, though we probably still do not want to ban it in taps
-# and Sorbet typecheck will tell us what is and isn't a problem anyway.
-# Right now, our use of refinements isn't problematic (or at least not yet).
-Sorbet/Refinement:
-  Enabled: false
 
 Sorbet/StrictSigil:
   Enabled: true
@@ -301,10 +398,12 @@ Sorbet/StrictSigil:
     - "Taps/**/*"
     - "/**/{Formula,Casks}/**/*.rb"
     - "**/{Formula,Casks}/**/*.rb"
-    - "Homebrew/utils/ruby_check_version_script.rb" # A standalone script.
+    - "Homebrew/bundle/{formula_dumper,checker,commands/exec}.rb" # These aren't typed: true yet.
+    - "Homebrew/ignorable.rbi" # Workaround for Sorbet to allow aliasing `raise`.
     - "Homebrew/{standalone,startup}/*.rb" # These are loaded before sorbet-runtime
     - "Homebrew/test/**/*.rb"
-    - "Homebrew/bundle/{brew_dumper,checker,commands/exec}.rb" # These aren't typed: true yet.
+    - "Homebrew/test/support/fixtures/rubocop@x.x.x.rbi" # Autogenerated test fixture for RuboCop types.
+    - "Homebrew/utils/ruby_check_version_script.rb" # A standalone script.
 
 Sorbet/TrueSigil:
   Enabled: true
@@ -342,6 +441,11 @@ Style/ClassAndModuleChildren:
 Style/CollectionMethods:
   Enabled: true
 
+# `disable-next` is only understood by RuboCop 1.90 and newer, so keep the
+# `disable`/`enable` pairs that every version reads.
+Style/DirectiveScope:
+  Enabled: false
+
 # Don't allow cops to be disabled in casks and formulae.
 Style/DisableCopsWithinSourceCodeDirective:
   Enabled: true
@@ -371,6 +475,18 @@ Style/FetchEnvVar:
     - "/**/Formula/**/*.rb"
     - "**/Formula/**/*.rb"
 
+# Doesn't make sense for formulae with e.g. requirements.
+Style/OneClassPerFile:
+  Exclude:
+    - "**/*.rbi"
+    - "Taps/*/*/*.rb"
+    - "/**/Abstract/**/*.rb"
+    - "**/Abstract/**/*.rb"
+    - "/**/Formula/**/*.rb"
+    - "**/Formula/**/*.rb"
+    - "/**/developer/bin/*"
+    - "**/developer/bin/*"
+
 # Not used for casks and formulae.
 Style/FrozenStringLiteralComment:
   EnforcedStyle: always
@@ -396,6 +512,11 @@ Style/HashAsLastArrayItem:
     - "/**/Formula/**/*.rb"
     - "**/Formula/**/*.rb"
 
+# Restore when the fix for https://github.com/rubocop/rubocop/issues/15531
+# is released.
+Style/IfUnlessModifier:
+  Enabled: false
+
 Style/InverseMethods:
   InverseMethods:
     :blank?: :present?
@@ -408,6 +529,10 @@ Style/InvertibleUnlessCondition:
     # Unset this (prefer `unless a.zero?` over `if a.nonzero?`)
     :zero?:
     :blank?: :present?
+
+# It's confusing to the ruby novice to support both `it` and `_1`
+Style/ItBlockParameter:
+  EnforcedStyle: only_numbered_parameters
 
 Style/MutableConstant:
   # would rather freeze too much than too little
@@ -433,14 +558,15 @@ Style/OptionalBooleanParameter:
     - respond_to?
     - respond_to_missing?
 
-# Broken in RuboCop 1.68.0 so tries to fix line continuations in inline patch blocks:
-# https://github.com/Homebrew/brew/actions/runs/11653110391/job/32460881827?pr=18682
-Style/RedundantLineContinuation:
-  Enabled: false
-
 # Rescuing `StandardError` is an understood default.
 Style/RescueStandardError:
   EnforcedStyle: implicit
+
+# The project index compares lexical resolution but Ruby also searches class
+# ancestors, including formula subclasses. Removing `::` can therefore resolve
+# a different constant.
+Style/RedundantConstantBase:
+  Enabled: false
 
 # Returning `nil` is unnecessary.
 Style/ReturnNil:

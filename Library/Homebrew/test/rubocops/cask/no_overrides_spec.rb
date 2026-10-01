@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
@@ -17,8 +18,32 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
   it "accepts when there are no top-level standalone stanzas" do
     expect_no_offenses <<~CASK
       cask 'foo' do
-        on_mojave :or_later do
+        on_sequoia :or_later do
           version :latest
+        end
+      end
+    CASK
+  end
+
+  it "accepts `depends_on macos:` in `on_macos` blocks" do
+    expect_no_offenses <<~CASK
+      cask 'foo' do
+        on_macos do
+          depends_on macos: :big_sur
+        end
+      end
+    CASK
+  end
+
+  it "does not crash on non-hash `depends_on` stanzas in `on_*` blocks" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        on_macos do
+          depends_on :macos
+          depends_on
+        end
+        on_linux do
+          depends_on :linux
         end
       end
     CASK
@@ -46,7 +71,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
         arch arm: "arm64", intel: "x86"
         version '1.2.3'
 
-        on_mojave :or_later do
+        on_sequoia :or_later do
           sha256 "aaa"
 
           url "https://brew.sh/foo-\#{version}-\#{arch}.pkg"
@@ -60,7 +85,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
       cask 'foo' do
         version '0.99,123.3'
 
-        on_mojave :or_later do
+        on_sequoia :or_later do
           url "https://brew.sh/foo-\#{version.csv.first}-\#{version.csv.second}.pkg"
         end
       end
@@ -74,7 +99,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
 
         version '0.99,123.3'
 
-        on_mojave :or_later do
+        on_sequoia :or_later do
           url "https://brew.sh/foo-\#{arch}-\#{version.csv.first}-\#{version.csv.last}.pkg"
 
           livecheck do
@@ -142,13 +167,26 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
     CASK
   end
 
+  it "accepts `conflicts_with` in both top-level and `on_*` blocks" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        version "1.2.3"
+        conflicts_with cask: "foo-beta"
+
+        on_sequoia :or_older do
+          conflicts_with cask: "foo-legacy"
+        end
+      end
+    CASK
+  end
+
   it "reports an offense when `on_*` blocks override a single upper-level stanza" do
     expect_offense <<~CASK
       cask 'foo' do
         version '2.3.4'
         ^^^^^^^^^^^^^^^ Do not use a top-level `version` stanza as the default. Add it to an `on_{system}` block instead. Use `:or_older` or `:or_newer` to specify a range of macOS versions.
 
-        on_mojave :or_older do
+        on_sequoia :or_older do
           version '1.2.3'
         end
 
@@ -187,7 +225,7 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
     CASK
   end
 
-  it "reports an offense when `on_*` blocks contain a `depends_on macos:` stanza" do
+  it "reports an offense when `on_*` blocks contain the samne `depends_on macos:` stanza" do
     expect_offense <<~CASK
       cask 'foo' do
         version '1.2.3'
@@ -208,6 +246,76 @@ RSpec.describe RuboCop::Cop::Cask::NoOverrides, :config do
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Do not use a `depends_on macos:` stanza inside an `on_{system}` block. Add it once to specify the oldest macOS supported by any version in the cask.
         end
 
+        name 'Foo'
+      end
+    CASK
+  end
+
+  it "accepts when multiple `on_*` blocks contain different `depends_on macos:` stanzas" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        version "1.2.3"
+
+        on_arm do
+          depends_on macos: ">= :monterey"
+        end
+        on_intel do
+          depends_on macos: ">= :ventura"
+        end
+
+        sha256 "aaa"
+        url "https://brew.sh/foo-mac.dmg"
+        name 'Foo'
+      end
+    CASK
+  end
+
+  it "accepts `depends_on macos: :any` in architecture blocks" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        version "1.2.3"
+
+        on_arm do
+          depends_on macos: :any
+        end
+        on_intel do
+          depends_on :macos
+        end
+
+        sha256 "aaa"
+        url "https://brew.sh/foo-mac.dmg"
+        name 'Foo'
+      end
+    CASK
+  end
+
+  it "accepts a bare macOS dependency opposite an architecture-specific minimum" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        on_arm do
+          depends_on macos: :monterey
+        end
+        on_intel do
+          depends_on :macos
+        end
+      end
+    CASK
+  end
+
+  it "accepts different `depends_on macos:` stanzas when one is `:any`" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        version "1.2.3"
+
+        on_arm do
+          depends_on macos: ">= :monterey"
+        end
+        on_intel do
+          depends_on macos: :any
+        end
+
+        sha256 "aaa"
+        url "https://brew.sh/foo-mac.dmg"
         name 'Foo'
       end
     CASK

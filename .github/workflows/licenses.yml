@@ -1,0 +1,59 @@
+# This file is synced from the `.github` repository, do not modify it directly.
+name: Licenses
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    paths:
+      - "**/Cargo.lock"
+      - "**/Cargo.toml"
+      - "**/Gemfile.lock"
+      - "**/Package.resolved"
+      - "**/Package.swift"
+      - "**/package-lock.json"
+      - "**/package.json"
+      - "**/requirements.txt"
+      - .github/denied-licenses.txt
+      - .github/scripts/check-licenses.sh
+      - .github/workflows/licenses.yml
+  merge_group:
+
+permissions:
+  actions: write
+  contents: read
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+jobs:
+  licenses:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+
+      - name: Install git-pkgs
+        run: brew install git-pkgs
+
+      - name: Cache git-pkgs licence metadata
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/git-pkgs
+          key: git-pkgs-metadata-v1-${{ hashFiles('**/Gemfile.lock', '**/Cargo.toml', '**/Cargo.lock', '**/Package.resolved', '**/Package.swift', '**/package.json', '**/package-lock.json', '**/requirements.txt') }}
+          restore-keys: git-pkgs-metadata-v1-
+
+      - name: Check licences
+        env:
+          # Identify ecosyste.ms requests for its polite pool:
+          # https://github.com/git-pkgs/git-pkgs#configuration
+          GIT_PKGS_ECOSYSTEMS_FROM: leads@brew.sh
+        run: bash .github/scripts/check-licenses.sh

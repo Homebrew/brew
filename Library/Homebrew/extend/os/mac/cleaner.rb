@@ -6,9 +6,12 @@ module OS
     module Cleaner
       private
 
-      sig { params(path: Pathname).returns(T::Boolean) }
+      sig { params(path: ::Pathname).returns(T::Boolean) }
       def executable_path?(path)
-        path.mach_o_executable? || path.text_executable?
+        return true if Utils::Path.text_executable?(path)
+
+        path = MachOPathname.wrap(path)
+        path.mach_o_executable?
       end
     end
   end

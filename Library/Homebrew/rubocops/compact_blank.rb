@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module RuboCop
@@ -87,12 +87,18 @@ module RuboCop
           false
         end
 
+        sig {
+          params(arguments: RuboCop::AST::ArgsNode, receiver_in_block: RuboCop::AST::Node).returns(T::Boolean)
+        }
         def use_single_value_block_argument?(arguments, receiver_in_block)
-          arguments.length == 1 && arguments[0].source == receiver_in_block.source
+          arguments.length == 1 && arguments.fetch(0).source == receiver_in_block.source
         end
 
+        sig {
+          params(arguments: RuboCop::AST::ArgsNode, receiver_in_block: RuboCop::AST::Node).returns(T::Boolean)
+        }
         def use_hash_value_block_argument?(arguments, receiver_in_block)
-          arguments.length == 2 && arguments[1].source == receiver_in_block.source
+          arguments.length == 2 && arguments.fetch(1).source == receiver_in_block.source
         end
 
         sig { params(node: RuboCop::AST::SendNode).returns(Parser::Source::Range) }

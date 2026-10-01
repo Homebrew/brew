@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "cask/denylist"
@@ -5,18 +6,21 @@ require "cask/denylist"
 RSpec.describe Cask::Denylist, :cask do
   describe "::reason" do
     matcher :disallow do |name|
+      T.bind(self, T.class_of(RSpec::Matchers::DSL::Matcher))
       match do |expected|
         expected.reason(name)
       end
     end
 
-    it { is_expected.not_to disallow("adobe-air") }
-    it { is_expected.to disallow("adobe-after-effects") }
-    it { is_expected.to disallow("adobe-illustrator") }
-    it { is_expected.to disallow("adobe-indesign") }
-    it { is_expected.to disallow("adobe-photoshop") }
-    it { is_expected.to disallow("adobe-premiere") }
-    it { is_expected.to disallow("pharo") }
-    it { is_expected.not_to disallow("allowed-cask") }
+    specify(:aggregate_failures) do
+      expect(described_class).not_to disallow("adobe-air")
+      expect(described_class).to disallow("adobe-after-effects")
+      expect(described_class).to disallow("adobe-illustrator")
+      expect(described_class).to disallow("adobe-indesign")
+      expect(described_class).to disallow("adobe-photoshop")
+      expect(described_class).to disallow("adobe-premiere")
+      expect(described_class).to disallow("pharo")
+      expect(described_class).not_to disallow("allowed-cask")
+    end
   end
 end

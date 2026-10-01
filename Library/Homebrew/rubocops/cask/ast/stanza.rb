@@ -14,16 +14,16 @@ module RuboCop
 
         sig {
           params(
-            method_node:  RuboCop::AST::Node,
+            method_node:  T.any(RuboCop::AST::AsgnNode, RuboCop::AST::BlockNode, RuboCop::AST::SendNode),
             all_comments: T::Array[T.any(String, Parser::Source::Comment)],
           ).void
         }
         def initialize(method_node, all_comments)
-          @method_node = T.let(method_node, RuboCop::AST::Node)
-          @all_comments = T.let(all_comments, T::Array[T.any(String, Parser::Source::Comment)])
+          @method_node = method_node
+          @all_comments = all_comments
         end
 
-        sig { returns(RuboCop::AST::Node) }
+        sig { returns(T.any(RuboCop::AST::AsgnNode, RuboCop::AST::BlockNode, RuboCop::AST::SendNode)) }
         attr_reader :method_node
         alias stanza_node method_node
 
@@ -32,6 +32,7 @@ module RuboCop
 
         def_delegator :stanza_node, :parent, :parent_node
         def_delegator :stanza_node, :arch_variable?
+        def_delegator :stanza_node, :system_variable?
         def_delegator :stanza_node, :on_system_block?
 
         sig { returns(Parser::Source::Range) }
@@ -53,6 +54,7 @@ module RuboCop
         sig { returns(Symbol) }
         def stanza_name
           return :on_arch_conditional if arch_variable?
+          return :on_system_conditional if system_variable?
           return stanza_node.method_node&.method_name if stanza_node.block_type?
 
           T.cast(stanza_node, RuboCop::AST::SendNode).method_name
@@ -83,11 +85,11 @@ module RuboCop
           )
         end
 
-        sig { returns(T::Hash[Parser::Source::Range, T::Array[Parser::Source::Comment]]) }
+        sig { returns(T::Hash[Parser::Source::Map, T::Array[Parser::Source::Comment]]) }
         def comments_hash
           @comments_hash ||= T.let(
             Parser::Source::Comment.associate_locations(stanza_node.parent, all_comments),
-            T.nilable(T::Hash[Parser::Source::Range, T::Array[Parser::Source::Comment]]),
+            T.nilable(T::Hash[Parser::Source::Map, T::Array[Parser::Source::Comment]]),
           )
         end
 

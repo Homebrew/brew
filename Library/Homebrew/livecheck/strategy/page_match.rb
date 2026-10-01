@@ -20,8 +20,6 @@ module Homebrew
       class PageMatch
         extend Strategic
 
-        NICE_NAME = "Page match"
-
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {PageMatch} so we can selectively apply it only when a regex is
         # provided in a `livecheck` block.
@@ -42,12 +40,11 @@ module Homebrew
         end
 
         # Uses the regex to match text in the content or, if a block is
-        # provided, passes the page content to the block to handle matching.
-        # With either approach, an array of unique matches is returned.
+        # provided, passes the content to the block to handle matching. With
+        # either approach, an array of unique matches is returned.
         #
-        # @param content [String] the page content to check
-        # @param regex [Regexp, nil] a regex used for matching versions in the
-        #   content
+        # @param content [String] the content to check
+        # @param regex [Regexp, nil] a regex for matching versions in content
         # @return [Array]
         sig {
           params(
@@ -70,6 +67,10 @@ module Homebrew
               match
             when Array
               match.first
+            else
+              # simplecov:disable
+              T.absurd(match)
+              # simplecov:enable
             end
           end.uniq
         end
@@ -78,34 +79,31 @@ module Homebrew
         # regex for matching.
         #
         # @param url [String] the URL of the content to check
-        # @param regex [Regexp, nil] a regex used for matching versions
-        # @param provided_content [String, nil] page content to use in place of
-        #   fetching via `Strategy#page_content`
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
           override.params(
-            url:              String,
-            regex:            T.nilable(Regexp),
-            provided_content: T.nilable(String),
-            options:          Options,
-            block:            T.nilable(Proc),
+            url:     String,
+            regex:   T.nilable(Regexp),
+            content: T.nilable(String),
+            options: Options,
+            block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
-        def self.find_versions(url:, regex: nil, provided_content: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           if regex.blank? && !block_given?
             raise ArgumentError, "#{Utils.demodulize(name)} requires a regex or `strategy` block"
           end
 
           match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if content
           return match_data if url.blank?
 
-          content = if provided_content.is_a?(String)
-            match_data[:cached] = true
-            provided_content
-          else
+          unless match_data[:cached]
             match_data.merge!(Strategy.page_content(url, options:))
-            match_data[:content]
+            content = match_data[:content]
           end
           return match_data if content.blank?
 

@@ -11,7 +11,7 @@ module UnpackStrategy
       [".xz"]
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       path.magic_number.match?(/\A\xFD7zXZ\x00/n)
     end
@@ -29,7 +29,7 @@ module UnpackStrategy
       quiet_flags = verbose ? [] : ["-q"]
       system_command! "unxz",
                       args:    [*quiet_flags, "-T0", "--", unpack_dir/basename],
-                      env:     { "PATH" => PATH.new(Formula["xz"].opt_bin, ENV.fetch("PATH")) },
+                      env:     Utils::Path.formula_opt_bin_env("xz"),
                       verbose:
     end
   end

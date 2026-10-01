@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/shell_commands"
@@ -88,6 +89,44 @@ RSpec.describe RuboCop::Cop::Homebrew::ShellCommands do
         class Foo < Formula
           def install
             Utils.popen_read("foo", "bar")
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects an offense when `Utils.popen_read_text` arguments are unseparated" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          def install
+            Utils.popen_read_text("foo bar")
+                                  ^^^^^^^^^ Homebrew/ShellCommands: Separate `Utils.popen_read_text` commands into `"foo", "bar"`
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          def install
+            Utils.popen_read_text("foo", "bar")
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects an offense when `Utils.popen_read_text` arguments are unseparated before options" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          def install
+            Utils.popen_read_text("foo bar", err: :err)
+                                  ^^^^^^^^^ Homebrew/ShellCommands: Separate `Utils.popen_read_text` commands into `"foo", "bar"`
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          def install
+            Utils.popen_read_text("foo", "bar", err: :err)
           end
         end
       RUBY

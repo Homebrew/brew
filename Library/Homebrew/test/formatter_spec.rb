@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "utils/formatter"
@@ -122,6 +123,75 @@ RSpec.describe Formatter do
 
     it "uses custom omission string" do
       expect(described_class.truncate("this is a long string", max: 10, omission: " [...]")).to eq("this [...]")
+    end
+  end
+
+  describe ".disk_usage_readable_size_unit" do
+    it "returns size and unit for bytes" do
+      expect(described_class.disk_usage_readable_size_unit(500)).to eq([500, "B"])
+    end
+
+    it "converts to KB for sizes >= 1000" do
+      size, unit = described_class.disk_usage_readable_size_unit(1500)
+      expect(unit).to eq("KB")
+      expect(size).to eq(1.5)
+    end
+
+    it "converts to MB for sizes >= 1000000" do
+      size, unit = described_class.disk_usage_readable_size_unit(2_500_000)
+      expect(unit).to eq("MB")
+      expect(size).to eq(2.5)
+    end
+
+    it "converts to GB for sizes >= 1000000000" do
+      size, unit = described_class.disk_usage_readable_size_unit(3_500_000_000)
+      expect(unit).to eq("GB")
+      expect(size).to eq(3.5)
+    end
+
+    it "respects precision parameter" do
+      _, unit = described_class.disk_usage_readable_size_unit(999.5, precision: 0)
+      expect(unit).to eq("KB")
+    end
+  end
+
+  describe ".disk_usage_readable" do
+    it "formats bytes as human-readable sizes" do
+      expect(described_class.disk_usage_readable(1)).to eq("1B")
+      expect(described_class.disk_usage_readable(999)).to eq("999B")
+      expect(described_class.disk_usage_readable(1000)).to eq("1KB")
+      expect(described_class.disk_usage_readable(1025)).to eq("1KB")
+      expect(described_class.disk_usage_readable(4_404_020)).to eq("4.4MB")
+      expect(described_class.disk_usage_readable(4_509_715_660)).to eq("4.5GB")
+    end
+  end
+
+  describe ".number_readable" do
+    it "returns a string with thousands separators" do
+      expect(described_class.number_readable(1)).to eq("1")
+      expect(described_class.number_readable(1_000)).to eq("1,000")
+      expect(described_class.number_readable(1_000_000)).to eq("1,000,000")
+      expect(described_class.number_readable(-123_456)).to eq("-123,456")
+    end
+  end
+
+  describe ".redact_secrets" do
+    it "replaces secrets with asterisks" do
+      expect(described_class.redact_secrets("password123", ["password123"])).to eq("******")
+    end
+
+    it "replaces multiple secrets" do
+      input = "user: admin, pass: secret"
+      expect(described_class.redact_secrets(input, ["admin", "secret"])).to eq("user: ******, pass: ******")
+    end
+
+    it "handles empty secrets array" do
+      expect(described_class.redact_secrets("keep this", [])).to eq("keep this")
+    end
+
+    it "returns frozen string" do
+      result = described_class.redact_secrets("test", ["foo"])
+      expect(result).to be_frozen
     end
   end
 end

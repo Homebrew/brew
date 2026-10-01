@@ -1,24 +1,31 @@
+# typed: strict
 # frozen_string_literal: true
 
+require "open3"
+
 RSpec.describe "brew --repository", type: :system do
-  it "prints Homebrew's repository", :integration_test do
-    expect { brew_sh "--repository" }
-      .to output("#{ENV.fetch("HOMEBREW_REPOSITORY")}\n").to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-  end
+  it_behaves_like "a documented command", "--repository", shell: true
 
-  it "prints a Tap's repository", :integration_test do
-    expect { brew_sh "--repository", "foo/bar" }
-      .to output("#{ENV.fetch("HOMEBREW_LIBRARY")}/Taps/foo/homebrew-bar\n").to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-  end
+  it "prints Homebrew and Tap repositories" do
+    stdout, stderr, status = Open3.capture3(
+      {
+        "HOMEBREW_LIBRARY"    => ENV.fetch("HOMEBREW_LIBRARY"),
+        "HOMEBREW_REPOSITORY" => ENV.fetch("HOMEBREW_REPOSITORY"),
+      },
+      "/bin/bash", "-c", <<~SH,
+        source "$1"
+        homebrew---repository
+        homebrew---repository foo/bar foo/homebrew-bar
+      SH
+      "bash", (HOMEBREW_LIBRARY_PATH/"cmd/--repository.sh").to_s
+    )
 
-  it "prints a Tap's repository correctly when homebrew- prefix is supplied", :integration_test do
-    expect { brew_sh "--repository", "foo/homebrew-bar" }
-      .to output("#{ENV.fetch("HOMEBREW_LIBRARY")}/Taps/foo/homebrew-bar\n").to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
+    expect(status).to be_success
+    expect(stdout).to eq(<<~EOS)
+      #{ENV.fetch("HOMEBREW_REPOSITORY")}
+      #{ENV.fetch("HOMEBREW_LIBRARY")}/Taps/foo/homebrew-bar
+      #{ENV.fetch("HOMEBREW_LIBRARY")}/Taps/foo/homebrew-bar
+    EOS
+    expect(stderr).to be_empty
   end
 end

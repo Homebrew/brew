@@ -1,0 +1,321 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    Ascii85 (2.0.1)
+    addressable (2.9.0)
+      public_suffix (>= 2.0.2, < 8.0)
+    afm (1.0.0)
+    async (2.46.0)
+      console (~> 1.29)
+      fiber-annotation
+      io-event (~> 1.21)
+    base64 (0.3.0)
+    benchmark (0.5.0)
+    bigdecimal (3.3.1)
+    chef-utils (19.3.15)
+      concurrent-ruby
+    colorator (1.1.0)
+    concurrent-ruby (1.3.8)
+    console (1.38.0)
+      fiber-annotation
+      fiber-local (~> 1.1)
+      json
+    csv (3.3.6)
+    em-websocket (0.5.3)
+      eventmachine (>= 0.12.9)
+      http_parser.rb (~> 0)
+    erb (6.0.7)
+    ethon (0.18.0)
+      ffi (>= 1.15.0)
+      logger
+    eventmachine (1.2.7)
+    ffi (1.17.4-aarch64-linux-gnu)
+    ffi (1.17.4-arm64-darwin)
+    ffi (1.17.4-x86_64-darwin)
+    ffi (1.17.4-x86_64-linux-gnu)
+    fiber-annotation (0.2.0)
+    fiber-local (1.1.0)
+      fiber-storage
+    fiber-storage (1.0.1)
+    forwardable-extended (2.6.0)
+    google-protobuf (4.36.2-aarch64-linux-gnu)
+      bigdecimal
+      rake (~> 13.3)
+    google-protobuf (4.36.2-arm64-darwin)
+      bigdecimal
+      rake (~> 13.3)
+    google-protobuf (4.36.2-x86_64-darwin)
+      bigdecimal
+      rake (~> 13.3)
+    google-protobuf (4.36.2-x86_64-linux-gnu)
+      bigdecimal
+      rake (~> 13.3)
+    hashery (2.1.2)
+    html-proofer (5.2.2)
+      addressable (~> 2.3)
+      async (~> 2.1)
+      benchmark (~> 0.5)
+      nokogiri (~> 1.13)
+      pdf-reader (~> 2.11)
+      rainbow (~> 3.0)
+      typhoeus (~> 1.3)
+      yell (~> 2.0)
+      zeitwerk (~> 2.5)
+    http_parser.rb (0.8.1)
+    i18n (1.15.2)
+      concurrent-ruby (~> 1.0)
+    io-console (0.9.4)
+    io-event (1.22.1)
+    irb (1.18.0)
+      pp (>= 0.6.0)
+      prism (>= 1.3.0)
+      rdoc (>= 4.0.0)
+      reline (>= 0.4.2)
+    jekyll (4.4.1)
+      addressable (~> 2.4)
+      base64 (~> 0.2)
+      colorator (~> 1.0)
+      csv (~> 3.0)
+      em-websocket (~> 0.5)
+      i18n (~> 1.0)
+      jekyll-sass-converter (>= 2.0, < 4.0)
+      jekyll-watch (~> 2.0)
+      json (~> 2.6)
+      kramdown (~> 2.3, >= 2.3.1)
+      kramdown-parser-gfm (~> 1.0)
+      liquid (~> 4.0)
+      mercenary (~> 0.3, >= 0.3.6)
+      pathutil (~> 0.9)
+      rouge (>= 3.0, < 5.0)
+      safe_yaml (~> 1.0)
+      terminal-table (>= 1.8, < 4.0)
+      webrick (~> 1.7)
+    jekyll-optional-front-matter (0.3.3)
+      jekyll (>= 3.0, < 5.0)
+    jekyll-redirect-from (0.16.0)
+      jekyll (>= 3.3, < 5.0)
+    jekyll-relative-links (0.8.0)
+      jekyll (>= 3.3, < 5.0)
+    jekyll-sass-converter (3.1.0)
+      sass-embedded (~> 1.75)
+    jekyll-seo-tag (2.9.0)
+      jekyll (>= 3.8, < 5.0)
+    jekyll-sitemap (1.4.0)
+      jekyll (>= 3.7, < 5.0)
+    jekyll-titles-from-headings (0.5.4)
+      jekyll (>= 3.3, < 5.0)
+    jekyll-watch (2.2.1)
+      listen (~> 3.0)
+    json (2.21.2)
+    kramdown (2.5.2)
+      rexml (>= 3.4.4)
+    kramdown-parser-gfm (1.1.0)
+      kramdown (~> 2.0)
+    liquid (4.0.4)
+    listen (3.10.0)
+      logger
+      rb-fsevent (~> 0.10, >= 0.10.3)
+      rb-inotify (~> 0.9, >= 0.9.10)
+    logger (1.7.0)
+    mdl (0.18.1)
+      kramdown (~> 2.5)
+      kramdown-parser-gfm (~> 1.1)
+      mixlib-cli
+      mixlib-config
+      mixlib-shellout
+      uri
+    mercenary (0.4.0)
+    mixlib-cli (2.1.8)
+    mixlib-config (3.0.27)
+      tomlrb
+    mixlib-shellout (3.4.10)
+      chef-utils
+    nokogiri (1.19.4-aarch64-linux-gnu)
+      racc (~> 1.4)
+    nokogiri (1.19.4-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.19.4-x86_64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.19.4-x86_64-linux-gnu)
+      racc (~> 1.4)
+    pathutil (0.16.2)
+      forwardable-extended (~> 2.6)
+    pdf-reader (2.16.0)
+      Ascii85 (>= 1.0, < 3.0, != 2.0.0)
+      afm (>= 0.2.1, < 2)
+      hashery (~> 2.0)
+      ttfunk
+    pp (0.6.4)
+      prettyprint
+    prettyprint (0.2.0)
+    prism (1.9.0)
+    public_suffix (7.0.5)
+    racc (1.8.1)
+    rainbow (3.1.1)
+    rake (13.4.2)
+    rb-fsevent (0.11.2)
+    rb-inotify (0.11.1)
+      ffi (~> 1.0)
+    rbs (4.2.0)
+      logger
+      prism (>= 1.6.0)
+      tsort
+    rdoc (8.0.0)
+      erb
+      prism (>= 1.6.0)
+      rbs (>= 4.0.0)
+      tsort
+    reline (0.7.0)
+      io-console (~> 0.5)
+    rexml (3.4.4)
+    rouge (4.7.0)
+    safe_yaml (1.0.5)
+    sass-embedded (1.105.0-aarch64-linux-gnu)
+      google-protobuf (~> 4.31)
+    sass-embedded (1.105.0-arm64-darwin)
+      google-protobuf (~> 4.31)
+    sass-embedded (1.105.0-x86_64-darwin)
+      google-protobuf (~> 4.31)
+    sass-embedded (1.105.0-x86_64-linux-gnu)
+      google-protobuf (~> 4.31)
+    sorbet-runtime (0.6.13508)
+    terminal-table (3.0.2)
+      unicode-display_width (>= 1.1.1, < 3)
+    tomlrb (2.0.4)
+    tsort (0.2.0)
+    ttfunk (1.8.0)
+      bigdecimal (~> 3.1)
+    typhoeus (1.6.0)
+      ethon (>= 0.18.0)
+    unicode-display_width (2.6.0)
+    uri (1.1.1)
+    webrick (1.9.2)
+    yard (0.9.45)
+    yard-sorbet (0.9.0)
+      sorbet-runtime
+      yard
+    yell (2.2.2)
+    zeitwerk (2.8.3)
+
+PLATFORMS
+  aarch64-linux-gnu
+  arm64-darwin
+  x86_64-darwin
+  x86_64-linux-gnu
+
+DEPENDENCIES
+  html-proofer
+  irb
+  jekyll
+  jekyll-optional-front-matter
+  jekyll-redirect-from
+  jekyll-relative-links
+  jekyll-seo-tag
+  jekyll-sitemap
+  jekyll-titles-from-headings
+  mdl
+  rake
+  webrick
+  yard
+  yard-sorbet
+
+CHECKSUMS
+  Ascii85 (2.0.1) sha256=15cb5d941808543cbb9e7e6aea3c8ec3877f154c3461e8b3673e97f7ecedbe5a
+  addressable (2.9.0) sha256=7fdf6ac3660f7f4e867a0838be3f6cf722ace541dd97767fa42bc6cfa980c7af
+  afm (1.0.0) sha256=5bd4d6f6241e7014ef090985ec6f4c3e9745f6de0828ddd58bc1efdd138f4545
+  async (2.46.0) sha256=34f984733dbf63a997376346451ec995e858cacc3105e86ccfeaf8877b4f490b
+  base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
+  benchmark (0.5.0) sha256=465df122341aedcb81a2a24b4d3bd19b6c67c1530713fd533f3ff034e419236c
+  bigdecimal (3.3.1) sha256=eaa01e228be54c4f9f53bf3cc34fe3d5e845c31963e7fcc5bedb05a4e7d52218
+  chef-utils (19.3.15) sha256=1c537a9c85b55b6d897de8e8af6b66b017a6dfae2b5e7b25e0bf320637e0b86a
+  colorator (1.1.0) sha256=e2f85daf57af47d740db2a32191d1bdfb0f6503a0dfbc8327d0c9154d5ddfc38
+  concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
+  console (1.38.0) sha256=35b82f59130e95e9be6b832d9e539c8b3988fc192e4a8e9a86ab4922f44ad5de
+  csv (3.3.6) sha256=aba61e7e507a66f03d45cb1f3c4b6359861c3504038b422962875dce099e4456
+  em-websocket (0.5.3) sha256=f56a92bde4e6cb879256d58ee31f124181f68f8887bd14d53d5d9a292758c6a8
+  erb (6.0.7) sha256=c5ca6dc25b0ef974a44dc8f59fe847577122483b1968a38dec305c60bf91ee92
+  ethon (0.18.0) sha256=b598afc9f30448cb068b850714b7d6948e941476095d04f90a4ac65b8d6efcb2
+  eventmachine (1.2.7) sha256=994016e42aa041477ba9cff45cbe50de2047f25dd418eba003e84f0d16560972
+  ffi (1.17.4-aarch64-linux-gnu) sha256=b208f06f91ffd8f5e1193da3cae3d2ccfc27fc36fba577baf698d26d91c080df
+  ffi (1.17.4-arm64-darwin) sha256=19071aaf1419251b0a46852abf960e77330a3b334d13a4ab51d58b31a937001b
+  ffi (1.17.4-x86_64-darwin) sha256=aa70390523cf3235096cf64962b709b4cfbd5c082a2cb2ae714eb0fe2ccda496
+  ffi (1.17.4-x86_64-linux-gnu) sha256=9d3db14c2eae074b382fa9c083fe95aec6e0a1451da249eab096c34002bc752d
+  fiber-annotation (0.2.0) sha256=7abfadf1d119f508867d4103bf231c0354d019cc39a5738945dec2edadaf6c03
+  fiber-local (1.1.0) sha256=c885f94f210fb9b05737de65d511136ea602e00c5105953748aa0f8793489f06
+  fiber-storage (1.0.1) sha256=f48e5b6d8b0be96dac486332b55cee82240057065dc761c1ea692b2e719240e1
+  forwardable-extended (2.6.0) sha256=1bec948c469bbddfadeb3bd90eb8c85f6e627a412a3e852acfd7eaedbac3ec97
+  google-protobuf (4.36.2-aarch64-linux-gnu) sha256=c3279ec6eaa59f6ed6276eda2a33cffb4306471183ab79a332e698b8564f5169
+  google-protobuf (4.36.2-arm64-darwin) sha256=f70d810e6bbab9d8ad9c1d5fd685a21de4c10ad3ad32efb9455e17e5b1286917
+  google-protobuf (4.36.2-x86_64-darwin) sha256=8d1bd2a344f7f589703b202ad2ee4cca8ef731b4ced45782ef92d385967384ba
+  google-protobuf (4.36.2-x86_64-linux-gnu) sha256=d25a820873e423f1d209ae8c672a4a28b019e2429debd0901d26670a0b4e14db
+  hashery (2.1.2) sha256=d239cc2310401903f6b79d458c2bbef5bf74c46f3f974ae9c1061fb74a404862
+  html-proofer (5.2.2) sha256=6e5e63c89ef9413246eeffaeba8dd03db62546992d7a2b85d166ac2a5903a241
+  http_parser.rb (0.8.1) sha256=9ae8df145b39aa5398b2f90090d651c67bd8e2ebfe4507c966579f641e11097a
+  i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
+  io-console (0.9.4) sha256=a403304f32928ee85e56d457b4612ca43f2703b561a3258844992bd24085fbb1
+  io-event (1.22.1) sha256=0dd054cefe4a29f1b8286604f332c14f3208d75f54902961e91e94d45e5e1600
+  irb (1.18.0) sha256=de9454a0703a54704b9811a5ef31a60c86949fbf4013fcf244fabc7c775248e3
+  jekyll (4.4.1) sha256=4c1144d857a5b2b80d45b8cf5138289579a9f8136aadfa6dd684b31fe2bc18c1
+  jekyll-optional-front-matter (0.3.3) sha256=fc96976ffaa5515b3ad7d553199011aa98782c13694dfbd1a6278ede88212a6e
+  jekyll-redirect-from (0.16.0) sha256=6635cae569ef9b0f90ffb71ec014ba977177fafb44d32a2b0526288d4d9be6db
+  jekyll-relative-links (0.8.0) sha256=128421fbe8d81b5c1319bd88ca8f6d60a070ed68dc31b78b7cc62c0455514163
+  jekyll-sass-converter (3.1.0) sha256=83925d84f1d134410c11d0c6643b0093e82e3a3cf127e90757a85294a3862443
+  jekyll-seo-tag (2.9.0) sha256=0260015a8e1df9bf195cdfb0c675b7b2883fd8cbf12556e1c1cbe36a831c6852
+  jekyll-sitemap (1.4.0) sha256=0de08c5debc185ea5a8f980e1025c7cd3f8e0c35c8b6ef592f15c46235cf4218
+  jekyll-titles-from-headings (0.5.4) sha256=d5e43a5690f1e5cf541543e33501def1346b34acca7ce740ab74484e5dd926b0
+  jekyll-watch (2.2.1) sha256=bc44ed43f5e0a552836245a54dbff3ea7421ecc2856707e8a1ee203a8387a7e1
+  json (2.21.2) sha256=1f1d3b7cf2b3ba1a69beca0bb6db13d5438b80bff3cd54cdaaa620b9b07c1c6a
+  kramdown (2.5.2) sha256=1ba542204c66b6f9111ff00dcc26075b95b220b07f2905d8261740c82f7f02fa
+  kramdown-parser-gfm (1.1.0) sha256=fb39745516427d2988543bf01fc4cf0ab1149476382393e0e9c48592f6581729
+  liquid (4.0.4) sha256=4fcfebb1a045e47918388dbb7a0925e7c3893e58d2bd6c3b3c73ec17a2d8fdb3
+  listen (3.10.0) sha256=c6e182db62143aeccc2e1960033bebe7445309c7272061979bb098d03760c9d2
+  logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
+  mdl (0.18.1) sha256=14c7ab8264bbeac4010bd54adb5d125cf1d29b3848c3b6bfacb239b8bc70037a
+  mercenary (0.4.0) sha256=b25a1e4a59adca88665e08e24acf0af30da5b5d859f7d8f38fba52c28f405138
+  mixlib-cli (2.1.8) sha256=e6f27be34d580f6ed71731ca46b967e57793a627131c1f6e1ed2dad39ea3bdf9
+  mixlib-config (3.0.27) sha256=d7748b1898e4f16502afec1de00b5ad65c6de405114b1b0c65ec61b1a9100148
+  mixlib-shellout (3.4.10) sha256=7c8a6c5a6c90922a8871ed682129c19c9b1a514eedea2e867077229e6a415f0c
+  nokogiri (1.19.4-aarch64-linux-gnu) sha256=1269fb644a6de405057a53dd5c762b1209b43ca7424f839454d3dbc677c31a8f
+  nokogiri (1.19.4-arm64-darwin) sha256=a46db9853286e6597b36ebc6953817d15acf3a299583eb3f89fdc6f91dd63527
+  nokogiri (1.19.4-x86_64-darwin) sha256=7fd17057d3e1f00e9954a74b3cd76595d3d4a5ef233b7ed9599047c204f70551
+  nokogiri (1.19.4-x86_64-linux-gnu) sha256=379fae440b28915e3f19d752ce2dcf8465ed2b2fbefd2a7ca0dd497bc981a06a
+  pathutil (0.16.2) sha256=e43b74365631cab4f6d5e4228f812927efc9cb2c71e62976edcb252ee948d589
+  pdf-reader (2.16.0) sha256=bf1b5564c085264d8279bde3cf1467778b75841494d20c0fe7da3dad475f3732
+  pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
+  prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
+  prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
+  public_suffix (7.0.5) sha256=1a8bb08f1bbea19228d3bed6e5ed908d1cb4f7c2726d18bd9cadf60bc676f623
+  racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
+  rainbow (3.1.1) sha256=039491aa3a89f42efa1d6dec2fc4e62ede96eb6acd95e52f1ad581182b79bc6a
+  rake (13.4.2) sha256=cb825b2bd5f1f8e91ca37bddb4b9aaf345551b4731da62949be002fa89283701
+  rb-fsevent (0.11.2) sha256=43900b972e7301d6570f64b850a5aa67833ee7d87b458ee92805d56b7318aefe
+  rb-inotify (0.11.1) sha256=a0a700441239b0ff18eb65e3866236cd78613d6b9f78fea1f9ac47a85e47be6e
+  rbs (4.2.0) sha256=51f7b886dcc05bc09e10b901daa6a81829f6adc03101d6ca9ea4aac6103e0674
+  rdoc (8.0.0) sha256=03bf8c08a9639658855a0cfd77c0abca8325c227693f7f33f82957811348c469
+  reline (0.7.0) sha256=5b012d8e55dbf9d450f12bde2cf7d15ff546ae80b3f8f3b30e570d431815583d
+  rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
+  rouge (4.7.0) sha256=dba5896715c0325c362e895460a6d350803dbf6427454f49a47500f3193ea739
+  safe_yaml (1.0.5) sha256=a6ac2d64b7eb027bdeeca1851fe7e7af0d668e133e8a88066a0c6f7087d9f848
+  sass-embedded (1.105.0-aarch64-linux-gnu) sha256=26dc2b0f8063f99ad4df226ebecac361c52ce06c63d8acc20ebc615d1450ea09
+  sass-embedded (1.105.0-arm64-darwin) sha256=c9a7bdcf976b03c7a420df25de1ce39255cc8c9776117ea20bcf0fe7cbadee3f
+  sass-embedded (1.105.0-x86_64-darwin) sha256=4e2d4238f8e286e0b256b63d3713ad27a06542b3079087e54d2c169072fb77fa
+  sass-embedded (1.105.0-x86_64-linux-gnu) sha256=c7cb4884c6d1ddad41d52f5950167d5cf77e242d7900ca0ec13170ba43878977
+  sorbet-runtime (0.6.13508) sha256=011ee266adead459077ebc0058d36aeb75d6c90968db8524916050ce3c62e526
+  terminal-table (3.0.2) sha256=f951b6af5f3e00203fb290a669e0a85c5dd5b051b3b023392ccfd67ba5abae91
+  tomlrb (2.0.4) sha256=262f77947ac3ac9b3366a0a5940ecd238300c553e2e14f22009e2afcd2181b99
+  tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
+  ttfunk (1.8.0) sha256=a7cbc7e489cc46e979dde04d34b5b9e4f5c8f1ee5fc6b1a7be39b829919d20ca
+  typhoeus (1.6.0) sha256=bacc41c23e379547e29801dc235cd1699b70b955a1ba3d32b2b877aa844c331d
+  unicode-display_width (2.6.0) sha256=12279874bba6d5e4d2728cef814b19197dbb10d7a7837a869bab65da943b7f5a
+  uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
+  webrick (1.9.2) sha256=beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131
+  yard (0.9.45) sha256=52e211493f7cb8a3ebf7e104a25a1e73937a3103092545d34cb88fafebb3dc51
+  yard-sorbet (0.9.0) sha256=03d1aa461b9e9c82b886919a13aa3e09fcf4d1852239d2967ed97e92723ffe21
+  yell (2.2.2) sha256=1d166f3cc3b6dc49a59778ea7156ed6d8de794c15106d48ffd6cbb061b9b26bc
+  zeitwerk (2.8.3) sha256=2c85125a8467ce069e20123d1e709a08955c9d29c118c25b46b7b7fafdbb92e5
+
+RUBY VERSION
+  ruby 4.0.7
+
+BUNDLED WITH
+  4.0.20

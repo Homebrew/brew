@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "cli/named_args"
@@ -10,56 +11,41 @@ RSpec.describe Homebrew::Cmd::Uses do
 
   it_behaves_like "parseable arguments"
 
-  it "prints the Formulae a given Formula is used by", :integration_test, :no_api do
-    # Included in output
-    setup_test_formula "bar"
-    setup_test_formula "optional", <<~RUBY
-      url "https://brew.sh/optional-1.0"
-      depends_on "bar" => :optional
-    RUBY
-
-    # Excluded from output
+  it "finds Formulae that use a given Formula", :integration_test, :no_api do
     setup_test_formula "foo"
-    setup_test_formula "test", <<~RUBY
-      url "https://brew.sh/test-1.0"
-      depends_on "foo" => :test
-    RUBY
-    setup_test_formula "build", <<~RUBY
-      url "https://brew.sh/build-1.0"
-      depends_on "foo" => :build
-    RUBY
-    setup_test_formula "installed", <<~RUBY
-      url "https://brew.sh/installed-1.0"
-      depends_on "foo"
-    RUBY
+    setup_test_formula "bar"
 
-    # Mock `Formula#any_version_installed?` by creating the tab in a plausible keg directory
-    %w[foo installed].each do |formula_name|
-      keg_dir = HOMEBREW_CELLAR/formula_name/"1.0"
-      keg_dir.mkpath
-      touch keg_dir/AbstractTab::FILENAME
-    end
-
-    expect { brew "uses", "foo", "--eval-all", "--include-optional", "--missing", "--recursive" }
-      .to output(/^(bar\noptional|optional\nbar)$/).to_stdout
+    expect { brew "uses", "foo" }
+      .to output("bar\n").to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
   end
 
-  it "handles unavailable formula", :integration_test, :no_api do
-    setup_test_formula "foo"
-    setup_test_formula "bar"
-    setup_test_formula "optional", <<~RUBY
-      url "https://brew.sh/optional-1.0"
-      depends_on "bar" => :optional
-    RUBY
+  it "evaluates all trusted formulae" do
+    used_formula = instance_double(Formula, full_name: "foo")
+    cmd = described_class.new(["--formula", "foo"])
 
-    expect_any_instance_of(Homebrew::CLI::NamedArgs)
+    allow(cmd.args.named).to receive(:to_formulae).and_return([used_formula])
+    expect(Formula).to receive(:all).and_return([])
+
+    expect { cmd.run }.to not_to_output.to_stderr
+  end
+
+  it "handles unavailable formula" do
+    cmd = described_class.new(%w[foo --include-optional --recursive])
+    allow(cmd.args.named)
       .to receive(:to_formulae)
       .and_raise(FormulaUnavailableError, "foo")
-    cmd = described_class.new(%w[foo --eval-all --include-optional --recursive])
+    allow(cmd).to receive(:intersection_of_dependents)
+      .and_return([
+        instance_double(Formula, full_name: "bar"),
+        instance_double(Formula, full_name: "optional"),
+      ])
+
+    allow(Homebrew::Trust).to receive(:trusted?).and_return(true)
+
     expect { cmd.run }
-      .to output(/^(bar\noptional|optional\nbar)$/).to_stdout
+      .to output(/^(?:bar\noptional|optional\nbar)$/).to_stdout
       .and output(/Error: Missing formulae should not have dependents!\n/).to_stderr
       .and raise_error SystemExit
   end

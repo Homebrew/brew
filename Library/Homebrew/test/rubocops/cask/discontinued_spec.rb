@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
@@ -6,8 +7,7 @@ RSpec.describe RuboCop::Cop::Cask::Discontinued, :config do
   it "reports no offenses when there is no `caveats` stanza" do
     expect_no_offenses <<~CASK
       cask "foo" do
-        url "https://example.com/download/foo-v1.2.0.dmg",
-            verified: "example.com/download/"
+        url "https://example.com/download/foo-v1.2.0.dmg"
       end
     CASK
   end
@@ -15,8 +15,7 @@ RSpec.describe RuboCop::Cop::Cask::Discontinued, :config do
   it "reports no offenses when there is a `caveats` stanza without `discontinued`" do
     expect_no_offenses <<~CASK
       cask "foo" do
-        url "https://example.com/download/foo-v1.2.0.dmg",
-            verified: "example.com/download/"
+        url "https://example.com/download/foo-v1.2.0.dmg"
 
         caveats do
           files_in_usr_local
@@ -28,8 +27,7 @@ RSpec.describe RuboCop::Cop::Cask::Discontinued, :config do
   it "reports an offense when there is a `caveats` stanza with `discontinued` and other caveats" do
     expect_offense <<~CASK
       cask "foo" do
-        url "https://example.com/download/foo-v1.2.0.dmg",
-            verified: "example.com/download/"
+        url "https://example.com/download/foo-v1.2.0.dmg"
 
         caveats do
           discontinued
@@ -43,8 +41,7 @@ RSpec.describe RuboCop::Cop::Cask::Discontinued, :config do
   it "corrects `caveats { discontinued }` to `deprecate!`" do
     expect_offense <<~CASK
       cask "foo" do
-        url "https://example.com/download/foo-v1.2.0.dmg",
-            verified: "example.com/download/"
+        url "https://example.com/download/foo-v1.2.0.dmg"
 
         caveats do
         ^^^^^^^^^^ Use `deprecate!` instead of `caveats { discontinued }`.
@@ -55,8 +52,7 @@ RSpec.describe RuboCop::Cop::Cask::Discontinued, :config do
 
     expect_correction <<~CASK
       cask "foo" do
-        url "https://example.com/download/foo-v1.2.0.dmg",
-            verified: "example.com/download/"
+        url "https://example.com/download/foo-v1.2.0.dmg"
 
         deprecate! date: "#{Date.today}", because: :discontinued
       end

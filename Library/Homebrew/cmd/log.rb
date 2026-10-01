@@ -44,7 +44,7 @@ module Homebrew
         if args.no_named?
           git_log(HOMEBREW_REPOSITORY)
         else
-          path = T.must(args.named.to_paths.first)
+          path = args.named.to_paths.fetch(0)
           tap = Tap.from_path(path)
           git_log path.dirname, path, tap
         end

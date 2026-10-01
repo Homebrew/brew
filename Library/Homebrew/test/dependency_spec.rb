@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "dependency"
@@ -25,10 +26,6 @@ RSpec.describe Dependency do
       dep = described_class.new("foo", [:build, "bar"])
       expect(dep.tags).to eq([:build, "bar"])
     end
-
-    it "rejects nil names" do
-      expect { described_class.new(nil) }.to raise_error(ArgumentError)
-    end
   end
 
   describe "::merge_repeats" do
@@ -39,12 +36,7 @@ RSpec.describe Dependency do
       merged = described_class.merge_repeats([dep, dep2, dep3])
       expect(merged.count).to eq(2)
       expect(merged.first).to be_a described_class
-
-      foo_named_dep = merged.find { |d| d.name == "foo" }
-      expect(foo_named_dep.tags).to eq(["bar"])
-
-      xyz_named_dep = merged.find { |d| d.name == "xyz" }
-      expect(xyz_named_dep.tags).to eq(["abc"])
+      expect(merged.to_h { |d| [d.name, d.tags] }).to eq("foo" => ["bar"], "xyz" => ["abc"])
     end
 
     it "merges necessity tags" do
@@ -94,6 +86,11 @@ RSpec.describe Dependency do
     foo3 = described_class.new("foo", [:build])
     expect(foo1).not_to eq(foo3)
     expect(foo1).not_to eql(foo3)
+
+    uses_from_macos_ventura = UsesFromMacOSDependency.new("foo", [], bounds: { since: :ventura })
+    uses_from_macos_sonoma = UsesFromMacOSDependency.new("foo", [], bounds: { since: :sonoma })
+    expect(uses_from_macos_ventura).not_to eq(uses_from_macos_sonoma)
+    expect(uses_from_macos_ventura).not_to eql(uses_from_macos_sonoma)
   end
 
   describe "#tap" do
@@ -111,5 +108,51 @@ RSpec.describe Dependency do
   specify "#option_names" do
     dependency = described_class.new("foo/bar/dog")
     expect(dependency.option_names).to eq(%w[dog])
+  end
+
+  describe "with no_linkage tag" do
+    it "marks dependency as no_linkage" do
+      dep = described_class.new("foo", [:no_linkage])
+      expect(dep).to be_no_linkage
+      expect(dep).to be_required
+      expect(dep).not_to be_build
+      expect(dep).not_to be_test
+    end
+  end
+
+  describe "Dependency#installed? with bottle_os_version" do
+    subject(:dependency) { described_class.new("foo") }
+
+    it "accepts macOS bottle_os_version parameter" do
+      expect { dependency.installed?(bottle_os_version: "macOS 14") }.not_to raise_error
+    end
+
+    it "accepts Ubuntu bottle_os_version parameter" do
+      expect { dependency.installed?(bottle_os_version: "Ubuntu 22.04") }.not_to raise_error
+    end
+  end
+
+  describe "Dependency#satisfied? with bottle_os_version" do
+    subject(:dependency) { described_class.new("foo") }
+
+    it "accepts bottle_os_version parameter" do
+      expect { dependency.satisfied?(bottle_os_version: "macOS 14") }.not_to raise_error
+    end
+
+    it "accepts Ubuntu bottle_os_version parameter" do
+      expect { dependency.installed?(bottle_os_version: "Ubuntu 22.04") }.not_to raise_error
+    end
+  end
+
+  describe "UsesFromMacOSDependency#installed? with bottle_os_version" do
+    subject(:uses_from_macos) { described_class.new("foo", bounds: { since: :sonoma }) }
+
+    it "accepts macOS bottle_os_version parameter" do
+      expect { uses_from_macos.installed?(bottle_os_version: "macOS 14") }.not_to raise_error
+    end
+
+    it "accepts Ubuntu bottle_os_version parameter" do
+      expect { uses_from_macos.installed?(bottle_os_version: "Ubuntu 22.04") }.not_to raise_error
+    end
   end
 end

@@ -1,15 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-OFFICIAL_CASK_TAPS = %w[
-  cask
-].freeze
-
-OFFICIAL_CMD_TAPS = T.let({
-  "homebrew/command-not-found" => ["command-not-found-init", "which-formula", "which-update"],
-  "homebrew/test-bot"          => ["test-bot"],
-}.freeze, T::Hash[String, T::Array[String]])
-
 DEPRECATED_OFFICIAL_TAPS = %w[
   aliases
   apache
@@ -19,10 +10,12 @@ DEPRECATED_OFFICIAL_TAPS = %w[
   cask-eid
   cask-fonts
   cask-versions
+  command-not-found
   completions
   devel-only
   dupes
   emacs
+  formula-analytics
   fuse
   games
   gui
@@ -31,9 +24,11 @@ DEPRECATED_OFFICIAL_TAPS = %w[
   livecheck
   nginx
   php
+  portable-ruby
   python
   science
   services
+  test-bot
   tex
   versions
   x11

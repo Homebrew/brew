@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cask/list"
@@ -19,43 +20,49 @@ RSpec.describe Cask::List, :cask do
   end
 
   it "lists oneline" do
-    casks = %w[
-      local-caffeine
-      third-party/tap/third-party-cask
-      local-transmission
-    ].map { |c| Cask::CaskLoader.load(c) }
+    with_env(HOMEBREW_USER_CONFIG_HOME: mktmpdir) do
+      Homebrew::Trust.trust!(:tap, "third-party/tap")
+      casks = %w[
+        local-caffeine
+        third-party/tap/third-party-cask
+        local-transmission
+      ].map { |c| Cask::CaskLoader.load(c) }
 
-    casks.each do |c|
-      InstallHelper.install_with_caskfile(c)
+      casks.each do |c|
+        InstallHelper.install_with_caskfile(c)
+      end
+
+      expect do
+        described_class.list_casks(one: true)
+      end.to output(<<~EOS).to_stdout
+        local-caffeine
+        local-transmission
+        third-party-cask
+      EOS
     end
-
-    expect do
-      described_class.list_casks(one: true)
-    end.to output(<<~EOS).to_stdout
-      local-caffeine
-      local-transmission
-      third-party-cask
-    EOS
   end
 
   it "lists full names" do
-    casks = %w[
-      local-caffeine
-      third-party/tap/third-party-cask
-      local-transmission
-    ].map { |c| Cask::CaskLoader.load(c) }
+    with_env(HOMEBREW_USER_CONFIG_HOME: mktmpdir) do
+      Homebrew::Trust.trust!(:tap, "third-party/tap")
+      casks = %w[
+        local-caffeine
+        third-party/tap/third-party-cask
+        local-transmission
+      ].map { |c| Cask::CaskLoader.load(c) }
 
-    casks.each do |c|
-      InstallHelper.install_with_caskfile(c)
+      casks.each do |c|
+        InstallHelper.install_with_caskfile(c)
+      end
+
+      expect do
+        described_class.list_casks(full_name: true)
+      end.to output(<<~EOS).to_stdout
+        local-caffeine
+        local-transmission
+        third-party/tap/third-party-cask
+      EOS
     end
-
-    expect do
-      described_class.list_casks(full_name: true)
-    end.to output(<<~EOS).to_stdout
-      local-caffeine
-      local-transmission
-      third-party/tap/third-party-cask
-    EOS
   end
 
   describe "lists versions" do
@@ -93,13 +100,13 @@ RSpec.describe Cask::List, :cask do
 
   describe "given a set of installed Casks" do
     let(:caffeine) { Cask::CaskLoader.load(cask_path("local-caffeine")) }
-    let(:transmission) { Cask::CaskLoader.load(cask_path("local-transmission")) }
+    let(:transmission) { Cask::CaskLoader.load(cask_path("local-transmission-zip")) }
     let(:casks) { [caffeine, transmission] }
 
     it "lists the installed files for those Casks" do
-      casks.each { InstallHelper.install_without_artifacts_with_caskfile(_1) }
+      casks.each { InstallHelper.install_without_artifacts_with_caskfile(it) }
 
-      transmission.artifacts.select { |a| a.is_a?(Cask::Artifact::App) }.each do |artifact|
+      transmission.artifacts.grep(Cask::Artifact::App).each do |artifact|
         artifact.install_phase(command: NeverSudoSystemCommand, force: false)
       end
 
@@ -107,10 +114,39 @@ RSpec.describe Cask::List, :cask do
         described_class.list_casks(transmission, caffeine)
       end.to output(<<~EOS).to_stdout
         ==> App
-        #{transmission.config.appdir.join("Transmission.app")} (#{transmission.config.appdir.join("Transmission.app").abv})
+        #{Pathname(transmission.config.appdir).join("Transmission.app")} (#{Pathname(transmission.config.appdir).join("Transmission.app").abv})
         ==> App
-        Missing App: #{caffeine.config.appdir.join("Caffeine.app")}
+        Missing App: #{Pathname(caffeine.config.appdir).join("Caffeine.app")}
       EOS
+    end
+  end
+
+  describe "TAP_AND_NAME_COMPARISON" do
+    describe "both strings are only names" do
+      it "alphabetizes the strings" do
+        expect(%w[a b].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[a b])
+        expect(%w[b a].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[a b])
+      end
+    end
+
+    describe "both strings include tap" do
+      it "alphabetizes the strings" do
+        expect(%w[a/z/z b/z/z].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[a/z/z b/z/z])
+        expect(%w[b/z/z a/z/z].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[a/z/z b/z/z])
+
+        expect(%w[z/a/z z/b/z].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[z/a/z z/b/z])
+        expect(%w[z/b/z z/a/z].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[z/a/z z/b/z])
+
+        expect(%w[z/z/a z/z/b].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[z/z/a z/z/b])
+        expect(%w[z/z/b z/z/a].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[z/z/a z/z/b])
+      end
+    end
+
+    describe "only one string includes tap" do
+      it "prefers the string without tap" do
+        expect(%w[a/z/z z].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[z a/z/z])
+        expect(%w[z a/z/z].sort(&Cask::List::TAP_AND_NAME_COMPARISON)).to eq(%w[z a/z/z])
+      end
     end
   end
 end

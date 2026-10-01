@@ -1,5 +1,6 @@
 --dir=.
 --enable-experimental-requires-ancestor
+--enable-experimental-rspec
 --ignore=/vendor/bundle
 --ignore=/vendor/gems
 --ignore=/vendor/ruby

@@ -31,7 +31,7 @@ module Homebrew
 
         exec(*HOMEBREW_RUBY_EXEC_ARGS,
              "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
-             "-rglobal", "-rdev-cmd/irb",
+             "-rglobal", "-rbrew_irb_helpers",
              *ruby_sys_args)
       end
     end

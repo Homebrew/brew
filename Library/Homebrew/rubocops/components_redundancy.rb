@@ -13,7 +13,7 @@ module RuboCop
       # - `bottle :unneeded`/`:disable` and `bottle do` should not be simultaneously present
       # - `stable do` should not be present without a `head` spec
       # - `stable do` should not be present with only `url|checksum|mirror|version`
-      # - `head do` should not be present with only `url`
+      # - `head do` should not be present with only `url|branch`
       class ComponentsRedundancy < FormulaCop
         HEAD_MSG = "`head` and `head do` should not be simultaneously present"
         BOTTLE_MSG = "`bottle :modifier` and `bottle do` should not be simultaneously present"
@@ -54,8 +54,9 @@ module RuboCop
           head_block = find_block(body_node, :head)
           if head_block && !head_block.body.nil?
             child_nodes = head_block.body.begin_type? ? head_block.body.child_nodes : [head_block.body]
-            if child_nodes.all? { |n| n.send_type? && n.method_name == :url }
-              problem "`head do` should not be present with only `url`"
+            shorthand_head_methods = [:url, :branch]
+            if child_nodes.all? { |n| n.send_type? && shorthand_head_methods.include?(n.method_name) }
+              problem "`head do` should not be present with only #{shorthand_head_methods.join("/")}"
             end
           end
 

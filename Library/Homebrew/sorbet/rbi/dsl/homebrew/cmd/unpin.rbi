@@ -10,4 +10,16 @@ class Homebrew::Cmd::Unpin
   def args; end
 end
 
-class Homebrew::Cmd::Unpin::Args < Homebrew::CLI::Args; end
+class Homebrew::Cmd::Unpin::Args < Homebrew::CLI::Args
+  sig { returns(T::Boolean) }
+  def cask?; end
+
+  sig { returns(T::Boolean) }
+  def casks?; end
+
+  sig { returns(T::Boolean) }
+  def formula?; end
+
+  sig { returns(T::Boolean) }
+  def formulae?; end
+end

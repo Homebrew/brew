@@ -12,17 +12,15 @@ module OS
           else
             MacOS.version
           end
-          if ::Hardware::CPU.arch == :arm64
+          if ::Hardware::CPU.arm64?
             :arm_vortex_tempest
           # This cannot use a newer CPU e.g. haswell because Rosetta 2 does not
           # support AVX instructions in bottles:
           #   https://github.com/Homebrew/homebrew-core/issues/67713
           elsif version >= :ventura
             :westmere
-          elsif version >= :mojave
-            :nehalem
           else
-            super
+            :nehalem
           end
         end
       end

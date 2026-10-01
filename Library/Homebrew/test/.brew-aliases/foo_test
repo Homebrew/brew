@@ -1,0 +1,6 @@
+#! /bin/bash
+# alias: brew foo-test
+#:  * `foo-test` [args...]
+#:    `brew foo-test` is an alias for `brew bar`
+brew bar $*
+

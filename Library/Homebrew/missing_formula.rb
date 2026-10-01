@@ -2,10 +2,14 @@
 # frozen_string_literal: true
 
 require "formulary"
+require "utils"
+require "utils/output"
 
 module Homebrew
   # Helper module for checking if there is a reason a formula is missing.
   module MissingFormula
+    extend Utils::Output::Mixin
+
     class << self
       sig { params(name: String, silent: T::Boolean, show_info: T::Boolean).returns(T.nilable(String)) }
       def reason(name, silent: false, show_info: false)
@@ -32,7 +36,7 @@ module Homebrew
           MacRuby has been discontinued. Consider RubyMotion:
             brew install --cask rubymotion
         EOS
-        when /(lib)?lzma/ then <<~EOS
+        when /(?:lib)?lzma/ then <<~EOS
           lzma is now part of the xz formula:
             brew install xz
         EOS
@@ -102,27 +106,45 @@ module Homebrew
           new_tap = old_tap.tap_migrations[name]
           next unless new_tap
 
-          new_tap_user, new_tap_repo, new_tap_new_name = new_tap.split("/")
-          new_tap_name = "#{new_tap_user}/#{new_tap_repo}"
+          same_tap = new_tap == name
+          migrated_tap_name = Utils.tap_from_full_name(new_tap)
+          same_tap_new_name = !same_tap && migrated_tap_name.nil? && new_tap.exclude?("/")
+          new_tap_name = if migrated_tap_name
+            migrated_tap_name
+          elsif new_tap.include?("/")
+            new_tap
+          elsif same_tap_new_name
+            old_tap.name
+          end
+          new_tap_new_name = if migrated_tap_name
+            Utils.name_from_full_name(new_tap)
+          elsif same_tap_new_name
+            new_tap
+          end
 
-          message = <<~EOS
-            It was migrated from #{old_tap} to #{new_tap}.
-          EOS
-          break if new_tap_name == CoreTap.instance.name
+          message = if same_tap
+            "It was migrated from a formula to a cask.\n"
+          else
+            "It was migrated from #{old_tap} to #{new_tap}.\n"
+          end
 
-          install_cmd = if new_tap_name.start_with?("homebrew/cask")
+          install_cmd = if new_tap_name&.start_with?("homebrew/cask") || same_tap
             "install --cask"
           else
             "install"
           end
           new_tap_new_name ||= name
 
-          message += <<~EOS
-            You can access it again by running:
-              brew tap #{new_tap_name}
-            And then you can install it by running:
-              brew #{install_cmd} #{new_tap_new_name}
-          EOS
+          message += if same_tap || same_tap_new_name || new_tap_name == CoreTap.instance.name
+            "You can install it by running:\n"
+          else
+            <<~EOS
+              You can access it again by running:
+                brew tap #{new_tap_name}
+              And then you can install it by running:
+            EOS
+          end
+          message += "  brew #{install_cmd} #{new_tap_new_name}\n"
           break
         end
 
@@ -168,10 +190,10 @@ module Homebrew
           log_command = "git log --since='1 month ago' --diff-filter=D " \
                         "--name-only --max-count=1 " \
                         "--format=%H\\\\n%h\\\\n%B -- #{relative_path}"
-          hash, short_hash, *commit_message, relative_path =
+          hash, short_hash, *commit_message, relative_path_string =
             Utils.popen_read(log_command).gsub("\\n", "\n").lines.map(&:chomp)
 
-          if hash.blank? || short_hash.blank? || relative_path.blank?
+          if hash.blank? || short_hash.blank? || relative_path_string.blank?
             ofail "No previously deleted formula found." unless silent
             return
           end
@@ -186,7 +208,7 @@ module Homebrew
               #{commit_message}
 
             To show the formula before removal, run:
-              git -C "$(brew --repo #{tap})" show #{short_hash}^:#{relative_path}
+              git -C "$(brew --repo #{tap})" show #{short_hash}^:#{relative_path_string}
 
             If you still use this formula, consider creating your own tap:
               #{Formatter.url("https://docs.brew.sh/How-to-Create-and-Maintain-a-Tap")}

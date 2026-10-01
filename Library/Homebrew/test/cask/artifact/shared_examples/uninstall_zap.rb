@@ -1,19 +1,27 @@
+# typed: true
 # frozen_string_literal: true
 
 require "benchmark"
+require "services/system"
 
 RSpec.shared_examples "#uninstall_phase or #zap_phase" do
+  extend Test::Helper::TestEach
+
   subject { artifact }
 
   let(:artifact_dsl_key) { described_class.dsl_key }
   let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
   let(:fake_system_command) { class_double(SystemCommand) }
 
+  before do
+    allow(fake_system_command).to receive(:is_a?) { |val| SystemCommand.is_a?(val) }
+    allow(Cask::Artifact::AbstractUninstall).to receive(:ancestor_bundle_ids).and_return([])
+  end
+
   context "when using :launchctl" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-launchctl")) }
     let(:launchctl_list_cmd) { %w[/bin/launchctl list my.fancy.package.service] }
     let(:launchctl_remove_cmd) { %w[/bin/launchctl remove my.fancy.package.service] }
-    let(:unknown_response) { "launchctl list returned unknown response\n" }
     let(:service_info) do
       <<~EOS
         {
@@ -30,24 +38,12 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
 
     it "works when job is owned by user" do
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         false,
-          sudo_as_root: false,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         true,
-          sudo_as_root: true,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: false)
+        .and_return([service_info, true, :launchctl_print])
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: true)
+        .and_return(["", false, :launchctl_list])
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
@@ -58,38 +54,43 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
 
     it "works when job is owned by system" do
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         false,
-          sudo_as_root: false,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service"],
-          print_stderr: false,
-          sudo:         true,
-          sudo_as_root: true,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: false)
+        .and_return(["", false, :launchctl_list])
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: true)
+        .and_return([service_info, true, :launchctl_print])
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
-        must_succeed: true, sudo: true, sudo_as_root: true)
+        must_succeed: false, sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+    end
+
+    it "does not fail when sudo removal fails" do
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: false)
+        .and_return(["", false, :launchctl_list])
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service)
+        .with("my.fancy.package.service", sudo: true)
+        .and_return([service_info, true, :launchctl_print])
+
+      expect(fake_system_command).to receive(:run)
+        .with("/bin/launchctl", args: ["remove", "my.fancy.package.service"],
+        must_succeed: false, sudo: true, sudo_as_root: true)
+        .and_return(instance_double(SystemCommand::Result, success?: false))
+
+      expect do
+        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      end.not_to raise_error
     end
   end
 
   context "when using :launchctl with regex wildcard" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-launchctl-wildcard")) }
     let(:launchctl_regex) { "my.fancy.package.service.*" }
-    let(:unknown_response) { "launchctl list returned unknown response\n" }
     let(:service_info) do
       <<~EOS
         {
@@ -114,33 +115,24 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       EOS
     end
 
+    before do
+      allow(fake_system_command).to receive(:run)
+        .with("/bin/launchctl", hash_including(args: ["print", anything]))
+        .and_return(instance_double(SystemCommand::Result, success?: false))
+    end
+
     it "searches installed launchctl items" do
       expect(subject).to receive(:find_launchctl_with_wildcard)
         .with(launchctl_regex)
         .and_return(["my.fancy.package.service.12345"])
 
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service.12345"],
-          print_stderr: false,
-          sudo:         false,
-          sudo_as_root: false,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: unknown_response))
-      allow(fake_system_command).to receive(:run)
-        .with(
-          "/bin/launchctl",
-          args:         ["list", "my.fancy.package.service.12345"],
-          print_stderr: false,
-          sudo:         true,
-          sudo_as_root: true,
-        )
-        .and_return(instance_double(SystemCommand::Result, stdout: service_info))
+      allow(Homebrew::Services::System).to receive(:launchctl_find_service) do |_label, sudo:|
+        sudo ? [service_info, true, :launchctl_print] : ["", false, :launchctl_list]
+      end
 
       expect(fake_system_command).to receive(:run)
         .with("/bin/launchctl", args: ["remove", "my.fancy.package.service.12345"],
-        must_succeed: true, sudo: true, sudo_as_root: true)
+        must_succeed: false, sudo: true, sudo_as_root: true)
         .and_return(instance_double(SystemCommand::Result, success?: true))
 
       subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
@@ -151,9 +143,8 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
         .with("/bin/launchctl", args: ["list"])
         .and_return(instance_double(SystemCommand::Result, stdout: launchctl_list))
 
-      expect(subject.send(:find_launchctl_with_wildcard,
-                          "my.fancy.package.service.*")).to eq(["my.fancy.package.service.12345",
-                                                                "my.fancy.package.service.test"])
+      expect(subject.find_launchctl_with_wildcard("my.fancy.package.service.*"))
+        .to eq(["my.fancy.package.service.12345", "my.fancy.package.service.test"])
     end
   end
 
@@ -218,6 +209,18 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       end.to output(/Not logged into a GUI; skipping quitting application ID 'my.fancy.package.app'\./).to_stderr
     end
 
+    it "does not quit the application hosting the `brew` process" do
+      allow(User.current).to receive(:gui?).and_return true
+      allow(subject).to receive(:running?).with(bundle_id).and_return(true)
+      allow(Cask::Artifact::AbstractUninstall).to receive(:ancestor_bundle_ids).and_return([bundle_id])
+
+      expect(subject).not_to receive(:quit)
+      expect do
+        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      end.to output(/Skipping quitting application 'my.fancy.package.app' as `brew` is running inside it\./)
+        .to_stderr
+    end
+
     it "quits a running application" do
       allow(User.current).to receive(:gui?).and_return true
 
@@ -231,44 +234,34 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       end.to output(/Application 'my.fancy.package.app' quit successfully\./).to_stdout
     end
 
-    it "does not attempt to quit when upgrading or reinstalling" do
-      next if artifact_dsl_key == :zap
-
-      allow(User.current).to receive(:gui?).and_return true
-
-      expect(subject).not_to receive(:running?)
-      expect(subject).not_to receive(:quit)
-
-      subject.public_send(:"#{artifact_dsl_key}_phase", upgrade: true, command: fake_system_command)
-      subject.public_send(:"#{artifact_dsl_key}_phase", reinstall: true, command: fake_system_command)
-    end
-
-    it "tries to quit the application for 10 seconds" do
+    it "tries to quit the application" do
       allow(User.current).to receive(:gui?).and_return true
 
       allow(subject).to receive(:running?).with(bundle_id).and_return(true)
       allow(subject).to receive(:quit).with(bundle_id)
                                       .and_return(instance_double(SystemCommand::Result, success?: false))
 
-      time = Benchmark.measure do
-        expect do
-          subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
-        end.to output(/Application 'my.fancy.package.app' did not quit\./).to_stderr
-      end
+      allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
 
-      expect(time.real).to be_within(3).of(10)
+      expect do
+        subject.public_send(:"#{artifact_dsl_key}_phase", command: fake_system_command)
+      end.to output(/Application 'my.fancy.package.app' did not quit\./).to_stderr
     end
   end
 
   context "when using :signal" do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-signal")) }
+
     let(:bundle_id) { "my.fancy.package.app" }
     let(:signals) { %w[TERM KILL] }
     let(:unix_pids) { [12_345, 67_890] }
 
+    before { allow(Cask::Artifact::AbstractUninstall).to receive(:owner_uid).and_return(Process.uid) }
+
     it "is supported" do
       allow(subject).to receive(:running_processes).with(bundle_id)
                                                    .and_return(unix_pids.map { |pid| [pid, 0, bundle_id] })
+      allow(subject).to receive(:sleep).with(3)
 
       signals.each do |signal|
         expect(Process).to receive(:kill).with(signal, *unix_pids).and_return(1)
@@ -278,7 +271,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
 
     it "does not send signal when upgrading or reinstalling" do
-      next if artifact_dsl_key == :zap
+      skip "only uninstall has upgrade and reinstall phases" if artifact_dsl_key == :zap
 
       allow(subject).to receive(:running_processes).with(bundle_id)
                                                    .and_return(unix_pids.map { |pid| [pid, 0, bundle_id] })
@@ -292,9 +285,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
   end
 
-  [:delete, :trash].each do |directive|
-    next if directive == :trash && ENV["HOMEBREW_TESTS_COVERAGE"].nil?
-
+  test_each([:delete, *(:trash unless ENV["HOMEBREW_TESTS_COVERAGE"].nil?)]) do |directive|
     context "when using :#{directive}" do
       let(:dir) { TEST_TMPDIR }
       let(:absolute_path) { Pathname.new("#{dir}/absolute_path") }
@@ -305,23 +296,20 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
       let(:fake_system_command) { NeverSudoSystemCommand }
       let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-#{directive}")) }
 
-      around do |example|
+      before do
         ENV["HOME"] = dir
-
         FileUtils.touch paths
 
-        example.run
-      ensure
-        FileUtils.rm_f paths
-      end
-
-      before do
         allow_any_instance_of(Cask::Artifact::AbstractUninstall).to receive(:trash_paths)
           .and_wrap_original do |method, *args, **kwargs|
             method.call(*args, **kwargs).tap do |trashed, _|
               FileUtils.rm_r trashed
             end
           end
+      end
+
+      after do
+        FileUtils.rm_f paths
       end
 
       it "is supported" do
@@ -336,7 +324,7 @@ RSpec.shared_examples "#uninstall_phase or #zap_phase" do
     end
   end
 
-  [:script, :early_script].each do |script_type|
+  test_each([:script, :early_script]) do |script_type|
     context "when using #{script_type.inspect}" do
       let(:fake_system_command) { NeverSudoSystemCommand }
       let(:token) { "with-#{artifact_dsl_key}-#{script_type}".tr("_", "-") }

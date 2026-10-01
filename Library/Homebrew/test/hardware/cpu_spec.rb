@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "hardware"
@@ -16,6 +17,13 @@ RSpec.describe Hardware::CPU do
     it "returns the current CPU's type as a symbol, or :dunno if it cannot be detected" do
       expect(cpu_types).to include(described_class.type)
     end
+
+    it "falls back when hw.cputype cannot be detected on a Mac", :needs_macos do
+      expect(described_class).to receive(:sysctl_int).with("hw.cputype").and_return(0)
+
+      # Unlike the previous test, we can usually assume this will never be `dunno` on a Mac.
+      expect(described_class.type).not_to eq(:dunno)
+    end
   end
 
   describe "::family" do
@@ -32,12 +40,14 @@ RSpec.describe Hardware::CPU do
         :arm_brava,
         :arm_donan,
         :arm_firestorm_icestorm,
+        :arm_hidra,
         :arm_hurricane_zephyr,
         :arm_ibiza,
         :arm_lightning_thunder,
         :arm_lobos,
         :arm_monsoon_mistral,
         :arm_palma,
+        :arm_sotra,
         :arm_twister,
         :arm_typhoon,
         :arm_vortex_tempest,

@@ -11,9 +11,6 @@ class Homebrew::DevCmd::Bottle
 end
 
 class Homebrew::DevCmd::Bottle::Args < Homebrew::CLI::Args
-  sig { returns(T.nilable(String)) }
-  def committer; end
-
   sig { returns(T::Boolean) }
   def force_core_tap?; end
 

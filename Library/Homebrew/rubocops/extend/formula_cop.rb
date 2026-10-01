@@ -23,7 +23,7 @@ module RuboCop
         prop :node, RuboCop::AST::ClassNode
         prop :class_node, RuboCop::AST::ConstNode
         prop :parent_class_node, RuboCop::AST::ConstNode
-        prop :body_node, RuboCop::AST::Node
+        prop :body_node, T.nilable(RuboCop::AST::Node)
       end
 
       # This method is called by RuboCop and is the main entry point.
@@ -37,8 +37,7 @@ module RuboCop
         @body = T.let(body, T.nilable(RuboCop::AST::Node))
 
         @formula_name = T.let(Pathname.new(@file_path).basename(".rb").to_s, T.nilable(String))
-        @tap_style_exceptions = T.let(nil, T.nilable(T::Hash[Symbol, T::Array[String]]))
-        audit_formula(FormulaNodes.new(node:, class_node:, parent_class_node:, body_node: T.must(@body)))
+        audit_formula(FormulaNodes.new(node:, class_node:, parent_class_node:, body_node: body))
       end
 
       sig { abstract.params(formula_nodes: FormulaNodes).void }
@@ -51,12 +50,12 @@ module RuboCop
       sig {
         params(
           urls: T::Array[RuboCop::AST::Node], regex: Regexp,
-          _block: T.proc.params(arg0: T::Array[RuboCop::AST::Node], arg1: String, arg2: Integer).void
+          _block: T.proc.params(arg0: MatchData, arg1: String, arg2: Integer).void
         ).void
       }
       def audit_urls(urls, regex, &_block)
         urls.each_with_index do |url_node, index|
-          url_string_node = parameters(url_node).first
+          url_string_node = parameters(url_node).fetch(0)
           url_string = string_content(url_string_node)
           match_object = regex_match_group(url_string_node, regex)
           next unless match_object
@@ -86,7 +85,6 @@ module RuboCop
       end
 
       # Returns true if given dependency name and dependency type exist in given dependency method call node.
-      # TODO: Add case where key of hash is an array
       sig {
         params(
           node: RuboCop::AST::Node, name: T.nilable(T.any(String, Symbol)), type: Symbol,
@@ -125,7 +123,7 @@ module RuboCop
       EOS
 
       def_node_search :dependency_type_hash_match?, <<~EOS
-        (hash (pair ({str sym} _) ({str sym} %1)))
+        (hash (pair ({str sym} _) {({str sym} %1) (array <({str sym} %1) ...>)}))
       EOS
 
       def_node_search :dependency_name_hash_match?, <<~EOS
@@ -145,20 +143,21 @@ module RuboCop
       def get_checksum_node(call)
         return if parameters(call).empty? || parameters(call).nil?
 
-        if parameters(call).first.str_type?
+        if parameters(call).fetch(0).str_type?
           parameters(call).first
         # sha256 is passed as a key-value pair in bottle blocks
-        elsif parameters(call).first.hash_type?
-          if parameters(call).first.keys.first.value == :cellar
+        elsif parameters(call).fetch(0).hash_type?
+          hash_node = T.cast(parameters(call).fetch(0), RuboCop::AST::HashNode)
+          if hash_node.keys.first.value == :cellar
             # sha256 :cellar :any, :tag "hexdigest"
-            parameters(call).first.values.last
-          elsif parameters(call).first.keys.first.is_a?(RuboCop::AST::SymbolNode)
+            hash_node.values.last
+          elsif hash_node.keys.first.is_a?(RuboCop::AST::SymbolNode)
             # sha256 :tag "hexdigest"
-            parameters(call).first.values.first
+            hash_node.values.first
           else
             # Legacy bottle block syntax
             # sha256 "hexdigest" => :tag
-            parameters(call).first.keys.first
+            hash_node.keys.first
           end
         end
       end
@@ -172,6 +171,12 @@ module RuboCop
         end
       end
 
+      # The name of the formula being audited.
+      sig { returns(String) }
+      def formula_name
+        @formula_name || raise("`formula_name` is only available inside `audit_formula`")
+      end
+
       # Returns true if the formula is versioned.
       sig { returns(T::Boolean) }
       def versioned_formula?
@@ -183,7 +188,7 @@ module RuboCop
       # Returns the formula tap.
       sig { returns(T.nilable(String)) }
       def formula_tap
-        return unless (match_obj = @file_path&.match(%r{/(homebrew-\w+)/}))
+        return unless (match_obj = @file_path&.match(%r{(?:/Taps/[\w-]+|^)/(homebrew-[\w-]+)/}))
 
         match_obj[1]
       end
@@ -218,26 +223,33 @@ module RuboCop
       # Defaults to the current formula being checked.
       sig { params(list: Symbol, formula: T.nilable(String)).returns(T::Boolean) }
       def tap_style_exception?(list, formula = nil)
-        if @tap_style_exceptions.nil? && !formula_tap.nil?
-          @tap_style_exceptions = {}
+        return false if formula_tap.nil? || (exceptions_dir = style_exceptions_dir).nil?
 
-          Pathname.glob("#{style_exceptions_dir}/*.json").each do |exception_file|
+        @tap_style_exceptions = T.let(
+          @tap_style_exceptions,
+          T.nilable(T::Hash[String, T::Hash[Symbol, T::Array[String]]]),
+        )
+        @tap_style_exceptions ||= {}
+        unless @tap_style_exceptions.key?(exceptions_dir)
+          tap_style_exceptions = T.let({}, T::Hash[Symbol, T::Array[String]])
+          Pathname.glob("#{exceptions_dir}/*.json").each do |exception_file|
             list_name = exception_file.basename.to_s.chomp(".json").to_sym
             list_contents = begin
               JSON.parse exception_file.read
             rescue JSON::ParserError
               nil
             end
-            next if list_contents.nil? || list_contents.count.zero?
+            next if list_contents.nil? || list_contents.none?
 
-            @tap_style_exceptions[list_name] = list_contents
+            tap_style_exceptions[list_name] = list_contents
           end
+          @tap_style_exceptions[exceptions_dir] = tap_style_exceptions
         end
 
-        return false if @tap_style_exceptions.nil? || @tap_style_exceptions.count.zero?
-        return false unless @tap_style_exceptions.key? list
+        tap_style_exceptions = @tap_style_exceptions.fetch(exceptions_dir)
+        return false unless tap_style_exceptions.key? list
 
-        T.must(@tap_style_exceptions[list]).include?(formula || @formula_name)
+        tap_style_exceptions.fetch(list).include?(formula || @formula_name)
       end
 
       private

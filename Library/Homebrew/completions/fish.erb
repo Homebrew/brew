@@ -3,7 +3,9 @@
 #
 # - For changes to a command under `COMMANDS` or `DEVELOPER COMMANDS` sections):
 #   - Find the source file in `Library/Homebrew/[dev-]cmd/<command>.{rb,sh}`.
-#   - For `.rb` files, edit the `<command>_args` method.
+#   - For `.rb` files, edit the `cmd_args` block. For subcommand metadata,
+#     edit `Library/Homebrew/<command>/subcommand.rb` and
+#     `Library/Homebrew/<command>/subcommand/*.rb` if they exist.
 #   - For `.sh` files, edit the top comment, being sure to use the line prefix
 #     `#:` for the comments to be recognized as documentation. If in doubt,
 #     compare with already documented commands.
@@ -36,6 +38,14 @@ function __fish_brew_args -d "Returns a list of all arguments given to brew"
     end
 end
 
+function __fish_brew_expand_alias -a cmd -d "Expands a Homebrew command alias"
+    switch $cmd
+<%= aliases.join("\n") + "\n" %>
+        case '*'
+            echo $cmd
+    end
+end
+
 function __fish_brew_opts -d "Only arguments starting with a dash (options)"
     string match --all -- '-*' (__fish_brew_args)
 end
@@ -50,11 +60,12 @@ end
 function __fish_brew_command -d "Helps matching the first argument of brew"
     set args (__fish_brew_args)
     set -q args[1]; or return 1
+    set -l cmd (__fish_brew_expand_alias $args[1])
 
     if count $argv
-        contains -- $args[1] $argv
+        contains -- $cmd $argv
     else
-        echo $args[1]
+        echo $cmd
     end
 end
 
@@ -99,7 +110,7 @@ end
 # These functions return lists of suggestions for arguments completion
 
 function __fish_brew_suggest_formulae_all -d 'Lists all available formulae with their descriptions'
-    brew formulae
+    HOMEBREW_COMPLETION=1 brew formulae
 end
 
 function __fish_brew_suggest_formulae_installed
@@ -126,7 +137,7 @@ function __fish_brew_suggest_formula_options -a formula -d "List installation op
 end
 
 function __fish_brew_suggest_casks_all -d "Lists locally available casks"
-    brew casks
+    HOMEBREW_COMPLETION=1 brew casks
 end
 
 function __fish_brew_suggest_casks_installed -d "Lists installed casks"
@@ -145,12 +156,37 @@ function __fish_brew_suggest_taps_installed -d "List all available taps"
     | string replace (brew --repo)/Library/Taps/ ""
 end
 
-function __fish_brew_suggest_commands -d "Lists all commands names, including aliases"
-    if test -f (brew --cache)/all_commands_list.txt
-        cat (brew --cache)/all_commands_list.txt
-    else
-        cat (brew --repo)/completions/internal_commands_list.txt
+function __fish_brew_suggest_aliases -d "Lists user-defined aliases"
+    set -l aliases_dir "$HOME/.config/brew-aliases"
+    test -d $aliases_dir; or set aliases_dir "$HOME/.brew-aliases"
+    test -d $aliases_dir; or return
+
+    for file in $aliases_dir/*
+        test -f $file; and not string match -q '*~' -- $file; or continue
+        set -l alias_name (string replace -r '^.*/' '' -- $file)
+        begin
+            read -l line
+            if read -l line
+                set -l match (string match -rg 'alias: brew ([^[:space:]]+)' -- $line)
+                test -n "$match"; and set alias_name $match[1]
+            end
+        end < $file
+        echo $alias_name
     end
+end
+
+function __fish_brew_suggest_commands -d "Lists all command names"
+    set -l commands
+    if test -f (brew --cache)/all_commands_list.txt
+        set commands (cat (brew --cache)/all_commands_list.txt)
+    else
+        set commands (cat (brew --repo)/completions/internal_commands_list.txt)
+    end
+    for command in $commands
+        set -l expanded_command (__fish_brew_expand_alias $command)
+        test "$expanded_command" = "$command"; and echo $command
+    end
+    __fish_brew_suggest_aliases
 end
 
 function __fish_brew_suggest_diagnostic_checks -d "List available diagnostic checks"
@@ -159,8 +195,8 @@ end
 
 function __fish_brew_suggest_services -d "Lists available services"
     command find (brew --cellar) -mindepth 3 -maxdepth 3 -name '*.service' \
-      | awk -F'homebrew.|.service' '{print $3}' \
-      | sort -d
+      | awk -F/ '{print $(NF-2)}' \
+      | sort -u
 end
 
 

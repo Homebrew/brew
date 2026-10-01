@@ -1,71 +1,73 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
-# How to Build Software Outside Homebrew with Homebrew `keg_only` Dependencies
+# Building Software with Homebrew Keg-Only Dependencies
 
-## What does "keg-only" mean?
+A keg-only formula is installed in its own prefix but is not linked into Homebrew's common `bin`, `lib` and `include` directories.
+This prevents a Homebrew package from shadowing software provided by macOS or conflicting with another formula.
+See the [FAQ explanation of keg-only formulae](FAQ.md#what-does-keg-only-mean).
 
-The [FAQ](FAQ.md#what-does-keg-only-mean) briefly explains this.
+- Do not replace macOS tools or libraries with manual symlinks.
+- Avoid `brew link --force` because it makes unrelated builds and system commands resolve a different dependency globally.
+- Pass the required location only to the build that needs it.
 
-As an example:
+## Discover the prefix
 
-*OpenSSL isn’t symlinked into my `PATH` and non-Homebrew builds can’t find it!*
-
-This is because Homebrew isolates it within its individual prefix, rather than symlinking to the publicly available location.
-
-## Advice on potential workarounds
-
-A number of people in this situation are either forcefully linking keg-only tools with `brew link --force` or moving default system utilities out of the `PATH` and replacing them with manually created symlinks to the Homebrew-provided tool.
-
-*Please* do not remove macOS native tools and forcefully replace them with symlinks back to the Homebrew-provided tool. Doing so can and likely will cause significant breakage when attempting to build software.
-
-`brew link --force` creates a warning in `brew doctor` to let both you and maintainers know that a link exists that could be causing issues. If you’ve linked something and there’s no problems at all? Feel free to ignore the `brew doctor` error.
-
-## How do I use those tools outside of Homebrew?
-
-Useful, reliable alternatives exist should you wish to use keg-only tools outside of Homebrew.
-
-### Build flags
-
-You can set flags to give configure scripts or Makefiles a nudge in the right direction. An example of flag setting:
+Use `brew --prefix <formula>` rather than embedding `/opt/homebrew`, `/usr/local` or a Cellar version:
 
 ```sh
-./configure --prefix=/Users/Dave/Downloads CFLAGS="-I$(brew --prefix openssl)/include" LDFLAGS="-L$(brew --prefix openssl)/lib"
+brew --prefix openssl@3
 ```
 
-An example using `pip`:
+The returned `opt` path remains stable when the formula is upgraded.
+
+## Compiler and linker flags
+
+For a build system that accepts compiler and linker flags:
 
 ```sh
-CFLAGS="-I$(brew --prefix icu4c)/include" LDFLAGS="-L$(brew --prefix icu4c)/lib" pip install pyicu
+CPPFLAGS="-I$(brew --prefix openssl@3)/include" \
+  LDFLAGS="-L$(brew --prefix openssl@3)/lib" \
+  ./configure
 ```
 
-### `PATH` modification
+Use `CPPFLAGS` for C or C++ preprocessor include paths unless upstream explicitly documents `CFLAGS` or `CXXFLAGS`.
+These flags affect only that command.
 
-You can temporarily prepend your `PATH` with the tool’s `bin` directory, such as:
+## Executable lookup
+
+Temporarily prepend a keg-only formula's executable directory when a build requires its tools:
 
 ```sh
-export PATH="$(brew --prefix openssl)/bin:${PATH}"
+PATH="$(brew --prefix FORMULA)/bin:$PATH" make
 ```
 
-This will prepend the directory to your `PATH`, ensuring any build script that searches the `PATH` will find it first.
+Do not add a keg-only dependency to a global shell `PATH` unless you want it to override the platform command in every future shell.
 
-Changing your `PATH` using this command ensures the change only exists for the duration of the shell session. Once the current session ends, the `PATH` reverts to its prior state.
+## `pkg-config`
 
-### `pkg-config` detection
-
-If the tool you are attempting to build is [pkg-config](https://en.wikipedia.org/wiki/Pkg-config) aware, you can amend your `PKG_CONFIG_PATH` to find a keg-only utility’s `.pc` files, if it has any. Not all formulae ship with these files.
-
-An example of this is:
+When the dependency installs `.pc` metadata, point `pkg-config` to it for one command:
 
 ```sh
-export PKG_CONFIG_PATH="$(brew --prefix openssl)/lib/pkgconfig"
+PKG_CONFIG_PATH="$(brew --prefix openssl@3)/lib/pkgconfig" pkg-config --cflags --libs openssl
 ```
 
-If you’re curious about the `PKG_CONFIG_PATH` variable, `man pkg-config` goes into more detail.
+Some formulae use `lib/pkgconfig`, some use `share/pkgconfig` and some provide no `pkg-config` metadata.
+Inspect the formula prefix rather than assuming a file exists.
 
-You can get `pkg-config` to print the default search path with:
+## CMake
+
+Add the formula prefix to `CMAKE_PREFIX_PATH` when a CMake project uses package configuration or Common Package Specification files:
 
 ```sh
-pkg-config --variable pc_path pkg-config
+CMAKE_PREFIX_PATH="$(brew --prefix openssl@3)" cmake -S . -B build
 ```
+
+If more than one prefix is required, separate them with the platform's normal path separator and preserve any intentional existing value.
+
+## Language packages
+
+Build Python and other language extensions inside an isolated project environment.
+Pass the same include, library or package-discovery settings to that environment's build command.
+Do not change ownership of Homebrew or macOS directories to make a language package install succeed.

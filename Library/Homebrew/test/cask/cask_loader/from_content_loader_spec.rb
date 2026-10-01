@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 RSpec.describe Cask::CaskLoader::FromContentLoader do

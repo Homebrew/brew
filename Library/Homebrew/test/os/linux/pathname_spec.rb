@@ -1,18 +1,20 @@
+# typed: true
 # frozen_string_literal: true
 
 require "extend/pathname"
 
 RSpec.describe Pathname do
-  let(:elf_dir) { described_class.new "#{TEST_FIXTURE_DIR}/elf" }
-  let(:sho) { elf_dir/"libforty.so.0" }
-  let(:sho_without_runpath_rpath) { elf_dir/"libhello.so.0" }
-  let(:exec) { elf_dir/"hello_with_rpath" }
+  let(:elf_dir) { ELFPathname.wrap("#{TEST_FIXTURE_DIR}/elf") }
+  let(:sho) { ELFPathname.wrap(elf_dir/"libforty.so.0") }
+  let(:sho_without_runpath_rpath) { ELFPathname.wrap(elf_dir/"libhello.so.0") }
+  let(:exec) { ELFPathname.wrap(elf_dir/"hello_with_rpath") }
+  let(:static_pie) { ELFPathname.wrap(elf_dir/"static_pie") }
 
   def patch_elfs
     mktmpdir do |tmp_dir|
       %w[c.elf].each do |elf|
         FileUtils.cp(elf_dir/elf, tmp_dir/elf)
-        yield tmp_dir/elf
+        yield ELFPathname.wrap(tmp_dir/elf)
       end
     end
   end
@@ -20,23 +22,28 @@ RSpec.describe Pathname do
   describe "#interpreter" do
     it "returns interpreter" do
       expect(exec.interpreter).to eq "/lib64/ld-linux-x86-64.so.2"
-    end
-
-    it "returns nil when absent" do
       expect(sho.interpreter).to be_nil
     end
   end
 
+  describe "#pie?" do
+    context "with a static position-independent executable" do
+      it "is true" do
+        expect(static_pie.pie?).to be true
+      end
+    end
+
+    context "with an executable that lacks the flag" do
+      it "is false" do
+        expect(exec.pie?).to be false
+      end
+    end
+  end
+
   describe "#rpath" do
-    it "prefers runpath over rpath when both are present" do
+    it "returns rpath" do
       expect(sho.rpath).to eq "runpath"
-    end
-
-    it "returns runpath or rpath" do
       expect(exec.rpath).to eq "@@HOMEBREW_PREFIX@@/lib"
-    end
-
-    it "returns nil when absent" do
       expect(sho_without_runpath_rpath.rpath).to be_nil
     end
   end
@@ -46,7 +53,11 @@ RSpec.describe Pathname do
     let(:short_prefix) { "/home/dwarf" }
     let(:standard_prefix) { "/home/linuxbrew/.linuxbrew" }
     let(:long_prefix) { "/home/organized/very organized/litter/more organized than/your words can describe" }
-    let(:prefixes) { [short_prefix, standard_prefix, long_prefix] }
+    let(:prefixes) { [short_prefix, standard_prefix, long_prefix].map { |prefix| ELFPathname.wrap(prefix) } }
+
+    it "does not evaluate the patcher signature at runtime" do
+      expect(T::Utils.signature_for_instance_method(ELFShim, :patchelf_patcher)).to be_nil
+    end
 
     # file is copied as modified_elf to avoid caching issues
     it "only interpreter" do
@@ -55,8 +66,8 @@ RSpec.describe Pathname do
           interpreter = elf.interpreter.gsub(placeholder_prefix, new_prefix)
           elf.patch!(interpreter:)
 
-          modified_elf = elf.dirname/"mod.#{elf.basename}"
-          FileUtils.cp(elf, modified_elf)
+          modified_elf = ELFPathname.wrap(elf.dirname/"mod.#{elf.basename}")
+          FileUtils.cp(elf, modified_elf.to_path)
           expect(modified_elf.interpreter).to eq interpreter
           expect(modified_elf.rpath).to eq "@@HOMEBREW_PREFIX@@/lib"
         end
@@ -69,8 +80,8 @@ RSpec.describe Pathname do
           rpath = elf.rpath.gsub(placeholder_prefix, new_prefix)
           elf.patch!(rpath:)
 
-          modified_elf = elf.dirname/"mod.#{elf.basename}"
-          FileUtils.cp(elf, modified_elf)
+          modified_elf = ELFPathname.wrap(elf.dirname/"mod.#{elf.basename}")
+          FileUtils.cp(elf, modified_elf.to_path)
           expect(modified_elf.interpreter).to eq "@@HOMEBREW_PREFIX@@/lib/ld.so"
           expect(modified_elf.rpath).to eq rpath
         end
@@ -84,8 +95,8 @@ RSpec.describe Pathname do
           rpath = elf.rpath.gsub(placeholder_prefix, new_prefix)
           elf.patch!(interpreter:, rpath:)
 
-          modified_elf = elf.dirname/"mod.#{elf.basename}"
-          FileUtils.cp(elf, modified_elf)
+          modified_elf = ELFPathname.wrap(elf.dirname/"mod.#{elf.basename}")
+          FileUtils.cp(elf, modified_elf.to_path)
           expect(modified_elf.interpreter).to eq interpreter
           expect(modified_elf.rpath).to eq rpath
         end

@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "test_runner_formula"
@@ -5,11 +6,11 @@ require "test/support/fixtures/testball"
 
 RSpec.describe TestRunnerFormula do
   let(:testball) { Testball.new }
-  let(:xcode_helper) { setup_test_formula("xcode-helper", [:macos]) }
-  let(:linux_kernel_requirer) { setup_test_formula("linux-kernel-requirer", [:linux]) }
-  let(:old_non_portable_software) { setup_test_formula("old-non-portable-software", [arch: :x86_64]) }
-  let(:fancy_new_software) { setup_test_formula("fancy-new-software", [arch: :arm64]) }
-  let(:needs_modern_compiler) { setup_test_formula("needs-modern-compiler", [macos: :ventura]) }
+  let(:xcode_helper) { setup_test_runner_formula("xcode-helper", [:macos]) }
+  let(:linux_kernel_requirer) { setup_test_runner_formula("linux-kernel-requirer", [:linux]) }
+  let(:old_non_portable_software) { setup_test_runner_formula("old-non-portable-software", [{ arch: :x86_64 }]) }
+  let(:fancy_new_software) { setup_test_runner_formula("fancy-new-software", [{ arch: :arm64 }]) }
+  let(:needs_modern_compiler) { setup_test_runner_formula("needs-modern-compiler", [{ macos: :ventura }]) }
 
   describe "#initialize" do
     it "enables the Formulary factory cache" do
@@ -24,21 +25,10 @@ RSpec.describe TestRunnerFormula do
     end
   end
 
-  describe "#eval_all" do
-    it "is false by default" do
-      expect(described_class.new(testball).eval_all).to be(false)
-    end
-
-    it "can be instantiated to be `true`" do
-      expect(described_class.new(testball, eval_all: true).eval_all).to be(true)
-    end
-
-    it "takes the value of `HOMEBREW_EVAL_ALL` at instantiation time if not specified" do
-      allow(Homebrew::EnvConfig).to receive(:eval_all?).and_return(true)
-      expect(described_class.new(testball).eval_all).to be(true)
-
-      allow(Homebrew::EnvConfig).to receive(:eval_all?).and_return(false)
-      expect(described_class.new(testball).eval_all).to be(false)
+  describe "#include_uninstalled" do
+    specify do
+      expect(described_class.new(testball).include_uninstalled).to be(false)
+      expect(described_class.new(testball, include_uninstalled: true).include_uninstalled).to be(true)
     end
   end
 
@@ -65,8 +55,8 @@ RSpec.describe TestRunnerFormula do
     end
 
     context "when a formula requires only a minimum version of macOS" do
-      it "returns false" do
-        expect(described_class.new(needs_modern_compiler).macos_only?).to be(false)
+      it "returns true" do
+        expect(described_class.new(needs_modern_compiler).macos_only?).to be(true)
       end
     end
   end
@@ -119,13 +109,13 @@ RSpec.describe TestRunnerFormula do
         expect(described_class.new(linux_kernel_requirer).linux_compatible?).to be(true)
         expect(described_class.new(old_non_portable_software).linux_compatible?).to be(true)
         expect(described_class.new(fancy_new_software).linux_compatible?).to be(true)
-        expect(described_class.new(needs_modern_compiler).linux_compatible?).to be(true)
       end
     end
 
     context "when a formula is not compatible with Linux" do
       it "returns false" do
         expect(described_class.new(xcode_helper).linux_compatible?).to be(false)
+        expect(described_class.new(needs_modern_compiler).linux_compatible?).to be(false)
       end
     end
   end
@@ -275,6 +265,46 @@ RSpec.describe TestRunnerFormula do
     end
   end
 
+  describe "#compatible_with_tag?" do
+    let(:platform_specific_software) { described_class.new(Formulary.factory("platform-specific-software")) }
+
+    before do
+      allow(Formulary).to receive(:factory).with("platform-specific-software") do
+        formula "platform-specific-software" do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/platform-specific-software-1.0.tar.gz"
+
+          on_linux do
+            depends_on arch: :x86_64
+          end
+
+          on_sequoia :or_older do
+            depends_on arch: :x86_64
+          end
+        end
+      end
+    end
+
+    context "when a formula requires an Intel architecture only on Linux" do
+      it "returns false for ARM64 Linux" do
+        expect(platform_specific_software.compatible_with_tag?(Utils::Bottles::Tag.from_symbol(:arm64_linux)))
+          .to be(false)
+      end
+    end
+
+    context "when a formula requires an Intel architecture only on older macOS versions" do
+      it "returns true for newer ARM64 macOS" do
+        expect(platform_specific_software.compatible_with_tag?(Utils::Bottles::Tag.from_symbol(:arm64_tahoe)))
+          .to be(true)
+      end
+
+      it "returns false for older ARM64 macOS" do
+        expect(platform_specific_software.compatible_with_tag?(Utils::Bottles::Tag.from_symbol(:arm64_sequoia)))
+          .to be(false)
+      end
+    end
+  end
+
   describe "#dependents" do
     let(:current_system) do
       current_arch = case Homebrew::SimulateSystem.current_arch
@@ -306,28 +336,30 @@ RSpec.describe TestRunnerFormula do
     end
 
     context "when a formula has dependents" do
-      let(:testball_user) { setup_test_formula("testball_user", ["testball"]) }
-      let(:recursive_testball_dependent) { setup_test_formula("recursive_testball_dependent", ["testball_user"]) }
+      let(:testball_user) { setup_test_runner_formula("testball_user", ["testball"]) }
+      let(:recursive_testball_dependent) do
+        setup_test_runner_formula("recursive_testball_dependent", ["testball_user"])
+      end
 
       it "returns an array of direct dependents" do
         allow(Formula).to receive(:all).and_return([testball_user, recursive_testball_dependent])
 
         expect(
-          described_class.new(testball, eval_all: true).dependents(**current_system).map(&:name),
+          described_class.new(testball, include_uninstalled: true).dependents(**current_system).map(&:name),
         ).to eq(["testball_user"])
 
         expect(
-          described_class.new(testball_user, eval_all: true).dependents(**current_system).map(&:name),
+          described_class.new(testball_user, include_uninstalled: true).dependents(**current_system).map(&:name),
         ).to eq(["recursive_testball_dependent"])
       end
 
       context "when called with arguments" do
-        let(:testball_user_intel) { setup_test_formula("testball_user-intel", intel: ["testball"]) }
-        let(:testball_user_arm) { setup_test_formula("testball_user-arm", arm: ["testball"]) }
-        let(:testball_user_macos) { setup_test_formula("testball_user-macos", macos: ["testball"]) }
-        let(:testball_user_linux) { setup_test_formula("testball_user-linux", linux: ["testball"]) }
+        let(:testball_user_intel) { setup_test_runner_formula("testball_user-intel", intel: ["testball"]) }
+        let(:testball_user_arm) { setup_test_runner_formula("testball_user-arm", arm: ["testball"]) }
+        let(:testball_user_macos) { setup_test_runner_formula("testball_user-macos", macos: ["testball"]) }
+        let(:testball_user_linux) { setup_test_runner_formula("testball_user-linux", linux: ["testball"]) }
         let(:testball_user_ventura) do
-          setup_test_formula("testball_user-ventura", ventura: ["testball"])
+          setup_test_runner_formula("testball_user-ventura", ventura: ["testball"])
         end
         let(:testball_and_dependents) do
           [
@@ -345,7 +377,7 @@ RSpec.describe TestRunnerFormula do
             allow(Formula).to receive(:all).and_wrap_original { testball_and_dependents }
 
             expect(
-              described_class.new(testball, eval_all: true).dependents(
+              described_class.new(testball, include_uninstalled: true).dependents(
                 platform: :linux, arch: :x86_64, macos_version: nil,
               ).map(&:name).sort,
             ).to eq(["testball_user", "testball_user-intel", "testball_user-linux"].sort)
@@ -357,7 +389,7 @@ RSpec.describe TestRunnerFormula do
             allow(Formula).to receive(:all).and_wrap_original { testball_and_dependents }
 
             expect(
-              described_class.new(testball, eval_all: true).dependents(
+              described_class.new(testball, include_uninstalled: true).dependents(
                 platform: :macos, arch: :x86_64, macos_version: nil,
               ).map(&:name).sort,
             ).to eq(["testball_user", "testball_user-intel", "testball_user-macos"].sort)
@@ -369,20 +401,20 @@ RSpec.describe TestRunnerFormula do
             allow(Formula).to receive(:all).and_wrap_original { testball_and_dependents }
 
             expect(
-              described_class.new(testball, eval_all: true).dependents(
+              described_class.new(testball, include_uninstalled: true).dependents(
                 platform: :macos, arch: :arm64, macos_version: nil,
               ).map(&:name).sort,
             ).to eq(["testball_user", "testball_user-arm", "testball_user-macos"].sort)
           end
         end
 
-        context "when given `{ platform: :macos, arch: :x86_64, macos_version: :mojave }`" do
+        context "when given `{ platform: :macos, arch: :x86_64, macos_version: :sonoma }`" do
           it "returns only the dependents for the requested platform and architecture" do
             allow(Formula).to receive(:all).and_wrap_original { testball_and_dependents }
 
             expect(
-              described_class.new(testball, eval_all: true).dependents(
-                platform: :macos, arch: :x86_64, macos_version: :mojave,
+              described_class.new(testball, include_uninstalled: true).dependents(
+                platform: :macos, arch: :x86_64, macos_version: :sonoma,
               ).map(&:name).sort,
             ).to eq(["testball_user", "testball_user-intel", "testball_user-macos"].sort)
           end
@@ -393,7 +425,7 @@ RSpec.describe TestRunnerFormula do
             allow(Formula).to receive(:all).and_wrap_original { testball_and_dependents }
 
             expect(
-              described_class.new(testball, eval_all: true).dependents(
+              described_class.new(testball, include_uninstalled: true).dependents(
                 platform: :macos, arch: :arm64, macos_version: :ventura,
               ).map(&:name).sort,
             ).to eq(%w[testball_user testball_user-arm testball_user-macos testball_user-ventura].sort)
@@ -403,13 +435,14 @@ RSpec.describe TestRunnerFormula do
     end
   end
 
-  def setup_test_formula(name, dependencies = [], **kwargs)
+  def setup_test_runner_formula(name, dependencies = [], **kwargs)
     formula name do
+      T.bind(self, T.class_of(Formula))
       url "https://brew.sh/#{name}-1.0.tar.gz"
       dependencies.each { |dependency| depends_on dependency }
 
       kwargs.each do |k, v|
-        send(:"on_#{k}") do
+        public_send(:"on_#{k}") do
           v.each do |dep|
             depends_on dep
           end

@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "source": "https://repology.org/api/v1",
+    "osv_distros": ["AlmaLinux", "Alpine", "Debian", "FreeBSD", "Mageia", "Red Hat", "Rocky Linux", "Ubuntu", "openEuler", "openSUSE"],
+    "ambiguous_projects": {
+      "antlr": ["antlr", "antlr4-cpp-runtime"]
+    },
+    "colliding_formulae": {}
+  },
+  "formulae": {
+    "curl": {
+      "Alpine": ["curl"],
+      "Debian": ["curl"],
+      "FreeBSD": ["curl"],
+      "Ubuntu": ["curl"],
+      "openSUSE": ["curl"]
+    },
+    "libgee": {
+      "Alpine": ["libgee"],
+      "Debian": ["libgee-0.8"]
+    },
+    "ack": {
+      "Ubuntu": ["ack", "ack-grep"]
+    },
+    "postgresql": {
+      "Debian": ["postgresql-17"],
+      "Alpine": ["postgresql17"]
+    }
+  }
+}

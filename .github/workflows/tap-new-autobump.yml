@@ -1,0 +1,42 @@
+# brew tap-new uses this file to generate an autobump workflow for the new tap
+name: tap-new autobump template
+
+on:
+  push:
+    branches:
+      - TAP_NEW_BRANCH
+    paths:
+      - .github/workflows/autobump.yml
+  schedule:
+    # this will be changed later and randomised by brew tap-new
+    - cron: "1 1 1 1 1"
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  autobump:
+    if: github.repository == ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+
+      - name: Set up git
+        id: git_setup
+        uses: Homebrew/actions/git-user-config@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+
+      - name: Bump formulae
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_GIT_COMMITTER_NAME: ${{ steps.git_setup.outputs.name }}
+          HOMEBREW_GIT_COMMITTER_EMAIL: ${{ steps.git_setup.outputs.email }}
+          TAP_NAME: ${{ steps.set-up-homebrew.outputs.tap-name }}
+        run: brew bump --no-fork --open-pr --formulae --bump-synced --tap="$TAP_NAME"

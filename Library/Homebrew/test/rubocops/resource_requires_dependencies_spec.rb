@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/resource_requires_dependencies"
@@ -13,6 +14,60 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ResourceRequiresDependencies do
           homepage "https://brew.sh"
 
           uses_from_macos "libxml2"
+        end
+      RUBY
+    end
+  end
+
+  context "when a formula does not have the bcrypt resource" do
+    it "does not report offenses" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          uses_from_macos "libxml2"
+
+          resource "not-bcrypt" do
+            url "blah"
+            sha256 "blah"
+          end
+        end
+      RUBY
+    end
+  end
+
+  context "when a formula has the bcrypt resource" do
+    it "does not report offenses if the dependencies are present" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          depends_on "pkgconf" => :build
+          depends_on "rust" => :build
+
+          resource "bcrypt" do
+            url "blah"
+            sha256 "blah"
+          end
+        end
+      RUBY
+    end
+
+    it "reports offenses if missing a dependency" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          depends_on "pkgconf" => :build
+
+          resource "bcrypt" do
+          ^^^^^^^^^^^^^^^^^ FormulaAudit/ResourceRequiresDependencies: Add `depends_on` lines above for `"pkgconf"` and `"rust"`.
+            url "blah"
+            sha256 "blah"
+          end
         end
       RUBY
     end
@@ -65,6 +120,59 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ResourceRequiresDependencies do
 
           resource "lxml" do
           ^^^^^^^^^^^^^^^ FormulaAudit/ResourceRequiresDependencies: Add `uses_from_macos` lines above for `"libxml2"` and `"libxslt"`.
+            url "blah"
+            sha256 "blah"
+          end
+        end
+      RUBY
+    end
+  end
+
+  context "when a formula does not have the pynacl resource" do
+    it "does not report offenses" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          uses_from_macos "libxml2"
+
+          resource "not-pynacl" do
+            url "blah"
+            sha256 "blah"
+          end
+        end
+      RUBY
+    end
+  end
+
+  context "when a formula has the pynacl resource" do
+    it "does not report offenses if the dependencies are present" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          depends_on "libsodium"
+
+          resource "pynacl" do
+            url "blah"
+            sha256 "blah"
+          end
+        end
+      RUBY
+    end
+
+    it "reports offenses if missing a dependency" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          depends_on "not_libsodium"
+
+          resource "pynacl" do
+          ^^^^^^^^^^^^^^^^^ FormulaAudit/ResourceRequiresDependencies: Add `depends_on` lines above for `"libsodium"`.
             url "blah"
             sha256 "blah"
           end
@@ -139,6 +247,12 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ResourceRequiresDependencies do
 
           resource "lxml" do
           ^^^^^^^^^^^^^^^ FormulaAudit/ResourceRequiresDependencies: Add `uses_from_macos` lines above for `"libxml2"` and `"libxslt"`.
+            url "blah"
+            sha256 "blah"
+          end
+
+          resource "pynacl" do
+          ^^^^^^^^^^^^^^^^^ FormulaAudit/ResourceRequiresDependencies: Add `depends_on` lines above for `"libsodium"`.
             url "blah"
             sha256 "blah"
           end

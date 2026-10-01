@@ -54,10 +54,11 @@ module OS
         EOS
       end
 
-      sig { params(lib: Pathname).returns(T.nilable(String)) }
+      sig { params(lib: ::Pathname).returns(T.nilable(String)) }
       def check_python_framework_links(lib)
-        python_modules = Pathname.glob lib/"python*/site-packages/**/*.so"
+        python_modules = ::Pathname.glob lib/"python*/site-packages/**/*.so"
         framework_links = python_modules.select do |obj|
+          obj = MachOPathname.wrap(obj)
           dlls = obj.dynamically_linked_libraries
           dlls.any? { |dll| dll.include?("Python.framework") }
         end
@@ -79,7 +80,8 @@ module OS
         keg = ::Keg.new(formula.prefix)
 
         CacheStoreDatabase.use(:linkage) do |db|
-          checker = ::LinkageChecker.new(keg, formula, cache_db: db)
+          typed_db = T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]])
+          checker = ::LinkageChecker.new(keg, formula, cache_db: typed_db)
           next unless checker.broken_library_linkage?
 
           output = <<~EOS
@@ -92,7 +94,7 @@ module OS
             output += <<~EOS
               Rebuild this from source with:
                 brew reinstall --build-from-source #{formula}
-              If that's successful, file an issue#{formula.tap ? " here:\n  #{formula.tap.issues_url}" : "."}
+              If that's successful, file an issue#{formula.tap ? " here:\n  #{formula.tap!.issues_url}" : "."}
             EOS
           end
           problem_if_output output
@@ -122,6 +124,8 @@ module OS
           This can cause linker errors due to name collisions and
           is often due to a bug in detecting the macOS version.
             #{flat_namespace_files * "\n  "}
+           Learn more about this in:
+            #{Formatter.url("https://developer.apple.com/forums/thread/689991?answerId=687895022#687895022")}
         EOS
       end
 
@@ -137,7 +141,7 @@ module OS
 
       MACOS_LIB_EXTENSIONS = %w[.dylib .framework].freeze
 
-      sig { params(filename: Pathname).returns(T::Boolean) }
+      sig { params(filename: ::Pathname).returns(T::Boolean) }
       def valid_library_extension?(filename)
         super || MACOS_LIB_EXTENSIONS.include?(filename.extname)
       end

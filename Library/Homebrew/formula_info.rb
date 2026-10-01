@@ -9,7 +9,7 @@ class FormulaInfo
 
   sig { params(info: T::Hash[String, T.untyped]).void }
   def initialize(info)
-    @info = T.let(info, T::Hash[String, T.untyped])
+    @info = info
   end
 
   # Looks up formula on disk and reads its info.

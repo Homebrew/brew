@@ -1,0 +1,21 @@
+name: Commit Style
+
+on:
+  pull_request:
+    branches: ["**"]
+  merge_group:
+
+permissions: {}
+
+jobs:
+  check-commit-format:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check commit format
+        if: github.event_name == 'pull_request'
+        uses: Homebrew/actions/check-commit-format@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+        with:
+          check_package_commit_format: false

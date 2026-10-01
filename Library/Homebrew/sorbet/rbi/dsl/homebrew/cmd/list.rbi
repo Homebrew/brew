@@ -36,10 +36,16 @@ class Homebrew::Cmd::List::Args < Homebrew::CLI::Args
   def installed_on_request?; end
 
   sig { returns(T::Boolean) }
+  def json?; end
+
+  sig { returns(T::Boolean) }
   def l?; end
 
   sig { returns(T::Boolean) }
   def multiple?; end
+
+  sig { returns(T::Boolean) }
+  def no_installed_on_request?; end
 
   sig { returns(T::Boolean) }
   def pinned?; end

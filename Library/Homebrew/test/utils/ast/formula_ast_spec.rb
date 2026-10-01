@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "utils/ast"
@@ -14,6 +15,88 @@ RSpec.describe Utils::AST::FormulaAST do
         ]
       end
     RUBY
+  end
+
+  describe "#remove_patches" do
+    let(:patch) do
+      <<~RUBY.chomp
+        patch do
+          url "https://github.com/example/project/commit/#{"a" * 40}.patch"
+          sha256 "#{"b" * 64}"
+        end
+      RUBY
+    end
+
+    it "preserves surrounding comments and removes only the selected HEAD patch" do
+      ast = described_class.new("class Foo < Formula\n# Keep this explanation\n" \
+                                "#{patch}\nhead do\n#{patch.sub("a" * 40, "c" * 40)}\nend\nend\n")
+      ast.remove_patches do |node|
+        [node].select { |patch_node| patch_node.source.include?("https://github.com/example/project/commit/#{"c" * 40}.patch") }
+      end
+
+      expect(ast.process).to eq("class Foo < Formula\n# Keep this explanation\n#{patch}\nhead do\nend\nend\n")
+    end
+
+    it "removes empty platform wrappers including comments inside removed patches" do
+      ast = described_class.new("class Foo < Formula\non_macos do\n# Platform explanation\non_arm do\n" \
+                                "#{patch.sub("patch do", "patch do\n# Patch-specific explanation")}\nend\nend\nend\n")
+      ast.remove_patches { |node| [node] }
+
+      expect(ast.process).to eq("class Foo < Formula\nend\n")
+    end
+
+    it "preserves a platform wrapper containing other declarations" do
+      ast = described_class.new("class Foo < Formula\non_macos do\n# Keep\ndepends_on 'foo'\n#{patch}\nend\nend\n")
+      ast.remove_patches { |node| [node] }
+
+      expect(ast.process).to eq("class Foo < Formula\non_macos do\n# Keep\ndepends_on 'foo'\nend\nend\n")
+    end
+  end
+
+  describe "#resource" do
+    it "finds resource block in a formula" do
+      formula_ast = described_class.new <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+
+          resource "foo" do
+            url "https://brew.sh/foo-1.0.tar.gz"
+          end
+        end
+      RUBY
+
+      expect(formula_ast.resource("foo").children[2].children[2].value).to eq("https://brew.sh/foo-1.0.tar.gz")
+    end
+
+    it "finds resource in `stable` block" do
+      formula_ast = described_class.new <<~RUBY
+        class Foo < Formula
+          stable do
+            url "https://brew.sh/foo-1.0.tar.gz"
+
+            resource "foo" do
+              url "https://brew.sh/foo-1.1.tar.gz"
+            end
+          end
+
+          resource "foo" do
+            url "https://brew.sh/foo-1.0.tar.gz"
+          end
+        end
+      RUBY
+
+      expect(formula_ast.resource("foo").children[2].children[2].value).to eq("https://brew.sh/foo-1.1.tar.gz")
+    end
+
+    it "raises an exception when resource block does not exist" do
+      formula_ast = described_class.new <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+        end
+      RUBY
+
+      expect { formula_ast.resource("foo") }.to raise_error("Could not find resource 'foo' block!")
+    end
   end
 
   describe "#replace_stanza" do
@@ -45,6 +128,274 @@ RSpec.describe Utils::AST::FormulaAST do
     end
   end
 
+  describe "#replace_stable_stanza_value" do
+    it "replaces a stable stanza argument" do
+      formula_ast.replace_stable_stanza_value(:url, "https://brew.sh/foo-2.0.tar.gz")
+
+      expect(formula_ast.process).to eq <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-2.0.tar.gz"
+          license all_of: [
+            :public_domain,
+            "MIT",
+            "GPL-3.0-or-later" => { with: "Autoconf-exception-3.0" },
+          ]
+        end
+      RUBY
+    end
+  end
+
+  describe "#replace_stable_stanza_hash_value" do
+    subject(:formula_ast) do
+      described_class.new <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo.git",
+              tag:      "v1.0",
+              revision: "abc123"
+        end
+      RUBY
+    end
+
+    it "replaces a stable stanza keyword value" do
+      formula_ast.replace_stable_stanza_hash_value(:url, :tag, "v2.0")
+      formula_ast.replace_stable_stanza_hash_value(:url, :revision, "def456")
+
+      expect(formula_ast.process).to eq <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo.git",
+              tag:      "v2.0",
+              revision: "def456"
+        end
+      RUBY
+    end
+  end
+
+  describe "#add_stanzas_after" do
+    it "adds multiple stanzas after the specified stanza" do
+      formula_ast.add_stanzas_after(:url, [[:mirror, "https://example.com/foo-1.0.tar.gz"], [:version, "1.0"]])
+
+      expect(formula_ast.process).to eq <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+          mirror "https://example.com/foo-1.0.tar.gz"
+          version "1.0"
+          license all_of: [
+            :public_domain,
+            "MIT",
+            "GPL-3.0-or-later" => { with: "Autoconf-exception-3.0" },
+          ]
+        end
+      RUBY
+    end
+
+    it "adds stanzas after comments following a multi-line stanza" do
+      formula_ast = described_class.new <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo.git",
+              tag:      "v1.0",
+              revision: "abc"
+          # keep with url
+          license :mit
+        end
+      RUBY
+
+      formula_ast.add_stanzas_after(:url, [[:version, "1.0"]])
+
+      expect(formula_ast.process).to eq <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo.git",
+              tag:      "v1.0",
+              revision: "abc"
+          # keep with url
+          version "1.0"
+          license :mit
+        end
+      RUBY
+    end
+  end
+
+  describe "#replace_resource_stanza_value" do
+    subject(:formula_ast) do
+      described_class.new <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+
+          resource "bar" do
+            url "https://brew.sh/bar-1.0.tar.gz"
+            mirror "https://example.com/bar-1.0.tar.gz"
+            sha256 "#{"e" * 64}"
+          end
+        end
+      RUBY
+    end
+
+    it "replaces resource stanza arguments" do
+      formula_ast.replace_resource_stanza_value("bar", :url, "https://brew.sh/bar-2.0.tar.gz")
+      formula_ast.replace_resource_stanza_value("bar", :mirror, "https://example.com/bar-2.0.tar.gz")
+      formula_ast.replace_resource_stanza_value("bar", :sha256, "f" * 64)
+      formula_ast.add_stanzas_after(:sha256, [[:version, "2.0"]], parent: formula_ast.resource("bar"))
+
+      expect(formula_ast.process).to eq <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+
+          resource "bar" do
+            url "https://brew.sh/bar-2.0.tar.gz"
+            mirror "https://example.com/bar-2.0.tar.gz"
+            sha256 "#{"f" * 64}"
+            version "2.0"
+          end
+        end
+      RUBY
+    end
+  end
+
+  describe "#replace_resource_stanza_hash_value" do
+    subject(:formula_ast) do
+      described_class.new <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+
+          resource "bar" do
+            url "https://brew.sh/bar.git",
+                tag:      "v1.0",
+                revision: "#{"a" * 40}"
+          end
+        end
+      RUBY
+    end
+
+    it "replaces keyword arguments of a resource stanza" do
+      formula_ast.replace_resource_stanza_hash_value("bar", :url, :tag, "v2.0")
+      formula_ast.replace_resource_stanza_hash_value("bar", :url, :revision, "b" * 40)
+
+      expect(formula_ast.process).to eq <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+
+          resource "bar" do
+            url "https://brew.sh/bar.git",
+                tag:      "v2.0",
+                revision: "#{"b" * 40}"
+          end
+        end
+      RUBY
+    end
+
+    it "raises when the keyword is missing" do
+      expect { formula_ast.replace_resource_stanza_hash_value("bar", :url, :branch, "main") }
+        .to raise_error(/Could not find 'branch' value/)
+    end
+  end
+
+  describe "#replace_resource_stanzas" do
+    it "inserts resource stanzas before the install method" do
+      formula_ast = described_class.new <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+
+          def install
+            bin.install "foo"
+          end
+        end
+      RUBY
+
+      formula_ast.replace_resource_stanzas <<~RUBY
+        resource "bar" do
+          url "https://brew.sh/bar-1.0.tar.gz"
+          sha256 "#{"e" * 64}"
+        end
+
+      RUBY
+
+      expect(formula_ast.process).to eq <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tar.gz"
+
+          resource "bar" do
+            url "https://brew.sh/bar-1.0.tar.gz"
+            sha256 "#{"e" * 64}"
+          end
+
+          def install
+            bin.install "foo"
+          end
+        end
+      RUBY
+    end
+
+    context "when resource stanzas already exist" do
+      subject(:formula_ast) do
+        described_class.new <<~RUBY
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tar.gz"
+
+            # RESOURCE-ERROR: Unable to resolve "baz"
+            resource "bar" do
+              url "https://brew.sh/bar-1.0.tar.gz"
+              sha256 "#{"e" * 64}"
+            end
+
+            def install
+              bin.install "foo"
+            end
+          end
+        RUBY
+      end
+
+      it "replaces the existing resource stanza group" do
+        formula_ast.replace_resource_stanzas <<~RUBY
+          resource "baz" do
+            url "https://brew.sh/baz-1.0.tar.gz"
+            sha256 "#{"f" * 64}"
+          end
+
+        RUBY
+
+        expect(formula_ast.process).to eq <<~RUBY
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tar.gz"
+
+            resource "baz" do
+              url "https://brew.sh/baz-1.0.tar.gz"
+              sha256 "#{"f" * 64}"
+            end
+
+            def install
+              bin.install "foo"
+            end
+          end
+        RUBY
+      end
+    end
+
+    context "when resource stanzas are split into multiple groups" do
+      subject(:formula_ast) do
+        described_class.new <<~RUBY
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tar.gz"
+
+            resource "bar" do
+              url "https://brew.sh/bar-1.0.tar.gz"
+              sha256 "#{"e" * 64}"
+            end
+
+            depends_on "pkg-config" => :build
+
+            resource "baz" do
+              url "https://brew.sh/baz-1.0.tar.gz"
+              sha256 "#{"f" * 64}"
+            end
+          end
+        RUBY
+      end
+
+      it "returns :multiple_groups" do
+        expect(formula_ast.replace_resource_stanzas("")).to be(:multiple_groups)
+      end
+    end
+  end
+
   describe "#remove_stanza" do
     context "when stanza to be removed is a single line followed by a blank line" do
       subject(:formula_ast) do
@@ -54,7 +405,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license :cannot_represent
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -66,7 +417,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -90,7 +441,7 @@ RSpec.describe Utils::AST::FormulaAST do
             ]
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -102,7 +453,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -122,7 +473,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license :cannot_represent # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -135,7 +486,7 @@ RSpec.describe Utils::AST::FormulaAST do
              # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -156,7 +507,7 @@ RSpec.describe Utils::AST::FormulaAST do
             # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -169,7 +520,7 @@ RSpec.describe Utils::AST::FormulaAST do
             # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -188,11 +539,12 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
 
             head do
               url "https://brew.sh/foo.git"
+              branch "develop"
             end
           end
         RUBY
@@ -205,6 +557,7 @@ RSpec.describe Utils::AST::FormulaAST do
 
             head do
               url "https://brew.sh/foo.git"
+              branch "develop"
             end
           end
         RUBY
@@ -224,7 +577,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license :cannot_represent
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -250,7 +603,7 @@ RSpec.describe Utils::AST::FormulaAST do
     let(:bottle_output) do
       <<-RUBY
   bottle do
-    sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+    sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
   end
       RUBY
     end
@@ -272,7 +625,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license "MIT"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -301,7 +654,7 @@ RSpec.describe Utils::AST::FormulaAST do
             license :cannot_represent
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -338,7 +691,7 @@ RSpec.describe Utils::AST::FormulaAST do
             ]
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -355,7 +708,7 @@ RSpec.describe Utils::AST::FormulaAST do
         described_class.new <<~RUBY.chomp
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tar.gz"
-            head "https://brew.sh/foo.git"
+            head "https://brew.sh/foo.git", branch: "develop"
           end
         RUBY
       end
@@ -364,10 +717,10 @@ RSpec.describe Utils::AST::FormulaAST do
         <<~RUBY.chomp
           class Foo < Formula
             url "https://brew.sh/foo-1.0.tar.gz"
-            head "https://brew.sh/foo.git"
+            head "https://brew.sh/foo.git", branch: "develop"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -387,6 +740,7 @@ RSpec.describe Utils::AST::FormulaAST do
 
             head do
               url "https://brew.sh/foo.git"
+              branch "develop"
             end
           end
         RUBY
@@ -398,11 +752,12 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
 
             head do
               url "https://brew.sh/foo.git"
+              branch "develop"
             end
           end
         RUBY
@@ -429,7 +784,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz" # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -458,7 +813,7 @@ RSpec.describe Utils::AST::FormulaAST do
             # comment
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
           end
         RUBY
@@ -487,7 +842,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             bottle do
-              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sierra
+              sha256 "f7b1fc772c79c20fddf621ccc791090bc1085fcef4da6cca03399424c66e06ca" => :sonoma
             end
 
             # comment

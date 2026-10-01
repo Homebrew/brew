@@ -7,12 +7,12 @@
 # HOMEBREW_CURL, HOMEBREW_GITHUB_PACKAGES_AUTH, HOMEBREW_LINUX, HOMEBREW_LINUX_MINIMUM_GLIBC_VERSION, HOMEBREW_MACOS,
 # HOMEBREW_PHYSICAL_PROCESSOR, HOMEBREW_PROCESSOR, HOMEBREW_USER_AGENT_CURL are set by brew.sh
 # shellcheck disable=SC2154
+source "${HOMEBREW_LIBRARY}/Homebrew/utils/cmd.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/lock.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/ruby.sh"
 
 VENDOR_DIR="${HOMEBREW_LIBRARY}/Homebrew/vendor"
 
-# Built from https://github.com/Homebrew/homebrew-portable-ruby.
 set_ruby_variables() {
   # Handle the case where /usr/local/bin/brew is run under arm64.
   # It's a x86_64 installation there (we refuse to install arm64 binaries) so
@@ -48,7 +48,18 @@ set_ruby_variables() {
     ruby_URLs=()
     if [[ -n "${HOMEBREW_ARTIFACT_DOMAIN}" ]]
     then
-      ruby_URLs+=("${HOMEBREW_ARTIFACT_DOMAIN}/v2/homebrew/portable-ruby/portable-ruby/blobs/sha256:${ruby_SHA}")
+      # If the artifact domain already contains the Docker Registry API's
+      # /v2/ path (e.g. an OCI registry proxying ghcr.io under a repository
+      # prefix: https://mirror.example.com/v2/ghcr-io), skip adding v2
+      # rather than producing a duplicate /v2/.
+      # Keep this in sync with the HOMEBREW_ARTIFACT_DOMAIN handling in
+      # Library/Homebrew/download_strategy/curl_download_strategy.rb.
+      local artifact_domain="${HOMEBREW_ARTIFACT_DOMAIN%/}"
+      if [[ ! "${artifact_domain}" =~ ^https?://[^/]+/v2(/|$) ]]
+      then
+        artifact_domain="${artifact_domain}/v2"
+      fi
+      ruby_URLs+=("${artifact_domain}/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}")
       if [[ -n "${HOMEBREW_ARTIFACT_DOMAIN_NO_FALLBACK}" ]]
       then
         ruby_URL="${ruby_URLs[0]}"
@@ -57,11 +68,10 @@ set_ruby_variables() {
     fi
     if [[ -n "${HOMEBREW_BOTTLE_DOMAIN}" ]]
     then
-      ruby_URLs+=("${HOMEBREW_BOTTLE_DOMAIN}/bottles-portable-ruby/${ruby_FILENAME}")
+      ruby_URLs+=("${HOMEBREW_BOTTLE_DOMAIN}/${ruby_FILENAME}")
     fi
     ruby_URLs+=(
-      "https://ghcr.io/v2/homebrew/portable-ruby/portable-ruby/blobs/sha256:${ruby_SHA}"
-      "https://github.com/Homebrew/homebrew-portable-ruby/releases/download/${HOMEBREW_PORTABLE_RUBY_VERSION}/${ruby_FILENAME}"
+      "https://ghcr.io/v2/homebrew/core/portable-ruby/blobs/sha256:${ruby_SHA}"
     )
     ruby_URL="${ruby_URLs[0]}"
   fi
@@ -122,8 +132,13 @@ fetch() {
     --remote-time
     --location
     --user-agent "${HOMEBREW_USER_AGENT_CURL}"
-    --header "Authorization: ${HOMEBREW_GITHUB_PACKAGES_AUTH}"
   )
+
+  if [[ -n "${HOMEBREW_GITHUB_PACKAGES_AUTH}" ]]
+  then
+    curl_args[${#curl_args[*]}]="--header"
+    curl_args[${#curl_args[*]}]="Authorization: ${HOMEBREW_GITHUB_PACKAGES_AUTH}"
+  fi
 
   if [[ -n "${HOMEBREW_QUIET}" ]]
   then
@@ -294,20 +309,18 @@ homebrew-vendor-install() {
 
   for option in "$@"
   do
+    if homebrew-command-help vendor-install "${option}"
+    then
+      exit $?
+    fi
+    if homebrew-command-common-option "${option}"
+    then
+      continue
+    fi
+
     case "${option}" in
-      -\? | -h | --help | --usage)
-        brew help vendor-install
-        exit $?
-        ;;
-      --verbose) HOMEBREW_VERBOSE=1 ;;
-      --quiet) HOMEBREW_QUIET=1 ;;
-      --debug) HOMEBREW_DEBUG=1 ;;
       --*) ;;
-      -*)
-        [[ "${option}" == *v* ]] && HOMEBREW_VERBOSE=1
-        [[ "${option}" == *q* ]] && HOMEBREW_QUIET=1
-        [[ "${option}" == *d* ]] && HOMEBREW_DEBUG=1
-        ;;
+      -*) homebrew-command-common-short-options "${option}" ;;
       *)
         if [[ -n "${VENDOR_NAME}" ]]
         then
@@ -331,7 +344,7 @@ homebrew-vendor-install() {
   done
 
   [[ -z "${VENDOR_NAME}" ]] && odie "This command requires a vendor target!"
-  [[ -n "${HOMEBREW_DEBUG}" ]] && set -x
+  homebrew-command-enable-debug
 
   if [[ -z "${VENDOR_PHYSICAL_PROCESSOR}" ]]
   then

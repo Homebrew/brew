@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 require "utils/curl"
 require "livecheck/options"
 
@@ -44,19 +46,25 @@ module Homebrew
       # redirections, followed by a final `200 OK` response.
       MAX_PARSE_ITERATIONS = T.let(MAX_REDIRECTIONS + 1, Integer)
 
+      # `curl` arguments used when following redirections in {Strategy}
+      # methods.
+      REDIRECTION_CURL_ARGS = T.let([
+        "--max-redirs", MAX_REDIRECTIONS.to_s,
+        *https_redirect_curl_args
+      ].freeze, T::Array[String])
+
       # Baseline `curl` arguments used in {Strategy} methods.
       DEFAULT_CURL_ARGS = T.let([
         # Follow redirections to handle mirrors, relocations, etc.
         "--location",
-        "--max-redirs", MAX_REDIRECTIONS.to_s,
+        *REDIRECTION_CURL_ARGS,
         # Avoid progress bar text, so we can reliably identify `curl` error
         # messages in output
-        "--silent"
+        "--silent",
       ].freeze, T::Array[String])
 
       # `curl` arguments used in `Strategy#page_content` method.
       PAGE_CONTENT_CURL_ARGS = T.let(([
-        "--compressed",
         # Return an error when the HTTP response code is 400 or greater but
         # continue to return body content
         "--fail-with-body",
@@ -98,6 +106,8 @@ module Homebrew
       # @return [Hash]
       sig { returns(T::Hash[Symbol, T.untyped]) }
       def self.strategies
+        # Strategies (including tap-provided ones) are discovered dynamically.
+        # rubocop:disable Sorbet/ConstantsFromStrings
         @strategies ||= T.let(Strategy.constants.sort.each_with_object({}) do |const_symbol, hash|
           constant = Strategy.const_get(const_symbol)
           next unless constant.is_a?(Class)
@@ -105,6 +115,7 @@ module Homebrew
           key = Utils.underscore(const_symbol).to_sym
           hash[key] = constant
         end, T.nilable(T::Hash[Symbol, T.untyped]))
+        # rubocop:enable Sorbet/ConstantsFromStrings
       end
       private_class_method :strategies
 
@@ -147,9 +158,12 @@ module Homebrew
             # Only treat the strategy as usable if the `livecheck` block
             # specifies the strategy and contains a `strategy` block
             next if (livecheck_strategy != strategy_symbol) || !block_provided
+          # The strategy's optional `PRIORITY` constant is read dynamically.
+          # rubocop:disable Sorbet/ConstantsFromStrings
           elsif strategy.const_defined?(:PRIORITY) &&
                 !strategy.const_get(:PRIORITY).positive? &&
                 livecheck_strategy != strategy_symbol
+            # rubocop:enable Sorbet/ConstantsFromStrings
             # Ignore strategies with a priority of 0 or lower, unless the
             # strategy is specified in the `livecheck` block
             next
@@ -161,7 +175,10 @@ module Homebrew
         # Sort usable strategies in descending order by priority, using the
         # DEFAULT_PRIORITY when a strategy doesn't contain a PRIORITY constant
         usable_strategies.sort_by do |strategy|
-          (strategy.const_defined?(:PRIORITY) ? -strategy.const_get(:PRIORITY) : -DEFAULT_PRIORITY)
+          # The strategy's optional `PRIORITY` constant is read dynamically.
+          # rubocop:disable Sorbet/ConstantsFromStrings
+          strategy.const_defined?(:PRIORITY) ? -strategy.const_get(:PRIORITY) : -DEFAULT_PRIORITY
+          # rubocop:enable Sorbet/ConstantsFromStrings
         end
       end
 
@@ -202,7 +219,12 @@ module Homebrew
       # @param url [String] the URL to fetch
       # @param options [Options] options to modify behavior
       # @return [Array]
-      sig { params(url: String, options: Options).returns(T::Array[T::Hash[String, String]]) }
+      sig {
+        params(
+          url:     String,
+          options: Options,
+        ).returns(T::Array[T::Hash[String, T.any(String, T::Array[String])]])
+      }
       def self.page_headers(url, options: Options.new)
         headers = []
 
@@ -213,15 +235,23 @@ module Homebrew
           )]
         end
 
-        [:default, :browser].each do |user_agent|
+        user_agents = if options.user_agent
+          [options.user_agent]
+        else
+          [:default, :browser]
+        end
+
+        user_agents.each_with_index do |user_agent, i|
           begin
             parsed_output = curl_headers(
               *curl_post_args,
-              "--max-redirs",
-              MAX_REDIRECTIONS.to_s,
+              *REDIRECTION_CURL_ARGS,
               url,
               wanted_headers:    ["location", "content-disposition"],
               use_homebrew_curl: options.homebrew_curl || false,
+              cookies:           options.cookies,
+              header:            options.header,
+              referer:           options.referer,
               user_agent:,
               **DEFAULT_CURL_OPTIONS,
             )
@@ -229,8 +259,17 @@ module Homebrew
             next
           end
 
-          parsed_output[:responses].each { |response| headers << response[:headers] }
-          break if headers.present?
+          parsed_output[:responses]&.each { |response| headers << response[:headers] }
+          next unless headers.present?
+
+          if i.positive?
+            Utils::Output.odeprecated(
+              "the user agent fallback in `page_headers`",
+              "the `user_agent:` option in a `livecheck` block",
+            )
+          end
+
+          break
         end
 
         headers
@@ -253,18 +292,41 @@ module Homebrew
           )]
         end
 
+        args = if options.compressed == false
+          PAGE_CONTENT_CURL_ARGS
+        else
+          PAGE_CONTENT_CURL_ARGS + ["--compressed"]
+        end
+
+        user_agents = if options.user_agent
+          [options.user_agent]
+        else
+          [:default, :browser]
+        end
+
         stderr = T.let(nil, T.nilable(String))
-        [:default, :browser].each do |user_agent|
+        user_agents.each_with_index do |user_agent, i|
           stdout, stderr, status = curl_output(
             *curl_post_args,
-            *PAGE_CONTENT_CURL_ARGS, url,
+            *args,
+            url,
             **DEFAULT_CURL_OPTIONS,
             use_homebrew_curl: options.homebrew_curl ||
                                !curl_supports_fail_with_body? ||
                                false,
-            user_agent:
+            cookies:           options.cookies,
+            header:            options.header,
+            referer:           options.referer,
+            user_agent:,
           )
           next unless status.success?
+
+          if i.positive?
+            Utils::Output.odeprecated(
+              "the user agent fallback in `page_content`",
+              "the `user_agent:` option in a `livecheck` block",
+            )
+          end
 
           # stdout contains the header information followed by the page content.
           # We use #scrub here to avoid "invalid byte sequence in UTF-8" errors.
@@ -292,10 +354,10 @@ module Homebrew
       sig { params(value: T.untyped).returns(T::Array[String]) }
       def self.handle_block_return(value)
         case value
-        when String
-          [value]
+        when String, Version
+          [value.to_s]
         when Array
-          value.compact.uniq
+          value.compact.map(&:to_s).uniq
         when nil
           []
         else
@@ -324,6 +386,7 @@ require_relative "strategy/launchpad"
 require_relative "strategy/npm"
 require_relative "strategy/page_match"
 require_relative "strategy/pypi"
+require_relative "strategy/ruby_gems"
 require_relative "strategy/sourceforge"
 require_relative "strategy/sparkle"
 require_relative "strategy/xml"

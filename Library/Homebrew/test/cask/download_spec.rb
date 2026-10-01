@@ -1,10 +1,138 @@
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Download, :cask do
+  describe "#download_name" do
+    subject(:download_name) { described_class.new(cask).download_name }
+
+    let(:token) { "example-cask" }
+    let(:full_token) { token }
+    let(:url) { instance_double(URL, to_s: url_to_s, specs: {}) }
+    let(:url_to_s) { "https://example.com/app.dmg" }
+    let(:version) { nil }
+    let(:cask) { instance_double(Cask::Cask, token:, full_token:, version:, url:) }
+
+    context "when cask has no version" do
+      it "returns the cask token" do
+        expect(download_name).to eq "example-cask"
+      end
+    end
+
+    context "when the URL basename would create a short symlink name" do
+      let(:version) { "1.0.0" }
+
+      it "returns the cask token" do
+        expect(download_name).to eq "example-cask"
+      end
+    end
+
+    context "when the URL basename would create a long symlink name" do
+      let(:version) do
+        "1.2.3,kch23dmbz6whmoogcbss45yi4c2kkq15gmemwys0hgwd3l7cahmx2ciagrlrgppatxaxarzazmdoerzmiisuf7mul4lgcays2dl3nl"
+      end
+      let(:url_to_s) { "https://example.com/app.dmg?#{Array.new(50) { |i| "param#{i}=value#{i}" }.join("&")}" }
+
+      it "returns the cask token" do
+        expect(download_name).to eq "example-cask"
+      end
+
+      context "when the cask is in a third-party tap" do
+        let(:full_token) { "third-party/tap/example-cask" }
+
+        it "returns the cask token" do
+          expect(download_name).to eq "example-cask"
+        end
+      end
+    end
+  end
+
+  describe "#fetch" do
+    it "fails before downloading if sha256 :no_check is used with --require-sha" do
+      no_checksum = Cask::CaskLoader.load(cask_path("no-checksum"))
+      download = described_class.new(no_checksum, require_sha: true)
+
+      expect(download).not_to receive(:downloader)
+      expect { download.fetch }.to raise_error(/--require-sha/)
+    end
+
+    it "fails before downloading if sha256 is nil with --require-sha" do
+      missing_checksum = Cask::CaskLoader.load(cask_path("missing-checksum"))
+      download = described_class.new(missing_checksum, require_sha: true)
+      allow(download).to receive(:downloader) { raise "download attempted" }
+
+      expect { download.fetch }.to raise_error(Cask::CaskError, /--require-sha/)
+    end
+
+    it "fails before downloading if a platform checksum is missing" do
+      Homebrew::SimulateSystem.with(os: :macos, arch: :intel) do
+        cask = Cask::Cask.new("missing-platform-checksum") do
+          version "1.2.3"
+          sha256 arm: "0000000000000000000000000000000000000000000000000000000000000000"
+          url "https://brew.sh/example.zip"
+        end
+        download = described_class.new(cask)
+        allow(download).to receive(:downloader) { raise "download attempted" }
+
+        expect { download.fetch }.to raise_error(Cask::CaskError, /`depends_on`/)
+      end
+    end
+  end
+
+  describe "#stage_from_download_queue?" do
+    it "does not mutate download state" do
+      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      download = described_class.new(cask)
+
+      expect(download).not_to receive(:primary_container)
+
+      expect(download.stage_from_download_queue?(TEST_FIXTURE_DIR/"cask/caffeine.zip", pour: true)).to be(true)
+      expect(cask.download).to be_nil
+    end
+  end
+
+  describe "#purge_staged_from_download_queue" do
+    it "removes stale markers with permission-aware removal" do
+      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      download = described_class.new(cask)
+      staged_marker = download.staged_path_from_download_queue_marker
+      staged_marker.dirname.mkpath
+      FileUtils.ln_s(download.staged_path_from_download_queue, staged_marker)
+
+      expect(Cask::Utils).to receive(:gain_permissions_remove).with(staged_marker,
+                                                                    command: SystemCommand).and_call_original
+
+      download.purge_staged_from_download_queue
+
+      expect(staged_marker).not_to exist
+    end
+  end
+
+  describe "#downloaded_and_valid?" do
+    it "quarantines valid cached downloads" do
+      cached_download = HOMEBREW_CACHE/"downloads/cask.zip"
+      cached_download.dirname.mkpath
+      cached_download.write("already downloaded")
+      checksum = Checksum.new(cached_download.sha256)
+      cask = instance_double(Cask::Cask, sha256: checksum)
+      download = described_class.new(cask)
+
+      allow(download).to receive(:cached_download).and_return(cached_download)
+      allow(download).to receive(:verify_download_integrity) do |filename|
+        filename.verify_checksum(checksum)
+      end
+      allow(Cask::Quarantine).to receive(:available?).and_return(true)
+
+      expect(Cask::Quarantine).to receive(:cask!).with(cask:, download_path: cached_download)
+
+      expect(download.downloaded_and_valid?).to be(true)
+    end
+  end
+
   describe "#verify_download_integrity" do
     subject(:verification) { described_class.new(cask).verify_download_integrity(downloaded_path) }
 
     let(:tap) { nil }
+    let(:expected_sha256) { nil }
     let(:cask) { instance_double(Cask::Cask, token: "cask", sha256: expected_sha256, tap:) }
     let(:cafebabe) { "cafebabecafebabecafebabecafebabecafebabecafebabecafebabecafebabe" }
     let(:deadbeef) { "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef" }
@@ -40,8 +168,6 @@ RSpec.describe Cask::Download, :cask do
     end
 
     context "when the expected checksum is nil" do
-      let(:expected_sha256) { nil }
-
       it "outputs an error" do
         expect { verification }.to output(/sha256 "#{computed_sha256}"/).to_stderr
       end

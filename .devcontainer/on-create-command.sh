@@ -13,6 +13,9 @@ then
   exit 0
 fi
 
+# disable interactive ask mode so non-interactive prebuilds don't hang
+export HOMEBREW_NO_ASK=1
+
 # install Homebrew's development gems
 brew install-bundler-gems --groups=all
 
@@ -27,15 +30,10 @@ brew tap --force homebrew/core
 
 # install some useful development things
 sudo apt-get update
-
-apt_get_install() {
-  sudo apt-get install -y \
-    -o Dpkg::Options::=--force-confdef \
-    -o Dpkg::Options::=--force-confnew \
-    "$@"
-}
-
-apt_get_install \
+sudo apt-get install -y \
+  -o Dpkg::Options::=--force-confdef \
+  -o Dpkg::Options::=--force-confnew \
+  bash-completion \
   openssh-server \
   zsh
 

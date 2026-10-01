@@ -1,9 +1,12 @@
+# typed: true
 # frozen_string_literal: true
 
 require "utils/string_inreplace_extension"
 
 RSpec.describe StringInreplaceExtension do
   subject(:string_extension) { described_class.new(string.dup) }
+
+  let(:string) { "" }
 
   describe "#change_make_var!" do
     context "with a flag" do
@@ -191,7 +194,7 @@ RSpec.describe StringInreplaceExtension do
         EOS
       end
 
-      specify "are be successfully removed" do
+      specify "are successfully removed" do
         string_extension.remove_make_var! ["FLAG", "FLAG2"]
         expect(string_extension.inreplace_string).to eq <<~EOS
           OTHER=def
@@ -239,6 +242,15 @@ RSpec.describe StringInreplaceExtension do
 
       it "extracts the value for a given variable" do
         expect(string_extension.get_make_var("CFLAGS")).to match(/^-Wall -O2 \\\n +-DSOME_VAR=1$/)
+      end
+    end
+
+    context "when the variable is missing" do
+      let(:string) { "CFLAGS = -Wall -O2\n" }
+
+      it "raises an error" do
+        expect { string_extension.get_make_var("LDFLAGS") }
+          .to raise_error(ArgumentError, 'expected to find make variable "LDFLAGS"')
       end
     end
   end

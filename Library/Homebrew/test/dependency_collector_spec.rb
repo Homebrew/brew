@@ -1,11 +1,12 @@
+# typed: true
 # frozen_string_literal: true
 
 require "dependency_collector"
 
 RSpec.describe DependencyCollector do
-  alias_matcher :be_a_build_requirement, :be_build
-
   subject(:collector) { described_class.new }
+
+  alias_matcher :be_a_build_requirement, :be_build
 
   def find_dependency(name)
     collector.deps.find { |dep| dep.name == name }
@@ -95,14 +96,23 @@ RSpec.describe DependencyCollector do
       expect { collector.add(Class.new) }.to raise_error(TypeError)
     end
 
-    it "raises a TypeError for unknown Types" do
-      expect { collector.add(Object.new) }.to raise_error(TypeError)
+    it "raises an ArgumentError for a removed codesign requirement" do
+      expect { collector.add(:codesign) }.to raise_error(ArgumentError, "Unsupported special dependency: :codesign")
     end
 
     it "raises a TypeError for a Resource with an unknown download strategy" do
       resource = Resource.new
       resource.download_strategy = Class.new
       expect { collector.add(resource) }.to raise_error(TypeError)
+    end
+  end
+
+  describe "#implicit_dependency_names" do
+    it "is empty when nothing needs to be silently installed" do
+      allow(Homebrew::EnvConfig).to receive(:sandbox_linux?).and_return(false)
+      allow(DevelopmentTools).to receive_messages(needs_build_formulae?: false, needs_libc_formula?: false)
+
+      expect(collector.implicit_dependency_names).to eq(Set.new)
     end
   end
 end

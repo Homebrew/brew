@@ -1,0 +1,76 @@
+# brew tap-new uses this file to generate a PR test workflow for the new tap
+name: tap-new tests template
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  test-bot:
+    if: github.repository == ''
+    strategy:
+      matrix:
+        os: [ macos-26 ]
+        include:
+          - os: ubuntu-latest
+            container:
+              image: ghcr.io/homebrew/brew:main
+              options: --privileged
+    runs-on: ${{ matrix.os }}
+    container: ${{ fromJSON(toJSON(matrix.container)) }} # zizmor: ignore[unpinned-images]
+    permissions:
+      actions: read
+      checks: read
+      contents: read
+      # tap-new-github-packages-start
+      packages: read
+      # tap-new-github-packages-end
+      pull-requests: read
+    steps:
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache Homebrew Bundler RubyGems
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.set-up-homebrew.outputs.gems-path }}
+          key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
+          restore-keys: ${{ matrix.os }}-rubygems-
+
+      - run: brew test-bot --only-cleanup-before
+
+      - run: brew test-bot --only-setup
+
+      - run: brew test-bot --only-tap-syntax
+      # tap-new-github-packages-start
+      - name: Base64-encode GITHUB_TOKEN for HOMEBREW_DOCKER_REGISTRY_TOKEN
+        id: base64-encode
+        if: github.event_name == 'pull_request'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          base64_token=$(echo -n "${TOKEN}" | base64 | tr -d "\n")
+          echo "::add-mask::${base64_token}"
+          echo "token=${base64_token}" >> "${GITHUB_OUTPUT}"
+      # tap-new-github-packages-end
+      - run: brew test-bot --only-formulaeTAP_NEW_ROOT_URL_ARGUMENT
+        if: github.event_name == 'pull_request'
+        # tap-new-github-packages-start
+        env:
+          HOMEBREW_DOCKER_REGISTRY_TOKEN: ${{ steps.base64-encode.outputs.token }}
+        # tap-new-github-packages-end
+
+      - name: Upload bottles as artifact
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bottles_${{ matrix.os }}
+          path: '*.bottle.*'

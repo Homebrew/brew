@@ -23,6 +23,8 @@
   "installed_time": null,
   "bundle_version": null,
   "bundle_short_version": null,
+  "pinned": false,
+  "pinned_version": null,
   "outdated": false,
   "sha256": "c64c05bdc0be845505d6e55e69e696a7f50d40846e76155f0c85d5ff5e7bbb84",
   "artifacts": [
@@ -62,7 +64,8 @@
     {
       "app": [
         "Everything.app"
-      ]
+      ],
+      "target": "$APPDIR/Everything.app"
     },
     {
       "zap": [
@@ -76,35 +79,48 @@
     }
   ],
   "caveats": "Installing everything might take a while...\n\neverything requires a kernel extension to work.\nIf the installation fails, retry after you enable it in:\n  System Settings → Privacy & Security\n\nFor more information, refer to vendor documentation or this Apple Technical Note:\n  https://developer.apple.com/library/content/technotes/tn2459/_index.html\n",
+  "caveats_rosetta": null,
   "depends_on": {
     "cask": [
       "something"
     ],
     "macos": {
       ">=": [
-        "10.11"
+        "11"
       ]
     }
   },
   "conflicts_with": {
-    "formula": [
+    "cask": [
       "nothing"
     ]
   },
   "container": {
     "type": "naked"
   },
+  "rename": [
+    {
+      "from": "Foobar.app",
+      "to": "Foo.app"
+    },
+    {
+      "from": "Foo.app",
+      "to": "Bar.app"
+    }
+  ],
   "auto_updates": true,
   "deprecated": false,
   "deprecation_date": null,
   "deprecation_reason": null,
   "deprecation_replacement_formula": null,
   "deprecation_replacement_cask": null,
+  "deprecate_args": null,
   "disabled": false,
   "disable_date": null,
   "disable_reason": null,
   "disable_replacement_formula": null,
   "disable_replacement_cask": null,
+  "disable_args": null,
   "tap_git_head": "abcdef1234567890abcdef1234567890abcdef12",
   "languages": [
     "en",
@@ -112,6 +128,6 @@
   ],
   "ruby_source_path": "Casks/everything.rb",
   "ruby_source_checksum": {
-    "sha256": "d8d0d6b2e5ff65388eccb82236fd3aa157b4a29bb043a1f72b97f0e9b70e8320"
+    "sha256": "703e89d0104c02d52f91eedefd38f3337d67915af7dc14a2eff42c26a43c3a6c"
   }
 }

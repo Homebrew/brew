@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "livecheck/livecheck"
@@ -8,50 +9,88 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
 
   let(:formulae) do
     {
-      basic:               formula("test") do
+      basic:                   formula("test") do
+        T.bind(self, T.class_of(Formula))
         desc "Test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
-        head "https://github.com/Homebrew/brew.git"
+        head "https://github.com/Homebrew/brew.git", branch: "main"
 
         livecheck do
           url "https://formulae.brew.sh/api/formula/ruby.json"
           regex(/"stable":"(\d+(?:\.\d+)+)"/i)
         end
       end,
-      deprecated:          formula("test_deprecated") do
+      deprecated:              formula("test_deprecated") do
+        T.bind(self, T.class_of(Formula))
         desc "Deprecated test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
         deprecate! date: "2020-06-25", because: :unmaintained
       end,
-      disabled:            formula("test_disabled") do
+      disabled:                formula("test_disabled") do
+        T.bind(self, T.class_of(Formula))
         desc "Disabled test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
         disable! date: "2020-06-25", because: :unmaintained
       end,
-      head_only:           formula("test_head_only") do
+      partially_disabled_arch: lambda do
+        path = mktmpdir/"test_partially_disabled_arch.rb"
+        path.write <<~RUBY
+          class TestPartiallyDisabledArch < Formula
+            desc "Partially disabled (arch) test formula"
+            homepage "https://brew.sh"
+            url "https://brew.sh/test-0.0.1.tgz"
+            on_#{Hardware::CPU.arm? ? "arm" : "intel"} do
+              disable! date: "2020-06-25", because: :unmaintained
+            end
+          end
+        RUBY
+
+        Formulary.factory(path)
+      end.call,
+      partially_disabled_os:   lambda do
+        path = mktmpdir/"test_partially_disabled_os.rb"
+        path.write <<~RUBY
+          class TestPartiallyDisabledOs < Formula
+            desc "Partially disabled (OS) test formula"
+            homepage "https://brew.sh"
+            url "https://brew.sh/test-0.0.1.tgz"
+            on_#{OS.mac? ? "macos" : "linux"} do
+              disable! date: "2020-06-25", because: :unmaintained
+            end
+          end
+        RUBY
+
+        Formulary.factory(path)
+      end.call,
+      head_only:               formula("test_head_only") do
+        T.bind(self, T.class_of(Formula))
         desc "HEAD-only test formula"
         homepage "https://brew.sh"
-        head "https://github.com/Homebrew/brew.git"
+        head "https://github.com/Homebrew/brew.git", branch: "main"
       end,
-      gist:                formula("test_gist") do
+      gist:                    formula("test_gist") do
+        T.bind(self, T.class_of(Formula))
         desc "Gist test formula"
         homepage "https://brew.sh"
         url "https://gist.github.com/Homebrew/0000000000"
       end,
-      google_code_archive: formula("test_google_code_archive") do
+      google_code_archive:     formula("test_google_code_archive") do
+        T.bind(self, T.class_of(Formula))
         desc "Google Code Archive test formula"
         homepage "https://brew.sh"
         url "https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/brew/brew-1.0.0.tar.gz"
       end,
-      internet_archive:    formula("test_internet_archive") do
+      internet_archive:        formula("test_internet_archive") do
+        T.bind(self, T.class_of(Formula))
         desc "Internet Archive test formula"
         homepage "https://brew.sh"
         url "https://web.archive.org/web/20200101000000/https://brew.sh/test-0.0.1.tgz"
       end,
-      skip:                formula("test_skip") do
+      skip:                    formula("test_skip") do
+        T.bind(self, T.class_of(Formula))
         desc "Skipped test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
@@ -60,7 +99,8 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           skip
         end
       end,
-      skip_with_message:   formula("test_skip_with_message") do
+      skip_with_message:       formula("test_skip_with_message") do
+        T.bind(self, T.class_of(Formula))
         desc "Skipped test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
@@ -69,17 +109,17 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           skip "Not maintained"
         end
       end,
-      versioned:           formula("test@0.0.1") do
+      versioned:               formula("test@0.0.1") do
+        T.bind(self, T.class_of(Formula))
         desc "Versioned test formula"
         homepage "https://brew.sh"
         url "https://brew.sh/test-0.0.1.tgz"
       end,
     }
   end
-
   let(:casks) do
     {
-      basic:             Cask::Cask.new("test") do
+      basic:                                 Cask::Cask.new("test") do
         version "0.0.1,2"
 
         url "https://brew.sh/test-0.0.1.tgz"
@@ -92,32 +132,72 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           regex(/"stable":"(\d+(?:\.\d+)+)"/i)
         end
       end,
-      deprecated:        Cask::Cask.new("test_deprecated") do
+      deprecated:                            Cask::Cask.new("test_deprecated") do
         version "0.0.1"
         sha256 :no_check
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test Deprecate"
         desc "Deprecated test cask"
         homepage "https://brew.sh"
 
         deprecate! date: "2020-06-25", because: :discontinued
       end,
-      disabled:          Cask::Cask.new("test_disabled") do
+      disabled:                              Cask::Cask.new("test_disabled") do
         version "0.0.1"
         sha256 :no_check
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test Disable"
         desc "Disabled test cask"
         homepage "https://brew.sh"
 
         disable! date: "2020-06-25", because: :discontinued
       end,
-      extract_plist:     Cask::Cask.new("test_extract_plist_skip") do
+      partially_disabled_arch:               Cask::CaskLoader.load(<<~RUBY),
+        cask "test_partially_disabled_arch" do
+          version "0.0.1"
+          sha256 :no_check
+
+          url "https://brew.sh/test-0.0.1.tgz"
+          name "Test Partially Disable Arch"
+          desc "Partially disabled (arch) test cask"
+          homepage "https://brew.sh"
+
+          on_#{Hardware::CPU.arm? ? "arm" : "intel"} do
+            disable! date: "2020-06-25", because: :unmaintained
+          end
+        end
+      RUBY
+      partially_disabled_os:                 Cask::CaskLoader.load(<<~RUBY),
+        cask "test_partially_disabled_os" do
+          version "0.0.1"
+          sha256 :no_check
+
+          url "https://brew.sh/test-0.0.1.tgz"
+          name "Test Partially Disable OS"
+          desc "Partially disabled (OS) test cask"
+          homepage "https://brew.sh"
+
+          on_#{OS.mac? ? "macos" : "linux"} do
+            disable! date: "2020-06-25", because: :unmaintained
+          end
+        end
+      RUBY
+      future_disable_fails_gatekeeper_check: Cask::Cask.new("test_future_disable_fails_gatekeeper_check") do
         version "0.0.1"
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
+        name "Test Future Disabled Fails Gatekeeper Check"
+        desc "Future Disable Fails Gatekeeper Check test cask"
+        homepage "https://brew.sh"
+
+        disable! date: "3000-06-25", because: :fails_gatekeeper_check
+      end,
+      extract_plist:                         Cask::Cask.new("test_extract_plist_skip") do
+        version "0.0.1"
+
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test ExtractPlist Skip"
         desc "Skipped test cask"
         homepage "https://brew.sh"
@@ -126,7 +206,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           strategy :extract_plist
         end
       end,
-      latest:            Cask::Cask.new("test_latest") do
+      latest:                                Cask::Cask.new("test_latest") do
         version :latest
         sha256 :no_check
 
@@ -135,7 +215,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         desc "Latest test cask"
         homepage "https://brew.sh"
       end,
-      unversioned:       Cask::Cask.new("test_unversioned") do
+      unversioned:                           Cask::Cask.new("test_unversioned") do
         version "1.2.3"
         sha256 :no_check
 
@@ -144,10 +224,10 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         desc "Unversioned test cask"
         homepage "https://brew.sh"
       end,
-      skip:              Cask::Cask.new("test_skip") do
+      skip:                                  Cask::Cask.new("test_skip") do
         version "0.0.1"
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test Skip"
         desc "Skipped test cask"
         homepage "https://brew.sh"
@@ -156,10 +236,10 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           skip
         end
       end,
-      skip_with_message: Cask::Cask.new("test_skip_with_message") do
+      skip_with_message:                     Cask::Cask.new("test_skip_with_message") do
         version "0.0.1"
 
-        url "https://brew.sh/test-0.0.1.tgz"
+        url "https://brew.sh/test-#{version}.tgz"
         name "Test Skip"
         desc "Skipped test cask"
         homepage "https://brew.sh"
@@ -170,7 +250,6 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end,
     }
   end
-
   let(:status_hashes) do
     {
       formula: {
@@ -243,23 +322,39 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
             livecheck_defined: true,
           },
         },
+        skip_with_messages:  {
+          formula:  "test_skip_with_messages",
+          status:   "skipped",
+          messages: ["First message", "Second message"],
+          meta:     {
+            livecheck_defined: true,
+          },
+        },
+        error_with_messages: {
+          formula:  "test_error_with_messages",
+          status:   "error",
+          messages: ["First error", "Second error"],
+          meta:     {
+            livecheck_defined: true,
+          },
+        },
       },
       cask:    {
-        deprecated:        {
+        deprecated:          {
           cask:   "test_deprecated",
           status: "deprecated",
           meta:   {
             livecheck_defined: false,
           },
         },
-        disabled:          {
+        disabled:            {
           cask:   "test_disabled",
           status: "disabled",
           meta:   {
             livecheck_defined: false,
           },
         },
-        extract_plist:     {
+        extract_plist:       {
           cask:     "test_extract_plist_skip",
           status:   "skipped",
           messages: ["Use `--extract-plist` to enable checking multiple casks with ExtractPlist strategy"],
@@ -267,31 +362,47 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
             livecheck_defined: true,
           },
         },
-        latest:            {
+        latest:              {
           cask:   "test_latest",
           status: "latest",
           meta:   {
             livecheck_defined: false,
           },
         },
-        unversioned:       {
+        unversioned:         {
           cask:   "test_unversioned",
           status: "unversioned",
           meta:   {
             livecheck_defined: false,
           },
         },
-        skip:              {
+        skip:                {
           cask:   "test_skip",
           status: "skipped",
           meta:   {
             livecheck_defined: true,
           },
         },
-        skip_with_message: {
+        skip_with_message:   {
           cask:     "test_skip_with_message",
           status:   "skipped",
           messages: ["Not maintained"],
+          meta:     {
+            livecheck_defined: true,
+          },
+        },
+        skip_with_messages:  {
+          cask:     "test_skip_with_messages",
+          status:   "skipped",
+          messages: ["First message", "Second message"],
+          meta:     {
+            livecheck_defined: true,
+          },
+        },
+        error_with_messages: {
+          cask:     "test_error_with_messages",
+          status:   "error",
+          messages: ["First error", "Second error"],
           meta:     {
             livecheck_defined: true,
           },
@@ -312,6 +423,18 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       it "skips" do
         expect(skip_conditions.skip_information(formulae[:disabled]))
           .to eq(status_hashes[:formula][:disabled])
+      end
+    end
+
+    context "when a formula is only disabled on the current arch" do
+      it "does not skip" do
+        expect(skip_conditions.skip_information(formulae[:partially_disabled_arch])).to eq({})
+      end
+    end
+
+    context "when a formula is only disabled on the current OS" do
+      it "does not skip" do
+        expect(skip_conditions.skip_information(formulae[:partially_disabled_os])).to eq({})
       end
     end
 
@@ -371,6 +494,25 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       it "skips" do
         expect(skip_conditions.skip_information(casks[:disabled]))
           .to eq(status_hashes[:cask][:disabled])
+      end
+    end
+
+    context "when a cask is only disabled on the current arch" do
+      it "does not skip" do
+        expect(skip_conditions.skip_information(casks[:partially_disabled_arch])).to eq({})
+      end
+    end
+
+    context "when a cask is only disabled on the current OS" do
+      it "does not skip" do
+        expect(skip_conditions.skip_information(casks[:partially_disabled_os])).to eq({})
+      end
+    end
+
+    context "when a cask without a `livecheck` block is deprecated" \
+            "with a future disable date because `:fails_gatekeeper_check`" do
+      it "does not skip" do
+        expect(skip_conditions.skip_information(casks[:future_disable_fails_gatekeeper_check])).to eq({})
       end
     end
 
@@ -601,6 +743,22 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
       end
     end
 
+    context "when a formula produces multiple messages" do
+      it "prints skip information" do
+        expect do
+          skip_conditions.print_skip_information(status_hashes[:formula][:skip_with_messages])
+        end.to output(
+          "test_skip_with_messages: skipped - First message; Second message\n",
+        ).to_stdout.and not_to_output.to_stderr
+
+        expect do
+          skip_conditions.print_skip_information(status_hashes[:formula][:error_with_messages])
+        end.to output(
+          "test_error_with_messages: First error; Second error\n",
+        ).to_stdout.and not_to_output.to_stderr
+      end
+    end
+
     context "when the cask is deprecated without a `livecheck` block" do
       it "prints skip information" do
         expect { skip_conditions.print_skip_information(status_hashes[:cask][:deprecated]) }
@@ -642,6 +800,22 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
         expect { skip_conditions.print_skip_information(status_hashes[:cask][:skip_with_message]) }
           .to output("test_skip_with_message: skipped - Not maintained\n").to_stdout
           .and not_to_output.to_stderr
+      end
+    end
+
+    context "when a cask produces multiple messages" do
+      it "prints skip information" do
+        expect do
+          skip_conditions.print_skip_information(status_hashes[:cask][:skip_with_messages])
+        end.to output(
+          "test_skip_with_messages: skipped - First message; Second message\n",
+        ).to_stdout.and not_to_output.to_stderr
+
+        expect do
+          skip_conditions.print_skip_information(status_hashes[:cask][:error_with_messages])
+        end.to output(
+          "test_error_with_messages: First error; Second error\n",
+        ).to_stdout.and not_to_output.to_stderr
       end
     end
 

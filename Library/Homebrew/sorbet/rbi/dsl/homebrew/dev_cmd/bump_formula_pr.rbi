@@ -63,6 +63,9 @@ class Homebrew::DevCmd::BumpFormulaPr::Args < Homebrew::CLI::Args
   def python_package_name; end
 
   sig { returns(T.nilable(String)) }
+  def resource_versions; end
+
+  sig { returns(T.nilable(String)) }
   def revision; end
 
   sig { returns(T.nilable(String)) }

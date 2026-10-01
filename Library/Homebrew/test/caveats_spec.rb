@@ -1,4 +1,7 @@
+# typed: true
 # frozen_string_literal: true
+
+require "utils/shell"
 
 require "formula"
 require "caveats"
@@ -6,7 +9,12 @@ require "caveats"
 RSpec.describe Caveats do
   subject(:caveats) { described_class.new(f) }
 
-  let(:f) { formula { url "foo-1.0" } }
+  let(:f) do
+    formula do
+      T.bind(self, T.class_of(Formula))
+      url "foo-1.0"
+    end
+  end
 
   specify "#f" do
     expect(caveats.formula).to eq(f)
@@ -19,6 +27,7 @@ RSpec.describe Caveats do
 
     it "returns false if the Formula has caveats" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
 
         def caveats
@@ -38,8 +47,10 @@ RSpec.describe Caveats do
 
       it "gives information about service" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"php", "test"]
           end
         end
@@ -52,8 +63,10 @@ RSpec.describe Caveats do
 
       it "prints warning when no service daemon is found" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"cmd"]
           end
         end
@@ -64,8 +77,10 @@ RSpec.describe Caveats do
 
       it "prints service startup information when service.require_root is true" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"cmd"]
             require_root true
           end
@@ -76,8 +91,10 @@ RSpec.describe Caveats do
 
       it "prints service login information" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"cmd"]
           end
         end
@@ -87,8 +104,10 @@ RSpec.describe Caveats do
 
       it "gives information about require_root restarting services after upgrade" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"cmd"]
             require_root true
           end
@@ -100,8 +119,10 @@ RSpec.describe Caveats do
 
       it "gives information about user restarting services after upgrade" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"cmd"]
           end
         end
@@ -112,8 +133,10 @@ RSpec.describe Caveats do
 
       it "gives information about require_root starting services after upgrade" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"cmd"]
             require_root true
           end
@@ -125,8 +148,10 @@ RSpec.describe Caveats do
 
       it "gives information about user starting services after upgrade" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"cmd"]
           end
         end
@@ -137,8 +162,10 @@ RSpec.describe Caveats do
 
       it "gives information about service manual command" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             run [bin/"cmd", "start"]
             environment_variables VAR: "foo"
           end
@@ -152,8 +179,10 @@ RSpec.describe Caveats do
 
       it "prints info when there are custom service files" do
         f = formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           service do
+            T.bind(self, Homebrew::Service)
             name macos: "custom.mxcl.foo", linux: "custom.foo"
           end
         end
@@ -166,6 +195,7 @@ RSpec.describe Caveats do
     context "when f.keg_only is not nil" do
       let(:f) do
         formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
           keg_only "some reason"
         end
@@ -174,6 +204,12 @@ RSpec.describe Caveats do
 
       it "tells formula is keg_only" do
         expect(caveats).to include("keg-only")
+      end
+
+      it "omits keg-only caveats when the formula is linked" do
+        allow(f).to receive(:linked?).and_return(true)
+
+        expect(caveats).to be_empty
       end
 
       it "gives command to be run when f.bin is a directory" do
@@ -211,6 +247,7 @@ RSpec.describe Caveats do
       context "when joining different caveat types together" do
         let(:f) do
           formula do
+            T.bind(self, T.class_of(Formula))
             url "foo-1.0"
             keg_only "some reason"
 
@@ -219,6 +256,7 @@ RSpec.describe Caveats do
             end
 
             service do
+              T.bind(self, Homebrew::Service)
               run [bin/"cmd"]
             end
           end
@@ -227,7 +265,7 @@ RSpec.describe Caveats do
         let(:caveats) { described_class.new(f).caveats }
 
         it "adds the correct amount of new lines to the output" do
-          expect(Utils::Service).to receive(:launchctl?).at_least(:once).and_return(true)
+          allow(Utils::Service).to receive_messages(running?: false, systemctl?: true)
           expect(caveats).to include("something else")
           expect(caveats).to include("keg-only")
           expect(caveats).to include("if you don't want/need a background service")
@@ -236,14 +274,204 @@ RSpec.describe Caveats do
       end
     end
 
+    describe "PATH shadowing" do
+      let(:f) do
+        formula do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+      end
+
+      before do
+        Pathname.new(f.opt_bin).mkpath
+        FileUtils.touch(f.opt_bin/"foo")
+        FileUtils.chmod(0755, f.opt_bin/"foo")
+        allow(f).to receive(:any_version_installed?).and_return(true)
+        allow_any_instance_of(Object).to receive(:which).and_call_original
+      end
+
+      it "warns about shadowed executables on PATH in alphabetical order" do
+        FileUtils.touch(f.opt_bin/"bar")
+        FileUtils.chmod(0755, f.opt_bin/"bar")
+
+        foo_shadower = Pathname.new("/usr/local/bin/foo")
+        bar_shadower = Pathname.new("/usr/local/bin/bar")
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(foo_shadower)
+        allow_any_instance_of(Object).to receive(:which).with("bar", ORIGINAL_PATHS).and_return(bar_shadower)
+        allow(foo_shadower).to receive(:realpath).and_return(foo_shadower)
+        allow(bar_shadower).to receive(:realpath).and_return(bar_shadower)
+        allow(f.opt_bin).to receive(:children).and_return([f.opt_bin/"foo", f.opt_bin/"bar"])
+
+        caveats = described_class.new(f).caveats
+        expect(caveats).to include("foo (shadowed by #{foo_shadower})")
+        expect(caveats.index("bar (shadowed by")).to be < caveats.index("foo (shadowed by")
+      end
+
+      it "does not warn when PATH resolves to the formula's own executable" do
+        own = f.opt_bin/"foo"
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(own)
+
+        expect(described_class.new(f).caveats).not_to include("shadowed")
+      end
+
+      it "does not warn for keg-only formulae" do
+        keg_only_f = formula do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          keg_only "some reason"
+        end
+        Pathname.new(keg_only_f.opt_bin).mkpath
+        FileUtils.touch(keg_only_f.opt_bin/"foo")
+        FileUtils.chmod(0755, keg_only_f.opt_bin/"foo")
+        allow_any_instance_of(Object).to receive(:which)
+          .with("foo", ORIGINAL_PATHS).and_return(Pathname.new("/usr/local/bin/foo"))
+
+        expect(described_class.new(keg_only_f).caveats).not_to include("shadowed")
+      end
+
+      it "does not warn when the queried formula itself is not installed" do
+        uninstalled_f = formula("foo@old") do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          keg_only :versioned_formula
+        end
+        Pathname.new(uninstalled_f.opt_bin).mkpath
+        FileUtils.touch(uninstalled_f.opt_bin/"foo")
+        FileUtils.chmod(0755, uninstalled_f.opt_bin/"foo")
+
+        sibling_keg_bin = HOMEBREW_CELLAR/"foo@2.0/2.0/bin"
+        sibling_keg_bin.mkpath
+        sibling_shadower = sibling_keg_bin/"foo"
+        sibling_shadower.write("#!/bin/sh\n")
+        sibling_shadower.chmod(0755)
+
+        allow(uninstalled_f).to receive_messages(versioned_formulae_names: ["foo@2.0"],
+                                                 unversioned_formula_name: "foo",
+                                                 any_version_installed?:   false)
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(sibling_shadower)
+
+        expect(described_class.new(uninstalled_f).caveats).not_to include("shadowed")
+      end
+
+      it "warns for a keg-only formula when a sibling keg is linked over it" do
+        keg_only_f = formula("foo@1.0") do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          keg_only :versioned_formula
+        end
+        Pathname.new(keg_only_f.opt_bin).mkpath
+        FileUtils.touch(keg_only_f.opt_bin/"foo")
+        FileUtils.chmod(0755, keg_only_f.opt_bin/"foo")
+
+        sibling_keg_bin = HOMEBREW_CELLAR/"foo@2.0/2.0/bin"
+        sibling_keg_bin.mkpath
+        sibling_shadower = sibling_keg_bin/"foo"
+        sibling_shadower.write("#!/bin/sh\n")
+        sibling_shadower.chmod(0755)
+
+        allow(keg_only_f).to receive_messages(versioned_formulae_names: ["foo@2.0"],
+                                              unversioned_formula_name: "foo",
+                                              any_version_installed?:   true)
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(sibling_shadower)
+
+        caveats = described_class.new(keg_only_f).caveats
+        expect(caveats).to include("foo (shadowed by #{sibling_shadower} from foo@2.0)")
+        expect(caveats).to include("Run `brew link foo@1.0`")
+      end
+
+      it "warns when a keg-only formula has been linked" do
+        keg_only_f = formula do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          keg_only "some reason"
+        end
+        Pathname.new(keg_only_f.opt_bin).mkpath
+        FileUtils.touch(keg_only_f.opt_bin/"foo")
+        FileUtils.chmod(0755, keg_only_f.opt_bin/"foo")
+        allow(keg_only_f).to receive_messages(linked?: true, any_version_installed?: true)
+        shadower = Pathname.new("/usr/local/bin/foo")
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(shadower)
+        allow(shadower).to receive(:realpath).and_return(shadower)
+
+        expect(described_class.new(keg_only_f).caveats).to include("foo (shadowed by #{shadower})")
+      end
+
+      it "does not warn when HOMEBREW_NO_PATH_SHADOW_CHECK is set" do
+        shadower = Pathname.new("/usr/local/bin/foo")
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(shadower)
+        allow(Homebrew::EnvConfig).to receive(:no_path_shadow_check?).and_return(true)
+
+        expect(described_class.new(f).caveats).not_to include("shadowed")
+      end
+
+      it "shows the opt-out hint by default" do
+        shadower = Pathname.new("/usr/local/bin/foo")
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(shadower)
+        allow(shadower).to receive(:realpath).and_return(shadower)
+
+        expect(described_class.new(f).caveats).to include("HOMEBREW_NO_PATH_SHADOW_CHECK=1")
+      end
+
+      it "hides the opt-out hint when HOMEBREW_NO_ENV_HINTS is set" do
+        shadower = Pathname.new("/usr/local/bin/foo")
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(shadower)
+        allow(shadower).to receive(:realpath).and_return(shadower)
+        allow(Homebrew::EnvConfig).to receive(:no_env_hints?).and_return(true)
+
+        expect(described_class.new(f).caveats).not_to include("HOMEBREW_NO_PATH_SHADOW_CHECK")
+      end
+
+      it "annotates sibling-keg shadowers with the keg name and adds a `brew link` hint" do
+        sibling_keg_bin = HOMEBREW_CELLAR/"#{f.name}@1.0/1.0/bin"
+        sibling_keg_bin.mkpath
+        sibling_shadower = sibling_keg_bin/"foo"
+        sibling_shadower.write("#!/bin/sh\n")
+        sibling_shadower.chmod(0755)
+
+        allow(f).to receive_messages(versioned_formulae_names: ["#{f.name}@1.0"], unversioned_formula_name: nil)
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(sibling_shadower)
+
+        caveats = described_class.new(f).caveats
+        expect(caveats).to include("shadowed by other linked Homebrew commands")
+        expect(caveats).to include("foo (shadowed by #{sibling_shadower} from #{f.name}@1.0)")
+        expect(caveats).to include("Run `brew link #{f.name}`")
+        expect(caveats).not_to include("earlier in your PATH")
+      end
+
+      it "annotates only the sibling line when shadowers are mixed" do
+        Pathname.new(f.opt_bin).mkpath
+        FileUtils.touch(f.opt_bin/"bar")
+        FileUtils.chmod(0755, f.opt_bin/"bar")
+
+        sibling_keg_bin = HOMEBREW_CELLAR/"#{f.name}@1.0/1.0/bin"
+        sibling_keg_bin.mkpath
+        sibling_shadower = sibling_keg_bin/"foo"
+        sibling_shadower.write("#!/bin/sh\n")
+        sibling_shadower.chmod(0755)
+
+        bar_shadower = Pathname.new("/usr/local/bin/bar")
+        allow(bar_shadower).to receive(:realpath).and_return(bar_shadower)
+
+        allow(f).to receive_messages(versioned_formulae_names: ["#{f.name}@1.0"], unversioned_formula_name: nil)
+        allow_any_instance_of(Object).to receive(:which).with("foo", ORIGINAL_PATHS).and_return(sibling_shadower)
+        allow_any_instance_of(Object).to receive(:which).with("bar", ORIGINAL_PATHS).and_return(bar_shadower)
+
+        caveats = described_class.new(f).caveats
+        expect(caveats).to include("foo (shadowed by #{sibling_shadower} from #{f.name}@1.0)")
+        expect(caveats).to include("bar (shadowed by #{bar_shadower})")
+        expect(caveats).to include("Run `brew link #{f.name}`")
+      end
+    end
+
     describe "shell completions" do
       let(:f) do
         formula do
+          T.bind(self, T.class_of(Formula))
           url "foo-1.0"
         end
       end
       let(:caveats) { described_class.new(f) }
-      let(:path) { f.prefix.resolved_path }
+      let(:path) { Utils::Path.resolved_path(f.prefix) }
 
       let(:bash_completion_dir) { path/"etc/bash_completion.d" }
       let(:fish_vendor_completions) { path/"share/fish/vendor_completions.d" }

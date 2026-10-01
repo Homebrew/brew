@@ -14,7 +14,7 @@ module UnpackStrategy
       []
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       return false unless path.magic_number.match?(/\ASQLite format 3\000/n)
 
@@ -36,7 +36,7 @@ module UnpackStrategy
       system_command! "fossil",
                       args:    ["open", path, *args],
                       chdir:   unpack_dir,
-                      env:     { "PATH" => PATH.new(Formula["fossil"].opt_bin, ENV.fetch("PATH")) },
+                      env:     Utils::Path.formula_opt_bin_env("fossil"),
                       verbose:
     end
   end

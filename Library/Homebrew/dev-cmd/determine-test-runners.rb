@@ -19,11 +19,15 @@ module Homebrew
         switch "--eval-all",
                description: "Evaluate all available formulae, whether installed or not, to determine testing " \
                             "dependents.",
-               env:         :eval_all
+               env:         :eval_all,
+               replacement: "the default trusted-tap behaviour",
+               odisabled:   true
         switch "--dependents",
-               description: "Determine runners for testing dependents. " \
-                            "Requires `--eval-all` or `$HOMEBREW_EVAL_ALL` to be set.",
-               depends_on:  "--eval-all"
+               description: "Determine runners for testing dependents."
+        flag   "--dependent-shards=",
+               description: "Split each dependent runner into the given number of shards.",
+               depends_on:  "--dependents",
+               hidden:      true
 
         named_args max: 2
 
@@ -41,17 +45,31 @@ module Homebrew
         end
 
         testing_formulae = args.named.first&.split(",").to_a.map do |name|
-          TestRunnerFormula.new(Formulary.factory(name), eval_all: args.eval_all?)
+          TestRunnerFormula.new(Formulary.factory(name), include_uninstalled: true)
         end.freeze
         deleted_formulae = args.named.second&.split(",").to_a.freeze
+        dependent_shards = args.dependent_shards || "1"
+        unless dependent_shards.match?(/\A[1-9]\d*\z/)
+          raise UsageError,
+                "`--dependent-shards` must be a positive integer."
+        end
+
         runner_matrix = GitHubRunnerMatrix.new(testing_formulae, deleted_formulae,
                                                all_supported:    args.all_supported?,
-                                               dependent_matrix: args.dependents?)
+                                               dependent_matrix: args.dependents?,
+                                               dependent_shards: dependent_shards.to_i)
         runners = runner_matrix.active_runner_specs_hash
 
         ohai "Runners", JSON.pretty_generate(runners)
 
-        github_output = ENV.fetch("GITHUB_OUTPUT")
+        # gracefully handle non-GitHub Actions environments
+        github_output = if ENV.key?("GITHUB_ACTIONS")
+          ENV.fetch("GITHUB_OUTPUT")
+        else
+          ENV.fetch("GITHUB_OUTPUT", nil)
+        end
+        return unless github_output
+
         File.open(github_output, "a") do |f|
           f.puts("runners=#{runners.to_json}")
           f.puts("runners_present=#{runners.present?}")

@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "build_environment"
@@ -39,6 +40,7 @@ RSpec.describe BuildEnvironment do
     context "with a single argument" do
       subject(:build_env) do
         Class.new(build_environment_dsl) do
+          T.bind(self, BuildEnvironment::DSL)
           env :std
         end
       end

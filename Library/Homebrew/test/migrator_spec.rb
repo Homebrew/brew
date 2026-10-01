@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "migrator"
@@ -10,39 +11,42 @@ RSpec.describe Migrator do
 
   let(:new_formula) { Testball.new("newname") }
   let(:old_formula) { Testball.new("oldname") }
-
   let(:new_keg_record) { HOMEBREW_CELLAR/"newname/0.1" }
   let(:old_keg_record) { HOMEBREW_CELLAR/"oldname/0.1" }
-
   let(:old_tab) { Tab.empty }
-
   let(:keg) { Keg.new(old_keg_record) }
   let(:old_pin) { HOMEBREW_PINNED_KEGS/"oldname" }
 
-  before do |example|
+  before do
     allow(new_formula).to receive(:oldnames).and_return(["oldname"])
+    allow(Formulary).to receive(:factory).with("homebrew/core/oldname", any_args).and_return(old_formula)
+    allow(Formulary).to receive(:factory).with("oldname", any_args).and_return(old_formula)
+    allow(Formulary).to receive(:factory).with("newname", any_args).and_return(new_formula)
+
+    example = RSpec.current_example
+    raise "Unable to determine the current example" if example.nil?
 
     # do not create directories for error tests
-    next if example.metadata[:description].start_with?("raises an error")
+    unless example.metadata.fetch(:description).to_s.start_with?("raises an error")
+      (old_keg_record/"bin").mkpath
 
-    (old_keg_record/"bin").mkpath
+      %w[inside bindir].each do |file|
+        FileUtils.touch old_keg_record/"bin/#{file}"
+      end
 
-    %w[inside bindir].each do |file|
-      FileUtils.touch old_keg_record/"bin/#{file}"
+      old_tab.tabfile = HOMEBREW_CELLAR/"oldname/0.1/INSTALL_RECEIPT.json"
+      old_tab.source["path"] = "/oldname"
+      old_tab.write
+
+      keg.link
+      keg.optlink
+
+      old_pin.make_relative_symlink old_keg_record
+
+      migrator # needs to be evaluated eagerly
+
+      (HOMEBREW_PREFIX/"bin").mkpath
     end
-
-    old_tab.tabfile = HOMEBREW_CELLAR/"oldname/0.1/INSTALL_RECEIPT.json"
-    old_tab.source["path"] = "/oldname"
-    old_tab.write
-
-    keg.link
-    keg.optlink
-
-    old_pin.make_relative_symlink old_keg_record
-
-    migrator # needs to be evaluated eagerly
-
-    (HOMEBREW_PREFIX/"bin").mkpath
   end
 
   after do
@@ -203,11 +207,12 @@ RSpec.describe Migrator do
 
   specify "#backup_old_tabs" do
     tab = Tab.empty
-    tab.tabfile = HOMEBREW_CELLAR/"oldname/0.1/INSTALL_RECEIPT.json"
+    tabfile = HOMEBREW_CELLAR/"oldname/0.1/INSTALL_RECEIPT.json"
+    tab.tabfile = tabfile
     tab.source["path"] = "/should/be/the/same"
     tab.write
     migrator = described_class.new(new_formula, "oldname")
-    tab.tabfile.delete
+    tabfile.delete
     migrator.backup_old_tabs
     expect(Tab.for_keg(old_keg_record).source["path"]).to eq("/should/be/the/same")
   end

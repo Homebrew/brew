@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/browser"
+
 require "abstract_command"
 
 module Homebrew
@@ -14,7 +16,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        exec_browser HOMEBREW_DOCS_WWW
+        Utils::Browser.open HOMEBREW_DOCS_WWW
       end
     end
   end

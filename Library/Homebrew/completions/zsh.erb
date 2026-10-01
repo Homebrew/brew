@@ -3,7 +3,9 @@
 #
 # - For changes to a command under `COMMANDS` or `DEVELOPER COMMANDS` sections):
 #   - Find the source file in `Library/Homebrew/[dev-]cmd/<command>.{rb,sh}`.
-#   - For `.rb` files, edit the `<command>_args` method.
+#   - For `.rb` files, edit the `cmd_args` block. For subcommand metadata,
+#     edit `Library/Homebrew/<command>/subcommand.rb` and
+#     `Library/Homebrew/<command>/subcommand/*.rb` if they exist.
 #   - For `.sh` files, edit the top comment, being sure to use the line prefix
 #     `#:` for the comments to be recognized as documentation. If in doubt,
 #     compare with already documented commands.
@@ -33,6 +35,29 @@ __brew_list_aliases() {
   echo "${aliases}"
 }
 
+__brew_user_aliases() {
+  local aliases_dir="${HOME}/.config/brew-aliases"
+  local pattern="alias: brew ([^[:space:]]+)"
+  local file line alias_name
+  local -a aliases
+
+  [[ ! -d ${aliases_dir} ]] && aliases_dir="${HOME}/.brew-aliases"
+  [[ ! -d ${aliases_dir} ]] && return
+
+  for file in "${aliases_dir}"/*(N); do
+    [[ ! -f ${file} || ${file} == *~ ]] && continue
+    alias_name="${file:t}"
+    {
+      read -r line
+      if read -r line && [[ ${line} =~ ${pattern} ]]; then
+        alias_name="${match[1]}"
+      fi
+    } < "${file}"
+    aliases+=("${alias_name}")
+  done
+  (( ${#aliases} )) && _describe -t user-aliases 'user aliases' aliases
+}
+
 __brew_formulae_or_ruby_files() {
   _alternative 'files:files:{_files -g "*.rb"}'
 }
@@ -56,7 +81,7 @@ __brew_formulae() {
   local -a list
   local comp_cachename=brew_formulae
   if ! _retrieve_cache $comp_cachename; then
-    list=( $(brew formulae) )
+    list=( $(HOMEBREW_COMPLETION=1 brew formulae) )
     _store_cache $comp_cachename list
   fi
   _describe -t formulae 'all formulae' list
@@ -86,7 +111,7 @@ __brew_casks() {
   local comp_cachename=brew_casks
 
   if ! _retrieve_cache $comp_cachename; then
-    list=( $(brew casks) )
+    list=( $(HOMEBREW_COMPLETION=1 brew casks) )
     _store_cache $comp_cachename list
   fi
 
@@ -130,6 +155,11 @@ __brew_internal_commands() {
   commands=(
     <%= builtin_command_descriptions.join("\n    ") + "\n" %>
   )
+  if [[ -n ${HOMEBREW_DEVELOPER:-} ]]; then
+    commands+=(
+      <%= maintainer_descriptions.join("\n      ") + "\n" %>
+    )
+  fi
   _describe -t internal-commands 'internal commands' commands
 }
 
@@ -148,13 +178,24 @@ __brew_external_commands() {
 __brew_commands() {
   _alternative \
     'internal-commands:command:__brew_internal_commands' \
-    'external-commands:command:__brew_external_commands'
+    'external-commands:command:__brew_external_commands' \
+    'user-aliases:alias:__brew_user_aliases'
 }
 
 __brew_diagnostic_checks() {
   local -a diagnostic_checks
   diagnostic_checks=($(brew doctor --list-checks))
   _describe -t diagnostic-checks 'diagnostic checks' diagnostic_checks
+}
+
+__brew_services() {
+  [[ -prefix '-' ]] && return 0
+
+  local -a services
+  services=($(command find "$(brew --cellar)" -mindepth 3 -maxdepth 3 -name '*.service' \
+    | awk -F/ '{print $(NF-2)}' \
+    | sort -u))
+  _describe -t services 'services' services
 }
 
 <%= completion_functions.join("\n") %>

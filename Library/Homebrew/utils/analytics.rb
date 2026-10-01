@@ -4,17 +4,23 @@
 require "context"
 require "erb"
 require "settings"
-require "cachable"
+require "cacheable"
+require "utils/output"
 
 module Utils
   # Helper module for fetching and reporting analytics data.
   module Analytics
     INFLUX_BUCKET = "analytics"
-    INFLUX_TOKEN = "iVdsgJ_OjvTYGAA79gOfWlA_fX0QCuj4eYUNdb-qVUTrC3tp3JTWCADVNE9HxV0kp2ZjIK9tuthy_teX4szr9A=="
-    INFLUX_HOST = "https://eu-central-1-1.aws.cloud2.influxdata.com"
+    INFLUX_HOST = "https://analytics.brew.sh"
     INFLUX_ORG = "d81a3e6d582d485f"
+    WSL_SUFFIX = " [WSL]"
+    ENV_CONFIG_COMMANDS = %w[config fetch install reinstall update update-report upgrade].freeze
 
-    extend Cachable
+    extend Utils::Output::Mixin
+    extend T::Generic
+    extend Cacheable
+
+    Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
 
     class << self
       include Context
@@ -28,7 +34,7 @@ module Utils
         return if not_this_run? || disabled?
 
         # Tags are always implicitly strings and must have low cardinality.
-        tags_string = tags.map { |k, v| "#{k}=#{v}" }
+        tags_string = tags.map { |k, v| "#{k}=#{v.to_s.gsub(/[ ,=]/) { |char| "\\#{char}" }}" }
                           .join(",")
 
         # Fields need explicitly wrapped with quotes and can have high cardinality.
@@ -38,7 +44,6 @@ module Utils
 
         args = [
           "--max-time", "3",
-          "--header", "Authorization: Token #{INFLUX_TOKEN}",
           "--header", "Content-Type: text/plain; charset=utf-8",
           "--header", "Accept: application/json",
           "--data-binary", "#{measurement},#{tags_string} #{fields_string} #{Time.now.to_i}"
@@ -57,9 +62,9 @@ module Utils
         args = Utils::Curl.curl_args(*args, "--silent", "--output", File::NULL, show_error: false)
         if ENV["HOMEBREW_ANALYTICS_DEBUG"]
           puts "#{curl} #{args.join(" ")} \"#{url}\""
-          puts Utils.popen_read(curl, *args, url)
+          puts Utils.safe_popen_read(curl, *args, url)
         else
-          pid = spawn curl, *args, url
+          pid = spawn curl, *args, url, out: File::NULL, err: File::NULL
           Process.detach(pid)
         end
       end
@@ -111,7 +116,7 @@ module Utils
         options_array.map! { |option| option.sub(/=.*/m, "=") }
 
         # Strip out --with-* and --without-* options
-        options_array.reject! { |option| option.match(/^--with(out)?-/) }
+        options_array.reject! { |option| option.match(/^--with(?:out)?-/) }
 
         options = options_array.sort.uniq.join(" ")
 
@@ -122,6 +127,16 @@ module Utils
           devcmdrun: Homebrew::EnvConfig.devcmdrun?,
           developer: Homebrew::EnvConfig.developer?,
         }
+        if ENV_CONFIG_COMMANDS.include?(command)
+          variables = Homebrew::EnvConfig::ANALYTICS_VARIABLES
+          env_config = variables.fetch(Random.rand(variables.length))
+          tags[:env_config] = env_config.to_s
+          tags[:env_config_state] = if Homebrew::EnvConfig.user_set_variable?(env_config)
+            Homebrew::EnvConfig.non_default_variable?(env_config) ? "non_default" : "default"
+          else
+            "unset"
+          end
+        end
 
         # Fields can have high cardinality.
         fields = { options: }
@@ -249,14 +264,14 @@ module Utils
         table_output(category, days, results, os_version:, cask_install:)
       end
 
-      sig { params(json: T::Hash[String, T.untyped], args: Homebrew::Cmd::Info::Args).void }
-      def output_analytics(json, args:)
+      sig { params(analytics: T::Hash[String, T.untyped], args: Homebrew::Cmd::Info::Args).void }
+      def output_analytics(analytics, args:)
         full_analytics = args.analytics? || verbose?
 
         ohai "Analytics"
-        json["analytics"].each do |category, value|
+        analytics.each do |category, value|
           category = category.tr("_", "-")
-          analytics = []
+          summaries = []
 
           value.each do |days, results|
             days = days.to_i
@@ -266,12 +281,12 @@ module Utils
 
               table_output(category, days.to_s, results)
             else
-              total_count = results.values.inject("+")
-              analytics << "#{number_readable(total_count)} (#{days} days)"
+              total_count = results.values.sum
+              summaries << "#{Formatter.number_readable(total_count)} (#{days} days)"
             end
           end
 
-          puts "#{category}: #{analytics.join(", ")}" unless full_analytics
+          puts "#{category}: #{summaries.join(", ")}" unless full_analytics
         end
       end
 
@@ -279,48 +294,60 @@ module Utils
       # It relies on screen scraping some GitHub HTML that's not available as an API.
       # This seems very likely to break in the future.
       # That said, it's the only way to get the data we want right now.
-      sig { params(formula: Formula, args: Homebrew::Cmd::Info::Args).void }
-      def output_github_packages_downloads(formula, args:)
+      sig { params(formula: Formula, analytics: T::Hash[String, T.untyped], args: Homebrew::Cmd::Info::Args).void }
+      def output_github_packages_downloads(formula, analytics, args:)
         return unless args.github_packages_downloads?
         return unless formula.core_formula?
 
+        require "tmpdir"
         require "utils/curl"
 
         escaped_formula_name = GitHubPackages.image_formula_name(formula.name)
                                              .gsub("/", "%2F")
         formula_url_suffix = "container/core%2F#{escaped_formula_name}/"
         formula_url = "https://github.com/Homebrew/homebrew-core/pkgs/#{formula_url_suffix}"
-        output = Utils::Curl.curl_output("--fail", formula_url)
+        output = Utils::Curl.curl_output("--fail", "--compressed", formula_url)
         return unless output.success?
 
-        formula_version_urls = output.stdout
-                                     .scan(%r{/orgs/Homebrew/packages/#{formula_url_suffix}\d+\?tag=[^"]+})
-                                     .map do |url|
-          T.cast(url, String).sub("/orgs/Homebrew/packages/", "/Homebrew/homebrew-core/pkgs/")
-        end
-        return if formula_version_urls.empty?
+        tag_urls = output.stdout
+                         .scan(%r{/orgs/Homebrew/packages/#{formula_url_suffix}(\d+\?tag=([^"]+))})
+                         .to_h { |version, tag| [tag.to_s, "#{formula_url}#{version}"] }
+        return if tag_urls.empty?
 
-        thirty_day_download_count = 0
-        formula_version_urls.each do |formula_version_url_suffix|
-          formula_version_url = "https://github.com#{formula_version_url_suffix}"
-          output = Utils::Curl.curl_output("--fail", formula_version_url)
-          next unless output.success?
+        downloads_by_tag = Dir.mktmpdir("github-packages-downloads", HOMEBREW_TEMP) do |tmpdir|
+          Utils::Curl.curl_output("--fail", "--compressed", "--parallel",
+                                  *tag_urls.flat_map { |tag, url| ["--output", "#{tmpdir}/#{tag}.html", url] })
 
-          last_thirty_days_match = output.stdout.match(
-            %r{<span class="[\s\-a-z]*">Last 30 days</span>\s*<span class="[\s\-a-z]*">([\d.M,]+)</span>}m,
-          )
-          next if last_thirty_days_match.blank?
+          tag_urls.keys.filter_map do |tag|
+            version_html = Pathname("#{tmpdir}/#{tag}.html")
+            next unless version_html.exist?
 
-          last_thirty_days_downloads = T.must(last_thirty_days_match.captures.first).tr(",", "")
-          thirty_day_download_count += if (millions_match = last_thirty_days_downloads.match(/(\d+\.\d+)M/).presence)
-            (millions_match.captures.first.to_f * 1_000_000).to_i
-          else
-            last_thirty_days_downloads.to_i
+            downloads = version_html.read[%r{>Last 30 days</span>\s*<span[^>]*>([\d.,]+M?)<}, 1]
+            next if downloads.nil?
+
+            count = if downloads.end_with?("M")
+              (downloads.to_f * 1_000_000).to_i
+            else
+              downloads.tr(",", "").to_i
+            end
+            [tag, count]
           end
         end
+        missing_tags = tag_urls.keys - downloads_by_tag.map(&:first)
+        if missing_tags.any?
+          opoo "Failed to fetch GitHub Packages downloads for: #{missing_tags.join(", ")}"
+          return
+        end
 
-        ohai "GitHub Packages Downloads"
-        puts "#{number_readable(thirty_day_download_count)} (30 days)"
+        table_output("github-packages-downloads", "30", downloads_by_tag.sort_by { |_, count| -count }.to_h,
+                     name_header: "Tag")
+
+        install_count = analytics.dig("install", "30d")&.values&.sum
+        return unless install_count&.positive?
+
+        difference = ((downloads_by_tag.sum { |_, count| count } - install_count) * 100.0) / install_count
+        puts "Difference from #{format_count(install_count)} analytics install events (30 days): " \
+             "#{format("%+.2f", difference)}%"
       end
 
       sig { params(formula: Formula, args: Homebrew::Cmd::Info::Args).void }
@@ -329,11 +356,13 @@ module Utils
 
         require "api"
 
-        json = Homebrew::API::Formula.fetch formula.name
-        return if json.blank? || json["analytics"].blank?
+        return unless Homebrew::API.formula_name? formula.name
 
-        output_analytics(json, args:)
-        output_github_packages_downloads(formula, args:)
+        analytics = Homebrew::API::Analytics.formula_analytics formula.name
+        return if analytics.blank?
+
+        output_analytics(analytics, args:)
+        output_github_packages_downloads(formula, analytics, args:)
       rescue ArgumentError
         # Ignore failed API requests
         nil
@@ -345,16 +374,25 @@ module Utils
 
         require "api"
 
-        json = Homebrew::API::Cask.fetch cask.token
-        return if json.blank? || json["analytics"].blank?
+        return unless Homebrew::API.cask_token?(cask.token)
 
-        output_analytics(json, args:)
+        analytics = Homebrew::API::Analytics.cask_analytics cask.token
+        return if analytics.blank?
+
+        output_analytics(analytics, args:)
       rescue ArgumentError
         # Ignore failed API requests
         nil
       end
 
-      sig { returns(T::Hash[Symbol, String]) }
+      sig { params(value: String, wsl: T::Boolean).returns(String) }
+      def with_wsl_suffix_if_needed(value, wsl: OS.wsl?)
+        return value if !wsl || value.end_with?(WSL_SUFFIX)
+
+        "#{value}#{WSL_SUFFIX}"
+      end
+
+      sig { returns(T::Hash[Symbol, T.any(T::Boolean, String)]) }
       def default_package_tags
         cache[:default_package_tags] ||= begin
           # Only display default prefixes to reduce cardinality and improve privacy
@@ -368,7 +406,7 @@ module Utils
             developer:      Homebrew::EnvConfig.developer?,
             devcmdrun:      Homebrew::EnvConfig.devcmdrun?,
             arch:           HOMEBREW_PHYSICAL_PROCESSOR,
-            os:             HOMEBREW_SYSTEM,
+            os:             with_wsl_suffix_if_needed(HOMEBREW_SYSTEM),
           }
         end
       end
@@ -378,16 +416,16 @@ module Utils
       sig { returns(T::Hash[Symbol, String]) }
       def default_package_fields
         cache[:default_package_fields] ||= begin
-          version = if (match_data = HOMEBREW_VERSION.match(/^[\d.]+/))
+          version = if (numeric_version = HOMEBREW_VERSION[/^[\d.]+/])
             suffix = "-dev" if HOMEBREW_VERSION.include?("-")
-            match_data[0] + suffix.to_s
+            numeric_version + suffix.to_s
           else
             ">=4.1.22"
           end
 
           # Only include OS versions with an actual name.
           os_name_and_version = if (os_version = OS_VERSION.presence) && os_version.downcase.match?(/^[a-z]/)
-            os_version
+            with_wsl_suffix_if_needed(os_version)
           end
 
           {
@@ -400,19 +438,21 @@ module Utils
       sig {
         params(
           category: String, days: String, results: T::Hash[String, Integer], os_version: T::Boolean,
-          cask_install: T::Boolean
+          cask_install: T::Boolean, name_header: T.nilable(String)
         ).void
       }
-      def table_output(category, days, results, os_version: false, cask_install: false)
+      def table_output(category, days, results, os_version: false, cask_install: false, name_header: nil)
         oh1 "#{category} (#{days} days)"
-        total_count = results.values.inject("+")
+        total_count = results.values.sum
         formatted_total_count = format_count(total_count)
         formatted_total_percent = format_percent(100)
 
         index_header = "Index"
         count_header = "Count"
         percent_header = "Percent"
-        name_with_options_header = if os_version
+        name_with_options_header = if name_header
+          name_header
+        elsif os_version
           "macOS Version"
         elsif cask_install
           "Token"
@@ -445,7 +485,7 @@ module Utils
           format "%#{index_width}s", index_header
         formatted_name_with_options_header =
           format "%-#{name_with_options_width}s",
-                 name_with_options_header[0..name_with_options_width-1]
+                 name_with_options_header[0..(name_with_options_width-1)]
         formatted_count_header =
           format "%#{count_width}s", count_header
         formatted_percent_header =
@@ -464,7 +504,7 @@ module Utils
           formatted_index = format "%-#{index_width}s", formatted_index
           formatted_name_with_options =
             format "%-#{name_with_options_width}s",
-                   name_with_options[0..name_with_options_width-1]
+                   name_with_options[0..(name_with_options_width-1)]
           formatted_count = format "%#{count_width}s", format_count(count)
           formatted_percent = if total_count.zero?
             format "%#{percent_width}s", format_percent(0)

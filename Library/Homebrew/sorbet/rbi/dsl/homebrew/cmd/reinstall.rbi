@@ -17,6 +17,9 @@ class Homebrew::Cmd::Reinstall::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def appdir; end
 
+  sig { returns(T.nilable(String)) }
+  def appimagedir; end
+
   sig { returns(T::Boolean) }
   def ask?; end
 
@@ -95,14 +98,14 @@ class Homebrew::Cmd::Reinstall::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def mdimporterdir; end
 
+  sig { returns(T::Boolean) }
+  def no_ask?; end
+
   sig { returns(T.nilable(String)) }
   def prefpanedir; end
 
   sig { returns(T.nilable(String)) }
   def qlplugindir; end
-
-  sig { returns(T::Boolean) }
-  def quarantine?; end
 
   sig { returns(T::Boolean) }
   def require_sha?; end
@@ -124,6 +127,12 @@ class Homebrew::Cmd::Reinstall::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def vst_plugindir; end
+
+  sig { returns(T::Boolean) }
+  def y?; end
+
+  sig { returns(T::Boolean) }
+  def yes?; end
 
   sig { returns(T::Boolean) }
   def zap?; end

@@ -9,33 +9,11 @@ module OS
 
         requires_ancestor { ::Cask::Installer }
 
-        LINUX_INVALID_ARTIFACTS = [
-          ::Cask::Artifact::App,
-          ::Cask::Artifact::AudioUnitPlugin,
-          ::Cask::Artifact::Colorpicker,
-          ::Cask::Artifact::Dictionary,
-          ::Cask::Artifact::InputMethod,
-          ::Cask::Artifact::Installer,
-          ::Cask::Artifact::InternetPlugin,
-          ::Cask::Artifact::KeyboardLayout,
-          ::Cask::Artifact::Mdimporter,
-          ::Cask::Artifact::Pkg,
-          ::Cask::Artifact::Prefpane,
-          ::Cask::Artifact::Qlplugin,
-          ::Cask::Artifact::ScreenSaver,
-          ::Cask::Artifact::Service,
-          ::Cask::Artifact::Suite,
-          ::Cask::Artifact::VstPlugin,
-          ::Cask::Artifact::Vst3Plugin,
-        ].freeze
-
         sig { void }
         def check_stanza_os_requirements
-          return unless artifacts.any? do |artifact|
-            LINUX_INVALID_ARTIFACTS.include?(artifact.class)
-          end
+          return if cask.supports_linux?
 
-          raise ::Cask::CaskError, "macOS is required for this software."
+          raise ::Cask::CaskError, "#{cask}: This cask requires macOS."
         end
       end
     end

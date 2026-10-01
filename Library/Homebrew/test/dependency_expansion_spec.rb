@@ -1,21 +1,22 @@
+# typed: true
 # frozen_string_literal: true
 
 require "dependency"
 
 RSpec.describe Dependency do
-  def build_dep(name, tags = [], deps = [])
-    dep = described_class.new(name.to_s, tags)
-    allow(dep).to receive(:to_formula).and_return \
-      instance_double(Formula, deps:, name:, full_name: name)
-    dep
-  end
-
   let(:foo) { build_dep(:foo) }
   let(:bar) { build_dep(:bar) }
   let(:baz) { build_dep(:baz) }
   let(:qux) { build_dep(:qux) }
   let(:deps) { [foo, bar, baz, qux] }
   let(:formula) { instance_double(Formula, deps:, name: "f") }
+
+  def build_dep(name, tags = [], deps = [])
+    dep = Dependency.new(name.to_s, tags)
+    allow(dep).to receive(:to_formula).and_return \
+      instance_double(Formula, deps:, name:, full_name: name)
+    dep
+  end
 
   describe "::expand" do
     it "yields dependent and dependency pairs" do
@@ -24,6 +25,7 @@ RSpec.describe Dependency do
         expect(dependent).to eq(formula)
         expect(deps[i]).to eq(dep)
         i += 1
+        nil
       end
     end
 
@@ -31,13 +33,13 @@ RSpec.describe Dependency do
       expect(described_class.expand(formula)).to eq(deps)
     end
 
-    it "prunes all when given a block with ::prune" do
-      expect(described_class.expand(formula) { described_class.prune }).to be_empty
+    it "prunes all when given a block with PRUNE" do
+      expect(described_class.expand(formula) { next Dependable::PRUNE }).to be_empty
     end
 
     it "can prune selectively" do
       deps = described_class.expand(formula) do |_, dep|
-        described_class.prune if dep.name == "foo"
+        next Dependable::PRUNE if dep.name == "foo"
       end
 
       expect(deps).to eq([bar, baz, qux])
@@ -67,10 +69,9 @@ RSpec.describe Dependency do
     baz2 = build_dep(:baz, ["option"])
     deps << foo2 << baz2
     deps = [foo2, bar, baz2, qux]
-    deps.zip(described_class.expand(formula)) do |expected, actual|
-      expect(expected.tags).to eq(actual.tags)
-      expect(expected).to eq(actual)
-    end
+    expanded = described_class.expand(formula)
+    expect(expanded.map(&:tags)).to eq(deps.map(&:tags))
+    expect(expanded).to eq(deps)
   end
 
   it "merges tags without duplicating them" do
@@ -78,10 +79,10 @@ RSpec.describe Dependency do
     foo3 = build_dep(:foo, ["option"])
     deps << foo2 << foo3
 
-    expect(described_class.expand(formula).first.tags).to eq(%w[option])
+    expect(described_class.expand(formula).fetch(0).tags).to eq(%w[option])
   end
 
-  it "skips parent but yields children with ::skip" do
+  it "skips parent but yields children with SKIP" do
     f = instance_double(
       Formula,
       name: "f",
@@ -92,22 +93,65 @@ RSpec.describe Dependency do
     )
 
     deps = described_class.expand(f) do |_dependent, dep|
-      described_class.skip if %w[foo qux].include? dep.name
+      next Dependable::SKIP if %w[foo qux].include? dep.name
     end
 
     expect(deps).to eq([bar, baz])
   end
 
-  it "keeps dependency but prunes recursive dependencies with ::keep_but_prune_recursive_deps" do
+  it "keeps dependency but prunes recursive dependencies with KEEP_BUT_PRUNE_RECURSIVE_DEPS" do
     foo = build_dep(:foo, [:test], bar)
     baz = build_dep(:baz, [:test])
     f = instance_double(Formula, name: "f", deps: [foo, baz])
 
     deps = described_class.expand(f) do |_dependent, dep|
-      described_class.keep_but_prune_recursive_deps if dep.test?
+      next Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS if dep.test?
     end
 
     expect(deps).to eq([foo, baz])
+  end
+
+  it "reuses formulae from the provided formula cache" do
+    shared_formula = instance_double(Formula, deps: [], name: "shared", full_name: "shared")
+    shared_dep = described_class.new("shared")
+    repeated_shared_dep = described_class.new("shared")
+    expect(shared_dep).to receive(:to_formula).once.and_return(shared_formula)
+    expect(repeated_shared_dep).not_to receive(:to_formula)
+    f = instance_double(
+      Formula,
+      name:      "f",
+      full_name: "f",
+      deps:      [
+        build_dep(:foo, [], [shared_dep]),
+        build_dep(:bar, [], [repeated_shared_dep]),
+      ],
+    )
+
+    deps = described_class.expand(f, cache_key: "formula-cache-spec", formula_cache: {})
+
+    expect(deps.map(&:name)).to eq(%w[shared foo bar])
+  end
+
+  it "does not reuse formulae for uses_from_macos dependencies with different bounds" do
+    first_formula = instance_double(Formula, deps: [], name: "shared", full_name: "shared")
+    second_formula = instance_double(Formula, deps: [], name: "shared", full_name: "shared")
+    first_dep = UsesFromMacOSDependency.new("shared", [], bounds: { since: :ventura })
+    second_dep = UsesFromMacOSDependency.new("shared", [], bounds: { since: :sonoma })
+    expect(first_dep).to receive(:to_formula).once.and_return(first_formula)
+    expect(second_dep).to receive(:to_formula).once.and_return(second_formula)
+    f = instance_double(
+      Formula,
+      name:      "f",
+      full_name: "f",
+      deps:      [
+        build_dep(:foo, [], [first_dep]),
+        build_dep(:bar, [], [second_dep]),
+      ],
+    )
+
+    deps = described_class.expand(f, cache_key: "uses-from-macos-formula-cache-spec", formula_cache: {})
+
+    expect(deps.map(&:name)).to eq(%w[shared foo bar])
   end
 
   it "returns only the dependencies given as a collection as second argument" do
@@ -129,6 +173,6 @@ RSpec.describe Dependency do
     allow(foo).to receive(:to_formula).and_raise(FormulaUnavailableError, foo.name)
     f = instance_double(Formula, name: "f", deps: [foo])
     expect { described_class.expand(f) }.to raise_error(FormulaUnavailableError)
-    expect(described_class.instance_variable_get(:@expand_stack)).to be_empty
+    expect(described_class.expand_stack).to be_empty
   end
 end

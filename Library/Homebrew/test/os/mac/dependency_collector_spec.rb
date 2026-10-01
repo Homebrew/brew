@@ -1,11 +1,12 @@
+# typed: true
 # frozen_string_literal: true
 
 require "dependency_collector"
 
 RSpec.describe DependencyCollector do
-  alias_matcher :need_tar_xz_dependency, :be_tar_needs_xz_dependency
-
   subject(:collector) { described_class.new }
+
+  alias_matcher :need_tar_xz_dependency, :be_tar_needs_xz_dependency
 
   specify "Resource dependency from a '.xz' URL" do
     resource = Resource.new

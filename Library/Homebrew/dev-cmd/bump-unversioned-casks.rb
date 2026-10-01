@@ -30,10 +30,10 @@ module Homebrew
 
       sig { override.void }
       def run
-        Homebrew.install_bundler_gems!(groups: ["bump_unversioned_casks"])
+        Utils::GemSetup.install_bundler_gems!(groups: ["bump_unversioned_casks"])
 
-        state_file = if args.state_file.present?
-          Pathname(T.must(args.state_file)).expand_path
+        state_file = if (state_file_path = args.state_file.presence)
+          Pathname(state_file_path).expand_path
         else
           HOMEBREW_CACHE/"bump_unversioned_casks.json"
         end
@@ -144,12 +144,15 @@ module Homebrew
               if cask.version == version
                 oh1 "Cask #{cask} is up-to-date at #{version}"
               else
+                sourcefile_path = cask.sourcefile_path
+                raise "unexpected nil cask.sourcefile_path" unless sourcefile_path
+
                 bump_cask_pr_args = [
                   "bump-cask-pr",
                   "--version", version.to_s,
                   "--sha256", ":no_check",
                   "--message", "Automatic update via `brew bump-unversioned-casks`.",
-                  cask.sourcefile_path
+                  sourcefile_path
                 ]
 
                 if args.dry_run?

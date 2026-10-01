@@ -1,20 +1,25 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
 # `brew` Shell Completion
 
-Homebrew comes with completion definitions for the `brew` command. Some packages also provide completion definitions for their own programs.
+Homebrew provides completion definitions for `brew` in Bash, fish and zsh.
+Some formulae and external commands provide completions for their own commands.
 
-`zsh`, `bash` and `fish` are currently supported.
+Homebrew stores completions under `HOMEBREW_PREFIX`, which a system shell may not search automatically.
+The installer does not modify every shell's completion configuration because startup files and plugin managers vary.
 
-You must manually configure your shell to enable its completion support. This is because the Homebrew-managed completions are stored under `HOMEBREW_PREFIX` which your system shell may not be aware of, and since it is difficult to automatically configure `bash` and `zsh` completions in a robust manner, the Homebrew installer does not do it for you.
+Completions supplied by external Homebrew commands are not linked automatically.
+Enable them with:
 
-Shell completions for external Homebrew commands are not automatically installed. To opt-in to using completions for external commands (if provided), they need to be linked to `HOMEBREW_PREFIX` by running `brew completions link`.
+```sh
+brew completions link
+```
 
-## Configuring Completions in `bash`
+## Bash
 
-To make Homebrew's completions available in `bash`, you must source the definitions as part of your shell's startup. Add the following to your `~/.bash_profile` (or, if it doesn't exist, `~/.profile`):
+Add the following to `~/.bash_profile`, or to `~/.profile` when `~/.bash_profile` does not exist:
 
 ```sh
 if type brew &>/dev/null
@@ -32,40 +37,35 @@ then
 fi
 ```
 
-If you install the `bash-completion` formula, this will automatically source the completions' initialisation script (so you do not need to follow the instructions in the formula's caveats).
+The `bash-completion` formula supports the system Bash shipped by macOS.
+Use `bash-completion@2` with Homebrew's Bash 4 or newer.
+The two formulae conflict with each other, so install only one.
+The snippet above loads the installed version, so do not also source it elsewhere in the same shell configuration.
 
-If you are using Homebrew's `bash` as your shell (i.e. `bash` >= v4) you should use the `bash-completion@2` formula instead.
+## zsh
 
-## Configuring Completions in `zsh`
-
-To make Homebrew's completions available in `zsh`, the Homebrew-managed `zsh/site-functions` path needs to be inserted into `FPATH` before initialising `zsh`'s completion facility. This is done by `brew shellenv`, so if you followed the post-Homebrew installation steps, `eval "$(brew shellenv)"` should be in your `~/.zprofile` (on macOS) or `~/.zshrc` (on Linux). All you need is add the following to your `~/.zshrc` if it's not already there, and, if you're on Linux, make sure it's placed after `eval "$(brew shellenv)"`:
+`brew shellenv` adds Homebrew's zsh completion directory to `FPATH`.
+Ensure that `eval "$(brew shellenv)"` runs before zsh initialises completion, then add the following to `~/.zshrc` if your configuration or framework does not already call `compinit`:
 
 ```sh
 autoload -Uz compinit
 compinit
 ```
 
-Note that if you are using Oh My Zsh, it will call `compinit` for you when you source `oh-my-zsh.sh`. In this case, make sure `eval "$(brew shellenv)"` is called before sourcing `oh-my-zsh.sh` if you're on Linux, and you should be all set without any additional configuration.
+Oh My Zsh calls `compinit` when it loads.
+Make sure `brew shellenv` is evaluated first, particularly on Linux.
 
-You may also need to forcibly rebuild `zcompdump`:
+If zsh reports insecure completion directories, run `compaudit` to list the affected paths.
+Inspect their ownership and remove group or world write access only from the directories reported by `compaudit`.
+Do not recursively change permissions across the entire Homebrew prefix.
 
-```sh
-rm -f ~/.zcompdump; compinit
-```
+## fish
 
-Additionally, if you receive "zsh compinit: insecure directories" warnings when attempting to load these completions, you may need to run this:
+Homebrew's `fish` formula discovers Homebrew-managed completions automatically.
 
-```sh
-chmod -R go-w "$(brew --prefix)/share"
-```
+For a fish installation from another source, add the following to `~/.config/fish/config.fish`:
 
-## Configuring Completions in `fish`
-
-No configuration is needed if you're using Homebrew's `fish`. Friendly!
-
-If your `fish` is from somewhere else, add the following to your `~/.config/fish/config.fish`:
-
-```sh
+```fish
 if test -d (brew --prefix)"/share/fish/completions"
     set -p fish_complete_path (brew --prefix)/share/fish/completions
 end
@@ -75,12 +75,15 @@ if test -d (brew --prefix)"/share/fish/vendor_completions.d"
 end
 ```
 
-## Configuring Completions in `pwsh`
+## PowerShell
 
-To make Homebrew's completions available in `pwsh` (PowerShell), you must source the definitions as part of your shell's startup. Add the following to your `$PROFILE`, for example: `~/.config/powershell/Microsoft.PowerShell_profile.ps1`:
+Some formulae install PowerShell completions for their own commands under Homebrew's PowerShell completion directory.
+Homebrew does not currently provide a PowerShell completion definition for `brew` itself.
+
+Add the following to your PowerShell profile, such as `~/.config/powershell/Microsoft.PowerShell_profile.ps1`:
 
 ```pwsh
-if ((Get-Command brew) -and (Test-Path ($completions = "$(brew --prefix)/share/pwsh/completions"))) {
+if ((Get-Command brew -ErrorAction SilentlyContinue) -and (Test-Path ($completions = "$(brew --prefix)/share/pwsh/completions"))) {
   foreach ($f in Get-ChildItem -Path $completions -File) {
     . $f
   }

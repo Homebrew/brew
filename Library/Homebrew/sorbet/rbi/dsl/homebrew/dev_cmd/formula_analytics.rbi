@@ -36,6 +36,9 @@ class Homebrew::DevCmd::FormulaAnalytics::Args < Homebrew::CLI::Args
   def homebrew_devcmdrun_developer?; end
 
   sig { returns(T::Boolean) }
+  def homebrew_env_config?; end
+
+  sig { returns(T::Boolean) }
   def homebrew_os_arch_ci?; end
 
   sig { returns(T::Boolean) }

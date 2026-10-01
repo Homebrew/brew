@@ -1,0 +1,222 @@
+# typed: strict
+# frozen_string_literal: true
+
+require "cmd/source"
+require "cmd/shared_examples/args_parse"
+
+RSpec.describe Homebrew::Cmd::Source do
+  it_behaves_like "parseable arguments"
+
+  it "opens Homebrew and Formula source repositories", :integration_test do
+    setup_test_formula "testball", <<~RUBY
+      url "https://github.com/Homebrew/testball/archive/refs/tags/v0.1.tar.gz"
+    RUBY
+
+    expect { brew "source", "HOMEBREW_BROWSER" => "echo" }
+      .to output(%r{https://github\.com/Homebrew/brew}).to_stdout
+      .and not_to_output.to_stderr
+      .and be_a_success
+    expect { brew "source", "testball", "HOMEBREW_BROWSER" => "echo" }
+      .to output(%r{Opening repository for testball.*https://github\.com/Homebrew/testball}m).to_stdout
+      .and not_to_output.to_stderr
+      .and be_a_success
+  end
+
+  describe "#github_repo_url" do
+    it "extracts repository URL from GitHub URL" do
+      expect(described_class.new([]).github_repo_url("https://github.com/Homebrew/brew.git"))
+        .to eq("https://github.com/Homebrew/brew")
+    end
+
+    it "handles GitHub archive URLs" do
+      expect(described_class.new([]).github_repo_url("https://github.com/Homebrew/testball/archive/refs/tags/v0.1.tar.gz"))
+        .to eq("https://github.com/Homebrew/testball")
+    end
+
+    it "returns nil for non-GitHub URLs" do
+      expect(described_class.new([]).github_repo_url("https://example.com/repo.git"))
+        .to be_nil
+    end
+  end
+
+  describe "#gitlab_repo_url" do
+    it "extracts repository URL from GitLab URL with nested groups" do
+      expect(described_class.new([]).gitlab_repo_url("https://gitlab.com/group/subgroup/project/-/archive/v1.0/project-v1.0.tar.gz"))
+        .to eq("https://gitlab.com/group/subgroup/project")
+    end
+
+    it "handles GitLab .git URLs" do
+      expect(described_class.new([]).gitlab_repo_url("https://gitlab.com/user/repo.git"))
+        .to eq("https://gitlab.com/user/repo")
+    end
+
+    it "returns nil for non-GitLab URLs" do
+      expect(described_class.new([]).gitlab_repo_url("https://example.com/repo.git"))
+        .to be_nil
+    end
+  end
+
+  describe "#bitbucket_repo_url" do
+    it "extracts repository URL from Bitbucket URL" do
+      expect(described_class.new([]).bitbucket_repo_url("https://bitbucket.org/user/repo/get/v1.0.tar.gz"))
+        .to eq("https://bitbucket.org/user/repo")
+    end
+
+    it "handles Bitbucket .git URLs" do
+      expect(described_class.new([]).bitbucket_repo_url("https://bitbucket.org/user/repo.git"))
+        .to eq("https://bitbucket.org/user/repo")
+    end
+
+    it "returns nil for non-Bitbucket URLs" do
+      expect(described_class.new([]).bitbucket_repo_url("https://example.com/repo.git"))
+        .to be_nil
+    end
+  end
+
+  describe "#codeberg_repo_url" do
+    it "extracts repository URL from Codeberg URL" do
+      expect(described_class.new([]).codeberg_repo_url("https://codeberg.org/user/repo/archive/v1.0.tar.gz"))
+        .to eq("https://codeberg.org/user/repo")
+    end
+
+    it "handles Codeberg .git URLs" do
+      expect(described_class.new([]).codeberg_repo_url("https://codeberg.org/user/repo.git"))
+        .to eq("https://codeberg.org/user/repo")
+    end
+
+    it "returns nil for non-Codeberg URLs" do
+      expect(described_class.new([]).codeberg_repo_url("https://example.com/repo.git"))
+        .to be_nil
+    end
+  end
+
+  describe "#sourcehut_repo_url" do
+    it "extracts repository URL from SourceHut URL" do
+      expect(described_class.new([]).sourcehut_repo_url("https://git.sr.ht/~user/repo/archive/v1.0.tar.gz"))
+        .to eq("https://sr.ht/~user/repo")
+    end
+
+    it "handles sr.ht URLs without git subdomain" do
+      expect(described_class.new([]).sourcehut_repo_url("https://sr.ht/~user/repo"))
+        .to eq("https://sr.ht/~user/repo")
+    end
+
+    it "returns nil for non-SourceHut URLs" do
+      expect(described_class.new([]).sourcehut_repo_url("https://example.com/repo.git"))
+        .to be_nil
+    end
+  end
+
+  describe "#pypi_repo_url" do
+    it "finds repository for PyPI URL" do
+      expect(Utils::Curl).to receive(:curl_output)
+        .with(*Utils::Curl.curl_args(show_error: false, retries: 2), "https://pypi.org/pypi/numpy/json")
+        .and_return([
+          <<~JSON,
+            {
+              "info": {
+                "project_urls": {
+                  "Repository": "https://github.com/numpy/numpy"
+                }
+              }
+            }
+          JSON
+          "",
+          instance_double(Process::Status, success?: true),
+        ])
+
+      expect(described_class.new([])
+        .pypi_repo_url(
+          "https://files.pythonhosted.org/packages/24/62/ae72ff66c0f1fd959925b4c11f8c2dea61f47f6acaea75a08512cdfe3fed/numpy-2.4.1.tar.gz",
+        ))
+        .to eq("https://github.com/numpy/numpy")
+    end
+
+    it "returns nil for PyPI package without project information" do
+      expect(Utils::Curl).to receive(:curl_output)
+        .with(*Utils::Curl.curl_args(show_error: false, retries: 2), "https://pypi.org/pypi/foobar/json")
+        .and_return([
+          <<~JSON,
+            {
+              "info": {
+                "project_urls": {}
+              }
+            }
+          JSON
+          "",
+          instance_double(Process::Status, success?: true),
+        ])
+
+      expect(described_class.new([])
+        .pypi_repo_url(
+          "https://files.pythonhosted.org/packages/00/00/000000000000000000000000000000000000000000000000000000000000/foobar-0.0.1.tar.gz",
+        ))
+        .to be_nil
+    end
+
+    it "returns nil for non-PyPI URLs" do
+      expect(described_class.new([]).pypi_repo_url("https://example.com/repo.git"))
+        .to be_nil
+    end
+  end
+
+  describe "#npm_repo_url" do
+    it "finds repository for npm URL" do
+      ["vite", "@org/vite"].each do |package|
+        encoded_package = URI.encode_uri_component(package)
+        expect(Utils::Curl).to receive(:curl_output)
+          .with(*Utils::Curl.curl_args(show_error: false, retries: 2), "https://registry.npmjs.org/#{encoded_package}/latest")
+          .and_return([
+            <<~JSON,
+              {
+                "repository": {
+                  "url": "git+https://github.com/vitejs/vite.git"
+                }
+              }
+            JSON
+            "",
+            instance_double(Process::Status, success?: true),
+          ])
+
+        expect(described_class.new([]).npm_repo_url("https://registry.npmjs.org/#{package}/-/vite-1.2.3.tgz"))
+          .to eq("https://github.com/vitejs/vite.git")
+      end
+    end
+
+    it "returns nil for npm package without repository information" do
+      expect(Utils::Curl).to receive(:curl_output)
+        .with(*Utils::Curl.curl_args(show_error: false, retries: 2), "https://registry.npmjs.org/vite/latest")
+        .and_return([
+          "{}",
+          "",
+          instance_double(Process::Status, success?: true),
+        ])
+
+      expect(described_class.new([])
+        .npm_repo_url("https://registry.npmjs.org/vite/-/vite-1.2.3.tgz"))
+        .to be_nil
+    end
+
+    it "returns nil for non-npm URLs" do
+      expect(described_class.new([]).npm_repo_url("https://example.com/repo.git"))
+        .to be_nil
+    end
+  end
+
+  describe "#url_to_repo" do
+    it "returns GitHub repo URL for GitHub URLs" do
+      expect(described_class.new([]).url_to_repo("https://github.com/Homebrew/brew"))
+        .to eq("https://github.com/Homebrew/brew")
+    end
+
+    it "returns GitLab repo URL for GitLab URLs" do
+      expect(described_class.new([]).url_to_repo("https://gitlab.com/user/repo.git"))
+        .to eq("https://gitlab.com/user/repo")
+    end
+
+    it "returns nil for unsupported URLs" do
+      expect(described_class.new([]).url_to_repo("https://example.com/repo.tar.gz"))
+        .to be_nil
+    end
+  end
+end

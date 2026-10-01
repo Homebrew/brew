@@ -1,4 +1,4 @@
-# typed: true # rubocop:disable Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module OS
@@ -23,20 +23,19 @@ module OS
         "$ORIGIN"
       end
 
-      sig { params(targets: T.nilable(T.any(Pathname, String))).void }
+      sig { params(targets: T.nilable(T.any(::Pathname, String))).void }
       def deuniversalize_machos(*targets); end
 
       sig { params(spec: SoftwareSpec).void }
       def add_global_deps_to_spec(spec)
-        return unless ::DevelopmentTools.needs_build_formulae?
-
+        @global_deps ||= T.let(nil, T.nilable(T::Array[Dependency]))
         @global_deps ||= begin
           dependency_collector = spec.dependency_collector
-          related_formula_names = Set.new([
-            name,
-            *aliases,
-            *versioned_formulae_names,
-          ])
+          related_formula_names = Set[name]
+          if ::DevelopmentTools.needs_build_formulae? || ::DevelopmentTools.needs_libc_formula?
+            related_formula_names.merge(aliases)
+            related_formula_names.merge(versioned_formulae_names)
+          end
           [
             dependency_collector.gcc_dep_if_needed(related_formula_names),
             dependency_collector.glibc_dep_if_needed(related_formula_names),
@@ -47,7 +46,20 @@ module OS
 
       sig { returns(T::Boolean) }
       def valid_platform?
-        requirements.none?(MacOSRequirement)
+        supports_linux?
+      end
+
+      sig { params(installdir: T.any(String, ::Pathname, FalseClass)).returns(T::Array[String]) }
+      def std_cabal_v2_args(installdir: bin)
+        args = super
+        args << "--ghc-option=-pie" if ::Hardware::CPU.arm?
+        args
+      end
+
+      sig { returns(T::Array[String]) }
+      def std_swift_args
+        # Use ld shim to help find Homebrew-installed libraries
+        ["--static-swift-stdlib", "-Xswiftc", "-use-ld=ld"].concat(super)
       end
     end
   end

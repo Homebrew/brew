@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "system_command"
+
 require "abstract_command"
 require "fileutils"
 
@@ -13,7 +15,6 @@ module Homebrew
         description <<~EOS
           Display the source of a <formula> or <cask>.
         EOS
-
         switch "--formula", "--formulae",
                description: "Treat all named arguments as formulae."
         switch "--cask", "--casks",
@@ -28,15 +29,20 @@ module Homebrew
       def run
         cd HOMEBREW_REPOSITORY do
           pager = if Homebrew::EnvConfig.bat?
-            ENV["BAT_CONFIG_PATH"] = Homebrew::EnvConfig.bat_config_path
-            ENV["BAT_THEME"] = Homebrew::EnvConfig.bat_theme
-            ensure_formula_installed!(
-              "bat",
-              reason:           "displaying <formula>/<cask> source",
-              # The user might want to capture the output of `brew cat ...`
-              # Redirect stdout to stderr
-              output_to_stderr: true,
-            ).opt_bin/"bat"
+            if (bat_config_path = Homebrew::EnvConfig.bat_config_path)
+              ENV["BAT_CONFIG_PATH"] = bat_config_path
+            end
+            if (bat_theme = Homebrew::EnvConfig.bat_theme)
+              ENV["BAT_THEME"] = bat_theme
+            end
+            require "formula"
+            T.cast(Formula["bat"].ensure_installed!(
+                     reason:           "displaying <formula>/<cask> source",
+                     # The user might want to capture the output of `brew cat ...`
+                     # Redirect stdout to stderr
+                     output_to_stderr: true,
+                     executable:       "bat",
+                   ), Pathname)
           else
             "cat"
           end
@@ -57,7 +63,7 @@ module Homebrew
             return
           end
 
-          safe_system pager, *args.named.to_paths
+          SystemCommand.safe_system pager, *args.named.to_paths
         end
       end
     end

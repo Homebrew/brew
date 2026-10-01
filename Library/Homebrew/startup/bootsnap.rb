@@ -3,6 +3,26 @@
 
 module Homebrew
   module Bootsnap
+    # This is the default Bundler group and its transitive dependencies. Optional
+    # groups must not rotate the compile cache used by the core load graph.
+    CORE_GEM_NAMES = %w[
+      bindata
+      concurrent-ruby
+      elftools
+      logger
+      patchelf
+      plist
+      ruby-macho
+      sorbet-runtime
+    ].freeze
+    private_constant :CORE_GEM_NAMES
+
+    def self.core_gem_names = CORE_GEM_NAMES
+
+    private_class_method def self.gem_directories
+      Dir.children(File.join(Gem.paths.path, "gems")).sort
+    end
+
     def self.key
       @key ||= begin
         require "digest/sha2"
@@ -10,7 +30,9 @@ module Homebrew
         checksum = Digest::SHA256.new
         checksum << RUBY_VERSION
         checksum << RUBY_PLATFORM
-        checksum << Dir.children(File.join(Gem.paths.path, "gems")).join(",")
+        checksum << gem_directories
+                    .select { |gem| core_gem_names.any? { |name| gem.start_with?("#{name}-") } }
+                    .join(",")
 
         checksum.hexdigest
       end
@@ -18,9 +40,13 @@ module Homebrew
 
     private_class_method def self.cache_dir
       cache = ENV.fetch("HOMEBREW_CACHE", nil) || ENV.fetch("HOMEBREW_DEFAULT_CACHE", nil)
-      raise "Needs HOMEBREW_CACHE or HOMEBREW_DEFAULT_CACHE!" if cache.nil? || cache.empty?
+      raise "Needs `$HOMEBREW_CACHE` or `$HOMEBREW_DEFAULT_CACHE`!" if cache.nil? || cache.empty?
 
       File.join(cache, "bootsnap", key)
+    end
+
+    private_class_method def self.load_path_cache
+      File.join(cache_dir, "bootsnap/load-path-cache")
     end
 
     private_class_method def self.ignore_directories
@@ -40,7 +66,22 @@ module Homebrew
     def self.load!(compile_cache: true)
       return unless enabled?
 
-      require ENV.fetch("HOMEBREW_BOOTSNAP_GEM_PATH")
+      begin
+        require ENV.fetch("HOMEBREW_BOOTSNAP_GEM_PATH")
+      rescue LoadError
+        return
+      end
+
+      installed_gem_directories = gem_directories.join(",")
+      gem_directories_cache = File.join(cache_dir, "bootsnap/gem-directories")
+      if !File.exist?(gem_directories_cache) || File.read(gem_directories_cache) != installed_gem_directories
+        # The compile cache is shared across optional groups, but Bootsnap treats
+        # gem load paths as immutable, so invalidate their separate index.
+        require "fileutils"
+        FileUtils.rm_f load_path_cache
+        FileUtils.mkdir_p File.dirname(gem_directories_cache)
+        File.write(gem_directories_cache, installed_gem_directories)
+      end
 
       ::Bootsnap.setup(
         cache_dir:,
@@ -50,9 +91,9 @@ module Homebrew
         # https://github.com/Shopify/bootsnap?tab=readme-ov-file#precompilation
         development_mode:   true,
         load_path_cache:    true,
-        compile_cache_iseq: compile_cache,
+        # Ruby refuses InstructionSequence#to_binary while Coverage is active.
+        compile_cache_iseq: compile_cache && ENV["HOMEBREW_TESTS_COVERAGE"].nil?,
         compile_cache_yaml: compile_cache,
-        compile_cache_json: compile_cache,
       )
     end
 
@@ -60,10 +101,32 @@ module Homebrew
       return unless enabled?
 
       ::Bootsnap.unload_cache!
+      # Gem changes invalidate resolution, but compiled files validate themselves
+      # against their source contents, so only discard the persisted load path.
+      require "fileutils"
+      FileUtils.rm_f load_path_cache
       @key = nil
 
-      # The compile cache doesn't get unloaded so we don't need to load it again!
       load!(compile_cache: false)
+    end
+
+    # Compile caches for the load graphs of common commands in a detached
+    # background process, so the next `brew` command doesn't pay the cost of
+    # compiling caches for Ruby files changed by e.g. `brew update`.
+    def self.prewarm!
+      return unless enabled?
+      return if ENV["HOMEBREW_TESTS"]
+
+      pid = Process.spawn(
+        *HOMEBREW_RUBY_EXEC_ARGS,
+        "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
+        "-rglobal", "-rcmd/install", "-rcmd/fetch", "-rcmd/upgrade",
+        "-e", "",
+        in: File::NULL, out: File::NULL, err: File::NULL, pgroup: true
+      )
+      Process.detach(pid)
+    rescue SystemCallError
+      nil
     end
   end
 end

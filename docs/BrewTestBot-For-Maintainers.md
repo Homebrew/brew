@@ -1,42 +1,51 @@
 ---
-logo: /assets/img/brewtestbot.png
-image: /assets/img/brewtestbot.png
+logo: https://brew.sh/assets/img/brewtestbot.png
+image: https://brew.sh/assets/img/brewtestbot.png
 redirect_from:
   - /Brew-Test-Bot-For-Core-Contributors
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
 # BrewTestBot for Maintainers
 
-[`brew test-bot`](Manpage.md#test-bot-options-formula) is the command our [CI](https://github.com/BrewTestBot) runs to test and build bottles for formulae.
+[`brew test-bot`](Manpage.md#test-bot-options-formula) runs Homebrew's formula checks, builds bottles and tests affected dependents in GitHub Actions.
+This page describes maintainer actions after the required checks have completed.
 
-## Publishing Bottles
+## Publishing bottles from a pull request
 
-If CI is passing on a pull request and it doesn't need any modifications (e.g. commit message, revision bump, etc.):
+When all required jobs pass and the pull request needs no changes:
 
-1. Review and approve the pull request. Be sure to thank the contributor!
-2. Wait for BrewTestBot to automatically merge the pull request. This job usually starts within a minute if both of the following are true:
-    - The pull request is approved by a maintainer who has write access to homebrew-core.
-    - CI is passing.
+1. Review the formula file, including its test, and the generated bottle information.
+2. Approve the pull request.
+3. Allow BrewTestBot to merge and publish it automatically when repository rules permit.
+4. Watch the final publication job and respond to a BrewTestBot failure notification.
 
-If any jobs did not complete successfully, the pull request will not automatically merge. Additionally, BrewTestBot will comment on the pull request if there is a publishing failure.
+Passing checks are not a substitute for reviewing the formula file, its test and the generated bottle checksums.
+Do not approve a pull request merely to discover whether the publication workflow succeeds.
 
-If a pull request won't be automatically merged by BrewTestBot (has the labels `autosquash`, `automerge-skip`, or`new formula`, or has some kind of acceptable CI failure):
+When automatic publication is intentionally unavailable, trigger the supported workflow with the pull-request number or URL:
 
-1. Ensure that bottles have built successfully.
-2. Run `brew pr-publish 12345` where `12345` is the pull request number (or URL).
-3. Watch the [actions queue](https://github.com/Homebrew/homebrew-core/actions) to ensure your job finishes. BrewTestBot will notify you of failures with a ping as well.
+```sh
+brew pr-publish PULL_REQUEST
+```
 
-If a pull request needs its commit messages changed in a way that autosquash doesn't support (has the label `automerge-skip`):
+Use `--autosquash` only when the target tap supports it and the resulting commit structure matches the repository's policy.
+Check the [Homebrew/core Actions queue](https://github.com/Homebrew/homebrew-core/actions) until publication finishes.
 
-1. Ensure that bottles have built successfully.
-2. Run `brew pr-pull 12345` where `12345` is the pull request number (or URL).
-3. Amend any relevant commits if needed, then run `git push` to push the commits to the pull request.
+## Changes that require a local commit edit
 
-## Rebottling
+Use `brew pr-pull PULL_REQUEST` when a maintainer must download bottle artifacts and edit unpublished commits locally.
+Inspect the command's dry-run and help output before using options that change commits or upload artifacts.
 
-If a formula in homebrew-core needs rebottling for any reason:
+After editing, run the relevant formula checks, inspect the final commits and push only the intended pull-request branch.
+See [Common Issues for Maintainers](Common-Issues-for-Maintainers.md) for preserving the current state before recovering a failed bottle upload from an earlier commit.
 
-1. Navigate to [homebrew-core's rebottling workflow page](https://github.com/Homebrew/homebrew-core/actions/workflows/dispatch-rebottle.yml)
-2. Click on the "Run workflow" button on the right of the page.
-3. Fill out any necessary fields.
+## Rebottling an existing formula
+
+Use the [`homebrew/core` rebottling workflow](https://github.com/Homebrew/homebrew-core/actions/workflows/dispatch-rebottle.yml) when a formula needs new bottles without an ordinary version update.
+
+1. Select **Run workflow**.
+2. Enter the formula and required rebuild information.
+3. Review the generated pull request and bottle jobs normally.
+
+Do not use rebottling to conceal a formula change that requires a version or revision update.

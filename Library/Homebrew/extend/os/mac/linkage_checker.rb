@@ -4,12 +4,16 @@
 module OS
   module Mac
     module LinkageChecker
+      extend T::Helpers
+
+      requires_ancestor { ::LinkageChecker }
+
       private
 
-      sig { returns(T::Boolean) }
-      def system_libraries_exist_in_cache?
-        # In macOS Big Sur and later, system libraries do not exist on-disk and instead exist in a cache.
-        MacOS.version >= :big_sur
+      sig { params(dylib: String).returns(T::Boolean) }
+      def dylib_found_in_shared_cache?(dylib)
+        require "os/mac/ffi"
+        MacOS::FFI.dyld_shared_cache_contains_path(dylib)
       end
     end
   end

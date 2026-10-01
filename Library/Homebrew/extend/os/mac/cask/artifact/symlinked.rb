@@ -17,7 +17,7 @@ module OS
             ::Cask::Utils.gain_permissions_mkpath(target.dirname, command:)
 
             command.run! "/bin/ln", args: ["-h", "-f", "-s", "--", source, target],
-                                    sudo: !target.dirname.writable?
+                                    sudo: nil
 
             add_altname_metadata(source, target.basename, command:)
           end

@@ -6,14 +6,7 @@ on:
     branches:
       - main
       - master
-    paths:
-      - '.github/workflows/*.ya?ml'
-      - 'Formula/a/actionlint.rb'
-      - 'Formula/s/shellcheck.rb'
-      - 'Formula/z/zizmor.rb'
   pull_request:
-    paths:
-      - '.github/workflows/*.ya?ml'
 
 defaults:
   run:
@@ -36,26 +29,29 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    container:
+      image: ghcr.io/homebrew/brew:main
     steps:
       - name: Set up Homebrew
         id: setup-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           core: false
           cask: false
-          test-bot: false
 
       - name: Install tools
         run: brew install actionlint shellcheck zizmor
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - run: zizmor --format sarif . > results.sarif
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload SARIF file
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         # We can't use the SARIF file when triggered by `merge_group` so we don't upload it.
         if: always() && github.event_name != 'merge_group'
         with:
@@ -84,19 +80,19 @@ jobs:
       !contains(fromJSON('["cancelled", "skipped"]'), needs.workflow_syntax.result) &&
       !github.event.repository.private &&
       github.event_name != 'merge_group'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       security-events: write
     steps:
       - name: Download SARIF file
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: results.sarif
           path: results.sarif
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@ce28f5bb42b7a9f2c824e633a3f6ee835bab6858 # v3.29.0
+        uses: github/codeql-action/upload-sarif@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
         with:
           sarif_file: results.sarif
           category: zizmor

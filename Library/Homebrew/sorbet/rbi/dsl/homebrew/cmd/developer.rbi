@@ -10,4 +10,7 @@ class Homebrew::Cmd::Developer
   def args; end
 end
 
-class Homebrew::Cmd::Developer::Args < Homebrew::CLI::Args; end
+class Homebrew::Cmd::Developer::Args < Homebrew::CLI::Args
+  sig { returns(T.nilable(String)) }
+  def subcommand; end
+end

@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "version"
@@ -10,11 +11,8 @@ RSpec.describe Version do
   end
 
   describe Version::Token do
-    specify "#inspect" do
+    specify do
       expect(described_class.create("foo").inspect).to eq('#<Version::StringToken "foo">')
-    end
-
-    specify "#to_s" do
       expect(described_class.create("foo").to_s).to eq("foo")
     end
 
@@ -78,15 +76,9 @@ RSpec.describe Version do
   describe "when the version is `NULL`" do
     subject(:null_version) { Version::NULL }
 
-    it "is always smaller" do
+    specify do
       expect(null_version).to be < described_class.new("1")
-    end
-
-    it "is never greater" do
       expect(null_version).not_to be > described_class.new("0")
-    end
-
-    it "isn't equal to itself" do
       expect(null_version).not_to eql(null_version)
     end
 
@@ -104,7 +96,7 @@ RSpec.describe Version do
       it "raises an error" do
         expect do
           null_version.to_str
-        end.to raise_error NoMethodError, "undefined method `to_str' for Version:NULL"
+        end.to raise_error NoMethodError, "undefined method `to_str` for Version:NULL"
       end
     end
 
@@ -126,14 +118,11 @@ RSpec.describe Version do
   end
 
   describe "::NULL_TOKEN" do
-    subject(:null_version) { described_class::NULL_TOKEN }
+    subject(:null_version) { Version::NULL_TOKEN }
 
-    specify "#inspect" do
+    specify do
       expect(null_version.inspect).to eq("#<Version::NullToken>")
-    end
-
-    it "is equal to itself" do
-      expect(null_version).to eq described_class::NULL_TOKEN
+      expect(null_version).to eq Version::NULL_TOKEN
     end
   end
 
@@ -312,12 +301,6 @@ RSpec.describe Version do
   end
 
   describe "::new" do
-    it "raises a TypeError for non-string objects" do
-      expect { described_class.new(1.1) }.to raise_error(TypeError)
-      expect { described_class.new(1) }.to raise_error(TypeError)
-      expect { described_class.new(:symbol) }.to raise_error(TypeError)
-    end
-
     it "parses a version from a string" do
       v = described_class.new("1.20")
       expect(v).not_to be_head
@@ -450,8 +433,9 @@ RSpec.describe Version do
 
   describe "::detect" do
     matcher :be_detected_from do |url, **specs|
+      T.bind(self, T.class_of(RSpec::Matchers::DSL::Matcher))
       match do |expected|
-        @detected = described_class.detect(url, **specs)
+        @detected = Version.detect(url, **specs)
         @detected == expected
       end
 
@@ -636,27 +620,27 @@ RSpec.describe Version do
 
     specify "bottle style" do
       expect(described_class.new("4.8.0"))
-        .to be_detected_from("https://homebrew.bintray.com/bottles/qt-4.8.0.lion.bottle.tar.gz")
+        .to be_detected_from("https://homebrew.bintray.com/bottles/qt-4.8.0.big_sur.bottle.tar.gz")
     end
 
     specify "versioned bottle style" do
       expect(described_class.new("4.8.1"))
-        .to be_detected_from("https://homebrew.bintray.com/bottles/qt-4.8.1.lion.bottle.1.tar.gz")
+        .to be_detected_from("https://homebrew.bintray.com/bottles/qt-4.8.1.big_sur.bottle.1.tar.gz")
     end
 
     specify "erlang bottle style" do
       expect(described_class.new("R15B"))
-        .to be_detected_from("https://homebrew.bintray.com/bottles/erlang-R15B.lion.bottle.tar.gz")
+        .to be_detected_from("https://homebrew.bintray.com/bottles/erlang-R15B.big_sur.bottle.tar.gz")
     end
 
     specify "another erlang bottle style" do
       expect(described_class.new("R15B01"))
-        .to be_detected_from("https://homebrew.bintray.com/bottles/erlang-R15B01.mountain_lion.bottle.tar.gz")
+        .to be_detected_from("https://homebrew.bintray.com/bottles/erlang-R15B01.monterey.bottle.tar.gz")
     end
 
     specify "yet another erlang bottle style" do
       expect(described_class.new("R15B03-1"))
-        .to be_detected_from("https://homebrew.bintray.com/bottles/erlang-R15B03-1.mountainlion.bottle.tar.gz")
+        .to be_detected_from("https://homebrew.bintray.com/bottles/erlang-R15B03-1.monterey.bottle.tar.gz")
     end
 
     specify "imagemagick style" do
@@ -666,7 +650,7 @@ RSpec.describe Version do
 
     specify "imagemagick bottle style" do
       expect(described_class.new("6.7.5-7"))
-        .to be_detected_from("https://homebrew.bintray.com/bottles/imagemagick-6.7.5-7.lion.bottle.tar.gz")
+        .to be_detected_from("https://homebrew.bintray.com/bottles/imagemagick-6.7.5-7.big_sur.bottle.tar.gz")
     end
 
     specify "imagemagick versioned bottle style" do
@@ -706,6 +690,12 @@ RSpec.describe Version do
         .to be_detected_from("https://github.com/fibjs/fibjs/releases/download/v0.6.1/fullsrc.zip")
       expect(described_class.new("1.9"))
         .to be_detected_from("https://wwwlehre.dhbw-stuttgart.de/~sschulz/WORK/E_DOWNLOAD/V_1.9/E.tgz")
+    end
+
+    specify "GitHub release tag takes precedence over asset filename" do
+      url = "https://github.com/dvorka-oss/hstr/releases/download/v3.2/hstr-3.2.0-tarball.tgz"
+
+      expect(described_class.detect(url).to_s).to eq("3.2")
     end
 
     specify "w.x.y.z url-only version style" do

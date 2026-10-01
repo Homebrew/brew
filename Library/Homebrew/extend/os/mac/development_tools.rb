@@ -11,15 +11,15 @@ module OS
 
         requires_ancestor { ::DevelopmentTools }
 
-        sig { params(tool: T.any(String, Symbol)).returns(T.nilable(Pathname)) }
+        sig { params(tool: T.any(String, Symbol)).returns(T.nilable(::Pathname)) }
         def locate(tool)
           @locate ||= T.let({}, T.nilable(T::Hash[T.any(String, Symbol), Pathname]))
           @locate.fetch(tool) do |key|
             @locate[key] = if (located_tool = super(tool))
               located_tool
-            else
-              path = Utils.popen_read("/usr/bin/xcrun", "-no-cache", "-find", tool, err: :close).chomp
-              Pathname.new(path) if File.executable?(path)
+            elsif installed?
+              path = Utils.popen_read("/usr/bin/xcrun", "-no-cache", "-find", tool.to_s, err: :close).chomp
+              ::Pathname.new(path) if File.executable?(path)
             end
           end
         end
@@ -54,13 +54,6 @@ module OS
           # The system Curl is too old for some modern HTTPS certificates on
           # older macOS versions.
           ENV["HOMEBREW_SYSTEM_CURL_TOO_OLD"].nil?
-        end
-
-        sig { returns(T::Boolean) }
-        def subversion_handles_most_https_certificates?
-          # The system Subversion is too old for some HTTPS certificates on
-          # older macOS versions.
-          MacOS.version >= :sierra
         end
 
         sig { returns(String) }

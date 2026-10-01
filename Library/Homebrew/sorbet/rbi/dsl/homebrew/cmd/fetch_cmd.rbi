@@ -14,6 +14,9 @@ class Homebrew::Cmd::FetchCmd::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def HEAD?; end
 
+  sig { returns(T::Boolean) }
+  def all_platforms?; end
+
   sig { returns(T.nilable(String)) }
   def arch; end
 
@@ -31,9 +34,6 @@ class Homebrew::Cmd::FetchCmd::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def casks?; end
-
-  sig { returns(T.nilable(String)) }
-  def concurrency; end
 
   sig { returns(T::Boolean) }
   def deps?; end
@@ -55,9 +55,6 @@ class Homebrew::Cmd::FetchCmd::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def os; end
-
-  sig { returns(T::Boolean) }
-  def quarantine?; end
 
   sig { returns(T::Boolean) }
   def retry?; end

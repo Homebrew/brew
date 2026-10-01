@@ -1,0 +1,421 @@
+# typed: true
+# frozen_string_literal: true
+
+require "cmd/shared_examples/args_parse"
+require "dev-cmd/generate-zap"
+
+RSpec.describe Homebrew::DevCmd::GenerateZap do
+  subject(:generate_zap) { described_class.new(["test"]) }
+
+  it_behaves_like "parseable arguments"
+
+  it "generates a zap stanza for a Cask", :cask, :integration_test do
+    caskfile = CoreCaskTap.instance.cask_dir/"zap-integration.rb"
+    caskfile.write <<~RUBY
+      cask "zap-integration" do
+        version "1.0"
+        sha256 :no_check
+        url "https://brew.sh/zap-integration-1.0.zip"
+        app "CodexZapCoverageRandom.app"
+      end
+    RUBY
+    CoreCaskTap.instance.clear_cache
+
+    expect { brew "generate-zap", caskfile }
+      .to output(/Scanning for files matching.*No zap stanza required/m).to_stdout
+      .and output(/No files found matching/).to_stderr
+      .and be_a_success
+  end
+
+  describe "#run" do
+    it "surfaces Full Disk Access guidance when scanning raises a permission error" do
+      generate_zap = described_class.new(["--name", "Test"])
+      protected_path = File.expand_path("~/Library/Application Support/com.apple.sharedfilelist")
+
+      allow(generate_zap).to receive(:scan_directories).and_raise(Errno::EACCES, protected_path)
+      allow(Cask::Utils).to receive(:full_disk_access_enabled?).and_return(false)
+      allow(Cask::Utils).to receive(:privacy_security_preference_pane)
+        .with("Full Disk Access")
+        .and_return("System Settings -> Privacy & Security -> Full Disk Access")
+
+      expect do
+        generate_zap.run
+      end.to raise_error(SystemExit)
+        .and output(/Full Disk Access/).to_stderr
+    end
+  end
+
+  describe "#resolve_patterns_from_cask" do
+    it "resolves app name from a cask with an app artifact" do
+      app = instance_double(Cask::Artifact::App, target: Pathname.new("TestCask.app"))
+      allow(app).to receive(:is_a?).with(Cask::Artifact::App).and_return(true)
+      cask = instance_double(Cask::Cask, artifacts: [app])
+
+      expect(generate_zap.resolve_patterns_from_cask(cask)).to eq(["TestCask"])
+    end
+
+    it "resolves bundle identifier from an installed app artifact" do
+      Dir.mktmpdir do |tmpdir|
+        app_path = Pathname.new("#{tmpdir}/TestCask.app")
+        info_plist = app_path/"Contents/Info.plist"
+        info_plist.dirname.mkpath
+        info_plist.write("")
+
+        app = instance_double(Cask::Artifact::App, target: app_path)
+        result = instance_double(SystemCommand::Result, plist: { "CFBundleIdentifier" => "com.example.testcask" })
+        cask = instance_double(Cask::Cask, artifacts: [app])
+
+        allow(app).to receive(:is_a?).with(Cask::Artifact::App).and_return(true)
+        allow(generate_zap).to receive(:system_command!)
+          .with("plutil", args: ["-convert", "xml1", "-o", "-", info_plist])
+          .and_return(result)
+
+        expect(generate_zap.resolve_patterns_from_cask(cask))
+          .to eq(["TestCask", "com.example.testcask"])
+      end
+    end
+
+    it "resolves an installed app and bundle identifier from a package receipt" do
+      Dir.mktmpdir do |tmpdir|
+        app_path = Pathname.new("#{tmpdir}/TestPkg.app")
+        info_plist = app_path/"Contents/Info.plist"
+        info_plist.dirname.mkpath
+        info_plist.write("")
+
+        cask = Cask::Cask.new("test-pkg") do
+          uninstall pkgutil: "com.example.test-pkg"
+        end
+        pkg = instance_double(
+          Cask::Pkg,
+          pkgutil_bom_all: [
+            app_path/"Contents/MacOS/TestPkg",
+            app_path/"Contents/Frameworks/TestPkg Helper.app/Contents/MacOS/TestPkg Helper",
+          ],
+        )
+        result = instance_double(SystemCommand::Result, plist: { "CFBundleIdentifier" => "com.example.testpkg" })
+
+        allow(Cask::Pkg).to receive(:all_matching)
+          .with("com.example.test-pkg", SystemCommand)
+          .and_return([pkg])
+        allow(generate_zap).to receive(:system_command!)
+          .with("plutil", args: ["-convert", "xml1", "-o", "-", info_plist])
+          .and_return(result)
+
+        expect(generate_zap.resolve_patterns_from_cask(cask))
+          .to eq(["TestPkg", "com.example.testpkg", "Test Pkg"])
+      end
+    end
+
+    it "ignores stale package receipts" do
+      cask = Cask::Cask.new("test-pkg") do
+        uninstall pkgutil: "com.example.test-pkg"
+      end
+      pkg = instance_double(
+        Cask::Pkg,
+        pkgutil_bom_all: [Pathname.new("/Applications/TestPkg.app/Contents/MacOS/TestPkg")],
+      )
+
+      allow(Cask::Pkg).to receive(:all_matching)
+        .with("com.example.test-pkg", SystemCommand)
+        .and_return([pkg])
+
+      expect(generate_zap.resolve_patterns_from_cask(cask)).to eq(["Test Pkg"])
+    end
+
+    it "falls back to title-cased token when no app artifact exists" do
+      cask = Cask::Cask.new("test-cask")
+
+      expect(generate_zap.resolve_patterns_from_cask(cask)).to eq(["Test Cask"])
+    end
+  end
+
+  describe "#scan_directories" do
+    it "finds matching entries case-insensitively" do
+      Dir.mktmpdir do |tmpdir|
+        FileUtils.mkdir_p("#{tmpdir}/Library/Preferences")
+        FileUtils.touch("#{tmpdir}/Library/Preferences/com.example.Foo.plist")
+        FileUtils.touch("#{tmpdir}/Library/Preferences/com.example.app.plist")
+
+        allow(Dir).to receive(:home).and_return(tmpdir)
+
+        results = generate_zap.scan_directories(["Library/Preferences"],
+                                                home_relative: true, patterns: ["foo"])
+
+        expect(results.size).to eq(1)
+        expect(results.first).to include("com.example.Foo.plist")
+      end
+    end
+
+    it "returns empty array when directory does not exist" do
+      results = generate_zap.scan_directories(["nonexistent/path"],
+                                              home_relative: true, patterns: ["test"])
+      expect(results).to be_empty
+    end
+
+    it "finds entries matching any pattern with one directory scan" do
+      Dir.mktmpdir do |tmpdir|
+        FileUtils.mkdir_p("#{tmpdir}/Library/Preferences")
+        FileUtils.touch("#{tmpdir}/Library/Preferences/com.example.foo.plist")
+        FileUtils.touch("#{tmpdir}/Library/Preferences/com.example.bar.plist")
+
+        allow(Dir).to receive(:home).and_return(tmpdir)
+
+        results = generate_zap.scan_directories(["Library/Preferences"],
+                                                home_relative: true, patterns: ["foo", "bar"])
+
+        expect(results.size).to eq(2)
+      end
+    end
+  end
+
+  describe "#scan_home_root" do
+    it "finds dotfiles matching the pattern" do
+      Dir.mktmpdir do |tmpdir|
+        FileUtils.touch("#{tmpdir}/.foo")
+        FileUtils.touch("#{tmpdir}/.bar")
+        FileUtils.touch("#{tmpdir}/foo")
+
+        allow(Dir).to receive(:home).and_return(tmpdir)
+
+        results = generate_zap.scan_home_root(["foo"])
+
+        expect(results.size).to eq(1)
+        expect(results.first).to include(".foo")
+      end
+    end
+  end
+
+  describe "#each_readable_child" do
+    it "yields each child entry of a readable directory" do
+      Dir.mktmpdir do |tmpdir|
+        FileUtils.touch("#{tmpdir}/a")
+        FileUtils.touch("#{tmpdir}/b")
+
+        entries = []
+        generate_zap.each_readable_child(tmpdir) { |entry| entries << entry }
+
+        expect(entries).to contain_exactly("a", "b")
+      end
+    end
+
+    it "skips directories that raise a permission error" do
+      allow(Dir).to receive(:each_child).and_raise(Errno::EPERM)
+
+      expect { generate_zap.each_readable_child("/protected") { |_entry| nil } }.not_to raise_error
+    end
+  end
+
+  describe "#patterns_from_app_paths" do
+    it "returns only the app name when Info.plist is missing" do
+      expect(generate_zap.patterns_from_app_paths([Pathname.new("TestCask.app")])).to eq(["TestCask"])
+    end
+
+    it "returns only the app name when Info.plist is unreadable" do
+      info_plist = instance_double(Pathname, exist?: true, readable?: false)
+      app_path = instance_double(Pathname, basename: Pathname.new("TestCask"))
+
+      allow(app_path).to receive(:/).with("Contents/Info.plist").and_return(info_plist)
+
+      expect(generate_zap.patterns_from_app_paths([app_path])).to eq(["TestCask"])
+    end
+
+    it "returns only the app name when CFBundleIdentifier is not a string" do
+      Dir.mktmpdir do |tmpdir|
+        app_path = Pathname.new("#{tmpdir}/TestCask.app")
+        info_plist = app_path/"Contents/Info.plist"
+        info_plist.dirname.mkpath
+        info_plist.write("")
+
+        result = instance_double(SystemCommand::Result, plist: { "CFBundleIdentifier" => [] })
+
+        allow(generate_zap).to receive(:system_command!)
+          .with("plutil", args: ["-convert", "xml1", "-o", "-", info_plist])
+          .and_return(result)
+
+        expect(generate_zap.patterns_from_app_paths([app_path])).to eq(["TestCask"])
+      end
+    end
+  end
+
+  describe "#collapse_to_wildcards" do
+    it "collapses entries sharing a common basename prefix" do
+      paths = [
+        "~/Library/Application Scripts/com.example.foo",
+        "~/Library/Application Scripts/com.example.foo.plist",
+      ]
+      result = generate_zap.collapse_to_wildcards(paths)
+
+      expect(result).to eq(["~/Library/Application Scripts/com.example.foo*"])
+    end
+
+    it "collapses multiple groups in the same directory independently" do
+      paths = [
+        "~/Library/Preferences/com.example.foo",
+        "~/Library/Preferences/com.example.foo.plist",
+        "~/Library/Preferences/com.example.app.plist",
+      ]
+      result = generate_zap.collapse_to_wildcards(paths)
+
+      expect(result).to include("~/Library/Preferences/com.example.foo*")
+      expect(result).to include("~/Library/Preferences/com.example.app.plist")
+      expect(result.size).to eq(2)
+    end
+
+    it "leaves single entries unchanged" do
+      paths = ["~/Library/Caches/com.example.foo"]
+      result = generate_zap.collapse_to_wildcards(paths)
+
+      expect(result).to eq(paths)
+    end
+
+    it "does not collapse entries in different directories" do
+      paths = [
+        "~/Library/Caches/com.example.foo",
+        "~/Library/Preferences/com.example.foo.plist",
+      ]
+      result = generate_zap.collapse_to_wildcards(paths)
+
+      expect(result).to eq(paths)
+    end
+
+    it "leaves unrelated entries in the same directory as-is" do
+      paths = [
+        "~/Library/Preferences/com.example.app.plist",
+        "~/Library/Preferences/com.example.foo.plist",
+      ]
+      result = generate_zap.collapse_to_wildcards(paths)
+
+      expect(result).to eq(paths)
+    end
+  end
+
+  describe "#normalize_path" do
+    it "replaces home directory with ~" do
+      home = Dir.home
+      expect(generate_zap.normalize_path("#{home}/Library/Preferences/com.example.foo.plist"))
+        .to eq("~/Library/Preferences/com.example.foo.plist")
+    end
+
+    it "leaves system paths unchanged" do
+      expect(generate_zap.normalize_path("/Library/Preferences/com.example.foo.plist"))
+        .to eq("/Library/Preferences/com.example.foo.plist")
+    end
+  end
+
+  describe "#format_stanza" do
+    it "formats a single trash path as inline" do
+      output = generate_zap.format_stanza(trash:  ["~/Library/Preferences/com.example.foo.plist"],
+                                          delete: [],
+                                          rmdir:  [])
+      expect(output).to eq('zap trash: "~/Library/Preferences/com.example.foo.plist"')
+    end
+
+    it "formats multiple trash paths as an array" do
+      output = generate_zap.format_stanza(trash:  [
+                                            "~/Library/Caches/com.example.foo",
+                                            "~/Library/Preferences/com.example.foo.plist",
+                                          ],
+                                          delete: [],
+                                          rmdir:  [])
+      expect(output).to include("zap trash: [")
+      expect(output).to include('"~/Library/Caches/com.example.foo"')
+      expect(output).to include('"~/Library/Preferences/com.example.foo.plist"')
+    end
+
+    it "includes multiple directive types" do
+      output = generate_zap.format_stanza(trash:  ["~/Library/Preferences/com.example.foo.plist"],
+                                          delete: ["/Library/Preferences/com.example.foo.plist"],
+                                          rmdir:  ["~/Library/Application Support/Foo"])
+      expect(output).to include("trash:")
+      expect(output).to include("delete:")
+      expect(output).to include("rmdir:")
+    end
+  end
+
+  describe "#replace_uuids" do
+    it "replaces UUIDs with wildcards" do
+      paths = [
+        "~/Library/Application Support/CrashReporter/Foo_1BBE8750-D851-5930-A16F-BE4B820B4537.plist",
+      ]
+      result = generate_zap.replace_uuids(paths)
+
+      expect(result).to eq(["~/Library/Application Support/CrashReporter/Foo_*.plist"])
+    end
+
+    it "deduplicates paths that only differed by UUID" do
+      paths = [
+        "~/Library/Caches/com.example.foo/Data_1BBE8750-D851-5930-A16F-BE4B820B4537",
+        "~/Library/Caches/com.example.foo/Data_AABBCCDD-1122-3344-5566-778899AABBCC",
+      ]
+      result = generate_zap.replace_uuids(paths)
+
+      expect(result).to eq(["~/Library/Caches/com.example.foo/Data_*"])
+    end
+
+    it "leaves paths without UUIDs unchanged" do
+      paths = ["~/Library/Preferences/com.example.foo.plist"]
+      result = generate_zap.replace_uuids(paths)
+
+      expect(result).to eq(paths)
+    end
+  end
+
+  describe "#glob_shared_filelists" do
+    it "replaces the Shared File List version with a glob" do
+      shared_file_list =
+        "~/Library/Application Support/com.apple.sharedfilelist/" \
+        "com.apple.LSSharedFileList.ApplicationRecentDocuments"
+      paths = [
+        "#{shared_file_list}/org.example.foo.sfl2",
+        "#{shared_file_list}/org.example.foo.sfl3",
+      ]
+      result = generate_zap.glob_shared_filelists(paths)
+
+      expect(result).to eq(["#{shared_file_list}/org.example.foo.sfl*"])
+    end
+
+    it "leaves paths without a Shared File List version unchanged" do
+      paths = ["~/Library/Preferences/com.example.foo.plist"]
+      result = generate_zap.glob_shared_filelists(paths)
+
+      expect(result).to eq(paths)
+    end
+  end
+
+  describe "#derive_rmdir_candidates" do
+    it "suggests Application Support parent directories" do
+      paths = ["~/Library/Application Support/Foo/config.json"]
+      result = generate_zap.derive_rmdir_candidates(paths)
+      expect(result).to include("~/Library/Application Support/Foo")
+    end
+
+    it "does not suggest rmdir for Preferences" do
+      paths = ["~/Library/Preferences/com.example.foo.plist"]
+      result = generate_zap.derive_rmdir_candidates(paths)
+      expect(result).to be_empty
+    end
+
+    it "does not suggest rmdir for CrashReporter" do
+      paths = ["~/Library/Application Support/CrashReporter/Foo_ABC123.plist"]
+      result = generate_zap.derive_rmdir_candidates(paths)
+      expect(result).to be_empty
+    end
+
+    it "does not suggest rmdir for application recent documents directory" do
+      application_recent_documents =
+        "~/Library/Application Support/com.apple.sharedfilelist/" \
+        "com.apple.LSSharedFileList.ApplicationRecentDocuments"
+      paths = [
+        "#{application_recent_documents}/org.example.foo.sfl2",
+      ]
+      result = generate_zap.derive_rmdir_candidates(paths)
+      expect(result).not_to include(application_recent_documents)
+    end
+
+    it "does not suggest rmdir for system-level shared directories" do
+      paths = ["/Library/Application Support/Foo"]
+      result = generate_zap.derive_rmdir_candidates(paths)
+      expect(result).to be_empty
+    end
+  end
+end

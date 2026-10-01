@@ -1,2 +1,11 @@
 Library/Homebrew/vendor/portable-ruby
+Library/Homebrew/vendor/bundle/ruby/.homebrew_gem_groups
+Library/Homebrew/vendor/bundle/ruby/*/.homebrew_vendor_version
+Library/Homebrew/vendor/bundle/ruby/*/bin
+Library/Homebrew/vendor/bundle/ruby/*/build_info
+Library/Homebrew/vendor/bundle/ruby/*/bundler.lock
+Library/Homebrew/vendor/bundle/ruby/*/cache
+Library/Homebrew/vendor/bundle/ruby/*/extensions
+Library/Homebrew/vendor/bundle/ruby/*/plugins
+Library/Homebrew/vendor/bundle/ruby/*/specifications
 Library/Taps

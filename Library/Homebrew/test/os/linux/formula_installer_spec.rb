@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "formula_installer"
@@ -5,8 +6,6 @@ require "test/support/fixtures/testball"
 
 RSpec.describe FormulaInstaller do
   include FileUtils
-
-  subject(:keg) { described_class.new(keg_path) }
 
   describe "#fresh_install" do
     subject(:formula_installer) { described_class.new(Testball.new) }

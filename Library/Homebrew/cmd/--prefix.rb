@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "system_command"
+
 require "abstract_command"
 require "fileutils"
 
@@ -52,6 +54,7 @@ module Homebrew
                description: "List files in Homebrew's prefix not installed by Homebrew."
         switch "--installed",
                description: "Outputs nothing and returns a failing status code if <formula> is not installed."
+
         conflicts "--unbrewed", "--installed"
 
         named_args :formula
@@ -108,7 +111,7 @@ module Homebrew
         arguments.concat UNBREWED_EXCLUDE_PATHS.flat_map { |d| %W[! -path #{d}] }
         arguments.push ")"
 
-        cd(HOMEBREW_PREFIX) { safe_system("find", *arguments) }
+        cd(HOMEBREW_PREFIX) { SystemCommand.safe_system("find", *arguments) }
       end
     end
   end

@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "lock_file"
@@ -26,6 +27,20 @@ RSpec.describe LockFile do
       expect do
         lock_file_copy.lock
       end.to raise_error(OperationInProgressError)
+    end
+
+    it "retries until it locks the file that is on disk" do
+      expect(lock_file.path).to receive(:exist?).twice.and_return(false, true)
+
+      lock_file.lock
+    end
+
+    # Deferring the interrupt can't be observed in-process, as RSpec owns the
+    # `INT` handler that `ignore_interrupts` traps.
+    it "ignores interrupts while locking" do
+      expect(Utils::Interrupts).to receive(:ignore).and_call_original
+
+      lock_file.lock
     end
   end
 

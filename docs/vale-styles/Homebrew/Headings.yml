@@ -1,0 +1,90 @@
+extends: capitalization
+message: "'%s' should be in sentence case"
+level: error
+scope:
+  - heading.h2
+  - heading.h3
+  - heading.h4
+  - heading.h5
+  - heading.h6
+match: $sentence
+threshold: 1.0
+exceptions:
+  - Annual General Meeting
+  - Apple Silicon
+  - AGM
+  - AI
+  - API
+  - ARM32
+  - ARM64
+  - ASCII
+  - CI
+  - CLI
+  - CLT
+  - CMake
+  - Claude Desktop
+  - Codecov
+  - Cursor
+  - DSL
+  - Dock
+  - Git
+  - GitHub
+  - Go
+  - Golden Gate
+  - Homebrew
+  - HTTPS
+  - ID
+  - How do I
+  - after I
+  - should I
+  - Can I
+  - can I
+  - when I
+  - JDK
+  - JSON
+  - Linux
+  - LLM
+  - Launchpad
+  - MPI
+  - Ops Team
+  - PLC
+  - PRs
+  - PowerShell
+  - Python
+  - Project Leader
+  - Project Leadership Committee
+  - Ruby
+  - Rust
+  - SHA-256
+  - SPDX
+  - Security Team
+  - SOS
+  - Sublime Text
+  - SourceForge
+  - Subversion
+  - URL
+  - URLs
+  - Terminal.app
+  - Tier 1 Support
+  - Tier 2 Support
+  - Tier 3 Support
+  - Open man Page
+  - VS Code
+  - Visual Studio Code
+  - Windows
+  - Windows Subsystem for Linux
+  - Windows 10 Subsystem for Linux
+  - Xcode
+  - Zed
+  - Brewfiles
+  - Command Line Tools
+  - Lead Maintainer
+  - Lead Maintainers
+  - PLC Members
+  - caveats
+  - fish
+  - formulae.brew.sh
+  - macOS
+  - target
+  - x86
+  - zsh

@@ -2,11 +2,20 @@
 
 module Homebrew
   module Bootsnap
+    sig { returns(T::Array[String]) }
+    def self.core_gem_names; end
+
     sig { returns(String) }
     def self.key; end
 
+    sig { returns(T::Array[String]) }
+    private_class_method def self.gem_directories; end
+
     sig { returns(String) }
     private_class_method def self.cache_dir; end
+
+    sig { returns(String) }
+    private_class_method def self.load_path_cache; end
 
     sig { returns(T::Array[String]) }
     private_class_method def self.ignore_directories; end

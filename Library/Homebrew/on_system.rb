@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "simulate_system"
@@ -6,15 +6,12 @@ require "simulate_system"
 module OnSystem
   ARCH_OPTIONS = [:intel, :arm].freeze
   BASE_OS_OPTIONS = [:macos, :linux].freeze
-  ALL_OS_OPTIONS = [*MacOSVersion::SYMBOLS.keys, :linux].freeze
-  ALL_OS_ARCH_COMBINATIONS = ALL_OS_OPTIONS.product(ARCH_OPTIONS).freeze
+  ALL_OS_OPTIONS = T.let([*MacOSVersion::SYMBOLS.keys, :linux].freeze, T::Array[Symbol])
+  ALL_OS_ARCH_COMBINATIONS = T.let(ALL_OS_OPTIONS.product(ARCH_OPTIONS).freeze, T::Array[[Symbol, Symbol]])
 
-  VALID_OS_ARCH_TAGS = ALL_OS_ARCH_COMBINATIONS.filter_map do |os, arch|
-    tag = Utils::Bottles::Tag.new(system: os, arch:)
-    next unless tag.valid_combination?
-
-    tag
-  end.freeze
+  VALID_OS_ARCH_TAGS = T.let(ALL_OS_ARCH_COMBINATIONS.map do |os, arch|
+    Utils::Bottles::Tag.new(system: os, arch:)
+  end.freeze, T::Array[Utils::Bottles::Tag])
 
   sig { params(arch: Symbol).returns(T::Boolean) }
   def self.arch_condition_met?(arch)
@@ -25,7 +22,9 @@ module OnSystem
 
   sig { params(os_name: Symbol, or_condition: T.nilable(Symbol)).returns(T::Boolean) }
   def self.os_condition_met?(os_name, or_condition = nil)
-    return Homebrew::SimulateSystem.send(:"simulating_or_running_on_#{os_name}?") if BASE_OS_OPTIONS.include?(os_name)
+    if BASE_OS_OPTIONS.include?(os_name)
+      return Homebrew::SimulateSystem.public_send(:"simulating_or_running_on_#{os_name}?")
+    end
 
     raise ArgumentError, "Invalid OS condition: #{os_name.inspect}" unless MacOSVersion::SYMBOLS.key?(os_name)
 
@@ -33,11 +32,11 @@ module OnSystem
       raise ArgumentError, "Invalid OS `or_*` condition: #{or_condition.inspect}"
     end
 
-    return false if Homebrew::SimulateSystem.simulating_or_running_on_linux?
+    return false unless Homebrew::SimulateSystem.simulating_or_running_on_macos?
 
     base_os = MacOSVersion.from_symbol(os_name)
     current_os = if Homebrew::SimulateSystem.current_os == :macos
-      # Assume the oldest macOS version when simulating a generic macOS version
+      # Assume the oldest macOS version when simulating a generic macOS version.
       # Version::NULL is always treated as less than any other version.
       Version::NULL
     else
@@ -50,18 +49,13 @@ module OnSystem
     current_os == base_os
   end
 
-  sig { params(method_name: Symbol).returns(Symbol) }
-  def self.condition_from_method_name(method_name)
-    method_name.to_s.sub(/^on_/, "").to_sym
-  end
-
-  sig { params(base: Class).void }
+  sig { params(base: T::Class[T.anything]).void }
   def self.setup_arch_methods(base)
     ARCH_OPTIONS.each do |arch|
       base.define_method(:"on_#{arch}") do |&block|
-        @on_system_blocks_exist = true
+        @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
 
-        return unless OnSystem.arch_condition_met? OnSystem.condition_from_method_name(T.must(__method__))
+        return unless OnSystem.arch_condition_met? arch
 
         @called_in_on_system_block = true
         result = block.call
@@ -72,7 +66,7 @@ module OnSystem
     end
 
     base.define_method(:on_arch_conditional) do |arm: nil, intel: nil|
-      @on_system_blocks_exist = true
+      @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
 
       if OnSystem.arch_condition_met? :arm
         arm
@@ -82,24 +76,28 @@ module OnSystem
     end
   end
 
-  sig { params(base: Class).void }
+  sig { params(base: T::Class[T.anything]).void }
   def self.setup_base_os_methods(base)
     BASE_OS_OPTIONS.each do |base_os|
       base.define_method(:"on_#{base_os}") do |&block|
-        @on_system_blocks_exist = true
+        @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
+        @on_os_blocks_exist = T.let(true, T.nilable(TrueClass))
 
-        return unless OnSystem.os_condition_met? OnSystem.condition_from_method_name(T.must(__method__))
+        return unless OnSystem.os_condition_met? base_os
 
         @called_in_on_system_block = true
+        @called_in_on_os_block = T.let(true, T.nilable(T::Boolean))
         result = block.call
         @called_in_on_system_block = false
+        @called_in_on_os_block = false
 
         result
       end
     end
 
     base.define_method(:on_system) do |linux, macos:, &block|
-      @on_system_blocks_exist = true
+      @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
+      @on_os_blocks_exist = T.let(true, T.nilable(TrueClass))
 
       raise ArgumentError, "The first argument to `on_system` must be `:linux`" if linux != :linux
 
@@ -111,14 +109,16 @@ module OnSystem
       return if !OnSystem.os_condition_met?(os_version, or_condition) && !OnSystem.os_condition_met?(:linux)
 
       @called_in_on_system_block = true
+      @called_in_on_os_block = T.let(true, T.nilable(T::Boolean))
       result = block.call
       @called_in_on_system_block = false
+      @called_in_on_os_block = false
 
       result
     end
 
     base.define_method(:on_system_conditional) do |macos: nil, linux: nil|
-      @on_system_blocks_exist = true
+      @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
 
       if OnSystem.os_condition_met?(:macos) && macos.present?
         macos
@@ -128,36 +128,41 @@ module OnSystem
     end
   end
 
-  sig { params(base: Class).void }
+  sig { params(base: T::Class[T.anything]).void }
   def self.setup_macos_methods(base)
     MacOSVersion::SYMBOLS.each_key do |os_name|
       base.define_method(:"on_#{os_name}") do |or_condition = nil, &block|
-        @on_system_blocks_exist = true
+        @on_system_blocks_exist = T.let(true, T.nilable(TrueClass))
+        @on_os_blocks_exist = T.let(true, T.nilable(TrueClass))
 
-        os_condition = OnSystem.condition_from_method_name T.must(__method__)
-        return unless OnSystem.os_condition_met? os_condition, or_condition
+        return unless OnSystem.os_condition_met? os_name, or_condition
 
-        @on_system_block_min_os = if or_condition == :or_older
-          @called_in_on_system_block ? @on_system_block_min_os : MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED)
-        else
-          MacOSVersion.from_symbol(os_condition)
-        end
-        @called_in_on_system_block = true
+        @on_system_block_min_os = T.let(
+          if or_condition == :or_older
+            @called_in_on_system_block ? @on_system_block_min_os : MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED)
+          else
+            MacOSVersion.from_symbol(os_name)
+          end,
+          T.nilable(MacOSVersion),
+        )
+        @called_in_on_system_block = T.let(true, T.nilable(T::Boolean))
+        @called_in_on_os_block = T.let(true, T.nilable(T::Boolean))
         result = block.call
         @called_in_on_system_block = false
+        @called_in_on_os_block = false
 
         result
       end
     end
   end
 
-  sig { params(_base: Class).void }
+  sig { params(_base: T::Class[T.anything]).void }
   def self.included(_base)
     raise "Do not include `OnSystem` directly. Instead, include `OnSystem::MacOSAndLinux` or `OnSystem::MacOSOnly`"
   end
 
   module MacOSAndLinux
-    sig { params(base: Class).void }
+    sig { params(base: T::Class[T.anything]).void }
     def self.included(base)
       OnSystem.setup_arch_methods(base)
       OnSystem.setup_base_os_methods(base)
@@ -166,7 +171,7 @@ module OnSystem
   end
 
   module MacOSOnly
-    sig { params(base: Class).void }
+    sig { params(base: T::Class[T.anything]).void }
     def self.included(base)
       OnSystem.setup_arch_methods(base)
       OnSystem.setup_macos_methods(base)

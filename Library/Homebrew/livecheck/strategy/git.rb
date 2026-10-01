@@ -1,9 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "addressable"
 require "livecheck/strategic"
 require "system_command"
+require "timeout"
+require "uri"
 
 module Homebrew
   module Livecheck
@@ -32,25 +33,36 @@ module Homebrew
         # Used to cache processed URLs, to avoid duplicating effort.
         @processed_urls = T.let({}, T::Hash[String, String])
 
+        class << self
+          sig { params(processed_urls: T::Hash[String, String]).void }
+          attr_writer :processed_urls
+        end
+
         # The priority of the strategy on an informal scale of 1 to 10 (from
         # lowest to highest).
         PRIORITY = 8
+
+        # Maximum time in seconds to wait for `git ls-remote` to finish.
+        TIMEOUT = 20
+
+        # The regex used to extract tags from `git ls-remote --tags` output.
+        TAG_REGEX = %r{^\h+\s+refs/tags/(.+?)(?:\^{})?$}
 
         # The default regex used to naively identify versions from tags when a
         # regex isn't provided.
         DEFAULT_REGEX = /\D*(.+)/
 
-        GITEA_INSTANCES = T.let(%w[
+        GITEA_INSTANCES = %w[
           codeberg.org
           gitea.com
           opendev.org
           tildegit.org
-        ].freeze, T::Array[String])
+        ].freeze
         private_constant :GITEA_INSTANCES
 
-        GOGS_INSTANCES = T.let(%w[
+        GOGS_INSTANCES = %w[
           lolg.it
-        ].freeze, T::Array[String])
+        ].freeze
         private_constant :GOGS_INSTANCES
 
         # Processes and returns the URL used by livecheck.
@@ -60,14 +72,14 @@ module Homebrew
           return processed_url if processed_url
 
           begin
-            uri = Addressable::URI.parse url
-          rescue Addressable::URI::InvalidURIError
+            uri = URI.parse(url)
+          rescue URI::InvalidURIError
             return url
           end
 
           host = uri.host
           path = uri.path
-          return url if host.nil? || path.nil?
+          return url if host.nil? || path.blank?
 
           host = "github.com" if host == "github.s3.amazonaws.com"
           path = path.delete_prefix("/").delete_suffix(".git")
@@ -112,52 +124,60 @@ module Homebrew
           (DownloadStrategyDetector.detect(url) <= GitDownloadStrategy) == true
         end
 
-        # Fetches a remote Git repository's tags using `git ls-remote --tags`
-        # and parses the command's output. If a regex is provided, it will be
-        # used to filter out any tags that don't match it.
+        # Runs `git ls-remote --tags` with the provided URL and returns a hash
+        # containing the `stdout` content, errors from `stderr` or a timeout error.
         #
         # @param url [String] the URL of the Git repository to check
-        # @param regex [Regexp] the regex to use for filtering tags
         # @return [Hash]
-        sig { params(url: String, regex: T.nilable(Regexp)).returns(T::Hash[Symbol, T.untyped]) }
-        def self.tag_info(url, regex = nil)
+        sig { params(url: String).returns(T::Hash[Symbol, T.any(String, T::Array[String])]) }
+        def self.ls_remote_tags(url)
           stdout, stderr, _status = system_command(
             "git",
-            args:         ["ls-remote", "--tags", url],
+            args:         ["ls-remote", "--tags", "--end-of-options", url],
             env:          { "GIT_TERMINAL_PROMPT" => "0" },
             print_stdout: false,
             print_stderr: false,
             debug:        false,
             verbose:      false,
-          )
+            timeout:      TIMEOUT,
+          ).to_a
 
-          tags_data = { tags: [] }
-          tags_data[:messages] = stderr.split("\n") if stderr.present?
-          return tags_data if stdout.blank?
+          data = {}
+          data[:content] = stdout.clone if stdout.present?
+          data[:messages] = stderr.split("\n") if stderr.present?
 
-          # Isolate tag strings and filter by regex
-          tags = stdout.gsub(%r{^.*\trefs/tags/|\^{}$}, "").split("\n").uniq.sort
-          tags.select! { |t| regex.match?(t) } if regex
-          tags_data[:tags] = tags
-
-          tags_data
+          data
+        rescue Timeout::Error
+          { messages: ["git ls-remote timed out after #{TIMEOUT} seconds."] }
         end
 
-        # Identify versions from tag strings using a provided regex or the
-        # `DEFAULT_REGEX`. The regex is expected to use a capture group around
-        # the version text.
+        # Parse tags from `git ls-remote --tags` output.
         #
-        # @param tags [Array] the tags to identify versions from
-        # @param regex [Regexp, nil] a regex to identify versions
+        # @param content [String] Git output to parse for tags
+        # @return [Array]
+        sig { params(content: String).returns(T::Array[String]) }
+        def self.tags_from_content(content)
+          content.scan(TAG_REGEX).flatten.uniq
+        end
+
+        # Identify versions from `git ls-remote --tags` output using a provided
+        # regex or the `DEFAULT_REGEX`. The regex is expected to use a capture
+        # group around the version text.
+        #
+        # @param content [String] the content to check
+        # @param regex [Regexp, nil] a regex for matching versions in content
         # @return [Array]
         sig {
           params(
-            tags:  T::Array[String],
-            regex: T.nilable(Regexp),
-            block: T.nilable(Proc),
+            content: String,
+            regex:   T.nilable(Regexp),
+            block:   T.nilable(Proc),
           ).returns(T::Array[String])
         }
-        def self.versions_from_tags(tags, regex = nil, &block)
+        def self.versions_from_content(content, regex = nil, &block)
+          tags = tags_from_content(content)
+          return [] if tags.empty?
+
           if block
             block_return_value = if regex.present?
               yield(tags, regex)
@@ -169,17 +189,8 @@ module Homebrew
             return Strategy.handle_block_return(block_return_value)
           end
 
-          tags.filter_map do |tag|
-            if regex
-              # Use the first capture group (the version)
-              # This code is not typesafe unless the regex includes a capture group
-              T.unsafe(tag.scan(regex).first)&.first
-            else
-              # Remove non-digits from the start of the tag and use that as the
-              # version text
-              tag[DEFAULT_REGEX, 1]
-            end
-          end.uniq
+          match_regex = regex || DEFAULT_REGEX
+          tags.filter_map { |tag| tag[match_regex, 1] }.uniq
         end
 
         # Checks the Git tags for new versions. When a regex isn't provided,
@@ -187,32 +198,34 @@ module Homebrew
         # strings and parses the remaining text as a {Version}.
         #
         # @param url [String] the URL of the Git repository to check
-        # @param regex [Regexp, nil] a regex used for matching versions
+        # @param regex [Regexp, nil] a regex for matching versions in content
+        # @param content [String, nil] content to check instead of fetching
         # @param options [Options] options to modify behavior
         # @return [Hash]
         sig {
-          override(allow_incompatible: true).params(
+          override.params(
             url:     String,
             regex:   T.nilable(Regexp),
+            content: T.nilable(String),
             options: Options,
             block:   T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.anything])
         }
-        def self.find_versions(url:, regex: nil, options: Options.new, &block)
+        def self.find_versions(url:, regex: nil, content: nil, options: Options.new, &block)
           match_data = { matches: {}, regex:, url: }
+          match_data[:cached] = true if content
+          return match_data if url.blank?
 
-          tags_data = tag_info(url, regex)
-          tags = tags_data[:tags]
-
-          if tags_data.key?(:messages)
-            match_data[:messages] = tags_data[:messages]
-            return match_data if tags.blank?
+          unless match_data[:cached]
+            match_data.merge!(ls_remote_tags(url))
+            content = match_data[:content]
           end
+          return match_data if content.blank?
 
-          versions_from_tags(tags, regex, &block).each do |version_text|
-            match_data[:matches][version_text] = Version.new(version_text)
-          rescue TypeError
-            next
+          versions_from_content(content, regex, &block).each do |match_text|
+            next unless match_text.is_a?(String)
+
+            match_data[:matches][match_text] = Version.new(match_text)
           end
 
           match_data

@@ -21,10 +21,6 @@
 #
 # That's why we hardcode the following cases and check duplicable? instead of
 # using that rescue idiom.
-# rubocop:disable Layout/EmptyLines
-
-
-# rubocop:enable Layout/EmptyLines
 class Object
   # Can you safely dup this object?
   #
@@ -33,37 +29,8 @@ class Object
   sig { returns(T::Boolean) }
   def duplicable? = true
 end
-
-class Method
-  # Methods are not duplicable:
-  #
-  # ```ruby
-  # method(:puts).duplicable? # => false
-  # method(:puts).dup         # => TypeError: allocator undefined for Method
-  # ```
-  sig { returns(FalseClass) }
-  def duplicable? = false
-end
-
-class UnboundMethod
-  # Unbound methods are not duplicable:
-  #
-  # ```ruby
-  # method(:puts).unbind.duplicable? # => false
-  # method(:puts).unbind.dup         # => TypeError: allocator undefined for UnboundMethod
-  # ```
-  sig { returns(FalseClass) }
-  def duplicable? = false
-end
+require "extend/object/duplicable/method"
+require "extend/object/duplicable/unbound_method"
 
 require "singleton"
-
-module Singleton
-  # Singleton instances are not duplicable:
-  #
-  # ```ruby
-  # Class.new.include(Singleton).instance.dup # TypeError (can't dup instance of singleton
-  # ```
-  sig { returns(FalseClass) }
-  def duplicable? = false
-end
+require "extend/object/duplicable/singleton"

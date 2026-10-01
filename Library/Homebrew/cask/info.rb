@@ -3,27 +3,34 @@
 
 require "json"
 require "cmd/info"
+require "utils/output"
 
 module Cask
   class Info
+    extend ::Utils::Output::Mixin
+
     sig { params(cask: Cask).returns(String) }
     def self.get_info(cask)
       require "cask/installer"
 
-      output = "#{title_info(cask)}\n"
+      installed = cask.installed?
+      output = "#{title_info(cask, installed:)}\n"
+      output << "#{cask.desc}\n" if cask.desc
       output << "#{Formatter.url(cask.homepage)}\n" if cask.homepage
       deprecate_disable = DeprecateDisable.message(cask)
       if deprecate_disable.present?
         deprecate_disable.tap { |message| message[0] = message[0].upcase }
         output << "#{deprecate_disable}\n"
       end
-      output << "#{installation_info(cask)}\n"
+      output << "#{installation_info(cask, installed:)}\n"
+      metadata = Homebrew::Cmd::Info.metadata_lines(cask)
+      output << "#{metadata.join("\n")}\n" if metadata.present?
       repo = repo_info(cask)
       output << "#{repo}\n" if repo
-      output << name_info(cask)
-      output << desc_info(cask)
-      deps = deps_info(cask)
+      deps = deps_info(cask, mark_uninstalled: installed)
       output << deps if deps
+      requirements = requirements_info(cask)
+      output << requirements if requirements
       language = language_info(cask)
       output << language if language
       output << "#{artifact_info(cask)}\n"
@@ -36,66 +43,150 @@ module Cask
     def self.info(cask, args:)
       puts get_info(cask)
 
+      return unless cask.tap&.core_cask_tap?
+
       require "utils/analytics"
       ::Utils::Analytics.cask_output(cask, args:)
     end
 
-    sig { params(cask: Cask).returns(String) }
-    def self.title_info(cask)
-      title = "#{oh1_title(cask.token)}: #{cask.version}"
+    sig { params(cask: Cask, installed: T::Boolean).returns(String) }
+    def self.title_info(cask, installed:)
+      name_with_status = pretty_install_status(
+        cask.token,
+        installed:,
+        outdated:    installed && cask.outdated?,
+        deprecated:  cask.deprecated?,
+        disabled:    cask.disabled?,
+        can_install: cask.valid_platform? && !cask.disabled?,
+        bold:        true,
+      )
+      title = oh1_title(name_with_status).to_s
+      title += " (#{cask.name.join(", ")})" unless cask.name.empty?
+
+      version = if installed && cask.outdated? && cask.installed_version.present?
+        "#{cask.installed_version} → #{cask.version}"
+      else
+        cask.version.to_s
+      end
+
+      title += ": #{version}"
       title += " (auto_updates)" if cask.auto_updates
       title
     end
 
-    sig { params(cask: Cask).returns(String) }
-    def self.installation_info(cask)
-      return "Not installed" unless cask.installed?
+    sig { params(cask: Cask, installed: T::Boolean).returns(String) }
+    def self.installation_info(cask, installed:)
+      return "Not installed" unless installed
       return "No installed version" unless (installed_version = cask.installed_version).present?
 
       versioned_staged_path = cask.caskroom_path.join(installed_version)
+      tab = Tab.for_cask(cask)
 
-      return "Installed\n#{versioned_staged_path} (#{Formatter.error("does not exist")})\n" unless versioned_staged_path.exist?
+      unless versioned_staged_path.exist?
+        return "#{Homebrew::Cmd::Info.installation_status(tab)}\n" \
+               "#{versioned_staged_path} (#{Formatter.error("does not exist")})\n"
+      end
 
       path_details = versioned_staged_path.children.sum(&:disk_usage)
 
-      tab = Tab.for_cask(cask)
-
-      info = ["Installed"]
-      info << "#{versioned_staged_path} (#{disk_usage_readable(path_details)})"
+      info = [Homebrew::Cmd::Info.installation_status(tab)]
+      info << "#{versioned_staged_path} (#{Formatter.disk_usage_readable(path_details)})"
       info << "  #{tab}" if tab.tabfile&.exist?
       info.join("\n")
     end
 
-    sig { params(cask: Cask).returns(String) }
-    def self.name_info(cask)
-      <<~EOS
-        #{ohai_title((cask.name.size > 1) ? "Names" : "Name")}
-        #{cask.name.empty? ? Formatter.error("None") : cask.name.join("\n")}
-      EOS
-    end
-
-    sig { params(cask: Cask).returns(String) }
-    def self.desc_info(cask)
-      <<~EOS
-        #{ohai_title("Description")}
-        #{cask.desc.nil? ? Formatter.error("None") : cask.desc}
-      EOS
-    end
-
-    sig { params(cask: Cask).returns(T.nilable(String)) }
-    def self.deps_info(cask)
+    sig { params(cask: Cask, mark_uninstalled: T::Boolean).returns(T.nilable(String)) }
+    def self.deps_info(cask, mark_uninstalled: true)
       depends_on = cask.depends_on
 
-      formula_deps = Array(depends_on[:formula]).map(&:to_s)
-      cask_deps = Array(depends_on[:cask]).map { |dep| "#{dep} (cask)" }
+      formula_deps = Array(depends_on[:formula]).map do |dep|
+        name = dep.to_s
+        rack = HOMEBREW_CELLAR/::Utils.name_from_full_name(name)
+        decorate_dependency(
+          name,
+          installed:        rack.directory? && !rack.subdirs.empty?,
+          mark_uninstalled:,
+        )
+      end
+
+      cask_deps = Array(depends_on[:cask]).map do |dep|
+        name = dep.to_s
+        decorate_dependency(
+          "#{name} (cask)",
+          installed:        (Caskroom.path/name).directory?,
+          mark_uninstalled:,
+        )
+      end
 
       all_deps = formula_deps + cask_deps
       return if all_deps.empty?
 
-      <<~EOS
-        #{ohai_title("Dependencies")}
-        #{all_deps.join(", ")}
-      EOS
+      formula_dependencies = T.let(Set.new, T::Set[String])
+      cask_dependencies = T.let(Set.new, T::Set[String])
+      Homebrew::Cmd::Info.collect_cask_dependency_names(cask, formula_dependencies, cask_dependencies,
+                                                        Set[cask.token])
+      recursive_count = formula_dependencies.count + cask_dependencies.count
+      lines = T.let(
+        [ohai_title("Dependencies").to_s, "Required (#{all_deps.count}): #{all_deps.join(", ")}"],
+        T::Array[String],
+      )
+      unless recursive_count.zero?
+        installed_count = formula_dependencies.count do |name|
+          rack = HOMEBREW_CELLAR/::Utils.name_from_full_name(name)
+          rack.directory? && !rack.subdirs.empty?
+        end + cask_dependencies.count do |name|
+          (Caskroom.path/name).directory?
+        end
+        lines << "Recursive Runtime (#{recursive_count}): " \
+                 "#{Homebrew::Cmd::Info.dependency_status_counts(installed_count, recursive_count)}"
+      end
+
+      "#{lines.join("\n")}\n"
+    end
+
+    sig { params(dep: String, installed: T::Boolean, mark_uninstalled: T::Boolean).returns(String) }
+    def self.decorate_dependency(dep, installed:, mark_uninstalled: true)
+      pretty_install_status(dep, installed:, mark_uninstalled:)
+    end
+
+    sig { params(cask: Cask, mark_uninstalled: T::Boolean).returns(T.nilable(String)) }
+    def self.requirements_info(cask, mark_uninstalled: true)
+      require "cask_dependent"
+
+      requirements = CaskDependent.new(cask).requirements.grep_v(CaskDependent::Requirement)
+      return if requirements.empty?
+
+      supports_linux = cask.supports_linux?
+      output = "#{ohai_title("Requirements")}\n"
+      %w[build required recommended optional].each do |type|
+        reqs = case type
+        when "build"
+          requirements.select(&:build?)
+        when "required"
+          requirements.select(&:required?)
+        when "recommended"
+          requirements.select(&:recommended?)
+        when "optional"
+          requirements.select(&:optional?)
+        else
+          []
+        end
+        next if reqs.empty?
+
+        output << "#{type.capitalize}: #{reqs.map do |requirement|
+          requirement_s = if requirement.is_a?(MacOSRequirement) && !supports_linux
+            requirement.display_s.delete_suffix(" (or Linux)")
+          else
+            requirement.display_s
+          end
+          pretty_install_status(
+            requirement_s,
+            installed:        requirement.satisfied?,
+            mark_uninstalled:,
+          )
+        end.join(", ")}\n"
+      end
+      output
     end
 
     sig { params(cask: Cask).returns(T.nilable(String)) }
@@ -110,12 +201,12 @@ module Cask
 
     sig { params(cask: Cask).returns(T.nilable(String)) }
     def self.repo_info(cask)
-      return if cask.tap.nil?
+      return unless (tap = cask.tap)
 
-      url = if cask.tap.custom_remote? && !cask.tap.remote.nil?
-        cask.tap.remote
+      url = if tap.custom_remote? && !tap.remote.nil?
+        tap.remote
       else
-        "#{cask.tap.default_remote}/blob/HEAD/#{cask.tap.relative_cask_path(cask.token)}"
+        "#{tap.default_remote}/blob/HEAD/#{tap.relative_cask_path(cask.token)}"
       end
 
       "From: #{Formatter.url(url)}"

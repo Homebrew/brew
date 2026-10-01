@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::App, :cask do
@@ -5,19 +6,16 @@ RSpec.describe Cask::Artifact::App, :cask do
     let(:cask) { Cask::CaskLoader.load(cask_path("with-alt-target")) }
 
     let(:install_phase) do
-      cask.artifacts.select { |a| a.is_a?(described_class) }.each do |artifact|
+      cask.artifacts.grep(described_class).each do |artifact|
         artifact.install_phase(command: NeverSudoSystemCommand, force: false)
       end
     end
-
     let(:source_path) { cask.staged_path.join("Caffeine.app") }
-    let(:target_path) { cask.config.appdir.join("AnotherName.app") }
-
-    before do
-      InstallHelper.install_without_artifacts(cask)
-    end
+    let(:target_path) { Pathname(cask.config.appdir).join("AnotherName.app") }
 
     it "installs the given apps using the proper target directory" do
+      source_path.mkpath
+
       expect(source_path).to be_a_directory
       expect(target_path).not_to exist
 
@@ -40,7 +38,7 @@ RSpec.describe Cask::Artifact::App, :cask do
 
       it "installs the given apps using the proper target directory" do
         appsubdir = cask.staged_path.join("subdir").tap(&:mkpath)
-        FileUtils.mv(source_path, appsubdir)
+        (appsubdir/"Caffeine.app").mkpath
 
         install_phase
 
@@ -50,19 +48,21 @@ RSpec.describe Cask::Artifact::App, :cask do
     end
 
     it "only uses apps when they are specified" do
+      source_path.mkpath
       staged_app_copy = source_path.sub("Caffeine.app", "Caffeine Deluxe.app")
-      FileUtils.cp_r source_path, staged_app_copy
+      staged_app_copy.mkpath
 
       install_phase
 
       expect(target_path).to be_a_directory
       expect(source_path).to be_a_symlink
 
-      expect(cask.config.appdir.join("Caffeine Deluxe.app")).not_to exist
+      expect(Pathname(cask.config.appdir).join("Caffeine Deluxe.app")).not_to exist
       expect(cask.staged_path.join("Caffeine Deluxe.app")).to be_a_directory
     end
 
     it "avoids clobbering an existing app by moving over it" do
+      source_path.mkpath
       target_path.mkpath
 
       expect { install_phase }

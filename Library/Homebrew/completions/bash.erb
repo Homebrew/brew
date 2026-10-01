@@ -3,7 +3,9 @@
 #
 # - For changes to a command under `COMMANDS` or `DEVELOPER COMMANDS` sections):
 #   - Find the source file in `Library/Homebrew/[dev-]cmd/<command>.{rb,sh}`.
-#   - For `.rb` files, edit the `<command>_args` method.
+#   - For `.rb` files, edit the `cmd_args` block. For subcommand metadata,
+#     edit `Library/Homebrew/<command>/subcommand.rb` and
+#     `Library/Homebrew/<command>/subcommand/*.rb` if they exist.
 #   - For `.sh` files, edit the top comment, being sure to use the line prefix
 #     `#:` for the comments to be recognized as documentation. If in doubt,
 #     compare with already documented commands.
@@ -31,65 +33,56 @@ __brewcomp_words_include() {
   return 1
 }
 
-__brewcomp() {
-  # break $1 on space, tab, and newline characters,
-  # and turn it into a newline separated list of words
-  local list s sep=$'\n' IFS=$' \t\n'
-  local cur=${COMP_WORDS[COMP_CWORD]}
-
-  for s in $1
+__brewcomp_words() {
+  local line
+  local -a words
+  while IFS= read -r line
   do
-    __brewcomp_words_include "${s}" || list+="${s}${sep}"
-  done
+    IFS=$' \t' read -r -a words <<< "${line}"
+    [[ ${#words[@]} -gt 0 ]] && printf '%s\n' "${words[@]}"
+  done <<< "$1"
+}
 
-  list=${list%"${sep}"}
+__brewcomp_lines() {
+  local line
+  while IFS= read -r line
+  do
+    [[ -n ${line} && ${line} == "${COMP_WORDS[COMP_CWORD]}"* ]] && COMPREPLY+=("${line}")
+  done <<< "$1"
+}
 
-  IFS="${sep}"
-  while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${list}" -- "${cur}")
+__brewcomp() {
+  local line
+  while IFS= read -r line
+  do
+    __brewcomp_words_include "${line}" || __brewcomp_lines "${line}"
+  done < <(__brewcomp_words "$1")
 }
 
 # Don't use __brewcomp() in any of the __brew_complete_foo functions, as
 # it is too slow and is not worth it just for duplicate elimination.
 __brew_complete_formulae() {
-  local cur="${COMP_WORDS[COMP_CWORD]}"
-  local formulae
-  formulae="$(brew formulae)"
-  while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${formulae}" -- "${cur}")
+  __brewcomp_lines "$(HOMEBREW_COMPLETION=1 brew formulae)"
 }
 
 __brew_complete_casks() {
-  local cur="${COMP_WORDS[COMP_CWORD]}"
-  local casks
-  casks="$(brew casks)"
-  while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${casks}" -- "${cur}")
+  __brewcomp_lines "$(HOMEBREW_COMPLETION=1 brew casks)"
 }
 
 __brew_complete_installed_formulae() {
-  local cur="${COMP_WORDS[COMP_CWORD]}"
-  local installed_formulae
-  installed_formulae="$(command ls "${HOMEBREW_CELLAR:-$(brew --cellar)}" 2>/dev/null)"
-  while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${installed_formulae}" -- "${cur}")
+  __brewcomp_lines "$(command ls "${HOMEBREW_CELLAR:-$(brew --cellar)}" 2>/dev/null)"
 }
 
 __brew_complete_installed_casks() {
-  local cur="${COMP_WORDS[COMP_CWORD]}"
-  local installed_casks
-  installed_casks="$(command ls "$(brew --caskroom)" 2>/dev/null)"
-  while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${installed_casks}" -- "${cur}")
+  __brewcomp_lines "$(command ls "$(brew --caskroom)" 2>/dev/null)"
 }
 
 __brew_complete_outdated_formulae() {
-  local cur="${COMP_WORDS[COMP_CWORD]}"
-  local outdated_formulae
-  outdated_formulae="$(HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --formula --quiet)"
-  while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${outdated_formulae}" -- "${cur}")
+  __brewcomp_lines "$(HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --formula --quiet)"
 }
 
 __brew_complete_outdated_casks() {
-  local cur="${COMP_WORDS[COMP_CWORD]}"
-  local outdated_casks
-  outdated_casks="$(HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --cask --quiet 2>/dev/null)"
-  while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${outdated_casks}" -- "${cur}")
+  __brewcomp_lines "$(HOMEBREW_NO_AUTO_UPDATE=1 brew outdated --cask --quiet 2>/dev/null)"
 }
 
 __brew_complete_tapped() {
@@ -109,9 +102,10 @@ __brew_complete_tapped() {
 __brew_complete_commands() {
   # Auto-complete Homebrew commands
 
-  local cur="${COMP_WORDS[COMP_CWORD]}"
+  local line
   local cmds
-  local -a cmd_aliases
+  local maintainer_cmds
+  local user_aliases
 
   if [[ -n ${__HOMEBREW_COMMANDS} ]]
   then
@@ -123,10 +117,23 @@ __brew_complete_commands() {
   then
     cmds="$(< "${HOMEBREW_REPOSITORY}/completions/internal_commands_list.txt")"
   fi
-  while read -r alias; do cmd_aliases+=("${alias}"); done < <(compgen -W "$(__brew_list_aliases)")
-  [[ -n ${cmd_aliases[*]+"${cmd_aliases[*]}"} ]] && cmds+=" ${cmd_aliases[*]} alias unalias"
-  while read -r line; do COMPREPLY+=("${line}"); done < <(compgen -W "${cmds}" -- "${cur}")
+  if [[ -n ${HOMEBREW_DEVELOPER:-} ]]
+  then
+    maintainer_cmds="<%= maintainer_commands.join(" ") %>"
+  fi
+  user_aliases="$(__brew_list_aliases)"
+  while IFS= read -r line
+  do
+    [[ $(__brew_internal_command_alias "${line}") == "${line}" ]] || continue
+    __brewcomp_lines "${line}"
+  done < <(__brewcomp_words "${cmds} ${maintainer_cmds} ${user_aliases}")
   export __HOMEBREW_COMMANDS=${cmds}
+}
+
+__brew_complete_services() {
+  __brewcomp_lines "$(command find "$(brew --cellar)" -mindepth 3 -maxdepth 3 -name '*.service' \
+    | awk -F/ '{print $(NF-2)}' \
+    | sort -u)"
 }
 
 # compopt is only available in newer versions of bash
@@ -134,22 +141,33 @@ __brew_complete_files() {
   command -v compopt &> /dev/null && compopt -o default
 }
 
+__brew_internal_command_alias() {
+  case "$1" in
+    <%= aliases.join("\n    ") + "\n" %>
+    *) echo "$1" ;;
+  esac
+}
+
 # https://github.com/Homebrew/homebrew-aliases
 __brew_list_aliases() {
-  local aliases_dir="${HOME}/.brew-aliases"
-  local pattern="^# alias: brew ([[:alnum:]-]+)$"
+  local aliases_dir="${HOME}/.config/brew-aliases"
+  local pattern="alias: brew ([^[:space:]]+)"
+  local alias_name line
   local -a aliases
 
+  [[ ! -d ${aliases_dir} ]] && aliases_dir="${HOME}/.brew-aliases"
   [[ ! -d ${aliases_dir} ]] && return
 
   for file in "${aliases_dir}"/*; do
-    [[ ! -f ${file} ]] && continue
-    while read -r line; do
-      if [[ ${line} =~ ${pattern} ]]; then
-        aliases+=("${BASH_REMATCH[1]}")
-        break
+    [[ ! -f ${file} || ${file} == *~ ]] && continue
+    alias_name="${file##*/}"
+    {
+      read -r line
+      if read -r line && [[ ${line} =~ ${pattern} ]]; then
+        alias_name="${BASH_REMATCH[1]}"
       fi
-    done < "${file}"
+    } < "${file}"
+    aliases+=("${alias_name}")
   done
   [[ -n ${aliases[*]+"${aliases[*]}"} ]] && echo "${aliases[@]}"
 }
@@ -183,6 +201,8 @@ _brew() {
     __brew_complete_commands
     return
   fi
+
+  cmd="$(__brew_internal_command_alias "${cmd}")"
 
   # subcommands have their own completion functions
   case "${cmd}" in

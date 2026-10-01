@@ -1,9 +1,12 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "system_command"
+
 require "abstract_command"
 require "utils/git"
 require "fileutils"
+require "utils/github"
 
 module Homebrew
   module DevCmd
@@ -12,24 +15,22 @@ module Homebrew
         description <<~EOS
           Install and commit Homebrew's vendored gems.
         EOS
-
         comma_array "--update",
                     description: "Update the specified list of vendored gems to the latest version."
-        switch      "--no-commit",
-                    description: "Do not generate a new commit upon completion."
-        switch     "--non-bundler-gems",
-                   description: "Update vendored gems that aren't using Bundler.",
-                   hidden:      true
+        switch "--no-commit",
+               description: "Do not generate a new commit upon completion."
+        switch "--non-bundler-gems",
+               description: "Update vendored gems that aren't using Bundler.",
+               hidden:      true
 
         named_args :none
       end
 
       sig { override.void }
       def run
-        Homebrew.install_bundler!
-
-        ENV["BUNDLE_WITH"] = Homebrew.valid_gem_groups.join(":")
-        ENV["BUNDLER_VERSION"] = HOMEBREW_BUNDLER_VERSION
+        Utils::GemSetup.setup_gem_environment!
+        ENV["PATH"] = (ENV.fetch("PATH").split(":") | ENV.fetch("HOMEBREW_PATH", "").split(":")).join(":")
+        ENV["BUNDLE_WITH"] = Utils::GemSetup.valid_gem_groups.join(":")
 
         ohai "cd #{HOMEBREW_LIBRARY_PATH}"
         HOMEBREW_LIBRARY_PATH.cd do
@@ -46,16 +47,33 @@ module Homebrew
           ohai "bundle install --standalone"
           run_bundle "install", "--standalone"
 
+          require "bundler"
+          definition = Bundler::Definition.build(Bundler.default_gemfile, Bundler.default_lockfile, false)
+          # Bundler ships with Ruby, outside the directory hashed by Bootsnap.
+          core_gem_names = definition.specs_for([:default])
+                                     .filter_map { |spec| spec.name if spec.name != "bundler" }
+                                     .sort
+          bootsnap_gem_names = Homebrew::Bootsnap.core_gem_names.sort
+          if core_gem_names != bootsnap_gem_names
+            raise <<~EOS
+              Bootsnap core gem list is out of date.
+              Expected: #{core_gem_names.join(", ")}
+              Actual: #{bootsnap_gem_names.join(", ")}
+            EOS
+          end
+
+          if GitHub::Actions.env_set? && HOMEBREW_PREFIX.to_s == HOMEBREW_LINUX_DEFAULT_PREFIX &&
+             SystemCommand.sudo_available?
+            ohai "chmod +t -R /home/linuxbrew/"
+            system "sudo", "chmod", "+t", "-R", "/home/linuxbrew/"
+          end
+
           ohai "bundle pristine"
           run_bundle "pristine"
 
           ohai "bundle clean"
           run_bundle "clean"
 
-          # Workaround Bundler 2.4.21 issue where platforms may be removed.
-          # Although we don't use 2.4.21, Dependabot does as it currently ignores your lockfile version.
-          # https://github.com/rubygems/rubygems/issues/7169
-          run_bundle "lock", "--add-platform", "aarch64-linux", "arm-linux"
           system "git", "add", "Gemfile.lock" unless args.no_commit?
 
           if args.non_bundler_gems?
@@ -66,11 +84,11 @@ module Homebrew
                 Pathname.glob("#{gem}-*/").each { |path| FileUtils.rm_r(path) }
               end
               ohai "gem install #{gem}"
-              safe_system "gem", "install", gem, "--install-dir", "vendor",
-                          "--no-document", "--no-wrappers", "--ignore-dependencies", "--force"
+              SystemCommand.safe_system "gem", "install", gem, "--install-dir", "vendor",
+                                        "--no-document", "--no-wrappers", "--ignore-dependencies", "--force"
               (HOMEBREW_LIBRARY_PATH/"vendor/gems").cd do
                 source = Pathname.glob("#{gem}-*/").first
-                next if source.blank?
+                next unless source
 
                 # We cannot use `#ln_sf` here because that has unintended consequences when
                 # the symlink we want to create exists and points to an existing directory.
@@ -95,13 +113,7 @@ module Homebrew
 
       sig { params(args: String).void }
       def run_bundle(*args)
-        Process.wait(fork do
-          # Native build scripts fail if EUID != UID
-          Process::UID.change_privilege(Process.euid) if Process.euid != Process.uid
-          exec "bundle", *args
-        end)
-
-        raise ErrorDuringExecution.new(["bundle", *args], status: $CHILD_STATUS) unless $CHILD_STATUS.success?
+        SystemCommand.safe_system "bundle", *args
       end
     end
   end

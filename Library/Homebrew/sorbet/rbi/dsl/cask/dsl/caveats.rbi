@@ -5,4 +5,37 @@
 # Please instead update this file by running `bin/tapioca dsl Cask::DSL::Caveats`.
 
 
-class Cask::DSL::Caveats; end
+class Cask::DSL::Caveats
+  sig { params(args: T.anything).returns(Symbol) }
+  def depends_on_java(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def files_in_usr_local(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def free_license(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def kext(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def license(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def logout(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def path_environment_variable(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def reboot(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def requires_rosetta(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def unsigned_accessibility(*args); end
+
+  sig { params(args: T.anything).returns(Symbol) }
+  def zsh_path_helper(*args); end
+end

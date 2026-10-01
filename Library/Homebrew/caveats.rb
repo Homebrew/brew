@@ -1,7 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "language/python"
+require "system_command"
+require "utils/shell"
+
 require "utils/service"
 
 # A formula's caveats.
@@ -31,6 +33,7 @@ class Caveats
         formula.build = build
       end
       caveats << keg_only_text
+      caveats << shadowed_path_text
       caveats << service_caveats
       caveats.compact.join("\n")
     end
@@ -66,6 +69,7 @@ class Caveats
   sig { params(skip_reason: T::Boolean).returns(T.nilable(String)) }
   def keg_only_text(skip_reason: false)
     return unless formula.keg_only?
+    return if formula.linked?
 
     s = if skip_reason
       ""
@@ -95,11 +99,11 @@ class Caveats
 
       s << "  #{Utils::Shell.export_value("CPPFLAGS", "-I#{formula.opt_include}")}\n" if formula.include.directory?
 
-      if which("pkg-config", ORIGINAL_PATHS) &&
+      if which("pkgconf", ORIGINAL_PATHS) &&
          ((formula.lib/"pkgconfig").directory? || (formula.share/"pkgconfig").directory?)
         s << <<~EOS
 
-          For pkg-config to find #{formula.name} you may need to set:
+          For pkgconf to find #{formula.name} you may need to set:
         EOS
 
         if (formula.lib/"pkgconfig").directory?
@@ -110,17 +114,105 @@ class Caveats
           s << "  #{Utils::Shell.export_value("PKG_CONFIG_PATH", "#{formula.opt_share}/pkgconfig")}\n"
         end
       end
+
+      if which("cmake", ORIGINAL_PATHS) &&
+         ((formula.lib/"cmake").directory? || (formula.share/"cmake").directory?)
+        s << <<~EOS
+
+          For cmake to find #{formula.name} you may need to set:
+            #{Utils::Shell.export_value("CMAKE_PREFIX_PATH", formula.opt_prefix.to_s)}
+        EOS
+      end
     end
     s << "\n" unless s.end_with?("\n")
     s
   end
 
+  sig { returns(T.nilable(String)) }
+  def shadowed_path_text
+    return if Homebrew::EnvConfig.no_path_shadow_check?
+    return unless formula.any_version_installed?
+
+    shadowed = shadowed_executables
+    shadowed = shadowed.select { |_, shadower| sibling_keg_name(shadower) } if formula.keg_only? && !formula.linked?
+    return if shadowed.empty?
+
+    sibling, external = shadowed.sort_by(&:first).partition { |_, shadower| sibling_keg_name(shadower) }
+    blocks = []
+
+    if external.any?
+      lines = external.map { |name, shadower| "  #{name} (shadowed by #{shadower})" }
+      blocks << <<~EOS
+        The following #{formula.name} executables are shadowed by other commands earlier in your PATH:
+        #{lines.join("\n")}
+        Running these by name will not invoke the version provided by Homebrew.
+      EOS
+    end
+
+    if sibling.any?
+      lines = sibling.map do |name, shadower|
+        "  #{name} (shadowed by #{shadower} from #{sibling_keg_name(shadower)})"
+      end
+      blocks << <<~EOS
+        The following #{formula.name} executables are shadowed by other linked Homebrew commands:
+        #{lines.join("\n")}
+        Running these by name will not invoke the version provided by this formula.
+        Run `brew link #{formula.name}` to switch the active version to this keg.
+      EOS
+    end
+
+    s = blocks.join("\n").dup
+    unless Homebrew::EnvConfig.no_env_hints?
+      s << "Disable this behaviour by setting `HOMEBREW_NO_PATH_SHADOW_CHECK=1`.\n"
+      s << "Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`).\n"
+    end
+    s
+  end
+
   private
+
+  sig { params(shadower: Pathname).returns(T.nilable(String)) }
+  def sibling_keg_name(shadower)
+    target = shadower.realpath
+    return unless target.to_s.start_with?("#{HOMEBREW_CELLAR.realpath}/")
+
+    name = target.relative_path_from(HOMEBREW_CELLAR.realpath).each_filename.first
+    return if name.nil? || name == formula.name
+
+    family = [
+      formula.unversioned_formula_name,
+      formula.name,
+      *formula.versioned_formulae_names,
+    ].compact
+    name if family.include?(name)
+  rescue Errno::ENOENT
+    nil
+  end
+
+  sig { returns(T::Array[[String, Pathname]]) }
+  def shadowed_executables
+    [formula.opt_bin, formula.opt_sbin].flat_map do |dir|
+      next [] unless dir.directory?
+
+      dir.children.filter_map do |child|
+        next if !child.file? || !child.executable?
+
+        name = child.basename.to_s
+        found = which(name, ORIGINAL_PATHS)
+        next unless found
+        next if found.realpath == child.realpath
+
+        [name, found]
+      rescue Errno::ENOENT
+        nil
+      end
+    end
+  end
 
   sig { returns(T.nilable(Keg)) }
   def keg
     @keg ||= T.let([formula.prefix, formula.opt_prefix, formula.linked_keg].filter_map do |d|
-      Keg.new(d.resolved_path)
+      Keg.new(Utils::Path.resolved_path(d))
     rescue
       nil
     end.first, T.nilable(Keg))
@@ -194,7 +286,7 @@ class Caveats
     startup = formula.service.requires_root?
     if Utils::Service.running?(formula)
       s << "To restart #{formula.full_name} after an upgrade:"
-      s << "  #{startup ? "sudo " : ""}brew services restart #{formula.full_name}"
+      s << "  #{"sudo " if startup}brew services restart #{formula.full_name}"
     elsif startup
       s << "To start #{formula.full_name} now and restart at startup:"
       s << "  sudo brew services start #{formula.full_name}"
@@ -210,7 +302,8 @@ class Caveats
 
     # pbpaste is the system clipboard tool on macOS and fails with `tmux` by default
     # check if this is being run under `tmux` to avoid failing
-    if ENV["HOMEBREW_TMUX"] && !quiet_system("/usr/bin/pbpaste")
+    if ENV.fetch("HOMEBREW_TMUX",
+                 false) && File.executable?("/usr/bin/pbpaste") && !SystemCommand.quiet_system("/usr/bin/pbpaste")
       s << "" << "WARNING: brew services will fail when run under tmux."
     end
 

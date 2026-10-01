@@ -1,3 +1,5 @@
+# typed: false
+
 cask "with-uninstall-script-user-relative" do
   version "1.2.3"
   sha256 "5633c3a0f2e572cbf021507dec78c50998b398c343232bdfc7e26221d0a5db4d"
@@ -7,10 +9,10 @@ cask "with-uninstall-script-user-relative" do
 
   app "MyFancyApp/MyFancyApp.app", target: "~/MyFancyApp.app"
 
-  postflight do
-    File.write "#{Dir.home}/MyFancyApp.app/uninstall.sh", <<~SH
+  postflight_steps do
+    write_file "MyFancyApp.app/uninstall.sh", <<~SH, base: :home
       #!/bin/sh
-      /bin/rm -r "#{Dir.home}/MyFancyApp.app"
+      /bin/rm -r "$HOME/MyFancyApp.app"
     SH
   end
 

@@ -1,0 +1,73 @@
+# brew tap-new uses this file to generate a bottle publish workflow for the new tap
+name: tap-new publish template
+
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: Pull request number
+        required: true
+      head_sha:
+        description: Expected pull request head commit SHA (optional)
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -xeuo pipefail {0}
+
+jobs:
+  pr-pull:
+    if: github.repository == ''
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      attestations: write
+      checks: read
+      contents: write
+      id-token: write
+      issues: read
+      # tap-new-github-packages-start
+      packages: write
+      # tap-new-github-packages-end
+      pull-requests: write
+    steps:
+      - name: Set up Homebrew
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up git
+        id: git_setup
+        uses: Homebrew/actions/git-user-config@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+
+      - name: Pull bottles
+        id: pull_bottles
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_GIT_COMMITTER_NAME: ${{ steps.git_setup.outputs.name }}
+          HOMEBREW_GIT_COMMITTER_EMAIL: ${{ steps.git_setup.outputs.email }}
+          # tap-new-github-packages-start
+          HOMEBREW_GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_GITHUB_PACKAGES_USER: ${{ github.repository_owner }}
+          # tap-new-github-packages-end
+          HEAD_SHA: ${{ inputs.head_sha }}
+          PULL_REQUEST: ${{ inputs.pull_request }}
+        run: |
+          if [[ -n "$HEAD_SHA" ]]
+          then
+            brew pr-pull --debug --retain-bottle-dir --tap="$GITHUB_REPOSITORY" --head-sha="$HEAD_SHA" \
+              "$PULL_REQUEST"
+          else
+            brew pr-pull --debug --retain-bottle-dir --tap="$GITHUB_REPOSITORY" "$PULL_REQUEST"
+          fi
+
+      - name: Generate build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: "${{ steps.pull_bottles.outputs.bottle_path }}/*.tar.gz"
+
+      - name: Push commits
+        uses: Homebrew/actions/git-try-push@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+        with:
+          branch: TAP_NEW_BRANCH

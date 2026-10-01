@@ -26,14 +26,11 @@ module OS
         self["VERSIONER_PERL_VERSION"] = MacOS.preferred_perl_version
       end
 
+      private
+
       sig { returns(T::Boolean) }
       def no_weak_imports_support?
-        return false if compiler != :clang
-
-        return false if !MacOS::Xcode.version.null? && MacOS::Xcode.version < "8.0"
-        return false if !MacOS::CLT.version.null? && MacOS::CLT.version < "8.0"
-
-        true
+        compiler == :clang
       end
 
       sig { returns(T::Boolean) }

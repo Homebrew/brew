@@ -1,15 +1,23 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
-# Custom GCC and Cross Compilers
+# Custom GCC and Cross-Compilers
 
-Homebrew depends on having an up-to-date version of Xcode because it comes with specific versions of build tools, e.g. `clang`. Installing a custom version of GCC or Autotools into your `PATH` has the potential to break lots of compiles so we prefer the Apple- or Homebrew-provided compilers. Cross compilers based on GCC will typically be "keg-only" and therefore not linked into your `PATH` by default, or be prefixed with the target architecture, again to avoid conflicting with Apple or Homebrew compilers.
+Homebrew uses the supported platform compiler by default.
+Changing `PATH` so an unrelated compiler, linker or build tool shadows the platform toolchain can make builds fail in ways that are difficult to reproduce.
 
-Rather than merging formulae for either of these cases at this time, we're listing them on this page. If you come up with a formula for a new version of GCC or cross-compiler suite, please link to it here.
+Homebrew provides current GNU GCC through the `gcc` formula and LLVM through the `llvm` formula.
+Versioned formulae may exist for software that still requires an older compiler, but they can have narrower platform support and shorter remaining support periods.
+Check `brew info <formula>` rather than relying on a compiler list in this document.
 
-- Homebrew provides a `gcc` formula for use with Xcode 4.2+.
-- Homebrew provides older GCC formulae, e.g. `gcc@9`.
-- Homebrew provides some cross-compilers and toolchains, but these are named to avoid clashing with the default tools, e.g. `i686-elf-gcc`, `x86_64-elf-gcc`.
-- Homebrew provides LLVM's Clang, which is bundled with the `llvm` formula.
-- [RISC-V](https://github.com/riscv/homebrew-riscv) provides the RISC-V toolchain including binutils and GCC.
+On macOS, the unversioned `cc`, `gcc` and `c++` commands are Apple Clang entry points.
+Homebrew's GNU compiler executables use versioned names to avoid replacing the platform compiler.
+Formulae and build scripts should identify the required compiler explicitly instead of assuming that `gcc` means GNU GCC on every platform.
+
+Cross-compiler formulae use target-prefixed names such as `x86_64-elf-gcc` and are not intended to replace the host compiler.
+Other toolchains may be available from third-party taps.
+Review the tap's ownership and [trust only the required item](Tap-Trust.md#installing-from-a-tap) before installation.
+
+Formula authors should declare compiler and toolchain dependencies in the formula, keep them isolated from the host toolchain and test generated binaries for the intended target.
+Use a third-party tap for a specialised or experimental toolchain that does not meet the criteria for `homebrew/core`.

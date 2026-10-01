@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "compilers"
@@ -66,7 +67,10 @@ RSpec.describe CompilerSelector do
 
     it "returns gcc-12 if gcc formula offers gcc-11 and fails with gcc <= 11 on linux", :needs_linux do
       software_spec.fails_with(:clang)
-      software_spec.fails_with(:gcc) { version "11" }
+      software_spec.fails_with(:gcc) do
+        T.bind(self, CompilerFailure)
+        version "11"
+      end
       allow(Formulary).to receive(:factory)
         .with(OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA)
         .and_return(instance_double(Formula, version: Version.new("11.0")))
@@ -75,13 +79,19 @@ RSpec.describe CompilerSelector do
 
     it "returns gcc-12 if gcc-12 is version 12.1 but spec fails with gcc-12 <= 12.0" do
       software_spec.fails_with(:clang)
-      software_spec.fails_with(gcc: "12") { version "12.0" }
+      software_spec.fails_with(gcc: "12") do
+        T.bind(self, CompilerFailure)
+        version "12.0"
+      end
       expect(selector.compiler).to eq("gcc-12")
     end
 
     it "returns gcc-11 if gcc-12 is version 12.1 but spec fails with gcc-12 <= 12.1" do
       software_spec.fails_with(:clang)
-      software_spec.fails_with(gcc: "12") { version "12.1" }
+      software_spec.fails_with(gcc: "12") do
+        T.bind(self, CompilerFailure)
+        version "12.1"
+      end
       expect(selector.compiler).to eq("gcc-11")
     end
 
@@ -100,6 +110,36 @@ RSpec.describe CompilerSelector do
       software_spec.fails_with(:gcc)
 
       expect { selector.compiler }.to raise_error(CompilerSelectionError)
+    end
+
+    context "when selecting LLVM Clang" do
+      let(:compilers) { [:llvm_clang, :clang] }
+      let(:versions) { Class.new(DevelopmentTools) }
+
+      before do
+        allow(versions).to receive(:clang_build_version).and_return(Version.new("600"))
+      end
+
+      it "selects LLVM Clang without calling deprecated APIs" do
+        llvm_prefix = mktmpdir
+        clang = llvm_prefix/"bin/clang"
+        clang.dirname.mkpath
+        clang.write "#!/bin/sh\n"
+        clang.chmod 0755
+
+        allow(Formula).to receive(:[]).with("llvm")
+                                      .and_return(instance_double(Formula, opt_prefix: llvm_prefix))
+        allow(Utils).to receive(:popen_read_text)
+          .with(clang, "--version", err: :err).and_return("clang version 21.1.0\n")
+
+        expect(selector.compiler).to eq(:llvm_clang)
+      end
+
+      it "falls back to Clang without calling deprecated APIs when LLVM is unavailable" do
+        allow(Formula).to receive(:[]).with("llvm").and_raise(FormulaUnavailableError.new("llvm"))
+
+        expect(selector.compiler).to eq(:clang)
+      end
     end
   end
 end

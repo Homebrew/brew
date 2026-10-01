@@ -6,7 +6,7 @@ require_relative "directory"
 module UnpackStrategy
   # Strategy for unpacking Bazaar archives.
   class Bazaar < Directory
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       !!(super && (path/".bzr").directory?)
     end

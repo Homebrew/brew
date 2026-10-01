@@ -2,37 +2,6 @@
 # frozen_string_literal: true
 
 require "abstract_command"
-require "formula"
-require "formulary"
-require "cask/cask_loader"
-
-class String
-  # @!visibility private
-  sig { params(args: Integer).returns(Formula) }
-  def f(*args)
-    Formulary.factory(self, *args)
-  end
-
-  # @!visibility private
-  sig { params(config: T.nilable(T::Hash[Symbol, T.untyped])).returns(Cask::Cask) }
-  def c(config: nil)
-    Cask::CaskLoader.load(self, config:)
-  end
-end
-
-class Symbol
-  # @!visibility private
-  sig { params(args: Integer).returns(Formula) }
-  def f(*args)
-    to_s.f(*args)
-  end
-
-  # @!visibility private
-  sig { params(config: T.nilable(T::Hash[Symbol, T.untyped])).returns(Cask::Cask) }
-  def c(config: nil)
-    to_s.c(config:)
-  end
-end
 
 module Homebrew
   module DevCmd
@@ -45,7 +14,9 @@ module Homebrew
                description: "Show several examples."
         switch "--pry",
                description: "Use Pry instead of IRB.",
-               env:         :pry
+               env:         :pry,
+               replacement: "the default IRB backend (Pry is largely unmaintained upstream)",
+               odisabled:   true
       end
 
       # work around IRB modifying ARGV.
@@ -54,8 +25,6 @@ module Homebrew
 
       sig { override.void }
       def run
-        clean_argv
-
         if args.examples?
           puts <<~EOS
             'v8'.f # => instance of the v8 formula
@@ -69,40 +38,15 @@ module Homebrew
           return
         end
 
-        if args.pry?
-          Homebrew.install_bundler_gems!(groups: ["pry"])
-          require "pry"
-        else
-          require "irb"
-        end
-
         require "keg"
         require "cask"
 
         ohai "Interactive Homebrew Shell", "Example commands available with: `brew irb --examples`"
-        if args.pry?
-          Pry.config.should_load_rc = false # skip loading .pryrc
-          Pry.config.history_file = "#{Dir.home}/.brew_pry_history"
-          Pry.config.prompt_name = "brew"
+        ENV["IRBRC"] = (HOMEBREW_LIBRARY_PATH/"brew_irbrc").to_s
 
-          Pry.start
-        else
-          ENV["IRBRC"] = (HOMEBREW_LIBRARY_PATH/"brew_irbrc").to_s
-
-          IRB.start
-        end
-      end
-
-      private
-
-      # Remove the `--debug`, `--verbose` and `--quiet` options which cause problems
-      # for IRB and have already been parsed by the CLI::Parser.
-      sig { returns(T.nilable(T::Array[Symbol])) }
-      def clean_argv
-        global_options = Homebrew::CLI::Parser
-                         .global_options
-                         .flat_map { |options| options[0..1] }
-        ARGV.reject! { |arg| global_options.include?(arg) }
+        $stdout.flush
+        $stderr.flush
+        exec File.join(RbConfig::CONFIG["bindir"], "irb"), "-I", $LOAD_PATH.join(File::PATH_SEPARATOR), *args.named
       end
     end
   end

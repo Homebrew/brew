@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".codex/hooks/brew-lgtm-stop.sh",
+            "timeout": 360
+          }
+        ]
+      }
+    ]
+  }
+}

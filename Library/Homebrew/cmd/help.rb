@@ -12,6 +12,7 @@ module Homebrew
           Outputs the usage instructions for `brew` <command>.
           Equivalent to `brew --help` <command>.
         EOS
+
         named_args [:command]
       end
 

@@ -1,4 +1,4 @@
-# typed: true # rubocop:disable Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module OS
@@ -9,9 +9,11 @@ module OS
       requires_ancestor { SharedEnvExtension }
       requires_ancestor { ::Stdenv }
 
-      sig { returns(T::Array[Pathname]) }
+      sig { returns(T::Array[::Pathname]) }
       def homebrew_extra_pkg_config_paths
-        [Pathname("#{HOMEBREW_LIBRARY}/Homebrew/os/mac/pkgconfig/#{MacOS.version}")]
+        %W[
+          #{HOMEBREW_LIBRARY}/Homebrew/os/mac/pkgconfig/#{MacOS.version}
+        ].map { |p| ::Pathname.new(p) }
       end
       private :homebrew_extra_pkg_config_paths
 
@@ -36,7 +38,7 @@ module OS
         self["LC_CTYPE"] = "C"
 
         # Add `lib` and `include` etc. from the current `macosxsdk` to compiler flags:
-        macosxsdk(formula: @formula, testing_formula:)
+        macosxsdk(formula:, testing_formula:)
 
         return unless MacOS::Xcode.without_clt?
 
@@ -44,6 +46,7 @@ module OS
         append_path "PATH", "#{MacOS::Xcode.toolchain_path}/usr/bin"
       end
 
+      sig { params(version: T.nilable(MacOSVersion)).void }
       def remove_macosxsdk(version = nil)
         # Clear all `lib` and `include` dirs from `CFLAGS`, `CPPFLAGS`, `LDFLAGS` that were
         # previously added by `macosxsdk`.
@@ -51,7 +54,7 @@ module OS
         delete("CPATH")
         remove "LDFLAGS", "-L#{HOMEBREW_PREFIX}/lib"
 
-        sdk = self["SDKROOT"] || MacOS.sdk_path_if_needed(version)
+        sdk = self["SDKROOT"] || MacOS.sdk_path(version)
         return unless sdk
 
         delete("SDKROOT")
@@ -67,6 +70,7 @@ module OS
         remove "CMAKE_FRAMEWORK_PATH", "#{sdk}/System/Library/Frameworks"
       end
 
+      sig { params(version: T.nilable(MacOSVersion), formula: T.nilable(Formula), testing_formula: T::Boolean).void }
       def macosxsdk(version = nil, formula: nil, testing_formula: false)
         # Sets all needed `lib` and `include` dirs to `CFLAGS`, `CPPFLAGS`, `LDFLAGS`.
         remove_macosxsdk
@@ -80,13 +84,14 @@ module OS
         else
           MacOS.sdk(version)
         end
-        return if !MacOS.sdk_root_needed? && sdk&.source != :xcode
 
         Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
+        raise "No macOS SDK found. Install Xcode or the Command Line Tools." if sdk.nil?
+
         sdk = sdk.path
 
         # Extra setup to support Xcode 4.3+ without CLT.
-        self["SDKROOT"] = sdk
+        self["SDKROOT"] = sdk.to_s
         # Tell clang/gcc where system include's are:
         append_path "CPATH", "#{sdk}/usr/include"
         # The -isysroot is needed, too, because of the Frameworks
@@ -100,22 +105,24 @@ module OS
       end
 
       # Some configure scripts won't find libxml2 without help.
-      # This is a no-op with macOS SDK 10.15.4 and later.
+      # This is a no-op with all supported macOS SDKs.
+      sig { void }
       def libxml2
-        sdk = self["SDKROOT"] || MacOS.sdk_path_if_needed
-        if !sdk
-          append "CPPFLAGS", "-I/usr/include/libxml2"
-        elsif !Pathname("#{sdk}/usr/include/libxml").directory?
-          # Use the includes form the sdk
-          append "CPPFLAGS", "-I#{sdk}/usr/include/libxml2"
-        end
+        super
+        sdk = self["SDKROOT"] || MacOS.sdk_path
+        # Use the includes from the sdk
+        append "CPPFLAGS", "-I#{sdk}/usr/include/libxml2" unless Pathname("#{sdk}/usr/include/libxml").directory?
       end
 
+      sig { void }
       def no_weak_imports
+        odisabled "ENV.no_weak_imports", "passing `-Wl,-no_weak_imports` to the linker"
         append "LDFLAGS", "-Wl,-no_weak_imports" if no_weak_imports_support?
       end
 
+      sig { void }
       def no_fixup_chains
+        odisabled "ENV.no_fixup_chains", "the default linker behaviour"
         append "LDFLAGS", "-Wl,-no_fixup_chains" if no_fixup_chains_support?
       end
     end

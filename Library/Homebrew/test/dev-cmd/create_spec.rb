@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cmd/shared_examples/args_parse"
@@ -24,5 +25,9 @@ RSpec.describe Homebrew::DevCmd::Create do
   it "retains @ in cask tokens" do
     t = Cask::Utils.token_from("test@preview")
     expect(t).to eq("test@preview")
+  end
+
+  it "does not prefill a livecheck block when the app is not installed" do
+    expect(described_class.new([url]).find_appcast_for("Nonexistent Homebrew Test")).to be_nil
   end
 end

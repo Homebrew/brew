@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "bundle_version"
@@ -40,11 +41,22 @@ RSpec.describe Homebrew::BundleVersion do
       ["2.5.2(3329)", "3329"] => "2.5.2,3329",
     }
 
-    expected_mappings.each do |(short_version, version), expected_version|
+    test_each_hash(expected_mappings) do |(short_version, version), expected_version|
       it "maps (#{short_version.inspect}, #{version.inspect}) to #{expected_version.inspect}" do
         expect(described_class.new(short_version, version).nice_version)
           .to eq expected_version
       end
+    end
+  end
+
+  describe "#to_h" do
+    it "returns a hash containing non-nil instance variables" do
+      expect(described_class.new("1.2.3", "3000").to_h)
+        .to eq({ short_version: "1.2.3", version: "3000" })
+      expect(described_class.new(nil, "3000").to_h)
+        .to eq({ version: "3000" })
+      expect(described_class.new("1.2.3", nil).to_h)
+        .to eq({ short_version: "1.2.3" })
     end
   end
 end

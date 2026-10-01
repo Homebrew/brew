@@ -1,12 +1,14 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-26"
 ---
 
 # How to Open a Homebrew Pull Request
 
 The following commands are used by Homebrew contributors to set up a fork of Homebrew's Git repository on GitHub, create a new branch and create a GitHub pull request ("PR") for the changes in that branch.
 
-The type of change you want to make influences which of Homebrew's main repositories you'll need to send your pull request to. If you want to submit a change to Homebrew's core code (the `brew` implementation), you should open a pull request on [Homebrew/brew](https://github.com/Homebrew/brew). If you want to submit a change for a formula, you should open a pull request on the [homebrew/core](https://github.com/Homebrew/homebrew-core) tap, while for casks you should open the pull request on the [homebrew/cask](https://github.com/Homebrew/homebrew-cask) tap or another [official tap](https://github.com/Homebrew), depending on the formula type.
+The type of change you want to make determines which of Homebrew's main repositories should receive the pull request.
+Submit changes to Homebrew's `brew` implementation to [Homebrew/brew](https://github.com/Homebrew/brew).
+Submit formula changes to the [homebrew/core](https://github.com/Homebrew/homebrew-core) tap and cask changes to the [homebrew/cask](https://github.com/Homebrew/homebrew-cask) tap.
 
 ## Submit a new version of an existing formula
 
@@ -68,13 +70,13 @@ Before creating a new cask, please read [Acceptable Casks](Acceptable-Casks.md).
 
 1. [Fork the Homebrew/homebrew-cask repository on GitHub](https://github.com/Homebrew/homebrew-cask/fork).
    * This creates a personal remote repository that you can push to. This is needed because only Homebrew maintainers have push access to the main repositories.
-2. Tap (download a local clone of) the repository of core Homebrew casks:
+2. Tap (download a local clone of) the `homebrew/cask` repository:
 
    ```sh
    brew tap --force homebrew/cask
    ```
 
-3. Change to the directory containing Homebrew casks:
+3. Change to the directory containing `homebrew/cask`:
 
    ```sh
    cd "$(brew --repository homebrew/cask)"
@@ -92,37 +94,46 @@ Before creating a new cask, please read [Acceptable Casks](Acceptable-Casks.md).
 
 To make changes on a new branch and submit it for review, create a GitHub pull request with the following steps:
 
-1. Check out the `master` branch:
+1. Check out the `main` branch:
 
    ```sh
-   git checkout master
+   git checkout main
    ```
 
-2. Retrieve new changes to the `master` branch:
+2. Retrieve new changes to the `main` branch:
 
    ```sh
    brew update
    ```
 
-3. Create a new branch from the latest `master` branch:
+3. Create a new branch from the latest default branch:
 
    ```sh
-   git checkout -b <YOUR_BRANCH_NAME> origin/master
+   git checkout -b <YOUR_BRANCH_NAME> origin/HEAD
    ```
 
 4. Make your changes. For formulae or casks, use `brew edit` or your favourite text editor, using the guidelines in the [Formula Cookbook](Formula-Cookbook.md) or [Cask Cookbook](Cask-Cookbook.md) for reference.
    * If there's a `bottle do` block in the formula, don't remove or change it; we'll update it when we merge your PR.
-5. Test your changes by running the following, and ensure they all pass without issue. For changed formulae and casks, make sure you do the `brew audit` step after your changed formula/cask has been installed.
+5. Test your changes by running the following, and ensure they all pass without issue. `brew lgtm --online` runs the relevant online `brew audit` checks for changed and new formulae and casks, and runs `brew test` for formulae when the latest version is installed.
+
+   For formulae:
 
    ```sh
-   brew tests
-   HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source <CHANGED_FORMULA|CHANGED_CASK>
-   brew test <CHANGED_FORMULA|CHANGED_CASK>
-   brew audit --strict --online <CHANGED_FORMULA|CHANGED_CASK>
+   HOMEBREW_NO_INSTALL_FROM_API=1 brew install --build-from-source <FORMULA>
+   brew lgtm --online
    ```
 
-6. [Make a separate commit](Formula-Cookbook.md#commit) for each changed formula with `git add` and `git commit`. Each formula's commits must be squashed.
-   * Please note that our required commit message format for simple version updates is "`<FORMULA_NAME> <NEW_VERSION>`", e.g. "`source-highlight 3.1.8`".
+   For casks:
+
+   ```sh
+   HOMEBREW_NO_INSTALL_FROM_API=1 brew install --cask <CASK>
+   brew uninstall --cask <CASK>
+   brew lgtm --online
+   ```
+
+6. [Make a separate commit](Formula-Cookbook.md#commit) for each changed formula or cask with `git add` and `git commit`. Each package's commits must be squashed.
+   * Use "`<NAME> <VERSION>`" for a simple version update, such as "`source-highlight 3.1.8`".
+   * Use "`<NAME> <VERSION> (new formula)`" or "`<NAME> <VERSION> (new cask)`" for a new package.
 7. Upload your branch of new commits to your fork:
 
    ```sh
@@ -134,13 +145,24 @@ To make changes on a new branch and submit it for review, create a GitHub pull r
 
 Thank you!
 
+### "Artificial intelligence"/large language model (AI/LLM) usage
+
+We allow you to create issues and pull requests with AI/LLM with the following requirements (see [Responsible AI Usage](Responsible-AI-Usage.md) for the principles behind them):
+
+* You must disclose in the initial issue or pull request that you used AI/LLM and what tool/model/etc. you used.
+* You must review all AI/LLM generated code, prose, etc. content before you ask anyone in Homebrew to review it for you.
+* You must not attribute a commit to AI/LLM as an author, co-author, committer or signatory, including through an `Assisted-by`, `Co-developed-by` or similar commit trailer.
+* You must answer all maintainer questions and pull request review comments yourself, without using AI/LLM.
+* If you reach the point where you feel unwilling or unable to do the above, please close your issue or pull request.
+
 ## Following up
 
 To respond well to feedback:
 
 1. Ask for clarification of anything you don't understand and for help with anything you don't know how to do.
-2. Post a comment on your pull request if you've provided all the requested changes/information and it hasn't been merged after a week. Post a comment on your pull request if you're stuck and need help.
-   * A `needs response` label on a PR means that the Homebrew maintainers need you to respond to previous comments.
+2. Post a comment on your pull request if you've provided all the requested changes/information and it hasn't been merged after a week.
+   Post a comment on your pull request if you're stuck and need help.
+   A `needs response` label on a PR means that the Homebrew maintainers need you to respond to previous comments.
 3. Keep discussion in the pull request unless requested otherwise (i.e. do not email maintainers privately).
 4. Do not continue discussion in closed pull requests.
 5. Do not argue with Homebrew maintainers. You may disagree but unless they change their mind, please implement what they request. Ultimately they control what is included in Homebrew, as they have to support any changes that are made.
@@ -154,13 +176,13 @@ To make changes based on feedback:
    ```
 
 2. Make any requested changes and commit them with `git add` and `git commit`.
-3. Squash new commits into one commit per formula:
+3. Squash new commits into one commit per formula or cask:
 
    ```sh
-   git rebase --interactive origin/master
+   git rebase --interactive origin/HEAD
    ```
 
-   * If you are working on a PR for a single formula, `git commit --amend` is a convenient way of keeping your commits squashed as you go.
+   If you are working on a PR for a single formula or cask, `git commit --amend` is a convenient way of keeping your commits squashed as you go.
 4. Push to your remote fork's branch and the pull request:
 
    ```sh

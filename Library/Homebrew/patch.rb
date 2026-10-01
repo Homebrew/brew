@@ -1,11 +1,102 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
-require "resource"
-require "erb"
+require "embedded_patch"
+require "data_patch"
+require "external_patch"
+require "string_patch"
+require "local_patch"
+require "utils/path"
+require "sandbox"
 
 # Helper module for creating patches.
 module Patch
+  CVE_PATTERN = /CVE-?(\d{4})-(\d{4,})/i
+  GHSA_PATTERN = /\AGHSA(-[23456789cfghjmpqrvwx]{4}){3}\z/
+  OSV_PATTERN = /\AOSV-\d{4}-\d+\z/
+  # CycloneDX `pedigree.patches.type` values applicable to source diffs.
+  # `monkey` is omitted: it describes runtime modification, which `patch do` cannot express.
+  # Keep in sync with `PATCH_TYPES` in `Library/Homebrew/rubocops/patches.rb`.
+  TYPES = T.let({
+    unofficial:  "A patch that has not been developed by the upstream maintainers " \
+                 "(e.g. a Homebrew- or distribution-specific build fix).",
+    backport:    "A patch that takes code from a newer version of the software and " \
+                 "applies it to the older version Homebrew ships (e.g. an unreleased " \
+                 "upstream security fix).",
+    cherry_pick: "A patch created by selectively applying upstream commits that are " \
+                 "not strictly from a newer release (e.g. a fix from a maintenance branch).",
+  }.freeze, T::Hash[Symbol, String])
+
+  sig { params(strings: String).returns(T::Array[String]) }
+  def self.extract_cves(*strings)
+    strings.flat_map { |s| s.scan(CVE_PATTERN) }
+           .map { |year, id| "CVE-#{year}-#{id}" }
+           .uniq
+  end
+
+  sig { params(id: String).returns(String) }
+  def self.resolves_type(id)
+    return "security" if id.match?(/\ACVE-\d{4}-\d{4,}\z/) || id.match?(GHSA_PATTERN) || id.match?(OSV_PATTERN)
+
+    "defect"
+  end
+
+  # Reject patch target paths (absolute or `..`-traversing) that escape the staged source tree.
+  sig { params(text: String, strip: T.any(Symbol, String), base: Pathname).void }
+  def self.ensure_targets_within!(text, strip:, base:)
+    # `patch` writes nothing for empty input.
+    return if text.blank?
+
+    # Resolve targets with `patch --dry-run` so containment matches what `patch`
+    # actually writes, covering `Index:`/`====` and non-selected context headers.
+    output = Sandbox.capture("patch", args: ["-g", "0", "-f", "-#{strip}", "--dry-run"],
+                                      input: text, read_paths: [base], chdir: base,
+                                      env: { "LC_ALL" => "C", "LANG" => "C", "QUOTING_STYLE" => "literal" },
+                                      must_succeed: false, print_stderr: false).merged_output
+
+    # No output means `patch` named nothing, not that it will write nothing, so
+    # fail closed. An ed-format patch reports nothing at all and lands here.
+    raise "Unsupported patch format: no target paths to verify." if output.blank?
+
+    output.each_line do |line|
+      # `patch` names a target for a hunk it applies and a reject file it writes.
+      line = line.chomp
+      named = line[/\A(?:patching|checking) (?:file|symbolic link) (.+)\z/, 1] ||
+              line[/hunks? ignored while patching (.+)\z/, 1]
+      next if named.nil?
+
+      # GNU patch appends the source it read, so a rename, copy or read names two
+      # paths. A filename may contain that text, so check every reading of it.
+      suffixed = named.match(/\A(.+) \((?:already )?(?:renamed|copied|read) from (.+)\)\z/)
+      targets = [named, *suffixed&.captures].uniq
+
+      targets.each do |target|
+        message = "Patch target path escapes the staged source tree: #{target}"
+
+        # Reject rather than resolve: `Pathname#/` collapses a `..` after a
+        # symlinked directory before anything below can resolve it.
+        target_path = Pathname(target)
+        raise message if target_path.absolute? || target_path.each_filename.include?("..")
+
+        Utils::Path.ensure_child_of!(base, base/target, message:)
+      end
+    end
+  end
+
+  sig { params(text: String, strip: T.any(Symbol, String), base: Pathname).void }
+  def self.apply(text, strip:, base:)
+    ensure_targets_within!(text, strip:, base:)
+    Sandbox.capture("patch", args: ["-g", "0", "-f", "-#{strip}"], input: text,
+                             write_paths: [base], chdir: base, print_stdout: true)
+  end
+
+  sig {
+    params(
+      strip: T.any(Symbol, String),
+      src:   T.nilable(T.any(Symbol, String)),
+      block: T.nilable(T.proc.bind(Resource::Patch).void),
+    ).returns(T.any(EmbeddedPatch, ExternalPatch))
+  }
   def self.create(strip, src, &block)
     case strip
     when :DATA
@@ -19,145 +110,18 @@ module Patch
       when String
         StringPatch.new(strip, src)
       else
-        ExternalPatch.new(strip, &block)
-      end
-    when nil
-      raise ArgumentError, "nil value for strip"
-    else
-      raise ArgumentError, "Unexpected value #{strip.inspect} for strip"
-    end
-  end
-end
+        external_patch = ExternalPatch.new(strip, &block)
+        resource = external_patch.resource
+        if (file = resource.file)
+          raise ArgumentError, "Patch cannot have both `file` and `url`." if resource.url.present?
+          raise ArgumentError, "Patch cannot use `sha256` with `file`." if resource.checksum
+          raise ArgumentError, "Patch cannot use `apply` with `file`." if resource.patch_files.present?
 
-# An abstract class representing a patch embedded into a formula.
-class EmbeddedPatch
-  attr_writer :owner
-  attr_reader :strip
-
-  def initialize(strip)
-    @strip = strip
-  end
-
-  sig { returns(T::Boolean) }
-  def external?
-    false
-  end
-
-  def contents; end
-
-  def apply
-    data = contents.gsub("HOMEBREW_PREFIX", HOMEBREW_PREFIX)
-    args = %W[-g 0 -f -#{strip}]
-    Utils.safe_popen_write("patch", *args) { |p| p.write(data) }
-  end
-
-  sig { returns(String) }
-  def inspect
-    "#<#{self.class.name}: #{strip.inspect}>"
-  end
-end
-
-# A patch at the `__END__` of a formula file.
-class DATAPatch < EmbeddedPatch
-  attr_accessor :path
-
-  def initialize(strip)
-    super
-    @path = nil
-  end
-
-  sig { returns(String) }
-  def contents
-    data = +""
-    path.open("rb") do |f|
-      loop do
-        line = f.gets
-        break if line.nil? || /^__END__$/.match?(line)
-      end
-      while (line = f.gets)
-        data << line
-      end
-    end
-    data.freeze
-  end
-end
-
-# A string containing a patch.
-class StringPatch < EmbeddedPatch
-  def initialize(strip, str)
-    super(strip)
-    @str = str
-  end
-
-  def contents
-    @str
-  end
-end
-
-# A file containing a patch.
-class ExternalPatch
-  extend Forwardable
-
-  attr_reader :resource, :strip
-
-  def_delegators :resource,
-                 :url, :fetch, :patch_files, :verify_download_integrity,
-                 :cached_download, :downloaded?, :clear_cache
-
-  def initialize(strip, &block)
-    @strip    = strip
-    @resource = Resource::Patch.new(&block)
-  end
-
-  sig { returns(T::Boolean) }
-  def external?
-    true
-  end
-
-  def owner=(owner)
-    resource.owner = owner
-    resource.version(resource.checksum&.hexdigest || ERB::Util.url_encode(resource.url))
-  end
-
-  def apply
-    base_dir = Pathname.pwd
-    resource.unpack do
-      patch_dir = Pathname.pwd
-      if patch_files.empty?
-        children = patch_dir.children
-        if children.length != 1 || !children.fetch(0).file?
-          raise MissingApplyError, <<~EOS
-            There should be exactly one patch file in the staging directory unless
-            the "apply" method was used one or more times in the patch-do block.
-          EOS
-        end
-
-        patch_files << children.fetch(0).basename
-      end
-      dir = base_dir
-      dir /= resource.directory if resource.directory.present?
-      dir.cd do
-        patch_files.each do |patch_file|
-          ohai "Applying #{patch_file}"
-          patch_file = patch_dir/patch_file
-          Utils.safe_popen_write("patch", "-g", "0", "-f", "-#{strip}") do |p|
-            File.foreach(patch_file) do |line|
-              data = line.gsub("@@HOMEBREW_PREFIX@@", HOMEBREW_PREFIX)
-              p.write(data)
-            end
-          end
+          LocalPatch.new(strip, file, resource.directory, resolves: resource.resolves, type: resource.type)
+        else
+          external_patch
         end
       end
     end
-  rescue ErrorDuringExecution => e
-    onoe e
-    f = resource.owner.owner
-    cmd, *args = e.cmd
-    raise BuildError.new(f, cmd, args, ENV.to_hash)
-  end
-
-  sig { returns(String) }
-  def inspect
-    "#<#{self.class.name}: #{strip.inspect} #{url.inspect}>"
   end
 end

@@ -29,9 +29,12 @@ class Hash
   # Same as {#deep_merge}, but modifies `self`.
   def deep_merge!(other_hash, &block)
     merge!(other_hash) do |key, this_val, other_val|
-      if T.unsafe(this_val).is_a?(Hash) && other_val.is_a?(Hash)
-        T.unsafe(this_val).deep_merge(other_val, &block)
-      elsif block
+      case this_val
+      when Hash
+        next this_val.deep_merge(other_val, &block) if other_val.is_a?(Hash)
+      end
+
+      if block
         yield(key, this_val, other_val)
       else
         other_val

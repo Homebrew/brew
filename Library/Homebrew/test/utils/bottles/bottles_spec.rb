@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "utils/bottles"
@@ -14,6 +15,13 @@ RSpec.describe Utils::Bottles do
     end
   end
 
+  describe ".extname_tag_rebuild" do
+    it "returns an empty rebuild for bottles without rebuilds" do
+      expect(described_class.extname_tag_rebuild("gh--2.93.0.arm64_sonoma.bottle.tar.gz"))
+        .to eq([".arm64_sonoma.bottle.tar.gz", "arm64_sonoma", ""])
+    end
+  end
+
   describe ".load_tab" do
     context "when tab_attributes and tabfile are missing" do
       before do
@@ -26,7 +34,6 @@ RSpec.describe Utils::Bottles do
             version "0.1"
           end
         RUBY
-        Formulary.cache.delete(dep_path)
 
         # setup a testball2, that depends on testball1
         formula_name = "testball2"
@@ -38,7 +45,6 @@ RSpec.describe Utils::Bottles do
             depends_on "testball1"
           end
         RUBY
-        Formulary.cache.delete(formula_path)
       end
 
       it "includes runtime_dependencies" do
@@ -47,9 +53,65 @@ RSpec.describe Utils::Bottles do
 
         runtime_dependencies = described_class.load_tab(formula).runtime_dependencies
 
-        expect(runtime_dependencies).not_to be_nil
-        expect(runtime_dependencies.size).to eq(1)
-        expect(runtime_dependencies.first).to include("full_name" => "testball1")
+        expect(runtime_dependencies).to contain_exactly(a_hash_including("full_name" => "testball1"))
+      end
+    end
+
+    # The `sh.brew.tab` manifest annotation is fetched without a checksum, so the build prefix
+    # must be derived from trusted sources rather than taken from the annotation.
+    context "when the manifest annotation supplies a built_prefix" do
+      before do
+        path = CoreTap.instance.new_formula_path("testball1")
+        path.write <<~RUBY
+          class #{Formulary.class_s("testball1")} < Formula
+            url "testball1"
+            version "0.1"
+          end
+        RUBY
+        Formula["testball1"].prefix.mkpath
+        # An arm64 macOS tag has a padded prefix on every host, unlike the running tag.
+        allow(described_class).to receive(:tag)
+          .and_return(Utils::Bottles::Tag.new(system: :tahoe, arch: :arm64))
+      end
+
+      it "derives a pinned-cellar prefix from the formula rather than the annotation" do
+        formula = Formula["testball1"]
+        allow(formula.bottle_specification).to receive(:tag_to_cellar).and_return("/custom/prefix/Cellar")
+        allow(formula).to receive(:bottle_tab_attributes).and_return(
+          "built_on" => { "os" => HOMEBREW_SYSTEM }, "built_prefix" => "/usr", "padded_prefix" => false,
+        )
+
+        expect(described_class.load_tab(formula).built_prefix).to eq("/custom/prefix")
+      end
+
+      it "clears the prefix for a relocatable bottle" do
+        formula = Formula["testball1"]
+        allow(formula.bottle_specification).to receive(:tag_to_cellar).and_return(:any_skip_relocation)
+        allow(formula).to receive(:bottle_tab_attributes).and_return(
+          "built_on" => { "os" => HOMEBREW_SYSTEM }, "built_prefix" => "/usr", "padded_prefix" => false,
+        )
+
+        expect(described_class.load_tab(formula).built_prefix).to be_nil
+      end
+
+      it "substitutes this tag's padded prefix for a padded bottle" do
+        formula = Formula["testball1"]
+        padded = Utils::Bottles::Tag.new(system: :tahoe, arch: :arm64).padded_prefix
+        allow(formula).to receive(:bottle_tab_attributes).and_return(
+          "built_on" => { "os" => HOMEBREW_SYSTEM }, "built_prefix" => padded, "padded_prefix" => true,
+        )
+
+        expect(described_class.load_tab(formula).built_prefix).to eq(padded)
+      end
+
+      it "substitutes the local prefix even when a padded bottle supplies a forged one" do
+        formula = Formula["testball1"]
+        padded = Utils::Bottles::Tag.new(system: :tahoe, arch: :arm64).padded_prefix
+        allow(formula).to receive(:bottle_tab_attributes).and_return(
+          "built_on" => { "os" => HOMEBREW_SYSTEM }, "built_prefix" => "/usr", "padded_prefix" => true,
+        )
+
+        expect(described_class.load_tab(formula).built_prefix).to eq(padded)
       end
     end
   end

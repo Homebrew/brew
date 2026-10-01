@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cask/cask_loader"
@@ -11,7 +12,7 @@ RSpec.describe CaskDependent, :needs_macos do
       cask "testing" do
         depends_on formula: "baz"
         depends_on cask: "foo-cask"
-        depends_on macos: ">= :mojave"
+        depends_on macos: :sequoia
       end
     RUBY
   end

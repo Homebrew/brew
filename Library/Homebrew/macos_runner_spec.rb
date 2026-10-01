@@ -6,6 +6,7 @@ class MacOSRunnerSpec < T::Struct
   const :runner, String
   const :timeout, Integer
   const :cleanup, T::Boolean
+  const :target_macos, T.nilable(String), default: nil
   prop  :testing_formulae, T::Array[String], default: []
 
   sig {
@@ -14,6 +15,7 @@ class MacOSRunnerSpec < T::Struct
       runner:           String,
       timeout:          Integer,
       cleanup:          T::Boolean,
+      target_macos:     T.nilable(String),
       testing_formulae: String,
     })
   }
@@ -23,6 +25,7 @@ class MacOSRunnerSpec < T::Struct
       runner:,
       timeout:,
       cleanup:,
+      target_macos:,
       testing_formulae: testing_formulae.join(","),
     }
   end

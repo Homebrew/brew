@@ -17,7 +17,7 @@ module RuboCop
           resource_nodes = find_every_method_call_by_name(body_node, :resource)
           return if resource_nodes.empty?
 
-          %w[lxml pyyaml].each do |resource_name|
+          %w[bcrypt lxml pynacl pyyaml].each do |resource_name|
             found = resource_nodes.find { |node| node.arguments&.first&.str_content == resource_name }
             next unless found
 
@@ -34,9 +34,15 @@ module RuboCop
             end
 
             required_deps = case resource_name
+            when "bcrypt"
+              kind = "depends_on"
+              ["pkgconf", "rust"]
             when "lxml"
               kind = depends_on?(:linux) ? "depends_on" : "uses_from_macos"
               ["libxml2", "libxslt"]
+            when "pynacl"
+              kind = "depends_on"
+              ["libsodium"]
             when "pyyaml"
               kind = "depends_on"
               ["libyaml"]
@@ -45,7 +51,7 @@ module RuboCop
             end
             next if required_deps.all? { |dep| uses_from_macos_or_depends_on.include?(dep) }
 
-            offending_node(found)
+            @offensive_node = found
             problem "Add `#{kind}` lines above for #{required_deps.map { |req| "`\"#{req}\"`" }.join(" and ")}."
           end
         end

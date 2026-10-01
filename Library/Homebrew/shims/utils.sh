@@ -56,8 +56,12 @@ safe_exec() {
   then
     return
   fi
-  # prevent fork-bombs
-  if [[ "$(lowercase "${arg0}")" == "${SHIM_FILE}" || "$(realpath "${arg0}")" == "${SHIM_REAL}" ]]
+  # prevent fork-bombs and exec loops between this shim and the same shared
+  # shim in another Homebrew checkout (found on PATH or by a stale xcrun cache)
+  local arg0_real
+  arg0_real="$(realpath "${arg0}")"
+  if [[ "$(lowercase "${arg0}")" == "${SHIM_FILE}" || "${arg0_real}" == "${SHIM_REAL}" ||
+        "${arg0_real}" == */shims/shared/"${SHIM_REAL##*/}" ]]
   then
     return
   fi

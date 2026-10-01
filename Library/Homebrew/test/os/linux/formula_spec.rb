@@ -1,3 +1,4 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "test/support/fixtures/testball"
@@ -11,6 +12,7 @@ RSpec.describe Formula do
 
     it "acts like #depends_on" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
 
         uses_from_macos("foo")
@@ -22,9 +24,10 @@ RSpec.describe Formula do
 
     it "ignores OS version specifications" do
       f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
         url "foo-1.0"
 
-        uses_from_macos "foo", since: :mojave
+        uses_from_macos "foo", since: :sequoia
       end
 
       expect(f.class.stable.deps.first.name).to eq("foo")
@@ -35,6 +38,7 @@ RSpec.describe Formula do
   describe "#on_linux" do
     it "adds a dependency on Linux only" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"
@@ -58,6 +62,7 @@ RSpec.describe Formula do
 
     it "adds a patch on Linux only" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"
@@ -81,6 +86,7 @@ RSpec.describe Formula do
 
     it "uses on_linux within a resource block" do
       f = formula do
+        T.bind(self, T.class_of(Formula))
         homepage "https://brew.sh"
 
         url "https://brew.sh/test-0.1.tbz"
@@ -94,6 +100,22 @@ RSpec.describe Formula do
       end
       expect(f.resources.length).to eq(1)
       expect(f.resources.first.url).to eq("on_linux")
+    end
+  end
+
+  describe "#common_sandbox_env" do
+    it "does not force Java headless" do
+      f = Testball.new
+      expect(f.common_sandbox_env(mktmpdir)[:_JAVA_OPTIONS]).to eq(
+        "-Duser.home=#{Homebrew::PackageManagerCache.path("java_cache")} -Djava.io.tmpdir=#{HOMEBREW_TEMP}",
+      )
+    end
+  end
+
+  describe "#test_sandbox_env" do
+    it "does not pass options to the java launcher" do
+      f = Testball.new
+      expect(f.test_sandbox_env(mktmpdir)).not_to have_key(:JDK_JAVA_OPTIONS)
     end
   end
 

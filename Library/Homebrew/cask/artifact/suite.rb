@@ -7,12 +7,12 @@ module Cask
   module Artifact
     # Artifact corresponding to the `suite` stanza.
     class Suite < Moved
-      sig { returns(String) }
+      sig { override.returns(String) }
       def self.english_name
         "App Suite"
       end
 
-      sig { returns(Symbol) }
+      sig { override.returns(Symbol) }
       def self.dirmethod
         :appdir
       end

@@ -1,6 +1,9 @@
+# typed: true
 # frozen_string_literal: true
 
 require "resource"
+require "bottle"
+require "github_packages"
 require "livecheck"
 
 RSpec.describe Resource do
@@ -13,7 +16,7 @@ RSpec.describe Resource do
 
       livecheck do
         url "https://brew.sh/test/releases"
-        regex(/foo[._-]v?(\d+(?:\.\d+)+)\.t/i)
+        regex(/foo[._-]v?\d+(?:\.\d+)+\.t/i)
       end
     end
   end
@@ -67,16 +70,13 @@ RSpec.describe Resource do
   describe "#livecheck" do
     specify "when `livecheck` block is set" do
       expect(livecheck_resource.livecheck.url).to eq("https://brew.sh/test/releases")
-      expect(livecheck_resource.livecheck.regex).to eq(/foo[._-]v?(\d+(?:\.\d+)+)\.t/i)
+      expect(livecheck_resource.livecheck.regex).to eq(/foo[._-]v?\d+(?:\.\d+)+\.t/i)
     end
   end
 
   describe "#livecheck_defined?" do
-    it "returns false if `livecheck` block is not set in resource" do
+    specify do
       expect(resource.livecheck_defined?).to be false
-    end
-
-    specify "`livecheck` block defined in resources" do
       expect(livecheck_resource.livecheck_defined?).to be true
     end
   end
@@ -105,12 +105,6 @@ RSpec.describe Resource do
       resource.url("https://brew.sh/foo-1.0.tar.gz", tag: "v1.0.2")
       expect(resource.version).to eq(Version.parse("1.0.2"))
       expect(resource.version).to be_detected_from_url
-    end
-
-    it "rejects non-string versions" do
-      expect { resource.version(1) }.to raise_error(TypeError)
-      expect { resource.version(2.0) }.to raise_error(TypeError)
-      expect { resource.version(Object.new) }.to raise_error(TypeError)
     end
 
     it "returns nil if unset" do
@@ -151,16 +145,145 @@ RSpec.describe Resource do
     end
   end
 
+  describe "#fetch" do
+    let(:url) do
+      ENV["HOMEBREW_PRIVATE_TOKEN"] = "glpat-secret"
+      ENV.clear_sensitive_environment_for_eval! do
+        "https://example.com/foo.tar.gz?private_token=#{ENV.fetch("HOMEBREW_PRIVATE_TOKEN", nil)}"
+      end
+    end
+    let(:headers) do
+      {
+        "accept-ranges"  => "bytes",
+        "content-length" => "37182",
+      }
+    end
+
+    before do
+      resource.url(url)
+      allow(resource.downloader).to receive(:curl_headers).with(any_args)
+                                                          .and_return({ responses: [{ headers: }] })
+    end
+
+    after do
+      ENV.delete("HOMEBREW_PRIVATE_TOKEN")
+      resource.clear_cache
+    end
+
+    it "expands deferred environment placeholders while downloading" do
+      expect(url).to include(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX)
+      expect(resource.downloader).to receive(:system_command)
+        .with(
+          /curl/,
+          hash_including(args: array_including("https://example.com/foo.tar.gz?private_token=glpat-secret")),
+        )
+        .at_least(:once)
+        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+      resource.downloader.temporary_path.dirname.mkpath
+      FileUtils.touch resource.downloader.temporary_path
+      resource.fetch(verify_download_integrity: false)
+    end
+
+    it "does not expand placeholders for custom curl download strategies" do
+      expect(url).to include(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX)
+      resource.url(url, using: Class.new(CurlDownloadStrategy))
+      allow(resource.downloader).to receive(:curl_headers).with(any_args)
+                                                          .and_return({ responses: [{ headers: }] })
+
+      expect(resource.downloader).to receive(:system_command)
+        .with(
+          /curl/,
+          hash_including(args: array_including(url)),
+        )
+        .at_least(:once)
+        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+
+      resource.downloader.temporary_path.dirname.mkpath
+      FileUtils.touch resource.downloader.temporary_path
+      resource.fetch(verify_download_integrity: false)
+    end
+  end
+
+  describe "#stage" do
+    let(:last_modified) { Time.utc(2026, 5, 6, 13, 43, 5) }
+    let(:tarball) { TEST_FIXTURE_DIR/"tarballs/testball-0.1.tbz" }
+    let(:url) { "https://files.pythonhosted.org/packages/ab/cd/efg/testball-0.1.tbz" }
+
+    before do
+      resource.url(url)
+      resource.sha256(tarball.sha256)
+      allow(resource.downloader).to receive(:resolve_url_basename_time_file_size)
+        .and_return([url, tarball.basename.to_s, last_modified, tarball.size, "application/x-bzip2", false])
+      allow(resource.downloader).to receive(:_fetch) do
+        resource.downloader.temporary_path.dirname.mkpath
+        FileUtils.cp tarball, resource.downloader.temporary_path
+        FileUtils.touch resource.downloader.temporary_path, mtime: last_modified
+      end
+    end
+
+    after { resource.clear_cache }
+
+    it "records the PyPI last modified time when staged files are older" do
+      resource.stage(mktmpdir)
+
+      expect(resource.source_modified_time).to eq(last_modified)
+    end
+
+    it "refuses to unpack a cached download that does not match the checksum and removes it" do
+      resource.sha256("bad0" * 16)
+      resource.cached_download.dirname.mkpath
+      FileUtils.cp tarball, resource.cached_download
+
+      expect { resource.stage(mktmpdir) }.to raise_error(ChecksumMismatchError)
+      # The known-bad download must be removed so the next attempt fetches
+      # a fresh copy instead of failing on the same file again.
+      expect(resource.cached_download).not_to exist
+    end
+
+    it "stages a cached download that matches its checksum" do
+      resource.downloader.fetch
+
+      expect { resource.stage(mktmpdir) }.not_to raise_error
+    end
+
+    it "keeps the recorded modification time out of a staged git checkout's status" do
+      mktmpdir do |staging_path|
+        (staging_path/".git").mkpath
+        exclude = ""
+
+        resource.stage(staging_path:) { exclude = (staging_path/".git/info/exclude").read }
+
+        expect(exclude).to include(".source_modified_time")
+      end
+    end
+
+    it "does not verify the cached download when reusing an existing staging directory" do
+      resource.downloader.fetch
+
+      mktmpdir do |staging_path|
+        (staging_path/"source").mkpath
+        (staging_path/".source_modified_time").write(last_modified.to_i.to_s)
+        expect(resource).not_to receive(:verify_download_integrity)
+
+        resource.stage(staging_path:, staged: true) { nil }
+      end
+    end
+  end
+
   describe "#owner" do
+    let(:owner) { described_class.new("test-owner") }
+
     it "sets the owner" do
-      owner = Object.new
       resource.owner = owner
       expect(resource.owner).to eq(owner)
     end
 
     it "sets its owner to be the patches' owner" do
-      resource.patch(:p1) { url "file:///my.patch" }
-      owner = Object.new
+      resource.patch(:p1) do
+        T.bind(self, Resource::Patch)
+        url "file:///my.patch"
+      end
       resource.owner = owner
       resource.patches.each do |p|
         expect(p.resource.owner).to eq(owner)
@@ -176,23 +299,78 @@ RSpec.describe Resource do
     end
   end
 
+  describe Resource::BottleManifest do
+    describe "#sbom_supplement" do
+      it "returns the current platform supplement from an all bottle manifest" do
+        bottle_resource = Resource.new("testball")
+        bottle_resource.version("1.0")
+        bottle_resource.sha256(TEST_SHA256)
+
+        bottle = instance_double(
+          Bottle,
+          name:     "testball",
+          rebuild:  0,
+          resource: bottle_resource,
+          tag:      Utils::Bottles.tag(:all),
+        )
+        manifest = described_class.new(bottle)
+
+        current_tag_supplement = { "packages" => [{ "SPDXID" => "SPDXRef-current" }] }
+        manifest_json = {
+          "manifests" => [
+            {
+              "annotations" => {
+                "org.opencontainers.image.ref.name" => "1.0.all",
+                "sh.brew.bottle.digest"             => TEST_SHA256,
+                "sh.brew.sbom.supplement"           => {
+                  "tags" => {
+                    Utils::Bottles.tag.to_s => current_tag_supplement,
+                    "other"                 => { "packages" => [{ "SPDXID" => "SPDXRef-other" }] },
+                  },
+                }.to_json,
+              },
+            },
+          ],
+        }
+        cached_download = mktmpdir/"manifest.json"
+        cached_download.write(JSON.generate(manifest_json))
+        allow(manifest).to receive(:cached_download).and_return(cached_download)
+
+        expect(manifest.sbom_supplement).to eq(current_tag_supplement)
+      end
+    end
+  end
+
+  specify "#verify_download_integrity skips files already verified in this process" do
+    fn = mktmpdir/"test.tar.gz"
+    fn.write "content"
+    digest = Digest::SHA256.hexdigest("content")
+    resource.sha256(digest)
+
+    other_resource = described_class.new("other")
+    other_resource.sha256(digest)
+
+    expect(fn).to receive(:sha256).once.and_call_original
+
+    resource.verify_download_integrity(fn)
+    other_resource.verify_download_integrity(fn)
+  end
+
   specify "#verify_download_integrity_missing" do
     fn = Pathname.new("test")
 
     allow(fn).to receive(:file?).and_return(true)
-    expect(fn).to receive(:verify_checksum).and_raise(ChecksumMissingError)
-    expect(fn).to receive(:sha256)
+    expect(fn).to receive(:sha256).and_return(Digest::SHA256.hexdigest("content"))
 
-    resource.verify_download_integrity(fn)
+    expect do
+      resource.verify_download_integrity(fn)
+    end.to output(/Cannot verify integrity/).to_stderr
   end
 
   specify "#verify_download_integrity_mismatch" do
-    fn = instance_double(Pathname, file?: true, basename: "foo")
-    checksum = resource.sha256(TEST_SHA256)
-
-    expect(fn).to receive(:verify_checksum)
-      .with(checksum)
-      .and_raise(ChecksumMismatchError.new(fn, checksum, Object.new))
+    fn = Pathname.new("foo")
+    allow(fn).to receive_messages(file?: true, sha256: Digest::SHA256.hexdigest("mismatch"))
+    resource.sha256(TEST_SHA256)
 
     expect do
       resource.verify_download_integrity(fn)

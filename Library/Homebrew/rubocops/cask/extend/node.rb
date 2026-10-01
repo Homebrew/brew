@@ -13,6 +13,7 @@ module RuboCop
       def_node_matcher :on_system_block?,
                        "(block (send nil? {#{ON_SYSTEM_METHODS.map(&:inspect).join(" ")}} ...) args ...)"
       def_node_matcher :arch_variable?, "(lvasgn _ (send nil? :on_arch_conditional ...))"
+      def_node_matcher :system_variable?, "(lvasgn _ (send nil? :on_system_conditional ...))"
       def_node_matcher :begin_block?, "(begin ...)"
 
       sig { returns(T::Boolean) }
@@ -23,6 +24,7 @@ module RuboCop
       sig { returns(T::Boolean) }
       def stanza?
         return true if arch_variable?
+        return true if system_variable?
 
         case self
         when RuboCop::AST::BlockNode, RuboCop::AST::SendNode

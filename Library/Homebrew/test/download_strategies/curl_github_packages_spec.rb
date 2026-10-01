@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "download_strategy"
@@ -10,6 +11,7 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
   let(:version) { "1.2.3" }
   let(:specs) { { headers: ["Accept: application/vnd.oci.image.index.v1+json"] } }
   let(:authorization) { nil }
+  let(:checksum) { "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97" }
   let(:head_response) do
     <<~HTTP
       HTTP/2 200\r
@@ -47,13 +49,11 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
     end
 
     it "calls curl with anonymous authentication headers" do
-      expect(strategy).to receive(:system_command)
-        .with(
-          /curl/,
-          hash_including(args: array_including_cons("--header", "Authorization: Bearer QQ==")),
-        )
-        .at_least(:once)
-        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
+      expect(strategy).to receive(:system_command) do |_command, options|
+        expect(options[:args]).to include("--header", "Authorization: Bearer QQ==")
+        expect(options[:args]).not_to include("--max-redirs")
+        instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil)
+      end.at_least(:once)
 
       strategy.fetch
     end
@@ -71,6 +71,91 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
           .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))
 
         strategy.fetch
+      end
+    end
+  end
+
+  describe "#cached_location" do
+    let(:url) { "https://#{GitHubPackages::URL_DOMAIN}/v2/homebrew/core/foo/blobs/sha256:#{checksum}" }
+    let(:specs) { { bottle: true } }
+
+    it "uses the resolved basename without discovering existing cache files" do
+      strategy.resolved_basename = "foo--1.2.3.arm64_ventura.bottle.tar.gz"
+
+      expect(Pathname).not_to receive(:glob)
+
+      expect(strategy.cached_location)
+        .to eq(HOMEBREW_CACHE/"downloads/#{Digest::SHA256.hexdigest(url)}--foo--1.2.3.arm64_ventura.bottle.tar.gz")
+    end
+
+    context "with an existing resolved cache location" do
+      let(:url) { "https://#{GitHubPackages::URL_DOMAIN}/v2/homebrew/core/foo/manifests/1.2.3" }
+      let(:specs) { {} }
+
+      it "uses it without discovering cache files" do
+        strategy.resolved_basename = "foo-1.2.3.bottle_manifest.json"
+        cached_location = HOMEBREW_CACHE/"downloads/#{Digest::SHA256.hexdigest(url)}--foo-1.2.3.bottle_manifest.json"
+        cached_location.dirname.mkpath
+        cached_location.write("cached")
+
+        expect(Pathname).not_to receive(:glob)
+
+        expect(strategy.cached_location).to eq(cached_location)
+      end
+
+      it "does not discover cache files for 100 cached manifests" do
+        strategies = (1..100).map do |index|
+          url = "https://#{GitHubPackages::URL_DOMAIN}/v2/homebrew/core/foo#{index}/manifests/1.2.3"
+          strategy = described_class.new(url, "foo#{index}", version, **specs)
+          strategy.resolved_basename = "foo#{index}-1.2.3.bottle_manifest.json"
+          cached_location = HOMEBREW_CACHE/"downloads/#{Digest::SHA256.hexdigest(url)}--foo#{index}-1.2.3.bottle_manifest.json"
+          cached_location.dirname.mkpath
+          cached_location.write("cached")
+          strategy
+        end
+
+        expect(Pathname).not_to receive(:glob)
+
+        strategies.each(&:cached_location)
+      end
+    end
+
+    context "with a cached download using another basename" do
+      let(:url) { "https://#{GitHubPackages::URL_DOMAIN}/v2/homebrew/core/foo/manifests/1.2.4" }
+      let(:specs) { {} }
+
+      it "uses generic cache discovery" do
+        strategy.resolved_basename = "foo-1.2.4.bottle_manifest.json"
+        cached_location = HOMEBREW_CACHE/"downloads/#{Digest::SHA256.hexdigest(url)}--server-filename.json"
+        cached_location.dirname.mkpath
+        cached_location.write("cached")
+
+        expect(strategy.cached_location).to eq(cached_location)
+      end
+    end
+
+    context "with a custom cache" do
+      let(:cache) { HOMEBREW_CACHE/"custom-cache" }
+      let(:specs) { { bottle: true, cache: } }
+
+      it "keeps cached downloads under HOMEBREW_CACHE downloads" do
+        strategy.resolved_basename = "foo--1.2.3.arm64_ventura.bottle.tar.gz"
+
+        expect(strategy.cached_location)
+          .to eq(HOMEBREW_CACHE/"downloads/#{Digest::SHA256.hexdigest(url)}--foo--1.2.3.arm64_ventura.bottle.tar.gz")
+        expect(strategy.symlink_location.dirname).to eq(cache)
+      end
+    end
+
+    context "with mirrors" do
+      let(:specs) { { bottle: true, mirrors: ["https://mirror.example/foo.tar.gz"] } }
+
+      it "uses generic cache discovery" do
+        strategy.resolved_basename = "foo--1.2.3.arm64_ventura.bottle.tar.gz"
+
+        expect(Pathname).to receive(:glob).and_call_original
+
+        strategy.cached_location
       end
     end
   end

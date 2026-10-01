@@ -13,8 +13,10 @@ module Homebrew
         description <<~EOS
           Fetch the newest version of Homebrew and all formulae from GitHub using `git`(1) and perform any necessary migrations.
         EOS
+        # Keep in sync with `homebrew-update` in `cmd/update.sh`.
         switch "--merge",
-               description: "Use `git merge` to apply updates (rather than `git rebase`)."
+               description: "Use `git merge` to apply updates (rather than `git rebase`).",
+               odisabled:   true
         switch "--auto-update",
                description: "Run on auto-updates (e.g. before `brew install`). Skips some slower steps."
         switch "-f", "--force",

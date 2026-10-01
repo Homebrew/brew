@@ -9,9 +9,9 @@ module Tapioca
   module Compilers
     class Forwardables < Tapioca::Dsl::Compiler
       FORWARDABLE_FILENAME = "forwardable.rb"
-      ARRAY_METHODS = T.let(["to_a", "to_ary"].freeze, T::Array[String])
-      HASH_METHODS = T.let(["to_h", "to_hash"].freeze, T::Array[String])
-      STRING_METHODS = T.let(["to_s", "to_str", "to_json"].freeze, T::Array[String])
+      ARRAY_METHODS = ["to_a", "to_ary"].freeze
+      HASH_METHODS = ["to_h", "to_hash"].freeze
+      STRING_METHODS = ["to_s", "to_str", "to_json"].freeze
       # Use this to override the default return type of a forwarded method:
       RETURN_TYPE_OVERRIDES = T.let({
         "::Cask::Cask" => {
@@ -20,13 +20,16 @@ module Tapioca
         },
       }.freeze, T::Hash[String, T::Hash[String, String]])
 
-      ConstantType = type_member { { fixed: Module } }
+      ConstantType = type_member { { fixed: T::Module[T.anything] } }
 
-      sig { override.returns(T::Enumerable[Module]) }
+      sig { override.returns(T::Enumerable[T::Module[T.anything]]) }
       def self.gather_constants
         Homebrew::Tapioca::Utils.named_objects_with_module(Forwardable).reject do |obj|
+          name = obj.name
+          next false if name.nil?
+
           # Avoid duplicate stubs for forwardables that are defined in vendored gems
-          Object.const_source_location(T.must(obj.name))&.first&.include?("vendor/bundle/ruby")
+          Object.const_source_location(name)&.first&.include?("vendor/bundle/ruby")
         end
       end
 

@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/bottle"
@@ -24,7 +25,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleTagIndentation do
           rebuild 4
           sha256 arm64_big_sur: "aaaaaaaa"
           sha256 big_sur: "faceb00c"
-          sha256 catalina: "deadbeef"
+          sha256 monterey: "deadbeef"
         end
       end
     RUBY
@@ -49,7 +50,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleTagIndentation do
           rebuild 4
           sha256 cellar: :any,                arm64_big_sur: "aaaaaaaa"
           sha256 cellar: "/usr/local/Cellar", big_sur:       "faceb00c"
-          sha256                              catalina:      "deadbeef"
+          sha256                              monterey:      "deadbeef"
         end
       end
     RUBY
@@ -75,7 +76,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleTagIndentation do
           sha256 cellar: :any, arm64_big_sur: "aaaaaaaa"
                                ^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleTagIndentation: Align bottle tags
           sha256 cellar: "/usr/local/Cellar", big_sur: "faceb00c"
-          sha256 catalina: "deadbeef"
+          sha256 monterey: "deadbeef"
                  ^^^^^^^^^^^^^^^^^^^^ FormulaAudit/BottleTagIndentation: Align bottle tags
         end
       end
@@ -89,7 +90,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleTagIndentation do
           rebuild 4
           sha256 cellar: :any,                arm64_big_sur: "aaaaaaaa"
           sha256 cellar: "/usr/local/Cellar", big_sur: "faceb00c"
-          sha256                              catalina: "deadbeef"
+          sha256                              monterey: "deadbeef"
         end
       end
     RUBY

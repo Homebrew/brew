@@ -1,6 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "io/console"
+require "utils/popen"
+
 # Various helper functions for interacting with TTYs.
 module Tty
   @stream = T.let($stdout, T.nilable(T.any(IO, StringIO)))
@@ -44,6 +47,28 @@ module Tty
 
   CODES = T.let(COLOR_CODES.merge(STYLE_CODES).freeze, T::Hash[Symbol, Integer])
 
+  TERMINAL_CONTROL_SEQUENCE = %r{
+      (?:\e\]|\u009D).*?(?:\a|\e\\|\u009C|\z) |
+      (?:\e[P^_X]|\u0090|\u0098|\u009E|\u009F).*?(?:\e\\|\u009C|\z) |
+      (?:\e\[|\u009B)[0-?]*[\x20-/]*[@-~] |
+      \e[\x20-/]*[@-~] |
+      \e |
+      [\u0080-\u009F] |
+      [\a\r]
+    }mx
+  private_constant :TERMINAL_CONTROL_SEQUENCE
+
+  BINARY_TERMINAL_CONTROL_SEQUENCE = /
+      (?:\x1B\]|\x9D).*?(?:\x07|\x1B\\|\x9C|\z) |
+      (?:\x1B[P^_X]|\x90|\x98|\x9E|\x9F).*?(?:\x1B\\|\x9C|\z) |
+      (?:\x1B\[|\x9B)[0-?]*[\x20-\x2F]*[@-~] |
+      \x1B[\x20-\x2F]*[@-~] |
+      \x1B |
+      [\x80-\x9F] |
+      [\x07\r]
+    /mnx
+  private_constant :BINARY_TERMINAL_CONTROL_SEQUENCE
+
   class << self
     sig { params(stream: T.any(IO, StringIO), _block: T.proc.params(arg0: T.any(IO, StringIO)).void).void }
     def with(stream, &_block)
@@ -57,12 +82,20 @@ module Tty
 
     sig { params(string: String).returns(String) }
     def strip_ansi(string)
-      string.gsub(/\033\[\d+(;\d+)*m/, "")
+      if string.ascii_only? || (string.encoding == Encoding::UTF_8 && string.valid_encoding?)
+        string.gsub(TERMINAL_CONTROL_SEQUENCE, "")
+      else
+        string.b.gsub(BINARY_TERMINAL_CONTROL_SEQUENCE, "".b).force_encoding(string.encoding)
+      end
     end
 
-    sig { params(line_count: Integer).returns(String) }
-    def move_cursor_up(line_count)
-      "\033[#{line_count}A"
+    # Simulates a terminal rendering `\r` overwrites (e.g. curl's `--progress-bar`).
+    sig { params(string: String).returns(String) }
+    def collapse_carriage_returns(string)
+      string.split("\n", -1).map do |line|
+        # `\r` resets the cursor, it doesn't erase, so keep the last non-empty segment.
+        line.split("\r", -1).reject(&:empty?).last || ""
+      end.join("\n")
     end
 
     sig { params(line_count: Integer).returns(String) }
@@ -95,24 +128,40 @@ module Tty
       "\033[?25h"
     end
 
+    sig { returns(String) }
+    def begin_synchronized_update
+      "\033[?2026h"
+    end
+
+    sig { returns(String) }
+    def end_synchronized_update
+      "\033[?2026l"
+    end
+
     sig { returns(T.nilable([Integer, Integer])) }
     def size
       return @size if defined?(@size)
 
-      height, width = `/bin/stty size 2>/dev/null`.presence&.split&.map(&:to_i)
-      return if height.nil? || width.nil?
-
-      @size = T.let([height, width], T.nilable([Integer, Integer]))
+      @size = T.let(($stdin.winsize if $stdin.tty?), T.nilable([Integer, Integer]))
+    rescue IOError, SystemCallError
+      @size = nil
     end
 
     sig { returns(Integer) }
     def height
-      @height ||= T.let(size&.first || `/usr/bin/tput lines 2>/dev/null`.presence&.to_i || 40, T.nilable(Integer))
+      @height ||= T.let(
+        size&.first || Utils.popen_read_text("/usr/bin/tput", "lines", err: File::NULL).presence&.to_i || 40,
+        T.nilable(Integer),
+      )
     end
 
+    # Keep in sync with `columns` in Library/Homebrew/utils/tty.sh.
     sig { returns(Integer) }
     def width
-      @width ||= T.let(size&.second || `/usr/bin/tput cols 2>/dev/null`.presence&.to_i || 80, T.nilable(Integer))
+      @width ||= T.let(
+        size&.second || Utils.popen_read_text("/usr/bin/tput", "cols", err: File::NULL).presence&.to_i || 80,
+        T.nilable(Integer),
+      )
     end
 
     sig { params(string: String).returns(String) }

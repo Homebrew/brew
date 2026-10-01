@@ -7,9 +7,11 @@ module RuboCop
   module Cop
     module FormulaAudit
       # This cop audits `patch`es in formulae.
-      # TODO: Many of these could be auto-corrected.
       class Patches < FormulaCop
         extend AutoCorrector
+
+        # Keep in sync with `Patch::TYPES` in `Library/Homebrew/patch.rb`.
+        PATCH_TYPES = [:unofficial, :backport, :cherry_pick].freeze
 
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
@@ -20,9 +22,18 @@ module RuboCop
 
           external_patches = find_all_blocks(body_node, :patch)
           external_patches.each do |patch_block|
-            url_node = find_every_method_call_by_name(patch_block, :url).first
-            url_string = parameters(url_node).first
-            patch_problems(url_string)
+            find_every_method_call_by_name(patch_block, :url).each do |url_node|
+              url_string = parameters(url_node).fetch(0)
+              sha256_node = find_every_method_call_by_name(patch_block, :sha256).first
+              sha256_string = parameters(sha256_node).first if sha256_node
+              patch_problems(url_string, sha256_string)
+            end
+            find_every_method_call_by_name(patch_block, :resolves).each do |resolves_node|
+              parameters(resolves_node).each { |arg| resolves_problems(arg) }
+            end
+            find_every_method_call_by_name(patch_block, :type).each do |type_node|
+              parameters(type_node).each { |arg| type_problems(arg) }
+            end
           end
 
           inline_patches = find_every_method_call_by_name(body_node, :patch)
@@ -38,16 +49,16 @@ module RuboCop
 
           legacy_patches = find_strings(patches_node)
           problem "Use the `patch` DSL instead of defining a `patches` method"
-          legacy_patches.each { |p| patch_problems(p) }
+          legacy_patches.each { |p| patch_problems(p, nil) }
         end
 
         private
 
-        sig { params(patch_url_node: RuboCop::AST::Node).void }
-        def patch_problems(patch_url_node)
+        sig { params(patch_url_node: RuboCop::AST::Node, sha256_node: T.nilable(RuboCop::AST::Node)).void }
+        def patch_problems(patch_url_node, sha256_node)
           patch_url = string_content(patch_url_node)
 
-          if regex_match_group(patch_url_node, %r{https://github.com/[^/]*/[^/]*/pull})
+          if regex_match_group(patch_url_node, %r{https://github\.com/[^/]*/[^/]*/pull})
             problem "Use a commit hash URL rather than an unstable pull request URL: #{patch_url}"
           end
 
@@ -55,8 +66,13 @@ module RuboCop
             problem "Use a commit hash URL rather than an unstable merge request URL: #{patch_url}"
           end
 
-          if regex_match_group(patch_url_node, %r{https://github.com/[^/]*/[^/]*/commit/[a-fA-F0-9]*\.diff})
-            problem "GitHub patches should end with .patch, not .diff: #{patch_url}"
+          if regex_match_group(patch_url_node, %r{https://github\.com/[^/]*/[^/]*/commit/[a-fA-F0-9]*\.diff})
+            problem "GitHub patches should end with .patch, not .diff: #{patch_url}" do |corrector|
+              # Replace .diff with .patch, keeping either the closing quote or query parameter start
+              correct = patch_url_node.source.sub(/\.diff(["?])/, '.patch\1')
+              corrector.replace(patch_url_node.source_range, correct)
+              corrector.replace(sha256_node.source_range, '""') if sha256_node
+            end
           end
 
           bitbucket_regex = %r{bitbucket\.org/([^/]+)/([^/]+)/commits/([a-f0-9]+)/raw}i
@@ -65,18 +81,28 @@ module RuboCop
             correct_url = "https://api.bitbucket.org/2.0/repositories/#{owner}/#{repo}/diff/#{commit}"
             problem "Bitbucket patches should use the API URL: #{correct_url}" do |corrector|
               corrector.replace(patch_url_node.source_range, %Q("#{correct_url}"))
+              corrector.replace(sha256_node.source_range, '""') if sha256_node
             end
           end
 
           # Only .diff passes `--full-index` to `git diff` and there is no documented way
           # to get .patch to behave the same for GitLab.
           if regex_match_group(patch_url_node, %r{.*gitlab.*/commit/[a-fA-F0-9]*\.patch})
-            problem "GitLab patches should end with .diff, not .patch: #{patch_url}"
+            problem "GitLab patches should end with .diff, not .patch: #{patch_url}" do |corrector|
+              # Replace .patch with .diff, keeping either the closing quote or query parameter start
+              correct = patch_url_node.source.sub(/\.patch(["?])/, '.diff\1')
+              corrector.replace(patch_url_node.source_range, correct)
+              corrector.replace(sha256_node.source_range, '""') if sha256_node
+            end
           end
 
           gh_patch_param_pattern = %r{https?://github\.com/.+/.+/(?:commit|pull)/[a-fA-F0-9]*.(?:patch|diff)}
           if regex_match_group(patch_url_node, gh_patch_param_pattern) && !patch_url.match?(/\?full_index=\w+$/)
-            problem "GitHub patches should use the full_index parameter: #{patch_url}?full_index=1"
+            problem "GitHub patches should use the full_index parameter: #{patch_url}?full_index=1" do |corrector|
+              correct = patch_url_node.source.sub(/"$/, '?full_index=1"')
+              corrector.replace(patch_url_node.source_range, correct)
+              corrector.replace(sha256_node.source_range, '""') if sha256_node
+            end
           end
 
           gh_patch_patterns = Regexp.union([%r{/raw\.github\.com/},
@@ -89,7 +115,7 @@ module RuboCop
           end
 
           gh_patch_diff_pattern =
-            %r{https?://patch-diff\.githubusercontent\.com/raw/(.+)/(.+)/pull/(.+)\.(?:diff|patch)}
+            %r{https?://patch-diff\.githubusercontent\.com/raw/.+/.+/pull/.+\.(?:diff|patch)}
           if regex_match_group(patch_url_node, gh_patch_diff_pattern)
             problem "Use a commit hash URL rather than patch-diff: #{patch_url}"
           end
@@ -100,17 +126,50 @@ module RuboCop
 
           if regex_match_group(patch_url_node, %r{^http://trac\.macports\.org})
             problem "Patches from MacPorts Trac should be https://, not http: #{patch_url}" do |corrector|
-              correct = patch_url_node.source.gsub(%r{^http://}, "https://")
-              corrector.replace(patch_url_node.source_range, correct)
+              corrector.replace(patch_url_node.source_range,
+                                patch_url_node.source.sub(%r{\A"http://}, '"https://'))
             end
           end
 
           return unless regex_match_group(patch_url_node, %r{^http://bugs\.debian\.org})
 
           problem "Patches from Debian should be https://, not http: #{patch_url}" do |corrector|
-            correct = patch_url_node.source.gsub(%r{^http://}, "https://")
-            corrector.replace(patch_url_node.source_range, correct)
+            corrector.replace(patch_url_node.source_range,
+                              patch_url_node.source.sub(%r{\A"http://}, '"https://'))
           end
+        end
+
+        sig { params(node: RuboCop::AST::Node).void }
+        def resolves_problems(node)
+          unless node.str_type?
+            offending_node(node)
+            problem "`resolves` should be passed identifier strings (CVE/GHSA/OSV id or issue URL)"
+            return
+          end
+
+          value = string_content(node)
+          return if value.match?(/\ACVE-\d{4}-\d{4,}\z/)
+          return if value.match?(/\AGHSA(-[23456789cfghjmpqrvwx]{4}){3}\z/)
+          return if value.match?(/\AOSV-\d{4}-\d+\z/)
+          return if value.match?(%r{\Ahttps?://})
+
+          offending_node(node)
+          if (m = value.match(/\ACVE-?(\d{4})-(\d{4,})\z/i))
+            corrected = "CVE-#{m[1]}-#{m[2]}"
+            problem "`resolves` should use the canonical CVE format: #{corrected}" do |corrector|
+              corrector.replace(node.source_range, corrected.inspect)
+            end
+          else
+            problem "`resolves` should be a CVE/GHSA/OSV identifier or issue URL, got: #{value.inspect}"
+          end
+        end
+
+        sig { params(node: RuboCop::AST::Node).void }
+        def type_problems(node)
+          return if node.sym_type? && PATCH_TYPES.include?(T.cast(node, RuboCop::AST::SymbolNode).value)
+
+          offending_node(node)
+          problem "Patch `type` should be one of: #{PATCH_TYPES.map(&:inspect).join(", ")}"
         end
 
         sig { params(patch: RuboCop::AST::Node).void }

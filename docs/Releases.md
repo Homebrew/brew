@@ -1,45 +1,62 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-24"
 ---
 
 # Releases
 
-Since Homebrew 1.0.0 most Homebrew users (those who haven't run a `dev-cmd` or set `HOMEBREW_DEVELOPER=1` which is ~99.9% based on analytics data) require tags on the [Homebrew/brew repository](https://github.com/homebrew/brew) in order to receive new versions of Homebrew. There are a few steps in making a new Homebrew release:
+Homebrew users receive new versions of Homebrew/brew from GitHub release tags.
+Only maintainers with write access to Homebrew/brew can create a release.
 
-1. Check if there is anything pressing that needs to be fixed or merged before the next release in:
-   - [`Homebrew/brew` pull requests](https://github.com/homebrew/brew/pulls)
-   - [`Homebrew/brew` issues](https://github.com/homebrew/brew/issues)
-   - [`Homebrew/homebrew-core` issues](https://github.com/homebrew/homebrew-core/issues)
-   - [Homebrew/discussions (forum)](https://github.com/orgs/Homebrew/discussions)
+## Prepare the release
 
-    If so, fix and merge these changes.
+1. Check for urgent work that should be resolved before the release:
+   - [`Homebrew/brew` pull requests](https://github.com/Homebrew/brew/pulls)
+   - [`Homebrew/brew` issues](https://github.com/Homebrew/brew/issues)
+   - [`Homebrew/homebrew-core` issues](https://github.com/Homebrew/homebrew-core/issues)
+   - [Homebrew Discussions](https://github.com/orgs/Homebrew/discussions)
+2. Label any Homebrew/brew issues or pull requests that must be resolved before any release with `release blocker`, or before the next major or minor release with `major/minor release blocker`.
+   While any open Homebrew/brew issue or pull request has a relevant label, `brew release` and the release workflow will refuse to create a release.
+3. Confirm that the workflows on Homebrew/brew's `main` branch are passing and that at least one recent Homebrew/homebrew-core pull request has completed CI successfully.
+4. Allow enough time after the last code change to detect regressions before releasing.
+5. Confirm that the current `main` branch is suitable for release.
 
-2. Ensure that:
-   - no code changes have happened for at least a couple of hours (ideally 4 hours),
-   - at least one Homebrew/homebrew-core pull request CI job has completed successfully,
-   - the state of the Homebrew/brew `master` CI job is clear (i.e. main jobs green or green after rerunning)
-   - you are confident there are no major regressions on the current `master` branch.
+Do not create a release from an older commit on `main`.
+If unreleased changes must be excluded from an urgent patch release, revert those changes, complete the release process and then reapply them.
 
-3. Run `brew release` to create a new draft release. For major or minor version bumps, pass `--major` or `--minor`, respectively.
+## Create the release
 
-4. Publish the draft release on [GitHub](https://github.com/Homebrew/brew/releases).
+Preview the release notes and version number:
 
-If this is a major or minor release (e.g. X.0.0 or X.Y.0) then there are a few more steps:
+```sh
+brew release
+```
 
-1. Before creating the tag you should:
-   - delete any `odisabled` code,
-   - make any `odeprecated` code `odisabled`,
-   - uncomment any `# odeprecated` code
-   - add any new `odeprecations` that are desired.
+Pass `--major` or `--minor` to preview a major or minor release instead of the default patch release.
+Homebrew will refuse to create a major or minor release if the previous major or minor release was less than one month ago.
 
-   Also delete any command argument definitions that pass `replacement: ...`.
+After reviewing the preview, create the draft release and trigger the release workflow:
 
-2. Write up a release notes blog post for <https://brew.sh> (e.g. [brew.sh#319](https://github.com/Homebrew/brew.sh/pull/319)). This should use the output from `brew release [--major|--minor]` as input but have the wording adjusted to be more human readable and explain not just what has changed but why.
+```sh
+brew release --force
+```
 
-3. When the release has shipped and the blog post has been merged, tweet the blog post as the [@MacHomebrew Twitter account](https://twitter.com/MacHomebrew) or tweet it yourself and retweet it with the @MacHomebrew Twitter account (credentials are in 1Password).
+Include `--major` or `--minor` when required.
+Review the resulting [draft release](https://github.com/Homebrew/brew/releases), confirm the version and notes, then publish it.
 
-4. Consider whether to submit it to other sources, e.g. Hacker News, Reddit.
-   - Pros: gets a wider reach and user feedback
-   - Cons: negative comments are common and people take this as a chance to complain about Homebrew (regardless of their usage)
+## Major and minor releases
 
-Please do not manually create a release based on older commits on the `master` branch. It's very hard to judge whether these have been sufficiently tested by users or if they will cause negative side effects with the current state of Homebrew/homebrew-core. If a new branch is needed ASAP but there are things on `master` that cannot be released yet (e.g. new deprecations and you want to make a patch release) then revert the relevant PRs, follow the process above and then revert the reverted PRs to reapply them on `master`.
+Before creating a major or minor release:
+
+1. Remove code marked `odisabled`.
+2. Change code marked `odeprecated` to `odisabled`.
+3. Uncomment code marked `# odeprecated` when it should enter the deprecation cycle.
+4. Add planned `odeprecations`.
+5. Remove command argument definitions that still pass `replacement:`.
+
+See [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removing.md#the-deprecation-lifecycle) for the complete lifecycle.
+
+Use the output from `brew release [--major|--minor]` as the basis for a release notes post on the [Homebrew website](https://brew.sh/).
+Edit the generated notes to explain the purpose and user impact of the changes, not only what changed.
+
+After the release and post are published, announce them through the project communication channels currently maintained by Homebrew.
+Consider broader announcement channels only when their expected reach and moderation cost are appropriate for the release.

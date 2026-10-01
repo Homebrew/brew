@@ -1,0 +1,37 @@
+# typed: false
+
+cask "with-caveats-everything" do
+  version "1.2.3"
+  sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+
+  url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
+  homepage "https://brew.sh/"
+
+  depends_on macos: :big_sur
+
+  app "Caffeine.app"
+
+  # simple string is evaluated at compile-time
+  caveats <<~EOS
+    Here are some things you might want to know.
+  EOS
+  # do block is evaluated at install-time
+  caveats do
+    "Cask token: #{token}"
+  end
+  # a do block may print and use a DSL
+  caveats do
+    puts "Custom text via puts followed by DSL-generated text:"
+    kext
+    unsigned_accessibility
+    path_environment_variable "/custom/path/bin"
+    zsh_path_helper "/example/path"
+    files_in_usr_local
+    depends_on_java "11+"
+    requires_rosetta
+    logout
+    reboot
+    license "https://brew.sh/test-license/"
+    free_license "https://brew.sh/test-free-license/"
+  end
+end

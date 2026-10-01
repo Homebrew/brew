@@ -54,13 +54,23 @@ module UnpackStrategy
                             verbose:)
 
             volumes.each do |volume|
-              FileUtils.mv tmp_unpack_dir/volume, unpack_dir/volume, verbose:
+              # Move by basename so a same-named symlink cannot redirect the destination.
+              # `Pathname#/` cleans `.` and `..` away, so skip a name that is not a leaf.
+              volume_path = tmp_unpack_dir/File.basename(volume)
+              next if volume_path.parent != tmp_unpack_dir
+
+              # Across filesystems `FileUtils.mv` copies instead of renaming, and that copy
+              # opens the destination, so clear a symlink `unzip` left on the same name.
+              destination = unpack_dir/volume_path.basename
+              destination.unlink if destination.symlink?
+
+              FileUtils.mv volume_path, unpack_dir, verbose:
             end
           end
         end
       end
 
-      sig { params(path: Pathname).returns(T::Boolean) }
+      sig { params(path: UnpackStrategy::Path).returns(T::Boolean) }
       def contains_extended_attributes?(path)
         path.zipinfo.grep(/(^__MACOSX|\._)/).any?
       end

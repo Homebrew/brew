@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cask/staged"
@@ -12,87 +13,118 @@ RSpec.shared_examples Cask::Staged do
   end
 
   it "can run system commands with list-form arguments" do
-    expect(fake_system_command).to receive(:run!)
+    expect(subject.command).to receive(:run!)
       .with("echo", args: ["homebrew-cask", "rocks!"])
 
-    staged.system_command("echo", args: ["homebrew-cask", "rocks!"])
+    subject.system_command("echo", args: ["homebrew-cask", "rocks!"])
   end
 
   it "can set the permissions of a file" do
     fake_pathname = existing_path
-    allow(staged).to receive(:Pathname).and_return(fake_pathname)
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
 
-    expect(fake_system_command).to receive(:run!)
-      .with("/bin/chmod", args: ["-R", "--", "777", fake_pathname], sudo: false)
+    expect(subject.command).to receive(:run!)
+      .with("chmod", args: ["-R", "--", "777", fake_pathname], sudo: false)
 
-    staged.set_permissions(fake_pathname.to_s, "777")
+    subject.set_permissions(fake_pathname.to_s, "777")
   end
 
   it "can set the permissions of multiple files" do
     fake_pathname = existing_path
-    allow(staged).to receive(:Pathname).and_return(fake_pathname)
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
 
-    expect(fake_system_command).to receive(:run!)
-      .with("/bin/chmod", args: ["-R", "--", "777", fake_pathname, fake_pathname], sudo: false)
+    expect(subject.command).to receive(:run!)
+      .with("chmod", args: ["-R", "--", "777", fake_pathname, fake_pathname], sudo: false)
 
-    staged.set_permissions([fake_pathname.to_s, fake_pathname.to_s], "777")
+    subject.set_permissions([fake_pathname.to_s, fake_pathname.to_s], "777")
   end
 
   it "cannot set the permissions of a file that does not exist" do
     fake_pathname = non_existent_path
-    allow(staged).to receive(:Pathname).and_return(fake_pathname)
-    expect(fake_system_command).not_to receive(:run!)
-    staged.set_permissions(fake_pathname.to_s, "777")
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
+    expect(subject.command).not_to receive(:run!)
+    subject.set_permissions(fake_pathname.to_s, "777")
   end
 
   it "can set the ownership of a file" do
     fake_pathname = existing_path
 
     allow(User).to receive(:current).and_return(User.new("fake_user"))
-    allow(staged).to receive(:Pathname).and_return(fake_pathname)
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
 
-    expect(fake_system_command).to receive(:run!)
-      .with("/usr/sbin/chown", args: ["-R", "--", "fake_user:staff", fake_pathname], sudo: true)
+    expect(subject.command).to receive(:run!)
+      .with("chown", args: ["-R", "--", "fake_user:staff", fake_pathname], sudo: nil)
 
-    staged.set_ownership(fake_pathname.to_s)
+    subject.set_ownership(fake_pathname.to_s)
   end
 
   it "can set the ownership of multiple files" do
     fake_pathname = existing_path
 
     allow(User).to receive(:current).and_return(User.new("fake_user"))
-    allow(staged).to receive(:Pathname).and_return(fake_pathname)
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
 
-    expect(fake_system_command).to receive(:run!)
+    expect(subject.command).to receive(:run!)
       .with(
-        "/usr/sbin/chown",
+        "chown",
         args: ["-R", "--", "fake_user:staff", fake_pathname, fake_pathname],
-        sudo: true,
+        sudo: nil,
       )
 
-    staged.set_ownership([fake_pathname.to_s, fake_pathname.to_s])
+    subject.set_ownership([fake_pathname.to_s, fake_pathname.to_s])
   end
 
   it "can set the ownership of a file with a different user and group" do
     fake_pathname = existing_path
 
-    allow(staged).to receive(:Pathname).and_return(fake_pathname)
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
 
-    expect(fake_system_command).to receive(:run!)
+    expect(subject.command).to receive(:run!)
       .with(
-        "/usr/sbin/chown",
+        "chown",
         args: ["-R", "--", "other_user:other_group", fake_pathname],
-        sudo: true,
+        sudo: nil,
       )
 
-    staged.set_ownership(fake_pathname.to_s, user: "other_user", group: "other_group")
+    subject.set_ownership(fake_pathname.to_s, user: "other_user", group: "other_group")
+  end
+
+  it "sets the ownership of an app when App Management permissions are granted" do
+    fake_pathname = existing_path
+
+    allow(User).to receive(:current).and_return(User.new("fake_user"))
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
+    allow(Cask::Quarantine).to receive(:app_management_permissions_granted?)
+      .with(app: fake_pathname, command: subject.command)
+      .and_return(true)
+
+    expect(subject.command).to receive(:run!)
+      .with("chown", args: ["-R", "--", "fake_user:staff", fake_pathname], sudo: nil)
+
+    subject.set_ownership(fake_pathname.to_s)
+  end
+
+  it "does not set the ownership of an app when App Management permissions are missing" do
+    fake_pathname = existing_path
+
+    allow(User).to receive(:current).and_return(User.new("fake_user"))
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
+    allow(Cask::Quarantine).to receive(:app_management_permissions_granted?)
+      .with(app: fake_pathname, command: subject.command)
+      .and_return(false)
+
+    expect(subject.command).not_to receive(:run!)
+
+    expect do
+      subject.set_ownership(fake_pathname.to_s)
+    end.to raise_error(Cask::CaskError, /App Management permissions/)
   end
 
   it "cannot set the ownership of a file that does not exist" do
     allow(User).to receive(:current).and_return(User.new("fake_user"))
     fake_pathname = non_existent_path
-    allow(staged).to receive(:Pathname).and_return(fake_pathname)
-    expect(fake_system_command).not_to receive(:run!)
-    staged.set_ownership(fake_pathname.to_s)
+    allow(subject).to receive(:Pathname).and_return(fake_pathname)
+    expect(subject.command).not_to receive(:run!)
+    subject.set_ownership(fake_pathname.to_s)
   end
 end

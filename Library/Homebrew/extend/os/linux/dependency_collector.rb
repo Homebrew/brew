@@ -29,6 +29,11 @@ module OS
         Dependency.new(GLIBC, [:implicit])
       end
 
+      sig { returns(T::Hash[String, T::Set[String]]) }
+      def global_dep_tree
+        @@global_dep_tree
+      end
+
       private
 
       GLIBC = "glibc"
@@ -37,9 +42,9 @@ module OS
 
       sig { void }
       def init_global_dep_tree_if_needed!
-        return unless ::DevelopmentTools.needs_build_formulae?
         return if building_global_dep_tree?
-        return unless global_dep_tree.empty?
+        return unless ::DevelopmentTools.needs_build_formulae?
+        return if global_dep_tree.key?(GLIBC) && global_dep_tree.key?(GCC)
 
         building_global_dep_tree!
         global_dep_tree[GLIBC] = Set.new(global_deps_for(GLIBC))
@@ -63,9 +68,11 @@ module OS
         # we're calculating their dependency trees. Other parts of Homebrew will
         # catch any circular dependencies.
         @global_deps_for[name] ||= if (formula = formula_for(name))
-          formula.deps.map(&:name).flat_map do |dep|
-            [dep, *global_deps_for(dep)].compact
-          end.uniq
+          formula.deps.filter_map do |dep|
+            next if dep.test? && !dep.build?
+
+            [dep.name, *global_deps_for(dep.name)].compact
+          end.flatten.uniq
         else
           []
         end
@@ -76,11 +83,6 @@ module OS
       # rubocop:disable Style/ClassVars
       @@global_dep_tree = T.let({}, T::Hash[String, T::Set[String]])
       @@building_global_dep_tree = T.let(false, T::Boolean)
-
-      sig { returns(T::Hash[String, T::Set[String]]) }
-      def global_dep_tree
-        @@global_dep_tree
-      end
 
       sig { void }
       def building_global_dep_tree!

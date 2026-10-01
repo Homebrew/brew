@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "cache_store"
@@ -8,17 +8,17 @@ require "cache_store"
 # by the `brew linkage` command.
 #
 class LinkageCacheStore < CacheStore
-  # @param keg_path [String]
-  # @param database [CacheStoreDatabase]
-  # @return [nil]
+  Key = type_member { { fixed: String } }
+  Value = type_member { { fixed: T::Hash[T.any(String, Symbol), T.anything] } }
+
+  sig { params(keg_path: String, database: CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]]).void }
   def initialize(keg_path, database)
     @keg_path = keg_path
     super(database)
   end
 
   # Returns `true` if the database has any value for the current `keg_path`.
-  #
-  # @return [Boolean]
+  sig { returns(T::Boolean) }
   def keg_exists?
     !database.get(@keg_path).nil?
   end
@@ -26,8 +26,8 @@ class LinkageCacheStore < CacheStore
   # Inserts dylib-related information into the cache if it does not exist or
   # updates data into the linkage cache if it does exist.
   #
-  # @param hash_values [Hash] hash containing KVPs of { :type => Hash }
-  # @return [nil]
+  # @param hash_values hash containing KVPs of { :type => Hash }
+  sig { params(hash_values: T::Hash[Symbol, T.anything]).void }
   def update!(hash_values)
     hash_values.each_key do |type|
       next if HASH_LINKAGE_TYPES.include?(type)
@@ -40,9 +40,9 @@ class LinkageCacheStore < CacheStore
     database.set @keg_path, hash_values
   end
 
-  # @param type [Symbol] the type to fetch from the {LinkageCacheStore}
+  # @param type the type to fetch from the {LinkageCacheStore}
   # @raise  [TypeError] error if the type is not in `HASH_LINKAGE_TYPES`
-  # @return [Hash]
+  sig { params(type: Symbol).returns(T.untyped) }
   def fetch(type)
     unless HASH_LINKAGE_TYPES.include?(type)
       raise TypeError, <<~EOS
@@ -55,9 +55,8 @@ class LinkageCacheStore < CacheStore
     fetch_hash_values(type)
   end
 
-  # Delete the keg from the {LinkageCacheStore}
-  #
-  # @return [nil]
+  # Delete the keg from the {LinkageCacheStore}.
+  sig { void }
   def delete!
     database.delete(@keg_path)
   end
@@ -67,8 +66,7 @@ class LinkageCacheStore < CacheStore
   HASH_LINKAGE_TYPES = [:keg_files_dylibs].freeze
   private_constant :HASH_LINKAGE_TYPES
 
-  # @param type [Symbol]
-  # @return [Hash]
+  sig { params(type: Symbol).returns(T.untyped) }
   def fetch_hash_values(type)
     keg_cache = database.get(@keg_path)
     return {} unless keg_cache

@@ -1,0 +1,223 @@
+# typed: strict
+# frozen_string_literal: true
+
+require "utils/output"
+
+class ReporterHub
+  include Utils::Output::Mixin
+
+  sig { returns(T::Array[Reporter]) }
+  attr_reader :reporters
+
+  sig { void }
+  def initialize
+    @hash = T.let({}, T::Hash[Symbol, T.any(T::Array[String], T::Array[[String, String]])])
+    @reporters = T.let([], T::Array[Reporter])
+  end
+
+  sig { params(key: Symbol).returns(T.any(T::Array[String], T::Array[[String, String]])) }
+  def select_formula_or_cask(key)
+    raise "Unsupported key #{key}" unless [:A, :AC, :D, :DC, :M, :MC, :R, :RC, :T].include?(key)
+
+    @hash.fetch(key, [])
+  end
+
+  sig { returns(T::Array[[String, String]]) }
+  def renamed_formulae
+    T.cast(@hash.fetch(:R, []), T::Array[[String, String]])
+  end
+
+  sig { params(reporter: Reporter, auto_update: T::Boolean).void }
+  def add(reporter, auto_update: false)
+    @reporters << reporter
+    report = reporter.report(auto_update:).reject { |_k, v| v.empty? }
+    @hash.update(report) { |_key, oldval, newval| oldval + newval }
+  end
+
+  sig { returns(T::Boolean) }
+  def empty?
+    @hash.empty?
+  end
+
+  sig { params(auto_update: T::Boolean).void }
+  def dump(auto_update: false)
+    return if auto_update && Homebrew::EnvConfig.auto_update_quiet?
+
+    unless Homebrew::EnvConfig.no_update_report_new?
+      dump_new_formula_report
+      dump_new_cask_report
+    end
+
+    dump_deleted_formula_report
+    dump_deleted_cask_report
+
+    outdated_formulae = Formula.installed.select(&:outdated?).map(&:name)
+    outdated_casks = Cask::Caskroom.casks.select(&:outdated?).map(&:token)
+    unless auto_update
+      output_dump_formula_or_cask_report "Outdated Formulae", outdated_formulae
+      output_dump_formula_or_cask_report "Outdated Casks", outdated_casks
+    end
+    return if outdated_formulae.blank? && outdated_casks.blank?
+
+    outdated_formulae = outdated_formulae.count
+    outdated_casks = outdated_casks.count
+
+    update_pronoun = if (outdated_formulae + outdated_casks) == 1
+      "it"
+    else
+      "them"
+    end
+
+    msg = ""
+
+    if outdated_formulae.positive?
+      noun = Utils.pluralize("formula", outdated_formulae)
+      msg += "#{Tty.bold}#{outdated_formulae}#{Tty.reset} outdated #{noun}"
+    end
+
+    if outdated_casks.positive?
+      msg += " and " if msg.present?
+      msg += "#{Tty.bold}#{outdated_casks}#{Tty.reset} outdated #{Utils.pluralize("cask", outdated_casks)}"
+    end
+
+    return if msg.blank?
+
+    # When auto-updating before a zero-argument `brew upgrade` or `brew outdated`,
+    # that command lists the outdated packages itself so don't duplicate it here.
+    # Two-way sync: `auto-update` in `Library/Homebrew/brew.sh`.
+    return if auto_update && ENV["HOMEBREW_AUTO_UPDATE_SKIP_OUTDATED"].present?
+
+    puts
+    puts "You have #{msg} installed."
+    # If we're auto-updating, don't need to suggest commands that we're perhaps
+    # already running.
+    return if auto_update
+
+    puts <<~EOS
+      You can upgrade #{update_pronoun} with #{Tty.bold}brew upgrade#{Tty.reset}
+      or list #{update_pronoun} with #{Tty.bold}brew outdated#{Tty.reset}.
+    EOS
+  end
+
+  sig { void }
+  def migrate_cask_renames
+    Cask::Caskroom.casks.each do |cask|
+      Cask::Migrator.migrate_if_needed(cask)
+    end
+  end
+
+  private
+
+  sig { void }
+  def dump_new_formula_report
+    formulae = T.cast(select_formula_or_cask(:A), T::Array[String]).sort.reject { |name| installed?(name) }
+    return if formulae.blank?
+
+    ohai "New Formulae"
+    should_display_descriptions = if Homebrew::EnvConfig.no_install_from_api?
+      formulae.size <= 100
+    else
+      true
+    end
+    formulae.each do |formula|
+      if should_display_descriptions && (desc = description(formula))
+        puts "#{formula}: #{desc}"
+      else
+        puts formula
+      end
+    end
+  end
+
+  sig { void }
+  def dump_new_cask_report
+    return unless Cask::Caskroom.any_casks_installed?
+
+    casks = T.cast(select_formula_or_cask(:AC), T::Array[String]).sort.reject { |name| cask_installed?(name) }
+    return if casks.blank?
+
+    ohai "New Casks"
+    should_display_descriptions = if Homebrew::EnvConfig.no_install_from_api?
+      casks.size <= 100
+    else
+      true
+    end
+    casks.each do |cask|
+      cask_token = Utils.name_from_full_name(cask)
+      if should_display_descriptions && (desc = cask_description(cask))
+        puts "#{cask_token}: #{desc}"
+      else
+        puts cask_token
+      end
+    end
+  end
+
+  sig { void }
+  def dump_deleted_formula_report
+    formulae = T.cast(select_formula_or_cask(:D), T::Array[String]).sort.filter_map do |name|
+      pretty_uninstalled(name) if installed?(name)
+    end
+
+    output_dump_formula_or_cask_report "Deleted Installed Formulae", formulae
+  end
+
+  sig { void }
+  def dump_deleted_cask_report
+    return if Homebrew::SimulateSystem.simulating_or_running_on_linux?
+
+    casks = T.cast(select_formula_or_cask(:DC), T::Array[String]).sort.filter_map do |name|
+      name = Utils.name_from_full_name(name)
+      pretty_uninstalled(name) if cask_installed?(name)
+    end
+
+    output_dump_formula_or_cask_report "Deleted Installed Casks", casks
+  end
+
+  sig { params(title: String, formulae_or_casks: T::Array[String]).void }
+  def output_dump_formula_or_cask_report(title, formulae_or_casks)
+    return if formulae_or_casks.blank?
+
+    ohai title, Formatter.columns(formulae_or_casks.sort)
+  end
+
+  sig { params(formula: String).returns(T::Boolean) }
+  def installed?(formula)
+    (HOMEBREW_CELLAR/Utils.name_from_full_name(formula)).directory?
+  end
+
+  sig { params(cask: String).returns(T::Boolean) }
+  def cask_installed?(cask)
+    (Cask::Caskroom.path/cask).directory?
+  end
+
+  sig { params(formula: String).returns(T.nilable(String)) }
+  def description(formula)
+    if Homebrew::EnvConfig.no_install_from_api?
+      # Skip non-homebrew/core formulae for security.
+      return if formula.include?("/")
+
+      begin
+        Formula[formula].desc&.presence
+      rescue FormulaUnavailableError
+        nil
+      end
+    else
+      Homebrew::API::Internal.formula_hash(formula)&.fetch("desc", nil)&.presence
+    end
+  end
+
+  sig { params(cask: String).returns(T.nilable(String)) }
+  def cask_description(cask)
+    if Homebrew::EnvConfig.no_install_from_api?
+      # Skip non-homebrew/cask formulae for security.
+      return if cask.include?("/")
+
+      begin
+        Cask::CaskLoader.load(cask).desc&.presence
+      rescue Cask::CaskError
+        nil
+      end
+    else
+      Homebrew::API::Internal.cask_hash(cask)&.fetch("desc", nil)&.presence
+    end
+  end
+end

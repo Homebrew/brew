@@ -1,9 +1,14 @@
+# typed: true
 # frozen_string_literal: true
 
 require "options"
 
 RSpec.describe Options do
   subject(:options) { described_class.new }
+
+  let(:foo) { Option.new("foo") }
+  let(:bar) { Option.new("bar") }
+  let(:baz) { Option.new("baz") }
 
   it "removes duplicate options" do
     options << Option.new("foo")
@@ -41,14 +46,12 @@ RSpec.describe Options do
   end
 
   specify "#&" do
-    foo, bar, baz = %w[foo bar baz].map { |o| Option.new(o) }
     other_options = described_class.new << foo << bar
     options << foo << baz
     expect((options & other_options).to_a).to eq([foo])
   end
 
   specify "#|" do
-    foo, bar, baz = %w[foo bar baz].map { |o| Option.new(o) }
     other_options = described_class.new << foo << bar
     options << foo << baz
     expect((options | other_options).sort).to eq([foo, bar, baz].sort)

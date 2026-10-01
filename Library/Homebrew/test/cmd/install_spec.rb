@@ -1,128 +1,755 @@
+# typed: true
 # frozen_string_literal: true
 
 require "cmd/install"
+require "install"
+require "cask/installer"
+require "cask/upgrade"
 require "cmd/shared_examples/args_parse"
 
 RSpec.describe Homebrew::Cmd::InstallCmd do
   include FileUtils
+
   it_behaves_like "parseable arguments"
 
-  it "installs formulae", :integration_test do
-    setup_test_formula "testball1"
+  it "defers full installers and the cask implementation at command load" do
+    stdout, stderr, status = Open3.capture3(
+      *HOMEBREW_RUBY_EXEC_ARGS,
+      "-I", $LOAD_PATH.join(File::PATH_SEPARATOR),
+      "-rglobal", "-rcmd/install",
+      "-e", <<~RUBY
+        deferred = %w[cask/cask.rb formula_installer.rb install.rb].map { |path| HOMEBREW_LIBRARY_PATH/path }
+        puts $LOADED_FEATURES & deferred.map(&:to_s)
+      RUBY
+    )
 
-    expect { brew "install", "testball1" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/0\.1}o).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/0.1/foo/test").not_to be_a_file
+    expect([stdout, stderr, status.success?]).to eq(["", "", true])
   end
 
-  it "installs formulae with options", :integration_test do
-    setup_test_formula "testball1"
-
-    expect { brew "install", "testball1", "--with-foo" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/0\.1}o).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/0.1/foo/test").to be_a_file
-  end
-
-  it "can install keg-only Formulae", :integration_test do
-    setup_test_formula "testball1", <<~RUBY
-      version "1.0"
-
-      keg_only "test reason"
-    RUBY
-
-    expect { brew "install", "testball1" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/1\.0}o).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/1.0/foo/test").not_to be_a_file
-  end
-
-  it "can install HEAD Formulae", :integration_test do
-    repo_path = HOMEBREW_CACHE.join("repo")
-    repo_path.join("bin").mkpath
-
-    repo_path.cd do
-      system "git", "-c", "init.defaultBranch=master", "init"
-      system "git", "remote", "add", "origin", "https://github.com/Homebrew/homebrew-foo"
-      FileUtils.touch "bin/something.bin"
-      FileUtils.touch "README"
-      system "git", "add", "--all"
-      system "git", "commit", "-m", "Initial repo commit"
+  it "separates new formulae from upgrades when asking" do
+    added = formula("added") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/added-1.0.tar.gz"
     end
+    changed = formula("changed") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/changed-2.0.tar.gz"
+    end
+    (changed.rack/"1.0_1").mkpath
+    tab = Tab.empty
+    tab.tabfile = changed.rack/"1.0_1"/AbstractTab::FILENAME
+    tab.write
+    added_installer = FormulaInstaller.new(added)
+    changed_installer = FormulaInstaller.new(changed)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
 
-    setup_test_formula "testball1", <<~RUBY
-      version "1.0"
+    allow(added_installer).to receive(:compute_dependencies).and_return([])
+    allow(changed_installer).to receive(:compute_dependencies).and_return([])
 
-      head "file://#{repo_path}", :using => :git
+    expect do
+      Homebrew::Install.ask_formulae(
+        [changed_installer, added_installer],
+        dependants,
+        prompt: false,
+      )
+    end.to output(<<~EOS).to_stdout
+      ==> Would install 1 formula:
+      added 1.0
+      ==> Would upgrade 1 formula:
+      changed 1.0_1 -> 2.0
+    EOS
+  end
 
-      def install
-        prefix.install Dir["*"]
+  test_each(%w[installation reinstallation]) do |action|
+    it "skips the #{action} plan and prompt for only requested formulae" do
+      formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/testball-0.1.tar.gz"
+      end
+      formula_installer = FormulaInstaller.new(formula)
+      dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+      allow(formula_installer).to receive(:compute_dependencies).and_return([])
+      expect(Homebrew::Install).not_to receive(:ask_input)
+
+      expect do
+        Homebrew::Install.ask_formulae(
+          [formula_installer],
+          dependants,
+          action:,
+        )
+      end.not_to output.to_stdout
+    end
+  end
+
+  it "does not list ignored formula dependencies when asking" do
+    dependency = formula("dependency") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/dependency-1.0.tar.gz"
+    end
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      depends_on dependency.name.to_s
+    end
+    formula_installer = FormulaInstaller.new(formula, ignore_deps: true)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+    expect(formula_installer).not_to receive(:compute_dependencies)
+    expect(Homebrew::Install).not_to receive(:ask_input)
+
+    expect do
+      Homebrew::Install.ask_formulae([formula_installer], dependants)
+    end.not_to output.to_stdout
+  end
+
+  it "uses the requested action when asking for formulae with dependencies" do
+    formula = formula("changed") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/changed-2.0.tar.gz"
+    end
+    dependency = formula("dependency") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/dependency-1.0.tar.gz"
+    end
+    formula_installer = FormulaInstaller.new(formula)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+    allow(formula_installer).to receive(:compute_dependencies)
+      .and_return([instance_double(Dependency, to_formula: dependency)])
+    expect(Homebrew::Install).to receive(:ask_input).with(action: "upgrade")
+
+    expect do
+      Homebrew::Install.ask_formulae(
+        [formula_installer],
+        dependants,
+        action: "upgrade",
+      )
+    end.to output(<<~EOS).to_stdout
+      ==> Would upgrade 1 formula:
+      changed 2.0
+      ==> Would install 1 dependency for changed:
+      dependency
+    EOS
+  end
+
+  it "groups an installed dependency under the upgrade header in the dry-run plan" do
+    formula = formula("changed") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/changed-2.0.tar.gz"
+    end
+    dependency = formula("dependency") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/dependency-1.0.tar.gz"
+    end
+    allow(dependency).to receive(:any_version_installed?).and_return(true)
+    formula_installer = FormulaInstaller.new(formula)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+    allow(formula_installer).to receive(:compute_dependencies)
+      .and_return([instance_double(Dependency, to_formula: dependency)])
+    allow(Homebrew::Install).to receive(:ask_input)
+
+    expect do
+      Homebrew::Install.ask_formulae([formula_installer], dependants)
+    end.to output(<<~EOS).to_stdout
+      ==> Would install 1 formula:
+      changed 2.0
+      ==> Would upgrade 1 dependency for changed:
+      dependency
+    EOS
+  end
+
+  it "prompts again for return ask input" do
+    ["\r", "\n"].each do |input|
+      allow($stdin).to receive(:tty?).and_return(true)
+      allow($stdin).to receive(:getch).and_return(input, "n")
+      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+      expect do
+        Homebrew::Install.ask(action: "upgrade")
+      end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+        .and output(<<~EOS).to_stdout
+          ==> Do you want to proceed with the upgrade? [y/n]
+          Invalid input. Please press 'y' to proceed, or 'n' to abort.
+        EOS
+    end
+  end
+
+  it "accepts single character ask input" do
+    %w[y Y].each do |input|
+      allow($stdin).to receive_messages(getch: input, tty?: true)
+      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+      expect do
+        Homebrew::Install.ask(action: "upgrade")
+      end.to output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+    end
+  end
+
+  it "declines single character ask input" do
+    %w[n N].each do |input|
+      allow($stdin).to receive_messages(getch: input, tty?: true)
+      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+      expect do
+        Homebrew::Install.ask(action: "upgrade")
+      end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+        .and output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+    end
+  end
+
+  it "terminates on ask cancellation input" do
+    ["\e", "\u0003", "\u0004"].each do |input|
+      allow($stdin).to receive_messages(getch: input, tty?: true)
+      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+      expect do
+        Homebrew::Install.ask(action: "upgrade")
+      end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+        .and output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+    end
+  end
+
+  it "terminates on ask interrupt" do
+    allow($stdin).to receive_messages(tty?: true)
+    allow($stdin).to receive(:getch).and_raise(Interrupt)
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    expect do
+      Homebrew::Install.ask(action: "upgrade")
+    end.to raise_error(SystemExit) { |error| expect(error.status).to eq(1) }
+      .and output("==> Do you want to proceed with the upgrade? [y/n]\n").to_stdout
+  end
+
+  it "skips ask input without a TTY" do
+    allow($stdin).to receive(:tty?).and_return(false)
+    expect($stdin).not_to receive(:getch)
+
+    expect { Homebrew::Install.ask(action: "upgrade") }.not_to output.to_stdout
+  end
+
+  it "uses shared prompt rules for ask plans" do
+    expect([
+      Homebrew::Install.ask_prompt_needed?(planned_names: ["fish"], requested_names: ["fish"]),
+      Homebrew::Install.ask_prompt_needed?(planned_names: ["fish", "openssl"], requested_names: ["fish"]),
+      Homebrew::Install.ask_prompt_needed?(planned_names: ["fish"], requested_names: [], named: false),
+      Homebrew::Install.ask_prompt_needed?(planned_names: ["fish"], requested_names: ["fish"], force: true),
+      Homebrew::Install.ask_prompt_needed?(planned_names: [], requested_names: [], named: false),
+    ]).to eq([false, true, true, true, false])
+  end
+
+  it "prints casks when asking", :cask do
+    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+
+    expect do
+      Homebrew::Install.ask_casks([cask], prompt: false)
+    end.to output(<<~EOS).to_stdout
+      ==> Would install 1 cask:
+      local-caffeine
+    EOS
+  end
+
+  context "with only requested casks", :cask do
+    test_each(%w[installation reinstallation]) do |action|
+      it "skips the #{action} plan and prompt" do
+        cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+
+        expect(Homebrew::Install).not_to receive(:ask_input)
+
+        expect { Homebrew::Install.ask_casks([cask], action:) }.not_to output.to_stdout
+      end
+    end
+  end
+
+  it "prompts when asking for casks with dependencies", :cask do
+    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    dependency = instance_double(Dependency, installed?: false, name: "unar")
+    cask_dependent = instance_double(CaskDependent)
+
+    allow(CaskDependent).to receive(:new)
+      .with(cask)
+      .and_return(cask_dependent)
+    allow(cask_dependent).to receive(:runtime_dependencies).and_return([dependency])
+    expect(Homebrew::Install).to receive(:ask_input).with(action: "installation")
+
+    expect do
+      Homebrew::Install.ask_casks([cask])
+    end.to output(<<~EOS).to_stdout
+      ==> Would install 1 cask:
+      local-caffeine
+      ==> Would install 1 dependency for local-caffeine:
+      unar
+    EOS
+  end
+
+  it "does not read installed formula metadata for cask dependency dry-run plans", :cask do
+    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    dependency = instance_double(Dependency, installed?: false, name: "ripgrep")
+    cask_dependent = instance_double(CaskDependent)
+
+    allow(CaskDependent).to receive(:new)
+      .with(cask)
+      .and_return(cask_dependent)
+    expect(cask_dependent).to receive(:runtime_dependencies)
+      .with(read_from_tab: false, undeclared: false)
+      .and_return([dependency])
+
+    expect do
+      Homebrew::Install.ask_casks([cask], prompt: false)
+    end.to output(<<~EOS).to_stdout
+      ==> Would install 1 cask:
+      local-caffeine
+      ==> Would install 1 dependency for local-caffeine:
+      ripgrep
+    EOS
+  end
+
+  it "prompts when asking for casks with cask dependencies", :cask do
+    cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
+
+    expect(Homebrew::Install).to receive(:ask_input).with(action: "installation")
+
+    expect do
+      Homebrew::Install.ask_casks([cask])
+    end.to output(<<~EOS).to_stdout
+      ==> Would install 1 cask:
+      with-depends-on-cask
+      ==> Would install 1 dependency for with-depends-on-cask:
+      local-transmission-zip
+    EOS
+  end
+
+  it "prints a cask reinstallation dry-run plan when asking", :cask do
+    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+
+    expect do
+      Homebrew::Install.ask_casks([cask], action: "reinstallation", prompt: false)
+    end.to output(<<~EOS).to_stdout
+      ==> Would reinstall 1 cask:
+      local-caffeine
+    EOS
+  end
+
+  it "does not prompt when skipped cask dependencies will not be installed", :cask do
+    cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
+
+    expect(Homebrew::Install).not_to receive(:ask_input)
+
+    expect do
+      Homebrew::Install.ask_casks([cask], skip_cask_deps: true)
+    end.not_to output.to_stdout
+  end
+
+  it "prints the install dry-run plan once without asking", :no_api do
+    path = Formulary.find_formula_in_tap("onlyball", CoreTap.instance)
+    path.dirname.mkpath
+    path.write <<~RUBY
+      class Onlyball < Formula
+        url "https://brew.sh/onlyball-1.0.tar.gz"
       end
     RUBY
+    CoreTap.instance.clear_cache
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+    expect(Homebrew::Install).not_to receive(:ask_formulae)
 
-    # Ignore dependencies, because we'll try to resolve requirements in build.rb
-    # and there will be the git requirement, but we cannot instantiate git
-    # formula since we only have testball1 formula.
-    expect { brew "install", "testball1", "--HEAD", "--ignore-dependencies" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/HEAD-d5eb689}o).to_stdout
-      .and output(/Cloning into/).to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/HEAD-d5eb689/foo/test").not_to be_a_file
+    expect { described_class.new(["--formula", "--dry-run", "onlyball"]).run }.to output(<<~EOS).to_stdout
+      ==> Would install 1 formula:
+      onlyball 1.0
+    EOS
   end
 
-  it "installs formulae with debug symbols", :integration_test do
-    setup_test_formula "testball1"
+  it "installs an explicitly requested tap before resolving a formula" do
+    cmd = described_class.new(["user/repo/foo"])
+    tap = Tap.fetch("user", "repo")
 
-    expect { brew "install", "testball1", "--debug-symbols", "--build-from-source" }
-      .to output(%r{#{HOMEBREW_CELLAR}/testball1/0\.1}o).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
-    expect(HOMEBREW_CELLAR/"testball1/0.1/bin/test").to be_a_file
-    expect(HOMEBREW_CELLAR/"testball1/0.1/bin/test.dSYM/Contents/Resources/DWARF/test").to be_a_file if OS.mac?
-    expect(HOMEBREW_CACHE/"Sources/testball1").to be_a_directory
+    allow(Tap).to receive(:with_formula_name).with("user/repo/foo").and_return([tap, "foo"])
+    expect(tap).to receive(:ensure_installed!).ordered
+    expect(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+      .with(["user/repo/foo"], type: nil)
+      .ordered
+    expect(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).ordered
+                                                             .and_raise(TapFormulaUnavailableError.new(tap, "foo"))
+
+    expect { cmd.run }.to output(/If you trust this tap/).to_stderr
+
+    expect(Homebrew).to have_failed
   end
 
-  it "installs with asking for user prompts without installed dependent checks", :integration_test do
-    setup_test_formula "testball1"
+  it "starts formula prelude fetches before dependant checks when not asking" do
+    cmd = described_class.new(["--yes", "testball"])
+    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+    end
+    formula_installer = instance_double(FormulaInstaller, formula:)
+    dependant = formula("dependant") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/dependant-0.1.tar.gz"
+    end
+    dependant_installer = instance_double(FormulaInstaller, formula: dependant)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [dependant], pinned: [], skipped: [])
 
-    expect do
-      brew "install", "--ask", "testball1"
-    end.to output(/.*Formula\s*\(1\):\s*testball1.*/).to_stdout.and not_to_output.to_stderr
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula])
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Install).to receive_messages(install_formula?: true, formula_installers: [formula_installer])
+    expect(Homebrew::DownloadQueue).to receive(:new).ordered.and_return(download_queue)
+    expect(formula_installer).to receive(:download_queue=).with(download_queue).ordered
+    expect(formula_installer).to receive(:prelude_fetch).with(no_args).ordered
+    expect(Homebrew::Upgrade).to receive(:dependants).ordered.and_return(dependants)
+    expect(Homebrew::Upgrade).to receive(:dependent_formula_installers)
+      .ordered
+      .and_return([dependant_installer])
+    expect(Homebrew::Install).to receive(:enqueue_formulae)
+      .with([formula_installer, dependant_installer], download_queue:)
+      .ordered
+      .and_return([formula_installer, dependant_installer])
+    expect(download_queue).to receive(:fetch).ordered
+    expect(download_queue).to receive(:shutdown).ordered
+    expect(Homebrew::Install).to receive(:install_formulae)
+      .with([formula_installer], dry_run: false, verbose: false, cleanup: false)
+      .ordered
+      .and_return([formula])
+    expect(Homebrew::Upgrade).to receive(:upgrade_dependents) do |actual_dependants, _, **options|
+      expect(actual_dependants).to eq(dependants)
+      expect(options).to include(
+        cleanup:                       false,
+        prefetched_formula_installers: [dependant_installer],
+      )
+      [dependant]
+    end.ordered
+    expect(Homebrew::Cleanup).to receive(:install_clean!)
+      .with(formulae: [formula, dependant], casks: [])
+      .ordered
+    expect(Homebrew::Cleanup).to receive(:periodic_clean!).with(dry_run: false).ordered
+    expect(Homebrew.messages).to receive(:display_messages)
+      .with(force_caveats: true, display_times: false)
+      .ordered
 
-    expect(HOMEBREW_CELLAR/"testball1/0.1/bin/test").to be_a_file
+    cmd.run
   end
 
-  it "installs with asking for user prompts with installed dependent checks", :integration_test do
-    setup_test_formula "testball1", <<~RUBY
-      depends_on "testball5"
-      # should work as its not building but test doesnt pass if dependant
-      # depends_on "build" => :build
-      depends_on "installed"
-    RUBY
-    setup_test_formula "installed"
-    setup_test_formula "testball5", <<~RUBY
-      depends_on "testball4"
-    RUBY
-    setup_test_formula "testball4", ""
-    setup_test_formula "hiop"
-    setup_test_formula "build"
+  it "installs what did download after an earlier failure" do
+    cmd = described_class.new(["--yes", "testball"])
+    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+    end
+    formula_installer = instance_double(FormulaInstaller, formula:, download_queue: nil, prelude_fetch: nil)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
 
-    # Mock `Formula#any_version_installed?` by creating the tab in a plausible keg directory
-    keg_dir = HOMEBREW_CELLAR/"installed"/"1.0"
-    keg_dir.mkpath
-    touch keg_dir/AbstractTab::FILENAME
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula])
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Install).to receive_messages(install_formula?: true, formula_installers: [formula_installer],
+                                                 enqueue_formulae: [formula_installer])
+    allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+    allow(formula_installer).to receive(:download_queue=)
+    allow(Homebrew::Upgrade).to receive_messages(dependants:, upgrade_dependents: [])
+    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+    allow(Homebrew.messages).to receive(:display_messages)
+    # A failure earlier in the run (e.g. one download of many) must not stop
+    # the packages that are ready from being installed.
+    Homebrew.failed = true
 
-    expect do
-      brew "install", "--ask", "testball1"
-    end.to output(/.*Formulae\s*\(3\):\s*testball1\s*,?\s*testball5\s*,?\s*testball4.*/).to_stdout
-                                                                                        .and not_to_output.to_stderr
+    expect(Homebrew::Install).to receive(:install_formulae)
+      .with([formula_installer], dry_run: false, verbose: false, cleanup: false)
+      .and_return([formula])
 
-    expect(HOMEBREW_CELLAR/"testball1/0.1/bin/test").to be_a_file
-    expect(HOMEBREW_CELLAR/"testball4/0.1/bin/testball4").to be_a_file
-    expect(HOMEBREW_CELLAR/"testball5/0.1/bin/testball5").to be_a_file
+    cmd.run
+  end
+
+  it "names the cask that failed to install", :cask do
+    cmd = described_class.new(["--yes", "local-caffeine"])
+    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
+    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    installer = instance_double(Cask::Installer, cask:, enqueue_downloads: nil,
+                                                  enqueue_dependency_downloads: nil)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([cask])
+    allow(Cask::Upgrade).to receive(:outdated_casks).and_return([])
+    allow(Cask::Installer).to receive(:new).and_return(installer)
+    allow(installer).to receive(:install).and_raise("uh-oh")
+    allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Upgrade).to receive_messages(dependants:, upgrade_dependents: [])
+    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+    allow(Homebrew.messages).to receive(:display_messages)
+
+    expect { cmd.run }.to output(/local-caffeine: uh-oh/).to_stderr
+  end
+
+  it "cleans an installed cask before displaying deferred caveats", :cask do
+    cmd = described_class.new(["--yes", "local-caffeine"])
+    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
+    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    installer = instance_double(Cask::Installer, cask:, install: nil, enqueue_downloads: nil,
+                                                  enqueue_dependency_downloads: nil)
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([cask])
+    allow(Cask::Upgrade).to receive(:outdated_casks).and_return([])
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Upgrade).to receive_messages(
+      dependants:                   Homebrew::Upgrade::Dependents.new(
+        upgradeable: [],
+        pinned:      [],
+        skipped:     [],
+      ),
+      dependent_formula_installers: [],
+      upgrade_dependents:           [],
+    )
+    allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+    allow(Cask::Installer).to receive(:new).and_return(installer)
+
+    expect(download_queue).to receive(:fetch)
+      .with(heading: "Fetching downloads for: local-caffeine")
+      .ordered
+    expect(download_queue).to receive(:fetch)
+      .with(heading: "Fetching dependency downloads")
+      .ordered
+    expect(installer).to receive(:install).ordered
+    expect(Homebrew::Cleanup).to receive(:install_clean!)
+      .with(formulae: [], casks: [cask])
+      .ordered
+    expect(Homebrew::Cleanup).to receive(:periodic_clean!).with(dry_run: false).ordered
+    expect(Homebrew.messages).to receive(:display_messages)
+      .with(force_caveats: true, display_times: false)
+      .ordered
+
+    cmd.run
+  end
+
+  it "drains metadata-only prelude fetches before the dry-run plan when asking" do
+    cmd = described_class.new(["testball"])
+    downloads = { instance_double(Downloadable) => nil }
+    download_queue = instance_double(Homebrew::DownloadQueue, shutdown: nil, failed_downloads: [], downloads:)
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+    end
+    formula_installer = instance_double(FormulaInstaller, formula:)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula])
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Install).to receive_messages(install_formula?: true, formula_installers: [formula_installer])
+    allow(Homebrew::Install).to receive(:install_formulae).and_return([])
+    allow(Homebrew::Upgrade).to receive(:upgrade_dependents).and_return([])
+    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+    allow(Homebrew.messages).to receive(:display_messages)
+    expect(Homebrew::DownloadQueue).to receive(:new).ordered.and_return(download_queue)
+    expect(formula_installer).to receive(:download_queue=).with(download_queue).ordered
+    expect(formula_installer).to receive(:prelude_fetch).with(metadata_only: true).ordered
+    expect(Homebrew::Upgrade).to receive(:dependants).ordered.and_return(dependants)
+    expect(download_queue).to receive(:fetch).ordered
+    expect(Homebrew::Install).to receive(:ask_formulae).ordered
+    expect(Homebrew::Install).to receive(:enqueue_formulae)
+      .with([formula_installer], download_queue:)
+      .ordered
+      .and_return([formula_installer])
+    expect(download_queue).to receive(:fetch).ordered
+    expect(download_queue).to receive(:shutdown).ordered
+
+    cmd.run
+  end
+
+  it "does not install `homebrew/cask` when a cask remains unavailable" do
+    cmd = described_class.new(["foo"])
+    cask_tap = CoreCaskTap.instance
+
+    require "search"
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil, untapped_official_taps: [])
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false)
+                                                            .and_raise(FormulaOrCaskUnavailableError.new("foo"))
+    allow(cask_tap).to receive(:installed?).and_return(false)
+    allow(Homebrew::Search).to receive(:search_names).and_return([[], []])
+
+    expect(cask_tap).not_to receive(:ensure_installed!)
+
+    expect { cmd.run }.to raise_error(SystemExit)
+
+    expect(Homebrew).to have_failed
+  end
+
+  context "when installing Formulae" do
+    it "installs Formulae and a Cask", :cask, :integration_test do
+      source_formula_name = "sourceball"
+      source_formula_prefix = HOMEBREW_CELLAR/source_formula_name/"0.1"
+      bottle_formula_name = "testball_bottle"
+      bottle_formula_prefix = HOMEBREW_CELLAR/bottle_formula_name/"0.1"
+
+      setup_test_formula source_formula_name, <<~RUBY
+        url "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
+        sha256 TESTBALL_SHA256
+
+        def install
+          (prefix/"built-from-source").write("test")
+        end
+      RUBY
+      setup_test_formula bottle_formula_name, <<~RUBY
+        keg_only "test reason"
+      RUBY
+      appdir = mktmpdir
+
+      expect do
+        brew "install", "--dry-run", "--no-ask", "--appdir=#{appdir}", source_formula_name,
+             cask_path("local-caffeine"),
+             "HOMEBREW_NO_INSTALL_FROM_API" => "1", "HOMEBREW_TEST_GENERIC_OS" => "1"
+      end
+        .to output(/Would install 1 cask:.*Would install 1 formula:/m).to_stdout
+        .and be_a_success
+
+      with_env(HOMEBREW_NO_INSTALL_FROM_API: "1") do
+        expect do
+          brew "install", "--yes", "--no-ask", "--appdir=#{appdir}", source_formula_name, bottle_formula_name,
+               cask_path("local-caffeine"),
+               "HOMEBREW_NO_INSTALL_FROM_API" => "1", "HOMEBREW_TEST_GENERIC_OS" => "1"
+        end
+          .to output(/#{Regexp.escape(source_formula_prefix)}.*#{Regexp.escape(bottle_formula_prefix)}/m).to_stdout
+          .and output(/✔︎.*/m).to_stderr
+          .and be_a_success
+      end
+      expect(source_formula_prefix/"built-from-source").to be_a_file
+      expect(bottle_formula_prefix/"foo/test").not_to be_a_file
+      expect(bottle_formula_prefix/"bin/helloworld").to be_a_file
+      expect(HOMEBREW_PREFIX/"bin/helloworld").not_to be_a_file
+      expect(appdir/"Caffeine.app").to be_a_directory
+    end
+  end
+
+  context "when installing HEAD" do
+    let(:formula_name) { "testball1" }
+
+    it "installs a HEAD Formula", :integration_test do
+      testball1_prefix = HOMEBREW_CELLAR/"testball1/HEAD-d5eb689"
+      repo_path = HOMEBREW_CACHE/"repo"
+      (repo_path/"bin").mkpath
+
+      repo_path.cd do
+        system "git", "-c", "init.defaultBranch=master", "init"
+        system "git", "remote", "add", "origin", "https://github.com/Homebrew/homebrew-foo"
+        FileUtils.touch "bin/something.bin"
+        FileUtils.touch "README"
+        system "git", "add", "--all"
+        system "git", "commit", "-m", "Initial repo commit"
+      end
+
+      setup_test_formula "testball1", <<~RUBY
+        version "1.0"
+
+        head "file://#{repo_path}", using: :git
+
+        def install
+          prefix.install Dir["*"]
+        end
+      RUBY
+
+      with_env(HOMEBREW_NO_INSTALL_FROM_API: "1") do
+        expect do
+          brew "install", "-y", formula_name, "--HEAD",
+               "HOMEBREW_DOWNLOAD_CONCURRENCY" => "1",
+               "HOMEBREW_NO_INSTALL_FROM_API"  => "1",
+               "HOMEBREW_TEST_GENERIC_OS"      => "1"
+        end
+          .to output(/#{Regexp.escape(testball1_prefix)}/o).to_stdout
+          .and output(/Cloning into/).to_stderr
+          .and be_a_success
+      end
+      expect(testball1_prefix/"foo/test").not_to be_a_file
+      expect(testball1_prefix/"bin/something.bin").to be_a_file
+    end
+  end
+
+  context "with cask upgrades", :cask do
+    test_each([0, 1, 2]) do |package_count|
+      it "prints an install upgrade summary only after #{package_count} completed operations" do
+        allow(Homebrew).to receive(:messages).and_return(Messages.new)
+        cmd = described_class.new(["--yes", "codex"])
+        download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
+        formula = formula("testball_bottle") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/testball_bottle-0.1.tar.gz"
+        end
+        formula_installer = instance_double(FormulaInstaller, formula:)
+        cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+        installer = instance_double(Cask::Installer, cask:, enqueue_downloads: nil,
+                                                      enqueue_dependency_downloads: nil)
+
+        allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+        allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula, cask])
+        allow(cask).to receive_messages(
+          installed?:        true,
+          full_name:         "codex",
+          installed_version: "0.117.0",
+          version:           "0.118.0",
+        )
+        allow(Cask::Upgrade).to receive(:outdated_casks).and_return([cask])
+        allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+        allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+        allow(Homebrew::Install).to receive(:check_cc_argv)
+        allow(Homebrew::Install).to receive_messages(
+          formula_installers: [formula_installer],
+          enqueue_formulae:   [formula_installer],
+        )
+        allow(formula_installer).to receive(:download_queue=)
+        allow(formula_installer).to receive(:prelude_fetch)
+        allow(Cask::Installer).to receive(:new).and_return(installer)
+        allow(Homebrew::Install).to receive_messages(install_formula?: true, install_formulae: [])
+        allow(Homebrew::Upgrade).to receive_messages(
+          dependants:         Homebrew::Upgrade::Dependents.new(
+            upgradeable: [],
+            pinned:      [],
+            skipped:     [],
+          ),
+          upgrade_dependents: [],
+        )
+        allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+        allow(Homebrew.messages).to receive(:display_messages)
+        allow(Cask::Upgrade).to receive(:upgrade_casks!) do |*_, **kwargs|
+          expect(kwargs[:skip_prefetch]).to be(true)
+          expect(kwargs[:show_upgrade_summary]).to be(false)
+
+          package_count.times { |index| Homebrew.messages.package_installed("package-#{index}", 0.0) }
+          kwargs[:summary_upgrades]&.push("codex 0.117.0 -> 0.118.0") if package_count.positive?
+
+          true
+        end
+        expect(download_queue).to receive(:fetch)
+          .with(heading: "Fetching downloads for: testball_bottle and codex")
+          .ordered
+        expect(download_queue).to receive(:fetch)
+          .with(heading: "Fetching dependency downloads")
+          .ordered
+
+        expected_summary = if package_count >= 2
+          <<~EOS
+            ==> Upgraded 1 outdated package:
+            codex 0.117.0 -> 0.118.0
+          EOS
+        else
+          ""
+        end
+        expect { cmd.run }.to output(expected_summary).to_stdout
+      end
+    end
   end
 end

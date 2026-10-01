@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "livecheck/strategy"
@@ -6,24 +7,9 @@ require "bundle_version"
 RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
   subject(:sparkle) { described_class }
 
-  def create_appcast_xml(items_str = "")
-    <<~EOS
-      <?xml version="1.0" encoding="utf-8"?>
-      <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
-        <channel>
-          <title>Example Changelog</title>
-          <link>#{appcast_url}</link>
-          <description>Most recent changes with links to updates.</description>
-          <language>en</language>
-          #{items_str}
-        </channel>
-      </rss>
-    EOS
-  end
-
   let(:appcast_url) { "https://www.example.com/example/appcast.xml" }
   let(:non_http_url) { "ftp://brew.sh/" }
-
+  let(:title_regex) { /Version\s+v?(\d+(?:\.\d+)+)\s*$/i }
   # The `item_hashes` data is used to create test appcast XML and expected
   # `Sparkle::Item` objects.
   let(:item_hashes) do
@@ -79,9 +65,8 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
       },
     }
   end
-
   let(:xml) do
-    v123_item = <<~EOS
+    v123_item = <<~XML
       <item>
         <title>#{item_hashes[:v123][:title]}</title>
         <sparkle:minimumSystemVersion>#{item_hashes[:v123][:minimum_system_version]}</sparkle:minimumSystemVersion>
@@ -89,9 +74,9 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
         <pubDate>#{item_hashes[:v123][:pub_date]}</pubDate>
         <enclosure url="#{item_hashes[:v123][:url]}" sparkle:shortVersionString="#{item_hashes[:v123][:short_version]}" sparkle:version="#{item_hashes[:v123][:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
       </item>
-    EOS
+    XML
 
-    v122_item = <<~EOS
+    v122_item = <<~XML
       <item>
         <title>#{item_hashes[:v122][:title]}</title>
         <link>#{item_hashes[:v122][:link]}</link>
@@ -101,9 +86,9 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
         <sparkle:version>#{item_hashes[:v122][:version]}</sparkle:version>
         <sparkle:shortVersionString>#{item_hashes[:v122][:short_version]}</sparkle:shortVersionString>
       </item>
-    EOS
+    XML
 
-    v121_item_with_osx_os = <<~EOS
+    v121_item_with_osx_os = <<~XML
       <item>
         <title>#{item_hashes[:v121][:title]}</title>
         <sparkle:minimumSystemVersion>#{item_hashes[:v121][:minimum_system_version]}</sparkle:minimumSystemVersion>
@@ -111,9 +96,9 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
         <pubDate>#{item_hashes[:v121][:pub_date]}</pubDate>
         <enclosure os="#{item_hashes[:v121][:os]}" url="#{item_hashes[:v121][:url]}" sparkle:shortVersionString="#{item_hashes[:v121][:short_version]}" sparkle:version="#{item_hashes[:v121][:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
       </item>
-    EOS
+    XML
 
-    v120_item_with_macos_os = <<~EOS
+    v120_item_with_macos_os = <<~XML
       <item>
         <title>#{item_hashes[:v120][:title]}</title>
         <sparkle:minimumSystemVersion>#{item_hashes[:v120][:minimum_system_version]}</sparkle:minimumSystemVersion>
@@ -121,31 +106,33 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
         <pubDate>#{item_hashes[:v120][:pub_date]}</pubDate>
         <enclosure os="#{item_hashes[:v120][:os]}" url="#{item_hashes[:v120][:url]}" sparkle:shortVersionString="#{item_hashes[:v120][:short_version]}" sparkle:version="#{item_hashes[:v120][:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
       </item>
-    EOS
+    XML
 
     # This main `appcast` data is intended as a relatively normal example.
     # As such, it also serves as a base for some other test data.
-    appcast = create_appcast_xml <<~EOS
+    appcast = create_appcast_xml <<~XML
       #{v123_item}
       #{v122_item}
       #{v121_item_with_osx_os}
       #{v120_item_with_macos_os}
-    EOS
+    XML
 
-    omitted_items = create_appcast_xml <<~EOS
+    omitted_items = create_appcast_xml <<~XML
       #{v123_item.sub(%r{<(enclosure[^>]+?)\s*?/>}, '<\1 os="not-osx-or-macos" />')}
       #{v123_item.sub(/(<sparkle:minimumSystemVersion>)[^<]+?</m, '\1100<')}
       <item>
       </item>
-    EOS
+    XML
 
     # Set the first item in a copy of `appcast` to a bad `minimumSystemVersion`
-    # value, to test `MacOSVersion::Error` handling.
+    # value, to test `MacOSVersion::Error` handling. The version string needs
+    # to be something that cannot be adequately cleaned up by the related
+    # `#gsub` call in `items_from_content`.
     bad_macos_version = appcast.sub(
       v123_item,
       v123_item.sub(
         /(<sparkle:minimumSystemVersion>)[^<]+?</m,
-        '\1Not a macOS version<',
+        '\1a1b2c3d<',
       ),
     )
 
@@ -159,7 +146,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
       ),
     )
 
-    no_versions_item = create_appcast_xml <<~EOS
+    no_versions_item = create_appcast_xml <<~XML
       <item>
         <title>Version</title>
         <sparkle:minimumSystemVersion>#{item_hashes[:v123][:minimum_system_version]}</sparkle:minimumSystemVersion>
@@ -167,7 +154,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
         <pubDate>#{item_hashes[:v123][:pub_date]}</pubDate>
         <enclosure url="#{item_hashes[:v123][:url]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
       </item>
-    EOS
+    XML
 
     no_items = create_appcast_xml
 
@@ -183,9 +170,6 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
       undefined_namespace:,
     }
   end
-
-  let(:title_regex) { /Version\s+v?(\d+(?:\.\d+)+)\s*$/i }
-
   let(:items) do
     {
       v124: Homebrew::Livecheck::Strategy::Sparkle::Item.new(
@@ -250,7 +234,6 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
       ),
     }
   end
-
   let(:item_arrays) do
     item_arrays = {
       appcast:        [
@@ -292,8 +275,22 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
 
     item_arrays
   end
+  let(:matches) { ["1.2.3,123"] }
 
-  let(:versions) { [items[:v123].nice_version] }
+  def create_appcast_xml(items_str = "")
+    <<~XML
+      <?xml version="1.0" encoding="utf-8"?>
+      <rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+        <channel>
+          <title>Example Changelog</title>
+          <link>#{appcast_url}</link>
+          <description>Most recent changes with links to updates.</description>
+          <language>en</language>
+          #{items_str}
+        </channel>
+      </rss>
+    XML
+  end
 
   describe "::match?" do
     it "returns true for an HTTP URL" do
@@ -359,6 +356,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
   # For example, the version 122 item doesn't have a parseable `pub_date` and
   # the substituted default will cause it to be sorted last.
   describe "::versions_from_content" do
+    let(:versions) { [items[:v123].nice_version] }
     let(:subbed_items) { item_arrays[:appcast_sorted].map { |item| item.nice_version.sub("1", "0") } }
 
     it "returns an array of version strings when given content" do
@@ -452,7 +450,61 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
 
     it "errors if the first block argument uses an unhandled name" do
       expect { sparkle.versions_from_content(xml[:appcast]) { |something| something } }
-        .to raise_error("First argument of Sparkle `strategy` block must be `item` or `items`")
+        .to raise_error(ArgumentError, "First argument of Sparkle `strategy` block must be `item` or `items`")
+    end
+  end
+
+  describe "::find_versions" do
+    let(:match_data) do
+      base = {
+        matches: matches.to_h { |v| [v, Version.new(v)] },
+        regex:   nil,
+        url:     appcast_url,
+      }
+
+      {
+        fetched:        base.merge({ content: xml[:appcast] }),
+        cached:         base.merge({ cached: true }),
+        cached_default: base.merge({ matches: {}, cached: true }),
+      }
+    end
+
+    let(:appcast_regex) { %r{/example[._-]v?(\d+(?:\.\d+)+)\.t}i }
+
+    it "finds versions in fetched content" do
+      allow(Homebrew::Livecheck::Strategy).to receive(:page_content).and_return({ content: xml[:appcast] })
+
+      expect(sparkle.find_versions(url: appcast_url))
+        .to eq(match_data[:fetched])
+    end
+
+    it "finds versions in provided content" do
+      expect(sparkle.find_versions(url: appcast_url, content: xml[:appcast]))
+        .to eq(match_data[:cached])
+
+      # This `strategy` block is unnecessary but it's intended to test using a
+      # regex in a `strategy` block.
+      expect(sparkle.find_versions(url: appcast_url, regex: appcast_regex, content: xml[:appcast]) do |item, regex|
+        match = item.url.match(regex)
+        next if match.blank?
+
+        "#{match[1]},#{match[1].tr(".", "")}"
+      end).to eq(match_data[:cached].merge({ regex: appcast_regex }))
+    end
+
+    it "returns default match_data when url is blank" do
+      expect(sparkle.find_versions(url: "", content: xml[:appcast]))
+        .to eq(match_data[:cached_default].merge({ url: "" }))
+    end
+
+    it "returns default match_data when content is blank" do
+      expect(sparkle.find_versions(url: appcast_url, content: ""))
+        .to eq(match_data[:cached_default])
+    end
+
+    it "errors if a regex is provided without a `strategy` block" do
+      expect { sparkle.find_versions(url: appcast_url, regex: appcast_regex, content: xml[:appcast]) }
+        .to raise_error(ArgumentError, "Sparkle only supports a regex when using a `strategy` block")
     end
   end
 end

@@ -1,6 +1,10 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "system_command"
+
+require "services/system"
+
 module Utils
   # Helpers for `brew services` related code.
   module Service
@@ -8,17 +12,23 @@ module Utils
     sig { params(formula: Formula).returns(T::Boolean) }
     def self.running?(formula)
       if launchctl?
-        quiet_system(launchctl, "list", formula.plist_name)
+        formula.plist_names.any? do |name|
+          Homebrew::Services::System.launchctl_service_running?(name)
+        end
       elsif systemctl?
-        quiet_system(systemctl, "is-active", "--quiet", formula.service_name)
+        formula.service_names.any? do |name|
+          SystemCommand.quiet_system(systemctl, "is-active", "--quiet", name)
+        end
+      else
+        false
       end
     end
 
     # Check if a service file is installed in the expected location.
     sig { params(formula: Formula).returns(T::Boolean) }
     def self.installed?(formula)
-      (launchctl? && formula.launchd_service_path.exist?) ||
-        (systemctl? && formula.systemd_service_path.exist?)
+      (launchctl? && formula.launchd_service_paths.any?(&:exist?)) ||
+        (systemctl? && formula.systemd_service_paths.any?(&:exist?))
     end
 
     # Path to launchctl binary.

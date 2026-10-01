@@ -11,7 +11,7 @@ module UnpackStrategy
       []
     end
 
-    sig { override.params(_path: Pathname).returns(T::Boolean) }
+    sig { override.params(_path: Path).returns(T::Boolean) }
     def self.can_extract?(_path)
       false
     end
@@ -30,7 +30,7 @@ module UnpackStrategy
                         "-force-overwrite", "-quiet", "-no-directory",
                         "-output-directory", unpack_dir, "--", path
                       ],
-                      env:     { "PATH" => PATH.new(Formula["unar"].opt_bin, ENV.fetch("PATH")) },
+                      env:     Utils::Path.formula_opt_bin_env("unar"),
                       verbose:
     end
   end

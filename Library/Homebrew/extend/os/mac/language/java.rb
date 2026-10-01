@@ -10,7 +10,7 @@ module OS
 
           requires_ancestor { T.class_of(::Language::Java) }
 
-          sig { params(version: T.nilable(String)).returns(T.nilable(Pathname)) }
+          sig { params(version: T.nilable(String)).returns(T.nilable(::Pathname)) }
           def java_home(version = nil)
             openjdk = find_openjdk_formula(version)
             return unless openjdk

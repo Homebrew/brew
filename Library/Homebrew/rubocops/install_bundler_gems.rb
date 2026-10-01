@@ -4,9 +4,9 @@
 module RuboCop
   module Cop
     module Homebrew
-      # Enforces the use of `Homebrew.install_bundler_gems!` in dev-cmd.
+      # Enforces the use of `Utils::GemSetup.install_bundler_gems!` in dev-cmd.
       class InstallBundlerGems < Base
-        MSG = "Only use `Homebrew.install_bundler_gems!` in dev-cmd."
+        MSG = "Only use `Utils::GemSetup.install_bundler_gems!` in dev-cmd."
         RESTRICT_ON_SEND = [:install_bundler_gems!].freeze
 
         sig { params(node: RuboCop::AST::Node).void }

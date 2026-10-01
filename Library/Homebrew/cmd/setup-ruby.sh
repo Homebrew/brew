@@ -4,7 +4,7 @@
 # HOMEBREW_BREW_FILE is set by extend/ENV/super.rb
 # shellcheck disable=SC2154
 homebrew-setup-ruby() {
-  source "${HOMEBREW_LIBRARY}/Homebrew/utils/helpers.sh"
+  source "${HOMEBREW_LIBRARY}/Homebrew/utils.sh"
   source "${HOMEBREW_LIBRARY}/Homebrew/utils/ruby.sh"
   setup-ruby-path
 
@@ -34,8 +34,5 @@ homebrew-setup-ruby() {
 
   setup-gem-home-bundle-gemfile
 
-  if ! bundle check &>/dev/null
-  then
-    "${HOMEBREW_BREW_FILE}" install-bundler-gems
-  fi
+  ensure-bundle-dependencies
 }

@@ -10,7 +10,7 @@ module RuboCop
       class Checksum < FormulaCop
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
-          body_node = formula_nodes.body_node
+          return if (body_node = formula_nodes.body_node).nil?
 
           problem "MD5 checksums are deprecated, please use SHA-256" if method_called_ever?(body_node, :md5)
 
@@ -38,7 +38,7 @@ module RuboCop
 
           return unless regex_match_group(checksum, /[^a-f0-9]+/i)
 
-          add_offense(T.must(@offensive_source_range), message: "`sha256` contains invalid characters")
+          add_offense(@offensive_source_range, message: "`sha256` contains invalid characters")
         end
       end
 
@@ -55,9 +55,9 @@ module RuboCop
             next unless regex_match_group(checksum, /[A-F]+/)
 
             add_offense(@offensive_source_range, message: "`sha256` should be lowercase") do |corrector|
-              correction = T.must(@offensive_node).source.downcase
-              corrector.insert_before(T.must(@offensive_node).source_range, correction)
-              corrector.remove(T.must(@offensive_node).source_range)
+              correction = checksum.source.downcase
+              corrector.insert_before(checksum.source_range, correction)
+              corrector.remove(checksum.source_range)
             end
           end
         end

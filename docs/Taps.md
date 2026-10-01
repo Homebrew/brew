@@ -1,80 +1,77 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
 # Taps (Third-Party Repositories)
 
-The `brew tap` command adds more repositories to the list of formulae that Homebrew tracks, updates,
-and installs from. By default, `tap` assumes that the repositories come from GitHub,
-but the command isn't limited to any one location.
+The `brew tap` command adds repositories that Homebrew can use for formulae, casks and external commands.
+The one-argument form assumes a repository on GitHub, while the two-argument form accepts any URL supported by Git.
+
+Code in a tap can run with your user's privileges.
+Read [Tap Trust](Tap-Trust.md) before using a non-official tap.
 
 ## The `brew tap` command
 
-* `brew tap` without arguments lists all currently tapped repositories. For
-  example:
+`brew tap` without arguments lists the currently tapped repositories.
+It prints nothing when no taps are installed.
 
-  ```console
-  $ brew tap
-  homebrew/cask
-  homebrew/core
-  petere/postgresql
-  ```
-
-* `brew tap <user>/<repo>` makes a clone of the repository at
-  `https://github.com/<user>/homebrew-<repo>` into `$(brew --repository)/Library/Taps`.
-  After that, `brew` will be able to work with those formulae as if they were in Homebrew's
-  [homebrew/core](https://github.com/Homebrew/homebrew-core) canonical repository.
-  You can install and uninstall them with `brew [un]install`, and the formulae are
-  automatically updated when you run `brew update`. (See below for details
-  about how `brew tap` handles the names of repositories.)
-
-* `brew tap <user>/<repo> <URL>` makes a clone of the repository at _URL_.
-  Unlike the one-argument version, _URL_ is not assumed to be GitHub, and it
-  doesn't have to be HTTP. Any location and any protocol that Git can handle is
-  fine.
-
-* `brew tap --repair` migrates tapped formulae from a symlink-based to
-  directory-based structure. (This should only need to be run once.)
-
-* `brew untap user/repo [user/repo user/repo ...]` removes the given taps. The
-  repositories are deleted and `brew` will no longer be aware of their formulae.
-  `brew untap` can handle multiple removals at once.
-
-## Repository naming conventions and assumptions
-
-On GitHub, your repository must be named `homebrew-something` to use
-the one-argument form of `brew tap`. The prefix "homebrew-" is not optional.
-(The two-argument form doesn't have this limitation, but it forces you to
-give the full URL explicitly.)
-
-When you use `brew tap` on the command line, however, you can leave out the
-"homebrew-" prefix in commands. That is, `brew tap username/foobar` can be used as a shortcut for the long
-version: `brew tap username/homebrew-foobar`. `brew` will automatically add
-back the "homebrew-" prefix whenever it's necessary.
-
-## Formula with duplicate names
-
-If your tap contains a formula that is also present in
-[homebrew/core](https://github.com/Homebrew/homebrew-core), that's fine,
-but you would need to specify its fully qualified name in the form
-`<user>/<repo>/<formula>` to install your version.
-
-Whenever a `brew install foo` command is issued, `brew` selects which formula
-to use by searching in the following order:
-
-* core formulae
-* other taps
-
-If you need a formula to be installed from a particular tap, you can use fully
-qualified names to refer to them.
-
-If you were to create a tap for an alternative `vim` formula, the behaviour would be:
-
-```sh
-brew install vim                     # installs from homebrew/core
-brew install username/repo/vim       # installs from your custom repository
+```console
+$ brew tap
+petere/postgresql
 ```
 
-As a result, we recommend you give new names to customized formulae if you want to make
-them easier to install. Note that there is (intentionally) no way of replacing
-dependencies of core formulae with those from other taps.
+`brew tap <user>/<repository>` clones `https://github.com/<user>/homebrew-<repository>` into Homebrew's tap directory.
+Homebrew updates the repository during `brew update`.
+
+Tapping a repository does not grant whole-tap trust.
+Install a fully qualified item to trust only that item:
+
+```sh
+brew tap user/repository
+brew install user/repository/formula
+```
+
+Alternatively, use `brew trust` first to access an item by its short name:
+
+```sh
+brew trust --formula user/repository/formula
+brew install formula
+```
+
+See [Tap Trust](Tap-Trust.md#installing-from-a-tap) for formula, cask, command and whole-tap trust options.
+
+`brew tap <user>/<repository> <URL>` clones a repository from the specified Git URL without assuming GitHub or a particular transport.
+
+`brew tap --repair` adds missing tap manpage and shell-completion symlinks.
+It also corrects remote references for taps whose upstream default branch has been renamed.
+
+`brew untap <user>/<repository> [...]` removes one or more taps.
+Homebrew deletes the local repositories and no longer loads their contents.
+
+## Repository naming conventions
+
+On GitHub, a repository must be named `homebrew-<repository>` to use the one-argument form of `brew tap`.
+The `homebrew-` prefix can be omitted from the command:
+
+```sh
+brew tap username/foobar
+```
+
+This command maps to `https://github.com/username/homebrew-foobar`.
+The two-argument form does not impose this naming convention because the full URL is explicit.
+
+## Duplicate names
+
+A tap may contain a formula with the same name as one in `homebrew/core`.
+Use the fully qualified name to select the formula from a particular tap:
+
+```sh
+brew install vim
+brew install username/repository/vim
+```
+
+The first command installs `vim` from `homebrew/core`.
+The second installs the formula from `username/repository` and trusts that individual formula.
+
+Give customised formulae distinct names when users should be able to select them without qualification.
+Dependencies of `homebrew/core` formulae cannot be replaced with formulae from other taps.

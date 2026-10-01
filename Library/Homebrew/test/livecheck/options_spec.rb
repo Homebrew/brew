@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "livecheck/options"
@@ -5,6 +6,9 @@ require "livecheck/options"
 RSpec.describe Homebrew::Livecheck::Options do
   subject(:options) { described_class }
 
+  let(:cookies) { { "cookie_key" => "cookie_value" } }
+  let(:header_string) { "Accept: */*" }
+  let(:referer_url) { "https://example.com/referer" }
   let(:post_hash) do
     {
       empty:   "",
@@ -15,9 +19,13 @@ RSpec.describe Homebrew::Livecheck::Options do
   end
   let(:args) do
     {
+      compressed:    false,
+      cookies:       cookies,
+      header:        header_string,
       homebrew_curl: true,
       post_form:     post_hash,
-      post_json:     post_hash,
+      referer:       referer_url,
+      user_agent:    :browser,
     }
   end
   let(:other_args) do
@@ -25,8 +33,15 @@ RSpec.describe Homebrew::Livecheck::Options do
       post_form: { something: "else" },
     }
   end
+  # `post_form` and `post_json` are mutually exclusive
+  let(:post_json_args) { args.except(:post_form).merge(post_json: post_hash) }
+  let(:other_post_json_args) do
+    {
+      post_json: { something: "else" },
+    }
+  end
   let(:merged_hash) { args.merge(other_args) }
-
+  let(:post_json_merged_hash) { post_json_args.merge(other_post_json_args) }
   let(:base_options) { options.new(**args) }
   let(:other_options) { options.new(**other_args) }
   let(:merged_options) { options.new(**merged_hash) }
@@ -34,9 +49,14 @@ RSpec.describe Homebrew::Livecheck::Options do
   describe "#url_options" do
     it "returns a Hash of the options that are provided as arguments to the `url` DSL method" do
       expect(options.new.url_options).to eq({
+        compressed:    nil,
+        cookies:       nil,
+        header:        nil,
         homebrew_curl: nil,
         post_form:     nil,
         post_json:     nil,
+        referer:       nil,
+        user_agent:    nil,
       })
     end
   end
@@ -60,15 +80,11 @@ RSpec.describe Homebrew::Livecheck::Options do
   end
 
   describe "#merge" do
-    it "returns an Options object with merged values" do
-      expect(options.new(**args).merge(other_args))
-        .to eq(options.new(**merged_hash))
-      expect(options.new(**args).merge(options.new(**other_args)))
-        .to eq(options.new(**merged_hash))
-      expect(options.new(**args).merge(args))
-        .to eq(options.new(**args))
-      expect(options.new(**args).merge({}))
-        .to eq(options.new(**args))
+    it "returns an Options object with merged values and doesn't modify `self`" do
+      o1 = options.new(**args)
+      expect(o1.merge(options.new(**other_post_json_args)))
+        .to eq(options.new(**post_json_merged_hash))
+      expect(o1).to eq(base_options)
     end
   end
 
@@ -79,30 +95,45 @@ RSpec.describe Homebrew::Livecheck::Options do
       expect(o1).to eq(merged_options)
 
       o2 = options.new(**args)
-      expect(o2.merge!(other_args)).to eq(merged_options)
-      expect(o2).to eq(merged_options)
+      expect(o2.merge!(base_options)).to eq(base_options)
+      expect(o2).to eq(base_options)
 
       o3 = options.new(**args)
-      expect(o3.merge!(base_options)).to eq(base_options)
+      expect(o3.merge!(options.new)).to eq(base_options)
       expect(o3).to eq(base_options)
-
-      o4 = options.new(**args)
-      expect(o4.merge!(args)).to eq(base_options)
-      expect(o4).to eq(base_options)
-
-      o5 = options.new(**args)
-      expect(o5.merge!(options.new)).to eq(base_options)
-      expect(o5).to eq(base_options)
-
-      o6 = options.new(**args)
-      expect(o6.merge!({})).to eq(base_options)
-      expect(o6).to eq(base_options)
     end
 
-    it "skips over hash values without a corresponding Options value" do
+    it "unsets the opposite value when `other` sets `post_form` or `post_json`" do
       o1 = options.new(**args)
-      expect(o1.merge!({ nonexistent: true })).to eq(base_options)
+      expect(o1.merge!(options.new(**other_post_json_args))).to eq(options.new(**post_json_merged_hash))
+
+      o2 = options.new(**post_json_args)
+      expect(o2.merge!(other_options)).to eq(merged_options)
+    end
+
+    it "doesn't unset `post_form` or `post_json` when `other` sets neither" do
+      o1 = options.new(**args)
+      expect(o1.merge!(options.new(user_agent: :curl)))
+        .to eq(options.new(**args, user_agent: :curl))
+    end
+
+    it "doesn't share a merged collection value with `other`" do
+      o1 = options.new(**args)
+      o1.merge!(other_options)
+      o1.post_form = nil
+
+      expect(other_options.post_form).to eq(other_args[:post_form])
+    end
+
+    it "raises an error if `other` sets both `post_form` and `post_json`" do
+      o1 = options.new(**args)
+      expect { o1.merge!(options.new(post_form: post_hash, post_json: post_hash)) }
+        .to raise_error(ArgumentError, /both `post_form` and `post_json`/)
       expect(o1).to eq(base_options)
+
+      o2 = options.new(post_form: post_hash, post_json: post_hash)
+      expect { o2.merge!(options.new(post_form: post_hash, post_json: post_hash)) }
+        .to raise_error(ArgumentError, /both `post_form` and `post_json`/)
     end
   end
 
@@ -127,21 +158,15 @@ RSpec.describe Homebrew::Livecheck::Options do
   end
 
   describe "#empty?" do
-    it "returns true if object has only default values" do
+    specify do
       expect(options.new.empty?).to be true
-    end
-
-    it "returns false if object has any non-default values" do
       expect(options.new(**args).empty?).to be false
     end
   end
 
   describe "#present?" do
-    it "returns false if object has only default values" do
+    specify do
       expect(options.new.present?).to be false
-    end
-
-    it "returns true if object has any non-default values" do
       expect(options.new(**args).present?).to be true
     end
   end

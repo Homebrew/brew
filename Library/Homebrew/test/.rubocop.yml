@@ -15,3 +15,10 @@ RSpec/ContextWording:
     - for
     - which
     - to
+
+RSpec/DescribedClass:
+  SkipBlocks: true
+
+# RSpec helper methods typecheck better as regular methods.
+Sorbet/BlockMethodDefinition:
+  Enabled: false

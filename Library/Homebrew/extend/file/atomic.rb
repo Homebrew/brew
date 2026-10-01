@@ -20,11 +20,11 @@ class File
   #     file.write('hello')
   #   end
   sig {
-    type_parameters(:out).params(
+    type_parameters(:Out).params(
       file_name: T.any(Pathname, String),
       temp_dir:  String,
-      _block:    T.proc.params(arg0: Tempfile).returns(T.type_parameter(:out)),
-    ).returns(T.type_parameter(:out))
+      _block:    T.proc.params(arg0: Tempfile).returns(T.type_parameter(:Out)),
+    ).returns(T.type_parameter(:Out))
   }
   def self.atomic_write(file_name, temp_dir = dirname(file_name), &_block)
     require "tempfile" unless defined?(Tempfile)
@@ -33,6 +33,8 @@ class File
       temp_file.binmode
       return_val = yield temp_file
       temp_file.close
+      temp_path = temp_file.path
+      raise "Temporary file for #{file_name} was unlinked before it could be moved into place" if temp_path.nil?
 
       old_stat = if exist?(file_name)
         # Get original file permissions
@@ -46,16 +48,16 @@ class File
       if old_stat
         # Set correct permissions on new file
         begin
-          chown(old_stat.uid, old_stat.gid, T.must(temp_file.path))
+          chown(old_stat.uid, old_stat.gid, temp_path)
           # This operation will affect filesystem ACL's
-          chmod(old_stat.mode, T.must(temp_file.path))
+          chmod(old_stat.mode, temp_path)
         rescue Errno::EPERM, Errno::EACCES
           # Changing file ownership failed, moving on.
         end
       end
 
       # Overwrite original file with temp file
-      rename(T.must(temp_file.path), file_name)
+      rename(temp_path, file_name)
       return_val
     end
   end

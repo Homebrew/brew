@@ -11,9 +11,6 @@ class Homebrew::Cmd::OptionsCmd
 end
 
 class Homebrew::Cmd::OptionsCmd::Args < Homebrew::CLI::Args
-  sig { returns(T.nilable(String)) }
-  def command; end
-
   sig { returns(T::Boolean) }
   def compact?; end
 

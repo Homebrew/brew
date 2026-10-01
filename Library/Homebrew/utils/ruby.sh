@@ -1,9 +1,11 @@
-# When bumping, run `brew vendor-gems --update=--ruby`
-# When bumping to a new major/minor version, also update the bounds in the Gemfile
+# When bumping, run `brew vendor-gems --update=--ruby`.
+# When bumping to a new major/minor version, also update the bounds in the Gemfile.
+# Also make sure that vendored gems have been committed for the new Ruby version by updating .gitignore.
 # HOMEBREW_LIBRARY set by bin/brew
 # shellcheck disable=SC2154
-export HOMEBREW_REQUIRED_RUBY_VERSION="3.4"
-HOMEBREW_PORTABLE_RUBY_VERSION="$(cat "${HOMEBREW_LIBRARY}/Homebrew/vendor/portable-ruby-version")"
+export HOMEBREW_REQUIRED_RUBY_VERSION="4.0"
+read -r HOMEBREW_PORTABLE_RUBY_VERSION <"${HOMEBREW_LIBRARY}/Homebrew/vendor/portable-ruby-version"
+export HOMEBREW_BUNDLER_VERSION="4.0.20"
 
 # Disable Ruby options we don't need.
 export HOMEBREW_RUBY_DISABLE_OPTIONS="--disable=gems,rubyopt"
@@ -91,7 +93,8 @@ setup-ruby-path() {
   local vendor_ruby_root
   local vendor_ruby_path
   local vendor_ruby_terminfo
-  local vendor_ruby_current_version
+  local bootsnap_gem_paths
+  local nullglob_enabled
   local ruby_exec
   local upgrade_fail
   local install_fail
@@ -115,7 +118,6 @@ If there's no Homebrew Portable Ruby available for your processor:
   vendor_ruby_root="${vendor_dir}/portable-ruby/current"
   vendor_ruby_path="${vendor_ruby_root}/bin/ruby"
   vendor_ruby_terminfo="${vendor_ruby_root}/share/terminfo"
-  vendor_ruby_current_version="$(readlink "${vendor_ruby_root}")"
 
   unset HOMEBREW_RUBY_PATH
 
@@ -124,18 +126,24 @@ If there's no Homebrew Portable Ruby available for your processor:
     return 0
   fi
 
+  # Needed for `brew` and `odie`.
+  source "${HOMEBREW_LIBRARY}/Homebrew/utils.sh"
+
   if [[ -x "${vendor_ruby_path}" ]]
   then
     HOMEBREW_RUBY_PATH="${vendor_ruby_path}"
     TERMINFO_DIRS="${vendor_ruby_terminfo}"
-    if [[ "${vendor_ruby_current_version}" != "${HOMEBREW_PORTABLE_RUBY_VERSION}" ]]
+    # `-ef` (rather than `readlink`) to check the `current` symlink without a fork.
+    if ! [[ "${vendor_ruby_root}" -ef "${vendor_dir}/portable-ruby/${HOMEBREW_PORTABLE_RUBY_VERSION}" ]]
     then
       brew vendor-install ruby || odie "${upgrade_fail}"
     fi
-    HOMEBREW_BOOTSNAP_GEM_PATH="$(
-      shopt -s nullglob
-      echo "${vendor_ruby_root}"/lib/ruby/gems/*/gems/bootsnap-*/lib/bootsnap 2>/dev/null
-    )"
+    nullglob_enabled=""
+    shopt -q nullglob && nullglob_enabled="1"
+    shopt -s nullglob
+    bootsnap_gem_paths=("${vendor_ruby_root}"/lib/ruby/gems/*/gems/bootsnap-*/lib/bootsnap)
+    [[ -z "${nullglob_enabled}" ]] && shopt -u nullglob
+    HOMEBREW_BOOTSNAP_GEM_PATH="${bootsnap_gem_paths[*]-}"
   else
     if system_ruby_supported
     then
@@ -147,7 +155,27 @@ If there's no Homebrew Portable Ruby available for your processor:
       brew vendor-install ruby || odie "${install_fail}"
       HOMEBREW_RUBY_PATH="${vendor_ruby_path}"
       TERMINFO_DIRS="${vendor_ruby_terminfo}"
+
+      if [[ -n "${HOMEBREW_DEVELOPER}" && -x "${vendor_ruby_path}" ]]
+      then
+        if [[ ! -f "${vendor_ruby_root}/bin/bundle" ]]
+        then
+          odie "Homebrew Portable Ruby is installed but bundle is not!"
+        elif [[ ! -d "${vendor_ruby_root}/lib/ruby/gems/${HOMEBREW_REQUIRED_RUBY_VERSION}.0/gems/bundler-${HOMEBREW_BUNDLER_VERSION}" ]]
+        then
+          odie "Homebrew Portable Ruby is installed but bundler ${HOMEBREW_BUNDLER_VERSION} is not!"
+        elif ! grep -q "  ${HOMEBREW_BUNDLER_VERSION}" "${HOMEBREW_LIBRARY}/Homebrew/Gemfile.lock"
+        then
+          odie "Homebrew Portable Ruby is installed but bundler ${HOMEBREW_BUNDLER_VERSION} is not in the Gemfile.lock!"
+        fi
+      fi
     fi
+  fi
+
+  homebrew_ruby_bin="${HOMEBREW_RUBY_PATH%/*}"
+  if [[ ! -f "${homebrew_ruby_bin}/bundle" ]]
+  then
+    "${homebrew_ruby_bin}/gem" install bundler -v "${HOMEBREW_BUNDLER_VERSION}"
   fi
 
   export HOMEBREW_RUBY_PATH HOMEBREW_BOOTSNAP_GEM_PATH
@@ -161,4 +189,19 @@ setup-gem-home-bundle-gemfile() {
 
   export GEM_HOME
   export BUNDLE_GEMFILE
+}
+
+ensure-bundle-dependencies() {
+  local install_args=()
+
+  if ! bundle check &>/dev/null
+  then
+    if [[ -n "${BUNDLE_WITH}" ]]
+    then
+      # Convert colon-separated BUNDLE_WITH to comma-separated for --add-groups
+      local groups_for_flag="${BUNDLE_WITH//:/,}"
+      install_args+=("--add-groups=${groups_for_flag}")
+    fi
+    "${HOMEBREW_BREW_FILE}" install-bundler-gems "${install_args[@]}"
+  fi
 }

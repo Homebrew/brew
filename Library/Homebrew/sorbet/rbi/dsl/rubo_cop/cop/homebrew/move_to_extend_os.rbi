@@ -7,5 +7,8 @@
 
 class RuboCop::Cop::Homebrew::MoveToExtendOS
   sig { params(node: RuboCop::AST::Node, kwargs: T.untyped, block: T.untyped).returns(T.untyped) }
-  def os_check?(node, **kwargs, &block); end
+  def os_linux?(node, **kwargs, &block); end
+
+  sig { params(node: RuboCop::AST::Node, kwargs: T.untyped, block: T.untyped).returns(T.untyped) }
+  def os_mac?(node, **kwargs, &block); end
 end

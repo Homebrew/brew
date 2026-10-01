@@ -1,14 +1,44 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "system_command"
+require "utils/shell"
+
+require "utils"
+require "utils/output"
+require "utils/path"
+require "utils/popen"
+
 module Language
   # Helper functions for Python formulae.
   #
   # @api public
   module Python
+    extend ::Utils::Output::Mixin
+
+    # Returns stable executable paths keyed by direct Python dependency name.
+    # @api private
+    sig {
+      params(
+        formula:  Formula,
+        pattern:  Regexp,
+        required: T::Boolean,
+      ).returns(T::Hash[String, Pathname])
+    }
+    def self.direct_dependency_paths(formula, pattern: /\Apython(?:@.+)?\z/, required: false)
+      formula.deps.filter_map do |dependency|
+        next if required && !dependency.required?
+
+        name = Utils.name_from_full_name(dependency.name)
+        next unless name.match?(pattern)
+
+        [name, Utils::Path.formula_opt_bin(name)/name.delete("@")]
+      end.to_h
+    end
+
     sig { params(python: T.any(String, Pathname)).returns(T.nilable(Version)) }
     def self.major_minor_version(python)
-      version = `#{python} --version 2>&1`.chomp[/(\d\.\d+)/, 1]
+      version = Utils.popen_read_text(python, "--version", err: :out).chomp[/(\d\.\d+)/, 1]
       return unless version
 
       Version.new(version)
@@ -16,11 +46,18 @@ module Language
 
     sig { params(python: T.any(String, Pathname)).returns(Pathname) }
     def self.homebrew_site_packages(python = "python3.7")
+      odeprecated "Language::Python.homebrew_site_packages", "HOMEBREW_PREFIX/Language::Python.site_packages(python)"
+
       HOMEBREW_PREFIX/site_packages(python)
     end
 
-    sig { params(python: T.any(String, Pathname)).returns(String) }
-    def self.site_packages(python = "python3.7")
+    sig { params(python: T.nilable(T.any(String, Pathname))).returns(String) }
+    def self.site_packages(python = nil)
+      if python.nil?
+        odeprecated "Language::Python.site_packages without an interpreter", "an explicit Python interpreter argument"
+        python = "python3.7"
+      end
+
       if (python == "pypy") || (python == "pypy3")
         "site-packages"
       else
@@ -35,6 +72,8 @@ module Language
       ).void
     }
     def self.each_python(build, &block)
+      odeprecated "Language::Python.each_python", "Formula#python3 or explicit Python dependency iteration"
+
       original_pythonpath = ENV.fetch("PYTHONPATH", nil)
       pythons = { "python@3" => "python3",
                   "pypy"     => "pypy",
@@ -47,7 +86,7 @@ module Language
         ENV["PYTHONPATH"] = if python_formula.latest_version_installed?
           nil
         else
-          homebrew_site_packages(python).to_s
+          (HOMEBREW_PREFIX/site_packages(python)).to_s
         end
         block&.call python, version
       end
@@ -56,13 +95,18 @@ module Language
 
     sig { params(python: T.any(String, Pathname)).returns(T::Boolean) }
     def self.reads_brewed_pth_files?(python)
-      return false unless homebrew_site_packages(python).directory?
-      return false unless homebrew_site_packages(python).writable?
+      odeprecated "Language::Python.reads_brewed_pth_files?", "an isolated Python virtualenv"
 
-      probe_file = homebrew_site_packages(python)/"homebrew-pth-probe.pth"
+      site_packages = HOMEBREW_PREFIX/site_packages(python)
+      return false unless site_packages.directory?
+      return false unless site_packages.writable?
+
+      probe_file = site_packages/"homebrew-pth-probe.pth"
       begin
         probe_file.atomic_write("import site; site.homebrew_was_here = True")
-        with_homebrew_path { quiet_system python, "-c", "import site; assert(site.homebrew_was_here)" }
+        Utils::Shell.with_homebrew_path do
+          SystemCommand.quiet_system python, "-c", "import site; assert(site.homebrew_was_here)"
+        end
       ensure
         probe_file.unlink if probe_file.exist?
       end
@@ -70,37 +114,23 @@ module Language
 
     sig { params(python: T.any(String, Pathname)).returns(Pathname) }
     def self.user_site_packages(python)
-      Pathname.new(`#{python} -c "import site; print(site.getusersitepackages())"`.chomp)
+      odeprecated "Language::Python.user_site_packages",
+                  "querying `site.getusersitepackages()` with the Python interpreter"
+
+      Pathname.new(
+        Utils.popen_read_text(python, "-c", "import site; print(site.getusersitepackages())", err: :err).chomp,
+      )
     end
 
     sig { params(python: T.any(String, Pathname), path: T.any(String, Pathname)).returns(T::Boolean) }
     def self.in_sys_path?(python, path)
+      odeprecated "Language::Python.in_sys_path?", "querying `sys.path` with the Python interpreter"
+
       script = <<~PYTHON
         import os, sys
         [os.path.realpath(p) for p in sys.path].index(os.path.realpath("#{path}"))
       PYTHON
-      quiet_system python, "-c", script
-    end
-
-    sig { params(prefix: Pathname, python: T.any(String, Pathname)).returns(T::Array[String]) }
-    def self.setup_install_args(prefix, python = "python3")
-      shim = <<~PYTHON
-        import setuptools, tokenize
-        __file__ = 'setup.py'
-        exec(compile(getattr(tokenize, 'open', open)(__file__).read()
-          .replace('\\r\\n', '\\n'), __file__, 'exec'))
-      PYTHON
-      %W[
-        -c
-        #{shim}
-        --no-user-cfg
-        install
-        --prefix=#{prefix}
-        --install-scripts=#{prefix}/bin
-        --install-lib=#{prefix/site_packages(python)}
-        --single-version-externally-managed
-        --record=installed.txt
-      ]
+      SystemCommand.quiet_system python, "-c", script
     end
 
     # Mixin module for {Formula} adding shebang rewrite features.
@@ -112,7 +142,7 @@ module Language
       module_function
 
       # A regex to match potential shebang permutations.
-      PYTHON_SHEBANG_REGEX = %r{^#! ?(?:/usr/bin/(?:env )?)?python(?:[23](?:\.\d{1,2})?)?( |$)}
+      PYTHON_SHEBANG_REGEX = %r{\A#! ?(?:/usr/bin/(?:env )?)?python(?:[23](?:\.\d{1,2})?)?( |$)}
 
       # The length of the longest shebang matching `SHEBANG_REGEX`.
       PYTHON_SHEBANG_MAX_LENGTH = T.let("#! /usr/bin/env pythonx.yyy ".length, Integer)
@@ -132,14 +162,13 @@ module Language
         python_path = if use_python_from_path
           "/usr/bin/env python3"
         else
-          python_deps = formula.deps.select(&:required?).map(&:name).grep(/^python(@.+)?$/)
+          python_deps = Language::Python.direct_dependency_paths(formula, required: true)
           raise ShebangDetectionError.new("Python", "formula does not depend on Python") if python_deps.empty?
           if python_deps.length > 1
             raise ShebangDetectionError.new("Python", "formula has multiple Python dependencies")
           end
 
-          python_dep = python_deps.first
-          Formula[python_dep].opt_bin/python_dep.sub("@", "")
+          python_deps.values.fetch(0)
         end
 
         python_shebang_rewrite_info(python_path)
@@ -189,19 +218,21 @@ module Language
         # Find any Python bindings provided by recursive dependencies
         pth_contents = []
         formula.recursive_dependencies do |dependent, dep|
-          Dependency.prune if dep.build? || dep.test?
+          next Dependable::PRUNE if dep.build? || dep.test?
           # Apply default filter
-          Dependency.prune if (dep.optional? || dep.recommended?) && !dependent.build.with?(dep)
+          next Dependable::PRUNE if (dep.optional? || dep.recommended?) && !T.cast(dependent,
+                                                                                   Formula).build.with?(dep)
           # Do not add the main site-package provided by the brewed
           # Python formula, to keep the virtual-env's site-package pristine
-          Dependency.prune if python_names.include? dep.name
+          next Dependable::PRUNE if python_names.include? dep.name
           # Skip uses_from_macos dependencies as these imply no Python bindings
-          Dependency.prune if dep.uses_from_macos?
+          next Dependable::PRUNE if dep.uses_from_macos?
 
           dep_site_packages = dep.to_formula.opt_prefix/Language::Python.site_packages(python)
-          Dependency.prune unless dep_site_packages.exist?
+          next Dependable::PRUNE unless dep_site_packages.exist?
 
           pth_contents << "import site; site.addsitedir('#{dep_site_packages}')\n"
+          nil # Return nil to satisfy T.nilable(Symbol) block sig (Array from << would violate it).
         end
         (venv.site_packages/"homebrew_deps.pth").write pth_contents.join unless pth_contents.empty?
 
@@ -218,7 +249,7 @@ module Language
       def needs_python?(python)
         return true if build.with?(python)
 
-        (requirements.to_a | deps).any? { |r| r.name.split("/").last == python && r.required? }
+        (requirements.to_a | deps).any? { |r| Utils.name_from_full_name(r.name) == python && r.required? }
       end
 
       # Helper method for the common case of installing a Python application.
@@ -247,7 +278,7 @@ module Language
           raise FormulaUnknownPythonError, self if wanted.empty?
           raise FormulaAmbiguousPythonError, self if wanted.size > 1
 
-          python = T.must(wanted.first)
+          python = wanted.fetch(0)
           python = "python3" if python == "python"
         end
 
@@ -266,7 +297,10 @@ module Language
         venv = virtualenv_create(libexec, python.delete("@"), system_site_packages:,
                                                               without_pip:)
         venv.pip_install venv_resources
-        venv.pip_install_and_link(T.must(buildpath), link_manpages:)
+        buildpath = self.buildpath
+        raise "#{name}: `virtualenv_install_with_resources` can only be called from `install`" if buildpath.nil?
+
+        venv.pip_install_and_link(buildpath, link_manpages:)
         venv
       end
 
@@ -286,7 +320,7 @@ module Language
       def slice_resources!(resources_hash, resource_names)
         resource_names.map do |resource_name|
           resources_hash.delete(resource_name) do
-            raise ArgumentError, "Resource \"#{resource_name}\" is not defined in formula or is already used"
+            raise ArgumentError, "Resource \"#{resource_name}\" is not defined in formula or is already used."
           end
         end
       end
@@ -342,7 +376,7 @@ module Language
 
             new_target = rp.sub(
               %r{#{HOMEBREW_CELLAR}/python#{version}/[^/]+},
-              Formula["python#{version}"].opt_prefix.to_s,
+              Utils::Path.formula_opt_prefix("python#{version}").to_s,
             )
             f.unlink
             f.make_symlink new_target
@@ -356,7 +390,7 @@ module Language
 
             prefix_path.sub!(
               %r{^#{HOMEBREW_CELLAR}/python#{version}/[^/]+},
-              Formula["python#{version}"].opt_prefix.to_s,
+              Utils::Path.formula_opt_prefix("python#{version}").to_s,
             )
             prefix_file.atomic_write prefix_path
           end
@@ -367,8 +401,9 @@ module Language
           if (cfg_file = @venv_root/"pyvenv.cfg").exist?
             cfg = cfg_file.read
             framework = "Frameworks/Python.framework/Versions"
-            cfg.match(%r{= *(#{HOMEBREW_CELLAR}/(python@[\d.]+)/[^/]+(?:/#{framework}/[\d.]+)?/bin)}) do |match|
-              cfg.sub! match[1].to_s, Formula[T.must(match[2])].opt_bin.to_s
+            match = cfg.match(%r{= *(#{HOMEBREW_CELLAR}/(python@[\d.]+)/[^/]+(?:/#{framework}/[\d.]+)?/bin)})
+            if match && (python_formula = match[2])
+              cfg.sub! match[1].to_s, Utils::Path.formula_opt_bin(python_formula).to_s
               cfg_file.atomic_write cfg
             end
           end
@@ -399,7 +434,7 @@ module Language
             if t.is_a?(Resource)
               t.stage do
                 target = Pathname.pwd
-                target /= t.downloader.basename if t.url&.end_with?("-none-any.whl")
+                target /= t.downloader.basename if t.url&.match?("[.-]py3[^-]*-none-any.whl$")
                 do_install(target, build_isolation:)
               end
             else

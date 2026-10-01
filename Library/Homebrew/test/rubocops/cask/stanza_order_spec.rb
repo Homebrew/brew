@@ -1,8 +1,53 @@
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/rubocop-cask"
 
 RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
+  it "registers system conditionals after os stanzas" do
+    expect(RuboCop::Cask::Constants::STANZA_GROUPS.take(2)).to eq([
+      [:arch, :on_arch_conditional, :os, :on_system_conditional],
+      [:version, :sha256],
+    ])
+  end
+
+  it "registers every new top-level cask DSL" do
+    expect(RuboCop::Cask::Constants::STANZA_ORDER).to include(
+      :on_macos,
+      :on_linux,
+      :on_system_conditional,
+      :app_image,
+      :generated_script,
+      :command_wrapper,
+      :generate_completions_from_executable,
+      :preflight_steps,
+      :postflight_steps,
+      :uninstall_preflight_steps,
+      :uninstall_postflight_steps,
+    )
+  end
+
+  it "orders system conditionals before version and URL stanzas" do
+    expect_offense <<~CASK
+      cask 'foo' do
+        version :latest
+        ^^^^^^^^^^^^^^^ `version` stanza out of order
+        url 'https://foo.brew.sh/foo.zip'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `url` stanza out of order
+        artifact = on_system_conditional macos: 'foo.dmg', linux: 'foo.AppImage'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `on_system_conditional` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask 'foo' do
+        artifact = on_system_conditional macos: 'foo.dmg', linux: 'foo.AppImage'
+        version :latest
+        url 'https://foo.brew.sh/foo.zip'
+      end
+    CASK
+  end
+
   it "accepts a sole stanza" do
     expect_no_offenses <<~CASK
       cask 'foo' do
@@ -37,6 +82,94 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
       cask 'foo' do
         version :latest
         sha256 :no_check
+      end
+    CASK
+  end
+
+  it "orders `app_image` after `app`" do
+    expect_offense <<~CASK
+      cask 'foo' do
+        app_image 'Foo.AppImage'
+        ^^^^^^^^^^^^^^^^^^^^^^^^ `app_image` stanza out of order
+        app 'Foo.app'
+        ^^^^^^^^^^^^^ `app` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask 'foo' do
+        app 'Foo.app'
+        app_image 'Foo.AppImage'
+      end
+    CASK
+  end
+
+  it "orders `generated_script` before `installer`" do
+    expect_offense <<~CASK
+      cask 'foo' do
+        installer script: 'installer.sh'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `installer` stanza out of order
+        generated_script 'installer.sh', content: '#!/bin/sh'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `generated_script` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask 'foo' do
+        generated_script 'installer.sh', content: '#!/bin/sh'
+        installer script: 'installer.sh'
+      end
+    CASK
+  end
+
+  it "orders `command_wrapper` after `binary`" do
+    expect_offense <<~CASK
+      cask 'foo' do
+        command_wrapper 'foo', executable: 'Foo.app/Contents/MacOS/foo'
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `command_wrapper` stanza out of order
+        binary 'foo'
+        ^^^^^^^^^^^^ `binary` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask 'foo' do
+        binary 'foo'
+        command_wrapper 'foo', executable: 'Foo.app/Contents/MacOS/foo'
+      end
+    CASK
+  end
+
+  it "orders legacy flight blocks after matching install step blocks" do
+    expect_offense <<~CASK
+      cask 'foo' do
+        version :latest
+        sha256 :no_check
+
+        postflight do
+        ^^^^^^^^^^^^^ `postflight` stanza out of order
+          next
+        end
+
+        postflight_steps do
+        ^^^^^^^^^^^^^^^^^^^ `postflight_steps` stanza out of order
+          touch "foo"
+        end
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask 'foo' do
+        version :latest
+        sha256 :no_check
+
+        postflight_steps do
+          touch "foo"
+        end
+
+        postflight do
+          next
+        end
       end
     CASK
   end
@@ -170,6 +303,150 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
     CASK
   end
 
+  it "alphabetizes `depends_on` stanzas" do
+    expect_offense <<~CASK
+      cask "foo" do
+        depends_on macos: :ventura
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+        depends_on arch: :arm64
+        ^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        depends_on arch: :arm64
+        depends_on macos: :ventura
+      end
+    CASK
+  end
+
+  it "alphabetizes `depends_on` stanzas with the same key by value" do
+    expect_offense <<~CASK
+      cask "foo" do
+        depends_on formula: "zlib"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+        depends_on formula: "foo"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        depends_on formula: "foo"
+        depends_on formula: "zlib"
+      end
+    CASK
+  end
+
+  it "alphabetizes scalar and array-valued `depends_on` stanzas by value" do
+    expect_offense <<~CASK
+      cask "foo" do
+        depends_on formula: "zebra"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+        depends_on formula: ["alpha"]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        depends_on formula: ["alpha"]
+        depends_on formula: "zebra"
+      end
+    CASK
+  end
+
+  it "does not sort `depends_on` stanzas that reference local variables" do
+    expect_no_offenses <<~CASK
+      cask "foo" do
+        depends_on macos: :ventura
+        formula_name = "foo"
+        depends_on formula: formula_name
+      end
+    CASK
+  end
+
+  it "alphabetizes `depends_on` stanzas inside an OS block" do
+    expect_offense <<~CASK
+      cask "foo" do
+        on_macos do
+          depends_on macos: :ventura
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+          depends_on arch: :arm64
+          ^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+        end
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        on_macos do
+          depends_on arch: :arm64
+          depends_on macos: :ventura
+        end
+      end
+    CASK
+  end
+
+  it "keeps comments with alphabetized `depends_on` stanzas" do
+    expect_offense <<~CASK
+      cask "foo" do
+        # macOS requirement
+        depends_on macos: :ventura
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+        # architecture requirement
+        depends_on arch: :arm64
+        ^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        # architecture requirement
+        depends_on arch: :arm64
+        # macOS requirement
+        depends_on macos: :ventura
+      end
+    CASK
+  end
+
+  it "alphabetizes parenthesized `depends_on` stanzas" do
+    expect_offense <<~CASK
+      cask "foo" do
+        depends_on(macos: :ventura)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+        depends_on(arch: :arm64)
+        ^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        depends_on(arch: :arm64)
+        depends_on(macos: :ventura)
+      end
+    CASK
+  end
+
+  it "alphabetizes mixed parenthesized and bare `depends_on` stanzas" do
+    expect_offense <<~CASK
+      cask "foo" do
+        depends_on(macos: :ventura)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+        depends_on formula: "foo"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^ `depends_on` stanza out of order
+      end
+    CASK
+
+    expect_correction <<~CASK
+      cask "foo" do
+        depends_on formula: "foo"
+        depends_on(macos: :ventura)
+      end
+    CASK
+  end
+
   it "keeps associated comments when auto-correcting" do
     expect_offense <<~CASK
       cask 'foo' do
@@ -234,7 +511,7 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
     CASK
   end
 
-  shared_examples "caveats" do
+  shared_examples "caveats" do |caveats|
     it "reports an offense when a `caveats` stanza is out of order" do
       # Indent all except the first line.
       interpolated_caveats = caveats.lines.map { |l| "  #{l}" }.join.strip
@@ -271,44 +548,32 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
   end
 
   context "when caveats is a one-line string" do
-    let(:caveats) do
-      <<~CAVEATS
-        caveats 'This is a one-line caveat.'
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `caveats` stanza out of order
-      CAVEATS
-    end
-
-    include_examples "caveats"
+    include_examples "caveats", <<~CAVEATS
+      caveats 'This is a one-line caveat.'
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `caveats` stanza out of order
+    CAVEATS
   end
 
   context "when caveats is a heredoc" do
-    let(:caveats) do
-      <<~CAVEATS
-        caveats <<~EOS
-        ^^^^^^^^^^^^^^ `caveats` stanza out of order
-          This is a multiline caveat.
+    include_examples "caveats", <<~CAVEATS
+      caveats <<~EOS
+      ^^^^^^^^^^^^^^ `caveats` stanza out of order
+        This is a multiline caveat.
 
-          Let's hope it doesn't cause any problems!
-        EOS
-      CAVEATS
-    end
-
-    include_examples "caveats"
+        Let's hope it doesn't cause any problems!
+      EOS
+    CAVEATS
   end
 
   context "when caveats is a block" do
-    let(:caveats) do
-      <<~CAVEATS
-        caveats do
-        ^^^^^^^^^^ `caveats` stanza out of order
-          puts 'This is a multiline caveat.'
+    include_examples "caveats", <<~CAVEATS
+      caveats do
+      ^^^^^^^^^^ `caveats` stanza out of order
+        puts 'This is a multiline caveat.'
 
-          puts "Let's hope it doesn't cause any problems!"
-        end
-      CAVEATS
-    end
-
-    include_examples "caveats"
+        puts "Let's hope it doesn't cause any problems!"
+      end
+    CAVEATS
   end
 
   it "reports an offense when the `postflight` stanza is out of order" do
@@ -396,18 +661,18 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
           ^^^^^^^^^^^^^^^ `version` stanza out of order
           url "https://foo.brew.sh/foo-ventura.zip"
         end
-        on_catalina do
+        on_monterey do
           sha256 "def456"
           ^^^^^^^^^^^^^^^ `sha256` stanza out of order
           version "0.7"
           ^^^^^^^^^^^^^ `version` stanza out of order
-          url "https://foo.brew.sh/foo-catalina.zip"
+          url "https://foo.brew.sh/foo-monterey.zip"
         end
-        on_mojave do
-        ^^^^^^^^^^^^ `on_mojave` stanza out of order
+        on_sequoia do
+        ^^^^^^^^^^^^^ `on_sequoia` stanza out of order
           version :latest
           sha256 "ghi789"
-          url "https://foo.brew.sh/foo-mojave.zip"
+          url "https://foo.brew.sh/foo-sequoia.zip"
         end
         on_big_sur do
         ^^^^^^^^^^^^^ `on_big_sur` stanza out of order
@@ -423,26 +688,26 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
 
     expect_correction <<~CASK
       cask "foo" do
-        on_mojave do
-          version :latest
-          sha256 "ghi789"
-          url "https://foo.brew.sh/foo-mojave.zip"
-        end
-        on_catalina do
-          version "0.7"
-          sha256 "def456"
-          url "https://foo.brew.sh/foo-catalina.zip"
-        end
         on_big_sur do
           version :latest
           sha256 "jkl012"
 
           url "https://foo.brew.sh/foo-big-sur.zip"
         end
+        on_monterey do
+          version "0.7"
+          sha256 "def456"
+          url "https://foo.brew.sh/foo-monterey.zip"
+        end
         on_ventura do
           version :latest
           sha256 "abc123"
           url "https://foo.brew.sh/foo-ventura.zip"
+        end
+        on_sequoia do
+          version :latest
+          sha256 "ghi789"
+          url "https://foo.brew.sh/foo-sequoia.zip"
         end
       end
     CASK

@@ -16,7 +16,10 @@ module Language
         next false unless f.any_version_installed?
 
         unless version.zero?
-          major = T.must(f.any_installed_version).major
+          installed_version = f.any_installed_version
+          next false if installed_version.nil?
+
+          major = installed_version.major
           next false if major < version
           next false if major > version && !can_be_newer
         end

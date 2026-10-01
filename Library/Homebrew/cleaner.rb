@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/output"
+
 # Cleans a newly installed keg.
 # By default:
 #
@@ -13,6 +15,7 @@
 # * removes unresolved symlinks
 class Cleaner
   include Context
+  include Utils::Output::Mixin
 
   # Create a cleaner for the given formula.
   sig { params(formula: Formula).void }
@@ -100,13 +103,13 @@ class Cleaner
 
     # Remove unresolved symlinks
     symlinks.reverse_each do |s|
-      s.unlink unless s.resolved_path_exists?
+      s.unlink unless Utils::Path.resolved_path_exists?(s)
     end
   end
 
   sig { params(path: Pathname).returns(T::Boolean) }
   def executable_path?(path)
-    path.text_executable? || path.executable?
+    Utils::Path.text_executable?(path) || path.executable?
   end
 
   # Both these files are completely unnecessary to package and cause

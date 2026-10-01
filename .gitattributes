@@ -1,0 +1,8 @@
+Library/Homebrew/sorbet/rbi/annotations/*.rbi linguist-generated=true
+Library/Homebrew/sorbet/rbi/annotations/**/*.rbi linguist-generated=true
+Library/Homebrew/sorbet/rbi/dsl/*.rbi linguist-generated=true
+Library/Homebrew/sorbet/rbi/dsl/**/*.rbi linguist-generated=true
+Library/Homebrew/sorbet/rbi/gems/*.rbi linguist-generated=true
+Library/Homebrew/sorbet/rbi/gems/**/*.rbi linguist-generated=true
+Library/Homebrew/sorbet/rbi/parser@*.rbi linguist-generated=true
+Library/Homebrew/vendor/bundle/** linguist-generated=true

@@ -40,4 +40,10 @@ class Homebrew::Cmd::Outdated::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def json; end
+
+  sig { returns(T.nilable(String)) }
+  def min_version; end
+
+  sig { returns(T.nilable(String)) }
+  def minimum_version; end
 end

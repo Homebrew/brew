@@ -3,14 +3,14 @@
 
 module Utils
   module Timer
-    sig { params(time: T.nilable(Time)).returns(T.any(Float, Integer, NilClass)) }
+    sig { params(time: T.nilable(Time)).returns(T.nilable(T.any(Float, Integer))) }
     def self.remaining(time)
       return unless time
 
       [0, time - Time.now].max
     end
 
-    sig { params(time: T.nilable(Time)).returns(T.any(Float, Integer, NilClass)) }
+    sig { params(time: T.nilable(Time)).returns(T.nilable(T.any(Float, Integer))) }
     def self.remaining!(time)
       r = remaining(time)
       raise Timeout::Error if r && r <= 0

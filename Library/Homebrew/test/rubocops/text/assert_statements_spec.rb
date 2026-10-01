@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/lines"
@@ -46,6 +47,17 @@ RSpec.describe RuboCop::Cop::FormulaAudit::AssertStatements do
           url 'https://brew.sh/foo-1.0.tgz'
           assert File.executable? f
                  ^^^^^^^^^^^^^^^^^^ FormulaAudit/AssertStatements: Use `assert_predicate <path_to_file>, :executable?` instead of `assert File.executable? f`
+        end
+      RUBY
+    end
+
+    it "reports an offense when assert_equal is used with a nil expected value" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          desc "foo"
+          url 'https://brew.sh/foo-1.0.tgz'
+          assert_equal nil, output
+          ^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/AssertStatements: Use `assert_nil` instead of `assert_equal` with a nil expected value
         end
       RUBY
     end

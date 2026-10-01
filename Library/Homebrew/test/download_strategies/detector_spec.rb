@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "download_strategy"
@@ -25,6 +26,23 @@ RSpec.describe DownloadStrategyDetector do
       let(:url) { "https://github.com/homebrew/brew.git" }
 
       it { is_expected.to eq(GitHubGitDownloadStrategy) }
+    end
+
+    context "when given a PyPI URL" do
+      let(:url) do
+        "https://files.pythonhosted.org/packages/ab/cd/efg/example-package-1.2.3.tar.gz"
+      end
+
+      it { is_expected.to eq(PyPIDownloadStrategy) }
+    end
+
+    context "when given a Bazaar strategy" do
+      let(:strategy) { :bzr }
+
+      it "is deprecated in favour of Git or a stable archive" do
+        expect { strategy_detector }
+          .to raise_error(MethodDeprecatedError, /GitDownloadStrategy or CurlDownloadStrategy/)
+      end
     end
 
     it "defaults to curl" do

@@ -14,6 +14,9 @@ class Homebrew::DevCmd::DetermineTestRunners::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def all_supported?; end
 
+  sig { returns(T.nilable(String)) }
+  def dependent_shards; end
+
   sig { returns(T::Boolean) }
   def dependents?; end
 

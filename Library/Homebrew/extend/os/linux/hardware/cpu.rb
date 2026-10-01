@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 module OS
@@ -10,14 +10,16 @@ module OS
 
           requires_ancestor { T.class_of(::Hardware::CPU) }
 
+          sig { returns(T::Hash[Symbol, String]) }
           def optimization_flags
-            @optimization_flags ||= begin
+            @optimization_flags ||= T.let(begin
               flags = super.dup
               flags[:native] = arch_flag(Homebrew::EnvConfig.arch)
               flags
-            end
+            end, T.nilable(T::Hash[Symbol, String]))
           end
 
+          sig { returns(Symbol) }
           def family
             return :arm if arm?
             return :ppc if ppc?
@@ -38,6 +40,7 @@ module OS
             end || unknown
           end
 
+          sig { params(family: Integer, cpu_model: Integer).returns(T.nilable(Symbol)) }
           def intel_family(family, cpu_model)
             case family
             when 0x06
@@ -93,6 +96,7 @@ module OS
             end
           end
 
+          sig { params(family: Integer, cpu_model: Integer).returns(T.nilable(Symbol)) }
           def amd_family(family, cpu_model)
             case family
             when 0x06
@@ -131,15 +135,17 @@ module OS
           end
 
           # Supported CPU instructions
+          sig { returns(T::Array[String]) }
           def flags
-            @flags ||= cpuinfo[/^(?:flags|Features)\s*: (.*)/, 1]&.split
+            @flags ||= T.let(cpuinfo[/^(?:flags|Features)\s*: (.*)/, 1]&.split, T.nilable(T::Array[String]))
             @flags ||= []
           end
 
           # Compatibility with Mac method, which returns lowercase symbols
           # instead of strings.
+          sig { returns(T::Array[Symbol]) }
           def features
-            @features ||= flags[1..].map(&:intern)
+            @features ||= T.let(flags.map(&:intern), T.nilable(T::Array[Symbol]))
           end
 
           %w[aes altivec avx avx2 lm ssse3 sse4_2].each do |flag|
@@ -149,18 +155,21 @@ module OS
             end
           end
 
+          sig { returns(T::Boolean) }
           def sse3?
             flags.include?("pni") || flags.include?("sse3")
           end
 
+          sig { returns(T::Boolean) }
           def sse4?
             flags.include? "sse4_1"
           end
 
           private
 
+          sig { returns(String) }
           def cpuinfo
-            @cpuinfo ||= File.read("/proc/cpuinfo")
+            @cpuinfo ||= T.let(File.read("/proc/cpuinfo"), T.nilable(String))
           end
         end
       end

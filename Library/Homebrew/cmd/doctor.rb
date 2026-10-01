@@ -1,9 +1,13 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "utils/profiling"
+
 require "abstract_command"
 require "diagnostic"
+require "diagnostic/finding"
 require "cask/caskroom"
+require "json"
 
 module Homebrew
   module Cmd
@@ -20,6 +24,9 @@ module Homebrew
         switch "--list-checks",
                description: "List all audit methods, which can be run individually " \
                             "if provided as arguments."
+        switch "--json",
+               description: "Print a JSON representation.",
+               hidden:      true
         switch "-D", "--audit-debug",
                description: "Enable debugging and profiling of audit methods."
 
@@ -28,7 +35,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        Homebrew.inject_dump_stats!(Diagnostic::Checks, /^check_*/) if args.audit_debug?
+        Utils::Profiling.inject_stats!(Diagnostic::Checks, /^check_*/) if args.audit_debug?
 
         checks = Diagnostic::Checks.new(verbose: args.verbose?)
 
@@ -48,6 +55,7 @@ module Homebrew
           methods = args.named
         end
 
+        finding_collection = []
         first_warning = T.let(true, T::Boolean)
         methods.each do |method|
           $stderr.puts Formatter.headline("Checking #{method}", color: :magenta) if args.debug?
@@ -56,10 +64,15 @@ module Homebrew
             next
           end
 
-          out = checks.send(method)
-          next if out.blank?
+          finding         = checks.public_send(method)
+          method_findings = T.let(Array(finding).compact, T::Array[Diagnostic::Finding])
+          next if method_findings.empty?
 
-          if first_warning
+          finding_collection.concat(method_findings.compact)
+          Homebrew.failed = true
+          next if args.json?
+
+          if first_warning && !args.quiet?
             $stderr.puts <<~EOS
               #{Tty.bold}Please note that these warnings are just used to help the Homebrew maintainers
               with debugging if you file an issue. If everything you use Homebrew for is
@@ -68,12 +81,25 @@ module Homebrew
           end
 
           $stderr.puts
-          opoo out
-          Homebrew.failed = true
+          opoo method_findings.each(&:to_s).join("\n")
           first_warning = false
         end
 
-        puts "Your system is ready to brew." if !Homebrew.failed? && !args.quiet?
+        finding_maps = finding_collection.map(&:to_h)
+        tier = Diagnostic::Finding.support_tier(finding_collection.map(&:tier))
+        if args.json?
+          puts JSON.pretty_generate({ tier:, findings: finding_maps }).gsub(/\[\n\n\s*\]/, "[]")
+
+          return
+        end
+
+        return if args.quiet?
+
+        if Homebrew.failed?
+          puts Diagnostic::Finding.support_tier_message(tier:)
+        else
+          puts "Your system is ready to brew."
+        end
       end
     end
   end

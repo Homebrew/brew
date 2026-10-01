@@ -1,0 +1,8 @@
+[project]
+name = "formula-analytics"
+version = "0"
+requires-python = ">=3.13"
+dependencies = ["influxdb3-python"]
+
+[tool.uv]
+package = false

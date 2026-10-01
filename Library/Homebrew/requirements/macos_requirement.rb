@@ -1,23 +1,70 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "requirement"
+require "utils/output"
 
 # A requirement on macOS.
 class MacOSRequirement < Requirement
+  extend Utils::Output::Mixin
+
+  Cache = type_template { { fixed: T::Hash[String, T.untyped] } }
+
   fatal true
 
-  attr_reader :comparator, :version
+  sig { returns(String) }
+  attr_reader :comparator
 
-  # TODO: when Yosemite is removed here, keep these around as empty arrays so we
-  # can keep the deprecation/disabling code the same.
+  sig { returns(T.nilable(T.any(MacOSVersion, T::Array[MacOSVersion]))) }
+  attr_reader :version
+
+  # Keep both arrays so we can keep the deprecation/disabling code the same.
+  # Treat these like odeprecated/odisabled in terms of deprecation/disabling.
   DISABLED_MACOS_VERSIONS = [
-    :yosemite,
+    :catalina,
+    :mojave,
+    :high_sierra,
+    :sierra,
+    :el_capitan,
   ].freeze
-  DEPRECATED_MACOS_VERSIONS = [].freeze
+  DEPRECATED_MACOS_VERSIONS = T.let([].freeze, T::Array[Symbol])
 
+  sig { params(args: T::Array[T.any(String, Symbol)], comparator: String).returns(MacOSRequirement) }
+  def self.parse(args, comparator:)
+    first_arg = args.first
+    first_arg_s = first_arg&.to_s
+
+    if first_arg == :any
+      new
+    elsif args.count > 1
+      new([args], comparator: "==")
+    elsif first_arg.is_a?(Symbol) &&
+          (MacOSVersion::SYMBOLS.key?(first_arg) ||
+           DISABLED_MACOS_VERSIONS.include?(first_arg) ||
+           DEPRECATED_MACOS_VERSIONS.include?(first_arg))
+      new([first_arg], comparator:)
+    elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*:(?<version>\S+)\s*$/.match(first_arg_s)) &&
+          (comparator = md[:comparator]) && (version = md[:version])
+      replacement = if comparator == "<="
+        "`depends_on maximum_macos: :#{version}`"
+      elsif comparator == ">="
+        "`depends_on macos: :#{version}`"
+      end
+      odeprecated "string comparison format for `depends_on macos:`", replacement
+      new([version.to_sym], comparator:)
+    elsif (md = /^\s*(?<comparator><|>|[=<>]=)\s*(?<version>\S+)\s*$/.match(first_arg_s)) &&
+          (comparator = md[:comparator])
+      odeprecated "string comparison format for `depends_on macos:`"
+      new([md[:version]], comparator:)
+    else
+      odeprecated "strict symbol format for `depends_on macos:`"
+      new([first_arg], comparator: "==")
+    end
+  end
+
+  sig { params(tags: T.untyped, comparator: String).void }
   def initialize(tags = [], comparator: ">=")
-    @version = begin
+    @version = T.let(begin
       if comparator == "==" && tags.first.respond_to?(:map)
         tags.first.map { |s| MacOSVersion.from_symbol(s) }
       else
@@ -42,83 +89,73 @@ class MacOSRequirement < Requirement
 
       # Otherwise fallback to the oldest allowed if comparator is >=.
       MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED) if comparator == ">="
-    end
+    end, T.nilable(T.any(MacOSVersion, T::Array[MacOSVersion])))
 
     @comparator = comparator
     super(tags.drop(1))
   end
 
+  sig { returns(T::Boolean) }
   def version_specified?
     @version.present?
   end
 
   satisfy(build_env: false) do
     T.bind(self, MacOSRequirement)
-    next Array(@version).any? { |v| OS::Mac.version.compare(@comparator, v) } if OS.mac? && version_specified?
-    next true if OS.mac?
-    next true if @version
-
-    false
+    macos_version_satisfied?
   end
 
+  sig { returns(T::Boolean) }
+  def macos_version_satisfied? = false
+
+  sig { returns(T.nilable(MacOSVersion)) }
   def minimum_version
     return MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED) if @comparator == "<=" || !version_specified?
-    return @version.min if @version.respond_to?(:to_ary)
 
-    @version
+    version = @version
+    return version.min if version.is_a?(Array)
+
+    version
   end
 
+  sig { returns(T.nilable(MacOSVersion)) }
   def maximum_version
     return MacOSVersion.new(HOMEBREW_MACOS_NEWEST_UNSUPPORTED) if @comparator == ">=" || !version_specified?
-    return @version.max if @version.respond_to?(:to_ary)
 
-    @version
+    version = @version
+    return version.max if version.is_a?(Array)
+
+    version
   end
 
+  sig { params(other: MacOSVersion).returns(T::Boolean) }
   def allows?(other)
     return true unless version_specified?
 
+    version = @version
     case @comparator
-    when ">=" then other >= @version
-    when "<=" then other <= @version
+    when ">=" then other >= T.cast(version, MacOSVersion)
+    when "<=" then other <= T.cast(version, MacOSVersion)
     else
-      return @version.include?(other) if @version.respond_to?(:to_ary)
+      return version.include?(other) if version.is_a?(Array)
 
-      @version == other
+      version == other
     end
   end
 
+  sig { override.params(type: Symbol).returns(String) }
   def message(type: :formula)
-    return "macOS is required for this software." unless version_specified?
-
-    case @comparator
-    when ">="
-      "This software does not run on macOS versions older than #{@version.pretty_name}."
-    when "<="
-      case type
-      when :formula
-        <<~EOS
-          This formula either does not compile or function as expected on macOS
-          versions newer than #{@version.pretty_name} due to an upstream incompatibility.
-        EOS
-      when :cask
-        "This cask does not run on macOS versions newer than #{@version.pretty_name}."
-      end
-    else
-      if @version.respond_to?(:to_ary)
-        *versions, last = @version.map(&:pretty_name)
-        return "This software does not run on macOS versions other than #{versions.join(", ")} and #{last}."
-      end
-
-      "This software does not run on macOS versions other than #{@version.pretty_name}."
-    end
+    subject = (type == :cask) ? "This cask" : "This formula"
+    "#{subject} requires macOS."
   end
 
+  sig { override.params(other: T.untyped).returns(T::Boolean) }
   def ==(other)
     super && comparator == other.comparator && version == other.version
   end
   alias eql? ==
 
+  sig { override.returns(Integer) }
   def hash
     [super, comparator, version].hash
   end
@@ -131,20 +168,28 @@ class MacOSRequirement < Requirement
   sig { returns(String) }
   def display_s
     if version_specified?
-      if @version.respond_to?(:to_ary)
-        "macOS #{@comparator} #{version.join(" / ")} (or Linux)"
-      else
-        "macOS #{@comparator} #{@version} (or Linux)"
-      end
+      version = @version
+      version = version.join(" / ") if version.is_a?(Array)
+      "macOS #{@comparator} #{version}"
     else
       "macOS"
     end
   end
 
-  def to_json(options)
-    comp = @comparator.to_s
-    return { comp => @version.map(&:to_s) }.to_json(options) if @version.is_a?(Array)
+  sig { returns(T::Hash[String, T::Array[String]]) }
+  def to_h
+    return {} unless version_specified?
 
-    { comp => [@version.to_s] }.to_json(options)
+    comp = @comparator.to_s
+    return { comp => @version.map(&:to_s) } if @version.is_a?(Array)
+
+    { comp => [@version.to_s] }
+  end
+
+  sig { params(options: T.untyped).returns(String) }
+  def to_json(options)
+    to_h.to_json(options)
   end
 end
+
+require "extend/os/requirements/macos_requirement"

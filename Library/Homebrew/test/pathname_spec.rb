@@ -1,15 +1,31 @@
+# typed: true
 # frozen_string_literal: true
+
+require "utils/output"
 
 require "extend/pathname"
 require "install_renamed"
 
 RSpec.describe Pathname do
-  include FileUtils
-
   let(:src) { mktmpdir }
   let(:dst) { mktmpdir }
   let(:file) { src/"foo" }
   let(:dir) { src/"bar" }
+
+  include FileUtils
+
+  describe EagerInitializeExtension do
+    it "defines the lazy memoised ivars on every new Pathname" do
+      pathname = Pathname.new(file.to_s)
+      [:@disk_usage, :@file_count].each do |ivar|
+        expect(pathname.instance_variable_defined?(ivar)).to be(true), "expected #{ivar} to be defined"
+        # Read the raw ivars: the names are dynamic and eager raw definition is under test.
+        # rubocop:disable Homebrew/NoInstanceVariableAccessInTests
+        expect(pathname.instance_variable_get(ivar)).to be_nil
+        # rubocop:enable Homebrew/NoInstanceVariableAccessInTests
+      end
+    end
+  end
 
   describe DiskUsageExtension do
     before do
@@ -17,6 +33,7 @@ RSpec.describe Pathname do
       touch [dir/".DS_Store", dir/"a-file"]
       File.truncate(dir/"a-file", 1_048_576)
       ln_s dir/"a-file", dir/"a-symlink"
+      ln_s dir/"a-directory", dir/"a-directory-symlink"
       ln dir/"a-file", dir/"a-hardlink"
     end
 
@@ -42,23 +59,42 @@ RSpec.describe Pathname do
   end
 
   describe "#rmdir_if_possible" do
-    before { mkdir_p dir }
+    it "deprecates the Pathname helper" do
+      expect(Utils::Output).to receive(:odeprecated)
+        .with("Pathname#rmdir_if_possible", "Utils::Path.rmdir_if_possible")
+      expect(Utils::Path).to receive(:rmdir_if_possible).with(dir).and_return(true)
 
-    it "returns true and removes a directory if it doesn't contain files" do
-      expect(dir.rmdir_if_possible).to be true
-      expect(dir).not_to exist
+      expect(dir.rmdir_if_possible).to be(true)
     end
+  end
 
-    it "returns false and doesn't delete a directory if it contains files" do
-      touch dir/"foo"
-      expect(dir.rmdir_if_possible).to be false
-      expect(dir).to be_a_directory
+  describe "#cp_path_sub" do
+    it "deprecates the Pathname helper" do
+      expect(Utils::Output).to receive(:odeprecated)
+        .with("Pathname#cp_path_sub", "Utils::Path.cp_path_sub")
+      expect(Utils::Path).to receive(:cp_path_sub).with(file, src, dst)
+
+      file.cp_path_sub(src, dst)
     end
+  end
 
-    it "ignores .DS_Store files" do
-      touch dir/".DS_Store"
-      expect(dir.rmdir_if_possible).to be true
-      expect(dir).not_to exist
+  describe "#install_info" do
+    it "deprecates the Pathname helper" do
+      expect(Utils::Output).to receive(:odeprecated)
+        .with("Pathname#install_info", "Utils::Path.install_info")
+      expect(Utils::Path).to receive(:install_info).with(file)
+
+      file.install_info
+    end
+  end
+
+  describe "#uninstall_info" do
+    it "deprecates the Pathname helper" do
+      expect(Utils::Output).to receive(:odeprecated)
+        .with("Pathname#uninstall_info", "Utils::Path.uninstall_info")
+      expect(Utils::Path).to receive(:uninstall_info).with(file)
+
+      file.uninstall_info
     end
   end
 
@@ -108,31 +144,52 @@ RSpec.describe Pathname do
   end
 
   describe "#ensure_writable" do
-    it "makes a file writable and restores permissions afterwards" do
-      skip "User is root so everything is writable." if Process.euid.zero?
-      touch file
-      chmod 0555, file
-      expect(file).not_to be_writable
-      file.ensure_writable do
-        expect(file).to be_writable
-      end
-      expect(file).not_to be_writable
+    it "deprecates the Pathname helper" do
+      expect(Utils::Output).to receive(:odeprecated)
+        .with("Pathname#ensure_writable", "Utils::Path.ensure_writable")
+      expect(Utils::Path).to receive(:ensure_writable).with(file).and_yield
+
+      file.ensure_writable { nil }
+    end
+  end
+
+  describe "#text_executable?" do
+    it "deprecates the Pathname helper" do
+      expect(Utils::Output).to receive(:odeprecated)
+        .with("Pathname#text_executable?", "Utils::Path.text_executable?")
+      expect(Utils::Path).to receive(:text_executable?).with(file).and_return(true)
+
+      expect(file.text_executable?).to be(true)
+    end
+  end
+
+  describe "#resolved_path" do
+    it "deprecates the Pathname helper" do
+      expect(Utils::Output).to receive(:odeprecated)
+        .with("Pathname#resolved_path", "Utils::Path.resolved_path")
+      expect(Utils::Path).to receive(:resolved_path).with(file).and_return(file)
+
+      expect(file.resolved_path).to eq(file)
+    end
+  end
+
+  describe "#resolved_path_exists?" do
+    it "deprecates the Pathname helper" do
+      expect(Utils::Output).to receive(:odeprecated)
+        .with("Pathname#resolved_path_exists?", "Utils::Path.resolved_path_exists?")
+      expect(Utils::Path).to receive(:resolved_path_exists?).with(file).and_return(true)
+
+      expect(file.resolved_path_exists?).to be(true)
     end
   end
 
   describe "#extname" do
-    it "supports common multi-level archives" do
+    specify do
       expect(described_class.new("foo-0.1.tar.gz").extname).to eq(".tar.gz")
       expect(described_class.new("foo-0.1.cpio.gz").extname).to eq(".cpio.gz")
-    end
-
-    it "does not treat version numbers as extensions" do
       expect(described_class.new("foo-0.1").extname).to eq("")
       expect(described_class.new("foo-1.0-rc1").extname).to eq("")
       expect(described_class.new("foo-1.2.3").extname).to eq ""
-    end
-
-    it "supports `.7z` with version numbers" do
       expect(described_class.new("snap7-full-1.4.2.7z").extname).to eq ".7z"
     end
   end
@@ -200,7 +257,7 @@ RSpec.describe Pathname do
     end
 
     it "supports renaming multiple files" do
-      dst.install(src/"a.txt" => "c.txt", src/"b.txt" => "d.txt")
+      dst.install(src/"a.txt" => "c.txt", src/"b.txt" => Pathname("d.txt"))
 
       expect(dst/"c.txt").to exist, "c.txt was not installed"
       expect(dst/"d.txt").to exist, "d.txt was not installed"
@@ -233,8 +290,9 @@ RSpec.describe Pathname do
     end
 
     it "can install relative paths as symlinks" do
-      dst.install_symlink "foo" => "bar"
+      dst.install_symlink "foo" => Pathname("bar"), "baz" => "qux"
       expect((dst/"bar").readlink).to eq(described_class.new("foo"))
+      expect((dst/"qux").readlink).to eq(described_class.new("baz"))
     end
 
     it "can install relative symlinks in a symlinked directory" do
@@ -278,24 +336,13 @@ RSpec.describe Pathname do
     end
   end
 
-  describe "#cp_path_sub" do
-    it "copies a file and replaces the given pattern" do
-      file.write "a"
-      file.cp_path_sub src, dst
-      expect(File.read(dst/file.basename)).to eq("a")
-    end
-
-    it "copies a directory and replaces the given pattern" do
-      dir.mkpath
-      dir.cp_path_sub src, dst
-      expect(dst/dir.basename).to be_a_directory
+  describe "#ds_store?" do
+    it "does not extend Pathname with a Finder metadata predicate" do
+      expect(file).not_to respond_to(:ds_store?)
     end
   end
 
-  describe "#ds_store?" do
-    it "returns whether a file is .DS_Store or not" do
-      expect(file).not_to be_ds_store
-      expect(file/".DS_Store").to be_ds_store
-    end
+  it "does not extend Pathname with archive inspection methods" do
+    expect([:magic_number, :file_type, :zipinfo].select { |method| file.respond_to?(method) }).to be_empty
   end
 end

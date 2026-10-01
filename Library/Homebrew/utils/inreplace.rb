@@ -8,7 +8,7 @@ module Utils
   module Inreplace
     # Error during text replacement.
     class Error < RuntimeError
-      sig { params(errors: T::Hash[String, T::Array[String]]).void }
+      sig { params(errors: T::Hash[T.any(String, Pathname), T::Array[String]]).void }
       def initialize(errors)
         formatted_errors = errors.reduce(+"inreplace failed\n") do |s, (path, errs)|
           s << "#{path}:\n" << errs.map { |e| "  #{e}\n" }.join
@@ -69,10 +69,12 @@ module Utils
           raise ArgumentError, "Must supply a block or before/after params" unless block
 
           yield s
+        elsif before.nil? || after.nil?
+          raise ArgumentError, "Must supply both before and after params"
         elsif global
-          s.gsub!(T.must(before), T.must(after), audit_result:)
+          s.gsub!(before, after, audit_result:)
         else
-          s.sub!(T.must(before), T.must(after), audit_result:)
+          s.sub!(before, after, audit_result:)
         end
 
         errors[path] = s.errors unless s.errors.empty?
@@ -81,31 +83,6 @@ module Utils
       end
 
       raise Utils::Inreplace::Error, errors if errors.present?
-    end
-
-    sig {
-      params(
-        path:              T.any(String, Pathname),
-        replacement_pairs: T::Array[[T.any(Regexp, Pathname, String), T.any(Pathname, String)]],
-        read_only_run:     T::Boolean,
-        silent:            T::Boolean,
-      ).returns(String)
-    }
-    def self.inreplace_pairs(path, replacement_pairs, read_only_run: false, silent: false)
-      str = File.binread(path)
-      contents = StringInreplaceExtension.new(str)
-      replacement_pairs.each do |old, new|
-        if old.blank?
-          contents.errors << "No old value for new value #{new}! Did you pass the wrong arguments?"
-          next
-        end
-
-        contents.gsub!(old, new)
-      end
-      raise Utils::Inreplace::Error, path => contents.errors if contents.errors.present?
-
-      Pathname(path).atomic_write(contents.inreplace_string) unless read_only_run
-      contents.inreplace_string
     end
   end
 end

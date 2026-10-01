@@ -10,9 +10,10 @@ module OS
 
           requires_ancestor { ::Cask::Artifact::Moved }
 
-          sig { params(target: Pathname).returns(T::Boolean) }
-          def undeletable?(target)
-            !target.parent.writable?
+          sig { params(target: ::Pathname, source: ::Pathname).returns(T::Array[T.any(String, ::Pathname)]) }
+          def backup_copy_args(target, source)
+            # GNU `cp --reflink=auto` reduces I/O when the filesystem supports it.
+            ["--reflink=auto", *super]
           end
         end
       end

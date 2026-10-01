@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "exceptions"
@@ -48,7 +49,9 @@ RSpec.describe "Exception" do
 
     let(:tap) { instance_double(Tap, user: "u", repository: "r", to_s: "u/r", installed?: false) }
 
-    it(:to_s) { expect(error.to_s).to match(%r{Please tap it and then try again: brew tap u/r}) }
+    it(:to_s) {
+      expect(error.to_s).to match(%r{If you trust this tap, tap it explicitly and then try again:\n  brew tap u/r})
+    }
   end
 
   describe FormulaUnavailableError do
@@ -90,43 +93,47 @@ RSpec.describe "Exception" do
 
     let(:tap) { instance_double(Tap, user: "u", repository: "r", to_s: "u/r", installed?: false) }
 
-    it(:to_s) { expect(error.to_s).to match(%r{Please tap it and then try again: brew tap u/r}) }
+    it(:to_s) {
+      expect(error.to_s).to match(%r{If you trust this tap, tap it explicitly and then try again:\n  brew tap u/r})
+    }
   end
 
   describe FormulaClassUnavailableError do
     subject(:error) { described_class.new("foo", "foo.rb", "Foo", list) }
 
     let(:mod) do
-      Module.new do
-        # These are defined within an anonymous module to avoid polluting the global namespace.
-        # rubocop:disable RSpec/LeakyConstantDeclaration,Lint/ConstantDefinitionInBlock
-        class Bar < Requirement; end
-
-        class Baz < Formula; end
-        # rubocop:enable RSpec/LeakyConstantDeclaration,Lint/ConstantDefinitionInBlock
-      end
+      mod = Module.new
+      mod.const_set :Bar, Class.new(Requirement)
+      mod.const_set :Baz, Class.new(Formula)
+      mod
     end
 
-    context "when there are no classes" do
-      let(:list) { [] }
+    let(:list) { [] }
 
+    context "when there are no classes" do
       it(:to_s) do
-        expect(error.to_s).to match(/Expected to find class Foo, but found no classes\./)
+        expect(error.to_s).to include("Expected to find class Foo, but found no classes.")
       end
     end
 
     context "when the class is not derived from Formula" do
+      # The constant lives on the dynamically built test module.
+      # rubocop:disable Sorbet/ConstantsFromStrings
       let(:list) { [mod.const_get(:Bar)] }
+      # rubocop:enable Sorbet/ConstantsFromStrings
 
       it(:to_s) do
-        expect(error.to_s).to match(/Expected to find class Foo, but only found: Bar \(not derived from Formula!\)\./)
+        expect(error.to_s).to include("Expected to find class Foo, but only found: Bar (not derived from Formula!).")
       end
     end
 
     context "when the class is derived from Formula" do
+      # The constant lives on the dynamically built test module.
+      # rubocop:disable Sorbet/ConstantsFromStrings
       let(:list) { [mod.const_get(:Baz)] }
+      # rubocop:enable Sorbet/ConstantsFromStrings
 
-      it(:to_s) { expect(error.to_s).to match(/Expected to find class Foo, but only found: Baz\./) }
+      it(:to_s) { expect(error.to_s).to include("Expected to find class Foo, but only found: Baz.") }
     end
   end
 
@@ -161,7 +168,7 @@ RSpec.describe "Exception" do
   describe OperationInProgressError do
     subject(:error) { described_class.new(Pathname("foo")) }
 
-    it(:to_s) { expect(error.to_s).to match(/has already locked foo/) }
+    it(:to_s) { expect(error.to_s).to include("has already locked foo") }
   end
 
   describe FormulaInstallationAlreadyAttemptedError do
@@ -176,9 +183,9 @@ RSpec.describe "Exception" do
     subject(:error) { described_class.new(formula, [conflict]) }
 
     let(:formula) { instance_double(Formula, full_name: "foo/qux") }
-    let(:conflict) { instance_double(FormulaConflict, name: "bar", reason: "I decided to") }
+    let(:conflict) { instance_double(Formula::FormulaConflict, name: "bar", reason: "I decided to") }
 
-    it(:to_s) { expect(error.to_s).to match(/Please `brew unlink bar` before continuing\./) }
+    it(:to_s) { expect(error.to_s).to include("Please `brew unlink bar` before continuing.") }
   end
 
   describe CompilerSelectionError do
@@ -186,14 +193,14 @@ RSpec.describe "Exception" do
 
     let(:formula) { instance_double(Formula, full_name: "foo") }
 
-    it(:to_s) { expect(error.to_s).to match(/foo cannot be built with any available compilers\./) }
+    it(:to_s) { expect(error.to_s).to include("foo cannot be built with any available compilers.") }
   end
 
   describe CurlDownloadStrategyError do
     context "when the file does not exist" do
       subject(:error) { described_class.new("file:///tmp/foo") }
 
-      it(:to_s) { expect(error.to_s).to eq("File does not exist: /tmp/foo") }
+      it(:to_s) { expect(error.to_s).to eq("File cannot be read: /tmp/foo") }
     end
 
     context "when the download failed" do
@@ -217,7 +224,28 @@ RSpec.describe "Exception" do
     let(:expected_checksum) { instance_double(Checksum, to_s: "deadbeef") }
     let(:actual_checksum) { instance_double(Checksum, to_s: "deadcafe") }
 
-    it(:to_s) { expect(error.to_s).to match(/SHA256 mismatch/) }
+    it(:to_s) { expect(error.to_s).to include("SHA-256 mismatch") }
+    it(:actual) { expect(error.actual).to eq(actual_checksum) }
+
+    it "does not add an HTML hint for non-HTML downloads" do
+      Tempfile.create("brew-checksum-test") do |file|
+        file.binmode
+        file.write("PK\x03\x04binary-content")
+        file.flush
+        message = described_class.new(Pathname(file.path), expected_checksum, actual_checksum).to_s
+        expect(message).not_to include("HTML/XML")
+      end
+    end
+
+    it "adds an HTML hint when the download is an HTML page" do
+      Tempfile.create("brew-checksum-test") do |file|
+        file.binmode
+        file.write('<!doctype html><html lang="en"><head><title>Oh noes!</title>')
+        file.flush
+        message = described_class.new(Pathname(file.path), expected_checksum, actual_checksum).to_s
+        expect(message).to include("HTML/XML, not a binary")
+      end
+    end
   end
 
   describe ResourceMissingError do
@@ -242,7 +270,7 @@ RSpec.describe "Exception" do
 
     let(:formula) { instance_double(Formula, full_name: "foo") }
 
-    it(:to_s) { expect(error.to_s).to match(/This bottle does not contain the formula file/) }
+    it(:to_s) { expect(error.to_s).to include("This bottle does not contain the formula file") }
   end
 
   describe BuildFlagsError do

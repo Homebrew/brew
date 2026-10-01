@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/desc"
@@ -11,6 +12,14 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Desc do
         class Foo < Formula
         ^^^^^^^^^^^^^^^^^^^ FormulaAudit/Desc: Formula should have a `desc` (description).
           url 'https://brew.sh/foo-1.0.tgz'
+        end
+      RUBY
+    end
+
+    it "reports an offense when the formula class body is empty" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+              ^^^ FormulaAudit/Desc: Formula should have a `desc` (description).
         end
       RUBY
     end

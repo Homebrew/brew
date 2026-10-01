@@ -21,6 +21,9 @@ class Homebrew::DevCmd::UpdatePythonResources::Args < Homebrew::CLI::Args
   def ignore_errors?; end
 
   sig { returns(T::Boolean) }
+  def ignore_main_package_cooldown?; end
+
+  sig { returns(T::Boolean) }
   def ignore_non_pypi_packages?; end
 
   sig { returns(T::Boolean) }

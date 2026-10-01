@@ -2,17 +2,24 @@
 # frozen_string_literal: true
 
 require "digest"
+require "downloadable"
 require "erb"
 require "utils/github"
+require "utils/output"
 
 module Homebrew
   # Class for generating a formula from a template.
   class FormulaCreator
+    include Utils::Output::Mixin
+
     sig { returns(String) }
     attr_accessor :name
 
     sig { returns(Version) }
     attr_reader :version
+
+    sig { returns(String) }
+    attr_reader :url
 
     sig { returns(T::Boolean) }
     attr_reader :head
@@ -34,9 +41,8 @@ module Homebrew
       end
       @tap = T.let(tap, Tap)
 
-      if (match_github = url.match %r{github\.com/(?<user>[^/]+)/(?<repo>[^/]+).*})
-        user = T.must(match_github[:user])
-        repository = T.must(match_github[:repo])
+      if (match_github = url.match(%r{github\.com/(?<user>[^/]+)/(?<repo>[^/]+).*})) &&
+         (user = match_github[:user]) && (repository = match_github[:repo])
         if repository.end_with?(".git")
           # e.g. https://github.com/Homebrew/brew.git
           repository.delete_suffix!(".git")
@@ -79,6 +85,9 @@ module Homebrew
             latest_release = GitHub.get_latest_release(user, repository)
             version = Version.new(latest_release.fetch("tag_name"))
             odebug "github: version from latest_release: #{version}"
+
+            @url = "https://github.com/#{user}/#{repository}/archive/refs/tags/#{version}.tar.gz"
+            odebug "github: url changed to source archive #{@url}"
           rescue GitHub::API::HTTPNotFoundError
             odebug "github: latest_release lookup failed: #{url}"
           end
@@ -124,7 +133,9 @@ module Homebrew
             raise "Downloaded URL is not archive"
           end
 
-          @sha256 = T.let(filepath.sha256, T.nilable(String))
+          # The missing-checksum warning during the fetch above has already
+          # hashed the file, so reuse its digest.
+          @sha256 = T.let(Downloadable.verification_cache.sha256(filepath), T.nilable(String))
         end
 
         if @github
@@ -135,7 +146,7 @@ module Homebrew
       end
 
       path.dirname.mkpath
-      path.write ERB.new(template, trim_mode: ">").result(binding)
+      path.write ERB.new(template, trim_mode: "<>").result(binding)
       path
     end
 
@@ -151,32 +162,35 @@ module Homebrew
 
     sig { returns(String) }
     def template
-      <<~ERB
+      <<~'ERB'
         # Documentation: https://docs.brew.sh/Formula-Cookbook
-        #                https://rubydoc.brew.sh/Formula
+        #                https://docs.brew.sh/rubydoc/Formula
         # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
-        class #{Formulary.class_s(name)} < Formula
+        class <%= Formulary.class_s(name) %> < Formula
         <% if @mode == :python %>
           include Language::Python::Virtualenv
 
         <% end %>
-          desc "#{@desc}"
-          homepage "#{@homepage}"
+          desc <%= @desc.to_s.inspect %>
+          homepage <%= @homepage.to_s.inspect %>
         <% unless @head %>
-          url "#{@url}"
+          url <%= @url.inspect %>
         <% unless @version.detected_from_url? %>
-          version "#{@version}"
+          version <%= @version.to_s.delete_prefix("v").inspect %>
         <% end %>
-          sha256 "#{@sha256}"
+          sha256 <%= @sha256.to_s.inspect %>
         <% end %>
-          license "#{@license}"
+          license <%= @license.to_s.inspect %>
         <% if @head %>
-          head "#{@url}"
+          head <%= @url.inspect %>
         <% end %>
 
         <% if @mode == :cabal %>
           depends_on "cabal-install" => :build
           depends_on "ghc" => :build
+          depends_on "gmp"
+
+          uses_from_macos "libffi"
         <% elsif @mode == :cmake %>
           depends_on "cmake" => :build
         <% elsif @mode == :crystal %>
@@ -190,10 +204,16 @@ module Homebrew
           depends_on "node"
         <% elsif @mode == :perl %>
           uses_from_macos "perl"
+
+          # Add CPAN dependencies as resources
+          # resource "" do
+          #   url ""
+          #   sha256 ""
+          # end
         <% elsif @mode == :python %>
-          depends_on "#{latest_versioned_formula("python")}"
+          depends_on <%= latest_versioned_formula("python").inspect %>
         <% elsif @mode == :ruby %>
-          uses_from_macos "ruby"
+          depends_on "ruby"
         <% elsif @mode == :rust %>
           depends_on "rust" => :build
         <% elsif @mode == :zig %>
@@ -202,17 +222,46 @@ module Homebrew
           # depends_on "cmake" => :build
         <% end %>
 
-        <% if @mode == :perl || :python || :ruby %>
-          # Additional dependency
-          # resource "" do
-          #   url ""
-          #   sha256 ""
-          # end
+        <% if [:node, :python].exclude? @mode %>
+          deny_network_access!
+
+        <% end %>
+        <% if @mode == :cabal %>
+          def fetch
+            system "cabal", "v2-update"
+            system "cabal", "v2-install", "--only-download", *std_cabal_v2_args
+          end
+
+        <% elsif @mode == :crystal %>
+          def fetch
+            system "shards", "install", "--production", "--skip-postinstall"
+          end
+
+        <% elsif @mode == :go %>
+          def fetch
+            system "go", "mod", "download"
+          end
+
+        <% elsif @mode == :ruby %>
+          def fetch
+            ENV["BUNDLE_PATH"] = ".bundle"
+
+            system "bundle", "cache", "--no-install"
+          end
+
+        <% elsif @mode == :rust %>
+          def fetch
+            system "cargo", "fetch", *std_cargo_fetch_args
+          end
+
+        <% elsif @mode == :zig %>
+          def fetch
+            system "zig", "build", "--fetch"
+          end
 
         <% end %>
           def install
         <% if @mode == :cabal %>
-            system "cabal", "v2-update"
             system "cabal", "v2-install", *std_cabal_v2_args
         <% elsif @mode == :cmake %>
             system "cmake", "-S", ".", "-B", "build", *std_cmake_args
@@ -220,28 +269,28 @@ module Homebrew
             system "cmake", "--install", "build"
         <% elsif @mode == :autotools %>
             # Remove unrecognized options if they cause configure to fail
-            # https://rubydoc.brew.sh/Formula.html#std_configure_args-instance_method
+            # https://docs.brew.sh/rubydoc/Formula.html#std_configure_args-instance_method
             system "./configure", "--disable-silent-rules", *std_configure_args
             system "make", "install" # if this fails, try separate make/make install steps
         <% elsif @mode == :crystal %>
-            system "shards", "build", "--release"
-            bin.install "bin/#{name}"
+            system "shards", "build", *std_shards_args
+            bin.install <%= "bin/#{name}".inspect %>
         <% elsif @mode == :go %>
-            system "go", "build", *std_go_args(ldflags: "-s -w")
+            system "go", "build", *std_go_args
         <% elsif @mode == :meson %>
             system "meson", "setup", "build", *std_meson_args
             system "meson", "compile", "-C", "build", "--verbose"
             system "meson", "install", "-C", "build"
         <% elsif @mode == :node %>
             system "npm", "install", *std_npm_args
-            bin.install_symlink Dir["\#{libexec}/bin/*"]
+            bin.install_symlink libexec.glob("bin/*")
         <% elsif @mode == :perl %>
             ENV.prepend_create_path "PERL5LIB", libexec/"lib/perl5"
             ENV.prepend_path "PERL5LIB", libexec/"lib"
 
             # Stage additional dependency (`Makefile.PL` style).
             # resource("").stage do
-            #   system "perl", "Makefile.PL", "INSTALL_BASE=\#{libexec}"
+            #   system "perl", "Makefile.PL", "INSTALL_BASE=#{libexec}"
             #   system "make"
             #   system "make", "install"
             # end
@@ -258,15 +307,13 @@ module Homebrew
         <% elsif @mode == :python %>
             virtualenv_install_with_resources
         <% elsif @mode == :ruby %>
-            ENV["BUNDLE_VERSION"] = "system" # Avoid installing Bundler into the keg
             ENV["GEM_HOME"] = libexec
 
-            system "bundle", "config", "set", "without", "development", "test"
-            system "bundle", "install"
-            system "gem", "build", "\#{name}.gemspec"
-            system "gem", "install", "\#{name}-\#{version}.gem"
+            system "bundle", "install", "--local"
+            system "gem", "build", "#{name}.gemspec"
+            system "gem", "install", "--ignore-dependencies", "#{name}-#{version}.gem"
 
-            bin.install libexec/"bin/\#{name}"
+            bin.install libexec/"bin/#{name}"
             bin.env_script_all_files(libexec/"bin", GEM_HOME: ENV["GEM_HOME"])
         <% elsif @mode == :rust %>
             system "cargo", "install", *std_cargo_args
@@ -274,7 +321,7 @@ module Homebrew
             system "zig", "build", *std_zig_args
         <% else %>
             # Remove unrecognized options if they cause configure to fail
-            # https://rubydoc.brew.sh/Formula.html#std_configure_args-instance_method
+            # https://docs.brew.sh/rubydoc/Formula.html#std_configure_args-instance_method
             system "./configure", "--disable-silent-rules", *std_configure_args
             # system "cmake", "-S", ".", "-B", "build", *std_cmake_args
         <% end %>
@@ -285,8 +332,7 @@ module Homebrew
             #
             # This test will fail and we won't accept that! For Homebrew/homebrew-core
             # this will need to be a test that verifies the functionality of the
-            # software. Run the test with `brew test #{name}`. Options passed
-            # to `brew install` such as `--HEAD` also need to be provided to `brew test`.
+            # software. Run the test with `brew test <%= name %>`.
             #
             # The installed folder is not in the path, so use the entire path to any
             # executables being tested: `system bin/"program", "do", "something"`.

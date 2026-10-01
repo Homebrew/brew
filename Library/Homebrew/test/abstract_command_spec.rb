@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "abstract_command"
@@ -5,7 +6,7 @@ require "abstract_command"
 RSpec.describe Homebrew::AbstractCommand do
   describe "subclasses" do
     before do
-      test_cat = Class.new(described_class) do
+      test_cat = Class.new(Homebrew::AbstractCommand) do
         cmd_args do
           description "test"
           switch "--foo"
@@ -22,7 +23,7 @@ RSpec.describe Homebrew::AbstractCommand do
       end
 
       it "allows access to args" do
-        expect(TestCat.new(["--bar", "baz"]).args.bar).to eq("baz")
+        expect(TestCat.new(["--bar", "baz"]).args).to have_attributes(bar: "baz")
       end
 
       it "raises on invalid args" do
@@ -46,7 +47,7 @@ RSpec.describe Homebrew::AbstractCommand do
 
       describe "when command name is overridden" do
         before do
-          tac = Class.new(described_class) do
+          tac = Class.new(Homebrew::AbstractCommand) do
             def self.command_name = "t-a-c"
             def run; end
           end
@@ -67,7 +68,9 @@ RSpec.describe Homebrew::AbstractCommand do
           filename = File.basename(file, ".rb")
           require(file)
           command = described_class.command(filename)
-          expect(Pathname(File.join(__dir__, "../#{dir}/#{command.command_name}.rb"))).to exist
+          expect(command).not_to be_nil, "No command found for #{filename}"
+
+          expect(Pathname(File.join(__dir__, "../#{dir}/#{command&.command_name}.rb"))).to exist
         end
       end
     end

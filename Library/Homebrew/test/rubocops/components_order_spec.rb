@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "rubocops/components_order"
@@ -180,6 +181,31 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
       RUBY
     end
 
+    it "orders `post_install_steps` before `post_install`" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          def post_install
+          end
+
+          post_install_steps do
+          ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsOrder: `post_install_steps` (line 5) should be put before `post_install` (line 2)
+            touch "foo"
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          post_install_steps do
+            touch "foo"
+          end
+
+          def post_install
+          end
+        end
+      RUBY
+    end
+
     it "reports and corrects an offense when `test` precedes `depends_on`" do
       expect_offense(<<~RUBY)
         class Foo < Formula
@@ -219,7 +245,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           depends_on "automake" => :build
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsOrder: `depends_on` (line 4) should be put before `conflicts_with` (line 3)
           depends_on "libtool" => :build
-          depends_on "pkg-config" => :build
+          depends_on "pkgconf" => :build
           depends_on "gettext"
         end
       RUBY
@@ -229,7 +255,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           depends_on "autoconf" => :build
           depends_on "automake" => :build
           depends_on "libtool" => :build
-          depends_on "pkg-config" => :build
+          depends_on "pkgconf" => :build
           depends_on "gettext"
           conflicts_with "visionmedia-watch"
         end
@@ -342,7 +368,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
         class Foo < Formula
           homepage "https://brew.sh"
 
-          depends_on "pkg-config" => :build
+          depends_on "pkgconf" => :build
 
           def install
           end
@@ -357,7 +383,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
         class Foo < Formula
           homepage "https://brew.sh"
 
-          depends_on "pkg-config" => :build
+          depends_on "pkgconf" => :build
 
           uses_from_macos "libxml2"
 
@@ -417,6 +443,48 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsOrder do
           end
 
           def install
+          end
+        end
+      RUBY
+    end
+
+    it "reports and corrects an offense when `patch` precedes `resource` in `on_macos`" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          homepage "https://brew.sh"
+
+          on_macos do
+            depends_on "readline"
+
+            patch do
+              url "https://brew.sh/patch.diff"
+              sha256 "2c39089f64d9d4c3e632f120894b36b68dcc8ae8c6f5130c0c2e6f5bb7aebf2f"
+            end
+
+            resource "foo" do
+            ^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsOrder: `resource` (line 12) should be put before `patch` (line 7)
+              url "https://brew.sh/foo.tar.gz"
+              sha256 "586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35"
+            end
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          homepage "https://brew.sh"
+
+          on_macos do
+            depends_on "readline"
+
+            resource "foo" do
+              url "https://brew.sh/foo.tar.gz"
+              sha256 "586372eb92059873e29eba4f9dec8381541b4d3834660707faf8ba59146dfc35"
+            end
+            patch do
+              url "https://brew.sh/patch.diff"
+              sha256 "2c39089f64d9d4c3e632f120894b36b68dcc8ae8c6f5130c0c2e6f5bb7aebf2f"
+            end
           end
         end
       RUBY

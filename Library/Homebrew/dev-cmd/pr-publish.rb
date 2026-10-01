@@ -19,7 +19,7 @@ module Homebrew
         switch "--large-runner",
                description: "Run the upload job on a large runner."
         flag   "--branch=",
-               description: "Branch to use the workflow from (default: `master`)."
+               description: "Branch to use the workflow from (default: `main`)."
         flag   "--message=",
                depends_on:  "--autosquash",
                description: "Message to include when autosquashing revision bumps, deletions and rebuilds."
@@ -29,13 +29,15 @@ module Homebrew
                description: "Target workflow filename (default: `publish-commit-bottles.yml`)."
 
         named_args :pull_request, min: 1
+
+        hide_from_man_page!
       end
 
       sig { override.void }
       def run
         tap = Tap.fetch(args.tap || CoreTap.instance.name)
         workflow = args.workflow || "publish-commit-bottles.yml"
-        ref = args.branch || "master"
+        ref = args.branch || "main"
 
         inputs = {
           autosquash:   args.autosquash?,
@@ -47,7 +49,7 @@ module Homebrew
           arg = "#{tap.default_remote}/pull/#{arg}" if arg.to_i.positive?
           url_match = arg.match HOMEBREW_PULL_OR_COMMIT_URL_REGEX
           _, user, repo, issue = *url_match
-          odie "Not a GitHub pull request: #{arg}" unless issue
+          odie "Not a GitHub pull request: #{arg}" if !user || !repo || !issue
 
           inputs[:pull_request] = issue
 
@@ -61,7 +63,7 @@ module Homebrew
             inputs[:large_runner] = true
           end
 
-          if args.tap.present? && !T.must("#{user}/#{repo}".casecmp(tap.full_name)).zero?
+          if args.tap.present? && !"#{user}/#{repo}".casecmp?(tap.full_name)
             odie "Pull request URL is for #{user}/#{repo} but `--tap=#{tap.full_name}` was specified!"
           end
 

@@ -11,23 +11,8 @@ class Homebrew::Cmd::Services
 end
 
 class Homebrew::Cmd::Services::Args < Homebrew::CLI::Args
-  sig { returns(T::Boolean) }
-  def all?; end
-
   sig { returns(T.nilable(String)) }
-  def file; end
-
-  sig { returns(T::Boolean) }
-  def json?; end
-
-  sig { returns(T::Boolean) }
-  def keep?; end
-
-  sig { returns(T.nilable(String)) }
-  def max_wait; end
-
-  sig { returns(T::Boolean) }
-  def no_wait?; end
+  def subcommand; end
 
   sig { returns(T.nilable(String)) }
   def sudo_service_user; end

@@ -17,14 +17,15 @@ class MacOSVersion < Version
     end
   end
 
-  # NOTE: When removing symbols here, ensure that they are added
-  #       to `DEPRECATED_MACOS_VERSIONS` in `MacOSRequirement`.
-  SYMBOLS = T.let({
+  # Retain named releases after support ends so historical data can still be labelled.
+  RELEASES = T.let({
+    golden_gate: "27",
     tahoe:       "26",
     sequoia:     "15",
     sonoma:      "14",
     ventura:     "13",
     monterey:    "12",
+    # odisabled: remove support for Big Sur and macOS x86_64 September (or later) 2027
     big_sur:     "11",
     catalina:    "10.15",
     mojave:      "10.14",
@@ -33,16 +34,31 @@ class MacOSVersion < Version
     el_capitan:  "10.11",
   }.freeze, T::Hash[Symbol, String])
 
+  # Big Sur reports 10.16 under SYSTEM_VERSION_COMPAT.
+  RELEASE_ALIASES = T.let({
+    "10.16" => "11",
+  }.freeze, T::Hash[String, String])
+
+  # NOTE: When removing support, exclude the symbol here and add it to
+  #       `DISABLED_MACOS_VERSIONS` in `MacOSRequirement`.
+  # NOTE: Active symbols must match `macos_version_name` in `cmd/update.sh`.
+  SYMBOLS = T.let(RELEASES.except(
+    :catalina,
+    :mojave,
+    :high_sierra,
+    :sierra,
+    :el_capitan,
+  ).freeze, T::Hash[Symbol, String])
+
   sig { params(macos_version: MacOSVersion).returns(Version) }
   def self.kernel_major_version(macos_version)
     version_major = macos_version.major.to_i
-    if version_major >= 26
+    if version_major >= 27
+      Version.new(version_major.to_s)
+    elsif version_major == 26
       Version.new((version_major - 1).to_s)
-    elsif version_major > 10
-      Version.new((version_major + 9).to_s)
     else
-      version_minor = macos_version.minor.to_i
-      Version.new((version_minor + 4).to_s)
+      Version.new((version_major + 9).to_s)
     end
   end
 
@@ -52,11 +68,17 @@ class MacOSVersion < Version
     new(str)
   end
 
+  sig { returns(T::Hash[T.untyped, T.nilable(Integer)]) }
+  attr_reader :comparison_cache
+
+  sig { returns(T.nilable(Symbol)) }
+  attr_reader :sym
+
   sig { params(version: T.nilable(String)).void }
   def initialize(version)
-    raise MacOSVersion::Error, version unless /\A\d{2,}(?:\.\d+){0,2}\z/.match?(version)
+    raise MacOSVersion::Error, version if version.nil? || !/\A\d{2,}(?:\.\d+){0,2}\z/.match?(version)
 
-    super(T.must(version))
+    super
 
     @comparison_cache = T.let({}, T::Hash[T.untyped, T.nilable(Integer)])
     @pretty_name = T.let(nil, T.nilable(String))
@@ -88,18 +110,33 @@ class MacOSVersion < Version
   def strip_patch
     return self if null?
 
-    # Big Sur is 11.x but Catalina is 10.15.x.
-    if T.must(major) >= 11
+    # Releases before Big Sur are all 10.x.
+    if major.to_i >= 11
       self.class.new(major.to_s)
     else
       major_minor
     end
   end
 
+  sig { returns(String) }
+  def release_version
+    version = strip_patch.to_s
+    RELEASE_ALIASES.fetch(version, version)
+  end
+
+  sig { returns(T.nilable(String)) }
+  def release_name
+    symbol = RELEASES.key(release_version)
+    return if symbol.nil?
+
+    symbol.to_s.split("_").map(&:capitalize).join(" ")
+  end
+
   sig { returns(Symbol) }
   def to_sym
     return @sym if @sym
 
+    # Compatibility aliases are display-only and must not become supported bottle tags.
     sym = SYMBOLS.invert.fetch(strip_patch.to_s, :dunno)
 
     @sym = sym unless frozen?
@@ -111,7 +148,7 @@ class MacOSVersion < Version
   def pretty_name
     return @pretty_name if @pretty_name
 
-    pretty_name = to_sym.to_s.split("_").map(&:capitalize).join(" ").freeze
+    pretty_name = (release_name || "Dunno").freeze
 
     @pretty_name = pretty_name unless frozen?
 
@@ -157,7 +194,7 @@ class MacOSVersion < Version
   # Represents the absence of a version.
   #
   # NOTE: Constructor needs to called with an arbitrary macOS-like version which is then set to `nil`.
-  NULL = T.let(MacOSVersion.new("10.0").tap do |v|
+  NULL = T.let(MacOSVersion.new("11").tap do |v|
     T.let(v, MacOSVersion).instance_variable_set(:@version, nil)
   end.freeze, MacOSVersion)
 end

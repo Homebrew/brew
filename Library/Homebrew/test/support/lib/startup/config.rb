@@ -3,7 +3,6 @@
 
 raise "HOMEBREW_BREW_FILE was not exported! Please call bin/brew directly!" unless ENV["HOMEBREW_BREW_FILE"]
 
-HOMEBREW_ORIGINAL_BREW_FILE = Pathname.new(ENV.fetch("HOMEBREW_ORIGINAL_BREW_FILE")).freeze
 HOMEBREW_BREW_FILE = Pathname.new(ENV.fetch("HOMEBREW_BREW_FILE")).freeze
 
 TEST_TMPDIR = ENV.fetch("HOMEBREW_TEST_TMPDIR") do |k|
@@ -31,10 +30,21 @@ HOMEBREW_CACHE         = (HOMEBREW_PREFIX.parent/"cache").freeze
 HOMEBREW_CACHE_FORMULA = (HOMEBREW_PREFIX.parent/"formula_cache").freeze
 HOMEBREW_LINKED_KEGS   = (HOMEBREW_PREFIX/"var/homebrew/linked").freeze
 HOMEBREW_PINNED_KEGS   = (HOMEBREW_PREFIX/"var/homebrew/pinned").freeze
+HOMEBREW_PINNED_CASKS  = (HOMEBREW_PREFIX/"var/homebrew/pinned_casks").freeze
 HOMEBREW_LOCKS         = (HOMEBREW_PREFIX/"var/homebrew/locks").freeze
+HOMEBREW_TEMP_CELLAR   = (HOMEBREW_PREFIX/"var/homebrew/tmp/.cellar").freeze
+HOMEBREW_TEMP_CASKROOM = (HOMEBREW_PREFIX/"var/homebrew/tmp/.caskroom").freeze
 HOMEBREW_CELLAR        = (HOMEBREW_PREFIX/"Cellar").freeze
 HOMEBREW_LOGS          = (HOMEBREW_PREFIX.parent/"logs").freeze
-HOMEBREW_TEMP          = (HOMEBREW_PREFIX.parent/"temp").freeze
+HOMEBREW_TEMP          = Pathname(
+  # Match Sandbox::INHERITANCE_FD before sandbox.rb can be loaded during startup.
+  begin
+    ENV.fetch("HOMEBREW_TEMP") if File.identical?(IO.new(198, autoclose: false),
+                                                  HOMEBREW_LIBRARY_PATH/"sandbox.rb")
+  rescue Errno::EBADF
+    nil
+  end || (HOMEBREW_PREFIX.parent/"temp"),
+).freeze
 HOMEBREW_TAP_DIRECTORY = (HOMEBREW_LIBRARY/"Taps").freeze
 HOMEBREW_RUBY_EXEC_ARGS = [
   RUBY_PATH,
@@ -46,9 +56,5 @@ HOMEBREW_RUBY_EXEC_ARGS = [
 TEST_FIXTURE_DIR = (HOMEBREW_LIBRARY_PATH/"test/support/fixtures").freeze
 
 TESTBALL_SHA256 = "91e3f7930c98d7ccfb288e115ed52d06b0e5bc16fec7dce8bdda86530027067b"
-TESTBALL_PATCHES_SHA256 = "799c2d551ac5c3a5759bea7796631a7906a6a24435b52261a317133a0bfb34d9"
-PATCH_A_SHA256 = "83404f4936d3257e65f176c4ffb5a5b8d6edd644a21c8d8dcc73e22a6d28fcfa"
-PATCH_B_SHA256 = "57958271bb802a59452d0816e0670d16c8b70bdf6530bcf6f78726489ad89b90"
-PATCH_D_SHA256 = "07c72c4463339e6e2ce235f3b26e316d4940017bf4b5236e27e757a44d67636c"
 
 TEST_SHA256 = "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"

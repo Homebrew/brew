@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 class FailballOfflineInstall < Formula
+  Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
+
   def initialize(name = "failball_offline_install", path = Pathname.new(__FILE__).expand_path, spec = :stable,
                  alias_path: nil, tap: nil, force_bottle: false)
     super

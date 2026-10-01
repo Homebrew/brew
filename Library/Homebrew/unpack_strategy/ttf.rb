@@ -11,7 +11,7 @@ module UnpackStrategy
       [".ttc", ".ttf"]
     end
 
-    sig { override.params(path: Pathname).returns(T::Boolean) }
+    sig { override.params(path: Path).returns(T::Boolean) }
     def self.can_extract?(path)
       # TrueType Font
       path.magic_number.match?(/\A\000\001\000\000\000/n) ||

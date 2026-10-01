@@ -1,0 +1,6 @@
+# This file is synced from the `.github` repository, do not modify it directly.
+# SPDX licences denied for every dependency ecosystem.
+AGPL-1.0-only
+AGPL-1.0-or-later
+AGPL-3.0-only
+AGPL-3.0-or-later

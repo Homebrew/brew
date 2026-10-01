@@ -8,7 +8,7 @@ dependency_require_map = {
 
 additional_requires_map = {
   "parser"        => ["parser/current"],
-  "rubocop-rspec" => ["rubocop/rspec/expect_offense"],
+  "rubocop-rspec" => ["rubocop/rspec/expect_offense", "rubocop/rspec/cop_helper"],
 }.freeze
 
 # Freeze lockfile
@@ -25,7 +25,7 @@ definition.resolve.for(definition.current_dependencies).each do |spec|
 
   name = dependency_require_map[name] if dependency_require_map.key?(name)
   require name
-  additional_requires_map[name]&.each { require(_1) }
+  additional_requires_map[name]&.each { require(it) }
 rescue LoadError
   raise unless name.include?("-")
 

@@ -4,7 +4,7 @@ last_review_date: "2025-02-08"
 
 # Querying `brew`
 
-_In this document we will be using [jq](https://stedolan.github.io/jq/) to parse JSON, available from Homebrew using `brew install jq`._
+_In this document we will be using [jq](https://jqlang.org/) to parse JSON, available from Homebrew using `brew install jq`._
 
 ## Overview
 
@@ -60,7 +60,7 @@ brew info --json=v1 --installed | jq "map(select(.keg_only == false and .linked_
 
 ## formulae.brew.sh
 
-[formulae.brew.sh](https://formulae.brew.sh) has a [documented JSON API](https://formulae.brew.sh/docs/api/) which provides access to the `brew info --json=v1` output without needing access to Homebrew.
+[formulae.brew.sh](https://formulae.brew.sh/) has a [documented JSON API](https://formulae.brew.sh/docs/api/) which provides access to the `brew info --json=v1` output without needing access to Homebrew.
 
 ## Concluding remarks
 

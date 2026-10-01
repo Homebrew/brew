@@ -1,0 +1,51 @@
+name: Approve stale lead maintainer PRs
+
+on:
+  push:
+    branches:
+      - approve-stale-lead-maintainer-prs
+  schedule:
+    # Run every six hours on weekdays to find stale lead maintainer PRs.
+    - cron: "17 0,6,12,18 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: Pull request number to review
+        required: true
+        type: number
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash -euo pipefail {0}
+
+jobs:
+  approve:
+    if: github.repository == 'Homebrew/brew'
+    runs-on: ubuntu-latest
+    permissions:
+      checks: read
+      contents: read
+      issues: read
+      pull-requests: write
+      statuses: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.inputs.pull_request || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Ruby
+        uses: Homebrew/actions/setup-ruby@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+        with:
+          setup-homebrew: true
+          portable-ruby: true
+          working-directory: Library/Homebrew
+
+      - name: Evaluate stale lead maintainer PRs
+        run: bundle exec ruby .github/scripts/approve_stale_lead_maintainer_prs.rb
+        env:
+          BUNDLE_GEMFILE: Library/Homebrew/Gemfile

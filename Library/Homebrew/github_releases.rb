@@ -2,17 +2,20 @@
 # frozen_string_literal: true
 
 require "utils/github"
+require "utils/output"
 require "json"
 
 # GitHub Releases client.
 class GitHubReleases
   include Context
+  include Utils::Output::Mixin
 
   URL_REGEX = %r{https://github\.com/([\w-]+)/([\w-]+)?/releases/download/(.+)}
 
   sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
   def upload_bottles(bottles_hash)
-    bottles_hash.each_value do |bottle_hash|
+    bottle_count = bottles_hash.count
+    bottles_hash.each_value.with_index do |bottle_hash, index|
       root_url = bottle_hash["bottle"]["root_url"]
       url_match = root_url.match URL_REGEX
       _, user, repo, tag = *url_match
@@ -34,6 +37,11 @@ class GitHubReleases
         odebug "Uploading #{remote_file}"
         GitHub.upload_release_asset user, repo, release["id"], local_file:, remote_file:
       end
+
+      next if bottle_count < 3
+
+      uploaded_count = index + 1
+      ohai "Upload progress: #{uploaded_count} formula(e) uploaded, #{bottle_count - uploaded_count} remaining"
     end
   end
 end

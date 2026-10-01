@@ -1,8 +1,11 @@
+# typed: false
 # frozen_string_literal: true
 
 RSpec.describe Cask::DSL::Version, :cask do
+  let(:version) { described_class.new(raw_version) }
+
   shared_examples "expectations hash" do |input_name, expectations|
-    expectations.each do |input_value, expected_output|
+    test_each(expectations) do |(input_value, expected_output)|
       context "when #{input_name} is #{input_value.inspect}" do
         let(input_name.to_sym) { input_value }
 
@@ -49,8 +52,6 @@ RSpec.describe Cask::DSL::Version, :cask do
     end
   end
 
-  let(:version) { described_class.new(raw_version) }
-
   describe "#initialize" do
     it "raises an error when the version contains a slash" do
       expect do
@@ -72,7 +73,7 @@ RSpec.describe Cask::DSL::Version, :cask do
   end
 
   shared_examples "version expectations hash" do |method, hash|
-    subject { version.send(method) }
+    subject { version.public_send(method) }
 
     include_examples "expectations hash", :raw_version,
                      { :latest  => "latest",
@@ -221,7 +222,7 @@ RSpec.describe Cask::DSL::Version, :cask do
   end
 
   describe "#unstable?" do
-    [
+    test_each([
       "0.0.11-beta.7",
       "0.0.23b-alpha",
       "0.1-beta",
@@ -349,17 +350,17 @@ RSpec.describe Cask::DSL::Version, :cask do
       "7.3.BETA-3",
       "8.5a8",
       "8u202,b08:1961070e4c9b4e26a04e7f5a083f551e",
-    ].each do |unstable_version|
+    ]) do |unstable_version|
       it "detects #{unstable_version.inspect} as unstable" do
         expect(described_class.new(unstable_version)).to be_unstable
       end
     end
 
-    [
+    test_each([
       "0.20.1,63d9b84e-bbcf-4a00-9427-0bb3f713c769",
       "1.5.4,13:53d8a307-a8ae-4f9b-9a59-a1adb8c67012",
       "b226",
-    ].each do |stable_version|
+    ]) do |stable_version|
       it "does not detect #{stable_version.inspect} as unstable" do
         expect(described_class.new(stable_version)).not_to be_unstable
       end

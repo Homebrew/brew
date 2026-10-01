@@ -2,14 +2,18 @@
 # frozen_string_literal: true
 
 module Utils
+  # @api internal
   sig {
     params(binary: T.any(String, Pathname), library: T.any(String, Pathname)).returns(T::Boolean)
   }
   def self.binary_linked_to_library?(binary, library)
-    Pathname.new(binary).dynamically_linked_libraries.any? do |dll|
-      next false unless dll.start_with?(HOMEBREW_PREFIX.to_s)
+    library = library.to_s
+    library = File.realpath(library) if library.start_with?(HOMEBREW_PREFIX.to_s)
 
-      File.realpath(dll) == File.realpath(Pathname.new(library))
+    binary_path = BinaryPathname.wrap(binary)
+    binary_path.dynamically_linked_libraries.any? do |dll|
+      dll = File.realpath(dll) if dll.start_with?(HOMEBREW_PREFIX.to_s)
+      dll == library
     end
   end
 end

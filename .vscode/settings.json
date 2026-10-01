@@ -66,5 +66,6 @@
     }
   },
   "simplecov-vscode.path": "Library/Homebrew/test/coverage/.resultset.json",
-  "simplecov-vscode.enabled": false
+  "simplecov-vscode.enabled": false,
+  "specstory.cloudSync.enabled": "never"
 }

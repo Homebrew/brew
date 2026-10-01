@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 class Testball < Formula
+  Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
+
   def initialize(name = "testball", path = Pathname.new(__FILE__).expand_path, spec = :stable,
                  alias_path: nil, tap: nil, force_bottle: false)
     super

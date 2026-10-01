@@ -10,7 +10,7 @@ module Cask
 
     sig { params(block: T.nilable(T.proc.params(arg0: Elem).returns(T.untyped))).void }
     def each(&block)
-      return enum_for(T.must(__method__)) { size } unless block
+      return enum_for(:each) { size } unless block
 
       to_a.each(&block)
       self

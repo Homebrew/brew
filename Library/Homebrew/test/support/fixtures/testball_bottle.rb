@@ -2,6 +2,8 @@
 # frozen_string_literal: true
 
 class TestballBottle < Formula
+  Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
+
   def initialize(name = "testball_bottle", path = Pathname.new(__FILE__).expand_path, spec = :stable,
                  alias_path: nil, tap: nil, force_bottle: false)
     super
@@ -15,8 +17,6 @@ class TestballBottle < Formula
       root_url "file://#{TEST_FIXTURE_DIR}/bottles"
       sha256 cellar: :any_skip_relocation, Utils::Bottles.tag.to_sym => "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97"
     end
-
-    cxxstdlib_check :skip
   end.freeze
   private_constant :DSL_PROC
 

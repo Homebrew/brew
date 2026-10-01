@@ -12,6 +12,9 @@ end
 
 class Homebrew::Cmd::SearchCmd::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
+  def alpine?; end
+
+  sig { returns(T::Boolean) }
   def archlinux?; end
 
   sig { returns(T::Boolean) }

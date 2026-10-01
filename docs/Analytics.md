@@ -1,72 +1,76 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
 # Anonymous Analytics
 
-Homebrew gathers anonymous analytics using InfluxDB. You will be notified the first time you run `brew update` or install Homebrew. Analytics are not enabled until after this notice is shown, to ensure that you can [opt out](Analytics.md#opting-out) without ever sending analytics data.
+Homebrew collects aggregate, anonymous usage analytics in InfluxDB.
+Homebrew displays a notice before analytics are enabled so a user can opt out before sending an event.
 
-## Why?
+## Purpose
 
-Homebrew is provided free of charge and run entirely by volunteers in their spare time. As a result, we do not have the resources to do detailed user studies of Homebrew users to decide on how best to design future features and prioritise current work. Anonymous analytics allow us to prioritise fixes and features based on how, where and when people use Homebrew. For example:
+The data helps maintainers prioritise widely used formulae, casks, commands and supported platforms.
+It also shows where installation or build failures are concentrated and whether a feature is used enough to justify its maintenance cost.
 
-- If a formula is widely used and is failing often it will enable us to prioritise fixing that formula over others.
-- Collecting the OS version allows us to decide which versions of macOS to prioritise for support and identify build failures that occur only on single versions.
-- If a command is not widely used, it can be deprecated.
+Analytics must not replace technical evidence or maintainer judgement.
+Low usage alone does not establish that removing a command or package is safe.
 
-## How Long?
+## Retention
 
-Homebrew's anonymous analytics has a 365 day retention period in InfluxDB.
+Homebrew retains analytics events in InfluxDB for 365 days.
+Public aggregate reports may cover shorter periods.
 
-## What?
+## Data sent
 
-Homebrew's analytics record some shared information for every formula or cask event:
+Formula, cask and build-error events can include:
 
-- Whether the data is being sent from CI, e.g. `true` if the CI environment variable is set.
-- Whether you are using the default install prefix (e.g. `/opt/homebrew`) or a custom one (e.g. `/home/mike/.brew`). If your prefix is custom, it will be sent as `custom-prefix` to preserve anonymity.
-- Whether you are a Homebrew Developer, e.g. `true` if the `HOMEBREW_DEVELOPER` environment variable is set.
-- Whether `devcmdrun` is set, e.g. `true` if you have ever run one of Homebrew's developer commands.
-- Your CPU's architecture, e.g. `x86_64`.
-- The OS you are using and its version number, e.g. `macOS 13`.
-- The version of Homebrew, e.g. `4.0.0`.
+- the package and non-private GitHub tap names
+- selected install options
+- whether the install was explicitly requested rather than installed as a dependency
+- whether Homebrew is running in CI, developer mode or after a developer command has been used
+- CPU architecture and operating system name or major version
+- Homebrew version
+- whether Homebrew uses its default prefix, with every other prefix reported only as `custom-prefix`
 
-All analytics data previously sent to Google Analytics has been destroyed.
+Command events include the command and option names after option values have been removed.
+For selected common commands, Homebrew randomly samples one supported configuration variable and records its name and whether the user left it unset, set it to its default or set it to a non-default value; variables Homebrew exports itself (e.g. `HOMEBREW_EDITOR` from `EDITOR`) count as unset.
+It does not record the variable's value.
 
-Homebrew's analytics records the following different events:
+BrewTestBot can send CI-only test-step results when its analytics setting is enabled.
+Build-error events do not include build logs or exception details.
 
-- The `install` event category and the Homebrew formula from a non-private GitHub tap you install plus any used options (e.g. `wget --HEAD`) as the action. This allows us to identify which formulae where work should be prioritised, as well as how to handle possible deprecation or removal of any.
-- The `install_on_request` event category and the Homebrew formula from a non-private GitHub tap you have requested to install (e.g. when explicitly named with a `brew install`) plus options. This allows us to differentiate the formulae that users intend to install from those pulled in as dependencies.
-- The `cask_install` event category and the Homebrew cask from a non-private GitHub tap you install as the action. This allows us to identify which casks where work should be prioritised, as well as how to handle possible deprecation or removal of any.
-- The `build_error` event category and the Homebrew formula plus options that failed to install as the action, e.g. `wget --HEAD`. This allows us to identify formulae that may need fixing. The details or logs of the build error are not sent.
-- The `command_run` event category and the command and flags you run as the action. This allows us to identify which commands and flags are most commonly used and which are not used at all.
-- The `test_bot_test` event category is only used in Homebrew's CI environment and is used to record the results of running tests on pull requests.
+The analytics payload does not contain a user identifier or an IP-address field.
+Homebrew does not use the payload to build a history for an individual user.
 
-You can also view all the information that is sent by Homebrew's analytics by setting `HOMEBREW_ANALYTICS_DEBUG=1` in your environment. Please note this will also stop any analytics from being sent.
+The current implementation is in [`analytics.rb`](https://github.com/Homebrew/brew/blob/HEAD/Library/Homebrew/utils/analytics.rb) and [`analytics.sh`](https://github.com/Homebrew/brew/blob/HEAD/Library/Homebrew/utils/analytics.sh).
+These files are the authoritative source when this page and the implementation differ.
 
-It is impossible for the Homebrew developers to match any particular event to any particular user. We do not store or receive IP addresses.
+## Inspecting analytics
 
-## When/Where?
+Set `HOMEBREW_ANALYTICS_DEBUG=1` for one command to print the analytics request and send it synchronously.
+The server response is discarded, so no response output is shown.
+Debug mode is not an opt-out mechanism; use one of the settings below when the request must not be sent.
 
-Homebrew's analytics are sent throughout Homebrew's execution to InfluxDB over HTTPS.
+Aggregate reports and their JSON representations are available from the [Homebrew analytics site](https://formulae.brew.sh/analytics/).
+Most Homebrew maintainers have access only to these public aggregates.
 
-## Who?
+## Transport and failure behaviour
 
-Aggregates of analytics events are [publicly available](https://formulae.brew.sh/analytics/). A JSON API is also available. The majority of Homebrew maintainers are not granted more detailed analytics data beyond these public resources.
-
-## How?
-
-The code is viewable in [`analytics.rb`](https://github.com/Homebrew/brew/blob/HEAD/Library/Homebrew/utils/analytics.rb) and [`analytics.sh`](https://github.com/Homebrew/brew/blob/HEAD/Library/Homebrew/utils/analytics.sh). They are done in a separate background process and fail fast to avoid delaying any execution. They will fail immediately and silently if you have no network connection.
+Homebrew sends analytics to InfluxDB over HTTPS in a detached background process.
+The request has a short timeout and failures are silent so analytics do not delay or prevent the requested Homebrew operation.
 
 ## Opting out
 
-Homebrew analytics helps us maintainers and leaving it on is appreciated. However, if you want to opt out of Homebrew's analytics, you can set this variable in your environment:
+Disable analytics persistently with:
+
+```sh
+brew analytics off
+```
+
+Alternatively, set the environment variable:
 
 ```sh
 export HOMEBREW_NO_ANALYTICS=1
 ```
 
-Alternatively, this will prevent analytics from ever being sent:
-
-```sh
-brew analytics off
-```
+Run `brew analytics state` to inspect the current setting.

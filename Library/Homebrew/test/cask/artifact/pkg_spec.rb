@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::Pkg, :cask do
@@ -8,9 +9,36 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
     InstallHelper.install_without_artifacts(cask)
   end
 
+  describe ".from_args" do
+    it "deprecates allow_untrusted" do
+      expect { described_class.from_args(cask, "MyFancyPkg/Fancy.pkg", allow_untrusted: true) }
+        .to raise_error(MethodDeprecatedError, /allow_untrusted/)
+    end
+  end
+
   describe "install_phase" do
     it "runs the system installer on the specified pkgs" do
       pkg = cask.artifacts.find { |a| a.is_a?(described_class) }
+
+      current_user = User.current&.to_s
+      expect(fake_system_command).to receive(:run!).with(
+        "/usr/sbin/installer",
+        args:         ["-pkg", cask.staged_path.join("MyFancyPkg", "Fancy.pkg"), "-target", "/"],
+        sudo:         true,
+        sudo_as_root: true,
+        print_stdout: true,
+        env:          {
+          "LOGNAME"  => an_instance_of(String).and(eq(current_user)),
+          "USER"     => an_instance_of(String).and(eq(current_user)),
+          "USERNAME" => an_instance_of(String).and(eq(current_user)),
+        },
+      )
+
+      pkg.install_phase(command: fake_system_command)
+    end
+
+    it "does not pass allowUntrusted when the option is explicitly false" do
+      pkg = described_class.new(cask, "MyFancyPkg/Fancy.pkg", allow_untrusted: false)
 
       expect(fake_system_command).to receive(:run!).with(
         "/usr/sbin/installer",
@@ -19,9 +47,9 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
         sudo_as_root: true,
         print_stdout: true,
         env:          {
-          "LOGNAME"  => ENV.fetch("USER"),
-          "USER"     => ENV.fetch("USER"),
-          "USERNAME" => ENV.fetch("USER"),
+          "LOGNAME"  => an_instance_of(String).and(eq(User.current&.to_s)),
+          "USER"     => an_instance_of(String).and(eq(User.current&.to_s)),
+          "USERNAME" => an_instance_of(String).and(eq(User.current&.to_s)),
         },
       )
 
@@ -58,6 +86,7 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
       expect(file).to receive(:unlink)
       expect(Tempfile).to receive(:open).and_yield(file)
 
+      current_user = User.current&.to_s
       expect(fake_system_command).to receive(:run!).with(
         "/usr/sbin/installer",
         args:         [
@@ -69,9 +98,9 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
         sudo_as_root: true,
         print_stdout: true,
         env:          {
-          "LOGNAME"  => ENV.fetch("USER"),
-          "USER"     => ENV.fetch("USER"),
-          "USERNAME" => ENV.fetch("USER"),
+          "LOGNAME"  => an_instance_of(String).and(eq(current_user)),
+          "USER"     => an_instance_of(String).and(eq(current_user)),
+          "USERNAME" => an_instance_of(String).and(eq(current_user)),
         },
       )
 

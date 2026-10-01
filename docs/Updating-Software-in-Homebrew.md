@@ -10,7 +10,7 @@ First, check the pull requests in the Homebrew tap repositories to make sure a P
 
 The [How to Open a Homebrew Pull Request](How-To-Open-a-Homebrew-Pull-Request.md) documentation should explain most everything you need to know about the process of creating a PR for a version update. For simple updates, this typically involves changing the `url` and `sha256` values.
 
-However, some updates require additional changes to the package. You can look back at previous pull requests to see how others have handled things in the past, but be sure to look at a variety of PRs. Sometimes packages aren't updated properly, so you may need to use your judgment to determine how best to proceed.
+However, some updates require additional changes to the package. You can look back at previous pull requests to see how others have handled things in the past, but be sure to look at a variety of PRs. Sometimes packages aren't updated properly, so you may need to use your judgement to determine how best to proceed.
 
 Once you've created the pull request in the appropriate Homebrew repository your commit(s) will be tested on our continuous integration servers, showing a green check mark if everything passed or a red X if there were failures. Maintainers will review your pull request and provide feedback about any changes that need to be made before it can be merged.
 

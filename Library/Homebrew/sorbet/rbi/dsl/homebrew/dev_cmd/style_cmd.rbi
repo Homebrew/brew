@@ -18,6 +18,9 @@ class Homebrew::DevCmd::StyleCmd::Args < Homebrew::CLI::Args
   def casks?; end
 
   sig { returns(T::Boolean) }
+  def changed?; end
+
+  sig { returns(T::Boolean) }
   def display_cop_names?; end
 
   sig { returns(T.nilable(T::Array[String])) }
@@ -37,4 +40,7 @@ class Homebrew::DevCmd::StyleCmd::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def reset_cache?; end
+
+  sig { returns(T::Boolean) }
+  def todo?; end
 end

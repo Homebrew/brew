@@ -11,9 +11,6 @@ class Homebrew::DevCmd::PrUpload
 end
 
 class Homebrew::DevCmd::PrUpload::Args < Homebrew::CLI::Args
-  sig { returns(T.nilable(String)) }
-  def committer; end
-
   sig { returns(T::Boolean) }
   def dry_run?; end
 

@@ -53,6 +53,12 @@ class Homebrew::DevCmd::BumpCaskPr::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def version_intel; end
 
+  sig { returns(T.nilable(String)) }
+  def version_linux_arm; end
+
+  sig { returns(T.nilable(String)) }
+  def version_linux_intel; end
+
   sig { returns(T::Boolean) }
   def write_only?; end
 end

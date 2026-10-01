@@ -1,4 +1,4 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
 
 require "context"
@@ -12,12 +12,26 @@ module ObserverPathnameExtension
     include Context
 
     sig { returns(Integer) }
-    attr_accessor :n, :d
+    def n
+      @n ||= 0
+    end
+
+    sig { params(n: Integer).void }
+    attr_writer :n
+
+    sig { returns(Integer) }
+    def d
+      @d ||= 0
+    end
+
+    sig { params(d: Integer).void }
+    attr_writer :d
 
     sig { void }
     def reset_counts!
-      @n = @d = 0
-      @put_verbose_trimmed_warning = false
+      @n = T.let(0, T.nilable(Integer))
+      @d = T.let(0, T.nilable(Integer))
+      @put_verbose_trimmed_warning = T.let(false, T.nilable(T::Boolean))
     end
 
     sig { returns(Integer) }
@@ -75,17 +89,5 @@ module ObserverPathnameExtension
     super
     puts "ln -s #{src.relative_path_from(dirname)} #{basename}" if ObserverPathnameExtension.verbose?
     ObserverPathnameExtension.n += 1
-  end
-
-  sig { void }
-  def install_info
-    super
-    puts "info #{self}" if ObserverPathnameExtension.verbose?
-  end
-
-  sig { void }
-  def uninstall_info
-    super
-    puts "uninfo #{self}" if ObserverPathnameExtension.verbose?
   end
 end

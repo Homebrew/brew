@@ -7,14 +7,18 @@ require "utils/tty"
 module Tapioca
   module Compilers
     class Tty < Tapioca::Dsl::Compiler
-      ConstantType = type_member { { fixed: Module } }
+      ConstantType = type_member { { fixed: T::Module[T.anything] } }
 
-      sig { override.returns(T::Enumerable[Module]) }
+      sig { override.returns(T::Enumerable[T::Module[T.anything]]) }
       def self.gather_constants = [::Tty]
 
       sig { override.void }
       def decorate
-        root.create_module(T.must(constant.name)) do |mod|
+        # `create_path` would use the overridden `Tty.to_s` (the escape codes) as the module name.
+        name = constant.name
+        raise ArgumentError, "Cannot generate an RBI for anonymous module #{constant.inspect}" if name.nil?
+
+        root.create_module(name) do |mod|
           dynamic_methods = ::Tty::COLOR_CODES.keys + ::Tty::STYLE_CODES.keys + ::Tty::SPECIAL_CODES.keys
 
           dynamic_methods.each do |method|

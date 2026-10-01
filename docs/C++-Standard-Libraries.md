@@ -1,32 +1,31 @@
 ---
-last_review_date: "1970-01-01"
+last_review_date: "2026-07-18"
 ---
 
 # C++ Standard Libraries
 
-There are two C++ standard libraries supported by Apple compilers.
+C++ libraries must use a compatible compiler, C++ standard library and application binary interface across their dependency graph.
+Mixing incompatible C++ runtimes can cause link failures, missing symbols or crashes that are not resolved by changing header or library search paths.
 
-The default for 10.9 and later is **libc++**, which is also the default for `clang` on older
-platforms when building C++11 code.
+## macOS
 
-The default for 10.8 and earlier was **libstdc++**, supported by Apple GCC
-compilers, GNU GCC compilers, and `clang`. This was marked deprecated with a
-warning during compilation as of Xcode 8.
+Apple Clang and Homebrew bottles on supported macOS versions use `libc++`.
+Formulae should use the compiler and standard library selected by Homebrew unless upstream has a documented requirement that cannot be met by the default toolchain.
 
-There are subtle incompatibilities between several of the C++ standard libraries,
-so Homebrew will refuse to install software if a dependency was built with an
-incompatible C++ library. It's recommended that you install the dependency tree
-using a compatible compiler.
+GNU GCC normally uses its own `libstdc++`.
+A formula built with GNU GCC must not pass C++ objects across a dependency boundary that was built with an incompatible runtime unless upstream explicitly supports that combination.
 
-**If you've upgraded to 10.9 or later from an earlier version:** Because the default C++
-standard library is now libc++, you may not be able to build software using
-dependencies that you built on 10.8 or earlier. If you're reading this page because
-you were directed here by a build error, you can most likely fix the issue if
-you reinstall all the dependencies of the package you're trying to build.
+## Linux
 
-Example install using GCC 9:
+Homebrew's Linux toolchain normally uses `libstdc++`.
+The same compatibility rule applies: a formula and the C++ libraries whose interfaces it consumes must agree on their runtime and ABI.
 
-```sh
-brew install gcc@9
-brew install --cc=gcc-9 <formula>
-```
+## Resolving compatibility errors
+
+After an operating system, compiler or C++ runtime upgrade, reinstall the affected formula and its C++ dependencies with the current Homebrew toolchain.
+Do not create replacement symlinks for missing versioned C++ libraries because doing so can load an ABI-incompatible library.
+
+Formula authors should inspect the complete compiler and linker commands before overriding Homebrew's compiler selection.
+If upstream requires a specific compiler, declare it as a dependency and test the complete dependency graph on every supported platform.
+
+See the [Formula Cookbook](Formula-Cookbook.md) for build and dependency guidance.

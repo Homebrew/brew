@@ -12,10 +12,7 @@ homebrew-rubocop() {
   BUNDLE_WITH="style"
   export BUNDLE_WITH
 
-  if ! bundle check &>/dev/null
-  then
-    "${HOMEBREW_BREW_FILE}" install-bundler-gems --add-groups="${BUNDLE_WITH}"
-  fi
+  ensure-bundle-dependencies
 
   export PATH="${GEM_HOME}/bin:${PATH}"
 

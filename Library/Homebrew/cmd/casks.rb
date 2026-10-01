@@ -2,17 +2,20 @@
 # frozen_string_literal: true
 
 require "abstract_command"
-require "shell_command"
 
-# This Ruby command exists to allow generation of completions for the Bash
-# version. It is not meant to be run.
 module Homebrew
   module Cmd
     class Casks < AbstractCommand
-      include ShellCommand
-
+      # Used when the Bash implementation falls back to Ruby for tap trust filtering.
       cmd_args do
         description "List all locally installable casks including short names."
+      end
+
+      sig { override.void }
+      def run
+        require "cask/cask"
+
+        puts Cask::Cask.all.flat_map { |cask| [cask.full_name, cask.token] }.uniq.sort
       end
     end
   end

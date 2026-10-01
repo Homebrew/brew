@@ -1,3 +1,4 @@
+# typed: true
 # frozen_string_literal: true
 
 require "utils/spdx"
@@ -42,28 +43,15 @@ RSpec.describe SPDX do
   end
 
   describe ".parse_license_expression" do
-    it "returns a single license" do
+    specify do
       expect(described_class.parse_license_expression("MIT").first).to eq ["MIT"]
-    end
-
-    it "returns a single license with plus" do
       expect(described_class.parse_license_expression("Apache-2.0+").first).to eq ["Apache-2.0+"]
-    end
-
-    it "returns multiple licenses with :any" do
       expect(described_class.parse_license_expression(any_of: ["MIT", "0BSD"]).first).to eq ["MIT", "0BSD"]
-    end
-
-    it "returns multiple licenses with :all" do
       expect(described_class.parse_license_expression(all_of: ["MIT", "0BSD"]).first).to eq ["MIT", "0BSD"]
-    end
-
-    it "returns multiple licenses with plus" do
       expect(described_class.parse_license_expression(any_of: ["MIT", "EPL-1.0+"]).first).to eq ["MIT", "EPL-1.0+"]
-    end
-
-    it "returns multiple licenses with array" do
       expect(described_class.parse_license_expression(["MIT", "EPL-1.0+"]).first).to eq ["MIT", "EPL-1.0+"]
+      expect(described_class.parse_license_expression(:public_domain).first).to eq [:public_domain]
+      expect(described_class.parse_license_expression(:cannot_represent).first).to eq [:cannot_represent]
     end
 
     it "returns license and exception" do
@@ -76,19 +64,13 @@ RSpec.describe SPDX do
         "MIT",
         :public_domain,
         # The final array item is legitimately a hash in the case of license expressions.
-        all_of: ["0BSD", "Zlib"], # rubocop:disable Style/HashAsLastArrayItem
-        "curl" => { with: "LLVM-exception" },
+        {
+          all_of: ["0BSD", "Zlib"],
+          "curl" => { with: "LLVM-exception" },
+        },
       ] }
       result = [["MIT", :public_domain, "curl", "0BSD", "Zlib"], ["LLVM-exception"]]
       expect(described_class.parse_license_expression(license_expression)).to eq result
-    end
-
-    it "returns :public_domain" do
-      expect(described_class.parse_license_expression(:public_domain).first).to eq [:public_domain]
-    end
-
-    it "returns :cannot_represent" do
-      expect(described_class.parse_license_expression(:cannot_represent).first).to eq [:cannot_represent]
     end
   end
 
@@ -197,8 +179,10 @@ RSpec.describe SPDX do
         "MIT",
         :public_domain,
         # The final array item is legitimately a hash in the case of license expressions.
-        all_of: ["0BSD", "Zlib"], # rubocop:disable Style/HashAsLastArrayItem
-        "curl" => { with: "LLVM-exception" },
+        {
+          all_of: ["0BSD", "Zlib"],
+          "curl" => { with: "LLVM-exception" },
+        },
       ] }
       result = "MIT OR LicenseRef-Homebrew-public-domain OR (0BSD AND Zlib) OR (curl WITH LLVM-exception)"
       expect(described_class.license_expression_to_string(license_expression)).to eq result
@@ -211,6 +195,27 @@ RSpec.describe SPDX do
     it "returns :cannot_represent" do
       result = "LicenseRef-Homebrew-cannot-represent"
       expect(described_class.license_expression_to_string(:cannot_represent)).to eq result
+    end
+  end
+
+  describe ".truncate_license" do
+    it "returns the license unchanged when within the limit" do
+      expect(described_class.truncate_license("MIT AND Apache-2.0")).to eq "MIT AND Apache-2.0"
+    end
+
+    it "truncates an over-long conjunction to a valid prefix with a marker" do
+      license = "MIT AND Apache-2.0 AND BSD-3-Clause AND GPL-2.0-only"
+      expect(described_class.truncate_license(license, limit: 40)).to eq "MIT AND LicenseRef-Homebrew-truncated"
+    end
+
+    it "falls back to :cannot_represent for over-long disjunctions" do
+      license = "MIT OR Apache-2.0 OR BSD-3-Clause OR GPL-2.0-only"
+      expect(described_class.truncate_license(license, limit: 40)).to eq "LicenseRef-Homebrew-cannot-represent"
+    end
+
+    it "falls back to :cannot_represent when even the first term does not fit" do
+      license = "Apache-2.0 AND MIT AND BSD-3-Clause AND ISC"
+      expect(described_class.truncate_license(license, limit: 20)).to eq "LicenseRef-Homebrew-cannot-represent"
     end
   end
 
@@ -238,19 +243,17 @@ RSpec.describe SPDX do
     end
 
     # The final array item is legitimately a hash in the case of license expressions.
-    # rubocop:disable Style/HashAsLastArrayItem
     it "handles nested brackets" do
       expect(described_class.string_to_license_expression("A AND (B OR (C AND D))")).to eq({
         all_of: [
           "A",
-          any_of: [
+          { any_of: [
             "B",
-            all_of: ["C", "D"],
-          ],
+            { all_of: ["C", "D"] },
+          ] },
         ],
       })
     end
-    # rubocop:enable Style/HashAsLastArrayItem
 
     it "returns :public_domain" do
       expect(described_class.string_to_license_expression("LicenseRef-Homebrew-public-domain")).to eq :public_domain

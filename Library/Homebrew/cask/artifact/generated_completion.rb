@@ -1,0 +1,204 @@
+# typed: strict
+# frozen_string_literal: true
+
+require "cask/artifact/abstract_artifact"
+require "cask/artifact/bashcompletion"
+require "cask/artifact/zshcompletion"
+require "cask/artifact/fishcompletion"
+require "cask/artifact/pwshcompletion"
+require "extend/hash/keys"
+require "utils/shell_completion"
+
+module Cask
+  module Artifact
+    # Artifact corresponding to the `generate_completions_from_executable` stanza.
+    class GeneratedCompletion < AbstractArtifact
+      SUPPORTED_SHELLS = [:bash, :zsh, :fish, :pwsh].freeze
+
+      sig { override.returns(Symbol) }
+      def self.dsl_key
+        :generate_completions_from_executable
+      end
+
+      sig {
+        params(
+          cask:                   Cask,
+          args:                   T.any(Pathname, String),
+          base_name:              T.nilable(String),
+          shell_parameter_format: T.nilable(T.any(Symbol, String)),
+          shells:                 T.nilable(T::Array[T.any(Symbol, String)]),
+        ).returns(T.attached_class)
+      }
+      def self.from_args(cask, *args, base_name: nil, shell_parameter_format: nil, shells: nil)
+        raise CaskInvalidError.new(cask.token, "'#{dsl_key}' requires at least one command") if args.empty?
+
+        commands = args.to_a
+        resolved_shells = (shells || ::Utils::ShellCompletion.default_completion_shells(shell_parameter_format))
+                          .map(&:to_sym)
+
+        unsupported_shells = resolved_shells - SUPPORTED_SHELLS
+        unless unsupported_shells.empty?
+          raise CaskInvalidError.new(
+            cask.token,
+            "'#{dsl_key}' does not support shell(s): #{unsupported_shells.join(", ")}",
+          )
+        end
+
+        new(
+          cask,
+          commands,
+          base_name:,
+          shell_parameter_format:,
+          shells:                 resolved_shells,
+        )
+      end
+
+      sig {
+        params(
+          cask:                   Cask,
+          commands:               T::Array[T.any(Pathname, String)],
+          base_name:              T.nilable(String),
+          shell_parameter_format: T.nilable(T.any(Symbol, String)),
+          shells:                 T::Array[Symbol],
+        ).void
+      }
+      def initialize(cask, commands, base_name:, shell_parameter_format:, shells:)
+        super(cask, *commands, base_name:, shell_parameter_format:, shells:)
+
+        @commands = commands
+        @base_name = base_name
+        @shell_parameter_format = shell_parameter_format
+        @shells = shells
+        @resolved_base_name = T.let(nil, T.nilable(String))
+      end
+
+      sig { returns(T::Array[T.any(Pathname, String)]) }
+      attr_reader :commands
+
+      sig { returns(T.nilable(String)) }
+      attr_reader :base_name
+
+      sig { returns(T.nilable(T.any(Symbol, String))) }
+      attr_reader :shell_parameter_format
+
+      sig { returns(T::Array[Symbol]) }
+      attr_reader :shells
+
+      sig { override.returns(String) }
+      def summarize
+        "#{commands.join(" ")} (base_name: #{resolved_base_name}, shells: #{shells.join(", ")})"
+      end
+
+      sig {
+        params(
+          adopt:        T::Boolean,
+          auto_updates: T.nilable(T::Boolean),
+          force:        T::Boolean,
+          verbose:      T::Boolean,
+          predecessor:  T.nilable(Cask),
+          command:      T.class_of(SystemCommand),
+        ).void
+      }
+      def install_phase(adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil,
+                        command: SystemCommand)
+        executable = staged_path_join_executable(commands.fetch(0))
+        completion_commands = [executable, *commands[1..]]
+        completions = shells.map do |shell|
+          popen_read_env = { "SHELL" => shell.to_s }
+          {
+            "shell"           => shell.to_s,
+            "commands"        => completion_commands.map(&:to_s),
+            "shell_parameter" => ::Utils::ShellCompletion.completion_shell_parameter(
+              shell_parameter_format, shell, executable.to_s, popen_read_env
+            ),
+            "env"             => popen_read_env,
+            "output_path"     => completion_script_path(shell).to_s,
+            "print_stderr"    => false,
+          }
+        end
+
+        if (sandbox = cask_sandbox)
+          completions.map { |completion| Pathname(completion.fetch("output_path")).dirname }.uniq.each do |directory|
+            sandbox.allow_write_path directory
+          end
+          begin
+            run_cask_sandbox(sandbox, { "action" => "generated_completions", "completions" => completions })
+          rescue => e
+            opoo e
+          end
+          return
+        end
+
+        completions.each { |completion| write_completion(completion, executable) }
+      end
+
+      sig {
+        params(
+          skip:      T::Boolean,
+          force:     T::Boolean,
+          verbose:   T::Boolean,
+          successor: T.nilable(Cask),
+          upgrade:   T::Boolean,
+          reinstall: T::Boolean,
+          command:   T.class_of(SystemCommand),
+        ).void
+      }
+      def uninstall_phase(skip: false, force: false, verbose: false, successor: nil, upgrade: false,
+                          reinstall: false, command: SystemCommand)
+        shells.each do |shell|
+          path = completion_script_path(shell)
+          next unless path.exist?
+
+          Utils.gain_permissions_remove(path, command:)
+        rescue => e
+          opoo "Failed to remove #{shell} generated completions: #{e}"
+        end
+      end
+
+      private
+
+      sig { params(completion: T::Hash[String, T.untyped], executable: Pathname).void }
+      def write_completion(completion, executable)
+        output_path = Pathname(completion.fetch("output_path"))
+        output_path.dirname.mkpath
+        output_path.write(
+          ::Utils::ShellCompletion.generate_completion_output(
+            completion.fetch("commands"),
+            completion["shell_parameter"],
+            completion.fetch("env"),
+            print_stderr: completion.fetch("print_stderr"),
+          ),
+        )
+      rescue => e
+        opoo "Failed to generate #{completion.fetch("shell")} completions from #{executable}: #{e}"
+      end
+
+      sig { returns(String) }
+      def resolved_base_name
+        @resolved_base_name ||= T.let(begin
+          executable = staged_path_join_executable(commands.fetch(0))
+          name = base_name || File.basename(executable.to_s)
+          name = cask.token if name.empty?
+          name
+        end, T.nilable(String))
+        @resolved_base_name
+      end
+
+      sig { params(shell: Symbol).returns(Pathname) }
+      def completion_script_path(shell)
+        case shell
+        when :bash
+          BashCompletion.new(cask, resolved_base_name).resolve_target(resolved_base_name)
+        when :zsh
+          ZshCompletion.new(cask, resolved_base_name).resolve_target(resolved_base_name)
+        when :fish
+          FishCompletion.new(cask, resolved_base_name).resolve_target(resolved_base_name)
+        when :pwsh
+          PwshCompletion.new(cask, resolved_base_name).resolve_target(resolved_base_name)
+        else
+          raise ArgumentError, "unsupported shell: #{shell}"
+        end
+      end
+    end
+  end
+end

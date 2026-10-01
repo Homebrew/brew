@@ -9,6 +9,18 @@ homebrew-formulae() {
   local sed_filter='s|/Formula/(.+/)?|/|'
   local grep_filter='^homebrew/core'
 
+  if homebrew-tap-trust-required
+  then
+    if homebrew-trusted-items-with-api-names "${find_include_filter}" '.*Casks(/.*|$)' \
+       "trustedformulae" "homebrew/core" "Formula" "formula_names.txt"
+    then
+      return
+    fi
+    opoo "jq is unavailable; falling back to Ruby to apply tap trust."
+    HOMEBREW_FORCE_RUBY_COMMAND=1 "${HOMEBREW_BREW_FILE}" formulae
+    return
+  fi
+
   # HOMEBREW_CACHE is set by brew.sh
   # shellcheck disable=SC2154
   if [[ -z "${HOMEBREW_NO_INSTALL_FROM_API}" &&

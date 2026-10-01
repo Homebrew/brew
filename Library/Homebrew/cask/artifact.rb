@@ -2,12 +2,16 @@
 # frozen_string_literal: true
 
 require "cask/artifact/app"
+require "cask/artifact/appimage"
 require "cask/artifact/artifact" # generic 'artifact' stanza
 require "cask/artifact/audio_unit_plugin"
 require "cask/artifact/binary"
 require "cask/artifact/colorpicker"
+require "cask/artifact/command_wrapper"
 require "cask/artifact/dictionary"
+require "cask/artifact/install_steps"
 require "cask/artifact/font"
+require "cask/artifact/generated_script"
 require "cask/artifact/input_method"
 require "cask/artifact/installer"
 require "cask/artifact/internet_plugin"
@@ -23,16 +27,12 @@ require "cask/artifact/qlplugin"
 require "cask/artifact/mdimporter"
 require "cask/artifact/screen_saver"
 require "cask/artifact/bashcompletion"
-require "cask/artifact/fishcompletion"
 require "cask/artifact/zshcompletion"
+require "cask/artifact/fishcompletion"
+require "cask/artifact/pwshcompletion"
+require "cask/artifact/generated_completion"
 require "cask/artifact/service"
 require "cask/artifact/stage_only"
 require "cask/artifact/suite"
 require "cask/artifact/uninstall"
 require "cask/artifact/zap"
-
-module Cask
-  # Module containing all cask artifact classes.
-  module Artifact
-  end
-end

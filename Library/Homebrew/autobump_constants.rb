@@ -1,11 +1,22 @@
 # typed: strict
 # frozen_string_literal: true
 
-# TODO: add more reasons here
-NO_AUTOBUMP_REASONS_LIST = T.let({
-  incompatible_version_format: "incompatible version format",
-  bumped_by_upstream:          "bumped by upstream",
-  extract_plist:               "livecheck uses `:extract_plist` strategy",
-  latest_version:              "`version` is set to `:latest`",
-  requires_manual_review:      "a manual review of this package is required for inclusion in autobump",
+NO_AUTOBUMP_REASONS_INTERNAL = T.let({
+  extract_plist:  "livecheck uses `:extract_plist` strategy",
+  latest_version: "`version` is set to `:latest`",
 }.freeze, T::Hash[Symbol, String])
+
+NO_AUTOBUMP_REASONS_DEPRECATED = T.let({}.freeze, T::Hash[Symbol, String])
+
+# The valid symbols for passing to `no_autobump!` in a `Formula` or `Cask`.
+# @api public
+NO_AUTOBUMP_REASONS_LIST = T.let(
+  {
+    incompatible_version_format: "the package has a version format that can only be updated manually",
+    bumped_by_upstream:          "updates to the package are handled by the upstream developers",
+  }
+    .merge(NO_AUTOBUMP_REASONS_INTERNAL)
+    .merge(NO_AUTOBUMP_REASONS_DEPRECATED)
+    .freeze,
+  T::Hash[Symbol, String],
+)

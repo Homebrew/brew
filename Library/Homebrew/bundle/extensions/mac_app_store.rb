@@ -1,0 +1,323 @@
+# typed: strict
+# frozen_string_literal: true
+
+require "bundle/extensions/extension"
+require "json"
+
+module Homebrew
+  module Bundle
+    class MacAppStore < Extension
+      class App < T::Struct
+        const :id, String
+        const :name, String
+      end
+      CheckablePackages = T.type_alias { T.any(T::Array[Object], T::Hash[Integer, String]) }
+
+      class << self
+        sig { override.returns(Symbol) }
+        def type = :mas
+
+        sig { override.returns(String) }
+        def check_label = "App"
+
+        sig { override.returns(String) }
+        def banner_name = "Mac App Store dependencies"
+
+        sig { override.returns(Symbol) }
+        def legacy_check_step
+          :apps_to_install
+        end
+
+        sig { override.returns(T::Boolean) }
+        def add_supported?
+          false
+        end
+
+        sig { override.returns(T.nilable(String)) }
+        def cleanup_heading
+          "Mac App Store apps"
+        end
+
+        sig { override.params(name: String, options: Homebrew::Bundle::EntryInputOptions).returns(Dsl::Entry) }
+        def entry(name, options = {})
+          id = options[:id]
+          raise "options[:id](#{id}) should be an Integer object" unless id.is_a? Integer
+
+          Dsl::Entry.new(type, name, id:)
+        end
+
+        sig { override.void }
+        def reset!
+          @apps = T.let(nil, T.nilable(T::Array[[String, String]]))
+          @packages = T.let(nil, T.nilable(T::Array[App]))
+          @installed_app_ids = T.let(nil, T.nilable(T::Array[String]))
+          @outdated_app_ids = T.let(nil, T.nilable(T::Array[String]))
+        end
+
+        sig { override.params(_name: String, _options: Homebrew::Bundle::EntryOptions).returns(T::Boolean) }
+        def batch_installable?(_name, _options = {})
+          true
+        end
+
+        sig { override.params(entries: T::Array[Dsl::Entry], verbose: T::Boolean).returns(T::Boolean) }
+        def install_batch!(entries, verbose: false)
+          outdated_entries, fresh_entries = entries.partition do |entry|
+            app_id_installed?(T.cast(entry.options.fetch(:id), Integer))
+          end
+          mas = package_manager_executable!
+          upgraded = outdated_entries.empty? || Bundle.system(
+            mas, "upgrade", *outdated_entries.map { |entry| entry.options.fetch(:id).to_s }, verbose:
+          )
+          fresh_installed = fresh_entries.empty? || Bundle.system(
+            mas, "install", *fresh_entries.map { |entry| entry.options.fetch(:id).to_s }, verbose:
+          ) || Bundle.system(mas, "get", *fresh_entries.map { |entry| entry.options.fetch(:id).to_s }, verbose:)
+          upgraded && fresh_installed
+        end
+
+        sig { returns(T::Array[[String, String]]) }
+        def apps
+          apps = @apps
+          return apps if apps
+
+          @apps = if (mas = package_manager_executable)
+            Utils.popen_read_text(mas, "list", err: File::NULL).split("\n").filter_map do |app|
+              app_details = app.match(/\A\s*(?<id>\d+)\s+(?<name>.*?)\s+\(?(?<version>[\d.]*)\)?\Z/)
+              next if app_details.nil?
+
+              id = app_details[:id]
+              name = app_details[:name]
+              next if id.nil? || name.nil?
+
+              # Only add the application details should we have a valid match.
+              # Strip unprintable characters
+              [id, name.gsub(/[[:cntrl:]]|\p{C}/, "")]
+            end
+          end
+          return [] if @apps.nil?
+
+          @apps
+        end
+
+        sig { returns(T::Array[String]) }
+        def app_ids
+          apps.map(&:first)
+        end
+
+        sig { override.returns(T::Array[App]) }
+        def packages
+          packages = @packages
+          return packages if packages
+
+          @packages = apps.sort_by { |_, name| name.downcase }.map { |id, name| App.new(id:, name:) }
+        end
+
+        sig { override.returns(T::Array[App]) }
+        def installed_packages
+          packages
+        end
+
+        sig { returns(T::Array[String]) }
+        def installed_app_ids
+          installed_app_ids = @installed_app_ids
+          return installed_app_ids if installed_app_ids
+
+          @installed_app_ids = app_ids
+        end
+
+        sig { override.params(package: Object).returns(String) }
+        def dump_entry(package)
+          app = T.cast(package, App)
+          "mas #{quote(app.name)}, id: #{app.id}"
+        end
+
+        sig { params(app: App).returns(String) }
+        def cleanup_item(app)
+          JSON.generate("id" => app.id, "name" => app.name)
+        end
+
+        sig { override.params(item: String).returns(String) }
+        def cleanup_item_name(item)
+          app = parse_cleanup_item(item)
+          "#{app.name} (#{app.id})"
+        end
+
+        sig { override.params(entries: T::Array[Dsl::Entry]).returns(T::Array[String]) }
+        def cleanup_items(entries)
+          return [].freeze unless package_manager_installed?
+
+          kept_app_ids = entries.filter_map do |entry|
+            entry.options[:id].to_s if entry.type == type
+          end
+          return [].freeze if kept_app_ids.empty?
+
+          packages.reject { |app| app.id.to_i.zero? || kept_app_ids.any? { |id| app.id.to_i == id.to_i } }
+                  .map { |app| cleanup_item(app) }
+        end
+
+        sig { override.params(items: T::Array[String]).void }
+        def cleanup!(items)
+          mas = package_manager_executable
+          return if mas.nil?
+
+          items.each do |item|
+            Bundle.system(mas, "uninstall", parse_cleanup_item(item).id, verbose: false)
+          end
+          puts "Uninstalled #{items.size} Mac App Store app#{"s" if items.size != 1}"
+        end
+
+        sig { params(id: Integer).returns(T::Boolean) }
+        def app_id_installed?(id)
+          installed_app_ids.any? { |app_id| app_id.to_i == id }
+        end
+
+        sig { params(id: Integer).returns(T::Boolean) }
+        def app_id_upgradable?(id)
+          outdated_app_ids.any? { |app_id| app_id.to_i == id }
+        end
+
+        sig { params(id: Integer, no_upgrade: T::Boolean).returns(T::Boolean) }
+        def app_id_installed_and_up_to_date?(id, no_upgrade: false)
+          return false unless app_id_installed?(id)
+          return true if no_upgrade
+
+          !app_id_upgradable?(id)
+        end
+
+        sig { returns(T::Array[String]) }
+        def outdated_app_ids
+          outdated_app_ids = @outdated_app_ids
+          return outdated_app_ids if outdated_app_ids
+
+          @outdated_app_ids = if (mas = package_manager_executable)
+            Utils.popen_read_text(mas, "outdated", err: File::NULL).split("\n").map do |app|
+              app.split(" ", 2).first.to_s
+            end
+          end
+          return [] if @outdated_app_ids.nil?
+
+          @outdated_app_ids
+        end
+
+        sig {
+          override.params(
+            name:       String,
+            id:         T.nilable(Integer),
+            with:       T.nilable(T::Array[String]),
+            no_upgrade: T::Boolean,
+            verbose:    T::Boolean,
+            options:    Homebrew::Bundle::EntryOption,
+          ).returns(T::Boolean)
+        }
+        def preinstall!(name, id = nil, with: nil, no_upgrade: false, verbose: false, **options)
+          _ = with
+          id ||= T.cast(options[:id], T.nilable(Integer))
+          raise ArgumentError, "missing keyword: id" if id.nil?
+
+          unless package_manager_installed?
+            puts "Installing mas. It is not currently installed." if verbose
+            Bundle.system(HOMEBREW_BREW_FILE, "install", "mas", verbose:)
+            raise "Unable to install #{name} app. mas installation failed." unless package_manager_installed?
+          end
+
+          if app_id_installed?(id) &&
+             (no_upgrade || !app_id_upgradable?(id))
+            puts "Skipping install of #{name} app. It is already installed." if verbose
+            return false
+          end
+
+          true
+        end
+
+        sig {
+          override.params(
+            name:       String,
+            id:         T.nilable(Integer),
+            with:       T.nilable(T::Array[String]),
+            preinstall: T::Boolean,
+            no_upgrade: T::Boolean,
+            verbose:    T::Boolean,
+            force:      T::Boolean,
+            options:    Homebrew::Bundle::EntryOption,
+          ).returns(T::Boolean)
+        }
+        def install!(name, id = nil, with: nil, preinstall: true, no_upgrade: false, verbose: false, force: false,
+                     **options)
+          _ = with
+          id ||= T.cast(options[:id], T.nilable(Integer))
+          raise ArgumentError, "missing keyword: id" if id.nil?
+
+          _ = no_upgrade
+          _ = force
+
+          return true unless preinstall
+
+          mas = package_manager_executable!
+
+          if app_id_installed?(id)
+            puts "Upgrading #{name} app. It is installed but not up-to-date." if verbose
+            return false unless Bundle.system(mas, "upgrade", id.to_s, verbose:)
+
+            return true
+          end
+
+          puts "Installing #{name} app. It is not currently installed." if verbose
+          installed = Bundle.system(mas, "install", id.to_s, verbose:) ||
+                      Bundle.system(mas, "get", id.to_s, verbose:)
+          return false unless installed
+
+          apps << [id.to_s, name] unless apps.any? { |app_id, _app_name| app_id.to_i == id }
+          packages << App.new(id: id.to_s, name:) unless packages.any? { |app| app.id.to_i == id }
+          installed_app_ids << id.to_s unless installed_app_ids.include?(id.to_s)
+          true
+        end
+
+        sig { params(item: String).returns(App) }
+        def parse_cleanup_item(item)
+          parsed = JSON.parse(item)
+          raise TypeError, "Invalid Mac App Store cleanup item: #{item}" unless parsed.is_a?(Hash)
+
+          id = parsed["id"]
+          name = parsed["name"]
+          raise TypeError, "Invalid Mac App Store cleanup item: #{item}" if !id.is_a?(String) || !name.is_a?(String)
+
+          App.new(id:, name:)
+        end
+      end
+
+      sig { override.params(entries: T::Array[Dsl::Entry]).returns(T::Array[Object]) }
+      def format_checkable(entries)
+        checkable_entries(entries).map do |entry|
+          [T.cast(entry.options.fetch(:id), Integer), entry.name]
+        end
+      end
+
+      sig { override.params(packages: CheckablePackages, no_upgrade: T::Boolean).returns(T::Array[String]) }
+      def exit_early_check(packages, no_upgrade:)
+        (packages.is_a?(Hash) ? packages.to_a : packages).each do |id, name|
+          next if installed_and_up_to_date?(id, no_upgrade:)
+
+          return [failure_reason(name, no_upgrade:)]
+        end
+        []
+      end
+
+      sig { override.params(packages: CheckablePackages, no_upgrade: T::Boolean).returns(T::Array[String]) }
+      def full_check(packages, no_upgrade:)
+        (packages.is_a?(Hash) ? packages.to_a : packages)
+          .reject { |id, _name| installed_and_up_to_date?(id, no_upgrade:) }
+          .map { |_id, name| failure_reason(name, no_upgrade:) }
+      end
+
+      sig { override.params(package: Object, no_upgrade: T::Boolean).returns(String) }
+      def failure_reason(package, no_upgrade:)
+        reason = no_upgrade ? "needs to be installed." : "needs to be installed or updated."
+        "#{self.class.check_label} #{package} #{reason}"
+      end
+
+      sig { override.params(package: Object, no_upgrade: T::Boolean).returns(T::Boolean) }
+      def installed_and_up_to_date?(package, no_upgrade: false)
+        self.class.app_id_installed_and_up_to_date?(T.cast(package, Integer), no_upgrade:)
+      end
+    end
+  end
+end

@@ -12,7 +12,9 @@ fi
 source "${HOMEBREW_LIBRARY}/Homebrew/shims/utils.sh"
 
 parallel_args=()
-if [[ -n "${HOMEBREW_MAKE_JOBS}" ]]
+# Defer to a POSIX FIFO jobserver if MAKEFLAGS advertises one; -j would
+# disable ninja's jobserver client. Other modes aren't usable on POSIX.
+if [[ -n "${HOMEBREW_MAKE_JOBS}" && "${MAKEFLAGS}" != *"--jobserver-auth=fifo:"* ]]
 then
   parallel_args+=(-j "${HOMEBREW_MAKE_JOBS}")
 fi

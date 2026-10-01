@@ -1,13 +1,21 @@
-# typed: true # rubocop:todo Sorbet/StrictSigil
+# typed: strict
 # frozen_string_literal: true
+
+require "utils/ruby"
+
+require "utils/text"
+
+require "homebrew"
+require "cli/parser"
+require "extend/ENV/sensitive"
 
 # Helper functions for commands.
 module Commands
-  HOMEBREW_CMD_PATH = (HOMEBREW_LIBRARY_PATH/"cmd").freeze
-  HOMEBREW_DEV_CMD_PATH = (HOMEBREW_LIBRARY_PATH/"dev-cmd").freeze
+  HOMEBREW_CMD_PATH = T.let((HOMEBREW_LIBRARY_PATH/"cmd").freeze, Pathname)
+  HOMEBREW_DEV_CMD_PATH = T.let((HOMEBREW_LIBRARY_PATH/"dev-cmd").freeze, Pathname)
   # If you are going to change anything in below hash,
   # be sure to also update appropriate case statement in brew.sh
-  HOMEBREW_INTERNAL_COMMAND_ALIASES = {
+  HOMEBREW_INTERNAL_COMMAND_ALIASES = T.let({
     "ls"           => "list",
     "homepage"     => "home",
     "-S"           => "search",
@@ -26,26 +34,37 @@ module Commands
     "-v"           => "--version",
     "lc"           => "livecheck",
     "tc"           => "typecheck",
-  }.freeze
+    "x"            => "exec",
+  }.freeze, T::Hash[String, String])
   # This pattern is used to split descriptions at full stops. We only consider a
   # dot as a full stop if it is either followed by a whitespace or at the end of
   # the description. In this way we can prevent cutting off a sentence in the
   # middle due to dots in URLs or paths.
   DESCRIPTION_SPLITTING_PATTERN = /\.(?>\s|$)/
 
+  # Keep in sync with the command name check in `brew.sh`.
+  sig { params(cmd: String).returns(T::Boolean) }
+  def self.internal_cmd_name?(cmd)
+    cmd.exclude?("/") && %w[. ..].exclude?(cmd)
+  end
+
+  sig { params(cmd: String).returns(T::Boolean) }
   def self.valid_internal_cmd?(cmd)
-    require?(HOMEBREW_CMD_PATH/cmd)
+    internal_cmd_name?(cmd) && Utils::Ruby.require?(HOMEBREW_CMD_PATH/cmd)
   end
 
+  sig { params(cmd: String).returns(T::Boolean) }
   def self.valid_internal_dev_cmd?(cmd)
-    require?(HOMEBREW_DEV_CMD_PATH/cmd)
+    internal_cmd_name?(cmd) && Utils::Ruby.require?(HOMEBREW_DEV_CMD_PATH/cmd)
   end
 
+  sig { params(cmd: String).returns(T::Boolean) }
   def self.valid_ruby_cmd?(cmd)
-    (valid_internal_cmd?(cmd) || valid_internal_dev_cmd?(cmd) || external_ruby_v2_cmd_path(cmd)) &&
-      Homebrew::AbstractCommand.command(cmd)&.ruby_cmd?
+    (valid_internal_cmd?(cmd) || valid_internal_dev_cmd?(cmd) || external_ruby_v2_cmd_path(cmd).present?) &&
+      (Homebrew::AbstractCommand.command(cmd)&.ruby_cmd? == true)
   end
 
+  sig { params(cmd: String).returns(Symbol) }
   def self.method_name(cmd)
     cmd.to_s
        .tr("-", "_")
@@ -53,20 +72,27 @@ module Commands
        .to_sym
   end
 
+  sig { params(cmd_path: Pathname).returns(Symbol) }
   def self.args_method_name(cmd_path)
     cmd_path_basename = basename_without_extension(cmd_path)
     cmd_method_prefix = method_name(cmd_path_basename)
     :"#{cmd_method_prefix}_args"
   end
 
+  sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.internal_cmd_path(cmd)
+    return unless internal_cmd_name?(cmd)
+
     [
       HOMEBREW_CMD_PATH/"#{cmd}.rb",
       HOMEBREW_CMD_PATH/"#{cmd}.sh",
     ].find(&:exist?)
   end
 
+  sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.internal_dev_cmd_path(cmd)
+    return unless internal_cmd_name?(cmd)
+
     [
       HOMEBREW_DEV_CMD_PATH/"#{cmd}.rb",
       HOMEBREW_DEV_CMD_PATH/"#{cmd}.sh",
@@ -74,20 +100,38 @@ module Commands
   end
 
   # Ruby commands which can be `require`d without being run.
+  sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.external_ruby_v2_cmd_path(cmd)
     path = which("#{cmd}.rb", tap_cmd_directories)
-    path if require?(path)
+    require_trusted_command!(path, cmd)
+    path if ENV.clear_sensitive_environment! { Utils::Ruby.require?(path) }
   end
 
   # Ruby commands which are run by being `require`d.
+  sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.external_ruby_cmd_path(cmd)
-    which("brew-#{cmd}.rb", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
+    path = which("brew-#{cmd}.rb", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
+    require_trusted_command!(path, cmd)
+    path
   end
 
+  sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.external_cmd_path(cmd)
-    which("brew-#{cmd}", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
+    path = which("brew-#{cmd}", PATH.new(ENV.fetch("PATH")).append(tap_cmd_directories))
+    require_trusted_command!(path, cmd)
+    path
   end
 
+  sig { params(path: T.nilable(Pathname), cmd: String).void }
+  def self.require_trusted_command!(path, cmd)
+    return unless path
+    return if path.expand_path.ascend.none?(HOMEBREW_TAP_DIRECTORY)
+
+    require "trust"
+    Homebrew::Trust.require_trusted_command!(path, cmd)
+  end
+
+  sig { params(cmd: String).returns(T.nilable(Pathname)) }
   def self.path(cmd)
     internal_cmd = HOMEBREW_INTERNAL_COMMAND_ALIASES.fetch(cmd, cmd)
     path ||= internal_cmd_path(internal_cmd)
@@ -98,6 +142,7 @@ module Commands
     path
   end
 
+  sig { params(external: T::Boolean, aliases: T::Boolean).returns(T::Array[String]) }
   def self.commands(external: true, aliases: false)
     cmds = internal_commands
     cmds += internal_developer_commands
@@ -106,84 +151,110 @@ module Commands
     cmds.sort
   end
 
+  sig { params(cmd: String).returns(String) }
+  def self.suggestion_message(cmd)
+    require "did_you_mean"
+
+    suggestions = DidYouMean::SpellChecker.new(dictionary: commands(external: false, aliases: true)).correct(cmd)
+    suggestions = DidYouMean::SpellChecker.new(dictionary: commands(aliases: true)).correct(cmd) if suggestions.empty?
+    return "" if suggestions.empty?
+
+    "\nDid you mean #{Utils::Text.to_sentence(suggestions, conjunction: "or")}?"
+  end
+
   # An array of all tap cmd directory {Pathname}s.
   sig { returns(T::Array[Pathname]) }
   def self.tap_cmd_directories
     Pathname.glob HOMEBREW_TAP_DIRECTORY/"*/*/cmd"
   end
 
+  sig { returns(T::Array[Pathname]) }
   def self.internal_commands_paths
     find_commands HOMEBREW_CMD_PATH
   end
 
+  sig { returns(T::Array[Pathname]) }
   def self.internal_developer_commands_paths
     find_commands HOMEBREW_DEV_CMD_PATH
   end
 
-  def self.official_external_commands_paths(quiet:)
-    require "tap"
-
-    OFFICIAL_CMD_TAPS.flat_map do |tap_name, cmds|
-      tap = Tap.fetch(tap_name)
-      tap.install(quiet:) unless tap.installed?
-      cmds.map(&method(:external_ruby_v2_cmd_path)).compact
-    end
-  end
-
+  sig { returns(T::Array[String]) }
   def self.internal_commands
     find_internal_commands(HOMEBREW_CMD_PATH).map(&:to_s)
   end
 
+  sig { returns(T::Array[String]) }
   def self.internal_developer_commands
     find_internal_commands(HOMEBREW_DEV_CMD_PATH).map(&:to_s)
   end
 
+  sig { returns(T::Array[String]) }
   def self.internal_commands_aliases
     HOMEBREW_INTERNAL_COMMAND_ALIASES.keys
   end
 
+  sig { params(path: Pathname).returns(T::Array[String]) }
   def self.find_internal_commands(path)
+    raise ArgumentError, "#{path} is not an official command path" \
+      unless [HOMEBREW_CMD_PATH, HOMEBREW_DEV_CMD_PATH].include?(path)
+
     find_commands(path).map(&:basename)
-                       .map { basename_without_extension(_1) }
+                       .map { |basename| basename_without_extension(basename) }
                        .uniq
+                       .reject { |name| Homebrew::CLI::Parser.from_cmd_path(path/"#{name}.rb")&.hide_from_man_page }
   end
 
+  sig { returns(T::Array[String]) }
   def self.external_commands
     tap_cmd_directories.flat_map do |path|
-      find_commands(path).select(&:executable?)
-                         .map { basename_without_extension(_1) }
-                         .map { |p| p.to_s.delete_prefix("brew-").strip }
+      commands = find_commands(path).select(&:executable?)
+      if path.expand_path.ascend.any?(HOMEBREW_TAP_DIRECTORY)
+        require "trust"
+        commands = Homebrew::Trust.trusted_command_files(commands)
+      end
+      commands
+        .map { |basename| basename_without_extension(basename) }
+        .map { |p| p.to_s.delete_prefix("brew-").strip }
     end.map(&:to_s)
        .sort
   end
 
+  sig { params(path: Pathname).returns(String) }
   def self.basename_without_extension(path)
-    path.basename(path.extname)
+    path.basename(path.extname).to_s
   end
 
+  sig { params(path: Pathname).returns(T::Array[Pathname]) }
   def self.find_commands(path)
     Pathname.glob("#{path}/*")
             .select(&:file?)
             .sort
   end
 
+  sig { void }
   def self.rebuild_internal_commands_completion_list
     require "completions"
 
-    cmds = internal_commands + internal_developer_commands + internal_commands_aliases
-    cmds.reject! { |cmd| Homebrew::Completions::COMPLETIONS_EXCLUSION_LIST.include? cmd }
+    cmds = internal_commands + internal_developer_commands
+    cmds.reject! do |cmd|
+      Homebrew::Completions::COMPLETIONS_EXCLUSION_LIST.include?(cmd) ||
+        Homebrew::Completions.command_hidden_from_manpage?(cmd)
+    end
 
     file = HOMEBREW_REPOSITORY/"completions/internal_commands_list.txt"
     file.atomic_write("#{cmds.sort.join("\n")}\n")
   end
 
+  sig { void }
   def self.rebuild_commands_completion_list
     require "completions"
 
     # Ensure that the cache exists so we can build the commands list
     HOMEBREW_CACHE.mkpath
 
-    cmds = commands(aliases: true) - Homebrew::Completions::COMPLETIONS_EXCLUSION_LIST
+    # Don't reject `command_hidden_from_manpage?` commands here: internal ones
+    # are already excluded and checking externals loads every tap command file.
+    cmds = commands - Homebrew::Completions::COMPLETIONS_EXCLUSION_LIST
 
     all_commands_file = HOMEBREW_CACHE/"all_commands_list.txt"
     external_commands_file = HOMEBREW_CACHE/"external_commands_list.txt"
@@ -191,18 +262,26 @@ module Commands
     external_commands_file.atomic_write("#{external_commands.sort.join("\n")}\n")
   end
 
-  sig { params(command: String).returns(T.nilable(T::Array[[String, String]])) }
-  def self.command_options(command)
+  sig { params(command: String, subcommand: T.nilable(String)).returns(T.nilable(T::Array[[String, String]])) }
+  def self.command_options(command, subcommand: nil)
     return if command == "help"
 
     path = self.path(command)
-    return if path.blank?
+    return unless path
 
     if (cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path))
-      cmd_parser.processed_options.filter_map do |short, long, desc, hidden|
+      processed_options = if subcommand.nil? && cmd_parser.subcommands.present?
+        cmd_parser.processed_options_for_root_command
+      else
+        cmd_parser.processed_options_for_subcommand(subcommand)
+      end
+      processed_options.filter_map do |short, long, desc, hidden|
         next if hidden
 
-        [long || short, desc]
+        option = long || short
+        next if option.nil?
+
+        [option, desc]
       end
     else
       options = []
@@ -210,7 +289,7 @@ module Commands
       return options if comment_lines.empty?
 
       # skip the comment's initial usage summary lines
-      comment_lines.slice(2..-1).each do |line|
+      comment_lines.slice(2..-1)&.each do |line|
         match_data = / (?<option>-[-\w]+) +(?<desc>.*)$/.match(line)
         options << [match_data[:option], match_data[:desc]] if match_data
       end
@@ -218,9 +297,10 @@ module Commands
     end
   end
 
+  sig { params(command: String, short: T::Boolean).returns(T.nilable(String)) }
   def self.command_description(command, short: false)
     path = self.path(command)
-    return if path.blank?
+    return unless path
 
     if (cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path))
       if short
@@ -237,33 +317,66 @@ module Commands
         next unless match_data
 
         desc = match_data[:desc]
-        return T.must(desc).split(DESCRIPTION_SPLITTING_PATTERN).first if short
+        next if desc.nil?
+
+        return desc.split(DESCRIPTION_SPLITTING_PATTERN).first if short
 
         return desc
       end
+      nil
     end
   end
 
-  def self.named_args_type(command)
+  sig { params(command: String).returns(T::Array[Homebrew::CLI::Parser::Subcommand]) }
+  def self.command_subcommands(command)
     path = self.path(command)
-    return if path.blank?
+    return [] unless path
+
+    cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path)
+    return [] if cmd_parser.blank?
+
+    cmd_parser.subcommands
+  end
+
+  sig {
+    params(command: String, subcommand: T.nilable(String))
+      .returns(T.nilable(T.any(T::Array[Symbol], T::Array[String])))
+  }
+  def self.named_args_type(command, subcommand: nil)
+    path = self.path(command)
+    return unless path
 
     cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path)
     return if cmd_parser.blank?
 
-    Array(cmd_parser.named_args_type)
+    args_type = if subcommand
+      cmd_parser.named_args_type_for_subcommand(subcommand)
+    else
+      cmd_parser.named_args_type
+    end
+    Array(args_type)
   end
 
   # Returns the conflicts of a given `option` for `command`.
+  sig { params(command: String, option: String).returns(T.nilable(T::Array[String])) }
   def self.option_conflicts(command, option)
     path = self.path(command)
-    return if path.blank?
+    return unless path
 
     cmd_parser = Homebrew::CLI::Parser.from_cmd_path(path)
     return if cmd_parser.blank?
 
+    hidden_options = cmd_parser.processed_options.filter_map do |short, long, _desc, hidden|
+      next unless hidden
+
+      option_name = long || short
+      next unless option_name
+
+      Homebrew::CLI::Parser.option_to_name(option_name).tr("_", "-")
+    end
+
     cmd_parser.conflicts.map do |set|
-      set.map! { |s| s.tr "_", "-" }
+      set = set.map { |s| s.tr "_", "-" } - hidden_options
       set - [option] if set.include? option
     end.flatten.compact
   end

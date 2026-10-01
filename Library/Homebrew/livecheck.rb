@@ -3,7 +3,7 @@
 
 require "livecheck/constants"
 require "livecheck/options"
-require "cask/cask"
+require "cask/cask_base"
 
 # The {Livecheck} class implements the DSL methods used in a formula's, cask's
 # or resource's `livecheck` block and stores related instance variables. Most
@@ -29,19 +29,25 @@ class Livecheck
   sig { returns(T.nilable(Proc)) }
   attr_reader :strategy_block
 
+  # The number of days from the last version update before a new version can be
+  # surfaced.
+  sig { returns(T.nilable(Integer)) }
+  attr_reader :throttle_days
+
   sig { params(package_or_resource: T.any(Cask::Cask, T.class_of(Formula), Resource)).void }
   def initialize(package_or_resource)
     @package_or_resource = package_or_resource
     @options = T.let(Homebrew::Livecheck::Options.new, Homebrew::Livecheck::Options)
     @referenced_cask_name = T.let(nil, T.nilable(String))
-    @referenced_formula_name = T.let(nil, T.nilable(String))
+    @referenced_formula_name = T.let(nil, T.nilable(T.any(String, Symbol)))
     @regex = T.let(nil, T.nilable(Regexp))
     @skip = T.let(false, T::Boolean)
     @skip_msg = T.let(nil, T.nilable(String))
     @strategy = T.let(nil, T.nilable(Symbol))
     @strategy_block = T.let(nil, T.nilable(Proc))
     @throttle = T.let(nil, T.nilable(Integer))
-    @url = T.let(nil, T.any(NilClass, String, Symbol))
+    @throttle_days = T.let(nil, T.nilable(Integer))
+    @url = T.let(nil, T.nilable(T.any(String, Symbol)))
   end
 
   # Sets the `@referenced_cask_name` instance variable to the provided `String`
@@ -51,10 +57,10 @@ class Livecheck
   sig {
     params(
       # Name of cask to inherit livecheck info from.
-      cask_name: String,
+      cask_name: T.nilable(String),
     ).returns(T.nilable(String))
   }
-  def cask(cask_name = T.unsafe(nil))
+  def cask(cask_name = nil)
     case cask_name
     when nil
       @referenced_cask_name
@@ -70,10 +76,10 @@ class Livecheck
   sig {
     params(
       # Name of formula to inherit livecheck info from.
-      formula_name: T.any(String, Symbol),
+      formula_name: T.nilable(T.any(String, Symbol)),
     ).returns(T.nilable(T.any(String, Symbol)))
   }
-  def formula(formula_name = T.unsafe(nil))
+  def formula(formula_name = nil)
     case formula_name
     when nil
       @referenced_formula_name
@@ -87,10 +93,10 @@ class Livecheck
   sig {
     params(
       # Regex to use for matching versions in content.
-      pattern: Regexp,
+      pattern: T.nilable(Regexp),
     ).returns(T.nilable(Regexp))
   }
-  def regex(pattern = T.unsafe(nil))
+  def regex(pattern = nil)
     case pattern
     when nil
       @regex
@@ -107,10 +113,10 @@ class Livecheck
   sig {
     params(
       # String describing why the formula/cask is skipped.
-      skip_msg: String,
+      skip_msg: T.nilable(String),
     ).returns(T::Boolean)
   }
-  def skip(skip_msg = T.unsafe(nil))
+  def skip(skip_msg = nil)
     @skip_msg = skip_msg if skip_msg.is_a?(String)
 
     @skip = true
@@ -129,11 +135,11 @@ class Livecheck
   sig {
     params(
       # Symbol for the desired strategy.
-      symbol: Symbol,
+      symbol: T.nilable(Symbol),
       block:  T.nilable(Proc),
     ).returns(T.nilable(Symbol))
   }
-  def strategy(symbol = T.unsafe(nil), &block)
+  def strategy(symbol = nil, &block)
     @strategy_block = block if block
 
     case symbol
@@ -145,14 +151,23 @@ class Livecheck
   end
 
   # Sets the `@throttle` instance variable to the provided `Integer` or returns
-  # the `@throttle` instance variable when no argument is provided.
+  # the `@throttle` instance variable when no argument is provided. The `days`
+  # argument will set `@throttle_days`.
+  #
+  # If both a throttle rate and days are provided, then the throttle days are
+  # used as a fallback when a new throttled version doesn't appear before the
+  # throttle interval ends.
   sig {
     params(
       # Throttle rate of version patch number to use for bumpable versions.
-      rate: Integer,
+      rate: T.nilable(Integer),
+      # Maximum number of days before allowing a non-multiple update.
+      days: T.nilable(Integer),
     ).returns(T.nilable(Integer))
   }
-  def throttle(rate = T.unsafe(nil))
+  def throttle(rate = nil, days: nil)
+    @throttle_days = days unless days.nil?
+
     case rate
     when nil
       @throttle
@@ -170,18 +185,47 @@ class Livecheck
   sig {
     params(
       # URL to check for version information.
-      url:           T.any(String, Symbol),
+      url:           T.nilable(T.any(String, Symbol)),
+      compressed:    T.nilable(T::Boolean),
+      cookies:       T.nilable(T::Hash[String, String]),
+      header:        T.nilable(T.any(String, T::Array[String])),
       homebrew_curl: T.nilable(T::Boolean),
       post_form:     T.nilable(T::Hash[Symbol, String]),
       post_json:     T.nilable(T::Hash[Symbol, T.anything]),
+      referer:       T.nilable(String),
+      user_agent:    T.nilable(T.any(String, Symbol)),
     ).returns(T.nilable(T.any(String, Symbol)))
   }
-  def url(url = T.unsafe(nil), homebrew_curl: nil, post_form: nil, post_json: nil)
-    raise ArgumentError, "Only use `post_form` or `post_json`, not both" if post_form && post_json
+  def url(
+    url = nil,
+    compressed: nil,
+    cookies: nil,
+    header: nil,
+    homebrew_curl: nil,
+    post_form: nil,
+    post_json: nil,
+    referer: nil,
+    user_agent: nil
+  )
+    # This manually enforces stricter values for `compressed` and
+    # `homebrew_curl`, as we can't rely on the Sorbet runtime being enabled in
+    # all circumstances.
+    raise ArgumentError, "`compressed` option should only be `false` or omitted" if compressed == true
+    raise ArgumentError, "`homebrew_curl` option should only be `true` or omitted" if homebrew_curl == false
+    if (post_form && post_json) ||
+       (@options.post_form && post_json) ||
+       (@options.post_json && post_form)
+      raise ArgumentError, "Only use `post_form` or `post_json`, not both"
+    end
 
+    @options.compressed = compressed unless compressed.nil?
+    @options.cookies = cookies unless cookies.nil?
+    @options.header = header unless header.nil?
     @options.homebrew_curl = homebrew_curl unless homebrew_curl.nil?
     @options.post_form = post_form unless post_form.nil?
     @options.post_json = post_json unless post_json.nil?
+    @options.referer = referer unless referer.nil?
+    @options.user_agent = user_agent unless user_agent.nil?
 
     case url
     when nil
@@ -203,15 +247,16 @@ class Livecheck
   sig { returns(T::Hash[String, T.untyped]) }
   def to_hash
     {
-      "options"  => @options.to_hash,
-      "cask"     => @referenced_cask_name,
-      "formula"  => @referenced_formula_name,
-      "regex"    => @regex,
-      "skip"     => @skip,
-      "skip_msg" => @skip_msg,
-      "strategy" => @strategy,
-      "throttle" => @throttle,
-      "url"      => @url,
+      "options"       => @options.to_hash,
+      "cask"          => @referenced_cask_name,
+      "formula"       => @referenced_formula_name,
+      "regex"         => @regex,
+      "skip"          => @skip,
+      "skip_msg"      => @skip_msg,
+      "strategy"      => @strategy,
+      "throttle"      => @throttle,
+      "throttle_days" => @throttle_days,
+      "url"           => @url,
     }
   end
 end

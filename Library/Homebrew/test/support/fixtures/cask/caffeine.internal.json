@@ -1,0 +1,27 @@
+{
+  "homepage": "https://brew.sh/",
+  "ruby_source_checksum": {
+    ":sha256": "d3c19b564ee5a17f22191599ad795a6cc9c4758d0e1269f2d13207155b378dea"
+  },
+  "ruby_source_path": "Casks/caffeine.rb",
+  "sha256": "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94",
+  "tap_string": "homebrew/cask",
+  "url_args": [
+    "https://www.example.com/cask/caffeine.zip"
+  ],
+  "version": "1.2.3",
+  "raw_artifacts": [
+    [
+      ":app",
+      [
+        "Caffeine.app"
+      ]
+    ],
+    [
+      ":zap",
+      {
+        ":trash": "/Users/rylanpolster/support/fixtures/cask/caffeine/org.example.caffeine.plist"
+      }
+    ]
+  ]
+}

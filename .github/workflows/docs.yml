@@ -1,6 +1,9 @@
-name: Documentation CI
+name: Documentation
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
   merge_group:
 
@@ -24,37 +27,37 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           core: false
           cask: false
-          test-bot: false
+          stable: false
 
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Install vale
+      - name: Install Vale
         run: brew install vale
 
       - name: Cleanup Homebrew/brew docs
         if: github.repository == 'Homebrew/brew'
         run: |
-          # Avoid failing on broken symlinks.
-          rm Library/Homebrew/os/mac/pkgconfig/fuse/fuse.pc
-          rm Library/Homebrew/os/mac/pkgconfig/fuse/osxfuse.pc
-
           # No ignore support (https://github.com/errata-ai/vale/issues/131).
           rm -r Library/Homebrew/vendor
+
+          # Generate latest manpage
+          brew generate-man-completions --no-exit-code
 
       - name: Run Vale
         run: vale docs/
 
-      - name: Install Ruby
-        uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
+      - name: Setup Ruby
+        uses: Homebrew/actions/setup-ruby@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
         with:
           bundler-cache: true
+          portable-ruby: true
           working-directory: docs
 
       - name: Check Markdown syntax
@@ -69,8 +72,70 @@ jobs:
         working-directory: docs
         run: ../script/generate-api-samples.rb --template
 
-      - name: Build the site and check for broken links
+      - name: Cache HTML Proofer
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: tmp/.htmlproofer
+          key: ${{ runner.os }}-htmlproofer
+
+      - name: Build the site
         working-directory: docs
-        run: bundle exec rake test
-        env:
-          JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bundle exec rake build
+
+      - name: Check for broken links
+        if: github.event_name == 'pull_request'
+        working-directory: docs
+        run: bundle exec rake test || bundle exec rake test
+
+      - name: Rebuild the site with YARD
+        if: github.repository == 'Homebrew/brew'
+        working-directory: docs
+        run: bundle exec rake yard build
+
+      - name: Upload pages artifact
+        if: github.repository == 'Homebrew/brew'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: docs/_site/
+
+  deploy:
+    needs: docs
+    if: ${{ github.repository == 'Homebrew/brew' && github.ref_name == 'main' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      deploy_url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  deploy-issue:
+    name: Open/close deploy issue
+    needs: [docs, deploy]
+    if: ${{ github.repository == 'Homebrew/brew' && always() && github.ref_name == 'main' }}
+    env:
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      issues: write # for Homebrew/actions/create-or-update-issue
+    steps:
+      - name: Open, update, or close deploy issue
+        uses: Homebrew/actions/create-or-update-issue@848c272c7bfe984a197bd4d16383f4c106ec61e6 # 2026.09.21.1
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          title: docs.brew.sh deployment failed!
+          body: The most recent [docs.brew.sh deployment failed](${{ env.RUN_URL }}).
+          labels: deploy failure
+          update-existing: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+          close-existing: ${{ needs.deploy.result == 'success' }}
+          close-from-author: github-actions[bot]
+          close-comment: The most recent [docs.brew.sh deployment succeeded](${{ env.RUN_URL }}). Closing issue.
