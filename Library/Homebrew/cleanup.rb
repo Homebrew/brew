@@ -818,15 +818,14 @@ module Homebrew
       lockfiles.each do |file|
         next unless file.readable?
 
-        file.open(File::RDWR) do |lockfile|
+        file.open(File::RDWR | File::NOFOLLOW) do |lockfile|
           next unless lockfile.flock(File::LOCK_EX | File::LOCK_NB)
+          next unless File.identical?(file, lockfile)
 
-          begin
-            file.unlink
-          ensure
-            lockfile.flock(File::LOCK_UN) if file.exist?
-          end
+          file.unlink
         end
+      rescue Errno::ELOOP, Errno::ENOENT
+        next
       end
     end
 

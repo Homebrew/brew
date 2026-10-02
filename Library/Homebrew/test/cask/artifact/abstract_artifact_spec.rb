@@ -40,6 +40,14 @@ RSpec.describe Cask::Artifact::AbstractArtifact, :cask do
       expect(payload_paths.map { |path| path.dirname.dirname }).to eq([HOMEBREW_PREFIX/"var/homebrew/sandbox"])
     end
 
+    it "protects Homebrew state after allowing artifact writes" do
+      expect(sandbox).to receive(:allow_write_path).with(cask.staged_path).ordered
+      expect(sandbox).to receive(:protect_homebrew_state).ordered
+      expect(sandbox).to receive(:run).ordered
+
+      artifact.install_phase
+    end
+
     it "removes its temporary directory when the sandbox succeeds" do
       artifact.install_phase
 

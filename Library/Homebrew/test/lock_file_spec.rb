@@ -9,6 +9,12 @@ RSpec.describe LockFile do
   let(:lock_file_copy) { described_class.new(:lock, Pathname("foo")) }
 
   describe "#lock" do
+    it "rejects symlinks instead of creating their targets" do
+      lock_file.path.make_symlink(mktmpdir/"target")
+
+      expect { lock_file.lock }.to raise_error(Errno::ELOOP)
+    end
+
     it "ensures the lock file is created" do
       expect(lock_file.path).not_to exist
       lock_file.lock
@@ -54,6 +60,21 @@ RSpec.describe LockFile do
       lock_file.unlock
 
       expect { lock_file_copy.lock }.not_to raise_error
+    end
+
+    test_each([false, true]) do |replaced|
+      it "unlocks when its file has been #{replaced ? "replaced" : "deleted"}" do
+        lock_file.lock
+        lock_file.path.unlink
+        lock_file_copy.lock if replaced
+
+        lock_file.unlock(unlink: true)
+
+        expect(lock_file.path.exist?).to eq(replaced)
+      ensure
+        lock_file.unlock
+        lock_file_copy.unlock
+      end
     end
 
     it "allows deleting a lock file only by the instance that locked it" do

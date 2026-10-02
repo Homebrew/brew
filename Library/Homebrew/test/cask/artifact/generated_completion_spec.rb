@@ -41,7 +41,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
       allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
-        instance_double(Sandbox).tap do |sandbox|
+        instance_double(Sandbox, protect_homebrew_state: nil).tap do |sandbox|
           allow(sandbox).to receive(:allow_read)
           allow(sandbox).to receive(:add_install_hook_rules)
           allow(sandbox).to receive(:allow_write_path)
@@ -71,12 +71,13 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
       allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
-        instance_double(Sandbox).tap do |sandbox|
+        instance_double(Sandbox, protect_homebrew_state: nil).tap do |sandbox|
           allow(sandbox).to receive(:allow_read)
           expect(sandbox).to receive(:allow_read).with(path: staged_path, type: :subpath)
           expect(sandbox).to receive(:add_install_hook_rules).with(network_access_allowed: false) do
             calls << :add_install_hook_rules
           end
+          expect(sandbox).to receive(:protect_homebrew_state) { calls << :protect_homebrew_state }
           allow(sandbox).to receive(:allow_write_path)
           allow(sandbox).to receive(:run) do |*args, **|
             calls << :run
@@ -90,7 +91,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
       artifact.install_phase
 
       expect(sandboxes.length).to eq(1)
-      expect(calls).to eq([:add_install_hook_rules, :run])
+      expect(calls).to eq([:add_install_hook_rules, :protect_homebrew_state, :run])
       expect(homes.uniq.length).to eq(1)
       expect(homes).to all(satisfy { |home| !home.exist? })
     end
@@ -101,7 +102,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
       allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
-        instance_double(Sandbox).tap do |sandbox|
+        instance_double(Sandbox, protect_homebrew_state: nil).tap do |sandbox|
           allow(sandbox).to receive(:allow_read)
           allow(sandbox).to receive(:add_install_hook_rules)
           allow(sandbox).to receive(:allow_write_path)
@@ -142,7 +143,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
         allow(Sandbox).to receive(:available?).and_return(true)
         allow(Sandbox).to receive(:new) do
-          instance_double(Sandbox).tap do |sandbox|
+          instance_double(Sandbox, protect_homebrew_state: nil).tap do |sandbox|
             allow(sandbox).to receive(:allow_read)
             allow(sandbox).to receive(:add_install_hook_rules)
             allow(sandbox).to receive(:allow_write_path)
@@ -199,7 +200,7 @@ RSpec.describe Cask::Artifact::GeneratedCompletion, :cask do
 
       allow(Sandbox).to receive(:available?).and_return(true)
       allow(Sandbox).to receive(:new) do
-        instance_double(Sandbox).tap do |sandbox|
+        instance_double(Sandbox, protect_homebrew_state: nil).tap do |sandbox|
           allow(sandbox).to receive(:allow_read)
           allow(sandbox).to receive(:add_install_hook_rules)
           allow(sandbox).to receive(:allow_write_path)

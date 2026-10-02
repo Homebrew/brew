@@ -624,13 +624,16 @@ class Sandbox
     allow_write_path formula.var
   end
 
-  # Deny writes to the download queue's temporary Cellar so sandboxed steps
-  # cannot plant kegs or markers that `pour` would move into the Cellar. Call
-  # this after `allow_write_cellar`: the temporary Cellar is inside the
+  # Protect locks and the temporary Cellar so sandboxed steps cannot
+  # disrupt other operations or plant kegs that `pour` moves into the Cellar.
+  # Call this after `allow_write_cellar`: both paths are inside the
   # granted `var` tree and macOS applies the last matching rule.
   sig { void }
-  def deny_write_temp_cellar
+  def protect_homebrew_state
     deny_write_path HOMEBREW_TEMP_CELLAR
+    deny_write_path HOMEBREW_LOCKS
+    # Advisory locks can also be acquired through read-only descriptors.
+    deny_read_path HOMEBREW_LOCKS
   end
 
   sig { void }

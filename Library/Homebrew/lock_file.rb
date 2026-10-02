@@ -22,8 +22,7 @@ class LockFile
   sig { params(type: Symbol, locked_path: Pathname).void }
   def initialize(type, locked_path)
     @locked_path = locked_path
-    lock_name = locked_path.basename.to_s
-    @path = T.let(HOMEBREW_LOCKS/"#{lock_name}.#{type}.lock", Pathname)
+    @path = T.let(HOMEBREW_LOCKS/"#{locked_path.basename}.#{type}.lock", Pathname)
     @lockfile = T.let(nil, T.nilable(File))
   end
 
@@ -36,7 +35,7 @@ class LockFile
 
       begin
         lockfile = begin
-          File.open(path, File::RDWR | File::CREAT)
+          File.open(path, File::RDWR | File::CREAT | File::NOFOLLOW)
         rescue Errno::EMFILE
           odie "The maximum number of open files on this system has been reached. " \
                "Use `ulimit -n` to increase this limit."
@@ -77,7 +76,7 @@ class LockFile
     Utils::Interrupts.ignore do
       next if @lockfile.nil?
 
-      @path.unlink if unlink
+      @path.unlink if unlink && File.identical?(@path, @lockfile)
       @lockfile.flock(File::LOCK_UN)
       @lockfile.close
       @lockfile = nil
