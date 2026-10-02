@@ -210,6 +210,13 @@ RSpec.describe Utils::Shell do
         .to eq("echo 'HOMEBREW_FOO=(''a b'')' >> #{described_class.profile}")
     end
 
+    it "escapes a zsh profile path that needs quoting" do
+      ENV["SHELL"] = "/bin/zsh"
+      ENV["HOMEBREW_ZDOTDIR"] = "/tmp/App Support"
+      expect(described_class.set_variable_in_profile("HOMEBREW_FOO", "bar"))
+        .to eq("echo 'export HOMEBREW_FOO=bar' >> /tmp/App\\ Support/.zshrc")
+    end
+
     it "keeps the fish echo runnable when the value contains a single quote" do
       ENV["SHELL"] = "/usr/local/bin/fish"
       expect(described_class.set_variable_in_profile("HOMEBREW_FOO", "it's"))

@@ -63,7 +63,7 @@ module OS
           return if executable
 
           commands = ["export HOMEBREW_TEMP=~/tmp",
-                      "echo 'export HOMEBREW_TEMP=~/tmp' >> #{Utils::Shell.profile}"]
+                      "echo 'export HOMEBREW_TEMP=~/tmp' >> #{Utils::Shell.profile_redirect_target}"]
           ::Homebrew::Diagnostic::Finding.new(
             <<~EOS,
               The directory #{HOMEBREW_TEMP} does not permit executing
@@ -83,7 +83,7 @@ module OS
         def check_umask_not_zero
           return unless File.umask.zero?
 
-          commands = ["echo 'umask 002' >> #{Utils::Shell.profile}"]
+          commands = ["echo 'umask 002' >> #{Utils::Shell.profile_redirect_target}"]
           ::Homebrew::Diagnostic::Finding.new(
             <<~EOS,
               umask is currently set to 000. Directories created by Homebrew cannot

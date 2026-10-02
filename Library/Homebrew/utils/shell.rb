@@ -144,19 +144,32 @@ module Utils
       SHELL_PROFILE_MAP.fetch(shell, "~/.profile")
     end
 
+    # Return {profile} quoted for use as a redirection target in the user's shell.
+    sig { returns(String) }
+    def profile_redirect_target
+      target = profile
+      return target unless target.match?(UNSAFE_SHELL_CHAR)
+
+      case preferred
+      when :pwsh then pwsh_quote(target)
+      when :rc then rc_quote(target)
+      else sh_quote(target)
+      end
+    end
+
     sig { params(variable: String, value: String).returns(T.nilable(String)) }
     def set_variable_in_profile(variable, value)
       case preferred
       when :bash, :ksh, :mksh, :sh, :zsh, nil
-        "echo #{sh_single_quote("export #{variable}=#{sh_quote(value)}")} >> #{profile}"
+        "echo #{sh_single_quote("export #{variable}=#{sh_quote(value)}")} >> #{profile_redirect_target}"
       when :pwsh
-        "#{pwsh_quote("$env:#{variable} = #{pwsh_quote(value)}")} >> #{profile}"
+        "#{pwsh_quote("$env:#{variable} = #{pwsh_quote(value)}")} >> #{profile_redirect_target}"
       when :rc
-        "echo #{rc_quote("#{variable}=(#{rc_quote(value)})")} >> #{profile}"
+        "echo #{rc_quote("#{variable}=(#{rc_quote(value)})")} >> #{profile_redirect_target}"
       when :csh, :tcsh
-        "echo #{sh_single_quote("setenv #{variable} #{csh_quote(value)}")} >> #{profile}"
+        "echo #{sh_single_quote("setenv #{variable} #{csh_quote(value)}")} >> #{profile_redirect_target}"
       when :fish
-        "echo #{fish_quote("set -gx #{variable} #{sh_quote(value)}")} >> #{profile}"
+        "echo #{fish_quote("set -gx #{variable} #{sh_quote(value)}")} >> #{profile_redirect_target}"
       end
     end
 
@@ -164,13 +177,13 @@ module Utils
     def prepend_path_in_profile(path)
       case preferred
       when :bash, :ksh, :mksh, :sh, :zsh, nil
-        "echo #{sh_single_quote("export PATH=#{sh_quote(path)}:$PATH")} >> #{profile}"
+        "echo #{sh_single_quote("export PATH=#{sh_quote(path)}:$PATH")} >> #{profile_redirect_target}"
       when :pwsh
-        "#{pwsh_quote("$env:PATH = #{pwsh_quote(path)} + \":$env:PATH\"")} >> #{profile}"
+        "#{pwsh_quote("$env:PATH = #{pwsh_quote(path)} + \":$env:PATH\"")} >> #{profile_redirect_target}"
       when :rc
-        "echo #{rc_quote("path=(#{rc_quote(path)} $path)")} >> #{profile}"
+        "echo #{rc_quote("path=(#{rc_quote(path)} $path)")} >> #{profile_redirect_target}"
       when :csh, :tcsh
-        "echo #{sh_single_quote("setenv PATH #{csh_quote(path)}:$PATH")} >> #{profile}"
+        "echo #{sh_single_quote("setenv PATH #{csh_quote(path)}:$PATH")} >> #{profile_redirect_target}"
       when :fish
         "fish_add_path #{sh_quote(path)}"
       end
