@@ -240,6 +240,7 @@ module Cask
           payload_path = temporary_path/"payload.json"
           payload_path.write(payload_json, mode: "wx")
           sandbox.allow_read(path: payload_path)
+          sandbox.protect_homebrew_state
 
           # The payload carries only structured data, not a cask `.rb` file.
           # Set HOME before starting this child so its boot process and any

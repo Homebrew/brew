@@ -27,6 +27,55 @@ RSpec.describe Homebrew::Cleanup do
     FileUtils.rm_rf HOMEBREW_LIBRARY/"Homebrew"
   end
 
+  describe "#cleanup_lockfiles" do
+    it "preserves active locks" do
+      lock_file.open(File::RDWR) do |file|
+        file.flock(File::LOCK_EX | File::LOCK_NB)
+
+        cleanup.cleanup_lockfiles
+
+        expect(lock_file).to exist
+      end
+    end
+
+    it "skips a lock replaced by a symlink before it is opened" do
+      allow(lock_file).to receive(:readable?) do
+        lock_file.unlink
+        lock_file.make_symlink(ds_store)
+        true
+      end
+
+      cleanup.cleanup_lockfiles(lock_file)
+
+      expect(lock_file).to be_a_symlink
+    end
+
+    it "preserves a replacement lock acquired after opening the original" do
+      allow(lock_file).to receive(:open).and_wrap_original do |original, *args, &block|
+        original.call(*args) do |file|
+          lock_file.unlink
+          original.call(File::RDWR | File::CREAT) do |replacement|
+            replacement.flock(File::LOCK_EX | File::LOCK_NB)
+            block.call(file)
+          end
+        end
+      end
+
+      cleanup.cleanup_lockfiles(lock_file)
+
+      expect(lock_file).to exist
+    end
+
+    it "ignores lock files deleted before they are opened" do
+      allow(lock_file).to receive(:readable?) do
+        lock_file.unlink
+        true
+      end
+
+      expect { cleanup.cleanup_lockfiles(lock_file) }.not_to raise_error
+    end
+  end
+
   describe "::install_formula_clean!" do
     it "does not report a formula when nothing was cleaned" do
       formula = Testball.new

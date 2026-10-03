@@ -35,31 +35,46 @@ class Sandbox
 
     sig { returns(T::Hash[String, Symbol]) }
     def writable_paths
-      profile.rules.each_with_object({}) do |rule, paths|
-        next if !rule.allow || !rule.operation.start_with?("file-write")
+      allowed_paths("file-write").each { |path, type| prepare_writable_path(path, type) }
+    end
+
+    private
+
+    sig { params(operation: String, paths: T::Hash[String, Symbol]).returns(T::Hash[String, Symbol]) }
+    def allowed_paths(operation, paths = {})
+      profile.rules.each do |rule|
+        next unless rule.operation.start_with?(operation)
         next unless (filter = rule.filter)
 
         case filter.type
         when :literal, :subpath
-          paths[filter.path] ||= filter.type
+          if rule.allow
+            next if operation != "file-write" && !File.exist?(filter.path)
+
+            paths[filter.path] ||= filter.type
+          else
+            paths = paths.flat_map do |path, type|
+              paths_excluding(::Pathname.new(path), ::Pathname.new(filter.path)).map { |allowed| [allowed, type] }
+            end.to_h
+          end
         when :regex
           raise ArgumentError, "Linux sandbox does not support regex path filters: #{filter.path}"
         else
           raise ArgumentError, "Invalid path filter type: #{filter.type}"
         end
       end
+      paths
     end
 
-    private
+    # Landlock grants are additive, so exclude denied paths by splitting ancestor grants.
+    sig { params(path: ::Pathname, denied_path: ::Pathname).returns(T::Array[String]) }
+    def paths_excluding(path, denied_path)
+      return [] if path.ascend.include?(denied_path) || path.symlink?
+      return [path.to_s] unless denied_path.ascend.include?(path)
 
-    sig { params(allow: T::Boolean, operation: String).returns(T::Array[String]) }
-    def profile_paths(allow:, operation:)
-      profile.rules.filter_map do |rule|
-        next if rule.allow != allow || !rule.operation.start_with?(operation)
-
-        filter = rule.filter
-        filter.path if filter && [:literal, :subpath].include?(filter.type)
-      end.uniq
+      path.children.sort.flat_map { |child| paths_excluding(child, denied_path) }
+    rescue Errno::EACCES, Errno::ENOENT
+      []
     end
 
     sig { returns(T::Boolean) }

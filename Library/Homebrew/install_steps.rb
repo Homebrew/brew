@@ -952,6 +952,8 @@ module Homebrew
           end
 
           case step.fetch("type")
+          when "init_data_dir"
+            [resolve_path(step_path(step, "path"))]
           when "mkdir_p"
             path = resolve_path(step_path(step, "path"))
             [path.parent.directory? ? path : path.parent]

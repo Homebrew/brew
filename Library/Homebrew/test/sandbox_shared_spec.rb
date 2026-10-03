@@ -454,6 +454,36 @@ RSpec.describe Sandbox do
     end
   end
 
+  describe "#allow_write_cellar" do
+    it "does not grant post-install data directories during builds" do
+      database_formula = formula("sandboxed-database") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        post_install_steps do
+          init_data_dir "postgresql@15/data", base: :var, using: :postgresql_initdb
+        end
+      end
+      sandbox.allow_write_cellar(database_formula)
+
+      expect(sandbox.profile.rules.filter_map { |rule| rule.filter&.path if rule.allow })
+        .not_to include((database_formula.var/"postgresql@15/data").to_s)
+    end
+  end
+
+  describe "#protect_homebrew_state" do
+    it "protects locks after granting access to var" do
+      sandbox.allow_read path: HOMEBREW_PREFIX/"var", type: :subpath
+      sandbox.allow_write_path HOMEBREW_PREFIX/"var"
+      sandbox.protect_homebrew_state
+
+      expect(sandbox.profile.rules.select { |rule| rule.filter&.path == HOMEBREW_LOCKS.realpath.to_s })
+        .to contain_exactly(
+          have_attributes(allow: false, operation: "file-write*"),
+          have_attributes(allow: false, operation: "file-read*"),
+        )
+    end
+  end
+
   describe "#add_install_hook_rules" do
     it "applies common install hook restrictions" do
       expect(sandbox).to receive(:allow_write_temp_and_cache).ordered

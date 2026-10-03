@@ -285,10 +285,19 @@ class Sandbox
 
     sig { params(args: T::Array[T.any(String, ::Pathname)], tmpdir: String).returns(T::Array[T.any(String, ::Pathname)]) }
     def command(args, tmpdir)
-      paths = writable_paths
-      @writable_paths = paths.keys | [File::NULL, tmpdir]
-      @writable_paths.each { |path| prepare_writable_path(path, paths.fetch(path, :subpath)) }
-      denied_read_paths = self.denied_read_paths
+      @writable_paths = writable_paths.keys | [File::NULL, tmpdir]
+      [File::NULL, tmpdir].each { |path| prepare_writable_path(path, :subpath) }
+      denied_read_paths = profile.rules.filter_map do |rule|
+        next if rule.allow || !rule.operation.start_with?("file-read")
+        next unless (filter = rule.filter)
+        next unless [:literal, :subpath].include?(filter.type)
+
+        pathname = ::Pathname.new(filter.path)
+        pathname.lstat
+        pathname
+      rescue Errno::ENOENT
+        nil
+      end.uniq
       @readable_paths = readable_paths(denied_read_paths)
       @deny_read = denied_read_paths.any?
       @deny_all_network = deny_all_network?
@@ -410,9 +419,7 @@ class Sandbox
     def readable_paths(denied_paths)
       return [] if denied_paths.empty? || denied_paths.include?(root_path)
 
-      paths = profile_paths(allow: true, operation: "file-read").select { |path| File.exist?(path) }
-      root_path.children.sort.each { |path| add_readable_path(path, denied_paths, paths) }
-      paths.uniq
+      allowed_paths("file-read", root_path.to_s => :subpath).keys
     end
 
     private
@@ -431,33 +438,6 @@ class Sandbox
       raise_system_call_error("landlock_add_rule") if result.negative?
     ensure
       close_file_descriptor(path_fd) if path_fd
-    end
-
-    sig { returns(T::Array[::Pathname]) }
-    def denied_read_paths
-      profile_paths(allow: false, operation: "file-read").filter_map do |path|
-        pathname = ::Pathname.new(path)
-        pathname.lstat
-        pathname
-      rescue Errno::ENOENT
-        nil
-      end
-    end
-
-    sig { params(path: ::Pathname, denied_paths: T::Array[::Pathname], paths: T::Array[String]).void }
-    def add_readable_path(path, denied_paths, paths)
-      return if denied_paths.include?(path)
-
-      path_stat = path.lstat
-      return if path_stat.symlink?
-
-      if path_stat.directory? && denied_paths.any? { |denied_path| denied_path.ascend.include?(path) }
-        path.children.sort.each { |child| add_readable_path(child, denied_paths, paths) }
-      else
-        paths << path.to_s
-      end
-    rescue Errno::EACCES, Errno::ENOENT
-      nil
     end
 
     sig { returns(::Pathname) }

@@ -196,7 +196,8 @@ RSpec.describe FormulaInstaller do
 
       allow(formula).to receive(:logs).and_return(mktmpdir)
       allow(Sandbox).to receive_messages(new: sandbox, use_for?: true)
-      expect(sandbox).to receive(:allow_write_temp_and_cache)
+      expect(sandbox).to receive(:allow_write_temp_and_cache).ordered
+      expect(sandbox).to receive(:protect_homebrew_state).ordered
       expect(sandbox).not_to receive(:allow_write_cellar)
       expect(sandbox).not_to receive(:deny_all_network)
       expect(sandbox).to receive(:run) do |*args|
@@ -209,6 +210,58 @@ RSpec.describe FormulaInstaller do
   end
 
   describe "#post_install" do
+    context "with a declared data directory" do
+      let(:database_formula) do
+        formula("sandboxed-database") do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          post_install_steps do
+            init_data_dir "postgresql@15/data", base: :var, using: :postgresql_initdb
+          end
+        end
+      end
+      let(:installer) { described_class.new(database_formula) }
+      let(:sandbox) { Sandbox.new }
+
+      before do
+        allow(database_formula).to receive_messages(logs: mktmpdir, var: mktmpdir, network_access_allowed?: false)
+        allow(installer).to receive(:post_install_formula_path).and_return(database_formula.path)
+        allow(Sandbox).to receive(:with_preserved_brew_file).and_yield
+        allow(Sandbox).to receive(:run_or_fork).and_yield(sandbox)
+      end
+
+      it "includes declared data directories" do
+        installer.post_install
+
+        expect(sandbox.profile.rules.filter_map { |rule| rule.filter&.path if rule.allow })
+          .to include((database_formula.var/"postgresql@15/data").to_s)
+      end
+
+      it "does not widen access through a declared data directory's symlink parent" do
+        outside = mktmpdir
+        (database_formula.var/"postgresql@15").make_symlink(outside)
+
+        installer.post_install
+
+        expect(sandbox.profile.rules.filter_map { |rule| rule.filter&.path if rule.allow })
+          .not_to include((outside/"data").to_s)
+      end
+
+      it "resolves symlinks before checking parent traversal" do
+        outside = mktmpdir
+        (outside/"child").mkpath
+        (database_formula.var/"postgresql@15").make_symlink(outside/"child")
+        allow(database_formula).to receive(:post_install_steps).and_return(Homebrew::InstallSteps::DSL.build do
+          init_data_dir "postgresql@15/../data", base: :var, using: :postgresql_initdb
+        end)
+
+        installer.post_install
+
+        expect(sandbox.profile.rules.filter_map { |rule| rule.filter&.path if rule.allow })
+          .not_to include((outside/"data").to_s)
+      end
+    end
+
     it "runs structured post-install steps inside the formula sandbox" do
       formula = formula("sandboxed-install-steps") do
         T.bind(self, T.class_of(Formula))
@@ -219,7 +272,7 @@ RSpec.describe FormulaInstaller do
         end
       end
       installer = described_class.new(formula)
-      sandbox = instance_double(Sandbox).as_null_object
+      sandbox = Sandbox.new
 
       allow(installer).to receive(:post_install_formula_path).and_return(formula.path)
       allow(formula).to receive_messages(logs: mktmpdir, network_access_allowed?: false)
@@ -1926,7 +1979,7 @@ RSpec.describe FormulaInstaller do
       expect(sandbox).not_to receive(:allow_write_temp_and_cache)
       expect(sandbox).not_to receive(:allow_write_path).with(HOMEBREW_CACHE)
       expect(sandbox).to receive(:deny_all_network).ordered
-      expect(sandbox).to receive(:deny_write_temp_cellar).ordered
+      expect(sandbox).to receive(:protect_homebrew_state).ordered
       expect(sandbox).to receive(:run) do
         staging_path = Pathname(ENV.fetch("HOMEBREW_BUILD_STAGING_PATH"))
         expect(staging_path).to be_a_directory
@@ -1969,7 +2022,7 @@ RSpec.describe FormulaInstaller do
       allow(sandbox).to receive_messages(record_log: nil, allow_read_if_exists: nil, allow_write_temp_and_cache: nil,
                                          allow_write_log: nil, allow_cvs: nil, allow_fossil: nil,
                                          allow_write_xcode: nil, allow_write_cellar: nil, deny_read_home: nil,
-                                         deny_write_temp_cellar: nil, run: nil)
+                                         protect_homebrew_state: nil, run: nil)
       allow(formula).to receive_messages(logs: mktmpdir, update_head_version: nil, prefix: mktmpdir,
                                          network_access_allowed?: true)
       allow(Keg).to receive(:new).and_return(instance_double(Keg, empty_installation?: false))

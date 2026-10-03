@@ -423,6 +423,61 @@ RSpec.describe Sandbox::Landlock do
   end
 
   describe "#command" do
+    it "does not create missing paths denied by a later rule" do
+      directory = mktmpdir
+      sandbox.allow_write_path directory
+      [:literal, :subpath].each do |type|
+        sandbox.allow_write(path: directory/type.to_s, type:)
+        sandbox.deny_write_path directory/type.to_s
+      end
+
+      landlock.command(["true"], mktmpdir.to_s)
+
+      expect(directory.children).to be_empty
+    end
+
+    it "prepares a database directory before calculating read access" do
+      root = mktmpdir
+      (root/"locks").mkpath
+      allow(landlock).to receive(:root_path).and_return(root)
+      sandbox.allow_write_path root
+      steps = Homebrew::InstallSteps::DSL.build do
+        init_data_dir (root/"postgresql@15").to_s, using: :postgresql_initdb
+      end
+      Homebrew::InstallSteps::Runner.new(context: Object.new).sandbox_write_paths(steps).each do |path|
+        sandbox.allow_write_path path
+      end
+      sandbox.deny_write_path root/"locks"
+      sandbox.deny_read_path root/"locks"
+
+      landlock.command(["true"], mktmpdir.to_s)
+
+      expect(landlock.readable_paths([root/"locks"])).to eq([(root/"postgresql@15").to_s])
+    end
+
+    it "excludes protected state from a writable parent" do
+      directory = mktmpdir
+      (directory/"database").mkpath
+      (directory/"homebrew/locks").mkpath
+      (directory/"homebrew/Cellar").mkpath
+      sandbox.allow_write_path directory
+      sandbox.deny_write_path directory/"homebrew/locks"
+      sandbox.deny_write_path directory/"homebrew/Cellar"
+
+      expect(landlock.writable_paths).to eq((directory/"database").to_s => :subpath)
+    end
+
+    it "applies read denials after an explicit parent allowance" do
+      root = mktmpdir
+      (root/"database").mkpath
+      (root/"locks").mkpath
+      allow(landlock).to receive(:root_path).and_return(root)
+      sandbox.allow_read(path: root, type: :subpath)
+      sandbox.deny_read_path root/"locks"
+
+      expect(landlock.readable_paths([root/"locks"])).to eq([(root/"database").to_s])
+    end
+
     it "limits an existing dylib symlink's write access to its resolved file" do
       directory = mktmpdir
       (directory/"target").mkpath
@@ -481,6 +536,7 @@ RSpec.describe Sandbox::Landlock do
       readable_dir.mkpath
       denied_dir.mkpath
       allow(landlock).to receive(:root_path).and_return(root)
+      sandbox.deny_read_path denied_dir
 
       expect(landlock.readable_paths([denied_dir])).to eq([readable_dir.to_s])
     end
@@ -503,6 +559,7 @@ RSpec.describe Sandbox::Landlock do
       home = root/"home"
       home.mkpath
       allow(landlock).to receive(:root_path).and_return(root)
+      sandbox.deny_read_path home
       sandbox.allow_read(path: home/"repository.fossil")
 
       expect(landlock.readable_paths([home])).to be_empty
@@ -515,6 +572,7 @@ RSpec.describe Sandbox::Landlock do
       alias_path = root/"alias"
       alias_path.make_symlink(denied_dir)
       allow(landlock).to receive(:root_path).and_return(root)
+      sandbox.deny_read_path denied_dir
 
       expect(landlock.readable_paths([denied_dir])).to be_empty
     end
@@ -526,6 +584,7 @@ RSpec.describe Sandbox::Landlock do
       dangling_path = root/"dangling"
       dangling_path.make_symlink(root/"missing")
       allow(landlock).to receive(:root_path).and_return(root)
+      sandbox.deny_read_path denied_dir
 
       expect(landlock.readable_paths([denied_dir])).to be_empty
     end
