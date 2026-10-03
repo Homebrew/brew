@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "shellwords"
+
 require "utils/path"
 require "utils/popen"
 
@@ -64,10 +66,9 @@ module Utils
         FileUtils.touch "#{home}/.zshrc"
       end
 
-      term = ENV.fetch("HOMEBREW_TERM", ENV.fetch("TERM", nil))
-      with_env(TERM: term) do
-        Process.wait fork { exec preferred_path(default: "/bin/bash") }
-      end
+      Process.wait Process.spawn(
+        { "TERM" => ENV.fetch("HOMEBREW_TERM", ENV.fetch("TERM", nil)) }, preferred_path(default: "/bin/bash")
+      )
 
       return if $CHILD_STATUS.success?
       raise "Aborted due to non-zero exit status (#{$CHILD_STATUS.exitstatus})" if $CHILD_STATUS.exited?
@@ -79,11 +80,9 @@ module Utils
     # return `nil` if there's no match.
     sig { params(path: String).returns(T.nilable(Symbol)) }
     def from_path(path)
-      # we only care about the basename
-      shell_name = File.basename(path)
       # handle possible version suffix like `zsh-5.2`
-      shell_name.sub!(/-.*\z/m, "")
-      shell_name.to_sym if %w[bash csh fish ksh mksh pwsh rc sh tcsh zsh].include?(shell_name)
+      shell = File.basename(path).sub(/-.*\z/m, "").to_sym
+      shell if SHELL_PROFILE_MAP.key?(shell)
     end
 
     sig { params(default: String).returns(String) }
@@ -106,16 +105,16 @@ module Utils
     def export_value(key, value, shell = preferred)
       case shell
       when :bash, :ksh, :mksh, :sh, :zsh
-        "export #{key}=#{sh_quote(value)}"
+        "export #{key}=\"#{sh_quote(value)}\""
       when :fish
         # fish quoting is mostly Bourne compatible except that
         # a single quote can be included in a single-quoted string via \'
         # and a literal \ can be included via \\
-        "set -gx #{key} #{sh_quote(value)}"
+        "set -gx #{key} \"#{sh_quote(value)}\""
       when :pwsh
         "$env:#{key} = #{pwsh_quote(value)}"
       when :rc
-        "#{key}=(#{rc_quote(value)})"
+        "#{key}=(#{sh_quote(value)})"
       when :csh, :tcsh
         "setenv #{key} #{csh_quote(value)};"
       end
@@ -138,25 +137,22 @@ module Utils
         return "#{ENV["HOMEBREW_ZDOTDIR"]}/.zshrc" if ENV["HOMEBREW_ZDOTDIR"].present?
       end
 
-      shell = preferred
-      return "~/.profile" if shell.nil?
-
-      SHELL_PROFILE_MAP.fetch(shell, "~/.profile")
+      SHELL_PROFILE_MAP.fetch(preferred || :sh, "~/.profile")
     end
 
     sig { params(variable: String, value: String).returns(T.nilable(String)) }
     def set_variable_in_profile(variable, value)
       case preferred
       when :bash, :ksh, :mksh, :sh, :zsh, nil
-        "echo #{sh_single_quote("export #{variable}=#{sh_quote(value)}")} >> #{profile}"
+        "echo 'export #{variable}=#{sh_quote(value)}' >> #{profile}"
       when :pwsh
         "#{pwsh_quote("$env:#{variable} = #{pwsh_quote(value)}")} >> #{profile}"
       when :rc
-        "echo #{rc_quote("#{variable}=(#{rc_quote(value)})")} >> #{profile}"
+        "echo '#{variable}=(#{sh_quote(value)})' >> #{profile}"
       when :csh, :tcsh
-        "echo #{sh_single_quote("setenv #{variable} #{csh_quote(value)}")} >> #{profile}"
+        "echo 'setenv #{variable} #{csh_quote(value)}' >> #{profile}"
       when :fish
-        "echo #{fish_quote("set -gx #{variable} #{sh_quote(value)}")} >> #{profile}"
+        "echo 'set -gx #{variable} #{sh_quote(value)}' >> #{profile}"
       end
     end
 
@@ -164,13 +160,13 @@ module Utils
     def prepend_path_in_profile(path)
       case preferred
       when :bash, :ksh, :mksh, :sh, :zsh, nil
-        "echo #{sh_single_quote("export PATH=#{sh_quote(path)}:$PATH")} >> #{profile}"
+        "echo 'export PATH=\"#{sh_quote(path)}:$PATH\"' >> #{profile}"
       when :pwsh
         "#{pwsh_quote("$env:PATH = #{pwsh_quote(path)} + \":$env:PATH\"")} >> #{profile}"
       when :rc
-        "echo #{rc_quote("path=(#{rc_quote(path)} $path)")} >> #{profile}"
+        "echo 'path=(#{sh_quote(path)} $path)' >> #{profile}"
       when :csh, :tcsh
-        "echo #{sh_single_quote("setenv PATH #{csh_quote(path)}:$PATH")} >> #{profile}"
+        "echo 'setenv PATH #{csh_quote(path)}:$PATH' >> #{profile}"
       when :fish
         "fish_add_path #{sh_quote(path)}"
       end
@@ -192,35 +188,10 @@ module Utils
       T::Hash[Symbol, String],
     )
 
-    UNSAFE_SHELL_CHAR = %r{([^A-Za-z0-9_\-.,:/@~+\n])}
-
     sig { params(str: String).returns(String) }
     def csh_quote(str)
-      # Ruby's implementation of `shell_escape`.
-      str = str.to_s
-      return "''" if str.empty?
-
-      str = str.dup
-      # Anything that isn't a known safe character is padded.
-      str.gsub!(UNSAFE_SHELL_CHAR, '\\\\\\1')
       # Newlines have to be specially quoted in `csh`.
-      str.gsub!("\n", "'\\\n'")
-      str
-    end
-
-    # A single-quoted string ends at the first `'`, so an embedded one has to
-    # close the string, escape the quote and reopen it. Nothing else is special
-    # inside single quotes, so one pass is enough.
-    sig { params(str: String).returns(String) }
-    def sh_single_quote(str)
-      "'#{str.gsub("'", "'\\\\''")}'"
-    end
-
-    # Inside fish single quotes `\'` and `\\` are escapes, so both have to be
-    # escaped rather than closing and reopening the string as in POSIX shells.
-    sig { params(str: String).returns(String) }
-    def fish_quote(str)
-      "'#{str.gsub("\\", "\\\\\\\\").gsub("'", "\\\\'")}'"
+      sh_quote(str).gsub("'\n'", "'\\\n'")
     end
 
     # PowerShell single-quoted strings take a literal `'` as `''` and expand
@@ -230,31 +201,16 @@ module Utils
       "'#{str.gsub("'", "''")}'"
     end
 
-    # rc has no backslash escapes: only a single-quoted string is literal, and
-    # an embedded `'` is written `''`.
-    sig { params(str: String).returns(String) }
-    def rc_quote(str)
-      "'#{str.gsub("'", "''")}'"
-    end
-
     sig { params(str: String).returns(String) }
     def sh_quote(str)
-      # Ruby's implementation of `shell_escape`.
-      str = str.to_s
-      return "''" if str.empty?
-
-      str = str.dup
-      # Anything that isn't a known safe character is padded.
-      str.gsub!(UNSAFE_SHELL_CHAR, '\\\\\\1')
-      str.gsub!("\n", "'\n'")
-      str
+      # Allow tilde expansion in paths such as ~/tmp.
+      Shellwords.escape(str).gsub("\\~", "~")
     end
 
     sig { params(type: String, preferred_path: String, notice: T.nilable(String), home: String).returns(String) }
     def shell_with_prompt(type, preferred_path:, notice:, home: Dir.home)
-      preferred = from_path(preferred_path)
       path = ENV.fetch("PATH")
-      subshell = case preferred
+      subshell = case from_path(preferred_path)
       when :zsh
         zdotdir = Pathname.new(HOMEBREW_TEMP/"brew-zsh-prompt-#{Process.euid}")
         zdotdir.mkpath
