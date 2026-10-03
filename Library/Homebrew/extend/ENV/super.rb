@@ -132,6 +132,8 @@ module Superenv
     # Set defaults for opam
     self["OPAMNODEPEXTS"] = "1"
     self["OPAMYES"] = "1"
+    # Set defaults for .NET
+    self["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1"
 
     set_debug_symbols if debug_symbols
 
