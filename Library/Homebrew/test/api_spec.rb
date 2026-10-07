@@ -103,6 +103,56 @@ RSpec.describe Homebrew::API do
       expect(target.mtime.to_i).to eq stale_mtime.to_i
     end
 
+    it "revalidates with the saved ETag instead of the bumped cache mtime" do
+      target = cache_dir/"bar.json"
+      target.write json
+      FileUtils.touch(target, mtime: Time.now - 7200)
+      etag_path = Pathname("#{target}.etag")
+      etag_path.write 'W/"old"'
+
+      args = T.let(nil, T.untyped)
+      allow(Utils::Curl).to receive(:curl_download) do |*curl_args, **|
+        args = curl_args
+        save_to = curl_args[curl_args.index("--etag-save") + 1]
+        File.write(save_to, 'W/"new"')
+      end
+
+      described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
+
+      expect(args).to include("--etag-compare", etag_path.to_s)
+      expect(args).not_to include("--time-cond")
+      expect(etag_path.read).to eq 'W/"new"'
+    end
+
+    it "keeps the saved ETag when curl blanks the new one on a 304" do
+      target = cache_dir/"bar.json"
+      target.write json
+      FileUtils.touch(target, mtime: Time.now - 7200)
+      etag_path = Pathname("#{target}.etag")
+      etag_path.write 'W/"old"'
+
+      allow(Utils::Curl).to receive(:curl_download) do |*curl_args, **|
+        File.write(curl_args[curl_args.index("--etag-save") + 1], "")
+      end
+
+      described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
+
+      expect(etag_path.read).to eq 'W/"old"'
+    end
+
+    it "falls back to --time-cond when no ETag has been saved" do
+      target = cache_dir/"bar.json"
+      target.write json
+      FileUtils.touch(target, mtime: Time.now - 7200)
+
+      args = T.let(nil, T.untyped)
+      allow(Utils::Curl).to receive(:curl_download) { |*curl_args, **| args = curl_args }
+
+      described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
+
+      expect(args).to include("--time-cond", target.to_s)
+    end
+
     it "refreshes the cache mtime when a fallback to the default API domain succeeds" do
       target = cache_dir/"bar.json"
       target.write json

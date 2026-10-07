@@ -75,6 +75,8 @@ module Homebrew
       insecure_download = DevelopmentTools.ca_file_substitution_required? ||
                           DevelopmentTools.curl_substitution_required?
       skip_download = skip_download?(target:, stale_seconds:)
+      etag_path = Pathname("#{target}.etag")
+      new_etag_path = Pathname("#{target}.etag.new")
 
       if enqueue
         unless skip_download
@@ -91,7 +93,15 @@ module Homebrew
         download_succeeded = T.let(false, T::Boolean)
         begin
           args = curl_args.dup
-          args.prepend("--time-cond", target.to_s) if target.exist? && !target.empty?
+          if target.exist? && !target.empty?
+            if etag_path.exist? && !etag_path.empty?
+              args.prepend("--etag-compare", etag_path.to_s)
+            else
+              args.prepend("--time-cond", target.to_s)
+            end
+          end
+          new_etag_path.unlink if new_etag_path.exist?
+          args.prepend("--etag-save", new_etag_path.to_s)
           if insecure_download
             opoo DevelopmentTools.insecure_download_warning(endpoint)
             args.append("--insecure")
@@ -101,6 +111,7 @@ module Homebrew
             # Disable retries here, we handle them ourselves below.
             Utils::Curl.curl_download(*args, url, to: target, retries: 0, show_error: false)
             download_succeeded = true
+            FileUtils.mv(new_etag_path, etag_path) if new_etag_path.exist? && !new_etag_path.empty?
           end
         rescue ErrorDuringExecution
           if url == default_url
