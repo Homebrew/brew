@@ -29,14 +29,21 @@ module RuboCop
         end
       end
 
-      # This cop makes sure that a `test` block contains a proper test.
+      # This cop makes sure that a `test` block exists and contains a real test.
       class Test < FormulaCop
         extend AutoCorrector
 
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
-          test = find_block(formula_nodes.body_node, :test)
-          return unless test
+          body_node = formula_nodes.body_node
+          test = find_block(body_node, :test)
+          if test.nil?
+            return if find_node_method_by_name(body_node, :disable!)
+
+            offending_node(formula_nodes.class_node) if body_node.nil?
+            problem "A `test do` test block should be added"
+            return
+          end
 
           if test.body.nil?
             problem "`test do` should not be empty"
@@ -127,21 +134,6 @@ module RuboCop
               corrector.remove(range)
             end
           end
-        end
-      end
-    end
-
-    module FormulaAuditStrict
-      # This cop makes sure that a `test` block exists.
-      class TestPresent < FormulaCop
-        sig { override.params(formula_nodes: FormulaNodes).void }
-        def audit_formula(formula_nodes)
-          body_node = formula_nodes.body_node
-          return if find_block(body_node, :test)
-          return if find_node_method_by_name(body_node, :disable!)
-
-          offending_node(formula_nodes.class_node) if body_node.nil?
-          problem "A `test do` test block should be added"
         end
       end
     end

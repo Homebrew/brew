@@ -1,7 +1,7 @@
 # typed: strict
 
 # Not a real formula, just a Sorbet shim for external taps.
-# rubocop:disable FormulaAudit/Desc,FormulaAudit/Homepage
+# rubocop:disable FormulaAudit/Desc,FormulaAudit/Homepage,FormulaAudit/Test
 class PortableFormula < Formula
   extend T::Generic
 
@@ -9,4 +9,4 @@ class PortableFormula < Formula
   # This could also be added to homebrew-core/Abstract/portable-formula.rb and subsequently removed here
   Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
 end
-# rubocop:enable FormulaAudit/Desc,FormulaAudit/Homepage
+# rubocop:enable FormulaAudit/Desc,FormulaAudit/Homepage,FormulaAudit/Test
