@@ -109,9 +109,13 @@ module Homebrew
           unless skip_download
             ohai "Downloading #{url}" if $stdout.tty? && !Context.current.quiet?
             # Disable retries here, we handle them ourselves below.
-            Utils::Curl.curl_download(*args, url, to: target, retries: 0, show_error: false)
+            result = Utils::Curl.curl_download(*args, url, to: target, retries: 0, show_error: false)
             download_succeeded = true
-            FileUtils.mv(new_etag_path, etag_path) if new_etag_path.exist? && !new_etag_path.empty?
+            if new_etag_path.exist? && !new_etag_path.empty?
+              FileUtils.mv(new_etag_path, etag_path)
+            elsif result.respond_to?(:stderr) && result.stderr.exclude?("HTTP status: 304")
+              etag_path.unlink if etag_path.exist?
+            end
           end
         rescue ErrorDuringExecution
           if url == default_url

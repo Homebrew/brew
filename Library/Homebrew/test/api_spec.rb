@@ -115,6 +115,7 @@ RSpec.describe Homebrew::API do
         args = curl_args
         save_to = curl_args[curl_args.index("--etag-save") + 1]
         File.write(save_to, 'W/"new"')
+        instance_double(SystemCommand::Result, stderr: "HTTP status: 200")
       end
 
       described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
@@ -133,11 +134,29 @@ RSpec.describe Homebrew::API do
 
       allow(Utils::Curl).to receive(:curl_download) do |*curl_args, **|
         File.write(curl_args[curl_args.index("--etag-save") + 1], "")
+        instance_double(SystemCommand::Result, stderr: "HTTP status: 304")
       end
 
       described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
 
       expect(etag_path.read).to eq 'W/"old"'
+    end
+
+    it "removes the saved ETag when a 200 response carries none" do
+      target = cache_dir/"bar.json"
+      target.write json
+      FileUtils.touch(target, mtime: Time.now - 7200)
+      etag_path = Pathname("#{target}.etag")
+      etag_path.write 'W/"old"'
+
+      allow(Utils::Curl).to receive(:curl_download) do |*curl_args, **|
+        File.write(curl_args[curl_args.index("--etag-save") + 1], "")
+        instance_double(SystemCommand::Result, stderr: "HTTP status: 200")
+      end
+
+      described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
+
+      expect(etag_path).not_to exist
     end
 
     it "falls back to --time-cond when no ETag has been saved" do
