@@ -103,73 +103,100 @@ RSpec.describe Homebrew::API do
       expect(target.mtime.to_i).to eq stale_mtime.to_i
     end
 
-    it "revalidates with the saved ETag instead of the bumped cache mtime" do
-      target = cache_dir/"bar.json"
-      target.write json
-      FileUtils.touch(target, mtime: Time.now - 7200)
-      etag_path = Pathname("#{target}.etag")
-      etag_path.write 'W/"old"'
+    context "with a stale cached file" do
+      let(:target) { cache_dir/"bar.json" }
+      let(:etag_path) { Pathname("#{target}.etag") }
+      let(:curl_args) { [] }
 
-      args = T.let(nil, T.untyped)
-      allow(Utils::Curl).to receive(:curl_download) do |*curl_args, **|
-        args = curl_args
-        save_to = curl_args[curl_args.index("--etag-save") + 1]
-        File.write(save_to, 'W/"new"')
-        instance_double(SystemCommand::Result, stderr: "HTTP status: 200")
+      before do
+        target.write json
+        FileUtils.touch(target, mtime: Time.now - 7200)
       end
 
-      described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
-
-      expect(args).to include("--etag-compare", etag_path.to_s)
-      expect(args).not_to include("--time-cond")
-      expect(etag_path.read).to eq 'W/"new"'
-    end
-
-    it "keeps the saved ETag when curl blanks the new one on a 304" do
-      target = cache_dir/"bar.json"
-      target.write json
-      FileUtils.touch(target, mtime: Time.now - 7200)
-      etag_path = Pathname("#{target}.etag")
-      etag_path.write 'W/"old"'
-
-      allow(Utils::Curl).to receive(:curl_download) do |*curl_args, **|
-        File.write(curl_args[curl_args.index("--etag-save") + 1], "")
-        instance_double(SystemCommand::Result, stderr: "HTTP status: 304")
+      def stub_curl(status:, etag: "")
+        allow(Utils::Curl).to receive(:curl_download) do |*args, to:, **|
+          curl_args.replace(args)
+          File.write(args.fetch(args.index("--etag-save") + 1), etag) if etag
+          to.write json if status == 200
+          SystemCommand::Result.new(["curl"], [[:stderr, "HTTP status: #{status}"]],
+                                    instance_double(Process::Status, success?: true, exitstatus: 0),
+                                    secrets: [])
+        end
       end
 
-      described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
-
-      expect(etag_path.read).to eq 'W/"old"'
-    end
-
-    it "removes the saved ETag when a 200 response carries none" do
-      target = cache_dir/"bar.json"
-      target.write json
-      FileUtils.touch(target, mtime: Time.now - 7200)
-      etag_path = Pathname("#{target}.etag")
-      etag_path.write 'W/"old"'
-
-      allow(Utils::Curl).to receive(:curl_download) do |*curl_args, **|
-        File.write(curl_args[curl_args.index("--etag-save") + 1], "")
-        instance_double(SystemCommand::Result, stderr: "HTTP status: 200")
+      def fetch
+        described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
       end
 
-      described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
+      it "sends the saved ETag instead of the cache mtime and stores the new one" do
+        etag_path.write 'W/"old"'
+        stub_curl(status: 200, etag: 'W/"new"')
+        fetch
+        expect(curl_args).to include("--etag-compare", etag_path.to_s)
+        expect(curl_args).not_to include("--time-cond")
+        expect(etag_path.read).to eq 'W/"new"'
+      end
 
-      expect(etag_path).not_to exist
-    end
+      it "falls back to --time-cond and saves the ETag when none is saved" do
+        stub_curl(status: 200, etag: 'W/"new"')
+        fetch
+        expect(curl_args).to include("--time-cond", target.to_s)
+        expect(curl_args).not_to include("--etag-compare")
+        expect(etag_path.read).to eq 'W/"new"'
+      end
 
-    it "falls back to --time-cond when no ETag has been saved" do
-      target = cache_dir/"bar.json"
-      target.write json
-      FileUtils.touch(target, mtime: Time.now - 7200)
+      it "falls back to --time-cond when the saved ETag is empty" do
+        etag_path.write ""
+        stub_curl(status: 200, etag: 'W/"new"')
+        fetch
+        expect(curl_args).to include("--time-cond", target.to_s)
+        expect(curl_args).not_to include("--etag-compare")
+      end
 
-      args = T.let(nil, T.untyped)
-      allow(Utils::Curl).to receive(:curl_download) { |*curl_args, **| args = curl_args }
+      it "keeps the saved ETag, refreshes the mtime and leaves no temp file on a 304" do
+        etag_path.write 'W/"old"'
+        stub_curl(status: 304)
+        fetch
+        expect(etag_path.read).to eq 'W/"old"'
+        expect(Pathname("#{target}.etag.new")).not_to exist
+        expect(target.mtime).to be > Time.now - 60
+      end
 
-      described_class.fetch_json_api_file("bar.json", target:, stale_seconds: 3600)
+      it "ignores a leftover temp ETag from an earlier run" do
+        etag_path.write 'W/"old"'
+        Pathname("#{target}.etag.new").write 'W/"leftover"'
+        stub_curl(status: 304, etag: nil)
+        fetch
+        expect(etag_path.read).to eq 'W/"old"'
+      end
 
-      expect(args).to include("--time-cond", target.to_s)
+      it "removes the saved ETag when a 200 carries none" do
+        etag_path.write 'W/"old"'
+        stub_curl(status: 200)
+        fetch
+        expect(etag_path).not_to exist
+      end
+
+      it "keeps the saved ETag when the download fails" do
+        etag_path.write 'W/"old"'
+        allow(Utils::Curl).to receive(:curl_download).and_raise(ErrorDuringExecution.new(["curl"], status: 1))
+        expect { fetch }.to output(/falling back to cached version/).to_stderr
+        expect(etag_path.read).to eq 'W/"old"'
+      end
+
+      it "uses only --time-cond and never touches ETags when curl is too old" do
+        allow(Utils::Curl).to receive(:curl_supports_etag?).and_return(false)
+        etag_path.write 'W/"old"'
+        stub_curl(status: 200, etag: nil)
+        allow(Utils::Curl).to receive(:curl_download) do |*args, to:, **|
+          curl_args.replace(args)
+          to.write json
+        end
+        fetch
+        expect(curl_args).to include("--time-cond", target.to_s)
+        expect(curl_args.grep(/etag/)).to be_empty
+        expect(etag_path.read).to eq 'W/"old"'
+      end
     end
 
     it "refreshes the cache mtime when a fallback to the default API domain succeeds" do

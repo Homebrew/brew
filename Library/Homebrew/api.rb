@@ -93,15 +93,16 @@ module Homebrew
         download_succeeded = T.let(false, T::Boolean)
         begin
           args = curl_args.dup
-          if target.exist? && !target.empty?
-            if etag_path.exist? && !etag_path.empty?
-              args.prepend("--etag-compare", etag_path.to_s)
-            else
-              args.prepend("--time-cond", target.to_s)
-            end
+          use_etag = Utils::Curl.curl_supports_etag?
+          if use_etag && etag_path.exist? && !etag_path.empty? && target.exist? && !target.empty?
+            args.prepend("--etag-compare", etag_path.to_s)
+          elsif target.exist? && !target.empty?
+            args.prepend("--time-cond", target.to_s)
           end
-          new_etag_path.unlink if new_etag_path.exist?
-          args.prepend("--etag-save", new_etag_path.to_s)
+          if use_etag
+            new_etag_path.unlink if new_etag_path.exist?
+            args.prepend("--etag-save", new_etag_path.to_s)
+          end
           if insecure_download
             opoo DevelopmentTools.insecure_download_warning(endpoint)
             args.append("--insecure")
@@ -111,10 +112,13 @@ module Homebrew
             # Disable retries here, we handle them ourselves below.
             result = Utils::Curl.curl_download(*args, url, to: target, retries: 0, show_error: false)
             download_succeeded = true
-            if new_etag_path.exist? && !new_etag_path.empty?
-              FileUtils.mv(new_etag_path, etag_path)
-            elsif result.respond_to?(:stderr) && result.stderr.exclude?("HTTP status: 304")
-              etag_path.unlink if etag_path.exist?
+            if use_etag
+              if new_etag_path.exist? && !new_etag_path.empty?
+                FileUtils.mv(new_etag_path, etag_path)
+              elsif result.respond_to?(:stderr) && result.stderr.exclude?("HTTP status: 304")
+                etag_path.unlink if etag_path.exist?
+              end
+              new_etag_path.unlink if new_etag_path.exist?
             end
           end
         rescue ErrorDuringExecution

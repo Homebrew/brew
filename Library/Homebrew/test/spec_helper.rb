@@ -231,6 +231,7 @@ RSpec.configure do |config|
     allow(Utils::Curl).to receive(:curl_executable).and_raise(<<~ERROR)
       Unexpected call to Utils::Curl.curl_executable without setting :needs_network or :needs_utils_curl.
     ERROR
+    allow(Utils::Curl).to receive(:curl_supports_etag?).and_return(true)
   end
 
   config.before do
