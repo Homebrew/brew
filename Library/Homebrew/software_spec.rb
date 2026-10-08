@@ -396,6 +396,10 @@ class SoftwareSpec
     Requirement.expand(self)
   end
 
+  # Needed for `ResourceAuditor`
+  sig { returns(T::Boolean) }
+  def test? = false
+
   sig {
     params(strip: T.any(Symbol, String), src: T.nilable(T.any(String, Symbol)),
            block: T.nilable(T.proc.bind(Resource::Patch).void)).void

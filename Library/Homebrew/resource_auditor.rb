@@ -33,6 +33,9 @@ module Homebrew
     sig { returns(T.nilable(Resource::Owner)) }
     attr_reader :owner
 
+    sig { returns(T::Boolean) }
+    attr_reader :test
+
     sig { returns(Symbol) }
     attr_reader :spec_name
 
@@ -61,6 +64,7 @@ module Homebrew
       @using    = T.let(resource.using, T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol)))
       @specs    = T.let(resource.specs, T::Hash[Symbol, T.untyped])
       @owner    = T.let(resource.owner, T.nilable(T.any(Cask::Cask, Resource::Owner)))
+      @test     = T.let(resource.test?, T::Boolean)
       @spec_name = spec_name
       @online    = online
       @strict    = strict
@@ -159,6 +163,7 @@ module Homebrew
     sig { void }
     def audit_resource_name_matches_pypi_package_name_in_url
       return unless url!.match?(%r{^https?://files\.pythonhosted\.org/packages/})
+      return if test
       # Skip the top-level package name as we only care about `resource "foo"` blocks.
       return if name == owner!.name
 
