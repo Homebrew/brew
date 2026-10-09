@@ -666,6 +666,9 @@ on_request: installed_on_request?, options:)
       next false if c.name == formula.name || c.name == formula.full_name
 
       f = Formulary.factory(c.name)
+    rescue Homebrew::UntrustedTapError
+      name = Formulary.loader_for(c.name, warn: false).name
+      (HOMEBREW_LINKED_KEGS/name).exist? && (HOMEBREW_PREFIX/"opt"/name).exist?
     rescue TapFormulaUnavailableError
       # If the formula name is a fully-qualified name let's silently
       # ignore it as we don't care about things used in taps that aren't
