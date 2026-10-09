@@ -1204,14 +1204,73 @@ RSpec.describe FormulaInstaller do
     end
 
     it "unlinks siblings before linking when explicitly requested" do
+      allow(described_class).to receive(:locked).and_return([other_version])
       installer = described_class.new(versioned_formula, link_keg: true)
 
       expect(installer.link_keg).to be true
       expect(Homebrew::Unlink).to receive(:unlink_link_overwrite_formulae).with(versioned_formula,
-                                                                                verbose: false).ordered
+                                                                                locked_formulae: [other_version],
+                                                                                verbose:         false).ordered
       expect(keg).to receive(:link).with(verbose: false, overwrite: false).ordered
 
       installer.link(keg)
+    end
+
+    context "with a linked sibling" do
+      let(:keg) { Keg.new(versioned_formula.prefix) }
+
+      before do
+        [versioned_formula, other_version].each do |formula|
+          formula.bin.mkpath
+          (formula.bin/"foo").write("foo")
+        end
+        Keg.new(other_version.prefix).link
+      end
+
+      after { [versioned_formula, other_version].each(&:unlock) }
+
+      it "unlinks the sibling without releasing its installer lock" do
+        [versioned_formula, other_version].each(&:lock)
+        allow(described_class).to receive(:locked).and_return([versioned_formula, other_version])
+
+        described_class.new(versioned_formula, link_keg: true).link(keg)
+
+        expect(other_version).not_to be_linked
+        expect(keg).to be_linked
+        expect do
+          FormulaLock.new(other_version.name).with_lock { raise "Installer lock was released" }
+        end.to raise_error(OperationInProgressError)
+      end
+
+      it "rejects a sibling lock not held by the installer" do
+        [versioned_formula, other_version].each(&:lock)
+        allow(described_class).to receive(:locked).and_return([versioned_formula])
+
+        expect do
+          described_class.new(versioned_formula, link_keg: true).link(keg)
+        end.to raise_error(OperationInProgressError)
+      end
+
+      it "clears partially acquired locks before a later link attempt" do
+        installer_class = Class.new(described_class)
+        dependency = Dependency.new(other_version.name)
+        allow(dependency).to receive(:to_formula).and_return(other_version)
+        allow(versioned_formula).to receive(:recursive_dependencies).and_return([dependency])
+
+        FormulaLock.new(other_version.name).with_lock do
+          expect do
+            installer_class.new(versioned_formula, link_keg: true).install
+          end.to raise_error(OperationInProgressError)
+          expect(installer_class.locked).to be_empty
+          expect do
+            FormulaLock.new(versioned_formula.name).with_lock { nil }
+          end.not_to raise_error
+          expect do
+            installer_class.new(versioned_formula, link_keg: true).link(keg)
+          end.to raise_error(OperationInProgressError)
+          expect(other_version).to be_linked
+        end
+      end
     end
   end
 
