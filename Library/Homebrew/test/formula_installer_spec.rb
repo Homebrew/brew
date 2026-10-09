@@ -1245,6 +1245,45 @@ RSpec.describe FormulaInstaller do
     end
   end
 
+  describe "#check_installation_already_attempted" do
+    it "rejects a queued formula already attempted through a different formula class" do
+      formula = Testball.new
+      installer = described_class.new(formula)
+      described_class.fetched << Class.new(Testball).new
+      installer.enqueue_fetch
+      described_class.attempted << described_class.new(formula).formula
+
+      expect { installer.check_installation_already_attempted }
+        .to raise_error(FormulaInstallationAlreadyAttemptedError)
+    end
+
+    it "rejects an already attempted formula of the same class" do
+      described_class.attempted << Testball.new
+
+      expect { described_class.new(Testball.new).check_installation_already_attempted }
+        .to raise_error(FormulaInstallationAlreadyAttemptedError)
+    end
+
+    it "allows a formula with the same name from a different tap" do
+      described_class.attempted << Testball.new(tap: Tap.fetch("user/first"))
+      installer = described_class.new(Testball.new(tap: Tap.fetch("user/second")))
+
+      expect { installer.check_installation_already_attempted }.not_to raise_error
+    end
+
+    it "allows a different spec of an already attempted formula" do
+      stable_formula = formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/testball-1.0.tar.gz"
+        head "https://brew.sh/testball.git"
+      end
+      described_class.attempted << stable_formula
+      installer = described_class.new(stable_formula.class.new(stable_formula.name, stable_formula.path, :head))
+
+      expect { installer.check_installation_already_attempted }.not_to raise_error
+    end
+  end
+
   describe "#check_install_sanity" do
     it "ignores removed dependencies from an installed version when pouring a bottle" do
       f = TestballBottle.new
