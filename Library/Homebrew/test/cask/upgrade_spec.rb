@@ -112,10 +112,10 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(described_class).to receive(:show_upgrade_summary) do |cask_upgrades, dry_run:|
           expect(dry_run).to be(true)
           expect(cask_upgrades).to include(
-            "local-caffeine 1.2.2 -> 1.2.3",
-            "local-transmission-zip 2.60 -> 2.61",
-            "auto-updates 2.57 -> 2.61",
-            "renamed-app 1.0.0 -> 2.0.0",
+            version_change("local-caffeine", "1.2.2", "1.2.3"),
+            version_change("local-transmission-zip", "2.60", "2.61"),
+            version_change("auto-updates", "2.57", "2.61"),
+            version_change("renamed-app", "1.0.0", "2.0.0"),
           )
           expect(cask_upgrades.grep(/version-latest/)).to be_empty
         end
@@ -156,9 +156,9 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(described_class).to receive(:show_upgrade_summary) do |cask_upgrades, dry_run:|
           expect(dry_run).to be(true)
           expect(cask_upgrades).to include(
-            "local-caffeine 1.2.2 -> 1.2.3",
-            "local-transmission-zip 2.60 -> 2.61",
-            "renamed-app 1.0.0 -> 2.0.0",
+            version_change("local-caffeine", "1.2.2", "1.2.3"),
+            version_change("local-transmission-zip", "2.60", "2.61"),
+            version_change("renamed-app", "1.0.0", "2.0.0"),
           )
           expect(cask_upgrades.grep(/auto-updates/)).to be_empty
         end
@@ -200,9 +200,9 @@ RSpec.describe Cask::Upgrade, :cask do
         expect(described_class).to receive(:show_upgrade_summary) do |cask_upgrades, dry_run:|
           expect(dry_run).to be(true)
           expect(cask_upgrades).to include(
-            "local-caffeine 1.2.2 -> 1.2.3",
-            "local-transmission-zip 2.60 -> 2.61",
-            "renamed-app 1.0.0 -> 2.0.0",
+            version_change("local-caffeine", "1.2.2", "1.2.3"),
+            version_change("local-transmission-zip", "2.60", "2.61"),
+            version_change("renamed-app", "1.0.0", "2.0.0"),
           )
           expect(cask_upgrades.grep(/auto-updates/)).to be_empty
         end
@@ -224,7 +224,7 @@ RSpec.describe Cask::Upgrade, :cask do
           args:,
         )
 
-        expect(summary_upgrades).to include("local-caffeine 1.2.2 -> 1.2.3")
+        expect(summary_upgrades).to include(version_change("local-caffeine", "1.2.2", "1.2.3"))
         expect(summary_deprecated).to include("local-caffeine")
       end
 
@@ -269,15 +269,15 @@ RSpec.describe Cask::Upgrade, :cask do
           expect(described_class).to receive(:show_upgrade_summary) do |cask_upgrades, dry_run:|
             expect(dry_run).to be(true)
             expect(cask_upgrades).to include(
-              "local-transmission-zip 2.60 -> 2.61",
-              "auto-updates 2.57 -> 2.61",
-              "renamed-app 1.0.0 -> 2.0.0",
+              version_change("local-transmission-zip", "2.60", "2.61"),
+              version_change("auto-updates", "2.57", "2.61"),
+              version_change("renamed-app", "1.0.0", "2.0.0"),
             )
             expect(cask_upgrades.grep(/local-caffeine/)).to be_empty
           end
 
           described_class.upgrade_casks!(dry_run: true, quiet: true, summary_pinned:, args:)
-          expect(summary_pinned).to include("local-caffeine 1.2.2 -> 1.2.3")
+          expect(summary_pinned).to include(version_change("local-caffeine", "1.2.2", "1.2.3"))
         ensure
           local_caffeine.unpin
         end
@@ -303,7 +303,7 @@ RSpec.describe Cask::Upgrade, :cask do
       it "would update only the Casks specified in the command line" do
         expect(described_class).not_to receive(:upgrade_cask)
         expect(described_class).to receive(:show_upgrade_summary)
-          .with(["local-caffeine 1.2.2 -> 1.2.3"], dry_run: true)
+          .with([version_change("local-caffeine", "1.2.2", "1.2.3")], dry_run: true)
 
         expect(local_caffeine).to be_installed
         expect(local_caffeine_path).to be_a_directory
@@ -327,7 +327,8 @@ RSpec.describe Cask::Upgrade, :cask do
       it 'would update "auto_updates" and "latest" Casks when their tokens are provided in the command line' do
         expect(described_class).not_to receive(:upgrade_cask)
         expect(described_class).to receive(:show_upgrade_summary)
-          .with(["local-caffeine 1.2.2 -> 1.2.3", "auto-updates 2.57 -> 2.61"], dry_run: true)
+          .with([version_change("local-caffeine", "1.2.2", "1.2.3"),
+                 version_change("auto-updates", "2.57", "2.61")], dry_run: true)
 
         expect(local_caffeine).to be_installed
         expect(local_caffeine_path).to be_a_directory
@@ -411,7 +412,7 @@ RSpec.describe Cask::Upgrade, :cask do
       it 'would update outdated Casks with "auto_updates true"' do
         expect(described_class).not_to receive(:upgrade_cask)
         expect(described_class).to receive(:show_upgrade_summary)
-          .with(["auto-updates 2.57 -> 2.61"], dry_run: true)
+          .with([version_change("auto-updates", "2.57", "2.61")], dry_run: true)
 
         expect(auto_updates).to be_installed
         expect(auto_updates_path).to be_a_directory
@@ -427,7 +428,7 @@ RSpec.describe Cask::Upgrade, :cask do
       it 'would update outdated Casks with "version latest"' do
         expect(described_class).not_to receive(:upgrade_cask)
         expect(described_class).to receive(:show_upgrade_summary)
-          .with(["version-latest latest -> latest"], dry_run: true)
+          .with([version_change("version-latest", "latest", "latest")], dry_run: true)
 
         expect(version_latest).to be_installed
         expect(version_latest_paths).to all be_a_directory
@@ -1008,7 +1009,7 @@ RSpec.describe Cask::Upgrade, :cask do
       end.to output(/bad-checksum: failed.*bad-checksum2: failed/m).to_stderr
 
       expect(upgraded_tokens).to contain_exactly("bad-checksum", "bad-checksum2", "local-transmission-zip")
-      expect(summary_upgrades).to contain_exactly("local-transmission-zip 2.60 -> 2.61")
+      expect(summary_upgrades).to contain_exactly(version_change("local-transmission-zip", "2.60", "2.61"))
 
       expect(bad_checksum).to be_installed
       expect(bad_checksum_path).to be_a_directory
@@ -1064,7 +1065,7 @@ RSpec.describe Cask::Upgrade, :cask do
       end.to output(/local-caffeine: This cask does not run on macOS versions older than Tahoe\./).to_stderr
 
       expect(upgraded_tokens).to eq(["local-transmission-zip"])
-      expect(summary_upgrades).to eq(["local-transmission-zip 2.60 -> 2.61"])
+      expect(summary_upgrades).to eq([version_change("local-transmission-zip", "2.60", "2.61")])
     end
 
     it "reports prefetched requirement errors alongside compatible casks" do
@@ -1090,7 +1091,7 @@ RSpec.describe Cask::Upgrade, :cask do
       end.to output(/#{Regexp.escape(cask_error.message)}/).to_stderr
 
       expect(upgraded_tokens).to eq(["local-transmission-zip"])
-      expect(summary_upgrades).to eq(["local-transmission-zip 2.60 -> 2.61"])
+      expect(summary_upgrades).to eq([version_change("local-transmission-zip", "2.60", "2.61")])
     end
   end
 end

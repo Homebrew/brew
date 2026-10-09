@@ -203,7 +203,7 @@ RSpec.describe Homebrew::Install do
           described_class.install_formulae([installer], dry_run: true)
         end.to output(<<~EOS).to_stdout
           ==> Would install 1 dependency for requested:
-          dependency
+          dependency 1.0
         EOS
       end
     end
@@ -487,7 +487,11 @@ RSpec.describe Homebrew::Install do
         instance_double(Dependency, to_formula: installed),
       ]
 
-      expect { described_class.print_dry_run_dependencies(Testball.new, deps, &:name) }
+      expect do
+        described_class.print_dry_run_dependencies(Testball.new, deps) do |dep|
+          version_change(dep.name, "1.0")
+        end
+      end
         .to output(/Would install 1 dependency.*fresh-dep.*Would upgrade 1 dependency.*installed-dep/m).to_stdout
     end
   end

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "utils/text"
+require "version_change"
 
 require "reinstall"
 require "formula_installer"
@@ -35,45 +36,11 @@ module Homebrew
       end
 
       # Describe a formula's version change for an upgrade summary.
-      sig { params(formula: Formula).returns(String) }
-      def formula_upgrade_description(formula)
+      sig { params(formula: Formula).returns(VersionChange) }
+      def formula_version_change(formula)
         current_version = installed_version(formula)
-        if current_version && current_version != formula.pkg_version
-          "#{formula.full_specified_name} #{current_version} -> #{formula.pkg_version}"
-        else
-          "#{formula.full_specified_name} #{formula.pkg_version}"
-        end
-      end
-
-      sig { params(upgrades: T::Array[String]).returns(T::Array[String]) }
-      def format_upgrade_summary(upgrades)
-        return upgrades if upgrades.size < 2
-
-        name_width = upgrades.map { |upgrade| upgrade.split(" ", 2).fetch(0).length }.max
-        name_width ||= 0
-        old_version_width = upgrades.filter_map do |upgrade|
-          versions = upgrade.split(" ", 2).fetch(1, "")
-          next unless versions.include?(" -> ")
-
-          versions.split(" -> ", 2).fetch(0).length
-        end.max
-        old_version_width ||= 0
-
-        upgrades.map do |upgrade|
-          parts = upgrade.split(" ", 2)
-          name = parts.fetch(0)
-          versions = parts.fetch(1, "")
-          next name if versions.blank?
-
-          if versions.include?(" -> ")
-            version_parts = versions.split(" -> ", 2)
-            old_version = version_parts.fetch(0)
-            new_version = version_parts.fetch(1)
-            "#{name.ljust(name_width)}  #{old_version.ljust(old_version_width)} -> #{new_version}"
-          else
-            "#{name.ljust(name_width)}  #{versions}"
-          end
-        end
+        old_version = current_version.to_s if current_version && current_version != formula.pkg_version
+        VersionChange.new(name: formula.full_specified_name, old_version:, new_version: formula.pkg_version.to_s)
       end
 
       sig {
@@ -435,15 +402,7 @@ module Homebrew
           ohai "#{upgrade_verb} #{Utils.pluralize("dependent", upgradeable.count,
                                                   include_count: true)} of upgraded #{formula_plural}:"
           puts_no_installed_dependents_check_disable_message_if_not_already!
-          formulae_upgrades = upgradeable.map do |f|
-            name = f.full_specified_name
-            if f.optlinked?
-              "#{name} #{Keg.new(f.opt_prefix).version} -> #{f.pkg_version}"
-            else
-              "#{name} #{f.pkg_version}"
-            end
-          end
-          puts format_upgrade_summary(formulae_upgrades).join("\n")
+          puts Formatter.version_changes(upgradeable.map { |f| formula_version_change(f) }).join("\n")
         end
 
         if !dry_run && dependent_installers.present?
@@ -559,7 +518,7 @@ module Homebrew
         if dry_run
           Install.print_dry_run_dependencies(formula, formula_installer.compute_dependencies,
                                              skip_formula_names:, dependency_summary:) do |f|
-            formula_upgrade_description(f)
+            formula_version_change(f)
           end
           return true
         end

@@ -12,6 +12,7 @@ class RSpec::Core::ExampleGroup
   include Test::Helper::Cask
   include Test::Helper::Fixtures
   include Test::Helper::Formula
+  include Test::Helper::VersionChange
   include Test::Helper::IntegrationTest
   include Test::Helper::MkTmpDir
   include Test::Helper::Subcommand

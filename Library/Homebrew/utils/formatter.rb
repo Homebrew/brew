@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "utils/tty"
+require "version_change"
 
 # Helper module for formatting output.
 #
@@ -126,6 +127,27 @@ module Formatter
     end
   end
   private_class_method :prefix
+
+  # Align version changes into columns: `name  old -> new` or `name  version`, followed by the download size
+  # like `(2.4MB)` in its own column.
+  sig { params(changes: T::Array[VersionChange]).returns(T::Array[String]) }
+  def self.version_changes(changes)
+    old_width = changes.map { |change| (change.old_version || change.new_version).length }.max || 0
+    versions = changes.map do |change|
+      old_version = change.old_version
+      next change.new_version unless old_version
+
+      "#{old_version.ljust(old_width)} -> #{change.new_version}"
+    end
+    name_width = changes.map { |change| change.name.length }.max || 0
+    versions_width = versions.map(&:length).max || 0
+    separator = (changes.one? ? " " : "  ")
+
+    changes.each_with_index.map do |change, index|
+      size = "(#{change.size})" if change.size
+      [change.name.ljust(name_width), versions.fetch(index).ljust(versions_width), size].join(separator).rstrip
+    end
+  end
 
   # Layout objects in columns that fit the current terminal width.
   #
