@@ -342,6 +342,26 @@ RSpec.describe FormulaVersions do
     expect(result).to eq "1.0"
   end
 
+  it "loads historical test-only resources" do
+    current = formula("test-resource") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/test-resource-2.0.tar.gz"
+    end
+    versions = described_class.new(current)
+    allow(versions).to receive(:file_contents_at_revision).and_return(<<~RUBY)
+      class TestResource < Formula
+        url "https://brew.sh/test-resource-1.0.tar.gz"
+        resource "fixture", :test do
+          url "https://brew.sh/fixture-1.0.tar.gz"
+        end
+      end
+    RUBY
+
+    result = versions.formula_at_revision("abc123") { |old| old.resources.map(&:name) }
+
+    expect(result).to eq ["fixture"]
+  end
+
   it "preserves dated lifecycle metadata" do
     current = formula("legacy-lifecycle") do
       T.bind(self, T.class_of(Formula))

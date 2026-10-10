@@ -40,7 +40,7 @@ class FormulaVersions
     requires_ancestor { SoftwareSpec }
 
     sig {
-      params(name: T.nilable(String), klass: T.class_of(Resource),
+      params(name: T.nilable(String), klass: T.any(T.class_of(Resource), Symbol),
              block: T.nilable(T.proc.bind(Resource).void)).returns(T.nilable(Resource))
     }
     def resource(name = nil, klass = Resource, &block)
