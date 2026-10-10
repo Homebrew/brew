@@ -33,6 +33,8 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
+    env:
+      HOMEBREW_DEVELOPER: 1
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
