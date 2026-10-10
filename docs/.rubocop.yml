@@ -17,6 +17,10 @@ FormulaAudit/Desc:
 FormulaAudit/Homepage:
   Enabled: false
 
+# The formula blocks in docs are deliberately truncated to only include bits relevant to the doc's purpose.
+FormulaAudit/Test:
+  Enabled: false
+
 Layout/LineLength:
   Exclude:
     - "**/Bottles.md" # The bottle block line length is long in its full form.
