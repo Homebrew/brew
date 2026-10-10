@@ -155,6 +155,9 @@ module Homebrew
 
             Homebrew::Trust.replace!(Homebrew::Bundle::Trust.entries(dsl.entries))
 
+            # Protect Brewfile formulae from autoremove during uninstall and cleanup.
+            Homebrew::Bundle.mark_as_installed_on_request!(dsl.entries)
+
             if casks.any?
               args = if zap
                 ["--zap"]
@@ -166,10 +169,6 @@ module Homebrew
             end
 
             if formulae.any?
-              # Mark Brewfile formulae as installed_on_request to prevent autoremove
-              # from removing them when their dependents are uninstalled
-              Homebrew::Bundle.mark_as_installed_on_request!(dsl.entries)
-
               Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", *formulae
               puts "Uninstalled #{formulae.size} formula#{"e" if formulae.size != 1}"
             end
