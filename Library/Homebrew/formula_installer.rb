@@ -408,7 +408,9 @@ class FormulaInstaller
 
   sig { void }
   def check_installation_already_attempted
-    raise FormulaInstallationAlreadyAttemptedError, formula if self.class.attempted.include?(formula)
+    return unless self.class.attempted.any? { same_formula?(it) }
+
+    raise FormulaInstallationAlreadyAttemptedError, formula
   end
 
   sig { void }
@@ -1506,14 +1508,7 @@ on_request: installed_on_request?, options:)
 
   sig { returns(T.nilable(Formula)) }
   def previously_fetched_formula
-    # We intentionally don't compare classes here:
-    # from-API-JSON and from-source formula classes are not equal but we
-    # want to equate them to be the same thing here given mixing bottle and
-    # from-source installs of the same formula within the same operation
-    # doesn't make sense.
-    self.class.fetched.find do |fetched_formula|
-      fetched_formula.full_name == formula.full_name && fetched_formula.active_spec_sym == formula.active_spec_sym
-    end
+    self.class.fetched.find { same_formula?(it) }
   end
 
   sig { params(quiet: T::Boolean, enqueue: T::Boolean, bottle: T.nilable(Bottle)).void }
@@ -1921,6 +1916,16 @@ on_request: installed_on_request?, options:)
   end
 
   private
+
+  sig { params(other: Formula).returns(T::Boolean) }
+  def same_formula?(other)
+    # We intentionally don't compare classes here:
+    # from-API-JSON and from-source formula classes are not equal but we
+    # want to equate them to be the same thing here given mixing bottle and
+    # from-source installs of the same formula within the same operation
+    # doesn't make sense.
+    other.full_name == formula.full_name && other.active_spec_sym == formula.active_spec_sym
+  end
 
   sig { returns(T::Boolean) }
   def auto_link_versioned_keg_only?

@@ -121,6 +121,22 @@ RSpec.describe Homebrew::Install do
     end
   end
 
+  describe "::install_formula" do
+    it "preserves the linked keg when another formula class already attempted the upgrade" do
+      formula = Testball.new
+      formula.bin.mkpath
+      (formula.bin/"testball").write "installed"
+      Tab.create(formula).write
+      keg = Keg.new(formula.prefix)
+      keg.link
+      installer = FormulaInstaller.new(formula)
+      FormulaInstaller.attempted << Class.new(Testball).new
+      allow(installer).to receive(:install).and_raise("unexpected duplicate installation")
+
+      expect { described_class.install_formula(installer, upgrade: true) }.not_to change(keg, :linked?)
+    end
+  end
+
   describe "::install_formulae" do
     it "only prints the upgrade group for an installed keg-only formula" do
       formula = formula("keg-only") do
