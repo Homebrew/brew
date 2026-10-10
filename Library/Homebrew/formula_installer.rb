@@ -1299,7 +1299,7 @@ on_request: installed_on_request?, options:)
       keg.remove_linked_keg_record
     end
 
-    Homebrew::Unlink.unlink_link_overwrite_formulae(formula, verbose: verbose?)
+    Homebrew::Unlink.unlink_link_overwrite_formulae(formula, locked_formulae: self.class.locked, verbose: verbose?)
 
     link_overwrite_backup = {} # Hash: conflict file -> backup file
     backup_dir = HOMEBREW_CACHE/"Backup"
@@ -1945,6 +1945,7 @@ on_request: installed_on_request?, options:)
   def lock
     return unless self.class.locked.empty?
 
+    @hold_locks = true
     unless ignore_deps?
       formula.recursive_dependencies.each do |dep|
         self.class.locked << dep.to_formula
@@ -1953,7 +1954,6 @@ on_request: installed_on_request?, options:)
     self.class.locked.unshift(formula)
     self.class.locked.uniq!
     self.class.locked.each(&:lock)
-    @hold_locks = true
   end
 
   sig { void }

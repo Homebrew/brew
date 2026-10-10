@@ -22,8 +22,8 @@ RSpec.describe Homebrew::Unlink do
     it "only unlinks linked keg-only sibling formulae for non-keg-only formulae" do
       allow(formula).to receive(:link_overwrite_formulae)
         .and_return([linked_keg_only_formula, linked_non_keg_only_formula, unlinked_formula])
-      expect(described_class).to receive(:unlink).with(linked_keg_only_keg, verbose: true).once
-      expect(described_class).not_to receive(:unlink).with(linked_non_keg_only_keg, verbose: true)
+      expect(described_class).to receive(:unlink).with(linked_keg_only_keg, verbose: true, lock: true).once
+      expect(described_class).not_to receive(:unlink).with(linked_non_keg_only_keg, verbose: true, lock: true)
 
       described_class.unlink_link_overwrite_formulae(formula, verbose: true)
     end
@@ -33,8 +33,8 @@ RSpec.describe Homebrew::Unlink do
                                          link_overwrite_formulae: [linked_keg_only_formula,
                                                                    linked_non_keg_only_formula,
                                                                    unlinked_formula])
-      expect(described_class).to receive(:unlink).with(linked_keg_only_keg, verbose: true).once
-      expect(described_class).to receive(:unlink).with(linked_non_keg_only_keg, verbose: true).once
+      expect(described_class).to receive(:unlink).with(linked_keg_only_keg, verbose: true, lock: true).once
+      expect(described_class).to receive(:unlink).with(linked_non_keg_only_keg, verbose: true, lock: true).once
 
       described_class.unlink_link_overwrite_formulae(formula, verbose: true)
     end
