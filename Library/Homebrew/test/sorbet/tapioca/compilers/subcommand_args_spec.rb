@@ -4,9 +4,6 @@
 require "bundler"
 require "tapioca/dsl"
 
-# Tapioca's CLI applies this through its RBS rewriter before loading custom compilers.
-Tapioca::Dsl::Compiler.extend(T::Generic)
-
 require "abstract_command"
 require "abstract_subcommand"
 require "sorbet/tapioca/compilers/args"

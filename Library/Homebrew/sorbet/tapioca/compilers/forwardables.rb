@@ -8,6 +8,8 @@ require "utils/ast"
 module Tapioca
   module Compilers
     class Forwardables < Tapioca::Dsl::Compiler
+      extend T::Generic
+
       FORWARDABLE_FILENAME = "forwardable.rb"
       ARRAY_METHODS = ["to_a", "to_ary"].freeze
       HASH_METHODS = ["to_h", "to_hash"].freeze

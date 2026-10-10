@@ -7,6 +7,8 @@ require "cask/config"
 module Tapioca
   module Compilers
     class CaskConfig < Tapioca::Dsl::Compiler
+      extend T::Generic
+
       ConstantType = type_member { { fixed: T::Module[T.anything] } }
 
       sig { override.returns(T::Enumerable[T::Module[T.anything]]) }
