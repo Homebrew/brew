@@ -12,7 +12,8 @@ module Homebrew
       overwrite_formulae.filter_map(&:any_installed_keg)
                         .select(&:directory?)
                         .each do |keg|
-        unlink(keg, verbose:, lock: locked_formulae.none? { |locked_formula| locked_formula.name == keg.name })
+        lock = locked_formulae.none? { |locked_formula| locked_formula.name == keg.name }
+        unlink(keg, verbose:, lock:)
       end
     end
 
