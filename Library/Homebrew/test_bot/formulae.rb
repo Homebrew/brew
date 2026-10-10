@@ -40,6 +40,7 @@ module Homebrew
         @unchanged_build_dependencies = T.let([], T::Array[String])
         @bottle_filename = T.let(nil, T.nilable(Pathname))
         @bottle_json_filename = T.let(nil, T.nilable(Pathname))
+        @previous_dependency_formulae = T.let({}, T::Hash[[Pathname, Symbol], Formula])
       end
 
       sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
@@ -217,55 +218,70 @@ module Homebrew
           end
           next if dependency_name.blank?
 
-          dependency = direct_runtime_dependencies.find do |runtime_dependency|
+          next unless direct_runtime_dependencies.any? do |runtime_dependency|
             dependency_name_match?(runtime_dependency, dependency_name)
           end
-          next if dependency.nil?
 
-          dependency_formula = dependency.to_formula
-          existing_runtime_dependency_names = recursive_runtime_dependency_names(
-            formula,
-            direct_runtime_dependencies.reject do |runtime_dependency|
-              dependency_name_match?(runtime_dependency, dependency.name)
-            end,
+          formula_tap = formula.tap!
+          previous_formula_paths = Utils.safe_popen_read(
+            git, "-C", repository, "diff", "--no-ext-diff", "--no-renames", "--name-only", "--diff-filter=MD",
+            "-z", "origin/HEAD", "HEAD"
+          ).split("\0").select { |path| formula_tap.formula_file?(path) }.to_h do |path|
+            [formula_tap.formula_file_to_name(repository/path), repository/path]
+          end
+          previous_dependency_names = recursive_runtime_dependency_names(
+            dependency_impact_formula(
+              formula.full_name, previous_formula_paths:, spec: formula.active_spec_sym
+            ).deps.to_a,
+            previous_formula_paths:,
           )
-          new_recursive_dependency_names =
-            (
-              [dependency_formula.full_name] +
-              recursive_runtime_dependency_names(
-                dependency_formula,
-                dependency_formula.runtime_dependencies(read_from_tab: false, undeclared: false),
-              )
-            ).uniq - existing_runtime_dependency_names
-          next if new_recursive_dependency_names.blank?
+          current_dependency_names = recursive_runtime_dependency_names(direct_runtime_dependencies)
+          added_dependency_names = (current_dependency_names - previous_dependency_names).sort
+          removed_dependency_names = (previous_dependency_names - current_dependency_names).sort
+          break if added_dependency_names.empty? && removed_dependency_names.empty?
 
-          sizes = new_recursive_dependency_names.map do |formula_name|
+          size_changes = (added_dependency_names + removed_dependency_names).map do |formula_name|
             installed_sizes = @dependency_impact_installed_sizes ||=
               T.let({}, T.nilable(T::Hash[String, T.nilable(Integer)]))
-            next installed_sizes[formula_name] if installed_sizes.key?(formula_name)
+            unless installed_sizes.key?(formula_name)
+              installed_sizes[formula_name] =
+                if (bottle = Formulary.factory(formula_name).bottle_for_tag(Utils::Bottles.tag))
+                  bottle.fetch_tab(quiet: true)
+                  bottle.installed_size
+                end
+            end
+            size = installed_sizes[formula_name]
+            next if size.nil?
 
-            installed_sizes[formula_name] =
-              if (bottle = Formulary.factory(formula_name).bottle_for_tag(Utils::Bottles.tag))
-                bottle.fetch_tab(quiet: true)
-                bottle.installed_size
-              end
+            added_dependency_names.include?(formula_name) ? size : -size
           rescue DownloadError, FormulaUnavailableError, Resource::BottleManifest::Error
             nil
           end
-          dependency_count = new_recursive_dependency_names.count
-          message = "Adding `#{dependency_name}` adds #{dependency_count} new recursive " \
-                    "#{Utils.pluralize("dependency", dependency_count)} " \
-                    "on #{Utils::Bottles.tag} (#{Formatter.disk_usage_readable(sizes.compact.sum)}"
-          unknown_size_count = sizes.count(&:nil?)
-          message << ", plus #{Utils.pluralize("unknown size", unknown_size_count, include_count: true)}" \
+          message = "Recursive runtime dependencies on #{Utils::Bottles.tag}: " \
+                    "#{added_dependency_names.count} added, #{removed_dependency_names.count} removed " \
+                    "(net change: #{added_dependency_names.count - removed_dependency_names.count}). " \
+                    "Installed size change: "
+          unknown_size_count = size_changes.count(&:nil?)
+          message << if size_changes.drop(added_dependency_names.count).any?(&:nil?)
+            "unknown"
+          else
+            size = size_changes.compact.sum
+            "#{"at least " if unknown_size_count.positive?}" \
+              "#{"+" if size.positive?}#{Formatter.disk_usage_readable(size)}"
+          end
+          message << " (#{Utils.pluralize("unknown size", unknown_size_count, include_count: true)})" \
             if unknown_size_count.positive?
+          message << "."
+          message << " Added: `#{added_dependency_names.join("`, `")}`." if added_dependency_names.present?
+          message << " Removed: `#{removed_dependency_names.join("`, `")}`." if removed_dependency_names.present?
           puts GitHub::Actions::Annotation.new(
             :warning,
-            "#{message}).",
+            message,
             file:  formula.path.to_s.delete_prefix("#{repository}/"),
             line:,
-            title: "#{formula}: new dependency impact",
+            title: "#{formula}: dependency impact",
           )
+          break
         end
       rescue => e
         opoo "Failed to determine dependency impact for #{formula.full_name}: #{e}"
@@ -526,13 +542,57 @@ module Homebrew
       sig { params(args: Homebrew::Cmd::TestBotCmd::Args).void }
       def setup_bottle_sudo_purge!(args:); end
 
-      sig { params(_formula: Formula, dependencies: T::Array[Dependency]).returns(T::Array[String]) }
-      def recursive_runtime_dependency_names(_formula, dependencies)
-        dependencies.each_with_object(Set.new) do |dep, set|
-          dep_f = dep.to_formula
-          set.add(dep_f.full_name)
-          set.merge(dep_f.runtime_dependencies(read_from_tab: false, undeclared: false).map(&:name))
-        end.to_a
+      sig {
+        params(name: String, previous_formula_paths: T::Hash[String, Pathname], spec: Symbol).returns(Formula)
+      }
+      def dependency_impact_formula(name, previous_formula_paths:, spec: :stable)
+        path = previous_formula_paths[name.delete_prefix("homebrew/core/")]
+        if path.nil?
+          begin
+            formula = Formulary.factory(name, spec)
+            path = previous_formula_paths[formula.full_name]
+            return formula if path.nil?
+          rescue FormulaUnavailableError => e
+            raise unless e.instance_of?(FormulaUnavailableError)
+            raise if Utils.tap_from_full_name(name).present?
+
+            path = previous_formula_paths.values.find { |previous_path| previous_path.basename(".rb").to_s == name }
+            raise if path.nil?
+          end
+        end
+
+        @previous_dependency_formulae[[path, spec]] ||= Formulary.from_contents(
+          path.basename(".rb").to_s, path,
+          Utils.safe_popen_read(
+            git.to_s, "-C", repository, "show", "origin/HEAD:#{path.relative_path_from(repository)}"
+          ),
+          spec
+        )
+      end
+
+      sig {
+        params(dependencies: T::Array[Dependency], previous_formula_paths: T::Hash[String, Pathname])
+          .returns(T::Array[String])
+      }
+      def recursive_runtime_dependency_names(dependencies, previous_formula_paths: {})
+        dependencies = dependencies.reject { |dep| dep.build? || dep.optional? || dep.test? }
+        traversed = Set.new
+        names = Set.new
+        while (dep = dependencies.shift)
+          dep_f = dependency_impact_formula(dep.name, previous_formula_paths:)
+          next unless traversed.add?(dep.dup_with_formula_name(dep_f))
+
+          names.add(dep_f.full_name)
+          build = BuildOptions.new(dep.options, dep_f.options)
+          dep_f.deps.each do |child|
+            next if child.build?
+
+            next if !child.required? && (build.any_args_or_options? ? build.without?(child) : !child.recommended?)
+
+            dependencies << child
+          end
+        end
+        names.to_a
       end
 
       sig {
