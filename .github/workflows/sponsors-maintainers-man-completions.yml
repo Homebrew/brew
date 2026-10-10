@@ -30,6 +30,8 @@ jobs:
   updates:
     runs-on: ubuntu-latest
     if: github.repository == 'Homebrew/brew'
+    env:
+      HOMEBREW_DEVELOPER: 1
     steps:
       - name: Setup Homebrew
         id: set-up-homebrew

@@ -21,6 +21,8 @@ jobs:
   spdx:
     if: github.repository == 'Homebrew/brew'
     runs-on: ubuntu-latest
+    env:
+      HOMEBREW_DEVELOPER: 1
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew

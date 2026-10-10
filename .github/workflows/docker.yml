@@ -190,7 +190,7 @@ jobs:
           labels: ${{ needs.generate-tags.outputs.labels }}
 
       - name: Run brew test-bot --only-setup
-        run: docker run --env HOMEBREW_GLIBC_TESTING --rm brew brew test-bot --only-setup
+        run: docker run --env HOMEBREW_DEVELOPER=1 --env HOMEBREW_GLIBC_TESTING --rm brew brew test-bot --only-setup
 
       - name: Log in to GitHub Packages (BrewTestBot)
         if: fromJSON(steps.attributes.outputs.push)

@@ -27,6 +27,8 @@ jobs:
   tapioca:
     if: github.repository == 'Homebrew/brew'
     runs-on: macos-26
+    env:
+      HOMEBREW_DEVELOPER: 1
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
