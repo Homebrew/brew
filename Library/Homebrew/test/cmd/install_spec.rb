@@ -129,7 +129,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       ==> Would upgrade 1 formula:
       changed 2.0
       ==> Would install 1 dependency for changed:
-      dependency
+      dependency 1.0
     EOS
   end
 
@@ -156,7 +156,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       ==> Would install 1 formula:
       changed 2.0
       ==> Would upgrade 1 dependency for changed:
-      dependency
+      dependency 1.0
     EOS
   end
 
@@ -728,7 +728,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
           expect(kwargs[:show_upgrade_summary]).to be(false)
 
           package_count.times { |index| Homebrew.messages.package_installed("package-#{index}", 0.0) }
-          kwargs[:summary_upgrades]&.push("codex 0.117.0 -> 0.118.0") if package_count.positive?
+          kwargs[:summary_upgrades]&.push(version_change("codex", "0.117.0", "0.118.0")) if package_count.positive?
 
           true
         end

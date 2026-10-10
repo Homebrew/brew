@@ -210,7 +210,7 @@ module Homebrew
           [T::Array[Formula], T::Array[Cask::Cask]],
         )
         ask = !args.no_ask? && !args.dry_run?
-        cask_upgrade_summary = T.let([], T::Array[String])
+        cask_upgrade_summary = T.let([], T::Array[VersionChange])
 
         installed_casks = T.let([], T::Array[Cask::Cask])
         new_casks = T.let([], T::Array[Cask::Cask])

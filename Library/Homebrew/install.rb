@@ -23,7 +23,7 @@ module Homebrew
   module Install
     extend Utils::Output::Mixin
 
-    DependencySummary = T.type_alias { T::Hash[Symbol, T::Array[String]] }
+    DependencySummary = T.type_alias { T::Hash[Symbol, T::Array[VersionChange]] }
 
     class << self
       sig { params(all_fatal: T::Boolean).void }
@@ -379,11 +379,11 @@ module Homebrew
           groups.keys.sort.each do |action|
             group = groups.fetch(action)
             ohai "Would #{action} #{Utils.pluralize("formula", group.count, include_count: true)}:"
-            puts Upgrade.format_upgrade_summary(group.map do |formula|
+            puts Formatter.version_changes(group.map do |formula|
               if action == "upgrade"
-                Upgrade.formula_upgrade_description(formula)
+                Upgrade.formula_version_change(formula)
               else
-                "#{formula.full_specified_name} #{formula.pkg_version}"
+                VersionChange.new(name: formula.full_specified_name, new_version: formula.pkg_version.to_s)
               end
             end)
           end
@@ -391,7 +391,9 @@ module Homebrew
           formula_installers.each do |fi|
             next if fi.ignore_deps?
 
-            print_dry_run_dependencies(fi.formula, fi.compute_dependencies, &:name)
+            print_dry_run_dependencies(fi.formula, fi.compute_dependencies) do |dependency|
+              Upgrade.formula_version_change(dependency)
+            end
           end
           return []
         end
@@ -423,7 +425,7 @@ module Homebrew
           dependencies:       T::Array[Dependency],
           skip_formula_names: T::Array[String],
           dependency_summary: T.nilable(DependencySummary),
-          _block:             T.proc.params(arg0: Formula).returns(String),
+          _block:             T.proc.params(arg0: Formula).returns(VersionChange),
         ).void
       }
       def print_dry_run_dependencies(formula, dependencies, skip_formula_names: [], dependency_summary: nil, &_block)
@@ -453,7 +455,7 @@ module Homebrew
 
           ohai "Would #{verb} #{Utils.pluralize("dependency", group.count, include_count: true)}" \
                "#{" for #{formula.name}" if formula}:"
-          puts Upgrade.format_upgrade_summary(group)
+          puts Formatter.version_changes(group)
         end
       end
 

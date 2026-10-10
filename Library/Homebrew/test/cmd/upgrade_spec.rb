@@ -237,8 +237,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     install_head_formula_version "head-formula", "1234567"
     cmd = described_class.new(["--yes", "--formula", "head-formula"])
 
-    expect(cmd.formula_upgrade_descriptions(cmd.args.named.to_resolved_formulae))
-      .to eq(["head-formula HEAD-1234567 -> latest HEAD"])
+    expect(cmd.formula_version_changes(cmd.args.named.to_resolved_formulae))
+      .to eq([version_change("head-formula", "HEAD-1234567", "latest HEAD")])
   end
 
   it "describes fetched HEAD formula upgrades with the resolved commit", :no_api do
@@ -247,8 +247,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       .and_return(PkgVersion.parse("HEAD-7654321"))
     cmd = described_class.new(["--yes", "--fetch-HEAD", "--formula", "head-formula"])
 
-    expect(cmd.formula_upgrade_descriptions(cmd.args.named.to_resolved_formulae))
-      .to eq(["head-formula HEAD-1234567 -> HEAD-7654321"])
+    expect(cmd.formula_version_changes(cmd.args.named.to_resolved_formulae))
+      .to eq([version_change("head-formula", "HEAD-1234567", "HEAD-7654321")])
   end
 
   it "skips fetched HEAD formula upgrades when the resolved commit is unchanged", :no_api do
@@ -374,13 +374,13 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it "does not repeat unchanged summary sections after a short upgrade" do
     cmd = described_class.new([])
-    cmd.final_upgrade_summary.pinned_formulae << "pinnedball 1.0 -> 2.0"
+    cmd.final_upgrade_summary.pinned_formulae << version_change("pinnedball", "1.0", "2.0")
     cmd.final_upgrade_summary.deprecated << "pinnedball"
 
     expect do
       cmd.show_final_upgrade_summary(dry_run: true)
       Homebrew.messages.package_installed("testball", 0.0)
-      cmd.final_upgrade_summary.version_changes << "testball 0.1 -> 0.2"
+      cmd.final_upgrade_summary.version_changes << version_change("testball", "0.1", "0.2")
       cmd.show_final_upgrade_summary
     end.to output(<<~EOS).to_stdout
       ==> 1 Pinned formula
@@ -392,8 +392,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
   it "repeats unchanged summary sections after two package changes" do
     cmd = described_class.new([])
-    cmd.final_upgrade_summary.pinned_formulae << "pinnedball 1.0 -> 2.0"
-    cmd.final_upgrade_summary.pinned_casks << "pinned-cask 2.0 -> 3.0"
+    cmd.final_upgrade_summary.pinned_formulae << version_change("pinnedball", "1.0", "2.0")
+    cmd.final_upgrade_summary.pinned_casks << version_change("pinned-cask", "2.0", "3.0")
     cmd.final_upgrade_summary.deprecated << "pinnedball"
 
     expect do
@@ -415,7 +415,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   test_each([0, 1]) do |package_count|
     it "omits upgrade summaries for #{package_count} completed package changes" do
       cmd = described_class.new([])
-      cmd.final_upgrade_summary.version_changes.push("testball 0.1 -> 0.2", "secondball 1.0 -> 2.0")
+      cmd.final_upgrade_summary.version_changes.push(version_change("testball", "0.1", "0.2"),
+                                                     version_change("secondball", "1.0", "2.0"))
 
       expect do
         cmd.show_final_upgrade_summary(dry_run: true)
@@ -571,7 +572,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     expect(cmd).to receive(:upgrade_outdated_formulae!)
       .with([], dry_run: true, show_upgrade_summary: false)
       .ordered do
-        cmd.final_upgrade_summary.version_changes << "testball 0.1 -> 0.2"
+        cmd.final_upgrade_summary.version_changes << version_change("testball", "0.1", "0.2")
         true
       end
     expect(cmd).to receive(:upgrade_outdated_casks!)
@@ -697,7 +698,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       expect(cmd).to receive(:upgrade_outdated_formulae!)
         .with([formula], dry_run: true, show_upgrade_summary: false)
         .ordered do
-          cmd.final_upgrade_summary.version_changes << "testball 0.1 -> 0.2"
+          cmd.final_upgrade_summary.version_changes << version_change("testball", "0.1", "0.2")
           true
         end
       allow(cmd).to receive(:show_final_upgrade_summary).and_call_original
@@ -749,8 +750,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     allow(formula).to receive_messages(optlinked?: true, opt_prefix: HOMEBREW_PREFIX/"opt/testball", bottle:)
     allow(Keg).to receive(:new).with(HOMEBREW_PREFIX/"opt/testball").and_return(keg)
 
-    expect(cmd.formula_upgrade_descriptions([formula], include_sizes: true))
-      .to eq(["testball 0.1 -> 0.2 (500B)"])
+    expect(cmd.formula_version_changes([formula], include_sizes: true))
+      .to eq([version_change("testball", "0.1", "0.2", size: "500B")])
   end
 
   it "omits formula download sizes in dry-run source build upgrade summaries" do
@@ -767,8 +768,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     allow(Keg).to receive(:new).with(HOMEBREW_PREFIX/"opt/testball").and_return(keg)
     expect(bottle).not_to receive(:fetch_tab)
 
-    expect(cmd.formula_upgrade_descriptions([formula], include_sizes: true))
-      .to eq(["testball 0.1 -> 0.2"])
+    expect(cmd.formula_version_changes([formula], include_sizes: true))
+      .to eq([version_change("testball", "0.1", "0.2")])
   end
 
   it "prints dry-run cleanup output from one formula cleanup run" do
@@ -900,15 +901,15 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   it "does not print aggregate package sizes" do
     cmd = described_class.new(["--dry-run"])
     summary = Homebrew::Cmd::UpgradeCmd::FinalUpgradeSummary.new(
-      version_changes:           ["testball 0.1 -> 0.2 (500B)"],
-      dependent_version_changes: ["codex 1.0 -> 2.0"],
+      version_changes:           [version_change("testball", "0.1", "0.2", size: "500B")],
+      dependent_version_changes: [version_change("codex", "1.0", "2.0")],
     )
 
     allow(cmd).to receive(:final_upgrade_summary).and_return(summary)
 
     expect { cmd.show_final_upgrade_summary }.to output(<<~EOS).to_stdout
       ==> Would upgrade 2 outdated packages
-      testball  0.1 -> 0.2 (500B)
+      testball  0.1 -> 0.2  (500B)
       codex     1.0 -> 2.0
     EOS
   end
@@ -916,8 +917,9 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   it "separates requested upgrades from dependent upgrades" do
     cmd = described_class.new(["--dry-run", "z3"])
     summary = Homebrew::Cmd::UpgradeCmd::FinalUpgradeSummary.new(
-      version_changes:           ["z3 4.16.0 -> 5.1.0"],
-      dependent_version_changes: ["llvm 22.1.8 -> 22.1.8_2", "rust 1.97.1 -> 1.98.0"],
+      version_changes:           [version_change("z3", "4.16.0", "5.1.0")],
+      dependent_version_changes: [version_change("llvm", "22.1.8", "22.1.8_2"),
+                                  version_change("rust", "1.97.1", "1.98.0")],
     )
 
     allow(cmd).to receive(:final_upgrade_summary).and_return(summary)
@@ -934,31 +936,31 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   it "deduplicates combined upgrade summaries while preserving package order" do
     summary = Homebrew::Cmd::UpgradeCmd::FinalUpgradeSummary.new(
       version_changes:           [
-        "openssl@3 3.6.4 -> 3.6.5",
-        "openssl@4 4.0.2 -> 4.0.3",
-        "openssl@3 3.6.4 -> 3.6.5",
+        version_change("openssl@3", "3.6.4", "3.6.5"),
+        version_change("openssl@4", "4.0.2", "4.0.3"),
+        version_change("openssl@3", "3.6.4", "3.6.5"),
       ],
       dependent_version_changes: [
-        "deno 2.7.10 -> 2.7.11",
-        "openssl@3 3.6.4 -> 3.6.5",
-        "deno 2.7.10 -> 2.7.11",
-        "openssl@4 4.0.2 -> 4.0.3",
+        version_change("deno", "2.7.10", "2.7.11"),
+        version_change("openssl@3", "3.6.4", "3.6.5"),
+        version_change("deno", "2.7.10", "2.7.11"),
+        version_change("openssl@4", "4.0.2", "4.0.3"),
       ],
     )
 
     expect(summary.all_version_changes).to eq([
-      "openssl@3 3.6.4 -> 3.6.5",
-      "openssl@4 4.0.2 -> 4.0.3",
-      "deno 2.7.10 -> 2.7.11",
+      version_change("openssl@3", "3.6.4", "3.6.5"),
+      version_change("openssl@4", "4.0.2", "4.0.3"),
+      version_change("deno", "2.7.10", "2.7.11"),
     ])
   end
 
   it "deduplicates the execution upgrade summary" do
     expect do
       Cask::Upgrade.show_upgrade_summary([
-        "testball 0.1 -> 0.2",
-        "testball 0.1 -> 0.2",
-        "codex 1.0 -> 2.0",
+        version_change("testball", "0.1", "0.2"),
+        version_change("testball", "0.1", "0.2"),
+        version_change("codex", "1.0", "2.0"),
       ])
     end.to output(<<~EOS).to_stdout
       ==> Upgrading 2 outdated packages:
@@ -1007,7 +1009,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       if prefetch_only
         expect(show_upgrade_summary).to be(false)
         prefetch_names&.replace(["deno"])
-        prefetch_upgrades&.replace(["deno 2.7.10 -> 2.7.11"])
+        prefetch_upgrades&.replace([version_change("deno", "2.7.10", "2.7.11")])
       end
 
       true
@@ -1052,7 +1054,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       expect(formulae).to eq([formula])
       if prefetch_only
         prefetch_names&.replace(["testball"])
-        prefetch_upgrades&.replace(["testball 0.1 -> 0.2"])
+        prefetch_upgrades&.replace([version_change("testball", "0.1", "0.2")])
       end
       true
     end.twice
@@ -1083,7 +1085,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
                                                           prefetch_casks:, prefetch_installers:, **|
       expect(casks).to eq([cask])
       prefetch_names.replace(["codex"])
-      prefetch_upgrades.replace(["codex 1.0 -> 2.0"])
+      prefetch_upgrades.replace([version_change("codex", "1.0", "2.0")])
       prefetch_casks.replace([cask])
       prefetch_installers.replace([installer])
       true
@@ -1173,10 +1175,10 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
                                                               use_prefetched: false, prefetch_names: nil,
                                                               prefetch_upgrades: nil, **|
       if dry_run
-        cmd.final_upgrade_summary.version_changes << "deno 2.7.10 -> 2.7.11"
+        cmd.final_upgrade_summary.version_changes << version_change("deno", "2.7.10", "2.7.11")
       elsif prefetch_only
         prefetch_names&.replace(["deno"])
-        prefetch_upgrades&.replace(["deno 2.7.10 -> 2.7.11"])
+        prefetch_upgrades&.replace([version_change("deno", "2.7.10", "2.7.11")])
       else
         expect(use_prefetched).to be(true)
       end
@@ -1187,7 +1189,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     allow(Cask::Installer).to receive(:new).and_return(installer)
     allow(Cask::Upgrade).to receive(:upgrade_casks!) do |*_, **kwargs|
       if kwargs[:dry_run]
-        kwargs[:summary_upgrades] << "codex 0.117.0 -> 0.118.0"
+        kwargs[:summary_upgrades] << version_change("codex", "0.117.0", "0.118.0")
       else
         expect(kwargs[:skip_prefetch]).to be(true)
       end
@@ -1217,13 +1219,13 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
                                                               prefetch_names: nil, **|
       if dry_run
         cmd.final_upgrade_summary.version_changes.push(
-          "deno 2.7.10 -> 2.7.11",
-          "openssl@3 3.6.4 -> 3.6.5",
-          "openssl@4 4.0.2 -> 4.0.3",
+          version_change("deno", "2.7.10", "2.7.11"),
+          version_change("openssl@3", "3.6.4", "3.6.5"),
+          version_change("openssl@4", "4.0.2", "4.0.3"),
         )
         cmd.final_upgrade_summary.dependent_version_changes.push(
-          "openssl@3 3.6.4 -> 3.6.5",
-          "openssl@4 4.0.2 -> 4.0.3",
+          version_change("openssl@3", "3.6.4", "3.6.5"),
+          version_change("openssl@4", "4.0.2", "4.0.3"),
         )
       elsif prefetch_only
         sequence << "prefetch"
@@ -1257,7 +1259,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     expect(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
     expect(cmd).to receive(:prefetch_outdated_casks!) do |_, prefetch_upgrades:, prefetch_casks:,
                                                             prefetch_errors:, **|
-      prefetch_upgrades.replace(["codex 0.117.0 -> 0.118.0"])
+      prefetch_upgrades.replace([version_change("codex", "0.117.0", "0.118.0")])
       prefetch_casks.replace([cask])
       prefetch_errors << cask_error
       true
@@ -1327,7 +1329,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       ),
     ).to be(true)
     expect(prefetch_names).to eq(["codex"])
-    expect(prefetch_upgrades).to eq(["codex 0.117.0 -> 0.118.0"])
+    expect(prefetch_upgrades).to eq([version_change("codex", "0.117.0", "0.118.0")])
     expect(prefetch_casks).to eq([compatible_cask])
     expect(prefetch_errors.map(&:to_s)).to eq(["bad-cask: This cask requires Linux."])
   end
@@ -1441,7 +1443,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
                                                               **|
       if prefetch_only
         prefetch_names&.replace(["deno"])
-        prefetch_upgrades&.replace(["deno 2.7.10 -> 2.7.11"])
+        prefetch_upgrades&.replace([version_change("deno", "2.7.10", "2.7.11")])
       elsif !dry_run
         upgraded[:use_prefetched] = use_prefetched
       end
@@ -1453,7 +1455,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     allow(Cask::Upgrade).to receive(:upgrade_casks!) do |*_, **kwargs|
       if kwargs[:dry_run]
         # Plan an upgrade in the `--ask` preview so the shared prefetch runs.
-        kwargs[:summary_upgrades]&.push("codex 0.117.0 -> 0.118.0")
+        kwargs[:summary_upgrades]&.push(version_change("codex", "0.117.0", "0.118.0"))
       else
         upgraded[:skip_prefetch] = kwargs[:skip_prefetch]
       end
@@ -1500,9 +1502,9 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   it "prints a narrow final upgrade summary" do
     cmd = described_class.new([])
     summary = Homebrew::Cmd::UpgradeCmd::FinalUpgradeSummary.new(
-      version_changes:       ["testball 0.1 -> 0.2"],
-      pinned_formulae:       ["pinnedball 1.0"],
-      pinned_casks:          ["pinned-cask 2.0"],
+      version_changes:       [version_change("testball", "0.1", "0.2")],
+      pinned_formulae:       [version_change("pinnedball", "1.0")],
+      pinned_casks:          [version_change("pinned-cask", "2.0")],
       deprecated:            ["oldball"],
       disabled:              ["disabledball"],
       source_build_formulae: ["sourceball"],
@@ -1569,8 +1571,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd.record_formula_upgrade_summary(context)
     summary = cmd.final_upgrade_summary
 
-    expect(summary.version_changes).to include("testball 0.1 -> 0.2")
-    expect(summary.pinned_formulae).to include("pinnedball 1.0")
+    expect(summary.version_changes).to include(version_change("testball", "0.1", "0.2"))
+    expect(summary.pinned_formulae).to include(version_change("pinnedball", "1.0"))
     expect(summary.deprecated).to include("oldball")
     expect(summary.disabled).to include("disabledball")
     expect(summary.source_build_formulae).to include("sourceball")
@@ -1604,7 +1606,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
     cmd.upgrade_outdated_formulae!([])
 
-    expect(cmd.final_upgrade_summary.version_changes).to include("testball 0.1 -> 0.2")
+    expect(cmd.final_upgrade_summary.version_changes).to include(version_change("testball", "0.1", "0.2"))
   end
 
   it "omits failed formula version changes from the final summary" do
@@ -1640,7 +1642,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd.upgrade_outdated_formulae!([])
 
     expect(cmd.final_upgrade_summary).to have_attributes(
-      version_changes: contain_exactly("testball 0.1 -> 0.2"),
+      version_changes: contain_exactly(version_change("testball", "0.1", "0.2")),
       deprecated:      contain_exactly("failball"),
     )
   end
@@ -1687,8 +1689,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd.upgrade_outdated_formulae!([])
 
     expect(cmd.final_upgrade_summary).to have_attributes(
-      version_changes:           contain_exactly("testball 0.1 -> 0.2"),
-      dependent_version_changes: contain_exactly("upgraded-dependent 0.1 -> 0.2"),
+      version_changes:           contain_exactly(version_change("testball", "0.1", "0.2")),
+      dependent_version_changes: contain_exactly(version_change("upgraded-dependent", "0.1", "0.2")),
     )
   end
 

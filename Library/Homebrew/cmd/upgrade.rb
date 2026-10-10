@@ -26,15 +26,15 @@ module Homebrew
       end
 
       class FinalUpgradeSummary < T::Struct
-        prop :version_changes, T::Array[String], default: []
-        prop :dependent_version_changes, T::Array[String], default: []
-        prop :pinned_formulae, T::Array[String], default: []
-        prop :pinned_casks, T::Array[String], default: []
+        prop :version_changes, T::Array[VersionChange], default: []
+        prop :dependent_version_changes, T::Array[VersionChange], default: []
+        prop :pinned_formulae, T::Array[VersionChange], default: []
+        prop :pinned_casks, T::Array[VersionChange], default: []
         prop :deprecated, T::Array[String], default: []
         prop :disabled, T::Array[String], default: []
         prop :source_build_formulae, T::Array[String], default: []
 
-        sig { returns(T::Array[String]) }
+        sig { returns(T::Array[VersionChange]) }
         def all_version_changes = version_changes | dependent_version_changes
       end
 
@@ -255,7 +255,7 @@ module Homebrew
             )
           end
 
-          planned_fetch_names = final_upgrade_summary.all_version_changes.map { |change| change.split.fetch(0) }
+          planned_fetch_names = final_upgrade_summary.all_version_changes.map(&:name)
           if Install.ask_prompt_needed?(
             planned_names:   planned_fetch_names.map do |planned_name|
               formulae.find { |formula| formula.full_specified_name == planned_name }&.full_name || planned_name
@@ -436,7 +436,7 @@ module Homebrew
           verb = dry_run ? "Would upgrade" : "Upgrading"
           oh1 "#{verb} #{formulae_to_install.count} outdated #{Utils.pluralize("package",
                                                                                formulae_to_install.count)}:"
-          puts Upgrade.format_upgrade_summary(formula_upgrade_descriptions(formulae_to_install)).join("\n") if
+          puts Formatter.version_changes(formula_version_changes(formulae_to_install)).join("\n") if
             args.no_ask?
         end
 
@@ -511,8 +511,8 @@ module Homebrew
           context:                   FormulaeUpgradeContext,
           include_sizes:             T::Boolean,
           formulae_installer:        T.nilable(T::Array[FormulaInstaller]),
-          version_changes:           T.nilable(T::Array[String]),
-          dependent_version_changes: T.nilable(T::Array[String]),
+          version_changes:           T.nilable(T::Array[VersionChange]),
+          dependent_version_changes: T.nilable(T::Array[VersionChange]),
         ).void
       }
       def record_formula_upgrade_summary(context, include_sizes: false, formulae_installer: nil, version_changes: nil,
@@ -521,13 +521,12 @@ module Homebrew
         formulae_installer ||= context.formulae_installer
         upgrade_formulae = formulae_installer.map(&:formula)
         dependent_formulae = context.dependants.upgradeable
-        summary.version_changes.concat(version_changes || formula_upgrade_descriptions(upgrade_formulae,
-                                                                                       include_sizes:))
+        summary.version_changes.concat(version_changes || formula_version_changes(upgrade_formulae, include_sizes:))
         summary.dependent_version_changes.concat(
-          dependent_version_changes || formula_upgrade_descriptions(dependent_formulae, include_sizes:),
+          dependent_version_changes || formula_version_changes(dependent_formulae, include_sizes:),
         )
         summary.pinned_formulae.concat((context.pinned_formulae + context.dependants.pinned).map do |formula|
-          Upgrade.formula_upgrade_description(formula)
+          Upgrade.formula_version_change(formula)
         end)
 
         formulae = context.formulae_to_install + context.pinned_formulae +
@@ -566,7 +565,7 @@ module Homebrew
             "#{dry_run ? "Would upgrade" : "Upgraded"} #{version_change_count} " \
             "#{"requested " if named}outdated " \
             "#{Utils.pluralize("package", version_change_count)}",
-            Upgrade.format_upgrade_summary(version_changes),
+            Formatter.version_changes(version_changes),
           )
         end
         if show_upgrade_summary && named && summary.dependent_version_changes.present?
@@ -574,21 +573,21 @@ module Homebrew
           show_final_upgrade_summary_section(
             "#{dry_run ? "Would upgrade" : "Upgraded"} #{dependent_count} " \
             "#{Utils.pluralize("dependent", dependent_count)}",
-            Upgrade.format_upgrade_summary(summary.dependent_version_changes),
+            Formatter.version_changes(summary.dependent_version_changes),
           )
         end
         if summary.pinned_formulae.present?
           pinned_count = summary.pinned_formulae.uniq.count
           show_final_upgrade_summary_section(
             "#{pinned_count} Pinned #{Utils.pluralize("formula", pinned_count)}",
-            Upgrade.format_upgrade_summary(summary.pinned_formulae.uniq),
+            Formatter.version_changes(summary.pinned_formulae.uniq),
           )
         end
         if summary.pinned_casks.present?
           pinned_count = summary.pinned_casks.uniq.count
           show_final_upgrade_summary_section(
             "#{pinned_count} Pinned #{Utils.pluralize("cask", pinned_count)}",
-            Upgrade.format_upgrade_summary(summary.pinned_casks.uniq),
+            Formatter.version_changes(summary.pinned_casks.uniq),
           )
         end
         deprecate_disable_summary = summary.deprecated.map { |item| "#{item} (deprecated)" } +
@@ -613,23 +612,16 @@ module Homebrew
         end
       end
 
-      sig { params(formulae: T::Array[Formula], include_sizes: T::Boolean).returns(T::Array[String]) }
-      def formula_upgrade_descriptions(formulae, include_sizes: false)
+      sig { params(formulae: T::Array[Formula], include_sizes: T::Boolean).returns(T::Array[VersionChange]) }
+      def formula_version_changes(formulae, include_sizes: false)
         formulae.map do |formula|
+          size = formula_upgrade_size(formula) if include_sizes
           if formula.optlinked?
-            old_keg = Keg.new(formula.opt_prefix)
-            old_version = old_keg.version
+            old_version = Keg.new(formula.opt_prefix).version
             new_version = formula_upgrade_display_version(formula, old_version)
-            if include_sizes
-              "#{formula.full_specified_name} #{old_version} -> " \
-                "#{new_version}#{formula_upgrade_size(formula)}"
-            else
-              "#{formula.full_specified_name} #{old_version} -> #{new_version}"
-            end
-          elsif include_sizes
-            "#{formula.full_specified_name} #{formula.pkg_version}#{formula_upgrade_size(formula)}"
+            VersionChange.new(name: formula.full_specified_name, old_version: old_version.to_s, new_version:, size:)
           else
-            "#{formula.full_specified_name} #{formula.pkg_version}"
+            VersionChange.new(name: formula.full_specified_name, new_version: formula.pkg_version.to_s, size:)
           end
         end
       end
@@ -642,7 +634,7 @@ module Homebrew
           dry_run:              T::Boolean,
           download_queue:       T.nilable(Homebrew::DownloadQueue),
           prefetch_names:       T.nilable(T::Array[String]),
-          prefetch_upgrades:    T.nilable(T::Array[String]),
+          prefetch_upgrades:    T.nilable(T::Array[VersionChange]),
           show_upgrade_summary: T::Boolean,
         ).returns(T::Boolean)
       }
@@ -693,7 +685,7 @@ module Homebrew
                                                                 .uniq { |fi| fi.formula.full_name },
                                                               download_queue: prefetch_download_queue)
           prefetch_names&.replace(valid_formula_installers.map { |fi| fi.formula.name })
-          prefetch_upgrades&.replace(formula_upgrade_descriptions(valid_formula_installers.map(&:formula)))
+          prefetch_upgrades&.replace(formula_version_changes(valid_formula_installers.map(&:formula)))
           valid_dependent_formulae_installer = valid_formula_installers & dependent_formulae_installer
           @prefetched_formulae_upgrade_context = FormulaeUpgradeContext.new(
             formulae_to_install:          context.formulae_to_install,
@@ -709,11 +701,10 @@ module Homebrew
           return true
         end
 
-        planned_formula_version_changes = formula_upgrade_descriptions(context.formulae_installer.map(&:formula),
-                                                                       include_sizes: dry_run)
+        planned_formula_version_changes = formula_version_changes(context.formulae_installer.map(&:formula),
+                                                                  include_sizes: dry_run)
         dependent_formulae = context.dependants.upgradeable.dup
-        planned_dependent_version_changes = formula_upgrade_descriptions(dependent_formulae,
-                                                                         include_sizes: dry_run)
+        planned_dependent_version_changes = formula_version_changes(dependent_formulae, include_sizes: dry_run)
         if dry_run
           record_formula_upgrade_summary(context,
                                          version_changes:           planned_formula_version_changes,
@@ -792,7 +783,7 @@ module Homebrew
       sig {
         params(casks: T::Array[Cask::Cask], download_queue: Homebrew::DownloadQueue,
                prefetch_names: T.nilable(T::Array[String]),
-               prefetch_upgrades: T.nilable(T::Array[String]),
+               prefetch_upgrades: T.nilable(T::Array[VersionChange]),
                prefetch_casks: T.nilable(T::Array[Cask::Cask]),
                prefetch_installers: T.nilable(T::Array[Cask::Installer]),
                prefetch_errors: T.nilable(T::Array[StandardError]))
@@ -858,7 +849,10 @@ module Homebrew
         prefetch_casks&.replace(valid_casks)
         prefetch_names&.replace(valid_casks.map(&:full_name))
         prefetch_upgrades&.replace(
-          valid_casks.map { |cask| "#{cask.full_name} #{cask.installed_version} -> #{cask.version}" },
+          valid_casks.map do |cask|
+            VersionChange.new(name: cask.full_name, old_version: cask.installed_version.to_s,
+                              new_version: cask.version.to_s)
+          end,
         )
         true
       rescue => e
@@ -986,17 +980,17 @@ module Homebrew
         latest_head_version.to_s
       end
 
-      sig { params(formula: Formula).returns(String) }
+      sig { params(formula: Formula).returns(T.nilable(String)) }
       def formula_upgrade_size(formula)
-        return "" if args.build_from_source_formulae.include?(formula.name)
+        return if args.build_from_source_formulae.include?(formula.name)
 
         bottle = formula.bottle
-        return "" unless bottle
+        return unless bottle
 
         bottle.fetch_tab(quiet: !args.debug?)
-        return "" unless (download_size = bottle.bottle_size)
+        return unless (download_size = bottle.bottle_size)
 
-        " (#{Formatter.disk_usage_readable(download_size.to_i)})"
+        Formatter.disk_usage_readable(download_size.to_i)
       end
     end
   end
