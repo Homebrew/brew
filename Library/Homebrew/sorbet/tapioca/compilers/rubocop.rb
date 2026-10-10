@@ -7,6 +7,8 @@ require_relative "../../../rubocops"
 module Tapioca
   module Compilers
     class RuboCop < Tapioca::Dsl::Compiler
+      extend T::Generic
+
       # This should be a module whose singleton class contains RuboCop::AST::NodePattern::Macros,
       #   but I don't know how to express that in Sorbet.
       ConstantType = type_member { { fixed: T::Module[T.anything] } }

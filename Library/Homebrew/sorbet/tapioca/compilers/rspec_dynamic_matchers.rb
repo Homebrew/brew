@@ -6,6 +6,8 @@ require "rspec/expectations"
 module Tapioca
   module Compilers
     class RspecDynamicMatchers < Tapioca::Dsl::Compiler
+      extend T::Generic
+
       ConstantType = type_member { { fixed: T::Module[T.anything] } }
 
       sig { override.returns(T::Enumerable[T::Module[T.anything]]) }

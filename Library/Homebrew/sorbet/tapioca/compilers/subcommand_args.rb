@@ -8,6 +8,8 @@ require_relative "args"
 module Tapioca
   module Compilers
     class SubcommandArgs < Tapioca::Dsl::Compiler
+      extend T::Generic
+
       ConstantType = type_member { { fixed: T.class_of(Homebrew::AbstractSubcommand) } }
 
       sig { override.returns(T::Enumerable[T.class_of(Homebrew::AbstractSubcommand)]) }
