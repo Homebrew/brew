@@ -903,6 +903,118 @@ RSpec.describe FormulaInstaller do
       end
     end
 
+    context "when conflicting formula is untrusted", :trust_store do
+      let(:tap) { Tap.fetch("untrustedconflicts", "foo") }
+      let(:conflicting_name) { "#{tap}/conflicting" }
+      let(:conflicting_prefix) { HOMEBREW_CELLAR/"conflicting/1.0" }
+      let(:test_formula) do
+        name = conflicting_name
+        formula "testball" do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/testball-0.1.tar.gz"
+          conflicts_with name
+        end
+      end
+
+      before do
+        allow(Formulary).to receive(:factory).and_call_original
+        tap.formula_dir.mkpath
+        (tap.formula_dir/"conflicting.rb").write 'raise "untrusted formula evaluated"'
+        tap.alias_dir.mkpath
+        (tap.alias_dir/"conflicting-alias").make_symlink(tap.formula_dir/"conflicting.rb")
+        (tap.path/"formula_renames.json").write JSON.generate("old-conflicting" => "conflicting")
+      end
+
+      after do
+        FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"untrustedconflicts"
+      end
+
+      test_each(%w[
+        conflicting
+        untrustedconflicts/foo/conflicting
+        untrustedconflicts/foo/conflicting-alias
+        untrustedconflicts/foo/old-conflicting
+      ]) do |name|
+        context "when named #{name}" do
+          let(:conflicting_name) { name }
+
+          it "ignores an uninstalled conflict without evaluating its formula" do
+            expect { described_class.new(test_formula).check_conflicts }.not_to raise_error
+          end
+
+          context "when installed" do
+            before do
+              (conflicting_prefix/".brew").mkpath
+              (conflicting_prefix/".brew/conflicting.rb").write 'raise "installed formula evaluated"'
+              (HOMEBREW_PREFIX/"opt").mkpath
+              (HOMEBREW_PREFIX/"opt/conflicting").make_symlink(conflicting_prefix)
+            end
+
+            it "ignores an unlinked conflict without evaluating its formula" do
+              expect { described_class.new(test_formula).check_conflicts }.not_to raise_error
+            end
+
+            it "rejects a linked conflict without evaluating its formula" do
+              HOMEBREW_LINKED_KEGS.mkpath
+              (HOMEBREW_LINKED_KEGS/"conflicting").make_symlink(conflicting_prefix)
+
+              expect { described_class.new(test_formula).check_conflicts }.to raise_error(FormulaConflictError)
+            end
+          end
+        end
+      end
+
+      it "ignores an opt alias pointing to another linked formula" do
+        other_prefix = HOMEBREW_CELLAR/"other/1.0"
+        other_prefix.mkpath
+        HOMEBREW_LINKED_KEGS.mkpath
+        (HOMEBREW_LINKED_KEGS/"other").make_symlink(other_prefix)
+        (HOMEBREW_PREFIX/"opt").mkpath
+        (HOMEBREW_PREFIX/"opt/conflicting").make_symlink(other_prefix)
+
+        expect { described_class.new(test_formula).check_conflicts }.not_to raise_error
+      end
+
+      it "ignores an unlinked conflict with a non-keg opt directory" do
+        (HOMEBREW_PREFIX/"opt/conflicting").mkpath
+
+        expect { described_class.new(test_formula).check_conflicts }.not_to raise_error
+      end
+
+      it "rejects a linked conflict when opt points to a different version" do
+        conflicting_prefix.mkpath
+        (HOMEBREW_CELLAR/"conflicting/2.0").mkpath
+        HOMEBREW_LINKED_KEGS.mkpath
+        (HOMEBREW_LINKED_KEGS/"conflicting").make_symlink(conflicting_prefix)
+        (HOMEBREW_PREFIX/"opt").mkpath
+        (HOMEBREW_PREFIX/"opt/conflicting").make_symlink(HOMEBREW_CELLAR/"conflicting/2.0")
+
+        expect { described_class.new(test_formula).check_conflicts }.to raise_error(FormulaConflictError)
+      end
+
+      context "when the conflicting formula was renamed" do
+        let(:conflicting_name) { "#{tap}/old-conflicting" }
+
+        it "does not warn about a renamed conflict" do
+          expect { described_class.new(test_formula).check_conflicts }.not_to output.to_stderr
+        end
+      end
+
+      it "ignores an uninstalled conflict when only the requested formula is trusted" do
+        (tap.formula_dir/"requested.rb").write <<~RUBY
+          class Requested < Formula
+            url "https://brew.sh/requested-1.0.tar.gz"
+            conflicts_with "conflicting"
+          end
+        RUBY
+        Homebrew::Trust.trust!(:formula, "#{tap}/requested")
+
+        expect do
+          described_class.new(Formulary.factory("#{tap}/requested")).check_conflicts
+        end.not_to raise_error
+      end
+    end
+
     it "ignores conflicts that name the formula being installed" do
       f = self_conflicting_formula
 
