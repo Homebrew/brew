@@ -290,6 +290,53 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
   end
 
+  context "when Brewfile formulae are installed as dependencies", :no_api do
+    let(:dsl) { Homebrew::Bundle::Dsl.new(StringIO.new("brew 'testball'")) }
+    let(:tabfile) { mktmpdir/AbstractTab::FILENAME }
+
+    before do
+      described_class.reset!
+      tab = Tab.empty
+      tab.tabfile = tabfile
+      tab.installed_on_request = false
+      tab.write
+      allow(Formula).to receive(:installed_formula_names).and_return(["testball"])
+      allow(Tab).to receive(:for_name).with("testball") { Tab.from_file(tabfile) }
+      allow(described_class).to receive_messages(casks_to_uninstall: [], formulae_to_uninstall: [], taps_to_untap: [])
+      Homebrew::Bundle.extensions.select(&:cleanup_supported?).each do |extension|
+        allow(extension).to receive(:cleanup_items).and_return([])
+      end
+      allow(described_class).to receive(:system_output_no_stderr).and_return("")
+    end
+
+    it "protects Brewfile formulae before uninstalling a cask" do
+      allow(described_class).to receive(:casks_to_uninstall).and_return(["example-app"])
+      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--cask", "--force", "example-app") do
+        expect(Tab.from_file(tabfile).installed_on_request).to be(true)
+      end
+
+      described_class.cleanup(force: true, dsl:)
+    end
+
+    it "protects Brewfile formulae before cleanup when nothing is uninstalled" do
+      expect(described_class).to receive(:system_output_no_stderr).with(HOMEBREW_BREW_FILE, "cleanup") do
+        expect(Tab.from_file(tabfile).installed_on_request).to be(true)
+        ""
+      end
+
+      described_class.cleanup(force: true, dsl:)
+    end
+
+    it "does not change receipts without force" do
+      allow(Homebrew::Cleanup).to receive(:dry_run_output).with(quiet: true).and_return("")
+      contents = tabfile.read
+
+      described_class.cleanup(dsl:)
+
+      expect(tabfile.read).to eq(contents)
+    end
+  end
+
   context "when there are no formulae to uninstall and no taps to untap" do
     before do
       described_class.reset!
