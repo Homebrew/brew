@@ -91,12 +91,35 @@ RSpec.describe Homebrew::TestBot::Formulae do
   end
 
   describe "#annotate_added_dependencies" do
+    subject(:formulae) do
+      described_class.new(
+        tap: impact_tap, git: "git", dry_run: true, fail_fast: false, verbose: false,
+        output_paths: {
+          bottle:                     Pathname("bottle.txt"),
+          linkage:                    Pathname("linkage.txt"),
+          skipped_or_failed_formulae: Pathname("skipped.txt"),
+        }
+      )
+    end
+
+    let(:impact_tap) { CoreTap.instance }
+    let(:repository) { impact_tap.path }
+
+    before do
+      ENV["GITHUB_ACTIONS"] = "true"
+      allow(formulae).to receive(:opoo) { |message| raise message }
+      allow(Utils).to receive(:safe_popen_read)
+        .with("git", "-C", repository, "diff", "--no-ext-diff", "--no-renames", "--name-only", "--diff-filter=MD",
+              "-z", "origin/HEAD", "HEAD").and_return("Formula/foo.rb\0")
+    end
+
     it "writes a warning annotation for the new recursive dependency impact" do
       formula = formula("foo") do
         T.bind(self, T.class_of(Formula))
         url "foo-1.0"
         depends_on "existing"
         depends_on "bar"
+        depends_on "baz"
       end
       existing = formula("existing") do
         T.bind(self, T.class_of(Formula))
@@ -135,28 +158,299 @@ RSpec.describe Homebrew::TestBot::Formulae do
         allow(f).to receive(:bottle_for_tag)
           .and_return(instance_double(Bottle, fetch_tab: nil, installed_size: size))
       end
-      allow(Utils).to receive(:safe_popen_read).and_return <<~DIFF
-        @@ -2,0 +7,1 @@
-        +  depends_on "bar"
-      DIFF
+      allow(Utils).to receive(:safe_popen_read)
+        .with("git", "-C", repository, "diff", "--no-ext-diff", "--unified=0",
+              "origin/HEAD", "HEAD", "--", formula.path.relative_path_from(repository).to_s).and_return <<~DIFF
+                @@ -2,0 +7,2 @@
+                +  depends_on "bar"
+                +  depends_on "baz"
+              DIFF
+      allow(Utils).to receive(:safe_popen_read)
+        .with("git", "-C", repository, "show",
+              "origin/HEAD:#{formula.path.relative_path_from(repository)}").and_return <<~RUBY
+                class Foo < Formula
+                  url "foo-1.0"
+                  depends_on "existing"
+                end
+              RUBY
 
-      Dir.mktmpdir do |tmpdir|
-        output_paths = {
-          bottle:                     Pathname.new("#{tmpdir}/bottle.txt"),
-          linkage:                    Pathname.new("#{tmpdir}/linkage.txt"),
-          skipped_or_failed_formulae: Pathname.new("#{tmpdir}/skipped.txt"),
-        }
-        formulae = described_class.new(
-          tap: nil, git: "git", dry_run: true, fail_fast: false, verbose: false,
-          output_paths:
-        )
+      expect { formulae.annotate_added_dependencies(formula) }
+        .to output(
+          "::warning file=#{formula.path.relative_path_from(repository)},line=7," \
+          "title=foo: dependency impact::Recursive runtime dependencies on #{Utils::Bottles.tag}: " \
+          "3 added, 0 removed (net change: 3). Installed size change: +1.9MB. " \
+          "Added: `bar`, `baz`, `recommended`.\n",
+        ).to_stdout
+    end
 
-        with_env(GITHUB_ACTIONS: "true") do
-          expect { formulae.annotate_added_dependencies(formula) }
+    context "with a real tap history", :no_api do
+      let(:git) do
+        ["git", "-C", repository.to_s, "-c", "user.name=Test", "-c", "user.email=test@example.test",
+         "-c", "commit.gpgSign=false", "-c", "core.hooksPath=/dev/null"]
+      end
+
+      sig { params(name: String, dependencies: T::Array[String]).void }
+      def write_impact_formula(name, dependencies)
+        path = repository/"Formula/#{name}.rb"
+        path.dirname.mkpath
+        path.write <<~RUBY
+          class #{Formulary.class_s(name)} < Formula
+            url "https://example.com/#{name}-1.0.tar.gz"
+            #{dependencies.map { |dependency| "depends_on #{dependency.inspect}" }.join("\n  ")}
+          end
+        RUBY
+      end
+
+      sig { void }
+      def commit_impact_formulae
+        Utils.safe_popen_read(*git, "add", ".")
+        Utils.safe_popen_read(*git, "commit", "--quiet", "-m", "Update formulae")
+      end
+
+      before do
+        allow(Utils).to receive(:safe_popen_read).and_call_original
+        write_impact_formula("foo", %w[libssh2 openssl@3])
+        write_impact_formula("libssh2", %w[openssl@3])
+        write_impact_formula("openssl@3", %w[ca-certificates])
+        write_impact_formula("openssl@4", %w[ca-certificates])
+        write_impact_formula("ca-certificates", [])
+        Utils.safe_popen_read(*git, "init", "--quiet")
+        Utils.safe_popen_read(*git, "remote", "add", "origin", impact_tap.default_remote)
+        commit_impact_formulae
+        Utils.safe_popen_read(*git, "update-ref", "refs/remotes/origin/HEAD", "HEAD")
+        allow(Formulary).to receive(:factory).and_wrap_original do |method, *args, **kwargs|
+          loaded = method.call(*args, **kwargs)
+          size = { "openssl@3" => 23_000_000, "openssl@4" => 24_000_000, "newlib" => nil }.fetch(loaded.name, 0)
+          allow(loaded).to receive(:bottle_for_tag)
+            .and_return(instance_double(Bottle, fetch_tab: nil, installed_size: size))
+          loaded
+        end
+      end
+
+      it "uses the previous dependencies of formulae migrated in the same change" do
+        write_impact_formula("foo", %w[libssh2 openssl@4])
+        write_impact_formula("libssh2", %w[openssl@4])
+        commit_impact_formulae
+
+        expect { formulae.annotate_added_dependencies(Formulary.factory("foo")) }
+          .to output(
+            "::warning file=Formula/foo.rb,line=4," \
+            "title=foo: dependency impact::Recursive runtime dependencies on #{Utils::Bottles.tag}: " \
+            "1 added, 1 removed (net change: 0). Installed size change: +1MB. " \
+            "Added: `openssl@4`. Removed: `openssl@3`.\n",
+          ).to_stdout
+      end
+
+      it "traverses a deleted previous dependency and its descendants" do
+        write_impact_formula("foo", %w[openssl@4])
+        (repository/"Formula/libssh2.rb").unlink
+        commit_impact_formulae
+
+        expect { formulae.annotate_added_dependencies(Formulary.factory("foo")) }
+          .to output(
+            "::warning file=Formula/foo.rb,line=3," \
+            "title=foo: dependency impact::Recursive runtime dependencies on #{Utils::Bottles.tag}: " \
+            "1 added, 2 removed (net change: -1). Installed size change: unknown (1 unknown size). " \
+            "Added: `openssl@4`. Removed: `libssh2`, `openssl@3`.\n",
+          ).to_stdout
+      end
+
+      it "reports a lower bound when only added dependency sizes are unknown" do
+        write_impact_formula("newlib", [])
+        write_impact_formula("foo", %w[libssh2 openssl@3 openssl@4 newlib])
+        commit_impact_formulae
+
+        expect { formulae.annotate_added_dependencies(Formulary.factory("foo")) }
+          .to output(/Installed size change: at least \+24MB \(1 unknown size\)\./).to_stdout
+      end
+
+      it "includes explicitly enabled optional transitive dependencies" do
+        write_impact_formula("newlib", [])
+        (repository/"Formula/foo.rb").write <<~RUBY
+          class Foo < Formula
+            url "https://example.com/foo-1.0.tar.gz"
+            depends_on "libssh2" => "with-newlib"
+          end
+        RUBY
+        (repository/"Formula/libssh2.rb").write <<~RUBY
+          class Libssh2 < Formula
+            url "https://example.com/libssh2-1.0.tar.gz"
+            depends_on "openssl@3"
+            depends_on "newlib" => :optional
+          end
+        RUBY
+        commit_impact_formulae
+
+        expect { formulae.annotate_added_dependencies(Formulary.factory("foo")) }
+          .to output(/1 added, 0 removed \(net change: 1\).*Added: `newlib`\./).to_stdout
+      end
+
+      it "loads each historical formula only once across annotations" do
+        write_impact_formula("foo", %w[libssh2 openssl@4])
+        write_impact_formula("libssh2", %w[openssl@4])
+        commit_impact_formulae
+        allow(formulae).to receive(:puts)
+
+        expect(Utils).to receive(:safe_popen_read)
+          .with("git", "-C", repository, "show", "origin/HEAD:Formula/libssh2.rb").once.and_call_original
+
+        2.times { formulae.annotate_added_dependencies(Formulary.factory("foo")) }
+      end
+
+      context "with a non-core tap" do
+        let(:impact_tap) { Tap.fetch("homebrew/test-bot") }
+
+        it "finds a deleted dependency declared without its tap prefix" do
+          write_impact_formula("foo", %w[openssl@4])
+          (repository/"Formula/libssh2.rb").unlink
+          commit_impact_formulae
+
+          expect { formulae.annotate_added_dependencies(Formulary.factory("#{impact_tap}/foo")) }
             .to output(
-              "::warning file=#{formula.path.relative_path_from(CoreTap.instance.path)},line=7," \
-              "title=foo: new dependency impact::Adding `bar` adds 3 new recursive dependencies " \
-              "on #{Utils::Bottles.tag} (1.9MB).\n",
+              "::warning file=Formula/foo.rb,line=3," \
+              "title=foo: dependency impact::" \
+              "Recursive runtime dependencies on #{Utils::Bottles.tag}: " \
+              "1 added, 2 removed (net change: -1). Installed size change: unknown (1 unknown size). " \
+              "Added: `homebrew/test-bot/openssl@4`. " \
+              "Removed: `homebrew/test-bot/libssh2`, `homebrew/test-bot/openssl@3`.\n",
+            ).to_stdout
+        end
+
+        it "preserves core precedence over a deleted non-core formula with the same name" do
+          (CoreTap.instance.path/"Formula/libssh2.rb").write <<~RUBY
+            class Libssh2 < Formula
+              url "https://example.com/libssh2-1.0.tar.gz"
+            end
+          RUBY
+          write_impact_formula("foo", %w[openssl@4])
+          (repository/"Formula/libssh2.rb").unlink
+          commit_impact_formulae
+
+          expect { formulae.annotate_added_dependencies(Formulary.factory("#{impact_tap}/foo")) }
+            .to output(%r{Removed: `homebrew/test-bot/openssl@3`, `libssh2`\.}).to_stdout
+        end
+      end
+    end
+
+    context "when replacing a versioned dependency" do
+      let(:current) do
+        formula("foo") do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          depends_on "openssl@4"
+        end
+      end
+      let(:old_dependency) { "openssl@3" }
+      let(:old_size) { 23_000_000 }
+      let(:new_size) { 24_000_000 }
+
+      before do
+        certificates = formula("ca-certificates") do
+          T.bind(self, T.class_of(Formula))
+          url "certificates-1.0"
+        end
+        stub_formula_loader certificates
+        { "openssl@3" => old_size, "openssl@4" => new_size }.each do |name, size|
+          openssl = formula(name) do
+            T.bind(self, T.class_of(Formula))
+            url "openssl-1.0"
+            depends_on "ca-certificates"
+          end
+          stub_formula_loader openssl
+          allow(openssl).to receive(:bottle_for_tag)
+            .and_return(instance_double(Bottle, fetch_tab: nil, installed_size: size))
+        end
+        allow(Utils).to receive(:safe_popen_read)
+          .with("git", "-C", repository, "diff", "--no-ext-diff", "--unified=0",
+                "origin/HEAD", "HEAD", "--", current.path.relative_path_from(repository).to_s)
+          .and_return <<~DIFF
+            @@ -3 +3 @@
+            -  depends_on "#{old_dependency}"
+            +  depends_on "openssl@4"
+          DIFF
+        allow(Utils).to receive(:safe_popen_read)
+          .with("git", "-C", repository, "show",
+                "origin/HEAD:#{current.path.relative_path_from(repository)}").and_return <<~RUBY
+                  class Foo < Formula
+                    url "foo-1.0"
+                    depends_on "#{old_dependency}"
+                  end
+                RUBY
+      end
+
+      it "reports the replacement and net size without counting shared dependencies" do
+        expect { formulae.annotate_added_dependencies(current) }
+          .to output(
+            "::warning file=#{current.path.relative_path_from(repository)},line=3," \
+            "title=foo: dependency impact::Recursive runtime dependencies on #{Utils::Bottles.tag}: " \
+            "1 added, 1 removed (net change: 0). Installed size change: +1MB. " \
+            "Added: `openssl@4`. Removed: `openssl@3`.\n",
+          ).to_stdout
+      end
+
+      context "when the replacement is smaller" do
+        let(:new_size) { 22_000_000 }
+
+        it "reports the size reduction" do
+          expect { formulae.annotate_added_dependencies(current) }
+            .to output(/Installed size change: -1MB\./).to_stdout
+        end
+      end
+
+      context "when a bottle size is unavailable" do
+        let(:old_size) { nil }
+
+        it "does not present a partial size difference as the net change" do
+          expect { formulae.annotate_added_dependencies(current) }
+            .to output(/Installed size change: unknown \(1 unknown size\)\./).to_stdout
+        end
+      end
+
+      context "when the declaration is only moved" do
+        let(:old_dependency) { "openssl@4" }
+
+        it "does not annotate an unchanged dependency set" do
+          expect { formulae.annotate_added_dependencies(current) }.not_to output.to_stdout
+        end
+      end
+
+      context "when another new dependency still needs the old version" do
+        let(:current) do
+          formula("foo") do
+            T.bind(self, T.class_of(Formula))
+            url "foo-1.0"
+            depends_on "openssl@4"
+            depends_on "consumer"
+          end
+        end
+
+        before do
+          consumer = formula("consumer") do
+            T.bind(self, T.class_of(Formula))
+            url "consumer-1.0"
+            depends_on "openssl@3"
+          end
+          stub_formula_loader consumer
+          allow(consumer).to receive(:bottle_for_tag)
+            .and_return(instance_double(Bottle, fetch_tab: nil, installed_size: 500_000))
+          allow(Utils).to receive(:safe_popen_read)
+            .with("git", "-C", repository, "diff", "--no-ext-diff", "--unified=0",
+                  "origin/HEAD", "HEAD", "--", current.path.relative_path_from(repository).to_s)
+            .and_return <<~DIFF
+              @@ -3 +3,2 @@
+              -  depends_on "openssl@3"
+              +  depends_on "openssl@4"
+              +  depends_on "consumer"
+            DIFF
+        end
+
+        it "reports the combined growth without subtracting the retained dependency" do
+          expect { formulae.annotate_added_dependencies(current) }
+            .to output(
+              "::warning file=#{current.path.relative_path_from(repository)},line=3," \
+              "title=foo: dependency impact::Recursive runtime dependencies on #{Utils::Bottles.tag}: " \
+              "2 added, 0 removed (net change: 2). Installed size change: +24.5MB. " \
+              "Added: `consumer`, `openssl@4`.\n",
             ).to_stdout
         end
       end
