@@ -670,6 +670,7 @@ module Homebrew
           current_api_package_basename,
           "#{current_api_package_basename}.payload",
           "#{current_api_package_basename}.payload.index",
+          "#{current_api_package_basename}.etag",
         ]
         api_internal.glob("packages.*.jws.json*").reject do |path|
           kept_basenames.include?(path.basename.to_s)

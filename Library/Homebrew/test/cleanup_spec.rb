@@ -874,6 +874,7 @@ RSpec.describe Homebrew::Cleanup do
         api_internal/current_basename,
         api_internal/"#{current_basename}.payload",
         api_internal/"#{current_basename}.payload.index",
+        api_internal/"#{current_basename}.etag",
       ]
       scrubbed_files = [
         api_internal/"packages.stale.jws.json.payload",
@@ -887,7 +888,7 @@ RSpec.describe Homebrew::Cleanup do
 
       described_class.new(scrub: true, cache:).cleanup_cache
 
-      expect((kept_files + scrubbed_files).map(&:exist?)).to eq([true, true, true, false, false, false])
+      expect((kept_files + scrubbed_files).map(&:exist?)).to eq([true, true, true, true, false, false, false])
     end
 
     it "cleans up API source files and symlinks at any depth without cleaning directories" do

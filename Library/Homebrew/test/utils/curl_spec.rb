@@ -595,6 +595,18 @@ RSpec.describe "Utils::Curl" do
     end
   end
 
+  describe "::curl_supports_etag?" do
+    it "returns `true` if curl version is 7.68.0 or higher" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(Version.new("7.68.0"))
+      expect(curl_supports_etag?).to be(true)
+    end
+
+    it "returns `false` if curl version is lower than 7.68.0" do
+      allow_any_instance_of(Utils::Curl).to receive(:curl_version).and_return(Version.new("7.64.1"))
+      expect(curl_supports_etag?).to be(false)
+    end
+  end
+
   describe "::curl_supports_tls13?" do
     it "returns `true` if curl command is successful" do
       allow(SystemCommand).to receive(:quiet_system).and_return(true)

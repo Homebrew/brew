@@ -725,6 +725,14 @@ module Utils
     end
 
     sig { returns(T::Boolean) }
+    def curl_supports_etag?
+      @curl_supports_etag ||= T.let(Hash.new do |h, key|
+        h[key] = curl_version >= Version.new("7.68.0")
+      end, T.nilable(T::Hash[T.any(Pathname, String), T::Boolean]))
+      @curl_supports_etag[curl_path]
+    end
+
+    sig { returns(T::Boolean) }
     def curl_supports_tls13?
       @curl_supports_tls13 ||= T.let(Hash.new do |h, key|
         h[key] = SystemCommand.quiet_system(curl_executable, "--tlsv1.3", "--head", "https://brew.sh/")
