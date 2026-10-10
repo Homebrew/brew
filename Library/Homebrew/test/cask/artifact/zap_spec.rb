@@ -4,8 +4,8 @@
 require_relative "shared_examples/uninstall_zap"
 
 RSpec.describe Cask::Artifact::Zap, :cask do
-  describe "#zap_phase" do
-    include_examples "#uninstall_phase or #zap_phase"
+  describe "directive dispatch" do
+    include_examples "uninstall/zap directive dispatch"
 
     context "when using :rmdir" do
       subject(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
@@ -29,7 +29,7 @@ RSpec.describe Cask::Artifact::Zap, :cask do
         expect(empty_directory_tree).to exist
         expect(ds_store).to exist
 
-        artifact.zap_phase(command: fake_system_command)
+        described_class.dispatch_directives([artifact], command: fake_system_command, deferred: true)
 
         expect(ds_store).not_to exist
         expect(empty_directory).not_to exist
@@ -47,7 +47,9 @@ RSpec.describe Cask::Artifact::Zap, :cask do
         after { FileUtils.rm_rf target }
 
         it "leaves the link and its target alone" do
-          expect { artifact.zap_phase(command: fake_system_command) }.not_to raise_error
+          expect do
+            described_class.dispatch_directives([artifact], command: fake_system_command, deferred: true)
+          end.not_to raise_error
 
           expect(empty_directory).to be_a_symlink
           expect(target.join("nested")).to be_a_directory

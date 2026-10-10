@@ -38,10 +38,53 @@ module Cask
         :on_upgrade,
       ].freeze
 
+      UPGRADE_REINSTALL_SKIP_DIRECTIVES = [:signal].freeze
+
       sig { params(cask: Cask, directives: DirectivesType).returns(AbstractUninstall) }
       def self.from_args(cask, **directives)
         new(cask, **directives)
       end
+
+      # Dispatches the directives of one or more `uninstall`/`zap` stanzas in a single
+      # `ORDERED_DIRECTIVES` pass, the earlier stanza's first at each step, so that
+      # zapping runs `zap` directives alongside the `uninstall` stanza's. Each stanza's
+      # `deferred_directives` are skipped, and are the only ones run when `deferred:`.
+      sig {
+        params(
+          artifacts: T::Array[AbstractUninstall],
+          command:   T.class_of(SystemCommand),
+          deferred:  T::Boolean,
+          force:     T::Boolean,
+          successor: T.nilable(Cask),
+          upgrade:   T::Boolean,
+          reinstall: T::Boolean,
+          quit:      T::Boolean,
+        ).void
+      }
+      def self.dispatch_directives(artifacts, command:, deferred: false, force: false, successor: nil,
+                                   upgrade: false, reinstall: false, quit: true)
+        ORDERED_DIRECTIVES.each do |directive_sym|
+          next if directive_sym == :quit && !quit
+
+          artifacts.each do |artifact|
+            next if artifact.deferred_directives.include?(directive_sym) != deferred
+
+            if (upgrade || reinstall) &&
+               UPGRADE_REINSTALL_SKIP_DIRECTIVES.include?(directive_sym) &&
+               Array(artifact.directives[:on_upgrade]).map { |name| name.to_s.to_sym }.exclude?(directive_sym)
+              next
+            end
+
+            artifact.dispatch_uninstall_directive(directive_sym, command:, force:, successor:, upgrade:)
+          end
+        end
+      end
+
+      # Directives that wait until the cask's artifacts have been removed and its
+      # `uninstall_postflight` steps have run, so that directories which held only
+      # those artifacts are seen as empty.
+      sig { overridable.returns(T::Array[Symbol]) }
+      def deferred_directives = [:rmdir]
 
       sig { returns(T::Hash[Symbol, DirectivesType]) }
       attr_reader :directives
@@ -180,22 +223,7 @@ module Cask
           end
       end
 
-      private
-
-      sig {
-        params(
-          command:   T.class_of(SystemCommand),
-          force:     T::Boolean,
-          successor: T.nilable(Cask),
-          upgrade:   T::Boolean,
-        ).void
-      }
-      def dispatch_uninstall_directives(command:, force: false, successor: nil, upgrade: false)
-        ORDERED_DIRECTIVES.each do |directive_sym|
-          dispatch_uninstall_directive(directive_sym, command:, force:, successor:, upgrade:)
-        end
-      end
-
+      # Runs this stanza's `directive_sym` directive, if it has one.
       # The `uninstall_*` methods are dispatched dynamically, so they take these
       # options uniformly and ignore the ones they do not need.
       sig {
@@ -215,6 +243,8 @@ module Cask
         send(:"uninstall_#{directive_sym}", *(args.is_a?(Hash) ? [args] : args),
              command:, force:, successor:, upgrade:)
       end
+
+      private
 
       sig { returns(Symbol) }
       def stanza

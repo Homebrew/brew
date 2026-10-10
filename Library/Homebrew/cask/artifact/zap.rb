@@ -7,16 +7,10 @@ module Cask
   module Artifact
     # Artifact corresponding to the `zap` stanza.
     class Zap < AbstractUninstall
-      sig {
-        params(
-          command: T.class_of(SystemCommand),
-          force:   T::Boolean,
-          verbose: T::Boolean,
-        ).void
-      }
-      def zap_phase(command:, force: false, verbose: false)
-        dispatch_uninstall_directives(command:, force:)
-      end
+      # Removing files also waits, as `uninstall` steps may still need them, e.g. to
+      # identify a keychain certificate to delete.
+      sig { override.returns(T::Array[Symbol]) }
+      def deferred_directives = [:pkgutil, :delete, :trash, :rmdir]
     end
   end
 end

@@ -715,67 +715,64 @@ on_request: true)
       puts summary
     end
 
-    sig { params(clear: T::Boolean, successor: T.nilable(Cask), quit: T::Boolean).void }
-    def uninstall_artifacts(clear: false, successor: nil, quit: true)
+    sig {
+      params(clear: T::Boolean, successor: T.nilable(Cask), quit: T::Boolean, zap_stanzas: T::Array[Artifact::Zap])
+        .void
+    }
+    def uninstall_artifacts(clear: false, successor: nil, quit: true, zap_stanzas: [])
       odebug "Uninstalling artifacts"
       odebug "#{::Utils.pluralize("artifact", artifacts.length, include_count: true)} defined", artifacts
 
-      artifacts.each do |artifact|
-        if artifact.respond_to?(:uninstall_phase)
-          artifact = T.cast(
-            artifact,
-            T.any(
-              Artifact::AbstractFlightBlock,
-              Artifact::GeneratedCompletion,
-              Artifact::KeyboardLayout,
-              Artifact::Moved,
-              Artifact::PostflightSteps,
-              Artifact::PreflightSteps,
-              Artifact::Qlplugin,
-              Artifact::Symlinked,
-              Artifact::Uninstall,
-              Artifact::UninstallPostflightSteps,
-              Artifact::UninstallPreflightSteps,
-            ),
-          )
+      directive_artifacts = [*artifacts.grep(Artifact::Uninstall), *zap_stanzas]
 
-          odebug "Uninstalling artifact of class #{artifact.class}"
-          if artifact.is_a?(Artifact::Uninstall)
-            artifact.uninstall_phase(command: @command, verbose: verbose?, skip: clear, force: force?, successor:,
-                                     upgrade: upgrade?, reinstall: reinstall?, quit:)
-          else
-            artifact.uninstall_phase(command: @command, verbose: verbose?, skip: clear, force: force?, successor:,
-                                     upgrade: upgrade?, reinstall: reinstall?)
-          end
-        end
-
-        next unless artifact.respond_to?(:post_uninstall_phase)
-
-        artifact = T.cast(artifact, Artifact::Uninstall)
-
-        odebug "Post-uninstalling artifact of class #{artifact.class}"
-        artifact.post_uninstall_phase(
-          command:   @command,
-          verbose:   verbose?,
-          skip:      clear,
-          force:     force?,
-          successor:,
-        )
+      preflight, removable = T.cast(
+        artifacts.grep_v(Artifact::AbstractUninstall).select { |artifact| artifact.respond_to?(:uninstall_phase) },
+        T::Array[
+          T.any(
+            Artifact::AbstractFlightBlock,
+            Artifact::GeneratedCompletion,
+            Artifact::KeyboardLayout,
+            Artifact::Moved,
+            Artifact::PostflightSteps,
+            Artifact::PreflightSteps,
+            Artifact::Qlplugin,
+            Artifact::Symlinked,
+            Artifact::UninstallPostflightSteps,
+            Artifact::UninstallPreflightSteps,
+          ),
+        ],
+      ).partition do |artifact|
+        order = artifact.sort_order
+        uninstall_order = order.fetch(Artifact::Uninstall)
+        order.fetch(artifact.class, uninstall_order) < uninstall_order
       end
+
+      preflight.each do |artifact|
+        odebug "Uninstalling artifact of class #{artifact.class}"
+        artifact.uninstall_phase(command: @command, verbose: verbose?, skip: clear, force: force?, successor:,
+                                 upgrade: upgrade?, reinstall: reinstall?)
+      end
+
+      Artifact::AbstractUninstall.dispatch_directives(directive_artifacts, command: @command, force: force?,
+                                                      successor:, upgrade: upgrade?, reinstall: reinstall?, quit:)
+
+      removable.each do |artifact|
+        odebug "Uninstalling artifact of class #{artifact.class}"
+        artifact.uninstall_phase(command: @command, verbose: verbose?, skip: clear, force: force?, successor:,
+                                 upgrade: upgrade?, reinstall: reinstall?)
+      end
+
+      Artifact::AbstractUninstall.dispatch_directives(directive_artifacts, command: @command, deferred: true,
+                                                                           force: force?, successor:)
     end
 
     sig { void }
     def zap
       load_installed_caskfile!
-      uninstall_artifacts
-      if (zap_stanzas = @cask.artifacts.grep(Artifact::Zap)).empty?
-        opoo "No zap stanza present for Cask '#{@cask}'"
-      else
-        ohai "Dispatching zap stanza"
-        zap_stanzas.each do |stanza|
-          stanza.zap_phase(command: @command, verbose: verbose?, force: force?)
-        end
-      end
+      oh1 "Zapping Cask #{Formatter.identifier(@cask)}"
+      zap_stanzas = @cask.artifacts.grep(Artifact::Zap)
+      opoo "No zap stanza present for Cask '#{@cask}'" if zap_stanzas.empty?
+      uninstall_artifacts(clear: true, zap_stanzas:)
       ohai "Removing all staged versions of Cask '#{@cask}'"
       purge_caskroom_path
     end

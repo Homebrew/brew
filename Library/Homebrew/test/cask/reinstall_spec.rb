@@ -31,9 +31,9 @@ RSpec.describe Cask::Reinstall, :cask do
     Cask::Installer.new(caffeine).install
 
     output = Regexp.new <<~EOS
+      ==> Zapping Cask local-caffeine
       ==> Backing up App 'Caffeine.app' to '.*Caffeine.app'
       ==> Removing App '.*Caffeine.app'
-      ==> Dispatching zap stanza
       ==> Trashing files:
       .*org.example.caffeine.plist
       ==> Removing all staged versions of Cask 'local-caffeine'
