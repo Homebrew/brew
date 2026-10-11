@@ -21,10 +21,8 @@ Homebrew’s governance is grounded in the principle that only active contributo
 - **Quarterly activity criteria**: Around 50 meaningful maintainer contributions per quarter to Primary Homebrew repositories to remain in good standing as a Maintainer.
   Lead Maintainers have mandatory numerical requirements, defined below.
 - **Quarter**: A Homebrew reporting quarter, defined as one of the following periods: December–February, March–May, June–August, or September–November.
-  Monthly reporting covers the Maintainers listed in Homebrew/brew's README at the end of the month.
-  Contribution counts cover that month; the `maintainer met` and `lead met` columns assess the latest completed quarter.
-  The report's `potential new role` column uses up to four full quarters of monthly or historical quarterly reports to apply multi-quarter role requirements.
-  Recommendations are omitted when the history required for the relevant activity check is incomplete.
+  Quarterly reporting covers the Maintainers listed in Homebrew/brew's README at the end of the quarter.
+  The report's `potential new role` column uses preceding full quarterly reports to apply multi-quarter role requirements.
   Its recommendations require review against Maintainer discretion, Security and Ops Team exceptions and non-numerical eligibility criteria before role changes are made.
 - **Meaningful maintainer contributions**: Merged pull requests by the Maintainer, pull requests created by others that GitHub reports as both reviewed and approved by the Maintainer, or merged co-authored commits in Primary Homebrew repositories.
   A pull request opened and merged by the same Maintainer counts only once for that Maintainer.

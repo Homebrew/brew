@@ -89,6 +89,7 @@ jobs:
                grep -qF "Created by https://github.com/mislav/bump-homebrew-formula-action" "${RUNNER_TEMP}/check-prs/body"
             then
               echo "complete_template=true" >>"${GITHUB_OUTPUT:?}"
+              echo "has_description=true" >>"${GITHUB_OUTPUT}"
               exit 0
             fi
           fi
@@ -100,15 +101,23 @@ jobs:
               "${PR_TITLE}" \
               "${GITHUB_REPOSITORY:?}"
           )"
-          case "${complete_template}" in
-            true | false) ;;
+          has_description="$(
+            ruby "${RUNNER_TEMP}/check_template.rb" pull-request-description \
+              "${RUNNER_TEMP}/check-prs/body" \
+              "${RUNNER_TEMP}/check-prs/template" \
+              "${PR_TITLE}" \
+              "${GITHUB_REPOSITORY}"
+          )"
+          case "${complete_template}:${has_description}" in
+            true:true | true:false | false:true | false:false) ;;
             *)
-              echo "Unexpected template completion result: ${complete_template}" >&2
+              echo "Unexpected template/description result: ${complete_template}:${has_description}" >&2
               exit 1
               ;;
           esac
 
           echo "complete_template=${complete_template}" >>"${GITHUB_OUTPUT:?}"
+          echo "has_description=${has_description}" >>"${GITHUB_OUTPUT}"
 
       - name: Find incomplete template comment
         id: comments
@@ -133,6 +142,7 @@ jobs:
           echo "closed_by=${closed_by}" >>"${GITHUB_OUTPUT:?}"
 
       - name: Reopen completed pull request
+        id: reopen
         if: >-
           github.event.pull_request.state == 'closed' &&
           steps.template.outputs.complete_template == 'true' &&
@@ -176,3 +186,41 @@ jobs:
         run: |
           gh api --method PATCH "repos/${GITHUB_REPOSITORY:?}/pulls/${PR_NUMBER:?}" \
             -f state=closed
+
+      - name: Find missing description comment
+        id: description_comments
+        run: |
+          gh api --paginate "repos/${GITHUB_REPOSITORY:?}/issues/${PR_NUMBER:?}/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("<!-- missing-pr-description -->"))) | .id' \
+            >"${RUNNER_TEMP:?}/check-prs/missing-description-comment-ids"
+          if [[ -s "${RUNNER_TEMP}/check-prs/missing-description-comment-ids" ]]
+          then
+            echo "has_missing_description_comment=true" >>"${GITHUB_OUTPUT:?}"
+          else
+            echo "has_missing_description_comment=false" >>"${GITHUB_OUTPUT:?}"
+          fi
+
+      - name: Remove resolved description comments
+        if: >-
+          steps.template.outputs.has_description == 'true' &&
+          steps.description_comments.outputs.has_missing_description_comment == 'true'
+        run: |
+          while IFS= read -r comment_id
+          do
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY:?}/issues/comments/${comment_id}"
+          done <"${RUNNER_TEMP:?}/check-prs/missing-description-comment-ids"
+
+      - name: Comment on missing description
+        if: >-
+          (github.event.pull_request.state != 'closed' || steps.reopen.outcome == 'success') &&
+          steps.template.outputs.complete_template == 'true' &&
+          steps.template.outputs.has_description == 'false' &&
+          steps.description_comments.outputs.has_missing_description_comment != 'true'
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY:?}/issues/${PR_NUMBER:?}/comments" \
+            --raw-field body="$(
+              cat <<'COMMENT'
+          <!-- missing-pr-description -->
+          Please add a short description explaining what this pull request changes and why. This helps reviewers and makes the change easier to understand when investigating bugs later.
+          COMMENT
+            )"
