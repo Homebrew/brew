@@ -1,8 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "bottle_transition"
-
 module Homebrew
   module TestBot
     class BottlesFetch < TestFormulae
@@ -26,15 +24,14 @@ module Homebrew
       sig { returns(T::Hash[Utils::Bottles::Tag, T::Set[String]]) }
       def formulae_by_tag
         tags = Hash.new { |hash, key| hash[key] = Set.new }
-        transition = BottleTransition.new
 
         testing_formulae.each do |formula_name|
           formula = Formula[formula_name]
           next if formula.disabled?
 
           formula_tags = formula.bottle_specification.collector.tags
+
           odie "#{formula_name} is missing bottles! Did you mean to use `brew pr-publish`?" if formula_tags.blank?
-          transition.check!(formula, tags: formula_tags)
 
           formula_tags.each do |tag|
             tags[tag] << formula_name

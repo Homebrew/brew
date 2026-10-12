@@ -8,9 +8,6 @@ class PrUploadForTesting < Homebrew::DevCmd::PrUpload
   sig { override.returns(Homebrew::CLI::Parser) }
   def self.parser = Homebrew::DevCmd::PrUpload.parser
 
-  sig { params(bottles_hash: T::Hash[String, T.anything]).void }
-  def validate_transition_bottles!(bottles_hash) = check_transition_bottles!(bottles_hash)
-
   sig { params(json_files: T::Array[String]).returns(T::Hash[String, T.anything]) }
   def merge_bottle_metadata(json_files) = bottles_hash_from_json_files(json_files, args)
 end
@@ -20,7 +17,6 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
     formula_path.dirname.mkpath
     formula_path.write(formula_source)
     Formulary.enable_factory_cache!
-    allow_any_instance_of(BottleTransition).to receive(:required?).and_return(true)
   end
 
   sig {
@@ -67,79 +63,7 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
 
   it "keeps upload helpers private" do
     expect(described_class.private_instance_methods)
-      .to include(:check_transition_bottles!, :bottles_hash_from_json_files)
-  end
-
-  describe "#check_transition_bottles!" do
-    it "rejects metadata for a different package version in upload-only mode" do
-      bottles.fetch(current.name).fetch("formula")["pkg_version"] = "1.0"
-
-      expect do
-        PrUploadForTesting.new(["--upload-only"]).validate_transition_bottles!(bottles)
-      end.to raise_error(UsageError, /metadata does not match/)
-    end
-
-    it "rejects a different rebuild when keeping old bottles" do
-      bottles.fetch(current.name).fetch("bottle")["rebuild"] = 1
-
-      expect do
-        PrUploadForTesting.new(["--keep-old", "--upload-only"]).validate_transition_bottles!(bottles)
-      end.to raise_error(UsageError, /metadata does not match/)
-    end
-
-    it "rejects a bottle commit that omits the transition platform" do
-      bottles
-      formula_path.atomic_write(formula_source.sub("arm64_golden_gate", "arm64_tahoe"))
-
-      expect do
-        PrUploadForTesting.new([]).validate_transition_bottles!(bottles)
-      end.to raise_error(UsageError, /before publishing or merging/)
-    end
-
-    it "reloads retained coverage from disk when keeping old bottles" do
-      bottles.fetch(current.name).fetch("bottle")["tags"] = { "arm64_tahoe" => { "sha256" => "a" * 64 } }
-      formula_path.atomic_write(formula_source.sub("arm64_golden_gate", "arm64_tahoe"))
-      Formulary.clear_cache
-      Formulary.factory(formula_path)
-      formula_path.atomic_write(formula_source.sub("bottle do", "bottle do\n    sha256 arm64_tahoe: \"#{"a" * 64}\""))
-
-      expect do
-        PrUploadForTesting.new(["--keep-old"]).validate_transition_bottles!(bottles)
-      end.not_to raise_error
-    end
-
-    it "identifies missing upload artifacts separately from committed coverage" do
-      bottles.fetch(current.name).fetch("bottle")["tags"] = { "arm64_tahoe" => {} }
-
-      expect do
-        PrUploadForTesting.new(["--upload-only"]).validate_transition_bottles!(bottles)
-      end.to raise_error(UsageError, /upload set is missing/)
-    end
-
-    it "normalises the registry organisation before comparing URLs" do
-      bottles.fetch(current.name).fetch("bottle")["root_url"] = "https://ghcr.io/v2/Homebrew/core"
-
-      expect { PrUploadForTesting.new([]).validate_transition_bottles!(bottles) }.not_to raise_error
-    end
-
-    it "skips a formula that is not enrolled" do
-      allow_any_instance_of(BottleTransition).to receive(:required?).and_return(false)
-      bottles.fetch(current.name).fetch("bottle")["tags"] = {}
-
-      expect { PrUploadForTesting.new([]).validate_transition_bottles!(bottles) }.not_to raise_error
-    end
-
-    context "when the formula belongs to another tap" do
-      it "does not apply the core transition policy" do
-        stub_const("HOMEBREW_MACOS_NEWEST_SUPPORTED", "26")
-        allow(current).to receive(:tap).and_return(Tap.fetch("user/test"))
-        allow(Formulary).to receive(:factory).with(current.path).and_return(current)
-        allow_any_instance_of(BottleTransition).to receive(:required?).and_call_original
-        bottles.fetch(current.name).fetch("bottle")["tags"] = {}
-
-        expect { PrUploadForTesting.new([]).validate_transition_bottles!(bottles) }.not_to raise_error
-      end
-    end
+      .to include(:bottles_hash_from_json_files)
   end
 
   describe "#bottles_hash_from_json_files" do

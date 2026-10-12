@@ -3,12 +3,8 @@
 
 require "test_runner_formula"
 require "github_runner"
-require "bottle_transition"
-require "utils/output"
 
 class GitHubRunnerMatrix
-  include Utils::Output::Mixin
-
   # When bumping newest runner, run e.g. `git log -p --reverse -G "sha256 tahoe"`
   # on homebrew/core and tag the first commit with a bottle e.g.
   # `git tag 15-sequoia f42c4a659e4da887fc714f8f41cc26794a4bb320`
@@ -214,77 +210,7 @@ class GitHubRunnerMatrix
 
   sig { params(macos_version: MacOSVersion).returns(T::Boolean) }
   def runner_enabled?(macos_version)
-    return true if macos_version.between?(OLDEST_HOMEBREW_CORE_MACOS_RUNNER, NEWEST_HOMEBREW_CORE_MACOS_RUNNER)
-    return false if @all_supported || @dependent_matrix
-
-    macos_version.to_sym == BottleTransition::MACOS && transition_formulae.present?
-  end
-
-  sig { returns(T::Array[TestRunnerFormula]) }
-  def transition_formulae
-    @transition_formulae ||= T.let(begin
-      transition = BottleTransition.new
-      covered = @testing_formulae.select { |formula| transition.required?(formula.formula) }
-      needed_names = []
-      testing_names = @testing_formulae.map(&:name)
-
-      Homebrew::SimulateSystem.with(os: BottleTransition::MACOS, arch: :arm) do
-        covered.each do |formula|
-          dependencies = Formulary.factory(formula.name).recursive_dependencies do |dependent, dependency|
-            next Dependable::PRUNE if dependency.optional?
-
-            if dependency.test? && !dependency.build? && testing_names.exclude?(dependency.name) &&
-               transition_test_dependency_bottled?(dependency.to_formula)
-              next Dependable::PRUNE
-            end
-            if dependency.is_a?(UsesFromMacOSDependency) && dependency.use_macos_install?
-              next Dependable::PRUNE
-            end
-            next unless dependent.is_a?(Formula)
-            next unless dependency.build?
-            next if testing_names.include?(dependent.name)
-
-            Dependable::PRUNE unless dependent.bottle_specification.tag?(Utils::Bottles.tag(:all))
-          end
-          missing = dependencies.reject do |dependency|
-            dependency_formula = dependency.to_formula
-            if testing_names.include?(dependency.name)
-              candidate = TestRunnerFormula.new(dependency_formula)
-              candidate.compatible?(platform: :macos, arch: :arm64,
-                                    macos_version: BottleTransition.tag.to_macos_version)
-            else
-              dependency_formula.bottle_specification.tag?(BottleTransition.tag, no_older_versions: true)
-            end
-          end
-          if missing.present?
-            opoo <<~EOS
-              Skipping #{formula.name}'s #{BottleTransition.tag} build: unavailable dependencies: #{missing.map(&:name).join(", ")}.
-              Resolve these dependencies and retry CI before publishing.
-            EOS
-            next
-          end
-
-          needed_names << formula.name
-          needed_names.concat(dependencies.map(&:name) & testing_names)
-        end
-      end
-
-      @testing_formulae.select { |formula| needed_names.include?(formula.name) }
-    end, T.nilable(T::Array[TestRunnerFormula]))
-  end
-
-  sig { params(formula: Formula).returns(T::Boolean) }
-  def transition_test_dependency_bottled?(formula)
-    spec = formula.bottle_specification
-    if spec.tag?(Utils::Bottles.tag(:all))
-      return formula.deps.all? { |dependency| transition_test_dependency_bottled?(dependency.to_formula) }
-    end
-
-    # Runner selection also runs on Linux, without macOS bottle fallback.
-    spec.collector.tags.any? do |tag|
-      tag.macos? && tag.standardized_arch == BottleTransition.tag.standardized_arch &&
-        tag.to_macos_version <= BottleTransition.tag.to_macos_version
-    end
+    macos_version.between?(OLDEST_HOMEBREW_CORE_MACOS_RUNNER, NEWEST_HOMEBREW_CORE_MACOS_RUNNER)
   end
 
   sig { returns(String) }
@@ -328,10 +254,7 @@ class GitHubRunnerMatrix
       macos_version = runner.macos_version
       tag = Utils::Bottles::Tag.new(system: macos_version&.to_sym || runner.platform, arch: runner.arch)
 
-      transition_runner = BottleTransition.active? && macos_version&.to_sym == BottleTransition::MACOS
-      testing_formulae = transition_runner ? transition_formulae : @testing_formulae
-
-      testing_formulae.select { |formula| formula.compatible_with_tag?(tag) }
+      @testing_formulae.select { |formula| formula.compatible_with_tag?(tag) }
     end
   end
 

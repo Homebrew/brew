@@ -8,7 +8,6 @@ require "formula"
 require "github_packages"
 require "github_releases"
 require "extend/hash/deep_merge"
-require "bottle_transition"
 
 module Homebrew
   module DevCmd
@@ -109,8 +108,6 @@ module Homebrew
           end
         end
 
-        check_transition_bottles!(bottles_hash)
-
         if github_releases?(bottles_hash)
           github_releases = GitHubReleases.new
           github_releases.upload_bottles(bottles_hash)
@@ -126,43 +123,6 @@ module Homebrew
       end
 
       private
-
-      sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
-      def check_transition_bottles!(bottles_hash)
-        # Reload the bottle block written by `brew bottle --merge`.
-        Formulary.clear_cache
-        transition = BottleTransition.new
-        bottles_hash.each_value do |bottle_hash|
-          formula_path = HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path")
-          formula = Formulary.factory(formula_path)
-          next unless transition.required?(formula)
-
-          spec = formula.bottle_specification
-          transition.check!(formula, tags: spec.collector.tags)
-          bottle = bottle_hash.fetch("bottle")
-          tags = bottle.fetch("tags").keys.map { |tag| Utils::Bottles.tag(tag.to_sym) }
-          if !args.keep_old? && tags.exclude?(BottleTransition.tag) && tags.exclude?(Utils::Bottles.tag(:all))
-            raise UsageError, <<~EOS
-              #{formula.full_name} #{formula.pkg_version}: upload set is missing
-              #{BottleTransition.tag} or `all` bottle artifacts.
-              Restore the matching bottle artifacts and JSON files before retrying.
-            EOS
-          end
-
-          root_url = bottle.fetch("root_url")
-          metadata_matches = bottle_hash.fetch("formula").fetch("pkg_version") == formula.pkg_version.to_s &&
-                             bottle.fetch("rebuild", 0).to_i == spec.rebuild &&
-                             (GitHubPackages.root_url_if_match(root_url) || root_url) == spec.root_url &&
-                             bottle.fetch("tags").all? do |tag, tag_hash|
-                               tag_spec = spec.collector.specification_for(Utils::Bottles.tag(tag.to_sym),
-                                                                           no_older_versions: true)
-                               tag_spec && tag_spec.checksum.hexdigest == tag_hash.fetch("sha256")
-                             end
-          next if metadata_matches
-
-          raise UsageError, "#{formula.full_name}: bottle metadata does not match the committed formula."
-        end
-      end
 
       sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
       def check_bottled_formulae!(bottles_hash)
