@@ -88,6 +88,18 @@ RSpec.describe Sandbox, :needs_macos do
       expect(sandbox.seatbelt_profile).to include("(allow network* network-outbound (subpath \"#{dir}\"))")
     end
 
+    it "allows timezone notifications when network access is denied" do
+      sandbox.deny_all_network
+
+      expect(sandbox.seatbelt_profile).to include('(global-name "com.apple.system.notification_center")')
+    end
+
+    it "allows system logging when network access is denied" do
+      sandbox.deny_all_network
+
+      expect(sandbox.seatbelt_profile).to include('(global-name "com.apple.logd")')
+    end
+
     it "allows installed Metal Toolchain discovery when network access is denied" do
       sandbox.deny_all_network
 

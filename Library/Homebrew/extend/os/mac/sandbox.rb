@@ -45,6 +45,8 @@ module OS
             (global-name "com.apple.sysmond")
             (global-name "com.apple.lsd.mapdb")
             (global-name "com.apple.bsd.dirhelper")
+            (global-name "com.apple.system.notification_center")
+            (global-name "com.apple.logd")
             (global-name "com.apple.system.opendirectoryd.libinfo")
             (global-name "com.apple.system.opendirectoryd.membership")
             (global-name "com.apple.PowerManagement.control")
