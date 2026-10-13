@@ -300,6 +300,7 @@ module Homebrew
           "sentinel-*.dylib", # SentinelOne
           "libASAF.dylib", # Apple Immersive Audio SDK
           "JPKI*.dylib", # JPKI (Japanese My Number Card) client
+          "libcpsrt.dylib", # WIBU-SYSTEMS CodeMeter Runtime
         ]
 
         msg = __check_stray_files "/usr/local/lib", "*.dylib", allow_list, <<~EOS
