@@ -26,6 +26,7 @@ homebrew-list() {
   local cask=""
   local versions=""
   local json=""
+  local installed_on_request=""
 
   # `OPTIND` is used internally by `getopts` to track parsing position
   local OPTIND=2 # skip $1 (and localise OPTIND to this function)
@@ -44,6 +45,7 @@ homebrew-list() {
           --cask | --casks) cask=1 ;;
           --versions) versions=1 ;;
           --json) json=1 ;;
+          --installed-on-request) installed_on_request=1 ;;
           *) return 1 ;;
         esac
         ;;
@@ -55,6 +57,56 @@ homebrew-list() {
   if ((OPTIND - 1 != $#))
   then
     return 1
+  fi
+
+  if [[ -n "${installed_on_request}" ]]
+  then
+    # The Ruby command handles combinations, names, and receipt layouts which
+    # cannot be identified from a single installed keg.
+    [[ -n "${formula}" && -z "${cask}${versions}${json}${ls_flag}" ]] || return 1
+
+    local jq
+    jq="$(type -P jq)"
+    if [[ -z "${jq}" && -n "${HOMEBREW_PATH:-}" ]]
+    then
+      jq="$(PATH="${HOMEBREW_PATH}" type -P jq)"
+    fi
+    [[ -n "${jq}" ]] || return 1
+
+    local aliases_file="${HOMEBREW_CACHE}/api/formula_aliases.txt"
+    local names_file="${HOMEBREW_CACHE}/api/formula_names.txt"
+    [[ -r "${aliases_file}" && -r "${names_file}" ]] || return 1
+    # Tap trust and tap migrations require Ruby's full resolution rules.
+    [[ ! -f "${HOMEBREW_USER_CONFIG_HOME}/trust.json" ]] || return 1
+    [[ -z "${HOMEBREW_NO_REQUIRE_TAP_TRUST:-}" ]] || return 1
+
+    local receipts=()
+    local rack keg receipt
+    if [[ -d "${HOMEBREW_CELLAR}" ]]
+    then
+      for rack in "${HOMEBREW_CELLAR}"/*
+      do
+        [[ -d "${rack}" && ! -L "${rack}" && "${rack##*/}" != .* ]] || continue
+        keg=""
+        local version_dir
+        for version_dir in "${rack}"/*
+        do
+          [[ -d "${version_dir}" ]] || continue
+          receipt="${version_dir}/INSTALL_RECEIPT.json"
+          [[ -f "${receipt}" && -r "${receipt}" ]] || return 1
+          [[ -z "${keg}" ]] || return 1
+          keg=1
+          receipts+=("${receipt}")
+        done
+        [[ -n "${keg}" ]] || return 1
+      done
+    fi
+
+    local output
+    output="$("${jq}" -nr --rawfile aliases "${aliases_file}" --rawfile names "${names_file}" \
+      -f "${HOMEBREW_LIBRARY}/Homebrew/list-installed-on-request.jq" "${receipts[@]}" 2>/dev/null)" || return 1
+    [[ -z "${output}" ]] || printf '%s\n' "${output}"
+    return 0
   fi
 
   if [[ -n "${json}" ]]

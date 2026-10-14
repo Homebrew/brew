@@ -114,6 +114,18 @@ RSpec.describe Homebrew::Cmd::List do
     status
   end
 
+  def requested_list_bash(cellar:, cache:, env: {})
+    Open3.capture3(
+      bash_list_env.merge(
+        "HOMEBREW_CELLAR"           => cellar.to_s,
+        "HOMEBREW_CACHE"            => cache.to_s,
+        "HOMEBREW_USER_CONFIG_HOME" => (cache/"config").to_s,
+      ).merge(env),
+      "/bin/bash", "-c", 'source "$1"; homebrew-list list --formulae --installed-on-request',
+      "bash", (HOMEBREW_LIBRARY_PATH/"list.sh").to_s
+    )
+  end
+
   def bash_list_output(argv)
     Open3.capture3(
       bash_list_env,
@@ -233,6 +245,44 @@ RSpec.describe Homebrew::Cmd::List do
       expect { described_class.new(["--installed-on-request", "--no-installed-on-request"]).run }
         .to output("dependency: installed as dependency\non-request: installed on request\n").to_stdout
     end
+  end
+
+  it "reads requested formula receipts in Bash and falls back for incomplete racks", :needs_jq do
+    root = mktmpdir
+    cellar = root/"Cellar"
+    cache = root/"cache"
+    (cache/"api").mkpath
+    (cache/"api/formula_aliases.txt").write("old-name|new-name\n")
+    (cache/"api/formula_names.txt").write("dependency\nnew-name\n")
+
+    { "old-name" => true, "dependency" => false }.each do |name, requested|
+      keg = cellar/name/"1.0"
+      keg.mkpath
+      (keg/AbstractTab::FILENAME).write JSON.generate(
+        installed_on_request: requested,
+        source:               { tap: "homebrew/core" },
+      )
+    end
+
+    stdout, stderr, status = requested_list_bash(cellar:, cache:)
+    expect([status.exitstatus, stdout, stderr]).to eq([0, "new-name\n", ""])
+
+    _stdout, _stderr, status = requested_list_bash(
+      cellar:, cache:, env: { "PATH" => root.to_s, "HOMEBREW_PATH" => root.to_s },
+    )
+    expect(status.exitstatus).to eq(1)
+
+    (cellar/"dependency/1.0"/AbstractTab::FILENAME).unlink
+    _stdout, _stderr, status = requested_list_bash(cellar:, cache:)
+    expect(status.exitstatus).to eq(1)
+
+    (cellar/"dependency/1.0"/AbstractTab::FILENAME).write "{"
+    _stdout, _stderr, status = requested_list_bash(cellar:, cache:)
+    expect(status.exitstatus).to eq(1)
+
+    (cellar/"dependency/2.0").mkpath
+    _stdout, _stderr, status = requested_list_bash(cellar:, cache:)
+    expect(status.exitstatus).to eq(1)
   end
 
   it "covers Bash list output and errors", :cask, :needs_jq do
