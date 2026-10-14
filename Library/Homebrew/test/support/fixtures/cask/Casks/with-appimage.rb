@@ -2,12 +2,14 @@
 
 cask "with-appimage" do
   version "1.2.3"
-  sha256 "73e5daee562b151389dc3e0751579c9f69f8be05b6b057f9c058c7a6e00a10f7"
+  sha256 "99b62217e2f08f58b151d9163b8b45d5232a5db6550da7e4718b0c7290f414f1"
 
   url "file://#{TEST_FIXTURE_DIR}/cask/naked.AppImage"
   name "With AppImage"
   desc "Cask with an app_image stanza"
   homepage "https://brew.sh/with-appimage"
+
+  depends_on :linux
 
   app_image "naked.AppImage"
 end
