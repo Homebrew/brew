@@ -7,6 +7,7 @@ require "pty"
 require "tempfile"
 require "system_command"
 require "exceptions"
+require "build_progress"
 require "mktemp"
 require "utils/fork"
 require "utils/output"
@@ -377,11 +378,18 @@ class Sandbox
     @failed = T.let(false, T::Boolean)
     @logfile = T.let(nil, T.nilable(T.any(String, Pathname)))
     @start = T.let(nil, T.nilable(Time))
+    @build_progress = T.let(nil, T.nilable(BuildProgress))
   end
 
   sig { params(file: T.any(String, Pathname)).void }
   def record_log(file)
     @logfile = file
+  end
+
+  # Show a spinner, with any step progress from the build logs, below the output.
+  sig { params(logs: Pathname).void }
+  def show_build_progress(logs)
+    @build_progress = BuildProgress.new(logs) if BuildProgress.tty?
   end
 
   sig {
@@ -797,6 +805,7 @@ class Sandbox
           ensure
             stdin_thread&.kill
             stdout_thread&.kill
+            @build_progress&.finish($stdout)
             trap(:TTIN, old_ttin)
             trap(:WINCH, old_winch)
           end
@@ -867,7 +876,11 @@ class Sandbox
 
   sig { params(controller: IO).void }
   def copy_pty_output(controller)
-    controller.each_char { |c| print(c) }
+    if (build_progress = @build_progress)
+      build_progress.forward(controller, $stdout)
+    else
+      controller.each_char { |c| print(c) }
+    end
   rescue Errno::EIO
     # Linux marks a PTY as an I/O error when its peer closes, so treat this as EOF:
     # https://github.com/torvalds/linux/blob/master/drivers/tty/pty.c

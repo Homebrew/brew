@@ -566,6 +566,27 @@ RSpec.describe Sandbox do
 
       expect { sandbox.copy_pty_output(controller) }.not_to raise_error
     end
+
+    it "treats a PTY EIO as EOF when showing build progress" do
+      allow(BuildProgress).to receive(:tty?).and_return(true)
+      sandbox.show_build_progress(mktmpdir)
+      controller = instance_double(IO)
+      allow(controller).to receive(:wait_readable).and_return(controller)
+      allow(controller).to receive(:readpartial).and_raise(Errno::EIO)
+
+      expect { sandbox.copy_pty_output(controller) }.not_to raise_error
+    end
+
+    it "draws the build progress below the output when shown" do
+      allow(Time).to receive(:now).and_return(Time.at(0))
+      allow(BuildProgress).to receive(:tty?).and_return(true)
+      sandbox.show_build_progress(mktmpdir)
+      controller, writer = IO.pipe
+      writer.write("foo\n")
+      writer.close
+
+      expect { sandbox.copy_pty_output(controller) }.to output("foo\n\e[0G\e[K⠋ ").to_stdout
+    end
   end
 
   describe "::failure_reason" do

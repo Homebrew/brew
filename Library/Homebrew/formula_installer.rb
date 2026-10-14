@@ -1256,6 +1256,7 @@ on_request: installed_on_request?, options:)
     sandbox.allow_read_if_exists path: Homebrew::Trust.trust_file
     formula.logs.mkpath
     sandbox.record_log(formula.logs/"#{log_name}.sandbox.log")
+    sandbox.show_build_progress(formula.logs) if !verbose? && !debug? && !interactive?
     sandbox.allow_write_log(formula)
     sandbox.allow_cvs
     sandbox.allow_fossil

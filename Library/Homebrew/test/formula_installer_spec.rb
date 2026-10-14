@@ -2237,7 +2237,7 @@ RSpec.describe FormulaInstaller do
       allow(sandbox).to receive_messages(record_log: nil, allow_read_if_exists: nil, allow_write_temp_and_cache: nil,
                                          allow_write_log: nil, allow_cvs: nil, allow_fossil: nil,
                                          allow_write_xcode: nil, allow_write_cellar: nil, deny_read_home: nil,
-                                         protect_homebrew_state: nil, run: nil)
+                                         protect_homebrew_state: nil, show_build_progress: nil, run: nil)
       allow(formula).to receive_messages(logs: mktmpdir, update_head_version: nil, prefix: mktmpdir,
                                          network_access_allowed?: true)
       allow(Keg).to receive(:new).and_return(instance_double(Keg, empty_installation?: false))

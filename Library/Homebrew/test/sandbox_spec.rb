@@ -167,6 +167,15 @@ RSpec.describe Sandbox, :needs_macos do
     expect(file).to exist
   end
 
+  it "shows build progress below the output" do
+    allow(BuildProgress).to receive(:tty?).and_return(true)
+    sandbox.show_build_progress(dir)
+    spinner = /[#{Homebrew::DownloadQueue::Spinner::FRAMES.join}]/
+
+    expect { sandbox.run "/bin/sh", "-c", "echo foo; sleep 0.3" }
+      .to output(/foo\r\n\e\[0G\e\[K#{spinner} /).to_stdout
+  end
+
   it "writes to a path containing the seatbelt string delimiters \\ and \"" do
     delimiter_dir = dir/"I:\\ and \"quote\""
     delimiter_dir.mkpath
