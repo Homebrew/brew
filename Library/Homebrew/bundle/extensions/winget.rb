@@ -327,12 +327,12 @@ module Homebrew
           winget = package_manager_executable
           return if winget.nil?
 
-          items.each do |item|
+          successes = cleanup_each!(items) do |item|
             app = parse_cleanup_item(item)
             Bundle.system(winget, "uninstall", "--id", app.id, "--exact", "--source", app.source,
                           "--accept-source-agreements", "--disable-interactivity", verbose: false)
           end
-          puts "Uninstalled #{items.size} WinGet package#{"s" if items.size != 1}"
+          puts "Uninstalled #{successes} WinGet package#{"s" if successes != 1}"
         end
 
         sig { params(id: String, source: String).returns(T::Boolean) }

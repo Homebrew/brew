@@ -395,6 +395,15 @@ RSpec.describe Homebrew::Bundle::Cargo do
       expect(described_class.cleanup_items(entries)).to eql(%w[fd-find bat])
     end
 
+    it "returns the uninstall command result" do
+      allow(Homebrew::Bundle).to receive(:system)
+        .with("/tmp/rust/bin/cargo", "uninstall", "example", verbose: false).and_return(false)
+
+      expect(
+        described_class.uninstall_package!("example", executable: Pathname("/tmp/rust/bin/cargo")),
+      ).to be(false)
+    end
+
     it "returns frozen empty array when cargo is not installed" do
       allow(described_class).to receive(:package_manager_installed?).and_return(false)
       entries = [Homebrew::Bundle::Dsl::Entry.new(:cargo, "ripgrep")]

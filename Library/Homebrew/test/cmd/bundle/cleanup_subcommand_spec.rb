@@ -403,7 +403,8 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
 
     it "uninstalls casks" do
-      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--cask", "--force", "a", "b")
+      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--cask", "--force", "a",
+                                              "b").and_return(true)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
       expect do
         described_class.cleanup(force: true)
@@ -428,7 +429,8 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
 
     it "uninstalls casks" do
-      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--cask", "--zap", "--force", "a", "b")
+      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--cask", "--zap", "--force", "a",
+                                              "b").and_return(true)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
       expect do
         described_class.cleanup(force: true, zap: true)
@@ -456,7 +458,8 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
 
     it "uninstalls formulae" do
-      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", "a", "b")
+      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", "a",
+                                              "b").and_return(true)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
       expect do
         described_class.cleanup(force: true)
@@ -483,7 +486,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
 
     it "untaps taps" do
-      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "untap", "a", "b")
+      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "untap", "a", "b").and_return(true)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
       described_class.cleanup(force: true)
     end
@@ -507,7 +510,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
 
     it "uninstalls extensions" do
-      expect(Kernel).to receive(:system).with("code", "--uninstall-extension", "GitHub.codespaces")
+      expect(Kernel).to receive(:system).with("code", "--uninstall-extension", "GitHub.codespaces").and_return(true)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
       described_class.cleanup(force: true)
     end
@@ -530,7 +533,8 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
 
     it "uninstalls flatpaks" do
-      expect(Kernel).to receive(:system).with("flatpak", "uninstall", "-y", "--system", "org.gnome.Calculator")
+      expect(Kernel).to receive(:system).with("flatpak", "uninstall", "-y", "--system",
+                                              "org.gnome.Calculator").and_return(true)
       expect(described_class).to receive(:system_output_no_stderr).and_return("")
       expect do
         described_class.cleanup(force: true)
@@ -577,12 +581,14 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     it "cleans up without suggesting --force when it prompts" do
       allow(Homebrew::Ask).to receive(:confirm?).with(action: "cleanup").and_return(true)
       allow(Homebrew::Bundle).to receive(:mark_as_installed_on_request!)
-      allow(Kernel).to receive(:system)
+      allow(Kernel).to receive(:system).and_return(true)
       allow(described_class).to receive(:system_output_no_stderr).and_return("")
       allow(Formatter).to receive(:columns).with(%w[a b]).and_return("a b")
-      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--cask", "--force", "a", "b")
-      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", "a", "b")
-      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "untap", "a", "b")
+      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--cask", "--force", "a",
+                                              "b").and_return(true)
+      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", "a",
+                                              "b").and_return(true)
+      expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "untap", "a", "b").and_return(true)
       expect(Homebrew::Cleanup).to receive(:dry_run_output).with(quiet: true).and_return("")
 
       expect { described_class.cleanup(ask: true) }.not_to output(/Run .brew bundle cleanup --force/).to_stdout
@@ -623,6 +629,89 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
   end
 
+  describe "cleanup failure reporting" do
+    before do
+      described_class.reset!
+      Homebrew::Bundle.extensions.each do |extension|
+        allow(extension).to receive(:cleanup_items).and_return([])
+      end
+      Homebrew.failed = false
+      allow(Homebrew::Trust).to receive(:replace!)
+      allow(Homebrew::Bundle).to receive(:mark_as_installed_on_request!)
+      allow(Homebrew::Bundle::Npm).to receive(:cleanup_items).and_return(["remaining"])
+      allow(Homebrew::Bundle::Npm).to receive(:cleanup!)
+      allow(described_class).to receive_messages(casks_to_uninstall:      %w[first second],
+                                                 formulae_to_uninstall:   %w[first second],
+                                                 taps_to_untap:           %w[first/tap second/tap],
+                                                 system_output_no_stderr: "")
+      allow(Kernel).to receive(:system).and_return(true)
+    end
+
+    let(:dsl) { Homebrew::Bundle::Dsl.new(StringIO.new("")) }
+
+    test_each([
+      [["uninstall", "--cask", "--force", "first", "second"], "Failed to uninstall casks"],
+      [["uninstall", "--cask", "--zap", "--force", "first", "second"], "Failed to uninstall casks"],
+      [["uninstall", "--formula", "--force", "first", "second"], "Failed to uninstall formulae"],
+      [["untap", "first/tap", "second/tap"], "Failed to untap"],
+    ].product([false, nil])) do |(arguments, failure_message), result|
+      it "retains failure when #{arguments.join(" ")} returns #{result.inspect}" do
+        allow(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, *arguments).and_return(result)
+        expect(Kernel).to receive(:system)
+          .with(HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", "first", "second")
+        expect(Kernel).to receive(:system).with(HOMEBREW_BREW_FILE, "untap", "first/tap", "second/tap")
+        allow(described_class).to receive(:puts)
+        expect(Homebrew::Bundle::Npm).to receive(:cleanup!).with(["remaining"])
+        expect(described_class).to receive(:system_output_no_stderr).with(HOMEBREW_BREW_FILE,
+                                                                          "cleanup").and_return("")
+
+        expect do
+          described_class.cleanup(force: true, zap: arguments.include?("--zap"), dsl:)
+        end.to(
+          change(Homebrew, :failed?).from(false).to(true)
+            .and(output(a_string_including(failure_message, "may have been removed")).to_stderr),
+        )
+      end
+    end
+
+    it "does not report successful removals when cask and formula commands fail" do
+      %w[cask formula].each do |type|
+        allow(Kernel).to receive(:system)
+          .with(HOMEBREW_BREW_FILE, "uninstall", "--#{type}", "--force", "first", "second")
+          .and_return(false)
+      end
+
+      expect do
+        described_class.cleanup(force: true, dsl:, taps: false)
+      end.not_to output(/Uninstalled/).to_stdout
+    end
+
+    it "preserves failure set before cleanup" do
+      Homebrew.failed = true
+      allow(described_class).to receive(:puts)
+
+      expect do
+        described_class.cleanup(force: true, dsl:)
+      end.not_to change(Homebrew, :failed?)
+    end
+
+    it "retains an extension failure after successful cache cleanup" do
+      expect(Homebrew::Bundle::Npm).to receive(:cleanup!).ordered.and_call_original
+      allow(Homebrew::Bundle::Npm).to receive(:package_manager_executable)
+        .and_return(Pathname("/usr/bin/false"))
+      allow(described_class).to receive(:puts)
+      expect(described_class).to receive(:system_output_no_stderr)
+        .with(HOMEBREW_BREW_FILE, "cleanup").ordered.and_return("")
+
+      expect do
+        described_class.cleanup(force: true, dsl:, casks: false, formulae: false, taps: false)
+      end.to(
+        change(Homebrew, :failed?).from(false).to(true)
+          .and(output(/Failed to uninstall npm packages: remaining/).to_stderr),
+      )
+    end
+  end
+
   describe "#system_output_no_stderr" do
     it "discards stderr without closing it" do
       stdout = nil
@@ -654,7 +743,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       )
       allow(Homebrew::Bundle::VscodeExtension).to receive(:cleanup_items).and_return([])
       allow(Homebrew::Bundle::Flatpak).to receive(:cleanup_items).and_return([])
-      allow(Kernel).to receive(:system)
+      allow(Kernel).to receive(:system).and_return(true)
       allow(described_class).to receive(:system_output_no_stderr).and_return("")
       allow_any_instance_of(Pathname).to receive(:read).and_return("")
     end

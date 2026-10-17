@@ -7,6 +7,32 @@ require "bundle/extensions/vscode_extension"
 require "extend/kernel"
 
 RSpec.describe Homebrew::Bundle::VscodeExtension do
+  describe "cleanup" do
+    test_each([false, nil]) do |result|
+      it "reports #{result.inspect} and continues cleanup" do
+        Homebrew.failed = false
+        ENV["PATH"] = "/usr/bin:/bin"
+        allow(described_class).to receive(:package_manager_executable).and_return(Pathname("code"))
+        expect(Kernel).to receive(:system)
+          .with("code", "--uninstall-extension", "publisher.first").ordered do
+            expect(ENV.fetch("PATH")).to eq("/usr/bin:/bin")
+            result
+          end
+        expect(Kernel).to receive(:system)
+          .with("code", "--uninstall-extension", "publisher.second")
+          .ordered.and_return(true)
+
+        expect do
+          described_class.cleanup!(%w[publisher.first publisher.second])
+        end.to(
+          change(Homebrew, :failed?).from(false).to(true)
+            .and(output(a_string_including("publisher.first")).to_stderr)
+            .and(output("").to_stdout),
+        )
+      end
+    end
+  end
+
   describe "dumping" do
     subject(:dumper) { described_class }
 

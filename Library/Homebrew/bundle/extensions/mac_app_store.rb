@@ -159,10 +159,10 @@ module Homebrew
           mas = package_manager_executable
           return if mas.nil?
 
-          items.each do |item|
+          successes = cleanup_each!(items) do |item|
             Bundle.system(mas, "uninstall", parse_cleanup_item(item).id, verbose: false)
           end
-          puts "Uninstalled #{items.size} Mac App Store app#{"s" if items.size != 1}"
+          puts "Uninstalled #{successes} Mac App Store app#{"s" if successes != 1}"
         end
 
         sig { params(id: Integer).returns(T::Boolean) }

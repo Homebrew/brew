@@ -410,10 +410,10 @@ module Homebrew
 
         sig { params(flatpaks: T::Array[String]).void }
         def cleanup!(flatpaks)
-          flatpaks.each do |flatpak_name|
-            Kernel.system("flatpak", "uninstall", "-y", "--system", flatpak_name)
+          successes = cleanup_each!(flatpaks) do |flatpak_name|
+            Kernel.system("flatpak", "uninstall", "-y", "--system", flatpak_name) == true
           end
-          puts "Uninstalled #{flatpaks.size} flatpak#{"s" if flatpaks.size != 1}"
+          puts "Uninstalled #{successes} flatpak#{"s" if successes != 1}"
         end
       end
 

@@ -16,6 +16,8 @@ module Homebrew
   module Cmd
     class Bundle < Homebrew::AbstractCommand
       class CleanupSubcommand < Homebrew::AbstractSubcommand
+        extend Utils::Output::Mixin
+
         subcommand_args do
           usage_banner <<~EOS
             `brew bundle cleanup`:
@@ -164,16 +166,24 @@ module Homebrew
               else
                 []
               end
-              Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--cask", *args, "--force", *casks
-              puts "Uninstalled #{casks.size} cask#{"s" if casks.size != 1}"
+              if Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--cask", *args, "--force", *casks
+                puts "Uninstalled #{casks.size} cask#{"s" if casks.size != 1}"
+              else
+                ofail "Failed to uninstall casks. Some may have been removed."
+              end
             end
 
             if formulae.any?
-              Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", *formulae
-              puts "Uninstalled #{formulae.size} formula#{"e" if formulae.size != 1}"
+              if Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", *formulae
+                puts "Uninstalled #{formulae.size} formula#{"e" if formulae.size != 1}"
+              else
+                ofail "Failed to uninstall formulae. Some may have been removed."
+              end
             end
 
-            Kernel.system HOMEBREW_BREW_FILE, "untap", *taps if taps.any?
+            if taps.any? && !Kernel.system(HOMEBREW_BREW_FILE, "untap", *taps)
+              ofail "Failed to untap. Some taps may have been removed."
+            end
 
             cleanup_extensions.each do |extension, items|
               next if items.empty?
