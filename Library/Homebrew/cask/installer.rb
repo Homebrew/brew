@@ -289,9 +289,9 @@ on_request: true)
              token:       @cask.token,
              cask_struct: Homebrew::API::Internal.cask_struct(@cask.token),
              languages:   @cask.config.languages,
-             require_sha: require_sha? && !force?,
+             require_sha: require_sha?,
            )
-        end) || Download.new(@cask, require_sha: require_sha? && !force?),
+        end) || Download.new(@cask, require_sha: require_sha?),
         T.nilable(Download),
       )
     end

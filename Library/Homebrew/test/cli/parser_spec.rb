@@ -6,6 +6,44 @@ require_relative "../../cli/parser"
 RSpec.describe Homebrew::CLI::Parser do
   before { stub_const("Cmd", Class.new(Homebrew::AbstractCommand)) }
 
+  describe "cask checksum policy" do
+    subject(:parser) do
+      described_class.new(Cmd) do
+        switch "--force"
+        switch "--require-sha", env: :cask_opts_require_sha
+      end
+    end
+
+    it "does not require checksums by default" do
+      ENV.delete("HOMEBREW_CASK_OPTS")
+      ENV.delete("HOMEBREW_CASK_OPTS_REQUIRE_SHA")
+
+      expect(parser.parse([]).cask_require_sha?).to be false
+    end
+
+    it "honours an environment checksum requirement" do
+      ENV["HOMEBREW_CASK_OPTS"] = "--require-sha"
+
+      expect(parser.parse([]).cask_require_sha?).to be true
+    end
+
+    it "allows force to override an environment-only requirement" do
+      ENV["HOMEBREW_CASK_OPTS"] = "--require-sha"
+
+      expect(parser.parse(["--force"]).cask_require_sha?).to be false
+    end
+
+    it "preserves an explicit requirement with force" do
+      expect(parser.parse(["--require-sha", "--force"]).cask_require_sha?).to be true
+    end
+
+    it "preserves an explicit requirement when the environment also requires it" do
+      ENV["HOMEBREW_CASK_OPTS"] = "--require-sha"
+
+      expect(parser.parse(["--force", "--require-sha"]).cask_require_sha?).to be true
+    end
+  end
+
   describe "test switch options" do
     subject(:parser) do
       described_class.new(Cmd) do
