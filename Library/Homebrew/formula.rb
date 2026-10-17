@@ -4701,6 +4701,14 @@ class Formula
     # depends_on "python@3.14" => :no_linkage
     # ```
     #
+    # On a `:build` dependency, such as a compiler, `:no_linkage` also lets an
+    # outdated installed version be used when building from source, whatever
+    # its `compatibility_version`.
+    #
+    # ```ruby
+    # depends_on "llvm" => [:build, :no_linkage]
+    # ```
+    #
     # `:recommended` dependencies are built by default.
     # But a `--without-...` option is generated to opt-out.
     #

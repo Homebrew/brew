@@ -1251,6 +1251,38 @@ RSpec.describe FormulaInstaller do
         end
       end
     end
+
+    context "with an outdated :no_linkage build dependency with a different compatibility_version" do
+      let(:build_dep) { Dependency.new("homebrew-no-linkage-build-dependency", [:build, :no_linkage]) }
+      let(:f) do
+        formula "homebrew-keep-no-linkage-build-dependency" do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+      end
+      let(:installer) { described_class.new(f) }
+
+      before do
+        build_dep_formula = formula build_dep.name do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+        allow(build_dep_formula).to receive_messages(
+          compatibility_version: 2,
+          opt_prefix:            instance_double(Pathname, exist?: true),
+          any_installed_keg:     instance_double(Keg, runtime_dependencies: []),
+        )
+        stub_formula_loader(build_dep_formula)
+        allow(build_dep).to receive_messages(satisfied?: false, missing_options: Options.new)
+        allow(f).to receive(:deps).and_return([build_dep])
+        allow(installer).to receive_messages(effective_build_options_for: BuildOptions.new(Options.new, Options.new),
+                                             install_bottle_for?:         false)
+      end
+
+      it "keeps it" do
+        expect(installer.expand_dependencies_for_formula(f)).to be_empty
+      end
+    end
   end
 
   describe "versioned keg-only linking defaults" do
