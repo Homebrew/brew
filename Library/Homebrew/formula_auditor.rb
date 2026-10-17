@@ -917,12 +917,22 @@ module Homebrew
 
           ra = ResourceAuditor.new(
             resource, spec_name,
-            online: @online, strict: @strict, only: @only, except: @except,
+            online: @online, strict: @strict, only: @only, except: @except, core_tap: @core_tap,
             use_homebrew_curl: resource.using == :homebrew_curl
           ).audit
           ra.problems.each do |message|
             problem "#{name} resource #{resource.name.inspect}: #{message}"
           end
+        end
+
+        (spec.patches + spec.resources.values.flat_map(&:patches)).grep(ExternalPatch).each do |patch|
+          ra = ResourceAuditor.new(patch.resource, spec_name, core_tap: @core_tap)
+          %w[checksum download_strategy].freeze.each do |audit|
+            next if @except&.include?(audit) || (@only.present? && @only.exclude?(audit))
+
+            ra.public_send(:"audit_#{audit}")
+          end
+          ra.problems.each { |message| problem "#{name} patch: #{message}" }
         end
 
         next if spec.patches.empty?

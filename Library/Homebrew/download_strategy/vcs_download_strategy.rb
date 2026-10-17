@@ -15,6 +15,10 @@ class VCSDownloadStrategy < AbstractDownloadStrategy
   sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
     super
+    # Deprecate stable Subversion, CVS, Mercurial and Fossil sources in the next major release.
+    # if !head? && !is_a?(GitDownloadStrategy)
+    #   odeprecated self.class.to_s, "GitDownloadStrategy or CurlDownloadStrategy", disable: true
+    # end
     extracted_ref = extract_ref(meta)
     @ref_type = T.let(extracted_ref.fetch(0), T.nilable(Symbol))
     @ref = T.let(extracted_ref.fetch(1), T.untyped)

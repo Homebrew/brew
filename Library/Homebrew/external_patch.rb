@@ -53,7 +53,7 @@ class ExternalPatch
   def apply
     begin
       if downloaded?
-        verify_download_integrity(cached_download) if resource.checksum.present?
+        verify_download_integrity(cached_download)
       else
         fetch
       end
