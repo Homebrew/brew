@@ -1107,6 +1107,22 @@ RSpec.describe FormulaInstaller do
   end
 
   describe "#expand_dependencies_for_formula" do
+    shared_examples "the old behaviour when building a bottle" do
+      before { allow(f).to receive(:deps).and_return([build_dep]) }
+
+      it "upgrades it" do
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      context "with --build-from-source" do
+        let(:build_from_source_formulae) { [f.full_name] }
+
+        it "upgrades it" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+        end
+      end
+    end
+
     it "checks equal dependency satisfaction once per expansion" do
       shared_formula = instance_double(Formula, deps: [], name: "shared", full_name: "shared")
       shared_dep = Dependency.new("shared")
@@ -1190,7 +1206,8 @@ RSpec.describe FormulaInstaller do
         end
       end
       let(:build_bottle) { false }
-      let(:installer) { described_class.new(f, build_bottle:) }
+      let(:build_from_source_formulae) { [] }
+      let(:installer) { described_class.new(f, build_bottle:, build_from_source_formulae:) }
 
       before do
         build_dep_formula = formula build_dep.name do
@@ -1244,23 +1261,26 @@ RSpec.describe FormulaInstaller do
       context "when building a bottle" do
         let(:build_bottle) { true }
 
-        it "upgrades it" do
-          allow(f).to receive(:deps).and_return([build_dep])
+        include_examples "the old behaviour when building a bottle"
 
-          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+        it "upgrades the dependencies it was built against" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(runtime_dep_formula.name)
         end
       end
     end
 
     context "with an outdated :no_linkage build dependency with a different compatibility_version" do
-      let(:build_dep) { Dependency.new("homebrew-no-linkage-build-dependency", [:build, :no_linkage]) }
+      let(:tags) { [:build, :no_linkage] }
+      let(:build_dep) { Dependency.new("homebrew-no-linkage-build-dependency", tags) }
       let(:f) do
         formula "homebrew-keep-no-linkage-build-dependency" do
           T.bind(self, T.class_of(Formula))
           url "foo-1.0"
         end
       end
-      let(:installer) { described_class.new(f) }
+      let(:build_bottle) { false }
+      let(:build_from_source_formulae) { [] }
+      let(:installer) { described_class.new(f, build_bottle:, build_from_source_formulae:) }
 
       before do
         build_dep_formula = formula build_dep.name do
@@ -1281,6 +1301,20 @@ RSpec.describe FormulaInstaller do
 
       it "keeps it" do
         expect(installer.expand_dependencies_for_formula(f)).to be_empty
+      end
+
+      context "when building a bottle" do
+        let(:build_bottle) { true }
+
+        include_examples "the old behaviour when building a bottle"
+      end
+
+      context "without :build" do
+        let(:tags) { [:no_linkage] }
+
+        it "upgrades it" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+        end
       end
     end
   end
