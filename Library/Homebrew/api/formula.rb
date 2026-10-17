@@ -35,6 +35,15 @@ module Homebrew
           raise ArgumentError, "API source path must be a relative path within the repository."
         end
 
+        if checksum.nil? && (sha256 = formula.local_patch_checksums[path])
+          checksum = Checksum.new(sha256)
+        end
+        if checksum.blank?
+          raise CannotInstallFormulaError,
+                "#{formula.full_name}: no checksum in API metadata for #{path}.\n" \
+                "Run `brew update` to refresh the API metadata and try again."
+        end
+
         path = Pathname(path).cleanpath
 
         git_head = formula.tap_git_head || "HEAD"
@@ -55,7 +64,7 @@ module Homebrew
           begin
             if !download.symlink_location.exist? || !download.symlink_location.symlink?
               download.fetch
-            elsif checksum
+            else
               download.verify_download_integrity(download.symlink_location)
             end
           rescue ChecksumMismatchError

@@ -132,7 +132,7 @@ RSpec.describe Homebrew::API::Formula do
     before do
       allow(Homebrew::API).to receive(:formula_names).and_return([])
       allow(f).to receive_messages(ruby_source_path: "Formula/testball.rb", tap_git_head: "abc123",
-                                   ruby_source_checksum: nil)
+                                   ruby_source_checksum: Checksum.new(Digest::SHA256.hexdigest("content")))
       allow(f).to receive(:tap).and_return(CoreTap.instance)
     end
 
@@ -203,7 +203,7 @@ RSpec.describe Homebrew::API::Formula do
     before do
       allow(Homebrew::API).to receive(:formula_names).and_return([])
       allow(f).to receive_messages(ruby_source_path: "Formula/testball.rb", tap_git_head: "abc123",
-                                   ruby_source_checksum: nil)
+                                   ruby_source_checksum: Checksum.new(Digest::SHA256.hexdigest("content")))
       allow(f).to receive(:tap).and_return(CoreTap.instance)
     end
 
@@ -234,34 +234,80 @@ RSpec.describe Homebrew::API::Formula do
       expect(result.name).to eq("testball")
     end
 
-    it "loads local patch files from API source cache" do
-      source_path = source_cache_dir/"Homebrew/homebrew-core/abc123/Formula/testball.rb"
-      source_path.dirname.mkpath
-      cached_source_path = cache_dir/"downloads/testball.rb"
-      cached_source_path.dirname.mkpath
-      cached_source_path.write <<~RUBY
-        class Testball < Formula
-          url "https://brew.sh/testball-0.1.tar.gz"
+    context "with local patch files" do
+      let(:patch_contents) { "patch contents" }
+      let(:patch_path) { source_cache_dir/"Homebrew/homebrew-core/abc123/patches/noop-a.diff" }
 
-          patch do
-            file "patches/noop-a.diff"
+      before do
+        source_path = source_cache_dir/"Homebrew/homebrew-core/abc123/Formula/testball.rb"
+        source_path.dirname.mkpath
+        cached_source_path = cache_dir/"downloads/testball.rb"
+        cached_source_path.dirname.mkpath
+        cached_source_path.write <<~RUBY
+          class Testball < Formula
+            url "https://brew.sh/testball-0.1.tar.gz"
+
+            patch do
+              file "patches/noop-a.diff"
+            end
+            resource "bar" do
+              url "https://brew.sh/bar-1.0.tar.gz"
+              patch do
+                file "patches/resource.diff"
+              end
+            end
           end
+        RUBY
+        FileUtils.ln_s cached_source_path.relative_path_from(source_path.dirname), source_path
+        allow(f).to receive_messages(
+          ruby_source_checksum:  Checksum.new(cached_source_path.sha256),
+          local_patch_checksums: {
+            "patches/noop-a.diff"   => Digest::SHA256.hexdigest("patch contents"),
+            "patches/resource.diff" => Digest::SHA256.hexdigest("patch contents"),
+          },
+        )
+        allow_any_instance_of(Homebrew::API::SourceDownloadStrategy).to receive(:fetch) do |download|
+          download.cached_location.dirname.mkpath
+          download.cached_location.write(patch_contents)
+          download.create_symlink_to_cached_download(download.cached_location)
         end
-      RUBY
-      FileUtils.ln_s cached_source_path.relative_path_from(source_path.dirname), source_path
-
-      allow_any_instance_of(Homebrew::API::SourceDownload).to receive(:fetch) do |download|
-        next if download.symlink_location.basename.to_s != "noop-a.diff"
-
-        cached_patch_path = download.downloader.cached_location
-        cached_patch_path.dirname.mkpath
-        cached_patch_path.write("patch contents")
-        download.downloader.create_symlink_to_cached_download(cached_patch_path)
       end
 
-      result = described_class.source_download_formula(f)
+      it "loads verified local patch files from the API source cache" do
+        expect(described_class.source_download_formula(f).patchlist.fetch(0).contents).to eq("patch contents")
+      end
 
-      expect(result.patchlist.fetch(0).contents).to eq("patch contents")
+      it "rejects a downloaded patch with a different checksum" do
+        allow(f).to receive(:local_patch_checksums).and_return(
+          "patches/noop-a.diff"   => Digest::SHA256.hexdigest("different"),
+          "patches/resource.diff" => Digest::SHA256.hexdigest("patch contents"),
+        )
+
+        expect { described_class.source_download_formula(f) }.to raise_error(ChecksumMismatchError)
+      end
+
+      it "rejects a resource patch with a different checksum" do
+        allow(f).to receive(:local_patch_checksums).and_return(
+          "patches/noop-a.diff"   => Digest::SHA256.hexdigest("patch contents"),
+          "patches/resource.diff" => Digest::SHA256.hexdigest("different"),
+        )
+
+        expect { described_class.source_download_formula(f) }.to raise_error(ChecksumMismatchError)
+      end
+
+      it "rejects a cached patch with a different checksum" do
+        described_class.source_download_formula(f)
+        patch_path.realpath.write("modified")
+
+        expect { described_class.source_download_formula(f) }.to raise_error(ChecksumMismatchError)
+      end
+
+      it "rejects patches missing a checksum in API metadata" do
+        allow(f).to receive(:local_patch_checksums).and_return({})
+
+        expect { described_class.source_download_formula(f) }
+          .to raise_error(CannotInstallFormulaError, /checksum.*patches/)
+      end
     end
   end
 end
