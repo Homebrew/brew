@@ -532,7 +532,10 @@ module Homebrew
           [*remaining, "--", *non_options]
         end
         @args.freeze_remaining_args!(remaining_args)
-        @args.freeze_processed_options!(@processed_options)
+        @args.freeze_processed_options!(
+          @processed_options,
+          env_options: @switch_sources.filter_map { |name, source| name if source == :env },
+        )
         @args.freeze
 
         @args_parsed = T.let(true, T.nilable(TrueClass))

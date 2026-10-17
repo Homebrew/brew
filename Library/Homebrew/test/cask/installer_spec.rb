@@ -330,12 +330,12 @@ RSpec.describe Cask::Installer, :cask do
       end.not_to raise_error
     end
 
-    it "installs fine if sha256 :no_check is used with --require-sha and --force" do
+    it "rejects sha256 :no_check with explicit --require-sha and --force" do
       no_checksum = Cask::CaskLoader.load(cask_path("no-checksum"))
 
-      described_class.new(no_checksum, require_sha: true, force: true).install
-
-      expect(no_checksum).to be_installed
+      expect do
+        described_class.new(no_checksum, require_sha: true, force: true).install
+      end.to raise_error(/--require-sha/)
     end
 
     it "records caveats without printing them inline" do

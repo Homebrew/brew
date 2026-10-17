@@ -20,6 +20,7 @@ module Homebrew
 
         @cli_args = T.let(nil, T.nilable(T::Array[String]))
         @processed_options = T.let([], OptionsType)
+        @env_options = T.let([], T::Array[String])
         @options_only = T.let([], T::Array[String])
         @flags_only = T.let([], T::Array[String])
         @cask_options = T.let(false, T::Boolean)
@@ -59,13 +60,14 @@ module Homebrew
         @table[:tap]
       end
 
-      sig { params(processed_options: OptionsType).void }
-      def freeze_processed_options!(processed_options)
+      sig { params(processed_options: OptionsType, env_options: T::Array[String]).void }
+      def freeze_processed_options!(processed_options, env_options: [])
         # Reset cache values reliant on processed_options
         @cli_args = nil
 
         @processed_options += processed_options
         @processed_options.freeze
+        @env_options = env_options.freeze
 
         @options_only = cli_args.select { it.start_with?("-") }.freeze
         @flags_only = cli_args.select { it.start_with?("--") }.freeze
@@ -79,6 +81,11 @@ module Homebrew
 
       sig { returns(T::Boolean) }
       def no_named? = named.empty?
+
+      sig { returns(T::Boolean) }
+      def cask_require_sha?
+        @table[:require_sha?] == true && (@table[:force?] != true || @env_options.exclude?("require_sha"))
+      end
 
       sig { returns(T::Array[String]) }
       def build_from_source_formulae
