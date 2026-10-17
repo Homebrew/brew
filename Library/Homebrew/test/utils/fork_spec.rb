@@ -28,6 +28,26 @@ RSpec.describe Utils do
     end
   end
 
+  describe "::report_forked_child_error" do
+    it "preserves a BuildError with Pathname commands and arguments" do
+      error = BuildError.new(nil, Pathname("/bin/false"), ["arg1", 2, Pathname("arg 3"), :arg4], { "PATH" => "/bin" })
+      error.set_backtrace ["/some/file.rb:1:in 'block'"]
+
+      IO.pipe do |reader, writer|
+        described_class.report_forked_child_error(writer, error)
+
+        expect(described_class.rewrite_child_error(JSON.parse(reader.read))).to have_attributes(
+          class:     BuildError,
+          cmd:       "/bin/false",
+          args:      ["arg1", "2", "arg 3", "arg4"],
+          env:       { "PATH" => "/bin" },
+          message:   error.message,
+          backtrace: error.backtrace,
+        )
+      end
+    end
+  end
+
   describe "#safe_fork" do
     it "reports only the parent error when the child reports a failure after disconnection" do
       handler = proc do |_message|

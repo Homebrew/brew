@@ -68,8 +68,8 @@ module Utils
     }
     case error
     when BuildError
-      error_hash["cmd"] = error.cmd
-      error_hash["args"] = error.args
+      error_hash["cmd"] = error.cmd.to_s
+      error_hash["args"] = error.args.map(&:to_s)
       error_hash["env"] = error.env
     when ErrorDuringExecution
       error_hash["cmd"] = error.cmd
