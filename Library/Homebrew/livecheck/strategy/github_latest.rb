@@ -16,11 +16,12 @@ module Homebrew
       # * `https://github.com/example/example/archive/v1.2.3.tar.gz`
       # * `https://github.com/downloads/example/example/example-1.2.3.tar.gz`
       #
+      # {Git} is much lighter and is preferred, with a `regex` if needed.
       # {GithubLatest} should only be used when the upstream repository has a
-      # "latest" release for a suitable version and the strategy is necessary
-      # or appropriate (e.g. the formula/cask uses a release asset or the
-      # {Git} strategy returns an unreleased version). The strategy can only
-      # be applied by using `strategy :github_latest` in a `livecheck` block.
+      # "latest" release for a suitable version and {Git} can't identify it
+      # (e.g. the repository has tags without matching releases or uses
+      # pre-releases). The strategy can only be applied by using
+      # `strategy :github_latest` in a `livecheck` block.
       #
       # The default regex identifies versions like `1.2.3`/`v1.2.3` in a
       # release's tag or title. This is a common tag format but a modified
