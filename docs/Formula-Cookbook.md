@@ -752,6 +752,9 @@ livecheck do
 end
 ```
 
+Omit the `livecheck` block when automatic detection already works.
+A formula with a GitHub `stable` URL is checked with the `Git` strategy by default; prefer this, adding a `regex` if needed, over `strategy :github_latest` unless upstream uses pre-releases or tags without matching releases.
+
 For `url`/`regex` guidelines and additional `livecheck` block examples, refer to the [`brew livecheck`](Brew-Livecheck.md) documentation. For more technical information on the methods used in a `livecheck` block, please refer to the [`Livecheck` class](/rubydoc/Livecheck.html) documentation.
 
 ### Excluding formulae from autobumping

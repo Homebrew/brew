@@ -36,7 +36,11 @@ This can be accomplished by adding a `livecheck` block to the formula/cask/resou
 
 * **Only use `strategy` when it's necessary**. For example, if livecheck is already using the `Git` strategy for a URL, it's not necessary to use `strategy :git`. However, if `Git` applies to a URL but we need to use `PageMatch`, it's necessary to specify `strategy :page_match`.
 
-* **Only use the `GithubLatest` and `GithubReleases` strategies when they are necessary and correct**. GitHub rate-limits API requests, so we only use these strategies when `Git` isn't sufficient or appropriate. `GithubLatest` should only be used if the upstream repository has a "latest" release for a suitable version and either the formula/cask uses a release asset or the `Git` strategy can't correctly identify the latest release version. `GithubReleases` should only be used if the upstream repository uses releases and both the `Git` and `GithubLatest` strategies aren't suitable.
+* **Prefer the `Git` strategy for GitHub repositories**. Livecheck applies `Git` automatically to GitHub `archive` and `releases/download` URLs, so a formula/cask using one doesn't need a `livecheck` block at all.
+  `Git` only runs `git ls-remote --tags`, which is much lighter than the GitHub API requests made by `GithubLatest` and `GithubReleases` and isn't subject to API rate limits.
+  When the tags need filtering, add a `livecheck` block with `url :stable` (formulae) or `url :url` (casks) and a `regex` rather than changing the strategy (see [Git tags](#git-tags)).
+
+* **Only use the `GithubLatest` and `GithubReleases` strategies when `Git` isn't suitable**. `GithubLatest` should only be used if the upstream repository has a "latest" release for a suitable version and either creates tags without matching releases (e.g. tags are pushed before the release assets are uploaded) or uses pre-releases. `GithubReleases` should only be used if the upstream repository uses releases and both the `Git` and `GithubLatest` strategies aren't suitable.
 
 ### URL guidelines
 
