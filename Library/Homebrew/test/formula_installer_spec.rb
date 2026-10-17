@@ -1258,6 +1258,30 @@ RSpec.describe FormulaInstaller do
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).not_to include(other_build_dep.name)
       end
 
+      it "upgrades it with a different compatibility_version" do
+        allow(build_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(false)
+        allow(f).to receive(:deps).and_return([build_dep])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      it "upgrades it if its install receipt has no runtime dependencies" do
+        keg = instance_double(Keg, runtime_dependencies: nil)
+        allow(build_dep.to_formula).to receive(:any_installed_keg).and_return(keg)
+        allow(f).to receive(:deps).and_return([build_dep])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      it "upgrades an outdated runtime dependency with a matching compatibility_version" do
+        runtime_dep = Dependency.new(build_dep.name)
+        allow(runtime_dep).to receive(:satisfied?).and_return(false)
+        allow(runtime_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(true)
+        allow(f).to receive(:deps).and_return([runtime_dep])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(runtime_dep.name)
+      end
+
       context "when building a bottle" do
         let(:build_bottle) { true }
 
@@ -1301,6 +1325,18 @@ RSpec.describe FormulaInstaller do
 
       it "keeps it" do
         expect(installer.expand_dependencies_for_formula(f)).to be_empty
+      end
+
+      it "upgrades it if it isn't opt-linked" do
+        allow(build_dep.to_formula).to receive(:opt_prefix).and_return(instance_double(Pathname, exist?: false))
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      it "upgrades it if it's missing required options" do
+        allow(build_dep).to receive(:missing_options).and_return(Options.create(["--with-foo"]))
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
       end
 
       context "when building a bottle" do
