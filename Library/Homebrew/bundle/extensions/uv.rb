@@ -363,7 +363,7 @@ module Homebrew
           installed_packages.include?(package_record(name, with:, source:))
         end
 
-        sig { override.params(name: String, executable: Pathname).void }
+        sig { override.params(name: String, executable: Pathname).returns(T::Boolean) }
         def uninstall_package!(name, executable: Pathname.new(""))
           Bundle.system(executable.to_s, "tool", "uninstall", name, verbose: false)
         end

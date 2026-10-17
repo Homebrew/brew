@@ -593,6 +593,15 @@ RSpec.describe Homebrew::Bundle::Uv do
       expect(described_class.cleanup_items(entries)).to eql(%w[mkdocs black])
     end
 
+    it "returns the uninstall command result" do
+      allow(Homebrew::Bundle).to receive(:system)
+        .with("/tmp/uv/bin/uv", "tool", "uninstall", "example", verbose: false).and_return(false)
+
+      expect(
+        described_class.uninstall_package!("example", executable: Pathname("/tmp/uv/bin/uv")),
+      ).to be(false)
+    end
+
     it "returns frozen empty array when uv is not installed" do
       allow(described_class).to receive(:package_manager_installed?).and_return(false)
       entries = [Homebrew::Bundle::Dsl::Entry.new(:uv, "ruff")]

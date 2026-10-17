@@ -218,6 +218,53 @@ RSpec.describe Homebrew::Bundle::Npm do
     end
   end
 
+  describe ".cleanup! inherited from Extension" do
+    before do
+      Homebrew.failed = false
+      allow(described_class).to receive(:package_manager_executable)
+        .and_return(Pathname("/usr/bin/false"))
+    end
+
+    it "reports a failed uninstall command" do
+      expect do
+        described_class.cleanup!(["example"])
+      end.to(
+        change(Homebrew, :failed?).from(false).to(true)
+          .and(output(/Uninstalled 0 npm packages/).to_stdout)
+          .and(output(/Failed to uninstall npm packages: example/).to_stderr),
+      )
+    end
+
+    it "reports successful cleanup" do
+      allow(Homebrew::Bundle).to receive(:system).and_return(true)
+
+      expect { described_class.cleanup!(["example"]) }.to output(/Uninstalled 1 npm package/).to_stdout
+    end
+
+    it "counts successful commands and continues after failure" do
+      { "first" => true, "second" => false, "third" => true }.each do |name, success|
+        expect(Homebrew::Bundle).to receive(:system)
+          .with("/usr/bin/false", "uninstall", "-g", name, verbose: false).ordered.and_return(success)
+      end
+
+      expect do
+        described_class.cleanup!(%w[first second third])
+      end.to(
+        change(Homebrew, :failed?).from(false).to(true)
+          .and(output(/Uninstalled 2 npm packages/).to_stdout)
+          .and(output(/Failed to uninstall npm packages: second/).to_stderr),
+      )
+    end
+
+    it "does not clear an earlier failure after successful uninstalls" do
+      Homebrew.failed = true
+      allow(Homebrew::Bundle).to receive(:system).and_return(true)
+      allow(described_class).to receive(:puts)
+
+      expect { described_class.cleanup!(["example"]) }.not_to change(Homebrew, :failed?)
+    end
+  end
+
   describe "installing" do
     context "when npm is not installed" do
       before do

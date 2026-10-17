@@ -189,8 +189,8 @@ module Homebrew
           vscode = package_manager_executable
           return if vscode.nil?
 
-          extensions.each do |extension|
-            Kernel.system(vscode.to_s, "--uninstall-extension", extension)
+          cleanup_each!(extensions) do |extension|
+            Kernel.system(vscode.to_s, "--uninstall-extension", extension) == true
           end
         end
       end

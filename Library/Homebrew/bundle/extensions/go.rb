@@ -118,10 +118,17 @@ module Homebrew
             module_path = path_line.split("\t")[2]&.strip
             next unless items.include?(module_path)
 
-            FileUtils.rm_f(binary)
+            begin
+              File.unlink(binary)
+            rescue Errno::ENOENT
+              next
+            rescue SystemCallError => e
+              ofail "Failed to remove Go executable #{binary}: #{e}"
+              next
+            end
             removed += 1
           end
-          puts "Uninstalled #{removed} #{banner_name}#{"s" if removed != 1}"
+          puts "Removed #{removed} Go executable#{"s" if removed != 1}"
         end
       end
     end

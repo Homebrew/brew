@@ -146,6 +146,16 @@ RSpec.describe Homebrew::Bundle::Krew do
       expect(described_class.cleanup_items(entries)).to eql(%w[ns neat])
     end
 
+    it "returns the uninstall command result" do
+      allow(Homebrew::Bundle).to receive(:system).with("/usr/local/bin/kubectl-krew", "uninstall", "example",
+                                                       verbose: false)
+                                                 .and_return(false)
+
+      expect(
+        described_class.uninstall_package!("example", executable: Pathname("/usr/local/bin/kubectl-krew")),
+      ).to be(false)
+    end
+
     it "uninstalls plugins" do
       expect(Homebrew::Bundle).to receive(:system) do |*args, verbose:|
         expect(ENV.fetch("PATH", "")).to start_with("/usr/local/bin:")

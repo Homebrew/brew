@@ -141,7 +141,7 @@ module Homebrew
           @outdated_packages = []
         end
 
-        sig { override.params(name: String, executable: Pathname).void }
+        sig { override.params(name: String, executable: Pathname).returns(T::Boolean) }
         def uninstall_package!(name, executable: Pathname.new(""))
           Bundle.system(executable.to_s, "uninstall", "-g", name, verbose: false)
         end

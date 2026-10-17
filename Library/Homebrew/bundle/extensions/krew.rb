@@ -82,7 +82,7 @@ module Homebrew
         end
         private :parse_plugin_list
 
-        sig { override.params(name: String, executable: Pathname).void }
+        sig { override.params(name: String, executable: Pathname).returns(T::Boolean) }
         def uninstall_package!(name, executable: Pathname.new(""))
           Bundle.system(executable.to_s, "uninstall", name, verbose: false)
         end

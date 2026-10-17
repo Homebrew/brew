@@ -370,5 +370,28 @@ RSpec.describe Homebrew::Bundle::Winget do
 
       expect { described_class.cleanup!(items) }.to output(/Uninstalled 1 WinGet package/).to_stdout
     end
+
+    it "reports failed removals by app name and source without changing PATH" do
+      Homebrew.failed = false
+      ENV["PATH"] = "/usr/bin:/bin"
+      items = described_class.cleanup_items([
+        Homebrew::Bundle::Dsl::Entry.new(:winget, "Steam", id: "Valve.Steam"),
+      ])
+      allow(Homebrew::Bundle).to receive(:system)
+        .with(Pathname("winget.exe"), "uninstall", "--id", "XPDC2RH70K22MN",
+              "--exact", "--source", "msstore",
+              "--accept-source-agreements", "--disable-interactivity", verbose: false) do
+        expect(ENV.fetch("PATH")).to eq("/usr/bin:/bin")
+        false
+      end
+
+      expect do
+        described_class.cleanup!(items)
+      end.to(
+        change(Homebrew, :failed?).from(false).to(true)
+          .and(output(a_string_including("Discord (XPDC2RH70K22MN, msstore)")).to_stderr)
+          .and(output(/Uninstalled 0 WinGet packages/).to_stdout),
+      )
+    end
   end
 end

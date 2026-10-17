@@ -166,6 +166,14 @@ It removes trust entries granted manually or by another `Brewfile` if they are
 not declared in the selected file. A `Brewfile` with no trust declarations
 removes every explicit trust entry.
 
+If a removal command reports failure, cleanup reports the error and attempts the remaining removals and cache cleanup.
+It exits with a non-zero status.
+Unexpected errors can stop cleanup before it reaches the remaining work.
+
+A failed command may already have removed some items.
+Cleanup does not undo completed removals or changes to the trust store.
+After resolving the error, rerun cleanup with the same options to retry the remaining work.
+
 ### `brew bundle list`
 
 If you want to get a list of all the formulae in your `Brewfile`, you can use:
