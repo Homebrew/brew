@@ -247,6 +247,20 @@ RSpec.describe Resource do
       expect { resource.stage(mktmpdir) }.not_to raise_error
     end
 
+    it "rejects a cached official formula resource without a checksum" do
+      ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
+      f = formula do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0.tar.gz"
+      end
+      allow(f).to receive(:tap).and_return(CoreTap.instance)
+      resource.owner = f
+      resource.checksum = nil
+      resource.downloader.fetch
+
+      expect { resource.stage(mktmpdir) }.to raise_error(ChecksumMissingError)
+    end
+
     it "keeps the recorded modification time out of a staged git checkout's status" do
       mktmpdir do |staging_path|
         (staging_path/".git").mkpath
@@ -365,6 +379,101 @@ RSpec.describe Resource do
     expect do
       resource.verify_download_integrity(fn)
     end.to output(/Cannot verify integrity/).to_stderr
+  end
+
+  describe "official formula checksums" do
+    let(:f) do
+      formula do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0.tar.gz"
+        resource "bar" do
+          url "bar-1.0.tar.gz"
+        end
+        patch do
+          url "https://brew.sh/foo.diff"
+        end
+        head do
+          url "https://brew.sh/foo.tar.gz"
+          resource "moving" do
+            url "https://brew.sh/latest.tar.gz"
+          end
+          resource "versioned" do
+            url "https://brew.sh/versioned-1.0.tar.gz"
+          end
+        end
+      end
+    end
+    let(:download) { mktmpdir/"source.tar.gz" }
+
+    before do
+      ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
+      allow(f).to receive(:tap).and_return(CoreTap.instance)
+      download.write("content")
+    end
+
+    it "rejects a stable source archive without a checksum" do
+      expect { f.active_spec.verify_download_integrity(download) }.to raise_error(ChecksumMissingError)
+    end
+
+    it "rejects a resource without a checksum" do
+      expect { f.resource("bar").verify_download_integrity(download) }.to raise_error(ChecksumMissingError)
+    end
+
+    it "rejects a cached external patch without a checksum" do
+      patch = f.patchlist.fetch(0)
+      raise "Expected an external patch" unless patch.is_a?(ExternalPatch)
+
+      allow(patch).to receive_messages(downloaded?: true, cached_download: download)
+      allow(patch.resource).to receive(:unpack)
+
+      expect { patch.apply }.to raise_error(ChecksumMissingError)
+    end
+
+    it "keeps the development override for missing checksums" do
+      ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+
+      expect { f.active_spec.verify_download_integrity(download) }.to output(/Cannot verify integrity/).to_stderr
+    end
+
+    it "still rejects mismatches with the development override" do
+      ENV["HOMEBREW_NO_INSTALL_FROM_API"] = "1"
+      f.resource("bar").sha256(TEST_SHA256)
+
+      expect { f.resource("bar").verify_download_integrity(download) }.to raise_error(ChecksumMismatchError)
+    end
+
+    it "warns for third-party formulae until the next major release" do
+      allow(f).to receive(:tap).and_return(Tap.fetch("test/tap"))
+
+      expect { f.active_spec.verify_download_integrity(download) }.to output(/Cannot verify integrity/).to_stderr
+    end
+
+    it "allows the moving HEAD source archive" do
+      expect { f.head&.resource&.verify_download_integrity(download) }.to output(/Cannot verify integrity/).to_stderr
+    end
+
+    it "allows a moving HEAD resource archive" do
+      expect { f.head&.resource("moving")&.verify_download_integrity(download) }
+        .to output(/Cannot verify integrity/).to_stderr
+    end
+
+    it "rejects a versioned HEAD resource archive without a checksum" do
+      expect do
+        f.head&.resource("versioned")&.verify_download_integrity(download)
+      end.to raise_error(ChecksumMissingError)
+    end
+
+    it "still rejects mismatches for moving HEAD resources" do
+      f.head&.resource("moving")&.sha256(TEST_SHA256)
+
+      expect { f.head&.resource("moving")&.verify_download_integrity(download) }.to raise_error(ChecksumMismatchError)
+    end
+
+    it "requires checksums for stable resources with a HEAD version" do
+      f.resource("bar").version("HEAD")
+
+      expect { f.resource("bar").verify_download_integrity(download) }.to raise_error(ChecksumMissingError)
+    end
   end
 
   specify "#verify_download_integrity_mismatch" do

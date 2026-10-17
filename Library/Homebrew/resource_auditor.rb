@@ -111,6 +111,9 @@ module Homebrew
 
       if (using == :git || url_strategy == GitDownloadStrategy) && specs[:tag] && !specs[:revision]
         problem "Git should specify `revision:` when a `tag:` is specified."
+      elsif !version&.head? && DownloadStrategyDetector.detect(url!, using) <= GitDownloadStrategy &&
+            !specs[:revision].to_s.match?(/\A(?:[0-9a-f]{40}|[0-9a-f]{64})\z/i)
+        problem "Git should specify a full commit hash in `revision:`."
       end
 
       return unless using
@@ -138,13 +141,21 @@ module Homebrew
 
     sig { void }
     def audit_checksum
-      return if spec_name == :head
-      # This condition is non-invertible.
-      # rubocop:disable Style/InvertibleUnlessCondition
-      return unless DownloadStrategyDetector.detect(url.to_s, using) <= CurlDownloadStrategy
-      # rubocop:enable Style/InvertibleUnlessCondition
+      return if spec_name == :head && version&.head?
 
-      problem "Checksum is missing" if checksum.blank?
+      strategy = DownloadStrategyDetector.detect(url.to_s, using)
+      if strategy <= AbstractFileDownloadStrategy
+        problem "Checksum is missing" if checksum.blank?
+        return
+      end
+      return if strategy <= GitDownloadStrategy
+
+      formula = T.let(owner, T.nilable(Resource::Owner))
+      formula = formula.owner while formula.is_a?(SoftwareSpec) || formula.is_a?(Resource)
+      # Remove this restriction with the next-major download strategy deprecations.
+      return if !@core_tap && (!formula.is_a?(::Formula) || !formula.tap&.official?)
+
+      problem "Use a checksummed archive or a Git commit."
     end
 
     sig { returns(T::Array[String]) }

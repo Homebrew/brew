@@ -916,6 +916,76 @@ RSpec.describe Homebrew::FormulaAuditor do
       expect(fa.problems).to be_empty
     end
 
+    %w[svn cvs hg fossil].each do |strategy|
+      it "rejects stable #{strategy} sources in official taps" do
+        fa = formula_auditor "foo", <<~RUBY, core_tap: true, only: ["checksum"]
+          class Foo < Formula
+            url "#{strategy}://brew.sh/foo", revision: "1234"
+            version "1.0"
+            sha256 "#{TEST_SHA256}"
+          end
+        RUBY
+
+        fa.audit_specs
+        expect(fa.problems.map { |problem| problem[:message] })
+          .to include("Stable: Use a checksummed archive or a Git commit.")
+      end
+    end
+
+    it "checks stable sources in official taps other than core" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "svn://brew.sh/foo", revision: "1234"
+          version "1.0"
+        end
+      RUBY
+      allow(fa.formula).to receive(:tap).and_return(Tap.fetch("homebrew/test"))
+
+      fa.audit_specs
+      expect(fa.problems.map { |problem| problem[:message] })
+        .to include("Stable: Use a checksummed archive or a Git commit.")
+    end
+
+    it "checks nested resources in official taps" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true, only: ["checksum"]
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "#{TEST_SHA256}"
+          resource "bar" do
+            url "svn://brew.sh/bar", revision: "1234"
+            version "1.0"
+          end
+          head do
+            url "svn://brew.sh/foo"
+            resource "baz" do
+              url "hg://brew.sh/baz", revision: "1234"
+              version "1.0"
+            end
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems.map { |problem| problem[:message] }).to contain_exactly(
+        'Stable resource "bar": Use a checksummed archive or a Git commit.',
+        'HEAD resource "bar": Use a checksummed archive or a Git commit.',
+        'HEAD resource "baz": Use a checksummed archive or a Git commit.',
+      )
+    end
+
+    it "continues to allow SVN in unofficial taps" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "svn://brew.sh/foo", revision: "1234"
+          version "1.0"
+        end
+      RUBY
+      allow(fa.formula).to receive(:tap).and_return(Tap.fetch("test/tap"))
+
+      fa.audit_specs
+      expect(fa.problems).to be_empty
+    end
+
     it "allows to miss a checksum for HEAD" do
       fa = formula_auditor "foo", <<~RUBY
         class Foo < Formula
@@ -927,6 +997,94 @@ RSpec.describe Homebrew::FormulaAuditor do
 
       fa.audit_specs
       expect(fa.problems).to be_empty
+    end
+
+    it "requires checksums for versioned resources in HEAD builds" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          head do
+            url "https://brew.sh/foo.git"
+            resource "bar" do
+              url "https://brew.sh/bar-1.0.tar.gz"
+            end
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems.map { |problem| problem[:message] })
+        .to include('HEAD resource "bar": Checksum is missing')
+    end
+
+    it "requires checksums for formula and resource patches in third-party taps" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "#{TEST_SHA256}"
+          patch do
+            url "https://brew.sh/foo.diff"
+          end
+          resource "bar" do
+            url "https://brew.sh/bar-1.0.tgz"
+            sha256 "#{TEST_SHA256}"
+            patch do
+              url "https://brew.sh/bar.diff"
+            end
+          end
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems.map { |problem| problem[:message] }).to contain_exactly(
+        "Stable patch: Checksum is missing", "Stable patch: Checksum is missing"
+      )
+    end
+
+    [
+      [{ core_tap: true }, nil, 2],
+      [{}, nil, 2],
+      [{}, "abc1234", 2],
+      [{}, "a" * 40, 0],
+      [{ only: ["download_strategy"] }, nil, 2],
+      [{ except: ["checksum"] }, nil, 2],
+      [{ only: ["checksum"] }, nil, 0],
+      [{ except: ["download_strategy"] }, nil, 0],
+    ].each do |options, revision, problem_count|
+      it "audits formula and resource Git patches with #{options} and revision #{revision.inspect}" do
+        fa = formula_auditor "foo", <<~RUBY, options
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tgz"
+            sha256 "#{TEST_SHA256}"
+            patch do
+              url "https://brew.sh/foo-patches", using: :git, revision: #{revision.inspect}
+            end
+            resource "bar" do
+              url "https://brew.sh/bar-1.0.tgz"
+              sha256 "#{TEST_SHA256}"
+              patch do
+                url "https://brew.sh/bar-patches", using: :git, revision: #{revision.inspect}
+              end
+            end
+          end
+        RUBY
+
+        fa.audit_specs
+        expect(fa.problems.map { |problem| problem[:message] })
+          .to eq(Array.new(problem_count, "Stable patch: Git should specify a full commit hash in `revision:`."))
+      end
+    end
+
+    it "requires full Git revisions for stable third-party downloads" do
+      fa = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo.git", revision: "abc1234"
+          version "1.0"
+        end
+      RUBY
+
+      fa.audit_specs
+      expect(fa.problems.map { |problem| problem[:message] })
+        .to include("Stable: Git should specify a full commit hash in `revision:`.")
     end
 
     it "accepts a curl dependency with a working HTTP mirror" do

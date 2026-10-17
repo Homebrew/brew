@@ -114,7 +114,7 @@ class Resource
     begin
       if !downloaded?
         fetch
-      elsif !staged && checksum.present?
+      elsif !staged
         verify_download_integrity(cached_download)
       end
     rescue ChecksumMismatchError
@@ -222,6 +222,27 @@ class Resource
     fetch_patches unless skip_patches
 
     super(verify_download_integrity:, timeout:, quiet:)
+  end
+
+  sig { override.params(filename: Pathname).void }
+  def verify_download_integrity(filename)
+    if filename.file? && checksum.blank? && !Homebrew::EnvConfig.no_install_from_api?
+      spec = T.let(owner, T.nilable(Owner))
+      spec = spec.owner while spec.is_a?(Resource)
+      formula = spec.is_a?(SoftwareSpec) ? spec.owner : spec
+      return super if formula.is_a?(::Formula) && spec.equal?(formula.head) && version&.head?
+
+      if formula.is_a?(::Formula) && formula.tap&.official?
+        raise ChecksumMissingError, "#{formula.full_name}: a SHA-256 checksum is required for #{url}."
+      end
+
+      # Enable for third-party taps in the next major release.
+      # if formula.is_a?(::Formula) && formula.tap
+      #   odeprecated "formula downloads without a checksum", "a `sha256` declaration", disable: true
+      # end
+    end
+
+    super
   end
 
   # {Livecheck} can be used to check for newer versions of the software.
