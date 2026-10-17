@@ -829,7 +829,12 @@ on_request: installed_on_request?, options:)
 
       dep_formula = dep.to_formula
       next if keepable_build_dependencies&.exclude?(dep_formula.full_name)
-      next unless dep.satisfied?(minimum_compatibility_version: dep_formula.compatibility_version)
+
+      if dep.no_linkage?
+        next if !dep_formula.opt_prefix.exist? || dep.missing_options.present?
+      else
+        next unless dep.satisfied?(minimum_compatibility_version: dep_formula.compatibility_version)
+      end
 
       runtime_dependencies = dep_formula.any_installed_keg&.runtime_dependencies
       next if runtime_dependencies.nil?

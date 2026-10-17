@@ -1107,6 +1107,22 @@ RSpec.describe FormulaInstaller do
   end
 
   describe "#expand_dependencies_for_formula" do
+    shared_examples "the old behaviour when building a bottle" do
+      before { allow(f).to receive(:deps).and_return([build_dep]) }
+
+      it "upgrades it" do
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      context "with --build-from-source" do
+        let(:build_from_source_formulae) { [f.full_name] }
+
+        it "upgrades it" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+        end
+      end
+    end
+
     it "checks equal dependency satisfaction once per expansion" do
       shared_formula = instance_double(Formula, deps: [], name: "shared", full_name: "shared")
       shared_dep = Dependency.new("shared")
@@ -1190,7 +1206,8 @@ RSpec.describe FormulaInstaller do
         end
       end
       let(:build_bottle) { false }
-      let(:installer) { described_class.new(f, build_bottle:) }
+      let(:build_from_source_formulae) { [] }
+      let(:installer) { described_class.new(f, build_bottle:, build_from_source_formulae:) }
 
       before do
         build_dep_formula = formula build_dep.name do
@@ -1241,12 +1258,97 @@ RSpec.describe FormulaInstaller do
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).not_to include(other_build_dep.name)
       end
 
+      it "upgrades it with a different compatibility_version" do
+        allow(build_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(false)
+        allow(f).to receive(:deps).and_return([build_dep])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      it "upgrades it if its install receipt has no runtime dependencies" do
+        keg = instance_double(Keg, runtime_dependencies: nil)
+        allow(build_dep.to_formula).to receive(:any_installed_keg).and_return(keg)
+        allow(f).to receive(:deps).and_return([build_dep])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      it "upgrades an outdated runtime dependency with a matching compatibility_version" do
+        runtime_dep = Dependency.new(build_dep.name)
+        allow(runtime_dep).to receive(:satisfied?).and_return(false)
+        allow(runtime_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(true)
+        allow(f).to receive(:deps).and_return([runtime_dep])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(runtime_dep.name)
+      end
+
       context "when building a bottle" do
         let(:build_bottle) { true }
 
-        it "upgrades it" do
-          allow(f).to receive(:deps).and_return([build_dep])
+        include_examples "the old behaviour when building a bottle"
 
+        it "upgrades the dependencies it was built against" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(runtime_dep_formula.name)
+        end
+      end
+    end
+
+    context "with an outdated :no_linkage build dependency with a different compatibility_version" do
+      let(:tags) { [:build, :no_linkage] }
+      let(:build_dep) { Dependency.new("homebrew-no-linkage-build-dependency", tags) }
+      let(:f) do
+        formula "homebrew-keep-no-linkage-build-dependency" do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+      end
+      let(:build_bottle) { false }
+      let(:build_from_source_formulae) { [] }
+      let(:installer) { described_class.new(f, build_bottle:, build_from_source_formulae:) }
+
+      before do
+        build_dep_formula = formula build_dep.name do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+        allow(build_dep_formula).to receive_messages(
+          compatibility_version: 2,
+          opt_prefix:            instance_double(Pathname, exist?: true),
+          any_installed_keg:     instance_double(Keg, runtime_dependencies: []),
+        )
+        stub_formula_loader(build_dep_formula)
+        allow(build_dep).to receive_messages(satisfied?: false, missing_options: Options.new)
+        allow(f).to receive(:deps).and_return([build_dep])
+        allow(installer).to receive_messages(effective_build_options_for: BuildOptions.new(Options.new, Options.new),
+                                             install_bottle_for?:         false)
+      end
+
+      it "keeps it" do
+        expect(installer.expand_dependencies_for_formula(f)).to be_empty
+      end
+
+      it "upgrades it if it isn't opt-linked" do
+        allow(build_dep.to_formula).to receive(:opt_prefix).and_return(instance_double(Pathname, exist?: false))
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      it "upgrades it if it's missing required options" do
+        allow(build_dep).to receive(:missing_options).and_return(Options.create(["--with-foo"]))
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      context "when building a bottle" do
+        let(:build_bottle) { true }
+
+        include_examples "the old behaviour when building a bottle"
+      end
+
+      context "without :build" do
+        let(:tags) { [:no_linkage] }
+
+        it "upgrades it" do
           expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
         end
       end
