@@ -2215,6 +2215,75 @@ RSpec.describe Formula do
   end
 
   describe "#to_hash patches" do
+    before do
+      allow_any_instance_of(LocalPatch).to receive(:contents).and_return("patch contents")
+    end
+
+    it "includes checksums for stable, HEAD and resource patch files" do
+      f = formula "foo" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        patch do
+          file "Patches/stable.diff"
+        end
+        resource "bar" do
+          url "bar-1.0"
+          patch do
+            file "Patches/resource.diff"
+          end
+        end
+        head do
+          url "https://example.com/foo.git"
+          patch do
+            file "Patches/head.diff"
+          end
+          resource "baz" do
+            url "baz-1.0"
+            patch do
+              file "Patches/head-resource.diff"
+            end
+          end
+        end
+      end
+
+      expect(f.to_hash["local_patch_checksums"]).to eq(
+        %w[stable resource head head-resource].to_h do |name|
+          ["Patches/#{name}.diff", Digest::SHA256.hexdigest("patch contents")]
+        end,
+      )
+    end
+
+    shared_examples "an unreadable local patch" do |error|
+      let(:f) do
+        formula "foo" do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          patch do
+            file "Patches/unreadable.diff"
+          end
+          patch do
+            file "Patches/valid.diff"
+          end
+        end
+      end
+
+      before do
+        allow(f.patchlist.fetch(0)).to receive(:contents).and_raise(error, "unreadable patch")
+      end
+
+      it "serialises checksums for the remaining patches" do
+        expect(f.to_hash["local_patch_checksums"])
+          .to eq("Patches/valid.diff" => Digest::SHA256.hexdigest("patch contents"))
+      end
+
+      it "warns about the omitted checksum" do
+        expect { f.to_hash }.to output(%r{cannot checksum Patches/unreadable.diff}).to_stderr
+      end
+    end
+
+    it_behaves_like "an unreadable local patch", ArgumentError
+    it_behaves_like "an unreadable local patch", Errno::EACCES
+
     it "serialises an external patch" do
       f = formula "foo" do
         T.bind(self, T.class_of(Formula))

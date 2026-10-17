@@ -401,6 +401,10 @@ module Formulary
         checksum = self.class.instance_variable_get(:@ruby_source_checksum_string)
         Checksum.new(checksum) if checksum
       end
+
+      define_method(:local_patch_checksums) do
+        formula_struct.local_patch_checksums
+      end
     end
 
     mod.const_set(class_name, klass)
