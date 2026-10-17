@@ -193,6 +193,13 @@ RSpec.describe Homebrew::API::Formula::FormulaStructGenerator do
       expect(struct.stable_patches).to eq hash["patches"]
     end
 
+    it "preserves local patch checksums through internal API serialisation" do
+      hash["local_patch_checksums"] = { "Patches/foo.diff" => TEST_SHA256 }
+
+      expect(struct.serialize["local_patch_checksums"])
+        .to eq(hash["local_patch_checksums"])
+    end
+
     context "when input contains placeholders" do
       let(:caveats_with_placeholder) { "Message about $HOMEBREW_CELLAR/foo/1.0.0/bin/foo" }
       let(:log_path_with_placeholder) { "$HOMEBREW_PREFIX/var/log/foo.log" }

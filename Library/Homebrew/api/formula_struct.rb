@@ -103,6 +103,7 @@ module Homebrew
       const :keg_only_args, T::Array[T.any(String, Symbol)], default: []
       const :license, SPDX::LicenseExpression
       const :link_overwrite_paths, T::Array[String], default: []
+      const :local_patch_checksums, T::Hash[String, String], default: {}
       const :no_autobump_args, T::Hash[Symbol, T.any(String, Symbol)], default: {}
       const :oldnames, T::Array[String], default: []
       const :post_install_defined, T::Boolean, default: false

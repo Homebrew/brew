@@ -864,6 +864,14 @@ RSpec.describe Formulary do
         expect(formula.loaded_from_internal_api?).to be true
       end
 
+      it "loads local patch checksums from the API" do
+        allow(Homebrew::API::Formula).to receive(:all_formulae)
+          .and_return formula_json_contents("local_patch_checksums" => { "Patches/foo.diff" => TEST_SHA256 })
+
+        expect(described_class.factory(formula_name).local_patch_checksums)
+          .to eq("Patches/foo.diff" => TEST_SHA256)
+      end
+
       it "returns a Formula with a compatibility_version" do
         allow(Homebrew::API::Formula).to receive(:all_formulae)
           .and_return formula_json_contents("compatibility_version" => 2)
