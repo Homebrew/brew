@@ -55,6 +55,7 @@ module OS
         <% if network_access_allowed %>
             (global-name "com.apple.trustd")
             (global-name "com.apple.TrustEvaluationAgent")
+            (global-name "com.apple.security.syspolicy")
         <% end %>
             (global-name "com.apple.SystemConfiguration.DNSConfiguration")
             (global-name "com.apple.SystemConfiguration.configd")

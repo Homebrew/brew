@@ -43,7 +43,8 @@ RSpec.describe Sandbox, :needs_macos do
         "(deny mach-lookup)", "(deny lsopen)", "(deny appleevent-send)",
         "(deny network-outbound (to unix-socket))",
         '(allow network-outbound (to unix-socket (path-literal "/private/var/run/mDNSResponder")))',
-        '(global-name "com.apple.TrustEvaluationAgent")', '(global-name "com.apple.trustd")'
+        '(global-name "com.apple.TrustEvaluationAgent")', '(global-name "com.apple.trustd")',
+        '(global-name "com.apple.security.syspolicy")'
       )
     end
 
@@ -51,14 +52,16 @@ RSpec.describe Sandbox, :needs_macos do
       sandbox.deny_all_network
 
       expect(sandbox.seatbelt_profile).not_to include("com.apple.TrustEvaluationAgent",
-                                                      '(global-name "com.apple.trustd")')
+                                                      '(global-name "com.apple.trustd")',
+                                                      '(global-name "com.apple.security.syspolicy")')
     end
 
     it "does not allow network services for an offline socket exception" do
       sandbox.deny_all_network
       sandbox.allow_network path: dir, type: :subpath
       expect(sandbox.seatbelt_profile).not_to include(
-        "mDNSResponder", "com.apple.TrustEvaluationAgent", '(global-name "com.apple.trustd")'
+        "mDNSResponder", "com.apple.TrustEvaluationAgent", '(global-name "com.apple.trustd")',
+        '(global-name "com.apple.security.syspolicy")'
       )
     end
 
