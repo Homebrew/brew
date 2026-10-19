@@ -580,6 +580,7 @@ _brew_bump() {
       --full-name
       --help
       --installed
+      --message
       --no-autobump
       --no-fork
       --no-pull-requests

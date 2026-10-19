@@ -91,6 +91,8 @@ module Homebrew
                description: "Don't try to fork the repository."
         switch "--open-pr",
                description: "Open a pull request for the new version if none have been opened yet."
+        flag   "--message=",
+               description: "Prepend <message> to the default pull request message when using `--open-pr`."
         flag   "--start-with=",
                description: "Letter or word that the list of package results should alphabetically follow."
         switch "--bump-synced",
@@ -633,7 +635,7 @@ module Homebrew
           name,
           *version_args,
           "--no-browse",
-          "--message=Created by `brew bump`",
+          "--message=#{[args.message.presence, "Created by `brew bump`"].compact.join("\n\n")}",
         ]
 
         bump_pr_args << "--no-fork" if args.no_fork?

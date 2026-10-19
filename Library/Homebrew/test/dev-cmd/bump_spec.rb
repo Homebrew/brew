@@ -345,6 +345,37 @@ RSpec.describe Homebrew::DevCmd::Bump do
       allow(GitHub).to receive(:too_many_open_prs?).and_return(false)
     end
 
+    context "with a custom pull request message" do
+      subject(:bump) do
+        described_class.new(["--open-pr", "--message=Publish with `brew pr-pull`.\nWait for CI.", "test"])
+      end
+
+      it "prepends the message when invoking bump-formula-pr" do
+        allow(bump).to receive(:retrieve_versions_by_arch).and_return(
+          Homebrew::DevCmd::Bump::VersionBumpInfo.new(
+            type:                :formula,
+            multiple_versions:   { current: false, new: false },
+            version_name:        "formula version:",
+            current_version:     Homebrew::BumpVersionParser.new(general: Version.new("1.2.3")),
+            new_version:         Homebrew::BumpVersionParser.new(general: Version.new("1.2.4")),
+            repology_latest:     "not found",
+            newer_than_upstream: { general: false },
+          ),
+        )
+
+        expect(bump).to receive(:system).with(
+          HOMEBREW_BREW_FILE,
+          "bump-formula-pr",
+          "test",
+          "--version=1.2.4",
+          "--no-browse",
+          "--message=Publish with `brew pr-pull`.\nWait for CI.\n\nCreated by `brew bump`",
+        ).and_return(true)
+
+        bump.retrieve_and_display_info_and_open_pr(f_basic, "test", [])
+      end
+    end
+
     it "passes arch-specific version arguments when a cask moves from one version to arch-specific versions" do
       version_info = Homebrew::DevCmd::Bump::VersionBumpInfo.new(
         type:                    :cask,

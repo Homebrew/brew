@@ -51,5 +51,8 @@ RSpec.describe Homebrew::DevCmd::TapNew do
     expect(autobump_yml).not_to include("# this will be changed later and randomised by brew tap-new")
     expect(autobump_yml).to include("- main")
     expect(autobump_yml).to include('brew bump --no-fork --open-pr --formulae --bump-synced --tap="$TAP_NAME"')
+    expect(autobump_yml).to include('--message="$PR_MESSAGE"')
+    expect(autobump_yml).to include("**Do not merge this pull request using GitHub's merge button.**")
+    expect(autobump_yml).to include("/actions/workflows/publish.yml)")
   end
 end
