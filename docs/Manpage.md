@@ -3018,6 +3018,10 @@ displays whether a pull request has been opened with the URL.
 
 : Open a pull request for the new version if none have been opened yet.
 
+`--tap-message`
+
+: Include tap bottle publishing instructions in the pull request message.
+
 `--start-with`
 
 : Letter or word that the list of package results should alphabetically follow.

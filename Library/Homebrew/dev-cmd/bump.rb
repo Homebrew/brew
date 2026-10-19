@@ -91,6 +91,9 @@ module Homebrew
                description: "Don't try to fork the repository."
         switch "--open-pr",
                description: "Open a pull request for the new version if none have been opened yet."
+        switch "--tap-message",
+               depends_on:  "--open-pr",
+               description: "Include tap bottle publishing instructions in the pull request message."
         flag   "--start-with=",
                description: "Letter or word that the list of package results should alphabetically follow."
         switch "--bump-synced",
@@ -628,12 +631,25 @@ module Homebrew
         version_args = version_args_for_bump(current_version:, new_version:, multiple_versions:, name:)
         return if version_args.blank?
 
+        message = "Created by `brew bump`"
+        if args.tap_message?
+          tap = formula_or_cask.tap
+          odie "Cannot add tap publishing instructions without a tap." unless tap
+
+          message = "**Do not merge this pull request using GitHub's merge button.** " \
+                    "Once all checks have passed, run the " \
+                    "[`brew pr-pull`](https://github.com/#{tap.remote_repository || tap.full_name}" \
+                    "/actions/workflows/publish.yml) " \
+                    "workflow with this pull request's number to publish the bottles and integrate the changes.\n\n" \
+                    "#{message}"
+        end
+
         bump_pr_args = [
           "bump-#{version_info.type}-pr",
           name,
           *version_args,
           "--no-browse",
-          "--message=Created by `brew bump`",
+          "--message=#{message}",
         ]
 
         bump_pr_args << "--no-fork" if args.no_fork?

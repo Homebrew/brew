@@ -55,4 +55,7 @@ class Homebrew::DevCmd::Bump::Args < Homebrew::CLI::Args
 
   sig { returns(T.nilable(String)) }
   def start_with; end
+
+  sig { returns(T::Boolean) }
+  def tap_message?; end
 end
