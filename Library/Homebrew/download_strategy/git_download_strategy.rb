@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "timeout"
 require "utils/timer"
 
 # Strategy for downloading a Git repository.
@@ -8,6 +9,13 @@ require "utils/timer"
 # @api public
 class GitDownloadStrategy < VCSDownloadStrategy
   MINIMUM_COMMIT_HASH_LENGTH = 7
+  MAXIMUM_CONFIG_INCLUDE_DEPTH = 10
+  MAXIMUM_CONFIG_DISCOVERY_WORK = 256
+  MAXIMUM_CONFIG_DISCOVERY_BYTES = 1_048_576
+  CONFIG_DISCOVERY_TIMEOUT = 2.0
+
+  class ConfigDiscoveryLimitError < StandardError; end
+  private_constant :ConfigDiscoveryLimitError
 
   sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
   def initialize(url, name, version, **meta)
@@ -22,15 +30,19 @@ class GitDownloadStrategy < VCSDownloadStrategy
     end
 
     super
+    @fetch_git_config_rules = T.let(nil, T.nilable(Sandbox))
     @ref_type ||= T.let(:branch, T.nilable(Symbol))
     @ref ||= T.let("master", T.untyped)
   end
 
   sig { override.params(timeout: T.nilable(T.any(Float, Integer))).void }
   def fetch(timeout: nil)
+    @fetch_git_config_rules = nil
     require "utils/git"
     Utils::Git.ensure_installed!
     super
+  ensure
+    @fetch_git_config_rules = nil
   end
 
   # Returns the most recent modified time for all files in the current working directory after stage.
@@ -91,6 +103,150 @@ class GitDownloadStrategy < VCSDownloadStrategy
   def allow_fetch_credentials(sandbox)
     # Let Git and SSH resolve configuration, includes, URL rewrites and agent sockets.
     sandbox.allow_network(path: "/", type: :subpath)
+
+    (@fetch_git_config_rules ||= global_git_config_rules).profile.rules.each do |rule|
+      sandbox.add_rule(allow: rule.allow, operation: rule.operation, filter: rule.filter, modifier: rule.modifier)
+    end
+  end
+
+  sig { returns(Sandbox) }
+  def global_git_config_rules
+    home = Pathname(Dir.home(ENV.fetch("USER")))
+    paths = if (global_config = ENV.fetch("GIT_CONFIG_GLOBAL", nil))
+      global_config.empty? ? [] : [Pathname(global_config)]
+    else
+      config_home = ENV.fetch("XDG_CONFIG_HOME", "")
+      config_home = (home/".config").to_s if config_home.empty?
+      [home/".gitconfig", Pathname(config_home)/"git/config"]
+    end
+    paths.map! { |path| path.absolute? ? path : Pathname("#{Dir.pwd}/#{path}") }
+
+    # This builder contains only supplemental rules, never a command's mutable sandbox.
+    rules = Sandbox.new
+    files = Set.new
+    # Grant all regular roots before exploring either root's descendants.
+    paths.select! do |path|
+      next false unless path.file?
+
+      resolved = path.realpath
+      rules.allow_read(path: resolved) if files.add?(resolved)
+      true
+    rescue SystemCallError
+      false
+    end
+
+    config_env = {
+      "HOME"                  => home.to_s,
+      "GIT_CONFIG_GLOBAL"     => File::NULL,
+      "GIT_CONFIG_NOSYSTEM"   => "1",
+      "GIT_CONFIG_COUNT"      => "0",
+      "GIT_CONFIG_PARAMETERS" => nil,
+      "GIT_CONFIG"            => nil,
+      "GIT_DIR"               => nil,
+      "GIT_WORK_TREE"         => nil,
+      "GIT_COMMON_DIR"        => nil,
+    }
+    visited = Set.new
+    work_left = MAXIMUM_CONFIG_DISCOVERY_WORK
+    bytes_left = MAXIMUM_CONFIG_DISCOVERY_BYTES
+    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + CONFIG_DISCOVERY_TIMEOUT
+    consume_step = lambda do
+      work_left -= 1
+      raise ConfigDiscoveryLimitError, "discovery work limit reached" if work_left.negative?
+
+      remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      raise ConfigDiscoveryLimitError, "discovery time limit reached" unless remaining.positive?
+
+      remaining
+    end
+
+    begin
+      # Breadth-first traversal gives every context its shortest include depth.
+      (0..MAXIMUM_CONFIG_INCLUDE_DEPTH).each do |depth|
+        children = []
+        paths.each do |path|
+          consume_step.call
+          begin
+            next unless path.file?
+
+            resolved = path.realpath
+            rules.allow_read(path: resolved) if files.add?(resolved)
+            next if depth == MAXIMUM_CONFIG_INCLUDE_DEPTH
+            next unless visited.add?([resolved, path.dirname.realpath])
+          rescue SystemCallError
+            next
+          end
+
+          contents = begin
+            File.binread(path, bytes_left + 1).to_s
+          rescue SystemCallError
+            nil
+          end
+          if contents
+            bytes_left -= contents.bytesize
+            raise ConfigDiscoveryLimitError, "discovery byte limit reached" if bytes_left.negative?
+
+            next unless contents.match?(/\[include/i)
+          end
+
+          # A failed read is inconclusive; Git remains the sole config parser.
+          config_args = ["config", "--file", path, "--no-includes", "--null"]
+          includes = SystemCommand.run(
+            "git",
+            args:         [*config_args, "--name-only", "--get-regexp", "^include(if\\..*)?\\.path$"],
+            env:          config_env,
+            timeout:      consume_step.call,
+            print_stderr: false,
+          )
+          bytes_left -= includes.stdout.bytesize
+          raise ConfigDiscoveryLimitError, "discovery byte limit reached" if bytes_left.negative?
+          next unless includes.success?
+
+          seen_keys = Set.new
+          includes.stdout.each_line("\0", chomp: true) do |key|
+            consume_step.call
+            next unless seen_keys.add?(key)
+
+            # An unexpandable inactive condition must not discard other keys.
+            values = SystemCommand.run("git", args: [*config_args, "--type=path", "--get-all", key],
+                                              env: config_env, timeout: consume_step.call, print_stderr: false)
+            bytes_left -= values.stdout.bytesize
+            raise ConfigDiscoveryLimitError, "discovery byte limit reached" if bytes_left.negative?
+            next unless values.success?
+
+            values.stdout.each_line("\0", chomp: true) do |value|
+              consume_step.call
+              next if value.empty?
+
+              # Preserve symlink/.. resolution relative to the file's lexical path.
+              children << if Pathname(value).absolute?
+                Pathname(value)
+              else
+                Pathname("#{path.dirname}/#{value}")
+              end
+            end
+          end
+        end
+        paths = children
+        break if paths.empty?
+      end
+    rescue ConfigDiscoveryLimitError, Timeout::Error => e
+      reason = e.is_a?(ConfigDiscoveryLimitError) ? e.message : "a Git configuration query timed out"
+      opoo <<~EOS
+        Some Git configuration includes may remain unreadable in the sandbox:
+          #{reason}
+        Continuing with the exact file permissions already found.
+      EOS
+    end
+
+    rules.profile.rules.each do |rule|
+      rule.filter&.path&.freeze
+      rule.filter&.freeze
+      rule.freeze
+    end
+    rules.profile.rules.freeze
+    rules.profile.freeze
+    rules.freeze
   end
 
   # Read user Git config so credential helpers work for private downloads,
