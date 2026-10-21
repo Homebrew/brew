@@ -298,6 +298,9 @@ module Homebrew::EnvConfig
     sig { returns(T.nilable(::String)) }
     def git_name; end
 
+    sig { returns(T::Boolean) }
+    def git_no_global_config?; end
+
     sig { returns(String) }
     def git_path; end
 

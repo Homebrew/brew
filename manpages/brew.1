@@ -3147,6 +3147,9 @@ Set the Git author name and, if \fB$HOMEBREW_GIT_COMMITTER_EMAIL\fP is unset, co
 \fBHOMEBREW_GIT_NAME\fP
 Set the Git author name and, if \fB$HOMEBREW_GIT_COMMITTER_NAME\fP is unset, committer name to this value\.
 .TP
+\fBHOMEBREW_GIT_NO_GLOBAL_CONFIG\fP
+If set, ignore user\-global Git configuration when downloading Git repositories\. Use this if the sandbox cannot read your Git config or its includes\. Global credential helpers, URL rewrites and network settings will not apply; system and repository configuration still apply\.
+.TP
 \fBHOMEBREW_GIT_PATH\fP
 Linux only: Set this value to a new enough \fBgit\fP executable for Homebrew to use\.
 .RS

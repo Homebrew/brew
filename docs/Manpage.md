@@ -4900,6 +4900,13 @@ command execution (e.g. `$(cat file)`).
 : Set the Git author name and, if `$HOMEBREW_GIT_COMMITTER_NAME` is unset,
   committer name to this value.
 
+`HOMEBREW_GIT_NO_GLOBAL_CONFIG`
+
+: If set, ignore user-global Git configuration when downloading Git
+  repositories. Use this if the sandbox cannot read your Git config or its
+  includes. Global credential helpers, URL rewrites and network settings will
+  not apply; system and repository configuration still apply.
+
 `HOMEBREW_GIT_PATH`
 
 : Linux only: Set this value to a new enough `git` executable for Homebrew to

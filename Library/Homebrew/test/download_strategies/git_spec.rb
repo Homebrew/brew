@@ -30,26 +30,75 @@ RSpec.describe GitDownloadStrategy do
 
       expect { strategy.fetch }.to raise_error("Git installation failed")
     end
+
+    context "when Git fails" do
+      let(:failure) do
+        ErrorDuringExecution.new(
+          ["git", "fetch"], status: 128,
+                            output: [[:stderr, "fatal: unable to access '/config': Operation not permitted\n"]]
+        )
+      end
+
+      before do
+        allow(Utils::Git).to receive(:ensure_installed!)
+        allow(strategy).to receive(:repo_valid?).and_return(true)
+        allow(strategy).to receive(:update).and_raise(failure)
+        allow(strategy).to receive(:opoo)
+      end
+
+      it "suggests explicitly skipping global config after a permission failure" do
+        expect(strategy).to receive(:opoo).with(include("HOMEBREW_GIT_NO_GLOBAL_CONFIG=1"))
+
+        begin
+          strategy.fetch
+        rescue ErrorDuringExecution
+          nil
+        end
+      end
+
+      it "preserves the original failure without retrying" do
+        attempts = 0
+        allow(strategy).to receive(:update) do
+          attempts += 1
+          raise failure
+        end
+        raised = begin
+          strategy.fetch
+        rescue ErrorDuringExecution => e
+          e
+        end
+
+        expect(error: raised, attempts:).to eq(error: failure, attempts: 1)
+      end
+
+      it "does not suggest skipping config for an authentication failure" do
+        allow(failure).to receive(:stderr).and_return("fatal: Authentication failed\n")
+        expect(strategy).not_to receive(:opoo)
+
+        begin
+          strategy.fetch
+        rescue ErrorDuringExecution
+          nil
+        end
+      end
+
+      it "does not suggest the option when it is already enabled" do
+        ENV["HOMEBREW_GIT_NO_GLOBAL_CONFIG"] = "1"
+        expect(strategy).not_to receive(:opoo).with(include("HOMEBREW_GIT_NO_GLOBAL_CONFIG=1"))
+
+        begin
+          strategy.fetch
+        rescue ErrorDuringExecution
+          nil
+        end
+      end
+    end
   end
 
   describe "#command_sandbox" do
-    subject(:strategy) do
-      Class.new(described_class) do
-        T.bind(self, T.class_of(GitDownloadStrategy))
-        public :global_git_config_rules
-      end.new(url, name, version)
-    end
-
     let(:home) { mktmpdir }
-    let(:allowed_config_paths) do
-      strategy.command_sandbox.profile.rules.filter_map do |rule|
-        rule.filter&.path if rule.allow && rule.operation == "file-read*" && rule.filter&.type == :literal
-      end.uniq
-    end
 
     before do
-      ENV.delete("GIT_CONFIG_GLOBAL")
-      ENV.delete("XDG_CONFIG_HOME")
       allow(Sandbox).to receive(:isolate_operation?).and_return(true)
       allow(Dir).to receive(:home).with(ENV.fetch("USER")).and_return(home.to_s)
       allow(strategy).to receive(:fetching?).and_return(true)
@@ -109,395 +158,10 @@ RSpec.describe GitDownloadStrategy do
       end
     end
 
-    it "does not probe configuration when no global Git configuration exists" do
+    it "does not probe Git or SSH configuration" do
       expect(SystemCommand).not_to receive(:run)
 
       strategy.command_sandbox
-    end
-
-    it "does not probe plain, empty or binary configuration without include tokens" do
-      (home/".gitconfig").binwrite("[user]\nname = Example\n\xff\x00".b)
-      (home/".config/git").mkpath
-      (home/".config/git/config").write("")
-      expect(SystemCommand).not_to receive(:run)
-
-      expect(allowed_config_paths).to contain_exactly((home/".gitconfig").to_s,
-                                                      (home/".config/git/config").to_s)
-    end
-
-    it "allows relative, transitive and empty Git includes without allowing their directory" do
-      directory = home/"Dropbox/dotfiles"
-      directory.mkpath
-      (home/".gitconfig").write("[include]\npath = #{directory}/main\n")
-      (directory/"main").write("[include]\npath = nested\n")
-      (directory/"nested").write("[include]\npath = empty\n")
-      (directory/"empty").write("")
-
-      expect(allowed_config_paths).to contain_exactly(
-        (home/".gitconfig").to_s, (directory/"main").to_s,
-        (directory/"nested").to_s, (directory/"empty").to_s
-      )
-    end
-
-    it "expands aliased contexts once and emits one supplemental rule per file" do
-      aliases = (1..12).map do |index|
-        (home/"alias-#{index}").make_symlink(home)
-        "path = alias-#{index}/shared\n"
-      end
-      (home/".gitconfig").write("[include]\n#{aliases.join}")
-      (home/"shared").write("[include]\npath = leaf\n")
-      (home/"leaf").write("")
-      expect(SystemCommand).to receive(:run).exactly(4).times.and_call_original
-
-      expect(strategy.global_git_config_rules.profile.rules.map { |rule| rule.filter&.path }).to eq(
-        %w[.gitconfig shared leaf].map { |path| (home/path).to_s },
-      )
-    end
-
-    it "expands the same canonical file beside each distinct lexical parent" do
-      (home/"shared").write("[include]\npath = leaf\n")
-      %w[first second].each do |parent|
-        (home/parent).mkpath
-        (home/parent/"config").make_symlink(home/"shared")
-        (home/parent/"leaf").write("")
-      end
-      (home/".gitconfig").write("[include]\npath = first/config\npath = second/config\n")
-
-      expect(strategy.global_git_config_rules.profile.rules.map { |rule| rule.filter&.path }).to eq(
-        %w[.gitconfig shared first/leaf second/leaf].map { |path| (home/path).to_s },
-      )
-    end
-
-    it "uses the shortest depth across both roots before suppressing a visited context" do
-      chain = (1..9).map { |index| home/"chain-#{index}" }
-      (home/".gitconfig").write("[include]\npath = #{chain.first}\n")
-      [*chain, home/"shared"].each_cons(2) { |parent, child| parent.write("[include]\npath = #{child}\n") }
-      (home/"shared").write("[include]\npath = leaf\n")
-      (home/"leaf").write("")
-      (home/".config/git").mkpath
-      (home/".config/git/config").write("[include]\npath = #{home}/shared\n")
-
-      expect(allowed_config_paths).to include((home/"leaf").to_s)
-    end
-
-    it "replays compiled literal rules without resolving a replaced symlink again" do
-      (home/".gitconfig").write("[include]\npath = target\n")
-      (home/"target").write("")
-      strategy.command_sandbox
-      (home/"target").unlink
-      (home/"replacement").write("")
-      (home/"target").make_symlink(home/"replacement")
-
-      expect(allowed_config_paths).to contain_exactly((home/".gitconfig").to_s, (home/"target").to_s)
-    end
-
-    it "freezes the supplemental builder, rules and filters" do
-      (home/".gitconfig").write("")
-      rules = strategy.global_git_config_rules
-
-      expect([rules, rules.profile, rules.profile.rules, *rules.profile.rules,
-              *rules.profile.rules.filter_map(&:filter),
-              *rules.profile.rules.filter_map { |rule| rule.filter&.path }]).to all(be_frozen)
-    end
-
-    test_each([false, true]) do |failure|
-      it "builds once per actual fetch and resets after #{failure ? "failure" : "success"}" do
-        (home/".gitconfig").write("[include]\npath = first\n")
-        (home/"first").write("")
-        (home/"second").write("")
-        allow(strategy).to receive(:repo_valid?).and_return(true)
-        plans = []
-        allow(strategy).to receive(:update) do
-          plans << strategy.command_sandbox.profile.rules.filter_map { |rule| rule.filter&.path }
-          (home/".gitconfig").atomic_write("[include]\npath = second\n")
-          plans << strategy.command_sandbox.profile.rules.filter_map { |rule| rule.filter&.path }
-          raise "fetch failed" if failure && plans.length == 2
-        end
-        expect(strategy).to receive(:global_git_config_rules).twice.and_call_original
-        if failure
-          expect { strategy.fetch }.to raise_error("fetch failed")
-        else
-          strategy.fetch
-        end
-        strategy.fetch
-
-        expect(plans.map { |plan| plan.grep(%r{/(first|second)$}) }).to eq(
-          [[(home/"first").to_s], [(home/"first").to_s], [(home/"second").to_s], [(home/"second").to_s]],
-        )
-      end
-    end
-
-    it "caches an empty discovery result until the next fetch" do
-      allow(strategy).to receive(:repo_valid?).and_return(true)
-      plans = []
-      allow(strategy).to receive(:update) do
-        plans << strategy.command_sandbox.profile.rules.count { |rule| rule.allow && rule.filter&.type == :literal }
-        (home/".gitconfig").atomic_write("")
-        plans << strategy.command_sandbox.profile.rules.count { |rule| rule.allow && rule.filter&.type == :literal }
-      end
-      expect(strategy).to receive(:global_git_config_rules).twice.and_call_original
-      strategy.fetch
-      strategy.fetch
-
-      expect(plans).to eq([0, 0, 1, 1])
-    end
-
-    it "clears compiled permissions immediately after a failed fetch" do
-      (home/".gitconfig").write("[include]\npath = first\n")
-      (home/"first").write("")
-      (home/"second").write("")
-      allow(strategy).to receive(:repo_valid?).and_return(true)
-      allow(strategy).to receive(:update) do
-        strategy.command_sandbox
-        raise "fetch failed"
-      end
-      expect { strategy.fetch }.to raise_error("fetch failed")
-      (home/".gitconfig").atomic_write("[include]\npath = second\n")
-
-      expect(allowed_config_paths).to contain_exactly((home/".gitconfig").to_s, (home/"second").to_s)
-    end
-
-    it "retains discovered files and both roots when the shared work budget is exhausted" do
-      (home/".gitconfig").write("[include]\npath = first\n")
-      (home/"first").write("[include]\npath = second\n")
-      (home/"second").write("")
-      (home/".config/git").mkpath
-      (home/".config/git/config").write("")
-      stub_const("GitDownloadStrategy::MAXIMUM_CONFIG_DISCOVERY_WORK", 7)
-      expect(strategy).to receive(:opoo).once.with(/work limit reached/)
-      first = allowed_config_paths
-      second = strategy.command_sandbox.profile.rules.filter_map do |rule|
-        rule.filter&.path if rule.allow && rule.operation == "file-read*" && rule.filter&.type == :literal
-      end
-
-      expect([first, second]).to all(contain_exactly((home/".gitconfig").to_s,
-                                                     (home/".config/git/config").to_s, (home/"first").to_s))
-    end
-
-    it "bounds prefilter reads by the remaining byte budget" do
-      (home/".gitconfig").write("x" * 20)
-      stub_const("GitDownloadStrategy::MAXIMUM_CONFIG_DISCOVERY_BYTES", 8)
-      expect(File).to receive(:binread).with(home/".gitconfig", 9).and_call_original
-      expect(SystemCommand).not_to receive(:run)
-      expect(strategy).to receive(:opoo).once.with(/byte limit reached/)
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s])
-    end
-
-    it "charges duplicate include records before visiting their targets" do
-      (home/".gitconfig").write("[include]\n#{"path = missing\n" * 20}")
-      stub_const("GitDownloadStrategy::MAXIMUM_CONFIG_DISCOVERY_WORK", 8)
-      expect(SystemCommand).to receive(:run).twice.and_call_original
-      expect(strategy).to receive(:opoo).once.with(/work limit reached/)
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s])
-    end
-
-    it "charges missing path attempts to the same work budget" do
-      (home/".gitconfig").write("[include]\npath = missing\npath = leaf\n")
-      (home/"leaf").write("")
-      stub_const("GitDownloadStrategy::MAXIMUM_CONFIG_DISCOVERY_WORK", 8)
-      expect(strategy).to receive(:opoo).once.with(/work limit reached/)
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s])
-    end
-
-    it "charges native query output to the aggregate byte budget" do
-      config = "[include]\npath = leaf\n"
-      (home/".gitconfig").write(config)
-      (home/"leaf").write("")
-      stub_const("GitDownloadStrategy::MAXIMUM_CONFIG_DISCOVERY_BYTES", config.bytesize + 5)
-      expect(SystemCommand).to receive(:run).once.and_call_original
-      expect(strategy).to receive(:opoo).once.with(/byte limit reached/)
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s])
-    end
-
-    it "retains exact rules and caches the partial result after a native timeout" do
-      (home/".gitconfig").write("[include]\npath = leaf\n")
-      expect(SystemCommand).to receive(:run).once.with("git", hash_including(timeout: be_between(0, 2)))
-                                            .and_raise(Timeout::Error)
-      expect(strategy).to receive(:opoo).once.with(/query timed out/)
-      strategy.command_sandbox
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s])
-    end
-
-    it "stops before a native probe when the monotonic deadline has elapsed" do
-      (home/".gitconfig").write("[include]\npath = leaf\n")
-      allow(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(0.0, 3.0)
-      expect(SystemCommand).not_to receive(:run)
-      expect(strategy).to receive(:opoo).once.with(/time limit reached/)
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s])
-    end
-
-    it "falls back to Git when the binary prefilter read fails" do
-      (home/".gitconfig").write("[include]\npath = leaf\n")
-      (home/"leaf").write("")
-      allow(File).to receive(:binread).and_call_original
-      allow(File).to receive(:binread).with(home/".gitconfig", anything).and_raise(Errno::EACCES)
-
-      expect(allowed_config_paths).to contain_exactly((home/".gitconfig").to_s, (home/"leaf").to_s)
-    end
-
-    it "does not open a FIFO named as an include target" do
-      (home/".gitconfig").write("[include]\npath = pipe\n")
-      File.mkfifo(home/"pipe")
-      expect(File).not_to receive(:binread).with(home/"pipe", anything)
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s])
-    end
-
-    it "neutralises runtime configuration injections only for native discovery" do
-      (home/".gitconfig").write("[include]\npath = leaf\n")
-      (home/"leaf").write("")
-      ENV["GIT_CONFIG_COUNT"] = "invalid"
-      ENV["GIT_CONFIG_PARAMETERS"] = "invalid"
-
-      expect(paths: allowed_config_paths, count: ENV.fetch("GIT_CONFIG_COUNT"),
-             parameters: ENV.fetch("GIT_CONFIG_PARAMETERS")).to eq(
-               paths: [(home/".gitconfig").to_s, (home/"leaf").to_s], count: "invalid", parameters: "invalid",
-             )
-    end
-
-    it "does not discover default roots when the explicit global path is empty" do
-      (home/".gitconfig").write("[include]\npath = leaf\n")
-      ENV["GIT_CONFIG_GLOBAL"] = ""
-      expect(SystemCommand).not_to receive(:run)
-
-      expect(allowed_config_paths).to be_empty
-    end
-
-    it "resolves includes beside a symlink's lexical path and expands tilde paths" do
-      directory = home/"Dropbox/dotfiles"
-      directory.mkpath
-      (directory/"root").write("[include]\npath = relative\npath = ~/Dropbox/dotfiles/tilde\n")
-      (home/".gitconfig").make_symlink(directory/"root")
-      (home/"relative").write("")
-      (directory/"relative").write("")
-      (directory/"tilde").write("")
-
-      expect(allowed_config_paths).to contain_exactly(
-        (directory/"root").to_s, (home/"relative").to_s, (directory/"tilde").to_s
-      )
-    end
-
-    it "resolves parent components after directory symlinks" do
-      directory = home/"Dropbox/dotfiles"
-      (directory/"nested").mkpath
-      (home/"link").make_symlink(directory/"nested")
-      (home/".gitconfig").write("[include]\npath = link/main\n")
-      (directory/"nested/main").write("[include]\npath = ../leaf\n")
-      (directory/"leaf").write("")
-      (home/"leaf").write("")
-
-      expect(allowed_config_paths).to contain_exactly(
-        (home/".gitconfig").to_s, (directory/"nested/main").to_s, (directory/"leaf").to_s
-      )
-    end
-
-    it "preserves whitespace-only include filenames" do
-      (home/".gitconfig").write("[include]\npath = \" \"\n")
-      (home/" ").write("")
-
-      expect(allowed_config_paths).to contain_exactly((home/".gitconfig").to_s, (home/" ").to_s)
-    end
-
-    it "follows conditional includes before the cached repository exists" do
-      FileUtils.rmdir cached_location
-      directory = home/"Dropbox/dotfiles"
-      directory.mkpath
-      (home/".gitconfig").write("[includeIf \"gitdir:#{cached_location}/\"]\npath = #{directory}/main\n")
-      (directory/"main").write("[includeIf \"onbranch:main\"]\npath = empty\n")
-      (directory/"empty").write("")
-
-      expect(paths: allowed_config_paths, cache_created: cached_location.exist?).to eq(
-        paths:         [(home/".gitconfig").to_s, (directory/"main").to_s, (directory/"empty").to_s],
-        cache_created: false,
-      )
-    end
-
-    test_each([".config/git/config", "custom-xdg/git/config", "empty-xdg"]) do |config_path|
-      it "follows includes from #{config_path}" do
-        ENV["XDG_CONFIG_HOME"] = (home/"custom-xdg").to_s if config_path.start_with?("custom-xdg")
-        ENV["XDG_CONFIG_HOME"] = "" if config_path == "empty-xdg"
-        config = home/((config_path == "empty-xdg") ? ".config/git/config" : config_path)
-        config.dirname.mkpath
-        config.write("[include]\npath = included\n")
-        (config.dirname/"included").write("")
-
-        expect(allowed_config_paths).to contain_exactly(config.to_s, (config.dirname/"included").to_s)
-      end
-    end
-
-    it "uses an explicit global configuration instead of the default files" do
-      config = home/"custom-global"
-      config.write("[include]\npath = included\n")
-      (home/"included").write("")
-      (home/".gitconfig").write("[include]\npath = unrelated\n")
-      (home/"unrelated").write("")
-      ENV["GIT_CONFIG_GLOBAL"] = config.to_s
-
-      expect(allowed_config_paths).to contain_exactly(config.to_s, (home/"included").to_s)
-    end
-
-    it "ignores missing, directory and malformed inactive targets without failing the download" do
-      (home/"directory").mkpath
-      (home/"invalid").write("[invalid\n")
-      (home/".gitconfig").write <<~EOS
-        [includeIf "onbranch:unused"]
-          path = missing
-          path = directory
-          path = invalid
-      EOS
-
-      expect(allowed_config_paths).to contain_exactly((home/".gitconfig").to_s, (home/"invalid").to_s)
-    end
-
-    it "keeps valid includes when an inactive condition has an unexpandable path" do
-      (home/".gitconfig").write <<~EOS
-        [include]
-          path = included
-        [includeIf "onbranch:unused"]
-          path = ~homebrew-nonexistent-include-user/config
-      EOS
-      (home/"included").write("")
-
-      expect(allowed_config_paths).to contain_exactly((home/".gitconfig").to_s, (home/"included").to_s)
-    end
-
-    it "does not use repository configuration to grant additional reads" do
-      (cached_location/".git").mkpath
-      (cached_location/".git/config").write("[include]\npath = #{home}/unrelated\n")
-      (home/"unrelated").write("")
-
-      expect(allowed_config_paths).to be_empty
-    end
-
-    it "does not grant config reads during local repository inspection" do
-      (home/".gitconfig").write("[include]\npath = included\n")
-      (home/"included").write("")
-      allow(strategy).to receive(:fetching?).and_return(false)
-
-      expect(allowed_config_paths).to be_empty
-    end
-
-    it "bounds cycles whose lexical paths grow through a directory symlink" do
-      (home/"loop").make_symlink(home)
-      (home/".gitconfig").write("[include]\npath = loop/.gitconfig\n")
-      expect(SystemCommand).to receive(:run).at_most(20).times.and_call_original
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s])
-    end
-
-    it "does not grant reads beyond Git's ten-level include limit" do
-      includes = (1..11).map { |depth| home/"include-#{depth}" }
-      (home/".gitconfig").write("[include]\npath = #{includes.first}\n")
-      includes.each_cons(2) { |parent, child| parent.write("[include]\npath = #{child}\n") }
-      includes.last.write("")
-
-      expect(allowed_config_paths).to eq([(home/".gitconfig").to_s, *includes.first(10).map(&:to_s)])
     end
 
     it "keeps writes restricted to the cached repository" do
@@ -530,7 +194,21 @@ RSpec.describe GitDownloadStrategy do
     before do
       allow(Sandbox).to receive(:isolate_operation?).and_return(true)
       ENV.delete("HOMEBREW_GITHUB_API_TOKEN")
+      ENV.delete("HOMEBREW_GIT_NO_GLOBAL_CONFIG")
       ENV["SSH_AUTH_SOCK"] = "/path/to/agent.sock"
+    end
+
+    it "skips global config only when explicitly requested for a download" do
+      allow(strategy).to receive(:fetching?).and_return(true)
+      ENV["HOMEBREW_GIT_NO_GLOBAL_CONFIG"] = "1"
+
+      expect(strategy.env).to include("GIT_CONFIG_GLOBAL" => File::NULL)
+    end
+
+    it "does not change non-download Git commands when the option is enabled" do
+      ENV["HOMEBREW_GIT_NO_GLOBAL_CONFIG"] = "1"
+
+      expect(strategy.env).to eq("GIT_TERMINAL_PROMPT" => "0")
     end
 
     it "preserves the download environment even for URLs that may be rewritten to SSH" do

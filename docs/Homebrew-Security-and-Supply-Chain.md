@@ -187,10 +187,6 @@ This reduces the risk that a malicious or faulty package can alter unrelated sof
 
 Sandbox permissions are defined by Homebrew's reviewed code.
 Sandboxing complements maintainer review, download verification and explicit trust decisions; it does not make arbitrary third-party code safe to run.
-Git downloads grant exact-file reads to existing user-global Git configs and declared include targets, including inactive `includeIf` branches.
-Reached shared or repository-managed configs can name further files, without additional directory access.
-Homebrew discovers the graph once per fetch, limiting work, checked bytes and Git query time.
-On exhaustion, it warns and retains collected permissions; targets introduced during fetch may remain unreadable.
 The separate trust requirements for taps and vendor-provided casks still apply.
 
 On macOS, Homebrew attempts to disclaim TCC responsibility when launching sandboxed commands for formulae and casks, preventing them from inheriting the launching application's privacy permissions, such as Full Disk Access.

@@ -489,6 +489,13 @@ module Homebrew
         description: "Set the Git author name and, if `$HOMEBREW_GIT_COMMITTER_NAME` is unset, committer name to " \
                      "this value.",
       },
+      HOMEBREW_GIT_NO_GLOBAL_CONFIG:             {
+        description: "If set, ignore user-global Git configuration when downloading Git repositories. " \
+                     "Use this if the sandbox cannot read your Git config or its includes. " \
+                     "Global credential helpers, URL rewrites and network settings will not apply; " \
+                     "system and repository configuration still apply.",
+        boolean:     true,
+      },
       HOMEBREW_GIT_PATH:                         {
         description: "Linux only: Set this value to a new enough `git` executable for Homebrew to use.",
         default:     "git",
