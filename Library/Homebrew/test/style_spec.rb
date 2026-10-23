@@ -59,8 +59,6 @@ RSpec.describe Homebrew::Style do
   end
 
   describe ".check_style_and_print" do
-    let(:dir) { mktmpdir }
-
     it "returns true (success) for conforming file with only audit-level violations" do
       # This file is known to use non-rocket hashes and other things that trigger audit,
       # but not regular, cop violations

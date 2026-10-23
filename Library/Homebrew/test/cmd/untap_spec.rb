@@ -5,8 +5,6 @@ require "cmd/shared_examples/args_parse"
 require "cmd/untap"
 
 RSpec.describe Homebrew::Cmd::Untap do
-  let(:class_instance) { described_class.new(%w[arg1]) }
-
   it_behaves_like "parseable arguments"
 
   it "untaps a given Tap with an installed cask", :cask, :integration_test do

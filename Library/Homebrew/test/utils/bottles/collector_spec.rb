@@ -6,7 +6,6 @@ require "utils/bottles"
 RSpec.describe Utils::Bottles::Collector do
   subject(:collector) { described_class.new }
 
-  let(:tahoe) { Utils::Bottles::Tag.from_symbol(:tahoe) }
   let(:sequoia) { Utils::Bottles::Tag.from_symbol(:sequoia) }
   let(:sonoma) { Utils::Bottles::Tag.from_symbol(:sonoma) }
 
