@@ -131,9 +131,12 @@ Homebrew/UnreferencedLet:
   Description: "Removes a lazy `let` whose name is never referenced (its block never runs)."
   Include:
     - "Homebrew/test/**/*_spec.rb"
-  # Deletion is unsafe (explicit -A required, never applied on a plain run): the cop is heuristic
-  # and cannot see references made across files via shared examples or included harnesses.
+  # Heuristic, as it cannot see references made from other files.
   SafeAutoCorrect: false
+  # Shared groups from other files that read no `let`.
+  SharedGroupsReadingNoLets:
+    - "a documented command"
+    - "parseable arguments"
 
 # `system` is a special case and aligns on second argument, so allow this for formulae.
 Layout/ArgumentAlignment:

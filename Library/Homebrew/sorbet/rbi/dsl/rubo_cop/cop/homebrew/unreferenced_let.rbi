@@ -7,5 +7,8 @@
 
 class RuboCop::Cop::Homebrew::UnreferencedLet
   sig { params(node: RuboCop::AST::Node, kwargs: T.untyped, block: T.untyped).returns(T.untyped) }
-  def definition_name(node, **kwargs, &block); end
+  def shared_group_name(node, **kwargs, &block); end
+
+  sig { params(node: RuboCop::AST::Node, kwargs: T.untyped, block: T.untyped).returns(T.untyped) }
+  def subject_name(node, **kwargs, &block); end
 end

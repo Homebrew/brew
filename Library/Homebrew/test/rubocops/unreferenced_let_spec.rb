@@ -5,9 +5,8 @@ require "yaml"
 require "rubocops/unreferenced_let"
 
 RSpec.describe RuboCop::Cop::Homebrew::UnreferencedLet, :config do
-  # `RSpec::Base#on_new_investigation` reads `config["RSpec"]["Language"]` to drive the RSpec DSL
-  # matchers (`shared_group?`, `include?`). A full `brew style` run merges that from rubocop-rspec's
-  # plugin config, but the isolated cop spec does not, so supply it from the gem's `default.yml`.
+  # `brew style` merges rubocop-rspec's RSpec `Language` config but an isolated cop spec does
+  # not, so load it from the gem's `default.yml`.
   let(:other_cops) do
     language_matcher_source, = RuboCop::RSpec::Language.instance_method(:include?).source_location
     language = YAML.safe_load_file(
@@ -82,8 +81,6 @@ RSpec.describe RuboCop::Cop::Homebrew::UnreferencedLet, :config do
       end
     RUBY
 
-    # The comment + let are removed, and the now-duplicate trailing blank is consumed so no
-    # stray blank is left behind.
     expect_correction(<<~RUBY)
       RSpec.describe Thing do
         let(:kept) { 1 }
@@ -104,7 +101,6 @@ RSpec.describe RuboCop::Cop::Homebrew::UnreferencedLet, :config do
       end
     RUBY
 
-    # `let(:kept)` precedes the removal, so the blank after it (the final-let separator) stays.
     expect_correction(<<~RUBY)
       RSpec.describe Thing do
         let(:kept) { 1 }
@@ -297,12 +293,258 @@ RSpec.describe RuboCop::Cop::Homebrew::UnreferencedLet, :config do
     RUBY
   end
 
-  it "skips every let in a file that consumes shared examples" do
+  it "does not flag a let in a group that includes shared examples" do
     expect_no_offenses(<<~RUBY)
       RSpec.describe Thing do
         let(:unused) { create(:thing) }
 
         it_behaves_like "a thing"
+      end
+    RUBY
+  end
+
+  it "does not flag a let in a group enclosing an include" do
+    expect_no_offenses(<<~RUBY)
+      RSpec.describe Thing do
+        let(:unused) { create(:thing) }
+
+        context "nested" do
+          include_context "a thing"
+        end
+      end
+    RUBY
+  end
+
+  it "does not flag a let in a group nested below an include" do
+    expect_no_offenses(<<~RUBY)
+      RSpec.describe Thing do
+        include_context "a thing"
+
+        context "nested" do
+          let(:unused) { create(:thing) }
+
+          it { expect(1).to eq(1) }
+        end
+      end
+    RUBY
+  end
+
+  it "does not flag a let beside an include whose name is not a literal" do
+    expect_no_offenses(<<~RUBY)
+      RSpec.describe Thing do
+        let(:unused) { create(:thing) }
+
+        it_behaves_like shared_name
+      end
+    RUBY
+  end
+
+  it "flags a let in a group the include cannot reach" do
+    expect_offense(<<~RUBY)
+      RSpec.describe Thing do
+        context "including" do
+          it_behaves_like "a thing"
+        end
+
+        context "sibling" do
+          let(:unused) { create(:thing) }
+          ^^^ Remove unreferenced `let(:unused)` -- its name is never used, so the block never runs.
+
+          it { expect(1).to eq(1) }
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      RSpec.describe Thing do
+        context "including" do
+          it_behaves_like "a thing"
+        end
+
+        context "sibling" do
+          it { expect(1).to eq(1) }
+        end
+      end
+    RUBY
+  end
+
+  it "flags a let beside an include of a shared group defined in the same file that does not read it" do
+    expect_offense(<<~RUBY)
+      RSpec.describe Thing do
+        let(:unused) { create(:thing) }
+        ^^^ Remove unreferenced `let(:unused)` -- its name is never used, so the block never runs.
+
+        shared_examples "a thing" do
+          it { expect(1).to eq(1) }
+        end
+
+        it_behaves_like "a thing"
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      RSpec.describe Thing do
+        shared_examples "a thing" do
+          it { expect(1).to eq(1) }
+        end
+
+        it_behaves_like "a thing"
+      end
+    RUBY
+  end
+
+  it "does not flag a let read by a shared group defined in the same file" do
+    expect_no_offenses(<<~RUBY)
+      RSpec.describe Thing do
+        let(:thing) { create(:thing) }
+
+        shared_examples "a thing" do
+          it { expect(thing).to be_present }
+        end
+
+        it_behaves_like "a thing"
+      end
+    RUBY
+  end
+
+  context "with SharedGroupsReadingNoLets" do
+    let(:cop_config) { { "SharedGroupsReadingNoLets" => ["a thing"] } }
+
+    it "flags a let beside an include of a listed shared group" do
+      expect_offense(<<~RUBY)
+        RSpec.describe Thing do
+          let(:unused) { create(:thing) }
+          ^^^ Remove unreferenced `let(:unused)` -- its name is never used, so the block never runs.
+
+          it_behaves_like "a thing"
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        RSpec.describe Thing do
+          it_behaves_like "a thing"
+        end
+      RUBY
+    end
+
+    it "does not flag a let beside an include of a shared group that is not listed" do
+      expect_no_offenses(<<~RUBY)
+        RSpec.describe Thing do
+          let(:unused) { create(:thing) }
+
+          it_behaves_like "another thing"
+        end
+      RUBY
+    end
+  end
+
+  it "flags a let that is only referenced in a sibling example group" do
+    expect_offense(<<~RUBY)
+      RSpec.describe Thing do
+        context "when first" do
+          let(:value) { 1 }
+          ^^^ Remove unreferenced `let(:value)` -- its name is never used, so the block never runs.
+
+          it { expect(1).to eq(1) }
+        end
+
+        context "when second" do
+          let(:value) { 2 }
+
+          it { expect(value).to eq(2) }
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      RSpec.describe Thing do
+        context "when first" do
+          it { expect(1).to eq(1) }
+        end
+
+        context "when second" do
+          let(:value) { 2 }
+
+          it { expect(value).to eq(2) }
+        end
+      end
+    RUBY
+  end
+
+  it "does not flag a let referenced in a nested example group" do
+    expect_no_offenses(<<~RUBY)
+      RSpec.describe Thing do
+        let(:value) { 1 }
+
+        context "nested" do
+          it { expect(value).to eq(1) }
+        end
+      end
+    RUBY
+  end
+
+  it "does not flag a let referenced from a hook in an enclosing example group" do
+    expect_no_offenses(<<~RUBY)
+      RSpec.describe Thing do
+        before { value }
+
+        context "nested" do
+          let(:value) { 1 }
+
+          it { expect(1).to eq(1) }
+        end
+      end
+    RUBY
+  end
+
+  it "does not flag a let referenced only from another let" do
+    expect_no_offenses(<<~RUBY)
+      RSpec.describe Thing do
+        let(:base) { 1 }
+        let(:derived) { base + 1 }
+
+        it { expect(derived).to eq(2) }
+      end
+    RUBY
+  end
+
+  it "flags every definition of an overridden name that nothing reads" do
+    expect_offense(<<~RUBY)
+      RSpec.describe Thing do
+        let(:value) { 1 }
+        ^^^ Remove unreferenced `let(:value)` -- its name is never used, so the block never runs.
+
+        context "nested" do
+          let(:value) { 2 }
+          ^^^ Remove unreferenced `let(:value)` -- its name is never used, so the block never runs.
+
+          it { expect(1).to eq(1) }
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      RSpec.describe Thing do
+        context "nested" do
+          it { expect(1).to eq(1) }
+        end
+      end
+    RUBY
+  end
+
+  it "flags a let whose name only appears inside its own block" do
+    expect_offense(<<~RUBY)
+      RSpec.describe Thing do
+        let(:tahoe) { Tag.from_symbol(:tahoe) }
+        ^^^ Remove unreferenced `let(:tahoe)` -- its name is never used, so the block never runs.
+
+        it { expect(1).to eq(1) }
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      RSpec.describe Thing do
+        it { expect(1).to eq(1) }
       end
     RUBY
   end

@@ -140,7 +140,6 @@ RSpec.describe Utils::Analytics do
     let(:package)  { f.name }
     let(:tap_name) { f.tap.name }
     let(:on_request) { false }
-    let(:options) { "--HEAD" }
 
     it "outputs in debug mode" do
       ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")

@@ -293,7 +293,6 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
       font "Test.ttf"
     end
   end
-  let(:newest_macos) { MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED).to_sym }
 
   it_behaves_like "parseable arguments"
 
@@ -440,9 +439,6 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
 
   describe "::filter_runners" do
     let(:arm_linux_runner) { OS::LINUX_CI_ARM_RUNNER }
-    # We simulate a macOS version older than the newest, as the method will use
-    # the host macOS version instead of the default (the newest macOS version).
-    let(:older_macos) { :big_sur }
 
     context "when cask does not have on_system blocks/calls or `depends_on arch`" do
       it "returns an array including everything" do
