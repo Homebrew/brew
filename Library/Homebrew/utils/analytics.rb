@@ -406,6 +406,7 @@ module Utils
             developer:      Homebrew::EnvConfig.developer?,
             devcmdrun:      Homebrew::EnvConfig.devcmdrun?,
             arch:           HOMEBREW_PHYSICAL_PROCESSOR,
+            cpu_family:     Hardware::CPU.family.to_s,
             os:             with_wsl_suffix_if_needed(HOMEBREW_SYSTEM),
           }
         end
