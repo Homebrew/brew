@@ -40,6 +40,35 @@ RSpec.describe Homebrew::DevCmd::GenerateFormulaApi do
     end
   end
 
+  context "when passed `--tap`" do
+    before do
+      tap = instance_double(Tap, installed?: true, name: "user/repo", formula_names: ["foo"], alias_table: {},
+                                 formula_renames: {}, git_head: "tap-head", tap_migrations: {})
+      allow(Tap).to receive(:fetch).with("user/repo").and_return(tap)
+    end
+
+    it "generates formula data from the tap" do
+      Dir.mktmpdir do |tmpdir|
+        path = Pathname.new(tmpdir)
+        path.cd { described_class.new(["--tap=user/repo"]).run }
+
+        expect(JSON.parse((path/"_data/formula/foo.json").read)["name"]).to eq("foo")
+      end
+    end
+
+    it "does not download the executables database" do
+      expect(Homebrew::API).not_to receive(:download_executables_file_from_github_packages!)
+
+      Dir.mktmpdir { |tmpdir| Pathname.new(tmpdir).cd { described_class.new(["--tap=user/repo"]).run } }
+    end
+
+    it "does not load the advisory database" do
+      expect(Homebrew::Vulns::AdvisoryDatabase).not_to receive(:load)
+
+      Dir.mktmpdir { |tmpdir| Pathname.new(tmpdir).cd { described_class.new(["--tap=user/repo"]).run } }
+    end
+  end
+
   it "attaches vulnerabilities from the advisory-database corpus to the public formula JSON" do
     advisories = Homebrew::Vulns::AdvisoryDatabase.new({
       "meta"       => {},

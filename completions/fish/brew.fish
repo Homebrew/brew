@@ -1211,6 +1211,7 @@ __fish_brew_complete_arg 'generate-cask-api' -l debug -d 'Display any debugging 
 __fish_brew_complete_arg 'generate-cask-api' -l dry-run -d 'Generate API data without writing it to files'
 __fish_brew_complete_arg 'generate-cask-api' -l help -d 'Show this message'
 __fish_brew_complete_arg 'generate-cask-api' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'generate-cask-api' -l tap -d 'The tap to generate cask API data for, specified as user`/`repo'
 __fish_brew_complete_arg 'generate-cask-api' -l verbose -d 'Make some output more verbose'
 
 
@@ -1239,6 +1240,7 @@ __fish_brew_complete_arg 'generate-formula-api' -l debug -d 'Display any debuggi
 __fish_brew_complete_arg 'generate-formula-api' -l dry-run -d 'Generate API data without writing it to files'
 __fish_brew_complete_arg 'generate-formula-api' -l help -d 'Show this message'
 __fish_brew_complete_arg 'generate-formula-api' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'generate-formula-api' -l tap -d 'The tap to generate formula API data for, specified as user`/`repo'
 __fish_brew_complete_arg 'generate-formula-api' -l verbose -d 'Make some output more verbose'
 
 
@@ -1247,6 +1249,7 @@ __fish_brew_complete_arg 'generate-internal-api' -l debug -d 'Display any debugg
 __fish_brew_complete_arg 'generate-internal-api' -l dry-run -d 'Generate internal API data without writing it to files'
 __fish_brew_complete_arg 'generate-internal-api' -l help -d 'Show this message'
 __fish_brew_complete_arg 'generate-internal-api' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'generate-internal-api' -l tap -d 'The tap to generate internal API data for, specified as user`/`repo'
 __fish_brew_complete_arg 'generate-internal-api' -l verbose -d 'Make some output more verbose'
 
 

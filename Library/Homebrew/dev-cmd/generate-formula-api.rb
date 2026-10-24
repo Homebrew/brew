@@ -25,6 +25,8 @@ module Homebrew
         EOS
         switch "-n", "--dry-run",
                description: "Generate API data without writing it to files."
+        flag   "--tap=",
+               description: "The tap to generate formula API data for, specified as <user>`/`<repo>."
 
         named_args :none
 
@@ -33,7 +35,11 @@ module Homebrew
 
       sig { override.void }
       def run
-        tap = CoreTap.instance
+        tap = if args.tap
+          Tap.fetch(args.tap)
+        else
+          CoreTap.instance
+        end
         raise TapUnavailableError, tap.name unless tap.installed?
 
         unless args.dry_run?
@@ -45,12 +51,14 @@ module Homebrew
         executables_path = Pathname("api/internal/executables.txt")
         # Use the existing executables database as the API generation source.
         # It is generated from GitHub Packages metadata, not generated API JSON.
-        if !args.dry_run? &&
+        if !args.dry_run? && tap == CoreTap.instance &&
            !Homebrew::API.download_executables_file_from_github_packages!(executables_path)
           odie "Failed to download #{executables_path}"
         end
         executables = ExecutablesDB.new(executables_path.to_s).to_hash
-        advisories = load_advisory_database
+        advisories = if tap == CoreTap.instance
+          load_advisory_database
+        end
 
         Homebrew::API.with_no_api_env do
           tap_migrations_json = JSON.dump(tap.tap_migrations)
