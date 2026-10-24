@@ -128,7 +128,14 @@ module Cask
         desktop_entries.each do |desktop_entry_name, desktop_entry_contents|
           desktop_entry = desktop_entry_dir/desktop_entry_name
           ohai "Creating desktop entry '#{desktop_entry}'"
-          desktop_entry.unlink if desktop_entry.exist? || desktop_entry.symlink?
+          if desktop_entry.exist? || desktop_entry.symlink?
+            # Take over the entry from any other cask that links to it,
+            # so uninstalling that cask doesn't remove this one's entry.
+            Caskroom.path.glob("*/*/*.desktop").each do |desktop_entry_link|
+              desktop_entry_link.unlink if desktop_entry_link.symlink? && desktop_entry_link.readlink == desktop_entry
+            end
+            desktop_entry.unlink
+          end
           desktop_entry.write(desktop_entry_contents)
           FileUtils.ln_sf desktop_entry, cask.staged_path/desktop_entry_name
         end

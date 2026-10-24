@@ -154,6 +154,21 @@ RSpec.describe Cask::Artifact::AppImage, :cask do
 
           expect(desktop_entry.read).to include("Name=Naked")
         end
+
+        describe "when another cask links to it" do
+          let(:other_desktop_entry_link) { Cask::Caskroom.path/"other-cask/1.0/naked.desktop" }
+
+          before do
+            other_desktop_entry_link.dirname.mkpath
+            FileUtils.ln_s desktop_entry, other_desktop_entry_link
+          end
+
+          it "takes it over from that cask" do
+            install_phase
+
+            expect(other_desktop_entry_link).not_to be_a_symlink
+          end
+        end
       end
 
       describe "given the adopt option" do
