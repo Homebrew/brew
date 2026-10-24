@@ -38,6 +38,9 @@ class Homebrew::DevCmd::Bump::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def installed?; end
 
+  sig { returns(T.nilable(String)) }
+  def message; end
+
   sig { returns(T::Boolean) }
   def no_autobump?; end
 

@@ -630,6 +630,7 @@ _brew_bump() {
     '--full-name[Print formulae/casks with fully-qualified names]' \
     '--help[Show this message]' \
     '(--tap)--installed[Check formulae and casks that are currently installed]' \
+    '--message[Prepend message to the default pull request message when using `--open-pr`]' \
     '(--tap)--no-autobump[Ignore formulae/casks in autobump list (official repositories only)]' \
     '--no-fork[Don'\''t try to fork the repository]' \
     '(--open-pr)--no-pull-requests[Do not retrieve pull requests from GitHub]' \

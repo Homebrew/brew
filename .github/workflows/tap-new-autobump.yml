@@ -39,4 +39,9 @@ jobs:
           HOMEBREW_GIT_COMMITTER_NAME: ${{ steps.git_setup.outputs.name }}
           HOMEBREW_GIT_COMMITTER_EMAIL: ${{ steps.git_setup.outputs.email }}
           TAP_NAME: ${{ steps.set-up-homebrew.outputs.tap-name }}
-        run: brew bump --no-fork --open-pr --formulae --bump-synced --tap="$TAP_NAME"
+          PR_MESSAGE: >-
+            **Do not merge this pull request using GitHub's merge button.**
+            Once all checks have passed, run the
+            [`brew pr-pull`](${{ github.server_url }}/${{ github.repository }}/actions/workflows/publish.yml)
+            workflow with this pull request's number to publish the bottles and integrate the changes.
+        run: brew bump --no-fork --open-pr --formulae --bump-synced --tap="$TAP_NAME" --message="$PR_MESSAGE"
