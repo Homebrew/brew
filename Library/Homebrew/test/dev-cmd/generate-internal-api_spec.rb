@@ -7,6 +7,47 @@ require "dev-cmd/generate-internal-api"
 RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
   it_behaves_like "parseable arguments"
 
+  context "when passed `--tap`" do
+    before do
+      tap = instance_double(Tap, installed?: true, name: "user/repo", formula_names: ["foo"],
+                                 cask_files: [Pathname("c.rb")], alias_table: {}, formula_renames: {},
+                                 cask_renames: {}, git_head: "tap-head", tap_migrations: {})
+      allow(Tap).to receive(:fetch).with("user/repo").and_return(tap)
+      allow(CoreTap).to receive(:instance).and_return(instance_double(CoreTap))
+      allow(Formulary).to receive(:enable_factory_cache!)
+      allow(Formula).to receive(:generating_hash!)
+      allow(Cask::Cask).to receive(:generating_hash!)
+      allow(Formulary).to receive(:factory).with("foo").and_return(
+        instance_double(Formula, name: "foo", to_hash_with_variations: { "name" => "foo" }),
+      )
+      allow(Cask::CaskLoader).to receive(:load).with(Pathname("c.rb")).and_return(
+        instance_double(Cask::Cask, token: "c", to_hash_with_variations: { "token" => "c" }),
+      )
+      allow(Homebrew::API::Formula::FormulaStructGenerator).to receive(:generate_formula_struct_hash)
+        .and_return(instance_double(Homebrew::API::FormulaStruct, serialize: { "name" => "foo" }))
+      allow(Homebrew::API::Cask::CaskStructGenerator).to receive(:generate_cask_struct_hash)
+        .and_return(instance_double(Homebrew::API::CaskStruct, serialize: { "token" => "c" }))
+      stub_const("OnSystem::VALID_OS_ARCH_TAGS", [Utils::Bottles::Tag.from_symbol(:arm64_sonoma)])
+    end
+
+    it "generates formula and cask data from the tap" do
+      mktmpdir do |path|
+        path.cd { described_class.new(["--tap=user/repo"]).run }
+
+        json = JSON.parse((path/"api/internal/packages.arm64_sonoma.json").read)
+        expect(json.values_at("formula_tap_git_head", "cask_tap_git_head")).to eq(["tap-head", "tap-head"])
+      end
+    end
+
+    it "does not download the executables database" do
+      expect(Homebrew::API).not_to receive(:download_executables_file_from_github_packages!)
+
+      mktmpdir do |path|
+        path.cd { described_class.new(["--tap=user/repo"]).run }
+      end
+    end
+  end
+
   it "writes metadata and formula executables to each generated packages file" do
     core_tap = instance_double(CoreTap, installed?: true, name: "homebrew/core", formula_names: ["foo"],
                                         alias_table: {}, formula_renames: {}, git_head: "formula-head",
