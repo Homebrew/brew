@@ -589,6 +589,7 @@ module Homebrew
     sig { params(type: Symbol, full_name: String, tap: Tap).returns(T::Boolean) }
     def self.explicitly_allowed?(type, full_name, tap)
       return false if type == :command
+      return false unless %w[install reinstall upgrade].include?(Homebrew.running_command)
 
       downcased_args = ARGV.map(&:downcase)
       downcased_full_name = full_name.downcase

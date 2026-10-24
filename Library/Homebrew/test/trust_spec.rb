@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cask/cask_loader"
 require "formulary"
 require "tap"
 require "trust"
@@ -319,6 +320,7 @@ RSpec.describe Homebrew::Trust, :trust_store do
     end
 
     before do
+      allow(Homebrew).to receive(:running_command).and_return("install")
       without_partial_double_verification { allow($stderr).to receive(:ohai) }
       formula_path.dirname.mkpath
       formula_path.write <<~RUBY
@@ -838,40 +840,87 @@ RSpec.describe Homebrew::Trust, :trust_store do
     end
   end
 
-  it "allows explicitly named formula files when trust checks are enabled" do
-    old_argv = ARGV.dup
-    tap = Tap.fetch("thirdparty", "foo")
-    formula_path = tap.formula_dir/"default-trust.rb"
-    formula_path.dirname.mkpath
+  shared_examples "explicit formula installation" do |command|
+    T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
 
-    ARGV.replace(["thirdparty/foo/default-trust"])
-    expect(described_class.trusted_formula_file?(formula_path)).to be(true)
+    it "allows explicitly named formula files for #{command}" do
+      old_argv = ARGV.dup
+      tap = Tap.fetch("thirdparty", "foo")
+      formula_path = tap.formula_dir/"default-trust.rb"
+      formula_path.dirname.mkpath
+      allow(Homebrew).to receive(:running_command).and_return(command)
 
-    expect(described_class.trusted?(:formula, "thirdparty/foo/default-trust")).to be(false)
-  ensure
-    ARGV.replace(old_argv) if old_argv
-    described_class.clear!(:tap)
-    described_class.clear!(:formula)
-    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+      ARGV.replace(["thirdparty/foo/default-trust"])
+      expect(described_class.trusted_formula_file?(formula_path)).to be(true)
+    ensure
+      ARGV.replace(old_argv) if old_argv
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
   end
 
-  it "allows files from explicitly named taps when trust checks are enabled" do
-    old_argv = ARGV.dup
-    tap = Tap.fetch("thirdparty", "foo")
-    cask_path = tap.cask_dir/"default-trust.rb"
-    cask_path.dirname.mkpath
+  it_behaves_like "explicit formula installation", "install"
+  it_behaves_like "explicit formula installation", "reinstall"
+  it_behaves_like "explicit formula installation", "upgrade"
 
-    ARGV.replace(["--tap", "thirdparty/foo"])
-    expect(described_class.trusted_cask_file?(cask_path)).to be(true)
+  shared_examples "untrusted tap arguments" do |arguments|
+    T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
 
-    expect(described_class.trusted?(:tap, "thirdparty/foo")).to be(false)
-    expect(described_class.trusted?(:cask, "thirdparty/foo/default-trust")).to be(false)
-  ensure
-    ARGV.replace(old_argv) if old_argv
-    described_class.clear!(:tap)
-    described_class.clear!(:cask)
-    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    sig { returns(Pathname) }
+    let(:formula_path) { Tap.fetch("thirdparty", "foo").formula_dir/"default-trust.rb" }
+
+    sig { returns(Pathname) }
+    let(:cask_path) { Tap.fetch("thirdparty", "foo").cask_dir/"default-trust.rb" }
+
+    around do |example|
+      old_argv = ARGV.dup
+      ARGV.replace(arguments)
+      example.run
+    ensure
+      ARGV.replace(old_argv)
+    end
+
+    before do
+      allow(Homebrew).to receive(:running_command).and_return("info")
+      formula_path.dirname.mkpath
+      formula_path.write <<~RUBY
+        class DefaultTrust < Formula
+          raise "must not evaluate untrusted formula"
+        end
+      RUBY
+      cask_path.dirname.mkpath
+      cask_path.write <<~RUBY
+        cask "default-trust" do
+          raise "must not evaluate untrusted cask"
+        end
+      RUBY
+    end
+
+    after do
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+
+    it "does not trust the formula file" do
+      expect(described_class.trusted_formula_file?(formula_path)).to be(false)
+    end
+
+    it "does not trust the cask file" do
+      expect(described_class.trusted_cask_file?(cask_path)).to be(false)
+    end
+
+    it "refuses to evaluate the formula" do
+      expect { Formulary.factory("thirdparty/foo/default-trust") }
+        .to raise_error(Homebrew::UntrustedTapError)
+    end
+
+    it "refuses to evaluate the cask" do
+      expect { Cask::CaskLoader.load("thirdparty/foo/default-trust") }
+        .to raise_error(Homebrew::UntrustedTapError)
+    end
   end
+
+  it_behaves_like "untrusted tap arguments", ["thirdparty/foo/default-trust"]
+  it_behaves_like "untrusted tap arguments", ["--tap=thirdparty/foo"]
+  it_behaves_like "untrusted tap arguments", ["--tap", "thirdparty/foo"]
 
   it "does not allow files from a tap named as a bare argument when trust checks are enabled" do
     old_argv = ARGV.dup
@@ -889,6 +938,7 @@ RSpec.describe Homebrew::Trust, :trust_store do
   end
 
   it "does not allow explicitly named command files when trust checks are enabled" do
+    allow(Homebrew).to receive(:running_command).and_return("install")
     old_argv = ARGV.dup
     tap = Tap.fetch("thirdparty", "foo")
     command_path = tap.path/"cmd/brew-default-trust.rb"

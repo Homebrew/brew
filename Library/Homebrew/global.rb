@@ -128,8 +128,12 @@ module Homebrew
       ENV.fetch("HOMEBREW_AUTO_UPDATE_COMMAND", false).present?
     end
 
+    sig { returns(T.nilable(String)) }
+    attr_reader :running_command
+
     sig { params(cmd: T.nilable(String)).void }
     def running_command=(cmd)
+      @running_command = T.let(cmd, T.nilable(String))
       @running_command_with_args = T.let("#{cmd} #{ARGV.join(" ")}", T.nilable(String))
     end
 
