@@ -1,3 +1,46 @@
 #!/bin/sh
+# Mimics an AppImage runtime's `--appimage-extract PATTERN`,
+# which extracts top-level symlinks without their targets.
+if [ "$1" = "--appimage-extract" ]
+then
+  mkdir -p squashfs-root/usr/share/icons
+  case "$2" in
+    "*.desktop")
+      if [ "${NAKED_DESKTOP_ENTRIES-}" = "multiple" ]
+      then
+        # Like opencode-desktop, whose root `.desktop` is its executable.
+        printf '\177ELF\002\001\001' >squashfs-root/naked.desktop
+        printf '# Naked\n\n[Desktop Entry]\nType=Application\nName=Naked\nExec=AppRun\n' \
+          >squashfs-root/naked.desktop.desktop
+        printf '[Desktop Entry]\nType=Application\nName=Naked Tools\nExec=AppRun --tools\n' \
+          >squashfs-root/naked-tools.desktop
+        {
+          printf '[Desktop Entry]\n'
+          head -c 70000 /dev/zero | tr '\0' '#'
+        } >squashfs-root/naked-huge.desktop
+      else
+        cat >squashfs-root/naked.desktop <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Naked
+Exec=AppRun --flag %U
+TryExec=AppRun
+${NAKED_ICON_LINE-Icon=naked}
+Actions=new;
+
+[Desktop Action new]
+Name=New
+Exec=AppRun --new
+DESKTOP
+      fi
+      ;;
+    "naked.*") ln -s usr/share/icons/naked.png squashfs-root/naked.png ;;
+    "usr/share/icons/naked.png") echo "PNG" >squashfs-root/usr/share/icons/naked.png ;;
+    ".DirIcon") printf '\211PNG\r\n' >squashfs-root/.DirIcon ;;
+    *) ;;
+  esac
+  exit 0
+fi
+
 echo "AppImage v1"
 exit 0
