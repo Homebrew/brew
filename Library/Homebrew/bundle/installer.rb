@@ -254,7 +254,10 @@ module Homebrew
 
         package = if entry.cls == Brew
           require "formula"
-          Formula[entry.full_name]
+          formula = Formula[entry.full_name]
+          return false if formula.conflicts.present?
+
+          formula
         else
           require "cask/cask_loader"
           ::Cask::CaskLoader.load(entry.full_name)

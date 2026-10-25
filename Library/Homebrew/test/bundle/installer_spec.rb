@@ -28,7 +28,9 @@ RSpec.describe Homebrew::Bundle::Installer do
                                                       installable_or_upgradable?:     true,
                                                       preinstall!:                    true)
     allow(Homebrew::Bundle::Tap).to receive_messages(preinstall!: true, install!: true, installed_taps: [])
-    allow(Formula).to receive(:[]) { |name| instance_double(Formula, full_name: name, tap: CoreTap.instance) }
+    allow(Formula).to receive(:[]) { |name|
+      instance_double(Formula, full_name: name, tap: CoreTap.instance, conflicts: [])
+    }
     allow(::Cask::CaskLoader).to receive(:load)
       .and_return(instance_double(::Cask::Cask, full_name: "google-chrome",
                                                 tap:       CoreCaskTap.instance))
@@ -92,7 +94,8 @@ RSpec.describe Homebrew::Bundle::Installer do
     expect(Homebrew::Trust).to receive(:trust!).with(:formula, "thirdparty/tap/bar").ordered.and_return(true)
     expect(Formula).to receive(:[]).with("thirdparty/tap/bar").ordered
                                    .and_return(instance_double(Formula, full_name: "thirdparty/tap/bar",
-                                                                        tap:       Tap.fetch("thirdparty/tap")))
+                                                                        tap:       Tap.fetch("thirdparty/tap"),
+                                                                        conflicts: []))
 
     described_class.install!([trusted_formula_entry], quiet: true)
   end
@@ -242,6 +245,53 @@ RSpec.describe Homebrew::Bundle::Installer do
       described_class.install!([formula_entry], quiet: true)
     end
 
+    it "unlinks installed conflicts before installing a formula" do
+      conflicting_formula = formula("mysql") do
+        T.bind(self, T.class_of(Formula))
+        url "mysql-1.0"
+        conflicts_with "mysql@8.4"
+      end
+      allow(conflicting_formula).to receive(:tap).and_return(CoreTap.instance)
+      allow(Formula).to receive(:[]).with("mysql").and_return(conflicting_formula)
+      allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
+      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
+      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("mysql@8.4").and_return(true)
+
+      expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
+                                                .ordered.and_return(true)
+      expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "mysql", verbose: false)
+                                                .ordered.and_return(true)
+
+      described_class.install!([formula_entry], quiet: true)
+    end
+
+    it "unlinks conflicts installed by the batch before installing a formula" do
+      conflicting_formula = formula("ctags") do
+        T.bind(self, T.class_of(Formula))
+        url "ctags-1.0"
+        conflicts_with "universal-ctags"
+      end
+      allow(conflicting_formula).to receive(:tap).and_return(CoreTap.instance)
+      allow(Formula).to receive(:[]).with("ctags").and_return(conflicting_formula)
+      allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
+      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
+
+      expect(Homebrew::Bundle).to receive(:brew).with("install", "homebrew/core/ctags-lsp", verbose: false)
+                                                .ordered do
+        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
+        true
+      end
+      expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
+                                                .ordered.and_return(true)
+      expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
+                                                .ordered.and_return(true)
+
+      described_class.install!([
+        Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags-lsp"),
+        Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
+      ], quiet: true)
+    end
+
     it "keeps an already up-to-date entry out of the batch but still finishes it" do
       allow(Homebrew::Bundle::Brew).to receive(:preinstall!).with("mysql", any_args).and_return(false)
 
@@ -280,7 +330,8 @@ RSpec.describe Homebrew::Bundle::Installer do
 
     it "uses the resolved formula name when batching an alias" do
       allow(Formula).to receive(:[]).with("mysql").and_return(instance_double(Formula, full_name: "mysql@9.7",
-                                                                                       tap:       CoreTap.instance))
+                                                                                       tap:       CoreTap.instance,
+                                                                                       conflicts: []))
 
       expect(Homebrew::Bundle).to receive(:brew)
         .with("install", "homebrew/core/mysql@9.7", verbose: false)
@@ -292,7 +343,8 @@ RSpec.describe Homebrew::Bundle::Installer do
     it "preserves third-party tap names in a mixed batch" do
       allow(Formula).to receive(:[]).with("mysql")
                                     .and_return(instance_double(Formula, full_name: "thirdparty/tap/mysql",
-                                                                         tap:       Tap.fetch("thirdparty/tap")))
+                                                                         tap:       Tap.fetch("thirdparty/tap"),
+                                                                         conflicts: []))
       allow(::Cask::CaskLoader).to receive(:load)
         .and_return(instance_double(::Cask::Cask, full_name: "thirdparty/tap/google-chrome",
                                                   tap:       Tap.fetch("thirdparty/tap")))
@@ -311,7 +363,8 @@ RSpec.describe Homebrew::Bundle::Installer do
         entry = Homebrew::Bundle::Dsl::Entry.new(type, "local")
         if type == :brew
           allow(Formula).to receive(:[]).with("local")
-                                        .and_return(instance_double(Formula, full_name: "local", tap: nil))
+                                        .and_return(instance_double(Formula, full_name: "local", tap: nil,
+                                                                             conflicts: []))
         else
           allow(::Cask::CaskLoader).to receive(:load).with("local")
                                                      .and_return(instance_double(::Cask::Cask, full_name: "local",
@@ -379,7 +432,8 @@ RSpec.describe Homebrew::Bundle::Installer do
       (tap.cask_dir/"collision.rb").write('raise "Do not load this cask"')
       allow(Homebrew::Bundle::Tap).to receive(:installed_taps).and_return([tap.name])
       allow(Formula).to receive(:[]).with("thirdparty/tap/collision")
-                                    .and_return(instance_double(Formula, full_name: "thirdparty/tap/collision", tap:))
+                                    .and_return(instance_double(Formula, full_name: "thirdparty/tap/collision", tap:,
+                                                                         conflicts: []))
       allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
       allow(Homebrew::Bundle::Brew).to receive_messages(formula_installed?: false, formulae_by_full_name: nil,
                                                         installed_formulae: [])
