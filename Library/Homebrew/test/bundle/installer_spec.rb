@@ -729,6 +729,24 @@ RSpec.describe Homebrew::Bundle::Installer do
       stub_formula_loader(ctags_formula)
     end
 
+    it "reuses formulae already loaded for cask dependencies" do
+      requested_cask = ::Cask::Cask.new("editor") do
+        version "1.0"
+        url "https://example.com/editor.zip"
+        depends_on formula: "universal-ctags"
+      end
+      allow(::Cask::CaskLoader).to receive(:load).with("editor").and_return(requested_cask)
+      cask_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
+        entry: Homebrew::Bundle::Dsl::Entry.new(:cask, "editor"), verb: "Installing",
+        cls: Homebrew::Bundle::Cask, install_name: "editor"
+      )
+
+      allow(Formula).to receive(:[]).and_call_original
+      expect(Formula).to receive(:[]).with("universal-ctags").once.and_call_original
+
+      described_class.formula_names_with_dependencies([cask_entry])
+    end
+
     it "includes optional dependencies even when no install options are specified" do
       requested_formula = formula("editor") do
         T.bind(self, T.class_of(Formula))

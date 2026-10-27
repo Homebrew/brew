@@ -293,23 +293,13 @@ module Homebrew
       def self.formula_names_with_dependencies(entries)
         require "formula"
 
-        entries.flat_map do |entry|
-          formulae = case entry.cls.name
-          when "Homebrew::Bundle::Brew"
-            [Formula[entry.full_name]]
-          when "Homebrew::Bundle::Cask"
-            require "cask/cask_loader"
-            require "utils/topological_hash"
-
-            ::Utils::TopologicalHash.graph_package_dependencies(::Cask::CaskLoader.load(entry.full_name))
-                                    .keys.grep(Formula)
-          else
-            []
-          end
-          formulae.flat_map do |formula|
-            formula.recursive_dependencies { nil }.map(&:name).prepend(formula.full_name)
-          end
-        end.to_set
+        formula_names = Brew.formula_names_with_dependencies(
+          entries.filter_map { |entry| Formula[entry.full_name] if entry.cls == Brew },
+        )
+        formula_names += Cask.formula_dependencies(
+          entries.filter_map { |entry| entry.full_name if entry.cls == Cask }, recursive: true
+        )
+        formula_names.to_set
       end
 
       sig {
