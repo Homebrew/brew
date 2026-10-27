@@ -56,7 +56,88 @@ module UnpackStrategy
                         # recognize out-of-space errors, while using a UTF-8 character set so
                         # that archives containing non-ASCII paths can be extracted.
                         env:     { "LC_ALL" => "en_US.UTF-8" },
-                        verbose:
+                        verbose: verbose
+
+        normalize_proot_hardlinks!(unpack_dir)
+      end
+    end
+
+    # PROOT's --link2symlink extension represents hard links as absolute symlinks
+    # into the extraction directory. These break as soon as the tree is moved, so
+    # materialise each hard-link group as a regular file plus relative symlinks.
+    sig { params(root: Pathname).void }
+    def normalize_proot_hardlinks!(root)
+      status = begin
+        File.read("/proc/self/status")
+      rescue SystemCallError
+        nil
+      end
+      return if status.nil?
+
+      tracer_pid = status[/^TracerPid:\s*(\d+)/, 1]
+      return if tracer_pid.nil? || tracer_pid.to_i.zero?
+      return if root.glob("**/.l2s.*", File::FNM_DOTMATCH).empty?
+
+      groups = T.let({}, T::Hash[String, T::Array[Pathname]])
+      l2s_links = T.let({}, T::Hash[String, T::Array[Pathname]])
+
+      root.find do |path|
+        next if path.directory?
+
+        target = begin
+          path.readlink
+        rescue SystemCallError
+          nil
+        end
+        if target
+          stat = begin
+            File.stat(target)
+          rescue SystemCallError
+            next
+          end
+          key = "#{stat.dev}:#{stat.ino}"
+          (l2s_links[key] ||= []) << path
+          next
+        end
+
+        stat = begin
+          File.stat(path)
+        rescue SystemCallError
+          next
+        end
+        next if stat.nlink <= 1
+
+        key = "#{stat.dev}:#{stat.ino}"
+        (groups[key] ||= []) << path
+      end
+
+      groups.each do |key, paths|
+        next if paths.size < 2
+
+        data = paths.find { |path| path.basename.to_s.start_with?(".l2s.") }
+        next if data.nil?
+
+        hardlinks = paths - [data]
+        temp_stem = data.basename.to_s.delete_prefix(".l2s.").sub(/\.\d+\z/, "")
+        candidates = hardlinks.select { |path| temp_stem.start_with?(path.basename.to_s) }
+        canonical = candidates.max_by { |path| path.basename.to_s.length } || hardlinks.first
+        next if canonical.nil?
+
+        tmp = canonical.dirname/".homebrew-proot-#{Process.pid}-#{canonical.basename}"
+        IO.copy_stream(data.to_s, tmp.to_s)
+        File.chmod(data.stat.mode & 07777, tmp.to_s)
+
+        (hardlinks + (l2s_links[key] || []) + [data]).each do |path|
+          path.unlink
+        rescue Errno::ENOENT
+          nil
+        end
+
+        tmp.rename(canonical.to_s)
+
+        (hardlinks - [canonical]).each do |path|
+          path.make_symlink(canonical.relative_path_from(path.parent))
+        end
       end
     end
 
