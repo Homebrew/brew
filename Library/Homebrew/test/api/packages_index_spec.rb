@@ -59,6 +59,42 @@ RSpec.describe Homebrew::API::PackagesIndex do
     expect(described_class.load(target, payload: "#{payload} ", source_stat: target.stat)).to be_nil
   end
 
+  it "names the entries of a section whose JSON includes any of some texts" do
+    write_index!
+
+    expect(load_index.names_including("formulae", ["0.4.0\"", "missing"])).to eq %w[bar]
+  end
+
+  it "does not name entries when a recorded offset does not match the payload" do
+    write_index!
+    index_path = described_class.path_for(target)
+    data = JSON.parse(index_path.read)
+    data["formulae"]["foo"] = data["formulae"]["bar"]
+    index_path.write(JSON.generate(data))
+
+    expect(load_index.names_including("formulae", ["Foo"])).to be_nil
+  end
+
+  it "does not name entries when a recorded offset is not a number" do
+    write_index!
+    index_path = described_class.path_for(target)
+    data = JSON.parse(index_path.read)
+    data["formulae"]["foo"][0] = nil
+    index_path.write(JSON.generate(data))
+
+    expect(load_index.names_including("formulae", ["Foo"])).to be_nil
+  end
+
+  it "does not name entries when a recorded entry is cut short" do
+    write_index!
+    index_path = described_class.path_for(target)
+    data = JSON.parse(index_path.read)
+    data["formulae"]["bar"][1] = 0
+    index_path.write(JSON.generate(data))
+
+    expect(load_index.names_including("formulae", ["0.4.0\""])).to be_nil
+  end
+
   it "raises on lookups whose recorded offsets do not match the payload" do
     write_index!
     index_path = described_class.path_for(target)

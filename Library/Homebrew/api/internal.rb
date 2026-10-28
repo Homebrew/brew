@@ -293,6 +293,22 @@ module Homebrew
         end
       end
 
+      # Names of formulae whose API data includes any of `texts`, or `nil` when
+      # the data isn't held as an index of the signed payload.
+      sig { params(texts: T::Array[String]).returns(T.nilable(T::Array[String])) }
+      def self.formula_names_including(texts)
+        ensure_formula_data!
+        cache["packages_index"]&.names_including("formulae", texts)
+      end
+
+      # Tokens of casks whose API data includes any of `texts`, or `nil` when
+      # the data isn't held as an index of the signed payload.
+      sig { params(texts: T::Array[String]).returns(T.nilable(T::Array[String])) }
+      def self.cask_tokens_including(texts)
+        ensure_cask_data!
+        cache["packages_index"]&.names_including("casks", texts)
+      end
+
       sig { returns(T::Array[String]) }
       def self.cask_names
         ensure_cask_data!
