@@ -136,6 +136,31 @@ chmod -h "${homebrew_pkg_mode}" Caskroom Cellar Frameworks bin etc include lib o
 chown -R "${homebrew_pkg_user}:${homebrew_pkg_group}" .
 
 rm -rf "${homebrew_directory}/.git/hooks" "${homebrew_directory}/.gitconfig" "${homebrew_directory}/.config/git"
+# `.git/config` is prefix-owned and may contain program-naming keys (e.g.
+# `core.fsmonitor`) that Git would execute; neutralise it while running the
+# privileged Git commands below, then restore it.
+git_config_backup="${homebrew_directory}/.git/config.homebrew-backup"
+# Recover a backup left behind by an interrupted previous run before creating
+# another one, so Git settings are never permanently lost.
+if [[ -f "${git_config_backup}" && ! -f "${homebrew_directory}/.git/config" ]]
+then
+  "${user_command[@]}" mv -f "${git_config_backup}" "${homebrew_directory}/.git/config"
+fi
+if [[ -f "${homebrew_directory}/.git/config" ]]
+then
+  "${user_command[@]}" mv -f "${homebrew_directory}/.git/config" "${git_config_backup}"
+else
+  git_config_backup=""
+fi
+restore_git_config() {
+  if [[ -n "${git_config_backup}" && -f "${git_config_backup}" ]]
+  then
+    "${user_command[@]}" mv -f "${git_config_backup}" "${homebrew_directory}/.git/config"
+    git_config_backup=""
+  fi
+}
+trap restore_git_config EXIT
+
 # The package already contains a stable checkout; reset it when Git is available.
 if developer_dir="$(xcode-select --print-path 2>/dev/null)" &&
    [[ -n "${developer_dir}" && "${developer_dir}" != / && -x "${developer_dir}/usr/bin/git" ]]
@@ -151,6 +176,10 @@ then
   git_as_user -C "${homebrew_directory}" reset --hard "${latest_tag}"
   git_as_user -C "${homebrew_directory}" clean -f -d
 fi
+
+# Restore the repository config now that the privileged Git commands are done.
+restore_git_config
+trap - EXIT
 
 # move API cache to ~/Library/Caches/Homebrew
 user_home_dir="$(homebrew-user-home "${homebrew_pkg_user}")" ||
