@@ -552,6 +552,11 @@ class Version
     version.nil?
   end
 
+  sig { returns(T::Boolean) }
+  def blank?
+    version.nil?
+  end
+
   sig { params(comparator: String, other: Version).returns(T::Boolean) }
   def compare(comparator, other)
     case comparator

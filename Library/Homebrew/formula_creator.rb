@@ -73,7 +73,7 @@ module Homebrew
       @version_in_url = T.let(false, T::Boolean)
 
       if @version.present?
-        odebug "version from user: #{version}"
+        odebug "version from user: #{@version}"
       else
         @version_in_url = true if Version.detect(url).present?
         odebug "version in url: #{@version_in_url}"
