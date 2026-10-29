@@ -2195,7 +2195,7 @@ run Bundler if necessary for that command.
 
 ### `shellenv` \[*`shell`* ...\]
 
-Valid shells: bash\|csh\|fish\|pwsh\|sh\|tcsh\|zsh
+Valid shells: bash\|csh\|fish\|nu\|pwsh\|sh\|tcsh\|zsh
 
 Print export statements. When run in a shell, this installation of Homebrew will
 be added to your `$PATH`, `$MANPATH`, and `$INFOPATH`.
@@ -2207,6 +2207,9 @@ directories are first and second respectively in your `$PATH`. Consider adding
 evaluation of this command's output to your dotfiles (e.g. `~/.bash_profile` or
 `~/.zprofile` on macOS and `~/.bashrc` or `~/.zshrc` on Linux) with e.g.: `eval
 "$(brew shellenv zsh)"` or `eval "$(brew shellenv bash)"`
+
+For Nushell, add to `env.nu`: `brew shellenv nu | from nuon | default {} |
+load-env`
 
 The shell should be specified explicitly with a supported shell name parameter
 but will be detected automatically if not provided (but this may not be

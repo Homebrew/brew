@@ -1926,7 +1926,7 @@ __fish_brew_complete_arg 'sh' -l ruby -d 'Set up Homebrew\'s Ruby environment'
 __fish_brew_complete_arg 'sh' -l verbose -d 'Make some output more verbose'
 
 
-__fish_brew_complete_cmd 'shellenv' 'Valid shells: bash|csh|fish|pwsh|sh|tcsh|zsh  Print export statements'
+__fish_brew_complete_cmd 'shellenv' 'Valid shells: bash|csh|fish|nu|pwsh|sh|tcsh|zsh  Print export statements'
 __fish_brew_complete_arg 'shellenv' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'shellenv' -l help -d 'Show this message'
 __fish_brew_complete_arg 'shellenv' -l quiet -d 'Make some output more quiet'

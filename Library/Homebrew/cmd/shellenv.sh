@@ -54,6 +54,37 @@ homebrew-shellenv() {
       echo "if (\${ENV:MANPATH}) { [System.Environment]::SetEnvironmentVariable('MANPATH',(':'+\${ENV:MANPATH}.Trim(':')),[System.EnvironmentVariableTarget]::Process) }"
       echo "[System.Environment]::SetEnvironmentVariable('INFOPATH',('${HOMEBREW_PREFIX}/share/info:'+\${ENV:INFOPATH}),[System.EnvironmentVariableTarget]::Process)"
       ;;
+    nu | -nu | nushell)
+      # Nushell has no `eval` but NUON can be loaded immediately with `from nuon | load-env`
+      # so later lines of `env.nu` can use Homebrew.
+      # HOMEBREW_MANPATH and HOMEBREW_INFOPATH are the user's MANPATH and INFOPATH, passed through by bin/brew.
+      # Values are raw strings, which need no escaping (unlike `"` strings, whose escaping varies with Bash 3.2),
+      # closed by more `#`s than follow any `'` or start any value.
+      local manpath="${HOMEBREW_MANPATH:-}" infopath="${HOMEBREW_PREFIX}/share/info:${HOMEBREW_INFOPATH:-}"
+      local hashes="#" path_rest="${HOMEBREW_PREFIX}/bin:${HOMEBREW_PREFIX}/sbin:${HOMEBREW_PATH}:" nuon_path
+      while [[ ":${HOMEBREW_PREFIX}:${HOMEBREW_CELLAR}:${HOMEBREW_REPOSITORY}:${HOMEBREW_PATH}:${manpath}:${infopath}" == *[:\']"${hashes}"* ]]
+      do
+        hashes+="#"
+      done
+      local raw_open="r${hashes}'" raw_close="'${hashes}"
+      while [[ -n "${path_rest}" ]]
+      do
+        nuon_path+=" ${raw_open}${path_rest%%:*}${raw_close}"
+        path_rest="${path_rest#*:}"
+      done
+      echo "{"
+      echo "  HOMEBREW_PREFIX: ${raw_open}${HOMEBREW_PREFIX}${raw_close}"
+      echo "  HOMEBREW_CELLAR: ${raw_open}${HOMEBREW_CELLAR}${raw_close}"
+      echo "  HOMEBREW_REPOSITORY: ${raw_open}${HOMEBREW_REPOSITORY}${raw_close}"
+      echo "  PATH: [${nuon_path# }]"
+      if [[ -n "${manpath}" ]]
+      then
+        manpath="${manpath%"${manpath##*[!:]}"}"
+        echo "  MANPATH: ${raw_open}:${manpath#"${manpath%%[!:]*}"}${raw_close}"
+      fi
+      echo "  INFOPATH: ${raw_open}${infopath}${raw_close}"
+      echo "}"
+      ;;
     *)
       echo "export HOMEBREW_PREFIX=\"${HOMEBREW_PREFIX}\";"
       echo "export HOMEBREW_CELLAR=\"${HOMEBREW_CELLAR}\";"

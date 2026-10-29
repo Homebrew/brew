@@ -28,7 +28,9 @@ RSpec.describe "brew shellenv", type: :system do
 
   sig { params(shell: String).returns(String) }
   def shellenv(shell)
+    # Mirrors `bin/brew` passing these through to `brew.sh`.
     Utils.safe_popen_read(
+      { "HOMEBREW_MANPATH" => ENV.fetch("MANPATH", ""), "HOMEBREW_INFOPATH" => ENV.fetch("INFOPATH", "") },
       "/bin/bash", "-c", 'source "$1"; homebrew-shellenv "$2"',
       "bash", (HOMEBREW_LIBRARY_PATH/"cmd/shellenv.sh").to_s, shell
     )
@@ -36,10 +38,17 @@ RSpec.describe "brew shellenv", type: :system do
 
   sig { params(shell: String, shell_args: T::Array[String]).returns(T::Hash[String, String]) }
   def shellenv_environment(shell, shell_args)
+    script = if shell == "nu"
+      nuon = HOMEBREW_TEMP/"shellenv.nuon"
+      nuon.write(shellenv(shell))
+      "open --raw '#{nuon}' | from nuon | default {} | load-env"
+    else
+      shellenv(shell)
+    end
     stdout, stderr, status = Open3.capture3(
       { "HOMEBREW_PREFIX" => nil, "HOMEBREW_CELLAR" => nil, "HOMEBREW_REPOSITORY" => nil },
       (which(shell, ORIGINAL_PATHS) || skip("#{shell} is not installed")).to_s, *shell_args,
-      "#{shellenv(shell)}\n/usr/bin/env"
+      "#{script}\n/usr/bin/env"
     )
     raise "shellenv failed: #{stderr}" if !status.success? || !stderr.empty?
 
@@ -52,10 +61,18 @@ RSpec.describe "brew shellenv", type: :system do
     end.to_h
   end
 
+  it "preserves characters that need escaping in nu PATH entries" do
+    path = %q(/back\slash:/"quote":/raw'#string:##hash:)
+    ENV["PATH"] = ENV["HOMEBREW_PATH"] = path
+
+    expect(shellenv_environment("nu", %w[--no-config-file -c]).fetch("PATH")).to end_with(path)
+  end
+
   test_each_hash({
     "bash" => %w[--noprofile --norc -c],
     "csh"  => %w[-f -c],
     "fish" => %w[--no-config -c],
+    "nu"   => %w[--no-config-file -c],
     "pwsh" => %w[-NoProfile -Command],
     "sh"   => %w[-c],
     "tcsh" => %w[-f -c],
@@ -86,7 +103,7 @@ RSpec.describe "brew shellenv", type: :system do
     end
 
     it "prioritises Homebrew executables and preserves existing PATH entries in #{shell}" do
-      ENV["PATH"] = "/custom path:/usr/bin:/bin"
+      ENV["PATH"] = ENV["HOMEBREW_PATH"] = "/custom path:/usr/bin:/bin"
 
       expect(shellenv_environment(shell, shell_args).fetch("PATH"))
         .to start_with("#{HOMEBREW_PREFIX}/bin:#{HOMEBREW_PREFIX}/sbin:")

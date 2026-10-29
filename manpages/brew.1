@@ -1392,11 +1392,13 @@ Remove all unused services\.
 .SS "\fBsetup\-ruby\fP \fR[\fIcommand\fP \.\.\.]"
 Installs and configures Homebrew\[u2019]s Ruby\. If \fBcommand\fP is passed, it will only run Bundler if necessary for that command\.
 .SS "\fBshellenv\fP \fR[\fIshell\fP \.\.\.]"
-Valid shells: bash|csh|fish|pwsh|sh|tcsh|zsh
+Valid shells: bash|csh|fish|nu|pwsh|sh|tcsh|zsh
 .P
 Print export statements\. When run in a shell, this installation of Homebrew will be added to your \fB$PATH\fP, \fB$MANPATH\fP, and \fB$INFOPATH\fP\&\.
 .P
 The variables \fB$HOMEBREW_PREFIX\fP, \fB$HOMEBREW_CELLAR\fP and \fB$HOMEBREW_REPOSITORY\fP are also exported to avoid querying them multiple times\. To help guarantee idempotence, this command produces no output when Homebrew\[u2019]s \fBbin\fP and \fBsbin\fP directories are first and second respectively in your \fB$PATH\fP\&\. Consider adding evaluation of this command\[u2019]s output to your dotfiles (e\.g\. \fB~/\.bash_profile\fP or \fB~/\.zprofile\fP on macOS and \fB~/\.bashrc\fP or \fB~/\.zshrc\fP on Linux) with e\.g\.: \fBeval "$(brew shellenv zsh)"\fP or \fBeval "$(brew shellenv bash)"\fP
+.P
+For Nushell, add to \fBenv\.nu\fP: \fBbrew shellenv nu | from nuon | default {} | load\-env\fP
 .P
 The shell should be specified explicitly with a supported shell name parameter but will be detected automatically if not provided (but this may not be correct)\. Unknown shells will output POSIX exports\.
 .SS "\fBsource\fP \fR[\fIformula\fP \.\.\.]"

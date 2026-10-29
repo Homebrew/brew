@@ -185,6 +185,12 @@ You need to update your shell's config file (which file exactly depends on your 
 eval "$(<Homebrew prefix path>/bin/brew shellenv)"
 ```
 
+If you use Nushell, add this to your `env.nu` instead (located at `$nu.env-path`):
+
+```nu
+^'<Homebrew prefix path>/bin/brew' shellenv nu | from nuon | default {} | load-env
+```
+
 Replace `<Homebrew prefix path>` with the directory where Homebrew is installed on your system.
 You can find Homebrew's default install location in [this FAQ entry](FAQ.md#why-should-i-install-homebrew-in-the-default-location).
 
