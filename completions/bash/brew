@@ -1817,6 +1817,7 @@ _brew_generate_cask_api() {
       --dry-run
       --help
       --quiet
+      --tap
       --verbose
       "
       return
@@ -1872,6 +1873,7 @@ _brew_generate_formula_api() {
       --dry-run
       --help
       --quiet
+      --tap
       --verbose
       "
       return
@@ -1889,6 +1891,7 @@ _brew_generate_internal_api() {
       --dry-run
       --help
       --quiet
+      --tap
       --verbose
       "
       return

@@ -1588,6 +1588,7 @@ _brew_generate_cask_api() {
     '--dry-run[Generate API data without writing it to files]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
+    '--tap[The tap to generate cask API data for, specified as user`/`repo]' \
     '--verbose[Make some output more verbose]'
 }
 
@@ -1623,6 +1624,7 @@ _brew_generate_formula_api() {
     '--dry-run[Generate API data without writing it to files]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
+    '--tap[The tap to generate formula API data for, specified as user`/`repo]' \
     '--verbose[Make some output more verbose]'
 }
 
@@ -1633,6 +1635,7 @@ _brew_generate_internal_api() {
     '--dry-run[Generate internal API data without writing it to files]' \
     '--help[Show this message]' \
     '--quiet[Make some output more quiet]' \
+    '--tap[The tap to generate internal API data for, specified as user`/`repo]' \
     '--verbose[Make some output more verbose]'
 }
 

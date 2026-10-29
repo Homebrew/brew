@@ -23,6 +23,8 @@ module Homebrew
         EOS
         switch "-n", "--dry-run",
                description: "Generate API data without writing it to files."
+        flag   "--tap=",
+               description: "The tap to generate cask API data for, specified as <user>`/`<repo>."
 
         named_args :none
 
@@ -31,7 +33,11 @@ module Homebrew
 
       sig { override.void }
       def run
-        tap = CoreCaskTap.instance
+        tap = if args.tap
+          Tap.fetch(args.tap)
+        else
+          CoreCaskTap.instance
+        end
         raise TapUnavailableError, tap.name unless tap.installed?
 
         unless args.dry_run?
