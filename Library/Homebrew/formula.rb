@@ -3168,6 +3168,7 @@ class Formula
       "conflicts_with"                  => conflicts.map(&:name),
       "conflicts_with_reasons"          => conflicts.map(&:reason),
       "link_overwrite"                  => self.class.link_overwrite_paths.to_a,
+      "preserve_rpath"                  => self.class.preserve_rpath?,
       "caveats"                         => caveats_with_placeholders,
       "installed"                       => T.let([], T::Array[T::Hash[String, T.untyped]]),
       "linked_keg"                      => linked_version&.to_s,

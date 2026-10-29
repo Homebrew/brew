@@ -340,6 +340,8 @@ module Formulary
         link_overwrite path
       end
 
+      preserve_rpath if formula_struct.preserve_rpath
+
       @post_install_steps = T.let(
         formula_struct.post_install_steps,
         T.nilable(Homebrew::InstallSteps::Steps),
