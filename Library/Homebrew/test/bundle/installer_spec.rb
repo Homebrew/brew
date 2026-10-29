@@ -245,214 +245,178 @@ RSpec.describe Homebrew::Bundle::Installer do
       described_class.install!([formula_entry], quiet: true)
     end
 
-    it "batches a formula whose conflicts are neither installed nor requested" do
-      conflicting_formula = formula("mysql") do
-        T.bind(self, T.class_of(Formula))
-        url "mysql-1.0"
-        conflicts_with "mysql@8.4"
+    context "with formula conflicts" do
+      let(:conflicting_formula) do
+        formula("mysql", tap: CoreTap.instance) do
+          T.bind(self, T.class_of(Formula))
+          url "mysql-1.0"
+          conflicts_with "mysql@8.4"
+        end
       end
-      unrelated_formula = formula("redis") do
-        T.bind(self, T.class_of(Formula))
-        url "redis-1.0"
+
+      before do
+        allow(Formula).to receive(:[]).with("mysql").and_return(conflicting_formula)
+        allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
+        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
       end
-      allow(conflicting_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(unrelated_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(Formula).to receive(:[]).with("mysql").and_return(conflicting_formula)
-      allow(Formula).to receive(:[]).with("redis").and_return(unrelated_formula)
-      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
 
-      expect(Homebrew::Bundle).to receive(:brew)
-        .with("install", "homebrew/core/mysql", "homebrew/core/redis", verbose: false)
-        .and_return(true)
+      it "batches a formula whose conflicts are neither installed nor requested" do
+        unrelated_formula = formula("redis", tap: CoreTap.instance) do
+          T.bind(self, T.class_of(Formula))
+          url "redis-1.0"
+        end
+        allow(Formula).to receive(:[]).with("redis").and_return(unrelated_formula)
 
-      described_class.install!([formula_entry, second_formula_entry], quiet: true)
-    end
+        expect(Homebrew::Bundle).to receive(:brew)
+          .with("install", "homebrew/core/mysql", "homebrew/core/redis", verbose: false)
+          .and_return(true)
 
-    it "unlinks installed conflicts before installing a formula" do
-      conflicting_formula = formula("mysql") do
-        T.bind(self, T.class_of(Formula))
-        url "mysql-1.0"
-        conflicts_with "mysql@8.4"
+        described_class.install!([formula_entry, second_formula_entry], quiet: true)
       end
-      allow(conflicting_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(Formula).to receive(:[]).with("mysql").and_return(conflicting_formula)
-      allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
-      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
-      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("mysql@8.4").and_return(true)
 
-      expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
-                                                .ordered.and_return(true)
-      expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "mysql", verbose: false)
-                                                .ordered.and_return(true)
-
-      described_class.install!([formula_entry], quiet: true)
-    end
-
-    it "unlinks a conflicting formula requested through an alias before installing a formula" do
-      conflicting_formula = formula("mysql") do
-        T.bind(self, T.class_of(Formula))
-        url "mysql-1.0"
-        conflicts_with "mysql@8.4"
-      end
-      requested_formula = formula("mysql@8.4") do
-        T.bind(self, T.class_of(Formula))
-        url "mysql-8.4"
-      end
-      allow(conflicting_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(requested_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(Formula).to receive(:[]).with("mysql").and_return(conflicting_formula)
-      allow(Formula).to receive(:[]).with("mysql-lts").and_return(requested_formula)
-      allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
-      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
-
-      expect(Homebrew::Bundle).to receive(:brew).with("install", "homebrew/core/mysql@8.4", verbose: false)
-                                                .ordered do
+      it "unlinks installed conflicts before installing a formula" do
         allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("mysql@8.4").and_return(true)
-        true
-      end
-      expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
-                                                .ordered.and_return(true)
-      expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "mysql", verbose: false)
-                                                .ordered.and_return(true)
 
-      described_class.install!([Homebrew::Bundle::Dsl::Entry.new(:brew, "mysql-lts"), formula_entry], quiet: true)
+        expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
+                                                  .ordered.and_return(true)
+        expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "mysql", verbose: false)
+                                                  .ordered.and_return(true)
+
+        described_class.install!([formula_entry], quiet: true)
+      end
+
+      it "unlinks a conflicting formula requested through an alias before installing a formula" do
+        requested_formula = formula("mysql@8.4", tap: CoreTap.instance) do
+          T.bind(self, T.class_of(Formula))
+          url "mysql-8.4"
+        end
+        allow(Formula).to receive(:[]).with("mysql-lts").and_return(requested_formula)
+
+        expect(Homebrew::Bundle).to receive(:brew).with("install", "homebrew/core/mysql@8.4", verbose: false)
+                                                  .ordered do
+          allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("mysql@8.4").and_return(true)
+          true
+        end
+        expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
+                                                  .ordered.and_return(true)
+        expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "mysql", verbose: false)
+                                                  .ordered.and_return(true)
+
+        described_class.install!([Homebrew::Bundle::Dsl::Entry.new(:brew, "mysql-lts"), formula_entry], quiet: true)
+      end
+
+      it "expands dependencies once when checking multiple formulae for conflicts" do
+        second_formula = formula("redis", tap: CoreTap.instance) do
+          T.bind(self, T.class_of(Formula))
+          url "redis-1.0"
+          conflicts_with "valkey"
+        end
+        allow(Formula).to receive(:[]).with("redis").and_return(second_formula)
+
+        expect(described_class).to receive(:formula_names_with_dependencies).once.and_call_original
+
+        described_class.install!([formula_entry, second_formula_entry], quiet: true)
+      end
     end
 
-    it "unlinks conflicts enabled by saved install options before installing a formula" do
-      conflicting_formula = formula("ctags") do
-        T.bind(self, T.class_of(Formula))
-        url "ctags-1.0"
-        conflicts_with "universal-ctags"
+    context "with conflicts introduced by dependencies" do
+      let(:conflicting_formula) do
+        formula("ctags", tap: CoreTap.instance) do
+          T.bind(self, T.class_of(Formula))
+          url "ctags-1.0"
+          conflicts_with "universal-ctags"
+        end
       end
-      requested_formula = formula("ctags-lsp") do
-        T.bind(self, T.class_of(Formula))
-        url "ctags-lsp-1.0"
-        depends_on "universal-ctags" => :optional
+      let(:dependency_formula) do
+        formula("universal-ctags") do
+          T.bind(self, T.class_of(Formula))
+          url "universal-ctags-1.0"
+        end
       end
-      stub_formula_loader(formula("universal-ctags") do
-        T.bind(self, T.class_of(Formula))
-        url "universal-ctags-1.0"
-      end)
-      allow(conflicting_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(requested_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(Formula).to receive(:[]).with("ctags").and_return(conflicting_formula)
-      allow(Formula).to receive(:[]).with("ctags-lsp").and_return(requested_formula)
-      tab = Tab.for_formula(requested_formula)
-      tab.used_options = ["--with-universal-ctags"]
-      allow(Tab).to receive(:for_formula).and_call_original
-      allow(Tab).to receive(:for_formula).with(requested_formula).and_return(tab)
-      allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
-      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
 
-      expect(Homebrew::Bundle).to receive(:brew).with("install", "homebrew/core/ctags-lsp", verbose: false)
-                                                .ordered do
-        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
-        true
+      before do
+        allow(Formula).to receive(:[]).with("ctags").and_return(conflicting_formula)
+        allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
+        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
       end
-      expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
-                                                .ordered.and_return(true)
-      expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
-                                                .ordered.and_return(true)
 
-      described_class.install!([
-        Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags-lsp"),
-        Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
-      ], quiet: true)
-    end
+      it "unlinks conflicts enabled by saved install options before installing a formula" do
+        requested_formula = formula("ctags-lsp", tap: CoreTap.instance) do
+          T.bind(self, T.class_of(Formula))
+          url "ctags-lsp-1.0"
+          depends_on "universal-ctags" => :optional
+        end
+        stub_formula_loader(dependency_formula)
+        allow(Formula).to receive(:[]).with("ctags-lsp").and_return(requested_formula)
+        tab = Tab.for_formula(requested_formula)
+        tab.used_options = ["--with-universal-ctags"]
+        allow(Tab).to receive(:for_formula).and_call_original
+        allow(Tab).to receive(:for_formula).with(requested_formula).and_return(tab)
 
-    it "unlinks conflicts installed by a cask before installing a formula" do
-      conflicting_formula = formula("ctags") do
-        T.bind(self, T.class_of(Formula))
-        url "ctags-1.0"
-        conflicts_with "universal-ctags"
+        expect(Homebrew::Bundle).to receive(:brew).with("install", "homebrew/core/ctags-lsp", verbose: false)
+                                                  .ordered do
+          allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
+          true
+        end
+        expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
+                                                  .ordered.and_return(true)
+        expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
+                                                  .ordered.and_return(true)
+
+        described_class.install!([
+          Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags-lsp"),
+          Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
+        ], quiet: true)
       end
-      dependency_formula = formula("universal-ctags") do
-        T.bind(self, T.class_of(Formula))
-        url "universal-ctags-1.0"
-      end
-      requested_cask = ::Cask::Cask.new("editor") do
-        version "1.0"
-        url "https://example.com/editor.zip"
-        depends_on formula: "universal-ctags"
-      end
-      allow(conflicting_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(requested_cask).to receive(:tap).and_return(CoreCaskTap.instance)
-      allow(Formula).to receive(:[]).with("ctags").and_return(conflicting_formula)
-      allow(Formula).to receive(:[]).with("universal-ctags").and_return(dependency_formula)
-      allow(::Cask::CaskLoader).to receive(:load).with("editor").and_return(requested_cask)
-      allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
-      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
 
-      expect(Homebrew::Bundle).to receive(:brew).with("install", "--adopt", "homebrew/cask/editor", verbose: false)
-                                                .ordered do
-        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
-        true
+      it "unlinks conflicts installed by a cask before installing a formula" do
+        requested_cask = ::Cask::Cask.new("editor", tap: CoreCaskTap.instance) do
+          version "1.0"
+          url "https://example.com/editor.zip"
+          depends_on formula: "universal-ctags"
+        end
+        allow(Formula).to receive(:[]).with("universal-ctags").and_return(dependency_formula)
+        allow(::Cask::CaskLoader).to receive(:load).with("editor").and_return(requested_cask)
+
+        expect(Homebrew::Bundle).to receive(:brew).with("install", "--adopt", "homebrew/cask/editor", verbose: false)
+                                                  .ordered do
+          allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
+          true
+        end
+        expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
+                                                  .ordered.and_return(true)
+        expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
+                                                  .ordered.and_return(true)
+
+        described_class.install!([
+          Homebrew::Bundle::Dsl::Entry.new(:cask, "editor"),
+          Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
+        ], quiet: true)
       end
-      expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
-                                                .ordered.and_return(true)
-      expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
-                                                .ordered.and_return(true)
 
-      described_class.install!([
-        Homebrew::Bundle::Dsl::Entry.new(:cask, "editor"),
-        Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
-      ], quiet: true)
-    end
+      it "unlinks conflicts enabled by another formula's install options" do
+        requested_formula = formula("editor", tap: CoreTap.instance) do
+          T.bind(self, T.class_of(Formula))
+          url "editor-1.0"
+          depends_on "universal-ctags" => :optional
+        end
+        allow(Formula).to receive(:[]).with("editor").and_return(requested_formula)
 
-    it "unlinks conflicts enabled by another formula's install options" do
-      conflicting_formula = formula("ctags") do
-        T.bind(self, T.class_of(Formula))
-        url "ctags-1.0"
-        conflicts_with "universal-ctags"
+        expect(Homebrew::Bundle).to receive(:brew)
+          .with("install", "--formula", "editor", "--with-universal-ctags", verbose: false).ordered do
+          allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
+          true
+        end
+        expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
+                                                  .ordered.and_return(true)
+        expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
+                                                  .ordered.and_return(true)
+
+        described_class.install!([
+          Homebrew::Bundle::Dsl::Entry.new(:brew, "editor", { args: ["with-universal-ctags"] }),
+          Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
+        ], quiet: true)
       end
-      requested_formula = formula("editor") do
-        T.bind(self, T.class_of(Formula))
-        url "editor-1.0"
-        depends_on "universal-ctags" => :optional
-      end
-      allow(conflicting_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(requested_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(Formula).to receive(:[]).with("ctags").and_return(conflicting_formula)
-      allow(Formula).to receive(:[]).with("editor").and_return(requested_formula)
-      allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
-      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
-
-      expect(Homebrew::Bundle).to receive(:brew)
-        .with("install", "--formula", "editor", "--with-universal-ctags", verbose: false).ordered do
-        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
-        true
-      end
-      expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
-                                                .ordered.and_return(true)
-      expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
-                                                .ordered.and_return(true)
-
-      described_class.install!([
-        Homebrew::Bundle::Dsl::Entry.new(:brew, "editor", { args: ["with-universal-ctags"] }),
-        Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
-      ], quiet: true)
-    end
-
-    it "expands dependencies once when checking multiple formulae for conflicts" do
-      first_formula = formula("mysql") do
-        T.bind(self, T.class_of(Formula))
-        url "mysql-1.0"
-        conflicts_with "mysql@8.4"
-      end
-      second_formula = formula("redis") do
-        T.bind(self, T.class_of(Formula))
-        url "redis-1.0"
-        conflicts_with "valkey"
-      end
-      allow(first_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(second_formula).to receive(:tap).and_return(CoreTap.instance)
-      allow(Formula).to receive(:[]).with("mysql").and_return(first_formula)
-      allow(Formula).to receive(:[]).with("redis").and_return(second_formula)
-      allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
-
-      expect(described_class).to receive(:formula_names_with_dependencies).once.and_call_original
-
-      described_class.install!([formula_entry, second_formula_entry], quiet: true)
     end
 
     it "keeps an already up-to-date entry out of the batch but still finishes it" do

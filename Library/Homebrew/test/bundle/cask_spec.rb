@@ -125,6 +125,7 @@ RSpec.describe Homebrew::Bundle::Cask do
 
     describe "#formula_dependencies" do
       context "with recursive dependencies" do
+        let(:installed_cask) { instance_double(Cask::Cask, to_s: "editor", full_name: "editor", depends_on: {}) }
         let(:dependency_formula) do
           formula("backend") do
             T.bind(self, T.class_of(Formula))
@@ -177,17 +178,13 @@ RSpec.describe Homebrew::Bundle::Cask do
         end
 
         it "uses the current definition when an installed cask has no dependencies" do
-          allow(described_class).to receive(:casks).and_return([
-            instance_double(Cask::Cask, to_s: "editor", full_name: "editor", depends_on: {}),
-          ])
+          allow(described_class).to receive(:casks).and_return([installed_cask])
 
           expect(dumper.formula_dependencies(["editor"], recursive: true)).to eq(["backend"])
         end
 
         it "still uses the installed definition for a non-recursive query" do
-          allow(described_class).to receive(:casks).and_return([
-            instance_double(Cask::Cask, to_s: "editor", full_name: "editor", depends_on: {}),
-          ])
+          allow(described_class).to receive(:casks).and_return([installed_cask])
 
           expect(dumper.formula_dependencies(["editor"])).to be_empty
         end
