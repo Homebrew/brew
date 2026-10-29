@@ -34,6 +34,8 @@ module Homebrew
       @license = license
       @fetch = fetch
 
+      @version_in_url = T.let(false, T::Boolean)
+
       tap = if tap.blank?
         CoreTap.instance
       else
@@ -73,21 +75,21 @@ module Homebrew
         version = Version.new(version)
         odebug "version from user: #{version}"
       else
-        version = Version.detect(url)
-        odebug "version from url: #{version}"
+        @version_in_url = true if Version.detect(url).present?
+        odebug "version in url: #{@version_in_url}"
       end
 
       if fetch && user && repository
         github = GitHub.repository(user, repository)
 
-        if version.null? && !head
+        if version.blank? && !head
           begin
-            latest_release = GitHub.get_latest_release(user, repository)
-            version = Version.new(latest_release.fetch("tag_name"))
-            odebug "github: version from latest_release: #{version}"
+            tag = GitHub.get_latest_release(user, repository).fetch("tag_name")
 
-            @url = "https://github.com/#{user}/#{repository}/archive/refs/tags/#{version}.tar.gz"
+            @url = "https://github.com/#{user}/#{repository}/archive/refs/tags/#{tag}.tar.gz"
+            @version_in_url = true
             odebug "github: url changed to source archive #{@url}"
+            odebug "version in url (github): #{@version_in_url}"
           rescue GitHub::API::HTTPNotFoundError
             odebug "github: latest_release lookup failed: #{url}"
           end
@@ -115,7 +117,7 @@ module Homebrew
       path = @tap.new_formula_path(@name)
       raise "#{path} already exists" if path.exist?
 
-      if @version.nil? || @version.null?
+      if @version.blank? && !@version_in_url
         odie "Version cannot be determined from URL. Explicitly set the version with `--set-version` instead."
       end
 
@@ -176,7 +178,7 @@ module Homebrew
           homepage <%= @homepage.to_s.inspect %>
         <% unless @head %>
           url <%= @url.inspect %>
-        <% unless @version.detected_from_url? %>
+        <% unless @version_in_url %>
           version <%= @version.to_s.delete_prefix("v").inspect %>
         <% end %>
           sha256 <%= @sha256.to_s.inspect %>
