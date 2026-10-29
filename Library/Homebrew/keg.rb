@@ -121,9 +121,10 @@ class Keg
     original_path = path
     raise Errno::ENOENT, original_path.to_s unless original_path.exist?
 
+    real_cellar = HOMEBREW_CELLAR.realpath
     if (path = original_path.realpath)
       until path.root?
-        return Keg.new(path) if path.parent.parent == HOMEBREW_CELLAR.realpath
+        return Keg.new(HOMEBREW_CELLAR/path.relative_path_from(real_cellar)) if path.parent.parent == real_cellar
 
         path = path.parent.realpath # realpath() prevents root? failing
       end

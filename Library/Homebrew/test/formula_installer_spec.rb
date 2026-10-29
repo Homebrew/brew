@@ -355,7 +355,7 @@ RSpec.describe FormulaInstaller do
       dependency_formula = instance_double(Formula, deps: [], name: "dependency", full_name: "dependency")
       allow(dependency).to receive(:to_formula).and_return(dependency_formula)
       build_options = BuildOptions.new(Options.new, Options.new)
-      allow(installer).to receive_messages(effective_build_options_for: build_options, install_bottle_for?: false)
+      allow(installer).to receive_messages(effective_build_options_for: build_options, install_bottle_for?: true)
 
       installer.determine_bottle_tab_attributes
 
@@ -1150,7 +1150,7 @@ RSpec.describe FormulaInstaller do
 
       installer = described_class.new(f)
       build_options = BuildOptions.new(Options.new, Options.new)
-      allow(installer).to receive_messages(effective_build_options_for: build_options, install_bottle_for?: false)
+      allow(installer).to receive_messages(effective_build_options_for: build_options, install_bottle_for?: true)
 
       deps = installer.expand_dependencies_for_formula(f)
 
@@ -1184,7 +1184,7 @@ RSpec.describe FormulaInstaller do
 
       installer = described_class.new(f)
       build_options = BuildOptions.new(Options.new, Options.new)
-      allow(installer).to receive_messages(effective_build_options_for: build_options, install_bottle_for?: false)
+      allow(installer).to receive_messages(effective_build_options_for: build_options, install_bottle_for?: true)
 
       deps = installer.expand_dependencies_for_formula(f)
 
@@ -1273,13 +1273,31 @@ RSpec.describe FormulaInstaller do
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
       end
 
-      it "upgrades an outdated runtime dependency with a matching compatibility_version" do
-        runtime_dep = Dependency.new(build_dep.name)
-        allow(runtime_dep).to receive(:satisfied?).and_return(false)
-        allow(runtime_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(true)
-        allow(f).to receive(:deps).and_return([runtime_dep])
+      context "with an outdated runtime dependency with a matching compatibility_version" do
+        let(:runtime_dep) { Dependency.new(build_dep.name) }
 
-        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(runtime_dep.name)
+        before do
+          allow(runtime_dep).to receive(:satisfied?).and_return(false)
+          allow(runtime_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(true)
+          allow(runtime_dep_formula).to receive(:opt_prefix).and_return(instance_double(Pathname, exist?: true))
+          allow(f).to receive(:deps).and_return([runtime_dep])
+        end
+
+        it "keeps it" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).not_to include(runtime_dep.name)
+        end
+
+        it "upgrades it if its current formula needs a dependency that isn't installed" do
+          allow(runtime_dep_formula).to receive(:opt_prefix).and_return(instance_double(Pathname, exist?: false))
+
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(runtime_dep.name)
+        end
+
+        it "upgrades it when pouring a bottle" do
+          allow(installer).to receive(:install_bottle_for?).and_return(true)
+
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(runtime_dep.name)
+        end
       end
 
       context "when building a bottle" do

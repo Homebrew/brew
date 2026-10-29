@@ -236,8 +236,6 @@ module OS
                   .freeze, T::Set[::Pathname])
     private_constant :SYSTEM_DIRS
 
-    # TODO: There should be a way to specify a containing
-    #       directory under which nothing can be deleted.
     UNDELETABLE_PATHS = T.let([
       "~/",
       "~/Applications",
@@ -378,6 +376,16 @@ module OS
                         .freeze, T::Set[::Pathname])
     private_constant :UNDELETABLE_PATHS
 
+    # Directories under which nothing can be deleted.
+    UNDELETABLE_CONTAINERS = T.let([
+      "~/Library/Application Support/com.apple.TCC",
+      "~/Library/Keychains",
+      "~/Library/Messages",
+    ]
+                             .to_set { |path| ::Pathname.new(path.sub(%r{^~(?=(?:/|$))}, Dir.home)).expand_path }
+                             .freeze, T::Set[::Pathname])
+    private_constant :UNDELETABLE_CONTAINERS
+
     sig { params(dir: T.any(::Pathname, String)).returns(T::Boolean) }
     def self.system_dir?(dir)
       SYSTEM_DIRS.include?(::Pathname.new(dir).expand_path)
@@ -385,7 +393,15 @@ module OS
 
     sig { params(path: T.any(::Pathname, String)).returns(T::Boolean) }
     def self.undeletable?(path)
-      UNDELETABLE_PATHS.include?(::Pathname.new(path).expand_path)
+      path = ::Pathname.new(path).expand_path
+      resolved_path = path.dirname.realpath/path.basename if path.dirname.exist?
+      resolved_containers = UNDELETABLE_CONTAINERS.filter_map { |container| container.realpath if container.exist? }
+      [path, resolved_path].compact.any? do |candidate|
+        UNDELETABLE_PATHS.include?(candidate) ||
+          UNDELETABLE_CONTAINERS.union(resolved_containers).any? do |container|
+            candidate == container || candidate.to_s.start_with?("#{container}/")
+          end
+      end
     end
   end
 end

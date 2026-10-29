@@ -51,5 +51,17 @@ RSpec.describe MacOS, :cask do
     expect(described_class).not_to be_undeletable(
       "/Applications/SnakeOil Professional.app",
     )
+    expect(described_class).to be_undeletable(
+      "#{Dir.home}/Library/Keychains/login.keychain-db",
+    )
+    expect(described_class).not_to be_undeletable(
+      "#{Dir.home}/Library/Keychains2/login.keychain-db",
+    )
+  end
+
+  it "resolves symlinked parent directories" do
+    link = mktmpdir/"link"
+    link.make_symlink("/")
+    expect(described_class).to be_undeletable(link/"Applications")
   end
 end
