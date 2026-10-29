@@ -34,8 +34,6 @@ module Homebrew
       @license = license
       @fetch = fetch
 
-      @version_in_url = T.let(false, T::Boolean)
-
       tap = if tap.blank?
         CoreTap.instance
       else
@@ -71,8 +69,10 @@ module Homebrew
       @name = T.let(name, String)
       @head = head
 
-      if version.present?
-        version = Version.new(version)
+      @version = T.let(version.blank? ? Version::NULL : Version.new(version), Version)
+      @version_in_url = T.let(false, T::Boolean)
+
+      if @version.present?
         odebug "version from user: #{version}"
       else
         @version_in_url = true if Version.detect(url).present?
@@ -82,7 +82,7 @@ module Homebrew
       if fetch && user && repository
         github = GitHub.repository(user, repository)
 
-        if version.blank? && !head
+        if @version.blank? && !head
           begin
             tag = GitHub.get_latest_release(user, repository).fetch("tag_name")
 
@@ -96,7 +96,6 @@ module Homebrew
         end
       end
       @github = T.let(github, T.untyped)
-      @version = T.let(version, Version)
 
       @sha256 = T.let(nil, T.nilable(String))
       @desc = T.let("", String)
