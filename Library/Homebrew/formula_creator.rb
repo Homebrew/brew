@@ -82,7 +82,7 @@ module Homebrew
       if fetch && user && repository
         github = GitHub.repository(user, repository)
 
-        if @version.blank? && !head
+        if @version.blank? && !@version_in_url && !head
           begin
             tag = GitHub.get_latest_release(user, repository).fetch("tag_name")
 
