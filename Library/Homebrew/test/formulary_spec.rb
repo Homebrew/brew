@@ -684,6 +684,7 @@ RSpec.describe Formulary do
             "conflicts_with"           => ["conflicting_formula"],
             "conflicts_with_reasons"   => ["it does"],
             "link_overwrite"           => ["bin/abc"],
+            "preserve_rpath"           => true,
             "linked_keg"               => nil,
             "caveats"                  => "example caveat string\n/$HOME\n$HOMEBREW_PREFIX",
             "service"                  => {
@@ -845,6 +846,7 @@ RSpec.describe Formulary do
         expect(formula.conflicts.map(&:name)).to include "conflicting_formula"
         expect(formula.conflicts.map(&:reason)).to include "it does"
         expect(formula.class.link_overwrite_paths).to include "bin/abc"
+        expect(formula.class.preserve_rpath?).to be true
 
         expect(formula.caveats).to eq "example caveat string\n#{Dir.home}\n#{HOMEBREW_PREFIX}"
 
