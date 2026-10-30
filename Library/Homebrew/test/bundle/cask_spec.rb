@@ -154,6 +154,8 @@ RSpec.describe Homebrew::Bundle::Cask do
         end
 
         it "includes formula dependencies of nested casks" do
+          expect(Formula).to receive(:[]).with("backend").once.and_return(dependency_formula)
+
           expect(dumper.formula_dependencies(["editor"], recursive: true)).to eq(["backend"])
         end
 

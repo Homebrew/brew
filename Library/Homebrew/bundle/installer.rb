@@ -260,9 +260,6 @@ module Homebrew
           conflicts = formula.conflicts.map(&:name)
           if conflicts.present?
             return false if conflicts.any? { |name| Brew.formula_installed?(name) }
-            return false if entries.any? do |candidate|
-              [Brew, Cask].include?(candidate.cls) && candidate.options[:args].present?
-            end
 
             formula_names.merge(formula_names_with_dependencies(entries)) if formula_names.empty?
             return false if conflicts.any? { |name| formula_names.include?(Formula[name].full_name) }

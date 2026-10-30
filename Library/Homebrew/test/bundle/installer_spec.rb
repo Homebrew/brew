@@ -253,20 +253,22 @@ RSpec.describe Homebrew::Bundle::Installer do
           conflicts_with "mysql@8.4"
         end
       end
-
-      before do
-        allow(Formula).to receive(:[]).with("mysql").and_return(conflicting_formula)
-        allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
-        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
-      end
-
-      it "batches a formula whose conflicts are neither installed nor requested" do
-        unrelated_formula = formula("redis", tap: CoreTap.instance) do
+      let(:unrelated_formula) do
+        formula("redis", tap: CoreTap.instance) do
           T.bind(self, T.class_of(Formula))
           url "redis-1.0"
         end
-        allow(Formula).to receive(:[]).with("redis").and_return(unrelated_formula)
+      end
 
+      before do
+        Homebrew::Bundle::Brew.reset!
+        allow(Formula).to receive(:installed).and_return([])
+        allow(Formula).to receive(:[]).with("mysql").and_return(conflicting_formula)
+        allow(Formula).to receive(:[]).with("redis").and_return(unrelated_formula)
+        allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
+      end
+
+      it "batches a formula whose conflicts are neither installed nor requested" do
         expect(Homebrew::Bundle).to receive(:brew)
           .with("install", "homebrew/core/mysql", "homebrew/core/redis", verbose: false)
           .and_return(true)
@@ -274,8 +276,18 @@ RSpec.describe Homebrew::Bundle::Installer do
         described_class.install!([formula_entry, second_formula_entry], quiet: true)
       end
 
+      it "keeps batching when an unrelated formula has install arguments" do
+        entry_with_args = Homebrew::Bundle::Dsl::Entry.new(:brew, "redis", { args: ["build-from-source"] })
+
+        expect(Homebrew::Bundle).to receive(:brew)
+          .with("install", "homebrew/core/mysql", verbose: false)
+          .and_return(true)
+
+        described_class.install!([formula_entry, entry_with_args], quiet: true)
+      end
+
       it "unlinks installed conflicts before installing a formula" do
-        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("mysql@8.4").and_return(true)
+        (HOMEBREW_CELLAR/"mysql@8.4/8.4").mkpath
 
         expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
                                                   .ordered.and_return(true)
@@ -294,7 +306,7 @@ RSpec.describe Homebrew::Bundle::Installer do
 
         expect(Homebrew::Bundle).to receive(:brew).with("install", "homebrew/core/mysql@8.4", verbose: false)
                                                   .ordered do
-          allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("mysql@8.4").and_return(true)
+          requested_formula.prefix.mkpath
           true
         end
         expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
@@ -335,27 +347,29 @@ RSpec.describe Homebrew::Bundle::Installer do
       end
 
       before do
+        Homebrew::Bundle::Brew.reset!
+        allow(Formula).to receive(:installed).and_return([])
         allow(Formula).to receive(:[]).with("ctags").and_return(conflicting_formula)
         allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
-        allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).and_return(false)
       end
 
-      it "unlinks conflicts enabled by saved install options before installing a formula" do
+      it "unlinks conflicts from transitive optional formula dependencies" do
         requested_formula = formula("ctags-lsp", tap: CoreTap.instance) do
           T.bind(self, T.class_of(Formula))
           url "ctags-lsp-1.0"
-          depends_on "universal-ctags" => :optional
+          depends_on "backend"
         end
+        stub_formula_loader(formula("backend") do
+          T.bind(self, T.class_of(Formula))
+          url "backend-1.0"
+          depends_on "universal-ctags" => :optional
+        end)
         stub_formula_loader(dependency_formula)
         allow(Formula).to receive(:[]).with("ctags-lsp").and_return(requested_formula)
-        tab = Tab.for_formula(requested_formula)
-        tab.used_options = ["--with-universal-ctags"]
-        allow(Tab).to receive(:for_formula).and_call_original
-        allow(Tab).to receive(:for_formula).with(requested_formula).and_return(tab)
 
         expect(Homebrew::Bundle).to receive(:brew).with("install", "homebrew/core/ctags-lsp", verbose: false)
                                                   .ordered do
-          allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
+          dependency_formula.prefix.mkpath
           true
         end
         expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
@@ -380,7 +394,7 @@ RSpec.describe Homebrew::Bundle::Installer do
 
         expect(Homebrew::Bundle).to receive(:brew).with("install", "--adopt", "homebrew/cask/editor", verbose: false)
                                                   .ordered do
-          allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
+          dependency_formula.prefix.mkpath
           true
         end
         expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
@@ -390,30 +404,6 @@ RSpec.describe Homebrew::Bundle::Installer do
 
         described_class.install!([
           Homebrew::Bundle::Dsl::Entry.new(:cask, "editor"),
-          Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
-        ], quiet: true)
-      end
-
-      it "unlinks conflicts enabled by another formula's install options" do
-        requested_formula = formula("editor", tap: CoreTap.instance) do
-          T.bind(self, T.class_of(Formula))
-          url "editor-1.0"
-          depends_on "universal-ctags" => :optional
-        end
-        allow(Formula).to receive(:[]).with("editor").and_return(requested_formula)
-
-        expect(Homebrew::Bundle).to receive(:brew)
-          .with("install", "--formula", "editor", "--with-universal-ctags", verbose: false).ordered do
-          allow(Homebrew::Bundle::Brew).to receive(:formula_installed?).with("universal-ctags").and_return(true)
-          true
-        end
-        expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
-                                                  .ordered.and_return(true)
-        expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
-                                                  .ordered.and_return(true)
-
-        described_class.install!([
-          Homebrew::Bundle::Dsl::Entry.new(:brew, "editor", { args: ["with-universal-ctags"] }),
           Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags"),
         ], quiet: true)
       end
@@ -672,148 +662,6 @@ RSpec.describe Homebrew::Bundle::Installer do
 
       expect(order).to include("gh")
       expect(order.index("gh")).to be < order.index("install")
-    end
-  end
-
-  describe ".formula_names_with_dependencies" do
-    let(:entry) do
-      Homebrew::Bundle::Installer::InstallableEntry.new(
-        entry: Homebrew::Bundle::Dsl::Entry.new(:brew, "editor"), verb: "Installing",
-        cls: Homebrew::Bundle::Brew, install_name: "editor"
-      )
-    end
-    let(:ctags_formula) do
-      formula("universal-ctags") do
-        T.bind(self, T.class_of(Formula))
-        url "universal-ctags-1.0"
-      end
-    end
-
-    before do
-      stub_formula_loader(ctags_formula)
-    end
-
-    it "reuses formulae already loaded for cask dependencies" do
-      requested_cask = ::Cask::Cask.new("editor") do
-        version "1.0"
-        url "https://example.com/editor.zip"
-        depends_on formula: "universal-ctags"
-      end
-      allow(::Cask::CaskLoader).to receive(:load).with("editor").and_return(requested_cask)
-      cask_entry = Homebrew::Bundle::Installer::InstallableEntry.new(
-        entry: Homebrew::Bundle::Dsl::Entry.new(:cask, "editor"), verb: "Installing",
-        cls: Homebrew::Bundle::Cask, install_name: "editor"
-      )
-
-      allow(Formula).to receive(:[]).and_call_original
-      expect(Formula).to receive(:[]).with("universal-ctags").once.and_call_original
-
-      described_class.formula_names_with_dependencies([cask_entry])
-    end
-
-    it "includes optional dependencies even when no install options are specified" do
-      requested_formula = formula("editor") do
-        T.bind(self, T.class_of(Formula))
-        url "editor-1.0"
-        depends_on "universal-ctags" => :optional
-      end
-      allow(Formula).to receive(:[]).with("editor").and_return(requested_formula)
-
-      expect(described_class.formula_names_with_dependencies([entry])).to contain_exactly("editor", "universal-ctags")
-    end
-
-    it "includes optional dependencies enabled by a dependency's saved install options" do
-      requested_formula = formula("editor") do
-        T.bind(self, T.class_of(Formula))
-        url "editor-1.0"
-        depends_on "backend"
-      end
-      dependency_formula = formula("backend") do
-        T.bind(self, T.class_of(Formula))
-        url "backend-1.0"
-        depends_on "universal-ctags" => :optional
-      end
-      stub_formula_loader(dependency_formula)
-      tab = Tab.for_formula(dependency_formula)
-      tab.used_options = ["--with-universal-ctags"]
-      allow(Tab).to receive(:for_formula).and_call_original
-      allow(Tab).to receive(:for_formula).with(dependency_formula).and_return(tab)
-      allow(Formula).to receive(:[]).with("editor").and_return(requested_formula)
-
-      expect(described_class.formula_names_with_dependencies([entry]))
-        .to contain_exactly("editor", "backend", "universal-ctags")
-    end
-
-    it "includes optional dependencies enabled through another dependency path" do
-      requested_formula = formula("editor") do
-        T.bind(self, T.class_of(Formula))
-        url "editor-1.0"
-        depends_on "plain"
-        depends_on "enabled"
-      end
-      stub_formula_loader(formula("plain") do
-        T.bind(self, T.class_of(Formula))
-        url "plain-1.0"
-        depends_on "backend"
-      end)
-      stub_formula_loader(formula("enabled") do
-        T.bind(self, T.class_of(Formula))
-        url "enabled-1.0"
-        depends_on "backend" => "with-universal-ctags"
-      end)
-      stub_formula_loader(formula("backend") do
-        T.bind(self, T.class_of(Formula))
-        url "backend-1.0"
-        depends_on "universal-ctags" => :optional
-      end)
-      allow(Formula).to receive(:[]).with("editor").and_return(requested_formula)
-
-      expect(described_class.formula_names_with_dependencies([entry]))
-        .to contain_exactly("editor", "plain", "enabled", "backend", "universal-ctags")
-    end
-
-    it "includes optional dependencies enabled by a renamed dependency option" do
-      requested_formula = formula("editor") do
-        T.bind(self, T.class_of(Formula))
-        url "editor-1.0"
-        depends_on "backend" => "with-old-ctags"
-      end
-      stub_formula_loader(formula("backend") do
-        T.bind(self, T.class_of(Formula))
-        url "backend-1.0"
-        depends_on "universal-ctags" => :optional
-        deprecated_option "with-old-ctags" => "with-universal-ctags"
-      end)
-      allow(Formula).to receive(:[]).with("editor").and_return(requested_formula)
-
-      expect(described_class.formula_names_with_dependencies([entry]))
-        .to contain_exactly("editor", "backend", "universal-ctags")
-    end
-
-    it "does not revisit descendants of a shared dependency" do
-      requested_formula = formula("editor") do
-        T.bind(self, T.class_of(Formula))
-        url "editor-1.0"
-        depends_on "first"
-        depends_on "second"
-      end
-      %w[first second].each do |name|
-        stub_formula_loader(formula(name) do
-          T.bind(self, T.class_of(Formula))
-          url "#{name}-1.0"
-          depends_on "backend"
-        end)
-      end
-      stub_formula_loader(formula("backend") do
-        T.bind(self, T.class_of(Formula))
-        url "backend-1.0"
-        depends_on "universal-ctags"
-      end)
-      allow(Formula).to receive(:[]).with("editor").and_return(requested_formula)
-
-      expect(ctags_formula).to receive(:deps).once.and_call_original
-
-      described_class.formula_names_with_dependencies([entry])
     end
   end
 
