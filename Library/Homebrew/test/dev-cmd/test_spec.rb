@@ -44,6 +44,71 @@ RSpec.describe Homebrew::DevCmd::Test do
     end
   end
 
+  it "asks to upgrade outdated test dependencies" do
+    cmd = described_class.new(["foo"])
+    foo = formula("foo") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/foo-1.0.tar.gz"
+
+      test do
+        true
+      end
+    end
+    bar = formula("bar") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/bar-1.0.tar.gz"
+    end
+    dependency = Dependency.new(bar.name)
+    allow(bar).to receive(:any_version_installed?).and_return(true)
+    stub_formula_loader(bar)
+    allow(dependency).to receive(:installed?).and_return(false)
+    allow(cmd.args.named).to receive(:to_resolved_formulae).and_return([foo])
+    allow(foo).to receive_messages(latest_version_installed?: true, linked?: true, deps: [dependency])
+    allow(Utils::GemSetup).to receive(:install_bundler_gems!)
+
+    expect { cmd.run }.to output(/foo has outdated test dependencies: bar\nUpgrade them with `brew upgrade bar`/)
+      .to_stderr
+  end
+
+  it "asks to install missing and upgrade outdated test dependencies" do
+    cmd = described_class.new(["foo"])
+    foo = formula("foo") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/foo-1.0.tar.gz"
+
+      test do
+        true
+      end
+    end
+    bar = formula("bar") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/bar-1.0.tar.gz"
+    end
+    baz = formula("baz") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/baz-1.0.tar.gz"
+    end
+    outdated_dependency = Dependency.new(bar.name)
+    missing_dependency = Dependency.new(baz.name)
+    allow(bar).to receive(:any_version_installed?).and_return(true)
+    allow(baz).to receive(:any_version_installed?).and_return(false)
+    stub_formula_loader(bar)
+    stub_formula_loader(baz)
+    allow(outdated_dependency).to receive(:installed?).and_return(false)
+    allow(missing_dependency).to receive(:installed?).and_return(false)
+    allow(cmd.args.named).to receive(:to_resolved_formulae).and_return([foo])
+    allow(foo).to receive_messages(latest_version_installed?: true, linked?: true,
+                                   deps: [missing_dependency, outdated_dependency])
+    allow(Utils::GemSetup).to receive(:install_bundler_gems!)
+
+    expect { cmd.run }.to output(<<~EOS).to_stderr
+      Error: foo is missing test dependencies: baz
+      Install with `brew install baz`.
+      Error: foo has outdated test dependencies: bar
+      Upgrade them with `brew upgrade bar`.
+    EOS
+  end
+
   it "tests a given Formula without process-listing warnings", :integration_test do
     skip "Nested sandboxing is not supported." if Sandbox.nested_sandbox?
 

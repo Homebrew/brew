@@ -64,9 +64,19 @@ module Homebrew
             next if dependency.test? && dependent == f
 
             next Dependable::PRUNE unless dependency.required?
-          end.map(&:to_s)
+          end
           unless missing_test_deps.empty?
-            ofail "#{f.full_name} is missing test dependencies: #{missing_test_deps.join(" ")}"
+            outdated_test_deps, missing_test_deps = missing_test_deps.partition do |dependency|
+              dependency.to_formula.any_version_installed?
+            end
+            if missing_test_deps.present?
+              ofail "#{f.full_name} is missing test dependencies: #{missing_test_deps.join(" ")}\n" \
+                    "Install with `brew install #{missing_test_deps.join(" ")}`."
+            end
+            if outdated_test_deps.present?
+              ofail "#{f.full_name} has outdated test dependencies: #{outdated_test_deps.join(" ")}\n" \
+                    "Upgrade them with `brew upgrade #{outdated_test_deps.join(" ")}`."
+            end
             next
           end
 
