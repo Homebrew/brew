@@ -588,6 +588,7 @@ _brew_bump() {
       --repology
       --start-with
       --tap
+      --tap-message
       --verbose
       "
       return

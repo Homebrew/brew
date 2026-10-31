@@ -345,6 +345,83 @@ RSpec.describe Homebrew::DevCmd::Bump do
       allow(GitHub).to receive(:too_many_open_prs?).and_return(false)
     end
 
+    context "with tap publishing instructions" do
+      subject(:bump) { described_class.new(["--open-pr", "--tap-message", "test"]) }
+
+      let(:tap) { Tap.fetch("test/tap") }
+      let(:remote_repository) { "other/homebrew-custom" }
+      let(:publishing_message) do
+        "**Do not merge this pull request using GitHub's merge button.** " \
+          "Once all checks have passed, run the " \
+          "[`brew pr-pull`](https://github.com/other/homebrew-custom/actions/workflows/publish.yml) " \
+          "workflow with this pull request's number to publish the bottles and integrate the changes."
+      end
+
+      before do
+        allow(f_basic).to receive(:tap).and_return(tap)
+        allow(tap).to receive(:remote_repository).and_return(remote_repository)
+        allow(bump).to receive(:retrieve_versions_by_arch).and_return(
+          Homebrew::DevCmd::Bump::VersionBumpInfo.new(
+            type:                :formula,
+            multiple_versions:   { current: false, new: false },
+            version_name:        "formula version:",
+            current_version:     Homebrew::BumpVersionParser.new(general: Version.new("1.2.3")),
+            new_version:         Homebrew::BumpVersionParser.new(general: Version.new("1.2.4")),
+            repology_latest:     "not found",
+            newer_than_upstream: { general: false },
+          ),
+        )
+      end
+
+      it "prepends instructions using the tap's remote repository" do
+        expect(bump).to receive(:system).with(
+          HOMEBREW_BREW_FILE,
+          "bump-formula-pr",
+          "test",
+          "--version=1.2.4",
+          "--no-browse",
+          "--message=#{publishing_message}\n\nCreated by `brew bump`",
+        ).and_return(true)
+
+        bump.retrieve_and_display_info_and_open_pr(f_basic, "test", [])
+      end
+
+      context "without a remote repository" do
+        let(:remote_repository) { nil }
+
+        it "falls back to the tap's full GitHub repository name" do
+          expect(bump).to receive(:system).with(
+            HOMEBREW_BREW_FILE,
+            "bump-formula-pr",
+            "test",
+            "--version=1.2.4",
+            "--no-browse",
+            "--message=#{publishing_message.sub("other/homebrew-custom", "test/homebrew-tap")}\n\n" \
+            "Created by `brew bump`",
+          ).and_return(true)
+
+          bump.retrieve_and_display_info_and_open_pr(f_basic, "test", [])
+        end
+      end
+
+      context "without --tap-message" do
+        subject(:bump) { described_class.new(["--open-pr", "test"]) }
+
+        it "keeps only the existing attribution" do
+          expect(bump).to receive(:system).with(
+            HOMEBREW_BREW_FILE,
+            "bump-formula-pr",
+            "test",
+            "--version=1.2.4",
+            "--no-browse",
+            "--message=Created by `brew bump`",
+          ).and_return(true)
+
+          bump.retrieve_and_display_info_and_open_pr(f_basic, "test", [])
+        end
+      end
+    end
+
     it "passes arch-specific version arguments when a cask moves from one version to arch-specific versions" do
       version_info = Homebrew::DevCmd::Bump::VersionBumpInfo.new(
         type:                    :cask,
