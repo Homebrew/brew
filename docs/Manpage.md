@@ -5228,8 +5228,8 @@ Ruoyu Zhong, Sam Ford and Sean Molenaar.
 
 Homebrew's other Maintainers are Andrew Nesbitt, Anton Melnikov, Bo Anderson,
 Branch Vincent, Caleb Xu, Daeho Ro, Douglas Eichelberger, Dustin Rodrigues, FX
-Coudert, Klaus Hipp, Markus Reiter, Michka Popoff, Štefan Baebler, Thierry
-Moisan and William Woodruff.
+Coudert, Harald Nordgren, Klaus Hipp, Markus Reiter, Michka Popoff, Štefan
+Baebler, Thierry Moisan and William Woodruff.
 
 ## BUGS
 
