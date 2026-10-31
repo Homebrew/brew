@@ -993,6 +993,27 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#latest_head_pkg_version" do
+    it "returns the installed version when the head spec is not a VCS" do
+      f = formula do
+        T.bind(self, T.class_of(Formula))
+        url "foo"
+        version "2.0"
+        head "foo.tar.gz"
+      end
+
+      prefix = f.rack/"HEAD"
+      prefix.mkpath
+
+      tab = Tab.empty
+      tab.tabfile = prefix/AbstractTab::FILENAME
+      tab.source["versions"] = { "stable" => "1.0" }
+      tab.write
+
+      expect(f.latest_head_pkg_version).to eq(PkgVersion.new(Version.new("HEAD"), 0))
+    end
+  end
+
   specify "equality" do
     x = Testball.new
     y = Testball.new
