@@ -538,6 +538,13 @@ RSpec.describe Keg do
     end
   end
 
+  describe "#aliases" do
+    it "ignores tab aliases that would escape `opt`" do
+      (keg/"INSTALL_RECEIPT.json").write({ aliases: ["../bin/hiworld", "..", ".", "", "foo@1.0"] }.to_json)
+      expect(keg.aliases).to eq(["foo@1.0"])
+    end
+  end
+
   describe "#optlink" do
     it "removes a stale versioned alias link" do
       setup_test_keg("foo", "0.9")

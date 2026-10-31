@@ -131,6 +131,12 @@ RSpec.describe Tap do
     expect do
       described_class.fetch("homebrew", "homebrew/baz")
     end.to raise_error(Tap::InvalidNameError, /Invalid tap name/)
+
+    ["../foo", "./foo", "/foo"].each do |name|
+      expect do
+        described_class.fetch(name)
+      end.to raise_error(Tap::InvalidNameError, /Invalid tap name/)
+    end
   end
 
   specify "::fetch raises an error `brew.rb` prints without a backtrace" do
