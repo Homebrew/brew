@@ -64,7 +64,7 @@ class Tap
     user, repository = user.split("/", 2) if repository.nil?
 
     if user.nil? || repository.nil? ||
-       [user, repository].any? { |part| part.include?("/") || ["", ".", ".."].include?(part) }
+       [user, repository].any? { |part| part.include?("/") || Utils::INVALID_PATH_COMPONENTS.include?(part) }
       raise InvalidNameError, "Invalid tap name: '#{[*user, *repository].join("/")}'"
     end
 
