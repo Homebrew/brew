@@ -178,6 +178,13 @@ RSpec.describe Tab do
     expect(tab.parsed_homebrew_version).to be < "2.0.0-135-g01789abdf"
   end
 
+  describe "#spec" do
+    it "returns stable for a receipt spec that is not a spec" do
+      tab.source["spec"] = "run_post_install_steps"
+      expect(tab.spec).to eq(:stable)
+    end
+  end
+
   specify "#runtime_dependencies" do
     tab = described_class.new
     expect(tab.runtime_dependencies).to be_nil

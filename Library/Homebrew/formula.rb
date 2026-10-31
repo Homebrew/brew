@@ -334,7 +334,10 @@ class Formula
 
   sig { params(spec_sym: Symbol).void }
   def active_spec=(spec_sym)
-    spec = send(spec_sym)
+    spec = case spec_sym
+    when :stable then stable
+    when :head then head
+    end
     raise FormulaSpecificationError, "#{spec_sym} spec is not available for #{full_name}" unless spec
 
     old_spec_sym = @active_spec_sym
@@ -455,7 +458,7 @@ class Formula
 
   sig { params(requested: T.any(String, Symbol)).returns(SoftwareSpec) }
   def determine_active_spec(requested)
-    spec = send(requested) || stable || head
+    spec = (requested.to_sym == :head) ? head || stable : stable || head
     spec || raise(FormulaSpecificationError, "#{full_name}: formula requires at least a URL")
   end
 

@@ -1203,6 +1203,7 @@ RSpec.describe Formula do
     expect(f.pkg_version.to_s).to eq("1.0_1")
 
     expect { f.active_spec = :head }.to raise_error(FormulaSpecificationError)
+    expect { f.active_spec = :name }.to raise_error(FormulaSpecificationError)
   end
 
   specify "class specs are always initialized" do

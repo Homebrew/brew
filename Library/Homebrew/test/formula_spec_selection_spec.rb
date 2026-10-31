@@ -71,5 +71,16 @@ RSpec.describe Formula do
 
       expect(f).to be_stable
     end
+
+    it "does not call a requested method that is not a spec" do
+      f = formula("test", spec: :run_post_install_steps) do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+
+        define_method(:run_post_install_steps) { raise "called" }
+      end
+
+      expect(f).to be_stable
+    end
   end
 end

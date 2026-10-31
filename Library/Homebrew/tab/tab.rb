@@ -373,7 +373,8 @@ class Tab < AbstractTab
 
   sig { returns(Symbol) }
   def spec
-    source["spec"].to_sym
+    spec = source["spec"].to_sym
+    Formula.spec_syms.include?(spec) ? spec : :stable
   end
 
   sig { returns(T::Hash[String, T.untyped]) }
