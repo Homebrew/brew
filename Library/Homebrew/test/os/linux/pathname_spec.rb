@@ -52,12 +52,40 @@ RSpec.describe Pathname do
     it "returns section names" do
       expect(exec.section_names).to include(".dynamic")
     end
+  end
 
-    it "is not read with the rest of the metadata" do
-      allow(exec).to receive(:patchelf_patcher).and_wrap_original do |method|
-        method.call.tap { |patcher| expect(patcher.elf).not_to receive(:sections) }
-      end
+  describe "metadata" do
+    it "is read without patchelf.rb" do
+      expect(exec).not_to receive(:patchelf_patcher)
       exec.rpath
+    end
+
+    it "is read with patchelf.rb when the header can't hold the program header count" do
+      mktmpdir do |tmp_dir|
+        path = tmp_dir/exec.basename
+        FileUtils.cp(exec, path)
+        program_header_count_offset = 0x38
+        program_header_count_in_first_section = 0xffff
+        File.binwrite(path, [program_header_count_in_first_section].pack("v"), program_header_count_offset)
+        elf = ELFPathname.wrap(path)
+        expect(elf).to receive(:patchelf_patcher).and_call_original
+        elf.rpath
+      end
+    end
+
+    it "is read from a 32-bit little-endian library" do
+      lib = ELFPathname.wrap(elf_dir/"libx_arm32.so.2")
+      expect([lib.dylib_id, lib.rpath, lib.dynamically_linked_libraries])
+        .to eq ["libx.so.2", "/opt/a/lib:$ORIGIN/../lib", ["libdep.so.1"]]
+    end
+
+    it "is read from a 64-bit big-endian executable" do
+      exe = ELFPathname.wrap(elf_dir/"exe_s390x")
+      expect([exe.interpreter, exe.rpath, exe.pie?]).to eq ["/lib/ld-test-loader.so.1", "/opt/exe/lib", true]
+    end
+
+    it "reads a file without program headers as not dynamic" do
+      expect(ELFPathname.wrap(elf_dir/"static_no_phdrs").dynamic_elf?).to be false
     end
   end
 
