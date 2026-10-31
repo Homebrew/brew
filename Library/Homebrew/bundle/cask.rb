@@ -217,13 +217,16 @@ module Homebrew
           end
         end
 
-        sig { params(cask_list: T::Array[String]).returns(T::Array[String]) }
-        def formula_dependencies(cask_list)
+        # Returns direct formula dependencies, preferring installed casks.
+        # Recursive queries include all declared formula dependencies from current cask
+        # definitions and raise if a cask is unavailable.
+        sig { params(cask_list: T::Array[String], recursive: T::Boolean).returns(T::Array[String]) }
+        def formula_dependencies(cask_list, recursive: false)
           return [] if cask_list.blank?
 
           require "cask/cask_loader"
 
-          installed_cask_objects = casks
+          installed_cask_objects = recursive ? [] : casks
           cask_list.flat_map do |cask_name|
             cask = installed_cask_objects.find do |installed_cask|
               cask_name == installed_cask.to_s || cask_name == installed_cask.full_name
@@ -231,11 +234,20 @@ module Homebrew
             cask ||= begin
               ::Cask::CaskLoader.load(cask_name)
             rescue ::Cask::CaskUnavailableError
+              raise if recursive
+
               nil
             end
             next unless cask
+            next cask.depends_on[:formula] unless recursive
 
-            cask.depends_on[:formula]
+            require "bundle/brew"
+            require "formula"
+            require "utils/topological_hash"
+
+            Brew.formula_names_with_dependencies(
+              ::Utils::TopologicalHash.graph_package_dependencies(cask).keys.grep(Formula),
+            )
           end.compact
         end
 

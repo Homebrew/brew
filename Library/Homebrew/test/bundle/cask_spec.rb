@@ -124,6 +124,78 @@ RSpec.describe Homebrew::Bundle::Cask do
     end
 
     describe "#formula_dependencies" do
+      context "with recursive dependencies" do
+        let(:installed_cask) { instance_double(Cask::Cask, to_s: "editor", full_name: "editor", depends_on: {}) }
+        let(:dependency_formula) do
+          formula("backend") do
+            T.bind(self, T.class_of(Formula))
+            url "backend-1.0"
+          end
+        end
+        let(:requested_cask) do
+          Cask::Cask.new("editor") do
+            version "1.0"
+            url "https://example.com/editor.zip"
+            depends_on cask: "editor-backend"
+          end
+        end
+
+        before do
+          described_class.reset!
+          allow(Cask::CaskLoader).to receive(:load).with("editor").and_return(requested_cask)
+          allow(Cask::CaskLoader).to receive(:load).with("editor-backend", config: nil).and_return(
+            Cask::Cask.new("editor-backend") do
+              version "1.0"
+              url "https://example.com/editor-backend.zip"
+              depends_on formula: "backend"
+            end,
+          )
+          allow(Formula).to receive(:[]).with("backend").and_return(dependency_formula)
+        end
+
+        it "includes formula dependencies of nested casks" do
+          expect(dumper.formula_dependencies(["editor"], recursive: true)).to eq(["backend"])
+        end
+
+        [:build, :test, :optional].each do |kind|
+          it "includes #{kind} dependencies of a cask's formula dependency" do
+            T.bind(self, RSpec::Core::ExampleGroup)
+
+            stub_formula_loader(formula("extra") do
+              T.bind(self, T.class_of(Formula))
+              url "extra-1.0"
+            end)
+            backend = formula("backend") do
+              T.bind(self, T.class_of(Formula))
+              url "backend-1.0"
+              depends_on "extra" => kind
+            end
+            allow(Formula).to receive(:[]).with("backend").and_return(backend)
+
+            expect(described_class.formula_dependencies(["editor"], recursive: true))
+              .to contain_exactly("backend", "extra")
+          end
+        end
+
+        it "uses the current definition when an installed cask has no dependencies" do
+          allow(described_class).to receive(:casks).and_return([installed_cask])
+
+          expect(dumper.formula_dependencies(["editor"], recursive: true)).to eq(["backend"])
+        end
+
+        it "still uses the installed definition for a non-recursive query" do
+          allow(described_class).to receive(:casks).and_return([installed_cask])
+
+          expect(dumper.formula_dependencies(["editor"])).to be_empty
+        end
+
+        it "raises when a requested cask cannot be loaded" do
+          allow(Cask::CaskLoader).to receive(:load).with("editor").and_raise(Cask::CaskUnavailableError, "editor")
+
+          expect { dumper.formula_dependencies(["editor"], recursive: true) }.to raise_error(Cask::CaskUnavailableError)
+        end
+      end
+
       context "when the given casks don't have formula dependencies" do
         before do
           described_class.reset!

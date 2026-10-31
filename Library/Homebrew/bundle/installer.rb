@@ -97,8 +97,9 @@ module Homebrew
         installed_taps = ensure_entry_taps_installed!(pending_entries, tap_entries:)
         prepare_attestation_verification!(pending_entries)
 
+        formula_names = Set.new
         batchable, remaining = pending_entries.partition do |entry|
-          homebrew_batchable?(entry, entries: installable_entries, installed_taps:)
+          homebrew_batchable?(entry, entries: installable_entries, installed_taps:, formula_names:)
         end
 
         if batchable.present?
@@ -238,9 +239,10 @@ module Homebrew
           entry:          InstallableEntry,
           entries:        T::Array[InstallableEntry],
           installed_taps: T::Array[String],
+          formula_names:  T::Set[String],
         ).returns(T::Boolean)
       }
-      def self.homebrew_batchable?(entry, entries:, installed_taps:)
+      def self.homebrew_batchable?(entry, entries:, installed_taps:, formula_names:)
         case entry.cls.name
         when "Homebrew::Bundle::Brew"
           return false if (entry.options.keys - BATCHABLE_OPTION_KEYS).any?
@@ -254,7 +256,19 @@ module Homebrew
 
         package = if entry.cls == Brew
           require "formula"
-          Formula[entry.full_name]
+          formula = Formula[entry.full_name]
+          conflicts = formula.conflicts.map(&:name)
+          if conflicts.present?
+            return false if conflicts.any? { |name| Brew.formula_installed?(name) }
+            return false if entries.any? do |candidate|
+              [Brew, Cask].include?(candidate.cls) && candidate.options[:args].present?
+            end
+
+            formula_names.merge(formula_names_with_dependencies(entries)) if formula_names.empty?
+            return false if conflicts.any? { |name| formula_names.include?(Formula[name].full_name) }
+          end
+
+          formula
         else
           require "cask/cask_loader"
           ::Cask::CaskLoader.load(entry.full_name)
@@ -273,6 +287,20 @@ module Homebrew
         false
       end
       private_class_method :homebrew_batchable?
+
+      # Returns the requested formula names, including optional formula and cask dependencies.
+      sig { params(entries: T::Array[InstallableEntry]).returns(T::Set[String]) }
+      def self.formula_names_with_dependencies(entries)
+        require "formula"
+
+        formula_names = Brew.formula_names_with_dependencies(
+          entries.filter_map { |entry| Formula[entry.full_name] if entry.cls == Brew },
+        )
+        formula_names += Cask.formula_dependencies(
+          entries.filter_map { |entry| entry.full_name if entry.cls == Cask }, recursive: true
+        )
+        formula_names.to_set
+      end
 
       sig {
         params(
