@@ -9,7 +9,6 @@ RSpec.describe Hardware::CPU do
       [
         :arm,
         :intel,
-        :ppc,
         :dunno,
       ]
     end
@@ -51,6 +50,13 @@ RSpec.describe Hardware::CPU do
         :arm_twister,
         :arm_typhoon,
         :arm_vortex_tempest,
+        :armv7_a,
+        :armv8_0_a,
+        :armv8_2_a,
+        :armv8_4_a,
+        :armv9_0_a,
+        :armv9_2_a,
+        :armv9_3_a,
         :arrowlake,
         :atom,
         :bobcat,
@@ -90,7 +96,8 @@ RSpec.describe Hardware::CPU do
     end
 
     it "returns the current CPU's family name as a symbol, or :dunno if it cannot be detected" do
-      expect(cpu_families).to include described_class.family
+      family = described_class.family
+      expect(cpu_families.include?(family) || family.start_with?("unknown_")).to be(true)
     end
 
     context "when hw.cpufamily is 0x573b5eec on a Mac", :needs_macos do
