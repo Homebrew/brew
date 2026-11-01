@@ -26,14 +26,20 @@ module Homebrew
         approved_pr_review: "approved-review search matches",
         coauthor:           "co-authored commits",
       }.freeze, T::Hash[Symbol, String])
+      MAINTAINER_CONTRIBUTION_TYPES = [:merged_pr_merger, :approved_pr_review, :closed_issue].freeze
+      MAINTAINER_USER_RENAMES = T.let({ "branchvincent" => "branchv" }.freeze, T::Hash[String, String])
+      MAX_RATE_LIMIT_RETRIES = 3
+      SECONDARY_RATE_LIMIT_DELAY = 60
       MAX_PR_SEARCH = 100
+      MAX_PR_AUTHOR_BATCH = 100
+      MAX_SEARCH_RESULTS = 1000
       # https://docs.brew.sh/Homebrew-Governance#maintainer
       ACTIVITY_PERIOD_MONTHS = 3
-      MAINTAINER_ACTIVITY_THRESHOLD = 50
+      MAINTAINER_ACTIVITY_THRESHOLD = 40
       # https://docs.brew.sh/Homebrew-Governance#lead-maintainer
       LEAD_ACTIVITY_PERIODS = 4
-      LEAD_REPOSITORY_ACTIVITY_THRESHOLD = 25
-      MAX_CONTRIBUTIONS = T.let(MAINTAINER_ACTIVITY_THRESHOLD * 10, Integer)
+      LEAD_REPOSITORY_ACTIVITY_THRESHOLD = 20
+      MAX_CONTRIBUTIONS = 500
       QUALIFYING_CONTRIBUTION_TYPES = [:merged_pr, :approved_pr_review, :coauthor].freeze
       GIT_LOG_FIELD_SEPARATOR = "\x1f"
       GIT_LOG_RECORD_SEPARATOR = "\x1e"
@@ -86,7 +92,7 @@ module Homebrew
                description: "Print a CSV of contributions across repositories over the time period."
         flag   "--maintainer-report-csv",
                description: "Print a CSV of Maintainer and Lead Maintainer activity criteria using fetched Git " \
-                            "histories and GitHub's existing approved-review search for the Homebrew " \
+                            "histories, verified GitHub approvals and issue closures for the Homebrew " \
                             "governance quarter, for example `--maintainer-report-csv=2026-2`. " \
                             "Alternatively, omit the value and set `--from` and `--to` for any reporting period. " \
                             "Also write it in the current directory as `brew-contributions-FROM-to-TO.csv`, or " \
@@ -94,13 +100,16 @@ module Homebrew
                             "Only Maintainers listed at the end of that period are included. " \
                             "Activity checks use the latest completed governance quarter; " \
                             "role recommendations use up to four full quarters of reports. " \
-                            "Review searches return at most 100 results and other counts are capped at 500 per " \
-                            "repository and contribution type. Repository-scoped follow-up searches ensure " \
-                            "role activity checks remain accurate when a count is capped. Completed-period " \
+                            "Counts are capped at 500 per repository and contribution type. " \
+                            "Merge and approval checks stop once the activity thresholds are met. " \
+                            "Historical reports using older criteria must be regenerated. Completed-period " \
                             "GitHub searches are cached in Homebrew's cache and removed by normal cache pruning. " \
                             "`YEAR-1` is December of the previous year through February, `YEAR-2` is March " \
                             "through May, `YEAR-3` is June through August and `YEAR-4` is September through " \
                             "November."
+        comma_array "--maintainer-exempt=",
+                    description: "GitHub usernames exempt from Maintainer inactivity removal, such as " \
+                                 "Security Team members. Lead Maintainer activity requirements still apply."
         conflicts "--organisation", "--repositories"
         conflicts "--organisation", "--team"
         conflicts "--user", "--team"
@@ -113,6 +122,9 @@ module Homebrew
       sig { override.void }
       def run
         maintainer_report_csv = args.maintainer_report_csv
+        if args.maintainer_exempt && !maintainer_report_csv
+          odie "`--maintainer-exempt` requires `--maintainer-report-csv`."
+        end
         requested_users = args.user || []
         odie "`--user` must not contain empty values." if requested_users.compact.length != requested_users.length
 
@@ -288,6 +300,7 @@ module Homebrew
 
             name = match.fetch(0)
             user = match.fetch(1)
+            user = MAINTAINER_USER_RENAMES.fetch(user.downcase, user)
             user_names[user] = name
             lead_maintainers[user.downcase] = true if lead
           end
@@ -384,6 +397,9 @@ module Homebrew
         git_merged_pull_requests = users.keys.to_h do |user|
           [user, repositories.to_h { |repository| [repository, Set.new] }]
         end
+        git_merger_pull_requests = users.keys.to_h do |user|
+          [user, repositories.to_h { |repository| [repository, Set.new] }]
+        end
         git_log_format_fields = [
           GIT_LOG_COMMIT_HASH_FORMAT, GIT_LOG_PARENT_HASHES_FORMAT, GIT_LOG_AUTHOR_NAME_FORMAT,
           GIT_LOG_AUTHOR_EMAIL_FORMAT, GIT_LOG_COMMITTER_NAME_FORMAT, GIT_LOG_COMMITTER_EMAIL_FORMAT,
@@ -398,12 +414,25 @@ module Homebrew
           )
           authored_pull_requests = users.keys.to_h { |user| [user, Set.new] }
           merged_pull_requests = users.keys.to_h { |user| [user, Set.new] }
-          parse_git_log(output, users, github_identities:, authored_pull_requests:, merged_pull_requests:)
+          merger_pull_requests = users.keys.to_h { |user| [user, Set.new] }
+          parse_git_log(output, users, github_identities:, authored_pull_requests:, merged_pull_requests:,
+                        merger_pull_requests:)
             .each do |user, counts|
             results.fetch(user)[repository] = counts
             git_authored_pull_requests.fetch(user)[repository] = authored_pull_requests.fetch(user)
             git_merged_pull_requests.fetch(user)[repository] = merged_pull_requests.fetch(user)
+            git_merger_pull_requests.fetch(user)[repository] = merger_pull_requests.fetch(user)
           end
+        end
+
+        if args.maintainer_report_csv
+          results.each_value do |user_results|
+            user_results.transform_values! do |counts|
+              MAINTAINER_CONTRIBUTION_TYPES.to_h { |type| [type, counts.fetch(type, 0)] }
+            end
+          end
+          return scan_maintainer_contributions(repositories, results, github_users, git_merger_pull_requests,
+                                               from:, to:, skip_reviews_if_lead_met:, progress:)
         end
 
         merged_range = "#{from}..#{Date.iso8601(to).prev_day.iso8601}"
@@ -511,12 +540,296 @@ module Homebrew
         results
       end
 
+      sig {
+        params(
+          repositories: T::Array[String],
+          results: T::Hash[String, T::Hash[String, T::Hash[Symbol, Integer]]],
+          github_users: T::Hash[String, T.nilable(String)],
+          git_merged_pull_requests: T::Hash[String, T::Hash[String, T::Set[String]]],
+          from: String, to: String, skip_reviews_if_lead_met: T::Boolean, progress: T::Boolean
+        ).returns(T::Hash[String, T::Hash[String, T::Hash[Symbol, Integer]]])
+      }
+      def scan_maintainer_contributions(repositories, results, github_users, git_merged_pull_requests, from:, to:,
+                                        skip_reviews_if_lead_met:, progress:)
+        github_users.each do |user, github_user|
+          next if github_user.nil?
+
+          repositories.each do |repository|
+            merged_pull_requests = git_merged_pull_requests.fetch(user).fetch(repository)
+            next if merged_pull_requests.empty?
+
+            $stderr.puts "Excluding self-merges for #{user} in #{repository}..." if progress
+            counts = results.fetch(user).fetch(repository)
+            verified_merges = Set.new
+            numbers = merged_pull_requests.sort_by(&:to_i)
+            numbers.each_slice(MAX_PR_AUTHOR_BATCH) do |batch|
+              authors = cached_github_request(Hash, "pull-request-authors", repository, *batch, to:) do
+                owner, name = repository.split("/", 2)
+                query = <<~GRAPHQL
+                  query($owner: String!, $name: String!) {
+                    repository(owner: $owner, name: $name) {
+                      #{batch.map { |number| "pr#{number}: pullRequest(number: #{number}) { author { login } }" }.join(" ")}
+                    }
+                  }
+                GRAPHQL
+                response = GitHub::API.open_graphql(query, variables: { owner:, name: }, raise_errors: false)
+                errors = response.fetch("errors", []).reject do |error|
+                  error["type"] == "NOT_FOUND" &&
+                    batch.any? { |number| error["path"] == ["repository", "pr#{number}"] }
+                end
+                raise GitHub::API::Error, errors.map { |error| error.fetch("message") }.join("\n") if errors.present?
+
+                response.fetch("data").fetch("repository")
+              end
+              batch.each do |number|
+                author = authors.fetch("pr#{number}")&.dig("author", "login")
+                if author.nil?
+                  counts[:unverified_merges] = counts.fetch(:unverified_merges, 0) + 1
+                  next
+                end
+                next if author.casecmp?(github_user)
+
+                verified_merges << number
+              end
+              limit = skip_reviews_if_lead_met ? MAINTAINER_ACTIVITY_THRESHOLD : MAX_CONTRIBUTIONS
+              next if verified_merges.length < limit
+
+              counts[:merges_skipped] = 1 if batch.last != numbers.last
+              break
+            end
+            merged_pull_requests.replace(verified_merges)
+            counts[:merged_pr_merger] = [verified_merges.length, MAX_CONTRIBUTIONS].min
+          end
+        end
+
+        repositories.each do |repository|
+          $stderr.puts "Querying issue closures in #{repository}..." if progress
+          closures = closed_issue_counts(repository, from:, to:)
+          github_users.each do |user, github_user|
+            next if github_user.nil?
+
+            results.fetch(user).fetch(repository)[:closed_issue] =
+              [closures.fetch(github_user.downcase, 0), MAX_CONTRIBUTIONS].min
+          end
+        end
+
+        github_users.each do |user, github_user|
+          next if github_user.nil?
+
+          repositories.each do |repository|
+            counts = results.fetch(user).fetch(repository)
+            if skip_reviews_if_lead_met && review_checks_complete?(results.fetch(user), repository)
+              counts[:reviews_skipped] = 1
+              next
+            end
+
+            $stderr.puts "Querying PR approvals for #{user} in #{repository}..." if progress
+            page = 1
+            loop do
+              matches = cached_github_request(Hash, "merged-review-candidates", repository, github_user, from, to,
+                                              page.to_s, to:) do
+                uri = GitHub.url_to("search", "issues")
+                uri.query = "#{GitHub.search_query_string("-author:#{github_user}", is: "merged", repo: repository,
+                                                         reviewed_by: github_user,
+                                                         merged: "#{from}..#{Date.iso8601(to).prev_day.iso8601}")}" \
+                            "&page=#{page}"
+                GitHub::API.open_rest(uri)
+              end
+              matches.fetch("items").each do |pull_request|
+                number = pull_request.fetch("number")
+                next if git_merged_pull_requests.fetch(user).fetch(repository).include?(number.to_s)
+                next unless approved_pull_request?(repository, number, github_user, from:, to:)
+
+                increment_contribution_count(counts, :approved_pr_review)
+                break if skip_reviews_if_lead_met && review_checks_complete?(results.fetch(user), repository)
+              end
+              if skip_reviews_if_lead_met && review_checks_complete?(results.fetch(user), repository)
+                counts[:reviews_skipped] = 1
+                break
+              end
+              break if counts.fetch(:approved_pr_review) >= MAX_CONTRIBUTIONS
+
+              if matches["incomplete_results"] ||
+                 (page * MAX_PR_SEARCH >= MAX_SEARCH_RESULTS && page * MAX_PR_SEARCH < matches.fetch("total_count"))
+                odie "Incomplete review search for #{user} in #{repository}.\nUse a shorter reporting period."
+              end
+              break if page * MAX_PR_SEARCH >= matches.fetch("total_count")
+
+              page += 1
+            end
+          end
+        end
+
+        results.each do |user, user_results|
+          assessments = [false, true].freeze.map do |include_unverified|
+            totals = user_results.values.map do |counts|
+              contribution_count(counts.slice(*MAINTAINER_CONTRIBUTION_TYPES)) +
+                (include_unverified ? counts.fetch(:unverified_merges, 0) : 0)
+            end
+            [totals.sum >= MAINTAINER_ACTIVITY_THRESHOLD,
+             totals.count { |count| count >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD } >= 2]
+          end
+          next if assessments.uniq.one?
+
+          odie "#{user}: unavailable PRs could change the activity assessment."
+        end
+        results
+      end
+
+      sig { params(repository: String, number: Integer, user: String, from: String, to: String).returns(T::Boolean) }
+      def approved_pull_request?(repository, number, user, from:, to:)
+        activity = cached_github_request(Hash, "merged-pr-activity", repository, number.to_s, to:) do
+          query = <<~GRAPHQL
+            query($owner: String!, $name: String!, $number: Int!, $after: String) {
+              repository(owner: $owner, name: $name) {
+                pullRequest(number: $number) {
+                  mergedAt
+                  author { login }
+                  timelineItems(itemTypes: [PULL_REQUEST_REVIEW, REVIEW_DISMISSED_EVENT], first: 100, after: $after) {
+                    nodes {
+                      ...ReviewFields
+                      ... on ReviewDismissedEvent {
+                        createdAt
+                        previousReviewState
+                        review { ...ReviewFields }
+                      }
+                    }
+                    pageInfo { hasNextPage endCursor }
+                  }
+                }
+              }
+            }
+            fragment ReviewFields on PullRequestReview {
+              id
+              author { login }
+              submittedAt
+              state
+              authorCanPushToRepository
+            }
+          GRAPHQL
+          owner, name = repository.split("/", 2)
+          merged_at = T.let("", String)
+          review_events = T.let([], T::Array[[String, String, String, String]])
+          GitHub::API.paginate_graphql(query, variables: { owner:, name:, number: }) do |result|
+            pull_request = result.fetch("repository").fetch("pullRequest")
+            merged_at = pull_request["mergedAt"].to_s
+            next({ "hasNextPage" => false }) if merged_at.empty?
+
+            timeline = pull_request.fetch("timelineItems")
+            timeline.fetch("nodes").each do |event|
+              review = event["review"] || event
+              reviewer = review.dig("author", "login")
+              date = review["submittedAt"]
+              next unless reviewer.is_a?(String)
+              next unless date.is_a?(String)
+              next if date > merged_at || reviewer.casecmp?(pull_request.dig("author", "login").to_s)
+              next unless review.fetch("authorCanPushToRepository")
+
+              state = event["previousReviewState"] || review.fetch("state")
+              next unless ["APPROVED", "CHANGES_REQUESTED"].include?(state)
+
+              review_events << [date, review.fetch("id"), reviewer.downcase, state]
+              if event["previousReviewState"] && event.fetch("createdAt") <= merged_at
+                review_events << [event.fetch("createdAt"), review.fetch("id"), reviewer.downcase, "DISMISSED"]
+              end
+            end
+            timeline.fetch("pageInfo")
+          end
+          approvals = T.let({}, T::Hash[String, [String, String]])
+          review_events.sort_by(&:first).each do |date, id, reviewer, state|
+            if state == "APPROVED"
+              approvals[id] = [reviewer, date]
+            elsif repository == "Homebrew/brew"
+              if state == "CHANGES_REQUESTED"
+                approvals.reject! { |_, (author, _)| author == reviewer }
+              elsif state == "DISMISSED"
+                approvals.delete(id)
+              end
+            end
+          end
+          approvers = if repository == "Homebrew/brew"
+            first_approval = approvals.values.min_by { |_, date| date }
+            first_approval ? [first_approval.first] : []
+          else
+            approvals.values.map(&:first).uniq
+          end
+          { "merged_at" => merged_at, "approvers" => approvers }
+        end
+        activity.fetch("merged_at") >= "#{from}T00:00:00Z" &&
+          activity.fetch("merged_at") < "#{to}T00:00:00Z" && activity.fetch("approvers").include?(user.downcase)
+      end
+
+      sig { params(repository: String, from: String, to: String).returns(T::Hash[String, Integer]) }
+      def closed_issue_counts(repository, from:, to:)
+        cached_github_request(Hash, "separate-issue-closures", repository, from, to, to:) do
+          query = <<~GRAPHQL
+            query($owner: String!, $name: String!, $since: DateTime!, $after: String) {
+              repository(owner: $owner, name: $name) {
+                issues(first: 100, after: $after, filterBy: {since: $since},
+                       orderBy: {field: CREATED_AT, direction: ASC}) {
+                  nodes {
+                    createdAt
+                    author { login }
+                    timelineItems(first: 100, itemTypes: [CLOSED_EVENT], since: $since) {
+                      nodes {
+                        ... on ClosedEvent {
+                          actor { login }
+                          createdAt
+                          closer {
+                            __typename
+                            ... on Commit { associatedPullRequests(first: 1) { nodes { merged } } }
+                          }
+                        }
+                      }
+                      pageInfo { hasNextPage }
+                    }
+                  }
+                  pageInfo { hasNextPage endCursor }
+                }
+              }
+            }
+          GRAPHQL
+          owner, name = repository.split("/", 2)
+          counts = T.let({}, T::Hash[String, Integer])
+          GitHub::API.paginate_graphql(query, variables: { owner:, name:, since: "#{from}T00:00:00Z" }) do |result|
+            issues = result.fetch("repository").fetch("issues")
+            nodes = issues.fetch("nodes")
+            relevant_issues = nodes.take_while { |issue| issue.fetch("createdAt") < "#{to}T00:00:00Z" }
+            relevant_issues.each do |issue|
+              timeline = issue.fetch("timelineItems")
+              if timeline.fetch("pageInfo").fetch("hasNextPage")
+                odie "Too many issue closures in #{repository}; use a shorter reporting period."
+              end
+              closers = timeline.fetch("nodes").filter_map do |event|
+                date = event.fetch("createdAt")
+                next if date < "#{from}T00:00:00Z" || date >= "#{to}T00:00:00Z"
+
+                next if event.dig("closer", "__typename") == "PullRequest"
+                next if event.dig("closer", "associatedPullRequests", "nodes")&.any? { |pr| pr.fetch("merged") }
+
+                user = event.dig("actor", "login")
+                next unless user.is_a?(String)
+                next if user.casecmp?(issue.dig("author", "login").to_s)
+
+                user.downcase
+              end
+              closers.uniq.each do |user|
+                counts[user] = counts.fetch(user, 0) + 1
+              end
+            end
+            (relevant_issues.length == nodes.length) ? issues.fetch("pageInfo") : { "hasNextPage" => false }
+          end
+          counts
+        end
+      end
+
       sig { params(user: String, to: String).returns(T.nilable(String)) }
       def github_username_for(user, to:)
+        user = MAINTAINER_USER_RENAMES.fetch(user.downcase, user) if args.maintainer_report_csv
         return user unless user.include?("@")
 
         noreply_username = github_noreply_username(user)
-        return noreply_username if noreply_username
+        return github_username_for(noreply_username, to:) if noreply_username
 
         matches = cached_github_request(Array, "public-email", user, to, to:) do
           GitHub.search("users", "\"#{user}\" in:email").fetch("items", [])
@@ -540,7 +853,12 @@ module Homebrew
         rescue GitHub::API::HTTPNotFoundError
           {}
         end
-        [username, profile["name"], profile["email"]].compact
+        aliases = if args.maintainer_report_csv
+          MAINTAINER_USER_RENAMES.filter_map { |former, current| former if current.casecmp?(username) }
+        else
+          []
+        end
+        [username, *aliases, profile["name"], profile["email"]].compact
       end
 
       # Returns the block's result, caching it as JSON for completed periods and waiting out rate limits.
@@ -571,15 +889,25 @@ module Homebrew
           cache_path.unlink if cache_path.exist?
         end
 
-        result = yield
+        rate_limit_retries = 0
+        result = begin
+          yield
+        rescue GitHub::API::RateLimitExceededError => e
+          minimum = 1
+          if e.resource == "secondary"
+            raise if rate_limit_retries >= MAX_RATE_LIMIT_RETRIES
+
+            minimum = SECONDARY_RATE_LIMIT_DELAY * (2**rate_limit_retries).to_i
+            rate_limit_retries += 1
+          end
+          GitHub::API.sleep_for_rate_limit(e, minimum:)
+          retry
+        end
         if cache_path
           HOMEBREW_CACHE.mkpath
           cache_path.atomic_write(JSON.generate(result))
         end
         result
-      rescue GitHub::API::RateLimitExceededError => e
-        GitHub::API.sleep_for_rate_limit(e)
-        retry
       end
 
       sig {
@@ -589,10 +917,12 @@ module Homebrew
           github_identities:      T.nilable(T::Hash[String, T::Array[String]]),
           authored_pull_requests: T.nilable(T::Hash[String, T::Set[String]]),
           merged_pull_requests:   T.nilable(T::Hash[String, T::Set[String]]),
+          merger_pull_requests:   T.nilable(T::Hash[String, T::Set[String]]),
         )
           .returns(T::Hash[String, T::Hash[Symbol, Integer]])
       }
-      def parse_git_log(output, users, github_identities: nil, authored_pull_requests: nil, merged_pull_requests: nil)
+      def parse_git_log(output, users, github_identities: nil, authored_pull_requests: nil, merged_pull_requests: nil,
+                        merger_pull_requests: nil)
         counts = users.to_h do |user, _|
           [user, CONTRIBUTION_TYPES.keys.to_h { |type| [type, 0] }]
         end
@@ -611,6 +941,7 @@ module Homebrew
         github_identity_users.each do |identity, user|
           identity_users[identity] ||= user if user
         end
+        merger_identities = args.maintainer_report_csv ? identity_users.dup : identity_users
         records = output.split(GIT_LOG_RECORD_SEPARATOR).filter_map do |record|
           values = record.strip.split(GIT_LOG_FIELD_SEPARATOR, GIT_LOG_FIELDS.length)
           next if values.length != GIT_LOG_FIELDS.length
@@ -670,7 +1001,7 @@ module Homebrew
           pull_request = fields.fetch(:commit_message).match(%r{\AMerge pull request #(\d+) from ([^/\s]+)/})
           next if parents.length < 2 || pull_request.nil?
 
-          merger = user_for_git_identity(fields.fetch(:author_name), fields.fetch(:author_email), identity_users)
+          merger = user_for_git_identity(fields.fetch(:author_name), fields.fetch(:author_email), merger_identities)
           pull_request_id = pull_request[1]
           source_owner = pull_request[2]
           next if pull_request_id.nil? || source_owner.nil?
@@ -680,7 +1011,10 @@ module Homebrew
             increment_contribution_count(counts.fetch(author), :merged_pr_author)
             authored_pull_requests&.fetch(author)&.add(pull_request_id)
           end
-          increment_contribution_count(counts.fetch(merger), :merged_pr_merger) if merger
+          if merger
+            increment_contribution_count(counts.fetch(merger), :merged_pr_merger)
+            merger_pull_requests&.fetch(merger)&.add(pull_request_id)
+          end
           [author, merger].compact.uniq.each do |user|
             increment_contribution_count(counts.fetch(user), :merged_pr)
             merged_pull_requests&.fetch(user)&.add(pull_request_id)
@@ -743,6 +1077,11 @@ module Homebrew
           totals = T.let({}, T::Hash[String, T::Hash[String, Integer]])
           CSV.foreach(path, headers: true) do |row|
             next unless row.is_a?(CSV::Row)
+
+            unless row.headers.include?("brew first approvals")
+              opoo "#{path} uses obsolete activity criteria; regenerate it before assessing roles."
+              return nil
+            end
 
             username = row["username"]
             next unless username.is_a?(String)
@@ -815,10 +1154,18 @@ module Homebrew
                                          from, to)
         require "csv"
 
+        exempt_usernames = (args.maintainer_exempt || []).map do |username|
+          MAINTAINER_USER_RENAMES.fetch(username.downcase, username).downcase
+        end.uniq
+        unmatched_exempt = exempt_usernames - results.keys.map(&:downcase)
+        if unmatched_exempt.present?
+          opoo "Exempt usernames not listed in this maintainer report: #{Utils::Text.to_sentence(unmatched_exempt)}."
+        end
+
         period_end = Date.iso8601(to)
         repository_totals = results.to_h do |user, repositories|
           [user.downcase, repositories.transform_values do |counts|
-            contribution_count(counts.slice(*QUALIFYING_CONTRIBUTION_TYPES))
+            contribution_count(counts.slice(*MAINTAINER_CONTRIBUTION_TYPES))
           end]
         end
         activity_end = Date.new(period_end.year, period_end.month, 1)
@@ -827,15 +1174,15 @@ module Homebrew
         activity = maintainer_activity_report(activity_start, activity_end.iso8601,
                                               current_report: [from, to, repository_totals]) || {}
         previous_reports = previous_maintainer_reports(activity_start)
-        # Without previous-period data, a potential role would be an unsubstantiated suggestion.
-        include_potential_role = activity.present? && previous_reports.present?
+        # Activity-based recommendations require previous-period data.
+        include_potential_role = (activity.present? && previous_reports.present?) || args.maintainer_exempt.present?
         rows = results.sort_by do |user, _|
-          qualifying_total = contribution_count(grand_totals.fetch(user).slice(*QUALIFYING_CONTRIBUTION_TYPES))
+          qualifying_total = contribution_count(grand_totals.fetch(user).slice(*MAINTAINER_CONTRIBUTION_TYPES))
           [-qualifying_total, user.downcase]
         end
         rows.map! do |user, user_repositories|
           grand_total = grand_totals.fetch(user)
-          qualifying_total = contribution_count(grand_total.slice(*QUALIFYING_CONTRIBUTION_TYPES))
+          qualifying_total = contribution_count(grand_total.slice(*MAINTAINER_CONTRIBUTION_TYPES))
           maintainer_since = maintainer_since_dates.fetch(user)
           maintainer_since_date = Date.iso8601(maintainer_since) if maintainer_since
           lead_maintainer = lead_maintainers.key?(user.downcase)
@@ -845,13 +1192,15 @@ module Homebrew
             potential_maintainer_role(user, role, maintainer_since_date, period_end, user_activity, previous_reports)
           end
 
-          capped = grand_total.fetch(:merged_pr_author_hit_cap, 0).positive? ||
-                   grand_total.fetch(:approved_pr_review_hit_cap, 0).positive?
-          capped ||= user_repositories.any? do |_, counts|
-            counts.fetch(:approved_pr_review) >= MAX_PR_SEARCH ||
-              counts.except(:approved_pr_review).values.any? do |count|
-                count >= MAX_CONTRIBUTIONS
-              end
+          exempt = exempt_usernames.include?(user.downcase)
+          if exempt && (potential_role == "None" || (potential_role.nil? && role == "Maintainer"))
+            potential_role = "Maintainer"
+          end
+
+          capped = user_repositories.any? do |_, counts|
+            counts.fetch(:reviews_skipped, 0).positive? || counts.fetch(:merges_skipped, 0).positive? ||
+              counts.fetch(:unverified_merges, 0).positive? ||
+              counts.slice(*MAINTAINER_CONTRIBUTION_TYPES).values.any? { |count| count >= MAX_CONTRIBUTIONS }
           end
 
           [
@@ -861,11 +1210,13 @@ module Homebrew
             maintainer_since_date ? [(period_end - maintainer_since_date).to_i, 0].max : nil,
             *PRIMARY_REPOS.flat_map do |repository|
               counts = user_repositories.fetch(repository)
-              [*counts.values_at(*CONTRIBUTION_TYPES.keys), repository_totals.fetch(user.downcase).fetch(repository)]
+              [*counts.values_at(*MAINTAINER_CONTRIBUTION_TYPES),
+               repository_totals.fetch(user.downcase).fetch(repository)]
             end,
             qualifying_total,
             user_activity&.fetch(0),
             user_activity&.fetch(1),
+            exempt,
             capped,
             role,
             *(include_potential_role ? [potential_role] : []),
@@ -877,11 +1228,11 @@ module Homebrew
             *PRIMARY_REPOS.flat_map do |repository|
               repository = repository.delete_prefix("Homebrew/").delete_prefix("homebrew-")
               [
-                "#{repository} authored", "#{repository} merged", "#{repository} PRs",
-                "#{repository} reviews", "#{repository} coauthored", "#{repository} total"
+                "#{repository} merged", (repository == "brew") ? "brew first approvals" : "#{repository} approvals",
+                "#{repository} issues closed", "#{repository} total"
               ]
             end,
-            "total", "maintainer met", "lead met", "capped", "role",
+            "total", "maintainer met", "lead met", "maintainer exempt", "capped", "role",
             *(include_potential_role ? ["potential new role"] : [])
           ]
           rows.each { |row| csv << row }
@@ -1048,6 +1399,18 @@ module Homebrew
         repositories.count do |_, counts|
           contribution_count(counts.slice(*QUALIFYING_CONTRIBUTION_TYPES)) >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD
         end >= 2
+      end
+
+      sig {
+        params(repositories: T::Hash[String, T::Hash[Symbol, Integer]], repository: String).returns(T::Boolean)
+      }
+      def review_checks_complete?(repositories, repository)
+        repository_totals = repositories.transform_values do |counts|
+          contribution_count(counts.slice(*MAINTAINER_CONTRIBUTION_TYPES))
+        end
+        repository_totals.values.count { |count| count >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD } >= 2 ||
+          (repository_totals.fetch(repository) >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD &&
+           repository_totals.values.sum >= MAINTAINER_ACTIVITY_THRESHOLD)
       end
 
       sig { params(quarter: Integer, current_year: Integer).returns([String, String]) }

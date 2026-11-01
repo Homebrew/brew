@@ -17,6 +17,9 @@ class Homebrew::DevCmd::Contributions::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
   def from; end
 
+  sig { returns(T.nilable(T::Array[String])) }
+  def maintainer_exempt; end
+
   sig { returns(T.nilable(String)) }
   def maintainer_report_csv; end
 

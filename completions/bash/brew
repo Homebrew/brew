@@ -1283,6 +1283,7 @@ _brew_contributions() {
       --debug
       --from
       --help
+      --maintainer-exempt
       --maintainer-report-csv
       --organisation
       --quarter

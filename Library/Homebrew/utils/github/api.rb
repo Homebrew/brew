@@ -79,13 +79,14 @@ module GitHub
 
     # Error when the API rate limit is exceeded.
     class RateLimitExceededError < Error
-      sig { params(github_message: String, reset: Integer, resource: String, limit: Integer).void }
+      sig { params(github_message: String, reset: Integer, resource: String, limit: T.nilable(Integer)).void }
       def initialize(github_message, reset:, resource:, limit:)
         @reset = reset
+        @resource = resource
         new_pat_message = ", or:\n#{GitHub.pat_blurb}" if API.credentials.blank?
         message = <<~EOS
           GitHub API Error: #{github_message}
-          Rate limit exceeded for #{resource} resource (#{limit} limit).
+          Rate limit exceeded for #{resource} resource#{" (#{limit} limit)" if limit}.
           Try again in #{pretty_ratelimit_reset}#{new_pat_message}
         EOS
         super(message, github_message)
@@ -93,6 +94,9 @@ module GitHub
 
       sig { returns(Integer) }
       attr_reader :reset
+
+      sig { returns(String) }
+      attr_reader :resource
 
       sig { returns(String) }
       def pretty_ratelimit_reset
@@ -170,9 +174,9 @@ module GitHub
     ].freeze
 
     # Sleeps until the rate limit from the given exception has reset.
-    sig { params(exception: RateLimitExceededError).void }
-    def self.sleep_for_rate_limit(exception)
-      sleep_seconds = [exception.reset - Time.now.to_i, 1].max
+    sig { params(exception: RateLimitExceededError, minimum: Integer).void }
+    def self.sleep_for_rate_limit(exception, minimum: 1)
+      sleep_seconds = [exception.reset - Time.now.to_i, minimum].max
       opoo "GitHub rate limit exceeded, sleeping for #{sleep_seconds} seconds..."
       sleep sleep_seconds
     end
@@ -478,12 +482,18 @@ module GitHub
       case http_code
       when "401"
         raise AuthenticationFailedError.new(credentials_type, message)
-      when "403"
+      when "403", "429"
         if meta.fetch("x-ratelimit-remaining", 1).to_i <= 0
-          reset = meta.fetch("x-ratelimit-reset").to_i
+          reset = [meta.fetch("x-ratelimit-reset").to_i,
+                   Time.now.to_i + meta.fetch("retry-after", 0).to_i].max
           resource = meta.fetch("x-ratelimit-resource")
           limit = meta.fetch("x-ratelimit-limit").to_i
           raise RateLimitExceededError.new(message, reset:, resource:, limit:)
+        end
+
+        if http_code == "429" || meta.key?("retry-after") || message.downcase.include?("secondary rate limit")
+          reset = Time.now.to_i + [meta.fetch("retry-after", 60).to_i, 60].max
+          raise RateLimitExceededError.new(message, reset:, resource: "secondary", limit: nil)
         end
 
         raise AuthenticationFailedError.new(credentials_type, message)
