@@ -343,12 +343,16 @@ module Homebrew
         require "api/env"
 
         Homebrew::API.with_no_api_env_if_needed(@without_api) do
+          if method == :bottle && only != :cask && HOMEBREW_BOTTLES_EXTNAME_REGEX.match?(name)
+            return Formulary.from_bottle(name, *@override_spec, force_bottle: @force_bottle, flags: @flags)
+          end
+
           unreadable_error = nil
 
           formula_or_kegs = if only != :cask
             begin
               case method
-              when nil, :factory
+              when nil, :factory, :bottle
                 Formulary.factory(name, *@override_spec, warn:, force_bottle: @force_bottle, flags: @flags)
               when :resolve
                 resolve_formula(name)

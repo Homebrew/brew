@@ -97,7 +97,11 @@ RSpec.describe DeprecateDisable do
               #{disable_stanzas}
             end
           RUBY
-          package = (type == :formula) ? Formulary.factory(path) : Cask::CaskLoader.load(path)
+          package = if type == :formula
+            Formulary.from_path(path)
+          else
+            Cask::CaskLoader.load(path)
+          end
           described_class.disabled_on_all_platforms?(package)
         end
       end

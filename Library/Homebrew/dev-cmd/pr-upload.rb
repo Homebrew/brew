@@ -133,8 +133,7 @@ module Homebrew
         Formulary.clear_cache
         transition = BottleTransition.new
         bottles_hash.each_value do |bottle_hash|
-          formula_path = HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path")
-          formula = Formulary.factory(formula_path)
+          formula = Formulary.from_path(HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path"))
           next unless transition.required?(formula)
 
           spec = formula.bottle_specification
@@ -167,8 +166,9 @@ module Homebrew
       sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
       def check_bottled_formulae!(bottles_hash)
         bottles_hash.each do |name, bottle_hash|
-          formula_path = HOMEBREW_REPOSITORY/bottle_hash["formula"]["path"]
-          formula_version = Formulary.factory(formula_path).pkg_version
+          formula_version = Formulary.from_path(
+            HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path"),
+          ).pkg_version
           bottle_version = PkgVersion.parse bottle_hash["formula"]["pkg_version"]
           next if formula_version == bottle_version
 

@@ -117,7 +117,12 @@ module Homebrew
 
             os_arch_combinations.each do |os, arch|
               SimulateSystem.with(os:, arch:) do
-                formula = Formulary.factory(ref, args.HEAD? ? :head : :stable)
+                spec = args.HEAD? ? :head : :stable
+                formula = if ref.is_a?(Pathname)
+                  Formulary.from_path(ref, spec)
+                else
+                  Formulary.factory(ref, spec)
+                end
 
                 formula.print_tap_action verb: "Fetching"
 

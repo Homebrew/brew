@@ -836,7 +836,7 @@ RSpec.describe Homebrew::Trust, :trust_store do
     end
 
     it "refuses to evaluate the formula" do
-      expect { Formulary.factory(formula_path) }.to raise_error(Homebrew::UntrustedTapError)
+      expect { Formulary.from_path(formula_path) }.to raise_error(Homebrew::UntrustedTapError)
     end
   end
 

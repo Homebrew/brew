@@ -13,16 +13,20 @@ require "utils/fork"
 require "extend/pathname/write_mkpath_extension"
 
 begin
-  # Undocumented opt-out for internal use.
-  # We need to allow formulae from paths here due to how we pass them through.
-  ENV["HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS"] = "1"
-
-  args = Homebrew::Cmd::Postinstall.new.args
   error_pipe = Utils.forked_child_error_pipe
+
+  formula_name = ARGV.delete("--formula-name")
+  spec = ARGV.include?("--HEAD") ? :head : nil
+  flags = ARGV.grep(/^--/)
+  formula = if formula_name
+    Formulary.resolve(ARGV.fetch(0), spec:, flags:)
+  else
+    Formulary.resolve_from_path(ARGV.fetch(0), spec:, flags:)
+  end
+  args = Homebrew::Cmd::Postinstall.new(formula:).args
 
   trap("INT", old_trap)
 
-  formula = args.named.to_resolved_formulae.fetch(0)
   if args.debug? && !Homebrew::EnvConfig.disable_debrew?
     require "debrew"
     formula.extend(Debrew::Formula)

@@ -24,7 +24,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
 
   before do
     allow(Formulary).to receive(:enable_factory_cache!)
-    allow(Formulary).to receive(:factory).with(requests.path).and_return(requests)
+    allow(Formulary).to receive(:from_path).with(requests.path).and_return(requests)
     allow(Homebrew::Vulns::Repology).to receive_messages(
       load:   Homebrew::Vulns::Repology.new({ "meta" => {}, "formulae" => {} }),
       lookup: {},
@@ -76,7 +76,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
 
     before do
       stub_osv_hit("CVE-2024-1234", fixed: "2.28.1")
-      allow(Formulary).to receive(:factory).with(requests.path).and_return(requests)
+      allow(Formulary).to receive(:from_path).with(requests.path).and_return(requests)
       allow(matcher).to receive(:reconcile_history).and_return(result)
       allow(Homebrew::Vulns::Match).to receive(:new).and_return(matcher)
     end
@@ -301,7 +301,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
       allow(Homebrew::Vulns::OSV).to receive(:query_batch).and_return([[]])
       allow(Homebrew::Vulns::OSV).to receive(:vulnerability)
         .and_raise(Homebrew::Vulns::OSV::NotFoundError, "404")
-      allow(Formulary).to receive(:factory).with(perl.path).and_return(perl)
+      allow(Formulary).to receive(:from_path).with(perl.path).and_return(perl)
       hit = matcher.advisories_for(perl).fetch(0)
       record = matcher.to_brew_record(perl, hit, now: Time.utc(2020))
       allow(matcher).to receive(:reconcile_history).and_return(result.with(state: :never_affected))
@@ -336,7 +336,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
 
     it "loads and walks distinct formula views under each platform" do
       walked = []
-      allow(Formulary).to receive(:factory).with(requests.path) do
+      allow(Formulary).to receive(:from_path).with(requests.path) do
         Formulary.from_contents("requests", requests.path, <<~RUBY)
           class Requests < Formula
             url "https://files.pythonhosted.org/packages/aa/bb/cc/requests-2.31.0.tar.gz"
@@ -1461,7 +1461,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
     expect(matcher).to receive(:reconcile_history).with(requests, anything, reuse_platforms: true)
                                                   .exactly(4).times.and_return(history_result)
     expect(matcher).not_to receive(:advisories_for)
-    expect(Formulary).not_to receive(:factory).with(requests.path)
+    expect(Formulary).not_to receive(:from_path).with(requests.path)
 
     cmd_for("requests", "--json").run
   end
@@ -1524,7 +1524,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
     let(:history) { instance_double(Homebrew::Vulns::History) }
 
     before do
-      allow(Formulary).to receive(:factory).with(requests.path) do
+      allow(Formulary).to receive(:from_path).with(requests.path) do
         if Homebrew::SimulateSystem.simulating_or_running_on_linux?
           resource_formula("3.0", linux_resource, unknown: unknown_identity)
         else

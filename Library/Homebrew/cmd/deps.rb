@@ -110,8 +110,8 @@ module Homebrew
         named_args [:formula, :cask]
       end
 
-      sig { override.params(argv: T::Array[String]).void }
-      def initialize(argv = ARGV.freeze)
+      sig { override.params(argv: T::Array[String], formula: T.nilable(Formula)).void }
+      def initialize(argv = ARGV.freeze, formula: nil)
         super
         @use_runtime_dependencies = T.let(true, T::Boolean)
       end

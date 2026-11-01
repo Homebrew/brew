@@ -30,7 +30,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       f.write text
     end
 
-    formula = Formulary.factory(path)
+    formula = Formulary.from_path(path)
 
     if options.key? :tap_audit_exceptions
       tap = Tap.fetch("test/tap")
@@ -1678,7 +1678,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
   describe "#audit_stable_version" do
     subject do
-      fa = described_class.new(Formulary.factory(formula_path), git: true)
+      fa = described_class.new(Formulary.from_path(formula_path), git: true)
       fa.audit_stable_version
       fa.problems.first&.fetch(:message)
     end
@@ -1744,7 +1744,7 @@ RSpec.describe Homebrew::FormulaAuditor do
 
   describe "#audit_revision dependency relationships" do
     subject do
-      fa = described_class.new(Formulary.factory(formula_path), git: true)
+      fa = described_class.new(Formulary.from_path(formula_path), git: true)
       fa.audit_revision
       fa.problems.first&.fetch(:message)
     end
@@ -1872,7 +1872,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     path.write(test_formula_source(name:, compatibility_version:, revision:, depends_on:))
 
     Formulary.clear_cache
-    formula = Formulary.factory(path)
+    formula = Formulary.from_path(path)
     allow(formula).to receive_messages(tap:, full_name: "#{tap.name}/#{name}")
 
     formula
@@ -2020,7 +2020,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       allow(tap).to receive_messages(formula_dir: tap_path/"Formula")
       allow(target_formula).to receive_messages(full_name: "test/tap/foo", recursive_dependencies: [])
       allow(Formulary).to receive(:factory).and_call_original
-      allow(Formulary).to receive(:factory).with(foo_path).and_return(target_formula)
+      allow(Formulary).to receive(:from_tap_path).with(foo_path).and_return(target_formula)
     end
 
     it "ignores formulae without a previous commit" do
@@ -2117,7 +2117,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       before do
         allow(dependent_formula).to receive_messages(full_name:              "test/tap/bar",
                                                      recursive_dependencies: [dependency_stub("foo")])
-        allow(Formulary).to receive(:factory).with(bar_path).and_return(dependent_formula)
+        allow(Formulary).to receive(:from_tap_path).with(bar_path).and_return(dependent_formula)
         stub_changed_paths(auditor, all_paths: [foo_path, bar_path])
       end
 
@@ -2270,8 +2270,8 @@ RSpec.describe Homebrew::FormulaAuditor do
       allow(tap).to receive_messages(formula_dir: tap_path/"Formula")
       allow(target_formula).to receive_messages(full_name: "test/tap/bar", recursive_dependencies: dependency_list)
       allow(Formulary).to receive(:factory).and_call_original
-      allow(Formulary).to receive(:factory).with(bar_path).and_return(target_formula)
-      allow(Formulary).to receive(:factory).with(foo_path).and_return(dependency_formula)
+      allow(Formulary).to receive(:from_tap_path).with(bar_path).and_return(target_formula)
+      allow(Formulary).to receive(:from_tap_path).with(foo_path).and_return(dependency_formula)
     end
 
     it "ignores revision changes when not incremented by one" do

@@ -1517,8 +1517,11 @@ on_request: installed_on_request?, options:)
 
   sig { void }
   def post_install
+    source = post_install_formula_path
+    source_args = [source]
+    source_args << "--formula-name" if source.is_a?(String)
     Sandbox.with_preserved_brew_file do
-      Sandbox.run_or_fork("nice", *Sandbox.ruby_command("postinstall.rb", post_install_formula_path),
+      Sandbox.run_or_fork("nice", *Sandbox.ruby_command("postinstall.rb", *source_args),
                           step: "running post-install", debug: debug?) do |sandbox|
         formula.logs.mkpath
         sandbox.record_log(formula.logs/"postinstall.sandbox.log")

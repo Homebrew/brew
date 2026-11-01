@@ -369,7 +369,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     expect(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
       .with(["user/repo/foo"], type: nil)
       .ordered
-    expect(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).ordered
+    expect(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false).ordered
                                                              .and_raise(TapFormulaUnavailableError.new(tap, "foo"))
 
     expect { cmd.run }.to output(/If you trust this tap/).to_stderr
@@ -394,7 +394,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
     allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
     allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
-    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula])
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false).and_return([formula])
     allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
     allow(Homebrew::Install).to receive(:check_cc_argv)
     allow(Homebrew::Install).to receive_messages(install_formula?: true, formula_installers: [formula_installer])
@@ -446,7 +446,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
     allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
     allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
-    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula])
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false).and_return([formula])
     allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
     allow(Homebrew::Install).to receive(:check_cc_argv)
     allow(Homebrew::Install).to receive_messages(install_formula?: true, formula_installers: [formula_installer],
@@ -477,7 +477,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
     allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
     allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
-    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([cask])
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false).and_return([cask])
     allow(Cask::Upgrade).to receive(:outdated_casks).and_return([])
     allow(Cask::Installer).to receive(:new).and_return(installer)
     allow(installer).to receive(:install).and_raise("uh-oh")
@@ -500,7 +500,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
     allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
     allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
-    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([cask])
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false).and_return([cask])
     allow(Cask::Upgrade).to receive(:outdated_casks).and_return([])
     allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
     allow(Homebrew::Install).to receive(:check_cc_argv)
@@ -547,7 +547,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
     allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
     allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
-    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula])
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false).and_return([formula])
     allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
     allow(Homebrew::Install).to receive(:check_cc_argv)
     allow(Homebrew::Install).to receive_messages(install_formula?: true, formula_installers: [formula_installer])
@@ -578,7 +578,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     require "search"
 
     allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil, untapped_official_taps: [])
-    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false)
                                                             .and_raise(FormulaOrCaskUnavailableError.new("foo"))
     allow(cask_tap).to receive(:installed?).and_return(false)
     allow(Homebrew::Search).to receive(:search_names).and_return([[], []])
@@ -694,7 +694,10 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
                                                       enqueue_dependency_downloads: nil)
 
         allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
-        allow(cmd.args.named).to receive(:to_formulae_and_casks).with(warn: false).and_return([formula, cask])
+        allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle,
+                                                                      warn:   false).and_return([
+                                                                        formula, cask
+                                                                      ])
         allow(cask).to receive_messages(
           installed?:        true,
           full_name:         "codex",

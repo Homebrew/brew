@@ -114,7 +114,7 @@ RSpec.describe Homebrew::FormulaCreator do
       end
 
       it "writes a formula with valid syntax when using #{mode} template" do
-        expect { Formulary.factory(formula) }.not_to raise_error
+        expect { Formulary.from_path(formula) }.not_to raise_error
       end
 
       specify "when using #{mode} template" do

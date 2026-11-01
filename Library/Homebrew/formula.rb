@@ -2763,7 +2763,11 @@ class Formula
     trusted_tap_files = Homebrew::Trust.trusted_formula_files(tap_files)
 
     (core_names + trusted_tap_files).filter_map do |name_or_file|
-      Formulary.factory(name_or_file)
+      if name_or_file.is_a?(Pathname)
+        Formulary.from_path(name_or_file)
+      else
+        Formulary.factory(name_or_file)
+      end
     rescue FormulaUnavailableError, FormulaUnreadableError, FormulaSpecificationError => e
       # Don't let one broken formula break commands. But do complain.
       onoe "Failed to import: #{name_or_file}"

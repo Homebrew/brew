@@ -45,7 +45,7 @@ class BottleTransition
     return false if formula.disabled?
 
     compatible = Homebrew::SimulateSystem.with(os: MACOS, arch: :arm) do
-      candidate = TestRunnerFormula.new(Formulary.factory(formula.path))
+      candidate = TestRunnerFormula.new(Formulary.from_path(formula.path))
       candidate.compatible?(platform: :macos, arch: :arm64, macos_version: MacOSVersion.from_symbol(MACOS))
     end
     return false unless compatible

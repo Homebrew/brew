@@ -20,7 +20,7 @@ RSpec.describe BottleTransition do
     path = CoreTap.instance.path/"Formula/t/transition-test.rb"
     path.dirname.mkpath
     path.write(current_contents)
-    Homebrew::SimulateSystem.with(os: :linux, arch: :intel) { Formulary.factory(path) }
+    Homebrew::SimulateSystem.with(os: :linux, arch: :intel) { Formulary.from_path(path) }
   end
 
   sig { returns(String) }

@@ -1944,11 +1944,11 @@ RSpec.describe Homebrew::Cmd::Info do
       end
 
       it "returns the local path when the formula is not installed" do
-        expect(described_class.new([]).github_info(Formulary.factory(formula_path)))
+        expect(described_class.new([]).github_info(Formulary.from_path(formula_path)))
           .to eq(formula_path.to_s)
       end
 
-      it "returns the same installed path with and without the API" do
+      it "identifies the same installed file with and without the API" do
         keg_path = HOMEBREW_CELLAR/"testball/0.1"
         (keg_path/".brew").mkpath
         (keg_path/".brew/testball.rb").write(formula_path.read)
@@ -1960,8 +1960,9 @@ RSpec.describe Homebrew::Cmd::Info do
         expect([nil, "1"].map do |no_api|
           ENV["HOMEBREW_NO_INSTALL_FROM_API"] = no_api
           tap.clear_cache
-          described_class.new([]).github_info(Formulary.factory("testball"))
-        end).to eq(["#{HOMEBREW_PREFIX}/opt/testball/.brew/testball.rb"] * 2)
+          formula = Formulary.from_keg(Keg.new(keg_path))
+          Pathname(described_class.new([]).github_info(formula)).realpath
+        end).to eq([keg_path/".brew/testball.rb"] * 2)
       end
 
       it "queries the index once for multiple formulae in a tap" do
@@ -1973,7 +1974,7 @@ RSpec.describe Homebrew::Cmd::Info do
                                              .once.and_call_original
 
         %w[testball testball2].each do |name|
-          info.github_info(Formulary.factory(formula_path.dirname/"#{name}.rb"))
+          info.github_info(Formulary.from_path(formula_path.dirname/"#{name}.rb"))
         end
       end
 

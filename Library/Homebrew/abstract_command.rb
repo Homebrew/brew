@@ -68,9 +68,9 @@ module Homebrew
     sig { returns(CLI::Args) }
     attr_reader :args
 
-    sig { params(argv: T::Array[String]).void }
-    def initialize(argv = ARGV.freeze)
-      @args = T.let(self.class.parser.parse(argv), CLI::Args)
+    T::Sig::WithoutRuntime.sig { params(argv: T::Array[String], formula: T.nilable(Formula)).void }
+    def initialize(argv = ARGV.freeze, formula: nil)
+      @args = T.let(self.class.parser.parse(argv, formula:), CLI::Args)
     end
 
     # This method will be invoked when the command is run.

@@ -291,25 +291,22 @@ class Build
 end
 
 begin
-  # Undocumented opt-out for internal use.
-  # We need to allow formulae from paths here due to how we pass them through.
-  ENV["HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS"] = "1"
-
-  formula_path = ARGV.first
-  args = Homebrew::Cmd::InstallCmd.new.args
-  Context.current = args.context
-
   error_pipe = Utils.forked_child_error_pipe
-
-  trap("INT", old_trap)
-
-  if formula_path&.end_with?(".json")
+  formula_path = ARGV.fetch(0)
+  if formula_path.end_with?(".json")
     raise "build.rb received an API JSON file as the formula path: #{formula_path}. " \
           "This usually means the formula source was not downloaded from the API. " \
           "Try clearing the cache: rm -rf $(brew --cache)/api-source"
   end
 
-  formula = args.named.to_formulae.fetch(0)
+  spec = ARGV.include?("--HEAD") ? :head : :stable
+  # The parent passes the selected formula source, never a dependency name.
+  formula = Formulary.from_path(formula_path, spec, flags: ARGV.grep(/^--/))
+  args = Homebrew::Cmd::InstallCmd.new(formula:).args
+  Context.current = args.context
+
+  trap("INT", old_trap)
+
   options = Options.create(args.flags_only)
   build   = Build.new(formula, options, args:)
 

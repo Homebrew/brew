@@ -163,12 +163,12 @@ RSpec.describe Formulary do
       full_name = "#{tap.name}/sensitive-env"
 
       with_env(HOMEBREW_USER_CONFIG_HOME: mktmpdir) do
-        expect { described_class.factory(formula_path) }
+        expect { described_class.from_path(formula_path) }
           .to raise_error(Homebrew::UntrustedTapError, /#{tap.name}/)
 
         Homebrew::Trust.trust!(:formula, full_name)
 
-        expect(described_class.factory(formula_path).full_name).to eq(full_name)
+        expect(described_class.from_path(formula_path).full_name).to eq(full_name)
       end
     ensure
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"formularytrust"
@@ -207,7 +207,7 @@ RSpec.describe Formulary do
     let(:linux_tag) { Utils::Bottles::Tag.new(system: :linux, arch: :intel) }
     let(:json) do
       Homebrew::SimulateSystem.with_tag(mac_tag) do
-        JSON.parse(JSON.generate(described_class.factory(formula_path).to_hash_with_variations))
+        JSON.parse(JSON.generate(described_class.from_path(formula_path).to_hash_with_variations))
       end
     end
 
@@ -228,7 +228,7 @@ RSpec.describe Formulary do
         payload = json
         tag = (tag_symbol == :arm64_sequoia) ? mac_tag : linux_tag
         Homebrew::SimulateSystem.with_tag(tag) do
-          source = described_class.factory(formula_path, spec)
+          source = described_class.from_path(formula_path, spec)
           restored = if format == :public
             described_class::FormulaJSONContentsLoader.new(formula_name, payload).get_formula(spec)
           else
@@ -322,8 +322,8 @@ RSpec.describe Formulary do
         end
       end
 
-      it "returns a Formula when given a path" do
-        expect(described_class.factory(formula_path)).to be_a(Formula)
+      it "returns a Formula for an explicit internal path" do
+        expect(described_class.from_path(formula_path)).to be_a(Formula)
       end
 
       it "errors when given a path but paths are disabled" do
@@ -372,7 +372,7 @@ RSpec.describe Formulary do
       end
 
       context "when given a bottle" do
-        subject(:formula) { described_class.factory(bottle) }
+        subject(:formula) { described_class.from_bottle(bottle) }
 
         specify do
           expect(formula).to be_a(Formula)
@@ -400,7 +400,7 @@ RSpec.describe Formulary do
           cached_formula.write(formula_content)
 
           expect do
-            described_class.factory(cached_formula)
+            described_class.from_path(cached_formula)
           end.to raise_error(FormulaUnreadableError, /'because' argument/)
         end
 
@@ -433,7 +433,7 @@ RSpec.describe Formulary do
           allow(Utils::Bottles).to receive(:formula_contents).with(bottle.realpath, name: formula_name)
                                                              .and_return(formula_content)
 
-          expect(described_class.factory(bottle).no_autobump_message).to eq(:requires_manual_review)
+          expect(described_class.from_bottle(bottle).no_autobump_message).to eq(:requires_manual_review)
         end
 
         it "loads the reason from a keg formula path for post-install hooks" do
@@ -441,7 +441,7 @@ RSpec.describe Formulary do
           keg_formula.dirname.mkpath
           keg_formula.write(formula_content)
 
-          expect(described_class.factory(keg_formula).no_autobump_message).to eq(:requires_manual_review)
+          expect(described_class.from_path(keg_formula).no_autobump_message).to eq(:requires_manual_review)
         end
 
         it "rejects the reason in a current formula under a .brew directory" do
@@ -449,7 +449,7 @@ RSpec.describe Formulary do
           current_formula.dirname.mkpath
           current_formula.write(formula_content)
 
-          expect { described_class.factory(current_formula) }
+          expect { described_class.from_path(current_formula) }
             .to raise_error(FormulaUnreadableError, /'because' argument/)
         end
 
@@ -465,7 +465,7 @@ RSpec.describe Formulary do
           (HOMEBREW_PREFIX/"opt/#{formula_name}").make_relative_symlink(keg_path)
           formula_path.unlink
 
-          expect(described_class.factory(formula_name).no_autobump_message).to eq(:requires_manual_review)
+          expect(described_class.from_keg(Keg.new(keg_path)).no_autobump_message).to eq(:requires_manual_review)
         end
       end
 
@@ -492,7 +492,7 @@ RSpec.describe Formulary do
           allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
         end
 
-        let(:installed_formula) { described_class.factory(formula_path) }
+        let(:installed_formula) { described_class.from_path(formula_path) }
         let(:installer) { FormulaInstaller.new(installed_formula) }
 
         it "returns a Formula when given a rack" do
@@ -1126,7 +1126,7 @@ RSpec.describe Formulary do
     expect(described_class.from_contents(formula_name, formula_path, formula_content)).to be_a(Formula)
   end
 
-  describe "::resolve", :no_api do
+  describe "::resolve_from_path", :no_api do
     before do
       prefix = HOMEBREW_CELLAR/formula_name/"0.1"
       prefix.mkpath
@@ -1145,13 +1145,13 @@ RSpec.describe Formulary do
         end
       RUBY
 
-      expect(described_class.resolve(formula_path.to_s).active_spec_sym).to eq(:head)
+      expect(described_class.resolve_from_path(formula_path).active_spec_sym).to eq(:head)
     end
 
     it "keeps the stable spec when the receipt's head spec is unavailable" do
       formula_path.write formula_content
 
-      expect(described_class.resolve(formula_path.to_s).active_spec_sym).to eq(:stable)
+      expect(described_class.resolve_from_path(formula_path).active_spec_sym).to eq(:stable)
     end
   end
 

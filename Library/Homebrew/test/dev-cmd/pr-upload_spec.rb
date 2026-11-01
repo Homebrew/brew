@@ -11,6 +11,9 @@ class PrUploadForTesting < Homebrew::DevCmd::PrUpload
   sig { params(bottles_hash: T::Hash[String, T.anything]).void }
   def validate_transition_bottles!(bottles_hash) = check_transition_bottles!(bottles_hash)
 
+  sig { params(bottles_hash: T::Hash[String, T.anything]).void }
+  def validate_bottled_formulae!(bottles_hash) = check_bottled_formulae!(bottles_hash)
+
   sig { params(json_files: T::Array[String]).returns(T::Hash[String, T.anything]) }
   def merge_bottle_metadata(json_files) = bottles_hash_from_json_files(json_files, args)
 end
@@ -44,7 +47,7 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
 
   sig { returns(Formula) }
   def current
-    Formulary.factory(formula_path)
+    Formulary.from_path(formula_path)
   end
 
   sig { returns(String) }
@@ -100,7 +103,7 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
       bottles.fetch(current.name).fetch("bottle")["tags"] = { "arm64_tahoe" => { "sha256" => "a" * 64 } }
       formula_path.atomic_write(formula_source.sub("arm64_golden_gate", "arm64_tahoe"))
       Formulary.clear_cache
-      Formulary.factory(formula_path)
+      Formulary.from_path(formula_path)
       formula_path.atomic_write(formula_source.sub("bottle do", "bottle do\n    sha256 arm64_tahoe: \"#{"a" * 64}\""))
 
       expect do
@@ -133,12 +136,36 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
       it "does not apply the core transition policy" do
         stub_const("HOMEBREW_MACOS_NEWEST_SUPPORTED", "26")
         allow(current).to receive(:tap).and_return(Tap.fetch("user/test"))
-        allow(Formulary).to receive(:factory).with(current.path).and_return(current)
+        allow(Formulary).to receive(:from_path).and_call_original
+        allow(Formulary).to receive(:from_path)
+          .with(HOMEBREW_REPOSITORY/bottles.fetch(current.name).fetch("formula").fetch("path")).and_return(current)
         allow_any_instance_of(BottleTransition).to receive(:required?).and_call_original
         bottles.fetch(current.name).fetch("bottle")["tags"] = {}
 
         expect { PrUploadForTesting.new([]).validate_transition_bottles!(bottles) }.not_to raise_error
       end
+    end
+  end
+
+  context "when a local source shares a core formula name" do
+    before do
+      path = mktmpdir/"transition-test.rb"
+      path.write(formula_source)
+      bottles.fetch(current.name).fetch("formula")["path"] = path.relative_path_from(HOMEBREW_REPOSITORY).to_s
+      formula_path.atomic_write(formula_source.sub("2.0", "1.0").sub(/    bottle do.*?    end\n/m, ""))
+      Formulary.clear_cache
+    end
+
+    it "checks the version of the recorded source" do
+      expect { PrUploadForTesting.new([]).validate_bottled_formulae!(bottles) }.not_to raise_error
+    end
+
+    it "checks transition coverage of the recorded source in upload-only mode" do
+      allow_any_instance_of(BottleTransition).to receive(:required?) { |_, formula| formula.path != formula_path }
+      bottles.fetch("transition-test").fetch("bottle")["tags"] = { "arm64_tahoe" => { "sha256" => "a" * 64 } }
+
+      expect { PrUploadForTesting.new(["--upload-only"]).validate_transition_bottles!(bottles) }
+        .to raise_error(UsageError, /upload set is missing/)
     end
   end
 

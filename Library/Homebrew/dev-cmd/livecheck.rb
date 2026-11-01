@@ -68,7 +68,7 @@ module Homebrew
           Homebrew::API.with_no_api_env do
             if args.tap
               tap = Tap.fetch(args.tap)
-              formulae = args.cask? ? [] : tap.formula_files.map { |path| Formulary.factory(path) }
+              formulae = args.cask? ? [] : tap.formula_files.map { |path| Formulary.from_path(path) }
               casks = args.formula? ? [] : tap.cask_files.map { |path| Cask::CaskLoader.load(path) }
               formulae + casks
             elsif args.installed?
