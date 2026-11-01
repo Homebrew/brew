@@ -200,13 +200,14 @@ module Homebrew
         requirement.instance_of?(MacOSRequirement) || requirement.instance_of?(LinuxRequirement)
       end
 
-      sig { params(installed_count: Integer, total_count: Integer).returns(String) }
-      def self.dependency_status_counts(installed_count, total_count)
+      sig { params(installed_count: Integer, total_count: Integer, mark_uninstalled: T::Boolean).returns(String) }
+      def self.dependency_status_counts(installed_count, total_count, mark_uninstalled: true)
         missing_count = total_count - installed_count
         return "all installed #{Formatter.success("✔")}" if missing_count.zero?
 
+        missing_status = mark_uninstalled ? "missing #{Formatter.error("✘")}" : "not installed"
         "#{installed_count} installed #{Formatter.success("✔")}, " \
-          "#{missing_count} missing #{Formatter.error("✘")}"
+          "#{missing_count} #{missing_status}"
       end
 
       sig { params(full_name: String, name: String).returns(T::Array[String]) }
@@ -580,15 +581,21 @@ module Homebrew
             puts "Missing libraries (#{missing_library_names.count}): #{decorated}"
           end
           if tab_runtime_deps.present?
-            installed_count = tab_runtime_deps.count do |dep|
+            runtime_deps = if outdated
+              formula.runtime_dependencies(read_from_tab: false, undeclared: false).map { { "full_name" => it.name } }
+            else
+              tab_runtime_deps
+            end
+            installed_count = runtime_deps.count do |dep|
               dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
               next false unless dep_name
 
               rack = HOMEBREW_CELLAR/dep_name
               rack.directory? && !rack.subdirs.empty?
             end
-            puts "Recursive Runtime (#{tab_runtime_deps.count}): " \
-                 "#{self.class.dependency_status_counts(installed_count, tab_runtime_deps.count)}"
+            puts "Recursive Runtime (#{runtime_deps.count}): " \
+                 "#{self.class.dependency_status_counts(installed_count, runtime_deps.count,
+                                                        mark_uninstalled: !outdated)}"
           end
           if installed_dependents.any?
             if args.verbose?
