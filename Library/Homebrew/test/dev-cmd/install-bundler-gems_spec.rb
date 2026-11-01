@@ -14,11 +14,25 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
     allow(Utils::GemSetup).to receive_messages(valid_gem_groups: [], user_gem_groups: [], user_vendor_version: 9)
     allow(Utils::GemSetup).to receive(:find_in_path).with("bundle").and_return("/tmp")
     allow(IO).to receive(:popen).with([bundle, "check"], err: [:child, :out]).and_return("")
-    allow(Utils::GemSetup).to receive(:system).with(bundle, "clean", out: :err).and_return(true)
+    allow(Utils::GemSetup).to receive(:run_bundle).with(bundle, "clean").and_return(true)
     allow(Utils::GemSetup).to receive(:write_user_gem_groups)
     expect(Homebrew::Bootsnap).to receive(:reset!)
 
     Kernel.system("true")
     with_env(HOMEBREW_TESTS: nil) { Utils::GemSetup.install_bundler_gems! }
+  end
+
+  describe "::run_bundle" do
+    it "forwards the command output to stderr" do
+      expect do
+        Utils::GemSetup.run_bundle(RbConfig.ruby, "-e", "puts 'hello'")
+      end.to output("hello\n").to_stderr
+    end
+
+    it "keeps draining output when stderr is closed" do
+      allow($stderr).to receive(:write).and_raise(Errno::EPIPE)
+
+      expect(Utils::GemSetup.run_bundle(RbConfig.ruby, "-e", "100_000.times { puts 'x' }")).to be(true)
+    end
   end
 end

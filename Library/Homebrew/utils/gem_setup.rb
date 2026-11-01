@@ -10,9 +10,10 @@ Homebrew::FastBootRequire.from_rubylibdir("English")
 module Utils
   # Helpers for loading and maintaining Homebrew's vendored gems.
   module GemSetup
-    # Bump this whenever a committed vendored gem is later added to or exclusion removed from gitignore.
+    # Bump this whenever a committed vendored gem is later added to or exclusion removed from gitignore,
+    # or when the vendored gem validation changes and needs to be re-run.
     # This will trigger it to reinstall properly if `brew install-bundler-gems` needs it.
-    VENDOR_VERSION = 9
+    VENDOR_VERSION = 10
     private_constant :VENDOR_VERSION
 
     RUBY_BUNDLE_VENDOR_DIRECTORY = (HOMEBREW_LIBRARY_PATH/"vendor/bundle/ruby").freeze
@@ -194,6 +195,29 @@ module Utils
     end
     private_class_method :user_vendor_version
 
+    # Runs `bundle` with its output connected to a pipe we own. If the output
+    # pipe is closed (e.g. `brew audit ... 2>&1 | head`), keep draining it
+    # instead of letting Bundler/RubyGems fail with EPIPE halfway through
+    # installing a gem's native extension.
+    def self.run_bundle(*args)
+      # [0] = still forwarding output, [1] = the output pipe was closed.
+      output_closed = [0]
+      IO.popen(args, err: [:child, :out]) do |io|
+        io.each_line do |line|
+          next if output_closed.first == 1
+
+          begin
+            $stderr.write(line)
+          rescue Errno::EPIPE, IOError
+            output_closed[0] = 1
+          end
+        end
+      end
+      $CHILD_STATUS.success?
+    rescue SystemCallError
+      false
+    end
+
     def self.install_bundler_gems!(only_warn_on_failure: false, setup_path: true, groups: [])
       old_path = ENV.fetch("PATH", nil)
       old_gem_path = ENV.fetch("GEM_PATH", nil)
@@ -255,6 +279,13 @@ module Utils
                 false
               end
 
+              # Native extensions are only usable once RubyGems has written the
+              # completion marker. Without it, the gem's Ruby files can load an
+              # incompatible system extension instead (e.g. json).
+              if package_install_intact && spec.extensions.any?
+                package_install_intact = File.exist?(spec.gem_build_complete_path)
+              end
+
               next false if package_install_intact
             end
 
@@ -263,14 +294,11 @@ module Utils
             true
           end.any?
 
-          VENDOR_VERSION_FILE.dirname.mkpath
-          VENDOR_VERSION_FILE.write(VENDOR_VERSION.to_s)
-
           bundle_install_required ||= vendor_reinstall_required
         end
 
         bundle_installed = if bundle_install_required
-          if system bundle, "install", out: :err
+          if run_bundle(bundle, "install")
             true
           else
             message = <<~EOS
@@ -283,7 +311,7 @@ module Utils
             end
             false
           end
-        elsif system bundle, "clean", out: :err # even if we have nothing to install, we may have removed gems
+        elsif run_bundle(bundle, "clean") # even if we have nothing to install, we may have removed gems
           true
         else
           message = <<~EOS
@@ -298,6 +326,10 @@ module Utils
         end
 
         if bundle_installed
+          VENDOR_VERSION_FILE.dirname.mkpath
+          VENDOR_VERSION_FILE.write(VENDOR_VERSION.to_s)
+          @user_vendor_version = VENDOR_VERSION
+
           # `bundle clean` can remove load paths just as `bundle install` can add them.
           Homebrew::Bootsnap.reset! if defined?(Homebrew::Bootsnap) # Gem setup can run before Bootsnap loads
           write_user_gem_groups(groups)
