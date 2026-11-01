@@ -737,11 +737,14 @@ RSpec.describe Sandbox do
 
   describe "#allow_process_exec" do
     it "allows a process to run outside the sandbox when requested" do
-      sandbox.allow_process_exec "/usr/bin/sudo", no_sandbox: true
+      file = mktmpdir/"sudo"
+      FileUtils.touch file
+
+      sandbox.allow_process_exec file, no_sandbox: true
 
       rule = sandbox.profile.rules.fetch(-1)
       expect(rule).to have_attributes(allow: true, operation: "process-exec", modifier: "no-sandbox")
-      expect(rule.filter).to have_attributes(path: "/usr/bin/sudo", type: :literal)
+      expect(rule.filter).to have_attributes(path: file.realpath.to_s, type: :literal)
     end
   end
 
