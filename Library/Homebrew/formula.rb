@@ -2785,6 +2785,13 @@ class Formula
     end
   end
 
+  # Whether the rack for a formula name, with or without a tap prefix, holds a keg.
+  sig { params(name: String).returns(T::Boolean) }
+  def self.rack_installed?(name)
+    rack = HOMEBREW_CELLAR/Utils.name_from_full_name(name)
+    rack.directory? && !rack.subdirs.empty?
+  end
+
   # An array of all currently installed formula names.
   sig { returns(T::Array[String]) }
   def self.installed_formula_names

@@ -40,6 +40,7 @@ This is a Ruby repository with Bash scripts for faster execution that provides t
 - Avoid `T.cast`, `T.let`, `T.untyped` and `T.anything`: use precise types and APIs that return non-nil values. If a generic top type is unavoidable, use `T.anything` rather than `T.untyped`.
 - Never use `.send`: call methods directly, use `.public_send` only for dynamically-named public methods and make private methods public in tests (enforced by `Homebrew/NoSendInTests`). In tests, read and write state through public `attr_*` accessors rather than `instance_variable_get`/`instance_variable_set` (enforced by `Homebrew/NoInstanceVariableAccessInTests`).
 - Shell out via `HOMEBREW_BREW_FILE` instead of requiring `cmd/` or `dev-cmd` when composing brew commands.
+- Avoid calling `Homebrew::Cmd` or `Homebrew::DevCmd` methods from other code: put shared helpers under `Utils` or on the relevant class, e.g. a `Formula` class method.
 - Keep `extend/os/*` prepends thin: put the `prepend` in the OS-specific `linux` or `macos` file rather than the shared loader with an inline `if`, and put substantive logic in shared code outside `extend/` so it is tested on all platforms rather than in `:needs_linux` or `:needs_macos` specs.
 - When Bash logic mirrors Ruby logic, keep both in sync with two-way comments naming the matching Ruby and Bash locations and keep matching helper filenames aligned.
 - Use `&>/dev/null` instead of `>/dev/null 2>&1`.
