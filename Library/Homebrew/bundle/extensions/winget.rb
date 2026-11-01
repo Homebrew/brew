@@ -542,6 +542,7 @@ module Homebrew
 
         sig { params(value: String).returns(String) }
         def powershell_quote(value)
+          # Escape smart quotes because PowerShell treats them as delimiters.
           "'#{value.gsub(/['\u2018-\u201B]/) { |quote| quote * 2 }}'"
         end
 
