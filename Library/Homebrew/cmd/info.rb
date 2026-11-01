@@ -577,7 +577,7 @@ module Homebrew
             "#{decorate_dependencies(deps, tab_runtime_deps: tab_deps, mark_uninstalled:,
                                      formula_outdated: outdated, missing_library_deps:)}"
         end
-        if dependency_lines.present? || runtime_deps.present? || installed_dependents.any?
+        if dependency_lines.present? || missing_libraries.any? || runtime_deps.present? || installed_dependents.any?
           ohai "Dependencies"
           puts dependency_lines
           missing_library_names = missing_libraries.map { |lib| File.basename(lib) }.uniq
