@@ -8,7 +8,7 @@ RSpec.describe Homebrew::TestBot::TestFormulae do
   subject(:test_formulae) do
     Class.new(described_class) do
       T.bind(self, T.class_of(Homebrew::TestBot::TestFormulae))
-      public :bottled_or_built?
+      public :bottled_or_built?, :downloads_using_homebrew_curl?
     end.new(tap: nil, git: nil, dry_run: false, fail_fast: false, verbose: false)
   end
 
@@ -75,6 +75,27 @@ RSpec.describe Homebrew::TestBot::TestFormulae do
       it "accepts older compatible bottles" do
         expect(test_formulae.bottled_or_built?(dependent, [])).to be(true)
       end
+    end
+  end
+
+  describe "#downloads_using_homebrew_curl?" do
+    it "detects a head spec that downloads with Homebrew curl" do
+      f = formula("headcurl") do
+        T.bind(self, T.class_of(Formula))
+        url "headcurl-1.0"
+        head "https://brew.sh/headcurl.tar.gz", using: :homebrew_curl
+      end
+
+      expect(test_formulae.downloads_using_homebrew_curl?(f)).to be(true)
+    end
+
+    it "ignores a missing head spec" do
+      f = formula("stableonly") do
+        T.bind(self, T.class_of(Formula))
+        url "stableonly-1.0"
+      end
+
+      expect(test_formulae.downloads_using_homebrew_curl?(f)).to be(false)
     end
   end
 

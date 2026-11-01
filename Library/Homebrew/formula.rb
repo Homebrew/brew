@@ -296,8 +296,6 @@ class Formula
     @revision = T.let(self.class.revision || 0, Integer)
     @version_scheme = T.let(self.class.version_scheme || 0, Integer)
     @compatibility_version = T.let(self.class.compatibility_version, T.nilable(Integer))
-    @head = T.let(nil, T.nilable(SoftwareSpec))
-    @stable = T.let(nil, T.nilable(SoftwareSpec))
 
     @autobump = T.let(true, T::Boolean)
     @no_autobump_message = T.let(nil, T.nilable(T.any(String, Symbol)))
@@ -316,9 +314,8 @@ class Formula
     @full_name = T.let(full_name_with_optional_tap(name), String)
     @full_alias_name = T.let((full_name_with_optional_tap(@alias_name) if @alias_name), T.nilable(String))
 
-    self.class.spec_syms.each do |sym|
-      spec_eval sym
-    end
+    @stable = T.let(spec_eval(self.class.stable, :stable), T.nilable(SoftwareSpec))
+    @head = T.let(spec_eval(self.class.head, :head), T.nilable(SoftwareSpec))
 
     @active_spec = T.let(determine_active_spec(spec), SoftwareSpec)
     @active_spec_sym = T.let(head? ? :head : :stable, Symbol)
@@ -436,9 +433,9 @@ class Formula
     end
   end
 
-  sig { params(name: T.any(String, Symbol)).void }
-  def spec_eval(name)
-    spec = self.class.public_send(name).dup
+  sig { params(class_spec: SoftwareSpec, name: Symbol).returns(T.nilable(SoftwareSpec)) }
+  def spec_eval(class_spec, name)
+    spec = class_spec.dup
     return unless spec.url
 
     spec.owner = self
@@ -450,7 +447,7 @@ class Formula
             "#{full_name}: conflicting :no_linkage declarations for #{dep_name.inspect} in the #{name} spec"
     end
     add_global_deps_to_spec(spec)
-    instance_variable_set(:"@#{name}", spec)
+    spec
   end
 
   sig { params(spec: SoftwareSpec).void }
@@ -3359,9 +3356,7 @@ class Formula
 
   sig { returns(T::Array[T::Hash[String, T.untyped]]) }
   def serialized_requirements
-    requirements = self.class.spec_syms.to_h do |sym|
-      [sym, send(sym)&.requirements]
-    end
+    requirements = { stable: stable&.requirements, head: head&.requirements }
 
     merge_spec_dependables(requirements).map do |data|
       req = data[:dependable]
@@ -3392,9 +3387,7 @@ class Formula
   sig { returns(T::Hash[String, T.untyped]) }
   def dependencies_hash
     # Create a hash of spec names (stable/head) to the list of dependencies under each
-    dependencies = self.class.spec_syms.to_h do |sym|
-      [sym, send(sym)&.declared_deps]
-    end
+    dependencies = { stable: stable&.declared_deps, head: head&.declared_deps }
 
     # Implicit dependencies are only needed when installing from source
     # since they are only used to download and unpack source files.
@@ -4424,11 +4417,7 @@ class Formula
 
     # A list of the {.stable} and {.head} {SoftwareSpec}s.
     sig { returns(T::Array[SoftwareSpec]) }
-    def specs
-      spec_syms.map do |sym|
-        send(sym)
-      end.freeze
-    end
+    def specs = [stable, head].freeze
 
     # The URL used to download the source for the {.stable} version of the formula.
     # We prefer `https` for security and proxy reasons.

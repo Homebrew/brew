@@ -376,9 +376,7 @@ module Homebrew
 
       sig { params(formula: Formula).returns(T::Boolean) }
       def downloads_using_homebrew_curl?(formula)
-        [:stable, :head].any? do |spec_name|
-          next false unless (spec = formula.public_send(spec_name))
-
+        [formula.stable, formula.head].compact.any? do |spec|
           spec.using == :homebrew_curl || spec.resources.values.any? { |r| r.using == :homebrew_curl }
         end
       end
