@@ -1370,22 +1370,6 @@ RSpec.describe Homebrew::Cmd::Info do
     end
   end
 
-  describe "::rack_installed?" do
-    it "is true when the rack has a keg" do
-      (HOMEBREW_CELLAR/"foo/1.0").mkpath
-      expect(described_class.rack_installed?("homebrew/core/foo")).to be(true)
-    end
-
-    it "is false when the rack is empty" do
-      (HOMEBREW_CELLAR/"foo").mkpath
-      expect(described_class.rack_installed?("foo")).to be(false)
-    end
-
-    it "is false when there is no rack" do
-      expect(described_class.rack_installed?("foo")).to be(false)
-    end
-  end
-
   describe "::metadata_lines" do
     before { allow($stdout).to receive(:tty?).and_return(true) }
 

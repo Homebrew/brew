@@ -103,7 +103,7 @@ module Cask
         name = dep.to_s
         decorate_dependency(
           name,
-          installed:        Homebrew::Cmd::Info.rack_installed?(name),
+          installed:        Formula.rack_installed?(name),
           mark_uninstalled:,
         )
       end
@@ -131,7 +131,7 @@ module Cask
       )
       unless recursive_count.zero?
         installed_count = formula_dependencies.count do |name|
-          Homebrew::Cmd::Info.rack_installed?(name)
+          Formula.rack_installed?(name)
         end + cask_dependencies.count do |name|
           (Caskroom.path/name).directory?
         end

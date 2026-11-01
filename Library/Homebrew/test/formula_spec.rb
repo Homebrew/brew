@@ -1117,6 +1117,22 @@ RSpec.describe Formula do
     end
   end
 
+  describe "::rack_installed?" do
+    it "is true when the rack has a keg" do
+      (HOMEBREW_CELLAR/"foo/1.0").mkpath
+      expect(described_class.rack_installed?("homebrew/core/foo")).to be(true)
+    end
+
+    it "is false when the rack is empty" do
+      (HOMEBREW_CELLAR/"foo").mkpath
+      expect(described_class.rack_installed?("foo")).to be(false)
+    end
+
+    it "is false when there is no rack" do
+      expect(described_class.rack_installed?("foo")).to be(false)
+    end
+  end
+
   describe "::installed_with_alias_path" do
     specify "with alias path with nil" do
       expect(described_class.installed_with_alias_path(nil)).to be_empty
