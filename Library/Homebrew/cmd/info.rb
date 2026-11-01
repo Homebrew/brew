@@ -99,7 +99,7 @@ module Homebrew
           if args.no_named?
             print_sizes
           else
-            formulae, casks = args.named.to_formulae_to_casks
+            formulae, casks = args.named.to_formulae_to_casks(method: :resolve_cask)
             formulae = T.cast(formulae, T::Array[Formula])
             print_sizes(formulae:, casks:)
           end
@@ -134,7 +134,7 @@ module Homebrew
         elsif args.github?
           raise FormulaOrCaskUnspecifiedError if args.no_named?
 
-          Utils::Browser.open(*args.named.to_formulae_and_casks.map do |formula_keg_or_cask|
+          Utils::Browser.open(*args.named.to_formulae_and_casks(method: :resolve_cask).map do |formula_keg_or_cask|
             formula_or_cask = T.cast(formula_keg_or_cask, T.any(Formula, Cask::Cask))
             github_info(formula_or_cask)
           end)
@@ -315,7 +315,7 @@ module Homebrew
 
       sig { params(quiet: T::Boolean).void }
       def print_info(quiet: false)
-        objects = args.named.to_formulae_and_casks_and_unavailable(uniq: false)
+        objects = args.named.to_formulae_and_casks_and_unavailable(method: :resolve_cask, uniq: false)
         user_qualified = args.named.downcased_unique_named.map { |name| name.include?("/") }
 
         resolved = user_qualified.zip(objects).map do |qualified, obj|
@@ -400,6 +400,8 @@ module Homebrew
           if !sourcefile_path || sourcefile_path.extname != ".rb"
             return "#{tap.default_remote}/blob/HEAD/#{tap.relative_cask_path(cask.token)}"
           end
+
+          return sourcefile_path.to_s unless sourcefile_path.to_s.start_with?("#{tap.path}/")
 
           sourcefile_path.relative_path_from(tap.path)
         end
@@ -666,7 +668,7 @@ module Homebrew
           return
         end
 
-        args.named.to_formulae_and_casks_and_unavailable.each_with_index do |obj, i|
+        args.named.to_formulae_and_casks_and_unavailable(method: :resolve_cask).each_with_index do |obj, i|
           puts unless i.zero?
 
           case obj
@@ -784,7 +786,7 @@ module Homebrew
               [formulae, casks]
             else
               named_formulae, named_casks = T.cast(
-                args.named.to_formulae_to_casks, [T::Array[Formula], T::Array[Cask::Cask]]
+                args.named.to_formulae_to_casks(method: :resolve_cask), [T::Array[Formula], T::Array[Cask::Cask]]
               )
               [named_formulae.map { |f| swap_to_installed_formula(f, qualified_inputs) }, named_casks]
             end, [T::Array[Formula], T::Array[Cask::Cask]]

@@ -41,6 +41,29 @@ RSpec.describe Homebrew::Cmd::Info do
 
   it_behaves_like "parseable arguments"
 
+  context "when an installed cask is no longer available", :no_api do
+    before do
+      (Cask::Caskroom.path/"removed-cask/1.0").mkpath
+      path = Cask::Caskroom.path/"removed-cask/.metadata/1.0/20250101000000.000/Casks/removed-cask.rb"
+      path.dirname.mkpath
+      path.write <<~RUBY
+        cask "removed-cask" do
+          version "1.0"
+          sha256 :no_check
+          url "https://example.com/removed-cask-1.0.zip"
+          homepage "https://example.com/"
+        end
+      RUBY
+    end
+
+    test_each([[], ["--json=v2"], ["--sizes"]]) do |flags|
+      it "shows the installed cask with #{flags.inspect}" do
+        expect { described_class.new(["--cask", "removed-cask", *flags]).run }
+          .to output(/removed-cask/).to_stdout
+      end
+    end
+  end
+
   it "prints as json with the --json=v1 flag" do
     test_formula = formula("testball") do
       T.bind(self, T.class_of(Formula))
@@ -1884,6 +1907,15 @@ RSpec.describe Homebrew::Cmd::Info do
 
   describe "#github_info" do
     let(:tap) { CoreTap.instance }
+
+    it "returns the local path for an installed cask whose file lives outside its tap" do
+      cask_tap = CoreCaskTap.instance
+      cask_path = Cask::Caskroom.path/"removed-cask/.metadata/1.0/20250101000000.000/Casks/removed-cask.rb"
+      cask = Cask::Cask.new("removed-cask", tap: cask_tap, sourcefile_path: cask_path)
+      allow(cask_tap).to receive(:remote).and_return(cask_tap.default_remote)
+
+      expect(described_class.new([]).github_info(cask)).to eq(cask_path.to_s)
+    end
 
     it "returns the local path for a formula whose file lives outside its tap" do
       # Simulates a formula that was removed from its tap but is still installed,

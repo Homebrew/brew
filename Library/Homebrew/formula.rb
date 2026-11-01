@@ -2853,7 +2853,7 @@ class Formula
     T.cast(@spell_checker.correct(name), T::Array[String])
   end
 
-  sig { params(name: T.any(Pathname, String)).returns(Formula) }
+  T::Sig::WithoutRuntime.sig { params(name: String).returns(Formula) }
   def self.[](name)
     Formulary.factory(name)
   end
