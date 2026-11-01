@@ -126,7 +126,7 @@ An exception is `target:` which typically consists of short lines.
 ### Required stanzas
 
 Each cask requires the identity and download stanzas below.
-New submissions to `homebrew/cask` also require a [`zap`](#stanza-zap) stanza and may require additional stanzas such as `livecheck`, `depends_on` or `uninstall` when the package needs them.
+Casks in `homebrew/cask` also require a [`zap`](#stanza-zap) stanza and may require additional stanzas such as `livecheck`, `depends_on` or `uninstall` when the package needs them.
 
 | name                               | multiple occurrences allowed? | value |
 | ---------------------------------- | :---------------------------: | ----- |
@@ -211,7 +211,7 @@ Allowing writes to a directory does not allow connections to sockets in it.
 | [`caveats`](#stanza-caveats)               | yes                           | String or Ruby block providing the user with cask-specific information at install time. |
 | [`livecheck`](#stanza-livecheck)           | no                            | Ruby block describing how to find updates when automatic detection is insufficient. It is not used with `version :latest` unless the block uses `skip`. |
 | [`depends_on`](#stanza-depends_on)         | yes                           | Dependencies and operating-system or architecture requirements for this cask. |
-| [`zap`](#stanza-zap)                       | no                            | Additional procedures for a more complete uninstall, including user files and shared resources. Required for new casks in `homebrew/cask`. |
+| [`zap`](#stanza-zap)                       | no                            | Additional procedures for a more complete uninstall, including user files and shared resources. Required in `homebrew/cask`. |
 | [`deprecate!`](#stanza-deprecate--disable) | no                            | Date as a string in `YYYY-MM-DD` format and a string or symbol providing a reason. |
 | [`disable!`](#stanza-deprecate--disable)   | no                            | Date as a string in `YYYY-MM-DD` format and a string or symbol providing a reason. |
 | `preflight_steps`                          | yes                           | Declarative file preparation steps run before artifact installation. |
