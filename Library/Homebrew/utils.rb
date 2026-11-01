@@ -160,6 +160,8 @@ module Utils
     word
   end
 
+  INVALID_PATH_COMPONENTS = ["", ".", ".."].freeze
+
   SAFE_FILENAME_REGEX = /[[:cntrl:]#{Regexp.escape("#{File::SEPARATOR}#{File::ALT_SEPARATOR}")}]/o
   private_constant :SAFE_FILENAME_REGEX
 

@@ -637,7 +637,7 @@ class Keg
   sig { returns(T::Array[String]) }
   def aliases
     # Sandboxed builds can write the tab, so ignore aliases that would escape `opt`.
-    (tab.aliases || []).reject { |a| a.include?("/") || ["", ".", ".."].include?(a) }
+    (tab.aliases || []).reject { |a| a.include?("/") || Utils::INVALID_PATH_COMPONENTS.include?(a) }
   end
 
   sig { params(verbose: T::Boolean, dry_run: T::Boolean, overwrite: T::Boolean).void }

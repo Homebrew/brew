@@ -58,7 +58,7 @@ module Cask
 
               components = spec.fetch("path").split("/", -1)
               next if components.length < 2 || components.first != step_app.target.basename.to_s ||
-                      components.intersect?(["", ".", ".."])
+                      components.intersect?(::Utils::INVALID_PATH_COMPONENTS)
 
               path = step_app.source.join(*components.drop(1))
               next if !path.file? || path.symlink? || path.stat.nlink != 1 ||
