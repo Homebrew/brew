@@ -305,8 +305,8 @@ module Homebrew
                                           include_count: true)} (#{Utils::Text.to_sentence(updated_taps)})."
           updated = true
         end
-        Tap.installed.each do |tap|
-          warn_if_branch_not_updated(tap.name, tap.git_repository, tap.repository_var_suffix) if tap.git?
+        Tap.installed.select(&:git?).each do |tap|
+          warn_if_branch_not_updated(tap.name, tap.git_repository, tap.repository_var_suffix)
         end
 
         if updated
