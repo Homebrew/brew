@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "diagnostic"
+require "utils/attestation"
 
 RSpec.describe Homebrew::Attestation do
   let(:fake_gh) { Pathname.new("/extremely/fake/gh") }
@@ -157,6 +158,29 @@ RSpec.describe Homebrew::Attestation do
         described_class.check_attestation fake_bottle,
                                           Homebrew::Attestation::HOMEBREW_CORE_REPO
       end.to raise_error(Homebrew::Attestation::InvalidAttestationError)
+    end
+
+    test_each(["HTTP 403: Forbidden", "HTTP 429: Too Many Requests", "HTTP 500: API rate limit exceeded"]) do |stderr|
+      it "does not classify #{stderr} as an API rate limit" do
+        allow(GitHub::API).to receive(:credentials).and_return(fake_gh_creds)
+        allow(described_class).to receive(:system_command!)
+          .and_raise(ErrorDuringExecution.new([fake_gh.to_s], status: fake_error_status, output: [[:stderr, stderr]]))
+
+        expect do
+          described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+        end.to raise_error(Homebrew::Attestation::InvalidAttestationError)
+      end
+    end
+
+    it "classifies a secondary rate limit as an API rate limit" do
+      stderr = "HTTP 403: You have exceeded a secondary rate limit."
+      allow(GitHub::API).to receive(:credentials).and_return(fake_gh_creds)
+      allow(described_class).to receive(:system_command!)
+        .and_raise(ErrorDuringExecution.new([fake_gh.to_s], status: fake_error_status, output: [[:stderr, stderr]]))
+
+      expect do
+        described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+      end.to raise_error(Homebrew::Attestation::RateLimitExceededError)
     end
 
     it "raises auth error when gh subprocess fails with auth exit code" do
@@ -322,6 +346,70 @@ RSpec.describe Homebrew::Attestation do
 
       allow(GitHub::API).to receive(:credentials)
         .and_return(fake_gh_creds)
+    end
+
+    test_each([403, 429]) do |status|
+      context "when gh returns HTTP #{status}: API rate limit exceeded" do
+        let(:rate_limit_error) do
+          ErrorDuringExecution.new(
+            [fake_gh.to_s], status: fake_error_status,
+                            output: [[:stderr, "HTTP #{status}: API rate limit exceeded"]]
+          )
+        end
+
+        before do
+          allow(described_class).to receive(:system_command!).and_raise(rate_limit_error)
+        end
+
+        it "raises a distinct rate-limit error" do
+          expect do
+            described_class.check_core_attestation fake_bottle
+          end.to raise_error(Homebrew::Attestation::RateLimitExceededError)
+        end
+
+        it "does not retry the lookup" do
+          expect(described_class).to receive(:system_command!).once.and_raise(rate_limit_error)
+
+          begin
+            described_class.check_core_attestation fake_bottle
+          rescue RuntimeError
+            nil
+          end
+        end
+
+        it "fails installation with a rate-limit message" do
+          allow(fake_bottle).to receive(:name).and_return("fakebottle")
+          allow(described_class).to receive(:check_formula_attestation) do
+            described_class.check_core_attestation fake_bottle
+          end
+
+          expect do
+            Utils::Attestation.check_attestation(fake_bottle, quiet: true)
+          end.to raise_error(CannotInstallFormulaError, <<~EOS)
+            The bottle for fakebottle could not be verified.
+
+            Attestation verification could not complete because the GitHub API rate
+            limit was exceeded. Please try again later.
+          EOS
+        end
+
+        it "does not retry a rate-limited backfill lookup" do
+          allow(described_class).to receive(:check_attestation)
+            .with(fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO)
+            .and_raise(Homebrew::Attestation::MissingAttestationError)
+          allow(described_class).to receive(:check_attestation).with(fake_bottle,
+                                                                     Homebrew::Attestation::BACKFILL_REPO,
+                                                                     any_args).and_call_original
+
+          expect(described_class).to receive(:system_command!).once.and_raise(rate_limit_error)
+
+          begin
+            described_class.check_core_attestation fake_bottle
+          rescue RuntimeError
+            nil
+          end
+        end
+      end
     end
 
     it "calls gh with args for homebrew-core" do

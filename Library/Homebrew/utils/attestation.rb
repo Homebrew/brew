@@ -55,6 +55,13 @@ module Utils
 
             gh auth login
         EOS
+      rescue Homebrew::Attestation::RateLimitExceededError
+        raise CannotInstallFormulaError, <<~EOS
+          The bottle for #{bottle.name} could not be verified.
+
+          Attestation verification could not complete because the GitHub API rate
+          limit was exceeded. Please try again later.
+        EOS
       rescue Homebrew::Attestation::UnsupportedTapError => e
         opoo <<~EOS
           Skipping attestation verification for #{bottle.name}.

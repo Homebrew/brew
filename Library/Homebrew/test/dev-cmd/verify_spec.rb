@@ -84,5 +84,15 @@ RSpec.describe Homebrew::DevCmd::Verify do
       expect { command.run }
         .to output(/tap cannot be attested safely/).to_stderr
     end
+
+    it "marks the command as failed when the GitHub API rate limit is exceeded" do
+      expect(Homebrew::Attestation).to receive(:check_formula_attestation)
+        .with(bottle)
+        .and_raise(Homebrew::Attestation::RateLimitExceededError, "GitHub API rate limit exceeded")
+      expect(Homebrew).to receive(:failed=).with(true)
+
+      expect { command.run }
+        .to output(/GitHub API rate limit exceeded/).to_stderr
+    end
   end
 end
