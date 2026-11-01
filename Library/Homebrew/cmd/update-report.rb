@@ -232,7 +232,7 @@ module Homebrew
                  "to #{new_tag} (#{shorten_revision(current_revision)})."
           end
         end
-        warn_if_branch_not_updated("Homebrew/brew", GitRepository.new(HOMEBREW_REPOSITORY), "")
+        warn_if_branch_not_updated("Homebrew/brew", GitRepository.new(HOMEBREW_REPOSITORY))
 
         # Check if we can parse the JSON and do any Ruby-side follow-up.
         Homebrew::API.write_names_and_aliases unless Homebrew::EnvConfig.no_install_from_api?
