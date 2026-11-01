@@ -37,7 +37,7 @@ module OS
 
       sig { params(rebuild_cache: T::Boolean).void }
       def check_dylibs(rebuild_cache:)
-        super
+        ELFShim.caching_library_lookups { super }
 
         # glibc and gcc are implicit dependencies.
         # No other linkage to system libraries is expected or desired.

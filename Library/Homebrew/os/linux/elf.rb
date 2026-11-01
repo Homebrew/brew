@@ -171,6 +171,25 @@ module ELFShim
     end
   end
 
+  # Where each library was found, by the expanded RPATH searched, whether the
+  # file ignores the default library paths and the library's name.
+  LibraryLookups = T.type_alias { T::Hash[[T.nilable(T::Array[String]), T::Boolean, String], ::Pathname] }
+  @library_lookups = T.let(nil, T.nilable(LibraryLookups))
+
+  sig { returns(T.nilable(LibraryLookups)) }
+  def self.library_lookups = @library_lookups
+
+  # Looks each library up only once while the block runs. Only use it where
+  # nothing installs or removes libraries, such as while checking a keg.
+  sig { params(_block: T.proc.void).void }
+  def self.caching_library_lookups(&_block)
+    outer_lookups = @library_lookups
+    @library_lookups ||= {}
+    yield
+  ensure
+    @library_lookups = outer_lookups
+  end
+
   # Helper class for reading metadata from an ELF file.
   class Metadata
     # Values from the ELF specification for the fields {#read_directly} reads.
@@ -258,10 +277,26 @@ module ELFShim
 
     sig { returns(T::Array[String]) }
     def dylibs
-      @dylibs ||= @needed.map { |lib| find_full_lib_path(lib).to_s }
+      @dylibs ||= @needed.map { |lib| cached_full_lib_path(lib).to_s }
     end
 
     private
+
+    # A keg's files mostly share an RPATH and need the same few libraries, so
+    # inside {ELFShim.caching_library_lookups} each search is made once. The key
+    # is everything {#find_full_lib_path} depends on besides the loader's paths
+    # and the files on disk, neither of which changes while that runs.
+    sig { params(basename: String).returns(::Pathname) }
+    def cached_full_lib_path(basename)
+      lookups = ELFShim.library_lookups
+      return find_full_lib_path(basename) if lookups.nil?
+
+      search_paths = rpath&.split(":")&.map do |local_path|
+        OS::Linux::Elf.expand_elf_dst(local_path, "ORIGIN", path.parent)
+      end
+      nodeflib = @dt_flags_1.to_i.anybits?(DF_1_NODEFLIB)
+      lookups[[search_paths, nodeflib, basename]] ||= find_full_lib_path(basename)
+    end
 
     # Reads the fields straight from the program headers and the dynamic section,
     # which is far faster than parsing every header with elftools. Returns nil

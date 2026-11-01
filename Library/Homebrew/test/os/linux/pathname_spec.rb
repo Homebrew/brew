@@ -89,6 +89,48 @@ RSpec.describe Pathname do
     end
   end
 
+  describe "library lookups" do
+    # `exec` and a copy elsewhere: neither finds `libc.so.6` through its RPATH,
+    # so each lookup goes on to read the loader's system directories.
+    def with_copy_of_exec
+      mktmpdir do |tmp_dir|
+        copy = ELFPathname.wrap(tmp_dir/exec.basename)
+        FileUtils.cp(exec, copy.to_path)
+        yield copy
+      end
+    end
+
+    it "is made once for files that search the same way while cached" do
+      with_copy_of_exec do |copy|
+        expect(OS::Linux::Ld).to receive(:system_dirs).once.and_call_original
+        ELFShim.caching_library_lookups { [exec, copy].each(&:dynamically_linked_libraries) }
+      end
+    end
+
+    it "is made for each file otherwise" do
+      with_copy_of_exec do |copy|
+        expect(OS::Linux::Ld).to receive(:system_dirs).twice.and_call_original
+        [exec, copy].each(&:dynamically_linked_libraries)
+      end
+    end
+
+    it "keeps files whose $ORIGIN differs apart while cached" do
+      mktmpdir do |tmp_dir|
+        (tmp_dir/"with/lib").mkpath
+        FileUtils.cp(elf_dir/"libhello.so.0", tmp_dir/"with/lib/libdep.so.1")
+        libs = %w[with without].map do |dir|
+          (tmp_dir/dir/"bin").mkpath
+          lib = ELFPathname.wrap(tmp_dir/dir/"bin/libx_arm32.so.2")
+          FileUtils.cp(elf_dir/"libx_arm32.so.2", lib.to_path)
+          lib
+        end
+        found = []
+        ELFShim.caching_library_lookups { found.concat(libs.map(&:dynamically_linked_libraries)) }
+        expect(found).to eq [["#{tmp_dir}/with/bin/../lib/libdep.so.1"], ["libdep.so.1"]]
+      end
+    end
+  end
+
   describe "#patch!" do
     let(:placeholder_prefix) { "@@HOMEBREW_PREFIX@@" }
     let(:short_prefix) { "/home/dwarf" }
