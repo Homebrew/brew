@@ -45,7 +45,7 @@ module Homebrew
 
           @packages = if package_manager_installed?
             with_package_manager_env do |krew|
-              parse_plugin_list(Utils.popen_read_text(krew, "list", err: File::NULL))
+              parse_plugin_list(command_output(krew, args: ["list"]))
             end
           else
             []
@@ -69,21 +69,13 @@ module Homebrew
 
         sig { override.returns(T::Array[String]) }
         def installed_packages
-          installed_packages = @installed_packages
-          return installed_packages if installed_packages
-
-          @installed_packages = packages.dup
+          @installed_packages ||= packages.dup
         end
 
         sig { params(output: String).returns(T::Array[String]) }
         def parse_plugin_list(output)
-          output.lines.filter_map do |line|
-            line = line.strip
-            next if line.empty?
-
-            name = line.split(/\s+/).first
-            name.presence
-          end.uniq
+          # Krew prints only plugin names when stdout is piped.
+          output.each_line(chomp: true).reject(&:empty?).uniq
         end
         private :parse_plugin_list
 

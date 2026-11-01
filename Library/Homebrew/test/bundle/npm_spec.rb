@@ -3,11 +3,98 @@
 
 require "bundle"
 require "bundle/dsl"
+require "bundle/shared_examples/inventory"
 require "bundle/extensions/npm"
 require "bundle/installer"
 require "language/node"
 
 RSpec.describe Homebrew::Bundle::Npm do
+  let(:inventory_output) { '{"dependencies":{"example-tool":{}}}' }
+  let(:inventory_records) { ["example-tool"] }
+
+  it_behaves_like "a checked package inventory", empty_output: "{}"
+  it_behaves_like "a checked inventory", :installed_packages, empty_output: "{}"
+
+  describe "checked outdated inventory" do
+    let(:inventory_output) { '{"example-tool":{"wanted":"1","latest":"2"}}' }
+
+    it_behaves_like "a checked inventory", :outdated_packages, empty_output: "{}"
+  end
+
+  describe "checked JSON inventory" do
+    let(:npm) { mktmpdir/"npm" }
+
+    before do
+      described_class.reset!
+      allow(described_class).to receive(:package_manager_executable).and_return(npm)
+    end
+
+    after do
+      described_class.reset!
+    end
+
+    def npm_result(json, status)
+      npm.write "#!/bin/sh\nprintf '%s' #{JSON.generate(json).shellescape}\nexit #{status}\n"
+      npm.chmod 0755
+    end
+
+    it "rejects a diagnostic envelope despite plausible dependencies" do
+      npm_result({ "dependencies" => { "example-tool" => {} }, "error" => { "code" => "ENETWORK" } }, 1)
+      expect { described_class.packages }.to raise_error(ErrorDuringExecution)
+    end
+
+    it "accepts installed packages from an ELSPROBLEMS tree and excludes missing packages" do
+      npm_result({ "dependencies" => { "example-tool" => { "invalid" => true },
+                                       "missing-tool" => { "missing" => true } },
+                   "problems"     => ["missing: missing-tool from Example's tools"],
+                   "error"        => { "code" => "ELSPROBLEMS" } }, 1)
+      expect(described_class.packages).to eq(["example-tool"])
+    end
+
+    it "rejects invalid successful JSON" do
+      npm_result([], 0)
+      expect { described_class.packages }.to raise_error(RuntimeError, /Invalid npm list inventory/)
+    end
+
+    it "rejects failed empty outdated output" do
+      npm.write "#!/bin/sh\nexit 1\n"
+      npm.chmod 0755
+      expect { described_class.outdated_packages }.to raise_error(ErrorDuringExecution)
+    end
+
+    test_each([{}, { "error" => { "code" => "ENETWORK" } },
+               { "example-tool" => [] },
+               { "example-tool" => [{ "wanted" => "1", "latest" => "2" }, {}] }]) do |json|
+      it "rejects invalid nonzero outdated JSON #{json.inspect}" do
+        npm_result(json, 1)
+        expect { described_class.outdated_packages }.to raise_error(ErrorDuringExecution)
+      end
+    end
+
+    it "accepts a real outdated package named error" do
+      npm_result({ "error" => { "wanted" => "1", "latest" => "2" } }, 1)
+      expect(described_class.outdated_packages).to eq(["error"])
+    end
+
+    it "accepts valid array-valued outdated records" do
+      npm_result({ "example-tool" => [{ "current" => "1", "wanted" => "2", "latest" => "3" },
+                                      { "current" => "2", "wanted" => "3", "latest" => "3" }] }, 1)
+      expect(described_class.outdated_packages).to eq(["example-tool"])
+    end
+  end
+
+  def stub_npm_list(output)
+    allow(SystemCommand).to receive(:run)
+      .with(Pathname("npm"), args: ["list", "-g", "--depth=0", "--json"], print_stderr: false)
+      .and_return(stub_npm_output(output))
+  end
+
+  def stub_npm_output(output)
+    SystemCommand::Result.new(["npm"], [[:stdout, output]],
+                              instance_double(Process::Status, success?: true, exitstatus: 0),
+                              secrets: [])
+  end
+
   describe "dumping" do
     subject(:dumper) { described_class }
 
@@ -24,15 +111,13 @@ RSpec.describe Homebrew::Bundle::Npm do
     end
 
     context "when npm is installed" do
-      let(:npm_list_args) { [Pathname("npm"), "list", "-g", "--depth=0", "--json"] }
-
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("npm"))
       end
 
       it "returns package list" do
-        allow(Utils).to receive(:popen_read_text).with(*npm_list_args, err: File::NULL).and_return(<<~JSON)
+        stub_npm_list(<<~JSON)
           {
             "dependencies": {
               "npm": { "version": "11.11.0" },
@@ -51,17 +136,17 @@ RSpec.describe Homebrew::Bundle::Npm do
         npm.write("")
 
         allow(described_class).to receive(:package_manager_executable).and_return(npm)
-        expect(Utils).to receive(:popen_read_text)
-          .with(npm, "list", "-g", "--depth=0", "--json", err: File::NULL) do
+        expect(SystemCommand).to receive(:run)
+          .with(npm, args: ["list", "-g", "--depth=0", "--json"], print_stderr: false) do
           expect(ENV.fetch("PATH", "")).to start_with("#{npm.dirname}:")
-          '{"dependencies":{"eslint":{"version":"10.4.0"}}}'
+          stub_npm_output('{"dependencies":{"eslint":{"version":"10.4.0"}}}')
         end
 
         expect(dumper.packages).to eql(["eslint"])
       end
 
       it "excludes npm itself from the package list" do
-        allow(Utils).to receive(:popen_read_text).with(*npm_list_args, err: File::NULL).and_return(<<~JSON)
+        stub_npm_list(<<~JSON)
           {
             "dependencies": {
               "npm": { "version": "11.11.0" }
@@ -73,15 +158,15 @@ RSpec.describe Homebrew::Bundle::Npm do
       end
 
       it "handles invalid JSON" do
-        allow(Utils).to receive(:popen_read_text).with(*npm_list_args, err: File::NULL).and_return("not json")
+        stub_npm_list("not json")
 
-        expect(dumper.packages).to be_empty
+        expect { dumper.packages }.to raise_error(/Invalid npm list inventory/)
       end
 
       it "handles empty output" do
-        allow(Utils).to receive(:popen_read_text).with(*npm_list_args, err: File::NULL).and_return("")
+        stub_npm_list("")
 
-        expect(dumper.packages).to be_empty
+        expect { dumper.packages }.to raise_error(/Invalid npm list inventory/)
       end
 
       it "dumps package list" do
@@ -98,12 +183,13 @@ RSpec.describe Homebrew::Bundle::Npm do
     end
 
     it "lists outdated packages, including scoped packages, but excludes npm" do
-      allow(Utils).to receive(:popen_read_text)
-        .with(Pathname("npm"), "outdated", "-g", "--depth=0", "--json", err: File::NULL).and_return(<<~JSON)
+      allow(SystemCommand).to receive(:run)
+        .with(Pathname("npm"), args: ["outdated", "-g", "--depth=0", "--json"], print_stderr: false)
+        .and_return(stub_npm_output(<<~JSON))
           {
-            "npm": { "current": "11.10.0", "latest": "11.11.0" },
-            "vercel": { "current": "38.0.0", "latest": "39.0.0" },
-            "@example/cli": { "current": "1.0.0", "latest": "2.0.0" }
+            "npm": { "current": "11.10.0", "wanted": "11.11.0", "latest": "11.11.0" },
+            "vercel": { "current": "38.0.0", "wanted": "39.0.0", "latest": "39.0.0" },
+            "@example/cli": { "current": "1.0.0", "wanted": "2.0.0", "latest": "2.0.0" }
           }
         JSON
 
@@ -111,30 +197,19 @@ RSpec.describe Homebrew::Bundle::Npm do
     end
 
     it "adds npm's directory to PATH when checking outdated packages" do
-      allow(Utils).to receive(:popen_read_text) do
+      allow(SystemCommand).to receive(:run) do
         expect(ENV.fetch("PATH")).to start_with(".:#{ORIGINAL_PATHS.join(":")}")
-        "{}"
+        stub_npm_output("{}")
       end
 
       described_class.outdated_packages
     end
 
-    it "caches outdated packages until reset" do
-      expect(Utils).to receive(:popen_read_text).twice.and_return("{}")
-
-      described_class.outdated_packages
-      described_class.outdated_packages
-      described_class.reset!
-      described_class.outdated_packages
-    end
-
-    it "handles empty or invalid output" do
-      expect(["", "not json", "{}"].map do |output|
-        described_class.reset!
-        allow(Utils).to receive(:popen_read_text).and_return(output)
-
-        described_class.outdated_packages
-      end).to eq([[], [], []])
+    test_each(["", "not json"]) do |output|
+      it "rejects invalid outdated output #{output.inspect}" do
+        allow(SystemCommand).to receive(:run).and_return(stub_npm_output(output))
+        expect { described_class.outdated_packages }.to raise_error(/Invalid npm outdated inventory/)
+      end
     end
 
     it "returns no outdated packages when npm is not installed" do

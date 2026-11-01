@@ -3,9 +3,13 @@
 
 require "bundle"
 require "bundle/dsl"
+require "bundle/shared_examples/inventory"
 require "bundle/extensions/cargo"
 
 RSpec.describe Homebrew::Bundle::Cargo do
+  let(:inventory_output) { "example-tool v1.0\n    example-tool\n" }
+  let(:inventory_records) { [{ name: "example-tool", source: nil }] }
+
   around do |example|
     with_env({
       "HOMEBREW_CARGO_HOME"         => "~/.cargo",
@@ -17,6 +21,14 @@ RSpec.describe Homebrew::Bundle::Cargo do
     }) do
       example.run
     end
+  end
+
+  it_behaves_like "a checked package inventory", stderr_forwarded: true
+  it_behaves_like "a checked inventory", :installed_packages, stderr_forwarded: true
+
+  def stub_cargo_list(output)
+    allow(described_class).to receive(:command_output)
+      .with(Pathname("cargo"), args: ["install", "--list"], print_stderr: true).and_return(output)
   end
 
   describe "entries" do
@@ -132,15 +144,14 @@ RSpec.describe Homebrew::Bundle::Cargo do
     end
 
     context "when cargo is installed" do
-      let(:cargo_list_args) { [Pathname("cargo"), "install", "--list"] }
-
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("cargo"))
       end
 
       it "returns package list" do
-        expect(Utils).to receive(:popen_read_text).with(*cargo_list_args, err: :err) do
+        expect(described_class).to receive(:command_output)
+          .with(Pathname("cargo"), args: ["install", "--list"], print_stderr: true) do
           expect(ENV.fetch("CARGO_HOME", nil)).to eq("~/.cargo")
           expect(ENV.fetch("CARGO_INSTALL_ROOT", nil)).to eq("~/.cargo/bin")
           expect(ENV.fetch("RUSTUP_HOME", nil)).to eq("~/.rustup")
@@ -157,68 +168,57 @@ RSpec.describe Homebrew::Bundle::Cargo do
         ])
       end
 
-      it "parses a git source and strips the resolved revision" do
-        allow(Utils).to receive(:popen_read_text).with(*cargo_list_args, err: :err).and_return(<<~EOS)
-          tftio-kb v4.0.0 (ssh://git@example.com/tftio/kb.git#3492d620):
-              kb
-        EOS
+      test_each_hash({
+        "a git source with a resolved revision" => {
+          origin: "ssh://git@example.com/tool.git#3492d620",
+          source: "ssh://git@example.com/tool.git",
+          dump:   'cargo "example-tool", source: "ssh://git@example.com/tool.git"',
+        },
+        "an HTTPS git source"                   => {
+          origin: "https://github.com/example/tool#9f0e88bc",
+          source: "https://github.com/example/tool",
+          dump:   'cargo "example-tool", source: "https://github.com/example/tool"',
+        },
+        "a tag selector and resolved revision"  => {
+          origin: "ssh://git@example.com/tool.git?tag=v4.0.0#3492d620",
+          source: "ssh://git@example.com/tool.git?tag=v4.0.0",
+          dump:   'cargo "example-tool", source: "ssh://git@example.com/tool.git?tag=v4.0.0"',
+        },
+        "a local installation path"             => {
+          origin: "/Users/test/src/tool",
+          source: nil,
+          dump:   'cargo "example-tool"',
+        },
+        "a file:// repository"                  => {
+          origin: "file:///Users/test/src/tool#3492d620",
+          source: nil,
+          dump:   'cargo "example-tool"',
+        },
+        "an unrecognised origin"                => {
+          origin: "registry+sparse",
+          source: nil,
+          dump:   'cargo "example-tool"',
+        },
+      }) do |description, fixture|
+        context "with #{description}" do
+          before do
+            stub_cargo_list("example-tool v1.0.0 (#{fixture.fetch(:origin)}):\n    example-tool\n")
+          end
 
-        expect(dumper.packages).to eql([
-          { name: "tftio-kb", source: "ssh://git@example.com/tftio/kb.git" },
-        ])
-        expect(dumper.dump).to eql('cargo "tftio-kb", source: "ssh://git@example.com/tftio/kb.git"')
-      end
-
-      it "parses an https git source" do
-        allow(Utils).to receive(:popen_read_text).with(*cargo_list_args, err: :err).and_return(<<~EOS)
-          ripgrep v13.0.0 (https://github.com/BurntSushi/ripgrep#9f0e88bc):
-              rg
-        EOS
-
-        expect(dumper.packages.first&.dig(:source)).to eql("https://github.com/BurntSushi/ripgrep")
-      end
-
-      it "keeps a tag selector while stripping the resolved revision" do
-        allow(Utils).to receive(:popen_read_text).with(*cargo_list_args, err: :err).and_return(<<~EOS)
-          tftio-kb v4.0.0 (ssh://git@example.com/tftio/kb.git?tag=v4.0.0#3492d620):
-              kb
-        EOS
-
-        expect(dumper.dump).to eql('cargo "tftio-kb", source: "ssh://git@example.com/tftio/kb.git?tag=v4.0.0"')
-      end
-
-      it "dumps a crate installed from a local path without a source" do
-        allow(Utils).to receive(:popen_read_text).with(*cargo_list_args, err: :err).and_return(<<~EOS)
-          bat v0.24.0 (/Users/test/src/bat):
-              bat
-        EOS
-
-        expect(dumper.dump).to eql('cargo "bat"')
-      end
-
-      it "dumps a crate installed from a file:// repository without a source" do
-        allow(Utils).to receive(:popen_read_text).with(*cargo_list_args, err: :err).and_return(<<~EOS)
-          bat v0.24.0 (file:///Users/test/src/bat#3492d620):
-              bat
-        EOS
-
-        expect(dumper.dump).to eql('cargo "bat"')
-      end
-
-      it "ignores an origin it cannot classify as a source" do
-        allow(Utils).to receive(:popen_read_text).with(*cargo_list_args, err: :err).and_return(<<~EOS)
-          ripgrep v13.0.0 (registry+sparse):
-              rg
-        EOS
-
-        expect(dumper.packages.first&.dig(:source)).to be_nil
-        expect(dumper.dump).to eql('cargo "ripgrep"')
+          it "parses and dumps the package source" do
+            expect(packages: dumper.packages, dump: dumper.dump).to eq(
+              packages: [{ name: "example-tool", source: fixture.fetch(:source) }],
+              dump:     fixture.fetch(:dump),
+            )
+          end
+        end
       end
 
       it "passes metacharacters in cargo's path literally" do
         cargo = Pathname("cargo; touch /tmp/pwned")
         allow(described_class).to receive(:package_manager_executable).and_return(cargo)
-        expect(Utils).to receive(:popen_read_text).with(cargo, "install", "--list", err: :err).and_return("")
+        expect(described_class).to receive(:command_output).with(cargo, args:         ["install", "--list"],
+                                                                        print_stderr: true).and_return("")
 
         dumper.packages
       end

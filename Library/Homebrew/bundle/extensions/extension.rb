@@ -19,6 +19,18 @@ module Homebrew
         Homebrew::Bundle.register_extension(T.cast(subclass, T.class_of(Homebrew::Bundle::Extension)))
       end
 
+      sig {
+        params(
+          executable:   T.any(String, Pathname),
+          args:         T::Array[String],
+          print_stderr: T::Boolean,
+        ).returns(String)
+      }
+      def self.command_output(executable, args:, print_stderr: false)
+        SystemCommand.run!(executable, args:, print_stderr:).stdout
+      end
+      private_class_method :command_output
+
       sig { abstract.returns(String) }
       def self.banner_name; end
 
@@ -310,6 +322,7 @@ module Homebrew
         Bundle.reset!
         Bundle.formula_versions_from_env_cache = formula_versions_from_env
         Bundle.upgrade_formulae = upgrade_formulae.join(",")
+        reset!
         return if package_manager_installed?
 
         raise "Unable to install #{name} #{package_description}. " \

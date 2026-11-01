@@ -3,10 +3,17 @@
 
 require "bundle"
 require "bundle/dsl"
+require "bundle/shared_examples/inventory"
 require "bundle/extensions/vscode_extension"
 require "extend/kernel"
 
 RSpec.describe Homebrew::Bundle::VscodeExtension do
+  let(:inventory_output) { "example.extension\n" }
+  let(:inventory_records) { ["example.extension"] }
+
+  it_behaves_like "a checked package inventory"
+  it_behaves_like "a checked inventory", :installed_packages
+
   describe "cleanup" do
     test_each([false, nil]) do |result|
       it "reports #{result.inspect} and continues cleanup" do
@@ -62,8 +69,8 @@ RSpec.describe Homebrew::Bundle::VscodeExtension do
           tamasfe.even-better-toml
         EOF
 
-        allow(Utils).to receive(:popen_read_text)
-          .with(Pathname("code"), "--list-extensions", err: File::NULL)
+        allow(described_class).to receive(:command_output)
+          .with(Pathname("code"), args: ["--list-extensions"])
           .and_return(output)
         expect(dumper.extensions).to eql([
           "catppuccin.catppuccin-vsc",
@@ -81,8 +88,8 @@ RSpec.describe Homebrew::Bundle::VscodeExtension do
           GitHub.codespaces
         EOF
 
-        allow(Utils).to receive(:popen_read_text)
-          .with(Pathname("code"), "--list-extensions", err: File::NULL)
+        allow(described_class).to receive(:command_output)
+          .with(Pathname("code"), args: ["--list-extensions"])
           .and_return(output)
 
         expect(dumper.extensions).to eql(["github.codespaces"])

@@ -3,10 +3,17 @@
 
 require "bundle"
 require "bundle/dsl"
+require "bundle/shared_examples/inventory"
 require "bundle/dumper"
 require "bundle/extensions/uv"
 
 RSpec.describe Homebrew::Bundle::Uv do
+  let(:inventory_output) { "example-tool v1.0 [required: https://example.com/café.whl]\n" }
+  let(:inventory_records) { [{ name: "example-tool", with: [], source: "https://example.com/café.whl" }] }
+
+  it_behaves_like "a checked package inventory"
+  it_behaves_like "a checked inventory", :installed_packages
+
   def stub_tool_list(output)
     allow(SystemCommand).to receive(:run!)
       .with(Pathname("uv"),
@@ -318,162 +325,6 @@ RSpec.describe Homebrew::Bundle::Uv do
         expect(dumper.packages.first).to include(name: "fastapi[all,standard]")
         expect(dumper.dump).to eq('uv "fastapi[all,standard]"')
       end
-    end
-  end
-
-  shared_examples "a uv inventory" do |inventory_method|
-    let(:uv) { mktmpdir/"uv" }
-
-    before do
-      described_class.reset!
-      uv.write <<~'SH'
-        #!/bin/sh
-        printf '%s\n' 'example v1.0 [required: https://example.com/café.whl]'
-        printf '%s\n' 'warning v1.0' >&2
-      SH
-      uv.chmod 0755
-      allow(described_class).to receive(:package_manager_executable).and_return(uv)
-    end
-
-    after do
-      described_class.reset!
-    end
-
-    it "preserves text encoding and parses only stdout" do
-      expect(described_class.public_send(inventory_method)).to eq([
-        { name: "example", with: [], source: "https://example.com/café.whl" },
-      ])
-    end
-
-    it "keeps successful stderr quiet" do
-      expect { described_class.public_send(inventory_method) }.not_to output.to_stderr
-    end
-
-    it "caches successful inventories until reset" do
-      described_class.public_send(inventory_method)
-      uv.write "#!/bin/sh\nexit 1\n"
-
-      expect(described_class.public_send(inventory_method)).to eq([
-        { name: "example", with: [], source: "https://example.com/café.whl" },
-      ])
-    end
-
-    it "queries again after reset" do
-      described_class.public_send(inventory_method)
-      uv.write "#!/bin/sh\nexit 0\n"
-      described_class.reset!
-
-      expect(described_class.public_send(inventory_method)).to eq([])
-    end
-
-    it "caches a successful empty inventory" do
-      uv.write <<~'SH'
-        #!/bin/sh
-        printf '%s\n' 'No tools installed' >&2
-      SH
-      described_class.public_send(inventory_method)
-      uv.write "#!/bin/sh\nexit 1\n"
-
-      expect(described_class.public_send(inventory_method)).to eq([])
-    end
-
-    context "when uv fails after printing a plausible inventory" do
-      before do
-        uv.write <<~'SH'
-          #!/bin/sh
-          printf '%s\n' 'example v1.0'
-          printf '%s\n' 'inventory unavailable' >&2
-          exit 2
-        SH
-      end
-
-      it "raises with the exit status and diagnostic" do
-        expect { described_class.public_send(inventory_method) }
-          .to raise_error(ErrorDuringExecution, /exited with 2.*inventory unavailable/m)
-      end
-
-      it "also rejects failed empty output" do
-        uv.write "#!/bin/sh\nexit 2\n"
-
-        expect { described_class.public_send(inventory_method) }.to raise_error(ErrorDuringExecution)
-      end
-
-      it "retries a failed inventory without resetting the cache" do
-        expect { described_class.public_send(inventory_method) }.to raise_error(ErrorDuringExecution)
-        uv.write <<~'SH'
-          #!/bin/sh
-          printf '%s\n' 'another-example v2.0'
-        SH
-
-        expect(described_class.public_send(inventory_method)).to eq([
-          { name: "another-example", with: [], source: nil },
-        ])
-      end
-    end
-  end
-
-  describe ".packages" do
-    it_behaves_like "a uv inventory", :packages
-  end
-
-  describe ".installed_packages" do
-    it_behaves_like "a uv inventory", :installed_packages
-  end
-
-  shared_examples "a failed inventory dump" do |tool_list_output|
-    subject(:dump_brewfile) do
-      Homebrew::Bundle::Dumper.dump_brewfile(
-        global:          false,
-        file:            brewfile.to_s,
-        describe:        false,
-        force:           true,
-        no_restart:      false,
-        formulae:        false,
-        taps:            false,
-        casks:           false,
-        extension_types: { uv: true },
-      )
-    end
-
-    let(:uv) { mktmpdir/"uv" }
-    let(:brewfile) { mktmpdir/"Brewfile" }
-
-    before do
-      described_class.reset!
-      uv.write <<~SH
-        #!/bin/sh
-        printf '%s' '#{tool_list_output}'
-        printf '%s\\n' 'inventory unavailable' >&2
-        exit 2
-      SH
-      uv.chmod 0755
-      allow(described_class).to receive(:package_manager_executable).and_return(uv)
-    end
-
-    after do
-      described_class.reset!
-    end
-
-    it "preserves an existing Brewfile with force enabled" do
-      brewfile.write "uv \"existing-tool\"\n"
-
-      expect { dump_brewfile }.to raise_error(ErrorDuringExecution)
-      expect(brewfile.read).to eq("uv \"existing-tool\"\n")
-    end
-
-    it "does not create a Brewfile" do
-      expect { dump_brewfile }.to raise_error(ErrorDuringExecution)
-      expect(brewfile).not_to exist
-    end
-  end
-
-  describe "dumping a Brewfile when uv fails" do
-    context "with partial output" do
-      it_behaves_like "a failed inventory dump", "example v1.0"
-    end
-
-    context "with empty output" do
-      it_behaves_like "a failed inventory dump", ""
     end
   end
 

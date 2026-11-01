@@ -3,10 +3,150 @@
 
 require "bundle"
 require "bundle/dsl"
+require "bundle/shared_examples/inventory"
 require "bundle/extensions/winget"
 require "bundle/skipper"
 
 RSpec.describe Homebrew::Bundle::Winget do
+  describe "checked Windows bridge" do
+    let(:powershell) { mktmpdir/"powershell.exe" }
+    let(:export_file) { mktmpdir/"export.json" }
+    let(:inventory_output) { '{"Sources":[{"Packages":[{"PackageIdentifier":"Example.App"}]}]}' }
+    let(:inventory_records) { Array.new(Homebrew::Bundle::Winget::SOURCES.length, "Example.App") }
+
+    def write_inventory(output: "", status: 0)
+      powershell.write <<~SH
+        #!/bin/sh
+        printf '%s' #{output.shellescape} > "$EXAMPLE_WINGET_EXPORT"
+        printf '%s\\n' 'native inventory diagnostic' >&2
+        exit #{status}
+      SH
+      powershell.chmod 0755
+    end
+
+    before do
+      described_class.reset!
+      ENV["EXAMPLE_WINGET_EXPORT"] = export_file.to_s
+      write_inventory(output: inventory_output)
+      allow(described_class).to receive(:package_manager_executable).and_return(Pathname("C:/WinGet/winget.exe"))
+      allow(described_class).to receive(:which).and_call_original
+      allow(described_class).to receive(:which).with("powershell.exe", ORIGINAL_PATHS).and_return(powershell)
+      allow(described_class).to receive(:inventory_windows_path).and_call_original
+      allow(described_class).to receive(:inventory_windows_path).with(export_file.to_s).and_return("C:/export.json")
+      allow(Tempfile).to receive(:create).with(["brew-bundle-winget", ".json"])
+                                         .and_yield(instance_double(File, path: export_file.to_s))
+    end
+
+    after do
+      described_class.reset!
+    end
+
+    it_behaves_like "a failed inventory dump"
+
+    it "does not cache a failed bridge and retries without reset" do
+      write_inventory(output: inventory_output, status: 1)
+      expect { described_class.apps }.to raise_error(ErrorDuringExecution)
+      write_inventory(output: inventory_output)
+      expect(described_class.apps.map(&:id)).to eq(inventory_records)
+    end
+
+    test_each_hash({ "missing" => Errno::ENOENT, "malformed" => RuntimeError }) do |export, error|
+      it "retries after a successful command produces a #{export} export" do
+        if export == "missing"
+          powershell.write "#!/bin/sh\nrm -f \"$EXAMPLE_WINGET_EXPORT\"\n"
+        else
+          write_inventory(output: "not json")
+        end
+
+        expect { described_class.apps }.to raise_error(error)
+        write_inventory(output: inventory_output)
+        expect(described_class.apps.map(&:id)).to eq(inventory_records)
+      end
+    end
+
+    it "rejects an unavailable PowerShell executable" do
+      powershell.unlink
+
+      expect { described_class.apps }.to raise_error(RuntimeError, /requires Windows PowerShell 5.1/)
+    end
+
+    it "skips name listing for empty exports" do
+      write_inventory(output: '{"Sources":[]}')
+      expect(described_class).not_to receive(:listed_app_names)
+      expect(described_class.apps).to eq([])
+    end
+
+    it "caches successful empty exports" do
+      write_inventory(output: '{"Sources":[]}')
+      described_class.apps
+      write_inventory(status: 1)
+      expect(described_class.apps).to eq([])
+    end
+
+    it "does not cache a partially completed pair of sources" do
+      allow(described_class).to receive(:listed_app_names).and_return({})
+      allow(described_class).to receive(:exported_apps).and_call_original
+      allow(described_class).to receive(:exported_apps).with(anything, source: "msstore")
+                                                       .and_raise("second source unavailable")
+      expect { described_class.apps }.to raise_error(/second source unavailable/)
+      allow(described_class).to receive(:exported_apps).with(anything, source: "msstore").and_return([])
+      expect(described_class.apps.map(&:id)).to eq(["Example.App"])
+    end
+
+    it "uses checked PowerShell execution and preserves quoted literal arguments" do
+      expect(SystemCommand).to receive(:run!).with(
+        powershell,
+        args:         ["-NoProfile", "-NonInteractive", "-Command",
+                       a_string_including("'Example''s ‘‘café’’ ‚‚‛‛; $(value)'", "$LASTEXITCODE = $null")],
+        print_stderr: false,
+      ).and_return(instance_double(SystemCommand::Result, stdout: ""))
+      described_class.listed_app_names(Pathname("C:/WinGet/winget.exe"), source: "Example's ‘café’ ‚‛; $(value)")
+    end
+  end
+
+  describe "strict inventory path conversion" do
+    test_each_hash({ "exit 2"               => /exited with 2/,
+                     "printf relative/path" => /Invalid Windows path/ }) do |command, error|
+      it "rejects unsuccessful or nonabsolute conversion: #{command}" do
+        converter = mktmpdir/"wslpath"
+        converter.write "#!/bin/sh\n#{command}\n"
+        converter.chmod 0755
+        allow(described_class).to receive(:which).with("wslpath", ORIGINAL_PATHS).and_return(converter)
+
+        expect do
+          described_class.exported_apps(Pathname("C:/WinGet/winget.exe"), source: "winget")
+        end.to raise_error(error)
+      end
+    end
+
+    it "rejects a missing converter for Linux paths" do
+      allow(described_class).to receive(:which).with("wslpath", ORIGINAL_PATHS).and_return(nil)
+      expect do
+        described_class.exported_apps(Pathname("C:/WinGet/winget.exe"),
+                                      source: "winget")
+      end.to raise_error(/requires wslpath/)
+    end
+
+    it "rejects an empty converted path" do
+      allow(described_class).to receive(:which).with("wslpath", ORIGINAL_PATHS).and_return(Pathname("wslpath"))
+      allow(described_class).to receive(:command_output).and_return("")
+      expect do
+        described_class.exported_apps(Pathname("C:/WinGet/winget.exe"),
+                                      source: "winget")
+      end.to raise_error(/Invalid Windows path/)
+    end
+  end
+
+  describe "export validation" do
+    test_each(["not json", "[]", "{}", '{"Sources":[{}]}',
+               '{"Sources":[{"Packages":[{"PackageIdentifier":1}]}]}']) do |output|
+      it "rejects invalid export #{output}" do
+        expect { described_class.parse_export(output, source: "winget") }
+          .to raise_error(RuntimeError, /Invalid WinGet export/)
+      end
+    end
+  end
+
   describe "checking" do
     let(:entry) do
       Homebrew::Bundle::Dsl::Entry.new(:winget, "PowerToys", id: "XP89DCGQ3K6VLD", source: "msstore")
@@ -111,9 +251,12 @@ RSpec.describe Homebrew::Bundle::Winget do
           Homebrew::Bundle::Winget::App.new(id: "Valve.Steam", name: "Valve.Steam", source: "winget"),
           Homebrew::Bundle::Winget::App.new(id: "Unknown.Package", name: "Unknown.Package", source: "winget"),
         ])
-        allow(Utils).to receive(:popen_read)
-          .with(winget, "list", "--source", "winget", "--accept-source-agreements", "--disable-interactivity",
-                "--nowarn", err: :close)
+        allow(described_class).to receive(:prepare_inventory_command)
+          .with(winget, args: ["list", "--source", "winget", "--accept-source-agreements", "--disable-interactivity",
+                               "--nowarn"])
+          .and_return([Pathname("powershell.exe"), "list script"])
+        allow(described_class).to receive(:run_inventory_script)
+          .with(Pathname("powershell.exe"), "list script")
           .and_return(<<~EOS)
             Name                                       Id                                          Version
             -----------------------------------------------------------------------------------------------
@@ -194,7 +337,7 @@ RSpec.describe Homebrew::Bundle::Winget do
 
     context "when app is not installed" do
       before do
-        allow(described_class).to receive(:installed_app_records).and_return([])
+        allow(described_class).to receive_messages(installed_app_records: [], export_apps: [])
       end
 
       it "installs app using its source and ID" do

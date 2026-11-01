@@ -63,8 +63,8 @@ module Homebrew
 
           @extensions = if (vscode = package_manager_executable)
             ENV["WSL_DISTRO_NAME"] = ENV.fetch("HOMEBREW_WSL_DISTRO_NAME", nil)
-            Utils.popen_read_text(vscode, "--list-extensions", err: File::NULL)
-                 .split("\n").map(&:strip).grep(EXTENSION_ID_REGEX).map(&:downcase)
+            command_output(vscode, args: ["--list-extensions"])
+              .split("\n").map(&:strip).grep(EXTENSION_ID_REGEX, &:downcase)
           end
           return [] if @extensions.nil?
 

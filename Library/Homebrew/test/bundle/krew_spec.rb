@@ -4,8 +4,63 @@
 require "bundle"
 require "bundle/dsl"
 require "bundle/extensions/krew"
+require "bundle/extensions/npm"
+require "bundle/extensions/winget"
+require "bundle/shared_examples/inventory"
 
 RSpec.describe Homebrew::Bundle::Krew do
+  let(:inventory_output) { "example-tool\n" }
+  let(:inventory_records) { ["example-tool"] }
+
+  it_behaves_like "a checked package inventory"
+  it_behaves_like "a checked inventory", :installed_packages
+
+  describe "selected extension snapshots" do
+    let(:krew) { mktmpdir/"krew" }
+    let(:npm) { mktmpdir/"npm" }
+    let(:brewfile) { mktmpdir/"Brewfile" }
+
+    before do
+      described_class.reset!
+      Homebrew::Bundle::Npm.reset!
+      krew.write "#!/bin/sh\nprintf '%s\\n' 'example-tool'\nexit 2\n"
+      krew.chmod 0755
+      npm.write "#!/bin/sh\nprintf '%s' '{\"dependencies\":{\"example-tool\":{}}}'\n"
+      npm.chmod 0755
+      allow(described_class).to receive(:package_manager_executable).and_return(krew)
+      allow(Homebrew::Bundle::Npm).to receive(:package_manager_executable).and_return(npm)
+      allow(Homebrew::Bundle).to receive(:dump_package_types).and_return([
+        Homebrew::Bundle::Npm, described_class, Homebrew::Bundle::Winget
+      ])
+    end
+
+    after do
+      described_class.reset!
+      Homebrew::Bundle::Npm.reset!
+    end
+
+    it "preserves the destination when a later selected extension fails" do
+      brewfile.write "# original\n"
+      expect do
+        Homebrew::Bundle::Dumper.dump_brewfile(
+          global: false, file: brewfile.to_s, describe: false, force: true, no_restart: false,
+          formulae: false, taps: false, casks: false, extension_types: { npm: true, krew: true }
+        )
+      end.to raise_error(ErrorDuringExecution)
+      expect(brewfile.read).to eq("# original\n")
+    end
+
+    it "does not query unselected managers or require PowerShell" do
+      expect(Homebrew::Bundle::Winget).not_to receive(:package_manager_executable)
+      expect(described_class).not_to receive(:package_manager_executable)
+      Homebrew::Bundle::Dumper.dump_brewfile(
+        global: false, file: brewfile.to_s, describe: false, force: true, no_restart: false,
+        formulae: false, taps: false, casks: false, extension_types: { npm: true, krew: false, winget: false }
+      )
+      expect(brewfile.read).to eq("npm \"example-tool\"\n")
+    end
+  end
+
   describe "dumping" do
     subject(:dumper) { described_class }
 
@@ -29,15 +84,15 @@ RSpec.describe Homebrew::Bundle::Krew do
       end
 
       it "returns plugin list" do
-        allow(Utils).to receive(:popen_read_text).with(Pathname("kubectl-krew"), "list", err: File::NULL)
-                                                 .and_return("ctx\nneat\nns\n")
+        allow(described_class).to receive(:command_output).with(Pathname("kubectl-krew"), args: ["list"])
+                                                          .and_return("ctx\nneat\nns\n")
 
         expect(dumper.packages).to eql(%w[ctx neat ns])
       end
 
-      it "handles empty output" do
-        allow(Utils).to receive(:popen_read_text).with(Pathname("kubectl-krew"), "list",
-                                                       err: File::NULL).and_return("")
+      it "handles the blank line emitted when no plugins are installed" do
+        allow(described_class).to receive(:command_output).with(Pathname("kubectl-krew"),
+                                                                args: ["list"]).and_return("\n")
 
         expect(dumper.packages).to be_empty
       end
@@ -47,6 +102,17 @@ RSpec.describe Homebrew::Bundle::Krew do
         expect(dumper.dump).to eql("krew \"ctx\"\nkrew \"ns\"\nkrew \"neat\"")
       end
     end
+  end
+
+  describe "bootstrap cache invalidation" do
+    let(:bootstrap_executable) { Pathname("kubectl-krew") }
+
+    before do
+      allow(described_class).to receive(:command_output).with(bootstrap_executable, args: ["list"])
+                                                        .and_return("ctx\n")
+    end
+
+    it_behaves_like "an inventory refreshed after bootstrap", "ctx"
   end
 
   describe "installing" do
@@ -101,6 +167,7 @@ RSpec.describe Homebrew::Bundle::Krew do
             package_manager_executable: Pathname.new("/usr/local/bin/kubectl-krew"),
             package_manager_installed?: true,
             installed_packages:         [],
+            packages:                   [],
           )
         end
 
