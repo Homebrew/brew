@@ -146,17 +146,13 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
   describe "#warn_if_branch_not_updated" do
     subject(:warn_if_branch_not_updated) do
-      described_class.new([]).warn_if_branch_not_updated(tap.name, tap.git_repository, tap.repository_var_suffix)
+      described_class.new([]).warn_if_branch_not_updated(tap.name, tap.git_repository, updated_revision)
     end
 
     let(:redirected_tap) { setup_redirected_tap("branch") }
     let(:tap) { redirected_tap.fetch(0) }
     let(:before_revision) { redirected_tap.fetch(1) }
-
-    before do
-      ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
-      ENV["HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"] = tap.git_head
-    end
+    let!(:updated_revision) { tap.git_head }
 
     after { FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"allowed" }
 
