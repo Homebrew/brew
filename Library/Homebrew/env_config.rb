@@ -406,12 +406,9 @@ module Homebrew
         odeprecated: true,
       },
       HOMEBREW_FORBID_PACKAGES_FROM_PATHS:       {
-        description:  "If set, Homebrew will refuse to read formulae or casks provided from file paths, " \
-                      "e.g. `brew install ./package.rb`.",
-        boolean:      :set,
-        default_text: "true unless `$HOMEBREW_DEVELOPER` is set.",
-        # Keep in sync with forbid_packages_from_paths? below.
-        default:      -> { ENV["HOMEBREW_TESTS"].blank? && ENV["HOMEBREW_DEVELOPER"].blank? },
+        description: "No-op. Loading formulae and casks from paths is always disabled.",
+        boolean:     :set,
+        default:     true,
       },
       HOMEBREW_FORCE_API_AUTO_UPDATE:            {
         description: "If set, update the Homebrew API formula or cask data even if " \
@@ -1038,15 +1035,7 @@ module Homebrew
 
     sig { returns(T::Boolean) }
     def forbid_packages_from_paths?
-      # Undocumented opt-out for internal use.
-      return false if ENV["HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS"].present?
-
-      return true if ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"].present?
-
-      # Provide an opt-out for tests and developers.
-      # Our testing framework installs formulae from file paths all over the place.
-      # Keep in sync with the HOMEBREW_FORBID_PACKAGES_FROM_PATHS default above.
-      ENV["HOMEBREW_TESTS"].blank? && ENV["HOMEBREW_DEVELOPER"].blank?
+      true
     end
 
     sig { returns(T::Boolean) }

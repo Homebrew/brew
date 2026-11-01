@@ -189,7 +189,7 @@ RSpec.describe Cask::Caskroom do
     end
   end
 
-  describe ".casks" do
+  describe ".casks", :trust_store do
     sig { params(dir: Pathname, token: String, tap: T.nilable(Tap), version: String).void }
     def setup_cask_metadata(dir, token, tap: nil, version: "1.0")
       casks_dir = dir/token/".metadata"/version/"20250101000000.000"/"Casks"
@@ -218,32 +218,33 @@ RSpec.describe Cask::Caskroom do
       end
     end
 
-    it "includes casks installed from untrusted taps without loading cask files" do
-      token = "untrusted-cask"
-      tap = Tap.fetch("thirdparty", "foo")
-      cask_path = tap.cask_dir/"#{token}.rb"
-      cask_path.dirname.mkpath
-      cask_path.write <<~RUBY
-        raise "untrusted cask evaluated"
-      RUBY
+    test_each(%w[rb json].product([true, false])) do |(extension, tap_source_exists)|
+      it "lists untrusted installed #{extension} casks with tap source present: #{tap_source_exists}" do
+        ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+        token = "untrusted-cask"
+        tap = Tap.fetch("thirdparty", "foo")
+        if tap_source_exists
+          cask_path = tap.cask_dir/"#{token}.rb"
+          cask_path.dirname.mkpath
+          cask_path.write 'raise "untrusted cask evaluated"'
+        end
 
-      Dir.mktmpdir do |dir|
-        allow(described_class).to receive(:path).and_return(Pathname(dir))
+        Dir.mktmpdir do |dir|
+          allow(described_class).to receive(:path).and_return(Pathname(dir))
+          setup_cask_metadata(Pathname(dir), token, tap:, version: "1.0")
+          casks_dir = Pathname(dir)/token/".metadata/1.0/20250101000000.000/Casks"
+          (casks_dir/"#{token}.rb").write 'raise "untrusted installed cask evaluated"'
+          (casks_dir/"#{token}.json").write("{}") if extension == "json"
 
-        setup_cask_metadata(Pathname(dir), token, tap:, version: "1.0")
-
-        casks = described_class.casks
-        expect(casks.map(&:token)).to eq([token])
-
-        cask = casks.first
-        expect(cask&.installed_version).to eq("1.0")
-        expect(cask&.tap).to eq(tap)
+          expect(described_class.casks)
+            .to contain_exactly(have_attributes(token:, installed_version: "1.0", tap:))
+        end
+      ensure
+        FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
       end
-    ensure
-      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
 
-    it "does not list a cask twice when it is also installed under an old token", :trust_store do
+    it "does not list a cask twice when it is also installed under an old token" do
       tap = Tap.fetch("thirdparty", "foo")
       cask_path = tap.cask_dir/"new-cask.rb"
       cask_path.dirname.mkpath
