@@ -74,8 +74,7 @@ module Homebrew
         return if current_revision == ENV.fetch("HOMEBREW_UPDATE_BEFORE#{var_suffix}", nil)
         return if current_revision == repository.head_ref
 
-        opoo "#{name} is on branch '#{repository.branch_name}', which is unchanged as only " \
-             "'#{repository.origin_branch_name}' was updated."
+        opoo "#{name} is on branch '#{repository.branch_name}'"
       end
 
       private

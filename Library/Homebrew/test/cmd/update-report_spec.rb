@@ -163,10 +163,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     it "warns when another branch is checked out" do
       system "git", "-C", tap.path.to_s, "checkout", "-q", "-b", "my-work", before_revision
 
-      expect { warn_if_branch_not_updated }.to output(
-        "Warning: allowed/branch is on branch 'my-work', which is unchanged as only " \
-        "'#{redirected_tap.fetch(2)}' was updated.\n",
-      ).to_stderr
+      expect { warn_if_branch_not_updated }.to output("Warning: allowed/branch is on branch 'my-work'\n").to_stderr
     end
 
     it "does not warn when the updated branch is checked out" do
