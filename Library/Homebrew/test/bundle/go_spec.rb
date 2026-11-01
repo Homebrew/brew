@@ -82,6 +82,38 @@ RSpec.describe Homebrew::Bundle::Go do
       expect { described_class.packages }.to raise_error(Errno::EACCES)
     end
 
+    test_each(["GOBIN", "GOPATH"]) do |variable|
+      context "when the binary directory comes from #{variable}" do
+        let(:bin_dir) { mktmpdir/"bin" }
+
+        before do
+          allow(described_class).to receive(:command_output)
+            .with(go, args: ["env", "GOBIN"], print_stderr: true)
+            .and_return((variable == "GOBIN") ? bin_dir.to_s : "")
+          allow(described_class).to receive(:command_output)
+            .with(go, args: ["env", "GOPATH"], print_stderr: true).and_return(bin_dir.dirname.to_s)
+        end
+
+        it "returns an empty inventory when the directory does not exist" do
+          expect(described_class.packages).to eq([])
+        end
+
+        it "preserves an existing Brewfile when the directory is a regular file" do
+          bin_dir.write ""
+          brewfile = mktmpdir/"Brewfile"
+          brewfile.write "# existing Brewfile\n"
+
+          expect do
+            Homebrew::Bundle::Dumper.dump_brewfile(
+              global: false, file: brewfile.to_s, describe: false, force: true, no_restart: false,
+              formulae: false, taps: false, casks: false, extension_types: { go: true }
+            )
+          end.to raise_error(Errno::ENOTDIR)
+          expect(brewfile.read).to eq("# existing Brewfile\n")
+        end
+      end
+    end
+
     test_each(["not a Go executable", "unrecognized file format"]) do |diagnostic|
       it "excludes only an exact file-bound #{diagnostic} negative" do
         go.write <<~SH
