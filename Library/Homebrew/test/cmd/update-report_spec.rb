@@ -144,6 +144,36 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"allowed"
   end
 
+  describe "#warn_if_branch_not_updated" do
+    subject(:warn_if_branch_not_updated) do
+      described_class.new([]).warn_if_branch_not_updated(tap.name, tap.git_repository, tap.repository_var_suffix)
+    end
+
+    let(:redirected_tap) { setup_redirected_tap("branch") }
+    let(:tap) { redirected_tap.fetch(0) }
+    let(:before_revision) { redirected_tap.fetch(1) }
+
+    before do
+      ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
+      ENV["HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"] = tap.git_head
+    end
+
+    after { FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"allowed" }
+
+    it "warns when another branch is checked out" do
+      system "git", "-C", tap.path.to_s, "checkout", "-q", "-b", "my-work", before_revision
+
+      expect { warn_if_branch_not_updated }.to output(
+        "Warning: allowed/branch is on branch 'my-work', which is unchanged as only " \
+        "'#{redirected_tap.fetch(2)}' was updated.\n",
+      ).to_stderr
+    end
+
+    it "does not warn when the updated branch is checked out" do
+      expect { warn_if_branch_not_updated }.not_to output.to_stderr
+    end
+  end
+
   it "rolls back a denied redirect after a conflicted stash pop" do
     tap, before_revision, branch = setup_redirected_tap("conflict")
     (tap.path/"before").write("local edit")

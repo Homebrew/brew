@@ -66,6 +66,18 @@ module Homebrew
         Settings.write "donationmessage", true if $stdout.tty?
       end
 
+      # `update.sh` updates the upstream branch and then checks out the original
+      # branch again, e.g. for developers, which leaves that branch unchanged.
+      sig { params(name: String, repository: GitRepository, var_suffix: String).void }
+      def warn_if_branch_not_updated(name, repository, var_suffix)
+        current_revision = ENV.fetch("HOMEBREW_UPDATE_AFTER#{var_suffix}", nil)
+        return if current_revision == ENV.fetch("HOMEBREW_UPDATE_BEFORE#{var_suffix}", nil)
+        return if current_revision == repository.head_ref
+
+        opoo "#{name} is on branch '#{repository.branch_name}', which is unchanged as only " \
+             "'#{repository.origin_branch_name}' was updated."
+      end
+
       private
 
       sig { void }
@@ -221,6 +233,7 @@ module Homebrew
                  "to #{new_tag} (#{shorten_revision(current_revision)})."
           end
         end
+        warn_if_branch_not_updated("Homebrew/brew", GitRepository.new(HOMEBREW_REPOSITORY), "")
 
         # Check if we can parse the JSON and do any Ruby-side follow-up.
         Homebrew::API.write_names_and_aliases unless Homebrew::EnvConfig.no_install_from_api?
@@ -292,6 +305,9 @@ module Homebrew
           puts "Updated #{Utils.pluralize("tap", updated_taps.count,
                                           include_count: true)} (#{Utils::Text.to_sentence(updated_taps)})."
           updated = true
+        end
+        Tap.installed.each do |tap|
+          warn_if_branch_not_updated(tap.name, tap.git_repository, tap.repository_var_suffix) if tap.git?
         end
 
         if updated
