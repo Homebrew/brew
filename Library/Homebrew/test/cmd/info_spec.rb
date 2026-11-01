@@ -625,7 +625,7 @@ RSpec.describe Homebrew::Cmd::Info do
     dependent_tab.write
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
-    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new], outdated?: false)
     allow(direct_dependency).to receive(:satisfied?).and_return(true)
 
     expected_output = Regexp.new(
@@ -703,12 +703,45 @@ RSpec.describe Homebrew::Cmd::Info do
     installed_dep_tab.write
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
-    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new], outdated?: false)
     allow(direct_dependency).to receive(:satisfied?).and_return(true)
 
     expect { info.info_formula(formula) }
       .to output(/Recursive Runtime \(1\): all installed .*✔/).to_stdout
       .and not_to_output(/missing/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "counts recursive runtime dependencies of the latest version when the formula is outdated" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      desc "Some test"
+    end
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = %w[installed-dep missing-dep dropped-dep].map do |name|
+      { "full_name" => name, "version" => "1.0" }
+    end
+    tab.write
+
+    %w[installed-dep dropped-dep].each { (HOMEBREW_CELLAR/it/"1.0").mkpath }
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new], outdated?: true)
+    latest_runtime_deps = %w[installed-dep missing-dep new-dep].map { Dependency.new(it) }
+    allow(formula).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false)
+                                                    .and_return(latest_runtime_deps)
+
+    expect { info.info_formula(formula) }
+      .to output(/Recursive Runtime \(3\): 1 installed .*✔.*, 2 not installed\n/).to_stdout
+      .and not_to_output(/✘/).to_stdout
       .and not_to_output.to_stderr
   end
 
@@ -769,7 +802,7 @@ RSpec.describe Homebrew::Cmd::Info do
     allow(direct_dependency).to receive(:to_formula).and_return(bar_formula)
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
-    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new], outdated?: false)
 
     expect { info.info_formula(formula) }
       .to output(/Required \(1\): .*bar.*✔/).to_stdout
@@ -806,7 +839,7 @@ RSpec.describe Homebrew::Cmd::Info do
     allow(direct_dependency).to receive(:to_formula).and_return(bar_formula)
 
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
-    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new], outdated?: false)
 
     expect { info.info_formula(formula) }
       .to output(/Required \(1\): .*bar.*↑/).to_stdout
