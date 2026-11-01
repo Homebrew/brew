@@ -209,6 +209,12 @@ module Homebrew
           "#{missing_count} missing #{Formatter.error("✘")}"
       end
 
+      sig { params(name: String).returns(T::Boolean) }
+      def self.rack_installed?(name)
+        rack = HOMEBREW_CELLAR/Utils.name_from_full_name(name)
+        rack.directory? && !rack.subdirs.empty?
+      end
+
       sig { params(full_name: String, name: String).returns(T::Array[String]) }
       def self.installed_dependent_names(full_name, name)
         Formula.racks.filter_map do |rack|
@@ -584,8 +590,7 @@ module Homebrew
               dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
               next false unless dep_name
 
-              rack = HOMEBREW_CELLAR/dep_name
-              rack.directory? && !rack.subdirs.empty?
+              self.class.rack_installed?(dep_name)
             end
             puts "Recursive Runtime (#{tab_runtime_deps.count}): " \
                  "#{self.class.dependency_status_counts(installed_count, tab_runtime_deps.count)}"
@@ -877,8 +882,7 @@ module Homebrew
             name == dep.name || name&.then { Utils.name_from_full_name(it) } == dep.name
           end
           full_name = matching_tab_dep&.fetch("full_name") || dep.name
-          rack = HOMEBREW_CELLAR/Utils.name_from_full_name(full_name)
-          installed = T.let(rack.directory? && !rack.subdirs.empty?, T::Boolean)
+          installed = self.class.rack_installed?(full_name)
           formula = begin
             dep.to_formula
           rescue FormulaUnavailableError, TapFormulaAmbiguityError
