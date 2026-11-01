@@ -69,7 +69,7 @@ module Homebrew
       # `update.sh` updates the upstream branch and then checks out the original
       # branch again, e.g. for developers, which leaves that branch unchanged.
       sig { params(name: String, repository: GitRepository, var_suffix: String).void }
-      def warn_if_branch_not_updated(name, repository, var_suffix="")
+      def warn_if_branch_not_updated(name, repository, var_suffix = "")
         current_revision = ENV.fetch("HOMEBREW_UPDATE_AFTER#{var_suffix}", nil)
         return if current_revision == ENV.fetch("HOMEBREW_UPDATE_BEFORE#{var_suffix}", nil)
         return if current_revision == repository.head_ref
