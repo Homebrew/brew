@@ -138,6 +138,20 @@ RSpec.describe Homebrew::FormulaAuditor do
       expect(fa).to receive(:curl_check_http_content)
       fa.audit_homepage
     end
+
+    it "audits homepages with Homebrew curl when the head spec uses it" do
+      fa = formula_auditor "foo", <<~RUBY, online: true
+        class Foo < Formula
+          homepage "https://brew.sh"
+          url "https://brew.sh/foo-1.0.tar.gz"
+          head "https://brew.sh/foo.tar.gz", using: :homebrew_curl
+        end
+      RUBY
+
+      expect(fa).to receive(:curl_check_http_content)
+        .with("https://brew.sh", anything, hash_including(use_homebrew_curl: true))
+      fa.audit_homepage
+    end
   end
 
   def homepage_auditor(**options)

@@ -1126,6 +1126,35 @@ RSpec.describe Formulary do
     expect(described_class.from_contents(formula_name, formula_path, formula_content)).to be_a(Formula)
   end
 
+  describe "::resolve", :no_api do
+    before do
+      prefix = HOMEBREW_CELLAR/formula_name/"0.1"
+      prefix.mkpath
+      tab = Tab.empty
+      tab.tabfile = prefix/AbstractTab::FILENAME
+      tab.source["spec"] = "head"
+      tab.write
+      formula_path.dirname.mkpath
+    end
+
+    it "activates the head spec recorded in an installed receipt" do
+      formula_path.write <<~RUBY
+        class #{described_class.class_s(formula_name)} < Formula
+          url "https://brew.sh/#{formula_name}-0.1.tar.gz"
+          head "https://brew.sh/#{formula_name}.git"
+        end
+      RUBY
+
+      expect(described_class.resolve(formula_path.to_s).active_spec_sym).to eq(:head)
+    end
+
+    it "keeps the stable spec when the receipt's head spec is unavailable" do
+      formula_path.write formula_content
+
+      expect(described_class.resolve(formula_path.to_s).active_spec_sym).to eq(:stable)
+    end
+  end
+
   describe "::to_rack" do
     alias_matcher :exist, :be_exist
 
