@@ -1063,6 +1063,8 @@ class Formula
     raise FormulaSpecificationError, "#{full_name} has a HEAD version installed but no head spec" if head_spec.nil?
 
     downloader = head_spec.downloader
+    return latest_version unless downloader.is_a?(VCSDownloadStrategy)
+
     with_context quiet: true do
       PkgVersion.new(Version.new("HEAD-#{downloader.last_commit}"), revision)
     end
