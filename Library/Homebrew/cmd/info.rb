@@ -552,6 +552,11 @@ module Homebrew
         end
 
         tab_runtime_deps = kegs.last&.runtime_dependencies
+        runtime_deps = if outdated
+          formula.runtime_dependencies(read_from_tab: false, undeclared: false).map { { "full_name" => it.name } }
+        else
+          tab_runtime_deps
+        end
         installed_dependents = if $stdout.tty? && kegs.any?
           self.class.installed_dependent_names(formula.full_name, formula.name)
         else
@@ -572,7 +577,7 @@ module Homebrew
             "#{decorate_dependencies(deps, tab_runtime_deps: tab_deps, mark_uninstalled:,
                                      formula_outdated: outdated, missing_library_deps:)}"
         end
-        if dependency_lines.present? || tab_runtime_deps.present? || installed_dependents.any?
+        if dependency_lines.present? || runtime_deps.present? || installed_dependents.any?
           ohai "Dependencies"
           puts dependency_lines
           missing_library_names = missing_libraries.map { |lib| File.basename(lib) }.uniq
@@ -580,12 +585,7 @@ module Homebrew
             decorated = missing_library_names.map { |lib| pretty_uninstalled(lib, bold: false) }.join(", ")
             puts "Missing libraries (#{missing_library_names.count}): #{decorated}"
           end
-          if tab_runtime_deps.present?
-            runtime_deps = if outdated
-              formula.runtime_dependencies(read_from_tab: false, undeclared: false).map { { "full_name" => it.name } }
-            else
-              tab_runtime_deps
-            end
+          if runtime_deps.present?
             installed_count = runtime_deps.count do |dep|
               dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
               next false unless dep_name
