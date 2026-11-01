@@ -173,6 +173,51 @@ module ELFShim
 
   # Helper class for reading metadata from an ELF file.
   class Metadata
+    # Values from the ELF specification for the fields {#read_directly} reads.
+    # @see https://refspecs.linuxfoundation.org/elf/gabi4+/contents.html
+    IDENT_BYTESIZE = 16
+    CLASS_OFFSET = 4
+    DATA_OFFSET = 5
+    ELFCLASS32 = 1
+    ELFCLASS64 = 2
+    ELFDATA2LSB = 1
+    ELFDATA2MSB = 2
+    ELF32_HEADER_BYTESIZE = 52
+    ELF64_HEADER_BYTESIZE = 64
+    ELF32_PROGRAM_HEADER_BYTESIZE = 32
+    ELF64_PROGRAM_HEADER_BYTESIZE = 56
+    PN_XNUM = 0xffff
+    PT_LOAD = 1
+    PT_DYNAMIC = 2
+    PT_INTERP = 3
+    DT_NULL = 0
+    DT_NEEDED = 1
+    DT_STRTAB = 5
+    DT_SONAME = 14
+    DT_RPATH = 15
+    DT_RUNPATH = 29
+    DT_FLAGS_1 = 0x6ffffffb
+    DF_1_NODEFLIB = 0x800
+    DF_1_PIE = 0x08000000
+    private_constant :IDENT_BYTESIZE, :CLASS_OFFSET, :DATA_OFFSET, :ELFCLASS32, :ELFCLASS64, :ELFDATA2LSB,
+                     :ELFDATA2MSB, :ELF32_HEADER_BYTESIZE, :ELF64_HEADER_BYTESIZE, :ELF32_PROGRAM_HEADER_BYTESIZE,
+                     :ELF64_PROGRAM_HEADER_BYTESIZE, :PN_XNUM, :PT_LOAD, :PT_DYNAMIC, :PT_INTERP, :DT_NULL,
+                     :DT_NEEDED, :DT_STRTAB, :DT_SONAME, :DT_RPATH, :DT_RUNPATH, :DT_FLAGS_1, :DF_1_NODEFLIB,
+                     :DF_1_PIE
+
+    # Everything {Metadata} reads from a file. {#read_directly} and
+    # {#read_using_patchelf_rb} each return all of it or nothing, so when the
+    # first gives up part of the way through, nothing it read is kept.
+    class Fields < T::Struct
+      const :dynamic_elf, T::Boolean
+      const :dylib_id, T.nilable(String)
+      const :needed, T::Array[String]
+      const :interpreter, T.nilable(String)
+      const :rpath, T.nilable(String)
+      const :dt_flags_1, T.nilable(Integer)
+    end
+    private_constant :Fields
+
     sig { returns(ELFShim) }
     attr_reader :path
 
@@ -192,33 +237,23 @@ module ELFShim
 
     sig { params(path: ELFShim).void }
     def initialize(path)
-      require "patchelf"
-      patcher = path.patchelf_patcher
-
       @path = path
       @dylibs = T.let(nil, T.nilable(T::Array[String]))
-      @dylib_id = T.let(nil, T.nilable(String))
-      @needed = T.let([], T::Array[String])
 
-      dynamic_segment = patcher.elf.segment_by_type(:dynamic)
-      @dynamic_elf = T.let(dynamic_segment.present?, T::Boolean)
-      @dylib_id, @needed = if @dynamic_elf
-        [patcher.soname, patcher.needed]
-      else
-        [nil, []]
-      end
-
-      @interpreter = T.let(patcher.interpreter, T.nilable(String))
-      @rpath = T.let(patcher.runpath || patcher.rpath, T.nilable(String))
-
-      @dt_flags_1 = T.let(dynamic_segment&.tag_by_type(:flags_1)&.value, T.nilable(Integer))
+      fields = path.open("rb") { |file| read_directly(file) } || read_using_patchelf_rb
+      @dynamic_elf = T.let(fields.dynamic_elf, T::Boolean)
+      @dylib_id = T.let(fields.dylib_id, T.nilable(String))
+      @needed = T.let(fields.needed, T::Array[String])
+      @interpreter = T.let(fields.interpreter, T.nilable(String))
+      @rpath = T.let(fields.rpath, T.nilable(String))
+      @dt_flags_1 = T.let(fields.dt_flags_1, T.nilable(Integer))
     end
 
     sig { returns(T::Boolean) }
     def pie?
       return false if @dt_flags_1.nil?
 
-      @dt_flags_1.anybits?(ELFTools::Constants::DF::DF_1_PIE)
+      @dt_flags_1.anybits?(DF_1_PIE)
     end
 
     sig { returns(T::Array[String]) }
@@ -227,6 +262,143 @@ module ELFShim
     end
 
     private
+
+    # Reads the fields straight from the program headers and the dynamic section,
+    # which is far faster than parsing every header with elftools. Returns nil
+    # for anything unusual, such as a truncated file, to leave it to patchelf.rb.
+    sig { params(file: File).returns(T.nilable(Fields)) }
+    def read_directly(file)
+      ident = read_bytes(file, 0, IDENT_BYTESIZE)
+      return unless ident.start_with?(MAGIC_NUMBER_ASCII)
+      return unless [ELFCLASS32, ELFCLASS64].include?(ident.getbyte(CLASS_OFFSET))
+      return unless [ELFDATA2LSB, ELFDATA2MSB].include?(ident.getbyte(DATA_OFFSET))
+
+      elf64 = ident.getbyte(CLASS_OFFSET) == ELFCLASS64
+      # `unpack` directives for the specification's Elf_Half, Elf_Word and
+      # Elf_Xword in the file's byte order. Elf_Addr and Elf_Off are a word in
+      # 32-bit files and an xword in 64-bit ones.
+      half, word, xword = (ident.getbyte(DATA_OFFSET) == ELFDATA2LSB) ? ["v", "V", "Q<"] : ["n", "N", "Q>"]
+      address = elf64 ? xword : word
+
+      # The ELF header after e_ident and each program header, field by field in
+      # the specification's order. 64-bit program headers move p_flags up to keep
+      # the 8-byte fields aligned.
+      header_layout = {
+        e_type: half, e_machine: half, e_version: word, e_entry: address, e_phoff: address, e_shoff: address,
+        e_flags: word, e_ehsize: half, e_phentsize: half, e_phnum: half, e_shentsize: half, e_shnum: half,
+        e_shstrndx: half
+      }
+      program_header_layout = if elf64
+        { p_type: word, p_flags: word, p_offset: xword, p_vaddr: xword, p_paddr: xword, p_filesz: xword,
+          p_memsz: xword, p_align: xword }
+      else
+        { p_type: word, p_offset: word, p_vaddr: word, p_paddr: word, p_filesz: word, p_memsz: word,
+          p_flags: word, p_align: word }
+      end
+      header_bytesize = elf64 ? ELF64_HEADER_BYTESIZE : ELF32_HEADER_BYTESIZE
+      program_header_bytesize = elf64 ? ELF64_PROGRAM_HEADER_BYTESIZE : ELF32_PROGRAM_HEADER_BYTESIZE
+
+      header = read_fields(file, IDENT_BYTESIZE, header_bytesize - IDENT_BYTESIZE, header_layout)
+      program_header_count = header.fetch(:e_phnum)
+      # With PN_XNUM, the real count is in the first section header.
+      return if program_header_count == PN_XNUM
+      return if program_header_count.positive? && header.fetch(:e_phentsize) != program_header_bytesize
+
+      program_headers = Array.new(program_header_count) do |index|
+        offset = header.fetch(:e_phoff) + (index * program_header_bytesize)
+        read_fields(file, offset, program_header_bytesize, program_header_layout)
+      end
+
+      # Like elftools, use the first program header of each type.
+      interpreter_header = program_headers.find { |program_header| program_header.fetch(:p_type) == PT_INTERP }
+      interpreter = if interpreter_header
+        # Drop the last byte, which should be a NUL, as elftools does.
+        read_bytes(file, interpreter_header.fetch(:p_offset), interpreter_header.fetch(:p_filesz))[0..-2]
+      end
+      dynamic_header = program_headers.find { |program_header| program_header.fetch(:p_type) == PT_DYNAMIC }
+      if dynamic_header.nil?
+        return Fields.new(dynamic_elf: false, dylib_id: nil, needed: [], interpreter:, rpath: nil, dt_flags_1: nil)
+      end
+
+      # The dynamic section's [d_tag, d_val] pairs up to DT_NULL. Like elftools,
+      # use the first entry for each tag, which is the one `assoc` finds.
+      entries = read_bytes(file, dynamic_header.fetch(:p_offset), dynamic_header.fetch(:p_filesz))
+                .unpack("#{address}*").map { |value| Integer(value) }.each_slice(2).to_a
+      return unless (null_index = entries.index { |d_tag, _| d_tag == DT_NULL })
+
+      entries = entries.first(null_index)
+      return unless (strtab = entries.assoc(DT_STRTAB)&.last)
+
+      # Map the string table's address to a file offset as elftools does.
+      strtab_header = program_headers.find do |program_header|
+        p_vaddr = program_header.fetch(:p_vaddr)
+        program_header.fetch(:p_type) == PT_LOAD &&
+          strtab >= [p_vaddr & -program_header.fetch(:p_align), p_vaddr - program_header.fetch(:p_offset)].max &&
+          strtab < p_vaddr + program_header.fetch(:p_filesz)
+      end
+      return if strtab_header.nil?
+
+      strtab_offset = strtab - strtab_header.fetch(:p_vaddr) + strtab_header.fetch(:p_offset)
+      soname_index = entries.assoc(DT_SONAME)&.last
+      rpath_index = (entries.assoc(DT_RUNPATH) || entries.assoc(DT_RPATH))&.last
+      needed_indexes = entries.filter_map { |d_tag, d_val| d_val if d_tag == DT_NEEDED }
+      Fields.new(
+        dynamic_elf: true,
+        dylib_id:    (read_string(file, strtab_offset + soname_index) if soname_index),
+        needed:      needed_indexes.map { |index| read_string(file, strtab_offset + index) },
+        interpreter:,
+        rpath:       (read_string(file, strtab_offset + rpath_index) if rpath_index),
+        dt_flags_1:  entries.assoc(DT_FLAGS_1)&.last,
+      )
+    rescue EOFError
+      nil
+    end
+
+    sig { params(file: File, offset: Integer, bytesize: Integer).returns(String) }
+    def read_bytes(file, offset, bytesize)
+      raise EOFError if offset + bytesize > file.size
+
+      file.pread(bytesize, offset)
+    end
+
+    # Reads the integer fields `layout` names, in order, from `bytesize` bytes at
+    # `offset`, where `layout` maps each field's name to its `unpack` directive.
+    sig {
+      params(file: File, offset: Integer, bytesize: Integer, layout: T::Hash[Symbol, String])
+        .returns(T::Hash[Symbol, Integer])
+    }
+    def read_fields(file, offset, bytesize, layout)
+      values = read_bytes(file, offset, bytesize).unpack(layout.values.join)
+      layout.keys.zip(values).to_h { |name, value| [name, Integer(value)] }
+    end
+
+    sig { params(file: File, offset: Integer).returns(String) }
+    def read_string(file, offset)
+      raise EOFError if offset >= file.size
+
+      file.seek(offset)
+      string = file.gets("\0").to_s
+      raise EOFError unless string.end_with?("\0")
+
+      string.chop!
+      # elftools returns ASCII strings as UTF-8.
+      string.force_encoding(Encoding::UTF_8) if string.ascii_only?
+      string
+    end
+
+    sig { returns(Fields) }
+    def read_using_patchelf_rb
+      patcher = path.patchelf_patcher
+      dynamic_segment = patcher.elf.segment_by_type(:dynamic)
+      dynamic_elf = dynamic_segment.present?
+      dylib_id, needed = if dynamic_elf
+        [patcher.soname, patcher.needed]
+      else
+        [nil, []]
+      end
+      Fields.new(dynamic_elf:, dylib_id:, needed:, interpreter: patcher.interpreter,
+                 rpath: patcher.runpath || patcher.rpath, dt_flags_1: dynamic_segment&.tag_by_type(:flags_1)&.value)
+    end
 
     sig { params(basename: String).returns(::Pathname) }
     def find_full_lib_path(basename)
@@ -245,7 +417,7 @@ module ELFShim
       nodeflib_flag = if @dt_flags_1.nil?
         false
       else
-        @dt_flags_1.anybits?(ELFTools::Constants::DF::DF_1_NODEFLIB)
+        @dt_flags_1.anybits?(DF_1_NODEFLIB)
       end
 
       linker_library_paths = OS::Linux::Ld.library_paths
