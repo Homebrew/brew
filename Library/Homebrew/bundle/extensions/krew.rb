@@ -75,7 +75,12 @@ module Homebrew
         sig { params(output: String).returns(T::Array[String]) }
         def parse_plugin_list(output)
           # Krew prints only plugin names when stdout is piped.
-          output.each_line(chomp: true).reject(&:empty?).uniq
+          names = output.each_line(chomp: true).reject(&:empty?)
+          if names.any? { |name| name.match?(/[[:space:]]/) }
+            raise "Invalid Krew inventory: plugin names cannot contain whitespace"
+          end
+
+          names.uniq
         end
         private :parse_plugin_list
 

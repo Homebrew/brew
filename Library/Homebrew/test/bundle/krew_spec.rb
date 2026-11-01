@@ -12,7 +12,56 @@ RSpec.describe Homebrew::Bundle::Krew do
   let(:inventory_output) { "example-tool\n" }
   let(:inventory_records) { ["example-tool"] }
 
-  it_behaves_like "a checked package inventory"
+  describe "inventory" do
+    include_examples "a checked package inventory"
+
+    test_each([
+      " ",
+      "\t",
+      " example-tool",
+      "example-tool ",
+      "example-tool other-tool",
+      "example-tool\tother-tool",
+      "example-tool\rother-tool",
+      "\v",
+      "\f",
+      "\u00a0",
+      "\u2003",
+    ]) do |name|
+      it "rejects a plugin name containing whitespace: #{name.dump}" do
+        write_inventory(output: "#{name}\n")
+
+        expect { described_class.packages }
+          .to raise_error(RuntimeError, "Invalid Krew inventory: plugin names cannot contain whitespace")
+      end
+    end
+
+    test_each([:packages, :installed_packages]) do |inventory_method|
+      it "retries malformed #{inventory_method} without reset" do
+        write_inventory(output: "example-tool\n \n")
+        expect { described_class.public_send(inventory_method) }
+          .to raise_error(RuntimeError, "Invalid Krew inventory: plugin names cannot contain whitespace")
+        write_inventory(output: inventory_output)
+
+        expect(described_class.public_send(inventory_method)).to eq(inventory_records)
+      end
+    end
+
+    it "preserves an existing Brewfile when a successful command returns malformed inventory" do
+      brewfile = mktmpdir/"Brewfile"
+      brewfile.write "# original\n"
+      write_inventory(output: "example-tool\n \n")
+
+      expect do
+        Homebrew::Bundle::Dumper.dump_brewfile(
+          global: false, file: brewfile.to_s, describe: false, force: true, no_restart: false,
+          formulae: false, taps: false, casks: false, extension_types: { krew: true }
+        )
+      end.to raise_error(RuntimeError, "Invalid Krew inventory: plugin names cannot contain whitespace")
+      expect(brewfile.read).to eq("# original\n")
+    end
+  end
+
   it_behaves_like "a checked inventory", :installed_packages
 
   describe "selected extension snapshots" do
@@ -83,11 +132,12 @@ RSpec.describe Homebrew::Bundle::Krew do
                                                    package_manager_executable: Pathname.new("kubectl-krew"))
       end
 
-      it "returns plugin list" do
-        allow(described_class).to receive(:command_output).with(Pathname("kubectl-krew"), args: ["list"])
-                                                          .and_return("ctx\nneat\nns\n")
+      it "preserves plugin order and custom indexes while removing duplicates and line endings" do
+        allow(described_class).to receive(:command_output)
+          .with(Pathname("kubectl-krew"), args: ["list"])
+          .and_return("other-tool\r\ncustom/example-tool\nother-tool\nexample-tool\n")
 
-        expect(dumper.packages).to eql(%w[ctx neat ns])
+        expect(dumper.packages).to eql(%w[other-tool custom/example-tool example-tool])
       end
 
       it "handles the blank line emitted when no plugins are installed" do
