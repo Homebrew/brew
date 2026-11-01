@@ -95,6 +95,12 @@ RSpec.describe CcShim::Cmd do
     end
   end
 
+  it "does not recognise a keg name containing a comma" do
+    setup_env(real_prefix)
+
+    expect(described_class.new("gcc", []).keg_regex).not_to match("#{real_prefix}/#{opt}/ocaml,broken/include")
+  end
+
   it "keeps an explicit dependency -L ahead of its own library paths" do
     setup_env(real_prefix)
     ENV["HOMEBREW_LIBRARY_PATHS"] = "#{real_prefix}/lib:#{real_prefix}/#{opt}/ocaml/lib"

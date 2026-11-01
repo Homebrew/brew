@@ -423,17 +423,7 @@ module Formulary
     flags: []
   )
     if name.include?("/") || File.exist?(name)
-      f = factory(name, spec || :stable, force_bottle:, flags:)
-      if f.any_version_installed?
-        tab = Tab.for_formula(f)
-        resolved_spec = spec || tab.spec
-        f.active_spec = resolved_spec if (resolved_spec == :head) ? f.head : f.stable
-        f.build = tab
-        if f.head? && (tabfile = tab.tabfile)
-          k = Keg.new(tabfile.parent)
-          f.version.update_commit(k.version.version.commit) if k.version.head?
-        end
-      end
+      f = resolve_installed_spec(factory(name, spec || :stable, force_bottle:, flags:), spec:)
     else
       rack = to_rack(name)
       alias_path = factory(name, force_bottle:, flags:).alias_path
@@ -452,6 +442,38 @@ module Formulary
 
     f
   end
+
+  # @api private
+  # Resolve the installed spec of a parent-selected source file.
+  T::Sig::WithoutRuntime.sig {
+    params(path: T.any(String, Pathname), spec: T.nilable(Symbol), flags: T::Array[String]).returns(Formula)
+  }
+  def self.resolve_from_path(path, spec: nil, flags: [])
+    formula = resolve_installed_spec(from_path(path, spec || :stable, flags:), spec:)
+    formula.follow_installed_alias = false
+    formula
+  end
+
+  sig { params(formula: Formula, spec: T.nilable(Symbol)).returns(Formula) }
+  def self.resolve_installed_spec(formula, spec:)
+    if formula.any_version_installed?
+      tab = Tab.for_formula(formula)
+      resolved_spec = spec || tab.spec
+      case resolved_spec
+      when :stable
+        formula.active_spec = :stable if formula.stable
+      when :head
+        formula.active_spec = :head if formula.head
+      end
+      formula.build = tab
+      if formula.head? && (tabfile = tab.tabfile)
+        k = Keg.new(tabfile.parent)
+        formula.version.update_commit(k.version.version.commit) if k.version.head?
+      end
+    end
+    formula
+  end
+  private_class_method :resolve_installed_spec
 
   sig { params(io: IO).returns(IO) }
   def self.ensure_utf8_encoding(io)
@@ -545,8 +567,13 @@ module Formulary
     def self.try_new(ref, from: nil, warn: false)
       return if Homebrew::EnvConfig.forbid_packages_from_paths?
 
-      ref = ref.to_s
+      from_path(ref.to_s)
+    end
 
+    # @api private
+    sig { params(path: T.any(String, Pathname)).returns(T.nilable(T.attached_class)) }
+    def self.from_path(path)
+      ref = path.to_s
       new(ref) if HOMEBREW_BOTTLES_EXTNAME_REGEX.match?(ref) && File.exist?(ref)
     end
 
@@ -619,6 +646,16 @@ module Formulary
 
       return unless path.expand_path.exist?
       return unless ::Utils::Path.loadable_package_path?(path, :formula)
+
+      from_path(path)
+    end
+
+    sig {
+      params(path: T.any(String, Pathname)).returns(T.nilable(T.any(T.attached_class, FromKegLoader)))
+    }
+    def self.from_path(path)
+      path = Pathname(path)
+      return unless path.expand_path.exist?
 
       if (tap = Tap.from_path(path))
         # Only treat symlinks in taps as aliases.
@@ -1034,6 +1071,45 @@ module Formulary
     factory_cache[cache_key] ||= formula if factory_cached?
 
     formula
+  end
+
+  # @api private
+  # Load a parent-selected Ruby source file. Homebrew/brew callers only.
+  T::Sig::WithoutRuntime.sig {
+    params(path: T.any(Pathname, String), spec: Symbol, alias_path: T.nilable(T.any(Pathname, String)),
+           force_bottle: T::Boolean, flags: T::Array[String], ignore_errors: T::Boolean)
+      .returns(Formula)
+  }
+  def self.from_path(path, spec = :stable, alias_path: nil, force_bottle: false,
+                     flags: [], ignore_errors: false)
+    cache_key = "path:#{path}-#{spec}-#{alias_path}"
+    return factory_cache.fetch(cache_key) if factory_cached? && factory_cache.key?(cache_key)
+
+    loader = FromPathLoader.from_path(path) || NullLoader.new(path)
+    formula = loader.get_formula(spec, alias_path:, force_bottle:, flags:, ignore_errors:)
+    factory_cache[cache_key] ||= formula if factory_cached?
+    formula
+  end
+
+  # @api private
+  # Load a registered tap source file for auditing or CI.
+  T::Sig::WithoutRuntime.sig { params(path: T.any(Pathname, String)).returns(Formula) }
+  def self.from_tap_path(path)
+    tap_path = Utils::Path.tap_package_path(Pathname(path), :formula)
+    raise FormulaUnavailableError, path.to_s unless tap_path
+
+    from_path(tap_path)
+  end
+
+  # @api private
+  # Load a local bottle explicitly selected for installation.
+  T::Sig::WithoutRuntime.sig {
+    params(path: T.any(Pathname, String), spec: Symbol,
+           force_bottle: T::Boolean, flags: T::Array[String]).returns(Formula)
+  }
+  def self.from_bottle(path, spec = :stable, force_bottle: false, flags: [])
+    loader = FromBottleLoader.from_path(path) || NullLoader.new(path)
+    loader.get_formula(spec, force_bottle:, flags:)
   end
 
   # Return a {Formula} instance for the given rack.

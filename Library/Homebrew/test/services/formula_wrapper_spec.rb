@@ -607,6 +607,12 @@ RSpec.describe Homebrew::Services::FormulaWrapper, :needs_daemon_manager do
   end
 
   describe ".from" do
+    it "does not look up a formula whose service label contains a comma" do
+      expect(Formulary).not_to receive(:factory)
+
+      described_class.from("sh.brew.foo,bar")
+    end
+
     it "keeps the exact compatible label it discovers" do
       allow(Homebrew::Services::System).to receive(:launchctl?).and_return(true)
       allow(Formulary).to receive(:factory).with("mysql").and_return(formula)

@@ -19,6 +19,7 @@ exec "${HOMEBREW_RUBY_PATH}" --enable-frozen-string-literal --disable=gems,did_y
 require "pathname"
 require "set"
 require "English"
+require_relative "../../package_constants"
 
 def mac?
   RUBY_PLATFORM[/darwin/]
@@ -55,7 +56,7 @@ class Cmd
     @keg_dirs = [opt, cellar].map { canonical_path(it) }
     @prefix_dirs = [prefix, cachedir, tmpdir].map { canonical_path(it) if it }
     # matches opt or Cellar prefix and formula name
-    @keg_regex = %r{(#{@keg_dirs.map { Regexp.escape(it) }.join("|")})/([\w+-.@]+)}
+    @keg_regex = %r{(#{@keg_dirs.map { Regexp.escape(it) }.join("|")})/(#{HOMEBREW_PACKAGE_NAME_REGEX.source})(?=/|\z)}
   end
 
   def split_args_at_double_dash(args)

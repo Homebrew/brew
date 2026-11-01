@@ -112,38 +112,24 @@ module Homebrew
       end
       private :validate_type!
 
-      HOMEBREW_TAP_ARGS_REGEX = %r{^([\w-]+)/(homebrew-)?([\w-]+)$}
-      HOMEBREW_CORE_FORMULA_REGEX = %r{^homebrew/homebrew/([\w+-.@]+)$}i
-      HOMEBREW_TAP_FORMULA_REGEX = %r{^([\w-]+)/([\w-]+)/([\w+-.@]+)$}
-
       sig { params(name: String).returns(String) }
       def self.sanitize_brew_name(name)
         name = name.downcase
-        if name =~ HOMEBREW_CORE_FORMULA_REGEX
-          sanitized_name = Regexp.last_match(1)
-          raise "sanitized_name is nil" unless sanitized_name
+        return name unless name.match?(HOMEBREW_PACKAGE_REFERENCE_REGEX)
 
-          sanitized_name
-        elsif name =~ HOMEBREW_TAP_FORMULA_REGEX
-          user = Regexp.last_match(1)
-          repo = Regexp.last_match(2)
-          name = Regexp.last_match(3)
-          raise "repo is nil" unless repo
+        tap, _, formula = name.rpartition("/")
+        return name if tap.empty?
+        return formula if tap == "homebrew/homebrew"
 
-          "#{user}/#{repo.sub("homebrew-", "")}/#{name}"
-        else
-          name
-        end
+        "#{sanitize_tap_name(tap)}/#{formula}"
       end
 
       sig { params(name: String).returns(String) }
       def self.sanitize_tap_name(name)
         name = name.downcase
-        if name =~ HOMEBREW_TAP_ARGS_REGEX
-          "#{Regexp.last_match(1)}/#{Regexp.last_match(3)}"
-        else
-          name
-        end
+        return name unless name.match?(/\A#{HOMEBREW_TAP_NAME_REGEX.source}\z/o)
+
+        name.sub("/homebrew-", "/")
       end
 
       sig { params(name: String).returns(String) }

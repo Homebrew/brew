@@ -312,5 +312,39 @@ module Utils
       Pathname(path).expand_path.to_s
     end
     private_class_method :trusted_package_root
+    # Accept bare package names or user/tap/name references, never filesystem paths.
+    T::Sig::WithoutRuntime.sig { params(name: String).returns(T::Boolean) }
+    def self.valid_package_name?(name)
+      name.match?(HOMEBREW_PACKAGE_REFERENCE_REGEX) &&
+        !name.split("/").intersect?(Utils::INVALID_PATH_COMPONENTS)
+    end
+
+    # Resolve an audited source path to its registered tap file, including symlinked checkouts.
+    # @api private
+    sig { params(path: Pathname, package_type: Symbol).returns(T.nilable(Pathname)) }
+    def self.tap_package_path(path, package_type)
+      return unless path.file?
+
+      require "api/env"
+
+      path = path.expand_path
+      tap = Tap.from_path(path)
+      unless tap
+        path = path.realpath
+        tap = Tap.installed.find do |installed_tap|
+          installed_tap.path.directory? && path.to_s.start_with?("#{installed_tap.path.realpath}/")
+        end
+        return unless tap
+      end
+
+      files = Homebrew::API.with_no_api_env do
+        (package_type == :formula) ? tap.formula_files : tap.cask_files
+      end
+      # Tap caches file lists sorted by full path.
+      return path if files.bsearch { |file| file.to_s >= path.to_s } == path
+
+      candidate = tap.path/path.realpath.relative_path_from(tap.path.realpath)
+      candidate if files.bsearch { |file| file.to_s >= candidate.to_s } == candidate
+    end
   end
 end

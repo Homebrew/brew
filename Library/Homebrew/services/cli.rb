@@ -41,7 +41,8 @@ module Homebrew
                                        "--no-pager",
                                        "--no-legend")
         end.chomp.split("\n").filter_map do |svc|
-          svc[/(?:homebrew(?>\.mxcl)?|sh\.brew)\.[\w+-.@]+/]&.delete_suffix(".service")
+          svc[/(?:homebrew(?>\.mxcl)?|sh\.brew)\.#{HOMEBREW_PACKAGE_NAME_REGEX.source}(?=\s|\z)/o]
+            &.delete_suffix(".service")
         end
       end
 

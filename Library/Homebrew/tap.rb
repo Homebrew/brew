@@ -1067,7 +1067,7 @@ class Tap
           # Sharding is only supported in Formula/ and HomebrewFormula/.
           Pathname.glob(formula_dir/"*.rb")
         else
-          Pathname.glob(formula_dir/"**/*.rb")
+          Pathname.glob(formula_dir/"**/*.rb").sort_by(&:to_s)
         end
       else
         []
@@ -1092,7 +1092,7 @@ class Tap
   def cask_files
     @cask_files ||= T.let(
       if cask_dir.directory?
-        Pathname.glob(cask_dir/"**/*.rb")
+        Pathname.glob(cask_dir/"**/*.rb").sort_by(&:to_s)
       else
         []
       end,
