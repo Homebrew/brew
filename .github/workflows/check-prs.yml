@@ -66,15 +66,13 @@ jobs:
 
       - name: Fetch pull request template
         run: |
-          gh api "repos/${GITHUB_REPOSITORY:?}/contents/.github/PULL_REQUEST_TEMPLATE.md?ref=main" \
-            --jq ".content" |
-            base64 --decode >"${RUNNER_TEMP:?}/check-prs/template"
+          curl --fail --location --retry 3 --show-error --silent --output "${RUNNER_TEMP:?}/check-prs/template" \
+            "https://raw.githubusercontent.com/${GITHUB_REPOSITORY:?}/refs/heads/main/.github/PULL_REQUEST_TEMPLATE.md"
 
       - name: Fetch template checker
         run: |
-          gh api "repos/Homebrew/.github/contents/.github/scripts/check_template.rb?ref=main" \
-            --jq ".content" |
-            base64 --decode >"${RUNNER_TEMP:?}/check_template.rb"
+          curl --fail --location --retry 3 --show-error --silent --output "${RUNNER_TEMP:?}/check_template.rb" \
+            https://raw.githubusercontent.com/Homebrew/.github/refs/heads/main/.github/scripts/check_template.rb
 
       - name: Check pull request template
         id: template
