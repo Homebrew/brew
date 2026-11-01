@@ -639,6 +639,7 @@ _brew_bump() {
     '--repology[Use Repology to check for outdated packages]' \
     '--start-with[Letter or word that the list of package results should alphabetically follow]' \
     '(--installed --no-autobump)--tap[Check formulae and casks within the given tap, specified as user`/`repo]' \
+    '--tap-message[Include tap bottle publishing instructions in the pull request message]' \
     '--verbose[Make some output more verbose]' \
     - formula \
     '(--cask)--formula[Check only formulae]' \
