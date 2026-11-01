@@ -78,8 +78,9 @@ module Homebrew
           result = SystemCommand.run(go, args: ["version", "-m", binary], print_stderr: false)
           if result.exit_status == 1 && result.stdout.empty?
             NON_GO_EXECUTABLE_ERRORS.each do |diagnostic|
-              return nil if result.stderr.chomp ==
-                            "#{binary}: could not read Go build info from #{binary}: #{diagnostic}"
+              if result.stderr.chomp == "#{binary}: could not read Go build info from #{binary}: #{diagnostic}"
+                return nil
+              end
             end
           end
 
