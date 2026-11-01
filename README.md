@@ -16,6 +16,7 @@ We need your funds to pay for software, hardware and hosting around continuous i
 Every donation will be spent on making Homebrew better for our users.
 
 Please consider a regular donation through [GitHub Sponsors](https://github.com/sponsors/Homebrew), [Open Collective](https://opencollective.com/homebrew) or [Patreon](https://www.patreon.com/homebrew).
+Read about [sponsoring Homebrew](https://docs.brew.sh/Sponsoring-Homebrew).
 Homebrew is fiscally hosted by the [Open Source Collective](https://opencollective.com/opensource).
 
 ## 📚 Documentation
@@ -88,7 +89,7 @@ Homebrew's [Project Leader](https://docs.brew.sh/Homebrew-Governance#project-lea
 
 Homebrew's [Lead Maintainers](https://docs.brew.sh/Homebrew-Governance#lead-maintainer) are [Bevan Kay](https://github.com/bevanjkay), [Carlo Cabrera](https://github.com/carlocab), [Issy Long](https://github.com/issyl0), [Justin Krehel](https://github.com/krehel), [Michael Cho](https://github.com/cho-m), [Mike McQuaid](https://github.com/MikeMcQuaid), [Nanda H Krishna](https://github.com/nandahkrishna), [Patrick Linnane](https://github.com/p-linnane), [Rui Chen](https://github.com/chenrui333), [Ruoyu Zhong](https://github.com/ZhongRuoyu), [Sam Ford](https://github.com/samford) and [Sean Molenaar](https://github.com/SMillerDev).
 
-Homebrew's other Maintainers are [Andrew Nesbitt](https://github.com/andrew), [Anton Melnikov](https://github.com/botantony), [Bo Anderson](https://github.com/Bo98), [Branch Vincent](https://github.com/branchv), [Caleb Xu](https://github.com/alebcay), [Daeho Ro](https://github.com/daeho-ro), [Douglas Eichelberger](https://github.com/dduugg), [Dustin Rodrigues](https://github.com/dtrodrigues), [FX Coudert](https://github.com/fxcoudert), [Klaus Hipp](https://github.com/khipp), [Markus Reiter](https://github.com/reitermarkus), [Michka Popoff](https://github.com/iMichka), [Štefan Baebler](https://github.com/stefanb), [Thierry Moisan](https://github.com/Moisan) and [William Woodruff](https://github.com/woodruffw).
+Homebrew's other Maintainers are [Andrew Nesbitt](https://github.com/andrew), [Anton Melnikov](https://github.com/botantony), [Bo Anderson](https://github.com/Bo98), [Branch Vincent](https://github.com/branchv), [Caleb Xu](https://github.com/alebcay), [Daeho Ro](https://github.com/daeho-ro), [Douglas Eichelberger](https://github.com/dduugg), [Dustin Rodrigues](https://github.com/dtrodrigues), [FX Coudert](https://github.com/fxcoudert), [Harald Nordgren](https://github.com/HaraldNordgren), [Klaus Hipp](https://github.com/khipp), [Markus Reiter](https://github.com/reitermarkus), [Michka Popoff](https://github.com/iMichka), [Štefan Baebler](https://github.com/stefanb), [Thierry Moisan](https://github.com/Moisan) and [William Woodruff](https://github.com/woodruffw).
 
 Homebrew was originally created by [Max Howell](https://github.com/mxcl).
 
@@ -99,19 +100,14 @@ Documentation is under the [Creative Commons Attribution license](https://creati
 
 ## 💛 Sponsors
 
-Our macOS continuous integration infrastructure is hosted by [MacStadium's Orka](https://www.macstadium.com/customers/homebrew).
+Homebrew is generously supported by:
 
-[![Powered by MacStadium](https://cloud.githubusercontent.com/assets/125011/22776032/097557ac-eea6-11e6-8ba8-eff22dfd58f1.png)](https://www.macstadium.com)
+- [GitHub](https://github.com/github), Randy Reddig, Joshua Baer, Codecademy, b.well, Workbrew, Gusto, thanks.dev, ZachryWilsn, Naveen Nathan, mikadelbert, chellesand, Aagam Dalal, thanvirmohamed, awppatel, EbbetG and [many others](https://github.com/sponsors/Homebrew#sponsors) via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
+- [Open Broadcaster Software](https://opencollective.com/obsproject), [Thinkst Canary](https://opencollective.com/thinkst-canary), Airbnb, Cybozu, WonderProxy, mkvirtasant, Gabor Nadai, PlanetScale, Richard Moats, Ajimah, David Ball, emushack, Ian-Retired, Cameron, J-Swift, Josh E., William Hern and [many others](https://opencollective.com/homebrew/transactions?kind=ADDED_FUNDS&kind=CONTRIBUTION) via [Open Collective](https://opencollective.com/homebrew).
+- [many others](https://www.patreon.com/homebrew) via [Patreon](https://www.patreon.com/homebrew).
 
-Secure password storage and syncing is provided by [1Password for Teams](https://1password.com/teams/).
-
-[<img src="https://i.1password.com/akb/featured/1password-icon.svg" alt="1Password" height="64">](https://1password.com)
-
-<https://brew.sh>'s DNS is [resolving with DNSimple](https://dnsimple.com/resolving/homebrew).
-
-[![DNSimple](https://cdn.dnsimple.com/assets/resolving-with-us/logo-light.png)](https://dnsimple.com/resolving/homebrew#gh-light-mode-only)
-[![DNSimple](https://cdn.dnsimple.com/assets/resolving-with-us/logo-dark.png)](https://dnsimple.com/resolving/homebrew#gh-dark-mode-only)
-
-Homebrew is generously supported by [Joshua Baer](https://github.com/joshuabaer), [Randy Reddig](https://github.com/ydnar), [Codecademy](https://github.com/Codecademy), [Gusto](https://github.com/Gusto), [b.well](https://github.com/icanbwell), [Workbrew](https://github.com/Workbrew), [GitHub](https://github.com/github) and many other users and organisations via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
-
+<!-- release-sponsors -->
 [![GitHub](https://github.com/github.png?size=64)](https://github.com/github)
+[![Open Broadcaster Software](https://images.opencollective.com/obsproject/64068a5/logo/64.png)](https://opencollective.com/obsproject)
+[![Thinkst Canary](https://images.opencollective.com/thinkst-canary/ed1556c/avatar/64.png)](https://opencollective.com/thinkst-canary)
+<!-- /release-sponsors -->

@@ -15,6 +15,8 @@ on:
       - Library/Homebrew/cli/parser.rb
       - Library/Homebrew/completions.rb
       - Library/Homebrew/env_config.rb
+      - Library/Homebrew/utils/github.rb
+      - Library/Homebrew/utils/sponsors.rb
   schedule:
     - cron: "0 0 * * *"
   workflow_dispatch:
@@ -81,7 +83,12 @@ jobs:
             git checkout --force --no-track -B "${BRANCH}" origin/HEAD
           fi
 
-          if brew update-sponsors
+          if ! brew update-sponsors
+          then
+            echo "::warning::brew update-sponsors failed; README sponsors were not updated."
+            echo "sponsors_failed=true" >> "$GITHUB_OUTPUT"
+          fi
+          if ! git diff --quiet -- README.md
           then
             git add "README.md"
             git commit -m "Update sponsors." \
@@ -122,6 +129,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
           HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_BREW_UPDATE_SPONSORS_MAINTAINERS_TOKEN }}
+          HOMEBREW_PATREON_API_TOKEN: ${{ secrets.HOMEBREW_PATREON_API_TOKEN }}
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
 
       - name: Push commits
@@ -140,6 +148,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.HOMEBREW_GITHUB_PUBLIC_REPO_TOKEN }}
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
 
+      - name: Report sponsor update failure
+        if: steps.update.outputs.sponsors_failed == 'true'
+        run: |
+          echo "::error::brew update-sponsors failed; other updates have been handled."
+          exit 1
+
   issue:
     needs: updates
     if: always() && github.event_name == 'schedule' && github.repository == 'Homebrew/brew'
@@ -155,7 +169,7 @@ jobs:
         with:
           title: Failed to update sponsors, maintainers, manpage and completions
           body: >
-            The sponsors, maintainers, manpage and completions workflow [failed](${{ env.RUN_URL }}). No sponsors, maintainers, manpage and completions were updated.
+            The sponsors, maintainers, manpage and completions workflow [failed](${{ env.RUN_URL }}). Some updates may have completed; check the workflow log for details.
           labels: bug
           update-existing: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
           close-existing: ${{ needs.updates.result == 'success' }}

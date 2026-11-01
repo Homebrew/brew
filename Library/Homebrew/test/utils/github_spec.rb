@@ -5,7 +5,7 @@ require "utils/github"
 
 RSpec.describe GitHub do
   describe "::sponsorship_tiers" do
-    it "returns published monthly tiers" do
+    it "returns published tiers with one-time prices spread over twelve months" do
       allow(GitHub::API).to receive(:open_graphql).with(
         a_string_including("tiers(first: 100, includeUnpublished: false)", "description",
                            "monthlyPriceInDollars", "isOneTime"),
@@ -15,7 +15,7 @@ RSpec.describe GitHub do
           "tiers" => {
             "nodes" => [
               { "description" => "Logo in our README", "monthlyPriceInDollars" => 1500, "isOneTime" => false },
-              { "description" => "One-time gift", "monthlyPriceInDollars" => 1, "isOneTime" => true },
+              { "description" => "Logo for twelve months", "monthlyPriceInDollars" => 12_000, "isOneTime" => true },
               nil,
             ],
           },
@@ -23,7 +23,8 @@ RSpec.describe GitHub do
       })
 
       expect(described_class.sponsorship_tiers("Homebrew"))
-        .to eq([{ description: "Logo in our README", monthly_amount: 1500 }])
+        .to eq([{ description: "Logo in our README", monthly_amount: 1500 },
+                { description: "Logo for twelve months", monthly_amount: 1000 }])
     end
   end
 
@@ -31,15 +32,20 @@ RSpec.describe GitHub do
     test_each([nil, 0, 1750].product(%w[User Organization], [false, true])) do |monthly_amount, type, one_time|
       it "handles $#{monthly_amount.inspect} #{type} sponsorships with one-time payments #{one_time}" do
         allow(GitHub::API).to receive(:paginate_graphql).with(
-          a_string_including("monthlyPriceInDollars", "__typename", "isOneTimePayment"),
+          a_string_including("monthlyPriceInDollars", "description", "__typename",
+                             "isOneTimePayment", "tierSelectedAt"),
           variables: { user: "Homebrew" }, scopes: ["user"], raise_errors: false,
         ).and_yield("data" => {
           "organization" => {
             "sponsorshipsAsMaintainer" => {
               "nodes"    => [{
                 "isOneTimePayment" => one_time,
+                "tierSelectedAt"   => "2026-10-01T00:00:00Z",
                 "sponsorEntity"    => { "__typename" => type, "login" => "sponsor", "name" => nil },
-                "tier"             => monthly_amount && { "monthlyPriceInDollars" => monthly_amount },
+                "tier"             => monthly_amount && {
+                  "monthlyPriceInDollars" => monthly_amount,
+                  "description"           => "Name and logo in our README",
+                },
               }],
               "pageInfo" => { "hasNextPage" => false },
             },
@@ -48,9 +54,11 @@ RSpec.describe GitHub do
 
         expect(described_class.sponsorships("Homebrew")).to eq(one_time ? [] : [{
           type:,
-          login:          "sponsor",
-          name:           "sponsor",
-          monthly_amount: monthly_amount || 0,
+          login:            "sponsor",
+          name:             "sponsor",
+          monthly_amount:   monthly_amount || 0,
+          tier_description: (monthly_amount && "Name and logo in our README").to_s,
+          started_at:       "2026-10-01T00:00:00Z",
         }])
       end
     end

@@ -432,7 +432,7 @@ module GitHub
     result["organization"]["team"]["members"]["nodes"].to_h { |member| [member["login"], member["name"]] }
   end
 
-  # Return the published monthly sponsorship tiers for an organisation.
+  # Return published tiers with one-time prices expressed as monthly amounts.
   sig { params(user: String).returns(T::Array[{ description: String, monthly_amount: Integer }]) }
   def self.sponsorship_tiers(user)
     query = <<~EOS
@@ -452,9 +452,10 @@ module GitHub
     EOS
     result = API.open_graphql(query, variables: { user: }, scopes: ["user"])
     Array(result.dig("organization", "sponsorsListing", "tiers", "nodes")).filter_map do |tier|
-      next if tier.nil? || tier["isOneTime"]
+      next if tier.nil?
 
-      { description: tier.fetch("description"), monthly_amount: tier.fetch("monthlyPriceInDollars") }
+      months = tier["isOneTime"] ? 12 : 1
+      { description: tier.fetch("description"), monthly_amount: tier.fetch("monthlyPriceInDollars") / months }
     end
   end
 
@@ -462,10 +463,12 @@ module GitHub
     params(user: String)
       .returns(
         T::Array[{
-          login:          String,
-          monthly_amount: Integer,
-          name:           String,
-          type:           String,
+          login:            String,
+          monthly_amount:   Integer,
+          name:             String,
+          type:             String,
+          tier_description: String,
+          started_at:       String,
         }],
       )
   }
@@ -479,8 +482,11 @@ module GitHub
             }
             nodes {
               isOneTimePayment
+              tierSelectedAt
+              createdAt
               tier {
                 monthlyPriceInDollars
+                description
               }
               sponsorEntity {
                 __typename
@@ -524,10 +530,12 @@ module GitHub
       tier = sponsorship["tier"].presence || {}
 
       {
-        name:           sponsor["name"].presence || sponsor["login"],
-        login:          sponsor["login"],
-        type:           sponsor["__typename"],
-        monthly_amount: tier.fetch("monthlyPriceInDollars", 0),
+        name:             sponsor["name"].presence || sponsor["login"],
+        login:            sponsor["login"],
+        type:             sponsor["__typename"],
+        monthly_amount:   tier.fetch("monthlyPriceInDollars", 0),
+        tier_description: tier.fetch("description", ""),
+        started_at:       (sponsorship["tierSelectedAt"] || sponsorship["createdAt"]).to_s,
       }
     end
   end

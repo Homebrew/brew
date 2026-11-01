@@ -2277,7 +2277,7 @@ __fish_brew_complete_arg 'update-reset' -l quiet -d 'Make some output more quiet
 __fish_brew_complete_arg 'update-reset' -l verbose -d 'Make some output more verbose'
 
 
-complete -f -c brew -n 'not __fish_brew_command; and set -q HOMEBREW_DEVELOPER' -a 'update-sponsors' -d 'Update the list of GitHub Sponsors in the `Homebrew/brew` README'
+complete -f -c brew -n 'not __fish_brew_command; and set -q HOMEBREW_DEVELOPER' -a 'update-sponsors' -d 'Update the list of sponsors in the `Homebrew/brew` README'
 __fish_brew_complete_arg 'update-sponsors' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'update-sponsors' -l help -d 'Show this message'
 __fish_brew_complete_arg 'update-sponsors' -l quiet -d 'Make some output more quiet'
