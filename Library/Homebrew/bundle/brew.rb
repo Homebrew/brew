@@ -360,6 +360,9 @@ module Homebrew
           end
 
           runtime_dependencies ||= formula.runtime_dependencies.map(&:name)
+          runtime_dependencies = runtime_dependencies.select do |name|
+            name.is_a?(String) && Dependency.new(name).formula_name?
+          end
 
           bottled = if (stable = formula.stable) && stable.bottle_defined?
             bottle_hash = formula.bottle_hash.deep_symbolize_keys
