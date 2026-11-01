@@ -302,7 +302,7 @@ __brew_internal_commands() {
       'update-maintainers:Update the list of maintainers in the `Homebrew/brew` README'
       'update-portable-ruby:Update the vendored `portable-ruby` from the current `portable-ruby` formula: write the version files and bottle checksums, run `brew vendor-install ruby`, then sync `utils/ruby.sh`, vendored gems and RBI files to the bundler shipped by the new ruby'
       'update-report:The Ruby implementation of `brew update`'
-      'update-sponsors:Update the list of GitHub Sponsors in the `Homebrew/brew` README'
+      'update-sponsors:Update the list of sponsors in the `Homebrew/brew` README'
       'vendor-install:Install Homebrew'\''s portable Ruby'
     )
   fi

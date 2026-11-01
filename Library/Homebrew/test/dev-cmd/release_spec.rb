@@ -8,6 +8,90 @@ RSpec.describe Homebrew::DevCmd::Release do
   it_behaves_like "parseable arguments"
 
   describe "#run" do
+    before do
+      allow(SystemCommand).to receive(:safe_system)
+    end
+
+    test_each(["--major", "--minor", nil].product([true, false])) do |version_flag, has_sponsors|
+      it "reads release sponsors #{has_sponsors} from origin/main for #{version_flag.inspect} blog notes" do
+        readme = mktmpdir/"README.md"
+        stub_const("HOMEBREW_REPOSITORY", readme.dirname)
+        readme.write <<~'MARKDOWN'
+          [![Infrastructure](https://example.com/infrastructure.png)](https://example.com)
+          Homebrew is generously supported by Named Sponsor and many others.
+          <!-- release-sponsors -->
+          [![Top One](https://example.com/one.png)](https://example.com/one)
+          [![Top \[Two\] \\](https://example.com/two.png)](https://example.com/two)
+          <!-- /release-sponsors -->
+        MARKDOWN
+        readme.write readme.read.gsub(/^\[!\[Top.*\n/, "") unless has_sponsors
+        allow(Utils).to receive(:safe_popen_read).with(
+          "git", "-C", HOMEBREW_REPOSITORY, "show", "origin/main:README.md"
+        ).and_return(readme.read)
+        readme.write <<~MARKDOWN
+          <!-- release-sponsors -->
+          [![Local Sponsor](https://example.com/local.png)](https://example.com/local)
+          <!-- /release-sponsors -->
+        MARKDOWN
+        allow(Homebrew::EnvConfig).to receive(:no_auto_update?).and_return(false)
+        allow(GitHub).to receive_messages(
+          issues:                 [],
+          get_latest_release:     { "tag_name" => "1.2.3" },
+          get_release:            { "published_at" => "2020-01-01" },
+          generate_release_notes: { "body" => "* A change by @contributor in https://example.com/pr" },
+        )
+
+        expected = <<~'MARKDOWN'
+          - [A change](https://example.com/pr)
+
+          Thanks to our top sponsors, Top One and Top \[Two\] \\, for supporting Homebrew.
+        MARKDOWN
+        if version_flag && has_sponsors
+          expect { described_class.new([version_flag]).run }.to output(/#{Regexp.escape(expected)}/).to_stdout
+        else
+          expect do
+            described_class.new([version_flag].compact).run
+          end.not_to output(/Thanks to our top sponsors/).to_stdout
+        end
+      end
+    end
+
+    test_each([
+      ["--major", false, [:fetch, :notes, :sponsors, :notes]],
+      ["--minor", false, [:fetch, :notes, :sponsors, :notes]],
+      [nil, false, [:notes]],
+      [nil, true, [:fetch, :notes]],
+    ]) do |version_flag, no_auto_update, expected_events|
+      it "refreshes origin before notes for #{version_flag.inspect} with no auto-update #{no_auto_update}" do
+        events = []
+        command = described_class.new([version_flag].compact)
+        allow(command).to receive_messages(puts: nil, opoo: nil, ohai: nil)
+        allow(Homebrew::EnvConfig).to receive(:no_auto_update?).and_return(no_auto_update)
+        allow(SystemCommand).to receive(:safe_system).with(
+          "git", "-C", HOMEBREW_REPOSITORY, "fetch", "origin"
+        ) { events << :fetch }
+        allow(GitHub).to receive_messages(
+          issues:             [],
+          get_latest_release: { "tag_name" => "1.2.3" },
+          get_release:        { "published_at" => "2020-01-01" },
+        )
+        allow(GitHub).to receive(:generate_release_notes) do
+          events << :notes
+          { "body" => "Release notes" }
+        end
+        allow(Utils).to receive(:safe_popen_read).with(
+          "git", "-C", HOMEBREW_REPOSITORY, "show", "origin/main:README.md"
+        ) do
+          events << :sponsors
+          ""
+        end
+
+        command.run
+
+        expect(events).to eq(expected_events)
+      end
+    end
+
     it "requires an up-to-date origin/main before triggering the release workflow" do
       command = described_class.new(["--force"])
 

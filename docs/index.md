@@ -13,6 +13,7 @@ Documentation is grouped below by audience: users, system administrators, contri
 
 - [`brew` manual page (command documentation, also available with `man brew`)](Manpage.md)
 - [Homebrew Blog (news on major updates)](https://brew.sh/blog/)
+- [Sponsoring Homebrew](Sponsoring-Homebrew.md)
 - [Installation](Installation.md)
 - [Support Tiers](Support-Tiers.md)
 - [Troubleshooting](Troubleshooting.md)
