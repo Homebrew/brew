@@ -81,6 +81,7 @@ flatpak "org.godotengine.Godot", remote: "flathub-beta", url: "https://dl.flathu
 flatpak "io.github.dvlv.boxbuddyrs", remote: "flathub-beta"
 ```
 
+WinGet discovery in WSL requires Windows PowerShell 5.1 (`powershell.exe`) and `wslpath`.
 WinGet installs run with installer interactivity disabled. If WinGet reports that elevation is required, `brew bundle` retries through Windows UAC.
 
 uv tools use the installed `python` or `python@` formula with the highest major/minor Python version, including keg-only versions.
@@ -133,6 +134,8 @@ You can do this with `brew bundle dump --global --force` to write to e.g. `~/.Br
 ```console
 brew bundle dump --global --force
 ```
+
+If package discovery fails, `brew bundle dump` stops without writing a `Brewfile`, even with `--force`.
 
 By default, the generated `Brewfile` also contains descriptions of each of the packages:
 

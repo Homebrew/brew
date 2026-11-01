@@ -44,6 +44,9 @@ module Homebrew
         /\ANvidia\.PhysX\z/i,
       ].freeze, T::Array[Regexp])
 
+      NO_APPLICATIONS_FOUND = 0x8A150014
+      private_constant :NO_APPLICATIONS_FOUND
+
       class << self
         sig { override.returns(Symbol) }
         def type = :winget
@@ -117,11 +120,11 @@ module Homebrew
           path = path.tr("\\", "/")
           return Pathname.new(path) if path.start_with?("/")
 
-          match = path.match(%r{\A([A-Za-z]):/(.+)\z})
+          match = path.match(%r{\A(?<drive>[A-Za-z]):/(?<relative_path>.+)\z})
           return if match.nil?
 
-          drive = match[1]
-          relative_path = match[2]
+          drive = match[:drive]
+          relative_path = match[:relative_path]
           return if drive.nil? || relative_path.nil?
 
           Pathname.new("/mnt/#{drive.downcase}/#{relative_path}")
@@ -151,8 +154,11 @@ module Homebrew
 
         sig { params(winget: Pathname, source: String).returns(T::Array[App]) }
         def export_apps(winget, source:)
+          exported = exported_apps(winget, source:)
+          return [] if exported.empty?
+
           names = listed_app_names(winget, source:)
-          exported_apps(winget, source:).map do |app|
+          exported.map do |app|
             App.new(id: app.id, name: names.fetch(app.id.downcase, app.name), source: app.source)
           end
         end
@@ -160,9 +166,19 @@ module Homebrew
         sig { params(winget: Pathname, source: String).returns(T::Array[App]) }
         def exported_apps(winget, source:)
           Tempfile.create(["brew-bundle-winget", ".json"]) do |file|
-            next [] unless Kernel.system(winget.to_s, "export", "--source", source, "--output",
-                                         windows_export_path(file.path), "--accept-source-agreements",
-                                         "--disable-interactivity", out: File::NULL, err: File::NULL)
+            output_path = inventory_windows_path(file.path)
+            powershell, script = prepare_inventory_command(
+              winget, args: ["export", "--source", source, "--output", output_path,
+                             "--accept-source-agreements", "--disable-interactivity"]
+            )
+            script += <<~POWERSHELL
+              if ($nativeCode -eq #{NO_APPLICATIONS_FOUND}) {
+                [System.IO.File]::WriteAllText(#{powershell_quote(output_path)}, '{"Sources":[]}',
+                  (New-Object System.Text.UTF8Encoding($false)))
+                exit 0
+              }
+            POWERSHELL
+            run_inventory_script(powershell, script)
 
             parse_export(File.read(file.path), source:)
           end
@@ -170,18 +186,19 @@ module Homebrew
 
         sig { params(winget: Pathname, source: String).returns(T::Hash[String, String]) }
         def listed_app_names(winget, source:)
-          output = Utils.popen_read(winget, "list", "--source", source, "--accept-source-agreements",
-                                    "--disable-interactivity", "--nowarn", err: :close)
+          powershell, script = prepare_inventory_command(
+            winget, args: ["list", "--source", source, "--accept-source-agreements",
+                           "--disable-interactivity", "--nowarn"]
+          )
 
-          parse_list_names(output)
+          parse_list_names(run_inventory_script(powershell, script))
         end
 
         sig { params(output: String).returns(T::Hash[String, String]) }
         def parse_list_names(output)
           lines = output.encode("UTF-8", invalid: :replace, undef: :replace)
                         .delete("\r")
-                        .lines
-                        .map(&:chomp)
+                        .lines(chomp: true)
           header_index = lines.index { |line| line.match?(/\bName\s+Id\s+Version\b/) }
           return {} if header_index.nil?
 
@@ -212,31 +229,92 @@ module Homebrew
           path
         end
 
+        sig { params(path: String).returns(String) }
+        def inventory_windows_path(path)
+          return path if absolute_windows_path?(path)
+          raise "Invalid WinGet inventory path: #{path}" unless path.start_with?("/")
+
+          wslpath = which("wslpath", ORIGINAL_PATHS)
+          raise "WinGet inventory requires wslpath for Windows path conversion" if wslpath.nil?
+
+          converted = command_output(wslpath, args: ["-w", path]).chomp
+          raise "Invalid Windows path from wslpath" unless absolute_windows_path?(converted)
+
+          converted
+        end
+        private :inventory_windows_path
+
+        sig { params(path: String).returns(T::Boolean) }
+        def absolute_windows_path?(path)
+          path_with_forward_slashes = path.tr("\\", "/")
+          return true if path_with_forward_slashes.match?(%r{\A[A-Za-z]:/})
+
+          # Check the original prefix so Linux paths beginning with // still require conversion.
+          return false unless path.start_with?("\\\\")
+
+          path_with_forward_slashes.match?(%r{\A//[^/]+/[^/]+})
+        end
+        private :absolute_windows_path?
+
+        sig { params(winget: Pathname, args: T::Array[String]).returns([Pathname, String]) }
+        def prepare_inventory_command(winget, args:)
+          powershell = which("powershell.exe", ORIGINAL_PATHS) ||
+                       Pathname.new("/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
+          raise "WinGet inventory requires Windows PowerShell 5.1 (powershell.exe)" unless powershell.executable?
+
+          script = <<~POWERSHELL
+            trap { [Console]::Error.WriteLine($_); exit 1 }
+            [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+
+            $LASTEXITCODE = $null
+            & #{powershell_quote(inventory_windows_path(winget.to_s))} #{args.map { |arg| powershell_quote(arg) }.join(" ")}
+            $nativeStatus = $LASTEXITCODE
+
+            if ($nativeStatus -isnot [int]) {
+              [Console]::Error.WriteLine('WinGet did not return a valid native exit status')
+              exit 1
+            }
+
+            $nativeCode = [long]$nativeStatus -band [uint32]::MaxValue
+            if ($nativeCode -eq 0) { exit 0 }
+          POWERSHELL
+
+          [powershell, script]
+        end
+        private :prepare_inventory_command
+
+        sig { params(powershell: Pathname, script: String).returns(String) }
+        def run_inventory_script(powershell, script)
+          script += <<~POWERSHELL
+            [Console]::Error.WriteLine(('WinGet failed with native exit code 0x{0:X8}' -f $nativeCode))
+            exit 1
+          POWERSHELL
+
+          command_output(powershell, args: ["-NoProfile", "-NonInteractive", "-Command", script])
+        end
+        private :run_inventory_script
+
         sig { params(output: String, source: String).returns(T::Array[App]) }
         def parse_export(output, source:)
           export = JSON.parse(output)
-          return [] unless export.is_a?(Hash)
+          if !export.is_a?(Hash) || !export["Sources"].is_a?(Array)
+            raise "Invalid WinGet export: expected Sources array"
+          end
 
-          sources = export["Sources"]
-          return [] unless sources.is_a?(Array)
+          export.fetch("Sources").flat_map do |source_export|
+            if !source_export.is_a?(Hash) || !source_export["Packages"].is_a?(Array)
+              raise "Invalid WinGet export: expected Packages array"
+            end
 
-          sources.flat_map do |source_export|
-            next [] unless source_export.is_a?(Hash)
-
-            packages = source_export["Packages"]
-            next [] unless packages.is_a?(Array)
-
-            packages.filter_map do |package|
-              next unless package.is_a?(Hash)
-
-              id = package["PackageIdentifier"]
-              next if !id.is_a?(String) || id.blank?
+            source_export.fetch("Packages").map do |package|
+              id = package.is_a?(Hash) ? package["PackageIdentifier"] : nil
+              raise "Invalid WinGet export: expected package identifier" if !id.is_a?(String) || id.blank?
 
               App.new(id:, name: id, source:)
             end
           end
         rescue JSON::ParserError
-          []
+          raise "Invalid WinGet export: expected JSON"
         end
 
         sig { override.returns(T::Array[App]) }
@@ -464,7 +542,8 @@ module Homebrew
 
         sig { params(value: String).returns(String) }
         def powershell_quote(value)
-          "'#{value.gsub("'", "''")}'"
+          # Escape smart quotes because PowerShell treats them as delimiters.
+          "'#{value.gsub(/['\u2018-\u201B]/) { |quote| quote * 2 }}'"
         end
 
         sig { params(output: String).returns(T::Boolean) }

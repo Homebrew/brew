@@ -101,7 +101,7 @@ module Homebrew
           @packages = if (npm = package_manager_executable) &&
                          (!npm.to_s.start_with?("/") || npm.exist?)
             with_env(package_manager_env(npm)) do
-              parse_package_list(Utils.popen_read_text(npm, "list", "-g", "--depth=0", "--json", err: File::NULL))
+              listed_package_names(npm)
             end
           end
           return [] if @packages.nil?
@@ -126,10 +126,7 @@ module Homebrew
 
         sig { override.returns(T::Array[String]) }
         def installed_packages
-          installed_packages = @installed_packages
-          return installed_packages if installed_packages
-
-          @installed_packages = packages.dup
+          @installed_packages ||= packages.dup
         end
 
         sig { returns(T::Array[String]) }
@@ -139,11 +136,8 @@ module Homebrew
           return [] unless (npm = package_manager_executable)
 
           @outdated_packages = with_env(package_manager_env(npm)) do
-            JSON.parse(Utils.popen_read_text(npm, "outdated", "-g", "--depth=0", "--json", err: File::NULL))
-                .keys.reject { |name| name == "npm" }
+            outdated_package_names(npm)
           end
-        rescue JSON::ParserError
-          @outdated_packages = []
         end
 
         sig { override.params(name: String, executable: Pathname).returns(T::Boolean) }
@@ -151,17 +145,75 @@ module Homebrew
           Bundle.system(executable.to_s, "uninstall", "-g", name, verbose: false)
         end
 
-        sig { params(output: String).returns(T::Array[String]) }
-        def parse_package_list(output)
-          return [] if output.blank?
+        sig { params(npm: Pathname, command: String).returns([SystemCommand::Result, T::Hash[String, Object]]) }
+        def inventory_json(npm, command)
+          result = SystemCommand.run(npm, args: [command, "-g", "--depth=0", "--json"], print_stderr: false)
+          result.assert_success! unless [0, 1].include?(result.exit_status)
 
-          json = JSON.parse(output)
-          deps = json.fetch("dependencies", {})
-          deps.keys.reject { |name| name == "npm" }
-        rescue JSON::ParserError
-          []
+          begin
+            json = JSON.parse(result.stdout)
+          rescue JSON::ParserError
+            result.assert_success!
+            raise "Invalid npm #{command} inventory: expected JSON"
+          end
+
+          unless json.is_a?(Hash)
+            result.assert_success!
+            raise "Invalid npm #{command} inventory: unexpected JSON structure"
+          end
+
+          [result, json]
         end
-        private :parse_package_list
+        private :inventory_json
+
+        sig { params(npm: Pathname).returns(T::Array[String]) }
+        def listed_package_names(npm)
+          result, json = inventory_json(npm, "list")
+          dependencies = json.fetch("dependencies", {})
+          valid = if result.exit_status == 1
+            error = json["error"]
+            json["dependencies"].is_a?(Hash) && error.is_a?(Hash) && error["code"] == "ELSPROBLEMS"
+          else
+            !json.key?("error")
+          end
+
+          if !dependencies.is_a?(Hash) || !valid
+            result.assert_success!
+            raise "Invalid npm list inventory: unexpected JSON structure"
+          end
+
+          dependencies = dependencies.reject do |_, metadata|
+            metadata.is_a?(Hash) && metadata["missing"] == true
+          end
+
+          dependencies.keys.reject { |name| name == "npm" }
+        end
+        private :listed_package_names
+
+        sig { params(npm: Pathname).returns(T::Array[String]) }
+        def outdated_package_names(npm)
+          result, json = inventory_json(npm, "outdated")
+          result.assert_success! if json.empty?
+
+          valid = json.each_value.all? do |value|
+            records = value.is_a?(Array) ? value : [value]
+            next false if records.empty?
+
+            records.all? do |record|
+              next false unless record.is_a?(Hash)
+
+              record.values_at("wanted", "latest").all?(String)
+            end
+          end
+
+          unless valid
+            result.assert_success!
+            raise "Invalid npm outdated inventory: unexpected JSON structure"
+          end
+
+          json.keys.reject { |name| name == "npm" }
+        end
+        private :outdated_package_names
       end
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(String) }

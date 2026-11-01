@@ -80,7 +80,7 @@ module Homebrew
           return apps if apps
 
           @apps = if (mas = package_manager_executable)
-            Utils.popen_read_text(mas, "list", err: File::NULL).split("\n").filter_map do |app|
+            command_output(mas, args: ["list"]).split("\n").filter_map do |app|
               app_details = app.match(/\A\s*(?<id>\d+)\s+(?<name>.*?)\s+\(?(?<version>[\d.]*)\)?\Z/)
               next if app_details.nil?
 
@@ -183,8 +183,9 @@ module Homebrew
           return outdated_app_ids if outdated_app_ids
 
           @outdated_app_ids = if (mas = package_manager_executable)
-            Utils.popen_read_text(mas, "outdated", err: File::NULL).split("\n").map do |app|
-              app.split(" ", 2).first.to_s
+            command_output(mas, args: ["outdated"]).split("\n").map do |line|
+              app_id, _details = line.split(" ", 2)
+              app_id.to_s
             end
           end
           return [] if @outdated_app_ids.nil?

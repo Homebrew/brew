@@ -75,11 +75,9 @@ module Homebrew
           return @packages if @packages
           return [] unless (uv = package_manager_executable)
 
-          @packages = parse_tool_list(SystemCommand.run!(
-            uv,
-            args:         ["tool", "list", "--show-with", "--show-extras", "--show-version-specifiers"],
-            print_stderr: false,
-          ).stdout)
+          @packages = parse_tool_list(
+            command_output(uv, args: %w[tool list --show-with --show-extras --show-version-specifiers]),
+          )
         end
 
         sig { override.params(package: Object).returns(String) }
@@ -127,9 +125,7 @@ module Homebrew
 
         sig { override.returns(T::Array[Tool]) }
         def installed_packages
-          return @installed_packages if @installed_packages
-
-          @installed_packages = packages.dup
+          @installed_packages ||= packages.dup
         end
 
         sig { params(output: String).returns(T::Array[Tool]) }
@@ -137,10 +133,10 @@ module Homebrew
           entries = T.let([], T::Array[Tool])
 
           output.each_line do |line|
-            match = line.match(/\A([A-Za-z0-9]\S*)\s+v\S+/)
+            match = line.match(/\A(?<name>[A-Za-z0-9]\S*)\s+v\S+/)
             next unless match
 
-            name = match[1]
+            name = match[:name]
             next if name.nil?
 
             extras_raw = line[/\[extras:\s*([^\]]+)\]/, 1]

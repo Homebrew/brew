@@ -3,9 +3,22 @@
 
 require "bundle"
 require "bundle/dsl"
+require "bundle/shared_examples/inventory"
 require "bundle/extensions/mac_app_store"
 
 RSpec.describe Homebrew::Bundle::MacAppStore do
+  let(:inventory_output) { "123 Example café (1.0)\n" }
+  let(:inventory_records) { [have_attributes(id: "123", name: "Example café")] }
+
+  it_behaves_like "a checked package inventory"
+  it_behaves_like "a checked inventory", :installed_packages
+
+  describe "checked outdated inventory" do
+    let(:inventory_records) { ["123"] }
+
+    it_behaves_like "a checked inventory", :outdated_app_ids
+  end
+
   describe "dumping" do
     subject(:dumper) { described_class }
 
@@ -25,7 +38,7 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("mas"))
-        allow(Utils).to receive(:popen_read_text).with(Pathname("mas"), "list", err: File::NULL).and_return("")
+        allow(described_class).to receive(:command_output).with(Pathname("mas"), args: ["list"]).and_return("")
       end
 
       specify do
@@ -38,7 +51,7 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("mas"))
-        allow(Utils).to receive(:popen_read_text).with(Pathname("mas"), "list", err: File::NULL).and_return(
+        allow(described_class).to receive(:command_output).with(Pathname("mas"), args: ["list"]).and_return(
           "123 foo (1.0)\n" \
           "456 bar (2.0)\n" \
           "789 baz (3.0)",
@@ -54,9 +67,9 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("mas"))
-        allow(Utils).to receive(:popen_read_text).with(Pathname("mas"), "list", err: File::NULL)
-                                                 .and_return("123 foo (1.0)\n456 bar (2.0)\n" \
-                                                             "789 baz (3.0)\n 10 qux (4.0)")
+        allow(described_class).to receive(:command_output).with(Pathname("mas"), args: ["list"])
+                                                          .and_return("123 foo (1.0)\n456 bar (2.0)\n" \
+                                                                      "789 baz (3.0)\n 10 qux (4.0)")
       end
 
       it "returns list %w[foo bar baz qux]" do
@@ -67,13 +80,13 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
     context "with invalid app details" do
       let(:invalid_mas_output) do
         <<~HEREDOC
-          497799835 Xcode (9.2)
-          425424353 The Unarchiver (4.0.0)
-          08981434 iMovie (10.1.8)
-          409201541 Pages (7.1)
+          497799835 Example App (9.2)
+          425424353 Other App (4.0.0)
+          08981434 iExample (10.1.8)
+          409201541 Third App (7.1)
           123456789 123AppNameWithNumbers (1.0)
-          409203825 Numbers (5.1)
-          944924917 Pastebin It! (1.0)
+          409203825 Fourth App (5.1)
+          944924917 Example App! (1.0)
           123456789 My (cool) app (1.0)
           987654321 an-app-i-use (2.1)
           123457867 App name with many spaces (1.0)
@@ -91,13 +104,13 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
 
       let(:expected_app_details_array) do
         [
-          ["497799835", "Xcode"],
-          ["425424353", "The Unarchiver"],
-          ["08981434", "iMovie"],
-          ["409201541", "Pages"],
+          ["497799835", "Example App"],
+          ["425424353", "Other App"],
+          ["08981434", "iExample"],
+          ["409201541", "Third App"],
           ["123456789", "123AppNameWithNumbers"],
-          ["409203825", "Numbers"],
-          ["944924917", "Pastebin It!"],
+          ["409203825", "Fourth App"],
+          ["944924917", "Example App!"],
           ["123456789", "My (cool) app"],
           ["987654321", "an-app-i-use"],
           ["123457867", "App name with many spaces"],
@@ -120,17 +133,17 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
           mas "another_app_name", id: 832423434
           mas "App name with many spaces", id: 123457867
           mas "app;with;semicolons", id: 688963445
-          mas "iMovie", id: 08981434
+          mas "Example App", id: 497799835
+          mas "Example App!", id: 944924917
+          mas "Fourth App", id: 409203825
+          mas "iExample", id: 08981434
           mas "My (cool) app", id: 123456789
           mas "My App?", id: 543213432
           mas "my 😊 app", id: 123345384
           mas "my,comma,app", id: 893489734
           mas "non><printing><characters", id: 310633997
-          mas "Numbers", id: 409203825
-          mas "Pages", id: 409201541
-          mas "Pastebin It!", id: 944924917
-          mas "The Unarchiver", id: 425424353
-          mas "Xcode", id: 497799835
+          mas "Other App", id: 425424353
+          mas "Third App", id: 409201541
           mas "áéíóú", id: 234324325
           mas "مرحبا", id: 634324555
           mas "你好", id: 896732467
@@ -140,9 +153,9 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("mas"))
-        allow(Utils).to receive(:popen_read)
-          .with(Pathname("mas"), "list", err: File::NULL)
-          .and_return(invalid_mas_output.b)
+        allow(SystemCommand).to receive(:run!)
+          .with(Pathname("mas"), args: ["list"], print_stderr: false)
+          .and_return(instance_double(SystemCommand::Result, stdout: invalid_mas_output))
       end
 
       specify do
@@ -154,25 +167,25 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
     context "with the new format after mas-cli/mas#339" do
       let(:new_mas_output) do
         <<~HEREDOC
-          1440147259  AdGuard for Safari  (1.9.13)
-          497799835   Xcode               (12.5)
-          425424353   The Unarchiver      (4.3.1)
+          1440147259  Example Browser App  (1.9.13)
+          497799835   Example App          (12.5)
+          425424353   Other App            (4.3.1)
         HEREDOC
       end
 
       let(:expected_app_details_array) do
         [
-          ["1440147259", "AdGuard for Safari"],
-          ["497799835", "Xcode"],
-          ["425424353", "The Unarchiver"],
+          ["1440147259", "Example Browser App"],
+          ["497799835", "Example App"],
+          ["425424353", "Other App"],
         ]
       end
 
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("mas"))
-        allow(Utils).to receive(:popen_read_text).with(Pathname("mas"), "list",
-                                                       err: File::NULL).and_return(new_mas_output)
+        allow(described_class).to receive(:command_output).with(Pathname("mas"),
+                                                                args: ["list"]).and_return(new_mas_output)
       end
 
       it "parses the app names without trailing whitespace" do
@@ -183,25 +196,25 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
     context "with the 8.0.0+ format" do
       let(:new_mas_output) do
         <<~HEREDOC
-          1440147259  AdGuard for Safari  1.9.13
-           497799835  Xcode               12.5
-           425424353  The Unarchiver      4.3.1
+          1440147259  Example Browser App  1.9.13
+           497799835  Example App          12.5
+           425424353  Other App            4.3.1
         HEREDOC
       end
 
       let(:expected_app_details_array) do
         [
-          ["1440147259", "AdGuard for Safari"],
-          ["497799835", "Xcode"],
-          ["425424353", "The Unarchiver"],
+          ["1440147259", "Example Browser App"],
+          ["497799835", "Example App"],
+          ["425424353", "Other App"],
         ]
       end
 
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("mas"))
-        allow(Utils).to receive(:popen_read_text).with(Pathname("mas"), "list",
-                                                       err: File::NULL).and_return(new_mas_output)
+        allow(described_class).to receive(:command_output).with(Pathname("mas"),
+                                                                args: ["list"]).and_return(new_mas_output)
       end
 
       it "parses the app versions without parentheses" do
@@ -219,8 +232,13 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
     end
 
     describe ".installed_app_ids" do
-      it "shells out" do
-        expect { described_class.installed_app_ids }.not_to raise_error
+      it "queries installed app IDs through the checked command" do
+        described_class.reset!
+        allow(described_class).to receive(:package_manager_executable).and_return(Pathname("mas"))
+        expect(SystemCommand).to receive(:run!).with(Pathname("mas"), args: ["list"], print_stderr: false)
+                                               .and_return(instance_double(SystemCommand::Result, stdout: ""))
+
+        expect(described_class.installed_app_ids).to eq([])
       end
     end
 
@@ -246,7 +264,7 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
 
       describe ".outdated_app_ids" do
         it "does not shell out" do
-          expect(Utils).not_to receive(:popen_read_text)
+          expect(described_class).not_to receive(:command_output)
           described_class.reset!
           described_class.outdated_app_ids
         end
@@ -260,16 +278,16 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
 
       describe ".outdated_app_ids" do
         it "returns app ids" do
-          expect(Utils).to receive(:popen_read_text).with(Pathname("mas"), "outdated",
-                                                          err: File::NULL).and_return("foo 123")
+          expect(described_class).to receive(:command_output).with(Pathname("mas"),
+                                                                   args: ["outdated"]).and_return(inventory_output)
           described_class.reset!
-          described_class.outdated_app_ids
+          expect(described_class.outdated_app_ids).to eq(["123"])
         end
       end
 
       context "when app is installed" do
         before do
-          allow(described_class).to receive(:installed_app_ids).and_return([123])
+          allow(described_class).to receive_messages(installed_app_ids: [123], outdated_app_ids: [])
         end
 
         it "skips" do
@@ -293,7 +311,7 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
 
       context "when app is not installed" do
         before do
-          allow(described_class).to receive(:installed_app_ids).and_return([])
+          allow(described_class).to receive_messages(installed_app_ids: [], apps: [])
         end
 
         it "installs app" do
@@ -334,7 +352,7 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
       allow(described_class).to receive_messages(package_manager_executable: Pathname.new("mas"), packages: [
         Homebrew::Bundle::MacAppStore::App.new(id: "123", name: "foo"),
         Homebrew::Bundle::MacAppStore::App.new(id: "456", name: "bar"),
-        Homebrew::Bundle::MacAppStore::App.new(id: "0", name: "testflight"),
+        Homebrew::Bundle::MacAppStore::App.new(id: "0", name: "unidentified-app"),
       ])
     end
 

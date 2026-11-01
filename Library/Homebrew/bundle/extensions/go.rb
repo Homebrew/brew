@@ -6,6 +6,9 @@ require "bundle/extensions/extension"
 module Homebrew
   module Bundle
     class Go < Extension
+      NON_GO_EXECUTABLE_ERRORS = ["not a Go executable", "unrecognized file format"].freeze
+      private_constant :NON_GO_EXECUTABLE_ERRORS
+
       class << self
         sig { override.returns(Symbol) }
         def type = :go
@@ -33,44 +36,67 @@ module Homebrew
           return packages if packages
 
           @packages = if (go = package_manager_executable)
-            ENV["GOBIN"] = ENV.fetch("HOMEBREW_GOBIN", nil)
-            ENV["GOPATH"] = ENV.fetch("HOMEBREW_GOPATH", nil)
-            gobin = Utils.popen_read(go, "env", "GOBIN", err: :err).chomp
-            gopath = Utils.popen_read(go, "env", "GOPATH", err: :err).chomp
-            bin_dir = gobin.empty? ? "#{gopath}/bin" : gobin
-            if File.directory?(bin_dir)
-              binaries = Dir.glob("#{bin_dir}/*").select do |file|
-                File.executable?(file) && !File.directory?(file) && !File.symlink?(file)
+            # Go uses `command-line-arguments` for binaries built from source files rather than a package.
+            # These binaries have no package path that Bundle can reinstall.
+            # https://github.com/golang/go/issues/36043
+            discovered_binaries(go).values.reject { |path| path == "command-line-arguments" }.uniq
+          else
+            []
+          end
+        end
+
+        sig { params(go: Pathname).returns(T::Hash[String, String]) }
+        def discovered_binaries(go)
+          ENV["GOBIN"] = ENV.fetch("HOMEBREW_GOBIN", nil)
+          ENV["GOPATH"] = ENV.fetch("HOMEBREW_GOPATH", nil)
+
+          gobin = command_output(go, args: ["env", "GOBIN"], print_stderr: true).chomp
+          gopath = command_output(go, args: ["env", "GOPATH"], print_stderr: true).chomp
+          bin_dir = gobin.empty? ? "#{gopath}/bin" : gobin
+
+          begin
+            entries = Dir.children(bin_dir).sort
+          rescue Errno::ENOENT
+            return {}
+          end
+
+          entries.each_with_object({}) do |entry, binaries|
+            next if entry.start_with?(".")
+
+            binary = File.join(bin_dir, entry)
+            next unless File.executable?(binary)
+            next if File.directory?(binary) || File.symlink?(binary)
+
+            path = binary_package_path(go, binary)
+            binaries[binary] = path if path
+          end
+        end
+        private :discovered_binaries
+
+        sig { params(go: Pathname, binary: String).returns(T.nilable(String)) }
+        def binary_package_path(go, binary)
+          result = SystemCommand.run(go, args: ["version", "-m", binary], print_stderr: false)
+          if result.exit_status == 1 && result.stdout.empty?
+            NON_GO_EXECUTABLE_ERRORS.each do |diagnostic|
+              if result.stderr.chomp == "#{binary}: could not read Go build info from #{binary}: #{diagnostic}"
+                return nil
               end
-
-              binaries.filter_map do |binary|
-                output = Utils.popen_read(go, "version", "-m", binary, err: File::NULL)
-                next if output.empty?
-
-                lines = output.split("\n")
-                path_line = lines.find { |line| line.strip.start_with?("path\t") }
-                next unless path_line
-
-                # Parse the output to find the path line
-                # Format: "\tpath\tgithub.com/user/repo"
-                parts = path_line.split("\t")
-                # Extract the package path (second field after splitting by tab)
-                # The line format is: "\tpath\tgithub.com/user/repo"
-                path = parts[2]&.strip
-
-                # `command-line-arguments` is a dummy package name for binaries built
-                # from a list of source files instead of a specific package name.
-                # https://github.com/golang/go/issues/36043
-                next if path == "command-line-arguments"
-
-                path
-              end.uniq
             end
           end
-          return [] if @packages.nil?
 
-          @packages
+          result.assert_success!
+
+          path_line = result.stdout.each_line.find { |line| line.start_with?("\tpath\t") }
+          return unless path_line
+
+          path = path_line.delete_prefix("\tpath\t").chomp
+          if path.empty? || path.match?(/\s/)
+            raise "Invalid Go package path for #{binary.inspect}: #{path.inspect}"
+          end
+
+          path
         end
+        private :binary_package_path
 
         sig {
           override.params(
@@ -89,10 +115,7 @@ module Homebrew
 
         sig { override.returns(T::Array[String]) }
         def installed_packages
-          installed_packages = @installed_packages
-          return installed_packages if installed_packages
-
-          @installed_packages = packages.dup
+          @installed_packages ||= packages.dup
         end
 
         sig { override.params(items: T::Array[String]).void }
@@ -103,23 +126,10 @@ module Homebrew
             return
           end
 
-          gobin = Utils.popen_read(go, "env", "GOBIN", err: :err).chomp
-          gopath = Utils.popen_read(go, "env", "GOPATH", err: :err).chomp
-          bin_dir = gobin.empty? ? "#{gopath}/bin" : gobin
-          return unless File.directory?(bin_dir)
-
           removed = 0
-          Dir.glob("#{bin_dir}/*").each do |binary|
-            next if !File.executable?(binary) || File.directory?(binary) || File.symlink?(binary)
-
-            output = Utils.popen_read(go, "version", "-m", binary, err: File::NULL)
-            next if output.empty?
-
-            path_line = output.split("\n").find { |line| line.strip.start_with?("path\t") }
-            next unless path_line
-
-            module_path = path_line.split("\t")[2]&.strip
-            next unless items.include?(module_path)
+          # Finish discovery before deleting anything so an inspection failure cannot leave partial cleanup.
+          discovered_binaries(go).each do |binary, package_path|
+            next unless items.include?(package_path)
 
             begin
               File.unlink(binary)

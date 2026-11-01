@@ -97,15 +97,10 @@ module Homebrew
           return remote_urls if remote_urls
 
           @remote_urls = if (flatpak = package_manager_executable)
-            output = Utils.popen_read_text(flatpak, "remote-list", "--system", "--columns=name,url",
-                                           err: File::NULL).chomp
+            output = command_output(flatpak, args: ["remote-list", "--system", "--columns=name,url"])
             urls = {}
             output.split("\n").each do |line|
-              parts = line.strip.split("\t")
-              next if parts.size < 2
-
-              name = parts[0]
-              url = parts[1]
+              name, url = line.strip.split("\t")
               urls[name] = url if name && url
             end
             urls
@@ -124,21 +119,16 @@ module Homebrew
             # List applications with their origin remote
             # Using --app to filter applications only
             # Using --columns=application,origin to get app IDs and their remotes
-            output = Utils.popen_read_text(flatpak, "list", "--app", "--columns=application,origin",
-                                           err: File::NULL).chomp
+            output = command_output(flatpak, args: ["list", "--app", "--columns=application,origin"])
 
             packages = output.split("\n").filter_map do |line|
-              parts = line.strip.split("\t")
-              name = parts[0]
-              next if parts.empty? || name.nil? || name.empty?
+              name, remote = line.strip.split("\t")
+              next if name.nil?
 
-              remote = parts[1] || "flathub"
-              package = T.let({ name:, remote:, remote_url: T.let(nil, T.nilable(String)) }, Package)
-              remote_url = remote_urls[remote]
-              package[:remote_url] = remote_url
-              package
+              remote ||= "flathub"
+              { name:, remote:, remote_url: remote_urls[remote] }
             end
-            packages.sort_by { |pkg| pkg[:name].to_s }
+            packages.sort_by { |pkg| pkg[:name] }
           end
           return [] if @packages_with_remotes.nil?
 
@@ -295,10 +285,9 @@ module Homebrew
           return false unless Bundle.system(flatpak, "install", "-y", "--system", url, verbose:)
 
           # Get the actual remote name used by Flatpak
-          output = Utils.popen_read_text(flatpak, "list", "--app", "--columns=application,origin",
-                                         err: File::NULL).chomp
-          installed = output.split("\n").find { |line| line.start_with?(name) }
-          actual_remote = installed ? installed.split("\t")[1] : "#{name}-origin"
+          output = command_output(flatpak, args: ["list", "--app", "--columns=application,origin"])
+          installed_line = output.each_line(chomp: true).find { |line| line.start_with?(name) }
+          _application, actual_remote = installed_line&.split("\t")
           actual_remote ||= "#{name}-origin"
           package = { name:, remote: actual_remote, remote_url: nil }
           packages_with_remotes = T.let(@packages_with_remotes || [], T::Array[Package])
@@ -307,6 +296,11 @@ module Homebrew
           @installed_packages = packages_with_remotes.dup
           @packages = packages_with_remotes.map { |pkg| pkg[:name] }
           true
+        rescue ErrorDuringExecution
+          reset!
+          opoo "Flatpak installation succeeded, but inventory refresh failed. " \
+               "Run Bundle again to rediscover installed applications."
+          raise
         end
 
         # Generate a single-app remote name (Tier 2)
@@ -356,11 +350,10 @@ module Homebrew
         # Get URL for an existing remote, or nil if not found
         sig { params(flatpak: String, remote_name: String).returns(T.nilable(String)) }
         def get_remote_url(flatpak, remote_name)
-          output = Utils.popen_read_text(flatpak, "remote-list", "--system", "--columns=name,url",
-                                         err: File::NULL).chomp
-          output.split("\n").each do |line|
-            parts = line.split("\t")
-            return parts[1] if parts[0] == remote_name
+          output = command_output(flatpak, args: ["remote-list", "--system", "--columns=name,url"])
+          output.each_line(chomp: true) do |line|
+            name, url = line.split("\t")
+            return url if name == remote_name
           end
           nil
         end

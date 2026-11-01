@@ -104,7 +104,7 @@ module Homebrew
           @packages = if (cargo = package_manager_executable) &&
                          (!cargo.to_s.start_with?("/") || cargo.exist?)
             with_env(cargo_env(cargo)) do
-              parse_package_list(Utils.popen_read_text(cargo, "install", "--list", err: :err))
+              parse_package_list(command_output(cargo, args: ["install", "--list"], print_stderr: true))
             end
           end
           return [] if @packages.nil?
@@ -154,10 +154,7 @@ module Homebrew
 
         sig { override.returns(T::Array[Crate]) }
         def installed_packages
-          installed_packages = @installed_packages
-          return installed_packages if installed_packages
-
-          @installed_packages = packages.dup
+          @installed_packages ||= packages.dup
         end
 
         sig { override.params(name: String, executable: Pathname).returns(T::Boolean) }
@@ -270,9 +267,7 @@ module Homebrew
 
         sig { params(output: String).returns(T::Array[Crate]) }
         def parse_package_list(output)
-          output.lines.filter_map do |line|
-            next if line.match?(/^\s/)
-
+          output.each_line.filter_map do |line|
             match = line.match(PACKAGE_LIST_REGEX)
             next if match.nil?
 
