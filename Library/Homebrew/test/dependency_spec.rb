@@ -105,6 +105,42 @@ RSpec.describe Dependency do
     end
   end
 
+  describe "#formula_name?" do
+    it "only accepts bare or tap-qualified formula names" do
+      names = ["foo", "foo@1.2", "foo-bar+baz", "homebrew/core/foo", "user/repo/foo", ".", "..", "foo.rb",
+               "user/repo/foo.rb", "foo--1.0.arm64_sequoia.bottle.tar.gz", "foo\n", "user/repo/foo\n",
+               "/Cellar/foo/1.0/bar.rb", "../foo", "user/../foo", "file:///foo.rb"]
+      expect(names.select { |name| described_class.new(name).formula_name? })
+        .to eq(["foo", "foo@1.2", "foo-bar+baz", "homebrew/core/foo", "user/repo/foo"])
+    end
+  end
+
+  describe "a formula file named by its path" do
+    subject(:dependency) { described_class.new(formula_file.to_s) }
+
+    let(:formula_file) { HOMEBREW_CELLAR/"foo/1.0/libexec/bar.rb" }
+    let(:loaded) { formula_file.dirname/"loaded" }
+
+    before do
+      formula_file.dirname.mkpath
+      formula_file.write "File.write(#{loaded.to_s.inspect}, \"\")\n"
+    end
+
+    specify "#installed? does not load it" do
+      dependency.installed?
+      expect(loaded).not_to exist
+    end
+
+    specify "#to_formula does not load it" do
+      begin
+        dependency.to_formula
+      rescue FormulaUnavailableError
+        nil
+      end
+      expect(loaded).not_to exist
+    end
+  end
+
   specify "#option_names" do
     dependency = described_class.new("foo/bar/dog")
     expect(dependency.option_names).to eq(%w[dog])

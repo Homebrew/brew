@@ -214,6 +214,21 @@ RSpec.describe Homebrew::Bundle::Brew do
         expect(dumper.formulae_by_full_name("qux/quuz/foo")).to eql(foo_hash)
       end
 
+      it "keeps only formula names from a tab's runtime dependencies" do
+        full_names = ["/usr/local/Cellar/bar/1.0/libexec/evil.rb", "evil.rb", "file:///evil.rb", "../evil", 1,
+                      "qux/quuz/foo", "baz"]
+        expect(Formula).to receive(:[]).with("bar").and_return(bar)
+        expect(bar.linked_keg).to receive(:realpath).and_return(instance_double(Pathname, basename: "1.0"))
+        expect(Tab).to receive(:for_keg).with(bar.linked_keg).and_return(
+          instance_double(Tab,
+                          installed_on_request: false,
+                          poured_from_bottle:   true,
+                          runtime_dependencies: full_names.map { |full_name| { "full_name" => full_name } },
+                          used_options:         []),
+        )
+        expect(dumper.formulae_by_full_name("bar")[:dependencies]).to eq(["qux/quuz/foo", "baz"])
+      end
+
       it "returns an array for all formulae" do
         expect(Formula).to receive(:installed).and_return([foo, bar, baz])
         expect(bar.linked_keg).to receive(:realpath).and_return(instance_double(Pathname, basename: "1.0"))

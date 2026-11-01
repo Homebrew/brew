@@ -47,6 +47,8 @@ class Dependency
 
   sig { returns(Formula) }
   def to_installed_formula
+    raise FormulaUnavailableError, name unless formula_name?
+
     formula = Formulary.resolve(name)
     formula.build = BuildOptions.new(options, formula.options)
     formula
@@ -54,9 +56,21 @@ class Dependency
 
   sig { returns(Formula) }
   def to_formula
+    raise FormulaUnavailableError, name unless formula_name?
+
     formula = Formulary.factory(name, warn: false)
     formula.build = BuildOptions.new(options, formula.options)
     formula
+  end
+
+  # Whether {#name} is a formula name rather than a path, URL or bottle that `Formulary` would load.
+  # Names from install receipts and bottle manifests can be written by sandboxed package code.
+  sig { returns(T::Boolean) }
+  def formula_name?
+    formula_name = tap ? Utils.name_from_full_name(name) : name
+    formula_name.match?(/\A#{HOMEBREW_TAP_FORMULA_NAME_REGEX}\z/o) &&
+      Utils::INVALID_PATH_COMPONENTS.exclude?(formula_name) &&
+      File.extname(formula_name) != ".rb" && !formula_name.match?(HOMEBREW_BOTTLES_EXTNAME_REGEX)
   end
 
   sig {
