@@ -14,24 +14,43 @@ class GitHubReleases
 
   sig { params(bottles_hash: T::Hash[String, T.untyped]).void }
   def upload_bottles(bottles_hash)
-    bottle_count = bottles_hash.count
-    bottles_hash.each_value.with_index do |bottle_hash, index|
-      root_url = bottle_hash["bottle"]["root_url"]
-      url_match = root_url.match URL_REGEX
-      _, user, repo, tag = *url_match
-
+    bottles_by_release = bottles_hash.values.group_by do |bottle_hash|
+      _, user, repo, tag = *bottle_hash["bottle"]["root_url"].match(URL_REGEX)
+      [user.downcase, repo.downcase, tag]
+    end
+    bottle_count = bottles_by_release.values.sum(&:count)
+    uploaded_count = 0
+    bottles_by_release.each do |(user, repo, tag), bottles|
       # Ensure a release is created or reused. Bottles are uploaded to a draft
       # release which is published afterwards, so that uploads also work on
       # repositories with immutable releases enabled, where assets cannot be
       # added to a release after it has been published.
       release, draft_release = find_or_create_release(user, repo, tag)
 
-      # Upload bottles as release assets.
-      bottle_hash["bottle"]["tags"].each_value do |tag_hash|
-        remote_file = tag_hash["filename"]
-        local_file = tag_hash["local_filename"]
-        odebug "Uploading #{remote_file}"
-        GitHub.upload_release_asset user, repo, release["id"], local_file:, remote_file:
+      bottles.each do |bottle_hash|
+        # Upload bottles as release assets.
+        bottle_hash["bottle"]["tags"].each_value do |tag_hash|
+          remote_file = tag_hash["filename"]
+          local_file = tag_hash["local_filename"]
+          if draft_release && (asset = release.fetch("assets", []).find { |a| a["name"] == remote_file })
+            if !File.file?(local_file) || !File.readable?(local_file)
+              raise GitHub::API::Error, "Cannot replace #{remote_file}: #{local_file} is not a readable file."
+            end
+
+            # open_rest only sets the HTTP method when a payload is supplied.
+            GitHub::API.open_rest(
+              "#{GitHub::API_URL}/repos/#{user}/#{repo}/releases/assets/#{asset.fetch("id")}",
+              data: {}, request_method: :DELETE, scopes: GitHub::CREATE_ISSUE_FORK_OR_PR_SCOPES,
+            )
+          end
+          odebug "Uploading #{remote_file}"
+          GitHub.upload_release_asset user, repo, release["id"], local_file:, remote_file:
+        end
+
+        uploaded_count += 1
+        next if bottle_count < 3
+
+        ohai "Upload progress: #{uploaded_count} formula(e) uploaded, #{bottle_count - uploaded_count} remaining"
       end
 
       # Publish the release (and thereby create its tag) now that all bottle
@@ -39,11 +58,6 @@ class GitHubReleases
       if draft_release
         GitHub.create_or_update_release(user, repo, tag, id: release["id"], draft: false)
       end
-
-      next if bottle_count < 3
-
-      uploaded_count = index + 1
-      ohai "Upload progress: #{uploaded_count} formula(e) uploaded, #{bottle_count - uploaded_count} remaining"
     end
   end
 
