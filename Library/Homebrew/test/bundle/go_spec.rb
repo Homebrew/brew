@@ -239,21 +239,21 @@ RSpec.describe Homebrew::Bundle::Go do
         allow(described_class).to receive(:command_output)
           .with(Pathname("go"), args:         ["env", "GOPATH"],
                                 print_stderr: true).and_return("/Users/test/go")
-        allow(Dir).to receive(:children).with("/Users/test/go/bin").and_return(["crush"])
-        allow(File).to receive(:executable?).with("/Users/test/go/bin/crush").and_return(true)
-        allow(File).to receive(:directory?).with("/Users/test/go/bin/crush").and_return(false)
+        allow(Dir).to receive(:children).with("/Users/test/go/bin").and_return(["example-tool"])
+        allow(File).to receive(:executable?).with("/Users/test/go/bin/example-tool").and_return(true)
+        allow(File).to receive(:directory?).with("/Users/test/go/bin/example-tool").and_return(false)
         allow(SystemCommand).to receive(:run)
-          .with(Pathname("go"), args: ["version", "-m", "/Users/test/go/bin/crush"], print_stderr: false)
+          .with(Pathname("go"), args: ["version", "-m", "/Users/test/go/bin/example-tool"], print_stderr: false)
           .and_return(instance_double(SystemCommand::Result,
                                       exit_status:     0,
                                       assert_success!: nil,
-                                      stdout:          "\tpath\tgithub.com/charmbracelet/crush\n"))
-        expect(dumper.packages).to eql(["github.com/charmbracelet/crush"])
+                                      stdout:          "\tpath\texample.com/tools/example-tool\n"))
+        expect(dumper.packages).to eql(["example.com/tools/example-tool"])
       end
 
       it "dumps package list" do
-        allow(dumper).to receive(:packages).and_return(["github.com/charmbracelet/crush"])
-        expect(dumper.dump).to eql('go "github.com/charmbracelet/crush"')
+        allow(dumper).to receive(:packages).and_return(["example.com/tools/example-tool"])
+        expect(dumper.dump).to eql('go "example.com/tools/example-tool"')
       end
     end
   end
@@ -279,7 +279,7 @@ RSpec.describe Homebrew::Bundle::Go do
         expect(Homebrew::Bundle).to \
           receive(:system).with(HOMEBREW_BREW_FILE, "install", "--formula", "go", verbose: false)
                           .and_return(true)
-        expect { described_class.preinstall!("github.com/charmbracelet/crush") }.to raise_error(RuntimeError)
+        expect { described_class.preinstall!("example.com/tools/example-tool") }.to raise_error(RuntimeError)
       end
 
       it "preserves upgrade_formulae while bootstrapping Go" do
@@ -288,7 +288,7 @@ RSpec.describe Homebrew::Bundle::Go do
         expect(Homebrew::Bundle).to \
           receive(:system).with(HOMEBREW_BREW_FILE, "install", "--formula", "go", verbose: false)
                           .and_return(true)
-        expect { described_class.preinstall!("github.com/charmbracelet/crush") }.to raise_error(RuntimeError)
+        expect { described_class.preinstall!("example.com/tools/example-tool") }.to raise_error(RuntimeError)
         expect(Homebrew::Bundle.upgrade_formulae).to eql(["foo", "bar"])
       end
     end
@@ -301,12 +301,12 @@ RSpec.describe Homebrew::Bundle::Go do
       context "when package is installed" do
         before do
           allow(described_class).to receive(:installed_packages)
-            .and_return(["github.com/charmbracelet/crush"])
+            .and_return(["example.com/tools/example-tool"])
         end
 
         it "skips" do
           expect(Homebrew::Bundle).not_to receive(:system)
-          expect(described_class.preinstall!("github.com/charmbracelet/crush")).to be(false)
+          expect(described_class.preinstall!("example.com/tools/example-tool")).to be(false)
         end
       end
 
@@ -317,20 +317,20 @@ RSpec.describe Homebrew::Bundle::Go do
 
         it "installs package" do
           expect(Homebrew::Bundle).to \
-            receive(:system).with("go", "install", "github.com/charmbracelet/crush@latest", verbose: false)
+            receive(:system).with("go", "install", "example.com/tools/example-tool@latest", verbose: false)
                             .and_return(true)
-          expect(described_class.preinstall!("github.com/charmbracelet/crush")).to be(true)
-          expect(described_class.install!("github.com/charmbracelet/crush")).to be(true)
+          expect(described_class.preinstall!("example.com/tools/example-tool")).to be(true)
+          expect(described_class.install!("example.com/tools/example-tool")).to be(true)
         end
 
         it "updates dump output after install in the same process" do
           expect(Homebrew::Bundle).to \
-            receive(:system).with("go", "install", "github.com/charmbracelet/crush@latest", verbose: false)
+            receive(:system).with("go", "install", "example.com/tools/example-tool@latest", verbose: false)
                             .and_return(true)
 
-          described_class.install!("github.com/charmbracelet/crush")
+          described_class.install!("example.com/tools/example-tool")
 
-          expect(described_class.dump).to eql('go "github.com/charmbracelet/crush"')
+          expect(described_class.dump).to eql('go "example.com/tools/example-tool"')
         end
       end
     end
@@ -339,7 +339,7 @@ RSpec.describe Homebrew::Bundle::Go do
   describe "cleanup" do
     before do
       described_class.reset!
-      pkgs = %w[github.com/charmbracelet/crush github.com/golangci/golangci-lint/v2/cmd/golangci-lint]
+      pkgs = %w[example.com/tools/example-tool example.com/tools/other-tool/v2/cmd/other-tool]
       allow(described_class).to receive_messages(
         package_manager_executable: Pathname.new("go"),
         packages:                   pkgs,
@@ -348,9 +348,9 @@ RSpec.describe Homebrew::Bundle::Go do
     end
 
     it "returns packages not in Brewfile entries" do
-      entries = [Homebrew::Bundle::Dsl::Entry.new(:go, "github.com/charmbracelet/crush")]
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:go, "example.com/tools/example-tool")]
       expect(described_class.cleanup_items(entries))
-        .to eql(%w[github.com/golangci/golangci-lint/v2/cmd/golangci-lint])
+        .to eql(%w[example.com/tools/other-tool/v2/cmd/other-tool])
     end
 
     it "reports a missing executable when removals are queued" do
@@ -374,7 +374,7 @@ RSpec.describe Homebrew::Bundle::Go do
     end
 
     it "removes binaries by their literal names" do
-      binary = "/Users/test/go/bin/cr;ush $(touch pwned)"
+      binary = "/Users/test/go/bin/example;tool $(touch pwned)"
       allow(described_class).to receive(:`).and_raise("Shell execution is not permitted")
       allow(described_class).to receive(:puts)
       allow(described_class).to receive(:command_output).with(Pathname("go"), args:         ["env", "GOBIN"],
@@ -390,11 +390,11 @@ RSpec.describe Homebrew::Bundle::Go do
         .and_return(instance_double(SystemCommand::Result,
                                     exit_status:     0,
                                     assert_success!: nil,
-                                    stdout:          "\tpath\tgithub.com/charmbracelet/crush\n"))
+                                    stdout:          "\tpath\texample.com/tools/example-tool\n"))
 
       expect(File).to receive(:unlink).with(binary)
 
-      described_class.cleanup!(["github.com/charmbracelet/crush"])
+      described_class.cleanup!(["example.com/tools/example-tool"])
     end
 
     context "with selected executables" do
@@ -469,7 +469,7 @@ RSpec.describe Homebrew::Bundle::Go do
 
     it "returns frozen empty array when go is not installed" do
       allow(described_class).to receive(:package_manager_installed?).and_return(false)
-      entries = [Homebrew::Bundle::Dsl::Entry.new(:go, "github.com/charmbracelet/crush")]
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:go, "example.com/tools/example-tool")]
       expect(described_class.cleanup_items(entries)).to eql([])
     end
   end

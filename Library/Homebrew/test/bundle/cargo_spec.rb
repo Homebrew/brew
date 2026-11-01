@@ -33,52 +33,52 @@ RSpec.describe Homebrew::Bundle::Cargo do
 
   describe "entries" do
     it "accepts a source option" do
-      entry = described_class.entry("tftio-kb", source: "ssh://git@example.com/tftio/kb.git")
-      expect(entry.name).to eql("tftio-kb")
-      expect(entry.options).to eql({ source: "ssh://git@example.com/tftio/kb.git" })
+      entry = described_class.entry("source-tool", source: "ssh://git@example.com/tools/example-repo.git")
+      expect(entry.name).to eql("source-tool")
+      expect(entry.options).to eql({ source: "ssh://git@example.com/tools/example-repo.git" })
     end
 
     it "accepts a source that selects a git reference" do
-      entry = described_class.entry("tftio-kb", source: "ssh://git@example.com/tftio/kb.git?branch=next")
-      expect(entry.options).to eql({ source: "ssh://git@example.com/tftio/kb.git?branch=next" })
+      entry = described_class.entry("source-tool", source: "ssh://git@example.com/tools/example-repo.git?branch=next")
+      expect(entry.options).to eql({ source: "ssh://git@example.com/tools/example-repo.git?branch=next" })
     end
 
     it "stores no options when no source is given" do
-      expect(described_class.entry("ripgrep").options).to be_empty
+      expect(described_class.entry("third-tool").options).to be_empty
     end
 
     it "rejects a non-String source" do
-      expect { described_class.entry("tftio-kb", source: ["ssh://git@example.com/tftio/kb.git"]) }
+      expect { described_class.entry("source-tool", source: ["ssh://git@example.com/tools/example-repo.git"]) }
         .to raise_error(RuntimeError, /options\[:source\]/)
     end
 
     it "rejects a source that is not a git URL" do
-      expect { described_class.entry("tftio-kb", source: "tftio-kb") }
+      expect { described_class.entry("source-tool", source: "source-tool") }
         .to raise_error(RuntimeError, /should be a git URL/)
     end
 
     it "rejects a local path, which does not resolve on another machine" do
-      expect { described_class.entry("bat", source: "/Users/test/src/bat") }
+      expect { described_class.entry("example-tool", source: "/Users/test/src/example-tool") }
         .to raise_error(RuntimeError, /should be a git URL/)
     end
 
     it "rejects a file:// git URL, which does not resolve on another machine either" do
-      expect { described_class.entry("bat", source: "file:///Users/test/src/bat") }
+      expect { described_class.entry("example-tool", source: "file:///Users/test/src/example-tool") }
         .to raise_error(RuntimeError, /should be a git URL/)
     end
 
     it "rejects a git query that selects something other than a branch, tag or rev" do
-      expect { described_class.entry("tftio-kb", source: "ssh://git@example.com/tftio/kb.git?foo=bar") }
+      expect { described_class.entry("source-tool", source: "ssh://git@example.com/tools/example-repo.git?foo=bar") }
         .to raise_error(RuntimeError, /should select a branch, tag or rev/)
     end
 
     it "rejects an scp-style git remote that cargo cannot parse as a URL" do
-      expect { described_class.entry("bat", source: "git@github.com:sharkdp/bat.git") }
+      expect { described_class.entry("example-tool", source: "git@example.com:tools/example-tool.git") }
         .to raise_error(RuntimeError, /should be a git URL/)
     end
 
     it "rejects unknown options" do
-      expect { described_class.entry("ripgrep", features: ["pcre2"]) }
+      expect { described_class.entry("third-tool", features: ["example-feature"]) }
         .to raise_error(RuntimeError, /unknown options/)
     end
   end
@@ -89,41 +89,42 @@ RSpec.describe Homebrew::Bundle::Cargo do
     describe "#installed_and_up_to_date?" do
       it "passes the source through when checking a crate installed from a source" do
         expect(described_class).to receive(:package_installed?)
-          .with("tftio-kb", source: "ssh://git@example.com/tftio/kb.git")
+          .with("source-tool", source: "ssh://git@example.com/tools/example-repo.git")
           .and_return(true)
 
         expect(
           checker.installed_and_up_to_date?(
-            { name: "tftio-kb", options: { source: "ssh://git@example.com/tftio/kb.git" } },
+            { name: "source-tool", options: { source: "ssh://git@example.com/tools/example-repo.git" } },
           ),
         ).to be(true)
       end
 
       it "passes a nil source through for a registry crate" do
         expect(described_class).to receive(:package_installed?)
-          .with("ripgrep", source: nil)
+          .with("third-tool", source: nil)
           .and_return(true)
 
-        expect(checker.installed_and_up_to_date?({ name: "ripgrep", options: {} })).to be(true)
+        expect(checker.installed_and_up_to_date?({ name: "third-tool", options: {} })).to be(true)
       end
     end
 
     describe "#find_actionable" do
       let(:entries) do
         [
-          Homebrew::Bundle::Dsl::Entry.new(:cargo, "ripgrep"),
-          Homebrew::Bundle::Dsl::Entry.new(:cargo, "tftio-kb", source: "ssh://git@example.com/tftio/kb.git"),
-          Homebrew::Bundle::Dsl::Entry.new(:brew, "wget"),
+          Homebrew::Bundle::Dsl::Entry.new(:cargo, "third-tool"),
+          Homebrew::Bundle::Dsl::Entry.new(:cargo, "source-tool",
+                                           source: "ssh://git@example.com/tools/example-repo.git"),
+          Homebrew::Bundle::Dsl::Entry.new(:brew, "example-formula"),
         ]
       end
 
       it "returns missing cargo packages" do
         allow(described_class).to receive(:package_installed?) do |name, **|
-          name == "ripgrep"
+          name == "third-tool"
         end
 
         actionable = checker.find_actionable(entries, exit_on_first_error: false, no_upgrade: false, verbose: false)
-        expect(actionable).to eq(["Cargo Package tftio-kb needs to be installed."])
+        expect(actionable).to eq(["Cargo Package source-tool needs to be installed."])
       end
     end
   end
@@ -156,15 +157,15 @@ RSpec.describe Homebrew::Bundle::Cargo do
           expect(ENV.fetch("CARGO_INSTALL_ROOT", nil)).to eq("~/.cargo/bin")
           expect(ENV.fetch("RUSTUP_HOME", nil)).to eq("~/.rustup")
           <<~EOS
-            ripgrep v13.0.0:
-                rg
-            bat v0.24.0 (https://github.com/sharkdp/bat#3492d620)
+            third-tool v13.0.0:
+                example-command
+            example-tool v0.24.0 (https://example.com/tools/example-tool#3492d620)
           EOS
         end
 
         expect(dumper.packages).to eql([
-          { name: "ripgrep", source: nil },
-          { name: "bat", source: "https://github.com/sharkdp/bat" },
+          { name: "third-tool", source: nil },
+          { name: "example-tool", source: "https://example.com/tools/example-tool" },
         ])
       end
 
@@ -225,10 +226,10 @@ RSpec.describe Homebrew::Bundle::Cargo do
 
       it "dumps package list" do
         allow(dumper).to receive(:packages).and_return([
-          { name: "ripgrep", source: nil },
-          { name: "bat", source: nil },
+          { name: "third-tool", source: nil },
+          { name: "example-tool", source: nil },
         ])
-        expect(dumper.dump).to eql("cargo \"ripgrep\"\ncargo \"bat\"")
+        expect(dumper.dump).to eql("cargo \"third-tool\"\ncargo \"example-tool\"")
       end
     end
   end
@@ -244,7 +245,7 @@ RSpec.describe Homebrew::Bundle::Cargo do
         expect(Homebrew::Bundle).to \
           receive(:system).with(HOMEBREW_BREW_FILE, "install", "--formula", "rust", verbose: false)
                           .and_return(true)
-        expect { described_class.preinstall!("ripgrep") }.to raise_error(RuntimeError)
+        expect { described_class.preinstall!("third-tool") }.to raise_error(RuntimeError)
       end
     end
 
@@ -256,17 +257,17 @@ RSpec.describe Homebrew::Bundle::Cargo do
       context "when package is installed" do
         before do
           allow(described_class).to receive(:installed_packages)
-            .and_return([{ name: "ripgrep", source: nil }])
+            .and_return([{ name: "third-tool", source: nil }])
         end
 
         it "skips" do
           expect(Homebrew::Bundle).not_to receive(:system)
-          expect(described_class.preinstall!("ripgrep")).to be(false)
+          expect(described_class.preinstall!("third-tool")).to be(false)
         end
 
         it "does not treat a differently-sourced package as installed" do
           expect(
-            described_class.package_installed?("ripgrep", source: "https://github.com/BurntSushi/ripgrep"),
+            described_class.package_installed?("third-tool", source: "https://example.com/tools/third-tool"),
           ).to be(false)
         end
       end
@@ -274,23 +275,23 @@ RSpec.describe Homebrew::Bundle::Cargo do
       context "when package is installed from a source" do
         before do
           allow(described_class).to receive(:installed_packages)
-            .and_return([{ name: "tftio-kb", source: "ssh://git@example.com/tftio/kb.git" }])
+            .and_return([{ name: "source-tool", source: "ssh://git@example.com/tools/example-repo.git" }])
         end
 
         it "treats a matching source as installed" do
           expect(
-            described_class.package_installed?("tftio-kb", source: "ssh://git@example.com/tftio/kb.git"),
+            described_class.package_installed?("source-tool", source: "ssh://git@example.com/tools/example-repo.git"),
           ).to be(true)
         end
 
         it "does not treat a different source as installed" do
           expect(
-            described_class.package_installed?("tftio-kb", source: "ssh://git@example.com/tftio/other.git"),
+            described_class.package_installed?("source-tool", source: "ssh://git@example.com/tools/example-tool.git"),
           ).to be(false)
         end
 
         it "does not treat the registry crate of the same name as installed" do
-          expect(described_class.package_installed?("tftio-kb")).to be(false)
+          expect(described_class.package_installed?("source-tool")).to be(false)
         end
       end
 
@@ -307,47 +308,48 @@ RSpec.describe Homebrew::Bundle::Cargo do
             expect(ENV.fetch("CARGO_INSTALL_ROOT", nil)).to eq("~/.cargo/bin")
             expect(ENV.fetch("RUSTUP_HOME", nil)).to eq("~/.rustup")
             expect(ENV.fetch("PATH", "")).to start_with("/tmp/rust/bin:")
-            expect(args).to eq(["/tmp/rust/bin/cargo", "install", "--locked", "ripgrep"])
+            expect(args).to eq(["/tmp/rust/bin/cargo", "install", "--locked", "third-tool"])
             expect(verbose).to be(false)
             true
           end
-          expect(described_class.preinstall!("ripgrep")).to be(true)
-          expect(described_class.install!("ripgrep")).to be(true)
+          expect(described_class.preinstall!("third-tool")).to be(true)
+          expect(described_class.install!("third-tool")).to be(true)
         end
 
         it "installs multiple registry crates in one native batch" do
           entries = [
-            Homebrew::Bundle::Dsl::Entry.new(:cargo, "ripgrep"),
-            Homebrew::Bundle::Dsl::Entry.new(:cargo, "bat"),
+            Homebrew::Bundle::Dsl::Entry.new(:cargo, "third-tool"),
+            Homebrew::Bundle::Dsl::Entry.new(:cargo, "example-tool"),
           ]
-          expect(described_class.batch_installable?("ripgrep")).to be(true)
+          expect(described_class.batch_installable?("third-tool")).to be(true)
           expect(Homebrew::Bundle).to receive(:system)
-            .with("/tmp/rust/bin/cargo", "install", "--locked", "ripgrep", "bat", verbose: false)
+            .with("/tmp/rust/bin/cargo", "install", "--locked", "third-tool", "example-tool", verbose: false)
             .and_return(true)
 
           expect(described_class.install_batch!(entries, verbose: false)).to be(true)
         end
 
         it "installs a package from a git source by package name" do
-          source = "ssh://git@example.com/tftio/kb.git"
+          source = "ssh://git@example.com/tools/example-repo.git"
           expect(Homebrew::Bundle).to receive(:system) do |*args, verbose:|
-            expect(args).to eq(["/tmp/rust/bin/cargo", "install", "--locked", "--git", source, "tftio-kb"])
+            expect(args).to eq(["/tmp/rust/bin/cargo", "install", "--locked", "--git", source, "source-tool"])
             expect(verbose).to be(false)
             true
           end
-          expect(described_class.preinstall!("tftio-kb", source:)).to be(true)
-          expect(described_class.install!("tftio-kb", source:)).to be(true)
+          expect(described_class.preinstall!("source-tool", source:)).to be(true)
+          expect(described_class.install!("source-tool", source:)).to be(true)
         end
 
         it "installs a package from a git branch" do
           expect(Homebrew::Bundle).to receive(:system) do |*args, verbose:|
             _ = verbose
             expect(args).to eq(["/tmp/rust/bin/cargo", "install", "--locked", "--git",
-                                "ssh://git@example.com/tftio/kb.git", "--branch", "next", "tftio-kb"])
+                                "ssh://git@example.com/tools/example-repo.git", "--branch", "next", "source-tool"])
             true
           end
           expect(
-            described_class.install!("tftio-kb", source: "ssh://git@example.com/tftio/kb.git?branch=next"),
+            described_class.install!("source-tool",
+                                     source: "ssh://git@example.com/tools/example-repo.git?branch=next"),
           ).to be(true)
         end
 
@@ -355,21 +357,22 @@ RSpec.describe Homebrew::Bundle::Cargo do
           expect(Homebrew::Bundle).to receive(:system) do |*args, verbose:|
             _ = verbose
             expect(args).to eq(["/tmp/rust/bin/cargo", "install", "--locked", "--git",
-                                "ssh://git@example.com/tftio/kb.git", "--rev", "3492d620", "tftio-kb"])
+                                "ssh://git@example.com/tools/example-repo.git", "--rev", "3492d620", "source-tool"])
             true
           end
           expect(
-            described_class.install!("tftio-kb", source: "ssh://git@example.com/tftio/kb.git?rev=3492d620"),
+            described_class.install!("source-tool",
+                                     source: "ssh://git@example.com/tools/example-repo.git?rev=3492d620"),
           ).to be(true)
         end
 
         it "updates dump output after install in the same process" do
-          source = "ssh://git@example.com/tftio/kb.git"
+          source = "ssh://git@example.com/tools/example-repo.git"
           allow(Homebrew::Bundle).to receive(:system).and_return(true)
 
-          described_class.install!("tftio-kb", source:)
+          described_class.install!("source-tool", source:)
 
-          expect(described_class.dump).to eql(%Q(cargo "tftio-kb", source: "#{source}"))
+          expect(described_class.dump).to eql(%Q(cargo "source-tool", source: "#{source}"))
         end
       end
     end
@@ -379,9 +382,9 @@ RSpec.describe Homebrew::Bundle::Cargo do
     before do
       described_class.reset!
       crates = [
-        { name: "ripgrep", source: nil },
-        { name: "fd-find", source: nil },
-        { name: "bat", source: nil },
+        { name: "third-tool", source: nil },
+        { name: "other-tool", source: nil },
+        { name: "example-tool", source: nil },
       ]
       allow(described_class).to receive_messages(
         package_manager_executable: Pathname.new("/tmp/rust/bin/cargo"),
@@ -391,8 +394,8 @@ RSpec.describe Homebrew::Bundle::Cargo do
     end
 
     it "returns packages not in Brewfile entries" do
-      entries = [Homebrew::Bundle::Dsl::Entry.new(:cargo, "ripgrep")]
-      expect(described_class.cleanup_items(entries)).to eql(%w[fd-find bat])
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:cargo, "third-tool")]
+      expect(described_class.cleanup_items(entries)).to eql(%w[other-tool example-tool])
     end
 
     it "returns the uninstall command result" do
@@ -406,7 +409,7 @@ RSpec.describe Homebrew::Bundle::Cargo do
 
     it "returns frozen empty array when cargo is not installed" do
       allow(described_class).to receive(:package_manager_installed?).and_return(false)
-      entries = [Homebrew::Bundle::Dsl::Entry.new(:cargo, "ripgrep")]
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:cargo, "third-tool")]
       expect(described_class.cleanup_items(entries)).to eql([])
     end
   end

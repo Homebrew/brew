@@ -148,8 +148,8 @@ RSpec.describe Homebrew::Bundle::Krew do
       end
 
       it "dumps plugin list" do
-        allow(dumper).to receive(:packages).and_return(["ctx", "ns", "neat"])
-        expect(dumper.dump).to eql("krew \"ctx\"\nkrew \"ns\"\nkrew \"neat\"")
+        allow(dumper).to receive(:packages).and_return(["example-tool", "third-tool", "other-tool"])
+        expect(dumper.dump).to eql("krew \"example-tool\"\nkrew \"third-tool\"\nkrew \"other-tool\"")
       end
     end
   end
@@ -159,10 +159,10 @@ RSpec.describe Homebrew::Bundle::Krew do
 
     before do
       allow(described_class).to receive(:command_output).with(bootstrap_executable, args: ["list"])
-                                                        .and_return("ctx\n")
+                                                        .and_return("example-tool\n")
     end
 
-    it_behaves_like "an inventory refreshed after bootstrap", "ctx"
+    it_behaves_like "an inventory refreshed after bootstrap", "example-tool"
   end
 
   describe "installing" do
@@ -177,7 +177,7 @@ RSpec.describe Homebrew::Bundle::Krew do
         expect(Homebrew::Bundle).to \
           receive(:system).with(HOMEBREW_BREW_FILE, "install", "--formula", "krew", verbose: false)
                           .and_return(true)
-        expect { described_class.preinstall!("ctx") }.to raise_error(RuntimeError)
+        expect { described_class.preinstall!("example-tool") }.to raise_error(RuntimeError)
       end
 
       it "preserves upgrade_formulae while bootstrapping krew" do
@@ -186,7 +186,7 @@ RSpec.describe Homebrew::Bundle::Krew do
         expect(Homebrew::Bundle).to \
           receive(:system).with(HOMEBREW_BREW_FILE, "install", "--formula", "krew", verbose: false)
                           .and_return(true)
-        expect { described_class.preinstall!("ctx") }.to raise_error(RuntimeError)
+        expect { described_class.preinstall!("example-tool") }.to raise_error(RuntimeError)
         expect(Homebrew::Bundle.upgrade_formulae).to eql(["foo", "bar"])
       end
     end
@@ -201,12 +201,12 @@ RSpec.describe Homebrew::Bundle::Krew do
 
       context "when plugin is installed" do
         before do
-          allow(described_class).to receive(:installed_packages).and_return(["ctx"])
+          allow(described_class).to receive(:installed_packages).and_return(["example-tool"])
         end
 
         it "skips" do
           expect(Homebrew::Bundle).not_to receive(:system)
-          expect(described_class.preinstall!("ctx")).to be(false)
+          expect(described_class.preinstall!("example-tool")).to be(false)
         end
       end
 
@@ -224,24 +224,24 @@ RSpec.describe Homebrew::Bundle::Krew do
         it "installs plugin" do
           expect(Homebrew::Bundle).to receive(:system) do |*args, verbose:|
             expect(ENV.fetch("PATH", "")).to start_with("/usr/local/bin:")
-            expect(args).to eq(["/usr/local/bin/kubectl-krew", "install", "ctx"])
+            expect(args).to eq(["/usr/local/bin/kubectl-krew", "install", "example-tool"])
             expect(verbose).to be(false)
             true
           end
-          expect(described_class.preinstall!("ctx")).to be(true)
-          expect(described_class.install!("ctx")).to be(true)
+          expect(described_class.preinstall!("example-tool")).to be(true)
+          expect(described_class.install!("example-tool")).to be(true)
         end
 
         it "updates dump output after install" do
           expect(Homebrew::Bundle).to receive(:system) do |*args, verbose:|
-            expect(args).to eq(["/usr/local/bin/kubectl-krew", "install", "ctx"])
+            expect(args).to eq(["/usr/local/bin/kubectl-krew", "install", "example-tool"])
             expect(verbose).to be(false)
             true
           end
 
-          described_class.install!("ctx")
+          described_class.install!("example-tool")
 
-          expect(described_class.dump).to eql('krew "ctx"')
+          expect(described_class.dump).to eql('krew "example-tool"')
         end
       end
     end
@@ -253,14 +253,14 @@ RSpec.describe Homebrew::Bundle::Krew do
       allow(described_class).to receive_messages(
         package_manager_executable: Pathname.new("/usr/local/bin/kubectl-krew"),
         package_manager_installed?: true,
-        packages:                   %w[ctx ns neat],
-        installed_packages:         %w[ctx ns neat],
+        packages:                   %w[example-tool third-tool other-tool],
+        installed_packages:         %w[example-tool third-tool other-tool],
       )
     end
 
     it "returns plugins not in Brewfile entries" do
-      entries = [Homebrew::Bundle::Dsl::Entry.new(:krew, "ctx")]
-      expect(described_class.cleanup_items(entries)).to eql(%w[ns neat])
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:krew, "example-tool")]
+      expect(described_class.cleanup_items(entries)).to eql(%w[third-tool other-tool])
     end
 
     it "returns the uninstall command result" do
@@ -276,12 +276,12 @@ RSpec.describe Homebrew::Bundle::Krew do
     it "uninstalls plugins" do
       expect(Homebrew::Bundle).to receive(:system) do |*args, verbose:|
         expect(ENV.fetch("PATH", "")).to start_with("/usr/local/bin:")
-        expect(args).to eq(["/usr/local/bin/kubectl-krew", "uninstall", "ns"])
+        expect(args).to eq(["/usr/local/bin/kubectl-krew", "uninstall", "third-tool"])
         expect(verbose).to be(false)
         true
       end
 
-      expect { described_class.cleanup!(["ns"]) }.to output("Uninstalled 1 krew plugin\n").to_stdout
+      expect { described_class.cleanup!(["third-tool"]) }.to output("Uninstalled 1 krew plugin\n").to_stdout
     end
   end
 end

@@ -121,13 +121,13 @@ RSpec.describe Homebrew::Bundle::Npm do
           {
             "dependencies": {
               "npm": { "version": "11.11.0" },
-              "vercel": { "version": "39.0.0" },
-              "typescript": { "version": "5.7.3" }
+              "third-tool": { "version": "39.0.0" },
+              "other-tool": { "version": "5.7.3" }
             }
           }
         JSON
 
-        expect(dumper.packages).to eql(%w[vercel typescript])
+        expect(dumper.packages).to eql(%w[third-tool other-tool])
       end
 
       it "adds npm's directory to PATH when listing packages" do
@@ -139,10 +139,10 @@ RSpec.describe Homebrew::Bundle::Npm do
         expect(SystemCommand).to receive(:run)
           .with(npm, args: ["list", "-g", "--depth=0", "--json"], print_stderr: false) do
           expect(ENV.fetch("PATH", "")).to start_with("#{npm.dirname}:")
-          stub_npm_output('{"dependencies":{"eslint":{"version":"10.4.0"}}}')
+          stub_npm_output('{"dependencies":{"third-tool":{"version":"10.4.0"}}}')
         end
 
-        expect(dumper.packages).to eql(["eslint"])
+        expect(dumper.packages).to eql(["third-tool"])
       end
 
       it "excludes npm itself from the package list" do
@@ -170,8 +170,8 @@ RSpec.describe Homebrew::Bundle::Npm do
       end
 
       it "dumps package list" do
-        allow(dumper).to receive(:packages).and_return(["vercel", "typescript"])
-        expect(dumper.dump).to eql("npm \"vercel\"\nnpm \"typescript\"")
+        allow(dumper).to receive(:packages).and_return(["third-tool", "other-tool"])
+        expect(dumper.dump).to eql("npm \"third-tool\"\nnpm \"other-tool\"")
       end
     end
   end
@@ -188,12 +188,12 @@ RSpec.describe Homebrew::Bundle::Npm do
         .and_return(stub_npm_output(<<~JSON))
           {
             "npm": { "current": "11.10.0", "wanted": "11.11.0", "latest": "11.11.0" },
-            "vercel": { "current": "38.0.0", "wanted": "39.0.0", "latest": "39.0.0" },
+            "third-tool": { "current": "38.0.0", "wanted": "39.0.0", "latest": "39.0.0" },
             "@example/cli": { "current": "1.0.0", "wanted": "2.0.0", "latest": "2.0.0" }
           }
         JSON
 
-      expect(described_class.outdated_packages).to eq(["vercel", "@example/cli"])
+      expect(described_class.outdated_packages).to eq(["third-tool", "@example/cli"])
     end
 
     it "adds npm's directory to PATH when checking outdated packages" do
@@ -220,20 +220,21 @@ RSpec.describe Homebrew::Bundle::Npm do
   end
 
   describe "checking" do
-    let(:entries) { [Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel")] }
+    let(:entries) { [Homebrew::Bundle::Dsl::Entry.new(:npm, "third-tool")] }
 
     before do
       described_class.reset!
-      allow(described_class).to receive_messages(installed_packages: ["vercel"], outdated_packages: ["vercel"])
+      allow(described_class).to receive_messages(installed_packages: ["third-tool"],
+                                                 outdated_packages:  ["third-tool"])
     end
 
     it "reports installed packages that need upgrading" do
-      expect(described_class.check(entries)).to eq(["npm Package vercel needs to be upgraded."])
+      expect(described_class.check(entries)).to eq(["npm Package third-tool needs to be upgraded."])
     end
 
     it "reports outdated packages when exiting on the first error" do
       expect(described_class.check(entries, exit_on_first_error: true))
-        .to eq(["npm Package vercel needs to be upgraded."])
+        .to eq(["npm Package third-tool needs to be upgraded."])
     end
 
     it "accepts up-to-date packages" do
@@ -252,7 +253,7 @@ RSpec.describe Homebrew::Bundle::Npm do
       allow(described_class).to receive(:installed_packages).and_return([])
       expect(described_class).not_to receive(:outdated_packages)
 
-      expect(described_class.check(entries)).to eq(["npm Package vercel needs to be installed."])
+      expect(described_class.check(entries)).to eq(["npm Package third-tool needs to be installed."])
     end
 
     it "does not check outdated packages without npm entries" do
@@ -267,28 +268,28 @@ RSpec.describe Homebrew::Bundle::Npm do
       described_class.reset!
       allow(described_class).to receive_messages(
         package_manager_executable: Pathname.new("/opt/homebrew/bin/npm"),
-        packages:                   %w[vercel typescript prettier],
-        installed_packages:         %w[vercel typescript prettier],
+        packages:                   %w[third-tool other-tool example-tool],
+        installed_packages:         %w[third-tool other-tool example-tool],
       )
     end
 
     it "returns packages not in Brewfile entries" do
-      entries = [Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel")]
-      expect(described_class.cleanup_items(entries)).to eql(%w[typescript prettier])
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:npm, "third-tool")]
+      expect(described_class.cleanup_items(entries)).to eql(%w[other-tool example-tool])
     end
 
     it "returns empty when all packages are in Brewfile" do
       entries = [
-        Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel"),
-        Homebrew::Bundle::Dsl::Entry.new(:npm, "typescript"),
-        Homebrew::Bundle::Dsl::Entry.new(:npm, "prettier"),
+        Homebrew::Bundle::Dsl::Entry.new(:npm, "third-tool"),
+        Homebrew::Bundle::Dsl::Entry.new(:npm, "other-tool"),
+        Homebrew::Bundle::Dsl::Entry.new(:npm, "example-tool"),
       ]
       expect(described_class.cleanup_items(entries)).to eql([])
     end
 
     it "returns frozen empty array when npm is not installed" do
       allow(described_class).to receive(:package_manager_installed?).and_return(false)
-      entries = [Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel")]
+      entries = [Homebrew::Bundle::Dsl::Entry.new(:npm, "third-tool")]
       expect(described_class.cleanup_items(entries)).to eql([])
     end
   end
@@ -379,7 +380,7 @@ RSpec.describe Homebrew::Bundle::Npm do
         expect(Homebrew::Bundle).to \
           receive(:system).with(HOMEBREW_BREW_FILE, "install", "--formula", "node", verbose: false)
                           .and_return(true)
-        expect { described_class.preinstall!("vercel") }.to raise_error(RuntimeError)
+        expect { described_class.preinstall!("third-tool") }.to raise_error(RuntimeError)
       end
     end
 
@@ -393,53 +394,53 @@ RSpec.describe Homebrew::Bundle::Npm do
       context "when package is installed" do
         before do
           allow(described_class).to receive(:installed_packages)
-            .and_return(["vercel"])
+            .and_return(["third-tool"])
         end
 
         it "skips" do
           expect(Homebrew::Bundle).not_to receive(:system)
-          expect(described_class.preinstall!("vercel")).to be(false)
+          expect(described_class.preinstall!("third-tool")).to be(false)
         end
 
         context "when package is outdated" do
           before do
-            allow(described_class).to receive(:outdated_packages).and_return(["vercel"])
+            allow(described_class).to receive(:outdated_packages).and_return(["third-tool"])
           end
 
           it "needs upgrading" do
-            expect(described_class.preinstall!("vercel")).to be(true)
+            expect(described_class.preinstall!("third-tool")).to be(true)
           end
 
           it "uses the upgrade verb" do
-            expect(described_class.install_verb("vercel")).to eq("Upgrading")
+            expect(described_class.install_verb("third-tool")).to eq("Upgrading")
           end
 
           it "skips checking outdated packages with no_upgrade" do
             expect(described_class).not_to receive(:outdated_packages)
 
-            expect(described_class.preinstall!("vercel", no_upgrade: true)).to be(false)
+            expect(described_class.preinstall!("third-tool", no_upgrade: true)).to be(false)
           end
 
           it "upgrades using npm install" do
             expect(Homebrew::Bundle).to receive(:system)
-              .with("npm", "install", *Language::Node.npm_install_security_args, "-g", "vercel", verbose: true)
+              .with("npm", "install", *Language::Node.npm_install_security_args, "-g", "third-tool", verbose: true)
               .and_return(true)
 
-            expect { described_class.install!("vercel", verbose: true) }
-              .to output("Upgrading vercel npm package. It is installed but not up-to-date.\n").to_stdout
+            expect { described_class.install!("third-tool", verbose: true) }
+              .to output("Upgrading third-tool npm package. It is installed but not up-to-date.\n").to_stdout
           end
 
           it "batches upgrades and new installs with the appropriate messages" do
             entries = [
-              Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel"),
-              Homebrew::Bundle::Dsl::Entry.new(:npm, "typescript"),
+              Homebrew::Bundle::Dsl::Entry.new(:npm, "third-tool"),
+              Homebrew::Bundle::Dsl::Entry.new(:npm, "other-tool"),
             ]
             expect(Homebrew::Bundle).to receive(:system)
               .with("npm", "install", *Language::Node.npm_install_security_args,
-                    "-g", "vercel", "typescript", verbose: false).and_return(true)
+                    "-g", "third-tool", "other-tool", verbose: false).and_return(true)
 
             expect { Homebrew::Bundle::Installer.install!(entries, quiet: true) }
-              .to output("Upgrading vercel\nInstalling typescript\n").to_stdout
+              .to output("Upgrading third-tool\nInstalling other-tool\n").to_stdout
           end
         end
       end
@@ -461,20 +462,20 @@ RSpec.describe Homebrew::Bundle::Npm do
               "--cache=#{HOMEBREW_CACHE}/npm_cache",
               "--ignore-scripts",
               "-g",
-              "vercel",
+              "third-tool",
               verbose: false,
             )
             .and_return(true)
-          expect(described_class.preinstall!("vercel")).to be(true)
-          expect(described_class.install!("vercel")).to be(true)
+          expect(described_class.preinstall!("third-tool")).to be(true)
+          expect(described_class.install!("third-tool")).to be(true)
         end
 
         it "installs multiple packages in npm's native batch" do
           entries = [
-            Homebrew::Bundle::Dsl::Entry.new(:npm, "vercel"),
-            Homebrew::Bundle::Dsl::Entry.new(:npm, "typescript"),
+            Homebrew::Bundle::Dsl::Entry.new(:npm, "third-tool"),
+            Homebrew::Bundle::Dsl::Entry.new(:npm, "other-tool"),
           ]
-          expect(described_class.batch_installable?("vercel")).to be(true)
+          expect(described_class.batch_installable?("third-tool")).to be(true)
           expect(Homebrew::Bundle).to receive(:system)
             .with(
               "/opt/homebrew/bin/npm",
@@ -483,8 +484,8 @@ RSpec.describe Homebrew::Bundle::Npm do
               "--cache=#{HOMEBREW_CACHE}/npm_cache",
               "--ignore-scripts",
               "-g",
-              "vercel",
-              "typescript",
+              "third-tool",
+              "other-tool",
               verbose: false,
             )
             .and_return(true)

@@ -80,13 +80,13 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
     context "with invalid app details" do
       let(:invalid_mas_output) do
         <<~HEREDOC
-          497799835 Xcode (9.2)
-          425424353 The Unarchiver (4.0.0)
-          08981434 iMovie (10.1.8)
-          409201541 Pages (7.1)
+          497799835 Example App (9.2)
+          425424353 Other App (4.0.0)
+          08981434 iExample (10.1.8)
+          409201541 Third App (7.1)
           123456789 123AppNameWithNumbers (1.0)
-          409203825 Numbers (5.1)
-          944924917 Pastebin It! (1.0)
+          409203825 Fourth App (5.1)
+          944924917 Example App! (1.0)
           123456789 My (cool) app (1.0)
           987654321 an-app-i-use (2.1)
           123457867 App name with many spaces (1.0)
@@ -104,13 +104,13 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
 
       let(:expected_app_details_array) do
         [
-          ["497799835", "Xcode"],
-          ["425424353", "The Unarchiver"],
-          ["08981434", "iMovie"],
-          ["409201541", "Pages"],
+          ["497799835", "Example App"],
+          ["425424353", "Other App"],
+          ["08981434", "iExample"],
+          ["409201541", "Third App"],
           ["123456789", "123AppNameWithNumbers"],
-          ["409203825", "Numbers"],
-          ["944924917", "Pastebin It!"],
+          ["409203825", "Fourth App"],
+          ["944924917", "Example App!"],
           ["123456789", "My (cool) app"],
           ["987654321", "an-app-i-use"],
           ["123457867", "App name with many spaces"],
@@ -133,17 +133,17 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
           mas "another_app_name", id: 832423434
           mas "App name with many spaces", id: 123457867
           mas "app;with;semicolons", id: 688963445
-          mas "iMovie", id: 08981434
+          mas "Example App", id: 497799835
+          mas "Example App!", id: 944924917
+          mas "Fourth App", id: 409203825
+          mas "iExample", id: 08981434
           mas "My (cool) app", id: 123456789
           mas "My App?", id: 543213432
           mas "my 😊 app", id: 123345384
           mas "my,comma,app", id: 893489734
           mas "non><printing><characters", id: 310633997
-          mas "Numbers", id: 409203825
-          mas "Pages", id: 409201541
-          mas "Pastebin It!", id: 944924917
-          mas "The Unarchiver", id: 425424353
-          mas "Xcode", id: 497799835
+          mas "Other App", id: 425424353
+          mas "Third App", id: 409201541
           mas "áéíóú", id: 234324325
           mas "مرحبا", id: 634324555
           mas "你好", id: 896732467
@@ -167,17 +167,17 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
     context "with the new format after mas-cli/mas#339" do
       let(:new_mas_output) do
         <<~HEREDOC
-          1440147259  AdGuard for Safari  (1.9.13)
-          497799835   Xcode               (12.5)
-          425424353   The Unarchiver      (4.3.1)
+          1440147259  Example Browser App  (1.9.13)
+          497799835   Example App          (12.5)
+          425424353   Other App            (4.3.1)
         HEREDOC
       end
 
       let(:expected_app_details_array) do
         [
-          ["1440147259", "AdGuard for Safari"],
-          ["497799835", "Xcode"],
-          ["425424353", "The Unarchiver"],
+          ["1440147259", "Example Browser App"],
+          ["497799835", "Example App"],
+          ["425424353", "Other App"],
         ]
       end
 
@@ -196,17 +196,17 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
     context "with the 8.0.0+ format" do
       let(:new_mas_output) do
         <<~HEREDOC
-          1440147259  AdGuard for Safari  1.9.13
-           497799835  Xcode               12.5
-           425424353  The Unarchiver      4.3.1
+          1440147259  Example Browser App  1.9.13
+           497799835  Example App          12.5
+           425424353  Other App            4.3.1
         HEREDOC
       end
 
       let(:expected_app_details_array) do
         [
-          ["1440147259", "AdGuard for Safari"],
-          ["497799835", "Xcode"],
-          ["425424353", "The Unarchiver"],
+          ["1440147259", "Example Browser App"],
+          ["497799835", "Example App"],
+          ["425424353", "Other App"],
         ]
       end
 
@@ -352,7 +352,7 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
       allow(described_class).to receive_messages(package_manager_executable: Pathname.new("mas"), packages: [
         Homebrew::Bundle::MacAppStore::App.new(id: "123", name: "foo"),
         Homebrew::Bundle::MacAppStore::App.new(id: "456", name: "bar"),
-        Homebrew::Bundle::MacAppStore::App.new(id: "0", name: "testflight"),
+        Homebrew::Bundle::MacAppStore::App.new(id: "0", name: "unidentified-app"),
       ])
     end
 

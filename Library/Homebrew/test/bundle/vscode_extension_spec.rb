@@ -63,20 +63,20 @@ RSpec.describe Homebrew::Bundle::VscodeExtension do
 
       it "returns package list" do
         output = <<~EOF
-          catppuccin.catppuccin-vsc
-          davidanson.vscode-markdownlint
-          streetsidesoftware.code-spell-checker
-          tamasfe.even-better-toml
+          example.first-extension
+          example.second-extension
+          other.first-extension
+          other.second-extension
         EOF
 
         allow(described_class).to receive(:command_output)
           .with(Pathname("code"), args: ["--list-extensions"])
           .and_return(output)
         expect(dumper.extensions).to eql([
-          "catppuccin.catppuccin-vsc",
-          "davidanson.vscode-markdownlint",
-          "streetsidesoftware.code-spell-checker",
-          "tamasfe.even-better-toml",
+          "example.first-extension",
+          "example.second-extension",
+          "other.first-extension",
+          "other.second-extension",
         ])
       end
 
@@ -84,15 +84,15 @@ RSpec.describe Homebrew::Bundle::VscodeExtension do
         output = <<~EOF
           updating vs code server to version f6cfa2ea2403534de03f069bdf160d06451ed282
           downloading:     \b\b\b\b  0%\b\b\b\b100%
-          unpacked 3485 files and folders to /home/mike/.vscode-server/bin/f6cfa2ea2403534de03f069bdf160d06451ed282.
-          GitHub.codespaces
+          unpacked 3485 files and folders to /home/example/.vscode-server/bin/f6cfa2ea2403534de03f069bdf160d06451ed282.
+          Example.Extension
         EOF
 
         allow(described_class).to receive(:command_output)
           .with(Pathname("code"), args: ["--list-extensions"])
           .and_return(output)
 
-        expect(dumper.extensions).to eql(["github.codespaces"])
+        expect(dumper.extensions).to eql(["example.extension"])
       end
     end
   end
