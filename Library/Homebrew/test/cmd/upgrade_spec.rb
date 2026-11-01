@@ -160,7 +160,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
         end
       RUBY
       CoreCaskTap.instance.clear_cache
-      InstallHelper.stub_cask_installation(Cask::CaskLoader.load(dir/"local-upgrade-test.rb"))
+      InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(dir/"local-upgrade-test.rb"))
       old_cask_download = HOMEBREW_CACHE/"Cask/local-upgrade-test--1.0"
       old_cask_download.dirname.mkpath
       old_cask_download.write("cached")
@@ -336,7 +336,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "warns once for a named cask that is already up-to-date", :cask do
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("local-caffeine")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("local-caffeine")))
 
     warning = "Warning: Not upgrading local-caffeine, the latest version is already installed\n"
     expect { described_class.new(["--cask", "local-caffeine"]).run }
@@ -375,7 +375,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     test_each([[], ["--yes"], ["--dry-run"]]) do |flags|
       it "lists pinned cask versions once with #{flags.presence || "default options"}" do
         %w[local-caffeine local-transmission-zip].each do |token|
-          InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("outdated/#{token}")))
+          InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/#{token}")))
           Cask::CaskLoader.load(token).pin
         end
         allow(Homebrew::Cleanup).to receive(:periodic_clean!)
@@ -511,14 +511,14 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "upgrades a named cask installed below --minimum-version", :cask do
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("outdated/local-caffeine")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")))
 
     expect { described_class.new(["--cask", "local-caffeine", "--minimum-version=1.2.3", "--dry-run"]).run }
       .to output(/local-caffeine 1\.2\.2 -> 1\.2\.3/).to_stdout
   end
 
   it "does not upgrade a named cask installed at --minimum-version", :cask do
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("local-caffeine")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("local-caffeine")))
 
     expect { described_class.new(["--cask", "local-caffeine", "--minimum-version=1.2.3", "--dry-run"]).run }
       .to not_to_output(/Would upgrade/).to_stdout
@@ -1515,7 +1515,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
   end
 
   it "does not print removed caveats method errors for installed casks", :cask do
-    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     installer = InstallHelper.install_with_caskfile(cask)
     installed_caskfile = installer.metadata_subdir/"#{cask.token}.json"
     expect(installed_caskfile).to exist

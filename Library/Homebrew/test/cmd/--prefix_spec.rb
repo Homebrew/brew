@@ -8,13 +8,13 @@ RSpec.describe Homebrew::Cmd::Prefix do
   it_behaves_like "parseable arguments"
 
   it "prints Homebrew's prefix and a Formula's prefix", :integration_test do
-    testball = setup_test_formula "testball"
+    setup_test_formula "testball"
 
     expect { brew_sh "--prefix" }
       .to output("#{ENV.fetch("HOMEBREW_PREFIX")}\n").to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
-    expect { brew_sh "--prefix", testball }
+    expect { brew_sh "--prefix", "testball", "HOMEBREW_BREW_SH" => test_prefix_brew_sh }
       .to output(%r{/opt/testball\n}).to_stdout
       .and not_to_output.to_stderr
       .and be_a_success

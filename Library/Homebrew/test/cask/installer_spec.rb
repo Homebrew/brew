@@ -17,7 +17,7 @@ RSpec.describe Cask::Installer, :cask do
 
   describe "#extract_primary_container" do
     it "respects the installer's download integrity setting" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       installer = described_class.new(cask, verify_download_integrity: false)
       download = instance_double(Cask::Download)
       downloaded_path = Pathname("/path/to/downloaded/cask")
@@ -36,7 +36,7 @@ RSpec.describe Cask::Installer, :cask do
 
   describe "#save_caskfile" do
     it "stores casks loaded from Ruby source as JSON metadata" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       described_class.new(cask).save_caskfile
       Cask::Tab.create(cask).write
@@ -72,7 +72,7 @@ RSpec.describe Cask::Installer, :cask do
     it "strips legacy install flight blocks and records empty artifacts in JSON metadata" do
       ENV["HOMEBREW_DEVELOPER"] = nil
       Homebrew.raise_deprecation_exceptions = false
-      cask = Cask::CaskLoader.load(cask_path("many-artifacts"))
+      cask = Cask::CaskLoader.from_path(cask_path("many-artifacts"))
       cask.artifacts.keep_if do |artifact|
         artifact.respond_to?(:directives) &&
           artifact.directives.keys.intersect?([:preflight, :postflight])
@@ -84,7 +84,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "stores intentional empty artifacts in JSON metadata" do
-      cask = Cask::CaskLoader.load(cask_path("stage-only"))
+      cask = Cask::CaskLoader.from_path(cask_path("stage-only"))
 
       described_class.new(cask).save_caskfile
 
@@ -94,7 +94,7 @@ RSpec.describe Cask::Installer, :cask do
     it "stores legacy uninstall flight block casks as Ruby metadata" do
       ENV["HOMEBREW_DEVELOPER"] = nil
       Homebrew.raise_deprecation_exceptions = false
-      cask = Cask::CaskLoader.load(cask_path("many-artifacts"))
+      cask = Cask::CaskLoader.from_path(cask_path("many-artifacts"))
 
       described_class.new(cask).save_caskfile
 
@@ -142,7 +142,7 @@ RSpec.describe Cask::Installer, :cask do
 
   describe "#prelude", :needs_macos do
     it "resolves the system languages before any other cask work" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       installer = described_class.new(caffeine)
 
       call_order = []
@@ -161,7 +161,7 @@ RSpec.describe Cask::Installer, :cask do
 
   describe "install" do
     it "resolves the system languages before installing artifacts", :needs_macos do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       call_order = []
       allow(MacOS).to receive(:languages) do
@@ -177,7 +177,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "downloads and installs a nice fresh Cask" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       described_class.new(caffeine).install
 
@@ -186,7 +186,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works with HFS+ dmg-based Casks" do
-      asset = Cask::CaskLoader.load(cask_path("container-dmg"))
+      asset = Cask::CaskLoader.from_path(cask_path("container-dmg"))
       stub_dmg_extraction { |path| FileUtils.touch path/"container" }
 
       described_class.new(asset).install
@@ -196,7 +196,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works with tar-gz-based Casks" do
-      asset = Cask::CaskLoader.load(cask_path("container-tar-gz"))
+      asset = Cask::CaskLoader.from_path(cask_path("container-tar-gz"))
 
       described_class.new(asset).install
 
@@ -207,7 +207,7 @@ RSpec.describe Cask::Installer, :cask do
     it "works with xar-based Casks" do
       ENV["HOMEBREW_DEVELOPER"] = nil
       Homebrew.raise_deprecation_exceptions = false
-      asset = Cask::CaskLoader.load(cask_path("container-xar"))
+      asset = Cask::CaskLoader.from_path(cask_path("container-xar"))
 
       described_class.new(asset).install
 
@@ -216,7 +216,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works with pure bzip2-based Casks" do
-      asset = Cask::CaskLoader.load(cask_path("container-bzip2"))
+      asset = Cask::CaskLoader.from_path(cask_path("container-bzip2"))
       # The bzip2 container depends on the `bzip2` formula via its unpack
       # strategy. Exercise dependency resolution without pouring a real
       # bottle (and flaking on its GitHub Packages manifest).
@@ -232,7 +232,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works with pure gzip-based Casks" do
-      asset = Cask::CaskLoader.load(cask_path("container-gzip"))
+      asset = Cask::CaskLoader.from_path(cask_path("container-gzip"))
 
       described_class.new(asset).install
 
@@ -241,21 +241,21 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "blows up on a bad checksum" do
-      bad_checksum = Cask::CaskLoader.load(cask_path("bad-checksum"))
+      bad_checksum = Cask::CaskLoader.from_path(cask_path("bad-checksum"))
       expect do
         described_class.new(bad_checksum).install
       end.to raise_error(ChecksumMismatchError)
     end
 
     it "blows up on a missing checksum" do
-      missing_checksum = Cask::CaskLoader.load(cask_path("missing-checksum"))
+      missing_checksum = Cask::CaskLoader.from_path(cask_path("missing-checksum"))
       expect do
         described_class.new(missing_checksum).install
       end.to output(/Cannot verify integrity/).to_stderr
     end
 
     it "installs fine if sha256 :no_check is used" do
-      no_checksum = Cask::CaskLoader.load(cask_path("no-checksum"))
+      no_checksum = Cask::CaskLoader.from_path(cask_path("no-checksum"))
 
       described_class.new(no_checksum).install
 
@@ -263,7 +263,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "fails to install if sha256 :no_check is used with --require-sha" do
-      no_checksum = Cask::CaskLoader.load(cask_path("no-checksum"))
+      no_checksum = Cask::CaskLoader.from_path(cask_path("no-checksum"))
       expect do
         described_class.new(no_checksum, require_sha: true).install
       end.to raise_error(/--require-sha/)
@@ -331,7 +331,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "rejects sha256 :no_check with explicit --require-sha and --force" do
-      no_checksum = Cask::CaskLoader.load(cask_path("no-checksum"))
+      no_checksum = Cask::CaskLoader.from_path(cask_path("no-checksum"))
 
       expect do
         described_class.new(no_checksum, require_sha: true, force: true).install
@@ -339,7 +339,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "records caveats without printing them inline" do
-      with_caveats = Cask::CaskLoader.load(cask_path("with-caveats"))
+      with_caveats = Cask::CaskLoader.from_path(cask_path("with-caveats"))
 
       expect(Homebrew.messages).to receive(:record_caveats)
         .with(with_caveats.token, with_caveats.caveats)
@@ -353,7 +353,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "prints installer :manual instructions when present" do
-      with_installer_manual = Cask::CaskLoader.load(cask_path("with-installer-manual"))
+      with_installer_manual = Cask::CaskLoader.from_path(cask_path("with-installer-manual"))
 
       expect do
         described_class.new(with_installer_manual).install
@@ -371,7 +371,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "does not extract __MACOSX directories from zips" do
-      with_macosx_dir = Cask::CaskLoader.load(cask_path("with-macosx-dir"))
+      with_macosx_dir = Cask::CaskLoader.from_path(cask_path("with-macosx-dir"))
 
       described_class.new(with_macosx_dir).install
 
@@ -379,7 +379,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "allows already-installed Casks which auto-update to be installed if force is provided" do
-      with_auto_updates = Cask::CaskLoader.load(cask_path("auto-updates"))
+      with_auto_updates = Cask::CaskLoader.from_path(cask_path("auto-updates"))
 
       expect(with_auto_updates).not_to be_installed
 
@@ -391,7 +391,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "allows already-installed Casks to be installed if force is provided" do
-      transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
 
       expect(transmission).not_to be_installed
 
@@ -403,7 +403,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "installs a cask from a dmg file" do
-      transmission = Cask::CaskLoader.load(cask_path("local-transmission"))
+      transmission = Cask::CaskLoader.from_path(cask_path("local-transmission"))
       stub_dmg_extraction { |path| (path/"Transmission.app").mkpath }
 
       expect(transmission).not_to be_installed
@@ -414,7 +414,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works naked-pkg-based Casks" do
-      naked_pkg = Cask::CaskLoader.load(cask_path("container-pkg"))
+      naked_pkg = Cask::CaskLoader.from_path(cask_path("container-pkg"))
 
       described_class.new(naked_pkg).install
 
@@ -422,7 +422,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works properly with an overridden container :type" do
-      naked_executable = Cask::CaskLoader.load(cask_path("naked-executable"))
+      naked_executable = Cask::CaskLoader.from_path(cask_path("naked-executable"))
 
       described_class.new(naked_executable).install
 
@@ -430,7 +430,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works fine with a nested container" do
-      nested_app = Cask::CaskLoader.load(cask_path("nested-app"))
+      nested_app = Cask::CaskLoader.from_path(cask_path("nested-app"))
 
       described_class.new(nested_app).install
 
@@ -438,7 +438,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "generates and finds a timestamped metadata directory for an installed Cask" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       described_class.new(caffeine).install
 
@@ -447,7 +447,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "generates and finds a metadata subdirectory for an installed Cask" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       described_class.new(caffeine).install
 
@@ -457,14 +457,14 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "don't print cask installed message with --quiet option" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       expect do
         described_class.new(caffeine, quiet: true).install
       end.to output(nil).to_stdout
     end
 
     it "does NOT generate LATEST_DOWNLOAD_SHA256 file for installed Cask without version :latest" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       described_class.new(caffeine).install
 
@@ -472,7 +472,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "generates and finds LATEST_DOWNLOAD_SHA256 file for installed Cask with version :latest" do
-      latest_cask = Cask::CaskLoader.load(cask_path("version-latest"))
+      latest_cask = Cask::CaskLoader.from_path(cask_path("version-latest"))
 
       described_class.new(latest_cask).install
 
@@ -480,7 +480,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     context "when loaded from the api with unsupported requirements" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-symbol")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-macos-symbol")) }
       let(:download_queue) { instance_double(Homebrew::DownloadQueue, enqueue: nil) }
       let(:macos_requirement) { cask.depends_on.macos }
 
@@ -504,7 +504,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "zap method reinstall cask" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       described_class.new(caffeine).install
 
       expect(caffeine).to be_installed
@@ -516,7 +516,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "zap method runs zap directives alongside uninstall ones, removing files last" do
-      cask = Cask::CaskLoader.load(cask_path("with-uninstall-and-zap"))
+      cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-and-zap"))
       dispatched = []
       allow_any_instance_of(Cask::Artifact::AbstractUninstall)
         .to receive(:dispatch_uninstall_directive) do |artifact, directive, **|
@@ -534,7 +534,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "zap method tolerates an artifact target removed by an uninstall directive" do
-      cask = Cask::CaskLoader.load(cask_path("with-uninstall-delete-app"))
+      cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-delete-app"))
       described_class.new(cask, command: NeverSudoSystemCommand).install
 
       expect { described_class.new(cask, command: NeverSudoSystemCommand).zap }.not_to raise_error
@@ -544,7 +544,7 @@ RSpec.describe Cask::Installer, :cask do
       after { FileUtils.rm_rf rmdir_directory }
 
       it "zap method removes directories emptied by removing artifacts" do
-        cask = Cask::CaskLoader.load(cask_path("with-uninstall-rmdir-app"))
+        cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-rmdir-app"))
         described_class.new(cask).install
 
         described_class.new(cask).zap
@@ -556,7 +556,7 @@ RSpec.describe Cask::Installer, :cask do
 
   describe "#backup" do
     it "does not raise when the staged version directory is already missing" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       installer = described_class.new(caffeine)
       installer.install
 
@@ -574,7 +574,7 @@ RSpec.describe Cask::Installer, :cask do
       after { FileUtils.rm_rf rmdir_directory }
 
       it "removes the directory once the artifact is removed" do
-        cask = Cask::CaskLoader.load(cask_path("with-uninstall-rmdir-app"))
+        cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-rmdir-app"))
         described_class.new(cask).install
 
         described_class.new(cask).uninstall
@@ -585,7 +585,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "fully uninstalls a Cask" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       installer = described_class.new(caffeine)
 
       installer.install
@@ -597,7 +597,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "removes Caskroom symlinks the uninstall broke, whatever name they carry" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       alias_link = Cask::Caskroom.path.join("local-caffeine-renamed")
       unrelated_link = Cask::Caskroom.path.join("alias-of-another-cask")
       installer = described_class.new(caffeine)
@@ -612,7 +612,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "uninstalls all versions if force is set" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       mutated_version = "#{caffeine.version}.1"
 
       described_class.new(caffeine).install
@@ -634,17 +634,17 @@ RSpec.describe Cask::Installer, :cask do
 
   describe "uninstall_existing_cask" do
     it "uninstalls when cask file is outdated" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       described_class.new(caffeine).install
 
-      expect(Cask::CaskLoader.load(cask_path("local-caffeine"))).to be_installed
+      expect(Cask::CaskLoader.from_path(cask_path("local-caffeine"))).to be_installed
 
       expect(caffeine).to receive(:installed?).once.and_return(true)
       outdate_caskfile = cask_path("invalid/invalid-depends-on-macos-bad-release")
       expect(caffeine).to receive(:installed_caskfile).once.and_return(outdate_caskfile)
       described_class.new(caffeine).uninstall_existing_cask
 
-      expect(Cask::CaskLoader.load(cask_path("local-caffeine"))).not_to be_installed
+      expect(Cask::CaskLoader.from_path(cask_path("local-caffeine"))).not_to be_installed
     end
   end
 
@@ -875,7 +875,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "stages the main cask download outside Caskroom before install" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       download_queue = Homebrew::DownloadQueue.new(pour: true)
       installer = described_class.new(cask, download_queue:, defer_fetch: true)
       queued_staged_path = installer.downloader.staged_path_from_download_queue
@@ -902,7 +902,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "removes the pre-staged download if the install failed before staging" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       download_queue = Homebrew::DownloadQueue.new(pour: true)
       installer = described_class.new(cask, download_queue:, defer_fetch: true)
 
@@ -923,7 +923,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "removes the pre-staged download if restoring the backup also failed" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       download_queue = Homebrew::DownloadQueue.new(pour: true)
       installer = described_class.new(cask, download_queue:, defer_fetch: true)
 
@@ -945,7 +945,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "reports the original install error if removing the pre-staged download fails" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       installer = described_class.new(cask, defer_fetch: true)
 
       allow(installer).to receive(:satisfy_cask_and_formula_dependencies)
@@ -994,7 +994,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "does not stage queued downloads with missing unpack dependencies" do
-      cask = Cask::CaskLoader.load(cask_path("container-bzip2"))
+      cask = Cask::CaskLoader.from_path(cask_path("container-bzip2"))
       download_queue = Homebrew::DownloadQueue.new(pour: true)
       installer = described_class.new(cask, download_queue:, defer_fetch: true)
       queued_staged_path = installer.downloader.staged_path_from_download_queue
@@ -1019,7 +1019,7 @@ RSpec.describe Cask::Installer, :cask do
 
   describe "#enqueue_dependency_downloads" do
     it "skips dependency resolution when the cask download failed" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       installer = described_class.new(cask, download_queue: instance_double(Homebrew::DownloadQueue))
       installer.download_failed!
 
@@ -1029,7 +1029,7 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "reuses formula dependencies fetched before installation" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       dependency = formula("cask-dependency") do
         T.bind(self, T.class_of(Formula))
         url "https://brew.sh/cask-dependency-1.0.tar.gz"
@@ -1063,7 +1063,7 @@ RSpec.describe Cask::Installer, :cask do
 
   describe "#load_installed_caskfile!" do
     it "uses recovered installed metadata before falling back to the current cask" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       recovered_cask = Cask::Cask.new(cask.token) do
         version "1.0"
         app "Recovered.app"

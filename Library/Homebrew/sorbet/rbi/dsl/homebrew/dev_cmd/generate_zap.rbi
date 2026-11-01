@@ -13,4 +13,7 @@ end
 class Homebrew::DevCmd::GenerateZap::Args < Homebrew::CLI::Args
   sig { returns(T::Boolean) }
   def name?; end
+
+  sig { returns(T::Boolean) }
+  def tap_source?; end
 end

@@ -24,7 +24,11 @@ module Cask
       def self.run(cask_path)
         $stdout.sync = true
 
-        cask = ::Cask::CaskLoader.load(cask_path)
+        cask = if cask_path.end_with?(".rb")
+          ::Cask::CaskLoader.from_tap_path(cask_path)
+        else
+          ::Cask::CaskLoader.load(cask_path)
+        end
         apps = cask.artifacts.grep(::Cask::Artifact::App).map(&:target).select(&:directory?)
         exercise(apps)
 
@@ -63,8 +67,10 @@ module Cask
 
       sig { params(cask_path: String).returns(T.nilable(SystemCommand::Result)) }
       def self.generate_zap(cask_path)
+        args = ["generate-zap"]
+        args << "--tap-source" if cask_path.end_with?(".rb")
         system_command ENV.fetch("HOMEBREW_BREW_FILE"),
-                       args:         ["generate-zap", cask_path],
+                       args:         [*args, cask_path],
                        print_stderr: false,
                        timeout:      GENERATE_ZAP_TIMEOUT
       rescue Timeout::Error

@@ -8,13 +8,13 @@ RSpec.describe Cask::Auditor, :cask do
 
   describe "audit" do
     it "returns an empty Set if there are no audit errors" do
-      basic_cask = Cask::CaskLoader.load(cask_path("basic-cask"))
+      basic_cask = Cask::CaskLoader.from_path(cask_path("basic-cask"))
       expect(auditor.audit(basic_cask)).to eq(Set.new)
 
-      with_languages_cask = Cask::CaskLoader.load(cask_path("with-languages"))
+      with_languages_cask = Cask::CaskLoader.from_path(cask_path("with-languages"))
       expect(auditor.audit(with_languages_cask)).to eq(Set.new)
 
-      with_many_languages_cask = Cask::CaskLoader.load(cask_path("with-many-languages"))
+      with_many_languages_cask = Cask::CaskLoader.from_path(cask_path("with-many-languages"))
       expect(auditor.audit(with_many_languages_cask)).to eq(Set.new)
     end
 
@@ -25,17 +25,17 @@ RSpec.describe Cask::Auditor, :cask do
         corrected: false,
       }
 
-      invalid_sha256_cask = Cask::CaskLoader.load(cask_path("invalid-sha256"))
+      invalid_sha256_cask = Cask::CaskLoader.from_path(cask_path("invalid-sha256"))
       expect(auditor.audit(invalid_sha256_cask)).to eq(Set[error_hash])
 
-      with_many_languages_and_error_cask = Cask::CaskLoader.load(cask_path("with-many-languages-and-invalid-sha256"))
+      with_many_languages_and_error_cask = Cask::CaskLoader.from_path(cask_path("with-many-languages-and-invalid-sha256"))
       expect(auditor.audit(with_many_languages_and_error_cask)).to eq(Set[error_hash])
       expect(auditor.audit(with_many_languages_and_error_cask, audit_strict: true)).to eq(Set[error_hash])
     end
   end
 
   describe "output_summary?" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("basic-cask")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("basic-cask")) }
 
     it "returns true if @any_named_args is true" do
       auditor_obj = auditor.new(cask, any_named_args: true)

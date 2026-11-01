@@ -6,7 +6,7 @@ require "test/cask/dsl/shared_examples/base"
 RSpec.describe Cask::DSL::Caveats, :cask do
   subject(:caveats) { described_class.new(cask) }
 
-  let(:cask) { Cask::CaskLoader.load(cask_path("with-caveats-everything")) }
+  let(:cask) { Cask::CaskLoader.from_path(cask_path("with-caveats-everything")) }
 
   it_behaves_like Cask::DSL::Base
 

@@ -14,7 +14,7 @@ RSpec.describe DependenciesHelpers do
       version "1.0"
     end
 
-    foo_cask = Cask::CaskLoader.load(+<<-RUBY)
+    foo_cask = Cask::CaskLoader.from_content(+<<-RUBY)
       cask "foo_cask" do
       end
     RUBY
@@ -25,7 +25,7 @@ RSpec.describe DependenciesHelpers do
       version "1.0"
     end
 
-    bar_cask = Cask::CaskLoader.load(+<<-RUBY)
+    bar_cask = Cask::CaskLoader.from_content(+<<-RUBY)
       cask "bar-cask" do
       end
     RUBY

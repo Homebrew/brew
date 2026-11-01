@@ -391,7 +391,7 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         modified_github_actions_files: [],
         modified_cask_files:           [cask_path],
       )
-      allow(Cask::CaskLoader).to receive(:load).and_return(cask)
+      allow(Cask::CaskLoader).to receive(:from_tap_path).and_return(cask)
       allow(command).to receive(:puts) { |output| stdout.puts(output) }
     end
 

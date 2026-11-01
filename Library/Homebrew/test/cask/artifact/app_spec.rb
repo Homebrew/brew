@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::App, :cask do
-  let(:cask) { Cask::CaskLoader.load(cask_path("local-caffeine")) }
+  let(:cask) { Cask::CaskLoader.from_path(cask_path("local-caffeine")) }
   let(:command) { NeverSudoSystemCommand }
   let(:adopt) { false }
   let(:force) { false }

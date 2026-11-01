@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Cask::CaskLoader, :cask do
-  describe "::for" do
+  describe "::loader_for" do
     let(:tap) { CoreCaskTap.instance }
 
     context "when a cask is renamed" do
@@ -36,13 +36,13 @@ RSpec.describe Cask::CaskLoader, :cask do
       context "when not using the API", :no_api do
         it "warns when using the short token" do
           expect do
-            expect(described_class.for("version-newest")).to be_a Cask::CaskLoader::FromPathLoader
+            expect(described_class.loader_for("version-newest")).to be_a described_class::FromPathLoader
           end.to output(/version-newest was renamed to version-latest/).to_stderr
         end
 
         it "warns when using the full token" do
           expect do
-            expect(described_class.for("homebrew/cask/version-newest")).to be_a Cask::CaskLoader::FromPathLoader
+            expect(described_class.loader_for("homebrew/cask/version-newest")).to be_a described_class::FromPathLoader
           end.to output(/version-newest was renamed to version-latest/).to_stderr
         end
       end
@@ -50,13 +50,13 @@ RSpec.describe Cask::CaskLoader, :cask do
       context "when using the API" do
         it "warns when using the short token" do
           expect do
-            expect(described_class.for("version-newest")).to be_a Cask::CaskLoader::FromAPILoader
+            expect(described_class.loader_for("version-newest")).to be_a Cask::CaskLoader::FromAPILoader
           end.to output(/version-newest was renamed to version-latest/).to_stderr
         end
 
         it "warns when using the full token" do
           expect do
-            expect(described_class.for("homebrew/cask/version-newest")).to be_a Cask::CaskLoader::FromAPILoader
+            expect(described_class.loader_for("homebrew/cask/version-newest")).to be_a Cask::CaskLoader::FromAPILoader
           end.to output(/version-newest was renamed to version-latest/).to_stderr
         end
       end
@@ -99,25 +99,25 @@ RSpec.describe Cask::CaskLoader, :cask do
           # It would be preferable not to print a warning when installing with the short token
           it "warns when loading the short token" do
             expect do
-              described_class.for(token)
+              described_class.loader_for(token)
             end.to output(%r{Cask #{old_tap}/#{token} was renamed to #{new_tap}/#{token}\.}).to_stderr
           end
 
           it "warns with the canonical token when loading an uppercase short token" do
             expect do
-              described_class.for(token.upcase)
+              described_class.loader_for(token.upcase)
             end.to output(%r{Cask #{old_tap}/#{token} was renamed to #{new_tap}/#{token}\.}).to_stderr
           end
 
           it "does not warn when loading the full token in the new tap" do
             expect do
-              described_class.for("#{new_tap}/#{token}")
+              described_class.loader_for("#{new_tap}/#{token}")
             end.not_to output.to_stderr
           end
 
           it "warns when loading the full token in the old tap" do
             expect do
-              described_class.for("#{old_tap}/#{token}")
+              described_class.loader_for("#{old_tap}/#{token}")
             end.to output(%r{Cask #{old_tap}/#{token} was renamed to #{new_tap}/#{token}\.}).to_stderr
           end
 
@@ -144,7 +144,7 @@ RSpec.describe Cask::CaskLoader, :cask do
 
           it "does not warn when loading the short token" do
             expect do
-              described_class.for(token)
+              described_class.loader_for(token)
             end.not_to output.to_stderr
           end
         end
@@ -164,7 +164,7 @@ RSpec.describe Cask::CaskLoader, :cask do
 
           it "does not warn when loading the short token" do
             expect do
-              described_class.for(token)
+              described_class.loader_for(token)
             end.not_to output.to_stderr
           end
         end
@@ -182,19 +182,19 @@ RSpec.describe Cask::CaskLoader, :cask do
 
           it "does not warn when loading the short token" do
             expect do
-              described_class.for(token)
+              described_class.loader_for(token)
             end.not_to output.to_stderr
           end
 
           it "does not warn when loading the full token in the default tap" do
             expect do
-              described_class.for("#{new_tap}/#{token}")
+              described_class.loader_for("#{new_tap}/#{token}")
             end.not_to output.to_stderr
           end
 
           it "warns when loading the full token in the old tap" do
             expect do
-              described_class.for("#{old_tap}/#{token}")
+              described_class.loader_for("#{old_tap}/#{token}")
             end.to output(%r{Cask #{old_tap}/#{token} was renamed to #{token}\.}).to_stderr
           end
 
@@ -208,7 +208,7 @@ RSpec.describe Cask::CaskLoader, :cask do
           #
           #   it "stops recursing" do
           #     expect do
-          #       klass.for("#{new_tap}/#{token}")
+          #       klass.loader_for("#{new_tap}/#{token}")
           #     end.not_to output.to_stderr
           #   end
           # end
@@ -227,7 +227,7 @@ RSpec.describe Cask::CaskLoader, :cask do
     it "falls back to the API for missing artifacts by default" do
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).and_call_original
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with("stubbed").and_return(
-        Cask::CaskLoader::FromInstanceLoader.new(Cask::Cask.new("stubbed") { app "Stubbed.app" }),
+        instance_double(Cask::CaskLoader::FromAPILoader, load: Cask::Cask.new("stubbed") { app "Stubbed.app" }),
       )
 
       expect(described_class.load_from_installed_caskfile(caskfile).artifacts_list(uninstall_only: true))
@@ -367,12 +367,12 @@ RSpec.describe Cask::CaskLoader, :cask do
         end
       RUBY
 
-      expect { Cask::CaskLoader::FromPathLoader.new(cask_file).load(config: nil) }
+      expect { described_class::FromPathLoader.new(cask_file).load(config: nil) }
         .to raise_error(Homebrew::UntrustedTapError, %r{thirdparty/foo})
 
       Homebrew::Trust.trust!(:cask, "thirdparty/foo/sensitive-env")
 
-      expect(Cask::CaskLoader::FromPathLoader.new(cask_file).load(config: nil).full_name)
+      expect(described_class::FromPathLoader.new(cask_file).load(config: nil).full_name)
         .to eq("thirdparty/foo/sensitive-env")
     ensure
       Homebrew::Trust.clear!(:cask)
@@ -409,18 +409,18 @@ RSpec.describe Cask::CaskLoader, :cask do
       end
 
       it "raises CaskInvalidError" do
-        loader = Cask::CaskLoader::FromPathLoader.new(cask_file)
+        loader = described_class::FromPathLoader.new(cask_file)
         expect { loader.load(config: nil) }.to raise_error(Cask::CaskInvalidError)
       end
 
       it "does not set Homebrew.failed" do
-        loader = Cask::CaskLoader::FromPathLoader.new(cask_file)
+        loader = described_class::FromPathLoader.new(cask_file)
         expect { loader.load(config: nil) }.to raise_error(Cask::CaskInvalidError)
         expect(Homebrew).not_to be_failed
       end
 
       it "raises CaskUnreadableError when loaded from installed caskfile" do
-        loader = Cask::CaskLoader::FromPathLoader.new(cask_file)
+        loader = described_class::FromPathLoader.new(cask_file)
         loader.from_installed_caskfile = true
         expect { loader.load(config: nil) }.to raise_error(Cask::CaskUnreadableError, /appcast/)
       end
@@ -481,12 +481,12 @@ RSpec.describe Cask::CaskLoader, :cask do
       end
 
       it "raises CaskInvalidError" do
-        loader = Cask::CaskLoader::FromPathLoader.new(cask_file)
+        loader = described_class::FromPathLoader.new(cask_file)
         expect { loader.load(config: nil) }.to raise_error(Cask::CaskInvalidError, /Unknown key: :formula/)
       end
 
       it "raises CaskUnreadableError when loaded from installed caskfile" do
-        loader = Cask::CaskLoader::FromPathLoader.new(cask_file)
+        loader = described_class::FromPathLoader.new(cask_file)
         loader.from_installed_caskfile = true
         expect { loader.load(config: nil) }.to raise_error(Cask::CaskUnreadableError, /Unknown key: :formula/)
       end
@@ -539,13 +539,7 @@ RSpec.describe Cask::CaskLoader, :cask do
 
     context "when HOMEBREW_FORBID_PACKAGES_FROM_PATHS is enabled" do
       it "allows loading casks from symlinked taps" do
-        loader = Cask::CaskLoader::FromPathLoader.try_new(cask_file_path)
-        expect(loader).not_to be_nil
-        expect(loader).to be_a(Cask::CaskLoader::FromPathLoader)
-
-        cask = loader.load(config: nil)
-        expect(cask.token).to eq(cask_token)
-        expect(cask.version).to eq(Version.new("1.0.0"))
+        expect(described_class.from_path(cask_file_path).token).to eq(cask_token)
       end
     end
 
@@ -555,9 +549,7 @@ RSpec.describe Cask::CaskLoader, :cask do
       end
 
       it "allows loading casks from symlinked taps" do
-        loader = Cask::CaskLoader::FromPathLoader.try_new(cask_file_path)
-        expect(loader).not_to be_nil
-        expect(loader).to be_a(Cask::CaskLoader::FromPathLoader)
+        expect(described_class.from_path(cask_file_path).token).to eq(cask_token)
       end
     end
   end
@@ -571,7 +563,7 @@ RSpec.describe Cask::CaskLoader, :cask do
     end
     let(:api_artifacts) { [{ uninstall: [{ quit: "com.example.api" }] }, { app: ["API.app"] }] }
 
-    def stub_api_loader(token, loader = Cask::CaskLoader::FromInstanceLoader.new(api_cask))
+    def stub_api_loader(token, loader = instance_double(Cask::CaskLoader::FromAPILoader, load: api_cask))
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with(token).and_return(loader)
     end
 
@@ -599,8 +591,9 @@ RSpec.describe Cask::CaskLoader, :cask do
 
     it "recovers from the local core tap when the API is opted out of", :no_api do
       token = "opted-out-cask"
-      allow(Cask::CaskLoader::FromNameLoader).to receive(:try_new).with(token, warn: false)
-                                                                  .and_return(Cask::CaskLoader::FromInstanceLoader.new(api_cask))
+      allow(Cask::CaskLoader::FromNameLoader).to receive(:try_new).with(token, warn: false).and_return(
+        instance_double(Cask::CaskLoader::FromAPILoader, load: api_cask),
+      )
       allow(Homebrew::API).to receive(:cask_token?).and_raise(ErrorDuringExecution.new(["curl"], status: 22))
 
       expect(described_class.resolve_installed_artifacts(token, nil, tap: CoreCaskTap.instance)).to eq(api_artifacts)

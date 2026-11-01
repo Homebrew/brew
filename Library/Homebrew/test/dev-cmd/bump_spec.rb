@@ -63,7 +63,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
   end
 
   let(:c_basic) do
-    Cask::CaskLoader.load(+<<-RUBY)
+    Cask::CaskLoader.from_content(+<<-RUBY)
       cask "basic_cask" do
         version "1.2.3"
 
@@ -73,7 +73,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
     RUBY
   end
   let(:c_disabled) do
-    Cask::CaskLoader.load(+<<-RUBY)
+    Cask::CaskLoader.from_content(+<<-RUBY)
       cask "disabled_cask" do
         version "1.2.3"
 
@@ -85,7 +85,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
     RUBY
   end
   let(:c_partially_disabled_arch) do
-    Cask::CaskLoader.load(<<~RUBY)
+    Cask::CaskLoader.from_content(<<~RUBY)
       cask "partially_disabled_arch_cask" do
         version "1.2.3"
 
@@ -99,7 +99,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
     RUBY
   end
   let(:c_partially_disabled_os) do
-    Cask::CaskLoader.load(<<~RUBY)
+    Cask::CaskLoader.from_content(<<~RUBY)
       cask "partially_disabled_os_cask" do
         version "1.2.3"
 
@@ -113,7 +113,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
     RUBY
   end
   let(:c_latest) do
-    Cask::CaskLoader.load(+<<-RUBY)
+    Cask::CaskLoader.from_content(+<<-RUBY)
       cask "latest_cask" do
         version :latest
         sha256 :no_check
@@ -476,7 +476,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
     end
 
     let(:c_arm_only) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "arm_only_cask" do
           arch arm: "arm64", intel: "x64"
 
@@ -493,7 +493,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
       RUBY
     end
     let(:c_intel_only) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "intel_only_cask" do
           arch arm: "arm64", intel: "x64"
 
@@ -510,7 +510,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
       RUBY
     end
     let(:c_multi_arch) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "multi_arch_cask" do
           arch arm: "arm64", intel: "x64"
 
@@ -552,7 +552,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
           name "Foo"
         end
       RUBY
-      Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { Cask::CaskLoader.load(path) }
+      Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { Cask::CaskLoader.from_path(path) }
     end
 
     let(:c_macos_versions) do
@@ -571,7 +571,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
           app "Foo.app"
         end
       RUBY
-      Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { Cask::CaskLoader.load(path) }
+      Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { Cask::CaskLoader.from_path(path) }
     end
 
     it "resolves existing per-OS versions for each supported platform" do
@@ -646,7 +646,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
 
     it "simulates only arm and consolidates to a general version when `depends_on arch:` restricts to arm-only" do
       allow(c_arm_only).to receive(:sourcefile_path).and_return(Pathname("arm_only_cask.rb"))
-      allow(Cask::CaskLoader).to receive(:load).and_return(c_arm_only)
+      allow(Cask::CaskLoader).to receive(:from_path).and_return(c_arm_only)
       expect(bump).to receive(:livecheck_result).once.and_return([Version.new("1.2.4"), nil])
 
       version_info = bump.retrieve_versions_by_arch(
@@ -657,7 +657,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
 
     it "simulates only intel and consolidates to a general version when `depends_on arch:` restricts to intel-only" do
       allow(c_intel_only).to receive(:sourcefile_path).and_return(Pathname("intel_only_cask.rb"))
-      allow(Cask::CaskLoader).to receive(:load).and_return(c_intel_only)
+      allow(Cask::CaskLoader).to receive(:from_path).and_return(c_intel_only)
       expect(bump).to receive(:livecheck_result).once.and_return([Version.new("1.2.4"), nil])
 
       version_info = bump.retrieve_versions_by_arch(
@@ -699,7 +699,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
 
     it "records cooldown-skipped versions per architecture" do
       allow(c_multi_arch).to receive(:sourcefile_path).and_return(Pathname("multi_arch_cask.rb"))
-      allow(Cask::CaskLoader).to receive(:load).and_return(c_multi_arch)
+      allow(Cask::CaskLoader).to receive(:from_path).and_return(c_multi_arch)
       expect(bump).to receive(:livecheck_result).twice.and_return(
         [Version.new("1.2.3"), Version.new("1.2.4")],
         [Version.new("1.2.3"), Version.new("1.2.5")],

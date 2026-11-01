@@ -5,6 +5,26 @@ require "cask/cask"
 require "cask/ci/zap_check"
 
 RSpec.describe Cask::CI::ZapCheck do
+  it "keeps the selected tap source when generating zap directives" do
+    path = CoreCaskTap.instance.new_cask_path("zap-source")
+    path.dirname.mkpath
+    path.write 'cask "zap-source" do; version "1.0"; end'
+    allow(described_class).to receive(:exercise)
+    result = instance_double(SystemCommand::Result, success?: true, stdout: "zap :not_required")
+    expect(described_class).to receive(:generate_zap).with(path.to_s).and_return(result)
+
+    described_class.run(path.to_s)
+  end
+
+  it "selects the explicit tap-source mode in the zap subprocess" do
+    expect(described_class).to receive(:system_command)
+      .with(ENV.fetch("HOMEBREW_BREW_FILE"), args: ["generate-zap", "--tap-source", "Casks/example.rb"],
+            print_stderr: false, timeout: Cask::CI::ZapCheck::GENERATE_ZAP_TIMEOUT)
+      .and_return(instance_double(SystemCommand::Result))
+
+    described_class.generate_zap("Casks/example.rb")
+  end
+
   it "recognises paths covered by zap directives" do
     cask = Cask::Cask.new("cask-ci-test") do
       zap trash: ["~/Library/Application Support/Cask CI Test", "~/Library/Preferences/*.plist"],

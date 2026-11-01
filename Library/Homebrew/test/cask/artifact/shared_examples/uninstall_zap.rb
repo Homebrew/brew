@@ -24,7 +24,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
   end
 
   context "when using :launchctl" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-launchctl")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-launchctl")) }
     let(:launchctl_list_cmd) { %w[/bin/launchctl list my.fancy.package.service] }
     let(:launchctl_remove_cmd) { %w[/bin/launchctl remove my.fancy.package.service] }
     let(:service_info) do
@@ -94,7 +94,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
   end
 
   context "when using :launchctl with regex wildcard" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-launchctl-wildcard")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-launchctl-wildcard")) }
     let(:launchctl_regex) { "my.fancy.package.service.*" }
     let(:service_info) do
       <<~EOS
@@ -154,7 +154,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
   end
 
   context "when using :pkgutil" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-pkgutil")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-pkgutil")) }
 
     let(:main_pkg_id) { "my.fancy.package.main" }
     let(:agent_pkg_id) { "my.fancy.package.agent" }
@@ -178,7 +178,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
   end
 
   context "when using :kext" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-kext")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-kext")) }
     let(:kext_id) { "my.fancy.package.kernelextension" }
 
     it "is supported" do
@@ -202,7 +202,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
   end
 
   context "when using :quit" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-quit")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-quit")) }
     let(:bundle_id) { "my.fancy.package.app" }
 
     it "is skipped when the user is not a GUI user" do
@@ -255,7 +255,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
   end
 
   context "when using :signal" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-signal")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-signal")) }
 
     let(:bundle_id) { "my.fancy.package.app" }
     let(:signals) { %w[TERM KILL] }
@@ -297,7 +297,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
       let(:glob_path_alt) { Pathname.new("#{dir}/glob_path_alt") }
       let(:paths) { [absolute_path, path_with_tilde, glob_path, glob_path_alt] }
       let(:fake_system_command) { NeverSudoSystemCommand }
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-#{directive}")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-#{directive}")) }
 
       before do
         ENV["HOME"] = dir
@@ -331,7 +331,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
     context "when using #{script_type.inspect}" do
       let(:fake_system_command) { NeverSudoSystemCommand }
       let(:token) { "with-#{artifact_dsl_key}-#{script_type}".tr("_", "-") }
-      let(:cask) { Cask::CaskLoader.load(cask_path(token.to_s)) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path(token.to_s)) }
       let(:script_pathname) { cask.staged_path.join("MyFancyPkg", "FancyUninstaller.tool") }
 
       it "is supported" do
@@ -353,7 +353,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
   end
 
   context "when using :login_item" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-login-item")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-login-item")) }
 
     it "is supported" do
       expect(subject).to receive(:system_command)

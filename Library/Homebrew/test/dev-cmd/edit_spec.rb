@@ -18,8 +18,8 @@ RSpec.describe Homebrew::DevCmd::Edit do
       .to output(/# something here/).to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
-    expect { brew "edit", "--print-path", "--cask", cask_path("local-caffeine") }
-      .to output("#{cask_path("local-caffeine")}\n").to_stdout
+    expect { brew "edit", "--print-path", "--cask", "local-caffeine" }
+      .to output("#{CoreCaskTap.instance.cask_dir}/local-caffeine.rb\n").to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
   end

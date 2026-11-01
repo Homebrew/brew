@@ -12,7 +12,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
     include_examples "uninstall/zap directive dispatch"
 
     context "when sudo is disabled" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-launchctl")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-launchctl")) }
 
       it "removes user services without probing system services" do
         ENV["HOMEBREW_NO_SUDO"] = "1"
@@ -30,7 +30,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
     end
 
     it "does not query sudo for unmatched service wildcards" do
-      artifact = described_class.new(Cask::CaskLoader.load(cask_path("with-uninstall-launchctl")),
+      artifact = described_class.new(Cask::CaskLoader.from_path(cask_path("with-uninstall-launchctl")),
                                      launchctl: "unmatched.*")
       allow(artifact).to receive(:find_launchctl_with_wildcard).and_return([])
 
@@ -41,7 +41,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
 
     describe "upgrade/reinstall uninstall directives" do
       context "with-uninstall-quit" do
-        let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-quit")) }
+        let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-quit")) }
         let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
         it "invokes :quit during upgrade" do
@@ -79,7 +79,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
       end
 
       context "with-uninstall-signal" do
-        let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-signal")) }
+        let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-signal")) }
         let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
         it "skips :signal by default during upgrade" do
@@ -106,7 +106,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
       end
 
       context "with-uninstall-signal-on-upgrade" do
-        let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-signal-on-upgrade")) }
+        let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-signal-on-upgrade")) }
         let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
         it "invokes :signal during upgrade" do
@@ -134,7 +134,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
     end
 
     context "with-uninstall-both-on-upgrade" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-both-on-upgrade")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-both-on-upgrade")) }
       let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
       it "invokes both quit and signal during upgrade when on_upgrade: :signal" do
@@ -149,7 +149,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
     end
 
     context "with-uninstall-quit-only-on-upgrade" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-quit-only-on-upgrade")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-quit-only-on-upgrade")) }
       let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
       it "invokes quit but not signal during upgrade without on_upgrade: :signal" do
@@ -166,7 +166,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
   end
 
   describe "#uninstall_quit" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-quit")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-quit")) }
     let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
     let(:fake_system_command) { NeverSudoSystemCommand }
@@ -238,7 +238,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
     subject(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
     let(:fake_system_command) { NeverSudoSystemCommand }
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-signal-wildcard")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-signal-wildcard")) }
 
     before do
       allow(User.current).to receive(:gui?).and_return(true)
@@ -359,7 +359,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
     subject(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
     let(:fake_system_command) { NeverSudoSystemCommand }
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-quit")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-quit")) }
     let(:bundle_id) { "my.fancy.package.app" }
 
     before { allow(User.current).to receive(:gui?).and_return true }
@@ -402,7 +402,7 @@ RSpec.describe Cask::Artifact::Uninstall, :cask do
     context "when using :rmdir" do
       let(:fake_system_command) { NeverSudoSystemCommand }
       let(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-uninstall-rmdir")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-rmdir")) }
       let(:empty_directory) { Pathname.new("#{TEST_TMPDIR}/empty_directory_path") }
       let(:empty_directory_tree) { empty_directory.join("nested", "empty_directory_path") }
       let(:ds_store) { empty_directory.join(".DS_Store") }

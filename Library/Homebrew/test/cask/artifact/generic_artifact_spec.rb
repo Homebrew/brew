@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::Artifact, :cask do
-  let(:cask) { Cask::CaskLoader.load(cask_path("with-generic-artifact")) }
+  let(:cask) { Cask::CaskLoader.from_path(cask_path("with-generic-artifact")) }
 
   let(:install_phase) do
     lambda do

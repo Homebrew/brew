@@ -26,7 +26,7 @@ RSpec.describe Homebrew::Cmd::Link do
   end
 
   it "links a given Cask's symlinked artifacts", :cask do
-    cask = Cask::CaskLoader.load(cask_path("with-binary"))
+    cask = Cask::CaskLoader.from_path(cask_path("with-binary"))
     InstallHelper.install_without_artifacts_with_caskfile(cask)
     cmd = described_class.new(["--cask", "with-binary"])
     allow(cmd.args.named).to receive(:to_kegs_to_casks).and_return([[], [cask]])
@@ -36,7 +36,7 @@ RSpec.describe Homebrew::Cmd::Link do
   end
 
   it "refuses to link a Cask over an existing file before linking anything", :cask do
-    cask = Cask::CaskLoader.load(cask_path("with-binary"))
+    cask = Cask::CaskLoader.from_path(cask_path("with-binary"))
     InstallHelper.install_without_artifacts_with_caskfile(cask)
     cask.config.binarydir.mkpath
     FileUtils.touch cask.config.binarydir/"binary"

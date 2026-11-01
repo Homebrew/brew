@@ -58,7 +58,7 @@ RSpec.describe Cask::Upgrade, :cask do
     it "reopens apps without inheriting Homebrew's temporary directory" do
       ENV["TMPDIR"] = ENV["HOMEBREW_TEMP"] = "/private/tmp"
       environment = mktmpdir/"reopened-app-environment"
-      old_cask = Cask::CaskLoader.load(cask_path("with-uninstall-quit"))
+      old_cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-quit"))
       old_cask.artifacts.grep(Cask::Artifact::Uninstall).fetch(0)
               .bundle_ids_to_reopen << "my.fancy.package.app"
 
@@ -100,7 +100,7 @@ RSpec.describe Cask::Upgrade, :cask do
         "outdated/version-latest",
         "outdated/renamed-app",
       ].each do |cask_name|
-        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask_name)))
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path(cask_name)))
       end
 
       write_info_plist(auto_updates_path, short_version: "2.57", bundle_version: "2057")
@@ -453,7 +453,7 @@ RSpec.describe Cask::Upgrade, :cask do
         "outdated/local-caffeine",
         "outdated/auto-updates",
       ].each do |cask_name|
-        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask_name)))
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path(cask_name)))
       end
 
       write_info_plist(auto_updates_path, short_version: "2.57", bundle_version: "2057")
@@ -516,8 +516,8 @@ RSpec.describe Cask::Upgrade, :cask do
   end
 
   context "when releasing quarantine during upgrade" do
-    let(:outdated_auto_updates) { Cask::CaskLoader.load(cask_path("outdated/auto-updates")) }
-    let(:outdated_local_caffeine) { Cask::CaskLoader.load(cask_path("outdated/local-caffeine")) }
+    let(:outdated_auto_updates) { Cask::CaskLoader.from_path(cask_path("outdated/auto-updates")) }
+    let(:outdated_local_caffeine) { Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")) }
     let(:auto_updates_identity) do
       Cask::Quarantine::SigningIdentity.new(
         requirement: 'identifier "sh.brew.auto-updates" and certificate leaf[subject.OU] = "ABCDE12345"',
@@ -534,7 +534,7 @@ RSpec.describe Cask::Upgrade, :cask do
         "outdated/local-caffeine",
         "outdated/auto-updates",
       ].each do |cask_name|
-        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask_name)))
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path(cask_name)))
       end
     end
 
@@ -686,7 +686,7 @@ RSpec.describe Cask::Upgrade, :cask do
 
   context "when an upgrade decides on quarantine after install" do
     before do
-      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/local-caffeine"))).install
+      Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
       allow(Cask::Quarantine).to receive(:available?).and_return(true)
     end
 
@@ -757,7 +757,7 @@ RSpec.describe Cask::Upgrade, :cask do
   end
 
   it "warns and skips disabled casks" do
-    cask = Cask::CaskLoader.load(cask_path("livecheck/livecheck-disabled"))
+    cask = Cask::CaskLoader.from_path(cask_path("livecheck/livecheck-disabled"))
     InstallHelper.stub_cask_installation(cask)
     allow(cask).to receive(:outdated?).with(greedy: true).and_return(true)
     summary_disabled = []
@@ -772,7 +772,7 @@ RSpec.describe Cask::Upgrade, :cask do
 
   context "when upgrading the same cask twice" do
     before do
-      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/local-caffeine"))).install
+      Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
     end
 
     it "uses the installed metadata version for the second upgrade" do
@@ -797,7 +797,7 @@ RSpec.describe Cask::Upgrade, :cask do
 
   context "when quarantine support is unavailable" do
     before do
-      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/local-caffeine"))).install
+      Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
     end
 
     it "upgrades without reading quarantine metadata" do
@@ -811,7 +811,7 @@ RSpec.describe Cask::Upgrade, :cask do
 
   context "when upgrading after a forced upgrade without a cask receipt" do
     before do
-      InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("outdated/local-caffeine")))
+      InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")))
     end
 
     it "uses the forced upgrade metadata for the next upgrade" do
@@ -819,7 +819,9 @@ RSpec.describe Cask::Upgrade, :cask do
       receipt_path.unlink
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).and_call_original
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with("local-caffeine").and_return(
-        Cask::CaskLoader::FromInstanceLoader.new(Cask::Cask.new("local-caffeine") { app "Caffeine.app" }),
+        instance_double(Cask::CaskLoader::FromAPILoader, load: Cask::Cask.new("local-caffeine") {
+          app "Caffeine.app"
+        }),
       )
 
       expect(receipt_path).not_to exist
@@ -853,7 +855,7 @@ RSpec.describe Cask::Upgrade, :cask do
 
   context "when an upgrade fails after installing artifacts" do
     before do
-      Cask::Installer.new(Cask::CaskLoader.load(cask_path("outdated/local-caffeine"))).install
+      Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
     end
 
     it "keeps the old cask receipt" do
@@ -880,7 +882,7 @@ RSpec.describe Cask::Upgrade, :cask do
         "outdated/bad-checksum",
         "outdated/will-fail-if-upgraded",
       ].each do |cask|
-        Cask::Installer.new(Cask::CaskLoader.load(cask_path(cask))).install
+        Cask::Installer.new(Cask::CaskLoader.from_path(cask_path(cask))).install
       end
     end
 
@@ -968,7 +970,7 @@ RSpec.describe Cask::Upgrade, :cask do
         "outdated/local-transmission-zip",
         "outdated/bad-checksum2",
       ].each do |cask|
-        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask)))
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path(cask)))
       end
 
       bad_checksum_2_path = Pathname(Cask::CaskLoader.load("bad-checksum2").config.appdir).join("container")
@@ -1033,7 +1035,7 @@ RSpec.describe Cask::Upgrade, :cask do
         "outdated/local-caffeine",
         "outdated/local-transmission-zip",
       ].each do |cask|
-        InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path(cask)))
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path(cask)))
       end
     end
 

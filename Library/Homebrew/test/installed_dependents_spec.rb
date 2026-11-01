@@ -229,7 +229,7 @@ RSpec.describe InstalledDependents do
     end
 
     def stub_cask_name(name, version, dependency)
-      c = Cask::CaskLoader.load(<<-RUBY)
+      c = Cask::CaskLoader.from_content(<<-RUBY)
         cask "#{name}" do
           version "#{version}"
 

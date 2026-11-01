@@ -13,7 +13,7 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
     cask_file.dirname.mkpath
     FileUtils.cp cask_path("local-caffeine"), cask_file
     tap.clear_cache
-    cask = Cask::CaskLoader.load(cask_file)
+    cask = Cask::CaskLoader.from_path(cask_file)
     InstallHelper.stub_cask_installation(cask)
     appdir = Pathname(cask.config.appdir)
 
@@ -30,7 +30,7 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
       ENV["HOMEBREW_NO_INSTALL_FROM_API"] = nil
       expect do
-        brew "uninstall", "--cask", "./Casks/l/local-caffeine.rb",
+        brew "uninstall", "--cask", "local-caffeine",
              "HOMEBREW_CASK_OPTS" => "--appdir=#{appdir}"
       end
         .to output(/Uninstalling Cask local-caffeine/).to_stdout

@@ -1363,7 +1363,7 @@ module Cask
 
       sourcefile_path.atomic_write(cask_ast.process)
       # Raises if the rewrite is invalid, which the `rescue` restores.
-      CaskLoader.load(sourcefile_path)
+      CaskLoader.from_path(sourcefile_path)
       add_error message, location:, corrected: true
       true
     rescue => e

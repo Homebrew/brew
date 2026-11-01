@@ -3,7 +3,7 @@
 
 RSpec.describe Cask::Artifact::App, :cask do
   describe "activate to alternate target" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-alt-target")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-alt-target")) }
 
     let(:install_phase) do
       cask.artifacts.grep(described_class).each do |artifact|

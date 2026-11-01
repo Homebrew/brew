@@ -16,12 +16,10 @@ RSpec.describe Homebrew::Cmd::Home do
     testballhome.homepage
   end
 
-  let(:local_caffeine_path) do
-    cask_path("local-caffeine")
-  end
+  let(:local_caffeine_name) { "local-caffeine" }
 
   let(:local_caffeine_homepage) do
-    Cask::CaskLoader.load(local_caffeine_path).homepage
+    Cask::CaskLoader.load(local_caffeine_name).homepage
   end
 
   it_behaves_like "parseable arguments"
@@ -31,9 +29,9 @@ RSpec.describe Homebrew::Cmd::Home do
       homepage "#{testballhome_homepage}"
     RUBY
 
-    expect { brew "home", "testballhome", local_caffeine_path, "HOMEBREW_BROWSER" => "echo" }
+    expect { brew "home", "testballhome", local_caffeine_name, "HOMEBREW_BROWSER" => "echo" }
       .to output(/#{Regexp.escape(testballhome_homepage)}.*#{Regexp.escape(local_caffeine_homepage)}/m).to_stdout
-      .and output(/Treating #{Regexp.escape(local_caffeine_path)} as a cask/).to_stderr
+      .and not_to_output.to_stderr
       .and be_a_success
     expect { brew "home", "HOMEBREW_BROWSER" => "echo" }
       .to output("https://brew.sh\n").to_stdout
@@ -52,13 +50,13 @@ RSpec.describe Homebrew::Cmd::Home do
   end
 
   it "opens the homepage for a given Cask", :cask, :needs_macos do
-    cmd = described_class.new([local_caffeine_path.to_s])
+    cmd = described_class.new([local_caffeine_name.to_s])
     expect(Utils::Browser).to receive(:open).with(local_caffeine_homepage)
 
     expect { cmd.run }
       .to output(/Opening homepage for Cask local-caffeine/).to_stdout
-      .and output(/Treating #{Regexp.escape(local_caffeine_path)} as a cask/).to_stderr
-    cmd = described_class.new(["--cask", local_caffeine_path.to_s])
+      .and not_to_output.to_stderr
+    cmd = described_class.new(["--cask", local_caffeine_name.to_s])
     expect(Utils::Browser).to receive(:open).with(local_caffeine_homepage)
 
     expect { cmd.run }
@@ -68,11 +66,11 @@ RSpec.describe Homebrew::Cmd::Home do
 
   it "opens the homepages for a given formula and Cask", :cask, :needs_macos do
     stub_formula_loader testballhome, call_original: true
-    cmd = described_class.new(["testballhome", local_caffeine_path.to_s])
+    cmd = described_class.new(["testballhome", local_caffeine_name.to_s])
     expect(Utils::Browser).to receive(:open).with(testballhome_homepage, local_caffeine_homepage)
 
     expect { cmd.run }
       .to output(/Opening homepage for Formula testballhome.*Opening homepage for Cask local-caffeine/m).to_stdout
-      .and output(/Treating #{Regexp.escape(local_caffeine_path)} as a cask/).to_stderr
+      .and not_to_output.to_stderr
   end
 end

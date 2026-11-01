@@ -64,7 +64,7 @@ RSpec.describe Homebrew::Cmd::Outdated do
   end
 
   it "excludes non-outdated auto-updating casks without --greedy-auto-updates", :cask do
-    cask = Cask::CaskLoader.load(cask_path("auto-updates"))
+    cask = Cask::CaskLoader.from_path(cask_path("auto-updates"))
     cmd = described_class.new([])
 
     expect(cask).to receive(:outdated?)
@@ -74,7 +74,7 @@ RSpec.describe Homebrew::Cmd::Outdated do
   end
 
   it "checks auto-updating casks with --greedy-auto-updates", :cask do
-    cask = Cask::CaskLoader.load(cask_path("auto-updates"))
+    cask = Cask::CaskLoader.from_path(cask_path("auto-updates"))
     cmd = described_class.new(["--greedy-auto-updates"])
 
     expect(cask).to receive(:outdated?)
@@ -84,9 +84,9 @@ RSpec.describe Homebrew::Cmd::Outdated do
   end
 
   it "excludes auto-updating casks when auto-update upgrades are disabled", :cask do
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("outdated/auto-updates")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/auto-updates")))
 
-    info_plist = Pathname(Cask::CaskLoader.load(cask_path("auto-updates")).config.appdir)
+    info_plist = Pathname(Cask::CaskLoader.from_path(cask_path("auto-updates")).config.appdir)
                  .join("MyFancyApp.app/Contents/Info.plist")
     info_plist.dirname.mkpath
     info_plist.write <<~PLIST
@@ -111,7 +111,7 @@ RSpec.describe Homebrew::Cmd::Outdated do
   it "outputs JSON for outdated formulae and casks", :cask, :integration_test do
     setup_test_formula "testball"
     (HOMEBREW_CELLAR/"testball/0.0.1/foo").mkpath
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("outdated/local-caffeine")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")))
 
     expected_json = JSON.pretty_generate({
       formulae: [{
@@ -157,7 +157,7 @@ RSpec.describe Homebrew::Cmd::Outdated do
   end
 
   it "reports a cask installed below --minimum-version", :cask do
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("outdated/local-caffeine")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")))
 
     expect { described_class.new(["--cask", "local-caffeine", "--minimum-version=1.2.3"]).run }
       .to output("local-caffeine\n").to_stdout
@@ -165,14 +165,14 @@ RSpec.describe Homebrew::Cmd::Outdated do
   end
 
   it "does not report a cask installed at --minimum-version", :cask do
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("local-caffeine")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("local-caffeine")))
 
     expect { described_class.new(["--cask", "local-caffeine", "--minimum-version=1.2.3"]).run }
       .not_to output.to_stdout
   end
 
   it "raises UsageError for an invalid cask --minimum-version", :cask do
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("local-caffeine")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("local-caffeine")))
 
     expect { described_class.new(["--cask", "local-caffeine", "--minimum-version=1/2"]).run }
       .to raise_error(UsageError, %r{invalid `--minimum-version`: 1/2})
@@ -210,7 +210,7 @@ RSpec.describe Homebrew::Cmd::Outdated do
   end
 
   it "outputs JSON for a cask installed below --minimum-version", :cask do
-    InstallHelper.stub_cask_installation(Cask::CaskLoader.load(cask_path("outdated/local-caffeine")))
+    InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")))
 
     expected_json = JSON.pretty_generate({
       formulae: [],

@@ -99,8 +99,8 @@ RSpec.describe Cask::List, :cask do
   end
 
   describe "given a set of installed Casks" do
-    let(:caffeine) { Cask::CaskLoader.load(cask_path("local-caffeine")) }
-    let(:transmission) { Cask::CaskLoader.load(cask_path("local-transmission-zip")) }
+    let(:caffeine) { Cask::CaskLoader.from_path(cask_path("local-caffeine")) }
+    let(:transmission) { Cask::CaskLoader.from_path(cask_path("local-transmission-zip")) }
     let(:casks) { [caffeine, transmission] }
 
     it "lists the installed files for those Casks" do

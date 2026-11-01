@@ -3,7 +3,7 @@
 
 RSpec.describe Cask::Artifact::Binary, :cask do
   let(:cask) do
-    Cask::CaskLoader.load(cask_path("with-binary")).tap do |cask|
+    Cask::CaskLoader.from_path(cask_path("with-binary")).tap do |cask|
       InstallHelper.install_without_artifacts(cask)
     end
   end
@@ -22,7 +22,7 @@ RSpec.describe Cask::Artifact::Binary, :cask do
 
   context "when --no-binaries is specified" do
     let(:cask) do
-      Cask::CaskLoader.load(cask_path("with-binary"))
+      Cask::CaskLoader.from_path(cask_path("with-binary"))
     end
 
     it "doesn't link the binary when --no-binaries is specified" do
@@ -42,7 +42,7 @@ RSpec.describe Cask::Artifact::Binary, :cask do
 
   context "when the binary is not executable" do
     let(:cask) do
-      Cask::CaskLoader.load(cask_path("with-non-executable-binary")).tap do |cask|
+      Cask::CaskLoader.from_path(cask_path("with-non-executable-binary")).tap do |cask|
         InstallHelper.install_without_artifacts(cask)
       end
     end
@@ -119,7 +119,7 @@ RSpec.describe Cask::Artifact::Binary, :cask do
 
   context "when the binary is inside an app package" do
     let(:cask) do
-      Cask::CaskLoader.load(cask_path("with-embedded-binary")).tap do |cask|
+      Cask::CaskLoader.from_path(cask_path("with-embedded-binary")).tap do |cask|
         InstallHelper.install_without_artifacts(cask)
       end
     end

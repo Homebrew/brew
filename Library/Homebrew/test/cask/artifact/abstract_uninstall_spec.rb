@@ -9,7 +9,7 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
     describe "#each_resolved_path for #{artifact_dsl_key.inspect}" do
       subject(:artifact) { cask.artifacts.find { |candidate| candidate.is_a?(artifact_class) } }
 
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-#{artifact_dsl_key}-delete")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-#{artifact_dsl_key}-delete")) }
 
       before do
         ENV["HOME"] = TEST_TMPDIR

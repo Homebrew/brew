@@ -48,7 +48,7 @@ RSpec.describe Cask::Download, :cask do
 
   describe "#fetch" do
     it "fails before downloading if sha256 :no_check is used with --require-sha" do
-      no_checksum = Cask::CaskLoader.load(cask_path("no-checksum"))
+      no_checksum = Cask::CaskLoader.from_path(cask_path("no-checksum"))
       download = described_class.new(no_checksum, require_sha: true)
 
       expect(download).not_to receive(:downloader)
@@ -56,7 +56,7 @@ RSpec.describe Cask::Download, :cask do
     end
 
     it "fails before downloading if sha256 is nil with --require-sha" do
-      missing_checksum = Cask::CaskLoader.load(cask_path("missing-checksum"))
+      missing_checksum = Cask::CaskLoader.from_path(cask_path("missing-checksum"))
       download = described_class.new(missing_checksum, require_sha: true)
       allow(download).to receive(:downloader) { raise "download attempted" }
 
@@ -80,7 +80,7 @@ RSpec.describe Cask::Download, :cask do
 
   describe "#stage_from_download_queue?" do
     it "does not mutate download state" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       download = described_class.new(cask)
 
       expect(download).not_to receive(:primary_container)
@@ -92,7 +92,7 @@ RSpec.describe Cask::Download, :cask do
 
   describe "#purge_staged_from_download_queue" do
     it "removes stale markers with permission-aware removal" do
-      cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       download = described_class.new(cask)
       staged_marker = download.staged_path_from_download_queue_marker
       staged_marker.dirname.mkpath

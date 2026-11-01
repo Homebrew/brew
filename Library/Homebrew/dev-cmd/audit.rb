@@ -271,7 +271,7 @@ module Homebrew
             # between OSes, so read it on the OS being audited.
             os = :linux if os != :linux && !cask.supports_macos?
             os = :macos if os == :linux && !cask.supports_linux?
-            cask_archs = SimulateSystem.with(os:, arch:) { Cask::CaskLoader.load(path) }
+            cask_archs = SimulateSystem.with(os:, arch:) { reload_cask(cask) }
                                        .depends_on.arch&.map { |cask_arch| cask_arch[:type] }
             arch = OnSystem::ARCH_OPTIONS.find { cask_archs.include?(it) } if cask_archs&.exclude?(arch)
 
@@ -279,7 +279,7 @@ module Homebrew
               odebug "Auditing Cask #{cask} on os #{os} and arch #{arch}"
 
               Cask::Auditor.audit(
-                Cask::CaskLoader.load(path),
+                reload_cask(cask),
                 # For switches, we add `|| nil` so that `nil` will be passed
                 # instead of `false` if they aren't set.
                 # This way, we can distinguish between "not set" and "set to false".
@@ -361,6 +361,18 @@ module Homebrew
 
       private
 
+      sig { params(cask: Cask::Cask).returns(Cask::Cask) }
+      def reload_cask(cask)
+        path = cask.sourcefile_path
+        raise Cask::CaskUnavailableError.new(cask.token, "No source file is available for audit.") if path.nil?
+
+        if cask.loaded_from_metadata?
+          Cask::CaskLoader.load_from_installed_caskfile(path)
+        else
+          Cask::CaskLoader.from_path(path)
+        end
+      end
+
       sig {
         params(
           path:            T.any(String, Pathname),
@@ -373,7 +385,7 @@ module Homebrew
           return if Utils::AST::CaskAST.new(Pathname(path).read).depends_on_macos?
 
           cask = SimulateSystem.with(os: :macos, arch: cask_audit_arch) do
-            loaded_cask = Cask::CaskLoader.load(path)
+            loaded_cask = Cask::CaskLoader.from_path(path)
             loaded_cask if loaded_cask.supports_linux?
           end
           return unless cask
@@ -382,7 +394,7 @@ module Homebrew
           return cask
         end
 
-        SimulateSystem.with(os: cask_audit_os, arch: cask_audit_arch) { Cask::CaskLoader.load(path) }
+        SimulateSystem.with(os: cask_audit_os, arch: cask_audit_arch) { Cask::CaskLoader.from_path(path) }
       end
 
       sig {
