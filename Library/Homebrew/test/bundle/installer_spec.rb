@@ -494,6 +494,126 @@ RSpec.describe Homebrew::Bundle::Installer do
     end
   end
 
+  describe "extension installation errors" do
+    let(:failed_entry) { Homebrew::Bundle::Dsl::Entry.new(:npm, "example-tool") }
+    let(:installed_entry) { Homebrew::Bundle::Dsl::Entry.new(:npm, "installed-tool") }
+    let(:actionable_entry) { Homebrew::Bundle::Dsl::Entry.new(:npm, "other-tool") }
+    let(:independent_batch_entry) { Homebrew::Bundle::Dsl::Entry.new(:cargo, "later-tool") }
+    let(:later_entry) { Homebrew::Bundle::Dsl::Entry.new(:krew, "last-tool") }
+    let(:entries) { [failed_entry, independent_batch_entry, later_entry] }
+    let(:inventory_error) do
+      ErrorDuringExecution.new(["example-tool", "list"], status: 2,
+                                                         output: [[:stderr, "inventory unavailable"]])
+    end
+
+    before do
+      allow(Homebrew::Bundle::Npm).to receive_messages(installed_packages: [], preinstall!: true, install!: true,
+                                                       install_batch!: true, reset!: nil)
+      allow(Homebrew::Bundle::Cargo).to receive_messages(preinstall!: true, install_batch!: true, reset!: nil)
+      allow(Homebrew::Bundle::Krew).to receive_messages(preinstall!: true, install!: true)
+    end
+
+    def expect_failure_and_continuation
+      expect(Homebrew::Bundle::Cargo).to receive(:install_batch!).with([independent_batch_entry], verbose: false)
+      expect(Homebrew::Bundle::Krew).to receive(:install!)
+        .with("last-tool", preinstall: true, no_upgrade: false, verbose: false, force: false)
+
+      expect do
+        expect(described_class.install!(entries, quiet: true)).to be(false)
+      end.to output(
+        /Failed to install example-tool:.*inventory unavailable.*1 Brewfile dependency failed/m,
+      ).to_stderr
+    end
+
+    context "when choosing the installation verb fails" do
+      it "reports the failure and continues independent entries" do
+        allow(Homebrew::Bundle::Npm).to receive(:installed_packages).and_raise(inventory_error)
+        expect(Homebrew::Bundle::Npm).not_to receive(:install_batch!)
+
+        expect_failure_and_continuation
+      end
+    end
+
+    context "when native batch preparation fails" do
+      before do
+        allow(Homebrew::Bundle::Npm).to receive(:preinstall!)
+          .with("example-tool", any_args).and_raise(inventory_error)
+        allow(Homebrew::Bundle::Npm).to receive(:preinstall!).with("installed-tool", any_args).and_return(false)
+      end
+
+      context "with no actionable entries" do
+        let(:entries) { [installed_entry, failed_entry, independent_batch_entry, later_entry] }
+
+        it "counts the failed entry without installing the batch" do
+          expect(Homebrew::Bundle::Npm).not_to receive(:install_batch!)
+
+          expect_failure_and_continuation
+        end
+      end
+
+      test_each([true, false]) do |batch_succeeded|
+        describe "when the remaining batch succeeds: #{batch_succeeded}" do
+          let(:entries) { [installed_entry, failed_entry, actionable_entry, independent_batch_entry, later_entry] }
+
+          it "preserves the preparation failure and installs only actionable entries" do
+            expect(Homebrew::Bundle::Npm).to receive(:install_batch!)
+              .with([actionable_entry], verbose: false).and_return(batch_succeeded)
+
+            expect_failure_and_continuation
+          end
+        end
+      end
+    end
+
+    test_each([:preinstall!, :install!]) do |method|
+      describe "when #{method} fails during a native batch retry" do
+        let(:entries) { [failed_entry, actionable_entry, independent_batch_entry, later_entry] }
+
+        it "counts the failed retry and continues other retries and entries" do
+          allow(Homebrew::Bundle::Npm).to receive(:install_batch!) do
+            allow(Homebrew::Bundle::Npm).to receive(method).with("example-tool", any_args).and_raise(inventory_error)
+            false
+          end
+          expect(Homebrew::Bundle::Npm).to receive(:install!)
+            .with("other-tool", preinstall: true, no_upgrade: false, verbose: false, force: false)
+
+          expect_failure_and_continuation
+        end
+      end
+
+      describe "when #{method} fails for a single entry" do
+        let(:failed_entry) { Homebrew::Bundle::Dsl::Entry.new(:krew, "example-tool") }
+
+        it "reports the failure and continues independent entries" do
+          allow(Homebrew::Bundle::Krew).to receive(method).with("example-tool", any_args).and_raise(inventory_error)
+
+          expect_failure_and_continuation
+        end
+      end
+    end
+
+    test_each([RuntimeError, Errno::EIO]) do |error|
+      describe "when inventory raises #{error}" do
+        let(:failed_entry) { Homebrew::Bundle::Dsl::Entry.new(:krew, "example-tool") }
+
+        it "reports the failure and continues independent entries" do
+          allow(Homebrew::Bundle::Krew).to receive(:preinstall!)
+            .with("example-tool", any_args).and_raise(error, "inventory unavailable")
+
+          expect_failure_and_continuation
+        end
+      end
+    end
+
+    test_each([Interrupt, SystemExit].product([:install_verb, :preinstall!, :install!])) do |error, method|
+      it "propagates #{error} from #{method}" do
+        allow(Homebrew::Bundle::Krew).to receive(method).and_raise(error)
+
+        expect { described_class.install!([later_entry], quiet: true) }.to raise_error(error)
+      end
+    end
+  end
+
   describe "native extension batches" do
     it "delegates entries to an extension that registers batch support" do
       first_entry = Homebrew::Bundle::Dsl::Entry.new(:npm, "typescript")

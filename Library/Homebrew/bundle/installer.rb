@@ -71,11 +71,14 @@ module Homebrew
           cls = Homebrew::Bundle.installable(type)
           next if cls.nil? || !cls.install_supported?
 
-          installable_brewfile_entries << entry
           installable_entries << InstallableEntry.new(
             entry:, verb: cls.install_verb(name, options), cls:,
             install_name: T.cast(options.fetch(:full_name, name), String)
           )
+          installable_brewfile_entries << entry
+        rescue => e
+          report_install_error(entry.name, e)
+          failure += 1
         end
 
         # Apply `trusted: true` Brewfile options before anything loads the entries.
@@ -341,6 +344,7 @@ module Homebrew
       }
       def self.batch_install_package_type!(entries, no_upgrade:, verbose:, force:, quiet:)
         cls = entries.fetch(0).cls
+        failure = 0
         actionable = entries.select do |entry|
           if cls.preinstall!(entry.name, **entry.options, no_upgrade:, verbose:)
             puts Formatter.success("#{entry.verb} #{entry.name}")
@@ -349,8 +353,12 @@ module Homebrew
             puts "Using #{entry.name}" unless quiet
             false
           end
+        rescue => e
+          report_install_error(entry.name, e)
+          failure += 1
+          false
         end
-        return [entries.length, 0] if actionable.empty?
+        return [entries.length - failure, failure] if actionable.empty?
 
         batch_succeeded = begin
           cls.install_batch!(actionable.map(&:entry), verbose:)
@@ -359,21 +367,19 @@ module Homebrew
           false
         end
         cls.reset!
-        return [entries.length, 0] if batch_succeeded
+        return [entries.length - failure, failure] if batch_succeeded
 
-        success = entries.length - actionable.length
-        failure = 0
         actionable.each do |entry|
-          entry_succeeded = !cls.preinstall!(entry.name, **entry.options, no_upgrade:, verbose: false) ||
-                            cls.install!(entry.name, **entry.options, preinstall: true, no_upgrade:, verbose:, force:)
-          if entry_succeeded
-            success += 1
-          else
-            $stderr.puts Formatter.error("#{entry.verb} #{entry.name} has failed!")
-            failure += 1
-          end
+          next unless cls.preinstall!(entry.name, **entry.options, no_upgrade:, verbose: false)
+          next if cls.install!(entry.name, **entry.options, preinstall: true, no_upgrade:, verbose:, force:)
+
+          $stderr.puts Formatter.error("#{entry.verb} #{entry.name} has failed!")
+          failure += 1
+        rescue => e
+          report_install_error(entry.name, e)
+          failure += 1
         end
-        [success, failure]
+        [entries.length - failure, failure]
       end
       private_class_method :batch_install_package_type!
 
@@ -407,8 +413,17 @@ module Homebrew
           $stderr.puts Formatter.error("#{verb} #{name} has failed!")
           false
         end
+      rescue => e
+        report_install_error(entry.name, e)
+        false
       end
       private_class_method :install_entry!
+
+      sig { params(name: String, error: StandardError).void }
+      def self.report_install_error(name, error)
+        $stderr.puts Formatter.error("Failed to install #{name}: #{error}")
+      end
+      private_class_method :report_install_error
     end
   end
 end
