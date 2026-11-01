@@ -11,6 +11,8 @@ RSpec.describe "shims/shared/curl", type: :system do
     (config_dir/"custom.curlrc").write 'write-out = "custom-config-read"'
     ENV["CURL_HOME"] = config_dir.to_s
     ENV["HOMEBREW_CURL"] = "/usr/bin/curl"
+    # curl >= 8.18.0 refuses a `--cacert` file that does not exist.
+    FileUtils.touch config_dir/"cert.pem"
     ENV["SSL_CERT_FILE"] = (config_dir/"cert.pem").to_s
   end
 
