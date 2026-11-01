@@ -53,7 +53,8 @@ module Homebrew
 
         diff = system_command "git", args: ["-C", HOMEBREW_REPOSITORY, "diff", "--exit-code", "README.md"]
         if diff.status.success?
-          ofail "No changes to list of maintainers."
+          puts "No changes to list of maintainers."
+          Homebrew.failed = true
         else
           Manpages.regenerate_man_pages(quiet: true)
           puts "List of maintainers updated in the README and the generated man pages."

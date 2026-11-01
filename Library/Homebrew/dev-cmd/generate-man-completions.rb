@@ -42,11 +42,8 @@ module Homebrew
           [:success, "Manpage and completions updated."]
         end
 
-        if status == :failure && !args.no_exit_code?
-          ofail message
-        else
-          puts message
-        end
+        puts message
+        Homebrew.failed = true if status == :failure && !args.no_exit_code?
       end
     end
   end
