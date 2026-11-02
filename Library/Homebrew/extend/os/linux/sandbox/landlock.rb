@@ -413,6 +413,13 @@ class Sandbox
       paths = profile_paths(allow: true, operation: "file-read").select { |path| File.exist?(path) }
       root_path.children.sort.each { |path| add_readable_path(path, denied_paths, paths) }
       paths.uniq
+    rescue Errno::EACCES
+      raise <<~EOS
+        Cannot set up the Linux sandbox: permission denied when listing #{root_path}.
+        Homebrew needs this listing to build its sandbox rules.
+        If running inside another sandbox, allow directory listings of #{root_path}
+        in its policy or run Homebrew outside it.
+      EOS
     end
 
     private
