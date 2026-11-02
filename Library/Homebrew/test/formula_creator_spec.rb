@@ -64,7 +64,9 @@ RSpec.describe Homebrew::FormulaCreator do
           end
         end
 
-        formula_creator = described_class.new(url: test.fetch(:url), name: test[:name], fetch:)
+        formula_creator = described_class.new(
+          url: test.fetch(:url), name: test[:name], version: test[:version], fetch:,
+        )
 
         expect(formula_creator.name).to eq(test.fetch(:expected_name))
         if (expected_version = test[:expected_version])
