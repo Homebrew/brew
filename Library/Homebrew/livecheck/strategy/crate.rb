@@ -7,13 +7,13 @@ module Homebrew
   module Livecheck
     module Strategy
       # The {Crate} strategy identifies versions of a Rust crate by checking
-      # the information from the `versions` API endpoint.
+      # the information from the crates.io sparse index.
       #
       # Crate URLs have the following format:
       #   `https://static.crates.io/crates/example/example-1.2.3.crate`
       #
       # The default regex identifies versions like `1.2.3`/`v1.2.3` from the
-      # version `num` field. This is a common version format but a different
+      # version `vers` field. This is a common version format but a different
       # regex can be provided in a `livecheck` block to override the default
       # if a package uses a different format (e.g. `1.2.3d`, `1.2.3-4`, etc.).
       #
@@ -28,12 +28,10 @@ module Homebrew
         # The default `strategy` block used to extract version information when
         # a `strategy` block isn't provided.
         DEFAULT_BLOCK = T.let(proc do |json, regex|
-          json["versions"]&.map do |version|
-            next if version["yanked"]
-            next unless (match = version["num"]&.match(regex))
+          next if json["yanked"]
+          next unless (match = json["vers"]&.match(regex))
 
-            match[1]
-          end
+          match[1]
         end.freeze, T.proc.params(
           arg0: T::Hash[String, T.anything],
           arg1: Regexp,
@@ -63,7 +61,17 @@ module Homebrew
           values = {}
           return values unless (match = url.match(URL_MATCH_REGEX))
 
-          values[:url] = "https://crates.io/api/v1/crates/#{match[:package]}/versions"
+          # https://doc.rust-lang.org/cargo/reference/registry-index.html#index-files
+          package = match[:package].to_s.downcase
+          directories = if package.length < 3
+            package.length.to_s
+          elsif package.length == 3
+            "#{package.length}/#{package[0]}"
+          else
+            "#{package[0..1]}/#{package[2..3]}"
+          end
+
+          values[:url] = "https://index.crates.io/#{directories}/#{package}"
 
           values
         end
@@ -95,17 +103,15 @@ module Homebrew
           match_data[:url] = generated[:url]
 
           unless match_data[:cached]
-            unless options.user_agent
-              options = options.deep_dup
-              options.user_agent = :browser
-            end
             match_data.merge!(Strategy.page_content(match_data[:url], options:))
             content = match_data[:content]
           end
           return match_data if content.blank?
 
-          Json.versions_from_content(content, regex || DEFAULT_REGEX, &block || DEFAULT_BLOCK).each do |match_text|
-            match_data[:matches][match_text] = Version.new(match_text)
+          content.each_line do |line|
+            Json.versions_from_content(line, regex || DEFAULT_REGEX, &block || DEFAULT_BLOCK).each do |match_text|
+              match_data[:matches][match_text] = Version.new(match_text)
+            end
           end
 
           match_data
