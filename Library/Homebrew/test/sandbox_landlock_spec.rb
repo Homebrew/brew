@@ -504,6 +504,19 @@ RSpec.describe Sandbox::Landlock do
       expect(landlock.readable_paths([denied_dir])).to eq([readable_dir.to_s])
     end
 
+    it "explains when the root directory cannot be listed" do
+      root = mktmpdir
+      allow(landlock).to receive(:root_path).and_return(root)
+      allow(root).to receive(:children).and_raise(Errno::EACCES)
+
+      expect { landlock.readable_paths([root/"denied"]) }.to raise_error(RuntimeError, <<~EOS)
+        Cannot set up the Linux sandbox: permission denied when listing #{root}.
+        Homebrew needs this listing to build its sandbox rules.
+        If running inside another sandbox, allow directory listings of #{root}
+        in its policy or run Homebrew outside it.
+      EOS
+    end
+
     it "allows an explicit input without reopening its denied parent" do
       root = mktmpdir
       home = root/"home"
