@@ -87,7 +87,12 @@ module Homebrew
             tag = GitHub.get_latest_release(user, repository).fetch("tag_name")
             @url = "https://github.com/#{user}/#{repository}/archive/refs/tags/#{tag}.tar.gz"
             odebug "github: url changed to source archive #{@url}"
-            @version_in_url = Version.detect(@url).present?
+            if Version.detect(@url) == Version.new(tag)
+              @version_in_url = true
+            else
+              @version = Version.new(tag)
+              odebug "github: version #{@version} from tag"
+            end
             odebug "version in url (github): #{@version_in_url}"
           rescue GitHub::API::HTTPNotFoundError
             odebug "github: latest_release lookup failed: #{url}"
