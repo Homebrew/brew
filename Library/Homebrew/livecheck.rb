@@ -164,8 +164,10 @@ class Livecheck
     ).returns(T.nilable(Integer))
   }
   def throttle(rate = nil, days: nil)
-    if (rate || @throttle) && (days || @throttle_days)
-      raise ArgumentError, "Only use `rate` or `days`, not both"
+    if (rate || @throttle) &&
+       (days || @throttle_days) &&
+       (@package_or_resource.is_a?(Resource) || !@package_or_resource.loaded_from_metadata?)
+      raise ArgumentError, "Only throttle by `rate` or `days`, not both"
     end
 
     @throttle_days = days unless days.nil?
