@@ -11,7 +11,8 @@ module Utils
   # Helper module for fetching and reporting analytics data.
   module Analytics
     INFLUX_BUCKET = "analytics"
-    INFLUX_HOST = "https://analytics.brew.sh"
+    INFLUX_TOKEN = "uek5rGcs52p9Ia42D48LNmbL543gNkGIDuoNqRdjkFkLai3sLJYqvc97KwHw9fjg1IIzBu2xgw1yOiugJ6Sypg=="
+    INFLUX_HOST = "https://eu-central-1-1.aws.cloud2.influxdata.com"
     INFLUX_ORG = "d81a3e6d582d485f"
     WSL_SUFFIX = " [WSL]"
     ENV_CONFIG_COMMANDS = %w[config fetch install reinstall update update-report upgrade].freeze
@@ -60,6 +61,7 @@ module Utils
 
         args = [
           "--max-time", "3",
+          "--header", "Authorization: Token #{INFLUX_TOKEN}",
           "--header", "Content-Type: text/plain; charset=utf-8",
           "--header", "Accept: application/json",
           "--data-binary", "#{measurement},#{tags_string} #{fields_string} #{Time.now.to_i}"
