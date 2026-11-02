@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require "English"
 require "rake"
+require "shellwords"
 
 RUBYDOC_DIR = "#{__dir__}/rubydoc".freeze
 
@@ -20,9 +22,14 @@ end
 
 desc "Run Markdownlint to validate the Markdown style."
 task :lint do
-  sh "mdl $(git ls-files '*.md' | grep -v 'Manpage.md' | grep -v '^docs/index.md$' | grep -v '^index.md$')"
+  markdown_files = `git ls-files '*.md'`.lines(chomp: true).grep_v(/Manpage\.md/)
+  raise "git ls-files '*.md' failed" unless $CHILD_STATUS.success?
+  next if markdown_files.empty?
+
+  lint_files = markdown_files - %w[docs/index.md index.md]
+  sh "mdl", *lint_files unless lint_files.empty?
   cd(__dir__) { sh "mdl --style index.mdl_style.rb index.md" } if File.exist?("#{__dir__}/index.md")
-  sh "grep -L '^last_review_date:' $(git ls-files '*.md' | grep -v 'Manpage.md') | " \
+  sh "grep -L '^last_review_date:' #{markdown_files.shelljoin} | " \
      "xargs -I {} echo 'File {} is missing last_review_date frontmatter.'"
 end
 
