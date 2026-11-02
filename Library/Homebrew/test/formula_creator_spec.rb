@@ -52,6 +52,14 @@ RSpec.describe Homebrew::FormulaCreator do
         expected_name:    "mame",
         expected_version: "0.289",
       },
+      "tag version overrides URL version":   {
+        url:                    "https://github.com/Wind4/vlmcsd",
+        fetch:                  true,
+        github_user_repository: ["Wind4", "vlmcsd"],
+        latest_release:         { "tag_name" => "svn1113" },
+        expected_name:          "vlmcsd",
+        expected_version:       "svn1113",
+      },
     }
 
     test_each(tests) do |(description, test)|
