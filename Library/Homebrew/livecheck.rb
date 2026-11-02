@@ -154,18 +154,20 @@ class Livecheck
   # the `@throttle` instance variable when no argument is provided. The `days`
   # argument will set `@throttle_days`.
   #
-  # If both a throttle rate and days are provided, then the throttle days are
-  # used as a fallback when a new throttled version doesn't appear before the
-  # throttle interval ends.
+  # Throttle rate and days are mutually exclusive.
   sig {
     params(
       # Throttle rate of version patch number to use for bumpable versions.
       rate: T.nilable(Integer),
-      # Maximum number of days before allowing a non-multiple update.
+      # Minimum number of days to wait between updates.
       days: T.nilable(Integer),
     ).returns(T.nilable(Integer))
   }
   def throttle(rate = nil, days: nil)
+    if (rate || @throttle) && (days || @throttle_days)
+      raise ArgumentError, "Only use `rate` or `days`, not both"
+    end
+
     @throttle_days = days unless days.nil?
 
     case rate
