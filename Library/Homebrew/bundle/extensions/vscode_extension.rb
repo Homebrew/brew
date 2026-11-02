@@ -44,6 +44,11 @@ module Homebrew
             which("code-insiders", ORIGINAL_PATHS)
         end
 
+        sig { override.params(name: String, _options: Homebrew::Bundle::EntryOptions).returns(String) }
+        def install_verb(name = "", _options = {})
+          package_installed?(name) ? "Upgrading" : "Installing"
+        end
+
         sig { override.params(_name: String, _options: Homebrew::Bundle::EntryOptions).returns(T::Boolean) }
         def batch_installable?(_name, _options = {})
           true
@@ -52,6 +57,7 @@ module Homebrew
         sig { override.params(entries: T::Array[Dsl::Entry], verbose: T::Boolean).returns(T::Boolean) }
         def install_batch!(entries, verbose: false)
           args = entries.flat_map { |entry| ["--install-extension", entry.name] }
+          args << "--force" if entries.any? { |entry| package_installed?(entry.name) }
 
           Bundle.system(package_manager_executable!, *args, verbose:)
         end
@@ -107,7 +113,6 @@ module Homebrew
         }
         def preinstall!(name, with: nil, no_upgrade: false, verbose: false, **_options)
           _ = with
-          _ = no_upgrade
 
           if !package_manager_installed? && Bundle.cask_installed?
             puts "Installing visual-studio-code. It is not currently installed." if verbose
@@ -115,6 +120,8 @@ module Homebrew
           end
 
           if package_installed?(name)
+            return true unless no_upgrade
+
             puts "Skipping install of #{name} VSCode extension. It is already installed." if verbose
             return false
           end
@@ -136,7 +143,8 @@ module Homebrew
         def install_package!(name, with: nil, verbose: false)
           _ = with
 
-          Bundle.system(package_manager_executable!, "--install-extension", name, verbose:)
+          Bundle.system(package_manager_executable!, "--install-extension", name,
+                        *(package_installed?(name) ? ["--force"] : []), verbose:)
         end
 
         sig {
@@ -158,7 +166,7 @@ module Homebrew
 
           return true unless preinstall
 
-          puts "Installing #{name} VSCode extension. It is not currently installed." if verbose
+          puts "#{install_verb(name)} #{name} VSCode extension." if verbose
           return false unless install_package!(name, verbose:)
 
           package = T.cast(package_record(name), String)

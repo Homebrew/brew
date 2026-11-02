@@ -272,6 +272,14 @@ module Homebrew
         raise NotImplementedError, "#{self} must override `uninstall_package!` or `cleanup!`."
       end
 
+      # Whether an installed package has an available upgrade.
+      sig {
+        params(_name: String, with: T.nilable(T::Array[String]), source: T.nilable(String)).returns(T::Boolean)
+      }
+      def self.package_outdated?(_name, with: nil, source: nil)
+        false
+      end
+
       sig { params(name: String, with: T.nilable(T::Array[String])).returns(Object) }
       def self.package_record(name, with: nil)
         _ = with
@@ -294,11 +302,11 @@ module Homebrew
         ).returns(T::Boolean)
       }
       def self.preinstall!(name, with: nil, no_upgrade: false, verbose: false, **_options)
-        _ = no_upgrade
-
         ensure_package_manager_installed!(name, verbose:)
 
         if package_installed?(name, with:)
+          return true if !no_upgrade && package_outdated?(name, with:)
+
           puts "Skipping install of #{name} #{package_description}. It is already installed." if verbose
           return false
         end
@@ -347,7 +355,7 @@ module Homebrew
 
         return true unless preinstall
 
-        puts "Installing #{name} #{package_description}. It is not currently installed." if verbose
+        puts "Installing #{name} #{package_description}." if verbose
         return false unless install_package!(name, with:, verbose:)
 
         package = package_record(name, with:)
@@ -358,12 +366,15 @@ module Homebrew
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(String) }
       def failure_reason(package, no_upgrade:)
-        "#{self.class.check_label} #{self.class.dump_name(package)} needs to be installed."
+        "#{self.class.check_label} #{self.class.dump_name(package)} needs to be " \
+          "#{(!no_upgrade && installed_and_up_to_date?(package, no_upgrade: true)) ? "upgraded" : "installed"}."
       end
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(T::Boolean) }
       def installed_and_up_to_date?(package, no_upgrade: false)
-        self.class.package_installed?(self.class.dump_name(package), with: self.class.dump_with(package))
+        self.class.package_installed?(self.class.dump_name(package), with: self.class.dump_with(package)) &&
+          (no_upgrade || !self.class.package_outdated?(self.class.dump_name(package),
+                                                       with: self.class.dump_with(package)))
       end
 
       sig {

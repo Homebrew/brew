@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "bundle/extensions/extension"
+require "yaml"
 
 module Homebrew
   module Bundle
@@ -18,6 +19,7 @@ module Homebrew
 
         sig { override.void }
         def reset!
+          @indexes_updated = T.let(nil, T.nilable(T::Boolean))
           @packages = T.let(nil, T.nilable(T::Array[String]))
           @installed_packages = T.let(nil, T.nilable(T::Array[String]))
           @package_manager_executable = T.let(nil, T.nilable(Pathname))
@@ -63,13 +65,36 @@ module Homebrew
           _ = with
 
           with_package_manager_env do |krew|
-            Bundle.system(krew.to_s, "install", name, verbose:)
+            Bundle.system(krew.to_s, package_installed?(name) ? "upgrade" : "install", name, verbose:)
           end
         end
 
         sig { override.returns(T::Array[String]) }
         def installed_packages
           @installed_packages ||= packages.dup
+        end
+
+        sig {
+          override.params(name: String, with: T.nilable(T::Array[String]), source: T.nilable(String)).returns(T::Boolean)
+        }
+        def package_outdated?(name, with: nil, source: nil)
+          with_package_manager_env do |krew|
+            unless @indexes_updated
+              command_output(krew, args: ["update"])
+              @indexes_updated = true
+            end
+
+            receipt = YAML.safe_load_file(File.join(ENV["KREW_ROOT"].presence || "#{Dir.home}/.krew",
+                                                    "receipts", "#{Pathname.new(name).basename}.yaml"))
+            spec = receipt["spec"] if receipt.is_a?(Hash)
+            installed = spec["version"] if spec.is_a?(Hash)
+            latest = command_output(krew, args: ["info", name])[/^VERSION: (\S+)$/, 1]
+            if !installed.is_a?(String) || installed.blank? || latest.blank?
+              raise "Invalid Krew version for #{name}"
+            end
+
+            Version.new(latest) > Version.new(installed)
+          end
         end
 
         sig { params(output: String).returns(T::Array[String]) }
