@@ -1558,6 +1558,8 @@ on_request: installed_on_request?, options:)
 
     return if deps.empty?
 
+    # Covers the fetch paths that bypass `Install.fetch_formulae`'s bulk listing.
+    Homebrew::Attestation.prefetch(deps.map(&:to_formula))
     deps.each { fetch_dependency(it) }
   end
 

@@ -58,6 +58,61 @@ RSpec.describe Homebrew::Install do
         expect(described_class.fetch_formulae([good_fi, bad_fi])).to eq([good_fi])
       end.to output(/Error: bad-bottle: unexpected failure/).to_stderr
     end
+
+    context "when listing attestations" do
+      sig { returns(Formula) }
+      let(:bottled_formula) do
+        formula("bottled") do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          bottle do
+            sha256 cellar: :any, Utils::Bottles.tag.to_sym => "0" * 64
+          end
+        end
+      end
+
+      it "lists the formulae's bottle attestations before their prelude fetch" do
+        formula_installer = FormulaInstaller.new(bottled_formula)
+        download_queue = instance_double(Homebrew::DownloadQueue)
+        calls = []
+        allow(Homebrew::Attestation).to receive(:prefetch) { |formulae| calls << [:prefetch, formulae] }
+        allow(formula_installer).to receive(:prelude_fetch) { calls << :prelude_fetch }
+
+        described_class.prelude_fetch_formulae([formula_installer], download_queue:)
+
+        expect(calls).to eq([[:prefetch, [bottled_formula]], :prelude_fetch])
+      end
+
+      it "does not list attestations for a metadata-only prelude fetch" do
+        formula_installer = FormulaInstaller.new(bottled_formula)
+        download_queue = instance_double(Homebrew::DownloadQueue)
+        allow(formula_installer).to receive(:prelude_fetch)
+        expect(Homebrew::Attestation).not_to receive(:prefetch)
+
+        described_class.prelude_fetch_formulae([formula_installer], download_queue:, metadata_only: true)
+      end
+
+      it "lists dependency bottle attestations once dependencies are known" do
+        formula_installer = FormulaInstaller.new(formula("dependent") do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end)
+        stub_formula_loader(bottled_formula)
+        allow(formula_installer).to receive_messages(prelude_fetch: nil, prelude: nil,
+                                                     compute_dependencies: [Dependency.new("bottled")])
+        calls = []
+        allow(Homebrew::Attestation).to receive(:prefetch) { |formulae| calls << [:prefetch, formulae] }
+        allow(formula_installer).to receive(:enqueue_fetch) { calls << :enqueue_fetch }
+
+        described_class.fetch_formulae([formula_installer])
+
+        expect(calls).to eq([
+          [:prefetch, [formula_installer.formula]],
+          [:prefetch, [bottled_formula]],
+          :enqueue_fetch,
+        ])
+      end
+    end
   end
 
   describe "::reject_failed_downloads" do

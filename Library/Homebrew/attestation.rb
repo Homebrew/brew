@@ -5,6 +5,7 @@ require "utils/executable"
 
 require "date"
 require "json"
+require "tempfile"
 require "utils/popen"
 require "utils/github/api"
 require "exceptions"
@@ -33,6 +34,12 @@ module Homebrew
     #
     # @api private
     BACKFILL_CUTOFF = DateTime.new(2024, 3, 14).freeze
+
+    # @api private
+    BULK_LIST_MAX_DIGESTS = 1024
+
+    # @api private
+    BULK_LIST_PAGE_SIZE = 100
 
     # Raised when the attestation was not found.
     #
@@ -106,6 +113,92 @@ module Homebrew
       end
     end
 
+    # Listed attestation bundles as JSON lines, keyed by bottle SHA-256 and
+    # then by organisation; an empty array means the organisation holds none.
+    #
+    # @api private
+    sig { returns(T::Hash[String, T::Hash[String, T::Array[String]]]) }
+    def self.prefetched_bundles
+      @prefetched_bundles ||= T.let({}, T.nilable(T::Hash[String, T::Hash[String, T::Array[String]]]))
+    end
+
+    # Lists the formulae's homebrew-core bottle attestations in bulk so that
+    # `check_attestation` can verify them offline. Failures are only logged:
+    # an unlisted bottle is looked up online as before.
+    #
+    # @api private
+    sig { params(formulae: T::Array[Formula]).void }
+    def self.prefetch(formulae)
+      return unless Homebrew::EnvConfig.verify_attestations?
+      return if Homebrew::EnvConfig.no_github_api?
+      return if GitHub::API.credentials.blank?
+
+      digests = formulae.filter_map do |formula|
+        bottle = formula.bottle if formula.tap&.core_tap?
+        bottle.resource.checksum&.hexdigest if bottle
+      end
+      digests = digests.uniq - prefetched_bundles.keys
+      return if digests.empty?
+
+      [HOMEBREW_CORE_REPO, BACKFILL_REPO].each do |signing_repo|
+        organisation = signing_organisation(signing_repo)
+        listed = bulk_list_bundles(organisation, digests)
+        digests.each do |digest|
+          (prefetched_bundles[digest] ||= {})[organisation] = listed.fetch(digest, [])
+        end
+        digests -= listed.keys
+        break if digests.empty?
+      end
+    rescue GitHub::API::Error, JSON::ParserError => e
+      odebug "Failed to list attestations in bulk: #{e}"
+    end
+
+    # Returns inline bundles as JSON lines, keyed by digest.
+    #
+    # @api private
+    sig { params(organisation: String, digests: T::Array[String]).returns(T::Hash[String, T::Array[String]]) }
+    def self.bulk_list_bundles(organisation, digests)
+      url = "#{GitHub::API_URL}/orgs/#{organisation}/attestations/bulk-list?per_page=#{BULK_LIST_PAGE_SIZE}"
+      bundles = {}
+      digests.each_slice(BULK_LIST_MAX_DIGESTS) do |slice|
+        data = { subject_digests: slice.map { |digest| "sha256:#{digest}" } }
+        page_url = url
+        loop do
+          response = GitHub::API.open_rest(page_url, data:, request_method: :POST)
+          break unless response.is_a?(Hash)
+
+          listed = response["attestations_subject_digests"]
+          listed = {} unless listed.is_a?(Hash)
+          listed.each do |subject_digest, attestations|
+            next unless attestations.is_a?(Array)
+
+            # Attestations with only a `bundle_url` are left to the online lookup.
+            lines = attestations.filter_map do |attestation|
+              bundle = attestation["bundle"] if attestation.is_a?(Hash)
+              JSON.generate(bundle) if bundle.is_a?(Hash)
+            end
+            next if lines.empty?
+
+            (bundles[subject_digest.to_s.delete_prefix("sha256:")] ||= []).concat(lines)
+          end
+
+          page_info = response["page_info"]
+          cursor = page_info["next"] if page_info.is_a?(Hash) && page_info["has_next"]
+          break if cursor.blank?
+
+          next_url = "#{url}&after=#{URI.encode_www_form_component(cursor)}"
+          break if next_url == page_url
+
+          page_url = next_url
+        end
+      end
+      bundles
+    end
+
+    # @api private
+    sig { params(signing_repo: String).returns(String) }
+    def self.signing_organisation(signing_repo) = signing_repo.split("/").fetch(0)
+
     # Verifies the given bottle against a cryptographic attestation of build provenance.
     #
     # The provenance is verified as originating from `signing_repository`, which is a `String`
@@ -135,7 +228,23 @@ module Homebrew
       credentials = GitHub::API.credentials
       raise GhAuthNeeded, "missing credentials" if credentials.blank?
 
+      digest = Downloadable.verification_cache.sha256(bottle.cached_download)
+      lines = prefetched_bundle_lines(bottle, digest, signing_organisation(signing_repo))
+      bundle_path = nil
       begin
+        if lines
+          count = Utils.pluralize("listed attestation", lines.count, include_count: true)
+          odebug "Verifying #{bottle.filename} against #{count} from #{signing_repo}"
+          bundle_file = Tempfile.create(["attestations-", ".jsonl"], HOMEBREW_TEMP)
+          bundle_path = Pathname(bundle_file.path)
+          begin
+            bundle_file.puts(lines)
+          ensure
+            bundle_file.close
+          end
+          cmd += ["--bundle", bundle_path]
+        end
+
         result = system_command!(gh_executable, args: cmd,
                                  env: { "GH_TOKEN" => credentials, "GH_HOST" => "github.com" },
                                  secrets: [credentials], print_stderr: false, chdir: HOMEBREW_TEMP)
@@ -160,6 +269,8 @@ module Homebrew
         end
 
         raise InvalidAttestationError, "attestation verification failed: #{e}"
+      ensure
+        bundle_path&.unlink
       end
 
       begin
@@ -180,8 +291,7 @@ module Homebrew
 
       attestation = attestations.find do |a|
         a.dig("verificationResult", "statement", "subject").any? do |candidate|
-          next false if candidate.dig("digest", "sha256") !=
-                        Downloadable.verification_cache.sha256(bottle.cached_download)
+          next false if candidate.dig("digest", "sha256") != digest
 
           if bottle.tag.to_sym == :all
             # :all-tagged bottles are created by `brew bottle --merge`, and are not directly
@@ -203,6 +313,27 @@ module Homebrew
       raise InvalidAttestationError, "no attestation matches subject: #{subject}" if attestation.blank?
 
       attestation
+    end
+
+    # The listed bundles to verify the bottle against, or `nil` to look the
+    # attestation up online.
+    #
+    # @raise [MissingAttestationError] when this organisation was listed empty and another has bundles
+    #
+    # @api private
+    sig { params(bottle: Bottle, digest: String, organisation: String).returns(T.nilable(T::Array[String])) }
+    def self.prefetched_bundle_lines(bottle, digest, organisation)
+      bundles = prefetched_bundles.fetch(digest, {})
+      lines = bundles[organisation]
+      return if lines.nil?
+      return lines unless lines.empty?
+
+      # Leave digests no organisation holds to the online lookup in case the
+      # listing was incomplete.
+      return if bundles.values.all?(&:empty?)
+
+      raise MissingAttestationError,
+            "attestation not found: none listed from #{organisation} for #{bottle.filename}"
     end
 
     ATTESTATION_MAX_RETRIES = 5
@@ -320,6 +451,9 @@ module Homebrew
     rescue InvalidAttestationError
       @attestation_retry_count ||= T.let(Hash.new(0), T.nilable(T::Hash[Bottle, Integer]))
       raise if @attestation_retry_count[bottle] >= ATTESTATION_MAX_RETRIES
+
+      # Retry online rather than against listed bundles that did not verify.
+      prefetched_bundles.delete(Downloadable.verification_cache.sha256(bottle.cached_download))
 
       sleep_time = 3 ** @attestation_retry_count[bottle]
       opoo "Failed to verify attestation. Retrying in #{sleep_time}s..."

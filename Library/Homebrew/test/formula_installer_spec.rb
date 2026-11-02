@@ -2474,4 +2474,20 @@ RSpec.describe FormulaInstaller do
       installer.build
     end
   end
+
+  describe "#fetch_dependencies" do
+    it "lists the dependencies' bottle attestations before fetching them" do
+      dependency = formula("dependency") { url "foo-1.0" }
+      stub_formula_loader(dependency)
+      installer = described_class.new(formula("dependent") { url "foo-1.0" })
+      allow(installer).to receive(:compute_dependencies).and_return([Dependency.new("dependency")])
+      calls = []
+      allow(Homebrew::Attestation).to receive(:prefetch) { |formulae| calls << [:prefetch, formulae] }
+      allow(installer).to receive(:fetch_dependency) { |dep| calls << [:fetch_dependency, dep.name] }
+
+      installer.fetch_dependencies
+
+      expect(calls).to eq([[:prefetch, [dependency]], [:fetch_dependency, "dependency"]])
+    end
+  end
 end
