@@ -87,10 +87,13 @@ module Homebrew
             tag = GitHub.get_latest_release(user, repository).fetch("tag_name")
             @url = "https://github.com/#{user}/#{repository}/archive/refs/tags/#{tag}.tar.gz"
             odebug "github: url changed to source archive #{@url}"
-            if Version.detect(@url) == Version.new(tag)
+
+            # detect(@url) removes v prefix from tags, and new(tag) doesn't
+            tag_version = Version.new(tag.delete_prefix("v"))
+            if Version.detect(@url) == tag_version
               @version_in_url = true
             else
-              @version = Version.new(tag)
+              @version = tag_version
               odebug "github: version #{@version} from tag"
             end
             odebug "version in url (github): #{@version_in_url}"
