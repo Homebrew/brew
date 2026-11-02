@@ -721,6 +721,55 @@ RSpec.describe Homebrew::Attestation do
       described_class.check_core_attestation fake_bottle
     end
 
+    context "with a backfilled :all bottle" do
+      let(:fake_bottle_tag) { fake_all_bottle_tag }
+      let(:fake_bottle_filename) do
+        instance_double(Bottle::Filename, name: "fakebottle", version: "1.0",
+                                         to_s: "fakebottle--1.0.all.bottle.tar.gz")
+      end
+
+      before do
+        allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
+          unless args.include?(Homebrew::Attestation::BACKFILL_REPO)
+            raise Homebrew::Attestation::MissingAttestationError
+          end
+
+          fake_result_json_resp_backfill
+        end
+      end
+
+      it "verifies the URL-prefixed subject" do
+        expect(described_class.check_core_attestation(fake_bottle))
+          .to eq(JSON.parse(fake_result_json_resp_backfill.stdout).first)
+      end
+
+      it "rejects an attestation for a different URL" do
+        allow(fake_bottle).to receive(:url).and_return("https://example.org/#{fake_bottle_filename}")
+
+        expect do
+          described_class.check_core_attestation(fake_bottle)
+        end.to raise_error(Homebrew::Attestation::InvalidAttestationError, /no attestation matches subject/)
+      end
+
+      it "rejects an attestation for a different digest" do
+        fake_subject[:digest][:sha256] = Digest::SHA256.hexdigest("other bottle")
+
+        expect do
+          described_class.check_core_attestation(fake_bottle)
+        end.to raise_error(Homebrew::Attestation::InvalidAttestationError, /no attestation matches subject/)
+      end
+
+      context "without a URL hash prefix" do
+        let(:fake_result_json_resp_backfill) { fake_result_json_resp }
+
+        it "rejects the attestation" do
+          expect do
+            described_class.check_core_attestation(fake_bottle)
+          end.to raise_error(Homebrew::Attestation::InvalidAttestationError, /no attestation matches subject/)
+        end
+      end
+    end
+
     it "raises when the backfilled attestation is too new" do
       expect(described_class).to receive(:system_command!)
         .with(fake_gh, args: ["attestation", "verify", cached_download, "--repo",

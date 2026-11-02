@@ -295,7 +295,7 @@ module Homebrew
         a.dig("verificationResult", "statement", "subject").any? do |candidate|
           next false if candidate.dig("digest", "sha256") != digest
 
-          if bottle.tag.to_sym == :all
+          if bottle.tag.to_sym == :all && signing_repo != BACKFILL_REPO
             # :all-tagged bottles are created by `brew bottle --merge`, and are not directly
             # bound to their own filename (since they're created by deduplicating other filenames).
             # To verify these, we parse each attestation subject and look for one with a matching
