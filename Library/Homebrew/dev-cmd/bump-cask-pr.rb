@@ -272,8 +272,10 @@ module Homebrew
         else
           # Architecture is only relevant if on_system blocks are present or
           # the cask uses `depends_on arch`, otherwise we default to ARM for
-          # consistency.
-          os_values << [systems.fetch(:macos), :macos]
+          # consistency. Linux-only casks need a Linux tag, as unsupported
+          # systems are skipped when replacing versions.
+          supported_system = cask.supports_macos? ? :macos : :linux
+          os_values << [systems.fetch(supported_system), supported_system]
           depends_on_archs = cask.depends_on.arch&.filter_map { |arch| arch[:type] }&.uniq
           arch_values = depends_on_archs.presence || [:arm]
         end

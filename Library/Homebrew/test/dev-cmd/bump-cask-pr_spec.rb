@@ -188,6 +188,37 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       end
     end
 
+    context "when cask does not have on_system blocks/calls but only supports Linux" do
+      it "returns an array only including Linux" do
+        linux_only = Cask::Cask.new("test-linux-only") do
+          version "0.0.1,2"
+
+          url "https://brew.sh/test-0.0.1.AppImage"
+          name "Test"
+          desc "Test cask"
+          homepage "https://brew.sh"
+
+          depends_on :linux
+        end
+        linux_only_intel = Cask::Cask.new("test-linux-only-intel") do
+          version "0.0.1,2"
+
+          url "https://brew.sh/test-0.0.1.AppImage"
+          name "Test"
+          desc "Test cask"
+          homepage "https://brew.sh"
+
+          depends_on arch: :x86_64
+          depends_on :linux
+        end
+
+        Homebrew::SimulateSystem.with(os: older_macos, arch: :arm) do
+          expect(os_arch_options(linux_only, new_version)).to eq([[:linux, :arm]])
+          expect(os_arch_options(linux_only_intel, new_version)).to eq([[:linux, :intel]])
+        end
+      end
+    end
+
     context "when cask has on_system blocks/calls but does not have `depends_on arch`" do
       it "returns an array with combinations of `OnSystem::BASE_OS_OPTIONS` and `OnSystem::ARCH_OPTIONS`" do
         Homebrew::SimulateSystem.with(os: :linux) do
@@ -636,6 +667,38 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
 
           url "https://brew.sh/foo-\#{version}.dmg"
           name "Foo"
+        end
+      RUBY
+    end
+
+    it "updates a Linux-only cask without on_system blocks" do
+      contents = <<~RUBY
+        cask "foo" do
+          version "1.0"
+          sha256 "#{old_hash}"
+
+          url "https://brew.sh/foo-\#{version}-x86_64.AppImage"
+          name "Foo"
+
+          depends_on arch: :x86_64
+          depends_on :linux
+        end
+      RUBY
+      cask = cask_from_contents(contents)
+      new_version = Homebrew::BumpVersionParser.new(general: "2.0")
+
+      expect(
+        bump_cask_pr.replace_version_and_checksum(cask, new_hash, new_version, contents),
+      ).to eq <<~RUBY
+        cask "foo" do
+          version "2.0"
+          sha256 "#{new_hash}"
+
+          url "https://brew.sh/foo-\#{version}-x86_64.AppImage"
+          name "Foo"
+
+          depends_on arch: :x86_64
+          depends_on :linux
         end
       RUBY
     end
