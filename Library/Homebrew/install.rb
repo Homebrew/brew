@@ -17,6 +17,7 @@ require "utils/output"
 require "utils/topological_hash"
 require "install/check"
 require "api/source_download"
+require "attestation"
 
 module Homebrew
   # Helper module for performing (pre-)install checks.
@@ -152,6 +153,11 @@ module Homebrew
             next if step == :enqueue_fetch && !fetch_after_enqueue
 
             if step == :prelude
+              # List dependency attestations before `enqueue_fetch` starts the downloads that verify them.
+              dependencies = valid_formula_installers.reject(&:ignore_deps?).flat_map do |fi|
+                fi.compute_dependencies.map(&:to_formula)
+              end
+              Homebrew::Attestation.prefetch(dependencies)
               download_queue.fetch(only: Resource::BottleManifest, heading: "Downloading bottle manifests",
                                    allow_failures: true)
             else
@@ -218,6 +224,9 @@ module Homebrew
         formula_installers.each do |fi|
           fi.download_queue = download_queue
         end
+
+        # List attestations before the bottle downloads below start verifying them.
+        Homebrew::Attestation.prefetch(formula_installers.reject(&:only_deps?).map(&:formula)) unless metadata_only
 
         # Only pass the keyword when limiting the fetch so mocks and
         # overrides expecting the historical no-argument call keep working.

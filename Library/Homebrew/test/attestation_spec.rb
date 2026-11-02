@@ -19,10 +19,14 @@ RSpec.describe Homebrew::Attestation do
   let(:fake_bottle_url) { "https://example.com/#{fake_bottle_filename}" }
   let(:fake_bottle_tag) { instance_double(Utils::Bottles::Tag, to_sym: :faketag) }
   let(:fake_all_bottle_tag) { instance_double(Utils::Bottles::Tag, to_sym: :all) }
+  let(:fake_bottle_resource) { instance_double(Resource, checksum: Checksum.new(fake_bottle_digest)) }
   let(:fake_bottle) do
     instance_double(Bottle, cached_download:, filename: fake_bottle_filename, url: fake_bottle_url,
-                    tag: fake_bottle_tag)
+                    tag: fake_bottle_tag, resource: fake_bottle_resource)
   end
+  let(:fake_bundle) { { "mediaType" => "application/vnd.dev.sigstore.bundle.v0.3+json", "dsseEnvelope" => {} } }
+  let(:fake_bundle_line) { JSON.generate(fake_bundle) }
+  let(:fake_formula) { instance_double(Formula, bottle: fake_bottle, tap: instance_double(Tap, core_tap?: true)) }
   let(:fake_all_bottle) do
     instance_double(Bottle, cached_download:, filename: fake_bottle_filename, url: fake_bottle_url,
                     tag: fake_all_bottle_tag)
@@ -77,6 +81,8 @@ RSpec.describe Homebrew::Attestation do
                     ]))
   end
 
+  before { described_class.prefetched_bundles.clear }
+
   describe "::gh_executable" do
     it "calls ensure_executable" do
       expect(Utils::Executable).to receive(:ensure!)
@@ -124,6 +130,167 @@ RSpec.describe Homebrew::Attestation do
         expect(described_class).to receive(:gh_executable).once
         expect(described_class.sort_formulae_for_install([other].freeze)).to eq([other])
       end
+    end
+  end
+
+  describe "::prefetch" do
+    let(:bulk_list_url) { "https://api.github.com/orgs/Homebrew/attestations/bulk-list?per_page=100" }
+    let(:backfill_bulk_list_url) { "https://api.github.com/orgs/trailofbits/attestations/bulk-list?per_page=100" }
+    let(:listed_attestation) { { "bundle" => fake_bundle, "repository_id" => 1 } }
+    let(:listed_digests) { { "sha256:#{fake_bottle_digest}" => [listed_attestation] } }
+    let(:other_bottle_digest) { Digest::SHA256.hexdigest("other bottle") }
+    let(:other_formula) do
+      bottle = instance_double(Bottle,
+                               resource: instance_double(Resource, checksum: Checksum.new(other_bottle_digest)))
+      instance_double(Formula, bottle:, tap: instance_double(Tap, core_tap?: true))
+    end
+
+    before do
+      ENV["HOMEBREW_VERIFY_ATTESTATIONS"] = "1"
+      ENV.delete("HOMEBREW_NO_VERIFY_ATTESTATIONS")
+      allow(GitHub::API).to receive(:credentials).and_return(fake_gh_creds)
+    end
+
+    it "lists the bottle digests from homebrew-core in one request" do
+      expect(GitHub::API).to receive(:open_rest)
+        .with(bulk_list_url, data: { subject_digests: ["sha256:#{fake_bottle_digest}"] }, request_method: :POST)
+        .and_return("attestations_subject_digests" => listed_digests)
+
+      described_class.prefetch([fake_formula])
+    end
+
+    it "records the listed bundles by digest and organisation" do
+      allow(GitHub::API).to receive(:open_rest).and_return("attestations_subject_digests" => listed_digests)
+
+      described_class.prefetch([fake_formula])
+
+      expect(described_class.prefetched_bundles).to eq(fake_bottle_digest => { "Homebrew" => [fake_bundle_line] })
+    end
+
+    it "lists digests homebrew-core does not hold from the backfill organisation" do
+      allow(GitHub::API).to receive(:open_rest)
+        .with(bulk_list_url, any_args)
+        .and_return("attestations_subject_digests" => {})
+      allow(GitHub::API).to receive(:open_rest)
+        .with(backfill_bulk_list_url, any_args)
+        .and_return("attestations_subject_digests" => listed_digests)
+
+      described_class.prefetch([fake_formula])
+
+      expect(described_class.prefetched_bundles)
+        .to eq(fake_bottle_digest => { "Homebrew" => [], "trailofbits" => [fake_bundle_line] })
+    end
+
+    it "records digests that neither organisation holds" do
+      allow(GitHub::API).to receive(:open_rest).and_return("attestations_subject_digests" => {})
+
+      described_class.prefetch([fake_formula])
+
+      expect(described_class.prefetched_bundles)
+        .to eq(fake_bottle_digest => { "Homebrew" => [], "trailofbits" => [] })
+    end
+
+    it "follows the listing's pagination" do
+      first_page = {
+        "attestations_subject_digests" => listed_digests,
+        "page_info"                    => { "has_next" => true, "next" => "cursor" },
+      }
+      second_page = {
+        "attestations_subject_digests" => { "sha256:#{other_bottle_digest}" => [listed_attestation] },
+        "page_info"                    => { "has_next" => false },
+      }
+      allow(GitHub::API).to receive(:open_rest)
+        .with(bulk_list_url, any_args)
+        .and_return(first_page)
+      allow(GitHub::API).to receive(:open_rest)
+        .with("#{bulk_list_url}&after=cursor", any_args)
+        .and_return(second_page)
+
+      described_class.prefetch([fake_formula, other_formula])
+
+      expect(described_class.prefetched_bundles.fetch(other_bottle_digest)).to eq("Homebrew" => [fake_bundle_line])
+    end
+
+    it "stops paginating when the listing names no next cursor" do
+      page = { "attestations_subject_digests" => listed_digests, "page_info" => { "has_next" => true } }
+      expect(GitHub::API).to receive(:open_rest).with(bulk_list_url, any_args).once.and_return(page)
+
+      described_class.prefetch([fake_formula])
+    end
+
+    it "stops paginating when the next cursor does not advance" do
+      page = {
+        "attestations_subject_digests" => listed_digests,
+        "page_info"                    => { "has_next" => true, "next" => "cursor" },
+      }
+      requested_urls = []
+      allow(GitHub::API).to receive(:open_rest) do |url, **_options|
+        requested_urls << url
+        page
+      end
+
+      described_class.prefetch([fake_formula])
+
+      expect(requested_urls).to eq([bulk_list_url, "#{bulk_list_url}&after=cursor"])
+    end
+
+    it "treats a listing without digests as empty" do
+      allow(GitHub::API).to receive(:open_rest).and_return("attestations_subject_digests" => nil)
+
+      expect { described_class.prefetch([fake_formula]) }.not_to raise_error
+    end
+
+    it "treats a null listing as empty" do
+      allow(GitHub::API).to receive(:open_rest).and_return(nil)
+
+      expect { described_class.prefetch([fake_formula]) }.not_to raise_error
+    end
+
+    it "skips digests that were already listed" do
+      described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
+      expect(GitHub::API).not_to receive(:open_rest)
+
+      described_class.prefetch([fake_formula])
+    end
+
+    it "ignores formulae from other taps" do
+      formula = instance_double(Formula, bottle: fake_bottle, tap: instance_double(Tap, core_tap?: false))
+      expect(GitHub::API).not_to receive(:open_rest)
+
+      described_class.prefetch([formula])
+    end
+
+    it "does nothing unless attestations are verified" do
+      ENV["HOMEBREW_NO_VERIFY_ATTESTATIONS"] = "1"
+      expect(GitHub::API).not_to receive(:open_rest)
+
+      described_class.prefetch([fake_formula])
+    end
+
+    it "does nothing without GitHub credentials" do
+      allow(GitHub::API).to receive(:credentials).and_return(nil)
+      expect(GitHub::API).not_to receive(:open_rest)
+
+      described_class.prefetch([fake_formula])
+    end
+
+    it "leaves attestations without an inline bundle to be looked up online" do
+      allow(GitHub::API).to receive(:open_rest).and_return(
+        "attestations_subject_digests" => {
+          "sha256:#{fake_bottle_digest}" => [{ "bundle_url" => "https://example.com/bundle", "repository_id" => 1 }],
+        },
+      )
+
+      described_class.prefetch([fake_formula])
+
+      expect(described_class.prefetched_bundles)
+        .to eq(fake_bottle_digest => { "Homebrew" => [], "trailofbits" => [] })
+    end
+
+    it "does not raise when the listing fails" do
+      allow(GitHub::API).to receive(:open_rest).and_raise(GitHub::API::HTTPNotFoundError, "Not Found")
+
+      expect { described_class.prefetch([fake_formula]) }.not_to raise_error
     end
   end
 
@@ -287,6 +454,91 @@ RSpec.describe Homebrew::Attestation do
         expect do
           described_class.check_attestation(fake_all_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO)
         end.to raise_error(Homebrew::Attestation::InvalidAttestationError, /no attestation matches subject/)
+      end
+    end
+
+    context "with listed attestations" do
+      before do
+        allow(GitHub::API).to receive(:credentials).and_return(fake_gh_creds)
+      end
+
+      it "verifies the bottle against its listed bundle" do
+        described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
+        bundle_contents = []
+        allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
+          bundle_contents << Pathname(args.fetch(args.index("--bundle") + 1)).read
+          fake_result_json_resp
+        end
+
+        described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+
+        expect(bundle_contents).to eq(["#{fake_bundle_line}\n"])
+      end
+
+      it "removes the bundle file after verification" do
+        described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
+        bundle_paths = []
+        allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
+          bundle_paths << args.fetch(args.index("--bundle") + 1)
+          fake_result_json_resp
+        end
+
+        described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+
+        expect(bundle_paths.fetch(0)).not_to exist
+      end
+
+      it "removes the bundle file when writing it fails" do
+        described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
+        bundle_paths = []
+        allow(Tempfile).to receive(:create).and_wrap_original do |create, *args|
+          create.call(*args).tap do |file|
+            bundle_paths << file.path
+            allow(file).to receive(:puts).and_raise(Errno::ENOSPC)
+          end
+        end
+
+        begin
+          described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+        rescue Errno::ENOSPC
+          # The failed write is the point; the file must still be removed.
+        end
+
+        expect(Pathname(bundle_paths.fetch(0))).not_to exist
+      end
+
+      it "raises a missing attestation error when another organisation holds the attestations" do
+        described_class.prefetched_bundles[fake_bottle_digest] =
+          { "Homebrew" => [], "trailofbits" => [fake_bundle_line] }
+        allow(described_class).to receive(:system_command!).and_return(fake_result_json_resp)
+
+        expect do
+          described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+        end.to raise_error(Homebrew::Attestation::MissingAttestationError)
+      end
+
+      it "looks the attestation up online when no listed organisation holds it" do
+        described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [], "trailofbits" => [] }
+        expect(described_class).to receive(:system_command!)
+          .with(fake_gh, args: ["attestation", "verify", cached_download, "--repo",
+                                Homebrew::Attestation::HOMEBREW_CORE_REPO, "--format", "json"],
+                env: { "GH_TOKEN" => fake_gh_creds, "GH_HOST" => "github.com" }, secrets: [fake_gh_creds],
+                print_stderr: false, chdir: HOMEBREW_TEMP)
+          .and_return(fake_result_json_resp)
+
+        described_class.check_attestation fake_bottle, Homebrew::Attestation::HOMEBREW_CORE_REPO
+      end
+
+      it "looks the attestation up online for an organisation that was not listed" do
+        described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
+        expect(described_class).to receive(:system_command!)
+          .with(fake_gh, args: ["attestation", "verify", cached_download, "--repo", "thirdparty/homebrew-tap",
+                                "--format", "json"],
+                env: { "GH_TOKEN" => fake_gh_creds, "GH_HOST" => "github.com" }, secrets: [fake_gh_creds],
+                print_stderr: false, chdir: HOMEBREW_TEMP)
+          .and_return(fake_result_json_resp)
+
+        described_class.check_attestation fake_bottle, "thirdparty/homebrew-tap"
       end
     end
   end
@@ -473,6 +725,47 @@ RSpec.describe Homebrew::Attestation do
       expect do
         described_class.check_core_attestation fake_bottle
       end.to raise_error(Homebrew::Attestation::InvalidAttestationError)
+    end
+
+    it "verifies a backfilled bottle without looking homebrew-core up online" do
+      described_class.prefetched_bundles[fake_bottle_digest] =
+        { "Homebrew" => [], "trailofbits" => [fake_bundle_line] }
+      expect(described_class).to receive(:system_command!)
+        .with(fake_gh, args: array_including("--repo", Homebrew::Attestation::BACKFILL_REPO, "--bundle"),
+              env: { "GH_TOKEN" => fake_gh_creds, "GH_HOST" => "github.com" }, secrets: [fake_gh_creds],
+              print_stderr: false, chdir: HOMEBREW_TEMP)
+        .once
+        .and_return(fake_result_json_resp_backfill)
+
+      described_class.check_core_attestation fake_bottle
+    end
+
+    it "retries online after a listed bundle fails to verify" do
+      described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
+      bundle_runs = []
+      allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
+        bundle_runs << args.include?("--bundle")
+        raise ErrorDuringExecution.new([fake_gh.to_s], status: fake_error_status) if bundle_runs.length == 1
+
+        fake_result_json_resp
+      end
+
+      described_class.check_core_attestation fake_bottle
+
+      expect(bundle_runs).to eq([true, false])
+    end
+
+    it "retries online after a listed bundle fails validation" do
+      described_class.prefetched_bundles[fake_bottle_digest] = { "Homebrew" => [fake_bundle_line] }
+      bundle_runs = []
+      allow(described_class).to receive(:system_command!) do |_gh, args:, **_options|
+        bundle_runs << args.include?("--bundle")
+        (bundle_runs.length == 1) ? fake_json_resp_wrong_sub : fake_result_json_resp
+      end
+
+      described_class.check_core_attestation fake_bottle
+
+      expect(bundle_runs).to eq([true, false])
     end
   end
 end
