@@ -279,12 +279,13 @@ It's also got the same backbone as `brew bundle exec` so the same arguments (e.g
 
 ### `brew bundle upgrade` and `HOMEBREW_BUNDLE_NO_UPGRADE=1`
 
-By default, `brew bundle` will attempt to upgrade all software.
-You can disable this behaviour by passing `--no-upgrade` or with `export HOMEBREW_BUNDLE_NO_UPGRADE=1` in your environment.
+By default, `brew bundle` will attempt to upgrade packages where supported.
+Installed Go, Cargo and uv packages are not checked for newer versions.
+You can disable upgrades by passing `--no-upgrade` or by setting `HOMEBREW_BUNDLE_NO_UPGRADE=1` in your environment.
 
-This only skips `brew upgrade`. It does not pin versions or add lock file support.
+This does not pin versions or add lock file support.
 
-If you do this, you can upgrade everything with:
+If you do this, you can request upgrades with:
 
 ```console
 brew bundle upgrade

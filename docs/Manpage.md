@@ -1776,9 +1776,8 @@ otherwise.
 
 `--json`
 
-: Print output in JSON format. There are two versions: `v1` and `v2`. `v1` is
-  deprecated and is currently the default if no version is specified. `v2`
-  prints outdated formulae and casks.
+: Print outdated formulae and casks in JSON format. The default and only
+  supported version is `v2`.
 
 `--minimum-version`
 

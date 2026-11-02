@@ -28,7 +28,9 @@ Press Ctrl-D or Ctrl-C to terminate it.
 {
   "mcpServers": {
     "Homebrew": {
-      "command": "brew mcp-server"
+      "type": "stdio",
+      "command": "brew",
+      "args": ["mcp-server"]
     }
   }
 }

@@ -10,7 +10,7 @@ Use these features to make your organisation's normal Homebrew workflow follow a
 Your management system distributes the settings and your existing help desk or Git workflow handles approvals.
 Operating-system controls remain necessary when the requirement is to prevent an untrusted user from executing software.
 
-The configuration works on macOS and Linux; cask settings apply only on macOS.
+The configuration works on macOS and Linux; cask settings apply to casks that support the platform.
 Run the Homebrew commands as the prefix owner.
 For root management jobs, use the absolute `brew` path with [`as-brew-user`](Homebrew-for-Mac-Admins.md#run-management-commands-as-the-owner), for example `/opt/homebrew/bin/brew as-brew-user config` on Apple Silicon.
 
