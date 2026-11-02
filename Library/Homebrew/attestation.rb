@@ -44,6 +44,11 @@ module Homebrew
     # @api private
     class InvalidAttestationError < RuntimeError; end
 
+    # Raised when attestation verification cannot complete due to the GitHub API rate limit.
+    #
+    # @api private
+    class RateLimitExceededError < RuntimeError; end
+
     # Raised when bottle attestation verification is unsupported for a tap.
     #
     # @api private
@@ -142,6 +147,10 @@ module Homebrew
         # Even if we have credentials, they may be invalid or malformed.
         if e.exitstatus == 4 || e.stderr.include?("HTTP 401: Bad credentials")
           raise GhAuthInvalid, "invalid credentials"
+        end
+
+        if e.stderr.match?(/HTTP (?:403|429)\b.*(?:API rate limit exceeded|exceeded a secondary rate limit)/)
+          raise RateLimitExceededError, "GitHub API rate limit exceeded: #{e}"
         end
 
         # The API used to return 404 but now can return 200 with an empty array.

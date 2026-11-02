@@ -66,7 +66,8 @@ module Homebrew
                   json_results.push(attestation)
                 rescue Homebrew::Attestation::UnsupportedTapError,
                        Homebrew::Attestation::MissingAttestationError,
-                       Homebrew::Attestation::InvalidAttestationError => e
+                       Homebrew::Attestation::InvalidAttestationError,
+                       Homebrew::Attestation::RateLimitExceededError => e
                   verification_failed = true
                   ofail <<~ERR
                     Failed to verify #{bottle.filename} with tag #{bottle_tag} due to error:
