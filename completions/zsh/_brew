@@ -2019,7 +2019,7 @@ _brew_outdated() {
     '--greedy-auto-updates[Also include outdated `auto_updates true` casks that would otherwise be skipped]' \
     '--greedy-latest[Also include outdated casks including those with `version :latest`]' \
     '--help[Show this message]' \
-    '(--quiet --verbose)--json[Print output in JSON format. There are two versions: `v1` and `v2`. `v1` is deprecated and is currently the default if no version is specified. `v2` prints outdated formulae and casks]' \
+    '(--quiet --verbose)--json[Print outdated formulae and casks in JSON format. The default and only supported version is `v2`]' \
     '--minimum-version[Only list a named formula or cask with an installed version below the given minimum version]' \
     '(--verbose --json)--quiet[List only the names of outdated kegs (takes precedence over `--verbose`)]' \
     '--severity[Only select findings at or above `low`, `medium`, `high` or `critical`]' \
