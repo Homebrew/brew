@@ -124,10 +124,21 @@ jobs:
         run: brew generate-formula-api --dry-run
 
   cask-audit:
-    name: cask audit
+    name: ${{ matrix.name }}
     needs: syntax
     if: github.repository_owner == 'Homebrew' && github.event_name != 'push'
-    runs-on: macos-26
+    runs-on: ${{ matrix.runs-on }}
+    container:
+      image: ${{ matrix.container }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: cask audit (Linux)
+            runs-on: ubuntu-latest
+            container: ghcr.io/homebrew/brew:main
+          - name: cask audit (macOS)
+            runs-on: macos-26
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
@@ -144,6 +155,7 @@ jobs:
           brew audit --skip-style --except=version --tap=homebrew/cask
 
       - name: Generate cask API
+        if: runner.os == 'macOS'
         run: brew generate-cask-api --dry-run
 
   vendored-gems:
