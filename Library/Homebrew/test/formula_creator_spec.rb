@@ -49,6 +49,7 @@ RSpec.describe Homebrew::FormulaCreator do
       "version overrides URL detect":        {
         url:              "https://github.com/mamedev/mame/archive/refs/tags/mame0289.tar.gz",
         version:          "0.289",
+        expected_name:    "mame",
         expected_version: "0.289",
       },
     }
