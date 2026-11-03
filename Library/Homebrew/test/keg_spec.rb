@@ -39,6 +39,20 @@ RSpec.describe Keg do
     expect(described_class.all).to eq([keg])
   end
 
+  describe "#deleted_formula?" do
+    it "returns true when no tap provides the formula" do
+      expect(keg.deleted_formula?).to be true
+    end
+
+    it "returns false when a tap provides the formula" do
+      formula_path = CoreTap.instance.new_formula_path("foo")
+      formula_path.dirname.mkpath
+      formula_path.write ""
+
+      expect(keg.deleted_formula?).to be false
+    end
+  end
+
   describe "#formula_preserve_rpath?" do
     let(:fallback_formula) do
       formula("foo") do

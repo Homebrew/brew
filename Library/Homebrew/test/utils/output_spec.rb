@@ -232,6 +232,11 @@ RSpec.describe Utils::Output do
       expect(described_class.pretty_install_status("foo", installed: true, disabled: true))
         .to match(/foo #{esc 32}✔#{esc 0} #{esc 31}\(disabled\)#{esc 0}\z/)
     end
+
+    it "keeps a removed installed entry marked as installed" do
+      expect(described_class.pretty_install_status("foo", installed: true, removed: true))
+        .to match(/foo #{esc 32}✔#{esc 0} #{esc 33}\(removed from tap\)#{esc 0}\z/)
+    end
   end
 
   describe "#pretty_deprecated" do
@@ -272,6 +277,27 @@ RSpec.describe Utils::Output do
 
       it "returns plain text" do
         expect(pretty_disabled_output).to eq("foo")
+      end
+    end
+  end
+
+  describe "#pretty_removed" do
+    subject(:pretty_removed_output) { described_class.pretty_removed("foo") }
+
+    context "when $stdout is a TTY" do
+      before { allow($stdout).to receive(:tty?).and_return(true) }
+
+      it "returns a string with a colored (removed from tap) label" do
+        expect(pretty_removed_output)
+          .to match(/foo #{esc 33}\(removed from tap\)#{esc 0}/)
+      end
+    end
+
+    context "when $stdout is not a TTY" do
+      before { allow($stdout).to receive(:tty?).and_return(false) }
+
+      it "returns plain text" do
+        expect(pretty_removed_output).to eq("foo")
       end
     end
   end
