@@ -5249,6 +5249,9 @@ Homebrew's Lead Maintainers are Bevan Kay, Carlo Cabrera, Justin Krehel, Michael
 Cho, Mike McQuaid, Nanda H Krishna, Patrick Linnane, Rui Chen, Ruoyu Zhong, Sam
 Ford and Sean Molenaar.
 
+Homebrew's Security Team members are Andrew Nesbitt, Mike McQuaid, Patrick
+Linnane and William Woodruff.
+
 Homebrew's other Maintainers are Andrew Nesbitt, Anton Melnikov, Bo Anderson,
 Branch Vincent, Caleb Xu, Daeho Ro, Douglas Eichelberger, Dustin Rodrigues, FX
 Coudert, Harald Nordgren, Issy Long, Klaus Hipp, Markus Reiter, Michka Popoff,

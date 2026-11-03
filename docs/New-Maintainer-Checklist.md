@@ -99,16 +99,20 @@ When they cease to be doing ops work, revoke or downgrade their access to all of
 
 ## Security Team
 
-If maintainers are interested in doing security work:
+When the Project Leader appoints a Maintainer to the Security Team under the [governance requirements](Homebrew-Governance.md#4-security--emergency-actions):
 
 - Invite them to the [**@Homebrew/security** team](https://github.com/orgs/Homebrew/teams/security)
 - Invite them to the [`homebrew` private 1Password](https://homebrew.1password.com/people) and add them to the "security" group.
 
-When they cease to be doing security work, revoke or downgrade their access to all of the above.
+When they leave the Security Team, revoke or downgrade their access to all of the above.
+Also revoke release access and any administrative permissions no longer authorised by [Homebrew Governance](Homebrew-Governance.md#4-security--emergency-actions).
 
 ## Owners
 
-The Project Leader and two other Lead Maintainers (ideally on the Security Team) should be made owners on GitHub and Slack:
+Choose GitHub organisation owners according to [Homebrew Governance](Homebrew-Governance.md#4-security--emergency-actions).
+
+Only Security Team members may hold owner or equivalent top-level administrative access to GitHub, Slack, 1Password or other project services.
+Ops Team members may also hold AWS `AdministratorAccess`; this exception is limited to AWS.
 
 - Make them owners on the [Homebrew GitHub organisation](https://github.com/orgs/Homebrew/people)
 - Make them owners on the [`machomebrew` private Slack](https://machomebrew.slack.com/admin)

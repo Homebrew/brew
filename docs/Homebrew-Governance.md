@@ -194,9 +194,9 @@ Lead Maintainers act collectively as Homebrew’s leadership.
 - Security Team members may be exempt from Maintainer numerical contribution requirements and may instead be evaluated by the Project Leader on qualitative security observations, such as their helpfulness to the project's security goals.
   This exemption does not waive the mandatory numerical requirements for becoming or remaining a Lead Maintainer.
 - Only Security Team members may make Homebrew/brew releases, whether directly or through automation.
-- GitHub organisation owners must include the Project Leader, Deputy Project Leader and at least one other Maintainer, preferably from the Security Team.
+- GitHub organisation owners must include the Project Leader, Deputy Project Leader and at least one other Security Team member.
   At least three human owners must be retained, including while an elected position is vacant.
-- Only Security Team members may hold owner or equivalent top-level administrative access to Slack, 1Password or other project services apart from GitHub.
+- Only Security Team members may hold owner or equivalent top-level administrative access to GitHub, Slack, 1Password or other project services.
   Ops Team members may also hold AWS AdministratorAccess; this exception is limited to AWS.
   Leaving the Security Team requires revocation of release access and any administrative permissions no longer authorised by this policy.
 - Only Security Team members who are GitHub organisation owners may be granted bypass permissions on GitHub repository rules.
