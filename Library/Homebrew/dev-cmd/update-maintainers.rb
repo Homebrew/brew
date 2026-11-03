@@ -29,14 +29,14 @@ module Homebrew
         Utils::GemSetup.install_bundler_gems!(groups: ["man"])
 
         lead_maintainers = GitHub.members_by_team("Homebrew", "lead-maintainers")
-        maintainers = GitHub.members_by_team("Homebrew", "maintainers")
-                            .reject { |login, _| lead_maintainers.key?(login) }
-        members = { lead_maintainers:, maintainers: }
-
-        sentences = {}
-        members.each do |group, hash|
+        sentences = {
+          lead_maintainers:,
+          maintainers:     GitHub.members_by_team("Homebrew", "maintainers")
+                                 .reject { |login, _| lead_maintainers.key?(login) },
+          security_team:   GitHub.members_by_team("Homebrew", "security"),
+        }.transform_values do |hash|
           hash.each { |login, name| hash[login] = "[#{name}](https://github.com/#{login})" }
-          sentences[group] = Utils::Text.to_sentence(
+          Utils::Text.to_sentence(
             hash.values.sort_by { |s| s.unicode_normalize(:nfd).gsub(/\P{L}+/, "") },
           )
         end
@@ -48,6 +48,8 @@ module Homebrew
                       "\\1 #{sentences[:lead_maintainers]}.")
         content.gsub!(/(Homebrew's other Maintainers (?:are|is)) .*\./,
                       "\\1 #{sentences[:maintainers]}.")
+        content.gsub!(/(Homebrew's \[Security Team.* members (?:are|is)) .*\./,
+                      "\\1 #{sentences[:security_team]}.")
 
         File.write(readme, content)
 

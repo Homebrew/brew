@@ -15,6 +15,7 @@ module Homebrew
       const :global_options, String
       const :project_leader, String
       const :lead_maintainers, String
+      const :security_team, String
       const :maintainers, String
     end
 
@@ -55,6 +56,8 @@ module Homebrew
         project_leader:        readme.read[/(Homebrew's \[Project Leader.*\.)/, 1]
                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
         lead_maintainers:      readme.read[/(Homebrew's \[Lead Maintainers.*\.)/, 1]
+                                     .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
+        security_team:         readme.read[/(Homebrew's \[Security Team.*\.)/, 1]
                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),
         maintainers:           readme.read[/(Homebrew's other Maintainers .*\.)/, 1]
                                      .gsub(/\[([^\]]+)\]\([^)]+\)/, '\1'),

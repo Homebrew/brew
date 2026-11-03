@@ -6,6 +6,25 @@ require "manpages"
 RSpec.describe Homebrew::Manpages do
   before { stub_const("Cmd", Class.new(Homebrew::AbstractCommand)) }
 
+  it "includes security team members from the README in the authors" do
+    stub_const("HOMEBREW_REPOSITORY", mktmpdir)
+    (HOMEBREW_REPOSITORY/"README.md").write <<~MARKDOWN
+      Homebrew's [Project Leader](https://example.com/leader) is [Alice](https://github.com/alice).
+      Homebrew's [Lead Maintainers](https://example.com/lead) are [Alice](https://github.com/alice).
+      Homebrew's [Security Team](https://example.com/security) members are [Alice](https://github.com/alice) and [Bob](https://github.com/bob).
+      Homebrew's other Maintainers are [Bob](https://github.com/bob).
+    MARKDOWN
+    allow(described_class).to receive_messages(
+      generate_cmd_manpages:       "",
+      global_cask_options_manpage: "",
+      global_options_manpage:      "",
+      env_vars_manpage:            "",
+    )
+
+    expect(described_class.build_man_page(quiet: true))
+      .to include("Homebrew's Security Team members are Alice and Bob.")
+  end
+
   def subcommand_parser
     Homebrew::CLI::Parser.new(Cmd) do
       usage_banner "`test` [<subcommand>]"
