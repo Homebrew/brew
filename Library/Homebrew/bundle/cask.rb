@@ -42,6 +42,7 @@ module Homebrew
         }
         # rubocop:enable Sorbet/AllowIncompatibleOverride
         def install_verb(name, options = {})
+          return "Pinning" if pin_needed?(name, options)
           return "Installing" if !cask_installed?(name) || !upgrading?(false, name, options)
 
           "Upgrading"
@@ -50,6 +51,8 @@ module Homebrew
         sig { override.params(name: String, no_upgrade: T::Boolean, verbose: T::Boolean, options: T.untyped).returns(T::Boolean) }
         def preinstall!(name, no_upgrade: false, verbose: false, **options)
           if cask_installed?(name) && !upgrading?(no_upgrade, name, options)
+            return true if pin_needed?(name, options)
+
             puts "Skipping install of #{name} cask. It is already installed." if verbose
             return false
           end
@@ -70,7 +73,10 @@ module Homebrew
           # cannot be meaningfully trusted.
           Homebrew::Trust.trust!(:cask, full_name) if options[:trusted] && Utils.full_name?(full_name)
 
-          install_result = if cask_installed?(name) && upgrading?(no_upgrade, name, options)
+          pin_only = cask_installed?(name) && !upgrading?(no_upgrade, name, options)
+          install_result = if pin_only
+            true
+          elsif cask_installed?(name)
             status = "#{options[:greedy] ? "may not be" : "not"} up-to-date"
             puts "Upgrading #{name} cask. It is installed but #{status}." if verbose
             Bundle.brew("upgrade", "--cask", full_name, verbose:)
@@ -103,8 +109,13 @@ module Homebrew
           result = install_result
 
           if cask_installed?(name)
-            postinstall_result = postinstall_change_state!(name:, options:, verbose:)
-            result &&= postinstall_result
+            pin_result = pin_change_state!(name:, full_name:, options:, verbose:)
+            result &&= pin_result
+
+            unless pin_only
+              postinstall_result = postinstall_change_state!(name:, options:, verbose:)
+              result &&= postinstall_result
+            end
           end
 
           result
@@ -149,6 +160,13 @@ module Homebrew
           cask_in_array?(cask, outdated_casks)
         end
 
+        sig { params(name: String, options: Homebrew::Bundle::EntryOptions).returns(T::Boolean) }
+        def pin_needed?(name, options)
+          return false if options[:pin] != true || !cask_installed?(name)
+
+          casks.none? { |cask| cask.to_s == name && cask.pinned? }
+        end
+
         sig { returns(T::Array[String]) }
         def installed_casks
           @installed_casks ||= cask_names
@@ -190,6 +208,7 @@ module Homebrew
             description = "# #{cask.desc}\n" if describe && cask.desc.present?
             config = ", args: { #{explicit_s(cask.config)} }" if cask.config.present? && cask.config.explicit.present?
             caskline = "#{description}cask \"#{cask.full_name}\"#{config}"
+            caskline += ", pin: true" if cask.pinned?
             caskline += ", trusted: true" if trusted_casks.include?(cask.full_name)
             caskline
           end.join("\n")
@@ -255,11 +274,22 @@ module Homebrew
 
         sig { params(no_upgrade: T::Boolean, name: String, options: Homebrew::Bundle::EntryOptions).returns(T::Boolean) }
         def upgrading?(no_upgrade, name, options)
-          return false if no_upgrade
+          return false if no_upgrade || options[:pin] == true
           return true if cask_upgradable?(name)
           return false unless options[:greedy]
 
           cask_is_outdated_using_greedy?(name)
+        end
+
+        sig {
+          params(name: String, full_name: String, options: Homebrew::Bundle::EntryOptions,
+                 verbose: T::Boolean).returns(T::Boolean)
+        }
+        def pin_change_state!(name:, full_name:, options:, verbose:)
+          return true unless pin_needed?(name, options)
+
+          puts "Pinning #{name} cask." if verbose
+          Bundle.brew("pin", "--cask", full_name, verbose:)
         end
 
         sig { params(name: String, options: Homebrew::Bundle::EntryOptions, verbose: T::Boolean).returns(T::Boolean) }

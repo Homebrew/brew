@@ -69,8 +69,7 @@ module Homebrew
         }
         # rubocop:enable Sorbet/AllowIncompatibleOverride
         def install_verb(name, options = {})
-          _ = options
-
+          return "Pinning" if options[:pin] == true && formula_installed?(name) && !formula_pinned?(name)
           return "Installing" unless formula_upgradable?(name)
 
           "Upgrading"
@@ -189,6 +188,11 @@ module Homebrew
           @pinned_formulae ||= formulae.filter_map { |f| f[:name] if f[:pinned?] }
         end
 
+        sig { params(formula: String).returns(T::Boolean) }
+        def formula_pinned?(formula)
+          formula_in_array?(formula, pinned_formulae)
+        end
+
         sig { params(name: String).returns(T.nilable(T::Hash[Symbol, T.untyped])) }
         def find_formula(name)
           formula = T.cast(formulae_by_full_name(name), T.nilable(T::Hash[Symbol, T.untyped]))
@@ -267,6 +271,7 @@ module Homebrew
             brewline += ", args: [#{args}]" unless f[:args].empty?
             brewline += ", restart_service: :changed" if !no_restart && Services.started?(f[:full_name])
             brewline += ", link: #{f[:link?]}" unless f[:link?].nil?
+            brewline += ", pin: true" if f[:pinned?]
             brewline += ", trusted: true" if trusted_formulae.include?(f[:full_name])
             brewline
           end.join("\n")
@@ -458,6 +463,7 @@ module Homebrew
         @postinstall = T.let(options.fetch(:postinstall, nil), T.nilable(String))
         @version_file = T.let(options.fetch(:version_file, nil), T.nilable(String))
         @trusted = T.let(options.fetch(:trusted, false), T::Boolean)
+        @pin = T.let(options[:pin] == true, T::Boolean)
         @changed = T.let(nil, T.nilable(T::Boolean))
       end
 
@@ -506,7 +512,9 @@ module Homebrew
 
       sig { params(no_upgrade: T::Boolean, verbose: T::Boolean).returns(T::Boolean) }
       def preinstall!(no_upgrade: false, verbose: false)
-        if installed? && (self.class.no_upgrade_with_args?(no_upgrade, @name) || !upgradable?)
+        if installed? && (self.class.no_upgrade_with_args?(no_upgrade, @name) || @pin || !upgradable?)
+          return true if pin_needed?
+
           puts "Skipping install of #{@name} formula. It is already installed." if verbose
           @changed = nil
           return false
@@ -517,7 +525,8 @@ module Homebrew
 
       sig { params(preinstall: T::Boolean, no_upgrade: T::Boolean, verbose: T::Boolean, force: T::Boolean).returns(T::Boolean) }
       def install!(preinstall: true, no_upgrade: false, verbose: false, force: false)
-        install_result = if preinstall
+        # A pinned entry is never upgraded, so an installed one only needs its pin.
+        install_result = if preinstall && !(@pin && installed?)
           install_change_state!(no_upgrade:, verbose:, force:)
         else
           true
@@ -530,6 +539,9 @@ module Homebrew
 
           link_result = link_change_state!(verbose:)
           result &&= link_result
+
+          pin_result = pin_change_state!(verbose:)
+          result &&= pin_result
 
           postinstall_result = postinstall_change_state!(verbose:)
           result &&= postinstall_result
@@ -650,6 +662,19 @@ module Homebrew
 
         puts "Running postinstall for #{@name}: #{@postinstall}" if verbose
         Kernel.system(@postinstall) || false
+      end
+
+      sig { returns(T::Boolean) }
+      def pin_needed?
+        @pin && !self.class.formula_pinned?(@full_name)
+      end
+
+      sig { params(verbose: T::Boolean).returns(T::Boolean) }
+      def pin_change_state!(verbose:)
+        return true unless pin_needed?
+
+        puts "Pinning #{@name} formula." if verbose
+        Bundle.brew("pin", "--formula", @full_name, verbose:)
       end
 
       private

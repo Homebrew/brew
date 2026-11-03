@@ -270,7 +270,7 @@ RSpec.describe Homebrew::Bundle::Brew do
         )
         expected = <<~RUBY
           # barfoo
-          brew "bar"
+          brew "bar", pin: true
           brew "bazzles/bizzles/baz", link: false, trusted: true
           # foobar
           brew "qux/quuz/foo"
@@ -776,6 +776,19 @@ RSpec.describe Homebrew::Bundle::Brew do
           expect(installer.preinstall!).to be(true)
           expect(installer.install!).to be(false)
         end
+
+        it "installs and then pins the formula when the pin option is true" do
+          allow(described_class).to receive(:pinned_formulae).and_return([])
+          pinning = described_class.new(formula_name, options.merge(pin: true))
+          expect(Homebrew::Bundle).to receive(:system)
+            .with(HOMEBREW_BREW_FILE, "install", "--formula", formula_name, "--with-option", verbose: false)
+            .and_return(true)
+          expect(Homebrew::Bundle).to receive(:system)
+            .with(HOMEBREW_BREW_FILE, "pin", "--formula", formula_name, verbose: false)
+            .and_return(true)
+          expect(pinning.preinstall!).to be(true)
+          expect(pinning.install!).to be(true)
+        end
       end
 
       context "when formula is installed" do
@@ -815,6 +828,28 @@ RSpec.describe Homebrew::Bundle::Brew do
             it "does not upgrade formula" do
               expect(Homebrew::Bundle).not_to \
                 receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
+              expect(installer.preinstall!).to be(false)
+            end
+          end
+
+          context "when the pin option is true" do
+            let(:options) { { args: ["with-option"], pin: true } }
+
+            it "pins the formula instead of upgrading it" do
+              allow(described_class).to receive(:pinned_formulae).and_return([])
+              expect(Homebrew::Bundle).not_to \
+                receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
+              expect(Homebrew::Bundle).to \
+                receive(:system).with(HOMEBREW_BREW_FILE, "pin", "--formula", formula_name, verbose: false)
+                                .and_return(true)
+              expect(described_class.install_verb(formula_name, options)).to eq("Pinning")
+              expect(installer.preinstall!).to be(true)
+              expect(installer.install!).to be(true)
+            end
+
+            it "skips a formula that is already pinned" do
+              allow(described_class).to receive(:pinned_formulae).and_return([formula_name])
+              expect(Homebrew::Bundle).not_to receive(:system)
               expect(installer.preinstall!).to be(false)
             end
           end

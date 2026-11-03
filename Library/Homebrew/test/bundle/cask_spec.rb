@@ -40,13 +40,16 @@ RSpec.describe Homebrew::Bundle::Cask do
     end
 
     context "when casks `foo`, `bar` and `baz` are installed, with `baz` being a formula requirement" do
-      let(:foo) { instance_double(Cask::Cask, to_s: "foo", full_name: "foo", desc: nil, config: nil) }
-      let(:baz) { instance_double(Cask::Cask, to_s: "baz", full_name: "baz", desc: "Software", config: nil) }
+      let(:foo) { instance_double(Cask::Cask, to_s: "foo", full_name: "foo", desc: nil, config: nil, pinned?: false) }
+      let(:baz) do
+        instance_double(Cask::Cask, to_s: "baz", full_name: "baz", desc: "Software", config: nil, pinned?: true)
+      end
       let(:bar) do
         instance_double(
           Cask::Cask, to_s:      "bar",
                       full_name: "bar",
                       desc:      nil,
+                      pinned?:   false,
                       config:    instance_double(
                         Cask::Config,
                         explicit: {
@@ -68,12 +71,12 @@ RSpec.describe Homebrew::Bundle::Cask do
         expect(dumper.cask_names).to eql(%w[foo bar baz])
       end
 
-      it "dumps as `cask 'baz'` and `cask 'foo' cask 'bar'` plus descriptions and config values" do
+      it "dumps as `cask 'baz'` and `cask 'foo' cask 'bar'` plus descriptions, config values and pins" do
         expected = <<~RUBY
           cask "foo"
           cask "bar", args: { fontdir: "/Library/Fonts", language: "zh-TW" }, trusted: true
           # Software
-          cask "baz"
+          cask "baz", pin: true
         RUBY
         allow(Homebrew::Trust).to receive(:trusted_entries).with(:cask).and_return(["bar"])
         expect(dumper.dump(describe: true)).to eql(expected.chomp)
@@ -337,6 +340,44 @@ RSpec.describe Homebrew::Bundle::Cask do
                             .and_return(true)
           expect(described_class.preinstall!("opera", greedy: true)).to be(true)
           expect(described_class.install!("opera", greedy: true)).to be(true)
+        end
+      end
+
+      context "when the pin option is true" do
+        let(:chrome) { instance_double(Cask::Cask, to_s: "google-chrome", pinned?: false) }
+
+        before do
+          described_class.reset!
+          allow(described_class).to receive_messages(installed_casks: ["google-chrome"],
+                                                     outdated_casks:  ["google-chrome"], casks: [chrome])
+        end
+
+        it "pins an unpinned cask instead of upgrading it" do
+          expect(Homebrew::Bundle).not_to \
+            receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--cask", "google-chrome", verbose: false)
+          expect(Homebrew::Bundle).to \
+            receive(:system).with(HOMEBREW_BREW_FILE, "pin", "--cask", "google-chrome", verbose: false)
+                            .and_return(true)
+          expect(described_class.install_verb("google-chrome", pin: true)).to eq("Pinning")
+          expect(described_class.preinstall!("google-chrome", pin: true)).to be(true)
+          expect(described_class.install!("google-chrome", pin: true)).to be(true)
+        end
+
+        it "skips a cask that is already pinned" do
+          allow(chrome).to receive(:pinned?).and_return(true)
+          expect(Homebrew::Bundle).not_to receive(:system)
+          expect(described_class.preinstall!("google-chrome", pin: true)).to be(false)
+        end
+
+        it "installs and then pins a missing cask" do
+          allow(described_class).to receive_messages(installed_casks: [], casks: [])
+          expect(Homebrew::Bundle).to receive(:brew).with("install", "--cask", "google-chrome", "--adopt",
+                                                          verbose: false)
+                                                    .and_return(true)
+          expect(Homebrew::Bundle).to receive(:brew).with("pin", "--cask", "google-chrome", verbose: false)
+                                                    .and_return(true)
+          expect(described_class.preinstall!("google-chrome", pin: true)).to be(true)
+          expect(described_class.install!("google-chrome", pin: true)).to be(true)
         end
       end
 
