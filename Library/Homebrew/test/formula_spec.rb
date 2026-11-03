@@ -1922,7 +1922,7 @@ RSpec.describe Formula do
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
       allow(tap_loader).to receive(:get_formula).and_raise(RuntimeError, "tried resolving tap formula")
-      allow(Formulary).to receive(:loader_for).with("foo/bar/f1", from: nil).and_return(tap_loader)
+      allow(Formulary).to receive(:loader_for).with("foo/bar/f1").and_return(tap_loader)
 
       f2_path = Tap.fetch("baz", "qux").path/"Formula/f2.rb"
       stub_formula_loader(
@@ -3868,7 +3868,7 @@ RSpec.describe Formula do
       RUBY
 
       allow(described_class).to receive_messages(core_names: [], tap_files: [formula_path])
-      expect(Formulary).not_to receive(:factory).with(formula_path)
+      expect(Formulary).not_to receive(:from_path).with(formula_path)
 
       expect { expect(described_class.all).to eq([]) }
         .to output(%r{Skipping thirdparty/foo because it is not trusted}).to_stderr

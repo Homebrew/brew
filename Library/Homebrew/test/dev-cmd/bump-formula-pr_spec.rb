@@ -132,7 +132,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
           end
         end
       RUBY
-      formula = Formulary.factory(formula_path)
+      formula = Formulary.from_path(formula_path)
       command = described_class.new([
         "--write-only", "--no-audit", "--url=https://brew.sh/test-1.2.4.tgz", "--sha256=#{"b" * 64}", "test"
       ])
@@ -164,7 +164,7 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
           end
         end
       RUBY
-      formula = Formulary.factory(formula_path)
+      formula = Formulary.from_path(formula_path)
       command = described_class.new([
         "--write-only", "--no-audit", "--url=https://brew.sh/test-1.2.4.tgz", "--sha256=#{"b" * 64}", "test"
       ])

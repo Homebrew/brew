@@ -778,7 +778,7 @@ module Homebrew
         if contents.present?
           Formulary.from_contents(name, path, contents, spec).version
         else
-          Formulary::FormulaLoader.new(name, path).get_formula(spec).version
+          Formulary.from_path(path, spec).version
         end
       end
 

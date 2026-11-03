@@ -1097,7 +1097,7 @@ module Homebrew
       return if changed_dependency_paths.empty?
 
       missing_compatibility_bumps = changed_dependency_paths.filter_map do |path|
-        changed_formula = Formulary.factory(path)
+        changed_formula = Formulary.from_tap_path(path)
         # Each changed dependency that updates its version must raise its compatibility_version by exactly one.
         _, base_ref_dependency_version_info = committed_version_info(formula: changed_formula)
         previous_dependency_version = base_ref_dependency_version_info[:version]
@@ -1153,7 +1153,7 @@ module Homebrew
       return unless formula.valid_platform?
 
       dependent_revision_bumps = changed_formulae_paths(tap).filter_map do |path|
-        changed_formula = Formulary.factory(path)
+        changed_formula = Formulary.from_tap_path(path)
         next if changed_formula.name == formula.name
 
         dependencies = changed_formula.recursive_dependencies.map(&:name)

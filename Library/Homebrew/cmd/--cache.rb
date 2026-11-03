@@ -66,7 +66,12 @@ module Homebrew
           when Formula
             os_arch_combinations.each do |os, arch|
               SimulateSystem.with(os:, arch:) do
-                print_formula_cache(Formulary.factory(ref), os:, arch:)
+                formula = if ref.is_a?(Pathname)
+                  Formulary.from_path(ref)
+                else
+                  Formulary.factory(ref)
+                end
+                print_formula_cache(formula, os:, arch:)
               end
             end
           when Cask::Cask

@@ -162,7 +162,7 @@ RSpec.describe Homebrew::Cmd::Untap do
             end
           RUBY
           subject.clear_cache
-          Formulary.factory(path)
+          Formulary.from_path(path)
         else
           formula(name, tap: subject) do
             T.bind(self, T.class_of(Formula))

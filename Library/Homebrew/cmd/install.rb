@@ -136,7 +136,7 @@ module Homebrew
           send(*args, **options)
           conflicts "--cask", args.last
         end
-        formula_options
+        formula_options bottles: true
         [
           [:switch, "--cask", "--casks", {
             description: "Treat all named arguments as casks.",
@@ -206,7 +206,7 @@ module Homebrew
         end
 
         formulae, casks = T.cast(
-          args.named.to_formulae_and_casks(warn: false).partition { it.is_a?(Formula) },
+          args.named.to_formulae_and_casks(method: :bottle, warn: false).partition { it.is_a?(Formula) },
           [T::Array[Formula], T::Array[Cask::Cask]],
         )
         ask = !args.no_ask? && !args.dry_run?

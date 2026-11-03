@@ -37,7 +37,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
       end
     RUBY
 
-    Formulary.factory(path)
+    Formulary.from_path(path)
   end
   let(:f_partially_disabled_os) do
     path = mktmpdir/"partially_disabled_os_formula.rb"
@@ -52,7 +52,7 @@ RSpec.describe Homebrew::DevCmd::Bump do
       end
     RUBY
 
-    Formulary.factory(path)
+    Formulary.from_path(path)
   end
   let(:f_head_only) do
     formula("head_only_formula") do

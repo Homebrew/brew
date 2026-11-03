@@ -8,6 +8,7 @@ old_trap = trap("INT") { exit! 130 }
 require_relative "global"
 require "extend/ENV"
 require "timeout"
+require "formula"
 require "formula_assertions"
 require "formula_free_port"
 require "cli/parser"
@@ -18,14 +19,13 @@ require "extend/pathname/write_mkpath_extension"
 DEFAULT_TEST_TIMEOUT_SECONDS = T.let(5 * 60, Integer)
 
 begin
-  # Undocumented opt-out for internal use.
-  # We need to allow formulae from paths here due to how we pass them through.
-  ENV["HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS"] = "1"
-
-  args = Homebrew::DevCmd::Test.new.args
-  Context.current = args.context
-
   error_pipe = Utils.forked_child_error_pipe
+
+  spec = ARGV.include?("--HEAD") ? :head : nil
+  # The parent passes the selected formula source, never a dependency name.
+  formula = Formulary.resolve_from_path(ARGV.fetch(0), spec:, flags: ARGV.grep(/^--/))
+  args = Homebrew::DevCmd::Test.new(formula:).args
+  Context.current = args.context
 
   trap("INT", old_trap)
 
@@ -34,7 +34,6 @@ begin
     raise "Cannot kill child processes without `pkill`, please install!" unless which("pkill")
   end
 
-  formula = args.named.to_resolved_formulae.fetch(0)
   formula.extend(Homebrew::Assertions)
   formula.extend(Homebrew::FreePort)
   if args.debug? && !Homebrew::EnvConfig.disable_debrew?

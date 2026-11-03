@@ -794,13 +794,15 @@ module Homebrew
           bottle.root_url bottle_hash["bottle"]["root_url"]
           bottle.rebuild bottle_hash["bottle"]["rebuild"]
 
-          path = HOMEBREW_REPOSITORY/bottle_hash["formula"]["path"]
-          formula = Formulary.factory(path)
+          formula = Formulary.from_path(HOMEBREW_REPOSITORY/bottle_hash.fetch("formula").fetch("path"))
+          path = formula.path
 
           old_bottle_spec = formula.bottle_specification
           old_pkg_version = formula.pkg_version
-          FormulaVersions.new(formula).formula_at_revision("origin/HEAD") do |upstream_formula|
-            old_pkg_version = upstream_formula.pkg_version
+          if formula.tap
+            FormulaVersions.new(formula).formula_at_revision("origin/HEAD") do |upstream_formula|
+              old_pkg_version = upstream_formula.pkg_version
+            end
           end
 
           old_bottle_spec_matches = old_bottle_spec &&

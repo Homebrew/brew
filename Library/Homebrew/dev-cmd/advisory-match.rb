@@ -323,7 +323,7 @@ module Homebrew
 
           Homebrew::SimulateSystem.with(os:, arch:) do
             begin
-              view = (index.zero? || independent) ? formula : Formulary.factory(formula.path)
+              view = (index.zero? || independent) ? formula : Formulary.from_path(formula.path)
               platform_hits = if index.zero? || independent
                 hits
               else
@@ -436,7 +436,7 @@ module Homebrew
           Homebrew::SimulateSystem.with(os:, arch:) do
             # Reload under each platform: resources and primary sources can differ.
             begin
-              view = index.zero? ? formula : Formulary.factory(formula.path)
+              view = index.zero? ? formula : Formulary.from_path(formula.path)
               platform_hits = if index.zero?
                 hits
               else

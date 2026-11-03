@@ -45,7 +45,7 @@ RSpec.describe Homebrew::DevCmd::BumpPythonResourcesPr do
         formula_path.write(formula_path.read.sub(old_url, new_url))
       end
       allow(Formulary).to receive(:clear_cache)
-      allow(Formulary).to receive(:factory).with(formula_path).and_return(updated_formula)
+      allow(Formulary).to receive(:from_path).with(formula_path).and_return(updated_formula)
       allow(GitHub).to receive(:check_for_duplicate_pull_requests)
       expect(Homebrew::Bump).to receive(:create_pr) do |info, dry_run:, no_fork:|
         expect([dry_run, no_fork]).to eq([true, true])
@@ -102,7 +102,7 @@ RSpec.describe Homebrew::DevCmd::BumpPythonResourcesPr do
         formula_path.write(formula_path.read.sub(old_url, new_url))
       end
       allow(Formulary).to receive(:clear_cache)
-      allow(Formulary).to receive(:factory).with(formula_path).and_return(updated_formula)
+      allow(Formulary).to receive(:from_path).with(formula_path).and_return(updated_formula)
       allow(GitHub).to receive(:check_for_duplicate_pull_requests)
       allow(Homebrew::Bump).to receive(:create_pr)
         .with(instance_of(Homebrew::Bump::BumpInfo), no_fork: true, dry_run: false)

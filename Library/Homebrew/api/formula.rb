@@ -99,12 +99,10 @@ module Homebrew
                 "Try `rm -rf $(brew --cache)/api-source` and retrying."
         end
 
-        source_formula = with_env(HOMEBREW_INTERNAL_ALLOW_PACKAGES_FROM_PATHS: "1") do
-          Formulary.factory(download.symlink_location,
-                            formula.active_spec_sym,
-                            alias_path: formula.alias_path,
-                            flags:      formula.class.build_flags)
-        end
+        source_formula = Formulary.from_path(download.symlink_location,
+                                             formula.active_spec_sym,
+                                             alias_path: formula.alias_path,
+                                             flags:      formula.class.build_flags)
 
         source_formula.resources.each do |resource|
           resource.patches.grep(LocalPatch) do |patch|

@@ -144,7 +144,7 @@ module Homebrew
               next unless File.exist?(absolute_file)
 
               if tap.formula_file?(file)
-                audit_formulae << Formulary.factory(absolute_file)
+                audit_formulae << Formulary.from_tap_path(absolute_file)
               elsif tap.cask_file?(file) && (cask = cask_for_audit(absolute_file, cask_audit_os, cask_audit_arch))
                 audit_casks << cask
               end
@@ -154,7 +154,7 @@ module Homebrew
           elsif args.tap
             Tap.fetch(args.tap).then do |tap|
               [
-                tap.formula_files.map { |path| Formulary.factory(path) },
+                tap.formula_files.map { |path| Formulary.from_path(path) },
                 tap.cask_files.filter_map { |path| cask_for_audit(path, cask_audit_os, cask_audit_arch) },
               ]
             end
@@ -237,7 +237,7 @@ module Homebrew
             SimulateSystem.with(os:, arch:) do
               odebug "Auditing Formula #{f} on os #{os} and arch #{arch}"
 
-              audit_proc = proc { FormulaAuditor.new(Formulary.factory(path), **options).tap(&:audit) }
+              audit_proc = proc { FormulaAuditor.new(Formulary.from_path(path), **options).tap(&:audit) }
 
               # Audit requires full Ruby source so disable API. We shouldn't do this for taps however so that we
               # don't unnecessarily require a full Homebrew/core clone.

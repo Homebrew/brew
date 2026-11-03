@@ -172,8 +172,8 @@ module Homebrew
         named_args [:installed_formula, :installed_cask]
       end
 
-      sig { override.params(argv: T::Array[String]).void }
-      def initialize(argv = ARGV.freeze)
+      sig { override.params(argv: T::Array[String], formula: T.nilable(Formula)).void }
+      def initialize(argv = ARGV.freeze, formula: nil)
         super
         @ask_prompt_required = T.let(false, T::Boolean)
         @upgraded_formulae = T.let([], T::Array[Formula])

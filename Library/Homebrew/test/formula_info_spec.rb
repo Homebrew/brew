@@ -5,9 +5,9 @@ require "formula_info"
 
 RSpec.describe FormulaInfo, :integration_test do
   it "tests the FormulaInfo class" do
-    formula_path = setup_test_formula "testball"
-    info = described_class.lookup(formula_path)
-    raise "#{described_class}.lookup(#{formula_path}) returned nil" if info.nil?
+    setup_test_formula "testball"
+    info = described_class.lookup("testball")
+    raise "#{described_class}.lookup(testball) returned nil" if info.nil?
 
     expect(info.revision).to eq(0)
     expect(info.bottle_tags).to eq([])

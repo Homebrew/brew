@@ -12,9 +12,9 @@ class FormulaInfo
     @info = info
   end
 
-  # Looks up formula on disk and reads its info.
+  # Looks up a formula by name and reads its info.
   # Returns nil if formula is absent or if there was an error reading it.
-  sig { params(name: Pathname).returns(T.nilable(FormulaInfo)) }
+  sig { params(name: String).returns(T.nilable(FormulaInfo)) }
   def self.lookup(name)
     json = Utils.popen_read(
       *HOMEBREW_RUBY_EXEC_ARGS,

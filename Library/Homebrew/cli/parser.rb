@@ -209,6 +209,7 @@ module Homebrew
         @usage_banner = T.let(nil, T.nilable(String))
         @hide_from_man_page = T.let(false, T::Boolean)
         @formula_options = T.let(false, T::Boolean)
+        @formula_options_bottles = T.let(false, T::Boolean)
         @cask_options = T.let(false, T::Boolean)
         @subcommands = T.let([], T::Array[Subcommand])
         @current_subcommands = T.let(nil, T.nilable(T::Array[String]))
@@ -457,8 +458,8 @@ module Homebrew
         [remaining, non_options]
       end
 
-      sig { params(argv: T::Array[String], ignore_invalid_options: T::Boolean).returns(Args) }
-      def parse(argv = ARGV.freeze, ignore_invalid_options: false)
+      T::Sig::WithoutRuntime.sig { params(argv: T::Array[String], ignore_invalid_options: T::Boolean, formula: T.nilable(Formula)).returns(Args) }
+      def parse(argv = ARGV.freeze, ignore_invalid_options: false, formula: nil)
         raise "Arguments were already parsed!" if @args_parsed
 
         # If we accept formula options, but the command isn't scoped only
@@ -469,7 +470,8 @@ module Homebrew
 
           argv = [*remaining, "--", *non_options]
 
-          formulae(argv).each do |f|
+          option_formulae = formula ? [formula] : formulae(argv)
+          option_formulae.each do |f|
             next if f.options.empty?
 
             f.options.each do |o|
@@ -613,9 +615,10 @@ module Homebrew
         @cask_options = true
       end
 
-      sig { void }
-      def formula_options
+      sig { params(bottles: T::Boolean).void }
+      def formula_options(bottles: false)
         @formula_options = true
+        @formula_options_bottles = bottles
       end
 
       sig {
@@ -1180,7 +1183,12 @@ module Homebrew
               next if cached_api_formula
             end
 
-            Formulary.factory(arg, spec, flags: argv.select { |a| a.start_with?("--") })
+            flags = argv.select { |a| a.start_with?("--") }
+            if @formula_options_bottles && HOMEBREW_BOTTLES_EXTNAME_REGEX.match?(arg)
+              Formulary.from_bottle(arg, spec, flags:)
+            else
+              Formulary.factory(arg, spec, flags:)
+            end
           rescue FormulaUnavailableError, FormulaSpecificationError
             nil
           end

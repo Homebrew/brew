@@ -48,7 +48,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           end
         RUBY
 
-        Formulary.factory(path)
+        Formulary.from_path(path)
       end.call,
       partially_disabled_os:   lambda do
         path = mktmpdir/"test_partially_disabled_os.rb"
@@ -63,7 +63,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           end
         RUBY
 
-        Formulary.factory(path)
+        Formulary.from_path(path)
       end.call,
       head_only:               formula("test_head_only") do
         T.bind(self, T.class_of(Formula))

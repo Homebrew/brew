@@ -30,7 +30,7 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
       allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
       allow(download_queue).to receive(:enqueue) { |download| downloads << download }
       allow(cmd.args.named).to receive_messages(to_formulae: [foo], to_formulae_and_casks: [foo])
-      allow(Formulary).to receive(:factory).and_return(foo)
+      allow(Formulary).to receive_messages(factory: foo, from_path: foo)
       allow(cmd).to receive(:fetch_bottle?).and_return(false)
       allow(cmd).to receive(:run_fetch_hook)
     end

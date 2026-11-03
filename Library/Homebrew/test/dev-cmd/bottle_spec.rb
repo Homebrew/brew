@@ -174,6 +174,30 @@ RSpec.describe Homebrew::DevCmd::Bottle do
     end
   end
 
+  it "writes the bottle block to the recorded source despite a matching core name" do
+    core_path = CoreTap.instance.new_formula_path("testball")
+    core_path.dirname.mkpath
+    core_path.write <<~RUBY
+      class Testball < Formula
+        url "https://example.com/testball-0.1.tar.gz"
+      end
+    RUBY
+    path = mktmpdir/"testball.rb"
+    path.write <<~RUBY
+      class Testball < Formula
+        url "https://example.com/testball-1.0.tar.gz"
+      end
+    RUBY
+    json = path.dirname/"testball.bottle.json"
+    json.write stub_hash(name: "testball", version: "1.0", path: path.relative_path_from(HOMEBREW_REPOSITORY),
+                         cellar: "any_skip_relocation", os: "arm64_tahoe", sha256: "a" * 64)
+    allow_any_instance_of(FormulaVersions).to receive(:formula_at_revision)
+
+    described_class.new(["--merge", "--write", "--no-commit", json.to_s]).run
+
+    expect(path.read).to include("sha256 cellar: :any_skip_relocation, arm64_tahoe:")
+  end
+
   describe "--merge", :integration_test do
     let(:core_tap) { CoreTap.instance }
     let(:tarball) do

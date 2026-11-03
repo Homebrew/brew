@@ -254,6 +254,31 @@ RSpec.describe FormulaInstaller do
       installer.post_install
     end
 
+    it "runs declarative post-install steps when the launcher selects an API formula name" do
+      (HOMEBREW_PREFIX/"bin").mkpath
+      (HOMEBREW_PREFIX/"bin/brew").make_symlink HOMEBREW_BREW_FILE
+      path = CoreTap.instance.new_formula_path("testball")
+      path.dirname.mkpath
+      path.write <<~RUBY
+        class Testball < Formula
+          url "https://example.com/testball-1.0.tar.gz"
+          post_install_steps do
+            touch "api-postinstall-ran", base: :var
+          end
+        end
+      RUBY
+      formula = Formulary.factory("testball")
+      allow(formula).to receive_messages(loaded_from_api?: true, any_installed_prefix: mktmpdir)
+      installer = described_class.new(formula)
+      allow(Sandbox).to receive(:use_for?).with("running post-install", warn_without_sandbox: true).and_return(false)
+      allow(Sandbox).to receive(:full_write_isolation?).and_return(false)
+      installer.post_install
+
+      expect(HOMEBREW_PREFIX/"var/api-postinstall-ran").to be_a_file
+    ensure
+      FileUtils.rm_f HOMEBREW_PREFIX/"var/api-postinstall-ran"
+    end
+
     it "restores bin/brew after a Landlock-sandboxed post-install replaces it" do
       prefix = mktmpdir
       stub_const("HOMEBREW_PREFIX", prefix)

@@ -54,7 +54,7 @@ RSpec.describe Homebrew::DevCmd::Extract do
         .and not_to_output.to_stderr
         .and be_a_success
       expect(path).to exist
-      expect(Formulary.factory(path).version).to eq "0.2"
+      expect(Formulary.from_path(path).version).to eq "0.2"
       expect(target[:path]/"noop-a.diff").not_to exist
     end
 
@@ -63,7 +63,7 @@ RSpec.describe Homebrew::DevCmd::Extract do
       expect { described_class.new(["testball", target[:name], "--version=0.1"]).run }
         .to output(/^#{path}$/).to_stdout
       expect(path).to exist
-      expect(Formulary.factory(path).version).to eq "0.1"
+      expect(Formulary.from_path(path).version).to eq "0.1"
       expect(target[:path]/"noop-a.diff").to exist
     end
 
@@ -72,7 +72,7 @@ RSpec.describe Homebrew::DevCmd::Extract do
       expect { described_class.new(["testball", target[:name], "--version=0"]).run }
         .to output(/^#{path}$/).to_stdout
       expect(path).to exist
-      expect(Formulary.factory(path).version).to eq "0.2"
+      expect(Formulary.from_path(path).version).to eq "0.2"
       expect(target[:path]/"noop-a.diff").not_to exist
     end
   end

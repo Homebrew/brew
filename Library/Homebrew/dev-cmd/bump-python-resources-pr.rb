@@ -79,7 +79,7 @@ module Homebrew
           end
 
           Formulary.clear_cache
-          updated_formula = Formulary.factory(formula.path)
+          updated_formula = Formulary.from_path(formula.path)
           new_urls = vulnerable_resource_urls(updated_formula, packages)
           replaced_urls = old_urls - new_urls
           return result("No vulnerable resources were updated") if replaced_urls.empty?
