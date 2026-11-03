@@ -1288,6 +1288,12 @@ end
 
 To find the file we append `.plist` to the `launchd` service name and `.service` to the `systemd` service name internally.
 
+The service file determines which commands run and with which privileges.
+`sudo brew services start` installs it as a system service.
+Its commands will run as root unless the service specifies another user.
+Running `brew` with `sudo` also trusts the Homebrew prefix owner to run arbitrary code as root: they can modify `brew` itself and the code it loads.
+See [Why does Homebrew say sudo is bad?](FAQ.md#why-does-homebrew-say-sudo-is-bad) for details.
+
 #### Formula-defined service file
 
 If the formula does not provide a service file you can generate one using the following stanza:

@@ -74,6 +74,9 @@ This setting does not control commands run internally by third-party installers.
 
 ### Running as the Homebrew owner
 
+Invoking `brew` with `sudo` trusts the prefix owner to run arbitrary code as root before any account switch.
+This also applies to `as-console-user`; see [Why does Homebrew say sudo is bad?](FAQ.md#why-does-homebrew-say-sudo-is-bad).
+
 A dedicated account can manage Homebrew while other accounts read and execute its installed software.
 Give the owner a writable home directory and write access to the Homebrew directories and any shared app destination.
 Non-admin installations use the account's primary group, including a custom group; membership of `admin` or `staff` is not required.

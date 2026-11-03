@@ -11,6 +11,13 @@ Homebrew is the easiest and most flexible way to install the UNIX tools Apple
 didn't include with macOS. It can also install software not packaged for your
 Linux distribution without requiring `sudo`.
 
+Running `brew` with `sudo` trusts the Homebrew prefix owner and anyone else who
+can modify Homebrew's code to run arbitrary code as root. They can modify `brew`
+itself and the code it loads before command-specific checks or switching users.
+This trust also applies to commands that only display information or
+subsequently run as another account. Only use `sudo` if you trust those accounts
+and any software you ask to run with elevated privileges.
+
 ## TERMINOLOGY
 
 **formula**
@@ -141,6 +148,10 @@ account. Changing users requires permission to use `sudo` or an already-root
 process; running as the owner does not. When `sudo` is disabled or unavailable,
 root can switch users directly.
 
+When invoked with `sudo`, this command trusts the Homebrew prefix owner to run
+arbitrary code as root: they can modify `brew` itself and the code it loads
+before switching users. Only use `sudo` if you trust the prefix owner.
+
 Use `brew as-brew-user install --yes` *`formula`* for unattended installation.
 On macOS, use `as-console-user` to select the active desktop user instead.
 
@@ -155,6 +166,10 @@ desktop user is logged in.
 Uses the user's home and a clean environment, then loads `brew.env` for that
 account. Uses `sudo` when enabled and available; root can also switch users when
 `sudo` is disabled or unavailable.
+
+When invoked with `sudo`, this command trusts the Homebrew prefix owner to run
+arbitrary code as root: they can modify `brew` itself and the code it loads
+before switching users. Only use `sudo` if you trust the prefix owner.
 
 Use `as-brew-user` to select the installation's owner on macOS or Linux,
 including when no user is logged in.
@@ -2059,6 +2074,11 @@ If `sudo` is passed, operate on `/Library/LaunchDaemons` or
 `/usr/lib/systemd/system` (started at boot). Otherwise, operate on
 `~/Library/LaunchAgents` or `~/.config/systemd/user` (started at login).
 
+Services started with `sudo` will run as root unless configured otherwise.
+Running `brew` with `sudo` also trusts the Homebrew prefix owner to run
+arbitrary code as root: they can modify `brew` itself and the code it loads.
+Only use `sudo` if you trust the prefix owner and the service software.
+
 Environment variables can be added or overridden for a service by creating
 `$HOMEBREW_USER_CONFIG_HOME/services/<formula>.env` (defaults to
 `~/.homebrew/services/<formula>.env`). The file uses `KEY=value` format, one per
@@ -2759,6 +2779,10 @@ Display Homebrew's install path. *Default:*
 
 If *`formula`* is provided, display the location where *`formula`* is or would
 be installed.
+
+When invoked with `sudo`, this command trusts the Homebrew prefix owner to run
+arbitrary code as root: they can modify `brew` itself and the code it loads.
+Only use `sudo` if you trust the prefix owner.
 
 `--unbrewed`
 

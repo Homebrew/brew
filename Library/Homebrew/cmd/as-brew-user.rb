@@ -24,6 +24,10 @@ module Homebrew
           already-root process; running as the owner does not. When `sudo` is
           disabled or unavailable, root can switch users directly.
 
+          When invoked with `sudo`, this command trusts the Homebrew prefix owner
+          to run arbitrary code as root: they can modify `brew` itself and the code
+          it loads before switching users. Only use `sudo` if you trust the prefix owner.
+
           Use `brew as-brew-user install --yes` <formula> for unattended installation.
           On macOS, use `as-console-user` to select the active desktop user instead.
         EOS

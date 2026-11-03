@@ -385,7 +385,7 @@ module Homebrew
         end
       end
 
-      # protections to avoid users editing root services
+      # Transfer ownership of selected root service paths.
       sig { params(service: Services::FormulaWrapper).returns(T::Boolean) }
       def self.take_root_ownership?(service)
         return false unless System.root?
@@ -447,6 +447,8 @@ module Homebrew
             #{root_paths.join("\n  ")}
           This will require manual removal of these paths using `sudo rm` on
           brew upgrade/reinstall/uninstall.
+          Root services will run Homebrew-installed software as root by default. Only use
+          root services if you trust all users who can write to your Homebrew installation.
         EOS
         chown "root", group, root_paths
         chmod "+t", root_paths
@@ -484,7 +486,10 @@ module Homebrew
       sig { params(service: Services::FormulaWrapper, file: T.nilable(Pathname), enable: T::Boolean).void }
       def self.service_load(service, file, enable:)
         if System.root? && !service.service_startup? && !sudo_service_user
-          opoo "`#{service.name}` must be run as non-root to start at user login!"
+          opoo <<~EOS
+            `#{service.name}` must be run as non-root to start at user login!
+            The service will run as root unless configured otherwise.
+          EOS
         elsif !System.root? && service.service_startup?
           opoo "`#{service.name}` must be run as root to start at system startup!"
         end

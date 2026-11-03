@@ -49,6 +49,10 @@ module Homebrew
             - Linux: `#{HOMEBREW_LINUX_DEFAULT_PREFIX}`
 
           If <formula> is provided, display the location where <formula> is or would be installed.
+
+          When invoked with `sudo`, this command trusts the Homebrew prefix owner
+          to run arbitrary code as root: they can modify `brew` itself and the code
+          it loads. Only use `sudo` if you trust the prefix owner.
         EOS
         switch "--unbrewed",
                description: "List files in Homebrew's prefix not installed by Homebrew."
