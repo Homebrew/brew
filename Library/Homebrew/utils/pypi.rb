@@ -312,7 +312,7 @@ module PyPI
     elsif version.present?
       if main_package.valid_pypi_package?
         main_package.version = version
-      elsif pypi_packages_info.nil?
+      elsif pypi_packages_info.nil? || formula.version.to_s != version
         return false if ignore_non_pypi_packages
 
         odie "The main package is not a PyPI package, meaning that version-only updates cannot be \
