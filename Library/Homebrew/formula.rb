@@ -4086,6 +4086,10 @@ class Formula
     sig { returns(T::Boolean) }
     def loaded_from_internal_api? = !!@loaded_from_internal_api
 
+    # Whether this formula was loaded from installed metadata.
+    sig { returns(T::Boolean) }
+    def loaded_from_metadata? = !!formula_namespace&.const_defined?(:LOADED_FROM_METADATA, false)
+
     # Whether this formula was loaded using the formulae.brew.sh API.
     sig { returns(T.nilable(T::Hash[String, T.untyped])) }
     attr_reader :api_source
@@ -5108,8 +5112,7 @@ class Formula
         raise ArgumentError, "no_autobump! can only be used in official Homebrew taps." if tap && !tap.official?
       end
 
-      if because.is_a?(Symbol) && !NO_AUTOBUMP_REASONS_LIST.key?(because) &&
-         !formula_namespace&.const_defined?(:LOADED_FROM_METADATA, false)
+      if because.is_a?(Symbol) && !NO_AUTOBUMP_REASONS_LIST.key?(because) && !loaded_from_metadata?
         raise ArgumentError, "'because' argument should use valid symbol or a string!"
       end
 

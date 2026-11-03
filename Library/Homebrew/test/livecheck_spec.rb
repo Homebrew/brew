@@ -131,6 +131,20 @@ RSpec.describe Livecheck do
       livecheck_f.throttle(days: 1)
       expect(livecheck_f.throttle_days).to eq(1)
     end
+
+    it "raises an ArgumentError if both `rate` and `days` arguments are provided" do
+      expect { livecheck_f.throttle(10, days: 1) }.to raise_error ArgumentError
+    end
+
+    it "raises an ArgumentError if `@throttle` is set and `days` is provided" do
+      livecheck_f.throttle(10)
+      expect { livecheck_f.throttle(days: 1) }.to raise_error ArgumentError
+    end
+
+    it "raises an ArgumentError if `@throttle_days` is set and `rate` is provided" do
+      livecheck_f.throttle(days: 1)
+      expect { livecheck_f.throttle(10) }.to raise_error ArgumentError
+    end
   end
 
   describe "#url" do
