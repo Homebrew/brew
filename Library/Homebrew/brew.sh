@@ -7,13 +7,6 @@
 # shellcheck disable=SC2154
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/os.sh"
 
-# Prevent other staff members from modifying new files, including subprocess output.
-# Keep in sync with Homebrew/install's install.sh and package/scripts/postinstall.
-if [[ -n "${HOMEBREW_MACOS}" && "$(id -gn)" == staff && " $(id -Gn) " != *" admin "* ]]
-then
-  umask go-w
-fi
-
 realpath() {
   (cd "$1" &>/dev/null && pwd -P)
 }
@@ -145,6 +138,14 @@ case "$@" in
     homebrew-help "$@" && exit 0
     ;;
 esac
+
+# Prevent other staff members from modifying new files, including subprocess output.
+# Keep in sync with Homebrew/install's install.sh and package/scripts/postinstall.
+# This forks `id` twice so keep it below the read-only commands above.
+if [[ -n "${HOMEBREW_MACOS}" && "$(id -gn)" == staff && " $(id -Gn) " != *" admin "* ]]
+then
+  umask go-w
+fi
 
 # commands that take a single or no arguments and need to write to HOMEBREW_PREFIX.
 # HOMEBREW_LIBRARY set by bin/brew

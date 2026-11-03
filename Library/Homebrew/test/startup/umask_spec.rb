@@ -18,11 +18,10 @@ RSpec.describe "startup umask", type: :system do
       stdout, stderr, status = Open3.capture3(
         { "HOMEBREW_MACOS" => macos }, "/bin/bash", "-c", <<~SH, "--", directory.to_s
           umask #{initial_umask}
-          source() { :; }
           id() {
             if [[ "$1" == -gn ]]; then echo '#{primary_group}'; else echo '#{groups}'; fi
           }
-          #{(HOMEBREW_LIBRARY_PATH/"brew.sh").read.split("\nrealpath()", 2).first}
+          #{(HOMEBREW_LIBRARY_PATH/"brew.sh").read[/^# Prevent other staff members.*?^fi$/m]}
           umask
           /bin/bash -c 'mkdir "$1/child"; touch "$1/child/file"' -- "$1"
         SH
