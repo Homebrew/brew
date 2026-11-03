@@ -2694,6 +2694,24 @@ RSpec.describe Formula do
       expect(f.eligible_kegs_for_cleanup).to contain_exactly(Keg.new(f.prefix("3.6.2")), Keg.new(f.prefix("3.6.3")))
     end
 
+    specify "without the latest version installed and outdated HEAD Kegs" do
+      f = Class.new(Testball) do
+        version("0.3")
+        head("foo")
+      end.new
+
+      %w[0.1 0.2 HEAD-000000 HEAD-111111].each do |version|
+        prefix = f.prefix(version)
+        prefix.mkpath
+        tab = Tab.empty
+        tab.tabfile = prefix/AbstractTab::FILENAME
+        tab.versions["stable"] = "0.2"
+        tab.write
+      end
+
+      expect(f.eligible_kegs_for_cleanup).to eq([Keg.new(f.prefix("0.1"))])
+    end
+
     specify "with HEAD installed" do
       f = formula do
         T.bind(self, T.class_of(Formula))
