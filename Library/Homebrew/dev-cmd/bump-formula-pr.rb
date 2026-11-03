@@ -353,7 +353,7 @@ module Homebrew
 
           resource_update_results = {}
           unless args.dry_run?
-            resources_checked = PyPI.update_python_resources! formula,
+            resources_checked = PyPI.update_python_resources! reload_formula(commit_formula, new_contents),
                                                               version:                  new_formula_version.to_s,
                                                               package_name:             args.python_package_name,
                                                               extra_packages:           args.python_extra_packages,
@@ -772,13 +772,18 @@ module Homebrew
 
       sig { params(formula: Formula, contents: T.nilable(String)).returns(Version) }
       def formula_version(formula, contents = nil)
+        reload_formula(formula, contents).version
+      end
+
+      sig { params(formula: Formula, contents: T.nilable(String)).returns(Formula) }
+      def reload_formula(formula, contents = nil)
         spec = :stable
         name = formula.name
         path = formula.path
         if contents.present?
-          Formulary.from_contents(name, path, contents, spec).version
+          Formulary.from_contents(name, path, contents, spec)
         else
-          Formulary.from_path(path, spec).version
+          Formulary.from_path(path, spec)
         end
       end
 

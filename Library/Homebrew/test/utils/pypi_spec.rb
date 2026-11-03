@@ -368,8 +368,13 @@ RSpec.describe PyPI do
   end
 
   describe ".update_python_resources!" do
+    let(:path) { mktmpdir/"foo.rb" }
+
+    before do
+      allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
+    end
+
     it "uses the stable resource for dependency and package metadata resolution" do
-      path = mktmpdir/"foo.rb"
       path.write <<~RUBY
         class Foo < Formula
           url "ssh://git@gitlab.example/foo.git", tag: "v1.0"
@@ -380,7 +385,6 @@ RSpec.describe PyPI do
         end
       RUBY
       formula = Formulary.from_contents("foo", path, path.read)
-      allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
       allow(described_class).to receive(:pip_output)
         .with(array_including(formula.resource), any_args)
         .and_return('{"install":[{"metadata":{"name":"foo","version":"1.0"}}]}')
@@ -388,10 +392,54 @@ RSpec.describe PyPI do
       expect(described_class.update_python_resources!(formula, quiet: true)).to be true
     end
 
-    context "with a package name and a non-PyPI stable URL" do
+    it "works on a formula with non-PyPI stable URL and pypi_packages defined" do
+      url = "https://github.com/example/foo/archive/refs/tags/v1.0.tar.gz"
+      path.write <<~RUBY
+        class Foo < Formula
+          url "#{url}"
+          sha256 "#{"a" * 64}"
+
+          pypi_packages
+
+          def install
+            bin.install "foo"
+          end
+        end
+      RUBY
+      formula = Formulary.from_contents("foo", path, path.read)
+      bar_url = "https://files.pythonhosted.org/packages/bar-1.0.tar.gz"
+      bar_sha = "b" * 64
+      bar_package = PyPI::Package.new("bar==1.0")
+
+      allow(bar_package).to receive(:pypi_info).and_return(["bar", bar_url, bar_sha, "1.0", nil])
+      allow(described_class).to receive(:pip_report).and_return([PyPI::Package.new("foo==1.0"), bar_package])
+      allow(described_class).to receive(:pip_output)
+        .with(array_including("--no-deps", url), any_args)
+        .and_return('{"install":[{"metadata":{"name":"foo","version":"1.0"}}]}')
+
+      expect(described_class.update_python_resources!(formula, version: "1.0")).to be true
+      expect(path.read).to eq <<~RUBY
+        class Foo < Formula
+          url "#{url}"
+          sha256 "#{"a" * 64}"
+
+          pypi_packages
+
+          resource "bar" do
+            url "#{bar_url}"
+            sha256 "#{bar_sha}"
+          end
+
+          def install
+            bin.install "foo"
+          end
+        end
+      RUBY
+    end
+
+    context "with a non-PyPI stable URL and no pypi_packages defined" do
       let(:url) { "https://github.com/example/foo/archive/refs/tags/v1.0.tar.gz" }
       let(:formula) do
-        path = mktmpdir/"foo.rb"
         path.write <<~RUBY
           class Foo < Formula
             url "#{url}"
@@ -407,38 +455,53 @@ RSpec.describe PyPI do
       let(:report) { '{"install":[{"metadata":{"name":"foo","version":"1.0"}}]}' }
 
       before do
-        allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
         allow(described_class).to receive(:pip_output).and_return(report)
       end
 
-      it "resolves the stable URL with the package's extras when PyPI lacks the formula version" do
-        allow(Utils::Curl).to receive(:curl_output)
-          .and_return(instance_double(SystemCommand::Result,
-                                      status: instance_double(Process::Status, success?: false)))
-        expect(described_class).to receive(:pip_output)
-          .with(array_including("--report=/dev/stdout", "foo[bar] @ #{url}"), any_args).and_return(report)
+      context "when provided a version" do
+        it "raises an error by default" do
+          expect { described_class.update_python_resources!(formula, version: "1.0", quiet: true) }
+            .to output(/main package is not a PyPI package/).to_stderr
+            .and raise_error(SystemExit)
+        end
 
-        described_class.update_python_resources!(formula, package_name: "foo[bar]", quiet: true)
+        it "returns false if ignore_non_pypi_packages is set" do
+          expect(described_class.update_python_resources!(formula,
+                                                          version:                  "1.0",
+                                                          quiet:                    true,
+                                                          ignore_non_pypi_packages: true)).to be false
+        end
       end
 
-      it "resolves the package from PyPI when it has the formula version" do
-        pypi_json = {
-          info: { name: "foo", version: "1.0" },
-          urls: [{ packagetype: "sdist", url: "https://files.pythonhosted.org/packages/foo-1.0.tar.gz",
-                   digests: { sha256: "b" * 64 } }],
-        }.to_json
-        allow(Utils::Curl).to receive(:curl_output)
-          .and_return(instance_double(SystemCommand::Result,
-                                      status: instance_double(Process::Status, success?: true), stdout: pypi_json))
-        expect(described_class).to receive(:pip_output)
-          .with(array_including("--report=/dev/stdout", "foo[bar]==1.0"), any_args).and_return(report)
+      context "when provided a package_name" do
+        it "resolves the stable URL with the package's extras when PyPI lacks the formula version" do
+          allow(Utils::Curl).to receive(:curl_output)
+            .and_return(instance_double(SystemCommand::Result,
+                                        status: instance_double(Process::Status, success?: false)))
+          expect(described_class).to receive(:pip_output)
+            .with(array_including("--report=/dev/stdout", "foo[bar] @ #{url}"), any_args).and_return(report)
 
-        described_class.update_python_resources!(formula, package_name: "foo[bar]", quiet: true)
+          described_class.update_python_resources!(formula, package_name: "foo[bar]", quiet: true)
+        end
+
+        it "resolves the package from PyPI when it has the formula version" do
+          pypi_json = {
+            info: { name: "foo", version: "1.0" },
+            urls: [{ packagetype: "sdist", url: "https://files.pythonhosted.org/packages/foo-1.0.tar.gz",
+                     digests: { sha256: "b" * 64 } }],
+          }.to_json
+          allow(Utils::Curl).to receive(:curl_output)
+            .and_return(instance_double(SystemCommand::Result,
+                                        status: instance_double(Process::Status, success?: true), stdout: pypi_json))
+          expect(described_class).to receive(:pip_output)
+            .with(array_including("--report=/dev/stdout", "foo[bar]==1.0"), any_args).and_return(report)
+
+          described_class.update_python_resources!(formula, package_name: "foo[bar]", quiet: true)
+        end
       end
     end
 
     it "keeps resources with livecheck blocks" do
-      path = mktmpdir/"foo.rb"
       livecheck_resource = <<~RUBY
         resource "aws-lambda-rie" do
           url "https://github.com/aws/aws-lambda-runtime-interface-emulator/archive/refs/tags/v1.0.tar.gz"
@@ -471,7 +534,6 @@ RSpec.describe PyPI do
       package = PyPI::Package.new("bar==1.0")
       livecheck_package = PyPI::Package.new("aws-lambda-rie==1.0")
 
-      allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
       allow(described_class).to receive(:pip_report)
         .and_return([PyPI::Package.new("foo==1.0"), package, livecheck_package])
       allow(package).to receive(:pypi_info).and_return(
@@ -502,7 +564,6 @@ RSpec.describe PyPI do
     end
 
     it "keeps test resources with livecheck blocks" do
-      path = mktmpdir/"foo.rb"
       test_resource = <<~RUBY
         resource "homebrew-test-resource", :test do
           url "https://example.com/v1.0.tar.gz"
@@ -528,7 +589,6 @@ RSpec.describe PyPI do
       path.write(contents)
       package = PyPI::Package.new("bar==1.0")
 
-      allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
       allow(described_class).to receive(:pip_report)
         .and_return([PyPI::Package.new("foo==1.0"), package])
       allow(package).to receive(:pypi_info).and_return(
@@ -557,7 +617,6 @@ RSpec.describe PyPI do
     end
 
     it "exempts the main package from the cooldown when requested" do
-      path = mktmpdir/"foo.rb"
       contents = <<~RUBY
         class Foo < Formula
           url "https://files.pythonhosted.org/packages/foo-1.0.tar.gz"
@@ -576,7 +635,6 @@ RSpec.describe PyPI do
       path.write(contents)
       bar = PyPI::Package.new("bar==1.0")
 
-      allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
       allow(bar).to receive(:pypi_info).and_return(
         ["bar", "https://files.pythonhosted.org/packages/bar-1.0.tar.gz", "d" * 64, "1.0", nil],
       )
