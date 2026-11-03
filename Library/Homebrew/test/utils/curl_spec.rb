@@ -596,7 +596,7 @@ RSpec.describe "Utils::Curl" do
       ENV["HOMEBREW_CURL_VERSION"] = "8.7.1"
       ENV["HOMEBREW_CURL_VERSION_PATH"] = "/usr/bin/curl"
       allow(self).to receive(:curl_path).and_return("/usr/bin/curl")
-      allow(self).to receive(:curl_output).and_raise("Unexpected version probe")
+      allow(self).to receive(:curl_with_workarounds).and_raise("Unexpected version probe")
 
       expect(curl_version).to eq(Version.new("8.7.1"))
     end
@@ -606,7 +606,7 @@ RSpec.describe "Utils::Curl" do
       ENV["HOMEBREW_CURL_VERSION"] = "8.7.1"
       ENV["HOMEBREW_CURL_VERSION_PATH"] = "/usr/bin/curl"
       allow(self).to receive(:curl_path).and_return("/another/curl")
-      allow(self).to receive(:curl_output).with("-V").and_return(
+      allow(self).to receive(:curl_with_workarounds).with("-V", print_stderr: false, show_output: true).and_return(
         instance_double(SystemCommand::Result, success?: true, stdout: "curl 8.8.0"),
       )
 
@@ -615,7 +615,7 @@ RSpec.describe "Utils::Curl" do
 
     it "ignores malformed version data from the environment" do
       ENV["HOMEBREW_CURL_VERSION"] = "invalid version"
-      allow(self).to receive(:curl_output).with("-V").and_return(
+      allow(self).to receive(:curl_with_workarounds).with("-V", print_stderr: false, show_output: true).and_return(
         instance_double(SystemCommand::Result, success?: true, stdout: "curl 8.8.0"),
       )
 
@@ -629,7 +629,8 @@ RSpec.describe "Utils::Curl" do
       error = ErrorDuringExecution.new(["curl", "-V"], status: 127)
       result = instance_double(SystemCommand::Result, success?: false, stdout: "")
       allow(result).to receive(:assert_success!).and_raise(error)
-      allow(self).to receive(:curl_output).with("-V").and_return(result)
+      allow(self).to receive(:curl_with_workarounds).with("-V", print_stderr: false,
+                                                                show_output:  true).and_return(result)
 
       expect { curl_version }.to raise_error(error).and change(selection_cache, :exist?).from(true).to(false)
     end
@@ -639,7 +640,8 @@ RSpec.describe "Utils::Curl" do
       selection_cache.dirname.mkpath
       selection_cache.write "cached selection"
       result = instance_double(SystemCommand::Result, success?: true, stdout: "invalid version", assert_success!: nil)
-      allow(self).to receive(:curl_output).with("-V").and_return(result)
+      allow(self).to receive(:curl_with_workarounds).with("-V", print_stderr: false,
+                                                                show_output:  true).and_return(result)
 
       expect { curl_version }.to raise_error(SystemExit).and change(selection_cache, :exist?).from(true).to(false)
     end
@@ -650,7 +652,7 @@ RSpec.describe "Utils::Curl" do
 
     it "only runs the curl subprocess on the first call" do
       allow(self).to receive(:curl_path).and_return("/usr/bin/curl")
-      expect(self).to receive(:curl_output).once.and_return(
+      expect(self).to receive(:curl_with_workarounds).once.and_return(
         instance_double(SystemCommand::Result, success?: true, stdout: "curl 8.7.1 (x86_64-apple-darwin)"),
       )
       2.times { expect(curl_version).to eq(Version.new("8.7.1")) }
@@ -658,7 +660,7 @@ RSpec.describe "Utils::Curl" do
 
     it "discards the version when clearing the executable cache" do
       allow(self).to receive(:curl_path).and_return("/usr/bin/curl")
-      allow(self).to receive(:curl_output).with("-V").and_return(
+      allow(self).to receive(:curl_with_workarounds).with("-V", print_stderr: false, show_output: true).and_return(
         instance_double(SystemCommand::Result, success?: true, stdout: "curl 8.7.1"),
         instance_double(SystemCommand::Result, success?: true, stdout: "curl 8.8.0"),
       )
@@ -758,6 +760,125 @@ RSpec.describe "Utils::Curl" do
   end
 
   describe "::curl_output" do
+    test_each([
+      ["7.41.0", [], ""],
+      ["7.54.1", [], ""],
+      ["7.55.0", %w[--header @-], "Authorization: token test-token\n"],
+    ]) do |version, header_args, input|
+      it "only passes GitHub tokens with curl 7.55 or newer (#{version})" do
+        allow(self).to receive(:curl_version).and_return(Version.new(version))
+        expect(self).to receive(:system_command).with(
+          /curl/,
+          hash_including(
+            args:    curl_args("https://example.com/", *header_args, show_output: true),
+            input:,
+            secrets: ["test-token"],
+          ),
+        ).and_return(instance_double(SystemCommand::Result, success?: true))
+
+        curl_output("https://example.com/", "--header", "Authorization: token test-token", secrets: ["test-token"])
+      end
+    end
+
+    context "when using brewed curl" do
+      before do
+        ENV["HOMEBREW_CURL"] = "/usr/bin/curl"
+        ENV["HOMEBREW_CURL_VERSION_PATH"] = "/usr/bin/curl"
+        allow(self).to receive(:curl_path).and_return("/usr/bin/curl")
+      end
+
+      test_each([
+        ["7.54.1", "7.55.0", [], "", nil],
+        ["7.55.0", "7.54.1", %w[--header @-], "Authorization: token test-token\n", nil],
+        ["7.54.1", "7.55.0", [], "", 16],
+        ["7.55.0", "7.54.1", %w[--header @-], "Authorization: token test-token\n", 16],
+        ["7.54.1", "7.55.0", [], "", 56],
+        ["7.55.0", "7.54.1", %w[--header @-], "Authorization: token test-token\n", 56],
+      ]) do |version, system_version, header_args, input, exit_status|
+        it "uses brewed curl #{version} with system curl #{system_version} and exit status #{exit_status || 0}" do
+          ENV["HOMEBREW_CURL_VERSION"] = system_version
+          prefix = HOMEBREW_CELLAR/"curl/#{version}_1"
+          (prefix/"bin").mkpath
+          (prefix/"bin/curl").write ""
+          (HOMEBREW_PREFIX/"opt").mkpath
+          (HOMEBREW_PREFIX/"opt/curl").make_symlink(prefix)
+          stub_const("HOMEBREW_BREWED_CURL_PATH", HOMEBREW_PREFIX/"opt/curl/bin/curl")
+
+          if exit_status
+            allow(self).to receive(:system_command).with(
+              HOMEBREW_BREWED_CURL_PATH, hash_including(args: array_including("-V"))
+            ).and_return(instance_double(SystemCommand::Result, success?: true,
+                                                                stdout:   "curl #{version}\nFeatures: HTTP2\n"))
+            allow(self).to receive(:system_command).with(
+              HOMEBREW_BREWED_CURL_PATH,
+              hash_including(args: curl_args("https://example.com/", *header_args, show_output: true), input:),
+            ).and_return(instance_double(SystemCommand::Result, success?: false, exit_status:))
+          end
+
+          expect(self).to receive(:system_command).with(
+            HOMEBREW_BREWED_CURL_PATH,
+            hash_including(
+              args:  curl_args("https://example.com/", *(exit_status ? ["--http1.1"] : []), *header_args,
+                               show_output: true),
+              input:,
+            ),
+          ).and_return(instance_double(SystemCommand::Result, success?: true))
+
+          curl_output("https://example.com/", header: "Authorization: token test-token", use_homebrew_curl: true)
+        end
+      end
+    end
+
+    it "keeps anonymous registry authentication with older curl" do
+      allow(self).to receive(:curl_version).and_return(Version.new("7.41.0"))
+      expect(self).to receive(:system_command).with(
+        /curl/,
+        hash_including(
+          args:  curl_args("https://ghcr.io/", header: "Authorization: Bearer QQ==", show_output: true),
+          input: "",
+        ),
+      ).and_return(instance_double(SystemCommand::Result, success?: true))
+
+      curl_output("https://ghcr.io/", header: "Authorization: Bearer QQ==")
+    end
+
+    it "passes header options through standard input again on HTTP/1.1 fallback" do
+      allow(self).to receive(:curl_version).and_return(Version.new("7.55.0"))
+      allow(self).to receive(:system_command).with(
+        /curl/,
+        hash_including(
+          args:  curl_args("https://example.com/", "--header", "@-", show_output: true),
+          input: "authorization: token test-token\n",
+        ),
+      ).and_return(instance_double(SystemCommand::Result, success?: false, exit_status: 16))
+      expect(self).to receive(:system_command).with(
+        /curl/,
+        hash_including(
+          args:  curl_args("https://example.com/", "--http1.1", "--header", "@-", show_output: true),
+          input: "authorization: token test-token\n",
+        ),
+      ).and_return(instance_double(SystemCommand::Result, success?: true))
+
+      curl_output("https://example.com/", header: "authorization: token test-token")
+    end
+
+    test_each([
+      ["7.41.0", [], ""],
+      ["7.54.1", [], ""],
+      ["7.55.0", %w[--header @-], 'Authorization: token "test\\token'],
+    ]) do |version, header_args, input|
+      it "only passes GitHub tokens in Bash with curl 7.55 or newer (#{version})" do
+        ENV["HOMEBREW_CURL_VERSION"] = version
+        ENV["TEST_CURL_HEADER"] = 'Authorization: token "test\\token'
+
+        expect(SystemCommand.run!("/bin/bash", args: [
+          "-c", 'source "$1"; source "$2"; setup_curl_header "$TEST_CURL_HEADER"; ' \
+                'printf "%s\0" "${CURL_HEADER_ARGS[@]}" "$CURL_HEADER_INPUT"',
+          "--", HOMEBREW_LIBRARY_PATH/"utils.sh", HOMEBREW_LIBRARY_PATH/"utils/curl.sh"
+        ]).stdout).to eq("#{[*header_args, input].join("\0")}\0")
+      end
+    end
+
     it "enforces HTTPS redirects before running curl" do
       allow(Homebrew::EnvConfig).to receive(:no_insecure_redirect?).and_return(true)
 
@@ -1047,7 +1168,7 @@ RSpec.describe "Utils::Curl" do
           instance_double(SystemCommand::Result, success?: false, exit_status: 56,
                                                 status: instance_double(Process::Status, exitstatus: 56)),
         )
-        allow(self).to receive(:curl_output).with("-V") do
+        allow(self).to receive(:curl_output).with("-V", use_homebrew_curl: false) do
           allow(Time).to receive(:now).and_return(retry_time)
           instance_double(SystemCommand::Result, stdout: "curl 7.59.0\nFeatures: HTTP2\n")
         end

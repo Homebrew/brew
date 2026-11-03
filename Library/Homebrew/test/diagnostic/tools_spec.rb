@@ -5,6 +5,53 @@ require "diagnostic"
 require "utils/curl"
 
 RSpec.describe Homebrew::Diagnostic::Checks do
+  describe "#check_github_api_tokens" do
+    sig { returns(Homebrew::Diagnostic::Checks) }
+    subject(:checks) { described_class.new }
+
+    before do
+      %w[GH_TOKEN GITHUB_TOKEN HOMEBREW_GITHUB_API_TOKEN].each { ENV.delete(it) }
+      allow(Utils::Curl).to receive(:curl_version).and_return(Version.new("7.54.1"))
+    end
+
+    it "reports that HOMEBREW_GITHUB_API_TOKEN is not passed to older curl" do
+      ENV["HOMEBREW_GITHUB_API_TOKEN"] = "test-token"
+
+      expect(checks.check_github_api_tokens&.to_s).to eq <<~EOS.rstrip
+        GitHub API tokens are set, but curl 7.54.1 is older than 7.55.0.
+        Homebrew does not pass these tokens to curl. Requests use unauthenticated
+        rate limits and cannot access private repositories or write to GitHub.
+
+        Upgrade curl to 7.55.0 or newer to use GitHub API tokens.
+      EOS
+    end
+
+    it "does not warn when HOMEBREW_GITHUB_API_TOKEN is empty" do
+      ENV["HOMEBREW_GITHUB_API_TOKEN"] = ""
+
+      expect(checks.check_github_api_tokens).to be_nil
+    end
+
+    test_each(%w[GH_TOKEN GITHUB_TOKEN]) do |variable|
+      it "ignores #{variable}" do
+        ENV[variable] = "test-token"
+
+        expect(checks.check_github_api_tokens).to be_nil
+      end
+    end
+
+    it "does not warn when no token variables are set" do
+      expect(checks.check_github_api_tokens).to be_nil
+    end
+
+    it "does not warn with curl 7.55.0" do
+      ENV["HOMEBREW_GITHUB_API_TOKEN"] = "test-token"
+      allow(Utils::Curl).to receive(:curl_version).and_return(Version.new("7.55.0"))
+
+      expect(checks.check_github_api_tokens).to be_nil
+    end
+  end
+
   describe "#check_tools" do
     sig { returns(Homebrew::Diagnostic::Checks) }
     subject(:checks) { described_class.new }

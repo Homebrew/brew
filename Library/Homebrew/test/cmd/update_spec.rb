@@ -854,6 +854,7 @@ RSpec.describe Homebrew::Cmd::Update do
 
   it "queries redirected remote metadata only for taps" do
     args_file = test_root/"brew-args.txt"
+    curl_input_file = test_root/"curl-input.txt"
     metadata_queries_file = test_root/"metadata-queries.txt"
     repository = test_root/"repository"
     tap_path = test_root/"Library/Taps/old/homebrew-foo"
@@ -904,6 +905,8 @@ RSpec.describe Homebrew::Cmd::Update do
           return 1
         }
         curl() {
+          printf '%s\\n' "$@" >> "#{test_root}/curl-args.txt"
+          cat >> "#{curl_input_file}"
           local url
           for url in "$@"; do :; done
 
@@ -944,7 +947,9 @@ RSpec.describe Homebrew::Cmd::Update do
         "HOMEBREW_CORE_DEFAULT_GIT_REMOTE" => "https://github.com/Homebrew/homebrew-core",
         "HOMEBREW_CORE_GIT_REMOTE"         => "https://github.com/Homebrew/homebrew-core",
         "HOMEBREW_CORE_REPOSITORY"         => (test_root/"core").to_s,
+        "HOMEBREW_CURL_VERSION"            => "7.55.0",
         "HOMEBREW_DEVELOPER"               => "1",
+        "HOMEBREW_GITHUB_API_TOKEN"        => "test-token",
         "HOMEBREW_LIBRARY"                 => (test_root/"Library").to_s,
         "HOMEBREW_NO_ENV_HINTS"            => "1",
         "HOMEBREW_NO_INSTALL_FROM_API"     => "1",
@@ -961,5 +966,7 @@ RSpec.describe Homebrew::Cmd::Update do
       "#{tap_path}\thttps://github.com/new/homebrew-foo.git\n",
     )
     expect(metadata_queries_file.read).to eq("https://api.github.com/repos/old/homebrew-foo\n")
+    expect((test_root/"curl-args.txt").read).not_to include("test-token")
+    expect(curl_input_file.read).to eq("Authorization: token test-token\n" * 2)
   end
 end

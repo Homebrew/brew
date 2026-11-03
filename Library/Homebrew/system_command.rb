@@ -347,7 +347,7 @@ class SystemCommand
 
   sig { returns(T::Array[String]) }
   def command
-    [*command_prefix, executable.to_s, *expanded_args]
+    [*(sudo? ? sudo_prefix : ["/usr/bin/env"]), executable.to_s, *expanded_args]
   end
 
   private
@@ -429,16 +429,6 @@ class SystemCommand
     end
     user_flags += ["-u", "root"] if sudo_as_root?
     ["/usr/bin/sudo", *user_flags, *askpass_flags, "-E", *env_args, "--"]
-  end
-
-  sig { returns(T::Array[String]) }
-  def env_prefix
-    ["/usr/bin/env", *env_args]
-  end
-
-  sig { returns(T::Array[String]) }
-  def command_prefix
-    sudo? ? sudo_prefix : env_prefix
   end
 
   sig { returns(T::Array[String]) }

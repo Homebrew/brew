@@ -7,11 +7,26 @@
 
 # Ensure the system curl is a version that supports modern HTTPS certificates.
 HOMEBREW_MINIMUM_CURL_VERSION="7.41.0"
+# odeprecated "Raise the minimum curl to 7.55 at the next major/minor release; remove this variable, export and check."
+HOMEBREW_CURL_HEADER_FILE_MIN_VERSION="7.55.0"
 
 # Timeout values to check for dead connections
 # We don't use --max-time to support slow connections
 HOMEBREW_CURL_SPEED_LIMIT=100
 HOMEBREW_CURL_SPEED_TIME=5
+
+# Keep header input in sync with Utils::Curl.curl_with_workarounds in utils/curl.rb.
+setup_curl_header() {
+  CURL_HEADER_ARGS=()
+  CURL_HEADER_INPUT=
+  [[ -z "$1" ]] && return
+
+  if [[ "$(numeric "${HOMEBREW_CURL_VERSION:-0}")" -ge "$(numeric "${HOMEBREW_CURL_HEADER_FILE_MIN_VERSION}")" ]]
+  then
+    CURL_HEADER_ARGS=(--header @-)
+    CURL_HEADER_INPUT="$1"
+  fi
+}
 
 # Set CURL_DISABLE_CURLRC_ARGS with all shared curl options.
 # Keep environment options in sync with Utils::Curl.curl_args in utils/curl.rb.

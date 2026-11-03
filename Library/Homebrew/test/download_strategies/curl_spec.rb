@@ -29,6 +29,32 @@ RSpec.describe CurlDownloadStrategy do
     expect(strategy._curl_args).to eq(["--user", "download:123456"])
   end
 
+  context "with an authorization header and no cached curl version" do
+    subject(:strategy) do
+      Class.new(described_class) do
+        T.bind(self, T.class_of(CurlDownloadStrategy))
+        public :curl_output
+      end.new(url, name, version, **specs)
+    end
+
+    let(:specs) { { headers: ["Authorization: token test-token"] } }
+
+    it "probes the version without download headers before passing them through standard input" do
+      ENV.delete("HOMEBREW_CURL_VERSION")
+      allow(strategy).to receive(:curl_path).and_return("/usr/bin/curl")
+      allow(strategy).to receive(:system_command)
+        .with(/curl/, hash_including(args: array_including("-V"), input: ""))
+        .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "curl 8.7.1"))
+
+      expect(strategy).to receive(:system_command)
+        .with(/curl/, hash_including(args:  array_including(url, "--header", "@-"),
+                                     input: "Authorization: token test-token\n"))
+        .and_return(instance_double(SystemCommand::Result, success?: true))
+
+      strategy.curl_output(url)
+    end
+  end
+
   context "with a deferred HOMEBREW_ secret in a header" do
     let(:specs) { { headers: [header] } }
     let(:header) do

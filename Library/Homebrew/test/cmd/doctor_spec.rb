@@ -12,7 +12,8 @@ RSpec.describe Homebrew::Cmd::Doctor do
       .to output(/This is an integration test/).to_stderr
   end
 
-  specify "prints json when requested" do
+  specify "prints json when requested", :needs_utils_curl do
+    ENV["HOMEBREW_GITHUB_API_TOKEN"] = "test-token"
     cmd = described_class.new(["--json"])
 
     expect { cmd.run }
