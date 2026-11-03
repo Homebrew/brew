@@ -871,12 +871,12 @@ EOS
         # shellcheck disable=SC2153
         if [[ -n "${UPSTREAM_REPOSITORY_TOKEN}" ]]
         then
-          CURL_GITHUB_API_ARGS=("--header" "Authorization: token ${UPSTREAM_REPOSITORY_TOKEN}")
+          setup_curl_header "Authorization: token ${UPSTREAM_REPOSITORY_TOKEN}"
         elif [[ -n "${HOMEBREW_GITHUB_API_TOKEN}" ]]
         then
-          CURL_GITHUB_API_ARGS=("--header" "Authorization: token ${HOMEBREW_GITHUB_API_TOKEN}")
+          setup_curl_header "Authorization: token ${HOMEBREW_GITHUB_API_TOKEN}"
         else
-          CURL_GITHUB_API_ARGS=()
+          setup_curl_header ""
         fi
 
         if [[ "${DIR}" == "${HOMEBREW_REPOSITORY}" && -n "${HOMEBREW_UPDATE_TO_TAG}" ]]
@@ -901,7 +901,7 @@ EOS
         UPSTREAM_SHA_HTTP_RESPONSE="$(
           curl \
             "${CURL_DISABLE_CURLRC_ARGS[@]}" \
-            "${CURL_GITHUB_API_ARGS[@]}" \
+            "${CURL_HEADER_ARGS[@]}" \
             --silent --max-time 3 \
             --location --no-remote-time --output /dev/null --write-out "%{http_code} %{url_effective}" \
             --dump-header "${DIR}/.git/GITHUB_HEADERS" \
@@ -909,7 +909,7 @@ EOS
             --header "X-GitHub-Api-Version:2022-11-28" \
             --header "Accept: ${GITHUB_API_ACCEPT}" \
             --header "If-None-Match: \"${GITHUB_API_ETAG}\"" \
-            "${upstream_api_url}"
+            "${upstream_api_url}" <<<"${CURL_HEADER_INPUT}"
         )"
         UPSTREAM_SHA_HTTP_CODE="${UPSTREAM_SHA_HTTP_RESPONSE%% *}"
         UPSTREAM_SHA_HTTP_EFFECTIVE_URL="${UPSTREAM_SHA_HTTP_RESPONSE#* }"
@@ -921,13 +921,13 @@ EOS
           redirected_remote="$(
             curl \
               "${CURL_DISABLE_CURLRC_ARGS[@]}" \
-              "${CURL_GITHUB_API_ARGS[@]}" \
+              "${CURL_HEADER_ARGS[@]}" \
               --silent --max-time 3 \
               --location --no-remote-time \
               --user-agent "${HOMEBREW_USER_AGENT_CURL}" \
               --header "X-GitHub-Api-Version:2022-11-28" \
               --header "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${UPSTREAM_REPOSITORY}" |
+              "https://api.github.com/repos/${UPSTREAM_REPOSITORY}" <<<"${CURL_HEADER_INPUT}" |
               sed -n 's/^[[:space:]]*"clone_url": "\(.*\)",$/\1/p' |
               head -n1
           )"

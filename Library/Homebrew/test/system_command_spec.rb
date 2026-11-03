@@ -124,17 +124,29 @@ RSpec.describe SystemCommand do
       it("run!.stdout") { expect(command.run!.stdout).to eq("123") }
 
       describe "the resulting command line" do
-        it "includes the given variables explicitly" do
+        it "passes the given variables through the environment" do
           expect(command)
             .to receive(:exec3)
             .with(
-              an_instance_of(Hash), "/usr/bin/env", "A=1", "B=2", "C=3",
+              env, "/usr/bin/env",
               "env", *env_args,
               pgroup: true
             )
             .and_call_original
 
           command.run!
+        end
+      end
+    end
+
+    test_each(%w[GH_TOKEN GITHUB_TOKEN HOMEBREW_GITHUB_API_TOKEN]) do |variable|
+      context "with #{variable}" do
+        let(:env) { { variable => 'test "token" \\ value' } }
+        let(:env_args) { ["bash", "-c", "printf '%s' \"${#{variable}}\""] }
+
+        it "passes the token unchanged without adding it to arguments" do
+          expect([command.command, command.run!.stdout])
+            .to eq([["/usr/bin/env", "env", *env_args], env.fetch(variable)])
         end
       end
     end

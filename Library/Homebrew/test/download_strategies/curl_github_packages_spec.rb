@@ -50,7 +50,7 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
 
     it "calls curl with anonymous authentication headers" do
       expect(strategy).to receive(:system_command) do |_command, options|
-        expect(options[:args]).to include("--header", "Authorization: Bearer QQ==")
+        expect(options[:input]).to eq("Authorization: Bearer QQ==\n")
         expect(options[:args]).not_to include("--max-redirs")
         instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil)
       end.at_least(:once)
@@ -65,7 +65,7 @@ RSpec.describe CurlGitHubPackagesDownloadStrategy do
         expect(strategy).to receive(:system_command)
           .with(
             /curl/,
-            hash_including(args: array_including_cons("--header", "Authorization: #{authorization}")),
+            hash_including(input: "Authorization: #{authorization}\n"),
           )
           .at_least(:once)
           .and_return(instance_double(SystemCommand::Result, success?: true, stdout: "", assert_success!: nil))

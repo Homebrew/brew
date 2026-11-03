@@ -25,6 +25,8 @@ HOMEBREW_PROCESSOR = T.let(ENV.fetch("HOMEBREW_PROCESSOR").freeze, String)
 HOMEBREW_PHYSICAL_PROCESSOR = T.let(ENV.fetch("HOMEBREW_PHYSICAL_PROCESSOR").freeze, String)
 
 HOMEBREW_BREWED_CURL_PATH = Pathname.new(ENV.fetch("HOMEBREW_BREWED_CURL_PATH")).freeze
+# odeprecated "At the next major/minor release, require curl 7.55 and remove this constant and its version checks."
+HOMEBREW_CURL_HEADER_FILE_MIN_VERSION = T.let(ENV.fetch("HOMEBREW_CURL_HEADER_FILE_MIN_VERSION").freeze, String)
 HOMEBREW_CURL_SUPPORTS_ETAGS = T.let(ENV["HOMEBREW_CURL_SUPPORTS_ETAGS"] == "1", T::Boolean)
 HOMEBREW_USER_AGENT_CURL = T.let(ENV.fetch("HOMEBREW_USER_AGENT_CURL").freeze, String)
 HOMEBREW_USER_AGENT_FAKE_SAFARI =

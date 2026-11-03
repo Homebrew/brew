@@ -262,8 +262,26 @@ module Utils
         verbose:,
       }.compact
 
+      input = +""
+      # Keep header input in sync with setup_curl_header in utils/curl.sh.
+      command_args = curl_args(*args, **options).each_with_object([]) do |arg, filtered_args|
+        if filtered_args.last == "--header" && arg.match?(/\AAuthorization:/i)
+          # odeprecated "Remove this version check and the older-curl branches when the minimum curl is 7.55."
+          header_input_supported =
+            curl_version(use_homebrew_curl:) >= Version.new(HOMEBREW_CURL_HEADER_FILE_MIN_VERSION)
+          if header_input_supported || arg.match?(/\AAuthorization:\s*token /i)
+            filtered_args.pop
+            input << "#{arg}\n" if header_input_supported
+            next
+          end
+        end
+        filtered_args << arg
+      end
+      command_args += ["--header", "@-"] unless input.empty?
+
       result = system_command curl_executable(use_homebrew_curl:),
-                              args:    curl_args(*args, **options),
+                              args:    command_args,
+                              input:,
                               env:,
                               timeout: Utils::Timer.remaining(end_time),
                               **command_options
@@ -276,13 +294,13 @@ module Utils
       if result.exit_status == 16
         return curl_with_workarounds(
           *args, "--http1.1",
-          timeout: Utils::Timer.remaining(end_time), **command_options, **options
+          timeout: Utils::Timer.remaining(end_time), use_homebrew_curl:, **command_options, **options
         )
       end
 
       # This is a workaround for https://github.com/curl/curl/issues/1618.
       if result.exit_status == 56 # Unexpected EOF
-        out = curl_output("-V").stdout
+        out = curl_output("-V", use_homebrew_curl:).stdout
 
         # If `curl` doesn't support HTTP2, the exception is unrelated to this bug.
         return result unless out.include?("HTTP2")
@@ -293,7 +311,7 @@ module Utils
 
         return curl_with_workarounds(
           *args, "--http1.1",
-          timeout: Utils::Timer.remaining!(end_time), **command_options, **options
+          timeout: Utils::Timer.remaining!(end_time), use_homebrew_curl:, **command_options, **options
         )
       end
 
@@ -730,8 +748,14 @@ module Utils
       file&.unlink
     end
 
-    sig { returns(Version) }
-    def curl_version
+    sig { params(use_homebrew_curl: T::Boolean).returns(Version) }
+    def curl_version(use_homebrew_curl: false)
+      if use_homebrew_curl
+        require "keg"
+
+        return Keg.for(HOMEBREW_BREWED_CURL_PATH).version.version
+      end
+
       # setup_curl in utils/curl.sh passes the version for its selected executable.
       if (version = ENV.fetch("HOMEBREW_CURL_VERSION", nil))&.match?(/\A\d+\.\d+(?:\.\d+)?\z/) &&
          curl_path == ENV["HOMEBREW_CURL_VERSION_PATH"] && curl_path == ENV["HOMEBREW_CURL"]
@@ -740,7 +764,8 @@ module Utils
 
       @curl_version ||= T.let({}, T.nilable(T::Hash[String, Version]))
       @curl_version[curl_path] ||= begin
-        result = curl_output("-V")
+        # Version probes must not include a download strategy's headers.
+        result = curl_with_workarounds("-V", print_stderr: false, show_output: true)
         version = result.stdout[/curl (\d+(?:\.\d+)+)/, 1]
         if !result.success? || version.nil?
           require "utils/tool"
