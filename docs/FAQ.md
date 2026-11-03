@@ -192,6 +192,13 @@ See [Support Tiers](Support-Tiers.md#unsupported) for unsupported multi-user env
 Homebrew runs formula builds and installations as the owning account because upstream build scripts should not have unrestricted system access.
 Some casks and system services need elevated privileges; see [running without sudo](Installation.md#running-without-sudo).
 
+Running any `brew` command with `sudo` trusts the Homebrew prefix owner and anyone else who can modify Homebrew's code to run arbitrary code as root.
+They can change `bin/brew` or the code it loads before a later invocation with `sudo`, including before command-specific checks or switching users.
+This trust also applies to commands that only display information or subsequently run as another account.
+For example, if the owner adds `rm -rf /path/to/data` to `bin/brew`, the next `sudo brew ...` will run that deletion as root.
+Changing ownership of selected service paths does not remove this trust in accounts that can still modify Homebrew itself.
+Prefer `brew services` without `sudo` when a service does not need root privileges.
+
 ## What are the default ownership and permissions used by Homebrew?
 
 The macOS installer uses the selected account and the `admin` group for administrators, or the account's primary group otherwise.

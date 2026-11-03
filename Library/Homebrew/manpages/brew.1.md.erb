@@ -30,6 +30,13 @@ Homebrew is the easiest and most flexible way to install the UNIX tools Apple
 didn't include with macOS. It can also install software not packaged for your
 Linux distribution without requiring `sudo`.
 
+Running `brew` with `sudo` trusts the Homebrew prefix owner and anyone else who
+can modify Homebrew's code to run arbitrary code as root. They can modify `brew`
+itself and the code it loads before command-specific checks or switching users.
+This trust also applies to commands that only display information or subsequently
+run as another account. Only use `sudo` if you trust those accounts and any
+software you ask to run with elevated privileges.
+
 ## TERMINOLOGY
 
 **formula**

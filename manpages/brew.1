@@ -8,6 +8,8 @@ brew \- The Package Manager for Everywhere
 \fBbrew\fP \fIcommand\fP [\fB\-\-verbose\fP|\fB\-v\fP] [\fIoptions\fP] [\fIformula\fP] \.\.\.
 .SH "DESCRIPTION"
 Homebrew is the easiest and most flexible way to install the UNIX tools Apple didn\[u2019]t include with macOS\. It can also install software not packaged for your Linux distribution without requiring \fBsudo\fP\&\.
+.P
+Running \fBbrew\fP with \fBsudo\fP trusts the Homebrew prefix owner and anyone else who can modify Homebrew\[u2019]s code to run arbitrary code as root\. They can modify \fBbrew\fP itself and the code it loads before command\-specific checks or switching users\. This trust also applies to commands that only display information or subsequently run as another account\. Only use \fBsudo\fP if you trust those accounts and any software you ask to run with elevated privileges\.
 .SH "TERMINOLOGY"
 .TP
 \fBformula\fP
@@ -87,6 +89,8 @@ Use this in administrative scripts and scheduled jobs to manage an existing inst
 .P
 Uses the owner\[u2019]s home and a clean environment, then loads \fBbrew\.env\fP for that account\. Changing users requires permission to use \fBsudo\fP or an already\-root process; running as the owner does not\. When \fBsudo\fP is disabled or unavailable, root can switch users directly\.
 .P
+When invoked with \fBsudo\fP, this command trusts the Homebrew prefix owner to run arbitrary code as root: they can modify \fBbrew\fP itself and the code it loads before switching users\. Only use \fBsudo\fP if you trust the prefix owner\.
+.P
 Use \fBbrew as\-brew\-user install \-\-yes\fP \fIformula\fP for unattended installation\. On macOS, use \fBas\-console\-user\fP to select the active desktop user instead\.
 .SS "\fBas\-console\-user\fP \fIcommand\fP \fR[\fIargs\fP \.\.\.]"
 Run a Homebrew command as the user logged in to the macOS desktop\.
@@ -94,6 +98,8 @@ Run a Homebrew command as the user logged in to the macOS desktop\.
 Use this from administrative scripts when the desktop user manages Homebrew, for example \fBbrew as\-console\-user install \-\-yes\fP \fIformula\fP\&\. Fails if no supported desktop user is logged in\.
 .P
 Uses the user\[u2019]s home and a clean environment, then loads \fBbrew\.env\fP for that account\. Uses \fBsudo\fP when enabled and available; root can also switch users when \fBsudo\fP is disabled or unavailable\.
+.P
+When invoked with \fBsudo\fP, this command trusts the Homebrew prefix owner to run arbitrary code as root: they can modify \fBbrew\fP itself and the code it loads before switching users\. Only use \fBsudo\fP if you trust the prefix owner\.
 .P
 Use \fBas\-brew\-user\fP to select the installation\[u2019]s owner on macOS or Linux, including when no user is logged in\.
 .SS "\fBautoremove\fP \fR[\fB\-\-dry\-run\fP]"
@@ -1311,6 +1317,8 @@ Manage background services with macOS\[u2019] \fBlaunchctl\fP(1) daemon manager 
 .P
 If \fBsudo\fP is passed, operate on \fB/Library/LaunchDaemons\fP or \fB/usr/lib/systemd/system\fP (started at boot)\. Otherwise, operate on \fB~/Library/LaunchAgents\fP or \fB~/\.config/systemd/user\fP (started at login)\.
 .P
+Services started with \fBsudo\fP will run as root unless configured otherwise\. Running \fBbrew\fP with \fBsudo\fP also trusts the Homebrew prefix owner to run arbitrary code as root: they can modify \fBbrew\fP itself and the code it loads\. Only use \fBsudo\fP if you trust the prefix owner and the service software\.
+.P
 Environment variables can be added or overridden for a service by creating \fB$HOMEBREW_USER_CONFIG_HOME/services/<formula>\.env\fP (defaults to \fB~/\.homebrew/services/<formula>\.env\fP)\. The file uses \fBKEY=value\fP format, one per line; lines starting with \fB#\fP are comments\. Changes take effect on the next \fBbrew services restart\fP and persist across upgrades\.
 .TP
 \fB\-\-sudo\-service\-user\fP
@@ -1744,6 +1752,8 @@ macOS Intel: \fB/usr/local\fP
 Linux: \fB/home/linuxbrew/\.linuxbrew\fP
 .P
 If \fIformula\fP is provided, display the location where \fIformula\fP is or would be installed\.
+.P
+When invoked with \fBsudo\fP, this command trusts the Homebrew prefix owner to run arbitrary code as root: they can modify \fBbrew\fP itself and the code it loads\. Only use \fBsudo\fP if you trust the prefix owner\.
 .TP
 \fB\-\-unbrewed\fP
 List files in Homebrew\[u2019]s prefix not installed by Homebrew\.

@@ -732,6 +732,20 @@ RSpec.describe Homebrew::Services::Cli do
       service = instance_double(Homebrew::Services::FormulaWrapper)
       expect(services_cli.take_root_ownership?(service)).to be(false)
     end
+
+    it "explains the trust required for root services" do
+      allow(Homebrew::Services::System).to receive_messages(root?: true, systemctl?: true)
+      allow(services_cli).to receive_messages(chown: nil, chmod: nil)
+      service_formula = formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://example.com/test-1.0.tar.gz"
+      end
+      service = instance_double(Homebrew::Services::FormulaWrapper, formula: service_formula)
+
+      expect do
+        services_cli.take_root_ownership?(service)
+      end.to output(/services if you trust all users who can write to your Homebrew installation\./).to_stderr
+    end
   end
 
   describe "#install_service_file" do
@@ -1091,7 +1105,10 @@ RSpec.describe Homebrew::Services::Cli do
           nil,
           enable: true,
         )
-      end.to output(/`name` must be run as non-root to start at user login!/).to_stderr
+      end.to output(<<~EOS).to_stderr
+        Warning: `name` must be run as non-root to start at user login!
+        The service will run as root unless configured otherwise.
+      EOS
     end
 
     it "does not warn root for login when given `--sudo-service-user`" do
