@@ -102,8 +102,8 @@ Documentation is under the [Creative Commons Attribution license](https://creati
 
 Homebrew is generously supported by:
 
-- [GitHub](https://github.com/github), Randy Reddig, Joshua Baer, Codecademy, b.well, Workbrew, Gusto, thanks.dev, ZachryWilsn, Naveen Nathan, mikadelbert, chellesand, Aagam Dalal, thanvirmohamed, awppatel, EbbetG and [many others](https://github.com/sponsors/Homebrew#sponsors) via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
-- [Open Broadcaster Software](https://opencollective.com/obsproject), [Thinkst Canary](https://opencollective.com/thinkst-canary), Airbnb, Cybozu, WonderProxy, mkvirtasant, Gabor Nadai, PlanetScale, Richard Moats, Ajimah, David Ball, emushack, Ian-Retired, Cameron, J-Swift, Josh E., William Hern and [many others](https://opencollective.com/homebrew/transactions?kind=ADDED_FUNDS&kind=CONTRIBUTION) via [Open Collective](https://opencollective.com/homebrew).
+- [GitHub](https://github.com/github), Joshua Baer, Randy Reddig, Workbrew, b.well, Gusto, Codecademy, thanks.dev, ZachryWilsn, Naveen Nathan, mikadelbert, EbbetG, awppatel, chellesand, Aagam Dalal, thanvirmohamed and [many others](https://github.com/sponsors/Homebrew#sponsors) via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
+- [Open Broadcaster Software](https://opencollective.com/obsproject), [Thinkst Canary](https://opencollective.com/thinkst-canary), Airbnb, Cybozu, WonderProxy, mkvirtasant, Gabor Nadai, PlanetScale, Richard Moats, J-Swift, Ajimah, David Ball, emushack, Ian-Retired, Cameron, Josh E., William Hern and [many others](https://opencollective.com/homebrew/transactions?kind=ADDED_FUNDS&kind=CONTRIBUTION) via [Open Collective](https://opencollective.com/homebrew).
 - [many others](https://www.patreon.com/homebrew) via [Patreon](https://www.patreon.com/homebrew).
 
 <!-- release-sponsors -->
