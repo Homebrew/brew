@@ -378,6 +378,49 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  it "marks an installed formula removed from its tap with `(removed from tap)` in the title" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    allow_any_instance_of(Keg).to receive(:deleted_formula?).and_return(true)
+
+    info = described_class.new([])
+    formula = installed_info_formula
+    (HOMEBREW_CELLAR/"testball/0.1"/AbstractTab::FILENAME).write({ source: { tap: "homebrew/core" } }.to_json)
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+
+    expect { info.info_formula(formula) }
+      .to output(/==> .*testball.*\(removed from tap\):/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "does not mark a formula as removed from tap when its keg came from another tap" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    allow_any_instance_of(Keg).to receive(:deleted_formula?).and_return(true)
+
+    info = described_class.new([])
+    formula = installed_info_formula
+    (HOMEBREW_CELLAR/"testball/0.1"/AbstractTab::FILENAME).write({ source: { tap: "alice/tools" } }.to_json)
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+
+    expect { info.info_formula(formula) }
+      .not_to output(/removed from tap/).to_stdout
+  end
+
+  it "does not mark an installed formula without a tap as removed from tap" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    allow_any_instance_of(Keg).to receive(:deleted_formula?).and_return(true)
+
+    info = described_class.new([])
+    formula = installed_info_formula
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new],
+                                       tap: nil, versioned_formulae: [])
+
+    expect { info.info_formula(formula) }
+      .not_to output(/removed from tap/).to_stdout
+  end
+
   it "shows separate blocks for an unqualified and a qualified input that resolve to the same shadowed formula" do
     info = described_class.new([])
     core = installed_info_formula

@@ -484,6 +484,28 @@ class Keg
     Formulary.from_keg(self)
   end
 
+  # Whether neither the API nor any tap provides this keg's formula any more,
+  # e.g. because it was removed from its tap or installed from a local file.
+  sig { returns(T::Boolean) }
+  def deleted_formula?
+    tap = tab.tap
+    tap_keg_name = tap ? "#{tap}/#{name}" : name
+
+    [
+      Formulary::FromAPILoader,
+      Formulary::FromTapLoader,
+      Formulary::FromNameLoader,
+    ].none? do |loader_class|
+      loader = begin
+        loader_class.try_new(tap_keg_name, warn: false)
+      rescue TapFormulaAmbiguityError => e
+        e.loaders.first
+      end
+
+      loader.instance_of?(Formulary::FromTapLoader) ? loader.path.exist? : loader.present?
+    end
+  end
+
   sig { returns(T::Array[Pathname]) }
   def oldname_opt_records
     return @oldname_opt_records unless @oldname_opt_records.empty?
