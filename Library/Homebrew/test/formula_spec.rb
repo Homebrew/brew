@@ -2573,6 +2573,14 @@ RSpec.describe Formula do
   end
 
   describe "#eligible_kegs_for_cleanup" do
+    def setup_keg(prefix, versions = {})
+      prefix.mkpath
+      tab = Tab.empty
+      tab.tabfile = prefix/AbstractTab::FILENAME
+      tab.versions.merge!(versions)
+      tab.write
+    end
+
     it "returns Kegs eligible for cleanup" do
       f1 = Class.new(Testball) do
         version("1.0")
@@ -2646,8 +2654,7 @@ RSpec.describe Formula do
       let(:f) { Class.new(Testball) { version("0.3") }.new }
 
       before do
-        f.prefix("0.1").mkpath
-        f.prefix("0.2").mkpath
+        %w[0.1 0.2].each { |version| setup_keg(f.prefix(version)) }
       end
 
       it "returns all but the newest Keg" do
@@ -2673,12 +2680,7 @@ RSpec.describe Formula do
       end.new
 
       { "0.1" => 1, "0.2" => 0 }.each do |version, version_scheme|
-        prefix = f.prefix(version)
-        prefix.mkpath
-        tab = Tab.empty
-        tab.tabfile = prefix/AbstractTab::FILENAME
-        tab.versions["version_scheme"] = version_scheme
-        tab.write
+        setup_keg(f.prefix(version), "version_scheme" => version_scheme)
       end
 
       expect(f.eligible_kegs_for_cleanup).to eq([Keg.new(f.prefix("0.2"))])
@@ -2689,7 +2691,7 @@ RSpec.describe Formula do
         version("3.5.9")
         version_scheme(1)
       end.new
-      %w[3.6.2 3.6.3 3.6.5].each { |version| f.prefix(version).mkpath }
+      %w[3.6.2 3.6.3 3.6.5].each { |version| setup_keg(f.prefix(version)) }
 
       expect(f.eligible_kegs_for_cleanup).to contain_exactly(Keg.new(f.prefix("3.6.2")), Keg.new(f.prefix("3.6.3")))
     end
@@ -2700,16 +2702,17 @@ RSpec.describe Formula do
         head("foo")
       end.new
 
-      %w[0.1 0.2 HEAD-000000 HEAD-111111].each do |version|
-        prefix = f.prefix(version)
-        prefix.mkpath
-        tab = Tab.empty
-        tab.tabfile = prefix/AbstractTab::FILENAME
-        tab.versions["stable"] = "0.2"
-        tab.write
-      end
+      %w[0.1 0.2 HEAD-000000 HEAD-111111].each { |version| setup_keg(f.prefix(version), "stable" => "0.2") }
 
       expect(f.eligible_kegs_for_cleanup).to eq([Keg.new(f.prefix("0.1"))])
+    end
+
+    specify "without the latest version installed and an incomplete newer Keg" do
+      f = Class.new(Testball) { version("0.3") }.new
+      setup_keg(f.prefix("0.1"))
+      f.prefix("0.2").mkpath
+
+      expect(f.eligible_kegs_for_cleanup).to be_empty
     end
 
     specify "with HEAD installed" do

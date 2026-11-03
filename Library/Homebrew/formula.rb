@@ -3830,7 +3830,9 @@ class Formula
           end
         end
       else
-        installed_kegs.reject { |keg| keg.version.head? }.sort_by(&:scheme_and_version).reverse.drop(1)
+        installed_kegs.select { |keg| (keg/AbstractTab::FILENAME).file? }
+                      .reject { |keg| keg.version.head? }
+                      .sort_by(&:scheme_and_version).reverse.drop(1)
       end
 
       unless eligible_kegs.empty?
