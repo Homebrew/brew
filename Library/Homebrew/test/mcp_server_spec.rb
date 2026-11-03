@@ -12,7 +12,6 @@ RSpec.describe Homebrew::McpServer do
   let(:server) { described_class.new(stdin:, stdout:, stderr:) }
   let(:jsonrpc) { Homebrew::McpServer::JSON_RPC_VERSION }
   let(:id) { Random.rand(1000) }
-  let(:code) { Homebrew::McpServer::ERROR_CODE }
   let(:command_status) { instance_double(Process::Status, success?: true) }
   let(:command_waiter) { instance_double(Thread, value: command_status) }
 
@@ -64,11 +63,22 @@ RSpec.describe Homebrew::McpServer do
             prompts:   {},
             resources: {},
             logging:   {},
-            roots:     {},
           },
           serverInfo:      Homebrew::McpServer::SERVER_INFO,
         },
       })
+    end
+
+    it "echoes a supported protocol version requested by the client" do
+      request = { "id" => id, "method" => "initialize", "params" => { "protocolVersion" => "2025-03-26" } }
+      result = server.handle_request(request)
+      expect(result.dig(:result, :protocolVersion)).to eq("2025-03-26")
+    end
+
+    it "answers an unsupported protocol version with its own" do
+      request = { "id" => id, "method" => "initialize", "params" => { "protocolVersion" => "1999-01-01" } }
+      result = server.handle_request(request)
+      expect(result.dig(:result, :protocolVersion)).to eq(Homebrew::McpServer::MCP_PROTOCOL_VERSION)
     end
 
     it "responds to resources/list" do
@@ -95,10 +105,26 @@ RSpec.describe Homebrew::McpServer do
       expect(result).to eq({ jsonrpc:, id:, result: {} })
     end
 
-    it "responds to get_server_info" do
-      request = { "id" => id, "method" => "get_server_info" }
+    it "responds to ping with a string id" do
+      request = { "id" => "abc", "method" => "ping" }
       result = server.handle_request(request)
-      expect(result).to eq({ jsonrpc:, id:, result: Homebrew::McpServer::SERVER_INFO })
+      expect(result).to eq({ jsonrpc:, id: "abc", result: {} })
+    end
+
+    it "responds to ping with a non-integer numeric id" do
+      request = { "id" => 1.5, "method" => "ping" }
+      result = server.handle_request(request)
+      expect(result).to eq({ jsonrpc:, id: 1.5, result: {} })
+    end
+
+    it "rejects a request whose id is neither a number nor a string" do
+      request = { "id" => true, "method" => "ping" }
+      result = server.handle_request(request)
+      expect(result).to eq({
+        jsonrpc:,
+        id:      nil,
+        error:   { message: "Invalid request", code: Homebrew::McpServer::INVALID_REQUEST_CODE },
+      })
     end
 
     it "responds to logging/setLevel with debug" do
@@ -131,12 +157,32 @@ RSpec.describe Homebrew::McpServer do
       expect(result[:result][:tools]).to match_array(Homebrew::McpServer::TOOLS.values)
     end
 
-    test_each(Homebrew::McpServer::TOOLS) do |(tool_name, tool_definition)|
+    it "advertises required arguments inside each tool's inputSchema" do
+      request = { "id" => id, "method" => "tools/list" }
+      tools = server.handle_request(request).dig(:result, :tools)
+      required = tools.to_h { |tool| [tool[:name], tool.dig(:inputSchema, :required)] }
+      expect(required).to include("search"    => ["text_or_regex"],
+                                  "install"   => ["formula_or_cask"],
+                                  "uninstall" => ["formula_or_cask"])
+    end
+
+    it "advertises only MCP tool fields" do
+      request = { "id" => id, "method" => "tools/list" }
+      tools = server.handle_request(request).dig(:result, :tools)
+      expect(tools.map(&:keys).uniq).to eq([[:name, :title, :description, :inputSchema, :annotations]])
+    end
+
+    test_each_hash(Homebrew::McpServer::TOOLS) do |tool_name, tool_definition|
       it "responds to tools/call for #{tool_name}" do
         allow(Open3).to receive(:popen2e)
           .and_yield(StringIO.new, StringIO.new("output for #{tool_name}"), command_waiter)
         arguments = {}
-        Array(tool_definition[:required]).each do |required_key|
+        input_schema = tool_definition.fetch(:inputSchema)
+        required_keys = case input_schema
+        when Hash then Array(input_schema[:required])
+        else []
+        end
+        required_keys.each do |required_key|
           arguments[required_key] = "dummy"
         end
         request = {
@@ -156,6 +202,28 @@ RSpec.describe Homebrew::McpServer do
       end
     end
 
+    it "rejects non-object tool arguments without spawning brew" do
+      expect(Open3).not_to receive(:popen2e)
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "upgrade", "arguments" => false },
+      }
+      result = server.handle_request(request)
+      expect(result.dig(:error, :code)).to eq(Homebrew::McpServer::INVALID_PARAMS_CODE)
+    end
+
+    it "rejects an empty name without spawning brew" do
+      expect(Open3).not_to receive(:popen2e)
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "upgrade", "arguments" => { "formula_or_cask" => "" } },
+      }
+      result = server.handle_request(request)
+      expect(result.dig(:result, :isError)).to be(true)
+    end
+
     it "treats null tool arguments as an empty object" do
       allow(Open3).to receive(:popen2e)
         .and_yield(StringIO.new, StringIO.new("commands output"), command_waiter)
@@ -172,7 +240,7 @@ RSpec.describe Homebrew::McpServer do
 
     it "passes tool arguments as argv when spawning brew" do
       expect(Open3).to receive(:popen2e)
-        .with(Homebrew::McpServer::HOMEBREW_BREW_FILE, "search", "visual studio;beta")
+        .with(Homebrew::McpServer::HOMEBREW_BREW_FILE, "search", "--", "visual studio;beta")
         .and_yield(StringIO.new, StringIO.new("output"), command_waiter)
       request = {
         "id"     => id,
@@ -181,6 +249,48 @@ RSpec.describe Homebrew::McpServer do
           "name"      => "search",
           "arguments" => { "text_or_regex" => "visual studio;beta" },
         },
+      }
+
+      server.handle_request(request)
+    end
+
+    it "passes package_type as a flag before the name separator" do
+      expect(Open3).to receive(:popen2e)
+        .with(Homebrew::McpServer::HOMEBREW_BREW_FILE, "info", "--cask", "--", "docker")
+        .and_yield(StringIO.new, StringIO.new("output"), command_waiter)
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => {
+          "name"      => "info",
+          "arguments" => { "formula_or_cask" => "docker", "package_type" => "cask" },
+        },
+      }
+
+      server.handle_request(request)
+    end
+
+    it "passes the help command through without a separator" do
+      expect(Open3).to receive(:popen2e)
+        .with(Homebrew::McpServer::HOMEBREW_BREW_FILE, "help", "--prefix")
+        .and_yield(StringIO.new, StringIO.new("output"), command_waiter)
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "help", "arguments" => { "command" => "--prefix" } },
+      }
+
+      server.handle_request(request)
+    end
+
+    it "ignores search text passed to a formula tool" do
+      expect(Open3).to receive(:popen2e)
+        .with(Homebrew::McpServer::HOMEBREW_BREW_FILE, "info")
+        .and_yield(StringIO.new, StringIO.new("output"), command_waiter)
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "info", "arguments" => { "text_or_regex" => "wget" } },
       }
 
       server.handle_request(request)
@@ -214,19 +324,58 @@ RSpec.describe Homebrew::McpServer do
         },
       }
       result = server.handle_request(request)
-      expect(result).to eq({ jsonrpc:, id:, error: { message: "Invalid formula or cask argument", code: } })
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        result:  { content: [{ type: "text", text: "Invalid formula or cask argument" }], isError: true },
+      })
+    end
+
+    it "rejects an inline cask definition passed as search text" do
+      expect(Open3).not_to receive(:popen2e)
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "search", "arguments" => { "text_or_regex" => %Q(cask "evil" do\nend) } },
+      }
+      expect(server.handle_request(request).dig(:result, :isError)).to be(true)
+    end
+
+    it "rejects an invalid package_type without spawning brew" do
+      expect(Open3).not_to receive(:popen2e)
+      request = {
+        "id"     => id,
+        "method" => "tools/call",
+        "params" => { "name" => "info", "arguments" => { "formula_or_cask" => "wget", "package_type" => "tap" } },
+      }
+      result = server.handle_request(request)
+      expect(result.dig(:result, :isError)).to be(true)
     end
 
     it "responds to tools/call for unknown tool" do
       request = { "id" => id, "method" => "tools/call", "params" => { "name" => "not_a_tool", "arguments" => {} } }
       result = server.handle_request(request)
-      expect(result).to eq({ jsonrpc:, id:, error: { message: "Unknown tool", code: } })
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        error:   { message: "Unknown tool", code: Homebrew::McpServer::INVALID_PARAMS_CODE },
+      })
+    end
+
+    it "responds to tools/call without params as an unknown tool" do
+      request = { "id" => id, "method" => "tools/call" }
+      result = server.handle_request(request)
+      expect(result.dig(:error, :code)).to eq(Homebrew::McpServer::INVALID_PARAMS_CODE)
     end
 
     it "responds with error for unknown method" do
       request = { "id" => id, "method" => "not_a_method" }
       result = server.handle_request(request)
-      expect(result).to eq({ jsonrpc:, id:, error: { message: "Method not found", code: } })
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        error:   { message: "Method not found", code: Homebrew::McpServer::METHOD_NOT_FOUND_CODE },
+      })
     end
 
     it "returns nil if id is nil" do
@@ -248,8 +397,12 @@ RSpec.describe Homebrew::McpServer do
 
   describe "#respond_error" do
     it "returns an error hash" do
-      result = server.respond_error(id, "fail")
-      expect(result).to eq({ jsonrpc:, id:, error: { message: "fail", code: } })
+      result = server.respond_error(id, Homebrew::McpServer::INVALID_PARAMS_CODE, "fail")
+      expect(result).to eq({
+        jsonrpc:,
+        id:,
+        error:   { message: "fail", code: Homebrew::McpServer::INVALID_PARAMS_CODE },
+      })
     end
   end
 
@@ -257,7 +410,13 @@ RSpec.describe Homebrew::McpServer do
     it "preserves search text as a single raw argv argument" do
       arguments = { "text_or_regex" => "visual studio;beta" }
 
-      expect(server.tool_command_arguments(:search, arguments)).to eq(["visual studio;beta"])
+      expect(server.tool_command_arguments(:search, arguments)).to eq(["--", "visual studio;beta"])
+    end
+
+    it "keeps style flags before the file separator" do
+      arguments = { "fix" => true, "files" => "formula.rb --changed" }
+
+      expect(server.tool_command_arguments(:style, arguments)).to eq(["--fix", "--", "formula.rb", "--changed"])
     end
   end
 
@@ -278,6 +437,53 @@ RSpec.describe Homebrew::McpServer do
           "id"     => id,
           "result" => a_hash_including("content" => [{ "type" => "text", "text" => "commands output" }]),
         ),
+        { "jsonrpc" => jsonrpc, "id" => id + 1, "result" => {} },
+      ])
+    end
+
+    it "answers malformed JSON with a parse error and keeps serving" do
+      stdin.puts("not json")
+      stdin.puts({ jsonrpc:, id:, method: "ping" }.to_json)
+      stdin.rewind
+
+      server.run
+
+      expect(stdout.string.lines.map { |line| JSON.parse(line) }).to eq([
+        {
+          "jsonrpc" => jsonrpc,
+          "id"      => nil,
+          "error"   => { "code" => Homebrew::McpServer::PARSE_ERROR_CODE, "message" => "Parse error" },
+        },
+        { "jsonrpc" => jsonrpc, "id" => id, "result" => {} },
+      ])
+    end
+
+    it "answers a non-object request with an invalid request error" do
+      stdin.puts("[]")
+      stdin.rewind
+
+      server.run
+
+      expect(JSON.parse(stdout.string)).to eq({
+        "jsonrpc" => jsonrpc,
+        "id"      => nil,
+        "error"   => { "code" => Homebrew::McpServer::INVALID_REQUEST_CODE, "message" => "Invalid request" },
+      })
+    end
+
+    it "answers non-object params with a protocol error and keeps serving" do
+      stdin.puts({ jsonrpc:, id:, method: "initialize", params: [] }.to_json)
+      stdin.puts({ jsonrpc:, id: id + 1, method: "ping" }.to_json)
+      stdin.rewind
+
+      server.run
+
+      expect(stdout.string.lines.map { |line| JSON.parse(line) }).to eq([
+        {
+          "jsonrpc" => jsonrpc,
+          "id"      => id,
+          "error"   => { "code" => Homebrew::McpServer::INVALID_PARAMS_CODE, "message" => "Invalid params" },
+        },
         { "jsonrpc" => jsonrpc, "id" => id + 1, "result" => {} },
       ])
     end
