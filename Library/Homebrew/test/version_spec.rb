@@ -115,6 +115,18 @@ RSpec.describe Version do
         expect(null_version.to_json).to eq "null"
       end
     end
+
+    describe "#blank?" do
+      it "returns true" do
+        expect(null_version.blank?).to be true
+      end
+    end
+
+    describe "#present?" do
+      it "returns false" do
+        expect(null_version.present?).to be false
+      end
+    end
   end
 
   describe "::NULL_TOKEN" do

@@ -69,32 +69,40 @@ module Homebrew
       @name = T.let(name, String)
       @head = head
 
-      if version.present?
-        version = Version.new(version)
-        odebug "version from user: #{version}"
+      @version = T.let(version.blank? ? Version::NULL : Version.new(version), Version)
+      @version_in_url = T.let(false, T::Boolean)
+
+      if @version.present?
+        odebug "version from user: #{@version}"
       else
-        version = Version.detect(url)
-        odebug "version from url: #{version}"
+        @version_in_url = Version.detect(url).present?
+        odebug "version in url: #{@version_in_url}"
       end
 
       if fetch && user && repository
         github = GitHub.repository(user, repository)
 
-        if version.null? && !head
+        if @version.blank? && !@version_in_url && !head
           begin
-            latest_release = GitHub.get_latest_release(user, repository)
-            version = Version.new(latest_release.fetch("tag_name"))
-            odebug "github: version from latest_release: #{version}"
-
-            @url = "https://github.com/#{user}/#{repository}/archive/refs/tags/#{version}.tar.gz"
+            tag = GitHub.get_latest_release(user, repository).fetch("tag_name")
+            @url = "https://github.com/#{user}/#{repository}/archive/refs/tags/#{tag}.tar.gz"
             odebug "github: url changed to source archive #{@url}"
+
+            # detect(@url) removes v prefix from tags, and new(tag) doesn't
+            tag_version = Version.new(tag.delete_prefix("v"))
+            if Version.detect(@url) == tag_version
+              @version_in_url = true
+            else
+              @version = tag_version
+              odebug "github: version #{@version} from tag"
+            end
+            odebug "version in url (github): #{@version_in_url}"
           rescue GitHub::API::HTTPNotFoundError
             odebug "github: latest_release lookup failed: #{url}"
           end
         end
       end
       @github = T.let(github, T.untyped)
-      @version = T.let(version, Version)
 
       @sha256 = T.let(nil, T.nilable(String))
       @desc = T.let("", String)
@@ -115,7 +123,7 @@ module Homebrew
       path = @tap.new_formula_path(@name)
       raise "#{path} already exists" if path.exist?
 
-      if @version.nil? || @version.null?
+      if @version.blank? && !@version_in_url
         odie "Version cannot be determined from URL. Explicitly set the version with `--set-version` instead."
       end
 
@@ -176,7 +184,7 @@ module Homebrew
           homepage <%= @homepage.to_s.inspect %>
         <% unless @head %>
           url <%= @url.inspect %>
-        <% unless @version.detected_from_url? %>
+        <% unless @version_in_url %>
           version <%= @version.to_s.delete_prefix("v").inspect %>
         <% end %>
           sha256 <%= @sha256.to_s.inspect %>
