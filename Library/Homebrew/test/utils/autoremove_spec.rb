@@ -143,7 +143,7 @@ RSpec.describe Utils::Autoremove do
     require "cask/cask_loader"
 
     let(:cask_one_dep) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "red" do
           depends_on formula: "two"
         end
@@ -151,7 +151,7 @@ RSpec.describe Utils::Autoremove do
     end
 
     let(:cask_multiple_deps) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "blue" do
           depends_on formula: "zero"
         end
@@ -159,14 +159,14 @@ RSpec.describe Utils::Autoremove do
     end
 
     let(:first_cask_no_deps) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "green" do
         end
       RUBY
     end
 
     let(:second_cask_no_deps) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "purple" do
         end
       RUBY

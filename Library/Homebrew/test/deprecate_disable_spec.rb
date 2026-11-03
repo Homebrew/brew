@@ -100,7 +100,7 @@ RSpec.describe DeprecateDisable do
           package = if type == :formula
             Formulary.from_path(path)
           else
-            Cask::CaskLoader.load(path)
+            Cask::CaskLoader.from_path(path)
           end
           described_class.disabled_on_all_platforms?(package)
         end

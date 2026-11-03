@@ -15,7 +15,7 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskApi do
     )
     allow(Cask::Cask).to receive(:generating_hash!)
     cask = instance_double(Cask::Cask, token: "c")
-    allow(Cask::CaskLoader).to receive(:load).with(Pathname("c.rb")).and_return(cask)
+    allow(Cask::CaskLoader).to receive(:from_path).with(Pathname("c.rb")).and_return(cask)
     allow(cask).to receive(:to_hash_with_variations)
       .and_return({ "token" => "c", "desc" => "First" }, { "token" => "c", "desc" => "Updated" })
     stub_const("OnSystem::VALID_OS_ARCH_TAGS", [])

@@ -245,19 +245,9 @@ RSpec.describe Cask::DSL, :cask, :no_api do
         end
       RUBY
 
-      expect { Cask::CaskLoader.load(caskfile) }.to raise_error(Cask::CaskUnreadableError, /'because' argument/)
-    end
-
-    it "rejects the removed reason in a current cask loaded from a URI", :needs_utils_curl do
-      caskfile = mktmpdir/"test-cask.rb"
-      caskfile.write <<~RUBY
-        cask "test-cask" do
-          no_autobump! because: :requires_manual_review
-        end
-      RUBY
-
-      expect { Cask::CaskLoader.load("file://#{caskfile}") }
-        .to raise_error(Cask::CaskUnreadableError, /'because' argument/)
+      expect do
+        Cask::CaskLoader.from_path(caskfile)
+      end.to raise_error(Cask::CaskUnreadableError, /'because' argument/)
     end
 
     context "when no_autobump! is set" do
@@ -711,11 +701,11 @@ RSpec.describe Cask::DSL, :cask, :no_api do
 
   describe "conflicts_with cask" do
     let(:local_caffeine) do
-      Cask::CaskLoader.load(cask_path("local-caffeine"))
+      Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     end
 
     let(:with_conflicts_with) do
-      Cask::CaskLoader.load(cask_path("with-conflicts-with"))
+      Cask::CaskLoader.from_path(cask_path("with-conflicts-with"))
     end
 
     it "raises an error when a conflicting cask is already installed" do

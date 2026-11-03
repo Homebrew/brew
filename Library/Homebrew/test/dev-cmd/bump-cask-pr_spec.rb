@@ -107,7 +107,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
           end
         end
       RUBY
-      cask = Cask::CaskLoader.load(cask_path)
+      cask = Cask::CaskLoader.from_path(cask_path)
       command = described_class.new([
         "--write-only", "--no-audit", "--no-style", "--version=1.2.4", "--sha256=:no_check", "test"
       ])
@@ -118,7 +118,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
 
       command.run
 
-      expect(Cask::CaskLoader.load(cask_path).version.to_s).to eq("1.2.4")
+      expect(Cask::CaskLoader.from_path(cask_path).version.to_s).to eq("1.2.4")
     end
 
     it "updates a cask disabled only on the current OS" do
@@ -134,7 +134,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
           end
         end
       RUBY
-      cask = Cask::CaskLoader.load(cask_path)
+      cask = Cask::CaskLoader.from_path(cask_path)
       command = described_class.new([
         "--write-only", "--no-audit", "--no-style", "--version=1.2.4", "--sha256=:no_check", "test"
       ])
@@ -145,7 +145,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
 
       command.run
 
-      expect(Cask::CaskLoader.load(cask_path).version.to_s).to eq("1.2.4")
+      expect(Cask::CaskLoader.from_path(cask_path).version.to_s).to eq("1.2.4")
     end
   end
 
@@ -385,7 +385,7 @@ RSpec.describe Homebrew::DevCmd::BumpCaskPr do
       path = mktmpdir/"foo.rb"
       path.write(contents)
       Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) do
-        Cask::CaskLoader.load(path)
+        Cask::CaskLoader.from_path(path)
       end
     end
 

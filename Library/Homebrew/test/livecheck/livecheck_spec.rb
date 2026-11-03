@@ -47,7 +47,7 @@ RSpec.describe Homebrew::Livecheck do
   end
   let(:r) { f.resources.first }
   let(:c) do
-    Cask::CaskLoader.load(+<<-RUBY)
+    Cask::CaskLoader.from_content(+<<-RUBY)
       cask "test" do
         version "0.0.1,2"
 
@@ -64,7 +64,7 @@ RSpec.describe Homebrew::Livecheck do
     RUBY
   end
   let(:c_no_checkable_urls) do
-    Cask::CaskLoader.load(+<<-RUBY)
+    Cask::CaskLoader.from_content(+<<-RUBY)
       cask "test_no_checkable_urls" do
         version "1.2.3"
 
@@ -184,7 +184,7 @@ RSpec.describe Homebrew::Livecheck do
     let(:r_livecheck_url) { f_livecheck_url.resources.first }
 
     let(:c_livecheck_url) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "test_livecheck_url" do
           version "0.0.1,2"
 
@@ -287,7 +287,7 @@ RSpec.describe Homebrew::Livecheck do
     end
 
     let(:c_homebrew_curl) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "test" do
           version "0.0.1,2"
 
@@ -387,7 +387,7 @@ RSpec.describe Homebrew::Livecheck do
     end
 
     let(:c_throttle_rate) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "test_throttle_rate" do
           version "0.0.1"
 
@@ -406,7 +406,7 @@ RSpec.describe Homebrew::Livecheck do
     end
 
     let(:c_throttle_days) do
-      Cask::CaskLoader.load(+<<-RUBY)
+      Cask::CaskLoader.from_content(+<<-RUBY)
         cask "test_throttle_days" do
           version "0.0.1"
 
@@ -552,7 +552,7 @@ RSpec.describe Homebrew::Livecheck do
       end
 
       let(:c_options) do
-        Cask::CaskLoader.load(+<<-RUBY)
+        Cask::CaskLoader.from_content(+<<-RUBY)
           cask "test_options" do
             version "0.0.1"
 
@@ -572,7 +572,7 @@ RSpec.describe Homebrew::Livecheck do
         RUBY
       end
       let(:c_reference) do
-        Cask::CaskLoader.load(+<<-RUBY)
+        Cask::CaskLoader.from_content(+<<-RUBY)
           cask "test_reference" do
             version "0.0.1"
 

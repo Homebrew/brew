@@ -7,7 +7,7 @@ require "test/cask/dsl/shared_examples/staged"
 RSpec.describe Cask::DSL::UninstallPreflight, :cask do
   subject(:dsl) { described_class.new(cask, fake_system_command) }
 
-  let(:cask) { Cask::CaskLoader.load(cask_path("basic-cask")) }
+  let(:cask) { Cask::CaskLoader.from_path(cask_path("basic-cask")) }
   let(:fake_system_command) { class_double(SystemCommand) }
 
   it_behaves_like Cask::DSL::Base

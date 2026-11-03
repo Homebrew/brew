@@ -32,6 +32,11 @@ module Homebrew
                description: "Treat the argument as a raw application name instead of a cask token. " \
                             "Also matches the app's bundle identifier if it is installed in `/Applications`."
 
+        switch "--tap-source",
+               description: "Load the selected registered tap source for cask CI.",
+               hidden:      true
+        conflicts "--name", "--tap-source"
+
         named_args :cask_or_name, number: 1
       end
 
@@ -98,6 +103,8 @@ module Homebrew
       def run
         patterns = if args.name?
           patterns_from_app_paths([Pathname.new("/Applications/#{args.named.fetch(0)}.app")])
+        elsif args.tap_source?
+          resolve_patterns_from_cask(Cask::CaskLoader.from_tap_path(args.named.fetch(0)))
         else
           resolve_patterns_from_cask(args.named.to_casks.fetch(0))
         end

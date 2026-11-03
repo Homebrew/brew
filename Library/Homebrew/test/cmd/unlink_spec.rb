@@ -8,7 +8,7 @@ RSpec.describe Homebrew::Cmd::UnlinkCmd do
   it_behaves_like "parseable arguments"
 
   it "unlinks a given Cask's symlinked artifacts", :cask do
-    cask = Cask::CaskLoader.load(cask_path("with-binary"))
+    cask = Cask::CaskLoader.from_path(cask_path("with-binary"))
     InstallHelper.install_without_artifacts_with_caskfile(cask)
     binary = cask.config.binarydir/"binary"
     binary.dirname.mkpath
@@ -21,7 +21,7 @@ RSpec.describe Homebrew::Cmd::UnlinkCmd do
   end
 
   it "leaves symlinks the Cask no longer owns alone", :cask do
-    cask = Cask::CaskLoader.load(cask_path("with-binary"))
+    cask = Cask::CaskLoader.from_path(cask_path("with-binary"))
     InstallHelper.install_without_artifacts_with_caskfile(cask)
     binary = cask.config.binarydir/"binary"
     binary.dirname.mkpath

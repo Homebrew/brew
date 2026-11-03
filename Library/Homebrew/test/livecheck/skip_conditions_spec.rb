@@ -154,7 +154,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
 
         disable! date: "2020-06-25", because: :discontinued
       end,
-      partially_disabled_arch:               Cask::CaskLoader.load(<<~RUBY),
+      partially_disabled_arch:               Cask::CaskLoader.from_content(<<~RUBY),
         cask "test_partially_disabled_arch" do
           version "0.0.1"
           sha256 :no_check
@@ -169,7 +169,7 @@ RSpec.describe Homebrew::Livecheck::SkipConditions do
           end
         end
       RUBY
-      partially_disabled_os:                 Cask::CaskLoader.load(<<~RUBY),
+      partially_disabled_os:                 Cask::CaskLoader.from_content(<<~RUBY),
         cask "test_partially_disabled_os" do
           version "0.0.1"
           sha256 :no_check

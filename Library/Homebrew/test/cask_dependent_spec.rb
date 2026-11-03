@@ -8,7 +8,7 @@ RSpec.describe CaskDependent, :needs_macos do
   subject(:dependent) { described_class.new test_cask }
 
   let :test_cask do
-    Cask::CaskLoader.load(+<<-RUBY)
+    Cask::CaskLoader.from_content(+<<-RUBY)
       cask "testing" do
         depends_on formula: "baz"
         depends_on cask: "foo-cask"

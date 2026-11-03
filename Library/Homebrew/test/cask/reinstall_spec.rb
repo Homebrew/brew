@@ -6,7 +6,7 @@ require "cask/reinstall"
 
 RSpec.describe Cask::Reinstall, :cask do
   it "displays the reinstallation progress" do
-    caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
     Cask::Installer.new(caffeine).install
 
@@ -26,7 +26,7 @@ RSpec.describe Cask::Reinstall, :cask do
   end
 
   it "displays the reinstallation progress with zapping" do
-    caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
     Cask::Installer.new(caffeine).install
 
@@ -48,17 +48,17 @@ RSpec.describe Cask::Reinstall, :cask do
   end
 
   it "allows reinstalling a Cask" do
-    Cask::Installer.new(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).install
+    Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))).install
 
-    expect(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).to be_installed
+    expect(Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))).to be_installed
 
     described_class.reinstall_casks(Cask::CaskLoader.load("local-transmission-zip"))
-    expect(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).to be_installed
+    expect(Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))).to be_installed
   end
 
   it "continues reinstalling remaining casks when one raises" do
-    cask1 = Cask::CaskLoader.load(cask_path("local-caffeine"))
-    cask2 = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+    cask1 = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+    cask2 = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
 
     Cask::Installer.new(cask1).install
     Cask::Installer.new(cask2).install
@@ -82,7 +82,7 @@ RSpec.describe Cask::Reinstall, :cask do
   end
 
   it "returns reinstalled casks without a caveat mode option" do
-    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     installer = instance_double(Cask::Installer, cask:, install: nil)
 
     expect(Cask::Installer).to receive(:new) do |new_cask, **options|
@@ -95,8 +95,8 @@ RSpec.describe Cask::Reinstall, :cask do
   end
 
   it "returns the casks from supplied installers" do
-    requested_cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
-    reinstalled_cask = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+    requested_cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+    reinstalled_cask = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
     installer = Cask::Installer.allocate
     allow(installer).to receive_messages(cask: reinstalled_cask, install: nil)
 
@@ -108,7 +108,7 @@ RSpec.describe Cask::Reinstall, :cask do
   end
 
   it "reinstalls casks after an earlier failure in the same run" do
-    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     installer = instance_double(Cask::Installer, cask:, prelude: nil, enqueue_downloads: nil,
                                                  enqueue_dependency_downloads: nil)
     allow(Cask::Installer).to receive(:new).and_return(installer)
@@ -122,9 +122,9 @@ RSpec.describe Cask::Reinstall, :cask do
   end
 
   it "allows reinstalling a non installed Cask" do
-    expect(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).not_to be_installed
+    expect(Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))).not_to be_installed
 
     described_class.reinstall_casks(Cask::CaskLoader.load("local-transmission-zip"))
-    expect(Cask::CaskLoader.load(cask_path("local-transmission-zip"))).to be_installed
+    expect(Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))).to be_installed
   end
 end

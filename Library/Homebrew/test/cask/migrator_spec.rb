@@ -55,8 +55,8 @@ RSpec.describe Cask::Migrator do
   end
 
   describe ".migrate_if_needed", :cask do
-    let(:old_cask) { Cask::CaskLoader.load(cask_path("local-caffeine")) }
-    let(:new_cask) { Cask::CaskLoader.load(cask_path("local-transmission-zip")) }
+    let(:old_cask) { Cask::CaskLoader.from_path(cask_path("local-caffeine")) }
+    let(:new_cask) { Cask::CaskLoader.from_path(cask_path("local-transmission-zip")) }
     let(:old_caskroom_path) { Cask::Caskroom.path/"local-caffeine" }
     let(:appdir) { Pathname(new_cask.config.appdir) }
 
@@ -123,7 +123,7 @@ RSpec.describe Cask::Migrator do
     end
 
     context "when the new cask is already installed and shares an artifact with the old cask" do
-      let(:new_cask) { Cask::CaskLoader.load(cask_path("local-caffeine-clone")) }
+      let(:new_cask) { Cask::CaskLoader.from_path(cask_path("local-caffeine-clone")) }
 
       before do
         Cask::Installer.new(old_cask).install

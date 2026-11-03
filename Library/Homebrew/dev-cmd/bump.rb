@@ -145,7 +145,7 @@ module Homebrew
             raise UsageError, "`--tap` requires `--auto` for official taps." if tap.official?
 
             formulae = args.cask? ? [] : tap.formula_files.map { |path| Formulary.from_path(path) }
-            casks = args.formula? ? [] : tap.cask_files.map { |path| Cask::CaskLoader.load(path) }
+            casks = args.formula? ? [] : tap.cask_files.map { |path| Cask::CaskLoader.from_path(path) }
             formulae + casks
           elsif args.installed?
             formulae = args.cask? ? [] : Formula.installed
@@ -266,7 +266,7 @@ module Homebrew
           end
           systems = { macos:, linux: :linux }
           detected_versions = {}
-          loaded_cask = Cask::CaskLoader.load(sourcefile_path)
+          loaded_cask = Cask::CaskLoader.from_path(sourcefile_path)
           detected_system_options = BumpVersionParser::VERSION_PLATFORMS.filter_map do |version_type, (system, arch)|
             os = systems.fetch(system)
             tag = Utils::Bottles::Tag.new(system: os, arch:)
@@ -304,7 +304,7 @@ module Homebrew
               sourcefile_path = formula_or_cask.sourcefile_path
               raise "unexpected nil sourcefile_path" unless sourcefile_path
 
-              loaded_formula_or_cask = Cask::CaskLoader.load(sourcefile_path)
+              loaded_formula_or_cask = Cask::CaskLoader.from_path(sourcefile_path)
               current_version_value = Version.new(loaded_formula_or_cask.version)
             end
 

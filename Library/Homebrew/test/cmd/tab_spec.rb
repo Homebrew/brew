@@ -25,7 +25,7 @@ RSpec.describe Homebrew::Cmd::TabCmd do
                        tab_attributes: { "installed_on_request" => false }
     foo = Formula["foo"]
 
-    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     InstallHelper.install_with_caskfile(cask)
     tab_path = cask.metadata_main_container_path/AbstractTab::FILENAME
 
@@ -42,7 +42,7 @@ RSpec.describe Homebrew::Cmd::TabCmd do
   end
 
   it "marks or unmarks a Cask as installed on request with a missing tab", :cask do
-    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     InstallHelper.install_with_caskfile(cask)
     tab_path = cask.metadata_main_container_path/AbstractTab::FILENAME
 

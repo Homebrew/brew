@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::AppImage, :cask do
-  let(:cask) { Cask::CaskLoader.load(cask_path("with-appimage")) }
+  let(:cask) { Cask::CaskLoader.from_path(cask_path("with-appimage")) }
   let(:command) { NeverSudoSystemCommand }
   let(:adopt) { false }
   let(:force) { false }

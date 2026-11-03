@@ -65,7 +65,7 @@ module Homebrew
             end
 
             cask_tap.cask_files.each do |path|
-              cask = Cask::CaskLoader.load(path)
+              cask = Cask::CaskLoader.from_path(path)
               name = cask.token
               all_casks[name] = cask.to_hash_with_variations
             rescue

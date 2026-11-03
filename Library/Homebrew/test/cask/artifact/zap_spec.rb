@@ -24,7 +24,7 @@ RSpec.describe Cask::Artifact::Zap, :cask do
       subject(:artifact) { cask.artifacts.find { |a| a.is_a?(described_class) } }
 
       let(:fake_system_command) { NeverSudoSystemCommand }
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-zap-rmdir")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-zap-rmdir")) }
       let(:empty_directory) { Pathname.new("#{TEST_TMPDIR}/empty_directory_path") }
       let(:empty_directory_tree) { empty_directory.join("nested", "empty_directory_path") }
       let(:ds_store) { empty_directory.join(".DS_Store") }

@@ -368,7 +368,7 @@ RSpec.describe Cask::Audit, :cask do
         f.write text
       end
 
-      Cask::CaskLoader.load(path)
+      Cask::CaskLoader.from_path(path)
     end
 
     let(:dir) { mktmpdir }

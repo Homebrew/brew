@@ -63,7 +63,11 @@ module Homebrew
 
       sig { params(cask_path: String).void }
       def write_cask_info(cask_path)
-        cask = Cask::CaskLoader.load(cask_path)
+        cask = if cask_path.end_with?(".rb")
+          Cask::CaskLoader.from_tap_path(cask_path)
+        else
+          Cask::CaskLoader.load(cask_path)
+        end
 
         manual_installer = cask.artifacts.any? do |artifact|
           artifact.is_a?(Cask::Artifact::Installer) && artifact.manual_install
@@ -106,7 +110,12 @@ module Homebrew
       def check_snapshot(cask_path)
         before = JSON.parse(ENV.fetch("HOMEBREW_SNAPSHOT_BEFORE", "{}"), symbolize_names: true)
         after = system_snapshot
-        errors = Cask::CI::Check.errors(before, after, cask: Cask::CaskLoader.load(cask_path))
+        cask = if cask_path.end_with?(".rb")
+          Cask::CaskLoader.from_tap_path(cask_path)
+        else
+          Cask::CaskLoader.load(cask_path)
+        end
+        errors = Cask::CI::Check.errors(before, after, cask:)
 
         errors.each do |error|
           puts GitHub::Actions::Annotation.new(:error, error, file: cask_path)

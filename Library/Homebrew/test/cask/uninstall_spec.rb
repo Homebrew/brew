@@ -6,7 +6,7 @@ require "cask/uninstall"
 RSpec.describe Cask::Uninstall, :cask do
   describe ".uninstall_casks" do
     it "displays the uninstallation progress" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       Cask::Installer.new(caffeine).install
 
@@ -23,14 +23,14 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "shows an error when a Cask is provided that's not installed" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       expect { described_class.uninstall_casks(caffeine) }
         .to raise_error(Cask::CaskNotInstalledError, /is not installed/)
     end
 
     it "tries anyway on a non-present Cask when --force is given" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
 
       expect do
         described_class.uninstall_casks(caffeine, force: true)
@@ -38,7 +38,7 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "does not uninstall a pinned Cask" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       InstallHelper.stub_cask_installation(caffeine)
       caffeine.pin
 
@@ -52,8 +52,8 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "can uninstall and unlink multiple Casks at once" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
-      transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+      transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
 
       Cask::Installer.new(caffeine).install
       Cask::Installer.new(transmission).install
@@ -70,7 +70,7 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "can uninstall Casks when the uninstall script is missing, but only when using `--force`" do
-      cask = Cask::CaskLoader.load(cask_path("with-uninstall-script-app"))
+      cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-script-app"))
 
       Cask::Installer.new(cask).install
 
@@ -91,8 +91,8 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "continues uninstalling remaining casks when one fails" do
-      caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
-      transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+      transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
 
       Cask::Installer.new(caffeine).install
       Cask::Installer.new(transmission).install
@@ -220,8 +220,8 @@ RSpec.describe Cask::Uninstall, :cask do
 
   describe ".check_dependent_casks" do
     it "shows error message when trying to uninstall a cask with dependents" do
-      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
-      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      depends_on_cask = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask"))
+      local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
 
       allow(Cask::Caskroom).to receive(:casks).and_return([depends_on_cask, local_transmission])
 
@@ -238,9 +238,9 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "shows error message when trying to uninstall a cask with multiple dependents" do
-      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
-      depends_on_cask_multiple = Cask::CaskLoader.load(cask_path("with-depends-on-cask-multiple"))
-      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      depends_on_cask = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask"))
+      depends_on_cask_multiple = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask-multiple"))
+      local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
 
       allow(Cask::Caskroom).to receive(:casks).and_return([
         depends_on_cask,
@@ -261,10 +261,10 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "shows error message when trying to uninstall multiple casks with dependents" do
-      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
-      depends_on_everything = Cask::CaskLoader.load(cask_path("with-depends-on-everything"))
-      local_caffeine = Cask::CaskLoader.load(cask_path("local-caffeine"))
-      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      depends_on_cask = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask"))
+      depends_on_everything = Cask::CaskLoader.from_path(cask_path("with-depends-on-everything"))
+      local_caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+      local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
       named_args = %w[local-transmission-zip local-caffeine]
 
       allow(Cask::Caskroom).to receive(:casks).and_return([
@@ -287,8 +287,8 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "does not output an error if no dependents found" do
-      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
-      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission"))
+      depends_on_cask = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask"))
+      local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission"))
 
       allow(Cask::Caskroom).to receive(:casks).and_return([depends_on_cask, local_transmission])
 
@@ -298,8 +298,8 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "does not show an error when the dependent is also being uninstalled" do
-      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
-      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      depends_on_cask = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask"))
+      local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
 
       allow(Cask::Caskroom).to receive(:casks).and_return([depends_on_cask, local_transmission])
 
@@ -313,9 +313,9 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "still shows an error when a non-uninstalled cask depends on one being uninstalled" do
-      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
-      depends_on_cask_multiple = Cask::CaskLoader.load(cask_path("with-depends-on-cask-multiple"))
-      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      depends_on_cask = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask"))
+      depends_on_cask_multiple = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask-multiple"))
+      local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
 
       allow(Cask::Caskroom).to receive(:casks).and_return([
         depends_on_cask,
@@ -333,8 +333,8 @@ RSpec.describe Cask::Uninstall, :cask do
     end
 
     it "lists other named args when showing the error message" do
-      depends_on_cask = Cask::CaskLoader.load(cask_path("with-depends-on-cask"))
-      local_transmission = Cask::CaskLoader.load(cask_path("local-transmission-zip"))
+      depends_on_cask = Cask::CaskLoader.from_path(cask_path("with-depends-on-cask"))
+      local_transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))
       named_args = %w[local-transmission-zip foo bar baz qux]
 
       allow(Cask::Caskroom).to receive(:casks).and_return([depends_on_cask, local_transmission])

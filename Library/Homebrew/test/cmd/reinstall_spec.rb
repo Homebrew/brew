@@ -85,7 +85,7 @@ RSpec.describe Homebrew::Cmd::Reinstall do
     end
     formula_installer = FormulaInstaller.new(formula)
     dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
-    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     cask_installer = instance_double(Cask::Installer)
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
     reinstall_context = Homebrew::Reinstall::InstallationContext.new(
@@ -236,12 +236,12 @@ RSpec.describe Homebrew::Cmd::Reinstall do
     Keg.new(formula_prefix).link
 
     expect(formula_bin).not_to exist
-    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     InstallHelper.stub_cask_installation(cask)
 
     expect do
       brew "reinstall", "--no-ask", "--appdir=#{Cask::Config::DEFAULT_DIRS_PATHNAMES[:appdir]}", formula_name,
-           cask_path("local-caffeine"), "HOMEBREW_TEST_GENERIC_OS" => "1"
+           "local-caffeine", "HOMEBREW_TEST_GENERIC_OS" => "1"
     end
       .to output(/Reinstalling #{formula_name}/).to_stdout
       .and output(/✔︎.*/m).to_stderr

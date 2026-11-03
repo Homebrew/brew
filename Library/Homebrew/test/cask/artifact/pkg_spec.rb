@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe Cask::Artifact::Pkg, :cask do
-  let(:cask) { Cask::CaskLoader.load(cask_path("with-installable")) }
+  let(:cask) { Cask::CaskLoader.from_path(cask_path("with-installable")) }
   let(:fake_system_command) { class_double(SystemCommand) }
 
   before do
@@ -58,7 +58,7 @@ RSpec.describe Cask::Artifact::Pkg, :cask do
   end
 
   describe "choices" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-choices")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-choices")) }
 
     it "passes the choice changes xml to the system installer" do
       pkg = cask.artifacts.find { |a| a.is_a?(described_class) }

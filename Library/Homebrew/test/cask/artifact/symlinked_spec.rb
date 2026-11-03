@@ -5,7 +5,7 @@ RSpec.describe Cask::Artifact::Symlinked, :cask do
   # Test the formula conflict detection functionality that applies to all symlinked artifacts
   describe "#conflicting_formula" do
     let(:cask) do
-      Cask::CaskLoader.load(cask_path("with-binary")).tap do |cask|
+      Cask::CaskLoader.from_path(cask_path("with-binary")).tap do |cask|
         InstallHelper.install_without_artifacts(cask)
       end
     end

@@ -213,7 +213,11 @@ module Homebrew
         cask_combinations.each do |os, arch|
           SimulateSystem.with(os:, arch:) do
             loaded_cask = begin
-              Cask::CaskLoader.load(ref)
+              if ref.is_a?(Pathname)
+                Cask::CaskLoader.from_path(ref)
+              else
+                Cask::CaskLoader.load(ref)
+              end
             rescue Cask::CaskInvalidError, Cask::CaskUnreadableError
               raise unless cask.on_system_blocks_exist?
             end
@@ -230,7 +234,11 @@ module Homebrew
               if language
                 # Reload per language: `Cask::Download` reads `sha256`/`url`
                 # lazily, so each download needs its own cask instance.
-                localized_cask = Cask::CaskLoader.load(ref)
+                localized_cask = if ref.is_a?(Pathname)
+                  Cask::CaskLoader.from_path(ref)
+                else
+                  Cask::CaskLoader.load(ref)
+                end
                 localized_cask.config = localized_cask.config.merge(
                   Cask::Config.new(explicit: { languages: [language] }),
                 )

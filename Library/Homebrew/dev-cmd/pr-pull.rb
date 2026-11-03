@@ -249,7 +249,7 @@ module Homebrew
       def get_package(tap, subject_name, subject_path, content)
         if subject_path.to_s.start_with?("#{tap.cask_dir}/")
           cask = begin
-            Cask::CaskLoader.load(content.dup)
+            Cask::CaskLoader.from_content(content.dup)
           rescue Cask::CaskUnavailableError
             nil
           end

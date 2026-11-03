@@ -45,7 +45,7 @@ RSpec.describe Homebrew::Cmd::Deps, :integration_test, :no_api do
       .to be_a_success
       .and output("bar\nfoo\ntest\n").to_stdout
       .and output(/not the actual runtime dependencies/).to_stderr
-    expect { brew "deps", "--cask", "--direct", cask_path("with-depends-on-everything") }
+    expect { brew "deps", "--cask", "--direct", "with-depends-on-everything" }
       .to output("unar\n").to_stdout
       .and output(/not the actual runtime dependencies/).to_stderr
       .and be_a_success

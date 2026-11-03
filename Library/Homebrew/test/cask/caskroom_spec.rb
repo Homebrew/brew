@@ -407,7 +407,7 @@ RSpec.describe Cask::Caskroom do
       RUBY
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).and_call_original
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with(token).and_return(
-        Cask::CaskLoader::FromInstanceLoader.new(Cask::Cask.new(token) { app "Current.app" }),
+        instance_double(Cask::CaskLoader::FromAPILoader, load: Cask::Cask.new(token) { app "Current.app" }),
       )
 
       described_class.migrate_caskfile_to_json(caskfile)
@@ -425,12 +425,12 @@ RSpec.describe Cask::Caskroom do
           app "Old.app"
         end
       RUBY
-      allow(Cask::CaskLoader).to receive(:load)
-        .with(caskfile, warn: false)
+      allow(Cask::CaskLoader).to receive(:from_path)
+        .with(caskfile)
         .and_raise(MethodDeprecatedError.new)
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).and_call_original
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with(token).and_return(
-        Cask::CaskLoader::FromInstanceLoader.new(Cask::Cask.new(token) { app "Current.app" }),
+        instance_double(Cask::CaskLoader::FromAPILoader, load: Cask::Cask.new(token) { app "Current.app" }),
       )
 
       described_class.migrate_caskfile_to_json(caskfile)
@@ -487,7 +487,7 @@ RSpec.describe Cask::Caskroom do
       caskfile = write_installed_caskfile(token, "{", extension: "json")
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).and_call_original
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with(token).and_return(
-        Cask::CaskLoader::FromInstanceLoader.new(Cask::Cask.new(token) { app "Current.app" }),
+        instance_double(Cask::CaskLoader::FromAPILoader, load: Cask::Cask.new(token) { app "Current.app" }),
       )
 
       described_class.migrate_caskfile_to_json(caskfile)
@@ -502,7 +502,7 @@ RSpec.describe Cask::Caskroom do
       caskfile = write_installed_caskfile(token, JSON.generate({ "artifacts" => ["invalid"] }), extension: "json")
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).and_call_original
       allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with(token).and_return(
-        Cask::CaskLoader::FromInstanceLoader.new(Cask::Cask.new(token) { app "Current.app" }),
+        instance_double(Cask::CaskLoader::FromAPILoader, load: Cask::Cask.new(token) { app "Current.app" }),
       )
 
       described_class.migrate_caskfile_to_json(caskfile)

@@ -21,13 +21,30 @@ RSpec.describe Homebrew::DevCmd::GenerateZap do
     RUBY
     CoreCaskTap.instance.clear_cache
 
-    expect { brew "generate-zap", caskfile }
+    expect { brew "generate-zap", "zap-integration" }
       .to output(/Scanning for files matching.*zap :not_required/m).to_stdout
       .and output(/No files found matching.*Only use `zap :not_required` if the app has been launched/m).to_stderr
       .and be_a_success
   end
 
   describe "#run" do
+    it "uses the selected tap source even when API loading is enabled" do
+      path = CoreCaskTap.instance.new_cask_path("zap-source")
+      path.dirname.mkpath
+      path.write <<~RUBY
+        cask "zap-source" do
+          version "1.0"
+          app "Modified.app"
+        end
+      RUBY
+      ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
+      allow(Cask::CaskLoader).to receive(:load).and_raise("API cask selected")
+      command = described_class.new(["--tap-source", path.to_s])
+      allow(command).to receive_messages(scan_directories: [], scan_home_root: [])
+
+      expect { command.run }.to output(/Scanning for files matching "Modified"/).to_stdout
+    end
+
     it "surfaces Full Disk Access guidance when scanning raises a permission error" do
       generate_zap = described_class.new(["--name", "Test"])
       protected_path = File.expand_path("~/Library/Application Support/com.apple.sharedfilelist")

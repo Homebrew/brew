@@ -16,7 +16,7 @@ RSpec.describe Livecheck do
   let(:livecheck_f) { described_class.new(f.class) }
 
   let(:c) do
-    Cask::CaskLoader.load(+<<-RUBY)
+    Cask::CaskLoader.from_content(+<<-RUBY)
       cask "test" do
         version "0.0.1,2"
 

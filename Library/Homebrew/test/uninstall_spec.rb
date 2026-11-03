@@ -20,7 +20,7 @@ RSpec.describe Homebrew::Uninstall do
   end
 
   let(:dependent_cask) do
-    Cask::CaskLoader.load(+<<-RUBY)
+    Cask::CaskLoader.from_content(+<<-RUBY)
       cask "dependent_cask" do
         version "1.0.0"
 

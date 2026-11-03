@@ -131,12 +131,12 @@ module Readall
     (files || tap.cask_files).each do |file|
       cask = if arch
         Homebrew::SimulateSystem.with(os: :macos, arch:) do
-          loaded_cask = Cask::CaskLoader.load(file)
+          loaded_cask = Cask::CaskLoader.from_tap_path(file)
           loaded_cask if loaded_cask.supports_linux?
         end
       else
         Homebrew::SimulateSystem.with(os: :macos) do
-          loaded_cask = Cask::CaskLoader.load(file)
+          loaded_cask = Cask::CaskLoader.from_tap_path(file)
           loaded_cask if loaded_cask.supports_linux?
         end
       end

@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "dev-cmd/audit"
+require "cask/auditor"
 require "cmd/shared_examples/args_parse"
 
 RSpec.describe Homebrew::DevCmd::Audit do
@@ -209,6 +210,33 @@ RSpec.describe Homebrew::DevCmd::Audit do
 
       expect { described_class.new(["--tap=homebrew/test", "--os=all", "--arch=all"]).run }
         .to output(/a sha256 stanza is required/).to_stdout
+    end
+
+    it "audits an installed cask whose tap source has been removed" do
+      path = Cask::Caskroom.path/"removed/.metadata/1.0/20200101000000.000/Casks/removed.rb"
+      path.dirname.mkpath
+      path.write <<~RUBY
+        cask "removed" do
+          version "1.0"
+          sha256 :no_check
+          url "https://example.com/removed-1.0.zip"
+        end
+      RUBY
+      cask = Cask::CaskLoader.load_from_installed_caskfile(path)
+      allow(Formula).to receive(:installed).and_return([])
+      allow(Cask::Caskroom).to receive(:casks).and_return([cask])
+      allow(Cask::Auditor).to receive(:audit).and_return([])
+
+      expect { described_class.new(["--installed", "--skip-style", "--os=all", "--arch=all"]).run }.not_to raise_error
+    end
+
+    it "enumerates cask paths only once when auditing a tap across platforms" do
+      real_tap = Tap.fetch("homebrew/test-audit")
+      allow(Tap).to receive(:fetch).with("homebrew/test").and_return(real_tap)
+      allow(Cask::Auditor).to receive(:audit).and_return([])
+      expect(real_tap).to receive(:cask_files).once.and_call_original
+
+      described_class.new(["--tap=homebrew/test", "--skip-style", "--os=all", "--arch=all"]).run
     end
 
     it "audits an installed formula whose tap source has been removed" do

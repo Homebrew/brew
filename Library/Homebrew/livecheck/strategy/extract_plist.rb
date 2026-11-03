@@ -134,7 +134,7 @@ module Homebrew
           sourcefile_path = cask.sourcefile_path
           raise "unexpected nil cask.sourcefile_path" unless sourcefile_path
 
-          cask_copy = Cask::CaskLoader.load(sourcefile_path)
+          cask_copy = Cask::CaskLoader.from_path(sourcefile_path)
           cask_copy.allow_reassignment = true
           cask_copy.url(url, **url_kwargs)
           cask_copy

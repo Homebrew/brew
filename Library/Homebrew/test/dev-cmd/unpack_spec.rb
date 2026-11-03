@@ -18,7 +18,7 @@ RSpec.describe Homebrew::DevCmd::Unpack do
     end
 
     mktmpdir do |path|
-      expect { brew "unpack", "--cask", cask_path("local-caffeine"), "--destdir=#{path}" }
+      expect { brew "unpack", "--cask", "local-caffeine", "--destdir=#{path}" }
         .to be_a_success
 
       expect(path/"local-caffeine-1.2.3").to be_a_directory

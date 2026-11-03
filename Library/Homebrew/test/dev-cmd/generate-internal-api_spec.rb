@@ -23,7 +23,7 @@ RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
     allow(Formulary).to receive(:factory).with("foo").and_return(
       instance_double(Formula, name: "foo", to_hash_with_variations: { "name" => "foo" }),
     )
-    allow(Cask::CaskLoader).to receive(:load).with(Pathname("c.rb")).and_return(
+    allow(Cask::CaskLoader).to receive(:from_path).with(Pathname("c.rb")).and_return(
       instance_double(Cask::Cask, token: "c", to_hash_with_variations: { "token" => "c" }),
     )
     allow(Homebrew::API).to receive(:download_executables_file_from_github_packages!) do |target|
@@ -46,7 +46,7 @@ RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
     stub_const("OnSystem::VALID_OS_ARCH_TAGS", [bottle_tag])
     allow(Formulary.factory("foo")).to receive(:to_hash_with_variations)
       .and_return({ "name" => "old" }, { "name" => "foo" })
-    allow(Cask::CaskLoader.load(Pathname("c.rb"))).to receive(:to_hash_with_variations)
+    allow(Cask::CaskLoader.from_path(Pathname("c.rb"))).to receive(:to_hash_with_variations)
       .and_return({ "token" => "old" }, { "token" => "c" })
     allow(Homebrew::API::Formula::FormulaStructGenerator).to receive(:generate_formula_struct_hash)
       .with({ "name" => "old", "executables" => ["foo-tool", "food"] }, bottle_tag:)

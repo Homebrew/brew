@@ -41,7 +41,7 @@ module Homebrew
 
         state = state_file.exist? ? JSON.parse(state_file.read) : {}
 
-        casks = args.named.to_paths(only: :cask, recurse_tap: true).map { |path| Cask::CaskLoader.load(path) }
+        casks = args.named.to_paths(only: :cask, recurse_tap: true).map { |path| Cask::CaskLoader.from_tap_path(path) }
 
         unversioned_casks = casks.select do |cask|
           cask.url&.unversioned? && !cask.livecheck_defined?

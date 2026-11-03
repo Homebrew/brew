@@ -49,7 +49,7 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
       ENV["GITHUB_OUTPUT"] = github_output.to_s
       ENV["GITHUB_ENV"] = (path/"github-env").to_s
 
-      described_class.new(["info", cask_path("with-installer-manual").to_s]).run
+      described_class.new(["info", (CoreCaskTap.instance.cask_dir/"with-installer-manual.rb").to_s]).run
 
       expect(github_output.read.lines(chomp: true)).to eq([
         "manual_installer=true",
@@ -65,7 +65,7 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
       ENV["GITHUB_OUTPUT"] = (path/"github-output").to_s
       ENV["GITHUB_ENV"] = github_env.to_s
 
-      described_class.new(["info", cask_path("with-installer-manual").to_s]).run
+      described_class.new(["info", (CoreCaskTap.instance.cask_dir/"with-installer-manual.rb").to_s]).run
 
       expect(github_env.read).to be_empty
     end
@@ -77,7 +77,7 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
       ENV["GITHUB_OUTPUT"] = (path/"github-output").to_s
       ENV["GITHUB_ENV"] = github_env.to_s
 
-      described_class.new(["info", cask_path("with-depends-on-cask-multiple").to_s]).run
+      described_class.new(["info", (CoreCaskTap.instance.cask_dir/"with-depends-on-cask-multiple.rb").to_s]).run
 
       expect(github_env.read).to eq("CASK_DEPENDENCIES=local-caffeine local-transmission-zip\n")
     end
@@ -97,8 +97,9 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
   end
 
   it "sets Homebrew.failed when check finds errors" do
-    mktmpdir do |path|
-      caskfile = path/"cask-ci-test.rb"
+    mktmpdir do |_path|
+      caskfile = CoreCaskTap.instance.new_cask_path("cask-ci-test")
+      caskfile.dirname.mkpath
       caskfile.write <<~RUBY
         cask "cask-ci-test" do
           version "1.0"
@@ -119,8 +120,9 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
   end
 
   it "leaves Homebrew.failed clear when check finds no errors" do
-    mktmpdir do |path|
-      caskfile = path/"cask-ci-test.rb"
+    mktmpdir do |_path|
+      caskfile = CoreCaskTap.instance.new_cask_path("cask-ci-test")
+      caskfile.dirname.mkpath
       caskfile.write <<~RUBY
         cask "cask-ci-test" do
           version "1.0"

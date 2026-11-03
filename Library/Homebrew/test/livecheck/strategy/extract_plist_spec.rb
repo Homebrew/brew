@@ -117,7 +117,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::ExtractPlist do
 
   describe "::cask_with_url" do
     it "returns a cask using the url and supported options from the `livecheck` block" do
-      cask = Cask::CaskLoader.load(cask_path("livecheck/livecheck-extract-plist-with-url"))
+      cask = Cask::CaskLoader.from_path(cask_path("livecheck/livecheck-extract-plist-with-url"))
       cask.livecheck.url(
         cask.livecheck.url,
         cookies:    { "key" => "value" },
@@ -141,7 +141,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::ExtractPlist do
     end
 
     it "errors if the `livecheck` block uses options not supported by `Cask::URL`" do
-      cask = Cask::CaskLoader.load(cask_path("livecheck/livecheck-extract-plist-with-url"))
+      cask = Cask::CaskLoader.from_path(cask_path("livecheck/livecheck-extract-plist-with-url"))
       livecheck_url = cask.livecheck.url
       cask.livecheck.url(
         livecheck_url,
@@ -168,7 +168,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::ExtractPlist do
   end
 
   describe "::find_versions" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("livecheck/livecheck-extract-plist")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("livecheck/livecheck-extract-plist")) }
     let(:content) { '{"com.caffeine":{"bundle_version":{"version":"1.2.3"}}}' }
     let(:match_data) do
       base = {
@@ -207,7 +207,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::ExtractPlist do
     end
 
     it "checks the cask using the livecheck URL string", :needs_macos do
-      cask_with_url = Cask::CaskLoader.load(cask_path("livecheck/livecheck-extract-plist-with-url"))
+      cask_with_url = Cask::CaskLoader.from_path(cask_path("livecheck/livecheck-extract-plist-with-url"))
       livecheck_url = cask_with_url.livecheck.url
 
       expect(

@@ -53,7 +53,7 @@ RSpec.describe Cask::Cask, :cask do
       end
     RUBY
 
-    Cask::CaskLoader.load(path)
+    Cask::CaskLoader.from_path(path)
   end
 
   describe ".all" do
@@ -190,7 +190,7 @@ RSpec.describe Cask::Cask, :cask do
     end
 
     it "returns an instance of the Cask from a specific file location" do
-      c = Cask::CaskLoader.load("#{tap_path}/Casks/local-caffeine.rb")
+      c = Cask::CaskLoader.from_path("#{tap_path}/Casks/local-caffeine.rb")
       expect(c).to be_a(described_class)
       expect(c).not_to be_loaded_from_api
       expect(c).not_to be_loaded_from_internal_api
@@ -198,7 +198,7 @@ RSpec.describe Cask::Cask, :cask do
     end
 
     it "returns an instance of the Cask from a JSON file" do
-      c = Cask::CaskLoader.load("#{TEST_FIXTURE_DIR}/cask/caffeine.json")
+      c = Cask::CaskLoader.from_path("#{TEST_FIXTURE_DIR}/cask/caffeine.json")
       expect(c).to be_a(described_class)
       expect(c).to be_loaded_from_api
       expect(c).not_to be_loaded_from_internal_api
@@ -206,7 +206,7 @@ RSpec.describe Cask::Cask, :cask do
     end
 
     it "returns an instance of the Cask from an internal JSON file" do
-      c = Cask::CaskLoader.load("#{TEST_FIXTURE_DIR}/cask/caffeine.internal.json")
+      c = Cask::CaskLoader.from_path("#{TEST_FIXTURE_DIR}/cask/caffeine.internal.json")
       expect(c).to be_a(described_class)
       expect(c).to be_loaded_from_api
       expect(c).to be_loaded_from_internal_api
@@ -226,7 +226,7 @@ RSpec.describe Cask::Cask, :cask do
     end
 
     it "returns an instance of the Cask from a relative file location" do
-      c = Cask::CaskLoader.load(relative_tap_path/"Casks/local-caffeine.rb")
+      c = Cask::CaskLoader.from_path(relative_tap_path/"Casks/local-caffeine.rb")
       expect(c).to be_a(described_class)
       expect(c.token).to eq("local-caffeine")
     end
@@ -574,7 +574,7 @@ RSpec.describe Cask::Cask, :cask do
         path = mktmpdir/"tapless-cask.rb"
         path.write "cask 'tapless-cask'"
 
-        expect(Cask::CaskLoader.load(path).full_name).to eq("tapless-cask")
+        expect(Cask::CaskLoader.from_path(path).full_name).to eq("tapless-cask")
       end
     end
   end

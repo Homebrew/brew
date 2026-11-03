@@ -454,7 +454,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
                                                    no_install_from_api?: true)
     allow(Cask::CaskLoader::FromNameLoader).to receive(:try_new).and_call_original
     expect(Cask::CaskLoader::FromNameLoader).to receive(:try_new).once.with("stubbed", warn: false).and_return(
-      Cask::CaskLoader::FromInstanceLoader.new(Cask::Cask.new("stubbed") { app "Stubbed.app" }),
+      instance_double(Cask::CaskLoader::FromAPILoader, load: Cask::Cask.new("stubbed") { app "Stubbed.app" }),
     )
 
     2.times { run_quiet_update_report }
@@ -480,8 +480,9 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       caskroom/"uninstall-flight-block/.metadata/1.0/20250101000000.000/Casks/uninstall-flight-block.rb"
     pre_receipt_stubbed_cask = Cask::Cask.new("pre-receipt-stubbed") { app "Pre Receipt Stubbed.app" }
     allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).and_call_original
-    expect(Cask::CaskLoader::FromAPILoader).to receive(:try_new).once.with("pre-receipt-stubbed")
-                                                                .and_return(Cask::CaskLoader::FromInstanceLoader.new(pre_receipt_stubbed_cask))
+    expect(Cask::CaskLoader::FromAPILoader).to receive(:try_new).once.with("pre-receipt-stubbed").and_return(
+      instance_double(Cask::CaskLoader::FromAPILoader, load: pre_receipt_stubbed_cask),
+    )
 
     described_class.new(["--quiet"]).migrate_caskroom_caskfiles_to_json
 

@@ -111,7 +111,7 @@ RSpec.describe Homebrew::Cmd::Doctor do
   end
 
   specify "does not print removed caveats method errors for installed casks", :cask do
-    cask = Cask::CaskLoader.load(cask_path("local-caffeine"))
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     installer = InstallHelper.install_with_caskfile(cask)
     installed_caskfile = installer.metadata_subdir/"#{cask.token}.json"
     expect(installed_caskfile).to exist

@@ -3,7 +3,7 @@
 
 RSpec.describe Cask::Artifact::App, :cask do
   describe "multiple apps" do
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-two-apps-correct")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-two-apps-correct")) }
 
     let(:install_phase) do
       cask.artifacts.grep(described_class).each do |artifact|
@@ -32,7 +32,7 @@ RSpec.describe Cask::Artifact::App, :cask do
     end
 
     describe "when apps are in a subdirectory" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-two-apps-subdir")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-two-apps-subdir")) }
 
       let(:source_path_mini) { cask.staged_path.join("Caffeines", "Caffeine Mini.app") }
       let(:source_path_pro) { cask.staged_path.join("Caffeines", "Caffeine Pro.app") }

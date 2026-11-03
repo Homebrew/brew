@@ -298,7 +298,7 @@ module Homebrew
         contents = split_root_version_and_checksum(cask, new_version, contents)
 
         old_cask = Homebrew::SimulateSystem.with(os: default_cask_os, arch: :arm) do
-          Cask::CaskLoader.load(cask_sourcefile_path)
+          Cask::CaskLoader.from_path(cask_sourcefile_path)
         end
         generate_system_options(cask, new_version).each do |os, arch, system, version_type|
           tag = Utils::Bottles::Tag.new(system: os, arch:)
@@ -338,8 +338,7 @@ module Homebrew
               within: version_scope
             )
 
-            tmp_cask = Cask::CaskLoader::FromContentLoader.new(contents)
-                                                          .load(config: nil)
+            tmp_cask = Cask::CaskLoader.from_content(contents)
             old_hash = tmp_cask.sha256
             if old_hash.nil?
               raise Cask::CaskError, "#{cask}: No checksum is defined for #{tag.to_sym.inspect}. " \
@@ -371,8 +370,7 @@ module Homebrew
                 cask.languages
               end
               languages.each do |language|
-                new_cask        = Cask::CaskLoader::FromContentLoader.new(contents)
-                                                                     .load(config: nil)
+                new_cask        = Cask::CaskLoader.from_content(contents)
                 next unless new_cask.url
 
                 new_cask.config = if language.blank?

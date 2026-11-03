@@ -6,7 +6,7 @@ require "cask/installer"
 RSpec.describe Cask::Installer, :cask do
   it "rejects pkg casks during requirements checks when sudo is disabled" do
     ENV["HOMEBREW_NO_SUDO"] = "1"
-    cask = Cask::CaskLoader.load(cask_path("with-installable"))
+    cask = Cask::CaskLoader.from_path(cask_path("with-installable"))
 
     expect { described_class.new(cask).check_requirements }
       .to raise_error(Cask::CaskError, /pkg artifact requires sudo/)
@@ -14,14 +14,14 @@ RSpec.describe Cask::Installer, :cask do
 
   it "preserves pkg casks when sudo is enabled" do
     ENV.delete("HOMEBREW_NO_SUDO")
-    cask = Cask::CaskLoader.load(cask_path("with-installable"))
+    cask = Cask::CaskLoader.from_path(cask_path("with-installable"))
 
     expect { described_class.new(cask).check_requirements }.not_to raise_error
   end
 
   it "rejects installer scripts that require sudo before installation" do
     ENV["HOMEBREW_NO_SUDO"] = "1"
-    cask = Cask::CaskLoader.load(cask_path("with-installable"))
+    cask = Cask::CaskLoader.from_path(cask_path("with-installable"))
     allow(cask).to receive(:artifacts).and_return(Set[Cask::Artifact::Installer.new(cask, script: {
       executable: "install.sh", sudo: true
     })])
@@ -32,7 +32,7 @@ RSpec.describe Cask::Installer, :cask do
 
   it "allows installer scripts that do not require sudo" do
     ENV["HOMEBREW_NO_SUDO"] = "1"
-    cask = Cask::CaskLoader.load(cask_path("with-installable"))
+    cask = Cask::CaskLoader.from_path(cask_path("with-installable"))
     allow(cask).to receive(:artifacts).and_return(Set[Cask::Artifact::Installer.new(cask, script: "install.sh")])
 
     expect { described_class.new(cask).check_requirements }.not_to raise_error
@@ -40,7 +40,7 @@ RSpec.describe Cask::Installer, :cask do
 
   context "when sudo is disabled" do
     sig { returns(Cask::Cask) }
-    let(:cask) { Cask::CaskLoader.load(cask_path("with-installable")) }
+    let(:cask) { Cask::CaskLoader.from_path(cask_path("with-installable")) }
 
     before { ENV["HOMEBREW_NO_SUDO"] = "1" }
 

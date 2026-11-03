@@ -10,7 +10,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
     Cask::Installer.new(cask).install
   end
 
-  let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-cask")) }
+  let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-cask")) }
 
   describe "depends_on cask" do
     let(:dependency) { Cask::CaskLoader.load(cask.depends_on.cask.first) }
@@ -22,7 +22,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
     end
 
     context "when depends_on cask is cyclic" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-cask-cyclic")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-cask-cyclic")) }
 
       it {
         expect { install }.to raise_error(
@@ -36,7 +36,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
 
   describe "depends_on macos" do
     context "with an array" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-array")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-macos-array")) }
 
       it "does not raise an error" do
         expect { install }.not_to raise_error
@@ -44,7 +44,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
     end
 
     context "with a comparison" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-comparison")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-macos-comparison")) }
 
       it "does not raise an error" do
         expect { install }.not_to raise_error
@@ -52,7 +52,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
     end
 
     context "with a symbol" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-symbol")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-macos-symbol")) }
 
       it "does not raise an error" do
         expect { install }.not_to raise_error
@@ -60,7 +60,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
     end
 
     context "when not satisfied" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-macos-failure")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-macos-failure")) }
 
       it "raises an error" do
         allow(OS::Mac).to receive(:version).and_return(MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED))
@@ -71,7 +71,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
 
   describe "depends_on arch" do
     context "when satisfied" do
-      let(:cask) { Cask::CaskLoader.load(cask_path("with-depends-on-arch")) }
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-arch")) }
 
       it "does not raise an error" do
         expect { install }.not_to raise_error

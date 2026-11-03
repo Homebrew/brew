@@ -251,7 +251,7 @@ RSpec.describe Cask::CaskLoader::FromAPILoader, :cask do
       allow(Cask::Caskroom).to receive(:path).and_return(caskroom)
       allow(described_class).to receive(:try_new).and_call_original
       allow(described_class).to receive(:try_new).with(token).and_return(
-        Cask::CaskLoader::FromInstanceLoader.new(Cask::Cask.new(token)),
+        instance_double(described_class, load: Cask::Cask.new(token)),
       )
       path = caskroom/token/".metadata/latest/20260713000000.000/Casks/#{token}.json"
       cask = described_class.new(token, from_json: {}, path:, from_installed_caskfile: true).load(config: nil)
@@ -273,7 +273,7 @@ RSpec.describe Cask::CaskLoader::FromAPILoader, :cask do
       end
       allow(described_class).to receive(:try_new).and_call_original
       allow(described_class).to receive(:try_new).with(token)
-                                                 .and_return(Cask::CaskLoader::FromInstanceLoader.new(api_cask))
+                                                 .and_return(instance_double(described_class, load: api_cask))
       path = caskroom/token/".metadata/1.0/20260713000000.000/Casks/#{token}.json"
 
       cask = described_class.new(token, from_json: {}, path:, from_installed_caskfile: true).load(config: nil)

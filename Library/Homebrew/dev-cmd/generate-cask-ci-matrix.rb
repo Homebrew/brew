@@ -276,7 +276,7 @@ module Homebrew
 
           audit_exceptions << %w[token_valid token_bad_words token_conflicts] if labels.include?("ci-skip-token")
 
-          cask = Cask::CaskLoader.load(path.expand_path)
+          cask = Cask::CaskLoader.from_tap_path(path.expand_path)
 
           runners = runners(cask:)
           puts "::warning file=#{path}::No CI runner supports this cask, so it will not be tested." if runners.empty?

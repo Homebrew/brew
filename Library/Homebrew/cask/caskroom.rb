@@ -102,7 +102,7 @@ module Cask
         if installed_json_caskfile
           CaskLoader.load_from_installed_caskfile(caskfile)
         else
-          CaskLoader.load(caskfile, warn: false)
+          CaskLoader.from_path(caskfile)
         end
       rescue CaskInvalidError, CaskUnavailableError, MethodDeprecatedError, JSON::ParserError, NoMethodError,
              TypeError
@@ -255,7 +255,8 @@ module Cask
       rescue Homebrew::UntrustedTapError
         # If the tap is untrusted the only place we can load the cask from is the installed cask file, if it exists.
         begin
-          CaskLoader::FromInstalledPathLoader.try_new(token, warn: false)&.load(config:)
+          installed_path = Cask.new(token).installed_caskfile
+          CaskLoader.load_from_installed_caskfile(installed_path, config:, warn: false) if installed_path
         rescue
           nil
         end
