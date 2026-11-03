@@ -1792,9 +1792,8 @@ RSpec.describe Cask::Audit, :cask do
       subject(:run) { Homebrew::SimulateSystem.with(os:) { audit.run! } }
 
       let(:only) { ["zap_required"] }
-      let(:new_cask) { true }
       let(:os) { :sequoia }
-      let(:message) { /New casks must have a `zap` stanza/ }
+      let(:message) { /Casks must have a `zap` stanza/ }
       let(:tap) { CoreCaskTap.instance }
       let(:stanzas) { nil }
       let(:cask) do
@@ -1817,8 +1816,14 @@ RSpec.describe Cask::Audit, :cask do
         end
       end
 
-      context "when the cask is not new" do
-        let(:new_cask) { false }
+      context "when the cask is deprecated" do
+        let(:stanzas) { proc { deprecate! date: "2021-01-01", because: :discontinued } }
+
+        it { is_expected.not_to error_with(message) }
+      end
+
+      context "when the cask is disabled" do
+        let(:stanzas) { proc { disable! date: "2021-01-01", because: :discontinued } }
 
         it { is_expected.not_to error_with(message) }
       end
