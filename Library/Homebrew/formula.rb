@@ -259,7 +259,7 @@ class Formula
 
   # Information about PyPI mappings for this {Formula} is stored
   # as {PypiPackages} object.
-  sig { returns(PypiPackages) }
+  sig { returns(T.nilable(PypiPackages)) }
   attr_reader :pypi_packages_info
 
   # Whether this formula should be considered outdated
@@ -309,7 +309,7 @@ class Formula
       Tap.from_path(path)
     end
 
-    @pypi_packages_info = T.let(self.class.pypi_packages_info || PypiPackages.new, PypiPackages)
+    @pypi_packages_info = T.let(self.class.pypi_packages_info, T.nilable(PypiPackages))
 
     @full_name = T.let(full_name_with_optional_tap(name), String)
     @full_alias_name = T.let((full_name_with_optional_tap(@alias_name) if @alias_name), T.nilable(String))
@@ -4662,10 +4662,6 @@ class Formula
       exclude_packages: nil,
       dependencies: nil
     )
-      if [package_name, extra_packages, exclude_packages, dependencies].all?(&:nil?)
-        raise ArgumentError, "must provide at least one argument"
-      end
-
       # Sadly `v1, v2, v3 = [v1, v2, v3].map { |x| Array(x) }` does not work
       # for typechecker
       extra_packages = Array(extra_packages)

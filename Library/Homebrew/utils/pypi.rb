@@ -251,13 +251,12 @@ module PyPI
                                     print_only: false, quiet: false, verbose: false,
                                     ignore_errors: false, ignore_non_pypi_packages: false,
                                     ignore_main_package_cooldown: false)
-    if [package_name, extra_packages, exclude_packages, dependencies].all?(&:blank?)
-      list_entry = formula.pypi_packages_info
-
-      package_name = list_entry.package_name
-      extra_packages = list_entry.extra_packages
-      exclude_packages = list_entry.exclude_packages
-      dependencies = list_entry.dependencies
+    pypi_packages_info = formula.pypi_packages_info
+    if pypi_packages_info && [package_name, extra_packages, exclude_packages, dependencies].all?(&:blank?)
+      package_name = pypi_packages_info.package_name
+      extra_packages = pypi_packages_info.extra_packages
+      exclude_packages = pypi_packages_info.exclude_packages
+      dependencies = pypi_packages_info.dependencies
     end
 
     missing_dependencies = Array(dependencies).reject do |dependency|
@@ -313,7 +312,7 @@ module PyPI
     elsif version.present?
       if main_package.valid_pypi_package?
         main_package.version = version
-      else
+      elsif pypi_packages_info.nil?
         return false if ignore_non_pypi_packages
 
         odie "The main package is not a PyPI package, meaning that version-only updates cannot be \
