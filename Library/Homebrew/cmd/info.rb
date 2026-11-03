@@ -474,7 +474,8 @@ module Homebrew
           outdated:,
           deprecated:  formula.deprecated?,
           disabled:    formula.disabled?,
-          removed:     installed && formula.tap.present? && kegs.all?(&:deleted_formula?),
+          removed:     installed && formula.tap.present? &&
+                       kegs.all? { |keg| keg.tab.tap == formula.tap && keg.deleted_formula? },
           can_install: formula.valid_platform? && !formula.disabled?,
           bold:        true,
         )
