@@ -296,6 +296,26 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(checks.check_homebrew_prefix).to be_nil
   end
 
+  describe "#check_for_unlinked_but_not_keg_only" do
+    before { (HOMEBREW_CELLAR/"testball/1.0").mkpath }
+
+    it "asks to link a keg whose formula is available" do
+      formula_path = CoreTap.instance.new_formula_path("testball")
+      formula_path.dirname.mkpath
+      formula_path.write <<~RUBY
+        class Testball < Formula
+          url "https://brew.sh/testball-1.0.tar.gz"
+        end
+      RUBY
+
+      expect(checks.check_for_unlinked_but_not_keg_only&.to_s).to match("Run `brew link` on these:\n  testball")
+    end
+
+    it "skips a keg whose formula was removed" do
+      expect(checks.check_for_unlinked_but_not_keg_only).to be_nil
+    end
+  end
+
   specify "#check_for_unnecessary_core_tap" do
     ENV.delete("HOMEBREW_DEVELOPER")
 
