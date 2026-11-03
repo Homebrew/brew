@@ -26,6 +26,7 @@ RSpec.describe Homebrew::Services::Cli do
         77513   50  homebrew.mxcl.php
         495     0   sh.brew.node_exporter
         1234    34  homebrew.mxcl.postgresql@14
+        1235    0   sh.brew.foo,bar
       EOS
       expect(services_cli.running).to eq([
         "homebrew.mxcl.php",
@@ -39,6 +40,7 @@ RSpec.describe Homebrew::Services::Cli do
       allow(Homebrew::Services::System::Systemctl).to receive(:popen_read).and_return <<~EOS
         sh.brew.php.service      loaded active running Homebrew PHP service
         homebrew.redis.service   loaded active running Homebrew Redis service
+        sh.brew.foo,bar.service  loaded active running Invalid package name
         systemd-udevd.service    loaded active running Rule-based Manager for Device Events and Files
         udisks2.service          loaded active running Disk Manager
         user@1000.service        loaded active running User Manager for UID 1000

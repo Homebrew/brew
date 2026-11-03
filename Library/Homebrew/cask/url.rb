@@ -121,6 +121,7 @@ module Cask
 
       @raw_url_line = T.let(nil, T.nilable(String))
       return unless (caller_path = @caller_location.path)
+      return unless File.file?(caller_path)
 
       @raw_url_line = Pathname(caller_path).each_line.drop(@caller_location.lineno - 1).first
     end

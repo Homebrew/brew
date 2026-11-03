@@ -549,7 +549,7 @@ module Homebrew
 
       sig { returns(Regexp) }
       private_class_method def self.path_or_label_regex
-        /((?:homebrew(?>\.mxcl)?|sh\.brew)\.([\w+-.@]+))\z/
+        /((?:homebrew(?>\.mxcl)?|sh\.brew)\.(#{HOMEBREW_PACKAGE_NAME_REGEX.source}))\z/o
       end
 
       class StatusOutputSuccessType

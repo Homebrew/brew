@@ -104,9 +104,12 @@ module Cask
       def load(config:)
         @config = config
 
-        ENV.clear_sensitive_environment_for_eval! do
-          instance_eval(content, __FILE__, __LINE__)
+        cask = ENV.clear_sensitive_environment_for_eval! do
+          instance_eval(content, "(cask content)")
         end
+        raise CaskUnavailableError.new("(content)", "Source does not contain a cask.") unless cask.is_a?(Cask)
+
+        cask
       end
     end
 
@@ -708,10 +711,37 @@ module Cask
       self.for(normalized_ref, warn:).load(config:)
     end
 
+    # @api private
+    # Load a parent-selected source file. Homebrew/brew callers only.
+    T::Sig::WithoutRuntime.sig { params(path: T.any(String, Pathname), config: T.nilable(Config)).returns(Cask) }
+    def self.from_path(path, config: nil)
+      path = Pathname(path)
+      raise CaskUnavailableError.new(path.to_s, "Invalid cask source path.") if FromPathLoader.invalid_path?(path)
+
+      FromPathLoader.new(path).load(config:)
+    end
+
+    # @api private
+    # Load a registered tap source file for auditing or CI.
+    T::Sig::WithoutRuntime.sig { params(path: T.any(String, Pathname)).returns(Cask) }
+    def self.from_tap_path(path)
+      tap_path = ::Utils::Path.tap_package_path(Pathname(path), :cask)
+      raise CaskUnavailableError.new(path.to_s, "Not a registered tap source file.") unless tap_path
+
+      from_path(tap_path)
+    end
+
+    # @api private
+    # Evaluate explicitly supplied source. Homebrew/brew callers only.
+    T::Sig::WithoutRuntime.sig { params(content: String, config: T.nilable(Config), tap: T.nilable(Tap)).returns(Cask) }
+    def self.from_content(content, config: nil, tap: nil)
+      FromContentLoader.new(content, tap:).load(config:)
+    end
+
     # Loads a bare cask token without interpreting it as source, a path or a URI.
     sig { params(name: String, warn: T::Boolean).returns(Cask) }
     def self.load_from_name(name, warn: true)
-      if !name.match?(/\A#{HOMEBREW_TAP_CASK_TOKEN_REGEX}\z/o) || %w[. ..].include?(name)
+      if !name.match?(/\A#{HOMEBREW_TAP_CASK_TOKEN_REGEX}\z/o) || ::Utils::INVALID_PATH_COMPONENTS.include?(name)
         raise CaskUnavailableError.new(name, "Invalid cask token.")
       end
 
@@ -793,6 +823,25 @@ module Cask
       end
 
       raise CaskError, "No cask loader found for #{ref.inspect}"
+    end
+
+    # Select only name-based sources: API, qualified tap then unqualified tap lookup.
+    T::Sig::WithoutRuntime.sig {
+      params(ref: String, warn: T::Boolean).returns(T.any(FromAPILoader, FromTapLoader, NullLoader))
+    }
+    def self.loader_for(ref, warn: true)
+      unless ::Utils::Path.valid_package_name?(ref)
+        odeprecated "CaskLoader lookup with paths, URLs or Ruby source",
+                    "a cask name, or CaskLoader.from_path/from_content for internal source loading"
+        return NullLoader.new(ref)
+      end
+
+      loader = FromAPILoader.try_new(ref, warn:) ||
+               FromTapLoader.try_new(ref, warn:) ||
+               FromNameLoader.try_new(ref, warn:) ||
+               NullLoader.new(ref)
+      $stderr.puts "#{$PROGRAM_NAME} (#{loader.class}): loading #{ref}" if verbose? && debug?
+      loader
     end
 
     sig { params(ref: String, config: T.nilable(Config), warn: T::Boolean).returns(Cask) }

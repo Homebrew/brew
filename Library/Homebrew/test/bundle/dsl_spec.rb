@@ -200,6 +200,24 @@ RSpec.describe Homebrew::Bundle::Dsl do
     expect(described_class.sanitize_tap_name("homebrew/foo")).to eql("homebrew/foo")
   end
 
+  test_each(["homebrew/homebrew/foo,bar", "user/homebrew-repo/foo,bar", "user/homebrew-repo/foo\nbar"]) do |name|
+    it "does not normalise an invalid package name in #{name}" do
+      expect(described_class.sanitize_brew_name(name)).to eq(name)
+    end
+  end
+
+  it "normalises formula references with dots in their tap names" do
+    expect(described_class.sanitize_brew_name("user.name/homebrew-repo.name/foo")).to eq("user.name/repo.name/foo")
+  end
+
+  it "normalises tap names with dots" do
+    expect(described_class.sanitize_tap_name("user.name/homebrew-repo.name")).to eq("user.name/repo.name")
+  end
+
+  it "only removes homebrew- at the start of the repository name" do
+    expect(described_class.sanitize_brew_name("user/my-homebrew-repo/foo")).to eq("user/my-homebrew-repo/foo")
+  end
+
   it ".sanitize_cask_name" do
     expect(described_class.sanitize_cask_name("homebrew/cask-versions/adoptopenjdk8")).to eql("adoptopenjdk8")
     expect(described_class.sanitize_cask_name("adoptopenjdk8")).to eql("adoptopenjdk8")

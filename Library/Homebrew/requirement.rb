@@ -119,7 +119,7 @@ class Requirement
     return unless @satisfied_result.is_a?(Pathname)
 
     parent = Utils::Path.resolved_path(@satisfied_result).parent
-    if parent.to_s =~ %r{^#{Regexp.escape(HOMEBREW_CELLAR)}/([\w+-.@]+)/[^/]+/(s?bin)/?$}o
+    if parent.to_s =~ %r{^#{Regexp.escape(HOMEBREW_CELLAR)}/(#{HOMEBREW_PACKAGE_NAME_REGEX.source})/[^/]+/(s?bin)/?$}o
       parent = HOMEBREW_PREFIX/"opt/#{Regexp.last_match(1)}/#{Regexp.last_match(2)}"
     end
     parent
