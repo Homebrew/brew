@@ -50,6 +50,8 @@ module Homebrew
             ofail finding.to_s
           else
             opoo finding.to_s
+            # `report_support_tier` already adds a blank line after a failed build's checks.
+            $stderr.puts if type != :build_error_checks && finding.to_s.include?("\n")
           end
         end
       end
