@@ -175,6 +175,12 @@ RSpec.describe DeprecateDisable do
         .to eq "deprecated because it does not build! It will be disabled on #{disable_date}."
     end
 
+    it "omits an estimated disable date that has passed" do
+      allow(Date).to receive(:today).and_return(disable_date + 1)
+      expect(described_class.message(deprecated_formula_with_date))
+        .to eq "deprecated because it does not build!"
+    end
+
     it "returns a disable message with a custom reason" do
       expect(described_class.message(disabled_formula))
         .to eq "disabled because it is broken!"
