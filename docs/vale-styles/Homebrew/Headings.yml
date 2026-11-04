@@ -18,6 +18,7 @@ exceptions:
   - ARM32
   - ARM64
   - ASCII
+  - C
   - CI
   - CLI
   - CLT
@@ -27,6 +28,8 @@ exceptions:
   - Cursor
   - DSL
   - Dock
+  - Erlang and Elixir
+  - F
   - Git
   - GitHub
   - Go
@@ -47,8 +50,11 @@ exceptions:
   - Launchpad
   - MDM
   - MPI
+  - NET
+  - OCaml
   - Ops Team
   - PLC
+  - PHP
   - PRs
   - PowerShell
   - Python
@@ -67,6 +73,7 @@ exceptions:
   - URL
   - URLs
   - Terminal.app
+  - Tcl and Tk
   - Tier 1 Support
   - Tier 2 Support
   - Tier 3 Support
