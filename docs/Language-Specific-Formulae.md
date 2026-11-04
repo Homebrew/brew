@@ -10,6 +10,9 @@ redirect_from:
 This guide covers the language-specific parts of formula authoring.
 The [Formula Cookbook](Formula-Cookbook.md), [Acceptable Formulae](Acceptable-Formulae.md) and [shared package acceptance policy](Package-Acceptance-Policy.md) still apply.
 
+* Table of Contents
+{:toc}
+
 ## Shared requirements
 
 - Declare every language runtime needed at build or runtime rather than relying on the contributor's environment.
