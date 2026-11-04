@@ -419,6 +419,7 @@ module Homebrew
 
           Utils::Analytics.report_build_error(e)
           e.dump(verbose:)
+          puts
           Homebrew.failed = true
         rescue => e
           # Keep a single failed install (e.g. a bottle that fails to extract)
