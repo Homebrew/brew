@@ -2663,7 +2663,7 @@ RSpec.describe Formula do
 
       it "warns about the Keg it keeps" do
         expect { f.eligible_kegs_for_cleanup }
-          .to output(%r{Keeping .*/0\.2: most recent version 0\.3 not installed}).to_stderr
+          .to output(%r{Skipping .*/0\.2: most recent version 0\.3 not installed}).to_stderr
       end
 
       it "doesn't warn if pinned" do

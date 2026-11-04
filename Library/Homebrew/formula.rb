@@ -3835,7 +3835,7 @@ class Formula
                              .sort_by(&:scheme_and_version)
         newest_keg = kegs.pop
         if !kegs.empty? && !quiet && !pinned?
-          opoo "Keeping #{newest_keg}: most recent version #{pkg_version} not installed"
+          opoo "Skipping #{newest_keg}: most recent version #{pkg_version} not installed"
         end
         kegs
       end
