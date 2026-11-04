@@ -96,6 +96,14 @@ RSpec.describe Utils::Autoremove do
         expect(described_class.formulae_with_no_formula_dependents(formulae))
           .to eq([formula_with_deps])
       end
+
+      it "filters out build dependencies when the bottle can't be poured" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+        allow(formula_with_deps).to receive(:pour_bottle?).and_return(false)
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
+      end
     end
 
     context "when formulae are built from source" do

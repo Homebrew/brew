@@ -70,7 +70,7 @@ module Utils
           end
 
           # Upgrading pours a bottle if it can, which doesn't use build dependencies
-          next if tab&.poured_from_bottle && formula.bottled?
+          next if tab&.poured_from_bottle && formula.bottled? && formula.pour_bottle?
 
           formula.deps.select(&:build?).each do |dep|
             names_to_keep.add(dep.to_formula.name)
