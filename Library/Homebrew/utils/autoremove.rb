@@ -50,10 +50,14 @@ module Utils
 
       # The names of the runtime dependencies of `formulae`. Build dependencies
       # are kept for {Formula} built from source or without a usable bottle.
+      # Those built from source are always kept, as a bottle may not be usable by
+      # the next upgrade and they take a while to install again.
       # @private
-      sig { params(formulae: T::Array[Formula]).returns(T::Set[String]) }
-      def names_of_dependencies_to_keep(formulae)
+      sig { params(formulae: T::Array[Formula], installed: T::Array[Formula]).returns(T::Set[String]) }
+      def names_of_dependencies_to_keep(formulae, installed)
         names_to_keep = T.let(Set.new, T::Set[String])
+        built_from_source_names = installed.reject { |f| f.any_installed_keg&.tab&.poured_from_bottle }
+                                           .flat_map(&:possible_names).to_set
         formulae.each do |formula|
           tab = formula.any_installed_keg&.tab
           if (tab_deps = T.cast(tab&.runtime_dependencies, T.nilable(T::Array[T::Hash[String, T.untyped]])))
@@ -69,10 +73,12 @@ module Utils
             formula.installed_runtime_formula_dependencies.each { |f| names_to_keep.add(f.name) }
           end
 
-          # Upgrading pours a bottle if it can, which doesn't use build dependencies
-          next if tab&.poured_from_bottle && formula.bottled? && formula.pour_bottle?
+          # Pouring a bottle doesn't use build dependencies
+          pours_bottle = tab&.poured_from_bottle && formula.bottled? && formula.pour_bottle?
 
           formula.deps.select(&:build?).each do |dep|
+            next if pours_bottle && built_from_source_names.exclude?(Utils.name_from_full_name(dep.name))
+
             names_to_keep.add(dep.to_formula.name)
           rescue FormulaUnavailableError
             # do nothing
@@ -85,7 +91,7 @@ module Utils
       # @private
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def formulae_with_no_formula_dependents(formulae)
-        names_to_keep = names_of_dependencies_to_keep(formulae)
+        names_to_keep = names_of_dependencies_to_keep(formulae, formulae)
         formulae.reject { |f| names_to_keep.intersect?(f.possible_names) }
       end
 
@@ -96,7 +102,7 @@ module Utils
       def formulae_safe_to_remove(removable, installed)
         removable = removable.reject(&:pinned?)
         until removable.empty?
-          names_to_keep = names_of_dependencies_to_keep(installed - removable)
+          names_to_keep = names_of_dependencies_to_keep(installed - removable, installed)
           still_removable = removable.reject { |f| names_to_keep.intersect?(f.possible_names) }
           break if still_removable.length == removable.length
 

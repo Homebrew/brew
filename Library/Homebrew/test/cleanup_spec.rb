@@ -381,22 +381,20 @@ RSpec.describe Homebrew::Cleanup do
         end
       end
 
-      context "when an upgrade would pour a bottle" do
-        it "removes a build dependency built from source of a requested bottle" do
+      context "when a formula has a usable bottle" do
+        it "keeps a build dependency built from source of a requested bottle" do
           installed_formulae(installed_formula("app", poured: true, requested: true, build: [source_built_dep]),
                              source_built_dep)
 
-          expect { described_class.autoremove(dry_run: true) }
-            .to output(/Would autoremove 1 unneeded formula:\ncmake\n\z/).to_stdout
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
         end
 
-        it "removes a build dependency built from source of a bottle a cask needs" do
+        it "keeps a build dependency built from source of a bottle a cask needs" do
           needed = installed_formula("needed", poured: true, build: [source_built_dep])
           installed_formulae(needed, source_built_dep)
           needed_by_cask(needed)
 
-          expect { described_class.autoremove(dry_run: true) }
-            .to output(/Would autoremove 1 unneeded formula:\ncmake\n\z/).to_stdout
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
         end
       end
 
