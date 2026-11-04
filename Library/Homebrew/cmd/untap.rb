@@ -40,7 +40,7 @@ module Homebrew
             installed_tap_casks = installed_casks_for(tap:)
 
             if installed_tap_formulae.present? || installed_tap_casks.present?
-              installed_formulae_names = installed_tap_formulae.map(&:full_name)
+              installed_formulae_names = installed_tap_formulae.keys
               installed_cask_names = installed_tap_casks.map(&:full_name)
               installed_package_types = if installed_formulae_names.empty?
                 "casks"
@@ -74,9 +74,7 @@ module Homebrew
                 end
 
                 named_args = installed_formulae_names + installed_cask_names
-                kegs_by_rack = installed_tap_formulae.flat_map do |formula|
-                  formula.installed_kegs.select { |keg| keg.tab.tap == tap }
-                end.group_by(&:rack)
+                kegs_by_rack = installed_tap_formulae.values.flatten(1).group_by(&:rack)
 
                 Cask::Uninstall.check_dependent_casks(*installed_tap_casks, named_args:)
                 next if Homebrew.failed?
@@ -103,23 +101,26 @@ module Homebrew
         end
       end
 
-      # All installed formulae currently available in a tap by formula full name.
-      sig { params(tap: Tap).returns(T::Array[Formula]) }
+      # Installed kegs for formulae currently available in a tap, keyed by formula full name.
+      sig { params(tap: Tap).returns(T::Hash[String, T::Array[Keg]]) }
       def installed_formulae_for(tap:)
         tap.formula_names.filter_map do |formula_name|
-          next unless installed_formulae_names.include?(Utils.name_from_full_name(formula_name))
+          name = Utils.name_from_full_name(formula_name)
+          possible_names = [name, *tap.formula_reverse_renames.fetch(name, [])]
+          next unless possible_names.any? { |possible_name| installed_formulae_names.include?(possible_name) }
 
-          formula = begin
-            Formulary.factory(formula_name)
+          kegs = begin
+            Formulary.factory(formula_name).installed_kegs
+          rescue Homebrew::UntrustedTapError
+            Utils::Path.formula_installed_prefixes(possible_names).map { |path| Keg.new(path) }
           rescue FormulaUnavailableError, FormulaSpecificationError
             # Don't blow up because of a single unavailable or invalid formula.
             next
           end
 
-          # Can't use Formula#any_version_installed? because it doesn't consider
-          # taps correctly.
-          formula if formula.installed_kegs.any? { |keg| keg.tab.tap == tap }
-        end
+          kegs.select! { |keg| keg.tab.tap == tap }
+          [formula_name, kegs] if kegs.present?
+        end.to_h
       end
 
       # All installed casks currently available in a tap by cask full name.

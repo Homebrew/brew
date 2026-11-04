@@ -40,6 +40,82 @@ RSpec.describe Homebrew::Cmd::Untap do
       .and raise_error(SystemExit)
   end
 
+  context "with an untrusted tap", :trust_store do
+    let(:tap) { Tap.fetch("thirdparty", "foo") }
+    let(:keg_path) { HOMEBREW_CELLAR/"testball/1.0" }
+
+    before do
+      tap.formula_dir.mkpath
+      (tap.formula_dir/"testball.rb").write <<~RUBY
+        raise "Untrusted formula must not be evaluated"
+      RUBY
+
+      keg_path.mkpath
+      (keg_path/AbstractTab::FILENAME).write <<~JSON
+        {"source":{"tap":"homebrew/core"}}
+      JSON
+    end
+
+    after do
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+
+    test_each([nil, "--force"]) do |flag|
+      it "untaps with colliding formula names (#{flag || "without --force"})" do
+        expect(tap).to receive(:uninstall).with(manual: true)
+
+        described_class.new([flag, tap.name].compact).run
+      end
+
+      it "uninstalls kegs from the untrusted tap (#{flag || "without --force"})" do
+        (keg_path/AbstractTab::FILENAME).write <<~JSON
+          {"source":{"tap":"#{tap.name}"}}
+        JSON
+        allow(Homebrew::Ask).to receive(:confirm?).with(action: "changes").and_return(true)
+
+        expect(tap).to receive(:uninstall).with(manual: true)
+
+        described_class.new([flag, tap.name].compact).run
+
+        expect(keg_path).not_to exist
+      end
+    end
+
+    test_each([true, false]) do |current_name_installed|
+      it "force-uninstalls former-name kegs (current name installed: #{current_name_installed})" do
+        (tap.path/"formula_renames.json").write <<~JSON
+          {"old-testball":"testball"}
+        JSON
+        FileUtils.rm_rf keg_path.parent unless current_name_installed
+
+        former_keg_path = HOMEBREW_CELLAR/"old-testball/1.0"
+        former_keg_path.mkpath
+        (former_keg_path/AbstractTab::FILENAME).write <<~JSON
+          {"source":{"tap":"#{tap.name}"}}
+        JSON
+
+        expect(tap).to receive(:uninstall).with(manual: true)
+
+        described_class.new(["--force", tap.name]).run
+
+        expect([former_keg_path.exist?, keg_path.exist?]).to eq([false, current_name_installed])
+      end
+    end
+
+    it "does not untap while an untrusted installation remains" do
+      (keg_path/AbstractTab::FILENAME).write <<~JSON
+        {"source":{"tap":"#{tap.name}"}}
+      JSON
+      allow(Homebrew::Uninstall).to receive(:uninstall_kegs)
+      expect(tap).not_to receive(:uninstall)
+
+      expect { described_class.new(["--force", tap.name]).run }
+        .to output(%r{Failed to fully uninstall formulae from thirdparty/foo}).to_stderr
+    ensure
+      Homebrew.failed = false
+    end
+  end
+
   it "continues untapping remaining taps when uninstallation is declined" do
     tap1 = Tap.fetch("homebrew", "foo")
     tap2 = Tap.fetch("homebrew", "bar")
@@ -47,9 +123,9 @@ RSpec.describe Homebrew::Cmd::Untap do
     cmd = described_class.new(["homebrew/foo", "homebrew/bar"])
     allow(cmd.args.named).to receive(:to_installed_taps).and_return([tap1, tap2])
 
-    formula = instance_double(Formula, full_name: "homebrew/foo/testball")
-    allow(cmd).to receive(:installed_formulae_for).with(tap: tap1).and_return([formula])
-    allow(cmd).to receive(:installed_formulae_for).with(tap: tap2).and_return([])
+    allow(cmd).to receive(:installed_formulae_for).with(tap: tap1)
+                                                  .and_return({ "homebrew/foo/testball" => [instance_double(Keg)] })
+    allow(cmd).to receive(:installed_formulae_for).with(tap: tap2).and_return({})
     allow(cmd).to receive(:installed_casks_for).with(tap: tap1).and_return([])
     allow(cmd).to receive(:installed_casks_for).with(tap: tap2).and_return([])
 
@@ -71,23 +147,18 @@ RSpec.describe Homebrew::Cmd::Untap do
     tap = Tap.fetch("homebrew", "foo")
     rack = HOMEBREW_CELLAR/"testball"
     keg = instance_double(Keg, rack:, tab: instance_double(Tab, tap:))
-    formula = instance_double(
-      Formula,
-      full_name:      "homebrew/foo/testball",
-      installed_kegs: [keg],
-      to_s:           "homebrew/foo/testball",
-    )
+    formula_name = "homebrew/foo/testball"
     cask = instance_double(Cask::Cask, full_name: "homebrew/foo/testcask", token: "testcask")
     cmd = described_class.new(["homebrew/foo"])
 
     allow(cmd.args.named).to receive(:to_installed_taps).and_return([tap])
-    allow(cmd).to receive(:installed_formulae_for).with(tap:).and_return([formula], [])
+    allow(cmd).to receive(:installed_formulae_for).with(tap:).and_return({ formula_name => [keg] }, {})
     allow(cmd).to receive(:installed_casks_for).with(tap:).and_return([cask], [])
     allow(Homebrew::Ask).to receive(:confirm?)
       .with(action: "changes")
       .and_return(true)
 
-    named_args = [formula.full_name, cask.full_name]
+    named_args = [formula_name, cask.full_name]
     expect(Cask::Uninstall).to receive(:check_dependent_casks).with(cask, named_args:).ordered
     expect(Homebrew::Uninstall).to receive(:uninstall_kegs)
       .with({ rack => [keg] }, casks: [cask], force: false, named_args:).ordered
@@ -105,20 +176,16 @@ RSpec.describe Homebrew::Cmd::Untap do
     tap = Tap.fetch("homebrew", "foo")
     rack = HOMEBREW_CELLAR/"testball"
     keg = instance_double(Keg, rack:, tab: instance_double(Tab, tap:))
-    formula = instance_double(
-      Formula,
-      full_name:      "homebrew/foo/testball",
-      installed_kegs: [keg],
-    )
+    formula_name = "homebrew/foo/testball"
     cask = instance_double(Cask::Cask, full_name: "homebrew/foo/testcask")
     cmd = described_class.new(["--force", "homebrew/foo"])
 
     allow(cmd.args.named).to receive(:to_installed_taps).and_return([tap])
-    allow(cmd).to receive(:installed_formulae_for).with(tap:).and_return([formula], [])
+    allow(cmd).to receive(:installed_formulae_for).with(tap:).and_return({ formula_name => [keg] }, {})
     allow(cmd).to receive(:installed_casks_for).with(tap:).and_return([cask], [])
     expect(Homebrew::Ask).not_to receive(:confirm?)
 
-    named_args = [formula.full_name, cask.full_name]
+    named_args = [formula_name, cask.full_name]
     expect(Cask::Uninstall).to receive(:check_dependent_casks).with(cask, named_args:).ordered
     expect(Homebrew::Uninstall).to receive(:uninstall_kegs)
       .with({ rack => [keg] }, casks: [cask], force: true, named_args:).ordered
@@ -134,7 +201,7 @@ RSpec.describe Homebrew::Cmd::Untap do
     cmd = described_class.new(["homebrew/foo"])
 
     allow(cmd.args.named).to receive(:to_installed_taps).and_return([tap])
-    allow(cmd).to receive(:installed_formulae_for).with(tap:).and_return([], [])
+    allow(cmd).to receive(:installed_formulae_for).with(tap:).and_return({}, {})
     allow(cmd).to receive(:installed_casks_for).with(tap:).and_return([cask], [cask])
     allow(Homebrew::Ask).to receive(:confirm?)
       .with(action: "changes")
@@ -202,7 +269,7 @@ RSpec.describe Homebrew::Cmd::Untap do
       end
 
       it "returns the expected formulae" do
-        expect(described_class.new(%w[arg1]).installed_formulae_for(tap: subject).map(&:full_name))
+        expect(described_class.new(%w[arg1]).installed_formulae_for(tap: subject).keys)
           .to eq([currently_installed_formula.full_name])
       end
 
@@ -225,7 +292,7 @@ RSpec.describe Homebrew::Cmd::Untap do
         JSON
         subject.clear_cache
 
-        expect(described_class.new(%w[arg1]).installed_formulae_for(tap: subject).map(&:full_name))
+        expect(described_class.new(%w[arg1]).installed_formulae_for(tap: subject).keys)
           .to eq([currently_installed_formula.full_name])
       end
     end
