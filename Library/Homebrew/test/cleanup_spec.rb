@@ -299,6 +299,57 @@ RSpec.describe Homebrew::Cleanup do
 
       expect { described_class.autoremove }.not_to output.to_stdout
     end
+
+    context "with an unused formula built from source that has a build dependency" do
+      let(:build_dep_formula) { unused_formula("cmake") }
+      let(:source_built_formula) do
+        unused_formula("bar", deps: [instance_double(Dependency, name: "cmake", build?: true,
+                                                                 to_formula: build_dep_formula)])
+      end
+
+      def unused_formula(name, deps: [])
+        tab = instance_double(Tab, runtime_dependencies: [], poured_from_bottle: false, installed_on_request: false,
+                                   installed_on_request_present?: true)
+        instance_double(Formula, name:, full_name: name, possible_names: [name], aliases: [], deps:, pinned?: false,
+                                 installed_runtime_formula_dependencies: [],
+                                 any_installed_keg: instance_double(Keg, name:, tab:))
+      end
+
+      before do
+        allow(Formula).to receive(:installed).and_return([source_built_formula, build_dep_formula])
+        allow(Utils::Autoremove).to receive(:removable_formulae).and_call_original
+        allow(InstalledDependents).to receive(:find_some_installed_dependents).and_return(nil)
+      end
+
+      it "removes both when nothing keeps them" do
+        expect { described_class.autoremove(dry_run: true) }
+          .to output(/Would autoremove 2 unneeded formulae:\nbar\ncmake\n/).to_stdout
+      end
+
+      it "keeps the build dependency when the formula is required by installed dependents" do
+        allow(InstalledDependents).to receive(:find_some_installed_dependents)
+          .and_return([[source_built_formula.any_installed_keg], ["dependent"]])
+
+        expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+      end
+
+      it "keeps the build dependency when the formula is in `HOMEBREW_NO_CLEANUP_FORMULAE`" do
+        allow(Homebrew::EnvConfig).to receive(:no_cleanup_formulae).and_return("bar")
+        allow(described_class).to receive(:skip_clean_formula?) { |formula| formula.name == "bar" }
+
+        expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+      end
+
+      it "keeps the build dependency when a cask depends on the formula" do
+        allow(Cask::Caskroom).to receive(:casks).and_return([Cask::CaskLoader.from_content(+<<~RUBY)])
+          cask "red" do
+            depends_on formula: "bar"
+          end
+        RUBY
+
+        expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+      end
+    end
   end
 
   describe "::prune_prefix_symlinks_and_directories" do

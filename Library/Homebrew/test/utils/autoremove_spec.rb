@@ -178,6 +178,39 @@ RSpec.describe Utils::Autoremove do
     end
   end
 
+  describe "::formulae_safe_to_remove" do
+    include_context "with formulae for dependency testing"
+
+    before do
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+      allow(tab_from_keg).to receive(:poured_from_bottle).and_return(false)
+    end
+
+    it "keeps formulae when everything that depends on them is also being removed" do
+      expect(described_class.formulae_safe_to_remove(formulae, formulae))
+        .to match_array(formulae)
+    end
+
+    it "filters out runtime and build dependencies of formulae that stay installed" do
+      expect(described_class.formulae_safe_to_remove(formulae - [formula_with_deps], formulae))
+        .to eq([])
+    end
+
+    it "filters out dependencies of formulae that it has filtered out" do
+      allow(formula_with_deps).to receive(:installed_runtime_formula_dependencies).and_return([first_formula_dep])
+
+      expect(described_class.formulae_safe_to_remove([first_formula_dep, second_formula_dep], formulae))
+        .to eq([])
+    end
+
+    it "filters out pinned formulae and their dependencies" do
+      allow(formula_with_deps).to receive(:pinned?).and_return(true)
+
+      expect(described_class.formulae_safe_to_remove(formulae, formulae))
+        .to eq([])
+    end
+  end
+
   shared_context "with formulae and casks for dependency testing" do
     include_context "with formulae for dependency testing"
 

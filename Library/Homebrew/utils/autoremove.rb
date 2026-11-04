@@ -48,12 +48,12 @@ module Utils
         names.to_set
       end
 
-      # An array of all installed {Formula} without runtime {Formula} dependents.
-      # Build dependencies are kept for {Formula} built from source and, if they
-      # were built from source themselves, for bottles too.
+      # The names of the runtime dependencies of `formulae`. Build dependencies
+      # are kept for {Formula} built from source and, if they were built from
+      # source themselves, for bottles too.
       # @private
-      sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
-      def formulae_with_no_formula_dependents(formulae)
+      sig { params(formulae: T::Array[Formula]).returns(T::Set[String]) }
+      def names_of_dependencies_to_keep(formulae)
         names_to_keep = T.let(Set.new, T::Set[String])
         built_from_source_names = formulae.reject { |f| f.any_installed_keg&.tab&.poured_from_bottle }
                                           .flat_map(&:possible_names).to_set
@@ -81,7 +81,31 @@ module Utils
             # do nothing
           end
         end
+        names_to_keep
+      end
+
+      # An array of all installed {Formula} that aren't dependencies to keep.
+      # @private
+      sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
+      def formulae_with_no_formula_dependents(formulae)
+        names_to_keep = names_of_dependencies_to_keep(formulae)
         formulae.reject { |f| names_to_keep.intersect?(f.possible_names) }
+      end
+
+      # Filters out pinned {Formula}, which uninstalling skips, and the dependencies
+      # of everything that stays installed, including earlier removal candidates.
+      # @private
+      sig { params(removable: T::Array[Formula], installed: T::Array[Formula]).returns(T::Array[Formula]) }
+      def formulae_safe_to_remove(removable, installed)
+        removable = removable.reject(&:pinned?)
+        until removable.empty?
+          names_to_keep = names_of_dependencies_to_keep(installed - removable)
+          still_removable = removable.reject { |f| names_to_keep.intersect?(f.possible_names) }
+          break if still_removable.length == removable.length
+
+          removable = still_removable
+        end
+        removable
       end
 
       # Recursive function that returns an array of {Formula} without
