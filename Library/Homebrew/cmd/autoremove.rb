@@ -19,7 +19,7 @@ module Homebrew
 
       sig { override.void }
       def run
-        Cleanup.autoremove(dry_run: args.dry_run?)
+        Cleanup.autoremove(dry_run: args.dry_run?, warn_built_from_source: true)
       end
     end
   end

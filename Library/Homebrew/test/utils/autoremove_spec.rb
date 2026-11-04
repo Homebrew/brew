@@ -91,6 +91,13 @@ RSpec.describe Utils::Autoremove do
         expect(described_class.bottled_formulae_with_no_formula_dependents(formulae))
           .to eq([])
       end
+
+      it "filters out only their dependencies when not keeping them" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(false)
+
+        expect(described_class.bottled_formulae_with_no_formula_dependents(formulae, keep_built_from_source: false))
+          .to eq([formula_with_deps])
+      end
     end
 
     context "when tab has runtime_dependencies data" do
@@ -134,6 +141,16 @@ RSpec.describe Utils::Autoremove do
 
       expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
         .to eq([])
+    end
+
+    specify "built from source and not kept" do
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+      allow(tab_from_keg).to receive_messages(poured_from_bottle:            false,
+                                              installed_on_request:          false,
+                                              installed_on_request_present?: true)
+
+      expect(described_class.unused_formulae_with_no_formula_dependents(formulae, keep_built_from_source: false))
+        .to match_array(formulae)
     end
   end
 

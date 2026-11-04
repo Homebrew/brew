@@ -4511,6 +4511,12 @@ For MDM configuration, package restrictions and policy ownership, see:
   are both set, if the request to `$HOMEBREW_ARTIFACT_DOMAIN` fails then
   Homebrew will error rather than trying any other/default URLs.
 
+`HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE`
+
+: If set, `brew autoremove`, `brew cleanup` and `brew uninstall` will also
+  remove unused formulae that were built from source. Build dependencies of the
+  remaining formulae that were built from source are still kept.
+
 `HOMEBREW_AUTO_UPDATE_QUIET`
 
 : If set, the auto-update run before commands like `brew install`, `brew

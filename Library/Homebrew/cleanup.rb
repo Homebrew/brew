@@ -1050,15 +1050,8 @@ module Homebrew
       puts "from #{HOMEBREW_PREFIX}"
     end
 
-    sig { params(dry_run: T::Boolean).void }
-    def self.autoremove(dry_run: false)
-      require "utils/autoremove"
-      require "cask/caskroom"
-
-      # If this runs after install, uninstall, reinstall or upgrade,
-      # the cache of installed formulae may no longer be valid.
-      Formula.clear_cache unless dry_run
-
+    sig { params(keep_built_from_source: T::Boolean).returns(T::Array[Formula]) }
+    def self.autoremovable_formulae(keep_built_from_source:)
       formulae = Formula.installed
       # Remove formulae listed in HOMEBREW_NO_CLEANUP_FORMULAE and their dependencies.
       if Homebrew::EnvConfig.no_cleanup_formulae.present?
@@ -1067,11 +1060,35 @@ module Homebrew
       end
       casks = Cask::Caskroom.casks
 
-      removable_formulae = Utils::Autoremove.removable_formulae(formulae, casks)
+      removable_formulae = Utils::Autoremove.removable_formulae(formulae, casks, keep_built_from_source:)
       if (candidate_kegs = removable_formulae.filter_map(&:any_installed_keg).presence) &&
          (required_kegs, = InstalledDependents.find_some_installed_dependents(candidate_kegs)) &&
          (required_names = Set.new(required_kegs.map(&:name)).presence)
         removable_formulae.reject! { |formula| required_names.include?(formula.name) }
+      end
+
+      removable_formulae
+    end
+
+    sig { params(dry_run: T::Boolean, warn_built_from_source: T::Boolean).void }
+    def self.autoremove(dry_run: false, warn_built_from_source: false)
+      require "utils/autoremove"
+      require "cask/caskroom"
+
+      # If this runs after install, uninstall, reinstall or upgrade,
+      # the cache of installed formulae may no longer be valid.
+      Formula.clear_cache unless dry_run
+
+      keep_built_from_source = !Homebrew::EnvConfig.autoremove_built_from_source?
+      removable_formulae = autoremovable_formulae(keep_built_from_source:)
+
+      if warn_built_from_source && keep_built_from_source &&
+         (kept = autoremovable_formulae(keep_built_from_source: false) - removable_formulae).present?
+        opoo <<~EOS
+          Not autoremoving #{Utils.pluralize("formula", kept.count, include_count: true)} because of source builds:
+          #{kept.map(&:full_name).sort.join("\n")}
+          Set `HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE=1` to autoremove them.
+        EOS
       end
 
       return if removable_formulae.blank?
