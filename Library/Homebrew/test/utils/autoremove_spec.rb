@@ -206,17 +206,17 @@ RSpec.describe Utils::Autoremove do
       allow(tab_from_keg).to receive(:poured_from_bottle).and_return(false)
     end
 
-    it "keeps formulae when everything that depends on them is also being removed" do
+    it "removes formulae when everything that depends on them is also being removed" do
       expect(described_class.formulae_safe_to_remove(formulae, formulae))
         .to match_array(formulae)
     end
 
-    it "filters out runtime and build dependencies of formulae that stay installed" do
+    it "keeps runtime and build dependencies of formulae that stay installed" do
       expect(described_class.formulae_safe_to_remove(formulae - [formula_with_deps], formulae))
         .to eq([])
     end
 
-    it "filters out dependencies of formulae that it has filtered out" do
+    it "keeps dependencies of formulae that it has decided to keep" do
       allow(formula_with_deps).to receive(:installed_runtime_formula_dependencies).and_return([first_formula_dep])
 
       expect(described_class.formulae_safe_to_remove([first_formula_dep, second_formula_dep], formulae))
