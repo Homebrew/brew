@@ -35,19 +35,6 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
       RUBY
     end
 
-    it "reports an offense if both `bottle :modifier` and `bottle do` are present" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-          bottle do
-          ^^^^^^^^^ FormulaAudit/ComponentsRedundancy: `bottle :modifier` and `bottle do` should not be simultaneously present
-            # bottles go here
-          end
-          bottle :unneeded
-        end
-      RUBY
-    end
-
     it "reports no offenses if `stable do` is present with a `head` method" do
       expect_no_offenses(<<~RUBY)
         class Foo < Formula

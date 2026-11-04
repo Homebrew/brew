@@ -10,13 +10,11 @@ module RuboCop
       #
       # - `url|checksum|mirror|version` should be inside `stable` block
       # - `head` and `head do` should not be simultaneously present
-      # - `bottle :unneeded`/`:disable` and `bottle do` should not be simultaneously present
       # - `stable do` should not be present without a `head` spec
       # - `stable do` should not be present with only `url|checksum|mirror|version`
       # - `head do` should not be present with only `url|branch`
       class ComponentsRedundancy < FormulaCop
         HEAD_MSG = "`head` and `head do` should not be simultaneously present"
-        BOTTLE_MSG = "`bottle :modifier` and `bottle do` should not be simultaneously present"
         STABLE_MSG = "`stable do` should not be present without a `head` spec"
         STABLE_BLOCK_METHODS = [:url, :sha256, :mirror, :version].freeze
 
@@ -62,9 +60,6 @@ module RuboCop
 
           problem HEAD_MSG if method_called?(body_node, :head) &&
                               find_block(body_node, :head)
-
-          problem BOTTLE_MSG if method_called?(body_node, :bottle) &&
-                                find_block(body_node, :bottle)
 
           return if method_called?(body_node, :head) ||
                     find_block(body_node, :head)
