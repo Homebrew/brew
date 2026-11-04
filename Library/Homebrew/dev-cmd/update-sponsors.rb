@@ -56,7 +56,7 @@ module Homebrew
         sponsorships_by_platform.each do |other_sponsors, sponsors|
           names = {}
           linked_names = {}
-          sponsors.sort_by { |s| -s[:monthly_amount] }.each do |s|
+          sponsors.sort_by { |s| [-s[:monthly_amount], s[:name].downcase, s[:name], s[:url]] }.each do |s|
             applicable_tiers = [
               *tiers,
               *s[:tier_descriptions].map { |description| { description:, monthly_amount: s[:monthly_amount] } },
