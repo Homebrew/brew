@@ -48,13 +48,15 @@ module Utils
         names.to_set
       end
 
-      # An array of all installed {Formula} without runtime {Formula}
-      # dependents for bottles and without build {Formula} dependents
-      # for those built from source.
+      # An array of all installed {Formula} without runtime {Formula} dependents.
+      # Build dependencies are kept for {Formula} built from source and, if they
+      # were built from source themselves, for bottles too.
       # @private
       sig { params(formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def formulae_with_no_formula_dependents(formulae)
         names_to_keep = T.let(Set.new, T::Set[String])
+        built_from_source_names = formulae.reject { |f| f.any_installed_keg&.tab&.poured_from_bottle }
+                                          .flat_map(&:possible_names).to_set
         formulae.each do |formula|
           tab = formula.any_installed_keg&.tab
           if (tab_deps = T.cast(tab&.runtime_dependencies, T.nilable(T::Array[T::Hash[String, T.untyped]])))
@@ -70,10 +72,10 @@ module Utils
             formula.installed_runtime_formula_dependencies.each { |f| names_to_keep.add(f.name) }
           end
 
-          # Ignore build dependencies when the formula is a bottle
-          next if tab&.poured_from_bottle
-
           formula.deps.select(&:build?).each do |dep|
+            # A bottle doesn't use its build dependencies, but those built from source take a while to install again
+            next if tab&.poured_from_bottle && built_from_source_names.exclude?(Utils.name_from_full_name(dep.name))
+
             names_to_keep.add(dep.to_formula.name)
           rescue FormulaUnavailableError
             # do nothing

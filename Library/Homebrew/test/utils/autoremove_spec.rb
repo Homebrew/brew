@@ -45,6 +45,11 @@ RSpec.describe Utils::Autoremove do
     end
 
     let(:tab_from_keg) { instance_double(Tab) }
+    let(:built_from_source_keg) do
+      tab = instance_double(Tab, runtime_dependencies: nil, poured_from_bottle: false, installed_on_request: false,
+                                 installed_on_request_present?: true)
+      instance_double(Keg, tab:)
+    end
 
     before do
       allow(tab_from_keg).to receive(:runtime_dependencies).and_return(nil)
@@ -81,6 +86,14 @@ RSpec.describe Utils::Autoremove do
 
         expect(described_class.formulae_with_no_formula_dependents(formulae))
           .to eq([formula_with_deps, formula_is_build_dep])
+      end
+
+      it "filters out build dependencies built from source" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+        allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
       end
     end
 
@@ -144,6 +157,24 @@ RSpec.describe Utils::Autoremove do
 
       expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
         .to match_array(formulae)
+    end
+
+    specify "build dependency built from source of an unused bottle" do
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+      allow(tab_from_keg).to receive_messages(installed_on_request: false, installed_on_request_present?: true)
+      allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
+
+      expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
+        .to match_array(formulae)
+    end
+
+    specify "build dependency built from source of a requested bottle" do
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+      allow(tab_from_keg).to receive_messages(installed_on_request: true, installed_on_request_present?: true)
+      allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
+
+      expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
+        .to eq([])
     end
   end
 
