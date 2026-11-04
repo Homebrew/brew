@@ -287,9 +287,8 @@ RSpec.describe Homebrew::Cleanup do
       allow(Formula).to receive(:installed).and_return([removable_formula])
       allow(Cask::Caskroom).to receive(:casks).and_return([])
       allow(Homebrew::EnvConfig).to receive(:no_cleanup_formulae).and_return([])
-      allow(Utils::Autoremove).to receive(:removable_formulae)
-        .with([removable_formula], [], keep_built_from_source: true)
-        .and_return([removable_formula])
+      allow(Utils::Autoremove).to receive(:removable_formulae).with([removable_formula],
+                                                                    []).and_return([removable_formula])
       allow(InstalledDependents).to receive(:find_some_installed_dependents)
         .with([removable_keg])
         .and_return([[removable_keg], ["pango"]])
@@ -299,78 +298,6 @@ RSpec.describe Homebrew::Cleanup do
       expect(Homebrew::Uninstall).not_to receive(:uninstall_kegs)
 
       expect { described_class.autoremove }.not_to output.to_stdout
-    end
-
-    context "with unused formulae built from source" do
-      let(:source_keg) { instance_double(Keg, name: "makedepend") }
-      let(:source_formula) do
-        instance_double(Formula, name: "makedepend", full_name: "makedepend", any_installed_keg: source_keg)
-      end
-
-      before do
-        allow(Utils::Autoremove).to receive(:removable_formulae)
-          .with([removable_formula], [], keep_built_from_source: true)
-          .and_return([])
-        allow(Utils::Autoremove).to receive(:removable_formulae)
-          .with([removable_formula], [], keep_built_from_source: false)
-          .and_return([source_formula])
-        allow(InstalledDependents).to receive(:find_some_installed_dependents)
-          .with([source_keg])
-          .and_return(nil)
-      end
-
-      it "warns about them and how to remove them when asked to" do
-        expect { described_class.autoremove(dry_run: true, warn_built_from_source: true) }
-          .to output(/because of source builds:\nmakedepend\nSet `HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE=1`/)
-          .to_stderr
-      end
-
-      it "does not warn about them by default" do
-        expect { described_class.autoremove(dry_run: true) }.not_to output.to_stderr
-      end
-
-      it "removes them with `HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE`" do
-        ENV["HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE"] = "1"
-
-        expect { described_class.autoremove(dry_run: true) }
-          .to output(/Would autoremove 1 unneeded formula:\nmakedepend/).to_stdout
-      end
-
-      it "does not warn about them with `HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE`" do
-        ENV["HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE"] = "1"
-
-        expect { described_class.autoremove(dry_run: true, warn_built_from_source: true) }.not_to output.to_stderr
-      end
-    end
-
-    context "with a bottled formula only needed by a formula built from source" do
-      def unused_formula(name, runtime_dependencies:, poured_from_bottle:)
-        tab = instance_double(Tab, runtime_dependencies:, poured_from_bottle:, installed_on_request: false,
-                                   installed_on_request_present?: true)
-        instance_double(Formula, name:, full_name: name, possible_names: [name], deps: [],
-                                 any_installed_keg: instance_double(Keg, name:, tab:))
-      end
-
-      before do
-        allow(Formula).to receive(:installed).and_return([
-          unused_formula("bar", runtime_dependencies: [{ "full_name" => "foo" }], poured_from_bottle: false),
-          unused_formula("foo", runtime_dependencies: [], poured_from_bottle: true),
-        ])
-        allow(Utils::Autoremove).to receive(:removable_formulae).and_call_original
-        allow(InstalledDependents).to receive(:find_some_installed_dependents).and_return(nil)
-      end
-
-      it "lists both in the warning" do
-        expect { described_class.autoremove(dry_run: true, warn_built_from_source: true) }
-          .to output(/Not autoremoving 2 formulae because of source builds:\nbar\nfoo\n/).to_stderr
-      end
-
-      it "removes both with `HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE`" do
-        ENV["HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE"] = "1"
-
-        expect { described_class.autoremove(dry_run: true) }
-          .to output(/Would autoremove 2 unneeded formulae:\nbar\nfoo\n/).to_stdout
-      end
     end
   end
 

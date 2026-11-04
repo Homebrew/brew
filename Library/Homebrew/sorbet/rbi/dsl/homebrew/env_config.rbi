@@ -38,9 +38,6 @@ module Homebrew::EnvConfig
     def auto_update_secs; end
 
     sig { returns(T::Boolean) }
-    def autoremove_built_from_source?; end
-
-    sig { returns(T::Boolean) }
     def avoid_nested_sandboxing?; end
 
     sig { returns(T::Boolean) }

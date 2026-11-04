@@ -104,12 +104,6 @@ module Homebrew
         replacement: "the default behaviour",
         odisabled:   true,
       },
-      HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE:     {
-        description: "If set, `brew autoremove`, `brew cleanup` and `brew uninstall` will also remove unused " \
-                     "formulae that were built from source. Build dependencies of the remaining formulae that " \
-                     "were built from source are still kept.",
-        boolean:     true,
-      },
       HOMEBREW_AUTO_UPDATE_QUIET:                {
         description: "If set, the auto-update run before commands like `brew install`, `brew upgrade` or " \
                      "`brew tap` will not show information about new, outdated or deleted formulae and casks.",
