@@ -1363,7 +1363,7 @@ module Homebrew
           next true if (HOMEBREW_LINKED_KEGS/rack.basename).directory?
 
           begin
-            Formulary.from_rack(rack).keg_only?
+            Keg.from_rack(rack)&.deleted_formula? || Formulary.from_rack(rack).keg_only?
           rescue Homebrew::UntrustedTapError
             true
           rescue FormulaUnavailableError, TapFormulaAmbiguityError
