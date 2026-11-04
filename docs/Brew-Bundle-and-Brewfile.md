@@ -357,6 +357,11 @@ cask "firefox", args: { appdir: "~/my-apps/Applications" }
 # This is used to force an upgrade in software that would typically update itself.
 cask "opera", greedy: true
 
+# Runs `brew install --cask google-chrome` only if it is not installed, then `brew pin --cask google-chrome`,
+# so neither `brew bundle` nor `brew upgrade` upgrades it afterwards; `brew unpin` undoes it.
+# This works on `brew` and `cask` entries. Casks with `auto_updates true` still update themselves.
+cask "google-chrome", pin: true
+
 # Runs `brew install --cask java` only if '/usr/libexec/java_home --failfast` fails (i.e there is no Java)
 # Note: `brew bundle list` will not output `java` if this `system` command succeeds and
 # this `system` command will be run even on `brew bundle check`, not just `brew bundle install`.

@@ -30,14 +30,17 @@ RSpec.describe Homebrew::Bundle::Dumper do
     chrome     = instance_double(Cask::Cask,
                                  full_name: "google-chrome",
                                  to_s:      "google-chrome",
+                                 pinned?:   false,
                                  config:    nil)
     java       = instance_double(Cask::Cask,
                                  full_name: "java",
                                  to_s:      "java",
+                                 pinned?:   false,
                                  config:    nil)
     iterm2beta = instance_double(Cask::Cask,
                                  full_name: "homebrew/cask-versions/iterm2-beta",
                                  to_s:      "iterm2-beta",
+                                 pinned?:   false,
                                  config:    nil)
 
     allow(Cask::Caskroom).to receive(:casks).and_return([chrome, java, iterm2beta])
