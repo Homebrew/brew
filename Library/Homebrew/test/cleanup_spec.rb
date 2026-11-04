@@ -342,6 +342,36 @@ RSpec.describe Homebrew::Cleanup do
         expect { described_class.autoremove(dry_run: true, warn_built_from_source: true) }.not_to output.to_stderr
       end
     end
+
+    context "with a bottled formula only needed by a formula built from source" do
+      def unused_formula(name, runtime_dependencies:, poured_from_bottle:)
+        tab = instance_double(Tab, runtime_dependencies:, poured_from_bottle:, installed_on_request: false,
+                                   installed_on_request_present?: true)
+        instance_double(Formula, name:, full_name: name, possible_names: [name], deps: [],
+                                 any_installed_keg: instance_double(Keg, name:, tab:))
+      end
+
+      before do
+        allow(Formula).to receive(:installed).and_return([
+          unused_formula("bar", runtime_dependencies: [{ "full_name" => "foo" }], poured_from_bottle: false),
+          unused_formula("foo", runtime_dependencies: [], poured_from_bottle: true),
+        ])
+        allow(Utils::Autoremove).to receive(:removable_formulae).and_call_original
+        allow(InstalledDependents).to receive(:find_some_installed_dependents).and_return(nil)
+      end
+
+      it "lists both in the warning" do
+        expect { described_class.autoremove(dry_run: true, warn_built_from_source: true) }
+          .to output(/Not autoremoving 2 formulae because of source builds:\nbar\nfoo\n/).to_stderr
+      end
+
+      it "removes both with `HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE`" do
+        ENV["HOMEBREW_AUTOREMOVE_BUILT_FROM_SOURCE"] = "1"
+
+        expect { described_class.autoremove(dry_run: true) }
+          .to output(/Would autoremove 2 unneeded formulae:\nbar\nfoo\n/).to_stdout
+      end
+    end
   end
 
   describe "::prune_prefix_symlinks_and_directories" do
