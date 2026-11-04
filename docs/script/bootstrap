@@ -3,7 +3,9 @@
 bundle_bootstrap() {
   if [[ "${HOMEBREW_INSIDE_BUNDLE:-}" != "1" ]]; then
     export HOMEBREW_NO_AUTO_UPDATE=1
-    eval "$(brew bundle --check --install env)"
+    local brew_env
+    brew_env="$(brew bundle --check --install env)" || return
+    eval "${brew_env}"
   fi
 
   # Share installed gems between worktrees belonging to the same repository.
