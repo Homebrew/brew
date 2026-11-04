@@ -229,7 +229,6 @@ module Homebrew
             ohai "Updated Homebrew from #{old_tag} (#{shorten_revision(initial_revision)}) " \
                  "to #{new_tag} (#{shorten_revision(current_revision)})."
           end
-          warn_if_branch_not_updated("Homebrew/brew", GitRepository.new(HOMEBREW_REPOSITORY), current_revision)
         end
 
         # Check if we can parse the JSON and do any Ruby-side follow-up.
@@ -303,15 +302,6 @@ module Homebrew
                                           include_count: true)} (#{Utils::Text.to_sentence(updated_taps)})."
           updated = true
         end
-        # Unlike the reports above, include the core taps as `update.sh` also
-        # updates their Git repositories when installing from the API.
-        Tap.installed.select(&:git?).each do |tap|
-          tap_initial_revision = ENV.fetch("HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}", nil)
-          tap_current_revision = ENV.fetch("HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}", nil)
-          next if tap_current_revision.nil? || tap_current_revision == tap_initial_revision
-
-          warn_if_branch_not_updated(tap.name, tap.git_repository, tap_current_revision)
-        end
 
         if updated
           if hub.empty?
@@ -336,10 +326,24 @@ module Homebrew
                                        .update_from_report!(hub)
             end
           end
-          puts if args.auto_update?
         elsif !args.auto_update? && !ENV["HOMEBREW_UPDATE_FAILED"]
           puts "Already up-to-date." unless args.quiet?
         end
+
+        if initial_revision != current_revision
+          warn_if_branch_not_updated("Homebrew/brew", GitRepository.new(HOMEBREW_REPOSITORY), current_revision)
+        end
+        # Unlike the reports above, include the core taps as `update.sh` also
+        # updates their Git repositories when installing from the API.
+        Tap.installed.select(&:git?).each do |tap|
+          tap_initial_revision = ENV.fetch("HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}", nil)
+          tap_current_revision = ENV.fetch("HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}", nil)
+          next if tap_current_revision.nil? || tap_current_revision == tap_initial_revision
+
+          warn_if_branch_not_updated(tap.name, tap.git_repository, tap_current_revision)
+        end
+
+        puts if updated && args.auto_update?
 
         Homebrew::Reinstall.reinstall_pkgconf_if_needed!
 
