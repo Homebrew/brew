@@ -3830,9 +3830,14 @@ class Formula
           end
         end
       else
-        installed_kegs.select { |keg| (keg/AbstractTab::FILENAME).file? }
-                      .reject { |keg| keg.version.head? }
-                      .sort_by(&:scheme_and_version).reverse.drop(1)
+        kegs = installed_kegs.select { |keg| (keg/AbstractTab::FILENAME).file? }
+                             .reject { |keg| keg.version.head? }
+                             .sort_by(&:scheme_and_version)
+        newest_keg = kegs.pop
+        if !kegs.empty? && !quiet && !pinned?
+          opoo "Keeping #{newest_keg}: most recent version #{pkg_version} not installed"
+        end
+        kegs
       end
 
       unless eligible_kegs.empty?

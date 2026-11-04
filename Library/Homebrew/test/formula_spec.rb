@@ -2661,7 +2661,14 @@ RSpec.describe Formula do
         expect(f.eligible_kegs_for_cleanup).to eq([Keg.new(f.prefix("0.1"))])
       end
 
-      it "doesn't warn" do
+      it "warns about the Keg it keeps" do
+        expect { f.eligible_kegs_for_cleanup }
+          .to output(%r{Keeping .*/0\.2: most recent version 0\.3 not installed}).to_stderr
+      end
+
+      it "doesn't warn if pinned" do
+        f.pin
+
         expect { f.eligible_kegs_for_cleanup }.not_to output.to_stderr
       end
 
@@ -2707,12 +2714,21 @@ RSpec.describe Formula do
       expect(f.eligible_kegs_for_cleanup).to eq([Keg.new(f.prefix("0.1"))])
     end
 
-    specify "without the latest version installed and an incomplete newer Keg" do
-      f = Class.new(Testball) { version("0.3") }.new
-      setup_keg(f.prefix("0.1"))
-      f.prefix("0.2").mkpath
+    context "without the latest version installed and an incomplete newer Keg" do
+      let(:f) { Class.new(Testball) { version("0.3") }.new }
 
-      expect(f.eligible_kegs_for_cleanup).to be_empty
+      before do
+        setup_keg(f.prefix("0.1"))
+        f.prefix("0.2").mkpath
+      end
+
+      it "returns nothing" do
+        expect(f.eligible_kegs_for_cleanup).to be_empty
+      end
+
+      it "doesn't warn" do
+        expect { f.eligible_kegs_for_cleanup }.not_to output.to_stderr
+      end
     end
 
     specify "with HEAD installed" do
