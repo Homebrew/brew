@@ -296,6 +296,35 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(checks.check_homebrew_prefix).to be_nil
   end
 
+  describe "#check_deprecated_disabled" do
+    let(:deprecated_formula) do
+      <<~RUBY
+        class Testball < Formula
+          url "https://brew.sh/testball-1.0.tar.gz"
+          deprecate! date: "2020-01-01", because: :unsupported
+        end
+      RUBY
+    end
+
+    it "lists a deprecated formula that is still in its tap" do
+      (HOMEBREW_CELLAR/"testball/1.0").mkpath
+      formula_path = CoreTap.instance.new_formula_path("testball")
+      formula_path.dirname.mkpath
+      formula_path.write deprecated_formula
+
+      expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
+    end
+
+    it "skips a formula removed from its tap whose keg kept a deprecated copy" do
+      keg_path = HOMEBREW_CELLAR/"testball/1.0"
+      (keg_path/".brew").mkpath
+      (keg_path/".brew/testball.rb").write deprecated_formula
+      (HOMEBREW_PREFIX/"opt/testball").make_relative_symlink(keg_path)
+
+      expect(checks.check_deprecated_disabled).to be_nil
+    end
+  end
+
   describe "#check_for_unlinked_but_not_keg_only" do
     before { (HOMEBREW_CELLAR/"testball/1.0").mkpath }
 
