@@ -56,6 +56,7 @@ RSpec.describe Utils::Autoremove do
       allow(formula_with_deps).to receive_messages(
         installed_runtime_formula_dependencies: [first_formula_dep, second_formula_dep],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
+        bottled?:                               true,
       )
       allow(first_formula_dep).to receive_messages(
         installed_runtime_formula_dependencies: [second_formula_dep],
@@ -88,9 +89,9 @@ RSpec.describe Utils::Autoremove do
           .to eq([formula_with_deps, formula_is_build_dep])
       end
 
-      it "filters out build dependencies built from source" do
+      it "filters out build dependencies when there is no longer a usable bottle" do
         allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
-        allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
+        allow(formula_with_deps).to receive(:bottled?).and_return(false)
 
         expect(described_class.formulae_with_no_formula_dependents(formulae))
           .to eq([formula_with_deps])
@@ -172,6 +173,16 @@ RSpec.describe Utils::Autoremove do
       allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
       allow(tab_from_keg).to receive_messages(installed_on_request: true, installed_on_request_present?: true)
       allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
+
+      expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
+        .to eq([formula_is_build_dep])
+    end
+
+    specify "build dependency of a requested formula without a usable bottle" do
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+      allow(tab_from_keg).to receive_messages(installed_on_request: true, installed_on_request_present?: true)
+      allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
+      allow(formula_with_deps).to receive(:bottled?).and_return(false)
 
       expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
         .to eq([])
