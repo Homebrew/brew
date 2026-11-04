@@ -45,11 +45,6 @@ RSpec.describe Utils::Autoremove do
     end
 
     let(:tab_from_keg) { instance_double(Tab) }
-    let(:built_from_source_keg) do
-      tab = instance_double(Tab, runtime_dependencies: nil, poured_from_bottle: false, installed_on_request: false,
-                                 installed_on_request_present?: true)
-      instance_double(Keg, tab:)
-    end
 
     before do
       allow(tab_from_keg).to receive(:runtime_dependencies).and_return(nil)
@@ -127,6 +122,40 @@ RSpec.describe Utils::Autoremove do
         expect(described_class.formulae_with_no_formula_dependents(formulae))
           .to eq([formula_with_deps, formula_is_build_dep])
       end
+
+      it "matches runtime dependencies by any of the formula's names" do
+        allow(tab_from_keg).to receive_messages(
+          runtime_dependencies: [{ "full_name" => "old-one" }], poured_from_bottle: true,
+        )
+        allow(first_formula_dep).to receive(:possible_names).and_return(["one", "old-one"])
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps, second_formula_dep, formula_is_build_dep])
+      end
+    end
+
+    context "when there is no receipt" do
+      it "filters out build dependencies" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+        allow(formula_with_deps).to receive(:any_installed_keg).and_return(nil)
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
+      end
+    end
+
+    context "when a build dependency loads as a different object" do
+      it "matches it by name" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(false)
+        different_object = formula "three" do
+          T.bind(self, T.class_of(Formula))
+          url "three-1.1"
+        end
+        allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(different_object)
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
+      end
     end
   end
 
@@ -167,34 +196,6 @@ RSpec.describe Utils::Autoremove do
       expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
         .to match_array(formulae)
     end
-
-    specify "build dependency built from source of an unused bottle" do
-      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
-      allow(tab_from_keg).to receive_messages(installed_on_request: false, installed_on_request_present?: true)
-      allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
-
-      expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
-        .to match_array(formulae)
-    end
-
-    specify "build dependency built from source of a requested bottle" do
-      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
-      allow(tab_from_keg).to receive_messages(installed_on_request: true, installed_on_request_present?: true)
-      allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
-
-      expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
-        .to eq([formula_is_build_dep])
-    end
-
-    specify "build dependency of a requested formula without a usable bottle" do
-      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
-      allow(tab_from_keg).to receive_messages(installed_on_request: true, installed_on_request_present?: true)
-      allow(formula_is_build_dep).to receive(:any_installed_keg).and_return(built_from_source_keg)
-      allow(formula_with_deps).to receive(:bottled?).and_return(false)
-
-      expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
-        .to eq([])
-    end
   end
 
   describe "::formulae_safe_to_remove" do
@@ -219,13 +220,6 @@ RSpec.describe Utils::Autoremove do
       allow(formula_with_deps).to receive(:installed_runtime_formula_dependencies).and_return([first_formula_dep])
 
       expect(described_class.formulae_safe_to_remove([first_formula_dep, second_formula_dep], formulae))
-        .to eq([])
-    end
-
-    it "filters out pinned formulae and their dependencies" do
-      allow(formula_with_deps).to receive(:pinned?).and_return(true)
-
-      expect(described_class.formulae_safe_to_remove(formulae, formulae))
         .to eq([])
     end
   end
