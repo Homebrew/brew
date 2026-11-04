@@ -24,6 +24,96 @@ The [Formula Cookbook](Formula-Cookbook.md), [Acceptable Formulae](Acceptable-Fo
 Ordinary libraries already handled well by a language package manager are generally not useful as standalone formulae.
 Command-line applications, substantial native libraries and bindings needed by other formulae can be appropriate when they meet the acceptance policy.
 
+## Java
+
+Declare the JDK used to build or run the software.
+Use `openjdk` for software that supports the current JDK, or a supported versioned formula when upstream requires a specific release:
+
+```ruby
+depends_on "openjdk@21"
+```
+
+Use a build-only dependency only when the installed software does not need Java at runtime.
+
+Wrap installed commands with `Language::Java.java_home_env` when they must always use the declared JDK:
+
+```ruby
+bin.env_script_all_files libexec/"bin", Language::Java.java_home_env("21")
+```
+
+Use `Language::Java.overridable_java_home_env` when the declared JDK should be the default but upstream supports a user-selected `JAVA_HOME`:
+
+```ruby
+(bin/"foo").write_env_script libexec/"bin/foo", Language::Java.overridable_java_home_env("21")
+```
+
+The helper's version must match the formula dependency.
+Do not embed a Cellar path or a macOS-only JDK location in an installed script.
+
+Java bytecode published by upstream may be installed directly when it meets the formula acceptance policy.
+When building with Maven, Gradle or another tool, ensure its dependency inputs are versioned and reproducible.
+
+## Node.js
+
+### Source and dependency
+
+Prefer the release tarball published to the npm registry when it contains the complete distributable application.
+Registry tarballs normally omit development-only files and include upstream's published build output.
+Use the exact tarball URL and SHA-256 checksum for the packaged version.
+The usual registry URL has the form `https://registry.npmjs.org/<name>/-/<name>-<version>.tgz`.
+
+Applications compatible with the current Node.js release should declare:
+
+```ruby
+depends_on "node"
+```
+
+Use a versioned Node.js formula only when upstream documents that requirement and that formula remains supported.
+
+### Standard npm installation
+
+Install a normal npm application into `libexec` and link its executables:
+
+```ruby
+class Foo < Formula
+  def install
+    system "npm", "install", *std_npm_args
+    bin.install_symlink libexec.glob("bin/*")
+  end
+end
+```
+
+`std_npm_args` uses Homebrew's npm cache, applies the package release cooldown, builds native dependencies from source and installs in npm's global layout under `libexec`.
+It ignores lifecycle scripts by default to reduce the amount of package code executed during installation.
+
+If the package requires an install-phase lifecycle script such as `postinstall`, review every enabled script and dependency before using:
+
+```ruby
+system "npm", "install", *std_npm_args(ignore_scripts: false)
+```
+
+Explain why those scripts are necessary in the pull request.
+
+Use a local npm layout when npm is only one stage of a larger build:
+
+```ruby
+system "npm", "install", *std_npm_args(prefix: false)
+```
+
+Continue the upstream build, then install the resulting files into the formula prefix explicitly.
+
+### Native addons
+
+A dependency tree containing native addons also needs the tools required by `node-gyp`.
+Declare Python as a build dependency when the build invokes it:
+
+```ruby
+depends_on "python" => :build
+```
+
+Native addons are tied to a Node.js ABI.
+Add a functional test that exposes an incompatible Node.js major version so maintainers know when the formula needs a revision bump.
+
 ## Python
 
 ### Applications, libraries and bindings
@@ -117,96 +207,6 @@ When more than one Python is available in the dependency graph, pass the declare
 - For Meson, check how upstream calls `find_installation()` and use its supported options to select the interpreter.
   - If Meson cannot infer Homebrew's installation directories, set `python.purelibdir` or `python.platlibdir` to a path inside the formula prefix.
 - For Autotools projects, use an upstream `--with-python` option when available or disable the build-system installation and install the bindings with the declared interpreter and `std_pip_args`.
-
-## Node.js
-
-### Source and dependency
-
-Prefer the release tarball published to the npm registry when it contains the complete distributable application.
-Registry tarballs normally omit development-only files and include upstream's published build output.
-Use the exact tarball URL and SHA-256 checksum for the packaged version.
-The usual registry URL has the form `https://registry.npmjs.org/<name>/-/<name>-<version>.tgz`.
-
-Applications compatible with the current Node.js release should declare:
-
-```ruby
-depends_on "node"
-```
-
-Use a versioned Node.js formula only when upstream documents that requirement and that formula remains supported.
-
-### Standard npm installation
-
-Install a normal npm application into `libexec` and link its executables:
-
-```ruby
-class Foo < Formula
-  def install
-    system "npm", "install", *std_npm_args
-    bin.install_symlink libexec.glob("bin/*")
-  end
-end
-```
-
-`std_npm_args` uses Homebrew's npm cache, applies the package release cooldown, builds native dependencies from source and installs in npm's global layout under `libexec`.
-It ignores lifecycle scripts by default to reduce the amount of package code executed during installation.
-
-If the package requires an install-phase lifecycle script such as `postinstall`, review every enabled script and dependency before using:
-
-```ruby
-system "npm", "install", *std_npm_args(ignore_scripts: false)
-```
-
-Explain why those scripts are necessary in the pull request.
-
-Use a local npm layout when npm is only one stage of a larger build:
-
-```ruby
-system "npm", "install", *std_npm_args(prefix: false)
-```
-
-Continue the upstream build, then install the resulting files into the formula prefix explicitly.
-
-### Native addons
-
-A dependency tree containing native addons also needs the tools required by `node-gyp`.
-Declare Python as a build dependency when the build invokes it:
-
-```ruby
-depends_on "python" => :build
-```
-
-Native addons are tied to a Node.js ABI.
-Add a functional test that exposes an incompatible Node.js major version so maintainers know when the formula needs a revision bump.
-
-## Java
-
-Declare the JDK used to build or run the software.
-Use `openjdk` for software that supports the current JDK, or a supported versioned formula when upstream requires a specific release:
-
-```ruby
-depends_on "openjdk@21"
-```
-
-Use a build-only dependency only when the installed software does not need Java at runtime.
-
-Wrap installed commands with `Language::Java.java_home_env` when they must always use the declared JDK:
-
-```ruby
-bin.env_script_all_files libexec/"bin", Language::Java.java_home_env("21")
-```
-
-Use `Language::Java.overridable_java_home_env` when the declared JDK should be the default but upstream supports a user-selected `JAVA_HOME`:
-
-```ruby
-(bin/"foo").write_env_script libexec/"bin/foo", Language::Java.overridable_java_home_env("21")
-```
-
-The helper's version must match the formula dependency.
-Do not embed a Cellar path or a macOS-only JDK location in an installed script.
-
-Java bytecode published by upstream may be installed directly when it meets the formula acceptance policy.
-When building with Maven, Gradle or another tool, ensure its dependency inputs are versioned and reproducible.
 
 ## Ruby
 
