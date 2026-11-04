@@ -144,4 +144,4 @@ Follow the installation instructions maintained by those projects rather than co
 ## Formula authors
 
 Formulae must declare and install language dependencies reproducibly rather than relying on packages in a contributor's user environment.
-See [Language-Specific Formulae](Language-Specific-Formulae.md) for Python, Node.js, Java and Ruby authoring guidance.
+See [Language-Specific Formulae](Language-Specific-Formulae.md) for language-specific authoring guidance.

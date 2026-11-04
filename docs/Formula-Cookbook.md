@@ -505,13 +505,13 @@ system "cmake", "-S", ".", "-B", "build", *std_cmake_args(install_prefix: libexe
 
 Always pass CMake an explicit source directory (`-S`) and build directory (`-B`) rather than relying on the current working directory.
 
-Homebrew provides helpers for Cabal, Cargo, CMake, Autoconf, Go, Meson, npm, pip and Zig builds.
+Homebrew provides helpers for Cabal, Cargo, CMake, Autoconf, Go, Meson, npm, pip, Shards, Swift and Zig builds.
 Pass the helper directly to the build command rather than copying its expanded argument list, because defaults change with Homebrew's build and security policy.
 Use the [`Formula` class API](/rubydoc/Formula.html) for each helper's current signature, supported overrides and generated arguments.
 
 Use `std_npm_args` for npm installations as described in [Language-Specific Formulae](Language-Specific-Formulae.md#standard-npm-installation).
 Use `std_pip_args` for direct pip installations as described in [Language-Specific Formulae](Language-Specific-Formulae.md#installing-python-bindings).
-`std_go_args` also provides supported ways to set `-ldflags`, `-gcflags` and `-tags`; see the [`babelfish`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/b/babelfish.rb) and [`wazero`](https://github.com/Homebrew/homebrew-core/blob/HEAD/Formula/w/wazero.rb) formulae for current examples.
+Use `std_go_args` for Go builds as described in [Language-Specific Formulae](Language-Specific-Formulae.md#go).
 
 ### `bin.install "foo"`
 
