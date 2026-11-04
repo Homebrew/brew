@@ -1473,7 +1473,6 @@ module Homebrew
           <<~EOS,
             Some installed kegs have no formulae!
             This means they were either deleted or installed manually.
-
           EOS
           affects:     deleted_formulae,
           remediation: append_indented_list(deleted_formulae, <<~EOS),
