@@ -55,6 +55,12 @@ jobs:
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]
           then
+            if ! gh api "repos/${GITHUB_REPOSITORY}/pulls/${PR}" \
+              --jq '.head.repo.full_name' | grep -Fxq "${GITHUB_REPOSITORY}"
+            then
+              echo "::error::Pull request must be from ${GITHUB_REPOSITORY}."
+              exit 1
+            fi
             gh pr checkout "${PR}"
           else
             git fetch origin "+refs/heads/${GITHUB_REF_NAME}:refs/remotes/origin/${GITHUB_REF_NAME}"
