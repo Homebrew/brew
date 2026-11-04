@@ -3810,7 +3810,7 @@ class Formula
   sig { params(quiet: T::Boolean).returns(T::Array[Keg]) }
   def eligible_kegs_for_cleanup(quiet: false)
     eligible_for_cleanup = []
-    if latest_version_installed?
+    if installed_prefixes.length > 1
       eligible_kegs = if head? && (head_prefix = latest_head_prefix)
         head, stable = installed_kegs.partition { |keg| keg.version.head? }
         stable = stable.sort_by(&:scheme_and_version)
@@ -3818,7 +3818,7 @@ class Formula
         # Remove newest head and stable kegs.
         stable.pop
         head - [Keg.new(head_prefix)] + stable
-      else
+      elsif latest_version_installed?
         installed_kegs.select do |keg|
           tab = keg.tab
           if version_scheme > tab.version_scheme
@@ -3829,6 +3829,15 @@ class Formula
             false
           end
         end
+      else
+        kegs = installed_kegs.select { |keg| (keg/AbstractTab::FILENAME).file? }
+                             .reject { |keg| keg.version.head? }
+                             .sort_by(&:scheme_and_version)
+        newest_keg = kegs.pop
+        if !kegs.empty? && !quiet && !pinned?
+          opoo "Skipping #{newest_keg}: most recent version #{pkg_version} not installed"
+        end
+        kegs
       end
 
       unless eligible_kegs.empty?
@@ -3844,11 +3853,6 @@ class Formula
           end
         end
       end
-    elsif !installed_prefixes.empty? && !pinned?
-      # If the rack only has one version installed, don't complain
-      # that we can't tell which one to keep. Don't complain at all if the
-      # only installed version is a pinned formula.
-      opoo "Skipping #{full_name}: most recent version #{pkg_version} not installed" unless quiet
     end
     eligible_for_cleanup
   end

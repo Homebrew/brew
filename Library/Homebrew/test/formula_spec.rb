@@ -2573,6 +2573,14 @@ RSpec.describe Formula do
   end
 
   describe "#eligible_kegs_for_cleanup" do
+    def setup_keg(prefix, versions = {})
+      prefix.mkpath
+      tab = Tab.empty
+      tab.tabfile = prefix/AbstractTab::FILENAME
+      tab.versions.merge!(versions)
+      tab.write
+    end
+
     it "returns Kegs eligible for cleanup" do
       f1 = Class.new(Testball) do
         version("1.0")
@@ -2621,6 +2629,106 @@ RSpec.describe Formula do
       expect(f2).to be_latest_version_installed
       expect(f3).to be_latest_version_installed
       expect(f3.eligible_kegs_for_cleanup).to eq([Keg.new(f2.prefix)])
+    end
+
+    specify "with an older linked Keg" do
+      f1 = Class.new(Testball) { version("0.1") }.new
+      f2 = Class.new(Testball) { version("0.2") }.new
+
+      f1.brew { f1.install }
+      f2.brew { f2.install }
+      HOMEBREW_LINKED_KEGS.mkpath
+      FileUtils.ln_s f1.prefix, HOMEBREW_LINKED_KEGS/f1.name
+
+      expect(f2.eligible_kegs_for_cleanup(quiet: true)).to be_empty
+    end
+
+    specify "without the latest version installed and a single Keg" do
+      f = Class.new(Testball) { version("0.2") }.new
+      f.prefix("0.1").mkpath
+
+      expect { f.eligible_kegs_for_cleanup }.not_to output.to_stderr
+    end
+
+    context "without the latest version installed" do
+      let(:f) { Class.new(Testball) { version("0.3") }.new }
+
+      before do
+        %w[0.1 0.2].each { |version| setup_keg(f.prefix(version)) }
+      end
+
+      it "returns all but the newest Keg" do
+        expect(f.eligible_kegs_for_cleanup).to eq([Keg.new(f.prefix("0.1"))])
+      end
+
+      it "warns about the Keg it keeps" do
+        expect { f.eligible_kegs_for_cleanup }
+          .to output(%r{Skipping .*/0\.2: most recent version 0\.3 not installed}).to_stderr
+      end
+
+      it "doesn't warn if pinned" do
+        f.pin
+
+        expect { f.eligible_kegs_for_cleanup }.not_to output.to_stderr
+      end
+
+      it "keeps an older linked Keg" do
+        HOMEBREW_LINKED_KEGS.mkpath
+        FileUtils.ln_s f.prefix("0.1"), HOMEBREW_LINKED_KEGS/f.name
+
+        expect(f.eligible_kegs_for_cleanup(quiet: true)).to be_empty
+      end
+    end
+
+    specify "without the latest version installed and a newer `version_scheme`" do
+      f = Class.new(Testball) do
+        version("0.1.1")
+        version_scheme(1)
+      end.new
+
+      { "0.1" => 1, "0.2" => 0 }.each do |version, version_scheme|
+        setup_keg(f.prefix(version), "version_scheme" => version_scheme)
+      end
+
+      expect(f.eligible_kegs_for_cleanup).to eq([Keg.new(f.prefix("0.2"))])
+    end
+
+    specify "without the latest version installed after a downgrade like `openssl@3` 3.6.5 to 3.5.9" do
+      f = Class.new(Testball) do
+        version("3.5.9")
+        version_scheme(1)
+      end.new
+      %w[3.6.2 3.6.3 3.6.5].each { |version| setup_keg(f.prefix(version)) }
+
+      expect(f.eligible_kegs_for_cleanup).to contain_exactly(Keg.new(f.prefix("3.6.2")), Keg.new(f.prefix("3.6.3")))
+    end
+
+    specify "without the latest version installed and outdated HEAD Kegs" do
+      f = Class.new(Testball) do
+        version("0.3")
+        head("foo")
+      end.new
+
+      %w[0.1 0.2 HEAD-000000 HEAD-111111].each { |version| setup_keg(f.prefix(version), "stable" => "0.2") }
+
+      expect(f.eligible_kegs_for_cleanup).to eq([Keg.new(f.prefix("0.1"))])
+    end
+
+    context "without the latest version installed and an incomplete newer Keg" do
+      let(:f) { Class.new(Testball) { version("0.3") }.new }
+
+      before do
+        setup_keg(f.prefix("0.1"))
+        f.prefix("0.2").mkpath
+      end
+
+      it "returns nothing" do
+        expect(f.eligible_kegs_for_cleanup).to be_empty
+      end
+
+      it "doesn't warn" do
+        expect { f.eligible_kegs_for_cleanup }.not_to output.to_stderr
+      end
     end
 
     specify "with HEAD installed" do
