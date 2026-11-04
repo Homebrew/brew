@@ -3349,7 +3349,7 @@ Summarise contributions to Homebrew repositories.
 `--maintainer-report-csv`
 
 : Print a CSV of Maintainer and Lead Maintainer activity criteria using fetched
-  Git histories and GitHub's existing approved-review search for the Homebrew
+  Git histories, verified GitHub approvals and issue closures for the Homebrew
   governance quarter, for example `--maintainer-report-csv=2026-2`.
   Alternatively, omit the value and set `--from` and `--to` for any reporting
   period. Also write it in the current directory as
@@ -3357,13 +3357,18 @@ Summarise contributions to Homebrew repositories.
   `brew-contributions-FROM-to-TO-USER.csv` when filtered with `--user`. Only
   Maintainers listed at the end of that period are included. Activity checks use
   the latest completed governance quarter; role recommendations use up to four
-  full quarters of reports. Review searches return at most 100 results and other
-  counts are capped at 500 per repository and contribution type.
-  Repository-scoped follow-up searches ensure role activity checks remain
-  accurate when a count is capped. Completed-period GitHub searches are cached
-  in Homebrew's cache and removed by normal cache pruning. `YEAR-1` is December
-  of the previous year through February, `YEAR-2` is March through May, `YEAR-3`
-  is June through August and `YEAR-4` is September through November.
+  full quarters of reports. Counts are capped at 500 per repository and
+  contribution type. Merge and approval checks stop once the activity thresholds
+  are met. Historical reports using older criteria must be regenerated.
+  Completed-period GitHub searches are cached in Homebrew's cache and removed by
+  normal cache pruning. `YEAR-1` is December of the previous year through
+  February, `YEAR-2` is March through May, `YEAR-3` is June through August and
+  `YEAR-4` is September through November.
+
+`--maintainer-exempt`
+
+: GitHub usernames exempt from Maintainer inactivity removal, such as Security
+  Team members. Lead Maintainer activity requirements still apply.
 
 ### `create` \[*`options`*\] *`URL`*
 

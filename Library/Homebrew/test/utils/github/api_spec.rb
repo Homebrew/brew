@@ -29,6 +29,22 @@ RSpec.describe GitHub::API do
       .to match([[], include('Link: <https://api.github.com/next>; rel="next"')])
   end
 
+  it "recognises secondary limits and honours Retry-After on primary limits" do
+    allow(Time).to receive(:now).and_return(Time.at(1000))
+    limits = [
+      ["403", "retry-after: 120\r\n", "You have exceeded a secondary rate limit."],
+      ["403", "", "You have exceeded a secondary rate limit."],
+      ["429", "x-ratelimit-remaining: 0\r\nx-ratelimit-reset: 1120\r\n" \
+              "x-ratelimit-resource: core\r\nx-ratelimit-limit: 5000\r\nretry-after: 180\r\n", "Rate limit exceeded"],
+    ].map do |status, headers, message|
+      described_class.raise_error({ message: }.to_json, "", status, headers, [])
+    rescue GitHub::API::RateLimitExceededError => e
+      e.reset
+    end
+
+    expect(limits).to eq([1120, 1060, 1180])
+  end
+
   describe "::sleep_for_rate_limit" do
     it "sleeps for at least 1 second even if the rate limit has already reset" do
       exception = GitHub::API::RateLimitExceededError.new(
