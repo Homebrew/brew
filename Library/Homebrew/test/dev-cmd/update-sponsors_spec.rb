@@ -231,14 +231,14 @@ RSpec.describe Homebrew::DevCmd::UpdateSponsors do
       expect(readme.read).to eq(<<~MARKDOWN)
         Homebrew is generously supported by:
 
-        - [Shared Sponsor](https://example.com/sponsor), [Gift Sponsor](https://example.com/sponsor) and [many others](https://github.com/sponsors/Homebrew#sponsors) via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
+        - [Gift Sponsor](https://example.com/sponsor), [Shared Sponsor](https://github.com/shared) and [many others](https://github.com/sponsors/Homebrew#sponsors) via [GitHub Sponsors](https://github.com/sponsors/Homebrew).
         - [Shared Sponsor](https://example.com/sponsor) and [many others](https://opencollective.com/homebrew/transactions?kind=ADDED_FUNDS&kind=CONTRIBUTION) via [Open Collective](https://opencollective.com/homebrew).
         - [Shared Sponsor](https://example.com/sponsor) and [many others](https://www.patreon.com/homebrew) via [Patreon](https://www.patreon.com/homebrew).
 
         <!-- release-sponsors -->
-        [![Shared Sponsor](https://github.com/shared.png?size=64)](https://github.com/shared)
-        [![Shared Sponsor](https://example.com/logo.png)](https://example.com/sponsor)
         [![Gift Sponsor](https://example.com/logo.png)](https://example.com/sponsor)
+        [![Shared Sponsor](https://example.com/logo.png)](https://example.com/sponsor)
+        [![Shared Sponsor](https://github.com/shared.png?size=64)](https://github.com/shared)
         <!-- /release-sponsors -->
       MARKDOWN
     end
@@ -256,6 +256,30 @@ RSpec.describe Homebrew::DevCmd::UpdateSponsors do
         expect(readme.read).to include(
           "[Largest Sponsor](https://example.com/sponsor), [Middle Sponsor](https://example.com/sponsor), " \
           "[Small Sponsor](https://example.com/sponsor) and [many others](",
+        )
+      end
+    end
+
+    test_each([:github_one_time, :open_collective, :patreon].product([false, true])) do |platform, reversed|
+      it "sorts equal #{platform} contributions by name and profile URL with reversed input #{reversed}" do
+        sponsorships = [
+          sponsor.merge(name: "Zulu"),
+          sponsor.merge(name: "Bravo", url: "https://example.com/bravo-2"),
+          sponsor.merge(name: "alpha"),
+          sponsor.merge(name: "Bravo", url: "https://example.com/bravo-1"),
+        ]
+        sponsorships.reverse! if reversed
+        allow(Sponsors).to receive(platform).and_return(sponsorships)
+
+        command.run
+
+        expect(readme.read).to include(
+          "[alpha](https://example.com/sponsor), [Bravo](https://example.com/bravo-2), " \
+          "[Zulu](https://example.com/sponsor) and [many others](",
+          "[![alpha](https://example.com/logo.png)](https://example.com/sponsor)\n" \
+          "[![Bravo](https://example.com/logo.png)](https://example.com/bravo-1)\n" \
+          "[![Bravo](https://example.com/logo.png)](https://example.com/bravo-2)\n" \
+          "[![Zulu](https://example.com/logo.png)](https://example.com/sponsor)\n",
         )
       end
     end
