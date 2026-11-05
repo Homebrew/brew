@@ -16,8 +16,8 @@ RSpec.describe Homebrew::Cmd::Autoremove do
       tab_attributes = { poured_from_bottle: true, installed_on_request: true }
       setup_test_formula("testball1", tab_attributes:)
 
-      # Make testball2 poured from a bottle and an unused dependency
-      tab_attributes = { poured_from_bottle: true, installed_on_request: false }
+      # Make testball2 built from source and an unused dependency
+      tab_attributes = { poured_from_bottle: false, installed_on_request: false }
       setup_test_formula("testball2", tab_attributes:)
     end
 

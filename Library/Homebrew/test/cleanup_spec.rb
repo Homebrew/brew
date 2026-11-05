@@ -187,6 +187,20 @@ RSpec.describe Homebrew::Cleanup do
       cleanup.clean!(periodic: true)
     end
 
+    it "autoremoves by default" do
+      expect(described_class).to receive(:autoremove)
+
+      cleanup.clean!
+    end
+
+    it "doesn't autoremove with `HOMEBREW_NO_AUTOREMOVE`" do
+      ENV["HOMEBREW_NO_AUTOREMOVE"] = "1"
+
+      expect(described_class).not_to receive(:autoremove)
+
+      cleanup.clean!
+    end
+
     it "removes .DS_Store and lock files" do
       cleanup.clean!
 
@@ -298,6 +312,153 @@ RSpec.describe Homebrew::Cleanup do
       expect(Homebrew::Uninstall).not_to receive(:uninstall_kegs)
 
       expect { described_class.autoremove }.not_to output.to_stdout
+    end
+
+    context "with the real autoremove logic" do
+      let(:source_built_dep) { installed_formula("cmake") }
+      let(:bottled_dep) { installed_formula("cmake", poured: true) }
+
+      def installed_formula(name, poured: false, usable_bottle: true, requested: false, pinned: false,
+                            runtime: [], build: [])
+        tab = instance_double(Tab, runtime_dependencies: runtime.map { |dep| { "full_name" => dep } },
+                                   poured_from_bottle: poured, installed_on_request: requested,
+                                   installed_on_request_present?: true)
+        deps = build.map { |dep| instance_double(Dependency, name: dep.name, build?: true, to_formula: dep) }
+        instance_double(Formula, name:, full_name: name, possible_names: [name], aliases: [], deps:, pinned?: pinned,
+                                 bottled?: usable_bottle, pour_bottle?: true,
+                                 installed_runtime_formula_dependencies: [],
+                                 any_installed_keg: instance_double(Keg, name:, tab:))
+      end
+
+      def installed_formulae(*formulae)
+        allow(Formula).to receive(:installed).and_return(formulae)
+      end
+
+      def required_by_installed_dependents(formula)
+        allow(InstalledDependents).to receive(:find_some_installed_dependents)
+          .and_return([[formula.any_installed_keg], ["dependent"]])
+      end
+
+      def listed_in_no_cleanup_formulae(formula)
+        allow(Homebrew::EnvConfig).to receive(:no_cleanup_formulae).and_return(formula.name)
+        allow(described_class).to receive(:skip_clean_formula?) { |other| other.name == formula.name }
+      end
+
+      def needed_by_cask(formula)
+        allow(Cask::Caskroom).to receive(:casks).and_return([Cask::CaskLoader.from_content(<<~RUBY)])
+          cask "red" do
+            depends_on formula: "#{formula.name}"
+          end
+        RUBY
+      end
+
+      before do
+        allow(Utils::Autoremove).to receive(:removable_formulae).and_call_original
+        allow(InstalledDependents).to receive(:find_some_installed_dependents).and_return(nil)
+      end
+
+      context "when nothing installed needs a formula" do
+        it "removes a bottled runtime dependency only needed by a formula built from source" do
+          installed_formulae(installed_formula("bar", runtime: ["foo"]), installed_formula("foo", poured: true))
+
+          expect { described_class.autoremove(dry_run: true) }
+            .to output(/Would autoremove 2 unneeded formulae:\nbar\nfoo\n\z/).to_stdout
+        end
+
+        it "removes an unused bottle and its build dependency built from source" do
+          installed_formulae(installed_formula("app", poured: true, build: [source_built_dep]), source_built_dep)
+
+          expect { described_class.autoremove(dry_run: true) }
+            .to output(/Would autoremove 2 unneeded formulae:\napp\ncmake\n\z/).to_stdout
+        end
+
+        it "removes an unused formula without a usable bottle and its build dependency" do
+          app = installed_formula("app", poured: true, usable_bottle: false, build: [bottled_dep])
+          installed_formulae(app, bottled_dep)
+
+          expect { described_class.autoremove(dry_run: true) }
+            .to output(/Would autoremove 2 unneeded formulae:\napp\ncmake\n\z/).to_stdout
+        end
+      end
+
+      context "when a formula has a usable bottle" do
+        it "keeps a build dependency built from source of a requested bottle" do
+          installed_formulae(installed_formula("app", poured: true, requested: true, build: [source_built_dep]),
+                             source_built_dep)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+
+        it "keeps a build dependency built from source of a bottle a cask needs" do
+          needed = installed_formula("needed", poured: true, build: [source_built_dep])
+          installed_formulae(needed, source_built_dep)
+          needed_by_cask(needed)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+      end
+
+      context "when an upgrade would build from source" do
+        it "keeps the build dependency of a requested formula built from source" do
+          installed_formulae(installed_formula("app", requested: true, build: [bottled_dep]), bottled_dep)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+
+        it "keeps the build dependency of a runtime dependency built from source" do
+          app = installed_formula("app", poured: true, requested: true, runtime: ["dep"])
+          installed_formulae(app, installed_formula("dep", build: [source_built_dep]), source_built_dep)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+      end
+
+      context "when a formula is required by installed dependents" do
+        it "keeps the build dependency of a formula built from source" do
+          bar = installed_formula("bar", build: [source_built_dep])
+          installed_formulae(bar, source_built_dep)
+          required_by_installed_dependents(bar)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+
+        it "keeps the runtime dependency of a bottle" do
+          bar = installed_formula("bar", poured: true, runtime: ["libfoo"])
+          installed_formulae(bar, installed_formula("libfoo", poured: true))
+          required_by_installed_dependents(bar)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+      end
+
+      context "when a formula is in `HOMEBREW_NO_CLEANUP_FORMULAE`" do
+        it "keeps a bottled build dependency" do
+          bar = installed_formula("bar", build: [bottled_dep])
+          installed_formulae(bar, bottled_dep)
+          listed_in_no_cleanup_formulae(bar)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+      end
+
+      context "when a cask needs a formula" do
+        it "keeps a bottled build dependency of a formula built from source" do
+          needed = installed_formula("needed", build: [bottled_dep])
+          installed_formulae(needed, bottled_dep)
+          needed_by_cask(needed)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+      end
+
+      context "when a formula is pinned" do
+        it "keeps a bottle and its runtime dependency" do
+          installed_formulae(installed_formula("pinned", poured: true, pinned: true, runtime: ["libfoo"]),
+                             installed_formula("libfoo", poured: true))
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
+      end
     end
   end
 

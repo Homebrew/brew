@@ -44,6 +44,33 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
     FileUtils.rm_rf tap.path if tap
   end
 
+  context "when uninstalling a cask" do
+    before do
+      allow(Cask::Uninstall).to receive(:uninstall_casks)
+      allow(Cask::Uninstall).to receive(:check_dependent_casks)
+      allow(Homebrew::Uninstall).to receive(:uninstall_kegs)
+    end
+
+    it "autoremoves by default" do
+      cmd = described_class.new(["test-cask"])
+      allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable).and_return([Cask::Cask.new("test-cask")])
+
+      expect(Homebrew::Cleanup).to receive(:autoremove)
+
+      cmd.run
+    end
+
+    it "doesn't autoremove with `HOMEBREW_NO_AUTOREMOVE`" do
+      ENV["HOMEBREW_NO_AUTOREMOVE"] = "1"
+      cmd = described_class.new(["test-cask"])
+      allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable).and_return([Cask::Cask.new("test-cask")])
+
+      expect(Homebrew::Cleanup).not_to receive(:autoremove)
+
+      cmd.run
+    end
+  end
+
   it "catches cask uninstall errors and sets Homebrew.failed" do
     allow(Cask::Uninstall).to receive(:uninstall_casks).and_raise(Cask::CaskError.new("test cask error"))
     allow(Cask::Uninstall).to receive(:check_dependent_casks)

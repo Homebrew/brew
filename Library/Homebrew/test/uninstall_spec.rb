@@ -53,6 +53,28 @@ RSpec.describe Homebrew::Uninstall do
     stub_cask_loader dependent_cask
   end
 
+  describe "::uninstall_kegs" do
+    let(:kegs_by_rack) do
+      [dependency, dependent_formula].to_h { |f| [f.rack, [Keg.new(f.latest_installed_prefix)]] }
+    end
+
+    before do
+      allow(Formulary).to receive(:from_rack).with(dependency.rack).and_return(dependency)
+      allow(Formulary).to receive(:from_rack).with(dependent_formula.rack).and_return(dependent_formula)
+      allow(dependent_formula).to receive(:pinned?).and_return(true)
+    end
+
+    it "keeps a pinned formula" do
+      expect { described_class.uninstall_kegs(kegs_by_rack) }
+        .not_to change { dependent_formula.latest_installed_prefix.exist? }.from(true)
+    end
+
+    it "still uninstalls the other formulae" do
+      expect { described_class.uninstall_kegs(kegs_by_rack) }
+        .to change { dependency.latest_installed_prefix.exist? }.from(true).to(false)
+    end
+  end
+
   describe "::handle_unsatisfied_dependents" do
     specify "when `ignore_dependencies` is false" do
       expect do

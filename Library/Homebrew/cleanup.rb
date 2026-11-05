@@ -1073,6 +1073,7 @@ module Homebrew
          (required_names = Set.new(required_kegs.map(&:name)).presence)
         removable_formulae.reject! { |formula| required_names.include?(formula.name) }
       end
+      removable_formulae = Utils::Autoremove.formulae_safe_to_remove(removable_formulae, Formula.installed)
 
       return if removable_formulae.blank?
 

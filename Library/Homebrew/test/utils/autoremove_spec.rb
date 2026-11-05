@@ -51,6 +51,7 @@ RSpec.describe Utils::Autoremove do
       allow(formula_with_deps).to receive_messages(
         installed_runtime_formula_dependencies: [first_formula_dep, second_formula_dep],
         any_installed_keg:                      instance_double(Keg, tab: tab_from_keg),
+        bottled?:                               true,
       )
       allow(first_formula_dep).to receive_messages(
         installed_runtime_formula_dependencies: [second_formula_dep],
@@ -67,7 +68,7 @@ RSpec.describe Utils::Autoremove do
     end
   end
 
-  describe "::bottled_formulae_with_no_formula_dependents" do
+  describe "::formulae_with_no_formula_dependents" do
     include_context "with formulae for dependency testing"
 
     before do
@@ -79,17 +80,33 @@ RSpec.describe Utils::Autoremove do
       it "filters out runtime dependencies" do
         allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
 
-        expect(described_class.bottled_formulae_with_no_formula_dependents(formulae))
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
           .to eq([formula_with_deps, formula_is_build_dep])
+      end
+
+      it "filters out build dependencies when there is no longer a usable bottle" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+        allow(formula_with_deps).to receive(:bottled?).and_return(false)
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
+      end
+
+      it "filters out build dependencies when the bottle can't be poured" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+        allow(formula_with_deps).to receive(:pour_bottle?).and_return(false)
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
       end
     end
 
     context "when formulae are built from source" do
-      it "filters out formulae" do
+      it "filters out runtime and build dependencies" do
         allow(tab_from_keg).to receive(:poured_from_bottle).and_return(false)
 
-        expect(described_class.bottled_formulae_with_no_formula_dependents(formulae))
-          .to eq([])
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
       end
     end
 
@@ -102,8 +119,42 @@ RSpec.describe Utils::Autoremove do
         expect(formula_with_deps).not_to receive(:installed_runtime_formula_dependencies)
         expect(first_formula_dep).not_to receive(:installed_runtime_formula_dependencies)
 
-        expect(described_class.bottled_formulae_with_no_formula_dependents(formulae))
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
           .to eq([formula_with_deps, formula_is_build_dep])
+      end
+
+      it "matches runtime dependencies by any of the formula's names" do
+        allow(tab_from_keg).to receive_messages(
+          runtime_dependencies: [{ "full_name" => "old-one" }], poured_from_bottle: true,
+        )
+        allow(first_formula_dep).to receive(:possible_names).and_return(["one", "old-one"])
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps, second_formula_dep, formula_is_build_dep])
+      end
+    end
+
+    context "when there is no receipt" do
+      it "filters out build dependencies" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(true)
+        allow(formula_with_deps).to receive(:any_installed_keg).and_return(nil)
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
+      end
+    end
+
+    context "when a build dependency loads as a different object" do
+      it "matches it by name" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(false)
+        different_object = formula "three" do
+          T.bind(self, T.class_of(Formula))
+          url "three-1.1"
+        end
+        allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(different_object)
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
       end
     end
   end
@@ -133,6 +184,42 @@ RSpec.describe Utils::Autoremove do
       allow(tab_from_keg).to receive_messages(installed_on_request: false, installed_on_request_present?: false)
 
       expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
+        .to eq([])
+    end
+
+    specify "built from source and not installed on request" do
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+      allow(tab_from_keg).to receive_messages(poured_from_bottle:            false,
+                                              installed_on_request:          false,
+                                              installed_on_request_present?: true)
+
+      expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
+        .to match_array(formulae)
+    end
+  end
+
+  describe "::formulae_safe_to_remove" do
+    include_context "with formulae for dependency testing"
+
+    before do
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+      allow(tab_from_keg).to receive(:poured_from_bottle).and_return(false)
+    end
+
+    it "removes formulae when everything that depends on them is also being removed" do
+      expect(described_class.formulae_safe_to_remove(formulae, formulae))
+        .to match_array(formulae)
+    end
+
+    it "keeps runtime and build dependencies of formulae that stay installed" do
+      expect(described_class.formulae_safe_to_remove(formulae - [formula_with_deps], formulae))
+        .to eq([])
+    end
+
+    it "keeps dependencies of formulae that it has decided to keep" do
+      allow(formula_with_deps).to receive(:installed_runtime_formula_dependencies).and_return([first_formula_dep])
+
+      expect(described_class.formulae_safe_to_remove([first_formula_dep, second_formula_dep], formulae))
         .to eq([])
     end
   end
