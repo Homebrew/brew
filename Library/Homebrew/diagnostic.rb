@@ -1224,7 +1224,8 @@ module Homebrew
         return unless HOMEBREW_CELLAR.exist?
 
         deprecated_or_disabled = Formula.installed.select do |f|
-          (f.deprecated? || f.disabled?) && f.installed_kegs.none?(&:deleted_formula?)
+          (f.deprecated? || f.disabled?) &&
+            f.installed_kegs.none? { |keg| keg.name == f.name && keg.deleted_formula? }
         end
         return if deprecated_or_disabled.empty?
 

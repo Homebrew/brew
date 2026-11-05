@@ -306,11 +306,23 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       RUBY
     end
 
-    it "lists a deprecated formula that is still in its tap" do
-      (HOMEBREW_CELLAR/"testball/1.0").mkpath
+    def write_deprecated_core_formula
       formula_path = CoreTap.instance.new_formula_path("testball")
       formula_path.dirname.mkpath
       formula_path.write deprecated_formula
+    end
+
+    def install_keg_from_removed_tap(keg_path)
+      keg_path.mkpath
+      tab = Tab.empty
+      tab.tabfile = keg_path/AbstractTab::FILENAME
+      tab.tap = "gone/tap"
+      tab.write
+    end
+
+    it "lists a deprecated formula that is still in its tap" do
+      (HOMEBREW_CELLAR/"testball/1.0").mkpath
+      write_deprecated_core_formula
 
       expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
     end
@@ -325,18 +337,20 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     end
 
     it "skips a deprecated formula with an older keg removed from its tap" do
-      old_keg_path = HOMEBREW_CELLAR/"testball/1.0"
-      old_keg_path.mkpath
-      tab = Tab.empty
-      tab.tabfile = old_keg_path/AbstractTab::FILENAME
-      tab.tap = "gone/tap"
-      tab.write
+      install_keg_from_removed_tap(HOMEBREW_CELLAR/"testball/1.0")
       (HOMEBREW_CELLAR/"testball/2.0").mkpath
-      formula_path = CoreTap.instance.new_formula_path("testball")
-      formula_path.dirname.mkpath
-      formula_path.write deprecated_formula
+      write_deprecated_core_formula
 
       expect(checks.check_deprecated_disabled).to be_nil
+    end
+
+    it "lists a deprecated formula when only a keg under its old name was removed" do
+      install_keg_from_removed_tap(HOMEBREW_CELLAR/"oldball/1.0")
+      (HOMEBREW_CELLAR/"testball/1.0").mkpath
+      write_deprecated_core_formula
+      allow(CoreTap.instance).to receive(:formula_reverse_renames).and_return("testball" => ["oldball"])
+
+      expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
     end
   end
 
