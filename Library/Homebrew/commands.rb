@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "command_constants"
 require "utils/ruby"
 
 require "utils/text"
@@ -11,31 +12,6 @@ require "extend/ENV/sensitive"
 
 # Helper functions for commands.
 module Commands
-  HOMEBREW_CMD_PATH = T.let((HOMEBREW_LIBRARY_PATH/"cmd").freeze, Pathname)
-  HOMEBREW_DEV_CMD_PATH = T.let((HOMEBREW_LIBRARY_PATH/"dev-cmd").freeze, Pathname)
-  # If you are going to change anything in below hash,
-  # be sure to also update appropriate case statement in brew.sh
-  HOMEBREW_INTERNAL_COMMAND_ALIASES = T.let({
-    "ls"           => "list",
-    "homepage"     => "home",
-    "-S"           => "search",
-    "up"           => "update",
-    "ln"           => "link",
-    "instal"       => "install", # gem does the same
-    "uninstal"     => "uninstall",
-    "post_install" => "postinstall",
-    "rm"           => "uninstall",
-    "remove"       => "uninstall",
-    "abv"          => "info",
-    "dr"           => "doctor",
-    "--repo"       => "--repository",
-    "environment"  => "--env",
-    "--config"     => "config",
-    "-v"           => "--version",
-    "lc"           => "livecheck",
-    "tc"           => "typecheck",
-    "x"            => "exec",
-  }.freeze, T::Hash[String, String])
   # This pattern is used to split descriptions at full stops. We only consider a
   # dot as a full stop if it is either followed by a whitespace or at the end of
   # the description. In this way we can prevent cutting off a sentence in the

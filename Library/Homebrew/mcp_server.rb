@@ -6,6 +6,7 @@
 # loaded here, so ActiveSupport extensions such as `exclude?` and `blank?`
 # are unavailable.
 require_relative "standalone"
+require_relative "command_constants"
 require "json"
 require "stringio"
 
@@ -217,13 +218,13 @@ module Homebrew
       help:      {
         name:        "help",
         title:       "Show command usage",
-        description: "Outputs the usage instructions for `brew` <command>.",
+        description: "Outputs the usage instructions for a built-in `brew` <command>.",
         inputSchema: {
           type:       "object",
           properties: {
             command: {
               type:        "string",
-              description: "Command to get help for",
+              description: "Built-in command or alias to get help for",
             },
           },
         },
@@ -376,6 +377,18 @@ module Homebrew
       package_type = arguments["package_type"]
       if package_type && PACKAGE_TYPES.none?(package_type)
         return respond_result(id, tool_result("Invalid package_type argument: expected formula or cask", error: true))
+      end
+
+      if tool_name == :help
+        command = arguments["command"].to_s
+        command = Commands::HOMEBREW_INTERNAL_COMMAND_ALIASES.fetch(command, command)
+        if !command.empty? &&
+           (command.match?(%r{[/\0]}) ||
+            [Commands::HOMEBREW_CMD_PATH, Commands::HOMEBREW_DEV_CMD_PATH].none? do |path|
+              (path/"#{command}.rb").file?
+            end)
+          return respond_result(id, tool_result("Invalid command argument: expected a built-in command", error: true))
+        end
       end
 
       command_args = tool_command_arguments(tool_name, arguments)

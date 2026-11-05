@@ -270,17 +270,41 @@ RSpec.describe Homebrew::McpServer do
       server.handle_request(request)
     end
 
-    it "passes the help command through without a separator" do
-      expect(Open3).to receive(:popen2e)
-        .with(Homebrew::McpServer::HOMEBREW_BREW_FILE, "help", "--prefix")
-        .and_yield(StringIO.new, StringIO.new("output"), command_waiter)
-      request = {
-        "id"     => id,
-        "method" => "tools/call",
-        "params" => { "name" => "help", "arguments" => { "command" => "--prefix" } },
-      }
+    test_each([nil, "", "install", "typecheck", "--prefix",
+               *Commands::HOMEBREW_INTERNAL_COMMAND_ALIASES.keys]) do |command|
+      it "passes the built-in help topic #{command.inspect} through without a separator" do
+        expect(Open3).to receive(:popen2e)
+          .with(Homebrew::McpServer::HOMEBREW_BREW_FILE, "help", *[command].reject { |name| name.to_s.empty? })
+          .and_yield(StringIO.new, StringIO.new("output"), command_waiter)
+        request = {
+          "id"     => id,
+          "method" => "tools/call",
+          "params" => { "name" => "help", "arguments" => { "command" => command } },
+        }
 
-      server.handle_request(request)
+        server.handle_request(request)
+      end
+    end
+
+    test_each(["external-command", "../brew", "/tmp/brew-command", "--", "--debug", "install --debug",
+               "\0"]) do |command|
+      it "rejects the help topic #{command.inspect} without spawning brew" do
+        allow(Open3).to receive(:popen2e).and_raise("Spawning brew is not permitted")
+        request = {
+          "id"     => id,
+          "method" => "tools/call",
+          "params" => { "name" => "help", "arguments" => { "command" => command } },
+        }
+
+        expect(server.handle_request(request)).to eq({
+          jsonrpc:,
+          id:,
+          result:  {
+            content: [{ type: "text", text: "Invalid command argument: expected a built-in command" }],
+            isError: true,
+          },
+        })
+      end
     end
 
     it "ignores search text passed to a formula tool" do
@@ -303,7 +327,7 @@ RSpec.describe Homebrew::McpServer do
       request = {
         "id"     => id,
         "method" => "tools/call",
-        "params" => { "name" => "help", "arguments" => { "command" => "unknown-command" } },
+        "params" => { "name" => "help", "arguments" => { "command" => "install" } },
       }
 
       expect(server.handle_request(request)).to eq({

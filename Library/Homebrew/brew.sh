@@ -462,7 +462,7 @@ HOMEBREW_ARG_COUNT="$#"
 HOMEBREW_COMMAND="$1"
 shift
 # If you are going to change anything in below case statement,
-# be sure to also update HOMEBREW_INTERNAL_COMMAND_ALIASES hash in commands.rb
+# be sure to also update HOMEBREW_INTERNAL_COMMAND_ALIASES hash in command_constants.rb
 # doesn't need a default case as other arguments handled elsewhere.
 # shellcheck disable=SC2249
 case "${HOMEBREW_COMMAND}" in
