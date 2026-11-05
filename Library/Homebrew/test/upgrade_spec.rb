@@ -249,6 +249,23 @@ RSpec.describe Homebrew::Upgrade do
         )
       end
 
+      it "doesn't plan to reinstall it with HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK" do
+        ENV["HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK"] = "1"
+
+        expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
+          .not_to output(/kept-dependent/).to_stdout
+      end
+
+      it "doesn't plan to reinstall it if the upgraded dependency wasn't kept" do
+        allow(dependent).to receive(:any_installed_keg).and_return(
+          instance_double(Keg, tab:                  instance_double(Tab, poured_from_bottle:),
+                               runtime_dependencies: [{ "full_name" => upgraded.full_name }]),
+        )
+
+        expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
+          .not_to output(/kept-dependent/).to_stdout
+      end
+
       context "when it was poured from a bottle" do
         sig { returns(T::Boolean) }
         let(:poured_from_bottle) { true }

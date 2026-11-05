@@ -193,6 +193,49 @@ RSpec.describe Dependency do
     end
   end
 
+  describe "Dependency#installed? with minimum_version" do
+    subject(:dependency) { described_class.new("foo") }
+
+    let(:keg) { instance_double(Keg, name: "foo", version: PkgVersion.new(Version.new("1.0"), 0)) }
+    let(:formula_compatibility_version) { 2 }
+
+    before do
+      allow(dependency).to receive(:to_installed_formula).and_return(
+        instance_double(Formula, opt_prefix: instance_double(Pathname, exist?: true),
+                                 latest_version_installed?: false, any_installed_keg: keg,
+                                 possible_names: ["foo"], revision: 1,
+                                 compatibility_version: formula_compatibility_version),
+      )
+      allow(Tab).to receive(:for_keg).with(keg).and_return(
+        instance_double(Tab, source: { "versions" => { "compatibility_version" => 1 } }),
+      )
+    end
+
+    it "is true for a newer keg with a different compatibility_version" do
+      expect(dependency.installed?(minimum_version: Version.new("0.9"), minimum_compatibility_version: 2)).to be(true)
+    end
+
+    it "is false for an older keg" do
+      expect(dependency.installed?(minimum_version: Version.new("1.1"))).to be(false)
+    end
+
+    it "is true for a keg at the minimum with a minimum_revision of 0 if the formula has a revision" do
+      expect(dependency.installed?(minimum_version: Version.new("1.0"), minimum_revision: 0)).to be(true)
+    end
+
+    it "is false for a keg at the minimum without a minimum_revision if the formula has a revision" do
+      expect(dependency.installed?(minimum_version: Version.new("1.0"))).to be(false)
+    end
+
+    context "when the formula has no compatibility_version" do
+      let(:formula_compatibility_version) { nil }
+
+      it "is true for a newer keg" do
+        expect(dependency.installed?(minimum_version: Version.new("0.9"))).to be(true)
+      end
+    end
+  end
+
   describe "Dependency#satisfied? with bottle_os_version" do
     subject(:dependency) { described_class.new("foo") }
 

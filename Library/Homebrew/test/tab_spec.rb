@@ -309,21 +309,63 @@ RSpec.describe Tab do
       expect(described_class.runtime_deps_hash(formula, formula_recursive_deps)).to eq(expected_output)
     end
 
-    it "includes kept_compatibility_version for a direct outdated dependency kept with a different one" do
-      foo = formula("foo") do
-        T.bind(self, T.class_of(Formula))
-        url "foo-1.0"
-        compatibility_version 2
+    context "with an installed dependency" do
+      let(:foo) do
+        formula("foo") do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+          compatibility_version 2
+        end
       end
-      kept_tab = instance_double(described_class, source: { "versions" => { "compatibility_version" => 1 } })
-      allow(foo).to receive_messages(latest_version_installed?: false,
-                                     any_installed_keg:         instance_double(Keg, tab: kept_tab))
-      stub_formula_loader foo
+      let(:installed_source) { { "versions" => { "compatibility_version" => 1 } } }
+      let(:latest_version_installed) { false }
+      let(:declared_deps) { [Dependency.new("foo")] }
+      let(:dep_hash) do
+        formula = instance_double(Formula, deps: declared_deps)
+        described_class.runtime_deps_hash(formula, [Dependency.new("foo")]).first
+      end
 
-      formula = instance_double(Formula, deps: [Dependency.new("foo")])
+      before do
+        keg = instance_double(Keg, tab: instance_double(described_class, source: installed_source))
+        allow(foo).to receive_messages(latest_version_installed?: latest_version_installed, any_installed_keg: keg)
+        stub_formula_loader foo
+      end
 
-      expect(described_class.runtime_deps_hash(formula, [Dependency.new("foo")]).first)
-        .to include("kept_compatibility_version" => 1)
+      it "includes kept_compatibility_version if it's outdated with a different one" do
+        expect(dep_hash).to include("kept_compatibility_version" => 1)
+      end
+
+      context "when its receipt has no compatibility_version" do
+        let(:installed_source) { {} }
+
+        it "includes a kept_compatibility_version of 0" do
+          expect(dep_hash).to include("kept_compatibility_version" => 0)
+        end
+      end
+
+      context "when its compatibility_version matches" do
+        let(:installed_source) { { "versions" => { "compatibility_version" => 2 } } }
+
+        it "doesn't include kept_compatibility_version" do
+          expect(dep_hash).not_to include("kept_compatibility_version")
+        end
+      end
+
+      context "when it's up to date" do
+        let(:latest_version_installed) { true }
+
+        it "doesn't include kept_compatibility_version" do
+          expect(dep_hash).not_to include("kept_compatibility_version")
+        end
+      end
+
+      context "when it's only an indirect dependency" do
+        let(:declared_deps) { [] }
+
+        it "doesn't include kept_compatibility_version" do
+          expect(dep_hash).not_to include("kept_compatibility_version")
+        end
+      end
     end
   end
 
