@@ -1420,7 +1420,7 @@ RSpec.describe FormulaInstaller do
         )
         stub_formula_loader(dep_formula)
         allow(dep).to receive(:satisfied?).and_return(false)
-        allow(dep).to receive(:satisfied?).with(minimum_version:).and_return(true)
+        allow(dep).to receive(:satisfied?).with(minimum_version:, minimum_revision: 0).and_return(true)
         allow(f).to receive(:deps).and_return([dep])
         allow(installer).to receive_messages(effective_build_options_for: BuildOptions.new(Options.new, Options.new),
                                              install_bottle_for?:         false)
@@ -1431,7 +1431,7 @@ RSpec.describe FormulaInstaller do
       end
 
       it "upgrades it if it doesn't meet its minimum_version" do
-        allow(dep).to receive(:satisfied?).with(minimum_version:).and_return(false)
+        allow(dep).to receive(:satisfied?).with(minimum_version:, minimum_revision: 0).and_return(false)
 
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(dep.name)
       end
