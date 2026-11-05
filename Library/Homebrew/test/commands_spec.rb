@@ -210,5 +210,12 @@ RSpec.describe Commands do
       expect(described_class.path("rbdevcmd")).to eq(Commands::HOMEBREW_DEV_CMD_PATH/"rbdevcmd.rb")
       expect(described_class.path("shdevcmd")).to eq(Commands::HOMEBREW_DEV_CMD_PATH/"shdevcmd.sh")
     end
+
+    specify "returns nil for a command name that escapes the command directories" do
+      ENV["PATH"] = (tmpdir/"bin").tap(&:mkpath).to_s
+      FileUtils.chmod "+x", cmd_path/"rbcmd.rb"
+
+      expect(described_class.path("../../../cmd/rbcmd")).to be_nil
+    end
   end
 end

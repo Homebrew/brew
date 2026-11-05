@@ -487,7 +487,7 @@ case "${HOMEBREW_COMMAND}" in
   x) HOMEBREW_COMMAND="exec" ;;
 esac
 
-# Keep in sync with `Commands.internal_cmd_name?` in `commands.rb`.
+# Keep in sync with `Commands.valid_cmd_name?` in `commands.rb`.
 if [[ "${HOMEBREW_COMMAND}" == */* || "${HOMEBREW_COMMAND}" == "." || "${HOMEBREW_COMMAND}" == ".." ]]
 then
   odie "Unknown command: brew ${HOMEBREW_COMMAND}"
