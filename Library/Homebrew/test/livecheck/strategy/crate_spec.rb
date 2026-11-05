@@ -12,40 +12,18 @@ RSpec.describe Homebrew::Livecheck::Strategy::Crate do
   # provided regex and the default strategy regex in testing.
   let(:regex) { /v?(\d+(?:\.\d+)+)/i }
   let(:generated) do
-    { url: "https://crates.io/api/v1/crates/example/versions" }
+    { url: "https://index.crates.io/ex/am/example" }
   end
-  # This is a limited subset of a `versions` response object, for the sake of
+  # This is a limited subset of a crate index response object, for the sake of
   # testing.
   let(:content) do
     <<~JSON
-      {
-        "versions": [
-          {
-            "crate": "example",
-            "created_at": "2023-01-03T00:00:00.000000+00:00",
-            "num": "1.0.2",
-            "updated_at": "2023-01-03T00:00:00.000000+00:00",
-            "yanked": true
-          },
-          {
-            "crate": "example",
-            "created_at": "2023-01-02T00:00:00.000000+00:00",
-            "num": "1.0.1",
-            "updated_at": "2023-01-02T00:00:00.000000+00:00",
-            "yanked": false
-          },
-          {
-            "crate": "example",
-            "created_at": "2023-01-01T00:00:00.000000+00:00",
-            "num": "1.0.0",
-            "updated_at": "2023-01-01T00:00:00.000000+00:00",
-            "yanked": false
-          }
-        ]
-      }
+      {"name":"example","vers":"1.0.2","deps":[],"cksum":"101295d6a1a7041f119b598a52bab4ac4a3aed89493f22b338d74b3caf4f9abc","features":{},"yanked":false,"pubtime":"2023-12-06T19:55:15Z"}
+      {"name":"example","vers":"1.1.0","deps":[],"cksum":"0b6a23e249717cd6d24a8f3fcd9639403948df1227fe303a106396597a68277e","features":{},"yanked":false,"pubtime":"2023-12-06T19:56:05Z"}
+      {"name":"example","vers":"1.1.1","deps":[],"cksum":"14608893613d97a992770c78686f17d73b8d99ed5e920057c7b5fd50581924fc","features":{},"yanked":true,"pubtime":"2023-12-06T19:56:37Z"}
     JSON
   end
-  let(:matches) { ["1.0.0", "1.0.1"] }
+  let(:matches) { ["1.0.2", "1.1.0"] }
 
   describe "::match?" do
     it "returns true for a crate URL" do
@@ -64,6 +42,21 @@ RSpec.describe Homebrew::Livecheck::Strategy::Crate do
 
     it "returns an empty hash for a non-crate URL" do
       expect(crate.generate_input_values(non_crate_url)).to eq({})
+    end
+
+    it "handles 1-character package name" do
+      expect(crate.generate_input_values("https://static.crates.io/crates/a/a-0.1.1.crate"))
+        .to eq({ url: "https://index.crates.io/1/a" })
+    end
+
+    it "handles 2-character package name" do
+      expect(crate.generate_input_values("https://static.crates.io/crates/cc/cc-1.11.0.crate"))
+        .to eq({ url: "https://index.crates.io/2/cc" })
+    end
+
+    it "handles 3-character package name" do
+      expect(crate.generate_input_values("https://static.crates.io/crates/syn/syn-3.0.9.crate"))
+        .to eq({ url: "https://index.crates.io/3/s/syn" })
     end
   end
 
@@ -87,7 +80,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Crate do
 
       expect(Homebrew::Livecheck::Strategy).to receive(:page_content)
         .at_least(:once)
-        .with(generated[:url], options: Homebrew::Livecheck::Options.new(user_agent: :browser))
+        .with(generated[:url], options: Homebrew::Livecheck::Options.new)
       expect(crate.find_versions(url: crate_url, regex:))
         .to eq(match_data[:fetched].merge({ regex: }))
       expect(crate.find_versions(url: crate_url)).to eq(match_data[:fetched])
@@ -114,21 +107,17 @@ RSpec.describe Homebrew::Livecheck::Strategy::Crate do
 
     it "finds versions in provided content using a block" do
       expect(crate.find_versions(url: crate_url, regex:, content:) do |json, regex|
-        json["versions"]&.map do |version|
-          next if version["yanked"] == true
-          next if (match = version["num"]&.match(regex)).blank?
+        next if json["yanked"] == true
+        next if (match = json["vers"]&.match(regex)).blank?
 
-          match[1]
-        end
+        match[1]
       end).to eq(match_data[:cached].merge({ regex: }))
 
       expect(crate.find_versions(url: crate_url, content:) do |json|
-        json["versions"]&.map do |version|
-          next if version["yanked"] == true
-          next if (match = version["num"]&.match(regex)).blank?
+        next if json["yanked"] == true
+        next if (match = json["vers"]&.match(regex)).blank?
 
-          match[1]
-        end
+        match[1]
       end).to eq(match_data[:cached])
     end
 
