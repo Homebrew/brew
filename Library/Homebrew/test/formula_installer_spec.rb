@@ -1283,6 +1283,25 @@ RSpec.describe FormulaInstaller do
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).not_to include(other_build_dep.name)
       end
 
+      it "keeps compatible dependencies only reached through one that is upgraded" do
+        nested_dep = Dependency.new("homebrew-nested-compatible-dependency")
+        nested_dep_formula = formula nested_dep.name do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+        allow(nested_dep_formula).to receive_messages(
+          compatibility_version: 1,
+          any_installed_keg:     instance_double(Keg, runtime_dependencies: []),
+        )
+        stub_formula_loader(nested_dep_formula)
+        allow(nested_dep).to receive(:satisfied?).and_return(false)
+        allow(nested_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(true)
+        allow(build_dep.to_formula).to receive(:deps).and_return([nested_dep])
+        allow(f).to receive(:deps).and_return([build_dep, Dependency.new(runtime_dep_formula.name)])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).not_to include(nested_dep.name)
+      end
+
       it "upgrades it with a different compatibility_version" do
         allow(build_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(false)
         allow(f).to receive(:deps).and_return([build_dep])
