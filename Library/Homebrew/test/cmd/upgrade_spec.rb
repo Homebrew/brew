@@ -24,11 +24,12 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd.run
   end
 
-  def install_formula_version(name, version, optlinked: false)
+  def install_formula_version(name, version, optlinked: false, runtime_dependencies: nil)
     keg_path = HOMEBREW_CELLAR/name/version
     keg_path.mkpath
     tab = Tab.empty
     tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.runtime_dependencies = runtime_dependencies
     tab.write
     return unless optlinked
 
@@ -245,6 +246,37 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
     expect { described_class.new(["minimum-version-formula", "--min-version=1.2.3", "--dry-run"]).run }
       .to output(/minimum-version-formula 1\.2\.2 -> 1\.2\.3/).to_stdout
+  end
+
+  it "plans to rebuild a dependent built against a kept dependency", :no_api do
+    ENV["HOMEBREW_NO_ENV_HINTS"] = "1"
+    write_formula "lz4", <<~RUBY
+      url "https://brew.sh/lz4-1.11.0"
+    RUBY
+    write_formula "llvm", <<~RUBY
+      url "https://brew.sh/llvm-23.1.5"
+      depends_on "lz4"
+    RUBY
+    write_formula "rust", <<~RUBY
+      url "https://brew.sh/rust-1.99.1"
+      depends_on "llvm" => { minimum_version: "21" }
+    RUBY
+    install_formula_version "lz4", "1.10.0", optlinked: true
+    install_formula_version "llvm", "22.1.8", optlinked: true
+    install_formula_version "rust", "1.99.1", optlinked: true, runtime_dependencies: [
+      { "full_name" => "llvm", "version" => "23.1.5", "kept_compatibility_version" => 1 },
+    ]
+
+    expect { described_class.new(["llvm", "--dry-run"]).run }.to output(<<~EOS).to_stdout
+      ==> Would upgrade 1 dependency:
+      lz4 1.10.0 -> 1.11.0
+      ==> Would rebuild 1 dependent against upgraded dependencies:
+      rust 1.99.1
+      ==> Would upgrade 1 requested outdated package
+      llvm 22.1.8 -> 23.1.5
+      ==> 1 homebrew/core formula that would build from source
+      llvm
+    EOS
   end
 
   it "aligns formula-only no-ask upgrade summaries", :no_api do
