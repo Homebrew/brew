@@ -274,8 +274,9 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       rust 1.99.1
       ==> Would upgrade 1 requested outdated package
       llvm 22.1.8 -> 23.1.5
-      ==> 1 homebrew/core formula that would build from source
+      ==> 2 homebrew/core formulae that would build from source
       llvm
+      rust
     EOS
   end
 

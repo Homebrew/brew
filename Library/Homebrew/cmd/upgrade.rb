@@ -565,6 +565,12 @@ module Homebrew
 
           formula.full_specified_name
         end)
+        summary.source_build_formulae.concat(
+          Upgrade.planned_kept_dependency_dependents(formulae_installer)
+                 .select(&:core_formula?)
+                 .reject(&:pinned?)
+                 .map(&:full_specified_name),
+        )
       end
 
       sig { params(dry_run: T::Boolean, show_upgrade_summary: T::Boolean).void }
