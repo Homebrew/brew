@@ -30,6 +30,8 @@ module Homebrew
                 ],
                 # Hash like { since: :big_sur } for uses_from_macos_bounds
                 T::Hash[Symbol, Symbol],
+                # Hash like { "foo" => "1.2" } for minimum_dependency_versions
+                T::Hash[String, String],
               ),
             ],
           ]
@@ -147,14 +149,15 @@ module Homebrew
           hash["requirements_array"] = hash["requirements"]
 
           stable_dependency_hash = {
-            "dependencies"             => hash["dependencies"] || [],
-            "build_dependencies"       => hash["build_dependencies"] || [],
-            "test_dependencies"        => hash["test_dependencies"] || [],
-            "recommended_dependencies" => hash["recommended_dependencies"] || [],
-            "optional_dependencies"    => hash["optional_dependencies"] || [],
-            "no_linkage_dependencies"  => hash["no_linkage_dependencies"] || [],
-            "uses_from_macos"          => hash["uses_from_macos"] || [],
-            "uses_from_macos_bounds"   => hash["uses_from_macos_bounds"] || [],
+            "dependencies"                => hash["dependencies"] || [],
+            "build_dependencies"          => hash["build_dependencies"] || [],
+            "test_dependencies"           => hash["test_dependencies"] || [],
+            "recommended_dependencies"    => hash["recommended_dependencies"] || [],
+            "optional_dependencies"       => hash["optional_dependencies"] || [],
+            "no_linkage_dependencies"     => hash["no_linkage_dependencies"] || [],
+            "minimum_dependency_versions" => hash["minimum_dependency_versions"] || [],
+            "uses_from_macos"             => hash["uses_from_macos"] || [],
+            "uses_from_macos_bounds"      => hash["uses_from_macos_bounds"] || [],
           }
 
           stable_dependencies, stable_uses_from_macos = process_dependencies_and_requirements(
@@ -247,7 +250,9 @@ module Homebrew
         sig { params(deps_hash: DependencyHash).returns(T::Array[FormulaStruct::DependsOnArgs]) }
         def process_dependencies(deps_hash)
           no_linkage_names = deps_hash.fetch("no_linkage_dependencies", [])
+          minimum_versions = deps_hash.fetch("minimum_dependency_versions", []).grep(Hash).reduce({}, :merge)
           dependencies = deps_hash.fetch("dependencies", []).uniq.map do |dep|
+            next { dep => { minimum_version: minimum_versions.fetch(dep).to_s } } if minimum_versions.key?(dep)
             next dep unless no_linkage_names.include?(dep)
 
             { dep => :no_linkage }

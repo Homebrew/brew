@@ -206,7 +206,7 @@ RSpec.describe Dependency do
   end
 
   describe "UsesFromMacOSDependency#installed? with bottle_os_version" do
-    subject(:uses_from_macos) { described_class.new("foo", bounds: { since: :sonoma }) }
+    subject(:uses_from_macos) { UsesFromMacOSDependency.new("foo", [], bounds: { since: :sonoma }) }
 
     it "accepts macOS bottle_os_version parameter" do
       expect { uses_from_macos.installed?(bottle_os_version: "macOS 14") }.not_to raise_error

@@ -135,6 +135,16 @@ RSpec.describe Homebrew::API::Formula::FormulaStructGenerator do
     ).to eq [[], []]
   end
 
+  it "annotates dependencies with their minimum versions" do
+    deps_hash = {
+      "dependencies"                => ["foo", "bar"],
+      "minimum_dependency_versions" => [{ "bar" => "21" }],
+    }
+
+    expect(described_class.process_dependencies_and_requirements(deps_hash, nil, :stable))
+      .to eq [["foo", { "bar" => { minimum_version: "21" } }], []]
+  end
+
   it "annotates no_linkage dependencies without duplicating them" do
     deps_hash = {
       "dependencies"            => ["foo", "bar"],

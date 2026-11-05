@@ -366,7 +366,8 @@ module Homebrew
           installed_formulae.include?(f) || (dry_run && skip_formula_names.include?(f.full_name))
         end
 
-        return upgraded_formulae if upgradeable.blank?
+        kept_dependency_dependents = dependents_of_kept_dependencies(dry_run ? formulae : installed_formulae.to_a)
+        return upgraded_formulae if upgradeable.blank? && kept_dependency_dependents.blank?
 
         dependent_installers = T.let([], T::Array[FormulaInstaller])
         unless dry_run
@@ -419,7 +420,7 @@ module Homebrew
         # Update non-core installed formulae for linkage checks after upgrading
         # Don't need to check core formulae because we do so at CI time.
         installed_non_core_formulae = FormulaInstaller.installed.to_a.reject(&:core_formula?)
-        return upgraded_formulae if installed_non_core_formulae.blank?
+        return upgraded_formulae if installed_non_core_formulae.blank? && kept_dependency_dependents.blank?
 
         # Assess the dependents tree again now we've upgraded.
         unless dry_run
@@ -427,7 +428,7 @@ module Homebrew
           puts_no_installed_dependents_check_disable_message_if_not_already!
         end
 
-        broken_dependents = check_broken_dependents(installed_non_core_formulae)
+        broken_dependents = check_broken_dependents(installed_non_core_formulae) | kept_dependency_dependents
         if broken_dependents.blank?
           if dry_run
             ohai "No currently broken dependents found!"
@@ -538,6 +539,25 @@ module Homebrew
       end
 
       private
+
+      # Source builds that kept an older dependency through `minimum_version` never get a `revision` bump for it
+      # and their linkage still resolves, so they need rebuilding when that dependency is upgraded.
+      sig { params(upgraded_formulae: T::Array[Formula]).returns(T::Array[Formula]) }
+      def dependents_of_kept_dependencies(upgraded_formulae)
+        return [] if Homebrew::EnvConfig.no_installed_dependents_check?
+
+        dependents = upgraded_formulae.flat_map do |upgraded|
+          upgraded.runtime_installed_formula_dependents.select do |dependent|
+            keg = dependent.any_installed_keg
+            next false if keg.nil? || keg.tab.poured_from_bottle
+
+            keg.runtime_dependencies&.any? do |dep|
+              dep["full_name"] == upgraded.full_name && dep.key?("kept_compatibility_version")
+            end
+          end
+        end
+        dependents.uniq - FormulaInstaller.installed.to_a
+      end
 
       sig { params(installed_formulae: T::Array[Formula]).returns(T::Array[Formula]) }
       def check_broken_dependents(installed_formulae)

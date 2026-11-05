@@ -2179,6 +2179,21 @@ RSpec.describe Formula do
     )
   end
 
+  specify "#to_hash minimum dependency versions" do
+    f = formula "foo" do
+      T.bind(self, T.class_of(Formula))
+      url "foo-1.0"
+      depends_on "bar"
+      depends_on "baz" => { minimum_version: "21" }
+    end
+    stub_formula_loader(f)
+
+    expect(f.to_hash).to include(
+      "dependencies"                => ["bar", "baz"],
+      "minimum_dependency_versions" => [{ "baz" => "21" }],
+    )
+  end
+
   describe "dependency linkage declarations" do
     test_each([[[], [:test, :no_linkage]], [[:no_linkage], [:test]], [[], [:no_linkage]]]
                 .flat_map { |tags| [tags, tags.reverse] }) do |(first_tags, second_tags)|

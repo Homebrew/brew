@@ -3175,6 +3175,7 @@ class Formula
       "recommended_dependencies"        => [],
       "optional_dependencies"           => [],
       "no_linkage_dependencies"         => [],
+      "minimum_dependency_versions"     => [],
       "uses_from_macos"                 => [],
       "uses_from_macos_bounds"          => [],
       "requirements"                    => serialized_requirements,
@@ -3445,6 +3446,8 @@ class Formula
                                                      .reject(&:uses_from_macos?)
                                                      .map(&:name)
                                                      .uniq
+      dep_hash["minimum_dependency_versions"] = spec_deps.select(&:minimum_version)
+                                                         .map { |dep| { dep.name => dep.minimum_version.to_s } }
 
       uses_from_macos_deps = spec_deps.select(&:uses_from_macos?).uniq
       dep_hash["uses_from_macos"] = uses_from_macos_deps.map do |dep|
@@ -4735,6 +4738,15 @@ class Formula
     #
     # ```ruby
     # depends_on "llvm" => [:build, :no_linkage]
+    # ```
+    #
+    # `minimum_version` declares the oldest version this formula's source builds
+    # against. It lets an outdated installed version that is at least this new be
+    # used when building from source, whatever its `compatibility_version`.
+    # The formula is rebuilt from source when that dependency is later upgraded.
+    #
+    # ```ruby
+    # depends_on "llvm" => { minimum_version: "21" }
     # ```
     #
     # `:recommended` dependencies are built by default.

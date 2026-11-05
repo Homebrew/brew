@@ -832,8 +832,9 @@ on_request: installed_on_request?, options:)
 
       if dep.build? && dep.no_linkage?
         next if !dep_formula.opt_prefix.exist? || dep.missing_options.present?
-      else
-        next unless dep.satisfied?(minimum_compatibility_version: dep_formula.compatibility_version)
+      elsif !dep.satisfied?(minimum_compatibility_version: dep_formula.compatibility_version) &&
+            !dep.satisfied?(minimum_version: dep.minimum_version)
+        next
       end
 
       # `Build` expands the current formula's runtime dependencies, so they must all be installed.

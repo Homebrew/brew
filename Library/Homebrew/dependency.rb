@@ -19,10 +19,20 @@ class Dependency
   sig { override.returns(T::Array[T.any(Symbol, String, T::Array[T.untyped])]) }
   attr_reader :tags
 
-  sig { params(name: String, tags: T.any(String, Symbol, T::Array[T.untyped], T::Hash[Symbol, T.anything])).void }
-  def initialize(name, tags = [])
+  sig { returns(T.nilable(Version)) }
+  attr_reader :minimum_version
+
+  sig {
+    params(
+      name:            String,
+      tags:            T.any(String, Symbol, T::Array[T.untyped], T::Hash[Symbol, T.anything]),
+      minimum_version: T.nilable(Version),
+    ).void
+  }
+  def initialize(name, tags = [], minimum_version: nil)
     @name = name
     @tags = T.let(Array(tags), T::Array[T.any(Symbol, String)])
+    @minimum_version = minimum_version
     @tap = T.let(nil, T.nilable(Tap))
 
     return unless (tap_with_name = Tap.with_formula_name(name))

@@ -174,6 +174,77 @@ RSpec.describe Homebrew::Upgrade do
   end
 
   describe "::upgrade_dependents" do
+    context "with a dependent built against a dependency kept by minimum_version" do
+      # Keep each Sorbet signature with its let declaration.
+      # rubocop:disable RSpec/ScatteredLet
+      sig { returns(Formula) }
+      let(:upgraded) do
+        formula("kept-dependency") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/kept-dependency-2.0"
+        end
+      end
+
+      sig { returns(Formula) }
+      let(:dependent) do
+        formula("kept-dependent") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/kept-dependent-2.0"
+        end
+      end
+
+      sig { returns(Homebrew::Upgrade::Dependents) }
+      let(:dependants) { Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: []) }
+
+      sig { returns(T::Boolean) }
+      let(:poured_from_bottle) { false }
+      # rubocop:enable RSpec/ScatteredLet
+
+      before do
+        allow(dependent).to receive(:any_installed_keg).and_return(
+          instance_double(Keg,
+                          tab:                  instance_double(Tab, poured_from_bottle:),
+                          runtime_dependencies: [{ "full_name"                  => upgraded.full_name,
+                                                   "kept_compatibility_version" => 1 }]),
+        )
+        allow(upgraded).to receive(:runtime_installed_formula_dependents).and_return([dependent])
+      end
+
+      it "plans to reinstall it when the dependency is upgraded" do
+        expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
+          .to output(/Reinstalling 1 dependent with broken linkage from source.*kept-dependent/m).to_stdout
+      end
+
+      it "reinstalls it when a dependency upgraded along the way isn't a requested formula" do
+        FormulaInstaller.installed << upgraded
+        formula_installer = FormulaInstaller.new(dependent)
+        reinstall_context = instance_double(Homebrew::Reinstall::InstallationContext,
+                                            formula: dependent, formula_installer:)
+        allow(Homebrew::Reinstall).to receive(:build_install_context).and_return(reinstall_context)
+        allow(Homebrew::Install).to receive(:fetch_formulae).and_return([formula_installer])
+        expect(Homebrew::Reinstall).to receive(:reinstall_formula).with(reinstall_context)
+
+        described_class.upgrade_dependents(dependants, [], flags: [])
+      end
+
+      it "doesn't reinstall it if it was rebuilt in this run" do
+        FormulaInstaller.installed.merge([upgraded, dependent])
+        expect(Homebrew::Reinstall).not_to receive(:build_install_context)
+
+        described_class.upgrade_dependents(dependants, [], flags: [])
+      end
+
+      context "when it was poured from a bottle" do
+        sig { returns(T::Boolean) }
+        let(:poured_from_bottle) { true }
+
+        it "doesn't plan to reinstall it" do
+          expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
+            .not_to output(/kept-dependent/).to_stdout
+        end
+      end
+    end
+
     it "returns installed dependents unless they are primary formulae" do
       installed_dependent = formula("installed-dependent") do
         T.bind(self, T.class_of(Formula))

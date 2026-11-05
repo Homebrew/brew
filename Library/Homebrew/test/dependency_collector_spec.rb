@@ -28,6 +28,10 @@ RSpec.describe DependencyCollector do
       expect(collector.add("foo")).to eq(Dependency.new("foo"))
     end
 
+    it "records a dependency's minimum_version" do
+      expect(collector.add("foo" => { minimum_version: "21" }).minimum_version).to eq(Version.new("21"))
+    end
+
     specify "requirement creation" do
       collector.add :xcode
       expect(find_requirement(XcodeRequirement)).to be_an_instance_of(XcodeRequirement)

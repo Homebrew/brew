@@ -49,6 +49,8 @@ module Homebrew
             String,
             # Formula name and dependency types: { "foo" => :build } or { "foo" => [:test, :no_linkage] }
             T::Hash[String, T.any(Symbol, T::Array[Symbol])],
+            # Formula name and minimum version: { "foo" => { minimum_version: "1.2" } }
+            T::Hash[String, T::Hash[Symbol, String]],
           ),
           # Requirements
           T.any(

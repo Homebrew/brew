@@ -154,14 +154,19 @@ class AbstractTab
 
   sig { params(formula: Formula, declared_deps: T::Array[String]).returns(T::Hash[String, T.untyped]) }
   def self.formula_to_dep_hash(formula, declared_deps)
+    declared_directly = declared_deps.include?(formula.full_name)
+    kept_keg = formula.any_installed_keg if declared_directly && !formula.latest_version_installed?
+    kept_compatibility_version = kept_keg.tab.source.dig("versions", "compatibility_version").to_i if kept_keg
+    kept_compatibility_version = nil if kept_compatibility_version == formula.compatibility_version
     {
-      "full_name"             => formula.full_name,
-      "version"               => formula.version.to_s,
-      "revision"              => formula.revision,
-      "bottle_rebuild"        => formula.bottle_for_tag(Utils::Bottles.tag)&.rebuild,
-      "pkg_version"           => formula.pkg_version.to_s,
-      "declared_directly"     => declared_deps.include?(formula.full_name),
-      "compatibility_version" => formula.compatibility_version,
+      "full_name"                  => formula.full_name,
+      "version"                    => formula.version.to_s,
+      "revision"                   => formula.revision,
+      "bottle_rebuild"             => formula.bottle_for_tag(Utils::Bottles.tag)&.rebuild,
+      "pkg_version"                => formula.pkg_version.to_s,
+      "declared_directly"          => declared_directly,
+      "compatibility_version"      => formula.compatibility_version,
+      "kept_compatibility_version" => kept_compatibility_version,
     }.compact
   end
   private_class_method :formula_to_dep_hash

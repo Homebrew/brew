@@ -1397,6 +1397,60 @@ RSpec.describe FormulaInstaller do
       end
     end
 
+    context "with an outdated dependency with a different compatibility_version meeting its minimum_version" do
+      let(:minimum_version) { Version.new("21") }
+      let(:dep) { Dependency.new("homebrew-minimum-version-dependency", [], minimum_version:) }
+      let(:f) do
+        formula "homebrew-keep-minimum-version-dependency" do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+      end
+      let(:build_bottle) { false }
+      let(:installer) { described_class.new(f, build_bottle:) }
+
+      before do
+        dep_formula = formula dep.name do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+        allow(dep_formula).to receive_messages(
+          compatibility_version: 2,
+          any_installed_keg:     instance_double(Keg, runtime_dependencies: []),
+        )
+        stub_formula_loader(dep_formula)
+        allow(dep).to receive(:satisfied?).and_return(false)
+        allow(dep).to receive(:satisfied?).with(minimum_version:).and_return(true)
+        allow(f).to receive(:deps).and_return([dep])
+        allow(installer).to receive_messages(effective_build_options_for: BuildOptions.new(Options.new, Options.new),
+                                             install_bottle_for?:         false)
+      end
+
+      it "keeps it" do
+        expect(installer.expand_dependencies_for_formula(f)).to be_empty
+      end
+
+      it "upgrades it if it doesn't meet its minimum_version" do
+        allow(dep).to receive(:satisfied?).with(minimum_version:).and_return(false)
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(dep.name)
+      end
+
+      it "upgrades it when pouring a bottle" do
+        allow(installer).to receive(:install_bottle_for?).and_return(true)
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(dep.name)
+      end
+
+      context "when building a bottle" do
+        let(:build_bottle) { true }
+
+        it "upgrades it" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(dep.name)
+        end
+      end
+    end
+
     context "with an outdated :no_linkage build dependency with a different compatibility_version" do
       let(:tags) { [:build, :no_linkage] }
       let(:build_dep) { Dependency.new("homebrew-no-linkage-build-dependency", tags) }

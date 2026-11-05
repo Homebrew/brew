@@ -184,6 +184,9 @@ A `Hash` (e.g. `=>`) adds information to a dependency. Given a string or symbol,
 * `:no_linkage` means the formula does not link against this dependency; it does not change when the dependency is required.
   All explicit declarations of the same dependency within a spec and platform must agree on `:no_linkage`; stable, HEAD and different platforms may differ.
   On a `:build` dependency, such as a compiler, it also lets an outdated installed version be used when building from source, whatever its `compatibility_version`.
+* `minimum_version`, as in `depends_on "foo" => { minimum_version: "1.2" }`, is the oldest version the formula's source builds against.
+  When building from source, it lets an outdated installed version that is at least this new be used, whatever its `compatibility_version`.
+  The formula is rebuilt from source when that dependency is later upgraded.
 * `:optional` (not allowed in `Homebrew/homebrew-core`) generates an implicit `with-foo` option for the formula. This means that, given `depends_on "foo" => :optional`, the user must pass `--with-foo` to use the dependency.
 * `:recommended` (not allowed in `Homebrew/homebrew-core`) generates an implicit `without-foo` option, meaning that the dependency is enabled by default and the user must pass `--without-foo` to disable this dependency. The default description can be overridden using the [`option`](/rubydoc/Formula.html#option-class_method) syntax (in this case, the [`option` declaration](#adding-optional-steps) must precede the dependency):
 

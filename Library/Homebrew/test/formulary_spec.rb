@@ -886,6 +886,14 @@ RSpec.describe Formulary do
         expect(described_class.factory(formula_name).compatibility_version).to eq 2
       end
 
+      it "returns a Formula with a dependency's minimum_version" do
+        allow(Homebrew::API::Formula).to receive(:all_formulae)
+          .and_return formula_json_contents("minimum_dependency_versions" => [{ "dep" => "21" }])
+
+        formula = described_class.factory(formula_name)
+        expect(formula.deps.find { |dep| dep.name == "dep" }.minimum_version).to eq(Version.new("21"))
+      end
+
       it "returns a Formula with no_linkage dependencies" do
         allow(Homebrew::API::Formula).to receive(:all_formulae)
           .and_return formula_json_contents("no_linkage_dependencies" => ["dep"])

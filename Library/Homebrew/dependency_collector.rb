@@ -90,6 +90,8 @@ class DependencyCollector
   sig { params(spec: T.untyped).returns(T.untyped) }
   def build(spec)
     spec, tags = spec.is_a?(Hash) ? spec.first : spec
+    return Dependency.new(spec, minimum_version: Version.new(tags.fetch(:minimum_version))) if tags.is_a?(Hash)
+
     parse_spec(spec, Array(tags))
   end
 

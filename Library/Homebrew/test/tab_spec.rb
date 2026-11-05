@@ -308,6 +308,23 @@ RSpec.describe Tab do
       ]
       expect(described_class.runtime_deps_hash(formula, formula_recursive_deps)).to eq(expected_output)
     end
+
+    it "includes kept_compatibility_version for a direct outdated dependency kept with a different one" do
+      foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        compatibility_version 2
+      end
+      kept_tab = instance_double(described_class, source: { "versions" => { "compatibility_version" => 1 } })
+      allow(foo).to receive_messages(latest_version_installed?: false,
+                                     any_installed_keg:         instance_double(Keg, tab: kept_tab))
+      stub_formula_loader foo
+
+      formula = instance_double(Formula, deps: [Dependency.new("foo")])
+
+      expect(described_class.runtime_deps_hash(formula, [Dependency.new("foo")]).first)
+        .to include("kept_compatibility_version" => 1)
+    end
   end
 
   describe "::from_file" do

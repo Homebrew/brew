@@ -299,6 +299,21 @@ RSpec.describe Homebrew::API::FormulaStruct do
       expect(restored.stable_dependencies).to eq(original.stable_dependencies)
     end
 
+    it "preserves minimum dependency versions after serialize then deserialize" do
+      original = described_class.new(
+        desc:                 "minimum dependency versions",
+        homepage:             "https://example.com",
+        license:              "MIT",
+        ruby_source_checksum: "abc123",
+        stable_version:       "1.0.0",
+        stable_dependencies:  [{ "dep" => { minimum_version: "21" } }],
+      )
+
+      restored = described_class.deserialize(original.serialize)
+
+      expect(restored.stable_dependencies).to eq(original.stable_dependencies)
+    end
+
     it "serializes post-install steps", :needs_macos do
       original = described_class.new(
         desc:                 "install steps test",
