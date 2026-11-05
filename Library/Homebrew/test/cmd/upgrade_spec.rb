@@ -295,6 +295,23 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
         EOS
     end
 
+    it "doesn't report the dependent as built from source if it was poured from a bottle" do
+      allow(Homebrew::Upgrade).to receive(:upgrade_dependents) do
+        rust = Formula["rust"]
+        FormulaInstaller.installed << rust
+        tab = rust.any_installed_keg.tab
+        tab.poured_from_bottle = true
+        tab.write
+        []
+      end
+
+      expect { described_class.new(["--yes", "--formula", "llvm"]).run }
+        .to output(a_string_including(<<~EOS)).to_stdout
+          ==> 1 homebrew/core formula built from source
+          llvm
+        EOS
+    end
+
     it "doesn't report the dependent as built from source if its rebuild fails" do
       expect { described_class.new(["--yes", "--formula", "llvm"]).run }
         .to output(a_string_including(<<~EOS)).to_stdout
