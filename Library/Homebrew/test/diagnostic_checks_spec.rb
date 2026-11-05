@@ -375,13 +375,13 @@ RSpec.describe Homebrew::Diagnostic::Checks do
   end
 
   specify "#check_deleted_formula" do
-    zebra_tap = Tap.fetch("zebra/tap")
-    allow(zebra_tap).to receive(:installed?).and_return(true)
+    acme_tap = Tap.fetch("acme/tap")
+    allow(acme_tap).to receive(:installed?).and_return(true)
     deleted_kegs = [
       ["hand-made", "1.0", nil],
       ["badger-tool", "1.0", Tap.fetch("badger/tap")],
       ["moved-tool", "1.0", Tap.fetch("aardvark/tap")],
-      ["moved-tool", "2.0", zebra_tap],
+      ["moved-tool", "2.0", acme_tap],
       ["gone-tool", "1.0", Tap.fetch("aardvark/tap")],
       ["terraform", "1.1.7", CoreTap.instance],
       ["half-installed", "2.0", nil],
@@ -403,11 +403,11 @@ RSpec.describe Homebrew::Diagnostic::Checks do
         openssl@1.1
         terraform
 
-      Deleted from zebra/tap:
-        moved-tool
-
-      From untapped homebrew/php:
+      Deleted from homebrew/php:
         php71
+
+      Deleted from acme/tap:
+        moved-tool
 
       From untapped aardvark/tap:
         gone-tool

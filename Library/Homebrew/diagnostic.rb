@@ -1476,7 +1476,8 @@ module Homebrew
         groups = deleted_kegs.group_by { |keg| keg.tab.tap }.map do |tap, kegs|
           type_order, header = if tap.nil?
             [2, "No tap recorded (possibly installed manually):\n"]
-          elsif tap.core_tap? || tap.installed?
+          elsif tap.core_tap? || tap.installed? ||
+                (tap.official? && DEPRECATED_OFFICIAL_TAPS.include?(tap.repository))
             [0, "Deleted from #{tap}:\n"]
           else
             [1, "From untapped #{tap}:\n"]
