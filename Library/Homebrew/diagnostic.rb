@@ -50,6 +50,8 @@ module Homebrew
             ofail finding.to_s
           else
             opoo finding.to_s
+            # Commands that continue after a failed build print their own blank line.
+            $stderr.puts if type != :build_error_checks && finding.to_s.include?("\n")
           end
         end
       end
@@ -1473,7 +1475,6 @@ module Homebrew
           <<~EOS,
             Some installed kegs have no formulae!
             This means they were either deleted or installed manually.
-
           EOS
           affects:     deleted_formulae,
           remediation: append_indented_list(deleted_formulae, <<~EOS),

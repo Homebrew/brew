@@ -316,6 +316,19 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     end
   end
 
+  specify "#check_deleted_formula" do
+    allow(Keg).to receive(:all).and_return([instance_double(Keg, name: "testball", deleted_formula?: true)])
+
+    expect(checks.check_deleted_formula&.to_s).to eq <<~EOS.rstrip
+      Some installed kegs have no formulae!
+      This means they were either deleted or installed manually.
+
+      You should find replacements for the following formulae:
+
+        testball
+    EOS
+  end
+
   specify "#check_for_unnecessary_core_tap" do
     ENV.delete("HOMEBREW_DEVELOPER")
 

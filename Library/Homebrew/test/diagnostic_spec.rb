@@ -53,4 +53,26 @@ RSpec.describe Homebrew::Diagnostic do
     expect([stderr.scan(/^This is a Tier \d configuration:/), status.exitstatus])
       .to eq([["This is a Tier 3 configuration:"], 1])
   end
+
+  context "with a multi-line warning" do
+    before do
+      checks = instance_double(Homebrew::Diagnostic::Checks,
+                               preinstall_checks:        ["check_access_directories"],
+                               build_error_checks:       ["check_access_directories"],
+                               check_access_directories: [
+                                 Homebrew::Diagnostic::Finding.new("First line\nSecond line"),
+                               ])
+      allow(Homebrew::Diagnostic::Checks).to receive(:new).and_return(checks)
+    end
+
+    it "separates the warning from later output with a blank line" do
+      expect { described_class.checks(:preinstall_checks, fatal: false) }
+        .to output("Warning: First line\nSecond line\n\n").to_stderr
+    end
+
+    it "adds no blank line after the final checks of a failed build" do
+      expect { described_class.checks(:build_error_checks, fatal: false) }
+        .to output("Warning: First line\nSecond line\n").to_stderr
+    end
+  end
 end

@@ -422,6 +422,21 @@ RSpec.describe Homebrew::Install do
 
       expect(described_class.install_formulae([bad_fi, good_fi])).to eq([good_fi.formula])
     end
+
+    it "separates a failed build from the output that follows" do
+      bad_formula = formula("bad-build") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
+      bad_fi = instance_double(FormulaInstaller, formula: bad_formula)
+      error = BuildError.new(bad_formula, "make", ["install"], {})
+
+      allow(described_class).to receive(:install_formula).with(bad_fi, upgrade: false).and_raise(error)
+      allow(Utils::Analytics).to receive(:report_build_error).with(error)
+      allow(error).to receive(:dump).with(verbose: false)
+
+      expect { described_class.install_formulae([bad_fi]) }.to output("\n").to_stdout
+    end
   end
 
   describe "::finish_installation" do
