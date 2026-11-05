@@ -374,44 +374,50 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     end
   end
 
-  describe "#check_deleted_formula" do
-    def deleted_keg(name, tap)
-      instance_double(Keg, name:, deleted_formula?: true, tab: instance_double(Tab, tap:))
+  specify "#check_deleted_formula" do
+    zebra_tap = Tap.fetch("zebra/tap")
+    allow(zebra_tap).to receive(:installed?).and_return(true)
+    deleted_kegs = [
+      ["hand-made", "1.0", nil],
+      ["badger-tool", "1.0", Tap.fetch("badger/tap")],
+      ["moved-tool", "1.0", Tap.fetch("aardvark/tap")],
+      ["moved-tool", "2.0", zebra_tap],
+      ["gone-tool", "1.0", Tap.fetch("aardvark/tap")],
+      ["terraform", "1.1.7", CoreTap.instance],
+      ["half-installed", "2.0", nil],
+      ["half-installed", "1.0", CoreTap.instance],
+      ["php71", "1.0", Tap.fetch("homebrew/php")],
+      ["openssl@1.1", "1.1.1t", CoreTap.instance],
+    ].map do |name, version, tap|
+      instance_double(Keg, name:, deleted_formula?: true, scheme_and_version: [0, PkgVersion.parse(version)],
+                           tab: instance_double(Tab, tap:))
     end
+    allow(Keg).to receive(:all).and_return([*deleted_kegs, instance_double(Keg, deleted_formula?: false)])
 
-    it "says a keg from homebrew/core was deleted from it" do
-      allow(Keg).to receive(:all).and_return([deleted_keg("testball", CoreTap.instance)])
+    expect(checks.check_deleted_formula&.to_s).to eq <<~EOS.rstrip
+      Some installed kegs have no formulae!
+      You should find replacements for the following formulae.
 
-      expect(checks.check_deleted_formula.map(&:to_s)).to eq [<<~EOS.rstrip]
-        Some installed kegs have no formulae!
-        This means they were deleted from homebrew/core.
+      Deleted from homebrew/core:
+        half-installed
+        openssl@1.1
+        terraform
 
-        You should find replacements for the following formulae:
+      Deleted from zebra/tap:
+        moved-tool
 
-          testball
-      EOS
-    end
+      From untapped homebrew/php:
+        php71
 
-    it "keeps the general explanation for a keg from anywhere else" do
-      allow(Keg).to receive(:all).and_return([deleted_keg("testball", nil)])
+      From untapped aardvark/tap:
+        gone-tool
 
-      expect(checks.check_deleted_formula.map(&:to_s)).to eq [<<~EOS.rstrip]
-        Some installed kegs have no formulae!
-        This means they were either deleted or installed manually.
+      From untapped badger/tap:
+        badger-tool
 
-        You should find replacements for the following formulae:
-
-          testball
-      EOS
-    end
-
-    it "lists a formula once when its kegs came from different places" do
-      allow(Keg).to receive(:all).and_return(
-        [deleted_keg("testball", CoreTap.instance), deleted_keg("testball", nil), deleted_keg("otherball", nil)],
-      )
-
-      expect(checks.check_deleted_formula.map(&:affects)).to eq [["testball"], ["otherball"]]
-    end
+      No tap recorded (possibly installed manually):
+        hand-made
+    EOS
   end
 
   specify "#check_for_unnecessary_core_tap" do

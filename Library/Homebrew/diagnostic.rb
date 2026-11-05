@@ -1464,32 +1464,33 @@ module Homebrew
         )
       end
 
-      sig { returns(T::Array[Finding]) }
+      sig { returns(T.nilable(Finding)) }
       def check_deleted_formula
-        deleted_kegs = Keg.all.select(&:deleted_formula?)
-        core_formulae = deleted_kegs.select { |keg| keg.tab.tap&.core_tap? }.map(&:name).uniq
-        other_formulae = deleted_kegs.map(&:name).uniq - core_formulae
+        newest_kegs_with_a_tap_first = Keg.all.select(&:deleted_formula?).sort_by do |keg|
+          [keg.tab.tap ? 1 : 0, *keg.scheme_and_version]
+        end.reverse
+        deleted_kegs = newest_kegs_with_a_tap_first.uniq(&:name)
 
-        [
-          __deleted_formula_finding(core_formulae, "deleted from homebrew/core"),
-          __deleted_formula_finding(other_formulae, "either deleted or installed manually"),
-        ].compact
-      end
+        return if deleted_kegs.blank?
 
-      sig { params(deleted_formulae: T::Array[String], explanation: String).returns(T.nilable(Finding)) }
-      def __deleted_formula_finding(deleted_formulae, explanation)
-        return if deleted_formulae.blank?
+        groups = deleted_kegs.group_by { |keg| keg.tab.tap }.map do |tap, kegs|
+          type_order, header = if tap.nil?
+            [2, "No tap recorded (possibly installed manually):\n"]
+          elsif tap.core_tap? || tap.installed?
+            [0, "Deleted from #{tap}:\n"]
+          else
+            [1, "From untapped #{tap}:\n"]
+          end
+          [[type_order, tap&.official? ? 0 : 1, tap.to_s], append_indented_list(kegs.map(&:name).sort, header)]
+        end
 
         Finding.new(
           <<~EOS,
             Some installed kegs have no formulae!
-            This means they were #{explanation}.
+            You should find replacements for the following formulae.
           EOS
-          affects:     deleted_formulae,
-          remediation: append_indented_list(deleted_formulae, <<~EOS),
-            You should find replacements for the following formulae:
-
-          EOS
+          affects:     deleted_kegs.map(&:name).sort,
+          remediation: groups.sort_by(&:first).map(&:last).join("\n"),
         )
       end
 
