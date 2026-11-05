@@ -165,6 +165,44 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     it "does not warn when the updated branch is checked out" do
       expect { warn_if_branch_not_updated }.not_to output.to_stderr
     end
+
+    context "when running the report" do
+      before do
+        allow(Homebrew::EnvConfig).to receive(:no_install_from_api?).and_return(true)
+        allow(Homebrew::Settings).to receive_messages(read: "1.0.0", write: nil)
+      end
+
+      it "warns about Homebrew/brew after the report and before the auto-update's blank line" do
+        allow(Utils).to receive(:popen_read).and_return("1.0.0\n")
+        ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
+        ENV["HOMEBREW_UPDATE_AFTER"] = "def"
+        update_report = described_class.new(["--auto-update"])
+        allow(update_report).to receive(:puts)
+
+        expect(update_report).to receive(:puts).with(/^No changes to formulae/).ordered
+        expect(update_report).to receive(:warn_if_branch_not_updated)
+          .with("Homebrew/brew", an_instance_of(GitRepository), "def").ordered
+        expect(update_report).to receive(:puts).with(no_args).ordered
+
+        update_report.run
+      end
+
+      it "warns about a tap even when nothing was reported as updated" do
+        system "git", "-C", tap.path.to_s, "checkout", "-q", "-b", "my-work", before_revision
+        system "git", "-C", tap.path.to_s, "remote", "remove", "origin"
+        ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
+        ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+        ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
+        ENV["HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"] = updated_revision
+        update_report = described_class.new([])
+        allow(update_report).to receive(:puts)
+
+        expect(update_report).to receive(:puts).with("Already up-to-date.").ordered
+        expect(update_report).to receive(:opoo).with("allowed/branch is on branch 'my-work'").ordered
+
+        update_report.run
+      end
+    end
   end
 
   it "rolls back a denied redirect after a conflicted stash pop" do
