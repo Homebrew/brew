@@ -428,7 +428,8 @@ module Homebrew
           puts_no_installed_dependents_check_disable_message_if_not_already!
         end
 
-        broken_dependents = check_broken_dependents(installed_non_core_formulae) | kept_dependency_dependents
+        broken_dependents = check_broken_dependents(installed_non_core_formulae) |
+                            (kept_dependency_dependents - FormulaInstaller.installed.to_a)
         if broken_dependents.blank?
           if dry_run
             ohai "No currently broken dependents found!"

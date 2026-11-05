@@ -234,6 +234,21 @@ RSpec.describe Homebrew::Upgrade do
         described_class.upgrade_dependents(dependants, [], flags: [])
       end
 
+      it "doesn't reinstall it if it was upgraded as an outdated dependent in this run" do
+        FormulaInstaller.installed << upgraded
+        formula_installer = FormulaInstaller.new(dependent)
+        allow(described_class).to receive(:formula_installers).and_return([formula_installer])
+        allow(described_class).to receive(:upgrade_formulae) do
+          FormulaInstaller.installed << dependent
+          [formula_installer]
+        end
+        expect(Homebrew::Reinstall).not_to receive(:build_install_context)
+
+        described_class.upgrade_dependents(
+          Homebrew::Upgrade::Dependents.new(upgradeable: [dependent], pinned: [], skipped: []), [], flags: []
+        )
+      end
+
       context "when it was poured from a bottle" do
         sig { returns(T::Boolean) }
         let(:poured_from_bottle) { true }
