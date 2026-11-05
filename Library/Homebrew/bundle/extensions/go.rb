@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "bundle/extensions/extension"
+require "semver"
 
 module Homebrew
   module Bundle
@@ -23,6 +24,7 @@ module Homebrew
         def reset!
           @packages = T.let(nil, T.nilable(T::Array[String]))
           @installed_packages = T.let(nil, T.nilable(T::Array[String]))
+          @discovered_binaries = T.let(nil, T.nilable(T::Hash[String, String]))
         end
 
         sig { override.returns(T.nilable(String)) }
@@ -116,6 +118,35 @@ module Homebrew
         sig { override.returns(T::Array[String]) }
         def installed_packages
           @installed_packages ||= packages.dup
+        end
+
+        sig {
+          override.params(name: String, with: T.nilable(T::Array[String]), source: T.nilable(String)).returns(T::Boolean)
+        }
+        def package_outdated?(name, with: nil, source: nil)
+          go = package_manager_executable!
+          @discovered_binaries ||= discovered_binaries(go)
+          @discovered_binaries.any? do |binary, package_path|
+            next false if package_path != name
+
+            mod = command_output(go, args: ["version", "-m", binary]).each_line.find do |line|
+              line.start_with?("\tmod\t")
+            end
+            next true unless mod
+
+            _, module_path, version = mod.split
+            next true if version.nil? || version == "(devel)"
+
+            latest = SystemCommand.run!(go, args: ["list", "-m", "-f", "{{.Version}}", "#{module_path}@latest"],
+                                            chdir: HOMEBREW_TEMP, print_stderr: false).stdout.strip
+            comparison = Semver.compare(latest, version)
+            raise "Invalid Go versions for #{name}: #{version.inspect}, #{latest.inspect}" if comparison.nil?
+
+            comparison.positive?
+          end
+        rescue ErrorDuringExecution => e
+          opoo "Unable to check #{name} for upgrades. Using the installed version.\n#{e}"
+          false
         end
 
         sig { override.params(items: T::Array[String]).void }

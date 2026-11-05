@@ -194,6 +194,20 @@ module Homebrew
           parse_list_names(run_inventory_script(powershell, script))
         end
 
+        sig {
+          override.params(name: String, with: T.nilable(T::Array[String]), source: T.nilable(String)).returns(T::Boolean)
+        }
+        def package_outdated?(name, with: nil, source: nil)
+          powershell, script = prepare_inventory_command(
+            package_manager_executable!,
+            args: ["list", "--id", name, "--exact", "--source", source || DEFAULT_SOURCE,
+                   "--upgrade-available", "--accept-source-agreements", "--disable-interactivity", "--nowarn"],
+          )
+          script += "if ($nativeCode -eq #{NO_APPLICATIONS_FOUND}) { exit 0 }\n"
+          # The exact ID filter means any result table contains this app, regardless of the display language.
+          run_inventory_script(powershell, script).lines.any? { |line| line.strip.match?(/\A-{3,}\z/) }
+        end
+
         sig { params(output: String).returns(T::Hash[String, String]) }
         def parse_list_names(output)
           lines = output.encode("UTF-8", invalid: :replace, undef: :replace)
@@ -426,7 +440,6 @@ module Homebrew
         def preinstall!(name, id: nil, with: nil, no_upgrade: false, verbose: false, source: DEFAULT_SOURCE,
                         **options)
           _ = with
-          _ = no_upgrade
           _ = options
 
           id ||= name
@@ -436,6 +449,8 @@ module Homebrew
           end
 
           if app_installed?(id, source:)
+            return true if !no_upgrade && package_outdated?(id, source:)
+
             puts "Skipping install of #{name} WinGet package. It is already installed." if verbose
             return false
           end
@@ -467,7 +482,7 @@ module Homebrew
 
           id ||= name
           winget = package_manager_executable!
-          args = ["install", "--id", id, "--exact", "--source", source,
+          args = [app_installed?(id, source:) ? "upgrade" : "install", "--id", id, "--exact", "--source", source,
                   "--accept-source-agreements", "--accept-package-agreements",
                   "--disable-interactivity"]
           success, output = run_install_command(winget, args, verbose:, elevated: false)
@@ -599,10 +614,9 @@ module Homebrew
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(T::Boolean) }
       def installed_and_up_to_date?(package, no_upgrade: false)
-        _ = no_upgrade
-
         app = T.cast(package, App)
-        self.class.app_installed?(app.id, source: app.source)
+        self.class.app_installed?(app.id, source: app.source) &&
+          (no_upgrade || !self.class.package_outdated?(app.id, source: app.source))
       end
     end
   end

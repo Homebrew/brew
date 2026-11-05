@@ -63,6 +63,7 @@ module Homebrew
         def reset!
           @packages = T.let(nil, T.nilable(T::Array[Tool]))
           @installed_packages = T.let(nil, T.nilable(T::Array[Tool]))
+          @requirements = T.let(nil, T.nilable(T::Hash[String, String]))
         end
 
         sig { override.returns(T.nilable(String)) }
@@ -101,19 +102,24 @@ module Homebrew
             with:    T.nilable(T::Array[String]),
             source:  T.nilable(String),
             verbose: T::Boolean,
+            upgrade: T::Boolean,
           ).returns(T::Boolean)
         }
-        def install_package!(name, with: nil, source: nil, verbose: false)
+        def install_package!(name, with: nil, source: nil, verbose: false, upgrade: false)
           require "formula"
           require "utils/path"
 
-          args = ["tool", "install", source.presence || name]
-          # Find the newest installed Homebrew Python from opt/bin filenames without loading formulae.
-          python = Formula.installed_formula_names.grep(/\Apython(?:@.+)?\z/)
-                          .flat_map { |formula_name| Utils::Path.formula_opt_bin(formula_name).glob("python[0-9]*") }
-                          .select { |path| path.file? && path.basename.to_s.match?(/\Apython\d+\.\d+\z/) }
-                          .max_by { |path| Version.new(path.basename.to_s.delete_prefix("python")) }
-          ENV["UV_PYTHON"] = python.to_s if python
+          args = ["tool", "install", upgrade ? upgrade_requirement(name, source:) : source.presence || name]
+          if upgrade
+            args.push("--upgrade", "--python", tool_python(name))
+          else
+            # Find the newest installed Homebrew Python from opt/bin filenames without loading formulae.
+            python = Formula.installed_formula_names.grep(/\Apython(?:@.+)?\z/)
+                            .flat_map { |formula_name| Utils::Path.formula_opt_bin(formula_name).glob("python[0-9]*") }
+                            .select { |path| path.file? && path.basename.to_s.match?(/\Apython\d+\.\d+\z/) }
+                            .max_by { |path| Version.new(path.basename.to_s.delete_prefix("python")) }
+            ENV["UV_PYTHON"] = python.to_s if python
+          end
 
           normalize_with(with || []).each do |requirement|
             args << "--with"
@@ -128,9 +134,43 @@ module Homebrew
           @installed_packages ||= packages.dup
         end
 
+        sig {
+          override.params(name: String, with: T.nilable(T::Array[String]), source: T.nilable(String)).returns(T::Boolean)
+        }
+        def package_outdated?(name, with: nil, source: nil)
+          output = SystemCommand.run!(
+            package_manager_executable!,
+            args:         ["pip", "install", "--dry-run", "--upgrade",
+                           "--python", tool_python(name),
+                           upgrade_requirement(name, source:), *normalize_with(with || [])],
+            print_stderr: false,
+          ).stderr
+          return true if output.match?(/^Would (?:install|uninstall) \d+ packages?$/)
+          return false if output.lines.any? { |line| line.chomp == "Would make no changes" }
+
+          raise "Invalid uv upgrade plan for #{name}: #{output.inspect}"
+        end
+
+        sig { params(name: String, source: T.nilable(String)).returns(String) }
+        def upgrade_requirement(name, source:)
+          return "#{name} @ #{source}" if source.present?
+
+          packages
+          "#{name}#{@requirements&.[](normalize_name(name))}"
+        end
+        private :upgrade_requirement
+
+        sig { params(name: String).returns(String) }
+        def tool_python(name)
+          File.join(command_output(package_manager_executable!, args: ["tool", "dir"]).strip,
+                    name.split("[", 2).first.to_s.downcase.gsub(/[-_.]+/, "-"), "bin", "python")
+        end
+        private :tool_python
+
         sig { params(output: String).returns(T::Array[Tool]) }
         def parse_tool_list(output)
           entries = T.let([], T::Array[Tool])
+          @requirements = {}
 
           output.each_line do |line|
             match = line.match(/\A(?<name>[A-Za-z0-9]\S*)\s+v\S+/)
@@ -143,6 +183,9 @@ module Homebrew
             name = name_with_extras(name, extras_raw)
             with_raw = line[/\[with:\s*([^\]]+)\]/, 1]
             required_raw = line[/\[required:\s*([^\]]+)\]/, 1]
+            if required_raw.present? && continuation_constraint?(required_raw)
+              @requirements[name] = required_raw.strip
+            end
 
             entries << {
               name:   name,
@@ -305,11 +348,11 @@ module Homebrew
           ).returns(T::Boolean)
         }
         def preinstall!(name, with: nil, source: nil, no_upgrade: false, verbose: false, **_options)
-          _ = no_upgrade
-
           ensure_package_manager_installed!(name, verbose:)
 
           if package_installed?(name, with:, source:)
+            return true if !no_upgrade && package_outdated?(name, with:, source:)
+
             puts "Skipping install of #{name} #{package_description}. It is already installed." if verbose
             return false
           end
@@ -336,8 +379,9 @@ module Homebrew
 
           return true unless preinstall
 
-          puts "Installing #{name} #{package_description}. It is not currently installed." if verbose
-          return false unless install_package!(name, with:, source:, verbose:)
+          puts "Installing #{name} #{package_description}." if verbose
+          return false unless install_package!(name, with:, source:, verbose:,
+                                                upgrade: package_installed?(name, with:, source:))
 
           package = normalized_options(name, with: with || [], source:)
           installed_packages << package unless installed_packages.include?(package)
@@ -375,7 +419,11 @@ module Homebrew
           self.class.dump_name(package),
           with:   self.class.dump_with(package),
           source: self.class.dump_source(package),
-        )
+        ) && (no_upgrade || !self.class.package_outdated?(
+          self.class.dump_name(package),
+          with:   self.class.dump_with(package),
+          source: self.class.dump_source(package),
+        ))
       end
     end
   end

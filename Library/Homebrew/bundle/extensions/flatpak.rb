@@ -79,7 +79,9 @@ module Homebrew
           end
           flatpak = flatpak.to_s
 
-          success = T.let(true, T::Boolean)
+          upgrades, entries = entries.partition { |entry| package_installed?(entry.name) }
+          success = upgrades.empty? || Bundle.system(flatpak, "update", "-y", "--noninteractive",
+                                                     *upgrades.map(&:name), verbose:)
           entries.group_by { |entry| [entry.options.fetch(:remote, "flathub"), entry.options[:url]] }
                  .each do |(remote, url), remote_entries|
             remote = T.cast(remote, String)
@@ -151,6 +153,15 @@ module Homebrew
           @installed_packages = packages_with_remotes.dup
         end
 
+        sig {
+          override.params(name: String, with: T.nilable(T::Array[String]), source: T.nilable(String)).returns(T::Boolean)
+        }
+        def package_outdated?(name, with: nil, source: nil)
+          command_output(package_manager_executable!,
+                         args: ["remote-ls", "--app", "--updates", "--columns=application"])
+            .lines(chomp: true).include?(name)
+        end
+
         sig { override.params(package: Object).returns(String) }
         def dump_entry(package)
           package = T.cast(package, Package)
@@ -196,13 +207,14 @@ module Homebrew
         }
         def preinstall!(name, with: nil, no_upgrade: false, verbose: false, remote: "flathub", url: nil, **_options)
           _ = with
-          _ = no_upgrade
           _ = url
 
           return true unless package_manager_installed?
 
           # Check if package is installed at all (regardless of remote)
           if package_installed?(name)
+            return true if !no_upgrade && package_outdated?(name)
+
             puts "Skipping install of #{name} Flatpak. It is already installed." if verbose
             return false
           end
@@ -237,6 +249,9 @@ module Homebrew
             return false
           end
           flatpak = flatpak.to_s
+          if package_installed?(name)
+            return Bundle.system(flatpak, "update", "-y", "--noninteractive", name, verbose:)
+          end
 
           # 3-tier remote handling:
           # - Tier 1: no URL → use named remote (default: flathub)
@@ -416,21 +431,18 @@ module Homebrew
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(String) }
       def failure_reason(package, no_upgrade:)
-        _ = no_upgrade
-
         name = if package.is_a?(Hash)
           package[:name]
         else
           package
         end
-        "#{self.class.check_label} #{name} needs to be installed."
+        "#{self.class.check_label} #{name} needs to be " \
+          "#{(!no_upgrade && installed_and_up_to_date?(package, no_upgrade: true)) ? "upgraded" : "installed"}."
       end
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(T::Boolean) }
       def installed_and_up_to_date?(package, no_upgrade: false)
-        _ = no_upgrade
-
-        return self.class.package_installed?(T.cast(package, String)) unless package.is_a?(Hash)
+        return super unless package.is_a?(Hash)
 
         flatpak = package
         name = T.cast(flatpak[:name], String)
@@ -445,7 +457,7 @@ module Homebrew
         actual_remote = if url.blank? && remote.start_with?("http://", "https://")
           # Tier 2: URL only - resolve to single-app remote name
           # (.flatpakref - check by name only since remote name varies)
-          return self.class.package_installed?(name) if remote.end_with?(".flatpakref")
+          return super(name, no_upgrade:) if remote.end_with?(".flatpakref")
 
           self.class.generate_single_app_remote_name(name)
         else
@@ -453,7 +465,8 @@ module Homebrew
           remote
         end
 
-        self.class.package_installed?(name, remote: actual_remote)
+        self.class.package_installed?(name, remote: actual_remote) &&
+          (no_upgrade || !self.class.package_outdated?(name))
       end
     end
   end

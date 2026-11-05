@@ -7,10 +7,57 @@ require "bundle/extensions/krew"
 require "bundle/extensions/npm"
 require "bundle/extensions/winget"
 require "bundle/shared_examples/inventory"
+require "bundle/shared_examples/upgradable_extension"
 
 RSpec.describe Homebrew::Bundle::Krew do
   let(:inventory_output) { "example-tool\n" }
   let(:inventory_records) { ["example-tool"] }
+
+  describe "upgrades" do
+    it_behaves_like "an upgradable extension", "example-tool"
+
+    it "upgrades an installed plugin through Krew" do
+      allow(described_class).to receive_messages(package_manager_executable: Pathname("kubectl-krew"),
+                                                 installed_packages:         ["example-tool"])
+      expect(Homebrew::Bundle).to receive(:system).with("kubectl-krew", "upgrade", "example-tool", verbose: false)
+                                                  .and_return(true)
+      described_class.install_package!("example-tool")
+    end
+  end
+
+  describe ".package_outdated?" do
+    before do
+      described_class.reset!
+      ENV["KREW_ROOT"] = mktmpdir.to_s
+      FileUtils.mkdir_p("#{ENV.fetch("KREW_ROOT")}/receipts")
+      File.write("#{ENV.fetch("KREW_ROOT")}/receipts/example-tool.yaml", "spec:\n  version: v1.0.0\n")
+      allow(described_class).to receive(:package_manager_executable).and_return(Pathname("kubectl-krew"))
+      allow(described_class).to receive(:command_output).with(Pathname("kubectl-krew"), args: ["update"])
+                                                        .and_return("")
+      allow(described_class).to receive(:command_output)
+        .with(Pathname("kubectl-krew"), args: ["info", "custom/example-tool"]).and_return("VERSION: v1.1.0\n")
+    end
+
+    it "compares the receipt with the refreshed custom index" do
+      expect(described_class.package_outdated?("custom/example-tool")).to be(true)
+    end
+
+    it "refreshes indexes only once per run" do
+      expect(described_class).to receive(:command_output).with(Pathname("kubectl-krew"), args: ["update"]).once
+      2.times { described_class.package_outdated?("custom/example-tool") }
+    end
+
+    it "does not downgrade a newer installed plugin" do
+      File.write("#{ENV.fetch("KREW_ROOT")}/receipts/example-tool.yaml", "spec:\n  version: v2.0.0\n")
+      expect(described_class.package_outdated?("custom/example-tool")).to be(false)
+    end
+
+    it "rejects malformed plugin metadata" do
+      allow(described_class).to receive(:command_output)
+        .with(Pathname("kubectl-krew"), args: ["info", "custom/example-tool"]).and_return("")
+      expect { described_class.package_outdated?("custom/example-tool") }.to raise_error(/Invalid Krew version/)
+    end
+  end
 
   describe "inventory" do
     include_examples "a checked package inventory"
@@ -158,6 +205,7 @@ RSpec.describe Homebrew::Bundle::Krew do
     let(:bootstrap_executable) { Pathname("kubectl-krew") }
 
     before do
+      allow(described_class).to receive(:package_outdated?).and_return(false)
       allow(described_class).to receive(:command_output).with(bootstrap_executable, args: ["list"])
                                                         .and_return("example-tool\n")
     end
@@ -166,6 +214,10 @@ RSpec.describe Homebrew::Bundle::Krew do
   end
 
   describe "installing" do
+    before do
+      allow(described_class).to receive(:package_outdated?).and_return(false)
+    end
+
     context "when kubectl-krew is not found" do
       before do
         described_class.reset!

@@ -8,6 +8,79 @@ require "bundle/extensions/winget"
 require "bundle/skipper"
 
 RSpec.describe Homebrew::Bundle::Winget do
+  describe "upgrades" do
+    let(:entry) { described_class.entry("Example App", id: "Example.App", source: "msstore") }
+
+    before do
+      allow(Homebrew::Bundle::Skipper).to receive(:skip?).and_return(false)
+      allow(described_class).to receive_messages(package_manager_executable: Pathname("winget.exe"),
+                                                 app_installed?: true, package_outdated?: true,
+                                                 apps: [], installed_app_records: [])
+    end
+
+    it "reports the name of an app that needs upgrading" do
+      expect(described_class.check([entry])).to eq(["WinGet Package Example App needs to be upgraded."])
+    end
+
+    it "schedules upgrades by source and ID" do
+      expect(described_class).to receive(:package_outdated?).with("Example.App", source: "msstore").and_return(true)
+      described_class.preinstall!(entry.name, id: "Example.App", source: "msstore")
+    end
+
+    it "does not check for upgrades with no_upgrade" do
+      expect(described_class).not_to receive(:package_outdated?)
+      described_class.check([entry], no_upgrade: true)
+      described_class.preinstall!(entry.name, id: "Example.App", source: "msstore", no_upgrade: true)
+    end
+
+    it "uses the native upgrade command" do
+      expect(described_class).to receive(:run_install_command)
+        .with(Pathname("winget.exe"), ["upgrade", "--id", "Example.App", "--exact", "--source", "msstore",
+                                       "--accept-source-agreements", "--accept-package-agreements",
+                                       "--disable-interactivity"], verbose: false, elevated: false).and_return([true,
+                                                                                                                ""])
+      described_class.install!(entry.name, id: "Example.App", source: "msstore")
+    end
+  end
+
+  describe ".package_outdated?" do
+    before do
+      allow(described_class).to receive(:prepare_inventory_command)
+        .with(Pathname("winget.exe"), args: ["list", "--id", "Example.App", "--exact", "--source", "msstore",
+                                             "--upgrade-available", "--accept-source-agreements",
+                                             "--disable-interactivity", "--nowarn"])
+        .and_return([Pathname("powershell.exe"), "query\n"])
+      allow(described_class).to receive_messages(package_manager_executable: Pathname("winget.exe"),
+                                                 run_inventory_script:       output)
+    end
+
+    let(:output) do
+      <<~EOS
+        Nom          ID           Version Disponible
+        --------------------------------------------
+        Example App  Example.App  1.0     1.1
+      EOS
+    end
+
+    it "detects a filtered upgrade without relying on English column names" do
+      expect(described_class.package_outdated?("Example.App", source: "msstore")).to be(true)
+    end
+
+    context "without upgrades" do
+      let(:output) { "No installed package found matching input criteria.\n" }
+
+      it "reports that the app is current" do
+        expect(described_class.package_outdated?("Example.App", source: "msstore")).to be(false)
+      end
+    end
+
+    it "handles only the exact no-applications native status" do
+      expect(described_class).to receive(:run_inventory_script)
+        .with(Pathname("powershell.exe"), "query\nif ($nativeCode -eq 2316632084) { exit 0 }\n").and_return(output)
+      described_class.package_outdated?("Example.App", source: "msstore")
+    end
+  end
+
   describe "checked Windows bridge" do
     let(:powershell) { mktmpdir/"powershell.exe" }
     let(:export_file) { mktmpdir/"export.json" }
@@ -153,6 +226,7 @@ RSpec.describe Homebrew::Bundle::Winget do
     end
 
     before do
+      allow(described_class).to receive(:package_outdated?).and_return(false)
       allow(OS).to receive(:wsl?).and_return(true)
       allow(Homebrew::Bundle::Skipper).to receive(:skip?).with(entry).and_return(false)
     end
@@ -320,7 +394,8 @@ RSpec.describe Homebrew::Bundle::Winget do
   describe "installing" do
     before do
       described_class.reset!
-      allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("winget.exe"))
+      allow(described_class).to receive_messages(package_outdated?:          false,
+                                                 package_manager_executable: Pathname.new("winget.exe"))
     end
 
     context "when app is installed" do

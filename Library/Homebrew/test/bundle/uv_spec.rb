@@ -4,6 +4,7 @@
 require "bundle"
 require "bundle/dsl"
 require "bundle/shared_examples/inventory"
+require "bundle/shared_examples/upgradable_extension"
 require "bundle/dumper"
 require "bundle/extensions/uv"
 
@@ -20,6 +21,119 @@ RSpec.describe Homebrew::Bundle::Uv do
             args:         ["tool", "list", "--show-with", "--show-extras", "--show-version-specifiers"],
             print_stderr: false)
       .and_return(instance_double(SystemCommand::Result, stdout: output))
+  end
+
+  describe ".package_outdated?" do
+    before do
+      described_class.reset!
+      allow(described_class).to receive_messages(package_manager_executable: Pathname("uv"), packages: [])
+      allow(described_class).to receive(:command_output)
+        .with(Pathname("uv"), args: ["tool", "dir"]).and_return("/tmp/uv tools\n")
+      allow(SystemCommand).to receive(:run!)
+        .with(Pathname("uv"), args:         ["pip", "install", "--dry-run", "--upgrade", "--python",
+                                             "/tmp/uv tools/example-tool/bin/python",
+                                             "example-tool[extra]", "dependency<2"],
+                              print_stderr: false)
+        .and_return(instance_double(SystemCommand::Result, stderr: output))
+    end
+
+    let(:output) do
+      "Would uninstall 1 package\nWould install 1 package\n - example-tool==1.0\n + example-tool==1.1\n"
+    end
+
+    it "resolves upgrades with extras and additional requirements in the tool environment" do
+      expect(described_class.package_outdated?("example-tool[extra]", with: ["dependency<2"])).to be(true)
+    end
+
+    it "resolves Git sources rather than registry versions" do
+      expect(SystemCommand).to receive(:run!)
+        .with(Pathname("uv"), args:         ["pip", "install", "--dry-run", "--upgrade", "--python",
+                                             "/tmp/uv tools/example-tool/bin/python",
+                                             "example-tool[extra] @ git+https://example.com/tool", "dependency<2"],
+                              print_stderr: false)
+        .and_return(instance_double(SystemCommand::Result, stderr: output))
+      described_class.package_outdated?("example-tool[extra]", with:   ["dependency<2"],
+                                                               source: "git+https://example.com/tool")
+    end
+
+    context "when the environment is current" do
+      let(:output) { "Would make no changes\n" }
+
+      it "does not schedule an upgrade" do
+        expect(described_class.package_outdated?("example-tool[extra]", with: ["dependency<2"])).to be(false)
+      end
+    end
+
+    context "when output is unexpected" do
+      let(:output) { "" }
+
+      it "does not silently consider the tool up to date" do
+        expect { described_class.package_outdated?("example-tool[extra]", with: ["dependency<2"]) }
+          .to raise_error(RuntimeError, /Invalid uv upgrade plan/)
+      end
+    end
+  end
+
+  describe "upgrades" do
+    it_behaves_like "an upgradable extension", "example-tool"
+
+    it "upgrades an installed package using the package manager" do
+      allow(described_class).to receive_messages(package_manager_executable: Pathname("uv"),
+                                                 package_installed?: true, packages: [], installed_packages: [])
+      ENV["UV_PYTHON"] = "/different/python"
+      allow(described_class).to receive(:command_output)
+        .with(Pathname("uv"), args: ["tool", "dir"]).and_return("/tmp/tools\n")
+      expect(Homebrew::Bundle).to receive(:system)
+        .with("uv", "tool", "install", "example-tool", "--upgrade", "--python", "/tmp/tools/example-tool/bin/python",
+              verbose: false).and_return(true)
+      described_class.install!("example-tool")
+    end
+
+    it "preserves extras and additional requirements when upgrading a source tool" do
+      allow(described_class).to receive_messages(package_manager_executable: Pathname("uv"),
+                                                 package_installed?: true, packages: [], installed_packages: [])
+      allow(described_class).to receive(:command_output)
+        .with(Pathname("uv"), args: ["tool", "dir"]).and_return("/tmp/tools\n")
+      expect(Homebrew::Bundle).to receive(:system)
+        .with("uv", "tool", "install", "example-tool[extra] @ git+https://example.com/tool",
+              "--upgrade", "--python", "/tmp/tools/example-tool/bin/python", "--with", "dependency<2",
+              verbose: false).and_return(true)
+      described_class.install!("example-tool[extra]", source: "git+https://example.com/tool", with: ["dependency<2"])
+    end
+  end
+
+  describe "upgrading constrained tools" do
+    before do
+      described_class.reset!
+      allow(described_class).to receive(:package_manager_executable).and_return(Pathname("uv"))
+      allow(described_class).to receive(:command_output).and_call_original
+      allow(described_class).to receive(:command_output)
+        .with(Pathname("uv"), args: ["tool", "dir"]).and_return("/tmp/tools\n")
+    end
+
+    test_each([">=1, <2", "==1.0"]) do |requirement|
+      context "with #{requirement}" do
+        before do
+          stub_tool_list("example-tool v1.0 [required: #{requirement}] [extras: extra] [with: dependency<2]\n")
+        end
+
+        it "preserves the requirement when detecting upgrades" do
+          expect(SystemCommand).to receive(:run!)
+            .with(Pathname("uv"), args: ["pip", "install", "--dry-run", "--upgrade", "--python",
+                                         "/tmp/tools/example-tool/bin/python",
+                                         "example-tool[extra]#{requirement}", "dependency<2"], print_stderr: false)
+            .and_return(instance_double(SystemCommand::Result, stderr: "Would make no changes\n"))
+          described_class.package_outdated?("example-tool[extra]", with: ["dependency<2"])
+        end
+
+        it "preserves the requirement when installing upgrades" do
+          expect(Homebrew::Bundle).to receive(:system)
+            .with("uv", "tool", "install", "example-tool[extra]#{requirement}", "--upgrade", "--python",
+                  "/tmp/tools/example-tool/bin/python", "--with", "dependency<2", verbose: false).and_return(true)
+          described_class.install!("example-tool[extra]", with: ["dependency<2"])
+        end
+      end
+    end
   end
 
   describe "entries" do
@@ -46,6 +160,10 @@ RSpec.describe Homebrew::Bundle::Uv do
 
   describe "checking" do
     subject(:checker) { described_class.new }
+
+    before do
+      allow(described_class).to receive(:package_outdated?).and_return(false)
+    end
 
     describe "#installed_and_up_to_date?" do
       it "returns false when package is not installed" do
@@ -331,6 +449,7 @@ RSpec.describe Homebrew::Bundle::Uv do
 
   describe "installing" do
     before do
+      allow(described_class).to receive(:package_outdated?).and_return(false)
       ENV.delete("UV_PYTHON")
       allow(Formula).to receive(:installed_formula_names).and_return([])
       allow(Formula).to receive(:[]).and_raise("Python selection must not load formulae")
@@ -563,7 +682,7 @@ RSpec.describe Homebrew::Bundle::Uv do
   describe "consumers of parsed tool lists" do
     before do
       described_class.reset!
-      allow(described_class).to receive(:package_manager_executable).and_return(Pathname("uv"))
+      allow(described_class).to receive_messages(package_outdated?: false, package_manager_executable: Pathname("uv"))
       stub_tool_list(<<~OUTPUT)
         v-other-tool v2.16 [required: git+https://example.com/v-other-tool.git] [extras: cli] [with: example-dependency>=0.27]
         - v-other-tool

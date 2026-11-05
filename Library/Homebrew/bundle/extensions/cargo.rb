@@ -18,7 +18,7 @@ module Homebrew
       # required too.
       GIT_SOURCE_REGEX = %r{\A(?:ssh|git|https?)://}
       GIT_REFERENCE_KEYS = %w[branch tag rev].freeze
-      PACKAGE_LIST_REGEX = /\A(?<name>[^\s:]+)\s+v[0-9A-Za-z.+-]+(?:\s+\((?<origin>[^)]+)\))?/
+      PACKAGE_LIST_REGEX = /\A(?<name>[^\s:]+)\s+v(?<version>[0-9A-Za-z.+-]+)(?:\s+\((?<origin>[^)]+)\))?/
 
       class << self
         sig { override.returns(Symbol) }
@@ -104,7 +104,7 @@ module Homebrew
           @packages = if (cargo = package_manager_executable) &&
                          (!cargo.to_s.start_with?("/") || cargo.exist?)
             with_env(cargo_env(cargo)) do
-              parse_package_list(command_output(cargo, args: ["install", "--list"], print_stderr: true))
+              parse_package_list(package_list)
             end
           end
           return [] if @packages.nil?
@@ -157,6 +157,63 @@ module Homebrew
           @installed_packages ||= packages.dup
         end
 
+        sig {
+          override.params(name: String, with: T.nilable(T::Array[String]), source: T.nilable(String)).returns(T::Boolean)
+        }
+        def package_outdated?(name, with: nil, source: nil)
+          source = normalize_source(source)
+          url, _, query = source.to_s.partition("?")
+          key, _, ref = query.partition("=")
+          return false if key == "rev" && ref.match?(/\A[0-9a-f]{7,40}\z/i)
+
+          cargo = package_manager_executable!
+          with_env(cargo_env(cargo)) do
+            installed = package_list.each_line.filter_map { |line| line.match(PACKAGE_LIST_REGEX) }
+                                    .find do |match|
+              match[:name] == name && normalize_source(match[:origin]) == source
+            end
+            raise "Missing Cargo version for #{name}" unless installed
+            return false if source.nil? && installed[:origin].present?
+
+            if source
+              revisions = SystemCommand.run!("git", args: ["ls-remote", "--exit-code", url, *case key
+              when "branch" then ["refs/heads/#{ref}"]
+              when "tag" then ["refs/tags/#{ref}", "refs/tags/#{ref}^{}"]
+              when "rev" then [ref, "refs/heads/#{ref}", "refs/tags/#{ref}", "refs/tags/#{ref}^{}"]
+              else ["HEAD"]
+              end], env: { "GIT_TERMINAL_PROMPT" => "0" }, print_stderr: false).stdout.lines
+              revision = (revisions.find do |line|
+                line.split.last&.end_with?("^{}")
+              end || revisions.first).to_s.split.first
+              installed_revision = installed[:origin].to_s.partition("#").last
+              if revision.blank? || installed_revision.blank?
+                raise "Missing Cargo Git revision for #{name}"
+              end
+
+              !revision.start_with?(installed_revision)
+            else
+              version_line = SystemCommand.run!(cargo, args: ["info", "--color=never", name],
+                                                       chdir: HOMEBREW_TEMP, print_stderr: false)
+                                          .stdout.lines.find { |line| line.start_with?("version: ") }.to_s
+              latest = version_line[/\(latest ([^)]+)\)/, 1] || version_line[/\Aversion: (\S+)/, 1]
+              unless latest&.match?(/\A\d+\.\d+\.\d+/)
+                raise "Invalid Cargo version for #{name}: #{version_line.inspect}"
+              end
+
+              Version.new(latest) > Version.new(installed[:version].to_s)
+            end
+          end
+        rescue ErrorDuringExecution => e
+          opoo "Unable to check #{name} for upgrades. Using the installed version.\n#{e}"
+          false
+        end
+
+        sig { returns(String) }
+        def package_list
+          command_output(package_manager_executable!, args: ["install", "--list"], print_stderr: true)
+        end
+        private :package_list
+
         sig { override.params(name: String, executable: Pathname).returns(T::Boolean) }
         def uninstall_package!(name, executable: Pathname.new(""))
           Bundle.system(executable.to_s, "uninstall", name, verbose: false)
@@ -208,11 +265,11 @@ module Homebrew
           ).returns(T::Boolean)
         }
         def preinstall!(name, with: nil, source: nil, no_upgrade: false, verbose: false, **_options)
-          _ = no_upgrade
-
           ensure_package_manager_installed!(name, verbose:)
 
           if package_installed?(name, with:, source:)
+            return true if !no_upgrade && package_outdated?(name, with:, source:)
+
             puts "Skipping install of #{name} #{package_description}. It is already installed." if verbose
             return false
           end
@@ -239,7 +296,7 @@ module Homebrew
 
           return true unless preinstall
 
-          puts "Installing #{name} #{package_description}. It is not currently installed." if verbose
+          puts "Installing #{name} #{package_description}." if verbose
           return false unless install_package!(name, with:, source:, verbose:)
 
           package = crate_record(name, source:)
@@ -318,7 +375,10 @@ module Homebrew
         self.class.package_installed?(
           self.class.dump_name(package),
           source: self.class.dump_source(package),
-        )
+        ) && (no_upgrade || !self.class.package_outdated?(
+          self.class.dump_name(package),
+          source: self.class.dump_source(package),
+        ))
       end
     end
   end

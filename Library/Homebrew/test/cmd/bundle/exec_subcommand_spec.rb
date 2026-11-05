@@ -48,6 +48,18 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
         expect { described_class.run_external_command("bundle", "install") }.not_to raise_error
       end
 
+      context "with an installed VSCode extension" do
+        let(:brewfile_contents) { "vscode 'example.extension'" }
+
+        it "executes the command with --check" do
+          Homebrew::Bundle::Checker.reset!
+          allow(Homebrew::Bundle::VscodeExtension).to receive(:installed_extensions).and_return(["example.extension"])
+          expect(described_class).to receive(:exec).with("/usr/bin/true")
+
+          described_class.run_external_command("/usr/bin/true", check: true)
+        end
+      end
+
       it "does not raise an error when HOMEBREW_BUNDLE_EXEC_ALL_KEG_ONLY_DEPS is set" do
         ENV["HOMEBREW_BUNDLE_EXEC_ALL_KEG_ONLY_DEPS"] = "1"
         expect { described_class.run_external_command("bundle", "install") }.not_to raise_error

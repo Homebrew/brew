@@ -4,11 +4,53 @@
 require "bundle"
 require "bundle/dsl"
 require "bundle/shared_examples/inventory"
+require "bundle/shared_examples/upgradable_extension"
 require "bundle/extensions/flatpak"
 
 RSpec.describe Homebrew::Bundle::Flatpak do
   let(:inventory_records) { ["Example.App"] }
   let(:inventory_output) { "Example.App\tflathub\n" }
+
+  describe "upgrades" do
+    before do
+      allow(Homebrew::Bundle::Skipper).to receive(:skip?).and_return(false)
+    end
+
+    it_behaves_like "an upgradable extension", "Example.App"
+
+    it "updates an installed app without changing its remote" do
+      allow(described_class).to receive_messages(package_manager_executable: Pathname("flatpak"),
+                                                 package_installed?:         true)
+      expect(Homebrew::Bundle).to receive(:system)
+        .with("flatpak", "update", "-y", "--noninteractive", "Example.App", verbose: false).and_return(true)
+      described_class.install!("Example.App", remote: "https://example.com/app.flatpakref")
+    end
+
+    it "updates installed apps in native batches" do
+      allow(described_class).to receive_messages(package_manager_executable: Pathname("flatpak"),
+                                                 package_installed?:         true)
+      expect(Homebrew::Bundle).to receive(:system)
+        .with("flatpak", "update", "-y", "--noninteractive", "Example.App", verbose: false).and_return(true)
+      described_class.install_batch!([described_class.entry("Example.App")])
+    end
+  end
+
+  describe ".package_outdated?" do
+    before do
+      allow(described_class).to receive(:package_manager_executable).and_return(Pathname("flatpak"))
+      allow(described_class).to receive(:command_output)
+        .with(Pathname("flatpak"), args: ["remote-ls", "--app", "--updates", "--columns=application"])
+        .and_return("Example.App\nOther.App\n")
+    end
+
+    it "checks native available updates" do
+      expect(described_class.package_outdated?("Example.App")).to be(true)
+    end
+
+    it "matches full application IDs" do
+      expect(described_class.package_outdated?("Example")).to be(false)
+    end
+  end
 
   describe "checked remote inventory" do
     let(:inventory_output) { "flathub\thttps://example.com/repo/\n" }
@@ -149,10 +191,10 @@ RSpec.describe Homebrew::Bundle::Flatpak do
     subject(:checker) { described_class.new }
 
     before do
-      allow(described_class).to receive(:package_installed?).and_return(false)
+      allow(described_class).to receive_messages(package_outdated?: false, package_installed?: false)
     end
 
-    describe "#installed_and_up_to_date?", :needs_linux do
+    describe "#installed_and_up_to_date?" do
       it "returns false when package is not installed" do
         expect(checker.installed_and_up_to_date?("org.example.App")).to be(false)
       end
@@ -198,7 +240,7 @@ RSpec.describe Homebrew::Bundle::Flatpak do
 
         it "checks Tier 2 package with .flatpakref by name only" do
           allow(described_class).to receive(:package_installed?)
-            .with("org.example.App")
+            .with("org.example.App", with: nil)
             .and_return(true)
 
           result = checker.installed_and_up_to_date?(
@@ -221,7 +263,7 @@ RSpec.describe Homebrew::Bundle::Flatpak do
       end
     end
 
-    describe "#failure_reason", :needs_linux do
+    describe "#failure_reason" do
       it "returns the correct failure message" do
         expect(checker.failure_reason("org.example.App", no_upgrade: false))
           .to eq("Flatpak org.example.App needs to be installed.")
@@ -372,6 +414,10 @@ RSpec.describe Homebrew::Bundle::Flatpak do
   end
 
   describe "installing" do
+    before do
+      allow(described_class).to receive(:package_outdated?).and_return(false)
+    end
+
     context "when Flatpak is not installed" do
       before do
         described_class.reset!
@@ -388,7 +434,8 @@ RSpec.describe Homebrew::Bundle::Flatpak do
 
     describe "native batches" do
       before do
-        allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("flatpak"))
+        allow(described_class).to receive_messages(installed_packages:         [],
+                                                   package_manager_executable: Pathname.new("flatpak"))
       end
 
       it "installs refs sharing a remote in one batch" do
@@ -413,7 +460,7 @@ RSpec.describe Homebrew::Bundle::Flatpak do
       end
     end
 
-    context "when Flatpak is installed", :needs_linux do
+    context "when Flatpak is installed" do
       before do
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("flatpak"))
       end
