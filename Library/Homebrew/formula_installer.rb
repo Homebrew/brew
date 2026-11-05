@@ -856,11 +856,22 @@ on_request: installed_on_request?, options:)
     deps = expand_dependencies_for_formula_once(formula, unkeepable_dependencies, kept_dependencies)
     return deps if kept_dependencies.empty?
 
+    uncompiled = Hash.new do |cache, f|
+      cache[f] = f.any_installed_keg&.binary_executable_or_library_files&.empty?
+    end
+
     # Each pass rules out at least one more dependency, so at worst this ends with none kept.
     formula.recursive_dependencies.size.times do
       incompatible_upgrades = deps.filter_map do |dep|
         dep_formula = dep.to_formula
-        dep_formula.full_name unless dep.installed?(minimum_compatibility_version: dep_formula.compatibility_version)
+        next if dep.installed?(minimum_compatibility_version: dep_formula.compatibility_version)
+
+        # A missing `compatibility_version` isn't a known incompatibility and
+        # nothing can link against a dependency without compiled code.
+        keg = dep_formula.any_installed_keg
+        next if keg && keg.tab.source.dig("versions", "compatibility_version").nil? && uncompiled[dep_formula]
+
+        dep_formula.full_name
       end << formula.full_name
       newly_unkeepable_dependencies = kept_dependencies.filter_map do |kept, runtime_dependency_names|
         kept.full_name if runtime_dependency_names.intersect?(incompatible_upgrades)

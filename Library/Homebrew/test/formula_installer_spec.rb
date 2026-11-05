@@ -1230,6 +1230,7 @@ RSpec.describe FormulaInstaller do
           url "foo-1.0"
         end
       end
+      let(:compatibility_version_source) { { "versions" => { "compatibility_version" => 1 } } }
       let(:build_bottle) { false }
       let(:build_from_source_formulae) { [] }
       let(:installer) { described_class.new(f, build_bottle:, build_from_source_formulae:) }
@@ -1239,7 +1240,11 @@ RSpec.describe FormulaInstaller do
           T.bind(self, T.class_of(Formula))
           url "foo-1.0"
         end
-        keg = instance_double(Keg, runtime_dependencies: [{ "full_name" => runtime_dep_formula.full_name }])
+        keg = instance_double(
+          Keg,
+          runtime_dependencies: [{ "full_name" => runtime_dep_formula.full_name }],
+          tab:                  instance_double(Tab, source: compatibility_version_source),
+        )
         allow(build_dep_formula).to receive_messages(
           compatibility_version: 1,
           deps:                  [Dependency.new(runtime_dep_formula.name)],
@@ -1263,6 +1268,43 @@ RSpec.describe FormulaInstaller do
         allow(f).to receive(:deps).and_return([build_dep, Dependency.new(runtime_dep_formula.name)])
 
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      it "keeps it if a dependency without compiled code or a recorded compatibility_version is upgraded" do
+        allow(runtime_dep_formula).to receive(:any_installed_keg).and_return(
+          instance_double(Keg, tab: instance_double(Tab, source: {}), binary_executable_or_library_files: []),
+        )
+        allow(f).to receive(:deps).and_return([build_dep, Dependency.new(runtime_dep_formula.name)])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).not_to include(build_dep.name)
+      end
+
+      it "upgrades it if a dependency without compiled code has a different compatibility_version" do
+        allow(runtime_dep_formula).to receive(:any_installed_keg).and_return(
+          instance_double(
+            Keg,
+            tab:                                instance_double(Tab, source: compatibility_version_source),
+            binary_executable_or_library_files: [],
+          ),
+        )
+        allow(f).to receive(:deps).and_return([build_dep, Dependency.new(runtime_dep_formula.name)])
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+      end
+
+      it "only checks a dependency for compiled code once" do
+        uncompiled_dep = Dependency.new("homebrew-uncompiled-dependency")
+        uncompiled_dep_formula = formula uncompiled_dep.name do
+          T.bind(self, T.class_of(Formula))
+          url "foo-1.0"
+        end
+        uncompiled_keg = instance_double(Keg, tab: instance_double(Tab, source: {}))
+        allow(uncompiled_dep_formula).to receive(:any_installed_keg).and_return(uncompiled_keg)
+        stub_formula_loader(uncompiled_dep_formula)
+        allow(f).to receive(:deps).and_return([build_dep, Dependency.new(runtime_dep_formula.name), uncompiled_dep])
+        expect(uncompiled_keg).to receive(:binary_executable_or_library_files).once.and_return([])
+
+        installer.expand_dependencies_for_formula(f)
       end
 
       it "keeps other compatible build dependencies if one is upgraded" do
