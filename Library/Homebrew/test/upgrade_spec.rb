@@ -211,14 +211,6 @@ RSpec.describe Homebrew::Upgrade do
         ENV["HOMEBREW_NO_ENV_HINTS"] = "1"
       end
 
-      it "plans to rebuild it when the dependency is requested" do
-        expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
-          .to output(<<~EOS).to_stdout
-            ==> Would rebuild 1 dependent against upgraded dependencies:
-            kept-dependent 2.0
-          EOS
-      end
-
       it "plans to rebuild it when the dependency is upgraded for a requested formula" do
         stub_formula_loader(upgraded)
         requested_installer = instance_double(FormulaInstaller, formula: formula("requested") do

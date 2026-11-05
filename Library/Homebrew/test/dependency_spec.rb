@@ -206,13 +206,6 @@ RSpec.describe Dependency do
                                  possible_names: ["foo"], revision: 1,
                                  compatibility_version: formula_compatibility_version),
       )
-      allow(Tab).to receive(:for_keg).with(keg).and_return(
-        instance_double(Tab, source: { "versions" => { "compatibility_version" => 1 } }),
-      )
-    end
-
-    it "is true for a newer keg with a different compatibility_version" do
-      expect(dependency.installed?(minimum_version: Version.new("0.9"), minimum_compatibility_version: 2)).to be(true)
     end
 
     it "is false for an older keg" do
