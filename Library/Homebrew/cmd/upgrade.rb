@@ -797,14 +797,15 @@ module Homebrew
           dependent_version_changes = dependent_formulae.each_with_index.filter_map do |formula, index|
             planned_dependent_version_changes.fetch(index) if upgraded_formulae_by_identity.key?(formula)
           end
+          rebuilt_dependents = (planned_rebuilt_dependents & FormulaInstaller.installed.to_a).reject do |formula|
+            formula.any_installed_keg&.tab&.poured_from_bottle
+          end
           record_formula_upgrade_summary(
             context,
             formulae_installer:        upgraded_formula_installers,
             version_changes:           formula_version_changes,
             dependent_version_changes:,
-            rebuilt_dependents:        (planned_rebuilt_dependents & FormulaInstaller.installed.to_a).reject do |formula|
-              formula.any_installed_keg&.tab&.poured_from_bottle
-            end,
+            rebuilt_dependents:,
           )
         end
 

@@ -297,9 +297,8 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
     it "doesn't report the dependent as built from source if it was poured from a bottle" do
       allow(Homebrew::Upgrade).to receive(:upgrade_dependents) do
-        rust = Formula["rust"]
-        FormulaInstaller.installed << rust
-        tab = rust.any_installed_keg.tab
+        FormulaInstaller.installed << Formula["rust"]
+        tab = Keg.new(HOMEBREW_CELLAR/"rust/1.99.1").tab
         tab.poured_from_bottle = true
         tab.write
         []
