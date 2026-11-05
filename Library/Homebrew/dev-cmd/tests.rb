@@ -322,9 +322,11 @@ module Homebrew
           if filestub.start_with?("test/")
             # Only run tests on *_spec.rb files in test/ folder
             filestub.end_with?("_spec") ? [Pathname("#{filestub}.rb")] : []
-          else
+          elsif (test_file = Pathname("test/#{filestub}_spec.rb")).exist?
             # For all other changed .rb files guess the associated test file name
-            [Pathname("test/#{filestub}_spec.rb")]
+            [test_file]
+          else
+            Pathname.glob("test/#{filestub}/*_spec.rb")
           end
         end
           .uniq
