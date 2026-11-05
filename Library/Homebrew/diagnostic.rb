@@ -1464,20 +1464,26 @@ module Homebrew
         )
       end
 
-      sig { returns(T.nilable(Finding)) }
+      sig { returns(T::Array[Finding]) }
       def check_deleted_formula
-        kegs = Keg.all
+        deleted_kegs = Keg.all.select(&:deleted_formula?)
+        core_formulae = deleted_kegs.select { |keg| keg.tab.tap&.core_tap? }.map(&:name).uniq
+        other_formulae = deleted_kegs.map(&:name).uniq - core_formulae
 
-        deleted_formulae = kegs.filter_map do |keg|
-          keg.name if keg.deleted_formula?
-        end.uniq
+        [
+          __deleted_formula_finding(core_formulae, "deleted from homebrew/core"),
+          __deleted_formula_finding(other_formulae, "either deleted or installed manually"),
+        ].compact
+      end
 
+      sig { params(deleted_formulae: T::Array[String], explanation: String).returns(T.nilable(Finding)) }
+      def __deleted_formula_finding(deleted_formulae, explanation)
         return if deleted_formulae.blank?
 
         Finding.new(
           <<~EOS,
             Some installed kegs have no formulae!
-            This means they were either deleted or installed manually.
+            This means they were #{explanation}.
           EOS
           affects:     deleted_formulae,
           remediation: append_indented_list(deleted_formulae, <<~EOS),

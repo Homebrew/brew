@@ -374,17 +374,44 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     end
   end
 
-  specify "#check_deleted_formula" do
-    allow(Keg).to receive(:all).and_return([instance_double(Keg, name: "testball", deleted_formula?: true)])
+  describe "#check_deleted_formula" do
+    def deleted_keg(name, tap)
+      instance_double(Keg, name:, deleted_formula?: true, tab: instance_double(Tab, tap:))
+    end
 
-    expect(checks.check_deleted_formula&.to_s).to eq <<~EOS.rstrip
-      Some installed kegs have no formulae!
-      This means they were either deleted or installed manually.
+    it "says a keg from homebrew/core was deleted from it" do
+      allow(Keg).to receive(:all).and_return([deleted_keg("testball", CoreTap.instance)])
 
-      You should find replacements for the following formulae:
+      expect(checks.check_deleted_formula.map(&:to_s)).to eq [<<~EOS.rstrip]
+        Some installed kegs have no formulae!
+        This means they were deleted from homebrew/core.
 
-        testball
-    EOS
+        You should find replacements for the following formulae:
+
+          testball
+      EOS
+    end
+
+    it "keeps the general explanation for a keg from anywhere else" do
+      allow(Keg).to receive(:all).and_return([deleted_keg("testball", nil)])
+
+      expect(checks.check_deleted_formula.map(&:to_s)).to eq [<<~EOS.rstrip]
+        Some installed kegs have no formulae!
+        This means they were either deleted or installed manually.
+
+        You should find replacements for the following formulae:
+
+          testball
+      EOS
+    end
+
+    it "lists a formula once when its kegs came from different places" do
+      allow(Keg).to receive(:all).and_return(
+        [deleted_keg("testball", CoreTap.instance), deleted_keg("testball", nil), deleted_keg("otherball", nil)],
+      )
+
+      expect(checks.check_deleted_formula.map(&:affects)).to eq [["testball"], ["otherball"]]
+    end
   end
 
   specify "#check_for_unnecessary_core_tap" do
