@@ -12,7 +12,7 @@ module RuboCop
       # - `head` and `head do` should not be simultaneously present
       # - `stable do` should not be present without a `head` spec
       # - `stable do` should not be present with only `url|checksum|mirror|version`
-      # - `head do` should not be present with only `url|branch`
+      # - `head do` should not be present with only `url`
       class ComponentsRedundancy < FormulaCop
         HEAD_MSG = "`head` and `head do` should not be simultaneously present"
         STABLE_MSG = "`stable do` should not be present without a `head` spec"
@@ -52,7 +52,7 @@ module RuboCop
           head_block = find_block(body_node, :head)
           if head_block && !head_block.body.nil?
             child_nodes = head_block.body.begin_type? ? head_block.body.child_nodes : [head_block.body]
-            shorthand_head_methods = [:url, :branch]
+            shorthand_head_methods = [:url]
             if child_nodes.all? { |n| n.send_type? && shorthand_head_methods.include?(n.method_name) }
               problem "`head do` should not be present with only #{shorthand_head_methods.join("/")}"
             end

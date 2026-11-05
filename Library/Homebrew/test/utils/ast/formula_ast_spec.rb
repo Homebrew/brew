@@ -641,8 +641,7 @@ RSpec.describe Utils::AST::FormulaAST do
             end
 
             head do
-              url "https://brew.sh/foo.git"
-              branch "develop"
+              url "https://brew.sh/foo.git", branch: "develop"
             end
           end
         RUBY
@@ -654,8 +653,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             head do
-              url "https://brew.sh/foo.git"
-              branch "develop"
+              url "https://brew.sh/foo.git", branch: "develop"
             end
           end
         RUBY
@@ -837,8 +835,7 @@ RSpec.describe Utils::AST::FormulaAST do
             url "https://brew.sh/foo-1.0.tar.gz"
 
             head do
-              url "https://brew.sh/foo.git"
-              branch "develop"
+              url "https://brew.sh/foo.git", branch: "develop"
             end
           end
         RUBY
@@ -854,8 +851,7 @@ RSpec.describe Utils::AST::FormulaAST do
             end
 
             head do
-              url "https://brew.sh/foo.git"
-              branch "develop"
+              url "https://brew.sh/foo.git", branch: "develop"
             end
           end
         RUBY

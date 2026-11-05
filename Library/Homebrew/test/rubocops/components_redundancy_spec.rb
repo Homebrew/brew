@@ -70,7 +70,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
           end
 
           head do
-          ^^^^^^^ FormulaAudit/ComponentsRedundancy: `head do` should not be present with only url/branch
+          ^^^^^^^ FormulaAudit/ComponentsRedundancy: `head do` should not be present with only url
             url "https://brew.sh/foo.git"
           end
         end
@@ -83,7 +83,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
           url "https://brew.sh/foo-1.0.tgz"
 
           head do
-          ^^^^^^^ FormulaAudit/ComponentsRedundancy: `head do` should not be present with only url/branch
+          ^^^^^^^ FormulaAudit/ComponentsRedundancy: `head do` should not be present with only url
             url "https://brew.sh/foo.git", branch: "develop"
           end
         end
@@ -109,8 +109,7 @@ RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
           url "https://brew.sh/foo-1.0.tgz"
 
           head do
-            url "https://brew.sh/foo.git"
-            branch "develop"
+            url "https://brew.sh/foo.git", branch: "develop"
             depends_on "bar"
           end
         end
