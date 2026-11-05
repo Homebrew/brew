@@ -323,6 +323,21 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
       expect(checks.check_deprecated_disabled).to be_nil
     end
+
+    it "skips a deprecated formula with an older keg removed from its tap" do
+      old_keg_path = HOMEBREW_CELLAR/"testball/1.0"
+      old_keg_path.mkpath
+      tab = Tab.empty
+      tab.tabfile = old_keg_path/AbstractTab::FILENAME
+      tab.tap = "gone/tap"
+      tab.write
+      (HOMEBREW_CELLAR/"testball/2.0").mkpath
+      formula_path = CoreTap.instance.new_formula_path("testball")
+      formula_path.dirname.mkpath
+      formula_path.write deprecated_formula
+
+      expect(checks.check_deprecated_disabled).to be_nil
+    end
   end
 
   describe "#check_for_unlinked_but_not_keg_only" do
