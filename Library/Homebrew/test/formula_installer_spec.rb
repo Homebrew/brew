@@ -1379,6 +1379,53 @@ RSpec.describe FormulaInstaller do
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).not_to include(other_build_dep.name)
       end
 
+      context "with a compatible dependency only reached through one that is upgraded" do
+        let(:nested_dep) { Dependency.new("homebrew-nested-compatible-dependency") }
+        let(:nested_dep_runtime_dependencies) { [] }
+
+        before do
+          nested_dep_formula = formula nested_dep.name do
+            T.bind(self, T.class_of(Formula))
+            url "foo-1.0"
+          end
+          allow(nested_dep_formula).to receive_messages(
+            compatibility_version: 1,
+            any_installed_keg:     instance_double(Keg, runtime_dependencies: nested_dep_runtime_dependencies),
+          )
+          stub_formula_loader(nested_dep_formula)
+          allow(nested_dep).to receive(:satisfied?).and_return(false)
+          allow(nested_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(true)
+          allow(build_dep.to_formula).to receive(:deps).and_return([nested_dep])
+          allow(f).to receive(:deps).and_return([build_dep, Dependency.new(runtime_dep_formula.name)])
+        end
+
+        it "keeps it" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).not_to include(nested_dep.name)
+        end
+
+        context "when it was built against a dependency that is upgraded" do
+          let(:nested_dep_runtime_dependencies) { [{ "full_name" => runtime_dep_formula.full_name }] }
+
+          it "upgrades it" do
+            expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(nested_dep.name)
+          end
+        end
+      end
+
+      context "with optional dependencies selected through installer options" do
+        let(:build_dep) { Dependency.new("homebrew-compatible-build-dependency", [:build, :optional]) }
+
+        before do
+          options = Options.create(["--with-#{build_dep.name}", "--with-#{runtime_dep_formula.name}"])
+          allow(installer).to receive(:effective_build_options_for).and_return(BuildOptions.new(options, options))
+          allow(f).to receive(:deps).and_return([build_dep, Dependency.new(runtime_dep_formula.name, [:optional])])
+        end
+
+        it "upgrades it if a dependency it was built against is upgraded" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
+        end
+      end
+
       it "upgrades it with a different compatibility_version" do
         allow(build_dep).to receive(:satisfied?).with(minimum_compatibility_version: 1).and_return(false)
         allow(f).to receive(:deps).and_return([build_dep])

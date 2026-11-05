@@ -785,12 +785,12 @@ on_request: installed_on_request?, options:)
 
   sig {
     params(
-      formula:               Formula,
-      keepable_dependencies: T.nilable(T::Array[String]),
-      kept_dependencies:     T::Hash[Formula, T::Array[String]],
+      formula:                 Formula,
+      unkeepable_dependencies: T::Array[String],
+      kept_dependencies:       T::Hash[Formula, T::Array[String]],
     ).returns(T::Array[Dependency])
   }
-  def expand_dependencies_for_formula_once(formula, keepable_dependencies, kept_dependencies)
+  def expand_dependencies_for_formula_once(formula, unkeepable_dependencies, kept_dependencies)
     # Cache for this expansion only. FormulaInstaller has a lot of inputs which can alter expansion.
     cache_key = "FormulaInstaller-#{formula.full_name}-#{Time.now.to_f}"
     formula_cache = T.let({}, T::Hash[Dependency, Formula])
@@ -828,7 +828,7 @@ on_request: installed_on_request?, options:)
       next if build_bottle? || (!dep.build? && install_bottle_for?(dependent, build))
 
       dep_formula = dep.to_formula
-      next if keepable_dependencies&.exclude?(dep_formula.full_name)
+      next if unkeepable_dependencies.include?(dep_formula.full_name)
 
       if dep.build? && dep.no_linkage?
         next if !dep_formula.opt_prefix.exist? || dep.missing_options.present?
@@ -851,11 +851,17 @@ on_request: installed_on_request?, options:)
 
   sig { params(formula: Formula).returns(T::Array[Dependency]) }
   def expand_dependencies_for_formula(formula)
+    unkeepable_dependencies = []
     kept_dependencies = T.let({}, T::Hash[Formula, T::Array[String]])
-    deps = expand_dependencies_for_formula_once(formula, nil, kept_dependencies)
+    deps = expand_dependencies_for_formula_once(formula, unkeepable_dependencies, kept_dependencies)
+    return deps if kept_dependencies.empty?
 
-    # Each pass keeps fewer dependencies than the last, so at worst this ends with none kept.
-    kept_dependencies.size.times do
+    reachable_dependencies = formula.recursive_dependencies do |dependent, dep|
+      Dependable::PRUNE if dep.prune_from_option?(effective_build_options_for(T.cast(dependent, Formula)))
+    end
+
+    # Each pass rules out at least one more dependency, so at worst this ends with none kept.
+    reachable_dependencies.size.times do
       incompatible_upgrades = deps.filter_map do |dep|
         dep_formula = dep.to_formula
         next if dep.installed?(minimum_compatibility_version: dep_formula.compatibility_version)
@@ -869,13 +875,14 @@ on_request: installed_on_request?, options:)
 
         dep_formula.full_name
       end << formula.full_name
-      keepable_dependencies = kept_dependencies.filter_map do |kept, runtime_dependency_names|
-        kept.full_name unless runtime_dependency_names.intersect?(incompatible_upgrades)
+      newly_unkeepable_dependencies = kept_dependencies.filter_map do |kept, runtime_dependency_names|
+        kept.full_name if runtime_dependency_names.intersect?(incompatible_upgrades)
       end
-      return deps if keepable_dependencies.size == kept_dependencies.size
+      return deps if newly_unkeepable_dependencies.empty?
 
+      unkeepable_dependencies.concat(newly_unkeepable_dependencies)
       kept_dependencies = {}
-      deps = expand_dependencies_for_formula_once(formula, keepable_dependencies, kept_dependencies)
+      deps = expand_dependencies_for_formula_once(formula, unkeepable_dependencies, kept_dependencies)
     end
     deps
   end
