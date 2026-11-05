@@ -127,7 +127,6 @@ module Homebrew
             cd dir do
               current_branch_head = ENV["GITHUB_SHA"] || tap.git_head
               original_commit = if args.no_cherry_pick?
-                # TODO: Handle the case where `merge-base` returns multiple commits.
                 Utils.safe_popen_read("git", "-C", tap.path, "merge-base", "origin/HEAD",
                                       current_branch_head).strip
               else
