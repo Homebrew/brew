@@ -534,10 +534,11 @@ module Homebrew
           formulae_installer:        T.nilable(T::Array[FormulaInstaller]),
           version_changes:           T.nilable(T::Array[VersionChange]),
           dependent_version_changes: T.nilable(T::Array[VersionChange]),
+          rebuilt_dependents:        T::Array[Formula],
         ).void
       }
       def record_formula_upgrade_summary(context, include_sizes: false, formulae_installer: nil, version_changes: nil,
-                                         dependent_version_changes: nil)
+                                         dependent_version_changes: nil, rebuilt_dependents: [])
         summary = final_upgrade_summary
         formulae_installer ||= context.formulae_installer
         upgrade_formulae = formulae_installer.map(&:formula)
@@ -566,10 +567,7 @@ module Homebrew
           formula.full_specified_name
         end)
         summary.source_build_formulae.concat(
-          Upgrade.planned_kept_dependency_dependents(formulae_installer)
-                 .select(&:core_formula?)
-                 .reject(&:pinned?)
-                 .map(&:full_specified_name),
+          rebuilt_dependents.select(&:core_formula?).reject(&:pinned?).map(&:full_specified_name),
         )
       end
 
@@ -732,10 +730,13 @@ module Homebrew
                                                                   include_sizes: dry_run)
         dependent_formulae = context.dependants.upgradeable.dup
         planned_dependent_version_changes = formula_version_changes(dependent_formulae, include_sizes: dry_run)
+        # Rebuilding a dependent removes it from this list, so work it out first.
+        planned_rebuilt_dependents = Upgrade.planned_kept_dependency_dependents(context.formulae_installer)
         if dry_run
           record_formula_upgrade_summary(context,
                                          version_changes:           planned_formula_version_changes,
-                                         dependent_version_changes: planned_dependent_version_changes)
+                                         dependent_version_changes: planned_dependent_version_changes,
+                                         rebuilt_dependents:        planned_rebuilt_dependents)
         end
         if !args.no_ask? && dry_run && args.named.present? &&
            Install.formulae_ask_prompt_needed?(context.formulae_installer, context.dependants)
@@ -801,6 +802,7 @@ module Homebrew
             formulae_installer:        upgraded_formula_installers,
             version_changes:           formula_version_changes,
             dependent_version_changes:,
+            rebuilt_dependents:        planned_rebuilt_dependents & FormulaInstaller.installed.to_a,
           )
         end
 

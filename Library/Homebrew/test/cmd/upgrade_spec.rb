@@ -248,7 +248,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       .to output(/minimum-version-formula 1\.2\.2 -> 1\.2\.3/).to_stdout
   end
 
-  it "plans to rebuild a dependent built against a kept dependency", :no_api do
+  def install_dependent_of_kept_dependency
     ENV["HOMEBREW_NO_ENV_HINTS"] = "1"
     write_formula "lz4", <<~RUBY
       url "https://brew.sh/lz4-1.11.0"
@@ -266,6 +266,46 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     install_formula_version "rust", "1.99.1", optlinked: true, runtime_dependencies: [
       { "full_name" => "llvm", "version" => "23.1.5", "kept_compatibility_version" => 1 },
     ]
+  end
+
+  context "when upgrading a dependency a dependent was built against while it was kept", :no_api do
+    before do
+      install_dependent_of_kept_dependency
+      stub_formula_upgrade_installers
+      allow(Homebrew::Upgrade).to receive(:upgrade_formulae) do |installers, **|
+        installers.each { |installer| Homebrew.messages.package_installed(installer.formula.full_name, 0.0) }
+        installers
+      end
+      allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+      allow(Homebrew::Reinstall).to receive(:reinstall_pkgconf_if_needed!)
+      allow(Homebrew.messages).to receive(:display_messages)
+    end
+
+    it "reports the dependent as built from source once it's rebuilt" do
+      allow(Homebrew::Upgrade).to receive(:upgrade_dependents) do
+        FormulaInstaller.installed << Formula["rust"]
+        []
+      end
+
+      expect { described_class.new(["--yes", "--formula", "llvm"]).run }
+        .to output(a_string_including(<<~EOS)).to_stdout
+          ==> 2 homebrew/core formulae built from source
+          llvm
+          rust
+        EOS
+    end
+
+    it "doesn't report the dependent as built from source if its rebuild fails" do
+      expect { described_class.new(["--yes", "--formula", "llvm"]).run }
+        .to output(a_string_including(<<~EOS)).to_stdout
+          ==> 1 homebrew/core formula built from source
+          llvm
+        EOS
+    end
+  end
+
+  it "plans to rebuild a dependent built against a kept dependency", :no_api do
+    install_dependent_of_kept_dependency
 
     expect { described_class.new(["llvm", "--dry-run"]).run }.to output(<<~EOS).to_stdout
       ==> Would upgrade 1 dependency:
