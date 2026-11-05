@@ -1436,6 +1436,13 @@ RSpec.describe FormulaInstaller do
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(dep.name)
       end
 
+      it "upgrades it if it doesn't meet its minimum_version even with a matching compatibility_version" do
+        allow(dep).to receive(:satisfied?).with(minimum_compatibility_version: 2).and_return(true)
+        allow(dep).to receive(:satisfied?).with(minimum_version:, minimum_revision: 0).and_return(false)
+
+        expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(dep.name)
+      end
+
       it "upgrades it when pouring a bottle" do
         allow(installer).to receive(:install_bottle_for?).and_return(true)
 
