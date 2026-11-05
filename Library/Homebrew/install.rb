@@ -524,6 +524,7 @@ module Homebrew
           debug:,
           quiet:,
           verbose:,
+          upgrading_formula_installers: formulae_installer,
         )
 
         ask_input(action:) if prompt
@@ -629,7 +630,8 @@ module Homebrew
         formulae_installer.any? do |formula_installer|
           !formula_installer.ignore_deps? && formula_installer.compute_dependencies.present?
         end ||
-          dependants.upgradeable.present?
+          dependants.upgradeable.present? ||
+          Upgrade.planned_kept_dependency_dependents(formulae_installer).present?
       end
 
       sig { params(formula_installer: FormulaInstaller, upgrade: T::Boolean).void }

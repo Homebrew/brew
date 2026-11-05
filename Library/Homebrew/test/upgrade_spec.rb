@@ -208,23 +208,99 @@ RSpec.describe Homebrew::Upgrade do
                                                    "kept_compatibility_version" => 1 }]),
         )
         allow(upgraded).to receive(:runtime_installed_formula_dependents).and_return([dependent])
+        ENV["HOMEBREW_NO_ENV_HINTS"] = "1"
       end
 
-      it "plans to reinstall it when the dependency is upgraded" do
+      it "plans to rebuild it when the dependency is requested" do
         expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
-          .to output(/Reinstalling 1 dependent with broken linkage from source.*kept-dependent/m).to_stdout
+          .to output(<<~EOS).to_stdout
+            ==> Would rebuild 1 dependent against upgraded dependencies:
+            kept-dependent 2.0
+          EOS
       end
 
-      it "reinstalls it when a dependency upgraded along the way isn't a requested formula" do
-        FormulaInstaller.installed << upgraded
-        formula_installer = FormulaInstaller.new(dependent)
-        reinstall_context = instance_double(Homebrew::Reinstall::InstallationContext,
-                                            formula: dependent, formula_installer:)
-        allow(Homebrew::Reinstall).to receive(:build_install_context).and_return(reinstall_context)
-        allow(Homebrew::Install).to receive(:fetch_formulae).and_return([formula_installer])
-        expect(Homebrew::Reinstall).to receive(:reinstall_formula).with(reinstall_context)
+      it "plans to rebuild it when the dependency is upgraded for a requested formula" do
+        stub_formula_loader(upgraded)
+        requested_installer = instance_double(FormulaInstaller, formula: formula("requested") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/requested-2.0"
+        end, ignore_deps?: false, compute_dependencies: [Dependency.new(upgraded.name)])
 
-        described_class.upgrade_dependents(dependants, [], flags: [])
+        expect do
+          described_class.upgrade_dependents(dependants, [], flags: [], dry_run: true,
+                                             upgrading_formula_installers: [requested_installer])
+        end.to output(<<~EOS).to_stdout
+          ==> Would rebuild 1 dependent against upgraded dependencies:
+          kept-dependent 2.0
+        EOS
+      end
+
+      it "plans to upgrade it in one build when it's outdated" do
+        allow(dependent).to receive(:outdated?).and_return(true)
+        allow(described_class).to receive(:installed_version).with(dependent)
+                                                             .and_return(PkgVersion.new(Version.new("1.0"), 0))
+
+        expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
+          .to output(<<~EOS).to_stdout
+            ==> Would rebuild 1 dependent against upgraded dependencies:
+            kept-dependent 1.0 -> 2.0
+          EOS
+      end
+
+      context "when the dependency was upgraded in this run" do
+        sig { returns(Homebrew::Reinstall::InstallationContext) }
+        let(:reinstall_context) do
+          instance_double(Homebrew::Reinstall::InstallationContext,
+                          formula: dependent, formula_installer: FormulaInstaller.new(dependent))
+        end
+
+        before do
+          FormulaInstaller.installed << upgraded
+          allow(Homebrew::Reinstall).to receive(:build_install_context).and_return(reinstall_context)
+          allow(Homebrew::Reinstall).to receive(:reinstall_formula)
+          allow(Homebrew::Install).to receive(:fetch_formulae).and_return([reinstall_context.formula_installer])
+        end
+
+        it "prints that it's rebuilding it" do
+          expect { described_class.upgrade_dependents(dependants, [], flags: []) }
+            .to output(<<~EOS).to_stdout
+              ==> Checking for dependents of upgraded formulae...
+              ==> Rebuilding 1 dependent against upgraded dependencies:
+              kept-dependent 2.0
+            EOS
+        end
+
+        it "rebuilds it from source" do
+          expect(Homebrew::Reinstall).to receive(:build_install_context)
+            .with(dependent, hash_including(build_from_source_formulae: [dependent.full_name]))
+            .and_return(reinstall_context)
+
+          described_class.upgrade_dependents(dependants, [], flags: [])
+        end
+
+        it "rebuilds it when it's outdated" do
+          allow(dependent).to receive(:outdated?).and_return(true)
+          expect(Homebrew::Reinstall).to receive(:reinstall_formula).with(reinstall_context)
+
+          described_class.upgrade_dependents(dependants, [], flags: [])
+        end
+
+        it "warns instead of rebuilding it when it's pinned" do
+          allow(dependent).to receive(:pinned?).and_return(true)
+
+          expect { described_class.upgrade_dependents(dependants, [], flags: []) }
+            .to output(<<~EOS).to_stderr
+              Warning: Not rebuilding 1 pinned dependent against upgraded dependencies:
+              kept-dependent 2.0
+            EOS
+        end
+
+        it "doesn't rebuild it when it's pinned" do
+          allow(dependent).to receive(:pinned?).and_return(true)
+          expect(Homebrew::Reinstall).not_to receive(:reinstall_formula)
+
+          described_class.upgrade_dependents(dependants, [], flags: [])
+        end
       end
 
       it "doesn't reinstall it if it was rebuilt in this run" do
@@ -249,30 +325,30 @@ RSpec.describe Homebrew::Upgrade do
         )
       end
 
-      it "doesn't plan to reinstall it with HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK" do
+      it "doesn't plan to rebuild it with HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK" do
         ENV["HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK"] = "1"
 
         expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
-          .not_to output(/kept-dependent/).to_stdout
+          .not_to output.to_stdout
       end
 
-      it "doesn't plan to reinstall it if the upgraded dependency wasn't kept" do
+      it "doesn't plan to rebuild it if the upgraded dependency wasn't kept" do
         allow(dependent).to receive(:any_installed_keg).and_return(
           instance_double(Keg, tab:                  instance_double(Tab, poured_from_bottle:),
                                runtime_dependencies: [{ "full_name" => upgraded.full_name }]),
         )
 
         expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
-          .not_to output(/kept-dependent/).to_stdout
+          .not_to output.to_stdout
       end
 
       context "when it was poured from a bottle" do
         sig { returns(T::Boolean) }
         let(:poured_from_bottle) { true }
 
-        it "doesn't plan to reinstall it" do
+        it "doesn't plan to rebuild it" do
           expect { described_class.upgrade_dependents(dependants, [upgraded], flags: [], dry_run: true) }
-            .not_to output(/kept-dependent/).to_stdout
+            .not_to output.to_stdout
         end
       end
     end

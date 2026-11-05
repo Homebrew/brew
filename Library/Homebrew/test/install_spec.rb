@@ -540,6 +540,17 @@ RSpec.describe Homebrew::Install do
     end
   end
 
+  describe "::formulae_ask_prompt_needed?" do
+    it "is true when a dependent would be rebuilt against an upgraded dependency" do
+      formula_installer = instance_double(FormulaInstaller, ignore_deps?: false, compute_dependencies: [])
+      dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+      allow(Homebrew::Upgrade).to receive(:planned_kept_dependency_dependents)
+        .with([formula_installer]).and_return([instance_double(Formula)])
+
+      expect(described_class.formulae_ask_prompt_needed?([formula_installer], dependants)).to be(true)
+    end
+  end
+
   describe "::print_dry_run_dependencies" do
     it "splits fresh installs and upgrades under separate headers" do
       fresh = formula("fresh-dep") do

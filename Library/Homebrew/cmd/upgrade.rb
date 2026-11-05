@@ -772,6 +772,7 @@ module Homebrew
           cleanup:                       false,
           show_pinned_summary:           false,
           prefetched_formula_installers: prefetched_dependent_formulae_installer,
+          upgrading_formula_installers:  context.formulae_installer,
           skip_formula_names:
         )
 

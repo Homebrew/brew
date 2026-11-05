@@ -451,7 +451,8 @@ module Homebrew
           quiet:                         args.quiet?,
           verbose:                       args.verbose?,
           cleanup:                       false,
-          prefetched_formula_installers: dependent_formulae_installer
+          prefetched_formula_installers: dependent_formulae_installer,
+          upgrading_formula_installers:  formulae_installer
         )
 
         installed_or_upgraded_casks = T.let([], T::Array[Cask::Cask])

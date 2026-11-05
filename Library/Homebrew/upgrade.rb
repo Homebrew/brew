@@ -314,7 +314,8 @@ module Homebrew
                debug_symbols: T::Boolean, force: T::Boolean, debug: T::Boolean, quiet: T::Boolean,
                verbose: T::Boolean, skip_formula_names: T::Array[String], cleanup: T::Boolean,
                show_pinned_summary: T::Boolean,
-               prefetched_formula_installers: T.nilable(T::Array[FormulaInstaller])).returns(T::Array[Formula])
+               prefetched_formula_installers: T.nilable(T::Array[FormulaInstaller]),
+               upgrading_formula_installers: T::Array[FormulaInstaller]).returns(T::Array[Formula])
       }
       def upgrade_dependents(deps, formulae,
                              flags:,
@@ -332,7 +333,8 @@ module Homebrew
                              skip_formula_names: [],
                              cleanup: true,
                              show_pinned_summary: true,
-                             prefetched_formula_installers: nil)
+                             prefetched_formula_installers: nil,
+                             upgrading_formula_installers: [])
         return [] if deps.blank?
 
         upgradeable = deps.upgradeable.dup
@@ -366,7 +368,11 @@ module Homebrew
           installed_formulae.include?(f) || (dry_run && skip_formula_names.include?(f.full_name))
         end
 
-        kept_dependency_dependents = dependents_of_kept_dependencies(dry_run ? formulae : installed_formulae.to_a)
+        kept_dependency_dependents = if dry_run
+          dependents_of_kept_dependencies(formulae) | planned_kept_dependency_dependents(upgrading_formula_installers)
+        else
+          dependents_of_kept_dependencies(installed_formulae.to_a)
+        end
         return upgraded_formulae if upgradeable.blank? && kept_dependency_dependents.blank?
 
         dependent_installers = T.let([], T::Array[FormulaInstaller])
@@ -428,9 +434,10 @@ module Homebrew
           puts_no_installed_dependents_check_disable_message_if_not_already!
         end
 
-        broken_dependents = check_broken_dependents(installed_non_core_formulae) |
-                            (kept_dependency_dependents - FormulaInstaller.installed.to_a)
-        if broken_dependents.blank?
+        broken_dependents = check_broken_dependents(installed_non_core_formulae)
+        pinned_kept_dependency_dependents, rebuildable_dependents =
+          (kept_dependency_dependents - FormulaInstaller.installed.to_a).partition(&:pinned?)
+        if broken_dependents.blank? && pinned_kept_dependency_dependents.blank? && rebuildable_dependents.blank?
           if dry_run
             ohai "No currently broken dependents found!"
             opoo "If they are broken by the upgrade they will also be upgraded or reinstalled."
@@ -460,19 +467,36 @@ module Homebrew
         end
 
         # Print the broken dependents.
-        if reinstallable_broken_dependents.blank?
-          ohai "No broken dependents to reinstall!"
-        else
+        if reinstallable_broken_dependents.present?
           ohai "Reinstalling #{Utils.pluralize("dependent", reinstallable_broken_dependents.count,
                                                include_count: true)} with broken linkage from source:"
           puts_no_installed_dependents_check_disable_message_if_not_already!
           puts reinstallable_broken_dependents.map(&:full_specified_name)
                                               .join(", ")
+        elsif broken_dependents.present?
+          ohai "No broken dependents to reinstall!"
+        end
+
+        if pinned_kept_dependency_dependents.present?
+          count = pinned_kept_dependency_dependents.count
+          opoo "Not rebuilding #{count} pinned #{Utils.pluralize("dependent", count)} against upgraded dependencies:"
+          $stderr.puts Formatter.version_changes(
+            pinned_kept_dependency_dependents.map { |f| formula_version_change(f) },
+          ).join("\n")
+        end
+
+        # Building from the current formula also upgrades an outdated dependent, so one build covers both.
+        if rebuildable_dependents.present?
+          ohai "#{dry_run ? "Would rebuild" : "Rebuilding"} " \
+               "#{Utils.pluralize("dependent", rebuildable_dependents.count, include_count: true)} " \
+               "against upgraded dependencies:"
+          puts_no_installed_dependents_check_disable_message_if_not_already!
+          puts Formatter.version_changes(rebuildable_dependents.map { |f| formula_version_change(f) }).join("\n")
         end
 
         return upgraded_formulae if dry_run
 
-        reinstall_contexts = reinstallable_broken_dependents.map do |formula|
+        reinstall_contexts = (reinstallable_broken_dependents | rebuildable_dependents).map do |formula|
           Reinstall.build_install_context(
             formula,
             flags:,
@@ -537,6 +561,16 @@ module Homebrew
         # from aborting the rest of the batch while still failing the run.
         ofail "#{formula_installer.formula.full_specified_name}: #{e}"
         false
+      end
+
+      # Dependents that need rebuilding because of the formulae and dependencies these installers would upgrade.
+      sig { params(formula_installers: T::Array[FormulaInstaller]).returns(T::Array[Formula]) }
+      def planned_kept_dependency_dependents(formula_installers)
+        dependents_of_kept_dependencies(formula_installers.flat_map do |formula_installer|
+          next [formula_installer.formula] if formula_installer.ignore_deps?
+
+          [formula_installer.formula, *formula_installer.compute_dependencies.map(&:to_formula)]
+        end)
       end
 
       private
