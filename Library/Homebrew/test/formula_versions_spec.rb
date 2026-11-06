@@ -557,6 +557,29 @@ RSpec.describe FormulaVersions do
     expect(result).to eq [FormulaVersions::LegacyBottleSpecification, "true", "1.0", digest, :any_skip_relocation]
   end
 
+  it "ignores SHA-1 bottle digests mislabelled as SHA-256 historically" do
+    current = formula("mislabelled-bottle") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/mislabelled-bottle-2.0.tar.gz"
+    end
+    versions = described_class.new(current)
+    allow(versions).to receive(:file_contents_at_revision).and_return(<<~RUBY)
+      class MislabelledBottle < Formula
+        url "https://brew.sh/mislabelled-bottle-1.0.tar.gz"
+
+        bottle do
+          sha256 "#{"a" * 40}" => :yosemite
+        end
+      end
+    RUBY
+
+    result = versions.formula_at_revision("abc123") do |historical|
+      [historical.pkg_version.to_s, historical.bottle_specification.checksums]
+    end
+
+    expect(result).to eq ["1.0", []]
+  end
+
   it "loads deprecated install steps without emitting annotations or losing historical metadata" do
     ENV["GITHUB_ACTIONS"] = "true"
     ENV.delete("HOMEBREW_TESTS")

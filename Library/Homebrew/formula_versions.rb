@@ -81,15 +81,19 @@ class FormulaVersions
     sig { override.params(hash: T::Hash[T.any(Symbol, String), T.any(String, Symbol)]).void }
     def sha256(hash)
       legacy = hash.find do |key, value|
-        key.is_a?(String) && key.match?(/^[a-f0-9]{64}$/i) && value.is_a?(Symbol)
+        key.is_a?(String) && key.match?(SHA256_REGEX) && value.is_a?(Symbol)
       end
-      return super if legacy.nil?
-
-      digest, tag = legacy
-      converted = T.let({ tag => digest }, T::Hash[T.any(Symbol, String), T.any(String, Symbol)])
-      cellar = hash[:cellar] || @legacy_cellar
-      converted[:cellar] = cellar unless cellar.nil?
-      super(converted)
+      if legacy
+        digest, tag = legacy
+        converted = T.let({ tag => digest }, T::Hash[T.any(Symbol, String), T.any(String, Symbol)])
+        cellar = hash[:cellar] || @legacy_cellar
+        converted[:cellar] = cellar unless cellar.nil?
+        super(converted)
+      elsif hash.any? { |key, value| key.is_a?(Symbol) && value.is_a?(String) && value.match?(SHA256_REGEX) }
+        # Only delegate valid digests: `super` would `odie` on invalid historical ones,
+        # e.g. SHA-1 bottle digests labelled `sha256`, so those are ignored.
+        super
+      end
     end
 
     sig { params(_value: String).void }
