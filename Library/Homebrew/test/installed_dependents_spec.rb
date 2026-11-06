@@ -113,11 +113,10 @@ RSpec.describe InstalledDependents do
 
       alter_tab(keg) { |t| t.source["tap"] = nil }
 
-      # nil tab means no known dependencies — don't fall back to formula definitions
       tab_dependencies dependent, nil
 
       result = described_class.find_some_installed_dependents([keg, tap_dep])
-      expect(result).to be_nil
+      expect(result).to eq([[keg, tap_dep], ["bar"]])
     end
 
     specify "no dependencies anywhere" do
@@ -126,15 +125,13 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_some_installed_dependents([keg])).to be_nil
     end
 
-    specify "nil tab does not fall back to formula definitions" do
+    specify "nil tab falls back to formula definitions" do
       dependent = setup_test_keg("bar", "1.0") do
         T.bind(self, T.class_of(Formula))
         depends_on "foo"
       end
-      # Tab has nil runtime_dependencies — should not fall back to the
-      # formula definition's depends_on, so uninstalling foo is allowed.
       tab_dependencies dependent, nil
-      expect(described_class.find_some_installed_dependents([keg])).to be_nil
+      expect(described_class.find_some_installed_dependents([keg])).to eq([[keg], ["bar"]])
     end
 
     specify "uninstalling dependent and dependency" do
@@ -159,7 +156,6 @@ RSpec.describe InstalledDependents do
         T.bind(self, T.class_of(Formula))
         depends_on "foo"
       end
-      # nil tab — no known dependencies, even though formula DSL says depends_on "foo"
       tab_dependencies dependent, nil
 
       stub_formula_loader Formula["foo"], "homebrew/core/foo-old"
@@ -168,7 +164,7 @@ RSpec.describe InstalledDependents do
       renamed_keg = Keg.new(renamed_path/keg.version.to_s)
 
       result = described_class.find_some_installed_dependents([renamed_keg])
-      expect(result).to be_nil
+      expect(result).to eq([[renamed_keg], ["bar"]])
     end
 
     specify "renamed dependency with tab data" do
@@ -212,15 +208,13 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_some_installed_dependents([keg])).to eq([[keg], ["bar"]])
     end
 
-    specify "old tab version returns nil dependencies and does not block" do
+    specify "old tab version falls back to formula definitions" do
       dependent = setup_test_keg("bar", "1.0") do
         T.bind(self, T.class_of(Formula))
         depends_on "foo"
       end
-      # Tab from Homebrew < 1.1.6 is unreliable; runtime_dependencies returns nil.
-      # With tab-only trust, nil means no known deps — uninstall is allowed.
       unreliable_tab_dependencies dependent, [{ "full_name" => "baz", "version" => "1.0" }]
-      expect(described_class.find_some_installed_dependents([keg])).to be_nil
+      expect(described_class.find_some_installed_dependents([keg])).to eq([[keg], ["bar"]])
     end
 
     specify "non-opt-linked" do
