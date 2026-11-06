@@ -20,6 +20,16 @@ RSpec.describe Homebrew::Reinstall do
       expect(formula.opt_prefix).to be_a_directory
       expect(Pathname.new("#{keg}.reinstall")).not_to exist
     end
+
+    it "keeps an unlinked keg unlinked" do
+      formula = Testball.new
+      formula.prefix.mkpath
+      Keg.new(formula.prefix).optlink
+
+      context = described_class.build_install_context(formula, flags: [])
+
+      expect(context.formula_installer.link_keg).to be(false)
+    end
   end
 
   describe ".reinstall_formula" do

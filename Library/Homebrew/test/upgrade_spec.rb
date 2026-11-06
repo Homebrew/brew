@@ -94,6 +94,25 @@ RSpec.describe Homebrew::Upgrade do
   end
 
   describe "::formula_installers" do
+    it "keeps an unlinked keg unlinked" do
+      formula = Testball.new
+      formula.prefix.mkpath
+      Keg.new(formula.prefix).optlink
+      download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil)
+
+      allow(Migrator).to receive(:migrate_if_needed)
+      allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+      allow(FormulaInstaller).to receive(:new).and_wrap_original do |original, *args, **kwargs|
+        original.call(*args, **kwargs).tap do |installer|
+          allow(installer).to receive_messages(fetch_bottle_tab: nil, determine_bottle_tab_attributes: nil)
+        end
+      end
+
+      installers = described_class.formula_installers([formula], flags: [])
+
+      expect(installers.map(&:link_keg)).to eq([false])
+    end
+
     it "explains when installed dependencies satisfy the bottle metadata" do
       dependent = formula("dependent") do
         T.bind(self, T.class_of(Formula))

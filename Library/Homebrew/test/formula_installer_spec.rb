@@ -764,13 +764,13 @@ RSpec.describe FormulaInstaller do
   end
 
   describe "linking defaults" do
-    it "links non-keg-only formulae when link_keg is false" do
+    it "does not link non-keg-only formulae when link_keg is false" do
       ordinary_formula = formula "homebrew-link-default" do
         T.bind(self, T.class_of(Formula))
         url "foo-1.0"
       end
 
-      expect(described_class.new(ordinary_formula, link_keg: false).link_keg).to be true
+      expect(described_class.new(ordinary_formula, link_keg: false).link_keg).to be false
     end
 
     it "links non-keg-only dependencies even when they were not previously linked" do

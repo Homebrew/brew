@@ -65,7 +65,7 @@ class FormulaInstaller
     params(
       formula:                    Formula,
       download_queue:             Homebrew::DownloadQueue,
-      link_keg:                   T::Boolean,
+      link_keg:                   T.nilable(T::Boolean),
       installed_on_request:       T::Boolean,
       show_header:                T::Boolean,
       build_bottle:               T::Boolean,
@@ -94,7 +94,7 @@ class FormulaInstaller
   def initialize(
     formula,
     download_queue: Homebrew::DownloadQueue.default,
-    link_keg: false,
+    link_keg: nil,
     installed_on_request: false,
     show_header: false,
     build_bottle: false,
@@ -126,8 +126,9 @@ class FormulaInstaller
     @keep_tmp = keep_tmp
     @debug_symbols = debug_symbols
     @installed_on_request = installed_on_request
-    link_keg ||= !formula.keg_only? || auto_link_versioned_keg_only?
-    @link_keg = link_keg
+    # `nil` uses the default and `false` must not link, so don't collapse them with `||=`.
+    link_keg = !formula.keg_only? || auto_link_versioned_keg_only? if link_keg.nil?
+    @link_keg = T.let(link_keg, T::Boolean)
     @show_header = show_header
     @ignore_deps = ignore_deps
     @only_deps = only_deps
@@ -965,11 +966,8 @@ on_request: installed_on_request?, options:)
     if dep_formula.linked_keg.directory?
       linked_keg = Keg.new(resolved_path(dep_formula.linked_keg))
       tab = linked_keg.tab
-      keg_had_linked_keg = true
       keg_was_linked = linked_keg.linked?
       linked_keg.unlink
-    else
-      keg_had_linked_keg = false
     end
 
     if dep_formula.latest_version_installed?
@@ -998,7 +996,7 @@ on_request: installed_on_request?, options:)
     fi = FormulaInstaller.new(
       dep_formula,
       options:,
-      link_keg:                   keg_had_linked_keg && keg_was_linked,
+      link_keg:                   keg_was_linked || nil,
       installed_on_request:,
       force_bottle:               false,
       include_test_formulae:      @include_test_formulae,
