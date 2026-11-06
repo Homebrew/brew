@@ -230,7 +230,7 @@ module Homebrew
           dep_names = tab_deps&.filter_map { T.cast(it, T::Hash[String, T.untyped])["full_name"] } ||
                       keg.to_formula.runtime_dependencies.map(&:name)
           keg.name if dep_names.any? { names.include?(Utils.name_from_full_name(it)) }
-        rescue FormulaUnavailableError, TapFormulaAmbiguityError
+        rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
           nil
         end.sort.uniq
       end
