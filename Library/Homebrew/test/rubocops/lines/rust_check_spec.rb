@@ -66,7 +66,19 @@ RSpec.describe RuboCop::Cop::FormulaAudit::RustCheck do
       RUBY
     end
 
-    it "reports an offense when a formula runs `rustup` in build but not test" do
+    it "reports no offenses when a formula runs `rustup` in test" do
+      expect_no_offenses(<<~RUBY, "/homebrew-core/Formula/foo.rb")
+        class Foo < Formula
+          homepage "https://brew.sh"
+          url "https://brew.sh/foo-1.0.tgz"
+          test do
+            system "rustup", "default", "beta"
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense when a formula runs `rustup` in build" do
       expect_offense(<<~RUBY, "/homebrew-core/Formula/foo.rb")
         class Foo < Formula
           homepage "https://brew.sh"
@@ -74,9 +86,13 @@ RSpec.describe RuboCop::Cop::FormulaAudit::RustCheck do
           def install
             system "rustup", "default", "beta"
                    ^^^^^^^^ FormulaAudit/RustCheck: Formulae in homebrew/core should not use `rustup` at build-time.
-          end
-          test do
-            system "rustup", "default", "beta"
+            system "/some/path/to/rustup", "default", "beta"
+                   ^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/RustCheck: Formulae in homebrew/core should not use `rustup` at build-time.
+            system which("rustup"), "default", "beta"
+                         ^^^^^^^^ FormulaAudit/RustCheck: Formulae in homebrew/core should not use `rustup` at build-time.
+            system formula_opt_bin("rustup")/"rustup", "default", "beta"
+                                             ^^^^^^^^ FormulaAudit/RustCheck: Formulae in homebrew/core should not use `rustup` at build-time.
+            system "not-rustup"
           end
         end
       RUBY

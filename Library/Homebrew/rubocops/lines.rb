@@ -389,10 +389,10 @@ module RuboCop
           return if install_node.blank?
 
           find_every_method_call_by_name(install_node, :system).each do |method|
-            param = parameters(method).first
+            param = method.first_argument
+            param = param.last_argument if param.is_a?(RuboCop::AST::SendNode)
             next if param.blank?
-            # FIXME: Handle Pathname parameters (e.g. `system bin/"rustup"`).
-            next if regex_match_group(param, /rustup$/).blank?
+            next if regex_match_group(param, %r{^(.*/)?rustup$}).blank?
 
             problem "Formulae in homebrew/core should not use `rustup` at build-time."
           end
