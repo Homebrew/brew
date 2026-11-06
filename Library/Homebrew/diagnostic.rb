@@ -1466,23 +1466,25 @@ module Homebrew
 
       sig { returns(T.nilable(Finding)) }
       def check_deleted_formula
-        newest_kegs_with_a_tap_first = Keg.all.select(&:deleted_formula?).sort_by do |keg|
-          [keg.tab.tap ? 1 : 0, *keg.scheme_and_version]
-        end.reverse
-        deleted_kegs = newest_kegs_with_a_tap_first.uniq(&:name)
+        newest_kegs_first = Keg.all.select(&:deleted_formula?).sort_by(&:scheme_and_version).reverse
+        kegs_with_a_tap, kegs_without_a_tap = newest_kegs_first.partition { |keg| keg.tab.tap }
+        deleted_kegs = (kegs_with_a_tap + kegs_without_a_tap).uniq(&:name)
 
         return if deleted_kegs.blank?
 
-        groups = deleted_kegs.group_by { |keg| keg.tab.tap }.map do |tap, kegs|
-          type_order, header = if tap.nil?
-            [2, "No tap recorded (possibly installed manually):\n"]
+        kegs_by_tap = deleted_kegs.group_by { |keg| keg.tab.tap }
+        official_taps, other_taps = kegs_by_tap.keys.sort_by(&:to_s).partition { |tap| tap&.official? }
+        groups_by_type = { deleted: [], untapped: [], no_tap: [] }
+        (official_taps + other_taps).each do |tap|
+          type, header = if tap.nil?
+            [:no_tap, "No tap recorded (possibly installed manually):\n"]
           elsif tap.core_tap? || tap.installed? ||
                 (tap.official? && DEPRECATED_OFFICIAL_TAPS.include?(tap.repository))
-            [0, "Deleted from #{tap}:\n"]
+            [:deleted, "Deleted from #{tap}:\n"]
           else
-            [1, "From untapped #{tap}:\n"]
+            [:untapped, "From untapped #{tap}:\n"]
           end
-          [[type_order, tap&.official? ? 0 : 1, tap.to_s], append_indented_list(kegs.map(&:name).sort, header)]
+          groups_by_type.fetch(type) << append_indented_list(kegs_by_tap.fetch(tap).map(&:name).sort, header)
         end
 
         Finding.new(
@@ -1491,7 +1493,7 @@ module Homebrew
             You should find replacements for the following formulae.
           EOS
           affects:     deleted_kegs.map(&:name).sort,
-          remediation: groups.sort_by(&:first).map(&:last).join("\n"),
+          remediation: groups_by_type.values.flatten.join("\n"),
         )
       end
 
