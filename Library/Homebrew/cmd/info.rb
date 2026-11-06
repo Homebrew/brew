@@ -210,8 +210,8 @@ module Homebrew
           "#{missing_count} #{missing_status}"
       end
 
-      sig { params(full_name: String, name: String).returns(T::Array[String]) }
-      def self.installed_dependent_names(full_name, name)
+      sig { params(names: T::Array[String]).returns(T::Array[String]) }
+      def self.installed_dependent_names(names)
         Formula.racks.filter_map do |rack|
           keg = Keg.from_rack(rack)
           next unless keg
@@ -219,17 +219,17 @@ module Homebrew
           tab_path = keg/AbstractTab::FILENAME
           next unless tab_path.file?
 
-          # Fast path: skip JSON parsing when the formula name
-          # does not appear anywhere in the raw receipt.
+          # Fast path: skip JSON parsing when no formula name
+          # appears anywhere in the raw receipt.
           content = File.read(tab_path)
-          next unless content.include?(name)
+          next unless names.any? { content.include?(it) }
 
           tab_deps = Tab.from_file_content(content, tab_path).runtime_dependencies
           next unless tab_deps
 
           dependent = tab_deps.any? do |dep|
             dep_full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
-            dep_full_name == full_name || dep_full_name&.then { Utils.name_from_full_name(it) } == name
+            dep_full_name&.then { names.include?(Utils.name_from_full_name(it)) }
           end
           keg.name if dependent
         end.sort.uniq
@@ -560,7 +560,7 @@ module Homebrew
           tab_runtime_deps
         end
         installed_dependents = if $stdout.tty? && kegs.any?
-          self.class.installed_dependent_names(formula.full_name, formula.name)
+          self.class.installed_dependent_names(formula.possible_names)
         else
           [].freeze
         end
