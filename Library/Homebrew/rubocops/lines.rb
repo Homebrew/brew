@@ -357,6 +357,48 @@ module RuboCop
         end
       end
 
+      # This cop makes sure that formulae build with `rust` instead of `rustup`.
+      class RustCheck < FormulaCop
+        extend AutoCorrector
+
+        sig { override.params(formula_nodes: FormulaNodes).void }
+        def audit_formula(formula_nodes)
+          return if (body_node = formula_nodes.body_node).nil?
+
+          # Enforce use of `rust` for rust dependency in core
+          return if formula_tap != "homebrew-core"
+
+          find_method_with_args(body_node, :depends_on, "rustup") do |method|
+            problem "Formulae in homebrew/core should use `depends_on \"rust\"` " \
+                    "instead of `#{method.source}`." do |corrector|
+              corrector.replace(method.source_range, "depends_on \"rust\"")
+            end
+          end
+
+          [:build, [:build, :test], [:test, :build]].each do |type|
+            find_method_with_args(body_node, :depends_on, "rustup" => type) do |method|
+              correction = method.source.sub("rustup", "rust")
+              problem "Formulae in homebrew/core should use `#{correction}` " \
+                      "instead of `#{method.source}`." do |corrector|
+                corrector.replace(method.source_range, correction)
+              end
+            end
+          end
+
+          install_node = find_method_def(body_node, :install)
+          return if install_node.blank?
+
+          find_every_method_call_by_name(install_node, :system).each do |method|
+            param = parameters(method).first
+            next if param.blank?
+            # FIXME: Handle Pathname parameters (e.g. `system bin/"rustup"`).
+            next if regex_match_group(param, /rustup$/).blank?
+
+            problem "Formulae in homebrew/core should not use `rustup` at build-time."
+          end
+        end
+      end
+
       # This cop makes sure that the safe versions of `popen_*` calls are used.
       class SafePopenCommands < FormulaCop
         extend AutoCorrector
@@ -1166,47 +1208,6 @@ module RuboCop
               problem "Formulae in homebrew/core (except e.g. cryptography, libraries) " \
                       "should not run build-time checks"
             end
-          end
-        end
-      end
-
-      # This cop makes sure that formulae build with `rust` instead of `rustup`.
-      class RustCheck < FormulaCop
-        extend AutoCorrector
-
-        sig { override.params(formula_nodes: FormulaNodes).void }
-        def audit_formula(formula_nodes)
-          return if (body_node = formula_nodes.body_node).nil?
-
-          # Enforce use of `rust` for rust dependency in core
-          return if formula_tap != "homebrew-core"
-
-          find_method_with_args(body_node, :depends_on, "rustup") do |method|
-            problem "Formulae in homebrew/core should use `depends_on \"rust\"` " \
-                    "instead of `#{method.source}`." do |corrector|
-              corrector.replace(method.source_range, "depends_on \"rust\"")
-            end
-          end
-
-          [:build, [:build, :test], [:test, :build]].each do |type|
-            find_method_with_args(body_node, :depends_on, "rustup" => type) do |method|
-              problem "Formulae in homebrew/core should use `depends_on \"rust\" => #{type}` " \
-                      "instead of `#{method.source}`." do |corrector|
-                corrector.replace(method.source_range, "depends_on \"rust\" => #{type}")
-              end
-            end
-          end
-
-          install_node = find_method_def(body_node, :install)
-          return if install_node.blank?
-
-          find_every_method_call_by_name(install_node, :system).each do |method|
-            param = parameters(method).first
-            next if param.blank?
-            # FIXME: Handle Pathname parameters (e.g. `system bin/"rustup"`).
-            next if regex_match_group(param, /rustup$/).blank?
-
-            problem "Formula in homebrew/core should not use `rustup` at build-time."
           end
         end
       end
