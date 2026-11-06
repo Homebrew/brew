@@ -468,6 +468,7 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       bob,Bob,2022-03-01,1461,25,0,0,25,24,1,0,25,0,0,451,451,501,true,true,false,false,Maintainer,Maintainer
       alice,Alice,2024-03-01,730,4,1,45,50,0,0,0,0,0,0,0,0,50,true,false,false,false,Lead Maintainer,Lead Maintainer
     CSV
+    allow(File).to receive(:write)
     expect(File).to receive(:write).with("brew-contributions-2025-12-01-to-2026-03-01.csv", csv)
 
     expect do
@@ -701,6 +702,119 @@ RSpec.describe Homebrew::DevCmd::Contributions do
       expect(report&.values_at("total", "maintainer met", "lead met", "potential new role"))
         .to eq(%w[10 false false None])
     end
+
+    context "with a Markdown summary" do
+      # Keep each Sorbet signature with its let declaration.
+      # rubocop:disable RSpec/ScatteredLet
+      sig { returns(Homebrew::DevCmd::Contributions) }
+      let(:command) do
+        described_class.new(["--maintainer-report-csv", "--from=2026-10-01", "--to=2026-11-01"])
+      end
+
+      sig { returns(T::Hash[String, String]) }
+      let(:reports) do
+        {
+          "2026-06-01-to-2026-09-01" => "alice,0,25,25,0,false",
+          "2026-09-01-to-2026-10-01" => "alice,0,10,10,0,false",
+        }
+      end
+
+      sig { returns(String) }
+      let(:summary) do
+        Dir.chdir(mktmpdir) do
+          reports.each do |dates, row|
+            Pathname("brew-contributions-#{dates}.csv")
+              .write("username,brew first approvals,brew total,core total,cask total,capped\n#{row}\n")
+          end
+          command.run
+          File.read(Dir["brew-contributions-*.md"].fetch(0))
+        end
+      end
+      # rubocop:enable RSpec/ScatteredLet
+
+      before do
+        allow(command).to receive(:previous_maintainer_reports).with("2026-06-01").and_return([])
+      end
+
+      it "summarises completed-quarter activity and current-quarter numerical gaps" do
+        completed_quarter = <<~MARKDOWN
+          ### Latest completed quarter: 2026-06-01 through 2026-08-31
+
+          - Maintainer activity: **1/1 met**; 0 unknown.
+          - Lead activity (Lead Maintainers): **1/1 met**; 0 unknown.
+
+          ### Current quarter: 2026-09-01 through 2026-11-30
+        MARKDOWN
+        current_quarter = <<~MARKDOWN
+          Progress through 2026-10-31; the quarter is still in progress.
+
+          - Maintainer activity: **0/1 met**; 0 unknown.
+          - Lead activity (Lead Maintainers): **0/1 met**; 0 unknown.
+
+          | Maintainer | Brew | Core | Cask | Total | Numerical gap |
+          | --- | ---: | ---: | ---: | ---: | --- |
+        MARKDOWN
+        current_quarter_gap = "| alice | 15 | 15 | 0 | 30 | 10 more for Maintainer activity; " \
+                              "Lead: reach 20 in 2 more repositories (brew: 5 more, core: 5 more, cask: 20 more) |"
+
+        expect(summary).to include(completed_quarter)
+          .and include(current_quarter)
+          .and include(current_quarter_gap)
+      end
+
+      it "marks numerical gaps as lower bounds when any report in the quarter is capped" do
+        reports["2026-09-01-to-2026-10-01"] = "alice,0,10,10,0,true"
+
+        expect(summary).to include("cask: 20 more); capped counts are lower bounds |")
+      end
+
+      it "names exempt Maintainers only when they are below the Maintainer threshold" do
+        allow(command).to receive(:args).and_return(described_class.new(
+          ["--maintainer-report-csv", "--from=2026-10-01", "--to=2026-11-01", "--maintainer-exempt=alice"],
+        ).args)
+
+        expect(summary.scan(/^- Maintainer activity: .*$/))
+          .to eq(["- Maintainer activity: **1/1 met**; 0 unknown.",
+                  "- Maintainer activity: **0/0 met**; 0 unknown; exempt: alice."])
+      end
+
+      it "reports incomplete individual history as unknown" do
+        reports["2026-09-01-to-2026-10-01"] = "bob,0,10,10,0,false"
+
+        expect(summary).to include("| alice | unknown | unknown | unknown | unknown | Incomplete history |")
+      end
+
+      it "reports activity as unknown without contiguous reports" do
+        reports.delete("2026-09-01-to-2026-10-01")
+
+        expect(summary).to include(<<~MARKDOWN)
+          Progress through 2026-10-31; the quarter is still in progress.
+
+          Activity is unknown without contiguous reports for this period.
+        MARKDOWN
+      end
+
+      it "normalises ISO 8601 dates before comparing reporting periods" do
+        allow(command).to receive(:args).and_return(described_class.new(
+          ["--maintainer-report-csv", "--from=20261001", "--to=+2026-11-01"],
+        ).args)
+
+        expect(summary).to include(<<~MARKDOWN)
+          Progress through 2026-10-31; the quarter is still in progress.
+
+          - Maintainer activity: **0/1 met**; 0 unknown.
+        MARKDOWN
+      end
+
+      it "omits current-quarter progress once the reporting quarter is complete" do
+        allow(command).to receive(:args).and_return(described_class.new(
+          ["--maintainer-report-csv", "--from=2026-11-01", "--to=2026-12-01"],
+        ).args)
+        reports["2026-10-01-to-2026-11-01"] = "alice,0,10,10,0,false"
+
+        expect(summary).not_to include("### Current quarter")
+      end
+    end
   end
 
   it "applies multi-quarter activity requirements to potential roles" do
@@ -775,6 +889,8 @@ RSpec.describe Homebrew::DevCmd::Contributions do
     allow(command).to receive(:generate_maintainer_report_csv).and_return(csv)
     expect(File).to receive(:write)
       .with("brew-contributions-2025-12-01-to-2026-03-01-alice-bob.csv", csv)
+    expect(File).to receive(:write)
+      .with("brew-contributions-2025-12-01-to-2026-03-01-alice-bob.md", String)
 
     expect { command.run }
       .to output(csv).to_stdout
