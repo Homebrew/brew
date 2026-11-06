@@ -14,6 +14,8 @@ module RuboCop
       # - `stable do` should not be present with only `url|checksum|mirror|version`
       # - `head do` should not be present with only `url`
       class ComponentsRedundancy < FormulaCop
+        extend AutoCorrector
+
         HEAD_MSG = "`head` and `head do` should not be simultaneously present"
         STABLE_MSG = "`stable do` should not be present without a `head` spec"
         STABLE_BLOCK_METHODS = [:url, :sha256, :mirror, :version].freeze
@@ -22,15 +24,18 @@ module RuboCop
         def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
 
-          urls = find_method_calls_by_name(body_node, :url)
+          find_every_method_call_by_name(body_node, :url).each do |url|
+            next if url.arguments.none? do |arg|
+              arg.is_a?(RuboCop::AST::HashNode) && arg.keys.any? { |key| key.sym_type? && key.value == :revision }
+            end
 
-          urls.each do |url|
-            url.arguments.each do |arg|
-              next if arg.class != RuboCop::AST::HashNode
+            url_node = parameters(url).fetch(0)
+            git_url = url_node.str_type? && string_content(url_node).end_with?(".git")
 
-              url_args = arg.keys.each.map(&:value)
-              if method_called?(body_node, :sha256) && url_args.include?(:tag) && url_args.include?(:revision)
-                problem "Do not use both `sha256` and `tag:`/`revision:`."
+            find_method_calls_by_name(url.parent, :sha256).each do |sha256|
+              offending_node(sha256)
+              problem "Do not use both `sha256` and `revision:`." do |corrector|
+                corrector.remove(range_with_surrounding_space(range: sha256.source_range, side: :left)) if git_url
               end
             end
           end

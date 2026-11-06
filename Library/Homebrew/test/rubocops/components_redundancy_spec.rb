@@ -1,12 +1,143 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/components_redundancy"
 
 RSpec.describe RuboCop::Cop::FormulaAudit::ComponentsRedundancy do
+  sig { returns(RuboCop::Cop::FormulaAudit::ComponentsRedundancy) }
   subject(:cop) { described_class.new }
 
   context "when auditing formula components" do
+    it "reports and corrects an offense if both `sha256` and git `revision` are defined" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo.git",
+              tag:      "1.0.0",
+              revision: "0000000000000000000000000000000000000000"
+          sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsRedundancy: Do not use both `sha256` and `revision:`.
+          revision 1
+
+          resource "bar" do
+            url "https://brew.sh/bar.git",
+                revision: "1111111111111111111111111111111111111111"
+            sha256 "1111111111111111111111111111111111111111111111111111111111111111"
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsRedundancy: Do not use both `sha256` and `revision:`.
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo.git",
+              tag:      "1.0.0",
+              revision: "0000000000000000000000000000000000000000"
+          revision 1
+
+          resource "bar" do
+            url "https://brew.sh/bar.git",
+                revision: "1111111111111111111111111111111111111111"
+          end
+        end
+      RUBY
+    end
+
+    it "reports an offense if both `sha256` and git `revision` are defined in stable/head block" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          stable do
+            url "https://brew.sh/foo.git",
+                tag:      "1.0.0",
+                revision: "0000000000000000000000000000000000000000"
+            sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsRedundancy: Do not use both `sha256` and `revision:`.
+
+            resource "bar" do
+              url "https://brew.sh/bar.git",
+                  revision: "1111111111111111111111111111111111111111"
+              sha256 "1111111111111111111111111111111111111111111111111111111111111111"
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsRedundancy: Do not use both `sha256` and `revision:`.
+            end
+          end
+
+          head do
+            url "https://brew.sh/foo.git", branch: "develop"
+
+            resource "bar" do
+              url "https://brew.sh/bar.git",
+                  revision: "2222222222222222222222222222222222222222"
+              sha256 "2222222222222222222222222222222222222222222222222222222222222222"
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/ComponentsRedundancy: Do not use both `sha256` and `revision:`.
+            end
+          end
+        end
+      RUBY
+
+      expect_correction(<<~RUBY)
+        class Foo < Formula
+          stable do
+            url "https://brew.sh/foo.git",
+                tag:      "1.0.0",
+                revision: "0000000000000000000000000000000000000000"
+
+            resource "bar" do
+              url "https://brew.sh/bar.git",
+                  revision: "1111111111111111111111111111111111111111"
+            end
+          end
+
+          head do
+            url "https://brew.sh/foo.git", branch: "develop"
+
+            resource "bar" do
+              url "https://brew.sh/bar.git",
+                  revision: "2222222222222222222222222222222222222222"
+            end
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses if url uses `sha256` and resource uses git `revision`" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+          revision 1
+
+          resource "bar" do
+            url "https://brew.sh/bar.git",
+                revision: "1111111111111111111111111111111111111111"
+          end
+        end
+      RUBY
+    end
+
+    it "reports no offenses if url uses `sha256` and resource uses git `revision` in stable/head block" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          stable do
+            url "https://brew.sh/foo-1.0.tgz"
+            sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+
+            resource "bar" do
+              url "https://brew.sh/bar.git",
+                  revision: "1111111111111111111111111111111111111111"
+            end
+          end
+
+          head do
+            url "https://brew.sh/foo.git", branch: "develop"
+
+            resource "bar" do
+              url "https://brew.sh/bar.git",
+                  revision: "2222222222222222222222222222222222222222"
+            end
+          end
+        end
+      RUBY
+    end
+
     it "reports an offense if `url` is outside `stable` block" do
       expect_offense(<<~RUBY)
         class Foo < Formula
