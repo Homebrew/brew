@@ -296,6 +296,64 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(checks.check_homebrew_prefix).to be_nil
   end
 
+  describe "#check_deprecated_disabled" do
+    let(:deprecated_formula) do
+      <<~RUBY
+        class Testball < Formula
+          url "https://brew.sh/testball-1.0.tar.gz"
+          deprecate! date: "2020-01-01", because: :unsupported
+        end
+      RUBY
+    end
+
+    def write_deprecated_core_formula
+      formula_path = CoreTap.instance.new_formula_path("testball")
+      formula_path.dirname.mkpath
+      formula_path.write deprecated_formula
+    end
+
+    def install_keg_from_removed_tap(keg_path)
+      keg_path.mkpath
+      tab = Tab.empty
+      tab.tabfile = keg_path/AbstractTab::FILENAME
+      tab.tap = "gone/tap"
+      tab.write
+    end
+
+    it "lists a deprecated formula that is still in its tap" do
+      (HOMEBREW_CELLAR/"testball/1.0").mkpath
+      write_deprecated_core_formula
+
+      expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
+    end
+
+    it "skips a formula removed from its tap whose keg kept a deprecated copy" do
+      keg_path = HOMEBREW_CELLAR/"testball/1.0"
+      (keg_path/".brew").mkpath
+      (keg_path/".brew/testball.rb").write deprecated_formula
+      (HOMEBREW_PREFIX/"opt/testball").make_relative_symlink(keg_path)
+
+      expect(checks.check_deprecated_disabled).to be_nil
+    end
+
+    it "skips a deprecated formula with an older keg removed from its tap" do
+      install_keg_from_removed_tap(HOMEBREW_CELLAR/"testball/1.0")
+      (HOMEBREW_CELLAR/"testball/2.0").mkpath
+      write_deprecated_core_formula
+
+      expect(checks.check_deprecated_disabled).to be_nil
+    end
+
+    it "lists a deprecated formula when only a keg under its old name was removed" do
+      install_keg_from_removed_tap(HOMEBREW_CELLAR/"oldball/1.0")
+      (HOMEBREW_CELLAR/"testball/1.0").mkpath
+      write_deprecated_core_formula
+      allow(CoreTap.instance).to receive(:formula_reverse_renames).and_return("testball" => ["oldball"])
+
+      expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
+    end
+  end
+
   describe "#check_for_unlinked_but_not_keg_only" do
     before { (HOMEBREW_CELLAR/"testball/1.0").mkpath }
 
@@ -317,15 +375,48 @@ RSpec.describe Homebrew::Diagnostic::Checks do
   end
 
   specify "#check_deleted_formula" do
-    allow(Keg).to receive(:all).and_return([instance_double(Keg, name: "testball", deleted_formula?: true)])
+    acme_tap = Tap.fetch("acme/tap")
+    allow(acme_tap).to receive(:installed?).and_return(true)
+    deleted_kegs = [
+      ["hand-made", "1.0", nil],
+      ["badger-tool", "1.0", Tap.fetch("badger/tap")],
+      ["moved-tool", "1.0", Tap.fetch("aardvark/tap")],
+      ["moved-tool", "2.0", acme_tap],
+      ["gone-tool", "1.0", Tap.fetch("aardvark/tap")],
+      ["terraform", "1.1.7", CoreTap.instance],
+      ["half-installed", "2.0", nil],
+      ["half-installed", "1.0", CoreTap.instance],
+      ["php71", "1.0", Tap.fetch("homebrew/php")],
+      ["openssl@1.1", "1.1.1t", CoreTap.instance],
+    ].map do |name, version, tap|
+      instance_double(Keg, name:, deleted_formula?: true, scheme_and_version: [0, PkgVersion.parse(version)],
+                           tab: instance_double(Tab, tap:))
+    end
+    allow(Keg).to receive(:all).and_return([*deleted_kegs, instance_double(Keg, deleted_formula?: false)])
 
     expect(checks.check_deleted_formula&.to_s).to eq <<~EOS.rstrip
       Some installed kegs have no formulae!
-      This means they were either deleted or installed manually.
+      You should find replacements for the following formulae.
 
-      You should find replacements for the following formulae:
+      Deleted from homebrew/core:
+        half-installed
+        openssl@1.1
+        terraform
 
-        testball
+      Deleted from homebrew/php:
+        php71
+
+      Deleted from acme/tap:
+        moved-tool
+
+      From untapped aardvark/tap:
+        gone-tool
+
+      From untapped badger/tap:
+        badger-tool
+
+      No tap recorded (possibly installed manually):
+        hand-made
     EOS
   end
 

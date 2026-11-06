@@ -1223,7 +1223,10 @@ module Homebrew
       def check_deprecated_disabled
         return unless HOMEBREW_CELLAR.exist?
 
-        deprecated_or_disabled = Formula.installed.select { |f| f.deprecated? || f.disabled? }
+        deprecated_or_disabled = Formula.installed.select do |f|
+          (f.deprecated? || f.disabled?) &&
+            f.installed_kegs.none? { |keg| keg.name == f.name && keg.deleted_formula? }
+        end
         return if deprecated_or_disabled.empty?
 
         Finding.new(
@@ -1463,24 +1466,34 @@ module Homebrew
 
       sig { returns(T.nilable(Finding)) }
       def check_deleted_formula
-        kegs = Keg.all
+        newest_kegs_first = Keg.all.select(&:deleted_formula?).sort_by(&:scheme_and_version).reverse
+        kegs_with_a_tap, kegs_without_a_tap = newest_kegs_first.partition { |keg| keg.tab.tap }
+        deleted_kegs = (kegs_with_a_tap + kegs_without_a_tap).uniq(&:name)
 
-        deleted_formulae = kegs.filter_map do |keg|
-          keg.name if keg.deleted_formula?
-        end.uniq
+        return if deleted_kegs.blank?
 
-        return if deleted_formulae.blank?
+        kegs_by_tap = deleted_kegs.group_by { |keg| keg.tab.tap }
+        official_taps, other_taps = kegs_by_tap.keys.sort_by(&:to_s).partition { |tap| tap&.official? }
+        groups_by_type = { deleted: [], untapped: [], no_tap: [] }
+        (official_taps + other_taps).each do |tap|
+          type, header = if tap.nil?
+            [:no_tap, "No tap recorded (possibly installed manually):\n"]
+          elsif tap.core_tap? || tap.installed? ||
+                (tap.official? && DEPRECATED_OFFICIAL_TAPS.include?(tap.repository))
+            [:deleted, "Deleted from #{tap}:\n"]
+          else
+            [:untapped, "From untapped #{tap}:\n"]
+          end
+          groups_by_type.fetch(type) << append_indented_list(kegs_by_tap.fetch(tap).map(&:name).sort, header)
+        end
 
         Finding.new(
           <<~EOS,
             Some installed kegs have no formulae!
-            This means they were either deleted or installed manually.
+            You should find replacements for the following formulae.
           EOS
-          affects:     deleted_formulae,
-          remediation: append_indented_list(deleted_formulae, <<~EOS),
-            You should find replacements for the following formulae:
-
-          EOS
+          affects:     deleted_kegs.map(&:name).sort,
+          remediation: groups_by_type.values.flatten.join("\n"),
         )
       end
 
