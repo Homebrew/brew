@@ -736,9 +736,10 @@ RSpec.describe Homebrew::Cmd::Info do
     tab.write
 
     {
-      "alias-dependent"   => "testball",
-      "oldname-dependent" => "old-testball",
-      "other-dependent"   => "other-formula",
+      "alias-dependent"     => "testball",
+      "oldname-dependent"   => "old-testball",
+      "qualified-dependent" => "homebrew/core/testball",
+      "other-dependent"     => "other-formula",
     }.each do |dependent_name, dependency_name|
       dependent_keg_path = HOMEBREW_CELLAR/"#{dependent_name}/1.0"
       dependent_keg_path.mkpath
@@ -755,7 +756,7 @@ RSpec.describe Homebrew::Cmd::Info do
                                        missing_library_linkage: [[], Set.new], oldnames: ["old-testball"])
 
     expect { info.info_formula(formula) }
-      .to output(/^Dependents \(2\): alias-dependent, oldname-dependent$/).to_stdout
+      .to output(/^Dependents \(3\): alias-dependent, oldname-dependent, qualified-dependent$/).to_stdout
       .and not_to_output.to_stderr
   end
 
