@@ -1265,6 +1265,102 @@ RSpec.describe FormulaInstaller do
         expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include(build_dep.name)
       end
 
+      context "when upgrading ruby with outdated rust and ca-certificates" do
+        let(:build_dep) { Dependency.new("rust", [:build]) }
+        let(:runtime_dep_formula) do
+          formula "ca-certificates" do
+            T.bind(self, T.class_of(Formula))
+            url "foo-1.0"
+          end
+        end
+        let(:f) do
+          formula "ruby" do
+            T.bind(self, T.class_of(Formula))
+            url "foo-1.0"
+          end
+        end
+        let(:ca_certificates_source) { {} }
+        let(:has_headers) { false }
+
+        before do
+          llvm = formula "llvm" do
+            T.bind(self, T.class_of(Formula))
+            url "foo-1.0"
+          end
+          stub_formula_loader(llvm)
+          allow(build_dep.to_formula).to receive(:deps).and_return([Dependency.new(llvm.name)])
+          headers = instance_double(Pathname, exist?: has_headers)
+          keg = instance_double(Keg)
+          allow(keg).to receive(:join).with("include").and_return(headers)
+          allow(runtime_dep_formula).to receive(:any_installed_keg).and_return(keg)
+          allow(runtime_dep_formula).to receive(:bottle_tag?).with(:all).and_return(true)
+          allow(Tab).to receive(:for_formula).with(runtime_dep_formula)
+                                             .and_return(instance_double(Tab, source: ca_certificates_source))
+          allow(f).to receive(:deps).and_return([build_dep, Dependency.new(runtime_dep_formula.name)])
+        end
+
+        it "only upgrades ca-certificates" do
+          expect(installer.expand_dependencies_for_formula(f).map(&:name)).to eq(["ca-certificates"])
+        end
+
+        context "without a ca-certificates keg" do
+          before { allow(runtime_dep_formula).to receive(:any_installed_keg).and_return(nil) }
+
+          it "only upgrades ca-certificates" do
+            expect(installer.expand_dependencies_for_formula(f).map(&:name)).to eq(["ca-certificates"])
+          end
+        end
+
+        context "with an older ca-certificates keg that has headers" do
+          before do
+            allow(runtime_dep_formula).to receive(:any_installed_keg).and_call_original
+            (runtime_dep_formula.rack/"2026-10-20/include").mkpath
+            (runtime_dep_formula.rack/"2026-11-05").mkpath
+          end
+
+          it "only upgrades ca-certificates" do
+            expect(installer.expand_dependencies_for_formula(f).map(&:name)).to eq(["ca-certificates"])
+          end
+        end
+
+        context "with a compatibility_version in the ca-certificates install receipt" do
+          let(:ca_certificates_source) { { "versions" => { "compatibility_version" => 1 } } }
+
+          it "also upgrades rust and llvm" do
+            expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include("rust", "llvm")
+          end
+        end
+
+        context "with the header-only eigen in place of ca-certificates" do
+          let(:runtime_dep_formula) do
+            formula "eigen" do
+              T.bind(self, T.class_of(Formula))
+              url "foo-1.0"
+            end
+          end
+          let(:has_headers) { true }
+
+          it "also upgrades rust and llvm" do
+            expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include("rust", "llvm")
+          end
+        end
+
+        context "with python@3.14, which has no `:all` bottle, in place of ca-certificates" do
+          let(:runtime_dep_formula) do
+            formula "python@3.14" do
+              T.bind(self, T.class_of(Formula))
+              url "foo-1.0"
+            end
+          end
+
+          before { allow(runtime_dep_formula).to receive_messages(bottled?: true, bottle_tag?: false) }
+
+          it "also upgrades rust and llvm" do
+            expect(installer.expand_dependencies_for_formula(f).map(&:name)).to include("rust", "llvm")
+          end
+        end
+      end
+
       it "keeps other compatible build dependencies if one is upgraded" do
         other_build_dep = Dependency.new("homebrew-other-compatible-build-dependency", [:build])
         other_build_dep_formula = formula other_build_dep.name do

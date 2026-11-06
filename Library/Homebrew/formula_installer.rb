@@ -858,7 +858,16 @@ on_request: installed_on_request?, options:)
     kept_dependencies.size.times do
       incompatible_upgrades = deps.filter_map do |dep|
         dep_formula = dep.to_formula
-        dep_formula.full_name unless dep.installed?(minimum_compatibility_version: dep_formula.compatibility_version)
+        next if dep.installed?(minimum_compatibility_version: dep_formula.compatibility_version)
+
+        # Poured kegs never record a `compatibility_version`, so an empty receipt isn't
+        # a known incompatibility. An `:all` bottle has no compiled code to link against
+        # and a keg without headers has nothing to compile against.
+        next if dep_formula.bottle_tag?(:all) &&
+                !dep_formula.any_installed_keg&.join("include")&.exist? &&
+                Tab.for_formula(dep_formula).source.dig("versions", "compatibility_version").nil?
+
+        dep_formula.full_name
       end << formula.full_name
       keepable_dependencies = kept_dependencies.filter_map do |kept, runtime_dependency_names|
         kept.full_name unless runtime_dependency_names.intersect?(incompatible_upgrades)
