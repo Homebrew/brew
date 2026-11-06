@@ -802,18 +802,30 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
-  it "skips installed dependents whose receipts have no list when their formula lookup is ambiguous" do
-    keg_path = HOMEBREW_CELLAR/"ambiguous-dependent/1.0"
-    keg_path.mkpath
-    tab = Tab.empty
-    tab.tabfile = keg_path/AbstractTab::FILENAME
-    tab.write
+  context "when an installed dependent has no receipt list and its formula can't be loaded" do
+    before do
+      keg_path = HOMEBREW_CELLAR/"unloadable-dependent/1.0"
+      keg_path.mkpath
+      tab = Tab.empty
+      tab.tabfile = keg_path/AbstractTab::FILENAME
+      tab.write
 
-    allow(Formulary).to receive(:loader_for).and_call_original
-    allow(Formulary).to receive(:loader_for).with("ambiguous-dependent", any_args)
-                                            .and_raise(TapFormulaAmbiguityError.new("ambiguous-dependent", []))
+      allow(Formulary).to receive(:loader_for).and_call_original
+    end
 
-    expect(described_class.installed_dependent_names(["testball"])).to be_empty
+    it "skips it when the formula lookup is ambiguous" do
+      allow(Formulary).to receive(:loader_for).with("unloadable-dependent", any_args)
+                                              .and_raise(TapFormulaAmbiguityError.new("unloadable-dependent", []))
+
+      expect(described_class.installed_dependent_names(["testball"])).to be_empty
+    end
+
+    it "skips it when the formula is from an untrusted tap" do
+      allow(Formulary).to receive(:loader_for).with("unloadable-dependent", any_args)
+                                              .and_raise(Homebrew::UntrustedTapError)
+
+      expect(described_class.installed_dependent_names(["testball"])).to be_empty
+    end
   end
 
   it "summarises recursive runtime dependencies as all installed when none are missing" do
