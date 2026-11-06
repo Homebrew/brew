@@ -299,9 +299,9 @@ module RuboCop
           return if formula_tap != "homebrew-core"
 
           find_method_with_args(body_node, :depends_on, "quictls") do |method|
-            problem "Formulae in homebrew/core should use `depends_on \"openssl@3\"` " \
+            problem "Formulae in homebrew/core should use `depends_on \"openssl@4\"` " \
                     "instead of `#{method.source}`." do |corrector|
-              corrector.replace(method.source_range, "depends_on \"openssl@3\"")
+              corrector.replace(method.source_range, "depends_on \"openssl@4\"")
             end
           end
         end
@@ -1167,17 +1167,6 @@ module RuboCop
                       "should not run build-time checks"
             end
           end
-        end
-      end
-
-      # This cop ensures that new formulae depending on removed Requirements are not used.
-      class Requirements < FormulaCop
-        sig { override.params(_formula_nodes: FormulaNodes).void }
-        def audit_formula(_formula_nodes)
-          problem "Formulae should depend on a versioned `openjdk` instead of :java" if depends_on? :java
-          problem "Formulae should depend on specific X libraries instead of :x11" if depends_on? :x11
-          problem "Formulae should not depend on :osxfuse" if depends_on? :osxfuse
-          problem "Formulae should not depend on :tuntap" if depends_on? :tuntap
         end
       end
 
