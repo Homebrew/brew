@@ -638,6 +638,7 @@ on_request: true)
           Homebrew will remove its records, but files installed by the Cask may remain.
         EOS
       end
+      warn_about_unmatched_pkgutil_patterns
       uninstall_artifacts(clear: true, successor:)
       if !reinstall? && !upgrade?
         remove_tabfile
@@ -781,6 +782,7 @@ on_request: true)
       oh1 "Zapping Cask #{Formatter.identifier(@cask)}"
       zap_stanzas = @cask.artifacts.grep(Artifact::Zap)
       opoo "No zap stanza present for Cask '#{@cask}'" if zap_stanzas.empty?
+      warn_about_unmatched_pkgutil_patterns
       uninstall_artifacts(clear: true, zap_stanzas:)
       ohai "Removing all staged versions of Cask '#{@cask}'"
       purge_caskroom_path
@@ -1071,6 +1073,22 @@ on_request: true)
     end
 
     private
+
+    # Call this before the uninstall rules run, because an `uninstall script:` can
+    # forget its own packages and leave nothing for the patterns to match.
+    sig { void }
+    def warn_about_unmatched_pkgutil_patterns
+      return if reinstall? || upgrade?
+
+      patterns = artifacts.grep(Artifact::Uninstall).flat_map { |artifact| Array(artifact.directives[:pkgutil]) }
+      return if patterns.empty? || patterns.any? { |pattern| Pkg.all_matching(pattern.to_s, @command).any? }
+
+      opoo <<~EOS
+        No installed packages match the `pkgutil` patterns of Cask '#{@cask}':
+          #{patterns.join("\n  ")}
+        Files installed by the Cask may remain. Check `pkgutil --pkgs` for them.
+      EOS
+    end
 
     # Remove Caskroom symlinks (e.g. from cask renames) that removing this cask's
     # directory has broken, whatever the symlink is named.

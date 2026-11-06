@@ -216,6 +216,46 @@ RSpec.describe Cask::Uninstall, :cask do
         end.not_to output(/files installed by the Cask may remain/).to_stderr
       end
     end
+
+    context "when a Cask has `pkgutil` uninstall rules" do
+      let(:cask) { Cask::CaskLoader.from_path(cask_path("with-uninstall-pkgutil")) }
+      let(:installed_pkg) { instance_double(Cask::Pkg, package_id: "my.fancy.package.main", uninstall: nil) }
+      let(:warning) { /No installed packages match the `pkgutil` patterns/ }
+
+      before { InstallHelper.install_without_artifacts_with_caskfile(cask) }
+
+      it "warns when no installed package matches" do
+        allow(Cask::Pkg).to receive(:all_matching).and_return([])
+
+        expect { described_class.uninstall_casks(cask) }.to output(warning).to_stderr
+      end
+
+      it "warns when zapping and no installed package matches" do
+        allow(Cask::Pkg).to receive(:all_matching).and_return([])
+
+        expect { Cask::Installer.new(cask).zap }.to output(warning).to_stderr
+      end
+
+      it "does not warn when an installed package matches" do
+        allow(Cask::Pkg).to receive(:all_matching).and_return([installed_pkg])
+
+        expect { described_class.uninstall_casks(cask) }.not_to output(warning).to_stderr
+      end
+
+      it "does not warn when the uninstall rules are what removes the packages" do
+        allow(Cask::Pkg).to receive(:all_matching).and_return([installed_pkg], [])
+
+        expect { described_class.uninstall_casks(cask) }.not_to output(warning).to_stderr
+      end
+
+      it "does not warn when uninstalling as part of an upgrade" do
+        allow(Cask::Pkg).to receive(:all_matching).and_return([])
+
+        expect do
+          Cask::Installer.new(cask, upgrade: true).uninstall(successor: cask)
+        end.not_to output(warning).to_stderr
+      end
+    end
   end
 
   describe ".check_dependent_casks" do
