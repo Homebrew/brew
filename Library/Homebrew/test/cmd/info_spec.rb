@@ -802,30 +802,62 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
-  context "when an installed dependent has no receipt list and its formula can't be loaded" do
-    before do
-      keg_path = HOMEBREW_CELLAR/"unloadable-dependent/1.0"
-      keg_path.mkpath
-      tab = Tab.empty
-      tab.tabfile = keg_path/AbstractTab::FILENAME
-      tab.write
+  it "skips installed dependents whose receipts have no list when their formula lookup is ambiguous" do
+    keg_path = HOMEBREW_CELLAR/"ambiguous-dependent/1.0"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
 
-      allow(Formulary).to receive(:loader_for).and_call_original
+    allow(Formulary).to receive(:loader_for).and_call_original
+    allow(Formulary).to receive(:loader_for).with("ambiguous-dependent", any_args)
+                                            .and_raise(TapFormulaAmbiguityError.new("ambiguous-dependent", []))
+
+    expect(described_class.installed_dependent_names(["testball"])).to be_empty
+  end
+
+  it "skips installed kegs from untrusted taps whose receipts have no list", :trust_store do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new(["--verbose"])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
     end
 
-    it "skips it when the formula lookup is ambiguous" do
-      allow(Formulary).to receive(:loader_for).with("unloadable-dependent", any_args)
-                                              .and_raise(TapFormulaAmbiguityError.new("unloadable-dependent", []))
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
 
-      expect(described_class.installed_dependent_names(["testball"])).to be_empty
-    end
+    tap = Tap.fetch("thirdparty", "foo")
+    formula_path = tap.path/"Formula/untrusted.rb"
+    formula_path.dirname.mkpath
+    formula_path.write <<~RUBY
+      class Untrusted < Formula
+        url "https://brew.sh/untrusted-1.0.tar.gz"
+      end
+    RUBY
 
-    it "skips it when the formula is from an untrusted tap" do
-      allow(Formulary).to receive(:loader_for).with("unloadable-dependent", any_args)
-                                              .and_raise(Homebrew::UntrustedTapError)
+    untrusted_keg_path = HOMEBREW_CELLAR/"untrusted/1.0"
+    untrusted_keg_path.mkpath
+    untrusted_tab = Tab.empty
+    untrusted_tab.tabfile = untrusted_keg_path/AbstractTab::FILENAME
+    untrusted_tab.tap = tap
+    untrusted_tab.write
 
-      expect(described_class.installed_dependent_names(["testball"])).to be_empty
-    end
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+
+    expect { info.info_formula(formula) }
+      .to output(/^==> Installed Kegs and Versions$/).to_stdout
+      .and not_to_output(/^Dependents/).to_stdout
+      .and not_to_output.to_stderr
+  ensure
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
   end
 
   it "summarises recursive runtime dependencies as all installed when none are missing" do
