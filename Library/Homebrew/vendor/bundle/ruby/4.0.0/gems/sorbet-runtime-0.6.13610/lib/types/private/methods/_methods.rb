@@ -508,7 +508,7 @@ module T::Private::Methods
   # Executes the `sig` block, and converts the resulting Declaration
   # to a Signature.
   def self.run_sig(method_name, original_method, declaration_block, unwrap:)
-    current_declaration =
+    current_decl_or_sig =
       begin
         run_builder(declaration_block)
       rescue DeclBuilder::BuilderError => e
@@ -516,12 +516,16 @@ module T::Private::Methods
         nil
       end
 
+    # Another thread can finish initialization after this call enters the
+    # first-call wrapper but before run_builder reads sig_state.
+    return current_decl_or_sig if current_decl_or_sig.is_a?(Signature)
+
     # Release location information sooner
     declaration_block.loc = nil
 
     signature =
-      if current_declaration
-        build_sig(method_name, original_method, current_declaration)
+      if current_decl_or_sig
+        build_sig(method_name, original_method, current_decl_or_sig)
       else
         Signature.new_untyped(method: original_method)
       end
@@ -547,10 +551,7 @@ module T::Private::Methods
 
   def self.run_builder(declaration_block)
     sig_state = declaration_block.sig_state
-    return sig_state if sig_state.is_a?(Declaration)
-    if !sig_state.is_a?(Proc)
-      raise "DeclarationBlock for #{declaration_block.mod} at #{declaration_block.loc} should have already been unwrapped"
-    end
+    return sig_state unless sig_state.is_a?(Proc)
 
     builder = DeclBuilder.new(
       declaration_block.mod,
@@ -615,10 +616,6 @@ module T::Private::Methods
     @signatures_by_method[method_to_key(maybe_wrapped_method)] = signature
   end
 
-  def self.has_sig_block_for_method(method)
-    has_sig_block_for_key(method_to_key(method))
-  end
-
   # Only public because it needs to get called inside the first-call wrapper closure.
   def self._sig_block_is_current?(key, sig_block)
     @sig_wrappers[key].equal?(sig_block)
@@ -635,10 +632,6 @@ module T::Private::Methods
   # Only public so that it can be accessed in the closure for _on_method_added
   def self.maybe_run_sig_block_for_key(key)
     run_sig_block_for_key(key) if has_sig_block_for_key(key)
-  end
-
-  def self.run_sig_block_for_method(method)
-    run_sig_block_for_key(method_to_key(method))
   end
 
   # use this directly if you don't want/need to box up the method into an object to pass to method_to_key.
