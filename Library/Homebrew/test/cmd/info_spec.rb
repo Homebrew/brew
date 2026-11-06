@@ -718,6 +718,47 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  it "lists installed dependents whose receipts use another name of the formula" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new(["--verbose"])
+    formula = formula("testball@2") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-2.0.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+    end
+
+    keg_path = HOMEBREW_CELLAR/"testball/1.0"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    {
+      "alias-dependent"   => "testball",
+      "oldname-dependent" => "old-testball",
+      "other-dependent"   => "other-formula",
+    }.each do |dependent_name, dependency_name|
+      dependent_keg_path = HOMEBREW_CELLAR/"#{dependent_name}/1.0"
+      dependent_keg_path.mkpath
+      dependent_tab = Tab.empty
+      dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
+      dependent_tab.runtime_dependencies = [
+        { "full_name" => dependency_name, "version" => "1.0" },
+      ]
+      dependent_tab.write
+    end
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(aliases: ["testball"], core_formula?: false,
+                                       missing_library_linkage: [[], Set.new], oldnames: ["old-testball"])
+
+    expect { info.info_formula(formula) }
+      .to output(/^Dependents \(2\): alias-dependent, oldname-dependent$/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
   it "summarises recursive runtime dependencies as all installed when none are missing" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
