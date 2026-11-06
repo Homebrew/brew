@@ -26,10 +26,11 @@ module RuboCop
 
           find_every_method_call_by_name(body_node, :url).each do |url|
             next if url.arguments.none? do |arg|
-              arg.is_a?(RuboCop::AST::HashNode) && arg.keys.each.map(&:value).include?(:revision)
+              arg.is_a?(RuboCop::AST::HashNode) && arg.keys.any? { |key| key.sym_type? && key.value == :revision }
             end
 
-            git_url = string_content(parameters(url).fetch(0)).end_with?(".git")
+            url_node = parameters(url).fetch(0)
+            git_url = url_node.str_type? && string_content(url_node).end_with?(".git")
 
             find_method_calls_by_name(url.parent, :sha256).each do |sha256|
               offending_node(sha256)
