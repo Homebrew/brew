@@ -1225,7 +1225,8 @@ module Homebrew
 
         deprecated_or_disabled = Formula.installed.select do |f|
           (f.deprecated? || f.disabled?) &&
-            f.installed_kegs.none? { |keg| keg.name == f.name && keg.deleted_formula? }
+            f.installed_kegs.none? { |keg| keg.name == f.name && keg.deleted_formula? } &&
+            !unrequested_dependency_of_current_formula?(f.any_installed_keg, f.possible_names)
         end
         return if deprecated_or_disabled.empty?
 
@@ -1468,7 +1469,9 @@ module Homebrew
       def check_deleted_formula
         newest_kegs_first = Keg.all.select(&:deleted_formula?).sort_by(&:scheme_and_version).reverse
         kegs_with_a_tap, kegs_without_a_tap = newest_kegs_first.partition { |keg| keg.tab.tap }
-        deleted_kegs = (kegs_with_a_tap + kegs_without_a_tap).uniq(&:name)
+        deleted_kegs = (kegs_with_a_tap + kegs_without_a_tap).uniq(&:name).reject do |keg|
+          unrequested_dependency_of_current_formula?(keg, [keg.name])
+        end
 
         return if deleted_kegs.blank?
 
@@ -1834,6 +1837,17 @@ module Homebrew
       end
 
       private
+
+      sig { params(keg: T.nilable(Keg), names: T::Array[String]).returns(T::Boolean) }
+      def unrequested_dependency_of_current_formula?(keg, names)
+        @names_required_by_current_formulae ||= T.let(
+          Formula.installed.reject { |f| f.deprecated? || f.disabled? || f.any_installed_keg&.deleted_formula? }
+                 .flat_map(&:runtime_dependencies)
+                 .to_set { |dep| Utils.name_from_full_name(dep.name) },
+          T.nilable(T::Set[String]),
+        )
+        @names_required_by_current_formulae.intersect?(names) && !keg&.tab&.installed_on_request
+      end
 
       sig { params(path: String).returns(Finding::Remediation) }
       def path_remediation(path = "#{HOMEBREW_PREFIX}/bin")

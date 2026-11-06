@@ -6,6 +6,32 @@ require "diagnostic"
 RSpec.describe Homebrew::Diagnostic::Checks do
   subject(:checks) { described_class.new }
 
+  def install_keg(name, installed_on_request: false, runtime_dependencies: [])
+    keg_path = HOMEBREW_CELLAR/name/"1.0"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.installed_on_request = installed_on_request
+    tab.runtime_dependencies = runtime_dependencies
+    tab.write
+  end
+
+  # The receipt names the dependency but the current formula doesn't, like a
+  # keg installed before its formula moved to another dependency.
+  def install_dependent(deprecated: false, deleted: false, dependency: "testball")
+    keg_path = HOMEBREW_CELLAR/"dependent/1.0"
+    formula_path = deleted ? keg_path/".brew/dependent.rb" : CoreTap.instance.new_formula_path("dependent")
+    formula_path.dirname.mkpath
+    formula_path.write <<~RUBY
+      class Dependent < Formula
+        url "https://brew.sh/dependent-1.0.tar.gz"
+        #{'deprecate! date: "2020-01-01", because: :unsupported' if deprecated}
+      end
+    RUBY
+    install_keg("dependent", runtime_dependencies: [{ "full_name" => dependency, "version" => "1.0" }])
+    (HOMEBREW_PREFIX/"opt/dependent").make_relative_symlink(keg_path) if deleted
+  end
+
   specify "#append_indented_list" do
     expect(checks.append_indented_list([], "foo:\n")).to eq("foo:\n")
     expect(checks.append_indented_list(%w[/a /b], "foo:\n")).to eq("foo:\n  /a\n  /b\n")
@@ -352,6 +378,47 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
       expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
     end
+
+    it "skips a deprecated dependency of a formula that isn't deprecated" do
+      install_keg("testball")
+      write_deprecated_core_formula
+      install_dependent
+
+      expect(checks.check_deprecated_disabled).to be_nil
+    end
+
+    it "skips a deprecated dependency whose receipt uses its old name" do
+      install_keg("testball")
+      write_deprecated_core_formula
+      install_dependent(dependency: "oldball")
+      allow(CoreTap.instance).to receive(:formula_reverse_renames).and_return("testball" => ["oldball"])
+
+      expect(checks.check_deprecated_disabled).to be_nil
+    end
+
+    it "lists a deprecated dependency that was installed on request" do
+      install_keg("testball", installed_on_request: true)
+      write_deprecated_core_formula
+      install_dependent
+
+      expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
+    end
+
+    it "lists a deprecated dependency of a deprecated formula" do
+      install_keg("testball")
+      write_deprecated_core_formula
+      install_dependent(deprecated: true)
+
+      expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  dependent\n  testball")
+    end
+
+    it "lists a deprecated dependency of a deleted formula" do
+      install_keg("testball")
+      write_deprecated_core_formula
+      install_dependent(deleted: true)
+
+      expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
+    end
   end
 
   describe "#check_for_unlinked_but_not_keg_only" do
@@ -418,6 +485,29 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       No tap recorded (possibly installed manually):
         hand-made
     EOS
+  end
+
+  describe "#check_deleted_formula for dependencies" do
+    it "skips a deleted dependency of a current formula" do
+      install_keg("testball")
+      install_dependent
+
+      expect(checks.check_deleted_formula).to be_nil
+    end
+
+    it "lists a deleted dependency that was installed on request" do
+      install_keg("testball", installed_on_request: true)
+      install_dependent
+
+      expect(checks.check_deleted_formula&.to_s).to match("manually\\):\n  testball")
+    end
+
+    it "lists a deleted dependency of a deleted formula" do
+      install_keg("testball")
+      install_dependent(deleted: true)
+
+      expect(checks.check_deleted_formula&.to_s).to match("manually\\):\n  dependent\n  testball")
+    end
   end
 
   specify "#check_for_unnecessary_core_tap" do
