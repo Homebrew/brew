@@ -154,6 +154,28 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       end
     end
 
+    context "with a checksum for only one architecture" do
+      it "stores a lone intel checksum" do
+        Homebrew::SimulateSystem.with(os: :macos, arch: :intel) do
+          cask = Cask::Cask.new("checksum-cask") do
+            sha256 intel: "imasha2intel"
+          end
+
+          expect(cask.sha256).to eq("imasha2intel")
+        end
+      end
+
+      it "stores a lone x86_64 checksum" do
+        Homebrew::SimulateSystem.with(os: :macos, arch: :intel) do
+          cask = Cask::Cask.new("checksum-cask") do
+            sha256 x86_64: "imasha2intel"
+          end
+
+          expect(cask.sha256).to eq("imasha2intel")
+        end
+      end
+    end
+
     context "with checksums for only one OS" do
       it "has no checksum on macOS when only Linux checksums are set" do
         Homebrew::SimulateSystem.with(os: :macos, arch: :arm) do
