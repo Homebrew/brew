@@ -486,6 +486,7 @@ RSpec.describe Cask::Upgrade, :cask do
       expect do
         described_class.upgrade_casks!(dry_run: true, args:)
       end.to output(/The cask 'auto-updates' cannot be upgraded as-is/).to_stderr
+      expect(Homebrew).not_to be_failed
     end
 
     it "warns and skips when the installed caskfile raises MethodDeprecatedError" do
@@ -500,7 +501,7 @@ RSpec.describe Cask::Upgrade, :cask do
       end.to output(/The cask 'auto-updates' cannot be upgraded as-is/).to_stderr
     end
 
-    it "warns and skips when the cask is not fully installed" do
+    it "fails and skips an explicitly named cask that is not fully installed" do
       # Stub installed? to return false after outdated detection
       # to simulate a cask with a broken metadata directory
       installed_calls = 0
@@ -511,7 +512,10 @@ RSpec.describe Cask::Upgrade, :cask do
 
       expect do
         described_class.upgrade_casks!(auto_updates, dry_run: true, args:)
-      end.to output(/The cask 'auto-updates' cannot be upgraded as-is/).to_stderr
+      end.to output(/Error: The cask 'auto-updates' cannot be upgraded as-is/).to_stderr
+      expect(Homebrew).to be_failed
+    ensure
+      Homebrew.failed = false
     end
   end
 

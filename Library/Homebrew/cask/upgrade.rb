@@ -212,10 +212,11 @@ module Cask
         end
 
         if loaded_cask.nil?
-          opoo <<~EOS
+          message = <<~EOS
             The cask '#{c.token}' cannot be upgraded as-is. To fix this, run:
             brew reinstall --cask --force #{c.token}
           EOS
+          casks.any? ? ofail(message) : opoo(message)
           next
         end
 
