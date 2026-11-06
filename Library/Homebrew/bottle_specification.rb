@@ -16,6 +16,8 @@ class BottleSpecification
 
   RELOCATABLE_CELLARS = T.let([ANY_CELLAR, ANY_SKIP_RELOCATION_CELLAR].freeze, T::Array[Symbol])
 
+  SHA256_REGEX = /^[a-f0-9]{64}$/i
+
   sig { returns(T.nilable(Tap)) }
   attr_accessor :tap
 
@@ -135,15 +137,13 @@ class BottleSpecification
   # end
   sig { params(hash: T::Hash[T.any(Symbol, String), T.any(String, Symbol)]).void }
   def sha256(hash)
-    sha256_regex = /^[a-f0-9]{64}$/i
-
     # find new `sha256 big_sur: "69489ae397e4645..."` format
     tag, digest = hash.find do |key, value|
       # Don't use `odie` in this case. We want to be able to catch this exception
       # in runtime when getting committed version info in formula auditor
-      raise LegacyDSLError.new(:sha256, hash) if key.is_a?(String) && key.match?(sha256_regex) && value.is_a?(Symbol)
+      raise LegacyDSLError.new(:sha256, hash) if key.is_a?(String) && key.match?(SHA256_REGEX) && value.is_a?(Symbol)
 
-      key.is_a?(Symbol) && value.is_a?(String) && value.match?(sha256_regex)
+      key.is_a?(Symbol) && value.is_a?(String) && value.match?(SHA256_REGEX)
     end
 
     odie "Invalid sha256 hash: #{digest}" if !tag || !digest
