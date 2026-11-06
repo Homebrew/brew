@@ -170,7 +170,7 @@ jobs:
           title: Failed to update sponsors, maintainers, manpage and completions
           body: >
             The sponsors, maintainers, manpage and completions workflow [failed](${{ env.RUN_URL }}). Some updates may have completed; check the workflow log for details.
-          labels: bug
+          type: Bug
           update-existing: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
           close-existing: ${{ needs.updates.result == 'success' }}
           close-from-author: github-actions[bot]
