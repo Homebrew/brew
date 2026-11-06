@@ -257,7 +257,9 @@ module Homebrew
 
           audit_exceptions = []
 
-          audit_exceptions << %w[homepage_https_availability] if labels.include?("ci-skip-homepage")
+          if labels.include?("ci-skip-homepage")
+            audit_exceptions << %w[homepage_https_availability homepage_domain_age]
+          end
 
           if labels.include?("ci-skip-livecheck")
             audit_exceptions << %w[hosting_with_livecheck livecheck_https_availability livecheck_version min_os]
