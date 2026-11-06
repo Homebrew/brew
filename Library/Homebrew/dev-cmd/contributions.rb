@@ -38,6 +38,7 @@ module Homebrew
       MAINTAINER_ACTIVITY_THRESHOLD = 40
       # https://docs.brew.sh/Homebrew-Governance#lead-maintainer
       LEAD_ACTIVITY_PERIODS = 4
+      LEAD_ACTIVITY_REPOSITORIES = 2
       LEAD_REPOSITORY_ACTIVITY_THRESHOLD = 20
       MAX_CONTRIBUTIONS = 500
       QUALIFYING_CONTRIBUTION_TYPES = [:merged_pr, :approved_pr_review, :coauthor].freeze
@@ -96,7 +97,9 @@ module Homebrew
                             "governance quarter, for example `--maintainer-report-csv=2026-2`. " \
                             "Alternatively, omit the value and set `--from` and `--to` for any reporting period. " \
                             "Also write it in the current directory as `brew-contributions-FROM-to-TO.csv`, or " \
-                            "`brew-contributions-FROM-to-TO-USER.csv` when filtered with `--user`. " \
+                            "`brew-contributions-FROM-to-TO-USER.csv` when filtered with `--user`, beside a " \
+                            "matching `.md` summary of activity in the latest completed and current quarters " \
+                            "with each Maintainer's numerical gap. " \
                             "Only Maintainers listed at the end of that period are included. " \
                             "Activity checks use the latest completed governance quarter; " \
                             "role recommendations use up to four full quarters of reports. " \
@@ -153,7 +156,9 @@ module Homebrew
           to = args.to.presence || quarter_dates&.last || (Date.today + 1).iso8601
         end
         if maintainer_report_csv
-          odie "`--from` must precede `--to`." if Date.iso8601(from) >= Date.iso8601(to)
+          from = Date.iso8601(from).iso8601
+          to = Date.iso8601(to).iso8601
+          odie "`--from` must precede `--to`." if from >= to
           $stderr.puts "Maintainer report dates: #{from}-to-#{to}"
         elsif args.verbose?
           puts "Date range is #{time_period(from:, to:)}."
@@ -227,6 +232,7 @@ module Homebrew
           filename = "brew-contributions-#{from}-to-#{to}"
           filename += "-#{user_names.keys.map(&:downcase).sort.join("-")}" if requested_users.present?
           File.write("#{filename}.csv", csv)
+          File.write("#{filename}.md", generate_maintainer_report_summary(csv, from, to))
           puts csv
           return
         end
@@ -662,12 +668,10 @@ module Homebrew
 
         results.each do |user, user_results|
           assessments = [false, true].freeze.map do |include_unverified|
-            totals = user_results.values.map do |counts|
+            activity_met(user_results.values.map do |counts|
               contribution_count(counts.slice(*MAINTAINER_CONTRIBUTION_TYPES)) +
                 (include_unverified ? counts.fetch(:unverified_merges, 0) : 0)
-            end
-            [totals.sum >= MAINTAINER_ACTIVITY_THRESHOLD,
-             totals.count { |count| count >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD } >= 2]
+            end)
           end
           next if assessments.uniq.one?
 
@@ -1054,16 +1058,32 @@ module Homebrew
         params(
           from:           String,
           to:             String,
-          current_report: T.nilable([String, String, T::Hash[String, T::Hash[String, Integer]]]),
+          current_report: T.nilable([String, String, T::Hash[String, T::Hash[String, Integer]], T::Array[String]]),
         ).returns(T.nilable(T::Hash[String, [T::Boolean, T::Boolean]]))
       }
       def maintainer_activity_report(from, to, current_report: nil)
+        maintainer_activity_totals(from, to, current_report:)&.transform_values do |totals, _capped|
+          activity_met(totals.values)
+        end
+      end
+
+      # Returns each user's per-repository totals and whether any contributing report capped their counts.
+      sig {
+        params(
+          from:           String,
+          to:             String,
+          current_report: T.nilable([String, String, T::Hash[String, T::Hash[String, Integer]], T::Array[String]]),
+        ).returns(T.nilable(T::Hash[String, [T::Hash[String, Integer], T::Boolean]]))
+      }
+      def maintainer_activity_totals(from, to, current_report: nil)
         require "csv"
 
         reports = T.let([], T::Array[T::Hash[String, T::Hash[String, Integer]]])
+        capped_users = T.let([], T::Array[String])
         while from < to
           if current_report && current_report[0] == from && current_report[1] <= to
             reports << current_report[2]
+            capped_users.concat(current_report[3])
             from = current_report[1]
             next
           end
@@ -1087,9 +1107,9 @@ module Homebrew
             next unless username.is_a?(String)
 
             totals[username.downcase] = PRIMARY_REPOS.to_h do |repository|
-              [repository,
-               Integer(row.fetch("#{repository.delete_prefix("Homebrew/").delete_prefix("homebrew-")} total"))]
+              [repository, Integer(row.fetch("#{repository_name(repository)} total"))]
             end
+            capped_users << username.downcase if row["capped"] == "true"
           end
           reports << totals
           from = report_to
@@ -1097,11 +1117,10 @@ module Homebrew
         reports.fetch(0).keys.filter_map do |user|
           next unless reports.all? { |report| report.key?(user) }
 
-          user_totals = PRIMARY_REPOS.map do |repository|
-            reports.sum { |report| report.fetch(user).fetch(repository) }
+          user_totals = PRIMARY_REPOS.to_h do |repository|
+            [repository, reports.sum { |report| report.fetch(user).fetch(repository) }]
           end
-          [user, [user_totals.sum >= MAINTAINER_ACTIVITY_THRESHOLD,
-                  user_totals.count { |total| total >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD } >= 2]]
+          [user, [user_totals, capped_users.include?(user)]]
         end.to_h
       end
 
@@ -1168,11 +1187,18 @@ module Homebrew
             contribution_count(counts.slice(*MAINTAINER_CONTRIBUTION_TYPES))
           end]
         end
-        activity_end = Date.new(period_end.year, period_end.month, 1)
-                           .prev_month(period_end.month % ACTIVITY_PERIOD_MONTHS)
+        capped_users = results.filter_map do |user, repositories|
+          capped = repositories.values.any? do |counts|
+            counts.fetch(:reviews_skipped, 0).positive? || counts.fetch(:merges_skipped, 0).positive? ||
+              counts.fetch(:unverified_merges, 0).positive? ||
+              counts.slice(*MAINTAINER_CONTRIBUTION_TYPES).values.any? { |count| count >= MAX_CONTRIBUTIONS }
+          end
+          user.downcase if capped
+        end
+        activity_end = activity_period_end(period_end)
         activity_start = activity_end.prev_month(ACTIVITY_PERIOD_MONTHS).iso8601
         activity = maintainer_activity_report(activity_start, activity_end.iso8601,
-                                              current_report: [from, to, repository_totals]) || {}
+                                              current_report: [from, to, repository_totals, capped_users]) || {}
         previous_reports = previous_maintainer_reports(activity_start)
         # Activity-based recommendations require previous-period data.
         include_potential_role = (activity.present? && previous_reports.present?) || args.maintainer_exempt.present?
@@ -1197,11 +1223,7 @@ module Homebrew
             potential_role = "Maintainer"
           end
 
-          capped = user_repositories.any? do |_, counts|
-            counts.fetch(:reviews_skipped, 0).positive? || counts.fetch(:merges_skipped, 0).positive? ||
-              counts.fetch(:unverified_merges, 0).positive? ||
-              counts.slice(*MAINTAINER_CONTRIBUTION_TYPES).values.any? { |count| count >= MAX_CONTRIBUTIONS }
-          end
+          capped = capped_users.include?(user.downcase)
 
           [
             user,
@@ -1226,7 +1248,7 @@ module Homebrew
           csv << [
             "username", "name", "since", "tenure days",
             *PRIMARY_REPOS.flat_map do |repository|
-              repository = repository.delete_prefix("Homebrew/").delete_prefix("homebrew-")
+              repository = repository_name(repository)
               [
                 "#{repository} merged", (repository == "brew") ? "brew first approvals" : "#{repository} approvals",
                 "#{repository} issues closed", "#{repository} total"
@@ -1237,6 +1259,125 @@ module Homebrew
           ]
           rows.each { |row| csv << row }
         end
+      end
+
+      sig { params(csv: String, from: String, to: String).returns(String) }
+      def generate_maintainer_report_summary(csv, from, to)
+        require "csv"
+
+        rows = CSV.parse(csv, headers: true).filter_map { |row| row.to_h if row.is_a?(CSV::Row) }
+        repository_totals = rows.to_h do |row|
+          [row.fetch("username").downcase, PRIMARY_REPOS.to_h do |repository|
+            [repository, Integer(row.fetch("#{repository_name(repository)} total"))]
+          end]
+        end
+        capped_users = rows.filter_map { |row| row.fetch("username").downcase if row["capped"] == "true" }
+        current_report = [from, to, repository_totals, capped_users]
+        period_end = Date.iso8601(to)
+        activity_end = activity_period_end(period_end)
+        activity_start = activity_end.prev_month(ACTIVITY_PERIOD_MONTHS)
+        summary = [
+          "## Maintainer contribution summary",
+          "",
+          "Contribution counts cover #{summary_period(Date.iso8601(from), period_end)}.",
+          "",
+          "### Latest completed quarter: #{summary_period(activity_start, activity_end)}",
+          "",
+          *maintainer_activity_summary(
+            rows, maintainer_activity_totals(activity_start.iso8601, activity_end.iso8601, current_report:)
+          ),
+        ]
+        if activity_end < period_end
+          summary += [
+            "",
+            "### Current quarter: #{summary_period(activity_end, activity_end.next_month(ACTIVITY_PERIOD_MONTHS))}",
+            "",
+            "Progress through #{period_end.prev_day.iso8601}; the quarter is still in progress.",
+            "",
+            *maintainer_activity_summary(rows, maintainer_activity_totals(activity_end.iso8601, to, current_report:)),
+          ]
+        end
+        summary += [
+          "",
+          "Maintainer activity requires #{MAINTAINER_ACTIVITY_THRESHOLD} meaningful maintainer contributions per " \
+          "quarter. Lead activity requires at least #{LEAD_REPOSITORY_ACTIVITY_THRESHOLD} in " \
+          "#{LEAD_ACTIVITY_REPOSITORIES} repositories. Counts in `capped` rows are lower bounds. Exemptions retain " \
+          "Maintainer status but don't waive Lead Maintainer requirements. Role changes also consider the other " \
+          "[governance criteria](https://docs.brew.sh/Homebrew-Governance).",
+        ]
+        "#{summary.join("\n")}\n"
+      end
+
+      sig {
+        params(
+          rows:   T::Array[T::Hash[String, T.nilable(String)]],
+          totals: T.nilable(T::Hash[String, [T::Hash[String, Integer], T::Boolean]]),
+        ).returns(T::Array[String])
+      }
+      def maintainer_activity_summary(rows, totals)
+        return ["Activity is unknown without contiguous reports for this period."] if totals.nil?
+
+        maintainer_activity = []
+        lead_activity = []
+        exempt = []
+        table = []
+        rows.each do |row|
+          username = row.fetch("username").to_s
+          user_totals, capped = totals[username.downcase]
+          maintainer_met, lead_met = activity_met(user_totals.values) if user_totals
+          # An exemption only changes the outcome for Maintainers below the threshold.
+          maintainer_exempt = row["maintainer exempt"] == "true" && !maintainer_met
+          if maintainer_exempt
+            exempt << username
+          else
+            maintainer_activity << maintainer_met
+          end
+          lead_maintainer = row["role"] == "Lead Maintainer"
+          lead_activity << lead_met if lead_maintainer
+          maintainer_below = !maintainer_exempt && !maintainer_met
+          lead_below = lead_maintainer && !lead_met
+          next if !maintainer_below && !lead_below
+
+          cells = if user_totals
+            gaps = []
+            if maintainer_below
+              gaps << "#{MAINTAINER_ACTIVITY_THRESHOLD - user_totals.values.sum} more for Maintainer activity"
+            end
+            if lead_below
+              below = user_totals.filter_map do |repository, total|
+                next if total >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD
+
+                "#{repository_name(repository)}: #{LEAD_REPOSITORY_ACTIVITY_THRESHOLD - total} more"
+              end
+              needed = LEAD_ACTIVITY_REPOSITORIES - (user_totals.length - below.length)
+              gaps << "Lead: reach #{LEAD_REPOSITORY_ACTIVITY_THRESHOLD} in #{needed} more " \
+                      "#{Utils.pluralize("repositor", needed, plural: "ies", singular: "y")} (#{below.join(", ")})"
+            end
+            gaps << "capped counts are lower bounds" if capped
+            [*user_totals.values, user_totals.values.sum, gaps.join("; ")]
+          else
+            [*Array.new(PRIMARY_REPOS.length + 1, "unknown"), "Incomplete history"]
+          end
+          table << "| #{[username, *cells].join(" | ")} |"
+        end
+
+        summary = [
+          "- Maintainer activity: **#{maintainer_activity.count(true)}/#{maintainer_activity.length} met**; " \
+          "#{maintainer_activity.count(nil)} unknown#{"; exempt: #{exempt.join(", ")}" if exempt.any?}.",
+        ]
+        unless lead_activity.empty?
+          summary << "- Lead activity (Lead Maintainers): **#{lead_activity.count(true)}/#{lead_activity.length} " \
+                     "met**; #{lead_activity.count(nil)} unknown."
+        end
+        return summary if table.empty?
+
+        repositories = PRIMARY_REPOS.map { |repository| repository_name(repository).capitalize }
+        summary + [
+          "",
+          "| Maintainer | #{repositories.join(" | ")} | Total | Numerical gap |",
+          "| --- |#{" ---: |" * (repositories.length + 1)} --- |",
+          *table,
+        ]
       end
 
       sig { params(repositories: T::Array[String], required: T::Boolean).returns(T::Hash[String, [Pathname, String]]) }
@@ -1398,7 +1539,28 @@ module Homebrew
       def lead_activity_met?(repositories)
         repositories.count do |_, counts|
           contribution_count(counts.slice(*QUALIFYING_CONTRIBUTION_TYPES)) >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD
-        end >= 2
+        end >= LEAD_ACTIVITY_REPOSITORIES
+      end
+
+      sig { params(totals: T::Array[Integer]).returns([T::Boolean, T::Boolean]) }
+      def activity_met(totals)
+        [totals.sum >= MAINTAINER_ACTIVITY_THRESHOLD,
+         totals.count { |total| total >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD } >= LEAD_ACTIVITY_REPOSITORIES]
+      end
+
+      sig { params(period_end: Date).returns(Date) }
+      def activity_period_end(period_end)
+        Date.new(period_end.year, period_end.month, 1).prev_month(period_end.month % ACTIVITY_PERIOD_MONTHS)
+      end
+
+      sig { params(repository: String).returns(String) }
+      def repository_name(repository)
+        repository.delete_prefix("Homebrew/").delete_prefix("homebrew-")
+      end
+
+      sig { params(from: Date, to: Date).returns(String) }
+      def summary_period(from, to)
+        "#{from.iso8601} through #{to.prev_day.iso8601}"
       end
 
       sig {
@@ -1408,7 +1570,8 @@ module Homebrew
         repository_totals = repositories.transform_values do |counts|
           contribution_count(counts.slice(*MAINTAINER_CONTRIBUTION_TYPES))
         end
-        repository_totals.values.count { |count| count >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD } >= 2 ||
+        _, lead_met = activity_met(repository_totals.values)
+        lead_met ||
           (repository_totals.fetch(repository) >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD &&
            repository_totals.values.sum >= MAINTAINER_ACTIVITY_THRESHOLD)
       end

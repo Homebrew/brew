@@ -3354,16 +3354,18 @@ Summarise contributions to Homebrew repositories.
   Alternatively, omit the value and set `--from` and `--to` for any reporting
   period. Also write it in the current directory as
   `brew-contributions-FROM-to-TO.csv`, or
-  `brew-contributions-FROM-to-TO-USER.csv` when filtered with `--user`. Only
-  Maintainers listed at the end of that period are included. Activity checks use
-  the latest completed governance quarter; role recommendations use up to four
-  full quarters of reports. Counts are capped at 500 per repository and
-  contribution type. Merge and approval checks stop once the activity thresholds
-  are met. Historical reports using older criteria must be regenerated.
-  Completed-period GitHub searches are cached in Homebrew's cache and removed by
-  normal cache pruning. `YEAR-1` is December of the previous year through
-  February, `YEAR-2` is March through May, `YEAR-3` is June through August and
-  `YEAR-4` is September through November.
+  `brew-contributions-FROM-to-TO-USER.csv` when filtered with `--user`, beside a
+  matching `.md` summary of activity in the latest completed and current
+  quarters with each Maintainer's numerical gap. Only Maintainers listed at the
+  end of that period are included. Activity checks use the latest completed
+  governance quarter; role recommendations use up to four full quarters of
+  reports. Counts are capped at 500 per repository and contribution type. Merge
+  and approval checks stop once the activity thresholds are met. Historical
+  reports using older criteria must be regenerated. Completed-period GitHub
+  searches are cached in Homebrew's cache and removed by normal cache pruning.
+  `YEAR-1` is December of the previous year through February, `YEAR-2` is March
+  through May, `YEAR-3` is June through August and `YEAR-4` is September through
+  November.
 
 `--maintainer-exempt`
 
