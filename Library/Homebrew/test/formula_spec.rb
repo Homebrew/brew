@@ -2004,8 +2004,23 @@ RSpec.describe Formula do
       allow(f).to receive(:any_installed_keg).and_return(keg)
     end
 
-    it "returns empty when no tab runtime_dependencies data" do
+    it "returns empty when no keg is installed" do
+      allow(f).to receive_messages(any_installed_keg:               nil,
+                                   declared_runtime_dependencies:   [Dependency.new("baz")],
+                                   undeclared_runtime_dependencies: [])
+      expect(f.missing_dependencies).to be_empty
+    end
+
+    it "falls back to formula definitions when the tab has no runtime_dependencies data" do
+      allow(f).to receive_messages(declared_runtime_dependencies:   [Dependency.new("baz")],
+                                   undeclared_runtime_dependencies: [])
       allow(keg).to receive(:runtime_dependencies).and_return(nil)
+      expect(f.missing_dependencies.map(&:name)).to eq(["baz"])
+    end
+
+    it "does not fall back to formula definitions when the tab has an empty runtime_dependencies list" do
+      allow(f).to receive(:declared_runtime_dependencies).and_return([Dependency.new("baz")])
+      allow(keg).to receive(:runtime_dependencies).and_return([])
       expect(f.missing_dependencies).to be_empty
     end
 
