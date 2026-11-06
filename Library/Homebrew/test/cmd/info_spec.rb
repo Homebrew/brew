@@ -802,6 +802,20 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  it "skips installed dependents whose receipts have no list when their formula lookup is ambiguous" do
+    keg_path = HOMEBREW_CELLAR/"ambiguous-dependent/1.0"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    allow(Formulary).to receive(:loader_for).and_call_original
+    allow(Formulary).to receive(:loader_for).with("ambiguous-dependent", any_args)
+                                            .and_raise(TapFormulaAmbiguityError.new("ambiguous-dependent", []))
+
+    expect(described_class.installed_dependent_names(["testball"])).to be_empty
+  end
+
   it "summarises recursive runtime dependencies as all installed when none are missing" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
