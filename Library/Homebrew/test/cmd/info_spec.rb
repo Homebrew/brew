@@ -760,6 +760,48 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  it "falls back to formula definitions only for installed dependents whose receipts have no list" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new(["--verbose"])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+    end
+    stub_formula_loader formula
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    { "no-list-dependent" => nil, "stale-list-dependent" => [] }.each do |dependent_name, runtime_dependencies|
+      stub_formula_loader(formula(dependent_name) do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/#{dependent_name}-1.0.tar.gz"
+
+        depends_on "testball"
+      end)
+
+      dependent_keg_path = HOMEBREW_CELLAR/"#{dependent_name}/1.0"
+      dependent_keg_path.mkpath
+      dependent_tab = Tab.empty
+      dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
+      dependent_tab.runtime_dependencies = runtime_dependencies
+      dependent_tab.write
+    end
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+
+    expect { info.info_formula(formula) }
+      .to output(/^Dependents \(1\): no-list-dependent$/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
   it "summarises recursive runtime dependencies as all installed when none are missing" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
