@@ -2957,6 +2957,9 @@ class Spoom::RBS::Comment
   sig { params(string: ::String, location: ::Prism::Location).void }
   def initialize(string, location); end
 
+  sig { returns(T::Array[::String]) }
+  def inner_comments; end
+
   sig { returns(::Prism::Location) }
   def location; end
 
@@ -3490,6 +3493,9 @@ class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::BaseTranslator < ::Spoo
   sig { overridable.params(of: ::String, to_height_of: ::Spoom::RBS::Comment).returns(::String) }
   def pad_out_line_count(of:, to_height_of:); end
 
+  sig { overridable.params(replacement: ::String, from: ::Spoom::RBS::Comment).returns(::String) }
+  def preserve_comments(replacement, from:); end
+
   sig { overridable.params(annotation: ::Spoom::RBS::Annotation, is_known: T::Boolean).void }
   def rewrite_annotation(annotation, is_known:); end
 
@@ -3548,6 +3554,9 @@ class Spoom::Sorbet::Translate::RBSCommentsToSorbetSigs::HumanReadableTranslator
       ).void
   end
   def insert_type_member(type_member, parent_node:, insert_pos:); end
+
+  sig { override.params(replacement: ::String, from: ::Spoom::RBS::Comment).returns(::String) }
+  def preserve_comments(replacement, from:); end
 
   sig { override.params(signature: ::Spoom::RBS::Signature).void }
   def rewrite_discarded_overload(signature); end

@@ -140,7 +140,7 @@ class Vernier::MemoryLeakDetector
   def start_thread; end
 
   class << self
-    def start_thread(*_arg0, **_arg1, &_arg2); end
+    def start_thread(*, **, &); end
   end
 end
 
@@ -224,7 +224,7 @@ class Vernier::Output::Firefox
   private
 
   def counter_data; end
-  def data; end
+  def data(hide_anonymous_threads); end
   def marker_schema; end
   def profile; end
 end
@@ -260,9 +260,11 @@ Vernier::Output::Firefox::Categorizer::RAILS_COMPONENTS = T.let(T.unsafe(nil), A
 class Vernier::Output::Firefox::Thread
   include ::Vernier::OutputHelpers
 
-  def initialize(ruby_thread_id, profile, categorizer, name:, tid:, samples:, weights:, markers:, started_at:, timestamps: T.unsafe(nil), sample_categories: T.unsafe(nil), stopped_at: T.unsafe(nil), allocations: T.unsafe(nil), is_main: T.unsafe(nil), is_start: T.unsafe(nil)); end
+  def initialize(ruby_thread_id, profile, categorizer, name:, tid:, samples:, weights:, markers:, started_at:, anonymous:, timestamps: T.unsafe(nil), sample_categories: T.unsafe(nil), stopped_at: T.unsafe(nil), allocations: T.unsafe(nil), is_main: T.unsafe(nil), is_start: T.unsafe(nil)); end
 
   def allocations_table; end
+  def anonymous; end
+  def anonymous?; end
   def categorize_filename(filename); end
   def cfunc_category_and_subcategory; end
   def data; end
@@ -270,6 +272,7 @@ class Vernier::Output::Firefox::Thread
   def find_category_and_subcategory(filename, categories); end
   def frame_table; end
   def func_table; end
+  def is_main; end
   def is_start; end
   def markers_table; end
   def profile; end
@@ -487,6 +490,7 @@ class Vernier::ThreadNames
   def initialize; end
 
   def [](object_id); end
+  def anonymous?(object_id); end
   def finish; end
 
   private

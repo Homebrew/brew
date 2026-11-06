@@ -544,6 +544,7 @@ class RuboCop::ConfigObsoletion
 
   def deprecated_cop_name?(name); end
   def legacy_cop_names; end
+  def messages; end
   def reject_obsolete!; end
   def rules; end
   def warnings; end
@@ -1828,6 +1829,8 @@ RuboCop::Cop::Lint::NameTypo::METHOD_MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::NestedMethodDefinition::MSG = T.let(T.unsafe(nil), String)
 
+RuboCop::Cop::Lint::NestedPercentLiteral::FORMAT_SEQUENCE = T.let(T.unsafe(nil), Regexp)
+
 RuboCop::Cop::Lint::NestedPercentLiteral::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::NestedPercentLiteral::PERCENT_LITERAL_TYPES = T.let(T.unsafe(nil), Array)
@@ -1895,6 +1898,8 @@ RuboCop::Cop::Lint::ParenthesesAsGroupedExpression::MSG = T.let(T.unsafe(nil), S
 RuboCop::Cop::Lint::PercentStringArray::LEADING_QUOTE = T.let(T.unsafe(nil), Regexp)
 
 RuboCop::Cop::Lint::PercentStringArray::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Lint::PercentStringArray::MSG_SPLIT_STRING = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Lint::PercentStringArray::QUOTES_AND_COMMAS = T.let(T.unsafe(nil), Array)
 
@@ -2585,6 +2590,8 @@ RuboCop::Cop::Severity::NAMES = T.let(T.unsafe(nil), Array)
 RuboCop::Cop::SpaceAfterPunctuation::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::SpaceBeforePunctuation::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::StatementModifier::SPACE_INSIDE_PARENS_STYLES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::AccessModifierDeclarations::GROUP_STYLE_MESSAGE = T.let(T.unsafe(nil), String)
 
@@ -3451,6 +3458,8 @@ RuboCop::Cop::Style::RedundantArrayFlatten::RESTRICT_ON_SEND = T.let(T.unsafe(ni
 RuboCop::Cop::Style::RedundantAssignment::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Style::RedundantBegin::MSG = T.let(T.unsafe(nil), String)
+
+RuboCop::Cop::Style::RedundantBegin::SPACE_INSIDE_PARENS_STYLES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Style::RedundantCapitalW::MSG = T.let(T.unsafe(nil), String)
 
