@@ -1,4 +1,4 @@
-# 🍺 Homebrew
+# ![🍺 Homebrew](https://capsule-render.vercel.app/api?type=blur&height=300&color=gradient&section=header&reversal=false&text=+Homebrew&textBg=false&fontSize=70&fontAlign=50&fontAlignY=50&rotate=0&strokeWidth=0&desc=%F0%9F%8D%BA+The+Package+Manager+for+Everywhere&descSize=20&descAlign=50&descAlignY=70)
 
 [![Latest GitHub release](https://img.shields.io/github/release/Homebrew/brew.svg)](https://github.com/Homebrew/brew/releases)
 [![BSD-2-Clause License](https://img.shields.io/github/license/Homebrew/brew)](https://github.com/Homebrew/brew/blob/HEAD/LICENSE.txt)
