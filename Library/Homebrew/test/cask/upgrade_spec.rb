@@ -509,6 +509,7 @@ RSpec.describe Cask::Upgrade, :cask do
         installed_calls += 1
         installed_calls <= 1
       end
+      args.freeze_named_args!([auto_updates.token], cask_options: true, without_api: false)
 
       expect do
         described_class.upgrade_casks!(auto_updates, dry_run: true, args:)
@@ -516,6 +517,20 @@ RSpec.describe Cask::Upgrade, :cask do
       expect(Homebrew).to be_failed
     ensure
       Homebrew.failed = false
+    end
+
+    it "warns and skips a cask passed to an upgrade without named casks" do
+      # `brew upgrade` passes its prefetched outdated casks without naming them
+      installed_calls = 0
+      allow(auto_updates).to receive(:installed?) do
+        installed_calls += 1
+        installed_calls <= 1
+      end
+
+      expect do
+        described_class.upgrade_casks!(auto_updates, dry_run: true, args:)
+      end.to output(/Warning: The cask 'auto-updates' cannot be upgraded as-is/).to_stderr
+      expect(Homebrew).not_to be_failed
     end
   end
 

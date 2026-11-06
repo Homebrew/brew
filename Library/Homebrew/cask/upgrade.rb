@@ -216,7 +216,7 @@ module Cask
             The cask '#{c.token}' cannot be upgraded as-is. To fix this, run:
             brew reinstall --cask --force #{c.token}
           EOS
-          casks.any? ? ofail(message) : opoo(message)
+          args.named.present? ? ofail(message) : opoo(message)
           next
         end
 
