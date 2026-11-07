@@ -241,25 +241,16 @@ module RuboCop
         ).returns(T::Boolean)
       }
       def node_is_allowed?(node, allowed_methods: [], allowed_blocks: [])
-        # TODO: check to see if it's legal
-        valid = T.let(false, T::Boolean)
-        node.each_ancestor do |ancestor|
-          valid_method_names = case ancestor.type
+        node.each_ancestor.any? do |ancestor|
+          case ancestor.type
           when :def
-            allowed_methods
+            allowed_methods.include?(ancestor.method_name)
           when :block
-            allowed_blocks
+            allowed_blocks.include?(ancestor.method_name)
           else
-            next
+            false
           end
-          next unless valid_method_names.include?(ancestor.method_name)
-
-          valid = true
-          break
         end
-        return true if valid
-
-        false
       end
 
       def_node_matcher :on_macos_version_method_call, <<~PATTERN
