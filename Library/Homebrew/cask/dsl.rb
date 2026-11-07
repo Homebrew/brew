@@ -551,7 +551,7 @@ module Cask
       ).returns(T.nilable(T.any(Symbol, Checksum)))
     }
     def sha256(arg = nil, arm: nil, intel: nil, x86_64: nil, x86_64_linux: nil, arm64_linux: nil)
-      should_return = arg.nil? && arm.nil? && (intel.nil? || x86_64.nil?) && x86_64_linux.nil? && arm64_linux.nil?
+      should_return = arg.nil? && arm.nil? && intel.nil? && x86_64.nil? && x86_64_linux.nil? && arm64_linux.nil?
 
       x86_64 ||= intel if intel.present? && x86_64.nil?
       set_unique_stanza(:sha256, should_return) do
