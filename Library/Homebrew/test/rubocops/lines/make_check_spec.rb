@@ -1,11 +1,13 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
 RSpec.describe RuboCop::Cop::FormulaAuditStrict::MakeCheck do
+  sig { returns(RuboCop::Cop::FormulaAuditStrict::MakeCheck) }
   subject(:cop) { described_class.new }
 
+  sig { returns(Pathname) }
   let(:path) { HOMEBREW_TAP_DIRECTORY/"homebrew/homebrew-core" }
 
   before do
@@ -13,6 +15,7 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::MakeCheck do
     (path/"style_exceptions").mkpath
   end
 
+  sig { void }
   def setup_style_exceptions
     (path/"style_exceptions/make_check_allowlist.json").write <<~JSON
       [ "bar" ]

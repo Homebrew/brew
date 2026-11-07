@@ -1,9 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
 RSpec.describe RuboCop::Cop::FormulaAudit::PythonVersions do
+  sig { returns(RuboCop::Cop::FormulaAudit::PythonVersions) }
   subject(:cop) { described_class.new }
 
   context "when auditing Python versions" do
