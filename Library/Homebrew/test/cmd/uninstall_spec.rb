@@ -44,6 +44,49 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
     FileUtils.rm_rf tap.path if tap
   end
 
+  context "when dry-running an uninstall" do
+    it "shows what would be uninstalled without uninstalling" do
+      keg_path = HOMEBREW_CELLAR/"testball/0.1"
+      keg_path.mkpath
+      keg = Keg.new(keg_path)
+      allow(keg).to receive(:tab).and_return(instance_double(Tab, tap: nil))
+
+      cask = Cask::Cask.new("test-cask")
+      cmd = described_class.new(["--dry-run", "testball", "test-cask"])
+      allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable).and_return([keg, cask])
+
+      expect(Homebrew::Uninstall).not_to receive(:uninstall_kegs)
+      expect(Cask::Uninstall).not_to receive(:uninstall_casks)
+      expect(Homebrew::Cleanup).not_to receive(:autoremove)
+
+      expect { cmd.run }.to output(<<~EOS).to_stdout
+        Would uninstall testball 0.1
+        Would uninstall Cask test-cask
+      EOS
+
+      expect(keg).to exist
+    end
+
+    it "accepts the short dry-run option" do
+      cmd = described_class.new(["-n", "testball"])
+
+      expect(cmd.args.dry_run?).to be(true)
+    end
+
+    it "reports an error when the requested package does not exist" do
+      cmd = described_class.new(["--dry-run", "--formula", "missing-package"])
+      error_message = /No such keg: #{Regexp.escape((HOMEBREW_CELLAR/"missing-package").to_s)}/
+
+      expect { cmd.run }
+        .to output(error_message).to_stderr
+        .and not_to_output.to_stdout
+
+      expect(Homebrew).to have_failed
+    ensure
+      Homebrew.failed = false
+    end
+  end
+
   context "when uninstalling a cask" do
     before do
       allow(Cask::Uninstall).to receive(:uninstall_casks)

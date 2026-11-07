@@ -18,6 +18,9 @@ class Homebrew::Cmd::UninstallCmd::Args < Homebrew::CLI::Args
   def casks?; end
 
   sig { returns(T::Boolean) }
+  def dry_run?; end
+
+  sig { returns(T::Boolean) }
   def f?; end
 
   sig { returns(T::Boolean) }
@@ -31,6 +34,9 @@ class Homebrew::Cmd::UninstallCmd::Args < Homebrew::CLI::Args
 
   sig { returns(T::Boolean) }
   def ignore_dependencies?; end
+
+  sig { returns(T::Boolean) }
+  def n?; end
 
   sig { returns(T::Boolean) }
   def zap?; end

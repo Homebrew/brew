@@ -23,6 +23,8 @@ module Homebrew
         switch "-f", "--force",
                description: "Delete all installed versions of <formula>. Uninstall even if <cask> is not " \
                             "installed, overwrite existing files and ignore errors when removing files."
+        switch "-n", "--dry-run",
+               description: "Show what would be uninstalled, but do not actually uninstall anything."
         switch "--zap",
                description: "Remove all files associated with a <cask>. " \
                             "*May remove files which are shared between applications.*"
@@ -71,6 +73,13 @@ module Homebrew
         end
 
         return if all_kegs.blank? && casks.blank? && unavailable_errors.blank?
+
+        if args.dry_run?
+          all_kegs.each { |keg| puts "Would uninstall #{keg.name} #{keg.version}" }
+          casks.each { |cask| puts "Would uninstall Cask #{cask}" }
+          unavailable_errors.each { |e| ofail e } unless args.force?
+          return
+        end
 
         kegs_by_rack = all_kegs.group_by(&:rack)
 
