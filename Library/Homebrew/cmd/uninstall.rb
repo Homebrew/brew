@@ -75,6 +75,38 @@ module Homebrew
         return if all_kegs.blank? && casks.blank? && unavailable_errors.blank?
 
         if args.dry_run?
+          Homebrew::Uninstall.handle_unsatisfied_dependents(
+            all_kegs.group_by(&:rack),
+            casks:,
+            ignore_dependencies: args.ignore_dependencies?,
+            named_args: args.named,
+          )
+          Cask::Uninstall.check_dependent_casks(*casks, named_args: args.named) unless args.ignore_dependencies?
+          return if Homebrew.failed?
+
+          unless args.force?
+            all_kegs.group_by(&:rack).each do |rack, kegs|
+              begin
+                formula = Formulary.from_rack(rack)
+                next unless formula.pinned?
+              rescue
+                next
+              end
+
+              onoe "#{formula.full_name} is pinned. You must unpin it to uninstall."
+              all_kegs -= kegs
+            end
+
+            casks.reject! do |cask|
+              if cask.installed?
+                !Cask::Uninstall.unpin_for_removal?(cask, force: false)
+              else
+                ofail Cask::CaskNotInstalledError.new(cask)
+                true
+              end
+            end
+          end
+
           all_kegs.each { |keg| puts "Would uninstall #{keg.name} #{keg.version}" }
           casks.each { |cask| puts "Would uninstall Cask #{cask}" }
 

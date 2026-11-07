@@ -304,7 +304,7 @@ RSpec.describe Homebrew::Cleanup do
       allow(Utils::Autoremove).to receive(:removable_formulae).with([removable_formula],
                                                                     []).and_return([removable_formula])
       allow(InstalledDependents).to receive(:find_some_installed_dependents)
-        .with([removable_keg])
+        .with([removable_keg], casks: [], formulae: [removable_formula])
         .and_return([[removable_keg], ["pango"]])
     end
 
@@ -392,6 +392,9 @@ RSpec.describe Homebrew::Cleanup do
           RUBY
           installed_formulae(app, formula_dep, cask_dep)
           allow(Cask::Caskroom).to receive(:casks).and_return([cask])
+          expect(InstalledDependents).to receive(:find_some_installed_dependents)
+            .with(anything, casks: [cask], formulae: [formula_dep, cask_dep])
+            .and_return(nil)
 
           expect do
             described_class.autoremove(dry_run: true, removed_kegs: [app.any_installed_keg], removed_casks: [cask])

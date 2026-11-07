@@ -52,11 +52,15 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       allow(keg).to receive(:tab).and_return(instance_double(Tab, tap: nil))
 
       cask = Cask::Cask.new("test-cask")
+      allow(cask).to receive(:installed?).and_return(true)
       cmd = described_class.new(["--dry-run", "testball", "test-cask"])
       allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable).and_return([keg, cask])
 
       expect(Homebrew::Uninstall).not_to receive(:uninstall_kegs)
       expect(Cask::Uninstall).not_to receive(:uninstall_casks)
+      expect(Homebrew::Uninstall).to receive(:handle_unsatisfied_dependents)
+        .with({ keg.rack => [keg] }, casks: [cask], ignore_dependencies: false, named_args: cmd.args.named)
+      expect(Cask::Uninstall).to receive(:check_dependent_casks).with(cask, named_args: cmd.args.named)
       expect(Homebrew::Cleanup).to receive(:autoremove)
         .with(dry_run: true, removed_kegs: [keg], removed_casks: [cask])
 
@@ -85,6 +89,63 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       expect(Homebrew).to have_failed
     ensure
       Homebrew.failed = false
+    end
+
+    it "does not show an uninstall plan when formulae have installed dependents" do
+      keg_path = HOMEBREW_CELLAR/"testball/0.1"
+      keg_path.mkpath
+      keg = Keg.new(keg_path)
+      allow(keg).to receive(:tab).and_return(instance_double(Tab, tap: nil))
+      cmd = described_class.new(["--dry-run", "testball"])
+      allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable).and_return([keg])
+      allow(Homebrew::Uninstall).to receive(:handle_unsatisfied_dependents) { Homebrew.failed = true }
+      allow(Cask::Uninstall).to receive(:check_dependent_casks)
+
+      expect(Homebrew::Cleanup).not_to receive(:autoremove)
+
+      expect { cmd.run }.not_to output.to_stdout
+      expect(Homebrew).to have_failed
+    ensure
+      Homebrew.failed = false
+    end
+
+    it "does not show an uninstalled cask unless forced" do
+      cask = Cask::Cask.new("test-cask")
+      allow(cask).to receive(:installed?).and_return(false)
+      cmd = described_class.new(["--dry-run", "--cask", "test-cask"])
+      allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable).and_return([cask])
+      allow(Homebrew::Uninstall).to receive(:handle_unsatisfied_dependents)
+      allow(Cask::Uninstall).to receive(:check_dependent_casks)
+
+      expect(Homebrew::Cleanup).not_to receive(:autoremove)
+      expect { cmd.run }
+        .to output(/Cask 'test-cask' is not installed/).to_stderr
+        .and not_to_output(/Would uninstall/).to_stdout
+      expect(Homebrew).to have_failed
+    ensure
+      Homebrew.failed = false
+    end
+
+    it "does not show pinned formulae or casks unless forced" do
+      keg_path = HOMEBREW_CELLAR/"testball/0.1"
+      keg_path.mkpath
+      keg = Keg.new(keg_path)
+      allow(keg).to receive(:tab).and_return(instance_double(Tab, tap: nil))
+      formula = instance_double(Formula, pinned?: true, full_name: "testball")
+      allow(Formulary).to receive(:from_rack).with(keg.rack).and_return(formula)
+
+      cask = Cask::Cask.new("test-cask")
+      allow(cask).to receive_messages(installed?: true, pinned?: true)
+      cmd = described_class.new(["--dry-run", "testball", "test-cask"])
+      allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable).and_return([keg, cask])
+      allow(Homebrew::Uninstall).to receive(:handle_unsatisfied_dependents)
+      allow(Cask::Uninstall).to receive(:check_dependent_casks)
+
+      expect(Cask::Uninstall).to receive(:unpin_for_removal?).with(cask, force: false).and_call_original
+      expect(Homebrew::Cleanup).not_to receive(:autoremove)
+      expect { cmd.run }
+        .to output(/testball is pinned.*test-cask is pinned/m).to_stderr
+        .and not_to_output(/Would uninstall/).to_stdout
     end
   end
 

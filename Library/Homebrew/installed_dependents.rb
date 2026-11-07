@@ -17,13 +17,17 @@ module InstalledDependents
   #
   # Note that nil will be returned if the only installed dependents of the
   # passed kegs are other kegs in the array or casks present in the casks
-  # parameter.
+  # parameter, or formulae excluded from the formulae parameter.
   #
   # For efficiency, we don't bother trying to get complete data.
   sig {
-    params(kegs: T::Array[Keg], casks: T::Array[Cask::Cask]).returns(T.nilable([T::Array[Keg], T::Array[String]]))
+    params(
+      kegs:     T::Array[Keg],
+      casks:    T::Array[Cask::Cask],
+      formulae: T::Array[Formula],
+    ).returns(T.nilable([T::Array[Keg], T::Array[String]]))
   }
-  def find_some_installed_dependents(kegs, casks: [])
+  def find_some_installed_dependents(kegs, casks: [], formulae: Formula.installed)
     keg_names = kegs.select(&:optlinked?).map(&:name)
     keg_formulae = []
     kegs_by_source = kegs.group_by do |keg|
@@ -42,7 +46,7 @@ module InstalledDependents
     all_dependents = []
 
     # Don't include dependencies of kegs that were in the given array.
-    dependents_to_check = (Formula.installed - keg_formulae) + (Cask::Caskroom.casks - casks)
+    dependents_to_check = (formulae - keg_formulae) + (Cask::Caskroom.casks - casks)
 
     dependents_to_check.each do |dependent|
       required = case dependent

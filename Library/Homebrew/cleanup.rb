@@ -1087,7 +1087,9 @@ module Homebrew
 
       removable_formulae = Utils::Autoremove.removable_formulae(formulae, casks)
       if (candidate_kegs = removable_formulae.filter_map(&:any_installed_keg).presence) &&
-         (required_kegs, = InstalledDependents.find_some_installed_dependents(candidate_kegs)) &&
+         (required_kegs, = InstalledDependents.find_some_installed_dependents(candidate_kegs,
+                                                                              casks:    removed_casks,
+                                                                              formulae: installed_formulae)) &&
          (required_names = Set.new(required_kegs.map(&:name)).presence)
         removable_formulae.reject! { |formula| required_names.include?(formula.name) }
       end
