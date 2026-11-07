@@ -473,6 +473,41 @@ RSpec.describe Homebrew::Bundle::Installer do
       described_class.install!([formula_entry, cask_entry], quiet: true)
     end
 
+    it "reinstalls a formula from a different tap outside the batch" do
+      allow(Homebrew::Bundle::Brew).to receive(:preinstall!).and_call_original
+      allow(Homebrew::Bundle::Brew).to receive(:install!).and_call_original
+      allow_any_instance_of(Homebrew::Bundle::Brew).to receive_messages(resolve_conflicts!: true, linked?: true,
+                                                                        keg_only?: false)
+      allow(Keg).to receive(:from_rack).with(HOMEBREW_CELLAR/"mysql").and_return(
+        instance_double(Keg, tab: instance_double(Tab, tap: CoreTap.instance)),
+      )
+      allow(Homebrew::Bundle::Brew).to receive(:installed_formulae).and_return(["mysql"])
+
+      expect(Homebrew::Bundle).to receive(:brew)
+        .with("reinstall", "--formula", "thirdparty/tap/mysql", verbose: false).and_return(true)
+
+      described_class.install!(
+        Homebrew::Bundle::Dsl.new(StringIO.new('brew "thirdparty/tap/mysql"')).entries,
+        quiet: true,
+      )
+    end
+
+    it "reinstalls a cask from a different tap outside the batch" do
+      allow(Homebrew::Bundle::Cask).to receive(:casks).and_return([
+        instance_double(Cask::Cask, to_s: "google-chrome", tap: CoreCaskTap.instance, pinned?: false),
+      ])
+      allow(Homebrew::Bundle::Cask).to receive(:preinstall!).and_call_original
+      allow(Homebrew::Bundle::Cask).to receive(:install!).and_call_original
+
+      expect(Homebrew::Bundle).to receive(:brew)
+        .with("reinstall", "--cask", "thirdparty/tap/google-chrome", "--adopt", verbose: false).and_return(true)
+
+      described_class.install!(
+        Homebrew::Bundle::Dsl.new(StringIO.new('cask "thirdparty/tap/google-chrome"')).entries,
+        quiet: true,
+      )
+    end
+
     [:brew, :cask].each do |type|
       it "preserves a tapless #{type} name" do
         T.bind(self, RSpec::Core::ExampleGroup)

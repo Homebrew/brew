@@ -56,6 +56,57 @@ RSpec.describe Cask::Reinstall, :cask do
     expect(Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))).to be_installed
   end
 
+  context "when adopting an app that the previous cask did not own" do
+    sig { returns([Cask::Cask, Pathname]) }
+    def cask_with_existing_app
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+      Cask::Installer.new(cask).install
+      target_path = cask.config.appdir/"Other Caffeine.app"
+      FileUtils.cp_r cask.config.appdir/"Caffeine.app", target_path
+      replacement_cask = Cask::CaskLoader.from_content(
+        cask_path("local-caffeine").read.sub('app "Caffeine.app"',
+                                             'app "Caffeine.app", target: "Other Caffeine.app"'),
+      )
+
+      [replacement_cask, target_path]
+    end
+
+    it "preserves the existing app when reinstalling successfully" do
+      replacement_cask, target_path = cask_with_existing_app
+      original_inode = target_path.stat.ino
+
+      expect(described_class.reinstall_casks(replacement_cask, adopt: true)).to eq([replacement_cask])
+      expect(target_path.stat.ino).to eq(original_inode)
+    end
+
+    test_each([false, true].product([false, true])) do |supplied_installers, existing_app|
+      it "rolls back a failed reinstall (supplied: #{supplied_installers}, existing app: #{existing_app})" do
+        replacement_cask, target_path = cask_with_existing_app
+        FileUtils.rm_r target_path unless existing_app
+        original_stat = target_path.stat if existing_app
+        failing_cask = Cask::CaskLoader.from_content(
+          replacement_cask.source.to_s.sub('app "Caffeine.app"', "binary \"missing-binary\"\n  app \"Caffeine.app\""),
+        )
+        download_queue = Homebrew::DownloadQueue.default
+        if supplied_installers
+          cask_installers = [Cask::Installer.new(failing_cask, adopt: true, reinstall: true,
+                                                            download_queue:, defer_fetch: true)]
+        end
+
+        expect do
+          described_class.reinstall_casks(failing_cask, adopt: true, binaries: true,
+                                                       download_queue:, cask_installers:)
+        end.to output(/missing-binary.*not there/).to_stderr
+
+        if original_stat
+          expect(target_path.stat.ino).to eq(original_stat.ino)
+        else
+          expect(target_path).not_to exist
+        end
+      end
+    end
+  end
+
   it "continues reinstalling remaining casks when one raises" do
     cask1 = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
     cask2 = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))

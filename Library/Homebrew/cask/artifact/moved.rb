@@ -13,6 +13,10 @@ module Cask
         "#{english_name}s"
       end
 
+      # Whether installation adopted an existing target.
+      sig { returns(T::Boolean) }
+      def adopted? = @adopted == true
+
       sig {
         overridable.params(
           adopt:        T::Boolean,
@@ -27,6 +31,7 @@ module Cask
       }
       def install_phase(adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil,
                         successor: nil, reinstall: false, command: SystemCommand)
+        @adopted = T.let(false, T.nilable(T::Boolean))
         move(adopt:, auto_updates:, force:, verbose:, predecessor:, successor:, reinstall:, command:)
       end
 
@@ -133,6 +138,7 @@ module Cask
 
               # Remove the source as we don't need to move it to the target location
               FileUtils.rm_r(source)
+              @adopted = true
 
               return post_move(command)
             end

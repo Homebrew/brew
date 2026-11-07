@@ -11,9 +11,9 @@ module Cask
 
     sig {
       params(
-        casks: ::Cask::Cask, verbose: T::Boolean, force: T::Boolean, skip_cask_deps: T::Boolean, binaries: T::Boolean,
-        require_sha: T::Boolean, zap: T::Boolean, skip_prefetch: T::Boolean,
-        download_queue: T.nilable(Homebrew::DownloadQueue),
+        casks: ::Cask::Cask, verbose: T::Boolean, force: T::Boolean, adopt: T::Boolean,
+        skip_cask_deps: T::Boolean, binaries: T::Boolean, require_sha: T::Boolean, zap: T::Boolean,
+        skip_prefetch: T::Boolean, download_queue: T.nilable(Homebrew::DownloadQueue),
         cask_installers: T.nilable(T::Array[Installer])
       ).returns(T::Array[Cask])
     }
@@ -21,6 +21,7 @@ module Cask
       *casks,
       verbose: false,
       force: false,
+      adopt: false,
       skip_cask_deps: false,
       binaries: false,
       require_sha: false,
@@ -48,6 +49,7 @@ module Cask
               binaries:,
               verbose:,
               force:,
+              adopt:,
               skip_cask_deps:,
               require_sha:,
               reinstall:      true,
