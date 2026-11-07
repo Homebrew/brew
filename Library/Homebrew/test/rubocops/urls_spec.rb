@@ -110,16 +110,8 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Urls do
                "https://www.mirrorservice.org/sites/ftp.debian.org/debian/pool/main/n/netris/foo.tar.gz",
       "col" => 2,
     }, {
-      "url" => "http://foo.googlecode.com/files/foo-1.0.zip",
-      "msg" => "Please use https:// for http://foo.googlecode.com/files/foo-1.0.zip",
-      "col" => 2,
-    }, {
       "url" => "git://github.com/foo.git",
       "msg" => "Please use https:// for git://github.com/foo.git",
-      "col" => 2,
-    }, {
-      "url" => "git://gitorious.org/foo/foo5",
-      "msg" => "Please use https:// for git://gitorious.org/foo/foo5",
       "col" => 2,
     }, {
       "url" => "http://github.com/foo/foo5.git",

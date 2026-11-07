@@ -232,8 +232,7 @@ module RuboCop
         end
 
         # Check for new-url Google Code download URLs, https:// is preferred
-        google_code_pattern = Regexp.union([%r{^http://[A-Za-z0-9\-.]*\.googlecode\.com/files.*},
-                                            %r{^http://code\.google\.com/}])
+        google_code_pattern = %r{^http://code\.google\.com/}
         audit_urls(urls, google_code_pattern) do |_, url|
           problem "Please use https:// for #{url}"
         end
@@ -241,12 +240,6 @@ module RuboCop
         # Check for `git://` GitHub repository URLs, https:// is preferred.
         git_gh_pattern = %r{^git://[^/]*github\.com/}
         audit_urls(urls, git_gh_pattern) do |_, url|
-          problem "Please use https:// for #{url}"
-        end
-
-        # Check for `git://` Gitorious repository URLs, https:// is preferred.
-        git_gitorious_pattern = %r{^git://[^/]*gitorious\.org/}
-        audit_urls(urls, git_gitorious_pattern) do |_, url|
           problem "Please use https:// for #{url}"
         end
 

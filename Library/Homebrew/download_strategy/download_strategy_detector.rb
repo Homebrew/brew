@@ -46,8 +46,7 @@ class DownloadStrategyDetector
       CurlApacheMirrorDownloadStrategy
     when %r{^https?://files\.pythonhosted\.org/packages/}
       PyPIDownloadStrategy
-    when %r{^https?://(?:[A-Za-z0-9\-.]+\.)?googlecode\.com/svn},
-         %r{^https?://svn\.},
+    when %r{^https?://svn\.},
          %r{^svn://},
          %r{^svn\+http://},
          %r{^http://svn\.apache\.org/repos/},
@@ -56,7 +55,6 @@ class DownloadStrategyDetector
     when %r{^cvs://}
       CVSDownloadStrategy
     when %r{^hg://},
-         %r{^https?://(?:[A-Za-z0-9\-.]+\.)?googlecode\.com/hg},
          %r{^https?://(?:[A-Za-z0-9\-.]+\.)?sourceforge\.net/hgweb/}
       MercurialDownloadStrategy
     when %r{^bzr://}
