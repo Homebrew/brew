@@ -3069,28 +3069,22 @@ class Formula
   end
 
   # Returns a list of formulae depended on by this formula that aren't
-  # installed. Only trusts tab data for dependency information; when the tab
-  # has no runtime dependency data (nil or empty), returns empty rather
-  # than falling back to formula definitions.
-  # This prevents stale or missing tab data from incorrectly blocking
-  # uninstalls.
+  # installed. Trusts a tab's dependency list, so a stale list doesn't
+  # incorrectly block uninstalls. A tab with no list at all says nothing about
+  # dependencies, so that falls back to formula definitions, like autoremove.
   sig { params(hide: T::Array[String]).returns(T::Array[Dependency]) }
   def missing_dependencies(hide: [])
-    tab_deps = any_installed_keg&.runtime_dependencies
-    return [] if tab_deps.blank?
+    return [] unless any_installed_keg
 
-    tab_deps.filter_map do |d|
-      full_name = d["full_name"]
-      next if full_name.blank?
-
+    runtime_dependencies.filter_map do |dep|
       # Use base name to check the cellar directly, avoiding Formulary.resolve.
       # A dep is "missing" if it's in the hide list (pretend uninstalled) or
       # genuinely not installed in the cellar.
-      base_name = Utils.name_from_full_name(full_name)
+      base_name = Utils.name_from_full_name(dep.name)
       next if hide.exclude?(base_name) && ((HOMEBREW_CELLAR/base_name).directory? ||
                                            (HOMEBREW_PREFIX/"opt"/base_name).directory?)
 
-      Dependency.new(full_name)
+      dep
     end
   end
 
