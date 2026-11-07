@@ -342,12 +342,12 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       expect(checks.check_deprecated_disabled&.to_s).to include(
         "The following formulae are installed as dependencies:\n\n  testball",
         "Upgrading these outdated dependents with `brew upgrade` will stop\n" \
-        "requiring the formulae shown after `->`:\n  dependent -> testball",
+        "requiring the formulae shown after `:`:\n  dependent: testball",
         "`brew upgrade` may not uninstall dependencies automatically.",
       )
     end
 
-    it "explains when upgrading a dependent will not remove a deprecated formula" do
+    it "does not recommend autoremove when dependents still require a deprecated formula" do
       tab = instance_double(Tab, installed_on_request_present?: true, installed_on_request: false)
       keg = instance_double(Keg, tab:)
       deprecated = instance_double(Formula, deprecated?: true, disabled?: false, name: "testball",
@@ -360,10 +360,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
                                                         .and_return([dependency])
       allow(Formula).to receive(:installed).and_return([deprecated, dependent])
 
-      expect(checks.check_deprecated_disabled&.to_s).to include(
-        "Upgrading these dependents with `brew upgrade` will not remove the\n" \
-        "formulae shown after `->` because their current formulae still require them:",
-      )
+      expect(checks.check_deprecated_disabled&.to_s).not_to include("brew autoremove")
     end
 
     it "skips a formula removed from its tap whose keg kept a deprecated copy" do
@@ -475,7 +472,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     expect(checks.check_deleted_formula&.to_s).to include(
       "The following formulae are installed as dependencies:",
       "Upgrading these outdated dependents with `brew upgrade` will stop\n" \
-      "requiring the formulae shown after `->`:\n  dependent -> deleted-dep",
+      "requiring the formulae shown after `:`:\n  dependent: deleted-dep",
     )
   end
 

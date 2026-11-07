@@ -1909,7 +1909,6 @@ module Homebrew
       }
       def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
         upgradeable_dependents = T.let([], T::Array[String])
-        still_required_dependents = T.let([], T::Array[String])
         non_upgradeable_dependents = T.let([], T::Array[String])
 
         installed_formulae.each do |dependent|
@@ -1925,10 +1924,6 @@ module Homebrew
           dependencies_still_required = installed_dependency_names & current_dependency_names
           dependencies_to_drop = installed_dependency_names - dependencies_still_required
 
-          still_required_dependents.concat(dependencies_still_required.map do |name|
-            "#{dependent.full_name} -> #{name}"
-          end)
-
           next if dependencies_to_drop.empty?
 
           destination = if dependent.pinned? || !dependent.outdated?
@@ -1936,34 +1931,30 @@ module Homebrew
           else
             upgradeable_dependents
           end
-          destination.concat(dependencies_to_drop.map { |name| "#{dependent.full_name} -> #{name}" })
+          destination.concat(dependencies_to_drop.map { |name| "#{dependent.full_name}: #{name}" })
         end
 
         guidance = []
         if upgradeable_dependents.present?
           guidance << append_indented_list(upgradeable_dependents.uniq.sort, <<~EOS)
             Upgrading these outdated dependents with `brew upgrade` will stop
-            requiring the formulae shown after `->`:
-          EOS
-        end
-        if still_required_dependents.present?
-          guidance << append_indented_list(still_required_dependents.uniq.sort, <<~EOS)
-            Upgrading these dependents with `brew upgrade` will not remove the
-            formulae shown after `->` because their current formulae still require them:
+            requiring the formulae shown after `:`:
           EOS
         end
         if non_upgradeable_dependents.present?
           guidance << append_indented_list(non_upgradeable_dependents.uniq.sort, <<~EOS)
-            These dependents no longer require the formulae shown after `->`, but
+            These dependents no longer require the formulae shown after `:`, but
             `brew upgrade` will not update them because they are up to date or pinned:
           EOS
           guidance << "Reinstall these dependents, or unpin and upgrade them, before running `brew autoremove`."
         end
 
-        guidance << <<~EOS
-          `brew upgrade` may not uninstall dependencies automatically. Run
-          `brew autoremove` to remove formulae that are no longer required.
-        EOS
+        if upgradeable_dependents.present? || non_upgradeable_dependents.present?
+          guidance << <<~EOS
+            `brew upgrade` may not uninstall dependencies automatically. Run
+            `brew autoremove` to remove formulae that are no longer required.
+          EOS
+        end
         guidance.join("\n")
       end
 
