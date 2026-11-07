@@ -1255,7 +1255,8 @@ module Formulary
         installed_rack
       end
       matching_racks.first if matching_racks.one?
-    rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
+    rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,
+           JSON::ParserError, SystemCallError
       nil
     end
     possible_rack || rack
