@@ -185,17 +185,12 @@ module Homebrew
         style_files = args.named.to_paths unless skip_style
 
         only_cops = args.only_cops
-        except_cops = args.except_cops
-        style_options = { fix: args.fix?, debug: args.debug?, verbose: args.verbose? }
-
-        if only_cops
-          style_options[:only_cops] = only_cops
-        elsif args.new?
+        except_cops = if only_cops || args.new?
           nil
-        elsif except_cops
-          style_options[:except_cops] = except_cops
+        elsif args.except_cops
+          args.except_cops
         elsif !strict
-          style_options[:except_cops] = %w[FormulaAuditStrict]
+          %w[FormulaAuditStrict]
         end
 
         # Run tap audits first
@@ -211,7 +206,16 @@ module Homebrew
         end
 
         # Check style in a single batch run up front for performance
-        style_offenses = Style.check_style_json(style_files, **style_options) if style_files
+        if style_files
+          style_offenses = Style.check_style_json(
+            style_files,
+            fix:         args.fix?,
+            except_cops:,
+            only_cops:,
+            debug:       args.debug?,
+            verbose:     args.verbose?,
+          )
+        end
         # load licenses
         spdx_license_data = SPDX.license_data
         spdx_exception_data = SPDX.exception_data
@@ -220,24 +224,26 @@ module Homebrew
           path = f.path
 
           only = only_cops ? ["style"] : args.only
-          options = {
-            new_formula:         args.new?,
-            strict:,
-            online:,
-            git:                 args.git?,
-            only:,
-            except:              args.except,
-            spdx_license_data:,
-            spdx_exception_data:,
-            style_offenses:      style_offenses&.for_path(f.path),
-            tap_audit:,
-          }.compact
 
           errors = os_arch_combinations.flat_map do |os, arch|
             SimulateSystem.with(os:, arch:) do
               odebug "Auditing Formula #{f} on os #{os} and arch #{arch}"
 
-              audit_proc = proc { FormulaAuditor.new(Formulary.from_path(path), **options).tap(&:audit) }
+              audit_proc = proc do
+                FormulaAuditor.new(
+                  Formulary.from_path(path),
+                  new_formula:         args.new?,
+                  strict:,
+                  online:,
+                  git:                 args.git?,
+                  only:,
+                  except:              args.except,
+                  style_offenses:      style_offenses&.for_path(path),
+                  tap_audit:,
+                  spdx_license_data:,
+                  spdx_exception_data:,
+                ).tap(&:audit)
+              end
 
               # Audit requires full Ruby source so disable API. We shouldn't do this for taps however so that we
               # don't unnecessarily require a full Homebrew/core clone.

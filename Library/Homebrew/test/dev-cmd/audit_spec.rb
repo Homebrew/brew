@@ -298,5 +298,36 @@ RSpec.describe Homebrew::DevCmd::Audit do
         audit.run
       end
     end
+
+    test_each_hash({
+      []                                           => { only_cops: nil, except_cops: ["FormulaAuditStrict"] },
+      ["--strict"]                                 => { only_cops: nil, except_cops: nil },
+      ["--new", "--except-cops=FormulaAudit/Desc"] => { only_cops: nil, except_cops: nil },
+      ["--except-cops=FormulaAudit/Desc"]          => { only_cops: nil, except_cops: ["FormulaAudit/Desc"] },
+      ["--only-cops=FormulaAudit/Desc"]            => { only_cops: ["FormulaAudit/Desc"], except_cops: nil },
+    }) do |flags, cops|
+      it "checks style with #{cops} for #{flags}" do
+        formula_file = tap_path/"Formula/example.rb"
+        formula_file.dirname.mkpath
+        formula_file.write <<~RUBY
+          class Example < Formula
+            url "https://example.com/example-1.0.tar.gz"
+          end
+        RUBY
+        command = described_class.new([*flags, "example"])
+        allow(command.args.named).to receive_messages(
+          to_formulae_and_casks_with_taps: [Formulary.from_path(formula_file)],
+          to_paths:                        [formula_file],
+        )
+        allow(Homebrew::FormulaAuditor).to receive(:new)
+          .and_return(instance_double(Homebrew::FormulaAuditor, audit: nil, problems: [], new_formula_problems: []))
+
+        expect(Homebrew::Style).to receive(:check_style_json)
+          .with([formula_file], hash_including(cops))
+          .and_return(instance_double(Homebrew::Style::Offenses, for_path: []))
+
+        command.run
+      end
+    end
   end
 end
