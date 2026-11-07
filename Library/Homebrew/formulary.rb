@@ -1245,13 +1245,15 @@ module Formulary
     rack = Utils::Path.resolved_path(HOMEBREW_CELLAR/canonical_name(ref))
     return rack if rack.directory?
 
-    installed_keg = begin
+    possible_rack = begin
       formula = factory(ref)
-      formula.installed_kegs.find { |keg| !keg.rack.symlink? && keg.tab.tap == formula.tap }
+      formula.installed_kegs.group_by(&:rack).find do |installed_rack, kegs|
+        !installed_rack.symlink? && kegs.all? { |keg| keg.tab.tap == formula.tap }
+      end&.first
     rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
       nil
     end
-    installed_keg&.rack || rack
+    possible_rack || rack
   end
 
   sig { params(ref: String).returns(String) }

@@ -1180,8 +1180,8 @@ RSpec.describe Formulary do
       let(:alias_name) { "testball-alias" }
       let(:alias_rack_path) { HOMEBREW_CELLAR/alias_name }
 
-      def install_keg(rack, tap: CoreTap.instance)
-        keg_path = rack/"0.1"
+      def install_keg(rack, version: "0.1", tap: CoreTap.instance)
+        keg_path = rack/version
         keg_path.mkpath
         tab = Tab.empty
         tab.tabfile = keg_path/AbstractTab::FILENAME
@@ -1202,8 +1202,9 @@ RSpec.describe Formulary do
         expect(described_class.to_rack(formula_name)).to eq(alias_rack_path)
       end
 
-      it "ignores a Rack of the alias with a keg from another tap" do
-        install_keg(alias_rack_path, tap: Tap.fetch("homebrew", "other"))
+      it "ignores a Rack of the alias with any keg from another tap" do
+        install_keg(alias_rack_path)
+        install_keg(alias_rack_path, version: "0.2", tap: Tap.fetch("homebrew", "other"))
 
         expect(described_class.to_rack(formula_name)).to eq(rack_path)
       end
