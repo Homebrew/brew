@@ -73,6 +73,21 @@ RSpec.describe Homebrew::Uninstall do
       expect { described_class.uninstall_kegs(kegs_by_rack) }
         .to change { dependency.latest_installed_prefix.exist? }.from(true).to(false)
     end
+
+    it "prints a copyable command for leftover configuration files" do
+      config_file = dependency.pkgetc/"test file.cnf"
+      config_file.dirname.mkpath
+      config_file.write("")
+
+      expect do
+        described_class.uninstall_kegs(
+          { dependency.rack => [Keg.new(dependency.latest_installed_prefix)] },
+          ignore_dependencies: true,
+        )
+      end.to output(a_string_including(
+        "rm -rf \\\n    #{dependency.pkgetc.to_s.shellescape} \\\n    #{config_file.to_s.shellescape}",
+      )).to_stderr
+    end
   end
 
   describe "::handle_unsatisfied_dependents" do

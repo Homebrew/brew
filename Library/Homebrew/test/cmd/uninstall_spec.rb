@@ -18,11 +18,18 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
     appdir = Pathname(cask.config.appdir)
 
     setup_test_formula "testball", tab_attributes: { installed_on_request: true }
+    config_directory = Formula["testball"].pkgetc
+    config_file = config_directory/"test file.cnf"
+    config_file.dirname.mkpath
+    config_file.write("")
 
     expect(HOMEBREW_CELLAR/"testball").to exist
-    expect { brew "uninstall", "--force", "testball" }
+    expect { brew "uninstall", "--ignore-dependencies", "testball" }
       .to output(/Uninstalling testball/).to_stdout
-      .and not_to_output.to_stderr
+      .and output(a_string_including(
+        "The following testball configuration files have not been removed!",
+        "rm -rf \\\n    #{config_directory.to_s.shellescape} \\\n    #{config_file.to_s.shellescape}",
+      )).to_stderr
       .and be_a_success
     expect(HOMEBREW_CELLAR/"testball").not_to exist
 

@@ -1,6 +1,8 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "shellwords"
+
 require "utils/text"
 
 require "dependents_message"
@@ -76,8 +78,9 @@ module Homebrew
                 puts
                 opoo <<~EOS
                   The following #{f.name} configuration files have not been removed!
-                  If desired, remove them manually with `rm -rf`:
-                    #{paths.sort.uniq.join("\n  ")}
+                  If desired, remove them manually with:
+                    rm -rf \\
+                      #{paths.sort.uniq.map(&:shellescape).join(" \\\n    ")}
                 EOS
               end
 
@@ -103,8 +106,9 @@ module Homebrew
                 puts
                 opoo <<~EOS
                   The following may be #{f.name} configuration files and have not been removed!
-                  If desired, remove them manually with `rm -rf`:
-                    #{maybe_paths.sort.uniq.join("\n  ")}
+                  If desired, remove them manually with:
+                    rm -rf \\
+                      #{maybe_paths.sort.uniq.map(&:shellescape).join(" \\\n    ")}
                 EOS
               end
             end
