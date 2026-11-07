@@ -129,19 +129,18 @@ module Homebrew
         raise UsageError, "No formulae or casks to check." if formulae_and_casks_to_check.blank? && !skipped_autobump
         return if formulae_and_casks_to_check.blank?
 
-        options = {
-          json:                 args.json?,
+        Livecheck.run_checks(
+          formulae_and_casks_to_check,
           full_name:            args.full_name?,
           handle_name_conflict: !args.formula? && !args.cask?,
           check_resources:      args.resources?,
+          json:                 args.json?,
           newer_only:           args.newer_only?,
           extract_plist:        args.extract_plist?,
-          quiet:                args.quiet?,
           debug:                args.debug?,
+          quiet:                args.quiet?,
           verbose:              args.verbose?,
-        }.compact
-
-        Livecheck.run_checks(formulae_and_casks_to_check, **options)
+        )
       end
 
       private
