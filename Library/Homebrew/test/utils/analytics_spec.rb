@@ -36,10 +36,18 @@ RSpec.describe Utils::Analytics do
 
     it "returns OS_VERSION, ARM and prefix when HOMEBREW_PREFIX is a custom prefix on arm" do
       expect(Homebrew).to receive(:default_prefix?).and_return(false).at_least(:once)
+      expect(described_class.default_package_tags).to have_key(:cpu_family)
       expect(described_class.default_package_tags).to have_key(:arch)
       expect(described_class.default_package_tags[:arch]).to eq HOMEBREW_PHYSICAL_PROCESSOR
       expect(described_class.default_package_tags).to have_key(:prefix)
       expect(described_class.default_package_tags[:prefix]).to eq "custom-prefix"
+    end
+
+    it "serialises the CPU family in the package tags" do
+      allow(Hardware::CPU).to receive(:family).and_return(:armv8_0_a)
+      described_class.clear_cache
+
+      expect(described_class.default_package_tags[:cpu_family]).to eq "armv8_0_a"
     end
 
     it "returns OS_VERSION, Rosetta and prefix when HOMEBREW_PREFIX is a custom prefix on Rosetta", :needs_macos do
