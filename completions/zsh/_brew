@@ -2186,7 +2186,7 @@ _brew_readall() {
 # brew reinstall
 _brew_reinstall() {
   _arguments \
-    '(--formula)--adopt[Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`]' \
+    '(--formula --force)--adopt[Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`]' \
     '(--formula)--appdir[Target location for Applications (default: `/Applications`)]' \
     '(--formula)--appimagedir[Target location for AppImages (default: `~/Applications`)]' \
     '(--formula)--audio-unit-plugindir[Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)]' \
@@ -2198,7 +2198,7 @@ _brew_reinstall() {
     '(--formula)--dictionarydir[Target location for Dictionaries (default: `~/Library/Dictionaries`)]' \
     '--display-times[Print install times for each package at the end of the run. Enabled by default if `$HOMEBREW_DISPLAY_INSTALL_TIMES` is set]' \
     '(--formula)--fontdir[Target location for Fonts (default: `~/Library/Fonts`)]' \
-    '--force[Install without checking for previously installed keg-only or non-migrated versions]' \
+    '(--adopt)--force[Install without checking for previously installed keg-only or non-migrated versions]' \
     '(--cask --build-from-source)--force-bottle[Install from a bottle if it exists for the current or newest version of macOS, even if it would not normally be used for installation]' \
     '(--cask)--git[Create a Git repository, useful for creating patches to the software]' \
     '--help[Show this message]' \

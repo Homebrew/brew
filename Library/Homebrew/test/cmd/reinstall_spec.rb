@@ -8,6 +8,13 @@ require "cmd/shared_examples/args_parse"
 RSpec.describe Homebrew::Cmd::Reinstall do
   it_behaves_like "parseable arguments"
 
+  test_each([["--cask", "local-caffeine"], ["testball", "local-caffeine"]]) do |names|
+    it "rejects --adopt with --force for #{names.join(" ")}" do
+      expect { described_class.new(["--adopt", "--force", *names]) }
+        .to raise_error(Homebrew::CLI::OptionConflictError)
+    end
+  end
+
   it "reports unavailable names via ofail and continues reinstalling" do
     error = FormulaOrCaskUnavailableError.new("nonexistent")
     formula = instance_double(Formula, full_name: "testball", pinned?: false)
@@ -57,6 +64,7 @@ RSpec.describe Homebrew::Cmd::Reinstall do
         binaries:        true,
         verbose:         false,
         force:           false,
+        adopt:           false,
         require_sha:     false,
         skip_cask_deps:  false,
         zap:             false,
@@ -78,7 +86,7 @@ RSpec.describe Homebrew::Cmd::Reinstall do
   end
 
   it "asks for casks before shared prefetch when reinstalling formulae and casks" do
-    cmd = described_class.new(["testball", "local-caffeine"])
+    cmd = described_class.new(["--adopt", "testball", "local-caffeine"])
     formula = formula("testball") do
       T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.1.tar.gz"
@@ -106,11 +114,11 @@ RSpec.describe Homebrew::Cmd::Reinstall do
     allow(Homebrew::Install).to receive_messages(enqueue_formulae:        [formula_installer],
                                                  enqueue_cask_installers: [cask_installer])
     allow(Homebrew::Install).to receive(:fetch_cask_dependencies)
-    allow(Cask::Installer).to receive(:new).and_return(cask_installer)
+    expect(Cask::Installer).to receive(:new).with(cask, hash_including(adopt: true)).and_return(cask_installer)
     allow(Homebrew::Reinstall).to receive(:reinstall_formula)
     allow(Homebrew::Upgrade).to receive_messages(dependants: dependants, upgrade_dependents: [])
-    expect(Cask::Reinstall).to receive(:reinstall_casks) do |reinstalled_cask, cask_installers:, **|
-      expect([reinstalled_cask, cask_installers]).to eq([cask, [cask_installer]])
+    expect(Cask::Reinstall).to receive(:reinstall_casks) do |reinstalled_cask, cask_installers:, adopt:, **|
+      expect([reinstalled_cask, cask_installers, adopt]).to eq([cask, [cask_installer], true])
       [cask]
     end
     allow(Homebrew::Cleanup).to receive_messages(install_clean!: nil, periodic_clean!: nil)

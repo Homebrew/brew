@@ -42,6 +42,7 @@ module Homebrew
         }
         # rubocop:enable Sorbet/AllowIncompatibleOverride
         def install_verb(name, options = {})
+          return "Reinstalling" if cask_tap_changed?(name, options)
           return "Pinning" if pin_needed?(name, options)
           return "Installing" if !cask_installed?(name) || !upgrading?(false, name, options)
 
@@ -50,6 +51,8 @@ module Homebrew
 
         sig { override.params(name: String, no_upgrade: T::Boolean, verbose: T::Boolean, options: T.untyped).returns(T::Boolean) }
         def preinstall!(name, no_upgrade: false, verbose: false, **options)
+          return true if cask_tap_changed?(name, options)
+
           if cask_installed?(name) && !upgrading?(no_upgrade, name, options)
             return true if pin_needed?(name, options)
 
@@ -73,10 +76,16 @@ module Homebrew
           # cannot be meaningfully trusted.
           Homebrew::Trust.trust!(:cask, full_name) if options[:trusted] && Utils.full_name?(full_name)
 
-          pin_only = cask_installed?(name) && !upgrading?(no_upgrade, name, options)
+          tap_changed = cask_tap_changed?(name, options)
+          if tap_changed && casks.any? { |cask| cask.to_s == name && cask.pinned? }
+            onoe "#{name} is pinned. Run `brew unpin --cask #{name}` before changing taps."
+            return false
+          end
+
+          pin_only = !tap_changed && cask_installed?(name) && !upgrading?(no_upgrade, name, options)
           install_result = if pin_only
             true
-          elsif cask_installed?(name)
+          elsif !tap_changed && cask_installed?(name)
             status = "#{options[:greedy] ? "may not be" : "not"} up-to-date"
             puts "Upgrading #{name} cask. It is installed but #{status}." if verbose
             Bundle.brew("upgrade", "--cask", full_name, verbose:)
@@ -97,9 +106,9 @@ module Homebrew
             args.uniq!
 
             with_args = " with #{args.join(" ")}" if args.present?
-            puts "Installing #{name} cask#{with_args}. It is not currently installed." if verbose
+            puts "#{tap_changed ? "Reinstalling" : "Installing"} #{full_name} cask#{with_args}." if verbose
 
-            if Bundle.brew("install", "--cask", full_name, *args, verbose:)
+            if Bundle.brew(tap_changed ? "reinstall" : "install", "--cask", full_name, *args, verbose:)
               installed_casks << name
               true
             else
@@ -118,6 +127,11 @@ module Homebrew
             end
           end
 
+          if tap_changed && install_result
+            ::Cask::Tab.clear_cache
+            reset!
+          end
+
           result
         end
 
@@ -128,10 +142,24 @@ module Homebrew
 
         sig { params(cask: String, no_upgrade: T::Boolean).returns(T::Boolean) }
         def cask_installed_and_up_to_date?(cask, no_upgrade: false)
+          return false if cask_tap_changed?(cask)
           return false unless cask_installed?(cask)
           return true if no_upgrade
 
           !cask_upgradable?(cask)
+        end
+
+        sig { params(name: String, options: Homebrew::Bundle::EntryOptions).returns(T::Boolean) }
+        def cask_tap_changed?(name, options = {})
+          full_name = options.fetch(:full_name, name)
+          return false unless full_name.is_a?(String)
+          return false unless Utils.full_name?(full_name)
+
+          require "cask/cask_loader"
+          return false unless (token_tap_type = ::Cask::CaskLoader.tap_cask_token_type(full_name, warn: false))
+
+          token, tap, = token_tap_type
+          casks.any? { |cask| cask.to_s == token && cask.tap != tap }
         end
 
         sig { params(cask: String, array: T::Array[String]).returns(T::Boolean) }
@@ -312,6 +340,11 @@ module Homebrew
             "#{key}: \"#{value.to_s.sub(/^#{Dir.home}/, "~")}\""
           end.join(", ")
         end
+      end
+
+      sig { override.params(entries: T::Array[Dsl::Entry]).returns(T::Array[Object]) }
+      def format_checkable(entries)
+        checkable_entries(entries).map { |entry| entry.options.fetch(:full_name, entry.name).to_s.downcase }
       end
 
       sig { override.params(cask: Object, no_upgrade: T::Boolean).returns(T::Boolean) }

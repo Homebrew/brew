@@ -115,6 +115,7 @@ module Homebrew
 
         conflicts "--build-from-source", "--force-bottle"
         conflicts "--ask", "--no-ask"
+        conflicts "--force", "--adopt"
 
         named_args [:formula, :cask], min: 1
       end
@@ -273,6 +274,7 @@ module Homebrew
                   binaries:       args.binaries?,
                   verbose:        args.verbose?,
                   force:          args.force?,
+                  adopt:          args.adopt?,
                   skip_cask_deps: args.skip_cask_deps?,
                   require_sha:    args.cask_require_sha?,
                   reinstall:      true,
@@ -336,6 +338,7 @@ module Homebrew
               binaries:        args.binaries?,
               verbose:         args.verbose?,
               force:           args.force?,
+              adopt:           args.adopt?,
               require_sha:     args.cask_require_sha?,
               skip_cask_deps:  args.skip_cask_deps?,
               zap:             args.zap?,
