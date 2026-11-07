@@ -1176,6 +1176,23 @@ RSpec.describe Formulary do
       end
     end
 
+    context "when only the Rack of an alias exists", :no_api do
+      let(:alias_name) { "testball-alias" }
+      let(:alias_rack_path) { HOMEBREW_CELLAR/alias_name }
+
+      before do
+        formula_path.dirname.mkpath
+        formula_path.write formula_content
+        CoreTap.instance.alias_dir.mkpath
+        FileUtils.ln_s formula_path, CoreTap.instance.alias_dir/alias_name
+        (alias_rack_path/"0.1").mkpath
+      end
+
+      it "returns the Rack of the alias" do
+        expect(described_class.to_rack(formula_name)).to eq(alias_rack_path)
+      end
+    end
+
     it "raises an error if the Formula is not available" do
       expect do
         described_class.to_rack("a/b/#{formula_name}")

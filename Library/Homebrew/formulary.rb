@@ -1242,7 +1242,15 @@ module Formulary
     end
 
     # Use canonical name to locate rack.
-    Utils::Path.resolved_path(HOMEBREW_CELLAR/canonical_name(ref))
+    rack = Utils::Path.resolved_path(HOMEBREW_CELLAR/canonical_name(ref))
+    return rack if rack.directory?
+
+    installed_keg = begin
+      factory(ref).installed_kegs.first
+    rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
+      nil
+    end
+    installed_keg ? Utils::Path.resolved_path(installed_keg.rack) : rack
   end
 
   sig { params(ref: String).returns(String) }
