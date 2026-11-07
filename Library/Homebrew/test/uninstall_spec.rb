@@ -85,8 +85,8 @@ RSpec.describe Homebrew::Uninstall do
           ignore_dependencies: true,
         )
       end.to output(a_string_including(
-        "rm -rf \\\n    #{dependency.pkgetc.to_s.shellescape} \\\n    #{config_file.to_s.shellescape}",
-      )).to_stderr
+                      "rm -rf \\\n    #{dependency.pkgetc.to_s.shellescape} \\\n    #{config_file.to_s.shellescape}",
+                    )).to_stderr
     end
   end
 

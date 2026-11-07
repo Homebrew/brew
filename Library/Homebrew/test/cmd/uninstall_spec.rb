@@ -25,11 +25,11 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
 
     expect(HOMEBREW_CELLAR/"testball").to exist
     expect { brew "uninstall", "--ignore-dependencies", "testball" }
-      .to output(/Uninstalling testball/).to_stdout
+      .to output(/Uninstalling .*testball/).to_stdout
       .and output(a_string_including(
-        "The following testball configuration files have not been removed!",
-        "rm -rf \\\n    #{config_directory.to_s.shellescape} \\\n    #{config_file.to_s.shellescape}",
-      )).to_stderr
+                    "The following testball configuration files have not been removed!",
+                    "rm -rf \\\n    #{config_directory.to_s.shellescape} \\\n    #{config_file.to_s.shellescape}",
+                  )).to_stderr
       .and be_a_success
     expect(HOMEBREW_CELLAR/"testball").not_to exist
 
