@@ -1212,6 +1212,13 @@ RSpec.describe Formulary do
         expect(described_class.to_rack(formula_name)).to eq(later_alias_rack_path)
       end
 
+      it "does not choose between multiple same-tap alias racks" do
+        install_keg(alias_rack_path)
+        install_keg(later_alias_rack_path)
+
+        expect(described_class.to_rack(formula_name)).to eq(rack_path)
+      end
+
       it "ignores a Rack of the alias with any keg from another tap" do
         install_keg(alias_rack_path)
         install_keg(alias_rack_path, version: "0.2", tap: Tap.fetch("homebrew", "other"))

@@ -1250,9 +1250,12 @@ module Formulary
       installed_kegs = Utils::Path.formula_installed_prefixes(
         formula.possible_names.reject { |name| (HOMEBREW_CELLAR/name).symlink? },
       ).map { |prefix| Keg.new(prefix) }
-      installed_kegs.group_by(&:rack).find do |installed_rack, kegs|
-        !installed_rack.symlink? && kegs.all? { |keg| keg.tab.tap == formula.tap }
-      end&.first
+      matching_racks = installed_kegs.group_by(&:rack).filter_map do |installed_rack, kegs|
+        next if installed_rack.symlink? || kegs.any? { |keg| keg.tab.tap != formula.tap }
+
+        installed_rack
+      end
+      matching_racks.first if matching_racks.one?
     rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
       nil
     end
