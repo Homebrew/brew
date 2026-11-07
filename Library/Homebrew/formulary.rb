@@ -1246,11 +1246,12 @@ module Formulary
     return rack if rack.directory?
 
     installed_keg = begin
-      factory(ref).installed_kegs.first
+      formula = factory(ref)
+      formula.installed_kegs.find { |keg| !keg.rack.symlink? && keg.tab.tap == formula.tap }
     rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
       nil
     end
-    installed_keg ? Utils::Path.resolved_path(installed_keg.rack) : rack
+    installed_keg&.rack || rack
   end
 
   sig { params(ref: String).returns(String) }

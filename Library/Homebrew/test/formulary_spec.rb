@@ -1176,20 +1176,44 @@ RSpec.describe Formulary do
       end
     end
 
-    context "when only the Rack of an alias exists", :no_api do
+    context "when the Formula has an alias", :no_api do
       let(:alias_name) { "testball-alias" }
       let(:alias_rack_path) { HOMEBREW_CELLAR/alias_name }
+
+      def install_keg(rack, tap: CoreTap.instance)
+        keg_path = rack/"0.1"
+        keg_path.mkpath
+        tab = Tab.empty
+        tab.tabfile = keg_path/AbstractTab::FILENAME
+        tab.tap = tap
+        tab.write
+      end
 
       before do
         formula_path.dirname.mkpath
         formula_path.write formula_content
         CoreTap.instance.alias_dir.mkpath
         FileUtils.ln_s formula_path, CoreTap.instance.alias_dir/alias_name
-        (alias_rack_path/"0.1").mkpath
       end
 
-      it "returns the Rack of the alias" do
+      it "returns the Rack of the alias when only that Rack exists" do
+        install_keg(alias_rack_path)
+
         expect(described_class.to_rack(formula_name)).to eq(alias_rack_path)
+      end
+
+      it "ignores a Rack of the alias with a keg from another tap" do
+        install_keg(alias_rack_path, tap: Tap.fetch("homebrew", "other"))
+
+        expect(described_class.to_rack(formula_name)).to eq(rack_path)
+      end
+
+      it "ignores a Rack of the alias that links to another Formula's Rack" do
+        other_rack_path = HOMEBREW_CELLAR/"testball-renamed"
+        install_keg(other_rack_path)
+        alias_rack_path.make_relative_symlink(other_rack_path)
+
+        expect(described_class.to_rack(formula_name)).to eq(rack_path)
       end
     end
 
