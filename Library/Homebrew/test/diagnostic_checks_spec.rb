@@ -440,7 +440,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     EOS
   end
 
-  it "lists outdated unpinned dependents that no longer need a deleted formula" do
+  it "lists pinned dependents alongside upgradeable dependents" do
     tap = CoreTap.instance
     tab = instance_double(Tab, tap:, installed_on_request_present?: true, installed_on_request: false)
     keg = instance_double(Keg, name: "deleted-dep", deleted_formula?: true,
@@ -470,7 +470,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       Upgrading the outdated dependents with `brew upgrade` will stop
       requiring the formulae:
 
-      deleted-dep: dependent-one, dependent-two
+      deleted-dep: dependent-one, dependent-two, pinned-dependent
     EOS
   end
 

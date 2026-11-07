@@ -1922,7 +1922,7 @@ module Homebrew
           dependencies_still_required = installed_dependency_names & current_dependency_names
           dependencies_to_drop = installed_dependency_names - dependencies_still_required
 
-          next if dependencies_to_drop.empty? || dependent.pinned? || !dependent.outdated?
+          next if dependencies_to_drop.empty? || !dependent.outdated?
 
           dependencies_to_drop.each do |name|
             if (dependents = upgradeable_dependents[name])
