@@ -1527,29 +1527,28 @@ module Homebrew
           end
         end
 
-        text = +"Some installed kegs have no formulae!"
+        text = +"Some installed kegs have no formulae!\n"
         remediation = []
         if direct_kegs.present?
-          text << "\nYou should find replacements for the following formulae.\n"
-          remediation << direct_groups_by_type.values.flatten.join("\n")
+          text << "You should find replacements for the following formulae.\n"
+          remediation << direct_groups_by_type.values.flatten.join("\n").strip
         end
         if dependency_kegs.present?
-          remediation << <<~EOS
-            The following formulae are installed as dependencies:
-
-            #{dependency_groups_by_type.values.flatten.join("\n")}
-          EOS
           dependency_names = dependency_kegs.to_h { |keg| [keg.name, keg.name] }
-          remediation << formula_dependency_upgrade_guidance(
-            dependency_names,
-            installed_formulae: installed_formulae || [],
-          )
+          remediation << [
+            "The following formulae are installed as dependencies:",
+            dependency_groups_by_type.values.flatten.join("\n").strip,
+            formula_dependency_upgrade_guidance(
+              dependency_names,
+              installed_formulae: installed_formulae || [],
+            ),
+          ].compact_blank.join("\n\n")
         end
 
         Finding.new(
           text,
           affects:     deleted_kegs.map(&:name).sort,
-          remediation: remediation.join("\n"),
+          remediation: remediation.compact_blank.join("\n\n"),
         )
       end
 
@@ -1908,8 +1907,8 @@ module Homebrew
           .returns(String)
       }
       def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
-        upgradeable_dependents = T.let([], T::Array[String])
-        non_upgradeable_dependents = T.let([], T::Array[String])
+        upgradeable_dependents = T.let({}, T::Hash[String, T::Array[String]])
+        non_upgradeable_dependents = T.let({}, T::Hash[String, T::Array[String]])
 
         installed_formulae.each do |dependent|
           installed_dependency_names = dependent.runtime_dependencies.filter_map do |dependency|
@@ -1931,31 +1930,41 @@ module Homebrew
           else
             upgradeable_dependents
           end
-          destination.concat(dependencies_to_drop.map { |name| "#{dependent.full_name}: #{name}" })
+          dependencies_to_drop.each do |name|
+            if (dependents = destination[name])
+              dependents << dependent.full_name
+            else
+              destination[name] = [dependent.full_name]
+            end
+          end
         end
 
         guidance = []
         if upgradeable_dependents.present?
-          guidance << append_indented_list(upgradeable_dependents.uniq.sort, <<~EOS)
-            Upgrading these outdated dependents with `brew upgrade` will stop
-            requiring the formulae shown after `:`:
-          EOS
+          guidance << [
+            <<~EOS.rstrip,
+              Upgrading the outdated dependents with `brew upgrade` will stop
+              requiring the formulae:
+            EOS
+            upgradeable_dependents.sort_by(&:first).map do |formula, dependents|
+              "#{formula}: #{dependents.uniq.sort.join(", ")}"
+            end.join("\n"),
+          ].join("\n\n")
         end
         if non_upgradeable_dependents.present?
-          guidance << append_indented_list(non_upgradeable_dependents.uniq.sort, <<~EOS)
-            These dependents no longer require the formulae shown after `:`, but
-            `brew upgrade` will not update them because they are up to date or pinned:
-          EOS
-          guidance << "Reinstall these dependents, or unpin and upgrade them, before running `brew autoremove`."
+          guidance << [
+            <<~EOS.rstrip,
+              These dependents no longer require the formulae below, but `brew upgrade`
+              will not update them because they are up to date or pinned:
+            EOS
+            non_upgradeable_dependents.sort_by(&:first).map do |formula, dependents|
+              "#{formula}: #{dependents.uniq.sort.join(", ")}"
+            end.join("\n"),
+            "Reinstall these dependents or unpin and upgrade them.",
+          ].join("\n\n")
         end
 
-        if upgradeable_dependents.present? || non_upgradeable_dependents.present?
-          guidance << <<~EOS
-            `brew upgrade` may not uninstall dependencies automatically. Run
-            `brew autoremove` to remove formulae that are no longer required.
-          EOS
-        end
-        guidance.join("\n")
+        guidance.join("\n\n")
       end
 
       sig { params(path: String).returns(Finding::Remediation) }
