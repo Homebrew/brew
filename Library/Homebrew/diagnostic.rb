@@ -1908,7 +1908,6 @@ module Homebrew
       }
       def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
         upgradeable_dependents = T.let({}, T::Hash[String, T::Array[String]])
-        non_upgradeable_dependents = T.let({}, T::Hash[String, T::Array[String]])
 
         installed_formulae.each do |dependent|
           installed_dependency_names = dependent.runtime_dependencies.filter_map do |dependency|
@@ -1923,18 +1922,13 @@ module Homebrew
           dependencies_still_required = installed_dependency_names & current_dependency_names
           dependencies_to_drop = installed_dependency_names - dependencies_still_required
 
-          next if dependencies_to_drop.empty?
+          next if dependencies_to_drop.empty? || dependent.pinned? || !dependent.outdated?
 
-          destination = if dependent.pinned? || !dependent.outdated?
-            non_upgradeable_dependents
-          else
-            upgradeable_dependents
-          end
           dependencies_to_drop.each do |name|
-            if (dependents = destination[name])
+            if (dependents = upgradeable_dependents[name])
               dependents << dependent.full_name
             else
-              destination[name] = [dependent.full_name]
+              upgradeable_dependents[name] = [dependent.full_name]
             end
           end
         end
@@ -1949,18 +1943,6 @@ module Homebrew
             upgradeable_dependents.sort_by(&:first).map do |formula, dependents|
               "#{formula}: #{dependents.uniq.sort.join(", ")}"
             end.join("\n"),
-          ].join("\n\n")
-        end
-        if non_upgradeable_dependents.present?
-          guidance << [
-            <<~EOS.rstrip,
-              These dependents no longer require the formulae below, but `brew upgrade`
-              will not update them because they are up to date or pinned:
-            EOS
-            non_upgradeable_dependents.sort_by(&:first).map do |formula, dependents|
-              "#{formula}: #{dependents.uniq.sort.join(", ")}"
-            end.join("\n"),
-            "Reinstall these dependents or unpin and upgrade them.",
           ].join("\n\n")
         end
 

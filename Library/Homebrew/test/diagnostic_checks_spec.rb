@@ -440,14 +440,18 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     EOS
   end
 
-  it "lists outdated dependents that no longer need a deleted formula" do
+  it "lists outdated unpinned dependents that no longer need a deleted formula" do
     tap = CoreTap.instance
     tab = instance_double(Tab, tap:, installed_on_request_present?: true, installed_on_request: false)
     keg = instance_double(Keg, name: "deleted-dep", deleted_formula?: true,
                                scheme_and_version: [0, PkgVersion.parse("1.0")], tab:)
     dependency = instance_double(Dependency, name: "deleted-dep")
-    dependents = %w[dependent-one dependent-two].map do |name|
-      dependent = instance_double(Formula, full_name: name, pinned?: false, outdated?: true,
+    dependents = {
+      "dependent-one"    => false,
+      "dependent-two"    => false,
+      "pinned-dependent" => true,
+    }.map do |name, pinned|
+      dependent = instance_double(Formula, full_name: name, pinned?: pinned, outdated?: true,
                                            runtime_dependencies: [dependency])
       allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
       dependent
