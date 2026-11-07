@@ -1176,6 +1176,65 @@ RSpec.describe Formulary do
       end
     end
 
+    context "when the Formula has an alias", :no_api do
+      let(:alias_name) { "testball-alias" }
+      let(:alias_rack_path) { HOMEBREW_CELLAR/alias_name }
+      let(:later_alias_name) { "testball-alias-later" }
+      let(:later_alias_rack_path) { HOMEBREW_CELLAR/later_alias_name }
+
+      def install_keg(rack, version: "0.1", tap: CoreTap.instance)
+        keg_path = rack/version
+        keg_path.mkpath
+        tab = Tab.empty
+        tab.tabfile = keg_path/AbstractTab::FILENAME
+        tab.tap = tap
+        tab.write
+      end
+
+      before do
+        formula_path.dirname.mkpath
+        formula_path.write formula_content
+        CoreTap.instance.alias_dir.mkpath
+        FileUtils.ln_s formula_path, CoreTap.instance.alias_dir/alias_name
+        FileUtils.ln_s formula_path, CoreTap.instance.alias_dir/later_alias_name
+      end
+
+      it "returns the Rack of the alias when only that Rack exists" do
+        install_keg(alias_rack_path)
+
+        expect(described_class.to_rack(formula_name)).to eq(alias_rack_path)
+      end
+
+      it "finds a non-symlink alias after an earlier symlinked alias" do
+        install_keg(later_alias_rack_path)
+        alias_rack_path.make_relative_symlink(later_alias_rack_path)
+
+        expect(described_class.to_rack(formula_name)).to eq(later_alias_rack_path)
+      end
+
+      it "does not choose between multiple same-tap alias racks" do
+        install_keg(alias_rack_path)
+        install_keg(later_alias_rack_path)
+
+        expect(described_class.to_rack(formula_name)).to eq(rack_path)
+      end
+
+      it "ignores a Rack of the alias with any keg from another tap" do
+        install_keg(alias_rack_path)
+        install_keg(alias_rack_path, version: "0.2", tap: Tap.fetch("homebrew", "other"))
+
+        expect(described_class.to_rack(formula_name)).to eq(rack_path)
+      end
+
+      it "ignores a Rack of the alias that links to another Formula's Rack" do
+        other_rack_path = HOMEBREW_CELLAR/"testball-renamed"
+        install_keg(other_rack_path)
+        alias_rack_path.make_relative_symlink(other_rack_path)
+
+        expect(described_class.to_rack(formula_name)).to eq(rack_path)
+      end
+    end
+
     it "raises an error if the Formula is not available" do
       expect do
         described_class.to_rack("a/b/#{formula_name}")

@@ -1120,14 +1120,16 @@ class Formula
   sig { returns(Pathname) }
   def rack = HOMEBREW_CELLAR/name
 
-  # All currently installed prefix directories.
-  sig { returns(T::Array[Pathname]) }
-  def installed_prefixes = Utils::Path.formula_installed_prefixes(possible_names)
+  # All currently installed prefix directories for formula names.
+  sig { params(formula_names: T::Array[String]).returns(T::Array[Pathname]) }
+  def installed_prefixes(formula_names = possible_names)
+    Utils::Path.formula_installed_prefixes(formula_names)
+  end
 
-  # All currently installed kegs.
-  sig { returns(T::Array[Keg]) }
-  def installed_kegs
-    installed_prefixes.map { |dir| Keg.new(dir) }
+  # All currently installed kegs for formula names.
+  sig { params(formula_names: T::Array[String]).returns(T::Array[Keg]) }
+  def installed_kegs(formula_names = possible_names)
+    installed_prefixes(formula_names).map { |dir| Keg.new(dir) }
   end
 
   # The directory where the formula's binaries should be installed.
