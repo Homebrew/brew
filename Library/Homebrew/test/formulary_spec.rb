@@ -988,6 +988,34 @@ RSpec.describe Formulary do
         end.to raise_error("Cannot build from source from abstract formula.")
       end
 
+      it "uses a matching local formula to resolve compiler-dependent dependencies" do
+        (CoreTap.instance.formula_dir/CoreTap.instance.new_formula_subdirectory(formula_name)).mkpath
+        formula_path.write <<~RUBY
+          class #{described_class.class_s(formula_name)} < Formula
+            url "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
+            if DevelopmentTools.clang_build_version >= Version.new("1600")
+              depends_on "llvm" => :build
+            end
+          end
+        RUBY
+
+        api_formulae = formula_json_contents
+        api_formula = api_formulae.fetch(formula_name)
+        api_formula["build_dependencies"] = ["llvm"]
+        api_formula["ruby_source_checksum"] = { "sha256" => formula_path.sha256 }
+        allow(Homebrew::API::Formula).to receive(:all_formulae).and_return(api_formulae)
+        internal_api_formula = api_formula.merge("ruby_source_checksum" => formula_path.sha256)
+        allow(Homebrew::API::Internal).to receive(:formula_hash).with(formula_name)
+                                                                .and_return(internal_api_formula)
+        allow(DevelopmentTools).to receive(:clang_build_version).and_return(Version.new("1400"))
+
+        formula = described_class.factory(formula_name)
+
+        expect(formula.deps.map(&:name)).not_to include("llvm")
+      ensure
+        formula_path.unlink if formula_path.exist?
+      end
+
       it "returns a future-disabled Formula when given a name" do
         allow(Homebrew::API::Formula).to receive(:all_formulae).and_return formula_json_contents(disable_future_json)
 
