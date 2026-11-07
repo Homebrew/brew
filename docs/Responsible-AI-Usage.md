@@ -15,8 +15,8 @@ These guidelines exist to make Homebrew better rather than shifting work and ris
 
 AI is not responsible for its output: you are responsible for the output of the AI tools you use.
 A pull request with your name on it is your work regardless of how much of it an AI wrote.
-Do not identify an AI tool as an author, co-author, committer or signatory of a commit, including through an `Assisted-by`, `Co-developed-by` or similar commit trailer.
-Disclose the tool's involvement in the pull request description instead.
+Every commit must have a human author or `Co-authored-by` co-author: commits attributed only to AI tools are rejected.
+You may credit an AI tool alongside them but must still disclose its involvement in the pull request description.
 
 Verify AI output for correctness as you would that of an avatarless GitHub user with no previous contributions.
 Read it, run it, test it and make sure you understand it.
