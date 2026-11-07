@@ -816,6 +816,30 @@ RSpec.describe Homebrew::Cmd::Info do
     expect(described_class.installed_dependent_names(["testball"])).to be_empty
   end
 
+  it "uses formula dependencies without rereading the receipt when the list is missing" do
+    rack = HOMEBREW_CELLAR/"dependent"
+    keg_path = rack/"1.0"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    keg = Keg.new(keg_path)
+    dependent_formula = formula("dependent", path: keg_path/"dependent.rb") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/dependent-1.0.tar.gz"
+    end
+
+    allow(Formula).to receive(:racks).and_return([rack])
+    allow(Keg).to receive(:from_rack).with(rack).and_return(keg)
+    allow(keg).to receive(:to_formula).and_return(dependent_formula)
+    allow(dependent_formula).to receive(:runtime_dependencies).and_return([])
+    allow(dependent_formula).to receive(:runtime_dependencies).with(read_from_tab: false)
+                                                              .and_return([Dependency.new("testball")])
+
+    expect(described_class.installed_dependent_names(["testball"])).to eq(["dependent"])
+  end
+
   it "skips installed kegs from untrusted taps whose receipts have no list", :trust_store do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
