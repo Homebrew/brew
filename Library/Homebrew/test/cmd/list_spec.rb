@@ -337,6 +337,28 @@ RSpec.describe Homebrew::Cmd::List do
     cask.unpin
   end
 
+  it "continues listing a pinned cask when a formula receipt is invalid", :cask do
+    formula = formula("local-caffeine") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/local-caffeine-1.0"
+    end
+    allow(Formulary).to receive(:factory).with("local-caffeine").and_return(formula)
+    allow(Formulary).to receive(:canonical_name).with("local-caffeine").and_return(formula.name)
+    allow(formula).to receive(:possible_names).and_return([formula.name, "old-local-caffeine"])
+
+    keg = HOMEBREW_CELLAR/"old-local-caffeine/1.0"
+    keg.mkpath
+    (keg/AbstractTab::FILENAME).write "{"
+
+    cask = Cask::CaskLoader.load("local-caffeine")
+    InstallHelper.stub_cask_installation(cask)
+    cask.pin
+
+    expect { described_class.new(["--pinned", "local-caffeine"]).run }
+      .to output("local-caffeine\n").to_stdout
+      .and not_to_output.to_stderr
+  end
+
   it "warns about broken Caskroom symlinks" do
     Cask::Caskroom.path.mkpath
     FileUtils.ln_s "missing-cask", Cask::Caskroom.path/"dangling-alias"

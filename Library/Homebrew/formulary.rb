@@ -1242,7 +1242,24 @@ module Formulary
     end
 
     # Use canonical name to locate rack.
-    Utils::Path.resolved_path(HOMEBREW_CELLAR/canonical_name(ref))
+    rack = Utils::Path.resolved_path(HOMEBREW_CELLAR/canonical_name(ref))
+    return rack if rack.directory?
+
+    possible_rack = begin
+      formula = factory(ref)
+      possible_names = formula.possible_names.reject { |name| (HOMEBREW_CELLAR/name).symlink? }
+      installed_kegs = formula.installed_kegs(possible_names)
+      matching_racks = installed_kegs.group_by(&:rack).filter_map do |installed_rack, kegs|
+        next if installed_rack.symlink? || kegs.any? { |keg| keg.tab.tap != formula.tap }
+
+        installed_rack
+      end
+      matching_racks.first if matching_racks.one?
+    rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,
+           JSON::ParserError, SystemCallError
+      nil
+    end
+    possible_rack || rack
   end
 
   sig { params(ref: String).returns(String) }
