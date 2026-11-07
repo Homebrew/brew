@@ -2869,6 +2869,26 @@ class Formula
     Formulary.factory(name)
   end
 
+  # Converts runtime dependencies from an install receipt into {Dependency}
+  # objects, returning `nil` only when no list is present.
+  #
+  # @api internal
+  sig {
+    params(tab_deps: AbstractTab::RuntimeDependencies)
+      .returns(T.nilable(T::Array[Dependency]))
+  }
+  def self.runtime_dependencies_from_tab(tab_deps)
+    return if tab_deps.nil?
+    return [] unless tab_deps.is_a?(Array)
+
+    tab_deps.filter_map do |dep|
+      next unless dep.is_a?(Hash)
+
+      full_name = dep["full_name"]
+      Dependency.new(full_name) if full_name.is_a?(String)
+    end
+  end
+
   # True if this formula is provided by Homebrew itself.
   sig { returns(T::Boolean) }
   def core_formula?
@@ -3011,12 +3031,7 @@ class Formula
     Formula.cache[:runtime_dependencies][cache_key] ||= begin
       deps = if read_from_tab && undeclared &&
                 (tab_deps = any_installed_keg&.runtime_dependencies)
-        tab_deps.filter_map do |d|
-          full_name = d["full_name"]
-          next unless full_name
-
-          Dependency.new full_name
-        end
+        Formula.runtime_dependencies_from_tab(tab_deps)
       end
       begin
         deps ||= declared_runtime_dependencies unless undeclared

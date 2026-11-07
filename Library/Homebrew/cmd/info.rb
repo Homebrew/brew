@@ -227,7 +227,7 @@ module Homebrew
           tab_deps = Tab.from_file_content(content, tab_path).runtime_dependencies
           # A receipt with no list says nothing about dependencies, so check the
           # formula instead, as `brew uninstall` does.
-          dep_names = tab_deps&.filter_map { T.cast(it, T::Hash[String, T.untyped])["full_name"] } ||
+          dep_names = Formula.runtime_dependencies_from_tab(tab_deps)&.map(&:name) ||
                       keg.to_formula.runtime_dependencies(read_from_tab: false).map(&:name)
           keg.name if dep_names.any? { names.include?(Utils.name_from_full_name(it)) }
         rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
