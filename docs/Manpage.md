@@ -2330,7 +2330,8 @@ Uninstall a *`formula`* or *`cask`*.
 
 `-n`, `--dry-run`
 
-: Show what would be uninstalled, but do not actually uninstall anything.
+: Show what would be uninstalled and autoremoved, but do not actually remove
+  anything.
 
 `--zap`
 

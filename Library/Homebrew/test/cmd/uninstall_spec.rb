@@ -57,7 +57,8 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
 
       expect(Homebrew::Uninstall).not_to receive(:uninstall_kegs)
       expect(Cask::Uninstall).not_to receive(:uninstall_casks)
-      expect(Homebrew::Cleanup).not_to receive(:autoremove)
+      expect(Homebrew::Cleanup).to receive(:autoremove)
+        .with(dry_run: true, removed_kegs: [keg], removed_casks: [cask])
 
       expect { cmd.run }.to output(<<~EOS).to_stdout
         Would uninstall testball 0.1

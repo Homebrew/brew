@@ -2728,7 +2728,7 @@ _brew_unbottled() {
 _brew_uninstall() {
   _arguments \
     '--debug[Display any debugging information]' \
-    '--dry-run[Show what would be uninstalled, but do not actually uninstall anything]' \
+    '--dry-run[Show what would be uninstalled and autoremoved, but do not actually remove anything]' \
     '--force[Delete all installed versions of formula. Uninstall even if cask is not installed, overwrite existing files and ignore errors when removing files]' \
     '--help[Show this message]' \
     '--ignore-dependencies[Don'\''t fail uninstall, even if formula is a dependency of any installed formulae]' \
