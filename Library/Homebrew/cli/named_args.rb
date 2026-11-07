@@ -352,7 +352,7 @@ module Homebrew
           formula_or_kegs = if only != :cask
             begin
               case method
-              when nil, :factory, :bottle
+              when nil, :factory, :bottle, :resolve_cask
                 Formulary.factory(name, *@override_spec, warn:, force_bottle: @force_bottle, flags: @flags)
               when :resolve
                 resolve_formula(name)
@@ -394,7 +394,13 @@ module Homebrew
               config = Cask::Config.from_args(@parent) if @cask_options
               options = { warn: }.compact
               untrusted_installed_cask = (load_untrusted_installed_cask(name, config:) if want_keg_like_cask)
-              candidate_cask = untrusted_installed_cask || Cask::CaskLoader.load(name, config:, **options)
+              candidate_cask = if untrusted_installed_cask
+                untrusted_installed_cask
+              elsif want_keg_like_cask || [:resolve, :resolve_cask].include?(method)
+                Cask::CaskLoader.load_prefer_installed(name, config:, **options)
+              else
+                Cask::CaskLoader.load(name, config:, **options)
+              end
               skip_installed_caskfile_load = if untrusted_installed_cask
                 !untrusted_installed_cask.loaded_from_api?
               else

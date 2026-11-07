@@ -39,7 +39,7 @@ module OS
           Utils.popen_read(gcc, "--version")[/ (\d+\.\d+\.\d+)/, 1] || "N/A"
         end
 
-        sig { params(formula: T.any(::Pathname, String)).returns(T.any(String, PkgVersion)) }
+        sig { params(formula: String).returns(T.any(String, PkgVersion)) }
         def formula_linked_version(formula)
           return "N/A" if Homebrew::EnvConfig.no_install_from_api? && !CoreTap.instance.installed?
 

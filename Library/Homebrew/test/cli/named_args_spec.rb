@@ -64,6 +64,40 @@ RSpec.describe Homebrew::CLI::NamedArgs do
   end
 
   describe "#to_formulae_and_casks" do
+    context "when only installed cask metadata remains", :no_api do
+      let(:installed_caskfile) do
+        Cask::Caskroom.path/"removed-cask/.metadata/1.0/20250101000000.000/Casks/removed-cask.rb"
+      end
+
+      before do
+        installed_caskfile.dirname.mkpath
+        installed_caskfile.write 'cask "removed-cask" do version "1.0" end'
+      end
+
+      test_each([:latest_kegs, :default_kegs, :kegs, :resolve, :resolve_cask]) do |method|
+        it "resolves installed casks with #{method}" do
+          expect(described_class.new("removed-cask").to_formulae_and_casks(only: :cask, method:).first)
+            .to have_attributes(token: "removed-cask", sourcefile_path: installed_caskfile)
+        end
+      end
+
+      it "checks the receipt's tap before evaluating installed Ruby", :trust_store do
+        ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+        installed_caskfile.write 'raise "untrusted metadata evaluated"'
+        receipt = Cask::Caskroom.path/"removed-cask/.metadata"/AbstractTab::FILENAME
+        receipt.write({ source: { tap: "user/removed" } }.to_json)
+
+        expect do
+          described_class.new("user/removed/removed-cask")
+                         .to_formulae_and_casks(only: :cask, method: :resolve_cask)
+        end.to raise_error(Homebrew::UntrustedTapError)
+      end
+
+      it "keeps ordinary name lookup independent of installed metadata" do
+        expect { described_class.new("removed-cask").to_casks }.to raise_error(Cask::CaskUnavailableError)
+      end
+    end
+
     it "returns formulae and casks", :needs_macos do
       stub_formula_loader foo, call_original: true
       stub_cask_loader baz, call_original: true

@@ -239,10 +239,12 @@ module Homebrew
       raise_untrusted!(:formula, full_name, tap)
     end
 
-    sig { params(token: String, path: Pathname).void }
-    def self.require_trusted_cask!(token, path)
+    sig { params(token: String, path: Pathname, tap: T.nilable(Tap)).void }
+    def self.require_trusted_cask!(token, path, tap: nil)
       return if Homebrew::EnvConfig.no_require_tap_trust?
-      return unless (tap = tap_from_path(path))
+
+      tap = tap_from_path(path) || tap
+      return unless tap
       return if trusted_tap?(tap)
 
       full_name = "#{tap.name}/#{::Utils.name_from_full_name(token)}"

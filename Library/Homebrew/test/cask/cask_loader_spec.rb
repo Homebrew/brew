@@ -288,13 +288,51 @@ RSpec.describe Cask::CaskLoader, :cask do
       expect(described_class.load_prefer_installed("user/foo/test-cask").tap).to eq(foo_tap)
     end
 
-    it "returns the correct cask when no tap is specified and the tab lists a tap that isn't installed" do
-      allow_any_instance_of(Cask::Cask).to receive(:tab).and_return(installed_tab)
-      expect(described_class).to receive(:load).with("user/bar/test-cask", load_args)
-                                               .and_raise(Cask::CaskUnavailableError.new("test-cask", bar_tap))
-      expect(described_class).to receive(:load).with("test-cask", load_args)
+    it "does not retry an unavailable qualified name without its tap" do
+      allow_any_instance_of(Cask::Cask).to receive(:tab).and_return(blank_tab)
+      allow(described_class).to receive(:load).with("user/bar/test-cask", load_args)
+                                              .and_raise(Cask::CaskUnavailableError.new("test-cask", bar_tap))
 
-      expect(described_class.load_prefer_installed("test-cask").tap).to eq(foo_tap)
+      expect { described_class.load_prefer_installed("user/bar/test-cask") }
+        .to raise_error(Cask::CaskUnavailableError)
+    end
+
+    context "with installed metadata" do
+      let(:caskfile) do
+        Cask::Caskroom.path/"test-cask/.metadata/1.0/20250101000000.000/Casks/test-cask.rb"
+      end
+
+      before do
+        caskfile.dirname.mkpath
+        caskfile.write 'cask "test-cask" do version "1.0" end'
+        allow_any_instance_of(Cask::Cask).to receive(:tab).and_return(installed_tab)
+        allow(described_class).to receive(:load).with("user/bar/test-cask", load_args)
+                                                .and_raise(Cask::CaskUnavailableError.new("test-cask", bar_tap))
+      end
+
+      it "uses matching installed metadata when the recorded tap is unavailable", :trust_store do
+        Homebrew::Trust.trust!(:cask, "user/bar/test-cask")
+
+        expect(described_class.load_prefer_installed("test-cask").sourcefile_path).to eq(caskfile)
+      end
+
+      it "does not use another tap's installed metadata" do
+        allow(described_class).to receive(:load).with("test-cask", load_args)
+                                                .and_raise(Cask::CaskUnavailableError.new("test-cask"))
+        allow(described_class).to receive(:load).with("user/foo/test-cask", load_args)
+                                                .and_raise(Cask::CaskUnavailableError.new("test-cask", foo_tap))
+
+        expect { described_class.load_prefer_installed("user/foo/test-cask") }
+          .to raise_error(Cask::CaskUnavailableError)
+      end
+
+      it "propagates unreadable definitions instead of using installed metadata" do
+        allow(described_class).to receive(:load).with("user/bar/test-cask", load_args)
+                                                .and_raise(Cask::CaskUnreadableError.new("test-cask", "invalid Ruby"))
+
+        expect { described_class.load_prefer_installed("user/bar/test-cask") }
+          .to raise_error(Cask::CaskUnreadableError)
+      end
     end
   end
 
@@ -346,6 +384,24 @@ RSpec.describe Cask::CaskLoader, :cask do
 
         expect(cask.desc).to eq("Token present")
       end
+    end
+
+    it "rejects a trusted tap's symlink to an untrusted cask before evaluation", :trust_store do
+      ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+      trusted_tap = Tap.fetch("thirdparty", "trusted-links")
+      untrusted_tap = Tap.fetch("thirdparty", "untrusted-targets")
+      target_path = untrusted_tap.cask_dir/"linked-cask.rb"
+      target_path.dirname.mkpath
+      target_path.write 'raise "untrusted cask evaluated"'
+      linked_path = trusted_tap.cask_dir/"linked-cask.rb"
+      linked_path.dirname.mkpath
+      linked_path.make_relative_symlink(target_path)
+      Homebrew::Trust.trust!(:tap, trusted_tap)
+
+      expect { described_class.from_path(linked_path) }
+        .to raise_error(Homebrew::UntrustedTapError, %r{thirdparty/untrusted-targets})
+    ensure
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
     end
 
     it "refuses untrusted third-party tap casks when trust is enabled", :trust_store do
