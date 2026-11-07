@@ -138,51 +138,6 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
       RUBY
     end
 
-    it 'reports an offense if `require "language/go"` is present' do
-      expect_offense(<<~RUBY)
-        require "language/go"
-        ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: `require "language/go"` is no longer necessary or correct
-
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-          homepage "https://brew.sh"
-
-          def install
-            system "go", "get", "bar"
-            ^^^^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: Do not use `go get`. Please ask upstream to implement Go vendoring
-          end
-        end
-      RUBY
-    end
-
-    it "reports an offense if `Formula.factory(name)` is present" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-          homepage "https://brew.sh"
-
-          def install
-            Formula.factory(name)
-            ^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: `Formula.factory(name)` is deprecated in favour of `Formula[name]`
-          end
-        end
-      RUBY
-    end
-
-    it "reports an offense if `dep ensure` is used without `-vendor-only`" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-          homepage "https://brew.sh"
-
-          def install
-            system "dep", "ensure"
-            ^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: Use `"dep", "ensure", "-vendor-only"`
-          end
-        end
-      RUBY
-    end
-
     it "reports an offense if `cargo build` is executed" do
       expect_offense(<<~RUBY)
         class Foo < Formula

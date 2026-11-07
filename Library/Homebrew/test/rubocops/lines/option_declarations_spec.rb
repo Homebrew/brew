@@ -1,9 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
 RSpec.describe RuboCop::Cop::FormulaAudit::OptionDeclarations do
+  sig { returns(RuboCop::Cop::FormulaAudit::OptionDeclarations) }
   subject(:cop) { described_class.new }
 
   context "when auditing options" do

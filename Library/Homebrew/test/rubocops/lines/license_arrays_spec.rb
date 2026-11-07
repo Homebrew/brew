@@ -1,9 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
 RSpec.describe RuboCop::Cop::FormulaAudit::LicenseArrays do
+  sig { returns(RuboCop::Cop::FormulaAudit::LicenseArrays) }
   subject(:cop) { described_class.new }
 
   context "when auditing license arrays" do

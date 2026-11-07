@@ -43,15 +43,6 @@ module RuboCop
             end
           end
 
-          # processed_source.ast is passed instead of body_node because `require` would be outside body_node
-          find_method_with_args(processed_source.ast, :require, "language/go") do
-            problem '`require "language/go"` is no longer necessary or correct'
-          end
-
-          find_instance_method_call(body_node, "Formula", :factory) do
-            problem "`Formula.factory(name)` is deprecated in favour of `Formula[name]`"
-          end
-
           find_method_with_args(body_node, :revision, 0) do
             problem "`revision 0` is unnecessary"
           end
@@ -74,13 +65,6 @@ module RuboCop
 
               problem 'Use `"cargo", "install", *std_cargo_args`'
             end
-          end
-
-          find_method_with_args(body_node, :system, "dep", "ensure") do |d|
-            next if parameters_passed?(d, [/vendor-only/])
-            next if @formula_name == "goose" # needed in 2.3.0
-
-            problem 'Use `"dep", "ensure", "-vendor-only"`'
           end
 
           find_every_method_call_by_name(body_node, :system).each do |m|

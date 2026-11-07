@@ -1,9 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
 RSpec.describe RuboCop::Cop::FormulaAudit::MacOSOnLinux do
+  sig { returns(RuboCop::Cop::FormulaAudit::MacOSOnLinux) }
   subject(:cop) { described_class.new }
 
   it "reports an offense when `MacOS` is used in the `Formula` class" do

@@ -1,9 +1,10 @@
-# typed: true
+# typed: strict
 # frozen_string_literal: true
 
 require "rubocops/lines"
 
 RSpec.describe RuboCop::Cop::FormulaAudit::AssertStatements do
+  sig { returns(RuboCop::Cop::FormulaAudit::AssertStatements) }
   subject(:cop) { described_class.new }
 
   context "when auditing formula assertions" do
