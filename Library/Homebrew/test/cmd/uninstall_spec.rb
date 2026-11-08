@@ -79,7 +79,6 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
 
       expect { cmd.run }.to output(<<~EOS).to_stdout
         Would uninstall testball 0.1
-        #{link}
         Would uninstall Cask test-cask
       EOS
 

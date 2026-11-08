@@ -382,7 +382,6 @@ class Keg
         next if src != resolved_path(dst)
 
         if dry_run
-          puts dst
           Find.prune if src.directory?
           next
         end
