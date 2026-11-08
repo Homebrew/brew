@@ -63,6 +63,54 @@ RSpec.describe Homebrew::Cmd::Outdated do
       .to raise_error(UsageError, /`--minimum-version` requires exactly one formula or cask argument/)
   end
 
+  test_each([[], ["--fetch-HEAD"], ["--minimum-version=1.2.3"]]) do |args|
+    it "excludes disabled formulae with #{args.inspect}" do
+      f = formula("disabled") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/disabled-1.2.3.tar.gz"
+        disable! date: Date.today.to_s, because: :does_not_build
+      end
+      install_formula_version f.name, "1.2.2"
+
+      expect(described_class.new(args).select_outdated([f])).to be_empty
+    end
+  end
+
+  it "includes outdated formulae before their disable date" do
+    f = formula("deprecated") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/deprecated-1.2.3.tar.gz"
+      disable! date: (Date.today + 1).to_s, because: :does_not_build
+    end
+    install_formula_version f.name, "1.2.2"
+
+    expect(described_class.new([]).select_outdated([f])).to eq([f])
+  end
+
+  describe "#select_outdated", :cask do
+    test_each([[], ["--greedy"], ["--minimum-version=1.2.3"]]) do |args|
+      it "excludes disabled casks with #{args.inspect}" do
+        cask = Cask::Cask.new("disabled") do
+          version "1.2.3"
+          disable! date: Date.today.to_s, because: :fails_gatekeeper_check
+        end
+        allow(cask).to receive(:installed_version).and_return("1.2.2")
+
+        expect(described_class.new(args).select_outdated([cask])).to be_empty
+      end
+    end
+
+    it "includes outdated casks before their disable date" do
+      cask = Cask::Cask.new("deprecated") do
+        version "1.2.3"
+        disable! date: (Date.today + 1).to_s, because: :fails_gatekeeper_check
+      end
+      allow(cask).to receive(:installed_version).and_return("1.2.2")
+
+      expect(described_class.new([]).select_outdated([cask])).to eq([cask])
+    end
+  end
+
   it "excludes non-outdated auto-updating casks without --greedy-auto-updates", :cask do
     cask = Cask::CaskLoader.from_path(cask_path("auto-updates"))
     cmd = described_class.new([])
