@@ -449,10 +449,23 @@ module Cask
     #
     # @api internal
     sig {
-      params(greedy: T::Boolean, greedy_latest: T.nilable(T::Boolean), greedy_auto_updates: T.nilable(T::Boolean))
-        .returns(T::Boolean)
+      params(
+        greedy:              T::Boolean,
+        greedy_latest:       T.nilable(T::Boolean),
+        greedy_auto_updates: T.nilable(T::Boolean),
+        minimum_version:     T.nilable(String),
+      ).returns(T::Boolean)
     }
-    def outdated?(greedy: false, greedy_latest: false, greedy_auto_updates: false)
+    def outdated?(greedy: false, greedy_latest: false, greedy_auto_updates: false, minimum_version: nil)
+      # Disabled casks cannot be upgraded, even when a newer version is available.
+      return false if disabled?
+
+      if minimum_version.present?
+        require "minimum_version"
+
+        return Homebrew::MinimumVersion.cask_installed_below?(self, minimum_version)
+      end
+
       !outdated_version(greedy:, greedy_latest:,
                         greedy_auto_updates:).nil?
     end

@@ -2146,8 +2146,17 @@ class Formula
   # Check whether the installed formula is outdated.
   #
   # @api internal
-  sig { params(fetch_head: T::Boolean).returns(T::Boolean) }
-  def outdated?(fetch_head: false)
+  sig { params(fetch_head: T::Boolean, minimum_version: T.nilable(String)).returns(T::Boolean) }
+  def outdated?(fetch_head: false, minimum_version: nil)
+    # Disabled formulae cannot be upgraded, even when a newer version is available.
+    return false if disabled?
+
+    if minimum_version.present?
+      require "minimum_version"
+
+      return Homebrew::MinimumVersion.formula_outdated_kegs(self, minimum_version, fetch_head:).present?
+    end
+
     !outdated_kegs(fetch_head:).empty?
   rescue Migrator::MigrationNeededError
     true

@@ -814,6 +814,23 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
   describe ReporterHub do
     let(:hub) { described_class.new }
+    let(:disabled_formula) do
+      f = formula("disabled") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/disabled-1.2.3.tar.gz"
+        disable! date: Date.today.to_s, because: :does_not_build
+      end
+      allow(f).to receive(:outdated_kegs).and_return([instance_double(Keg)])
+      f
+    end
+    let(:disabled_cask) do
+      cask = Cask::Cask.new("disabled") do
+        version "1.2.3"
+        disable! date: Date.today.to_s, because: :fails_gatekeeper_check
+      end
+      allow(cask).to receive(:installed_version).and_return("1.2.2")
+      cask
+    end
 
     before do
       ENV["HOMEBREW_NO_COLOR"] = "1"
@@ -907,10 +924,12 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       allow(Formula).to receive(:installed).and_return([
         instance_double(Formula, name: "foo", outdated?: true),
         instance_double(Formula, name: "bar", outdated?: true),
+        disabled_formula,
       ])
       allow(Cask::Caskroom).to receive(:casks).and_return([
         instance_double(Cask::Cask, token: "baz", outdated?: true),
         instance_double(Cask::Cask, token: "qux", outdated?: true),
+        disabled_cask,
       ])
       expect { hub.dump }.to output(<<~EOS).to_stdout
         ==> Outdated Formulae
@@ -924,6 +943,15 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
         You can upgrade them with brew upgrade
         or list them with brew outdated.
       EOS
+    end
+
+    test_each([false, true]) do |auto_update|
+      it "prints nothing when only disabled packages are outdated with auto_update=#{auto_update}" do
+        allow(Formula).to receive(:installed).and_return([disabled_formula])
+        allow(Cask::Caskroom).to receive(:casks).and_return([disabled_cask])
+
+        expect { hub.dump(auto_update:) }.not_to output.to_stdout
+      end
     end
 
     it "skips the outdated count when auto-updating before a zero-argument upgrade or outdated" do
