@@ -3249,8 +3249,8 @@ class Formula
     hsh
   end
 
-  sig { returns(T::Hash[String, T.untyped]) }
-  def to_hash_with_variations
+  sig { params(include_compiler_variations: T::Boolean).returns(T::Hash[String, T.untyped]) }
+  def to_hash_with_variations(include_compiler_variations: false)
     if loaded_from_internal_api?
       raise UsageError, "Cannot call #to_hash_with_variations on formulae loaded from the internal API"
     end
@@ -3266,8 +3266,8 @@ class Formula
 
     variations = {}
 
-    if path.exist? && on_system_blocks_exist?
-      formula_contents = path.read
+    formula_contents = path.read if path.exist? && (on_system_blocks_exist? || include_compiler_variations)
+    if formula_contents && (on_system_blocks_exist? || formula_contents.include?("clang_build_version"))
       OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
         Homebrew::SimulateSystem.with_tag(bottle_tag) do
           variations_namespace = Formulary.class_s("Variations#{bottle_tag.to_sym.capitalize}")

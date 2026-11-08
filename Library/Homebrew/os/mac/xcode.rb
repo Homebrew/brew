@@ -307,11 +307,11 @@ module OS
         end
       end
 
-      sig { returns(String) }
-      def self.latest_clang_version
-        case MacOS.version
+      sig { params(macos: MacOSVersion, arm64: T::Boolean).returns(String) }
+      def self.latest_clang_version(macos: MacOS.version, arm64: ::Hardware::CPU.physical_cpu_arm64?)
+        case macos.strip_patch
         when "27" then "2100.3.34.2"
-        when "26" then ::Hardware::CPU.physical_cpu_arm64? ? "2100.3.34.2" : "2100.1.1.101"
+        when "26" then arm64 ? "2100.3.34.2" : "2100.1.1.101"
         when "15" then "1700.6.4.2"
         when "14" then "1600.0.26.6"
         when "13" then "1500.1.0.2.5"

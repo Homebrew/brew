@@ -44,7 +44,9 @@ RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
     allow(Time).to receive(:now).and_return(Time.at(1_714_056_000))
     stub_const("HOMEBREW_VERSION", "4.2.18")
     stub_const("OnSystem::VALID_OS_ARCH_TAGS", [bottle_tag])
-    allow(Formulary.factory("foo")).to receive(:to_hash_with_variations)
+    expect(Formulary.factory("foo")).to receive(:to_hash_with_variations)
+      .with(include_compiler_variations: true)
+      .twice
       .and_return({ "name" => "old" }, { "name" => "foo" })
     allow(Cask::CaskLoader.from_path(Pathname("c.rb"))).to receive(:to_hash_with_variations)
       .and_return({ "token" => "old" }, { "token" => "c" })

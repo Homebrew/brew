@@ -7,6 +7,7 @@ require "executables_db"
 require "fileutils"
 require "formula"
 require "cask/cask"
+require "os/mac/xcode"
 
 module Homebrew
   module DevCmd
@@ -57,7 +58,7 @@ module Homebrew
             core_tap.formula_names.each do |name|
               formula = Formulary.factory(name)
               name = formula.name
-              all_formulae[name] = formula.to_hash_with_variations
+              all_formulae[name] = formula.to_hash_with_variations(include_compiler_variations: true)
               all_formulae[name]["executables"] = executables[name] if executables.key?(name)
             rescue
               onoe "Error while generating data for formula '#{name}'."

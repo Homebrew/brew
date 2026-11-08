@@ -2585,6 +2585,35 @@ RSpec.describe Formula do
       expect(h).to be_a(Hash)
       expect(JSON.pretty_generate(h["variations"])).to eq expected_variations.strip
     end
+
+    it "includes compiler-dependent dependencies in system variations" do
+      mktmpdir do |path|
+        formula_path = path/"foo-compiler-variations.rb"
+        formula_path.write <<~RUBY
+          class FooCompilerVariations < Formula
+            url "file://#{TEST_FIXTURE_DIR}/tarballs/testball-0.1.tbz"
+            sha256 TESTBALL_SHA256
+
+            if DevelopmentTools.clang_build_version >= Version.new("1600")
+              depends_on "llvm" => :build
+            end
+          end
+        RUBY
+        stub_const("OnSystem::VALID_OS_ARCH_TAGS", [
+          Utils::Bottles::Tag.new(system: :monterey, arch: :intel),
+          Utils::Bottles::Tag.new(system: :sonoma, arch: :intel),
+        ])
+
+        hash = Homebrew::SimulateSystem.with(os: :monterey, arch: :intel) do
+          Formulary.from_path(formula_path).to_hash_with_variations(include_compiler_variations: true)
+        end
+
+        expect([
+          hash.fetch("build_dependencies"),
+          hash.dig("variations", :sonoma, "build_dependencies"),
+        ]).to eq([[], ["llvm"]])
+      end
+    end
   end
 
   describe "#eligible_kegs_for_cleanup" do

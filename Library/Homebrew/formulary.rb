@@ -981,17 +981,7 @@ module Formulary
       return unless (name_tap_type = Formulary.tap_formula_name_type(ref, warn:))
 
       name, tap, _type, alias_name = name_tap_type
-      loader = new(name, tap:, alias_name:)
-      # Use the local source to evaluate conditions flattened from API dependency metadata.
-      if !Homebrew::EnvConfig.disable_load_formula? &&
-         loader.path.file? &&
-         (api_formula = Homebrew::API::Internal.formula_hash(name)) &&
-         (source_checksum = api_formula["ruby_source_checksum"]).is_a?(String) &&
-         loader.path.sha256 == source_checksum
-        return
-      end
-
-      loader
+      new(name, tap:, alias_name:)
     end
 
     sig { params(name: String, tap: T.nilable(Tap), alias_name: T.nilable(String)).void }
