@@ -548,6 +548,28 @@ RSpec.describe Cask::Audit, :cask do
       end
     end
 
+    describe "checking binary URL availability" do
+      let(:online) { true }
+      let(:only) { ["url_https_availability"] }
+
+      test_each_hash({ nil => nil, URI("https://brew.sh/") => "https://brew.sh/" }) do |referer, curl_referer|
+        context "with referer #{referer.inspect}" do
+          let(:cask) do
+            Cask::Cask.new("binary-url") do
+              url "https://brew.sh/binary.dmg", referer:
+            end
+          end
+
+          it "checks the URL with referer #{curl_referer.inspect}" do
+            expect(audit).to receive(:curl_check_http_content)
+              .with("https://brew.sh/binary.dmg", "binary URL", user_agents: [:default], referer: curl_referer,
+                                                                 check_content: false, strict: false)
+            run
+          end
+        end
+      end
+    end
+
     describe "token validation" do
       let(:strict) { true }
       let(:only) { ["token"] }

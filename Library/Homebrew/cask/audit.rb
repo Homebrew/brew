@@ -1247,7 +1247,7 @@ module Cask
         url, "binary URL",
         location:    url.location,
         user_agents: [url.user_agent],
-        referer:     url.referer
+        referer:     url.referer&.to_s
       )
     end
 
@@ -1482,14 +1482,18 @@ module Cask
 
     sig {
       params(
-        url_to_check: T.any(String, URL),
-        url_type:     String,
-        location:     T.nilable(Homebrew::SourceLocation),
-        options:      T.untyped,
+        url_to_check:  T.any(String, URL),
+        url_type:      String,
+        user_agents:   T::Array[T.any(String, Symbol)],
+        location:      T.nilable(Homebrew::SourceLocation),
+        referer:       T.nilable(String),
+        check_content: T::Boolean,
+        strict:        T::Boolean,
       ).void
     }
-    def validate_url_for_https_availability(url_to_check, url_type, location: nil, **options)
-      problem = curl_check_http_content(url_to_check.to_s, url_type, **options)
+    def validate_url_for_https_availability(url_to_check, url_type, user_agents:, location: nil, referer: nil,
+                                            check_content: false, strict: false)
+      problem = curl_check_http_content(url_to_check.to_s, url_type, user_agents:, referer:, check_content:, strict:)
       exception = cask.tap&.audit_exception(:secure_connection_audit_skiplist, cask.token, url_to_check.to_s)
 
       if problem
