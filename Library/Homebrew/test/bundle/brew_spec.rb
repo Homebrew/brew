@@ -160,7 +160,12 @@ RSpec.describe Homebrew::Bundle::Brew do
       }
     end
 
-    def formula_double_depending_on(name, dependency)
+    def formula_double_depending_on(name, dependency, installed_on_request: true)
+      keg = instance_double(Pathname, realpath: Pathname("/usr/local/Cellar/#{name}/1.0"))
+      allow(Tab).to receive(:for_keg).with(keg).and_return(
+        instance_double(Tab, installed_on_request:, poured_from_bottle: false,
+                            runtime_dependencies: nil, used_options: []),
+      )
       instance_double(Formula,
                       name:,
                       desc:                   name,
@@ -171,7 +176,7 @@ RSpec.describe Homebrew::Bundle::Brew do
                       runtime_dependencies:   [instance_double(Dependency, name: dependency)],
                       deps:                   [],
                       conflicts:              [],
-                      any_installed_prefix:   nil,
+                      any_installed_prefix:   keg,
                       linked?:                false,
                       keg_only?:              true,
                       pinned?:                false,
@@ -207,6 +212,30 @@ RSpec.describe Homebrew::Bundle::Brew do
 
         expect { dumper.formulae_by_full_name }.to output(/found a circular dependency/).to_stderr
         expect(dumper.formulae.map { |f| f[:full_name] }).to contain_exactly("foo", "bar")
+      end
+
+      test_each([
+        [true, true, "brew install bar foo"],
+        [false, false, "brew install --as-dependency bar foo"],
+        [true, false, "brew install foo\n  brew install --as-dependency bar"],
+        [false, true, "brew install bar\n  brew install --as-dependency foo"],
+      ]) do |foo_requested, bar_requested, install_commands|
+        it "preserves dependency status with foo requested: #{foo_requested} and bar requested: #{bar_requested}" do
+          allow(Formula).to receive(:installed).and_return([
+            formula_double_depending_on("foo", "bar", installed_on_request: foo_requested),
+            formula_double_depending_on("bar", "foo", installed_on_request: bar_requested),
+          ])
+
+          expect { dumper.formulae_by_full_name }.to output(<<~EOS).to_stderr
+            Warning: Formulae dependency graph sorting found a circular dependency:
+              bar, foo
+            This is usually caused by stale dependency data in installed keg tabs.
+            If it persists, run the following commands and try again:
+              brew update
+              brew uninstall --ignore-dependencies --force bar foo
+              #{install_commands}
+          EOS
+        end
       end
 
       it "returns a hash for a formula" do

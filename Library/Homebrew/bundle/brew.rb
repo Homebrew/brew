@@ -449,15 +449,23 @@ module Homebrew
                            .filter_map { |name| @formulae_by_full_name[name] || @formulae_by_name[name] }
                            .uniq { |f| f[:full_name] }
                            .map { |f| f[:full_name] }
-            opoo <<~EOS
+            warning = <<~EOS
               Formulae dependency graph sorting found a circular dependency:
                 #{cyclic.join(", ")}
               This is usually caused by stale dependency data in installed keg tabs.
               If it persists, run the following commands and try again:
                 brew update
                 brew uninstall --ignore-dependencies --force #{cyclic.join(" ")}
-                brew install #{cyclic.join(" ")}
             EOS
+            [true, false].each do |on_request|
+              names = cyclic.select do |name|
+                @formulae_by_full_name.fetch(name)[:installed_on_request?] == on_request
+              end
+              next if names.empty?
+
+              warning += "  brew install#{" --as-dependency" unless on_request} #{names.join(" ")}\n"
+            end
+            opoo warning
           end
 
           @formulae = sorted.filter_map { |name| @formulae_by_full_name[name] || @formulae_by_name[name] }

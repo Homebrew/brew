@@ -97,7 +97,7 @@ module Homebrew
           FormulaInstaller.new(
             formula,
             options:                    build_options.used_options,
-            installed_on_request:,
+            installed_on_request:       installed_on_request || Tab.for_formula(formula).installed_on_request,
             build_bottle:,
             force_bottle:,
             bottle_arch:,

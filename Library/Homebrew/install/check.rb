@@ -12,7 +12,7 @@ module Homebrew
       sig {
         params(formula: Formula, head: T::Boolean, fetch_head: T::Boolean,
                only_dependencies: T::Boolean, force: T::Boolean, quiet: T::Boolean,
-               skip_link: T::Boolean, overwrite: T::Boolean).returns(T::Boolean)
+               skip_link: T::Boolean, overwrite: T::Boolean, installed_on_request: T::Boolean).returns(T::Boolean)
       }
       def install_formula?(
         formula,
@@ -22,7 +22,8 @@ module Homebrew
         force: false,
         quiet: false,
         skip_link: false,
-        overwrite: false
+        overwrite: false,
+        installed_on_request: true
       )
         # HEAD-only without --HEAD is an error
         if !head && formula.stable.nil?
@@ -185,9 +186,8 @@ module Homebrew
           return true
         end
 
-        # Even if we don't install this formula mark it as no longer just
-        # installed as a dependency.
-        return false unless formula.opt_prefix.directory?
+        # Even if we don't install this formula, mark it as requested when appropriate.
+        return false if !installed_on_request || !formula.opt_prefix.directory?
 
         keg = Keg.new(Utils::Path.resolved_path(formula.opt_prefix))
         tab = keg.tab

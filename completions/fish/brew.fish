@@ -1341,7 +1341,7 @@ __fish_brew_complete_arg 'install' -l HEAD -d 'If formula defines it, install th
 __fish_brew_complete_arg 'install' -l adopt -d 'Adopt existing artifacts in the destination that are identical to those being installed. Cannot be combined with `--force`'
 __fish_brew_complete_arg 'install' -l appdir -d 'Target location for Applications (default: `/Applications`)'
 __fish_brew_complete_arg 'install' -l appimagedir -d 'Target location for AppImages (default: `~/Applications`)'
-__fish_brew_complete_arg 'install' -l as-dependency -d 'Install but mark as installed as a dependency and not installed on request'
+__fish_brew_complete_arg 'install' -l as-dependency -d 'Install formula or cask as a dependency without marking it as installed on request. Previously requested packages retain their status'
 __fish_brew_complete_arg 'install' -l audio-unit-plugindir -d 'Target location for Audio Unit Plugins (default: `~/Library/Audio/Plug-Ins/Components`)'
 __fish_brew_complete_arg 'install' -l binaries -d 'Disable/enable linking of helper executables (default: enabled)'
 __fish_brew_complete_arg 'install' -l bottle-arch -d 'Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on'

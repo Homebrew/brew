@@ -14,6 +14,7 @@ module Homebrew
           Check the given <formula> kegs and <cask> installations for missing dependencies.
           If no <formula> or <cask> are provided, check all kegs and casks. Will exit with
           a non-zero status if any kegs or casks are found to be missing dependencies.
+          Print installation instructions to standard error unless `--hide` is used.
         EOS
         comma_array "--hide",
                     description: "Act as if none of the specified <hidden> are installed. <hidden> should be " \
@@ -42,6 +43,13 @@ module Homebrew
           Homebrew.failed = true
           puts Homebrew::Missing.format_deps(formula_or_cask.to_s, missing, show_name: formulae.size + casks.size > 1)
         end
+
+        return if missing_deps.empty? || args.hide
+
+        opoo <<~EOS
+          You should `brew install` the missing dependencies:
+            #{Homebrew::Missing.install_commands(missing_deps).join("\n  ")}
+        EOS
       end
     end
   end

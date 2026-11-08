@@ -37,6 +37,19 @@ RSpec.describe Homebrew::Install do
     end
   end
 
+  test_each([false, true]) do |on_request|
+    it "preserves on_request: #{on_request} when preparing to reinstall a formula as a dependency" do
+      installed_formula = Testball.new
+      installed_formula.prefix.mkpath
+      tab = Tab.create(installed_formula)
+      tab.installed_on_request = on_request
+      tab.write
+
+      expect(described_class.formula_installers([installed_formula], installed_on_request: false)
+                            .map(&:installed_on_request?)).to eq([on_request])
+    end
+  end
+
   describe "::fetch_formulae" do
     it "skips formulae whose fetch steps raise and continues with the rest" do
       good_fi = FormulaInstaller.new(formula("good-bottle") do

@@ -912,6 +912,9 @@ Print the verification and post\-install steps\.
 \fB\-n\fP, \fB\-\-dry\-run\fP
 Show what would be installed, but do not actually install anything\.
 .TP
+\fB\-\-as\-dependency\fP
+Install \fIformula\fP or \fIcask\fP as a dependency without marking it as installed on request\. Previously requested packages retain their status\.
+.TP
 \fB\-y\fP, \fB\-\-no\-ask\fP
 Do not ask for confirmation before downloading and installing\. Ask mode is the default\. Enabled by default if \fB$HOMEBREW_NO_ASK\fP is set\.
 .TP
@@ -956,9 +959,6 @@ Install but skip any post\-install steps\.
 .TP
 \fB\-\-skip\-link\fP
 Install but skip linking the keg into the prefix\.
-.TP
-\fB\-\-as\-dependency\fP
-Install but mark as installed as a dependency and not installed on request\.
 .TP
 \fB\-\-bottle\-arch\fP
 Optimise bottles for the specified architecture rather than the oldest architecture supported by the version of macOS the bottles are built on\.
@@ -1107,7 +1107,7 @@ Only migrate formulae\.
 \fB\-\-cask\fP
 Only migrate casks\.
 .SS "\fBmissing\fP \fR[\fB\-\-hide=\fP] \fR[\fIformula\fP|\fIcask\fP \.\.\.]"
-Check the given \fIformula\fP kegs and \fIcask\fP installations for missing dependencies\. If no \fIformula\fP or \fIcask\fP are provided, check all kegs and casks\. Will exit with a non\-zero status if any kegs or casks are found to be missing dependencies\.
+Check the given \fIformula\fP kegs and \fIcask\fP installations for missing dependencies\. If no \fIformula\fP or \fIcask\fP are provided, check all kegs and casks\. Will exit with a non\-zero status if any kegs or casks are found to be missing dependencies\. Print installation instructions to standard error unless \fB\-\-hide\fP is used\.
 .TP
 \fB\-\-hide\fP
 Act as if none of the specified \fIhidden\fP are installed\. \fIhidden\fP should be a comma\-separated list of formulae or casks\.
