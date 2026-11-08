@@ -392,9 +392,8 @@ module Homebrew
 
             cask = begin
               config = Cask::Config.from_args(@parent) if @cask_options
-              options = { warn: }.compact
               untrusted_installed_cask = (load_untrusted_installed_cask(name, config:) if want_keg_like_cask)
-              candidate_cask = untrusted_installed_cask || Cask::CaskLoader.load(name, config:, **options)
+              candidate_cask = untrusted_installed_cask || Cask::CaskLoader.load(name, config:, warn:)
               skip_installed_caskfile_load = if untrusted_installed_cask
                 !untrusted_installed_cask.loaded_from_api?
               else
