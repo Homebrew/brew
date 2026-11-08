@@ -106,6 +106,12 @@ module RuboCop
               problem "Do not concatenate paths in string interpolation"
             end
           end
+
+          return if formula_tap != "homebrew-core"
+
+          find_method_with_args(body_node, :env, :std) do
+            problem "`env :std` in homebrew/core formulae is deprecated"
+          end
         end
       end
     end
@@ -118,10 +124,6 @@ module RuboCop
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
-
-          find_method_with_args(body_node, :env, :userpaths) do
-            problem "`env :userpaths` in homebrew/core formulae is deprecated"
-          end
 
           share_path_starts_with(body_node, formula_name) do |share_node|
             offending_node(share_node)
@@ -141,12 +143,6 @@ module RuboCop
             problem "Use `bin/\"#{cmd}\"` instead of `\"\#{bin}/#{cmd}\"`" do |corrector|
               corrector.replace(bin_node.loc.expression, "bin/\"#{cmd}\"")
             end
-          end
-
-          return if formula_tap != "homebrew-core"
-
-          find_method_with_args(body_node, :env, :std) do
-            problem "`env :std` in homebrew/core formulae is deprecated"
           end
         end
 
