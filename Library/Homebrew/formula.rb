@@ -3000,41 +3000,30 @@ class Formula
     any_installed_keg&.version
   end
 
-  # Returns a keg's {Dependency} objects, falling back to formula definitions.
-  # Reads from a keg's tab when available, loading its formula only as a fallback.
-  #
-  # @api internal
-  sig {
-    params(keg: Keg, formula: T.nilable(Formula)).returns(T::Array[Dependency])
-  }
-  def self.runtime_dependencies_for_keg(keg, formula: nil)
-    if (tab_deps = keg.runtime_dependencies)
-      tab_deps.filter_map do |dependency|
-        full_name = dependency["full_name"]
-        Dependency.new(full_name) if full_name
-      end
-    else
-      (formula || keg.to_formula).runtime_dependencies(read_from_tab: false)
-    end
-  end
-
   # Returns a list of {Dependency} objects that are required at runtime.
   #
   # @api internal
-  sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean).returns(T::Array[Dependency]) }
-  def runtime_dependencies(read_from_tab: true, undeclared: true)
+  sig {
+    params(read_from_tab: T::Boolean, undeclared: T::Boolean, keg: T.nilable(Keg))
+      .returns(T::Array[Dependency])
+  }
+  def runtime_dependencies(read_from_tab: true, undeclared: true, keg: nil)
+    keg ||= any_installed_keg if read_from_tab && undeclared
     cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}"
+    cache_key += "-#{keg}" if keg
 
     Formula.cache[:runtime_dependencies] ||= {}
     Formula.cache[:runtime_dependencies][cache_key] ||= begin
-      deps = if read_from_tab && undeclared &&
-                (keg = any_installed_keg)
-        Formula.runtime_dependencies_for_keg(keg, formula: self)
+      deps = if read_from_tab && undeclared && keg && (tab_deps = keg.runtime_dependencies)
+        tab_deps.filter_map do |dependency|
+          full_name = dependency["full_name"]
+          Dependency.new(full_name) if full_name
+        end
       end
       begin
         if deps.nil?
           deps ||= declared_runtime_dependencies unless undeclared
-          deps ||= (declared_runtime_dependencies | undeclared_runtime_dependencies)
+          deps ||= (declared_runtime_dependencies | undeclared_runtime_dependencies(keg:))
         end
       rescue FormulaUnavailableError
         onoe "Could not get runtime dependencies from #{path}!"
@@ -3650,9 +3639,9 @@ class Formula
 
   # Returns a list of {Dependency} objects that are not declared in the formula
   # but the formula links to.
-  sig { returns(T::Array[Dependency]) }
-  def undeclared_runtime_dependencies
-    keg = any_installed_keg
+  sig { params(keg: T.nilable(Keg)).returns(T::Array[Dependency]) }
+  def undeclared_runtime_dependencies(keg: nil)
+    keg ||= any_installed_keg
     return [] unless keg
 
     CacheStoreDatabase.use(:linkage) do |db|

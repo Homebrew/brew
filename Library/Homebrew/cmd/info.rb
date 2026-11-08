@@ -219,8 +219,15 @@ module Homebrew
           tab_path = keg/AbstractTab::FILENAME
           next unless tab_path.file?
 
-          dependent = Formula.runtime_dependencies_for_keg(keg)
-                             .any? { names.include?(Utils.name_from_full_name(it.name)) }
+          dependencies = begin
+            keg.to_formula.runtime_dependencies(keg:)
+          rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
+            (keg.runtime_dependencies || []).filter_map do |dep|
+              full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
+              Dependency.new(full_name) if full_name
+            end
+          end
+          dependent = dependencies.any? { names.include?(Utils.name_from_full_name(it.name)) }
           keg.name if dependent
         rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,
                JSON::ParserError

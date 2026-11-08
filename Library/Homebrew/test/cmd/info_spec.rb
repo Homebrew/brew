@@ -848,12 +848,11 @@ RSpec.describe Homebrew::Cmd::Info do
     allow(Formula).to receive(:racks).and_return([rack])
     allow(Keg).to receive(:from_rack).with(rack).and_return(keg)
     allow(keg).to receive(:to_formula).and_return(dependent_formula)
-    expect(Formula).to receive(:runtime_dependencies_for_keg)
-      .with(keg)
-      .and_call_original
+    allow(dependent_formula).to receive_messages(declared_runtime_dependencies:   [Dependency.new("testball")],
+                                                 undeclared_runtime_dependencies: [])
     expect(dependent_formula).to receive(:runtime_dependencies)
-      .with(read_from_tab: false)
-      .and_return([Dependency.new("testball")])
+      .with(keg:)
+      .and_call_original
 
     expect(described_class.installed_dependent_names(["testball"])).to eq(["dependent"])
   end
