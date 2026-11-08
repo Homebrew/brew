@@ -47,7 +47,12 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
   context "when dry-running an uninstall" do
     it "shows what would be uninstalled without uninstalling" do
       keg_path = HOMEBREW_CELLAR/"testball/0.1"
-      keg_path.mkpath
+      keg_file = keg_path/"bin/testball"
+      keg_file.dirname.mkpath
+      keg_file.write("")
+      link = HOMEBREW_PREFIX/"bin/testball"
+      link.dirname.mkpath
+      link.make_relative_symlink(keg_file)
       keg = Keg.new(keg_path)
       allow(keg).to receive(:tab).and_return(instance_double(Tab, tap: nil))
 
@@ -74,10 +79,12 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
 
       expect { cmd.run }.to output(<<~EOS).to_stdout
         Would uninstall testball 0.1
+        #{link}
         Would uninstall Cask test-cask
       EOS
 
       expect(keg).to exist
+      expect(link).to be_a_symlink
     end
 
     it "accepts the short dry-run option" do
