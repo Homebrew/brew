@@ -274,7 +274,7 @@ module Homebrew
           next Dependable::PRUNE if dependency.test? && !dependency.build?
         end.map(&:to_formula).reject(&:any_version_installed?)
         if missing_dependencies.present?
-          opoo <<~EOS
+          odebug <<~EOS
             Not running #{formula.full_name}'s `fetch` as these dependencies are not installed:
               #{missing_dependencies.map(&:full_name).join(", ")}
             Install them first with:

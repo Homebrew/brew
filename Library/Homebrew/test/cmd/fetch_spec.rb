@@ -80,7 +80,7 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
     end
   end
 
-  it "does not run a formula's fetch hook until its dependencies are installed" do
+  it "silently skips a formula's fetch hook until its dependencies are installed" do
     cmd = described_class.new(["--build-from-source", "foo"])
     dependency = formula("bar") do
       T.bind(self, T.class_of(Formula))
@@ -96,7 +96,7 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
     allow(foo).to receive(:recursive_dependencies).and_return([instance_double(Dependency, to_formula: dependency)])
     expect(FormulaInstaller).not_to receive(:new)
 
-    expect { cmd.run_fetch_hook(foo) }.to output(/brew install --only-dependencies foo/).to_stderr
+    expect { cmd.run_fetch_hook(foo) }.not_to output.to_stderr
   end
 
   it "uses API bottle metadata before loading simple core formulae" do
