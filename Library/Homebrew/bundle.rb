@@ -18,16 +18,15 @@ module Homebrew
 
       sig { params(cmd: T.any(String, Pathname), args: T.anything, verbose: T::Boolean).returns(T::Boolean) }
       def system(cmd, *args, verbose: false)
-        return super cmd, *args if verbose
-
         env = {}
 
         # Make sure node's bin opt path is part of the PATH
         # This is essential for the npm bundle extension that calls node directly
         if Npm.package_manager_executable && cmd.to_s == Npm.package_manager_executable.to_s
-          node_bin = "#{HOMEBREW_PREFIX}/opt/node/bin"
-          env["PATH"] = "#{ENV.fetch("PATH")}:#{node_bin}"
+          env["PATH"] = "#{ENV.fetch("PATH")}:#{HOMEBREW_PREFIX}/opt/node/bin"
         end
+
+        return super env, cmd, *args if verbose
 
         logs = []
         success = T.let(false, T::Boolean)
