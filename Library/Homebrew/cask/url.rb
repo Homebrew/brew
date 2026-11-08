@@ -28,7 +28,7 @@ module Cask
     sig { returns(T::Hash[Symbol, T.untyped]) }
     attr_reader :specs
 
-    sig { returns(T.nilable(T.any(Symbol, String))) }
+    sig { returns(T.any(Symbol, String)) }
     attr_reader :user_agent
 
     sig { returns(T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol))) }
@@ -88,7 +88,7 @@ module Cask
         @cookies = T.let(cookies&.transform_keys(&:to_s), T.nilable(T::Hash[String, String]))
       specs[:referer]    = @referer    = T.let(referer, T.nilable(T.any(URI::Generic, String)))
       specs[:headers]    = @header     = T.let(header, T.nilable(T::Array[String]))
-      specs[:user_agent] = @user_agent = T.let(user_agent || :default, T.nilable(T.any(Symbol, String)))
+      specs[:user_agent] = @user_agent = T.let(user_agent || :default, T.any(Symbol, String))
       specs[:data]       = @data       = T.let(data, T.nilable(T::Hash[String, String]))
       specs[:only_path]  = @only_path  = T.let(only_path, T.nilable(String))
 
