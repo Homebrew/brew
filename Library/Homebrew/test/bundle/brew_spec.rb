@@ -622,6 +622,101 @@ RSpec.describe Homebrew::Bundle::Brew do
       end
     end
 
+    context "when a formula is requested from another tap" do
+      let(:tapped_name) { "thirdparty/tap/mysql" }
+      let(:receipt) { HOMEBREW_CELLAR/"mysql/1.0"/AbstractTab::FILENAME }
+      let(:installed_tab) { Tab.empty }
+
+      before do
+        receipt.dirname.mkpath
+        installed_tab.tap = CoreTap.instance
+        installed_tab.tabfile = receipt
+        installed_tab.write
+        allow(described_class).to receive_messages(outdated_formulae: [], pinned_formulae: [],
+                                                   formula_oldnames: {}, formula_aliases: {})
+        allow_any_instance_of(described_class).to receive_messages(resolve_conflicts!: true, linked?: true,
+                                                                   keg_only?: false)
+        allow(Tap.fetch("thirdparty/tap")).to receive(:ensure_installed!)
+        allow(Homebrew::Bundle).to receive(:brew).and_return(true)
+      end
+
+      test_each([false, true]) do |no_upgrade|
+        it "does not skip the installed name with no_upgrade: #{no_upgrade}" do
+          expect(described_class.preinstall!(tapped_name, no_upgrade:)).to be(true)
+        end
+      end
+
+      it "reports that it will reinstall the formula" do
+        expect(described_class.install_verb(tapped_name)).to eq("Reinstalling")
+      end
+
+      test_each([false, true]) do |pin|
+        it "reinstalls from the requested tap with pin: #{pin}" do
+          expect(Homebrew::Bundle).to receive(:brew)
+            .with("reinstall", "--formula", tapped_name, "--with-option", verbose: false).and_return(true)
+
+          described_class.install!(tapped_name, **options, pin:)
+        end
+      end
+
+      context "when the installed formula is pinned" do
+        before do
+          allow(described_class).to receive(:pinned_formulae).and_return(["mysql"])
+        end
+
+        test_each([false, true]) do |force|
+          it "fails with an instruction to unpin the formula (force: #{force})" do
+            expect do
+              expect(described_class.install!(tapped_name, force:)).to be(false)
+            end.to output(/mysql is pinned.*brew unpin --formula mysql/m).to_stderr
+          end
+        end
+
+        it "does not reinstall or unpin the formula" do
+          allow(described_class).to receive(:onoe)
+
+          expect(Homebrew::Bundle).not_to receive(:brew)
+
+          described_class.install!(tapped_name)
+        end
+      end
+
+      it "checks the requested tap even when upgrades are disabled" do
+        expect(described_class.check([
+          Homebrew::Bundle::Dsl::Entry.new(:brew, tapped_name),
+        ], no_upgrade: true)).to eq(["Formula #{tapped_name} needs to be installed."])
+      end
+
+      it "keeps the tap when upgrading an installed formula from that tap" do
+        installed_tab.tap = Tap.fetch("thirdparty/tap")
+        installed_tab.write
+
+        expect(Homebrew::Bundle).to receive(:brew)
+          .with("upgrade", "--formula", tapped_name, verbose: false).and_return(true)
+
+        described_class.install!(tapped_name)
+      end
+
+      it "refreshes the installed tap after reinstalling" do
+        allow(Homebrew::Bundle).to receive(:brew).with("reinstall", "--formula", tapped_name, verbose: false) do
+          reinstalled_tab = Tab.empty
+          reinstalled_tab.tap = Tap.fetch("thirdparty/tap")
+          receipt.write(reinstalled_tab.to_json)
+          true
+        end
+
+        described_class.install!(tapped_name)
+
+        expect(described_class.preinstall!(tapped_name, no_upgrade: true)).to be(false)
+      end
+
+      test_each(["mysql", "homebrew/core/mysql", "homebrew/homebrew-core/mysql"]) do |name|
+        it "skips the installed formula when requested as #{name}" do
+          expect(described_class.preinstall!(name)).to be(false)
+        end
+      end
+    end
+
     context "when the trusted option is true" do
       let(:tapped_name) { "foo/bar/baz" }
 

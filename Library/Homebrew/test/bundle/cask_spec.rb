@@ -3,6 +3,7 @@
 
 require "bundle"
 require "bundle/cask"
+require "bundle/skipper"
 require "cask"
 require "cask/cask_loader"
 
@@ -324,6 +325,99 @@ RSpec.describe Homebrew::Bundle::Cask do
                             .and_return(true)
           expect(described_class.preinstall!("google-chrome")).to be(true)
           expect(described_class.install!("google-chrome")).to be(true)
+        end
+      end
+
+      context "when a cask is requested from another tap" do
+        let(:options) { { full_name: "thirdparty/tap/google-chrome" } }
+        let(:installed_cask) do
+          instance_double(Cask::Cask, to_s: "google-chrome", tap: CoreCaskTap.instance, pinned?: false)
+        end
+
+        before do
+          allow(Homebrew::Bundle::Skipper).to receive(:skip?).and_return(false)
+          allow(described_class).to receive_messages(outdated_casks: [], casks: [installed_cask])
+        end
+
+        it "does not skip the installed token" do
+          expect(described_class.preinstall!("google-chrome", **options)).to be(true)
+        end
+
+        it "reports that it will reinstall the cask" do
+          expect(described_class.install_verb("google-chrome", options)).to eq("Reinstalling")
+        end
+
+        it "reinstalls from the requested tap" do
+          expect(Homebrew::Bundle).to receive(:brew)
+            .with("reinstall", "--cask", "thirdparty/tap/google-chrome", "--adopt", verbose: false).and_return(true)
+
+          described_class.install!("google-chrome", **options)
+        end
+
+        context "when the installed cask is pinned" do
+          before do
+            allow(installed_cask).to receive(:pinned?).and_return(true)
+            allow(Homebrew::Bundle).to receive(:brew).and_return(true)
+          end
+
+          test_each([false, true]) do |force|
+            it "fails with an instruction to unpin the cask (force: #{force})" do
+              expect do
+                expect(described_class.install!("google-chrome", **options, force:)).to be(false)
+              end.to output(/google-chrome is pinned.*brew unpin --cask google-chrome/m).to_stderr
+            end
+          end
+
+          it "does not reinstall or unpin the cask" do
+            allow(described_class).to receive(:onoe)
+
+            expect(Homebrew::Bundle).not_to receive(:brew)
+
+            described_class.install!("google-chrome", **options)
+          end
+        end
+
+        it "does not report the requested cask as up to date" do
+          expect(described_class.cask_installed_and_up_to_date?("thirdparty/tap/google-chrome")).to be(false)
+        end
+
+        it "checks the requested tap in Brewfile entries" do
+          expect(described_class.check([
+            Homebrew::Bundle::Dsl::Entry.new(:cask, "google-chrome", options),
+          ])).to eq(["Cask thirdparty/tap/google-chrome needs to be installed or updated."])
+        end
+
+        it "changes taps even when upgrades are disabled" do
+          expect(described_class.preinstall!("google-chrome", no_upgrade: true, **options)).to be(true)
+        end
+
+        it "refreshes the installed tap after reinstalling" do
+          allow(described_class).to receive(:casks).and_call_original
+          allow(Cask::Caskroom).to receive(:casks).and_return(
+            [Cask::Cask.new("google-chrome", tap: CoreCaskTap.instance)],
+            [Cask::Cask.new("google-chrome", tap: Tap.fetch("thirdparty/tap"))],
+          )
+          allow(Homebrew::Bundle).to receive(:brew).and_return(true)
+
+          described_class.install!("google-chrome", **options)
+
+          expect(described_class.preinstall!("google-chrome", **options)).to be(false)
+        end
+
+        ["google-chrome", "homebrew/cask/google-chrome", "homebrew/homebrew-cask/google-chrome"].each do |full_name|
+          it "skips the installed cask when requested as #{full_name}" do
+            T.bind(self, RSpec::Core::ExampleGroup)
+
+            expect(described_class.preinstall!("google-chrome", full_name:)).to be(false)
+          end
+        end
+
+        it "checks sanitised cask names" do
+          allow(described_class).to receive(:cask_oldnames).and_return({})
+
+          expect(described_class.check(
+                   Homebrew::Bundle::Dsl.new(StringIO.new('cask "Google-Chrome"')).entries,
+                 )).to be_empty
         end
       end
 

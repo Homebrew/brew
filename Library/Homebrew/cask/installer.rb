@@ -374,6 +374,8 @@ on_request: true)
     rescue => e
       begin
         already_installed_artifacts&.each do |artifact|
+          next if artifact.is_a?(Artifact::Moved) && artifact.adopted?
+
           if artifact.respond_to?(:uninstall_phase)
             odebug "Reverting installation of artifact of class #{artifact.class}"
             artifact.uninstall_phase(command: @command, verbose: verbose?, force: force?)
