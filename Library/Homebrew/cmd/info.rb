@@ -219,17 +219,18 @@ module Homebrew
           tab_path = keg/AbstractTab::FILENAME
           next unless tab_path.file?
 
-          # Fast path: skip JSON parsing when the raw receipt has a dependency
-          # list and no formula name appears anywhere in it.
-          content = File.read(tab_path)
-          next if content.match?(/"runtime_dependencies":\s*\[/) && names.none? { content.include?(it) }
-
-          tab_deps = Tab.from_file_content(content, tab_path).runtime_dependencies
-          # A receipt with no list says nothing about dependencies, so check the
-          # formula instead, as `brew uninstall` does.
-          dep_names = Formula.runtime_dependencies_from_tab(tab_deps)&.map(&:name) ||
-                      keg.to_formula.runtime_dependencies(read_from_tab: false).map(&:name)
-          keg.name if dep_names.any? { names.include?(Utils.name_from_full_name(it)) }
+          dependent = if (tab_deps = keg.runtime_dependencies)
+            tab_deps.any? do |dep|
+              full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
+              full_name&.then { names.include?(Utils.name_from_full_name(it)) }
+            end
+          else
+            # A receipt with no list says nothing about dependencies, so check the
+            # formula instead, as `brew uninstall` does.
+            keg.to_formula.runtime_dependencies(read_from_tab: false)
+               .any? { names.include?(Utils.name_from_full_name(it.name)) }
+          end
+          keg.name if dependent
         rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
           nil
         end.sort.uniq

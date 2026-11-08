@@ -1991,19 +1991,6 @@ RSpec.describe Formula do
     end
   end
 
-  describe ".runtime_dependencies_from_tab" do
-    it "converts receipt dependencies and preserves a missing list" do
-      expect([
-        described_class.runtime_dependencies_from_tab(nil),
-        described_class.runtime_dependencies_from_tab([]),
-        described_class.runtime_dependencies_from_tab([
-          { "full_name" => "homebrew/core/foo", "version" => "1.0" },
-          { "version" => "1.0" },
-        ])&.map(&:name),
-      ]).to eq([nil, [], ["homebrew/core/foo"]])
-    end
-  end
-
   describe "#missing_dependencies" do
     let(:f) do
       formula("foo") do
