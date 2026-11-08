@@ -219,7 +219,7 @@ module Homebrew
           tab_path = keg/AbstractTab::FILENAME
           next unless tab_path.file?
 
-          dependent = Formula.runtime_dependencies_for_keg(keg, stop_at_untrusted: true)
+          dependent = Formula.runtime_dependencies_for_keg(keg)
                              .any? { names.include?(Utils.name_from_full_name(it.name)) }
           keg.name if dependent
         rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,

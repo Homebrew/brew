@@ -849,10 +849,10 @@ RSpec.describe Homebrew::Cmd::Info do
     allow(Keg).to receive(:from_rack).with(rack).and_return(keg)
     allow(keg).to receive(:to_formula).and_return(dependent_formula)
     expect(Formula).to receive(:runtime_dependencies_for_keg)
-      .with(keg, stop_at_untrusted: true)
+      .with(keg)
       .and_call_original
     expect(dependent_formula).to receive(:runtime_dependencies)
-      .with(read_from_tab: false, stop_at_untrusted: true)
+      .with(read_from_tab: false)
       .and_return([Dependency.new("testball")])
 
     expect(described_class.installed_dependent_names(["testball"])).to eq(["dependent"])

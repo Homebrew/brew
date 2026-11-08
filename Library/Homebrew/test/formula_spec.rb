@@ -2018,24 +2018,6 @@ RSpec.describe Formula do
       expect(f.missing_dependencies.map(&:name)).to eq(["baz"])
     end
 
-    it "does not load untrusted dependencies when the tab has no runtime_dependencies data", :trust_store do
-      dependency_name = "untrusted/tap/dependency"
-      formula = formula("foo") do
-        T.bind(self, T.class_of(Formula))
-        url "foo-1.0"
-        depends_on dependency_name
-      end
-
-      allow(formula).to receive(:any_installed_keg).and_return(keg)
-      allow(keg).to receive_messages(runtime_dependencies: nil, find: [])
-      allow(Homebrew::EnvConfig).to receive(:no_require_tap_trust?).and_return(false)
-      allow(Homebrew::Trust).to receive(:trusted?).with(:formula, dependency_name).and_return(false)
-      allow(Formulary).to receive(:factory).with(dependency_name, any_args)
-                                           .and_raise(Homebrew::UntrustedTapError)
-
-      expect(formula.missing_dependencies(hide: ["dependency"]).map(&:name)).to eq([dependency_name])
-    end
-
     it "does not fall back to formula definitions when the tab has an empty runtime_dependencies list" do
       allow(f).to receive(:declared_runtime_dependencies).and_return([Dependency.new("baz")])
       allow(keg).to receive(:runtime_dependencies).and_return([])

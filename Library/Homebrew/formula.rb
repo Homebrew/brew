@@ -3005,42 +3005,36 @@ class Formula
   #
   # @api internal
   sig {
-    params(keg: Keg, formula: T.nilable(Formula), stop_at_untrusted: T::Boolean)
-      .returns(T::Array[Dependency])
+    params(keg: Keg, formula: T.nilable(Formula)).returns(T::Array[Dependency])
   }
-  def self.runtime_dependencies_for_keg(keg, formula: nil, stop_at_untrusted: false)
+  def self.runtime_dependencies_for_keg(keg, formula: nil)
     if (tab_deps = keg.runtime_dependencies)
       tab_deps.filter_map do |dependency|
         full_name = dependency["full_name"]
         Dependency.new(full_name) if full_name
       end
     else
-      (formula || keg.to_formula).runtime_dependencies(read_from_tab: false, stop_at_untrusted:)
+      (formula || keg.to_formula).runtime_dependencies(read_from_tab: false)
     end
   end
 
   # Returns a list of {Dependency} objects that are required at runtime.
-  # When `stop_at_untrusted` is true, untrusted dependencies are kept without
-  # expanding their own dependencies.
   #
   # @api internal
-  sig {
-    params(read_from_tab: T::Boolean, undeclared: T::Boolean, stop_at_untrusted: T::Boolean)
-      .returns(T::Array[Dependency])
-  }
-  def runtime_dependencies(read_from_tab: true, undeclared: true, stop_at_untrusted: false)
-    cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}-#{stop_at_untrusted}"
+  sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean).returns(T::Array[Dependency]) }
+  def runtime_dependencies(read_from_tab: true, undeclared: true)
+    cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}"
 
     Formula.cache[:runtime_dependencies] ||= {}
     Formula.cache[:runtime_dependencies][cache_key] ||= begin
       deps = if read_from_tab && undeclared &&
                 (keg = any_installed_keg)
-        Formula.runtime_dependencies_for_keg(keg, formula: self, stop_at_untrusted:)
+        Formula.runtime_dependencies_for_keg(keg, formula: self)
       end
       begin
         if deps.nil?
-          deps = declared_runtime_dependencies(stop_at_untrusted:)
-          deps |= undeclared_runtime_dependencies(stop_at_untrusted:) if undeclared
+          deps ||= declared_runtime_dependencies unless undeclared
+          deps ||= (declared_runtime_dependencies | undeclared_runtime_dependencies)
         end
       rescue FormulaUnavailableError
         onoe "Could not get runtime dependencies from #{path}!"
@@ -3051,25 +3045,17 @@ class Formula
   end
 
   # Returns a list of {Formula} objects that are required at runtime.
-  sig {
-    params(read_from_tab: T::Boolean, undeclared: T::Boolean, stop_at_untrusted: T::Boolean)
-      .returns(T::Array[Formula])
-  }
-  def runtime_formula_dependencies(read_from_tab: true, undeclared: true, stop_at_untrusted: false)
-    cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}-#{stop_at_untrusted}"
+  sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean).returns(T::Array[Formula]) }
+  def runtime_formula_dependencies(read_from_tab: true, undeclared: true)
+    cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}"
 
     Formula.cache[:runtime_formula_dependencies] ||= {}
     Formula.cache[:runtime_formula_dependencies][cache_key] ||= runtime_dependencies(
       read_from_tab:,
       undeclared:,
-      stop_at_untrusted:,
     ).filter_map do |d|
       d.to_formula
     rescue FormulaUnavailableError
-      nil
-    rescue Homebrew::UntrustedTapError
-      raise unless stop_at_untrusted
-
       nil
     end
   end
@@ -3116,7 +3102,7 @@ class Formula
   def missing_dependencies(hide: [])
     return [] unless any_installed_keg
 
-    runtime_dependencies(stop_at_untrusted: true).filter_map do |dep|
+    runtime_dependencies.filter_map do |dep|
       # Use base name to check the cellar directly, avoiding Formulary.resolve.
       # A dep is "missing" if it's in the hide list (pretend uninstalled) or
       # genuinely not installed in the cellar.
@@ -3640,10 +3626,9 @@ class Formula
   end
 
   # Returns a list of {Dependency} objects that are declared in the formula.
-  sig { params(stop_at_untrusted: T::Boolean).returns(T::Array[Dependency]) }
-  def declared_runtime_dependencies(stop_at_untrusted: false)
+  sig { returns(T::Array[Dependency]) }
+  def declared_runtime_dependencies
     cache_key = "Formula#declared_runtime_dependencies"
-    cache_key += "-stop-at-untrusted" if stop_at_untrusted
     if build.any_args_or_options?
       cache_key += "-#{full_name}"
       cache_timestamp = Time.now
@@ -3651,20 +3636,13 @@ class Formula
     Dependency.expand(self, cache_key:, cache_timestamp:) do |_, dependency|
       next Dependable::PRUNE if dependency.build?
 
-      unless dependency.required?
-        if build.any_args_or_options?
-          next Dependable::PRUNE if build.without?(dependency)
-        elsif !dependency.recommended?
-          next Dependable::PRUNE
-        end
+      next if dependency.required?
+
+      if build.any_args_or_options?
+        next Dependable::PRUNE if build.without?(dependency)
+      elsif !dependency.recommended?
+        next Dependable::PRUNE
       end
-
-      next unless stop_at_untrusted
-      next if Homebrew::EnvConfig.no_require_tap_trust?
-      next unless dependency.tap
-      next if Homebrew::Trust.trusted?(:formula, dependency.name)
-
-      Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS
     end
   ensure
     Dependency.delete_timestamped_cache_entry(cache_key, cache_timestamp) if build.any_args_or_options?
@@ -3672,14 +3650,14 @@ class Formula
 
   # Returns a list of {Dependency} objects that are not declared in the formula
   # but the formula links to.
-  sig { params(stop_at_untrusted: T::Boolean).returns(T::Array[Dependency]) }
-  def undeclared_runtime_dependencies(stop_at_untrusted: false)
+  sig { returns(T::Array[Dependency]) }
+  def undeclared_runtime_dependencies
     keg = any_installed_keg
     return [] unless keg
 
     CacheStoreDatabase.use(:linkage) do |db|
       typed_db = T.cast(db, CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]])
-      linkage_checker = LinkageChecker.new(keg, self, cache_db: typed_db, stop_at_untrusted:)
+      linkage_checker = LinkageChecker.new(keg, self, cache_db: typed_db)
       linkage_checker.undeclared_deps.map { |n| Dependency.new(n) }
     end
   end

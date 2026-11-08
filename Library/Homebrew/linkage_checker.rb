@@ -32,13 +32,12 @@ class LinkageChecker
     params(
       keg: Keg, formula: T.nilable(Formula),
       cache_db: CacheStoreDatabase[String, T::Hash[T.any(String, Symbol), T.anything]],
-      rebuild_cache: T::Boolean, stop_at_untrusted: T::Boolean
+      rebuild_cache: T::Boolean
     ).void
   }
-  def initialize(keg, formula = nil, cache_db:, rebuild_cache: false, stop_at_untrusted: false)
+  def initialize(keg, formula = nil, cache_db:, rebuild_cache: false)
     @keg = keg
     @formula = T.let(formula || resolve_formula(keg), T.nilable(Formula))
-    @stop_at_untrusted = stop_at_untrusted
     @store = T.let(LinkageCacheStore.new(keg.to_s, cache_db), LinkageCacheStore)
 
     @system_dylibs    = T.let(Set.new, T::Set[String])
@@ -277,8 +276,7 @@ class LinkageChecker
       Utils.name_from_full_name(dep)
     end
 
-    recursive_deps = formula.runtime_formula_dependencies(undeclared:        false,
-                                                          stop_at_untrusted: @stop_at_untrusted)
+    recursive_deps = formula.runtime_formula_dependencies(undeclared: false)
                             .map(&:name)
 
     indirect_deps = []
@@ -306,14 +304,7 @@ class LinkageChecker
     sort_by_formula_full_name!(unexpected_linkage_deps)
 
     unnecessary_deps = declared_deps_full_names.reject do |full_name|
-      dependency_formula = begin
-        Formula[full_name]
-      rescue Homebrew::UntrustedTapError
-        raise unless @stop_at_untrusted
-
-        next true
-      end
-      next true if dependency_formula.bin.directory?
+      next true if Formula[full_name].bin.directory?
 
       name = Utils.name_from_full_name(full_name)
       @brewed_dylibs.keys.map { |l| Utils.name_from_full_name(l) }.include?(name)
