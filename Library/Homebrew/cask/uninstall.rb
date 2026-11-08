@@ -9,40 +9,64 @@ module Cask
   class Uninstall
     extend ::Utils::Output::Mixin
 
-    sig { params(casks: ::Cask::Cask, binaries: T::Boolean, force: T::Boolean, verbose: T::Boolean).void }
-    def self.uninstall_casks(*casks, binaries: false, force: false, verbose: false)
+    sig {
+      params(
+        casks:    ::Cask::Cask,
+        binaries: T::Boolean,
+        force:    T::Boolean,
+        verbose:  T::Boolean,
+        dry_run:  T::Boolean,
+      ).returns(T::Array[::Cask::Cask])
+    }
+    def self.uninstall_casks(*casks, binaries: false, force: false, verbose: false, dry_run: false)
       require "cask/installer"
 
       caught_exceptions = []
+      casks_to_uninstall = []
 
       casks.each do |cask|
         odebug "Uninstalling Cask #{cask}"
 
-        raise CaskNotInstalledError, cask if !cask.installed? && !force
+        if !cask.installed? && !force
+          if dry_run
+            ofail CaskNotInstalledError.new(cask)
+            next
+          end
 
-        next unless unpin_for_removal?(cask, force:)
+          raise CaskNotInstalledError, cask
+        end
 
-        Installer.new(cask, binaries:, force:, verbose:).uninstall
+        next unless unpin_for_removal?(cask, force:, dry_run:)
+
+        Installer.new(cask, binaries:, force:, verbose:).uninstall(dry_run:)
+        casks_to_uninstall << cask
       rescue => e
-        caught_exceptions << e
+        if dry_run
+          ofail e
+        else
+          caught_exceptions << e
+        end
         next
       end
 
-      return if caught_exceptions.empty?
+      return casks_to_uninstall if dry_run
+      return casks_to_uninstall if caught_exceptions.empty?
 
       raise MultipleCaskErrors, caught_exceptions if caught_exceptions.count > 1
 
       raise caught_exceptions.fetch(0)
     end
 
-    sig { params(cask: ::Cask::Cask, force: T::Boolean).returns(T::Boolean) }
-    def self.unpin_for_removal?(cask, force:)
+    sig { params(cask: ::Cask::Cask, force: T::Boolean, dry_run: T::Boolean).returns(T::Boolean) }
+    def self.unpin_for_removal?(cask, force:, dry_run: false)
       return true unless cask.pinned?
 
       unless force
         onoe "#{cask.full_name} is pinned. You must unpin it to uninstall."
         return false
       end
+
+      return true if dry_run
 
       cask.unpin
       true

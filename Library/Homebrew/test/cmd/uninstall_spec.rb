@@ -55,12 +55,20 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       allow(cask).to receive(:installed?).and_return(true)
       cmd = described_class.new(["--dry-run", "testball", "test-cask"])
       allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable).and_return([keg, cask])
+      allow(Formulary).to receive(:from_rack).with(keg.rack).and_return(instance_double(Formula, pinned?: false))
 
-      expect(Homebrew::Uninstall).not_to receive(:uninstall_kegs)
-      expect(Cask::Uninstall).not_to receive(:uninstall_casks)
+      expect(Homebrew::Uninstall).to receive(:uninstall_kegs)
+        .with({ keg.rack => [keg] }, casks: [cask], force: false, ignore_dependencies: false,
+                                     named_args: cmd.args.named, dry_run: true)
+        .and_call_original
+      expect(keg).to receive(:unlink).with(dry_run: true).and_call_original
+      expect(keg).to receive(:uninstall).with(dry_run: true).and_call_original
       expect(Homebrew::Uninstall).to receive(:handle_unsatisfied_dependents)
         .with({ keg.rack => [keg] }, casks: [cask], ignore_dependencies: false, named_args: cmd.args.named)
       expect(Cask::Uninstall).to receive(:check_dependent_casks).with(cask, named_args: cmd.args.named)
+      expect(Cask::Uninstall).to receive(:uninstall_casks)
+        .with(cask, verbose: false, force: false, dry_run: true)
+        .and_call_original
       expect(Homebrew::Cleanup).to receive(:autoremove)
         .with(dry_run: true, removed_kegs: [keg], removed_casks: [cask])
 
@@ -141,7 +149,8 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       allow(Homebrew::Uninstall).to receive(:handle_unsatisfied_dependents)
       allow(Cask::Uninstall).to receive(:check_dependent_casks)
 
-      expect(Cask::Uninstall).to receive(:unpin_for_removal?).with(cask, force: false).and_call_original
+      expect(Cask::Uninstall).to receive(:unpin_for_removal?)
+        .with(cask, force: false, dry_run: true).and_call_original
       expect(Homebrew::Cleanup).not_to receive(:autoremove)
       expect { cmd.run }
         .to output(/testball is pinned.*test-cask is pinned/m).to_stderr

@@ -520,6 +520,10 @@ RSpec.describe Keg do
       (keg/"INSTALL_RECEIPT.json").write({ aliases: names }.to_json)
     end
 
+    it "does not remove a Keg during a dry run" do
+      expect { keg.uninstall(dry_run: true) }.not_to change(keg, :exist?).from(true)
+    end
+
     it "keeps a versioned opt alias that points at a newer keg" do
       new_keg = setup_test_keg("foo", "2.0")
       write_aliases(keg, ["foo@1.0"])

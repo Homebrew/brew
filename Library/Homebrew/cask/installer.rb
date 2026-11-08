@@ -627,8 +627,13 @@ on_request: true)
       @cask.download_sha_path.atomic_write(@cask.new_download_sha)
     end
 
-    sig { params(successor: T.nilable(Cask)).void }
-    def uninstall(successor: nil)
+    sig { params(successor: T.nilable(Cask), dry_run: T::Boolean).void }
+    def uninstall(successor: nil, dry_run: false)
+      if dry_run
+        puts "Would uninstall Cask #{@cask}"
+        return
+      end
+
       completed = false
       load_installed_caskfile!
       oh1 "Uninstalling Cask #{Formatter.identifier(@cask)}"
@@ -648,7 +653,7 @@ on_request: true)
       purge_caskroom_path if force?
       completed = true
     ensure
-      @cask.cleanup_temp(retain: !completed) if !reinstall? && !upgrade?
+      @cask.cleanup_temp(retain: !completed) if !dry_run && !reinstall? && !upgrade?
     end
 
     sig { void }
@@ -774,8 +779,13 @@ on_request: true)
                                                                            force: force?, successor:)
     end
 
-    sig { void }
-    def zap
+    sig { params(dry_run: T::Boolean).void }
+    def zap(dry_run: false)
+      if dry_run
+        puts "Would uninstall Cask #{@cask}"
+        return
+      end
+
       completed = false
       load_installed_caskfile!
       oh1 "Zapping Cask #{Formatter.identifier(@cask)}"
@@ -786,7 +796,7 @@ on_request: true)
       purge_caskroom_path
       completed = true
     ensure
-      @cask.cleanup_temp(retain: !completed) if !reinstall? && !upgrade?
+      @cask.cleanup_temp(retain: !completed) if !dry_run && !reinstall? && !upgrade?
     end
 
     sig { returns(T.nilable(Pathname)) }
