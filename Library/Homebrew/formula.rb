@@ -3000,6 +3000,25 @@ class Formula
     any_installed_keg&.version
   end
 
+  # Returns a keg's {Dependency} objects, falling back to formula definitions.
+  # Reads from a keg's tab when available, loading its formula only as a fallback.
+  #
+  # @api internal
+  sig {
+    params(keg: Keg, formula: T.nilable(Formula), stop_at_untrusted: T::Boolean)
+      .returns(T::Array[Dependency])
+  }
+  def self.runtime_dependencies_for_keg(keg, formula: nil, stop_at_untrusted: false)
+    if (tab_deps = keg.runtime_dependencies)
+      tab_deps.filter_map do |dependency|
+        full_name = dependency["full_name"]
+        Dependency.new(full_name) if full_name
+      end
+    else
+      (formula || keg.to_formula).runtime_dependencies(read_from_tab: false, stop_at_untrusted:)
+    end
+  end
+
   # Returns a list of {Dependency} objects that are required at runtime.
   # When `stop_at_untrusted` is true, untrusted dependencies are kept without
   # expanding their own dependencies.
@@ -3015,13 +3034,8 @@ class Formula
     Formula.cache[:runtime_dependencies] ||= {}
     Formula.cache[:runtime_dependencies][cache_key] ||= begin
       deps = if read_from_tab && undeclared &&
-                (tab_deps = any_installed_keg&.runtime_dependencies)
-        tab_deps.filter_map do |d|
-          full_name = d["full_name"]
-          next unless full_name
-
-          Dependency.new full_name
-        end
+                (keg = any_installed_keg)
+        Formula.runtime_dependencies_for_keg(keg, formula: self, stop_at_untrusted:)
       end
       begin
         if deps.nil?

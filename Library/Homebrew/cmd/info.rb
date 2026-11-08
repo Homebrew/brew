@@ -219,17 +219,8 @@ module Homebrew
           tab_path = keg/AbstractTab::FILENAME
           next unless tab_path.file?
 
-          dependent = if (tab_deps = keg.runtime_dependencies)
-            tab_deps.any? do |dep|
-              full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
-              full_name&.then { names.include?(Utils.name_from_full_name(it)) }
-            end
-          else
-            # A receipt with no list says nothing about dependencies, so check the
-            # formula instead, as `brew uninstall` does.
-            keg.to_formula.runtime_dependencies(read_from_tab: false)
-               .any? { names.include?(Utils.name_from_full_name(it.name)) }
-          end
+          dependent = Formula.runtime_dependencies_for_keg(keg, stop_at_untrusted: true)
+                             .any? { names.include?(Utils.name_from_full_name(it.name)) }
           keg.name if dependent
         rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,
                JSON::ParserError
