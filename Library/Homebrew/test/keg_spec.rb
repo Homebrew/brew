@@ -416,6 +416,32 @@ RSpec.describe Keg do
       expect(dst).not_to be_a_symlink
     end
 
+    it "prints linked paths during a dry run" do
+      keg.link
+
+      expect do
+        keg.unlink(dry_run: true)
+      end.to output(<<~EOS).to_stdout
+        #{HOMEBREW_PREFIX}/bin/goodbye_cruel_world
+        #{HOMEBREW_PREFIX}/bin/helloworld
+        #{HOMEBREW_PREFIX}/bin/hiworld
+      EOS
+
+      expect(dst).to be_a_symlink
+    end
+
+    it "prunes symlinked directories during a dry run" do
+      src = keg/"bin/linked_dir"
+      src.mkpath
+      link = HOMEBREW_PREFIX/"bin/linked_dir"
+      link.make_relative_symlink(src)
+
+      expect(Find).to receive(:prune).at_least(:once).and_call_original
+      expect do
+        keg.unlink(dry_run: true, print_dry_run_links: false)
+      end.not_to change(link, :symlink?).from(true)
+    end
+
     it "prunes empty top-level directories" do
       mkpath HOMEBREW_PREFIX/"lib/foo/bar"
       mkpath keg/"lib/foo/bar"

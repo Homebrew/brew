@@ -40,7 +40,7 @@ module Homebrew
               kegs.each do |keg|
                 puts "Would uninstall #{keg.name} #{keg.version}"
                 kegs_to_uninstall << keg
-                keg.unlink(dry_run: true)
+                keg.unlink(dry_run: true, print_dry_run_links: false)
                 keg.uninstall(dry_run: true)
               end
             else
@@ -70,7 +70,7 @@ module Homebrew
               if dry_run
                 puts "Would uninstall #{keg.name} #{keg.version}"
                 kegs_to_uninstall << keg
-                keg.unlink(dry_run: true)
+                keg.unlink(dry_run: true, print_dry_run_links: false)
                 keg.uninstall(dry_run: true)
                 next
               end
