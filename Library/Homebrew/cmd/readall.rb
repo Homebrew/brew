@@ -46,11 +46,11 @@ module Homebrew
             Homebrew.failed = true unless Readall.valid_ruby_syntax?(ruby_files)
           end
 
-          options = {
-            aliases:     args.aliases?,
-            no_simulate: args.no_simulate?,
-          }
-          options[:os_arch_combinations] = args.os_arch_combinations if args.os || args.arch
+          os_arch_combinations = if args.os || args.arch
+            args.os_arch_combinations
+          else
+            OnSystem::ALL_OS_ARCH_COMBINATIONS
+          end
 
           taps = if args.no_named?
             Tap.installed
@@ -61,9 +61,11 @@ module Homebrew
           taps.each do |tap|
             Homebrew.failed = true unless Readall.valid_tap?(
               tap,
-              **options,
-              formula_files: Homebrew::Trust.trusted_formula_files(tap.formula_files),
-              cask_files:    Homebrew::Trust.trusted_cask_files(tap.cask_files),
+              aliases:              args.aliases?,
+              no_simulate:          args.no_simulate?,
+              os_arch_combinations:,
+              formula_files:        Homebrew::Trust.trusted_formula_files(tap.formula_files),
+              cask_files:           Homebrew::Trust.trusted_cask_files(tap.cask_files),
             )
           end
         end
