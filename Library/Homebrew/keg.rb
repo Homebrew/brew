@@ -360,8 +360,8 @@ class Keg
     end
   end
 
-  sig { params(verbose: T::Boolean, dry_run: T::Boolean, print_dry_run_links: T::Boolean).returns(Integer) }
-  def unlink(verbose: false, dry_run: false, print_dry_run_links: true)
+  sig { params(verbose: T::Boolean, dry_run: T::Boolean).returns(Integer) }
+  def unlink(verbose: false, dry_run: false)
     ObserverPathnameExtension.reset_counts!
 
     dirs = []
@@ -382,7 +382,7 @@ class Keg
         next if src != resolved_path(dst)
 
         if dry_run
-          puts dst if print_dry_run_links
+          puts dst
           Find.prune if src.directory?
           next
         end

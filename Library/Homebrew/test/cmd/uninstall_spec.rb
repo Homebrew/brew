@@ -66,7 +66,7 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
         .with({ keg.rack => [keg] }, casks: [cask], force: false, ignore_dependencies: false,
                                      named_args: cmd.args.named, dry_run: true)
         .and_call_original
-      expect(keg).to receive(:unlink).with(dry_run: true, print_dry_run_links: false).and_call_original
+      expect(keg).to receive(:unlink).with(dry_run: true).and_call_original
       expect(keg).to receive(:uninstall).with(dry_run: true).and_call_original
       expect(Homebrew::Uninstall).to receive(:handle_unsatisfied_dependents)
         .with({ keg.rack => [keg] }, casks: [cask], ignore_dependencies: false, named_args: cmd.args.named)
@@ -79,6 +79,7 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
 
       expect { cmd.run }.to output(<<~EOS).to_stdout
         Would uninstall testball 0.1
+        #{link}
         Would uninstall Cask test-cask
       EOS
 

@@ -438,8 +438,10 @@ RSpec.describe Keg do
 
       expect(Find).to receive(:prune).at_least(:once).and_call_original
       expect do
-        keg.unlink(dry_run: true, print_dry_run_links: false)
-      end.not_to change(link, :symlink?).from(true)
+        keg.unlink(dry_run: true)
+      end.to output("#{link}\n").to_stdout
+
+      expect(link).to be_a_symlink
     end
 
     it "prunes empty top-level directories" do
