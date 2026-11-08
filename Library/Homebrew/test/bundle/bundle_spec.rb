@@ -31,6 +31,28 @@ RSpec.describe Homebrew::Bundle do
     end
   end
 
+  context "when running npm" do
+    let(:npm) { mktmpdir/"npm" }
+
+    before do
+      stub_const("HOMEBREW_PREFIX", mktmpdir)
+      node = HOMEBREW_PREFIX/"opt/node/bin/node"
+      node.dirname.mkpath
+      node.write "#!/bin/sh\nexit 0\n"
+      node.chmod 0755
+      npm.write "#!/usr/bin/env node\n"
+      npm.chmod 0755
+      ENV["PATH"] = npm.dirname.to_s
+      allow(Homebrew::Bundle::Npm).to receive(:package_manager_executable).and_return(npm)
+    end
+
+    test_each([false, true]) do |verbose|
+      it "finds node with verbose: #{verbose}" do
+        expect(described_class.system(npm.to_s, "--version", verbose:)).to be true
+      end
+    end
+  end
+
   context "when checking for homebrew/cask", :needs_macos do
     it "finds it when present" do
       allow(File).to receive(:directory?).with("#{HOMEBREW_PREFIX}/Caskroom").and_return(true)
