@@ -34,7 +34,7 @@ module Cask
         cask: ::Cask::Cask, command: T.class_of(SystemCommand), force: T::Boolean, adopt: T::Boolean,
         skip_cask_deps: T::Boolean, binaries: T::Boolean, verbose: T::Boolean, zap: T::Boolean,
         require_sha: T::Boolean, upgrade: T::Boolean, reinstall: T::Boolean,
-        installed_on_request: T::Boolean, verify_download_integrity: T::Boolean,
+        installed_on_request: T::Boolean, top_level: T::Boolean, verify_download_integrity: T::Boolean,
         quiet: T::Boolean, download_queue: Homebrew::DownloadQueue, defer_fetch: T::Boolean,
         default_uninstall_artifacts: T.nilable(ArtifactSet)
       ).void
@@ -42,7 +42,7 @@ module Cask
     def initialize(cask, command: SystemCommand, force: false, adopt: false,
                    skip_cask_deps: false, binaries: true, verbose: false,
                    zap: false, require_sha: false, upgrade: false, reinstall: false,
-                   installed_on_request: true,
+                   installed_on_request: true, top_level: true,
                    verify_download_integrity: true, quiet: false,
                    download_queue: Homebrew::DownloadQueue.default, defer_fetch: false,
                    default_uninstall_artifacts: nil)
@@ -58,6 +58,7 @@ module Cask
       @reinstall = reinstall
       @upgrade = upgrade
       @installed_on_request = installed_on_request
+      @top_level = top_level
       @verify_download_integrity = verify_download_integrity
       @quiet = quiet
       @download_queue = download_queue
@@ -481,7 +482,7 @@ on_request: true)
 
     sig { void }
     def enqueue_dependency_downloads
-      return if download_failed? || !installed_on_request?
+      return if download_failed? || !@top_level
 
       cask_installers, formula_installers = dependency_installers(defer_fetch: true)
       if cask_installers.any?
@@ -496,7 +497,7 @@ on_request: true)
 
     sig { void }
     def satisfy_cask_and_formula_dependencies
-      return unless installed_on_request?
+      return unless @top_level
 
       formulae_and_casks = cask_and_formula_dependencies
 
@@ -559,6 +560,7 @@ on_request: true)
             binaries:             binaries?,
             force:                false,
             installed_on_request: false,
+            top_level:            false,
             quiet:                quiet?,
             require_sha:          require_sha?,
             verbose:              verbose?,

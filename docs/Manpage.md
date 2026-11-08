@@ -1426,6 +1426,11 @@ upgrade *`formula`* if it is already installed but outdated.
 
 : Show what would be installed, but do not actually install anything.
 
+`--as-dependency`
+
+: Install *`formula`* or *`cask`* as a dependency without marking it as
+  installed on request. Previously requested packages retain their status.
+
 `-y`, `--no-ask`
 
 : Do not ask for confirmation before downloading and installing. Ask mode is the
@@ -1501,10 +1506,6 @@ upgrade *`formula`* if it is already installed but outdated.
 `--skip-link`
 
 : Install but skip linking the keg into the prefix.
-
-`--as-dependency`
-
-: Install but mark as installed as a dependency and not installed on request.
 
 `--bottle-arch`
 
@@ -1740,7 +1741,8 @@ packages.
 Check the given *`formula`* kegs and *`cask`* installations for missing
 dependencies. If no *`formula`* or *`cask`* are provided, check all kegs and
 casks. Will exit with a non-zero status if any kegs or casks are found to be
-missing dependencies.
+missing dependencies. Print installation instructions to standard error unless
+`--hide` is used.
 
 `--hide`
 

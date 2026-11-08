@@ -1205,7 +1205,7 @@ module Homebrew
         missing = Homebrew::Missing.deps(Formula.installed, Cask::Caskroom.casks)
         return if missing.empty?
 
-        commands = ["brew install #{missing.values.flatten.uniq.sort * " "}"]
+        commands = Homebrew::Missing.install_commands(missing)
         Finding.new(
           append_indented_list(missing.map { |name, deps| Homebrew::Missing.format_deps(name, deps) }, <<~EOS),
             Some installed formulae or casks are missing dependencies:

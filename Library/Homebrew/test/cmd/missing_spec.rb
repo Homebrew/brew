@@ -21,16 +21,22 @@ RSpec.describe Homebrew::Cmd::Missing do
 
     expect { brew "missing" }
       .to output("foo\n").to_stdout
-      .and not_to_output.to_stderr
       .and be_a_failure
+      .and output(<<~EOS).to_stderr
+        Warning: You should `brew install` the missing dependencies:
+          brew install --as-dependency foo
+      EOS
 
     setup_test_formula "unar"
     cask = Cask::CaskLoader.load("with-depends-on-everything")
     InstallHelper.stub_cask_installation(cask)
     expect { brew "missing", cask.token }
       .to output(/local-caffeine.*unar/).to_stdout
-      .and not_to_output.to_stderr
       .and be_a_failure
+      .and output(<<~EOS).to_stderr
+        Warning: You should `brew install` the missing dependencies:
+          brew install --as-dependency local-caffeine local-transmission-zip unar with-depends-on-cask
+      EOS
   end
 
   it "prints missing cask dependencies", :cask, :no_api do
@@ -47,6 +53,10 @@ RSpec.describe Homebrew::Cmd::Missing do
 
     expect { described_class.new([]).run }
       .to output("local-caffeine unar\n").to_stdout
+      .and output(<<~EOS).to_stderr
+        Warning: You should `brew install` the missing dependencies:
+          brew install --as-dependency local-caffeine unar
+      EOS
 
     expect(Homebrew).to have_failed
   end
@@ -65,7 +75,34 @@ RSpec.describe Homebrew::Cmd::Missing do
 
     expect { cmd.run }
       .to output("local-caffeine unar\n").to_stdout
+      .and output(<<~EOS).to_stderr
+        Warning: You should `brew install` the missing dependencies:
+          brew install --as-dependency local-caffeine unar
+      EOS
 
     expect(Homebrew).to have_failed
+  end
+
+  it "prints no recovery instructions when no dependencies are missing" do
+    HOMEBREW_CELLAR.mkpath
+    allow(Formula).to receive(:installed).and_return([])
+    allow(Cask::Caskroom).to receive(:casks).and_return([])
+
+    expect { described_class.new([]).run }
+      .to output("").to_stdout
+      .and output("").to_stderr
+  end
+
+  it "prints no recovery instructions when hiding dependencies" do
+    HOMEBREW_CELLAR.mkpath
+    allow(Formula).to receive(:installed).and_return([
+      instance_double(Formula, full_name: "needs-foo", to_s: "needs-foo",
+                               missing_dependencies: [instance_double(Dependency, to_s: "foo")]),
+    ])
+    allow(Cask::Caskroom).to receive(:casks).and_return([])
+
+    expect { described_class.new(["--hide=foo"]).run }
+      .to output("foo\n").to_stdout
+      .and output("").to_stderr
   end
 end

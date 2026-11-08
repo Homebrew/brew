@@ -1,6 +1,8 @@
 # typed: true
 # frozen_string_literal: true
 
+require "install"
+
 # TODO: this test should be named after the corresponding class, once
 #       that class is abstracted from installer.rb
 # rubocop:disable RSpec/DescribeClass
@@ -21,6 +23,16 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
       expect(dependency).to be_installed
     end
 
+    test_each([:enqueue_dependency_downloads, :satisfy_cask_and_formula_dependencies]) do |method|
+      it "leaves nested dependency handling to the parent during #{method}" do
+        nested_installer = Cask::Installer.new(cask).dependency_installers.fetch(0).fetch(0)
+
+        expect(nested_installer).not_to receive(:cask_and_formula_dependencies)
+
+        nested_installer.public_send(method)
+      end
+    end
+
     context "when depends_on cask is cyclic" do
       let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-cask-cyclic")) }
 
@@ -31,6 +43,37 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
           "on other Casks: with-depends-on-cask-cyclic-helper",
         )
       }
+    end
+  end
+
+  describe "depends_on formula when not installed on request" do
+    let(:installer) { Cask::Installer.new(cask, installed_on_request: false) }
+    let(:dependency) do
+      formula("dependency") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/dependency-1.0.tar.gz"
+      end
+    end
+    let(:formula_installer) { installer.dependency_installers.fetch(1).fetch(0) }
+
+    before do
+      allow(installer).to receive(:cask_and_formula_dependencies).and_return([dependency])
+      allow(formula_installer).to receive(:finish)
+      allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    end
+
+    it "enqueues missing formula dependencies" do
+      expect(Homebrew::Install).to receive(:enqueue_formulae)
+        .with([formula_installer], download_queue: Homebrew::DownloadQueue.default).and_return([formula_installer])
+
+      installer.enqueue_dependency_downloads
+    end
+
+    it "installs missing formula dependencies" do
+      allow(Homebrew::Install).to receive(:fetch_formulae).with([formula_installer]).and_return([formula_installer])
+      expect(formula_installer).to receive(:install)
+
+      installer.satisfy_cask_and_formula_dependencies
     end
   end
 

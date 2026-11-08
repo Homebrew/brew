@@ -14,6 +14,12 @@ module Homebrew
       "#{"#{package_name}: " if show_name}#{missing_dependencies.join(" ")}"
     end
 
+    # Commands to install missing dependencies without marking them as requested.
+    sig { params(missing: T::Hash[String, T::Array[String]]).returns(T::Array[String]) }
+    def self.install_commands(missing)
+      ["brew install --as-dependency #{missing.values.flatten.uniq.sort.join(" ")}"]
+    end
+
     sig {
       params(formulae: T::Array[Formula], casks: T::Array[Cask::Cask], hide: T::Array[String], _block: T.nilable(
         T.proc.params(package_name: String, missing_dependencies: T::Array[String]).void,

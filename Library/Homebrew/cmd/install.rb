@@ -39,6 +39,9 @@ module Homebrew
                description: "Print the verification and post-install steps."
         switch "-n", "--dry-run",
                description: "Show what would be installed, but do not actually install anything."
+        switch "--as-dependency",
+               description: "Install <formula> or <cask> as a dependency without marking it as installed on " \
+                            "request. Previously requested packages retain their status."
         switch "--no-ask", "--yes", "-y",
                description: "Do not ask for confirmation before downloading and installing. Ask mode is the default.",
                env:         :no_ask
@@ -110,9 +113,6 @@ module Homebrew
           }],
           [:switch, "--skip-link", {
             description: "Install but skip linking the keg into the prefix.",
-          }],
-          [:switch, "--as-dependency", {
-            description: "Install but mark as installed as a dependency and not installed on request.",
           }],
           [:flag, "--bottle-arch=", {
             depends_on:  "--build-bottle",
@@ -209,6 +209,7 @@ module Homebrew
           args.named.to_formulae_and_casks(method: :bottle, warn: false).partition { it.is_a?(Formula) },
           [T::Array[Formula], T::Array[Cask::Cask]],
         )
+        installed_on_request = !args.as_dependency?
         ask = !args.no_ask? && !args.dry_run?
         cask_upgrade_summary = T.let([], T::Array[VersionChange])
 
@@ -265,13 +266,14 @@ module Homebrew
         installed_formulae = formulae.select do |f|
           Install.install_formula?(
             f,
-            head:              args.HEAD?,
-            fetch_head:        args.fetch_HEAD?,
-            only_dependencies: args.only_dependencies?,
-            force:             args.force?,
-            quiet:             args.quiet?,
-            skip_link:         args.skip_link?,
-            overwrite:         args.overwrite?,
+            head:                 args.HEAD?,
+            fetch_head:           args.fetch_HEAD?,
+            only_dependencies:    args.only_dependencies?,
+            force:                args.force?,
+            quiet:                args.quiet?,
+            skip_link:            args.skip_link?,
+            overwrite:            args.overwrite?,
+            installed_on_request:,
           )
         end
 
@@ -282,7 +284,7 @@ module Homebrew
 
         formulae_installer = Install.formula_installers(
           installed_formulae,
-          installed_on_request:       !args.as_dependency?,
+          installed_on_request:,
           build_bottle:               args.build_bottle?,
           force_bottle:               args.force_bottle?,
           bottle_arch:                args.bottle_arch,
@@ -323,7 +325,7 @@ module Homebrew
             installed_formulae,
             flags:                      args.flags_only,
             ask:                        ask,
-            installed_on_request:       !args.as_dependency?,
+            installed_on_request:,
             force_bottle:               args.force_bottle?,
             build_from_source_formulae: args.build_from_source_formulae,
             interactive:                args.interactive?,
@@ -396,16 +398,17 @@ module Homebrew
               prefetched_cask_installers = fetch_casks.map do |cask|
                 Cask::Installer.new(
                   cask,
-                  adopt:          args.adopt?,
-                  binaries:       args.binaries?,
-                  verbose:        args.verbose?,
-                  force:          args.force?,
-                  quiet:          args.quiet?,
-                  skip_cask_deps: args.skip_cask_deps?,
-                  require_sha:    args.cask_require_sha?,
-                  upgrade:        upgrade_casks.include?(cask),
+                  adopt:                args.adopt?,
+                  binaries:             args.binaries?,
+                  verbose:              args.verbose?,
+                  force:                args.force?,
+                  quiet:                args.quiet?,
+                  skip_cask_deps:       args.skip_cask_deps?,
+                  require_sha:          args.cask_require_sha?,
+                  upgrade:              upgrade_casks.include?(cask),
                   download_queue:,
-                  defer_fetch:    true,
+                  defer_fetch:          true,
+                  installed_on_request:,
                 )
               end
 
@@ -460,13 +463,14 @@ module Homebrew
             installer = prefetched_cask_installers.find { |candidate| candidate.cask.equal?(cask) }
             installer ||= Cask::Installer.new(
               cask,
-              adopt:          args.adopt?,
-              binaries:       args.binaries?,
-              force:          args.force?,
-              quiet:          args.quiet?,
-              require_sha:    args.cask_require_sha?,
-              skip_cask_deps: args.skip_cask_deps?,
-              verbose:        args.verbose?,
+              adopt:                args.adopt?,
+              binaries:             args.binaries?,
+              force:                args.force?,
+              quiet:                args.quiet?,
+              require_sha:          args.cask_require_sha?,
+              skip_cask_deps:       args.skip_cask_deps?,
+              verbose:              args.verbose?,
+              installed_on_request:,
             )
             installer.install
             installed_or_upgraded_casks << cask

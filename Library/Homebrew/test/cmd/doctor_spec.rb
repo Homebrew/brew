@@ -93,7 +93,7 @@ RSpec.describe Homebrew::Cmd::Doctor do
           with-depends-on-everything: local-caffeine unar
 
         You should `brew install` the missing dependencies:
-          brew install foo local-caffeine unar
+          brew install --as-dependency foo local-caffeine unar
       EOS
   end
 
