@@ -231,7 +231,8 @@ module Homebrew
                .any? { names.include?(Utils.name_from_full_name(it.name)) }
           end
           keg.name if dependent
-        rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
+        rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,
+               JSON::ParserError
           nil
         end.sort.uniq
       end

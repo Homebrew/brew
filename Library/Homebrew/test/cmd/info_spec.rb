@@ -816,6 +816,21 @@ RSpec.describe Homebrew::Cmd::Info do
     expect(described_class.installed_dependent_names(["testball"])).to be_empty
   end
 
+  it "skips installed dependents with malformed receipts" do
+    malformed_keg_path = HOMEBREW_CELLAR/"malformed-dependent/1.0"
+    malformed_keg_path.mkpath
+    (malformed_keg_path/AbstractTab::FILENAME).write("{")
+
+    dependent_keg_path = HOMEBREW_CELLAR/"valid-dependent/1.0"
+    dependent_keg_path.mkpath
+    dependent_tab = Tab.empty
+    dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
+    dependent_tab.runtime_dependencies = [{ "full_name" => "testball" }]
+    dependent_tab.write
+
+    expect(described_class.installed_dependent_names(["testball"])).to eq(["valid-dependent"])
+  end
+
   it "uses formula dependencies without rereading the receipt when the list is missing" do
     rack = HOMEBREW_CELLAR/"dependent"
     keg_path = rack/"1.0"
