@@ -140,6 +140,17 @@ RSpec.describe Cask::Installer, :cask do
     end
   end
 
+  describe "#uninstall" do
+    it "does not uninstall artifacts during a dry run" do
+      cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+      installer = described_class.new(cask)
+
+      expect(installer).not_to receive(:uninstall_artifacts)
+      expect { installer.uninstall(dry_run: true) }
+        .to output("Would uninstall Cask local-caffeine\n").to_stdout
+    end
+  end
+
   describe "#prelude", :needs_macos do
     it "resolves the system languages before any other cask work" do
       caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))

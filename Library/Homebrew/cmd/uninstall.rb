@@ -23,6 +23,8 @@ module Homebrew
         switch "-f", "--force",
                description: "Delete all installed versions of <formula>. Uninstall even if <cask> is not " \
                             "installed, overwrite existing files and ignore errors when removing files."
+        switch "-n", "--dry-run",
+               description: "Show what would be uninstalled and autoremoved, but do not actually remove anything."
         switch "--zap",
                description: "Remove all files associated with a <cask>. " \
                             "*May remove files which are shared between applications.*"
@@ -72,20 +74,30 @@ module Homebrew
 
         return if all_kegs.blank? && casks.blank? && unavailable_errors.blank?
 
+        dry_run = args.dry_run?
         kegs_by_rack = all_kegs.group_by(&:rack)
+        if dry_run && !args.ignore_dependencies?
+          Cask::Uninstall.check_dependent_casks(*casks, named_args: args.named)
+          return if Homebrew.failed?
+        end
 
-        Uninstall.uninstall_kegs(
+        kegs_to_uninstall = Uninstall.uninstall_kegs(
           kegs_by_rack,
           casks:,
           force:               args.force?,
           ignore_dependencies: args.ignore_dependencies?,
           named_args:          args.named,
+          dry_run:,
         )
+        return if dry_run && kegs_to_uninstall.nil?
 
-        Cask::Uninstall.check_dependent_casks(*casks, named_args: args.named) unless args.ignore_dependencies?
+        if !dry_run && !args.ignore_dependencies?
+          Cask::Uninstall.check_dependent_casks(*casks, named_args: args.named)
+        end
 
-        return if Homebrew.failed?
+        return if Homebrew.failed? && !dry_run
 
+        casks_to_uninstall = T.let([], T::Array[Cask::Cask])
         begin
           if args.zap?
             caught_exceptions = []
@@ -93,13 +105,25 @@ module Homebrew
             casks.each do |cask|
               odebug "Zapping Cask #{cask}"
 
-              raise Cask::CaskNotInstalledError, cask if !cask.installed? && !args.force?
+              if !cask.installed? && !args.force?
+                if dry_run
+                  ofail Cask::CaskNotInstalledError.new(cask)
+                  next
+                end
 
-              next unless Cask::Uninstall.unpin_for_removal?(cask, force: args.force?)
+                raise Cask::CaskNotInstalledError, cask
+              end
 
-              Cask::Installer.new(cask, verbose: args.verbose?, force: args.force?).zap
+              next unless Cask::Uninstall.unpin_for_removal?(cask, force: args.force?, dry_run:)
+
+              Cask::Installer.new(cask, verbose: args.verbose?, force: args.force?).zap(dry_run:)
+              casks_to_uninstall << cask
             rescue => e
-              caught_exceptions << e
+              if dry_run
+                ofail e
+              else
+                caught_exceptions << e
+              end
               next
             end
 
@@ -109,14 +133,25 @@ module Homebrew
               raise caught_exceptions.fetch(0)
             end
           else
-            Cask::Uninstall.uninstall_casks(
+            casks_to_uninstall = Cask::Uninstall.uninstall_casks(
               *casks,
               verbose: args.verbose?,
               force:   args.force?,
+              dry_run:,
             )
           end
         rescue => e
           ofail e
+        end
+
+        if dry_run
+          if (kegs_to_uninstall.present? || casks_to_uninstall.present?) && !Homebrew::EnvConfig.no_autoremove?
+            require "cleanup"
+            Cleanup.autoremove(dry_run: true, removed_kegs: kegs_to_uninstall, removed_casks: casks_to_uninstall)
+          end
+
+          unavailable_errors.each { |e| ofail e } unless args.force?
+          return
         end
 
         trusted_items_to_remove.uniq.each do |type, name|

@@ -3349,6 +3349,7 @@ _brew_uninstall() {
       __brewcomp "
       --cask
       --debug
+      --dry-run
       --force
       --formula
       --help

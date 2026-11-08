@@ -146,6 +146,14 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_some_installed_dependents([keg, dependent])).to be_nil
     end
 
+    specify "projected formula and cask removals do not block uninstall" do
+      dependent = setup_test_keg("bar", "1.0")
+      tab_dependencies dependent, [{ "full_name" => keg.name, "version" => keg.version.to_s }]
+      cask = setup_test_cask("qux", "1.0.0", "foo")
+
+      expect(described_class.find_some_installed_dependents([keg], formulae: [], casks: [cask])).to be_nil
+    end
+
     specify "renamed dependency with nil tab" do
       dependent = setup_test_keg("bar", "1.0") do
         T.bind(self, T.class_of(Formula))

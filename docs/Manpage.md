@@ -2328,6 +2328,11 @@ Uninstall a *`formula`* or *`cask`*.
 : Delete all installed versions of *`formula`*. Uninstall even if *`cask`* is
   not installed, overwrite existing files and ignore errors when removing files.
 
+`-n`, `--dry-run`
+
+: Show what would be uninstalled and autoremoved, but do not actually remove
+  anything.
+
 `--zap`
 
 : Remove all files associated with a *`cask`*. *May remove files which are

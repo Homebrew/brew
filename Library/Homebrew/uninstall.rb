@@ -19,9 +19,12 @@ module Homebrew
         force:               T::Boolean,
         ignore_dependencies: T::Boolean,
         named_args:          T::Array[String],
-      ).void
+        dry_run:             T::Boolean,
+      ).returns(T.nilable(T::Array[Keg]))
     }
-    def self.uninstall_kegs(kegs_by_rack, casks: [], force: false, ignore_dependencies: false, named_args: [])
+    def self.uninstall_kegs(kegs_by_rack, casks: [], force: false, ignore_dependencies: false, named_args: [],
+                            dry_run: false)
+      kegs_to_uninstall = []
       handle_unsatisfied_dependents(kegs_by_rack,
                                     casks:,
                                     ignore_dependencies:,
@@ -33,14 +36,24 @@ module Homebrew
           name = rack.basename
 
           if rack.directory?
-            puts "Uninstalling #{name}... (#{rack.abv})"
-            kegs.each do |keg|
-              keg.unlink
-              keg.uninstall
+            if dry_run
+              kegs.each do |keg|
+                puts "Would uninstall #{keg.name} #{keg.version}"
+                kegs_to_uninstall << keg
+                keg.unlink(dry_run: true)
+                keg.uninstall(dry_run: true)
+              end
+            else
+              puts "Uninstalling #{name}... (#{rack.abv})"
+              kegs.each do |keg|
+                kegs_to_uninstall << keg
+                keg.unlink
+                keg.uninstall
+              end
             end
           end
 
-          rm_pin rack
+          rm_pin rack unless dry_run
         else
           kegs.each do |keg|
             begin
@@ -54,7 +67,16 @@ module Homebrew
             end
 
             keg.lock do
+              if dry_run
+                puts "Would uninstall #{keg.name} #{keg.version}"
+                kegs_to_uninstall << keg
+                keg.unlink(dry_run: true)
+                keg.uninstall(dry_run: true)
+                next
+              end
+
               puts "Uninstalling #{keg}... (#{keg.abv})"
+              kegs_to_uninstall << keg
               keg.unlink
               keg.uninstall
               rack = keg.rack
@@ -111,12 +133,14 @@ module Homebrew
           end
         end
       end
+      kegs_to_uninstall
     rescue MultipleVersionsInstalledError => e
       ofail e
+      nil
     ensure
       # If we delete Cellar/newname, then Cellar/oldname symlink
       # can become broken and we have to remove it.
-      if HOMEBREW_CELLAR.directory?
+      if !dry_run && HOMEBREW_CELLAR.directory?
         HOMEBREW_CELLAR.children.each do |rack|
           rack.unlink if rack.symlink? && !Utils::Path.resolved_path_exists?(rack)
         end

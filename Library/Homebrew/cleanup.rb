@@ -1050,8 +1050,14 @@ module Homebrew
       puts "from #{HOMEBREW_PREFIX}"
     end
 
-    sig { params(dry_run: T::Boolean).void }
-    def self.autoremove(dry_run: false)
+    sig {
+      params(
+        dry_run:       T::Boolean,
+        removed_kegs:  T::Array[Keg],
+        removed_casks: T::Array[Cask::Cask],
+      ).void
+    }
+    def self.autoremove(dry_run: false, removed_kegs: [], removed_casks: [])
       require "utils/autoremove"
       require "cask/caskroom"
 
@@ -1059,21 +1065,35 @@ module Homebrew
       # the cache of installed formulae may no longer be valid.
       Formula.clear_cache unless dry_run
 
-      formulae = Formula.installed
+      installed_formulae = Formula.installed
+      unless removed_kegs.empty?
+        installed_formulae = installed_formulae.reject do |formula|
+          formula.installed_kegs.all? { |keg| removed_kegs.include?(keg) }
+        end
+      end
+
+      formulae = installed_formulae
       # Remove formulae listed in HOMEBREW_NO_CLEANUP_FORMULAE and their dependencies.
       if Homebrew::EnvConfig.no_cleanup_formulae.present?
         formulae -= formulae.select { skip_clean_formula?(it) }
                             .flat_map { |f| [f, *f.installed_runtime_formula_dependencies] }
       end
       casks = Cask::Caskroom.casks
+      if removed_casks.present?
+        casks = casks.reject do |cask|
+          removed_casks.any? { |removed_cask| removed_cask.token == cask.token }
+        end
+      end
 
       removable_formulae = Utils::Autoremove.removable_formulae(formulae, casks)
       if (candidate_kegs = removable_formulae.filter_map(&:any_installed_keg).presence) &&
-         (required_kegs, = InstalledDependents.find_some_installed_dependents(candidate_kegs)) &&
+         (required_kegs, = InstalledDependents.find_some_installed_dependents(candidate_kegs,
+                                                                              casks:    removed_casks,
+                                                                              formulae: installed_formulae)) &&
          (required_names = Set.new(required_kegs.map(&:name)).presence)
         removable_formulae.reject! { |formula| required_names.include?(formula.name) }
       end
-      removable_formulae = Utils::Autoremove.formulae_safe_to_remove(removable_formulae, Formula.installed)
+      removable_formulae = Utils::Autoremove.formulae_safe_to_remove(removable_formulae, installed_formulae)
 
       return if removable_formulae.blank?
 

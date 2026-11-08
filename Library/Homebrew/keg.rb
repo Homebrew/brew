@@ -324,8 +324,10 @@ class Keg
     rmdir_if_possible(opt_record.parent)
   end
 
-  sig { params(raise_failures: T::Boolean).void }
-  def uninstall(raise_failures: false)
+  sig { params(raise_failures: T::Boolean, dry_run: T::Boolean).void }
+  def uninstall(raise_failures: false, dry_run: false)
+    return if dry_run
+
     CacheStoreDatabase.use(:linkage) do |db|
       break unless db.created?
 

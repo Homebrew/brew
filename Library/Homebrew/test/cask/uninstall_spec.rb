@@ -51,6 +51,16 @@ RSpec.describe Cask::Uninstall, :cask do
       caffeine.unpin
     end
 
+    it "does not unpin a Cask during a forced dry run" do
+      caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+      InstallHelper.stub_cask_installation(caffeine)
+      caffeine.pin
+
+      expect do
+        described_class.uninstall_casks(caffeine, force: true, dry_run: true)
+      end.not_to change(caffeine, :pinned?).from(true)
+    end
+
     it "can uninstall and unlink multiple Casks at once" do
       caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
       transmission = Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))

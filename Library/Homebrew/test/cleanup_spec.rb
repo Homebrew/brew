@@ -304,7 +304,7 @@ RSpec.describe Homebrew::Cleanup do
       allow(Utils::Autoremove).to receive(:removable_formulae).with([removable_formula],
                                                                     []).and_return([removable_formula])
       allow(InstalledDependents).to receive(:find_some_installed_dependents)
-        .with([removable_keg])
+        .with([removable_keg], casks: [], formulae: [removable_formula])
         .and_return([[removable_keg], ["pango"]])
     end
 
@@ -324,10 +324,11 @@ RSpec.describe Homebrew::Cleanup do
                                    poured_from_bottle: poured, installed_on_request: requested,
                                    installed_on_request_present?: true)
         deps = build.map { |dep| instance_double(Dependency, name: dep.name, build?: true, to_formula: dep) }
+        keg = instance_double(Keg, name:, tab:)
         instance_double(Formula, name:, full_name: name, possible_names: [name], aliases: [], deps:, pinned?: pinned,
                                  bottled?: usable_bottle, pour_bottle?: true,
                                  installed_runtime_formula_dependencies: [],
-                                 any_installed_keg: instance_double(Keg, name:, tab:))
+                                 any_installed_keg: keg, installed_kegs: [keg])
       end
 
       def installed_formulae(*formulae)
@@ -378,6 +379,37 @@ RSpec.describe Homebrew::Cleanup do
 
           expect { described_class.autoremove(dry_run: true) }
             .to output(/Would autoremove 2 unneeded formulae:\napp\ncmake\n\z/).to_stdout
+        end
+
+        it "includes dependencies made unneeded by the uninstall of a formula and cask" do
+          app = installed_formula("app", requested: true, runtime: ["formula-dep"])
+          formula_dep = installed_formula("formula-dep", poured: true)
+          cask_dep = installed_formula("cask-dep", poured: true)
+          cask = Cask::CaskLoader.from_content(<<~RUBY)
+            cask "red" do
+              depends_on formula: "cask-dep"
+            end
+          RUBY
+          installed_formulae(app, formula_dep, cask_dep)
+          allow(Cask::Caskroom).to receive(:casks).and_return([cask])
+          expect(InstalledDependents).to receive(:find_some_installed_dependents)
+            .with(anything, casks: [cask], formulae: [formula_dep, cask_dep])
+            .and_return(nil)
+
+          expect do
+            described_class.autoremove(dry_run: true, removed_kegs: [app.any_installed_keg], removed_casks: [cask])
+          end.to output(/Would autoremove 2 unneeded formulae:\ncask-dep\nformula-dep\n\z/).to_stdout
+        end
+
+        it "keeps dependencies when a formula has another installed version" do
+          app = installed_formula("app", requested: true, runtime: ["foo"])
+          another_keg = instance_double(Keg, name: "app", tab: app.any_installed_keg.tab)
+          allow(app).to receive(:installed_kegs).and_return([app.any_installed_keg, another_keg])
+          installed_formulae(app, installed_formula("foo", poured: true))
+
+          expect do
+            described_class.autoremove(dry_run: true, removed_kegs: [app.any_installed_keg])
+          end.not_to output.to_stdout
         end
       end
 
