@@ -36,13 +36,24 @@ RSpec.describe Homebrew::Cmd::ReadallCmd do
                                                trusted_cask_files:    [trusted_cask])
     expect(Readall).to receive(:valid_tap?).with(
       tap,
-      aliases:       false,
-      no_simulate:   false,
-      formula_files: [trusted_formula],
-      cask_files:    [trusted_cask],
+      aliases:              false,
+      no_simulate:          false,
+      os_arch_combinations: OnSystem::ALL_OS_ARCH_COMBINATIONS,
+      formula_files:        [trusted_formula],
+      cask_files:           [trusted_cask],
     ).and_return(true)
 
     described_class.new([]).run
+  end
+
+  it "validates only the platforms given by `--os` and `--arch`" do
+    tap = instance_double(Tap, formula_files: [], cask_files: [])
+    allow(Tap).to receive(:installed).and_return([tap])
+    expect(Readall).to receive(:valid_tap?)
+      .with(tap, hash_including(os_arch_combinations: [[:linux, :arm]]))
+      .and_return(true)
+
+    described_class.new(["--os=linux", "--arch=arm"]).run
   end
 
   it "skips macOS-only casks when loading tap casks on Linux" do
