@@ -274,11 +274,14 @@ module Utils
 
               next false if package_install_intact && (
                 spec.extensions.empty? ||
-                  Dir.glob(
-                    spec.full_require_paths.map do |path|
-                      File.join(path, "**", "*.#{RbConfig::CONFIG.fetch("DLEXT")}")
-                    end,
-                  ).uniq.count { |path| File.file?(path) } >= spec.extensions.length
+                  spec.full_require_paths.flat_map do |path|
+                    Dir.glob(File.join(path, "**", "*.#{RbConfig::CONFIG.fetch("DLEXT")}"))
+                      .filter_map do |extension_path|
+                        next unless File.file?(extension_path)
+
+                        extension_path.delete_prefix("#{path}#{File::SEPARATOR}")
+                      end
+                  end.uniq.count >= spec.extensions.length
               )
             end
 
