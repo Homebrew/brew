@@ -244,11 +244,11 @@ module Utils
             next false unless File.exist?(spec_file)
 
             cache_file = "#{Gem.dir}/cache/#{spec.full_name}.gem"
-            if File.exist?(cache_file)
+            package_install_intact = if File.exist?(cache_file)
               require "rubygems/package"
               package = Gem::Package.new(cache_file)
 
-              package_install_intact = begin
+              begin
                 contents = package.contents
 
                 # If the gem has contents, ensure we have every file installed it contains.
@@ -260,19 +260,21 @@ module Utils
                 File.unlink(cache_file)
                 false
               end
-
-              next false if package_install_intact && (
-                spec.extensions.empty? ||
-                  spec.full_require_paths.flat_map do |path|
-                    Dir.glob(File.join(path, "**", "*.#{RbConfig::CONFIG.fetch("DLEXT")}"))
-                      .filter_map do |extension_path|
-                        next unless File.file?(extension_path)
-
-                        extension_path.delete_prefix("#{path}#{File::SEPARATOR}")
-                      end
-                  end.uniq.count >= spec.extensions.length
-              )
+            else
+              false
             end
+
+            native_extensions_intact = spec.extensions.empty? || (
+              spec.full_require_paths.flat_map do |path|
+                Dir.glob(File.join(path, "**", "*.#{RbConfig::CONFIG.fetch("DLEXT")}"))
+                  .filter_map do |extension_path|
+                    next unless File.file?(extension_path)
+
+                    extension_path.delete_prefix("#{path}#{File::SEPARATOR}")
+                  end
+              end.uniq.count >= spec.extensions.length
+            )
+            next false if package_install_intact && native_extensions_intact
 
             # Mark gem for reinstallation
             File.unlink(spec_file)

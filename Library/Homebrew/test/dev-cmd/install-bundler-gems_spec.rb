@@ -138,7 +138,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
 
       allow(Utils::GemSetup).to receive_messages(
         setup_gem_environment!: nil,
-        valid_gem_groups:       %w[extensions_in_lib missing_extension],
+        valid_gem_groups:       %w[extensions_in_lib missing_extension missing_cache],
         user_gem_groups:        [],
         user_vendor_version:    8,
         bundler_definition:     definition,
@@ -178,6 +178,16 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
 
       with_env(HOMEBREW_TESTS: nil) do
         Utils::GemSetup.install_bundler_gems!(groups: ["extensions_in_lib"])
+      end
+    end
+
+    it "checks native extensions when the gem package cache is missing" do
+      (Pathname(gem_dir)/"cache/#{full_name}.gem").unlink
+      allow(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "install", out: :err).and_return(true)
+      expect(Dir).to receive(:glob).at_least(:once).and_call_original
+
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["missing_cache"])
       end
     end
   end

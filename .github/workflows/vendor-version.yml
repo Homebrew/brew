@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/vendor-version.yml
+      - Library/Homebrew/utils/gem_setup.rb
       - Library/Homebrew/vendor/bundle/ruby/**
 
 permissions:
@@ -25,6 +26,26 @@ jobs:
         with:
           core: false
           cask: false
+
+      - name: Require vendor version bump when gem setup changes
+        run: |
+          changed_files=$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" -- Library/Homebrew/utils/gem_setup.rb)
+          if [[ -z "${changed_files}" ]]; then
+            exit 0
+          fi
+
+          base_version=$(git show "origin/${GITHUB_BASE_REF}:Library/Homebrew/utils/gem_setup.rb" |
+            sed -nE 's/^[[:space:]]*VENDOR_VERSION = ([0-9]+)$/\1/p')
+          current_version=$(sed -nE 's/^[[:space:]]*VENDOR_VERSION = ([0-9]+)$/\1/p' \
+            Library/Homebrew/utils/gem_setup.rb)
+          if [[ ! "${base_version}" =~ ^[0-9]+$ || ! "${current_version}" =~ ^[0-9]+$ ]]; then
+            echo "::error::Could not determine VENDOR_VERSION in gem_setup.rb" >&2
+            exit 1
+          fi
+          if (( current_version <= base_version )); then
+            echo "::error::VENDOR_VERSION must increase when gem_setup.rb changes" >&2
+            exit 1
+          fi
 
       - name: Set up Ruby
         uses: Homebrew/actions/setup-ruby@c262868c096d909fc278daa87ed9772967331ea3 # 2026.11.02.1
