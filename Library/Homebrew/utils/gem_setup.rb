@@ -13,8 +13,11 @@ module Utils
     # Bump this when the vendored gem integrity checks change or a gem is added to or removed from
     # gitignore.
     # This triggers an integrity check the next time `brew install-bundler-gems` runs.
-    VENDOR_VERSION = 10
+    VENDOR_VERSION = 11
     private_constant :VENDOR_VERSION
+
+    JSON_NATIVE_EXTENSIONS = %w[json/ext/generator json/ext/parser].freeze
+    private_constant :JSON_NATIVE_EXTENSIONS
 
     RUBY_BUNDLE_VENDOR_DIRECTORY = (HOMEBREW_LIBRARY_PATH/"vendor/bundle/ruby").freeze
     private_constant :RUBY_BUNDLE_VENDOR_DIRECTORY
@@ -264,16 +267,25 @@ module Utils
               false
             end
 
-            native_extensions_intact = spec.extensions.empty? || (
+            native_extension_suffix = RbConfig::CONFIG.fetch("DLEXT")
+            native_extensions_intact = if spec.extensions.empty?
+              true
+            elsif spec.name == "json"
+              JSON_NATIVE_EXTENSIONS.all? do |extension|
+                spec.full_require_paths.any? do |path|
+                  File.file?(File.join(path, "#{extension}.#{native_extension_suffix}"))
+                end
+              end
+            else
               spec.full_require_paths.flat_map do |path|
-                Dir.glob(File.join(path, "**", "*.#{RbConfig::CONFIG.fetch("DLEXT")}"))
-                  .filter_map do |extension_path|
-                    next unless File.file?(extension_path)
+                Dir.glob(File.join(path, "**", "*.#{native_extension_suffix}"))
+                   .filter_map do |extension_path|
+                     next unless File.file?(extension_path)
 
-                    extension_path.delete_prefix("#{path}#{File::SEPARATOR}")
-                  end
+                     extension_path.delete_prefix("#{path}#{File::SEPARATOR}")
+                   end
               end.uniq.count >= spec.extensions.length
-            )
+            end
             next false if package_install_intact && native_extensions_intact
 
             # Mark gem for reinstallation

@@ -28,8 +28,9 @@ jobs:
           cask: false
 
       - name: Require vendor version bump when gem setup changes
+        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
         run: |
-          changed_files=$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" -- Library/Homebrew/utils/gem_setup.rb)
+          changed_files=$(git diff --name-only "origin/${GITHUB_BASE_REF}" HEAD -- Library/Homebrew/utils/gem_setup.rb)
           if [[ -z "${changed_files}" ]]; then
             exit 0
           fi
