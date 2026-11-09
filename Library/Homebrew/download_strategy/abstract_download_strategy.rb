@@ -161,22 +161,32 @@ class AbstractDownloadStrategy
     super unless quiet?
   end
 
-  sig { params(args: String, options: T.untyped).returns(SystemCommand::Result) }
-  def silent_command(*args, **options)
-    system_command(*args, print_stderr: false, env:, **options)
+  sig {
+    params(
+      executable: T.any(String, Pathname),
+      args:       T::Array[T.any(String, Integer, Float, Pathname)],
+      chdir:      T.nilable(T.any(String, Pathname)),
+    ).returns(SystemCommand::Result)
+  }
+  def silent_command(executable, args:, chdir: nil)
+    system_command(executable, args:, env:, print_stderr: false, chdir:)
   end
 
-  sig { params(args: String, options: T.untyped).returns(SystemCommand::Result) }
-  def command!(*args, **options)
-    system_command!(
-      *args,
-      env: env.merge(options.fetch(:env, {})),
-      **command_output_options,
-      **options,
-    )
+  sig {
+    params(
+      executable: T.any(String, Pathname),
+      args:       T::Array[T.any(String, Integer, Float, Pathname)],
+      env:        T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
+      input:      T.any(String, T::Array[String]),
+      chdir:      T.nilable(T.any(String, Pathname)),
+      timeout:    T.nilable(T.any(Integer, Float)),
+    ).returns(SystemCommand::Result)
+  }
+  def command!(executable, args:, env: {}, input: [], chdir: nil, timeout: nil)
+    system_command!(executable, args:, env: self.env.merge(env), input:, chdir:, timeout:, **command_output_options)
   end
 
-  sig { returns(T::Hash[Symbol, T::Boolean]) }
+  sig { returns({ print_stdout: T::Boolean, print_stderr: T::Boolean, verbose: T::Boolean }) }
   def command_output_options
     {
       print_stdout: !quiet?,

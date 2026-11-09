@@ -19,4 +19,22 @@ RSpec.describe AbstractDownloadStrategy do
       expect(strategy.source_modified_time).to eq(File.mtime("foo"))
     end
   end
+
+  describe "#command!" do
+    subject(:strategy) do
+      Class.new(described_class) do
+        T.bind(self, T.class_of(AbstractDownloadStrategy))
+        public :command!
+      end.new(url, name, version)
+    end
+
+    it "merges the caller's environment into the strategy's" do
+      allow(strategy).to receive(:env).and_return({ "STRATEGY" => "1" })
+      expect(strategy).to receive(:system_command!)
+        .with("true", hash_including(env: { "STRATEGY" => "1", "CALLER" => "1" }))
+        .and_return(instance_double(SystemCommand::Result))
+
+      strategy.command!("true", args: [], env: { "CALLER" => "1" })
+    end
+  end
 end
