@@ -269,14 +269,15 @@ module Utils
             end
 
             native_extension_suffix = RbConfig::CONFIG.fetch("DLEXT")
-            native_extensions_intact = if spec.extensions.empty?
+            runtime_files_intact = if spec.name == "json"
+              spec.full_require_paths.any? { |path| File.file?(File.join(path, "json.rb")) } &&
+                (spec.extensions.empty? || JSON_NATIVE_EXTENSIONS.all? do |extension|
+                  spec.full_require_paths.any? do |path|
+                    File.file?(File.join(path, "#{extension}.#{native_extension_suffix}"))
+                  end
+                end)
+            elsif spec.extensions.empty?
               true
-            elsif spec.name == "json"
-              JSON_NATIVE_EXTENSIONS.all? do |extension|
-                spec.full_require_paths.any? do |path|
-                  File.file?(File.join(path, "#{extension}.#{native_extension_suffix}"))
-                end
-              end
             else
               spec.full_require_paths.flat_map do |path|
                 Dir.glob(File.join(path, "**", "*.#{native_extension_suffix}"))
@@ -287,7 +288,7 @@ module Utils
                    end
               end.uniq.count >= spec.extensions.length
             end
-            next false if package_install_intact && native_extensions_intact
+            next false if package_install_intact && runtime_files_intact
 
             # Mark gem for reinstallation
             File.unlink(spec_file)

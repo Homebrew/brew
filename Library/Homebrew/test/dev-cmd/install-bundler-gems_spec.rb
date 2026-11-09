@@ -140,7 +140,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
       allow(Utils::GemSetup).to receive_messages(
         setup_gem_environment!: nil,
         valid_gem_groups:       %w[
-          extensions_in_lib missing_extension missing_cache missing_json_extension
+          extensions_in_lib missing_extension missing_cache missing_cache_json missing_json_extension
           missing_cache_intact missing_package_file
         ],
         user_gem_groups:        [],
@@ -237,6 +237,22 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
 
       with_env(HOMEBREW_TESTS: nil) do
         Utils::GemSetup.install_bundler_gems!(groups: ["missing_cache_intact"])
+      end
+    end
+
+    it "reinstalls JSON if its library file and package cache are missing" do
+      (Pathname(gem_dir)/"cache/#{full_name}.gem").unlink
+      (gem_lib_dir/"json.rb").unlink
+      %w[generator parser].each do |name|
+        extension_file = gem_lib_dir/"json/ext/#{name}.#{RbConfig::CONFIG.fetch("DLEXT")}"
+        extension_file.dirname.mkpath
+        extension_file.write("")
+      end
+
+      expect(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "install", out: :err).and_return(true)
+
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["missing_cache_json"])
       end
     end
 
