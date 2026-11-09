@@ -275,8 +275,10 @@ module Utils
               next false if package_install_intact && (
                 spec.extensions.empty? ||
                   Dir.glob(
-                    File.join(spec.extension_dir, "**", "*.#{RbConfig::CONFIG.fetch("DLEXT")}"),
-                  ).any? { |path| File.file?(path) }
+                    spec.full_require_paths.map do |path|
+                      File.join(path, "**", "*.#{RbConfig::CONFIG.fetch("DLEXT")}")
+                    end,
+                  ).uniq.count { |path| File.file?(path) } >= spec.extensions.length
               )
             end
 

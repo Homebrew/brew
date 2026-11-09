@@ -42,51 +42,147 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
     expect(Utils::GemSetup.initial_gem_install_required?(gems_vendored: true)).to be(false)
   end
 
-  it "reinstalls gems with missing native extensions" do
-    gem_dir = mktmpdir
-    full_name = "json-3.1.0"
-    version_file = Pathname(gem_dir)/".homebrew_vendor_version"
-    stub_const("Utils::GemSetup::VENDOR_VERSION_FILE", version_file)
-    allow(Gem).to receive(:dir).and_return(gem_dir)
+  describe "vendor version marker" do
+    # Keep each Sorbet signature with its let declaration.
+    # rubocop:disable RSpec/ScatteredLet
+    sig { returns(Pathname) }
+    let(:gem_dir) { mktmpdir }
+    sig { returns(Pathname) }
+    let(:version_file) { Pathname(gem_dir)/".homebrew_vendor_version" }
+    sig { returns(Bundler::Definition) }
+    let(:definition) do
+      instance_double(
+        Bundler::Definition,
+        resolve:             instance_double(Bundler::SpecSet, materialize: []),
+        locked_dependencies: [],
+      )
+    end
+    # rubocop:enable RSpec/ScatteredLet
 
-    spec_file = Pathname(gem_dir)/"specifications/#{full_name}.gemspec"
-    cache_file = Pathname(gem_dir)/"cache/#{full_name}.gem"
-    gem_file = Pathname(gem_dir)/"gems/#{full_name}/lib/json.rb"
-    [spec_file, cache_file, gem_file].each do |path|
-      path.dirname.mkpath
-      path.write("")
+    before do
+      stub_const("Utils::GemSetup::VENDOR_VERSION_FILE", version_file)
+      allow(Gem).to receive(:dir).and_return(gem_dir)
+      allow(Utils::GemSetup).to receive_messages(
+        setup_gem_environment!: nil,
+        valid_gem_groups:       %w[marker_failure marker_success],
+        user_gem_groups:        [],
+        user_vendor_version:    9,
+        bundler_definition:     definition,
+        find_in_path:           "/tmp",
+        write_user_gem_groups:  nil,
+      )
+      allow(IO).to receive(:popen).with(["/tmp/bundle", "check"], err: [:child, :out])
+                                  .and_return("Install missing gems")
+      allow(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "install", out: :err).and_return(true)
+      allow(Homebrew::Bootsnap).to receive(:reset!)
+      Kernel.system("true")
     end
 
-    spec = instance_double(
-      Gem::Specification,
-      full_name:,
-      extensions: ["ext/json/ext/generator/extconf.rb"],
-      extension_dir: (Pathname(gem_dir)/"extensions"/full_name).to_s,
-    )
-    definition = instance_double(
-      Bundler::Definition,
-      resolve:             instance_double(Bundler::SpecSet, materialize: [spec]),
-      locked_dependencies: [],
-    )
+    it "writes the vendor version after a successful install" do
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["marker_success"])
+      end
 
-    allow(Utils::GemSetup).to receive_messages(
-      setup_gem_environment!: nil,
-      valid_gem_groups:       ["tests"],
-      user_gem_groups:        [],
-      user_vendor_version:    8,
-      bundler_definition:     definition,
-      find_in_path:           "/tmp",
-      write_user_gem_groups:  nil,
-    )
-    allow(IO).to receive(:popen).with(["/tmp/bundle", "check"], err: [:child, :out]).and_return("")
-    allow(Gem::Package).to receive(:new).with(cache_file.to_s)
-                                        .and_return(instance_double(Gem::Package, contents: ["lib/json.rb"]))
-    allow(Homebrew::Bootsnap).to receive(:reset!)
-    expect(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "install", out: :err).and_return(true)
+      expect(version_file.read).to eq("10")
+    end
 
-    Kernel.system("true")
-    with_env(HOMEBREW_TESTS: nil) do
-      Utils::GemSetup.install_bundler_gems!(groups: ["tests"])
+    it "does not write the vendor version after a failed install" do
+      allow(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "install", out: :err).and_return(false)
+
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["marker_failure"], only_warn_on_failure: true)
+      end
+
+      expect(version_file.exist?).to be(false)
+    end
+  end
+
+  describe "native extension integrity" do
+    # Keep each Sorbet signature with its let declaration.
+    # rubocop:disable RSpec/ScatteredLet
+    sig { returns(Pathname) }
+    let(:gem_dir) { mktmpdir }
+    sig { returns(String) }
+    let(:full_name) { "json-3.1.0" }
+    sig { returns(Pathname) }
+    let(:extension_dir) { Pathname(gem_dir)/"extensions"/full_name }
+    sig { returns(Pathname) }
+    let(:gem_lib_dir) { Pathname(gem_dir)/"gems"/full_name/"lib" }
+    sig { returns(Pathname) }
+    let(:version_file) { Pathname(gem_dir)/".homebrew_vendor_version" }
+    sig { returns(Gem::Specification) }
+    let(:spec) do
+      instance_double(
+        Gem::Specification,
+        full_name:,
+        extensions:        ["ext/json/ext/generator/extconf.rb", "ext/json/ext/parser/extconf.rb"],
+        extension_dir:     extension_dir.to_s,
+        full_require_paths: [extension_dir.to_s, gem_lib_dir.to_s],
+      )
+    end
+    sig { returns(Bundler::Definition) }
+    let(:definition) do
+      instance_double(
+        Bundler::Definition,
+        resolve:             instance_double(Bundler::SpecSet, materialize: [spec]),
+        locked_dependencies: [],
+      )
+    end
+    # rubocop:enable RSpec/ScatteredLet
+
+    before do
+      stub_const("Utils::GemSetup::VENDOR_VERSION_FILE", version_file)
+      allow(Gem).to receive(:dir).and_return(gem_dir)
+
+      spec_file = Pathname(gem_dir)/"specifications/#{full_name}.gemspec"
+      cache_file = Pathname(gem_dir)/"cache/#{full_name}.gem"
+      gem_file = gem_lib_dir/"json.rb"
+      [spec_file, cache_file, gem_file].each do |path|
+        path.dirname.mkpath
+        path.write("")
+      end
+
+      allow(Utils::GemSetup).to receive_messages(
+        setup_gem_environment!: nil,
+        valid_gem_groups:       %w[extensions_in_lib missing_extension],
+        user_gem_groups:        [],
+        user_vendor_version:    8,
+        bundler_definition:     definition,
+        find_in_path:           "/tmp",
+        write_user_gem_groups:  nil,
+      )
+      allow(IO).to receive(:popen).with(["/tmp/bundle", "check"], err: [:child, :out]).and_return("")
+      allow(Gem::Package).to receive(:new).with(cache_file.to_s)
+                                          .and_return(instance_double(Gem::Package, contents: ["lib/json.rb"]))
+      allow(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "clean", out: :err).and_return(true)
+      allow(Homebrew::Bootsnap).to receive(:reset!)
+      Kernel.system("true")
+    end
+
+    it "reinstalls gems if any declared native extension is missing" do
+      extension_file = extension_dir/"json/ext/generator.bundle"
+      extension_file.dirname.mkpath
+      extension_file.write("")
+
+      expect(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "install", out: :err).and_return(true)
+
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["missing_extension"])
+      end
+    end
+
+    it "accepts native extensions copied into the gem's lib directory" do
+      %w[generator parser].each do |name|
+        extension_file = gem_lib_dir/"json/ext/#{name}.bundle"
+        extension_file.dirname.mkpath
+        extension_file.write("")
+      end
+
+      expect(Utils::GemSetup).not_to receive(:system).with("/tmp/bundle", "install", out: :err)
+
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["extensions_in_lib"])
+      end
     end
   end
 end
