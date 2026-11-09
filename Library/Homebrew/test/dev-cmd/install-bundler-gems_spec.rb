@@ -24,22 +24,16 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
     with_env(HOMEBREW_TESTS: nil) { Utils::GemSetup.install_bundler_gems! }
   end
 
-  it "rechecks an outdated bundle on developer startup" do
+  it "detects an outdated vendor version" do
     allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(9)
 
-    ENV["HOMEBREW_DEVELOPER"] = nil
-    ENV["HOMEBREW_DEV_CMD_RUN"] = "1"
-
-    expect(Utils::GemSetup.initial_gem_install_required?(gems_vendored: true)).to be(true)
+    expect(Utils::GemSetup.vendor_version_current?).to be(false)
   end
 
-  it "does not reinstall a vendored bundle outside developer mode" do
-    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(9)
+  it "recognises the current vendor version" do
+    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(10)
 
-    ENV["HOMEBREW_DEVELOPER"] = nil
-    ENV["HOMEBREW_DEV_CMD_RUN"] = nil
-
-    expect(Utils::GemSetup.initial_gem_install_required?(gems_vendored: true)).to be(false)
+    expect(Utils::GemSetup.vendor_version_current?).to be(true)
   end
 
   describe "vendor version marker" do

@@ -198,17 +198,6 @@ module Utils
     def self.vendor_version_current?
       user_vendor_version == VENDOR_VERSION
     end
-    private_class_method :vendor_version_current?
-
-    def self.initial_gem_install_required?(gems_vendored:)
-      return true unless gems_vendored
-
-      if !ENV.fetch("HOMEBREW_DEVELOPER", nil) && !ENV.fetch("HOMEBREW_DEV_CMD_RUN", nil)
-        return false
-      end
-
-      !vendor_version_current?
-    end
 
     def self.install_bundler_gems!(only_warn_on_failure: false, setup_path: true, groups: [])
       old_path = ENV.fetch("PATH", nil)

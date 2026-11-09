@@ -65,7 +65,9 @@ Utils::GemSetup.setup_gem_environment!(setup_path: false)
 
 # Install gems for unvendored Rubies and recheck outdated bundles in developer mode.
 if !ENV["HOMEBREW_SKIP_INITIAL_GEM_INSTALL"] &&
-   Utils::GemSetup.initial_gem_install_required?(gems_vendored:)
+   (!gems_vendored ||
+    ((ENV["HOMEBREW_DEVELOPER"] || ENV.fetch("HOMEBREW_DEV_CMD_RUN", nil)) &&
+     !Utils::GemSetup.vendor_version_current?))
   Utils::GemSetup.install_bundler_gems!(setup_path: false)
   ENV["HOMEBREW_SKIP_INITIAL_GEM_INSTALL"] = "1"
 end
