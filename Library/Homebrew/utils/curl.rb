@@ -240,31 +240,37 @@ module Utils
         print_stderr:      T.any(T::Boolean, Symbol),
         debug:             T.nilable(T::Boolean),
         verbose:           T.nilable(T::Boolean),
-        env:               T::Hash[String, String],
         timeout:           T.nilable(T.any(Integer, Float)),
         use_homebrew_curl: T::Boolean,
-        options:           T.untyped,
+        connect_timeout:   T.nilable(T.any(Integer, Float)),
+        max_time:          T.nilable(T.any(Integer, Float)),
+        retries:           T.nilable(Integer),
+        retry_max_time:    T.nilable(T.any(Integer, Float)),
+        show_output:       T.nilable(T::Boolean),
+        show_error:        T.nilable(T::Boolean),
+        cookies:           T.nilable(T::Hash[String, String]),
+        header:            T.nilable(T.any(String, T::Array[String])),
+        referer:           T.nilable(String),
+        user_agent:        T.nilable(T.any(String, Symbol)),
       ).returns(SystemCommand::Result)
     }
     def curl_with_workarounds(
       *args,
-      secrets: [], print_stdout: false, print_stderr: false, debug: nil,
-      verbose: nil, env: {}, timeout: nil, use_homebrew_curl: false, **options
+      secrets: [], print_stdout: false, print_stderr: false, debug: nil, verbose: nil, timeout: nil,
+      use_homebrew_curl: false, connect_timeout: nil, max_time: nil, retries: Homebrew::EnvConfig.curl_retries.to_i,
+      retry_max_time: nil, show_output: false, show_error: true, cookies: nil, header: nil, referer: nil,
+      user_agent: nil
     )
       args = no_insecure_redirect_curl_args(args)
       end_time = Time.now + timeout if timeout
 
-      command_options = {
-        secrets:,
-        print_stdout:,
-        print_stderr:,
-        debug:,
-        verbose:,
-      }.compact
-
       input = +""
       # Keep header input in sync with setup_curl_header in utils/curl.sh.
-      command_args = curl_args(*args, **options).each_with_object([]) do |arg, filtered_args|
+      command_args = curl_args(
+        *args,
+        connect_timeout:, max_time:, retries:, retry_max_time:, show_output:, show_error:, cookies:, header:,
+        referer:, user_agent:
+      ).each_with_object([]) do |arg, filtered_args|
         if filtered_args.last == "--header" && arg.match?(/\AAuthorization:/i)
           # odeprecated "Remove this version check and the older-curl branches when the minimum curl is 7.55."
           header_input_supported =
@@ -280,11 +286,14 @@ module Utils
       command_args += ["--header", "@-"] unless input.empty?
 
       result = system_command curl_executable(use_homebrew_curl:),
-                              args:    command_args,
+                              args:         command_args,
                               input:,
-                              env:,
-                              timeout: Utils::Timer.remaining(end_time),
-                              **command_options
+                              print_stdout:,
+                              print_stderr:,
+                              debug:,
+                              verbose:,
+                              secrets:,
+                              timeout:      Utils::Timer.remaining(end_time)
 
       return result if result.success? || args.include?("--http1.1")
 
@@ -294,7 +303,9 @@ module Utils
       if result.exit_status == 16
         return curl_with_workarounds(
           *args, "--http1.1",
-          timeout: Utils::Timer.remaining(end_time), use_homebrew_curl:, **command_options, **options
+          secrets:, print_stdout:, print_stderr:, debug:, verbose:, timeout: Utils::Timer.remaining(end_time),
+          use_homebrew_curl:, connect_timeout:, max_time:, retries:, retry_max_time:, show_output:, show_error:,
+          cookies:, header:, referer:, user_agent:
         )
       end
 
@@ -311,7 +322,9 @@ module Utils
 
         return curl_with_workarounds(
           *args, "--http1.1",
-          timeout: Utils::Timer.remaining!(end_time), use_homebrew_curl:, **command_options, **options
+          secrets:, print_stdout:, print_stderr:, debug:, verbose:, timeout: Utils::Timer.remaining!(end_time),
+          use_homebrew_curl:, connect_timeout:, max_time:, retries:, retry_max_time:, show_output:, show_error:,
+          cookies:, header:, referer:, user_agent:
         )
       end
 
