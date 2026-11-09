@@ -160,7 +160,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
     end
 
     it "reinstalls gems if any declared native extension is missing" do
-      extension_file = extension_dir/"json/ext/generator.bundle"
+      extension_file = extension_dir/"json/ext/generator.#{RbConfig::CONFIG.fetch("DLEXT")}"
       extension_file.dirname.mkpath
       extension_file.write("")
 
@@ -173,7 +173,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
 
     it "accepts native extensions copied into the gem's lib directory" do
       %w[generator parser].each do |name|
-        extension_file = gem_lib_dir/"json/ext/#{name}.bundle"
+        extension_file = gem_lib_dir/"json/ext/#{name}.#{RbConfig::CONFIG.fetch("DLEXT")}"
         extension_file.dirname.mkpath
         extension_file.write("")
       end
