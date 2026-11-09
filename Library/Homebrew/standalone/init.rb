@@ -63,8 +63,9 @@ HOMEBREW_BUNDLER_VERSION = ENV.fetch("HOMEBREW_BUNDLER_VERSION").freeze
 require_relative "../utils/gem_setup"
 Utils::GemSetup.setup_gem_environment!(setup_path: false)
 
-# Install gems for Rubies we don't vendor for.
-if !gems_vendored && !ENV["HOMEBREW_SKIP_INITIAL_GEM_INSTALL"]
+# Install gems for unvendored Rubies and recheck outdated bundles in developer mode.
+if !ENV["HOMEBREW_SKIP_INITIAL_GEM_INSTALL"] &&
+   Utils::GemSetup.initial_gem_install_required?(gems_vendored:)
   Utils::GemSetup.install_bundler_gems!(setup_path: false)
   ENV["HOMEBREW_SKIP_INITIAL_GEM_INSTALL"] = "1"
 end

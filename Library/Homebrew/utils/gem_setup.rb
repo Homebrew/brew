@@ -10,9 +10,10 @@ Homebrew::FastBootRequire.from_rubylibdir("English")
 module Utils
   # Helpers for loading and maintaining Homebrew's vendored gems.
   module GemSetup
-    # Bump this whenever a committed vendored gem is later added to or exclusion removed from gitignore.
-    # This will trigger it to reinstall properly if `brew install-bundler-gems` needs it.
-    VENDOR_VERSION = 9
+    # Bump this when the vendored gem integrity checks change or a gem is added to or removed from
+    # gitignore.
+    # This triggers an integrity check the next time `brew install-bundler-gems` runs.
+    VENDOR_VERSION = 10
     private_constant :VENDOR_VERSION
 
     RUBY_BUNDLE_VENDOR_DIRECTORY = (HOMEBREW_LIBRARY_PATH/"vendor/bundle/ruby").freeze
@@ -194,6 +195,21 @@ module Utils
     end
     private_class_method :user_vendor_version
 
+    def self.vendor_version_current?
+      user_vendor_version == VENDOR_VERSION
+    end
+    private_class_method :vendor_version_current?
+
+    def self.initial_gem_install_required?(gems_vendored:)
+      return true unless gems_vendored
+
+      if !ENV.fetch("HOMEBREW_DEVELOPER", nil) && !ENV.fetch("HOMEBREW_DEV_CMD_RUN", nil)
+        return false
+      end
+
+      !vendor_version_current?
+    end
+
     def self.install_bundler_gems!(only_warn_on_failure: false, setup_path: true, groups: [])
       old_path = ENV.fetch("PATH", nil)
       old_gem_path = ENV.fetch("GEM_PATH", nil)
@@ -229,8 +245,9 @@ module Utils
         # for some reason sometimes the exit code lies so check the output too.
         bundle_install_required = bundle_check_failed || bundle_check_output.include?("Install missing gems")
 
-        if user_vendor_version != VENDOR_VERSION
-          # Check if the install is intact. This is useful if any gems are added to gitignore.
+        update_vendor_version = !vendor_version_current?
+        if update_vendor_version
+          # Check installed gem files and native extensions for integrity.
           # We intentionally map over everything and then call `any?` so that we remove the spec of each bad gem.
           specs = bundler_definition.resolve.materialize(bundler_definition.locked_dependencies)
           vendor_reinstall_required = specs.map do |spec|
@@ -255,16 +272,18 @@ module Utils
                 false
               end
 
-              next false if package_install_intact
+              next false if package_install_intact && (
+                spec.extensions.empty? ||
+                  Dir.glob(
+                    File.join(spec.extension_dir, "**", "*.#{RbConfig::CONFIG.fetch("DLEXT")}"),
+                  ).any? { |path| File.file?(path) }
+              )
             end
 
             # Mark gem for reinstallation
             File.unlink(spec_file)
             true
           end.any?
-
-          VENDOR_VERSION_FILE.dirname.mkpath
-          VENDOR_VERSION_FILE.write(VENDOR_VERSION.to_s)
 
           bundle_install_required ||= vendor_reinstall_required
         end
@@ -298,6 +317,11 @@ module Utils
         end
 
         if bundle_installed
+          if update_vendor_version
+            VENDOR_VERSION_FILE.dirname.mkpath
+            VENDOR_VERSION_FILE.write(VENDOR_VERSION.to_s)
+          end
+
           # `bundle clean` can remove load paths just as `bundle install` can add them.
           Homebrew::Bootsnap.reset! if defined?(Homebrew::Bootsnap) # Gem setup can run before Bootsnap loads
           write_user_gem_groups(groups)
