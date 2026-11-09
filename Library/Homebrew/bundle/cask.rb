@@ -49,7 +49,11 @@ module Homebrew
           "Upgrading"
         end
 
-        sig { override.params(name: String, no_upgrade: T::Boolean, verbose: T::Boolean, options: T.untyped).returns(T::Boolean) }
+        sig {
+          override
+            .params(name: String, no_upgrade: T::Boolean, verbose: T::Boolean, options: Homebrew::Bundle::EntryOption)
+            .returns(T::Boolean)
+        }
         def preinstall!(name, no_upgrade: false, verbose: false, **options)
           return true if cask_tap_changed?(name, options)
 
@@ -65,7 +69,7 @@ module Homebrew
 
         sig {
           override.params(name: String, preinstall: T::Boolean, no_upgrade: T::Boolean, verbose: T::Boolean,
-                          force: T::Boolean, options: T.untyped).returns(T::Boolean)
+                          force: T::Boolean, options: Homebrew::Bundle::EntryOption).returns(T::Boolean)
         }
         def install!(name, preinstall: true, no_upgrade: false, verbose: false, force: false, **options)
           return true unless preinstall
@@ -90,7 +94,8 @@ module Homebrew
             puts "Upgrading #{name} cask. It is installed but #{status}." if verbose
             Bundle.brew("upgrade", "--cask", full_name, verbose:)
           else
-            args = options.fetch(:args, []).filter_map do |k, v|
+            cask_args = options.fetch(:args, {})
+            args = (cask_args.is_a?(Hash) ? cask_args : {}).filter_map do |k, v|
               case v
               when TrueClass
                 "--#{k}"
@@ -135,7 +140,9 @@ module Homebrew
           result
         end
 
-        sig { params(name: String, no_upgrade: T::Boolean, options: T.untyped).returns(T::Boolean) }
+        sig {
+          params(name: String, no_upgrade: T::Boolean, options: Homebrew::Bundle::EntryOption).returns(T::Boolean)
+        }
         def installable_or_upgradable?(name, no_upgrade: false, **options)
           !cask_installed?(name) || upgrading?(no_upgrade, name, options)
         end

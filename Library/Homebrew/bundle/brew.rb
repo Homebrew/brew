@@ -49,14 +49,18 @@ module Homebrew
         }
         attr_writer :formulae_by_name
 
-        sig { override.params(name: String, no_upgrade: T::Boolean, verbose: T::Boolean, options: T.untyped).returns(T::Boolean) }
+        sig {
+          override
+            .params(name: String, no_upgrade: T::Boolean, verbose: T::Boolean, options: Homebrew::Bundle::EntryOption)
+            .returns(T::Boolean)
+        }
         def preinstall!(name, no_upgrade: false, verbose: false, **options)
           new(name, options).preinstall!(no_upgrade:, verbose:)
         end
 
         sig {
           override.params(name: String, preinstall: T::Boolean, no_upgrade: T::Boolean, verbose: T::Boolean,
-                          force: T::Boolean, options: T.untyped).returns(T::Boolean)
+                          force: T::Boolean, options: Homebrew::Bundle::EntryOption).returns(T::Boolean)
         }
         def install!(name, preinstall: true, no_upgrade: false, verbose: false, force: false, **options)
           new(name, options).install!(preinstall:, no_upgrade:, verbose:, force:)
