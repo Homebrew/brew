@@ -2,7 +2,8 @@
 
 Most importantly, run `./bin/brew lgtm` (style checks, type checks and tests) to verify any file edits before prompting for input.
 
-Inline any new or existing methods or variables used only once unless they are needed for unit tests or explain magic numbers.
+Inline methods with a single caller and variables used only once, except where
+a one-off helper is needed for unit tests or a variable explains a magic number.
 Keep the diff as small, DRY and YAGNI as possible.
 Re-read relevant files after each prompt and preserve user edits and comments.
 Before finishing, check your work and point out anything the user may not have considered.
