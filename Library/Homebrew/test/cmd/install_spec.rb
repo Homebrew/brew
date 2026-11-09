@@ -491,6 +491,32 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     expect { cmd.run }.to output(/local-caffeine: uh-oh/).to_stderr
   end
 
+  it "reports a failed cask prefetch only once", :cask do
+    cmd = described_class.new(["--yes", "--cask", "local-caffeine"])
+    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+    installer = instance_double(Cask::Installer, cask:, enqueue_downloads: nil)
+    error = Cask::CaskError.new("local-caffeine: This cask does not run on macOS versions older than Tahoe.")
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false).and_return([cask])
+    allow(Cask::Upgrade).to receive(:outdated_casks).and_return([])
+    allow(Cask::Installer).to receive(:new).and_return(installer)
+    allow(installer).to receive(:enqueue_downloads).and_raise(error)
+    allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Upgrade).to receive_messages(dependants:, upgrade_dependents: [])
+    allow(Homebrew::Cleanup).to receive(:periodic_clean!)
+    allow(Homebrew.messages).to receive(:display_messages)
+
+    expect { cmd.run }.to output(<<~EOS).to_stderr
+      Error: local-caffeine: This cask does not run on macOS versions older than Tahoe.
+    EOS
+  end
+
   it "cleans an installed cask before displaying deferred caveats", :cask do
     cmd = described_class.new(["--yes", "local-caffeine"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])

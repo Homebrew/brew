@@ -280,13 +280,21 @@ module Homebrew
 
       # Leave the cask downloads queued so the caller fetches them alongside
       # any formula bottles under one heading instead of draining them first.
-      sig { params(cask_installers: T::Array[Cask::Installer]).returns(T::Array[Cask::Installer]) }
-      def enqueue_cask_installers(cask_installers)
+      sig {
+        params(
+          cask_installers: T::Array[Cask::Installer],
+          failed_casks:    T::Array[Cask::Cask],
+        ).returns(T::Array[Cask::Installer])
+      }
+      def enqueue_cask_installers(cask_installers, failed_casks: [])
         cask_installers.select do |cask_installer|
           cask_installer.enqueue_downloads
           true
         rescue => e
-          ofail "#{cask_installer.cask}: #{e}"
+          failed_casks << cask_installer.cask if e.is_a?(Cask::CaskError)
+          ofail(
+            e.message.start_with?("#{cask_installer.cask}: ") ? e : "#{cask_installer.cask}: #{e}",
+          )
           false
         end
       end
