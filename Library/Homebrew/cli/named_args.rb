@@ -352,7 +352,7 @@ module Homebrew
           formula_or_kegs = if only != :cask
             begin
               case method
-              when nil, :factory, :bottle
+              when nil, :factory, :bottle, :resolve_cask
                 Formulary.factory(name, *@override_spec, warn:, force_bottle: @force_bottle, flags: @flags)
               when :resolve
                 resolve_formula(name)
@@ -393,13 +393,13 @@ module Homebrew
             cask = begin
               config = Cask::Config.from_args(@parent) if @cask_options
               untrusted_installed_cask = (load_untrusted_installed_cask(name, config:) if want_keg_like_cask)
-              candidate_cask = untrusted_installed_cask || Cask::CaskLoader.load(name, config:, warn:)
-              skip_installed_caskfile_load = if untrusted_installed_cask
-                !untrusted_installed_cask.loaded_from_api?
+              candidate_cask = if untrusted_installed_cask
+                untrusted_installed_cask
+              elsif want_keg_like_cask || [:resolve, :resolve_cask].include?(method)
+                Cask::CaskLoader.load_prefer_installed(name, config:, warn:)
               else
-                false
+                Cask::CaskLoader.load(name, config:, warn:)
               end
-
               if unreadable_error
                 onoe <<~EOS
                   Failed to load formula: #{name}
@@ -410,7 +410,7 @@ module Homebrew
 
               # If we're trying to get a keg-like Cask, do our best to use the same cask
               # file that was used for installation, if possible.
-              if want_keg_like_cask && !skip_installed_caskfile_load &&
+              if want_keg_like_cask && !untrusted_installed_cask &&
                  (installed_caskfile = candidate_cask.installed_caskfile) &&
                  installed_caskfile.exist?
                 cask = Cask::CaskLoader.load_from_installed_caskfile(installed_caskfile)
@@ -505,8 +505,7 @@ module Homebrew
         return if Homebrew::Trust.trusted?(:cask, "#{installed_tap.name}/#{token}")
 
         if installed_caskfile.extname == ".json"
-          return Cask::CaskLoader.load_from_installed_caskfile(installed_caskfile,
-                                                               config:)
+          return Cask::CaskLoader.load_from_installed_caskfile(installed_caskfile, config:, api_fallback: false)
         end
 
         return unless (cask_version = Cask::Caskroom.cask_installed_version(token))

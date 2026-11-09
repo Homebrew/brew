@@ -46,13 +46,12 @@ RSpec.describe Cask::CaskLoader, :cask do
           .to output(/old-transmission was renamed to local-transmission/).to_stderr
       end
 
-      it "preserves installed metadata fallback for a removed cask" do
+      it "requires explicit installed metadata loading for a removed cask" do
         path = Cask::Caskroom.path/"removed-cask/.metadata/1.0/20250101000000.000/Casks/removed-cask.rb"
         path.dirname.mkpath
         path.write 'cask "removed-cask" do version "1.0" end'
 
-        expect(described_class.load_from_name("removed-cask"))
-          .to have_attributes(token: "removed-cask", version: "1.0", loaded_from_metadata?: true)
+        expect { described_class.load_from_name("removed-cask") }.to raise_error(Cask::CaskUnavailableError)
       end
     end
 

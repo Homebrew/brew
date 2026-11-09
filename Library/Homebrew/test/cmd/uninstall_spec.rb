@@ -7,7 +7,7 @@ require "cmd/shared_examples/args_parse"
 RSpec.describe Homebrew::Cmd::UninstallCmd do
   it_behaves_like "parseable arguments"
 
-  it "uninstalls a given Formula and Cask path", :cask, :integration_test do
+  it "uninstalls a formula and zaps a cask whose tap source was removed", :cask, :integration_test do
     tap = CoreCaskTap.instance
     cask_file = tap.cask_dir/"l/local-caffeine.rb"
     cask_file.dirname.mkpath
@@ -16,6 +16,9 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
     cask = Cask::CaskLoader.from_path(cask_file)
     InstallHelper.stub_cask_installation(cask)
     appdir = Pathname(cask.config.appdir)
+    cask_file.unlink
+    (tap.cask_dir/"local-caffeine.rb").unlink
+    tap.clear_cache
 
     setup_test_formula "testball", tab_attributes: { installed_on_request: true }
 
@@ -30,10 +33,10 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       ENV["HOMEBREW_FORBID_PACKAGES_FROM_PATHS"] = "1"
       ENV["HOMEBREW_NO_INSTALL_FROM_API"] = nil
       expect do
-        brew "uninstall", "--cask", "local-caffeine",
+        brew "uninstall", "--zap", "--cask", "local-caffeine",
              "HOMEBREW_CASK_OPTS" => "--appdir=#{appdir}"
       end
-        .to output(/Uninstalling Cask local-caffeine/).to_stdout
+        .to output(/Zapping Cask local-caffeine/).to_stdout
         .and not_to_output.to_stderr
         .and be_a_success
     end

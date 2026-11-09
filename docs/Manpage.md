@@ -4855,10 +4855,9 @@ For MDM configuration, package restrictions and policy ownership, see:
 
 `HOMEBREW_FORBID_PACKAGES_FROM_PATHS`
 
-: If set, Homebrew will refuse to read formulae or casks provided from file
-  paths, e.g. `brew install ./package.rb`.
+: No-op. Loading formulae and casks from paths is always disabled.
   
-  *Default:* true unless `$HOMEBREW_DEVELOPER` is set.
+  *Default:* `true`.
 
 `HOMEBREW_FORCE_API_AUTO_UPDATE`
 

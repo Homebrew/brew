@@ -75,7 +75,6 @@ HOMEBREW_SYSTEM_ENV_TAKES_PRIORITY=1
 HOMEBREW_FORBIDDEN_FORMULAE=telnet
 HOMEBREW_FORBIDDEN_CASKS=transmission
 HOMEBREW_FORBIDDEN_TAPS=example/unreviewed
-HOMEBREW_FORBID_PACKAGES_FROM_PATHS=1
 HOMEBREW_FORBIDDEN_OWNER=IT support
 HOMEBREW_FORBIDDEN_OWNER_CONTACT=https://support.example.com/homebrew
 ```
@@ -92,10 +91,24 @@ Space-separated lists replace earlier values rather than automatically merging a
 | Block named command-line tools   | `HOMEBREW_FORBIDDEN_FORMULAE`              | Includes formula dependencies; does not remove existing installations |
 | Block named applications         | `HOMEBREW_FORBIDDEN_CASKS`                 | Includes cask dependencies; does not block a direct vendor download   |
 | Block a package source           | `HOMEBREW_FORBIDDEN_TAPS`                  | Use the remote URL when a tap uses a custom remote                    |
-| Refuse local package definitions | `HOMEBREW_FORBID_PACKAGES_FROM_PATHS`      | Refuses formula and cask file paths in Homebrew                       |
+| Refuse local package definitions | Always enabled                             | Formula and cask arguments must be names, including in developer mode |
 | Restrict formula licences        | `HOMEBREW_FORBIDDEN_LICENSES`              | Uses declared SPDX metadata, including formula dependencies           |
 | Explain policy failures          | `HOMEBREW_FORBIDDEN_OWNER` and its contact | Directs users to the team that owns the restriction                   |
 | Control third-party Ruby loading | `brew trust` and `brew untrust`            | Trust is explicit but can be changed by the managing account          |
+
+Formula and cask file paths and URLs are not accepted as package arguments, including for developers.
+Use a tap and refer to packages by name.
+`HOMEBREW_FORBID_PACKAGES_FROM_PATHS` has no effect.
+Explicit local bottle installation and internal loading of verified API source, installed metadata and registered tap files for auditing remain supported through explicit internal APIs.
+Ordinary name lookup does not evaluate supplied Ruby content or fall back to installed Ruby files.
+Commands that inspect or manage installed casks can still use their recorded metadata when the definition is no longer available.
+Unsupported package references warn that a package name is required.
+Old loader names emit deprecation notices.
+Suppressing these notices does not re-enable implicit source loading.
+
+Homebrew's internal callers use `Formulary.from_path`, `Formulary.from_bottle`, `Formulary.from_contents` and the corresponding `CaskLoader.from_path` and `CaskLoader.from_content` APIs.
+Formulae should use `Formula[]` for name lookup; internal source-loading APIs are not supported in formula or cask definitions.
+These API distinctions do not sandbox Ruby: code already executing in the Homebrew process can call Ruby's `load` and `eval`.
 
 Inspect effective settings as the Homebrew owner:
 
