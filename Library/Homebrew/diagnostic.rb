@@ -1907,7 +1907,8 @@ module Homebrew
           .returns(String)
       }
       def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
-        upgradeable_dependents = T.let({}, T::Hash[String, T::Array[String]])
+        upgradeable_dependents = T.let([], T::Array[String])
+        pinned_dependents = T.let([], T::Array[String])
 
         installed_formulae.each do |dependent|
           installed_dependency_names = dependent.runtime_dependencies.filter_map do |dependency|
@@ -1924,26 +1925,16 @@ module Homebrew
 
           next if dependencies_to_drop.empty? || !dependent.outdated?
 
-          dependencies_to_drop.each do |name|
-            if (dependents = upgradeable_dependents[name])
-              dependents << dependent.full_name
-            else
-              upgradeable_dependents[name] = [dependent.full_name]
-            end
-          end
+          destination = dependent.pinned? ? pinned_dependents : upgradeable_dependents
+          destination << dependent.full_name
         end
 
         guidance = []
-        if upgradeable_dependents.present?
-          guidance << [
-            <<~EOS.rstrip,
-              Upgrading the outdated dependents with `brew upgrade` will stop
-              requiring the formulae:
-            EOS
-            upgradeable_dependents.sort_by(&:first).map do |formula, dependents|
-              "#{formula}: #{dependents.uniq.sort.join(", ")}"
-            end.join("\n"),
-          ].join("\n\n")
+        if upgradeable_dependents.present? || pinned_dependents.present?
+          commands = []
+          commands << "brew unpin #{pinned_dependents.uniq.sort.join(" ")}" if pinned_dependents.present?
+          commands << "brew upgrade #{(upgradeable_dependents + pinned_dependents).uniq.sort.join(" ")}"
+          guidance << "Run:\n#{commands.map { |command| "  #{command}" }.join("\n")}"
         end
 
         guidance.join("\n\n")

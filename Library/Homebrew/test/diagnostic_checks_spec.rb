@@ -341,8 +341,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
       expect(checks.check_deprecated_disabled&.to_s).to include(
         "The following formulae are installed as dependencies:\n\n  testball",
-        "Upgrading the outdated dependents with `brew upgrade` will stop\n" \
-        "requiring the formulae:\n\ntestball: dependent",
+        "Run:\n  brew upgrade dependent",
       )
     end
 
@@ -440,7 +439,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     EOS
   end
 
-  it "lists pinned dependents alongside upgradeable dependents" do
+  it "provides commands to upgrade dependents of a deleted formula" do
     tap = CoreTap.instance
     tab = instance_double(Tab, tap:, installed_on_request_present?: true, installed_on_request: false)
     keg = instance_double(Keg, name: "deleted-dep", deleted_formula?: true,
@@ -467,10 +466,9 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       Deleted from homebrew/core:
         deleted-dep
 
-      Upgrading the outdated dependents with `brew upgrade` will stop
-      requiring the formulae:
-
-      deleted-dep: dependent-one, dependent-two, pinned-dependent
+      Run:
+        brew unpin pinned-dependent
+        brew upgrade dependent-one dependent-two pinned-dependent
     EOS
   end
 
