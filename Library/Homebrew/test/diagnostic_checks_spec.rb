@@ -327,6 +327,25 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       expect(checks.check_deprecated_disabled&.to_s).to match("following formulae:\n\n  testball")
     end
 
+    it "explains when upgrading an outdated dependent releases a deprecated formula" do
+      tab = instance_double(Tab, installed_on_request_present?: true, installed_on_request: false)
+      keg = instance_double(Keg, tab:)
+      deprecated = instance_double(Formula, deprecated?: true, disabled?: false, name: "testball",
+                                            full_name: "testball", possible_names: ["testball"],
+                                            installed_kegs: [], any_installed_keg: keg, runtime_dependencies: [])
+      dependency = instance_double(Dependency, name: "testball")
+      dependent = instance_double(Formula, deprecated?: false, disabled?: false, runtime_dependencies: [dependency],
+                                           full_name: "dependent", pinned?: false, outdated?: true)
+      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
+      allow(Formula).to receive(:installed).and_return([deprecated, dependent])
+
+      expect(checks.check_deprecated_disabled&.to_s).to include(
+        "The following formulae are installed as dependencies:\n\n  testball",
+        "To stop the listed dependents from requiring the formulae above, run:\n  " \
+        "brew upgrade dependent",
+      )
+    end
+
     it "skips a formula removed from its tap whose keg kept a deprecated copy" do
       keg_path = HOMEBREW_CELLAR/"testball/1.0"
       (keg_path/".brew").mkpath
@@ -390,7 +409,8 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       ["openssl@1.1", "1.1.1t", CoreTap.instance],
     ].map do |name, version, tap|
       instance_double(Keg, name:, deleted_formula?: true, scheme_and_version: [0, PkgVersion.parse(version)],
-                           tab: instance_double(Tab, tap:))
+                           tab: instance_double(Tab, tap:, installed_on_request_present?: false,
+                                                        installed_on_request: false))
     end
     allow(Keg).to receive(:all).and_return([*deleted_kegs, instance_double(Keg, deleted_formula?: false)])
 
@@ -417,6 +437,39 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
       No tap recorded (possibly installed manually):
         hand-made
+    EOS
+  end
+
+  it "provides commands to upgrade dependents of a deleted formula" do
+    tap = CoreTap.instance
+    tab = instance_double(Tab, tap:, installed_on_request_present?: true, installed_on_request: false)
+    keg = instance_double(Keg, name: "deleted-dep", deleted_formula?: true,
+                               scheme_and_version: [0, PkgVersion.parse("1.0")], tab:)
+    dependency = instance_double(Dependency, name: "deleted-dep")
+    dependents = {
+      "dependent-one"    => false,
+      "dependent-two"    => false,
+      "pinned-dependent" => true,
+    }.map do |name, pinned|
+      dependent = instance_double(Formula, full_name: name, pinned?: pinned, outdated?: true,
+                                           runtime_dependencies: [dependency])
+      allow(dependent).to receive(:runtime_dependencies).with(read_from_tab: false, undeclared: false).and_return([])
+      dependent
+    end
+    allow(Keg).to receive(:all).and_return([keg])
+    allow(Formula).to receive(:installed).and_return(dependents)
+
+    expect(checks.check_deleted_formula&.to_s).to eq <<~EOS.rstrip
+      Some installed kegs have no formulae!
+
+      The following formulae are installed as dependencies:
+
+      Deleted from homebrew/core:
+        deleted-dep
+
+      To stop the listed dependents from requiring the formulae above, run:
+        brew unpin pinned-dependent
+        brew upgrade dependent-one dependent-two pinned-dependent
     EOS
   end
 

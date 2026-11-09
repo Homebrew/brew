@@ -1223,19 +1223,42 @@ module Homebrew
       def check_deprecated_disabled
         return unless HOMEBREW_CELLAR.exist?
 
-        deprecated_or_disabled = Formula.installed.select do |f|
+        installed_formulae = Formula.installed
+        deprecated_or_disabled = installed_formulae.select do |f|
           (f.deprecated? || f.disabled?) &&
             f.installed_kegs.none? { |keg| keg.name == f.name && keg.deleted_formula? }
         end
         return if deprecated_or_disabled.empty?
 
-        Finding.new(
-          "Some installed formulae are deprecated or disabled.",
-          affects:     deprecated_or_disabled.map(&:full_name),
-          remediation: append_indented_list(deprecated_or_disabled.sort_by(&:full_name).uniq, <<~EOS),
+        installed_dependency_names = installed_formula_dependency_names(installed_formulae)
+        dependency_formulae, replacement_formulae = deprecated_or_disabled.partition do |formula|
+          tab = formula.any_installed_keg&.tab
+          tab && installed_as_dependency?(tab) &&
+            installed_dependency_names.intersect?(formula.possible_names)
+        end
+
+        remediation = []
+        if replacement_formulae.present?
+          remediation << append_indented_list(replacement_formulae.sort_by(&:full_name).uniq, <<~EOS)
             You should find replacements for the following formulae:
 
           EOS
+        end
+        if dependency_formulae.present?
+          dependency_names = dependency_formulae.each_with_object({}) do |formula, names|
+            formula.possible_names.each { |name| names[name] = formula.full_name }
+          end
+          remediation << append_indented_list(dependency_formulae.map(&:full_name).sort.uniq, <<~EOS)
+            The following formulae are installed as dependencies:
+
+          EOS
+          remediation << formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
+        end
+
+        Finding.new(
+          "Some installed formulae are deprecated or disabled.",
+          affects:     deprecated_or_disabled.map(&:full_name),
+          remediation: remediation.join("\n"),
         )
       end
 
@@ -1474,7 +1497,13 @@ module Homebrew
 
         kegs_by_tap = deleted_kegs.group_by { |keg| keg.tab.tap }
         official_taps, other_taps = kegs_by_tap.keys.sort_by(&:to_s).partition { |tap| tap&.official? }
-        groups_by_type = { deleted: [], untapped: [], no_tap: [] }
+        potential_dependency_kegs = deleted_kegs.select { |keg| installed_as_dependency?(keg.tab) }
+        installed_formulae = Formula.installed if potential_dependency_kegs.present?
+        installed_dependency_names = installed_formula_dependency_names(installed_formulae || [])
+        dependency_keg_names = potential_dependency_kegs.map(&:name) & installed_dependency_names.to_a
+        dependency_kegs, direct_kegs = deleted_kegs.partition { |keg| dependency_keg_names.include?(keg.name) }
+        direct_groups_by_type = { deleted: [], untapped: [], no_tap: [] }
+        dependency_groups_by_type = { deleted: [], untapped: [], no_tap: [] }
         (official_taps + other_taps).each do |tap|
           type, header = if tap.nil?
             [:no_tap, "No tap recorded (possibly installed manually):\n"]
@@ -1484,16 +1513,42 @@ module Homebrew
           else
             [:untapped, "From untapped #{tap}:\n"]
           end
-          groups_by_type.fetch(type) << append_indented_list(kegs_by_tap.fetch(tap).map(&:name).sort, header)
+
+          direct, dependencies = kegs_by_tap.fetch(tap).partition do |keg|
+            direct_kegs.include?(keg)
+          end
+          if direct.present?
+            direct_groups_by_type.fetch(type) << append_indented_list(direct.map(&:name).sort,
+                                                                      header)
+          end
+          if dependencies.present?
+            dependency_groups_by_type.fetch(type) << append_indented_list(dependencies.map(&:name).sort,
+                                                                          header)
+          end
+        end
+
+        text = +"Some installed kegs have no formulae!\n"
+        remediation = []
+        if direct_kegs.present?
+          text << "You should find replacements for the following formulae.\n"
+          remediation << direct_groups_by_type.values.flatten.join("\n").strip
+        end
+        if dependency_kegs.present?
+          dependency_names = dependency_kegs.to_h { |keg| [keg.name, keg.name] }
+          remediation << [
+            "The following formulae are installed as dependencies:",
+            dependency_groups_by_type.values.flatten.join("\n").strip,
+            formula_dependency_upgrade_guidance(
+              dependency_names,
+              installed_formulae: installed_formulae || [],
+            ),
+          ].compact_blank.join("\n\n")
         end
 
         Finding.new(
-          <<~EOS,
-            Some installed kegs have no formulae!
-            You should find replacements for the following formulae.
-          EOS
+          text,
           affects:     deleted_kegs.map(&:name).sort,
-          remediation: groups_by_type.values.flatten.join("\n"),
+          remediation: remediation.compact_blank.join("\n\n"),
         )
       end
 
@@ -1834,6 +1889,59 @@ module Homebrew
       end
 
       private
+
+      sig { params(tab: AbstractTab).returns(T::Boolean) }
+      def installed_as_dependency?(tab)
+        tab.installed_on_request_present? && !tab.installed_on_request
+      end
+
+      sig { params(formulae: T::Array[Formula]).returns(T::Set[String]) }
+      def installed_formula_dependency_names(formulae)
+        formulae.flat_map do |formula|
+          formula.runtime_dependencies.map { |dependency| Utils.name_from_full_name(dependency.name) }
+        end.to_set
+      end
+
+      sig {
+        params(dependency_names: T::Hash[String, String], installed_formulae: T::Array[Formula])
+          .returns(String)
+      }
+      def formula_dependency_upgrade_guidance(dependency_names, installed_formulae:)
+        upgradeable_dependents = T.let([], T::Array[String])
+        pinned_dependents = T.let([], T::Array[String])
+
+        installed_formulae.each do |dependent|
+          installed_dependency_names = dependent.runtime_dependencies.filter_map do |dependency|
+            dependency_names[Utils.name_from_full_name(dependency.name)]
+          end.uniq
+          next if installed_dependency_names.empty?
+
+          current_dependency_names = dependent.runtime_dependencies(read_from_tab: false, undeclared: false)
+                                              .filter_map do |dependency|
+            dependency_names[Utils.name_from_full_name(dependency.name)]
+          end
+          dependencies_still_required = installed_dependency_names & current_dependency_names
+          dependencies_to_drop = installed_dependency_names - dependencies_still_required
+
+          next if dependencies_to_drop.empty? || !dependent.outdated?
+
+          destination = dependent.pinned? ? pinned_dependents : upgradeable_dependents
+          destination << dependent.full_name
+        end
+
+        guidance = []
+        if upgradeable_dependents.present? || pinned_dependents.present?
+          commands = []
+          commands << "brew unpin #{pinned_dependents.uniq.sort.join(" ")}" if pinned_dependents.present?
+          commands << "brew upgrade #{(upgradeable_dependents + pinned_dependents).uniq.sort.join(" ")}"
+          guidance << [
+            "To stop the listed dependents from requiring the formulae above, run:",
+            commands.map { |command| "  #{command}" }.join("\n"),
+          ].join("\n")
+        end
+
+        guidance.join("\n\n")
+      end
 
       sig { params(path: String).returns(Finding::Remediation) }
       def path_remediation(path = "#{HOMEBREW_PREFIX}/bin")
