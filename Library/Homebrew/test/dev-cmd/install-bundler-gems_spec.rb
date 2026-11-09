@@ -13,7 +13,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
   it "resets Bootsnap after cleaning gems" do
     bundle = "/tmp/bundle"
     allow(Utils::GemSetup).to receive(:setup_gem_environment!)
-    allow(Utils::GemSetup).to receive_messages(valid_gem_groups: [], user_gem_groups: [], user_vendor_version: 11)
+    allow(Utils::GemSetup).to receive_messages(valid_gem_groups: [], user_gem_groups: [], user_vendor_version: 12)
     allow(Utils::GemSetup).to receive(:find_in_path).with("bundle").and_return("/tmp")
     allow(IO).to receive(:popen).with([bundle, "check"], err: [:child, :out]).and_return("")
     allow(Utils::GemSetup).to receive(:system).with(bundle, "clean", out: :err).and_return(true)
@@ -25,13 +25,13 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
   end
 
   it "detects an outdated vendor version" do
-    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(10)
+    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(11)
 
     expect(Utils::GemSetup.vendor_version_current?).to be(false)
   end
 
   it "recognises the current vendor version" do
-    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(11)
+    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(12)
 
     expect(Utils::GemSetup.vendor_version_current?).to be(true)
   end
@@ -60,7 +60,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
         setup_gem_environment!: nil,
         valid_gem_groups:       %w[marker_failure marker_success],
         user_gem_groups:        [],
-        user_vendor_version:    10,
+        user_vendor_version:    11,
         bundler_definition:     definition,
         find_in_path:           "/tmp",
         write_user_gem_groups:  nil,
@@ -77,7 +77,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
         Utils::GemSetup.install_bundler_gems!(groups: ["marker_success"])
       end
 
-      expect(version_file.read).to eq("11")
+      expect(version_file.read).to eq("12")
     end
 
     it "does not write the vendor version after a failed install" do
@@ -139,7 +139,10 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
 
       allow(Utils::GemSetup).to receive_messages(
         setup_gem_environment!: nil,
-        valid_gem_groups:       %w[extensions_in_lib missing_extension missing_cache missing_json_extension],
+        valid_gem_groups:       %w[
+          extensions_in_lib missing_extension missing_cache missing_json_extension
+          missing_cache_intact missing_package_file
+        ],
         user_gem_groups:        [],
         user_vendor_version:    8,
         bundler_definition:     definition,
@@ -219,6 +222,36 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
 
       with_env(HOMEBREW_TESTS: nil) do
         Utils::GemSetup.install_bundler_gems!(groups: ["missing_cache"])
+      end
+    end
+
+    it "does not reinstall intact gems if the package cache is missing" do
+      (Pathname(gem_dir)/"cache/#{full_name}.gem").unlink
+      %w[generator parser].each do |name|
+        extension_file = gem_lib_dir/"json/ext/#{name}.#{RbConfig::CONFIG.fetch("DLEXT")}"
+        extension_file.dirname.mkpath
+        extension_file.write("")
+      end
+
+      expect(Utils::GemSetup).not_to receive(:system).with("/tmp/bundle", "install", out: :err)
+
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["missing_cache_intact"])
+      end
+    end
+
+    it "reinstalls gems if a packaged file is missing" do
+      (gem_lib_dir/"json.rb").unlink
+      %w[generator parser].each do |name|
+        extension_file = gem_lib_dir/"json/ext/#{name}.#{RbConfig::CONFIG.fetch("DLEXT")}"
+        extension_file.dirname.mkpath
+        extension_file.write("")
+      end
+
+      expect(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "install", out: :err).and_return(true)
+
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["missing_package_file"])
       end
     end
   end
