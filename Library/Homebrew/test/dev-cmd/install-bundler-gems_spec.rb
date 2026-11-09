@@ -13,7 +13,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
   it "resets Bootsnap after cleaning gems" do
     bundle = "/tmp/bundle"
     allow(Utils::GemSetup).to receive(:setup_gem_environment!)
-    allow(Utils::GemSetup).to receive_messages(valid_gem_groups: [], user_gem_groups: [], user_vendor_version: 12)
+    allow(Utils::GemSetup).to receive_messages(valid_gem_groups: [], user_gem_groups: [], user_vendor_version: 10)
     allow(Utils::GemSetup).to receive(:find_in_path).with("bundle").and_return("/tmp")
     allow(IO).to receive(:popen).with([bundle, "check"], err: [:child, :out]).and_return("")
     allow(Utils::GemSetup).to receive(:system).with(bundle, "clean", out: :err).and_return(true)
@@ -25,13 +25,13 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
   end
 
   it "detects an outdated vendor version" do
-    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(11)
+    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(9)
 
     expect(Utils::GemSetup.vendor_version_current?).to be(false)
   end
 
   it "recognises the current vendor version" do
-    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(12)
+    allow(Utils::GemSetup).to receive(:user_vendor_version).and_return(10)
 
     expect(Utils::GemSetup.vendor_version_current?).to be(true)
   end
@@ -60,7 +60,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
         setup_gem_environment!: nil,
         valid_gem_groups:       %w[marker_failure marker_success],
         user_gem_groups:        [],
-        user_vendor_version:    11,
+        user_vendor_version:    9,
         bundler_definition:     definition,
         find_in_path:           "/tmp",
         write_user_gem_groups:  nil,
@@ -77,7 +77,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
         Utils::GemSetup.install_bundler_gems!(groups: ["marker_success"])
       end
 
-      expect(version_file.read).to eq("12")
+      expect(version_file.read).to eq("10")
     end
 
     it "does not write the vendor version after a failed install" do
@@ -144,7 +144,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
           missing_cache_intact missing_package_file
         ],
         user_gem_groups:        [],
-        user_vendor_version:    8,
+        user_vendor_version:    9,
         bundler_definition:     definition,
         find_in_path:           "/tmp",
         write_user_gem_groups:  nil,

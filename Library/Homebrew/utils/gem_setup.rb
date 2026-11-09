@@ -13,7 +13,7 @@ module Utils
     # Bump this when the vendored gem integrity checks change or a gem is added to or removed from
     # gitignore.
     # This triggers an integrity check the next time `brew install-bundler-gems` runs.
-    VENDOR_VERSION = 12
+    VENDOR_VERSION = 10
     private_constant :VENDOR_VERSION
 
     JSON_NATIVE_EXTENSIONS = %w[json/ext/generator json/ext/parser].freeze
