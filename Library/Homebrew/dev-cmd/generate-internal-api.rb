@@ -7,7 +7,6 @@ require "executables_db"
 require "fileutils"
 require "formula"
 require "cask/cask"
-require "os/mac/xcode"
 
 module Homebrew
   module DevCmd

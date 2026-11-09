@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "version"
+require "simulate_system"
 require "utils/output"
 require "utils/popen"
 
@@ -94,11 +95,10 @@ class DevelopmentTools
     # @api public
     sig { returns(Version) }
     def clang_build_version
-      if defined?(Homebrew::SimulateSystem) &&
-         Homebrew::SimulateSystem.simulating? &&
+      if Homebrew::SimulateSystem.simulating? &&
          Homebrew::SimulateSystem.simulating_or_running_on_macos? &&
-         defined?(OS::Mac::CLT) &&
          MacOSVersion::SYMBOLS.key?(Homebrew::SimulateSystem.current_os)
+        require "os/mac/xcode"
         clang_version = OS::Mac::CLT.latest_clang_version(
           macos: MacOSVersion.from_symbol(Homebrew::SimulateSystem.current_os),
           arm64: Homebrew::SimulateSystem.current_arch == :arm,

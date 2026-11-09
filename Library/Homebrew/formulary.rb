@@ -981,6 +981,7 @@ module Formulary
       return unless (name_tap_type = Formulary.tap_formula_name_type(ref, warn:))
 
       name, tap, _type, alias_name = name_tap_type
+
       new(name, tap:, alias_name:)
     end
 
