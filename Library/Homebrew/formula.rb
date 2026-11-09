@@ -3003,24 +3003,28 @@ class Formula
   # Returns a list of {Dependency} objects that are required at runtime.
   #
   # @api internal
-  sig { params(read_from_tab: T::Boolean, undeclared: T::Boolean).returns(T::Array[Dependency]) }
-  def runtime_dependencies(read_from_tab: true, undeclared: true)
+  sig {
+    params(read_from_tab: T::Boolean, undeclared: T::Boolean, keg: T.nilable(Keg))
+      .returns(T::Array[Dependency])
+  }
+  def runtime_dependencies(read_from_tab: true, undeclared: true, keg: nil)
+    keg ||= any_installed_keg if read_from_tab && undeclared
     cache_key = "#{full_name}-#{read_from_tab}-#{undeclared}"
+    cache_key += "-#{keg}" if keg
 
     Formula.cache[:runtime_dependencies] ||= {}
     Formula.cache[:runtime_dependencies][cache_key] ||= begin
-      deps = if read_from_tab && undeclared &&
-                (tab_deps = any_installed_keg&.runtime_dependencies)
-        tab_deps.filter_map do |d|
-          full_name = d["full_name"]
-          next unless full_name
-
-          Dependency.new full_name
+      deps = if read_from_tab && undeclared && keg && (tab_deps = keg.runtime_dependencies)
+        tab_deps.filter_map do |dependency|
+          full_name = dependency["full_name"]
+          Dependency.new(full_name) if full_name
         end
       end
       begin
-        deps ||= declared_runtime_dependencies unless undeclared
-        deps ||= (declared_runtime_dependencies | undeclared_runtime_dependencies)
+        if deps.nil?
+          deps ||= declared_runtime_dependencies unless undeclared
+          deps ||= (declared_runtime_dependencies | undeclared_runtime_dependencies(keg:))
+        end
       rescue FormulaUnavailableError
         onoe "Could not get runtime dependencies from #{path}!"
         deps ||= []
@@ -3080,28 +3084,22 @@ class Formula
   end
 
   # Returns a list of formulae depended on by this formula that aren't
-  # installed. Only trusts tab data for dependency information; when the tab
-  # has no runtime dependency data (nil or empty), returns empty rather
-  # than falling back to formula definitions.
-  # This prevents stale or missing tab data from incorrectly blocking
-  # uninstalls.
+  # installed. Trusts a tab's dependency list, so a stale list doesn't
+  # incorrectly block uninstalls. A tab with no list at all says nothing about
+  # dependencies, so that falls back to formula definitions, like autoremove.
   sig { params(hide: T::Array[String]).returns(T::Array[Dependency]) }
   def missing_dependencies(hide: [])
-    tab_deps = any_installed_keg&.runtime_dependencies
-    return [] if tab_deps.blank?
+    return [] unless any_installed_keg
 
-    tab_deps.filter_map do |d|
-      full_name = d["full_name"]
-      next if full_name.blank?
-
+    runtime_dependencies.filter_map do |dep|
       # Use base name to check the cellar directly, avoiding Formulary.resolve.
       # A dep is "missing" if it's in the hide list (pretend uninstalled) or
       # genuinely not installed in the cellar.
-      base_name = Utils.name_from_full_name(full_name)
+      base_name = Utils.name_from_full_name(dep.name)
       next if hide.exclude?(base_name) && ((HOMEBREW_CELLAR/base_name).directory? ||
                                            (HOMEBREW_PREFIX/"opt"/base_name).directory?)
 
-      Dependency.new(full_name)
+      dep
     end
   end
 
@@ -3626,6 +3624,7 @@ class Formula
     end
     Dependency.expand(self, cache_key:, cache_timestamp:) do |_, dependency|
       next Dependable::PRUNE if dependency.build?
+
       next if dependency.required?
 
       if build.any_args_or_options?
@@ -3640,9 +3639,9 @@ class Formula
 
   # Returns a list of {Dependency} objects that are not declared in the formula
   # but the formula links to.
-  sig { returns(T::Array[Dependency]) }
-  def undeclared_runtime_dependencies
-    keg = any_installed_keg
+  sig { params(keg: T.nilable(Keg)).returns(T::Array[Dependency]) }
+  def undeclared_runtime_dependencies(keg: nil)
+    keg ||= any_installed_keg
     return [] unless keg
 
     CacheStoreDatabase.use(:linkage) do |db|

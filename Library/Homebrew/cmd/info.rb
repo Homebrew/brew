@@ -219,19 +219,19 @@ module Homebrew
           tab_path = keg/AbstractTab::FILENAME
           next unless tab_path.file?
 
-          # Fast path: skip JSON parsing when no formula name
-          # appears anywhere in the raw receipt.
-          content = File.read(tab_path)
-          next unless names.any? { content.include?(it) }
-
-          tab_deps = Tab.from_file_content(content, tab_path).runtime_dependencies
-          next unless tab_deps
-
-          dependent = tab_deps.any? do |dep|
-            dep_full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
-            dep_full_name&.then { names.include?(Utils.name_from_full_name(it)) }
+          dependencies = begin
+            keg.to_formula.runtime_dependencies(keg:)
+          rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
+            (keg.runtime_dependencies || []).filter_map do |dep|
+              full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
+              Dependency.new(full_name) if full_name
+            end
           end
+          dependent = dependencies.any? { names.include?(Utils.name_from_full_name(it.name)) }
           keg.name if dependent
+        rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError,
+               JSON::ParserError
+          nil
         end.sort.uniq
       end
 

@@ -760,6 +760,147 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  it "falls back to formula definitions only for installed dependents whose receipts have no list" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new(["--verbose"])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+    end
+    stub_formula_loader formula
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    { "no-list-dependent" => nil, "stale-list-dependent" => [] }.each do |dependent_name, runtime_dependencies|
+      stub_formula_loader(formula(dependent_name) do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/#{dependent_name}-1.0.tar.gz"
+
+        depends_on "testball"
+      end)
+
+      dependent_keg_path = HOMEBREW_CELLAR/"#{dependent_name}/1.0"
+      dependent_keg_path.mkpath
+      dependent_tab = Tab.empty
+      dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
+      dependent_tab.runtime_dependencies = runtime_dependencies
+      dependent_tab.write
+    end
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+
+    expect { info.info_formula(formula) }
+      .to output(/^Dependents \(1\): no-list-dependent$/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "skips installed dependents whose receipts have no list when their formula lookup is ambiguous" do
+    keg_path = HOMEBREW_CELLAR/"ambiguous-dependent/1.0"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    allow(Formulary).to receive(:loader_for).and_call_original
+    allow(Formulary).to receive(:loader_for).with("ambiguous-dependent", any_args)
+                                            .and_raise(TapFormulaAmbiguityError.new("ambiguous-dependent", []))
+
+    expect(described_class.installed_dependent_names(["testball"])).to be_empty
+  end
+
+  it "skips installed dependents with malformed receipts" do
+    malformed_keg_path = HOMEBREW_CELLAR/"malformed-dependent/1.0"
+    malformed_keg_path.mkpath
+    (malformed_keg_path/AbstractTab::FILENAME).write("{")
+
+    dependent_keg_path = HOMEBREW_CELLAR/"valid-dependent/1.0"
+    dependent_keg_path.mkpath
+    dependent_tab = Tab.empty
+    dependent_tab.tabfile = dependent_keg_path/AbstractTab::FILENAME
+    dependent_tab.runtime_dependencies = [{ "full_name" => "testball" }]
+    dependent_tab.write
+
+    expect(described_class.installed_dependent_names(["testball"])).to eq(["valid-dependent"])
+  end
+
+  it "uses formula dependencies without rereading the receipt when the list is missing" do
+    rack = HOMEBREW_CELLAR/"dependent"
+    keg_path = rack/"1.0"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    keg = Keg.new(keg_path)
+    dependent_formula = formula("dependent", path: keg_path/"dependent.rb") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/dependent-1.0.tar.gz"
+    end
+
+    allow(Formula).to receive(:racks).and_return([rack])
+    allow(Keg).to receive(:from_rack).with(rack).and_return(keg)
+    allow(keg).to receive(:to_formula).and_return(dependent_formula)
+    allow(dependent_formula).to receive_messages(declared_runtime_dependencies:   [Dependency.new("testball")],
+                                                 undeclared_runtime_dependencies: [])
+    expect(dependent_formula).to receive(:runtime_dependencies)
+      .with(keg:)
+      .and_call_original
+
+    expect(described_class.installed_dependent_names(["testball"])).to eq(["dependent"])
+  end
+
+  it "skips installed kegs from untrusted taps whose receipts have no list", :trust_store do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new(["--verbose"])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+    end
+
+    keg_path = HOMEBREW_CELLAR/"testball/0.1"
+    keg_path.mkpath
+    tab = Tab.empty
+    tab.tabfile = keg_path/AbstractTab::FILENAME
+    tab.write
+
+    tap = Tap.fetch("thirdparty", "foo")
+    formula_path = tap.path/"Formula/untrusted.rb"
+    formula_path.dirname.mkpath
+    formula_path.write <<~RUBY
+      class Untrusted < Formula
+        url "https://brew.sh/untrusted-1.0.tar.gz"
+      end
+    RUBY
+
+    untrusted_keg_path = HOMEBREW_CELLAR/"untrusted/1.0"
+    untrusted_keg_path.mkpath
+    untrusted_tab = Tab.empty
+    untrusted_tab.tabfile = untrusted_keg_path/AbstractTab::FILENAME
+    untrusted_tab.tap = tap
+    untrusted_tab.write
+
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, missing_library_linkage: [[], Set.new])
+
+    expect { info.info_formula(formula) }
+      .to output(/^==> Installed Kegs and Versions$/).to_stdout
+      .and not_to_output(/^Dependents/).to_stdout
+      .and not_to_output.to_stderr
+  ensure
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+  end
+
   it "summarises recursive runtime dependencies as all installed when none are missing" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
