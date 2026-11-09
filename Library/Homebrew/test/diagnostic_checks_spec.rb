@@ -341,7 +341,8 @@ RSpec.describe Homebrew::Diagnostic::Checks do
 
       expect(checks.check_deprecated_disabled&.to_s).to include(
         "The following formulae are installed as dependencies:\n\n  testball",
-        "Run:\n  brew upgrade dependent",
+        "To stop the listed dependents from requiring the formulae above, run:\n  " \
+        "brew upgrade dependent",
       )
     end
 
@@ -466,7 +467,7 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       Deleted from homebrew/core:
         deleted-dep
 
-      Run:
+      To stop the listed dependents from requiring the formulae above, run:
         brew unpin pinned-dependent
         brew upgrade dependent-one dependent-two pinned-dependent
     EOS

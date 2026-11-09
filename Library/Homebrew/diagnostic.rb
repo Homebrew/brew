@@ -1934,7 +1934,10 @@ module Homebrew
           commands = []
           commands << "brew unpin #{pinned_dependents.uniq.sort.join(" ")}" if pinned_dependents.present?
           commands << "brew upgrade #{(upgradeable_dependents + pinned_dependents).uniq.sort.join(" ")}"
-          guidance << "Run:\n#{commands.map { |command| "  #{command}" }.join("\n")}"
+          guidance << [
+            "To stop the listed dependents from requiring the formulae above, run:",
+            commands.map { |command| "  #{command}" }.join("\n"),
+          ].join("\n")
         end
 
         guidance.join("\n\n")
