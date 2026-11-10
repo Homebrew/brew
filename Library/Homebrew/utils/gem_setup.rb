@@ -302,7 +302,7 @@ module Utils
 
         update_vendor_version = !vendor_version_current?
         if update_vendor_version
-          bundle_install_required ||= gem_integrity_check_required?
+          bundle_install_required = gem_integrity_check_required? || bundle_install_required
         end
 
         bundle_installed = if bundle_install_required

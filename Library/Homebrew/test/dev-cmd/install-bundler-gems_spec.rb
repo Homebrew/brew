@@ -199,6 +199,18 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
       end
     end
 
+    it "checks native extensions when Bundler reports other missing gems" do
+      allow(IO).to receive(:popen).with(["/tmp/bundle", "check"], err: [:child, :out])
+                                  .and_return("Install missing gems")
+      allow(Utils::GemSetup).to receive(:system).with("/tmp/bundle", "install", out: :err).and_return(true)
+      expect(File).to receive(:unlink)
+        .with("#{gem_dir}/specifications/#{full_name}.gemspec").and_call_original
+
+      with_env(HOMEBREW_TESTS: nil) do
+        Utils::GemSetup.install_bundler_gems!(groups: ["missing_extension"])
+      end
+    end
+
     it "reinstalls gems if a JSON extension is missing despite other native extensions" do
       generator = extension_dir/"json/ext/generator.#{RbConfig::CONFIG.fetch("DLEXT")}"
       unrelated_extension = gem_lib_dir/"unrelated.#{RbConfig::CONFIG.fetch("DLEXT")}"
