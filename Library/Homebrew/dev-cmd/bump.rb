@@ -26,7 +26,7 @@ module Homebrew
         max_time:        55,
         timeout:         60,
         retries:         0,
-      }.freeze, T::Hash[Symbol, T.untyped])
+      }.freeze, { connect_timeout: Integer, max_time: Integer, timeout: Integer, retries: Integer })
       MAX_CONSECUTIVE_GITHUB_API_ERRORS = 5
       MAX_GITHUB_API_RETRIES = 3
       PYPI_UNSTABLE_VERSION_REGEX = /^(?:\d+!)?\d+(?:\.\d+)*(?:a|b|rc)\d+|\.dev\d+$/i

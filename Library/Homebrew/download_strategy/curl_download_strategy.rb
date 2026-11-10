@@ -339,14 +339,42 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
     end
   end
 
-  sig { returns(T::Hash[Symbol, T.any(String, Symbol)]) }
-  def _curl_opts
-    meta.slice(:user_agent)
-  end
+  sig { returns(T.nilable(T.any(String, Symbol))) }
+  def _curl_user_agent = meta[:user_agent]
 
-  sig { override.params(args: String, options: T.untyped).returns(SystemCommand::Result) }
-  def curl_output(*args, **options)
-    super(*_curl_args, *expand_deferred_environment_args(args), **_curl_opts, **options)
+  sig {
+    override.params(
+      args:              String,
+      secrets:           T.any(String, T::Array[String]),
+      print_stdout:      T.any(T::Boolean, Symbol),
+      print_stderr:      T.any(T::Boolean, Symbol),
+      debug:             T.nilable(T::Boolean),
+      verbose:           T.nilable(T::Boolean),
+      timeout:           T.nilable(T.any(Integer, Float)),
+      use_homebrew_curl: T::Boolean,
+      connect_timeout:   T.nilable(T.any(Integer, Float)),
+      max_time:          T.nilable(T.any(Integer, Float)),
+      retries:           T.nilable(Integer),
+      retry_max_time:    T.nilable(T.any(Integer, Float)),
+      show_error:        T.nilable(T::Boolean),
+      cookies:           T.nilable(T::Hash[String, String]),
+      header:            T.nilable(T.any(String, T::Array[String])),
+      referer:           T.nilable(String),
+      user_agent:        T.nilable(T.any(String, Symbol)),
+    ).returns(SystemCommand::Result)
+  }
+  def curl_output(
+    *args,
+    secrets: [], print_stdout: false, print_stderr: false, debug: nil, verbose: nil, timeout: nil,
+    use_homebrew_curl: false, connect_timeout: nil, max_time: nil, retries: Homebrew::EnvConfig.curl_retries.to_i,
+    retry_max_time: nil, show_error: true, cookies: nil, header: nil, referer: nil, user_agent: nil
+  )
+    super(
+      *_curl_args, *expand_deferred_environment_args(args),
+      secrets:, print_stdout:, print_stderr:, debug:, verbose:, timeout:, use_homebrew_curl:, connect_timeout:,
+      max_time:, retries:, retry_max_time:, show_error:, cookies:, header:, referer:,
+      user_agent: user_agent || _curl_user_agent
+    )
   end
 
   sig {
@@ -355,6 +383,9 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   }
   def curl(*args, print_stdout: true, **options)
     options[:connect_timeout] = 15 unless mirrors.empty?
-    super(*_curl_args, *expand_deferred_environment_args(args), **_curl_opts, **command_output_options, **options)
+    super(
+      *_curl_args, *expand_deferred_environment_args(args),
+      user_agent: _curl_user_agent, **command_output_options, **options
+    )
   end
 end

@@ -638,6 +638,27 @@ RSpec.describe CurlDownloadStrategy do
     end
   end
 
+  describe "#curl_output" do
+    subject(:strategy) do
+      Class.new(described_class) do
+        T.bind(self, T.class_of(CurlDownloadStrategy))
+        public :curl_output
+      end.new(url, name, version, **specs)
+    end
+
+    let(:specs) { { user_agent: "Mozilla/25.0.1" } }
+
+    test_each_hash({ nil => "Mozilla/25.0.1", "Explicit/1.0" => "Explicit/1.0" }) do |user_agent, expected|
+      it "passes the #{expected} user agent when given #{user_agent.inspect}" do
+        expect(strategy).to receive(:curl_with_workarounds)
+          .with(any_args, hash_including(user_agent: expected))
+          .and_return(instance_double(SystemCommand::Result))
+
+        strategy.curl_output("--head", url, user_agent:)
+      end
+    end
+  end
+
   describe "#cached_location" do
     subject(:cached_location) { strategy.cached_location }
 
