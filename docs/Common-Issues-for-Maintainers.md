@@ -1,5 +1,5 @@
 ---
-last_review_date: "2026-07-18"
+last_review_date: "2026-11-10"
 redirect_from:
   - /Common-Issues-for-Core-Contributors
 ---
@@ -50,3 +50,11 @@ Do not add a permanent workaround based only on an old issue or an exact linker 
 Reproduce the failure on a supported runner, inspect the compiler and linker invocation, then determine whether the problem comes from the formula, upstream or the runner image.
 
 Document reusable findings in the relevant maintainer or formula-author guide instead of adding one-off historical errors to this page.
+
+## Stale GitHub state
+
+GitHub can sometimes appear to retain stale state, e.g. GitHub Pages deployments that report success without updating served content, or pull request auto-merge state that does not reflect the current checks and merge requirements.
+Pushing a new commit to the affected branch is a possible mitigation.
+Afterwards, verify that the affected feature behaves as expected, such as checking the served content or the pull request's auto-merge state.
+
+Contact GitHub if the mitigation does not resolve the issue, or if it restores the expected behaviour but the issue may not already be known to them.
