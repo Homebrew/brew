@@ -3,23 +3,24 @@
 
 require "open3"
 require "ripper"
+require "sorbet-runtime"
 
 module Utils
   # Checks that changes to vendored gem integrity rules bump VENDOR_VERSION.
   module VendorVersionCheck
-    sig { params(base_source: String, current_source: String).returns(T::Boolean) }
+    T::Sig::WithoutRuntime.sig { params(base_source: String, current_source: String).returns(T::Boolean) }
     def self.integrity_rules_changed?(base_source:, current_source:)
       integrity_rule_tokens(base_source) != integrity_rule_tokens(current_source)
     end
 
-    sig { params(base_source: String, current_source: String).returns(T::Boolean) }
+    T::Sig::WithoutRuntime.sig { params(base_source: String, current_source: String).returns(T::Boolean) }
     def self.vendor_version_bumped_for_integrity_changes?(base_source:, current_source:)
       return true unless integrity_rules_changed?(base_source:, current_source:)
 
       vendor_version(current_source) > vendor_version(base_source)
     end
 
-    sig { params(source: String).returns(Integer) }
+    T::Sig::WithoutRuntime.sig { params(source: String).returns(Integer) }
     def self.vendor_version(source)
       match = source.match(/^\s*VENDOR_VERSION = (\d+)$/)
       raise "Failed to read VENDOR_VERSION" if match.nil?
@@ -28,7 +29,7 @@ module Utils
     end
     private_class_method :vendor_version
 
-    sig { params(source: String).returns(T::Array[T::Array[String]]) }
+    T::Sig::WithoutRuntime.sig { params(source: String).returns(T::Array[T::Array[String]]) }
     def self.integrity_rule_tokens(source)
       lines = source.lines
       method_start = lines.index { |line| line.match?(/^\s*def self\.gem_integrity_check_required\?/) }
@@ -67,7 +68,7 @@ module Utils
       [ruby_tokens(method_source), ruby_tokens(extensions_source)]
     end
 
-    sig { params(source: String).returns(T::Array[String]) }
+    T::Sig::WithoutRuntime.sig { params(source: String).returns(T::Array[String]) }
     def self.ruby_tokens(source)
       Ripper.lex(source).filter_map do |(_, type, token, _)|
         next if [
