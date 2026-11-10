@@ -378,14 +378,38 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   end
 
   sig {
-    override.params(args: String, print_stdout: T.any(T::Boolean, Symbol), options: T.untyped)
-            .returns(SystemCommand::Result)
+    override.params(
+      args:              String,
+      secrets:           T.any(String, T::Array[String]),
+      print_stdout:      T.any(T::Boolean, Symbol),
+      print_stderr:      T.any(T::Boolean, Symbol),
+      debug:             T.nilable(T::Boolean),
+      verbose:           T.nilable(T::Boolean),
+      timeout:           T.nilable(T.any(Integer, Float)),
+      use_homebrew_curl: T::Boolean,
+      connect_timeout:   T.nilable(T.any(Integer, Float)),
+      max_time:          T.nilable(T.any(Integer, Float)),
+      retries:           T.nilable(Integer),
+      retry_max_time:    T.nilable(T.any(Integer, Float)),
+      show_error:        T.nilable(T::Boolean),
+      cookies:           T.nilable(T::Hash[String, String]),
+      header:            T.nilable(T.any(String, T::Array[String])),
+      referer:           T.nilable(String),
+      user_agent:        T.nilable(T.any(String, Symbol)),
+    ).returns(SystemCommand::Result)
   }
-  def curl(*args, print_stdout: true, **options)
-    options[:connect_timeout] = 15 unless mirrors.empty?
+  def curl(
+    *args, secrets: [], print_stdout: true, print_stderr: command_output_options[:print_stderr], debug: nil,
+    verbose: command_output_options[:verbose], timeout: nil, use_homebrew_curl: false, connect_timeout: nil,
+    max_time: nil, retries: Homebrew::EnvConfig.curl_retries.to_i, retry_max_time: nil, show_error: true,
+    cookies: nil, header: nil, referer: nil, user_agent: nil
+  )
     super(
       *_curl_args, *expand_deferred_environment_args(args),
-      user_agent: _curl_user_agent, **command_output_options, **options
+      # `print_stdout:` is accepted for the parent signature. Strategy output follows `quiet?`.
+      secrets:, print_stdout: command_output_options[:print_stdout], print_stderr:, debug:, verbose:, timeout:,
+      use_homebrew_curl:, connect_timeout: mirrors.empty? ? connect_timeout : 15, max_time:, retries:,
+      retry_max_time:, show_error:, cookies:, header:, referer:, user_agent: user_agent || _curl_user_agent
     )
   end
 end

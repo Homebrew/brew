@@ -333,13 +333,34 @@ module Utils
 
     sig {
       overridable.params(
-        args:         String,
-        print_stdout: T.any(T::Boolean, Symbol),
-        options:      T.untyped,
+        args:              String,
+        secrets:           T.any(String, T::Array[String]),
+        print_stdout:      T.any(T::Boolean, Symbol),
+        print_stderr:      T.any(T::Boolean, Symbol),
+        debug:             T.nilable(T::Boolean),
+        verbose:           T.nilable(T::Boolean),
+        timeout:           T.nilable(T.any(Integer, Float)),
+        use_homebrew_curl: T::Boolean,
+        connect_timeout:   T.nilable(T.any(Integer, Float)),
+        max_time:          T.nilable(T.any(Integer, Float)),
+        retries:           T.nilable(Integer),
+        retry_max_time:    T.nilable(T.any(Integer, Float)),
+        show_error:        T.nilable(T::Boolean),
+        cookies:           T.nilable(T::Hash[String, String]),
+        header:            T.nilable(T.any(String, T::Array[String])),
+        referer:           T.nilable(String),
+        user_agent:        T.nilable(T.any(String, Symbol)),
       ).returns(SystemCommand::Result)
     }
-    def curl(*args, print_stdout: true, **options)
-      result = curl_with_workarounds(*args, print_stdout:, **options)
+    def curl(
+      *args, secrets: [], print_stdout: true, print_stderr: false, debug: nil, verbose: nil, timeout: nil,
+      use_homebrew_curl: false, connect_timeout: nil, max_time: nil, retries: Homebrew::EnvConfig.curl_retries.to_i,
+      retry_max_time: nil, show_error: true, cookies: nil, header: nil, referer: nil, user_agent: nil
+    )
+      result = curl_with_workarounds(
+        *args, secrets:, print_stdout:, print_stderr:, debug:, verbose:, timeout:, use_homebrew_curl:,
+        connect_timeout:, max_time:, retries:, retry_max_time:, show_error:, cookies:, header:, referer:, user_agent:
+      )
       result.assert_success!
       result
     end
@@ -347,14 +368,22 @@ module Utils
     # `timeout` covers the resume probe and the download together.
     sig {
       params(
-        args:        String,
-        to:          T.any(Pathname, String),
-        try_partial: T::Boolean,
-        timeout:     T.nilable(T.any(Integer, Float)),
-        options:     T.untyped,
+        args:              String,
+        to:                T.any(Pathname, String),
+        try_partial:       T::Boolean,
+        timeout:           T.nilable(T.any(Integer, Float)),
+        secrets:           T.any(String, T::Array[String]),
+        print_stdout:      T.any(T::Boolean, Symbol),
+        use_homebrew_curl: T::Boolean,
+        retries:           T.nilable(Integer),
+        show_error:        T.nilable(T::Boolean),
+        header:            T.nilable(T.any(String, T::Array[String])),
       ).returns(T.nilable(SystemCommand::Result))
     }
-    def curl_download(*args, to:, try_partial: false, timeout: nil, **options)
+    def curl_download(
+      *args, to:, try_partial: false, timeout: nil, secrets: [], print_stdout: true, use_homebrew_curl: false,
+      retries: Homebrew::EnvConfig.curl_retries.to_i, show_error: true, header: nil
+    )
       end_time = Time.now + timeout if timeout
       destination = Pathname(to)
       destination.dirname.mkpath
@@ -364,7 +393,8 @@ module Utils
       if try_partial && destination.exist?
         headers = begin
           parsed_output = curl_headers(
-            *args, **options, wanted_headers: ["accept-ranges"], deadline: end_time
+            *args, secrets:, use_homebrew_curl:, retries:, show_error:, header:,
+            wanted_headers: ["accept-ranges"], deadline: end_time
           )
           parsed_output.fetch(:responses).last&.fetch(:headers) || {}
         rescue ErrorDuringExecution
@@ -387,7 +417,10 @@ module Utils
 
       args = ["--remote-time", "--output", destination.to_s, *args]
 
-      curl(*args, **options, timeout: Utils::Timer.remaining!(end_time))
+      curl(
+        *args, secrets:, print_stdout:, timeout: Utils::Timer.remaining!(end_time), use_homebrew_curl:,
+        retries:, show_error:, header:
+      )
     rescue ErrorDuringExecution => e
       raise if e.exitstatus != 23 # CURLE_WRITE_ERROR
 
