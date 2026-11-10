@@ -570,11 +570,12 @@ module Cask
 
     sig { void }
     def audit_token_conflicts
-      Homebrew::API.with_no_api_env do
+      return unless strict?
+
+      Homebrew::API.with_no_api_env_if_needed(core_tap.installed?) do
         return unless core_formula_names.include?(cask.token)
 
-        add_error("cask token conflicts with an existing homebrew/core formula: #{Formatter.url(core_formula_url)}",
-                  strict_only: true)
+        add_error "cask token conflicts with an existing homebrew/core formula: #{Formatter.url(core_formula_url)}"
       end
     end
 

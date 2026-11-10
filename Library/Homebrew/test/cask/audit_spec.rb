@@ -2428,6 +2428,26 @@ RSpec.describe Cask::Audit, :cask do
       context "when existing cask token conflicts with a core formula" do
         it { is_expected.not_to error_with(/cask token conflicts/) }
       end
+
+      context "when core formula names are unavailable outside strict mode" do
+        before do
+          allow(audit).to receive(:core_formula_names).and_raise(RuntimeError, "API download failed")
+        end
+
+        it { is_expected.to pass }
+      end
+
+      context "when new cask token conflicts with a formula from the API" do
+        let(:new_cask) { true }
+
+        before do
+          allow(audit).to receive(:core_formula_names).and_call_original
+          allow(CoreTap.instance).to receive(:installed?).and_return(false)
+          allow(Homebrew::API).to receive(:formula_names).and_return(formula_names)
+        end
+
+        it { is_expected.to error_with(/cask token conflicts/) }
+      end
     end
 
     describe "audit of downloads" do
