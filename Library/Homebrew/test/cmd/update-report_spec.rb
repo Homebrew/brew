@@ -441,6 +441,26 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     ])
   end
 
+  it "skips Cask metadata backups from interrupted upgrades" do
+    caskroom = mktmpdir/"Caskroom"
+    caskfile = caskroom/"example/.metadata/2.0/20250101000000.000/Casks/example.json"
+    backup_caskfile = caskroom/"example/.metadata/1.0.upgrading/20240101000000.000/Casks/example.json"
+    caskfile.dirname.mkpath
+    caskfile.write('{"version":"2.0","name":"Example"}')
+    backup_caskfile.dirname.mkpath
+    backup_caskfile.write("{}")
+    (caskroom/"example/.metadata/INSTALL_RECEIPT.json").write JSON.pretty_generate({
+      "source"              => { "version" => "2.0" },
+      "uninstall_artifacts" => [{ "app" => ["Example.app"] }],
+    })
+    allow(Cask::Caskroom).to receive(:path).and_return(caskroom)
+
+    expect do
+      2.times { described_class.new([]).migrate_caskroom_caskfiles_to_json }
+    end.not_to output.to_stderr
+    expect([JSON.parse(caskfile.read), backup_caskfile.read]).to eq([{}, "{}"])
+  end
+
   it "repairs migrated Cask metadata that differs" do
     caskroom = mktmpdir/"Caskroom"
     caskfile = caskroom/"mismatched/.metadata/1.0/20250101000000.000/Casks/mismatched.rb"

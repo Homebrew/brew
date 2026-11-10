@@ -49,6 +49,8 @@ module Homebrew
         return unless Cask::Caskroom.path.directory?
 
         Cask::Caskroom.path.glob("*/.metadata/*/*/Casks/*.{json,rb}").each do |caskfile|
+          next if caskfile.dirname.dirname.dirname.extname == ".upgrading"
+
           Cask::Caskroom.migrate_caskfile_to_json(caskfile)
         rescue => e
           opoo "Failed to migrate #{caskfile} to JSON metadata: #{e}"
