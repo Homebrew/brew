@@ -46,6 +46,8 @@ jobs:
           key: ${{ runner.os }}-rubygems-syntax-${{ steps.set-up-homebrew.outputs.gems-hash }}
           restore-keys: ${{ runner.os }}-rubygems-syntax-
 
+      - run: brew typecheck
+
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=style,typecheck
 
@@ -60,8 +62,6 @@ jobs:
           restore-keys: syntax-style-cache-
 
       - run: brew style
-
-      - run: brew typecheck
 
   tap-syntax:
     name: tap syntax
@@ -179,9 +179,6 @@ jobs:
       # "uncommitted RubyGems" step with a cold cache.
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=all
-
-      - name: Run brew typecheck with vendored gems
-        run: brew typecheck
 
       - name: Check for uncommitted RubyGems
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
