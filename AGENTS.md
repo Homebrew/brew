@@ -34,6 +34,7 @@ This is a Ruby repository with Bash scripts for faster execution that provides t
 ## Code
 
 - Maintain existing code structure and organisation and document public APIs.
+- Prefer `ENV["HOMEBREW_DEVELOPER"]` over `ENV.fetch("HOMEBREW_DEVELOPER", nil)` when possible.
 - Use Sorbet `sig` type signatures and `typed: strict` for new files.
 - Never use `T.must` (enforced by `Sorbet/ForbidTMust`): bind the value to a local and branch on `nil`, use `fetch` or `first(n)` on collections, or raise an exception with a helpful message where `nil` is impossible.
 - Never use `T.unsafe` (enforced by `Sorbet/ForbidTUnsafe`): give DSL parameters `= nil` defaults with nilable types, narrow with `is_a?` or `case`, use `requires_ancestor` for typed modules and `public_send` behind a `respond_to?` guard for duck typing.

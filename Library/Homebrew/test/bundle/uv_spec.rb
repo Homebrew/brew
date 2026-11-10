@@ -162,7 +162,7 @@ RSpec.describe Homebrew::Bundle::Uv do
     subject(:checker) { described_class.new }
 
     before do
-      allow(described_class).to receive(:package_outdated?).and_return(false)
+      allow(described_class).to receive_messages(package_installed?: false, package_outdated?: false)
     end
 
     describe "#installed_and_up_to_date?" do
