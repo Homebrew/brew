@@ -475,14 +475,33 @@ module Utils
     # `timeout` applies to each curl process; `deadline` bounds all requests.
     sig {
       params(
-        args:           String,
-        wanted_headers: T::Array[String],
-        timeout:        T.nilable(T.any(Integer, Float)),
-        deadline:       T.nilable(Time),
-        options:        T.untyped,
+        args:              String,
+        wanted_headers:    T::Array[String],
+        timeout:           T.nilable(T.any(Integer, Float)),
+        deadline:          T.nilable(Time),
+        secrets:           T.any(String, T::Array[String]),
+        print_stdout:      T.any(T::Boolean, Symbol),
+        print_stderr:      T.any(T::Boolean, Symbol),
+        debug:             T.nilable(T::Boolean),
+        verbose:           T.nilable(T::Boolean),
+        use_homebrew_curl: T::Boolean,
+        connect_timeout:   T.nilable(T.any(Integer, Float)),
+        max_time:          T.nilable(T.any(Integer, Float)),
+        retries:           T.nilable(Integer),
+        retry_max_time:    T.nilable(T.any(Integer, Float)),
+        show_error:        T.nilable(T::Boolean),
+        cookies:           T.nilable(T::Hash[String, String]),
+        header:            T.nilable(T.any(String, T::Array[String])),
+        referer:           T.nilable(String),
+        user_agent:        T.nilable(T.any(String, Symbol)),
       ).returns(T::Hash[Symbol, T.untyped])
     }
-    def curl_headers(*args, wanted_headers: [], timeout: nil, deadline: nil, **options)
+    def curl_headers(
+      *args, wanted_headers: [], timeout: nil, deadline: nil, secrets: [], print_stdout: false, print_stderr: false,
+      debug: nil, verbose: nil, use_homebrew_curl: false, connect_timeout: nil, max_time: nil,
+      retries: Homebrew::EnvConfig.curl_retries.to_i, retry_max_time: nil, show_error: true, cookies: nil,
+      header: nil, referer: nil, user_agent: nil
+    )
       base_args = ["--fail", "--location", "--silent"]
       get_retry_args = []
       if (is_post_request = args.include?("POST"))
@@ -497,8 +516,9 @@ module Utils
 
       [[], get_retry_args].each do |request_args|
         result = curl_output(
-          *base_args, *request_args, *args, **options,
-          timeout: [timeout, Utils::Timer.remaining!(deadline)].compact.min
+          *base_args, *request_args, *args, secrets:, print_stdout:, print_stderr:, debug:, verbose:,
+          timeout: [timeout, Utils::Timer.remaining!(deadline)].compact.min, use_homebrew_curl:, connect_timeout:,
+          max_time:, retries:, retry_max_time:, show_error:, cookies:, header:, referer:, user_agent:
         )
 
         # We still receive usable headers with certain non-successful exit
