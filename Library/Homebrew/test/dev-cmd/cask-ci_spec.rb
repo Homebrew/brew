@@ -23,6 +23,11 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
       .to raise_error(UsageError, /The `info` operation requires a cask\./)
   end
 
+  it "requires a cask for install" do
+    expect { described_class.new(["install"]).run }
+      .to raise_error(UsageError, /The `install` operation requires a cask\./)
+  end
+
   it "requires a cask for zap-check" do
     expect { described_class.new(["zap-check"]).run }
       .to raise_error(UsageError, /The `zap-check` operation requires a cask\./)
@@ -81,6 +86,22 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
 
       expect(github_env.read).to eq("CASK_DEPENDENCIES=local-caffeine local-transmission-zip\n")
     end
+  end
+
+  it "installs a cask from its tap file rather than the API", :cask, :needs_macos do
+    allow(Homebrew::API).to receive(:cask_token?) { |token| token == "local-caffeine" }
+
+    described_class.new(["install", (CoreCaskTap.instance.cask_dir/"local-caffeine.rb").to_s]).run
+
+    expect(Cask::Caskroom.path/"local-caffeine/1.2.3").to be_a_directory
+  end
+
+  it "refuses to install an installed cask again", :cask, :needs_macos do
+    cask_path = (CoreCaskTap.instance.cask_dir/"local-caffeine.rb").to_s
+    described_class.new(["install", cask_path]).run
+
+    expect { described_class.new(["install", cask_path]).run }
+      .to raise_error(Cask::CaskError, "local-caffeine is already installed.")
   end
 
   it "writes the prefixed system snapshot" do
