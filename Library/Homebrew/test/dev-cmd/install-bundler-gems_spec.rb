@@ -10,6 +10,20 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
   it_behaves_like "parseable arguments"
   it_behaves_like "a documented command", "install-bundler-gems"
 
+  it "treats empty developer flags as disabled" do
+    ENV["HOMEBREW_DEVELOPER"] = ""
+    ENV["HOMEBREW_DEV_CMD_RUN"] = ""
+
+    expect(Utils::GemSetup.developer_mode?).to be(false)
+  end
+
+  it "treats a non-empty developer flag as enabled" do
+    ENV["HOMEBREW_DEVELOPER"] = ""
+    ENV["HOMEBREW_DEV_CMD_RUN"] = "1"
+
+    expect(Utils::GemSetup.developer_mode?).to be(true)
+  end
+
   it "resets Bootsnap after cleaning gems" do
     bundle = "/tmp/bundle"
     allow(Utils::GemSetup).to receive(:setup_gem_environment!)
@@ -43,6 +57,8 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
     let(:gem_dir) { mktmpdir }
     sig { returns(Pathname) }
     let(:version_file) { Pathname(gem_dir)/".homebrew_vendor_version" }
+    sig { returns(Pathname) }
+    let(:groups_file) { Pathname(gem_dir)/".homebrew_gem_groups" }
     sig { returns(Bundler::Definition) }
     let(:definition) do
       instance_double(
@@ -55,10 +71,11 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
 
     before do
       stub_const("Utils::GemSetup::VENDOR_VERSION_FILE", version_file)
+      stub_const("Utils::GemSetup::GEM_GROUPS_FILE", groups_file)
       allow(Gem).to receive(:dir).and_return(gem_dir)
       allow(Utils::GemSetup).to receive_messages(
         setup_gem_environment!: nil,
-        valid_gem_groups:       %w[marker_failure marker_success],
+        valid_gem_groups:       %w[group_persistence marker_failure marker_success],
         user_gem_groups:        [],
         user_vendor_version:    9,
         bundler_definition:     definition,
@@ -88,6 +105,17 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
       end
 
       expect(version_file.exist?).to be(false)
+    end
+
+    it "preserves requested groups after forgetting stored groups" do
+      allow(Utils::GemSetup).to receive(:write_user_gem_groups).and_call_original
+      ENV["HOMEBREW_TESTS"] = nil
+
+      Utils::GemSetup.install_bundler_gems!(groups: ["group_persistence"])
+      Utils::GemSetup.forget_user_gem_groups!
+      Utils::GemSetup.install_bundler_gems!(groups: ["group_persistence"])
+
+      expect(groups_file.read).to eq("group_persistence")
     end
   end
 

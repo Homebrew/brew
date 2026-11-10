@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/vendor-version.yml
       - Library/Homebrew/utils/gem_setup.rb
+      - Library/Homebrew/utils/vendor_version_check.rb
       - Library/Homebrew/vendor/bundle/ruby/**
 
 permissions:
@@ -31,6 +32,10 @@ jobs:
         uses: Homebrew/actions/setup-ruby@c262868c096d909fc278daa87ed9772967331ea3 # 2026.11.02.1
         with:
           portable-ruby: true
+
+      - name: Check vendor version for integrity changes
+        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
+        run: brew ruby Library/Homebrew/utils/vendor_version_check.rb "origin/${GITHUB_BASE_REF}"
 
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=all

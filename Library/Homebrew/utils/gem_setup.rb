@@ -10,8 +10,8 @@ Homebrew::FastBootRequire.from_rubylibdir("English")
 module Utils
   # Helpers for loading and maintaining Homebrew's vendored gems.
   module GemSetup
-    # Bump this when the vendored gem integrity checks change or a gem is added to or removed from
-    # gitignore.
+    # Bump this when `gem_integrity_check_required?` or `JSON_NATIVE_EXTENSIONS` changes or a gem is
+    # added to or removed from gitignore.
     # This triggers an integrity check the next time `brew install-bundler-gems` runs.
     VENDOR_VERSION = 10
     private_constant :VENDOR_VERSION
@@ -187,6 +187,7 @@ module Utils
     def self.forget_user_gem_groups!
       GEM_GROUPS_FILE.truncate(0) if GEM_GROUPS_FILE.exist?
       @user_gem_groups = []
+      @bundle_installed_groups = nil
     end
 
     def self.user_vendor_version
@@ -201,6 +202,68 @@ module Utils
     def self.vendor_version_current?
       user_vendor_version == VENDOR_VERSION
     end
+
+    def self.developer_mode?
+      !ENV.fetch("HOMEBREW_DEVELOPER", "").empty? ||
+        !ENV.fetch("HOMEBREW_DEV_CMD_RUN", "").empty?
+    end
+
+    def self.gem_integrity_check_required?
+      specs = bundler_definition.resolve.materialize(bundler_definition.locked_dependencies)
+      specs.map do |spec|
+        spec_file = "#{Gem.dir}/specifications/#{spec.full_name}.gemspec"
+        next false unless File.exist?(spec_file)
+
+        cache_file = "#{Gem.dir}/cache/#{spec.full_name}.gem"
+        package_install_intact = if File.exist?(cache_file)
+          require "rubygems/package"
+          package = Gem::Package.new(cache_file)
+
+          begin
+            contents = package.contents
+
+            # If the gem has contents, ensure we have every file installed it contains.
+            contents&.all? do |gem_file|
+              File.exist?("#{Gem.dir}/gems/#{spec.full_name}/#{gem_file}")
+            end
+          rescue Gem::Package::Error, Gem::Security::Exception
+            # Malformed, assume broken
+            File.unlink(cache_file)
+            false
+          end
+        else
+          # The cache is optional, so its absence does not invalidate the installation.
+          true
+        end
+
+        native_extension_suffix = RbConfig::CONFIG.fetch("DLEXT")
+        runtime_files_intact = if spec.name == "json"
+          spec.full_require_paths.any? { |path| File.file?(File.join(path, "json.rb")) } &&
+            (spec.extensions.empty? || JSON_NATIVE_EXTENSIONS.all? do |extension|
+              spec.full_require_paths.any? do |path|
+                File.file?(File.join(path, "#{extension}.#{native_extension_suffix}"))
+              end
+            end)
+        elsif spec.extensions.empty?
+          true
+        else
+          spec.full_require_paths.flat_map do |path|
+            Dir.glob(File.join(path, "**", "*.#{native_extension_suffix}"))
+               .filter_map do |extension_path|
+                 next unless File.file?(extension_path)
+
+                 extension_path.delete_prefix("#{path}#{File::SEPARATOR}")
+               end
+          end.uniq.count >= spec.extensions.length
+        end
+        next false if package_install_intact && runtime_files_intact
+
+        # Mark gem for reinstallation
+        File.unlink(spec_file)
+        true
+      end.any?
+    end
+    private_class_method :gem_integrity_check_required?
 
     def self.install_bundler_gems!(only_warn_on_failure: false, setup_path: true, groups: [])
       old_path = ENV.fetch("PATH", nil)
@@ -239,63 +302,7 @@ module Utils
 
         update_vendor_version = !vendor_version_current?
         if update_vendor_version
-          # Check installed gem files and native extensions for integrity.
-          # We intentionally map over everything and then call `any?` so that we remove the spec of each bad gem.
-          specs = bundler_definition.resolve.materialize(bundler_definition.locked_dependencies)
-          vendor_reinstall_required = specs.map do |spec|
-            spec_file = "#{Gem.dir}/specifications/#{spec.full_name}.gemspec"
-            next false unless File.exist?(spec_file)
-
-            cache_file = "#{Gem.dir}/cache/#{spec.full_name}.gem"
-            package_install_intact = if File.exist?(cache_file)
-              require "rubygems/package"
-              package = Gem::Package.new(cache_file)
-
-              begin
-                contents = package.contents
-
-                # If the gem has contents, ensure we have every file installed it contains.
-                contents&.all? do |gem_file|
-                  File.exist?("#{Gem.dir}/gems/#{spec.full_name}/#{gem_file}")
-                end
-              rescue Gem::Package::Error, Gem::Security::Exception
-                # Malformed, assume broken
-                File.unlink(cache_file)
-                false
-              end
-            else
-              # The cache is optional, so its absence does not invalidate the installation.
-              true
-            end
-
-            native_extension_suffix = RbConfig::CONFIG.fetch("DLEXT")
-            runtime_files_intact = if spec.name == "json"
-              spec.full_require_paths.any? { |path| File.file?(File.join(path, "json.rb")) } &&
-                (spec.extensions.empty? || JSON_NATIVE_EXTENSIONS.all? do |extension|
-                  spec.full_require_paths.any? do |path|
-                    File.file?(File.join(path, "#{extension}.#{native_extension_suffix}"))
-                  end
-                end)
-            elsif spec.extensions.empty?
-              true
-            else
-              spec.full_require_paths.flat_map do |path|
-                Dir.glob(File.join(path, "**", "*.#{native_extension_suffix}"))
-                   .filter_map do |extension_path|
-                     next unless File.file?(extension_path)
-
-                     extension_path.delete_prefix("#{path}#{File::SEPARATOR}")
-                   end
-              end.uniq.count >= spec.extensions.length
-            end
-            next false if package_install_intact && runtime_files_intact
-
-            # Mark gem for reinstallation
-            File.unlink(spec_file)
-            true
-          end.any?
-
-          bundle_install_required ||= vendor_reinstall_required
+          bundle_install_required ||= gem_integrity_check_required?
         end
 
         bundle_installed = if bundle_install_required
