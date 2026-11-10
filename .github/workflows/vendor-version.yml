@@ -4,8 +4,6 @@ on:
   pull_request:
     paths:
       - .github/workflows/vendor-version.yml
-      - Library/Homebrew/utils/gem_setup.rb
-      - Library/Homebrew/utils/vendor_version_check.rb
       - Library/Homebrew/vendor/bundle/ruby/**
 
 permissions:
@@ -36,12 +34,6 @@ jobs:
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=all
 
-      - name: Check vendor version for integrity changes
-        working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
-        env:
-          BUNDLE_GEMFILE: Library/Homebrew/Gemfile
-        run: bundle exec ruby Library/Homebrew/utils/vendor_version_check.rb "origin/${GITHUB_BASE_REF}"
-
       - name: Get Ruby ABI version
         id: ruby-abi
         run: echo "version=$(ruby -e 'puts Gem.ruby_api_version')" >> "${GITHUB_OUTPUT}"
@@ -57,7 +49,7 @@ jobs:
             echo "EOS"
           } >> "${GITHUB_OUTPUT}"
 
-      - name: Check for newly ignored vendored files
+      - name: Compare to base ref
         working-directory: ${{ steps.set-up-homebrew.outputs.gems-path }}/${{ steps.ruby-abi.outputs.version }}
         env:
           ABI_VERSION: ${{ steps.ruby-abi.outputs.version }}

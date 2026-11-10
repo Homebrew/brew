@@ -180,6 +180,9 @@ jobs:
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=all
 
+      - name: Run brew typecheck with vendored gems
+        run: brew typecheck
+
       - name: Check for uncommitted RubyGems
         working-directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
         run: |
