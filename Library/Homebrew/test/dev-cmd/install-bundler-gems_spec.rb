@@ -168,8 +168,8 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
       allow(Utils::GemSetup).to receive_messages(
         setup_gem_environment!: nil,
         valid_gem_groups:       %w[
-          extensions_in_lib missing_extension missing_cache missing_cache_json missing_json_extension
-          missing_cache_intact missing_package_file
+          extensions_in_lib missing_extension missing_extension_with_other_missing_gems missing_cache
+          missing_cache_json missing_json_extension missing_cache_intact missing_package_file
         ],
         user_gem_groups:        [],
         user_vendor_version:    9,
@@ -207,7 +207,7 @@ RSpec.describe Homebrew::DevCmd::InstallBundlerGems do
         .with("#{gem_dir}/specifications/#{full_name}.gemspec").and_call_original
 
       with_env(HOMEBREW_TESTS: nil) do
-        Utils::GemSetup.install_bundler_gems!(groups: ["missing_extension"])
+        Utils::GemSetup.install_bundler_gems!(groups: ["missing_extension_with_other_missing_gems"])
       end
     end
 
