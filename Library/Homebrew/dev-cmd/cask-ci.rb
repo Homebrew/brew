@@ -6,6 +6,7 @@ require "cask/cask_loader"
 require "cask/ci/check"
 require "cask/ci/zap_check"
 require "cask/installer"
+require "install"
 require "json"
 require "utils/github/actions"
 
@@ -18,7 +19,7 @@ module Homebrew
           `cask-ci` <operation> [<cask>]
 
           Runs Homebrew Cask's internal CI helpers. Supported operations are
-          `info`, `snapshot`, `zap-check`, and `check`.
+          `info`, `install`, `snapshot`, `zap-check` and `check`.
         EOS
 
         description <<~EOS
@@ -39,6 +40,12 @@ module Homebrew
         case operation
         when "info"
           write_cask_info(require_cask_path!(operation, cask_path))
+        when "install"
+          cask = load_cask(require_cask_path!(operation, cask_path))
+          raise Cask::CaskError, "#{cask} is already installed." if cask.installed?
+
+          Cask::Installer.new(cask, verbose: args.verbose?).install
+          Homebrew.messages.display_messages(force_caveats: true)
         when "snapshot"
           raise UsageError, "The `snapshot` operation does not accept a cask." if cask_path
 
@@ -61,13 +68,18 @@ module Homebrew
         raise UsageError, "The `#{operation}` operation requires a cask."
       end
 
-      sig { params(cask_path: String).void }
-      def write_cask_info(cask_path)
-        cask = if cask_path.end_with?(".rb")
+      sig { params(cask_path: String).returns(Cask::Cask) }
+      def load_cask(cask_path)
+        if cask_path.end_with?(".rb")
           Cask::CaskLoader.from_tap_path(cask_path)
         else
           Cask::CaskLoader.load(cask_path)
         end
+      end
+
+      sig { params(cask_path: String).void }
+      def write_cask_info(cask_path)
+        cask = load_cask(cask_path)
 
         manual_installer = cask.artifacts.any? do |artifact|
           artifact.is_a?(Cask::Artifact::Installer) && artifact.manual_install
@@ -110,12 +122,7 @@ module Homebrew
       def check_snapshot(cask_path)
         before = JSON.parse(ENV.fetch("HOMEBREW_SNAPSHOT_BEFORE", "{}"), symbolize_names: true)
         after = system_snapshot
-        cask = if cask_path.end_with?(".rb")
-          Cask::CaskLoader.from_tap_path(cask_path)
-        else
-          Cask::CaskLoader.load(cask_path)
-        end
-        errors = Cask::CI::Check.errors(before, after, cask:)
+        errors = Cask::CI::Check.errors(before, after, cask: load_cask(cask_path))
 
         errors.each do |error|
           puts GitHub::Actions::Annotation.new(:error, error, file: cask_path)
