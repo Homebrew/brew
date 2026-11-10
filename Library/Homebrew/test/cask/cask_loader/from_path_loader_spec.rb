@@ -35,6 +35,24 @@ RSpec.describe Cask::CaskLoader::FromPathLoader do
       end
     end
 
+    context "when the header passes a loader keyword" do
+      let(:path) do
+        (mktmpdir/"cask.rb").tap do |path|
+          path.write <<~RUBY
+            cask "cask", tap: CoreCaskTap.instance do
+              version "1.0"
+            end
+          RUBY
+        end
+      end
+
+      it "raises an error" do
+        expect do
+          described_class.new(path).load(config: nil)
+        end.to raise_error(Cask::CaskUnreadableError, /wrong number of arguments/)
+      end
+    end
+
     context "when the file contains an outdated cask" do
       it "raises an error" do
         expect do

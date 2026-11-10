@@ -50,12 +50,11 @@ module Cask
       sig {
         overridable.params(
           header_token: String,
-          options:      T.untyped,
           block:        T.nilable(T.proc.bind(DSL).void),
         ).returns(Cask)
       }
-      def cask(header_token, **options, &block)
-        Cask.new(header_token, source: content, tap:, **options, config: @config, &block)
+      def cask(header_token, &block)
+        Cask.new(header_token, source: content, tap:, config: @config, &block)
       end
     end
 
@@ -193,14 +192,14 @@ module Cask
       sig {
         override.params(
           header_token: String,
-          options:      T.untyped,
           block:        T.nilable(T.proc.bind(DSL).void),
         ).returns(Cask)
       }
-      def cask(header_token, **options, &block)
+      def cask(header_token, &block)
         raise CaskTokenMismatchError.new(token, header_token) if token != header_token
 
-        super(header_token, **options, sourcefile_path: path, loaded_from_metadata: @from_installed_caskfile, &block)
+        Cask.new(header_token, sourcefile_path: path, source: content, tap:,
+                               loaded_from_metadata: @from_installed_caskfile, config: @config, &block)
       end
     end
 
