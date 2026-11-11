@@ -461,6 +461,54 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     expect([JSON.parse(caskfile.read), backup_caskfile.read]).to eq([{}, "{}"])
   end
 
+  it "skips Cask metadata from older versions" do
+    caskroom = mktmpdir/"Caskroom"
+    caskfile = caskroom/"test-cask/.metadata/2.0/20250201000000.000/Casks/test-cask.rb"
+    old_caskfile = caskroom/"test-cask/.metadata/1.0/20250101000000.000/Casks/test-cask.json"
+    caskfile.dirname.mkpath
+    caskfile.write <<~RUBY
+      cask "test-cask" do
+        version "2.0"
+        app "Test.app"
+      end
+    RUBY
+    old_caskfile.dirname.mkpath
+    old_caskfile.write("{}")
+    (caskroom/"test-cask/.metadata/INSTALL_RECEIPT.json").write JSON.pretty_generate({
+      "source"              => { "version" => "2.0" },
+      "uninstall_artifacts" => [{ "app" => ["Test.app"] }],
+    })
+    allow(Cask::Caskroom).to receive(:path).and_return(caskroom)
+
+    expect { described_class.new(["--quiet"]).migrate_caskroom_caskfiles_to_json }.not_to output.to_stderr
+    expect([
+      caskfile.exist?,
+      JSON.parse(caskfile.sub_ext(".json").read),
+      old_caskfile.read,
+    ]).to eq([false, {}, "{}"])
+  end
+
+  it "migrates renamed Cask metadata without following old token symlinks" do
+    caskroom = mktmpdir/"Caskroom"
+    caskfile = caskroom/"new-cask/.metadata/2.0/20250101000000.000/Casks/new-cask.rb"
+    caskfile.dirname.mkpath
+    caskfile.write <<~RUBY
+      cask "new-cask" do
+        version "2.0"
+        app "New.app"
+      end
+    RUBY
+    (caskroom/"new-cask/.metadata/INSTALL_RECEIPT.json").write JSON.pretty_generate({
+      "source"              => { "version" => "2.0" },
+      "uninstall_artifacts" => [{ "app" => ["New.app"] }],
+    })
+    FileUtils.ln_s "new-cask", caskroom/"old-cask"
+    allow(Cask::Caskroom).to receive(:path).and_return(caskroom)
+
+    expect { described_class.new(["--quiet"]).migrate_caskroom_caskfiles_to_json }.not_to output.to_stderr
+    expect([caskfile.exist?, JSON.parse(caskfile.sub_ext(".json").read)]).to eq([false, {}])
+  end
+
   it "repairs migrated Cask metadata that differs" do
     caskroom = mktmpdir/"Caskroom"
     caskfile = caskroom/"mismatched/.metadata/1.0/20250101000000.000/Casks/mismatched.rb"

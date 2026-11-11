@@ -50,6 +50,9 @@ module Homebrew
 
         Cask::Caskroom.path.glob("*/.metadata/*/*/Casks/*.{json,rb}").each do |caskfile|
           next if caskfile.dirname.dirname.dirname.extname == ".upgrading"
+          # Other caskfiles fail to load as installed metadata, and the rollback after
+          # failing through a renamed cask's old token symlink deletes the current file.
+          next if caskfile != Cask::Caskroom.cask_installed_caskfile(Cask::CaskLoader.token_from_path(caskfile))
 
           Cask::Caskroom.migrate_caskfile_to_json(caskfile)
         rescue => e
