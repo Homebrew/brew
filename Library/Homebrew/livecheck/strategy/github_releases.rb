@@ -157,7 +157,7 @@ module Homebrew
           match_data[:cached] = true if content
 
           fetch_type =
-            if !block_given? && GitHub::API.credentials_type != :none
+            if !block_given? && Homebrew::EnvConfig.livecheck_use_github_graphql?
               :graphql_api
             else
               :rest_api

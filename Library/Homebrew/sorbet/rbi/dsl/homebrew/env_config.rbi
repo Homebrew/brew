@@ -322,6 +322,9 @@ module Homebrew::EnvConfig
     sig { returns(T::Boolean) }
     def livecheck_autobump?; end
 
+    sig { returns(T::Boolean) }
+    def livecheck_use_github_graphql?; end
+
     sig { returns(String) }
     def livecheck_watchlist; end
 
