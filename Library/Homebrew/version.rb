@@ -345,9 +345,9 @@ class Version
   ).freeze, Regexp)
   private_constant :SCAN_PATTERN
 
-  sig { params(url: T.any(String, Pathname), specs: T.untyped).returns(Version) }
-  def self.detect(url, **specs)
-    parse(specs.fetch(:tag, url), detected_from_url: true)
+  sig { params(url: T.any(String, Pathname), tag: T.nilable(String)).returns(Version) }
+  def self.detect(url, tag: nil)
+    parse(tag || url, detected_from_url: true)
   end
 
   sig { params(spec: T.any(String, Pathname), detected_from_url: T::Boolean).returns(Version) }
