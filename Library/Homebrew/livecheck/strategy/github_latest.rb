@@ -121,6 +121,10 @@ module Homebrew
           match_data[:url] = generated[:url]
 
           unless match_data[:cached]
+            if Homebrew::EnvConfig.no_github_api?
+              raise "#{Utils.demodulize(name)} cannot be used when `HOMEBREW_NO_GITHUB_API` is set"
+            end
+
             match_data[:content] = if fetch_type == :graphql_api
               # Use the GraphQL API to fetch minimal data and structure the JSON
               # to match REST API responses

@@ -302,6 +302,13 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
       }))
     end
 
+    it "raises an error when `HOMEBREW_NO_GITHUB_API` is set and an API request would be made" do
+      ENV["HOMEBREW_NO_GITHUB_API"] = "1"
+
+      expect { github_releases.find_versions(url: github_urls[:brew_tag_archive]) }
+        .to raise_error(RuntimeError, "GithubReleases cannot be used when `HOMEBREW_NO_GITHUB_API` is set")
+    end
+
     it "returns default match_data when url is blank" do
       expect(github_releases.find_versions(url: ""))
         .to eq({ matches: {}, regex: Homebrew::Livecheck::Strategy::GithubReleases::DEFAULT_REGEX, url: "" })
