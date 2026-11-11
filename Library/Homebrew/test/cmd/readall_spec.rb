@@ -277,4 +277,36 @@ RSpec.describe Homebrew::Cmd::ReadallCmd do
 
     expect(success).to be true
   end
+
+  it "re-evaluates loaded casks for each architecture" do
+    tap_path = CoreCaskTap.instance.path
+    arm_only_linux_cask_file = tap_path/"Casks/arm-only-linux-example.rb"
+    arm_only_linux_cask_file.dirname.mkpath
+    arm_only_linux_cask_file.write <<~RUBY
+      cask "arm-only-linux-example" do
+        version "1.0"
+        sha256 arm:   "0000000000000000000000000000000000000000000000000000000000000000",
+               intel: "1111111111111111111111111111111111111111111111111111111111111111"
+        url "https://example.invalid/x.tar.gz"
+        name "Example"
+        desc "macOS-only on Intel cask"
+        homepage "https://example.invalid/"
+
+        on_intel do
+          depends_on :macos
+        end
+
+        binary "x"
+      end
+    RUBY
+
+    expect do
+      Homebrew::SimulateSystem.with(os: :linux) do
+        Readall.valid_tap?(
+          instance_double(Tap, formula_files: [], cask_files: [arm_only_linux_cask_file]),
+          os_arch_combinations: [[:linux, :arm], [:linux, :intel]],
+        )
+      end
+    end.to output(a_string_matching(/\A(?!.*Intel)(?=.*Linux on ARM64)/m)).to_stderr
+  end
 end
