@@ -13,9 +13,9 @@ RSpec.describe Homebrew::TestBot::Formulae do
       end.new(
         tap: nil, git: "git", dry_run: true, fail_fast: false, verbose: false,
         output_paths: {
-          bottle:                     Pathname("bottle.txt"),
-          linkage:                    Pathname("linkage.txt"),
-          skipped_or_failed_formulae: Pathname("skipped.txt"),
+          bottle:                     HOMEBREW_TEMP/"bottle.txt",
+          linkage:                    HOMEBREW_TEMP/"linkage.txt",
+          skipped_or_failed_formulae: HOMEBREW_TEMP/"skipped.txt",
         }
       )
     end
@@ -35,6 +35,65 @@ RSpec.describe Homebrew::TestBot::Formulae do
       formulae.formula!("foo", args: Homebrew::Cmd::TestBotCmd.new([]).args)
 
       expect(formulae.steps.map(&:command)).to include(%w[brew fetch --formula --retry foo --test --build-bottle])
+    end
+
+    context "when cleaning up dependencies" do
+      let(:foo) do
+        formula("foo") do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/foo-1.0.tar.gz"
+          depends_on "build" => :build
+          depends_on "runtime"
+          depends_on "test" => :test
+        end
+      end
+
+      before do
+        stub_formula_loader foo
+        %w[build runtime test transitive].each do |name|
+          stub_formula_loader formula(name) {
+            T.bind(self, T.class_of(Formula))
+            url "https://brew.sh/#{name}-1.0.tar.gz"
+            depends_on "transitive" if name == "runtime"
+          }
+        end
+        allow(formulae).to receive_messages(bottled?: true, build_bottle?: true, cleanup?: false,
+                                            artifact_cache_valid?: false)
+        allow(formulae).to receive(:annotate_added_dependencies)
+        allow(formulae).to receive(:install_ca_certificates_if_needed)
+        allow(formulae).to receive(:bottle_reinstall_formula) { (foo.prefix/"bin").mkpath }
+        allow(Utils).to receive(:safe_popen_read).with("brew", "list", "--formula", "--full-name").and_return("")
+        allow(Utils).to receive(:safe_popen_read)
+          .with("brew", "deps", "--formula", "--include-build", "--include-test", "--full-name", "foo")
+          .and_return("build\nruntime\ntest\ntransitive\n")
+        allow(Utils).to receive(:safe_popen_read)
+          .with("brew", "deps", "--formula", "--include-test", "foo").and_return("runtime\ntest\ntransitive\n")
+      end
+
+      it "keeps direct and transitive runtime dependencies of the installed formula" do
+        formulae.formula!("foo", args: Homebrew::Cmd::TestBotCmd.new([]).args)
+
+        expect(formulae.steps.last&.command)
+          .to eq(%w[brew uninstall --formulae --force --ignore-dependencies build test])
+      end
+
+      it "removes all temporary dependencies when the formula is not installed" do
+        allow(formulae).to receive(:bottle_reinstall_formula)
+
+        formulae.formula!("foo", args: Homebrew::Cmd::TestBotCmd.new([]).args)
+
+        expect(formulae.steps.last&.command)
+          .to eq(%w[brew uninstall --formulae --force --ignore-dependencies build runtime test transitive])
+      end
+
+      it "does not resolve runtime dependencies when there is nothing to remove" do
+        (foo.prefix/"bin").mkpath
+        allow(foo).to receive(:disabled?).and_return(true)
+
+        expect(foo).not_to receive(:runtime_formula_dependencies)
+
+        formulae.formula!("foo", args: Homebrew::Cmd::TestBotCmd.new([]).args)
+      end
     end
   end
 
