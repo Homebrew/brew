@@ -134,6 +134,22 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_some_installed_dependents([keg])).to eq([[keg], ["bar"]])
     end
 
+    specify "untrusted dependencies that match a keg being removed" do
+      dependent = setup_test_keg("bar", "1.0")
+      dependent_formula = dependent.to_formula
+      dependency = Dependency.new("untrusted/tap/dependency")
+      allow(dependent_formula).to receive(:missing_dependencies).and_return([dependency])
+      allow(dependency).to receive(:to_installed_formula).and_raise(Homebrew::UntrustedTapError)
+
+      untrusted_keg = setup_test_keg("dependency", "1.0")
+      alter_tab(untrusted_keg) { |tab| tab.tap = Tap.fetch("untrusted/tap") }
+      allow(untrusted_keg).to receive(:to_formula).and_raise(Homebrew::UntrustedTapError)
+      untrusted_keg.optlink
+
+      result = described_class.find_some_installed_dependents([untrusted_keg], formulae: [dependent_formula])
+      expect(result).to eq([[untrusted_keg], ["bar"]])
+    end
+
     specify "uninstalling dependent and dependency" do
       dependent = setup_test_keg("bar", "1.0") do
         T.bind(self, T.class_of(Formula))

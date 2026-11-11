@@ -3051,6 +3051,9 @@ class Formula
       undeclared:,
       stop_at_untrusted:,
     ).filter_map do |d|
+      next if stop_at_untrusted && !Homebrew::EnvConfig.no_require_tap_trust? &&
+              d.tap && !Homebrew::Trust.trusted?(:formula, d.name)
+
       d.to_formula
     rescue FormulaUnavailableError
       nil

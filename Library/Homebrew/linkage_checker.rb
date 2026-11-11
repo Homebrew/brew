@@ -306,6 +306,12 @@ class LinkageChecker
     sort_by_formula_full_name!(unexpected_linkage_deps)
 
     unnecessary_deps = declared_deps_full_names.reject do |full_name|
+      if @stop_at_untrusted && !Homebrew::EnvConfig.no_require_tap_trust? &&
+         Utils.tap_from_full_name(full_name) &&
+         !Homebrew::Trust.trusted?(:formula, full_name)
+        next true
+      end
+
       dependency_formula = begin
         Formula[full_name]
       rescue Homebrew::UntrustedTapError

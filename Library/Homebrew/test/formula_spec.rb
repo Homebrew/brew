@@ -2030,8 +2030,7 @@ RSpec.describe Formula do
       allow(keg).to receive_messages(runtime_dependencies: nil, find: [])
       allow(Homebrew::EnvConfig).to receive(:no_require_tap_trust?).and_return(false)
       allow(Homebrew::Trust).to receive(:trusted?).with(:formula, dependency_name).and_return(false)
-      allow(Formulary).to receive(:factory).with(dependency_name, any_args)
-                                           .and_raise(Homebrew::UntrustedTapError)
+      expect(Formulary).not_to receive(:factory).with(dependency_name, any_args)
 
       expect(formula.missing_dependencies(hide: ["dependency"]).map(&:name)).to eq([dependency_name])
     end

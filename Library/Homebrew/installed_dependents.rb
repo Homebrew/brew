@@ -49,23 +49,24 @@ module InstalledDependents
     dependents_to_check = (formulae - keg_formulae) + (Cask::Caskroom.casks - casks)
 
     dependents_to_check.each do |dependent|
-      required = case dependent
+      required_kegs = case dependent
       when Formula
         dependent.missing_dependencies(hide: keg_names).filter_map do |d|
-          d.to_installed_formula
-        rescue FormulaUnavailableError
-          nil
+          f_kegs = begin
+            formula = d.to_installed_formula
+            kegs_by_source[[formula.name, formula.tap]]
+          rescue FormulaUnavailableError
+            next
+          rescue Homebrew::UntrustedTapError
+            kegs_by_source[[Utils.name_from_full_name(d.name), d.tap]]
+          end
+          f_kegs&.max_by(&:scheme_and_version)
         end
       when Cask::Cask
         # When checking for cask dependents, we don't care about missing or non-runtime dependencies
-        CaskDependent.new(dependent).runtime_dependencies.map(&:to_installed_formula)
-      end
-
-      required_kegs = required.filter_map do |f|
-        f_kegs = kegs_by_source[[f.name, f.tap]]
-        next unless f_kegs
-
-        f_kegs.max_by(&:scheme_and_version)
+        CaskDependent.new(dependent).runtime_dependencies.map(&:to_installed_formula).filter_map do |f|
+          kegs_by_source[[f.name, f.tap]]&.max_by(&:scheme_and_version)
+        end
       end
 
       next if required_kegs.empty?
