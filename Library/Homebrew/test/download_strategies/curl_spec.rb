@@ -659,6 +659,40 @@ RSpec.describe CurlDownloadStrategy do
     end
   end
 
+  describe "#curl" do
+    subject(:strategy) do
+      Class.new(described_class) do
+        T.bind(self, T.class_of(CurlDownloadStrategy))
+        public :curl
+      end.new(url, name, version, **specs)
+    end
+
+    let(:result) { instance_double(SystemCommand::Result, assert_success!: nil) }
+
+    test_each_hash({ false => true, true => false }) do |quiet, printed|
+      it "prints curl's output: #{printed} when `quiet?` is #{quiet}, whatever `print_stdout:` says" do
+        strategy.quiet! if quiet
+        expect(strategy).to receive(:curl_with_workarounds)
+          .with(any_args, hash_including(print_stdout: printed, print_stderr: printed))
+          .and_return(result)
+
+        strategy.curl(url, print_stdout: true)
+      end
+    end
+
+    context "with mirrors" do
+      let(:specs) { { mirrors: ["https://mirror.example.com/foo.tar.gz"] } }
+
+      it "uses a 15 second connect timeout" do
+        expect(strategy).to receive(:curl_with_workarounds)
+          .with(any_args, hash_including(connect_timeout: 15))
+          .and_return(result)
+
+        strategy.curl(url, connect_timeout: 60)
+      end
+    end
+  end
+
   describe "#cached_location" do
     subject(:cached_location) { strategy.cached_location }
 

@@ -1166,6 +1166,15 @@ RSpec.describe "Utils::Curl" do
         expect(error).to equal(network_error)
       }
     end
+
+    it "keeps the resume probe's headers off stdout" do
+      allow(self).to receive(:curl)
+      expect(self).to receive(:curl_headers)
+        .with(any_args, hash_excluding(:print_stdout))
+        .and_return({ responses: [] })
+
+      curl_download(url, to: destination, try_partial: true)
+    end
   end
 
   describe "curl request deadlines" do
@@ -1238,11 +1247,11 @@ RSpec.describe "Utils::Curl" do
       destination = mktmpdir/"download.zip"
       destination.write("partial")
       allow(self).to receive(:curl_headers)
-        .with(any_args, wanted_headers: ["accept-ranges"], deadline: start_time + 3) do
+        .with(any_args, hash_including(wanted_headers: ["accept-ranges"], deadline: start_time + 3)) do
           allow(Time).to receive(:now).and_return(start_time + 2)
           { responses: [{ headers: { "accept-ranges" => "bytes" } }] }
         end
-      expect(self).to receive(:curl).with(any_args, timeout: 1)
+      expect(self).to receive(:curl).with(any_args, hash_including(timeout: 1))
 
       curl_download(url, to: destination, try_partial: true, timeout: 3)
     end
