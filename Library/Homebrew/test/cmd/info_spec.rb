@@ -3,6 +3,7 @@
 
 require "cmd/info"
 require "cmd/shared_examples/args_parse"
+require "cask/info"
 
 RSpec.describe Homebrew::Cmd::Info do
   before do
@@ -306,6 +307,36 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  it "loads installed casks only once for a verbose inventory" do
+    casks = %w[example example@dev].map do |token|
+      cask = Cask::Cask.new(token) { version "1.0" }
+      (Cask::Caskroom.path/token/"1.0").mkpath
+      allow(cask).to receive_messages(installed?: true, installed_version: "1.0", outdated?: false)
+      cask
+    end
+    allow(Cask::Tab).to receive(:for_cask).and_return(Cask::Tab.empty)
+    allow(Cask::Info).to receive(:repo_url).and_return(nil)
+    expect(Cask::Caskroom).to receive(:casks).once.and_return(casks)
+
+    expect { described_class.new(["--installed", "--cask", "--verbose"]).run }.to output(<<~EOS).to_stdout
+      ==> example: 1.0
+      Installed (as dependency)
+      ==> Installed Versions
+      example     1.0 (0B)
+        Caskroom: #{Cask::Caskroom.path}/example/1.0
+      example@dev 1.0 (0B)
+        Caskroom: #{Cask::Caskroom.path}/example@dev/1.0
+
+      ==> example@dev: 1.0
+      Installed (as dependency)
+      ==> Installed Versions
+      example     1.0 (0B)
+        Caskroom: #{Cask::Caskroom.path}/example/1.0
+      example@dev 1.0 (0B)
+        Caskroom: #{Cask::Caskroom.path}/example@dev/1.0
+    EOS
+  end
+
   it "prints quiet formula information in the slim inventory format" do
     info = described_class.new([])
     formula = formula("testball") do
@@ -447,6 +478,8 @@ RSpec.describe Homebrew::Cmd::Info do
     allow(info).to receive(:github_info).with(test_formula).and_return("https://example.com/testball.rb")
 
     expected_output = <<~EOS
+      ==> testball: stable 1.0
+      A test formula
       https://example.com/testball
       Deprecated!
       Replacement:
@@ -455,8 +488,9 @@ RSpec.describe Homebrew::Cmd::Info do
       Conflicts with:
         other
       Not installed
+      From: https://example.com/testball.rb
     EOS
-    expect { info.info_formula(test_formula) }.to output(Regexp.new(Regexp.escape(expected_output))).to_stdout
+    expect { info.info_formula(test_formula) }.to output(expected_output).to_stdout
   end
 
   it "shows build dependencies for an uninstalled formula without a bottle" do
@@ -467,6 +501,8 @@ RSpec.describe Homebrew::Cmd::Info do
       depends_on "builddep" => :build
     end
     allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    requirement = OS.mac? ? MacOSRequirement.new : LinuxRequirement.new
+    allow(formula).to receive(:requirements).and_return([requirement])
 
     expect { info.info_formula(formula) }
       .to output(/Build \(1\): builddep/).to_stdout
@@ -2013,6 +2049,8 @@ RSpec.describe Homebrew::Cmd::Info do
       main_tab = Tab.empty
       main_tab.tabfile = main_keg/AbstractTab::FILENAME
       main_tab.write
+      (HOMEBREW_LINKED_KEGS/"testball").parent.mkpath
+      FileUtils.ln_s(main_keg, HOMEBREW_LINKED_KEGS/"testball")
 
       sibling_keg = HOMEBREW_CELLAR/"testball@0.9/0.9"
       sibling_keg.mkpath
@@ -2020,16 +2058,21 @@ RSpec.describe Homebrew::Cmd::Info do
       sibling_tab.tabfile = sibling_keg/AbstractTab::FILENAME
       sibling_tab.write
 
-      allow(main_formula).to receive(:versioned_formulae).and_return([versioned])
+      allow(main_formula).to receive_messages(versioned_formulae: [versioned], outdated?: false)
+      allow(versioned).to receive(:outdated?).and_return(false)
       allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
+      allow_any_instance_of(Keg).to receive(:abv).and_return("1 file, 1KB")
 
       expect { info.info_formula(main_formula) }
-        .to output(Regexp.new(
-                     "==> Installed Versions\n" \
-                     ".*testball\\b.*\\s+1\\.0\\s+\\(.*\\)\n" \
-                     ".*testball@0\\.9\\b.*\\s+0\\.9\\s+\\(",
-                   )).to_stdout
-        .and not_to_output.to_stderr
+        .to output(<<~EOS).to_stdout
+          ==> testball: stable 1.0
+          Installed (as dependency)
+          From: https://example.com/testball.rb
+          ==> Installed Versions
+          testball     1.0 (1 file, 1KB) [Linked]
+          testball@0.9 0.9 (1 file, 1KB)
+        EOS
+                          .and not_to_output.to_stderr
     end
 
     it "shows installed → latest only on the newest installed keg of an outdated formula" do
@@ -2050,11 +2093,17 @@ RSpec.describe Homebrew::Cmd::Info do
 
       allow(main_formula).to receive_messages(versioned_formulae: [], outdated?: true)
       allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
+      allow_any_instance_of(Keg).to receive(:abv).and_return("1 file, 1KB")
 
       expect { info.info_formula(main_formula) }
-        .to output(/==> Installed Versions\n.*testball\b.*\s+1\.0 → 2\.0\s+\(/).to_stdout
-        .and not_to_output(/0\.9 →/).to_stdout
-        .and not_to_output.to_stderr
+        .to output(<<~EOS).to_stdout
+          ==> testball: 1.0 → stable 2.0
+          Installed (as dependency)
+          From: https://example.com/testball.rb
+          ==> Installed Versions
+          testball 1.0 → 2.0 (1 file, 1KB)
+        EOS
+                          .and not_to_output.to_stderr
     end
 
     it "hides older non-linked kegs by default" do
@@ -2078,41 +2127,6 @@ RSpec.describe Homebrew::Cmd::Info do
       expect { info.info_formula(main_formula) }
         .to output(/==> Installed Versions\n.*testball\b.*\s+1\.0\s+\(/).to_stdout
         .and not_to_output(/\s+0\.9\s+\(/).to_stdout
-        .and not_to_output.to_stderr
-    end
-
-    it "marks the currently linked version with `*`" do
-      info = described_class.new([])
-      main_formula = formula("testball") do
-        T.bind(self, T.class_of(Formula))
-        url "https://brew.sh/testball-1.0.tar.gz"
-      end
-      versioned = formula("testball@0.9") do
-        T.bind(self, T.class_of(Formula))
-        url "https://brew.sh/testball-0.9.tar.gz"
-        keg_only :versioned_formula
-      end
-
-      main_keg = HOMEBREW_CELLAR/"testball/1.0"
-      main_keg.mkpath
-      main_tab = Tab.empty
-      main_tab.tabfile = main_keg/AbstractTab::FILENAME
-      main_tab.write
-      (HOMEBREW_LINKED_KEGS/"testball").parent.mkpath
-      FileUtils.ln_s(main_keg, HOMEBREW_LINKED_KEGS/"testball")
-
-      sibling_keg = HOMEBREW_CELLAR/"testball@0.9/0.9"
-      sibling_keg.mkpath
-      sibling_tab = Tab.empty
-      sibling_tab.tabfile = sibling_keg/AbstractTab::FILENAME
-      sibling_tab.write
-
-      allow(main_formula).to receive_messages(versioned_formulae: [versioned], linked?: true,
-                                              linked_version: PkgVersion.parse("1.0"))
-      allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
-
-      expect { info.info_formula(main_formula) }
-        .to output(/.*testball\b.*\s+1\.0\s+\(.*\)\s+\[Linked\]/).to_stdout
         .and not_to_output.to_stderr
     end
 
@@ -2217,43 +2231,27 @@ RSpec.describe Homebrew::Cmd::Info do
         tab.write
       end
 
-      allow(main_formula).to receive(:versioned_formulae).and_return([])
+      allow(main_formula).to receive_messages(versioned_formulae: [], outdated?: false)
       allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
+      allow_any_instance_of(Keg).to receive(:abv).and_return("1 file, 1KB")
 
       expect { info.info_formula(main_formula) }
-        .to output(Regexp.new(
-                     "==> Installed Kegs and Versions\n" \
-                     ".*testball\\b.*\\s+1\\.0\\b.*\\(.*\\)\n" \
-                     "(?: .*\n)*" \
-                     ".*testball\\b.*\\s+0\\.10\\s+\\(.*\\)\n" \
-                     "(?: .*\n)*" \
-                     ".*testball\\b.*\\s+0\\.9\\s+\\(",
-                   )).to_stdout
-        .and not_to_output.to_stderr
-    end
-
-    it "shows the Cellar path of every keg with --verbose" do
-      info = described_class.new(["--verbose"])
-      main_formula = formula("testball") do
-        T.bind(self, T.class_of(Formula))
-        url "https://brew.sh/testball-1.0.tar.gz"
-      end
-
-      ["0.9", "1.0"].each { |version| (HOMEBREW_CELLAR/"testball/#{version}").mkpath }
-
-      allow(main_formula).to receive(:versioned_formulae).and_return([])
-      allow(info).to receive(:github_info).with(main_formula).and_return("https://example.com/testball.rb")
-
-      expect { info.info_formula(main_formula) }
-        .to output(Regexp.new(
-                     ".*testball\\b.*\\s+1\\.0\\s+\\(.*\\)\n  " \
-                     "Cellar: #{Regexp.escape((HOMEBREW_CELLAR/"testball/1.0").to_s)}\n  " \
-                     "Built from source\n" \
-                     ".*testball\\b.*\\s+0\\.9\\s+\\(.*\\)\n  " \
-                     "Cellar: #{Regexp.escape((HOMEBREW_CELLAR/"testball/0.9").to_s)}\n  " \
-                     "Built from source\n",
-                   )).to_stdout
-        .and not_to_output.to_stderr
+        .to output(<<~EOS).to_stdout
+          ==> testball: stable 1.0
+          Installed (as dependency)
+          From: https://example.com/testball.rb
+          ==> Installed Kegs and Versions
+          testball 1.0  (1 file, 1KB)
+            Cellar: #{HOMEBREW_CELLAR}/testball/1.0
+            Built from source
+          testball 0.10 (1 file, 1KB)
+            Cellar: #{HOMEBREW_CELLAR}/testball/0.10
+            Built from source
+          testball 0.9  (1 file, 1KB)
+            Cellar: #{HOMEBREW_CELLAR}/testball/0.9
+            Built from source
+        EOS
+                          .and not_to_output.to_stderr
     end
 
     it "omits the section when nothing in the family is installed" do

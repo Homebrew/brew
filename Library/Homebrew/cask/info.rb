@@ -10,8 +10,9 @@ module Cask
   class Info
     extend ::Utils::Output::Mixin
 
-    sig { params(cask: Cask, verbose: T::Boolean).returns(String) }
-    def self.get_info(cask, verbose: false)
+    # TODO: Remove installed_casks by loading only related casks, including renamed and unavailable ones.
+    sig { params(cask: Cask, verbose: T::Boolean, installed_casks: T.nilable(T::Array[Cask])).returns(String) }
+    def self.get_info(cask, verbose: false, installed_casks: nil)
       require "cask/installer"
 
       installed = cask.installed?
@@ -27,7 +28,7 @@ module Cask
         auto_updates:        cask.auto_updates == true,
         installation_status: [installation_info(cask, installed:)],
         source_url:          repo_url(cask),
-        installed_versions:  installed_section_rows(cask),
+        installed_versions:  installed_section_rows(cask, installed_casks:),
         verbose:,
       )}\n"
       deps = deps_info(cask, mark_uninstalled: installed)
@@ -53,9 +54,9 @@ module Cask
       output
     end
 
-    sig { params(cask: Cask, args: Homebrew::Cmd::Info::Args).void }
-    def self.info(cask, args:)
-      puts get_info(cask, verbose: args.verbose?)
+    sig { params(cask: Cask, args: Homebrew::Cmd::Info::Args, installed_casks: T.nilable(T::Array[Cask])).void }
+    def self.info(cask, args:, installed_casks: nil)
+      puts get_info(cask, verbose: args.verbose?, installed_casks:)
 
       return unless cask.tap&.core_cask_tap?
 
@@ -71,10 +72,13 @@ module Cask
       ::Utils::InfoDisplay.installation_status(Tab.for_cask(cask))
     end
 
-    sig { params(cask: Cask).returns(T::Array[::Utils::InfoDisplay::InstalledVersion]) }
-    def self.installed_section_rows(cask)
+    sig {
+      params(cask: Cask, installed_casks: T.nilable(T::Array[Cask]))
+        .returns(T::Array[::Utils::InfoDisplay::InstalledVersion])
+    }
+    def self.installed_section_rows(cask, installed_casks: nil)
       base_token = cask.token.split("@", 2).fetch(0)
-      related_casks = [*Caskroom.casks, cask].uniq(&:full_name).select do |other|
+      related_casks = [*(installed_casks || Caskroom.casks), cask].uniq(&:token).select do |other|
         other.token == base_token || other.token.start_with?("#{base_token}@")
       end
       related_casks.sort_by(&:full_name).filter_map do |installed_cask|
@@ -89,11 +93,7 @@ module Cask
         else
           ""
         end
-        details = if path_exists
-          ["Caskroom: #{versioned_staged_path}"]
-        else
-          ["#{versioned_staged_path} (#{Formatter.error("does not exist")})"]
-        end
+        details = path_exists ? ["Caskroom: #{versioned_staged_path}"] : []
         if (tab = Tab.for_cask(installed_cask)).tabfile&.exist?
           details << tab.to_s
         end
@@ -109,6 +109,7 @@ module Cask
           size:,
           linked: false,
           details:,
+          warning: ("#{versioned_staged_path} (#{Formatter.error("does not exist")})" unless path_exists),
         )
       end
     end

@@ -98,6 +98,7 @@ module Homebrew
 
       sig { override.void }
       def run
+        @installed_casks = T.let(nil, T.nilable(T::Array[Cask::Cask]))
         if args.sizes?
           if args.no_named?
             print_sizes
@@ -126,9 +127,10 @@ module Homebrew
         elsif (json = args.json)
           print_json(json, args.no_named? && !args.installed?)
         elsif args.installed?
+          @installed_casks = Cask::Caskroom.casks unless args.formula?
           T.let([
             *(args.cask? ? [] : Formula.installed.sort),
-            *(args.formula? ? [] : Cask::Caskroom.casks.sort_by(&:full_name)),
+            *(@installed_casks || []).sort_by(&:full_name),
           ], T::Array[T.any(Formula, Cask::Cask)]).each_with_index do |formula_or_cask, i|
             puts unless i.zero?
 
@@ -734,7 +736,8 @@ module Homebrew
       def info_cask(cask)
         require "cask/info"
 
-        Cask::Info.info(cask, args:)
+        @installed_casks ||= Cask::Caskroom.casks
+        Cask::Info.info(cask, args:, installed_casks: @installed_casks)
       end
 
       sig { params(cask: Cask::Cask).void }
@@ -827,5 +830,3 @@ module Homebrew
     end
   end
 end
-
-require "extend/os/cmd/info"

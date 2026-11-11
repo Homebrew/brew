@@ -15,8 +15,9 @@ Additional commands, including external commands, can of course be written to pr
 To enable users to do rich queries without the problems above, Homebrew provides the `brew info` command.
 
 For casks, the human-readable `brew info` output groups apps, fonts, manpages and plugins under their own headings.
-Other install artifacts appear under Artifacts, and binaries and command wrappers appear under Binaries with `--verbose`.
+Other installation artefacts appear under Artifacts, and binaries and command wrappers appear under Binaries with `--verbose`.
 Installed version paths and receipt details are also shown with `--verbose`.
+Missing installed version paths are reported even without `--verbose`.
 
 ## `brew info --json`
 
