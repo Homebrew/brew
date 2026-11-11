@@ -201,7 +201,6 @@ RSpec.describe InstalledDependents do
       dependent_formula = dependent.to_formula
       dependency = Dependency.new("dependency")
       allow(dependent_formula).to receive(:missing_dependencies).and_return([dependency])
-      allow(dependency).to receive(:to_installed_formula).and_raise(Homebrew::UntrustedTapError)
 
       first_tap = Tap.fetch("untrusted/first")
       second_tap = Tap.fetch("untrusted/second")
@@ -210,7 +209,7 @@ RSpec.describe InstalledDependents do
         instance_double(Formulary::FormulaLoader, name: "dependency", tap: second_tap),
       ]
       allow(Formulary).to receive(:loader_for).and_call_original
-      allow(Formulary).to receive(:loader_for).with("dependency", warn: false)
+      allow(Formulary).to receive(:loader_for).with("dependency", any_args)
                                               .and_raise(TapFormulaAmbiguityError.new("dependency", loaders))
 
       first_keg = setup_test_keg("dependency-first", "1.0")
@@ -223,6 +222,28 @@ RSpec.describe InstalledDependents do
 
       result = described_class.find_some_installed_dependents([first_keg, second_keg], formulae: [dependent_formula])
       expect(result).to eq([[first_keg, second_keg], ["bar"]])
+    end
+
+    specify "does not match an untrusted dependency to a keg from another tap" do
+      dependent = setup_test_keg("bar", "1.0")
+      dependent_formula = dependent.to_formula
+      dependency = Dependency.new("untrusted/first/dependency")
+      allow(dependent_formula).to receive(:missing_dependencies).and_return([dependency])
+      allow(dependency).to receive(:to_installed_formula).and_raise(Homebrew::UntrustedTapError)
+
+      first_tap = Tap.fetch("untrusted/first")
+      second_tap = Tap.fetch("untrusted/second")
+      loader = instance_double(Formulary::FormulaLoader, name: "dependency", tap: first_tap)
+      allow(Formulary).to receive(:loader_for).and_call_original
+      allow(Formulary).to receive(:loader_for).with("untrusted/first/dependency", warn: false)
+                                              .and_return(loader)
+
+      other_keg = setup_test_keg("dependency", "1.0")
+      alter_tab(other_keg) { |tab| tab.tap = second_tap }
+      allow(other_keg).to receive(:to_formula).and_raise(Homebrew::UntrustedTapError)
+      other_keg.optlink
+
+      expect(described_class.find_some_installed_dependents([other_keg], formulae: [dependent_formula])).to be_nil
     end
 
     specify "uninstalling dependent and dependency" do

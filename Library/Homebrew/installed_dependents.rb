@@ -56,18 +56,30 @@ module InstalledDependents
             d.to_installed_formula
           rescue FormulaUnavailableError
             next []
-          rescue Homebrew::UntrustedTapError
-            loaders = begin
-              [Formulary.loader_for(d.name, warn: false)]
-            rescue TapFormulaAmbiguityError => e
+          rescue Homebrew::UntrustedTapError, TapFormulaAmbiguityError => e
+            loaders = if e.is_a?(TapFormulaAmbiguityError)
               e.loaders
+            else
+              begin
+                [Formulary.loader_for(d.name, warn: false)]
+              rescue TapFormulaAmbiguityError => ambiguity
+                ambiguity.loaders
+              end
             end
             matching_kegs = loaders.filter_map do |loader|
               kegs_by_source[[loader.name, loader.tap]]&.max_by(&:scheme_and_version)
             end
             if matching_kegs.empty?
-              matching_kegs = kegs_by_source.filter_map do |(name, _tap), source_kegs|
-                source_kegs.max_by(&:scheme_and_version) if name == Utils.name_from_full_name(d.name)
+              fallback_names = [Utils.name_from_full_name(d.name)]
+              fallback_names.concat(loaders.map { |loader| Utils.name_from_full_name(loader.name) })
+              known_taps = loaders.filter_map(&:tap)
+              dependency_tap = d.tap
+              known_taps << dependency_tap if dependency_tap
+              matching_kegs = kegs_by_source.filter_map do |(name, tap), source_kegs|
+                next unless fallback_names.include?(name)
+                next if tap && known_taps.any? && known_taps.exclude?(tap)
+
+                source_kegs.max_by(&:scheme_and_version)
               end
             end
             next matching_kegs

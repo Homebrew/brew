@@ -3106,12 +3106,18 @@ class Formula
     return [] unless any_installed_keg
 
     runtime_dependencies(stop_at_untrusted: true).filter_map do |dep|
-      # Use base name to check the cellar directly, avoiding Formulary.resolve.
-      # A dep is "missing" if it's in the hide list (pretend uninstalled) or
-      # genuinely not installed in the cellar.
-      base_name = Utils.name_from_full_name(dep.name)
-      next if hide.exclude?(base_name) && ((HOMEBREW_CELLAR/base_name).directory? ||
-                                           (HOMEBREW_PREFIX/"opt"/base_name).directory?)
+      # Use names and loader metadata to check the cellar without loading formulae.
+      dependency_names = [Utils.name_from_full_name(dep.name)]
+      if dep.untrusted?
+        dependency_names.concat(dep.formula_loaders.map { |loader| Utils.name_from_full_name(loader.name) })
+      end
+      dependency_names.uniq!
+
+      hidden = dependency_names.any? { |name| hide.include?(name) }
+      installed = dependency_names.any? do |name|
+        (HOMEBREW_CELLAR/name).directory? || (HOMEBREW_PREFIX/"opt"/name).directory?
+      end
+      next if !hidden && installed
 
       dep
     end
