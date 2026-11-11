@@ -449,8 +449,8 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         expect(generate_matrix.filter_runners(c))
           .to eq({
             { arch: :arm, name: "macos-15", symbol: :sequoia }      => 0.0,
-            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 1.0,
-            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 0.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 0.0,
+            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 1.0,
             { arch: :arm, name: arm_linux_runner, symbol: :linux }  => 1.0,
             { arch: :intel, name: "ubuntu-latest", symbol: :linux } => 1.0,
           })
@@ -458,8 +458,8 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         expect(generate_matrix.filter_runners(c_app_only_macos))
           .to eq({
             { arch: :arm, name: "macos-15", symbol: :sequoia }      => 0.0,
-            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 1.0,
-            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 0.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 0.0,
+            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 1.0,
             { arch: :arm, name: arm_linux_runner, symbol: :linux }  => 1.0,
             { arch: :intel, name: "ubuntu-latest", symbol: :linux } => 1.0,
           })
@@ -485,8 +485,8 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         expect(generate_matrix.filter_runners(c_app))
           .to eq({
             { arch: :arm, name: "macos-15", symbol: :sequoia }     => 0.0,
-            { arch: :arm, name: "macos-26", symbol: :tahoe }       => 1.0,
-            { arch: :arm, name: "xcode-27", symbol: :golden_gate } => 0.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }       => 0.0,
+            { arch: :arm, name: "xcode-27", symbol: :golden_gate } => 1.0,
           })
       end
     end
@@ -495,8 +495,8 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
       it "filters macOS runners by the minimum and maximum macOS requirements" do
         expect(generate_matrix.filter_runners(c_minimum_macos))
           .to eq({
-            { arch: :arm, name: "macos-26", symbol: :tahoe }       => 1.0,
-            { arch: :arm, name: "xcode-27", symbol: :golden_gate } => 0.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }       => 0.0,
+            { arch: :arm, name: "xcode-27", symbol: :golden_gate } => 1.0,
           })
 
         expect(generate_matrix.filter_runners(c_maximum_macos))
@@ -505,7 +505,7 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         expect(generate_matrix.filter_runners(c_minimum_and_maximum_macos))
           .to eq({
             { arch: :arm, name: "macos-15", symbol: :sequoia } => 0.0,
-            { arch: :arm, name: "macos-26", symbol: :tahoe }   => 1.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }   => 0.0,
           })
 
         # A requirement excluding all runners must skip macOS, not test them all.
@@ -534,8 +534,8 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         expect(generate_matrix.filter_runners(c_on_system))
           .to eq({
             { arch: :arm, name: "macos-15", symbol: :sequoia }      => 0.0,
-            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 1.0,
-            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 0.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 0.0,
+            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 1.0,
             { arch: :arm, name: arm_linux_runner, symbol: :linux }  => 1.0,
             { arch: :intel, name: "ubuntu-latest", symbol: :linux } => 1.0,
           })
@@ -550,8 +550,8 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         expect(generate_matrix.filter_runners(c_on_linux_depends_on_intel))
           .to eq({
             { arch: :arm, name: "macos-15", symbol: :sequoia }      => 0.0,
-            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 1.0,
-            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 0.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 0.0,
+            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 1.0,
             { arch: :intel, name: "ubuntu-latest", symbol: :linux } => 1.0,
           })
 
@@ -564,8 +564,8 @@ RSpec.describe Homebrew::DevCmd::GenerateCaskCiMatrix do
         expect(generate_matrix.filter_runners(c_on_macos_depends_on_arm))
           .to eq({
             { arch: :arm, name: "macos-15", symbol: :sequoia }      => 0.0,
-            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 1.0,
-            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 0.0,
+            { arch: :arm, name: "macos-26", symbol: :tahoe }        => 0.0,
+            { arch: :arm, name: "xcode-27", symbol: :golden_gate }  => 1.0,
             { arch: :arm, name: arm_linux_runner, symbol: :linux }  => 1.0,
             { arch: :intel, name: "ubuntu-latest", symbol: :linux } => 1.0,
           })
