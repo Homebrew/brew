@@ -4,36 +4,50 @@
 require "json"
 require "cmd/info"
 require "utils/output"
+require "utils/info_display"
 
 module Cask
   class Info
     extend ::Utils::Output::Mixin
 
-    sig { params(cask: Cask).returns(String) }
-    def self.get_info(cask)
+    sig { params(cask: Cask, verbose: T::Boolean).returns(String) }
+    def self.get_info(cask, verbose: false)
       require "cask/installer"
 
       installed = cask.installed?
-      output = "#{title_info(cask, installed:)}\n"
-      output << "#{cask.desc}\n" if cask.desc
-      output << "#{Formatter.url(cask.homepage)}\n" if cask.homepage
-      deprecate_disable = DeprecateDisable.message(cask)
-      if deprecate_disable.present?
-        deprecate_disable.tap { |message| message[0] = message[0].upcase }
-        output << "#{deprecate_disable}\n"
-      end
-      output << "#{installation_info(cask, installed:)}\n"
-      metadata = Homebrew::Cmd::Info.metadata_lines(cask)
-      output << "#{metadata.join("\n")}\n" if metadata.present?
-      repo = repo_info(cask)
-      output << "#{repo}\n" if repo
+      outdated = installed && cask.outdated?
+      output = "#{::Utils::InfoDisplay.package_summary(
+        formula_or_cask:     cask,
+        name:                cask.token,
+        display_names:       cask.name,
+        version:             cask.version.to_s,
+        installed_version:   (cask.installed_version.presence if outdated),
+        installed:,
+        outdated:,
+        auto_updates:        cask.auto_updates == true,
+        installation_status: [installation_info(cask, installed:)],
+        source_url:          repo_url(cask),
+        installed_versions:  installed_section_rows(cask),
+        verbose:,
+      )}\n"
       deps = deps_info(cask, mark_uninstalled: installed)
       output << deps if deps
-      requirements = requirements_info(cask)
-      output << requirements if requirements
+      require "cask_dependent"
+      requirements = CaskDependent.new(cask).requirements.grep_v(CaskDependent::Requirement)
+      if requirements.present?
+        requirements_section = ::Utils::InfoDisplay.requirements_section(
+          requirements, omit_macos_linux: !cask.supports_linux?
+        )
+        output << "#{requirements_section}\n" if requirements_section
+      end
       language = language_info(cask)
       output << language if language
-      output << "#{artifact_info(cask)}\n"
+      artifacts = artifact_info(cask)
+      output << "#{artifacts}\n" if artifacts
+      if verbose
+        binaries = cask.artifacts.grep(Artifact::Binary).map { |binary| binary.target.basename.to_s }
+        output << "#{::Utils::InfoDisplay.binaries_section(binaries).chomp}\n" if binaries.present?
+      end
       caveats = Installer.caveats(cask)
       output << caveats if caveats
       output
@@ -41,7 +55,7 @@ module Cask
 
     sig { params(cask: Cask, args: Homebrew::Cmd::Info::Args).void }
     def self.info(cask, args:)
-      puts get_info(cask)
+      puts get_info(cask, verbose: args.verbose?)
 
       return unless cask.tap&.core_cask_tap?
 
@@ -50,49 +64,53 @@ module Cask
     end
 
     sig { params(cask: Cask, installed: T::Boolean).returns(String) }
-    def self.title_info(cask, installed:)
-      name_with_status = pretty_install_status(
-        cask.token,
-        installed:,
-        outdated:    installed && cask.outdated?,
-        deprecated:  cask.deprecated?,
-        disabled:    cask.disabled?,
-        can_install: cask.valid_platform? && !cask.disabled?,
-        bold:        true,
-      )
-      title = oh1_title(name_with_status).to_s
-      title += " (#{cask.name.join(", ")})" unless cask.name.empty?
-
-      version = if installed && cask.outdated? && cask.installed_version.present?
-        "#{cask.installed_version} → #{cask.version}"
-      else
-        cask.version.to_s
-      end
-
-      title += ": #{version}"
-      title += " (auto_updates)" if cask.auto_updates
-      title
-    end
-
-    sig { params(cask: Cask, installed: T::Boolean).returns(String) }
     def self.installation_info(cask, installed:)
       return "Not installed" unless installed
-      return "No installed version" unless (installed_version = cask.installed_version).present?
+      return "No installed version" unless cask.installed_version.present?
 
-      versioned_staged_path = cask.caskroom_path.join(installed_version)
-      tab = Tab.for_cask(cask)
+      ::Utils::InfoDisplay.installation_status(Tab.for_cask(cask))
+    end
 
-      unless versioned_staged_path.exist?
-        return "#{Homebrew::Cmd::Info.installation_status(tab)}\n" \
-               "#{versioned_staged_path} (#{Formatter.error("does not exist")})\n"
+    sig { params(cask: Cask).returns(T::Array[::Utils::InfoDisplay::InstalledVersion]) }
+    def self.installed_section_rows(cask)
+      base_token = cask.token.split("@", 2).fetch(0)
+      related_casks = [*Caskroom.casks, cask].uniq(&:full_name).select do |other|
+        other.token == base_token || other.token.start_with?("#{base_token}@")
       end
+      related_casks.sort_by(&:full_name).filter_map do |installed_cask|
+        installed_version = installed_cask.installed_version
+        next unless installed_version.present?
 
-      path_details = versioned_staged_path.children.sum(&:disk_usage)
+        versioned_staged_path = installed_cask.caskroom_path.join(installed_version)
+        path_exists = versioned_staged_path.exist?
+        size = if path_exists
+          path_details = versioned_staged_path.children.sum(&:disk_usage)
+          "(#{Formatter.disk_usage_readable(path_details)})"
+        else
+          ""
+        end
+        details = if path_exists
+          ["Caskroom: #{versioned_staged_path}"]
+        else
+          ["#{versioned_staged_path} (#{Formatter.error("does not exist")})"]
+        end
+        if (tab = Tab.for_cask(installed_cask)).tabfile&.exist?
+          details << tab.to_s
+        end
 
-      info = [Homebrew::Cmd::Info.installation_status(tab)]
-      info << "#{versioned_staged_path} (#{Formatter.disk_usage_readable(path_details)})"
-      info << "  #{tab}" if tab.tabfile&.exist?
-      info.join("\n")
+        outdated = installed_cask.outdated?
+        name = pretty_install_status(installed_cask.full_name, installed: true, outdated:)
+        version = installed_version
+        latest = installed_cask.version.to_s
+        version = "#{version} → #{latest}" if outdated && latest != version
+        ::Utils::InfoDisplay::InstalledVersion.new(
+          name:,
+          version:,
+          size:,
+          linked: false,
+          details:,
+        )
+      end
     end
 
     sig { params(cask: Cask, mark_uninstalled: T::Boolean).returns(T.nilable(String)) }
@@ -122,69 +140,25 @@ module Cask
 
       formula_dependencies = T.let(Set.new, T::Set[String])
       cask_dependencies = T.let(Set.new, T::Set[String])
-      Homebrew::Cmd::Info.collect_cask_dependency_names(cask, formula_dependencies, cask_dependencies,
-                                                        Set[cask.token])
+      ::Utils::InfoDisplay.collect_cask_dependency_names(cask, formula_dependencies, cask_dependencies,
+                                                         Set[cask.token])
       recursive_count = formula_dependencies.count + cask_dependencies.count
-      lines = T.let(
-        [ohai_title("Dependencies").to_s, "Required (#{all_deps.count}): #{all_deps.join(", ")}"],
-        T::Array[String],
-      )
+      lines = ["Required (#{all_deps.count}): #{all_deps.join(", ")}"]
       unless recursive_count.zero?
         installed_count = formula_dependencies.count do |name|
           Formula.rack_installed?(name)
         end + cask_dependencies.count do |name|
           (Caskroom.path/name).directory?
         end
-        lines << "Recursive Runtime (#{recursive_count}): " \
-                 "#{Homebrew::Cmd::Info.dependency_status_counts(installed_count, recursive_count)}"
+        lines << ::Utils::InfoDisplay.recursive_runtime_line(installed_count, recursive_count)
       end
 
-      "#{lines.join("\n")}\n"
+      "#{::Utils::InfoDisplay.section("Dependencies", lines)}\n"
     end
 
     sig { params(dep: String, installed: T::Boolean, mark_uninstalled: T::Boolean).returns(String) }
     def self.decorate_dependency(dep, installed:, mark_uninstalled: true)
       pretty_install_status(dep, installed:, mark_uninstalled:)
-    end
-
-    sig { params(cask: Cask, mark_uninstalled: T::Boolean).returns(T.nilable(String)) }
-    def self.requirements_info(cask, mark_uninstalled: true)
-      require "cask_dependent"
-
-      requirements = CaskDependent.new(cask).requirements.grep_v(CaskDependent::Requirement)
-      return if requirements.empty?
-
-      supports_linux = cask.supports_linux?
-      output = "#{ohai_title("Requirements")}\n"
-      %w[build required recommended optional].each do |type|
-        reqs = case type
-        when "build"
-          requirements.select(&:build?)
-        when "required"
-          requirements.select(&:required?)
-        when "recommended"
-          requirements.select(&:recommended?)
-        when "optional"
-          requirements.select(&:optional?)
-        else
-          []
-        end
-        next if reqs.empty?
-
-        output << "#{type.capitalize}: #{reqs.map do |requirement|
-          requirement_s = if requirement.is_a?(MacOSRequirement) && !supports_linux
-            requirement.display_s.delete_suffix(" (or Linux)")
-          else
-            requirement.display_s
-          end
-          pretty_install_status(
-            requirement_s,
-            installed:        requirement.satisfied?,
-            mark_uninstalled:,
-          )
-        end.join(", ")}\n"
-      end
-      output
     end
 
     sig { params(cask: Cask).returns(T.nilable(String)) }
@@ -198,28 +172,46 @@ module Cask
     end
 
     sig { params(cask: Cask).returns(T.nilable(String)) }
-    def self.repo_info(cask)
+    def self.repo_url(cask)
       return unless (tap = cask.tap)
 
-      url = if tap.custom_remote? && !tap.remote.nil?
+      if tap.custom_remote? && !tap.remote.nil?
         tap.remote
       else
         "#{tap.default_remote}/blob/HEAD/#{tap.relative_cask_path(cask.token)}"
       end
-
-      "From: #{Formatter.url(url)}"
     end
 
-    sig { params(cask: Cask).returns(String) }
+    sig { params(cask: Cask).returns(T.nilable(String)) }
     def self.artifact_info(cask)
-      artifact_output = ohai_title("Artifacts").dup
+      groups = T.let({}, T::Hash[String, T::Array[String]])
       cask.artifacts.each do |artifact|
         next unless artifact.respond_to?(:install_phase)
         next unless DSL::ORDINARY_ARTIFACT_CLASSES.include?(artifact.class)
+        next if artifact.is_a?(Artifact::Binary)
 
-        artifact_output << "\n" << artifact.to_s
+        heading, detail = case artifact
+        when Artifact::App, Artifact::AppImage
+          ["Apps", artifact.summarize]
+        when Artifact::Font
+          ["Fonts", artifact.summarize]
+        when Artifact::Manpage
+          ["Manpages", artifact.summarize]
+        when Artifact::AudioUnitPlugin, Artifact::Colorpicker, Artifact::InternetPlugin, Artifact::Qlplugin,
+             Artifact::VstPlugin, Artifact::Vst3Plugin
+          ["Plugins", artifact.to_s]
+        else
+          ["Artifacts", artifact.to_s]
+        end
+        (groups[heading] ||= []) << detail
       end
-      artifact_output.freeze
+      return if groups.empty?
+
+      %w[Apps Fonts Manpages Plugins Artifacts].filter_map do |heading|
+        next unless (artifacts = groups[heading])
+
+        [ohai_title(heading), *artifacts].join("\n")
+      end.join("\n")
     end
   end
 end

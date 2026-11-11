@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "utils/browser"
+require "utils/info_display"
 
 require "abstract_command"
 require "missing_formula"
@@ -21,6 +22,8 @@ require "api"
 module Homebrew
   module Cmd
     class Info < AbstractCommand
+      extend ::Utils::Output::Mixin
+
       class NameSize < T::Struct
         const :name, String
         const :size, Integer
@@ -154,62 +157,6 @@ module Homebrew
         end
       end
 
-      sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(T::Array[String]) }
-      def self.metadata_lines(formula_or_cask)
-        return [] unless $stdout.tty?
-
-        case formula_or_cask
-        when Formula
-          formula_metadata_lines(formula_or_cask)
-        when Cask::Cask
-          if formula_or_cask.pinned?
-            pinned = "Pinned: #{formula_or_cask.pinned_version}"
-            if (pinned_time = pin_path_mtime(formula_or_cask.pin_path))
-              pinned << " on #{formatted_time(pinned_time)}"
-            end
-            [pinned]
-          else
-            []
-          end
-        else
-          T.absurd(formula_or_cask)
-        end
-      end
-
-      sig { params(tab: T.any(Tab, Cask::Tab)).returns(String) }
-      def self.installation_status(tab)
-        tab.installed_on_request ? "Installed (on request)" : "Installed (as dependency)"
-      end
-
-      sig { params(tab: T.any(Tab, Cask::Tab)).returns(String) }
-      def self.installation_reason(tab)
-        return "-" unless tab.installed_on_request_present?
-
-        tab.installed_on_request ? "on request" : "dependency"
-      end
-
-      sig { params(version: String, tab: T.any(Tab, Cask::Tab)).returns(String) }
-      def self.installation_summary(version, tab)
-        reason = installation_reason(tab)
-
-        "Installed: #{version}#{" (#{reason})" if reason != "-"}"
-      end
-
-      sig { params(requirement: Requirement).returns(T::Boolean) }
-      def self.requirement_for_other_os?(requirement)
-        requirement.instance_of?(MacOSRequirement) || requirement.instance_of?(LinuxRequirement)
-      end
-
-      sig { params(installed_count: Integer, total_count: Integer, mark_uninstalled: T::Boolean).returns(String) }
-      def self.dependency_status_counts(installed_count, total_count, mark_uninstalled: true)
-        missing_count = total_count - installed_count
-        return "all installed #{Formatter.success("✔")}" if missing_count.zero?
-
-        missing_status = mark_uninstalled ? "missing #{Formatter.error("✘")}" : "not installed"
-        "#{installed_count} installed #{Formatter.success("✔")}, " \
-          "#{missing_count} #{missing_status}"
-      end
-
       sig { params(names: T::Array[String]).returns(T::Array[String]) }
       def self.installed_dependent_names(names)
         Formula.racks.filter_map do |rack|
@@ -234,84 +181,6 @@ module Homebrew
           nil
         end.sort.uniq
       end
-
-      sig { params(formula: Formula).returns(T::Array[String]) }
-      def self.formula_metadata_lines(formula)
-        metadata = T.let([], T::Array[String])
-        if formula.pinned?
-          pinned = "Pinned: #{formula.pinned_version}"
-          if (pinned_time = pin_path_mtime(FormulaPin.new(formula).path))
-            pinned << " on #{formatted_time(pinned_time)}"
-          end
-          metadata << pinned
-        end
-
-        if !formula.any_version_installed? && formula_installs_from_source?(formula)
-          metadata << "Installs from source: yes"
-        end
-        metadata
-      end
-
-      sig { params(time: T.any(Integer, Time)).returns(String) }
-      def self.formatted_time(time)
-        time = Time.at(time) if time.is_a?(Integer)
-
-        time.strftime("%Y-%m-%d at %H:%M:%S")
-      end
-
-      sig { params(pin_path: Pathname).returns(T.nilable(Time)) }
-      def self.pin_path_mtime(pin_path)
-        pin_path.lstat.mtime if pin_path.symlink? || pin_path.exist?
-      rescue Errno::ENOENT
-        nil
-      end
-
-      sig { params(formula: T.untyped).returns(T::Boolean) }
-      def self.formula_installs_from_source?(formula)
-        return false if formula.requirements.any? { |requirement| requirement_for_other_os?(requirement) }
-        return true if formula.stable.blank? && formula.head.present?
-        return false if formula.stable.blank?
-
-        !formula.stable.bottled? || !formula.pour_bottle?
-      end
-
-      sig {
-        params(cask: T.untyped, formula_dependencies: T::Set[String], cask_dependencies: T::Set[String],
-               visited_casks: T::Set[String]).void
-      }
-      def self.collect_cask_dependency_names(cask, formula_dependencies, cask_dependencies, visited_casks)
-        cask.depends_on.formula.each do |name|
-          dep_name = name.to_s
-          formula_dependencies << dep_name
-          rack = HOMEBREW_CELLAR/Utils.name_from_full_name(dep_name)
-          next unless rack.directory?
-
-          keg = Keg.from_rack(rack)
-          next unless keg
-
-          tab_deps = Tab.for_keg(keg).runtime_dependencies
-          tab_deps&.each do |runtime_dep|
-            dep_full_name = T.cast(runtime_dep, T::Hash[String, T.untyped])["full_name"]
-            formula_dependencies << dep_full_name if dep_full_name
-          end
-        end
-
-        cask.depends_on.cask.each do |name|
-          token = name.to_s
-          next if visited_casks.include?(token)
-
-          cask_dependencies << token
-          visited_casks << token
-          begin
-            dependency = Cask::CaskLoader.load(token)
-            collect_cask_dependency_names(dependency, formula_dependencies, cask_dependencies, visited_casks)
-          rescue Cask::CaskUnavailableError
-            next
-          end
-        end
-      end
-
-      private_class_method :formula_metadata_lines, :formatted_time, :pin_path_mtime
 
       sig { params(quiet: T::Boolean).void }
       def print_info(quiet: false)
@@ -430,37 +299,25 @@ module Homebrew
                                 T.cast(tab.source["tap"], T.nilable(String)) ||
                                 T.cast(tab.source["path"], T.nilable(String)) ||
                                 github_info(formula)}"
-          puts self.class.installation_summary(version, tab)
+          puts Utils::InfoDisplay.installation_summary(version, tab)
         end
       end
 
       sig { params(formula: Formula, shadowed_by: T.nilable(Tap)).void }
       def info_formula(formula, shadowed_by: nil)
-        specs = T.let([], T::Array[String])
-
         shadowing_formula = shadowing_installed_formula(formula)
         kegs = shadowing_formula ? [] : formula.installed_kegs
         installed = kegs.any?
         outdated = installed && formula.outdated?
 
-        if (stable = formula.stable)
-          string = "stable #{outdated ? formula.pkg_version : stable.version}"
-          string += " (bottled)" if stable.bottled? && formula.pour_bottle?
-          specs << string
-        end
-
-        specs << "HEAD" if formula.head
-
-        attrs = []
-        attrs << "keg-only" if formula.keg_only?
-
+        stable = formula.stable
+        stable_version = (outdated ? formula.pkg_version : stable.version).to_s if stable
+        bottled = stable.present? && stable.bottled? && formula.pour_bottle?
         missing_libraries, missing_library_deps = formula.missing_library_linkage if installed
         missing_libraries ||= []
         missing_library_deps ||= Set.new
-        if outdated && (upgrade_version = specs.first.presence)
-          installed_version = formula.linked_version ||
-                              kegs.max_by(&:scheme_and_version)&.version
-          specs[0] = "#{installed_version} → #{upgrade_version}"
+        installed_version = if outdated
+          (formula.linked_version || kegs.max_by(&:scheme_and_version)&.version).to_s
         end
         title_name = if shadowing_formula && formula.tap
           Utils.fully_qualified_name(formula)
@@ -469,37 +326,6 @@ module Homebrew
         else
           formula.full_name
         end
-        name_with_status = pretty_install_status(
-          title_name,
-          warning:     missing_libraries.present?,
-          installed:,
-          outdated:,
-          deprecated:  formula.deprecated?,
-          disabled:    formula.disabled?,
-          removed:     installed && formula.tap.present? &&
-                       kegs.all? { |keg| keg.tab.tap == formula.tap && keg.deleted_formula? },
-          can_install: formula.valid_platform? && !formula.disabled?,
-          bold:        true,
-        )
-
-        puts "#{oh1_title(name_with_status)}: #{specs * ", "}#{" [#{attrs * ", "}]" unless attrs.empty?}"
-        if shadowed_by
-          puts Formatter.warning(
-            "`#{formula.name}` shadows `#{shadowed_by.name}/#{formula.name}`.",
-            label: "Warning",
-          )
-        end
-        puts formula.desc if formula.desc
-        puts Formatter.url(formula.homepage) if formula.homepage
-        puts "Aliases: #{formula.aliases.join(", ")}" if formula.aliases.any?
-        puts "Old Names: #{formula.oldnames.join(", ")}" if formula.oldnames.any?
-
-        deprecate_disable_info_string = DeprecateDisable.message(formula)
-        if deprecate_disable_info_string.present?
-          deprecate_disable_info_string.tap { |info_string| info_string[0] = info_string[0].upcase }
-          puts deprecate_disable_info_string
-        end
-
         conflicts = formula.conflicts.filter_map do |conflict|
           resolved = begin
             Formulary.factory(conflict.name)
@@ -512,12 +338,6 @@ module Homebrew
           reason = " (because #{conflict.reason})" if conflict.reason
           "#{conflict_name}#{reason}"
         end.sort!
-        unless conflicts.empty?
-          puts <<~EOS
-            Conflicts with:
-              #{conflicts.join("\n  ")}
-          EOS
-        end
 
         heads, versioned = kegs.partition { |keg| keg.version.head? }
         kegs = [
@@ -525,35 +345,49 @@ module Homebrew
           *versioned.sort_by(&:scheme_and_version),
         ]
         if kegs.empty?
-          puts "Not installed"
+          installation_status = ["Not installed"]
           if (bottle = formula.bottle)
             begin
               bottle.fetch_tab(quiet: !args.debug?) if args.verbose?
               bottle_size = bottle.bottle_size
               installed_size = bottle.installed_size
-              puts "Bottle Size: #{Formatter.disk_usage_readable(bottle_size)}" if bottle_size
-              puts "Installed Size: #{Formatter.disk_usage_readable(installed_size)}" if installed_size
+              installation_status << "Bottle Size: #{Formatter.disk_usage_readable(bottle_size)}" if bottle_size
+              if installed_size
+                installation_status << "Installed Size: #{Formatter.disk_usage_readable(installed_size)}"
+              end
             rescue RuntimeError => e
               odebug e
             end
           end
         else
-          puts self.class.installation_status(Tab.for_formula(formula))
+          installation_status = [Utils::InfoDisplay.installation_status(Tab.for_formula(formula))]
         end
 
-        puts "From: #{Formatter.url(github_info(formula))}"
-        formula_tap = formula.tap
-        puts "Tap: #{formula_tap.name}" if formula_tap && !formula_tap.official?
-
-        puts "License: #{SPDX.license_expression_to_string formula.license}" if formula.license.present?
-        metadata = self.class.metadata_lines(formula)
-        puts metadata if metadata.present?
-
-        installed_lines = installed_section_lines(shadowing_formula || formula, verbose: args.verbose?)
-        unless installed_lines.empty?
-          ohai(args.verbose? ? "Installed Kegs and Versions" : "Installed Versions")
-          installed_lines.each { |line| puts line }
-        end
+        puts Utils::InfoDisplay.package_summary(
+          formula_or_cask:     formula,
+          name:                title_name,
+          version:             stable_version,
+          installed_version:,
+          installed:,
+          outdated:,
+          warning:             missing_libraries.present?,
+          removed:             installed && formula.tap.present? &&
+                               kegs.all? { |keg| keg.tab.tap == formula.tap && keg.deleted_formula? },
+          stable:              stable.present?,
+          bottled:,
+          head:                formula.head.present?,
+          keg_only:            formula.keg_only?,
+          shadowed_by:         shadowed_by&.name,
+          aliases:             formula.aliases,
+          old_names:           formula.oldnames,
+          conflicts:,
+          installation_status:,
+          source_url:          github_info(formula),
+          tap:                 formula.tap,
+          license:             formula.license,
+          installed_versions:  installed_section_rows(shadowing_formula || formula, verbose: args.verbose?),
+          verbose:             args.verbose?,
+        )
 
         tab_runtime_deps = kegs.last&.runtime_dependencies
         runtime_deps = if outdated
@@ -567,7 +401,7 @@ module Homebrew
           [].freeze
         end
         built_from_source = kegs.any? { |keg| !keg.tab.poured_from_bottle }
-        installs_from_source = !installed && self.class.formula_installs_from_source?(formula)
+        installs_from_source = !installed && Utils::InfoDisplay.formula_installs_from_source?(formula)
         dependency_lines = %w[build required recommended optional].filter_map do |type|
           next if type == "build" && !built_from_source && !installs_from_source
 
@@ -582,12 +416,10 @@ module Homebrew
                                      formula_outdated: outdated, missing_library_deps:)}"
         end
         if dependency_lines.present? || missing_libraries.any? || runtime_deps.present? || installed_dependents.any?
-          ohai "Dependencies"
-          puts dependency_lines
           missing_library_names = missing_libraries.map { |lib| File.basename(lib) }.uniq
           if missing_library_names.present?
             decorated = missing_library_names.map { |lib| pretty_uninstalled(lib, bold: false) }.join(", ")
-            puts "Missing libraries (#{missing_library_names.count}): #{decorated}"
+            dependency_lines << "Missing libraries (#{missing_library_names.count}): #{decorated}"
           end
           if runtime_deps.present?
             installed_count = runtime_deps.count do |dep|
@@ -596,28 +428,22 @@ module Homebrew
 
               Formula.rack_installed?(dep_name)
             end
-            puts "Recursive Runtime (#{runtime_deps.count}): " \
-                 "#{self.class.dependency_status_counts(installed_count, runtime_deps.count,
-                                                        mark_uninstalled: !outdated)}"
+            dependency_lines << Utils::InfoDisplay.recursive_runtime_line(
+              installed_count, runtime_deps.count, mark_uninstalled: !outdated
+            )
           end
           if installed_dependents.any?
-            if args.verbose?
-              puts "Dependents (#{installed_dependents.count}): #{installed_dependents.join(", ")}"
+            dependency_lines << if args.verbose?
+              "Dependents (#{installed_dependents.count}): #{installed_dependents.join(", ")}"
             else
-              puts "Dependents: #{installed_dependents.count}"
+              "Dependents: #{installed_dependents.count}"
             end
           end
+          puts Utils::InfoDisplay.section("Dependencies", dependency_lines)
         end
 
-        unless formula.requirements.to_a.empty?
-          ohai "Requirements"
-          %w[build required recommended optional].map do |type|
-            reqs = formula.requirements.select(&:"#{type}?")
-            next if reqs.to_a.empty?
-
-            puts "#{type.capitalize}: #{decorate_requirements(reqs)}"
-          end
-        end
+        requirements_section = Utils::InfoDisplay.requirements_section(formula.requirements.to_a, bold: true)
+        puts requirements_section if requirements_section
 
         if !formula.options.empty? || formula.head
           ohai "Options"
@@ -637,10 +463,7 @@ module Homebrew
           end
           if binaries.present?
             binaries = binaries.sort.uniq - caveats.shadowed_path_executables.map(&:first)
-            ohai "Binaries", [
-              (Formatter.columns(binaries) if binaries.any?),
-              caveats.shadowed_path_text,
-            ].compact.join("\n")
+            puts Utils::InfoDisplay.binaries_section(binaries, additional_text: caveats.shadowed_path_text)
           end
         end
 
@@ -819,8 +642,8 @@ module Homebrew
         "#{name}#{": #{description}" if description.present?}"
       end
 
-      sig { params(formula: Formula, verbose: T::Boolean).returns(T::Array[String]) }
-      def installed_section_lines(formula, verbose: false)
+      sig { params(formula: Formula, verbose: T::Boolean).returns(T::Array[Utils::InfoDisplay::InstalledVersion]) }
+      def installed_section_rows(formula, verbose: false)
         siblings = formula.versioned_formulae
         parent = if (parent_name = formula.unversioned_formula_name)
           begin
@@ -846,28 +669,22 @@ module Homebrew
           ordered_kegs.each_with_index.map { |keg, index| [other, keg, index.zero?] }
         end
         with_kegs = with_kegs.select { |_other, keg, newest| newest || keg.linked? } unless verbose
-        rows = with_kegs.map do |other, keg, newest|
-          name_status = pretty_install_status(other.full_name, installed: true, outdated: other.outdated?)
+        with_kegs.map do |other, keg, newest|
+          outdated = other.outdated?
+          name_status = pretty_install_status(other.full_name, installed: true, outdated:)
           version = keg.version.to_s
           latest = other.pkg_version.to_s
-          version = "#{version} → #{latest}" if newest && other.outdated? && latest != version
-          linked_marker = keg.linked? ? "[Linked]" : ""
-          [name_status, version, "(#{keg.abv})", linked_marker, keg]
-        end
-        name_width = rows.map { |r| Tty.strip_ansi(r[0]).length }.max || 0
-        version_width = rows.map { |r| r[1].length }.max || 0
-        size_width = rows.map { |r| r[2].length }.max || 0
-        rows.flat_map do |name_status, version, size, linked_marker, keg|
-          padded_name = name_status + (" " * (name_width - Tty.strip_ansi(name_status).length))
-          padded_size = linked_marker.empty? ? size : size.ljust(size_width)
-          line = "#{padded_name} #{version.ljust(version_width)} #{padded_size}" \
-                 "#{" #{linked_marker}" unless linked_marker.empty?}"
-          next [line] unless verbose
-
-          lines = [line, "  Cellar: #{keg}"]
+          version = "#{version} → #{latest}" if newest && outdated && latest != version
           tab_string = keg.tab.to_s
-          lines << "  #{tab_string}" unless tab_string.empty?
-          lines
+          details = ["Cellar: #{keg}"]
+          details << tab_string unless tab_string.empty?
+          Utils::InfoDisplay::InstalledVersion.new(
+            name:    name_status,
+            version:,
+            size:    "(#{keg.abv})",
+            linked:  keg.linked?,
+            details:,
+          )
         end
       end
 
@@ -906,15 +723,6 @@ module Homebrew
         end.join(", ")
       end
 
-      sig { params(requirements: T::Array[Requirement]).returns(String) }
-      def decorate_requirements(requirements)
-        req_status = requirements.map do |req|
-          req_s = req.display_s
-          pretty_install_status(req_s, installed: req.satisfied?, mark_uninstalled: true, bold: true)
-        end
-        req_status.join(", ")
-      end
-
       sig { params(dep: Dependency).returns(String) }
       def dep_display_s(dep)
         return dep.name if dep.option_tags.empty?
@@ -950,7 +758,7 @@ module Homebrew
                              cask.sourcefile_path&.to_s ||
                              T.cast(tab.source["path"], T.nilable(String)) ||
                              github_info(cask)}"
-          puts self.class.installation_summary(installed_version, tab)
+          puts Utils::InfoDisplay.installation_summary(installed_version, tab)
         else
           puts "Cask from #{github_info(cask)}"
           puts "Not installed"
