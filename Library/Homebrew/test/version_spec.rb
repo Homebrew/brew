@@ -264,6 +264,10 @@ RSpec.describe Version do
     expect(described_class.new("2-p194")).to be < described_class.new("2.1-p195")
   end
 
+  it "orders a release with a trailing zero after its release candidate" do
+    expect(described_class.new("1.0.0")).to be > described_class.new("1.0rc1")
+  end
+
   it "can be compared against nil" do
     expect(described_class.new("2.1.0-p194")).to be > nil
   end

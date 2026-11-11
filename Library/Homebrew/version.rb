@@ -623,7 +623,7 @@ class Version
     max = max(ltokens.length, rtokens.length)
     l = r = 0
 
-    while l < max
+    while l < max || r < max
       a = ltokens[l] || NULL_TOKEN
       b = rtokens[r] || NULL_TOKEN
 
