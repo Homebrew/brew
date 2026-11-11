@@ -906,6 +906,10 @@ module Homebrew
           @tested_formulae_count += 1
           cleanup_bottle_etc_var(formula) if cleanup?(args)
 
+          # Keep tested formulae usable by subsequent tests and Homebrew itself.
+          if @unchanged_dependencies.present? && formula.latest_version_installed?
+            @unchanged_dependencies -= formula.runtime_formula_dependencies.map(&:full_name)
+          end
           if @unchanged_dependencies.present?
             test "brew", "uninstall", "--formulae", "--force", "--ignore-dependencies", *@unchanged_dependencies
           end
