@@ -18,24 +18,18 @@ Homebrew’s governance is grounded in the principle that only active contributo
 - **Ops Team**: Maintainers responsible for operating Homebrew's infrastructure.
 - **Project Leader (PL)**: A Maintainer elected from the Lead Maintainers to serve as Homebrew’s primary public representative and project-wide coordinator.
 - **Deputy Project Leader (DPL)**: A Maintainer elected from the Lead Maintainers to act as Project Leader when the Project Leader is unavailable.
-- **Quarterly activity criteria**: Around 40 meaningful maintainer contributions per quarter to Primary Homebrew repositories to remain in good standing as a Maintainer.
+- **Quarterly activity criteria**: Around 50 meaningful maintainer contributions per quarter to Primary Homebrew repositories to remain in good standing as a Maintainer.
   Lead Maintainers have mandatory numerical requirements, defined below.
 - **Quarter**: A Homebrew reporting quarter, defined as one of the following periods: December–February, March–May, June–August, or September–November.
   Monthly reports cover contributions for the preceding month from the Maintainers listed in Homebrew/brew's README at the end of that month.
   The `maintainer met` and `lead met` columns assess the latest completed quarter.
-  The `maintainer exempt` column records exemptions supplied with `--maintainer-exempt`; these retain Maintainer status without changing activity counts.
-  Exempt usernames are matched case-insensitively and known former usernames are recognised; unmatched names produce a warning because historical or filtered reports may omit current Maintainers.
   The report's `potential new role` column uses up to four full quarters of monthly or historical quarterly reports to apply multi-quarter role requirements.
-  Activity-based recommendations are omitted when the required history is incomplete.
+  Recommendations are omitted when the history required for the relevant activity check is incomplete.
   Its recommendations require review against Maintainer discretion, Security and Ops Team exceptions and non-numerical eligibility criteria before role changes are made.
-- **Meaningful maintainer contributions**: Merging or approving other people's merged pull requests, or closing other people's issues, in Primary Homebrew repositories.
-  Authorship, co-authorship and self-merges do not count.
-  Homebrew/brew counts only the first approval still valid at merge; core and cask count each approving Maintainer once, including approvals dismissed after pushes, because they require reapproval on each push and brew does not.
-  Each pull request counts once per Maintainer in its merge period, including any issues it closes.
-  Other issue closures count once per Maintainer per issue per reporting period.
-  These rules apply only to `brew contributions --maintainer-report-csv`; historical CSVs using older criteria must be regenerated.
-  Approval verification uses GitHub's reported write access; merge and approval checks stop when further contributions cannot affect activity checks, with `capped` marking lower bounds.
-  Historical permission changes may require manual review.
+- **Meaningful maintainer contributions**: Merged pull requests by the Maintainer, pull requests created by others that GitHub reports as both reviewed and approved by the Maintainer, or merged co-authored commits in Primary Homebrew repositories.
+  A pull request opened and merged by the same Maintainer counts only once for that Maintainer.
+  Review attribution uses GitHub's `review:approved reviewed-by:USERNAME` search as an intentionally ambiguous, 100-result-capped activity proxy, not a precise approval audit.
+  Repository-scoped follow-up searches ensure that capped counts do not affect role activity checks.
 - **Primary Homebrew repositories**: The three highest-traffic, security-critical repositories in the Homebrew project:
   - [Homebrew/brew](https://github.com/Homebrew/brew) ([contributions](https://github.com/Homebrew/brew/graphs/contributors)),
   - [Homebrew/homebrew-core](https://github.com/Homebrew/homebrew-core) ([contributions](https://github.com/Homebrew/homebrew-core/graphs/contributors)),
@@ -55,7 +49,7 @@ Homebrew’s governance is grounded in the principle that only active contributo
 **Expectations:**
 
 - Maintains consistent quarterly contribution activity, as defined in Homebrew's activity criteria.
-- Contributions use maintainer permissions to unblock others; issue closures also qualify despite requiring only Triage access.
+- Contributions require write access e.g. review of pull requests and not just fork access e.g. opening pull requests.
 
 **Accession:**
 
@@ -67,7 +61,7 @@ Homebrew’s governance is grounded in the principle that only active contributo
 **Removal for Inactivity:**
 
 The Project Leader applies this policy after considering other essential work under the quarterly activity criteria.
-Security Team members automatically retain Maintainer status regardless of numerical activity.
+Security Team members may be exempt from this Maintainer inactivity policy.
 Ops Team members may also retain Maintainer status if the Project Leader determines that their Ops activity has been substantial, timely and reliable.
 
 - Missing the activity threshold for 1 quarter triggers a private warning.
@@ -88,7 +82,7 @@ Lead Maintainers act collectively as Homebrew’s leadership.
 
 **Expectations:**
 
-- Must make at least 40 meaningful maintainer contributions in total and at least 20 in each of any two Primary Homebrew repositories per quarter.
+- Must make at least 50 meaningful maintainer contributions in total and at least 25 in each of any two Primary Homebrew repositories per quarter.
   These numerical requirements are mandatory for eligibility and retention and cannot be waived or replaced by other work.
 - A higher level of responsibility and responsiveness than standard maintainers e.g. timely pull request review, timely responses in Slack, pulling weight on shared project tasks and not just whatever is personally most interesting.
 
@@ -197,7 +191,7 @@ Lead Maintainers act collectively as Homebrew’s leadership.
 
 - The Security Team comprises the Project Leader and any number of Maintainers appointed by the Project Leader, serving until resignation or removal from the team by the Project Leader.
 - Before joining the Security or Ops Team or becoming a human GitHub organisation owner, Maintainers must have met a Homebrew Lead Maintainer in person, preferably at an in-person AGM or another official Homebrew event.
-- Security Team members are exempt from Maintainer numerical contribution requirements.
+- Security Team members may be exempt from Maintainer numerical contribution requirements and may instead be evaluated by the Project Leader on qualitative security observations, such as their helpfulness to the project's security goals.
   This exemption does not waive the mandatory numerical requirements for becoming or remaining a Lead Maintainer.
 - Only Security Team members may make Homebrew/brew releases, whether directly or through automation.
 - GitHub organisation owners must include the Project Leader, Deputy Project Leader and at least one other Security Team member.
