@@ -56,6 +56,20 @@ RSpec.describe DevelopmentTools do
     end
   end
 
+  describe ".clang_build_version" do
+    it "uses the simulated macOS compiler build version" do
+      require "os/mac/xcode"
+      allow(Homebrew::SimulateSystem).to receive_messages(
+        simulating?:                     true,
+        simulating_or_running_on_macos?: true,
+        current_os:                      :monterey,
+        current_arch:                    :intel,
+      )
+
+      expect(development_tools.clang_build_version).to eq(Version.new("1400"))
+    end
+  end
+
   describe ".clear_version_cache" do
     sig { returns(Pathname) }
     let(:llvm_prefix) { mktmpdir }

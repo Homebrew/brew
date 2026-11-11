@@ -111,6 +111,11 @@ RSpec.describe OS::Mac::Xcode, :needs_macos do
 
         expect(described_class.latest_clang_version).to eq("2100.1.1.101")
       end
+
+      it "returns the compiler version for a simulated macOS and architecture" do
+        expect(described_class.latest_clang_version(macos: MacOSVersion.new("12"), arm64: false))
+          .to eq("1400.0.29.202")
+      end
     end
 
     describe ".outdated?" do
