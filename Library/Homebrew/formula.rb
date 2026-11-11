@@ -3133,7 +3133,7 @@ class Formula
 
   sig { returns(T.nilable(Checksum)) }
   def ruby_source_checksum
-    Checksum.new(Digest::SHA256.file(path).hexdigest) if path.exist?
+    Checksum.new(Digest::SHA256.hexdigest(Formulary.formula_contents(path))) if path.exist?
   end
 
   # API generation requires every patch checksum; other metadata consumers can omit unreadable patches.
@@ -3286,7 +3286,9 @@ class Formula
 
     variations = {}
 
-    formula_contents = path.read if path.exist? && (on_system_blocks_exist? || include_compiler_variations)
+    formula_contents = if path.exist? && (on_system_blocks_exist? || include_compiler_variations)
+      Formulary.formula_contents(path)
+    end
     if formula_contents && (on_system_blocks_exist? || formula_contents.include?("clang_build_version"))
       OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
         Homebrew::SimulateSystem.with_tag(bottle_tag) do

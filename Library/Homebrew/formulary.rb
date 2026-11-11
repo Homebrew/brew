@@ -202,15 +202,23 @@ module Formulary
           .gsub(HOMEBREW_HOME_PLACEHOLDER, Dir.home)
   end
 
+  # Share source across platform-specific classes, rereading it after edits.
+  sig { params(path: Pathname).returns(String) }
+  def self.formula_contents(path)
+    cache["formula_contents"] ||= {}
+    stat = path.stat
+    cache["formula_contents"][[path.to_s, stat.mtime, stat.ctime, stat.size]] ||=
+      path.open("rb") { |file| file.read.force_encoding(Encoding::UTF_8) }.freeze
+  end
+
   sig {
     params(name: String, path: Pathname, flags: T::Array[String], ignore_errors: T::Boolean,
            from_metadata: T::Boolean)
       .returns(T.class_of(Formula))
   }
   def self.load_formula_from_path(name, path, flags:, ignore_errors:, from_metadata: false)
-    contents = path.open("r") { |f| ensure_utf8_encoding(f).read }
-    namespace = "FormulaNamespace#{namespace_key(path.to_s)}"
-    klass = load_formula(name, path, contents, namespace, flags:, ignore_errors:, from_metadata:)
+    klass = load_formula(name, path, formula_contents(path), "FormulaNamespace#{namespace_key(path.to_s)}",
+                         flags:, ignore_errors:, from_metadata:)
     platform_cache[:path] ||= {}
     platform_cache.fetch(:path)[path.to_s] = klass
   end
@@ -473,11 +481,6 @@ module Formulary
     formula
   end
   private_class_method :resolve_installed_spec
-
-  sig { params(io: IO).returns(IO) }
-  def self.ensure_utf8_encoding(io)
-    io.set_encoding(Encoding::UTF_8)
-  end
 
   sig { params(name: String).returns(String) }
   def self.class_s(name)

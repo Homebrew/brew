@@ -265,6 +265,9 @@ module Cask
       sig { returns(T.nilable(T::Hash[String, T.untyped])) }
       attr_reader :from_json
 
+      sig { returns(T::Boolean) }
+      attr_reader :api_fallback
+
       sig {
         params(ref: String, warn: T::Boolean)
           .returns(T.nilable(FromAPILoader))

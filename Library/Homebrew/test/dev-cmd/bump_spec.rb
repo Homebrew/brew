@@ -593,6 +593,14 @@ RSpec.describe Homebrew::DevCmd::Bump do
                                              ))
     end
 
+    it "reuses the loaded cask source when checking platform versions" do
+      cask = c_per_os
+      allow(bump).to receive(:livecheck_result).and_return([Version.new("2.0"), nil])
+      expect(Cask::CaskLoader).not_to receive(:from_path)
+
+      bump.retrieve_versions_by_arch(formula_or_cask: cask, repositories: [])
+    end
+
     it "does not emit a Linux bump when Linux livecheck returns no version" do
       allow(bump).to receive(:livecheck_result) do
         if Homebrew::SimulateSystem.simulating_or_running_on_linux?

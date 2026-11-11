@@ -255,9 +255,6 @@ module Homebrew
           [nil, arch, is_cask_with_blocks ? arch : :general]
         end
         if formula_or_cask.is_a?(Cask::Cask) && formula_or_cask.on_os_blocks_exist?
-          sourcefile_path = formula_or_cask.sourcefile_path
-          raise "unexpected nil sourcefile_path" unless sourcefile_path
-
           current_os = Homebrew::SimulateSystem.current_os
           macos = if MacOSVersion::SYMBOLS.include?(current_os)
             current_os
@@ -266,7 +263,7 @@ module Homebrew
           end
           systems = { macos:, linux: :linux }
           detected_versions = {}
-          loaded_cask = Cask::CaskLoader.from_path(sourcefile_path)
+          loaded_cask = formula_or_cask.refresh_copy
           detected_system_options = BumpVersionParser::VERSION_PLATFORMS.filter_map do |version_type, (system, arch)|
             os = systems.fetch(system)
             tag = Utils::Bottles::Tag.new(system: os, arch:)
@@ -292,8 +289,6 @@ module Homebrew
 
         system_options.each do |os, arch, version_key|
           SimulateSystem.with(os:, arch:) do
-            # We reload the formula/cask here to ensure we're getting the
-            # correct version for the current platform
             if formula_or_cask.is_a?(Formula)
               loaded_formula_or_cask = formula_or_cask
               stable = loaded_formula_or_cask.stable
@@ -301,10 +296,7 @@ module Homebrew
 
               current_version_value = stable.version
             else
-              sourcefile_path = formula_or_cask.sourcefile_path
-              raise "unexpected nil sourcefile_path" unless sourcefile_path
-
-              loaded_formula_or_cask = Cask::CaskLoader.from_path(sourcefile_path)
+              loaded_formula_or_cask = formula_or_cask.refresh_copy
               current_version_value = Version.new(loaded_formula_or_cask.version)
             end
 

@@ -116,6 +116,13 @@ RSpec.describe Homebrew::Livecheck::Strategy::ExtractPlist do
   end
 
   describe "::cask_with_url" do
+    it "reuses the parsed cask when overriding its URL" do
+      cask = Cask::CaskLoader.from_path(cask_path("livecheck/livecheck-extract-plist-with-url"))
+      expect(Cask::CaskLoader).not_to receive(:from_path)
+
+      extract_plist.cask_with_url(cask, cask.livecheck.url, cask.livecheck.options.url_options)
+    end
+
     it "returns a cask using the url and supported options from the `livecheck` block" do
       cask = Cask::CaskLoader.from_path(cask_path("livecheck/livecheck-extract-plist-with-url"))
       cask.livecheck.url(

@@ -179,6 +179,38 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
   end
 
   describe "#cask_downloads", :cask do
+    it "reuses the loaded cask source across platforms and languages" do
+      cask = Cask::CaskLoader.load("with-many-languages")
+      expect(Cask::CaskLoader).not_to receive(:from_path)
+
+      described_class.new(["--cask", "--all-platforms", cask.token]).cask_downloads(cask)
+    end
+
+    it "keeps each queued download's platform and language values independent" do
+      cask = Cask::CaskLoader.from_content(<<~RUBY)
+        cask "localised-platforms" do
+          version "1.0"
+          arch arm: "arm", intel: "intel"
+          os macos: "macos", linux: "linux"
+          language "en", default: true do
+            sha256 "#{"0" * 64}"
+            "en"
+          end
+          language "fr" do
+            sha256 "#{"1" * 64}"
+            "fr"
+          end
+          url "https://example.com/\#{os}-\#{arch}-\#{language}.zip"
+        end
+      RUBY
+      downloads = described_class.new(["--cask", "--all-platforms", cask.token]).cask_downloads(cask)
+
+      expect(downloads.map { |download| [File.basename(download.url.to_s), download.checksum.to_s] })
+        .to match_array(%w[macos linux].product(%w[intel arm], %w[en fr]).map do |os, arch, language|
+          ["#{os}-#{arch}-#{language}.zip", ((language == "en") ? "0" : "1") * 64]
+        end)
+    end
+
     it "collects one download per distinct URL across all platforms" do
       cmd = described_class.new(["--cask", "--all-platforms", "sha256-os"])
       basenames = cmd.cask_downloads(Cask::CaskLoader.load("sha256-os"))

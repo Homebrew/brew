@@ -239,6 +239,68 @@ RSpec.describe Homebrew::DevCmd::Audit do
       described_class.new(["--tap=homebrew/test", "--skip-style", "--os=all", "--arch=all"]).run
     end
 
+    it "loads each cask file only once when auditing across platforms" do
+      allow(tap).to receive(:cask_files).and_return([linux_cask_file])
+      allow(Cask::Auditor).to receive(:audit).and_return([])
+      expect(Cask::CaskLoader).to receive(:from_path).with(linux_cask_file).once.and_call_original
+
+      described_class.new(["--tap=homebrew/test", "--os=all", "--arch=all"]).run
+    end
+
+    it "re-evaluates casks for each platform without exposing sensitive environment variables" do
+      linux_cask_file.write <<~RUBY
+        cask "linux-example" do
+          on_macos do
+            on_intel do
+              version "1.0"
+            end
+            on_arm do
+              version "2.0"
+            end
+          end
+          on_linux do
+            version "3.0"
+          end
+          url "https://example.invalid/\#{version}/\#{ENV["HOMEBREW_SECRET_TOKEN"] == "secret" ? "exposed" : "scrubbed"}.zip"
+        end
+      RUBY
+      cask = Homebrew::SimulateSystem.with(os: :macos, arch: :intel) do
+        Cask::CaskLoader.from_path(linux_cask_file)
+      end
+      stub_const("OnSystem::ALL_OS_OPTIONS", [:macos, :linux])
+      command = described_class.new(["--cask", "--skip-style", "--os=all", "--arch=all", "linux-example"])
+      allow(command.args.named).to receive(:to_formulae_and_casks_with_taps).and_return([cask])
+      urls = []
+      allow(Cask::Auditor).to receive(:audit) do |loaded_cask, **|
+        urls << loaded_cask.url.to_s
+        []
+      end
+      ENV["HOMEBREW_SECRET_TOKEN"] = "secret"
+
+      command.run
+
+      expect([urls, cask.url.to_s, ENV.fetch("HOMEBREW_SECRET_TOKEN")]).to eq([
+        %w[https://example.invalid/1.0/scrubbed.zip https://example.invalid/2.0/scrubbed.zip
+           https://example.invalid/3.0/scrubbed.zip https://example.invalid/3.0/scrubbed.zip],
+        "https://example.invalid/1.0/scrubbed.zip",
+        "secret",
+      ])
+    end
+
+    it "reloads cask corrections before auditing the next platform" do
+      allow(tap).to receive(:cask_files).and_return([linux_cask_file])
+      versions = []
+      allow(Cask::Auditor).to receive(:audit) do |cask, **|
+        versions << cask.version.to_s
+        linux_cask_file.atomic_write(linux_cask_file.read.sub('version "1.0"', 'version "2.0"'))
+        []
+      end
+
+      described_class.new(["--tap=homebrew/test", "--fix", "--os=linux", "--arch=all"]).run
+
+      expect(versions).to eq(["1.0", "2.0"])
+    end
+
     it "audits an installed formula whose tap source has been removed" do
       path = HOMEBREW_CELLAR/"removed/1.0/.brew/removed.rb"
       path.dirname.mkpath

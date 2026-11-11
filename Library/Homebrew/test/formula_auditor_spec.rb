@@ -86,6 +86,17 @@ RSpec.describe Homebrew::FormulaAuditor do
   end
 
   describe "#problems" do
+    it "reuses formula source when creating multiple auditors" do
+      auditor = formula_auditor "foo", <<~RUBY
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+        end
+      RUBY
+      expect(auditor.formula.path).not_to receive(:open)
+
+      2.times { described_class.new(auditor.formula) }
+    end
+
     it "is empty by default" do
       fa = formula_auditor "foo", <<~RUBY
         class Foo < Formula
@@ -2460,7 +2471,7 @@ RSpec.describe Homebrew::FormulaAuditor do
   describe "#audit_conflicts" do
     before do
       # We don't really test the formula text retrieval here
-      allow(File).to receive(:open).and_return("")
+      allow(Formulary).to receive(:formula_contents).and_return("")
     end
 
     specify "it warns when conflicting with non-existing formula", :no_api do

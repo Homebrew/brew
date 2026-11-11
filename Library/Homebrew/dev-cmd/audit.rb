@@ -374,8 +374,10 @@ module Homebrew
 
         if cask.loaded_from_metadata?
           Cask::CaskLoader.load_from_installed_caskfile(path)
-        else
+        elsif args.fix? || cask.loaded_from_api?
           Cask::CaskLoader.from_path(path)
+        else
+          cask.refresh_copy
         end
       end
 

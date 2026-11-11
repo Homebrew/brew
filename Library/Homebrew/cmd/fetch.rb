@@ -195,8 +195,6 @@ module Homebrew
 
       sig { params(cask: Cask::Cask).returns(T::Array[Cask::Download]) }
       def cask_downloads(cask)
-        ref = cask.reloadable_ref
-
         if args.all_platforms? && cask.loaded_from_api?
           opoo "Cask #{cask} was loaded from the API; cannot fetch all operating system and " \
                "architecture variants. Set `HOMEBREW_NO_INSTALL_FROM_API=1` to fetch them all."
@@ -213,11 +211,7 @@ module Homebrew
         cask_combinations.each do |os, arch|
           SimulateSystem.with(os:, arch:) do
             loaded_cask = begin
-              if ref.is_a?(Pathname)
-                Cask::CaskLoader.from_path(ref)
-              else
-                Cask::CaskLoader.load(ref)
-              end
+              cask.refresh_copy
             rescue Cask::CaskInvalidError, Cask::CaskUnreadableError
               raise unless cask.on_system_blocks_exist?
             end
@@ -232,15 +226,10 @@ module Homebrew
             languages.each do |language|
               localized_cask = loaded_cask
               if language
-                # Reload per language: `Cask::Download` reads `sha256`/`url`
+                # Copy per language: `Cask::Download` reads `sha256`/`url`
                 # lazily, so each download needs its own cask instance.
-                localized_cask = if ref.is_a?(Pathname)
-                  Cask::CaskLoader.from_path(ref)
-                else
-                  Cask::CaskLoader.load(ref)
-                end
-                localized_cask.config = localized_cask.config.merge(
-                  Cask::Config.new(explicit: { languages: [language] }),
+                localized_cask = loaded_cask.refresh_copy(
+                  config: loaded_cask.config.merge(Cask::Config.new(explicit: { languages: [language] })),
                 )
               end
 

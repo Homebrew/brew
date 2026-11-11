@@ -41,9 +41,10 @@ module Utils
       params(
         packages:    T.any(CaskOrFormula, T::Array[CaskOrFormula]),
         accumulator: TopologicalHash,
+        cask_cache:  T::Hash[String, Cask::Cask],
       ).returns(TopologicalHash)
     }
-    def self.graph_package_dependencies(packages, accumulator = TopologicalHash.new)
+    def self.graph_package_dependencies(packages, accumulator = TopologicalHash.new, cask_cache = {})
       packages = Array(packages)
 
       packages.each do |cask_or_formula|
@@ -54,23 +55,19 @@ module Utils
           formula_deps = cask_or_formula.depends_on
                                         .formula
                                         .map { |f| Formula[f] }
-          cask_deps = cask_or_formula.depends_on
-                                     .cask
-                                     .map { |c| Cask::CaskLoader.load(c, config: nil) }
+          cask_names = cask_or_formula.depends_on.cask
         when Formula
           formula_deps = cask_or_formula.deps
                                         .filter_map { |d| d.to_formula if !d.build? && !d.test? }
-          cask_deps = cask_or_formula.requirements
-                                     .filter_map(&:cask)
-                                     .map { |c| Cask::CaskLoader.load(c, config: nil) }
+          cask_names = cask_or_formula.requirements.filter_map(&:cask)
         else
           T.absurd(cask_or_formula)
         end
 
+        cask_deps = cask_names.map { |name| cask_cache[name] ||= Cask::CaskLoader.load(name, config: nil) }
         accumulator[cask_or_formula] = formula_deps + cask_deps
 
-        graph_package_dependencies(formula_deps, accumulator)
-        graph_package_dependencies(cask_deps, accumulator)
+        graph_package_dependencies(formula_deps + cask_deps, accumulator, cask_cache)
       end
 
       accumulator
