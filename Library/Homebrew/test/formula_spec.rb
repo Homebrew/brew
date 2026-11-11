@@ -2018,6 +2018,70 @@ RSpec.describe Formula do
       expect(f.missing_dependencies.map(&:name)).to eq(["baz"])
     end
 
+    it "does not load untrusted dependencies when the tab has no runtime_dependencies data", :trust_store do
+      dependency_name = "untrusted/tap/dependency"
+      formula = formula("foo") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on dependency_name
+      end
+
+      allow(formula).to receive(:any_installed_keg).and_return(keg)
+      allow(keg).to receive_messages(runtime_dependencies: nil, find: [])
+      allow(Homebrew::EnvConfig).to receive(:no_require_tap_trust?).and_return(false)
+      allow(Homebrew::Trust).to receive(:trusted?).with(:formula, dependency_name).and_return(false)
+      expect(Formulary).not_to receive(:factory).with(dependency_name, any_args)
+
+      expect(formula.missing_dependencies(hide: ["dependency"]).map(&:name)).to eq([dependency_name])
+    end
+
+    it "does not expand unqualified dependencies from untrusted taps", :trust_store do
+      dependency_name = "dependency"
+      formula = formula("foo") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on dependency_name
+      end
+      untrusted_tap = Tap.fetch("untrusted/tap")
+      loader = instance_double(Formulary::FormulaLoader, name: dependency_name, tap: untrusted_tap)
+
+      allow(formula).to receive(:any_installed_keg).and_return(keg)
+      allow(keg).to receive_messages(runtime_dependencies: nil, find: [])
+      allow(Homebrew::EnvConfig).to receive(:no_require_tap_trust?).and_return(false)
+      allow(Formulary).to receive(:loader_for).and_call_original
+      allow(Formulary).to receive(:loader_for).with(dependency_name, warn: false).and_return(loader)
+      allow(Homebrew::Trust).to receive(:trusted?)
+        .with(:formula, "#{untrusted_tap}/#{dependency_name}").and_return(false)
+      expect(Formulary).not_to receive(:factory).with(dependency_name, any_args)
+
+      expect(formula.missing_dependencies(hide: [dependency_name]).map(&:name)).to eq([dependency_name])
+    end
+
+    it "checks canonical names for untrusted aliases and respects hide", :trust_store do
+      dependency_name = "untrusted/tap/old"
+      formula = formula("foo") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on dependency_name
+      end
+      untrusted_tap = Tap.fetch("untrusted/tap")
+      loader = instance_double(Formulary::FormulaLoader, name: "new", tap: untrusted_tap)
+
+      allow(formula).to receive(:any_installed_keg).and_return(keg)
+      allow(keg).to receive_messages(runtime_dependencies: nil, find: [])
+      allow(Homebrew::EnvConfig).to receive(:no_require_tap_trust?).and_return(false)
+      allow(Formulary).to receive(:loader_for).and_call_original
+      allow(Formulary).to receive(:loader_for).with(dependency_name, any_args).and_return(loader)
+      allow(Homebrew::Trust).to receive(:trusted?)
+        .with(:formula, "#{untrusted_tap}/new").and_return(false)
+      expect(Formulary).not_to receive(:factory).with(dependency_name, any_args)
+      (HOMEBREW_CELLAR/"new").mkpath
+
+      expect(formula.missing_dependencies.map(&:name)).to be_empty
+      expect(formula.missing_dependencies(hide: ["old"]).map(&:name)).to eq([dependency_name])
+      expect(formula.missing_dependencies(hide: ["new"]).map(&:name)).to eq([dependency_name])
+    end
+
     it "does not fall back to formula definitions when the tab has an empty runtime_dependencies list" do
       allow(f).to receive(:declared_runtime_dependencies).and_return([Dependency.new("baz")])
       allow(keg).to receive(:runtime_dependencies).and_return([])

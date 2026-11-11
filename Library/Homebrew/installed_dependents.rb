@@ -49,23 +49,49 @@ module InstalledDependents
     dependents_to_check = (formulae - keg_formulae) + (Cask::Caskroom.casks - casks)
 
     dependents_to_check.each do |dependent|
-      required = case dependent
+      required_kegs = case dependent
       when Formula
-        dependent.missing_dependencies(hide: keg_names).filter_map do |d|
-          d.to_installed_formula
-        rescue FormulaUnavailableError
-          nil
+        dependent.missing_dependencies(hide: keg_names).flat_map do |d|
+          formula = begin
+            d.to_installed_formula
+          rescue FormulaUnavailableError
+            next []
+          rescue Homebrew::UntrustedTapError, TapFormulaAmbiguityError => e
+            loaders = if e.is_a?(TapFormulaAmbiguityError)
+              e.loaders
+            else
+              begin
+                [Formulary.loader_for(d.name, warn: false)]
+              rescue TapFormulaAmbiguityError => ambiguity
+                ambiguity.loaders
+              end
+            end
+            matching_kegs = loaders.filter_map do |loader|
+              kegs_by_source[[loader.name, loader.tap]]&.max_by(&:scheme_and_version)
+            end
+            if matching_kegs.empty?
+              fallback_names = [Utils.name_from_full_name(d.name)]
+              fallback_names.concat(loaders.map { |loader| Utils.name_from_full_name(loader.name) })
+              known_taps = loaders.filter_map(&:tap)
+              dependency_tap = d.tap
+              known_taps << dependency_tap if dependency_tap
+              matching_kegs = kegs_by_source.filter_map do |(name, tap), source_kegs|
+                next unless fallback_names.include?(name)
+                next if tap && known_taps.any? && known_taps.exclude?(tap)
+
+                source_kegs.max_by(&:scheme_and_version)
+              end
+            end
+            next matching_kegs
+          end
+          f_kegs = kegs_by_source[[formula.name, formula.tap]]
+          [f_kegs&.max_by(&:scheme_and_version)].compact
         end
       when Cask::Cask
         # When checking for cask dependents, we don't care about missing or non-runtime dependencies
-        CaskDependent.new(dependent).runtime_dependencies.map(&:to_installed_formula)
-      end
-
-      required_kegs = required.filter_map do |f|
-        f_kegs = kegs_by_source[[f.name, f.tap]]
-        next unless f_kegs
-
-        f_kegs.max_by(&:scheme_and_version)
+        CaskDependent.new(dependent).runtime_dependencies.map(&:to_installed_formula).filter_map do |f|
+          kegs_by_source[[f.name, f.tap]]&.max_by(&:scheme_and_version)
+        end
       end
 
       next if required_kegs.empty?

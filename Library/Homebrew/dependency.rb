@@ -63,6 +63,25 @@ class Dependency
     formula
   end
 
+  sig { returns(T::Array[Formulary::FormulaLoader]) }
+  def formula_loaders
+    [Formulary.loader_for(name, warn: false)]
+  rescue TapFormulaAmbiguityError => e
+    e.loaders
+  end
+
+  sig { returns(T::Boolean) }
+  def untrusted?
+    return false if Homebrew::EnvConfig.no_require_tap_trust?
+
+    formula_loaders.any? do |loader|
+      tap = loader.tap
+      next false unless tap
+
+      !Homebrew::Trust.trusted?(:formula, "#{tap}/#{loader.name}")
+    end
+  end
+
   # Whether {#name} is a formula name rather than a path, URL or bottle that `Formulary` would load.
   # Names from install receipts and bottle manifests can be written by sandboxed package code.
   sig { returns(T::Boolean) }
