@@ -41,6 +41,48 @@ RSpec.describe Homebrew::Cmd::Info do
 
   it_behaves_like "parseable arguments"
 
+  it "formats the common package summary" do
+    test_formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://example.com/testball-1.0.tar.gz"
+      desc "Test formula"
+      homepage "https://example.com/"
+      license "MIT"
+    end
+    allow(Utils::InfoDisplay).to receive(:metadata_lines).with(test_formula).and_return(["Pinned: 1.0"])
+    expect(Utils::InfoDisplay.package_summary(
+             formula_or_cask:     test_formula,
+             name:                "testball",
+             version:             "1.0",
+             stable:              true,
+             shadowed_by:         "homebrew/core",
+             aliases:             ["tball"],
+             old_names:           ["old-testball"],
+             conflicts:           ["other"],
+             installation_status: ["Installed (on request)"],
+             source_url:          "https://github.com/user/repo/blob/HEAD/Formula/t/testball.rb",
+             tap:                 Tap.fetch("example/tools"),
+             license:             test_formula.license,
+             installed_versions:  [],
+             verbose:             false,
+           )).to eq(
+             [
+               "==> testball: stable 1.0",
+               Formatter.warning("`testball` shadows `homebrew/core/testball`.", label: "Warning"),
+               "Test formula",
+               Formatter.url("https://example.com/"),
+               "Aliases: tball",
+               "Old Names: old-testball",
+               "Conflicts with:\n  other",
+               "Installed (on request)",
+               "From: #{Formatter.url("https://github.com/user/repo/blob/HEAD/Formula/t/testball.rb")}",
+               "Tap: example/tools",
+               "License: MIT",
+               "Pinned: 1.0",
+             ].join("\n"),
+           )
+  end
+
   context "when an installed cask is no longer available", :no_api do
     before do
       (Cask::Caskroom.path/"removed-cask/1.0").mkpath
@@ -297,6 +339,78 @@ RSpec.describe Homebrew::Cmd::Info do
       .to not_to_output.to_stderr
   end
 
+  describe "complete formula information" do
+    let(:test_formula) do
+      formula("testball") do
+        T.bind(self, T.class_of(Formula))
+        url "https://example.com/testball-1.0.tar.gz"
+        homepage "https://example.com/testball"
+        desc "A test formula"
+        license "MIT"
+      end
+    end
+    let(:keg_path) { HOMEBREW_CELLAR/"testball/1.0" }
+
+    before do
+      (keg_path/"bin").mkpath
+      (keg_path/"bin/testball").write("#!/bin/sh\n")
+      (keg_path/"bin/testball").chmod(0755)
+      tab = Tab.empty
+      tab.tabfile = keg_path/AbstractTab::FILENAME
+      tab.write
+
+      allow(info).to receive(:github_info).with(test_formula).and_return("https://example.com/testball.rb")
+      allow(test_formula).to receive_messages(
+        core_formula?: false, missing_library_linkage: [[], Set.new], outdated?: false, versioned_formulae: [],
+      )
+      allow_any_instance_of(Keg).to receive(:abv).and_return("2 files, 1.1KB")
+    end
+
+    context "without --verbose" do
+      let(:info) { described_class.new([]) }
+
+      it "prints the complete output" do
+        expected_output = <<~EOS
+          ==> testball: stable 1.0
+          A test formula
+          https://example.com/testball
+          Installed (as dependency)
+          From: https://example.com/testball.rb
+          License: MIT
+          ==> Installed Versions
+          testball 1.0 (2 files, 1.1KB)
+        EOS
+        expect { info.info_formula(test_formula) }
+          .to output(expected_output).to_stdout
+          .and not_to_output.to_stderr
+      end
+    end
+
+    context "with --verbose" do
+      let(:info) { described_class.new(["--verbose"]) }
+
+      it "prints the complete output" do
+        expected_output = <<~EOS
+          ==> testball: stable 1.0
+          A test formula
+          https://example.com/testball
+          Installed (as dependency)
+          From: https://example.com/testball.rb
+          License: MIT
+          ==> Installed Kegs and Versions
+          testball 1.0 (2 files, 1.1KB)
+            Cellar: #{keg_path}
+            Built from source
+          ==> Binaries
+          testball
+        EOS
+        expect { info.info_formula(test_formula) }
+          .to output(expected_output).to_stdout
+          .and not_to_output.to_stderr
+      end
+    end
+  end
+
   it "prints inline summary information for formulae" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
@@ -317,6 +431,32 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output(/Metadata/).to_stdout
       .and not_to_output(/supports macOS and Linux/).to_stdout
       .and not_to_output.to_stderr
+  end
+
+  it "shows deprecation before formula aliases and conflicts" do
+    info = described_class.new([])
+    test_formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://example.com/testball-1.0.tar.gz"
+      homepage "https://example.com/testball"
+      desc "A test formula"
+      conflicts_with "other"
+    end
+    allow(test_formula).to receive_messages(aliases: ["alias"], oldnames: [], core_formula?: false)
+    allow(DeprecateDisable).to receive(:message).with(test_formula) { +"deprecated!\nReplacement:\n  example\n" }
+    allow(info).to receive(:github_info).with(test_formula).and_return("https://example.com/testball.rb")
+
+    expected_output = <<~EOS
+      https://example.com/testball
+      Deprecated!
+      Replacement:
+        example
+      Aliases: alias
+      Conflicts with:
+        other
+      Not installed
+    EOS
+    expect { info.info_formula(test_formula) }.to output(Regexp.new(Regexp.escape(expected_output))).to_stdout
   end
 
   it "shows build dependencies for an uninstalled formula without a bottle" do
@@ -1722,12 +1862,12 @@ RSpec.describe Homebrew::Cmd::Info do
 
   describe "::installation_status" do
     it "prints on-request installs explicitly" do
-      expect(described_class.installation_status(instance_double(Tab, installed_on_request: true)))
+      expect(Utils::InfoDisplay.installation_status(instance_double(Tab, installed_on_request: true)))
         .to eq("Installed (on request)")
     end
 
     it "treats non-requested installs as dependency installs" do
-      expect(described_class.installation_status(instance_double(Tab, installed_on_request: false)))
+      expect(Utils::InfoDisplay.installation_status(instance_double(Tab, installed_on_request: false)))
         .to eq("Installed (as dependency)")
     end
   end
@@ -1749,7 +1889,7 @@ RSpec.describe Homebrew::Cmd::Info do
         File.utime(pin_time, pin_time, pin_path)
         allow(FormulaPin).to receive(:new).with(test_formula).and_return(instance_double(FormulaPin, path: pin_path))
 
-        expect(described_class.metadata_lines(test_formula)).to eq([
+        expect(Utils::InfoDisplay.metadata_lines(test_formula)).to eq([
           "Pinned: 1.0 on #{pin_time.strftime("%Y-%m-%d at %H:%M:%S")}",
         ])
       end
@@ -1769,7 +1909,7 @@ RSpec.describe Homebrew::Cmd::Info do
         File.utime(pin_time, pin_time, pin_path)
         allow(cask).to receive(:pin_path).and_return(pin_path)
 
-        expect(described_class.metadata_lines(cask)).to eq([
+        expect(Utils::InfoDisplay.metadata_lines(cask)).to eq([
           "Pinned: 1.0 on #{pin_time.strftime("%Y-%m-%d at %H:%M:%S")}",
         ])
       end
