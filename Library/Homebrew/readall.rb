@@ -111,6 +111,19 @@ module Readall
     success
   end
 
+  # Load a cask file once per process, then re-evaluate it for the simulated
+  # system rather than re-reading it for every OS and architecture.
+  sig { params(file: Pathname).returns(Cask::Cask) }
+  def self.load_cask(file)
+    casks = cache[:casks] ||= {}
+    if (cask = casks[file])
+      ENV.clear_sensitive_environment_for_eval! { cask.refresh }
+      cask
+    else
+      casks[file] = Cask::CaskLoader.from_tap_path(file)
+    end
+  end
+
   sig {
     params(
       tap: Tap, os_name: T.nilable(Symbol), arch: T.nilable(Symbol), files: T.nilable(T::Array[Pathname]),
@@ -131,12 +144,12 @@ module Readall
     (files || tap.cask_files).each do |file|
       cask = if arch
         Homebrew::SimulateSystem.with(os: :macos, arch:) do
-          loaded_cask = Cask::CaskLoader.from_tap_path(file)
+          loaded_cask = load_cask(file)
           loaded_cask if loaded_cask.supports_linux?
         end
       else
         Homebrew::SimulateSystem.with(os: :macos) do
-          loaded_cask = Cask::CaskLoader.from_tap_path(file)
+          loaded_cask = load_cask(file)
           loaded_cask if loaded_cask.supports_linux?
         end
       end
