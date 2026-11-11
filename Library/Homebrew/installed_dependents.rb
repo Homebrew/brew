@@ -51,16 +51,29 @@ module InstalledDependents
     dependents_to_check.each do |dependent|
       required_kegs = case dependent
       when Formula
-        dependent.missing_dependencies(hide: keg_names).filter_map do |d|
-          f_kegs = begin
-            formula = d.to_installed_formula
-            kegs_by_source[[formula.name, formula.tap]]
+        dependent.missing_dependencies(hide: keg_names).flat_map do |d|
+          formula = begin
+            d.to_installed_formula
           rescue FormulaUnavailableError
-            next
+            next []
           rescue Homebrew::UntrustedTapError
-            kegs_by_source[[Utils.name_from_full_name(d.name), d.tap]]
+            loaders = begin
+              [Formulary.loader_for(d.name, warn: false)]
+            rescue TapFormulaAmbiguityError => e
+              e.loaders
+            end
+            matching_kegs = loaders.filter_map do |loader|
+              kegs_by_source[[loader.name, loader.tap]]&.max_by(&:scheme_and_version)
+            end
+            if matching_kegs.empty?
+              matching_kegs = kegs_by_source.filter_map do |(name, _tap), source_kegs|
+                source_kegs.max_by(&:scheme_and_version) if name == Utils.name_from_full_name(d.name)
+              end
+            end
+            next matching_kegs
           end
-          f_kegs&.max_by(&:scheme_and_version)
+          f_kegs = kegs_by_source[[formula.name, formula.tap]]
+          [f_kegs&.max_by(&:scheme_and_version)].compact
         end
       when Cask::Cask
         # When checking for cask dependents, we don't care about missing or non-runtime dependencies

@@ -3051,8 +3051,7 @@ class Formula
       undeclared:,
       stop_at_untrusted:,
     ).filter_map do |d|
-      next if stop_at_untrusted && !Homebrew::EnvConfig.no_require_tap_trust? &&
-              d.tap && !Homebrew::Trust.trusted?(:formula, d.name)
+      next if stop_at_untrusted && d.untrusted?
 
       d.to_formula
     rescue FormulaUnavailableError
@@ -3650,9 +3649,7 @@ class Formula
       end
 
       next unless stop_at_untrusted
-      next if Homebrew::EnvConfig.no_require_tap_trust?
-      next unless dependency.tap
-      next if Homebrew::Trust.trusted?(:formula, dependency.name)
+      next unless dependency.untrusted?
 
       Dependable::KEEP_BUT_PRUNE_RECURSIVE_DEPS
     end
