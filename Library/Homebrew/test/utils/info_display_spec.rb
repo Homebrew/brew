@@ -4,6 +4,21 @@
 require "utils/info_display"
 
 RSpec.describe Utils::InfoDisplay do
+  describe ".requirement_for_other_os?" do
+    test_each([
+      [:macos, MacOSRequirement, false],
+      [:macos, LinuxRequirement, true],
+      [:linux, MacOSRequirement, true],
+      [:linux, LinuxRequirement, false],
+    ]) do |(os, requirement_class, expected)|
+      it "identifies #{requirement_class} on #{os}" do
+        Homebrew::SimulateSystem.with(os:) do
+          expect(described_class.requirement_for_other_os?(requirement_class.new)).to eq(expected)
+        end
+      end
+    end
+  end
+
   describe ".package_summary" do
     let(:cask) { Cask::Cask.new("example") { version "2.0" } }
 

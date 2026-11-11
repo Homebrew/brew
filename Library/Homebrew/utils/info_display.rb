@@ -3,6 +3,7 @@
 
 require "utils/output"
 require "deprecate_disable"
+require "simulate_system"
 
 module Utils
   # Shared presentation helpers for formula and cask information.
@@ -15,6 +16,7 @@ module Utils
       const :size, String
       const :linked, T::Boolean
       const :details, T::Array[String]
+      const :warning, T.nilable(String), default: nil
     end
 
     class Title < T::Struct
@@ -211,9 +213,10 @@ module Utils
         end
         line = "#{padded_name} #{row.version.ljust(version_width)}#{padded_size}"
         line += " [Linked]" if row.linked
-        next [line] unless show_details
-
-        [line, *row.details.map { |detail| "  #{detail}" }]
+        row_lines = [line]
+        row_lines << "  #{row.warning}" if row.warning
+        row_lines.concat(row.details.map { |detail| "  #{detail}" }) if show_details
+        row_lines
       end
       section(title, lines)
     end
@@ -259,7 +262,8 @@ module Utils
 
     sig { params(requirement: Requirement).returns(T::Boolean) }
     def self.requirement_for_other_os?(requirement)
-      requirement.instance_of?(MacOSRequirement) || requirement.instance_of?(LinuxRequirement)
+      (Homebrew::SimulateSystem.simulating_or_running_on_macos? && requirement.instance_of?(LinuxRequirement)) ||
+        (Homebrew::SimulateSystem.simulating_or_running_on_linux? && requirement.instance_of?(MacOSRequirement))
     end
 
     sig { params(installed_count: Integer, total_count: Integer, mark_uninstalled: T::Boolean).returns(String) }
