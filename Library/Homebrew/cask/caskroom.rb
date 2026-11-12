@@ -233,15 +233,16 @@ module Cask
       Process.egid.to_s
     end
 
-    # Get all installed casks.
+    # Get installed casks, optionally limited to specific Caskroom tokens.
     #
     # A Caskroom directory for a cask that has been renamed but not yet migrated loads
     # as the cask it was renamed to, so deduplicate to avoid listing it twice.
     #
     # @api internal
-    sig { params(config: T.nilable(Config)).returns(T::Array[Cask]) }
-    def self.casks(config: nil)
-      return [] unless any_casks_installed?
+    sig { params(config: T.nilable(Config), tokens: T.nilable(T::Array[String])).returns(T::Array[Cask]) }
+    def self.casks(config: nil, tokens: nil)
+      tokens ||= self.tokens
+      return [] if tokens.empty?
 
       require "cask/cask_loader"
 

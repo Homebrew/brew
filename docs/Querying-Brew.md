@@ -17,7 +17,6 @@ To enable users to do rich queries without the problems above, Homebrew provides
 For casks, the human-readable `brew info` output groups apps, fonts, manpages and plugins under their own headings.
 Other installation artefacts appear under Artifacts, and binaries and command wrappers appear under Binaries with `--verbose`.
 Installed version paths and receipt details are also shown with `--verbose`.
-Missing installed version paths are reported even without `--verbose`.
 
 ## `brew info --json`
 

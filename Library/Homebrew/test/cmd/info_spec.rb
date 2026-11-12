@@ -307,7 +307,7 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
-  it "loads installed casks only once for a verbose inventory" do
+  it "uses matching casks in each verbose inventory summary" do
     casks = %w[example example@dev].map do |token|
       cask = Cask::Cask.new(token) { version "1.0" }
       (Cask::Caskroom.path/token/"1.0").mkpath
@@ -316,7 +316,9 @@ RSpec.describe Homebrew::Cmd::Info do
     end
     allow(Cask::Tab).to receive(:for_cask).and_return(Cask::Tab.empty)
     allow(Cask::Info).to receive(:repo_url).and_return(nil)
-    expect(Cask::Caskroom).to receive(:casks).once.and_return(casks)
+    expect(Cask::Caskroom).to receive(:casks).with(no_args).once.and_return(casks)
+    expect(Cask::Caskroom).to receive(:casks).with(tokens: contain_exactly("example", "example@dev"))
+                                             .twice.and_return(casks)
 
     expect { described_class.new(["--installed", "--cask", "--verbose"]).run }.to output(<<~EOS).to_stdout
       ==> example: 1.0

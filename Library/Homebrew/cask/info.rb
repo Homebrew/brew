@@ -3,6 +3,7 @@
 
 require "json"
 require "cmd/info"
+require "cask/cask_loader"
 require "utils/output"
 require "utils/info_display"
 
@@ -10,9 +11,8 @@ module Cask
   class Info
     extend ::Utils::Output::Mixin
 
-    # TODO: Remove installed_casks by loading only related casks, including renamed and unavailable ones.
-    sig { params(cask: Cask, verbose: T::Boolean, installed_casks: T.nilable(T::Array[Cask])).returns(String) }
-    def self.get_info(cask, verbose: false, installed_casks: nil)
+    sig { params(cask: Cask, verbose: T::Boolean).returns(String) }
+    def self.get_info(cask, verbose: false)
       require "cask/installer"
 
       installed = cask.installed?
@@ -28,7 +28,7 @@ module Cask
         auto_updates:        cask.auto_updates == true,
         installation_status: [installation_info(cask, installed:)],
         source_url:          repo_url(cask),
-        installed_versions:  installed_section_rows(cask, installed_casks:),
+        installed_versions:  installed_section_rows(cask),
         verbose:,
       )}\n"
       deps = deps_info(cask, mark_uninstalled: installed)
@@ -54,9 +54,9 @@ module Cask
       output
     end
 
-    sig { params(cask: Cask, args: Homebrew::Cmd::Info::Args, installed_casks: T.nilable(T::Array[Cask])).void }
-    def self.info(cask, args:, installed_casks: nil)
-      puts get_info(cask, verbose: args.verbose?, installed_casks:)
+    sig { params(cask: Cask, args: Homebrew::Cmd::Info::Args).void }
+    def self.info(cask, args:)
+      puts get_info(cask, verbose: args.verbose?)
 
       return unless cask.tap&.core_cask_tap?
 
@@ -72,13 +72,19 @@ module Cask
       ::Utils::InfoDisplay.installation_status(Tab.for_cask(cask))
     end
 
-    sig {
-      params(cask: Cask, installed_casks: T.nilable(T::Array[Cask]))
-        .returns(T::Array[::Utils::InfoDisplay::InstalledVersion])
-    }
-    def self.installed_section_rows(cask, installed_casks: nil)
+    sig { params(cask: Cask).returns(T::Array[::Utils::InfoDisplay::InstalledVersion]) }
+    def self.installed_section_rows(cask)
       base_token = cask.token.split("@", 2).fetch(0)
-      related_casks = [*(installed_casks || Caskroom.casks), cask].uniq(&:token).select do |other|
+      matching_token = ->(token) { token == base_token || token.start_with?("#{base_token}@") }
+      tokens = Caskroom.tokens
+      renamed_tokens = Tap.to_a.flat_map do |tap|
+        (tap.cask_renames.keys | tap.tap_migrations.keys).intersection(tokens).select do |token|
+          resolved = CaskLoader.tap_cask_token_type("#{tap}/#{token}", warn: false)
+          resolved && matching_token.call(resolved.first)
+        end
+      end
+      related_tokens = tokens.select { |token| matching_token.call(token) || renamed_tokens.include?(token) }
+      related_casks = [*Caskroom.casks(tokens: related_tokens), cask].uniq(&:token).select do |other|
         other.token == base_token || other.token.start_with?("#{base_token}@")
       end
       related_casks.sort_by(&:full_name).filter_map do |installed_cask|

@@ -238,6 +238,20 @@ RSpec.describe Cask::Info, :cask do
     end
   end
 
+  it "loads only matching installed casks, including renamed siblings" do
+    cask = Cask::Cask.new("example") { version "3.0" }
+    tap = Tap.fetch("homebrew/cask")
+    allow(Cask::Caskroom).to receive(:tokens).and_return(%w[example@dev old-example unrelated])
+    allow(Tap).to receive(:to_a).and_return([tap])
+    allow(tap).to receive_messages(cask_renames: { "old-example" => "example@beta" }, tap_migrations: {})
+    expect(Cask::Caskroom).to receive(:casks).with(tokens: %w[example@dev old-example]).and_return([])
+
+    expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+      ==> example: 3.0
+      Not installed
+    EOS
+  end
+
   it "lists an installed cask only once when another tap has the same token" do
     cask = Cask::Cask.new("example", tap: Tap.fetch("other/tools")) { version "2.0" }
     installed_cask = Cask::Cask.new("example", tap: Tap.fetch("original/tools")) { version "1.0" }

@@ -262,8 +262,10 @@ module Utils
 
     sig { params(requirement: Requirement).returns(T::Boolean) }
     def self.requirement_for_other_os?(requirement)
-      (Homebrew::SimulateSystem.simulating_or_running_on_macos? && requirement.instance_of?(LinuxRequirement)) ||
-        (Homebrew::SimulateSystem.simulating_or_running_on_linux? && requirement.instance_of?(MacOSRequirement))
+      return !Homebrew::SimulateSystem.simulating_or_running_on_macos? if requirement.instance_of?(MacOSRequirement)
+      return !Homebrew::SimulateSystem.simulating_or_running_on_linux? if requirement.instance_of?(LinuxRequirement)
+
+      false
     end
 
     sig { params(installed_count: Integer, total_count: Integer, mark_uninstalled: T::Boolean).returns(String) }

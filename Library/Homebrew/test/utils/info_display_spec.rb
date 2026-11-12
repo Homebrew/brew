@@ -17,6 +17,15 @@ RSpec.describe Utils::InfoDisplay do
         end
       end
     end
+
+    it "treats macOS and Linux requirements as other OS requirements on generic OS" do
+      allow(Homebrew::SimulateSystem).to receive_messages(simulating_or_running_on_macos?: false,
+                                                          simulating_or_running_on_linux?: false)
+
+      expect([MacOSRequirement.new, LinuxRequirement.new].map do |requirement|
+        described_class.requirement_for_other_os?(requirement)
+      end).to eq([true, true])
+    end
   end
 
   describe ".package_summary" do
