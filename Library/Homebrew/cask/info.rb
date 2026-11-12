@@ -3,6 +3,7 @@
 
 require "json"
 require "cmd/info"
+require "cask/cask_loader"
 require "utils/output"
 require "utils/info_display"
 
@@ -74,7 +75,16 @@ module Cask
     sig { params(cask: Cask).returns(T::Array[::Utils::InfoDisplay::InstalledVersion]) }
     def self.installed_section_rows(cask)
       base_token = cask.token.split("@", 2).fetch(0)
-      related_casks = [*Caskroom.casks, cask].uniq(&:full_name).select do |other|
+      matching_token = ->(token) { token == base_token || token.start_with?("#{base_token}@") }
+      tokens = Caskroom.tokens
+      renamed_tokens = (tokens.empty? ? [] : Tap.to_a).flat_map do |tap|
+        (tap.cask_renames.keys | tap.tap_migrations.keys).intersection(tokens).select do |token|
+          resolved = CaskLoader.tap_cask_token_type("#{tap}/#{token}", warn: false)
+          resolved && matching_token.call(resolved.first)
+        end
+      end
+      related_tokens = tokens.select { |token| matching_token.call(token) || renamed_tokens.include?(token) }
+      related_casks = [*Caskroom.casks(tokens: related_tokens), cask].uniq(&:token).select do |other|
         other.token == base_token || other.token.start_with?("#{base_token}@")
       end
       related_casks.sort_by(&:full_name).filter_map do |installed_cask|
@@ -89,11 +99,7 @@ module Cask
         else
           ""
         end
-        details = if path_exists
-          ["Caskroom: #{versioned_staged_path}"]
-        else
-          ["#{versioned_staged_path} (#{Formatter.error("does not exist")})"]
-        end
+        details = path_exists ? ["Caskroom: #{versioned_staged_path}"] : []
         if (tab = Tab.for_cask(installed_cask)).tabfile&.exist?
           details << tab.to_s
         end
@@ -109,6 +115,7 @@ module Cask
           size:,
           linked: false,
           details:,
+          warning: ("#{versioned_staged_path} (#{Formatter.error("does not exist")})" unless path_exists),
         )
       end
     end

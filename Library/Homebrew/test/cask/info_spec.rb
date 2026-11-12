@@ -110,8 +110,20 @@ RSpec.describe Cask::Info, :cask do
     cask = Cask::CaskLoader.load("local-transmission")
     allow(DeprecateDisable).to receive(:message).with(cask) { +"deprecated!\nReplacement:\n  example\n" }
 
-    expect { described_class.info(cask, args:) }
-      .to output(%r{https://transmissionbt.com/\nDeprecated!\nReplacement:\n  example\nNot installed}).to_stdout
+    expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+      ==> local-transmission (Transmission): 2.61
+      BitTorrent client
+      https://transmissionbt.com/
+      Deprecated!
+      Replacement:
+        example
+      Not installed
+      From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/l/local-transmission.rb
+      ==> Requirements
+      Required: macOS >= 11
+      ==> Apps
+      Transmission.app
+    EOS
   end
 
   it "prints inline summary information for casks" do
@@ -134,9 +146,22 @@ RSpec.describe Cask::Info, :cask do
                                     outdated?:         true,
                                     version:           Cask::DSL::Version.new("2.61"),
                                     supports_linux?:   false)
+    (Cask::Caskroom.path/"local-transmission/2.60").mkpath
+    allow(Cask::Caskroom).to receive(:casks).and_return([])
+    allow(Cask::Tab).to receive(:for_cask).with(cask).and_return(Cask::Tab.empty)
 
-    expect { described_class.info(cask, args:) }
-      .to output(/==> .*↑.*: 2\.60 → 2\.61/).to_stdout
+    expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+      ==> local-transmission #{Formatter.success("↑")} (Transmission): 2.60 → 2.61
+      BitTorrent client
+      https://transmissionbt.com/
+      Installed (as dependency)
+      From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/l/local-transmission.rb
+      ==> Installed Versions
+      local-transmission #{Formatter.success("↑")} 2.60 → 2.61 (0B)
+      #{requirements_section(installed("macOS >= 11"))}
+      ==> Apps
+      Transmission.app
+    EOS
   end
 
   describe "installed sibling cask versions" do
@@ -191,9 +216,104 @@ RSpec.describe Cask::Info, :cask do
     it "shows the available version for an outdated sibling" do
       allow(installed_cask).to receive_messages(outdated?: true, version: Cask::DSL::Version.new("4.0"))
 
-      expect { described_class.info(cask, args:) }
-        .to output(/example@dev.*3\.2\.0-RC3 → 4\.0/).to_stdout
-        .and not_to_output.to_stderr
+      expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+        #{oh1_title uninstalled("example")}: 3.0
+        Not installed
+        ==> Installed Versions
+        example@dev #{Formatter.success("↑")} 3.2.0-RC3 → 4.0 (844MB)
+      EOS
+    end
+
+    it "shows a missing sibling directory without --verbose" do
+      missing_path = Cask::Caskroom.path/"missing-example/3.2.0-RC3"
+      allow(installed_cask).to receive(:caskroom_path).and_return(missing_path.parent)
+
+      expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+        #{oh1_title uninstalled("example")}: 3.0
+        Not installed
+        ==> Installed Versions
+        #{installed("example@dev")} 3.2.0-RC3
+          #{missing_path} (#{Formatter.error("does not exist")})
+      EOS
+    end
+  end
+
+  it "loads only matching installed casks, including renamed siblings" do
+    cask = Cask::Cask.new("example") { version "3.0" }
+    tap = Tap.fetch("homebrew/cask")
+    allow(Cask::Caskroom).to receive(:tokens).and_return(%w[example@dev old-example unrelated])
+    allow(Tap).to receive(:to_a).and_return([tap])
+    allow(tap).to receive_messages(cask_renames: { "old-example" => "example@beta" }, tap_migrations: {})
+    expect(Cask::Caskroom).to receive(:casks).with(tokens: %w[example@dev old-example]).and_return([])
+
+    expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+      ==> example: 3.0
+      Not installed
+    EOS
+  end
+
+  it "does not inspect tap renames when no casks are installed" do
+    cask = Cask::Cask.new("example") { version "3.0" }
+    allow(Cask::Caskroom).to receive(:tokens).and_return([])
+    expect(Tap).not_to receive(:to_a)
+
+    expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+      ==> example: 3.0
+      Not installed
+    EOS
+  end
+
+  it "lists an installed cask only once when another tap has the same token" do
+    cask = Cask::Cask.new("example", tap: Tap.fetch("other/tools")) { version "2.0" }
+    installed_cask = Cask::Cask.new("example", tap: Tap.fetch("original/tools")) { version "1.0" }
+    (Cask::Caskroom.path/"example/1.0").mkpath
+    allow(cask).to receive_messages(installed?: true, installed_version: "1.0", outdated?: false)
+    allow(installed_cask).to receive_messages(installed?: true, installed_version: "1.0", outdated?: false)
+    allow(Cask::Caskroom).to receive(:casks).and_return([installed_cask])
+    allow(Cask::Tab).to receive(:for_cask).and_return(Cask::Tab.empty)
+    allow(described_class).to receive(:repo_url).with(cask).and_return(nil)
+
+    expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+      ==> example: 2.0
+      Installed (as dependency)
+      ==> Installed Versions
+      original/tools/example 1.0 (0B)
+    EOS
+  end
+
+  describe "a missing installed cask directory" do
+    let(:cask) { Cask::Cask.new("example") { version "1.0" } }
+    let(:installed_path) { Cask::Caskroom.path/"example/1.0" }
+    let(:time) { 1_720_189_863 }
+
+    before do
+      allow(cask).to receive_messages(installed?: true, installed_version: "1.0", outdated?: false)
+      allow(Cask::Caskroom).to receive(:casks).and_return([])
+      allow(Cask::Tab).to receive(:for_cask).with(cask).and_return(
+        Cask::Tab.new(loaded_from_api: true, tabfile: TEST_FIXTURE_DIR/"cask_receipt.json", time:),
+      )
+    end
+
+    it "shows the missing path without --verbose" do
+      expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+        ==> example: 1.0
+        Installed (as dependency)
+        ==> Installed Versions
+        example 1.0
+          #{installed_path} (does not exist)
+      EOS
+    end
+
+    it "shows the missing path once and the receipt with --verbose" do
+      verbose_args = Homebrew::Cmd::Info.new(["--verbose"]).args
+      expect { described_class.info(cask, args: verbose_args) }.to output(<<~EOS).to_stdout
+        ==> example: 1.0
+        Installed (as dependency)
+        ==> Installed Versions
+        example 1.0
+          #{installed_path} (does not exist)
+          Installed using the formulae.brew.sh API on #{Time.at(time).strftime("%Y-%m-%d at %H:%M:%S")}
+      EOS
     end
   end
 
@@ -273,6 +393,8 @@ RSpec.describe Cask::Info, :cask do
     allow(Cask::Caskroom).to receive(:casks).and_return([])
 
     expected_output = <<~EOS
+      ==> grouped-artifacts: 1.0
+      Not installed
       ==> Apps
       Example.app -> Renamed.app
       ==> Fonts
@@ -289,8 +411,11 @@ RSpec.describe Cask::Info, :cask do
       Example.qlgenerator (Quick Look Plugin)
       ==> Artifacts
       Example.pkg (Pkg)
+      ==> Binaries
+      example
     EOS
-    expect(described_class.artifact_info(cask)).to eq(expected_output.chomp)
+    expect { described_class.info(cask, args: Homebrew::Cmd::Info.new(["--verbose"]).args) }
+      .to output(expected_output).to_stdout
   end
 
   it "lists command wrappers under Binaries only with --verbose" do
