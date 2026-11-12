@@ -15,6 +15,10 @@ module Utils
     INFLUX_ORG = "d81a3e6d582d485f"
     WSL_SUFFIX = " [WSL]"
     ENV_CONFIG_COMMANDS = %w[config fetch install reinstall update update-report upgrade].freeze
+    # Commands that report an event for each package they install so send them in batches.
+    BATCH_REPORTS_COMMANDS = %w[install reinstall upgrade].freeze
+    # Keeps each request well under Linux's 128KiB limit on a single `curl` argument.
+    INFLUX_MAX_BATCH_SIZE = 100
 
     extend Utils::Output::Mixin
     extend T::Generic
@@ -58,16 +62,46 @@ module Utils
                               .map { |k, v| %Q(#{k}="#{v}") }
                               .join(",")
 
-        args = [
-          "--max-time", "3",
-          "--header", "Content-Type: text/plain; charset=utf-8",
-          "--header", "Accept: application/json",
-          "--data-binary", "#{measurement},#{tags_string} #{fields_string} #{Time.now.to_i}"
-        ]
+        line = "#{measurement},#{tags_string} #{fields_string} #{Time.now.to_i}"
+        if (batch = @batched_influx_lines)
+          batch << line
+        else
+          write_influx([line])
+        end
+      end
 
+      # Sends the events reported in the block together when it finishes,
+      # rather than making a request for each event.
+      sig { params(_block: T.proc.void).void }
+      def batch_reports(&_block)
+        # Events reported in a nested batch are sent by the outermost one.
+        return yield if @batched_influx_lines
+
+        @batched_influx_lines = T.let([], T.nilable(T::Array[String]))
+        begin
+          yield
+        ensure
+          lines = @batched_influx_lines
+          @batched_influx_lines = nil
+          write_influx(lines) if lines
+        end
+      end
+
+      sig { params(lines: T::Array[String]).void }
+      def write_influx(lines)
         # Second precision is highest we can do and has the lowest performance cost.
         url = "#{INFLUX_HOST}/api/v2/write?bucket=#{INFLUX_BUCKET}&precision=s"
-        deferred_curl(url, args)
+
+        lines.each_slice(INFLUX_MAX_BATCH_SIZE) do |slice|
+          args = [
+            "--max-time", "3",
+            "--header", "Content-Type: text/plain; charset=utf-8",
+            "--header", "Accept: application/json",
+            # Line protocol separates each event with a newline.
+            "--data-binary", slice.join("\n")
+          ]
+          deferred_curl(url, args)
+        end
       end
 
       sig { params(url: String, args: T::Array[String]).void }

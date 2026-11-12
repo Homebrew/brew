@@ -170,6 +170,85 @@ RSpec.describe Utils::Analytics do
     end
   end
 
+  describe "::batch_reports" do
+    it "sends events reported in the block in a single request" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Time).to receive(:now).and_return(Time.at(123))
+      expect(described_class).to receive(:deferred_curl).once.with(
+        anything,
+        array_including("--data-binary", "a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123"),
+      )
+
+      described_class.batch_reports do
+        described_class.report_influx(:a, { t: "1" }, { f: "1" })
+        described_class.report_influx(:b, { t: "2" }, { f: "2" })
+      end
+    end
+
+    it "sends events reported before an error is raised" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Time).to receive(:now).and_return(Time.at(123))
+      expect(described_class).to receive(:deferred_curl).once.with(
+        anything,
+        array_including("--data-binary", "a,t=1 f=\"1\" 123"),
+      )
+
+      expect do
+        described_class.batch_reports do
+          described_class.report_influx(:a, { t: "1" }, { f: "1" })
+          raise "boom"
+        end
+      end.to raise_error(RuntimeError, "boom")
+    end
+
+    it "sends events from nested batches with the outermost batch" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Time).to receive(:now).and_return(Time.at(123))
+      requests = []
+      allow(described_class).to receive(:deferred_curl) { |_url, args| requests << args }
+
+      described_class.batch_reports do
+        described_class.report_influx(:a, { t: "1" }, { f: "1" })
+        described_class.batch_reports do
+          described_class.report_influx(:b, { t: "2" }, { f: "2" })
+        end
+        expect(requests).to be_empty
+      end
+
+      expect(requests.length).to eq(1)
+      expect(requests.first).to include("a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123")
+    end
+
+    it "splits batches larger than INFLUX_MAX_BATCH_SIZE into multiple requests" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Time).to receive(:now).and_return(Time.at(123))
+      stub_const("Utils::Analytics::INFLUX_MAX_BATCH_SIZE", 2)
+      requests = []
+      allow(described_class).to receive(:deferred_curl) { |_url, args| requests << args }
+
+      described_class.batch_reports do
+        described_class.report_influx(:a, { t: "1" }, { f: "1" })
+        described_class.report_influx(:b, { t: "2" }, { f: "2" })
+        described_class.report_influx(:c, { t: "3" }, { f: "3" })
+      end
+
+      expect(requests.map { |args| args[args.index("--data-binary") + 1] }).to eq([
+        "a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123",
+        "c,t=3 f=\"3\" 123",
+      ])
+    end
+
+    it "does not send a request when no events are reported" do
+      expect(described_class).not_to receive(:deferred_curl)
+
+      described_class.batch_reports { nil }
+    end
+  end
+
   describe "::deferred_curl" do
     it "forwards args and silences subprocess output outside debug mode" do
       ENV.delete("HOMEBREW_ANALYTICS_DEBUG")
