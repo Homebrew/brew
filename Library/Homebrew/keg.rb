@@ -792,7 +792,7 @@ class Keg
     keepme = path/KEEPME_FILE
     return [] if !keepme.exist? || !keepme.readable?
 
-    keepme.readlines.select { |ref| File.exist?(ref.strip) }
+    keepme.each_line.select { |ref| File.exist?(ref.strip) }
   end
 
   sig { returns(T::Array[Pathname]) }

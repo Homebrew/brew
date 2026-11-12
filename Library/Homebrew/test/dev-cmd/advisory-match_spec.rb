@@ -2751,7 +2751,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
     end
 
     it "fails when the rejection file is unreadable" do
-      allow(File).to receive(:readlines).with(rejected_path, chomp: true).and_raise(Errno::EACCES)
+      allow(File).to receive(:foreach).with(rejected_path, chomp: true).and_raise(Errno::EACCES)
       expect { command.run }.to raise_error(Errno::EACCES)
     end
 

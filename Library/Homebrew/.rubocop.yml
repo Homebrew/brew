@@ -34,6 +34,9 @@ Lint/DuplicateMethods:
     - "keg_only_reason.rb"
     - "extend/os/mac/keg_only_reason.rb"
 
+Lint/HeredocMethodCallPosition:
+  Enabled: true
+
 # Detect unreferenced private methods across Homebrew's project index.
 Lint/UnusedPrivateMethod:
   Enabled: true
@@ -58,6 +61,12 @@ Naming/MethodParameterName:
   AllowedNames:
     - go
     - uv
+
+Performance/IoReadlines:
+  Enabled: true
+
+Performance/OpenStruct:
+  Enabled: true
 
 # Only enforce documentation for public APIs.
 # Include list checked by Homebrew/PublicApiDocumentation.
