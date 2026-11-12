@@ -217,6 +217,7 @@ module Homebrew
         new_casks = T.let([], T::Array[Cask::Cask])
         upgrade_casks = T.let([], T::Array[Cask::Cask])
         fetch_casks = T.let([], T::Array[Cask::Cask])
+        failed_casks = T.let([], T::Array[Cask::Cask])
         if casks.any?
           require "cask/installer"
           require "cask/upgrade"
@@ -412,7 +413,10 @@ module Homebrew
                 )
               end
 
-              prefetched_cask_installers = Install.enqueue_cask_installers(prefetched_cask_installers)
+              prefetched_cask_installers = Install.enqueue_cask_installers(
+                prefetched_cask_installers,
+                failed_casks:,
+              )
             end
 
             download_queue.fetch(heading: Install.combined_fetch_downloads_heading(
@@ -460,6 +464,8 @@ module Homebrew
         installed_or_upgraded_casks = T.let([], T::Array[Cask::Cask])
         if prefetched_cask_installers
           new_casks.each do |cask|
+            next if failed_casks.any? { |failed_cask| failed_cask.equal?(cask) }
+
             installer = prefetched_cask_installers.find { |candidate| candidate.cask.equal?(cask) }
             installer ||= Cask::Installer.new(
               cask,
@@ -478,10 +484,13 @@ module Homebrew
             ofail "#{cask.full_name}: #{e}"
           end
 
-          if !Homebrew::EnvConfig.no_install_upgrade? && installed_casks.any?
+          installed_casks_to_upgrade = installed_casks.reject do |cask|
+            failed_casks.any? { |failed_cask| failed_cask.equal?(cask) }
+          end
+          if !Homebrew::EnvConfig.no_install_upgrade? && installed_casks_to_upgrade.any?
             begin
               Cask::Upgrade.upgrade_casks!(
-                *installed_casks,
+                *installed_casks_to_upgrade,
                 force:                      args.force?,
                 dry_run:                    args.dry_run?,
                 binaries:                   args.binaries?,
