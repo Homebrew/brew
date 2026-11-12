@@ -495,19 +495,26 @@ RSpec.describe Homebrew::Cmd::Info do
     expect { info.info_formula(test_formula) }.to output(expected_output).to_stdout
   end
 
-  it "shows build dependencies for an uninstalled formula without a bottle" do
-    info = described_class.new([])
-    formula = formula("testball") do
-      T.bind(self, T.class_of(Formula))
-      url "https://brew.sh/testball-0.1.tar.gz"
-      depends_on "builddep" => :build
-    end
-    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
-    requirement = OS.mac? ? MacOSRequirement.new : LinuxRequirement.new
-    allow(formula).to receive(:requirements).and_return([requirement])
+  test_each([
+    ["macOS", true, false, MacOSRequirement],
+    ["Linux", false, true, LinuxRequirement],
+    ["generic OS", false, false, nil],
+  ]) do |(os, macos, linux, requirement_class)|
+    it "shows build dependencies for an uninstalled formula without a bottle on #{os}" do
+      info = described_class.new([])
+      formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/testball-0.1.tar.gz"
+        depends_on "builddep" => :build
+      end
+      allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+      allow(Homebrew::SimulateSystem).to receive_messages(simulating_or_running_on_macos?: macos,
+                                                          simulating_or_running_on_linux?: linux)
+      allow(formula).to receive(:requirements).and_return(requirement_class ? [requirement_class.new] : [])
 
-    expect { info.info_formula(formula) }
-      .to output(/Build \(1\): builddep/).to_stdout
+      expect { info.info_formula(formula) }
+        .to output(/Build \(1\): builddep/).to_stdout
+    end
   end
 
   it "shows a conflict by its resolved full name" do
