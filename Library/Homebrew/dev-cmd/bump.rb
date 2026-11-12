@@ -399,12 +399,17 @@ module Homebrew
                                   false }
         end
 
-        # Collect resource version info for formulae with resources that have explicit livecheck blocks
-        resource_versions = if formula_or_cask.is_a?(Formula) && new_version.general.is_a?(Version)
-          collect_resource_versions(formula_or_cask, new_version.general.to_s)
-        else
-          []
-        end
+        # Collect resource version info for formulae with resources that have
+        # explicit livecheck blocks, only when the formula has a newer version
+        resource_versions =
+          if formula_or_cask.is_a?(Formula) &&
+             (new_version_general = new_version.general).is_a?(Version) &&
+             (current_version_general = current_version.general) &&
+             new_version_general > current_version_general
+            collect_resource_versions(formula_or_cask, new_version_general.to_s)
+          else
+            []
+          end
 
         if !args.no_pull_requests? &&
            !newer_than_upstream.all? { |_k, v| v == true }
