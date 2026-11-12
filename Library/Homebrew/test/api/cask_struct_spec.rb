@@ -282,6 +282,17 @@ RSpec.describe Homebrew::API::CaskStruct do
         expect(struct.public_send(:"#{predicate}?")).to be true
       end
     end
+
+    it "allows a missing sha256 for casks with no checksum on this platform" do
+      hash = {
+        "version"              => "1.0.0",
+        "ruby_source_checksum" => { sha256: "def456" },
+      }
+
+      struct = described_class.deserialize(hash)
+
+      expect(struct.sha256).to be_nil
+    end
   end
 
   describe "serialize/deserialize round-trip" do
