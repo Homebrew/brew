@@ -86,7 +86,7 @@ module Homebrew
           File.readlines(list, chomp: true).reject(&:empty?).uniq
         end
         rejected_candidates = if (path = args.rejected_candidates)
-          File.readlines(path, chomp: true).filter_map do |line|
+          File.foreach(path, chomp: true).filter_map do |line|
             id = line.sub(/#.*/, "").strip
             id unless id.empty?
           end.to_set

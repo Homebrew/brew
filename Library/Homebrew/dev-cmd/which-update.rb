@@ -62,7 +62,7 @@ module Homebrew
         removed_formulae = if removed_formulae_file.blank? || !File.file?(removed_formulae_file)
           []
         else
-          File.readlines(removed_formulae_file, chomp: true).filter_map { |line| line.strip.presence }
+          File.foreach(removed_formulae_file, chomp: true).filter_map { |line| line.strip.presence }
         end
 
         if pull_request

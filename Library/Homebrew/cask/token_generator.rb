@@ -143,7 +143,7 @@ module Cask
       return unless strings_file.exist?
 
       name_line = File.open(strings_file, "r:UTF-16LE:UTF-8") do |fh|
-        fh.readlines.grep(/^CFBundle(?:Display)?Name\s*=\s*/).first
+        fh.each_line.grep(/^CFBundle(?:Display)?Name\s*=\s*/).first
       end
       name_line&.[](/\ACFBundle(?:Display)?Name\s*=\s*"(.*)";\Z/, 1)
     end
