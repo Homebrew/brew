@@ -57,6 +57,62 @@ RSpec.describe Formulary do
     end
   end
 
+  describe "::formula_contents" do
+    before do
+      formula_path.dirname.mkpath
+      formula_path.write <<~RUBY
+        class TestballBottle < Formula
+          on_intel do
+            url "https://example.com/intel-1.0.tar.gz"
+          end
+          on_arm do
+            url "https://example.com/arm-1.0.tar.gz"
+          end
+        end
+      RUBY
+    end
+
+    it "reads formula source only once across simulated platforms" do
+      expect(formula_path).to receive(:open).once.and_call_original
+
+      [:arm, :intel].each do |arch|
+        Homebrew::SimulateSystem.with(os: :linux, arch:) do
+          described_class.load_formula_from_path(formula_name, formula_path, flags: [], ignore_errors: false)
+        end
+      end
+    end
+
+    it "evaluates a separate formula class for each platform" do
+      urls = [:arm, :intel].map do |arch|
+        Homebrew::SimulateSystem.with(os: :linux, arch:) do
+          described_class.load_formula_from_path(formula_name, formula_path, flags: [], ignore_errors: false).url
+        end
+      end
+
+      expect(urls).to eq(%w[https://example.com/arm-1.0.tar.gz https://example.com/intel-1.0.tar.gz])
+    end
+
+    it "rereads edited source even when its modification time is preserved" do
+      updated_source = described_class.formula_contents(formula_path).sub("intel", "other")
+      mtime = formula_path.mtime
+      formula_path.atomic_write(updated_source)
+      File.utime(mtime, mtime, formula_path)
+
+      expect(described_class.formula_contents(formula_path)).to eq(updated_source)
+    end
+
+    it "preserves source checksums with a non-UTF-8 default internal encoding" do
+      original_internal_encoding = Encoding.default_internal
+      formula_path.write "#{formula_path.read}\n# café\n"
+      Encoding.default_internal = Encoding::ISO_8859_1
+
+      expect(described_class.from_path(formula_path).ruby_source_checksum.hexdigest)
+        .to eq(Digest::SHA256.file(formula_path).hexdigest)
+    ensure
+      Encoding.default_internal = original_internal_encoding
+    end
+  end
+
   describe "::load_formula" do
     it "continues evaluation after ignorable errors with ignore_errors" do
       formula_class = described_class.load_formula(

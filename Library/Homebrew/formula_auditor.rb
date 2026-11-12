@@ -68,7 +68,7 @@ module Homebrew
       @core_tap = T.let(formula.tap&.core_tap? || core_tap || false, T::Boolean)
       @problems = T.let([], T::Array[T.any(String, T::Hash[Symbol, T.untyped])])
       @new_formula_problems = T.let([], T::Array[T.any(String, T::Hash[Symbol, T.untyped])])
-      @text = T.let(formula.path.open("rb", &:read), String)
+      @text = T.let(Formulary.formula_contents(formula.path).b, String)
       @specs = T.let([formula.stable, formula.head].compact, T::Array[SoftwareSpec])
       @spdx_license_data = spdx_license_data
       @spdx_exception_data = spdx_exception_data

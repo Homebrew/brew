@@ -1450,7 +1450,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
 
   it "reuses an independent current formula's hits without additional OSV queries" do
     stub_osv_hit("CVE-2024-1234", fixed: "2.28.1")
-    allow(requests.path).to receive(:read).and_return(<<~RUBY)
+    requests.path.write <<~RUBY
       class Requests < Formula
         url "https://files.pythonhosted.org/packages/aa/bb/cc/requests-2.31.0.tar.gz"
         head "https://github.com/psf/requests.git"
@@ -1468,7 +1468,7 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
 
   it "still stops at the first held platform when the current source is independent" do
     stub_osv_hit("CVE-2024-1234", fixed: "2.28.1")
-    allow(requests.path).to receive(:read).and_return("class Requests < Formula; end")
+    requests.path.write "class Requests < Formula; end"
     matcher = Homebrew::Vulns::Match.new
     allow(Homebrew::Vulns::Match).to receive(:new).and_return(matcher)
     expect(matcher).to receive(:reconcile_history).with(requests, anything, reuse_platforms: true).once

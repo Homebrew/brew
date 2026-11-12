@@ -17,7 +17,7 @@ module Homebrew
 
       sig { params(formula: Formula).returns(T::Boolean) }
       def self.formula?(formula)
-        source?(formula.path.read)
+        source?(Formulary.formula_contents(formula.path))
       rescue SystemCallError
         false
       end

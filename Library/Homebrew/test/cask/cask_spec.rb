@@ -726,6 +726,77 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "#refresh_copy" do
+    it "does not carry cached languages or downloads into another platform" do
+      original = Homebrew::SimulateSystem.with(os: :macos, arch: :arm) do
+        described_class.new("platform-languages") do
+          on_arm { language("en", default: true) { "en" } }
+          on_intel { language("fr", default: true) { "fr" } }
+        end
+      end
+      original.languages
+      original.download = Pathname("/downloaded/archive.zip")
+      copy = Homebrew::SimulateSystem.with(os: :macos, arch: :intel) { original.refresh_copy }
+
+      expect([copy.languages, copy.download, original.languages]).to eq([["fr"], nil, ["en"]])
+    end
+
+    it "honours the requested language over the installed configuration" do
+      original = Cask::CaskLoader.load("with-many-languages")
+      original.config_path.dirname.mkpath
+      original.config_path.write(Cask::Config.new(explicit: { languages: ["en"] }).to_json)
+
+      expect(original.refresh_copy(config: Cask::Config.new(explicit: { languages: ["cs"] })).language).to eq("cs")
+    end
+
+    it "reloads API casks to select the simulated platform's values" do
+      original = Homebrew::SimulateSystem.with(os: :macos, arch: :arm) do
+        Cask::CaskLoader::FromAPILoader.new(
+          "sha256-os", from_json: JSON.parse(Cask::CaskLoader.load("sha256-os").to_hash_with_variations.to_json)
+        ).load(config: nil)
+      end
+
+      expect(Homebrew::SimulateSystem.with(os: :linux, arch: :intel) { original.refresh_copy.url.to_s })
+        .to include("caffeine-intel-linux")
+    end
+
+    context "when loaded from installed JSON" do
+      let(:caskfile) do
+        (Cask::Caskroom.path/"removed-cask/.metadata/1.0/20250101000000.000/Casks").tap(&:mkpath)/"removed-cask.json"
+      end
+
+      before { caskfile.write("{}") }
+
+      it "reloads removed casks from their recorded installed path" do
+        original = Cask::CaskLoader.load_from_installed_caskfile(caskfile, api_fallback: false)
+        caskfile.write({ version: "2.0", artifacts: [{ app: ["Removed.app"] }] }.to_json)
+        copy = original.refresh_copy
+
+        expect([copy.version.to_s, copy.sourcefile_path, copy.loaded_from_metadata?]).to eq(["2.0", caskfile, true])
+      end
+
+      it "preserves disabled API fallback" do
+        original = Cask::CaskLoader.load_from_installed_caskfile(caskfile, api_fallback: false)
+        expect(Homebrew::API).not_to receive(:cask_token?)
+
+        original.refresh_copy
+      end
+
+      it "preserves enabled API fallback for missing artifacts" do
+        allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).and_call_original
+        allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with("removed-cask").and_return(nil)
+        original = Cask::CaskLoader.load_from_installed_caskfile(caskfile)
+        allow(Cask::CaskLoader::FromAPILoader).to receive(:try_new).with("removed-cask").and_return(
+          instance_double(Cask::CaskLoader::FromAPILoader, load: described_class.new("removed-cask") {
+            app "Removed.app"
+          }),
+        )
+
+        expect(original.refresh_copy.artifacts_list(uninstall_only: true)).to eq([{ app: ["Removed.app"] }])
+      end
+    end
+  end
+
   describe "#refresh_for_tag" do
     let(:cask) { Cask::CaskLoader.load("on-linux-asymmetric") }
 

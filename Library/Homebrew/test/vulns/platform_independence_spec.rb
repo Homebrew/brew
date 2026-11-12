@@ -189,8 +189,21 @@ RSpec.describe Homebrew::Vulns::PlatformIndependence do
       T.bind(self, T.class_of(Formula))
       url "https://example.test/example-1.0.tar.gz"
     end
-    allow(current.path).to receive(:read).and_raise(Errno::ENOENT)
+    allow(current.path).to receive(:stat).and_raise(Errno::ENOENT)
 
     expect(described_class.formula?(current)).to be false
+  end
+
+  it "reuses the source already loaded for the formula" do
+    path = mktmpdir/"example.rb"
+    path.write <<~RUBY
+      class Example < Formula
+        url "https://example.test/example-1.0.tar.gz"
+      end
+    RUBY
+    current = Formulary.from_path(path)
+    expect(current.path).not_to receive(:read)
+
+    2.times { described_class.formula?(current) }
   end
 end

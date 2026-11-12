@@ -200,6 +200,27 @@ module Cask
       refresh
     end
 
+    # Return an independent cask for the current system, reusing its parsed Ruby.
+    # @api internal
+    sig { params(config: Config).returns(Cask) }
+    def refresh_copy(config: self.config)
+      ENV.clear_sensitive_environment_for_eval! do
+        copy = if loaded_from_metadata?
+          metadata_loader = loader
+          CaskLoader.load_from_installed_caskfile(
+            sourcefile_path || raise("unexpected nil cask sourcefile_path"), config:,
+            api_fallback: !metadata_loader.is_a?(CaskLoader::FromAPILoader) || metadata_loader.api_fallback
+          )
+        elsif loaded_from_api?
+          CaskLoader.load(full_name, config:)
+        else
+          self.class.new(token, sourcefile_path:, source:, tap:, config:, allow_reassignment:, &@block)
+        end
+        copy.config = config unless copy.config.equal?(config)
+        copy
+      end
+    end
+
     sig { void }
     def refresh
       @dsl = T.let(DSL.new(self), T.nilable(DSL))

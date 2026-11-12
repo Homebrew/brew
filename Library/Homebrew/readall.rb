@@ -88,12 +88,10 @@ module Readall
       next if valid == true || valid&.include?(bottle_tag)
 
       formula_name = file.basename(".rb").to_s
-      formula_contents = file.read.force_encoding("UTF-8")
-
-      readall_namespace = "ReadallNamespace"
-      readall_formula_class = Formulary.load_formula(formula_name, file, formula_contents, readall_namespace,
-                                                     flags: [], ignore_errors: false)
-      readall_formula = readall_formula_class.new(formula_name, file, :stable, tap:)
+      readall_formula = Formulary.load_formula(
+        formula_name, file, Formulary.formula_contents(file), "ReadallNamespace",
+        flags: [], ignore_errors: false
+      ).new(formula_name, file, :stable, tap:)
       readall_formula.to_hash
       cache[:valid_formulae][file] = if readall_formula.on_system_blocks_exist?
         [bottle_tag, *cache[:valid_formulae][file]]
