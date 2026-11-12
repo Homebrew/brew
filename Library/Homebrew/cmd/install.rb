@@ -375,6 +375,8 @@ module Homebrew
           formulae_installer = fetched.formula_installers
           dependent_formulae_installer = fetched.dependent_formula_installers
           prefetched_cask_installers = fetched.cask_installers
+          Utils::Analytics.report_formula_installs(formulae_installer + dependent_formulae_installer)
+          Utils::Analytics.report_cask_installs(prefetched_cask_installers)
         end
         shared_download_queue&.shutdown
 
@@ -523,25 +525,34 @@ module Homebrew
       def install_casks(new_casks, installed_casks, failed_casks, prefetched_cask_installers, cask_upgrade_summary,
                         installed_on_request:)
         installed_or_upgraded_casks = T.let([], T::Array[Cask::Cask])
-        new_casks.each do |cask|
+        new_cask_installers = new_casks.filter_map do |cask|
           next if failed_casks.any? { |failed_cask| failed_cask.equal?(cask) }
 
-          installer = prefetched_cask_installers.find { |candidate| candidate.cask.equal?(cask) }
-          installer ||= Cask::Installer.new(
-            cask,
-            adopt:                args.adopt?,
-            binaries:             args.binaries?,
-            force:                args.force?,
-            quiet:                args.quiet?,
-            require_sha:          args.cask_require_sha?,
-            skip_cask_deps:       args.skip_cask_deps?,
-            verbose:              args.verbose?,
-            installed_on_request:,
-          )
+          prefetched_cask_installers.find { |candidate| candidate.cask.equal?(cask) } ||
+            Cask::Installer.new(
+              cask,
+              adopt:                args.adopt?,
+              binaries:             args.binaries?,
+              force:                args.force?,
+              quiet:                args.quiet?,
+              require_sha:          args.cask_require_sha?,
+              skip_cask_deps:       args.skip_cask_deps?,
+              verbose:              args.verbose?,
+              installed_on_request:,
+            )
+        end
+
+        new_cask_installers.each do |installer|
+          unless prefetched_cask_installers.include?(installer)
+            # Its prefetch failed, so download (and verify) it before reporting; installing reuses the download.
+            installer.prelude
+            installer.download
+            Utils::Analytics.report_cask_installs([installer])
+          end
           installer.install
-          installed_or_upgraded_casks << cask
+          installed_or_upgraded_casks << installer.cask
         rescue => e
-          ofail "#{cask.full_name}: #{e}"
+          ofail "#{installer.cask.full_name}: #{e}"
         end
 
         installed_casks_to_upgrade = installed_casks.reject do |cask|

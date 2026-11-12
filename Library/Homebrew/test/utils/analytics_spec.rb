@@ -90,14 +90,14 @@ RSpec.describe Utils::Analytics do
     context "when ENV vars is set" do
       it "returns nil when HOMEBREW_NO_ANALYTICS is true" do
         ENV["HOMEBREW_NO_ANALYTICS"] = "true"
-        expect(described_class).not_to receive(:report_influx)
+        expect(described_class).not_to receive(:write_influx)
         described_class.report_package_event(:install, package_name:, tap_name:,
           on_request:, options:)
       end
 
       it "returns nil when HOMEBREW_NO_ANALYTICS_THIS_RUN is true" do
         ENV["HOMEBREW_NO_ANALYTICS_THIS_RUN"] = "true"
-        expect(described_class).not_to receive(:report_influx)
+        expect(described_class).not_to receive(:write_influx)
         described_class.report_package_event(:install, package_name:, tap_name:,
           on_request:, options:)
       end
@@ -106,7 +106,7 @@ RSpec.describe Utils::Analytics do
         ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
         ENV.delete("HOMEBREW_NO_ANALYTICS")
         ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
-        expect(described_class).to receive(:report_influx)
+        expect(described_class).to receive(:write_influx)
 
         described_class.report_package_event(:install, package_name:, tap_name:,
           on_request:, options:)
@@ -117,10 +117,134 @@ RSpec.describe Utils::Analytics do
       ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
       ENV.delete("HOMEBREW_NO_ANALYTICS")
       ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
-      expect(described_class).to receive(:report_influx).with(:install, hash_including(on_request:),
-                                                              hash_including(package: package_name)).once
+      expect(described_class).to receive(:write_influx).with(
+        [a_string_including("install,", "on_request=#{on_request}", "package=\"#{package_name}\"")],
+      ).once
       described_class.report_package_event(:install, package_name:, tap_name:,
           on_request:, options:)
+    end
+  end
+
+  describe "::report_package_events" do
+    def cask_event(name)
+      { package_name: name, tap_name: "homebrew/cask", on_request: true, options: "" }
+    end
+
+    before do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Time).to receive(:now).and_return(Time.at(123))
+      allow(described_class).to receive_messages(default_package_tags: { ci: false }, default_package_fields: {})
+    end
+
+    it "reports all the packages in a single request" do
+      expect(described_class).to receive(:write_influx).with([
+        "cask_install,ci=false,on_request=true package=\"foo\",tap_name=\"homebrew/cask\" 123",
+        "cask_install,ci=false,on_request=true package=\"bar\",tap_name=\"homebrew/cask\" 124",
+      ])
+
+      described_class.report_package_events(:cask_install, [cask_event("foo"), cask_event("bar")])
+    end
+
+    it "gives packages in separate reports within the same second different timestamps" do
+      lines = []
+      allow(described_class).to receive(:write_influx) { |report_lines| lines.concat(report_lines) }
+
+      described_class.report_package_events(:cask_install, [cask_event("foo")])
+      described_class.report_package_events(:cask_install, [cask_event("bar")])
+
+      expect(lines.map { |line| line.split.last }).to eq(["123", "124"])
+    end
+  end
+
+  describe "::report_formula_installs" do
+    def package_event(name, on_request: false)
+      { package_name: name, tap_name: "homebrew/core", on_request:, options: "" }
+    end
+
+    def installer_for(name, on_request: false)
+      tap = instance_double(Tap, name: "homebrew/core", should_report_analytics?: true)
+      instance_double(FormulaInstaller, formula: instance_double(Formula, name:, tap:), display_options: [],
+                                        installed_on_request?: on_request, ignore_deps?: false, only_deps?: false)
+    end
+
+    # An installer for the formula `name` that installs the `dependencies` (names) first.
+    def formula_installer(name, dependencies: [])
+      installer = installer_for(name, on_request: true)
+      deps = dependencies.map do |dependency_name|
+        dep = instance_double(Dependency, to_formula: instance_double(Formula, name: dependency_name))
+        dependency_installer = installer_for(dependency_name)
+        allow(dependency_installer).to receive(:downloadable).and_return(instance_double(Bottle))
+        allow(installer).to receive(:dependency_installer).with(dep, dep.to_formula).and_return(dependency_installer)
+        dep
+      end
+      allow(installer).to receive_messages(
+        compute_dependencies: deps,
+        download_queue:       instance_double(Homebrew::DownloadQueue, downloaded_and_verified?: true),
+      )
+      installer
+    end
+
+    before do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+    end
+
+    it "reports the dependencies each formula installs and then the formula, each once" do
+      expect(described_class).to receive(:report_package_events).with(:formula_install, [
+        package_event("shared"), package_event("foo", on_request: true),
+        package_event("baz"), package_event("bar", on_request: true)
+      ])
+
+      described_class.report_formula_installs([
+        formula_installer("foo", dependencies: ["shared"]),
+        formula_installer("bar", dependencies: ["shared", "baz"]),
+      ])
+    end
+
+    it "keeps the details of a requested formula that another requested formula depends on" do
+      expect(described_class).to receive(:report_package_events).with(:formula_install, [
+        package_event("foo", on_request: true), package_event("bar", on_request: true)
+      ])
+
+      described_class.report_formula_installs([
+        formula_installer("foo", dependencies: ["bar"]),
+        formula_installer("bar"),
+      ])
+    end
+
+    it "leaves out a dependency whose install receipt can't be read" do
+      installer = formula_installer("foo", dependencies: ["broken"])
+      allow(installer).to receive(:dependency_installer).and_raise(JSON::ParserError, "corrupt INSTALL_RECEIPT.json")
+
+      expect(described_class).to receive(:report_package_events)
+        .with(:formula_install, [package_event("foo", on_request: true)])
+
+      described_class.report_formula_installs([installer])
+    end
+  end
+
+  describe "::report_cask_installs" do
+    def cask_installer(token, tap:, download_failed: false)
+      instance_double(Cask::Installer, cask:             instance_double(Cask::Cask, token:, tap:),
+                                       download_failed?: download_failed)
+    end
+
+    it "only reports downloaded casks from taps that report analytics" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      reporting_tap = instance_double(Tap, name: "homebrew/cask", should_report_analytics?: true)
+
+      expect(described_class).to receive(:report_package_events).with(
+        :cask_install,
+        [{ package_name: "foo", tap_name: "homebrew/cask", on_request: true, options: "" }],
+      )
+
+      described_class.report_cask_installs([
+        cask_installer("foo", tap: reporting_tap),
+        cask_installer("failed-download", tap: reporting_tap, download_failed: true),
+        cask_installer("private", tap: instance_double(Tap, should_report_analytics?: false)),
+      ])
     end
   end
 
@@ -164,6 +288,22 @@ RSpec.describe Utils::Analytics do
     end
   end
 
+  describe "::write_influx" do
+    it "splits lines larger than INFLUX_MAX_BATCH_BYTES into multiple requests" do
+      # Exactly enough room for two lines and the newline between them.
+      stub_const("Utils::Analytics::INFLUX_MAX_BATCH_BYTES", ("a,t=1 f=\"1\" 123".bytesize * 2) + 1)
+      requests = []
+      allow(described_class).to receive(:deferred_curl) { |_url, args| requests << args }
+
+      described_class.write_influx(["a,t=1 f=\"1\" 123", "b,t=2 f=\"2\" 123", "c,t=3 f=\"3\" 123"])
+
+      expect(requests.map { |args| args[args.index("--data-binary") + 1] }).to eq([
+        "a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123",
+        "c,t=3 f=\"3\" 123",
+      ])
+    end
+  end
+
   describe "::deferred_curl" do
     it "forwards args and silences subprocess output outside debug mode" do
       ENV.delete("HOMEBREW_ANALYTICS_DEBUG")
@@ -177,6 +317,14 @@ RSpec.describe Utils::Analytics do
       expect(Process).to receive(:detach).with(123)
 
       described_class.deferred_curl("https://example.com", ["--max-time", "3"])
+    end
+
+    it "does not raise when curl can't be launched" do
+      ENV.delete("HOMEBREW_ANALYTICS_DEBUG")
+      allow(Utils::Curl).to receive(:curl_executable).and_return("/usr/bin/curl")
+      allow(described_class).to receive(:spawn).and_raise(Errno::ENOENT, "/usr/bin/curl")
+
+      expect { described_class.deferred_curl("https://example.com", ["--max-time", "3"]) }.not_to raise_error
     end
   end
 

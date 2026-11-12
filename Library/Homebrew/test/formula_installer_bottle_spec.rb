@@ -108,20 +108,18 @@ RSpec.describe FormulaInstaller do
     bottle = formula.bottle
     stub_formula_loader formula
 
-    # Simulate a GitHub Packages bottle blob, which is trusted without being
-    # rehashed, so this corrupt download is only noticed when it fails to
-    # extract and must then be discarded and downloaded again.
+    # Simulate a GitHub Packages bottle blob, which is trusted by its name
+    # alone, so the download queue checks its contents and downloads it again.
     bottle.cached_download.dirname.mkpath
     bottle.cached_download.write("corrupt" * 1000)
     allow(bottle).to receive(:downloaded_and_valid?).and_return(true)
 
     formula_installer = described_class.new(formula)
     begin
-      expect do
-        formula_installer.fetch
-        formula_installer.install
-      end.to output(/Removing corrupt cached download/).to_stderr
+      formula_installer.fetch
+      expect(bottle.cached_download.binread).not_to start_with("corrupt")
 
+      formula_installer.install
       expect(formula).to be_latest_version_installed
       expect(Homebrew).not_to have_failed
     ensure

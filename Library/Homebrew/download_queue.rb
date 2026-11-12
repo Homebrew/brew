@@ -35,6 +35,8 @@ module Homebrew
       @spinner = T.let(nil, T.nilable(Spinner))
       @symlink_targets = T.let({}, T::Hash[Pathname, T::Set[Downloadable]])
       @downloads_by_location = T.let({}, T::Hash[Pathname, Concurrent::Promises::Future])
+      # Unlike `@downloads_by_location`, kept after `fetch` for `downloaded_and_verified?`.
+      @kept_downloads_by_location = T.let({}, T::Hash[Pathname, Concurrent::Promises::Future])
       @staged_downloads_by_location = T.let({}, T::Hash[Pathname, Concurrent::Promises::Future])
       @cancelled = T.let(Concurrent::AtomicBoolean.new(false), Concurrent::AtomicBoolean)
       @active_threads = T.let(Concurrent::Set.new, Concurrent::Set)
@@ -66,9 +68,17 @@ module Homebrew
 
           download.clear_cache if force
           if !force && downloadable.downloaded_and_valid?
-            check_bottle_attestation(downloadable, check_attestation:)
-            create_symlinks_for_shared_download(cached_location)
-            next cached_location
+            begin
+              # `downloaded_and_valid?` can trust a bottle from its file name alone, so check
+              # its contents before reusing it.
+              downloadable.verify_download_integrity(cached_location)
+              check_bottle_attestation(downloadable, check_attestation:)
+              create_symlinks_for_shared_download(cached_location)
+              next cached_location
+            rescue ChecksumMismatchError
+              # Download it again instead.
+              FileUtils.rm_f(cached_location)
+            end
           end
 
           downloaded_path = download.fetch(quiet:)
@@ -110,6 +120,8 @@ module Homebrew
       else
         download
       end
+      # Queued staging verifies its own copy of the download, so keep its result rather than the raw one.
+      @kept_downloads_by_location[cached_location] = downloads.fetch(downloadable)
     end
 
     sig { params(heading: String).void }
@@ -345,6 +357,21 @@ module Homebrew
     # or skip only the packages that were actually affected.
     sig { returns(T::Array[Downloadable]) }
     attr_reader :failed_downloads
+
+    # Waits for just this download and returns whether it downloaded and passed its checksum
+    # verification, also after `fetch` has finished. A failure is still reported once, by `fetch`.
+    sig { params(downloadable: Downloadable).returns(T::Boolean) }
+    def downloaded_and_verified?(downloadable)
+      location = downloadable.cached_download
+      download = @kept_downloads_by_location[location]
+      # Wait while this queue still has the download, but not for one an interrupted `fetch` dropped unresolved.
+      return download.wait.fulfilled? if download && @downloads_by_location.key?(location)
+      # `downloaded_and_valid?` can't vouch for every download (e.g. a bottle from a mirror),
+      # so prefer the result of a download this queue finished.
+      return download.fulfilled? if download&.resolved?
+
+      downloadable.downloaded_and_valid?
+    end
 
     sig { params(message: String).void }
     def stdout_print_and_flush_if_tty(message)

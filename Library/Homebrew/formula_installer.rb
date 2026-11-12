@@ -536,6 +536,21 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
       next false unless dep.implicit?
 
       fetch_dependencies
+      # It's installed before the batch report could see it, so report it once its download is verified.
+      begin
+        fi = dependency_installer(dep, dep.to_formula)
+        # Check its own dependencies against the queue that verified their downloads.
+        fi.download_queue = download_queue
+        if download_queue.downloaded_and_verified?(fi.downloadable)
+          # Use the bottle's minimum dependency versions, as installing it does.
+          fi.determine_bottle_tab_attributes
+          require "utils/analytics"
+          Utils::Analytics.report_formula_installs([fi])
+        end
+      rescue
+        # Installing it reports the error instead.
+        nil
+      end
       install_dependency(dep)
       true
     end
@@ -602,12 +617,6 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
 
     options = display_options(formula).join(" ")
     oh1 "Installing #{Formatter.identifier(formula.full_name)} #{options}".strip if show_header?
-
-    if (tap = formula.tap) && tap.should_report_analytics?
-      require "utils/analytics"
-      Utils::Analytics.report_package_event(:formula_install, package_name: formula.name, tap_name: tap.name,
-on_request: installed_on_request?, options:)
-    end
 
     self.class.attempted << formula
 
@@ -960,35 +969,23 @@ on_request: installed_on_request?, options:)
     fi.enqueue_fetch
   end
 
-  sig { params(dep: Dependency, dep_formula: Formula).void }
-  def install_dependency(dep, dep_formula = dep.to_formula)
-    upgrading = dep_formula.outdated?
-    if upgrading && dep_formula.optlinked?
-      installed_version = Keg.new(dep_formula.opt_prefix).version
-      upgrade_from = "#{installed_version} -> "
-    end
-
+  # The installed version of a dependency: its linked keg, the tab of the keg it's
+  # installed in and whether that linked keg is linked.
+  sig { params(dep_formula: Formula).returns([T.nilable(Keg), T.nilable(Tab), T::Boolean]) }
+  def installed_dependency(dep_formula)
     if dep_formula.linked_keg.directory?
       linked_keg = Keg.new(resolved_path(dep_formula.linked_keg))
       tab = linked_keg.tab
-      keg_was_linked = linked_keg.linked?
-      linked_keg.unlink
     end
+    tab ||= Keg.new(dep_formula.prefix).tab if dep_formula.latest_version_installed?
+    [linked_keg, tab, linked_keg&.linked? || false]
+  end
 
-    if dep_formula.latest_version_installed?
-      installed_keg = Keg.new(dep_formula.prefix)
-      tab ||= installed_keg.tab
-      tmp_keg = Pathname.new("#{installed_keg}.tmp")
-      installed_keg.rename(tmp_keg) unless tmp_keg.directory?
-    end
-
-    if dep_formula.tap.present? && tab.present? && (tab_tap = tab.source["tap"].presence) &&
-       dep_formula.tap.to_s != tab_tap.to_s
-      odie <<~EOS
-        #{dep_formula} is already installed from #{tab_tap}!
-        Please `brew uninstall #{dep_formula}` first."
-      EOS
-    end
+  # The installer for a dependency, keeping the options and `installed_on_request`
+  # of the version of it that's already installed.
+  sig { params(dep: Dependency, dep_formula: Formula).returns(FormulaInstaller) }
+  def dependency_installer(dep, dep_formula)
+    _, tab, keg_was_linked = installed_dependency(dep_formula)
 
     options = Options.new
     options |= tab.used_options if tab.present?
@@ -998,7 +995,7 @@ on_request: installed_on_request?, options:)
     installed_on_request = dep_formula.any_version_installed? && tab.present? && tab.installed_on_request
     installed_on_request ||= false
 
-    fi = FormulaInstaller.new(
+    FormulaInstaller.new(
       dep_formula,
       options:,
       link_keg:                   keg_was_linked || nil,
@@ -1013,6 +1010,35 @@ on_request: installed_on_request?, options:)
       quiet:                      quiet?,
       verbose:                    verbose?,
     )
+  end
+
+  sig { params(dep: Dependency, dep_formula: Formula).void }
+  def install_dependency(dep, dep_formula = dep.to_formula)
+    upgrading = dep_formula.outdated?
+    if upgrading && dep_formula.optlinked?
+      installed_version = Keg.new(dep_formula.opt_prefix).version
+      upgrade_from = "#{installed_version} -> "
+    end
+
+    # Before the installed kegs it reads from are unlinked and renamed below.
+    fi = dependency_installer(dep, dep_formula)
+    linked_keg, tab, keg_was_linked = installed_dependency(dep_formula)
+    linked_keg&.unlink
+
+    if dep_formula.latest_version_installed?
+      installed_keg = Keg.new(dep_formula.prefix)
+      tmp_keg = Pathname.new("#{installed_keg}.tmp")
+      installed_keg.rename(tmp_keg) unless tmp_keg.directory?
+    end
+
+    if dep_formula.tap.present? && tab.present? && (tab_tap = tab.source["tap"].presence) &&
+       dep_formula.tap.to_s != tab_tap.to_s
+      odie <<~EOS
+        #{dep_formula} is already installed from #{tab_tap}!
+        Please `brew uninstall #{dep_formula}` first."
+      EOS
+    end
+
     action = upgrading ? "Upgrading" : "Installing"
     oh1 "#{action} #{formula.full_name} dependency: #{Formatter.identifier(dep.name)} " \
         "(#{upgrade_from}#{dep_formula.pkg_version})"
@@ -1024,7 +1050,7 @@ on_request: installed_on_request?, options:)
   rescue Exception => e # rubocop:disable Lint/RescueException
     Utils::Interrupts.ignore do
       tmp_keg.rename(installed_keg.to_path) if tmp_keg && !installed_keg.directory?
-      linked_keg.link(verbose: verbose?) if keg_was_linked
+      linked_keg&.link(verbose: verbose?) if keg_was_linked
     end
     raise unless e.is_a? FormulaInstallationAlreadyAttemptedError
 

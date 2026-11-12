@@ -1144,6 +1144,30 @@ RSpec.describe Cask::Installer, :cask do
 
       installer.satisfy_cask_and_formula_dependencies
     end
+
+    it "downloads and reports cask dependencies, then checks each for conflicts just before installing it" do
+      installer = described_class.new(Cask::CaskLoader.from_path(cask_path("local-caffeine")))
+      calls = []
+      dependency_installers = ["b", "c"].map do |token|
+        dependency = Cask::Cask.new(token)
+        allow(dependency).to receive(:installed?).and_return(false)
+        dependency_installer = instance_double(described_class, cask: dependency, download_failed?: false,
+                                                                prelude: nil)
+        allow(dependency_installer).to receive(:download) { calls << :"download_#{token}" }
+        allow(dependency_installer).to receive(:check_conflicts) { calls << :"check_#{token}" }
+        allow(dependency_installer).to receive(:install) { calls << :"install_#{token}" }
+        dependency_installer
+      end
+      dependencies = dependency_installers.map(&:cask)
+      allow(installer).to receive_messages(cask_and_formula_dependencies:         dependencies,
+                                           missing_cask_and_formula_dependencies: dependencies,
+                                           dependency_installers:                 [dependency_installers, []])
+      allow(Utils::Analytics).to receive(:report_cask_installs).with(dependency_installers) { calls << :report }
+
+      installer.satisfy_cask_and_formula_dependencies
+
+      expect(calls).to eq([:download_b, :download_c, :report, :check_b, :install_b, :check_c, :install_c])
+    end
   end
 
   describe "#load_installed_caskfile!" do

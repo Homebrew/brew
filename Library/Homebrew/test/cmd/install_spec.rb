@@ -582,7 +582,7 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     cmd = described_class.new(["--yes", "--cask", "local-caffeine"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
     cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
-    installer = instance_double(Cask::Installer, cask:, enqueue_downloads: nil)
+    installer = instance_double(Cask::Installer, cask:, enqueue_downloads: nil, download_failed!: nil)
     error = Cask::CaskError.new("local-caffeine: This cask does not run on macOS versions older than Tahoe.")
     dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
 
@@ -602,6 +602,39 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     expect { cmd.run }.to output(<<~EOS).to_stderr
       Error: local-caffeine: This cask does not run on macOS versions older than Tahoe.
     EOS
+  end
+
+  it "downloads and reports a cask whose prefetch failed with another error before installing it", :cask do
+    cmd = described_class.new(["--yes", "--cask", "local-caffeine"])
+    download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil, failed_downloads: [])
+    cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+    prefetch_installer = instance_double(Cask::Installer, cask:, download_failed!: nil)
+    installer = instance_double(Cask::Installer, cask:)
+    dependants = Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: [])
+    calls = []
+
+    allow(Tap).to receive_messages(with_formula_name: nil, with_cask_token: nil)
+    allow(Homebrew::Trust).to receive(:trust_fully_qualified_items!)
+    allow(cmd.args.named).to receive(:to_formulae_and_casks).with(method: :bottle, warn: false).and_return([cask])
+    allow(Cask::Upgrade).to receive(:outdated_casks).and_return([])
+    allow(Cask::Installer).to receive(:new).and_return(prefetch_installer, installer)
+    allow(prefetch_installer).to receive(:enqueue_downloads).and_raise(URI::InvalidURIError, "bad URI")
+    allow(Homebrew::Install).to receive(:ofail)
+    allow(installer).to receive(:prelude) { calls << :prelude }
+    allow(installer).to receive(:download) { calls << :download }
+    allow(Utils::Analytics).to receive(:report_cask_installs)
+    allow(Utils::Analytics).to receive(:report_cask_installs).with([installer]) { calls << :report }
+    allow(installer).to receive(:install) { calls << :install }
+    allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+    allow(Homebrew::Install).to receive(:perform_preinstall_checks_once)
+    allow(Homebrew::Install).to receive(:check_cc_argv)
+    allow(Homebrew::Upgrade).to receive_messages(dependants:, upgrade_dependents: [])
+    allow(Homebrew::Cleanup).to receive_messages(install_clean!: nil, periodic_clean!: nil)
+    allow(Homebrew.messages).to receive(:display_messages)
+
+    cmd.run
+
+    expect(calls).to eq([:prelude, :download, :report, :install])
   end
 
   it "cleans an installed cask before displaying deferred caveats", :cask do

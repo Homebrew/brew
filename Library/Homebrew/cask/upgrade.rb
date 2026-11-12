@@ -294,8 +294,32 @@ module Cask
 
       download_queue ||= Homebrew::DownloadQueue.default
 
+      # Report every cask once it has been downloaded and verified. A cask whose prefetch couldn't be
+      # enqueued gets the installer `upgrade_cask` would fall back to and is downloaded now instead.
+      fallback_cask_installers = T.let([], T::Array[Installer])
+      new_cask_installers = upgradable_casks.map do |(old_cask, new_cask)|
+        prefetched_cask_installers.find { |installer| installer.cask.equal?(new_cask) } ||
+          begin
+            # Its download can depend on the config, which `upgrade_cask` only sets later.
+            new_cask.config = new_cask.default_config.merge(old_cask.config)
+            installer = fallback_installer(new_cask, binaries:, force:, require_sha:, skip_cask_deps:, verbose:,
+                                           download_queue:)
+            installer.prelude
+            installer.download
+            fallback_cask_installers << installer
+            installer
+          rescue
+            # `upgrade_cask` retries it and reports it if that download succeeds.
+            nil
+          end
+      end
+      # Callers that prefetched the casks have already reported them.
+      ::Utils::Analytics.report_cask_installs(skip_prefetch ? fallback_cask_installers : new_cask_installers.compact)
+
       upgradable_casks.each_with_index do |(old_cask, new_cask), index|
-        new_cask_installer = prefetched_cask_installers.find { |installer| installer.cask.equal?(new_cask) }
+        new_cask_installer = new_cask_installers.fetch(index)
+        # A fallback's prelude ran before any upgrade, which may have since installed a conflicting cask.
+        new_cask_installer&.check_conflicts if fallback_cask_installers.include?(new_cask_installer)
         upgrade_cask(
           old_cask, new_cask,
           binaries:, force:, skip_cask_deps:, verbose:,
@@ -377,6 +401,33 @@ module Cask
     end
     private_class_method :reopen_apps_after_upgrade
 
+    # The installer `upgrade_cask` uses for a cask that wasn't prefetched.
+    sig {
+      params(
+        new_cask:       Cask,
+        binaries:       T.nilable(T::Boolean),
+        force:          T.nilable(T::Boolean),
+        require_sha:    T.nilable(T::Boolean),
+        skip_cask_deps: T.nilable(T::Boolean),
+        verbose:        T.nilable(T::Boolean),
+        download_queue: Homebrew::DownloadQueue,
+      ).returns(Installer)
+    }
+    def self.fallback_installer(new_cask, binaries:, force:, require_sha:, skip_cask_deps:, verbose:, download_queue:)
+      new_options = {
+        binaries:,
+        verbose:,
+        force:,
+        skip_cask_deps:,
+        require_sha:,
+        upgrade:        true,
+        download_queue:,
+      }.compact
+
+      Installer.new(new_cask, **new_options, defer_fetch: true)
+    end
+    private_class_method :fallback_installer
+
     sig {
       params(
         old_cask:           Cask,
@@ -414,17 +465,9 @@ module Cask
 
       new_cask.config = new_cask.default_config.merge(old_config)
 
-      new_options = {
-        binaries:,
-        verbose:,
-        force:,
-        skip_cask_deps:,
-        require_sha:,
-        upgrade:        true,
-        download_queue:,
-      }.compact
-
-      new_cask_installer ||= Installer.new(new_cask, **new_options, defer_fetch: true)
+      built_fallback_installer = new_cask_installer.nil?
+      new_cask_installer ||= fallback_installer(new_cask, binaries:, force:, require_sha:, skip_cask_deps:,
+                                                verbose:, download_queue:)
       raise CaskError, "Download failed for #{new_cask}." if new_cask_installer.download_failed?
 
       started_upgrade = false
@@ -469,6 +512,8 @@ module Cask
 
         # Install the new cask
         new_cask_installer.stage
+        # Staging downloaded (and verified) a fallback built here, which nothing has reported yet.
+        ::Utils::Analytics.report_cask_installs([new_cask_installer]) if built_fallback_installer
 
         new_cask_installer.install_artifacts(predecessor: old_cask)
         new_artifacts_installed = true
@@ -530,8 +575,6 @@ module Cask
       tab = Tab.create(new_cask)
       tab.installed_on_request = old_tab.tabfile.nil? || old_tab.installed_on_request
       tab.write
-
-      new_cask_installer.report_analytics
 
       end_time = Time.now
       Homebrew.messages.package_installed(new_cask.token, end_time - start_time)
