@@ -10,6 +10,8 @@ module OS
 
       use_library "/usr/lib/libSystem.B.dylib"
 
+      FINDER_TAGS_XATTR = "com.apple.metadata:_kMDItemUserTags"
+
       sig { params(operation: String, path: String, attribute: T.nilable(String)).void }
       private_class_method def self.raise_xattr_error(operation, path, attribute = nil)
         raise SystemCallError.new("#{operation} for #{attribute || path}", Fiddle.last_error)
@@ -90,8 +92,11 @@ module OS
 
       sig { params(source: String, destination: String).void }
       def self.copy_xattrs(source, destination)
-        list_xattrs(destination).each { |attribute| remove_xattr(destination, attribute) }
-        list_xattrs(source).each { |attribute| set_xattr(destination, attribute, get_xattr(source, attribute)) }
+        kept_attributes, stale_attributes = list_xattrs(destination).partition { it == FINDER_TAGS_XATTR }
+        stale_attributes.each { |attribute| remove_xattr(destination, attribute) }
+        (list_xattrs(source) - kept_attributes).each do |attribute|
+          set_xattr(destination, attribute, get_xattr(source, attribute))
+        end
       end
     end
   end

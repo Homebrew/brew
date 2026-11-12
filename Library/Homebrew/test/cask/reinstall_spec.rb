@@ -56,6 +56,18 @@ RSpec.describe Cask::Reinstall, :cask do
     expect(Cask::CaskLoader.from_path(cask_path("local-transmission-zip"))).to be_installed
   end
 
+  it "preserves Finder tags on reinstalled apps", :needs_macos do
+    caffeine = Cask::CaskLoader.from_path(cask_path("local-caffeine"))
+    Cask::Installer.new(caffeine).install
+    app = (caffeine.config.appdir/"Caffeine.app").to_s
+    red_work_tag = "Work\n6"
+    MacOS::FFI.set_xattr(app, MacOS::FFI::FINDER_TAGS_XATTR, red_work_tag)
+
+    described_class.reinstall_casks(Cask::CaskLoader.load("local-caffeine"))
+
+    expect(MacOS::FFI.get_xattr(app, MacOS::FFI::FINDER_TAGS_XATTR)).to eq(red_work_tag)
+  end
+
   context "when adopting an app that the previous cask did not own" do
     sig { returns([Cask::Cask, Pathname]) }
     def cask_with_existing_app
