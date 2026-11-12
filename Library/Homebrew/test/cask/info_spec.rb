@@ -252,6 +252,17 @@ RSpec.describe Cask::Info, :cask do
     EOS
   end
 
+  it "does not inspect tap renames when no casks are installed" do
+    cask = Cask::Cask.new("example") { version "3.0" }
+    allow(Cask::Caskroom).to receive(:tokens).and_return([])
+    expect(Tap).not_to receive(:to_a)
+
+    expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout
+      ==> example: 3.0
+      Not installed
+    EOS
+  end
+
   it "lists an installed cask only once when another tap has the same token" do
     cask = Cask::Cask.new("example", tap: Tap.fetch("other/tools")) { version "2.0" }
     installed_cask = Cask::Cask.new("example", tap: Tap.fetch("original/tools")) { version "1.0" }

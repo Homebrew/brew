@@ -77,7 +77,7 @@ module Cask
       base_token = cask.token.split("@", 2).fetch(0)
       matching_token = ->(token) { token == base_token || token.start_with?("#{base_token}@") }
       tokens = Caskroom.tokens
-      renamed_tokens = Tap.to_a.flat_map do |tap|
+      renamed_tokens = (tokens.empty? ? [] : Tap.to_a).flat_map do |tap|
         (tap.cask_renames.keys | tap.tap_migrations.keys).intersection(tokens).select do |token|
           resolved = CaskLoader.tap_cask_token_type("#{tap}/#{token}", warn: false)
           resolved && matching_token.call(resolved.first)
