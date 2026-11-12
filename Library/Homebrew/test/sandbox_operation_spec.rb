@@ -32,6 +32,27 @@ RSpec.describe Sandbox do
     HOMEBREW_TEMP.chmod(0755)
   end
 
+  it "extracts archives on another macOS volume without reopening the source in the worker" do
+    source = mktmpdir/"archive.tar.gz"
+    FileUtils.cp archive, source
+    strategy = UnpackStrategy::Tar.new(source)
+    directory = mktmpdir
+    allow(described_class).to receive(:disclaims_tcc_responsibility?).and_return(true)
+    allow(strategy.path).to receive(:stat).and_return(instance_double(File::Stat, dev: HOMEBREW_TEMP.stat.dev + 1))
+    allow(sandbox).to receive(:capture).and_wrap_original do |original, *args, **kwargs|
+      source.rename("#{source}.unavailable")
+      begin
+        original.call(*args, **kwargs)
+      ensure
+        File.rename("#{source}.unavailable", source)
+      end
+    end
+
+    strategy.extract(to: directory)
+
+    expect(directory/"container").to be_a_file
+  end
+
   it "extracts only the selected ZIP in a worker using its private temporary directory", :needs_unzip do
     temporary_directory = mktmpdir
     directory = mktmpdir

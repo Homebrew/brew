@@ -79,6 +79,10 @@ Homebrew doesn't support arbitrary mixing and matching of formula versions, so e
 
 Which is usually: `~/Library/Caches/Homebrew`
 
+Set `HOMEBREW_CACHE` to use another location, including an external drive.
+On macOS, archives on a different volume from `HOMEBREW_TEMP` are temporarily copied there before sandboxed extraction, so workers do not need the terminal's privacy permissions to read the cache.
+Keep `HOMEBREW_TEMP` in a location accessible without those permissions, with enough free space for the archive copy and extracted files.
+
 ## How do I authenticate private Git source downloads?
 
 Prefer HTTPS source URLs and the `gh` credential helper for GitHub.

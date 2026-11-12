@@ -187,6 +187,16 @@ module UnpackStrategy
     unpack_dir.mkpath
     # Mount disk images outside the extraction sandbox; Dmg::Mount sandboxes the copy.
     if !is_a?(Dmg) && Sandbox.isolate_operation?
+      if Sandbox.disclaims_tcc_responsibility? && path.file? && path.stat.dev != temporary_directory.stat.dev
+        # Disclaimed workers cannot inherit TCC access to external volumes.
+        Dir.mktmpdir("homebrew-unpack", temporary_directory.to_s) do |tmpdir|
+          FileUtils.cp path, tmpdir, preserve: true
+          self.class.new(Pathname(tmpdir)/path.basename, ref_type: @ref_type, ref: @ref, merge_xattrs:,
+                         temporary_directory:).extract(to: unpack_dir, basename:, verbose:)
+        end
+        return
+      end
+
       move = is_a?(Directory) && move?
       Sandbox.operation(
         "extract",

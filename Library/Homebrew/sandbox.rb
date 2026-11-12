@@ -92,6 +92,10 @@ class Sandbox
   sig { returns(T::Boolean) }
   def self.full_write_isolation? = true
 
+  # Whether workers attempt to discard the parent's macOS privacy permissions.
+  sig { returns(T::Boolean) }
+  def self.disclaims_tcc_responsibility? = false
+
   # Whether Homebrew is itself running inside another sandbox, which would make
   # its own nested sandbox hang (macOS) or fail to start (Linux). Overridden
   # per-OS.
