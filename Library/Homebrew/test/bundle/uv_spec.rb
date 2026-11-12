@@ -203,6 +203,7 @@ RSpec.describe Homebrew::Bundle::Uv do
 
     describe "#failure_reason" do
       it "returns a package-specific message" do
+        allow(described_class).to receive(:package_installed?).and_return(false)
         expect(
           checker.failure_reason({ name: "example-tool", options: { with: ["example-dependency<10"] } },
                                  no_upgrade: false),
