@@ -3,7 +3,8 @@
 
 module OS
   module Mac
-    SYSTEM_DIRS = T.let([
+    # Keep the protected system paths together so removal safeguards can be reviewed in one place.
+    SYSTEM_DIRS = T.let([ # rubocop:disable Metrics/CollectionLiteralLength
       "/",
       "/Applications",
       "/Applications/Utilities",
@@ -236,7 +237,8 @@ module OS
                   .freeze, T::Set[::Pathname])
     private_constant :SYSTEM_DIRS
 
-    UNDELETABLE_PATHS = T.let([
+    # Keep the protected user paths together so removal safeguards can be reviewed in one place.
+    UNDELETABLE_PATHS = T.let([ # rubocop:disable Metrics/CollectionLiteralLength
       "~/",
       "~/Applications",
       "~/Applications/.localized",

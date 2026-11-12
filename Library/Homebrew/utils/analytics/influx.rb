@@ -84,7 +84,7 @@ module Utils
         params(categories: T::Array[Symbol], days_ago: Integer,
                all_core_formulae_json: T::Boolean).returns(T::Array[T::Hash[Symbol, T.untyped]])
       }
-      def query(categories:, days_ago: 30, all_core_formulae_json: false)
+      def query(categories:, days_ago: 30, all_core_formulae_json: false) # rubocop:todo Metrics/MethodLength
         require "utils/analytics"
         require "json"
 
@@ -104,7 +104,7 @@ module Utils
 
         category_matching_buckets = [:build_error, :cask_install, :command_run, :test_bot_test]
 
-        categories.map do |category|
+        categories.map do |category| # rubocop:todo Metrics/BlockLength
           additional_where = all_core_formulae_json ? " AND tap_name ~ '^homebrew/'" : ""
           bucket = if category_matching_buckets.include?(category)
             category

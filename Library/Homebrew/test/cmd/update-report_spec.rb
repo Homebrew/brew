@@ -894,7 +894,7 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
           expect(JSON.parse(tabfile.read).dig("source", "tap")).to eq("foo/bar")
         end
 
-        context "with a third-party cask tap" do
+        shared_context "with third-party cask tap fixtures" do
           let(:new_tap) { Tap.fetch("baz", "qux") }
 
           before do
@@ -903,6 +903,10 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
           end
 
           after { FileUtils.rm_r(new_tap.path.parent) }
+        end
+
+        context "with a third-party cask tap" do
+          include_context "with third-party cask tap fixtures"
 
           it "updates the tap in the installed cask's receipt" do
             expect(reporter).not_to receive(:system)
@@ -910,76 +914,78 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
             expect(JSON.parse(tabfile.read).dig("source", "tap")).to eq("baz/qux")
           end
+        end
 
-          context "when the cask is also renamed" do
-            let(:migration_target) { "baz/qux/new-cask" }
+        context "when a third-party cask is also renamed" do
+          include_context "with third-party cask tap fixtures"
 
-            before do
-              (new_tap.path/"Casks/new-cask.rb").write <<~RUBY
-                cask "new-cask" do
-                  version "1.0"
-                  sha256 :no_check
-                  url "https://example.com/new-cask.zip"
-                  app "Example.app"
-                end
-              RUBY
-              caskfile = HOMEBREW_PREFIX/"Caskroom/old-cask/.metadata/1.0/20250101000000.000/Casks/old-cask.json"
-              caskfile.dirname.mkpath
-              caskfile.write('{"artifacts":[{"app":["Example.app"]}]}')
-              allow(Homebrew::Trust).to receive(:trusted?).with(:cask, migration_target).and_return(true)
-            end
+          let(:migration_target) { "baz/qux/new-cask" }
 
-            it "follows the renamed cask after the source tap is removed" do
-              expect(reporter).not_to receive(:system)
+          before do
+            (new_tap.path/"Casks/new-cask.rb").write <<~RUBY
+              cask "new-cask" do
+                version "1.0"
+                sha256 :no_check
+                url "https://example.com/new-cask.zip"
+                app "Example.app"
+              end
+            RUBY
+            caskfile = HOMEBREW_PREFIX/"Caskroom/old-cask/.metadata/1.0/20250101000000.000/Casks/old-cask.json"
+            caskfile.dirname.mkpath
+            caskfile.write('{"artifacts":[{"app":["Example.app"]}]}')
+            allow(Homebrew::Trust).to receive(:trusted?).with(:cask, migration_target).and_return(true)
+          end
+
+          it "follows the renamed cask after the source tap is removed" do
+            expect(reporter).not_to receive(:system)
+            reporter.migrate_tap_migration
+            FileUtils.rm_r(tap.path)
+
+            expect([
+              JSON.parse(tabfile.read).dig("source", "tap"),
+              (HOMEBREW_PREFIX/"Caskroom/old-cask").symlink?,
+              Cask::Caskroom.casks.map { |cask| [cask.full_name, cask.url&.to_s] },
+            ]).to eq(["baz/qux", true, [["baz/qux/new-cask", "https://example.com/new-cask.zip"]]])
+          end
+
+          it "reports a failed token migration and continues with later migrations" do
+            (new_tap.path/"Casks/another-cask.rb").write ""
+            another_tabfile = HOMEBREW_PREFIX/"Caskroom/another-cask/.metadata/INSTALL_RECEIPT.json"
+            another_tabfile.dirname.mkpath
+            another_tabfile.write(tabfile.read)
+            allow(tap).to receive(:tap_migrations)
+              .and_return("old-cask" => migration_target, "another-cask" => new_tap.name)
+            allow(reporter).to receive(:report)
+              .and_return({ D: [], DC: ["foo/bar/old-cask", "foo/bar/another-cask"], T: [] })
+            allow(Homebrew::Trust).to receive(:trusted?).with(:cask, "baz/qux/another-cask").and_return(true)
+            allow(FileUtils).to receive(:cp_r).and_raise(Errno::EACCES)
+
+            expect { reporter.migrate_tap_migration }.to output(/Permission denied/).to_stderr
+            expect([
+              JSON.parse(tabfile.read).dig("source", "tap"),
+              JSON.parse(another_tabfile.read).dig("source", "tap"),
+            ]).to eq(["foo/bar", "baz/qux"])
+          end
+
+          it "preserves a destination from another tap and recommends reinstalling" do
+            destination_tabfile = HOMEBREW_PREFIX/"Caskroom/new-cask/.metadata/INSTALL_RECEIPT.json"
+            destination_tabfile.dirname.mkpath
+            destination_tab = Cask::Tab.empty
+            destination_tab.tabfile = destination_tabfile
+            destination_tab.tap = "other/tap"
+            destination_tab.write
+            destination_caskfile = destination_tabfile.dirname/"1.0/20250101000000.000/Casks/new-cask.json"
+            destination_caskfile.dirname.mkpath
+            destination_caskfile.write("{}")
+            source_receipt = tabfile.read
+            destination_receipt = destination_tabfile.read
+
+            expect(Cask::Installer).not_to receive(:new)
+            expect do
               reporter.migrate_tap_migration
-              FileUtils.rm_r(tap.path)
-
-              expect([
-                JSON.parse(tabfile.read).dig("source", "tap"),
-                (HOMEBREW_PREFIX/"Caskroom/old-cask").symlink?,
-                Cask::Caskroom.casks.map { |cask| [cask.full_name, cask.url&.to_s] },
-              ]).to eq(["baz/qux", true, [["baz/qux/new-cask", "https://example.com/new-cask.zip"]]])
-            end
-
-            it "reports a failed token migration and continues with later migrations" do
-              (new_tap.path/"Casks/another-cask.rb").write ""
-              another_tabfile = HOMEBREW_PREFIX/"Caskroom/another-cask/.metadata/INSTALL_RECEIPT.json"
-              another_tabfile.dirname.mkpath
-              another_tabfile.write(tabfile.read)
-              allow(tap).to receive(:tap_migrations)
-                .and_return("old-cask" => migration_target, "another-cask" => new_tap.name)
-              allow(reporter).to receive(:report)
-                .and_return({ D: [], DC: ["foo/bar/old-cask", "foo/bar/another-cask"], T: [] })
-              allow(Homebrew::Trust).to receive(:trusted?).with(:cask, "baz/qux/another-cask").and_return(true)
-              allow(FileUtils).to receive(:cp_r).and_raise(Errno::EACCES)
-
-              expect { reporter.migrate_tap_migration }.to output(/Permission denied/).to_stderr
-              expect([
-                JSON.parse(tabfile.read).dig("source", "tap"),
-                JSON.parse(another_tabfile.read).dig("source", "tap"),
-              ]).to eq(["foo/bar", "baz/qux"])
-            end
-
-            it "preserves a destination from another tap and recommends reinstalling" do
-              destination_tabfile = HOMEBREW_PREFIX/"Caskroom/new-cask/.metadata/INSTALL_RECEIPT.json"
-              destination_tabfile.dirname.mkpath
-              destination_tab = Cask::Tab.empty
-              destination_tab.tabfile = destination_tabfile
-              destination_tab.tap = "other/tap"
-              destination_tab.write
-              destination_caskfile = destination_tabfile.dirname/"1.0/20250101000000.000/Casks/new-cask.json"
-              destination_caskfile.dirname.mkpath
-              destination_caskfile.write("{}")
-              source_receipt = tabfile.read
-              destination_receipt = destination_tabfile.read
-
-              expect(Cask::Installer).not_to receive(:new)
-              expect do
-                reporter.migrate_tap_migration
-                hub.migrate_cask_renames
-              end.to output(%r{installed from another tap.*brew reinstall --cask baz/qux/new-cask}m).to_stderr
-              expect([tabfile.read, destination_tabfile.read]).to eq([source_receipt, destination_receipt])
-            end
+              hub.migrate_cask_renames
+            end.to output(%r{installed from another tap.*brew reinstall --cask baz/qux/new-cask}m).to_stderr
+            expect([tabfile.read, destination_tabfile.read]).to eq([source_receipt, destination_receipt])
           end
         end
       end

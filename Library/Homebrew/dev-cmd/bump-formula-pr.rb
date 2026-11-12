@@ -99,6 +99,7 @@ module Homebrew
       end
 
       sig { override.void }
+      # rubocop:todo Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def run
         Utils::GemSetup.install_bundler_gems!(groups: ["ast"])
         require "utils/ast"
@@ -174,7 +175,7 @@ module Homebrew
         added_release_info = Set.new
         patch_inclusion = GitHub::PatchInclusion.new
 
-        commits = all_formulae.filter_map do |formula_name|
+        commits = all_formulae.filter_map do |formula_name| # rubocop:todo Metrics/BlockLength
           commit_formula = Formula[formula_name]
           raise FormulaUnspecifiedError if commit_formula.blank?
 
@@ -533,6 +534,8 @@ module Homebrew
           Utils::Browser.open url
         end
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+      # rubocop:enable Metrics/PerceivedComplexity
 
       # Whether platform or conditional source declarations prevent checking patches against one release.
       sig { params(formula_ast: Utils::AST::FormulaAST).returns(T::Boolean) }

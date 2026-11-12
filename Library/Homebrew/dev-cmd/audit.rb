@@ -103,7 +103,7 @@ module Homebrew
       end
 
       sig { override.void }
-      def run
+      def run # rubocop:todo Metrics/AbcSize, Metrics/MethodLength
         Formulary.enable_factory_cache!
 
         os_arch_combinations = args.os_arch_combinations

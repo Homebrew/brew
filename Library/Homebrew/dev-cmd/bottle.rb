@@ -424,7 +424,7 @@ module Homebrew
       end
 
       sig { params(formula: Formula).void }
-      def bottle_formula(formula)
+      def bottle_formula(formula) # rubocop:todo Metrics/AbcSize, Metrics/MethodLength
         local_bottle_json = args.json? && formula.local_bottle_path
 
         unless local_bottle_json

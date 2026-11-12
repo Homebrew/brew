@@ -361,7 +361,9 @@ RSpec.describe Cask::Upgrade, :cask do
     end
 
     describe "with --greedy it checks additional Casks" do
+      # rubocop:todo RSpec/MultipleExpectations
       it 'would include the Casks with "auto_updates true" or "version latest"' do
+        # rubocop:enable RSpec/MultipleExpectations
         expect(described_class).not_to receive(:upgrade_cask)
 
         expect(local_caffeine).to be_installed

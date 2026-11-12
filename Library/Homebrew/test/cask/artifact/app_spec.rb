@@ -309,7 +309,7 @@ RSpec.describe Cask::Artifact::App, :cask do
         let(:adopt) { true }
 
         describe "when the target compares different from the source" do
-          describe "when the cask does not auto_updates" do
+          describe "when the cask does not auto_updates" do # rubocop:todo RSpec/NestedGroups
             it "avoids clobbering the existing app if brew manages updates" do
               stdout = <<~EOS
                 ==> Adopting existing App at '#{target_path}'
@@ -331,7 +331,7 @@ RSpec.describe Cask::Artifact::App, :cask do
             end
           end
 
-          describe "when the cask auto_updates" do
+          describe "when the cask auto_updates" do # rubocop:todo RSpec/NestedGroups
             before do
               target_path.delete
               FileUtils.cp_r source_path, target_path

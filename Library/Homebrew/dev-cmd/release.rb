@@ -40,7 +40,7 @@ module Homebrew
       end
 
       sig { override.void }
-      def run
+      def run # rubocop:todo Metrics/MethodLength
         if Homebrew::EnvConfig.no_auto_update? || args.major? || args.minor?
           SystemCommand.safe_system "git", "-C", HOMEBREW_REPOSITORY, "fetch", "origin"
         end

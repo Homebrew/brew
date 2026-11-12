@@ -17,7 +17,7 @@ require "utils/path"
 # cases, `user/repository` will be used as the {#name} of this {Tap}, where
 # {#user} represents the GitHub username and {#repository} represents the
 # repository name without the leading `homebrew-`.
-class Tap
+class Tap # rubocop:todo Metrics/ClassLength
   extend T::Generic
   extend Cacheable
   extend Utils::Output::Mixin

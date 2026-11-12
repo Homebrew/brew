@@ -17,7 +17,7 @@ require "tap"
 
 # The {Formulary} is responsible for creating instances of {Formula}.
 # It is not meant to be used directly from formulae.
-module Formulary
+module Formulary # rubocop:todo Metrics/ModuleLength
   extend Context
   extend T::Generic
   extend Cacheable

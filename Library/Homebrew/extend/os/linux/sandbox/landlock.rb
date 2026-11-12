@@ -323,7 +323,7 @@ class Sandbox
 
       begin
         # PTY allocation opens `/dev/ptmx` read-write, then configures its
-        # dynamically allocated `/dev/pts/*` slave with device ioctls:
+        # dynamically allocated `/dev/pts/*` endpoint with device ioctls:
         # https://github.com/torvalds/linux/blob/master/drivers/tty/pty.c
         # https://www.kernel.org/doc/html/latest/userspace-api/landlock.html#ioctl-support
         pty_access = ACCESS_FS_WRITE_FILE

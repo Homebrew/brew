@@ -97,7 +97,7 @@ RSpec.describe Homebrew::DevCmd::Bottle do
     expect { bottle.run }.to raise_error(RuntimeError, "placeholdering failed")
   end
 
-  it "builds a bottle for the given Formula", :integration_test do
+  it "builds a bottle for the given Formula", :integration_test do # rubocop:todo RSpec/ExampleLength
     setup_test_formula "testball",
                        tab_attributes: { built_as_bottle: true, built_prefix: Keg::PREFIX_PLACEHOLDER }
     formula = Formula["testball"]

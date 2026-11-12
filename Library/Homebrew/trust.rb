@@ -12,7 +12,7 @@ module Homebrew
   class InsecureTrustStoreError < RuntimeError; end
   class UntrustedTapError < RuntimeError; end
 
-  module Trust
+  module Trust # rubocop:todo Metrics/ModuleLength
     extend Utils::Output::Mixin
 
     SETTING_KEYS = T.let({

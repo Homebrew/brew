@@ -23,7 +23,7 @@ require "utils/path"
 
 module Cask
   # Audit a cask for various problems.
-  class Audit
+  class Audit # rubocop:todo Metrics/ClassLength
     include SystemCommand::Mixin
     include ::Utils::Curl
     include ::Utils::Output::Mixin

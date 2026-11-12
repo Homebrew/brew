@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 RSpec.describe MacOS, :cask do
-  specify do
+  specify do # rubocop:todo RSpec/ExampleLength
     expect(described_class).to be_undeletable(
       "/",
     )

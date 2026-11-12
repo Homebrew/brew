@@ -9,6 +9,9 @@ Cask/InstallSteps:
   Exclude:
     - "test/support/fixtures/cask/Casks/many-artifacts.rb"
 
+Layout/HeredocArgumentClosingParenthesis:
+  Enabled: true
+
 # The project index does not model explicit removal or isolated entry points.
 Lint/ConstantReassignment:
   Exclude:
@@ -41,6 +44,61 @@ Lint/HeredocMethodCallPosition:
 Lint/UnusedPrivateMethod:
   Enabled: true
 
+# TODO: Aim to reduce all elevated Metrics and RSpec limits to their upstream
+# defaults over time as the code is refactored and inline TODOs are resolved.
+Metrics:
+  Enabled: true
+  Exclude:
+    - "**/*.rbi"
+    - "test/support/fixtures/**/*"
+
+Metrics/AbcSize:
+  Max: 250
+
+Metrics/BlockLength:
+  Max: 150
+  CountAsOne: [array, hash, heredoc]
+  AllowedMethods:
+    - refine
+    - sig
+    - cmd_args
+    - describe
+    - context
+    - shared_examples
+    - shared_examples_for
+    - shared_context
+
+Metrics/BlockNesting:
+  Max: 4
+
+Metrics/ClassLength:
+  Max: 1000
+  CountAsOne: [array, hash, heredoc]
+
+Metrics/CollectionLiteralLength:
+  Max: 100
+
+Metrics/CyclomaticComplexity:
+  Max: 100
+
+Metrics/MethodLength:
+  Max: 150
+  CountAsOne: [array, hash, heredoc]
+
+Metrics/ModuleLength:
+  Max: 500
+  CountAsOne: [array, hash, heredoc]
+
+Metrics/ParameterLists:
+  Max: 20
+  MaxOptionalParameters: 5
+
+Metrics/PerceivedComplexity:
+  Max: 100
+
+Naming/InclusiveLanguage:
+  Enabled: true
+
 # Want to preserve our own API for these methods for now.
 Naming/PredicatePrefix:
   inherit_mode:
@@ -66,6 +124,44 @@ Performance/IoReadlines:
   Enabled: true
 
 Performance/OpenStruct:
+  Enabled: true
+
+RSpec/ExampleLength:
+  Enabled: true
+  Max: 50
+  CountAsOne: [array, hash, heredoc]
+
+RSpec/MultipleExpectations:
+  Enabled: true
+  Max: 25
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: true
+  Max: 25
+
+RSpec/NestedGroups:
+  Enabled: true
+  Max: 5
+
+Sorbet/ForbidIncludeConstLiteral:
+  Enabled: true
+  # Its autocorrection introduces T.unsafe, which this repository forbids.
+  AutoCorrect: false
+
+Sorbet/ForbidSuperclassConstLiteral:
+  Enabled: true
+
+Sorbet/ForbidTCollectionInstantiation:
+  Enabled: true
+
+Sorbet/HasSigil:
+  Enabled: true
+  SuggestedStrictness: strict
+  Exclude:
+    # Fixtures model external formula and cask DSLs, which do not require sigils.
+    - "test/support/fixtures/**/*"
+
+Sorbet/SingleLineRbiClassModuleDefinitions:
   Enabled: true
 
 # Only enforce documentation for public APIs.
@@ -146,9 +242,8 @@ Style/Documentation:
     - version.rb
     - tap.rb
 
-Style/DocumentationMethod:
-  Include:
-    - "formula.rb"
+Style/OneClassPerFile:
+  Enabled: true
 
 # Ensure @api public methods have proper YARD documentation.
 # No Include needed: the cop self-selects by finding @api public comments.

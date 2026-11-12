@@ -176,7 +176,7 @@ module Homebrew
       end
 
       sig { override.void }
-      def run
+      def run # rubocop:todo Metrics/AbcSize, Metrics/MethodLength
         if args.env.present?
           # Can't use `replacement: false` because `install_args` are used by
           # `build.rb`. Instead, `hide_from_man_page` and don't do anything with

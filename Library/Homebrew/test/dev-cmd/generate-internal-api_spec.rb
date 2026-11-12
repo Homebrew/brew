@@ -7,7 +7,7 @@ require "dev-cmd/generate-internal-api"
 RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
   it_behaves_like "parseable arguments"
 
-  it "regenerates metadata and package data on every run" do
+  it "regenerates metadata and package data on every run" do # rubocop:todo RSpec/ExampleLength
     core_tap = instance_double(CoreTap, installed?: true, name: "homebrew/core", formula_names: ["foo"],
                                         alias_table: {}, formula_renames: {}, git_head: "formula-head",
                                         tap_migrations: {})

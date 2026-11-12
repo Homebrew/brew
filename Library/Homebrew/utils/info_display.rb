@@ -130,7 +130,7 @@ module Utils
         conflicts:           T::Array[String],
       ).returns(String)
     }
-    def self.package_summary(
+    def self.package_summary( # rubocop:todo Metrics/ParameterLists
       formula_or_cask:,
       name:,
       installation_status:,

@@ -584,7 +584,7 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
         end
 
         context "when dependent formulae have requirements" do
-          context "when dependent formulae require Linux" do
+          context "when dependent formulae require Linux" do # rubocop:todo RSpec/NestedGroups
             it "activates the applicable runners" do
               allow(Formula).to receive(:all).and_return([testball, testball_depender_linux].map(&:formula))
 
@@ -597,7 +597,7 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
             end
           end
 
-          context "when dependent formulae require macOS" do
+          context "when dependent formulae require macOS" do # rubocop:todo RSpec/NestedGroups
             it "activates the applicable runners" do
               allow(Formula).to receive(:all).and_return([testball, testball_depender_macos].map(&:formula))
 

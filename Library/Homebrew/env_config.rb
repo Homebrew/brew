@@ -43,7 +43,8 @@ module Homebrew
       T::Hash[Symbol, T::Hash[Symbol, T.untyped]],
     )
 
-    ENVS = T.let({
+    # Keep environment-variable defaults and documentation together in one registry.
+    ENVS = T.let({ # rubocop:disable Metrics/CollectionLiteralLength
       HOMEBREW_ALLOWED_TAPS:                     {
         description: "A space-separated list of taps. Homebrew will refuse to install a " \
                      "formula unless it and all of its dependencies are in an official tap " \

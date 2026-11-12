@@ -39,7 +39,7 @@ RSpec.describe Utils::TopologicalHash do
       2.times { described_class.graph_package_dependencies(parents) }
     end
 
-    it "returns a topological hash" do
+    it "returns a topological hash" do # rubocop:todo RSpec/ExampleLength
       formula1 = formula "homebrew-test-formula1" do
         T.bind(self, T.class_of(Formula))
         url "foo"

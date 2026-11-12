@@ -11,7 +11,7 @@ require "system_command"
 # A module that interfaces with GitHub, code like PAT scopes, credential handling and API errors.
 #
 # @api internal
-module GitHub
+module GitHub # rubocop:todo Metrics/ModuleLength
   extend SystemCommand::Mixin
   extend Utils::Output::Mixin
 

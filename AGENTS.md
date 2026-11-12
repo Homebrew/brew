@@ -1,6 +1,6 @@
 # Agent Instructions for Homebrew/brew
 
-Most importantly, run `./bin/brew lgtm` (style checks, type checks and tests) to verify any file edits before prompting for input.
+Run `./bin/brew lgtm --online` (style checks, type checks and tests) to verify file edits before finishing.
 
 Inline any new or existing methods or variables used only once unless they are needed for unit tests or explain magic numbers.
 Keep the diff as small, DRY and YAGNI as possible.
@@ -18,7 +18,7 @@ This is a Ruby repository with Bash scripts for faster execution that provides t
 
 - `./bin/brew typecheck`: Sorbet type checking. It only runs globally but is fast.
 - `./bin/brew style --fix --changed`: RuboCop linting. Pass files to check them individually, e.g. `./bin/brew style --fix Library/Homebrew/cmd/reinstall.rb`.
-- `./bin/brew tests --online --changed`: RSpec tests. Online tests can be flaky, so ignore failures that pass on a rerun. Pass `--only` for individual files, e.g. `./bin/brew tests --only=cmd/reinstall` runs `Library/Homebrew/test/cmd/reinstall_spec.rb`.
+- `./bin/brew tests --online --changed`: RSpec tests. Rerun apparently flaky online failures and report any that remain. If changed Ruby files have no associated tests, select the relevant specs explicitly with `--only`, e.g. `./bin/brew tests --online --only=cmd/reinstall` runs `Library/Homebrew/test/cmd/reinstall_spec.rb`.
 - `./bin/brew lgtm --online` runs all of the above in one command.
 - The Homebrew MCP Server (`./bin/brew mcp-server`) can also run all of the above.
 
@@ -34,10 +34,13 @@ This is a Ruby repository with Bash scripts for faster execution that provides t
 ## Code
 
 - Maintain existing code structure and organisation and document public APIs.
-- Use Sorbet `sig` type signatures and `typed: strict` for new files.
+- Keep methods, classes and tests within the limits in `Library/Homebrew/.rubocop.yml`. Simplify control flow and remove duplication without extracting single-use helpers just to satisfy metrics.
+- Treat inline `rubocop:todo` comments as refactoring opportunities and remove them once the code complies. Keep suppressions local to the offending code, lower limits as outliers are refactored and do not raise limits or add TODOs just to make new code pass.
+- For intentional exceptions where refactoring would not improve the code, use `rubocop:disable` with a brief comment explaining why instead of `rubocop:todo`.
+- Use Sorbet `sig` type signatures and `typed: strict` for new Ruby files; see the test-specific exception below.
 - Never use `T.must` (enforced by `Sorbet/ForbidTMust`): bind the value to a local and branch on `nil`, use `fetch` or `first(n)` on collections, or raise an exception with a helpful message where `nil` is impossible.
 - Never use `T.unsafe` (enforced by `Sorbet/ForbidTUnsafe`): give DSL parameters `= nil` defaults with nilable types, narrow with `is_a?` or `case`, use `requires_ancestor` for typed modules and `public_send` behind a `respond_to?` guard for duck typing.
-- Avoid `T.cast`, `T.let`, `T.untyped` and `T.anything`: use precise types and APIs that return non-nil values. If a generic top type is unavoidable, use `T.anything` rather than `T.untyped`.
+- Avoid `T.cast`, `T.untyped` and `T.anything`: use precise types and APIs that return non-nil values. Use `T.let` where Sorbet requires an explicit annotation. If a generic top type is unavoidable, use `T.anything` rather than `T.untyped`.
 - Never use `.send`: call methods directly, use `.public_send` only for dynamically-named public methods and make private methods public in tests (enforced by `Homebrew/NoSendInTests`). In tests, read and write state through public `attr_*` accessors rather than `instance_variable_get`/`instance_variable_set` (enforced by `Homebrew/NoInstanceVariableAccessInTests`).
 - Shell out via `HOMEBREW_BREW_FILE` instead of requiring `cmd/` or `dev-cmd` when composing brew commands.
 - Avoid calling `Homebrew::Cmd` or `Homebrew::DevCmd` methods from other code: put shared helpers under `Utils` or on the relevant class, e.g. a `Formula` class method.

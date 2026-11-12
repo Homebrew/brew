@@ -951,7 +951,7 @@ module RuboCop
       # This cop checks for other miscellaneous style violations.
       class Miscellaneous < FormulaCop
         sig { override.params(formula_nodes: FormulaNodes).void }
-        def audit_formula(formula_nodes)
+        def audit_formula(formula_nodes) # rubocop:todo Metrics/MethodLength
           return if (body_node = formula_nodes.body_node).nil?
 
           # FileUtils is included in Formula

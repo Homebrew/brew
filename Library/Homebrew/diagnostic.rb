@@ -59,7 +59,7 @@ module Homebrew
     end
 
     # Diagnostic checks.
-    class Checks
+    class Checks # rubocop:todo Metrics/ClassLength
       include SystemCommand::Mixin
       include Utils::Output::Mixin
 

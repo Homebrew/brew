@@ -999,7 +999,7 @@ module Homebrew
       private
 
       sig { params(step: Step).void }
-      def run_install_step(step)
+      def run_install_step(step) # rubocop:todo Metrics/AbcSize, Metrics/MethodLength
         case step.fetch("type")
         when "mkdir"
           resolve_path(step_path(step, "path")).mkdir
