@@ -248,6 +248,7 @@ Cooldowns have been added for:
 * [npm and pip defaults](https://github.com/Homebrew/brew/pull/21919)
 * [PyPI resource resolution](https://github.com/Homebrew/brew/pull/21920)
 * [npm and PyPI in `bump`](https://github.com/Homebrew/brew/pull/21888)
+* [Cargo dependency resolution](https://github.com/Homebrew/brew/pull/24593)
 
 Homebrew applies these cooldowns narrowly, only to the language ecosystems that have actually suffered fast-moving supply-chain attacks, rather than as a blanket delay on every package.
 A blanket cooldown would trade a small, speculative reduction in supply-chain risk for a real, across-the-board delay in shipping critical fixes: when a zero-day in something like OpenSSL is being exploited in the wild, Homebrew works to get the fix to users as fast as possible, and Homebrew's design means upgrading one package can require upgrading others.
