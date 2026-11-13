@@ -206,10 +206,7 @@ module Cask
       tab.installed_on_request = installed_on_request?
       tab.write
 
-      if (tap = @cask.tap) && tap.should_report_analytics?
-        ::Utils::Analytics.report_package_event(:cask_install, package_name: @cask.token, tap_name: tap.name,
-on_request: true)
-      end
+      report_analytics
 
       purge_backed_up_versioned_files
 
@@ -226,6 +223,15 @@ on_request: true)
       raise e
     ensure
       @cask.cleanup_temp(retain: !completed)
+    end
+
+    # Report a successful installation or upgrade.
+    sig { void }
+    def report_analytics
+      if (tap = @cask.tap) && tap.should_report_analytics?
+        ::Utils::Analytics.report_package_event(:cask_install, package_name: @cask.token, tap_name: tap.name,
+                                               on_request: true)
+      end
     end
 
     sig { void }

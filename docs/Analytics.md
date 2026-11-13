@@ -22,6 +22,8 @@ Public aggregate reports may cover shorter periods.
 
 ## Data sent
 
+Formula and cask install events include upgrades and reinstalls, so these counts measure operations rather than unique users.
+
 Formula, cask and build-error events can include:
 
 - the package and non-private GitHub tap names
@@ -53,6 +55,11 @@ Debug mode is not an opt-out mechanism; use one of the settings below when the r
 
 Aggregate reports and their JSON representations are available from the [Homebrew analytics site](https://formulae.brew.sh/analytics/).
 Most Homebrew maintainers have access only to these public aggregates.
+
+Package reports combine old and current names using renames and tap migrations from official Homebrew taps.
+Core tap metadata is available through the API; other official taps must be installed when generating reports.
+Third-party packages with the same name remain separate, and reports never read third-party rename or migration metadata.
+Moves recorded only in a third-party tap therefore cannot be inferred.
 
 [Analytics reports](https://formulae.brew.sh/analytics/) describe sources, periods, column definitions and limitations.
 

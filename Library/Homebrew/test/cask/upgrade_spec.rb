@@ -814,6 +814,37 @@ RSpec.describe Cask::Upgrade, :cask do
     end
   end
 
+  context "when reporting upgrade analytics" do
+    before do
+      Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
+      allow(CoreCaskTap.instance).to receive(:should_report_analytics?).and_return(true)
+    end
+
+    it "reports a successful upgrade as one cask install" do
+      expect(Utils::Analytics).to receive(:report_package_event)
+        .with(:cask_install, package_name: "local-caffeine", tap_name: "homebrew/cask", on_request: true).once
+
+      described_class.upgrade_casks!(local_caffeine, args:)
+    end
+
+    it "does not report upgrades from private taps" do
+      allow(CoreCaskTap.instance).to receive(:should_report_analytics?).and_return(false)
+
+      expect(Utils::Analytics).not_to receive(:report_package_event)
+
+      described_class.upgrade_casks!(local_caffeine, args:)
+    end
+
+    it "does not report failed upgrades" do
+      allow_any_instance_of(Cask::Installer).to receive(:finalize_upgrade)
+        .and_raise(Cask::CaskError, "finalize failed")
+
+      expect(Utils::Analytics).not_to receive(:report_package_event)
+
+      described_class.upgrade_casks!(local_caffeine, args:)
+    end
+  end
+
   context "when quarantine support is unavailable" do
     before do
       Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install

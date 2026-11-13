@@ -105,7 +105,7 @@ module Utils
         category_matching_buckets = [:build_error, :cask_install, :command_run, :test_bot_test]
 
         categories.map do |category|
-          additional_where = all_core_formulae_json ? " AND tap_name ~ '^homebrew/(core|cask)$'" : ""
+          additional_where = all_core_formulae_json ? " AND tap_name ~ '^homebrew/'" : ""
           bucket = if category_matching_buckets.include?(category)
             category
           elsif [:command_run_options, :homebrew_env_config].include?(category)
@@ -152,6 +152,24 @@ module Utils
             dimension_key = :formula
             additional_where += " AND on_request = 'true'" if category == :formula_install_on_request
             groups = [:package, :tap_name, :options]
+          end
+
+          package_renames = {}
+          if [:formula, :cask].include?(dimension_key)
+            require "tap"
+
+            Tap.all.select(&:official?).each do |tap|
+              ((dimension_key == :cask) ? tap.cask_renames : tap.formula_renames).each do |old_name, new_name|
+                package_renames["#{tap.name}/#{old_name}"] = "#{tap.name}/#{new_name}"
+              end
+              tap.tap_migrations.each do |old_name, new_name|
+                package_renames["#{tap.name}/#{old_name}"] = if Utils.full_name?(new_name)
+                  new_name
+                else
+                  "#{new_name}/#{old_name}"
+                end
+              end
+            end
           end
 
           sql_groups = groups.map { |e| "\"#{e}\"" }.join(",")
@@ -230,10 +248,18 @@ module Utils
             end
             next if dimension.blank?
 
-            if (tap_name = record["tap_name"].presence) &&
-               ((tap_name != "homebrew/cask" && dimension_key == :cask) ||
-                (tap_name != "homebrew/core" && dimension_key == :formula))
-              dimension = "#{tap_name}/#{dimension}"
+            if [:formula, :cask].include?(dimension_key)
+              tap_name = record["tap_name"].presence
+              dimension = "#{tap_name}/#{dimension}" if tap_name
+              seen = Set.new
+              while (new_name = package_renames[dimension]) && seen.add?(dimension)
+                dimension = new_name
+              end
+
+              core_tap_name = (dimension_key == :cask) ? "homebrew/cask" : "homebrew/core"
+              next if all_core_formulae_json && !dimension.start_with?("#{core_tap_name}/")
+
+              dimension = dimension.delete_prefix("#{core_tap_name}/")
             end
 
             if (all_core_formulae_json || category == :build_error) &&
@@ -250,7 +276,6 @@ module Utils
 
             count = record["count"]
 
-            json[:total_items] += 1
             json[:total_count] += count
 
             json[:items] << {
@@ -280,7 +305,7 @@ module Utils
           end
 
           json[:items] = deduped_items.values
-          json[:total_items] = json[:items].length if category == :homebrew_env_config
+          json[:total_items] = json[:items].length
 
           if all_core_formulae_json
             core_formula_items = {}
