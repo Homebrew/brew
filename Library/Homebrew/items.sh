@@ -26,6 +26,7 @@ homebrew-items() {
       -e 's/\.rb//g' \
       -e 's_.*/Taps/(.*)/(home|linux)brew-_\1/_' \
       -e "${sed_filter}")"
+  [[ -n "${items}" ]] || return 0
   local shortnames
   shortnames="$(echo "${items}" | cut -d "/" -f 3)"
   echo -e "${items}\n${shortnames}" |
@@ -77,14 +78,14 @@ homebrew-trusted-items() {
     $tap
   '
 
+  items="$(homebrew-items-paths "${find_include_filter}" "${find_exclude_filter}")"
+  [[ -n "${items}" ]] || return 0
+
   if ! jq="$(type -P jq)" && [[ -n "${HOMEBREW_PATH:-}" ]]
   then
     jq="$(PATH="${HOMEBREW_PATH}" type -P jq)"
   fi
   [[ -x "${jq}" ]] || return 1
-
-  items="$(homebrew-items-paths "${find_include_filter}" "${find_exclude_filter}")"
-  [[ -n "${items}" ]] || return 0
 
   local store='{}'
   if [[ -f "${trust_file}" ]]
@@ -121,6 +122,7 @@ homebrew-trusted-items() {
     '
   )"
 
+  # Keep in sync with the `HOMEBREW_COMPLETION` check in `Homebrew::Trust.trusted_files` in `trust.rb`.
   if [[ -z "${HOMEBREW_COMPLETION:-}" ]]
   then
     local tap
@@ -161,11 +163,13 @@ homebrew-trusted-items-with-api-names() {
   then
     {
       cat "${HOMEBREW_CACHE}/api/${api_names_file}"
-      echo
-      echo "${trusted_items}"
+      [[ -z "${trusted_items}" ]] || {
+        echo
+        echo "${trusted_items}"
+      }
     } | sort -uf
   else
-    echo "${trusted_items}"
+    [[ -z "${trusted_items}" ]] || echo "${trusted_items}"
   fi
 
   # Output errors, including SIGPIPE, do not require the Ruby fallback.
