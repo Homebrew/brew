@@ -137,7 +137,6 @@ class AbstractTab
   def self.empty
     new(
       homebrew_version:         HOMEBREW_VERSION,
-      installed_on_request:     false,
       loaded_from_api:          false,
       loaded_from_internal_api: false,
       time:                     nil,

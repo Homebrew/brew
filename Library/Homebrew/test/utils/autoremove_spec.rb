@@ -187,6 +187,14 @@ RSpec.describe Utils::Autoremove do
         .to eq([])
     end
 
+    specify "without an install receipt" do
+      formulae.each { |f| allow(f).to receive(:any_installed_keg).and_return(instance_double(Keg, tab: Tab.empty)) }
+      allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
+
+      expect(described_class.unused_formulae_with_no_formula_dependents(formulae))
+        .to eq([])
+    end
+
     specify "built from source and not installed on request" do
       allow(Formulary).to receive(:factory).with("three", { warn: false }).and_return(formula_is_build_dep)
       allow(tab_from_keg).to receive_messages(poured_from_bottle:            false,
