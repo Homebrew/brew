@@ -4393,9 +4393,12 @@ RSpec.describe Formula do
       expect(f.common_sandbox_env(mktmpdir)).not_to have_key(:JDK_JAVA_OPTIONS)
     end
 
-    it "does not configure Cargo cooldown before stable support" do
+    it "sets Cargo cooldown for registry dependencies" do
+      expect(f.common_sandbox_env(mktmpdir)[:CARGO_REGISTRY_GLOBAL_MIN_PUBLISH_AGE]).to eq("1 day")
+    end
+
+    it "does not enable unstable Cargo features" do
       expect(f.common_sandbox_env(mktmpdir).keys & [
-        :CARGO_REGISTRY_GLOBAL_MIN_PUBLISH_AGE,
         :CARGO_UNSTABLE_MIN_PUBLISH_AGE,
         :RUSTC_BOOTSTRAP,
       ]).to be_empty
