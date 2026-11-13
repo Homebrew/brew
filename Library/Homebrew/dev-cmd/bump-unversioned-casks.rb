@@ -139,39 +139,35 @@ module Homebrew
 
               nil
             end
+          end
+        end
 
-            if version
-              if cask.version == version
-                oh1 "Cask #{cask} is up-to-date at #{version}"
-              else
-                sourcefile_path = cask.sourcefile_path
-                raise "unexpected nil cask.sourcefile_path" unless sourcefile_path
+        if version
+          if cask.version == version
+            oh1 "Cask #{cask} is up-to-date at #{version}"
+          else
+            sourcefile_path = cask.sourcefile_path
+            raise "unexpected nil cask.sourcefile_path" unless sourcefile_path
 
-                bump_cask_pr_args = [
-                  "bump-cask-pr",
-                  "--version", version.to_s,
-                  "--sha256", ":no_check",
-                  "--message", "Automatic update via `brew bump-unversioned-casks`.",
-                  sourcefile_path
-                ]
+            bump_cask_pr_args = [
+              "bump-cask-pr",
+              "--version", version.to_s,
+              "--sha256", ":no_check",
+              "--message", "Automatic update via `brew bump-unversioned-casks`.",
+              sourcefile_path
+            ]
 
-                # rubocop:todo Metrics/BlockNesting
-                if args.dry_run?
-                  bump_cask_pr_args << "--dry-run"
-                  oh1 "Would bump #{cask} from #{cask.version} to #{version}"
-                else
-                  oh1 "Bumping #{cask} from #{cask.version} to #{version}"
-                end
-                # rubocop:enable Metrics/BlockNesting
+            if args.dry_run?
+              bump_cask_pr_args << "--dry-run"
+              oh1 "Would bump #{cask} from #{cask.version} to #{version}"
+            else
+              oh1 "Bumping #{cask} from #{cask.version} to #{version}"
+            end
 
-                begin
-                  system_command! HOMEBREW_BREW_FILE, args: bump_cask_pr_args
-                # rubocop:todo Metrics/BlockNesting
-                rescue ErrorDuringExecution => e
-                  onoe e
-                  # rubocop:enable Metrics/BlockNesting
-                end
-              end
+            begin
+              system_command! HOMEBREW_BREW_FILE, args: bump_cask_pr_args
+            rescue ErrorDuringExecution => e
+              onoe e
             end
           end
         end

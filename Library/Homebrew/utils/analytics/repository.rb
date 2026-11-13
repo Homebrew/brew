@@ -28,7 +28,7 @@ module Utils
       end
 
       sig { returns(T::Array[T::Hash[String, T.nilable(T.any(String, Integer))]]) }
-      def rows # rubocop:todo Metrics/AbcSize
+      def rows
         if git("rev-parse", "--is-shallow-repository") == "true"
           raise "Analytics require complete Git history for #{@name}"
         end
@@ -185,18 +185,10 @@ module Utils
             "maintainers"          => maintainers[revision],
             "pull_requests_merged" => (period == "current") ? pull_requests.size : merged_years.fetch(period, 0),
             "added"                => if @name == "Homebrew/homebrew-cask"
-                                        if period == "current"
-                                          changes.values.sum { |counts| counts.fetch("added", 0) }
-                                        else
-                                          changes.fetch(period, {}).fetch("added", 0)
-                                        end
+                                        change_count(changes, period, "added")
             end,
             "removed"              => if @name == "Homebrew/homebrew-cask"
-                                        if period == "current"
-                                          changes.values.sum { |counts| counts.fetch("removed", 0) }
-                                        else
-                                          changes.fetch(period, {}).fetch("removed", 0)
-                                        end
+                                        change_count(changes, period, "removed")
             end,
             "formulae"             => formula_repository ? catalogue : nil,
             "casks"                => (@name == "Homebrew/homebrew-cask") ? catalogue : nil,
@@ -215,6 +207,16 @@ module Utils
                                            pull_requests:, rows: }))
         rows
       end
+
+      sig { params(changes: T::Hash[String, T::Hash[String, Integer]], period: String, metric: String).returns(Integer) }
+      def change_count(changes, period, metric)
+        if period == "current"
+          changes.values.sum { |counts| counts.fetch(metric, 0) }
+        else
+          changes.fetch(period, {}).fetch(metric, 0)
+        end
+      end
+      private :change_count
 
       sig { params(args: String).returns(String) }
       def git(*args)

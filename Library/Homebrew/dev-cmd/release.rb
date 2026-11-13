@@ -40,7 +40,7 @@ module Homebrew
       end
 
       sig { override.void }
-      def run # rubocop:todo Metrics/MethodLength
+      def run
         if Homebrew::EnvConfig.no_auto_update? || args.major? || args.minor?
           SystemCommand.safe_system "git", "-C", HOMEBREW_REPOSITORY, "fetch", "origin"
         end
@@ -57,8 +57,8 @@ module Homebrew
           odie "Unable to check for release blockers: #{e.message}!"
         end
         if release_blockers.present?
-          blocker_urls = release_urls(release_blockers).uniq.join("\n")
-          odie "Open issues or pull requests are blocking this release:\n#{blocker_urls}"
+          odie "Open issues or pull requests are blocking this release:\n" \
+               "#{release_urls(release_blockers).uniq.join("\n")}"
         end
 
         begin
@@ -95,14 +95,11 @@ module Homebrew
           latest_major_minor_version = "#{latest_version.major}.#{latest_version.minor.to_i}.0"
           ohai "Release notes since #{latest_major_minor_version} for #{new_version} blog post:"
           # release notes without usernames, new contributors, or extra lines
-          blog_post_notes = GitHub.generate_release_notes("Homebrew", "brew", new_version,
-                                                          previous_tag: latest_major_minor_version)["body"]
-          blog_post_notes = blog_post_notes.lines.filter_map do |line|
-            next unless (match = line.match(/^\* (.*) by @[\w-]+ in (.*)$/))
-
-            "- [#{match[1]}](#{match[2]})"
-          end.sort
-          puts blog_post_notes
+          puts GitHub.generate_release_notes("Homebrew", "brew", new_version,
+                                             previous_tag: latest_major_minor_version)["body"]
+                     .scan(/^\* (.*) by @[\w-]+ in (.*)$/)
+                     .map { |title, url| "- [#{title}](#{url})" }
+                     .sort
 
           release_sponsors = Utils.safe_popen_read(
             "git", "-C", HOMEBREW_REPOSITORY, "show", "origin/main:README.md"
@@ -145,22 +142,10 @@ module Homebrew
 
         if existing_releases.present?
           draft_releases, published_releases = existing_releases.partition { |release| release["draft"] }
-          error_message = +""
-
-          if draft_releases.present?
-            error_message << "Draft releases already exist for #{new_version}. " \
-                             "Delete them in the web interface first:\n"
-            error_message << release_urls(draft_releases).join("\n")
-          end
-
-          if published_releases.present?
-            error_message << "\n" if error_message.present?
-            error_message << "Published releases already exist for #{new_version}. " \
-                             "Run `brew update` instead:\n"
-            error_message << release_urls(published_releases).join("\n")
-          end
-
-          odie error_message
+          odie [
+            release_conflict_message(draft_releases, new_version, draft: true),
+            release_conflict_message(published_releases, new_version, draft: false),
+          ].compact.join("\n")
         end
 
         # Get the current commit SHA
@@ -269,6 +254,21 @@ module Homebrew
       end
 
       private
+
+      sig {
+        params(releases: T::Array[T::Hash[String, T.anything]], version: String,
+               draft: T::Boolean).returns(T.nilable(String))
+      }
+      def release_conflict_message(releases, version, draft:)
+        return if releases.empty?
+
+        kind, action = if draft
+          ["Draft", "Delete them in the web interface first"]
+        else
+          ["Published", "Run `brew update` instead"]
+        end
+        "#{kind} releases already exist for #{version}. #{action}:\n#{release_urls(releases).join("\n")}"
+      end
 
       sig { params(releases: T::Array[T::Hash[String, T.untyped]]).returns(T::Array[String]) }
       def release_urls(releases)

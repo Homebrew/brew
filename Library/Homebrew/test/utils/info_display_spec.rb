@@ -31,10 +31,13 @@ RSpec.describe Utils::InfoDisplay do
   describe ".package_summary" do
     let(:cask) { Cask::Cask.new("example") { version "2.0" } }
 
-    it "formats title data passed directly to the summary" do
+    it "formats the supplied title" do
       expect(described_class.package_summary(
-               formula_or_cask: cask, name: "example", display_names: ["Example"], version: "2.0",
-               installed_version: "1.0", installed: true, outdated: true, auto_updates: true,
+               formula_or_cask: cask,
+               title: Utils::InfoDisplay::Title.new(
+                 name: "example", display_names: ["Example"], version: "2.0",
+                 installed_version: "1.0", installed: true, outdated: true, auto_updates: true
+               ),
                installation_status: ["Installed"], source_url: nil,
                installed_versions: [], verbose: false
              )).to eq("==> example (Example): 1.0 → 2.0 (auto_updates)\nInstalled")
@@ -44,7 +47,8 @@ RSpec.describe Utils::InfoDisplay do
       allow(described_class).to receive(:metadata_lines).with(cask).and_return(["Pinned: 1.0"])
 
       expect(described_class.package_summary(
-               formula_or_cask: cask, name: "example", version: "2.0", installation_status: ["Installed"],
+               formula_or_cask: cask, title: Utils::InfoDisplay::Title.new(name: "example", version: "2.0"),
+               installation_status: ["Installed"],
                source_url: "https://example.com/cask.rb", installed_versions: [], verbose: false
              )).to eq("==> example: 2.0\nInstalled\nFrom: https://example.com/cask.rb\nPinned: 1.0")
     end

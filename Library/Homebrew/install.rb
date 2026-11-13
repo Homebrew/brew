@@ -21,7 +21,7 @@ require "attestation"
 
 module Homebrew
   # Helper module for performing (pre-)install checks.
-  module Install # rubocop:todo Metrics/ModuleLength
+  module Install
     extend Utils::Output::Mixin
 
     DependencySummary = T.type_alias { T::Hash[Symbol, T::Array[VersionChange]] }
@@ -346,42 +346,11 @@ module Homebrew
       end
 
       sig {
-        params(formula_installers: T::Array[FormulaInstaller], installed_on_request: T::Boolean,
-               build_bottle: T::Boolean, force_bottle: T::Boolean,
-               bottle_arch: T.nilable(String), ignore_deps: T::Boolean, only_deps: T::Boolean,
-               include_test_formulae: T::Array[String], build_from_source_formulae: T::Array[String],
-               cc: T.nilable(String), git: T::Boolean, interactive: T::Boolean, keep_tmp: T::Boolean,
-               debug_symbols: T::Boolean, force: T::Boolean, overwrite: T::Boolean, debug: T::Boolean,
-               quiet: T::Boolean, verbose: T::Boolean, dry_run: T::Boolean,
-               dry_run_action: String, skip_post_install: T::Boolean, skip_link: T::Boolean,
-               cleanup: T::Boolean).returns(T::Array[Formula])
+        params(formula_installers: T::Array[FormulaInstaller], verbose: T::Boolean, dry_run: T::Boolean,
+               dry_run_action: String, cleanup: T::Boolean).returns(T::Array[Formula])
       }
-      def install_formulae( # rubocop:todo Metrics/ParameterLists
-        formula_installers,
-        installed_on_request: true,
-        build_bottle: false,
-        force_bottle: false,
-        bottle_arch: nil,
-        ignore_deps: false,
-        only_deps: false,
-        include_test_formulae: [],
-        build_from_source_formulae: [],
-        cc: nil,
-        git: false,
-        interactive: false,
-        keep_tmp: false,
-        debug_symbols: false,
-        force: false,
-        overwrite: false,
-        debug: false,
-        quiet: false,
-        verbose: false,
-        dry_run: false,
-        dry_run_action: "install",
-        skip_post_install: false,
-        skip_link: false,
-        cleanup: true
-      )
+      def install_formulae(formula_installers, verbose: false, dry_run: false, dry_run_action: "install",
+                           cleanup: true)
         return [] if formula_installers.empty?
 
         if dry_run

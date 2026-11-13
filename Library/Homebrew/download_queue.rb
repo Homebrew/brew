@@ -238,13 +238,7 @@ module Homebrew
               else
                 failure_message = if exception.is_a?(DownloadError) && exception.cause.is_a?(ErrorDuringExecution)
                   cause = T.cast(exception.cause, ErrorDuringExecution)
-                  # rubocop:todo Metrics/BlockNesting
-                  if (stderr_output = cause.stderr.presence)
-                    "#{stderr_output}#{cause.message}"
-                  else
-                    cause.message
-                  end
-                  # rubocop:enable Metrics/BlockNesting
+                  "#{cause.stderr.presence}#{cause.message}"
                 else
                   future.reason.to_s
                 end

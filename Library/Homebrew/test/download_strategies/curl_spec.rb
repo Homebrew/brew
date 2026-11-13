@@ -464,45 +464,46 @@ RSpec.describe CurlDownloadStrategy do
 
             strategy.fetch
           end
+        end
 
-          context "with a trailing slash" do # rubocop:todo RSpec/NestedGroups
-            let(:artifact_domain) { "https://mirror.example.com/v2/oci/" }
+        context "with a trailing slash" do
+          let(:artifact_domain) { "https://mirror.example.com/v2/oci/" }
 
-            it "does not duplicate the /v2/ API path" do
-              expect(strategy).to receive(:system_command)
-                .with(
-                  /curl/,
-                  hash_including(args: array_including_cons("https://mirror.example.com/v2/oci/homebrew/core/spec/manifests/0.0")),
-                )
-                .at_least(:once)
-                .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
+          it "does not duplicate the /v2/ API path" do
+            expect(strategy).to receive(:system_command)
+              .with(
+                /curl/,
+                hash_including(args: array_including_cons("https://mirror.example.com/v2/oci/homebrew/core/spec/manifests/0.0")),
+              )
+              .at_least(:once)
+              .and_return(SystemCommand::Result.new(["curl"], [[:stdout, ""]], status, secrets: []))
 
-              strategy.fetch
-            end
+            strategy.fetch
           end
+        end
 
-          context "when the artifact domain is unreachable" do # rubocop:todo RSpec/NestedGroups
-            let(:failed_status) { instance_double(Process::Status, success?: false, exitstatus: 6, termsig: nil) }
+        context "when the /v2 artifact domain is unreachable" do
+          let(:artifact_domain) { "https://mirror.example.com/v2/oci" }
+          let(:failed_status) { instance_double(Process::Status, success?: false, exitstatus: 6, termsig: nil) }
 
-            it "falls back to the original ghcr.io URL" do
-              artifact_url = "https://mirror.example.com/v2/oci/homebrew/core/spec/manifests/0.0"
+          it "falls back to the original ghcr.io URL" do
+            artifact_url = "https://mirror.example.com/v2/oci/homebrew/core/spec/manifests/0.0"
 
-              # First call: artifact domain URL fails
-              expect(strategy).to receive(:_fetch)
-                .with(url: artifact_url, resolved_url: artifact_url,
-                      timeout: anything)
-                .once
-                .and_raise(ErrorDuringExecution.new(["curl", artifact_url], status: failed_status))
+            # First call: artifact domain URL fails
+            expect(strategy).to receive(:_fetch)
+              .with(url: artifact_url, resolved_url: artifact_url,
+                    timeout: anything)
+              .once
+              .and_raise(ErrorDuringExecution.new(["curl", artifact_url], status: failed_status))
 
-              # Second call: original ghcr.io URL succeeds
-              expect(strategy).to receive(:_fetch)
-                .with(url: url, resolved_url: url,
-                      timeout: anything)
-                .once
-                .and_return(nil)
+            # Second call: original ghcr.io URL succeeds
+            expect(strategy).to receive(:_fetch)
+              .with(url: url, resolved_url: url,
+                    timeout: anything)
+              .once
+              .and_return(nil)
 
-              strategy.fetch
-            end
+            strategy.fetch
           end
         end
 

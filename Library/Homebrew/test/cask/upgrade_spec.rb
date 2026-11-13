@@ -361,27 +361,21 @@ RSpec.describe Cask::Upgrade, :cask do
     end
 
     describe "with --greedy it checks additional Casks" do
-      # rubocop:todo RSpec/MultipleExpectations
       it 'would include the Casks with "auto_updates true" or "version latest"' do
-        # rubocop:enable RSpec/MultipleExpectations
         expect(described_class).not_to receive(:upgrade_cask)
 
-        expect(local_caffeine).to be_installed
+        expect(local_caffeine).to have_attributes(installed?: true, installed_version: "1.2.2")
         expect(local_caffeine_path).to be_a_directory
-        expect(local_caffeine.installed_version).to eq "1.2.2"
 
-        expect(auto_updates).to be_installed
+        expect(auto_updates).to have_attributes(installed?: true, installed_version: "2.57")
         expect(auto_updates_path).to be_a_directory
-        expect(auto_updates.installed_version).to eq "2.57"
 
-        expect(local_transmission).to be_installed
+        expect(local_transmission).to have_attributes(installed?: true, installed_version: "2.60")
         expect(local_transmission_path).to be_a_directory
-        expect(local_transmission.installed_version).to eq "2.60"
 
-        expect(renamed_app).to be_installed
+        expect(renamed_app).to have_attributes(installed?: true, installed_version: "1.0.0")
         expect(renamed_app_old_path).to be_a_directory
         expect(renamed_app_new_path).not_to be_a_directory
-        expect(renamed_app.installed_version).to eq "1.0.0"
 
         expect(version_latest).to be_installed
         # Change download sha so that :latest cask decides to update itself
@@ -390,22 +384,18 @@ RSpec.describe Cask::Upgrade, :cask do
 
         described_class.upgrade_casks!(greedy: true, dry_run: true, args:)
 
-        expect(local_caffeine).to be_installed
+        expect(local_caffeine).to have_attributes(installed?: true, installed_version: "1.2.2")
         expect(local_caffeine_path).to be_a_directory
-        expect(local_caffeine.installed_version).to eq "1.2.2"
 
-        expect(auto_updates).to be_installed
+        expect(auto_updates).to have_attributes(installed?: true, installed_version: "2.57")
         expect(auto_updates_path).to be_a_directory
-        expect(auto_updates.installed_version).to eq "2.57"
 
-        expect(local_transmission).to be_installed
+        expect(local_transmission).to have_attributes(installed?: true, installed_version: "2.60")
         expect(local_transmission_path).to be_a_directory
-        expect(local_transmission.installed_version).to eq "2.60"
 
-        expect(renamed_app).to be_installed
+        expect(renamed_app).to have_attributes(installed?: true, installed_version: "1.0.0")
         expect(renamed_app_old_path).to be_a_directory
         expect(renamed_app_new_path).not_to be_a_directory
-        expect(renamed_app.installed_version).to eq "1.0.0"
 
         expect(version_latest).to be_installed
         expect(version_latest.outdated_download_sha?).to be(true)

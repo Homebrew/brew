@@ -2,61 +2,36 @@
 # frozen_string_literal: true
 
 RSpec.describe MacOS, :cask do
-  specify do # rubocop:todo RSpec/ExampleLength
-    expect(described_class).to be_undeletable(
-      "/",
-    )
-    expect(described_class).to be_undeletable(
-      "/.",
-    )
-    expect(described_class).to be_undeletable(
-      "/usr/local/Library/Taps/../../../..",
-    )
-    expect(described_class).to be_undeletable(
-      "/Applications",
-    )
-    expect(described_class).to be_undeletable(
-      "/Applications/",
-    )
-    expect(described_class).to be_undeletable(
-      "/Applications/.",
-    )
-    expect(described_class).to be_undeletable(
-      "/Applications/Mail.app/..",
-    )
-    expect(described_class).to be_undeletable(
-      Dir.home,
-    )
-    expect(described_class).to be_undeletable(
-      "#{Dir.home}/",
-    )
-    expect(described_class).to be_undeletable(
-      "#{Dir.home}/Documents/..",
-    )
-    expect(described_class).to be_undeletable(
-      "#{Dir.home}/Library",
-    )
-    expect(described_class).to be_undeletable(
-      "#{Dir.home}/Library/",
-    )
-    expect(described_class).to be_undeletable(
-      "#{Dir.home}/Library/.",
-    )
-    expect(described_class).to be_undeletable(
-      "#{Dir.home}/Library/Preferences/..",
-    )
-    expect(described_class).not_to be_undeletable(
-      "/Applications/.app",
-    )
-    expect(described_class).not_to be_undeletable(
-      "/Applications/SnakeOil Professional.app",
-    )
-    expect(described_class).to be_undeletable(
-      "#{Dir.home}/Library/Keychains/login.keychain-db",
-    )
-    expect(described_class).not_to be_undeletable(
-      "#{Dir.home}/Library/Keychains2/login.keychain-db",
-    )
+  test_each([
+    "/",
+    "/.",
+    "/usr/local/Library/Taps/../../../..",
+    "/Applications",
+    "/Applications/",
+    "/Applications/.",
+    "/Applications/Mail.app/..",
+    "~",
+    "~/",
+    "~/Documents/..",
+    "~/Library",
+    "~/Library/",
+    "~/Library/.",
+    "~/Library/Preferences/..",
+    "~/Library/Keychains/login.keychain-db",
+  ]) do |path|
+    it "protects #{path}" do
+      expect(described_class).to be_undeletable(path.sub(/\A~/, Dir.home))
+    end
+  end
+
+  test_each([
+    "/Applications/.app",
+    "/Applications/SnakeOil Professional.app",
+    "~/Library/Keychains2/login.keychain-db",
+  ]) do |path|
+    it "allows deletion of #{path}" do
+      expect(described_class).not_to be_undeletable(path.sub(/\A~/, Dir.home))
+    end
   end
 
   it "resolves symlinked parent directories" do

@@ -373,19 +373,15 @@ RSpec.describe Homebrew::Bundle::Brew do
             allow(Homebrew::Bundle::Brew::Services).to receive(:started?).with(formula_name).and_return(true)
           end
 
-          context "with a successful installation" do # rubocop:todo RSpec/NestedGroups
-            it "start service" do
-              expect(Homebrew::Bundle::Brew::Services).not_to receive(:start)
-              described_class.preinstall!(formula_name, start_service: true)
-              described_class.install!(formula_name, start_service: true)
-            end
+          it "does not restart a running service after installation" do
+            expect(Homebrew::Bundle::Brew::Services).not_to receive(:start)
+            described_class.preinstall!(formula_name, start_service: true)
+            described_class.install!(formula_name, start_service: true)
           end
 
-          context "with a skipped installation" do # rubocop:todo RSpec/NestedGroups
-            it "start service" do
-              expect(Homebrew::Bundle::Brew::Services).not_to receive(:start)
-              described_class.install!(formula_name, preinstall: false, start_service: true)
-            end
+          it "does not restart a running service when installation is skipped" do
+            expect(Homebrew::Bundle::Brew::Services).not_to receive(:start)
+            described_class.install!(formula_name, preinstall: false, start_service: true)
           end
         end
 
@@ -394,21 +390,17 @@ RSpec.describe Homebrew::Bundle::Brew do
             allow(Homebrew::Bundle::Brew::Services).to receive(:started?).with(formula_name).and_return(false)
           end
 
-          context "with a successful installation" do # rubocop:todo RSpec/NestedGroups
-            it "start service" do
-              expect(Homebrew::Bundle::Brew::Services).to \
-                receive(:start).with(formula_name, file: nil, verbose: false).and_return(true)
-              described_class.preinstall!(formula_name, start_service: true)
-              described_class.install!(formula_name, start_service: true)
-            end
+          it "starts the service after installation" do
+            expect(Homebrew::Bundle::Brew::Services).to \
+              receive(:start).with(formula_name, file: nil, verbose: false).and_return(true)
+            described_class.preinstall!(formula_name, start_service: true)
+            described_class.install!(formula_name, start_service: true)
           end
 
-          context "with a skipped installation" do # rubocop:todo RSpec/NestedGroups
-            it "start service" do
-              expect(Homebrew::Bundle::Brew::Services).to \
-                receive(:start).with(formula_name, file: nil, verbose: false).and_return(true)
-              described_class.install!(formula_name, preinstall: false, start_service: true)
-            end
+          it "starts the service when installation is skipped" do
+            expect(Homebrew::Bundle::Brew::Services).to \
+              receive(:start).with(formula_name, file: nil, verbose: false).and_return(true)
+            described_class.install!(formula_name, preinstall: false, start_service: true)
           end
         end
       end
@@ -917,76 +909,71 @@ RSpec.describe Homebrew::Bundle::Brew do
 
       context "when formula is installed" do
         before do
-          allow(described_class).to receive(:installed_formulae).and_return([formula_name])
           allow_any_instance_of(described_class).to receive(:conflicts_with).and_return([])
           allow_any_instance_of(described_class).to receive(:linked?).and_return(true)
           allow_any_instance_of(Formula).to receive(:outdated?).and_return(true)
+          allow(described_class).to receive_messages(installed_formulae: [formula_name],
+                                                     outdated_formulae:  [formula_name])
         end
 
-        context "when formula upgradable" do
+        it "upgrade formula" do
+          expect(Homebrew::Bundle).to \
+            receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
+                            .and_return(true)
+          expect(installer.preinstall!).to be(true)
+          expect(installer.install!).to be(true)
+        end
+
+        it "reports a failure" do
+          expect(Homebrew::Bundle).to \
+            receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
+                            .and_return(false)
+          expect(installer.preinstall!).to be(true)
+          expect(installer.install!).to be(false)
+        end
+
+        context "when formula pinned" do
           before do
-            allow(described_class).to receive(:outdated_formulae).and_return([formula_name])
+            allow(described_class).to receive(:pinned_formulae).and_return([formula_name])
           end
 
-          it "upgrade formula" do
-            expect(Homebrew::Bundle).to \
+          it "does not upgrade formula" do
+            expect(Homebrew::Bundle).not_to \
               receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
+            expect(installer.preinstall!).to be(false)
+          end
+        end
+
+        context "when the pin option is true" do
+          let(:options) { { args: ["with-option"], pin: true } }
+
+          it "pins the formula instead of upgrading it" do
+            allow(described_class).to receive(:pinned_formulae).and_return([])
+            expect(Homebrew::Bundle).not_to \
+              receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
+            expect(Homebrew::Bundle).to \
+              receive(:system).with(HOMEBREW_BREW_FILE, "pin", "--formula", formula_name, verbose: false)
                               .and_return(true)
+            expect(described_class.install_verb(formula_name, options)).to eq("Pinning")
             expect(installer.preinstall!).to be(true)
             expect(installer.install!).to be(true)
           end
 
-          it "reports a failure" do
-            expect(Homebrew::Bundle).to \
-              receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
-                              .and_return(false)
-            expect(installer.preinstall!).to be(true)
-            expect(installer.install!).to be(false)
+          it "skips a formula that is already pinned" do
+            allow(described_class).to receive(:pinned_formulae).and_return([formula_name])
+            expect(Homebrew::Bundle).not_to receive(:system)
+            expect(installer.preinstall!).to be(false)
+          end
+        end
+
+        context "when formula not upgraded" do
+          before do
+            allow(described_class).to receive(:outdated_formulae).and_return([])
           end
 
-          context "when formula pinned" do # rubocop:todo RSpec/NestedGroups
-            before do
-              allow(described_class).to receive(:pinned_formulae).and_return([formula_name])
-            end
-
-            it "does not upgrade formula" do
-              expect(Homebrew::Bundle).not_to \
-                receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
-              expect(installer.preinstall!).to be(false)
-            end
-          end
-
-          context "when the pin option is true" do # rubocop:todo RSpec/NestedGroups
-            let(:options) { { args: ["with-option"], pin: true } }
-
-            it "pins the formula instead of upgrading it" do
-              allow(described_class).to receive(:pinned_formulae).and_return([])
-              expect(Homebrew::Bundle).not_to \
-                receive(:system).with(HOMEBREW_BREW_FILE, "upgrade", "--formula", formula_name, verbose: false)
-              expect(Homebrew::Bundle).to \
-                receive(:system).with(HOMEBREW_BREW_FILE, "pin", "--formula", formula_name, verbose: false)
-                                .and_return(true)
-              expect(described_class.install_verb(formula_name, options)).to eq("Pinning")
-              expect(installer.preinstall!).to be(true)
-              expect(installer.install!).to be(true)
-            end
-
-            it "skips a formula that is already pinned" do
-              allow(described_class).to receive(:pinned_formulae).and_return([formula_name])
-              expect(Homebrew::Bundle).not_to receive(:system)
-              expect(installer.preinstall!).to be(false)
-            end
-          end
-
-          context "when formula not upgraded" do # rubocop:todo RSpec/NestedGroups
-            before do
-              allow(described_class).to receive(:outdated_formulae).and_return([])
-            end
-
-            it "does not upgrade formula" do
-              expect(Homebrew::Bundle).not_to receive(:system)
-              expect(installer.preinstall!).to be(false)
-            end
+          it "does not upgrade formula" do
+            expect(Homebrew::Bundle).not_to receive(:system)
+            expect(installer.preinstall!).to be(false)
           end
         end
       end

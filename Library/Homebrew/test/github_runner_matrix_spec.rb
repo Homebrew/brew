@@ -583,27 +583,25 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
           end
         end
 
-        context "when dependent formulae have requirements" do
-          context "when dependent formulae require Linux" do # rubocop:todo RSpec/NestedGroups
-            it "activates the applicable runners" do
-              allow(Formula).to receive(:all).and_return([testball, testball_depender_linux].map(&:formula))
+        context "when dependent formulae require Linux" do
+          it "activates the applicable runners" do
+            allow(Formula).to receive(:all).and_return([testball, testball_depender_linux].map(&:formula))
 
-              matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
-              expect(get_runner_names(matrix)).to eq(["Linux arm64", "Linux x86_64"])
+            matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
+            expect(get_runner_names(matrix)).to eq(["Linux arm64", "Linux x86_64"])
 
-              allow(ENV).to receive(:fetch).with("HOMEBREW_LINUX_SELF_HOSTED", "false").and_return("true")
-              matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
-              expect(get_runner_names(matrix)).to eq(["Linux arm64", "Linux x86_64"])
-            end
+            allow(ENV).to receive(:fetch).with("HOMEBREW_LINUX_SELF_HOSTED", "false").and_return("true")
+            matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
+            expect(get_runner_names(matrix)).to eq(["Linux arm64", "Linux x86_64"])
           end
+        end
 
-          context "when dependent formulae require macOS" do # rubocop:todo RSpec/NestedGroups
-            it "activates the applicable runners" do
-              allow(Formula).to receive(:all).and_return([testball, testball_depender_macos].map(&:formula))
+        context "when dependent formulae require macOS" do
+          it "activates the applicable runners" do
+            allow(Formula).to receive(:all).and_return([testball, testball_depender_macos].map(&:formula))
 
-              matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
-              expect(get_runner_names(matrix)).to eq(get_runner_names(matrix, :macos?))
-            end
+            matrix = described_class.new([testball], ["deleted"], all_supported: false, dependent_matrix: true)
+            expect(get_runner_names(matrix)).to eq(get_runner_names(matrix, :macos?))
           end
         end
       end

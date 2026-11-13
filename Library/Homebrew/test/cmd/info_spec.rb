@@ -53,9 +53,11 @@ RSpec.describe Homebrew::Cmd::Info do
     allow(Utils::InfoDisplay).to receive(:metadata_lines).with(test_formula).and_return(["Pinned: 1.0"])
     expect(Utils::InfoDisplay.package_summary(
              formula_or_cask:     test_formula,
-             name:                "testball",
-             version:             "1.0",
-             stable:              true,
+             title:               Utils::InfoDisplay::Title.new(
+               name:    "testball",
+               version: "1.0",
+               stable:  true,
+             ),
              shadowed_by:         "homebrew/core",
              aliases:             ["tball"],
              old_names:           ["old-testball"],

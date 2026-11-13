@@ -97,80 +97,86 @@ RSpec.describe Homebrew::DevCmd::Bottle do
     expect { bottle.run }.to raise_error(RuntimeError, "placeholdering failed")
   end
 
-  it "builds a bottle for the given Formula", :integration_test do # rubocop:todo RSpec/ExampleLength
-    setup_test_formula "testball",
-                       tab_attributes: { built_as_bottle: true, built_prefix: Keg::PREFIX_PLACEHOLDER }
-    formula = Formula["testball"]
+  describe "building a bottle", :integration_test do
+    let(:formula) { Formula["testball"] }
 
-    # `brew bottle` should not fail with dead symlink
-    # https://github.com/Homebrew/legacy-homebrew/issues/49007
-    formula.prefix.cd do
-      FileUtils.ln_s "not-exist", "symlink"
-    end
-    formula.libexec.mkpath
-    (formula.libexec/"raw-prefix").binwrite(
-      "\0#{Array.new(Homebrew::DevCmd::Bottle::MAXIMUM_STRING_MATCHES + 1, formula.libexec.to_s).join("\0")}\0",
-    )
-    require "patchelf"
-    library = formula.libexec/"José/libhello.so.0"
-    library.dirname.mkpath
-    FileUtils.cp TEST_FIXTURE_DIR/"elf/libhello.so.0", library
-    FileUtils.cp TEST_FIXTURE_DIR/"elf/hello", formula.libexec/"elf-prefix"
-    patcher = PatchELF::Patcher.new((formula.libexec/"elf-prefix").to_s, on_error: :silent)
-    patcher.add_needed(library.to_s.b)
-    patcher.save
-    stderr = if !Sandbox.available?
-      "Warning: Sandbox unavailable: processing downloaded files without sandboxing!\n"
-    elsif Sandbox.nested_sandbox?
-      "Warning: Processing downloaded files without Homebrew's sandbox; relying on the outer sandbox.\n"
-    elsif OS.linux? && (abi = Sandbox::Landlock.abi_version) && abi < 10
-      network_warning = if abi >= 4
-        "Applying the network restrictions supported by this kernel."
-      else
-        "This kernel cannot restrict network access."
+    before do
+      setup_test_formula "testball",
+                         tab_attributes: { built_as_bottle: true, built_prefix: Keg::PREFIX_PLACEHOLDER }
+
+      # `brew bottle` should not fail with dead symlink
+      # https://github.com/Homebrew/legacy-homebrew/issues/49007
+      formula.prefix.cd do
+        FileUtils.ln_s "not-exist", "symlink"
       end
-      "Warning: Landlock ABI 10 or later is required to deny all network access; found ABI #{abi}. " \
-        "#{network_warning}\n"
-    else
-      ""
+      formula.libexec.mkpath
+      (formula.libexec/"raw-prefix").binwrite(
+        "\0#{Array.new(Homebrew::DevCmd::Bottle::MAXIMUM_STRING_MATCHES + 1, formula.libexec.to_s).join("\0")}\0",
+      )
+      require "patchelf"
+      library = formula.libexec/"José/libhello.so.0"
+      library.dirname.mkpath
+      FileUtils.cp TEST_FIXTURE_DIR/"elf/libhello.so.0", library
+      FileUtils.cp TEST_FIXTURE_DIR/"elf/hello", formula.libexec/"elf-prefix"
+      patcher = PatchELF::Patcher.new((formula.libexec/"elf-prefix").to_s, on_error: :silent)
+      patcher.add_needed(library.to_s.b)
+      patcher.save
     end
-    stderr = "" if Sandbox.inherited_sandbox?
 
-    begin
-      expect { brew "bottle", "--no-rebuild", "--json", "testball" }
-        .to output(/testball--0\.1.*\.bottle\.tar\.gz/).to_stdout
-        .and output(stderr).to_stderr
-        .and be_a_success
-      expect(HOMEBREW_CELLAR/"testball-bottle.tar").not_to exist
+    it "builds a bottle for the given Formula" do
+      stderr = if !Sandbox.available?
+        "Warning: Sandbox unavailable: processing downloaded files without sandboxing!\n"
+      elsif Sandbox.nested_sandbox?
+        "Warning: Processing downloaded files without Homebrew's sandbox; relying on the outer sandbox.\n"
+      elsif OS.linux? && (abi = Sandbox::Landlock.abi_version) && abi < 10
+        network_warning = if abi >= 4
+          "Applying the network restrictions supported by this kernel."
+        else
+          "This kernel cannot restrict network access."
+        end
+        "Warning: Landlock ABI 10 or later is required to deny all network access; found ABI #{abi}. " \
+          "#{network_warning}\n"
+      else
+        ""
+      end
+      stderr = "" if Sandbox.inherited_sandbox?
 
-      tag = JSON.parse(Pathname(Dir["testball--0.1*.bottle.json"].fetch(0)).read)
-                .dig("testball", "bottle", "tags").values.fetch(0)
-      expect(tag.fetch("tab")).to include(
-        "changed_files"           => be_an(Array),
-        "linkage_files"           => be_an(Array),
-        "binary_relocation_files" => include("libexec/raw-prefix", "libexec/elf-prefix"),
-        "built_prefix"            => HOMEBREW_PREFIX.to_s,
-      )
-      binary_relocation_diagnostics = tag.fetch("binary_relocation_diagnostics")
-      expect(binary_relocation_diagnostics.size).to eq(Homebrew::DevCmd::Bottle::MAXIMUM_STRING_MATCHES)
-      expect(binary_relocation_diagnostics).to include(
-        include(
-          "path"   => "libexec/raw-prefix",
-          "string" => formula.libexec.to_s,
-          "offset" => be_an(Integer),
-        ),
-      )
+      begin
+        expect { brew "bottle", "--no-rebuild", "--json", "testball" }
+          .to output(/testball--0\.1.*\.bottle\.tar\.gz/).to_stdout
+          .and output(stderr).to_stderr
+          .and be_a_success
+        expect(HOMEBREW_CELLAR/"testball-bottle.tar").not_to exist
 
-      expect { brew "bottle", "--no-rebuild", "--json", "--skip-relocation", "testball" }
-        .to be_a_success
-      skipped_tag = JSON.parse(Pathname(Dir["testball--0.1*.bottle.json"].fetch(0)).read)
-                        .dig("testball", "bottle", "tags").values.fetch(0)
-      expect(skipped_tag.fetch("tab").values_at(
-               "changed_files", "linkage_files", "binary_relocation_files"
-             )).to eq([nil, nil, nil])
-    ensure
-      FileUtils.rm_f Dir.glob("testball--0.1*.bottle.tar.gz")
-      FileUtils.rm_f Dir.glob("testball--0.1*.bottle.json")
+        tag = JSON.parse(Pathname(Dir["testball--0.1*.bottle.json"].fetch(0)).read)
+                  .dig("testball", "bottle", "tags").values.fetch(0)
+        expect(tag.fetch("tab")).to include(
+          "changed_files"           => be_an(Array),
+          "linkage_files"           => be_an(Array),
+          "binary_relocation_files" => include("libexec/raw-prefix", "libexec/elf-prefix"),
+          "built_prefix"            => HOMEBREW_PREFIX.to_s,
+        )
+        binary_relocation_diagnostics = tag.fetch("binary_relocation_diagnostics")
+        expect(binary_relocation_diagnostics.size).to eq(Homebrew::DevCmd::Bottle::MAXIMUM_STRING_MATCHES)
+        expect(binary_relocation_diagnostics).to include(
+          include(
+            "path"   => "libexec/raw-prefix",
+            "string" => formula.libexec.to_s,
+            "offset" => be_an(Integer),
+          ),
+        )
+
+        expect { brew "bottle", "--no-rebuild", "--json", "--skip-relocation", "testball" }
+          .to be_a_success
+        skipped_tag = JSON.parse(Pathname(Dir["testball--0.1*.bottle.json"].fetch(0)).read)
+                          .dig("testball", "bottle", "tags").values.fetch(0)
+        expect(skipped_tag.fetch("tab").values_at(
+                 "changed_files", "linkage_files", "binary_relocation_files"
+               )).to eq([nil, nil, nil])
+      ensure
+        FileUtils.rm_f Dir.glob("testball--0.1*.bottle.tar.gz")
+        FileUtils.rm_f Dir.glob("testball--0.1*.bottle.json")
+      end
     end
   end
 

@@ -8,9 +8,7 @@ require "yaml"
 RSpec.describe Homebrew::DevCmd::TapNew do
   it_behaves_like "parseable arguments"
 
-  # rubocop:todo RSpec/MultipleExpectations
   it "initializes a new tap with a README file and GitHub Actions CI", :integration_test do
-    # rubocop:enable RSpec/MultipleExpectations
     ENV["HOMEBREW_GIT_NAME"] = "Homebrew Test"
     ENV["HOMEBREW_GIT_EMAIL"] = "test@example.com"
 
@@ -30,9 +28,7 @@ RSpec.describe Homebrew::DevCmd::TapNew do
     [dependabot_yml, tests_yml, publish_yml].each { YAML.parse(it) }
     expect(tests_yml).not_to include("HOMEBREW_DEVELOPER")
     expect(tests_yml).to include("options: --privileged")
-    expect(publish_yml).not_to include("HOMEBREW_DEVELOPER")
-    expect(publish_yml).not_to include("pull_request_target")
-    expect(publish_yml).not_to include("workflow_run")
+    expect(publish_yml).not_to include("HOMEBREW_DEVELOPER", "pull_request_target", "workflow_run")
     expect(publish_yml).to include("workflow_dispatch:")
     expect(publish_yml).to include("description: Expected pull request head commit SHA (optional)")
     expect(publish_yml).to include("attestations: write")
@@ -45,9 +41,7 @@ RSpec.describe Homebrew::DevCmd::TapNew do
                                    '"$PULL_REQUEST"')
     expect(publish_yml).to include("name: Generate build provenance")
     expect(publish_yml).to include('subject-path: "${{ steps.pull_bottles.outputs.bottle_path }}/*.tar.gz"')
-    expect(autobump_yml).not_to include("HOMEBREW_DEVELOPER")
-    expect(autobump_yml).not_to include("pull_request_target")
-    expect(autobump_yml).not_to include("workflow_run")
+    expect(autobump_yml).not_to include("HOMEBREW_DEVELOPER", "pull_request_target", "workflow_run")
     expect(autobump_yml).not_to include("TAP_NEW_")
     expect(autobump_yml).not_to include("cron: \"1 1 1 1 1\"")
     expect(autobump_yml).not_to include("# this will be changed later and randomised by brew tap-new")

@@ -19,13 +19,15 @@ module Cask
       outdated = installed && cask.outdated?
       output = "#{::Utils::InfoDisplay.package_summary(
         formula_or_cask:     cask,
-        name:                cask.token,
-        display_names:       cask.name,
-        version:             cask.version.to_s,
-        installed_version:   (cask.installed_version.presence if outdated),
-        installed:,
-        outdated:,
-        auto_updates:        cask.auto_updates == true,
+        title:               ::Utils::InfoDisplay::Title.new(
+          name:              cask.token,
+          display_names:     cask.name,
+          version:           cask.version.to_s,
+          installed_version: (cask.installed_version.presence if outdated),
+          installed:,
+          outdated:,
+          auto_updates:      cask.auto_updates == true,
+        ),
         installation_status: [installation_info(cask, installed:)],
         source_url:          repo_url(cask),
         installed_versions:  installed_section_rows(cask),
