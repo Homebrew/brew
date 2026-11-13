@@ -45,6 +45,30 @@ RSpec.describe BottleSpecification do
     end
   end
 
+  describe "#manifest_sha256" do
+    it "is unset by default" do
+      expect(bottle_spec.manifest_sha256).to be_nil
+    end
+
+    it "stores a digest in lower case" do
+      bottle_spec.manifest_sha256("DEADBEEF" * 8)
+
+      expect(bottle_spec.manifest_sha256).to eq("deadbeef" * 8)
+    end
+
+    it "rejects a value that is not a SHA-256" do
+      expect { bottle_spec.manifest_sha256("deadbeef") }.to raise_error(SystemExit)
+    end
+
+    it "rejects a digest followed by a newline" do
+      expect { bottle_spec.manifest_sha256("#{"deadbeef" * 8}\n") }.to raise_error(SystemExit)
+    end
+
+    it "rejects a digest on one line of several" do
+      expect { bottle_spec.manifest_sha256("foo\n#{"deadbeef" * 8}\nbar") }.to raise_error(SystemExit)
+    end
+  end
+
   describe ".compatible_locations?" do
     it "checks if default bottles can be relocated" do
       expect(described_class.compatible_locations?).to be false
