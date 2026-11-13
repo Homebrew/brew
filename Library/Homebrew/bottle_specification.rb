@@ -16,7 +16,7 @@ class BottleSpecification
 
   RELOCATABLE_CELLARS = T.let([ANY_CELLAR, ANY_SKIP_RELOCATION_CELLAR].freeze, T::Array[Symbol])
 
-  SHA256_REGEX = /^[a-f0-9]{64}$/i
+  SHA256_REGEX = /\A[a-f0-9]{64}\z/i
 
   sig { returns(T.nilable(Tap)) }
   attr_accessor :tap
@@ -33,6 +33,7 @@ class BottleSpecification
   sig { void }
   def initialize
     @rebuild = T.let(0, Integer)
+    @manifest_sha256 = T.let(nil, T.nilable(String))
     @repository = T.let(Homebrew::DEFAULT_REPOSITORY, String)
     @collector = T.let(Utils::Bottles::Collector.new, Utils::Bottles::Collector)
     @root_url_specs = T.let({}, T::Hash[Symbol, T.untyped])
@@ -42,6 +43,18 @@ class BottleSpecification
   sig { params(val: T.nilable(Integer)).returns(Integer) }
   def rebuild(val = nil)
     val.nil? ? @rebuild : @rebuild = val
+  end
+
+  # The SHA-256 of the GitHub Packages image index that lists every bottle
+  # in this block. The index is fetched by this digest, not by its mutable
+  # tag, and checked against it.
+  sig { params(val: T.nilable(String)).returns(T.nilable(String)) }
+  def manifest_sha256(val = nil)
+    return @manifest_sha256 if val.nil?
+
+    odie "Invalid manifest_sha256: #{val}" unless val.match?(SHA256_REGEX)
+
+    @manifest_sha256 = val.downcase
   end
 
   sig { params(var: T.nilable(String), specs: T::Hash[Symbol, T.untyped]).returns(String) }
@@ -67,7 +80,7 @@ class BottleSpecification
   def ==(other)
     case other
     when BottleSpecification
-      rebuild == other.rebuild && collector == other.collector &&
+      rebuild == other.rebuild && manifest_sha256 == other.manifest_sha256 && collector == other.collector &&
         root_url == other.root_url && root_url_specs == other.root_url_specs && tap == other.tap
     else false
     end

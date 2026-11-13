@@ -695,6 +695,12 @@ RSpec.describe Homebrew::DevCmd::Bottle do
         expect { homebrew.merge_bottle_spec(valid_keys, old_spec, {}) }.not_to raise_error
       end
 
+      it "drops a manifest digest that the merged bottles make stale" do
+        old_spec = BottleSpecification.new
+        old_spec.manifest_sha256("c847599789efade500c448e8b302fc9a3f985e1e4370e91b339b839b2205d984")
+        expect(homebrew.merge_bottle_spec([:manifest_sha256], old_spec, {})).to eq [[], []]
+      end
+
       it "checks for conflicting root URL" do
         old_spec = BottleSpecification.new
         old_spec.root_url("https://failbrew.bintray.com/bottles")

@@ -145,6 +145,35 @@ RSpec.describe RuboCop::Cop::FormulaAudit::BottleOrder do
     RUBY
   end
 
+  it "keeps the manifest digest above corrected bottles" do
+    expect_offense(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        bottle do
+        ^^^^^^^^^ FormulaAudit/BottleOrder: ARM bottles should be listed before Intel bottles
+          rebuild 4
+          manifest_sha256 "cafebabe"
+          sha256 big_sur: "faceb00c"
+          sha256 arm64_big_sur: "aaaaaaaa"
+        end
+      end
+    RUBY
+
+    expect_correction(<<~RUBY)
+      class Foo < Formula
+        url "https://brew.sh/foo-1.0.tgz"
+
+        bottle do
+          rebuild 4
+          manifest_sha256 "cafebabe"
+          sha256 arm64_big_sur: "aaaaaaaa"
+          sha256 big_sur: "faceb00c"
+        end
+      end
+    RUBY
+  end
+
   it "reports and corrects multiple arm bottles below intel bottles" do
     expect_offense(<<~RUBY)
       class Foo < Formula

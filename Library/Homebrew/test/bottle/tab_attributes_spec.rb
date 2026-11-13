@@ -9,10 +9,12 @@ RSpec.describe Bottle do
     let(:bottle) do
       bottle_spec = BottleSpecification.new
       bottle_spec.root_url(HOMEBREW_BOTTLE_DEFAULT_DOMAIN)
+      bottle_spec.manifest_sha256(manifest_sha256)
       bottle_spec.sha256(cellar: :any_skip_relocation, arm64_golden_gate: "deadbeef" * 8)
       described_class.new(nil, bottle_spec, Utils::Bottles::Tag.from_symbol(:arm64_golden_gate),
                           name: "pkgconf", pkg_version: PkgVersion.new(Version.new("1.2.3"), 0))
     end
+    let(:manifest_sha256) { nil }
     let(:manifest_resource) { bottle.github_packages_manifest_resource || raise("Expected a bottle manifest") }
     let(:manifest) do
       {
@@ -61,6 +63,16 @@ RSpec.describe Bottle do
       expect(manifest_resource.downloader).not_to receive(:fetch)
 
       expect(bottle.tab_attributes).to eq({})
+    end
+
+    context "when the bottle block has a manifest checksum" do
+      let(:manifest_sha256) { Digest::SHA256.hexdigest(manifest.to_json) }
+
+      it "fetches the manifest again when its cached copy does not match the checksum" do
+        manifest_resource.cached_download.write(manifest.to_json.sub("macOS 27.0", "macOS 26.0"))
+
+        expect(bottle.tab_attributes).to eq({ "built_on" => { "os_version" => "macOS 27.0" } })
+      end
     end
   end
 end

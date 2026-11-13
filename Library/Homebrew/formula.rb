@@ -3324,6 +3324,9 @@ class Formula # rubocop:todo Metrics/ClassLength
 
     hash["rebuild"] = bottle_spec.rebuild
     hash["root_url"] = bottle_spec.root_url
+    if (manifest_sha256 = bottle_spec.manifest_sha256)
+      hash["manifest_sha256"] = manifest_sha256
+    end
     hash["files"] = {}
 
     bottle_spec.collector.each_tag do |tag|

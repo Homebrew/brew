@@ -198,7 +198,8 @@ module Homebrew
           rebuild:  new_bottle_hash["rebuild"],
         }
 
-        skip_keys = [:sha256, :cellar]
+        # A `manifest_sha256` is stale once the block changes, so it is dropped.
+        skip_keys = [:sha256, :cellar, :manifest_sha256]
         old_keys.each do |key|
           next if skip_keys.include?(key)
 
