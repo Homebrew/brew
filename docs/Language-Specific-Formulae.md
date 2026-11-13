@@ -279,6 +279,9 @@ Both helpers pass `--locked`.
 Use `path:` for a workspace member, `features:` for additional Cargo features and `root:` to change the installation prefix.
 Declare native libraries used by crates as formula dependencies rather than allowing their build scripts to download them.
 
+Homebrew sets `CARGO_REGISTRY_GLOBAL_MIN_PUBLISH_AGE` to apply its release cooldown when Cargo 1.100 or newer resolves registry dependencies.
+Cargo's resolver keeps using versions already recorded in `Cargo.lock`, even when they were published within the cooldown period.
+
 ## Java
 
 Declare the JDK used to build or run the software.

@@ -3970,25 +3970,23 @@ class Formula
   def common_sandbox_env(home)
     env = Homebrew::PackageManagerCache.env
     env.merge(
-      _JAVA_OPTIONS:           [env[:_JAVA_OPTIONS], "-Djava.io.tmpdir=#{HOMEBREW_TEMP}"].compact.join(" "),
-      HOME:                    home.to_s,
-      TMPDIR:                  HOMEBREW_TEMP.to_s,
-      TEMP:                    HOMEBREW_TEMP.to_s,
-      TMP:                     HOMEBREW_TEMP.to_s,
-      GIT_CONFIG_GLOBAL:       Utils::Git.no_global_config_file,
-      GIT_TERMINAL_PROMPT:     "0",
-      GOENV:                   "off",
-      # TODO: Enable when `min-publish-age` stabilises in Cargo 1.100,
-      # expected with Rust 1.100 on 2026-11-12.
-      # https://github.com/rust-lang/cargo/pull/17335
-      # CARGO_REGISTRY_GLOBAL_MIN_PUBLISH_AGE: Utils.pluralize("day", Homebrew::RELEASE_COOLDOWN_DAYS,
-      #                                                        include_count: true),
-      BUNDLE_COOLDOWN:         Homebrew::RELEASE_COOLDOWN_DAYS.to_s,
-      PIP_CONFIG_FILE:         File::NULL,
-      NPM_CONFIG_USERCONFIG:   File::NULL,
-      CURL_HOME:               ENV.fetch("CURL_HOME") { home.to_s },
-      PYTHONDONTWRITEBYTECODE: "1",
-      XDG_CONFIG_HOME:         "#{home}/.config",
+      _JAVA_OPTIONS:                         [env[:_JAVA_OPTIONS],
+                                              "-Djava.io.tmpdir=#{HOMEBREW_TEMP}"].compact.join(" "),
+      HOME:                                  home.to_s,
+      TMPDIR:                                HOMEBREW_TEMP.to_s,
+      TEMP:                                  HOMEBREW_TEMP.to_s,
+      TMP:                                   HOMEBREW_TEMP.to_s,
+      GIT_CONFIG_GLOBAL:                     Utils::Git.no_global_config_file,
+      GIT_TERMINAL_PROMPT:                   "0",
+      GOENV:                                 "off",
+      CARGO_REGISTRY_GLOBAL_MIN_PUBLISH_AGE: Utils.pluralize("day", Homebrew::RELEASE_COOLDOWN_DAYS,
+                                                             include_count: true),
+      BUNDLE_COOLDOWN:                       Homebrew::RELEASE_COOLDOWN_DAYS.to_s,
+      PIP_CONFIG_FILE:                       File::NULL,
+      NPM_CONFIG_USERCONFIG:                 File::NULL,
+      CURL_HOME:                             ENV.fetch("CURL_HOME") { home.to_s },
+      PYTHONDONTWRITEBYTECODE:               "1",
+      XDG_CONFIG_HOME:                       "#{home}/.config",
     )
   end
 
