@@ -394,6 +394,41 @@ RSpec.describe Resource do
         expect { manifest.verify_download_integrity(cached_download) }.not_to raise_error
       end
 
+      it "lists each bottle's own manifest digest in an index" do
+        cached_download.write(JSON.generate("manifests" => [{
+          "digest"      => "sha256:#{"faceb00c" * 8}",
+          "annotations" => { "sh.brew.bottle.digest" => TEST_SHA256 },
+        }]))
+
+        expect(manifest.platform_manifest_sha256s).to eq(TEST_SHA256 => "faceb00c" * 8)
+      end
+
+      it "refuses to list digests from an index that does not match its expected digest" do
+        manifest.sha256(TEST_SHA256)
+
+        expect { manifest.platform_manifest_sha256s }.to raise_error(ChecksumMismatchError)
+      end
+
+      it "reads the tab from a bottle's own manifest" do
+        cached_download.write(JSON.generate("layers" => [], "annotations" => {
+          "org.opencontainers.image.ref.name" => "1.0.all",
+          "sh.brew.bottle.digest"             => TEST_SHA256,
+          "sh.brew.tab"                       => '{"compiler":"clang"}',
+        }))
+
+        expect(manifest.tab).to eq("compiler" => "clang")
+      end
+
+      it "rejects another bottle's own manifest" do
+        cached_download.write(JSON.generate("layers" => [], "annotations" => {
+          "org.opencontainers.image.ref.name" => "1.0.all",
+          "sh.brew.bottle.digest"             => "faceb00c" * 8,
+          "sh.brew.tab"                       => "{}",
+        }))
+
+        expect { manifest.tab }.to raise_error(Resource::BottleManifest::Error, /matching bottle checksum/)
+      end
+
       it "discards a cached manifest that does not match its expected digest", :aggregate_failures do
         manifest.sha256(TEST_SHA256)
 

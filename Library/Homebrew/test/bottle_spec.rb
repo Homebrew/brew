@@ -371,15 +371,19 @@ RSpec.describe Bottle do
     sig { returns(String) }
     def manifest_sha256 = "c847599789efade500c448e8b302fc9a3f985e1e4370e91b339b839b2205d984"
 
-    sig { params(root_url: String, manifest_sha256: T.nilable(String)).returns(Bottle) }
-    def test_bottle(root_url = bottle_domain, manifest_sha256: nil)
+    sig {
+      params(root_url: String, manifest_sha256: T.nilable(String), bottle_manifest_sha256: T.nilable(String))
+        .returns(Bottle)
+    }
+    def test_bottle(root_url = bottle_domain, manifest_sha256: nil, bottle_manifest_sha256: nil)
       bottle_spec = BottleSpecification.new
       bottle_spec.root_url(root_url)
       bottle_spec.manifest_sha256(manifest_sha256)
-      bottle_spec.sha256(
+      bottle_spec.sha256({
         cellar:            :any_skip_relocation,
+        manifest_sha256:   bottle_manifest_sha256,
         Utils::Bottles.tag.to_sym => "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97",
-      )
+      }.compact)
       described_class.new(nil, bottle_spec, Utils::Bottles.tag,
                           name: "foo", pkg_version: PkgVersion.new(Version.new("1.2.3"), 0))
     end
@@ -407,6 +411,18 @@ RSpec.describe Bottle do
         "#{bottle_domain}/foo/manifests/sha256:#{manifest_sha256}",
         manifest_sha256,
       ])
+    end
+
+    it "fetches the bottle's own manifest in place of the index when the bottle has its digest" do
+      manifest_resource = test_bottle(manifest_sha256:, bottle_manifest_sha256: TEST_SHA256)
+                          .github_packages_manifest_resource
+
+      expect([manifest_resource&.url, manifest_resource&.checksum&.hexdigest, manifest_resource&.specs&.[](:headers)])
+        .to eq([
+          "#{bottle_domain}/foo/manifests/sha256:#{TEST_SHA256}",
+          TEST_SHA256,
+          ["Accept: application/vnd.oci.image.manifest.v1+json", "Authorization: #{HOMEBREW_GITHUB_PACKAGES_AUTH}"],
+        ])
     end
 
     it "discards a manifest with the wrong checksum and fetches it once more before failing", :aggregate_failures do
