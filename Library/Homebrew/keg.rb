@@ -337,7 +337,7 @@ class Keg
     end
 
     # Capture these before we delete the Tab.
-    versioned_aliases = aliases
+    versioned_aliases = rack.subdirs.flat_map { |keg| Keg.new(keg).aliases }
     FileUtils.rm_r(path)
     rmdir_if_possible(path.parent)
     remove_opt_record if optlinked?
