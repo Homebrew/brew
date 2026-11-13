@@ -80,6 +80,8 @@ module Utils
             next if pours_bottle && built_from_source_names.exclude?(Utils.name_from_full_name(dep.name))
 
             names_to_keep.add(dep.to_formula.name)
+          rescue TapFormulaAmbiguityError => e
+            names_to_keep.merge(e.loaders.map(&:name))
           rescue FormulaUnavailableError
             # do nothing
           end

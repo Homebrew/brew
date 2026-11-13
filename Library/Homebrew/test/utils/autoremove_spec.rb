@@ -157,6 +157,19 @@ RSpec.describe Utils::Autoremove do
           .to eq([formula_with_deps])
       end
     end
+
+    context "when a build dependency is in multiple taps" do
+      it "matches it by the names it resolves to" do
+        allow(tab_from_keg).to receive(:poured_from_bottle).and_return(false)
+        allow(formula_with_deps).to receive(:deps).and_return([Dependency.new("old-three", [:build])])
+        loader = Formulary::FormulaLoader.new("three", Pathname("three.rb"))
+        allow(Formulary).to receive(:factory).with("old-three", { warn: false })
+                                             .and_raise(TapFormulaAmbiguityError.new("old-three", [loader]))
+
+        expect(described_class.formulae_with_no_formula_dependents(formulae))
+          .to eq([formula_with_deps])
+      end
+    end
   end
 
   describe "::unused_formulae_with_no_formula_dependents" do
