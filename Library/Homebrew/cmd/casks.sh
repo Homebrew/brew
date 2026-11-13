@@ -16,7 +16,7 @@ homebrew-casks() {
     then
       return
     fi
-    opoo "jq is unavailable; falling back to Ruby to apply tap trust."
+    [[ -n "${HOMEBREW_COMPLETION:-}" ]] || opoo "jq is unavailable; falling back to Ruby to apply tap trust."
     HOMEBREW_FORCE_RUBY_COMMAND=1 "${HOMEBREW_BREW_FILE}" casks
     return
   fi

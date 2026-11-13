@@ -964,6 +964,19 @@ RSpec.describe Homebrew::Trust, :trust_store do
     FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
   end
 
+  it "does not warn about untrusted taps when completing" do
+    ENV["HOMEBREW_COMPLETION"] = "1"
+    tap = Tap.fetch("thirdparty", "foo")
+    formula_path = tap.formula_dir/"untrusted.rb"
+    formula_path.dirname.mkpath
+    FileUtils.touch formula_path
+
+    expect { expect(described_class.trusted_formula_files([formula_path])).to eq([]) }
+      .not_to output.to_stderr
+  ensure
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+  end
+
   it "does not warn about a partially trusted tap when other files are untrusted" do
     tap = Tap.fetch("thirdparty", "foo")
     trusted_path = tap.formula_dir/"trusted.rb"

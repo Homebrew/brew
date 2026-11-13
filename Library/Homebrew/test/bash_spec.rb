@@ -79,7 +79,41 @@ RSpec.describe "Bash" do
           BASH
         )
 
-        expect([stdout, stderr, status.success?]).to eq(["\n", "", true])
+        expect([stdout, stderr, status.success?]).to eq(["item00001\n", "", true])
+      end
+
+      it "falls back to Ruby without jq quietly when completing" do
+        ENV["HOMEBREW_COMPLETION"] = "1"
+        stdout, stderr, status = Open3.capture3(
+          "/bin/bash", "-c", <<~BASH, "bash", command
+            source "${HOMEBREW_LIBRARY}/Homebrew/cmd/$1.sh"
+            homebrew-trusted-items() { return 1; }
+            HOMEBREW_BREW_FILE=/bin/echo
+            "homebrew-$1"
+          BASH
+        )
+
+        expect([stdout, stderr, status.success?]).to eq(["#{command}\n", "", true])
+      end
+
+      it "lists items without jq, Ruby or a blank line when no taps are installed" do
+        cache = mktmpdir
+        ENV["HOMEBREW_NO_INSTALL_FROM_API"] = nil
+        ENV["HOMEBREW_CACHE"] = cache.to_s
+        ENV["HOMEBREW_REPOSITORY"] = mktmpdir.to_s
+        (cache/"api").mkpath
+        (cache/"api/#{(command == "formulae") ? "formula" : "cask"}_names.txt").write("item1\nitem2")
+        script = <<~BASH
+          source "${HOMEBREW_LIBRARY}/Homebrew/cmd/$1.sh"
+          type() { [[ "$*" != "-P jq" ]] && builtin type "$@"; }
+          HOMEBREW_BREW_FILE=/bin/echo
+          "homebrew-$1"
+        BASH
+
+        outputs = [{}, { "HOMEBREW_NO_REQUIRE_TAP_TRUST" => "1" }, { "HOMEBREW_NO_INSTALL_FROM_API" => "1" }]
+                  .map { |env| Open3.capture3(env, "/bin/bash", "-c", script, "bash", command).first(2) }
+
+        expect(outputs).to eq([["item1\nitem2\n", ""], ["item1\nitem2\n", ""], ["", ""]])
       end
     end
   end

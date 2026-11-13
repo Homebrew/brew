@@ -624,6 +624,9 @@ module Homebrew
     sig { params(type: Symbol, files: T::Array[Pathname]).returns(T::Array[Pathname]) }
     def self.trusted_files(type, files)
       trusted_files = files.select { |file| trusted_file?(type, file) }
+      # Keep in sync with the `HOMEBREW_COMPLETION` check in `homebrew-trusted-items` in `items.sh`.
+      return trusted_files if ENV["HOMEBREW_COMPLETION"].present?
+
       skipped_taps = (files - trusted_files).filter_map { |file| tap_from_path(file) }.uniq.sort_by(&:name)
       skipped_taps.each do |tap|
         next if partially_trusted_tap?(tap)
