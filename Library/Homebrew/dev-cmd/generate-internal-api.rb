@@ -3,6 +3,7 @@
 
 require "abstract_command"
 require "api"
+require "download_queue"
 require "executables_db"
 require "fileutils"
 require "formula"
@@ -52,6 +53,7 @@ module Homebrew
 
           all_formulae = {}
           all_casks = {}
+          bottle_manifests = {}
           latest_macos = MacOSVersion.new(HOMEBREW_MACOS_NEWEST_SUPPORTED).to_sym
           Homebrew::SimulateSystem.with(os: latest_macos, arch: :arm) do
             core_tap.formula_names.each do |name|
@@ -59,9 +61,33 @@ module Homebrew
               name = formula.name
               all_formulae[name] = formula.to_hash_with_variations(include_compiler_variations: true)
               all_formulae[name]["executables"] = executables[name] if executables.key?(name)
+
+              bottle_hash = all_formulae[name].dig("bottle", "stable") || {}
+              next unless bottle_hash.key?("manifest_sha256")
+
+              # Any bottle will do: the block's digest is that of the index listing them all.
+              bottle_tag = Utils::Bottles::Tag.from_symbol(bottle_hash.fetch("files").keys.first)
+              bottle_manifests[name] = formula.bottle_for_tag(bottle_tag)&.github_packages_manifest_resource
             rescue
               onoe "Error while generating data for formula '#{name}'."
               raise
+            end
+
+            # Clients fetch a bottle's own manifest by the digest its pinned index
+            # lists, so a missing or mismatched index must fail the run.
+            download_queue = Homebrew::DownloadQueue.new
+            bottle_manifests.compact!
+            bottle_manifests.each_value do |manifest|
+              download_queue.enqueue(manifest) unless manifest.downloaded_and_valid?
+            end
+            download_queue.fetch
+            download_queue.shutdown
+            odie "Failed to download bottle manifests." if download_queue.failed_downloads.present?
+            bottle_manifests.each do |name, manifest|
+              manifest_sha256s = manifest.platform_manifest_sha256s
+              all_formulae.fetch(name).dig("bottle", "stable", "files").each_value do |file|
+                file["manifest_sha256"] = manifest_sha256s.fetch(file.fetch("sha256"))
+              end
             end
 
             cask_tap.cask_files.each do |path|

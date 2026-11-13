@@ -511,6 +511,16 @@ class Resource
       nil
     end
 
+    # The SHA-256 of each bottle's own manifest in a downloaded index, keyed
+    # by the SHA-256 of that bottle.
+    sig { returns(T::Hash[String, String]) }
+    def platform_manifest_sha256s
+      JSON.parse(cached_manifest).fetch("manifests").to_h do |manifest|
+        [manifest.fetch("annotations").fetch("sh.brew.bottle.digest"),
+         manifest.fetch("digest").delete_prefix("sha256:")]
+      end
+    end
+
     sig { override.returns(String) }
     def download_queue_type = "Bottle Manifest"
 
@@ -519,26 +529,32 @@ class Resource
 
     private
 
-    sig { returns(T::Hash[String, String]) }
-    def manifest_annotations
-      cached = @manifest_annotations
-      return cached unless cached.nil?
-
-      # The cache is not trusted, so a manifest fetched by digest is checked
-      # whenever it is read, and the bytes checked are the bytes parsed.
+    # The cache is not trusted, so a manifest fetched by digest is checked
+    # whenever it is read, and the bytes checked are the bytes parsed.
+    sig { returns(String) }
+    def cached_manifest
       manifest = cached_download.read
       if (expected = checksum) && expected != (actual = Checksum.new(Digest::SHA256.hexdigest(manifest)))
         raise ChecksumMismatchError.new(cached_download, expected, actual)
       end
 
+      manifest
+    end
+
+    sig { returns(T::Hash[String, String]) }
+    def manifest_annotations
+      cached = @manifest_annotations
+      return cached unless cached.nil?
+
       json = begin
-        JSON.parse(manifest)
+        JSON.parse(cached_manifest)
       rescue JSON::ParserError
         raise Error, "The downloaded GitHub Packages manifest was corrupted or modified (it is not valid JSON): " \
                      "\n#{cached_download}"
       end
 
-      manifests = json["manifests"]
+      # A bottle's own manifest has layers where an index lists manifests.
+      manifests = json.key?("layers") ? [json] : json["manifests"]
       raise Error, "Missing 'manifests' section." if manifests.blank?
 
       manifests_annotations = manifests.filter_map { |m| m["annotations"] }

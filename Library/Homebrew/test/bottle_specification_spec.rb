@@ -40,6 +40,19 @@ RSpec.describe BottleSpecification do
       end
     end
 
+    it "stores a bottle's own manifest checksum beside its checksum" do
+      bottle_spec.sha256(manifest_sha256: "deadbeef" * 8, arm64_tahoe: "faceb00c" * 8)
+      tag_spec = bottle_spec.tag_specification_for(Utils::Bottles::Tag.from_symbol(:arm64_tahoe))
+
+      expect([tag_spec&.checksum, tag_spec&.manifest_checksum])
+        .to eq([Checksum.new("faceb00c" * 8), Checksum.new("deadbeef" * 8)])
+    end
+
+    it "rejects a bottle's own manifest checksum that is not a SHA-256" do
+      expect { bottle_spec.sha256(manifest_sha256: "#{"deadbeef" * 8}\n", arm64_tahoe: "faceb00c" * 8) }
+        .to raise_error(SystemExit)
+    end
+
     it "rejects legacy syntax" do
       expect { bottle_spec.sha256(("deadbeef" * 8) => :big_sur) }.to raise_error(LegacyDSLError)
     end

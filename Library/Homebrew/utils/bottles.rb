@@ -334,18 +334,27 @@ module Utils
       sig { returns(T.any(Symbol, String)) }
       attr_reader :cellar
 
-      sig { params(tag: Utils::Bottles::Tag, checksum: Checksum, cellar: T.any(Symbol, String)).void }
-      def initialize(tag:, checksum:, cellar:)
+      # The checksum of this bottle's own GitHub Packages manifest.
+      sig { returns(T.nilable(Checksum)) }
+      attr_reader :manifest_checksum
+
+      sig {
+        params(tag: Utils::Bottles::Tag, checksum: Checksum, cellar: T.any(Symbol, String),
+               manifest_checksum: T.nilable(Checksum)).void
+      }
+      def initialize(tag:, checksum:, cellar:, manifest_checksum: nil)
         @tag = tag
         @checksum = checksum
         @cellar = cellar
+        @manifest_checksum = manifest_checksum
       end
 
       sig { override.params(other: BasicObject).returns(T::Boolean) }
       def ==(other)
         case other
         when self.class
-          tag == other.tag && checksum == other.checksum && cellar == other.cellar
+          tag == other.tag && checksum == other.checksum && cellar == other.cellar &&
+            manifest_checksum == other.manifest_checksum
         else false
         end
       end
@@ -374,9 +383,12 @@ module Utils
       end
       alias eql? ==
 
-      sig { params(tag: Utils::Bottles::Tag, checksum: Checksum, cellar: T.any(Symbol, String)).void }
-      def add(tag, checksum:, cellar:)
-        spec = Utils::Bottles::TagSpecification.new(tag:, checksum:, cellar:)
+      sig {
+        params(tag: Utils::Bottles::Tag, checksum: Checksum, cellar: T.any(Symbol, String),
+               manifest_checksum: T.nilable(Checksum)).void
+      }
+      def add(tag, checksum:, cellar:, manifest_checksum: nil)
+        spec = Utils::Bottles::TagSpecification.new(tag:, checksum:, cellar:, manifest_checksum:)
         @tag_specs[tag] = spec
       end
 
