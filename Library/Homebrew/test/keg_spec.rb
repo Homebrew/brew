@@ -582,6 +582,19 @@ RSpec.describe Keg do
 
       expect(alias_link).not_to be_a_symlink
     end
+
+    it "keeps a versioned opt alias that a newer keg owns" do
+      new_keg = setup_test_keg("foo", "2.0")
+      write_aliases(keg, ["foo@1"])
+      write_aliases(new_keg, ["foo@2"])
+      alias_link = HOMEBREW_PREFIX/"opt/foo@2"
+      alias_link.parent.mkpath
+      alias_link.make_relative_symlink(HOMEBREW_CELLAR/"foo/2.0")
+
+      keg.uninstall
+
+      expect(alias_link).to be_a_symlink
+    end
   end
 
   describe "#aliases" do
