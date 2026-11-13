@@ -38,14 +38,14 @@ jobs:
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@c262868c096d909fc278daa87ed9772967331ea3 # 2026.11.02.1
+        uses: Homebrew/actions/setup-homebrew@63a2d4d8d4193eab3e62b1b782ff3ab8408f5b29 # 2026.11.09.1
         with:
           core: false
           cask: false
 
       - name: Configure Git user
         if: github.event_name != 'pull_request'
-        uses: Homebrew/actions/git-user-config@c262868c096d909fc278daa87ed9772967331ea3 # 2026.11.02.1
+        uses: Homebrew/actions/git-user-config@63a2d4d8d4193eab3e62b1b782ff3ab8408f5b29 # 2026.11.09.1
         with:
           username: github-actions[bot]
 
@@ -104,7 +104,7 @@ jobs:
 
       - name: Push to pull request
         if: github.event_name != 'pull_request'
-        uses: Homebrew/actions/git-try-push@c262868c096d909fc278daa87ed9772967331ea3 # 2026.11.02.1
+        uses: Homebrew/actions/git-try-push@63a2d4d8d4193eab3e62b1b782ff3ab8408f5b29 # 2026.11.09.1
         with:
           token: ${{ github.token }}
           directory: ${{ steps.set-up-homebrew.outputs.repository-path }}
