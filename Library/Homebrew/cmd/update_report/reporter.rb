@@ -248,6 +248,30 @@ class Reporter
 
         new_tap = Tap.fetch(new_tap_name)
         next unless ensure_trusted_tap_installed!(name, new_name, new_tap)
+
+        if new_tap.core_cask_tap? || new_tap.cask_tokens.intersect?([new_full_name, new_name])
+          cask_tab = Cask::CaskLoader.load_installed_tab(name)
+          next if cask_tab.tap != tap
+
+          # Installing an up-to-date cask does not switch its receipt to the new tap.
+          next unless ensure_trusted_migration_target!(:cask, new_full_name, reinstall: true)
+
+          # Resolve renames while the receipt still identifies the source migration.
+          if new_name != name
+            begin
+              Cask::Migrator.new(Cask::Cask.new(name), Cask::CaskLoader.load(new_full_name)).migrate
+              cask_tab = Cask::CaskLoader.load_installed_tab(new_name)
+            rescue => e
+              onoe e
+              next
+            end
+          end
+
+          cask_tab.tap = new_tap
+          cask_tab.write
+          next
+        end
+
         next unless ensure_trusted_migration_target!(:formula, new_full_name)
 
         ohai "#{name} has been moved to Homebrew.", <<~EOS
@@ -366,8 +390,8 @@ class Reporter
     true
   end
 
-  sig { params(type: Symbol, full_name: String).returns(T::Boolean) }
-  def ensure_trusted_migration_target!(type, full_name)
+  sig { params(type: Symbol, full_name: String, reinstall: T::Boolean).returns(T::Boolean) }
+  def ensure_trusted_migration_target!(type, full_name, reinstall: false)
     return true if Homebrew::Trust.trusted?(type, full_name)
 
     opoo <<~EOS
@@ -375,7 +399,7 @@ class Reporter
       not trusted.
       To complete the migration yourself, run:
         brew trust --#{type} #{full_name}
-        brew install --#{type} #{full_name}
+        brew #{reinstall ? "reinstall" : "install"} --#{type} #{full_name}
     EOS
     false
   end
