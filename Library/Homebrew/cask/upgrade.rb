@@ -521,6 +521,8 @@ module Cask
       tab.installed_on_request = old_tab.tabfile.nil? || old_tab.installed_on_request
       tab.write
 
+      new_cask_installer.report_analytics
+
       end_time = Time.now
       Homebrew.messages.package_installed(new_cask.token, end_time - start_time)
       completed = true
