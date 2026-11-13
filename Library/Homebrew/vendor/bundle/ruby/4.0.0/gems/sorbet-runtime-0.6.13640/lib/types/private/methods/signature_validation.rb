@@ -232,7 +232,9 @@ module T::Private::Methods::SignatureValidation
       end
     end
 
-    if super_signature.block_name && !signature.block_name
+    # block_type is set exactly when the method declares a block param, and
+    # unlike block_name, reading it doesn't rebuild `method.parameters`.
+    if !super_signature.block_type.nil? && signature.block_type.nil?
       raise "Your definition of `#{method_name}` must accept a block parameter to be compatible " \
             "with the method it #{mode_verb}: " \
             "#{base_override_loc_str(signature, super_signature)}"

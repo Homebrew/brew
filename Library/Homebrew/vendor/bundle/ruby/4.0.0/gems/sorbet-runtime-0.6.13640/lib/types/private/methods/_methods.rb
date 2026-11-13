@@ -616,6 +616,17 @@ module T::Private::Methods
     @signatures_by_method[method_to_key(maybe_wrapped_method)] = signature
   end
 
+  # This method tells whether `drop_unchecked_sigs!` can free `signature`.
+  # It returns true for a signature whose runtime checks never run.
+  # It returns false for an `abstract` signature, because `T::AbstractUtils`
+  # reads that signature after load time.
+  private_class_method def self.drop_sig?(signature)
+    return false if signature.mode == Modes.abstract
+
+    signature.check_level == :never ||
+      (signature.check_level == :tests && !T::Private::RuntimeLevels.check_tests?)
+  end
+
   # Only public because it needs to get called inside the first-call wrapper closure.
   def self._sig_block_is_current?(key, sig_block)
     @sig_wrappers[key].equal?(sig_block)
@@ -697,6 +708,10 @@ module T::Private::Methods
 
   def self.all_checked_tests_sigs
     @signatures_by_method.values.select { |sig| sig.check_level == :tests }
+  end
+
+  def self.drop_unchecked_sigs!
+    @signatures_by_method.delete_if { |_key, sig| drop_sig?(sig) }
   end
 
   # the module target is adding the methods from the module source to itself. we need to check that for all instance

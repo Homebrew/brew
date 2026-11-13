@@ -10,12 +10,15 @@ class T::Private::Types::SimplePairUnion < T::Types::Union
   # @param type_a [T::Types::Simple]
   # @param type_b [T::Types::Simple]
   def initialize(type_a, type_b)
+    @raw_a = type_a.raw_type
+    @raw_b = type_b.raw_type
+
+    # Only raise after setting every field. `union_of_types` rescues this and
+    # drops the object, but `ObjectSpace.each_object` still yields it until the
+    # next GC, and `T::Utils.build_all_types` must be able to build it.
     if type_a == type_b
       raise DuplicateType.new("#{type_a} == #{type_b}")
     end
-
-    @raw_a = type_a.raw_type
-    @raw_b = type_b.raw_type
   end
 
   # @override Union
