@@ -1,12 +1,28 @@
 # frozen_string_literal: true
 # typed: true
 
+# Every sig keeps one of these for the life of the process. At 18 or fewer instance variables an
+# instance fits in a 160-byte GC slot; a 19th moves every instance to the 320-byte slot, so prefer
+# deriving new state over storing it.
 class T::Private::Methods::Signature
-  attr_reader :method, :method_name, :arg_types, :kwarg_types, :block_type, :block_name,
-              :rest_type, :rest_name, :keyrest_type, :keyrest_name, :bind, :effective_return_type,
-              :return_type, :mode, :req_arg_count, :req_kwarg_names,
-              :check_level, :parameters, :on_failure, :override_allow_incompatible,
-              :defined_raw
+  attr_reader :method, :method_name, :arg_types, :kwarg_types, :block_type,
+              :rest_type, :keyrest_type, :bind, :effective_return_type,
+              :return_type, :req_arg_count, :req_kwarg_names, :on_failure
+
+  # @flags packs, from the low bits up: mode (3 bits), check_level (2 bits),
+  # override_allow_incompatible (2 bits), and defined_raw (1 bit).
+  FLAG_MODES = T::Private::Methods::Modes::MODES
+  FLAG_CHECK_LEVELS = T::Private::RuntimeLevels::LEVELS
+  FLAG_ALLOW_INCOMPATIBLE = [false, true, :visibility].freeze
+  MODE_MASK = 0b111
+  CHECK_LEVEL_SHIFT = 3
+  CHECK_LEVEL_MASK = 0b11
+  ALLOW_INCOMPATIBLE_SHIFT = 5
+  ALLOW_INCOMPATIBLE_MASK = 0b11
+  DEFINED_RAW_BIT = 1 << 7
+  private_constant :FLAG_MODES, :FLAG_CHECK_LEVELS, :FLAG_ALLOW_INCOMPATIBLE, :MODE_MASK,
+                   :CHECK_LEVEL_SHIFT, :CHECK_LEVEL_MASK, :ALLOW_INCOMPATIBLE_SHIFT,
+                   :ALLOW_INCOMPATIBLE_MASK, :DEFINED_RAW_BIT
 
   # T.unsafe: `UnboundMethod#parameters` lies and says `T::Array[[Symbol, Symbol]]`.
   # Sorbet can't lub tuple types, meaning that `T.any([Symbol], [Symbol,
@@ -42,16 +58,13 @@ class T::Private::Methods::Signature
     )
   end
 
-  def initialize(method:, method_name:, raw_arg_types:, raw_return_type:, bind:, mode:, check_level:, on_failure:, parameters: method.parameters, override_allow_incompatible: false, defined_raw: false)
+  def initialize(method:, method_name:, raw_arg_types:, raw_return_type:, bind:, mode:, check_level:, on_failure:, parameters: nil, override_allow_incompatible: false, defined_raw: false)
     check_level = check_level.nil? ? T::Private::RuntimeLevels.default_checked_level : check_level
     @method = method
     @method_name = method_name
     @block_type = nil
-    @block_name = nil
     @rest_type = nil
-    @rest_name = nil
     @keyrest_type = nil
-    @keyrest_name = nil
     @return_type = T::Utils.coerce(raw_return_type)
     @effective_return_type = if check_level == :tests && @return_type.is_a?(T::Private::Types::Void)
       T::Types::Anything::Private::INSTANCE
@@ -59,12 +72,13 @@ class T::Private::Methods::Signature
       @return_type
     end
     @bind = NilClass.===(bind) ? bind : T::Utils.coerce(bind)
-    @mode = mode
-    @check_level = check_level
     @parameters = parameters
+    parameters ||= method.parameters
     @on_failure = on_failure
-    @override_allow_incompatible = override_allow_incompatible
-    @defined_raw = defined_raw
+    @flags = flag_index(FLAG_MODES, mode, 'mode') |
+             (flag_index(FLAG_CHECK_LEVELS, check_level, 'check_level') << CHECK_LEVEL_SHIFT) |
+             (flag_index(FLAG_ALLOW_INCOMPATIBLE, override_allow_incompatible, 'override_allow_incompatible') << ALLOW_INCOMPATIBLE_SHIFT) |
+             (defined_raw ? DEFINED_RAW_BIT : 0)
 
     # Use T.untyped in lieu of T.nilable to try to avoid unnecessary allocations.
     arg_types = nil
@@ -147,13 +161,10 @@ class T::Private::Methods::Signature
           (req_kwarg_names ||= []) << param_name
         end
       when :block
-        @block_name = param_name
         @block_type = type
       when :rest
-        @rest_name = param_name
         @rest_type = type
       when :keyrest
-        @keyrest_name = param_name
         @keyrest_type = type
       else
         raise "Unexpected param_kind: `#{param_kind}`. Method: #{method_desc}"
@@ -162,6 +173,7 @@ class T::Private::Methods::Signature
       i += 1
     end
 
+    @parameters ||= parameters unless @rest_type.nil?
     @arg_types = arg_types || EMPTY_LIST
     @kwarg_types = kwarg_types || EMPTY_HASH
     @req_arg_count = req_arg_count
@@ -175,6 +187,39 @@ class T::Private::Methods::Signature
     new_sig = clone
     new_sig.method_name = alias_name
     new_sig
+  end
+
+  # Names are derived rather than stored so that Signature fits in a smaller GC slot.
+  def parameters
+    @parameters || @method.parameters
+  end
+
+  def block_name
+    parameter_name(:block)
+  end
+
+  def rest_name
+    parameter_name(:rest)
+  end
+
+  def keyrest_name
+    parameter_name(:keyrest)
+  end
+
+  def mode
+    FLAG_MODES.fetch(@flags & MODE_MASK)
+  end
+
+  def check_level
+    FLAG_CHECK_LEVELS.fetch((@flags >> CHECK_LEVEL_SHIFT) & CHECK_LEVEL_MASK)
+  end
+
+  def override_allow_incompatible
+    FLAG_ALLOW_INCOMPATIBLE.fetch((@flags >> ALLOW_INCOMPATIBLE_SHIFT) & ALLOW_INCOMPATIBLE_MASK)
+  end
+
+  def defined_raw
+    @flags.anybits?(DEFINED_RAW_BIT)
   end
 
   def arg_count
@@ -227,11 +272,14 @@ class T::Private::Methods::Signature
 
       if !@rest_type.nil?
         rest_count = args_length - @arg_types.length
-        rest_count = 0 if rest_count.negative?
 
-        rest_count.times do
-          yield @rest_name, args[it], @rest_type
-          it += 1
+        if rest_count > 0
+          rest_name = fast_rest_name
+
+          rest_count.times do
+            yield rest_name, args[it], @rest_type
+            it += 1
+          end
         end
       end
     end
@@ -266,6 +314,20 @@ class T::Private::Methods::Signature
     @rest_type&.build_type
     @keyrest_type&.build_type
     @return_type.build_type
+  end
+
+  # The rest param directly follows the positional params unless required params come after it.
+  private def fast_rest_name
+    param_kind, param_name = parameters[@arg_types.length]
+    param_kind == :rest ? param_name : parameter_name(:rest)
+  end
+
+  private def parameter_name(kind)
+    parameters.assoc(kind)&.[](1)
+  end
+
+  private def flag_index(values, value, field)
+    values.index(value) || raise(ArgumentError.new("Invalid #{field} for `#{@method_name}`: #{value.inspect}"))
   end
 
   EMPTY_LIST = [].freeze

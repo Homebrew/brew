@@ -9,13 +9,19 @@ module T::Types
     attr_reader :values
 
     def initialize(values)
-      case values
-      when Hash
-        @values = values
-      else
-        require "set" unless defined?(Set)
-        @values = values.to_set
-      end
+      @values =
+        case values
+        when Hash
+          values
+        else
+          values.to_set
+        end
+    rescue StandardError
+      # The conversion can raise. A caller can rescue that and drop this
+      # object, but `ObjectSpace.each_object` still yields it until the next
+      # GC, and `T::Utils.build_all_types` must be able to build it.
+      @values = Set[]
+      raise
     end
 
     def build_type
