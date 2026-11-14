@@ -2021,6 +2021,30 @@ RSpec.describe Tap do
     end
   end
 
+  describe CoreCaskTap do
+    subject(:core_cask_tap) { described_class.instance }
+
+    specify "cask aliases use short names", :no_api do
+      cask_file = core_cask_tap.cask_dir/"foo.rb"
+      cask_file.dirname.mkpath
+      cask_file.write <<~RUBY
+        cask "foo" do
+          url "https://brew.sh/foo-1.0.dmg"
+        end
+      RUBY
+      alias_file = core_cask_tap.alias_dir/"bar"
+      alias_file.parent.mkpath
+      ln_s "../Casks/foo.rb", alias_file
+
+      expect(core_cask_tap.cask_aliases).to eq(["bar"])
+      expect(core_cask_tap.cask_alias_table).to eq("bar" => "foo")
+      expect(core_cask_tap.cask_alias_reverse_table).to eq("foo" => ["bar"])
+    ensure
+      core_cask_tap.clear_cache
+      FileUtils.rm_rf core_cask_tap.path
+    end
+  end
+
   describe "#repository_var_suffix" do
     specify do
       expect(CoreTap.instance.repository_var_suffix).to eq "_HOMEBREW_HOMEBREW_CORE"
@@ -2030,6 +2054,30 @@ RSpec.describe Tap do
       expect(
         described_class.fetch("my", "tap-with-@-symbol").repository_var_suffix,
       ).to eq "_MY_HOMEBREW_TAP_WITH___SYMBOL"
+    end
+  end
+
+  describe "cask aliases" do
+    let(:cask_file) { path/"Casks/baz.rb" }
+    let(:cask_alias_file) { path/"Aliases/qux" }
+
+    before do
+      setup_tap_files
+      cask_file.dirname.mkpath
+      cask_file.write <<~RUBY
+        cask "baz" do
+          url "https://brew.sh/baz-1.0.dmg"
+        end
+      RUBY
+      ln_s "../Casks/baz.rb", cask_alias_file
+    end
+
+    it "separates cask aliases from formula aliases" do
+      expect(homebrew_foo_tap.alias_files).to eq([alias_file])
+      expect(homebrew_foo_tap.cask_alias_files).to eq([cask_alias_file])
+      expect(homebrew_foo_tap.cask_aliases).to eq(["homebrew/foo/qux"])
+      expect(homebrew_foo_tap.cask_alias_table).to eq("homebrew/foo/qux" => "homebrew/foo/baz")
+      expect(homebrew_foo_tap.cask_alias_reverse_table).to eq("homebrew/foo/baz" => ["homebrew/foo/qux"])
     end
   end
 

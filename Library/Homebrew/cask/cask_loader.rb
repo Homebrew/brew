@@ -275,6 +275,7 @@ module Cask
         return if Homebrew::EnvConfig.no_install_from_api?
         return unless (token = ref[HOMEBREW_DEFAULT_TAP_CASK_REGEX, :token])
         if !Homebrew::API.cask_token?(token) &&
+           !Homebrew::API.cask_aliases.key?(token) &&
            !Homebrew::API.cask_renames.key?(token)
           return
         end
@@ -653,7 +654,12 @@ module Cask
 
       type = nil
 
-      if (new_token = tap.cask_renames[token].presence)
+      alias_table_key = tap.core_cask_tap? ? token : "#{tap}/#{token}"
+
+      if (alias_target = tap.cask_alias_table[alias_table_key].presence)
+        token = ::Utils.name_from_full_name(alias_target)
+        type = :alias
+      elsif (new_token = tap.cask_renames[token].presence)
         old_token = tap.core_cask_tap? ? token : tapped_token
         token = new_token
         new_token = tap.core_cask_tap? ? token : "#{tap}/#{token}"

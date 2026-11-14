@@ -32,6 +32,7 @@ module Cask
         source_url:          repo_url(cask),
         installed_versions:  installed_section_rows(cask),
         verbose:,
+        aliases:             cask.aliases,
       )}\n"
       deps = deps_info(cask, mark_uninstalled: installed)
       output << deps if deps
@@ -93,7 +94,7 @@ module Cask
         installed_version = installed_cask.installed_version
         next unless installed_version.present?
 
-        versioned_staged_path = installed_cask.caskroom_path.join(installed_version)
+        versioned_staged_path = installed_cask.installed_caskroom_path.join(installed_version)
         path_exists = versioned_staged_path.exist?
         size = if path_exists
           path_details = versioned_staged_path.children.sum(&:disk_usage)

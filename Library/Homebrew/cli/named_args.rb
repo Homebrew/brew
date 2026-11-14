@@ -225,7 +225,8 @@ module Homebrew
               if cask_path.exist? ||
                  (!Homebrew::EnvConfig.no_install_from_api? &&
                  !CoreCaskTap.instance.installed? &&
-                 Homebrew::API.cask_token?(path.basename.to_s))
+                 (Homebrew::API.cask_token?(path.basename.to_s) ||
+                  Homebrew::API.cask_aliases.key?(path.basename.to_s)))
                 paths << cask_path
               end
 
@@ -631,10 +632,11 @@ module Homebrew
       def warn_if_cask_conflicts(ref, loaded_type)
         unless defined?(Cask::CaskLoader)
           api_cask = !Homebrew::EnvConfig.no_install_from_api? &&
-                     (Homebrew::API.cask_token?(ref) || Homebrew::API.cask_renames.key?(ref) ||
-                      Homebrew::API.cask_tap_migrations.key?(ref))
+                     (Homebrew::API.cask_token?(ref) || Homebrew::API.cask_aliases.key?(ref) ||
+                      Homebrew::API.cask_renames.key?(ref) || Homebrew::API.cask_tap_migrations.key?(ref))
           tapped_cask = Tap.any? do |tap|
-            tap.cask_tokens.include?(ref) || tap.cask_renames.key?(ref) || tap.tap_migrations.key?(ref)
+            tap.cask_tokens.include?(ref) || tap.cask_aliases.include?(ref) || tap.cask_renames.key?(ref) ||
+              tap.tap_migrations.key?(ref)
           end
           installed_cask = Cask::Caskroom.cask_installed?(ref)
           return if !api_cask && !tapped_cask && !installed_cask

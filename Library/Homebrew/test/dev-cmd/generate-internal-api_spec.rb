@@ -13,7 +13,8 @@ RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
                                           alias_table: {}, formula_renames: {}, git_head: "formula-head",
                                           tap_migrations: {})
       cask_tap = instance_double(CoreCaskTap, installed?: true, name: "homebrew/cask", cask_files: [Pathname("c.rb")],
-                                              cask_renames: {}, git_head: "cask-head", tap_migrations: {})
+                                              cask_alias_table: { "c-alias" => "c" }, cask_renames: {},
+                                              git_head: "cask-head", tap_migrations: {})
       bottle_tag = Utils::Bottles::Tag.from_symbol(:arm64_sonoma)
 
       allow(CoreTap).to receive(:instance).and_return(core_tap)
@@ -72,6 +73,7 @@ RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
         })
         expect(json.dig("formulae", "foo", "executables")).to eq(["foo-tool", "food"])
         expect(json.dig("casks", "c", "token")).to eq("c")
+        expect(json["cask_aliases"]).to eq("c-alias" => "c")
       end
     end
   end

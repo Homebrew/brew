@@ -619,6 +619,11 @@ module Homebrew
     end
 
     sig { returns(T::Hash[String, String]) }
+    def self.cask_aliases
+      Homebrew::API::Internal.cask_aliases
+    end
+
+    sig { returns(T::Hash[String, String]) }
     def self.cask_renames
       Homebrew::API::Internal.cask_renames
     end

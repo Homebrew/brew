@@ -193,6 +193,19 @@ module Cask
       )
     end
 
+    # All aliases for the cask.
+    sig { returns(T::Array[String]) }
+    def aliases
+      @aliases ||= T.let(
+        if (t = tap)
+          t.cask_alias_reverse_table.fetch(full_token, []).map { ::Utils.name_from_full_name(it) }
+        else
+          []
+        end,
+        T.nilable(T::Array[String]),
+      )
+    end
+
     sig { params(config: Config).void }
     def config=(config)
       @config = config
@@ -364,6 +377,17 @@ module Cask
     def installed_version
       # <caskroom_path>/.metadata/<version>/<timestamp>/Casks/<token>.{rb,json} -> <version>
       Caskroom.cask_installed_version(token, old_tokens:)
+    end
+
+    # The Caskroom directory of the installed cask, which is the directory of its
+    # old token until a renamed cask has been migrated.
+    sig { returns(Pathname) }
+    def installed_caskroom_path
+      # <caskroom_path>/.metadata/<version>/<timestamp>/Casks/<token>.{rb,json} -> <caskroom_path>
+      caskfile = installed_caskfile
+      return caskroom_path unless caskfile
+
+      caskfile.dirname.dirname.dirname.dirname.dirname
     end
 
     sig { void }
@@ -622,6 +646,7 @@ module Cask
         "token"                           => token,
         "full_token"                      => full_name,
         "old_tokens"                      => old_tokens,
+        "aliases"                         => aliases,
         "tap"                             => tap&.name,
         "name"                            => name,
         "desc"                            => desc,

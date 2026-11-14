@@ -209,7 +209,7 @@ RSpec.describe Cask::Uninstall, :cask do
       before do
         saved_caskfile.dirname.mkpath
         saved_caskfile.write("{}")
-        allow(Homebrew::API).to receive_messages(cask_token?: false, cask_renames: {})
+        allow(Homebrew::API).to receive_messages(cask_token?: false, cask_aliases: {}, cask_renames: {})
       end
 
       it "removes Homebrew's records and warns that installed files may remain" do

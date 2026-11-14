@@ -66,6 +66,9 @@ RSpec.describe Homebrew::API::Internal do
           "bar-old": "bar",
           "baz-old": "baz"
         },
+        "cask_aliases": {
+          "foo-alias": "foo"
+        },
         "cask_renames": {
           "foo-old": "foo",
           "bar-old": "bar",
@@ -162,6 +165,11 @@ RSpec.describe Homebrew::API::Internal do
       "baz-old" => "baz",
     }
   end
+  let(:cask_aliases) do
+    {
+      "foo-alias" => "foo",
+    }
+  end
   let(:cask_renames) do
     {
       "foo-old" => "foo",
@@ -241,6 +249,19 @@ RSpec.describe Homebrew::API::Internal do
   it "returns the expected formula rename list" do
     formula_renames_output = described_class.formula_renames
     expect(formula_renames_output).to eq formulae_renames
+  end
+
+  it "returns the expected cask alias list" do
+    cask_aliases_output = described_class.cask_aliases
+    expect(cask_aliases_output).to eq cask_aliases
+  end
+
+  it "returns no cask aliases for API data generated before they existed" do
+    allow(Utils::Curl).to receive(:curl_download) do |*_args, **kwargs|
+      kwargs[:to].write JSON.parse(packages_json).except("cask_aliases").to_json
+    end
+
+    expect(described_class.cask_aliases).to eq({})
   end
 
   it "returns the expected cask rename list" do

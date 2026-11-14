@@ -415,6 +415,17 @@ RSpec.describe Homebrew::CLI::NamedArgs do
       expect(described_class.new("foo", "baz").to_paths(only: :cask)).to eq [cask_path, Cask::CaskLoader.path("baz")]
     end
 
+    it "returns the cask path for an API cask alias when the tap is not installed" do
+      aliased_cask_path = Pathname("/path/to/foo.rb")
+      allow(CoreCaskTap.instance).to receive(:installed?).and_return(false)
+
+      require "api"
+      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_aliases: { "bar" => "foo" })
+      expect(Cask::CaskLoader).to receive(:path).with("bar").and_return(aliased_cask_path)
+
+      expect(described_class.new("bar").to_paths).to eq [aliased_cask_path]
+    end
+
     context "when without_api: true" do
       it "returns a bare path for an API-known formula when the tap is not installed" do
         allow(CoreTap.instance).to receive(:installed?).and_return(false)

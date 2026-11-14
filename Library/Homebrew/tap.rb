@@ -334,6 +334,10 @@ class Tap # rubocop:todo Metrics/ClassLength
     @aliases = nil
     @alias_table = nil
     @alias_reverse_table = nil
+    @cask_alias_files = nil
+    @cask_aliases = nil
+    @cask_alias_table = nil
+    @cask_alias_reverse_table = nil
 
     @command_dir = nil
     @command_files = nil
@@ -1178,16 +1182,28 @@ class Tap # rubocop:todo Metrics/ClassLength
     @alias_dir ||= T.let(path/"Aliases", T.nilable(Pathname))
   end
 
-  # An array of all alias files of this {Tap}.
+  # An array of all formula alias files of this {Tap}.
   sig { returns(T::Array[Pathname]) }
   def alias_files
-    @alias_files ||= T.let(Pathname.glob("#{alias_dir}/*").select(&:file?), T.nilable(T::Array[Pathname]))
+    @alias_files ||= T.let(all_alias_files.reject { cask_alias_file?(it) }, T.nilable(T::Array[Pathname]))
   end
 
-  # An array of all aliases of this {Tap}.
+  # An array of all cask alias files of this {Tap}.
+  sig { returns(T::Array[Pathname]) }
+  def cask_alias_files
+    @cask_alias_files ||= T.let(all_alias_files.select { cask_alias_file?(it) }, T.nilable(T::Array[Pathname]))
+  end
+
+  # An array of all formula aliases of this {Tap}.
   sig { returns(T::Array[String]) }
   def aliases
     @aliases ||= T.let(alias_table.keys, T.nilable(T::Array[String]))
+  end
+
+  # An array of all cask aliases of this {Tap}.
+  sig { returns(T::Array[String]) }
+  def cask_aliases
+    @cask_aliases ||= T.let(cask_alias_table.keys, T.nilable(T::Array[String]))
   end
 
   # Mapping from aliases to formula names.
@@ -1199,6 +1215,15 @@ class Tap # rubocop:todo Metrics/ClassLength
                            end, T.nilable(T::Hash[String, String]))
   end
 
+  # Mapping from aliases to cask tokens.
+  sig { overridable.returns(T::Hash[String, String]) }
+  def cask_alias_table
+    @cask_alias_table ||= T.let(cask_alias_files.to_h do |alias_file|
+                                  [alias_file_to_name(alias_file),
+                                   formula_file_to_name(resolved_path(alias_file))]
+                                end, T.nilable(T::Hash[String, String]))
+  end
+
   # Mapping from formula names to aliases.
   sig { returns(T::Hash[String, T::Array[String]]) }
   def alias_reverse_table
@@ -1206,6 +1231,18 @@ class Tap # rubocop:todo Metrics/ClassLength
       alias_table.each_with_object({}) do |(alias_name, formula_name), alias_reverse_table|
         alias_reverse_table[formula_name] ||= []
         alias_reverse_table[formula_name] << alias_name
+      end,
+      T.nilable(T::Hash[String, T::Array[String]]),
+    )
+  end
+
+  # Mapping from cask tokens to aliases.
+  sig { returns(T::Hash[String, T::Array[String]]) }
+  def cask_alias_reverse_table
+    @cask_alias_reverse_table ||= T.let(
+      cask_alias_table.each_with_object({}) do |(alias_name, token), cask_alias_reverse_table|
+        cask_alias_reverse_table[token] ||= []
+        cask_alias_reverse_table[token] << alias_name
       end,
       T.nilable(T::Hash[String, T::Array[String]]),
     )
@@ -1574,6 +1611,17 @@ class Tap # rubocop:todo Metrics/ClassLength
   end
 
   private
+
+  sig { returns(T::Array[Pathname]) }
+  def all_alias_files
+    Pathname.glob("#{alias_dir}/*").select(&:file?)
+  end
+
+  # Whether an alias file points at a cask rather than a formula.
+  sig { params(alias_file: Pathname).returns(T::Boolean) }
+  def cask_alias_file?(alias_file)
+    cask_file?(resolved_path(alias_file).cleanpath.relative_path_from(path).to_s)
+  end
 
   sig { params(file: Pathname).returns(T.any(T::Array[String], T::Hash[String, T.untyped])) }
   def read_formula_list(file)
