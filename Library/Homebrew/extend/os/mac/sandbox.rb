@@ -95,6 +95,9 @@ module OS
           File.executable?(SANDBOX_EXEC)
         end
 
+        sig { returns(T::Boolean) }
+        def disclaims_tcc_responsibility? = true
+
         # Nested `sandbox-exec` invocations hang inside an existing macOS sandbox
         # (e.g. an agent's), so detect that via the libSystem `sandbox_check`
         # syscall. The shared `avoid_nested_sandboxing?` only calls this once the
