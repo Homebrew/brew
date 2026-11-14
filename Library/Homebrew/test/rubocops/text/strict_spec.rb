@@ -7,28 +7,6 @@ RSpec.describe RuboCop::Cop::FormulaAuditStrict::Text do
   subject(:cop) { described_class.new }
 
   context "when auditing formula text in homebrew/core" do
-    it "reports an offense if `env :userpaths` is present" do
-      expect_offense(<<~RUBY)
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-
-          env :userpaths
-          ^^^^^^^^^^^^^^ FormulaAuditStrict/Text: `env :userpaths` in homebrew/core formulae is deprecated
-        end
-      RUBY
-    end
-
-    it "reports an offense if `env :std` is present in homebrew/core" do
-      expect_offense(<<~RUBY, "/homebrew-core/")
-        class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-
-          env :std
-          ^^^^^^^^ FormulaAuditStrict/Text: `env :std` in homebrew/core formulae is deprecated
-        end
-      RUBY
-    end
-
     it %Q(reports an offense if "\#{share}/<formula name>" is present) do
       expect_offense(<<~'RUBY', "/homebrew-core/Formula/foo.rb")
         class Foo < Formula

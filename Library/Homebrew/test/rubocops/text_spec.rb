@@ -219,5 +219,16 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
         end
       RUBY
     end
+
+    it "reports an offense if `env :std` is present in homebrew/core" do
+      expect_offense(<<~RUBY, "/homebrew-core/")
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+
+          env :std
+          ^^^^^^^^ FormulaAudit/Text: `env :std` in homebrew/core formulae is deprecated
+        end
+      RUBY
+    end
   end
 end
