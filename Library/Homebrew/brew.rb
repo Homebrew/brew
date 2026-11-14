@@ -143,8 +143,15 @@ begin
       command_instance = Homebrew::PhaseTimings.measure("cli_parse") { cmd_class.new }
 
       require "utils/analytics"
-      Utils::Analytics.report_command_run(command_instance)
-      command_instance.run
+      if Utils::Analytics::BATCH_REPORTS_COMMANDS.include?(cmd)
+        Utils::Analytics.batch_reports do
+          Utils::Analytics.report_command_run(command_instance)
+          command_instance.run
+        end
+      else
+        Utils::Analytics.report_command_run(command_instance)
+        command_instance.run
+      end
     else
       Utils::Output.odie "Unknown command: brew #{cmd}"
     end
