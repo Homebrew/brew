@@ -125,6 +125,20 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "#installed_caskroom_path" do
+    it "is the old token's directory until a renamed cask is migrated" do
+      Dir.mktmpdir do |dir|
+        allow(Cask::Caskroom).to receive(:path).and_return(Pathname(dir))
+        allow(cask).to receive(:old_tokens).and_return(["old-cask"])
+        casks_dir = Pathname(dir)/"old-cask/.metadata/1.0/1000/Casks"
+        casks_dir.mkpath
+        (casks_dir/"old-cask.rb").write("cask \"old-cask\"\n")
+
+        expect(cask.installed_caskroom_path).to eq(Pathname(dir)/"old-cask")
+      end
+    end
+  end
+
   context "when multiple versions are installed" do
     describe "#installed_version" do
       context "when there are duplicate versions" do

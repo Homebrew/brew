@@ -220,6 +220,20 @@ RSpec.describe Cask::Info, :cask do
         .and not_to_output.to_stderr
     end
 
+    it "shows the old token's directory of a sibling that is not migrated yet" do
+      verbose_args = Homebrew::Cmd::Info.new(["--verbose"]).args
+      old_token_path = Cask::Caskroom.path/"old-example/3.2.0-RC3"
+      old_token_path.mkpath
+      casks_dir = Cask::Caskroom.path/"old-example/.metadata/3.2.0-RC3/20240705000000.000/Casks"
+      casks_dir.mkpath
+      (casks_dir/"old-example.rb").write("cask \"old-example\"\n")
+      allow(installed_cask).to receive(:old_tokens).and_return(["old-example"])
+
+      expect { described_class.info(cask, args: verbose_args) }
+        .to output(a_string_including("Caskroom: #{old_token_path}")).to_stdout
+        .and not_to_output(/does not exist/).to_stdout
+    end
+
     it "shows the available version for an outdated sibling" do
       allow(installed_cask).to receive_messages(outdated?: true, version: Cask::DSL::Version.new("4.0"))
 
