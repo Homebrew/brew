@@ -202,6 +202,23 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
         update_report.run
       end
+
+      it "does not migrate renames from a tap on a branch that was not updated" do
+        system "git", "-C", tap.path.to_s, "checkout", "-q", "-b", "my-work", before_revision
+        ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
+        ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+        ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
+        ENV["HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"] = updated_revision
+        hub = ReporterHub.new
+        allow(ReporterHub).to receive(:new).and_return(hub)
+        allow(hub).to receive_messages(empty?: false, dump: nil)
+        update_report = described_class.new([])
+        allow(update_report).to receive_messages(puts: nil, opoo: nil)
+
+        expect(hub).to receive(:migrate_cask_renames).with(skip_taps: [tap])
+
+        update_report.run
+      end
     end
   end
 
@@ -801,6 +818,16 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       end
     end
 
+    describe "#migrate_formula_rename" do
+      it "does not migrate formulae from taps on a branch that was not updated" do
+        allow(Formula).to receive(:installed).and_return([instance_double(Formula, tap:)])
+
+        expect(Migrator).not_to receive(:needs_migration?)
+
+        reporter.migrate_formula_rename(force: false, verbose: false, skip_taps: [tap])
+      end
+    end
+
     describe "#migrate_tap_migration" do
       let(:tap) { Tap.fetch("foo", "bar") }
 
@@ -1057,12 +1084,21 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     end
 
     it "migrates installed cask renames once" do
-      cask = instance_double(Cask::Cask)
+      cask = instance_double(Cask::Cask, tap: nil)
 
       expect(Cask::Caskroom).to receive(:casks).once.and_return([cask])
       expect(Cask::Migrator).to receive(:migrate_if_needed).with(cask).once
 
       hub.migrate_cask_renames
+    end
+
+    it "does not migrate cask renames from taps on a branch that was not updated" do
+      tap = Tap.fetch("allowed/branch")
+      allow(Cask::Caskroom).to receive(:casks).and_return([instance_double(Cask::Cask, tap:)])
+
+      expect(Cask::Migrator).not_to receive(:migrate_if_needed)
+
+      hub.migrate_cask_renames(skip_taps: [tap])
     end
 
     it "dumps new formulae report" do

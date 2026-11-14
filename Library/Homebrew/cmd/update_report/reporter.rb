@@ -340,9 +340,10 @@ class Reporter
     end
   end
 
-  sig { params(force: T::Boolean, verbose: T::Boolean).void }
-  def migrate_formula_rename(force:, verbose:)
+  sig { params(force: T::Boolean, verbose: T::Boolean, skip_taps: T::Array[Tap]).void }
+  def migrate_formula_rename(force:, verbose:, skip_taps: [])
     Formula.installed.each do |formula|
+      next if skip_taps.include?(formula.tap)
       next unless Migrator.needs_migration?(formula)
 
       oldnames_to_migrate = formula.oldnames.select do |oldname|

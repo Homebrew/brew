@@ -99,9 +99,11 @@ class ReporterHub
     EOS
   end
 
-  sig { void }
-  def migrate_cask_renames
+  sig { params(skip_taps: T::Array[Tap]).void }
+  def migrate_cask_renames(skip_taps: [])
     Cask::Caskroom.casks.each do |cask|
+      next if skip_taps.include?(cask.tap)
+
       Cask::Migrator.migrate_if_needed(cask)
     end
   end

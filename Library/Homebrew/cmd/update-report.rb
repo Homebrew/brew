@@ -248,9 +248,15 @@ module Homebrew
         hub = ReporterHub.new
 
         updated_taps = []
+        unupdated_branch_taps = []
         Tap.installed.each do |tap|
           next if !tap.git? || tap.git_repository.origin_url.nil?
           next if (tap.core_tap? || tap.core_cask_tap?) && !Homebrew::EnvConfig.no_install_from_api?
+
+          # `update.sh` leaves another checked-out branch unchanged, so its
+          # renames are not part of this update.
+          updated_revision = ENV.fetch("HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}", nil)
+          unupdated_branch_taps << tap if updated_revision.present? && updated_revision != tap.git_repository.head_ref
 
           begin
             reporter = Reporter.new(tap)
@@ -319,8 +325,10 @@ module Homebrew
 
             hub.dump(auto_update: args.auto_update?) unless args.quiet?
             hub.reporters.each(&:migrate_tap_migration)
-            hub.migrate_cask_renames
-            hub.reporters.each { |r| r.migrate_formula_rename(force: args.force?, verbose: args.verbose?) }
+            hub.migrate_cask_renames(skip_taps: unupdated_branch_taps)
+            hub.reporters.each do |r|
+              r.migrate_formula_rename(force: args.force?, verbose: args.verbose?, skip_taps: unupdated_branch_taps)
+            end
 
             CacheStoreDatabase.use(:descriptions) do |db|
               DescriptionCacheStore.new(T.cast(db, CacheStoreDatabase[String, T.anything]))
