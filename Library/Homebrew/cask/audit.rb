@@ -1164,7 +1164,8 @@ module Cask
       return if !cask.tap&.official? || cask.conflicts_with.nil?
 
       Homebrew::API.with_no_api_env do
-        nonexisting_conflicting_casks = cask.conflicts_with.fetch(:cask, Set.new) - core_cask_tokens
+        nonexisting_conflicting_casks = cask.conflicts_with.fetch(:cask, Set.new) -
+                                        core_cask_tokens - core_cask_aliases
         nonexisting_conflicting_casks.each do |c|
           add_error("cask conflicts with non-existing cask `#{c}`")
         end
@@ -1579,6 +1580,11 @@ module Cask
     sig { returns(T::Array[String]) }
     def core_cask_tokens
       core_cask_tap.cask_tokens
+    end
+
+    sig { returns(T::Array[String]) }
+    def core_cask_aliases
+      core_cask_tap.cask_aliases
     end
 
     sig { returns(String) }

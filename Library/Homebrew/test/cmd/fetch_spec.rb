@@ -176,6 +176,7 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
     allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
     allow(download_queue).to receive(:enqueue) { |download| enqueued_downloads << download }
     allow(Homebrew::API::Internal).to receive_messages(
+      cask_aliases: {},
       cask_renames: {},
       cask_struct:  cask_struct,
     )

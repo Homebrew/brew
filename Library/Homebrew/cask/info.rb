@@ -32,6 +32,7 @@ module Cask
         source_url:          repo_url(cask),
         installed_versions:  installed_section_rows(cask),
         verbose:,
+        aliases:             cask.aliases,
       )}\n"
       deps = deps_info(cask, mark_uninstalled: installed)
       output << deps if deps

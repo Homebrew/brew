@@ -23,7 +23,7 @@ RSpec.describe Cask::CaskLoader, :cask do
       end
 
       before do
-        allow(Homebrew::API).to receive_messages(cask_tokens: api_casks.keys, cask_renames:)
+        allow(Homebrew::API).to receive_messages(cask_tokens: api_casks.keys, cask_aliases: {}, cask_renames:)
         allow(Homebrew::API).to receive(:cask_token?) { |token| api_casks.key?(token) }
         allow(Homebrew::API::Cask)
           .to receive(:all_casks)
@@ -58,6 +58,42 @@ RSpec.describe Cask::CaskLoader, :cask do
           expect do
             expect(described_class.loader_for("homebrew/cask/version-newest")).to be_a Cask::CaskLoader::FromAPILoader
           end.to output(/version-newest was renamed to version-latest/).to_stderr
+        end
+      end
+    end
+
+    context "when a cask has an alias" do
+      let(:token) { "local-caffeine" }
+      let(:alias_token) { "caffeine-alias" }
+
+      context "when not using the API", :no_api do
+        before do
+          tap.alias_dir.mkpath
+          FileUtils.ln_s "../Casks/#{token}.rb", tap.alias_dir/alias_token
+          tap.clear_cache
+        end
+
+        it "loads the aliased cask without a warning" do
+          expect do
+            expect(described_class.load(alias_token).token).to eq(token)
+          end.not_to output.to_stderr
+        end
+
+        it "loads the aliased cask by its full token" do
+          expect(described_class.load("homebrew/cask/#{alias_token}").token).to eq(token)
+        end
+      end
+
+      context "when using the API" do
+        before do
+          allow(Homebrew::API).to receive_messages(cask_tokens: [token], cask_aliases: { alias_token => token },
+                                                   cask_renames: {})
+          allow(Homebrew::API).to receive(:cask_token?) { |cask_token| cask_token == token }
+        end
+
+        it "resolves the alias to an API loader for the cask" do
+          expect(described_class.loader_for(alias_token))
+            .to be_a(described_class::FromAPILoader).and have_attributes(token:)
         end
       end
     end
@@ -656,7 +692,7 @@ RSpec.describe Cask::CaskLoader, :cask do
     end
 
     it "returns empty artifacts for a removed cask" do
-      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_renames: {})
+      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_aliases: {}, cask_renames: {})
 
       expect(described_class.resolve_installed_artifacts("removed-cask", nil)).to eq([])
     end
@@ -696,7 +732,7 @@ RSpec.describe Cask::CaskLoader, :cask do
 
     it "returns empty artifacts when tap lookup is ambiguous" do
       token = "ambiguous"
-      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_renames: {})
+      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_aliases: {}, cask_renames: {})
       allow(Cask::CaskLoader::FromNameLoader).to receive(:try_new)
         .with(token, warn: false)
         .and_raise(Cask::TapCaskAmbiguityError.new(token, []))

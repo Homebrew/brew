@@ -86,6 +86,13 @@ RSpec.describe Cask::Info, :cask do
     EOS
   end
 
+  it "lists the aliases of a cask" do
+    cask = Cask::CaskLoader.load("local-transmission")
+    allow(cask).to receive(:aliases).and_return(["transmission-alias"])
+
+    expect { described_class.info(cask, args:) }.to output(/^Aliases: transmission-alias$/).to_stdout
+  end
+
   it "marks a disabled Cask in the title" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
@@ -243,7 +250,9 @@ RSpec.describe Cask::Info, :cask do
     tap = Tap.fetch("homebrew/cask")
     allow(Cask::Caskroom).to receive(:tokens).and_return(%w[example@dev old-example unrelated])
     allow(Tap).to receive(:to_a).and_return([tap])
-    allow(tap).to receive_messages(cask_renames: { "old-example" => "example@beta" }, tap_migrations: {})
+    allow(tap).to receive_messages(cask_alias_table: {},
+                                   cask_renames:     { "old-example" => "example@beta" },
+                                   tap_migrations:   {})
     expect(Cask::Caskroom).to receive(:casks).with(tokens: %w[example@dev old-example]).and_return([])
 
     expect { described_class.info(cask, args:) }.to output(<<~EOS).to_stdout

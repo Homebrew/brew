@@ -496,7 +496,7 @@ RSpec.describe Cask::Caskroom do
       RUBY
       Homebrew::Trust.trust!(:tap, tap.name)
       allow(Homebrew::EnvConfig).to receive(:no_install_from_api?).and_return(false)
-      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_renames: {})
+      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_aliases: {}, cask_renames: {})
 
       described_class.migrate_caskfile_to_json(caskfile)
 
@@ -566,7 +566,7 @@ RSpec.describe Cask::Caskroom do
     it "does not mark unavailable artifacts as intentionally empty" do
       token = "removed-cask"
       caskfile = write_installed_caskfile(token, "{}", extension: "json")
-      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_renames: {})
+      allow(Homebrew::API).to receive_messages(cask_token?: false, cask_aliases: {}, cask_renames: {})
 
       described_class.migrate_caskfile_to_json(caskfile)
 

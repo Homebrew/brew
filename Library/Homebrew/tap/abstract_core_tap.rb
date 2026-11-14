@@ -36,6 +36,11 @@ class AbstractCoreTap < Tap
     file.basename(".rb").to_s
   end
 
+  sig { override.params(file: Pathname).returns(String) }
+  def alias_file_to_name(file)
+    file.basename.to_s
+  end
+
   sig { override.returns(T::Boolean) }
   def should_report_analytics?
     return super if Homebrew::EnvConfig.no_install_from_api?

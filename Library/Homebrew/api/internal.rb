@@ -131,6 +131,7 @@ module Homebrew
         cache.delete("packages_index")
         cache["formula_aliases"] = json_contents["formula_aliases"]
         cache["formula_renames"] = json_contents["formula_renames"]
+        cache["cask_aliases"] = json_contents["cask_aliases"]
         cache["cask_renames"] = json_contents["cask_renames"]
         cache["formula_tap_git_head"] = json_contents["formula_tap_git_head"]
         cache["cask_tap_git_head"] = json_contents["cask_tap_git_head"]
@@ -307,6 +308,13 @@ module Homebrew
         return cache["cask_hashes"].key?(name) if cache.key?("cask_hashes")
 
         cache["packages_index"].cask_name?(name)
+      end
+
+      sig { returns(T::Hash[String, String]) }
+      def self.cask_aliases
+        ensure_cask_data!
+        # API data generated before cask aliases existed has no `cask_aliases` key.
+        packages_value("cask_aliases") || {}
       end
 
       sig { returns(T::Hash[String, String]) }

@@ -21,6 +21,21 @@ RSpec.describe Homebrew::Cmd::ReadallCmd do
       .and not_to_output.to_stderr
   end
 
+  it "rejects aliases duplicating a cask token" do
+    tap_path = CoreCaskTap.instance.path
+    cask_file = tap_path/"Casks/foo.rb"
+    cask_file.dirname.mkpath
+    cask_file.write "cask \"foo\" do end\n"
+    alias_file = tap_path/"Aliases/foo"
+    alias_file.dirname.mkpath
+    FileUtils.ln_s "../Casks/foo.rb", alias_file
+
+    success = T.let(true, T::Boolean)
+    expect { success = Readall.valid_aliases?(tap_path/"Aliases", tap_path/"Formula", tap_path/"Casks") }
+      .to output(/Cask duplicating alias/).to_stderr
+    expect(success).to be false
+  end
+
   it "validates only trusted items from installed taps" do
     trusted_formula = Pathname("trusted-formula.rb")
     untrusted_formula = Pathname("untrusted-formula.rb")

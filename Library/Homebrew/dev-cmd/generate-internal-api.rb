@@ -97,6 +97,7 @@ module Homebrew
               casks:,
               formula_aliases:        core_tap.alias_table,
               formula_renames:        core_tap.formula_renames,
+              cask_aliases:           cask_tap.cask_alias_table,
               cask_renames:           cask_tap.cask_renames,
               formula_tap_git_head:   core_tap.git_head,
               cask_tap_git_head:      cask_tap.git_head,
