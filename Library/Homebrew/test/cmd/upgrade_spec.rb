@@ -391,6 +391,20 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       ensure
         %w[local-caffeine local-transmission-zip].each { |token| Cask::CaskLoader.load(token).unpin }
       end
+
+      it "lists a named pinned cask's version with #{flags.presence || "default options"}" do
+        InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine")))
+        Cask::CaskLoader.load("local-caffeine").pin
+
+        expect { described_class.new(["--cask", "local-caffeine", *flags]).run }
+          .to output("Error: Not upgrading 1 pinned package:\n").to_stderr
+          .and output(<<~EOS).to_stdout
+            ==> 1 Pinned cask
+            local-caffeine 1.2.2 -> 1.2.3
+          EOS
+      ensure
+        Cask::CaskLoader.load("local-caffeine").unpin
+      end
     end
   end
 
