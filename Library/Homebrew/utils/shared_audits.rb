@@ -92,22 +92,22 @@ module SharedAudits
         break unless result.status.success?
 
         parsed = Utils::Curl.parse_curl_output(result.stdout)
-        case parsed.fetch(:responses).last&.fetch(:status_code).to_i
-        when 200
-          registered_on = begin
-            events = JSON.parse(parsed.fetch(:body)).fetch("events", [])
-            registration = events.find { |event| event["eventAction"] == "registration" }
-            Date.parse(registration.fetch("eventDate")) unless registration.nil?
-          rescue JSON::ParserError, KeyError, TypeError, Date::Error
-            nil
-          end
-          registered_domain = candidate unless registered_on.nil?
-          break
-        when 400..499
+        status_code = parsed.fetch(:responses).last&.fetch(:status_code).to_i
+        if (400..499).cover?(status_code)
           labels.shift
-        else
-          break
+          next
         end
+        break if status_code != 200
+
+        registered_on = begin
+          events = JSON.parse(parsed.fetch(:body)).fetch("events", [])
+          registration = events.find { |event| event["eventAction"] == "registration" }
+          Date.parse(registration.fetch("eventDate")) unless registration.nil?
+        rescue JSON::ParserError, KeyError, TypeError, Date::Error
+          nil
+        end
+        registered_domain = candidate unless registered_on.nil?
+        break
       end
     end
 

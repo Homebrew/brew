@@ -57,14 +57,14 @@ module InstalledDependents
           rescue FormulaUnavailableError
             next []
           rescue Homebrew::UntrustedTapError, TapFormulaAmbiguityError => e
-            loaders = if e.is_a?(TapFormulaAmbiguityError)
-              e.loaders
-            else
-              begin
+            loaders = begin
+              if e.is_a?(TapFormulaAmbiguityError)
+                e.loaders
+              else
                 [Formulary.loader_for(d.name, warn: false)]
-              rescue TapFormulaAmbiguityError => ambiguity
-                ambiguity.loaders
               end
+            rescue TapFormulaAmbiguityError => ambiguity
+              ambiguity.loaders
             end
             matching_kegs = loaders.filter_map do |loader|
               kegs_by_source[[loader.name, loader.tap]]&.max_by(&:scheme_and_version)

@@ -69,7 +69,7 @@ Metrics/BlockLength:
     - shared_context
 
 Metrics/BlockNesting:
-  Max: 4
+  Max: 3
 
 Metrics/ClassLength:
   Max: 1000

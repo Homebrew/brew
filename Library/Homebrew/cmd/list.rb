@@ -104,24 +104,24 @@ module Homebrew
         if args.full_name? &&
            !(args.installed_on_request? || installed_as_dependency ||
              args.poured_from_bottle? || args.built_from_source?)
-          unless args.cask?
-            full_formula_names = if args.no_named?
-              Formula.racks.map do |rack|
-                name = rack.basename.to_s
-                tap = begin
-                  Keg.from_rack(rack)&.tab&.tap
-                rescue JSON::ParserError, SystemCallError, Tap::InvalidNameError
-                  opoo "Could not identify the tap for #{name} from its installation receipt."
-                  nil
-                end
-                (tap.nil? || tap.core_tap?) ? name : "#{tap}/#{name}"
+          full_formula_names = if args.cask?
+            []
+          elsif args.no_named?
+            Formula.racks.map do |rack|
+              name = rack.basename.to_s
+              tap = begin
+                Keg.from_rack(rack)&.tab&.tap
+              rescue JSON::ParserError, SystemCallError, Tap::InvalidNameError
+                opoo "Could not identify the tap for #{name} from its installation receipt."
+                nil
               end
-            else
-              args.named.to_resolved_formulae.map(&:full_name)
-            end.sort(&Cask::List::TAP_AND_NAME_COMPARISON)
-            full_formula_names = Formatter.columns(full_formula_names) unless args.public_send(:"1?")
-            puts full_formula_names if full_formula_names.present?
-          end
+              (tap.nil? || tap.core_tap?) ? name : "#{tap}/#{name}"
+            end
+          else
+            args.named.to_resolved_formulae.map(&:full_name)
+          end.sort(&Cask::List::TAP_AND_NAME_COMPARISON)
+          full_formula_names = Formatter.columns(full_formula_names) unless args.public_send(:"1?")
+          puts full_formula_names if full_formula_names.present?
           if args.cask? || (!args.formula? && args.no_named?)
             cask_names = if args.no_named?
               Cask::Caskroom.casks
