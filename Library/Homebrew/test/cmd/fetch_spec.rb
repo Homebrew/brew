@@ -5,26 +5,27 @@ require "cmd/fetch"
 require "cmd/shared_examples/args_parse"
 
 RSpec.describe Homebrew::Cmd::FetchCmd do
+  let(:foo) do
+    formula("foo") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/foo-1.0.tar.gz"
+
+      resource "build" do
+        url "https://brew.sh/build-1.0.tar.gz"
+      end
+
+      resource "fixture", :test do
+        url "https://brew.sh/fixture-1.0.tar.gz"
+      end
+    end
+  end
+
   it_behaves_like "parseable arguments"
 
   describe "--test" do
     let(:cmd) { described_class.new(["--test", "foo"]) }
     let(:download_queue) { instance_double(Homebrew::DownloadQueue, fetch: nil, shutdown: nil) }
     let(:downloads) { [] }
-    let(:foo) do
-      formula("foo") do
-        T.bind(self, T.class_of(Formula))
-        url "https://brew.sh/foo-1.0.tar.gz"
-
-        resource "build" do
-          url "https://brew.sh/build-1.0.tar.gz"
-        end
-
-        resource "fixture", :test do
-          url "https://brew.sh/fixture-1.0.tar.gz"
-        end
-      end
-    end
 
     before do
       allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
@@ -48,7 +49,12 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
     it "loads the formula source to find test resources when using the API" do
       ENV.delete("HOMEBREW_TEST_GENERIC_OS")
       allow(foo).to receive(:loaded_from_api?).and_return(true)
-      expect(Homebrew::API::Formula).to receive(:source_download_formula).with(foo).and_return(foo)
+      source_foo = formula("foo") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/foo-1.0.tar.gz"
+      end
+      allow(source_foo).to receive(:loaded_from_api?).and_return(false)
+      expect(Homebrew::API::Formula).to receive(:source_download_formula).with(foo).and_return(source_foo)
 
       cmd.run
     end
@@ -97,6 +103,25 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
     expect(FormulaInstaller).not_to receive(:new)
 
     expect { cmd.run_fetch_hook(foo) }.not_to output.to_stderr
+  end
+
+  it "loads the formula source to enqueue its resources when using the API" do
+    ENV.delete("HOMEBREW_TEST_GENERIC_OS")
+    cmd = described_class.new(["--build-from-source", "foo"])
+    api_foo = formula("foo") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/foo-1.0.tar.gz"
+    end
+    allow(api_foo).to receive(:loaded_from_api?).and_return(true)
+    download_queue = instance_double(Homebrew::DownloadQueue, enqueue: nil, fetch: nil, shutdown: nil)
+    allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
+    allow(cmd.args.named).to receive_messages(to_formulae_and_casks: [api_foo])
+    allow(Formulary).to receive_messages(factory: api_foo, from_path: api_foo)
+    allow(cmd).to receive(:run_fetch_hook)
+    allow(Homebrew::API::Formula).to receive(:source_download_formula).with(api_foo).and_return(foo)
+    expect(download_queue).to receive(:enqueue).with(foo.resource("build"))
+
+    cmd.run
   end
 
   it "uses API bottle metadata before loading simple core formulae" do
