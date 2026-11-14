@@ -171,6 +171,8 @@ module Homebrew
 
                 next if fetched_bottle
 
+                formula = Homebrew::API::Formula.source_download_formula(formula) if formula.loaded_from_api?
+
                 if (resource = formula.resource)
                   download_queue.enqueue(resource)
                 end
