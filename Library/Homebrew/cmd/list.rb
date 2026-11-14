@@ -91,7 +91,6 @@ module Homebrew
       end
 
       sig { override.void }
-      # rubocop:todo Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def run
         if args.json?
           raise UsageError, "`brew list --json` requires `--versions`." unless args.versions?
@@ -136,57 +135,7 @@ module Homebrew
             puts full_cask_names if full_cask_names.present?
           end
         elsif args.pinned?
-          pinned = if args.no_named?
-            entries = T.let([], T::Array[String])
-            unless args.cask?
-              Formula.racks.each do |rack|
-                entry = pinned_formula_entry(rack.basename.to_s)
-                entries << entry if entry
-              end
-            end
-
-            if !args.formula? && Cask::Caskroom.path.directory?
-              Cask::Caskroom.path.children.reject(&:file?).each do |path|
-                entry = pinned_cask_entry(path.basename.to_s)
-                entries << entry if entry
-              end
-            end
-            entries
-          else
-            args.named.filter_map do |name|
-              entry = T.let(nil, T.nilable(String))
-              package_found = T.let(false, T::Boolean)
-              package_name = T.let(nil, T.nilable(String))
-
-              unless args.cask?
-                rack = Formulary.to_rack(name)
-                if rack.exist?
-                  package_found = true
-                  package_name = rack.basename.to_s
-                  entry ||= pinned_formula_entry(rack.basename.to_s)
-                end
-              end
-
-              unless args.formula?
-                token = ::Utils.name_from_full_name(name).to_s
-                caskroom_path = Cask::Caskroom.path/token
-                if caskroom_path.exist? || caskroom_path.symlink?
-                  package_found = true
-                  package_name ||= token
-                  entry ||= pinned_cask_entry(token)
-                end
-              end
-
-              if package_found && entry.nil?
-                opoo "#{package_name || name} not pinned"
-              elsif !package_found
-                Homebrew.failed = true
-              end
-              entry
-            end
-          end
-
-          puts pinned.sort(&Cask::List::TAP_AND_NAME_COMPARISON)
+          list_pinned
         elsif args.versions? || args.multiple?
           filtered_list unless args.cask?
           list_casks if args.cask? || (!args.formula? && !args.multiple? && args.no_named?)
@@ -263,8 +212,61 @@ module Homebrew
           end
         end
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
-      # rubocop:enable Metrics/PerceivedComplexity
+
+      sig { void }
+      def list_pinned
+        pinned = if args.no_named?
+          entries = T.let([], T::Array[String])
+          unless args.cask?
+            Formula.racks.each do |rack|
+              entry = pinned_formula_entry(rack.basename.to_s)
+              entries << entry if entry
+            end
+          end
+
+          if !args.formula? && Cask::Caskroom.path.directory?
+            Cask::Caskroom.path.children.reject(&:file?).each do |path|
+              entry = pinned_cask_entry(path.basename.to_s)
+              entries << entry if entry
+            end
+          end
+          entries
+        else
+          args.named.filter_map do |name|
+            entry = T.let(nil, T.nilable(String))
+            package_found = T.let(false, T::Boolean)
+            package_name = T.let(nil, T.nilable(String))
+
+            unless args.cask?
+              rack = Formulary.to_rack(name)
+              if rack.exist?
+                package_found = true
+                package_name = rack.basename.to_s
+                entry ||= pinned_formula_entry(rack.basename.to_s)
+              end
+            end
+
+            unless args.formula?
+              token = ::Utils.name_from_full_name(name).to_s
+              caskroom_path = Cask::Caskroom.path/token
+              if caskroom_path.exist? || caskroom_path.symlink?
+                package_found = true
+                package_name ||= token
+                entry ||= pinned_cask_entry(token)
+              end
+            end
+
+            if package_found && entry.nil?
+              opoo "#{package_name || name} not pinned"
+            elsif !package_found
+              Homebrew.failed = true
+            end
+            entry
+          end
+        end
+
+        puts pinned.sort(&Cask::List::TAP_AND_NAME_COMPARISON)
+      end
 
       private
 

@@ -34,6 +34,29 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
     expect(formula_path.read).to include("version \"0.2\"")
   end
 
+  describe "#resource_checkboxes" do
+    it "retains source annotations in the review checklist during a dry run" do
+      command = described_class.new(["--dry-run", "test"])
+
+      expect(command.resource_checkboxes(f, "# TODO: review this change", Version.new("1.2.4")))
+        .to eq(["- [ ] TODO and FIXME comments have been checked."])
+    end
+  end
+
+  describe "#github_release_notes" do
+    it "escapes release links and records the release only once" do
+      url = "https://github.com/example/project/archive/refs/tags/v1.2.4.tar.gz"
+      releases = Set.new
+      allow(GitHub::API).to receive(:open_rest).and_return(
+        "body" => "Release changes", "html_url" => 'https://example.com/?a=1&b="2"', "prerelease" => true,
+      )
+
+      expect(bump_formula_pr.github_release_notes(url, releases))
+        .to include("prerelease notes", "Release changes", "?a=1&amp;b=&quot;2&quot;")
+      expect(bump_formula_pr.github_release_notes(url, releases)).to eq("")
+    end
+  end
+
   describe "#run" do
     context "when the formula has patches" do
       let(:formula_path) { CoreTap.instance.new_formula_path("patchball") }
@@ -84,7 +107,8 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
       end
 
       it "writes the version bump, removes incorporated patches and retains unverified patches" do
-        command.run
+        command.prepare_formula_bump("patchball", Formula["patchball"], CoreTap.instance,
+                                     "Homebrew/homebrew-core", Set.new, patch_inclusion)
 
         expect(formula_path.read).to include(source_url, other_url)
         expect(formula_path.read).not_to include(patch_url, "# Backport a build fix.", "\n\n\n")
@@ -115,6 +139,119 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
 
           expect { command.run }.to raise_error(SystemExit)
           expect(formula_path.read).to eq(original)
+        end
+      end
+    end
+
+    context "when bumping synced formulae", :trust_store do
+      let(:tap) { CoreTap.instance }
+      let(:options) { [] }
+      let(:formulae) do
+        %w[first second third].map do |name|
+          path = tap.new_formula_path(name)
+          path.dirname.mkpath
+          path.write <<~RUBY
+            class #{name.capitalize} < Formula
+              url "https://brew.sh/#{name}-1.0.tar.gz"
+              sha256 "#{"a" * 64}"
+            end
+          RUBY
+          Formulary.from_contents(name, path, path.read, tap:)
+        end
+      end
+      let(:command) do
+        described_class.new([
+          *options, "--bump-synced=#{formulae.map(&:full_name).join(",")}",
+          "--url=https://brew.sh/updated-2.0.tar.gz", "--sha256=#{"b" * 64}", formulae.first.full_name
+        ])
+      end
+
+      before do
+        Homebrew::Trust.trust!(:tap, tap.name)
+        allow(Utils::GemSetup).to receive(:install_bundler_gems!)
+        allow(tap).to receive_messages(allow_bump?: true, git?: true, remote_repository: tap.full_name)
+        allow(command).to receive_messages(check_new_version: nil, check_pull_requests: nil, resource_checkboxes: [])
+        allow(command.args.named).to receive(:to_formulae).and_return([formulae.first])
+        allow(GitHub).to receive(:too_many_open_prs?).and_return(false)
+        allow(Homebrew::Bump).to receive(:create_pr)
+        tap.alias_dir.mkpath
+        formulae.each do |formula|
+          allow(Formula).to receive(:[]).with(formula.full_name).and_return(formula)
+          allow(Formula).to receive(:[]).with(formula.name).and_return(formula)
+          allow(formula).to receive(:aliases).and_return(["#{formula.name}@1"])
+          FileUtils.ln_s formula.path, tap.alias_dir/"#{formula.name}@1"
+        end
+      end
+
+      test_each(%w[first second]) do |failed_formula|
+        it "restores completed alias moves and all formulae when #{failed_formula} fails audit" do
+          original_contents = formulae.map { |formula| formula.path.read }
+          allow(command).to receive(:system) do |*arguments|
+            system((arguments.last == failed_formula) ? "/usr/bin/false" : "/usr/bin/true")
+          end
+
+          expect { command.run }.to raise_error(SystemExit)
+            .and output("Error: `brew audit` failed for #{failed_formula}!\n").to_stderr
+          expect(formulae.map { |formula| formula.path.read }).to eq(original_contents)
+          expect(tap.alias_dir.children.to_h { |path| [path.basename.to_s, path.readlink] })
+            .to eq(formulae.to_h { |formula| ["#{formula.name}@1", formula.path] })
+        end
+      end
+
+      context "with a third-party tap" do
+        let(:tap) { Tap.fetch("user", "repo") }
+
+        after { FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"user" }
+
+        it "audits and restores the tapped formula without overwriting the same-named core formula" do
+          core_path = CoreTap.instance.new_formula_path("first")
+          core_path.dirname.mkpath
+          core_contents = "class First < Formula\n  url \"https://brew.sh/core-1.0.tar.gz\"\nend\n"
+          core_path.write core_contents
+          allow(Formula).to receive(:[]).with("first")
+                                        .and_return(Formulary.from_contents("first", core_path, core_contents,
+                                                                            tap: CoreTap.instance))
+          allow(command).to receive(:alias_update_pair).and_return(nil)
+          original_contents = formulae.map { |formula| formula.path.read }
+          audited_formulae = []
+          allow(command).to receive(:system) do |*arguments|
+            audited_formulae << arguments.last
+            system "/usr/bin/false"
+          end
+
+          expect { command.run }.to raise_error(SystemExit)
+          expect(audited_formulae).to eq(["user/repo/first"])
+          expect(formulae.map { |formula| formula.path.read }).to eq(original_contents)
+          expect(core_path.read).to eq(core_contents)
+        end
+      end
+
+      context "with --write-only" do
+        let(:options) { ["--write-only"] }
+        let(:formulae) { super().first(1) }
+
+        it "keeps the bumped formula and renamed alias when audit fails" do
+          allow(command).to receive(:system) { system "/usr/bin/false" }
+
+          expect { command.run }.to raise_error(SystemExit)
+            .and output("Error: `brew audit` failed for first!\n").to_stderr
+          expect(formulae.fetch(0).path.read).to include('url "https://brew.sh/updated-2.0.tar.gz"')
+          expect(tap.alias_dir.children.to_h { |path| [path.basename.to_s, path.readlink] })
+            .to eq("first@2" => formulae.fetch(0).path)
+        end
+      end
+
+      context "with a dry run" do
+        let(:options) { ["--dry-run"] }
+
+        it "leaves formula contents and versioned aliases untouched" do
+          original_contents = formulae.map { |formula| formula.path.read }
+
+          command.run
+
+          expect(formulae.map { |formula| formula.path.read }).to eq(original_contents)
+          expect(tap.alias_dir.children.to_h { |path| [path.basename.to_s, path.readlink] })
+            .to eq(formulae.to_h { |formula| ["#{formula.name}@1", formula.path] })
         end
       end
     end

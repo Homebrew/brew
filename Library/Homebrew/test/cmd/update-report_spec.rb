@@ -56,22 +56,16 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
                                                      .with("https://github.com/new/homebrew-foo.git", quiet: true) do
       allow(tap).to receive(:repository_var_suffix).and_return("_NEW_HOMEBREW_FOO")
     end
-    allow(Homebrew::EnvConfig).to receive_messages(disable_load_formula?: true, no_install_from_api?: true)
     update_report = described_class.new(["--quiet"])
-    allow(update_report).to receive(:tap_or_untap_core_taps_if_necessary)
 
-    with_env(
-      HOMEBREW_REDIRECTED_REMOTES_FILE:        redirected_remotes_file.to_s,
-      HOMEBREW_UPDATE_BEFORE:                  "abc",
-      HOMEBREW_UPDATE_AFTER:                   "abc",
-      HOMEBREW_UPDATE_BEFORE_OLD_HOMEBREW_FOO: "123",
-      HOMEBREW_UPDATE_AFTER_OLD_HOMEBREW_FOO:  "456",
-    ) do
-      update_report.run
+    ENV["HOMEBREW_REDIRECTED_REMOTES_FILE"] = redirected_remotes_file.to_s
+    ENV["HOMEBREW_UPDATE_BEFORE_OLD_HOMEBREW_FOO"] = "123"
+    ENV["HOMEBREW_UPDATE_AFTER_OLD_HOMEBREW_FOO"] = "456"
 
-      expect(ENV.fetch("HOMEBREW_UPDATE_BEFORE_NEW_HOMEBREW_FOO")).to eq("123")
-      expect(ENV.fetch("HOMEBREW_UPDATE_AFTER_NEW_HOMEBREW_FOO")).to eq("456")
-    end
+    update_report.apply_redirected_remotes
+
+    expect(ENV.fetch("HOMEBREW_UPDATE_BEFORE_NEW_HOMEBREW_FOO")).to eq("123")
+    expect(ENV.fetch("HOMEBREW_UPDATE_AFTER_NEW_HOMEBREW_FOO")).to eq("456")
   end
 
   it "refuses an off-allowlist redirect and rolls the tap back to its pre-update revision" do

@@ -94,7 +94,9 @@ RSpec.describe Homebrew::DevCmd::Bottle do
     allow(keg).to receive(:delete_pyc_files!).and_raise("placeholdering failed")
     allow(keg).to receive(:replace_placeholders_with_locations).and_raise("restoration ran")
 
-    expect { bottle.run }.to raise_error(RuntimeError, "placeholdering failed")
+    expect do
+      bottle.bottle_keg(formula, keg, tap, Pathname.pwd/"testball.tar.gz", Pathname.pwd/"testball.tar", padded: false)
+    end.to raise_error(RuntimeError, "placeholdering failed")
   end
 
   describe "building a bottle", :integration_test do

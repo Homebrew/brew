@@ -23,7 +23,8 @@ require "utils/path"
 
 module Cask
   # Audit a cask for various problems.
-  class Audit # rubocop:todo Metrics/ClassLength
+  # Audit methods share cask state and form the dynamically discovered check catalogue.
+  class Audit # rubocop:disable Metrics/ClassLength
     include SystemCommand::Mixin
     include ::Utils::Curl
     include ::Utils::Output::Mixin

@@ -17,6 +17,30 @@ RSpec.describe PyPI do
     "https://github.com/pypa/pip-audit/releases/download/v2.5.6/v2.5.6.tar.gz"
   end
 
+  describe ".main_package" do
+    let(:package_formula) do
+      formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://files.pythonhosted.org/packages/example-1.0.tar.gz"
+        version "1.0"
+      end
+    end
+
+    it "retains the current version when resolving an explicit package name" do
+      expect(described_class.main_package(package_formula, package_name: "example", python_name: "python")&.to_s)
+        .to eq("example==1.0")
+    end
+
+    it "does not pin the current version when a new version was requested" do
+      expect(described_class.main_package(package_formula, package_name: "example", version: "2.0",
+                                          python_name: "python")&.to_s).to eq("example")
+    end
+
+    it "allows the main package to be omitted" do
+      expect(described_class.main_package(package_formula, package_name: "", python_name: "python")).to be_nil
+    end
+  end
+
   describe PyPI::Package do
     let(:package_checksum) { "47417307d08ecb0707b3b29effc933bd63d8c8e3ab15509c62b685b7614c6568" }
     let(:old_package_checksum) { "2367ce91baf7f8fa7738d33aff9670ffdf5410bbac49aeb209f73b45a3425046" }

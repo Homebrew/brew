@@ -42,6 +42,20 @@ RSpec.describe Homebrew::DevCmd::AdvisoryMatch do
     cmd
   end
 
+  it "stops record emission when alias preparation fails" do
+    command = cmd_for("--no-history", "requests")
+    emitter = Homebrew::DevCmd::AdvisoryMatch::Emitter.new
+    allow(command).to receive(:text_mode?).and_return(false)
+    allow(emitter).to receive(:prepare_aliases).and_return(["Conflicting advisory aliases"])
+
+    expect do
+      command.emit_formula_records(instance_double(Homebrew::Vulns::Match), requests, [], emitter,
+                                   overrides: nil, latest_macos: :sequoia, rejected_candidates: Set.new,
+                                   prefiltered: [])
+    end.to output(/Conflicting advisory aliases/).to_stderr
+    expect(Homebrew).to have_failed
+  end
+
   def stub_osv_hit(cve, fixed:, aliases: [])
     allow(Homebrew::Vulns::OSV).to receive(:query_batch).and_return([[{ "id" => cve }], []])
     allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with(cve).and_return(
