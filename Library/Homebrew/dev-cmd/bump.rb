@@ -218,7 +218,7 @@ module Homebrew
           repositories:    T::Array[T::Hash[String, T.untyped]],
         ).returns(VersionBumpInfo)
       }
-      def retrieve_versions_by_arch(formula_or_cask:, repositories:) # rubocop:todo Metrics/MethodLength
+      def retrieve_versions_by_arch(formula_or_cask:, repositories:)
         is_cask_with_blocks = formula_or_cask.is_a?(Cask::Cask) && formula_or_cask.on_system_blocks_exist?
         type, version_name = if formula_or_cask.is_a?(Formula)
           [:formula, "formula version:"]
@@ -405,31 +405,16 @@ module Homebrew
 
         if !args.no_pull_requests? &&
            !newer_than_upstream.all? { |_k, v| v == true }
-          pull_request_version = nil
-          if (new_version_arm = new_version.arm) &&
-             !message?(new_version_arm) &&
-             (new_version_arm != current_version.arm)
-            # We use the ARM version for the pull request version even if there
-            # are multiple arch versions to be consistent with the behavior of
-            # bump-cask-pr.
-            pull_request_version = new_version_arm.to_s
-          elsif (new_version_intel = new_version.intel) &&
-                !message?(new_version_intel) &&
-                (new_version_intel != current_version.intel)
-            pull_request_version = new_version_intel.to_s
-          elsif (new_version_linux_arm = new_version.linux_arm) &&
-                !message?(new_version_linux_arm) &&
-                (new_version_linux_arm != current_version.linux_arm)
-            pull_request_version = new_version_linux_arm.to_s
-          elsif (new_version_linux_intel = new_version.linux_intel) &&
-                !message?(new_version_linux_intel) &&
-                (new_version_linux_intel != current_version.linux_intel)
-            pull_request_version = new_version_linux_intel.to_s
-          elsif (new_version_general = new_version.general) &&
-                !message?(new_version_general) &&
-                (new_version_general != current_version.general)
-            pull_request_version = new_version_general.to_s
-          end
+          # Prefer ARM for the pull request version, matching bump-cask-pr.
+          pull_request_version = [
+            [new_version.arm, current_version.arm],
+            [new_version.intel, current_version.intel],
+            [new_version.linux_arm, current_version.linux_arm],
+            [new_version.linux_intel, current_version.linux_intel],
+            [new_version.general, current_version.general],
+          ].find do |candidate, current|
+            candidate && !message?(candidate) && candidate != current
+          end&.first&.to_s
 
           if pull_request_version
             duplicate_pull_requests = retrieve_pull_requests(formula_or_cask, version: pull_request_version)

@@ -8,7 +8,6 @@ RSpec.describe Homebrew::Attestation do
   let(:fake_gh) { Pathname.new("/extremely/fake/gh") }
   let(:fake_gh_creds) { "fake-gh-api-token" }
   let(:fake_error_status) { instance_double(Process::Status, exitstatus: 1, termsig: nil) }
-  let(:fake_auth_status) { instance_double(Process::Status, exitstatus: 4, termsig: nil) }
   let(:cached_download) { (mktmpdir/"bottle.tar.gz").tap { |path| path.write("bottle") } }
   let(:fake_bottle_digest) { Digest::SHA256.hexdigest("bottle") }
   let(:fake_subject) { { name: fake_bottle_filename.to_s, digest: { sha256: fake_bottle_digest } } }
@@ -31,42 +30,11 @@ RSpec.describe Homebrew::Attestation do
     instance_double(Bottle, cached_download:, filename: fake_bottle_filename, url: fake_bottle_url,
                     tag: fake_all_bottle_tag)
   end
-  let(:fake_result_invalid_json) { instance_double(SystemCommand::Result, stdout: "\"invalid JSON") }
   let(:fake_result_json_resp) do
     instance_double(SystemCommand::Result,
                     stdout: JSON.dump([
                       { verificationResult: {
                         verifiedTimestamps: [{ timestamp: "2024-03-13T00:00:00Z" }],
-                        statement:          { subject: [fake_subject] },
-                      } },
-                    ]))
-  end
-  let(:fake_result_json_resp_multi_subject) do
-    instance_double(SystemCommand::Result,
-                    stdout: JSON.dump([
-                      { verificationResult: {
-                        verifiedTimestamps: [{ timestamp: "2024-03-13T00:00:00Z" }],
-                        statement:          { subject: [{ name: "nonsense" }, fake_subject] },
-                      } },
-                    ]))
-  end
-  let(:fake_result_json_resp_backfill) do
-    digest = Digest::SHA256.hexdigest(fake_bottle_url)
-    instance_double(SystemCommand::Result,
-                    stdout: JSON.dump([
-                      { verificationResult: {
-                        verifiedTimestamps: [{ timestamp: "2024-03-13T00:00:00Z" }],
-                        statement:          {
-                          subject: [fake_subject.merge(name: "#{digest}--#{fake_bottle_filename}")],
-                        },
-                      } },
-                    ]))
-  end
-  let(:fake_result_json_resp_too_new) do
-    instance_double(SystemCommand::Result,
-                    stdout: JSON.dump([
-                      { verificationResult: {
-                        verifiedTimestamps: [{ timestamp: "2024-03-15T00:00:00Z" }],
                         statement:          { subject: [fake_subject] },
                       } },
                     ]))
@@ -133,7 +101,7 @@ RSpec.describe Homebrew::Attestation do
     end
   end
 
-  describe "::prefetch" do # rubocop:todo RSpec/MultipleMemoizedHelpers
+  describe "::prefetch" do
     let(:bulk_list_url) { "https://api.github.com/orgs/Homebrew/attestations/bulk-list?per_page=100" }
     let(:backfill_bulk_list_url) { "https://api.github.com/orgs/trailofbits/attestations/bulk-list?per_page=100" }
     let(:listed_attestation) { { "bundle" => fake_bundle, "repository_id" => 1 } }
@@ -311,6 +279,10 @@ RSpec.describe Homebrew::Attestation do
   end
 
   describe "::check_attestation" do
+    let(:fake_result_invalid_json) { instance_double(SystemCommand::Result, stdout: "\"invalid JSON") }
+
+    let(:fake_auth_status) { instance_double(Process::Status, exitstatus: 4, termsig: nil) }
+
     before do
       allow(described_class).to receive(:gh_executable)
         .and_return(fake_gh)
@@ -559,7 +531,7 @@ RSpec.describe Homebrew::Attestation do
     end
   end
 
-  describe "::check_formula_attestation" do # rubocop:todo RSpec/MultipleMemoizedHelpers
+  describe "::check_formula_attestation" do
     let(:bottle_resource) { instance_double(Resource, owner: formula_owner) }
     let(:attested_bottle) { instance_double(Bottle, resource: bottle_resource) }
     let(:formula_owner) do
@@ -608,6 +580,39 @@ RSpec.describe Homebrew::Attestation do
   end
 
   describe "::check_core_attestation" do
+    let(:fake_result_json_resp_too_new) do
+      instance_double(SystemCommand::Result,
+                      stdout: JSON.dump([
+                        { verificationResult: {
+                          verifiedTimestamps: [{ timestamp: "2024-03-15T00:00:00Z" }],
+                          statement:          { subject: [fake_subject] },
+                        } },
+                      ]))
+    end
+
+    let(:fake_result_json_resp_backfill) do
+      digest = Digest::SHA256.hexdigest(fake_bottle_url)
+      instance_double(SystemCommand::Result,
+                      stdout: JSON.dump([
+                        { verificationResult: {
+                          verifiedTimestamps: [{ timestamp: "2024-03-13T00:00:00Z" }],
+                          statement:          {
+                            subject: [fake_subject.merge(name: "#{digest}--#{fake_bottle_filename}")],
+                          },
+                        } },
+                      ]))
+    end
+
+    let(:fake_result_json_resp_multi_subject) do
+      instance_double(SystemCommand::Result,
+                      stdout: JSON.dump([
+                        { verificationResult: {
+                          verifiedTimestamps: [{ timestamp: "2024-03-13T00:00:00Z" }],
+                          statement:          { subject: [{ name: "nonsense" }, fake_subject] },
+                        } },
+                      ]))
+    end
+
     before do
       allow(described_class).to receive(:gh_executable)
         .and_return(fake_gh)

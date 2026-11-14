@@ -951,7 +951,7 @@ module RuboCop
       # This cop checks for other miscellaneous style violations.
       class Miscellaneous < FormulaCop
         sig { override.params(formula_nodes: FormulaNodes).void }
-        def audit_formula(formula_nodes) # rubocop:todo Metrics/MethodLength
+        def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
 
           # FileUtils is included in Formula
@@ -986,21 +986,11 @@ module RuboCop
 
           # Avoid hard-coding compilers
           find_every_method_call_by_name(body_node, :system).each do |method|
-            param = parameters(method).fetch(0)
-            if (match = regex_match_group(param, %r{^(?:/usr/bin/)?(gcc|clang|cc|c[89]9)(?:\s|$)}))
-              problem "Use `\#{ENV.cc}` instead of hard-coding `#{match[1]}`"
-            elsif (match = regex_match_group(param, %r{^(?:/usr/bin/)?((?:g|clang|c)\+\+)(?:\s|$)}))
-              problem "Use `\#{ENV.cxx}` instead of hard-coding `#{match[1]}`"
-            end
+            audit_compiler(parameters(method).fetch(0))
           end
 
           find_instance_method_call(body_node, "ENV", :[]=) do |method|
-            param = parameters(method).fetch(1)
-            if (match = regex_match_group(param, %r{^(?:/usr/bin/)?(gcc|clang|cc|c[89]9)(?:\s|$)}))
-              problem "Use `\#{ENV.cc}` instead of hard-coding `#{match[1]}`"
-            elsif (match = regex_match_group(param, %r{^(?:/usr/bin/)?((?:g|clang|c)\+\+)(?:\s|$)}))
-              problem "Use `\#{ENV.cxx}` instead of hard-coding `#{match[1]}`"
-            end
+            audit_compiler(parameters(method).fetch(1))
           end
 
           # Prefer formula path shortcuts in strings
@@ -1153,6 +1143,15 @@ module RuboCop
             next unless (match = regex_match_group(param, fileutils_methods))
 
             problem "Use the `#{match}` Ruby method instead of `#{method.source}`"
+          end
+        end
+
+        sig { params(param: RuboCop::AST::Node).void }
+        def audit_compiler(param)
+          if (match = regex_match_group(param, %r{^(?:/usr/bin/)?(gcc|clang|cc|c[89]9)(?:\s|$)}))
+            problem "Use `\#{ENV.cc}` instead of hard-coding `#{match[1]}`"
+          elsif (match = regex_match_group(param, %r{^(?:/usr/bin/)?((?:g|clang|c)\+\+)(?:\s|$)}))
+            problem "Use `\#{ENV.cxx}` instead of hard-coding `#{match[1]}`"
           end
         end
 

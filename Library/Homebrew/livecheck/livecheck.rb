@@ -630,7 +630,7 @@ module Homebrew
         debug:                      T::Boolean,
       ).returns(T.nilable(T::Hash[Symbol, T.untyped]))
     }
-    # rubocop:todo Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+    # rubocop:todo Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def self.latest_version(
       formula_or_cask,
       referenced_formula_or_cask: nil,
@@ -692,7 +692,7 @@ module Homebrew
       end
 
       checked_urls = []
-      urls.each_with_index do |original_url, i| # rubocop:todo Metrics/BlockLength
+      urls.each_with_index do |original_url, i|
         url = original_url
         next if checked_urls.include?(url)
 
@@ -713,20 +713,8 @@ module Homebrew
         end
 
         if debug
-          puts
-          if livecheck_url.is_a?(Symbol)
-            # This assumes the URL symbol will fit within the available space
-            puts "URL (#{livecheck_url}):".ljust(18, " ") + original_url
-          elsif original_url.present? && original_url != "None"
-            puts "URL:              #{original_url}"
-          end
-          puts "URL (processed):  #{url}" if url != original_url
-          puts "URL Options:      #{livecheck_url_options}" if livecheck_url_options.present?
-          if strategies.present? && verbose
-            puts "Strategies:       #{strategies.map { |s| livecheck_strategy_names(s) }.join(", ")}"
-          end
-          puts "Strategy:         #{strategy_name}" if strategy.present?
-          puts "Regex:            #{livecheck_regex.inspect}" if livecheck_regex.present?
+          print_strategy_info(original_url:, url:, url_spec: livecheck_url, url_options: livecheck_url_options,
+                              strategies:, strategy:, regex: livecheck_regex, verbose:)
         end
 
         if livecheck_strategy.present?
@@ -796,18 +784,7 @@ module Homebrew
         end
         next if match_version_map.blank?
 
-        if debug
-          puts
-          puts "Matched Versions:"
-
-          if verbose
-            match_version_map.each do |match, version|
-              puts Tty.strip_ansi("#{match} => #{version.inspect}")
-            end
-          else
-            puts Tty.strip_ansi(match_version_map.values.join(", "))
-          end
-        end
+        print_matches(match_version_map, verbose:) if debug
 
         version_info = {
           latest: Version.new(match_version_map.values.max_by { |v| LivecheckVersion.create(formula_or_cask, v) }),
@@ -834,16 +811,7 @@ module Homebrew
           end
 
           if debug
-            puts
-            puts "Matched Throttled Versions:"
-
-            if verbose
-              throttled_match_version_map.each do |match, version|
-                puts Tty.strip_ansi("#{match} => #{version.inspect}")
-              end
-            elsif throttled_match_version_map.present?
-              puts Tty.strip_ansi(throttled_match_version_map.values.join(", "))
-            end
+            print_matches(throttled_match_version_map, heading: "Matched Throttled Versions", verbose:)
 
             if version_info[:latest_throttled] == version_info[:latest] && throttled_match_version_map.blank?
               puts Tty.strip_ansi("#{version_info[:latest_throttled]} (throttle interval elapsed)")
@@ -892,7 +860,45 @@ module Homebrew
       end
       nil
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+
+    sig {
+      params(original_url: String, url: String, url_spec: T.nilable(T.any(String, Symbol)),
+             url_options: T::Hash[Symbol, T.anything], strategies: T::Array[T::Class[Strategic]],
+             strategy: T.nilable(T::Class[Strategic]), regex: T.nilable(Regexp), verbose: T::Boolean).void
+    }
+    def self.print_strategy_info(original_url:, url:, url_spec:, url_options:, strategies:, strategy:, regex:,
+                                 verbose:)
+      puts
+      if url_spec.is_a?(Symbol)
+        # This assumes the URL symbol will fit within the available space.
+        puts "URL (#{url_spec}):".ljust(18, " ") + original_url
+      elsif original_url.present? && original_url != "None"
+        puts "URL:              #{original_url}"
+      end
+      puts "URL (processed):  #{url}" if url != original_url
+      puts "URL Options:      #{url_options}" if url_options.present?
+      if strategies.present? && verbose
+        puts "Strategies:       #{strategies.map { |s| livecheck_strategy_names(s) }.join(", ")}"
+      end
+      puts "Strategy:         #{livecheck_strategy_names(strategy)}" if strategy
+      puts "Regex:            #{regex.inspect}" if regex.present?
+    end
+    private_class_method :print_strategy_info
+
+    sig { params(matches: T::Hash[String, Version], verbose: T::Boolean, heading: String).void }
+    def self.print_matches(matches, verbose:, heading: "Matched Versions")
+      puts
+      puts "#{heading}:"
+      if verbose
+        matches.each do |match, version|
+          puts Tty.strip_ansi("#{match} => #{version.inspect}")
+        end
+      elsif matches.present?
+        puts Tty.strip_ansi(matches.values.join(", "))
+      end
+    end
+    private_class_method :print_matches
 
     # Identifies the latest version of a resource and returns a Hash containing the
     # version information. Returns nil if a latest version couldn't be found.
@@ -907,7 +913,7 @@ module Homebrew
         verbose:        T::Boolean,
       ).returns(T::Hash[Symbol, T.untyped])
     }
-    def self.resource_version( # rubocop:todo Metrics/MethodLength
+    def self.resource_version(
       resource,
       formula_latest,
       json: false,
@@ -942,7 +948,7 @@ module Homebrew
       urls ||= checkable_urls(resource)
 
       checked_urls = []
-      urls.each_with_index do |original_url, i| # rubocop:todo Metrics/BlockLength
+      urls.each_with_index do |original_url, i|
         url = original_url.gsub(Constants::LATEST_VERSION, formula_latest)
         next if checked_urls.include?(url)
 
@@ -963,29 +969,13 @@ module Homebrew
         end
 
         if debug
-          puts
-          if livecheck_url.is_a?(Symbol)
-            # This assumes the URL symbol will fit within the available space
-            puts "URL (#{livecheck_url}):".ljust(18, " ") + original_url
-          elsif original_url.present? && original_url != "None"
-            puts "URL:              #{original_url}"
-          end
-          puts "URL (processed):  #{url}" if url != original_url
-          puts "URL Options:      #{livecheck_url_options}" if livecheck_url_options.present?
-          if strategies.present? && verbose
-            puts "Strategies:       #{strategies.map { |s| livecheck_strategy_names(s) }.join(", ")}"
-          end
-          puts "Strategy:         #{strategy_name}" if strategy.present?
-          puts "Regex:            #{livecheck_regex.inspect}" if livecheck_regex.present?
+          print_strategy_info(original_url:, url:, url_spec: livecheck_url, url_options: livecheck_url_options,
+                              strategies:, strategy:, regex: livecheck_regex, verbose:)
           if livecheck_reference == :parent
             resource_owner = resource.owner
             raise "Resource owner is nil" if resource_owner.nil?
 
-            formula = if full_name
-              T.cast(resource_owner, ::Formula).full_name
-            else
-              resource_owner.name
-            end
+            formula = full_name ? T.cast(resource_owner, ::Formula).full_name : resource_owner.name
             puts "Formula Ref:      #{formula} (parent)"
           end
         end
@@ -1056,18 +1046,7 @@ module Homebrew
         end
         next if match_version_map.blank?
 
-        if debug
-          puts
-          puts "Matched Versions:"
-
-          if verbose
-            match_version_map.each do |match, version|
-              puts Tty.strip_ansi("#{match} => #{version.inspect}")
-            end
-          else
-            puts Tty.strip_ansi(match_version_map.values.join(", "))
-          end
-        end
+        print_matches(match_version_map, verbose:) if debug
 
         res_current = resource.version
         return status_hash(resource, "error", [NO_CURRENT_VERSION_MSG], verbose:) if res_current.nil?
@@ -1096,11 +1075,7 @@ module Homebrew
           resource_owner = resource.owner
           raise "Resource owner is nil" if resource_owner.nil?
 
-          formula = if full_name
-            T.cast(resource_owner, ::Formula).full_name
-          else
-            resource_owner.name
-          end
+          formula = full_name ? T.cast(resource_owner, ::Formula).full_name : resource_owner.name
           resource_version_info[:meta][:references] =
             [{ formula:, symbol: :parent }]
         end

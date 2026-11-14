@@ -104,62 +104,34 @@ module Utils
 
     sig {
       params(
+        title:               Title,
         formula_or_cask:     T.any(Formula, Cask::Cask),
-        name:                String,
         installation_status: T::Array[String],
         source_url:          T.nilable(String),
         installed_versions:  T::Array[InstalledVersion],
         verbose:             T::Boolean,
         tap:                 T.nilable(Tap),
         license:             T.nilable(T.any(String, Symbol, T::Hash[T.nilable(T.any(Symbol, String)), T.untyped])),
-        display_names:       T::Array[String],
-        version:             T.nilable(String),
-        installed_version:   T.nilable(String),
-        installed:           T::Boolean,
-        outdated:            T::Boolean,
-        warning:             T::Boolean,
-        removed:             T::Boolean,
-        stable:              T::Boolean,
-        bottled:             T::Boolean,
-        head:                T::Boolean,
-        keg_only:            T::Boolean,
-        auto_updates:        T::Boolean,
         shadowed_by:         T.nilable(String),
         aliases:             T::Array[String],
         old_names:           T::Array[String],
         conflicts:           T::Array[String],
       ).returns(String)
     }
-    def self.package_summary( # rubocop:todo Metrics/ParameterLists
+    def self.package_summary(
+      title:,
       formula_or_cask:,
-      name:,
       installation_status:,
       source_url:,
       installed_versions:,
       verbose:,
       tap: nil,
       license: nil,
-      display_names: [],
-      version: nil,
-      installed_version: nil,
-      installed: false,
-      outdated: false,
-      warning: false,
-      removed: false,
-      stable: false,
-      bottled: false,
-      head: false,
-      keg_only: false,
-      auto_updates: false,
       shadowed_by: nil,
       aliases: [],
       old_names: [],
       conflicts: []
     )
-      title = Title.new(
-        name:, display_names:, version:, installed_version:, installed:, outdated:, warning:, removed:,
-        stable:, bottled:, head:, keg_only:, auto_updates:
-      )
       deprecation = DeprecateDisable.message(formula_or_cask)
       deprecation = deprecation.chomp.sub(/\A./, &:upcase) if deprecation.present?
       installed_title = if verbose && formula_or_cask.is_a?(Formula)

@@ -96,60 +96,51 @@ module Cask
                 Utils.gain_permissions_remove(target, command:)
               end
             end
-          else
-            if adopt
-              ohai "Adopting existing #{self.class.english_name} at '#{target}'"
+          elsif adopt
+            ohai "Adopting existing #{self.class.english_name} at '#{target}'"
 
-              unless auto_updates
-                source_plist = Pathname("#{source}/Contents/Info.plist")
-                target_plist = Pathname("#{target}/Contents/Info.plist")
-                # rubocop:todo Metrics/BlockNesting
-                same = if source_plist.size? &&
-                          (source_bundle_version = Homebrew::BundleVersion.from_info_plist(source_plist)) &&
-                          target_plist.size? &&
-                          (target_bundle_version = Homebrew::BundleVersion.from_info_plist(target_plist))
-                  if source_bundle_version.short_version == target_bundle_version.short_version
-                    if source_bundle_version.version == target_bundle_version.version
-                      true
-                    else
-                      onoe "The bundle version of #{source} is #{source_bundle_version.version} but " \
-                           "is #{target_bundle_version.version} for #{target}!"
-                      false
-                    end
-                  else
-                    onoe "The bundle short version of #{source} is #{source_bundle_version.short_version} but " \
-                         "is #{target_bundle_version.short_version} for #{target}!"
-                    false
-                  end
-                else
-                  command.run(
-                    "/usr/bin/diff",
-                    args:         ["--recursive", "--brief", source, target],
-                    verbose:,
-                    print_stdout: verbose,
-                  ).success?
-                end
-                # rubocop:enable Metrics/BlockNesting
+            unless auto_updates
+              source_plist = Pathname("#{source}/Contents/Info.plist")
+              target_plist = Pathname("#{target}/Contents/Info.plist")
+              same = if source_plist.size? &&
+                        (source_bundle_version = Homebrew::BundleVersion.from_info_plist(source_plist)) &&
+                        target_plist.size? &&
+                        (target_bundle_version = Homebrew::BundleVersion.from_info_plist(target_plist))
+                [
+                  ["short version", source_bundle_version.short_version, target_bundle_version.short_version],
+                  ["version", source_bundle_version.version, target_bundle_version.version],
+                ].all? do |version_type, source_version, target_version|
+                  next true if source_version == target_version
 
-                # rubocop:todo Metrics/BlockNesting
-                unless same
-                  raise CaskError,
-                        "It seems the existing #{self.class.english_name} is different from " \
-                        "the one being installed."
+                  onoe "The bundle #{version_type} of #{source} is #{source_version} but " \
+                       "is #{target_version} for #{target}!"
+                  false
                 end
-                # rubocop:enable Metrics/BlockNesting
+              else
+                command.run(
+                  "/usr/bin/diff",
+                  args:         ["--recursive", "--brief", source, target],
+                  verbose:,
+                  print_stdout: verbose,
+                ).success?
               end
 
-              # Remove the source as we don't need to move it to the target location
-              FileUtils.rm_r(source)
-              @adopted = true
-
-              return post_move(command)
+              unless same
+                raise CaskError,
+                      "It seems the existing #{self.class.english_name} is different from " \
+                      "the one being installed."
+              end
             end
 
+            # Remove the source as we don't need to move it to the target location
+            FileUtils.rm_r(source)
+            @adopted = true
+
+            return post_move(command)
+          else
             message = "It seems there is already #{self.class.english_article} " \
                       "#{self.class.english_name} at '#{target}'"
-            raise CaskError, "#{message}." if !force && !adopt
+            raise CaskError, "#{message}." unless force
 
             opoo "#{message}; overwriting."
             delete(target, force:, successor:, command:)

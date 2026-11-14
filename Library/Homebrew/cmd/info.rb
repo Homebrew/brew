@@ -365,18 +365,20 @@ module Homebrew
 
         puts Utils::InfoDisplay.package_summary(
           formula_or_cask:     formula,
-          name:                title_name,
-          version:             stable_version,
-          installed_version:,
-          installed:,
-          outdated:,
-          warning:             missing_libraries.present?,
-          removed:             installed && formula.tap.present? &&
-                               kegs.all? { |keg| keg.tab.tap == formula.tap && keg.deleted_formula? },
-          stable:              stable.present?,
-          bottled:,
-          head:                formula.head.present?,
-          keg_only:            formula.keg_only?,
+          title:               Utils::InfoDisplay::Title.new(
+            name:              title_name,
+            version:           stable_version,
+            installed_version:,
+            installed:,
+            outdated:,
+            warning:           missing_libraries.present?,
+            removed:           installed && formula.tap.present? &&
+                                 kegs.all? { |keg| keg.tab.tap == formula.tap && keg.deleted_formula? },
+            stable:            stable.present?,
+            bottled:,
+            head:              formula.head.present?,
+            keg_only:          formula.keg_only?,
+          ),
           shadowed_by:         shadowed_by&.name,
           aliases:             formula.aliases,
           old_names:           formula.oldnames,

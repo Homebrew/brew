@@ -49,25 +49,22 @@ module RuboCop
           livecheck_urls: T::Array[String],
         ).void
       }
-      def audit_url(type, urls, mirrors, livecheck_urls: []) # rubocop:todo Metrics/MethodLength
+      def audit_url(type, urls, mirrors, livecheck_urls: [])
         @type = T.let(type, T.nilable(Symbol))
 
         # URLs must be ASCII; IDNs must be punycode
-        ascii_pattern = /[^\p{ASCII}]+/
-        audit_urls(urls, ascii_pattern) do |_, url|
+        audit_urls(urls, /[^\p{ASCII}]+/) do |_, url|
           problem "Please use the ASCII (Punycode-encoded host, URL-encoded path and query) version of #{url}."
         end
 
         # Prefer ftpmirror.gnu.org as suggested by https://www.gnu.org/prep/ftp.en.html
-        gnu_pattern = %r{^(?:https?|ftp)://ftp\.gnu\.org/(?:gnu/)?(.*)}
-        audit_urls(urls, gnu_pattern) do |match, url|
+        audit_urls(urls, %r{^(?:https?|ftp)://ftp\.gnu\.org/(?:gnu/)?(.*)}) do |match, url|
           problem "#{url} should be: https://ftpmirror.gnu.org/#{match[1]}"
         end
 
         # Fossies upstream requests they aren't used as primary URLs
         # https://github.com/Homebrew/homebrew-core/issues/14486#issuecomment-307753234
-        fossies_pattern = %r{^https?://fossies\.org/}
-        audit_urls(urls, fossies_pattern) do
+        audit_urls(urls, %r{^https?://fossies\.org/}) do
           problem "Please don't use \"fossies.org\" in the `url` (using as a mirror is fine)"
         end
 
@@ -90,8 +87,7 @@ module RuboCop
           end
         end
 
-        version_control_pattern = %r{^(cvs|bzr|hg|fossil)://}
-        audit_urls(urls, version_control_pattern) do |match, _|
+        audit_urls(urls, %r{^(cvs|bzr|hg|fossil)://}) do |match, _|
           if match[1] == "bzr"
             problem "Use of the \"bzr://\" scheme is deprecated, use Git or a stable archive URL instead"
           else
@@ -99,8 +95,7 @@ module RuboCop
           end
         end
 
-        svn_pattern = %r{^svn\+http://}
-        audit_urls(urls, svn_pattern) do |_, _|
+        audit_urls(urls, %r{^svn\+http://}) do |_, _|
           problem "Use of the \"svn+http://\" scheme is deprecated, pass `using: :svn` instead"
         end
 
@@ -148,34 +143,29 @@ module RuboCop
           problem "Please use https:// for #{url}" if !https_index || https_index > index
         end
 
-        apache_mirror_pattern = %r{^https?://(?:[^/]*\.)?apache\.org/dyn/closer\.(?:cgi|lua)\?path=/?(.*)}i
-        audit_urls(mirrors, apache_mirror_pattern) do |match, mirror|
+        audit_urls(mirrors,
+                   %r{^https?://(?:[^/]*\.)?apache\.org/dyn/closer\.(?:cgi|lua)\?path=/?(.*)}i) do |match, mirror|
           problem "#{mirror} should be: https://archive.apache.org/dist/#{match[1]}"
         end
 
-        cpan_pattern = %r{^http://search\.mcpan\.org/CPAN/(.*)}i
-        audit_urls(urls, cpan_pattern) do |match, url|
+        audit_urls(urls, %r{^http://search\.mcpan\.org/CPAN/(.*)}i) do |match, url|
           problem "#{url} should be: https://cpan.metacpan.org/#{match[1]}"
         end
 
-        gnome_pattern = %r{^(?:http|ftp)://ftp\.gnome\.org/pub/gnome/(.*)}i
-        audit_urls(urls, gnome_pattern) do |match, url|
+        audit_urls(urls, %r{^(?:http|ftp)://ftp\.gnome\.org/pub/gnome/(.*)}i) do |match, url|
           problem "#{url} should be: https://download.gnome.org/#{match[1]}"
         end
 
-        debian_pattern = %r{^git://anonscm\.debian\.org/users/(.*)}i
-        audit_urls(urls, debian_pattern) do |match, url|
+        audit_urls(urls, %r{^git://anonscm\.debian\.org/users/(.*)}i) do |match, url|
           problem "#{url} should be: https://anonscm.debian.org/git/users/#{match[1]}"
         end
 
         # Prefer HTTP/S when possible over FTP protocol due to possible firewalls.
-        mirror_service_pattern = %r{^ftp://ftp\.mirrorservice\.org}
-        audit_urls(urls, mirror_service_pattern) do |_, url|
+        audit_urls(urls, %r{^ftp://ftp\.mirrorservice\.org}) do |_, url|
           problem "Please use https:// for #{url}"
         end
 
-        cpan_ftp_pattern = %r{^ftp://ftp\.cpan\.org/pub/CPAN(.*)}i
-        audit_urls(urls, cpan_ftp_pattern) do |match_obj, url|
+        audit_urls(urls, %r{^ftp://ftp\.cpan\.org/pub/CPAN(.*)}i) do |match_obj, url|
           problem "#{url} should be: http://search.cpan.org/CPAN#{match_obj[1]}"
         end
 
@@ -213,8 +203,7 @@ module RuboCop
 
         # Debian has an abundance of secure mirrors. Let's not pluck the insecure
         # one out of the grab bag.
-        unsecure_deb_pattern = %r{^http://http\.debian\.net/debian/(.*)}i
-        audit_urls(urls, unsecure_deb_pattern) do |match, _|
+        audit_urls(urls, %r{^http://http\.debian\.net/debian/(.*)}i) do |match, _|
           problem <<~EOS
             Please use a secure mirror for Debian URLs.
             We recommend:
@@ -232,20 +221,17 @@ module RuboCop
         end
 
         # Check for new-url Google Code download URLs, https:// is preferred
-        google_code_pattern = %r{^http://code\.google\.com/}
-        audit_urls(urls, google_code_pattern) do |_, url|
+        audit_urls(urls, %r{^http://code\.google\.com/}) do |_, url|
           problem "Please use https:// for #{url}"
         end
 
         # Check for `git://` GitHub repository URLs, https:// is preferred.
-        git_gh_pattern = %r{^git://[^/]*github\.com/}
-        audit_urls(urls, git_gh_pattern) do |_, url|
+        audit_urls(urls, %r{^git://[^/]*github\.com/}) do |_, url|
           problem "Please use https:// for #{url}"
         end
 
         # Check for `http://` GitHub repository URLs, https:// is preferred.
-        gh_pattern = %r{^http://github\.com/.*\.git$}
-        audit_urls(urls, gh_pattern) do |_, url|
+        audit_urls(urls, %r{^http://github\.com/.*\.git$}) do |_, url|
           problem "Please use https:// for #{url}"
         end
 
@@ -258,23 +244,23 @@ module RuboCop
         end
 
         # Use new-style archive downloads.
-        archive_gh_pattern = %r{https://.*github.*/(?:tar|zip)ball/}
-        audit_urls(urls, archive_gh_pattern) do |_, url|
+        audit_urls(urls, %r{https://.*github.*/(?:tar|zip)ball/}) do |_, url|
           next if url.end_with?(".git")
 
           problem "Use /archive/ URLs for GitHub tarballs (`url` is #{url})."
         end
 
-        archive_refs_gh_pattern = %r{https://.*github.+/archive/(?![a-fA-F0-9]{40})(?!refs/(?:tags|heads)/)(.*)\.tar\.gz$}
-        audit_urls(urls, archive_refs_gh_pattern) do |match, url|
+        audit_urls(
+          urls,
+          %r{https://.*github.+/archive/(?![a-fA-F0-9]{40})(?!refs/(?:tags|heads)/)(.*)\.tar\.gz$},
+        ) do |match, url|
           next if url.end_with?(".git")
 
           problem %Q(Use "refs/tags/#{match[1]}" or "refs/heads/#{match[1]}" for GitHub references (`url` is #{url}).)
         end
 
         # Don't use GitHub .zip files
-        zip_gh_pattern = %r{https://.*github.*/(?:archive|releases)/.*\.zip$}
-        audit_urls(urls, zip_gh_pattern) do |_, url|
+        audit_urls(urls, %r{https://.*github.*/(?:archive|releases)/.*\.zip$}) do |_, url|
           next if url.match? %r{raw\.githubusercontent\.com/.*/.*/(main|master|HEAD)/}
           next if url.include?("releases/download")
           next if url.include?("desktop.githubusercontent.com/releases/")
@@ -283,8 +269,7 @@ module RuboCop
         end
 
         # Don't use GitHub codeload URLs
-        codeload_gh_pattern = %r{https?://codeload\.github\.com/(.+)/(.+)/(?:tar\.gz|zip)/(.+)}
-        audit_urls(urls, codeload_gh_pattern) do |match, url|
+        audit_urls(urls, %r{https?://codeload\.github\.com/(.+)/(.+)/(?:tar\.gz|zip)/(.+)}) do |match, url|
           problem <<~EOS
             Use GitHub archive URLs:
               https://github.com/#{match[1]}/#{match[2]}/archive/#{match[3]}.tar.gz
@@ -294,8 +279,7 @@ module RuboCop
         end
 
         # Check for Maven Central URLs, prefer HTTPS redirector over specific host
-        maven_pattern = %r{https?://(?:central|repo\d+)\.maven\.org/maven2/(.+)$}
-        audit_urls(urls, maven_pattern) do |match, url|
+        audit_urls(urls, %r{https?://(?:central|repo\d+)\.maven\.org/maven2/(.+)$}) do |match, url|
           problem "#{url} should be: https://search.maven.org/remotecontent?filepath=#{match[1]}"
         end
       end
