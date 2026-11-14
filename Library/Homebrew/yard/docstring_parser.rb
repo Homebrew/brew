@@ -34,43 +34,41 @@ module Homebrew
 
         source = handler&.statement&.source
 
+        # Only match `odeprecated`/`odisabled` for this method.
         if object&.type == :method &&
-           (match = source&.match(/\so(deprecated|disabled)\s+"((?:\\"|[^"])*)"(?:\s*,\s*"((?:\\"|[^"])*))?"/m))
+           (match = source&.match(/\so(deprecated|disabled)\s+"((?:\\"|[^"])*)"(?:\s*,\s*"((?:\\"|[^"])*))?"/m)) &&
+           (method = match[2].sub(/\#{self(?:\.class)?}/, object.namespace.to_s)) &&
+           method.match?(/(.|#|`)#{Regexp.escape(object.name.to_s)}`/)
           type = match[1]
-          method = match[2]
-          method = method.sub(/\#{self(?:\.class)?}/, object.namespace.to_s)
           replacement = match[3]
           replacement = replacement.sub(/\#{self(?:\.class)?}/, object.namespace.to_s)
 
-          # Only match `odeprecated`/`odisabled` for this method.
-          if method.match?(/(.|#|`)#{Regexp.escape(object.name.to_s)}`/)
-            if (method_name = method[/\A`([^`]*)`\Z/, 1]) && (
-              (method_name.count(".") + method_name.count("#")) <= 1
-            )
-              method_name = method_name.delete_prefix(object.namespace.to_s)
-              method = (method_name.delete_prefix(".") == object.name(true).to_s) ? nil : "{#{method_name}}"
-            end
-
-            if replacement &&
-               (replacement_method_name = replacement[/\A`([^`]*)`\Z/, 1]) && (
-                 (replacement_method_name.count(".") + replacement_method_name.count("#")) <= 1
-               )
-              replacement_method_name = replacement_method_name.delete_prefix(object.namespace.to_s)
-              replacement = "{#{replacement_method_name}}"
-            end
-
-            if method && method.index('#{').nil?
-              description = "Calling #{method} is #{type}"
-              description += ", use #{replacement} instead" if replacement && replacement.index('#{').nil?
-              description += "."
-            elsif replacement && replacement.index('#{').nil?
-              description = "Use #{replacement} instead."
-            else
-              description = ""
-            end
-
-            tags << create_tag("deprecated", description)
+          if (method_name = method[/\A`([^`]*)`\Z/, 1]) && (
+            (method_name.count(".") + method_name.count("#")) <= 1
+          )
+            method_name = method_name.delete_prefix(object.namespace.to_s)
+            method = (method_name.delete_prefix(".") == object.name(true).to_s) ? nil : "{#{method_name}}"
           end
+
+          if replacement &&
+             (replacement_method_name = replacement[/\A`([^`]*)`\Z/, 1]) && (
+               (replacement_method_name.count(".") + replacement_method_name.count("#")) <= 1
+             )
+            replacement_method_name = replacement_method_name.delete_prefix(object.namespace.to_s)
+            replacement = "{#{replacement_method_name}}"
+          end
+
+          if method && method.index('#{').nil?
+            description = "Calling #{method} is #{type}"
+            description += ", use #{replacement} instead" if replacement && replacement.index('#{').nil?
+            description += "."
+          elsif replacement && replacement.index('#{').nil?
+            description = "Use #{replacement} instead."
+          else
+            description = ""
+          end
+
+          tags << create_tag("deprecated", description)
         end
 
         api = tags.find { |tag| tag.tag_name == "api" }&.text

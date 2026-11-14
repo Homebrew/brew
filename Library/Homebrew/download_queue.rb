@@ -175,145 +175,147 @@ module Homebrew
 
           report_tolerated_failure(downloadable)
         end
-      else
-        message_length_max = fetchable_downloads.keys.map do |download|
-          download.download_queue_message.length
-        end.max || 0
-        remaining_downloads = fetchable_downloads.dup.to_a
-        previous_pending_line_count = 0
-        max_lines = [concurrency, Tty.height].min
 
-        resolution = Concurrent::Event.new
-        fetchable_downloads.each_value { |future| future.on_resolution! { resolution.set } }
+        return
+      end
 
-        # `WINCH` is `SIGWINCH` (window change), which Ruby names without the
-        # `SIG` prefix. The kernel sends it to the foreground process group
-        # when the terminal is resized. Without this handler `Tty.width` keeps
-        # the width brew started with, so progress lines wrap after the
-        # terminal narrows and the redraw, which moves the cursor up by lines
-        # rather than rows, starts lower each time. `Tty.size_stale!` only
-        # marks the cached size as stale so it is safe to call from a handler.
-        trap(:WINCH) { Tty.size_stale! }
-        frame_width = Tty.width if tty_with_cursor_move_support?
-        begin
-          stdout_print_and_flush_if_tty Tty.hide_cursor
+      message_length_max = fetchable_downloads.keys.map do |download|
+        download.download_queue_message.length
+      end.max || 0
+      remaining_downloads = fetchable_downloads.dup.to_a
+      previous_pending_line_count = 0
+      max_lines = [concurrency, Tty.height].min
 
-          output_message = lambda do |downloadable, future, last|
-            status = status_from_future(future)
-            exception = future.reason if future.rejected?
-            next 1 if exception.is_a?(CancelledDownloadError)
+      resolution = Concurrent::Event.new
+      fetchable_downloads.each_value { |future| future.on_resolution! { resolution.set } }
 
-            message = downloadable.download_queue_message
-            if tty_with_cursor_move_support?
-              message = message_with_progress(downloadable, future, message, message_length_max)
-              stdout_print_and_flush "#{status} #{message}#{"\n" unless last}"
-            elsif status
-              $stderr.puts "#{status} #{message}"
-            end
+      # `WINCH` is `SIGWINCH` (window change), which Ruby names without the
+      # `SIG` prefix. The kernel sends it to the foreground process group
+      # when the terminal is resized. Without this handler `Tty.width` keeps
+      # the width brew started with, so progress lines wrap after the
+      # terminal narrows and the redraw, which moves the cursor up by lines
+      # rather than rows, starts lower each time. `Tty.size_stale!` only
+      # marks the cached size as stale so it is safe to call from a handler.
+      trap(:WINCH) { Tty.size_stale! }
+      frame_width = Tty.width if tty_with_cursor_move_support?
+      begin
+        stdout_print_and_flush_if_tty Tty.hide_cursor
 
-            if future.rejected? && allow_failures
-              # Remove known-bad downloads so they cannot be reused, while
-              # staying non-fatal for tolerated metadata prefetches.
-              unlink_cached_download(downloadable) if exception.is_a?(ChecksumMismatchError)
-            elsif future.rejected?
-              if exception.is_a?(ChecksumMismatchError)
-                @failed_downloads << downloadable
-                actual_message, expected_message =
-                  align_checksum_mismatch_message(downloadable.download_queue_message)
+        output_message = lambda do |downloadable, future, last|
+          status = status_from_future(future)
+          exception = future.reason if future.rejected?
+          next 1 if exception.is_a?(CancelledDownloadError)
 
-                report_or_defer_failure do
-                  ofail "#{actual_message} #{exception.expected}"
-                  puts "#{expected_message} #{exception.actual}"
-                end
-                # Remove the known-bad download so it can never be staged later.
-                unlink_cached_download(downloadable)
-              elsif exception.is_a?(CannotInstallFormulaError)
-                unlink_cached_download(downloadable)
-                raise exception
-              elsif bottle_manifest_error?(downloadable, exception)
-                # Fatal: unlike a missing blob (which then fails to stage), a
-                # stale blob would still pour without the manifest tab that
-                # drives relocation, so abort rather than stage a broken keg.
-                raise exception
+          message = downloadable.download_queue_message
+          if tty_with_cursor_move_support?
+            message = message_with_progress(downloadable, future, message, message_length_max)
+            stdout_print_and_flush "#{status} #{message}#{"\n" unless last}"
+          elsif status
+            $stderr.puts "#{status} #{message}"
+          end
+
+          if future.rejected? && allow_failures
+            # Remove known-bad downloads so they cannot be reused, while
+            # staying non-fatal for tolerated metadata prefetches.
+            unlink_cached_download(downloadable) if exception.is_a?(ChecksumMismatchError)
+          elsif future.rejected?
+            if exception.is_a?(ChecksumMismatchError)
+              @failed_downloads << downloadable
+              actual_message, expected_message =
+                align_checksum_mismatch_message(downloadable.download_queue_message)
+
+              report_or_defer_failure do
+                ofail "#{actual_message} #{exception.expected}"
+                puts "#{expected_message} #{exception.actual}"
+              end
+              # Remove the known-bad download so it can never be staged later.
+              unlink_cached_download(downloadable)
+            elsif exception.is_a?(CannotInstallFormulaError)
+              unlink_cached_download(downloadable)
+              raise exception
+            elsif bottle_manifest_error?(downloadable, exception)
+              # Fatal: unlike a missing blob (which then fails to stage), a
+              # stale blob would still pour without the manifest tab that
+              # drives relocation, so abort rather than stage a broken keg.
+              raise exception
+            else
+              failure_message = if exception.is_a?(DownloadError) && exception.cause.is_a?(ErrorDuringExecution)
+                cause = T.cast(exception.cause, ErrorDuringExecution)
+                "#{cause.stderr.presence}#{cause.message}"
               else
-                failure_message = if exception.is_a?(DownloadError) && exception.cause.is_a?(ErrorDuringExecution)
-                  cause = T.cast(exception.cause, ErrorDuringExecution)
-                  "#{cause.stderr.presence}#{cause.message}"
-                else
-                  future.reason.to_s
-                end
-                @failed_downloads << downloadable
-                report_or_defer_failure { ofail failure_message }
+                future.reason.to_s
               end
-            end
-
-            1
-          end
-
-          until remaining_downloads.empty?
-            begin
-              stdout_print_and_flush_if_tty Tty.begin_synchronized_update
-              # Terminals rewrap the frame already on screen when their width
-              # changes, so clear any rows the next frame won't overwrite.
-              if frame_width && (width = Tty.width) && width != frame_width && (frame_width = width)
-                stdout_print_and_flush Tty.clear_to_end_of_screen
-              end
-
-              finished_states = [:fulfilled, :rejected]
-
-              finished_downloads, remaining_downloads = remaining_downloads.partition do |_, future|
-                finished_states.include?(future.state)
-              end
-
-              finished_downloads.each do |downloadable, future|
-                previous_pending_line_count -= 1
-                output_message.call(downloadable, future, false)
-                stdout_print_and_flush_if_tty Tty.clear_to_end
-              end
-
-              previous_pending_line_count = 0
-              remaining_downloads.each_with_index do |(downloadable, future), i|
-                break if previous_pending_line_count >= max_lines
-
-                last = i == max_lines - 1 || i == remaining_downloads.count - 1
-                previous_pending_line_count += output_message.call(downloadable, future, last)
-                stdout_print_and_flush_if_tty Tty.clear_to_end
-              end
-
-              if previous_pending_line_count.positive?
-                if (previous_pending_line_count - 1).zero?
-                  stdout_print_and_flush_if_tty Tty.move_cursor_beginning
-                else
-                  stdout_print_and_flush_if_tty Tty.move_cursor_up_beginning(previous_pending_line_count - 1)
-                end
-              end
-
-              stdout_print_and_flush_if_tty Tty.end_synchronized_update
-
-              next if remaining_downloads.empty?
-
-              resolution.reset
-              # A download may resolve between the partition above and this
-              # reset: re-check before waiting to avoid a lost wakeup.
-              next if remaining_downloads.any? { |_, future| finished_states.include?(future.state) }
-
-              # Wake as soon as any download resolves; the timeout only sets
-              # the redraw cadence for spinner and progress bars on TTYs.
-              resolution.wait(tty_with_cursor_move_support? ? 0.05 : 1)
-            # `Interrupt` inherits from `Exception`, so rescue it to restore the TTY.
-            rescue Exception # rubocop:disable Lint/RescueException
-              if previous_pending_line_count.positive?
-                stdout_print_and_flush_if_tty Tty.move_cursor_down(previous_pending_line_count - 1)
-              end
-
-              raise
+              @failed_downloads << downloadable
+              report_or_defer_failure { ofail failure_message }
             end
           end
-        ensure
-          stdout_print_and_flush_if_tty Tty.end_synchronized_update
-          stdout_print_and_flush_if_tty Tty.show_cursor
-          @deferred_failure_messages.each(&:call)
+
+          1
         end
+
+        until remaining_downloads.empty?
+          begin
+            stdout_print_and_flush_if_tty Tty.begin_synchronized_update
+            # Terminals rewrap the frame already on screen when their width
+            # changes, so clear any rows the next frame won't overwrite.
+            if frame_width && (width = Tty.width) && width != frame_width && (frame_width = width)
+              stdout_print_and_flush Tty.clear_to_end_of_screen
+            end
+
+            finished_states = [:fulfilled, :rejected]
+
+            finished_downloads, remaining_downloads = remaining_downloads.partition do |_, future|
+              finished_states.include?(future.state)
+            end
+
+            finished_downloads.each do |downloadable, future|
+              previous_pending_line_count -= 1
+              output_message.call(downloadable, future, false)
+              stdout_print_and_flush_if_tty Tty.clear_to_end
+            end
+
+            previous_pending_line_count = 0
+            remaining_downloads.each_with_index do |(downloadable, future), i|
+              break if previous_pending_line_count >= max_lines
+
+              last = i == max_lines - 1 || i == remaining_downloads.count - 1
+              previous_pending_line_count += output_message.call(downloadable, future, last)
+              stdout_print_and_flush_if_tty Tty.clear_to_end
+            end
+
+            if previous_pending_line_count.positive?
+              if (previous_pending_line_count - 1).zero?
+                stdout_print_and_flush_if_tty Tty.move_cursor_beginning
+              else
+                stdout_print_and_flush_if_tty Tty.move_cursor_up_beginning(previous_pending_line_count - 1)
+              end
+            end
+
+            stdout_print_and_flush_if_tty Tty.end_synchronized_update
+
+            next if remaining_downloads.empty?
+
+            resolution.reset
+            # A download may resolve between the partition above and this
+            # reset: re-check before waiting to avoid a lost wakeup.
+            next if remaining_downloads.any? { |_, future| finished_states.include?(future.state) }
+
+            # Wake as soon as any download resolves; the timeout only sets
+            # the redraw cadence for spinner and progress bars on TTYs.
+            resolution.wait(tty_with_cursor_move_support? ? 0.05 : 1)
+          # `Interrupt` inherits from `Exception`, so rescue it to restore the TTY.
+          rescue Exception # rubocop:disable Lint/RescueException
+            if previous_pending_line_count.positive?
+              stdout_print_and_flush_if_tty Tty.move_cursor_down(previous_pending_line_count - 1)
+            end
+
+            raise
+          end
+        end
+      ensure
+        stdout_print_and_flush_if_tty Tty.end_synchronized_update
+        stdout_print_and_flush_if_tty Tty.show_cursor
+        @deferred_failure_messages.each(&:call)
       end
     # `Interrupt` inherits from `Exception`, so rescue it to cancel active workers
     # even when it arrives before fetch setup completes.

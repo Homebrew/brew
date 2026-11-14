@@ -416,12 +416,9 @@ module Homebrew
                 cask = Cask::CaskLoader.load_from_installed_caskfile(installed_caskfile)
 
                 requested_tap, requested_token = Tap.with_cask_token(name)
-                if requested_tap && requested_token
-                  installed_cask_tap = cask.tab.tap
-
-                  if installed_cask_tap && installed_cask_tap != requested_tap
-                    raise Cask::TapCaskUnavailableError.new(requested_tap, requested_token)
-                  end
+                if requested_tap && requested_token &&
+                   (installed_cask_tap = cask.tab.tap) && installed_cask_tap != requested_tap
+                  raise Cask::TapCaskUnavailableError.new(requested_tap, requested_token)
                 end
 
                 cask

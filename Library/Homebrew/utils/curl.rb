@@ -797,14 +797,14 @@ module Utils
           charset = content_type[/;\s*charset\s*=\s*"?([^\s";]+)/i, 1] if content_type
           charset ||= File.binread(file_path, 1024).to_s
                           .gsub(/<!--.*?(?:-->|\z)/m, "")[/<meta[^>]*[\s;]charset\s*=\s*["']?([\w-]+)/i, 1]
-          if charset
-            begin
+          begin
+            if charset
               encoding = Encoding.find(charset)
               # Content is compared with ASCII regexes, which raise on e.g. UTF-16.
               open_args[:encoding] = encoding if encoding.ascii_compatible?
-            rescue ArgumentError
-              # Unknown charset
             end
+          rescue ArgumentError
+            # Unknown charset
           end
 
           file_contents = File.read(file_path, **open_args)
