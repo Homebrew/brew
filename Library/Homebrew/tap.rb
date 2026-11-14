@@ -535,21 +535,22 @@ class Tap # rubocop:todo Metrics/ClassLength
     false
   end
 
-  sig { params(output: String, quiet: T::Boolean).void }
-  def update_remote_from_git_redirect!(output, quiet: false)
+  sig { params(output: String, quiet: T::Boolean, update_receipts: T::Boolean).void }
+  def update_remote_from_git_redirect!(output, quiet: false, update_receipts: true)
     output.each_line do |line|
       next unless (match = line.match(GIT_REDIRECT_REMOTE_REGEX))
       next unless (redirected_remote = match[:remote])
 
-      apply_redirected_remote!(redirected_remote, quiet:)
+      apply_redirected_remote!(redirected_remote, quiet:, update_receipts:)
       break
     end
   end
 
-  sig { params(redirected_remote: String, quiet: T::Boolean).void }
-  def apply_redirected_remote!(redirected_remote, quiet: false)
+  sig { params(redirected_remote: String, quiet: T::Boolean, update_receipts: T::Boolean).void }
+  def apply_redirected_remote!(redirected_remote, quiet: false, update_receipts: true)
     old_name = name
     old_remote = remote
+    old_path = path
     return if old_remote.present? && self.class.same_remote?(old_remote, redirected_remote)
 
     redirected_reference = Tap.remote_to_reference(redirected_remote)
@@ -610,7 +611,6 @@ class Tap # rubocop:todo Metrics/ClassLength
     end
 
     if redirected_tap && redirected_tap.name != name && !redirected_tap.installed?
-      old_path = path
       redirected_tap.path.dirname.mkpath
       FileUtils.mv(old_path, redirected_tap.path)
       rmdir_if_possible(old_path.parent)
@@ -630,6 +630,25 @@ class Tap # rubocop:todo Metrics/ClassLength
     Tap.clear_cache
 
     trust_invalidated = Homebrew::Trust.invalidate_tap_references!(old_name, remote: old_remote)
+
+    if update_receipts && old_name != name
+      require "cask/cask"
+      require "cask/caskroom"
+      require "formula"
+
+      # Receipts naming the old tap stop installed casks seeing upgrades and
+      # make `brew doctor` report installed formulae as untapped.
+      [*Keg.all, *Cask::Caskroom.tokens].each do |keg_or_token|
+        tab = (keg_or_token.is_a?(Keg) ? keg_or_token : Cask::Cask.new(keg_or_token)).tab
+        next if tab.source["tap"] != old_name
+
+        tab.tap = self
+        tab.source["path"] = tab.source["path"]&.sub("#{old_path}/", "#{path}/")
+        tab.write
+      rescue => e
+        opoo "Failed to update the receipt for #{keg_or_token}: #{e}"
+      end
+    end
 
     return if quiet
 
@@ -782,7 +801,8 @@ class Tap # rubocop:todo Metrics/ClassLength
         SystemCommand.safe_system "git", *worktree_args
       else
         result = git_command!(args)
-        update_remote_from_git_redirect!(result.stderr, quiet:)
+        # This tap is removed again if it fails verification below.
+        update_remote_from_git_redirect!(result.stderr, quiet:, update_receipts: false)
       end
 
       if verify && !Homebrew::EnvConfig.developer? && !Readall.valid_tap?(

@@ -120,6 +120,30 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"allowed"
   end
 
+  it "leaves receipts on the old tap when a renaming redirect is denied and rolled back" do
+    tap, before_revision, = setup_redirected_tap("receipts")
+    tabfile = HOMEBREW_CELLAR/"redirected-formula/1.0/INSTALL_RECEIPT.json"
+    tabfile.dirname.mkpath
+    tab = Tab.empty
+    tab.tabfile = tabfile
+    tab.tap = tap
+    tab.write
+    redirected_remotes_file = mktmpdir/"redirected-remotes"
+    redirected_remotes_file.write("#{tap.path}\thttps://github.com/newowner/homebrew-receipts\n")
+    allow(Homebrew::EnvConfig).to receive_messages(disable_load_formula?: true, no_install_from_api?: true)
+
+    ENV["HOMEBREW_REDIRECTED_REMOTES_FILE"] = redirected_remotes_file.to_s
+    ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
+    ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+    ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
+
+    expect { described_class.new(["--quiet"]).run }.to raise_error(SystemExit)
+
+    expect(JSON.parse(tabfile.read).dig("source", "tap")).to eq("allowed/receipts")
+  ensure
+    FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"allowed"
+  end
+
   it "rolls back the updated branch without rewinding a developer branch" do
     tap, before_revision, branch = setup_redirected_tap("branch")
     system "git", "-C", tap.path.to_s, "checkout", "-q", "-b", "my-work", before_revision
