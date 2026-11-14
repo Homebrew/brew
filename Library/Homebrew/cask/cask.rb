@@ -379,6 +379,17 @@ module Cask
       Caskroom.cask_installed_version(token, old_tokens:)
     end
 
+    # The Caskroom directory of the installed cask, which is the directory of its
+    # old token until a renamed cask has been migrated.
+    sig { returns(Pathname) }
+    def installed_caskroom_path
+      # <caskroom_path>/.metadata/<version>/<timestamp>/Casks/<token>.{rb,json} -> <caskroom_path>
+      caskfile = installed_caskfile
+      return caskroom_path unless caskfile
+
+      caskfile.dirname.dirname.dirname.dirname.dirname
+    end
+
     sig { void }
     def pin
       return unless (installed_version = self.installed_version)
