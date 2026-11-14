@@ -65,6 +65,19 @@ RSpec.describe Homebrew::API::FormulaStruct do
       expect(struct.serialize_bottle(bottle_tag: x86_64_linux)).to be_nil
     end
 
+    it "serializes a bottle's own manifest checksum when it has one", :needs_macos do
+      struct = build_formula_struct([{ cellar: :any, manifest_sha256: "manifest1", arm64_sequoia: "checksum1" }])
+
+      expect(struct.serialize_bottle(bottle_tag: Utils::Bottles::Tag.from_symbol(:arm64_sequoia))).to eq(
+        {
+          "bottle_tag"               => nil,
+          "bottle_cellar"            => :any,
+          "bottle_checksum"          => "checksum1",
+          "bottle_manifest_checksum" => "manifest1",
+        },
+      )
+    end
+
     it "serializes bottle with all tag" do
       all_struct = build_formula_struct([{ cellar: :any_skip_relocation, all: "checksum1" }])
       all_struct_result = {
@@ -152,6 +165,23 @@ RSpec.describe Homebrew::API::FormulaStruct do
       expect(struct.bottle?).to be(true)
       expect(struct.bottle_checksums).to eq([{ cellar: :any, arm64_sequoia: "checksum1" }])
       expect(struct.executables).to eq(["foo"])
+    end
+
+    it "passes a bottle's own manifest checksum on with its checksum" do
+      hash = {
+        "desc"                     => "test formula",
+        "homepage"                 => "https://example.com",
+        "license"                  => "MIT",
+        "ruby_source_checksum"     => "abc123",
+        "stable_version"           => "1.0.0",
+        "bottle_checksum"          => "checksum1",
+        "bottle_manifest_checksum" => "manifest1",
+      }
+
+      struct = described_class.deserialize(hash, bottle_tag: Utils::Bottles::Tag.from_symbol(:arm64_sequoia))
+
+      expect(struct.bottle_checksums)
+        .to eq([{ cellar: :any_skip_relocation, manifest_sha256: "manifest1", arm64_sequoia: "checksum1" }])
     end
 
     it "sets bottle_present to false when no bottle_checksum is present" do

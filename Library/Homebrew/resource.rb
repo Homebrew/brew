@@ -511,6 +511,17 @@ class Resource
       nil
     end
 
+    # The SHA-256 of each bottle's own manifest in a downloaded index, keyed
+    # by the SHA-256 of that bottle.
+    sig { returns(T::Hash[String, String]) }
+    def platform_manifest_sha256s
+      Downloadable.verification_cache.verify(cached_download, checksum) if checksum
+      JSON.parse(cached_download.read).fetch("manifests").to_h do |manifest|
+        [manifest.fetch("annotations").fetch("sh.brew.bottle.digest"),
+         manifest.fetch("digest").delete_prefix("sha256:")]
+      end
+    end
+
     sig { override.returns(String) }
     def download_queue_type = "Bottle Manifest"
 
@@ -535,7 +546,8 @@ class Resource
                      "\n#{cached_download}"
       end
 
-      manifests = json["manifests"]
+      # A bottle's own manifest has layers where an index lists manifests.
+      manifests = json.key?("layers") ? [json] : json["manifests"]
       raise Error, "Missing 'manifests' section." if manifests.blank?
 
       manifests_annotations = manifests.filter_map { |m| m["annotations"] }

@@ -47,9 +47,10 @@ module Homebrew
             files = hash.dig("bottle", "stable", "files") || {}
             files.map do |tag, bottle_spec|
               {
-                cellar: Utils.convert_to_string_or_symbol(bottle_spec.fetch("cellar")),
+                cellar:          Utils.convert_to_string_or_symbol(bottle_spec.fetch("cellar")),
+                manifest_sha256: bottle_spec["manifest_sha256"],
                 tag.to_sym => bottle_spec.fetch("sha256"),
-              }
+              }.compact
             end
           end
 

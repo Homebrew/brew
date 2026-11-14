@@ -503,7 +503,7 @@ runner and one residential connection.
 |---|---|---|---|
 | 1 | brew | 1 | This plan: threat model, policy, targets, gates and risks |
 | 2 | brew | 1 to 2 | Done: `manifest_sha256` in `bottle do`, checked when present |
-| 3 | brew, formulae.brew.sh | 2 to 3 | Per-platform manifest digest in the API, fetched directly when present |
+| 3 | brew, formulae.brew.sh | 2 to 3 | Done in brew: `bottle_manifest_checksum` in the API, fetched directly when present |
 | 4 | brew | 2 | Vendor the `sigstore` gem |
 | 5 | brew | 2 | Verify bundles in Ruby, offline, against a pinned trusted root |
 | 6 | brew | 3 | Enforce the trust policy |
@@ -541,25 +541,18 @@ nothing else depends on them.
    `brew bottle --merge --write` drops it, as a changed block makes it
    stale, until PR 9 writes the new one. It must be in a stable release
    before homebrew/core uses it and may be absent until PR 11 requires it.
-3. **Per-platform manifest digest in the API.** For every formula whose
-   bottle block has a digest, `brew generate-internal-api` fetches the
-   index by that digest, checks the bytes and writes the digest of each
-   platform's manifest, as `bottle_manifest_checksum` beside
-   `bottle_checksum`, in that platform's file,
-   choosing the manifest whose `sh.brew.bottle.digest` is that checksum.
-   Indexes are cached by digest, so a run fetches only new ones, and a
-   missing or mismatched index fails the run, as a failed download of the
-   executables database already does. `Homebrew::API::FormulaStruct`
-   carries the new field; older clients already drop fields they do not
-   know. When it is present, `Bottle#github_packages_manifest_resource`
-   fetches that manifest by digest in place of the index, and
-   `Resource::BottleManifest` checks the bytes, checks that the manifest
-   names the expected bottle and reads the tab and other annotations from
-   it. `brew info --github-packages-downloads` reads per-platform counts
-   where clients no longer fetch the index. Nothing changes until a
-   bottle block has a digest: test by hand on the same single bottle as
-   PR 2. The commit message carries cold `brew benchmark` output for
-   one-bottle and 20-bottle installs.
+3. **Per-platform manifest digest in the API.** Done in brew: for every
+   formula whose bottle block has a digest, `brew generate-internal-api`
+   fetches the index by that digest through the download queue and writes
+   the digest of each bottle's own manifest, as `bottle_manifest_checksum`
+   beside `bottle_checksum`, in that platform's file. A missing or
+   mismatched index fails the run. When the field is present,
+   `Bottle#github_packages_manifest_resource` fetches that manifest by
+   digest in place of the index and `Resource::BottleManifest` checks the
+   bytes and that the manifest names the expected bottle. Older clients
+   drop the field. Left to do: have the formulae.brew.sh workflow keep
+   `HOMEBREW_CACHE/downloads/*.bottle_manifest.json` between runs, so a run
+   fetches only new indexes.
 4. **Vendor the `sigstore` gem.** Add it to the vendored gems in
    `Library/Homebrew/Gemfile` pinned to an exact version at or above 0.3.0
    (0.2.3 fixed in-toto statement verification, GHSA-mhg6-2q2v-9h2c) and run
@@ -665,8 +658,11 @@ nothing else depends on them.
     call and shown as the bottle's `:verifying` phase. Verified bundles are
     memoised by digest for the process. The `Attestation.prefetch` call
     sites go. Until PR 13, a bottle with no published bundle falls back to
-    the `gh` path. The commit message carries cold and warm
-    `brew benchmark` output for one-bottle and 20-bottle installs.
+    the `gh` path. `brew info --github-packages-downloads` reads
+    per-platform counts where clients no longer fetch the index, as PR 7
+    found them to be counted. The commit message carries cold and warm
+    `brew benchmark` output for one-bottle and 20-bottle installs,
+    comparing the direct manifest fetch of PR 3 with the index fetch.
 13. **Remove the `gh`, token and API paths** once the mirror reports full
     coverage: `gh_executable`, `sort_formulae_for_install` and its three
     callers, `prepare_attestation_verification!`, `prefetch` and its
@@ -879,9 +875,8 @@ How the chosen design uses the digest:
   index today, so counts are per formula version. Fetching the index by
   digest should not change that; fetching only per-platform manifests
   moves the counts to those untagged manifests and gives per-platform
-  counts for the first time. PR 3 updates
-  `brew info --github-packages-downloads` to read them and PR 7 confirms
-  both on a test package.
+  counts for the first time. PR 7 confirms both on a test package and
+  PR 12 then updates `brew info --github-packages-downloads` to read them.
 
 Considered instead of the DSL change:
 
@@ -909,9 +904,9 @@ Considered instead of the DSL change:
 | The gem is young (0.x, one in-toto advisory) and reports failures both as results and exceptions | Exact pin, reviewed bumps, fail-closed wrapper, real and tampered fixtures, upstream fixes rather than patches |
 | API generation fails when GitHub Packages is unreachable or a pinned index is missing | Indexes are cached by digest, so a run fetches only new ones; a failed run leaves the previous API published; generation already depends on GitHub Packages for the executables database |
 | The API carries a wrong per-platform digest | Installs fail closed, as the client checks the manifest names its bottle; the generator fails on any mismatch and the sweep derives the digests again daily |
-| Download counts move from the index to per-platform manifests | PR 3 updates `brew info --github-packages-downloads`; PR 7 confirms how GitHub Packages counts them |
+| Download counts move from the index to per-platform manifests | PR 7 confirms how GitHub Packages counts them and PR 12 updates `brew info --github-packages-downloads` to match |
 | Mirrors and proxies do not serve bundles | They travel in a manifest, which a mirror already has to serve; PR 7 tests a proxy by digest; contract documented before the stable gate |
-| Slow links or `HOMEBREW_DOWNLOAD_CONCURRENCY=1` regress | Benchmarked in PRs 3 and 12; API installs download fewer manifest bytes than today and nothing on a cache hit |
+| Slow links or `HOMEBREW_DOWNLOAD_CONCURRENCY=1` regress | Benchmarked in PR 12; API installs download fewer manifest bytes than today and nothing on a cache hit |
 | GitHub Packages throttles anonymous requests | No extra request for API installs; the sweep measures retrieval reliability against bottle retrieval |
 | A bug or stale trusted root on Homebrew's side makes valid bottles fail for everyone once this is the default | Publish-time verification, canary and sweep catch it first; messages name `HOMEBREW_NO_VERIFY_ATTESTATIONS`; each stage reverts with one PR |
 

@@ -160,6 +160,18 @@ RSpec.describe Homebrew::API::Formula::FormulaStructGenerator do
       }
     end
 
+    it "carries each bottle's own manifest digest with its checksum" do
+      hash["bottle"] = { "stable" => { "rebuild" => 0, "files" => {
+        "arm64_sequoia" => { "cellar" => ":any", "sha256" => "checksum1", "manifest_sha256" => "manifest1" },
+        "sequoia"       => { "cellar" => ":any", "sha256" => "checksum2" },
+      } } }
+
+      expect(struct.bottle_checksums).to eq([
+        { cellar: :any, manifest_sha256: "manifest1", arm64_sequoia: "checksum1" },
+        { cellar: :any, sequoia: "checksum2" },
+      ])
+    end
+
     it "falls back to stable deps when head_dependencies is absent" do
       hash.update({
         "dependencies"             => ["foo"],
