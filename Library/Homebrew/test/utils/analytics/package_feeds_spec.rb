@@ -1,12 +1,14 @@
 # typed: true
 # frozen_string_literal: true
 
-require "utils/analytics/formula_feeds"
+require "dev-cmd/generate-cask-feeds"
+require "dev-cmd/generate-formula-feeds"
 
-RSpec.describe Utils::Analytics::FormulaFeeds do
+RSpec.describe Utils::Analytics::PackageFeeds do
   let(:root) { mktmpdir }
   let(:repository) { root/"core" }
   let(:commit_dates) { (1..).lazy.map { |index| Time.utc(2026, 1, 1) + (60 * index) } }
+  let(:feed_class) { Homebrew::DevCmd::GenerateFormulaFeeds::Feeds }
 
   before do
     repository.mkpath
@@ -15,6 +17,7 @@ RSpec.describe Utils::Analytics::FormulaFeeds do
     git("config", "user.email", "feeds@example.test")
     git("config", "commit.gpgsign", "false")
     git("config", "core.hooksPath", File::NULL)
+    git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
   end
 
   def git(*args, path: repository)
@@ -33,6 +36,7 @@ RSpec.describe Utils::Analytics::FormulaFeeds do
     )
     raise stderr unless status.success?
 
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
     git("rev-parse", "HEAD")
   end
 
@@ -58,7 +62,24 @@ RSpec.describe Utils::Analytics::FormulaFeeds do
   end
 
   def feeds
-    described_class.new(repository).generate
+    feed_class.new(repository).generate
+  end
+
+  it "reads the remote default branch instead of local commits" do
+    formula
+    commit
+    formula(version: "2.0")
+    upstream = commit
+    git("switch", "--quiet", "-c", "local")
+    formula(version: "3.0")
+    commit
+    git("update-ref", "refs/remotes/origin/main", upstream)
+
+    expect(feeds).to include(
+      "revision" => upstream,
+      "new"      => [include("versions" => ["1.0"])],
+      "updated"  => [include("versions" => ["2.0"])],
+    )
   end
 
   it "uses merged changes once and excludes bottles, resources, aliases and renames" do
@@ -208,6 +229,155 @@ RSpec.describe Utils::Analytics::FormulaFeeds do
     commit
     shallow = root/"shallow"
     git("clone", "--quiet", "--depth=1", "file://#{repository}", shallow.to_s)
-    expect { described_class.new(shallow).generate }.to raise_error(/unshallow/)
+    expect { feed_class.new(shallow).generate }.to raise_error(/unshallow/)
+  end
+
+  it "tracks updates from historical to nested formula directories" do
+    path = formula
+    historical = repository/"Library/Formula/example.rb"
+    historical.dirname.mkpath
+    FileUtils.mv(path, historical)
+    commit
+    path = formula(version: "2.0")
+    historical.unlink
+    nested = repository/"Formula/e/examples/example.rb"
+    nested.dirname.mkpath
+    FileUtils.mv(path, nested)
+    commit
+
+    expect(feeds).to include(
+      "new" => [include("versions" => ["1.0"])], "updated" => [include("versions" => ["2.0"])],
+    )
+  end
+
+  context "with casks" do
+    let(:feed_class) { Homebrew::DevCmd::GenerateCaskFeeds::Feeds }
+
+    def cask(version: "1.0", checksum: "a" * 64, extra: "")
+      path = repository/"Casks/example.rb"
+      path.dirname.mkpath
+      path.write <<~RUBY
+        cask "example" do
+          version #{version.inspect}
+          sha256 "#{checksum}"
+          url "https://example.test/example.dmg"
+          name "Example"
+          desc "Example application"
+          homepage "https://example.test"
+          #{extra}
+        end
+      RUBY
+      path
+    end
+
+    it "collects cask additions and updates while excluding checksum edits, moves and formulae" do
+      formula
+      path = cask
+      added = commit
+      cask(version: "2.0")
+      updated = commit
+      cask(version: "2.0", checksum: "b" * 64)
+      commit
+      moved = repository/"Casks/e/example.rb"
+      moved.dirname.mkpath
+      FileUtils.mv(path, moved)
+      commit
+
+      expect(feeds).to include(
+        "new"     => [include("commit" => added, "name" => "example", "versions" => ["1.0"])],
+        "updated" => [include("commit" => updated, "versions" => ["2.0"])],
+      )
+    end
+
+    it "counts architecture-specific version changes once" do
+      cask(extra: "on_intel do\n    version \"2.0\"\n  end")
+      commit
+      cask(extra: "on_intel do\n    version \"2.1\"\n  end")
+      commit
+
+      expect(feeds.fetch("updated")).to match([include("versions" => ["1.0", "2.1"])])
+    end
+
+    it "includes Linux-specific cask version changes" do
+      cask(extra: "on_linux do\n    version \"2.0\"\n  end")
+      commit
+      cask(extra: "on_linux do\n    version \"2.1\"\n  end")
+      commit
+
+      expect(feeds.fetch("updated")).to match([include("versions" => ["1.0", "2.1"])])
+    end
+
+    it "includes cask releases on newly supported platforms" do
+      cask(version: nil, extra: "on_macos do\n    version \"1.0\"\n  end")
+      commit
+      cask(version: nil, extra: <<~RUBY)
+        on_macos do
+          version "1.0"
+        end
+        on_linux do
+          version "2.0"
+        end
+      RUBY
+      updated = commit
+
+      expect(feeds.fetch("updated")).to match([include("commit" => updated, "versions" => ["1.0", "2.0"])])
+    end
+
+    def single_os_feeds(os)
+      path = cask(version: nil, extra: <<~RUBY)
+        on_#{os} do
+          version "1.0"
+        end
+        uninstall quit: "com.example.\#{version.major}"
+      RUBY
+      commit
+      path.write(path.read.sub('version "1.0"', 'version "2.0"'))
+      commit
+      feeds
+    end
+
+    it "handles casks whose definitions only load on macOS" do
+      expect(single_os_feeds("macos")).to include(
+        "new" => [include("versions" => ["1.0"])], "updated" => [include("versions" => ["2.0"])],
+      )
+    end
+
+    it "handles casks whose definitions only load on Linux" do
+      expect(single_os_feeds("linux")).to include(
+        "new" => [include("versions" => ["1.0"])], "updated" => [include("versions" => ["2.0"])],
+      )
+    end
+
+    it "validates each cask token against its path" do
+      path = cask
+      FileUtils.cp(path, repository/"Casks/other.rb")
+      commit
+
+      expect { feeds }.to raise_error(%r{Cannot read cask metadata for Casks/other.rb})
+    end
+
+    it "keeps latest-version casks in additions without treating checksum edits as releases" do
+      cask(version: :latest)
+      commit
+      cask(version: :latest, checksum: "b" * 64)
+      commit
+
+      expect(feeds).to include("new" => [include("versions" => ["latest"])], "updated" => [])
+    end
+
+    it "tracks updates from historical to current cask directories" do
+      path = cask
+      historical = repository/"Cask/example.rb"
+      historical.dirname.mkpath
+      FileUtils.mv(path, historical)
+      commit
+      cask(version: "2.0")
+      historical.unlink
+      commit
+
+      expect(feeds).to include(
+        "new" => [include("versions" => ["1.0"])], "updated" => [include("versions" => ["2.0"])],
+      )
+    end
   end
 end
