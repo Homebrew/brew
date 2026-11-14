@@ -225,7 +225,8 @@ module Homebrew
               if cask_path.exist? ||
                  (!Homebrew::EnvConfig.no_install_from_api? &&
                  !CoreCaskTap.instance.installed? &&
-                 Homebrew::API.cask_token?(path.basename.to_s))
+                 (Homebrew::API.cask_token?(path.basename.to_s) ||
+                  Homebrew::API.cask_aliases.key?(path.basename.to_s)))
                 paths << cask_path
               end
 
