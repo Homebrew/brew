@@ -72,8 +72,10 @@ Pull requests must always fill in the repository's pull request template
   `manifests/<version>[-<rebuild>]`. It has no expected digest, so it is only
   parsed. Bottle blobs are fetched by digest and checked against the formula
   SHA-256.
-- `sigstore` 0.3.0 and its five `protobug*` gems are vendored. Nothing
-  loads them yet.
+- `sigstore` 0.3.0 and its five `protobug*` gems are vendored.
+  `Attestation.verify_bundle` verifies a bundle with them, offline, against
+  the trusted root pinned in `attestation/trusted_root.json`. No install
+  path calls it yet.
 
 ### Publishing
 
@@ -110,8 +112,9 @@ them properly.
 | Same, negative cases | wrong digest and wrong workflow return failures; a tampered payload or log time raises `Sigstore::Error` |
 | `sigstore` 0.3.0 dependencies | ten gems (five `protobug*`, `net-http`, `net-protocol`, `timeout`, `uri`, `logger`), about 0.9 MB of Ruby |
 
-Signer identities seen so far: `publish-commit-bottles.yml` and
-`dispatch-build-bottle.yml` at `refs/heads/main` of Homebrew/homebrew-core
+Signer identities seen so far: `publish-commit-bottles.yml`,
+`dispatch-build-bottle.yml` and `dispatch-rebottle.yml` at
+`refs/heads/main` of Homebrew/homebrew-core
 (repository ID 52855516, owner ID 1503512, `workflow_dispatch`) and
 `backfill_signatures.yml` at `refs/heads/main` of
 trailofbits/homebrew-brew-verify (repository ID 754716714).
@@ -192,7 +195,7 @@ Expected claims:
 | Signer workflow | `publish-commit-bottles.yml`, `dispatch-build-bottle.yml` or `dispatch-rebottle.yml` | `backfill_signatures.yml` |
 | Ref | `refs/heads/main` | `refs/heads/main` |
 | Runner | GitHub-hosted | GitHub-hosted |
-| Signing time | inside the certificate's validity, from the log or a timestamp authority | same, and no later than `BACKFILL_CUTOFF` |
+| Signing time | inside the certificate's validity and signed by the log, or by a timestamp authority once Rekor v2 bundles are supported | same, and no later than `BACKFILL_CUTOFF` |
 | Statement | in-toto v1 with a SLSA provenance v1 predicate | same |
 | Subject digest | SHA-256 of the downloaded tarball, equal to the formula's | same |
 | Subject name | the bottle filename, which binds formula, version, tag and rebuild; any tag of the same name and version for `:all` | `<SHA-256 of bottle URL>--<filename>` |
@@ -208,8 +211,17 @@ install.
 ## Design decisions
 
 1. Use the official `sigstore` gem, vendored and pinned to an exact
-   version. No hand-written cryptography: gaps are fixed upstream. It is
-   required lazily, only when a bundle is verified.
+   version. No hand-written cryptography: `Attestation.verify_bundle`
+   passes the gem only the one bundle form Homebrew's signers produce, so
+   gaps in its other paths are closed by narrowing what reaches it rather
+   than by patching it. It is required lazily, only when a bundle is
+   verified. Replace it with a verifier for that one form, behind the same
+   method, when GitHub moves to Rekor v2 (seen by PR 15's canary), as that
+   needs the timestamp authority's time, which the gem does not return;
+   when a flaw is found in a check Homebrew's bundles rely on, which
+   narrowing cannot avoid; when a gem or `protobug` incompatibility
+   cannot be worked around in the wrapper; or when such a verifier would
+   be much less code, faster or more secure than the gem and its wrapper.
 2. Verification is always offline. The bundle carries its own Rekor proof
    and the trusted root is pinned in the repository, so installs make no
    Rekor, Fulcio, TUF or GitHub API request. A Sigstore or GitHub API outage
@@ -506,7 +518,7 @@ runner and one residential connection.
 | 2 | brew | 1 to 2 | Done: `manifest_sha256` in `bottle do`, checked when present |
 | 3 | brew, formulae.brew.sh | 2 to 3 | Done in brew: `bottle_manifest_checksum` in the API, fetched directly when present |
 | 4 | brew | 2 | Done: `sigstore` gem vendored, off the load path until needed |
-| 5 | brew | 2 | Verify bundles in Ruby, offline, against a pinned trusted root |
+| 5 | brew | 2 | Done: `Attestation.verify_bundle`, offline, against a pinned trusted root |
 | 6 | brew | 3 | Enforce the trust policy |
 | 7 | brew | 4 to 5 | GitHub Packages distribution experiment and format contract |
 | 8 | brew | 6 | Publish bundles from `brew pr-upload` |
@@ -563,28 +575,39 @@ nothing else depends on them.
    verified. Ruby's default gems (`net-http`, `net-protocol`, `timeout` and
    `uri`) are not vendored: the copies in Homebrew's Ruby are used.
    Licences are Apache-2.0, MIT and Unlicense.
-5. **Verify bundles in Ruby.** Add offline verification to
-   `Homebrew::Attestation`: bundle JSON and bottle SHA-256 in, verified
-   statement and signing time out, `InvalidAttestationError` otherwise.
-   Put the six vendored gems' `lib` directories on the load path before
-   requiring `sigstore`, and silence its debug logging. Parse bundle and
-   trusted root JSON in Homebrew and decode it with `decode_json_hash`:
-   `protobug` 0.2.0 passes `JSON.parse` options that `json` 3 rejects, and
-   while Homebrew's Ruby bundles `json` 2.18.0, developers and CI load
-   3.1.0 from the bundle.
-   Check in the Sigstore trusted root next to the code (as
-   `api/homebrew-1.pem` is) and build the verifier without a Rekor client so
-   a stale root can never cause a request. Rescue both failure results and
-   `Sigstore::Error`, and keep raw signature bytes out of messages. Specs
-   use real fixtures for all four bundle kinds (`publish-commit-bottles`,
-   `dispatch-build-bottle`, `dispatch-rebottle` and backfill), block sockets
-   and cover tampered payloads, signatures, certificates, log entries and
-   proofs. No install path calls it yet: bundles already in hand
+5. **Verify bundles in Ruby.** Done: `Attestation.verify_bundle` takes
+   bundle JSON, a bottle SHA-256 and the signing workflow, and returns the
+   verified statement and signing time in the shape of a
+   `gh attestation verify` result, so PR 6 can swap it in. Anything else
+   raises `InvalidAttestationError`: failed results with the gem's reason
+   and exceptions by class alone, as the gem's messages can quote signature
+   bytes. Before the gem sees a bundle, it must have exactly the form of
+   the four real signers' bundles, key for key: v0.3, or v0.2 for
+   backfill, with one Rekor v1 `dsse` entry carrying the log's signed time
+   and an inclusion proof, no timestamp authority response and one DSSE
+   signature, as the gem trusts a log time the log has not signed and
+   `protobug` reads each field under a second name, the last one read
+   winning. Rekor v2 entries are rejected until supported (design
+   decision 1).
+   On first use it puts the vendored gems on the load path, silences
+   the gem's logging and builds one verifier, without a Rekor client so a
+   stale root can never cause a request, from the trusted root pinned in
+   `attestation/trusted_root.json`: the copy Sigstore's TUF repository
+   served on 14 November 2026 (SHA-256 `6494e21e...`). JSON is parsed in
+   Homebrew and decoded with `decode_json_hash`, as `protobug` 0.2.0 passes
+   `JSON.parse` options that `json` 3 rejects: Homebrew's Ruby bundles
+   `json` 2.18.0 but developers and CI load 3.1.0 from the bundle. The
+   first bundle takes about 55 ms, nearly all of it loading the gem, and
+   each later one under 1 ms. Specs use real bundles from all four signers
+   with sockets blocked and cover another bottle, another workflow and a
+   tampered statement, signature, certificate, log time, log entry and
+   inclusion proof, an unsigned log time and a field under its second
+   name. No install path calls it yet: bundles already in hand
    (`prefetched_bundles`) stay on `gh --bundle` until PR 6 enforces the
-   repository identity that `gh --repo` checks today. Name
-   `HOMEBREW_NO_VERIFY_ATTESTATIONS` in every fatal message in
-   `utils/attestation.rb` (none mentions it today) and add specs that it
-   disables verification on every path.
+   repository identity that `gh --repo` checks today. Every fatal message
+   from `Utils::Attestation.check_attestation` now names
+   `HOMEBREW_NO_VERIFY_ATTESTATIONS`, which every path already honours
+   through `EnvConfig.verify_attestations?`.
 6. **Enforce the trust policy.** Implement the expected claims table as the
    gem's certificate policy plus statement checks, and cross-check the
    signed digest against the formula checksum as well as the file. Only
@@ -909,9 +932,9 @@ Considered instead of the DSL change:
 | GitHub Packages limits manifest annotations or removes manifests that no tag reaches | PR 7 tests both before the format is fixed; an annotation uses only what `sh.brew.tab` already relies on, and a current bottle's per-platform manifest is always listed by a tagged index |
 | Rewriting the manifests of every current bottle breaks installs | PR 11 adds only the bundle, compares everything else before and after, starts with a handful of formulae and is resumable |
 | Some current bottles have no valid attestation | PR 11 census and coverage report; rebottle until none remain; the developers gate needs 100% |
-| A Sigstore key rotation or GitHub's move to Rekor v2 outpaces stable tags | PR 15 refresh and canary; Sigstore's trusted root already lists the Rekor v2 log; gem 0.3.0 verifies Rekor v2 entries but DSSE on Rekor v2 needs a fixture as soon as one exists |
-| The gem is young (0.x, one in-toto advisory) and reports failures both as results and exceptions | Exact pin, reviewed bumps, fail-closed wrapper, real and tampered fixtures, upstream fixes rather than patches |
-| `protobug` 0.2.0 cannot decode JSON where `json` 3 is loaded: developers and CI today, everyone once Homebrew's Ruby bundles it | PR 5 parses JSON itself and its specs run under the bundle's `json`; report it upstream and drop the workaround once a fixed release is pinned |
+| A Sigstore key rotation or GitHub's move to Rekor v2 outpaces stable tags | PR 15 refresh and canary; Sigstore's trusted root already lists the Rekor v2 log; `verify_bundle` rejects Rekor v2 entries, as the gem does not return the timestamp authority's time it checks for them, so the move replaces the gem (design decision 1), with a DSSE fixture as soon as one exists |
+| The gem is young (0.x, one in-toto advisory), trusts a log time the log has not signed and reports failures both as results and exceptions | Exact pin, reviewed bumps, fail-closed wrapper that passes it only the bundle form Homebrew's signers produce, real and tampered fixtures; replaced rather than patched (design decision 1) |
+| `protobug` 0.2.0 cannot decode JSON where `json` 3 is loaded: developers and CI today, everyone once Homebrew's Ruby bundles it | PR 5 parses JSON itself and its specs run under the bundle's `json`; the workaround stays until a fixed release is pinned or the gem is replaced |
 | API generation fails when GitHub Packages is unreachable or a pinned index is missing | Indexes are cached by digest, so a run fetches only new ones; a failed run leaves the previous API published; generation already depends on GitHub Packages for the executables database |
 | The API carries a wrong per-platform digest | Installs fail closed, as the client checks the manifest names its bottle; the generator fails on any mismatch and the sweep derives the digests again daily |
 | Download counts move from the index to per-platform manifests | PR 7 confirms how GitHub Packages counts them and PR 12 updates `brew info --github-packages-downloads` to match |

@@ -81,6 +81,12 @@ module Utils
           #{e}
         EOS
       end
+    rescue CannotInstallFormulaError => e
+      raise CannotInstallFormulaError, <<~EOS
+        #{e.message.chomp}
+
+        To skip attestation verification, set `HOMEBREW_NO_VERIFY_ATTESTATIONS=1`.
+      EOS
     end
   end
 end
