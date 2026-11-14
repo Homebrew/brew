@@ -10,8 +10,12 @@ gem:
     - bigdecimal
     - json
     - logger
+    - net-http
+    - net-protocol
     - racc
     - rexml
+    - timeout
+    - uri
     # These aren't needed:
     - diff-lcs
     - hana
