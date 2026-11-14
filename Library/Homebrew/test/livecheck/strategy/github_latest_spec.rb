@@ -17,28 +17,30 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
   end
   let(:non_github_url) { "https://brew.sh/test" }
   let(:generated) do
-    {
-      def:  {
+    data = {
+      def_rest:  {
         url:        "https://api.github.com/repos/abc/def/releases/latest",
         username:   "abc",
         repository: "def",
       },
-      brew: {
+      brew_rest: {
         url:        "https://api.github.com/repos/Homebrew/brew/releases/latest",
         username:   "Homebrew",
         repository: "brew",
       },
     }
+
+    graphql_url = "https://api.github.com/graphql"
+    data[:def_graphql] = data[:def_rest].merge({ url: graphql_url })
+    data[:brew_graphql] = data[:brew_rest].merge({ url: graphql_url })
+    data
   end
   # For the sake of brevity, this is a limited subset of the information found
   # in release objects in a response from the GitHub API.
   let(:content) do
     <<~JSON
       {
-        "tag_name": "1.2.3",
-        "name": "1.2.3",
-        "draft": false,
-        "prerelease": false
+        "tag_name": "1.2.3"
       }
     JSON
   end
@@ -65,16 +67,31 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
 
   describe "::generate_input_values" do
     it "returns a hash containing a url and regex for a GitHub release artifact URL" do
-      expect(github_latest.generate_input_values(github_urls[:release_asset])).to eq(generated[:def])
+      expect(github_latest.generate_input_values(github_urls[:release_asset])).to eq(generated[:def_rest])
     end
 
     it "returns a hash containing a url and regex for a GitHub tag archive URL" do
-      expect(github_latest.generate_input_values(github_urls[:short_tag_archive])).to eq(generated[:def])
-      expect(github_latest.generate_input_values(github_urls[:long_tag_archive])).to eq(generated[:def])
+      expect(github_latest.generate_input_values(github_urls[:short_tag_archive])).to eq(generated[:def_rest])
+      expect(github_latest.generate_input_values(github_urls[:long_tag_archive])).to eq(generated[:def_rest])
     end
 
     it "returns a hash containing a url and regex for a GitHub repository upload URL" do
-      expect(github_latest.generate_input_values(github_urls[:repository_upload])).to eq(generated[:def])
+      expect(github_latest.generate_input_values(github_urls[:repository_upload])).to eq(generated[:def_rest])
+    end
+
+    it "returns a hash containing a REST API url when it should be used" do
+      expect(github_latest.generate_input_values(github_urls[:release_asset], fetch_type: :rest_api))
+        .to eq(generated[:def_rest])
+    end
+
+    it "returns a hash containing a GraphQL API url when REST should not be used" do
+      expect(github_latest.generate_input_values(github_urls[:release_asset], fetch_type: :graphql_api))
+        .to eq(generated[:def_graphql])
+    end
+
+    it "raises an error for an unrecognized `fetch_type`" do
+      expect { github_latest.generate_input_values(github_urls[:release_asset], fetch_type: :unknown) }
+        .to raise_error(ArgumentError, "Unrecognized `fetch_type` argument")
     end
 
     it "returns an empty hash for a non-GitHub URL" do
@@ -87,23 +104,61 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
       base = {
         matches: matches.to_h { |v| [v, Version.new(v)] },
         regex:   Homebrew::Livecheck::Strategy::GithubReleases::DEFAULT_REGEX,
-        url:     generated[:brew][:url],
+        url:     generated[:brew_rest][:url],
       }
 
       {
-        fetched:        base.merge({ content: }),
-        cached:         base.merge({ cached: true }),
-        cached_default: base.merge({ matches: {}, cached: true }),
+        fetched_rest:    base.merge({ content: }),
+        fetched_graphql: base.merge({
+          url:     generated[:brew_graphql][:url],
+          content:,
+        }),
+        cached:          base.merge({ cached: true }),
+        cached_default:  base.merge({ matches: {}, cached: true }),
       }
     end
 
     let(:brew_regex) { /^v?(\d+(?:\.\d+)+)$/i }
 
-    it "finds versions in fetched content" do
+    it "finds versions in content fetched from the REST API" do
       allow(GitHub::API).to receive(:open_rest).and_return(content)
 
       expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]))
-        .to eq(match_data[:fetched])
+        .to eq(match_data[:fetched_rest])
+    end
+
+    it "uses the REST API when a `strategy` block is provided" do
+      ENV["HOMEBREW_LIVECHECK_USE_GITHUB_GRAPHQL"] = "1"
+      allow(GitHub::API).to receive(:open_rest).and_return(content)
+
+      expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]) { |json| json["tag_name"] })
+        .to eq(match_data[:fetched_rest])
+    end
+
+    it "finds versions in content fetched from the GraphQL API" do
+      ENV["HOMEBREW_LIVECHECK_USE_GITHUB_GRAPHQL"] = "1"
+      allow(GitHub::API).to receive(:open_graphql).and_return(
+        { "repository" => { "latestRelease" => { "tagName" => "1.2.3" } } },
+      )
+
+      expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]))
+        .to eq(match_data[:fetched_graphql])
+    end
+
+    it "returns no matches from the GraphQL API when the repository has no latest release" do
+      ENV["HOMEBREW_LIVECHECK_USE_GITHUB_GRAPHQL"] = "1"
+      allow(GitHub::API).to receive(:open_graphql).and_return({ "repository" => { "latestRelease" => nil } })
+
+      expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]))
+        .to eq(match_data[:fetched_graphql].merge({ matches: {}, content: nil }))
+    end
+
+    it "returns no matches from the GraphQL API when there is no content" do
+      ENV["HOMEBREW_LIVECHECK_USE_GITHUB_GRAPHQL"] = "1"
+      allow(GitHub::API).to receive(:open_graphql).and_return(nil)
+
+      expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]))
+        .to eq(match_data[:fetched_graphql].merge({ matches: {}, content: nil }))
     end
 
     it "finds versions in provided content" do
@@ -124,6 +179,13 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
           match[1]
         end,
       ).to eq(match_data[:cached].merge({ regex: brew_regex }))
+    end
+
+    it "raises an error when `HOMEBREW_NO_GITHUB_API` is set and an API request would be made" do
+      ENV["HOMEBREW_NO_GITHUB_API"] = "1"
+
+      expect { github_latest.find_versions(url: github_urls[:brew_tag_archive]) }
+        .to raise_error(RuntimeError, "GithubLatest cannot be used when `HOMEBREW_NO_GITHUB_API` is set")
     end
 
     it "returns default match_data when url is blank" do

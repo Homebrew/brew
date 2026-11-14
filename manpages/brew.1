@@ -3182,6 +3182,9 @@ Print this text before the installation summary of each successful build\.
 \fBHOMEBREW_LIVECHECK_AUTOBUMP\fP
 If set, \fBbrew livecheck\fP will include data for packages that are autobumped by BrewTestBot\.
 .TP
+\fBHOMEBREW_LIVECHECK_USE_GITHUB_GRAPHQL\fP
+If set, \fBbrew livecheck\fP will use the GitHub GraphQL API for the \fBGithubLatest\fP and \fBGithubReleases\fP strategies when possible\. This requires adequate GitHub credentials to be set\.
+.TP
 \fBHOMEBREW_LIVECHECK_WATCHLIST\fP
 Consult this file for the list of formulae to check by default when no formula argument is passed to \fBbrew livecheck\fP\&\.
 .RS

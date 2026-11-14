@@ -39,6 +39,16 @@ module Homebrew
         # `strategy :github_latest` in a `livecheck` block.
         PRIORITY = 0
 
+        # A GraphQL query to fetch a repository's "latest" release tag, which
+        # can be used for basic checks without a `strategy` block.
+        LATEST_RELEASE_TAG_QUERY = <<~GRAPHQL
+          query($owner: String!, $name: String!) {
+            repository(owner: $owner, name: $name) {
+              latestRelease { tagName }
+            }
+          }
+        GRAPHQL
+
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
@@ -54,15 +64,23 @@ module Homebrew
         # `livecheck` block.
         #
         # @param url [String] the URL used to generate values
+        # @param fetch_type the type of GitHub data to fetch
         # @return [Hash]
-        sig { params(url: String).returns(T::Hash[Symbol, T.untyped]) }
-        def self.generate_input_values(url)
+        sig { params(url: String, fetch_type: Symbol).returns(T::Hash[Symbol, T.untyped]) }
+        def self.generate_input_values(url, fetch_type: :rest_api)
           values = {}
 
           match = url.delete_suffix(".git").match(GithubReleases::URL_MATCH_REGEX)
           return values if match.blank?
 
-          values[:url] = "#{GitHub::API_URL}/repos/#{match[:username]}/#{match[:repository]}/releases/latest"
+          values[:url] = case fetch_type
+          when :graphql_api
+            "#{GitHub::API_URL}/graphql"
+          when :rest_api
+            "#{GitHub::API_URL}/repos/#{match[:username]}/#{match[:repository]}/releases/latest"
+          else
+            raise ArgumentError, "Unrecognized `fetch_type` argument"
+          end
           values[:username] = match[:username]
           values[:repository] = match[:repository]
 
@@ -91,13 +109,36 @@ module Homebrew
           match_data = { matches: {}, regex:, url: }
           match_data[:cached] = true if content
 
-          generated = generate_input_values(url)
+          fetch_type =
+            if !block_given? && Homebrew::EnvConfig.livecheck_use_github_graphql?
+              :graphql_api
+            else
+              :rest_api
+            end
+          generated = generate_input_values(url, fetch_type:)
           return match_data if generated.blank?
 
           match_data[:url] = generated[:url]
 
           unless match_data[:cached]
-            match_data[:content] = GitHub::API.open_rest(generated[:url], parse_json: false)
+            if Homebrew::EnvConfig.no_github_api?
+              raise "#{Utils.demodulize(name)} cannot be used when `HOMEBREW_NO_GITHUB_API` is set"
+            end
+
+            match_data[:content] = if fetch_type == :graphql_api
+              # Use the GraphQL API to fetch minimal data and structure the JSON
+              # to match REST API responses
+              tag_name = GitHub::API.open_graphql(
+                LATEST_RELEASE_TAG_QUERY,
+                variables: {
+                  owner: generated[:username],
+                  name:  generated[:repository],
+                },
+              )&.dig("repository", "latestRelease", "tagName")
+              "#{JSON.pretty_generate({ tag_name: })}\n" if tag_name
+            else
+              GitHub::API.open_rest(generated[:url], parse_json: false)
+            end
             content = match_data[:content]
           end
           return match_data if content.blank?

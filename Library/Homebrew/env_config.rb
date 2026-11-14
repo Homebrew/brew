@@ -502,6 +502,12 @@ module Homebrew
         description: "If set, `brew livecheck` will include data for packages that are autobumped by BrewTestBot.",
         boolean:     true,
       },
+      HOMEBREW_LIVECHECK_USE_GITHUB_GRAPHQL:     {
+        description: "If set, `brew livecheck` will use the GitHub GraphQL API for the `GithubLatest` and " \
+                     "`GithubReleases` strategies when possible. This requires adequate GitHub credentials " \
+                     "to be set.",
+        boolean:     true,
+      },
       HOMEBREW_LIVECHECK_WATCHLIST:              {
         description:  "Consult this file for the list of formulae to check by default when no formula argument " \
                       "is passed to `brew livecheck`.",

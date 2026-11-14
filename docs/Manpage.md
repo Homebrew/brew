@@ -4959,6 +4959,12 @@ For MDM configuration, package restrictions and policy ownership, see:
 : If set, `brew livecheck` will include data for packages that are autobumped by
   BrewTestBot.
 
+`HOMEBREW_LIVECHECK_USE_GITHUB_GRAPHQL`
+
+: If set, `brew livecheck` will use the GitHub GraphQL API for the
+  `GithubLatest` and `GithubReleases` strategies when possible. This requires
+  adequate GitHub credentials to be set.
+
 `HOMEBREW_LIVECHECK_WATCHLIST`
 
 : Consult this file for the list of formulae to check by default when no formula
