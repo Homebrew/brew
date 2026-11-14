@@ -246,6 +246,7 @@ module PyPI
       ignore_main_package_cooldown: T::Boolean,
     ).returns(T::Boolean)
   }
+  # rubocop:todo Metrics/MethodLength, Metrics/PerceivedComplexity
   def self.update_python_resources!(formula, version: nil, package_name: nil, extra_packages: nil,
                                     exclude_packages: nil, dependencies: nil, install_dependencies: false,
                                     print_only: false, quiet: false, verbose: false,
@@ -488,6 +489,7 @@ module PyPI
 
     true
   end
+  # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity
 
   sig { params(contents: String).returns(T::Hash[String, String]) }
   def self.resource_blocks_from_formula(contents)

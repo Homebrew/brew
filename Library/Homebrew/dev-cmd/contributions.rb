@@ -11,7 +11,7 @@ require "tap"
 
 module Homebrew
   module DevCmd
-    class Contributions < AbstractCommand
+    class Contributions < AbstractCommand # rubocop:todo Metrics/ClassLength
       include SystemCommand::Mixin
 
       PRIMARY_REPOS = %w[

@@ -21,7 +21,7 @@ require "attestation"
 
 module Homebrew
   # Helper module for performing (pre-)install checks.
-  module Install
+  module Install # rubocop:todo Metrics/ModuleLength
     extend Utils::Output::Mixin
 
     DependencySummary = T.type_alias { T::Hash[Symbol, T::Array[VersionChange]] }
@@ -66,7 +66,7 @@ module Homebrew
                quiet: T::Boolean, verbose: T::Boolean, dry_run: T::Boolean, skip_post_install: T::Boolean,
                skip_link: T::Boolean).returns(T::Array[FormulaInstaller])
       }
-      def formula_installers(
+      def formula_installers( # rubocop:todo Metrics/ParameterLists
         formulae_to_install,
         installed_on_request: true,
         build_bottle: false,
@@ -356,7 +356,7 @@ module Homebrew
                dry_run_action: String, skip_post_install: T::Boolean, skip_link: T::Boolean,
                cleanup: T::Boolean).returns(T::Array[Formula])
       }
-      def install_formulae(
+      def install_formulae( # rubocop:todo Metrics/ParameterLists
         formula_installers,
         installed_on_request: true,
         build_bottle: false,

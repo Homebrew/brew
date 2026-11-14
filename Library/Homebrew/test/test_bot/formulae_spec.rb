@@ -172,7 +172,7 @@ RSpec.describe Homebrew::TestBot::Formulae do
               "-z", "origin/HEAD", "HEAD").and_return("Formula/foo.rb\0")
     end
 
-    it "writes a warning annotation for the new recursive dependency impact" do
+    it "writes a warning annotation for the new recursive dependency impact" do # rubocop:todo RSpec/ExampleLength
       formula = formula("foo") do
         T.bind(self, T.class_of(Formula))
         url "foo-1.0"

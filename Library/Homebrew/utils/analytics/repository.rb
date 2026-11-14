@@ -28,7 +28,7 @@ module Utils
       end
 
       sig { returns(T::Array[T::Hash[String, T.nilable(T.any(String, Integer))]]) }
-      def rows
+      def rows # rubocop:todo Metrics/AbcSize
         if git("rev-parse", "--is-shallow-repository") == "true"
           raise "Analytics require complete Git history for #{@name}"
         end

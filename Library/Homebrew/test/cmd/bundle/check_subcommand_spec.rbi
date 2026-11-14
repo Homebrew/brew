@@ -1,4 +1,3 @@
 # typed: strict
 
-class TestChecker < Homebrew::Bundle::PackageType
-end
+class TestChecker < Homebrew::Bundle::PackageType; end

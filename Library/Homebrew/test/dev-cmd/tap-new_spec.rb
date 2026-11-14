@@ -8,7 +8,9 @@ require "yaml"
 RSpec.describe Homebrew::DevCmd::TapNew do
   it_behaves_like "parseable arguments"
 
+  # rubocop:todo RSpec/MultipleExpectations
   it "initializes a new tap with a README file and GitHub Actions CI", :integration_test do
+    # rubocop:enable RSpec/MultipleExpectations
     ENV["HOMEBREW_GIT_NAME"] = "Homebrew Test"
     ENV["HOMEBREW_GIT_EMAIL"] = "test@example.com"
 

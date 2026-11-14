@@ -36,7 +36,7 @@ require "utils/path"
 require "utils/attestation"
 
 # Installer for a formula.
-class FormulaInstaller
+class FormulaInstaller # rubocop:todo Metrics/ClassLength
   include FormulaCellarChecks
   include Utils::Output::Mixin
   include Utils::Path
@@ -91,7 +91,7 @@ class FormulaInstaller
       verbose:                    T::Boolean,
     ).void
   }
-  def initialize(
+  def initialize( # rubocop:todo Metrics/ParameterLists
     formula,
     download_queue: Homebrew::DownloadQueue.default,
     link_keg: nil,

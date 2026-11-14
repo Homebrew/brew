@@ -91,7 +91,7 @@ module Homebrew
       end
 
       sig { void }
-      def output_update_report
+      def output_update_report # rubocop:todo Metrics/AbcSize, Metrics/MethodLength
         if ENV["HOMEBREW_ADDITIONAL_GOOGLE_ANALYTICS_ID"].present?
           opoo "HOMEBREW_ADDITIONAL_GOOGLE_ANALYTICS_ID is now a no-op so can be unset."
           puts "All Homebrew Google Analytics code and data was destroyed."
@@ -138,6 +138,7 @@ module Homebrew
 
                       current_branch = Utils.popen_read("git", *git_args, "symbolic-ref", "--short", "-q",
                                                         "HEAD").chomp
+                      # rubocop:todo Metrics/BlockNesting
                       if current_branch.blank? || current_branch == branch
                         local_changes = Utils.popen_read("git", *git_args, "status", "--porcelain",
                                                          "--untracked-files=all").present?
@@ -160,8 +161,10 @@ module Homebrew
                         SystemCommand.safe_system "git", *git_args, "update-ref", "refs/heads/#{branch}",
                                                   before_revision
                       end
+                      # rubocop:enable Metrics/BlockNesting
                       SystemCommand.safe_system "git", *git_args, "update-ref", "refs/remotes/origin/#{branch}",
                                                 before_revision
+                      # rubocop:todo Metrics/BlockNesting
                       if local_changes && !SystemCommand.run("git", args: [*git_args, "-c", "core.hooksPath=#{File::NULL}",
                                                                            "stash", "pop", "-q"]).success?
                         stash_message = "Could not restore local changes for #{tap.name}. " \
@@ -174,6 +177,8 @@ module Homebrew
                         end
                         denied_redirects << stash_message
                       end
+                    # rubocop:enable Metrics/BlockNesting
+                    # rubocop:todo Metrics/BlockNesting
                     rescue => rollback_error
                       denied_redirects << "Could not roll back #{tap.name}: #{rollback_error.message}\n" \
                                           "Pre-update revision: #{before_revision}.\n" \
@@ -181,6 +186,7 @@ module Homebrew
                                           "After saving local changes, run " \
                                           "`git -C #{tap.path.to_s.shellescape} reset --hard #{before_revision}` " \
                                           "only if the updated branch is checked out."
+                      # rubocop:enable Metrics/BlockNesting
                     end
                   end
                   next

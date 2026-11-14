@@ -16,7 +16,7 @@ module Homebrew
   # The {Livecheck} module consists of methods used by the `brew livecheck`
   # command. These methods print the requested livecheck information
   # for formulae.
-  module Livecheck
+  module Livecheck # rubocop:todo Metrics/ModuleLength
     extend Utils::Output::Mixin
 
     NO_CURRENT_VERSION_MSG = "Unable to identify current version"
@@ -158,7 +158,7 @@ module Homebrew
         verbose:                     T::Boolean,
       ).void
     }
-    def self.run_checks(
+    def self.run_checks( # rubocop:todo Metrics/MethodLength, Metrics/PerceivedComplexity
       formulae_and_casks_to_check,
       full_name: false, handle_name_conflict: false, check_resources: false, json: false, newer_only: false,
       extract_plist: false, debug: false, quiet: false, verbose: false
@@ -630,6 +630,7 @@ module Homebrew
         debug:                      T::Boolean,
       ).returns(T.nilable(T::Hash[Symbol, T.untyped]))
     }
+    # rubocop:todo Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     def self.latest_version(
       formula_or_cask,
       referenced_formula_or_cask: nil,
@@ -691,7 +692,7 @@ module Homebrew
       end
 
       checked_urls = []
-      urls.each_with_index do |original_url, i|
+      urls.each_with_index do |original_url, i| # rubocop:todo Metrics/BlockLength
         url = original_url
         next if checked_urls.include?(url)
 
@@ -891,6 +892,7 @@ module Homebrew
       end
       nil
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 
     # Identifies the latest version of a resource and returns a Hash containing the
     # version information. Returns nil if a latest version couldn't be found.
@@ -905,7 +907,7 @@ module Homebrew
         verbose:        T::Boolean,
       ).returns(T::Hash[Symbol, T.untyped])
     }
-    def self.resource_version(
+    def self.resource_version( # rubocop:todo Metrics/MethodLength
       resource,
       formula_latest,
       json: false,
@@ -940,7 +942,7 @@ module Homebrew
       urls ||= checkable_urls(resource)
 
       checked_urls = []
-      urls.each_with_index do |original_url, i|
+      urls.each_with_index do |original_url, i| # rubocop:todo Metrics/BlockLength
         url = original_url.gsub(Constants::LATEST_VERSION, formula_latest)
         next if checked_urls.include?(url)
 

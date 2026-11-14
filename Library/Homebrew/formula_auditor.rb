@@ -17,7 +17,7 @@ require "tap_auditor"
 
 module Homebrew
   # Auditor for checking common violations in {Formula}e.
-  class FormulaAuditor
+  class FormulaAuditor # rubocop:todo Metrics/ClassLength
     include FormulaCellarChecks
     include Utils::Curl
     include Utils::Output::Mixin

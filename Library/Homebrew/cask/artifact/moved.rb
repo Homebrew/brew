@@ -103,6 +103,7 @@ module Cask
               unless auto_updates
                 source_plist = Pathname("#{source}/Contents/Info.plist")
                 target_plist = Pathname("#{target}/Contents/Info.plist")
+                # rubocop:todo Metrics/BlockNesting
                 same = if source_plist.size? &&
                           (source_bundle_version = Homebrew::BundleVersion.from_info_plist(source_plist)) &&
                           target_plist.size? &&
@@ -128,12 +129,15 @@ module Cask
                     print_stdout: verbose,
                   ).success?
                 end
+                # rubocop:enable Metrics/BlockNesting
 
+                # rubocop:todo Metrics/BlockNesting
                 unless same
                   raise CaskError,
                         "It seems the existing #{self.class.english_name} is different from " \
                         "the one being installed."
                 end
+                # rubocop:enable Metrics/BlockNesting
               end
 
               # Remove the source as we don't need to move it to the target location

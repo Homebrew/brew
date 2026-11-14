@@ -49,7 +49,7 @@ module RuboCop
           livecheck_urls: T::Array[String],
         ).void
       }
-      def audit_url(type, urls, mirrors, livecheck_urls: [])
+      def audit_url(type, urls, mirrors, livecheck_urls: []) # rubocop:todo Metrics/MethodLength
         @type = T.let(type, T.nilable(Symbol))
 
         # URLs must be ASCII; IDNs must be punycode

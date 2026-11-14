@@ -102,7 +102,8 @@ end
 # work when type-checking is active.
 RSpec::Sorbet.allow_doubles!
 
-RSpec.configure do |config|
+# Keep suite-wide configuration and lifecycle hooks together so their ordering remains visible.
+RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   config.order = :random
 
   config.raise_errors_for_deprecations!

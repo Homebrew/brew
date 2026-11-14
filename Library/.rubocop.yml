@@ -268,7 +268,7 @@ Lint/ParenthesesAsGroupedExpression:
 Lint/UnusedMethodArgument:
   AllowUnusedKeywordArguments: true
 
-# These metrics didn't end up helping.
+# Homebrew's own code enables these with fixed limits in Homebrew/.rubocop.yml.
 Metrics:
   Enabled: false
 
@@ -341,7 +341,7 @@ RSpec/StubbedMock:
   Enabled: false
 RSpec/SubjectStub:
   Enabled: false
-# These were ever-growing numbers, not useful.
+# Homebrew's own tests enable these with fixed limits in Homebrew/.rubocop.yml.
 RSpec/ExampleLength:
   Enabled: false
 RSpec/MultipleExpectations:

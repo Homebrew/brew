@@ -683,7 +683,7 @@ module Homebrew
       end
 
       sig { params(formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args).void }
-      def formula!(formula_name, args:)
+      def formula!(formula_name, args:) # rubocop:todo Metrics/MethodLength
         cleanup_during!(@testing_formulae, args:)
 
         test_header(:Formulae, method: "formula!(#{formula_name})")

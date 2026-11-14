@@ -71,7 +71,7 @@ module Homebrew
       end
 
       sig { override.void }
-      def run
+      def run # rubocop:todo Metrics/MethodLength
         if args.formula_list && !args.reconcile_history? && !args.new_history?
           raise UsageError, "`--formula-list` requires `--new-history` or `--reconcile-history`"
         end
@@ -95,9 +95,9 @@ module Homebrew
         end
         prefiltered = T.let([], T::Array[String])
         Formulary.enable_factory_cache!
-        Homebrew::API.with_no_api_env do
+        Homebrew::API.with_no_api_env do # rubocop:todo Metrics/BlockLength
           latest_macos = MacOSVersion.new((HOMEBREW_MACOS_NEWEST_UNSUPPORTED.to_i - 1).to_s).to_sym
-          Homebrew::SimulateSystem.with(os: latest_macos, arch: :arm) do
+          Homebrew::SimulateSystem.with(os: latest_macos, arch: :arm) do # rubocop:todo Metrics/BlockLength
             overrides = local_overrides
             matcher = Homebrew::Vulns::Match.new(repology:        local_repology,
                                                  overrides:,

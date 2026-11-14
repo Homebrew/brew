@@ -218,7 +218,7 @@ module Homebrew
           repositories:    T::Array[T::Hash[String, T.untyped]],
         ).returns(VersionBumpInfo)
       }
-      def retrieve_versions_by_arch(formula_or_cask:, repositories:)
+      def retrieve_versions_by_arch(formula_or_cask:, repositories:) # rubocop:todo Metrics/MethodLength
         is_cask_with_blocks = formula_or_cask.is_a?(Cask::Cask) && formula_or_cask.on_system_blocks_exist?
         type, version_name = if formula_or_cask.is_a?(Formula)
           [:formula, "formula version:"]

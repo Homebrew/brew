@@ -85,7 +85,7 @@ require "time"
 #   end
 # end
 # ```
-class Formula
+class Formula # rubocop:todo Metrics/ClassLength
   include FileUtils
   include Utils::Shebang
   include Utils::Shell

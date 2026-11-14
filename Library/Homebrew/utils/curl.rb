@@ -10,7 +10,7 @@ require "system_command"
 
 module Utils
   # Helper function for interacting with `curl`.
-  module Curl
+  module Curl # rubocop:todo Metrics/ModuleLength
     include SystemCommand::Mixin
     extend SystemCommand::Mixin
     include Utils::Output::Mixin

@@ -133,7 +133,7 @@ RSpec.describe Homebrew::Attestation do
     end
   end
 
-  describe "::prefetch" do
+  describe "::prefetch" do # rubocop:todo RSpec/MultipleMemoizedHelpers
     let(:bulk_list_url) { "https://api.github.com/orgs/Homebrew/attestations/bulk-list?per_page=100" }
     let(:backfill_bulk_list_url) { "https://api.github.com/orgs/trailofbits/attestations/bulk-list?per_page=100" }
     let(:listed_attestation) { { "bundle" => fake_bundle, "repository_id" => 1 } }
@@ -559,7 +559,7 @@ RSpec.describe Homebrew::Attestation do
     end
   end
 
-  describe "::check_formula_attestation" do
+  describe "::check_formula_attestation" do # rubocop:todo RSpec/MultipleMemoizedHelpers
     let(:bottle_resource) { instance_double(Resource, owner: formula_owner) }
     let(:attested_bottle) { instance_double(Bottle, resource: bottle_resource) }
     let(:formula_owner) do

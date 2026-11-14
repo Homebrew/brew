@@ -222,7 +222,8 @@ RSpec.describe Cask::DSL::Version, :cask do
   end
 
   describe "#unstable?" do
-    test_each([
+    # These real-world version strings share the same assertion and each generate a separate example.
+    test_each([ # rubocop:disable Metrics/CollectionLiteralLength
       "0.0.11-beta.7",
       "0.0.23b-alpha",
       "0.1-beta",

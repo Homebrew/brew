@@ -3,7 +3,7 @@
 
 module RuboCop
   module Cop
-    module InstallStepsHelper
+    module InstallStepsHelper # rubocop:todo Metrics/ModuleLength
       OFFICIAL_HOMEBREW_TAP_PATH_REGEX = %r{(?:\A|/)Taps/homebrew/homebrew-[\w-]+/}i
       FILE_PREPARATION_STEP_METHODS =
         [:mkdir, :mkdir_p, :touch, :move, :mv, :move_children, :move_contents, :copy, :remove, :inreplace,

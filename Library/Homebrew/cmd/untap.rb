@@ -61,9 +61,12 @@ module Homebrew
                   puts installed_names
                   confirmed = begin
                     Homebrew::Ask.confirm?(action: "changes")
+                  # rubocop:todo Metrics/BlockNesting
                   rescue SystemExit
                     false
+                    # rubocop:enable Metrics/BlockNesting
                   end
+                  # rubocop:todo Metrics/BlockNesting
                   unless confirmed
                     ofail <<~EOS
                       Refusing to untap #{tap} because it contains the following installed #{installed_package_types}:
@@ -71,6 +74,7 @@ module Homebrew
                     EOS
                     next
                   end
+                  # rubocop:enable Metrics/BlockNesting
                 end
 
                 named_args = installed_formulae_names + installed_cask_names

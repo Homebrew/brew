@@ -155,17 +155,21 @@ module Homebrew
                   sourcefile_path
                 ]
 
+                # rubocop:todo Metrics/BlockNesting
                 if args.dry_run?
                   bump_cask_pr_args << "--dry-run"
                   oh1 "Would bump #{cask} from #{cask.version} to #{version}"
                 else
                   oh1 "Bumping #{cask} from #{cask.version} to #{version}"
                 end
+                # rubocop:enable Metrics/BlockNesting
 
                 begin
                   system_command! HOMEBREW_BREW_FILE, args: bump_cask_pr_args
+                # rubocop:todo Metrics/BlockNesting
                 rescue ErrorDuringExecution => e
                   onoe e
+                  # rubocop:enable Metrics/BlockNesting
                 end
               end
             end

@@ -373,7 +373,7 @@ RSpec.describe Homebrew::Bundle::Brew do
             allow(Homebrew::Bundle::Brew::Services).to receive(:started?).with(formula_name).and_return(true)
           end
 
-          context "with a successful installation" do
+          context "with a successful installation" do # rubocop:todo RSpec/NestedGroups
             it "start service" do
               expect(Homebrew::Bundle::Brew::Services).not_to receive(:start)
               described_class.preinstall!(formula_name, start_service: true)
@@ -381,7 +381,7 @@ RSpec.describe Homebrew::Bundle::Brew do
             end
           end
 
-          context "with a skipped installation" do
+          context "with a skipped installation" do # rubocop:todo RSpec/NestedGroups
             it "start service" do
               expect(Homebrew::Bundle::Brew::Services).not_to receive(:start)
               described_class.install!(formula_name, preinstall: false, start_service: true)
@@ -394,7 +394,7 @@ RSpec.describe Homebrew::Bundle::Brew do
             allow(Homebrew::Bundle::Brew::Services).to receive(:started?).with(formula_name).and_return(false)
           end
 
-          context "with a successful installation" do
+          context "with a successful installation" do # rubocop:todo RSpec/NestedGroups
             it "start service" do
               expect(Homebrew::Bundle::Brew::Services).to \
                 receive(:start).with(formula_name, file: nil, verbose: false).and_return(true)
@@ -403,7 +403,7 @@ RSpec.describe Homebrew::Bundle::Brew do
             end
           end
 
-          context "with a skipped installation" do
+          context "with a skipped installation" do # rubocop:todo RSpec/NestedGroups
             it "start service" do
               expect(Homebrew::Bundle::Brew::Services).to \
                 receive(:start).with(formula_name, file: nil, verbose: false).and_return(true)
@@ -944,7 +944,7 @@ RSpec.describe Homebrew::Bundle::Brew do
             expect(installer.install!).to be(false)
           end
 
-          context "when formula pinned" do
+          context "when formula pinned" do # rubocop:todo RSpec/NestedGroups
             before do
               allow(described_class).to receive(:pinned_formulae).and_return([formula_name])
             end
@@ -956,7 +956,7 @@ RSpec.describe Homebrew::Bundle::Brew do
             end
           end
 
-          context "when the pin option is true" do
+          context "when the pin option is true" do # rubocop:todo RSpec/NestedGroups
             let(:options) { { args: ["with-option"], pin: true } }
 
             it "pins the formula instead of upgrading it" do
@@ -978,7 +978,7 @@ RSpec.describe Homebrew::Bundle::Brew do
             end
           end
 
-          context "when formula not upgraded" do
+          context "when formula not upgraded" do # rubocop:todo RSpec/NestedGroups
             before do
               allow(described_class).to receive(:outdated_formulae).and_return([])
             end

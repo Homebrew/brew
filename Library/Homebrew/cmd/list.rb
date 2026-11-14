@@ -91,6 +91,7 @@ module Homebrew
       end
 
       sig { override.void }
+      # rubocop:todo Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
       def run
         if args.json?
           raise UsageError, "`brew list --json` requires `--versions`." unless args.versions?
@@ -262,6 +263,8 @@ module Homebrew
           end
         end
       end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
+      # rubocop:enable Metrics/PerceivedComplexity
 
       private
 

@@ -465,7 +465,7 @@ RSpec.describe CurlDownloadStrategy do
             strategy.fetch
           end
 
-          context "with a trailing slash" do
+          context "with a trailing slash" do # rubocop:todo RSpec/NestedGroups
             let(:artifact_domain) { "https://mirror.example.com/v2/oci/" }
 
             it "does not duplicate the /v2/ API path" do
@@ -481,7 +481,7 @@ RSpec.describe CurlDownloadStrategy do
             end
           end
 
-          context "when the artifact domain is unreachable" do
+          context "when the artifact domain is unreachable" do # rubocop:todo RSpec/NestedGroups
             let(:failed_status) { instance_double(Process::Status, success?: false, exitstatus: 6, termsig: nil) }
 
             it "falls back to the original ghcr.io URL" do

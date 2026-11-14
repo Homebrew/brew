@@ -135,7 +135,7 @@ module Cask
         prefetched_cask_installers: T.nilable(T::Array[Installer]),
       ).returns(T::Boolean)
     }
-    def self.upgrade_casks!(
+    def self.upgrade_casks!( # rubocop:todo Metrics/ParameterLists
       *casks,
       args:,
       force: false,
