@@ -354,7 +354,7 @@ RSpec.describe Homebrew::Cmd::List do
     InstallHelper.stub_cask_installation(cask)
     cask.pin
 
-    expect { described_class.new(["--pinned", "local-caffeine"]).run }
+    expect { described_class.new(["--pinned", "local-caffeine"]).list_pinned }
       .to output("local-caffeine\n").to_stdout
       .and not_to_output.to_stderr
   end

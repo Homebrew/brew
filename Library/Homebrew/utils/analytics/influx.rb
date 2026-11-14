@@ -131,7 +131,7 @@ module Utils
         params(categories: T::Array[Symbol], days_ago: Integer,
                all_core_formulae_json: T::Boolean).returns(T::Array[T::Hash[Symbol, T.untyped]])
       }
-      def query(categories:, days_ago: 30, all_core_formulae_json: false) # rubocop:todo Metrics/MethodLength
+      def query(categories:, days_ago: 30, all_core_formulae_json: false)
         require "utils/analytics"
         require "json"
 
@@ -149,7 +149,7 @@ module Utils
           days_ago = 365
         end
 
-        categories.map do |category| # rubocop:todo Metrics/BlockLength
+        categories.map do |category|
           additional_where = all_core_formulae_json ? " AND tap_name ~ '^homebrew/'" : ""
           dimensions = CATEGORY_DIMENSIONS.fetch(category, DEFAULT_CATEGORY_DIMENSIONS)
           dimension_key = dimensions.dimension_key
@@ -158,23 +158,7 @@ module Utils
           additional_where += " AND env_config_state IS NOT NULL" if category == :homebrew_env_config
           additional_where += " AND on_request = 'true'" if category == :formula_install_on_request
 
-          package_renames = {}
-          if [:formula, :cask].include?(dimension_key)
-            require "tap"
-
-            Tap.all.select(&:official?).each do |tap|
-              ((dimension_key == :cask) ? tap.cask_renames : tap.formula_renames).each do |old_name, new_name|
-                package_renames["#{tap.name}/#{old_name}"] = "#{tap.name}/#{new_name}"
-              end
-              tap.tap_migrations.each do |old_name, new_name|
-                package_renames["#{tap.name}/#{old_name}"] = if Utils.full_name?(new_name)
-                  new_name
-                else
-                  "#{new_name}/#{old_name}"
-                end
-              end
-            end
-          end
+          package_renames = self.package_renames(dimension_key)
 
           sql_groups = dimensions.groups.map { |e| "\"#{e}\"" }.join(",")
           query = <<~EOS
@@ -216,11 +200,7 @@ module Utils
             when :homebrew_devcmdrun_developer
               "devcmdrun=#{record["devcmdrun"]} HOMEBREW_DEVELOPER=#{record["developer"]}"
             when :homebrew_os_arch_ci
-              if record["ci"] == "true"
-                "#{record["os"]} #{record["arch"]} (CI)"
-              else
-                "#{record["os"]} #{record["arch"]}"
-              end
+              "#{record["os"]} #{record["arch"]}#{" (CI)" if record["ci"] == "true"}"
             when :homebrew_prefixes
               prefix = record["prefix"].to_s
               if STANDARD_PREFIXES.none? { |std| std.casecmp?(prefix) }
@@ -362,6 +342,28 @@ module Utils
 
           json
         end
+      end
+
+      sig { params(dimension_key: T.any(String, Symbol)).returns(T::Hash[String, String]) }
+      def package_renames(dimension_key)
+        return {} unless [:formula, :cask].include?(dimension_key)
+
+        require "tap"
+
+        package_renames = {}
+        Tap.all.select(&:official?).each do |tap|
+          ((dimension_key == :cask) ? tap.cask_renames : tap.formula_renames).each do |old_name, new_name|
+            package_renames["#{tap.name}/#{old_name}"] = "#{tap.name}/#{new_name}"
+          end
+          tap.tap_migrations.each do |old_name, new_name|
+            package_renames["#{tap.name}/#{old_name}"] = if Utils.full_name?(new_name)
+              new_name
+            else
+              "#{new_name}/#{old_name}"
+            end
+          end
+        end
+        package_renames
       end
 
       sig { params(dimension: T.nilable(String)).returns(T.nilable(String)) }

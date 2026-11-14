@@ -9,6 +9,13 @@ require "cask/quarantine"
 require "formulary"
 require "macho"
 
+class InstallStepsTestRunner < Homebrew::InstallSteps::Runner
+  sig { params(step: Homebrew::InstallSteps::Step).void }
+  def file_step(step)
+    run_file_step(step)
+  end
+end
+
 RSpec.describe Homebrew::InstallSteps do
   let(:root) { Pathname(TEST_TMPDIR)/"install-steps" }
   let(:context) do
@@ -551,9 +558,11 @@ RSpec.describe Homebrew::InstallSteps do
     (root/"stage/source.txt").write "replacement"
     (root/"var/copied.txt").write "existing"
 
-    expect { Homebrew::InstallSteps::Runner.new(context:).run(rejecting_steps) }.to raise_error(Errno::EEXIST)
+    runner = InstallStepsTestRunner.new(context:)
 
-    Homebrew::InstallSteps::Runner.new(context:).run(steps)
+    expect { runner.file_step(rejecting_steps.fetch(0)) }.to raise_error(Errno::EEXIST)
+
+    runner.file_step(steps.fetch(0))
     expect((root/"var/copied.txt").read).to eq("replacement")
   end
 

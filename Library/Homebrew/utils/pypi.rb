@@ -246,7 +246,6 @@ module PyPI
       ignore_main_package_cooldown: T::Boolean,
     ).returns(T::Boolean)
   }
-  # rubocop:todo Metrics/MethodLength, Metrics/PerceivedComplexity
   def self.update_python_resources!(formula, version: nil, package_name: nil, extra_packages: nil,
                                     exclude_packages: nil, dependencies: nil, install_dependencies: false,
                                     print_only: false, quiet: false, verbose: false,
@@ -278,35 +277,9 @@ module PyPI
                          .map(&:to_formula)
                          .sort_by(&:version)
                          .reverse
-    python_name = if python_deps.empty?
-      "python"
-    else
-      (python_deps.find(&:any_version_installed?) || python_deps.first).name
-    end
+    python_name = (python_deps.find(&:any_version_installed?) || python_deps.first)&.name || "python"
 
-    stable = formula.stable
-    stable_url = stable&.url
-    main_package = if package_name.present?
-      package_string = package_name
-      package_string += "==#{formula.version}" if version.blank? && formula.version.present?
-      package = Package.new(package_string, python_name:)
-      if stable && stable_url && package_string != package_name &&
-         !stable_url.start_with?(PYTHONHOSTED_URL_PREFIX) && !stable.downloader.is_a?(VCSDownloadStrategy) &&
-         package.pypi_info(ignore_errors: true).nil?
-        Package.new("#{package_name} @ #{stable_url}", is_url: true, python_name:)
-      else
-        package
-      end
-    elsif package_name == ""
-      nil
-    else
-      if stable.nil? || stable_url.nil?
-        odie "#{formula.full_name} has no stable URL to determine the main Python package from."
-      end
-
-      Package.new(stable_url, is_url: true, python_name:,
-                  resource: (stable.resource if stable.downloader.is_a?(VCSDownloadStrategy)))
-    end
+    main_package = self.main_package(formula, package_name:, version:, python_name:)
 
     if main_package.nil?
       odie "The main package was skipped but no PyPI `extra_packages` were provided." if extra_packages.blank?
@@ -347,15 +320,13 @@ module PyPI
     end
 
     non_pypi_resource_names = formula.resources.filter_map do |resource|
-      next if resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
-      next if resource.livecheck_defined?
+      next if resource.url.start_with?(PYTHONHOSTED_URL_PREFIX) || resource.livecheck_defined?
 
       resource.name
     end.to_set
 
     test_resources = formula.resources.filter_map do |resource|
-      next unless resource.test?
-      next if resource.livecheck_defined?
+      next if !resource.test? || resource.livecheck_defined?
 
       resource.name
     end.to_set
@@ -374,7 +345,6 @@ module PyPI
     ohai "Retrieving PyPI dependencies for \"#{input_packages.join(" ")}\"..." if show_info
 
     print_stderr = verbose && show_info
-    print_stderr ||= false
 
     ignore_cooldown_package = main_package if ignore_main_package_cooldown
     found_packages = pip_report(input_packages, python_name:, print_stderr:,
@@ -489,7 +459,36 @@ module PyPI
 
     true
   end
-  # rubocop:enable Metrics/MethodLength, Metrics/PerceivedComplexity
+
+  sig {
+    params(formula: Formula, package_name: T.nilable(String), version: T.nilable(String), python_name: String)
+      .returns(T.nilable(Package))
+  }
+  def self.main_package(formula, package_name: nil, version: nil, python_name: "python")
+    stable = formula.stable
+    stable_url = stable&.url
+    if package_name.present?
+      package_string = package_name
+      package_string += "==#{formula.version}" if version.blank? && formula.version.present?
+      package = Package.new(package_string, python_name:)
+      if stable && stable_url && package_string != package_name &&
+         !stable_url.start_with?(PYTHONHOSTED_URL_PREFIX) && !stable.downloader.is_a?(VCSDownloadStrategy) &&
+         package.pypi_info(ignore_errors: true).nil?
+        Package.new("#{package_name} @ #{stable_url}", is_url: true, python_name:)
+      else
+        package
+      end
+    elsif package_name == ""
+      nil
+    else
+      if stable.nil? || stable_url.nil?
+        odie "#{formula.full_name} has no stable URL to determine the main Python package from."
+      end
+
+      Package.new(stable_url, is_url: true, python_name:,
+                  resource: (stable.resource if stable.downloader.is_a?(VCSDownloadStrategy)))
+    end
+  end
 
   sig { params(contents: String).returns(T::Hash[String, String]) }
   def self.resource_blocks_from_formula(contents)
