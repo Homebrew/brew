@@ -353,6 +353,60 @@ RSpec.describe Resource do
         expect(manifest.sbom_supplement).to eq(current_tag_supplement)
       end
     end
+
+    context "with a cached manifest" do
+      subject(:manifest) do
+        bottle_resource = Resource.new("testball")
+        bottle_resource.version("1.0")
+        bottle_resource.sha256(TEST_SHA256)
+
+        described_class.new(instance_double(Bottle, name: "testball", rebuild: 0, resource: bottle_resource,
+                                                    tag: Utils::Bottles.tag(:all)))
+      end
+
+      let(:cached_download) do
+        (mktmpdir/"manifest.json").tap do |path|
+          path.write(JSON.generate("manifests" => [{ "annotations" => {
+            "org.opencontainers.image.ref.name" => "1.0.all",
+            "sh.brew.bottle.digest"             => TEST_SHA256,
+            "sh.brew.tab"                       => "{}",
+          } }]))
+        end
+      end
+
+      before do
+        allow(manifest).to receive_messages(cached_download:, clear_cache: nil)
+      end
+
+      it "accepts a manifest matching its expected digest" do
+        manifest.sha256(cached_download.sha256)
+
+        expect { manifest.verify_download_integrity(cached_download) }.not_to raise_error
+      end
+
+      it "rejects a manifest that does not match its expected digest" do
+        manifest.sha256(TEST_SHA256)
+
+        expect { manifest.verify_download_integrity(cached_download) }.to raise_error(ChecksumMismatchError)
+      end
+
+      it "only parses a manifest that has no expected digest" do
+        expect { manifest.verify_download_integrity(cached_download) }.not_to raise_error
+      end
+
+      it "discards a cached manifest that does not match its expected digest", :aggregate_failures do
+        manifest.sha256(TEST_SHA256)
+
+        expect(manifest).to receive(:clear_cache)
+        expect(manifest.downloaded_and_valid?).to be(false)
+      end
+
+      it "refuses to read a cached manifest that does not match its expected digest" do
+        manifest.sha256(TEST_SHA256)
+
+        expect { manifest.tab }.to raise_error(ChecksumMismatchError)
+      end
+    end
   end
 
   specify "#verify_download_integrity skips files already verified in this process" do

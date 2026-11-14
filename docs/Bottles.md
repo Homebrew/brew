@@ -58,6 +58,7 @@ A full example:
 bottle do
   root_url "https://example.com"
   rebuild 4
+  manifest_sha256 "c847599789efade500c448e8b302fc9a3f985e1e4370e91b339b839b2205d984"
   sha256 cellar: "/opt/homebrew/Cellar", arm64_tahoe: "a9ae578b05c3da46cedc07dd428d94a856aeae7f3ef80a0f405bf89b8cde893a"
   sha256 cellar: :any,                   tahoe:       "5dc376aa20241233b76e2ec2c1d4e862443a0250916b2838a1ff871e8a6dc2c5"
   sha256                                 sequoia:     "924afbbc16549d8c2b80544fd03104ff8c17a4b1460238e3ed17a1313391a2af"
@@ -84,6 +85,13 @@ Optionally contains the rebuild version of the bottle.
 
 Sometimes a bottle must be updated without changing the formula version or revision, such as after a bottle-only packaging correction.
 In that case `rebuild` has a value of `1` or greater.
+
+### Manifest checksum (`manifest_sha256`)
+
+Optionally contains the SHA-256 hash of the GitHub Packages manifest that lists every bottle in the block.
+
+When it is present, Homebrew fetches the manifest by this hash and refuses it if its contents do not match.
+It must be removed or updated whenever a bottle is added to or changed in the block.
 
 ### Checksum (`sha256`)
 

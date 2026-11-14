@@ -265,11 +265,13 @@ class Bottle
     begin
       # `$HOMEBREW_BOTTLE_DOMAIN` fallback is configured on the resource below.
       resource.fetch(timeout:, quiet:)
-    rescue Resource::BottleManifest::Error
+    rescue Resource::BottleManifest::Error, ChecksumMismatchError => e
+      # Unlike invalid metadata, a manifest with the wrong checksum never
+      # stays cached after the retry, as later reads would not check it.
+      resource.clear_cache if !@fetch_tab_retried || e.is_a?(ChecksumMismatchError)
       raise if @fetch_tab_retried
 
       @fetch_tab_retried = true
-      resource.clear_cache
       retry
     end
   end
@@ -281,7 +283,7 @@ class Bottle
 
     begin
       resource.tab
-    rescue Resource::BottleManifest::Error
+    rescue Resource::BottleManifest::Error, ChecksumMismatchError
       fetch_tab(quiet: true)
       resource.tab
     end
@@ -441,8 +443,15 @@ class Bottle
         resource.version(version_rebuild)
 
         image_name = GitHubPackages.image_formula_name(@name)
-        image_tag = GitHubPackages.image_version_rebuild(version_rebuild)
-        manifest_path = "#{image_name}/manifests/#{image_tag}"
+        manifest_sha256 = @spec.manifest_sha256
+        # A digest names one immutable index; a tag can be moved to another.
+        manifest_reference = if manifest_sha256
+          "sha256:#{manifest_sha256}"
+        else
+          GitHubPackages.image_version_rebuild(version_rebuild)
+        end
+        manifest_path = "#{image_name}/manifests/#{manifest_reference}"
+        resource.sha256(manifest_sha256) if manifest_sha256
         resource.url(
           "#{root_url}/#{manifest_path}",
           using:   CurlGitHubPackagesDownloadStrategy,

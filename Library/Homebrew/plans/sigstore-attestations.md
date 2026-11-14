@@ -280,8 +280,9 @@ per-platform manifest, and the client fetches that manifest alone.
 - `brew pr-upload` writes each bottle's bundle into its per-platform
   manifest, not the index, and the digest of the index into the bottle
   block.
-- The API generator writes the digest of each platform's manifest beside
-  `bottle_checksum` in that platform's file
+- The API generator writes the digest of each platform's manifest, as
+  `bottle_manifest_checksum` beside `bottle_checksum`, in that platform's
+  file
   (`api/internal/packages.<tag>.jws.json`), which already holds exactly
   one bottle checksum per formula. It holds no manifest digest today.
 - A client installing from the API fetches its per-platform manifest by
@@ -501,7 +502,7 @@ runner and one residential connection.
 | PR | Repository | Week | Summary |
 |---|---|---|---|
 | 1 | brew | 1 | This plan: threat model, policy, targets, gates and risks |
-| 2 | brew | 1 to 2 | Manifest digest in `bottle do`, checked when present |
+| 2 | brew | 1 to 2 | Done: `manifest_sha256` in `bottle do`, checked when present |
 | 3 | brew, formulae.brew.sh | 2 to 3 | Per-platform manifest digest in the API, fetched directly when present |
 | 4 | brew | 2 | Vendor the `sigstore` gem |
 | 5 | brew | 2 | Verify bundles in Ruby, offline, against a pinned trusted root |
@@ -532,23 +533,19 @@ nothing else depends on them.
 
 1. **This plan.** Review agrees the threat model, expected claims,
    performance targets, rollout gates and risk register.
-2. **Manifest digest in `bottle do`.** Add a `BottleSpecification`
-   attribute holding the SHA-256 of the bottle's image index: one per
-   bottle block, covering every platform. It may be absent until PR 11
-   requires it for Homebrew/core. When it is present and the API supplies
-   no per-platform digest (PR 3),
-   `Bottle#github_packages_manifest_resource` fetches the index by that
-   digest instead of by tag and
-   `Resource::BottleManifest#verify_download_integrity` checks the bytes.
-   When it is absent nothing changes. Carry it through
-   `Formula#bottle_hash` so the API generator can read it, and teach the
-   bottle RuboCops where it goes. Nothing writes it yet. It lands first so
-   that it is in a stable release, and tested by hand on a single bottle,
-   before homebrew/core relies on it.
+2. **Manifest digest in `bottle do`.** Done: `manifest_sha256` holds the
+   SHA-256 of the bottle's image index, one per bottle block. When it is
+   present, `Bottle#github_packages_manifest_resource` fetches the index
+   by that digest instead of by tag, `Resource::BottleManifest` checks the
+   bytes and `Formula#bottle_hash` carries it for the API generator.
+   `brew bottle --merge --write` drops it, as a changed block makes it
+   stale, until PR 9 writes the new one. It must be in a stable release
+   before homebrew/core uses it and may be absent until PR 11 requires it.
 3. **Per-platform manifest digest in the API.** For every formula whose
    bottle block has a digest, `brew generate-internal-api` fetches the
    index by that digest, checks the bytes and writes the digest of each
-   platform's manifest beside `bottle_checksum` in that platform's file,
+   platform's manifest, as `bottle_manifest_checksum` beside
+   `bottle_checksum`, in that platform's file,
    choosing the manifest whose `sh.brew.bottle.digest` is that checksum.
    Indexes are cached by digest, so a run fetches only new ones, and a
    missing or mismatched index fails the run, as a failed download of the
@@ -773,7 +770,7 @@ and SBOM annotations are equally unsigned.
 
 The fix is one digest per bottle block, as one index lists every
 platform's bottle, from which every manifest a client reads is checked.
-The attribute name is a placeholder:
+The attribute is `manifest_sha256`:
 
 ```ruby
 bottle do
@@ -939,8 +936,6 @@ Considered instead of the DSL change:
   could also retire the backfill special cases from the client, at the
   price of Homebrew re-signing bottles it did not publish under that
   identity.
-- What are the bottle block attribute and the API field called?
-  `manifest_sha256` and `bottle_manifest_checksum` are placeholders.
 - Is delivering the trusted root with `brew update` enough for stable users
   who update rarely, or should it also travel in the signed JSON API?
 
