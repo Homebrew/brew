@@ -373,6 +373,55 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#versioned_dependency" do
+    it "returns the name for a dependency with a versioned prefix" do
+      f = formula "bar" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on "bar@2"
+      end
+
+      expect(f.versioned_dependency("bar")).to eq "bar@2"
+    end
+
+    it "returns the name for a dependency without s versioned prefix" do
+      f = formula "bar-unversioned" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on "bar"
+      end
+
+      expect(f.versioned_dependency("bar")).to eq "bar"
+    end
+
+    it "raises an exception if a dependency is not declared" do
+      f = formula "bar-without-baz" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on "bar"
+      end
+
+      expect { f.versioned_dependency("baz") }
+        .to raise_error(RuntimeError,
+                        "`bar-without-baz` must have exactly one `baz` dependency to use " \
+                        "`versioned_dependency`; found none.")
+    end
+
+    it "raises an exception if multiple versions are declared" do
+      f = formula "bar-multiple" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on "bar@2"
+        depends_on "bar@1"
+      end
+
+      expect { f.versioned_dependency("bar") }
+        .to raise_error(RuntimeError,
+                        "`bar-multiple` must have exactly one `bar` dependency to use " \
+                        "`versioned_dependency`; found bar@2, bar@1.")
+    end
+  end
+
   describe "#versioned_formulae" do
     let(:f) do
       formula "foo" do

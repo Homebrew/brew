@@ -320,6 +320,7 @@ class Formula # rubocop:todo Metrics/ClassLength
     @active_spec = T.let(determine_active_spec(spec), SoftwareSpec)
     @active_spec_sym = T.let(head? ? :head : :stable, Symbol)
     @python3 = T.let(nil, T.nilable(Pathname))
+    @versioned_deps_cache = T.let({}, T::Hash[String, String])
     validate_attributes!
     @build = T.let(active_spec.build, T.any(BuildOptions, Tab))
     @pin = T.let(FormulaPin.new(self), FormulaPin)
@@ -346,6 +347,7 @@ class Formula # rubocop:todo Metrics/ClassLength
     return if spec_sym == old_spec_sym
 
     @python3 = nil
+    @versioned_deps_cache = {}
     Dependency.clear_cache
     Requirement.clear_cache
   end
@@ -954,6 +956,31 @@ class Formula # rubocop:todo Metrics/ClassLength
     end
 
     @python3 = python_deps.values.fetch(0)
+  end
+
+  # Helper method that returns versioned dependency name based on unversioned part.
+  # ```ruby
+  # depends_on "foo@1.2.3"
+  #
+  # foo_name = versioned_dependency("foo") # equals "foo@1.2.3"
+  # foo_path = formula_opt_prefix(foo_name)
+  # ```
+  #
+  # @raise [RuntimeError] if the formula does not have exactly one versioned dependency with this name
+  # @api public
+  sig { params(dep_name: String).returns(String) }
+  def versioned_dependency(dep_name)
+    if (full_dep_name = @versioned_deps_cache[dep_name])
+      return full_dep_name
+    end
+
+    case deps.map(&:name).grep(Version.formula_optionally_versioned_regex(dep_name))
+    in [full_dep_name]
+      @versioned_deps_cache[dep_name] = full_dep_name
+    in arr
+      raise "`#{full_name}` must have exactly one `#{dep_name}` dependency to use " \
+            "`versioned_dependency`; found #{arr.empty? ? "none" : arr.join(", ")}."
+    end
   end
 
   # The declared {Dependency}s for the currently active {SoftwareSpec} (i.e. including those provided by macOS).
