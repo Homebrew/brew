@@ -107,6 +107,8 @@
 **/vendor/bundle/ruby/*/gems/mini_portile2-*/
 **/vendor/bundle/ruby/*/gems/minitest-*/
 **/vendor/bundle/ruby/*/gems/msgpack-*/
+**/vendor/bundle/ruby/*/gems/net-http-*/
+**/vendor/bundle/ruby/*/gems/net-protocol-*/
 **/vendor/bundle/ruby/*/gems/netrc-*/
 **/vendor/bundle/ruby/*/gems/ntlm-http-*/
 **/vendor/bundle/ruby/*/gems/ostruct-*/
@@ -156,10 +158,12 @@
 **/vendor/bundle/ruby/*/gems/tapioca-*/
 **/vendor/bundle/ruby/*/gems/test-prof-*/
 **/vendor/bundle/ruby/*/gems/thor-*/
+**/vendor/bundle/ruby/*/gems/timeout-*/
 **/vendor/bundle/ruby/*/gems/tsort-*/
 **/vendor/bundle/ruby/*/gems/unicode-display_width-*/
 **/vendor/bundle/ruby/*/gems/unicode-emoji-*/
 **/vendor/bundle/ruby/*/gems/unparser-*/
+**/vendor/bundle/ruby/*/gems/uri-*/
 **/vendor/bundle/ruby/*/gems/uri_template-*/
 **/vendor/bundle/ruby/*/gems/vernier-*/
 **/vendor/bundle/ruby/*/gems/webrobots-*/

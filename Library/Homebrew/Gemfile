@@ -73,6 +73,12 @@ group :audit, :bump_unversioned_casks, :livecheck, optional: true do
   gem "rexml", require: false
 end
 
+# vendored gems left off the load path until a bottle attestation is verified
+# (not optional, so `bundle clean` keeps them)
+group :attestation do
+  gem "sigstore", "0.3.0", require: false
+end
+
 # vendored gems (no group)
 gem "concurrent-ruby"
 gem "patchelf"

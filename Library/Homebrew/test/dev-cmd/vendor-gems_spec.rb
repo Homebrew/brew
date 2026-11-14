@@ -41,6 +41,15 @@ RSpec.describe Homebrew::DevCmd::VendorGems do
     expect { command.run }.not_to raise_error
   end
 
+  it "leaves the attestation group out of the standalone setup" do
+    command = vendor_gems_command
+    allow(Utils::GemSetup).to receive(:valid_gem_groups).and_return(%w[attestation style])
+
+    expect(command).to receive(:run_bundle).with("install", "--standalone", "default", "style")
+
+    command.run
+  end
+
   it "uses the runtime platform for native extension load paths" do
     vendor_gems_command.run
     platform = OS.linux? ? "arm64-darwin-20" : "x86_64-linux"

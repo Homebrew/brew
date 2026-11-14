@@ -28,6 +28,11 @@ GEM
     minitest (6.0.6)
       drb (~> 2.0)
       prism (~> 1.5)
+    net-http (0.10.0)
+      net-protocol (>= 0.3.0)
+      uri (>= 0.11.1)
+    net-protocol (0.4.0)
+      timeout
     netrc (0.11.0)
     ostruct (0.6.3)
     parallel (2.3.0)
@@ -41,6 +46,19 @@ GEM
       logger (~> 1)
     plist (3.7.2)
     prism (1.9.0)
+    protobug (0.2.0)
+    protobug_googleapis_field_behavior_protos (0.2.0)
+      protobug (= 0.2.0)
+      protobug_well_known_protos (= 0.2.0)
+    protobug_in_toto_attestation_protos (0.2.0)
+      protobug (= 0.2.0)
+      protobug_well_known_protos (= 0.2.0)
+    protobug_sigstore_protos (0.2.0)
+      protobug (= 0.2.0)
+      protobug_googleapis_field_behavior_protos (= 0.2.0)
+      protobug_well_known_protos (= 0.2.0)
+    protobug_well_known_protos (0.2.0)
+      protobug (= 0.2.0)
     racc (1.8.1)
     rainbow (3.1.1)
     rbi (0.5.0)
@@ -116,6 +134,12 @@ GEM
     rubydex (0.4.4-arm64-darwin)
     rubydex (0.4.4-x86_64-darwin)
     rubydex (0.4.4-x86_64-linux)
+    sigstore (0.3.0)
+      logger
+      net-http
+      protobug_in_toto_attestation_protos (~> 0.2.0)
+      protobug_sigstore_protos (~> 0.2.0)
+      uri
     simplecov (1.3.2)
     simplecov-cobertura (4.0.0)
       rexml
@@ -154,10 +178,12 @@ GEM
     test-prof (1.6.4)
       logger
     thor (1.5.0)
+    timeout (0.6.1)
     tsort (0.2.0)
     unicode-display_width (3.3.0)
       unicode-emoji (~> 4.3)
     unicode-emoji (4.3.0)
+    uri (1.1.2)
     vernier (1.12.0)
     yard (0.9.45)
     yard-sorbet (0.9.0)
@@ -198,6 +224,7 @@ DEPENDENCIES
   ruby-prof
   ruby-progressbar
   rubydex
+  sigstore (= 0.3.0)
   simplecov
   simplecov-cobertura
   sorbet-runtime
@@ -230,6 +257,8 @@ CHECKSUMS
   lint_roller (1.1.0) sha256=2c0c845b632a7d172cb849cc90c1bce937a28c5c8ccccb50dfd46a485003cc87
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
+  net-http (0.10.0) sha256=1a2ff6e37a05724973c43f2bf7bf105f59c36a4cd0a7e9b1c021a0a566987c27
+  net-protocol (0.4.0) sha256=f9f90c8c6f64794a45160bf422177a336db12809de3beeeaa26b88fcd2e8c853
   netrc (0.11.0) sha256=de1ce33da8c99ab1d97871726cba75151113f117146becbe45aa85cb3dabee3f
   ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
   parallel (2.3.0) sha256=f75a3e904101ce6a1ccb6b8dc800cbafd42166d83330192438dcf29395167a6f
@@ -238,6 +267,11 @@ CHECKSUMS
   patchelf (1.7.0) sha256=2ee526c92165306dbb074cc9550826dfb13efc8655aac7f42ac9d8bb8a572e11
   plist (3.7.2) sha256=d37a4527cc1116064393df4b40e1dbbc94c65fa9ca2eec52edf9a13616718a42
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
+  protobug (0.2.0) sha256=eb154bdbe2a3afe796711e0c16e89b2ed59efee0f172a10b634400471299b3f2
+  protobug_googleapis_field_behavior_protos (0.2.0) sha256=5d4ddcdcfd8616a74ac100de893e3768feee631579a777e23498d3a0ba45b893
+  protobug_in_toto_attestation_protos (0.2.0) sha256=64317c2bb5efe8494ecd0da6990f3c027e7af58bf12c34d6dbd1aa43fd87f731
+  protobug_sigstore_protos (0.2.0) sha256=b094cbb2ceadc9ffe6e34ec217613dd7a8e78b6411bf4404bd686f7343514e25
+  protobug_well_known_protos (0.2.0) sha256=89dd4965ed80ed9355b575e9243e7762487de581a8e2b34a97af6bef60fe3b3f
   racc (1.8.1) sha256=4a7f6929691dbec8b5209a0b373bc2614882b55fc5d2e447a21aaa691303d62f
   rainbow (3.1.1) sha256=039491aa3a89f42efa1d6dec2fc4e62ede96eb6acd95e52f1ad581182b79bc6a
   rbi (0.5.0) sha256=8311af9761f2e89b1448c4b2cfba18b3b3a90b0d03056879fd6f5483b9c3adab
@@ -268,6 +302,7 @@ CHECKSUMS
   rubydex (0.4.4-arm64-darwin) sha256=e593b7a2b820e3d91ba3d6b7371916efe7c742b75d44f6eaa39cd04546211c09
   rubydex (0.4.4-x86_64-darwin) sha256=596c0820bc12c475321550dbb3320d8fe7f08f2f068565884ba3a02ca39acb50
   rubydex (0.4.4-x86_64-linux) sha256=6c9144ac21ec4455850bc3b087f0bdce350af9358429675610c9d61fb8bfccfd
+  sigstore (0.3.0) sha256=a6a25add5220283ed583011392f2952abc2125505ef08a52178fdb86ea67ca56
   simplecov (1.3.2) sha256=2a22ec1759f1b8db60881a2e038758956fc69ef93ed669be0bde0678de6d0e85
   simplecov-cobertura (4.0.0) sha256=e4fb3159b1ecea545b44f5452a8611305323e78ad23eae8aed35924d072e01ea
   simpleidn (0.3.0) sha256=12ca730bed2f3db04d11e9bfd1bca3e11fb37f55b21eb2e9793fb5814bf54d03
@@ -282,9 +317,11 @@ CHECKSUMS
   tapioca (0.20.0) sha256=b375ed7bf51d2c86c09543eafedd0de85513634187c0f7a062615af8bb9347a0
   test-prof (1.6.4) sha256=95dd0cab62fde10ce61c41778b925a0def41bd6f58252fab2576b4cfcc25fb1d
   thor (1.5.0) sha256=e3a9e55fe857e44859ce104a84675ab6e8cd59c650a49106a05f55f136425e73
+  timeout (0.6.1) sha256=78f57368a7e7bbadec56971f78a3f5ecbcfb59b7fcbb0a3ed6ddc08a5094accb
   tsort (0.2.0) sha256=9650a793f6859a43b6641671278f79cfead60ac714148aabe4e3f0060480089f
   unicode-display_width (3.3.0) sha256=4b7aa66a4b11db50f6f7e98411215cd0dd10eaecb665d36eec5bcacb3fa0b613
   unicode-emoji (4.3.0) sha256=11c02fa73290378c066bb0562cd4c87d8e1b706fbbe0059ca12746a4244de8ce
+  uri (1.1.2) sha256=89292e98eabbef6248b0a0ed5e7e398e152f83f17560023a6d94a7f492b169fb
   vernier (1.12.0) sha256=51a018d6ef6fdf8052dcfdcde996d0337a0fd4be6b0c3ed7eb0fa6852ff4f48b
   yard (0.9.45) sha256=52e211493f7cb8a3ebf7e104a25a1e73937a3103092545d34cb88fafebb3dc51
   yard-sorbet (0.9.0) sha256=03d1aa461b9e9c82b886919a13aa3e09fcf4d1852239d2967ed97e92723ffe21

@@ -72,7 +72,8 @@ Pull requests must always fill in the repository's pull request template
   `manifests/<version>[-<rebuild>]`. It has no expected digest, so it is only
   parsed. Bottle blobs are fetched by digest and checked against the formula
   SHA-256.
-- No Sigstore code is vendored.
+- `sigstore` 0.3.0 and its five `protobug*` gems are vendored. Nothing
+  loads them yet.
 
 ### Publishing
 
@@ -504,7 +505,7 @@ runner and one residential connection.
 | 1 | brew | 1 | This plan: threat model, policy, targets, gates and risks |
 | 2 | brew | 1 to 2 | Done: `manifest_sha256` in `bottle do`, checked when present |
 | 3 | brew, formulae.brew.sh | 2 to 3 | Done in brew: `bottle_manifest_checksum` in the API, fetched directly when present |
-| 4 | brew | 2 | Vendor the `sigstore` gem |
+| 4 | brew | 2 | Done: `sigstore` gem vendored, off the load path until needed |
 | 5 | brew | 2 | Verify bundles in Ruby, offline, against a pinned trusted root |
 | 6 | brew | 3 | Enforce the trust policy |
 | 7 | brew | 4 to 5 | GitHub Packages distribution experiment and format contract |
@@ -553,16 +554,24 @@ nothing else depends on them.
    drop the field. Left to do: have the formulae.brew.sh workflow keep
    `HOMEBREW_CACHE/downloads/*.bottle_manifest.json` between runs, so a run
    fetches only new indexes.
-4. **Vendor the `sigstore` gem.** Add it to the vendored gems in
-   `Library/Homebrew/Gemfile` pinned to an exact version at or above 0.3.0
-   (0.2.3 fixed in-toto statement verification, GHSA-mhg6-2q2v-9h2c) and run
-   `brew vendor-gems` and `brew typecheck --update`. Decide whether Ruby's
-   default gems (`net-http`, `uri`, `timeout`) need vendoring at all, check
-   every new gem's licence and confirm with `brew benchmark` that nothing
-   loads it at startup. No behaviour change.
+4. **Vendor the `sigstore` gem.** Done: `sigstore` 0.3.0 (0.2.3 fixed
+   in-toto statement verification, GHSA-mhg6-2q2v-9h2c) and its five
+   `protobug*` gems are vendored from a Bundler group of their own,
+   `attestation`, which `brew vendor-gems` leaves out of
+   `vendor/bundle/bundler/setup.rb`. That file is unchanged, so the load
+   path of every command is too, until PR 5 adds the gems when a bundle is
+   verified. Ruby's default gems (`net-http`, `net-protocol`, `timeout` and
+   `uri`) are not vendored: the copies in Homebrew's Ruby are used.
+   Licences are Apache-2.0, MIT and Unlicense.
 5. **Verify bundles in Ruby.** Add offline verification to
    `Homebrew::Attestation`: bundle JSON and bottle SHA-256 in, verified
    statement and signing time out, `InvalidAttestationError` otherwise.
+   Put the six vendored gems' `lib` directories on the load path before
+   requiring `sigstore`, and silence its debug logging. Parse bundle and
+   trusted root JSON in Homebrew and decode it with `decode_json_hash`:
+   `protobug` 0.2.0 passes `JSON.parse` options that `json` 3 rejects, and
+   while Homebrew's Ruby bundles `json` 2.18.0, developers and CI load
+   3.1.0 from the bundle.
    Check in the Sigstore trusted root next to the code (as
    `api/homebrew-1.pem` is) and build the verifier without a Rekor client so
    a stale root can never cause a request. Rescue both failure results and
@@ -902,6 +911,7 @@ Considered instead of the DSL change:
 | Some current bottles have no valid attestation | PR 11 census and coverage report; rebottle until none remain; the developers gate needs 100% |
 | A Sigstore key rotation or GitHub's move to Rekor v2 outpaces stable tags | PR 15 refresh and canary; Sigstore's trusted root already lists the Rekor v2 log; gem 0.3.0 verifies Rekor v2 entries but DSSE on Rekor v2 needs a fixture as soon as one exists |
 | The gem is young (0.x, one in-toto advisory) and reports failures both as results and exceptions | Exact pin, reviewed bumps, fail-closed wrapper, real and tampered fixtures, upstream fixes rather than patches |
+| `protobug` 0.2.0 cannot decode JSON where `json` 3 is loaded: developers and CI today, everyone once Homebrew's Ruby bundles it | PR 5 parses JSON itself and its specs run under the bundle's `json`; report it upstream and drop the workaround once a fixed release is pinned |
 | API generation fails when GitHub Packages is unreachable or a pinned index is missing | Indexes are cached by digest, so a run fetches only new ones; a failed run leaves the previous API published; generation already depends on GitHub Packages for the executables database |
 | The API carries a wrong per-platform digest | Installs fail closed, as the client checks the manifest names its bottle; the generator fails on any mismatch and the sweep derives the digests again daily |
 | Download counts move from the index to per-platform manifests | PR 7 confirms how GitHub Packages counts them and PR 12 updates `brew info --github-packages-downloads` to match |

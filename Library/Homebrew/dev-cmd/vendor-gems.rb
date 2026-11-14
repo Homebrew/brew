@@ -45,8 +45,11 @@ module Homebrew
             end
           end
 
-          ohai "bundle install --standalone"
-          run_bundle "install", "--standalone"
+          # The `attestation` group's gems are vendored but left out of
+          # `setup.rb`, so they are off the load path until they are needed.
+          standalone_groups = ["default", *Utils::GemSetup.valid_gem_groups] - ["attestation"]
+          ohai "bundle install --standalone #{standalone_groups.join(" ")}"
+          run_bundle "install", "--standalone", *standalone_groups
           Utils::Inreplace.inreplace "vendor/bundle/bundler/setup.rb",
                                      "/extensions/#{Gem::Platform.local}/", "/extensions/\#{Gem::Platform.local}/"
 
