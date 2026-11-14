@@ -178,6 +178,7 @@ module Homebrew
             Homebrew::API.formula_renames.exclude?(entry.name)
         when "Homebrew::Bundle::Cask"
           !Homebrew::API.cask_token?(entry.name) &&
+            Homebrew::API.cask_aliases.exclude?(entry.name) &&
             Homebrew::API.cask_renames.exclude?(entry.name)
         else
           false

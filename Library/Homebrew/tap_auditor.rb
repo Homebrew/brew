@@ -53,6 +53,7 @@ module Homebrew
       @tap_official                                   = T.let(tap.official?, T::Boolean)
       @problems                                       = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
       @cask_tokens                                    = T.let([], T::Array[String])
+      @cask_aliases                                   = T.let([], T::Array[String])
       @formula_aliases                                = T.let([], T::Array[String])
       @formula_renames                                = T.let({}, T::Hash[String, String])
       @cask_renames                                   = T.let({}, T::Hash[String, String])
@@ -65,6 +66,9 @@ module Homebrew
         @cask_renames    = tap.cask_renames
         @cask_tokens = tap.cask_tokens.map do |cask_token|
           Utils.name_from_full_name(cask_token)
+        end
+        @cask_aliases = tap.cask_aliases.map do |cask_alias|
+          Utils.name_from_full_name(cask_alias)
         end
         @formula_aliases = tap.aliases.map do |formula_alias|
           Utils.name_from_full_name(formula_alias)
@@ -97,7 +101,7 @@ module Homebrew
       check_formula_list_directory "audit_exceptions", @tap_audit_exceptions
       check_formula_list_directory "style_exceptions", @tap_style_exceptions
       check_renames "formula_renames.json", @formula_renames, @formula_names, @formula_aliases
-      check_renames "cask_renames.json", @cask_renames, @cask_tokens
+      check_renames "cask_renames.json", @cask_renames, @cask_tokens, @cask_aliases
       check_formula_list ".github/autobump.txt", @tap_autobump unless @tap_official
       check_formula_list "synced_versions_formulae", @tap_synced_versions_formulae.flatten
       check_formula_list "disabled_new_usr_local_relocation_formulae.json",

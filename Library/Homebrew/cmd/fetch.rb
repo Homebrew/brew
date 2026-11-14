@@ -336,7 +336,7 @@ module Homebrew
           regex:   HOMEBREW_DEFAULT_TAP_CASK_REGEX,
           capture: :token,
           named:   ->(token) { Homebrew::API::Internal.cask_name?(token) },
-          aliases: {},
+          aliases: Homebrew::API::Internal.cask_aliases,
           renames: Homebrew::API::Internal.cask_renames,
         )
         return false if tokens.nil?

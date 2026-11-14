@@ -49,6 +49,21 @@ RSpec.describe Homebrew::TapAuditor do
         cask_renames_path.write JSON.pretty_generate(renames_data)
       end
 
+      context "when the rename target is an alias" do
+        let(:renames_data) { { "oldcask" => "newcask" } }
+
+        before do
+          write_cask("newcask@1")
+          alias_file = tap_path/"Aliases/newcask"
+          alias_file.dirname.mkpath
+          FileUtils.ln_s "../Casks/newcask@1.rb", alias_file
+        end
+
+        it "accepts the rename" do
+          expect(problems).to be_empty
+        end
+      end
+
       context "when .rb extension in old cask name (key)" do
         let(:renames_data) { { "oldcask.rb" => "newcask" } }
 

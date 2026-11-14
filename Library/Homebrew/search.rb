@@ -144,11 +144,12 @@ module Homebrew
       end
 
       cask_tokens = Tap.each_with_object([]) do |tap, array|
+        tokens_and_aliases = tap.cask_tokens + tap.cask_aliases
         # We can exclude the core cask tap because `CoreCaskTap#cask_tokens` returns short names by default.
         if tap.official? && !tap.core_cask_tap?
-          tap.cask_tokens.each { |token| array << token.sub(%r{^homebrew/cask.*/}, "") }
+          tokens_and_aliases.each { |token| array << token.sub(%r{^homebrew/cask.*/}, "") }
         else
-          tap.cask_tokens.each { |token| array << token }
+          tokens_and_aliases.each { |token| array << token }
         end
       end.uniq
 

@@ -2,6 +2,7 @@
   "token": "everything-with-variations",
   "full_token": "everything-with-variations",
   "old_tokens": [],
+  "aliases": [],
   "tap": "homebrew/cask",
   "name": [
     "Everything"

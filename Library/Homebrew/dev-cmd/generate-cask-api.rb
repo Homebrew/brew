@@ -72,7 +72,7 @@ module Homebrew
             end
           end
 
-          canonical_json = JSON.pretty_generate(tap.cask_renames)
+          canonical_json = JSON.pretty_generate(tap.cask_renames.merge(tap.cask_alias_table))
           File.write("_data/cask_canonical.json", "#{canonical_json}\n") unless args.dry_run?
 
           OnSystem::VALID_OS_ARCH_TAGS.each do |bottle_tag|
@@ -84,6 +84,7 @@ module Homebrew
 
             json_contents = {
               casks:,
+              aliases:        tap.cask_alias_table,
               renames:        tap.cask_renames,
               tap_git_head:   tap.git_head,
               tap_migrations: tap.tap_migrations,

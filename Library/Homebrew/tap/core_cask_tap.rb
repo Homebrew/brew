@@ -85,6 +85,18 @@ class CoreCaskTap < AbstractCoreTap
     )
   end
 
+  sig { override.returns(T::Hash[String, String]) }
+  def cask_alias_table
+    @cask_alias_table ||= T.let(
+      if Homebrew::EnvConfig.no_install_from_api?
+        super
+      else
+        Homebrew::API.cask_aliases
+      end,
+      T.nilable(T::Hash[String, String]),
+    )
+  end
+
   sig { override.returns(T::Hash[String, T.untyped]) }
   def tap_migrations
     @tap_migrations ||= T.let(

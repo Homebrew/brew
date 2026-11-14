@@ -170,11 +170,6 @@ class CoreTap < AbstractCoreTap
     end, T.nilable(T::Array[T::Array[String]]))
   end
 
-  sig { override.params(file: Pathname).returns(String) }
-  def alias_file_to_name(file)
-    file.basename.to_s
-  end
-
   sig { override.returns(T::Hash[String, String]) }
   def alias_table
     @alias_table ||= T.let(

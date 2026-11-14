@@ -2,6 +2,7 @@
   "token": "everything",
   "full_token": "everything",
   "old_tokens": [],
+  "aliases": [],
   "tap": "homebrew/cask",
   "name": [
     "Everything"

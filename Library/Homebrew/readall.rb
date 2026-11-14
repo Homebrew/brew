@@ -50,11 +50,12 @@ module Readall
     end
   end
 
-  sig { params(alias_dir: Pathname, formula_dir: Pathname).returns(T::Boolean) }
-  def self.valid_aliases?(alias_dir, formula_dir)
+  sig { params(alias_dir: Pathname, formula_dir: Pathname, cask_dir: Pathname).returns(T::Boolean) }
+  def self.valid_aliases?(alias_dir, formula_dir, cask_dir)
     return true unless alias_dir.directory?
 
     formula_basenames = Set.new(formula_dir.glob("**/*.rb").map { |formula_file| formula_file.basename.to_s })
+    cask_basenames = Set.new(cask_dir.glob("**/*.rb").map { |cask_file| cask_file.basename.to_s })
 
     failed = T.let(false, T::Boolean)
     alias_dir.each_child do |f|
@@ -68,6 +69,9 @@ module Readall
 
       if formula_basenames.include?("#{f.basename}.rb")
         onoe "Formula duplicating alias: #{f}"
+        failed = true
+      elsif cask_basenames.include?("#{f.basename}.rb")
+        onoe "Cask duplicating alias: #{f}"
         failed = true
       end
     end
@@ -202,7 +206,7 @@ module Readall
     success = true
 
     if aliases
-      valid_aliases = valid_aliases?(tap.alias_dir, tap.formula_dir)
+      valid_aliases = valid_aliases?(tap.alias_dir, tap.formula_dir, tap.cask_dir)
       success = false unless valid_aliases
     end
 

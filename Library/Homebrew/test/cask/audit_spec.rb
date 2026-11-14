@@ -1670,6 +1670,27 @@ RSpec.describe Cask::Audit, :cask do
 
         it { is_expected.to error_with(/cask conflicts with non-existing cask/) }
       end
+
+      context "when a conflicting cask is an alias" do
+        let(:cask) do
+          tmp_cask "test-conflicts-cask", <<~RUBY
+            cask 'test-conflicts-cask' do
+              version '1.0'
+              url "https://brew.sh/index.html"
+              artifact "example.pdf", target: "/Library/Application Support/example"
+
+              conflicts_with cask: ["foo", "bar"]
+            end
+          RUBY
+        end
+
+        before do
+          allow(audit).to receive_messages(core_cask_tokens: ["foo"], core_cask_aliases: ["bar"])
+          allow(cask).to receive(:tap).and_return(tap)
+        end
+
+        it { is_expected.to pass }
+      end
     end
 
     describe "denylist checks" do
