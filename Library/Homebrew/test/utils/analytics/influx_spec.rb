@@ -275,7 +275,7 @@ RSpec.describe Utils::Analytics::Influx do
       command.each_influx_record("SELECT 1") { |record| records << record }
 
       expect(records).to eq [{
-        "host"     => "analytics.brew.sh",
+        "host"     => "eu-central-1-1.aws.cloud2.influxdata.com",
         "org"      => Utils::Analytics::INFLUX_ORG,
         "database" => Utils::Analytics::INFLUX_BUCKET,
         "query"    => "SELECT 1",
