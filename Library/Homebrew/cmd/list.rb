@@ -100,10 +100,14 @@ module Homebrew
         end
 
         installed_as_dependency = args.no_installed_on_request?
+        filter_flags = {
+          "`--installed-on-request`"    => args.installed_on_request?,
+          "`--no-installed-on-request`" => installed_as_dependency,
+          "`--poured-from-bottle`"      => args.poured_from_bottle?,
+          "`--built-from-source`"       => args.built_from_source?,
+        }.select { |_, enabled| enabled }.keys
 
-        if args.full_name? &&
-           !(args.installed_on_request? || installed_as_dependency ||
-             args.poured_from_bottle? || args.built_from_source?)
+        if args.full_name? && filter_flags.empty?
           full_formula_names = if args.cask?
             []
           elsif args.no_named?
@@ -139,17 +143,8 @@ module Homebrew
         elsif args.versions? || args.multiple?
           filtered_list unless args.cask?
           list_casks if args.cask? || (!args.formula? && !args.multiple? && args.no_named?)
-        elsif args.installed_on_request? ||
-              installed_as_dependency ||
-              args.poured_from_bottle? ||
-              args.built_from_source?
-          flags = []
-          flags << "`--installed-on-request`" if args.installed_on_request?
-          flags << "`--no-installed-on-request`" if installed_as_dependency
-          flags << "`--poured-from-bottle`" if args.poured_from_bottle?
-          flags << "`--built-from-source`" if args.built_from_source?
-
-          raise UsageError, "Cannot use #{flags.join(", ")} with formula arguments." unless args.no_named?
+        elsif filter_flags.any?
+          raise UsageError, "Cannot use #{filter_flags.join(", ")} with formula arguments." unless args.no_named?
 
           formulae = if args.t?
             # See https://ruby-doc.org/3.2/Kernel.html#method-i-test
@@ -171,7 +166,7 @@ module Homebrew
             next if statuses.empty?
 
             name = args.full_name? ? formula.full_name : formula.name
-            if flags.count > 1
+            if filter_flags.count > 1
               puts "#{name}: #{statuses.join(", ")}"
             else
               puts name
@@ -207,7 +202,7 @@ module Homebrew
             casks.each { |cask| raise Cask::CaskNotInstalledError, cask unless cask.installed? }
             system_command! "find", args: casks.map(&:caskroom_path) + find_args, print_stdout: true if casks.present?
           else
-            kegs.each { |keg| PrettyListing.new keg } if kegs.present?
+            kegs.each { |keg| PrettyListing.new keg }
             Cask::List.list_casks(*casks, one: args.public_send(:"1?")) if casks.present?
           end
         end

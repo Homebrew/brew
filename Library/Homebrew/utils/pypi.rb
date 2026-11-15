@@ -294,8 +294,8 @@ module PyPI
       end
     end
 
-    extra_packages = (extra_packages || []).map { |p| Package.new p }
-    exclude_packages = (exclude_packages || []).map { |p| Package.new p }
+    extra_packages = Array(extra_packages).map { |p| Package.new p }
+    exclude_packages = Array(exclude_packages).map { |p| Package.new p }
     exclude_packages += %w[argparse pip wsgiref].map { |p| Package.new p }
     if (newest_python = python_deps.first) && newest_python.version < Version.new("3.12")
       exclude_packages.append(Package.new("setuptools"))
@@ -415,8 +415,7 @@ module PyPI
       EOS
     end
 
-    package_errors += "\n" if package_errors.present?
-    resource_section = "#{package_errors}#{new_resource_blocks}"
+    resource_section = [package_errors.presence, new_resource_blocks].compact.join("\n")
 
     odie "Excluded superfluous packages: #{exclude_packages.join(", ")}" if exclude_packages.any?
 

@@ -96,7 +96,9 @@ module Homebrew
       formulae_checked = formulae_and_casks_to_check.map.with_index do |formula_or_cask, i|
         formula = formula_or_cask if formula_or_cask.is_a?(Formula)
         cask = formula_or_cask if formula_or_cask.is_a?(Cask::Cask)
-        formula.head&.downloader&.quiet! if formula
+        if (head = formula&.head)
+          head.downloader.quiet!
+        end
 
         use_full_name = full_name || ambiguous_names.include?(formula_or_cask)
         name = package_or_resource_name(formula_or_cask, full_name: use_full_name)
@@ -145,7 +147,7 @@ module Homebrew
         current_str = current.to_s
         current = LivecheckVersion.create(formula_or_cask, current)
 
-        latest = if formula&.head_only? && (head = formula.head)
+        latest = if formula&.head_only? && head
           Version.new(head.downloader.fetch_last_commit)
         else
           version_info = latest_version(
@@ -177,6 +179,7 @@ module Homebrew
             res_version_info
           end.compact_blank
           Homebrew.failed = true if resource_version_info.any? { |info| info[:status] == "error" }
+          resource_version_info.each { |info| info.delete(:meta) } if json && !verbose
         end
 
         if latest.blank?
@@ -187,10 +190,7 @@ module Homebrew
 
           latest_info = status_hash(formula_or_cask, "error", [NO_VERSIONS_MSG], full_name: use_full_name,
                                                                                  verbose:)
-          if check_for_resources
-            resource_version_info.each { |info| info.delete(:meta) } unless verbose
-            latest_info[:resources] = resource_version_info
-          end
+          latest_info[:resources] = resource_version_info if check_for_resources
 
           next latest_info
         end
@@ -232,14 +232,11 @@ module Homebrew
 
         next if newer_only && !info[:version][:outdated]
 
-        has_a_newer_upstream_version ||= true
+        has_a_newer_upstream_version = true
 
         if json
           progress.increment
           info.delete(:meta) unless verbose
-          if check_for_resources && !verbose
-            resource_version_info.each { |resource_info| resource_info.delete(:meta) }
-          end
           next info
         end
         puts if debug

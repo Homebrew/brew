@@ -79,7 +79,7 @@ Metrics/CollectionLiteralLength:
   Max: 100
 
 Metrics/CyclomaticComplexity:
-  Max: 100
+  Max: 80
 
 Metrics/MethodLength:
   Max: 140

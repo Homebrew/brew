@@ -45,7 +45,7 @@ module Utils
         cache = HOMEBREW_CACHE/"analytics/git/#{@name}.json"
         data = cache.exist? ? JSON.parse(cache.read) : {}
         generator = Digest::SHA256.file(__FILE__).hexdigest
-        if data["head"] && data["mailmap"] == mailmap && data["generator"] == generator
+        if data["head"] && data.values_at("mailmap", "generator") == [mailmap, generator]
           begin
             git("merge-base", "--is-ancestor", data.fetch("head"), "HEAD")
           rescue ErrorDuringExecution
@@ -55,7 +55,7 @@ module Utils
           data = {}
         end
         year = Time.now.utc.year
-        if data["head"] == head && data["year"] == year && data["tags"] == tags
+        if data.values_at("head", "year", "tags") == [head, year, tags]
           @author_identities = data.fetch("authors")
           return data.fetch("rows")
         end
