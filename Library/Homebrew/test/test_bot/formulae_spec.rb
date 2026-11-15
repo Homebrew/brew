@@ -42,6 +42,22 @@ RSpec.describe Homebrew::TestBot::Formulae do
     end
   end
 
+  describe "#failed" do
+    subject(:formulae) do
+      Class.new(described_class) do
+        T.bind(self, T.class_of(Homebrew::TestBot::Formulae))
+        public :failed
+      end.new(tap: nil, git: "git", dry_run: true, fail_fast: false, verbose: false,
+              output_paths: { bottle: HOMEBREW_TEMP/"bottle.txt", linkage: HOMEBREW_TEMP/"linkage.txt",
+                              skipped_or_failed_formulae: HOMEBREW_TEMP/"skipped.txt" })
+    end
+
+    it "reports ignored failures as skipped" do
+      expect { formulae.failed("foo", "install failed", ignore_failures: true) }
+        .to output(/SKIPPED.*foo/).to_stdout.and output(/install failed/).to_stderr
+    end
+  end
+
   describe "#formula!" do
     subject(:formulae) do
       Class.new(described_class) do

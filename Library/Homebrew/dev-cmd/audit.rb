@@ -174,19 +174,14 @@ module Homebrew
         end
 
         if audit_formulae.empty? && audit_casks.empty? && !args.tap
-          ofail "No matching formulae or casks to audit!"
-          return
+          return ofail "No matching formulae or casks to audit!"
         end
 
         style_files = args.named.to_paths unless skip_style
 
         only_cops = args.only_cops
-        except_cops = if only_cops || args.new?
-          nil
-        elsif args.except_cops
-          args.except_cops
-        elsif !strict
-          %w[FormulaAuditStrict]
+        except_cops = if !only_cops && !args.new?
+          args.except_cops || (%w[FormulaAuditStrict] unless strict)
         end
 
         # Run tap audits first
@@ -219,8 +214,6 @@ module Homebrew
         formula_problems = audit_formulae.sort.each_with_object({}) do |f, problems|
           path = f.path
 
-          only = only_cops ? ["style"] : args.only
-
           errors = os_arch_combinations.flat_map do |os, arch|
             SimulateSystem.with(os:, arch:) do
               odebug "Auditing Formula #{f} on os #{os} and arch #{arch}"
@@ -232,7 +225,7 @@ module Homebrew
                   strict:,
                   online:,
                   git:                 args.git?,
-                  only:,
+                  only:                only_cops ? ["style"] : args.only,
                   except:              args.except,
                   style_offenses:      style_offenses&.for_path(path),
                   tap_audit:,
@@ -272,14 +265,12 @@ module Homebrew
           problems[[cask.full_name, path]] = errors if errors.any?
         end
 
-        print_problems(tap_problems)
-        print_problems(formula_problems)
-        print_problems(cask_problems)
+        [tap_problems, formula_problems, cask_problems].each { |problems| print_problems(problems) }
 
         problem_groups = { formula: formula_problems, cask: cask_problems, tap: tap_problems }
 
-        corrected_problem_count = (formula_problems.values + cask_problems.values)
-                                  .sum { |problems| problems.count { |problem| problem.fetch(:corrected) } }
+        corrected_count = (formula_problems.values + cask_problems.values)
+                          .sum { |problems| problems.count { |problem| problem.fetch(:corrected) } }
 
         total_problems_count = problem_groups.values.sum { |problems| problems.values.sum(&:length) }
 
@@ -294,13 +285,12 @@ module Homebrew
 
           errors_summary += " detected"
 
-          if corrected_problem_count.positive?
-            errors_summary +=
-              ", #{Utils.pluralize("problem", corrected_problem_count, include_count: true)} corrected"
+          if corrected_count.positive?
+            errors_summary += ", #{Utils.pluralize("problem", corrected_count, include_count: true)} corrected"
           end
 
           # Succeed when everything was corrected, as `brew style --fix` does.
-          if total_problems_count == corrected_problem_count
+          if total_problems_count == corrected_count
             opoo "#{errors_summary}."
           else
             ofail "#{errors_summary}."
@@ -309,20 +299,19 @@ module Homebrew
 
         return unless GitHub::Actions.env_set?
 
-        annotations = formula_problems.merge(cask_problems).flat_map do |(_, path), problems|
-          problems.reject { |problem| problem[:corrected] }.map do |problem|
-            GitHub::Actions::Annotation.new(
+        formula_problems.merge(cask_problems).each do |(_, path), problems|
+          problems.each do |problem|
+            next if problem[:corrected]
+
+            annotation = GitHub::Actions::Annotation.new(
               :error,
               problem[:message],
               file:   path,
               line:   problem[:location]&.line,
               column: problem[:location]&.column,
             )
+            puts annotation if annotation.relevant?
           end
-        end.compact
-
-        annotations.each do |annotation|
-          puts annotation if annotation.relevant?
         end
       end
 

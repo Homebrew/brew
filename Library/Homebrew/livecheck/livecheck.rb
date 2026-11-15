@@ -161,24 +161,20 @@ module Homebrew
         if check_for_resources
           resource_version_info = formula_or_cask.resources.map do |resource|
             res_skip_info ||= SkipConditions.skip_information(resource, verbose:)
-            if res_skip_info.present?
-              res_skip_info
-            else
-              res_version_info = resource_version(
-                resource,
-                latest.to_s,
-                json:,
-                full_name: use_full_name,
-                debug:,
-                quiet:,
-                verbose:,
-              )
-              if res_version_info.empty?
-                status_hash(resource, "error", [NO_VERSIONS_MSG], verbose:)
-              else
-                res_version_info
-              end
-            end
+            next res_skip_info if res_skip_info.present?
+
+            res_version_info = resource_version(
+              resource,
+              latest.to_s,
+              json:,
+              full_name: use_full_name,
+              debug:,
+              quiet:,
+              verbose:,
+            )
+            next status_hash(resource, "error", [NO_VERSIONS_MSG], verbose:) if res_version_info.empty?
+
+            res_version_info
           end.compact_blank
           Homebrew.failed = true if resource_version_info.any? { |info| info[:status] == "error" }
         end
@@ -192,12 +188,7 @@ module Homebrew
           latest_info = status_hash(formula_or_cask, "error", [NO_VERSIONS_MSG], full_name: use_full_name,
                                                                                  verbose:)
           if check_for_resources
-            unless verbose
-              resource_version_info.map! do |info|
-                info.delete(:meta)
-                info
-              end
-            end
+            resource_version_info.each { |info| info.delete(:meta) } unless verbose
             latest_info[:resources] = resource_version_info
           end
 
@@ -247,10 +238,7 @@ module Homebrew
           progress.increment
           info.delete(:meta) unless verbose
           if check_for_resources && !verbose
-            resource_version_info.map! do |resource_info|
-              resource_info.delete(:meta)
-              resource_info
-            end
+            resource_version_info.each { |resource_info| resource_info.delete(:meta) }
           end
           next info
         end
@@ -353,14 +341,8 @@ module Homebrew
         end
 
         livecheck_references.each do |ref_formula_or_cask|
-          case ref_formula_or_cask
-          when Formula
-            puts "Formula Ref:      #{formula_name(ref_formula_or_cask, full_name:)}"
-          when Cask::Cask
-            puts "Cask Ref:         #{cask_name(ref_formula_or_cask, full_name:)}"
-          else
-            T.absurd(ref_formula_or_cask) # simplecov:disable
-          end
+          puts "#{ref_formula_or_cask.is_a?(Formula) ? "Formula Ref:      " : "Cask Ref:         "}" \
+               "#{package_or_resource_name(ref_formula_or_cask, full_name:)}"
         end
       end
 
@@ -400,8 +382,6 @@ module Homebrew
           end
         end
 
-        next if strategy.blank?
-
         if (livecheck_homebrew_curl = livecheck_options.homebrew_curl).nil?
           case strategy_name
           when "PageMatch", "HeaderMatch"
@@ -415,15 +395,11 @@ module Homebrew
 
         # Only use arguments that the strategy's `#find_versions` method
         # supports
-        find_versions_parameters = livecheck_find_versions_parameters(strategy)
-        strategy_args = {}
-        strategy_args[:cask] = cask if find_versions_parameters.include?(:cask)
-        strategy_args[:url] = url if find_versions_parameters.include?(:url)
-        strategy_args[:regex] = livecheck_regex if find_versions_parameters.include?(:regex)
-        strategy_args[:options] = livecheck_options if find_versions_parameters.include?(:options)
-        strategy_args.compact!
-
-        strategy_data = strategy.find_versions(**strategy_args, &livecheck_strategy_block)
+        strategy_data = strategy.find_versions(
+          **{ cask:, url:, regex: livecheck_regex, options: livecheck_options }
+            .slice(*livecheck_find_versions_parameters(strategy)).compact,
+          &livecheck_strategy_block
+        )
         match_version_map = strategy_data[:matches]
         regex = strategy_data[:regex]
         messages = strategy_data[:messages]
@@ -613,14 +589,11 @@ module Homebrew
         else
           # Only use arguments that the strategy's `#find_versions` method
           # supports
-          find_versions_parameters = livecheck_find_versions_parameters(strategy)
-          strategy_args = {}
-          strategy_args[:url] = url if find_versions_parameters.include?(:url)
-          strategy_args[:regex] = livecheck_regex if find_versions_parameters.include?(:regex)
-          strategy_args[:options] = livecheck_options if find_versions_parameters.include?(:options)
-          strategy_args.compact!
-
-          strategy_data = strategy.find_versions(**strategy_args, &livecheck_strategy_block)
+          strategy_data = strategy.find_versions(
+            **{ url:, regex: livecheck_regex, options: livecheck_options }
+              .slice(*livecheck_find_versions_parameters(strategy)).compact,
+            &livecheck_strategy_block
+          )
           match_version_map = strategy_data[:matches]
           regex = strategy_data[:regex]
           messages = strategy_data[:messages]

@@ -319,23 +319,14 @@ module PyPI
       input_packages << extra_package unless input_packages.include? extra_package
     end
 
-    non_pypi_resource_names = formula.resources.filter_map do |resource|
-      next if resource.url.start_with?(PYTHONHOSTED_URL_PREFIX) || resource.livecheck_defined?
-
-      resource.name
+    test_resources, non_test_resources = formula.resources.reject(&:livecheck_defined?).partition(&:test?)
+    non_pypi_resource_names = non_test_resources.filter_map do |resource|
+      resource.name unless resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
     end.to_set
-
-    test_resources = formula.resources.filter_map do |resource|
-      next if !resource.test? || resource.livecheck_defined?
-
-      resource.name
-    end.to_set
-
-    non_pypi_resource_names -= test_resources
+    test_resources = test_resources.to_set(&:name)
 
     existing_resources_by_name = formula.resources.to_h { |resource| [resource.name, resource] }
-    formula_contents = formula.path.read
-    existing_resource_blocks = resource_blocks_from_formula(formula_contents)
+    existing_resource_blocks = resource_blocks_from_formula(formula.path.read)
 
     require "formula"
     Formula[python_name].ensure_installed!
@@ -346,9 +337,8 @@ module PyPI
 
     print_stderr = verbose && show_info
 
-    ignore_cooldown_package = main_package if ignore_main_package_cooldown
     found_packages = pip_report(input_packages, python_name:, print_stderr:,
-                                ignore_cooldown_package:)
+                                ignore_cooldown_package: ignore_main_package_cooldown ? main_package : nil)
     # Resolve the dependency tree of excluded packages to prune the above
     exclude_packages.delete_if { |package| found_packages.exclude? package }
     if exclude_packages.present?
@@ -357,9 +347,7 @@ module PyPI
     end
     # Keep extra_packages even if they are dependencies of exclude_packages
     exclude_packages.delete_if { |package| extra_packages.include? package }
-    if (main_package_name = main_package&.name)
-      exclude_packages += [Package.new(main_package_name)]
-    end
+    main_package&.name&.then { |name| exclude_packages << Package.new(name) }
 
     new_resource_blocks = ""
     package_errors = ""
@@ -453,9 +441,8 @@ module PyPI
     end
     formula.path.atomic_write(formula_ast.process)
 
-    if package_errors.present?
-      ofail "Unable to resolve some dependencies. Please check #{formula.path} for RESOURCE-ERROR comments."
-    end
+    ofail "Unable to resolve some dependencies. Please check #{formula.path} for RESOURCE-ERROR comments." if
+      package_errors.present?
 
     true
   end

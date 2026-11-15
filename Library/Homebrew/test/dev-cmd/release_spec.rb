@@ -147,6 +147,65 @@ RSpec.describe Homebrew::DevCmd::Release do
     end
   end
 
+  describe "#wait_for_release_workflow" do
+    let(:command) { described_class.new([]) }
+    let(:dispatch_time) { Time.utc(2026, 11, 15) }
+    let(:workflow_run) do
+      { "head_sha" => "release-sha", "created_at" => dispatch_time.iso8601,
+        "status" => "completed", "conclusion" => "success", "html_url" => "https://example.com/run" }
+    end
+
+    before do
+      allow(command).to receive(:sleep)
+      allow(GitHub::API).to receive(:open_rest)
+        .with("#{GitHub::API_URL}/repos/Homebrew/brew/actions/workflows/release.yml/runs?event=workflow_dispatch&per_page=5")
+        .and_return({ "workflow_runs" => [workflow_run] })
+    end
+
+    it "ignores runs for other commits or before dispatch" do
+      allow(GitHub::API).to receive(:open_rest).and_return({
+        "workflow_runs" => [workflow_run.merge("head_sha" => "other-sha", "conclusion" => "failure"),
+                            workflow_run.merge("created_at" => (dispatch_time - 1).iso8601,
+                                               "conclusion" => "failure"),
+                            workflow_run],
+      })
+
+      expect(command.wait_for_release_workflow("release.yml", "release-sha", dispatch_time)).to eq("success")
+    end
+
+    it "waits longer for the first poll and stops after completion" do
+      sleeps = []
+      allow(command).to receive(:sleep) { |seconds| sleeps << seconds }
+      allow(GitHub::API).to receive(:open_rest).and_return(
+        { "workflow_runs" => [workflow_run.merge("status" => "in_progress")] },
+        { "workflow_runs" => [workflow_run] },
+      )
+
+      command.wait_for_release_workflow("release.yml", "release-sha", dispatch_time)
+
+      expect(sleeps).to eq([15, 5])
+    end
+
+    it "returns no conclusion when the workflow never completes" do
+      polls = 0
+      allow(GitHub::API).to receive(:open_rest) do
+        polls += 1
+        { "workflow_runs" => [workflow_run.merge("status" => "in_progress")] }
+      end
+
+      conclusion = command.wait_for_release_workflow("release.yml", "release-sha", dispatch_time)
+
+      expect([conclusion, polls]).to eq([nil, 180])
+    end
+
+    it "fails when no matching workflow run exists" do
+      allow(GitHub::API).to receive(:open_rest).and_return({ "workflow_runs" => [] })
+
+      expect { command.wait_for_release_workflow("release.yml", "release-sha", dispatch_time) }
+        .to raise_error(SystemExit).and output(/Unable to find workflow for commit: release-sha!/).to_stderr
+    end
+  end
+
   describe "release lookup helpers" do
     let(:command) { described_class.new([]) }
     let(:releases) do

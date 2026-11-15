@@ -170,8 +170,7 @@ module RuboCop
         end
 
         # SourceForge url patterns
-        sourceforge_patterns = %r{^https?://.*\b(?:sourceforge|sf)\.(?:com|net)}
-        audit_urls(urls, sourceforge_patterns) do |_, url|
+        audit_urls(urls, %r{^https?://.*\b(?:sourceforge|sf)\.(?:com|net)}) do |_, url|
           # Skip if the URL looks like a SVN repository.
           next if url.include? "/svnroot/"
           next if url.include? "svn.sourceforge"

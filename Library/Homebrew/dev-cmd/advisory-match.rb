@@ -236,14 +236,13 @@ module Homebrew
               next
             end
             candidate = matcher.to_brew_record(formula, hit, history:)
-            revalidated = !history.fixed.nil? && !override&.fixed_in_overridden
-            emitter.emit(candidate, revalidated:, initial_introduction: true)
+            emitter.emit(candidate, revalidated:          !history.fixed.nil? && !override&.fixed_in_overridden,
+                                    initial_introduction: true)
             next
           end
 
-          has_open_range = reviewed_state == :open
           has_terminal_range = reviewed_state == :terminal
-          transition = (status&.fixed? && has_open_range) ||
+          transition = (status&.fixed? && reviewed_state == :open) ||
                        (status&.affected? && has_terminal_range)
           if args.no_history? && transition
             opoo "#{record_id}: reviewed range transition needs history; leaving it unchanged"
@@ -307,8 +306,8 @@ module Homebrew
           # A metadata override does not replace the upstream constraints
           # used by the history walk. Correct its reviewed ranges and
           # provenance together instead of automatically certifying them.
-          revalidated = !fixed_boundary.nil? && !override&.fixed_in_overridden
-          emitter.emit(candidate, revalidated:, initial_introduction:)
+          emitter.emit(candidate, revalidated:          !fixed_boundary.nil? && !override&.fixed_in_overridden,
+                                  initial_introduction:)
         end
       end
 

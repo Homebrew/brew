@@ -179,9 +179,8 @@ module Homebrew
         return
       end
 
-      message_length_max = fetchable_downloads.keys.map do |download|
-        download.download_queue_message.length
-      end.max || 0
+      message_length_max = fetchable_downloads.each_key.map { |download| download.download_queue_message.length }
+                                              .max || 0
       remaining_downloads = fetchable_downloads.dup.to_a
       previous_pending_line_count = 0
       max_lines = [concurrency, Tty.height].min
@@ -230,13 +229,11 @@ module Homebrew
               end
               # Remove the known-bad download so it can never be staged later.
               unlink_cached_download(downloadable)
-            elsif exception.is_a?(CannotInstallFormulaError)
-              unlink_cached_download(downloadable)
-              raise exception
-            elsif bottle_manifest_error?(downloadable, exception)
+            elsif exception.is_a?(CannotInstallFormulaError) || bottle_manifest_error?(downloadable, exception)
               # Fatal: unlike a missing blob (which then fails to stage), a
               # stale blob would still pour without the manifest tab that
               # drives relocation, so abort rather than stage a broken keg.
+              unlink_cached_download(downloadable) if exception.is_a?(CannotInstallFormulaError)
               raise exception
             else
               failure_message = if exception.is_a?(DownloadError) && exception.cause.is_a?(ErrorDuringExecution)
@@ -262,10 +259,8 @@ module Homebrew
               stdout_print_and_flush Tty.clear_to_end_of_screen
             end
 
-            finished_states = [:fulfilled, :rejected]
-
             finished_downloads, remaining_downloads = remaining_downloads.partition do |_, future|
-              finished_states.include?(future.state)
+              future.resolved?
             end
 
             finished_downloads.each do |downloadable, future|
@@ -283,12 +278,10 @@ module Homebrew
               stdout_print_and_flush_if_tty Tty.clear_to_end
             end
 
-            if previous_pending_line_count.positive?
-              if (previous_pending_line_count - 1).zero?
-                stdout_print_and_flush_if_tty Tty.move_cursor_beginning
-              else
-                stdout_print_and_flush_if_tty Tty.move_cursor_up_beginning(previous_pending_line_count - 1)
-              end
+            if (previous_pending_line_count - 1).zero?
+              stdout_print_and_flush_if_tty Tty.move_cursor_beginning
+            elsif previous_pending_line_count.positive?
+              stdout_print_and_flush_if_tty Tty.move_cursor_up_beginning(previous_pending_line_count - 1)
             end
 
             stdout_print_and_flush_if_tty Tty.end_synchronized_update
@@ -298,7 +291,7 @@ module Homebrew
             resolution.reset
             # A download may resolve between the partition above and this
             # reset: re-check before waiting to avoid a lost wakeup.
-            next if remaining_downloads.any? { |_, future| finished_states.include?(future.state) }
+            next if remaining_downloads.any? { |_, future| future.resolved? }
 
             # Wake as soon as any download resolves; the timeout only sets
             # the redraw cadence for spinner and progress bars on TTYs.

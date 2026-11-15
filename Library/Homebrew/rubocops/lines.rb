@@ -1117,8 +1117,7 @@ module RuboCop
           find_instance_method_call(body_node, "ENV", :[]) do |method|
             next unless modifier?(method.parent)
 
-            param = parameters(method).first
-            next unless node_equals?(param, "CI")
+            next unless node_equals?(parameters(method).first, "CI")
 
             problem 'Don\'t use `ENV["CI"]` for Homebrew CI checks.'
           end
@@ -1139,8 +1138,7 @@ module RuboCop
                      .join("|"),
           )
           find_every_method_call_by_name(body_node, :system).each do |method|
-            param = parameters(method).fetch(0)
-            next unless (match = regex_match_group(param, fileutils_methods))
+            next unless (match = regex_match_group(parameters(method).fetch(0), fileutils_methods))
 
             problem "Use the `#{match}` Ruby method instead of `#{method.source}`"
           end
