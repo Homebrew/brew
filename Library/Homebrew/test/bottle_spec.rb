@@ -368,10 +368,14 @@ RSpec.describe Bottle do
     sig { returns(String) }
     def bottle_domain = "https://mirror.example.com/homebrew-bottles"
 
-    sig { params(root_url: String).returns(Bottle) }
-    def test_bottle(root_url = bottle_domain)
+    sig { returns(String) }
+    def manifest_sha256 = "c847599789efade500c448e8b302fc9a3f985e1e4370e91b339b839b2205d984"
+
+    sig { params(root_url: String, manifest_sha256: T.nilable(String)).returns(Bottle) }
+    def test_bottle(root_url = bottle_domain, manifest_sha256: nil)
       bottle_spec = BottleSpecification.new
       bottle_spec.root_url(root_url)
+      bottle_spec.manifest_sha256(manifest_sha256)
       bottle_spec.sha256(
         cellar:            :any_skip_relocation,
         Utils::Bottles.tag.to_sym => "d7b9f4e8bf83608b71fe958a99f19f2e5e68bb2582965d32e41759c24f1aef97",
@@ -394,6 +398,29 @@ RSpec.describe Bottle do
         "#{bottle_domain}/foo/manifests/1.2.3",
         ["#{HOMEBREW_BOTTLE_DEFAULT_DOMAIN}/foo/manifests/1.2.3"],
       ])
+    end
+
+    it "fetches a manifest by its digest and expects that checksum when the bottle block has one" do
+      manifest_resource = test_bottle(manifest_sha256:).github_packages_manifest_resource
+
+      expect([manifest_resource&.url, manifest_resource&.checksum&.hexdigest]).to eq([
+        "#{bottle_domain}/foo/manifests/sha256:#{manifest_sha256}",
+        manifest_sha256,
+      ])
+    end
+
+    it "discards a manifest with the wrong checksum and fetches it once more before failing", :aggregate_failures do
+      bottle = test_bottle(manifest_sha256:)
+      manifest_resource = bottle.github_packages_manifest_resource
+      raise "Expected a bottle manifest resource" if manifest_resource.nil?
+
+      expect(manifest_resource).to receive(:clear_cache).twice
+      expect(manifest_resource).to receive(:fetch).twice.and_raise(
+        ChecksumMismatchError.new(Pathname("manifest.json"), Checksum.new(manifest_sha256),
+                                  Checksum.new(TEST_SHA256)),
+      )
+
+      expect { bottle.fetch_tab }.to raise_error(ChecksumMismatchError)
     end
 
     it "keeps the bottle mirror when neither manifest URL is available", :aggregate_failures do

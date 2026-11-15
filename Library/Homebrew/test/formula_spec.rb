@@ -2222,6 +2222,20 @@ RSpec.describe Formula do
     expect(h["patches"]).to eq([])
   end
 
+  specify "#bottle_hash includes the manifest digest" do
+    f = formula "foo" do
+      T.bind(self, T.class_of(Formula))
+      url "foo-1.0"
+
+      bottle do
+        manifest_sha256 TEST_SHA256
+        sha256 cellar: :any, Utils::Bottles.tag.to_sym => TEST_SHA256
+      end
+    end
+
+    expect(f.bottle_hash["manifest_sha256"]).to eq(TEST_SHA256)
+  end
+
   it "includes existing and missing SBOM paths for each installed keg" do
     f = formula("foo") do
       T.bind(self, T.class_of(Formula))

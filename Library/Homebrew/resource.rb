@@ -445,9 +445,11 @@ class Resource
       @manifest_annotations = nil
     end
 
-    sig { override.params(_filename: Pathname).void }
-    def verify_download_integrity(_filename)
-      # We don't have a checksum, but we can at least try parsing it.
+    sig { override.params(filename: Pathname).void }
+    def verify_download_integrity(filename)
+      # Only a manifest fetched by digest has a checksum. Without one we can
+      # at least try parsing it.
+      super if checksum
       tab
     end
 
@@ -457,7 +459,7 @@ class Resource
 
       with_context(quiet: true) { verify_download_integrity(cached_download) }
       true
-    rescue Error
+    rescue Error, ChecksumMismatchError
       clear_cache
       false
     end
@@ -522,8 +524,15 @@ class Resource
       cached = @manifest_annotations
       return cached unless cached.nil?
 
+      # The cache is not trusted, so a manifest fetched by digest is checked
+      # whenever it is read, and the bytes checked are the bytes parsed.
+      manifest = cached_download.read
+      if (expected = checksum) && expected != (actual = Checksum.new(Digest::SHA256.hexdigest(manifest)))
+        raise ChecksumMismatchError.new(cached_download, expected, actual)
+      end
+
       json = begin
-        JSON.parse(cached_download.read)
+        JSON.parse(manifest)
       rescue JSON::ParserError
         raise Error, "The downloaded GitHub Packages manifest was corrupted or modified (it is not valid JSON): " \
                      "\n#{cached_download}"
