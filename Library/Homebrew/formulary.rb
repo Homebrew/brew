@@ -1028,14 +1028,9 @@ module Formulary
     type = nil
     alias_name = nil
 
-    # FIXME: Remove the need to do this here.
-    alias_table_key = tap.core_tap? ? name : "#{tap}/#{name}"
-
-    if (possible_alias = tap.alias_table[alias_table_key].presence)
+    if (possible_alias = tap.alias_target(name))
       alias_name = name
-      # FIXME: Remove the need to split the name and instead make
-      #        the alias table only contain short names.
-      name = Utils.name_from_full_name(possible_alias)
+      name = possible_alias
       type = :alias
     elsif (new_name = tap.formula_renames[name].presence)
       old_name = tap.core_tap? ? name : tapped_name

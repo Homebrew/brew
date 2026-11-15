@@ -474,8 +474,8 @@ module Homebrew
     sig { params(tap: Tap, name: String).returns(String) }
     def self.tap_formula_name(tap, name)
       name = name.downcase
-      if (alias_target = tap.alias_table[tap.core_tap? ? name : "#{tap.name}/#{name}"].presence)
-        name = ::Utils.name_from_full_name(alias_target)
+      if (alias_target = tap.alias_target(name))
+        name = alias_target
       elsif (new_name = tap.formula_renames[name].presence)
         name = new_name
       end

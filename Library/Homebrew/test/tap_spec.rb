@@ -2004,6 +2004,7 @@ RSpec.describe Tap do
       expect(core_tap.aliases).to eq(["bar"])
       expect(core_tap.alias_table).to eq("bar" => "foo")
       expect(core_tap.alias_reverse_table).to eq("foo" => ["bar"])
+      expect(core_tap.alias_target("bar")).to eq("foo")
 
       expect(core_tap.formula_renames).to eq formula_list_file_contents
       expect(core_tap.tap_migrations).to eq formula_list_file_contents
@@ -2030,6 +2031,7 @@ RSpec.describe Tap do
       expect(core_cask_tap.cask_aliases).to eq(["bar"])
       expect(core_cask_tap.cask_alias_table).to eq("bar" => "foo")
       expect(core_cask_tap.cask_alias_reverse_table).to eq("foo" => ["bar"])
+      expect(core_cask_tap.cask_alias_target("bar")).to eq("foo")
     ensure
       core_cask_tap.clear_cache
       FileUtils.rm_rf core_cask_tap.path
@@ -2069,6 +2071,8 @@ RSpec.describe Tap do
       expect(homebrew_foo_tap.cask_aliases).to eq(["homebrew/foo/qux"])
       expect(homebrew_foo_tap.cask_alias_table).to eq("homebrew/foo/qux" => "homebrew/foo/baz")
       expect(homebrew_foo_tap.cask_alias_reverse_table).to eq("homebrew/foo/baz" => ["homebrew/foo/qux"])
+      expect(homebrew_foo_tap.cask_alias_target("qux")).to eq("baz")
+      expect(homebrew_foo_tap.alias_target("bar")).to eq("foo")
     end
   end
 

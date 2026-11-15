@@ -1238,6 +1238,18 @@ class Tap # rubocop:disable Metrics/ClassLength
     )
   end
 
+  # The name of the formula that an alias of this {Tap} points at.
+  sig { params(alias_name: String).returns(T.nilable(String)) }
+  def alias_target(alias_name)
+    alias_table_target(alias_table, alias_name)
+  end
+
+  # The token of the cask that an alias of this {Tap} points at.
+  sig { params(alias_name: String).returns(T.nilable(String)) }
+  def cask_alias_target(alias_name)
+    alias_table_target(cask_alias_table, alias_name)
+  end
+
   sig { returns(Pathname) }
   def command_dir
     @command_dir ||= T.let(path/"cmd", T.nilable(Pathname))
@@ -1619,6 +1631,14 @@ class Tap # rubocop:disable Metrics/ClassLength
     files.to_h do |alias_file|
       [alias_file_to_name(alias_file), formula_file_to_name(resolved_path(alias_file))]
     end
+  end
+
+  sig { params(table: T::Hash[String, String], alias_name: String).returns(T.nilable(String)) }
+  def alias_table_target(table, alias_name)
+    target = table[alias_file_to_name(Pathname(alias_name))].presence
+    # FIXME: Remove the need to split the name and instead make
+    #        the alias table only contain short names.
+    Utils.name_from_full_name(target) if target
   end
 
   sig { params(table: T::Hash[String, String]).returns(T::Hash[String, T::Array[String]]) }

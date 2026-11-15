@@ -654,10 +654,8 @@ module Cask
 
       type = nil
 
-      alias_table_key = tap.core_cask_tap? ? token : "#{tap}/#{token}"
-
-      if (alias_target = tap.cask_alias_table[alias_table_key].presence)
-        token = ::Utils.name_from_full_name(alias_target)
+      if (alias_target = tap.cask_alias_target(token))
+        token = alias_target
         type = :alias
       elsif (new_token = tap.cask_renames[token].presence)
         old_token = tap.core_cask_tap? ? token : tapped_token
