@@ -253,11 +253,35 @@ RSpec.describe Homebrew::Cleanup do
       (HOMEBREW_CELLAR/"untrusted/1.0").mkpath
 
       expect(Formulary).to receive(:from_rack).with(HOMEBREW_CELLAR/"untrusted", from_cache: true)
-                                              .and_raise(Homebrew::UntrustedTapError)
+                                              .and_raise(Homebrew::UntrustedTapError, "untrusted tap")
 
       expect { cleanup.cleanup_cache([{ path: cache_file, type: nil }]) }
-        .to output(/Skipping untrusted: tap formula is not trusted/).to_stderr
+        .to output(/untrusted tap/).to_stderr
       expect(cache_file).to exist
+    end
+
+    it "warns once about an untrusted formula with several cache files" do
+      cache_files = %w[1.0 2.0].map { |version| HOMEBREW_CACHE/"untrusted-twice--#{version}" }
+      cache_files.each { |cache_file| cache_file.write "cached" }
+      (HOMEBREW_CELLAR/"untrusted-twice/2.0").mkpath
+
+      allow(Formulary).to receive(:from_rack).with(HOMEBREW_CELLAR/"untrusted-twice", from_cache: true)
+                                             .and_raise(Homebrew::UntrustedTapError, "untrusted tap")
+
+      expect { cleanup.cleanup_cache(cache_files.map { |path| { path:, type: nil } }) }
+        .to output("Warning: untrusted tap\n").to_stderr
+    end
+
+    it "warns once about an untrusted cask with several cache files" do
+      Cask::Cache.path.mkpath
+      cache_files = %w[1.0 2.0].map { |version| Cask::Cache.path/"untrusted-cask--#{version}.zip" }
+      cache_files.each { |cache_file| cache_file.write "cached" }
+
+      allow(Cask::CaskLoader).to receive(:load_from_name).with("untrusted-cask", warn: false)
+                                                         .and_raise(Homebrew::UntrustedTapError, "untrusted tap")
+
+      expect { cleanup.cleanup_cache(cache_files.map { |path| { path:, type: :cask } }) }
+        .to output("Warning: untrusted tap\n").to_stderr
     end
 
     context "when it can't remove a keg" do
