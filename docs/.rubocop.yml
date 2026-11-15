@@ -14,6 +14,7 @@ FormulaAudit/Comments:
 # This forces us to use dummy descriptions/homepages in example formulae which we don't need to clutter the docs with.
 FormulaAudit/Desc:
   Enabled: false
+
 FormulaAudit/Homepage:
   Enabled: false
 
@@ -29,24 +30,29 @@ Layout/LineLength:
 Lint/ConstantDefinitionInBlock:
   Enabled: false
 
+# Formulae and Casks no longer use `rm_f`/`rm_rf`, so the docs need to match.
+Lint/NonAtomicFileOperation:
+  Enabled: false
+
+# Report Markdown parser warnings (e.g. unclosed HTML tags) as offenses.
+Markdown/Syntax:
+  Enabled: true
+
+# We're not using Sorbet for the documentation.
+Sorbet/BlockMethodDefinition:
+  Enabled: false
+
+Sorbet/StrictSigil:
+  Enabled: false
+
+# This is expected in documentation files.
+Style/OneClassPerFile:
+  Enabled: false
+
 # A fake regexp is deliberately documented for `inreplace` in the Formula Cookbook.
 Style/RedundantRegexpArgument:
   Enabled: false
 
 # Want to be able to display partial formulae in the docs.
 Style/TopLevelMethodDefinition:
-  Enabled: false
-
-# Formulae and Casks no longer use `rm_f`/`rm_rf`, so the docs need to match.
-Lint/NonAtomicFileOperation:
-  Enabled: false
-
-# We're not using Sorbet for the documentation.
-Sorbet/StrictSigil:
-  Enabled: false
-Sorbet/BlockMethodDefinition:
-  Enabled: false
-
-# This is expected in documentation files.
-Style/OneClassPerFile:
   Enabled: false

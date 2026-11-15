@@ -169,143 +169,143 @@ end
 module RuboCop::AST::CollectionNode
   extend ::RuboCop::SimpleForwardable
 
-  def &(*_arg0, **_arg1, &_arg2); end
-  def *(*_arg0, **_arg1, &_arg2); end
-  def +(*_arg0, **_arg1, &_arg2); end
-  def -(*_arg0, **_arg1, &_arg2); end
-  def <<(*_arg0, **_arg1, &_arg2); end
-  def [](*_arg0, **_arg1, &_arg2); end
-  def []=(*_arg0, **_arg1, &_arg2); end
-  def all?(*_arg0, **_arg1, &_arg2); end
-  def any?(*_arg0, **_arg1, &_arg2); end
-  def append(*_arg0, **_arg1, &_arg2); end
-  def assoc(*_arg0, **_arg1, &_arg2); end
-  def at(*_arg0, **_arg1, &_arg2); end
-  def bsearch(*_arg0, **_arg1, &_arg2); end
-  def bsearch_index(*_arg0, **_arg1, &_arg2); end
-  def chain(*_arg0, **_arg1, &_arg2); end
-  def chunk(*_arg0, **_arg1, &_arg2); end
-  def chunk_while(*_arg0, **_arg1, &_arg2); end
-  def clear(*_arg0, **_arg1, &_arg2); end
-  def collect(*_arg0, **_arg1, &_arg2); end
-  def collect!(*_arg0, **_arg1, &_arg2); end
-  def collect_concat(*_arg0, **_arg1, &_arg2); end
-  def combination(*_arg0, **_arg1, &_arg2); end
-  def compact(*_arg0, **_arg1, &_arg2); end
-  def compact!(*_arg0, **_arg1, &_arg2); end
-  def concat(*_arg0, **_arg1, &_arg2); end
-  def count(*_arg0, **_arg1, &_arg2); end
-  def cycle(*_arg0, **_arg1, &_arg2); end
-  def deconstruct(*_arg0, **_arg1, &_arg2); end
-  def delete(*_arg0, **_arg1, &_arg2); end
-  def delete_at(*_arg0, **_arg1, &_arg2); end
-  def delete_if(*_arg0, **_arg1, &_arg2); end
-  def detect(*_arg0, **_arg1, &_arg2); end
-  def difference(*_arg0, **_arg1, &_arg2); end
-  def dig(*_arg0, **_arg1, &_arg2); end
-  def drop(*_arg0, **_arg1, &_arg2); end
-  def drop_while(*_arg0, **_arg1, &_arg2); end
-  def each(*_arg0, **_arg1, &_arg2); end
-  def each_cons(*_arg0, **_arg1, &_arg2); end
-  def each_entry(*_arg0, **_arg1, &_arg2); end
-  def each_index(*_arg0, **_arg1, &_arg2); end
-  def each_slice(*_arg0, **_arg1, &_arg2); end
-  def each_with_index(*_arg0, **_arg1, &_arg2); end
-  def each_with_object(*_arg0, **_arg1, &_arg2); end
-  def empty?(*_arg0, **_arg1, &_arg2); end
-  def entries(*_arg0, **_arg1, &_arg2); end
-  def fetch(*_arg0, **_arg1, &_arg2); end
-  def fetch_values(*_arg0, **_arg1, &_arg2); end
-  def fill(*_arg0, **_arg1, &_arg2); end
-  def filter(*_arg0, **_arg1, &_arg2); end
-  def filter!(*_arg0, **_arg1, &_arg2); end
-  def filter_map(*_arg0, **_arg1, &_arg2); end
-  def find(*_arg0, **_arg1, &_arg2); end
-  def find_all(*_arg0, **_arg1, &_arg2); end
-  def find_index(*_arg0, **_arg1, &_arg2); end
-  def first(*_arg0, **_arg1, &_arg2); end
-  def flat_map(*_arg0, **_arg1, &_arg2); end
-  def flatten(*_arg0, **_arg1, &_arg2); end
-  def flatten!(*_arg0, **_arg1, &_arg2); end
-  def grep(*_arg0, **_arg1, &_arg2); end
-  def grep_v(*_arg0, **_arg1, &_arg2); end
-  def group_by(*_arg0, **_arg1, &_arg2); end
-  def include?(*_arg0, **_arg1, &_arg2); end
-  def index(*_arg0, **_arg1, &_arg2); end
-  def inject(*_arg0, **_arg1, &_arg2); end
-  def insert(*_arg0, **_arg1, &_arg2); end
-  def intersect?(*_arg0, **_arg1, &_arg2); end
-  def intersection(*_arg0, **_arg1, &_arg2); end
-  def join(*_arg0, **_arg1, &_arg2); end
-  def keep_if(*_arg0, **_arg1, &_arg2); end
-  def last(*_arg0, **_arg1, &_arg2); end
-  def lazy(*_arg0, **_arg1, &_arg2); end
-  def length(*_arg0, **_arg1, &_arg2); end
-  def map(*_arg0, **_arg1, &_arg2); end
-  def map!(*_arg0, **_arg1, &_arg2); end
-  def max(*_arg0, **_arg1, &_arg2); end
-  def max_by(*_arg0, **_arg1, &_arg2); end
-  def member?(*_arg0, **_arg1, &_arg2); end
-  def min(*_arg0, **_arg1, &_arg2); end
-  def min_by(*_arg0, **_arg1, &_arg2); end
-  def minmax(*_arg0, **_arg1, &_arg2); end
-  def minmax_by(*_arg0, **_arg1, &_arg2); end
-  def none?(*_arg0, **_arg1, &_arg2); end
-  def one?(*_arg0, **_arg1, &_arg2); end
-  def pack(*_arg0, **_arg1, &_arg2); end
-  def partition(*_arg0, **_arg1, &_arg2); end
-  def permutation(*_arg0, **_arg1, &_arg2); end
-  def place(*_arg0, **_arg1, &_arg2); end
-  def pop(*_arg0, **_arg1, &_arg2); end
-  def prepend(*_arg0, **_arg1, &_arg2); end
-  def product(*_arg0, **_arg1, &_arg2); end
-  def push(*_arg0, **_arg1, &_arg2); end
-  def rassoc(*_arg0, **_arg1, &_arg2); end
-  def reduce(*_arg0, **_arg1, &_arg2); end
-  def reject(*_arg0, **_arg1, &_arg2); end
-  def reject!(*_arg0, **_arg1, &_arg2); end
-  def repeated_combination(*_arg0, **_arg1, &_arg2); end
-  def repeated_permutation(*_arg0, **_arg1, &_arg2); end
-  def replace(*_arg0, **_arg1, &_arg2); end
-  def reverse(*_arg0, **_arg1, &_arg2); end
-  def reverse!(*_arg0, **_arg1, &_arg2); end
-  def reverse_each(*_arg0, **_arg1, &_arg2); end
-  def rfind(*_arg0, **_arg1, &_arg2); end
-  def rindex(*_arg0, **_arg1, &_arg2); end
-  def rotate(*_arg0, **_arg1, &_arg2); end
-  def rotate!(*_arg0, **_arg1, &_arg2); end
-  def sample(*_arg0, **_arg1, &_arg2); end
-  def select(*_arg0, **_arg1, &_arg2); end
-  def select!(*_arg0, **_arg1, &_arg2); end
-  def shelljoin(*_arg0, **_arg1, &_arg2); end
-  def shift(*_arg0, **_arg1, &_arg2); end
-  def shuffle(*_arg0, **_arg1, &_arg2); end
-  def shuffle!(*_arg0, **_arg1, &_arg2); end
-  def size(*_arg0, **_arg1, &_arg2); end
-  def slice(*_arg0, **_arg1, &_arg2); end
-  def slice!(*_arg0, **_arg1, &_arg2); end
-  def slice_after(*_arg0, **_arg1, &_arg2); end
-  def slice_before(*_arg0, **_arg1, &_arg2); end
-  def slice_when(*_arg0, **_arg1, &_arg2); end
-  def sort(*_arg0, **_arg1, &_arg2); end
-  def sort!(*_arg0, **_arg1, &_arg2); end
-  def sort_by(*_arg0, **_arg1, &_arg2); end
-  def sort_by!(*_arg0, **_arg1, &_arg2); end
-  def sum(*_arg0, **_arg1, &_arg2); end
-  def take(*_arg0, **_arg1, &_arg2); end
-  def take_while(*_arg0, **_arg1, &_arg2); end
-  def tally(*_arg0, **_arg1, &_arg2); end
-  def to_ary(*_arg0, **_arg1, &_arg2); end
-  def to_h(*_arg0, **_arg1, &_arg2); end
-  def to_set(*_arg0, **_arg1, &_arg2); end
-  def transpose(*_arg0, **_arg1, &_arg2); end
-  def union(*_arg0, **_arg1, &_arg2); end
-  def uniq(*_arg0, **_arg1, &_arg2); end
-  def uniq!(*_arg0, **_arg1, &_arg2); end
-  def unshift(*_arg0, **_arg1, &_arg2); end
-  def values_at(*_arg0, **_arg1, &_arg2); end
-  def zip(*_arg0, **_arg1, &_arg2); end
-  def |(*_arg0, **_arg1, &_arg2); end
+  def &(*, **, &); end
+  def *(*, **, &); end
+  def +(*, **, &); end
+  def -(*, **, &); end
+  def <<(*, **, &); end
+  def [](*, **, &); end
+  def []=(*, **, &); end
+  def all?(*, **, &); end
+  def any?(*, **, &); end
+  def append(*, **, &); end
+  def assoc(*, **, &); end
+  def at(*, **, &); end
+  def bsearch(*, **, &); end
+  def bsearch_index(*, **, &); end
+  def chain(*, **, &); end
+  def chunk(*, **, &); end
+  def chunk_while(*, **, &); end
+  def clear(*, **, &); end
+  def collect(*, **, &); end
+  def collect!(*, **, &); end
+  def collect_concat(*, **, &); end
+  def combination(*, **, &); end
+  def compact(*, **, &); end
+  def compact!(*, **, &); end
+  def concat(*, **, &); end
+  def count(*, **, &); end
+  def cycle(*, **, &); end
+  def deconstruct(*, **, &); end
+  def delete(*, **, &); end
+  def delete_at(*, **, &); end
+  def delete_if(*, **, &); end
+  def detect(*, **, &); end
+  def difference(*, **, &); end
+  def dig(*, **, &); end
+  def drop(*, **, &); end
+  def drop_while(*, **, &); end
+  def each(*, **, &); end
+  def each_cons(*, **, &); end
+  def each_entry(*, **, &); end
+  def each_index(*, **, &); end
+  def each_slice(*, **, &); end
+  def each_with_index(*, **, &); end
+  def each_with_object(*, **, &); end
+  def empty?(*, **, &); end
+  def entries(*, **, &); end
+  def fetch(*, **, &); end
+  def fetch_values(*, **, &); end
+  def fill(*, **, &); end
+  def filter(*, **, &); end
+  def filter!(*, **, &); end
+  def filter_map(*, **, &); end
+  def find(*, **, &); end
+  def find_all(*, **, &); end
+  def find_index(*, **, &); end
+  def first(*, **, &); end
+  def flat_map(*, **, &); end
+  def flatten(*, **, &); end
+  def flatten!(*, **, &); end
+  def grep(*, **, &); end
+  def grep_v(*, **, &); end
+  def group_by(*, **, &); end
+  def include?(*, **, &); end
+  def index(*, **, &); end
+  def inject(*, **, &); end
+  def insert(*, **, &); end
+  def intersect?(*, **, &); end
+  def intersection(*, **, &); end
+  def join(*, **, &); end
+  def keep_if(*, **, &); end
+  def last(*, **, &); end
+  def lazy(*, **, &); end
+  def length(*, **, &); end
+  def map(*, **, &); end
+  def map!(*, **, &); end
+  def max(*, **, &); end
+  def max_by(*, **, &); end
+  def member?(*, **, &); end
+  def min(*, **, &); end
+  def min_by(*, **, &); end
+  def minmax(*, **, &); end
+  def minmax_by(*, **, &); end
+  def none?(*, **, &); end
+  def one?(*, **, &); end
+  def pack(*, **, &); end
+  def partition(*, **, &); end
+  def permutation(*, **, &); end
+  def place(*, **, &); end
+  def pop(*, **, &); end
+  def prepend(*, **, &); end
+  def product(*, **, &); end
+  def push(*, **, &); end
+  def rassoc(*, **, &); end
+  def reduce(*, **, &); end
+  def reject(*, **, &); end
+  def reject!(*, **, &); end
+  def repeated_combination(*, **, &); end
+  def repeated_permutation(*, **, &); end
+  def replace(*, **, &); end
+  def reverse(*, **, &); end
+  def reverse!(*, **, &); end
+  def reverse_each(*, **, &); end
+  def rfind(*, **, &); end
+  def rindex(*, **, &); end
+  def rotate(*, **, &); end
+  def rotate!(*, **, &); end
+  def sample(*, **, &); end
+  def select(*, **, &); end
+  def select!(*, **, &); end
+  def shelljoin(*, **, &); end
+  def shift(*, **, &); end
+  def shuffle(*, **, &); end
+  def shuffle!(*, **, &); end
+  def size(*, **, &); end
+  def slice(*, **, &); end
+  def slice!(*, **, &); end
+  def slice_after(*, **, &); end
+  def slice_before(*, **, &); end
+  def slice_when(*, **, &); end
+  def sort(*, **, &); end
+  def sort!(*, **, &); end
+  def sort_by(*, **, &); end
+  def sort_by!(*, **, &); end
+  def sum(*, **, &); end
+  def take(*, **, &); end
+  def take_while(*, **, &); end
+  def tally(*, **, &); end
+  def to_ary(*, **, &); end
+  def to_h(*, **, &); end
+  def to_set(*, **, &); end
+  def transpose(*, **, &); end
+  def union(*, **, &); end
+  def uniq(*, **, &); end
+  def uniq!(*, **, &); end
+  def unshift(*, **, &); end
+  def values_at(*, **, &); end
+  def zip(*, **, &); end
+  def |(*, **, &); end
 end
 
 RuboCop::AST::CollectionNode::ARRAY_METHODS = T.let(T.unsafe(nil), Array)
@@ -363,6 +363,7 @@ class RuboCop::AST::DefinedNode < ::RuboCop::AST::Node
 end
 
 module RuboCop::AST::Descendence
+  def any_descendant?(*types); end
   def child_nodes; end
   def descendants; end
   def each_child_node(*types); end
@@ -391,8 +392,13 @@ RuboCop::AST::EnsureNode::DEPRECATION_WARNING_LOCATION_CACHE = T.let(T.unsafe(ni
 module RuboCop::AST::Ext; end
 
 module RuboCop::AST::Ext::Range
+  def begins_its_line?; end
   def line_span(exclude_end: T.unsafe(nil)); end
+  def same_line?(other); end
 end
+
+RuboCop::AST::Ext::Range::LINE_BEGINS_REGEX_CACHE = T.let(T.unsafe(nil), Hash)
+RuboCop::AST::Ext::Range::MAX_LINE_BEGINS_REGEX_INDEX = T.let(T.unsafe(nil), Integer)
 
 class RuboCop::AST::FloatNode < ::RuboCop::AST::Node
   include ::RuboCop::AST::BasicLiteralNode
@@ -732,6 +738,7 @@ class RuboCop::AST::Node < ::Parser::AST::Node
   def falsey_literal?; end
   def find_pattern_type?; end
   def first_line; end
+  def first_part_of_call_chain; end
   def float_type?; end
   def for_type?; end
   def forward_arg_type?; end
@@ -940,7 +947,9 @@ class RuboCop::AST::NodePattern
   def ==(other); end
   def as_json(_options = T.unsafe(nil)); end
   def ast; end
-  def captures(*_arg0, **_arg1, &_arg2); end
+  def captures(*, **, &); end
+  def definition_location; end
+  def definition_location=(_arg0); end
   def encode_with(coder); end
   def eql?(other); end
   def freeze; end
@@ -949,13 +958,15 @@ class RuboCop::AST::NodePattern
   def marshal_load(pattern); end
   def match(*args, **rest, &block); end
   def match_code; end
-  def named_parameters(*_arg0, **_arg1, &_arg2); end
+  def named_parameters(*, **, &); end
   def pattern; end
-  def positional_parameters(*_arg0, **_arg1, &_arg2); end
+  def positional_parameters(*, **, &); end
   def to_s; end
 
   class << self
     def descend(element, &block); end
+    def lazy_compilation; end
+    def lazy_compilation=(_arg0); end
   end
 end
 
@@ -990,7 +1001,7 @@ class RuboCop::AST::NodePattern::Compiler
 
   def initialize; end
 
-  def bind(*_arg0, **_arg1, &_arg2); end
+  def bind(*, **, &); end
   def binding; end
   def captures; end
   def compile_as_atom(node); end
@@ -1042,11 +1053,11 @@ end
 class RuboCop::AST::NodePattern::Compiler::Debug < ::RuboCop::AST::NodePattern::Compiler
   def initialize; end
 
-  def comments(*_arg0, **_arg1, &_arg2); end
+  def comments(*, **, &); end
   def named_parameters; end
   def node_ids; end
   def parser; end
-  def tokens(*_arg0, **_arg1, &_arg2); end
+  def tokens(*, **, &); end
 end
 
 class RuboCop::AST::NodePattern::Compiler::Debug::Colorizer
@@ -1265,6 +1276,10 @@ class RuboCop::AST::NodePattern::LexerRex::ScanError < ::RuboCop::AST::NodePatte
 module RuboCop::AST::NodePattern::Macros
   def def_node_matcher(method_name, pattern_str, **keyword_defaults); end
   def def_node_search(method_name, pattern_str, **keyword_defaults); end
+
+  private
+
+  def def_node_pattern_method_lazily(definer, method_name, pattern_str, keyword_defaults, location); end
 end
 
 module RuboCop::AST::NodePattern::MethodDefiner
@@ -1319,11 +1334,11 @@ end
 RuboCop::AST::NodePattern::Node::AnyOrder::ARITIES = T.let(T.unsafe(nil), Hash)
 
 class RuboCop::AST::NodePattern::Node::Capture < ::RuboCop::AST::NodePattern::Node
-  def arity(*_arg0, **_arg1, &_arg2); end
+  def arity(*, **, &); end
   def capture?; end
   def in_sequence_head; end
   def nb_captures; end
-  def rest?(*_arg0, **_arg1, &_arg2); end
+  def rest?(*, **, &); end
 end
 
 module RuboCop::AST::NodePattern::Node::ForbidInSeqHead
@@ -1415,14 +1430,14 @@ class RuboCop::AST::NodePattern::Parser < ::Racc::Parser
   def _reduce_8(val, _values); end
   def _reduce_9(val, _values); end
   def _reduce_none(val, _values); end
-  def emit_atom(*_arg0, **_arg1, &_arg2); end
-  def emit_call(*_arg0, **_arg1, &_arg2); end
-  def emit_capture(*_arg0, **_arg1, &_arg2); end
-  def emit_list(*_arg0, **_arg1, &_arg2); end
-  def emit_unary_op(*_arg0, **_arg1, &_arg2); end
-  def emit_union(*_arg0, **_arg1, &_arg2); end
+  def emit_atom(*, **, &); end
+  def emit_call(*, **, &); end
+  def emit_capture(*, **, &); end
+  def emit_list(*, **, &); end
+  def emit_unary_op(*, **, &); end
+  def emit_union(*, **, &); end
   def inspect; end
-  def next_token(*_arg0, **_arg1, &_arg2); end
+  def next_token(*, **, &); end
   def parse(source); end
 
   private
@@ -1488,6 +1503,7 @@ RuboCop::AST::NodePattern::Sets::SET_AND_RETURN_AND_RAISE_AND_THROW_ETC = T.let(
 RuboCop::AST::NodePattern::Sets::SET_ANY_EMPTY_NONE_ETC = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_ANY_NONE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_ARRAY_HASH = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_ARRAY_HASH_SET_ETC = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_ATTR_READER_ATTR_WRITER_ATTR_ACCESSOR = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_ATTR_READER_ATTR_WRITER_ATTR_ACCESSOR_ATTR = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_BE_EQ_EQL_EQUAL = T.let(T.unsafe(nil), Set)
@@ -1499,6 +1515,8 @@ RuboCop::AST::NodePattern::Sets::SET_CAPTURE2_CAPTURE2E_CAPTURE3_ETC = T.let(T.u
 RuboCop::AST::NodePattern::Sets::SET_CIPHER_DIGEST = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_CLASS_EVAL_INSTANCE_EVAL = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_CLASS_EVAL_MODULE_EVAL = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_CLASS_EVAL_MODULE_EVAL_INSTANCE_EVAL = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_CLASS_EXEC_MODULE_EXEC_INSTANCE_EXEC = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_CLASS_MODULE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_CLASS_MODULE_STRUCT = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_CLONE_DUP_FREEZE = T.let(T.unsafe(nil), Set)
@@ -1538,8 +1556,6 @@ RuboCop::AST::NodePattern::Sets::SET_GSUB_GSUB_SUB_SUB = T.let(T.unsafe(nil), Se
 RuboCop::AST::NodePattern::Sets::SET_IF_UNLESS = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_INCLUDE_EXTEND_PREPEND = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_INCLUDE_PREPEND = T.let(T.unsafe(nil), Set)
-RuboCop::AST::NodePattern::Sets::SET_INSTANCE_EVAL_CLASS_EVAL_MODULE_EVAL = T.let(T.unsafe(nil), Set)
-RuboCop::AST::NodePattern::Sets::SET_INSTANCE_EXEC_CLASS_EXEC_MODULE_EXEC = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_INTEGER_BIGDECIMAL_COMPLEX_RATIONAL = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_IO_FILE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_IS_A_KIND_OF = T.let(T.unsafe(nil), Set)
@@ -1549,6 +1565,7 @@ RuboCop::AST::NodePattern::Sets::SET_IT_SPECIFY_EXAMPLE_ETC = T.let(T.unsafe(nil
 RuboCop::AST::NodePattern::Sets::SET_KEYS_VALUES = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_KEY_HAS_KEY_FETCH_ETC = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_LAST_FIRST = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_LAZY_CHAIN = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_LENGTH_SIZE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_LOAD_RESTORE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MAP_COLLECT = T.let(T.unsafe(nil), Set)
@@ -1556,7 +1573,6 @@ RuboCop::AST::NodePattern::Sets::SET_MAP_FILTER_MAP = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MATCH_MATCH = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MATCH_MATCH_ = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MATCH__MATCH = T.let(T.unsafe(nil), Set)
-RuboCop::AST::NodePattern::Sets::SET_MATCH___MATCH = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MAX_BY_MIN_BY_MINMAX_BY = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MEMBER_INCLUDE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_MODULE_FUNCTION_RUBY2_KEYWORDS = T.let(T.unsafe(nil), Set)
@@ -1565,6 +1581,8 @@ RuboCop::AST::NodePattern::Sets::SET_NEW_COMPILE = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_NEW_OPEN = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_NIL_ = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_PIPELINE_PIPELINE_R_PIPELINE_RW_ETC = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_POSITIVE_ZERO = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_PRIVATE_CLASS_METHOD_PUBLIC_CLASS_METHOD = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_PRIVATE_PROTECTED_PRIVATE_CLASS_METHOD = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_PRIVATE_PROTECTED_PUBLIC = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_PROC_LAMBDA = T.let(T.unsafe(nil), Set)
@@ -1591,6 +1609,7 @@ RuboCop::AST::NodePattern::Sets::SET_SEND___SEND__ = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_SET_SORTEDSET = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_SHOULD_SHOULD_NOT = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_SIG_HELPERS = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET_SILENCE_REDEFINITION_OF_METHOD_REDEFINE_METHOD = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_SKIP_PENDING = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_SORT_BY_SORT = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_SORT_SORT_MIN_ETC = T.let(T.unsafe(nil), Set)
@@ -1620,6 +1639,7 @@ RuboCop::AST::NodePattern::Sets::SET__FETCH = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET__GLOB = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET__PUSH_APPEND = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET___ = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET___10 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET___2 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET___3 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET___4 = T.let(T.unsafe(nil), Set)
@@ -1628,13 +1648,13 @@ RuboCop::AST::NodePattern::Sets::SET___6 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET___7 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET___8 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET___9 = T.let(T.unsafe(nil), Set)
+RuboCop::AST::NodePattern::Sets::SET___MATCH_MATCH = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET___METHOD_____CALLEE__ = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET____ = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET____2 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET____ETC = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET____ETC_2 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET____ETC_3 = T.let(T.unsafe(nil), Set)
-RuboCop::AST::NodePattern::Sets::SET____ETC_4 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::Sets::SET_____2 = T.let(T.unsafe(nil), Set)
 RuboCop::AST::NodePattern::VAR = T.let(T.unsafe(nil), String)
 
@@ -1767,7 +1787,7 @@ class RuboCop::AST::ProcessedSource
   def line_indentation(line_number); end
   def line_with_comment?(line); end
   def lines; end
-  def parse(src, *_arg1, **_arg2, &_arg3); end
+  def parse(src, *, **, &); end
   def parser_engine; end
   def parser_error; end
   def path; end
@@ -1792,6 +1812,7 @@ class RuboCop::AST::ProcessedSource
   def parse_and_lex(parser); end
   def parser_class(ruby_version, parser_engine); end
   def parser_tokens; end
+  def sort_tokens; end
   def source_range(range_or_node); end
   def store_tokens(tokens); end
   def tokenize(parser); end

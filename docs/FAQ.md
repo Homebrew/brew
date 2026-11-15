@@ -15,35 +15,49 @@ The Formula Cookbook has a list of [Homebrew terminology](Formula-Cookbook.md#ho
 
 First update all package definitions (formulae) and Homebrew itself:
 
-    brew update
+```sh
+brew update
+```
 
 You can now list which of your installed packages (kegs) are outdated with:
 
-    brew outdated
+```sh
+brew outdated
+```
 
 Upgrade everything with:
 
-    brew upgrade
+```sh
+brew upgrade
+```
 
 Or upgrade a specific formula with:
 
-    brew upgrade <formula>
+```sh
+brew upgrade <formula>
+```
 
 ## How do I stop certain formulae from being updated?
 
 To stop something from being updated/upgraded:
 
-    brew pin <formula_or_cask>
+```sh
+brew pin <formula_or_cask>
+```
 
 If you also do not want Homebrew to automatically learn about newer versions until you choose to, disable auto-updating entirely:
 
-    export HOMEBREW_NO_AUTO_UPDATE=1
+```sh
+export HOMEBREW_NO_AUTO_UPDATE=1
+```
 
 For the tradeoffs and alternatives, see [Locking installed formulae at specific versions](Versions.md#locking-installed-formulae-at-specific-versions).
 
 To allow that package to update again:
 
-    brew unpin <formula_or_cask>
+```sh
+brew unpin <formula_or_cask>
+```
 
 Note that pinned, outdated formulae that another formula depends on need to be upgraded when required, as we do not allow formulae to be built against outdated versions. If this is not desired, see [Locking installed formulae at specific versions](Versions.md#locking-installed-formulae-at-specific-versions) instead.
 
@@ -59,11 +73,15 @@ Homebrew automatically uninstalls old versions of each formula that is upgraded 
 
 To __disable__ automatic `brew cleanup`:
 
-    export HOMEBREW_NO_INSTALL_CLEANUP=1
+```sh
+export HOMEBREW_NO_INSTALL_CLEANUP=1
+```
 
 To disable automatic `brew cleanup` only for formulae `foo` and `bar`:
 
-    export HOMEBREW_NO_CLEANUP_FORMULAE=foo,bar
+```sh
+export HOMEBREW_NO_CLEANUP_FORMULAE=foo,bar
+```
 
 When automatic `brew cleanup` is disabled, if you uninstall a formula, it will only remove the latest version you have installed. It will not remove all versions of the formula that you may have installed in the past. Homebrew will continue to attempt to install the newest version it knows about when you run `brew upgrade`. This can be surprising.
 
@@ -75,7 +93,9 @@ Homebrew doesn't support arbitrary mixing and matching of formula versions, so e
 
 ## Where does stuff get downloaded?
 
-    brew --cache
+```sh
+brew --cache
+```
 
 Which is usually: `~/Library/Caches/Homebrew`
 
