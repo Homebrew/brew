@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require "abstract_command"
-require "utils/analytics/formula_feeds"
+require "utils/analytics/package_feeds"
 
 module Homebrew
   module DevCmd
@@ -12,12 +12,7 @@ module Homebrew
           Generate recent formula additions and updates for <#{HOMEBREW_API_WWW}> feeds.
           Requires a complete `homebrew/core` Git history.
         EOS
-        flag "--repository=", description: "Read formula history from this Git repository instead of `homebrew/core`."
-        flag "--revision=", description: "Read history ending at this revision instead of `HEAD`."
         flag "--output=", description: "Write JSON to this path instead of `_data/formula_feeds.json`."
-        flag "--new-limit=", description: "Maximum number of new formula entries (default: 50). Use 0 for none."
-        flag "--updated-limit=",
-             description: "Maximum number of updated formula entries (default: 500). Use 0 for none."
 
         named_args :none
         hide_from_man_page!
@@ -25,21 +20,27 @@ module Homebrew
 
       sig { override.void }
       def run
-        limits = { "new" => args.new_limit, "updated" => args.updated_limit }.to_h do |feed, value|
-          value ||= Utils::Analytics::FormulaFeeds::LIMITS.fetch(feed).to_s
-          unless value.match?(/\A\d+\z/)
-            raise UsageError, "`--#{feed}-limit` must be a non-negative integer."
-          end
+        Feeds.write(
+          repository: CoreTap.instance.path,
+          output: Pathname(args.output || "_data/formula_feeds.json"), kind: "formula"
+        )
+      end
 
-          [feed, value.to_i]
+      # Supplies formula metadata to the shared feed generator.
+      class Feeds < Utils::Analytics::PackageFeeds
+        sig { override.params(path: String, blob: String, source: String).returns(Builds) }
+        def read_builds(path, blob, source)
+          @history.builds(path, source).tap do |builds|
+            if builds.values.any?(&:error)
+              raise "Cannot read formula metadata for #{path} at #{blob}"
+            end
+          end
         end
-        feeds = Utils::Analytics::FormulaFeeds.new(
-          Pathname(args.repository || CoreTap.instance.path), revision: args.revision || "HEAD", limits:
-        ).generate
-        output = Pathname(args.output || "_data/formula_feeds.json")
-        output.dirname.mkpath
-        output.atomic_write("#{JSON.pretty_generate(feeds)}\n")
-        puts "Generated #{feeds.fetch("new").length} new and #{feeds.fetch("updated").length} updated formula entries"
+
+        sig { override.params(path: String).returns(T::Boolean) }
+        def package_path?(path)
+          CoreTap.instance.formula_file?(path.delete_prefix("Library/"))
+        end
       end
     end
   end

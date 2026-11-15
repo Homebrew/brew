@@ -104,7 +104,7 @@ __brew_complete_commands() {
   fi
   if [[ -n ${HOMEBREW_DEVELOPER:-} ]]
   then
-    maintainer_cmds="advisory-match bump-python-resources-pr cask-ci determine-test-runners dispatch-build-bottle formula-analytics formula-python-resources generate-advisories-api generate-analytics-api generate-bottle-ci-matrix generate-cask-api generate-cask-ci-matrix generate-formula-api generate-formula-feeds generate-internal-api generate-vulns-advisories pr-automerge pr-publish pr-pull pr-upload release update-license-data update-maintainers update-portable-ruby update-report update-sponsors vendor-install"
+    maintainer_cmds="advisory-match bump-python-resources-pr cask-ci determine-test-runners dispatch-build-bottle formula-analytics formula-python-resources generate-advisories-api generate-analytics-api generate-bottle-ci-matrix generate-cask-api generate-cask-ci-matrix generate-cask-feeds generate-formula-api generate-formula-feeds generate-internal-api generate-vulns-advisories pr-automerge pr-publish pr-pull pr-upload release update-license-data update-maintainers update-portable-ruby update-report update-sponsors vendor-install"
   fi
   user_aliases="$(__brew_list_aliases)"
   while IFS= read -r line
@@ -1857,6 +1857,23 @@ _brew_generate_cask_ci_matrix() {
   __brew_complete_casks
 }
 
+_brew_generate_cask_feeds() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  case "${cur}" in
+    -*)
+      __brewcomp "
+      --debug
+      --help
+      --output
+      --quiet
+      --verbose
+      "
+      return
+      ;;
+    *) ;;
+  esac
+}
+
 _brew_generate_cask_token() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "${cur}" in
@@ -1897,12 +1914,8 @@ _brew_generate_formula_feeds() {
       __brewcomp "
       --debug
       --help
-      --new-limit
       --output
       --quiet
-      --repository
-      --revision
-      --updated-limit
       --verbose
       "
       return
@@ -3983,6 +3996,7 @@ _brew() {
     generate-bottle-ci-matrix) _brew_generate_bottle_ci_matrix ;;
     generate-cask-api) _brew_generate_cask_api ;;
     generate-cask-ci-matrix) _brew_generate_cask_ci_matrix ;;
+    generate-cask-feeds) _brew_generate_cask_feeds ;;
     generate-cask-token) _brew_generate_cask_token ;;
     generate-formula-api) _brew_generate_formula_api ;;
     generate-formula-feeds) _brew_generate_formula_feeds ;;

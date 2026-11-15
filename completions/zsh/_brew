@@ -289,6 +289,7 @@ __brew_internal_commands() {
       'generate-bottle-ci-matrix:Generate a GitHub Actions runner matrix for a dispatched bottle build'
       'generate-cask-api:Generate `homebrew/cask` API data files for https://formulae.brew.sh'
       'generate-cask-ci-matrix:Generate a GitHub Actions matrix for a given pull request URL or list of cask names'
+      'generate-cask-feeds:Generate recent cask additions and updates for https://formulae.brew.sh feeds'
       'generate-formula-api:Generate `homebrew/core` API data files for https://formulae.brew.sh'
       'generate-formula-feeds:Generate recent formula additions and updates for https://formulae.brew.sh feeds'
       'generate-internal-api:Generate internal API data files for https://formulae.brew.sh'
@@ -1618,6 +1619,16 @@ _brew_generate_cask_ci_matrix() {
     '*:cask:__brew_casks'
 }
 
+# brew generate-cask-feeds
+_brew_generate_cask_feeds() {
+  _arguments \
+    '--debug[Display any debugging information]' \
+    '--help[Show this message]' \
+    '--output[Write JSON to this path instead of `_data/cask_feeds.json`]' \
+    '--quiet[Make some output more quiet]' \
+    '--verbose[Make some output more verbose]'
+}
+
 # brew generate-cask-token
 _brew_generate_cask_token() {
   _arguments \
@@ -1642,12 +1653,8 @@ _brew_generate_formula_feeds() {
   _arguments \
     '--debug[Display any debugging information]' \
     '--help[Show this message]' \
-    '--new-limit[Maximum number of new formula entries (default: 50). Use 0 for none]' \
     '--output[Write JSON to this path instead of `_data/formula_feeds.json`]' \
     '--quiet[Make some output more quiet]' \
-    '--repository[Read formula history from this Git repository instead of `homebrew/core`]' \
-    '--revision[Read history ending at this revision instead of `HEAD`]' \
-    '--updated-limit[Maximum number of updated formula entries (default: 500). Use 0 for none]' \
     '--verbose[Make some output more verbose]'
 }
 

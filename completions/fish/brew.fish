@@ -1237,6 +1237,14 @@ __fish_brew_complete_arg 'generate-cask-ci-matrix' -l verbose -d 'Make some outp
 __fish_brew_complete_arg 'generate-cask-ci-matrix' -a '(__fish_brew_suggest_casks_all)'
 
 
+complete -f -c brew -n 'not __fish_brew_command; and set -q HOMEBREW_DEVELOPER' -a 'generate-cask-feeds' -d 'Generate recent cask additions and updates for https://formulae.brew.sh feeds'
+__fish_brew_complete_arg 'generate-cask-feeds' -l debug -d 'Display any debugging information'
+__fish_brew_complete_arg 'generate-cask-feeds' -l help -d 'Show this message'
+__fish_brew_complete_arg 'generate-cask-feeds' -l output -d 'Write JSON to this path instead of `_data/cask_feeds.json`'
+__fish_brew_complete_arg 'generate-cask-feeds' -l quiet -d 'Make some output more quiet'
+__fish_brew_complete_arg 'generate-cask-feeds' -l verbose -d 'Make some output more verbose'
+
+
 __fish_brew_complete_cmd 'generate-cask-token' 'Generate a cask token, filename and header line for an application, following the token conventions described in the Cask Cookbook'
 __fish_brew_complete_arg 'generate-cask-token' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'generate-cask-token' -l help -d 'Show this message'
@@ -1255,12 +1263,8 @@ __fish_brew_complete_arg 'generate-formula-api' -l verbose -d 'Make some output 
 complete -f -c brew -n 'not __fish_brew_command; and set -q HOMEBREW_DEVELOPER' -a 'generate-formula-feeds' -d 'Generate recent formula additions and updates for https://formulae.brew.sh feeds'
 __fish_brew_complete_arg 'generate-formula-feeds' -l debug -d 'Display any debugging information'
 __fish_brew_complete_arg 'generate-formula-feeds' -l help -d 'Show this message'
-__fish_brew_complete_arg 'generate-formula-feeds' -l new-limit -d 'Maximum number of new formula entries (default: 50). Use 0 for none'
 __fish_brew_complete_arg 'generate-formula-feeds' -l output -d 'Write JSON to this path instead of `_data/formula_feeds.json`'
 __fish_brew_complete_arg 'generate-formula-feeds' -l quiet -d 'Make some output more quiet'
-__fish_brew_complete_arg 'generate-formula-feeds' -l repository -d 'Read formula history from this Git repository instead of `homebrew/core`'
-__fish_brew_complete_arg 'generate-formula-feeds' -l revision -d 'Read history ending at this revision instead of `HEAD`'
-__fish_brew_complete_arg 'generate-formula-feeds' -l updated-limit -d 'Maximum number of updated formula entries (default: 500). Use 0 for none'
 __fish_brew_complete_arg 'generate-formula-feeds' -l verbose -d 'Make some output more verbose'
 
 

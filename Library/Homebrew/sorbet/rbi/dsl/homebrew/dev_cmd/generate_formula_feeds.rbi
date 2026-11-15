@@ -12,17 +12,5 @@ end
 
 class Homebrew::DevCmd::GenerateFormulaFeeds::Args < Homebrew::CLI::Args
   sig { returns(T.nilable(String)) }
-  def new_limit; end
-
-  sig { returns(T.nilable(String)) }
   def output; end
-
-  sig { returns(T.nilable(String)) }
-  def repository; end
-
-  sig { returns(T.nilable(String)) }
-  def revision; end
-
-  sig { returns(T.nilable(String)) }
-  def updated_limit; end
 end
