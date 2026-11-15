@@ -530,6 +530,13 @@ RSpec.describe Homebrew::Trust, :trust_store do
       expect(described_class.target("#{tap.name}/editor", type: :cask, include_existing: true))
         .to eq([:cask, "#{tap.name}/editor@2"])
     end
+
+    it "infers the cask type for the alias when revoking canonical trust" do
+      described_class.trust!(:cask, "#{tap.name}/editor@2")
+
+      expect(described_class.target("#{tap.name}/editor", include_existing: true))
+        .to eq([:cask, "#{tap.name}/editor@2"])
+    end
   end
 
   it "does not follow cross-tap migrations" do

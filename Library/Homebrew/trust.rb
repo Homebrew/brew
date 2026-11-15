@@ -331,7 +331,7 @@ module Homebrew
       if tap.formula_files_by_name.key?(token) || tap_formula_name(tap, token) != token
         candidate_types << :formula
       end
-      candidate_types << :cask if tap.cask_files_by_name.key?(token)
+      candidate_types << :cask if tap.cask_files_by_name.key?(token) || tap.cask_alias_target(token)
       if tap.command_files.any? { |path| path.basename(path.extname).to_s.delete_prefix("brew-") == token }
         candidate_types << :command
       end
