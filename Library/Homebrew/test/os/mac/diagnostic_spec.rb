@@ -6,6 +6,68 @@ require "diagnostic"
 RSpec.describe Homebrew::Diagnostic::Checks do
   subject(:checks) { described_class.new }
 
+  describe "#check_homebrew_prefix_in_sandbox" do
+    let(:sandbox) { instance_double(Sandbox) }
+
+    before do
+      allow(Sandbox).to receive_messages(nested_sandbox?: false, use_for?: true)
+      allow(Sandbox).to receive(:for_operation).and_return(sandbox)
+      allow(sandbox).to receive(:capture).and_return(instance_double(SystemCommand::Result, success?: true))
+    end
+
+    it "accepts Homebrew files readable inside the sandbox" do
+      expect(checks.check_homebrew_prefix_in_sandbox).to be_nil
+    end
+
+    it "reports unreadable Homebrew files with relocation guidance" do
+      allow(sandbox).to receive(:capture).and_return(instance_double(SystemCommand::Result, success?: false))
+
+      expect(checks.check_homebrew_prefix_in_sandbox&.to_s).to eq <<~EOS.rstrip
+        Homebrew's files are not readable inside the macOS sandbox.
+        Homebrew cannot install formulae or casks in this configuration.
+
+        macOS privacy restrictions can block access to external or network drives
+        and protected folders, even when your terminal can access them.
+        Reinstall Homebrew on an internal disk outside protected folders such as
+        Desktop, Documents and Downloads.
+        Symlinking or mounting a blocked drive at #{HOMEBREW_PREFIX} does not help.
+      EOS
+    end
+
+    it "reads the worker script with a quiet, time-limited sandbox probe" do
+      expect(sandbox).to receive(:capture).with(
+        "/bin/cat",
+        args:         [HOMEBREW_LIBRARY_PATH/"sandbox_operation.rb"],
+        must_succeed: false,
+        print_stderr: false,
+        timeout:      10,
+      )
+
+      checks.check_homebrew_prefix_in_sandbox
+    end
+
+    test_each([{ nested_sandbox?: true }, { use_for?: false }]) do |settings|
+      it "does not probe when Sandbox reports #{settings}" do
+        allow(Sandbox).to receive_messages(settings)
+        expect(Sandbox).not_to receive(:for_operation)
+
+        checks.check_homebrew_prefix_in_sandbox
+      end
+    end
+
+    test_each([Timeout::Error, Errno::EACCES, RuntimeError]) do |error|
+      it "reports #{error} without misdiagnosing the installation location" do
+        allow(sandbox).to receive(:capture).and_raise(error)
+
+        expect(checks.check_homebrew_prefix_in_sandbox&.to_s).to eq <<~EOS.rstrip
+          Homebrew's files could not be checked inside the macOS sandbox.
+          Check Homebrew's sandbox setup and temporary directory permissions,
+          then rerun `brew doctor`.
+        EOS
+      end
+    end
+  end
+
   describe "#check_for_unsupported_macos" do
     before do
       ENV.delete("HOMEBREW_DEVELOPER")
@@ -76,6 +138,10 @@ RSpec.describe Homebrew::Diagnostic::Checks do
   end
 
   describe "#fatal_preinstall_checks" do
+    it "requires Homebrew files to be readable inside the sandbox" do
+      expect(checks.fatal_preinstall_checks).to include("check_homebrew_prefix_in_sandbox")
+    end
+
     it "doesn't require developer tools on Apple Silicon" do
       allow(Hardware::CPU).to receive(:arm?).and_return(true)
 

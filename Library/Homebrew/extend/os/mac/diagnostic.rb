@@ -62,6 +62,7 @@ module OS
         def fatal_preinstall_checks
           checks = %w[
             check_access_directories
+            check_homebrew_prefix_in_sandbox
           ]
 
           # We need the developer tools for `codesign` on Intel:
@@ -106,6 +107,41 @@ module OS
             check_xcode_up_to_date
             check_clt_up_to_date
           ].freeze
+        end
+
+        sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }
+        def check_homebrew_prefix_in_sandbox
+          require "sandbox"
+
+          return if ::Sandbox.nested_sandbox?
+          return unless ::Sandbox.use_for?("checking Homebrew's files", warn_without_sandbox: false)
+          return if ::Sandbox.for_operation.capture(
+            "/bin/cat",
+            args:         [HOMEBREW_LIBRARY_PATH/"sandbox_operation.rb"],
+            must_succeed: false,
+            print_stderr: false,
+            timeout:      10,
+          ).success?
+
+          ::Homebrew::Diagnostic::Finding.new(
+            <<~EOS,
+              Homebrew's files are not readable inside the macOS sandbox.
+              Homebrew cannot install formulae or casks in this configuration.
+            EOS
+            remediation: <<~EOS,
+              macOS privacy restrictions can block access to external or network drives
+              and protected folders, even when your terminal can access them.
+              Reinstall Homebrew on an internal disk outside protected folders such as
+              Desktop, Documents and Downloads.
+              Symlinking or mounting a blocked drive at #{HOMEBREW_PREFIX} does not help.
+            EOS
+          )
+        rescue SystemCallError, RuntimeError
+          ::Homebrew::Diagnostic::Finding.new(<<~EOS)
+            Homebrew's files could not be checked inside the macOS sandbox.
+            Check Homebrew's sandbox setup and temporary directory permissions,
+            then rerun `brew doctor`.
+          EOS
         end
 
         sig { returns(T.nilable(::Homebrew::Diagnostic::Finding)) }

@@ -42,6 +42,11 @@ This also applies to installations and upgrades performed with the macOS `.pkg` 
   [Xcode](https://itunes.apple.com/us/app/xcode/id497799835) <sup>[3](#3)</sup>
 * The Bourne-again shell for installation (i.e. `bash`) <sup>[4](#4)</sup>
 
+Homebrew's files must be readable by sandboxed processes that do not inherit your terminal's macOS privacy permissions.
+External or network drives and protected folders such as Desktop, Documents and Downloads can prevent this, even when symlinked or mounted at the default prefix.
+`brew doctor` checks this access and Homebrew stops before installation if the check fails.
+If access is blocked, reinstall Homebrew on an internal disk outside these protected locations.
+
 ## Advanced configuration
 
 The Homebrew installer offers various advanced configuration settings. **Most users can skip this section and instead follow the instructions on the [homepage](https://brew.sh/)!**
