@@ -335,6 +335,7 @@ class Tap # rubocop:disable Metrics/ClassLength
     @aliases = nil
     @alias_table = nil
     @alias_reverse_table = nil
+
     @cask_alias_files = nil
     @cask_aliases = nil
     @cask_alias_table = nil
