@@ -503,6 +503,35 @@ RSpec.describe Homebrew::Trust, :trust_store do
   it_behaves_like "a fully qualified formula alias or rename", "23bar"
   it_behaves_like "a fully qualified formula alias or rename", "oldbar"
 
+  describe "a fully qualified cask alias" do
+    sig { returns(Tap) }
+    let(:tap) { Tap.fetch("thirdparty", "foo") }
+
+    before do
+      cask_path = tap.cask_dir/"editor@2.rb"
+      cask_path.dirname.mkpath
+      cask_path.write("cask 'editor@2'\n")
+      tap.alias_dir.mkpath
+      (tap.alias_dir/"editor").make_relative_symlink(cask_path)
+    end
+
+    after do
+      FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+    end
+
+    it "requires the canonical token for an explicit cask trust target" do
+      expect { described_class.target("#{tap.name}/editor", type: :cask) }
+        .to raise_error(UsageError, %r{brew trust --cask thirdparty/foo/editor@2})
+    end
+
+    it "resolves the alias when revoking canonical trust" do
+      described_class.trust!(:cask, "#{tap.name}/editor@2")
+
+      expect(described_class.target("#{tap.name}/editor", type: :cask, include_existing: true))
+        .to eq([:cask, "#{tap.name}/editor@2"])
+    end
+  end
+
   it "does not follow cross-tap migrations" do
     tap = Tap.fetch("thirdparty", "foo")
     tap.path.mkpath

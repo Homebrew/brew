@@ -369,26 +369,27 @@ module Homebrew
         else
           normalise_name(Tap.fetch(name).reference(remote: tap_remote))
         end
-      when :formula
-        tap, formula_name = fully_qualified_package_name(name, "Formulae")
+      when :formula, :cask
+        tap, item_name = fully_qualified_package_name(name, (type == :formula) ? "Formulae" : "Casks")
         if include_existing
-          existing_name = item_trust_name(type, tap, formula_name, include_existing:, tap_remote:)
+          existing_name = item_trust_name(type, tap, item_name, include_existing:, tap_remote:)
           return existing_name if trusted_entries(type).include?(existing_name)
         end
 
         if tap_remote.nil? || Tap.same_remote?(tap_remote, tap.remote)
-          canonical_name = tap_formula_name(tap, formula_name)
-          if !include_existing && canonical_name != formula_name
-            raise UsageError, "#{name} resolves to #{tap.name}/#{canonical_name}.\n" \
-                              "Trust the canonical formula explicitly:\n  " \
-                              "brew trust --formula #{tap.name}/#{canonical_name}"
+          canonical_name = if type == :formula
+            tap_formula_name(tap, item_name)
+          else
+            tap.cask_alias_target(item_name) || item_name
           end
-          formula_name = canonical_name
+          if !include_existing && canonical_name != item_name
+            raise UsageError, "#{name} resolves to #{tap.name}/#{canonical_name}.\n" \
+                              "Trust the canonical #{type} explicitly:\n  " \
+                              "brew trust --#{type} #{tap.name}/#{canonical_name}"
+          end
+          item_name = canonical_name
         end
-        item_trust_name(type, tap, formula_name, include_existing:, tap_remote:)
-      when :cask
-        tap, token = fully_qualified_package_name(name, "Casks")
-        item_trust_name(type, tap, token, include_existing:, tap_remote:)
+        item_trust_name(type, tap, item_name, include_existing:, tap_remote:)
       when :command
         tap, command_name = fully_qualified_package_name(name, "Commands")
         item_trust_name(type, tap, command_name, include_existing:, tap_remote:)
