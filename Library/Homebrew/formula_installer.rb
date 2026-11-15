@@ -36,7 +36,8 @@ require "utils/path"
 require "utils/attestation"
 
 # Installer for a formula.
-class FormulaInstaller # rubocop:todo Metrics/ClassLength
+# Installation phases share locks, rollback state and dependency bookkeeping.
+class FormulaInstaller # rubocop:disable Metrics/ClassLength
   include FormulaCellarChecks
   include Utils::Output::Mixin
   include Utils::Path
@@ -61,6 +62,8 @@ class FormulaInstaller # rubocop:todo Metrics/ClassLength
   sig { params(ran_prelude: T::Boolean).void }
   attr_writer :ran_prelude
 
+  # Explicit typed keywords expose independent install flags and their defaults.
+  # rubocop:disable Metrics/ParameterLists
   sig {
     params(
       formula:                    Formula,
@@ -91,7 +94,7 @@ class FormulaInstaller # rubocop:todo Metrics/ClassLength
       verbose:                    T::Boolean,
     ).void
   }
-  def initialize( # rubocop:todo Metrics/ParameterLists
+  def initialize(
     formula,
     download_queue: Homebrew::DownloadQueue.default,
     link_keg: nil,
@@ -169,6 +172,7 @@ class FormulaInstaller # rubocop:todo Metrics/ClassLength
     @ran_prelude_fetch = T.let(false, T::Boolean)
     @ran_prelude = T.let(false, T::Boolean)
   end
+  # rubocop:enable Metrics/ParameterLists
 
   sig { returns(T::Boolean) }
   def debug? = @debug

@@ -49,6 +49,28 @@ RSpec.describe Utils::Analytics::Influx do
     end
   end
 
+  describe "#package_renames" do
+    it "does not load tap metadata for non-package dimensions" do
+      allow(Tap).to receive(:all).and_raise("Unexpected tap metadata read")
+
+      expect(described_class.new.package_renames("env_config")).to eq({})
+    end
+
+    it "qualifies renames and short migration destinations from official taps" do
+      tap = Tap.fetch("homebrew/old")
+      allow(Tap).to receive(:all).and_return([tap, Tap.fetch("user/tap")])
+      allow(tap).to receive_messages(formula_renames: { "old" => "new" },
+                                     tap_migrations:  { "moved" => "homebrew/core", "renamed" => "user/tap/new" })
+      allow(Tap.fetch("user/tap")).to receive(:tap_migrations).and_raise("Unexpected third-party metadata read")
+
+      expect(described_class.new.package_renames(:formula)).to eq(
+        "homebrew/old/old"     => "homebrew/old/new",
+        "homebrew/old/moved"   => "homebrew/core/moved",
+        "homebrew/old/renamed" => "user/tap/new",
+      )
+    end
+  end
+
   describe "#query" do
     it "queries package analytics without preloaded tap classes" do
       ENV.delete("HOMEBREW_NO_ANALYTICS")

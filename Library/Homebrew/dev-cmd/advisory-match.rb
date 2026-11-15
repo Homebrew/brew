@@ -71,7 +71,7 @@ module Homebrew
       end
 
       sig { override.void }
-      def run # rubocop:todo Metrics/MethodLength
+      def run
         if args.formula_list && !args.reconcile_history? && !args.new_history?
           raise UsageError, "`--formula-list` requires `--new-history` or `--reconcile-history`"
         end
@@ -95,9 +95,9 @@ module Homebrew
         end
         prefiltered = T.let([], T::Array[String])
         Formulary.enable_factory_cache!
-        Homebrew::API.with_no_api_env do # rubocop:todo Metrics/BlockLength
+        Homebrew::API.with_no_api_env do
           latest_macos = MacOSVersion.new((HOMEBREW_MACOS_NEWEST_UNSUPPORTED.to_i - 1).to_s).to_sym
-          Homebrew::SimulateSystem.with(os: latest_macos, arch: :arm) do # rubocop:todo Metrics/BlockLength
+          Homebrew::SimulateSystem.with(os: latest_macos, arch: :arm) do
             overrides = local_overrides
             matcher = Homebrew::Vulns::Match.new(repology:        local_repology,
                                                  overrides:,
@@ -121,171 +121,8 @@ module Homebrew
                   next
                 end
 
-                report(matcher, formula, hits) if text_mode?
-                # A below-introduced hit would otherwise look open to OSV
-                # consumers; it must not participate in alias maintenance.
-                actionable = hits.filter_map do |hit|
-                  status, = matcher.range_status(hit, formula_name: formula.name)
-                  [hit, status] if status&.state != :not_applicable
-                end
-                record_ids_by_canonical = actionable.to_h do |hit, _status|
-                  ids = matcher.record_ids(formula, hit)
-                  [ids.fetch(0), ids]
-                end
-                alias_errors = emitter.prepare_aliases(formula.name, record_ids_by_canonical)
-                if alias_errors.any?
-                  alias_errors.each { |error| onoe error }
-                  Homebrew.failed = true
-                  next
-                end
-
-                # Alias preparation must still see every actionable hit. Only
-                # absent records can be rejected before their initial history;
-                # existing records remain subject to the database's checks.
-                if rejected_candidates.any? && !args.no_history? && emitter.is_a?(DirEmitter)
-                  actionable.reject! do |hit, status|
-                    next false unless status
-
-                    id = matcher.record_id(formula, hit)
-                    next false unless rejected_candidates.include?(id)
-                    next false if emitter.alias_protected?(id) || emitter.reviewed_range_state(id)
-                    next false if emitter.alias_target_paths(id).any? { |target| File.exist?(target) }
-
-                    prefiltered << id
-                    true
-                  end
-                end
-
-                new_histories = T.let({}, T::Hash[String, Homebrew::Vulns::Match::ReconciledHistory])
-                actionable.each do |hit, status|
-                  record_id = matcher.record_id(formula, hit)
-                  next if emitter.alias_protected?(record_id)
-
-                  reviewed_state = emitter.reviewed_range_state(record_id)
-                  if reviewed_state && !status && matcher.current_prerelease_boundary?(hit)
-                    opoo "#{record_id}: prerelease_boundary in current version; leaving reviewed record unchanged"
-                    next
-                  end
-                  initial_introduction = false
-                  initial_introduction = true if !args.no_history? && status && reviewed_state.nil?
-                  candidate = matcher.to_brew_record(formula, hit)
-                  basis_changed = emitter.range_basis_changed?(candidate)
-                  if basis_changed && !initial_introduction && (args.no_history? || !status&.fixed?)
-                    emitter.emit(candidate)
-                    next
-                  end
-
-                  override = overrides&.advisory_override(formula.name, hit.identifiers)
-                  if initial_introduction && override&.state
-                    upstream_state = matcher.aggregate_state_at(formula, hit)
-                    if override.state != upstream_state
-                      emitter.record_history_unavailable(formula.name)
-                      opoo "#{record_id}: reviewed state override " \
-                           "#{upstream_state.nil? ? "cannot be checked against" : "disagrees with"} " \
-                           "upstream history; " \
-                           "skipping automatic update. Review its ranges and provenance together."
-                      next
-                    end
-                  end
-
-                  if initial_introduction
-                    if new_histories.empty?
-                      new_hits = actionable.filter_map do |candidate_hit, candidate_status|
-                        id = matcher.record_id(formula, candidate_hit)
-                        next if !candidate_status || emitter.alias_protected?(id) || emitter.reviewed_range_state(id)
-
-                        candidate_hit
-                      end
-                      new_histories = new_record_histories(matcher, formula, new_hits, emitter, latest_macos:)
-                    end
-                    history = new_histories.fetch(record_id)
-                    next if history.state == :never_affected
-
-                    if history.state != :range
-                      emitter.record_history_unavailable(formula.name)
-                      reason = if history.reasons.include?(:history_unavailable)
-                        "formula history is unavailable"
-                      else
-                        "complete history requires review"
-                      end
-                      opoo "#{record_id}: #{reason} (#{history.reasons.join(", ")}); skipping automatic update"
-                      next
-                    end
-                    candidate = matcher.to_brew_record(formula, hit, history:)
-                    revalidated = !history.fixed.nil? && !override&.fixed_in_overridden
-                    emitter.emit(candidate, revalidated:, initial_introduction: true)
-                    next
-                  end
-
-                  has_open_range = reviewed_state == :open
-                  has_terminal_range = reviewed_state == :terminal
-                  transition = (status&.fixed? && has_open_range) ||
-                               (status&.affected? && has_terminal_range)
-                  if args.no_history? && transition
-                    opoo "#{record_id}: reviewed range transition needs history; leaving it unchanged"
-                    next
-                  end
-
-                  walk_history = !args.no_history? && status&.fixed?
-                  walk_history &&= basis_changed || emitter.history_required?(record_id) if args.new_history?
-                  emitter.record_history_walk if walk_history
-                  first_fixed = matcher.first_fixed_version(formula, hit) if walk_history
-                  fixed_boundary = T.let(nil, T.nilable(String))
-                  case first_fixed
-                  when String
-                    fixed_boundary = first_fixed
-                  when nil
-                    # No history walk was required.
-                  when :never_affected
-                    next
-                  when :history_unavailable
-                    emitter.record_history_unavailable(formula.name)
-                    opoo "#{record_id}: formula history is unavailable; skipping automatic update"
-                    next
-                  when :shared_fixed_version
-                    emitter.record_history_unavailable(formula.name)
-                    opoo "#{record_id}: #{formula.pkg_version} also has an affected build; " \
-                         "skipping automatic update until a later version"
-                    next
-                  else
-                    raise TypeError, "unexpected fixed-history result: #{first_fixed.inspect}"
-                  end
-
-                  if fixed_boundary && !emitter.fixed_boundary_valid?(record_id, fixed_boundary)
-                    onoe "#{record_id}: fixed #{fixed_boundary} does not follow its reviewed range"
-                    Homebrew.failed = true
-                    next
-                  end
-
-                  first_introduced = T.let(nil, T.nilable(String))
-                  if status&.affected? && has_terminal_range
-                    emitter.record_history_walk
-                    reintroduced = matcher.first_reintroduced_version(formula, hit)
-                    if reintroduced == :history_unavailable
-                      emitter.record_history_unavailable(formula.name)
-                      opoo "#{record_id}: reintroduction history is unavailable; skipping automatic update"
-                      next
-                    end
-                    unless reintroduced.is_a?(String)
-                      onoe "#{record_id}: could not find a prior non-affected version for its reviewed fixed range"
-                      Homebrew.failed = true
-                      next
-                    end
-                    unless emitter.reintroduction_boundary_valid?(record_id, reintroduced)
-                      onoe "#{record_id}: reintroduction #{reintroduced} does not follow its reviewed range"
-                      Homebrew.failed = true
-                      next
-                    end
-                    first_introduced = reintroduced
-                  end
-
-                  candidate = matcher.to_brew_record(formula, hit, first_fixed: fixed_boundary, first_introduced:)
-                  # A metadata override does not replace the upstream constraints
-                  # used by the history walk. Correct its reviewed ranges and
-                  # provenance together instead of automatically certifying them.
-                  revalidated = !fixed_boundary.nil? && !override&.fixed_in_overridden
-                  emitter.emit(candidate, revalidated:, initial_introduction:)
-                end
+                emit_formula_records(matcher, formula, hits, emitter, overrides:, latest_macos:,
+                                     rejected_candidates:, prefiltered:)
               end
             rescue Homebrew::Vulns::OSV::Error => e
               onoe "OSV query failed: #{e.message}"
@@ -298,6 +135,180 @@ module Homebrew
             end
             report_history_load_failures(matcher) if args.reconcile_history?
           end
+        end
+      end
+
+      sig {
+        params(matcher: Homebrew::Vulns::Match, formula: Formula, hits: T::Array[Homebrew::Vulns::Match::Hit],
+               emitter: Emitter, overrides: T.nilable(Homebrew::Vulns::AdvisoryOverrides), latest_macos: Symbol,
+               rejected_candidates: T::Set[String], prefiltered: T::Array[String]).void
+      }
+      def emit_formula_records(matcher, formula, hits, emitter, overrides:, latest_macos:, rejected_candidates:,
+                               prefiltered:)
+        report(matcher, formula, hits) if text_mode?
+        # A below-introduced hit would otherwise look open to OSV
+        # consumers; it must not participate in alias maintenance.
+        actionable = hits.filter_map do |hit|
+          status, = matcher.range_status(hit, formula_name: formula.name)
+          [hit, status] if status&.state != :not_applicable
+        end
+        record_ids_by_canonical = actionable.to_h do |hit, _status|
+          ids = matcher.record_ids(formula, hit)
+          [ids.fetch(0), ids]
+        end
+        alias_errors = emitter.prepare_aliases(formula.name, record_ids_by_canonical)
+        if alias_errors.any?
+          alias_errors.each { |error| onoe error }
+          Homebrew.failed = true
+          return
+        end
+
+        # Alias preparation must still see every actionable hit. Only
+        # absent records can be rejected before their initial history;
+        # existing records remain subject to the database's checks.
+        if rejected_candidates.any? && !args.no_history? && emitter.is_a?(DirEmitter)
+          actionable.reject! do |hit, status|
+            next false unless status
+
+            id = matcher.record_id(formula, hit)
+            next false unless rejected_candidates.include?(id)
+            next false if emitter.alias_protected?(id) || emitter.reviewed_range_state(id)
+            next false if emitter.alias_target_paths(id).any? { |target| File.exist?(target) }
+
+            prefiltered << id
+            true
+          end
+        end
+
+        new_histories = T.let({}, T::Hash[String, Homebrew::Vulns::Match::ReconciledHistory])
+        actionable.each do |hit, status|
+          record_id = matcher.record_id(formula, hit)
+          next if emitter.alias_protected?(record_id)
+
+          reviewed_state = emitter.reviewed_range_state(record_id)
+          if reviewed_state && !status && matcher.current_prerelease_boundary?(hit)
+            opoo "#{record_id}: prerelease_boundary in current version; leaving reviewed record unchanged"
+            next
+          end
+          initial_introduction = false
+          initial_introduction = true if !args.no_history? && status && reviewed_state.nil?
+          candidate = matcher.to_brew_record(formula, hit)
+          basis_changed = emitter.range_basis_changed?(candidate)
+          if basis_changed && !initial_introduction && (args.no_history? || !status&.fixed?)
+            emitter.emit(candidate)
+            next
+          end
+
+          override = overrides&.advisory_override(formula.name, hit.identifiers)
+          if initial_introduction && override&.state
+            upstream_state = matcher.aggregate_state_at(formula, hit)
+            if override.state != upstream_state
+              emitter.record_history_unavailable(formula.name)
+              opoo "#{record_id}: reviewed state override " \
+                   "#{upstream_state.nil? ? "cannot be checked against" : "disagrees with"} " \
+                   "upstream history; " \
+                   "skipping automatic update. Review its ranges and provenance together."
+              next
+            end
+          end
+
+          if initial_introduction
+            if new_histories.empty?
+              new_hits = actionable.filter_map do |candidate_hit, candidate_status|
+                id = matcher.record_id(formula, candidate_hit)
+                next if !candidate_status || emitter.alias_protected?(id) || emitter.reviewed_range_state(id)
+
+                candidate_hit
+              end
+              new_histories = new_record_histories(matcher, formula, new_hits, emitter, latest_macos:)
+            end
+            history = new_histories.fetch(record_id)
+            next if history.state == :never_affected
+
+            if history.state != :range
+              emitter.record_history_unavailable(formula.name)
+              reason = if history.reasons.include?(:history_unavailable)
+                "formula history is unavailable"
+              else
+                "complete history requires review"
+              end
+              opoo "#{record_id}: #{reason} (#{history.reasons.join(", ")}); skipping automatic update"
+              next
+            end
+            candidate = matcher.to_brew_record(formula, hit, history:)
+            revalidated = !history.fixed.nil? && !override&.fixed_in_overridden
+            emitter.emit(candidate, revalidated:, initial_introduction: true)
+            next
+          end
+
+          has_open_range = reviewed_state == :open
+          has_terminal_range = reviewed_state == :terminal
+          transition = (status&.fixed? && has_open_range) ||
+                       (status&.affected? && has_terminal_range)
+          if args.no_history? && transition
+            opoo "#{record_id}: reviewed range transition needs history; leaving it unchanged"
+            next
+          end
+
+          walk_history = !args.no_history? && status&.fixed?
+          walk_history &&= basis_changed || emitter.history_required?(record_id) if args.new_history?
+          emitter.record_history_walk if walk_history
+          first_fixed = matcher.first_fixed_version(formula, hit) if walk_history
+          fixed_boundary = T.let(nil, T.nilable(String))
+          case first_fixed
+          when String
+            fixed_boundary = first_fixed
+          when nil
+            # No history walk was required.
+          when :never_affected
+            next
+          when :history_unavailable
+            emitter.record_history_unavailable(formula.name)
+            opoo "#{record_id}: formula history is unavailable; skipping automatic update"
+            next
+          when :shared_fixed_version
+            emitter.record_history_unavailable(formula.name)
+            opoo "#{record_id}: #{formula.pkg_version} also has an affected build; " \
+                 "skipping automatic update until a later version"
+            next
+          else
+            raise TypeError, "unexpected fixed-history result: #{first_fixed.inspect}"
+          end
+
+          if fixed_boundary && !emitter.fixed_boundary_valid?(record_id, fixed_boundary)
+            onoe "#{record_id}: fixed #{fixed_boundary} does not follow its reviewed range"
+            Homebrew.failed = true
+            next
+          end
+
+          first_introduced = T.let(nil, T.nilable(String))
+          if status&.affected? && has_terminal_range
+            emitter.record_history_walk
+            reintroduced = matcher.first_reintroduced_version(formula, hit)
+            if reintroduced == :history_unavailable
+              emitter.record_history_unavailable(formula.name)
+              opoo "#{record_id}: reintroduction history is unavailable; skipping automatic update"
+              next
+            end
+            unless reintroduced.is_a?(String)
+              onoe "#{record_id}: could not find a prior non-affected version for its reviewed fixed range"
+              Homebrew.failed = true
+              next
+            end
+            unless emitter.reintroduction_boundary_valid?(record_id, reintroduced)
+              onoe "#{record_id}: reintroduction #{reintroduced} does not follow its reviewed range"
+              Homebrew.failed = true
+              next
+            end
+            first_introduced = reintroduced
+          end
+
+          candidate = matcher.to_brew_record(formula, hit, first_fixed: fixed_boundary, first_introduced:)
+          # A metadata override does not replace the upstream constraints
+          # used by the history walk. Correct its reviewed ranges and
+          # provenance together instead of automatically certifying them.
+          revalidated = !fixed_boundary.nil? && !override&.fixed_in_overridden
+          emitter.emit(candidate, revalidated:, initial_introduction:)
         end
       end
 

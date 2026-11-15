@@ -85,7 +85,8 @@ require "time"
 #   end
 # end
 # ```
-class Formula # rubocop:todo Metrics/ClassLength
+# The public formula DSL and lifecycle hooks share one subclass contract.
+class Formula # rubocop:disable Metrics/ClassLength
   include FileUtils
   include Utils::Shebang
   include Utils::Shell

@@ -24,6 +24,13 @@ module Homebrew
     class Bottle < AbstractCommand
       include FileUtils
 
+      class BottlingResult < T::Struct
+        const :tab, T.nilable(Tab)
+        const :relocatable, T::Boolean
+        const :skip_relocation, T::Boolean
+        const :binary_relocation_diagnostics, T::Array[T::Hash[String, T.any(String, Integer)]]
+      end
+
       BOTTLE_ERB = T.let(<<-EOS.freeze, String)
   bottle do
     <% if [HOMEBREW_BOTTLE_DEFAULT_DOMAIN.to_s,
@@ -242,6 +249,165 @@ module Homebrew
         utf8_match.scrub
       end
 
+      sig {
+        params(formula: Formula, keg: Keg, tap: Tap, bottle_path: Pathname, tar_path: Pathname, padded: T::Boolean)
+          .returns(BottlingResult)
+      }
+      def bottle_keg(formula, keg, tap, bottle_path, tar_path, padded:)
+        prefix = HOMEBREW_PREFIX.to_s
+        cellar = HOMEBREW_CELLAR.to_s
+        formula_and_runtime_deps_names = [formula.name] + formula.runtime_dependencies.map(&:name)
+        binary_relocation_files = T.let([], T::Array[Pathname])
+        binary_relocation_diagnostics = T.let([], T::Array[T::Hash[String, T.any(String, Integer)]])
+        tab = T.let(nil, T.nilable(Tab))
+        relocatable = T.let(false, T::Boolean)
+        skip_relocation = T.let(false, T::Boolean)
+
+        keg.lock do
+          original_tab = nil
+          changed_files = T.let(nil, T.nilable(T::Array[Pathname]))
+          linkage_files = T.let(nil, T.nilable(T::Array[Pathname]))
+
+          begin
+            keg.delete_pyc_files!
+            keg.delete_node_gyp_debris!
+            keg.strip_node_gyp_addons!
+            keg.relativize_prefix_symlinks!
+
+            unless args.skip_relocation?
+              changed_files, linkage_files = keg.replace_locations_with_placeholders
+            end
+
+            Formula.clear_cache
+            Keg.clear_cache
+            Tab.clear_cache
+            Dependency.clear_cache
+            Requirement.clear_cache
+
+            tab = keg.tab
+            original_tab = tab.dup
+            tab.built_prefix = prefix if tab.built_prefix
+            tab.poured_from_bottle = false
+            tab.time = nil
+            tab.changed_files = changed_files&.dup
+            tab.linkage_files = linkage_files&.sort
+
+            ohai "Detecting if #{bottle_path.basename} is relocatable..." if keg.disk_usage > 1 * 1024 * 1024
+
+            is_usr_local_prefix = prefix == "/usr/local"
+            prefix_check = if is_usr_local_prefix
+              "#{prefix}/opt"
+            else
+              prefix
+            end
+
+            # Ignore matches to source code, which is not required at run time.
+            # These matches may be caused by debugging symbols.
+            ignores = [%r{/include/|\.(?:c|cc|cpp|h|hpp)$}]
+
+            # Add additional workarounds to ignore
+            ignores += formula_ignores(formula)
+
+            repository_reference = if HOMEBREW_PREFIX == HOMEBREW_REPOSITORY
+              HOMEBREW_LIBRARY
+            else
+              HOMEBREW_REPOSITORY
+            end.to_s
+            if keg_contain?(repository_reference, keg, ignores + ALLOWABLE_HOMEBREW_REPOSITORY_LINKS)
+              odie "Bottle contains non-relocatable reference to #{repository_reference}!"
+            end
+
+            relocatable = true
+            if args.skip_relocation?
+              skip_relocation = true
+            else
+              relocatable = false if keg_contain?(
+                prefix_check, keg, ignores, formula_and_runtime_deps_names,
+                binary_relocation_files:, binary_relocation_diagnostics:
+              )
+              relocatable = false if keg_contain?(
+                cellar, keg, ignores, formula_and_runtime_deps_names,
+                binary_relocation_files:, binary_relocation_diagnostics:
+              )
+              relocatable = false if keg_contain?(
+                HOMEBREW_LIBRARY.to_s, keg, ignores, formula_and_runtime_deps_names,
+                binary_relocation_files:, binary_relocation_diagnostics:
+              )
+              if is_usr_local_prefix
+                relocatable = false if keg_contain_absolute_symlink_starting_with?(prefix, keg)
+                if tap.disabled_new_usr_local_relocation_formulae.exclude?(formula.name)
+                  keg.new_usr_local_replacement_pairs.each_value do |value|
+                    relocatable = false if keg_contain?(
+                      value.fetch(:old), keg, ignores,
+                      binary_relocation_files:, binary_relocation_diagnostics:
+                    )
+                  end
+                else
+                  ["#{prefix}/etc", "#{prefix}/var", "#{prefix}/share/vim"].each do |path|
+                    relocatable = false if keg_contain?(
+                      path, keg, ignores,
+                      binary_relocation_files:, binary_relocation_diagnostics:
+                    )
+                  end
+                end
+              end
+              skip_relocation = relocatable && !keg.require_relocation?
+            end
+            tab.padded_prefix = (padded && !relocatable) ? true : nil
+            tab.binary_relocation_files = args.skip_relocation? ? nil : binary_relocation_files.sort
+
+            if args.only_json_tab?
+              tab.changed_files&.delete(Pathname.new(AbstractTab::FILENAME))
+              tab.tabfile&.unlink
+            else
+              tab.write
+            end
+
+            sbom = SBOM.create(formula, tab)
+            sbom.write(bottling: true)
+
+            keg.consistent_reproducible_symlink_permissions!
+
+            cd cellar do
+              sudo_purge
+              # Tar then gzip for reproducible bottles.
+              # GNU tar fails to create a bottle if modification time is unsigned integer
+              # (i.e. before 1970)
+              time_at_epoch = Time.at(1)
+              tab_source_modified_time = [time_at_epoch, tab.source_modified_time].max
+              tar_mtime = tab_source_modified_time.strftime("%Y-%m-%d %H:%M:%S")
+              tar, tar_args = setup_tar_and_args!(tar_mtime, default_tar: formula.name == "gnu-tar")
+              SystemCommand.safe_system tar, "--create", "--numeric-owner",
+                                        *tar_args,
+                                        "--file", tar_path, "#{formula.name}/#{formula.pkg_version}"
+              sudo_purge
+              # Set filename as it affects the tarball checksum.
+              relocatable_tar_path = "#{formula}-bottle.tar"
+              mv tar_path, relocatable_tar_path
+              # Use gzip, faster to compress than bzip2, faster to uncompress than bzip2
+              # or an uncompressed tarball (and more bandwidth friendly).
+              Utils::Gzip.compress_with_options(relocatable_tar_path,
+                                                mtime:     tab.source_modified_time,
+                                                orig_name: relocatable_tar_path,
+                                                output:    bottle_path)
+              sudo_purge
+            end
+
+            puts if !relocatable && args.verbose?
+          rescue Interrupt
+            Utils::Interrupts.ignore { bottle_path.unlink if bottle_path.exist? }
+            raise
+          ensure
+            Utils::Interrupts.ignore do
+              original_tab&.write
+              keg.replace_placeholders_with_locations(changed_files) if changed_files
+            end
+          end
+        end
+
+        BottlingResult.new(tab:, relocatable:, skip_relocation:, binary_relocation_diagnostics:)
+      end
+
       private
 
       sig {
@@ -424,7 +590,7 @@ module Homebrew
       end
 
       sig { params(formula: Formula).void }
-      def bottle_formula(formula) # rubocop:todo Metrics/AbcSize, Metrics/MethodLength
+      def bottle_formula(formula)
         local_bottle_json = args.json? && formula.local_bottle_path
 
         unless local_bottle_json
@@ -515,7 +681,7 @@ module Homebrew
 
           unless relocatable
             cellar = tag_spec.cellar.to_s
-            prefix = tab.built_prefix || Pathname(cellar).parent.to_s
+            tab.built_prefix || Pathname(cellar).parent.to_s
           end
         else
           return if tar_path.blank?
@@ -525,152 +691,15 @@ module Homebrew
 
         ohai "Bottling #{local_filename}..."
 
-        formula_and_runtime_deps_names = [formula.name] + formula.runtime_dependencies.map(&:name)
-        binary_relocation_files = T.let([], T::Array[Pathname])
         # Detailed blockers stay in CI JSON while the client-facing tab contains only compact file paths.
         binary_relocation_diagnostics = T.let([], T::Array[T::Hash[String, T.any(String, Integer)]])
 
-        # this will be nil when using a local bottle
-        keg&.lock do
-          original_tab = nil
-          changed_files = T.let(nil, T.nilable(T::Array[Pathname]))
-          linkage_files = T.let(nil, T.nilable(T::Array[Pathname]))
-
-          begin
-            keg.delete_pyc_files!
-            keg.delete_node_gyp_debris!
-            keg.strip_node_gyp_addons!
-            keg.relativize_prefix_symlinks!
-
-            unless args.skip_relocation?
-              changed_files, linkage_files = keg.replace_locations_with_placeholders
-            end
-
-            Formula.clear_cache
-            Keg.clear_cache
-            Tab.clear_cache
-            Dependency.clear_cache
-            Requirement.clear_cache
-
-            tab = keg.tab
-            original_tab = tab.dup
-            tab.built_prefix = prefix if tab.built_prefix
-            tab.poured_from_bottle = false
-            tab.time = nil
-            tab.changed_files = changed_files&.dup
-            tab.linkage_files = linkage_files&.sort
-
-            ohai "Detecting if #{local_filename} is relocatable..." if keg.disk_usage > 1 * 1024 * 1024
-
-            is_usr_local_prefix = prefix == "/usr/local"
-            prefix_check = if is_usr_local_prefix
-              "#{prefix}/opt"
-            else
-              prefix
-            end
-
-            # Ignore matches to source code, which is not required at run time.
-            # These matches may be caused by debugging symbols.
-            ignores = [%r{/include/|\.(?:c|cc|cpp|h|hpp)$}]
-
-            # Add additional workarounds to ignore
-            ignores += formula_ignores(formula)
-
-            repository_reference = if HOMEBREW_PREFIX == HOMEBREW_REPOSITORY
-              HOMEBREW_LIBRARY
-            else
-              HOMEBREW_REPOSITORY
-            end.to_s
-            if keg_contain?(repository_reference, keg, ignores + ALLOWABLE_HOMEBREW_REPOSITORY_LINKS)
-              odie "Bottle contains non-relocatable reference to #{repository_reference}!"
-            end
-
-            relocatable = true
-            if args.skip_relocation?
-              skip_relocation = true
-            else
-              relocatable = false if keg_contain?(
-                prefix_check, keg, ignores, formula_and_runtime_deps_names,
-                binary_relocation_files:, binary_relocation_diagnostics:
-              )
-              relocatable = false if keg_contain?(
-                cellar, keg, ignores, formula_and_runtime_deps_names,
-                binary_relocation_files:, binary_relocation_diagnostics:
-              )
-              relocatable = false if keg_contain?(
-                HOMEBREW_LIBRARY.to_s, keg, ignores, formula_and_runtime_deps_names,
-                binary_relocation_files:, binary_relocation_diagnostics:
-              )
-              if is_usr_local_prefix
-                relocatable = false if keg_contain_absolute_symlink_starting_with?(prefix, keg)
-                if tap.disabled_new_usr_local_relocation_formulae.exclude?(formula.name)
-                  keg.new_usr_local_replacement_pairs.each_value do |value|
-                    relocatable = false if keg_contain?(
-                      value.fetch(:old), keg, ignores,
-                      binary_relocation_files:, binary_relocation_diagnostics:
-                    )
-                  end
-                else
-                  ["#{prefix}/etc", "#{prefix}/var", "#{prefix}/share/vim"].each do |path|
-                    relocatable = false if keg_contain?(
-                      path, keg, ignores,
-                      binary_relocation_files:, binary_relocation_diagnostics:
-                    )
-                  end
-                end
-              end
-              skip_relocation = relocatable && !keg.require_relocation?
-            end
-            tab.padded_prefix = (padded && !relocatable) ? true : nil
-            tab.binary_relocation_files = args.skip_relocation? ? nil : binary_relocation_files.sort
-
-            if args.only_json_tab?
-              tab.changed_files&.delete(Pathname.new(AbstractTab::FILENAME))
-              tab.tabfile&.unlink
-            else
-              tab.write
-            end
-
-            sbom = SBOM.create(formula, tab)
-            sbom.write(bottling: true)
-
-            keg.consistent_reproducible_symlink_permissions!
-
-            cd cellar do
-              sudo_purge
-              # Tar then gzip for reproducible bottles.
-              # GNU tar fails to create a bottle if modification time is unsigned integer
-              # (i.e. before 1970)
-              time_at_epoch = Time.at(1)
-              tab_source_modified_time = [time_at_epoch, tab.source_modified_time].max
-              tar_mtime = tab_source_modified_time.strftime("%Y-%m-%d %H:%M:%S")
-              tar, tar_args = setup_tar_and_args!(tar_mtime, default_tar: formula.name == "gnu-tar")
-              SystemCommand.safe_system tar, "--create", "--numeric-owner",
-                                        *tar_args,
-                                        "--file", tar_path, "#{formula.name}/#{formula.pkg_version}"
-              sudo_purge
-              # Set filename as it affects the tarball checksum.
-              relocatable_tar_path = "#{formula}-bottle.tar"
-              mv tar_path, relocatable_tar_path
-              # Use gzip, faster to compress than bzip2, faster to uncompress than bzip2
-              # or an uncompressed tarball (and more bandwidth friendly).
-              Utils::Gzip.compress_with_options(relocatable_tar_path,
-                                                mtime:     tab.source_modified_time,
-                                                orig_name: relocatable_tar_path,
-                                                output:    bottle_path)
-              sudo_purge
-            end
-
-            puts if !relocatable && args.verbose?
-          rescue Interrupt
-            Utils::Interrupts.ignore { bottle_path.unlink if bottle_path.exist? }
-            raise
-          ensure
-            Utils::Interrupts.ignore do
-              original_tab&.write
-              keg.replace_placeholders_with_locations(changed_files) if changed_files
-            end
-          end
+        if keg
+          result = bottle_keg(formula, keg, tap, bottle_path, tar_path, padded:)
+          tab = result.tab
+          relocatable = result.relocatable
+          skip_relocation = result.skip_relocation
+          binary_relocation_diagnostics = result.binary_relocation_diagnostics
         end
 
         bottle = BottleSpecification.new

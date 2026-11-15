@@ -59,7 +59,8 @@ module Homebrew
     end
 
     # Diagnostic checks.
-    class Checks # rubocop:todo Metrics/ClassLength
+    # Keep the diagnostic check catalogue with its shared path and environment state.
+    class Checks # rubocop:disable Metrics/ClassLength
       include SystemCommand::Mixin
       include Utils::Output::Mixin
 

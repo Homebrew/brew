@@ -24,6 +24,8 @@ module Homebrew
   module Install
     extend Utils::Output::Mixin
 
+    autoload :FetchResult, "install/fetch_result"
+
     DependencySummary = T.type_alias { T::Hash[Symbol, T::Array[VersionChange]] }
 
     class << self
@@ -56,6 +58,8 @@ module Homebrew
       sig { void }
       def check_prefix; end
 
+      # Match FormulaInstaller's explicit typed flags without hiding defaults in an options hash.
+      # rubocop:disable Metrics/ParameterLists
       sig {
         params(formulae_to_install: T::Array[Formula], installed_on_request: T::Boolean,
                build_bottle: T::Boolean, force_bottle: T::Boolean,
@@ -66,7 +70,7 @@ module Homebrew
                quiet: T::Boolean, verbose: T::Boolean, dry_run: T::Boolean, skip_post_install: T::Boolean,
                skip_link: T::Boolean).returns(T::Array[FormulaInstaller])
       }
-      def formula_installers( # rubocop:todo Metrics/ParameterLists
+      def formula_installers(
         formulae_to_install,
         installed_on_request: true,
         build_bottle: false,
@@ -120,6 +124,7 @@ module Homebrew
           )
         end
       end
+      # rubocop:enable Metrics/ParameterLists
 
       sig {
         params(

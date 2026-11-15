@@ -81,6 +81,21 @@ RSpec.describe Homebrew::DevCmd::Audit do
       allow(Tap).to receive(:installed).and_return([])
     end
 
+    it "audits a Linux-only cask on its supported platform" do
+      cask = Homebrew::SimulateSystem.with(os: :linux, arch: :arm) do
+        Cask::CaskLoader.from_path(linux_only_cask_file)
+      end
+      audited_systems = []
+      allow(Cask::Auditor).to receive(:audit) do
+        audited_systems << [Homebrew::SimulateSystem.current_os, Homebrew::SimulateSystem.current_arch]
+        []
+      end
+
+      audit.audit_cask(cask, [[:macos, :arm]], no_named_args: true)
+
+      expect(audited_systems).to eq([[:linux, :arm]])
+    end
+
     it "audits Linux-supporting casks and skips macOS-only ones on Linux" do
       problems = a_string_matching(
         /\A(?=.*linux-example)(?=.*a sha256 stanza is required)(?!.*macos-only-example).*\z/m,

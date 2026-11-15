@@ -999,7 +999,99 @@ module Homebrew
       private
 
       sig { params(step: Step).void }
-      def run_install_step(step) # rubocop:todo Metrics/AbcSize, Metrics/MethodLength
+      def run_install_step(step)
+        case step.fetch("type")
+        when "mkdir", "mkdir_p", "init_data_dir", "touch", "move", "move_children", "move_contents", "copy",
+             "remove", "inreplace", "link_dir", "link_children", "symlink", "write"
+          run_file_step(step)
+        when "run"
+          run_serialised_command(step)
+        when "terminate_process"
+          run_terminate_process(step)
+        when "change_dylib_id"
+          Homebrew::InstallSteps.change_dylib_id(
+            resolve_path(step_path(step, "source")),
+            expand_template_tokens(step_string(step, "id")),
+            resolve_source: step["resolve_source"] == true,
+          )
+        when "warn"
+          opoo expand_template_tokens(step_string(step, "message"))
+        when "configure_gcc_runtime"
+          run_configure_gcc_runtime
+        when "install_gzipped_executable"
+          run_install_gzipped_executable(step)
+        when "configure_glibc_runtime"
+          run_configure_glibc_runtime
+        when "configure_clang_system"
+          run_configure_clang_system
+        when "configure_php"
+          run_configure_php
+        when "bootstrap_cpython"
+          run_bootstrap_cpython
+        when "bootstrap_pypy"
+          run_bootstrap_pypy(step_string(step, "abi_version"))
+        when "set_permissions"
+          run_set_permissions(step)
+        when "set_ownership"
+          run_set_ownership(step)
+        when "compile_gsettings_schemas"
+          run_formula_tool("glib", "glib-compile-schemas", resolve_path(step_path(step, "path")))
+        when "gio_querymodules"
+          run_formula_tool("glib", "gio-querymodules", resolve_path(step_path(step, "path")))
+        when "gdk_pixbuf_query_loaders"
+          run_formula_tool("gdk-pixbuf", "gdk-pixbuf-query-loaders", "--update-cache")
+        when "gtk_update_icon_cache"
+          require "utils/path"
+          if Utils::Path.formula_any_version_installed?("gtk4")
+            run_formula_tool("gtk4", "gtk4-update-icon-cache", "-q", "-t", "-f",
+                             resolve_path(step_path(step, "path")))
+          else
+            run_formula_tool("gtk+3", "gtk3-update-icon-cache", "-q", "-t", "-f",
+                             resolve_path(step_path(step, "path")))
+          end
+        when "update_mime_database"
+          run_formula_tool("shared-mime-info", "update-mime-database", resolve_path(step_path(step, "path")))
+        when "update_desktop_database"
+          run_formula_tool("desktop-file-utils", "update-desktop-database", resolve_path(step_path(step, "path")))
+        when "delete_keychain_certificate"
+          certificate_hash = nil
+          if step.key?("matching_certificate")
+            certificate = resolve_path(step_path(step, "matching_certificate"))
+            return unless certificate.exist?
+
+            certificate_hash = run_command_output("/usr/bin/openssl", "x509", "-fingerprint", "-sha256", "-noout",
+                                                  "-in", certificate)
+                               .lines
+                               .first
+                               .to_s
+                               .split("=", 2)[1]
+                               .to_s
+                               .delete(":")
+                               .strip
+                               .upcase
+            return if certificate_hash.blank?
+          end
+
+          certificate_hashes = run_command_output(
+            "/usr/bin/security", "find-certificate", "-a", "-c", step_string(step, "name"), "-Z",
+            sudo: true
+          ).lines.filter_map { |line| line[/\ASHA-256 hash:\s*(\S+)/, 1]&.upcase }
+
+          if certificate_hash
+            run_command "/usr/bin/security", "delete-certificate", "-Z", certificate_hash, sudo: true if
+              certificate_hashes.include?(certificate_hash)
+          else
+            certificate_hashes.each do |matching_certificate_hash|
+              run_command "/usr/bin/security", "delete-certificate", "-Z", matching_certificate_hash, sudo: true
+            end
+          end
+        else
+          raise ArgumentError, "unknown install step: #{step.fetch("type")}"
+        end
+      end
+
+      sig { params(step: Step).void }
+      def run_file_step(step)
         case step.fetch("type")
         when "mkdir"
           resolve_path(step_path(step, "path")).mkdir
@@ -1133,89 +1225,8 @@ module Homebrew
             path.dirname.mkpath
             path.atomic_write(expand_template_tokens(content))
           end
-        when "run"
-          run_serialised_command(step)
-        when "terminate_process"
-          run_terminate_process(step)
-        when "change_dylib_id"
-          Homebrew::InstallSteps.change_dylib_id(
-            resolve_path(step_path(step, "source")),
-            expand_template_tokens(step_string(step, "id")),
-            resolve_source: step["resolve_source"] == true,
-          )
-        when "warn"
-          opoo expand_template_tokens(step_string(step, "message"))
-        when "configure_gcc_runtime"
-          run_configure_gcc_runtime
-        when "install_gzipped_executable"
-          run_install_gzipped_executable(step)
-        when "configure_glibc_runtime"
-          run_configure_glibc_runtime
-        when "configure_clang_system"
-          run_configure_clang_system
-        when "configure_php"
-          run_configure_php
-        when "bootstrap_cpython"
-          run_bootstrap_cpython
-        when "bootstrap_pypy"
-          run_bootstrap_pypy(step_string(step, "abi_version"))
-        when "set_permissions"
-          run_set_permissions(step)
-        when "set_ownership"
-          run_set_ownership(step)
-        when "compile_gsettings_schemas"
-          run_formula_tool("glib", "glib-compile-schemas", resolve_path(step_path(step, "path")))
-        when "gio_querymodules"
-          run_formula_tool("glib", "gio-querymodules", resolve_path(step_path(step, "path")))
-        when "gdk_pixbuf_query_loaders"
-          run_formula_tool("gdk-pixbuf", "gdk-pixbuf-query-loaders", "--update-cache")
-        when "gtk_update_icon_cache"
-          require "utils/path"
-          if Utils::Path.formula_any_version_installed?("gtk4")
-            run_formula_tool("gtk4", "gtk4-update-icon-cache", "-q", "-t", "-f",
-                             resolve_path(step_path(step, "path")))
-          else
-            run_formula_tool("gtk+3", "gtk3-update-icon-cache", "-q", "-t", "-f",
-                             resolve_path(step_path(step, "path")))
-          end
-        when "update_mime_database"
-          run_formula_tool("shared-mime-info", "update-mime-database", resolve_path(step_path(step, "path")))
-        when "update_desktop_database"
-          run_formula_tool("desktop-file-utils", "update-desktop-database", resolve_path(step_path(step, "path")))
-        when "delete_keychain_certificate"
-          certificate_hash = nil
-          if step.key?("matching_certificate")
-            certificate = resolve_path(step_path(step, "matching_certificate"))
-            return unless certificate.exist?
-
-            certificate_hash = run_command_output("/usr/bin/openssl", "x509", "-fingerprint", "-sha256", "-noout",
-                                                  "-in", certificate)
-                               .lines
-                               .first
-                               .to_s
-                               .split("=", 2)[1]
-                               .to_s
-                               .delete(":")
-                               .strip
-                               .upcase
-            return if certificate_hash.blank?
-          end
-
-          certificate_hashes = run_command_output(
-            "/usr/bin/security", "find-certificate", "-a", "-c", step_string(step, "name"), "-Z",
-            sudo: true
-          ).lines.filter_map { |line| line[/\ASHA-256 hash:\s*(\S+)/, 1]&.upcase }
-
-          if certificate_hash
-            run_command "/usr/bin/security", "delete-certificate", "-Z", certificate_hash, sudo: true if
-              certificate_hashes.include?(certificate_hash)
-          else
-            certificate_hashes.each do |matching_certificate_hash|
-              run_command "/usr/bin/security", "delete-certificate", "-Z", matching_certificate_hash, sudo: true
-            end
-          end
         else
-          raise ArgumentError, "unknown install step: #{step.fetch("type")}"
+          raise ArgumentError, "unknown file step: #{step.fetch("type")}"
         end
       end
 

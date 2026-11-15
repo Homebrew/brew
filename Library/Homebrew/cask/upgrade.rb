@@ -108,6 +108,8 @@ module Cask
       puts Formatter.version_changes(cask_upgrades).join("\n")
     end
 
+    # Keep upgrade flags and optional shared-download/summary accumulators explicit and typed.
+    # rubocop:disable Metrics/ParameterLists
     sig {
       params(
         casks:                      Cask,
@@ -135,7 +137,7 @@ module Cask
         prefetched_cask_installers: T.nilable(T::Array[Installer]),
       ).returns(T::Boolean)
     }
-    def self.upgrade_casks!( # rubocop:todo Metrics/ParameterLists
+    def self.upgrade_casks!(
       *casks,
       args:,
       force: false,
@@ -305,6 +307,7 @@ module Cask
 
       !failed
     end
+    # rubocop:enable Metrics/ParameterLists
 
     sig {
       params(
