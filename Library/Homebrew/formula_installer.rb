@@ -1548,6 +1548,9 @@ on_request: installed_on_request?, options:)
         Keg.keg_link_directories.each do |dir|
           sandbox.allow_write_path "#{HOMEBREW_PREFIX}/#{dir}"
         end
+        # Created ahead of the sandbox so the Linux backend does not record it
+        # as its own and remove it when it is still empty at cleanup.
+        (HOMEBREW_PREFIX/"libexec").mkpath
         sandbox.allow_write_path "#{HOMEBREW_PREFIX}/libexec"
         sandbox.protect_homebrew_state
       end
