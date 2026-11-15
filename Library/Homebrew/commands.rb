@@ -183,7 +183,12 @@ module Commands
     find_commands(path).map(&:basename)
                        .map { |basename| basename_without_extension(basename) }
                        .uniq
-                       .reject { |name| Homebrew::CLI::Parser.from_cmd_path(path/"#{name}.rb")&.hide_from_man_page }
+                       .reject do |name|
+                         # Check the source for `hide_from_man_page!` rather than requiring
+                         # every command to build its parser.
+                         cmd_path = path/"#{name}.rb"
+                         cmd_path.exist? && cmd_path.read.include?("hide_from_man_page!")
+                       end
   end
 
   sig { returns(T::Array[String]) }
