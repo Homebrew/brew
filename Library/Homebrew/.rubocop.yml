@@ -56,7 +56,7 @@ Metrics/AbcSize:
   Max: 250
 
 Metrics/BlockLength:
-  Max: 150
+  Max: 100
   CountAsOne: [array, hash, heredoc]
   AllowedMethods:
     - refine

@@ -106,6 +106,39 @@ RSpec.describe Utils::Analytics::Influx do
       ])
     end
 
+    context "with platform dimensions" do
+      before do
+        ENV.delete("HOMEBREW_NO_ANALYTICS")
+        ENV["HOMEBREW_INFLUXDB_TOKEN"] = "token"
+      end
+
+      it "anonymises custom prefixes while preserving standard prefixes case-insensitively" do
+        command = described_class.new
+        allow(command).to receive(:each_influx_record)
+          .and_yield({ "prefix" => "/OPT/HOMEBREW", "os" => "macOS", "arch" => "arm64", "count" => 1 })
+          .and_yield({ "prefix" => "/private/user/brew", "os" => "Linux", "arch" => "x86_64", "count" => 2 })
+
+        expect(command.query(categories: [:homebrew_prefixes]).fetch(0).fetch(:items))
+          .to eq([
+            { number: 1, "prefix" => "custom-prefix (Linux x86_64)", count: "2", percent: "66.67" },
+            { number: 2, "prefix" => "/OPT/HOMEBREW", count: "1", percent: "33.33" },
+          ])
+      end
+
+      it "keeps CI and non-CI platform counts separate" do
+        command = described_class.new
+        allow(command).to receive(:each_influx_record)
+          .and_yield({ "os" => "Linux", "arch" => "x86_64", "ci" => "true", "count" => 2 })
+          .and_yield({ "os" => "Linux", "arch" => "x86_64", "ci" => "false", "count" => 1 })
+
+        expect(command.query(categories: [:homebrew_os_arch_ci]).fetch(0).fetch(:items))
+          .to eq([
+            { number: 1, "os_arch_ci" => "Linux x86_64 (CI)", count: "2", percent: "66.67" },
+            { number: 2, "os_arch_ci" => "Linux x86_64", count: "1", percent: "33.33" },
+          ])
+      end
+    end
+
     context "with package renames and tap migrations" do
       before do
         ENV.delete("HOMEBREW_NO_ANALYTICS")
@@ -282,6 +315,44 @@ RSpec.describe Utils::Analytics::Influx do
           include('GROUP BY "env_config","env_config_state"'),
         ),
       )
+    end
+  end
+
+  describe "#test_bot_dimension" do
+    it "sorts options and includes the platform and successful result" do
+      expect(described_class.new.test_bot_dimension("audit foo --strict --online", os: "macOS", arch: "arm64",
+                                                                                passed: true))
+        .to eq("audit foo --online --strict (macOS arm64) (PASSED)")
+    end
+
+    it "includes failed results" do
+      expect(described_class.new.test_bot_dimension("test foo", os: "Linux", arch: "x86_64", passed: false))
+        .to eq("test foo (Linux x86_64) (FAILED)")
+    end
+
+    it "ignores commands outside the formula test workflow" do
+      expect(described_class.new.test_bot_dimension("info foo", os: "Linux", arch: "x86_64", passed: true)).to be_nil
+    end
+
+    it "ignores qualified formula names from legacy events" do
+      expect(described_class.new.test_bot_dimension("audit user/tap/foo", os: "Linux", arch: "x86_64", passed: true))
+        .to be_nil
+    end
+
+    it "ignores legacy events containing an empty tap option" do
+      expect(described_class.new.test_bot_dimension("install foo --tap=", os: "Linux", arch: "x86_64", passed: true))
+        .to be_nil
+    end
+
+    it "ignores dependency-only installs" do
+      expect(described_class.new.test_bot_dimension("install foo --only-dependencies", os: "Linux", arch: "x86_64",
+                                                                                      passed: true)).to be_nil
+    end
+
+    it "ignores cached installs" do
+      expect(described_class.new.test_bot_dimension("install foo --cached", os: "Linux", arch: "x86_64",
+passed: true))
+        .to be_nil
     end
   end
 

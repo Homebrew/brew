@@ -43,6 +43,43 @@ module Homebrew
       end
 
       sig {
+        params(original_url: String, url: String, url_symbol: T.nilable(Symbol), strategy_url: T.nilable(String),
+               final_url: T.nilable(String), url_options: T::Hash[Symbol, T.anything])
+          .returns(T::Hash[Symbol, T.any(String, Symbol, T::Hash[Symbol, T.anything])])
+      }
+      def url_metadata(original_url:, url:, url_symbol:, strategy_url:, final_url:, url_options:)
+        {
+          symbol:    url_symbol,
+          original:  original_url,
+          processed: (url if url != original_url),
+          strategy:  (strategy_url if strategy_url.present? && strategy_url != url),
+          final:     final_url,
+          options:   url_options.presence,
+        }.compact
+      end
+
+      sig {
+        params(package_or_resource: T.any(Formula, Cask::Cask, Resource), error: StandardError,
+               json: T::Boolean, quiet: T::Boolean, debug: T::Boolean, full_name: T::Boolean,
+               verbose: T::Boolean, ambiguous_cask: T::Boolean)
+          .returns(T.nilable(T::Hash[Symbol, T.any(String, T::Array[String], T::Hash[Symbol, T::Boolean])]))
+      }
+      def report_error(package_or_resource, error, json: false, quiet: false, debug: false, full_name: false,
+                       verbose: false, ambiguous_cask: false)
+        return if quiet
+        return status_hash(package_or_resource, "error", [error.to_s], full_name:, verbose:) if json
+
+        name = package_or_resource_name(package_or_resource, full_name:)
+        name += " (cask)" if ambiguous_cask
+        onoe "#{Tty.blue}#{name}#{Tty.reset}: #{error}"
+        if debug && !error.is_a?(Livecheck::Error)
+          require "utils/backtrace"
+          $stderr.puts Utils::Backtrace.clean(error)
+        end
+        nil
+      end
+
+      sig {
         params(url: String, regex: T.nilable(Regexp), strategy_url: T.nilable(String), final_url: T.nilable(String),
                strategy_regex: T.nilable(Regexp), cached: T.nilable(T::Boolean)).void
       }
