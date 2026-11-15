@@ -143,7 +143,7 @@ RSpec.describe Homebrew::Search do
       expect(described_class.search_casks(/testball/)).to eq(["testball"])
     end
 
-    it "finds casks by alias", :needs_macos do
+    it "finds casks by alias" do
       allow(Tap).to receive(:each_with_object).and_return(["testball-alias"])
       allow(Cask::CaskLoader).to receive(:load_from_name).with("testball-alias").and_return(cask)
 
