@@ -335,13 +335,11 @@ module Homebrew
         # Collapse identical platform results to `general`
         # only when every platform returned a result.
         if platform_specific
-          new_version_values = new_versions.values.compact
-          if new_version_values.size == system_options.size && new_version_values.uniq.one?
-            new_versions = { general: new_version_values.first }
-          end
-          cooldown_skipped_version_values = cooldown_skipped_versions.values
-          if cooldown_skipped_version_values.size == system_options.size && cooldown_skipped_version_values.uniq.one?
-            cooldown_skipped_versions = { general: cooldown_skipped_version_values.first }
+          [new_versions, cooldown_skipped_versions].each do |versions|
+            values = versions.values.compact
+            next if values.size != system_options.size || !values.uniq.one?
+
+            versions.replace(general: values.first)
           end
         # Consolidate into a single general version when only one architecture
         # was simulated (e.g. `depends_on arch:` restricts to a single arch) or
@@ -353,15 +351,10 @@ module Homebrew
           new_versions = { general: new_versions[single_arch] }
           cooldown_skipped_versions = { general: cooldown_skipped_versions[single_arch] }.compact
         else
-          if current_versions[:arm].present? && current_versions[:arm] == current_versions[:intel]
-            current_versions = { general: current_versions[:arm] }
-          end
-          if new_versions[:arm].present? && new_versions[:arm] == new_versions[:intel]
-            new_versions = { general: new_versions[:arm] }
-          end
-          if cooldown_skipped_versions[:arm].present? &&
-             cooldown_skipped_versions[:arm] == cooldown_skipped_versions[:intel]
-            cooldown_skipped_versions = { general: cooldown_skipped_versions[:arm] }
+          [current_versions, new_versions, cooldown_skipped_versions].each do |versions|
+            next if versions[:arm].blank? || versions[:arm] != versions[:intel]
+
+            versions.replace(general: versions[:arm])
           end
         end
 

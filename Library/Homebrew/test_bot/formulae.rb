@@ -779,11 +779,7 @@ module Homebrew
           install_args = ["--verbose", "--formula", "--build-bottle"]
 
           # We can't verify attestations if we're building `gh`.
-          verify_attestations = if formula_name == "gh"
-            nil
-          else
-            ENV.fetch("HOMEBREW_VERIFY_ATTESTATIONS", nil)
-          end
+          verify_attestations = ENV.fetch("HOMEBREW_VERIFY_ATTESTATIONS", nil) if formula_name != "gh"
           # Don't care about e.g. bottle failures for dependencies.
           test "brew", "install", "--only-dependencies", *install_args, formula_name,
                env: { "HOMEBREW_DEVELOPER"           => nil,
@@ -820,11 +816,7 @@ module Homebrew
           test "brew", "style", "--formula", formula_name, report_analytics: true
           test "brew", "audit", "--formula", *audit_args, report_analytics: true unless formula.deprecated?
           unless install_step_passed
-            if ignore_failures
-              skipped formula_name, "install failed"
-            else
-              failed formula_name, "install failed"
-            end
+            failed(formula_name, "install failed", ignore_failures:)
 
             return
           end
@@ -874,11 +866,7 @@ module Homebrew
               relocate_bottle_artifacts([@bottle_filename, @bottle_json_filename], @bottle_filename.dirname/"failed")
             end
 
-            if ignore_failures
-              skipped formula_name, failed_linkage_or_test_messages.join(", ")
-            else
-              failed formula_name, failed_linkage_or_test_messages.join(", ")
-            end
+            failed(formula_name, failed_linkage_or_test_messages.join(", "), ignore_failures:)
           end
         ensure
           @tested_formulae_count += 1

@@ -416,8 +416,10 @@ module Homebrew
         opoo reason
       end
 
-      sig { params(formula_name: String, reason: String).void }
-      def failed(formula_name, reason)
+      sig { params(formula_name: String, reason: String, ignore_failures: T::Boolean).void }
+      def failed(formula_name, reason, ignore_failures: false)
+        return skipped(formula_name, reason) if ignore_failures
+
         @skipped_or_failed_formulae << formula_name
 
         puts Formatter.headline(

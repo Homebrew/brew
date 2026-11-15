@@ -190,13 +190,10 @@ module Homebrew
 
       sig { void }
       def output_update_report
-        if ENV["HOMEBREW_ADDITIONAL_GOOGLE_ANALYTICS_ID"].present?
-          opoo "HOMEBREW_ADDITIONAL_GOOGLE_ANALYTICS_ID is now a no-op so can be unset."
-          puts "All Homebrew Google Analytics code and data was destroyed."
-        end
+        %w[HOMEBREW_ADDITIONAL_GOOGLE_ANALYTICS_ID HOMEBREW_NO_GOOGLE_ANALYTICS].each do |variable|
+          next if ENV[variable].blank?
 
-        if ENV["HOMEBREW_NO_GOOGLE_ANALYTICS"].present?
-          opoo "HOMEBREW_NO_GOOGLE_ANALYTICS is now a no-op so can be unset."
+          opoo "#{variable} is now a no-op so can be unset."
           puts "All Homebrew Google Analytics code and data was destroyed."
         end
 
@@ -209,17 +206,15 @@ module Homebrew
         apply_redirected_remotes
         tap_or_untap_core_taps_if_necessary
 
-        updated = false
         new_tag = nil
 
         initial_revision = ENV["HOMEBREW_UPDATE_BEFORE"].to_s
         current_revision = ENV["HOMEBREW_UPDATE_AFTER"].to_s
         odie "update-report should not be called directly!" if initial_revision.empty? || current_revision.empty?
 
-        if initial_revision != current_revision
+        updated = initial_revision != current_revision
+        if updated
           auto_update_header
-
-          updated = true
 
           old_tag = Settings.read "latesttag"
 
@@ -229,16 +224,13 @@ module Homebrew
 
           Settings.write "latesttag", new_tag if new_tag != old_tag
 
-          if new_tag == old_tag
-            ohai "Updated Homebrew from #{shorten_revision(initial_revision)} " \
-                 "to #{shorten_revision(current_revision)}."
-          elsif old_tag.blank?
-            ohai "Updated Homebrew from #{shorten_revision(initial_revision)} " \
-                 "to #{new_tag} (#{shorten_revision(current_revision)})."
-          else
-            ohai "Updated Homebrew from #{old_tag} (#{shorten_revision(initial_revision)}) " \
-                 "to #{new_tag} (#{shorten_revision(current_revision)})."
+          initial_version = shorten_revision(initial_revision)
+          current_version = shorten_revision(current_revision)
+          if new_tag != old_tag
+            initial_version = "#{old_tag} (#{initial_version})" if old_tag.present?
+            current_version = "#{new_tag} (#{current_version})"
           end
+          ohai "Updated Homebrew from #{initial_version} to #{current_version}."
         end
 
         # Check if we can parse the JSON and do any Ruby-side follow-up.
@@ -346,9 +338,9 @@ module Homebrew
         # Unlike the reports above, include the core taps as `update.sh` also
         # updates their Git repositories when installing from the API.
         Tap.installed.select(&:git?).each do |tap|
-          tap_initial_revision = ENV.fetch("HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}", nil)
           tap_current_revision = ENV.fetch("HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}", nil)
-          next if tap_current_revision.nil? || tap_current_revision == tap_initial_revision
+          next if tap_current_revision.nil? ||
+                  tap_current_revision == ENV.fetch("HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}", nil)
 
           warn_if_branch_not_updated(tap.name, tap.git_repository, tap_current_revision)
         end

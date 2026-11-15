@@ -29,9 +29,8 @@ module Utils
 
       sig { returns(T::Array[T::Hash[String, T.nilable(T.any(String, Integer))]]) }
       def rows
-        if git("rev-parse", "--is-shallow-repository") == "true"
-          raise "Analytics require complete Git history for #{@name}"
-        end
+        raise "Analytics require complete Git history for #{@name}" if git("rev-parse",
+                                                                           "--is-shallow-repository") == "true"
 
         head = git("rev-parse", "HEAD")
         mailmap = git("ls-tree", "HEAD", "--", ".mailmap")

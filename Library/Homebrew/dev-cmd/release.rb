@@ -129,11 +129,6 @@ module Homebrew
           return
         end
 
-        # Not actually useless, needed for Sorbet.
-        # rubocop:disable Lint/UselessAssignment
-        e = T.let(nil, T.nilable(Exception))
-        # rubocop:enable Lint/UselessAssignment
-
         existing_releases = begin
           matching_releases(new_version)
         rescue *GitHub::API::ERRORS => e
@@ -165,12 +160,33 @@ module Homebrew
         ohai "Triggering release workflow for #{new_version}..."
         begin
           GitHub.workflow_dispatch_event("Homebrew", "brew", release_workflow, "main", tag: new_version)
-        # Cannot use `e` as Sorbet needs it used below instead.
-        # rubocop:disable Naming/RescuedExceptionsVariableName
-        rescue *GitHub::API::ERRORS => error
-          odie "Unable to trigger workflow: #{error.message}!"
+        rescue *GitHub::API::ERRORS => e
+          odie "Unable to trigger workflow: #{e.message}!"
         end
-        # rubocop:enable Naming/RescuedExceptionsVariableName
+
+        run_conclusion = wait_for_release_workflow(release_workflow, current_sha, dispatch_time)
+        odie "Workflow completed with status: #{run_conclusion}!" if run_conclusion != "success"
+
+        puts
+        ohai "Release created at:"
+        releases_page_url = "https://github.com/Homebrew/brew/releases"
+        release_url = begin
+          latest_matching_release(new_version)&.fetch("html_url", nil) || releases_page_url
+        rescue *GitHub::API::ERRORS => e
+          opoo "Unable to locate created release: #{e.message}"
+          releases_page_url
+        end
+        puts "  #{Formatter.url(release_url)}"
+        Utils::Browser.open release_url
+      end
+
+      # Wait for the dispatched release workflow and return its conclusion.
+      sig { params(release_workflow: String, current_sha: String, dispatch_time: Time).returns(T.nilable(String)) }
+      def wait_for_release_workflow(release_workflow, current_sha, dispatch_time)
+        # Not actually useless, needed for Sorbet.
+        # rubocop:disable Lint/UselessAssignment
+        e = T.let(nil, T.nilable(Exception))
+        # rubocop:enable Lint/UselessAssignment
 
         # Poll for workflow completion
         initial_sleep_time = 15
@@ -215,19 +231,7 @@ module Homebrew
           end
         end
 
-        odie "Workflow completed with status: #{run_conclusion}!" if run_conclusion != "success"
-
-        puts
-        ohai "Release created at:"
-        releases_page_url = "https://github.com/Homebrew/brew/releases"
-        release_url = begin
-          latest_matching_release(new_version)&.fetch("html_url", nil) || releases_page_url
-        rescue *GitHub::API::ERRORS => e
-          opoo "Unable to locate created release: #{e.message}"
-          releases_page_url
-        end
-        puts "  #{Formatter.url(release_url)}"
-        Utils::Browser.open release_url
+        run_conclusion
       end
 
       sig { params(name: String).returns(T::Array[T::Hash[String, T.untyped]]) }

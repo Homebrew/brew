@@ -294,8 +294,6 @@ module Homebrew
           check_for_mirrors(commit_formula.name, old_mirrors, new_mirrors)
         end
 
-        old_hash = commit_formula_spec.checksum&.hexdigest
-
         new_hash = args.sha256
         new_tag = args.tag
         new_revision = args.revision
@@ -311,7 +309,7 @@ module Homebrew
         elsif new_tag.present? && new_revision.present?
           check_new_version(commit_formula, tap_remote_repo, url: old_url, tag: new_tag) if new_version.blank?
           false
-        elsif old_hash.blank?
+        elsif commit_formula_spec.checksum&.hexdigest.blank?
           if new_tag.blank? && new_version.blank? && new_revision.blank?
             raise UsageError, "#{formula}: no `--tag` or `--version` argument specified!"
           end
@@ -327,8 +325,8 @@ module Homebrew
             check_new_version(commit_formula, tap_remote_repo, url: old_url, tag: new_tag) if new_version.blank?
             resource_path, forced_version = fetch_resource_and_forced_version(commit_formula, new_version, old_url,
                                                                               tag: new_tag)
-            new_revision = Utils.popen_read("git", "-C", resource_path.to_s, "rev-parse", "-q", "--verify", "HEAD")
-            new_revision = new_revision.strip
+            new_revision = Utils.popen_read("git", "-C", resource_path.to_s, "rev-parse", "-q", "--verify",
+                                            "HEAD").strip
           elsif new_revision.blank?
             odie "#{commit_formula}: the current URL requires specifying a `--revision=` argument."
           end
@@ -441,9 +439,7 @@ module Homebrew
         end
 
         alias_rename = alias_update_pair(commit_formula, new_formula_version)
-        if alias_rename.present?
-          ohai "Renaming alias #{alias_rename.first} to #{alias_rename.last}"
-        end
+        ohai "Renaming alias #{alias_rename.first} to #{alias_rename.last}" if alias_rename.present?
 
         formula_checkboxes.concat(resource_checkboxes(commit_formula, new_contents, new_formula_version))
 

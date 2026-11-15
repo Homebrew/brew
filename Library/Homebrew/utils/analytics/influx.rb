@@ -272,23 +272,11 @@ module Utils
           odie "No data returned" if json[:total_count].zero?
 
           # Combine identical values
-          deduped_items = {}
-
-          json[:items].each do |item|
-            key = item[dimension_key]
-            if deduped_items.key?(key)
-              deduped_items[key][:count] += item[:count]
-              if category == :homebrew_env_config
-                deduped_items[key][:non_default_count] += item[:non_default_count]
-                deduped_items[key][:set_default_count] += item[:set_default_count]
-                deduped_items[key][:unset_count] += item[:unset_count]
-              end
-            else
-              deduped_items[key] = item
-            end
+          count_keys = [:count]
+          count_keys += [:non_default_count, :set_default_count, :unset_count] if category == :homebrew_env_config
+          json[:items] = json[:items].group_by { |item| item[dimension_key] }.map do |_, items|
+            items.fetch(0).merge(count_keys.to_h { |key| [key, items.sum { |item| item[key] }] })
           end
-
-          json[:items] = deduped_items.values
           json[:total_items] = json[:items].length
 
           if all_core_formulae_json

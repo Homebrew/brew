@@ -188,13 +188,7 @@ module Homebrew
         end
 
         args.named.each do |name|
-          if (tap_with_name = Tap.with_formula_name(name))
-            tap, = tap_with_name
-          elsif (tap_with_token = Tap.with_cask_token(name))
-            tap, = tap_with_token
-          end
-
-          tap&.ensure_installed!
+          (Tap.with_formula_name(name) || Tap.with_cask_token(name))&.first&.ensure_installed!
         end
         Homebrew::Trust.trust_fully_qualified_items!(args.named, type: args.only_formula_or_cask)
 
@@ -422,13 +416,10 @@ module Homebrew
           prefetched_formula_installers: dependent_formulae_installer
         )
 
-        installed_or_upgraded_casks = install_casks(new_casks, installed_casks, failed_casks,
-                                                    prefetched_cask_installers, cask_upgrade_summary,
-                                                    installed_on_request:)
-
         Install.finish_installation(
           formulae:      installed_or_upgraded_formulae,
-          casks:         installed_or_upgraded_casks,
+          casks:         install_casks(new_casks, installed_casks, failed_casks,
+                                       prefetched_cask_installers, cask_upgrade_summary, installed_on_request:),
           dry_run:       args.dry_run?,
           display_times: args.display_times?,
         )

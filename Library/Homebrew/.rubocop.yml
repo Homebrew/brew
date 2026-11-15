@@ -82,7 +82,7 @@ Metrics/CyclomaticComplexity:
   Max: 100
 
 Metrics/MethodLength:
-  Max: 150
+  Max: 140
   CountAsOne: [array, hash, heredoc]
 
 Metrics/ModuleLength:
