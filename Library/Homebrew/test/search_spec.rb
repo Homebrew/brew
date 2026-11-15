@@ -144,7 +144,9 @@ RSpec.describe Homebrew::Search do
     end
 
     it "finds casks by alias" do
-      allow(Tap).to receive(:each_with_object).and_return(["testball-alias"])
+      tap = instance_double(Tap, official?: false, cask_tokens: [], cask_aliases: ["testball-alias"])
+      allow(Tap).to receive(:each_with_object).and_call_original
+      allow(Tap).to receive(:each).and_yield(tap)
       allow(Cask::CaskLoader).to receive(:load_from_name).with("testball-alias").and_return(cask)
 
       expect(described_class.search_casks(/testball/)).to eq(["testball"])
