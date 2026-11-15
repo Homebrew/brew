@@ -77,7 +77,7 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
     end
   end
 
-  describe "depends_on macos" do
+  describe "depends_on macos", :needs_macos do
     context "with an array" do
       let(:cask) { Cask::CaskLoader.from_path(cask_path("with-depends-on-macos-array")) }
 

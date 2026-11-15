@@ -54,7 +54,7 @@ module Cask
         rmdir(deepest_path_first(pkgutil_bom_dirs))
       end
 
-      rmdir(root) unless MacOS.undeletable?(root)
+      rmdir(root) unless OS::Mac.undeletable?(root)
 
       forget
     end
@@ -94,7 +94,7 @@ module Cask
                 .stdout
                 .split("\n")
                 .map { |path| root.join(path) }
-                .reject { |path| MacOS.undeletable?(path) },
+                .reject { |path| OS::Mac.undeletable?(path) },
         T.nilable(T::Array[Pathname]),
       )
     end

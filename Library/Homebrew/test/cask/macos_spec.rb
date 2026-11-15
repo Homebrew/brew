@@ -1,7 +1,9 @@
 # typed: strict
 # frozen_string_literal: true
 
-RSpec.describe MacOS, :cask do
+require "cask/macos"
+
+RSpec.describe OS::Mac, :cask do
   test_each([
     "/",
     "/.",

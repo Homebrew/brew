@@ -26,23 +26,6 @@ RSpec.describe Cask::Upgrade, :cask do
     parser.args
   end
 
-  def write_info_plist(path, short_version:, bundle_version:)
-    info_plist = path/"Contents/Info.plist"
-    info_plist.dirname.mkpath
-    info_plist.write <<~PLIST
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
-      <plist version="1.0">
-      <dict>
-        <key>CFBundleShortVersionString</key>
-        <string>#{short_version}</string>
-        <key>CFBundleVersion</key>
-        <string>#{bundle_version}</string>
-      </dict>
-      </plist>
-    PLIST
-  end
-
   before do
     allow(Homebrew::EnvConfig).to receive(:upgrade_auto_updates_casks?).and_return(true)
   end
@@ -103,7 +86,7 @@ RSpec.describe Cask::Upgrade, :cask do
         InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path(cask_name)))
       end
 
-      write_info_plist(auto_updates_path, short_version: "2.57", bundle_version: "2057")
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.57", bundle_version: "2057")
     end
 
     describe "without --greedy" do
@@ -194,7 +177,7 @@ RSpec.describe Cask::Upgrade, :cask do
       end
 
       it 'excludes "auto_updates true" casks when the installed bundle matches the tap version' do
-        write_info_plist(auto_updates_path, short_version: "2.61", bundle_version: "2061")
+        stub_cask_bundle_version(auto_updates_path, short_version: "2.61", bundle_version: "2061")
 
         expect(described_class).not_to receive(:upgrade_cask)
         expect(described_class).to receive(:show_upgrade_summary) do |cask_upgrades, dry_run:|
@@ -448,7 +431,7 @@ RSpec.describe Cask::Upgrade, :cask do
         InstallHelper.stub_cask_installation(Cask::CaskLoader.from_path(cask_path(cask_name)))
       end
 
-      write_info_plist(auto_updates_path, short_version: "2.57", bundle_version: "2057")
+      stub_cask_bundle_version(auto_updates_path, short_version: "2.57", bundle_version: "2057")
       allow(Cask::CaskLoader).to receive(:recover_from_installed_caskfile).and_return(nil)
     end
 
@@ -698,7 +681,7 @@ RSpec.describe Cask::Upgrade, :cask do
   context "when an upgrade decides on quarantine after install" do
     before do
       Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
-      allow(Cask::Quarantine).to receive(:available?).and_return(true)
+      allow(Cask::Quarantine).to receive_messages(available?: true, status: "0081", cask!: nil, propagate: nil)
     end
 
     it "inherits quarantine approval when the previous version was already approved" do

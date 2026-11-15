@@ -49,7 +49,7 @@ RSpec.describe Homebrew::Cmd::Home do
       .and not_to_output.to_stderr
   end
 
-  it "opens the homepage for a given Cask", :cask, :needs_macos do
+  it "opens the homepage for a given Cask", :cask do
     cmd = described_class.new([local_caffeine_name.to_s])
     expect(Utils::Browser).to receive(:open).with(local_caffeine_homepage)
 
@@ -64,7 +64,7 @@ RSpec.describe Homebrew::Cmd::Home do
       .and not_to_output.to_stderr
   end
 
-  it "opens the homepages for a given formula and Cask", :cask, :needs_macos do
+  it "opens the homepages for a given formula and Cask", :cask do
     stub_formula_loader testballhome, call_original: true
     cmd = described_class.new(["testballhome", local_caffeine_name.to_s])
     expect(Utils::Browser).to receive(:open).with(testballhome_homepage, local_caffeine_homepage)

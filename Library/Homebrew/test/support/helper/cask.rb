@@ -17,6 +17,16 @@ module Test
         loader = instance_double(::Cask::CaskLoader::FromAPILoader, load: cask)
         allow(::Cask::CaskLoader).to receive(:loader_for).with(ref, any_args).and_return(loader)
       end
+
+      sig { params(path: Pathname, short_version: T.nilable(String), bundle_version: T.nilable(String)).void }
+      def stub_cask_bundle_version(path, short_version: nil, bundle_version: nil)
+        info_plist = path/"Contents/Info.plist"
+        info_plist.dirname.mkpath
+        FileUtils.touch info_plist
+        allow(Homebrew::BundleVersion).to receive(:from_info_plist)
+          .with(info_plist)
+          .and_return(Homebrew::BundleVersion.new(short_version, bundle_version))
+      end
     end
   end
 end

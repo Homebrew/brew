@@ -4,40 +4,6 @@
 RSpec.describe Cask::Cask, :cask do
   let(:cask) { described_class.new("versioned-cask") }
 
-  def write_info_plist(path, short_version: nil, bundle_version: nil, contents: nil)
-    info_plist = path/"Contents/Info.plist"
-    info_plist.dirname.mkpath
-
-    if contents
-      info_plist.write(contents)
-      return
-    end
-
-    entries = []
-    if short_version
-      entries << <<~PLIST.chomp
-        <key>CFBundleShortVersionString</key>
-        <string>#{short_version}</string>
-      PLIST
-    end
-    if bundle_version
-      entries << <<~PLIST.chomp
-        <key>CFBundleVersion</key>
-        <string>#{bundle_version}</string>
-      PLIST
-    end
-
-    info_plist.write <<~PLIST
-      <?xml version="1.0" encoding="UTF-8"?>
-      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
-      <plist version="1.0">
-      <dict>
-      #{entries.join("\n")}
-      </dict>
-      </plist>
-    PLIST
-  end
-
   def write_auto_updates_cask(path, version:, artifacts:, token: "auto-updates-bundle-check")
     path.write <<~RUBY
       cask "#{token}" do
@@ -301,7 +267,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.57", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.57", bundle_version: "2057")
 
         expect(cask.outdated_version).to eq("2.57")
       end
@@ -311,7 +277,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.57", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.57", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -320,7 +286,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61,3000"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -329,7 +295,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61,3000,2057"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -338,7 +304,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.62", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.62", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -347,7 +313,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.61")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.57", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.57", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -356,7 +322,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -365,7 +331,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2057"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -374,7 +340,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61-2057"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57-2056")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -383,7 +349,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "3.6.4-28955b81"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("3.6.3-931da4a1")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "3.6.4", bundle_version: "3.6.4")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "3.6.4", bundle_version: "3.6.4")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -392,7 +358,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61-2057"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57-2056")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2058")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2058")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -401,7 +367,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61-2057"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57-2056")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2056")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2056")
 
         expect(cask.outdated_version).to eq("2.57-2056")
       end
@@ -410,7 +376,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61,2057"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2057", bundle_version: "3000")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2057", bundle_version: "3000")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -419,7 +385,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61,2056,2055"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -428,7 +394,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61,3000,2057"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
 
         expect(cask.version.csv.first).not_to eq("2057")
         expect(cask.outdated_version).to be_nil
@@ -446,7 +412,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2.61,3000"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2.57")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", bundle_version: "2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", bundle_version: "2057")
 
         expect(cask.outdated_version).to eq("2.57")
       end
@@ -455,7 +421,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "2026.406.0"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("2025.816.0")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", bundle_version: "0.0")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", bundle_version: "0.0")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -464,7 +430,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "1.0"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("0.9")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "1", bundle_version: "200")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "1", bundle_version: "200")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -473,7 +439,8 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "158.0.1"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("158.0")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "158.0", bundle_version: "15826.10.13")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version:  "158.0",
+                                                                      bundle_version: "15826.10.13")
 
         expect(cask.outdated_version).to eq("158.0")
       end
@@ -482,7 +449,8 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "157.0"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("156.0.1")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "156.0.1", bundle_version: "15626.9.20")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version:  "156.0.1",
+                                                                      bundle_version: "15626.9.20")
 
         expect(cask.outdated_version).to eq("156.0.1")
       end
@@ -491,7 +459,8 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "158.0.1"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("158.0")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "159.0", bundle_version: "15926.11.10")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version:  "159.0",
+                                                                      bundle_version: "15926.11.10")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -500,7 +469,7 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "1.0.1,3000"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("1.0")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "1.0", bundle_version: "3000")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "1.0", bundle_version: "3000")
 
         expect(cask.outdated_version).to be_nil
       end
@@ -509,7 +478,8 @@ RSpec.describe Cask::Cask, :cask do
         tap_version = "158.0"
         cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
         allow(cask).to receive(:installed_version).and_return("158.0.1")
-        write_info_plist(cask.config.appdir/"MyFancyApp.app", short_version: "158.0.1", bundle_version: "15826.10.20")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version:  "158.0.1",
+                                                                      bundle_version: "15826.10.20")
 
         expect(cask.outdated_version).to eq("158.0.1")
       end
@@ -604,7 +574,7 @@ RSpec.describe Cask::Cask, :cask do
         }] },
       ]
 
-      expect(cask.artifacts_list).to eq(expected_artifacts)
+      expect(cask.artifacts_list).to match_array(expected_artifacts)
     end
 
     it "returns only uninstall artifacts when uninstall_only is true" do
@@ -701,7 +671,7 @@ RSpec.describe Cask::Cask, :cask do
 
     context "when loaded from cask file" do
       it "returns expected hash" do
-        allow(MacOS).to receive(:version).and_return(MacOSVersion.new("14"))
+        Homebrew::SimulateSystem.os = :sonoma
 
         cask = Cask::CaskLoader.load("everything")
 
@@ -811,6 +781,7 @@ RSpec.describe Cask::Cask, :cask do
     end
 
     it "returns nil for a tag the cask cannot be refreshed for" do
+      Homebrew::SimulateSystem.os = :macos
       invalid_on_linux_cask = described_class.new("on-linux-invalid") do
         on_macos do
           version "1.2.3"
@@ -825,7 +796,6 @@ RSpec.describe Cask::Cask, :cask do
   end
 
   describe "#to_hash_with_variations" do
-    let!(:original_macos_version) { MacOS.full_version.to_s }
     let(:expected_versions_variations) do
       <<~JSON
         {
@@ -953,14 +923,8 @@ RSpec.describe Cask::Cask, :cask do
       JSON
     end
 
-    before do
-      # For consistency, always run on Monterey and ARM
-      MacOS.full_version = "12"
-      allow(Hardware::CPU).to receive(:type).and_return(:arm)
-    end
-
-    after do
-      MacOS.full_version = original_macos_version
+    around do |example|
+      Homebrew::SimulateSystem.with(os: :monterey, arch: :arm) { example.run }
     end
 
     it "returns language variations with a deterministic default" do

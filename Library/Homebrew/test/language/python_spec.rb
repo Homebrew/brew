@@ -3,8 +3,8 @@
 
 require "language/python"
 
-RSpec.describe Language::Python, :needs_python do
-  describe ".direct_dependency_paths", needs_python: false do
+RSpec.describe Language::Python do
+  describe ".direct_dependency_paths" do
     it "returns unique stable paths for tap-qualified direct Python dependencies" do
       f = formula "foo" do
         T.bind(self, T.class_of(Formula))
@@ -37,12 +37,13 @@ RSpec.describe Language::Python, :needs_python do
 
   describe "#major_minor_version" do
     it "returns a Version for Python 2" do
-      expect(described_class).to receive(:major_minor_version).and_return(Version)
-      described_class.major_minor_version("python")
+      allow(Utils).to receive(:popen_read_text).with("python", "--version", err: :out).and_return("Python 2.7.18\n")
+
+      expect(described_class.major_minor_version("python")).to eq(Version.new("2.7"))
     end
   end
 
-  describe ".each_python", needs_python: false do
+  describe ".each_python" do
     it "deprecates implicit Python dependency iteration" do
       allow(Formulary).to receive(:factory).and_return(instance_double(Formula, to_s: "python"))
 
@@ -53,10 +54,12 @@ RSpec.describe Language::Python, :needs_python do
 
   describe "#site_packages" do
     it "gives a different location between PyPy and Python 2" do
+      allow(described_class).to receive(:major_minor_version).with("python").and_return(Version.new("2.7"))
+
       expect(described_class.site_packages("python")).not_to eql(described_class.site_packages("pypy"))
     end
 
-    it "deprecates the implicit Python interpreter", needs_python: false do
+    it "deprecates the implicit Python interpreter" do
       allow(described_class).to receive(:major_minor_version).and_return(Version.new("3.7"))
 
       expect { described_class.site_packages }
@@ -64,7 +67,7 @@ RSpec.describe Language::Python, :needs_python do
     end
   end
 
-  describe ".homebrew_site_packages", needs_python: false do
+  describe ".homebrew_site_packages" do
     before do
       allow(described_class).to receive(:major_minor_version).and_return(Version.new("3.14"))
     end
@@ -81,7 +84,7 @@ RSpec.describe Language::Python, :needs_python do
     end
   end
 
-  describe ".reads_brewed_pth_files?", needs_python: false do
+  describe ".reads_brewed_pth_files?" do
     it "deprecates the brewed pth file probe" do
       allow(described_class).to receive(:major_minor_version).and_return(Version.new("3.14"))
 
@@ -90,7 +93,7 @@ RSpec.describe Language::Python, :needs_python do
     end
   end
 
-  describe ".in_sys_path?", needs_python: false do
+  describe ".in_sys_path?" do
     it "deprecates the Python path probe" do
       allow(SystemCommand).to receive(:quiet_system).and_return(true)
 
@@ -99,7 +102,7 @@ RSpec.describe Language::Python, :needs_python do
     end
   end
 
-  describe ".user_site_packages", needs_python: false do
+  describe ".user_site_packages" do
     it "deprecates the user site packages helper" do
       allow(Utils).to receive(:popen_read_text).and_return("/tmp/site-packages\n")
 

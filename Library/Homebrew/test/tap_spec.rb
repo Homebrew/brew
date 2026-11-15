@@ -1699,16 +1699,7 @@ RSpec.describe Tap do
   end
 
   describe ".all" do
-    it "includes the core and cask taps by default", :needs_macos do
-      expect(described_class.all).to contain_exactly(
-        CoreTap.instance,
-        CoreCaskTap.instance,
-        described_class.fetch("homebrew/foo"),
-        described_class.fetch("third-party/tap"),
-      )
-    end
-
-    it "includes the core and cask taps by default", :needs_linux do
+    it "includes the core and cask taps by default" do
       expect(described_class.all).to contain_exactly(
         CoreTap.instance,
         CoreCaskTap.instance,

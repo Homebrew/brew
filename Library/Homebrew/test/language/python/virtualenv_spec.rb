@@ -4,7 +4,7 @@
 require "language/python"
 require "resource"
 
-RSpec.describe Language::Python::Virtualenv, :needs_python do
+RSpec.describe Language::Python::Virtualenv do
   describe "#virtualenv_install_with_resources" do
     let(:venv) { instance_double(Language::Python::Virtualenv::Virtualenv) }
     let(:f) do

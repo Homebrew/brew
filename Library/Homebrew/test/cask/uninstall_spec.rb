@@ -81,8 +81,9 @@ RSpec.describe Cask::Uninstall, :cask do
 
     it "can uninstall Casks when the uninstall script is missing, but only when using `--force`" do
       cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-script-app"))
+      allow(Sandbox).to receive(:use_for?).and_return(false)
 
-      Cask::Installer.new(cask).install
+      InstallHelper.stub_cask_installation(cask)
 
       expect(cask).to be_installed
 

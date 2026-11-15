@@ -46,6 +46,8 @@ RSpec.describe Cask::Info, :cask do
   end
 
   before do
+    Homebrew::SimulateSystem.os = :sonoma
+    allow_any_instance_of(MacOSRequirement).to receive(:satisfied?).and_return(true)
     # Prevent unnecessary network requests in `Utils::Analytics.cask_output`
     ENV["HOMEBREW_NO_ANALYTICS"] = "1"
   end

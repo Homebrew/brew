@@ -267,6 +267,12 @@ RSpec.describe Homebrew::FormulaAuditor do
     let(:license_any_nonstandard) { 'any_of: ["0BSD", "zzz", "MIT"]' }
     let(:license_any_deprecated) { 'any_of: ["0BSD", "GPL-1.0", "MIT"]' }
 
+    before do
+      allow(GitHub::API).to receive(:open_rest)
+        .with("https://api.github.com/repos/cask/cask/license")
+        .and_return("license" => { "spdx_id" => "GPL-3.0" })
+    end
+
     it "does not check if the formula is not a new formula" do
       fa = formula_auditor "foo", <<~RUBY, new_formula: false
         class Foo < Formula
@@ -465,7 +471,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "checks online and verifies that a standard license id is the same " \
-       "as what is indicated on its GitHub repo", :needs_network do
+       "as what is indicated on its GitHub repo" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -481,7 +487,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "checks online and verifies that a standard license id with AND is the same " \
-       "as what is indicated on its GitHub repo", :needs_network do
+       "as what is indicated on its GitHub repo" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -497,7 +503,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "checks online and verifies that a standard license id with WITH is the same " \
-       "as what is indicated on its GitHub repo", :needs_network do
+       "as what is indicated on its GitHub repo" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -512,7 +518,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       expect(fa.problems).to be_empty
     end
 
-    it "verifies that a license exception has standard spdx ids", :needs_network do
+    it "verifies that a license exception has standard spdx ids" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -531,7 +537,7 @@ RSpec.describe Homebrew::FormulaAuditor do
       EOS
     end
 
-    it "verifies that a license exception has non-deprecated spdx ids", :needs_network do
+    it "verifies that a license exception has non-deprecated spdx ids" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -551,7 +557,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "checks online and verifies that a standard license id is in the same exempted license group " \
-       "as what is indicated on its GitHub repo", :needs_network do
+       "as what is indicated on its GitHub repo" do
       fa = formula_auditor "cask", <<~RUBY, spdx_license_data:, online: true, new_formula: true
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -565,7 +571,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "checks online and verifies that a standard license array is in the same exempted license group " \
-       "as what is indicated on its GitHub repo", :needs_network do
+       "as what is indicated on its GitHub repo" do
       fa = formula_auditor "cask", <<~RUBY, spdx_license_data:, online: true, new_formula: true
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -579,7 +585,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "checks online and detects that a formula-specified license is not " \
-       "the same as what is indicated on its GitHub repository", :needs_network do
+       "the same as what is indicated on its GitHub repository" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -596,7 +602,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "allows a formula-specified license that differs from its GitHub " \
-       "repository for formulae on the mismatched license allowlist", :needs_network do
+       "repository for formulae on the mismatched license allowlist" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -613,7 +619,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "checks online and detects that an array of license does not contain " \
-       "what is indicated on its GitHub repository", :needs_network do
+       "what is indicated on its GitHub repository" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"
@@ -630,7 +636,7 @@ RSpec.describe Homebrew::FormulaAuditor do
     end
 
     it "checks online and verifies that an array of license contains " \
-       "what is indicated on its GitHub repository", :needs_network do
+       "what is indicated on its GitHub repository" do
       formula_text = <<~RUBY
         class Cask < Formula
           url "https://github.com/cask/cask/archive/v0.8.4.tar.gz"

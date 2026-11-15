@@ -296,7 +296,7 @@ RSpec.describe Homebrew::API::CaskStruct do
   end
 
   describe "serialize/deserialize round-trip" do
-    it "reconstructs an equivalent struct after serialize then deserialize", :needs_macos do
+    it "reconstructs an equivalent struct after serialize then deserialize" do
       original = described_class.new(
         auto_updates:         true,
         conflicts_with_args:  { cask: ["other-cask"] },

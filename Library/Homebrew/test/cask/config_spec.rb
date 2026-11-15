@@ -45,7 +45,7 @@ RSpec.describe Cask::Config, :cask do
           "default": {},
           "env": {
             "appdir": "/path/to/apps",
-            "input-methoddir": "/path/to/input/methods"
+            "vst-plugindir": "/path/to/vst/plugins"
           },
           "explicit": {}
         }
@@ -92,7 +92,7 @@ RSpec.describe Cask::Config, :cask do
       config = described_class.from_json(legacy_keys_json, ignore_invalid_keys: true)
 
       expect(config.env).to eq(appdir: Pathname("/path/to/apps"))
-      expect(config.input_methoddir).to eq(Pathname(TEST_TMPDIR).join("cask-input_methoddir"))
+      expect(config.vst_plugindir).to eq(Pathname(TEST_TMPDIR).join("cask-vst_plugindir"))
     end
 
     it "does not warn about legacy hyphenated keys" do
@@ -103,7 +103,7 @@ RSpec.describe Cask::Config, :cask do
     it "accepts legacy hyphenated keys without ignoring invalid keys" do
       config = described_class.from_json(legacy_keys_json)
 
-      expect(config.input_methoddir).to eq(Pathname(TEST_TMPDIR).join("cask-input_methoddir"))
+      expect(config.vst_plugindir).to eq(Pathname(TEST_TMPDIR).join("cask-vst_plugindir"))
     end
 
     it "warns about unknown hyphenated keys" do
@@ -161,16 +161,16 @@ RSpec.describe Cask::Config, :cask do
     end
 
     it "normalizes hyphenated option names to underscored keys" do
-      ENV["HOMEBREW_CASK_OPTS"] = "--input-methoddir=/path/to/input/methods"
+      ENV["HOMEBREW_CASK_OPTS"] = "--vst-plugindir=/path/to/vst/plugins"
 
-      expect(config.env).to eq(input_methoddir: Pathname("/path/to/input/methods"))
-      expect(config.input_methoddir).to eq(Pathname("/path/to/input/methods"))
+      expect(config.env).to eq(vst_plugindir: Pathname("/path/to/vst/plugins"))
+      expect(config.vst_plugindir).to eq(Pathname("/path/to/vst/plugins"))
     end
 
     it "accepts underscored option names" do
-      ENV["HOMEBREW_CASK_OPTS"] = "--input_methoddir=/path/to/input/methods"
+      ENV["HOMEBREW_CASK_OPTS"] = "--vst_plugindir=/path/to/vst/plugins"
 
-      expect(config.env).to eq(input_methoddir: Pathname("/path/to/input/methods"))
+      expect(config.env).to eq(vst_plugindir: Pathname("/path/to/vst/plugins"))
     end
 
     it "normalizes option names but not their values" do
@@ -180,11 +180,11 @@ RSpec.describe Cask::Config, :cask do
     end
 
     it "survives a JSON round-trip" do
-      ENV["HOMEBREW_CASK_OPTS"] = "--input-methoddir=/path/to/input/methods"
+      ENV["HOMEBREW_CASK_OPTS"] = "--vst-plugindir=/path/to/vst/plugins"
 
       round_tripped = described_class.from_json(config.to_json)
 
-      expect(round_tripped.input_methoddir).to eq(Pathname("/path/to/input/methods"))
+      expect(round_tripped.vst_plugindir).to eq(Pathname("/path/to/vst/plugins"))
     end
   end
 

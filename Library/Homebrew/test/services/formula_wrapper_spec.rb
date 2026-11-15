@@ -5,7 +5,7 @@ require "services/system"
 require "services/formula_wrapper"
 require "tempfile"
 
-RSpec.describe Homebrew::Services::FormulaWrapper, :needs_daemon_manager do
+RSpec.describe Homebrew::Services::FormulaWrapper do
   subject(:service) { described_class.new(formula) }
 
   let(:formula) do
@@ -44,6 +44,8 @@ RSpec.describe Homebrew::Services::FormulaWrapper, :needs_daemon_manager do
 
   before do
     allow(formula).to receive(:service).and_return(service_object)
+    allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false,
+                                                          launchctl_find_service: ["", false, :launchctl_list])
     ENV["HOME"] = "/tmp_home"
   end
 
@@ -694,9 +696,16 @@ RSpec.describe Homebrew::Services::FormulaWrapper, :needs_daemon_manager do
     end
   end
 
-  describe "#pid", :needs_systemd do
-    it "outputs nil because there is not pid" do
-      expect(service.pid).to be_nil
+  context "when systemd has no status" do
+    before do
+      allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
+      allow(Homebrew::Services::System::Systemctl).to receive_messages(quiet_run: false, popen_read: "")
+    end
+
+    test_each_hash({ pid: nil, exit_code: nil, unknown_status?: true }) do |method, expected|
+      it "returns #{expected.inspect} for #{method}" do
+        expect(service.public_send(method)).to eq(expected)
+      end
     end
   end
 
@@ -735,18 +744,6 @@ RSpec.describe Homebrew::Services::FormulaWrapper, :needs_daemon_manager do
     it "outputs true because there is no PID and a negative exit code" do
       allow(service).to receive_messages(pid: nil, exit_code: -1)
       expect(service.error?).to be(true)
-    end
-  end
-
-  describe "#exit_code", :needs_systemd do
-    it "outputs nil because there is no exit code" do
-      expect(service.exit_code).to be_nil
-    end
-  end
-
-  describe "#unknown_status?", :needs_systemd do
-    it "outputs true because there is no PID" do
-      expect(service.unknown_status?).to be(true)
     end
   end
 

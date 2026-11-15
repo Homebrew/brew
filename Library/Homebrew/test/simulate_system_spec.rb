@@ -19,19 +19,19 @@ RSpec.describe Homebrew::SimulateSystem do
       expect(described_class.simulating_or_running_on_macos?).to be false
     end
 
-    it "returns false on macOS when simulating Linux", :needs_macos do
+    it "returns false when simulating Linux" do
       described_class.clear
       described_class.os = :linux
       expect(described_class.simulating_or_running_on_macos?).to be false
     end
 
-    it "returns true on Linux when simulating a generic macOS version", :needs_linux do
+    it "returns true when simulating a generic macOS version" do
       described_class.clear
       described_class.os = :macos
       expect(described_class.simulating_or_running_on_macos?).to be true
     end
 
-    it "returns true on Linux when simulating a specific macOS version", :needs_linux do
+    it "returns true when simulating a specific macOS version" do
       described_class.clear
       described_class.os = :monterey
       expect(described_class.simulating_or_running_on_macos?).to be true
@@ -55,19 +55,19 @@ RSpec.describe Homebrew::SimulateSystem do
       expect(described_class.simulating_or_running_on_linux?).to be false
     end
 
-    it "returns true on macOS when simulating Linux", :needs_macos do
+    it "returns true when simulating Linux" do
       described_class.clear
       described_class.os = :linux
       expect(described_class.simulating_or_running_on_linux?).to be true
     end
 
-    it "returns false on Linux when simulating a generic macOS version", :needs_linux do
+    it "returns false when simulating a generic macOS version" do
       described_class.clear
       described_class.os = :macos
       expect(described_class.simulating_or_running_on_linux?).to be false
     end
 
-    it "returns false on Linux when simulating a specific macOS version", :needs_linux do
+    it "returns false when simulating a specific macOS version" do
       described_class.clear
       described_class.os = :monterey
       expect(described_class.simulating_or_running_on_linux?).to be false
@@ -128,19 +128,19 @@ RSpec.describe Homebrew::SimulateSystem do
       expect(described_class.current_os).to eq :linux
     end
 
-    it "returns `:linux` when simulating Linux on macOS", :needs_macos do
+    it "returns `:linux` when simulating Linux" do
       described_class.clear
       described_class.os = :linux
       expect(described_class.current_os).to eq :linux
     end
 
-    it "returns `:macos` when simulating a generic macOS version on Linux", :needs_linux do
+    it "returns `:macos` when simulating a generic macOS version" do
       described_class.clear
       described_class.os = :macos
       expect(described_class.current_os).to eq :macos
     end
 
-    it "returns `:macos` when simulating a specific macOS version on Linux", :needs_linux do
+    it "returns `:monterey` when simulating a specific macOS version" do
       described_class.clear
       described_class.os = :monterey
       expect(described_class.current_os).to eq :monterey

@@ -74,7 +74,7 @@ RSpec.describe Cask::Artifact::AbstractUninstall, :cask do
       it "surfaces Full Disk Access guidance when globbing raises EPERM" do
         allow(Pathname).to receive(:glob).and_raise(Errno::EPERM)
         allow(Cask::Utils).to receive(:full_disk_access_enabled?).and_return(false)
-        allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:ventura))
+        Homebrew::SimulateSystem.os = :ventura
 
         expect do
           artifact.each_resolved_path(:delete, ["/tmp/each_resolved_path_#{artifact_dsl_key}"]).to_a

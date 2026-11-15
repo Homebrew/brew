@@ -216,6 +216,8 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works with xar-based Casks" do
+      skip "xar is not installed." unless which("xar")
+
       ENV["HOMEBREW_DEVELOPER"] = nil
       Homebrew.raise_deprecation_exceptions = false
       asset = Cask::CaskLoader.from_path(cask_path("container-xar"))
@@ -280,14 +282,14 @@ RSpec.describe Cask::Installer, :cask do
       end.to raise_error(/--require-sha/)
     end
 
-    it "names the cask when Linux is required" do
+    it "names the cask when Linux is required", :needs_macos do
       linux_cask = Cask::CaskLoader.load("with-depends-on-linux-bare")
       expect do
         described_class.new(linux_cask).check_stanza_os_requirements
       end.to raise_error(Cask::CaskError, "with-depends-on-linux-bare: This cask requires Linux.")
     end
 
-    it "names the cask when the macOS requirement is not satisfied" do
+    it "names the cask when the macOS requirement is not satisfied", :needs_macos do
       macos_cask = Cask::CaskLoader.load("with-depends-on-macos-failure")
       allow(macos_cask.depends_on.maximum_macos).to receive(:satisfied?).and_return(false)
       expect do
@@ -306,27 +308,33 @@ RSpec.describe Cask::Installer, :cask do
       end.to raise_error(Cask::CaskError, /\Awith-depends-on-arch: This cask depends on hardware architecture/)
     end
 
-    it "names the cask when it has nothing to install on this system" do
-      no_artifacts_cask = Cask::Cask.new("with-no-artifacts", loaded_from_api: true) do
-        version "1.0"
-        sha256 :no_check
-        url "https://brew.sh/x.zip"
+    test_each([[:macos, "macOS"], [:linux, "Linux"]]) do |os, os_name|
+      it "names the cask when it has nothing to install on #{os}" do
+        Homebrew::SimulateSystem.os = os
+        no_artifacts_cask = Cask::Cask.new("with-no-artifacts", loaded_from_api: true) do
+          version "1.0"
+          sha256 :no_check
+          url "https://brew.sh/x.zip"
+        end
+        expect do
+          described_class.new(no_artifacts_cask).check_supported_system
+        end.to raise_error(Cask::CaskError,
+                           "with-no-artifacts: This cask is not available on #{os_name}.")
       end
-      expect do
-        described_class.new(no_artifacts_cask).check_supported_system
-      end.to raise_error(Cask::CaskError, "with-no-artifacts: This cask is not available on macOS.")
-    end
 
-    it "treats uninstall-only artifacts as nothing to install" do
-      zap_only_cask = Cask::Cask.new("with-zap-only", loaded_from_api: true) do
-        version "1.0"
-        sha256 :no_check
-        url "https://brew.sh/x.zip"
-        zap trash: "~/Library/Caches/brew-test"
+      it "treats uninstall-only artifacts as nothing to install on #{os}" do
+        Homebrew::SimulateSystem.os = os
+        zap_only_cask = Cask::Cask.new("with-zap-only", loaded_from_api: true) do
+          version "1.0"
+          sha256 :no_check
+          url "https://brew.sh/x.zip"
+          zap trash: "~/Library/Caches/brew-test"
+        end
+        expect do
+          described_class.new(zap_only_cask).check_supported_system
+        end.to raise_error(Cask::CaskError,
+                           "with-zap-only: This cask is not available on #{os_name}.")
       end
-      expect do
-        described_class.new(zap_only_cask).check_supported_system
-      end.to raise_error(Cask::CaskError, "with-zap-only: This cask is not available on macOS.")
     end
 
     it "does not treat stage_only casks as having nothing to install" do
@@ -351,6 +359,8 @@ RSpec.describe Cask::Installer, :cask do
 
     it "records caveats without printing them inline" do
       with_caveats = Cask::CaskLoader.from_path(cask_path("with-caveats"))
+      allow(with_caveats).to receive(:supports_linux?).and_return(true)
+      allow(with_caveats.depends_on.macos).to receive(:satisfied?).and_return(true)
 
       expect(Homebrew.messages).to receive(:record_caveats)
         .with(with_caveats.token, with_caveats.caveats)
@@ -413,7 +423,7 @@ RSpec.describe Cask::Installer, :cask do
       end.not_to raise_error
     end
 
-    it "installs a cask from a dmg file" do
+    it "installs a cask from a dmg file", :needs_macos do
       transmission = Cask::CaskLoader.from_path(cask_path("local-transmission"))
       stub_dmg_extraction { |path| (path/"Transmission.app").mkpath }
 
@@ -498,7 +508,7 @@ RSpec.describe Cask::Installer, :cask do
       before do
         allow(macos_requirement).to receive(:satisfied?).and_return(false)
         allow(macos_requirement).to receive(:message).with(type: :cask).and_return("macOS is required")
-        allow(cask).to receive(:loaded_from_api?).and_return(true)
+        allow(cask).to receive_messages(loaded_from_api?: true, supports_linux?: true)
       end
 
       it "checks requirements before enqueueing downloads" do
@@ -877,6 +887,8 @@ RSpec.describe Cask::Installer, :cask do
       download_queue = instance_double(Homebrew::DownloadQueue)
       installer = described_class.new(cask, download_queue:)
 
+      allow(cask).to receive(:supports_linux?).and_return(true)
+      allow(cask.depends_on.macos).to receive(:satisfied?).and_return(true)
       allow(Homebrew::API::Internal).to receive(:cask_struct).with("language-api-cask").and_return(cask_struct)
       expect(download_queue).to receive(:enqueue) do |download|
         expect(download.url.to_s).to eq("file://#{TEST_FIXTURE_DIR}/cask/container.tar.gz")

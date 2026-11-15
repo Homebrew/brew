@@ -55,10 +55,14 @@ RSpec.describe Cask::Artifact::App, :cask do
       end
 
       test_each([["0755", false], ["755", false], ["0755", true]]) do |mode, native|
-        it "prepares mode #{mode} before installing the app (native sandbox: #{native})" do
+        it "prepares mode #{mode} before installing the app (native sandbox: #{native})", needs_sandbox: native do
           if native
+            allow(Sandbox).to receive(:available?).and_call_original
+            skip "Sandbox is not available." unless Sandbox.available?
             skip "Nested sandboxing is not supported." if Sandbox.nested_sandbox?
 
+            (HOMEBREW_PREFIX/"bin").mkpath
+            FileUtils.touch HOMEBREW_PREFIX/"bin/brew"
             allow(Sandbox).to receive(:new).and_call_original
             allow(Sandbox).to receive(:with_preserved_brew_file).and_call_original
           end
@@ -623,7 +627,7 @@ RSpec.describe Cask::Artifact::App, :cask do
     end
 
     describe "when quarantine support is unavailable" do
-      it "reinstalls into the reused directory without copying xattrs" do
+      it "reinstalls into the reused directory without copying xattrs", :needs_macos do
         allow(Cask::Quarantine).to receive(:available?).and_return(false)
         expect(MacOS::FFI).not_to receive(:copy_xattrs)
 

@@ -26,7 +26,7 @@ do
 
     # Some packages leave broken symlinks around; we clean them out before
     # attempting to `rmdir` to prevent extra cruft from accumulating.
-    /usr/bin/find -f "${path}" -- -mindepth 1 -maxdepth 1 -type l ! -exec test -e {} \; -delete || true
+    /usr/bin/find "${path}" -mindepth 1 -maxdepth 1 -type l ! -exec test -e {} \; -delete || true
   elif ! ${symlink} && [[ ! -e "${path}" ]]
   then
     # Skip paths that don't exists and aren't a broken symlink.
@@ -40,7 +40,7 @@ do
   elif ${directory}
   then
     # Delete directory if empty.
-    /usr/bin/find -f "${path}" -- -maxdepth 0 -type d -empty -exec rmdir -- {} \;
+    /usr/bin/find "${path}" -maxdepth 0 -type d -empty -exec rmdir -- {} \;
   else
     # Try `rmdir` anyways to show a proper error.
     rmdir -- "${path}"

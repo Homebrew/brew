@@ -28,22 +28,16 @@ RSpec.describe Utils::Analytics do
   describe "::default_package_tags" do
     let(:ci) { ", CI" if ENV["CI"] }
 
-    it "returns OS_VERSION and prefix when HOMEBREW_PREFIX is a custom prefix on intel" do
+    it "returns a custom prefix tag when HOMEBREW_PREFIX is a custom prefix" do
       expect(Homebrew).to receive(:default_prefix?).and_return(false).at_least(:once)
       expect(described_class.default_package_tags).to have_key(:prefix)
       expect(described_class.default_package_tags[:prefix]).to eq "custom-prefix"
     end
 
-    it "returns OS_VERSION, ARM and prefix when HOMEBREW_PREFIX is a custom prefix on arm" do
+    it "returns the physical processor when HOMEBREW_PREFIX is a custom prefix" do
       expect(Homebrew).to receive(:default_prefix?).and_return(false).at_least(:once)
       expect(described_class.default_package_tags).to have_key(:arch)
       expect(described_class.default_package_tags[:arch]).to eq HOMEBREW_PHYSICAL_PROCESSOR
-      expect(described_class.default_package_tags).to have_key(:prefix)
-      expect(described_class.default_package_tags[:prefix]).to eq "custom-prefix"
-    end
-
-    it "returns OS_VERSION, Rosetta and prefix when HOMEBREW_PREFIX is a custom prefix on Rosetta", :needs_macos do
-      expect(Homebrew).to receive(:default_prefix?).and_return(false).at_least(:once)
       expect(described_class.default_package_tags).to have_key(:prefix)
       expect(described_class.default_package_tags[:prefix]).to eq "custom-prefix"
     end

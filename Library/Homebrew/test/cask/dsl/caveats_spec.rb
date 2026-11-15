@@ -8,6 +8,8 @@ RSpec.describe Cask::DSL::Caveats, :cask do
 
   let(:cask) { Cask::CaskLoader.from_path(cask_path("with-caveats-everything")) }
 
+  before { Homebrew::SimulateSystem.os = :sonoma }
+
   it_behaves_like Cask::DSL::Base
 
   describe "#to_s" do
@@ -107,7 +109,7 @@ RSpec.describe Cask::DSL::Caveats, :cask do
 
   describe "#kext" do
     it "returns System Settings on macOS Sonoma or later" do
-      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:sonoma))
+      Homebrew::SimulateSystem.os = :sonoma
       expected_caveats_str = <<~EOS
         #{cask} requires a kernel extension to work.
         If the installation fails, retry after you enable it in:
@@ -137,7 +139,7 @@ RSpec.describe Cask::DSL::Caveats, :cask do
     end
 
     it "does not return kext caveat text on macOS Ventura and earlier" do
-      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:ventura))
+      Homebrew::SimulateSystem.os = :ventura
       caveats.eval_caveats do
         T.bind(self, Cask::DSL::Caveats)
         kext
@@ -149,7 +151,7 @@ RSpec.describe Cask::DSL::Caveats, :cask do
 
   describe "#unsigned_accessibility" do
     it "returns System Settings text on macOS Ventura or later" do
-      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:ventura))
+      Homebrew::SimulateSystem.os = :ventura
       expected_caveats_str = <<~EOS
         #{cask} is not signed and requires Accessibility access,
         so you will need to re-grant Accessibility access every time the app is updated.
@@ -168,7 +170,7 @@ RSpec.describe Cask::DSL::Caveats, :cask do
     end
 
     it "returns System Preferences text on macOS Monterey and earlier" do
-      allow(MacOS).to receive(:version).and_return(MacOSVersion.from_symbol(:monterey))
+      Homebrew::SimulateSystem.os = :monterey
       expected_caveats_str = <<~EOS
         #{cask} is not signed and requires Accessibility access,
         so you will need to re-grant Accessibility access every time the app is updated.

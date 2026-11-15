@@ -3574,7 +3574,7 @@ RSpec.describe Formula do
     end
   end
 
-  describe "#on_macos", :needs_macos do
+  describe "#on_macos and #on_linux" do
     let(:f) do
       Class.new(Testball) do
         attr_reader :test
@@ -3592,33 +3592,13 @@ RSpec.describe Formula do
       end.new
     end
 
-    it "only calls code within on_macos" do
-      f.brew { f.install }
-      expect(f.test).to eq(1)
-    end
-  end
-
-  describe "#on_linux", :needs_linux do
-    let(:f) do
-      Class.new(Testball) do
-        attr_reader :test
-
-        def install
-          T.bind(self, Formula)
-          @test = 0
-          on_macos do
-            @test = 1
-          end
-          on_linux do
-            @test = 2
-          end
+    test_each_hash({ macos: 1, linux: 2 }) do |os, expected|
+      it "only calls code within on_#{os}" do
+        Homebrew::SimulateSystem.with(os:) do
+          f.install
+          expect(f.test).to eq(expected)
         end
-      end.new
-    end
-
-    it "only calls code within on_linux" do
-      f.brew { f.install }
-      expect(f.test).to eq(2)
+      end
     end
   end
 
@@ -3642,48 +3622,48 @@ RSpec.describe Formula do
       end.new
     end
 
-    it "doesn't call code on Sequoia", :needs_macos do
+    it "doesn't call code on Sequoia" do
       Homebrew::SimulateSystem.with os: :sequoia do
-        f.brew { f.install }
+        f.install
         expect(f.foo).to eq(0)
         expect(f.bar).to eq(0)
       end
     end
 
-    it "calls code on Linux", :needs_linux do
+    it "calls code on Linux" do
       Homebrew::SimulateSystem.with os: :linux do
-        f.brew { f.install }
+        f.install
         expect(f.foo).to eq(1)
         expect(f.bar).to eq(1)
       end
     end
 
-    it "calls code within `on_system :linux, macos: :tahoe` on Tahoe", :needs_macos do
+    it "calls code within `on_system :linux, macos: :tahoe` on Tahoe" do
       Homebrew::SimulateSystem.with os: :tahoe do
-        f.brew { f.install }
+        f.install
         expect(f.foo).to eq(1)
         expect(f.bar).to eq(0)
       end
     end
 
-    it "calls code within `on_system :linux, macos: :sonoma_or_older` on Sonoma", :needs_macos do
+    it "calls code within `on_system :linux, macos: :sonoma_or_older` on Sonoma" do
       Homebrew::SimulateSystem.with os: :sonoma do
-        f.brew { f.install }
+        f.install
         expect(f.foo).to eq(0)
         expect(f.bar).to eq(1)
       end
     end
 
-    it "calls code within `on_system :linux, macos: :sonoma_or_older` on Ventura", :needs_macos do
+    it "calls code within `on_system :linux, macos: :sonoma_or_older` on Ventura" do
       Homebrew::SimulateSystem.with os: :ventura do
-        f.brew { f.install }
+        f.install
         expect(f.foo).to eq(0)
         expect(f.bar).to eq(1)
       end
     end
   end
 
-  describe "on_{os_version} blocks", :needs_macos do
+  describe "on_{os_version} blocks" do
     let(:f) do
       Class.new(Testball) do
         attr_reader :test
@@ -3706,35 +3686,35 @@ RSpec.describe Formula do
 
     it "only calls code within `on_sequoia`" do
       Homebrew::SimulateSystem.with os: :tahoe do
-        f.brew { f.install }
+        f.install
         expect(f.test).to eq(1)
       end
     end
 
     it "only calls code within `on_sequoia :or_newer`" do
       Homebrew::SimulateSystem.with os: :sequoia do
-        f.brew { f.install }
+        f.install
         expect(f.test).to eq(1)
       end
     end
 
     it "only calls code within `on_sonoma`" do
       Homebrew::SimulateSystem.with os: :sonoma do
-        f.brew { f.install }
+        f.install
         expect(f.test).to eq(2)
       end
     end
 
     it "only calls code within `on_ventura`" do
       Homebrew::SimulateSystem.with os: :ventura do
-        f.brew { f.install }
+        f.install
         expect(f.test).to eq(3)
       end
     end
 
     it "only calls code within `on_ventura :or_older`" do
       Homebrew::SimulateSystem.with os: :monterey do
-        f.brew { f.install }
+        f.install
         expect(f.test).to eq(3)
       end
     end

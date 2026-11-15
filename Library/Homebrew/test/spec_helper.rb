@@ -57,7 +57,7 @@ require "test/support/helper/subcommand"
 require "test/support/helper/test_each"
 require "test/support/helper/version_change"
 
-require "test/support/helper/spec/shared_context/homebrew_cask" if OS.mac?
+require "test/support/helper/spec/shared_context/homebrew_cask"
 require "test/support/helper/spec/shared_context/integration_test"
 require "test/support/helper/spec/shared_context/trust_store"
 require "test/support/helper/spec/shared_examples/formulae_exist"
@@ -198,16 +198,8 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
     skip "Not running on CI." unless ENV["CI"]
   end
 
-  config.before(:each, :needs_java) do
-    ensure_test_dependency!(which("java"), "Java is not installed.")
-  end
-
   config.before(:each, :needs_jq) do
     ensure_test_dependency!(which("jq"), "jq is not installed.")
-  end
-
-  config.before(:each, :needs_python) do
-    ensure_test_dependency!(which("python3") || which("python"), "Python is not installed.")
   end
 
   config.before(:each, :needs_network) do
@@ -217,10 +209,6 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   config.before(:each, :needs_homebrew_core) do
     core_tap_path = "#{ENV.fetch("HOMEBREW_LIBRARY")}/Taps/homebrew/homebrew-core"
     ensure_test_dependency!(Dir.exist?(core_tap_path), "Requires homebrew/core to be tapped.")
-  end
-
-  config.before(:each, :needs_systemd) do
-    ensure_test_dependency!(which("systemctl"), "No SystemD found.")
   end
 
   config.before(:each, :needs_daemon_manager) do
@@ -301,13 +289,6 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
 
     svn_path_dirs = [svnadmin.dirname]
     ENV["PATH"] = PATH.new(ENV.fetch("PATH")).append(svn_path_dirs)
-  end
-
-  config.before(:each, :needs_homebrew_curl) do
-    ENV["HOMEBREW_CURL"] = HOMEBREW_BREWED_CURL_PATH
-    ensure_test_dependency!(Utils::Curl.curl_supports_tls13?, "A `curl` with TLS 1.3 support is required.")
-  rescue FormulaUnavailableError
-    ensure_test_dependency!(false, "No `curl` formula is available.")
   end
 
   config.before(:each, :needs_unzip) do
