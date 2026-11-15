@@ -972,6 +972,24 @@ RSpec.describe Homebrew::DevCmd::Bump do
       expect(bump.version_with_cooldown(version_info, Version.new("1.2.2"))).to eq(Version.new("1.2.3"))
     end
 
+    it "uses crates.io index publish times" do
+      version_info = {
+        latest:  "1.2.5",
+        meta:    {
+          strategy: "Crate",
+          url:      { strategy: "https://index.crates.io/ex/am/example-crate" },
+        },
+        content: <<~JSON,
+          {"name":"example-crate","vers":"1.2.3","yanked":false,"pubtime":"2026-04-01T00:00:00Z"}
+          {"name":"example-crate","vers":"1.2.4","yanked":true,"pubtime":"2026-04-02T00:00:00Z"}
+          {"name":"example-crate","vers":"1.2.5","yanked":false,"pubtime":"2026-04-04T00:00:00Z"}
+        JSON
+      }
+      allow(DateTime).to receive(:now).and_return(DateTime.parse("2026-04-04T12:00:00Z"))
+
+      expect(bump.version_with_cooldown(version_info, Version.new("1.2.2"))).to eq(Version.new("1.2.3"))
+    end
+
     it "uses semver precedence for npm prerelease versions" do
       allow(DateTime).to receive(:now).and_return(DateTime.parse("2026-04-04T12:00:00Z"))
       stub_npm_registry(

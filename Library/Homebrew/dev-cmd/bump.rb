@@ -784,6 +784,34 @@ module Homebrew
         return unless compare_versions_for_strategy(strategy, latest.to_s, current.to_s)&.positive?
 
         case strategy
+        when "Crate"
+          url = version_info.dig(:meta, :url, :strategy)
+          return unless url
+
+          content = version_info[:content]
+          unless content
+            stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
+            return unless status.success?
+
+            content = stdout.scrub
+          end
+          return if content.blank?
+
+          releases = content.each_line.map { |line| Homebrew::Livecheck::Strategy::Json.parse_json(line) }
+          current_str = current.to_s
+          current_is_prerelease = Semver.prerelease?(current_str)
+          cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
+          releases.sort_by { |release| Version.new(release["vers"]) }.reverse_each do |release|
+            version_str = release["vers"]
+            version = Version.new(version_str)
+            return version if version_str == current_str
+            next if (version > latest) || (version < current)
+            next if release["yanked"]
+            next if !current_is_prerelease && Semver.prerelease?(version_str)
+            next unless (date_str = release["pubtime"])
+
+            return version if DateTime.parse(date_str) < cooldown_interval
+          end
         when "Npm"
           url = version_info.dig(:meta, :url, :strategy)&.delete_suffix("/latest")
           return unless url
