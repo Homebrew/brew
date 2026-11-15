@@ -313,9 +313,11 @@ module Homebrew
         stable = formula.stable
         stable_version = (outdated ? formula.pkg_version : stable.version).to_s if stable
         bottled = stable.present? && stable.bottled? && formula.pour_bottle?
-        missing_libraries, missing_library_deps = formula.missing_library_linkage if installed
-        missing_libraries ||= []
-        missing_library_deps ||= Set.new
+        missing_libraries, missing_library_deps = if installed
+          formula.missing_library_linkage
+        else
+          [[], Set.new]
+        end
         installed_version = if outdated
           (formula.linked_version || kegs.max_by(&:scheme_and_version)&.version).to_s
         end
@@ -417,32 +419,30 @@ module Homebrew
             "#{decorate_dependencies(deps, tab_runtime_deps: tab_deps, mark_uninstalled:,
                                      formula_outdated: outdated, missing_library_deps:)}"
         end
-        if dependency_lines.present? || missing_libraries.any? || runtime_deps.present? || installed_dependents.any?
-          missing_library_names = missing_libraries.map { |lib| File.basename(lib) }.uniq
-          if missing_library_names.present?
-            decorated = missing_library_names.map { |lib| pretty_uninstalled(lib, bold: false) }.join(", ")
-            dependency_lines << "Missing libraries (#{missing_library_names.count}): #{decorated}"
-          end
-          if runtime_deps.present?
-            installed_count = runtime_deps.count do |dep|
-              dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
-              next false unless dep_name
-
-              Formula.rack_installed?(dep_name)
-            end
-            dependency_lines << Utils::InfoDisplay.recursive_runtime_line(
-              installed_count, runtime_deps.count, mark_uninstalled: !outdated
-            )
-          end
-          if installed_dependents.any?
-            dependency_lines << if args.verbose?
-              "Dependents (#{installed_dependents.count}): #{installed_dependents.join(", ")}"
-            else
-              "Dependents: #{installed_dependents.count}"
-            end
-          end
-          puts Utils::InfoDisplay.section("Dependencies", dependency_lines)
+        missing_library_names = missing_libraries.map { |lib| File.basename(lib) }.uniq
+        if missing_library_names.present?
+          decorated = missing_library_names.map { |lib| pretty_uninstalled(lib, bold: false) }.join(", ")
+          dependency_lines << "Missing libraries (#{missing_library_names.count}): #{decorated}"
         end
+        if runtime_deps.present?
+          installed_count = runtime_deps.count do |dep|
+            dep_name = dep["full_name"]&.then { Utils.name_from_full_name(it) }
+            next false unless dep_name
+
+            Formula.rack_installed?(dep_name)
+          end
+          dependency_lines << Utils::InfoDisplay.recursive_runtime_line(
+            installed_count, runtime_deps.count, mark_uninstalled: !outdated
+          )
+        end
+        if installed_dependents.any?
+          dependency_lines << if args.verbose?
+            "Dependents (#{installed_dependents.count}): #{installed_dependents.join(", ")}"
+          else
+            "Dependents: #{installed_dependents.count}"
+          end
+        end
+        puts Utils::InfoDisplay.section("Dependencies", dependency_lines) if dependency_lines.present?
 
         requirements_section = Utils::InfoDisplay.requirements_section(formula.requirements.to_a, bold: true)
         puts requirements_section if requirements_section
