@@ -290,7 +290,7 @@ module Homebrew
           end
           ask_upgrade_planned = final_upgrade_summary.all_version_changes.present?
           skip_upgrades_after_failed_ask_preview = Homebrew.failed? && !ask_upgrade_planned
-          @final_upgrade_summary = FinalUpgradeSummary.new
+          @final_upgrade_summary = FinalUpgradeSummary.new unless skip_upgrades_after_failed_ask_preview
         end
 
         if !args.dry_run? && (!ask || ask_upgrade_planned) && !(only_upgrade_formulae && only_upgrade_casks)
