@@ -25,6 +25,10 @@ Layout/LineLength:
   Exclude:
     - "**/Bottles.md" # The bottle block line length is long in its full form.
 
+# Report Markdown parser warnings (e.g. unclosed HTML tags) as offenses.
+Markdown/Syntax:
+  Enabled: true
+
 # Apparently Casks are allowed to have constant definitions in blocks and we document this.
 Lint/ConstantDefinitionInBlock:
   Enabled: false
