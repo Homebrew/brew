@@ -524,13 +524,6 @@ RSpec.describe Homebrew::Trust, :trust_store do
         .to raise_error(UsageError, %r{brew trust --cask thirdparty/foo/editor@2})
     end
 
-    it "resolves the alias when revoking canonical trust" do
-      described_class.trust!(:cask, "#{tap.name}/editor@2")
-
-      expect(described_class.target("#{tap.name}/editor", type: :cask, include_existing: true))
-        .to eq([:cask, "#{tap.name}/editor@2"])
-    end
-
     it "infers the cask type for the alias when revoking canonical trust" do
       described_class.trust!(:cask, "#{tap.name}/editor@2")
 
