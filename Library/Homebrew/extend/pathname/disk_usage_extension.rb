@@ -8,6 +8,12 @@ module DiskUsageExtension
 
   requires_ancestor { Pathname }
 
+  # Errors that `Find.find` also skips.
+  SKIPPABLE_PATH_ERRORS = [
+    Errno::ENOENT, Errno::EACCES, Errno::ENOTDIR, Errno::ELOOP, Errno::ENAMETOOLONG, Errno::EINVAL
+  ].freeze
+  private_constant :SKIPPABLE_PATH_ERRORS
+
   sig { returns(Integer) }
   def disk_usage
     @disk_usage ||= T.let(nil, T.nilable(Integer))
@@ -54,19 +60,33 @@ module DiskUsageExtension
       scanned_files = Set.new
       file_count = 0
       disk_usage = 0
-      path.find do |f|
-        # use Pathname#lstat instead of Pathname#stat to get info of symlink itself.
-        stat = f.lstat
-        if stat.directory? || (stat.symlink? && f.directory?)
+      # Walk path strings rather than `Pathname#find`, which builds a `Pathname`
+      # and makes `Find.find` `lstat` each entry before we `lstat` it again.
+      entries = [path.to_s]
+      while (entry = entries.pop)
+        begin
+          # use File.lstat instead of File.stat to get info of symlink itself.
+          stat = File.lstat(entry)
+        rescue *SKIPPABLE_PATH_ERRORS
+          # Skip entries that vanished or can't be read.
+          next
+        end
+        if stat.directory? || (stat.symlink? && File.directory?(entry))
           disk_usage += stat.size
         else
-          file_count += 1 if File.basename(f.to_s) != ".DS_Store"
-          file_id = [stat.dev, stat.ino]
+          file_count += 1 if File.basename(entry) != ".DS_Store"
           # count hardlinks only once.
-          unless scanned_files.include?(file_id)
-            disk_usage += stat.size
-            scanned_files.add(file_id)
+          disk_usage += stat.size if scanned_files.add?([stat.dev, stat.ino])
+        end
+        next unless stat.directory?
+
+        begin
+          Dir.children(entry, encoding: entry.encoding).each do |child|
+            entries << File.join(entry, child)
           end
+        rescue *SKIPPABLE_PATH_ERRORS
+          # Skip directories that can't be listed.
+          nil
         end
       end
     else

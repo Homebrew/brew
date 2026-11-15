@@ -41,6 +41,28 @@ RSpec.describe Pathname do
       it "returns the number of files in a directory" do
         expect(dir.file_count).to eq(3)
       end
+
+      it "lstats each entry once" do
+        entries = [dir, *dir.children]
+        expect(File).to receive(:lstat).exactly(entries.count).times.and_call_original
+
+        dir.file_count
+      end
+
+      it "skips directories it can't read" do
+        (dir/"a-directory").chmod 0000
+
+        expect(dir.file_count).to eq(3)
+      ensure
+        (dir/"a-directory").chmod 0755
+      end
+
+      it "skips entries it can't lstat" do
+        allow(File).to receive(:lstat).and_call_original
+        allow(File).to receive(:lstat).with((dir/"a-file").to_s).and_raise(Errno::EACCES)
+
+        expect(dir.file_count).to eq(2)
+      end
     end
 
     describe "#abv" do
