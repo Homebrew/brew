@@ -1211,29 +1211,20 @@ class Tap # rubocop:disable Metrics/ClassLength
   # Mapping from aliases to formula names.
   sig { overridable.returns(T::Hash[String, String]) }
   def alias_table
-    @alias_table ||= T.let(alias_files.to_h do |alias_file|
-                             [alias_file_to_name(alias_file),
-                              formula_file_to_name(resolved_path(alias_file))]
-                           end, T.nilable(T::Hash[String, String]))
+    @alias_table ||= T.let(alias_files_table(alias_files), T.nilable(T::Hash[String, String]))
   end
 
   # Mapping from aliases to cask tokens.
   sig { overridable.returns(T::Hash[String, String]) }
   def cask_alias_table
-    @cask_alias_table ||= T.let(cask_alias_files.to_h do |alias_file|
-                                  [alias_file_to_name(alias_file),
-                                   formula_file_to_name(resolved_path(alias_file))]
-                                end, T.nilable(T::Hash[String, String]))
+    @cask_alias_table ||= T.let(alias_files_table(cask_alias_files), T.nilable(T::Hash[String, String]))
   end
 
   # Mapping from formula names to aliases.
   sig { returns(T::Hash[String, T::Array[String]]) }
   def alias_reverse_table
     @alias_reverse_table ||= T.let(
-      alias_table.each_with_object({}) do |(alias_name, formula_name), alias_reverse_table|
-        alias_reverse_table[formula_name] ||= []
-        alias_reverse_table[formula_name] << alias_name
-      end,
+      reverse_alias_table(alias_table),
       T.nilable(T::Hash[String, T::Array[String]]),
     )
   end
@@ -1242,10 +1233,7 @@ class Tap # rubocop:disable Metrics/ClassLength
   sig { returns(T::Hash[String, T::Array[String]]) }
   def cask_alias_reverse_table
     @cask_alias_reverse_table ||= T.let(
-      cask_alias_table.each_with_object({}) do |(alias_name, token), cask_alias_reverse_table|
-        cask_alias_reverse_table[token] ||= []
-        cask_alias_reverse_table[token] << alias_name
-      end,
+      reverse_alias_table(cask_alias_table),
       T.nilable(T::Hash[String, T::Array[String]]),
     )
   end
@@ -1623,6 +1611,22 @@ class Tap # rubocop:disable Metrics/ClassLength
   sig { params(alias_file: Pathname).returns(T::Boolean) }
   def cask_alias_file?(alias_file)
     cask_file?(resolved_path(alias_file).cleanpath.relative_path_from(path).to_s)
+  end
+
+  # Mapping from the names of alias files to the names of the files they point at.
+  sig { params(files: T::Array[Pathname]).returns(T::Hash[String, String]) }
+  def alias_files_table(files)
+    files.to_h do |alias_file|
+      [alias_file_to_name(alias_file), formula_file_to_name(resolved_path(alias_file))]
+    end
+  end
+
+  sig { params(table: T::Hash[String, String]).returns(T::Hash[String, T::Array[String]]) }
+  def reverse_alias_table(table)
+    table.each_with_object({}) do |(alias_name, name), reverse_table|
+      reverse_table[name] ||= []
+      reverse_table[name] << alias_name
+    end
   end
 
   sig { params(file: Pathname).returns(T.any(T::Array[String], T::Hash[String, T.untyped])) }
