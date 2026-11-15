@@ -57,38 +57,40 @@ module Homebrew
           info += ", #{Utils.pluralize("command", command_count, include_count: true)}"
           info += ", #{HOMEBREW_TAP_DIRECTORY.dup.abv}" if HOMEBREW_TAP_DIRECTORY.directory?
           puts info
-        else
-          info = ""
-          default_branches = %w[main master].freeze
 
-          taps.each_with_index do |tap, i|
-            puts unless i.zero?
-            info = "#{tap}: "
-            if tap.installed?
-              info += "Installed"
-              if Homebrew::EnvConfig.require_tap_trust?
-                require "trust"
-                info += "\n#{Homebrew::Trust.trusted_tap?(tap) ? "Trusted" : "Untrusted"}"
-              end
-              info += if (contents = tap.contents).blank?
-                "\nNo commands/casks/formulae"
-              else
-                "\n#{contents.join(", ")}"
-              end
-              info += "\nPrivate" if tap.private?
-              info += "\n#{tap.path} (#{tap.path.abv})"
-              info += "\nFrom: #{tap.remote.presence || "N/A"}"
-              info += "\norigin: #{tap.remote}" if tap.remote != tap.default_remote
-              info += "\nHEAD: #{tap.git_head || "(none)"}"
-              info += "\nlast commit: #{tap.git_last_commit || "never"}"
-              info += "\nbranch: #{tap.git_branch || "(none)"}" if default_branches.exclude?(tap.git_branch)
-              puts info
-              print_tap_listings(tap)
-            else
-              info += "Not installed"
-              Homebrew.failed = true
-              puts info
+          return
+        end
+
+        info = ""
+        default_branches = %w[main master].freeze
+
+        taps.each_with_index do |tap, i|
+          puts unless i.zero?
+          info = "#{tap}: "
+          if tap.installed?
+            info += "Installed"
+            if Homebrew::EnvConfig.require_tap_trust?
+              require "trust"
+              info += "\n#{Homebrew::Trust.trusted_tap?(tap) ? "Trusted" : "Untrusted"}"
             end
+            info += if (contents = tap.contents).blank?
+              "\nNo commands/casks/formulae"
+            else
+              "\n#{contents.join(", ")}"
+            end
+            info += "\nPrivate" if tap.private?
+            info += "\n#{tap.path} (#{tap.path.abv})"
+            info += "\nFrom: #{tap.remote.presence || "N/A"}"
+            info += "\norigin: #{tap.remote}" if tap.remote != tap.default_remote
+            info += "\nHEAD: #{tap.git_head || "(none)"}"
+            info += "\nlast commit: #{tap.git_last_commit || "never"}"
+            info += "\nbranch: #{tap.git_branch || "(none)"}" if default_branches.exclude?(tap.git_branch)
+            puts info
+            print_tap_listings(tap)
+          else
+            info += "Not installed"
+            Homebrew.failed = true
+            puts info
           end
         end
       end

@@ -122,42 +122,7 @@ module Homebrew
       sig { params(formulae_or_casks: T::Array[T.any(Formula, Cask::Cask)]).void }
       def print_outdated(formulae_or_casks)
         formulae_or_casks.each do |formula_or_cask|
-          if formula_or_cask.is_a?(Formula)
-            f = formula_or_cask
-
-            if verbose?
-              outdated_kegs = formula_outdated_kegs(f)
-              latest_formula = f.latest_formula
-
-              current_version = if minimum_version.present?
-                minimum_version
-              elsif f.alias_changed? && !latest_formula.latest_version_installed?
-                "#{latest_formula.name} (#{latest_formula.pkg_version})"
-              elsif f.head?
-                latest_head_version = f.latest_head_pkg_version(fetch_head: args.fetch_HEAD?)
-                if outdated_kegs.any? { |k| k.version.to_s == latest_head_version.to_s }
-                  # There is a newer HEAD but the version number has not changed.
-                  "latest HEAD"
-                else
-                  latest_head_version.to_s
-                end
-              else
-                latest_formula.pkg_version.to_s
-              end
-
-              outdated_versions = outdated_kegs.group_by { |keg| Formulary.from_keg(keg).full_name }
-                                               .sort_by { |full_name, _kegs| full_name }
-                                               .map do |full_name, kegs|
-                "#{full_name} (#{kegs.map(&:version).join(", ")})"
-              end.join(", ")
-
-              pinned_version = " [pinned at #{f.pinned_version}]" if f.pinned?
-
-              puts "#{outdated_versions} < #{current_version}#{pinned_version}"
-            else
-              puts f.full_installed_specified_name
-            end
-          else
+          unless formula_or_cask.is_a?(Formula)
             c = formula_or_cask
 
             if minimum_version.present?
@@ -172,6 +137,43 @@ module Homebrew
               puts c.outdated_info(upgrade_greedy_cask?(args.greedy?, formula_or_cask), verbose?,
                                    false, args.greedy_latest?, args.greedy_auto_updates?)
             end
+
+            next
+          end
+
+          f = formula_or_cask
+
+          if verbose?
+            outdated_kegs = formula_outdated_kegs(f)
+            latest_formula = f.latest_formula
+
+            current_version = if minimum_version.present?
+              minimum_version
+            elsif f.alias_changed? && !latest_formula.latest_version_installed?
+              "#{latest_formula.name} (#{latest_formula.pkg_version})"
+            elsif f.head?
+              latest_head_version = f.latest_head_pkg_version(fetch_head: args.fetch_HEAD?)
+              if outdated_kegs.any? { |k| k.version.to_s == latest_head_version.to_s }
+                # There is a newer HEAD but the version number has not changed.
+                "latest HEAD"
+              else
+                latest_head_version.to_s
+              end
+            else
+              latest_formula.pkg_version.to_s
+            end
+
+            outdated_versions = outdated_kegs.group_by { |keg| Formulary.from_keg(keg).full_name }
+                                             .sort_by { |full_name, _kegs| full_name }
+                                             .map do |full_name, kegs|
+              "#{full_name} (#{kegs.map(&:version).join(", ")})"
+            end.join(", ")
+
+            pinned_version = " [pinned at #{f.pinned_version}]" if f.pinned?
+
+            puts "#{outdated_versions} < #{current_version}#{pinned_version}"
+          else
+            puts f.full_installed_specified_name
           end
         end
       end

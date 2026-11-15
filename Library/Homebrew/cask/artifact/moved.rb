@@ -86,65 +86,64 @@ module Cask
           raise CaskError, "It seems the #{self.class.english_name} source '#{source}' is not there."
         end
 
-        if Utils.path_occupied?(target)
-          if target.directory? && target.children.empty? && matching_artifact?(predecessor)
-            # An upgrade removed the directory contents but left the directory itself (see below).
-            unless source.directory?
-              if target.parent.writable? && !force
-                target.rmdir
-              else
-                Utils.gain_permissions_remove(target, command:)
-              end
+        target_occupied = Utils.path_occupied?(target)
+        if target_occupied && target.directory? && target.children.empty? && matching_artifact?(predecessor)
+          # An upgrade removed the directory contents but left the directory itself (see below).
+          unless source.directory?
+            if target.parent.writable? && !force
+              target.rmdir
+            else
+              Utils.gain_permissions_remove(target, command:)
             end
-          elsif adopt
-            ohai "Adopting existing #{self.class.english_name} at '#{target}'"
-
-            unless auto_updates
-              source_plist = Pathname("#{source}/Contents/Info.plist")
-              target_plist = Pathname("#{target}/Contents/Info.plist")
-              same = if source_plist.size? &&
-                        (source_bundle_version = Homebrew::BundleVersion.from_info_plist(source_plist)) &&
-                        target_plist.size? &&
-                        (target_bundle_version = Homebrew::BundleVersion.from_info_plist(target_plist))
-                [
-                  ["short version", source_bundle_version.short_version, target_bundle_version.short_version],
-                  ["version", source_bundle_version.version, target_bundle_version.version],
-                ].all? do |version_type, source_version, target_version|
-                  next true if source_version == target_version
-
-                  onoe "The bundle #{version_type} of #{source} is #{source_version} but " \
-                       "is #{target_version} for #{target}!"
-                  false
-                end
-              else
-                command.run(
-                  "/usr/bin/diff",
-                  args:         ["--recursive", "--brief", source, target],
-                  verbose:,
-                  print_stdout: verbose,
-                ).success?
-              end
-
-              unless same
-                raise CaskError,
-                      "It seems the existing #{self.class.english_name} is different from " \
-                      "the one being installed."
-              end
-            end
-
-            # Remove the source as we don't need to move it to the target location
-            FileUtils.rm_r(source)
-            @adopted = true
-
-            return post_move(command)
-          else
-            message = "It seems there is already #{self.class.english_article} " \
-                      "#{self.class.english_name} at '#{target}'"
-            raise CaskError, "#{message}." unless force
-
-            opoo "#{message}; overwriting."
-            delete(target, force:, successor:, command:)
           end
+        elsif target_occupied && adopt
+          ohai "Adopting existing #{self.class.english_name} at '#{target}'"
+
+          unless auto_updates
+            source_plist = Pathname("#{source}/Contents/Info.plist")
+            target_plist = Pathname("#{target}/Contents/Info.plist")
+            same = if source_plist.size? &&
+                      (source_bundle_version = Homebrew::BundleVersion.from_info_plist(source_plist)) &&
+                      target_plist.size? &&
+                      (target_bundle_version = Homebrew::BundleVersion.from_info_plist(target_plist))
+              [
+                ["short version", source_bundle_version.short_version, target_bundle_version.short_version],
+                ["version", source_bundle_version.version, target_bundle_version.version],
+              ].all? do |version_type, source_version, target_version|
+                next true if source_version == target_version
+
+                onoe "The bundle #{version_type} of #{source} is #{source_version} but " \
+                     "is #{target_version} for #{target}!"
+                false
+              end
+            else
+              command.run(
+                "/usr/bin/diff",
+                args:         ["--recursive", "--brief", source, target],
+                verbose:,
+                print_stdout: verbose,
+              ).success?
+            end
+
+            unless same
+              raise CaskError,
+                    "It seems the existing #{self.class.english_name} is different from " \
+                    "the one being installed."
+            end
+          end
+
+          # Remove the source as we don't need to move it to the target location
+          FileUtils.rm_r(source)
+          @adopted = true
+
+          return post_move(command)
+        elsif target_occupied
+          message = "It seems there is already #{self.class.english_article} " \
+                    "#{self.class.english_name} at '#{target}'"
+          raise CaskError, "#{message}." unless force
+
+          opoo "#{message}; overwriting."
+          delete(target, force:, successor:, command:)
         end
 
         ohai "Moving #{self.class.english_name} '#{source.basename}' to '#{target}'"

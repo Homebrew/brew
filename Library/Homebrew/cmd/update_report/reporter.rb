@@ -257,14 +257,14 @@ class Reporter
           next unless ensure_trusted_migration_target!(:cask, new_full_name, reinstall: true)
 
           # Resolve renames while the receipt still identifies the source migration.
-          if new_name != name
-            begin
+          begin
+            if new_name != name
               Cask::Migrator.new(Cask::Cask.new(name), Cask::CaskLoader.load(new_full_name)).migrate
               cask_tab = Cask::CaskLoader.load_installed_tab(new_name)
-            rescue => e
-              onoe e
-              next
             end
+          rescue => e
+            onoe e
+            next
           end
 
           cask_tab.tap = new_tap

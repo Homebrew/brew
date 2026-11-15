@@ -322,20 +322,16 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
   def prelude_fetch(metadata_only: false)
     unless @ran_prelude_fetch_metadata
       deprecate_disable_type = DeprecateDisable.type(formula)
-      if deprecate_disable_type.present?
+      case deprecate_disable_type
+      when :deprecated, :disabled
         message = "#{formula.full_name} has been #{DeprecateDisable.message(formula)}"
 
-        case deprecate_disable_type
-        when :deprecated
-          opoo message
-        when :disabled
-          if force?
-            opoo message
-          else
-            GitHub::Actions.puts_annotation_if_env_set!(:error, message)
-            raise CannotInstallFormulaError, message
-          end
+        if deprecate_disable_type == :disabled && !force?
+          GitHub::Actions.puts_annotation_if_env_set!(:error, message)
+          raise CannotInstallFormulaError, message
         end
+
+        opoo message
       end
 
       # Run the formula-self forbidden checks before any source or bottle

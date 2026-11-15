@@ -113,18 +113,20 @@ module Utils
           while (token = tokens.shift)
             if token == "year"
               period = Time.at(tokens.shift.to_i).utc.year.to_s
-            elsif token.lstrip.start_with?(":")
-              old_mode, new_mode, _, _, status = token.delete_prefix("\n").delete_prefix(":").split
-              old_path = tokens.shift.to_s
-              new_path = status&.start_with?("R") ? tokens.shift.to_s : old_path
-              before = %w[100644 100755].include?(old_mode) && old_path.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
-              after = %w[100644 100755].include?(new_mode) && new_path.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
-              next if before == after
-
-              metric = after ? "added" : "removed"
-              changes[period] ||= {}
-              changes[period][metric] = changes[period].fetch(metric, 0) + 1
+              next
             end
+            next unless token.lstrip.start_with?(":")
+
+            old_mode, new_mode, _, _, status = token.delete_prefix("\n").delete_prefix(":").split
+            old_path = tokens.shift.to_s
+            new_path = status&.start_with?("R") ? tokens.shift.to_s : old_path
+            before = %w[100644 100755].include?(old_mode) && old_path.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
+            after = %w[100644 100755].include?(new_mode) && new_path.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
+            next if before == after
+
+            metric = after ? "added" : "removed"
+            changes[period] ||= {}
+            changes[period][metric] = changes[period].fetch(metric, 0) + 1
           end
         end
 

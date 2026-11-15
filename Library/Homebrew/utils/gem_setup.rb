@@ -221,73 +221,61 @@ module Utils
       ENV["BUNDLE_WITH"] = groups.join(" ")
       ENV["BUNDLE_FROZEN"] = "true"
 
-      if @bundle_installed_groups != groups
-        bundle = File.join(find_in_path("bundle"), "bundle")
-        bundle_check_output = IO.popen([bundle, "check"], err: [:child, :out], &:read)
-        bundle_check_failed = !$CHILD_STATUS.success?
+      return setup_gem_environment! if @bundle_installed_groups == groups
 
-        # for some reason sometimes the exit code lies so check the output too.
-        bundle_install_required = bundle_check_failed || bundle_check_output.include?("Install missing gems")
+      bundle = File.join(find_in_path("bundle"), "bundle")
+      bundle_check_output = IO.popen([bundle, "check"], err: [:child, :out], &:read)
+      bundle_check_failed = !$CHILD_STATUS.success?
 
-        if user_vendor_version != VENDOR_VERSION
-          # Check if the install is intact. This is useful if any gems are added to gitignore.
-          # We intentionally map over everything and then call `any?` so that we remove the spec of each bad gem.
-          specs = bundler_definition.resolve.materialize(bundler_definition.locked_dependencies)
-          vendor_reinstall_required = specs.map do |spec|
-            spec_file = "#{Gem.dir}/specifications/#{spec.full_name}.gemspec"
-            next false unless File.exist?(spec_file)
+      # for some reason sometimes the exit code lies so check the output too.
+      bundle_install_required = bundle_check_failed || bundle_check_output.include?("Install missing gems")
 
-            cache_file = "#{Gem.dir}/cache/#{spec.full_name}.gem"
-            if File.exist?(cache_file)
-              require "rubygems/package"
-              package = Gem::Package.new(cache_file)
+      if user_vendor_version != VENDOR_VERSION
+        # Check if the install is intact. This is useful if any gems are added to gitignore.
+        # We intentionally map over everything and then call `any?` so that we remove the spec of each bad gem.
+        specs = bundler_definition.resolve.materialize(bundler_definition.locked_dependencies)
+        vendor_reinstall_required = specs.map do |spec|
+          spec_file = "#{Gem.dir}/specifications/#{spec.full_name}.gemspec"
+          next false unless File.exist?(spec_file)
 
-              package_install_intact = begin
-                contents = package.contents
+          cache_file = "#{Gem.dir}/cache/#{spec.full_name}.gem"
+          if File.exist?(cache_file)
+            require "rubygems/package"
+            package = Gem::Package.new(cache_file)
 
-                # If the gem has contents, ensure we have every file installed it contains.
-                contents&.all? do |gem_file|
-                  File.exist?("#{Gem.dir}/gems/#{spec.full_name}/#{gem_file}")
-                end
-              rescue Gem::Package::Error, Gem::Security::Exception
-                # Malformed, assume broken
-                File.unlink(cache_file)
-                false
+            package_install_intact = begin
+              contents = package.contents
+
+              # If the gem has contents, ensure we have every file installed it contains.
+              contents&.all? do |gem_file|
+                File.exist?("#{Gem.dir}/gems/#{spec.full_name}/#{gem_file}")
               end
-
-              next false if package_install_intact
+            rescue Gem::Package::Error, Gem::Security::Exception
+              # Malformed, assume broken
+              File.unlink(cache_file)
+              false
             end
 
-            # Mark gem for reinstallation
-            File.unlink(spec_file)
-            true
-          end.any?
-
-          VENDOR_VERSION_FILE.dirname.mkpath
-          VENDOR_VERSION_FILE.write(VENDOR_VERSION.to_s)
-
-          bundle_install_required ||= vendor_reinstall_required
-        end
-
-        bundle_installed = if bundle_install_required
-          if system bundle, "install", out: :err
-            true
-          else
-            message = <<~EOS
-              failed to run `#{bundle} install`!
-            EOS
-            if only_warn_on_failure
-              opoo_if_defined message
-            else
-              odie_if_defined message
-            end
-            false
+            next false if package_install_intact
           end
-        elsif system bundle, "clean", out: :err # even if we have nothing to install, we may have removed gems
+
+          # Mark gem for reinstallation
+          File.unlink(spec_file)
+          true
+        end.any?
+
+        VENDOR_VERSION_FILE.dirname.mkpath
+        VENDOR_VERSION_FILE.write(VENDOR_VERSION.to_s)
+
+        bundle_install_required ||= vendor_reinstall_required
+      end
+
+      bundle_installed = if bundle_install_required
+        if system bundle, "install", out: :err
           true
         else
           message = <<~EOS
-            failed to run `#{bundle} clean`!
+            failed to run `#{bundle} install`!
           EOS
           if only_warn_on_failure
             opoo_if_defined message
@@ -296,13 +284,25 @@ module Utils
           end
           false
         end
-
-        if bundle_installed
-          # `bundle clean` can remove load paths just as `bundle install` can add them.
-          Homebrew::Bootsnap.reset! if defined?(Homebrew::Bootsnap) # Gem setup can run before Bootsnap loads
-          write_user_gem_groups(groups)
-          @bundle_installed_groups = groups
+      elsif system bundle, "clean", out: :err # even if we have nothing to install, we may have removed gems
+        true
+      else
+        message = <<~EOS
+          failed to run `#{bundle} clean`!
+        EOS
+        if only_warn_on_failure
+          opoo_if_defined message
+        else
+          odie_if_defined message
         end
+        false
+      end
+
+      if bundle_installed
+        # `bundle clean` can remove load paths just as `bundle install` can add them.
+        Homebrew::Bootsnap.reset! if defined?(Homebrew::Bootsnap) # Gem setup can run before Bootsnap loads
+        write_user_gem_groups(groups)
+        @bundle_installed_groups = groups
       end
 
       setup_gem_environment!
