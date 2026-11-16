@@ -2209,6 +2209,28 @@ RuboCop::Cop::Lint::Void::UNARY_OPERATORS = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Lint::Void::VAR_MSG = T.let(T.unsafe(nil), String)
 
+module RuboCop::Cop::MethodComplexity
+  include ::RuboCop::Cop::AllowedMethods
+  include ::RuboCop::Cop::AllowedPattern
+  include ::RuboCop::Cop::Metrics::Utils::RepeatedCsendDiscount
+  extend ::RuboCop::AST::NodePattern::Macros
+  extend ::RuboCop::ExcludeLimit
+
+  def define_method?(param0 = T.unsafe(nil)); end
+  def max=(value); end
+  def on_block(node); end
+  def on_def(node); end
+  def on_defs(node); end
+  def on_itblock(node); end
+  def on_numblock(node); end
+
+  private
+
+  def check_complexity(node, method_name); end
+  def complexity(body); end
+  def location(node); end
+end
+
 module RuboCop::Cop::MethodPreference
   private
 
@@ -2221,6 +2243,20 @@ RuboCop::Cop::Metrics::AbcSize::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Metrics::BlockLength::LABEL = T.let(T.unsafe(nil), String)
 
+class RuboCop::Cop::Metrics::BlockNesting < ::RuboCop::Cop::Base
+  def max=(value); end
+  def on_new_investigation; end
+
+  private
+
+  def check_nesting_level(node, max, current_level); end
+  def consider_node?(node); end
+  def count_blocks?; end
+  def count_if_block?(node); end
+  def count_modifier_forms?; end
+  def message(max); end
+end
+
 RuboCop::Cop::Metrics::BlockNesting::NESTING_BLOCKS = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Metrics::ClassLength::LABEL = T.let(T.unsafe(nil), String)
@@ -2228,6 +2264,18 @@ RuboCop::Cop::Metrics::ClassLength::LABEL = T.let(T.unsafe(nil), String)
 RuboCop::Cop::Metrics::CollectionLiteralLength::MSG = T.let(T.unsafe(nil), String)
 
 RuboCop::Cop::Metrics::CollectionLiteralLength::RESTRICT_ON_SEND = T.let(T.unsafe(nil), Array)
+
+class RuboCop::Cop::Metrics::CyclomaticComplexity < ::RuboCop::Cop::Base
+  include ::RuboCop::Cop::AllowedMethods
+  include ::RuboCop::Cop::AllowedPattern
+  include ::RuboCop::Cop::Metrics::Utils::RepeatedCsendDiscount
+  include ::RuboCop::Cop::MethodComplexity
+  include ::RuboCop::Cop::Metrics::Utils::IteratingBlock
+
+  private
+
+  def complexity_score_for(node); end
+end
 
 RuboCop::Cop::Metrics::CyclomaticComplexity::COUNTED_NODES = T.let(T.unsafe(nil), Array)
 
@@ -2243,21 +2291,124 @@ RuboCop::Cop::Metrics::ParameterLists::NAMED_KEYWORD_TYPES = T.let(T.unsafe(nil)
 
 RuboCop::Cop::Metrics::ParameterLists::OPTIONAL_PARAMETERS_MSG = T.let(T.unsafe(nil), String)
 
+class RuboCop::Cop::Metrics::PerceivedComplexity < ::RuboCop::Cop::Metrics::CyclomaticComplexity
+  private
+
+  def complexity_score_for(node); end
+  def simple_in_pattern?(in_pattern_node); end
+end
+
 RuboCop::Cop::Metrics::PerceivedComplexity::COUNTED_NODES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Metrics::PerceivedComplexity::MSG = T.let(T.unsafe(nil), String)
+
+module RuboCop::Cop::Metrics::Utils; end
+
+class RuboCop::Cop::Metrics::Utils::AbcSizeCalculator
+  include ::RuboCop::AST::Sexp
+  include ::RuboCop::Cop::Metrics::Utils::RepeatedAttributeDiscount
+  include ::RuboCop::Cop::Metrics::Utils::IteratingBlock
+  include ::RuboCop::Cop::Metrics::Utils::RepeatedCsendDiscount
+
+  def initialize(node, discount_repeated_attributes: T.unsafe(nil)); end
+
+  def calculate; end
+  def calculate_node(node); end
+  def else_branch?(node); end
+  def evaluate_branch_nodes(node); end
+  def evaluate_condition_node(node); end
+
+  private
+
+  def argument?(node); end
+  def assignment?(node); end
+  def branch?(node); end
+  def capturing_variable?(name); end
+  def compound_assignment(node); end
+  def condition?(node); end
+  def simple_assignment?(node); end
+  def visit_depth_last(node, &block); end
+
+  class << self
+    def calculate(node, discount_repeated_attributes: T.unsafe(nil)); end
+  end
+end
 
 RuboCop::Cop::Metrics::Utils::AbcSizeCalculator::BRANCH_NODES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Metrics::Utils::AbcSizeCalculator::CONDITION_NODES = T.let(T.unsafe(nil), Array)
 
+class RuboCop::Cop::Metrics::Utils::CodeLengthCalculator
+  include ::RuboCop::PathUtil
+  include ::RuboCop::Cop::Util
+  extend ::RuboCop::AST::NodePattern::Macros
+
+  def initialize(node, processed_source, count_comments: T.unsafe(nil), foldable_types: T.unsafe(nil)); end
+
+  def calculate; end
+
+  private
+
+  def another_args?(node); end
+  def build_foldable_checks(types); end
+  def classlike_code_length(node); end
+  def classlike_node?(node); end
+  def code_length(node); end
+  def count_comments?; end
+  def each_top_level_descendant(node, types, &block); end
+  def extract_body(node); end
+  def foldable_node?(node); end
+  def heredoc_length(node); end
+  def heredoc_node?(node); end
+  def irrelevant_line?(source_line); end
+  def line_numbers_of_inner_nodes(node, *types); end
+  def namespace_module?(node); end
+  def node_with_heredoc?(node); end
+  def normalize_foldable_types(types); end
+  def omit_length(descendant); end
+  def parenthesized?(node); end
+  def source_from_node_with_heredoc(node); end
+end
+
 RuboCop::Cop::Metrics::Utils::CodeLengthCalculator::CLASSLIKE_TYPES = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::Metrics::Utils::CodeLengthCalculator::FOLDABLE_TYPES = T.let(T.unsafe(nil), Array)
 
+module RuboCop::Cop::Metrics::Utils::IteratingBlock
+  def block_method_name(node); end
+  def iterating_block?(node); end
+  def iterating_method?(name); end
+end
+
 RuboCop::Cop::Metrics::Utils::IteratingBlock::KNOWN_ITERATING_METHODS = T.let(T.unsafe(nil), Set)
 
+module RuboCop::Cop::Metrics::Utils::RepeatedAttributeDiscount
+  include ::RuboCop::AST::Sexp
+  extend ::RuboCop::AST::NodePattern::Macros
+
+  def initialize(node, discount_repeated_attributes: T.unsafe(nil)); end
+
+  def attribute_call?(param0 = T.unsafe(nil)); end
+  def calculate_node(node); end
+  def discount_repeated_attributes?; end
+  def evaluate_branch_nodes(node); end
+  def root_node?(param0 = T.unsafe(nil)); end
+
+  private
+
+  def discount_repeated_attribute?(send_node); end
+  def find_attributes(node, &block); end
+  def setter_to_getter(node); end
+  def update_repeated_attribute(node); end
+end
+
 RuboCop::Cop::Metrics::Utils::RepeatedAttributeDiscount::VAR_SETTER_TO_GETTER = T.let(T.unsafe(nil), Hash)
+
+module RuboCop::Cop::Metrics::Utils::RepeatedCsendDiscount
+  def discount_for_repeated_csend?(csend_node); end
+  def reset_on_lvasgn(node); end
+  def reset_repeated_csend; end
+end
 
 RuboCop::Cop::Migration::DepartmentName::DISABLE_COMMENT_FORMAT = T.let(T.unsafe(nil), Regexp)
 
@@ -2446,6 +2597,32 @@ RuboCop::Cop::PatternMatchingHelp::PATTERN_TYPES = T.let(T.unsafe(nil), Array)
 RuboCop::Cop::PrecedingFollowingAlignment::ASSIGNMENT_OR_COMPARISON_TOKENS = T.let(T.unsafe(nil), Array)
 
 RuboCop::Cop::PreferredDelimiters::PERCENT_LITERAL_TYPES = T.let(T.unsafe(nil), Array)
+
+module RuboCop::Cop::ProjectIndexHelp
+  def external_dependency_checksum; end
+
+  private
+
+  def compute_project_index_signature; end
+  def definitions_in_other_files(definitions); end
+  def fully_resolved_index_ancestry?(declaration, ignore_extend: T.unsafe(nil)); end
+  def indexed_singleton_member(namespace, member_name); end
+  def indexed_singleton_of(declaration); end
+  def inherited_index_member?(scope, member_name); end
+  def lexical_nesting_of(node); end
+  def overrides_inherited_method?(def_node); end
+  def prior_definition_in_other_file(definitions); end
+  def project_index_signature; end
+  def resolve_constant_in_index(const_node); end
+  def resolved_mixin_references?(definition, ignore_extend: T.unsafe(nil)); end
+  def resolved_superclass_reference?(definition); end
+  def same_file?(path, other); end
+
+  class << self
+    def cached_index_signature; end
+    def cached_index_signature=(_arg0); end
+  end
+end
 
 RuboCop::Cop::ProjectIndexHelp::BUILTIN_DOCUMENT_URI = T.let(T.unsafe(nil), String)
 

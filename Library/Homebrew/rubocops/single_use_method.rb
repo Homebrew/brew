@@ -75,18 +75,22 @@ module RuboCop
           attr_accessor :cached_index_name_counts
         end
 
+        # These cannot be moved into the caller unchanged: `return`, `yield`, `super` and `block_given?`
+        # would act on the caller, `FormulaAudit/OnSystemConditionals` disallows `on_*` blocks in e.g.
+        # `install` and memoised values are kept between calls, e.g. from a loop.
+        def_node_search :unmovable?, <<~PATTERN
+          {return yield super zsuper (send _ :block_given?) (or_asgn ivasgn _) (any_block (call _ /^on_/ ...) ...)}
+        PATTERN
+
+        def_node_search :rescued_variable_names, "(resbody _ (lvasgn $_) _)"
+
+        def_node_matcher :formula_class?, "(class _ (const _ :Formula) _)"
+
         sig { params(node: RuboCop::AST::DefNode).void }
         def on_def(node)
           return if node.each_ancestor(:any_def, :any_block, :sclass).any?
-          # These behave differently once moved into the caller.
-          return if node.each_descendant(:return, :yield, :super, :zsuper).any?
-          # `FormulaAudit/OnSystemConditionals` disallows `on_*` blocks in e.g. `install`.
-          return if node.each_descendant(:block).any? { |block| block.method_name.start_with?("on_") }
-          # Memoised values are kept between calls, e.g. from a loop, so must stay in a method.
-          return if node.each_descendant(:or_asgn).any? { |assignment| assignment.children.first.ivasgn_type? }
           # A block parameter has no equivalent once the method is inlined.
-          return if node.arguments.any?(&:blockarg_type?) ||
-                    node.each_descendant(:send).any? { |send| send.method?(:block_given?) }
+          return if node.block_argument? || unmovable?(node)
 
           namespace = node.each_ancestor(:class, :module).first
           return if namespace.nil?
@@ -96,25 +100,23 @@ module RuboCop
           references = processed_source.ast&.each_node(:call, :def, :sym, :str, :dstr, :dsym)&.select do |reference|
             next false if reference.equal?(node)
 
-            if reference.is_a?(RuboCop::AST::DefNode) || reference.is_a?(RuboCop::AST::SendNode)
-              reference.method?(name)
-            elsif reference.is_a?(RuboCop::AST::SymbolNode)
-              reference.value == name
-            elsif reference.dstr_type? || reference.dsym_type?
+            # Matching raises on string literals with invalid byte sequences, hence `scrub`.
+            case reference.type
+            when :send, :csend, :def then reference.method?(name)
+            when :sym then reference.value == name
+            when :str then reference.value.scrub.scan(IDENTIFIER_PATTERN).include?(name.to_s)
+            else
               # `send(:"format_#{type}")` may call any method starting with `format_`.
               first = reference.children.first
-              # Matching raises on string literals with invalid byte sequences.
-              prefix = first.value.scrub[NAME_PREFIX_PATTERN] if first.is_a?(RuboCop::AST::StrNode)
+              prefix = first.value.scrub[NAME_PREFIX_PATTERN] if first&.any_str_type?
               prefix.present? && name.start_with?(prefix)
-            elsif reference.is_a?(RuboCop::AST::StrNode)
-              reference.value.scrub.scan(IDENTIFIER_PATTERN).include?(name.to_s)
             end
           end
           return if references&.length != 1
 
           call = references.first
           return unless call.is_a?(RuboCop::AST::SendNode)
-          return if call.receiver && !call.receiver&.self_type?
+          return if call.receiver && !call.self_receiver?
           return unless call.each_ancestor(:class, :module).first.equal?(namespace)
           return if call.each_ancestor(:def).include?(node)
 
@@ -122,26 +124,22 @@ module RuboCop
           in_condition = [call, *call.each_ancestor].each_cons(2)
                                                     .take_while { |_, parent| !parent.type?(:any_def, :any_block) }
                                                     .any? do |child, parent|
-            next true if parent.operator_keyword?
-
-            parent.type?(:if, :while, :until, :case) && parent.children.first.equal?(child)
+            parent.operator_keyword? || (parent.conditional? && parent.children.first.equal?(child))
           end
           return if in_condition && node.body&.type?(:rescue, :ensure)
 
           # `Naming/RescuedExceptionsVariableName` stops renaming a rescued variable the caller already uses.
-          rescued_names = node.each_descendant(:resbody).filter_map { |resbody| resbody.children[1]&.children&.first }
           caller_names = call.each_ancestor(:any_def, :any_block).to_a.last
-                             &.each_descendant(:lvasgn, :argument)&.map { |local| local.children.first }
-          return if caller_names&.intersect?(rescued_names)
+                             &.each_descendant(:lvasgn, :argument)&.map(&:name)
+          return if caller_names&.intersect?(rescued_variable_names(node).to_a)
 
           return if !formula_class?(namespace) && !single_use_in_project_index?(namespace, name)
           # Inlining should not push any enclosing method or block over an enabled `Metrics` limit
           # that would then need suppressing.
           return if call.each_ancestor(:any_def, :any_block).any? do |scope|
-            if scope.is_a?(RuboCop::AST::BlockNode)
+            if scope.any_block_type?
               next !scope.class_constructor? && inlining_exceeds_length?("Metrics/BlockLength", scope, node)
             end
-            next false unless scope.is_a?(RuboCop::AST::DefNode)
             next true if inlining_exceeds_length?("Metrics/MethodLength", scope, node)
 
             max_abc = enabled_metrics_max("Metrics/AbcSize", scope)
@@ -184,23 +182,13 @@ module RuboCop
 
         private
 
-        sig { params(namespace: RuboCop::AST::Node).returns(T::Boolean) }
-        def formula_class?(namespace)
-          return false unless namespace.is_a?(RuboCop::AST::ClassNode)
-
-          parent_class = namespace.parent_class
-          parent_class.is_a?(RuboCop::AST::ConstNode) && parent_class.short_name == :Formula
-        end
-
-        sig { params(namespace: RuboCop::AST::Node, name: Symbol).returns(T::Boolean) }
+        sig {
+          params(namespace: T.any(RuboCop::AST::ClassNode, RuboCop::AST::ModuleNode), name: Symbol).returns(T::Boolean)
+        }
         def single_use_in_project_index?(namespace, name)
           return false unless project_index
 
-          identifier = namespace.identifier if namespace.is_a?(RuboCop::AST::ClassNode) ||
-                                               namespace.is_a?(RuboCop::AST::ModuleNode)
-          return false if identifier.nil?
-
-          declaration = resolve_constant_in_index(identifier)
+          declaration = resolve_constant_in_index(namespace.identifier)
           return false unless declaration.is_a?(Rubydex::Namespace)
 
           method = declaration.member("#{name}()")
