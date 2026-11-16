@@ -284,6 +284,22 @@ RSpec.describe Homebrew::Cleanup do
         .to output("Warning: untrusted tap\n").to_stderr
     end
 
+    it "warns once about an untrusted formula with several cached API sources" do
+      cache_files = %w[abc123 def456].map do |git_head|
+        HOMEBREW_CACHE/"api-source/thirdparty/homebrew-foo/#{git_head}/Formula/untrusted.rb"
+      end
+      cache_files.each do |cache_file|
+        cache_file.dirname.mkpath
+        cache_file.write "cached"
+      end
+
+      allow(Formulary).to receive(:factory).with("thirdparty/homebrew-foo/untrusted")
+                                           .and_raise(Homebrew::UntrustedTapError, "untrusted tap")
+
+      expect { cleanup.cleanup_cache(cache_files.map { |path| { path:, type: :api_source } }) }
+        .to output("Warning: untrusted tap\n").to_stderr
+    end
+
     context "when it can't remove a keg" do
       let(:formula_zero_dot_one) { Class.new(Testball) { version "0.1" }.new }
       let(:formula_zero_dot_two) { Class.new(Testball) { version "0.2" }.new }
@@ -923,12 +939,27 @@ RSpec.describe Homebrew::Cleanup do
   end
 
   describe "::cleanup_cache" do
-    context "with cask cache names", :cask do
+    context "with cask cache names", :cask, :trust_store do
       before do
         Cask::Cache.path.mkpath
       end
 
       test_each([false, true]) do |dry_run|
+        it "preserves downloads for untrusted casks with dry_run=#{dry_run}" do
+          ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+          tap = Tap.fetch("thirdparty", "foo")
+          tap.cask_dir.mkpath
+          (tap.cask_dir/"untrusted-cask.rb").write 'raise "untrusted cask evaluated"'
+          download = Cask::Cache.path/"untrusted-cask--1.0.zip"
+          FileUtils.touch download
+
+          described_class.new(dry_run:).cleanup_cache
+
+          expect(download).to exist
+        ensure
+          FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+        end
+
         it "does not evaluate cask source in cache names with dry_run=#{dry_run}" do
           [
             'cask "cache-name" do HOMEBREW_CACHE.join("evaluated").write("yes") end',
@@ -1268,9 +1299,32 @@ RSpec.describe Homebrew::Cleanup do
       expect(source_file).not_to exist
     end
 
-    context "with formula cache names", :no_api do
+    context "with formula cache names", :no_api, :trust_store do
       def cleanup_cache_file(cache_file, dry_run:)
         described_class.new(dry_run:).cleanup_cache([{ path: cache_file, type: nil }], cleanup_unreferenced: false)
+      end
+
+      test_each([false, true].product(%w[
+        untrusted--1.0.tar.gz
+        untrusted_bottle_manifest--1.0.bottle_manifest.json
+        api-source/thirdparty/homebrew-foo/abc123/Formula/untrusted.rb
+      ])) do |(dry_run, name)|
+        it "preserves untrusted formula cache #{name} with dry_run=#{dry_run}" do
+          ENV["HOMEBREW_REQUIRE_TAP_TRUST"] = "1"
+          tap = Tap.fetch("thirdparty", "foo")
+          tap.formula_dir.mkpath
+          (tap.formula_dir/"untrusted.rb").write 'raise "untrusted formula evaluated"'
+          (HOMEBREW_CELLAR/"untrusted/1.0").mkpath
+          cache_file = HOMEBREW_CACHE/name
+          cache_file.dirname.mkpath
+          FileUtils.touch cache_file
+
+          described_class.new(dry_run:).cleanup_cache
+
+          expect(cache_file).to exist
+        ensure
+          FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"thirdparty"
+        end
       end
 
       test_each([false, true].product(%w[
