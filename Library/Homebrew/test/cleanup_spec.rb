@@ -485,6 +485,15 @@ RSpec.describe Homebrew::Cleanup do
 
           expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
         end
+
+        it "keeps a formula whose keg is installed under an alias" do
+          bar = installed_formula("bar", poured: true)
+          allow(bar.any_installed_keg).to receive(:name).and_return("bar-alias")
+          installed_formulae(bar)
+          required_by_installed_dependents(bar)
+
+          expect { described_class.autoremove(dry_run: true) }.not_to output.to_stdout
+        end
       end
 
       context "when a formula is in `HOMEBREW_NO_CLEANUP_FORMULAE`" do
