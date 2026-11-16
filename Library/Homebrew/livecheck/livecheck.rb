@@ -438,7 +438,9 @@ module Homebrew
           version_info[:meta][:throttle] = livecheck_throttle if livecheck_throttle
           version_info[:meta][:throttle_days] = livecheck_throttle_days if livecheck_throttle_days
 
-          version_info[:content] = strategy_data[:content] if strategy_data[:content] && strategy_name == "Pypi"
+          if strategy_data[:content] && %w[Crate Pypi].include?(strategy_name)
+            version_info[:content] = strategy_data[:content]
+          end
         end
 
         return version_info
