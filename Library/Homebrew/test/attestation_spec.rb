@@ -865,6 +865,12 @@ RSpec.describe Homebrew::Attestation do
     # Swaps the case of one letter of a Base64 string: still valid Base64 for different bytes.
     def corrupt(base64) = base64.sub(/[a-z]/i, &:swapcase)
 
+    def corrupt_signature(base64)
+      bytes = Base64.strict_decode64(base64)
+      bytes.setbyte(-1, bytes.bytes.fetch(-1) ^ 1)
+      Base64.strict_encode64(bytes)
+    end
+
     before do
       # Verification must never make a request.
       [[TCPSocket, :new], [TCPSocket, :open], [Socket, :tcp]].each do |socket_class, method|
@@ -896,6 +902,10 @@ RSpec.describe Homebrew::Attestation do
                  "backfill_signatures.yml@refs/heads/main"
 
       expect(verified_digests("backfill", digest, workflow)).to include(digest)
+    end
+
+    it "accepts an uppercase expected SHA-256" do
+      expect(verified_digests("publish-commit-bottles", digest.upcase, workflow)).to include(digest)
     end
 
     it "returns the time the transparency log recorded the signature" do
@@ -938,12 +948,19 @@ RSpec.describe Homebrew::Attestation do
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
-    it "rejects a tampered log time without quoting the signature bytes the gem reports" do
+    it "rejects a tampered log time without quoting signature bytes" do
       log_entry(bundle)["integratedTime"] = (log_entry(bundle).fetch("integratedTime").to_i + 1).to_s
 
       expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError,
-                        "attestation verification failed: Sigstore::Error::InvalidSignature")
+                        "attestation verification failed: invalid inclusion promise")
+    end
+
+    it "rejects whitespace in the signed log time" do
+      log_entry(bundle)["integratedTime"] = " #{log_entry(bundle).fetch("integratedTime")}"
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
     it "rejects a log time that the log has not signed" do
@@ -981,13 +998,396 @@ RSpec.describe Homebrew::Attestation do
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
     end
 
-    it "names the opt-out when verification fails an installation" do
-      allow(fake_bottle).to receive(:name).and_return("fakebottle")
-      allow(described_class).to receive(:check_formula_attestation)
-        .and_raise(Homebrew::Attestation::InvalidAttestationError)
+    test_each(%w[2.13.0 2.14.0 2.18.0 2.19.0 2.19.1 2.19.2.pre]) do |json_version|
+      it "refuses JSON #{json_version} before parsing untrusted input" do
+        stub_const("JSON::VERSION", json_version)
+        allow(JSON).to receive(:parse).and_raise("untrusted input reached the parser")
 
-      expect { Utils::Attestation.check_attestation(fake_bottle, quiet: true) }
-        .to raise_error(CannotInstallFormulaError, /set `HOMEBREW_NO_VERIFY_ATTESTATIONS=1`\.$/)
+        expect { described_class.verify_bundle('{"%%":1,"%%":2}', digest, workflow) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /requires JSON >= 2\.19\.2/)
+      end
+    end
+
+    test_each(%w[2.19.2 2.20.0 3.0.0 3.1.0]) do |json_version|
+      it "allows verification with JSON #{json_version}" do
+        stub_const("JSON::VERSION", json_version)
+
+        expect(verified_digests("publish-commit-bottles", digest, workflow)).to include(digest)
+      end
+    end
+
+    it "reports unexpected exceptions by class without their message" do
+      require "attestation/verifier"
+      allow(Homebrew::Attestation::Verifier).to receive(:verify).and_raise(ArgumentError, "signature bytes")
+      error = begin
+        described_class.verify_bundle(JSON.generate(bundle), digest, workflow)
+      rescue Homebrew::Attestation::InvalidAttestationError => e
+        e
+      end
+
+      expect(error).to have_attributes(
+        message: "attestation verification failed: ArgumentError",
+        cause:   nil,
+      )
+    end
+
+    context "with individual verification checks" do
+      let(:verifier) { Homebrew::Attestation::Verifier }
+      let(:entry) { verifier.parse_bundle(JSON.generate(bundle)).log_entry }
+      let(:leaf) do
+        OpenSSL::X509::Certificate.new(
+          Base64.strict_decode64(bundle.fetch("verificationMaterial").fetch("certificate").fetch("rawBytes")),
+        )
+      end
+      let(:issuer) { verifier.verify_certificate(leaf, time).fetch(1) }
+
+      def proof = entry.inclusion_proof
+      def body = entry.body
+      def payload = Base64.strict_decode64(bundle.fetch("dsseEnvelope").fetch("payload"))
+      def signature = Base64.strict_decode64(envelope_signature(bundle).fetch("sig"))
+      def time = Time.at(entry.integrated_time).utc
+      def key_id = entry.log_id
+      def key = verifier.trusted_key(verifier.trusted_root.transparency_logs, key_id, time)
+
+      before { require "attestation/verifier" }
+
+      context "when JSON permits duplicate keys by default" do
+        before do
+          allow(JSON).to receive(:parse).and_wrap_original do |parse, source, **options|
+            parse.call(source, allow_duplicate_key: true, **options)
+          end
+        end
+
+        test_each(%w[mediaType integratedTime]) do |field|
+          it "rejects a duplicate #{field} in the bundle" do
+            duplicate = JSON.generate(bundle).sub(%Q("#{field}":), %Q("#{field}":null,"#{field}":))
+
+            expect { described_class.verify_bundle(duplicate, digest, workflow) }
+              .to raise_error(Homebrew::Attestation::InvalidAttestationError,
+                              "attestation verification failed: JSON::ParserError")
+          end
+        end
+
+        it "rejects a duplicate key with another JSON escape spelling" do
+          duplicate = JSON.generate(bundle).sub('"mediaType":', '"media\\u0054ype":null,"mediaType":')
+
+          expect { described_class.verify_bundle(duplicate, digest, workflow) }
+            .to raise_error(Homebrew::Attestation::InvalidAttestationError,
+                            "attestation verification failed: JSON::ParserError")
+        end
+
+        it "rejects duplicate keys in the trusted root" do
+          duplicate = (HOMEBREW_LIBRARY_PATH/"attestation/trusted_root.json").read.insert(1, '"tlogs":null,')
+
+          expect { verifier.parse_trusted_root(duplicate) }.to raise_error(JSON::ParserError)
+        end
+
+        it "rejects duplicate keys in the log body" do
+          expect { verifier.verify_body(body.dup.insert(1, '"kind":null,'), payload, signature, leaf) }
+            .to raise_error(JSON::ParserError)
+        end
+
+        it "rejects duplicate keys in the statement" do
+          expect { verifier.verify_statement(payload.dup.insert(1, '"_type":null,'), digest) }
+            .to raise_error(JSON::ParserError)
+        end
+
+        it "treats percent signs in duplicate keys as literal text" do
+          expect { verifier.parse_bundle('{"%%":1,"%%":2}') }
+            .to raise_error(JSON::ParserError, /duplicate key "%%"/)
+        end
+      end
+
+      test_each(%w[promise checkpoint ca missing_sct altered_sct altered_dsse log_payload log_signature
+                   log_certificate statement_type]) do |tamper|
+        it "rejects a bundle with #{tamper.tr("_", " ")}" do
+          case tamper
+          when "promise"
+            promise = log_entry(bundle).fetch("inclusionPromise")
+            promise["signedEntryTimestamp"] = corrupt_signature(promise.fetch("signedEntryTimestamp"))
+          when "checkpoint"
+            other = JSON.parse((TEST_FIXTURE_DIR/"attestation/dispatch-rebottle.json").read)
+            log_entry(bundle).fetch("inclusionProof")["checkpoint"] =
+              log_entry(other).fetch("inclusionProof").fetch("checkpoint")
+          when "ca", "missing_sct", "altered_sct"
+            if %w[missing_sct altered_sct].include?(tamper)
+              # Changing the SCT also invalidates the certificate and its log binding.
+              allow(verifier).to receive(:verify_certificate).and_return([leaf, issuer])
+              allow(verifier).to receive(:verify_body)
+            end
+            case tamper
+            when "ca" then leaf.sign(OpenSSL::PKey::EC.generate("prime256v1"), "SHA256")
+            when "missing_sct"
+              leaf.extensions = leaf.extensions.reject { |ext| ext.oid == "ct_precert_scts" }
+            when "altered_sct"
+              leaf.extensions = leaf.extensions.map do |ext|
+                next ext if ext.oid != "ct_precert_scts"
+
+                bytes = ext.value_der.dup
+                bytes.setbyte(-1, bytes.bytes.fetch(-1) ^ 1)
+                OpenSSL::X509::Extension.new(ext.oid, bytes)
+              end
+            end
+            leaf.tbs_bytes
+            bundle.fetch("verificationMaterial").fetch("certificate")["rawBytes"] =
+              Base64.strict_encode64(leaf.to_der)
+          when "altered_dsse"
+            envelope_signature(bundle)["sig"] = corrupt_signature(envelope_signature(bundle).fetch("sig"))
+            allow(verifier).to receive(:verify_body) # The log also binds the signature.
+          when "log_payload", "log_signature", "log_certificate"
+            # Isolate the binding check from the log signatures covering the body.
+            allow(verifier).to receive_messages(verify_promise: nil, verify_inclusion: nil)
+            logged = JSON.parse(body)
+            case tamper
+            when "log_payload" then logged.fetch("spec").fetch("payloadHash")["value"] = "0" * 64
+            when "log_signature" then logged.fetch("spec").fetch("signatures").fetch(0)["signature"] =
+                                        Base64.strict_encode64("other")
+            when "log_certificate" then logged.fetch("spec").fetch("signatures").fetch(0)["verifier"] =
+                                          Base64.strict_encode64("other")
+            end
+            log_entry(bundle)["canonicalizedBody"] = Base64.strict_encode64(JSON.generate(logged))
+          when "statement_type"
+            statement = JSON.parse(payload).merge("_type" => "https://in-toto.io/Statement/v0.1")
+            bundle.fetch("dsseEnvelope")["payload"] = Base64.strict_encode64(JSON.generate(statement))
+          end
+
+          expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+            .to raise_error(Homebrew::Attestation::InvalidAttestationError)
+        end
+      end
+
+      it "rejects a bundle with another OIDC issuer" do
+        # Changing the issuer also invalidates the certificate, SCT and log binding.
+        allow(verifier).to receive_messages(verify_certificate: [leaf, issuer], verify_sct: nil, verify_body: nil)
+        replace_issuer("1.3.6.1.4.1.57264.1.1", "https://example.com")
+        leaf.tbs_bytes
+        certificate_der = leaf.to_der
+        expect(OpenSSL::X509::Certificate.new(certificate_der).extensions)
+          .to include(have_attributes(oid: "1.3.6.1.4.1.57264.1.1", value_der: "https://example.com"))
+        bundle.fetch("verificationMaterial").fetch("certificate")["rawBytes"] =
+          Base64.strict_encode64(certificate_der)
+
+        expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError,
+                          "attestation verification failed: OIDC issuer does not match")
+      end
+
+      it "rejects a proof size not signed by the checkpoint" do
+        inclusion = log_entry(bundle).fetch("inclusionProof")
+        inclusion["treeSize"] = (inclusion.fetch("treeSize").to_i + 1).to_s
+
+        expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /checkpoint/)
+      end
+
+      it "rejects a bad inclusion promise signature" do
+        promise = entry.inclusion_promise.dup
+        promise.setbyte(-1, promise.bytes.fetch(-1) ^ 1)
+
+        expect { verifier.verify_promise(entry.with(inclusion_promise: promise), key) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /inclusion promise/)
+      end
+
+      it "rejects an inclusion proof for another root" do
+        expect { verifier.verify_inclusion(body, proof.with(encoded_root_hash: Base64.strict_encode64("x" * 32))) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /inclusion proof/)
+      end
+
+      it "rejects a signed checkpoint for another root" do
+        expect do
+          verifier.verify_checkpoint(proof.with(encoded_root_hash: Base64.strict_encode64("x" * 32)), key_id, key)
+        end
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /checkpoint/)
+      end
+
+      it "rejects a signed checkpoint for another tree size" do
+        expect { verifier.verify_checkpoint(proof.with(tree_size: proof.tree_size + 1), key_id, key) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /checkpoint/)
+      end
+
+      it "rejects a bad checkpoint signature" do
+        checkpoint = proof.checkpoint.sub(/(\S+)\n\z/) do
+          "#{corrupt_signature(Regexp.last_match(1))}\n"
+        end
+
+        expect { verifier.verify_checkpoint(proof.with(checkpoint:), key_id, key) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /checkpoint/)
+      end
+
+      it "rejects a certificate signed by another CA" do
+        leaf.sign(OpenSSL::PKey::EC.generate("prime256v1"), "SHA256")
+
+        expect { verifier.verify_certificate(leaf, time) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /Fulcio/)
+      end
+
+      it "rejects a certificate outside its validity period" do
+        expect { verifier.verify_certificate(leaf, leaf.not_after + 1) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /signing time/)
+      end
+
+      it "requires digital signature key usage" do
+        leaf.extensions = leaf.extensions.reject { |ext| ext.oid == "keyUsage" }
+
+        expect { verifier.verify_certificate(leaf, time) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /digital signature/)
+      end
+
+      it "requires code signing extended key usage" do
+        leaf.extensions = leaf.extensions.reject { |ext| ext.oid == "extendedKeyUsage" }
+
+        expect { verifier.verify_certificate(leaf, time) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /code signing/)
+      end
+
+      it "verifies the SCT when the precertificate has a stale DER encoding" do
+        precertificate = leaf.dup
+        allow(leaf).to receive(:dup).and_return(precertificate)
+        allow(precertificate).to receive(:to_der).and_return(leaf.to_der)
+
+        expect { verifier.verify_sct(leaf, issuer, time) }.not_to raise_error
+      end
+
+      it "requires an embedded SCT" do
+        trusted_issuer = issuer
+        leaf.extensions = leaf.extensions.reject { |ext| ext.oid == "ct_precert_scts" }
+
+        expect { verifier.verify_sct(leaf, trusted_issuer, time) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /missing SCT/)
+      end
+
+      it "rejects an altered SCT signature" do
+        trusted_issuer = issuer
+        leaf.extensions = leaf.extensions.map do |ext|
+          next ext if ext.oid != "ct_precert_scts"
+
+          bytes = ext.value_der.dup
+          bytes.setbyte(-1, bytes.bytes.fetch(-1) ^ 1)
+          OpenSSL::X509::Extension.new(ext.oid, bytes)
+        end
+
+        expect { verifier.verify_sct(leaf, trusted_issuer, time) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /SCT signature/)
+      end
+
+      def replace_issuer(issuer_extension, issuer_url)
+        value = if issuer_extension == "1.3.6.1.4.1.57264.1.8"
+          OpenSSL::ASN1::UTF8String.new(issuer_url).to_der
+        else
+          issuer_url
+        end
+        leaf.extensions = leaf.extensions.reject { |extension| extension.oid.start_with?("1.3.6.1.4.1.57264.1.") } +
+                          [OpenSSL::X509::Extension.new(issuer_extension, value)]
+      end
+
+      test_each(%w[1.3.6.1.4.1.57264.1.1 1.3.6.1.4.1.57264.1.8]) do |issuer_extension|
+        it "accepts the exact GitHub Actions issuer in #{issuer_extension}" do
+          replace_issuer(issuer_extension, Homebrew::Attestation::GITHUB_ACTIONS_ISSUER)
+
+          expect { verifier.verify_identity(leaf, workflow) }.not_to raise_error
+        end
+      end
+
+      test_each(%w[1.3.6.1.4.1.57264.1.1 1.3.6.1.4.1.57264.1.8].product(%w[
+        https://example.com
+        https://token.actions.githubusercontent.com.example.com
+        https://token.actions.githubusercontent.com@example.com
+        https://example.com/https://token.actions.githubusercontent.com
+        https://token.actions.githubusercontent.com/extra
+      ])) do |(issuer_extension, issuer_url)|
+        it "rejects the issuer #{issuer_url} in #{issuer_extension}" do
+          replace_issuer(issuer_extension, issuer_url)
+
+          expect { verifier.verify_identity(leaf, workflow) }
+            .to raise_error(Homebrew::Attestation::InvalidAttestationError, /OIDC issuer/)
+        end
+      end
+
+      it "requires an exact workflow URI" do
+        expect { verifier.verify_identity(leaf, "#{workflow}/extra") }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /SANs/)
+      end
+
+      it "rejects a DSSE signature over another payload" do
+        expect { verifier.verify_dsse(leaf, "#{payload} ", signature) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /DSSE signature/)
+      end
+
+      it "rejects a log body for another envelope" do
+        expect { verifier.verify_body(body, "#{payload} ", signature, leaf) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /log body/)
+      end
+
+      it "requires an in-toto v1 statement" do
+        statement = JSON.parse(payload).merge("_type" => "https://in-toto.io/Statement/v0.1")
+
+        expect { verifier.verify_statement(JSON.generate(statement), digest) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /in-toto v1/)
+      end
+
+      test_each([:tlogs, :ctlogs, :certificateAuthorities].product([:start, :end])) do |(kind, boundary)|
+        it "requires #{kind} #{boundary} to cover the integrated time" do
+          root = JSON.parse((HOMEBREW_LIBRARY_PATH/"attestation/trusted_root.json").read, symbolize_names: true)
+          root.fetch(kind).each do |authority|
+            period = if kind == :certificateAuthorities
+              authority.fetch(:validFor)
+            else
+              authority.fetch(:publicKey).fetch(:validFor)
+            end
+            period[boundary] = (time + ((boundary == :start) ? 1 : -1)).iso8601
+          end
+          trusted_root = verifier.parse_trusted_root(JSON.generate(root))
+          allow(verifier).to receive(:trusted_root).and_return(trusted_root)
+
+          expect do
+            if kind == :certificateAuthorities
+              verifier.verify_certificate(leaf, time)
+            else
+              log_keys = if kind == :tlogs
+                trusted_root.transparency_logs
+              else
+                trusted_root.certificate_transparency_logs
+              end
+              verifier.trusted_key(log_keys, log_keys.fetch(-1).log_id, time)
+            end
+          end.to raise_error(Homebrew::Attestation::InvalidAttestationError)
+        end
+      end
+
+      it "rejects log integers outside canonical JSON precision" do
+        expect { verifier.log_integer((2**53).to_s) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /out of range/)
+      end
+
+      it "rejects an unknown log key ID" do
+        expect { verifier.trusted_key(verifier.trusted_root.transparency_logs, "x" * 32, time) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /no trusted/)
+      end
+
+      it "requires the expected subject digest" do
+        expect { verifier.verify_statement(payload, "0" * 64) }
+          .to raise_error(Homebrew::Attestation::InvalidAttestationError, /subjects matches/)
+      end
+    end
+
+    test_each(%w[shape parsing verification]) do |failure|
+      it "names the opt-out once when #{failure} fails an installation" do
+        allow(fake_bottle).to receive(:name).and_return("fakebottle")
+        allow(described_class).to receive(:check_formula_attestation) do
+          input = case failure
+          when "shape" then "{}"
+          when "parsing" then "{"
+          else JSON.generate(bundle)
+          end
+          described_class.verify_bundle(input, "0" * 64, workflow)
+        end
+
+        expect { Utils::Attestation.check_attestation(fake_bottle, quiet: true) }
+          .to raise_error(CannotInstallFormulaError) { |error|
+            expect(error.message.scan("HOMEBREW_NO_VERIFY_ATTESTATIONS=1"))
+              .to eq(["HOMEBREW_NO_VERIFY_ATTESTATIONS=1"])
+          }
+      end
     end
   end
 end
