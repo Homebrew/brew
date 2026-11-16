@@ -22,6 +22,10 @@ module PyPI
   class Package
     include Utils::Output::Mixin
 
+    # The Python formula used to resolve package metadata.
+    sig { params(python_name: String).void }
+    attr_writer :python_name
+
     sig { params(package_string: String, is_url: T::Boolean, python_name: String, resource: T.nilable(Resource)).void }
     def initialize(package_string, is_url: false, python_name: "python", resource: nil)
       @pypi_info = T.let(nil, T.nilable(T::Array[String]))
@@ -272,14 +276,7 @@ module PyPI
       missing_dependencies.each { |dep| Formula[dep].ensure_installed! }
     end
 
-    python_deps = formula.deps
-                         .select { |d| d.name.match?(/^python(@.+)?$/) }
-                         .map(&:to_formula)
-                         .sort_by(&:version)
-                         .reverse
-    python_name = (python_deps.find(&:any_version_installed?) || python_deps.first)&.name || "python"
-
-    main_package = self.main_package(formula, package_name:, version:, python_name:)
+    main_package = self.main_package(formula, package_name:, version:)
 
     if main_package.nil?
       odie "The main package was skipped but no PyPI `extra_packages` were provided." if extra_packages.blank?
@@ -293,6 +290,14 @@ module PyPI
           performed. Please update its URL manually."
       end
     end
+
+    python_deps = formula.deps
+                         .select { |d| d.name.match?(/^python(@.+)?$/) }
+                         .map(&:to_formula)
+                         .sort_by(&:version)
+                         .reverse
+    python_name = (python_deps.find(&:any_version_installed?) || python_deps.first)&.name || "python"
+    main_package.python_name = python_name if main_package
 
     extra_packages = Array(extra_packages).map { |p| Package.new p }
     exclude_packages = Array(exclude_packages).map { |p| Package.new p }
@@ -320,9 +325,9 @@ module PyPI
     end
 
     test_resources, non_test_resources = formula.resources.reject(&:livecheck_defined?).partition(&:test?)
-    non_pypi_resource_names = non_test_resources.filter_map do |resource|
-      resource.name unless resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
-    end.to_set
+    non_pypi_resource_names = non_test_resources.reject do |resource|
+      resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
+    end.to_set(&:name)
     test_resources = test_resources.to_set(&:name)
 
     existing_resources_by_name = formula.resources.to_h { |resource| [resource.name, resource] }
