@@ -196,14 +196,12 @@ module Cask
     # All aliases for the cask.
     sig { returns(T::Array[String]) }
     def aliases
-      @aliases ||= T.let(
-        if (t = tap)
-          t.cask_alias_reverse_table.fetch(full_token, []).map { ::Utils.name_from_full_name(it) }
-        else
-          []
-        end,
-        T.nilable(T::Array[String]),
-      )
+      @aliases ||= T.let(nil, T.nilable(T::Array[String]))
+      @aliases ||= if (t = tap)
+        t.cask_alias_reverse_table.fetch(full_token, []).map { ::Utils.name_from_full_name(it) }
+      else
+        []
+      end
     end
 
     sig { params(config: Config).void }
