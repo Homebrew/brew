@@ -223,6 +223,8 @@ RSpec.describe Homebrew::Install do
       end.to output(<<~EOS).to_stdout
         ==> Would upgrade 1 formula:
         keg-only 1.0 -> 2.0
+        ==> 1 homebrew/core formula that would build from source
+        keg-only
       EOS
     end
 
@@ -242,6 +244,8 @@ RSpec.describe Homebrew::Install do
       end.to output(<<~EOS).to_stdout
         ==> Would reinstall 1 formula:
         installed 2.0
+        ==> 1 homebrew/core formula that would build from source
+        installed
       EOS
     end
 
@@ -272,8 +276,46 @@ RSpec.describe Homebrew::Install do
         end.to output(<<~EOS).to_stdout
           ==> Would install 1 dependency for requested:
           dependency 1.0
+          ==> 1 homebrew/core formula that would build from source
+          dependency
         EOS
       end
+    end
+
+    it "lists bottle sizes and source builds in the dry-run plan" do
+      formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/testball-0.2.tar.gz"
+      end
+      bottled_dependency = formula("bottled-dependency") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/bottled-dependency-1.0.tar.gz"
+      end
+      source_dependency = formula("source-dependency") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/source-dependency-1.0.tar.gz"
+      end
+      allow(formula).to receive(:bottle).and_return(instance_double(Bottle, fetch_tab: nil, bottle_size: 500))
+      allow(bottled_dependency).to receive(:bottle).and_return(instance_double(Bottle, compatible_locations?: true))
+      installer = FormulaInstaller.new(formula)
+      allow(installer).to receive_messages(
+        pour_bottle?:         true,
+        compute_dependencies: [bottled_dependency, source_dependency].map do |dependency|
+          instance_double(Dependency, to_formula: dependency)
+        end,
+      )
+
+      expect do
+        described_class.install_formulae([installer], dry_run: true)
+      end.to output(<<~EOS).to_stdout
+        ==> Would install 1 formula:
+        testball 0.2 (500B)
+        ==> Would install 2 dependencies for testball:
+        bottled-dependency  1.0
+        source-dependency   1.0
+        ==> 1 homebrew/core formula that would build from source
+        source-dependency
+      EOS
     end
 
     it "does not describe installing the same version as an upgrade" do
@@ -291,6 +333,8 @@ RSpec.describe Homebrew::Install do
       end.to output(<<~EOS).to_stdout
         ==> Would install 1 formula:
         current 2.0
+        ==> 1 homebrew/core formula that would build from source
+        current
       EOS
     end
 
@@ -316,6 +360,8 @@ RSpec.describe Homebrew::Install do
         end.to output(<<~EOS).to_stdout
           ==> Would upgrade 1 formula:
           multiple #{optlinked ? "1.9" : "1.10"} -> 2.0
+          ==> 1 homebrew/core formula that would build from source
+          multiple
         EOS
       end
     end
@@ -333,6 +379,8 @@ RSpec.describe Homebrew::Install do
       end.to output(<<~EOS).to_stdout
         ==> Would install 1 formula:
         stale 2.0
+        ==> 1 homebrew/core formula that would build from source
+        stale
       EOS
     end
 
@@ -355,6 +403,8 @@ RSpec.describe Homebrew::Install do
         end.to output(<<~EOS).to_stdout
           ==> Would install 1 formula:
           incomplete 2.0
+          ==> 1 homebrew/core formula that would build from source
+          incomplete
         EOS
       end
 
@@ -380,6 +430,8 @@ RSpec.describe Homebrew::Install do
         end.to output(<<~EOS).to_stdout
           ==> Would upgrade 1 formula:
           mixed 1.0 -> 2.0
+          ==> 1 homebrew/core formula that would build from source
+          mixed
         EOS
       end
     end

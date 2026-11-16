@@ -558,13 +558,7 @@ module Homebrew
         summary.disabled.concat(formulae.filter_map do |formula|
           formula.full_specified_name if formula.disabled?
         end)
-        summary.source_build_formulae.concat(formulae_installer.filter_map do |formula_installer|
-          formula = formula_installer.formula
-          next unless formula.core_formula?
-          next if formula_installer.pour_bottle?
-
-          formula.full_specified_name
-        end)
+        summary.source_build_formulae.concat(Install.source_build_formulae(formulae_installer))
       end
 
       sig { params(dry_run: T::Boolean, show_upgrade_summary: T::Boolean).void }
@@ -618,25 +612,18 @@ module Homebrew
           "#{deprecate_disable_count} Deprecated or disabled #{Utils.pluralize("package", deprecate_disable_count)}",
           deprecate_disable_summary,
         )
-        source_build_count = summary.source_build_formulae.uniq.count
-        if dry_run
-          show_final_upgrade_summary_section(
-            "#{source_build_count} homebrew/core " \
-            "#{Utils.pluralize("formula", source_build_count)} that would build from source",
-            summary.source_build_formulae,
-          )
-        else
-          show_final_upgrade_summary_section(
-            "#{source_build_count} homebrew/core #{Utils.pluralize("formula", source_build_count)} built from source",
-            summary.source_build_formulae,
-          )
-        end
+        show_final_upgrade_summary_section(
+          Install.source_build_heading(summary.source_build_formulae.uniq.count, dry_run:),
+          summary.source_build_formulae,
+        )
       end
 
       sig { params(formulae: T::Array[Formula], include_sizes: T::Boolean).returns(T::Array[VersionChange]) }
       def formula_version_changes(formulae, include_sizes: false)
         formulae.map do |formula|
-          size = formula_upgrade_size(formula) if include_sizes
+          if include_sizes && args.build_from_source_formulae.exclude?(formula.name)
+            size = Install.bottle_download_size(formula, debug: args.debug?)
+          end
           if formula.optlinked?
             old_version = Keg.new(formula.opt_prefix).version
             new_version = formula_upgrade_display_version(formula, old_version)
@@ -726,11 +713,6 @@ module Homebrew
                                                                   include_sizes: dry_run)
         dependent_formulae = context.dependants.upgradeable.dup
         planned_dependent_version_changes = formula_version_changes(dependent_formulae, include_sizes: dry_run)
-        if dry_run
-          record_formula_upgrade_summary(context,
-                                         version_changes:           planned_formula_version_changes,
-                                         dependent_version_changes: planned_dependent_version_changes)
-        end
         if !args.no_ask? && dry_run && args.named.present? &&
            Install.formulae_ask_prompt_needed?(context.formulae_installer, context.dependants)
           @ask_prompt_required = true
@@ -775,7 +757,12 @@ module Homebrew
           skip_formula_names:
         )
 
-        unless dry_run
+        if dry_run
+          record_formula_upgrade_summary(context,
+                                         formulae_installer:        upgraded_formula_installers,
+                                         version_changes:           planned_formula_version_changes,
+                                         dependent_version_changes: planned_dependent_version_changes)
+        else
           @upgraded_formulae.concat(upgraded_formula_installers.map(&:formula) + upgraded_dependent_formulae)
                             .uniq!(&:full_name)
           upgraded_formulae_by_identity = T.let({}.compare_by_identity, T::Hash[Formula, T::Boolean])
@@ -999,19 +986,6 @@ module Homebrew
         return "latest HEAD" if latest_head_version.to_s == old_version.to_s
 
         latest_head_version.to_s
-      end
-
-      sig { params(formula: Formula).returns(T.nilable(String)) }
-      def formula_upgrade_size(formula)
-        return if args.build_from_source_formulae.include?(formula.name)
-
-        bottle = formula.bottle
-        return unless bottle
-
-        bottle.fetch_tab(quiet: !args.debug?)
-        return unless (download_size = bottle.bottle_size)
-
-        Formatter.disk_usage_readable(download_size.to_i)
       end
     end
   end

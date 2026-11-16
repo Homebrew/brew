@@ -359,9 +359,9 @@ module Homebrew
         return [] if formula_installers.empty?
 
         if dry_run
-          groups = formula_installers.reject(&:only_deps?).map(&:formula).group_by do |formula|
-            installed_version = Upgrade.installed_version(formula) if dry_run_action == "install"
-            if installed_version && installed_version != formula.pkg_version
+          groups = formula_installers.reject(&:only_deps?).group_by do |fi|
+            installed_version = Upgrade.installed_version(fi.formula) if dry_run_action == "install"
+            if installed_version && installed_version != fi.formula.pkg_version
               "upgrade"
             else
               dry_run_action
@@ -370,11 +370,13 @@ module Homebrew
           groups.keys.sort.each do |action|
             group = groups.fetch(action)
             ohai "Would #{action} #{Utils.pluralize("formula", group.count, include_count: true)}:"
-            puts Formatter.version_changes(group.map do |formula|
+            puts Formatter.version_changes(group.map do |fi|
+              formula = fi.formula
+              size = bottle_download_size(formula, debug: fi.debug?) if fi.pour_bottle?
               if action == "upgrade"
-                Upgrade.formula_version_change(formula)
+                Upgrade.formula_version_change(formula, size:)
               else
-                VersionChange.new(name: formula.full_specified_name, new_version: formula.pkg_version.to_s)
+                VersionChange.new(name: formula.full_specified_name, new_version: formula.pkg_version.to_s, size:)
               end
             end)
           end
@@ -385,6 +387,11 @@ module Homebrew
             print_dry_run_dependencies(fi.formula, fi.compute_dependencies) do |dependency|
               Upgrade.formula_version_change(dependency)
             end
+          end
+          source_builds = source_build_formulae(formula_installers)
+          if source_builds.any?
+            ohai source_build_heading(source_builds.count)
+            puts source_builds
           end
           return []
         end
@@ -437,6 +444,40 @@ module Homebrew
         else
           print_dry_run_dependency_summary(summary, formula:)
         end
+      end
+
+      # The size of the bottle that would be downloaded for a formula.
+      sig { params(formula: Formula, debug: T::Boolean).returns(T.nilable(String)) }
+      def bottle_download_size(formula, debug: false)
+        bottle = formula.bottle
+        return unless bottle
+
+        bottle.fetch_tab(quiet: !debug)
+        return unless (download_size = bottle.bottle_size)
+
+        Formatter.disk_usage_readable(download_size.to_i)
+      end
+
+      # The `homebrew/core` formulae, dependencies included, that would be
+      # built from source rather than poured from a bottle.
+      sig { params(formula_installers: T::Array[FormulaInstaller]).returns(T::Array[String]) }
+      def source_build_formulae(formula_installers)
+        formula_installers.flat_map do |fi|
+          formulae = fi.only_deps? ? [] : [fi.formula]
+          formulae += fi.compute_dependencies.map(&:to_formula) unless fi.ignore_deps?
+          formulae.filter_map do |formula|
+            next unless formula.core_formula?
+            next if fi.install_bottle_for?(formula, fi.effective_build_options_for(formula))
+
+            formula.full_specified_name
+          end
+        end.uniq
+      end
+
+      sig { params(count: Integer, dry_run: T::Boolean).returns(String) }
+      def source_build_heading(count, dry_run: true)
+        "#{count} homebrew/core #{Utils.pluralize("formula", count)} " \
+          "#{dry_run ? "that would build" : "built"} from source"
       end
 
       sig { params(summary: DependencySummary, formula: T.nilable(Formula)).void }
@@ -709,39 +750,6 @@ module Homebrew
       def ask_input(action: "installation")
         Homebrew::Ask.confirm?(action:)
         nil
-      end
-
-      # Compute the total sizes (download and installed) for the given formulae.
-      sig { params(sized_formulae: T::Array[Formula], debug: T::Boolean).returns(T::Hash[Symbol, Integer]) }
-      def compute_total_sizes(sized_formulae, debug: false)
-        total_download_size  = 0
-        total_installed_size = 0
-
-        sized_formulae.each do |formula|
-          bottle = formula.bottle
-          next unless bottle
-
-          # Fetch additional bottle metadata (if necessary).
-          bottle.fetch_tab(quiet: !debug)
-
-          total_download_size  += bottle.bottle_size.to_i if bottle.bottle_size
-          total_installed_size += bottle.installed_size.to_i if bottle.installed_size
-        end
-
-        { download:  total_download_size,
-          installed: total_installed_size }
-      end
-
-      sig {
-        params(formulae_installer: T::Array[FormulaInstaller],
-               dependants:         Homebrew::Upgrade::Dependents).returns(T::Array[Formula])
-      }
-      def collect_dependencies(formulae_installer, dependants)
-        formulae_dependencies = formulae_installer.flat_map do |f|
-          [f.formula, f.compute_dependencies.flatten.grep(Dependency).flat_map(&:to_formula)]
-        end.flatten.uniq
-        formulae_dependencies.concat(dependants.upgradeable) if dependants.upgradeable
-        formulae_dependencies.uniq
       end
     end
   end

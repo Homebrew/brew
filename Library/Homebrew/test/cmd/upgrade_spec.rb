@@ -795,20 +795,79 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     end
   end
 
-  it "prints formula download sizes in dry-run upgrade summaries" do
+  it "lists bottle sizes and source builds in the dry-run plan" do
     cmd = described_class.new(["--dry-run"])
     formula = formula("testball") do
       T.bind(self, T.class_of(Formula))
       url "https://brew.sh/testball-0.2"
     end
-    bottle = instance_double(Bottle, fetch_tab: nil, bottle_size: 500)
-    keg = instance_double(Keg, version: PkgVersion.parse("0.1"), disk_usage: 1000)
+    bottled_dependency = formula("bottled-dependency") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/bottled-dependency-1.0"
+    end
+    source_dependency = formula("source-dependency") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/source-dependency-1.0"
+    end
+    old_keg = HOMEBREW_CELLAR/"testball/0.1"
+    old_keg.mkpath
+    allow(formula).to receive_messages(optlinked?: true, opt_prefix: old_keg,
+                                       bottle: instance_double(Bottle, fetch_tab: nil, bottle_size: 500))
+    allow(bottled_dependency).to receive(:bottle).and_return(instance_double(Bottle, compatible_locations?: true))
+    installer = FormulaInstaller.new(formula)
+    allow(installer).to receive_messages(
+      pour_bottle?:         true,
+      compute_dependencies: [bottled_dependency, source_dependency].map do |dependency|
+        instance_double(Dependency, to_formula: dependency)
+      end,
+    )
+    allow(cmd).to receive(:formulae_upgrade_context).and_return(
+      Homebrew::Cmd::UpgradeCmd::FormulaeUpgradeContext.new(
+        formulae_to_install: [formula],
+        formulae_installer:  [installer],
+        dependants:          Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: []),
+      ),
+    )
 
-    allow(formula).to receive_messages(optlinked?: true, opt_prefix: HOMEBREW_PREFIX/"opt/testball", bottle:)
-    allow(Keg).to receive(:new).with(HOMEBREW_PREFIX/"opt/testball").and_return(keg)
+    expect do
+      cmd.upgrade_outdated_formulae!([])
+      cmd.show_final_upgrade_summary
+    end.to output(<<~EOS).to_stdout
+      ==> Would install 2 dependencies:
+      bottled-dependency  1.0
+      source-dependency   1.0
+      ==> Would upgrade 1 outdated package
+      testball 0.1 -> 0.2 (500B)
+      ==> 1 homebrew/core formula that would build from source
+      source-dependency
+    EOS
+  end
 
-    expect(cmd.formula_version_changes([formula], include_sizes: true))
-      .to eq([version_change("testball", "0.1", "0.2", size: "500B")])
+  it "keeps the dry-run plan when a formula's dependencies cannot be computed" do
+    cmd = described_class.new(["--dry-run"])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.2"
+    end
+    old_keg = HOMEBREW_CELLAR/"testball/0.1"
+    old_keg.mkpath
+    allow(formula).to receive_messages(optlinked?: true, opt_prefix: old_keg)
+    installer = FormulaInstaller.new(formula)
+    allow(installer).to receive(:compute_dependencies).and_raise(UnsatisfiedRequirements.new([]))
+    allow(cmd).to receive(:formulae_upgrade_context).and_return(
+      Homebrew::Cmd::UpgradeCmd::FormulaeUpgradeContext.new(
+        formulae_to_install: [formula],
+        formulae_installer:  [installer],
+        dependants:          Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: []),
+      ),
+    )
+
+    expect do
+      cmd.upgrade_outdated_formulae!([])
+      cmd.show_final_upgrade_summary
+    end
+      .to output("==> Would upgrade 1 outdated package\ntestball 0.1 -> 0.2\n").to_stdout
+      .and output("Error: testball: Unsatisfied requirements failed this build.\n").to_stderr
   end
 
   it "omits formula download sizes in dry-run source build upgrade summaries" do
