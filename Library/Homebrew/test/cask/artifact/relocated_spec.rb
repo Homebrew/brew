@@ -16,6 +16,12 @@ RSpec.describe Cask::Artifact::Relocated, :cask do
   let(:command) { NeverSudoSystemCommand }
   let(:artifact) { described_class.new(cask, "test_file.txt") }
 
+  describe "#altname_metadata_supported?" do
+    it "supports alternate name metadata only on macOS" do
+      expect(artifact.altname_metadata_supported?).to eq(OS.mac?)
+    end
+  end
+
   describe "#add_altname_metadata" do
     let(:file) { Pathname("/tmp/test_file.txt") }
     let(:altname) { Pathname("alternate_name.txt") }
@@ -24,19 +30,22 @@ RSpec.describe Cask::Artifact::Relocated, :cask do
       allow(file).to receive_messages(basename: Pathname("test_file.txt"), writable?: true, realpath: file)
     end
 
-    context "when running on Linux", :needs_linux do
+    context "when alternate name metadata is unsupported" do
+      before do
+        allow(artifact).to receive(:altname_metadata_supported?).and_return(false)
+      end
+
       it "is a no-op and does not call xattr commands" do
         expect(command).not_to receive(:run)
-        expect(command).not_to receive(:run!)
 
         artifact.add_altname_metadata(file, altname, command: command)
       end
     end
 
-    context "when running on macOS", :needs_macos do
+    context "when alternate name metadata is supported" do
       before do
-        stdout_double = instance_double(SystemCommand::Result, stdout: "")
-        allow(command).to receive(:run).and_return(stdout_double)
+        allow(artifact).to receive(:altname_metadata_supported?).and_return(true)
+        allow(command).to receive(:run).and_return(instance_double(SystemCommand::Result, stdout: ""))
         allow(command).to receive(:run!)
       end
 

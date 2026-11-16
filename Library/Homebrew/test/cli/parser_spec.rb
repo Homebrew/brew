@@ -1016,7 +1016,7 @@ RSpec.describe Homebrew::CLI::Parser do
     end
   end
 
-  describe "--cask on linux", :needs_linux do
+  describe "--cask" do
     context "without --formula switch" do
       subject(:parser) do
         described_class.new(Cmd) do
@@ -1049,7 +1049,7 @@ RSpec.describe Homebrew::CLI::Parser do
     end
   end
 
-  describe "--formula on linux", :needs_linux do
+  describe "--formula" do
     it "doesn't set --formula when not defined" do
       parser = described_class.new(Cmd)
       args = parser.parse([])

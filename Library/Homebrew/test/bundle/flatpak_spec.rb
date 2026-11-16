@@ -297,7 +297,7 @@ RSpec.describe Homebrew::Bundle::Flatpak do
       end
     end
 
-    context "when flatpak is installed", :needs_linux do
+    context "when flatpak is installed" do
       before do
         described_class.reset!
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname.new("flatpak"))

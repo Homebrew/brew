@@ -4,7 +4,7 @@
 require "cmd/services"
 require "cmd/shared_examples/args_parse"
 
-RSpec.describe Homebrew::Cmd::Services, :needs_daemon_manager do
+RSpec.describe Homebrew::Cmd::Services do
   it_behaves_like "parseable arguments"
 
   it "sets canonical subcommand names", :aggregate_failures do
@@ -38,7 +38,7 @@ RSpec.describe Homebrew::Cmd::Services, :needs_daemon_manager do
     expect(subcommand_options.call("info")["--all"]).to eq("List all managed services.")
   end
 
-  it "allows controlling services", :integration_test do
+  it "allows controlling services", :integration_test, :needs_daemon_manager do
     expect { brew "services", "list" }
       .to not_to_output.to_stderr
       .and not_to_output.to_stdout

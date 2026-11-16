@@ -5,7 +5,6 @@ require "utils/browser"
 
 require "abstract_command"
 require "fileutils"
-require "hardware"
 require "system_command"
 require "utils/git"
 
@@ -153,8 +152,6 @@ module Homebrew
           bundle_args << "--fail-fast" if args.fail_fast?
           bundle_args << "--dry-run" if args.load_only?
           bundle_args << "--profile" << args.profile if args.profile
-          bundle_args << "--tag" << "~needs_arm" unless Hardware::CPU.arm?
-          bundle_args << "--tag" << "~needs_intel" unless Hardware::CPU.intel?
           bundle_args << "--tag" << "~needs_network" unless args.online?
           bundle_args << "--tag" << "~needs_ci" unless ENV["CI"]
 
@@ -349,12 +346,12 @@ module Homebrew
         bundle_args << "--tag" << "~needs_svnadmin" unless args.online?
         bundle_args << "--tag" << "~needs_svn" unless args.online?
 
-        bundle_args << "--tag" << "~needs_macos" << "--tag" << "~cask"
+        bundle_args << "--tag" << "~needs_macos"
       end
 
       sig { params(bundle_args: T::Array[String]).returns(T::Array[String]) }
       def non_linux_bundle_args(bundle_args)
-        bundle_args << "--tag" << "~needs_linux" << "--tag" << "~needs_systemd"
+        bundle_args << "--tag" << "~needs_linux"
       end
 
       sig { params(files: T::Array[String]).returns(T::Array[String]) }
@@ -365,7 +362,7 @@ module Homebrew
 
       sig { params(files: T::Array[String]).returns(T::Array[String]) }
       def non_macos_files(files)
-        files.grep_v(%r{^test/(os/mac|cask)(/.*|_spec\.rb)$})
+        files.grep_v(%r{^test/os/mac(/.*|_spec\.rb)$})
       end
 
       sig { params(files: T::Array[String]).returns(T::Array[String]) }

@@ -88,7 +88,7 @@ RSpec.describe Cask::Pkg, :cask do
       pkg.uninstall
 
       expect(intact_symlink).to exist
-      expect(broken_symlink).not_to exist
+      expect(broken_symlink).not_to be_a_symlink
       expect(fake_dir).to exist
       expect(fake_root).not_to exist
     ensure

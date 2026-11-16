@@ -165,7 +165,7 @@ module Cask
       def create_filesystem_link(command)
         Utils.gain_permissions_mkpath(target.dirname, command:)
 
-        command.run! "/bin/ln", args: ["--no-dereference", "--force", "--symbolic", source, target],
+        command.run! "/bin/ln", args: ["-n", "-f", "-s", "--", source, target],
                                 sudo: nil
       end
 

@@ -277,7 +277,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       expect(Homebrew::Bundle::VscodeExtension.cleanup_items(described_class.dsl.entries)).to eql(%w[z])
     end
 
-    it "computes which flatpaks to uninstall", :needs_linux do
+    it "computes which flatpaks to uninstall" do
       allow_any_instance_of(Pathname).to receive(:read).and_return <<~RUBY
         flatpak 'org.gnome.Calculator'
       RUBY
@@ -522,7 +522,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
   end
 
-  context "when there are flatpaks to uninstall", :needs_linux do
+  context "when there are flatpaks to uninstall" do
     before do
       described_class.reset!
       allow_any_instance_of(Pathname).to receive(:read).and_return("")

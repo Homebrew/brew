@@ -61,7 +61,7 @@ RSpec.describe Cask::Installer, :cask do
   end
 
   before do
-    stub_const("HOMEBREW_TEMP", mktmpdir)
+    stub_const("HOMEBREW_TEMP", (HOMEBREW_TEMP/"cask").tap(&:mkpath))
     old_cask.staged_path.mkpath
     described_class.new(old_cask).save_caskfile
     Cask::Tab.create(old_cask).write

@@ -288,7 +288,7 @@ RSpec.describe Homebrew::API::FormulaStruct do
   end
 
   describe "serialize/deserialize round-trip" do
-    it "reconstructs an equivalent struct after serialize then deserialize", :needs_macos do
+    it "reconstructs an equivalent struct after serialize then deserialize" do
       bottle_tag = Utils::Bottles::Tag.from_symbol(:arm64_sequoia)
 
       original = described_class.new(
@@ -329,7 +329,7 @@ RSpec.describe Homebrew::API::FormulaStruct do
       expect(restored.stable_dependencies).to eq(original.stable_dependencies)
     end
 
-    it "serializes post-install steps", :needs_macos do
+    it "serializes post-install steps" do
       original = described_class.new(
         desc:                 "install steps test",
         homepage:             "https://example.com",

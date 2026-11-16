@@ -288,7 +288,7 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
     end
   end
 
-  test_each([:delete, *(:trash unless ENV["HOMEBREW_TESTS_COVERAGE"].nil?)]) do |directive|
+  test_each([:delete, :trash]) do |directive|
     context "when using :#{directive}" do
       let(:dir) { TEST_TMPDIR }
       let(:absolute_path) { Pathname.new("#{dir}/absolute_path") }
@@ -303,12 +303,10 @@ RSpec.shared_examples "uninstall/zap directive dispatch" do
         ENV["HOME"] = dir
         FileUtils.touch paths
 
-        allow_any_instance_of(Cask::Artifact::AbstractUninstall).to receive(:trash_paths)
-          .and_wrap_original do |method, *args, **kwargs|
-            method.call(*args, **kwargs).tap do |trashed, _|
-              FileUtils.rm_r trashed
-            end
-          end
+        allow(Cask::Utils::Trash).to receive(:trash) do |*resolved_paths, **|
+          FileUtils.rm_f resolved_paths
+          [resolved_paths.map(&:to_s), []]
+        end
       end
 
       after do

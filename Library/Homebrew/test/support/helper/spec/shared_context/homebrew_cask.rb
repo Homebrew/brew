@@ -33,8 +33,14 @@ module Cask
   end
 end
 
+if OS.linux?
+  OS::Linux::Cask::Config::ClassMethods.module_eval do
+    const_set(:DEFAULT_DIRS, ::Cask::Config::DEFAULT_DIRS.slice(*remove_const(:DEFAULT_DIRS).keys).freeze)
+  end
+end
+
 # These shared contexts starting with `when` don't make sense.
-RSpec.shared_context "Homebrew Cask", :needs_macos do # rubocop:disable RSpec/ContextWording
+RSpec.shared_context "Homebrew Cask" do # rubocop:disable RSpec/ContextWording
   T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
 
   around do |example|

@@ -48,7 +48,7 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
       .to raise_error(UsageError, /Unknown cask CI operation: unknown/)
   end
 
-  it "writes JSON-encoded cask information", :cask, :needs_macos do
+  it "writes JSON-encoded cask information", :cask do
     mktmpdir do |path|
       github_output = path/"github-output"
       ENV["GITHUB_OUTPUT"] = github_output.to_s
@@ -64,7 +64,7 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
     end
   end
 
-  it "omits empty environment values", :cask, :needs_macos do
+  it "omits empty environment values", :cask do
     mktmpdir do |path|
       github_env = path/"github-env"
       ENV["GITHUB_OUTPUT"] = (path/"github-output").to_s
@@ -76,7 +76,7 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
     end
   end
 
-  it "writes non-empty cask dependencies", :cask, :needs_macos do
+  it "writes non-empty cask dependencies", :cask do
     mktmpdir do |path|
       github_env = path/"github-env"
       ENV["GITHUB_OUTPUT"] = (path/"github-output").to_s
@@ -88,7 +88,7 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
     end
   end
 
-  it "installs a cask from its tap file rather than the API", :cask, :needs_macos do
+  it "installs a cask from its tap file rather than the API", :cask do
     allow(Homebrew::API).to receive(:cask_token?) { |token| token == "local-caffeine" }
 
     described_class.new(["install", (CoreCaskTap.instance.cask_dir/"local-caffeine.rb").to_s]).run
@@ -96,7 +96,7 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
     expect(Cask::Caskroom.path/"local-caffeine/1.2.3").to be_a_directory
   end
 
-  it "refuses to install an installed cask again", :cask, :needs_macos do
+  it "refuses to install an installed cask again", :cask do
     cask_path = (CoreCaskTap.instance.cask_dir/"local-caffeine.rb").to_s
     described_class.new(["install", cask_path]).run
 

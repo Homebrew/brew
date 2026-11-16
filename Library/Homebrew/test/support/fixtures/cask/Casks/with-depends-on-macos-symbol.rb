@@ -7,7 +7,7 @@ cask "with-depends-on-macos-symbol" do
   url "file://#{TEST_FIXTURE_DIR}/cask/caffeine.zip"
   homepage "https://brew.sh/with-depends-on-macos-symbol"
 
-  depends_on macos: MacOS.version.to_sym
+  depends_on macos: :big_sur
 
   app "Caffeine.app"
 end

@@ -124,26 +124,26 @@ RSpec.describe Homebrew::Search do
       allow(Cask::Tab).to receive(:for_cask).with(cask).and_return(tab)
     end
 
-    it "annotates deprecated casks", :needs_macos do
+    it "annotates deprecated casks" do
       allow(cask).to receive(:deprecated?).and_return(true)
       expect(described_class.search_casks(/testball/)).to contain_exactly(include("(deprecated)"))
     end
 
-    it "annotates disabled casks", :needs_macos do
+    it "annotates disabled casks" do
       allow(cask).to receive(:disabled?).and_return(true)
       expect(described_class.search_casks(/testball/)).to contain_exactly(include("(disabled)"))
     end
 
-    it "does not show a red cross for disabled casks", :needs_macos do
+    it "does not show a red cross for disabled casks" do
       allow(cask).to receive(:disabled?).and_return(true)
       expect(described_class.search_casks(/testball/).join(" ")).not_to include("#{Tty.red}✘")
     end
 
-    it "does not annotate normal casks", :needs_macos do
+    it "does not annotate normal casks" do
       expect(described_class.search_casks(/testball/)).to eq(["testball"])
     end
 
-    it "skips casks from untrusted taps", :needs_macos do
+    it "skips casks from untrusted taps" do
       allow(Cask::CaskLoader).to receive(:load_from_name).with("testball").and_raise(Homebrew::UntrustedTapError)
 
       expect(described_class.search_casks(/testball/)).to be_empty
@@ -159,7 +159,7 @@ RSpec.describe Homebrew::Search do
       expect(described_class.search_casks(/testball/)).to eq(["testball"])
     end
 
-    it "shows only the installed icon for installed casks", :needs_macos do
+    it "shows only the installed icon for installed casks" do
       allow(cask).to receive(:installed?).and_return(true)
 
       expect(described_class.search_casks(/testball/))
@@ -177,7 +177,7 @@ RSpec.describe Homebrew::Search do
       expect(HOMEBREW_CACHE/"evaluated").not_to exist
     end
 
-    it "loads tap-qualified casks by full name", :needs_macos do
+    it "loads tap-qualified casks by full name" do
       allow(Tap).to receive(:each_with_object).and_return(["thirdparty/foo/testball"])
       allow(Cask::CaskLoader).to receive(:load).with("thirdparty/foo/testball").and_return(cask)
 
@@ -248,13 +248,13 @@ RSpec.describe Homebrew::Search do
         described_class.search_descriptions("some", args)
       end
 
-      it "searches cask descriptions", :needs_macos do
+      it "searches cask descriptions" do
         expect { described_class.search_descriptions(described_class.query_regexp("ball"), args) }
           .to output(/testball: \(Test Ball\) Some test/).to_stdout
           .and not_to_output(/testball: Some test/).to_stdout
       end
 
-      it "searches cask names without descriptions", :needs_macos do
+      it "searches cask names without descriptions" do
         api_casks["testball"]["desc"] = nil
 
         expect do

@@ -127,6 +127,8 @@ RSpec.describe Cask::DSL, :cask, :no_api do
     end
 
     context "with a different arm and intel checksum" do
+      before { Homebrew::SimulateSystem.os = :macos }
+
       let(:cask) do
         Cask::Cask.new("checksum-cask") do
           sha256 arm: "imasha2arm", intel: "imasha2intel"
@@ -604,7 +606,7 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       let(:token) { "with-depends-on-macos-symbol" }
 
       it "creates a minimum MacOSRequirement" do
-        expect(cask.depends_on.macos).to eq(MacOSRequirement.new([MacOS.version.to_sym], comparator: ">="))
+        expect(cask.depends_on.macos).to eq(MacOSRequirement.new([:big_sur], comparator: ">="))
       end
     end
 
@@ -802,10 +804,13 @@ RSpec.describe Cask::DSL, :cask, :no_api do
     context "when specified multiple times" do
       let(:token) { "with-conflicts-with-multiple" }
 
-      it "merges and deduplicates all conflicts_with stanzas" do
-        os_conflict = OS.mac? ? "macos-caffeine" : "linux-caffeine"
-        expect(cask.conflicts_with[:cask])
-          .to eq(Set.new(["local-caffeine", "with-caffeine", os_conflict]))
+      test_each([:macos, :linux]) do |os|
+        it "merges and deduplicates all conflicts_with stanzas on #{os}" do
+          Homebrew::SimulateSystem.with(os:) do
+            expect(cask.conflicts_with[:cask])
+              .to eq(Set.new(["local-caffeine", "with-caffeine", "#{os}-caffeine"]))
+          end
+        end
       end
     end
 

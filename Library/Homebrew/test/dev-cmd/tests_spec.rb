@@ -23,7 +23,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
       let(:args) { ["--changed"] }
       let(:changed_file) do
         if OS.linux?
-          "Library/Homebrew/cask/cask.rb"
+          "Library/Homebrew/os/mac/xcode.rb"
         else
           "Library/Homebrew/os/linux/ld.rb"
         end
@@ -42,7 +42,7 @@ RSpec.describe Homebrew::DevCmd::Tests do
 
     context "when an explicit test only runs on another OS" do
       let(:args) { ["--only=#{test_name}"] }
-      let(:test_name) { OS.linux? ? "cask/cask" : "os/linux/ld" }
+      let(:test_name) { OS.linux? ? "os/mac/xcode" : "os/linux/ld" }
 
       it "fails instead of reporting success without running the test" do
         expect(tests).not_to receive(:system)
@@ -208,6 +208,26 @@ RSpec.describe Homebrew::DevCmd::Tests do
 
         expect(invoked_arguments).to end_with("--", "test/b_spec.rb", "test/d_spec.rb")
       end
+    end
+  end
+
+  describe "non-macOS test selection" do
+    subject(:tests) do
+      described_class.new([]).tap do |command|
+        command.singleton_class.class_eval do
+          T.bind(self, T.class_of(Homebrew::DevCmd::Tests))
+          public :non_macos_files, :non_macos_bundle_args
+        end
+      end
+    end
+
+    it "includes cask files while excluding native macOS files" do
+      expect(tests.non_macos_files(%w[test/cask/cask_spec.rb test/cask_spec.rb test/os/mac/xcode_spec.rb]))
+        .to eq(%w[test/cask/cask_spec.rb test/cask_spec.rb])
+    end
+
+    it "does not exclude the cask fixture context" do
+      expect(tests.non_macos_bundle_args([])).not_to include("~cask")
     end
   end
 

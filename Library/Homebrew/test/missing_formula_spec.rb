@@ -194,6 +194,14 @@ RSpec.describe Homebrew::MissingFormula do
   describe "::suggest_command", :cask do
     subject(:reason) { described_class.suggest_command(name, command) }
 
+    test_each([[:linux, "with-depends-on-macos-bare"], [:macos, "with-depends-on-linux-bare"]]) do |os, cask|
+      it "does not suggest installing #{cask} on #{os}" do
+        Homebrew::SimulateSystem.with(os:) do
+          expect(described_class.suggest_command(cask, "install")).to be_nil
+        end
+      end
+    end
+
     context "when installing" do
       let(:name) { "local-caffeine" }
       let(:command) { "install" }

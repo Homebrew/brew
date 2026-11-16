@@ -39,40 +39,34 @@ RSpec.describe CompilerSelector do
       expect(selector.compiler).to eq("gcc-12")
     end
 
-    it "returns gcc-11 if gcc formula offers gcc-11 on mac", :needs_macos do
-      software_spec.fails_with(:clang)
-      allow(Formulary).to receive(:factory)
-        .with("gcc")
-        .and_return(instance_double(Formula, version: Version.new("11.0")))
-      expect(selector.compiler).to eq("gcc-11")
+    test_each(["10", "11"]) do |version|
+      it "returns gcc-#{version} if the preferred GCC formula offers gcc-#{version}" do
+        software_spec.fails_with(:clang)
+        allow(Formulary).to receive(:factory)
+          .with(described_class.preferred_gcc)
+          .and_return(instance_double(Formula, version: Version.new("#{version}.0")))
+        expect(selector.compiler).to eq("gcc-#{version}")
+      end
     end
 
-    it "returns gcc-10 if gcc formula offers gcc-10 on linux", :needs_linux do
-      software_spec.fails_with(:clang)
-      allow(Formulary).to receive(:factory)
-        .with(OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA)
-        .and_return(instance_double(Formula, version: Version.new("10.0")))
-      expect(selector.compiler).to eq("gcc-10")
-    end
-
-    it "returns gcc-11 if gcc formula offers gcc-10 and fails with gcc-10 and gcc-12 on linux", :needs_linux do
+    it "returns gcc-11 if gcc formula offers gcc-10 and fails with gcc-10 and gcc-12" do
       software_spec.fails_with(:clang)
       software_spec.fails_with(gcc: "10")
       software_spec.fails_with(gcc: "12")
       allow(Formulary).to receive(:factory)
-        .with(OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA)
+        .with(described_class.preferred_gcc)
         .and_return(instance_double(Formula, version: Version.new("10.0")))
       expect(selector.compiler).to eq("gcc-11")
     end
 
-    it "returns gcc-12 if gcc formula offers gcc-11 and fails with gcc <= 11 on linux", :needs_linux do
+    it "returns gcc-12 if gcc formula offers gcc-11 and fails with gcc <= 11" do
       software_spec.fails_with(:clang)
       software_spec.fails_with(:gcc) do
         T.bind(self, CompilerFailure)
         version "11"
       end
       allow(Formulary).to receive(:factory)
-        .with(OS::LINUX_PREFERRED_GCC_COMPILER_FORMULA)
+        .with(described_class.preferred_gcc)
         .and_return(instance_double(Formula, version: Version.new("11.0")))
       expect(selector.compiler).to eq("gcc-12")
     end

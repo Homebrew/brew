@@ -83,11 +83,18 @@ module Cask
         "#{@source_string}#{target_string}"
       end
 
+      # Whether the host supports alternate name metadata.
+      sig { returns(T::Boolean) }
+      def altname_metadata_supported?
+        false
+      end
+
       # Try to make the asset searchable under the target name. Spotlight
       # respects this attribute for many filetypes, but ignores it for App
       # bundles. Alfred 2.2 respects it even for App bundles.
       sig { params(file: Pathname, altname: Pathname, command: T.class_of(SystemCommand)).returns(T.nilable(SystemCommand::Result)) }
       def add_altname_metadata(file, altname, command:)
+        return unless altname_metadata_supported?
         return if altname.to_s.casecmp(file.basename.to_s)&.zero?
 
         odebug "Adding #{ALT_NAME_ATTRIBUTE} metadata"
