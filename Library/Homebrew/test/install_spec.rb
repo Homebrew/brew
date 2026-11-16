@@ -449,6 +449,23 @@ RSpec.describe Homebrew::Install do
       expect(described_class.install_formulae([formula_installer], cleanup: false)).to eq([formula])
     end
 
+    it "reports the formulae it installs before installing any of them" do
+      first_fi = instance_double(FormulaInstaller, formula: formula("first") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end)
+      second_fi = instance_double(FormulaInstaller, formula: formula("second") do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end)
+
+      expect(Utils::Analytics).to receive(:report_formula_installs).with([first_fi, second_fi]).ordered
+      expect(described_class).to receive(:install_formula).with(first_fi, upgrade: false).ordered
+      expect(described_class).to receive(:install_formula).with(second_fi, upgrade: false).ordered
+
+      described_class.install_formulae([first_fi, second_fi], cleanup: false)
+    end
+
     it "skips a formula whose install raises and continues with the rest" do
       bad_fi = instance_double(FormulaInstaller, formula: formula("bad-bottle") do
         T.bind(self, T.class_of(Formula))

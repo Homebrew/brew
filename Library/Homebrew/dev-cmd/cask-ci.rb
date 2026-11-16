@@ -72,6 +72,7 @@ module Homebrew
           cask = load_cask(require_cask_path!(operation, cask_path))
           raise Cask::CaskError, "#{cask} is already installed." if cask.installed?
 
+          Utils::Analytics.report_cask_installs([cask])
           Cask::Installer.new(cask, verbose: args.verbose?).install
           Homebrew.messages.display_messages(force_caveats: true)
         when "snapshot"

@@ -15,10 +15,13 @@ module Utils
     INFLUX_ORG = "d81a3e6d582d485f"
     WSL_SUFFIX = " [WSL]"
     ENV_CONFIG_COMMANDS = %w[config fetch install reinstall update update-report upgrade].freeze
-    # Commands that report an event for each package they install so send them in batches.
-    BATCH_REPORTS_COMMANDS = %w[install reinstall upgrade].freeze
     # Linux limits a single `curl` argument (the request body) to 128KiB so stay well under it.
     INFLUX_MAX_BATCH_BYTES = 65_536 # 64KiB
+
+    # A package to report with `report_package_events`.
+    PackageEvent = T.type_alias do
+      { package_name: String, tap_name: String, on_request: T::Boolean, options: String }
+    end
 
     extend Utils::Output::Mixin
     extend T::Generic
@@ -53,6 +56,15 @@ module Utils
       def report_influx(measurement, tags, fields)
         return if not_this_run? || disabled?
 
+        write_influx([influx_line(measurement, tags, fields)])
+      end
+
+      sig {
+        params(measurement: Symbol,
+               tags:        T::Hash[Symbol, T.any(T::Boolean, String)],
+               fields:      T::Hash[Symbol, T.any(T::Boolean, String)]).returns(String)
+      }
+      def influx_line(measurement, tags, fields)
         # Tags are always implicitly strings and must have low cardinality.
         tags_string = tags.map { |k, v| "#{k}=#{v.to_s.gsub(/[ ,=]/) { |char| "\\#{char}" }}" }
                           .join(",")
@@ -62,29 +74,7 @@ module Utils
                               .map { |k, v| %Q(#{k}="#{v}") }
                               .join(",")
 
-        line = "#{measurement},#{tags_string} #{fields_string} #{Time.now.to_i}"
-        if (batch = @batched_influx_lines)
-          batch << line
-        else
-          write_influx([line])
-        end
-      end
-
-      # Sends the events reported in the block together when it finishes,
-      # rather than making a request for each event.
-      sig { params(_block: T.proc.void).void }
-      def batch_reports(&_block)
-        # Events reported in a nested batch are sent by the outermost one.
-        return yield if @batched_influx_lines
-
-        @batched_influx_lines = T.let([], T.nilable(T::Array[String]))
-        begin
-          yield
-        ensure
-          lines = @batched_influx_lines
-          @batched_influx_lines = nil
-          write_influx(lines) if lines
-        end
+        "#{measurement},#{tags_string} #{fields_string} #{Time.now.to_i}"
       end
 
       sig { params(lines: T::Array[String]).void }
@@ -134,19 +124,57 @@ module Utils
                on_request: T::Boolean, options: String).void
       }
       def report_package_event(measurement, package_name:, tap_name:, on_request: false, options: "")
+        report_package_events(measurement, [{ package_name:, tap_name:, on_request:, options: }])
+      end
+
+      # Reports all the packages in a single request.
+      sig { params(measurement: Symbol, packages: T::Array[PackageEvent]).void }
+      def report_package_events(measurement, packages)
         return if not_this_run? || disabled?
 
-        # ensure options are removed (by `.compact` below) if empty
-        options = nil if options.blank?
+        lines = packages.map do |package|
+          # ensure options are removed (by `.compact` below) if empty
+          options = package[:options].presence
 
-        # Tags must have low cardinality.
-        tags = default_package_tags.merge(on_request:)
+          # Tags must have low cardinality.
+          tags = default_package_tags.merge(on_request: package[:on_request])
 
-        # Fields can have high cardinality.
-        fields = default_package_fields.merge(package: package_name, tap_name:, options:)
-                                       .compact
+          # Fields can have high cardinality.
+          fields = default_package_fields.merge(
+            package:  package[:package_name],
+            tap_name: package[:tap_name],
+            options:,
+          ).compact
 
-        report_influx(measurement, tags, fields)
+          influx_line(measurement, tags, fields)
+        end
+        write_influx(lines)
+      end
+
+      # Reports installing the formulae, and the dependencies they will install,
+      # in a single request. Call this before installing them.
+      sig { params(formula_installers: T::Array[::FormulaInstaller]).void }
+      def report_formula_installs(formula_installers)
+        return if not_this_run? || disabled?
+
+        # A dependency of several of the formulae is only installed once.
+        packages = formula_installers.flat_map(&:install_analytics_events)
+                                     .uniq { |package| package[:package_name] }
+        report_package_events(:formula_install, packages)
+      end
+
+      # Reports installing the casks in a single request. Call this before installing them.
+      sig { params(casks: T::Array[::Cask::Cask]).void }
+      def report_cask_installs(casks)
+        return if not_this_run? || disabled?
+
+        packages = casks.filter_map do |cask|
+          tap = cask.tap
+          next if tap.nil? || !tap.should_report_analytics?
+
+          { package_name: cask.token, tap_name: tap.name, on_request: true, options: "" }
+        end
+        report_package_events(:cask_install, packages)
       end
 
       sig { params(exception: BuildError).void }

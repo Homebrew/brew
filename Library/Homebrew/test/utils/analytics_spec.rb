@@ -90,14 +90,14 @@ RSpec.describe Utils::Analytics do
     context "when ENV vars is set" do
       it "returns nil when HOMEBREW_NO_ANALYTICS is true" do
         ENV["HOMEBREW_NO_ANALYTICS"] = "true"
-        expect(described_class).not_to receive(:report_influx)
+        expect(described_class).not_to receive(:write_influx)
         described_class.report_package_event(:install, package_name:, tap_name:,
           on_request:, options:)
       end
 
       it "returns nil when HOMEBREW_NO_ANALYTICS_THIS_RUN is true" do
         ENV["HOMEBREW_NO_ANALYTICS_THIS_RUN"] = "true"
-        expect(described_class).not_to receive(:report_influx)
+        expect(described_class).not_to receive(:write_influx)
         described_class.report_package_event(:install, package_name:, tap_name:,
           on_request:, options:)
       end
@@ -106,7 +106,7 @@ RSpec.describe Utils::Analytics do
         ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
         ENV.delete("HOMEBREW_NO_ANALYTICS")
         ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
-        expect(described_class).to receive(:report_influx)
+        expect(described_class).to receive(:write_influx)
 
         described_class.report_package_event(:install, package_name:, tap_name:,
           on_request:, options:)
@@ -117,10 +117,90 @@ RSpec.describe Utils::Analytics do
       ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
       ENV.delete("HOMEBREW_NO_ANALYTICS")
       ENV["HOMEBREW_ANALYTICS_DEBUG"] = "true"
-      expect(described_class).to receive(:report_influx).with(:install, hash_including(on_request:),
-                                                              hash_including(package: package_name)).once
+      expect(described_class).to receive(:write_influx).with(
+        [a_string_including("install,", "on_request=#{on_request}", "package=\"#{package_name}\"")],
+      ).once
       described_class.report_package_event(:install, package_name:, tap_name:,
           on_request:, options:)
+    end
+  end
+
+  describe "::report_package_events" do
+    it "reports all the packages in a single request" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Time).to receive(:now).and_return(Time.at(123))
+      allow(described_class).to receive_messages(default_package_tags:   { ci: false },
+                                                 default_package_fields: { version: "1.0" })
+      expect(described_class).to receive(:deferred_curl).once.with(
+        anything,
+        array_including(
+          "--data-binary",
+          "formula_install,ci=false,on_request=true version=\"1.0\",package=\"foo\"," \
+          "tap_name=\"homebrew/core\" 123\n" \
+          "formula_install,ci=false,on_request=false version=\"1.0\",package=\"bar\"," \
+          "tap_name=\"homebrew/core\",options=\"--HEAD\" 123",
+        ),
+      )
+
+      described_class.report_package_events(:formula_install, [
+        { package_name: "foo", tap_name: "homebrew/core", on_request: true, options: "" },
+        { package_name: "bar", tap_name: "homebrew/core", on_request: false, options: "--HEAD" },
+      ])
+    end
+
+    it "does not report when analytics are disabled" do
+      ENV["HOMEBREW_NO_ANALYTICS"] = "1"
+      expect(described_class).not_to receive(:write_influx)
+
+      described_class.report_package_events(:formula_install, [
+        { package_name: "foo", tap_name: "homebrew/core", on_request: true, options: "" },
+      ])
+    end
+  end
+
+  describe "::report_formula_installs" do
+    it "reports each formula and dependency to install once" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      shared_dep = { package_name: "shared", tap_name: "homebrew/core", on_request: false, options: "" }
+      foo = { package_name: "foo", tap_name: "homebrew/core", on_request: true, options: "" }
+      bar = { package_name: "bar", tap_name: "homebrew/core", on_request: true, options: "" }
+      formula_installers = [
+        instance_double(FormulaInstaller, install_analytics_events: [shared_dep, foo]),
+        instance_double(FormulaInstaller, install_analytics_events: [shared_dep, bar]),
+      ]
+      expect(described_class).to receive(:report_package_events).with(:formula_install, [shared_dep, foo, bar])
+
+      described_class.report_formula_installs(formula_installers)
+    end
+
+    it "does not look at the formulae when analytics are disabled" do
+      ENV["HOMEBREW_NO_ANALYTICS"] = "1"
+      formula_installer = instance_double(FormulaInstaller)
+      expect(formula_installer).not_to receive(:install_analytics_events)
+      expect(described_class).not_to receive(:report_package_events)
+
+      described_class.report_formula_installs([formula_installer])
+    end
+  end
+
+  describe "::report_cask_installs" do
+    it "reports the casks from taps that report analytics" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      reporting_tap = instance_double(Tap, name: "homebrew/cask", should_report_analytics?: true)
+      casks = [
+        instance_double(Cask::Cask, token: "foo", tap: reporting_tap),
+        instance_double(Cask::Cask, token: "bar", tap: instance_double(Tap, should_report_analytics?: false)),
+        instance_double(Cask::Cask, token: "baz", tap: nil),
+      ]
+      expect(described_class).to receive(:report_package_events).with(
+        :cask_install,
+        [{ package_name: "foo", tap_name: "homebrew/cask", on_request: true, options: "" }],
+      )
+
+      described_class.report_cask_installs(casks)
     end
   end
 
@@ -164,72 +244,23 @@ RSpec.describe Utils::Analytics do
     end
   end
 
-  describe "::batch_reports" do
-    it "sends events reported in the block in a single request" do
-      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
-      ENV.delete("HOMEBREW_NO_ANALYTICS")
-      allow(Time).to receive(:now).and_return(Time.at(123))
+  describe "::write_influx" do
+    it "sends all the lines in a single request" do
       expect(described_class).to receive(:deferred_curl).once.with(
         anything,
         array_including("--data-binary", "a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123"),
       )
 
-      described_class.batch_reports do
-        described_class.report_influx(:a, { t: "1" }, { f: "1" })
-        described_class.report_influx(:b, { t: "2" }, { f: "2" })
-      end
+      described_class.write_influx(["a,t=1 f=\"1\" 123", "b,t=2 f=\"2\" 123"])
     end
 
-    it "sends events reported before an error is raised" do
-      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
-      ENV.delete("HOMEBREW_NO_ANALYTICS")
-      allow(Time).to receive(:now).and_return(Time.at(123))
-      expect(described_class).to receive(:deferred_curl).once.with(
-        anything,
-        array_including("--data-binary", "a,t=1 f=\"1\" 123"),
-      )
-
-      expect do
-        described_class.batch_reports do
-          described_class.report_influx(:a, { t: "1" }, { f: "1" })
-          raise "boom"
-        end
-      end.to raise_error(RuntimeError, "boom")
-    end
-
-    it "sends events from nested batches with the outermost batch" do
-      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
-      ENV.delete("HOMEBREW_NO_ANALYTICS")
-      allow(Time).to receive(:now).and_return(Time.at(123))
-      requests = []
-      allow(described_class).to receive(:deferred_curl) { |_url, args| requests << args }
-
-      described_class.batch_reports do
-        described_class.report_influx(:a, { t: "1" }, { f: "1" })
-        described_class.batch_reports do
-          described_class.report_influx(:b, { t: "2" }, { f: "2" })
-        end
-        expect(requests).to be_empty
-      end
-
-      expect(requests.length).to eq(1)
-      expect(requests.first).to include("a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123")
-    end
-
-    it "splits batches larger than INFLUX_MAX_BATCH_BYTES into multiple requests" do
-      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
-      ENV.delete("HOMEBREW_NO_ANALYTICS")
-      allow(Time).to receive(:now).and_return(Time.at(123))
-      # Exactly enough room for two events and the newline between them.
+    it "splits lines larger than INFLUX_MAX_BATCH_BYTES into multiple requests" do
+      # Exactly enough room for two lines and the newline between them.
       stub_const("Utils::Analytics::INFLUX_MAX_BATCH_BYTES", ("a,t=1 f=\"1\" 123".bytesize * 2) + 1)
       requests = []
       allow(described_class).to receive(:deferred_curl) { |_url, args| requests << args }
 
-      described_class.batch_reports do
-        described_class.report_influx(:a, { t: "1" }, { f: "1" })
-        described_class.report_influx(:b, { t: "2" }, { f: "2" })
-        described_class.report_influx(:c, { t: "3" }, { f: "3" })
-      end
+      described_class.write_influx(["a,t=1 f=\"1\" 123", "b,t=2 f=\"2\" 123", "c,t=3 f=\"3\" 123"])
 
       expect(requests.map { |args| args[args.index("--data-binary") + 1] }).to eq([
         "a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123",
@@ -237,18 +268,12 @@ RSpec.describe Utils::Analytics do
       ])
     end
 
-    it "sends an event larger than INFLUX_MAX_BATCH_BYTES in its own request" do
-      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
-      ENV.delete("HOMEBREW_NO_ANALYTICS")
-      allow(Time).to receive(:now).and_return(Time.at(123))
+    it "sends a line larger than INFLUX_MAX_BATCH_BYTES in its own request" do
       stub_const("Utils::Analytics::INFLUX_MAX_BATCH_BYTES", 10)
       requests = []
       allow(described_class).to receive(:deferred_curl) { |_url, args| requests << args }
 
-      described_class.batch_reports do
-        described_class.report_influx(:a, { t: "1" }, { f: "1" })
-        described_class.report_influx(:b, { t: "2" }, { f: "2" })
-      end
+      described_class.write_influx(["a,t=1 f=\"1\" 123", "b,t=2 f=\"2\" 123"])
 
       expect(requests.map { |args| args[args.index("--data-binary") + 1] }).to eq([
         "a,t=1 f=\"1\" 123",
@@ -256,10 +281,10 @@ RSpec.describe Utils::Analytics do
       ])
     end
 
-    it "does not send a request when no events are reported" do
+    it "does not send a request without any lines" do
       expect(described_class).not_to receive(:deferred_curl)
 
-      described_class.batch_reports { nil }
+      described_class.write_influx([])
     end
   end
 

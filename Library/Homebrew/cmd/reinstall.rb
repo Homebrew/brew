@@ -302,6 +302,9 @@ module Homebrew
             download_queue.shutdown
           end
 
+          require "utils/analytics"
+          Utils::Analytics.report_formula_installs(reinstall_contexts.map(&:formula_installer) & formulae_installers)
+
           # Reinstall everything that did download, rather than aborting the
           # whole run; the failures above still exit nonzero at the end.
           reinstall_contexts.each do |reinstall_context|

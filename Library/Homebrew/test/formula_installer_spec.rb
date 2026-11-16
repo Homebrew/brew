@@ -922,6 +922,65 @@ RSpec.describe FormulaInstaller do
     end
   end
 
+  describe "#install_analytics_events" do
+    let(:tap) { CoreTap.instance }
+    let(:dependency_formula) do
+      formula "analytics-dependency" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
+    end
+    let(:dependency) do
+      instance_double(Dependency, to_formula: dependency_formula, name: dependency_formula.name,
+                                  options: Options.new)
+    end
+    let(:testball) { Testball.new }
+
+    before do
+      allow(dependency_formula).to receive_messages(
+        tap:,
+        linked_keg:                Pathname("/tmp/nonexistent-linked-keg"),
+        latest_version_installed?: false,
+        any_version_installed?:    false,
+      )
+      allow(testball).to receive(:tap).and_return(tap)
+      allow(tap).to receive(:should_report_analytics?).and_return(true)
+    end
+
+    it "returns the dependencies it will install and then the formula" do
+      installer = described_class.new(testball, installed_on_request: true)
+      allow(installer).to receive(:compute_dependencies).and_return([dependency])
+
+      expect(installer.install_analytics_events).to eq([
+        { package_name: "analytics-dependency", tap_name: "homebrew/core", on_request: false, options: "" },
+        { package_name: "testball", tap_name: "homebrew/core", on_request: true, options: "" },
+      ])
+    end
+
+    it "only returns the dependencies when only installing them" do
+      installer = described_class.new(testball, only_deps: true)
+      allow(installer).to receive(:compute_dependencies).and_return([dependency])
+
+      expect(installer.install_analytics_events.map { |event| event[:package_name] })
+        .to eq(["analytics-dependency"])
+    end
+
+    it "does not return formulae from taps that don't report analytics" do
+      allow(tap).to receive(:should_report_analytics?).and_return(false)
+      installer = described_class.new(testball)
+      allow(installer).to receive(:compute_dependencies).and_return([dependency])
+
+      expect(installer.install_analytics_events).to be_empty
+    end
+
+    it "still returns the formula when its dependencies can't be computed" do
+      installer = described_class.new(testball)
+      allow(installer).to receive(:compute_dependencies).and_raise(RuntimeError, "unsatisfied requirement")
+
+      expect(installer.install_analytics_events.map { |event| event[:package_name] }).to eq(["testball"])
+    end
+  end
+
   describe "#check_conflicts" do
     let(:test_formula) do
       formula "testball" do
