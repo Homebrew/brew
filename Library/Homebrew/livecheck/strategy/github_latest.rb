@@ -110,10 +110,10 @@ module Homebrew
           match_data[:cached] = true if content
 
           fetch_type =
-            if !block_given? && GitHub::API.credentials_type != :none
-              :graphql_api
-            else
+            if block_given? || !GithubReleases.github_credentials?
               :rest_api
+            else
+              :graphql_api
             end
           generated = generate_input_values(url, fetch_type:)
           return match_data if generated.blank?

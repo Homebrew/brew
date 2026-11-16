@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cacheable"
 require "livecheck/strategic"
 
 module Homebrew
@@ -31,7 +32,11 @@ module Homebrew
       #
       # @api public
       class GithubReleases
+        extend T::Generic
+        extend Cacheable
         extend Strategic
+
+        Cache = type_template { { fixed: T::Hash[Symbol, T::Boolean] } }
 
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {GithubReleases} so we can selectively apply the strategy using
@@ -70,6 +75,22 @@ module Homebrew
         sig { override.params(url: String).returns(T::Boolean) }
         def self.match?(url)
           URL_MATCH_REGEX.match?(url)
+        end
+
+        # Whether GitHub credentials are available, which are strictly required
+        # to use the GraphQL API.
+        #
+        # @return [Boolean]
+        # @api private
+        sig { returns(T::Boolean) }
+        def self.github_credentials?
+          # `GitHub::API.credentials` doesn't memoise a `nil` value (when no
+          # credentials are available), so it will re-check for credentials
+          # the next time the method is called. We cache a value here to avoid
+          # repeating this work within the GitHub strategies.
+          cache.fetch(:github_credentials) do
+            cache[:github_credentials] = GitHub::API.credentials.present?
+          end
         end
 
         # Extracts information from a provided URL and uses it to generate
@@ -157,10 +178,10 @@ module Homebrew
           match_data[:cached] = true if content
 
           fetch_type =
-            if !block_given? && GitHub::API.credentials_type != :none
-              :graphql_api
-            else
+            if block_given? || !github_credentials?
               :rest_api
+            else
+              :graphql_api
             end
           generated = generate_input_values(url, fetch_type:)
           return match_data if generated.blank?

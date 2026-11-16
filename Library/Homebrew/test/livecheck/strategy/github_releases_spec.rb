@@ -147,6 +147,14 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
     end
   end
 
+  describe "::has_github_credentials?" do
+    it "caches the result when credentials are unavailable" do
+      expect(GitHub::API).to receive(:credentials).once.and_return(nil)
+
+      2.times { github_releases.github_credentials? }
+    end
+  end
+
   describe "::generate_input_values" do
     it "returns a hash containing a url and regex for a GitHub release artifact URL" do
       expect(github_releases.generate_input_values(github_urls[:release_asset])).to eq(generated[:def_rest])
@@ -237,21 +245,21 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
     let(:brew_regex) { /^v?(\d+(?:\.\d+)+)$/i }
 
     it "finds versions in content fetched from the REST API" do
-      allow(GitHub::API).to receive_messages(credentials_type: :none, open_rest: content)
+      allow(GitHub::API).to receive_messages(credentials: nil, open_rest: content)
 
       expect(github_releases.find_versions(url: github_urls[:brew_tag_archive]))
         .to eq(match_data[:fetched_rest])
     end
 
     it "uses the REST API when a `strategy` block is provided" do
-      allow(GitHub::API).to receive_messages(credentials_type: :env_token, open_rest: content)
+      allow(GitHub::API).to receive_messages(credentials: "token", open_rest: content)
 
       expect(github_releases.find_versions(url: github_urls[:brew_tag_archive]) { matches })
         .to eq(match_data[:fetched_rest])
     end
 
     it "finds versions in content fetched from the GraphQL API" do
-      allow(GitHub::API).to receive_messages(credentials_type: :env_token, open_graphql: graphql_response)
+      allow(GitHub::API).to receive_messages(credentials: "token", open_graphql: graphql_response)
 
       expect(github_releases.find_versions(url: github_urls[:brew_tag_archive]))
         .to eq(match_data[:fetched_graphql])
@@ -259,8 +267,8 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
 
     it "returns no matches from the GraphQL API when the repository has no releases" do
       allow(GitHub::API).to receive_messages(
-        credentials_type: :env_token,
-        open_graphql:     { "repository" => { "releases" => { "nodes" => [] } } },
+        credentials:  "token",
+        open_graphql: { "repository" => { "releases" => { "nodes" => [] } } },
       )
 
       expect(github_releases.find_versions(url: github_urls[:brew_tag_archive]))
@@ -268,14 +276,14 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
     end
 
     it "returns no matches from the GraphQL API when there is no content" do
-      allow(GitHub::API).to receive_messages(credentials_type: :env_token, open_graphql: nil)
+      allow(GitHub::API).to receive_messages(credentials: "token", open_graphql: nil)
 
       expect(github_releases.find_versions(url: github_urls[:brew_tag_archive]))
         .to eq(match_data[:fetched_graphql].merge({ matches: {}, content: nil }))
     end
 
     it "finds versions in provided content" do
-      allow(GitHub::API).to receive(:credentials_type).and_return(:none)
+      allow(GitHub::API).to receive(:credentials).and_return(nil)
 
       expect(github_releases.find_versions(url: github_urls[:brew_tag_archive], content:))
         .to eq(match_data[:cached])
@@ -316,7 +324,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubReleases do
     end
 
     it "returns default match_data when content is blank" do
-      allow(GitHub::API).to receive(:credentials_type).and_return(:none)
+      allow(GitHub::API).to receive(:credentials).and_return(nil)
 
       expect(github_releases.find_versions(url: github_urls[:brew_tag_archive], content: ""))
         .to eq(match_data[:cached_default])

@@ -121,14 +121,14 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
     let(:brew_regex) { /^v?(\d+(?:\.\d+)+)$/i }
 
     it "finds versions in content fetched from the REST API" do
-      allow(GitHub::API).to receive_messages(credentials_type: :none, open_rest: content)
+      allow(GitHub::API).to receive_messages(credentials: nil, open_rest: content)
 
       expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]))
         .to eq(match_data[:fetched_rest])
     end
 
     it "uses the REST API when a `strategy` block is provided" do
-      allow(GitHub::API).to receive_messages(credentials_type: :env_token, open_rest: content)
+      allow(GitHub::API).to receive_messages(credentials: "token", open_rest: content)
 
       expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]) { |json| json["tag_name"] })
         .to eq(match_data[:fetched_rest])
@@ -136,8 +136,8 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
 
     it "finds versions in content fetched from the GraphQL API" do
       allow(GitHub::API).to receive_messages(
-        credentials_type: :env_token,
-        open_graphql:     {
+        credentials:  "token",
+        open_graphql: {
           "repository" => { "latestRelease" => { "tagName" => "1.2.3" } },
         },
       )
@@ -148,8 +148,8 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
 
     it "returns no matches from the GraphQL API when the repository has no latest release" do
       allow(GitHub::API).to receive_messages(
-        credentials_type: :env_token,
-        open_graphql:     { "repository" => { "latestRelease" => nil } },
+        credentials:  "token",
+        open_graphql: { "repository" => { "latestRelease" => nil } },
       )
 
       expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]))
@@ -158,8 +158,8 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
 
     it "returns no matches from the GraphQL API when there is no content" do
       allow(GitHub::API).to receive_messages(
-        credentials_type: :env_token,
-        open_graphql:     nil,
+        credentials:  "token",
+        open_graphql: nil,
       )
 
       expect(github_latest.find_versions(url: github_urls[:brew_tag_archive]))
@@ -167,7 +167,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
     end
 
     it "finds versions in provided content" do
-      allow(GitHub::API).to receive(:credentials_type).and_return(:none)
+      allow(GitHub::API).to receive(:credentials).and_return(nil)
 
       expect(github_latest.find_versions(url: github_urls[:brew_tag_archive], content:))
         .to eq(match_data[:cached])
@@ -201,7 +201,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::GithubLatest do
     end
 
     it "returns default match_data when content is blank" do
-      allow(GitHub::API).to receive(:credentials_type).and_return(:none)
+      allow(GitHub::API).to receive(:credentials).and_return(nil)
 
       expect(github_latest.find_versions(url: github_urls[:brew_tag_archive], content: ""))
         .to eq(match_data[:cached_default])
