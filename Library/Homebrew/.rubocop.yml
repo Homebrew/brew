@@ -4,6 +4,10 @@ inherit_from:
 Homebrew/MoveToExtendOS:
   Enabled: true
 
+# Only enforced for taps until the existing offences here are inlined.
+Homebrew/SingleUseMethod:
+  Enabled: false
+
 # This fixture intentionally exercises the deprecated flight-block DSL.
 Cask/InstallSteps:
   Exclude:
