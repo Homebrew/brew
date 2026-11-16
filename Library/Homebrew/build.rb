@@ -93,37 +93,28 @@ class Build
 
     ENV.activate_extensions!(env: args.env)
 
-    if Superenv.enabled_for?(args.env)
+    superenv_enabled = Superenv.enabled_for?(args.env)
+    if superenv_enabled
       superenv = ENV
       superenv.keg_only_deps = keg_only_deps
       superenv.deps = formula_deps
       superenv.run_time_deps = run_time_deps
-      ENV.setup_build_environment(
-        formula:,
-        cc:            args.cc,
-        build_bottle:  args.build_bottle?,
-        bottle_arch:   args.bottle_arch,
-        debug_symbols: args.debug_symbols?,
-      )
-      reqs.each do |req|
-        req.modify_build_environment(
-          env: args.env, cc: args.cc, build_bottle: args.build_bottle?, bottle_arch: args.bottle_arch,
-        )
-      end
-    else
-      ENV.setup_build_environment(
-        formula:,
-        cc:            args.cc,
-        build_bottle:  args.build_bottle?,
-        bottle_arch:   args.bottle_arch,
-        debug_symbols: args.debug_symbols?,
-      )
-      reqs.each do |req|
-        req.modify_build_environment(
-          env: args.env, cc: args.cc, build_bottle: args.build_bottle?, bottle_arch: args.bottle_arch,
-        )
-      end
+    end
 
+    ENV.setup_build_environment(
+      formula:,
+      cc:            args.cc,
+      build_bottle:  args.build_bottle?,
+      bottle_arch:   args.bottle_arch,
+      debug_symbols: args.debug_symbols?,
+    )
+    reqs.each do |req|
+      req.modify_build_environment(
+        env: args.env, cc: args.cc, build_bottle: args.build_bottle?, bottle_arch: args.bottle_arch,
+      )
+    end
+
+    unless superenv_enabled
       keg_only_deps.each do |dep|
         ENV.prepend_path "PATH", dep.opt_bin.to_s
         ENV.prepend_path "PKG_CONFIG_PATH", "#{dep.opt_lib}/pkgconfig"

@@ -34,6 +34,7 @@ module Utils
 
         head = git("rev-parse", "HEAD")
         mailmap = git("ls-tree", "HEAD", "--", ".mailmap")
+        cask_repository = @name == "Homebrew/homebrew-cask"
         formula_repository = ["Homebrew/homebrew-core", "Homebrew/legacy-homebrew"].include?(@name)
         release_repository = ["Homebrew/brew", "Homebrew/legacy-homebrew"].include?(@name)
         tags = if release_repository
@@ -66,10 +67,9 @@ module Utils
           timestamp, email = line.chomp.split("\t", 2)
           next if timestamp.nil? || email.nil?
 
-          commit_year = Time.at(timestamp.to_i).utc.year.to_s
-          authors[commit_year] ||= []
+          commit_year = timestamp_year(timestamp)
           # Historical author addresses can contain non-UTF-8 bytes.
-          authors[commit_year] << email.unpack1("H*")
+          (authors[commit_year] ||= []) << email.unpack1("H*")
         end
         authors.transform_values!(&:uniq)
         @author_identities = authors
@@ -87,31 +87,21 @@ module Utils
           .split("\0").each_slice(2) do |timestamp, message|
             next if message.nil?
 
-            subject = message.lines.first.to_s.chomp
-            numbers = [subject[/\AMerge pull request #(\d+)\b/, 1], subject[/\(#(\d+)\)\z/, 1]].compact
-            message.scan(/^Closes (.+?)\.?$/i).flatten.each do |reference|
-              number = reference[/\A#(\d+)\z/, 1] ||
-                       reference[/\A#{Regexp.escape(@name)}#(\d+)\z/i, 1] ||
-                       reference[%r{\Ahttps://github\.com/#{Regexp.escape(@name)}/pull/(\d+)\z}i, 1]
-              numbers << number if number
-            end
-            numbers.each do |number|
-              next if @name == "Homebrew/legacy-homebrew" && number.to_i < FIRST_LEGACY_PULL_REQUEST
-
-              pull_requests[number] ||= Time.at(timestamp.to_i).utc.year.to_s
+            pull_request_numbers(message).each do |number|
+              pull_requests[number] ||= timestamp_year(timestamp)
             end
           end
         merged_years = pull_requests.values.tally
 
         changes = data.fetch("changes", {})
-        if @name == "Homebrew/homebrew-cask"
+        if cask_repository
           period = ""
           tokens = git("log", "--first-parent", "--reverse", "--raw", "--root", "--no-abbrev",
                        "--diff-merges=first-parent", "--find-renames=100%", "--format=%x00year%x00%ct",
                        "-z", range).split("\0")
           while (token = tokens.shift)
             if token == "year"
-              period = Time.at(tokens.shift.to_i).utc.year.to_s
+              period = timestamp_year(tokens.shift)
               next
             end
             next unless token.lstrip.start_with?(":")
@@ -119,13 +109,13 @@ module Utils
             old_mode, new_mode, _, _, status = token.delete_prefix("\n").delete_prefix(":").split
             old_path = tokens.shift.to_s
             new_path = status&.start_with?("R") ? tokens.shift.to_s : old_path
-            before = %w[100644 100755].include?(old_mode) && old_path.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
-            after = %w[100644 100755].include?(new_mode) && new_path.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
+            before = cask_entry?(old_mode, old_path)
+            after = cask_entry?(new_mode, new_path)
             next if before == after
 
             metric = after ? "added" : "removed"
-            changes[period] ||= {}
-            changes[period][metric] = changes[period].fetch(metric, 0) + 1
+            period_changes = (changes[period] ||= {})
+            period_changes[metric] = period_changes.fetch(metric, 0) + 1
           end
         end
 
@@ -145,25 +135,17 @@ module Utils
           tag, annotated_date, commit_date = line.chomp.split("\t", -1)
           next unless tag&.match?(/\Av?\d+(?:\.\d+){1,2}\z/)
 
-          Time.at((annotated_date.presence || commit_date).to_i).utc.year.to_s
+          timestamp_year(annotated_date.presence || commit_date)
         end.tally
         catalogues = data.fetch("catalogues", {})
         maintainers = data.fetch("maintainers", {})
-        rows = ["current", *(2009..year).to_a.reverse.map(&:to_s)].map do |period|
-          revision = (period == "current" || period == year.to_s) ? head : revisions[period]
+        rows = ["current", *(2009..year).map(&:to_s).reverse].map do |period|
+          current = period == "current"
+          revision = (current || period == year.to_s) ? head : revisions[period]
           catalogue = if @name == "Homebrew/brew" || revision.nil?
             0
           else
-            catalogues[revision] ||= git("ls-tree", "-rz", revision).split("\0").count do |entry|
-              metadata, path = entry.split("\t", 2)
-              next false unless metadata&.match?(/\A100(?:644|755) blob /)
-
-              if formula_repository
-                path&.match?(%r{\A(?:Library/)?Formula/(?:[^/]+/)?[^/]+\.rb\z})
-              else
-                path&.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
-              end
-            end
+            catalogues[revision] ||= catalogue_count(revision, formula_repository:)
           end
           if @name == "Homebrew/brew" && revision && !maintainers.key?(revision)
             readme = git("ls-tree", "--name-only", revision).lines(chomp: true).find do |file|
@@ -177,24 +159,24 @@ module Utils
             end
             maintainers[revision] = identities&.presence&.size
           end
-          contributors = ((period == "current") ? authors.values.flatten : authors.fetch(period, [])).uniq.size
+          contributors = (current ? authors.values.flatten : authors.fetch(period, [])).uniq.size
           {
             "period"               => period,
             "revision"             => revision,
             "contributors"         => contributors,
-            "new_contributors"     => (period == "current") ? contributors : first_years.fetch(period, 0),
+            "new_contributors"     => current ? contributors : first_years.fetch(period, 0),
             "maintainers"          => maintainers[revision],
-            "pull_requests_merged" => (period == "current") ? pull_requests.size : merged_years.fetch(period, 0),
-            "added"                => if @name == "Homebrew/homebrew-cask"
+            "pull_requests_merged" => current ? pull_requests.size : merged_years.fetch(period, 0),
+            "added"                => if cask_repository
                                         change_count(changes, period, "added")
             end,
-            "removed"              => if @name == "Homebrew/homebrew-cask"
+            "removed"              => if cask_repository
                                         change_count(changes, period, "removed")
             end,
             "formulae"             => formula_repository ? catalogue : nil,
-            "casks"                => (@name == "Homebrew/homebrew-cask") ? catalogue : nil,
+            "casks"                => cask_repository ? catalogue : nil,
             "releases"             => if release_repository
-                                        if period == "current"
+                                        if current
                                           release_years.values.sum
                                         else
                                           release_years.fetch(period, 0)
@@ -208,6 +190,50 @@ module Utils
                                            pull_requests:, rows: }))
         rows
       end
+
+      # Count package files in a historical tree without following aliases.
+      sig { params(revision: String, formula_repository: T::Boolean).returns(Integer) }
+      def catalogue_count(revision, formula_repository:)
+        git("ls-tree", "-rz", revision).split("\0").count do |entry|
+          metadata, path = entry.split("\t", 2)
+          next false unless metadata&.match?(/\A100(?:644|755) blob /)
+
+          if formula_repository
+            path&.match?(%r{\A(?:Library/)?Formula/(?:[^/]+/)?[^/]+\.rb\z})
+          else
+            path&.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
+          end
+        end
+      end
+
+      # Extract PR identities from merge subjects and closing references in this repository.
+      sig { params(message: String).returns(T::Array[String]) }
+      def pull_request_numbers(message)
+        subject = message.lines.first.to_s.chomp
+        numbers = [subject[/\AMerge pull request #(\d+)\b/, 1], subject[/\(#(\d+)\)\z/, 1]].compact
+        message.scan(/^Closes (.+?)\.?$/i).flatten.each do |reference|
+          number = reference[/\A#(\d+)\z/, 1] ||
+                   reference[/\A#{Regexp.escape(@name)}#(\d+)\z/i, 1] ||
+                   reference[%r{\Ahttps://github\.com/#{Regexp.escape(@name)}/pull/(\d+)\z}i, 1]
+          numbers << number if number
+        end
+        if @name == "Homebrew/legacy-homebrew"
+          numbers.reject! { |number| number.to_i < FIRST_LEGACY_PULL_REQUEST }
+        end
+        numbers.uniq
+      end
+
+      sig { params(mode: T.nilable(String), path: String).returns(T::Boolean) }
+      def cask_entry?(mode, path)
+        %w[100644 100755].include?(mode) && path.match?(%r{\ACasks?/(?:[^/]+/)*[^/]+\.rb\z})
+      end
+      private :cask_entry?
+
+      sig { params(timestamp: T.nilable(String)).returns(String) }
+      def timestamp_year(timestamp)
+        Time.at(timestamp.to_i).utc.year.to_s
+      end
+      private :timestamp_year
 
       sig { params(changes: T::Hash[String, T::Hash[String, Integer]], period: String, metric: String).returns(Integer) }
       def change_count(changes, period, metric)

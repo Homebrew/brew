@@ -335,6 +335,7 @@ module Homebrew
 
     sig { void }
     def audit_deps
+      formula = self.formula
       @specs.each do |spec|
         # Check for things we don't like to depend on.
         # We allow non-Homebrew installs whenever possible.
@@ -451,7 +452,7 @@ module Homebrew
 
         next unless @core_tap
 
-        if spec.requirements.map(&:recommended?).any? || spec.requirements.map(&:optional?).any?
+        if spec.requirements.any?(&:recommended?) || spec.requirements.any?(&:optional?)
           problem "Formulae in homebrew/core should not have optional or recommended requirements"
         end
       end
@@ -853,6 +854,7 @@ module Homebrew
 
     sig { void }
     def audit_specs
+      formula = self.formula
       problem "HEAD-only (no stable download)" if head_only?(formula) && @core_tap
 
       { "Stable" => formula.stable, "HEAD" => formula.head }.each do |name, spec|
@@ -917,12 +919,11 @@ module Homebrew
       return unless stable
       return unless (url = stable.url)
 
-      version = stable.version
-      problem "Stable: version (#{version}) is set to a string without a digit" unless /\d/.match?(version.to_s)
+      version = stable.version.to_s
+      problem "Stable: version (#{version}) is set to a string without a digit" unless /\d/.match?(version)
 
-      stable_version_string = version.to_s
-      if stable_version_string.start_with?("HEAD")
-        problem "Stable: non-HEAD version (#{stable_version_string}) should not begin with `HEAD`"
+      if version.start_with?("HEAD")
+        problem "Stable: non-HEAD version (#{version}) should not begin with `HEAD`"
       end
 
       stable_url_version = Version.parse(url)
@@ -942,7 +943,7 @@ module Homebrew
       case url
       when /[\d._-](alpha|beta|rc\d)/
         matched = Regexp.last_match(1)
-        version_prefix = stable_version_string.sub(/\d+$/, "")
+        version_prefix = version.sub(/\d+$/, "")
         return if formula.tap&.audit_exception :unstable_allowlist, formula.name, version_prefix
         return if formula.tap&.audit_exception :unstable_devel_allowlist, formula.name, version_prefix
 

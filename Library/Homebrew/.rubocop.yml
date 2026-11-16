@@ -53,7 +53,7 @@ Metrics:
     - "test/support/fixtures/**/*"
 
 Metrics/AbcSize:
-  Max: 250
+  Max: 195
 
 Metrics/BlockLength:
   Max: 100

@@ -14,6 +14,71 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
   it_behaves_like "parseable arguments"
 
+  describe "#check_build_flags" do
+    let(:test_formula) { instance_double(Formula, bottled?: true) }
+
+    before do
+      allow(DevelopmentTools).to receive(:installed?).and_return(false)
+      allow(Homebrew::EnvConfig).to receive(:developer?).and_return(false)
+    end
+
+    it "allows bottle installation without development tools" do
+      command = described_class.new(["testball"])
+
+      expect { command.check_build_flags([test_formula]) }.not_to raise_error
+    end
+
+    it "warns non-developers for each source-build flag" do
+      allow(DevelopmentTools).to receive(:installed?).and_return(true)
+      flags = %w[-s --HEAD --build-bottle]
+
+      expect do
+        flags.each do |flag|
+          described_class.new([flag, "testball"]).check_build_flags([test_formula])
+        end
+      end.to output("Warning: building from source is not supported!\n" * flags.length).to_stderr
+         .and output("You're on your own. Failures are expected so don't create any issues, please!\n" * flags.length)
+         .to_stdout
+    end
+
+    it "does not warn developers requesting a source build" do
+      allow(DevelopmentTools).to receive(:installed?).and_return(true)
+      allow(Homebrew::EnvConfig).to receive(:developer?).and_return(true)
+      command = described_class.new(["-s", "testball"])
+
+      expect { command.check_build_flags([test_formula]) }.to output("").to_stderr.and output("").to_stdout
+    end
+
+    it "does not warn when no source-build flags are supplied" do
+      allow(DevelopmentTools).to receive(:installed?).and_return(true)
+      command = described_class.new(["testball"])
+
+      expect { command.check_build_flags([test_formula]) }.to output("").to_stderr.and output("").to_stdout
+    end
+
+    it "reports all flags requiring missing development tools" do
+      command = described_class.new(["--HEAD", "--build-from-source", "testball"])
+
+      expect { command.check_build_flags([test_formula]) }
+        .to raise_error(BuildFlagsError, /--HEAD, --build-from-source/)
+    end
+
+    it "suggests bottle installation when all formulae have bottles" do
+      command = described_class.new(["--build-bottle", "testball"])
+
+      expect { command.check_build_flags([test_formula]) }
+        .to raise_error(BuildFlagsError, /remove the flag to attempt bottle installation/)
+    end
+
+    it "does not suggest bottles when a formula has none" do
+      allow(test_formula).to receive(:bottled?).and_return(false)
+      command = described_class.new(["--build-from-source", "testball"])
+
+      expect { command.check_build_flags([test_formula]) }
+        .to raise_error(BuildFlagsError, /\A(?!.*attempt bottle installation).*/m)
+    end
+  end
+
   it "defers full installers and the cask implementation at command load" do
     stdout, stderr, status = Open3.capture3(
       *HOMEBREW_RUBY_EXEC_ARGS,

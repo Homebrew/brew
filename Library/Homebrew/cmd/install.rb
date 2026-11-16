@@ -178,6 +178,7 @@ module Homebrew
       sig { override.void }
       def run
         args = self.args
+        dry_run = args.dry_run?
 
         if args.env.present?
           # Can't use `replacement: false` because `install_args` are used by
@@ -206,7 +207,7 @@ module Homebrew
           [T::Array[Formula], T::Array[Cask::Cask]],
         )
         installed_on_request = !args.as_dependency?
-        ask = !args.no_ask? && !args.dry_run?
+        ask = !args.no_ask? && !dry_run
         cask_upgrade_summary = T.let([], T::Array[VersionChange])
 
         installed_casks = T.let([], T::Array[Cask::Cask])
@@ -220,7 +221,7 @@ module Homebrew
           require "cask/upgrade"
           require "install"
 
-          if args.dry_run?
+          if dry_run
             Install.print_dry_run_casks(casks, skip_cask_deps: args.skip_cask_deps?, include_installed: false)
             # Only a mixed invocation has formulae left to report. The formula
             # path below runs preinstall checks that are not dry-run guarded.
@@ -243,21 +244,7 @@ module Homebrew
           formulae = Homebrew::Attestation.sort_formulae_for_install(formulae)
         end
 
-        # if the user's flags will prevent bottle only-installations when no
-        # developer tools are available, we need to stop them early on
-        build_flags = []
-        unless DevelopmentTools.installed?
-          build_flags << "--HEAD" if args.HEAD?
-          build_flags << "--build-bottle" if args.build_bottle?
-          build_flags << "--build-from-source" if args.build_from_source?
-
-          raise BuildFlagsError.new(build_flags, bottled: formulae.all?(&:bottled?)) if build_flags.present?
-        end
-
-        if build_flags.present? && !Homebrew::EnvConfig.developer?
-          opoo "building from source is not supported!"
-          puts "You're on your own. Failures are expected so don't create any issues, please!"
-        end
+        check_build_flags(formulae)
 
         installed_formulae = formulae.select do |f|
           Install.install_formula?(
@@ -299,13 +286,13 @@ module Homebrew
           debug:                      args.debug?,
           quiet:                      args.quiet?,
           verbose:                    args.verbose?,
-          dry_run:                    args.dry_run?,
+          dry_run:,
           skip_post_install:          args.skip_post_install?,
           skip_link:                  args.skip_link?,
         )
 
         shared_download_queue = T.let(nil, T.nilable(Homebrew::DownloadQueue))
-        if !args.dry_run? && formulae_installer.any?
+        if !dry_run && formulae_installer.any?
           shared_download_queue = Homebrew::DownloadQueue.new(pour: true)
           # Start bottle manifest (and, once downloads are confirmed, bottle)
           # transfers before the local-only work below.
@@ -332,7 +319,7 @@ module Homebrew
             debug:                      args.debug?,
             quiet:                      args.quiet?,
             verbose:                    args.verbose?,
-            dry_run:                    args.dry_run?,
+            dry_run:,
           )
 
           # Main block: if asking the user is enabled, show dry-run information.
@@ -360,7 +347,7 @@ module Homebrew
           raise
         end
 
-        dependent_formulae_installer = if args.dry_run?
+        dependent_formulae_installer = if dry_run
           []
         else
           Upgrade.dependent_formula_installers(
@@ -379,7 +366,7 @@ module Homebrew
           )
         end
 
-        if !args.dry_run? && (formulae_installer.any? || dependent_formulae_installer.any? || fetch_casks.any?)
+        if !dry_run && (formulae_installer.any? || dependent_formulae_installer.any? || fetch_casks.any?)
           download_queue = T.let(shared_download_queue || Homebrew::DownloadQueue.new(pour: true),
                                  Homebrew::DownloadQueue)
           shared_download_queue = nil
@@ -394,7 +381,7 @@ module Homebrew
 
         installed_or_upgraded_formulae = Install.install_formulae(
           formulae_installer,
-          dry_run: args.dry_run?,
+          dry_run:,
           verbose: args.verbose?,
           cleanup: false,
         )
@@ -402,7 +389,7 @@ module Homebrew
         installed_or_upgraded_formulae |= Upgrade.upgrade_dependents(
           dependants, installed_formulae,
           flags:                         args.flags_only,
-          dry_run:                       args.dry_run?,
+          dry_run:,
           force_bottle:                  args.force_bottle?,
           build_from_source_formulae:    args.build_from_source_formulae,
           interactive:                   args.interactive?,
@@ -420,7 +407,7 @@ module Homebrew
           formulae:      installed_or_upgraded_formulae,
           casks:         install_casks(new_casks, installed_casks, failed_casks,
                                        prefetched_cask_installers, cask_upgrade_summary, installed_on_request:),
-          dry_run:       args.dry_run?,
+          dry_run:,
           display_times: args.display_times?,
         )
         if cask_upgrade_summary.present? && Homebrew.messages.package_count - initial_package_count >= 2
@@ -446,6 +433,26 @@ module Homebrew
         end
 
         report_missing_package(name, e)
+      end
+
+      # Check tool availability and warn about unsupported source builds.
+      sig { params(formulae: T::Array[Formula]).void }
+      def check_build_flags(formulae)
+        build_flags = []
+        build_flags << "--HEAD" if args.HEAD?
+        build_flags << "--build-bottle" if args.build_bottle?
+        build_flags << "--build-from-source" if args.build_from_source?
+
+        return if build_flags.empty?
+
+        unless DevelopmentTools.installed?
+          raise BuildFlagsError.new(build_flags, bottled: formulae.all?(&:bottled?))
+        end
+
+        return if Homebrew::EnvConfig.developer?
+
+        opoo "building from source is not supported!"
+        puts "You're on your own. Failures are expected so don't create any issues, please!"
       end
 
       # Fetch the shared install plan and retain only formulae whose downloads succeeded.

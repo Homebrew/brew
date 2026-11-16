@@ -19,15 +19,10 @@ module Formulary
       ).returns(T.class_of(Formula))
     }
     def load_formula_from_struct!(name, formula_struct, api_source:, tap_git_head:, flags:, internal_api: false)
-      namespace = :"FormulaNamespaceAPI#{namespace_key(api_source.to_json)}"
-
-      mod = Module.new
-      remove_const(namespace) if const_defined?(namespace)
-      const_set(namespace, mod)
+      mod = replace_namespace(:"FormulaNamespaceAPI#{namespace_key(api_source.to_json)}")
 
       mod.const_set(:BUILD_FLAGS, flags)
 
-      class_name = class_s(name)
       ruby_source_path = "Formula/#{CoreTap.instance.new_formula_subdirectory(name)}/#{name.downcase}.rb"
 
       klass = Class.new(::Formula) do
@@ -59,7 +54,9 @@ module Formulary
                   if (patch_sha256 = patch_hash.fetch("sha256", patch_hash[:sha256]))
                     sha256 patch_sha256
                   end
-                  apply patch_hash.fetch("apply", patch_hash[:apply]) if patch_hash.fetch("apply", patch_hash[:apply])
+                  if (patch_apply = patch_hash.fetch("apply", patch_hash[:apply]))
+                    apply patch_apply
+                  end
                   if (patch_directory = patch_hash.fetch("directory", patch_hash[:directory]))
                     directory patch_directory
                   end
@@ -128,7 +125,7 @@ module Formulary
           formula_struct.post_install_steps,
           T.nilable(Homebrew::InstallSteps::Steps),
         )
-        @post_install_steps_defined = T.let(formula_struct.post_install_steps.present?, T.nilable(T::Boolean))
+        @post_install_steps_defined = T.let(@post_install_steps.present?, T.nilable(T::Boolean))
 
         define_method(:install) do
           raise NotImplementedError, "Cannot build from source from abstract formula."
@@ -191,10 +188,10 @@ module Formulary
         end
       end
 
-      mod.const_set(class_name, klass)
+      mod.const_set(class_s(name), klass)
 
-      platform_cache[:api] ||= {}
-      platform_cache.fetch(:api)[name] = klass
+      api_cache = (platform_cache[:api] ||= {})
+      api_cache[name] = klass
     end
   end
 end
