@@ -97,25 +97,20 @@ module Homebrew
             Dir.glob("test/**/*_spec.rb")
           end
 
-          if files.blank?
-            raise UsageError, "The `--only` argument requires a valid file or folder name!" if only
-
-            if args.changed?
-              opoo "No tests are directly associated with the changed files!"
-              return
-            end
+          if only && files.blank?
+            raise UsageError, "The `--only` argument requires a valid file or folder name!"
           end
 
-          parallel_rspec_log_name = "parallel_runtime_rspec"
-          parallel_rspec_log_name = "#{parallel_rspec_log_name}.generic" if args.generic?
-          parallel_rspec_log_name = "#{parallel_rspec_log_name}.online" if args.online?
-          parallel_rspec_log_name = "#{parallel_rspec_log_name}.log"
-
-          parallel_rspec_log_path = if ENV["CI"]
-            "tests/#{parallel_rspec_log_name}"
-          else
-            "#{HOMEBREW_CACHE}/#{parallel_rspec_log_name}"
+          if args.changed? && files.blank?
+            opoo "No tests are directly associated with the changed files!"
+            return
           end
+
+          parallel_rspec_log_name = [
+            "parallel_runtime_rspec", ("generic" if args.generic?), ("online" if args.online?), "log"
+          ].compact.join(".")
+
+          parallel_rspec_log_path = "#{ENV["CI"] ? "tests" : HOMEBREW_CACHE}/#{parallel_rspec_log_name}"
           # A run that may not record every file must not replace the log a full run
           # reads: `--only`, `--changed` and `--shard` cover a subset by design, and
           # `--fail-fast` stops its workers early.
@@ -125,16 +120,7 @@ module Homebrew
             parallel_rspec_log_path
           end
 
-          parallel_args = if ENV["CI"]
-            %w[
-              --combine-stderr
-              --serialize-stdout
-            ]
-          else
-            %w[
-              --nice
-            ]
-          end
+          parallel_args = ENV["CI"] ? %w[--combine-stderr --serialize-stdout] : %w[--nice]
           # Group by recorded runtime rather than source file size, which barely
           # correlates with how long a file takes.
           parallel_args += ["--runtime-log", parallel_rspec_log_path]
@@ -143,15 +129,17 @@ module Homebrew
           # seeds being output when running parallel tests.
           seed = args.seed || rand(0xFFFF).to_i
 
-          bundle_args = ["-I", (HOMEBREW_LIBRARY_PATH/"test").to_s]
-          bundle_args += %W[
+          bundle_args = %W[
+            -I #{HOMEBREW_LIBRARY_PATH/"test"}
             --seed #{seed}
             --color
             --require spec_helper
           ]
           bundle_args << "--fail-fast" if args.fail_fast?
           bundle_args << "--dry-run" if args.load_only?
-          bundle_args << "--profile" << args.profile if args.profile
+          if (profile = args.profile)
+            bundle_args << "--profile" << profile
+          end
           bundle_args << "--tag" << "~needs_network" unless args.online?
           bundle_args << "--tag" << "~needs_ci" unless ENV["CI"]
 
@@ -172,12 +160,10 @@ module Homebrew
             ).fetch(shard_index - 1)
           end
           if files.blank?
-            if args.changed?
-              opoo "No tests are available to run on this operating system."
-              return
-            end
+            raise UsageError, "No tests are available to run on this operating system." unless args.changed?
 
-            raise UsageError, "No tests are available to run on this operating system."
+            opoo "No tests are available to run on this operating system."
+            return
           end
 
           puts "Randomized with seed #{seed}"
@@ -220,9 +206,7 @@ module Homebrew
 
           Utils::Browser.open prof_filename if prof_filename
 
-          return if success
-
-          Homebrew.failed = true
+          Homebrew.failed = true unless success
         end
       end
 

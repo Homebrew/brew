@@ -202,16 +202,6 @@ module Homebrew
         latest_str = latest.to_s
         latest = LivecheckVersion.create(formula_or_cask, latest)
 
-        is_outdated = if formula&.head_only?
-          # A HEAD-only formula is considered outdated if the latest upstream
-          # commit hash is different than the installed version's commit hash
-          (current != latest)
-        else
-          (current < latest)
-        end
-
-        is_newer_than_upstream = (formula&.stable? || cask) && (current > latest)
-
         info = {}
         info[:formula] = name if formula
         info[:cask] = name if cask
@@ -219,8 +209,9 @@ module Homebrew
           current:             current_str,
           latest:              latest_str,
           latest_throttled:    version_info&.dig(:latest_throttled),
-          outdated:            is_outdated,
-          newer_than_upstream: is_newer_than_upstream,
+          # HEAD-only formulae compare commit hashes rather than ordered versions.
+          outdated:            formula&.head_only? ? (current != latest) : (current < latest),
+          newer_than_upstream: (formula&.stable? || cask) && (current > latest),
         }.compact
         info[:meta] = {
           livecheck_defined: formula_or_cask.livecheck_defined?,
@@ -245,25 +236,11 @@ module Homebrew
         nil
       rescue => e
         Homebrew.failed = true
-        use_full_name = full_name || ambiguous_names.include?(formula_or_cask)
-
-        if json
-          progress.increment
-          unless quiet
-            status_hash(formula_or_cask, "error", [e.to_s], full_name: use_full_name,
-                                                            verbose:)
-          end
-        elsif !quiet
-          name = package_or_resource_name(formula_or_cask, full_name: use_full_name)
-          name += " (cask)" if ambiguous_casks.include?(formula_or_cask)
-
-          onoe "#{Tty.blue}#{name}#{Tty.reset}: #{e}"
-          if debug && !e.is_a?(Livecheck::Error)
-            require "utils/backtrace"
-            $stderr.puts Utils::Backtrace.clean(e)
-          end
-          print_resources_info(resource_version_info, verbose:) if check_for_resources
-          nil
+        progress.increment if json
+        report_error(formula_or_cask, e, json:, quiet:, debug:, verbose:,
+                     full_name: full_name || ambiguous_names.include?(formula_or_cask),
+                     ambiguous_cask: ambiguous_casks.include?(formula_or_cask)).tap do
+          print_resources_info(resource_version_info, verbose:) if !json && !quiet && check_for_resources
         end
       end
 
@@ -448,15 +425,11 @@ module Homebrew
           end
 
           if url != "None"
-            version_info[:meta][:url] = {}
-            version_info[:meta][:url][:symbol] = livecheck_url if livecheck_url.is_a?(Symbol) && livecheck_url_string
-            version_info[:meta][:url][:original] = original_url
-            version_info[:meta][:url][:processed] = url if url != original_url
-            if strategy_data[:url].present? && strategy_data[:url] != url
-              version_info[:meta][:url][:strategy] = strategy_data[:url]
-            end
-            version_info[:meta][:url][:final] = strategy_data[:final_url] if strategy_data[:final_url]
-            version_info[:meta][:url][:options] = livecheck_url_options if livecheck_url_options.present?
+            version_info[:meta][:url] = url_metadata(
+              original_url:, url:, url_symbol: (livecheck_url if livecheck_url.is_a?(Symbol) && livecheck_url_string),
+              strategy_url: strategy_data[:url], final_url: strategy_data[:final_url],
+              url_options: livecheck_url_options
+            )
           end
           version_info[:meta][:strategy] = strategy_name if strategy.present?
           version_info[:meta][:strategies] = strategies.map { |s| livecheck_strategy_names(s) } if strategies.present?
@@ -649,17 +622,11 @@ module Homebrew
             [{ formula:, symbol: :parent }]
         end
         if url != "None"
-          resource_version_info[:meta][:url] = {}
-          if livecheck_url.is_a?(Symbol) && livecheck_url_string
-            resource_version_info[:meta][:url][:symbol] = livecheck_url
-          end
-          resource_version_info[:meta][:url][:original] = original_url
-          resource_version_info[:meta][:url][:processed] = url if url != original_url
-          if strategy_data&.dig(:url).present? && strategy_data[:url] != url
-            resource_version_info[:meta][:url][:strategy] = strategy_data[:url]
-          end
-          resource_version_info[:meta][:url][:final] = strategy_data[:final_url] if strategy_data&.dig(:final_url)
-          resource_version_info[:meta][:url][:options] = livecheck_url_options if livecheck_url_options.present?
+          resource_version_info[:meta][:url] = url_metadata(
+            original_url:, url:, url_symbol: (livecheck_url if livecheck_url.is_a?(Symbol) && livecheck_url_string),
+            strategy_url: strategy_data&.dig(:url), final_url: strategy_data&.dig(:final_url),
+            url_options: livecheck_url_options
+          )
         end
         resource_version_info[:meta][:strategy] = strategy_name if strategy.present?
         if strategies.present?
@@ -669,16 +636,7 @@ module Homebrew
         resource_version_info[:meta][:cached] = true if cached == true
       rescue => e
         Homebrew.failed = true
-        if json
-          status_hash(resource, "error", [e.to_s], verbose:)
-        elsif !quiet
-          onoe "#{Tty.blue}#{resource.name}#{Tty.reset}: #{e}"
-          if debug && !e.is_a?(Livecheck::Error)
-            require "utils/backtrace"
-            $stderr.puts Utils::Backtrace.clean(e)
-          end
-          nil
-        end
+        report_error(resource, e, json:, quiet: quiet && !json, debug:, verbose:)
       end
       resource_version_info
     end

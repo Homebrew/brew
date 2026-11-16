@@ -196,37 +196,22 @@ module Utils
               next
             end
 
+            platform = "#{record["os"]} #{record["arch"]}"
             dimension = case category
             when :homebrew_devcmdrun_developer
               "devcmdrun=#{record["devcmdrun"]} HOMEBREW_DEVELOPER=#{record["developer"]}"
             when :homebrew_os_arch_ci
-              "#{record["os"]} #{record["arch"]}#{" (CI)" if record["ci"] == "true"}"
+              "#{platform}#{" (CI)" if record["ci"] == "true"}"
             when :homebrew_prefixes
               prefix = record["prefix"].to_s
-              if STANDARD_PREFIXES.none? { |std| std.casecmp?(prefix) }
-                "custom-prefix (#{record["os"]} #{record["arch"]})"
-              else
-                prefix
-              end
+              (STANDARD_PREFIXES.any? { |std| std.casecmp?(prefix) }) ? prefix : "custom-prefix (#{platform})"
             when :os_versions
               format_os_version_dimension(record["os_name_and_version"])
             when :command_run_options
               "#{record["command"]} #{record["options"].to_s.split.sort.join(" ")}"
             when :test_bot_test
-              command_and_package, options = record["command"].split.partition { |arg| !arg.start_with?("-") }
-
-              # Cleanup bad data before https://github.com/Homebrew/homebrew-test-bot/pull/1043
-              # Can delete this code after 27th April 2025.
-              next if %w[audit install linkage style test].exclude?(command_and_package.first)
-              next if command_and_package.last.include?("/")
-              next if options.include?("--tap=")
-              next if options.include?("--only-dependencies")
-              next if options.include?("--cached")
-
-              command_and_options = (command_and_package + options.sort).join(" ")
-              passed = (record["passed"] == "true") ? "PASSED" : "FAILED"
-
-              "#{command_and_options} (#{record["os"]} #{record["arch"]}) (#{passed})"
+              test_bot_dimension(record["command"], os: record["os"].to_s, arch: record["arch"].to_s,
+                                                    passed: record["passed"] == "true")
             else
               record[dimensions.groups.first.to_s]
             end
@@ -249,9 +234,7 @@ module Utils
             if (all_core_formulae_json || category == :build_error) &&
                (options = record["options"].presence)
               # homebrew/core formulae don't have non-HEAD options but they ended up in our analytics anyway.
-              if all_core_formulae_json
-                options = options.split.include?("--HEAD") ? "--HEAD" : ""
-              end
+              options = options.split.include?("--HEAD") ? "--HEAD" : "" if all_core_formulae_json
               dimension = "#{dimension} #{options}"
             end
 
@@ -280,26 +263,15 @@ module Utils
           json[:total_items] = json[:items].length
 
           if all_core_formulae_json
-            core_formula_items = {}
-
-            json[:items].each do |item|
-              item.delete(:number)
-              formula_name, = item[dimension_key].split.first
-              next if formula_name.include?("/")
-
-              core_formula_items[formula_name] ||= []
-              core_formula_items[formula_name] << item
-            end
-            json.delete(:items)
-
-            core_formula_items.each_value do |items|
+            json[:formulae] = json.delete(:items).group_by { |item| item[dimension_key].split.first }.sort.to_h
+            json[:formulae].reject! { |name, _| name.include?("/") }
+            json[:formulae].each_value do |items|
               items.sort_by! { |item| -item[:count] }
               items.each do |item|
+                item.delete(:number)
                 item[:count] = Utils::Analytics.format_count(item[:count])
               end
             end
-
-            json[:formulae] = core_formula_items.sort_by { |name, _| name }.to_h
           else
             json[:items].sort_by! do |item|
               if category == :homebrew_env_config
@@ -318,18 +290,28 @@ module Utils
                 (item[:count].to_f / json[:total_count]) * 100
               end
               item[:percent] = Utils::Analytics.format_percent(percent).delete_suffix(".00")
-              item[:count] = Utils::Analytics.format_count(item[:count])
+              count_keys.each { |key| item[key] = Utils::Analytics.format_count(item[key]) }
               next if category != :homebrew_env_config
 
-              item[:non_default_count] = Utils::Analytics.format_count(item[:non_default_count])
-              item[:set_default_count] = Utils::Analytics.format_count(item[:set_default_count])
-              item[:unset_count] = Utils::Analytics.format_count(item[:unset_count])
               item[:default_value] = Homebrew::EnvConfig.default_description(item[dimension_key].to_sym)
             end
           end
 
           json
         end
+      end
+
+      sig { params(command: String, os: String, arch: String, passed: T::Boolean).returns(T.nilable(String)) }
+      def test_bot_dimension(command, os:, arch:, passed:)
+        command_and_package, options = command.split.partition { |arg| !arg.start_with?("-") }
+
+        # Cleanup bad data before https://github.com/Homebrew/homebrew-test-bot/pull/1043
+        # Can delete this code after 27th April 2025.
+        return if %w[audit install linkage style test].exclude?(command_and_package.first)
+        return if command_and_package.last.to_s.include?("/")
+        return if options.intersect?(%w[--tap= --only-dependencies --cached])
+
+        "#{(command_and_package + options.sort).join(" ")} (#{os} #{arch}) (#{passed ? "PASSED" : "FAILED"})"
       end
 
       sig { params(dimension_key: T.any(String, Symbol)).returns(T::Hash[String, String]) }

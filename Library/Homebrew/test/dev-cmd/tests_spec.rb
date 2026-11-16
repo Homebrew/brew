@@ -124,6 +124,23 @@ RSpec.describe Homebrew::DevCmd::Tests do
         expect(invoked_arguments).to array_including_cons("--runtime-log", "tests/parallel_runtime_rspec.log")
       end
 
+      context "with generic and online tests" do
+        let(:args) { ["--generic", "--online"] }
+
+        it "uses a separate runtime log for both modes" do
+          expect(invoked_arguments)
+            .to array_including_cons("--runtime-log", "#{HOMEBREW_CACHE}/parallel_runtime_rspec.generic.online.log")
+        end
+      end
+
+      context "with profiling" do
+        let(:args) { ["--profile=5"] }
+
+        it "passes the requested example count to RSpec" do
+          expect(invoked_arguments).to array_including_cons("--profile", "5")
+        end
+      end
+
       context "when exiting on the first failure" do
         let(:args) { ["--fail-fast"] }
 

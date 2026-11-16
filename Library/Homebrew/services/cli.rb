@@ -262,26 +262,15 @@ module Homebrew
 
           if System.systemctl?
             loaded_service_names.each do |service_name|
-              if keep
-                if service.timed?
-                  systemctl_stop_results << System::Systemctl.quiet_run(
-                    *systemctl_args, "stop", "#{service_name}.timer"
-                  )
-                end
-                systemctl_stop_results << System::Systemctl.quiet_run(*systemctl_args, "stop", service_name)
-              elsif service.timed?
-                timer_name = "#{service_name}.timer"
-                result = System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", timer_name)
+              unit_names = [service_name]
+              unit_names.unshift("#{service_name}.timer") if service.timed?
+              unit_names.each do |unit_name|
+                result = System::Systemctl.quiet_run(*systemctl_args, *(keep ? ["stop"] : ["disable", "--now"]),
+                                                     unit_name)
                 systemctl_stop_results << result
-                disabled_units << timer_name if result
+                next if keep || !result
 
-                result = System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service_name)
-                systemctl_stop_results << result
-                disabled_units << "#{service_name}.service" if result
-              else
-                result = System::Systemctl.quiet_run(*systemctl_args, "disable", "--now", service_name)
-                systemctl_stop_results << result
-                disabled_units << "#{service_name}.service" if result
+                disabled_units << ((unit_name == service_name) ? "#{service_name}.service" : unit_name)
               end
             end
           elsif System.launchctl?

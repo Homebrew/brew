@@ -579,6 +579,83 @@ RSpec.describe Homebrew::DevCmd::Bottle do
     end
   end
 
+  describe "#write_bottle_json" do
+    subject(:command) { described_class.new(["--merge", "test.json"]) }
+
+    it "writes JSON to a new bottle file" do
+      path = mktmpdir/"test.bottle.json"
+      command.write_bottle_json(path.to_s, '{"bottle":{}}')
+
+      expect(path.read).to eq('{"bottle":{}}')
+    end
+
+    it "replaces the destination without overwriting another hard link" do
+      path = mktmpdir/"test.bottle.json"
+      path.write("old bottle")
+      previous = path.dirname/"previous.bottle.json"
+      File.link(path, previous)
+      command.write_bottle_json(path.to_s, '{"bottle":{}}')
+
+      expect([path.read, previous.read]).to eq(['{"bottle":{}}', "old bottle"])
+    end
+  end
+
+  describe "#warn_missing_all_bottle" do
+    subject(:command) { described_class.new(["--merge", "test.json"]) }
+
+    let(:event_path) { mktmpdir/"event.json" }
+
+    before do
+      ENV["GITHUB_EVENT_PATH"] = event_path.to_s
+    end
+
+    it "posts the formula and platform diagnostics on the triggering pull request" do
+      event_path.write({ repository: { full_name: "Homebrew/homebrew-core" }, pull_request: { number: 123 } }.to_json)
+
+      expect(GitHub).to receive(:create_issue_comment)
+        .with("Homebrew/homebrew-core", 123,
+              include("foo should have had an `:all` bottle", '"sha256": "abc123"'))
+
+      command.warn_missing_all_bottle("foo", [{ "sha256" => "abc123" }])
+    end
+
+    it "does nothing outside GitHub Actions" do
+      ENV.delete("GITHUB_EVENT_PATH")
+
+      expect(GitHub).not_to receive(:create_issue_comment)
+
+      command.warn_missing_all_bottle("foo", [])
+    end
+
+    it "ignores events without a pull request" do
+      event_path.write({ repository: { full_name: "Homebrew/homebrew-core" } }.to_json)
+
+      expect(GitHub).not_to receive(:create_issue_comment)
+
+      command.warn_missing_all_bottle("foo", [])
+    end
+
+    it "warns when the event file is missing" do
+      expect { command.warn_missing_all_bottle("foo", []) }
+        .to output(/Failed to post missing `:all` bottle warning/).to_stderr
+    end
+
+    it "warns when the event file is malformed" do
+      event_path.write("{")
+
+      expect { command.warn_missing_all_bottle("foo", []) }
+        .to output(/Failed to post missing `:all` bottle warning/).to_stderr
+    end
+
+    it "warns when GitHub rejects the comment" do
+      event_path.write({ repository: { full_name: "Homebrew/homebrew-core" }, pull_request: { number: 123 } }.to_json)
+      allow(GitHub).to receive(:create_issue_comment).and_raise(GitHub::API::Error, "API unavailable")
+
+      expect { command.warn_missing_all_bottle("foo", []) }
+        .to output(/Failed to post missing `:all` bottle warning.*API unavailable/).to_stderr
+    end
+  end
+
   describe "bottle_cmd" do
     subject(:homebrew) { described_class.new(["foo"]) }
 

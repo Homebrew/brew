@@ -361,8 +361,7 @@ module Homebrew
               when :default_kegs
                 resolve_default_keg(name)
               when :kegs
-                _, kegs = resolve_kegs(name)
-                kegs
+                resolve_kegs(name).fetch(1)
               else
                 raise
               end
@@ -393,9 +392,8 @@ module Homebrew
             cask = begin
               config = Cask::Config.from_args(@parent) if @cask_options
               untrusted_installed_cask = (load_untrusted_installed_cask(name, config:) if want_keg_like_cask)
-              candidate_cask = if untrusted_installed_cask
-                untrusted_installed_cask
-              elsif want_keg_like_cask || [:resolve, :resolve_cask].include?(method)
+              candidate_cask = untrusted_installed_cask
+              candidate_cask ||= if want_keg_like_cask || [:resolve, :resolve_cask].include?(method)
                 Cask::CaskLoader.load_prefer_installed(name, config:, warn:)
               else
                 Cask::CaskLoader.load(name, config:, warn:)

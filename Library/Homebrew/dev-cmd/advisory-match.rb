@@ -190,8 +190,7 @@ module Homebrew
             opoo "#{record_id}: prerelease_boundary in current version; leaving reviewed record unchanged"
             next
           end
-          initial_introduction = false
-          initial_introduction = true if !args.no_history? && status && reviewed_state.nil?
+          initial_introduction = !!(!args.no_history? && status && reviewed_state.nil?)
           candidate = matcher.to_brew_record(formula, hit)
           basis_changed = emitter.range_basis_changed?(candidate)
           if basis_changed && !initial_introduction && (args.no_history? || !status&.fixed?)
@@ -253,30 +252,26 @@ module Homebrew
           walk_history &&= basis_changed || emitter.history_required?(record_id) if args.new_history?
           emitter.record_history_walk if walk_history
           first_fixed = matcher.first_fixed_version(formula, hit) if walk_history
-          fixed_boundary = T.let(nil, T.nilable(String))
-          case first_fixed
-          when String
-            fixed_boundary = first_fixed
-          when nil
-            # No history walk was required.
+          fixed_boundary = case first_fixed
+          when String, nil
+            # nil means no history walk was required.
+            first_fixed
           when :never_affected
             next
-          when :history_unavailable
+          when :history_unavailable, :shared_fixed_version
             emitter.record_history_unavailable(formula.name)
-            opoo "#{record_id}: formula history is unavailable; skipping automatic update"
-            next
-          when :shared_fixed_version
-            emitter.record_history_unavailable(formula.name)
-            opoo "#{record_id}: #{formula.pkg_version} also has an affected build; " \
-                 "skipping automatic update until a later version"
+            opoo({
+              history_unavailable:  "#{record_id}: formula history is unavailable; skipping automatic update",
+              shared_fixed_version: "#{record_id}: #{formula.pkg_version} also has an affected build; " \
+                                    "skipping automatic update until a later version",
+            }.fetch(first_fixed))
             next
           else
             raise TypeError, "unexpected fixed-history result: #{first_fixed.inspect}"
           end
 
           if fixed_boundary && !emitter.fixed_boundary_valid?(record_id, fixed_boundary)
-            onoe "#{record_id}: fixed #{fixed_boundary} does not follow its reviewed range"
-            Homebrew.failed = true
+            ofail "#{record_id}: fixed #{fixed_boundary} does not follow its reviewed range"
             next
           end
 
@@ -290,13 +285,11 @@ module Homebrew
               next
             end
             unless reintroduced.is_a?(String)
-              onoe "#{record_id}: could not find a prior non-affected version for its reviewed fixed range"
-              Homebrew.failed = true
+              ofail "#{record_id}: could not find a prior non-affected version for its reviewed fixed range"
               next
             end
             unless emitter.reintroduction_boundary_valid?(record_id, reintroduced)
-              onoe "#{record_id}: reintroduction #{reintroduced} does not follow its reviewed range"
-              Homebrew.failed = true
+              ofail "#{record_id}: reintroduction #{reintroduced} does not follow its reviewed range"
               next
             end
             first_introduced = reintroduced
