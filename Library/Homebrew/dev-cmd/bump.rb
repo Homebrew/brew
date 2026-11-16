@@ -783,133 +783,81 @@ module Homebrew
         strategy = T.cast(version_info.dig(:meta, :strategy), T.nilable(String))
         return unless compare_versions_for_strategy(strategy, latest.to_s, current.to_s)&.positive?
 
-        case strategy
+        url = version_info.dig(:meta, :url, :strategy)
+        original_url = version_info.dig(:meta, :url, :original)
+        current_str = current.to_s
+        # Each strategy lists `[version, publish time]` pairs, without yanked
+        # releases or prereleases (unless the current version is one).
+        releases = case strategy
         when "Crate"
-          url = version_info.dig(:meta, :url, :strategy)
-          return unless url
+          return if (content = cooldown_content(url, version_info[:content])).blank?
 
-          content = version_info[:content]
-          unless content
-            stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
-            return unless status.success?
-
-            content = stdout.scrub
-          end
-          return if content.blank?
-
-          releases = content.each_line.map { |line| Homebrew::Livecheck::Strategy::Json.parse_json(line) }
-          current_str = current.to_s
           current_is_prerelease = Semver.prerelease?(current_str)
-          cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
-          releases.sort_by { |release| Version.new(release["vers"]) }.reverse_each do |release|
-            version_str = release["vers"]
-            version = Version.new(version_str)
-            return version if version_str == current_str
-            next if (version > latest) || (version < current)
+          content.each_line.filter_map do |line|
+            release = Homebrew::Livecheck::Strategy::Json.parse_json(line)
             next if release["yanked"]
-            next if !current_is_prerelease && Semver.prerelease?(version_str)
-            next unless (date_str = release["pubtime"])
+            next if !current_is_prerelease && Semver.prerelease?(release["vers"])
 
-            return version if DateTime.parse(date_str) < cooldown_interval
+            [release["vers"], release["pubtime"]]
           end
         when "Npm"
-          url = version_info.dig(:meta, :url, :strategy)&.delete_suffix("/latest")
-          return unless url
+          return if (content = cooldown_content(url&.delete_suffix("/latest"))).blank?
 
-          stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
-          return unless status.success?
-          return if (content = stdout.scrub).blank?
-
-          json = Homebrew::Livecheck::Strategy::Json.parse_json(content)
-          release_dates = json["time"]&.except("created", "modified")
-                                      &.transform_values { |v| DateTime.parse(v) }
-          return unless release_dates.present?
-
-          current_str = current.to_s
-          latest_str = latest.to_s
           current_is_prerelease = Semver.prerelease?(current_str)
-          cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
-          release_dates.sort_by { |_, date| date }.reverse_each do |version_str, date|
-            return Version.new(version_str) if version_str == current_str
-
-            latest_comparison = compare_versions_for_strategy(strategy, version_str, latest_str)
-            next if latest_comparison.nil? || latest_comparison.positive?
-
-            current_comparison = compare_versions_for_strategy(strategy, version_str, current_str)
-            next if current_comparison.nil? || current_comparison.negative?
-            next if !current_is_prerelease && Semver.prerelease?(version_str)
-
-            return Version.new(version_str) if date < cooldown_interval
+          json = Homebrew::Livecheck::Strategy::Json.parse_json(content)
+          json["time"].to_h.except("created", "modified").reject do |version_str, _|
+            !current_is_prerelease && Semver.prerelease?(version_str)
           end
         when "Pypi"
-          url = version_info.dig(:meta, :url, :strategy)
-          original_url = version_info.dig(:meta, :url, :original)
-          return if !url || !original_url
-
-          suffix = Homebrew::Livecheck::Strategy::Pypi::URL_MATCH_REGEX.match(original_url)&.[](:suffix)
+          suffix = Homebrew::Livecheck::Strategy::Pypi::URL_MATCH_REGEX.match(original_url.to_s)&.[](:suffix)
           return unless suffix
+          return if (content = cooldown_content(url, version_info[:content])).blank?
 
-          content = version_info[:content]
-          unless content
-            stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
-            return unless status.success?
-
-            content = stdout.scrub
-          end
-          return if content.blank?
-
-          json = Homebrew::Livecheck::Strategy::Json.parse_json(content)
-          return unless (releases = json["releases"])
-
-          current_str = current.to_s
           current_is_prerelease = current_str.match?(PYPI_UNSTABLE_VERSION_REGEX)
-          cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
-          releases.sort_by { |k, _| Version.new(k) }.reverse_each do |version_str, assets|
-            version = Version.new(version_str)
-            return version if version_str == current_str
-            next if (version > latest) || (version < current)
-            next if !current_is_prerelease && version_str.match?(PYPI_UNSTABLE_VERSION_REGEX)
+          json = Homebrew::Livecheck::Strategy::Json.parse_json(content)
+          json["releases"].to_a.flat_map do |version_str, assets|
+            next [] if !current_is_prerelease && version_str.match?(PYPI_UNSTABLE_VERSION_REGEX)
 
-            assets.each do |asset|
-              next if asset["yanked"]
-              next unless asset["url"]&.end_with?(suffix)
-              next unless (date_str = asset["upload_time_iso_8601"])
-
-              date = DateTime.parse(date_str)
-              return version if date < cooldown_interval
+            assets.filter_map do |asset|
+              [version_str, asset["upload_time_iso_8601"]] if !asset["yanked"] && asset["url"]&.end_with?(suffix)
             end
           end
         when "RubyGems"
-          url = version_info.dig(:meta, :url, :strategy)&.sub(%r{/latest\.json\z}, ".json")
-          original_url = version_info.dig(:meta, :url, :original)
-          return if !url || !original_url
-
-          match = Homebrew::Livecheck::Strategy::RubyGems::URL_MATCH_REGEX.match(original_url)
+          match = Homebrew::Livecheck::Strategy::RubyGems::URL_MATCH_REGEX.match(original_url.to_s)
           return unless match
-
-          stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
-          return unless status.success?
-          return if (content = stdout.scrub).blank?
+          return if (content = cooldown_content(url&.sub(%r{/latest\.json\z}, ".json"))).blank?
 
           json = Homebrew::Livecheck::Strategy::Json.parse_json(content)
           return unless json.is_a?(Array)
 
-          current_str = current.to_s
-          cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
-          json.sort_by { |release| Version.new(release["number"]) }.reverse_each do |release|
+          current_is_prerelease = Gem::Version.correct?(current_str) && Gem::Version.new(current_str).prerelease?
+          json.filter_map do |release|
             next if release["platform"] != (match[:platform] || "ruby")
+            next if release["prerelease"] && !current_is_prerelease
 
-            version_str = release["number"]
-            version = Version.new(version_str)
-            return version if version_str == current_str
-            next if (version > latest) || (version < current)
-            next if release["prerelease"] &&
-                    !(Gem::Version.correct?(current_str) && Gem::Version.new(current_str).prerelease?)
-            next unless (date_str = release["created_at"])
-
-            return version if DateTime.parse(date_str) < cooldown_interval
+            [release["number"], release["created_at"]]
           end
         end
+        return if releases.blank?
+
+        latest_str = latest.to_s
+        cooldown_interval = (DateTime.now - Homebrew::RELEASE_COOLDOWN_DAYS)
+        cooldown_versions = releases.filter_map do |version_str, date_str|
+          next unless date_str
+
+          latest_comparison = compare_versions_for_strategy(strategy, version_str, latest_str)
+          next if latest_comparison.nil? || latest_comparison.positive?
+
+          current_comparison = compare_versions_for_strategy(strategy, version_str, current_str)
+          next if current_comparison.nil? || current_comparison.negative?
+
+          version_str if DateTime.parse(date_str) < cooldown_interval
+        end
+        cooldown_version = cooldown_versions.max do |left, right|
+          compare_versions_for_strategy(strategy, left, right) || 0
+        end
+        # Keep the current version when every newer release is in cooldown.
+        Version.new(cooldown_version || current_str)
       end
 
       sig {
@@ -951,6 +899,16 @@ module Homebrew
       end
 
       private
+
+      # Returns release metadata already fetched by livecheck or fetches it.
+      sig { params(url: T.nilable(String), content: T.nilable(String)).returns(T.nilable(String)) }
+      def cooldown_content(url, content = nil)
+        return content if content
+        return unless url
+
+        stdout, _stderr, status = Utils::Curl.curl_output(*DEFAULT_CURL_ARGS, url, **DEFAULT_CURL_OPTIONS).to_a
+        stdout.scrub if status.success?
+      end
 
       sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(T::Boolean) }
       def skip_repology?(formula_or_cask)
