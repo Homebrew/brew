@@ -231,7 +231,7 @@ module GitHub
     # `curl` arguments to authenticate a GitHub API request, if credentials are available.
     sig { returns(T::Array[String]) }
     def self.credentials_curl_args
-      return [] if credentials_type == :none
+      return [] if credentials.blank?
 
       ["--header", "Authorization: token #{credentials}"]
     end
