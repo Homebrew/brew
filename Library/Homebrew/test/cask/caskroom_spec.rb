@@ -6,6 +6,7 @@ require "cask/info"
 
 RSpec.describe Cask::Caskroom do
   before { described_class.expected_caskroom_group = nil }
+  after { described_class.expected_caskroom_group = nil }
 
   describe ".ensure_caskroom_exists" do
     test_each([
