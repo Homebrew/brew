@@ -35,6 +35,11 @@ module Homebrew
     # @api private
     BACKFILL_CUTOFF = DateTime.new(2024, 3, 14).freeze
 
+    # The OIDC issuer of the certificates GitHub Actions workflows sign with.
+    #
+    # @api private
+    GITHUB_ACTIONS_ISSUER = "https://token.actions.githubusercontent.com"
+
     # @api private
     BULK_LIST_MAX_DIGESTS = 1024
 
@@ -336,6 +341,109 @@ module Homebrew
 
       raise MissingAttestationError,
             "attestation not found: none listed from #{organisation} for #{bottle.filename}"
+    end
+
+    # Verifies a Sigstore bundle of build provenance for the given bottle
+    # SHA-256 with the vendored `sigstore` gem. It makes no request: the
+    # bundle carries its transparency log proof and Sigstore's trusted root is
+    # pinned in `attestation/trusted_root.json`.
+    #
+    # The provenance must have been signed by `signing_workflow`, in
+    # `https://github.com/OWNER/REPO/.github/workflows/WORKFLOW.yml@REF` format.
+    #
+    # @return [Hash] the verified statement and signing time, shaped like a
+    #   `gh attestation verify --format json` result
+    # @raise [InvalidAttestationError] on any verification failures
+    #
+    # @api private
+    sig { params(bundle: String, digest: String, signing_workflow: String).returns(T::Hash[String, T.untyped]) }
+    def self.verify_bundle(bundle, digest, signing_workflow)
+      # Only the bundle form Homebrew's signers produce reaches the gem, so it
+      # never decides on one Homebrew has not reviewed. That form carries the
+      # log's signature over the entry's time, which the gem otherwise trusts
+      # as stated, and no timestamp authority response, whose time the gem
+      # does not return. Keys must match exactly, as `protobug` also reads each
+      # field under its protobuf name and the last name it reads wins.
+      JSON.parse(bundle, symbolize_names: true) => {
+        mediaType:            "application/vnd.dev.sigstore.bundle.v0.3+json" |
+                              "application/vnd.dev.sigstore.bundle+json;version=0.2",
+        verificationMaterial: {
+          tlogEntries:               [{
+            logIndex:          String,
+            logId:             { keyId: String, **nil },
+            kindVersion:       { kind: "dsse", version: "0.0.1", **nil },
+            integratedTime:    String,
+            inclusionPromise:  { signedEntryTimestamp: String, **nil },
+            inclusionProof:    {
+              logIndex: String, rootHash: String, treeSize: String, hashes: Array,
+              checkpoint: { envelope: String, **nil }, **nil
+            },
+            canonicalizedBody: String,
+            **nil
+          }],
+          timestampVerificationData: {},
+          **certificate
+        },
+        dsseEnvelope:         {
+          payload: String, payloadType: "application/vnd.in-toto+json", signatures: [{ sig: String, **nil }], **nil
+        },
+        **nil
+      }
+      certificate => { certificate: { rawBytes: String, **nil }, **nil } |
+                     { x509CertificateChain: { certificates: [{ rawBytes: String, **nil }], **nil }, **nil }
+
+      @sigstore_verifier ||= T.let(begin
+        # The vendored `sigstore` gem is left off the load path until now.
+        gems = HOMEBREW_LIBRARY_PATH/"vendor/bundle/#{RUBY_ENGINE}/#{Gem.ruby_api_version}/gems"
+        $LOAD_PATH.unshift(*gems.glob("{sigstore,protobug}*/lib").map(&:to_s))
+        require "logger"
+        require "sigstore"
+        Sigstore.logger = Logger.new(nil)
+
+        # `protobug` passes `JSON.parse` options that `json` 3 rejects, so
+        # JSON is parsed here and not by its `decode_json`.
+        trusted_root = Sigstore::TrustedRoot.new(
+          Sigstore::TrustRoot::V1::TrustedRoot.decode_json_hash(
+            JSON.parse((HOMEBREW_LIBRARY_PATH/"attestation/trusted_root.json").read), registry: Sigstore::REGISTRY
+          ),
+        )
+        # Without a Rekor client a stale trusted root can never cause a request.
+        Sigstore::Verifier.new(
+          rekor_client:          nil,
+          fulcio_cert_chains:    trusted_root.fulcio_cert_chains,
+          timestamp_authorities: trusted_root.timestamp_authorities,
+          rekor_keyring:         Sigstore::Internal::Keyring.new(keys: trusted_root.rekor_keys),
+          ct_keyring:            Sigstore::Internal::Keyring.new(keys: trusted_root.ctfe_keys),
+        )
+      end, T.nilable(Sigstore::Verifier))
+
+      bundle = Sigstore::Bundle::V1::Bundle.decode_json_hash(JSON.parse(bundle), registry: Sigstore::REGISTRY)
+      input = Sigstore::Verification::V1::Input.new
+      input.bundle = bundle
+      artifact = Sigstore::Verification::V1::Artifact.new
+      artifact.artifact_uri = "sha256:#{digest}"
+      input.artifact = artifact
+      policy = Sigstore::Policy::Identity.new(identity: signing_workflow, issuer: GITHUB_ACTIONS_ISSUER)
+      result = @sigstore_verifier.verify(input: Sigstore::VerificationInput.new(input), policy:, offline: true)
+      raise InvalidAttestationError, "attestation verification failed: #{result.reason}" unless result.verified?
+
+      integrated_time = bundle.verification_material.tlog_entries.fetch(0).integrated_time
+      {
+        "verificationResult" => {
+          "statement"          => JSON.parse(bundle.dsse_envelope.payload),
+          "verifiedTimestamps" => [{ "timestamp" => Time.at(integrated_time).utc.iso8601 }],
+        },
+      }
+    rescue NoMatchingPatternError
+      raise InvalidAttestationError, "attestation verification failed: unsupported bundle form"
+    rescue InvalidAttestationError
+      raise
+    # Besides failed results, the gem raises `Sigstore::Error` and whatever its
+    # parsers raise on malformed input, with messages that can dump the
+    # bundle's raw bytes.
+    rescue => e
+      odebug "#{e.class}: #{e.message}"
+      raise InvalidAttestationError, "attestation verification failed: #{e.class}"
     end
 
     ATTESTATION_MAX_RETRIES = 5

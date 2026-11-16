@@ -663,6 +663,8 @@ RSpec.describe Homebrew::Attestation do
 
             Attestation verification could not complete because the GitHub API rate
             limit was exceeded. Please try again later.
+
+            To skip attestation verification, set `HOMEBREW_NO_VERIFY_ATTESTATIONS=1`.
           EOS
         end
 
@@ -836,6 +838,156 @@ RSpec.describe Homebrew::Attestation do
       described_class.check_core_attestation fake_bottle
 
       expect(bundle_runs).to eq([true, false])
+    end
+  end
+
+  describe "::verify_bundle" do
+    let(:digest) { "6647e78fa0031ae48458496a4c46dee645fa8f8dda44d35f3a095627590e77b1" }
+    let(:bundle) { JSON.parse((TEST_FIXTURE_DIR/"attestation/publish-commit-bottles.json").read) }
+
+    def core_workflow(name)
+      "https://github.com/Homebrew/homebrew-core/.github/workflows/#{name}.yml@refs/heads/main"
+    end
+
+    def workflow = core_workflow("publish-commit-bottles")
+
+    # The bottle digests attested by the named fixture: a real bundle from that signer.
+    def verified_digests(fixture, digest, workflow)
+      described_class.verify_bundle((TEST_FIXTURE_DIR/"attestation/#{fixture}.json").read, digest, workflow)
+                     .dig("verificationResult", "statement", "subject")
+                     .map { |subject| subject.dig("digest", "sha256") }
+    end
+
+    def envelope_signature(bundle) = bundle.fetch("dsseEnvelope").fetch("signatures").fetch(0)
+
+    def log_entry(bundle) = bundle.fetch("verificationMaterial").fetch("tlogEntries").fetch(0)
+
+    # Swaps the case of one letter of a Base64 string: still valid Base64 for different bytes.
+    def corrupt(base64) = base64.sub(/[a-z]/i, &:swapcase)
+
+    before do
+      # Verification must never make a request.
+      [[TCPSocket, :new], [TCPSocket, :open], [Socket, :tcp]].each do |socket_class, method|
+        allow(socket_class).to receive(method).and_raise("verification attempted a network connection")
+      end
+    end
+
+    it "verifies a publish-commit-bottles bundle" do
+      expect(verified_digests("publish-commit-bottles", digest, workflow)).to include(digest)
+    end
+
+    it "verifies a dispatch-build-bottle bundle" do
+      digest = "08cea07f0d5aa44680d79cf97dbae12da8f80e85deb70b36f0e701be0896efd5"
+      workflow = core_workflow("dispatch-build-bottle")
+
+      expect(verified_digests("dispatch-build-bottle", digest, workflow)).to include(digest)
+    end
+
+    it "verifies a dispatch-rebottle bundle" do
+      digest = "d3a17c017f2a07e9b1fcdbb28a13bcb77a832a13ca822c526ed3d950b579cd41"
+      workflow = core_workflow("dispatch-rebottle")
+
+      expect(verified_digests("dispatch-rebottle", digest, workflow)).to include(digest)
+    end
+
+    it "verifies a backfill bundle" do
+      digest = "0ebfa147cd1a513a86323167ab696a94b490dcd215d6685188bc376bf1313953"
+      workflow = "https://github.com/trailofbits/homebrew-brew-verify/.github/workflows/" \
+                 "backfill_signatures.yml@refs/heads/main"
+
+      expect(verified_digests("backfill", digest, workflow)).to include(digest)
+    end
+
+    it "returns the time the transparency log recorded the signature" do
+      result = described_class.verify_bundle(JSON.generate(bundle), digest, workflow)
+
+      expect(result.dig("verificationResult", "verifiedTimestamps"))
+        .to eq([{ "timestamp" => "2026-09-02T14:33:41Z" }])
+    end
+
+    it "rejects a bundle for another bottle" do
+      expect { described_class.verify_bundle(JSON.generate(bundle), "0" * 64, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError, /None of in-toto subjects matches/)
+    end
+
+    it "rejects a bundle signed by another workflow" do
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, core_workflow("dispatch-rebottle")) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError, /SANs do not match/)
+    end
+
+    it "rejects a tampered statement" do
+      envelope = bundle.fetch("dsseEnvelope")
+      envelope["payload"] = [envelope.fetch("payload").unpack1("m").sub("gmp--6.3.0", "gmp--6.3.1")].pack("m0")
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError)
+    end
+
+    it "rejects a tampered signature" do
+      envelope_signature(bundle)["sig"] = corrupt(envelope_signature(bundle).fetch("sig"))
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError)
+    end
+
+    it "rejects a tampered certificate" do
+      certificate = bundle.fetch("verificationMaterial").fetch("certificate")
+      certificate["rawBytes"] = corrupt(certificate.fetch("rawBytes").reverse).reverse
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError)
+    end
+
+    it "rejects a tampered log time without quoting the signature bytes the gem reports" do
+      log_entry(bundle)["integratedTime"] = (log_entry(bundle).fetch("integratedTime").to_i + 1).to_s
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError,
+                        "attestation verification failed: Sigstore::Error::InvalidSignature")
+    end
+
+    it "rejects a log time that the log has not signed" do
+      log_entry(bundle).delete("inclusionPromise")
+      log_entry(bundle)["integratedTime"] = (log_entry(bundle).fetch("integratedTime").to_i + 1).to_s
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError, /unsupported bundle form/)
+    end
+
+    it "rejects a field under the other name protobuf reads it by" do
+      bundle["dsse_envelope"] = bundle.delete("dsseEnvelope")
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError, /unsupported bundle form/)
+    end
+
+    it "rejects a tampered log inclusion proof" do
+      hashes = log_entry(bundle).fetch("inclusionProof").fetch("hashes")
+      hashes[0] = corrupt(hashes.fetch(0))
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError)
+    end
+
+    it "rejects a log entry for another signature" do
+      log_entry(bundle)["canonicalizedBody"] = ['{"apiVersion":"0.0.1","kind":"dsse","spec":{}}'].pack("m0")
+
+      expect { described_class.verify_bundle(JSON.generate(bundle), digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError)
+    end
+
+    it "rejects malformed JSON" do
+      expect { described_class.verify_bundle("{", digest, workflow) }
+        .to raise_error(Homebrew::Attestation::InvalidAttestationError)
+    end
+
+    it "names the opt-out when verification fails an installation" do
+      allow(fake_bottle).to receive(:name).and_return("fakebottle")
+      allow(described_class).to receive(:check_formula_attestation)
+        .and_raise(Homebrew::Attestation::InvalidAttestationError)
+
+      expect { Utils::Attestation.check_attestation(fake_bottle, quiet: true) }
+        .to raise_error(CannotInstallFormulaError, /set `HOMEBREW_NO_VERIFY_ATTESTATIONS=1`\.$/)
     end
   end
 end
