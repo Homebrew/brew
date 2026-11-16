@@ -17,8 +17,8 @@ module Utils
     ENV_CONFIG_COMMANDS = %w[config fetch install reinstall update update-report upgrade].freeze
     # Commands that report an event for each package they install so send them in batches.
     BATCH_REPORTS_COMMANDS = %w[install reinstall upgrade].freeze
-    # Keeps each request well under Linux's 128KiB limit on a single `curl` argument.
-    INFLUX_MAX_BATCH_SIZE = 100
+    # Linux limits a single `curl` argument (the request body) to 128KiB so stay well under it.
+    INFLUX_MAX_BATCH_BYTES = 65_536 # 64KiB
 
     extend Utils::Output::Mixin
     extend T::Generic
@@ -92,13 +92,23 @@ module Utils
         # Second precision is highest we can do and has the lowest performance cost.
         url = "#{INFLUX_HOST}/api/v2/write?bucket=#{INFLUX_BUCKET}&precision=s"
 
-        lines.each_slice(INFLUX_MAX_BATCH_SIZE) do |slice|
+        # Line protocol separates each event with a newline. Put as many events in each request
+        # as fit in INFLUX_MAX_BATCH_BYTES: an event larger than that on its own is sent by itself.
+        bodies = lines.each_with_object(T.let([], T::Array[String])) do |line, result|
+          body = result.last
+          if body && body.bytesize + 1 + line.bytesize <= INFLUX_MAX_BATCH_BYTES
+            body << "\n" << line
+          else
+            result << line.dup
+          end
+        end
+
+        bodies.each do |body|
           args = [
             "--max-time", "3",
             "--header", "Content-Type: text/plain; charset=utf-8",
             "--header", "Accept: application/json",
-            # Line protocol separates each event with a newline.
-            "--data-binary", slice.join("\n")
+            "--data-binary", body
           ]
           deferred_curl(url, args)
         end

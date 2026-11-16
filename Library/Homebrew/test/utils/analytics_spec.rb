@@ -216,11 +216,12 @@ RSpec.describe Utils::Analytics do
       expect(requests.first).to include("a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123")
     end
 
-    it "splits batches larger than INFLUX_MAX_BATCH_SIZE into multiple requests" do
+    it "splits batches larger than INFLUX_MAX_BATCH_BYTES into multiple requests" do
       ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
       ENV.delete("HOMEBREW_NO_ANALYTICS")
       allow(Time).to receive(:now).and_return(Time.at(123))
-      stub_const("Utils::Analytics::INFLUX_MAX_BATCH_SIZE", 2)
+      # Exactly enough room for two events and the newline between them.
+      stub_const("Utils::Analytics::INFLUX_MAX_BATCH_BYTES", ("a,t=1 f=\"1\" 123".bytesize * 2) + 1)
       requests = []
       allow(described_class).to receive(:deferred_curl) { |_url, args| requests << args }
 
@@ -233,6 +234,25 @@ RSpec.describe Utils::Analytics do
       expect(requests.map { |args| args[args.index("--data-binary") + 1] }).to eq([
         "a,t=1 f=\"1\" 123\nb,t=2 f=\"2\" 123",
         "c,t=3 f=\"3\" 123",
+      ])
+    end
+
+    it "sends an event larger than INFLUX_MAX_BATCH_BYTES in its own request" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Time).to receive(:now).and_return(Time.at(123))
+      stub_const("Utils::Analytics::INFLUX_MAX_BATCH_BYTES", 10)
+      requests = []
+      allow(described_class).to receive(:deferred_curl) { |_url, args| requests << args }
+
+      described_class.batch_reports do
+        described_class.report_influx(:a, { t: "1" }, { f: "1" })
+        described_class.report_influx(:b, { t: "2" }, { f: "2" })
+      end
+
+      expect(requests.map { |args| args[args.index("--data-binary") + 1] }).to eq([
+        "a,t=1 f=\"1\" 123",
+        "b,t=2 f=\"2\" 123",
       ])
     end
 
