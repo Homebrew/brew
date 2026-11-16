@@ -171,6 +171,13 @@ module UnpackStrategy
       end
     end
 
+    # UDIF disk images end in a 512-byte "koly" trailer. Its 8-byte big-endian fields at byte 216
+    # hold the offset and length of an XML plist of resources, where a license agreement is `LPic`.
+    UDIF_TRAILER_SIZE = 512
+    private_constant :UDIF_TRAILER_SIZE
+    UDIF_XML_FIELDS_OFFSET = 216
+    private_constant :UDIF_XML_FIELDS_OFFSET
+
     sig { override.returns(T::Array[String]) }
     def self.extensions
       [".dmg"]
@@ -182,55 +189,16 @@ module UnpackStrategy
       (status.success? && !stdout.empty?) || false
     end
 
+    sig { returns(T::Boolean) }
+    def self.diskutil_image? = false
+
     sig { params(verbose: T::Boolean, _block: T.proc.params(arg0: T::Array[Mount]).void).void }
     def mount(verbose: false, &_block)
       Dir.mktmpdir("homebrew-dmg", HOMEBREW_TEMP) do |mount_dir|
         mount_dir = Pathname(mount_dir)
 
-        without_eula = system_command(
-          "hdiutil",
-          args:         [
-            "attach", "-plist", "-nobrowse", "-readonly",
-            "-mountrandom", mount_dir, path
-          ],
-          input:        "qn\n",
-          print_stderr: false,
-          verbose:,
-        )
-
-        # If mounting without agreeing to EULA succeeded, there is none.
-        plist = if without_eula.success?
-          without_eula.plist
-        else
-          without_eula.assert_success! if without_eula.stdout.empty?
-
-          cdr_path = mount_dir/path.basename.sub_ext(".cdr")
-
-          quiet_flag = "-quiet" unless verbose
-
-          system_command!(
-            "hdiutil",
-            args:    [
-              "convert", *quiet_flag, "-format", "UDTO", "-o", cdr_path, path
-            ],
-            verbose:,
-          )
-
-          with_eula = system_command!(
-            "hdiutil",
-            args:    [
-              "attach", "-plist", "-nobrowse", "-readonly",
-              "-mountrandom", mount_dir, cdr_path
-            ],
-            verbose:,
-          )
-
-          if verbose && !(eula_text = without_eula.stdout).empty?
-            ohai "Software License Agreement for '#{path}':", eula_text
-          end
-
-          with_eula.plist
-        end
+        plist = attach_with_diskutil(mount_dir, verbose:) if self.class.diskutil_image?
+        plist ||= attach_with_hdiutil(mount_dir, verbose:)
 
         mounts = if plist.respond_to?(:fetch)
           plist.fetch("system-entities", [])
@@ -252,6 +220,113 @@ module UnpackStrategy
 
     private
 
+    # Strips a license agreement before attaching, as `attach_with_hdiutil` does, so it is never
+    # agreed to. If one is missed, attaching with nothing on standard input cancels, and `PAGER`
+    # stops `diskutil` paging the agreement on a terminal. Returns `nil` when `diskutil` fails (e.g.
+    # on a multi-volume image, which `--mountPoint` doesn't support) so `hdiutil` can mount it.
+    sig { params(mount_dir: Pathname, verbose: T::Boolean).returns(T.untyped) }
+    def attach_with_diskutil(mount_dir, verbose:)
+      image_path = path
+      if license_agreement?
+        # A RAW image has no UDIF resources, so converting to one drops the license agreement
+        # like `hdiutil convert -format UDTO` does.
+        image_path = mount_dir/path.basename.sub_ext(".img")
+        converted = system_command(
+          "diskutil",
+          args:         ["image", "create", "from", "--format", "RAW", path, image_path],
+          env:          { "PAGER" => "true" },
+          print_stderr: false,
+          verbose:,
+        )
+        unless converted.success?
+          odebug "`diskutil image create from` failed for '#{path}', retrying with `hdiutil`.", converted.stderr
+          return
+        end
+      end
+
+      mount_point = mount_dir/"mount"
+      mount_point.mkpath
+
+      result = system_command(
+        "diskutil",
+        args:         [
+          "image", "attach", "--plist", "--readOnly", "--nobrowse",
+          "--mountPoint", mount_point, image_path
+        ],
+        env:          { "PAGER" => "true" },
+        print_stderr: false,
+        verbose:,
+      )
+      return result.plist if result.success?
+
+      odebug "`diskutil image attach` failed for '#{path}', retrying with `hdiutil`.", result.stderr
+      # `hdiutil` converts the original again, so don't keep two uncompressed copies.
+      image_path.unlink if image_path != path
+      nil
+    end
+
+    sig { returns(T::Boolean) }
+    def license_agreement?
+      size = path.size
+      return false if size < UDIF_TRAILER_SIZE
+
+      trailer = path.binread(UDIF_TRAILER_SIZE, size - UDIF_TRAILER_SIZE)
+      return false if trailer.nil? || !trailer.start_with?("koly")
+
+      xml_offset, xml_length = trailer.unpack("@#{UDIF_XML_FIELDS_OFFSET}Q>Q>")
+      return false if !xml_offset.is_a?(Integer) || !xml_length.is_a?(Integer)
+      return false if xml_length.zero? || xml_offset + xml_length > size
+
+      # Match the key rather than parse XML straight from the image.
+      path.binread(xml_length, xml_offset).to_s.include?("<key>LPic</key>")
+    end
+
+    sig { params(mount_dir: Pathname, verbose: T::Boolean).returns(T.untyped) }
+    def attach_with_hdiutil(mount_dir, verbose:)
+      without_eula = system_command(
+        "hdiutil",
+        args:         [
+          "attach", "-plist", "-nobrowse", "-readonly",
+          "-mountrandom", mount_dir, path
+        ],
+        input:        "qn\n",
+        print_stderr: false,
+        verbose:,
+      )
+
+      # If mounting without agreeing to EULA succeeded, there is none.
+      return without_eula.plist if without_eula.success?
+
+      without_eula.assert_success! if without_eula.stdout.empty?
+
+      cdr_path = mount_dir/path.basename.sub_ext(".cdr")
+
+      quiet_flag = "-quiet" unless verbose
+
+      system_command!(
+        "hdiutil",
+        args:    [
+          "convert", *quiet_flag, "-format", "UDTO", "-o", cdr_path, path
+        ],
+        verbose:,
+      )
+
+      with_eula = system_command!(
+        "hdiutil",
+        args:    [
+          "attach", "-plist", "-nobrowse", "-readonly",
+          "-mountrandom", mount_dir, cdr_path
+        ],
+        verbose:,
+      )
+
+      if verbose && !(eula_text = without_eula.stdout).empty?
+        ohai "Software License Agreement for '#{path}':", eula_text
+      end
+
+      with_eula.plist
+    end
+
     sig { override.params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).void }
     def extract_to_dir(unpack_dir, basename:, verbose:)
       mount(verbose:) do |mounts|
@@ -264,3 +339,5 @@ module UnpackStrategy
     end
   end
 end
+
+require "extend/os/unpack_strategy/dmg"
