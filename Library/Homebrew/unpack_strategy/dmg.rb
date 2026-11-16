@@ -216,6 +216,18 @@ module UnpackStrategy
           end
         end
       end
+    rescue ErrorDuringExecution => e
+      raise unless e.stderr.include?("There may be a problem with this disk image.")
+      raise unless e.stderr.include?("hdiutil: attach canceled")
+
+      raise e.exception(<<~EOS), cause: nil
+        macOS refused to mount the disk image:
+          #{path}
+        Its filesystem may be damaged or inconsistent.
+        Report this to the software vendor and request a corrected disk image.
+
+        #{e.message}
+      EOS
     end
 
     private

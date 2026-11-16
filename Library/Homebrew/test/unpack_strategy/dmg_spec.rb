@@ -58,6 +58,64 @@ RSpec.describe UnpackStrategy::Dmg do
 
       expect { unpack_strategy.mount { nil } }.to raise_error(attach_error)
     end
+
+    context "when macOS cancels attachment of a problematic disk image" do
+      let(:unpack_strategy) { described_class.new(path) }
+      let(:stderr) do
+        <<~EOS
+          There may be a problem with this disk image. Are you sure you want to open it?
+          hdiutil: WARNING: 'hdiutil attach -nobrowse -readonly ...' is deprecated.
+          hdiutil: attach canceled
+        EOS
+      end
+      let(:attach_error) do
+        ErrorDuringExecution.new(["hdiutil", "attach", path], status: 1, output: [[:stderr, stderr]])
+      end
+
+      before do
+        attach_result = instance_double(SystemCommand::Result, success?: false, stdout: "")
+        allow(unpack_strategy).to receive(:system_command).and_return(attach_result)
+        allow(attach_result).to receive(:assert_success!).and_raise(attach_error)
+        allow(unpack_strategy).to receive(:system_command!).and_raise("Unexpected disk image conversion")
+      end
+
+      it "explains the failure and asks for a corrected image from the vendor" do
+        expect { unpack_strategy.mount { nil } }.to raise_error(ErrorDuringExecution, <<~EOS)
+          macOS refused to mount the disk image:
+            #{path}
+          Its filesystem may be damaged or inconsistent.
+          Report this to the software vendor and request a corrected disk image.
+
+          #{attach_error.message}
+        EOS
+      end
+
+      it "preserves the command failure details without chaining the error" do
+        error = begin
+          unpack_strategy.mount { nil }
+        rescue ErrorDuringExecution => e
+          e
+        end
+
+        expect(error).to have_attributes(cmd: attach_error.cmd, exitstatus: 1, stderr:, cause: nil)
+      end
+
+      context "without the disk image warning" do
+        let(:stderr) { "hdiutil: attach canceled\n" }
+
+        it "preserves the original cancellation error" do
+          expect { unpack_strategy.mount { nil } }.to raise_error(attach_error)
+        end
+      end
+
+      context "without an attachment cancellation" do
+        let(:stderr) { "There may be a problem with this disk image. Are you sure you want to open it?\n" }
+
+        it "preserves the original failure" do
+          expect { unpack_strategy.mount { nil } }.to raise_error(attach_error)
+        end
+      end
+    end
   end
 
   describe "::diskutil_image?", :needs_macos do
