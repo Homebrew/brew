@@ -528,7 +528,11 @@ module Cask
       return if (url = cask.url).nil?
 
       odebug "Auditing URL format"
-      return unless bad_sourceforge_url?
+      return unless bad_url_format?(%r{(?:(?:downloads|\.dl)\.|//)sourceforge},
+                                    [
+                                      %r{\Ahttps://sourceforge\.net/projects/[^/]+/files/latest/download\Z},
+                                      %r{\Ahttps://downloads\.sourceforge\.net/(?!(?:project|sourceforge)/)},
+                                    ])
 
       add_error "SourceForge URL format incorrect. See #{Formatter.url(SOURCEFORGE_REFERENCE_URL)}",
                 location: url.location
@@ -576,7 +580,11 @@ module Cask
       Homebrew::API.with_no_api_env_if_needed(core_tap.installed?) do
         return unless core_formula_names.include?(cask.token)
 
-        add_error "cask token conflicts with an existing homebrew/core formula: #{Formatter.url(core_formula_url)}"
+        formula_path = Formulary.core_path(cask.token)
+                                .to_s
+                                .delete_prefix(core_tap.path.to_s)
+        formula_url = "#{core_tap.default_remote}/blob/HEAD#{formula_path}"
+        add_error "cask token conflicts with an existing homebrew/core formula: #{Formatter.url(formula_url)}"
       end
     end
 
@@ -1542,24 +1550,10 @@ module Cask
     end
 
     sig { returns(T::Boolean) }
-    def bad_sourceforge_url?
-      bad_url_format?(%r{(?:(?:downloads|\.dl)\.|//)sourceforge},
-                      [
-                        %r{\Ahttps://sourceforge\.net/projects/[^/]+/files/latest/download\Z},
-                        %r{\Ahttps://downloads\.sourceforge\.net/(?!(?:project|sourceforge)/)},
-                      ])
-    end
-
-    sig { returns(T::Boolean) }
     def bad_osdn_url?
-      return false unless (host = domain)
+      return false unless (host = URI(cask.url.to_s).host)
 
       host.match?(%r{^(?:\w+\.)*osdn\.jp(?=/|$)})
-    end
-
-    sig { returns(T.nilable(String)) }
-    def domain
-      URI(cask.url.to_s).host
     end
 
     sig { returns(Tap) }
@@ -1580,14 +1574,6 @@ module Cask
     sig { returns(T::Array[String]) }
     def core_cask_tokens
       core_cask_tap.cask_tokens
-    end
-
-    sig { returns(String) }
-    def core_formula_url
-      formula_path = Formulary.core_path(cask.token)
-                              .to_s
-                              .delete_prefix(core_tap.path.to_s)
-      "#{core_tap.default_remote}/blob/HEAD#{formula_path}"
     end
   end
 end

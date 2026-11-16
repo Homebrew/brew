@@ -318,61 +318,45 @@ module Cask
       # This is a false positive incompatibililty warning, due to Kernel#load being overridden.
       sig { override(allow_incompatible: true).params(config: T.nilable(Config)).returns(Cask) } # rubocop:disable Sorbet/AllowIncompatibleOverride
       def load(config:)
-        if (api_source = from_json)
-          if @from_internal_json
-            load_from_internal_json(config:, api_source:)
-          else
-            load_from_json(config:, api_source:)
-          end
+        api_source = from_json
+        if api_source.nil?
+          cask_struct = Homebrew::API::Internal.cask_struct(token)
+          api_source = Homebrew::API::Internal.cask_hash(token)
+          raise KeyError, "key not found: #{token.inspect}" if api_source.nil?
+
+          tap_git_head = Homebrew::API::Internal.cask_tap_git_head
+
+          load_from_struct(config:, cask_struct:, api_source:, tap_git_head:, internal_api: true)
+        elsif @from_internal_json
+          api_source = api_source.dup
+          tap_git_head = api_source.delete("tap_git_head")
+          cask_struct = Homebrew::API::CaskStruct.deserialize(api_source)
+
+          load_from_struct(config:, cask_struct:, api_source:, tap_git_head:, internal_api: true)
         else
-          load_from_internal_api(config:)
+          if @from_installed_caskfile
+            api_source = api_source.dup
+            api_source["version"] = api_source["version"].presence
+            api_source["version"] ||= @sourcefile_path.dirname.dirname.dirname.basename.to_s.presence
+            if api_source["version"].nil? || api_source["artifacts"].nil?
+              installed_tab = CaskLoader.load_installed_tab(token)
+              api_source["version"] ||= installed_tab.version.presence
+              api_source["artifacts"] ||= CaskLoader.resolve_installed_artifacts(
+                token, installed_tab.uninstall_artifacts, tap: installed_tab.tap, api_fallback: @api_fallback
+              )
+            end
+          end
+
+          tap_git_head = api_source["tap_git_head"]
+          cask_struct = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(
+            api_source, ignore_types: @from_installed_caskfile
+          )
+
+          load_from_struct(config:, cask_struct:, api_source:, tap_git_head:)
         end
       end
 
       private
-
-      sig { params(config: T.nilable(Config)).returns(Cask) }
-      def load_from_internal_api(config:)
-        cask_struct = Homebrew::API::Internal.cask_struct(token)
-        api_source = Homebrew::API::Internal.cask_hash(token)
-        raise KeyError, "key not found: #{token.inspect}" if api_source.nil?
-
-        tap_git_head = Homebrew::API::Internal.cask_tap_git_head
-
-        load_from_struct(config:, cask_struct:, api_source:, tap_git_head:, internal_api: true)
-      end
-
-      sig { params(config: T.nilable(Config), api_source: T::Hash[String, T.untyped]).returns(Cask) }
-      def load_from_json(config:, api_source:)
-        if @from_installed_caskfile
-          api_source = api_source.dup
-          api_source["version"] = api_source["version"].presence
-          api_source["version"] ||= @sourcefile_path.dirname.dirname.dirname.basename.to_s.presence
-          if api_source["version"].nil? || api_source["artifacts"].nil?
-            installed_tab = CaskLoader.load_installed_tab(token)
-            api_source["version"] ||= installed_tab.version.presence
-            api_source["artifacts"] ||= CaskLoader.resolve_installed_artifacts(
-              token, installed_tab.uninstall_artifacts, tap: installed_tab.tap, api_fallback: @api_fallback
-            )
-          end
-        end
-
-        tap_git_head = api_source["tap_git_head"]
-        cask_struct = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(
-          api_source, ignore_types: @from_installed_caskfile
-        )
-
-        load_from_struct(config:, cask_struct:, api_source:, tap_git_head:)
-      end
-
-      sig { params(config: T.nilable(Config), api_source: T::Hash[String, T.untyped]).returns(Cask) }
-      def load_from_internal_json(config:, api_source:)
-        api_source = api_source.dup
-        tap_git_head = api_source.delete("tap_git_head")
-        cask_struct = Homebrew::API::CaskStruct.deserialize(api_source)
-
-        load_from_struct(config:, cask_struct:, api_source:, tap_git_head:, internal_api: true)
-      end
 
       sig {
         params(

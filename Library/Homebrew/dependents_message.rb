@@ -23,24 +23,12 @@ class DependentsMessage
 
   sig { void }
   def output
+    installed_deps = "#{Utils::Text.to_sentence(deps)}, which #{deps.one? ? "is" : "are"} currently installed"
     ofail <<~EOS
       Refusing to uninstall #{Utils::Text.to_sentence(reqs)}
-      because #{reqs.one? ? "it" : "they"} #{are_required_by_deps}.
+      because #{reqs.one? ? "it is" : "they are"} required by #{installed_deps}.
       You can override this and force removal with:
-        #{sample_command}
+        brew uninstall --ignore-dependencies #{named_args.join(" ")}
     EOS
-  end
-
-  protected
-
-  sig { returns(String) }
-  def sample_command
-    "brew uninstall --ignore-dependencies #{named_args.join(" ")}"
-  end
-
-  sig { returns(String) }
-  def are_required_by_deps
-    "#{reqs.one? ? "is" : "are"} required by #{Utils::Text.to_sentence(deps)}, " \
-      "which #{deps.one? ? "is" : "are"} currently installed"
   end
 end

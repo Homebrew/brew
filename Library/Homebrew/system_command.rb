@@ -286,7 +286,7 @@ class SystemCommand
     end
 
     result = Result.new(command, output, status, secrets: @secrets)
-    result.assert_success! if must_succeed?
+    result.assert_success! if @must_succeed
     result
   end
 
@@ -347,7 +347,30 @@ class SystemCommand
 
   sig { returns(T::Array[String]) }
   def command
-    [*(sudo? ? sudo_prefix : ["/usr/bin/env"]), executable.to_s, *expanded_args]
+    prefix = if sudo?
+      unless self.class.sudo_available?
+        raise ErrorDuringExecution.new([executable.to_s, *expanded_args], status: 1, secrets: @secrets,
+                                       output: [[:stderr, "sudo is disabled by HOMEBREW_NO_SUDO.\n"]])
+      end
+
+      askpass_flags = ENV.key?("SUDO_ASKPASS") ? ["-A"] : []
+      user_flags = []
+      if Homebrew::EnvConfig.sudo_through_sudo_user?
+        if homebrew_sudo_user.blank?
+          raise ArgumentError, "`$HOMEBREW_SUDO_THROUGH_SUDO_USER` set but `$SUDO_USER` unset!"
+        end
+
+        user_flags += ["--prompt", "Password for %p:", "-u", homebrew_sudo_user,
+                       *askpass_flags,
+                       "-E", *env_args,
+                       "--", "/usr/bin/sudo"]
+      end
+      user_flags += ["-u", "root"] if @sudo_as_root
+      ["/usr/bin/sudo", *user_flags, *askpass_flags, "-E", *env_args, "--"]
+    else
+      ["/usr/bin/env"]
+    end
+    [*prefix, executable.to_s, *expanded_args]
   end
 
   private
@@ -368,13 +391,7 @@ class SystemCommand
   attr_reader :env
 
   sig { returns(T::Boolean) }
-  def must_succeed? = @must_succeed
-
-  sig { returns(T::Boolean) }
   def sudo? = @sudo
-
-  sig { returns(T::Boolean) }
-  def sudo_as_root? = @sudo_as_root
 
   sig { returns(T::Boolean) }
   def debug?
@@ -406,29 +423,6 @@ class SystemCommand
   sig { returns(T.nilable(String)) }
   def homebrew_sudo_user
     ENV.fetch("HOMEBREW_SUDO_USER", nil)
-  end
-
-  sig { returns(T::Array[String]) }
-  def sudo_prefix
-    unless self.class.sudo_available?
-      raise ErrorDuringExecution.new([executable.to_s, *expanded_args], status: 1, secrets: @secrets,
-                                     output: [[:stderr, "sudo is disabled by HOMEBREW_NO_SUDO.\n"]])
-    end
-
-    askpass_flags = ENV.key?("SUDO_ASKPASS") ? ["-A"] : []
-    user_flags = []
-    if Homebrew::EnvConfig.sudo_through_sudo_user?
-      if homebrew_sudo_user.blank?
-        raise ArgumentError, "`$HOMEBREW_SUDO_THROUGH_SUDO_USER` set but `$SUDO_USER` unset!"
-      end
-
-      user_flags += ["--prompt", "Password for %p:", "-u", homebrew_sudo_user,
-                     *askpass_flags,
-                     "-E", *env_args,
-                     "--", "/usr/bin/sudo"]
-    end
-    user_flags += ["-u", "root"] if sudo_as_root?
-    ["/usr/bin/sudo", *user_flags, *askpass_flags, "-E", *env_args, "--"]
   end
 
   sig { returns(T::Array[String]) }
@@ -473,7 +467,7 @@ class SystemCommand
       nil
     end
 
-    write_input_to(raw_stdin)
+    input.each { raw_stdin.write(it) }
     raw_stdin.close_write
 
     end_time = Time.now + @timeout if @timeout
@@ -573,11 +567,6 @@ class SystemCommand
     in_r&.close
     out_w&.close
     err_w&.close
-  end
-
-  sig { params(raw_stdin: IO).void }
-  def write_input_to(raw_stdin)
-    input.each { raw_stdin.write(it) }
   end
 
   sig { params(sources: T::Array[IO], _block: T.proc.params(type: Symbol, line: String).void).void }

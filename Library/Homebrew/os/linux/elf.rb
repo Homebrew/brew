@@ -205,8 +205,8 @@ module ELFShim
                      :DT_NEEDED, :DT_STRTAB, :DT_SONAME, :DT_RPATH, :DT_RUNPATH, :DT_FLAGS_1, :DF_1_NODEFLIB,
                      :DF_1_PIE
 
-    # Everything {Metadata} reads from a file. {#read_directly} and
-    # {#read_using_patchelf_rb} each return all of it or nothing, so when the
+    # Everything {Metadata} reads from a file. {#read_directly} and the
+    # `patchelf.rb` fallback each return all of it or nothing, so when the
     # first gives up part of the way through, nothing it read is kept.
     class Fields < T::Struct
       const :dynamic_elf, T::Boolean
@@ -240,7 +240,20 @@ module ELFShim
       @path = path
       @dylibs = T.let(nil, T.nilable(T::Array[String]))
 
-      fields = path.open("rb") { |file| read_directly(file) } || read_using_patchelf_rb
+      fields = path.open("rb") { |file| read_directly(file) }
+      if fields.nil?
+        patcher = path.patchelf_patcher
+        dynamic_segment = patcher.elf.segment_by_type(:dynamic)
+        dynamic_elf = dynamic_segment.present?
+        dylib_id, needed = if dynamic_elf
+          [patcher.soname, patcher.needed]
+        else
+          [nil, []]
+        end
+        fields = Fields.new(dynamic_elf:, dylib_id:, needed:, interpreter: patcher.interpreter,
+                            rpath: patcher.runpath || patcher.rpath,
+                            dt_flags_1: dynamic_segment&.tag_by_type(:flags_1)&.value)
+      end
       @dynamic_elf = T.let(fields.dynamic_elf, T::Boolean)
       @dylib_id = T.let(fields.dylib_id, T.nilable(String))
       @needed = T.let(fields.needed, T::Array[String])
@@ -384,20 +397,6 @@ module ELFShim
       # elftools returns ASCII strings as UTF-8.
       string.force_encoding(Encoding::UTF_8) if string.ascii_only?
       string
-    end
-
-    sig { returns(Fields) }
-    def read_using_patchelf_rb
-      patcher = path.patchelf_patcher
-      dynamic_segment = patcher.elf.segment_by_type(:dynamic)
-      dynamic_elf = dynamic_segment.present?
-      dylib_id, needed = if dynamic_elf
-        [patcher.soname, patcher.needed]
-      else
-        [nil, []]
-      end
-      Fields.new(dynamic_elf:, dylib_id:, needed:, interpreter: patcher.interpreter,
-                 rpath: patcher.runpath || patcher.rpath, dt_flags_1: dynamic_segment&.tag_by_type(:flags_1)&.value)
     end
 
     sig { params(basename: String).returns(::Pathname) }

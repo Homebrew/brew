@@ -32,7 +32,37 @@ class Cleaner
     # and will conflict if more than one formula provides it.
     observe_file_removal @formula.lib/"charset.alias"
 
-    [@formula.bin, @formula.sbin, @formula.lib].each { |dir| clean_dir(dir) if dir.exist? }
+    # Recursively fix file permissions and remove `.la` files, unless they (or
+    # their parent directories) are protected by `skip_clean`.
+    [@formula.bin, @formula.sbin, @formula.lib].each do |directory|
+      next unless directory.exist?
+
+      directory.find do |path|
+        path.extend(ObserverPathnameExtension)
+
+        Find.prune if @formula.skip_clean? path
+
+        next if path.directory?
+
+        if path.extname == ".la" || path.extname == ".tbd" || PERL_BASENAMES.include?(path.basename.to_s)
+          path.unlink
+        elsif path.symlink?
+          # Skip it.
+        else
+          # Set permissions for executables and non-executables.
+          perms = if executable_path?(path)
+            0555
+          else
+            0444
+          end
+          if debug?
+            old_perms = path.stat.mode & 0777
+            odebug "Fixing #{path} permissions from #{old_perms.to_s(8)} to #{perms.to_s(8)}" if perms != old_perms
+          end
+          path.chmod perms
+        end
+      end
+    end
 
     # Get rid of any info `dir` files, so they don't conflict at the link stage.
     #
@@ -63,7 +93,26 @@ class Cleaner
     end
 
     rewrite_shebangs
-    clean_python_metadata
+
+    # Remove non-reproducible pip direct_url.json which records the /tmp build directory.
+    # Remove RECORD files to prevent changes to the installed Python package.
+    # Modify INSTALLER to provide information that files are managed by brew.
+    #
+    # @see https://packaging.python.org/en/latest/specifications/recording-installed-packages/
+    @formula.prefix.realpath.find do |path|
+      Find.prune if @formula.skip_clean?(path)
+
+      next if path.directory? || path.symlink?
+      next if path.parent.extname != ".dist-info"
+
+      case path.basename.to_s
+      when "direct_url.json", "RECORD"
+        observe_file_removal path
+      when "INSTALLER"
+        odebug "Modifying #{path} contents from #{path.read.chomp} to brew"
+        path.atomic_write("brew\n")
+      end
+    end
 
     prune
   end
@@ -119,44 +168,6 @@ class Cleaner
   PERL_BASENAMES = T.let(Set.new(%w[perllocal.pod .packlist]).freeze, T::Set[String])
   private_constant :PERL_BASENAMES
 
-  # Clean a top-level (`bin`, `sbin`, `lib`) directory, recursively, by fixing file
-  # permissions and removing .la files, unless the files (or parent
-  # directories) are protected by skip_clean.
-  #
-  # `bin` and `sbin` should not have any subdirectories; if either do that is
-  # caught as an audit warning.
-  #
-  # `lib` may have a large directory tree (see Erlang for instance) and
-  # clean_dir applies cleaning rules to the entire tree.
-  sig { params(directory: Pathname).void }
-  def clean_dir(directory)
-    directory.find do |path|
-      path.extend(ObserverPathnameExtension)
-
-      Find.prune if @formula.skip_clean? path
-
-      next if path.directory?
-
-      if path.extname == ".la" || path.extname == ".tbd" || PERL_BASENAMES.include?(path.basename.to_s)
-        path.unlink
-      elsif path.symlink?
-        # Skip it.
-      else
-        # Set permissions for executables and non-executables.
-        perms = if executable_path?(path)
-          0555
-        else
-          0444
-        end
-        if debug?
-          old_perms = path.stat.mode & 0777
-          odebug "Fixing #{path} permissions from #{old_perms.to_s(8)} to #{perms.to_s(8)}" if perms != old_perms
-        end
-        path.chmod perms
-      end
-    end
-  end
-
   sig { void }
   def rewrite_shebangs
     require "language/node"
@@ -178,30 +189,6 @@ class Cleaner
       next if path.directory? || path.symlink?
 
       rewrites.each { |rw| Utils::Shebang.rewrite_shebang rw, path }
-    end
-  end
-
-  # Remove non-reproducible pip direct_url.json which records the /tmp build directory.
-  # Remove RECORD files to prevent changes to the installed Python package.
-  # Modify INSTALLER to provide information that files are managed by brew.
-  #
-  # @see https://packaging.python.org/en/latest/specifications/recording-installed-packages/
-  sig { void }
-  def clean_python_metadata
-    basepath = @formula.prefix.realpath
-    basepath.find do |path|
-      Find.prune if @formula.skip_clean?(path)
-
-      next if path.directory? || path.symlink?
-      next if path.parent.extname != ".dist-info"
-
-      case path.basename.to_s
-      when "direct_url.json", "RECORD"
-        observe_file_removal path
-      when "INSTALLER"
-        odebug "Modifying #{path} contents from #{path.read.chomp} to brew"
-        path.atomic_write("brew\n")
-      end
     end
   end
 end

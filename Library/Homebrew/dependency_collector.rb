@@ -90,7 +90,23 @@ class DependencyCollector
   sig { params(spec: T.untyped).returns(T.untyped) }
   def build(spec)
     spec, tags = spec.is_a?(Hash) ? spec.first : spec
-    parse_spec(spec, Array(tags))
+    tags = Array(tags)
+    raise ArgumentError, "Implicit dependencies cannot be manually specified" if tags.include?(:implicit)
+
+    case spec
+    when String
+      Dependency.new(spec, tags)
+    when Resource
+      resource_dep(spec, tags)
+    when Symbol
+      parse_symbol_spec(spec, tags)
+    when Requirement, Dependency
+      spec
+    when Class
+      raise TypeError, "#{spec.inspect} is not a Requirement subclass" unless spec < Requirement
+
+      spec.new(tags)
+    end
   end
 
   sig { params(related_formula_names: T::Set[String]).returns(T.nilable(Dependency)) }
@@ -170,32 +186,6 @@ class DependencyCollector
   sig { void }
   def init_global_dep_tree_if_needed!; end
 
-  sig {
-    params(spec: T.any(String, Resource, Symbol, Requirement, Dependency, T::Class[Requirement]),
-           tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(T.any(Dependency, Requirement, T::Array[T.untyped])))
-  }
-  def parse_spec(spec, tags)
-    raise ArgumentError, "Implicit dependencies cannot be manually specified" if tags.include?(:implicit)
-
-    case spec
-    when String
-      parse_string_spec(spec, tags)
-    when Resource
-      resource_dep(spec, tags)
-    when Symbol
-      parse_symbol_spec(spec, tags)
-    when Requirement, Dependency
-      spec
-    when Class
-      parse_class_spec(spec, tags)
-    end
-  end
-
-  sig { params(spec: String, tags: T::Array[T.any(String, Symbol)]).returns(Dependency) }
-  def parse_string_spec(spec, tags)
-    Dependency.new(spec, tags)
-  end
-
   sig { params(spec: Symbol, tags: T::Array[T.any(String, Symbol)]).returns(Requirement) }
   def parse_symbol_spec(spec, tags)
     # When modifying this list of supported requirements, consider
@@ -209,13 +199,6 @@ class DependencyCollector
     else
       raise ArgumentError, "Unsupported special dependency: #{spec.inspect}"
     end
-  end
-
-  sig { params(spec: T::Class[Requirement], tags: T::Array[T.any(String, Symbol)]).returns(Requirement) }
-  def parse_class_spec(spec, tags)
-    raise TypeError, "#{spec.inspect} is not a Requirement subclass" unless spec < Requirement
-
-    spec.new(tags)
   end
 
   sig { params(spec: Resource, tags: T::Array[T.any(String, Symbol)]).returns(T.nilable(T.any(Dependency, T::Array[T.nilable(Dependency)]))) }

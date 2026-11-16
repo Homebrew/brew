@@ -212,25 +212,22 @@ module FormulaClassUnavailableErrorModule
 
   sig { returns(String) }
   def to_s
-    s = super
-    s += "\nIn formula file: #{path}"
-    s += "\nExpected to find class #{class_name}, but #{class_list_s}."
-    s
-  end
-
-  private
-
-  sig { returns(String) }
-  def class_list_s
     formula_class_list = class_list.select { |klass| klass < Formula }
-    if class_list.empty?
+    found_classes = if class_list.empty?
       "found no classes"
     elsif formula_class_list.empty?
       "only found: #{format_list(class_list)} (not derived from Formula!)"
     else
       "only found: #{format_list(formula_class_list)}"
     end
+
+    s = super
+    s += "\nIn formula file: #{path}"
+    s += "\nExpected to find class #{class_name}, but #{found_classes}."
+    s
   end
+
+  private
 
   sig { params(class_list: T::Array[T::Class[T.anything]]).returns(String) }
   def format_list(class_list)

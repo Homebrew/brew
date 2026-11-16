@@ -22,7 +22,6 @@ module Homebrew
     end
     RawStep = T.type_alias { T::Hash[T.any(String, Symbol), RawStepValue] }
     SystemCommandArg = T.type_alias { T.any(String, Pathname) }
-    TemplateTokenValue = T.type_alias { T.any(String, Pathname) }
 
     sig { params(file: Pathname, id: T.any(String, Pathname), resolve_source: T::Boolean).void }
     def self.change_dylib_id(file, id, resolve_source: false)
@@ -931,7 +930,17 @@ module Homebrew
       def run(steps, phase: :install, privileged_step_handler: nil, reset_guard_results: true)
         @guard_results.clear if reset_guard_results
         DSL.normalise_steps(steps).each_with_index do |step, index|
-          next if phase != :uninstall && !step_guards_match?(step)
+          if phase != :uninstall
+            if step["type"] == "move" && context_value(:temp)
+              source = resolve_step_path(step, "source")
+              if temporary_backup_marker(source)&.exist? && !source.exist? && !source.symlink?
+                raise "Expected cask backup is missing:\n#{source}"
+              end
+            end
+
+            guards = T.cast(step["guards"], T.nilable(PathSpecs))
+            next if guards && !guards.all? { |guard| guard_matches?(guard) }
+          end
 
           if privileged_step_handler && sudo_required?([step])
             privileged_step_handler.call(index)
@@ -1230,19 +1239,6 @@ module Homebrew
         end
       end
 
-      sig { params(step: Step).returns(T::Boolean) }
-      def step_guards_match?(step)
-        if step["type"] == "move" && context_value(:temp)
-          source = resolve_step_path(step, "source")
-          if temporary_backup_marker(source)&.exist? && !source.exist? && !source.symlink?
-            raise "Expected cask backup is missing:\n#{source}"
-          end
-        end
-
-        guards = T.cast(step["guards"], T.nilable(PathSpecs))
-        guards.nil? || guards.all? { |guard| guard_matches?(guard) }
-      end
-
       sig { params(path: Pathname).returns(T.nilable(Pathname)) }
       def temporary_backup_marker(path)
         temporary = context_value(:temp)
@@ -1447,38 +1443,34 @@ module Homebrew
       sig { params(content: String).returns(String) }
       def expand_template_tokens(content)
         content.gsub(/\{\{([A-Za-z_][\w.]*)\}\}/) do |match|
-          value = template_token_value(match.delete_prefix("{{").delete_suffix("}}"))
+          token = match.delete_prefix("{{").delete_suffix("}}")
+          value = case token
+          when "HOMEBREW_BREW_FILE"
+            HOMEBREW_BREW_FILE
+          when "HOMEBREW_CELLAR"
+            HOMEBREW_CELLAR
+          when "HOMEBREW_PREFIX"
+            HOMEBREW_PREFIX
+          when "formula_name"
+            context_value(:name)&.to_s
+          when "name"
+            context_name
+          when "arch"
+            context_arch
+          when "token"
+            context_value(:token)&.to_s
+          when "user"
+            ENV.fetch("USER")
+          when "version"
+            context_version
+          when "version.major"
+            context_version_major
+          when "version.major_minor"
+            context_version_major_minor
+          else
+            root_path(token, nil) if CONTENT_PATH_TOKENS.include?(token)
+          end
           value.nil? ? match : value.to_s
-        end
-      end
-
-      sig { params(token: String).returns(T.nilable(TemplateTokenValue)) }
-      def template_token_value(token)
-        case token
-        when "HOMEBREW_BREW_FILE"
-          HOMEBREW_BREW_FILE
-        when "HOMEBREW_CELLAR"
-          HOMEBREW_CELLAR
-        when "HOMEBREW_PREFIX"
-          HOMEBREW_PREFIX
-        when "formula_name"
-          context_value(:name)&.to_s
-        when "name"
-          context_name
-        when "arch"
-          context_arch
-        when "token"
-          context_value(:token)&.to_s
-        when "user"
-          ENV.fetch("USER")
-        when "version"
-          context_version
-        when "version.major"
-          context_version_major
-        when "version.major_minor"
-          context_version_major_minor
-        else
-          root_path(token, nil) if CONTENT_PATH_TOKENS.include?(token)
         end
       end
 
@@ -1642,7 +1634,10 @@ module Homebrew
       sig { params(base: String).returns(Pathname) }
       def context_path(base)
         method = base.to_sym
-        value = context_value(method) || context_config_value(method)
+        value = context_value(method) || begin
+          config = context_value(:config)
+          config.public_send(method) if config.respond_to?(method)
+        end
         raise ArgumentError, "unknown install step base: #{base}" if value.nil?
 
         Pathname(value.to_s)
@@ -1665,12 +1660,6 @@ module Homebrew
       sig { params(method: Symbol).returns(T.nilable(Object)) }
       def context_value(method)
         @context.public_send(method) if @context.respond_to?(method)
-      end
-
-      sig { params(method: Symbol).returns(T.nilable(Object)) }
-      def context_config_value(method)
-        config = context_value(:config)
-        config.public_send(method) if config.respond_to?(method)
       end
 
       sig { params(command: SystemCommandArg, args: SystemCommandArg, sudo: T::Boolean).void }

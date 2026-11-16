@@ -19,9 +19,9 @@ class VCSDownloadStrategy < AbstractDownloadStrategy
     # if !head? && !is_a?(GitDownloadStrategy)
     #   odeprecated self.class.to_s, "GitDownloadStrategy or CurlDownloadStrategy", disable: true
     # end
-    extracted_ref = extract_ref(meta)
-    @ref_type = T.let(extracted_ref.fetch(0), T.nilable(Symbol))
-    @ref = T.let(extracted_ref.fetch(1), T.untyped)
+    ref_type = REF_TYPES.find { |type| meta.key?(type) }
+    @ref_type = T.let(ref_type, T.nilable(Symbol))
+    @ref = T.let((meta[ref_type] if ref_type), T.untyped)
     @revision = T.let(meta[:revision], T.nilable(String))
     @cached_location = T.let(@cache/Utils.safe_filename("#{name}--#{cache_tag}"), Pathname)
     @fetching = T.let(false, T::Boolean)
@@ -130,10 +130,4 @@ class VCSDownloadStrategy < AbstractDownloadStrategy
 
   sig { overridable.returns(T.nilable(String)) }
   def current_revision; end
-
-  sig { params(specs: T::Hash[T.nilable(Symbol), T.untyped]).returns([T.nilable(Symbol), T.untyped]) }
-  def extract_ref(specs)
-    key = REF_TYPES.find { |type| specs.key?(type) }
-    [key, specs[key]]
-  end
 end

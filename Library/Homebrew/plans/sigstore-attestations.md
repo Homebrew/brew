@@ -442,8 +442,9 @@ it adds pouring, so shares of a whole install are smaller still.
 
 What each would cost to build:
 
-- A: one annotation written by `write_image_index` and read from the
-  index the client already fetches.
+- A: one annotation written into the image index by
+  `GitHubPackages#upload_bottle` and read from the index the client
+  already fetches.
 - E: the bundle written into the per-platform manifest by
   `GitHubPackages#upload_bottle`, a second manifest download per bottle
   and, for every bottle already published, a new per-platform manifest

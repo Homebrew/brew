@@ -185,11 +185,6 @@ class GitDownloadStrategy < VCSDownloadStrategy
     end
   end
 
-  sig { returns(Integer) }
-  def cache_version
-    0
-  end
-
   sig { override.params(timeout: T.nilable(Time)).void }
   def update(timeout: nil)
     config_repo
@@ -234,15 +229,6 @@ class GitDownloadStrategy < VCSDownloadStrategy
   end
 
   sig { returns(String) }
-  def refspec
-    case @ref_type
-    when :branch then "+refs/heads/#{@ref}:refs/remotes/origin/#{@ref}"
-    when :tag    then "+refs/tags/#{@ref}:refs/tags/#{@ref}"
-    else              default_refspec
-    end
-  end
-
-  sig { returns(String) }
   def default_refspec
     # https://git-scm.com/book/en/v2/Git-Internals-The-Refspec
     "+refs/heads/*:refs/remotes/origin/*"
@@ -250,6 +236,12 @@ class GitDownloadStrategy < VCSDownloadStrategy
 
   sig { void }
   def config_repo
+    refspec = case @ref_type
+    when :branch then "+refs/heads/#{@ref}:refs/remotes/origin/#{@ref}"
+    when :tag    then "+refs/tags/#{@ref}:refs/tags/#{@ref}"
+    else              default_refspec
+    end
+
     command! "git",
              args:  ["config", "remote.origin.url", @url],
              chdir: cached_location
@@ -288,7 +280,7 @@ class GitDownloadStrategy < VCSDownloadStrategy
     git_download_command!(args: clone_args, timeout:)
 
     command! "git",
-             args:    ["config", "homebrew.cacheversion", cache_version],
+             args:    ["config", "homebrew.cacheversion", 0],
              chdir:   cached_location,
              timeout: Utils::Timer.remaining(timeout)
 
@@ -329,18 +321,14 @@ class GitDownloadStrategy < VCSDownloadStrategy
              args:    ["submodule", "update", "--init", "--recursive"],
              chdir:   cached_location,
              timeout: Utils::Timer.remaining(timeout)
-    fix_absolute_submodule_gitdir_references!
-  end
 
-  # When checking out Git repositories with recursive submodules, some Git
-  # versions create `.git` files with absolute instead of relative `gitdir:`
-  # pointers. This works for the cached location, but breaks various Git
-  # operations once the affected Git resource is staged, i.e. recursively
-  # copied to a new location. (This bug was introduced in Git 2.7.0 and fixed
-  # in 2.8.3. Clones created with affected version remain broken.)
-  # See https://github.com/Homebrew/homebrew-core/pull/1520 for an example.
-  sig { void }
-  def fix_absolute_submodule_gitdir_references!
+    # When checking out Git repositories with recursive submodules, some Git
+    # versions create `.git` files with absolute instead of relative `gitdir:`
+    # pointers. This works for the cached location, but breaks various Git
+    # operations once the affected Git resource is staged, i.e. recursively
+    # copied to a new location. (This bug was introduced in Git 2.7.0 and fixed
+    # in 2.8.3. Clones created with affected version remain broken.)
+    # See https://github.com/Homebrew/homebrew-core/pull/1520 for an example.
     submodule_dirs = command!("git",
                               args:  ["submodule", "--quiet", "foreach", "--recursive", "pwd"],
                               chdir: cached_location).stdout

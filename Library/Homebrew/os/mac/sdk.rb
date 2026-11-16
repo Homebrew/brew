@@ -88,7 +88,7 @@ module OS
             sdk_for version
           end
         rescue NoSDKError
-          latest_sdk
+          all_sdks.max_by(&:version)
         end
         return if sdk.blank?
 
@@ -105,11 +105,6 @@ module OS
 
       sig { abstract.returns(String) }
       def sdk_prefix; end
-
-      sig { returns(T.nilable(SDK)) }
-      def latest_sdk
-        all_sdks.max_by(&:version)
-      end
 
       sig { params(sdk_path: ::Pathname).returns(T.nilable(MacOSVersion)) }
       def read_sdk_version(sdk_path)

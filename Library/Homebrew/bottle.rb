@@ -141,8 +141,13 @@ class Bottle
   def fetch(verify_download_integrity: true, timeout: nil, quiet: false)
     resource.fetch(verify_download_integrity:, timeout:, quiet:)
   rescue DownloadError
-    raise unless fallback_on_error?
+    # Use the default bottle domain as a fallback mirror
+    raise unless @resource.url&.start_with?(Homebrew::EnvConfig.bottle_domain)
+    raise unless Homebrew::EnvConfig.bottle_domain_custom?
 
+    opoo "Bottle missing, falling back to the default domain..."
+    root_url(HOMEBREW_BOTTLE_DEFAULT_DOMAIN)
+    @github_packages_manifest_resource = T.let(nil, T.nilable(Resource::BottleManifest))
     fetch_tab
     retry
   end
@@ -489,28 +494,6 @@ class Bottle
                                 padded_prefix: tab["padded_prefix"] == true)
   end
 
-  sig { params(specs: T::Hash[Symbol, T.anything]).returns(T::Hash[Symbol, T.anything]) }
-  def select_download_strategy(specs)
-    odie "cannot select download strategy for #{name} because root_url is nil" if @root_url.nil?
-    specs[:using] ||= DownloadStrategyDetector.detect(@root_url)
-    specs[:bottle] = true
-    specs
-  end
-
-  sig { returns(T::Boolean) }
-  def fallback_on_error?
-    # Use the default bottle domain as a fallback mirror
-    if @resource.url&.start_with?(Homebrew::EnvConfig.bottle_domain) &&
-       Homebrew::EnvConfig.bottle_domain_custom?
-      opoo "Bottle missing, falling back to the default domain..."
-      root_url(HOMEBREW_BOTTLE_DEFAULT_DOMAIN)
-      @github_packages_manifest_resource = T.let(nil, T.nilable(Resource::BottleManifest))
-      true
-    else
-      false
-    end
-  end
-
   sig { params(val: T.nilable(String), specs: T::Hash[Symbol, T.anything]).returns(T.nilable(String)) }
   def root_url(val = nil, specs = {})
     return @root_url if val.nil?
@@ -522,7 +505,9 @@ class Bottle
     odie "resource checksum is nil" if resource_checksum.nil?
 
     path, resolved_basename = Utils::Bottles.path_resolved_basename(val, name, resource_checksum, filename)
-    @resource.url("#{val}/#{path}", **select_download_strategy(specs))
+    specs[:using] ||= DownloadStrategyDetector.detect(val)
+    specs[:bottle] = true
+    @resource.url("#{val}/#{path}", **specs)
     return unless resolved_basename.present?
 
     downloader = @resource.downloader

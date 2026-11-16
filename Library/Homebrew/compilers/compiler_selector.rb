@@ -74,20 +74,18 @@ class CompilerSelector
 
   private
 
-  sig { returns(T::Array[String]) }
-  def gnu_gcc_versions
-    # prioritize gcc version provided by gcc formula.
-    v = Formulary.factory(CompilerSelector.preferred_gcc).version.to_s.slice(/\d+/)
-    GNU_GCC_VERSIONS - [v] + [v] # move the version to the end of the list
-  rescue FormulaUnavailableError
-    GNU_GCC_VERSIONS
-  end
-
   sig { params(_block: T.proc.params(arg0: Compiler).void).void }
   def find_compiler(&_block)
     compilers.each do |compiler|
       case compiler
       when :gnu
+        # prioritize gcc version provided by gcc formula.
+        gnu_gcc_versions = begin
+          preferred_version = Formulary.factory(CompilerSelector.preferred_gcc).version.to_s.slice(/\d+/)
+          GNU_GCC_VERSIONS - [preferred_version] + [preferred_version] # move the version to the end of the list
+        rescue FormulaUnavailableError
+          GNU_GCC_VERSIONS
+        end
         gnu_gcc_versions.reverse_each do |v|
           executable = "gcc-#{v}"
           version = compiler_version(executable)

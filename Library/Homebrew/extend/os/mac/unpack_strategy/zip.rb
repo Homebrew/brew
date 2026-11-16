@@ -15,7 +15,7 @@ module UnpackStrategy
       sig { params(unpack_dir: Pathname, basename: Pathname, verbose: T::Boolean).void }
       def extract_to_dir(unpack_dir, basename:, verbose:)
         with_env(TZ: "UTC") do
-          if merge_xattrs && contains_extended_attributes?(path)
+          if merge_xattrs && path.zipinfo.grep(/(^__MACOSX|\._)/).any?
             # We use ditto directly, because dot_clean has issues if the __MACOSX
             # folder has incorrect permissions.
             # (Also, Homebrew's ZIP artifact automatically deletes this folder.)
@@ -68,11 +68,6 @@ module UnpackStrategy
             end
           end
         end
-      end
-
-      sig { params(path: UnpackStrategy::Path).returns(T::Boolean) }
-      def contains_extended_attributes?(path)
-        path.zipinfo.grep(/(^__MACOSX|\._)/).any?
       end
     end
     private_constant :MacOSZipExtension
