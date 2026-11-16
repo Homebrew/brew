@@ -80,8 +80,11 @@ module Homebrew
         pathname.mtime < days_ago && pathname.ctime < days_ago
       end
 
-      sig { params(entry: { path: Pathname, type: T.nilable(Symbol) }, scrub: T::Boolean).returns(T::Boolean) }
-      def stale?(entry, scrub: false)
+      sig {
+        params(entry: { path: Pathname, type: T.nilable(Symbol) }, scrub: T::Boolean, warned: T::Set[String])
+          .returns(T::Boolean)
+      }
+      def stale?(entry, scrub: false, warned: Set.new)
         pathname = entry[:path]
         return false unless resolved_path(pathname).file?
 
@@ -97,6 +100,9 @@ module Homebrew
         else
           stale_formula?(pathname, scrub)
         end
+      rescue Homebrew::UntrustedTapError => e
+        opoo e.message if warned.add?(e.message)
+        false
       end
 
       sig { params(pathname: Pathname, cask: Cask::Cask, name: String).returns(T::Boolean) }
@@ -183,9 +189,6 @@ module Homebrew
 
         formula = begin
           Formulary.from_rack(HOMEBREW_CELLAR/formula_name, from_cache: true)
-        rescue Homebrew::UntrustedTapError
-          opoo "Skipping #{formula_name}: tap formula is not trusted"
-          nil
         rescue FormulaUnavailableError, TapFormulaAmbiguityError
           nil
         end
@@ -196,9 +199,6 @@ module Homebrew
 
           formula = begin
             Formulary.from_rack(HOMEBREW_CELLAR/formula_name, from_cache: true)
-          rescue Homebrew::UntrustedTapError
-            opoo "Skipping #{formula_name}: tap formula is not trusted"
-            nil
           rescue FormulaUnavailableError, TapFormulaAmbiguityError
             nil
           end
@@ -300,6 +300,7 @@ module Homebrew
       @cache = cache
       @output = output
       @cleaned_up_paths = T.let(Set.new, T::Set[Pathname])
+      @warned_untrusted = T.let(Set.new, T::Set[String])
       @formula_cache_paths = T.let(nil, T.nilable(T::Hash[String, T::Array[Pathname]]))
     end
 
@@ -778,7 +779,9 @@ module Homebrew
         end
 
         # If we've specified --prune don't do the (expensive) .stale? check.
-        cleanup_path(path) { path.unlink } if !prune? && self.class.stale?(entry, scrub: scrub?)
+        next if prune?
+
+        cleanup_path(path) { path.unlink } if self.class.stale?(entry, scrub: scrub?, warned: @warned_untrusted)
       end
 
       cleanup_legacy_cask_downloads(Cask::Caskroom.casks) if full_cache_cleanup
