@@ -207,6 +207,19 @@ RSpec.describe Homebrew::DevCmd::Bump do
         .and not_to_output.to_stderr
     end
 
+    it "skips casks with no version for the current platform" do
+      cask = Homebrew::SimulateSystem.with(os: :linux) do
+        Cask::Cask.new("macos-only") do
+          on_macos do
+            version "1.2.3"
+          end
+        end
+      end
+
+      expect { bump.skip_ineligible_package!(cask) }
+        .to output(/Cask has no version for the current platform so `brew bump` cannot check it\./).to_stdout
+    end
+
     it "prints a message for autobumped packages" do
       allow(f_basic).to receive(:tap).and_return(instance_double(Tap, allow_bump?: false))
 

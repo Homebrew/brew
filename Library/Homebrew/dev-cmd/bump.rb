@@ -193,10 +193,13 @@ module Homebrew
           name = formula_or_cask.name
           text = "Formula is #{disabled ? "disabled" : "HEAD-only"} so not accepting updates.\n"
         else
-          skip = disabled || formula_or_cask.version.latest?
+          version = formula_or_cask.version
+          skip = disabled || version.nil? || version.latest?
           name = formula_or_cask.token
           text = if disabled
             "Cask is disabled so not accepting updates.\n"
+          elsif version.nil?
+            "Cask has no version for the current platform so `brew bump` cannot check it.\n"
           else
             "Cask uses `version :latest` so `brew bump` cannot check it.\n"
           end
