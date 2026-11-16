@@ -1199,28 +1199,31 @@ class Tap # rubocop:disable Metrics/ClassLength
   # An array of all formula aliases of this {Tap}.
   sig { returns(T::Array[String]) }
   def aliases
-    @aliases ||= T.let(alias_table.keys, T.nilable(T::Array[String]))
+    @aliases ||= T.let(alias_table.keys.map { alias_file_to_name(Pathname(it)) }, T.nilable(T::Array[String]))
   end
 
   # An array of all cask aliases of this {Tap}.
   sig { returns(T::Array[String]) }
   def cask_aliases
-    @cask_aliases ||= T.let(cask_alias_table.keys, T.nilable(T::Array[String]))
+    @cask_aliases ||= T.let(
+      cask_alias_table.keys.map { alias_file_to_name(Pathname(it)) },
+      T.nilable(T::Array[String]),
+    )
   end
 
-  # Mapping from aliases to formula names.
+  # Mapping from aliases to formula names, both as short names.
   sig { overridable.returns(T::Hash[String, String]) }
   def alias_table
     @alias_table ||= T.let(alias_files_table(alias_files), T.nilable(T::Hash[String, String]))
   end
 
-  # Mapping from aliases to cask tokens.
+  # Mapping from aliases to cask tokens, both as short names.
   sig { overridable.returns(T::Hash[String, String]) }
   def cask_alias_table
     @cask_alias_table ||= T.let(alias_files_table(cask_alias_files), T.nilable(T::Hash[String, String]))
   end
 
-  # Mapping from formula names to aliases.
+  # Mapping from formula names to aliases, both as short names.
   sig { returns(T::Hash[String, T::Array[String]]) }
   def alias_reverse_table
     @alias_reverse_table ||= T.let(
@@ -1229,25 +1232,13 @@ class Tap # rubocop:disable Metrics/ClassLength
     )
   end
 
-  # Mapping from cask tokens to aliases.
+  # Mapping from cask tokens to aliases, both as short names.
   sig { returns(T::Hash[String, T::Array[String]]) }
   def cask_alias_reverse_table
     @cask_alias_reverse_table ||= T.let(
       reverse_alias_table(cask_alias_table),
       T.nilable(T::Hash[String, T::Array[String]]),
     )
-  end
-
-  # The name of the formula that an alias of this {Tap} points at.
-  sig { params(alias_name: String).returns(T.nilable(String)) }
-  def alias_target(alias_name)
-    alias_table_target(alias_table, alias_name)
-  end
-
-  # The token of the cask that an alias of this {Tap} points at.
-  sig { params(alias_name: String).returns(T.nilable(String)) }
-  def cask_alias_target(alias_name)
-    alias_table_target(cask_alias_table, alias_name)
   end
 
   sig { returns(Pathname) }
@@ -1625,20 +1616,10 @@ class Tap # rubocop:disable Metrics/ClassLength
     cask_file?(resolved_path(alias_file).cleanpath.relative_path_from(path).to_s)
   end
 
-  # Mapping from the names of alias files to the names of the files they point at.
+  # Mapping from the short names of alias files to the short names of the files they point at.
   sig { params(files: T::Array[Pathname]).returns(T::Hash[String, String]) }
   def alias_files_table(files)
-    files.to_h do |alias_file|
-      [alias_file_to_name(alias_file), formula_file_to_name(resolved_path(alias_file))]
-    end
-  end
-
-  sig { params(table: T::Hash[String, String], alias_name: String).returns(T.nilable(String)) }
-  def alias_table_target(table, alias_name)
-    target = table[alias_file_to_name(Pathname(alias_name))].presence
-    # FIXME: Remove the need to split the name and instead make
-    #        the alias table only contain short names.
-    Utils.name_from_full_name(target) if target
+    files.to_h { |alias_file| [alias_file.basename.to_s, resolved_path(alias_file).basename(".rb").to_s] }
   end
 
   sig { params(table: T::Hash[String, String]).returns(T::Hash[String, T::Array[String]]) }

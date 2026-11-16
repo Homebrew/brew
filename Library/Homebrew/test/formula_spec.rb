@@ -819,6 +819,17 @@ RSpec.describe Formula do
     FileUtils.rm_rf HOMEBREW_LIBRARY/"Taps/user"
   end
 
+  specify "#aliases with tap" do
+    tap = Tap.fetch("user", "repo")
+    f = formula("foo", path: tap.path/"Formula/foo.rb") do
+      T.bind(self, T.class_of(Formula))
+      url "foo-1.0"
+    end
+    allow(tap).to receive(:alias_reverse_table).and_return("foo" => ["bar"])
+
+    expect(f.aliases).to eq(["bar"])
+  end
+
   specify "#prefix" do
     f = Testball.new
     expect(f.prefix).to eq(HOMEBREW_CELLAR/f.name/"0.1")

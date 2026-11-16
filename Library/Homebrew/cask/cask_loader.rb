@@ -654,7 +654,7 @@ module Cask
 
       type = nil
 
-      if (alias_target = tap.cask_alias_target(token))
+      if (alias_target = tap.cask_alias_table[token].presence)
         token = alias_target
         type = :alias
       elsif (new_token = tap.cask_renames[token].presence)

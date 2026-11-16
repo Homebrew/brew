@@ -91,6 +91,15 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "#aliases" do
+    it "lists the aliases of a cask in a third-party tap" do
+      tap = Tap.fetch("thirdparty", "foo")
+      allow(tap).to receive(:cask_alias_reverse_table).and_return("versioned-cask" => ["versioned-alias"])
+
+      expect(described_class.new("versioned-cask", tap:).aliases).to eq(["versioned-alias"])
+    end
+  end
+
   describe "#installed_caskroom_path" do
     it "is the old token's directory until a renamed cask is migrated" do
       Dir.mktmpdir do |dir|

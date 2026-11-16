@@ -331,7 +331,7 @@ module Homebrew
       if tap.formula_files_by_name.key?(token) || tap_formula_name(tap, token) != token
         candidate_types << :formula
       end
-      candidate_types << :cask if tap.cask_files_by_name.key?(token) || tap.cask_alias_target(token)
+      candidate_types << :cask if tap.cask_files_by_name.key?(token) || tap.cask_alias_table.key?(token)
       if tap.command_files.any? { |path| path.basename(path.extname).to_s.delete_prefix("brew-") == token }
         candidate_types << :command
       end
@@ -380,7 +380,7 @@ module Homebrew
           canonical_name = if type == :formula
             tap_formula_name(tap, item_name)
           else
-            tap.cask_alias_target(item_name) || item_name
+            tap.cask_alias_table.fetch(item_name, item_name)
           end
           if !include_existing && canonical_name != item_name
             raise UsageError, "#{name} resolves to #{tap.name}/#{canonical_name}.\n" \
@@ -475,7 +475,7 @@ module Homebrew
     sig { params(tap: Tap, name: String).returns(String) }
     def self.tap_formula_name(tap, name)
       name = name.downcase
-      if (alias_target = tap.alias_target(name))
+      if (alias_target = tap.alias_table[name].presence)
         name = alias_target
       elsif (new_name = tap.formula_renames[name].presence)
         name = new_name

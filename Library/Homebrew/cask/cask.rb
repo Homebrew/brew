@@ -198,7 +198,7 @@ module Cask
     def aliases
       @aliases ||= T.let(nil, T.nilable(T::Array[String]))
       @aliases ||= if (t = tap)
-        t.cask_alias_reverse_table.fetch(full_token, []).map { ::Utils.name_from_full_name(it) }
+        t.cask_alias_reverse_table.fetch(token, [])
       else
         []
       end

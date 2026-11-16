@@ -1028,7 +1028,7 @@ module Formulary
     type = nil
     alias_name = nil
 
-    if (possible_alias = tap.alias_target(name))
+    if (possible_alias = tap.alias_table[name].presence)
       alias_name = name
       name = possible_alias
       type = :alias

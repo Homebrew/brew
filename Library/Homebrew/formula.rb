@@ -923,7 +923,7 @@ class Formula # rubocop:disable Metrics/ClassLength
   def aliases
     @aliases ||= T.let(
       if (tap = self.tap)
-        tap.alias_reverse_table.fetch(full_name, []).map { Utils.name_from_full_name(it) }
+        tap.alias_reverse_table.fetch(name, [])
       else
         []
       end, T.nilable(T::Array[String])
