@@ -398,10 +398,11 @@ RSpec.describe PyPI do
       allow(Formula).to receive(:[]).with("python").and_return(instance_double(Formula, ensure_installed!: true))
     end
 
-    it "uses the stable resource for dependency and package metadata resolution" do
+    it "uses the stable resource and selected Python for dependency and package metadata resolution" do
       path.write <<~RUBY
         class Foo < Formula
           url "ssh://git@gitlab.example/foo.git", tag: "v1.0"
+          depends_on "python@3.14"
 
           def install
             bin.install "foo"
@@ -409,8 +410,13 @@ RSpec.describe PyPI do
         end
       RUBY
       formula = Formulary.from_contents("foo", path, path.read)
+      python = instance_double(Formula, name: "python@3.14", version: Version.new("3.14"),
+                                        any_version_installed?: true, ensure_installed!: true)
+      allow(formula.deps.fetch(0)).to receive(:to_formula).and_return(python)
+      allow(Formula).to receive(:[]).with("python@3.14").and_return(python)
       allow(described_class).to receive(:pip_output)
-        .with(array_including(formula.resource), any_args)
+        .with(array_including(Utils::Path.formula_opt_libexec("python@3.14")/"bin/python",
+                              formula.resource), any_args)
         .and_return('{"install":[{"metadata":{"name":"foo","version":"1.0"}}]}')
 
       expect(described_class.update_python_resources!(formula, quiet: true)).to be true
@@ -459,6 +465,18 @@ RSpec.describe PyPI do
           end
         end
       RUBY
+    end
+
+    it "skips non-PyPI formulae with unavailable optional Python dependencies", :no_api do
+      formula = formula("vim-custom") do
+        T.bind(self, T.class_of(Formula))
+        url "https://github.com/vim/vim/archive/refs/tags/v9.2.1350.tar.gz"
+        depends_on "python@3.14" => :optional
+      end
+
+      expect(described_class.update_python_resources!(formula,
+                                                      version:                  "9.2.1350",
+                                                      ignore_non_pypi_packages: true)).to be false
     end
 
     context "with a non-PyPI stable URL and no pypi_packages defined" do
