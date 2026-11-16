@@ -108,7 +108,23 @@ module Utils
       sig { params(formula_contents: String).void }
       def initialize(formula_contents)
         @formula_contents = formula_contents
-        processed_source, children = process_formula
+        processed_source, root_node = process_source(formula_contents)
+
+        class_node = root_node if root_node.class_type?
+        if root_node.begin_type?
+          nodes = root_node.children.select(&:class_type?)
+          class_node = if nodes.count > 1
+            nodes.find { |n| n.parent_class&.const_name == "Formula" }
+          else
+            nodes.first
+          end
+        end
+
+        raise "Could not find formula class!" if class_node.nil?
+
+        children = body_children(class_node.body)
+        raise "Formula class is empty!" if children.empty?
+
         @processed_source = T.let(processed_source, ProcessedSource)
         @children = T.let(children, T::Array[Node])
         @tree_rewriter = T.let(TreeRewriter.new(processed_source.buffer), TreeRewriter)
@@ -230,7 +246,20 @@ module Utils
         end
         raise "Could not find '#{after_name}' stanza!" if preceding_component.blank?
 
-        preceding_expr = source_range_with_trailing_comments(preceding_component)
+        preceding_expr = preceding_component.location.expression
+        processed_source.comments.each do |comment|
+          comment_expr = comment.location.expression
+          distance = comment_expr.first_line - preceding_expr.last_line
+          case distance
+          when 0
+            if comment_expr.last_line > preceding_expr.last_line ||
+               comment_expr.end_pos > preceding_expr.end_pos
+              preceding_expr = comment_expr
+            end
+          when 1
+            preceding_expr = comment_expr
+          end
+        end
         text = new_stanzas.map do |stanza_name, value|
           "\n#{stanza_text(stanza_name, value, indent: preceding_component.source_range.column)}"
         end.join
@@ -248,16 +277,69 @@ module Utils
         resource_section = resource_section.gsub(/^(?!$)/, "  ") unless resource_section.match?(/\A\n* +/)
 
         if replace_existing
-          groups = resource_stanza_groups(preserve_livecheck:)
+          test_node = stanza(:test, type: :block_call)
+          resource_nodes = stanzas(:resource, type: :block_call).filter_map do |node|
+            node = T.cast(node, BlockNode)
+            next if test_node.present? && node.source_range.begin_pos > test_node.source_range.begin_pos
+
+            next if preserve_livecheck &&
+                    matching_stanzas(body_children(node.body), :livecheck, type: :block_call).present?
+
+            node
+          end
+
+          groups = T.let([], T::Array[T::Array[BlockNode]])
+          resource_nodes.each do |resource_node|
+            previous_group = groups.last
+            if previous_group
+              previous_end = whole_line_range(previous_group.fetch(-1).source_range).end_pos
+              current_start = resource_node.source_range.begin_pos - resource_node.source_range.column
+              contiguous = formula_contents[previous_end...current_start].to_s.lines.all? do |line|
+                line.strip.empty? || line.strip.start_with?("# RESOURCE-ERROR:")
+              end
+            end
+
+            if previous_group && contiguous
+              previous_group << resource_node
+            else
+              groups << [resource_node]
+            end
+          end
           return :multiple_groups if groups.length > 1
 
           if (group = groups.first)
-            tree_rewriter.replace(resource_stanza_group_range(group), resource_section)
+            # Include any `# RESOURCE-ERROR:` comments directly above the first resource.
+            first_range = group.fetch(0).source_range
+            loop do
+              line_start = first_range.begin_pos - first_range.column
+              previous_comments = processed_source.comments.select do |comment|
+                comment.location.expression.end_pos <= line_start &&
+                  comment.text.start_with?("# RESOURCE-ERROR:")
+              end
+              previous_comment = previous_comments.max_by { |comment| comment.location.expression.end_pos }
+              break if previous_comment.blank?
+
+              comment_range = previous_comment.location.expression
+              break unless formula_contents[comment_range.end_pos...line_start].to_s.lines.all? do |line|
+                line.strip.empty?
+              end
+
+              first_range = T.cast(first_range.with(begin_pos: comment_range.begin_pos), Parser::Source::Range)
+            end
+            last_range = whole_line_range(group.fetch(-1).source_range, include_following_blank_lines: true)
+            group_range = first_range.with(
+              begin_pos: first_range.begin_pos - first_range.column,
+              end_pos:   last_range.end_pos,
+            )
+            tree_rewriter.replace(group_range, resource_section)
             return
           end
         end
 
-        install_node = method_definition(:install)
+        install_node = T.cast(
+          children.find { |child| child.def_type? && T.cast(child, DefNode).method_name == :install },
+          T.nilable(DefNode),
+        )
         raise "Could not find 'install' method!" if install_node.blank?
 
         tree_rewriter.insert_before(whole_line_range(install_node.source_range), resource_section)
@@ -467,98 +549,6 @@ module Utils
         tree_rewriter.remove(stanza_range)
       end
 
-      sig { params(node: T.any(Node, Parser::Source::Range)).returns(Parser::Source::Range) }
-      def source_range_with_trailing_comments(node)
-        preceding_expr = node.is_a?(Parser::Source::Range) ? node : node.location.expression
-        processed_source.comments.each do |comment|
-          comment_expr = comment.location.expression
-          distance = comment_expr.first_line - preceding_expr.last_line
-          case distance
-          when 0
-            if comment_expr.last_line > preceding_expr.last_line ||
-               comment_expr.end_pos > preceding_expr.end_pos
-              preceding_expr = comment_expr
-            end
-          when 1
-            preceding_expr = comment_expr
-          end
-        end
-        preceding_expr
-      end
-
-      sig { params(name: Symbol).returns(T.nilable(DefNode)) }
-      def method_definition(name)
-        T.cast(
-          children.find { |child| child.def_type? && T.cast(child, DefNode).method_name == name },
-          T.nilable(DefNode),
-        )
-      end
-
-      sig { params(preserve_livecheck: T::Boolean).returns(T::Array[T::Array[BlockNode]]) }
-      def resource_stanza_groups(preserve_livecheck: false)
-        test_node = stanza(:test, type: :block_call)
-        resource_nodes = stanzas(:resource, type: :block_call).filter_map do |node|
-          node = T.cast(node, BlockNode)
-          next if test_node.present? && node.source_range.begin_pos > test_node.source_range.begin_pos
-
-          next if preserve_livecheck &&
-                  matching_stanzas(body_children(node.body), :livecheck, type: :block_call).present?
-
-          node
-        end
-
-        groups = T.let([], T::Array[T::Array[BlockNode]])
-        resource_nodes.each do |resource_node|
-          previous_group = groups.last
-          if previous_group.nil? || !resource_stanzas_contiguous?(previous_group.fetch(-1), resource_node)
-            groups << [resource_node]
-          else
-            previous_group << resource_node
-          end
-        end
-        groups
-      end
-
-      sig { params(previous_node: BlockNode, current_node: BlockNode).returns(T::Boolean) }
-      def resource_stanzas_contiguous?(previous_node, current_node)
-        previous_end = whole_line_range(previous_node.source_range).end_pos
-        current_start = current_node.source_range.begin_pos - current_node.source_range.column
-        formula_contents[previous_end...current_start].to_s.lines.all? do |line|
-          line.strip.empty? || line.strip.start_with?("# RESOURCE-ERROR:")
-        end
-      end
-
-      sig { params(group: T::Array[BlockNode]).returns(Parser::Source::Range) }
-      def resource_stanza_group_range(group)
-        first_range = source_range_with_leading_resource_error_comments(group.fetch(0).source_range)
-        last_range = whole_line_range(group.fetch(-1).source_range, include_following_blank_lines: true)
-        first_range.with(
-          begin_pos: first_range.begin_pos - first_range.column,
-          end_pos:   last_range.end_pos,
-        )
-      end
-
-      sig { params(range: Parser::Source::Range).returns(Parser::Source::Range) }
-      def source_range_with_leading_resource_error_comments(range)
-        loop do
-          line_start = range.begin_pos - range.column
-          previous_comments = processed_source.comments.select do |comment|
-            comment.location.expression.end_pos <= line_start &&
-              comment.text.start_with?("# RESOURCE-ERROR:")
-          end
-          previous_comment = previous_comments.max_by { |comment| comment.location.expression.end_pos }
-          break if previous_comment.blank?
-
-          comment_range = previous_comment.location.expression
-          break unless formula_contents[comment_range.end_pos...line_start].to_s.lines.all? do |line|
-            line.strip.empty?
-          end
-
-          range = T.cast(range.with(begin_pos: comment_range.begin_pos), Parser::Source::Range)
-        end
-        range
-      end
-
       sig {
         params(
           range:                         Parser::Source::Range,
@@ -583,28 +573,6 @@ module Utils
       def line_end_pos(position)
         newline_pos = formula_contents.index("\n", position)
         newline_pos ? newline_pos + 1 : formula_contents.length
-      end
-
-      sig { returns([ProcessedSource, T::Array[Node]]) }
-      def process_formula
-        processed_source, root_node = process_source(formula_contents)
-
-        class_node = root_node if root_node.class_type?
-        if root_node.begin_type?
-          nodes = root_node.children.select(&:class_type?)
-          class_node = if nodes.count > 1
-            nodes.find { |n| n.parent_class&.const_name == "Formula" }
-          else
-            nodes.first
-          end
-        end
-
-        raise "Could not find formula class!" if class_node.nil?
-
-        children = body_children(class_node.body)
-        raise "Formula class is empty!" if children.empty?
-
-        [processed_source, children]
       end
 
       sig { params(node: Node, target_name: Symbol, target_type: T.nilable(Symbol)).returns(T::Boolean) }
@@ -632,9 +600,17 @@ module Utils
       sig { params(cask_contents: String).void }
       def initialize(cask_contents)
         @cask_contents = cask_contents
-        processed_source, cask_block = process_cask
+        processed_source, root_node = process_source(cask_contents)
+        cask_block = if root_node.block_type? && T.cast(root_node, BlockNode).method_name == :cask
+          T.cast(root_node, BlockNode)
+        elsif root_node.begin_type?
+          root_node.children.find { |node| node.block_type? && node.method_name == :cask }
+        end
+
+        raise "Could not find cask block!" if cask_block.nil?
+
         @processed_source = T.let(processed_source, ProcessedSource)
-        @cask_block = T.let(cask_block, BlockNode)
+        @cask_block = T.let(T.cast(cask_block, BlockNode), BlockNode)
         @tree_rewriter = T.let(TreeRewriter.new(processed_source.buffer), TreeRewriter)
       end
 
@@ -741,7 +717,10 @@ module Utils
       # cannot be expressed, e.g. an exact version list or a maximum.
       sig { params(version: Symbol).returns(T::Boolean) }
       def update_depends_on_macos_minimum!(version)
-        if (macos_pair = top_level_depends_on_macos_pair)
+        depends_on_pairs = top_level_stanzas(:depends_on).flat_map do |stanza_node|
+          stanza_node.arguments.grep(RuboCop::AST::HashNode).flat_map(&:pairs)
+        end
+        if (macos_pair = depends_on_pairs.find { |pair| literal_value(pair.key) == :macos })
           return false unless minimum_macos_value?(macos_pair.value)
 
           tree_rewriter.replace(macos_pair.value.source_range, ruby_literal(version))
@@ -750,7 +729,11 @@ module Utils
 
         # A second stanza alongside a bare `depends_on :macos` would be flagged
         # as redundant by `Homebrew/OSDependsOn`.
-        if (bare_argument = top_level_bare_depends_on_macos_argument)
+        bare_stanza_node = top_level_stanzas(:depends_on).find do |node|
+          argument = node.first_argument
+          argument&.sym_type? && literal_value(argument) == :macos
+        end
+        if (bare_argument = bare_stanza_node&.first_argument)
           tree_rewriter.replace(bare_argument.source_range, "macos: #{ruby_literal(version)}")
           return true
         end
@@ -823,23 +806,6 @@ module Utils
         node.str_content&.match?(/\A\s*>=/) || false
       end
 
-      sig { returns(T.nilable(RuboCop::AST::PairNode)) }
-      def top_level_depends_on_macos_pair
-        pairs = top_level_stanzas(:depends_on).flat_map do |stanza_node|
-          stanza_node.arguments.grep(RuboCop::AST::HashNode).flat_map(&:pairs)
-        end
-        pairs.find { |pair| literal_value(pair.key) == :macos }
-      end
-
-      sig { returns(T.nilable(Node)) }
-      def top_level_bare_depends_on_macos_argument
-        stanza_node = top_level_stanzas(:depends_on).find do |node|
-          argument = node.first_argument
-          argument&.sym_type? && literal_value(argument) == :macos
-        end
-        stanza_node&.first_argument
-      end
-
       # The first top-level stanza which must be ordered after `name`.
       sig { params(name: Symbol).returns(T.nilable(SendNode)) }
       def stanza_successor(name)
@@ -880,20 +846,6 @@ module Utils
       def line_end_pos(position)
         newline_pos = cask_contents.index("\n", position)
         newline_pos ? newline_pos + 1 : cask_contents.length
-      end
-
-      sig { returns([ProcessedSource, BlockNode]) }
-      def process_cask
-        processed_source, root_node = process_source(cask_contents)
-        cask_block = if root_node.block_type? && T.cast(root_node, BlockNode).method_name == :cask
-          T.cast(root_node, BlockNode)
-        elsif root_node.begin_type?
-          root_node.children.find { |node| node.block_type? && node.method_name == :cask }
-        end
-
-        raise "Could not find cask block!" if cask_block.nil?
-
-        [processed_source, T.cast(cask_block, BlockNode)]
       end
     end
   end

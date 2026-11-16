@@ -50,7 +50,20 @@ module RuboCop
 
         sig { params(node: RuboCop::AST::SendNode).void }
         def on_send(node)
-          autocorrect_macos_comparison_strings(node)
+          depends_on_pairs(node).each do |pair|
+            key = symbol_key(pair)
+            next unless MACOS_DEPENDENCY_STANZAS.include?(key)
+            next unless pair.value.str_type?
+
+            match = pair.value.value.match(/\A\s*(?<comparator>>=|<=)\s*:(?<version>\S+)\s*\z/)
+            next unless match
+
+            replacement_key = (match[:comparator] == "<=") ? :maximum_macos : :macos
+            message = "Use `depends_on #{replacement_key}: :#{match[:version]}`."
+            add_offense(pair.value.source_range, message:) do |corrector|
+              corrector.replace(pair.source_range, "#{replacement_key}: :#{match[:version]}")
+            end
+          end
           check_redundant_bare_macos(node)
           check_conflicting_os_requirements(node)
 
@@ -104,27 +117,9 @@ module RuboCop
         private
 
         sig { params(node: RuboCop::AST::SendNode).void }
-        def autocorrect_macos_comparison_strings(node)
-          depends_on_pairs(node).each do |pair|
-            key = symbol_key(pair)
-            next unless MACOS_DEPENDENCY_STANZAS.include?(key)
-            next unless pair.value.str_type?
-
-            match = pair.value.value.match(/\A\s*(?<comparator>>=|<=)\s*:(?<version>\S+)\s*\z/)
-            next unless match
-
-            replacement_key = (match[:comparator] == "<=") ? :maximum_macos : :macos
-            message = "Use `depends_on #{replacement_key}: :#{match[:version]}`."
-            add_offense(pair.value.source_range, message:) do |corrector|
-              corrector.replace(pair.source_range, "#{replacement_key}: :#{match[:version]}")
-            end
-          end
-        end
-
-        sig { params(node: RuboCop::AST::SendNode).void }
         def check_redundant_bare_macos(node)
           return unless bare_os_depends_on?(node, :macos)
-          return unless sibling_depends_on_pairs(node).any? do |pair|
+          return unless sibling_depends_on_calls(node).flat_map { |sibling| depends_on_pairs(sibling) }.any? do |pair|
             MACOS_DEPENDENCY_STANZAS.include?(symbol_key(pair))
           end
 
@@ -161,13 +156,26 @@ module RuboCop
 
           top_level_stanzas = direct_stanzas(body)
           stanzas = top_level_stanzas.flat_map { |stanza| [stanza, *platform_block_stanzas(stanza)] }
-          return if os_depends_on?(body)
+          os_depends_on = body.each_node(:send).any? do |send_node|
+            send_node = T.cast(send_node, RuboCop::AST::SendNode)
+            next false if send_node.method_name != :depends_on
+
+            bare_os_depends_on?(send_node, :macos) || bare_os_depends_on?(send_node, :linux) ||
+              top_level_macos_depends_on?(send_node) ||
+              depends_on_pairs(send_node).any? { |pair| LINUX_DEPENDENCY_STANZAS.include?(symbol_key(pair)) }
+          end
+          return if os_depends_on
 
           os_stanza = stanzas.find { |stanza| os_only_stanza?(stanza, os) }
           return unless os_stanza
 
           os_name = (os == :macos) ? "macOS" : "Linux"
-          if cross_platform_cask?(top_level_stanzas, stanzas, os)
+          other_os = (os == :macos) ? :linux : :macos
+          other_os_block = (other_os == :macos) ? :on_macos : :on_linux
+          # `on_system` always spans both operating systems, so it can never imply a bare OS dependency.
+          if stanzas.any? { |stanza| stanza.method_name == :on_system } ||
+             top_level_stanzas.any? { |stanza| stanza.method_name == other_os_block } ||
+             stanzas.any? { |stanza| os_only_stanza?(stanza, other_os) }
             add_offense(
               os_stanza.source_range,
               message: "Move this #{os_name}-only stanza into an `on_#{os}` block for cross-platform casks.",
@@ -219,23 +227,6 @@ module RuboCop
           end
         end
 
-        sig {
-          params(
-            top_level_stanzas: T::Array[RuboCop::AST::SendNode],
-            stanzas:           T::Array[RuboCop::AST::SendNode],
-            os:                Symbol,
-          ).returns(T::Boolean)
-        }
-        def cross_platform_cask?(top_level_stanzas, stanzas, os)
-          other_os = (os == :macos) ? :linux : :macos
-          other_os_block = (other_os == :macos) ? :on_macos : :on_linux
-
-          # `on_system` always spans both operating systems, so it can never imply a bare OS dependency.
-          stanzas.any? { |stanza| stanza.method_name == :on_system } ||
-            top_level_stanzas.any? { |stanza| stanza.method_name == other_os_block } ||
-            stanzas.any? { |stanza| os_only_stanza?(stanza, other_os) }
-        end
-
         sig { params(node: RuboCop::AST::Node).returns(T::Array[RuboCop::AST::SendNode]) }
         def direct_stanzas(node)
           (node.begin_type? ? node.child_nodes : [node]).filter_map do |child|
@@ -284,27 +275,11 @@ module RuboCop
           key.value
         end
 
-        sig { params(node: RuboCop::AST::SendNode).returns(T::Array[RuboCop::AST::PairNode]) }
-        def sibling_depends_on_pairs(node)
-          sibling_depends_on_calls(node).flat_map { |sibling| depends_on_pairs(sibling) }
-        end
-
         sig { params(node: RuboCop::AST::SendNode).returns(T::Array[RuboCop::AST::SendNode]) }
         def sibling_depends_on_calls(node)
           parent = node.parent
           siblings = parent&.begin_type? ? parent.child_nodes : [node]
           siblings.select { |sibling| sibling.send_type? && sibling.method_name == :depends_on }
-        end
-
-        sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
-        def os_depends_on?(node)
-          node.each_node(:send).any? do |send_node|
-            send_node = T.cast(send_node, RuboCop::AST::SendNode)
-            next false if send_node.method_name != :depends_on
-
-            bare_os_depends_on?(send_node, :macos) || bare_os_depends_on?(send_node, :linux) ||
-              top_level_macos_depends_on?(send_node) || top_level_linux_depends_on?(send_node)
-          end
         end
 
         sig { params(node: RuboCop::AST::SendNode, os: Symbol).returns(T::Boolean) }
@@ -315,11 +290,6 @@ module RuboCop
         sig { params(node: RuboCop::AST::SendNode).returns(T::Boolean) }
         def top_level_macos_depends_on?(node)
           depends_on_pairs(node).any? { |pair| MACOS_DEPENDENCY_STANZAS.include?(symbol_key(pair)) }
-        end
-
-        sig { params(node: RuboCop::AST::SendNode).returns(T::Boolean) }
-        def top_level_linux_depends_on?(node)
-          depends_on_pairs(node).any? { |pair| LINUX_DEPENDENCY_STANZAS.include?(symbol_key(pair)) }
         end
       end
     end

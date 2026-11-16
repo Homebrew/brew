@@ -12,23 +12,13 @@ module RuboCop
         super
 
         processed_source.comments.each do |comment|
-          next unless disable_comment?(comment)
-          next if comment?(processed_source[comment.loc.line - 2])
+          next unless comment.text.start_with? "# rubocop:disable"
+
+          previous_line = processed_source[comment.loc.line - 2]
+          next if previous_line.strip.start_with?("#") && previous_line.strip.delete_prefix("#") != ""
 
           add_offense(comment)
         end
-      end
-
-      private
-
-      sig { params(comment: Parser::Source::Comment).returns(T::Boolean) }
-      def disable_comment?(comment)
-        comment.text.start_with? "# rubocop:disable"
-      end
-
-      sig { params(line: String).returns(T::Boolean) }
-      def comment?(line)
-        line.strip.start_with?("#") && line.strip.delete_prefix("#") != ""
       end
     end
   end

@@ -132,11 +132,6 @@ module RuboCop
             return
           end
 
-          add_implicit_var_path_offenses(block_node)
-        end
-
-        sig { params(block_node: RuboCop::AST::BlockNode).void }
-        def add_implicit_var_path_offenses(block_node)
           block_node.each_descendant(:send) do |node|
             send_node = T.cast(node, RuboCop::AST::SendNode)
             next if send_node.receiver
@@ -238,12 +233,78 @@ module RuboCop
           if formula_class.match?(MYSQL_FORMULA_CLASS_REGEX)
             add_mysql_step_nodes(direct_nodes, formula_body, step_nodes)
           end
-          add_mariadb_step_nodes(direct_nodes, step_nodes)
-          add_postgresql_link_step_nodes(direct_nodes, step_nodes)
-          add_certificate_symlink_step_nodes(direct_nodes, step_nodes)
+          add_mysql_data_step_nodes(direct_nodes, step_nodes, MARIADB_INITIALISE_SOURCE, :mariadb)
+          direct_nodes.each do |node|
+            case normalised_install_step_source(node)
+            when POSTGRESQL_LINK_DIR_SOURCE
+              step_nodes[node] = [
+                "symlink_tree \"include/postgresql\", \"include/{{formula_name}}\"",
+                "symlink_tree \"lib/postgresql\", \"lib/{{formula_name}}\"",
+                "symlink_tree \"share/postgresql\", \"share/{{formula_name}}\"",
+              ]
+            when POSTGRESQL_LINK_CHILDREN_SOURCE
+              step_nodes[node] = ["symlink_children \"bin\", suffix: \"-{{version.major}}\""]
+            end
+          end
+          (0...(direct_nodes.length - 1)).each do |index|
+            remove_node = direct_nodes.fetch(index)
+            symlink_node = direct_nodes.fetch(index + 1)
+            next if normalised_install_step_source(remove_node) != CERTIFICATE_REMOVE_SOURCE
+            next if normalised_install_step_source(symlink_node) != CERTIFICATE_INSTALL_SYMLINK_SOURCE
+
+            step_nodes[remove_node] = []
+            step_nodes[symlink_node] = [<<~RUBY.chomp]
+              symlink "cert.pem", "cert.pem",
+                      source_formula: "ca-certificates",
+                      source_base: :formula_pkgetc,
+                      target_base: :pkgetc,
+                      overwrite: true
+            RUBY
+          end
           unless step_nodes.empty?
-            add_formula_step_conversion_offense(post_install_def, post_install_steps_block, direct_nodes, step_nodes,
-                                                removable_methods)
+            step_lines = step_nodes.sort_by { |node, _| node.source_range.begin_pos }.flat_map(&:last)
+            remaining_nodes = direct_nodes.reject { |node| step_nodes.key?(node) }
+            add_offense(post_install_def,
+                        message: format(SIMPLE_STEP_CONVERSION_MSG, steps_block: "post_install_steps")) do |corrector|
+              if post_install_steps_block
+                append_install_step_lines(corrector, post_install_steps_block, step_lines)
+              elsif remaining_nodes.empty?
+                corrector.replace(
+                  post_install_def.source_range,
+                  install_steps_block_source(:post_install_steps, step_lines, post_install_def.source_range.column),
+                )
+              else
+                corrector.insert_before(
+                  post_install_def.source_range,
+                  "#{install_steps_block_source(:post_install_steps, step_lines,
+                                                post_install_def.source_range.column)}\n\n" \
+                  "#{" " * post_install_def.source_range.column}",
+                )
+              end
+
+              if post_install_steps_block || remaining_nodes.present?
+                matched_node_groups = direct_nodes.chunk_while do |left, right|
+                  step_nodes.key?(left) && step_nodes.key?(right)
+                end
+                matched_node_groups.select { |nodes| step_nodes.key?(nodes.fetch(0)) }.each do |nodes|
+                  first_range = range_by_whole_lines(nodes.fetch(0).source_range)
+                  last_range = range_by_whole_lines(nodes.fetch(-1).source_range, include_final_newline: true)
+                  range = ::Parser::Source::Range.new(processed_source.buffer, first_range.begin_pos,
+                                                      last_range.end_pos)
+                  prefix = processed_source.buffer.source[...range.begin_pos]
+                  preceding_blank_lines = prefix[/\n(?:[ \t]*\n)+\z/].to_s.length
+                  preceding_blank_lines -= 1 if preceding_blank_lines.positive?
+                  blank_lines = processed_source.buffer.source[range.end_pos..].to_s[/\A(?:[ \t]*\n)*/].to_s
+                  corrector.remove(range.adjust(begin_pos: -preceding_blank_lines, end_pos: blank_lines.length))
+                end
+                if remaining_nodes.empty?
+                  corrector.remove(range_with_surrounding_space(range: post_install_def.source_range, side: :left))
+                end
+              end
+              removable_methods.each do |method|
+                corrector.remove(range_with_surrounding_space(range: method.source_range, side: :left))
+              end
+            end
             return true
           end
 
@@ -326,16 +387,6 @@ module RuboCop
 
         sig {
           params(
-            direct_nodes: T::Array[RuboCop::AST::Node],
-            step_nodes:   T::Hash[RuboCop::AST::Node, T::Array[String]],
-          ).void
-        }
-        def add_mariadb_step_nodes(direct_nodes, step_nodes)
-          add_mysql_data_step_nodes(direct_nodes, step_nodes, MARIADB_INITIALISE_SOURCE, :mariadb)
-        end
-
-        sig {
-          params(
             direct_nodes:      T::Array[RuboCop::AST::Node],
             step_nodes:        T::Hash[RuboCop::AST::Node, T::Array[String]],
             initialise_source: String,
@@ -358,124 +409,11 @@ module RuboCop
           step_nodes[init_node] = ["init_data_dir \"mysql\", using: :#{using}"]
         end
 
-        sig {
-          params(
-            direct_nodes: T::Array[RuboCop::AST::Node],
-            step_nodes:   T::Hash[RuboCop::AST::Node, T::Array[String]],
-          ).void
-        }
-        def add_postgresql_link_step_nodes(direct_nodes, step_nodes)
-          direct_nodes.each do |node|
-            case normalised_install_step_source(node)
-            when POSTGRESQL_LINK_DIR_SOURCE
-              step_nodes[node] = [
-                "symlink_tree \"include/postgresql\", \"include/{{formula_name}}\"",
-                "symlink_tree \"lib/postgresql\", \"lib/{{formula_name}}\"",
-                "symlink_tree \"share/postgresql\", \"share/{{formula_name}}\"",
-              ]
-            when POSTGRESQL_LINK_CHILDREN_SOURCE
-              step_nodes[node] = ["symlink_children \"bin\", suffix: \"-{{version.major}}\""]
-            end
-          end
-        end
-
-        sig {
-          params(
-            direct_nodes: T::Array[RuboCop::AST::Node],
-            step_nodes:   T::Hash[RuboCop::AST::Node, T::Array[String]],
-          ).void
-        }
-        def add_certificate_symlink_step_nodes(direct_nodes, step_nodes)
-          (0...(direct_nodes.length - 1)).each do |index|
-            remove_node = direct_nodes.fetch(index)
-            symlink_node = direct_nodes.fetch(index + 1)
-            next if normalised_install_step_source(remove_node) != CERTIFICATE_REMOVE_SOURCE
-            next if normalised_install_step_source(symlink_node) != CERTIFICATE_INSTALL_SYMLINK_SOURCE
-
-            step_nodes[remove_node] = []
-            step_nodes[symlink_node] = [<<~RUBY.chomp]
-              symlink "cert.pem", "cert.pem",
-                      source_formula: "ca-certificates",
-                      source_base: :formula_pkgetc,
-                      target_base: :pkgetc,
-                      overwrite: true
-            RUBY
-          end
-        end
-
         sig { params(nodes: T::Array[RuboCop::AST::Node]).returns(T::Boolean) }
         def nodes_in_source_order?(nodes)
           nodes.each_index.all? do |index|
             index.zero? || nodes.fetch(index - 1).source_range.begin_pos < nodes.fetch(index).source_range.begin_pos
           end
-        end
-
-        sig {
-          params(
-            post_install_def:         RuboCop::AST::DefNode,
-            post_install_steps_block: T.nilable(RuboCop::AST::BlockNode),
-            direct_nodes:             T::Array[RuboCop::AST::Node],
-            step_nodes:               T::Hash[RuboCop::AST::Node, T::Array[String]],
-            removable_methods:        T::Array[RuboCop::AST::Node],
-          ).void
-        }
-        def add_formula_step_conversion_offense(post_install_def, post_install_steps_block, direct_nodes, step_nodes,
-                                                removable_methods)
-          step_lines = step_nodes.sort_by { |node, _| node.source_range.begin_pos }.flat_map(&:last)
-          remaining_nodes = direct_nodes.reject { |node| step_nodes.key?(node) }
-          add_offense(post_install_def,
-                      message: format(SIMPLE_STEP_CONVERSION_MSG, steps_block: "post_install_steps")) do |corrector|
-            if post_install_steps_block
-              append_install_step_lines(corrector, post_install_steps_block, step_lines)
-            elsif remaining_nodes.empty?
-              corrector.replace(
-                post_install_def.source_range,
-                install_steps_block_source(:post_install_steps, step_lines, post_install_def.source_range.column),
-              )
-            else
-              corrector.insert_before(
-                post_install_def.source_range,
-                "#{install_steps_block_source(:post_install_steps, step_lines,
-                                              post_install_def.source_range.column)}\n\n" \
-                "#{" " * post_install_def.source_range.column}",
-              )
-            end
-
-            if post_install_steps_block || remaining_nodes.present?
-              matched_install_step_node_groups(direct_nodes, step_nodes).each do |nodes|
-                corrector.remove(range_for_install_step_node_group(nodes))
-              end
-              if remaining_nodes.empty?
-                corrector.remove(range_with_surrounding_space(range: post_install_def.source_range, side: :left))
-              end
-            end
-            removable_methods.each do |method|
-              corrector.remove(range_with_surrounding_space(range: method.source_range, side: :left))
-            end
-          end
-        end
-
-        sig {
-          params(
-            direct_nodes: T::Array[RuboCop::AST::Node],
-            step_nodes:   T::Hash[RuboCop::AST::Node, T::Array[String]],
-          ).returns(T::Array[T::Array[RuboCop::AST::Node]])
-        }
-        def matched_install_step_node_groups(direct_nodes, step_nodes)
-          direct_nodes.chunk_while { |left, right| step_nodes.key?(left) && step_nodes.key?(right) }
-                      .select { |nodes| step_nodes.key?(nodes.fetch(0)) }
-        end
-
-        sig { params(nodes: T::Array[RuboCop::AST::Node]).returns(::Parser::Source::Range) }
-        def range_for_install_step_node_group(nodes)
-          first_range = range_by_whole_lines(nodes.fetch(0).source_range)
-          last_range = range_by_whole_lines(nodes.fetch(-1).source_range, include_final_newline: true)
-          range = ::Parser::Source::Range.new(processed_source.buffer, first_range.begin_pos, last_range.end_pos)
-          prefix = processed_source.buffer.source[...range.begin_pos]
-          preceding_blank_lines = prefix[/\n(?:[ \t]*\n)+\z/].to_s.length
-          preceding_blank_lines -= 1 if preceding_blank_lines.positive?
-          blank_lines = processed_source.buffer.source[range.end_pos..].to_s[/\A(?:[ \t]*\n)*/].to_s
-          range.adjust(begin_pos: -preceding_blank_lines, end_pos: blank_lines.length)
         end
 
         sig {

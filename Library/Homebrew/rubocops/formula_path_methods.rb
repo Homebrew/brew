@@ -121,13 +121,11 @@ module RuboCop
 
         sig { params(helper_method: String, formula_name: RuboCop::AST::Node, node: RuboCop::AST::Node).returns(String) }
         def formula_helper_method_call(helper_method, formula_name, node)
-          helper_receiver = "Utils::Path." unless formula_or_cask_dsl?(node)
+          formula_or_cask_dsl = node.each_ancestor.any? do |ancestor|
+            formula_class?(ancestor) || cask_block?(ancestor)
+          end
+          helper_receiver = "Utils::Path." unless formula_or_cask_dsl
           "#{helper_receiver}#{helper_method}(#{formula_name.source})"
-        end
-
-        sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
-        def formula_or_cask_dsl?(node)
-          node.each_ancestor.any? { |ancestor| formula_class?(ancestor) || cask_block?(ancestor) }
         end
       end
     end

@@ -40,7 +40,15 @@ module RuboCop
           inline_patches.each { |patch| inline_patch_problems(patch) }
 
           if inline_patches.empty? && patch_end?
-            offending_patch_end_node(node)
+            @offensive_node = T.let(node, T.nilable(RuboCop::AST::Node))
+            @source_buf = T.let(source_buffer(node), T.nilable(Parser::Source::Buffer))
+            @line_no = T.let(node.loc.last_line + 1, T.nilable(Integer))
+            @column = T.let(0, T.nilable(Integer))
+            @length = T.let(7, T.nilable(Integer)) # "__END__".size
+            @offense_source_range = T.let(
+              source_range(@source_buf, @line_no, @column, @length),
+              T.nilable(Parser::Source::Range),
+            )
             add_offense(@offense_source_range, message: "Patch is missing `patch :DATA`")
           end
 
@@ -187,19 +195,6 @@ module RuboCop
         sig { returns(T::Boolean) }
         def patch_end?
           /^__END__$/.match?(@full_source_content)
-        end
-
-        sig { params(node: RuboCop::AST::Node).void }
-        def offending_patch_end_node(node)
-          @offensive_node = T.let(node, T.nilable(RuboCop::AST::Node))
-          @source_buf = T.let(source_buffer(node), T.nilable(Parser::Source::Buffer))
-          @line_no = T.let(node.loc.last_line + 1, T.nilable(Integer))
-          @column = T.let(0, T.nilable(Integer))
-          @length = T.let(7, T.nilable(Integer)) # "__END__".size
-          @offense_source_range = T.let(
-            source_range(@source_buf, @line_no, @column, @length),
-            T.nilable(Parser::Source::Range),
-          )
         end
       end
     end

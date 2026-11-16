@@ -56,24 +56,6 @@ module RuboCop
             audit_on_system_blocks(stanza.stanza_node, stanza.stanza_name)
           end
 
-          audit_redundant_nested_on_system_blocks
-          audit_arch_conditionals(cask_body, allowed_blocks: FLIGHT_STANZA_NAMES)
-          audit_macos_version_conditionals(cask_body, recommend_on_system: false, allowed_blocks: FLIGHT_STANZA_NAMES)
-          simplify_sha256_stanzas
-          simplify_os_sha256_stanzas
-          simplify_arch_version_stanzas
-          audit_identical_sha256_across_architectures
-        end
-
-        private
-
-        sig { returns(T.nilable(RuboCop::Cask::AST::CaskBlock)) }
-        attr_reader :cask_block
-
-        def_delegators :cask_block, :toplevel_stanzas, :cask_body
-
-        sig { void }
-        def audit_redundant_nested_on_system_blocks
           cask_body.each_node(:block) do |block_node|
             next unless cask_on_system_conditional_block?(block_node)
 
@@ -84,29 +66,18 @@ module RuboCop
 
             add_offense(method_node, message: "Remove the redundant nested `#{method_node.source}` block.")
           end
-        end
 
-        sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
-        def cask_on_system_conditional_block?(node)
-          method_node = node.method_node
-          return false unless method_node
-          return false unless method_node.receiver.nil?
-          return false unless ON_SYSTEM_BLOCK_METHODS.include?(method_node.method_name)
+          audit_arch_conditionals(cask_body, allowed_blocks: FLIGHT_STANZA_NAMES)
+          audit_macos_version_conditionals(cask_body, recommend_on_system: false, allowed_blocks: FLIGHT_STANZA_NAMES)
 
-          node.each_ancestor.any?(&:cask_block?)
-        end
-
-        sig { void }
-        def simplify_sha256_stanzas
-          grouped_nodes = Hash.new { |hash, key| hash[key] = {} }
-
+          sha256_nodes = Hash.new { |hash, key| hash[key] = {} }
           sha256_on_arch_stanzas(cask_body) do |node, method, value|
             arch = method.to_s.delete_prefix("on_").to_sym
             ast_node = T.cast(node, RuboCop::AST::Node)
-            grouped_nodes[ast_node.parent][arch] = { node: ast_node, value: }
+            sha256_nodes[ast_node.parent][arch] = { node: ast_node, value: }
           end
 
-          grouped_nodes.each_value do |nodes|
+          sha256_nodes.each_value do |nodes|
             next if !nodes.key?(:arm) || !nodes.key?(:intel)
 
             offending_node(nodes[:arm][:node])
@@ -121,6 +92,119 @@ module RuboCop
               corrector.remove(range_by_whole_lines(nodes[:intel][:node].source_range, include_final_newline: true))
             end
           end
+
+          simplify_os_sha256_stanzas
+
+          version_nodes = Hash.new { |hash, key| hash[key] = {} }
+          version_and_sha256_on_arch_stanzas(cask_body) do |block_node, arch_method, version_value, sha256_value|
+            arch = arch_method.to_s.delete_prefix("on_").to_sym
+            ast_block_node = T.cast(block_node, RuboCop::AST::Node)
+            version_nodes[ast_block_node.parent][arch] = {
+              node:          ast_block_node,
+              version_value:,
+              sha256_value:,
+            }
+          end
+
+          version_nodes.each_value do |nodes|
+            next if !nodes.key?(:arm) || !nodes.key?(:intel)
+
+            arm_version = nodes[:arm][:version_value]
+            intel_version = nodes[:intel][:version_value]
+
+            next if arm_version != intel_version
+
+            arm_sha = nodes[:arm][:sha256_value]
+            intel_sha = nodes[:intel][:sha256_value]
+            arm_node = nodes[:arm][:node]
+            intel_node = nodes[:intel][:node]
+
+            indent = " " * arm_node.loc.column
+            version_str = "version #{arm_version.inspect}"
+            sha256_str = if arm_sha == intel_sha
+              "sha256 #{arm_sha.inspect}"
+            else
+              "sha256 arm: #{arm_sha.inspect}, intel: #{intel_sha.inspect}"
+            end
+            replacement = "#{version_str}\n#{indent}#{sha256_str}"
+
+            offending_node(arm_node)
+            if comments_in_node_ranges?(arm_node, intel_node)
+              problem "Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks"
+              next
+            end
+
+            problem "Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks" do |corrector|
+              corrector.replace(arm_node.source_range, replacement)
+              corrector.remove(range_by_whole_lines(intel_node.source_range, include_final_newline: true))
+            end
+          end
+
+          toplevel_stanzas.select { |stanza| stanza.stanza_name == :sha256 }.each do |stanza|
+            sha256_node = stanza.stanza_node
+            next if sha256_node.arguments.count != 1
+            next unless sha256_node.arguments.first.hash_type?
+
+            hash_node = sha256_node.arguments.first
+            values = hash_node.pairs.filter_map do |pair|
+              next unless pair.key.sym_type?
+              next unless pair.value.str_type?
+
+              [pair.key.value, pair.value.value]
+            end.to_h
+
+            arm_sha = values[:arm]
+            intel_sha = values[:intel] || values[:x86_64]
+
+            next unless arm_sha
+            next unless intel_sha
+            next if arm_sha != intel_sha
+
+            if values.keys.intersect?([:arm64_linux, :x86_64_linux])
+              next unless values.values.uniq.one?
+
+              # A scalar also covers omitted Linux architectures, unless dependencies exclude them.
+              linux_arches = cask_body.each_node(:send).filter_map do |node|
+                next if node.method_name != :depends_on || !node.receiver.nil?
+                next unless (argument = node.first_argument)&.hash_type?
+
+                arch_pair = argument.pairs.find { |pair| pair.key.sym_type? && pair.key.value == :arch }
+                next unless arch_pair
+
+                scope = node.each_ancestor(:block).take_while { |block| !block.cask_block? }
+                next if scope.any? { |block| block.method_name == :on_macos }
+                next :unknown unless scope.all? { |block| block.method_name == :on_linux }
+
+                arch_pair.value.sym_type? ? arch_pair.value.value : :unknown
+              end
+              if linux_arches.empty? || (linux_arches - [:arm64, :intel, :x86_64]).any?
+                linux_arches = [:arm64, :intel]
+              end
+              next unless linux_arches.all? do |arch|
+                values.key?((arch == :arm64) ? :arm64_linux : :x86_64_linux)
+              end
+            end
+
+            offending_node(sha256_node)
+            problem "sha256 values for different architectures should not be identical."
+          end
+        end
+
+        private
+
+        sig { returns(T.nilable(RuboCop::Cask::AST::CaskBlock)) }
+        attr_reader :cask_block
+
+        def_delegators :cask_block, :toplevel_stanzas, :cask_body
+
+        sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
+        def cask_on_system_conditional_block?(node)
+          method_node = node.method_node
+          return false unless method_node
+          return false unless method_node.receiver.nil?
+          return false unless ON_SYSTEM_BLOCK_METHODS.include?(method_node.method_name)
+
+          node.each_ancestor.any?(&:cask_block?)
         end
 
         sig { void }
@@ -249,55 +333,6 @@ module RuboCop
           end
         end
 
-        sig { void }
-        def simplify_arch_version_stanzas
-          grouped_nodes = Hash.new { |hash, key| hash[key] = {} }
-
-          version_and_sha256_on_arch_stanzas(cask_body) do |block_node, arch_method, version_value, sha256_value|
-            arch = arch_method.to_s.delete_prefix("on_").to_sym
-            ast_block_node = T.cast(block_node, RuboCop::AST::Node)
-            grouped_nodes[ast_block_node.parent][arch] = {
-              node:          ast_block_node,
-              version_value:,
-              sha256_value:,
-            }
-          end
-
-          grouped_nodes.each_value do |nodes|
-            next if !nodes.key?(:arm) || !nodes.key?(:intel)
-
-            arm_version = nodes[:arm][:version_value]
-            intel_version = nodes[:intel][:version_value]
-
-            next if arm_version != intel_version
-
-            arm_sha = nodes[:arm][:sha256_value]
-            intel_sha = nodes[:intel][:sha256_value]
-            arm_node = nodes[:arm][:node]
-            intel_node = nodes[:intel][:node]
-
-            indent = " " * arm_node.loc.column
-            version_str = "version #{arm_version.inspect}"
-            sha256_str = if arm_sha == intel_sha
-              "sha256 #{arm_sha.inspect}"
-            else
-              "sha256 arm: #{arm_sha.inspect}, intel: #{intel_sha.inspect}"
-            end
-            replacement = "#{version_str}\n#{indent}#{sha256_str}"
-
-            offending_node(arm_node)
-            if comments_in_node_ranges?(arm_node, intel_node)
-              problem "Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks"
-              next
-            end
-
-            problem "Don't nest identical `version` stanzas in `on_intel` and `on_arm` blocks" do |corrector|
-              corrector.replace(arm_node.source_range, replacement)
-              corrector.remove(range_by_whole_lines(intel_node.source_range, include_final_newline: true))
-            end
-          end
-        end
-
         sig { params(nodes: RuboCop::AST::Node).returns(T::Boolean) }
         def comments_in_node_ranges?(*nodes)
           processed_source.comments.any? do |comment|
@@ -383,60 +418,6 @@ module RuboCop
             symbol_arch_values.filter_map { |arch| SHA256_KEYS.fetch(os)[arch] }.uniq
           end
           keys.map { |key| [key, argument.source] }
-        end
-
-        sig { void }
-        def audit_identical_sha256_across_architectures
-          sha256_stanzas = toplevel_stanzas.select { |stanza| stanza.stanza_name == :sha256 }
-
-          sha256_stanzas.each do |stanza|
-            sha256_node = stanza.stanza_node
-            next if sha256_node.arguments.count != 1
-            next unless sha256_node.arguments.first.hash_type?
-
-            hash_node = sha256_node.arguments.first
-            values = hash_node.pairs.filter_map do |pair|
-              next unless pair.key.sym_type?
-              next unless pair.value.str_type?
-
-              [pair.key.value, pair.value.value]
-            end.to_h
-
-            arm_sha = values[:arm]
-            intel_sha = values[:intel] || values[:x86_64]
-
-            next unless arm_sha
-            next unless intel_sha
-            next if arm_sha != intel_sha
-
-            if values.keys.intersect?([:arm64_linux, :x86_64_linux])
-              next unless values.values.uniq.one?
-
-              # A scalar also covers omitted Linux architectures, unless dependencies exclude them.
-              linux_arches = cask_body.each_node(:send).filter_map do |node|
-                next if node.method_name != :depends_on || !node.receiver.nil?
-                next unless (argument = node.first_argument)&.hash_type?
-
-                arch_pair = argument.pairs.find { |pair| pair.key.sym_type? && pair.key.value == :arch }
-                next unless arch_pair
-
-                scope = node.each_ancestor(:block).take_while { |block| !block.cask_block? }
-                next if scope.any? { |block| block.method_name == :on_macos }
-                next :unknown unless scope.all? { |block| block.method_name == :on_linux }
-
-                arch_pair.value.sym_type? ? arch_pair.value.value : :unknown
-              end
-              if linux_arches.empty? || (linux_arches - [:arm64, :intel, :x86_64]).any?
-                linux_arches = [:arm64, :intel]
-              end
-              next unless linux_arches.all? do |arch|
-                values.key?((arch == :arm64) ? :arm64_linux : :x86_64_linux)
-              end
-            end
-
-            offending_node(sha256_node)
-            problem "sha256 values for different architectures should not be identical."
-          end
         end
 
         def_node_search :sha256_on_arch_stanzas, <<~PATTERN

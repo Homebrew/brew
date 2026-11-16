@@ -465,7 +465,7 @@ module Homebrew
         # If we accept formula options, but the command isn't scoped only
         # to casks, parse once allowing invalid options so we can get the
         # remaining list containing formula names.
-        if @formula_options && !only_casks?(argv)
+        if @formula_options && !argv.intersect?(["--casks", "--cask"])
           remaining, non_options = parse_remaining(argv, ignore_invalid_options: true)
 
           argv = [*remaining, "--", *non_options]
@@ -507,8 +507,30 @@ module Homebrew
             set_default_options
             validate_options
           end
-          check_constraint_violations(named_args)
-          check_named_args(named_args)
+          @conflicts.each do |mutually_exclusive_options_group|
+            @constraints.each do |p, s, _subcommands|
+              next unless Set[p, s].subset?(Set[*mutually_exclusive_options_group])
+
+              raise InvalidConstraintError.new(p, s)
+            end
+          end
+          check_conflicts
+          constraint_subcommand = subcommand_name(named_args)
+          @constraints.each do |primary, secondary, subcommands|
+            next if subcommands.present? &&
+                    (constraint_subcommand.nil? || subcommands.exclude?(constraint_subcommand))
+
+            primary_passed = option_passed?(primary)
+            secondary_passed = option_passed?(secondary)
+
+            next if !secondary_passed || (primary_passed && secondary_passed)
+
+            primary = name_to_option(primary)
+            secondary = name_to_option(secondary)
+
+            raise OptionConstraintError.new(primary, secondary, missing: true)
+          end
+          check_named_args_count(named_args, @named_args_type, @min_named_args, @max_named_args)
           check_subcommand_violations(named_args)
         end
 
@@ -777,69 +799,75 @@ module Homebrew
       private
 
       sig { returns(String) }
-      def generate_usage_banner
-        command_names = ["`#{@command_name}`"]
-        aliases_to_skip = %w[instal uninstal]
-        command_names += Commands::HOMEBREW_INTERNAL_COMMAND_ALIASES.filter_map do |command_alias, command|
-          next if aliases_to_skip.include? command_alias
-
-          "`#{command_alias}`" if command == @command_name
-        end.sort
-
-        options = if @non_global_processed_options.empty?
-          ""
-        elsif @non_global_processed_options.count > 2
-          " [<options>]"
-        else
-          required_argument_types = [:required_flag, :comma_array]
-          @non_global_processed_options.map do |option, type|
-            next " [`#{option}=`]" if required_argument_types.include? type
-
-            " [`#{option}`]"
-          end.join
-        end
-
-        named_args = ""
-        if @named_args_type.present? && @named_args_type != :none
-          arg_type = if @named_args_type.is_a? Array
-            types = @named_args_type.filter_map do |type|
-              next unless type.is_a? Symbol
-              next SYMBOL_TO_USAGE_MAPPING[type] if SYMBOL_TO_USAGE_MAPPING.key?(type)
-
-              "<#{type}>"
-            end
-            types << "<subcommand>" if @named_args_type.any?(String)
-            types.join("|")
-          elsif SYMBOL_TO_USAGE_MAPPING.key? @named_args_type
-            SYMBOL_TO_USAGE_MAPPING[@named_args_type]
-          else
-            "<#{@named_args_type}>"
-          end
-
-          named_args = if @min_named_args.nil? && @max_named_args == 1
-            " [#{arg_type}]"
-          elsif @min_named_args.nil?
-            " [#{arg_type} ...]"
-          elsif @min_named_args == 1 && @max_named_args == 1
-            " #{arg_type}"
-          elsif @min_named_args == 1
-            " #{arg_type} [...]"
-          else
-            " #{arg_type} ..."
-          end
-        end
-
-        "#{command_names.join(", ")}#{options}#{named_args}"
-      end
-
-      sig { returns(String) }
       def generate_banner
-        @usage_banner ||= generate_usage_banner
+        @usage_banner ||= begin
+          command_names = ["`#{@command_name}`"]
+          aliases_to_skip = %w[instal uninstal]
+          command_names += Commands::HOMEBREW_INTERNAL_COMMAND_ALIASES.filter_map do |command_alias, command|
+            next if aliases_to_skip.include? command_alias
+
+            "`#{command_alias}`" if command == @command_name
+          end.sort
+
+          options = if @non_global_processed_options.empty?
+            ""
+          elsif @non_global_processed_options.count > 2
+            " [<options>]"
+          else
+            required_argument_types = [:required_flag, :comma_array]
+            @non_global_processed_options.map do |option, type|
+              next " [`#{option}=`]" if required_argument_types.include? type
+
+              " [`#{option}`]"
+            end.join
+          end
+
+          named_args = ""
+          if @named_args_type.present? && @named_args_type != :none
+            arg_type = if @named_args_type.is_a? Array
+              types = @named_args_type.filter_map do |type|
+                next unless type.is_a? Symbol
+                next SYMBOL_TO_USAGE_MAPPING[type] if SYMBOL_TO_USAGE_MAPPING.key?(type)
+
+                "<#{type}>"
+              end
+              types << "<subcommand>" if @named_args_type.any?(String)
+              types.join("|")
+            elsif SYMBOL_TO_USAGE_MAPPING.key? @named_args_type
+              SYMBOL_TO_USAGE_MAPPING[@named_args_type]
+            else
+              "<#{@named_args_type}>"
+            end
+
+            named_args = if @min_named_args.nil? && @max_named_args == 1
+              " [#{arg_type}]"
+            elsif @min_named_args.nil?
+              " [#{arg_type} ...]"
+            elsif @min_named_args == 1 && @max_named_args == 1
+              " #{arg_type}"
+            elsif @min_named_args == 1
+              " #{arg_type} [...]"
+            else
+              " #{arg_type} ..."
+            end
+          end
+
+          "#{command_names.join(", ")}#{options}#{named_args}"
+        end
+
+        description_parts = T.let([], T::Array[String])
+        description_parts << @description if @description.present?
+        @subcommands.each do |subcommand|
+          next if subcommand.hidden
+
+          usage_banner = subcommand.usage_banner
+          description_parts << usage_banner if usage_banner.present?
+        end
 
         @parser.banner = <<~BANNER
           #{@usage_banner}
 
-          #{usage_description_text}
+          #{description_parts.join("\n\n")}
 
         BANNER
       end
@@ -891,24 +919,6 @@ module Homebrew
         @constraints << [primary, secondary, effective_subcommands(subcommands)]
       end
 
-      sig { params(args: T::Array[String]).void }
-      def check_constraints(args)
-        subcommand = subcommand_name(args)
-        @constraints.each do |primary, secondary, subcommands|
-          next if subcommands.present? && (subcommand.nil? || subcommands.exclude?(subcommand))
-
-          primary_passed = option_passed?(primary)
-          secondary_passed = option_passed?(secondary)
-
-          next if !secondary_passed || (primary_passed && secondary_passed)
-
-          primary = name_to_option(primary)
-          secondary = name_to_option(secondary)
-
-          raise OptionConstraintError.new(primary, secondary, missing: true)
-        end
-      end
-
       sig { void }
       def check_conflicts
         @conflicts.each do |mutually_exclusive_options_group|
@@ -929,24 +939,6 @@ module Homebrew
         end
       end
 
-      sig { void }
-      def check_invalid_constraints
-        @conflicts.each do |mutually_exclusive_options_group|
-          @constraints.each do |p, s, _subcommands|
-            next unless Set[p, s].subset?(Set[*mutually_exclusive_options_group])
-
-            raise InvalidConstraintError.new(p, s)
-          end
-        end
-      end
-
-      sig { params(args: T::Array[String]).void }
-      def check_constraint_violations(args)
-        check_invalid_constraints
-        check_conflicts
-        check_constraints(args)
-      end
-
       sig { params(args: T::Array[String], type: ArgType, min: T.nilable(Integer), max: T.nilable(Integer)).void }
       def check_named_args_count(args, type, min, max)
         types = Array(type).filter_map do |type|
@@ -964,11 +956,6 @@ module Homebrew
         end
 
         raise exception if exception
-      end
-
-      sig { params(args: T::Array[String]).void }
-      def check_named_args(args)
-        check_named_args_count(args, @named_args_type, @min_named_args, @max_named_args)
       end
 
       sig { params(args: T::Array[String]).void }
@@ -1003,19 +990,6 @@ module Homebrew
           raise UsageError, "The `#{subcommand.name}` subcommand does not accept the `#{name_to_option(option)}` " \
                             "#{option_type_name}."
         end
-      end
-
-      sig { returns(String) }
-      def usage_description_text
-        parts = T.let([], T::Array[String])
-        parts << @description if @description.present?
-        @subcommands.each do |subcommand|
-          next if subcommand.hidden
-
-          usage_banner = subcommand.usage_banner
-          parts << usage_banner if usage_banner.present?
-        end
-        parts.join("\n\n")
       end
 
       sig { params(subcommand_name: T.nilable(String)).returns(String) }
@@ -1057,34 +1031,6 @@ module Homebrew
       end
 
       sig {
-        params(option_names: T::Array[String], type: Symbol,
-               subcommands: T.nilable(T.any(String, T::Array[String]))).void
-      }
-      def record_option_metadata(option_names, type:, subcommands:)
-        option_names.each do |name|
-          option_name = option_to_name(name)
-          @option_types[option_name] = type
-          # Global options are accepted everywhere, so a subcommand block
-          # re-declaring one (e.g. for a custom description) must not constrain it.
-          next if global_option?(name)
-
-          effective_subcommands = effective_subcommands(subcommands)
-          next if effective_subcommands.blank?
-
-          @option_subcommands[option_name] = (@option_subcommands[option_name] || []) |
-                                             effective_subcommands
-        end
-      end
-
-      sig { params(name: String).returns(T::Boolean) }
-      def global_option?(name)
-        option_name = option_to_name(name)
-        self.class.global_options.any? do |short, long, _desc|
-          option_to_name(short) == option_name || option_to_name(long) == option_name
-        end
-      end
-
-      sig {
         params(args: String, type: Symbol, hidden: T::Boolean,
                subcommands: T.nilable(T.any(String, T::Array[String]))).void
       }
@@ -1120,7 +1066,22 @@ module Homebrew
         end
 
         args.pop # last argument is the description
-        record_option_metadata(args, type:, subcommands:)
+        args.each do |name|
+          option_name = option_to_name(name)
+          @option_types[option_name] = type
+          # Global options are accepted everywhere, so a subcommand block
+          # re-declaring one (e.g. for a custom description) must not constrain it.
+          global_option = self.class.global_options.any? do |short, long, _desc|
+            option_to_name(short) == option_name || option_to_name(long) == option_name
+          end
+          next if global_option
+
+          effective_subcommands = effective_subcommands(subcommands)
+          next if effective_subcommands.blank?
+
+          @option_subcommands[option_name] = (@option_subcommands[option_name] || []) |
+                                             effective_subcommands
+        end
         if type == :switch
           disable_switch(*args)
         else
@@ -1193,11 +1154,6 @@ module Homebrew
             nil
           end
         end.uniq(&:name)
-      end
-
-      sig { params(argv: T::Array[String]).returns(T::Boolean) }
-      def only_casks?(argv)
-        argv.include?("--casks") || argv.include?("--cask")
       end
 
       sig { params(env: T.nilable(T.any(String, Symbol))).returns(T.untyped) }
