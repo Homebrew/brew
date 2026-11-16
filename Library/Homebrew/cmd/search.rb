@@ -76,10 +76,36 @@ module Homebrew
         if args.desc?
           Search.search_descriptions(string_or_regex, args, show_missing: true)
         elsif args.pull_request?
-          search_pull_requests(query)
+          only = if args.open? && !args.closed?
+            "open"
+          elsif args.closed? && !args.open?
+            "closed"
+          end
+
+          GitHub.print_pull_requests_matching(query, only)
         else
           formulae, casks = Search.search_names(string_or_regex, args)
-          print_results(formulae, casks, query, args.quiet?)
+          count = formulae.size + casks.size
+
+          if formulae.any?
+            if $stdout.tty? && !args.quiet?
+              ohai "Formulae", Formatter.columns(formulae)
+            else
+              puts formulae
+            end
+          end
+          puts if formulae.any? && casks.any?
+          if casks.any?
+            if $stdout.tty? && !args.quiet?
+              ohai "Casks", Formatter.columns(casks)
+            else
+              puts casks
+            end
+          end
+
+          print_missing_formula_help(query, count.positive?) if casks.exclude?(query)
+
+          odie "No formulae or casks found for #{query.inspect}." if count.zero?
         end
 
         puts "Use `brew desc` to list packages with a short description." if args.verbose?
@@ -129,42 +155,6 @@ module Homebrew
         _, url = package_manager
         Utils::Browser.open url.call(URI.encode_www_form_component(args.named.join(" ")))
         true
-      end
-
-      sig { params(query: String).void }
-      def search_pull_requests(query)
-        only = if args.open? && !args.closed?
-          "open"
-        elsif args.closed? && !args.open?
-          "closed"
-        end
-
-        GitHub.print_pull_requests_matching(query, only)
-      end
-
-      sig { params(all_formulae: T::Array[String], all_casks: T::Array[String], query: String, quiet: T::Boolean).void }
-      def print_results(all_formulae, all_casks, query, quiet)
-        count = all_formulae.size + all_casks.size
-
-        if all_formulae.any?
-          if $stdout.tty? && !quiet
-            ohai "Formulae", Formatter.columns(all_formulae)
-          else
-            puts all_formulae
-          end
-        end
-        puts if all_formulae.any? && all_casks.any?
-        if all_casks.any?
-          if $stdout.tty? && !quiet
-            ohai "Casks", Formatter.columns(all_casks)
-          else
-            puts all_casks
-          end
-        end
-
-        print_missing_formula_help(query, count.positive?) if all_casks.exclude?(query)
-
-        odie "No formulae or casks found for #{query.inspect}." if count.zero?
       end
     end
   end

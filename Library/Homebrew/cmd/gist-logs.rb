@@ -6,7 +6,6 @@ require "formula"
 require "install"
 require "system_config"
 require "stringio"
-require "socket"
 
 module Homebrew
   module Cmd
@@ -37,38 +36,6 @@ module Homebrew
         Install.perform_build_from_source_checks(all_fatal: true)
         return unless (formula = args.named.to_resolved_formulae.first)
 
-        gistify_logs(formula)
-      end
-
-      # Truncates a text string to fit within a byte size constraint,
-      # preserving character encoding validity. The returned string will
-      # be not much longer than the specified max_bytes, though the exact
-      # shortfall or overrun may vary.
-      sig { params(str: String, max_bytes: Integer, options: T::Hash[Symbol, T.untyped]).returns(String) }
-      def self.truncate_text_to_approximate_size(str, max_bytes, options = {})
-        front_weight = options.fetch(:front_weight, 0.5)
-        raise "opts[:front_weight] must be between 0.0 and 1.0" if front_weight < 0.0 || front_weight > 1.0
-        return str if str.bytesize <= max_bytes
-
-        glue = "\n[...snip...]\n"
-        max_bytes_in = [max_bytes - glue.bytesize, 1].max
-        bytes = str.dup.force_encoding("BINARY")
-        glue_bytes = glue.encode("BINARY")
-        n_front_bytes = (max_bytes_in * front_weight).floor
-        n_back_bytes = max_bytes_in - n_front_bytes
-        front = bytes.byteslice(0, n_front_bytes).to_s
-        back = bytes.byteslice(bytes.bytesize - n_back_bytes, n_back_bytes).to_s
-        out = front + glue_bytes + back
-        out.force_encoding("UTF-8")
-        out.encode!("UTF-16", invalid: :replace)
-        out.encode!("UTF-8")
-        out
-      end
-
-      private
-
-      sig { params(formula: Formula).void }
-      def gistify_logs(formula)
         files = load_logs(formula.logs)
         build_time = formula.logs.ctime
         timestamp = build_time.strftime("%Y-%m-%d_%H-%M-%S")
@@ -77,7 +44,10 @@ module Homebrew
         SystemConfig.dump_verbose_config s
         # Dummy summary file, asciibetically first, to control display title of gist
         files["# #{formula.name} - #{timestamp}.txt"] = {
-          content: brief_build_info(formula, with_hostname: false),
+          content: <<~EOS,
+            Homebrew build logs for #{formula.full_name} on #{OS_VERSION}
+            Build date: #{build_time.strftime("%Y-%m-%d %H:%M:%S")}
+          EOS
         }
         files["00.config.out"] = { content: s.string }
         files["00.doctor.out"] = { content: Utils.popen_read("#{HOMEBREW_PREFIX}/bin/brew", "doctor", err: :out) }
@@ -119,19 +89,32 @@ module Homebrew
         puts url if url
       end
 
-      sig { params(formula: Formula, with_hostname: T::Boolean).returns(String) }
-      def brief_build_info(formula, with_hostname:)
-        build_time_string = formula.logs.ctime.strftime("%Y-%m-%d %H:%M:%S")
-        string = <<~EOS
-          Homebrew build logs for #{formula.full_name} on #{OS_VERSION}
-        EOS
-        if with_hostname
-          hostname = Socket.gethostname
-          string << "Host: #{hostname}\n"
-        end
-        string << "Build date: #{build_time_string}\n"
-        string.freeze
+      # Truncates a text string to fit within a byte size constraint,
+      # preserving character encoding validity. The returned string will
+      # be not much longer than the specified max_bytes, though the exact
+      # shortfall or overrun may vary.
+      sig { params(str: String, max_bytes: Integer, options: T::Hash[Symbol, T.untyped]).returns(String) }
+      def self.truncate_text_to_approximate_size(str, max_bytes, options = {})
+        front_weight = options.fetch(:front_weight, 0.5)
+        raise "opts[:front_weight] must be between 0.0 and 1.0" if front_weight < 0.0 || front_weight > 1.0
+        return str if str.bytesize <= max_bytes
+
+        glue = "\n[...snip...]\n"
+        max_bytes_in = [max_bytes - glue.bytesize, 1].max
+        bytes = str.dup.force_encoding("BINARY")
+        glue_bytes = glue.encode("BINARY")
+        n_front_bytes = (max_bytes_in * front_weight).floor
+        n_back_bytes = max_bytes_in - n_front_bytes
+        front = bytes.byteslice(0, n_front_bytes).to_s
+        back = bytes.byteslice(bytes.bytesize - n_back_bytes, n_back_bytes).to_s
+        out = front + glue_bytes + back
+        out.force_encoding("UTF-8")
+        out.encode!("UTF-16", invalid: :replace)
+        out.encode!("UTF-8")
+        out
       end
+
+      private
 
       sig { params(dir: Pathname, basedir: Pathname).returns(T::Hash[String, { content: String }]) }
       def load_logs(dir, basedir = dir)

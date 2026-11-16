@@ -16,16 +16,6 @@ module Homebrew
     class Deps < AbstractCommand
       include DependenciesHelpers
 
-      class DepsCombineMode < T::Enum
-        enums do
-          # enum values are not mutable, and calling .freeze on them breaks Sorbet
-          # rubocop:disable Style/MutableConstant
-          Intersection = new
-          Union = new
-          # rubocop:enable Style/MutableConstant
-        end
-      end
-
       cmd_args do
         description <<~EOS
           Show dependencies for <formula>. When given multiple formula arguments,
@@ -181,7 +171,24 @@ module Homebrew
             end
 
             if args.graph?
-              dot_code = dot_code(dependents, recursive:)
+              dep_graph = {}
+              dependents.each { graph_deps(it, dep_graph:, recursive:) }
+
+              edges = dep_graph.map do |d, deps|
+                deps.map do |dep|
+                  attributes = []
+                  attributes << "style = dotted" if dep.build?
+                  attributes << "arrowhead = empty" if dep.test?
+                  if dep.optional?
+                    attributes << "color = red"
+                  elsif dep.recommended?
+                    attributes << "color = green"
+                  end
+                  comment = " # #{dep.tags.map(&:inspect).join(", ")}" if dep.tags.any?
+                  "  \"#{d.name}\" -> \"#{dep}\"#{" [#{attributes.join(", ")}]" if attributes.any?}#{comment}"
+                end
+              end.flatten.join("\n")
+              dot_code = "digraph {\n#{edges}\n}"
               if args.dot?
                 puts dot_code
               else
@@ -190,7 +197,12 @@ module Homebrew
               return
             end
 
-            puts_deps_tree(dependents, recursive:)
+            check_head_spec(dependents) if args.HEAD?
+            dependents.each do |d|
+              puts d.full_name
+              recursive_deps_tree(d, deps_seen: {}, prefix: "", recursive:)
+              puts
+            end
             return
           elsif args.no_named? && !args.installed? && !args.brewfile
             puts_deps(sorted_dependents(Formula.all + Cask::Cask.all), recursive:)
@@ -218,8 +230,7 @@ module Homebrew
           dependents = dependents(inputs)
           check_head_spec(dependents) if args.HEAD?
 
-          deps_combine_mode = args.union? ? DepsCombineMode::Union : DepsCombineMode::Intersection
-          all_deps = deps_for_dependents(dependents, deps_combine_mode:, recursive:)
+          all_deps = dependents.map { deps_for_dependent(it, recursive:) }.reduce(args.union? ? :| : :&)
           condense_requirements(all_deps)
           all_deps.map! { dep_display_name(it) }
           all_deps.uniq!
@@ -317,18 +328,6 @@ module Homebrew
         deps + reqs.to_a
       end
 
-      sig {
-        params(
-          dependents:        T::Array[T.any(Formula, CaskDependent)],
-          deps_combine_mode: DepsCombineMode,
-          recursive:         T::Boolean,
-        ).returns(T::Array[T.any(Dependency, Requirement)])
-      }
-      def deps_for_dependents(dependents, deps_combine_mode:, recursive:)
-        symbol = (deps_combine_mode == DepsCombineMode::Intersection) ? :& : :|
-        dependents.map { deps_for_dependent(it, recursive:) }.reduce(symbol)
-      end
-
       sig { params(dependents: T::Array[T.any(Formula, CaskDependent)]).void }
       def check_head_spec(dependents)
         headless = Utils::Text.to_sentence(
@@ -348,28 +347,6 @@ module Homebrew
           deps.map! { dep_display_name(it) }
           puts "#{dependent.full_name}: #{deps.join(" ")}"
         end
-      end
-
-      sig { params(dependents: T::Array[T.any(Formula, CaskDependent)], recursive: T::Boolean).returns(String) }
-      def dot_code(dependents, recursive:)
-        dep_graph = {}
-        dependents.each { graph_deps(it, dep_graph:, recursive:) }
-
-        dot_code = dep_graph.map do |d, deps|
-          deps.map do |dep|
-            attributes = []
-            attributes << "style = dotted" if dep.build?
-            attributes << "arrowhead = empty" if dep.test?
-            if dep.optional?
-              attributes << "color = red"
-            elsif dep.recommended?
-              attributes << "color = green"
-            end
-            comment = " # #{dep.tags.map(&:inspect).join(", ")}" if dep.tags.any?
-            "  \"#{d.name}\" -> \"#{dep}\"#{" [#{attributes.join(", ")}]" if attributes.any?}#{comment}"
-          end
-        end.flatten.join("\n")
-        "digraph {\n#{dot_code}\n}"
       end
 
       sig {
@@ -392,16 +369,6 @@ module Homebrew
           graph_deps(Formulary.factory(dep.name),
                      dep_graph:,
                      recursive: true)
-        end
-      end
-
-      sig { params(dependents: T::Array[T.any(Formula, CaskDependent)], recursive: T::Boolean).void }
-      def puts_deps_tree(dependents, recursive: false)
-        check_head_spec(dependents) if args.HEAD?
-        dependents.each do |d|
-          puts d.full_name
-          recursive_deps_tree(d, deps_seen: {}, prefix: "", recursive:)
-          puts
         end
       end
 

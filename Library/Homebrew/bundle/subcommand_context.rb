@@ -71,13 +71,8 @@ module Homebrew
         }
         def type_selected?(args, predicate_method, disabled_predicate_method, env_disabled_predicate_method,
                            all: false)
-          !type_disabled?(args, disabled_predicate_method, env_disabled_predicate_method) &&
+          !args.public_send(disabled_predicate_method) && !args.public_send(env_disabled_predicate_method) &&
             (args.public_send(predicate_method) || all || no_type_args)
-        end
-
-        sig { params(args: T.untyped, disabled_methods: Symbol).returns(T::Boolean) }
-        def type_disabled?(args, *disabled_methods)
-          disabled_methods.any? { |disabled_method| args.public_send(disabled_method) }
         end
       end
     end

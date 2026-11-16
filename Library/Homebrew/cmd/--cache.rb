@@ -89,7 +89,7 @@ module Homebrew
                 formula_or_cask.platform_supported?(tag, installable: formula_or_cask.loaded_from_api?)
               end
               if supported
-                print_cask_cache(formula_or_cask)
+                puts Cask::Download.new(formula_or_cask).downloader.cached_location
               else
                 opoo "Cask #{formula_or_cask} is not supported on os #{os} and arch #{arch}"
               end
@@ -129,11 +129,6 @@ module Homebrew
         else
           puts formula.cached_download
         end
-      end
-
-      sig { params(cask: Cask::Cask).void }
-      def print_cask_cache(cask)
-        puts Cask::Download.new(cask).downloader.cached_location
       end
     end
   end

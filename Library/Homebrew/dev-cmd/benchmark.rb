@@ -138,7 +138,22 @@ module Homebrew
           "phases"         => PHASES,
           "samples"        => samples.map(&:serialize),
         })}\n")
-        summarise(samples)
+        ohai "Benchmark results"
+        puts "#{"operation".ljust(10)}#{"workload".ljust(15)}#{"batch".rjust(5)}#{"wall".rjust(10)}  slowest phases"
+        samples.group_by { |sample| [sample.operation, sample.workload, sample.batch_size] }
+               .each do |(operation, workload, batch_size), workload_samples|
+          means = PHASES.union(workload_samples.flat_map { |sample| sample.phase_totals_microseconds.keys })
+                        .to_h do |phase|
+            [phase, workload_samples.sum { |sample| sample.phase_totals_microseconds.fetch(phase, 0) } /
+              workload_samples.length]
+          end
+          slowest = means.reject { |_, total| total.zero? }
+                         .max_by(3) { |_, total| total }
+                         .map { |phase, total| "#{phase} #{total / 1000}ms" }
+          wall = workload_samples.sum(&:wall_time_seconds) / workload_samples.length
+          puts "#{operation.ljust(10)}#{workload.tr("_", " ").ljust(15)}#{batch_size.to_s.rjust(5)}" \
+               "#{format("%.3fs", wall).rjust(10)}  #{slowest.join(", ")}"
+        end
         ohai "Full results written to #{output}"
       end
 
@@ -211,26 +226,6 @@ module Homebrew
           wall_time_seconds:         JSON.parse(hyperfine_output.read).fetch("results").fetch(0).fetch("mean"),
           phase_totals_microseconds: phase_totals,
         )
-      end
-
-      sig { params(samples: T::Array[Sample]).void }
-      def summarise(samples)
-        ohai "Benchmark results"
-        puts "#{"operation".ljust(10)}#{"workload".ljust(15)}#{"batch".rjust(5)}#{"wall".rjust(10)}  slowest phases"
-        samples.group_by { |sample| [sample.operation, sample.workload, sample.batch_size] }
-               .each do |(operation, workload, batch_size), workload_samples|
-          means = PHASES.union(workload_samples.flat_map { |sample| sample.phase_totals_microseconds.keys })
-                        .to_h do |phase|
-            [phase, workload_samples.sum { |sample| sample.phase_totals_microseconds.fetch(phase, 0) } /
-              workload_samples.length]
-          end
-          slowest = means.reject { |_, total| total.zero? }
-                         .max_by(3) { |_, total| total }
-                         .map { |phase, total| "#{phase} #{total / 1000}ms" }
-          wall = workload_samples.sum(&:wall_time_seconds) / workload_samples.length
-          puts "#{operation.ljust(10)}#{workload.tr("_", " ").ljust(15)}#{batch_size.to_s.rjust(5)}" \
-               "#{format("%.3fs", wall).rjust(10)}  #{slowest.join(", ")}"
-        end
       end
 
       sig { params(scenario: Scenario).returns(T::Array[String]) }

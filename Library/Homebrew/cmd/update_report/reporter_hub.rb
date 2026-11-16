@@ -48,7 +48,10 @@ class ReporterHub
       dump_new_cask_report
     end
 
-    dump_deleted_formula_report
+    deleted_formulae = T.cast(select_formula_or_cask(:D), T::Array[String]).sort.filter_map do |name|
+      pretty_uninstalled(name) if installed?(name)
+    end
+    output_dump_formula_or_cask_report "Deleted Installed Formulae", deleted_formulae
     dump_deleted_cask_report
 
     outdated_formulae = Formula.installed.select(&:outdated?).map(&:name)
@@ -149,15 +152,6 @@ class ReporterHub
         puts cask_token
       end
     end
-  end
-
-  sig { void }
-  def dump_deleted_formula_report
-    formulae = T.cast(select_formula_or_cask(:D), T::Array[String]).sort.filter_map do |name|
-      pretty_uninstalled(name) if installed?(name)
-    end
-
-    output_dump_formula_or_cask_report "Deleted Installed Formulae", formulae
   end
 
   sig { void }

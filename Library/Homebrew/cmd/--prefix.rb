@@ -71,7 +71,22 @@ module Homebrew
         if args.unbrewed?
           raise UsageError, "`--unbrewed` does not take a formula argument." unless args.no_named?
 
-          list_unbrewed
+          dirs  = HOMEBREW_PREFIX.subdirs.map { |dir| dir.basename.to_s }
+          dirs -= %w[Library Cellar Caskroom .git]
+
+          # Exclude cache, logs and repository, if they are located under the prefix.
+          [HOMEBREW_CACHE, HOMEBREW_LOGS, HOMEBREW_REPOSITORY].each do |dir|
+            dirs.delete dir.relative_path_from(HOMEBREW_PREFIX).to_s
+          end
+          dirs.delete "etc"
+          dirs.delete "var"
+
+          arguments = dirs.sort + %w[-type f (]
+          arguments.concat UNBREWED_EXCLUDE_FILES.flat_map { |f| %W[! -name #{f}] }
+          arguments.concat UNBREWED_EXCLUDE_PATHS.flat_map { |d| %W[! -path #{d}] }
+          arguments.push ")"
+
+          cd(HOMEBREW_PREFIX) { SystemCommand.safe_system("find", *arguments) }
         elsif args.no_named?
           puts HOMEBREW_PREFIX
         else
@@ -94,28 +109,6 @@ module Homebrew
             EOS
           end
         end
-      end
-
-      private
-
-      sig { void }
-      def list_unbrewed
-        dirs  = HOMEBREW_PREFIX.subdirs.map { |dir| dir.basename.to_s }
-        dirs -= %w[Library Cellar Caskroom .git]
-
-        # Exclude cache, logs and repository, if they are located under the prefix.
-        [HOMEBREW_CACHE, HOMEBREW_LOGS, HOMEBREW_REPOSITORY].each do |dir|
-          dirs.delete dir.relative_path_from(HOMEBREW_PREFIX).to_s
-        end
-        dirs.delete "etc"
-        dirs.delete "var"
-
-        arguments = dirs.sort + %w[-type f (]
-        arguments.concat UNBREWED_EXCLUDE_FILES.flat_map { |f| %W[! -name #{f}] }
-        arguments.concat UNBREWED_EXCLUDE_PATHS.flat_map { |d| %W[! -path #{d}] }
-        arguments.push ")"
-
-        cd(HOMEBREW_PREFIX) { SystemCommand.safe_system("find", *arguments) }
       end
     end
   end

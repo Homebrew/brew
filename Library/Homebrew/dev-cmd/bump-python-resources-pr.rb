@@ -48,7 +48,12 @@ module Homebrew
         packages = args.packages.to_a.map { |package| PyPI.normalize_python_package(package) }.uniq
 
         formula = args.named.to_formulae.fetch(0)
-        write_result(bump_resources(formula, packages))
+        json = JSON.generate(bump_resources(formula, packages))
+        if (output = args.output)
+          File.write(output, "#{json}\n")
+        else
+          puts json
+        end
       end
 
       private
@@ -66,7 +71,14 @@ module Homebrew
         keep_changes = false
 
         begin
-          bump_revision(formula)
+          formula_ast = Utils::AST::FormulaAST.new(formula.path.read)
+          next_revision = formula.revision + 1
+          if formula.revision.zero?
+            formula_ast.add_stanza(:revision, next_revision)
+          else
+            formula_ast.replace_stanza(:revision, next_revision)
+          end
+          formula.path.atomic_write(formula_ast.process)
 
           begin
             PyPI.update_python_resources!(formula,
@@ -109,7 +121,21 @@ module Homebrew
               ),
             ],
             branch_name: args.branch || "bump-python-resources-#{updated_formula.name}-#{Time.now.to_i}",
-            pr_message:  pull_request_message(old_urls, replaced_urls),
+            pr_message:  <<~MSG,
+              #{args.message.presence || "Created with `brew bump-python-resources-pr`."}
+
+              The following resources have known vulnerabilities:
+
+              ```console
+              #{old_urls.join("\n")}
+              ```
+
+              Of those, the following were replaced:
+
+              ```console
+              #{replaced_urls.join("\n")}
+              ```
+            MSG
             package_tap: tap,
             pr_title:    commit_message,
           )
@@ -126,18 +152,6 @@ module Homebrew
         end
       end
 
-      sig { params(formula: Formula).void }
-      def bump_revision(formula)
-        formula_ast = Utils::AST::FormulaAST.new(formula.path.read)
-        next_revision = formula.revision + 1
-        if formula.revision.zero?
-          formula_ast.add_stanza(:revision, next_revision)
-        else
-          formula_ast.replace_stanza(:revision, next_revision)
-        end
-        formula.path.atomic_write(formula_ast.process)
-      end
-
       sig { params(formula: Formula, packages: T::Array[String]).returns(T::Array[String]) }
       def vulnerable_resource_urls(formula, packages)
         formula.resources.filter_map do |resource|
@@ -149,41 +163,11 @@ module Homebrew
         end
       end
 
-      sig { params(old_urls: T::Array[String], replaced_urls: T::Array[String]).returns(String) }
-      def pull_request_message(old_urls, replaced_urls)
-        intro = args.message.presence || "Created with `brew bump-python-resources-pr`."
-        <<~MSG
-          #{intro}
-
-          The following resources have known vulnerabilities:
-
-          ```console
-          #{old_urls.join("\n")}
-          ```
-
-          Of those, the following were replaced:
-
-          ```console
-          #{replaced_urls.join("\n")}
-          ```
-        MSG
-      end
-
       sig {
         params(reason: String, attempted: T::Boolean, updated: T::Boolean).returns(Result)
       }
       def result(reason, attempted: false, updated: false)
         { attempted:, updated:, reason: }
-      end
-
-      sig { params(result: Result).void }
-      def write_result(result)
-        json = JSON.generate(result)
-        if (output = args.output)
-          File.write(output, "#{json}\n")
-        else
-          puts json
-        end
       end
     end
   end

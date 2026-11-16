@@ -195,7 +195,14 @@ module Homebrew
           end
         end
 
-        unique_by_display_name(resolved).each_with_index do |(obj, shadowed_by), i|
+        resolved.uniq! do |obj, _shadowed_by|
+          case obj
+          when Formula, Cask::Cask then obj.full_name
+          else obj
+          end
+        end
+
+        resolved.each_with_index do |(obj, shadowed_by), i|
           puts unless i.zero?
 
           if obj.is_a?(FormulaOrCaskUnavailableError)
@@ -205,7 +212,7 @@ module Homebrew
             if (reason = MissingFormula.reason(obj.name, show_info: true))
               $stderr.puts reason
             end
-          else
+          elsif obj.is_a?(Formula) || obj.is_a?(Cask::Cask)
             info_formula_or_cask(obj, quiet:, shadowed_by:)
           end
         end
@@ -511,18 +518,6 @@ module Homebrew
         end
       end
 
-      sig {
-        params(resolved: T::Array[[T.untyped, T.nilable(Tap)]]).returns(T::Array[[T.untyped, T.nilable(Tap)]])
-      }
-      def unique_by_display_name(resolved)
-        resolved.uniq do |obj, _shadowed_by|
-          case obj
-          when Formula, Cask::Cask then obj.full_name
-          else obj
-          end
-        end
-      end
-
       sig { params(formula: Formula, user_qualified: T::Boolean).returns([Formula, T.nilable(Tap)]) }
       def display_resolution(formula, user_qualified:)
         return [formula, nil] if user_qualified
@@ -541,7 +536,30 @@ module Homebrew
           end
         when Cask::Cask
           if quiet
-            info_cask_summary(formula_or_cask)
+            installed_version = formula_or_cask.installed_version
+            installed = installed_version.present?
+            tab = Cask::Tab.for_cask(formula_or_cask)
+
+            puts oh1_title(info_summary_title(
+                             formula_or_cask.full_name,
+                             formula_or_cask.desc.presence&.then do |desc|
+                               "#{if formula_or_cask.name.present?
+                                    "(#{formula_or_cask.name.join(", ")}) "
+                               end}#{desc}"
+                             end,
+                             installed:,
+                           ))
+            if installed
+              puts "Cask from #{T.cast(formula_or_cask.tap, T.nilable(Tap))&.name ||
+                                 T.cast(tab.source["tap"], T.nilable(String)) ||
+                                 formula_or_cask.sourcefile_path&.to_s ||
+                                 T.cast(tab.source["path"], T.nilable(String)) ||
+                                 github_info(formula_or_cask)}"
+              puts Utils::InfoDisplay.installation_summary(installed_version, tab)
+            else
+              puts "Cask from #{github_info(formula_or_cask)}"
+              puts "Not installed"
+            end
           else
             info_cask(formula_or_cask)
           end
@@ -737,34 +755,6 @@ module Homebrew
         require "cask/info"
 
         Cask::Info.info(cask, args:)
-      end
-
-      sig { params(cask: Cask::Cask).void }
-      def info_cask_summary(cask)
-        installed_version = cask.installed_version
-        installed = installed_version.present?
-        tab = Cask::Tab.for_cask(cask)
-
-        puts oh1_title(info_summary_title(
-                         cask.full_name,
-                         cask.desc.presence&.then do |desc|
-                           "#{if cask.name.present?
-                                "(#{cask.name.join(", ")}) "
-                           end}#{desc}"
-                         end,
-                         installed:,
-                       ))
-        if installed
-          puts "Cask from #{T.cast(cask.tap, T.nilable(Tap))&.name ||
-                             T.cast(tab.source["tap"], T.nilable(String)) ||
-                             cask.sourcefile_path&.to_s ||
-                             T.cast(tab.source["path"], T.nilable(String)) ||
-                             github_info(cask)}"
-          puts Utils::InfoDisplay.installation_summary(installed_version, tab)
-        else
-          puts "Cask from #{github_info(cask)}"
-          puts "Not installed"
-        end
       end
 
       sig { params(title: String, items: T::Array[NameSize]).void }

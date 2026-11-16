@@ -246,16 +246,12 @@ module Homebrew
 
             totals.sort_by { |_, counts| -contribution_count(counts.slice(*QUALIFYING_CONTRIBUTION_TYPES)) }
                   .each do |user, total|
-              csv << grand_total_row(user, total)
+              csv << [
+                user, "all", *total.slice(*CONTRIBUTION_TYPES.keys).values,
+                contribution_count(total.slice(*QUALIFYING_CONTRIBUTION_TYPES))
+              ]
             end
           end
-        end
-
-        sig { params(user: String, grand_total: T::Hash[Symbol, Integer]).returns(T::Array[T.any(String, T.nilable(Integer))]) }
-        def grand_total_row(user, grand_total)
-          grand_totals = grand_total.slice(*CONTRIBUTION_TYPES.keys).values
-          qualifying_total = contribution_count(grand_total.slice(*QUALIFYING_CONTRIBUTION_TYPES))
-          [user, "all", *grand_totals, qualifying_total]
         end
 
         sig { params(repository: String).returns(String) }
