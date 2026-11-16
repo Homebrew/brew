@@ -26,8 +26,8 @@ RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
                                git_head: "formula-head", tap_migrations: {}),
     )
     allow(CoreCaskTap).to receive(:instance).and_return(
-      instance_double(CoreCaskTap, installed?: true, cask_files: [], cask_renames: {}, git_head: "cask-head",
-                                   tap_migrations: {}),
+      instance_double(CoreCaskTap, installed?: true, cask_files: [], cask_alias_table: {}, cask_renames: {},
+                                   git_head: "cask-head", tap_migrations: {}),
     )
     allow(Formulary).to receive(:enable_factory_cache!)
     allow(Formula).to receive(:generating_hash!)
