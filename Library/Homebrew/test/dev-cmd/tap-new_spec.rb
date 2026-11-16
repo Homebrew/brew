@@ -46,6 +46,7 @@ RSpec.describe Homebrew::DevCmd::TapNew do
     expect(autobump_yml).not_to include("cron: \"1 1 1 1 1\"")
     expect(autobump_yml).not_to include("# this will be changed later and randomised by brew tap-new")
     expect(autobump_yml).to include("- main")
+    expect(autobump_yml).to include("runs-on: ubuntu-latest")
     expect(autobump_yml).to include('brew bump --no-fork --open-pr --bump-synced --tap="$TAP_NAME"')
   end
 end
