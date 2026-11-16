@@ -7,6 +7,41 @@ require "dev-cmd/generate-internal-api"
 RSpec.describe Homebrew::DevCmd::GenerateInternalApi do
   it_behaves_like "parseable arguments"
 
+  it "adds each bottle's own manifest digest from the index its bottle block pins" do
+    files = { arm64_sonoma: { "cellar" => ":any", "sha256" => "bottle-checksum" } }
+    manifest = instance_double(
+      Resource::BottleManifest,
+      downloaded_and_valid?:     true,
+      platform_manifest_sha256s: { "bottle-checksum" => "manifest-checksum" },
+    )
+    formula = instance_double(
+      Formula,
+      name:                    "foo",
+      to_hash_with_variations: { "bottle" => { "stable" => { "manifest_sha256" => "index-checksum",
+                                                             "files"           => files } } },
+      bottle_for_tag:          instance_double(Bottle, github_packages_manifest_resource: manifest),
+    )
+    allow(CoreTap).to receive(:instance).and_return(
+      instance_double(CoreTap, installed?: true, formula_names: ["foo"], alias_table: {}, formula_renames: {},
+                               git_head: "formula-head", tap_migrations: {}),
+    )
+    allow(CoreCaskTap).to receive(:instance).and_return(
+      instance_double(CoreCaskTap, installed?: true, cask_files: [], cask_renames: {}, git_head: "cask-head",
+                                   tap_migrations: {}),
+    )
+    allow(Formulary).to receive(:enable_factory_cache!)
+    allow(Formula).to receive(:generating_hash!)
+    allow(Cask::Cask).to receive(:generating_hash!)
+    allow(Formulary).to receive(:factory).with("foo").and_return(formula)
+    allow(Homebrew::API::Formula::FormulaStructGenerator).to receive(:generate_formula_struct_hash)
+      .and_return(instance_double(Homebrew::API::FormulaStruct, serialize: {}))
+    stub_const("OnSystem::VALID_OS_ARCH_TAGS", [Utils::Bottles::Tag.from_symbol(:arm64_sonoma)])
+
+    mktmpdir { |path| path.cd { described_class.new(["--dry-run"]).run } }
+
+    expect(files.dig(:arm64_sonoma, "manifest_sha256")).to eq("manifest-checksum")
+  end
+
   describe "regenerating the internal API" do
     before do
       core_tap = instance_double(CoreTap, installed?: true, name: "homebrew/core", formula_names: ["foo"],

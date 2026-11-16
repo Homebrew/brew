@@ -124,6 +124,7 @@ class Bottle
 
     @resource.version(@pkg_version.to_s)
     @resource.checksum = tag_spec.checksum
+    @manifest_checksum = T.let(tag_spec.manifest_checksum, T.nilable(Checksum))
 
     @fetch_tab_retried = T.let(false, T::Boolean)
 
@@ -443,8 +444,10 @@ class Bottle
         resource.version(version_rebuild)
 
         image_name = GitHubPackages.image_formula_name(@name)
-        manifest_sha256 = @spec.manifest_sha256
-        # A digest names one immutable index; a tag can be moved to another.
+        # The JSON API supplies the digest of this bottle's own manifest; a
+        # bottle block can only supply that of the index listing every bottle.
+        manifest_sha256 = @manifest_checksum&.hexdigest || @spec.manifest_sha256
+        # A digest names one immutable manifest; a tag can be moved to another.
         manifest_reference = if manifest_sha256
           "sha256:#{manifest_sha256}"
         else
@@ -455,7 +458,7 @@ class Bottle
         resource.url(
           "#{root_url}/#{manifest_path}",
           using:   CurlGitHubPackagesDownloadStrategy,
-          headers: ["Accept: application/vnd.oci.image.index.v1+json"],
+          headers: ["Accept: application/vnd.oci.image.#{@manifest_checksum ? "manifest" : "index"}.v1+json"],
         )
         # Give a legacy mirror the first chance to serve the manifest. Many
         # contain only bottle archives, so retain GHCR as a fallback. By

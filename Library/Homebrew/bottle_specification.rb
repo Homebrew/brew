@@ -148,10 +148,16 @@ class BottleSpecification
   #  sha256 cellar: :any_skip_relocation, big_sur: "69489ae397e4645..."
   #  sha256 cellar: :any, monterey: "449de5ea35d0e94..."
   # end
+  # The JSON API also passes `manifest_sha256:`, the SHA-256 of that bottle's
+  # own GitHub Packages manifest, which is then fetched in place of the index.
   sig { params(hash: T::Hash[T.any(Symbol, String), T.any(String, Symbol)]).void }
   def sha256(hash)
+    manifest_sha256 = hash[:manifest_sha256]
+
     # find new `sha256 big_sur: "69489ae397e4645..."` format
     tag, digest = hash.find do |key, value|
+      next if key == :manifest_sha256
+
       # Don't use `odie` in this case. We want to be able to catch this exception
       # in runtime when getting committed version info in formula auditor
       raise LegacyDSLError.new(:sha256, hash) if key.is_a?(String) && key.match?(SHA256_REGEX) && value.is_a?(Symbol)
@@ -165,7 +171,12 @@ class BottleSpecification
 
     cellar = hash[:cellar] || tag.default_cellar
 
-    collector.add(tag, checksum: Checksum.new(digest.to_s), cellar:)
+    if manifest_sha256
+      odie "Invalid manifest_sha256: #{manifest_sha256}" unless manifest_sha256.match?(SHA256_REGEX)
+
+      manifest_checksum = Checksum.new(manifest_sha256.to_s)
+    end
+    collector.add(tag, checksum: Checksum.new(digest.to_s), cellar:, manifest_checksum:)
   end
 
   sig {

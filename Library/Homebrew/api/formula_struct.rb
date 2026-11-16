@@ -140,13 +140,15 @@ module Homebrew
         bottle_checksums.each do |bottle_info|
           bottle_info = bottle_info.dup
           cellar = bottle_info.delete(:cellar) || :any
+          manifest_sha256 = bottle_info.delete(:manifest_sha256)
           tag = bottle_info.keys.fetch(0)
           checksum = T.cast(bottle_info.values.first, String)
 
           bottle_collector.add(
             ::Utils::Bottles::Tag.from_symbol(tag),
-            checksum: Checksum.new(checksum),
+            checksum:          Checksum.new(checksum),
             cellar:,
+            manifest_checksum: (Checksum.new(manifest_sha256.to_s) if manifest_sha256),
           )
         end
         return unless (bottle_spec = bottle_collector.specification_for(bottle_tag))
@@ -154,11 +156,15 @@ module Homebrew
         tag = (bottle_spec.tag if bottle_spec.tag != bottle_tag)
         cellar = (bottle_spec.cellar if bottle_spec.cellar != DEFAULT_CELLAR)
 
-        {
+        bottle_hash = {
           "bottle_tag"      => tag&.to_sym,
           "bottle_cellar"   => cellar,
           "bottle_checksum" => bottle_spec.checksum.to_s,
         }
+        if (manifest_checksum = bottle_spec.manifest_checksum)
+          bottle_hash["bottle_manifest_checksum"] = manifest_checksum.to_s
+        end
+        bottle_hash
       end
 
       sig { params(bottle_tag: ::Utils::Bottles::Tag).returns(T::Hash[String, T.untyped]) }
@@ -199,7 +205,9 @@ module Homebrew
           cellar = hash.fetch("bottle_cellar", DEFAULT_CELLAR)
 
           hash["bottle_present"] = true
-          hash["bottle_checksums"] = [{ cellar: cellar, tag => bottle_checksum }]
+          hash["bottle_checksums"] = [
+            { cellar: cellar, manifest_sha256: hash["bottle_manifest_checksum"], tag => bottle_checksum }.compact,
+          ]
         else
           hash["bottle_present"] = false
         end
