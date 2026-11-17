@@ -16,6 +16,28 @@ RSpec.describe GitHub::API do
     end
   end
 
+  describe "::keychain_username_password" do
+    it "skips the credential helper when the keychain is unavailable" do
+      allow(described_class).to receive(:keychain_available?).and_return(false)
+      allow(described_class).to receive(:system_command).and_raise(Errno::EPIPE)
+
+      expect(described_class.keychain_username_password).to be_nil
+    end
+
+    it "returns a GitHub token when the keychain is available" do
+      token = "a" * 40
+      allow(described_class).to receive(:keychain_available?).and_return(true)
+      allow(described_class).to receive(:system_command).with(
+        "git", args: ["credential-osxkeychain", "get"],
+        input: ["protocol=https\n", "host=github.com\n"], print_stderr: false
+      ).and_return(instance_double(SystemCommand::Result,
+                                   to_a: ["username=test\npassword=#{token}\n", "",
+                                          instance_double(Process::Status, success?: true)]))
+
+      expect(described_class.keychain_username_password).to eq(token)
+    end
+  end
+
   it "optionally returns response headers for cursor pagination" do
     allow(described_class).to receive(:credentials).and_return(nil)
     allow(Utils::Curl).to receive(:curl_output) do |*args, **|
