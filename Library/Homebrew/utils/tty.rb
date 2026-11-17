@@ -6,7 +6,7 @@ require "utils/popen"
 
 # Various helper functions for interacting with TTYs.
 module Tty
-  @stream = T.let($stdout, T.nilable(T.any(IO, StringIO)))
+  @default_stream = T.let($stdout, T.any(IO, StringIO))
 
   COLOR_CODES = T.let(
     {
@@ -70,14 +70,15 @@ module Tty
   private_constant :BINARY_TERMINAL_CONTROL_SEQUENCE
 
   class << self
+    # Uses the given stream for colour detection within the current thread.
     sig { params(stream: T.any(IO, StringIO), _block: T.proc.params(arg0: T.any(IO, StringIO)).void).void }
     def with(stream, &_block)
-      previous_stream = @stream
-      @stream = T.let(stream, T.nilable(T.any(IO, StringIO)))
+      previous_stream = Thread.current[:tty_stream]
+      Thread.current[:tty_stream] = stream
 
       yield stream
     ensure
-      @stream = T.let(previous_stream, T.nilable(T.any(IO, StringIO)))
+      Thread.current[:tty_stream] = previous_stream
     end
 
     sig { params(string: String).returns(String) }
@@ -183,28 +184,28 @@ module Tty
 
     sig { returns(String) }
     def current_escape_sequence
-      return "" if @escape_sequence.nil?
+      return "" if escape_sequence.empty?
 
-      "\033[#{@escape_sequence.join(";")}m"
+      "\033[#{escape_sequence.join(";")}m"
     end
 
     sig { void }
     def reset_escape_sequence!
-      @escape_sequence = T.let(nil, T.nilable(T::Array[Integer]))
+      escape_sequence.clear
     end
 
     CODES.each do |name, code|
       define_method(name) do
-        @escape_sequence ||= T.let([], T.nilable(T::Array[Integer]))
-        @escape_sequence << code
+        T.bind(self, T.class_of(Tty))
+        escape_sequence << code
         self
       end
     end
 
     SPECIAL_CODES.each do |name, code|
       define_method(name) do
-        @stream = T.let($stdout, T.nilable(T.any(IO, StringIO)))
-        if @stream&.tty?
+        Thread.current[:tty_stream] = $stdout
+        if $stdout.tty?
           "\033[#{code}"
         else
           ""
@@ -227,12 +228,17 @@ module Tty
 
       return false if Homebrew::EnvConfig.no_color?
       return true if Homebrew::EnvConfig.color?
-      return false if @stream.blank?
 
-      @stream.tty?
+      (Thread.current[:tty_stream] || @default_stream).tty?
     end
 
     private
+
+    # Another thread must not consume or reset a partially built style chain.
+    sig { returns(T::Array[Integer]) }
+    def escape_sequence
+      Thread.current[:tty_escape_sequence] ||= []
+    end
 
     sig { void }
     def clear_stale_size!
