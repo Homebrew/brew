@@ -1604,7 +1604,7 @@ For Corretto (`corretto`), pinned to version 11, the token is `corretto@11`, whi
 
 The most recent version can also get a versioned name through an alias: a symlink in the `Aliases` directory at the tap root that points at the cask file, as [homebrew/core does for `dotnet@11`](https://github.com/Homebrew/homebrew-core/tree/HEAD/Aliases).
 With `Aliases/foo@2 -> ../Casks/f/foo.rb`, `brew install --cask foo@2` installs `foo` while it is on version 2.
-An alias must not share its name with a cask in the same tap.
+An alias must not share its name with a formula or cask in the same tap.
 
 #### Casks for alternative release channels
 
