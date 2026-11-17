@@ -91,58 +91,48 @@ module RuboCop
           return unless block
 
           name = name_argument.value
-          return if exempt_from_deletion?(name, block)
+          # A lazy `let` is exempt from deletion whenever file-scoped analysis cannot prove its name
+          # is dead: its name is a framework-reserved contract (e.g. `cop_config`), the file
+          # dispatches through a name we cannot resolve statically, it consumes shared examples, the
+          # `let` is lexically inside a shared-example definition, it is overridden by another
+          # definition of the same name, or it is referenced somewhere in the file.
+          return if FRAMEWORK_RESERVED_NAMES.include?(name) ||
+                    dynamic_dispatch? ||
+                    consumes_shared_examples? ||
+                    block.each_ancestor(:any_block).any? { |ancestor| shared_group?(ancestor) } ||
+                    definitions_by_name.fetch(name, 0) > 1 ||
+                    referenced_names.include?(name)
 
           add_offense(node.loc.selector, message: format(MSG, name:)) do |corrector|
-            corrector.remove(removal_range(block))
+            # Delete the `let` block, plus:
+            # - an immediately-preceding `sig { ... }` (so a Sorbet signature is not left dangling),
+            # - explanatory comment lines attached directly above it (so they are not orphaned), and
+            # - a single trailing blank line where removal would otherwise leave a stray/duplicate
+            #   blank -- unless the line above is a `let`/`subject`, where that blank is the required
+            #   separator after the now-final let and must stay.
+            lines = processed_source.lines
+            start_line = block.source_range.first_line
+            end_line = block.source_range.last_line
+
+            sig = preceding_sig(block)
+            start_line = sig.source_range.first_line if sig
+
+            start_line -= 1 while start_line > 1 && absorbable_comment?(lines[start_line - 2])
+
+            if end_line < lines.size && blank_line?(lines[end_line]) &&
+               !(start_line > 1 && let_or_subject_line?(lines[start_line - 2]))
+              end_line += 1
+            end
+
+            buffer = processed_source.buffer
+            corrector.remove(range_by_whole_lines(
+                               buffer.line_range(start_line).join(buffer.line_range(end_line)),
+                               include_final_newline: true,
+                             ))
           end
         end
 
         private
-
-        # A lazy `let` is exempt from deletion whenever file-scoped analysis cannot prove its name
-        # is dead: its name is a framework-reserved contract (e.g. `cop_config`), the file
-        # dispatches through a name we cannot resolve statically, it consumes shared examples, the
-        # `let` is lexically inside a shared-example definition, it is overridden by another
-        # definition of the same name, or it is referenced somewhere in the file.
-        sig { params(name: Symbol, block: RuboCop::AST::BlockNode).returns(T::Boolean) }
-        def exempt_from_deletion?(name, block)
-          FRAMEWORK_RESERVED_NAMES.include?(name) ||
-            dynamic_dispatch? ||
-            consumes_shared_examples? ||
-            within_shared_definition?(block) ||
-            overridden?(name) ||
-            referenced?(name)
-        end
-
-        # Delete the `let` block, plus:
-        # - an immediately-preceding `sig { ... }` (so a Sorbet signature is not left dangling),
-        # - explanatory comment lines attached directly above it (so they are not orphaned), and
-        # - a single trailing blank line where removal would otherwise leave a stray/duplicate
-        #   blank -- unless the line above is a `let`/`subject`, where that blank is the required
-        #   separator after the now-final let and must stay.
-        sig { params(node: RuboCop::AST::BlockNode).returns(Parser::Source::Range) }
-        def removal_range(node)
-          lines = processed_source.lines
-          start_line = node.source_range.first_line
-          end_line = node.source_range.last_line
-
-          sig = preceding_sig(node)
-          start_line = sig.source_range.first_line if sig
-
-          start_line -= 1 while start_line > 1 && absorbable_comment?(lines[start_line - 2])
-
-          if end_line < lines.size && blank_line?(lines[end_line]) &&
-             !(start_line > 1 && let_or_subject_line?(lines[start_line - 2]))
-            end_line += 1
-          end
-
-          buffer = processed_source.buffer
-          range_by_whole_lines(
-            buffer.line_range(start_line).join(buffer.line_range(end_line)),
-            include_final_newline: true,
-          )
-        end
 
         sig { params(source_line: T.nilable(String)).returns(T::Boolean) }
         def absorbable_comment?(source_line)
@@ -175,11 +165,6 @@ module RuboCop
           sibling
         end
 
-        sig { params(node: RuboCop::AST::BlockNode).returns(T::Boolean) }
-        def within_shared_definition?(node)
-          node.each_ancestor(:any_block).any? { |ancestor| shared_group?(ancestor) }
-        end
-
         sig { returns(T::Boolean) }
         def consumes_shared_examples?
           @consumes_shared_examples = T.let(@consumes_shared_examples, T.nilable(T::Boolean))
@@ -207,11 +192,6 @@ module RuboCop
           end
         end
 
-        sig { params(name: Symbol).returns(T::Boolean) }
-        def overridden?(name)
-          definitions_by_name.fetch(name, 0) > 1
-        end
-
         sig { returns(T::Hash[Symbol, Integer]) }
         def definitions_by_name
           @definitions_by_name ||= T.let(
@@ -226,11 +206,6 @@ module RuboCop
             end,
             T.nilable(T::Hash[Symbol, Integer]),
           )
-        end
-
-        sig { params(name: Symbol).returns(T::Boolean) }
-        def referenced?(name)
-          referenced_names.include?(name)
         end
 
         # A name is "referenced" if it is called as a bare method (`foo`), appears as a symbol

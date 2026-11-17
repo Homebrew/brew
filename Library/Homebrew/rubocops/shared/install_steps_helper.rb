@@ -398,7 +398,8 @@ module RuboCop
           end
         end
 
-        return unless fileutils_or_no_receiver?(send_node)
+        receiver = send_node.receiver
+        return if receiver && (!receiver.const_type? || receiver.const_name != "FileUtils")
 
         case send_node.method_name
         when :mkdir, :mkdir_p
@@ -544,8 +545,8 @@ module RuboCop
         return unless (paths = permission_paths_source(send_node.arguments.fetch(0), default_base))
 
         path_source, base = paths
-        "set_permissions #{path_source}, #{permissions_node.source}" \
-          "#{install_step_path_keywords_for_base(base, default_base)}"
+        base_keyword = (base && base != default_base) ? ", base: :#{base}" : ""
+        "set_permissions #{path_source}, #{permissions_node.source}#{base_keyword}"
       end
 
       sig {
@@ -673,17 +674,6 @@ module RuboCop
         return if send_node.receiver || send_node.arguments.present?
 
         send_node.method_name if [:appdir, :staged_path].include?(send_node.method_name)
-      end
-
-      sig { params(base: T.nilable(Symbol), default_base: Symbol).returns(String) }
-      def install_step_path_keywords_for_base(base, default_base)
-        (base && base != default_base) ? ", base: :#{base}" : ""
-      end
-
-      sig { params(send_node: RuboCop::AST::SendNode).returns(T::Boolean) }
-      def fileutils_or_no_receiver?(send_node)
-        receiver = send_node.receiver
-        receiver.nil? || (receiver.const_type? && receiver.const_name == "FileUtils")
       end
 
       sig { params(node: T.nilable(RuboCop::AST::Node)).returns(T.nilable(InstallStepPath)) }

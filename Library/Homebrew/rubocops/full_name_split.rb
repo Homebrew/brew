@@ -99,19 +99,15 @@ module RuboCop
         def full_name_receiver?(receiver)
           return false if receiver.source.match?(/(?:\A|[.])tap(?:\.|&\.)full_name\z/)
 
-          identifier = receiver_identifier(receiver)
-
-          !identifier.nil? && FULL_NAME_RECEIVER_NAMES.include?(identifier)
-        end
-
-        sig { params(receiver: RuboCop::AST::Node).returns(T.nilable(String)) }
-        def receiver_identifier(receiver)
-          case receiver.type
+          identifier = case receiver.type
           when :lvar, :ivar, :cvar, :gvar
             receiver.source.delete_prefix("@@").delete_prefix("@").delete_prefix("$")
           when :send, :csend
             receiver_method_name(T.cast(receiver, RuboCop::AST::SendNode))
           end
+          return false if identifier.nil?
+
+          FULL_NAME_RECEIVER_NAMES.include?(identifier)
         end
 
         sig { params(receiver: RuboCop::AST::SendNode).returns(T.nilable(String)) }

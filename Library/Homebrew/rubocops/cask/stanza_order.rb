@@ -18,7 +18,20 @@ module RuboCop
         sig { override.params(stanza_block: RuboCop::Cask::AST::StanzaBlock).void }
         def on_cask_stanza_block(stanza_block)
           stanzas = stanza_block.stanzas
-          ordered_stanzas = sort_stanzas(stanzas)
+          sort_depends_on_stanzas = stanzas.all? do |stanza|
+            stanza.stanza_name != :depends_on || !depends_on_sort_key(stanza).nil?
+          end
+          ordered_stanzas = stanzas.each_with_index.sort_by do |stanza, index|
+            [
+              stanza.stanza_index || raise("unexpected nil stanza index"),
+              if sort_depends_on_stanzas && stanza.stanza_name == :depends_on
+                depends_on_sort_key(stanza)
+              else
+                ""
+              end,
+              index,
+            ]
+          end.map(&:first)
 
           return if stanzas == ordered_stanzas
 
@@ -51,24 +64,6 @@ module RuboCop
         end
 
         private
-
-        sig { params(stanzas: T::Array[RuboCop::Cask::AST::Stanza]).returns(T::Array[RuboCop::Cask::AST::Stanza]) }
-        def sort_stanzas(stanzas)
-          sort_depends_on_stanzas = stanzas.all? do |stanza|
-            stanza.stanza_name != :depends_on || !depends_on_sort_key(stanza).nil?
-          end
-          stanzas.each_with_index.sort_by do |stanza, index|
-            [
-              stanza.stanza_index || raise("unexpected nil stanza index"),
-              if sort_depends_on_stanzas && stanza.stanza_name == :depends_on
-                depends_on_sort_key(stanza)
-              else
-                ""
-              end,
-              index,
-            ]
-          end.map(&:first)
-        end
 
         sig { params(stanza: RuboCop::Cask::AST::Stanza).returns(T.nilable(String)) }
         def depends_on_sort_key(stanza)

@@ -80,7 +80,7 @@ module RuboCop
 
         sig { params(node: RuboCop::AST::IfNode).void }
         def on_if(node)
-          return if ignore_if_node?(node)
+          return if node.elsif?
 
           redundant_receiver_and_other(node) do |receiver, other|
             return if ignore_other_node?(other) || receiver.nil?
@@ -104,11 +104,6 @@ module RuboCop
           add_offense(node, message: message(node, receiver, other)) do |corrector|
             corrector.replace(node, replacement(receiver, other, node.left_sibling))
           end
-        end
-
-        sig { params(node: RuboCop::AST::IfNode).returns(T::Boolean) }
-        def ignore_if_node?(node)
-          node.elsif?
         end
 
         sig { params(node: T.nilable(RuboCop::AST::Node)).returns(T::Boolean) }
@@ -146,7 +141,15 @@ module RuboCop
         }
         def replacement(receiver, other, left_sibling)
           or_source = if other.is_a?(RuboCop::AST::SendNode)
-            build_source_for_or_method(other)
+            if other.parenthesized? || other.method?("[]") || other.arithmetic_operation? || !other.arguments?
+              " || #{other.source}"
+            else
+              method_end_pos = other.first_argument.source_range.begin_pos - 1
+              method = range_between(other.source_range.begin_pos, method_end_pos).source
+              arguments = other.arguments.map(&:source).join(", ")
+
+              " || #{method}(#{arguments})"
+            end
           elsif other.nil? || other.nil_type?
             ""
           else
@@ -155,23 +158,6 @@ module RuboCop
 
           replaced = "#{receiver.source}.presence#{or_source}"
           left_sibling ? "(#{replaced})" : replaced
-        end
-
-        sig { params(other: RuboCop::AST::SendNode).returns(String) }
-        def build_source_for_or_method(other)
-          if other.parenthesized? || other.method?("[]") || other.arithmetic_operation? || !other.arguments?
-            " || #{other.source}"
-          else
-            method = method_range(other).source
-            arguments = other.arguments.map(&:source).join(", ")
-
-            " || #{method}(#{arguments})"
-          end
-        end
-
-        sig { params(node: RuboCop::AST::SendNode).returns(Parser::Source::Range) }
-        def method_range(node)
-          range_between(node.source_range.begin_pos, node.first_argument.source_range.begin_pos - 1)
         end
       end
     end

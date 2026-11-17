@@ -66,7 +66,12 @@ module RuboCop
         def on_send(node)
           return unless bad_method?(node)
 
-          range = offense_range(node)
+          end_pos = if node.parent&.block_type? && node.parent&.send_node == node
+            node.parent.source_range.end_pos
+          else
+            node.source_range.end_pos
+          end
+          range = range_between(node.loc.selector.begin_pos, end_pos)
           preferred_method = preferred_method(node)
           add_offense(range, message: format(MSG, preferred_method:)) do |corrector|
             corrector.replace(range, preferred_method)
@@ -80,36 +85,11 @@ module RuboCop
           return true if reject_with_block_pass?(node)
 
           if (arguments, receiver_in_block = reject_with_block?(node.parent))
-            return use_single_value_block_argument?(arguments, receiver_in_block) ||
-                   use_hash_value_block_argument?(arguments, receiver_in_block)
+            return (arguments.length == 1 && arguments.fetch(0).source == receiver_in_block.source) ||
+                   (arguments.length == 2 && arguments.fetch(1).source == receiver_in_block.source)
           end
 
           false
-        end
-
-        sig {
-          params(arguments: RuboCop::AST::ArgsNode, receiver_in_block: RuboCop::AST::Node).returns(T::Boolean)
-        }
-        def use_single_value_block_argument?(arguments, receiver_in_block)
-          arguments.length == 1 && arguments.fetch(0).source == receiver_in_block.source
-        end
-
-        sig {
-          params(arguments: RuboCop::AST::ArgsNode, receiver_in_block: RuboCop::AST::Node).returns(T::Boolean)
-        }
-        def use_hash_value_block_argument?(arguments, receiver_in_block)
-          arguments.length == 2 && arguments.fetch(1).source == receiver_in_block.source
-        end
-
-        sig { params(node: RuboCop::AST::SendNode).returns(Parser::Source::Range) }
-        def offense_range(node)
-          end_pos = if node.parent&.block_type? && node.parent&.send_node == node
-            node.parent.source_range.end_pos
-          else
-            node.source_range.end_pos
-          end
-
-          range_between(node.loc.selector.begin_pos, end_pos)
         end
 
         sig { params(node: RuboCop::AST::SendNode).returns(String) }

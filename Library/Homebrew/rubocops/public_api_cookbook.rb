@@ -58,49 +58,9 @@ module RuboCop
             return
           end
 
-          api_public_targets = build_api_public_targets
-
-          check_cookbook_methods(ApiAnnotationHelper::FORMULA_COOKBOOK_METHODS,
-                                 "Formula Cookbook", relative_path, api_public_targets)
-          check_cookbook_methods(ApiAnnotationHelper::CASK_COOKBOOK_METHODS,
-                                 "Cask Cookbook", relative_path, api_public_targets)
-          check_service_methods(relative_path, api_public_targets)
-
-          return unless %w[cask/dsl.rb cask/cask.rb cask/dsl/version.rb].include?(relative_path)
-
-          cookbook_methods = ApiAnnotationHelper::CASK_COOKBOOK_METHODS.keys.to_set
-          lines = processed_source.lines
-
-          processed_source.comments.each do |comment|
-            next unless ["# @api public", "@api public"].include?(comment.text.strip)
-
-            (1..5).each do |offset|
-              target_line = lines[comment.loc.line - 1 + offset]&.strip
-              break if target_line.blank?
-
-              match = target_line.match(/\A(?:def\s+(?:self\.)?|attr_reader\s+:|attr_accessor\s+:)(\w+[!?]?)/) ||
-                      target_line.match(/\Adelegate\s+(\w+[!?]?):/)
-              next if match.nil?
-
-              method_name = match[1].to_s
-              break if cookbook_methods.include?(method_name)
-
-              add_offense(comment, message: format(MISSING_CASK_LIST_MSG, method: method_name, file: relative_path))
-              break
-            end
-          end
-        end
-
-        private
-
-        # Build a set of line numbers for definitions that are directly
-        # preceded by an `@api public` annotation in their doc block.
-        # Walks forward from each `@api public` comment to find the next
-        # def/attr_reader/delegate, matching only the immediately following
-        # definition; not one 20 lines away.
-        sig { returns(T::Set[Integer]) }
-        def build_api_public_targets
-          targets = T.let(Set.new, T::Set[Integer])
+          # Line numbers of definitions directly preceded by an `@api public` annotation,
+          # matching only the immediately following definition; not one 20 lines away.
+          api_public_targets = T.let(Set.new, T::Set[Integer])
           lines = processed_source.lines
 
           processed_source.comments.each do |comment|
@@ -126,13 +86,42 @@ module RuboCop
                 next
               end
 
-              targets.add(line_idx + offset)
+              api_public_targets.add(line_idx + offset)
               break
             end
           end
 
-          targets
+          check_cookbook_methods(ApiAnnotationHelper::FORMULA_COOKBOOK_METHODS,
+                                 "Formula Cookbook", relative_path, api_public_targets)
+          check_cookbook_methods(ApiAnnotationHelper::CASK_COOKBOOK_METHODS,
+                                 "Cask Cookbook", relative_path, api_public_targets)
+          check_service_methods(relative_path, api_public_targets)
+
+          return unless %w[cask/dsl.rb cask/cask.rb cask/dsl/version.rb].include?(relative_path)
+
+          cookbook_methods = ApiAnnotationHelper::CASK_COOKBOOK_METHODS.keys.to_set
+
+          processed_source.comments.each do |comment|
+            next unless ["# @api public", "@api public"].include?(comment.text.strip)
+
+            (1..5).each do |offset|
+              target_line = lines[comment.loc.line - 1 + offset]&.strip
+              break if target_line.blank?
+
+              match = target_line.match(/\A(?:def\s+(?:self\.)?|attr_reader\s+:|attr_accessor\s+:)(\w+[!?]?)/) ||
+                      target_line.match(/\Adelegate\s+(\w+[!?]?):/)
+              next if match.nil?
+
+              method_name = match[1].to_s
+              break if cookbook_methods.include?(method_name)
+
+              add_offense(comment, message: format(MISSING_CASK_LIST_MSG, method: method_name, file: relative_path))
+              break
+            end
+          end
         end
+
+        private
 
         sig {
           params(

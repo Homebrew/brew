@@ -44,10 +44,18 @@ module RuboCop
           stanzas.each_cons(2) do |stanza, next_stanza|
             next if !stanza || !next_stanza
 
-            if missing_line_after?(stanza, next_stanza)
-              add_offense_missing_line(stanza)
-            elsif extra_line_after?(stanza, next_stanza)
-              add_offense_extra_line(stanza)
+            line_index = stanza.source_range.last_line
+            empty_line_after = processed_source[line_index].empty?
+            if !(stanza.same_group?(next_stanza) || empty_line_after)
+              line_ops[line_index] = :insert
+              add_offense(line_index, message: MISSING_LINE_MSG) do |corrector|
+                corrector.insert_before(@range, "\n")
+              end
+            elsif stanza.same_group?(next_stanza) && empty_line_after
+              line_ops[line_index] = :remove
+              add_offense(line_index, message: EXTRA_LINE_MSG) do |corrector|
+                corrector.remove(@range)
+              end
             end
           end
         end
@@ -55,51 +63,6 @@ module RuboCop
         sig { returns(T::Hash[Integer, Symbol]) }
         def line_ops
           @line_ops || raise("Call to line_ops before it has been initialized")
-        end
-
-        sig { params(stanza: RuboCop::Cask::AST::Stanza, next_stanza: RuboCop::Cask::AST::Stanza).returns(T::Boolean) }
-        def missing_line_after?(stanza, next_stanza)
-          !(stanza.same_group?(next_stanza) ||
-            empty_line_after?(stanza))
-        end
-
-        sig { params(stanza: RuboCop::Cask::AST::Stanza, next_stanza: RuboCop::Cask::AST::Stanza).returns(T::Boolean) }
-        def extra_line_after?(stanza, next_stanza)
-          stanza.same_group?(next_stanza) &&
-            empty_line_after?(stanza)
-        end
-
-        sig { params(stanza: RuboCop::Cask::AST::Stanza).returns(T::Boolean) }
-        def empty_line_after?(stanza)
-          source_line_after(stanza).empty?
-        end
-
-        sig { params(stanza: RuboCop::Cask::AST::Stanza).returns(String) }
-        def source_line_after(stanza)
-          processed_source[index_of_line_after(stanza)]
-        end
-
-        sig { params(stanza: RuboCop::Cask::AST::Stanza).returns(Integer) }
-        def index_of_line_after(stanza)
-          stanza.source_range.last_line
-        end
-
-        sig { params(stanza: RuboCop::Cask::AST::Stanza).void }
-        def add_offense_missing_line(stanza)
-          line_index = index_of_line_after(stanza)
-          line_ops[line_index] = :insert
-          add_offense(line_index, message: MISSING_LINE_MSG) do |corrector|
-            corrector.insert_before(@range, "\n")
-          end
-        end
-
-        sig { params(stanza: RuboCop::Cask::AST::Stanza).void }
-        def add_offense_extra_line(stanza)
-          line_index = index_of_line_after(stanza)
-          line_ops[line_index] = :remove
-          add_offense(line_index, message: EXTRA_LINE_MSG) do |corrector|
-            corrector.remove(@range)
-          end
         end
 
         sig { params(line_index: Integer, message: String, block: T.proc.params(corrector: RuboCop::Cop::Corrector).void).void }

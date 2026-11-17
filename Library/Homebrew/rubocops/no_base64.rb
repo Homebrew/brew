@@ -85,7 +85,13 @@ module RuboCop
           replacement = case node.method_name
           when :decode64, :strict_decode64
             directive = (node.method_name == :decode64) ? "m" : "m0"
-            "#{arg.source}.unpack1(\"#{directive}\")" if chainable?(arg)
+            chainable = if arg.is_a?(RuboCop::AST::SendNode)
+              !arg.operator_method? && !arg.assignment_method?
+            else
+              arg.variable? || arg.const_type? || arg.begin_type? ||
+                (arg.literal? && !arg.range_type?)
+            end
+            "#{arg.source}.unpack1(\"#{directive}\")" if chainable
           when :encode64, :strict_encode64
             directive = (node.method_name == :encode64) ? "m" : "m0"
             "[#{arg.source}].pack(\"#{directive}\")" if !arg.splat_type? && !arg.block_pass_type?
@@ -93,16 +99,6 @@ module RuboCop
           return if replacement.nil?
 
           corrector.replace(node, replacement)
-        end
-
-        sig { params(node: RuboCop::AST::Node).returns(T::Boolean) }
-        def chainable?(node)
-          if node.is_a?(RuboCop::AST::SendNode)
-            !node.operator_method? && !node.assignment_method?
-          else
-            node.variable? || node.const_type? || node.begin_type? ||
-              (node.literal? && !node.range_type?)
-          end
         end
       end
     end
