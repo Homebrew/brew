@@ -155,6 +155,7 @@ class Keg
   sig { returns(T::Array[Pathname]) }
   def self.must_exist_subdirectories
     @must_exist_subdirectories ||= T.let((keg_link_directories - %w[var] + %w[
+      libexec
       opt
       var/homebrew/linked
     ]).map { |dir| HOMEBREW_PREFIX/dir }.sort.uniq.freeze, T.nilable(T::Array[Pathname]))
