@@ -843,31 +843,34 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     EOS
   end
 
-  it "keeps the dry-run plan when a formula's dependencies cannot be computed" do
-    cmd = described_class.new(["--dry-run"])
-    formula = formula("testball") do
-      T.bind(self, T.class_of(Formula))
-      url "https://brew.sh/testball-0.2"
-    end
-    old_keg = HOMEBREW_CELLAR/"testball/0.1"
-    old_keg.mkpath
-    allow(formula).to receive_messages(optlinked?: true, opt_prefix: old_keg)
-    installer = FormulaInstaller.new(formula)
-    allow(installer).to receive(:compute_dependencies).and_raise(UnsatisfiedRequirements.new([]))
-    allow(cmd).to receive(:formulae_upgrade_context).and_return(
-      Homebrew::Cmd::UpgradeCmd::FormulaeUpgradeContext.new(
-        formulae_to_install: [formula],
-        formulae_installer:  [installer],
-        dependants:          Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: []),
-      ),
-    )
+  test_each([[], ["testball"]]) do |named|
+    it "keeps the dry-run plan when dependencies cannot be computed with #{named.presence || "no names"}" do
+      cmd = described_class.new(["--dry-run", *named])
+      formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/testball-0.2"
+      end
+      old_keg = HOMEBREW_CELLAR/"testball/0.1"
+      old_keg.mkpath
+      allow(formula).to receive_messages(optlinked?: true, opt_prefix: old_keg)
+      installer = FormulaInstaller.new(formula)
+      allow(installer).to receive(:compute_dependencies).and_raise(UnsatisfiedRequirements.new([]))
+      allow(cmd).to receive(:formulae_upgrade_context).and_return(
+        Homebrew::Cmd::UpgradeCmd::FormulaeUpgradeContext.new(
+          formulae_to_install: [formula],
+          formulae_installer:  [installer],
+          dependants:          Homebrew::Upgrade::Dependents.new(upgradeable: [], pinned: [], skipped: []),
+        ),
+      )
 
-    expect do
-      cmd.upgrade_outdated_formulae!([])
-      cmd.show_final_upgrade_summary
+      expect do
+        cmd.upgrade_outdated_formulae!([])
+        cmd.show_final_upgrade_summary
+      end
+        .to output("==> Would upgrade 1 #{"requested " if named.any?}outdated package\n" \
+                   "testball 0.1 -> 0.2\n").to_stdout
+        .and output("Error: testball: Unsatisfied requirements failed this build.\n").to_stderr
     end
-      .to output("==> Would upgrade 1 outdated package\ntestball 0.1 -> 0.2\n").to_stdout
-      .and output("Error: testball: Unsatisfied requirements failed this build.\n").to_stderr
   end
 
   it "omits formula download sizes in dry-run source build upgrade summaries" do

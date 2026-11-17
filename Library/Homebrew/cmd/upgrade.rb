@@ -713,11 +713,6 @@ module Homebrew
                                                                   include_sizes: dry_run)
         dependent_formulae = context.dependants.upgradeable.dup
         planned_dependent_version_changes = formula_version_changes(dependent_formulae, include_sizes: dry_run)
-        if !args.no_ask? && dry_run && args.named.present? &&
-           Install.formulae_ask_prompt_needed?(context.formulae_installer, context.dependants)
-          @ask_prompt_required = true
-        end
-
         skip_formula_names = if dry_run
           (context.formulae_installer.map(&:formula) + context.dependants.upgradeable)
             .uniq(&:full_name)
@@ -762,6 +757,10 @@ module Homebrew
                                          formulae_installer:        upgraded_formula_installers,
                                          version_changes:           planned_formula_version_changes,
                                          dependent_version_changes: planned_dependent_version_changes)
+          if !args.no_ask? && args.named.present? &&
+             Install.formulae_ask_prompt_needed?(upgraded_formula_installers, context.dependants)
+            @ask_prompt_required = true
+          end
         else
           @upgraded_formulae.concat(upgraded_formula_installers.map(&:formula) + upgraded_dependent_formulae)
                             .uniq!(&:full_name)
