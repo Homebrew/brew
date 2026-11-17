@@ -2770,8 +2770,8 @@ class Formula # rubocop:disable Metrics/ClassLength
   end
 
   # An array of each known trusted {Formula}.
-  sig { returns(T::Array[Formula]) }
-  def self.all
+  sig { params(core_names: T::Array[String]).returns(T::Array[Formula]) }
+  def self.all(core_names: self.core_names)
     trusted_tap_files = Homebrew::Trust.trusted_formula_files(tap_files)
 
     (core_names + trusted_tap_files).filter_map do |name_or_file|

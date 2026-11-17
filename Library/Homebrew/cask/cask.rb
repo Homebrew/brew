@@ -78,10 +78,10 @@ module Cask
     sig { returns(T::Boolean) }
     attr_accessor :allow_reassignment
 
-    sig { returns(T::Array[Cask]) }
-    def self.all
+    sig { params(core_tokens: T::Array[String]).returns(T::Array[Cask]) }
+    def self.all(core_tokens: CoreCaskTap.instance.cask_tokens)
       # Load core casks from tokens so they load from the API when the core cask is not tapped.
-      tokens_and_files = CoreCaskTap.instance.cask_tokens
+      tokens_and_files = core_tokens
       tokens_and_files += Tap.reject(&:core_cask_tap?).flat_map(&:cask_files)
                              .then { |files| Homebrew::Trust.trusted_cask_files(files) }
       tokens_and_files.filter_map do |token_or_file|

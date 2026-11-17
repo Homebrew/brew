@@ -31,6 +31,46 @@ RSpec.describe Homebrew::Cmd::Uses do
     expect { cmd.run }.to not_to_output.to_stderr
   end
 
+  context "when core formulae come from the API" do
+    before do
+      allow(CoreTap.instance).to receive(:installed?).and_return(false)
+      allow(Homebrew::EnvConfig).to receive(:no_install_from_api?).and_return(false)
+      allow(Homebrew::API::Internal).to receive_messages(formula_aliases: {}, formula_renames: {})
+      allow(Formula).to receive(:core_names).and_return(%w[bar baz foo])
+    end
+
+    it "loads only the formulae whose API data names the used formula" do
+      cmd = described_class.new(["--formula", "foo"])
+      allow(cmd.args.named).to receive(:to_formulae)
+        .and_return([instance_double(Formula, name: "foo", full_name: "foo")])
+      allow(Homebrew::API::Internal).to receive(:formula_names_including)
+        .with(["\"foo\"", "/foo\""]).and_return(["bar"])
+
+      expect(Formula).to receive(:all).with(core_names: ["bar"]).and_return([])
+      cmd.run
+    end
+
+    it "loads every core formula when including build dependencies" do
+      cmd = described_class.new(["--formula", "--include-build", "foo"])
+      allow(cmd.args.named).to receive(:to_formulae)
+        .and_return([instance_double(Formula, name: "foo", full_name: "foo")])
+
+      expect(Formula).to receive(:all).with(core_names: %w[bar baz foo]).and_return([])
+      cmd.run
+    end
+
+    it "loads every core formula when the used formula can be an implicit dependency" do
+      cmd = described_class.new(["--formula", "foo"])
+      allow(cmd.args.named).to receive(:to_formulae)
+        .and_return([instance_double(Formula, name: "foo", full_name: "foo")])
+      allow(DependencyCollector).to receive(:new)
+        .and_return(instance_double(DependencyCollector, implicit_dependency_names: Set["foo"]))
+
+      expect(Formula).to receive(:all).with(core_names: %w[bar baz foo]).and_return([])
+      cmd.run
+    end
+  end
+
   it "handles unavailable formula" do
     cmd = described_class.new(%w[foo --include-optional --recursive])
     allow(cmd.args.named)

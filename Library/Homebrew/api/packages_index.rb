@@ -237,6 +237,34 @@ module Homebrew
         @sections.fetch("casks", {}).key?(name)
       end
 
+      # Names of the `section` entries whose JSON includes any of `texts`, found
+      # without parsing any entry, or `nil` unless the recorded entries tile the
+      # section, each right after its own comma-separated JSON key, so that no
+      # byte goes unsearched.
+      sig { params(section: String, texts: T::Array[String]).returns(T.nilable(T::Array[String])) }
+      def names_including(section, texts)
+        section_offset, section_bytesize = @top_level[section]
+        return if !section_offset.is_a?(Integer) || !section_bytesize.is_a?(Integer)
+
+        entries = @sections.fetch(section, {})
+        position = section_offset + 1
+        entries_tile_section = entries.each_with_index.all? do |(name, (offset, bytesize)), index|
+          key_bytes = "#{"," if index.positive?}#{name.to_json}:"
+          next false if !offset.is_a?(Integer) || !bytesize.is_a?(Integer) || bytesize.negative?
+          next false if offset != position + key_bytes.bytesize
+          next false if payload.byteslice(position, key_bytes.bytesize) != key_bytes
+
+          position = offset + bytesize
+          true
+        end
+        return if !entries_tile_section || position + 1 != section_offset + section_bytesize
+
+        entries.filter_map do |name, (offset, bytesize)|
+          entry = payload.byteslice(offset, bytesize)
+          name if entry && texts.any? { |text| entry.include?(text) }
+        end
+      end
+
       sig { params(key: String).returns(T.untyped) }
       def top_level_value(key)
         return if SECTION_KEYS.include?(key)

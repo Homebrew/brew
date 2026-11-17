@@ -126,10 +126,28 @@ module Homebrew
           deps
         else
           if show_formulae_and_casks || args.formula?
-            deps.concat(args.installed? ? Formula.installed : Formula.all)
+            formulae = if args.installed?
+              Formula.installed
+            else
+              core_names = core_names_naming(used_formulae, recursive, CoreTap.instance) do |texts|
+                Homebrew::API::Internal.formula_names_including(texts)
+              end
+              core_names ||= Formula.core_names
+              Formula.all(core_names:)
+            end
+            deps.concat(formulae)
           end
           if show_formulae_and_casks || args.cask?
-            deps.concat(args.installed? ? Cask::Caskroom.casks : Cask::Cask.all)
+            casks = if args.installed?
+              Cask::Caskroom.casks
+            else
+              core_tokens = core_names_naming(used_formulae, recursive, CoreCaskTap.instance) do |texts|
+                Homebrew::API::Internal.cask_tokens_including(texts)
+              end
+              core_tokens ||= CoreCaskTap.instance.cask_tokens
+              Cask::Cask.all(core_tokens:)
+            end
+            deps.concat(casks)
           end
 
           if args.missing?
@@ -139,6 +157,38 @@ module Homebrew
 
           select_used_dependents(dependents(deps), used_formulae, recursive, includes, ignores)
         end
+      end
+
+      # A formula or cask can only list a used formula as a direct dependency if
+      # its API data has its name, or one of its aliases or old names, as a JSON
+      # string on its own or after a tap, so only those need loading. Recursive and
+      # implicit dependencies aren't in that data: implicit download dependencies
+      # are also build and test dependencies, and some systems add an implicit
+      # dependency to every formula. A tapped core tap is read instead.
+      sig {
+        params(
+          used_formulae:   T::Array[T.any(Formula, UnavailableFormula)],
+          recursive:       T::Boolean,
+          core_tap:        Tap,
+          names_including: T.proc.params(texts: T::Array[String]).returns(T.nilable(T::Array[String])),
+        ).returns(T.nilable(T::Array[String]))
+      }
+      def core_names_naming(used_formulae, recursive, core_tap, &names_including)
+        return if recursive || args.include_implicit? || args.include_build? || args.include_test? ||
+                  core_tap.installed? || Homebrew::EnvConfig.no_install_from_api?
+        return if DependencyCollector.new.implicit_dependency_names.intersect?(used_formulae.to_set(&:name))
+
+        aliases = Homebrew::API::Internal.formula_aliases
+        renames = Homebrew::API::Internal.formula_renames
+        names = used_formulae.map do |formula|
+          other_names = aliases.select { |_, name| name == formula.name }.keys +
+                        renames.select { |_, name| name == formula.name }.keys
+          yield([formula.name, *other_names].flat_map { |name| ["\"#{name}\"", "/#{name}\""] })
+        end
+        present_names = names.compact
+        return if present_names.length != names.length
+
+        present_names.reduce { |common, more| common & more }
       end
 
       sig {
