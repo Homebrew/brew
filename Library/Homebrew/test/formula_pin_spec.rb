@@ -7,7 +7,7 @@ RSpec.describe FormulaPin do
   subject(:formula_pin) { described_class.new(formula) }
 
   let(:name) { "double" }
-  let(:formula) { instance_double(Formula, name:, rack: HOMEBREW_CELLAR/name) }
+  let(:formula) { instance_double(Formula, name:, rack: HOMEBREW_CELLAR/name, possible_names: [name]) }
 
   before do
     formula.rack.mkpath
@@ -41,5 +41,28 @@ RSpec.describe FormulaPin do
     formula_pin.unpin
     expect(formula_pin).not_to be_pinned
     expect(HOMEBREW_PINNED_KEGS).not_to be_a_directory
+  end
+
+  context "when the Keg is in the Rack of an alias" do
+    let(:alias_name) { "double-alias" }
+    let(:alias_keg) { HOMEBREW_CELLAR/alias_name/"0.1" }
+
+    before do
+      alias_keg.mkpath
+      allow(formula).to receive_messages(possible_names: [name, alias_name], installed_kegs: [Keg.new(alias_keg)])
+    end
+
+    it "pins the Keg" do
+      formula_pin.pin
+
+      expect(formula_pin.pinned_version).to eq(PkgVersion.parse("0.1"))
+    end
+
+    it "finds a pin recorded under the alias" do
+      HOMEBREW_PINNED_KEGS.mkpath
+      (HOMEBREW_PINNED_KEGS/alias_name).make_relative_symlink(alias_keg)
+
+      expect(formula_pin).to be_pinned
+    end
   end
 end
