@@ -43,6 +43,20 @@ RSpec.describe DescriptionCacheStore do
     end
   end
 
+  describe "#populate_if_empty!" do
+    it "takes core formula descriptions from the API and loads only tap formulae" do
+      database = CacheStoreDatabase.new(:descriptions)
+      allow(Homebrew::API::Internal).to receive(:formula_names).and_return(["core"])
+      allow(Homebrew::API::Internal).to receive(:formula_hash).with("core").and_return("desc" => "Core desc")
+      tap_formula = instance_double(Formula, full_name: "user/tap/f", desc: "Tap desc")
+      allow(Formula).to receive(:all).with(core_names: []).and_return([tap_formula])
+
+      described_class.new(database).populate_if_empty!
+
+      expect(database.select { true }).to eq("core" => "Core desc", "user/tap/f" => "Tap desc")
+    end
+  end
+
   describe "#update_from_report!" do
     let(:report) { instance_double(ReporterHub, select_formula_or_cask: [], empty?: false) }
 
@@ -121,6 +135,29 @@ RSpec.describe DescriptionCacheStore do
 
     it "removes untrusted cached cask descriptions before selecting" do
       expect_untrusted_cached_description_removed(cache_store, database, :cask)
+    end
+
+    describe "#populate_if_empty!" do
+      it "takes core cask descriptions from the API and loads only localised and tap casks" do
+        database = CacheStoreDatabase.new(:cask_descriptions)
+        allow(Homebrew::API::Internal).to receive(:cask_names).and_return(%w[core localised])
+        allow(Homebrew::API::Internal).to receive(:cask_hash).with("core")
+                                                             .and_return("names" => ["Core"], "desc" => "Core desc")
+        allow(Homebrew::API::Internal).to receive(:cask_hash).with("localised")
+                                                             .and_return("language_variations" => [{}])
+        allow(Cask::Cask).to receive(:all).with(core_tokens: ["localised"]).and_return([
+          instance_double(Cask::Cask, full_name: "localised", name: ["Localised"], desc: nil),
+          instance_double(Cask::Cask, full_name: "user/tap/c", name: ["Tap"], desc: "Tap desc"),
+        ])
+
+        described_class.new(database).populate_if_empty!
+
+        expect(database.select { true }).to eq(
+          "core"       => ["Core", "Core desc"],
+          "localised"  => ["Localised", nil],
+          "user/tap/c" => ["Tap", "Tap desc"],
+        )
+      end
     end
 
     describe "#update_from_report!" do

@@ -40,7 +40,17 @@ class DescriptionCacheStore < CacheStore
   def populate_if_empty!
     return unless database.empty?
 
-    Formula.all.each { |formula| update!(formula.full_name, formula.desc) }
+    names = core_names
+    # Core formulae and casks from the API already include their descriptions.
+    unless Homebrew::EnvConfig.no_install_from_api?
+      names = names.select do |name|
+        next true unless (description = api_description(name))
+
+        update!(name, description)
+        false
+      end
+    end
+    update_from_all!(names)
   end
 
   # Use an update report to update a populated {DescriptionCacheStore}.
@@ -115,5 +125,16 @@ class DescriptionCacheStore < CacheStore
 
   sig { overridable.returns(Symbol) }
   def trust_type = :formula
+
+  sig { overridable.returns(T::Array[String]) }
+  def core_names = Formula.core_names
+
+  sig { overridable.params(name: String).returns(T.nilable(T.any(String, T::Array[T.nilable(String)]))) }
+  def api_description(name) = Homebrew::API::Internal.formula_hash(name)&.fetch("desc", nil)
+
+  sig { overridable.params(core_names: T::Array[String]).void }
+  def update_from_all!(core_names)
+    Formula.all(core_names:).each { |formula| update!(formula.full_name, formula.desc) }
+  end
 end
 require "description_cache_store/cask_description_cache_store"
