@@ -195,10 +195,7 @@ RSpec.describe Version do
   end
 
   specify "sorting versions with pre-release and string tokens" do
-    versions = [
-      %w[1alpha 1beta 1pre 1rc1 1 1a],
-      %w[1.0alpha 1.0beta 1.0pre 1.0rc1 1.0 1.0a],
-    ]
+    versions = [%w[1alpha 1beta 1pre 1rc1 1 1a], %w[1.0alpha 1.0beta 1.0pre 1.0rc1 1.0 1.0a]]
     permutations = versions.flat_map do |version_set|
       version_set.map { |v| described_class.new(v) }.permutation.map do |permutation|
         [permutation.sort.map(&:to_s), permutation.max.to_s]
@@ -311,13 +308,9 @@ RSpec.describe Version do
   end
 
   specify "erlang versions" do
-    versions = %w[R16B R15B03-1 R15B03 R15B02 R15B01 R14B04 R14B03
+    versions = %w[R16B03.0 R16B02 R16B01 R16b R16A01 R16a
+                  R15B03-1 R15B03 R15B02 R15B01 R14B04 R14B03
                   R14B02 R14B01 R14B R13B04 R13B03 R13B02-1].reverse
-    expect(versions.sort_by { |v| described_class.new(v) }).to eq(versions)
-  end
-
-  specify "erlang versions with mixed-case revisions" do
-    versions = %w[R16a R16A01 R16b R16B01 R16B02 R16B03.0]
     expect(versions.sort_by { |v| described_class.new(v) }).to eq(versions)
   end
 
