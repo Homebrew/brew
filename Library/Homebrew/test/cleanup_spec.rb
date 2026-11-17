@@ -577,6 +577,60 @@ RSpec.describe Homebrew::Cleanup do
       expect(file).to exist
     end
 
+    context "when libexec exists" do
+      let(:libexec) { HOMEBREW_PREFIX/"libexec" }
+      let(:link) { libexec/"container" }
+
+      before do
+        libexec.mkpath
+      end
+
+      after do
+        FileUtils.rm_rf libexec
+      end
+
+      it "keeps the empty directory" do
+        cleanup.prune_prefix_symlinks_and_directories
+
+        expect(libexec).to be_a_directory
+      end
+
+      it "removes broken symlinks without removing libexec" do
+        link.make_relative_symlink(HOMEBREW_CELLAR/"container/1.0/libexec")
+
+        cleanup.prune_prefix_symlinks_and_directories
+
+        expect(libexec.children).to be_empty
+      end
+
+      it "keeps valid symlinks and user files" do
+        plugins = libexec/"container/plugins"
+        plugins.mkpath
+        (plugins/"custom").write "plugin"
+        (plugins/"linked").make_relative_symlink(plugins/"custom")
+
+        cleanup.prune_prefix_symlinks_and_directories
+
+        expect(plugins.children).to contain_exactly(plugins/"custom", plugins/"linked")
+      end
+
+      it "reports broken symlinks during a dry run" do
+        link.make_relative_symlink(HOMEBREW_CELLAR/"container/1.0/libexec")
+
+        expect do
+          described_class.new(dry_run: true).prune_prefix_symlinks_and_directories
+        end.to output("Would remove (broken link): #{link}\n").to_stdout
+      end
+
+      it "keeps broken symlinks during a dry run" do
+        link.make_relative_symlink(HOMEBREW_CELLAR/"container/1.0/libexec")
+
+        described_class.new(dry_run: true).prune_prefix_symlinks_and_directories
+
+        expect(link).to be_a_symlink
+      end
+    end
+
     context "when nested directories exist with only broken symlinks" do
       let(:dir) { HOMEBREW_PREFIX/"lib/foo" }
       let(:child_dir) { dir/"bar" }
