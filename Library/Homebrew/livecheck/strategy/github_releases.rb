@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cacheable"
 require "livecheck/strategic"
 
 module Homebrew
@@ -31,7 +32,11 @@ module Homebrew
       #
       # @api public
       class GithubReleases
+        extend T::Generic
+        extend Cacheable
         extend Strategic
+
+        Cache = type_template { { fixed: T::Hash[Symbol, T::Boolean] } }
 
         # A priority of zero causes livecheck to skip the strategy. We do this
         # for {GithubReleases} so we can selectively apply the strategy using
@@ -49,6 +54,20 @@ module Homebrew
         # isn't provided.
         DEFAULT_REGEX = /v?(\d+(?:\.\d+)+)/i
 
+        # A GraphQL query to fetch a repository's recent release tags and their
+        # draft/pre-release status, which can be used for basic checks without
+        # a `strategy` block. This is intended to align with the REST API's
+        # pagination behaviour.
+        RELEASE_TAGS_QUERY = <<~GRAPHQL
+          query($owner: String!, $name: String!) {
+            repository(owner: $owner, name: $name) {
+              releases(first: 30, orderBy: { field: CREATED_AT, direction: DESC }) {
+                nodes { tagName isDraft isPrerelease }
+              }
+            }
+          }
+        GRAPHQL
+
         # Whether the strategy can be applied to the provided URL.
         #
         # @param url [String] the URL to match against
@@ -58,21 +77,45 @@ module Homebrew
           URL_MATCH_REGEX.match?(url)
         end
 
+        # Whether GitHub credentials are available, which are strictly required
+        # to use the GraphQL API.
+        #
+        # @return [Boolean]
+        # @api private
+        sig { returns(T::Boolean) }
+        def self.github_credentials?
+          # `GitHub::API.credentials` doesn't memoise a `nil` value (when no
+          # credentials are available), so it will re-check for credentials
+          # the next time the method is called. We cache a value here to avoid
+          # repeating this work within the GitHub strategies.
+          cache.fetch(:github_credentials) do
+            cache[:github_credentials] = GitHub::API.credentials.present?
+          end
+        end
+
         # Extracts information from a provided URL and uses it to generate
         # various input values used by the strategy to check for new versions.
         # Some of these values act as defaults and can be overridden in a
         # `livecheck` block.
         #
         # @param url [String] the URL used to generate values
+        # @param fetch_type the type of GitHub data to fetch
         # @return [Hash]
-        sig { params(url: String).returns(T::Hash[Symbol, T.untyped]) }
-        def self.generate_input_values(url)
+        sig { params(url: String, fetch_type: Symbol).returns(T::Hash[Symbol, T.untyped]) }
+        def self.generate_input_values(url, fetch_type: :rest_api)
           values = {}
 
           match = url.delete_suffix(".git").match(URL_MATCH_REGEX)
           return values if match.blank?
 
-          values[:url] = "#{GitHub::API_URL}/repos/#{match[:username]}/#{match[:repository]}/releases"
+          values[:url] = case fetch_type
+          when :graphql_api
+            "#{GitHub::API_URL}/graphql"
+          when :rest_api
+            "#{GitHub::API_URL}/repos/#{match[:username]}/#{match[:repository]}/releases"
+          else
+            raise ArgumentError, "Unrecognized `fetch_type` argument"
+          end
           values[:username] = match[:username]
           values[:repository] = match[:repository]
 
@@ -134,13 +177,45 @@ module Homebrew
           match_data = { matches: {}, regex:, url: }
           match_data[:cached] = true if content
 
-          generated = generate_input_values(url)
+          fetch_type =
+            if block_given? || !github_credentials?
+              :rest_api
+            else
+              :graphql_api
+            end
+          generated = generate_input_values(url, fetch_type:)
           return match_data if generated.blank?
 
           match_data[:url] = generated[:url]
 
           unless match_data[:cached]
-            match_data[:content] = GitHub::API.open_rest(generated[:url], parse_json: false)
+            if Homebrew::EnvConfig.no_github_api?
+              raise "#{Utils.demodulize(name)} cannot be used when `HOMEBREW_NO_GITHUB_API` is set"
+            end
+
+            match_data[:content] = if fetch_type == :graphql_api
+              # Use the GraphQL API to fetch minimal data and structure the JSON
+              # to match REST API responses
+              releases = GitHub::API.open_graphql(
+                RELEASE_TAGS_QUERY,
+                variables: {
+                  owner: generated[:username],
+                  name:  generated[:repository],
+                },
+              )&.dig("repository", "releases", "nodes")
+              if releases.present?
+                rest_releases = releases.compact.map do |release|
+                  {
+                    tag_name:   release["tagName"],
+                    draft:      release["isDraft"],
+                    prerelease: release["isPrerelease"],
+                  }
+                end
+                "#{JSON.pretty_generate(rest_releases)}\n"
+              end
+            else
+              GitHub::API.open_rest(generated[:url], parse_json: false)
+            end
             content = match_data[:content]
           end
           return match_data if content.blank?
