@@ -65,12 +65,29 @@ RSpec.describe Commands do
   end
 
   specify "::internal_commands omits commands hidden from the manpage" do
-    hidden_parser = instance_double(Homebrew::CLI::Parser, hide_from_man_page: true)
-    allow(Homebrew::CLI::Parser).to receive(:from_cmd_path).and_call_original
-    allow(Homebrew::CLI::Parser).to receive(:from_cmd_path).with(Commands::HOMEBREW_CMD_PATH/"rbcmd.rb")
-                                                           .and_return(hidden_parser)
+    (cmd_path/"rbcmd.rb").write("hide_from_man_page!\n")
 
     expect(described_class.internal_commands).not_to include("rbcmd")
+  end
+
+  specify "::internal_commands doesn't build command parsers" do
+    (cmd_path/"rbcmd.rb").write("hide_from_man_page!\n")
+    expect(Homebrew::CLI::Parser).not_to receive(:from_cmd_path)
+
+    described_class.internal_commands
+  end
+
+  specify "::internal_commands and ::internal_developer_commands omit only commands with hidden parsers" do
+    stub_const("Commands::HOMEBREW_CMD_PATH", HOMEBREW_LIBRARY_PATH/"cmd")
+    stub_const("Commands::HOMEBREW_DEV_CMD_PATH", HOMEBREW_LIBRARY_PATH/"dev-cmd")
+    listed = described_class.internal_commands + described_class.internal_developer_commands
+    ruby_cmd_paths = Commands::HOMEBREW_CMD_PATH.glob("*.rb") + Commands::HOMEBREW_DEV_CMD_PATH.glob("*.rb")
+    mismatched = ruby_cmd_paths.select do |ruby_cmd_path|
+      listed.include?(ruby_cmd_path.basename(".rb").to_s) ==
+        (Homebrew::CLI::Parser.from_cmd_path(ruby_cmd_path)&.hide_from_man_page == true)
+    end
+
+    expect(mismatched).to be_empty
   end
 
   specify "::internal_developer_commands" do
@@ -175,10 +192,7 @@ RSpec.describe Commands do
       mktmpdir do |cache|
         stub_const("HOMEBREW_CACHE", cache)
         allow(described_class).to receive(:external_commands).and_return(["external"])
-        hidden_parser = instance_double(Homebrew::CLI::Parser, hide_from_man_page: true)
-        allow(Homebrew::CLI::Parser).to receive(:from_cmd_path).and_call_original
-        allow(Homebrew::CLI::Parser).to receive(:from_cmd_path).with(Commands::HOMEBREW_CMD_PATH/"rbcmd.rb")
-                                                               .and_return(hidden_parser)
+        (cmd_path/"rbcmd.rb").write("hide_from_man_page!\n")
 
         described_class.rebuild_commands_completion_list
 

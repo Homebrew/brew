@@ -10,9 +10,6 @@ module Homebrew
   module Aliases
     extend Utils::Output::Mixin
 
-    # Lazily computed to avoid a load-time cycle: `Commands.internal_commands`
-    # requires every `cmd/*.rb`, including `cmd/alias.rb`, which itself
-    # requires this file.
     sig { returns(T::Array[String]) }
     def self.reserved
       @reserved ||= T.let(
