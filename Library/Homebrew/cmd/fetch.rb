@@ -205,7 +205,15 @@ module Homebrew
         # With `--all-platforms`, a cask without `on_system` blocks resolves
         # identically everywhere, so one combination covers the whole matrix.
         cask_combinations = args.os_arch_combinations
-        cask_combinations = cask_combinations.first(1) if args.all_platforms? && !cask.on_system_blocks_exist?
+
+        supports_all_platforms = cask_combinations.all? do |os, arch|
+          tag = Utils::Bottles::Tag.from_arg(nil, os:, arch:)
+          cask.platform_supported?(tag)
+        end
+
+        if args.all_platforms? && !cask.on_system_blocks_exist? && supports_all_platforms
+          cask_combinations = cask_combinations.first(1)
+        end
 
         downloads = T.let([], T::Array[Cask::Download])
         enqueued_urls = Set.new

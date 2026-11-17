@@ -236,6 +236,26 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
         end)
     end
 
+    it "fetches platform-specific artifacts with `--all-platforms` flag" do
+      cask = Cask::CaskLoader.from_content(<<~RUBY)
+        cask "test-cask" do
+          version "1.2.3"
+          sha256 "9a1c0967baa46828930ccbbc88668d1b0db07e6edf778800ed4da073c00054f8"
+
+          url "https://example.com/linux-arm64.zip"
+          homepage "https://brew.sh/"
+
+          depends_on arch: :arm64
+          depends_on :linux
+        end
+      RUBY
+
+      cmd = described_class.new(["--cask", "--all-platforms", cask.token])
+      downloads = cmd.cask_downloads(cask)
+                     .map { |download| File.basename(download.url.to_s) }
+      expect(downloads).to contain_exactly("linux-arm64.zip")
+    end
+
     it "collects one download per distinct URL across all platforms" do
       cmd = described_class.new(["--cask", "--all-platforms", "sha256-os"])
       basenames = cmd.cask_downloads(Cask::CaskLoader.load("sha256-os"))
