@@ -40,19 +40,6 @@ module OS
       GCC = OS::LINUX_PREFERRED_GCC_RUNTIME_FORMULA
       private_constant :GLIBC, :GCC
 
-      sig { void }
-      def init_global_dep_tree_if_needed!
-        return if building_global_dep_tree?
-        return unless ::DevelopmentTools.needs_build_formulae?
-        return if global_dep_tree.key?(GLIBC) && global_dep_tree.key?(GCC)
-
-        building_global_dep_tree!
-        global_dep_tree[GLIBC] = Set.new(global_deps_for(GLIBC))
-        # gcc depends on glibc
-        global_dep_tree[GCC] = Set.new([*global_deps_for(GCC), GLIBC, *@@global_dep_tree[GLIBC]])
-        built_global_dep_tree!
-      end
-
       sig { params(name: String).returns(T.nilable(::Formula)) }
       def formula_for(name)
         @formula_for ||= T.let({}, T.nilable(T::Hash[String, ::Formula]))
@@ -85,12 +72,15 @@ module OS
       @@building_global_dep_tree = T.let(false, T::Boolean)
 
       sig { void }
-      def building_global_dep_tree!
-        @@building_global_dep_tree = true
-      end
+      def init_global_dep_tree_if_needed!
+        return if building_global_dep_tree?
+        return unless ::DevelopmentTools.needs_build_formulae?
+        return if global_dep_tree.key?(GLIBC) && global_dep_tree.key?(GCC)
 
-      sig { void }
-      def built_global_dep_tree!
+        @@building_global_dep_tree = true
+        global_dep_tree[GLIBC] = Set.new(global_deps_for(GLIBC))
+        # gcc depends on glibc
+        global_dep_tree[GCC] = Set.new([*global_deps_for(GCC), GLIBC, *@@global_dep_tree[GLIBC]])
         @@building_global_dep_tree = false
       end
 

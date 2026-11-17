@@ -104,7 +104,7 @@ class CacheStoreDatabase
   # Closes the underlying database (if it is created and open).
   sig { void }
   def write_if_dirty!
-    return unless dirty?
+    return unless @dirty
 
     cache_path.dirname.mkpath
     cache_path.atomic_write(JSON.dump(@db))
@@ -179,12 +179,6 @@ class CacheStoreDatabase
   sig { void }
   def dirty!
     @dirty = true
-  end
-
-  # Returns `true` if the cache needs to be written to disk.
-  sig { returns(T::Boolean) }
-  def dirty?
-    !!@dirty
   end
 end
 require "cache_store/cache_store"

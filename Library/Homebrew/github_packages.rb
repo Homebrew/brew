@@ -218,7 +218,9 @@ class GitHubPackages
     if keep_old
       download(user, token, skopeo, image_uri, root, dry_run:)
     else
-      write_image_layout(root)
+      image_layout = { imageLayoutVersion: "1.0.0" }
+      validate_schema!(IMAGE_LAYOUT_SCHEMA_URI, image_layout)
+      write_hash(root, image_layout, "oci-layout")
     end
 
     blobs = root/"blobs/sha256"
@@ -291,7 +293,8 @@ class GitHubPackages
       local_file = tag_hash["local_filename"]
       odebug "Uploading #{local_file}"
 
-      tar_gz_sha256 = write_tar_gz(local_file, blobs)
+      tar_gz_sha256 = Digest::SHA256.file(local_file).hexdigest
+      FileUtils.ln local_file, blobs/tar_gz_sha256, force: true
 
       tab = tag_hash["tab"]
       architecture = TAB_ARCH_TO_PLATFORM_ARCHITECTURE[tab["arch"].presence || bottle_tag.standardized_arch.to_s]
@@ -331,7 +334,14 @@ class GitHubPackages
         end
       end
 
-      config_json_sha256, config_json_size = write_image_config(platform_hash, tar_sha256.hexdigest, blobs)
+      image_config = platform_hash.merge({
+        rootfs: {
+          type:     "layers",
+          diff_ids: ["sha256:#{tar_sha256.hexdigest}"],
+        },
+      })
+      validate_schema!(IMAGE_CONFIG_SCHEMA_URI, image_config)
+      config_json_sha256, config_json_size = write_hash(blobs, image_config)
 
       documentation = "https://formulae.brew.sh/formula/#{formula_name}" if formula_core_tap
 
@@ -403,11 +413,26 @@ class GitHubPackages
       }.compact
     end
 
-    index_json_sha256, index_json_size = write_image_index(manifests, blobs, formula_annotations_hash)
+    image_index = {
+      schemaVersion: 2,
+      manifests:,
+      annotations:   formula_annotations_hash,
+    }
+    validate_schema!(IMAGE_INDEX_SCHEMA_URI, image_index)
+    index_json_sha256, index_json_size = write_hash(blobs, image_index)
     raise "Image index too large!" if index_json_size >= 4 * 1024 * 1024 # GitHub will error 500 if too large
 
-    write_index_json(index_json_sha256, index_json_size, root,
-                     "org.opencontainers.image.ref.name" => version_rebuild)
+    index_json = {
+      schemaVersion: 2,
+      manifests:     [{
+        mediaType:   "application/vnd.oci.image.index.v1+json",
+        digest:      "sha256:#{index_json_sha256}",
+        size:        index_json_size,
+        annotations: { "org.opencontainers.image.ref.name" => version_rebuild },
+      }],
+    }
+    validate_schema!(IMAGE_INDEX_SCHEMA_URI, index_json)
+    write_hash(root, index_json, "index.json")
 
     puts
     args = ["copy", "--retry-times=3", "--format=oci", "--all", "oci:#{root}", image_uri.to_s]
@@ -571,59 +596,6 @@ class GitHubPackages
     end
 
     [formula_name, org, repo, version, rebuild, version_rebuild, image_name, image_uri, keep_old]
-  end
-
-  sig { params(root: Pathname).returns([String, Integer]) }
-  def write_image_layout(root)
-    image_layout = { imageLayoutVersion: "1.0.0" }
-    validate_schema!(IMAGE_LAYOUT_SCHEMA_URI, image_layout)
-    write_hash(root, image_layout, "oci-layout")
-  end
-
-  sig { params(local_file: String, blobs: Pathname).returns(String) }
-  def write_tar_gz(local_file, blobs)
-    tar_gz_sha256 = Digest::SHA256.file(local_file)
-                                  .hexdigest
-    FileUtils.ln local_file, blobs/tar_gz_sha256, force: true
-    tar_gz_sha256
-  end
-
-  sig { params(platform_hash: T::Hash[T.any(String, Symbol), T.untyped], tar_sha256: String, blobs: Pathname).returns([String, Integer]) }
-  def write_image_config(platform_hash, tar_sha256, blobs)
-    image_config = platform_hash.merge({
-      rootfs: {
-        type:     "layers",
-        diff_ids: ["sha256:#{tar_sha256}"],
-      },
-    })
-    validate_schema!(IMAGE_CONFIG_SCHEMA_URI, image_config)
-    write_hash(blobs, image_config)
-  end
-
-  sig { params(manifests: T::Array[T::Hash[T.any(String, Symbol), T.untyped]], blobs: Pathname, annotations: T::Hash[String, String]).returns([String, Integer]) }
-  def write_image_index(manifests, blobs, annotations)
-    image_index = {
-      schemaVersion: 2,
-      manifests:,
-      annotations:,
-    }
-    validate_schema!(IMAGE_INDEX_SCHEMA_URI, image_index)
-    write_hash(blobs, image_index)
-  end
-
-  sig { params(index_json_sha256: String, index_json_size: Integer, root: Pathname, annotations: T::Hash[String, String]).void }
-  def write_index_json(index_json_sha256, index_json_size, root, annotations)
-    index_json = {
-      schemaVersion: 2,
-      manifests:     [{
-        mediaType:   "application/vnd.oci.image.index.v1+json",
-        digest:      "sha256:#{index_json_sha256}",
-        size:        index_json_size,
-        annotations:,
-      }],
-    }
-    validate_schema!(IMAGE_INDEX_SCHEMA_URI, index_json)
-    write_hash(root, index_json, "index.json")
   end
 
   sig { params(directory: Pathname, hash: T::Hash[T.any(String, Symbol), T.untyped], filename: T.nilable(String)).returns([String, Integer]) }

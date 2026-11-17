@@ -44,7 +44,7 @@ module Cask
 
         return Pathname.glob(metadata_versioned_path(version:, caskroom_path:).join("*")).max
       when :now
-        timestamp = new_timestamp
+        timestamp = Time.now.utc.strftime(TIMESTAMP_FORMAT)
       when Symbol
         raise CaskError, "Invalid timestamp symbol :#{timestamp}. Valid symbols are :latest and :now."
       end
@@ -86,13 +86,6 @@ module Cask
       end
 
       subdir
-    end
-
-    private
-
-    sig { params(time: Time).returns(String) }
-    def new_timestamp(time = Time.now)
-      time.utc.strftime(TIMESTAMP_FORMAT)
     end
   end
 end

@@ -1576,23 +1576,20 @@ class Tap # rubocop:disable Metrics/ClassLength
 
   private
 
-  sig { params(file: Pathname).returns(T.any(T::Array[String], T::Hash[String, T.untyped])) }
-  def read_formula_list(file)
-    JSON.parse file.read
-  rescue JSON::ParserError
-    opoo "#{file} contains invalid JSON"
-    {}
-  rescue Errno::ENOENT
-    {}
-  end
-
   sig { params(directory: String).returns(T::Hash[Symbol, T.untyped]) }
   def read_formula_list_directory(directory)
     list = {}
 
     Pathname.glob(path/directory).each do |exception_file|
       list_name = exception_file.basename.to_s.chomp(".json").to_sym
-      list_contents = read_formula_list exception_file
+      list_contents = begin
+        JSON.parse exception_file.read
+      rescue JSON::ParserError
+        opoo "#{exception_file} contains invalid JSON"
+        {}
+      rescue Errno::ENOENT
+        {}
+      end
 
       next if list_contents.blank?
 

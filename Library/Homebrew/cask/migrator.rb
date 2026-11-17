@@ -101,8 +101,17 @@ module Cask
       # Load the old cask from its own installed caskfile so that its artifacts (rather
       # than the artifacts of the cask it was renamed to) are the ones uninstalled.
       installed_old_cask = CaskLoader.load_from_installed_caskfile(old_caskfile)
+      # Artifacts the new cask installs too must be left alone: uninstalling them would
+      # remove them from the new cask, which stays installed.
       uninstallable, shared = installed_old_cask.artifacts.partition do |artifact|
-        !shared_with_new_cask?(artifact)
+        new_cask.artifacts.none? do |new_artifact|
+          if artifact.is_a?(Artifact::Relocated)
+            # Compare the paths these end up at, which is all that matters on disk.
+            new_artifact.is_a?(Artifact::Relocated) && new_artifact.target == artifact.target
+          else
+            new_artifact.instance_of?(artifact.class) && new_artifact.to_args == artifact.to_args
+          end
+        end
       end
 
       if dry_run
@@ -126,20 +135,6 @@ module Cask
 
       FileUtils.rm_rf old_caskroom_path
       FileUtils.ln_s new_caskroom_path.basename, old_caskroom_path
-    end
-
-    # Artifacts the new cask installs too must be left alone: uninstalling them would
-    # remove them from the new cask, which stays installed.
-    sig { params(artifact: Artifact::AbstractArtifact).returns(T::Boolean) }
-    def shared_with_new_cask?(artifact)
-      new_cask.artifacts.any? do |new_artifact|
-        if artifact.is_a?(Artifact::Relocated)
-          # Compare the paths these end up at, which is all that matters on disk.
-          new_artifact.is_a?(Artifact::Relocated) && new_artifact.target == artifact.target
-        else
-          new_artifact.instance_of?(artifact.class) && new_artifact.to_args == artifact.to_args
-        end
-      end
     end
 
     sig { params(old_caskfile: Pathname, dry_run: T::Boolean).void }

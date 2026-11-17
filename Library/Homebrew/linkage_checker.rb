@@ -209,7 +209,16 @@ class LinkageChecker
         rescue NotAKegError
           @system_dylibs << dylib
         rescue Errno::ENOENT
-          next if harmless_broken_link?(dylib)
+          # Skip (and don't report) harmless broken links.
+          # libgcc_s_* is referenced by programs that use the Java Service Wrapper,
+          # and is harmless on x86(_64) machines
+          # dyld will fall back to Apple libc++ if LLVM's is not available.
+          next if [
+            "/usr/lib/libgcc_s_ppc64.1.dylib",
+            "/opt/local/lib/libgcc/libgcc_s.1.dylib",
+            # TODO: Report linkage with `/usr/lib/libc++.1.dylib` when this link is broken.
+            "#{HOMEBREW_PREFIX}/opt/llvm/lib/libc++.1.dylib",
+          ].include?(dylib)
 
           if (dep = dylib_to_dep(dylib))
             broken_dep = (@broken_deps[dep] ||= [])
@@ -217,7 +226,7 @@ class LinkageChecker
           elsif dylib_found_in_shared_cache?(dylib)
             # In macOS Big Sur and later, system libraries do not exist on-disk and instead exist in a cache.
             @system_dylibs << dylib
-          elsif !system_framework?(dylib) && !broken_dylibs_allowed?(file.to_s)
+          elsif !dylib.start_with?("/System/Library/Frameworks/") && !broken_dylibs_allowed?(file.to_s)
             @broken_dylibs << dylib
           end
         else
@@ -354,26 +363,6 @@ class LinkageChecker
         (a <=> b).to_i
       end
     end
-  end
-
-  # Whether or not dylib is a harmless broken link, meaning that it's
-  # okay to skip (and not report) as broken.
-  sig { params(dylib: String).returns(T::Boolean) }
-  def harmless_broken_link?(dylib)
-    # libgcc_s_* is referenced by programs that use the Java Service Wrapper,
-    # and is harmless on x86(_64) machines
-    # dyld will fall back to Apple libc++ if LLVM's is not available.
-    [
-      "/usr/lib/libgcc_s_ppc64.1.dylib",
-      "/opt/local/lib/libgcc/libgcc_s.1.dylib",
-      # TODO: Report linkage with `/usr/lib/libc++.1.dylib` when this link is broken.
-      "#{HOMEBREW_PREFIX}/opt/llvm/lib/libc++.1.dylib",
-    ].include?(dylib)
-  end
-
-  sig { params(dylib: String).returns(T::Boolean) }
-  def system_framework?(dylib)
-    dylib.start_with?("/System/Library/Frameworks/")
   end
 
   # Display a list of things.

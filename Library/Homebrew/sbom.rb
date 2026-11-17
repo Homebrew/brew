@@ -252,8 +252,142 @@ class SBOM
     compiler_info = compiler_packages
     compiler_info = {} if bottling
 
-    packages = generate_packages_json(runtime_full, compiler_info, bottling:)
+    bottle = []
+    if bottle_package?(bottling:) &&
+       (bottle_info = get_bottle_info(source.bottle)) &&
+       (stable_version = source.version)
+      bottle << {
+        SPDXID:           bottle_spdx_id,
+        name:             name.to_s,
+        versionInfo:      stable_version.to_s,
+        filesAnalyzed:    false,
+        licenseDeclared:  assert_value(nil),
+        builtDate:        source_modified_time.iso8601,
+        licenseConcluded: assert_value(license),
+        downloadLocation: bottle_info.fetch("url"),
+        copyrightText:    assert_value(nil),
+        externalRefs:     [
+          {
+            referenceCategory: "PACKAGE-MANAGER",
+            referenceLocator:  SBOM.brew_purl([source.tap_name, name].compact.join("/"), stable_version),
+            referenceType:     "purl",
+          },
+        ],
+        checksums:        [
+          {
+            algorithm:     "SHA256",
+            checksumValue: bottle_info.fetch("sha256"),
+          },
+        ],
+      }
+    end
+
+    patches = source.patches.each_with_index.filter_map do |patch, index|
+      next unless patch.is_a?(ExternalPatch)
+
+      package = {
+        SPDXID:           SBOM.spdx_id("Patch-#{name}-#{index}"),
+        name:             "#{name} patch #{index}",
+        filesAnalyzed:    false,
+        licenseDeclared:  assert_value(nil),
+        licenseConcluded: assert_value(nil),
+        downloadLocation: assert_value(patch.url),
+        copyrightText:    assert_value(nil),
+        checksums:        [],
+        externalRefs:     [],
+      }
+      if (checksum = patch.resource.checksum.presence)
+        package[:checksums] = [
+          {
+            algorithm:     "SHA256",
+            checksumValue: checksum.hexdigest,
+          },
+        ]
+      end
+      package
+    end
+
+    source_purl = SBOM.brew_purl([source.tap_name, name].compact.join("/"), spec_version)
+
+    external_refs = T.let([
+      {
+        referenceCategory: "PACKAGE-MANAGER",
+        referenceLocator:  source_purl,
+        referenceType:     "purl",
+      },
+    ], T::Array[SPDXSymbolHash])
+
+    if (registry_pkg = Homebrew::Vulns::Identify.registry_package(source.url))
+      external_refs << {
+        referenceCategory: "PACKAGE-MANAGER",
+        referenceLocator:  registry_pkg.purl,
+        referenceType:     "purl",
+      }
+    end
+
+    packages = [
+      {
+        SPDXID:           SBOM.spdx_id("Archive-#{name}-src"),
+        name:             name.to_s,
+        versionInfo:      spec_version.to_s,
+        filesAnalyzed:    false,
+        licenseDeclared:  assert_value(nil),
+        builtDate:        source_modified_time.iso8601,
+        licenseConcluded: assert_value(license),
+        downloadLocation: source.url,
+        copyrightText:    assert_value(nil),
+        externalRefs:     external_refs,
+        checksums:        source.checksum.presence&.then do |checksum|
+          [{ algorithm: "SHA256", checksumValue: checksum.hexdigest }]
+        end || [],
+      },
+    ] + patches + runtime_full + compiler_info.values + bottle
     files = generate_files_json
+
+    runtime_relations = runtime_full.map do |dependency|
+      {
+        spdxElementId:      dependency[:SPDXID],
+        relationshipType:   "RUNTIME_DEPENDENCY_OF",
+        relatedSpdxElement: described_package_spdx_id(bottling:),
+      }
+    end
+
+    patch_relations = source.patches.each_with_index.filter_map do |patch, index|
+      next unless patch.is_a?(ExternalPatch)
+
+      {
+        spdxElementId:      SBOM.spdx_id("Patch-#{name}-#{index}"),
+        relationshipType:   "PATCH_APPLIED",
+        relatedSpdxElement: SBOM.spdx_id("Archive-#{name}-src"),
+      }
+    end
+
+    base_relations = T.let([], T::Array[SPDXSymbolHash])
+
+    if source.checksum.present?
+      base_relations << {
+        spdxElementId:      SBOM.spdx_id("File-#{name}"),
+        relationshipType:   "PACKAGE_OF",
+        relatedSpdxElement: SBOM.spdx_id("Archive-#{name}-src"),
+      }
+    end
+
+    unless bottling
+      base_relations << {
+        spdxElementId:      "SPDXRef-Compiler",
+        relationshipType:   "BUILD_TOOL_OF",
+        relatedSpdxElement: SBOM.spdx_id("Archive-#{name}-src"),
+      }
+
+      if compiler_info["SPDXRef-Stdlib"].present?
+        base_relations << {
+          spdxElementId:      "SPDXRef-Stdlib",
+          relationshipType:   "DEPENDENCY_OF",
+          relatedSpdxElement: described_package_spdx_id(bottling:),
+        }
+      end
+    end
+
     {
       SPDXID:            "SPDXRef-DOCUMENT",
       spdxVersion:       "SPDX-2.3",
@@ -267,7 +401,7 @@ class SBOM
       documentDescribes: packages.map { |dependency| dependency[:SPDXID] },
       files:,
       packages:,
-      relationships:     generate_relations_json(runtime_full, compiler_info, bottling:),
+      relationships:     runtime_relations + patch_relations + base_relations,
     }
   end
 
@@ -440,161 +574,6 @@ class SBOM
     packages
   end
 
-  sig {
-    params(
-      runtime_dependency_declaration: T::Array[SPDXSymbolHash],
-      compiler_declaration:           T::Hash[String, Object],
-      bottling:                       T::Boolean,
-    ).returns(T::Array[SPDXSymbolHash])
-  }
-  def generate_relations_json(runtime_dependency_declaration, compiler_declaration, bottling:)
-    runtime = runtime_dependency_declaration.map do |dependency|
-      {
-        spdxElementId:      dependency[:SPDXID],
-        relationshipType:   "RUNTIME_DEPENDENCY_OF",
-        relatedSpdxElement: described_package_spdx_id(bottling:),
-      }
-    end
-
-    patches = source.patches.each_with_index.filter_map do |patch, index|
-      next unless patch.is_a?(ExternalPatch)
-
-      {
-        spdxElementId:      SBOM.spdx_id("Patch-#{name}-#{index}"),
-        relationshipType:   "PATCH_APPLIED",
-        relatedSpdxElement: SBOM.spdx_id("Archive-#{name}-src"),
-      }
-    end
-
-    base = T.let([], T::Array[SPDXSymbolHash])
-
-    if source.checksum.present?
-      base << {
-        spdxElementId:      SBOM.spdx_id("File-#{name}"),
-        relationshipType:   "PACKAGE_OF",
-        relatedSpdxElement: SBOM.spdx_id("Archive-#{name}-src"),
-      }
-    end
-
-    unless bottling
-      base << {
-        spdxElementId:      "SPDXRef-Compiler",
-        relationshipType:   "BUILD_TOOL_OF",
-        relatedSpdxElement: SBOM.spdx_id("Archive-#{name}-src"),
-      }
-
-      if compiler_declaration["SPDXRef-Stdlib"].present?
-        base << {
-          spdxElementId:      "SPDXRef-Stdlib",
-          relationshipType:   "DEPENDENCY_OF",
-          relatedSpdxElement: described_package_spdx_id(bottling:),
-        }
-      end
-    end
-
-    runtime + patches + base
-  end
-
-  sig {
-    params(
-      runtime_dependency_declaration: T::Array[SPDXSymbolHash],
-      compiler_declaration:           T::Hash[String, SPDXSymbolHash],
-      bottling:                       T::Boolean,
-    ).returns(T::Array[SPDXSymbolHash])
-  }
-  def generate_packages_json(runtime_dependency_declaration, compiler_declaration, bottling:)
-    bottle = []
-    if bottle_package?(bottling:) &&
-       (bottle_info = get_bottle_info(source.bottle)) &&
-       (stable_version = source.version)
-      bottle << {
-        SPDXID:           bottle_spdx_id,
-        name:             name.to_s,
-        versionInfo:      stable_version.to_s,
-        filesAnalyzed:    false,
-        licenseDeclared:  assert_value(nil),
-        builtDate:        source_modified_time.iso8601,
-        licenseConcluded: assert_value(license),
-        downloadLocation: bottle_info.fetch("url"),
-        copyrightText:    assert_value(nil),
-        externalRefs:     [
-          {
-            referenceCategory: "PACKAGE-MANAGER",
-            referenceLocator:  SBOM.brew_purl([source.tap_name, name].compact.join("/"), stable_version),
-            referenceType:     "purl",
-          },
-        ],
-        checksums:        [
-          {
-            algorithm:     "SHA256",
-            checksumValue: bottle_info.fetch("sha256"),
-          },
-        ],
-      }
-    end
-
-    patches = source.patches.each_with_index.filter_map do |patch, index|
-      next unless patch.is_a?(ExternalPatch)
-
-      package = {
-        SPDXID:           SBOM.spdx_id("Patch-#{name}-#{index}"),
-        name:             "#{name} patch #{index}",
-        filesAnalyzed:    false,
-        licenseDeclared:  assert_value(nil),
-        licenseConcluded: assert_value(nil),
-        downloadLocation: assert_value(patch.url),
-        copyrightText:    assert_value(nil),
-        checksums:        [],
-        externalRefs:     [],
-      }
-      if (checksum = patch.resource.checksum.presence)
-        package[:checksums] = [
-          {
-            algorithm:     "SHA256",
-            checksumValue: checksum.hexdigest,
-          },
-        ]
-      end
-      package
-    end
-
-    source_purl = SBOM.brew_purl([source.tap_name, name].compact.join("/"), spec_version)
-
-    external_refs = T.let([
-      {
-        referenceCategory: "PACKAGE-MANAGER",
-        referenceLocator:  source_purl,
-        referenceType:     "purl",
-      },
-    ], T::Array[SPDXSymbolHash])
-
-    if (registry_pkg = Homebrew::Vulns::Identify.registry_package(source.url))
-      external_refs << {
-        referenceCategory: "PACKAGE-MANAGER",
-        referenceLocator:  registry_pkg.purl,
-        referenceType:     "purl",
-      }
-    end
-
-    [
-      {
-        SPDXID:           SBOM.spdx_id("Archive-#{name}-src"),
-        name:             name.to_s,
-        versionInfo:      spec_version.to_s,
-        filesAnalyzed:    false,
-        licenseDeclared:  assert_value(nil),
-        builtDate:        source_modified_time.iso8601,
-        licenseConcluded: assert_value(license),
-        downloadLocation: source.url,
-        copyrightText:    assert_value(nil),
-        externalRefs:     external_refs,
-        checksums:        source.checksum.presence&.then do |checksum|
-          [{ algorithm: "SHA256", checksumValue: checksum.hexdigest }]
-        end || [],
-      },
-    ] + patches + runtime_dependency_declaration + compiler_declaration.values + bottle
-  end
-
   sig { returns(T::Array[SPDXSymbolHash]) }
   def generate_files_json
     checksum = source.checksum.presence
@@ -678,7 +657,7 @@ class SBOM
 
   sig { params(bottling: T::Boolean).returns(T::Boolean) }
   def bottle_package?(bottling:)
-    !bottling && get_bottle_info(source.bottle).present? && spec_symbol == :stable && source.version.present?
+    !bottling && get_bottle_info(source.bottle).present? && source.spec == :stable && source.version.present?
   end
 
   sig { params(bottling: T::Boolean).returns(String) }
@@ -704,11 +683,6 @@ class SBOM
   def tap
     tap_name = source.tap_name
     Tap.fetch(tap_name) if tap_name
-  end
-
-  sig { returns(Symbol) }
-  def spec_symbol
-    source.spec
   end
 
   sig { returns(T.nilable(Version)) }

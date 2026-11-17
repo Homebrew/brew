@@ -77,7 +77,7 @@ module Cask
     def audit
       errors = Set.new
 
-      if !language && !(blocks = language_blocks).empty?
+      if !language && !(blocks = cask.instance_variable_get(:@dsl).instance_variable_get(:@language_blocks)).empty?
         sample_languages = if blocks.length > LANGUAGE_BLOCK_LIMIT && !@audit_new_cask
           sample_keys = blocks.keys.shuffle.take(LANGUAGE_BLOCK_LIMIT)
           ohai "Auditing a sample of available languages for #{cask}: " \
@@ -142,11 +142,6 @@ module Cask
         except:   @except,
       )
       audit.run!
-    end
-
-    sig { returns(T::Hash[T::Array[String], T.proc.returns(T.untyped)]) }
-    def language_blocks
-      cask.instance_variable_get(:@dsl).instance_variable_get(:@language_blocks)
     end
   end
 end

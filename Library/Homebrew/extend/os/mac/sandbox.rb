@@ -181,33 +181,28 @@ module OS
       sig { returns(String) }
       def seatbelt_profile
         ERB.new(SEATBELT_ERB).result_with_hash(
-          rules:                  profile.rules.map { |rule| seatbelt_rule(rule) },
+          rules:                  profile.rules.map do |rule|
+            s = +"("
+            s << (rule.allow ? "allow" : "deny")
+            s << " #{rule.operation}"
+            s << " network-outbound" if rule.allow && rule.operation == "network*"
+            if (filter = rule.filter)
+              path_filter = case filter.type
+              when :regex   then "regex #\"#{filter.path}\""
+              when :subpath then "subpath \"#{seatbelt_quote(filter.path)}\""
+              when :literal then "literal \"#{seatbelt_quote(filter.path)}\""
+              else raise ArgumentError, "Invalid path filter type: #{filter.type}"
+              end
+              s << " (#{path_filter})"
+            end
+            s << " (with #{rule.modifier})" if rule.modifier
+            s << ")"
+            s.freeze
+          end,
           network_access_allowed: profile.rules.none? do |rule|
             !rule.allow && rule.operation == "network*" && rule.filter.nil?
           end,
         )
-      end
-
-      sig { params(rule: T.untyped).returns(String) }
-      def seatbelt_rule(rule)
-        s = +"("
-        s << (rule.allow ? "allow" : "deny")
-        s << " #{rule.operation}"
-        s << " network-outbound" if rule.allow && rule.operation == "network*"
-        s << " (#{seatbelt_path_filter(rule.filter)})" if rule.filter
-        s << " (with #{rule.modifier})" if rule.modifier
-        s << ")"
-        s.freeze
-      end
-
-      sig { params(filter: T.untyped).returns(String) }
-      def seatbelt_path_filter(filter)
-        case filter.type
-        when :regex   then "regex #\"#{filter.path}\""
-        when :subpath then "subpath \"#{seatbelt_quote(filter.path)}\""
-        when :literal then "literal \"#{seatbelt_quote(filter.path)}\""
-        else raise ArgumentError, "Invalid path filter type: #{filter.type}"
-        end
       end
 
       # `"` and `\` are the only characters special inside a double-quoted

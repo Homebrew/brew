@@ -191,7 +191,6 @@ class Formula # rubocop:disable Metrics/ClassLength
   attr_reader :head
 
   # The currently active {SoftwareSpec}.
-  # @see #determine_active_spec
   sig { returns(SoftwareSpec) }
   attr_reader :active_spec
 
@@ -318,7 +317,10 @@ class Formula # rubocop:disable Metrics/ClassLength
     @stable = T.let(spec_eval(self.class.stable, :stable), T.nilable(SoftwareSpec))
     @head = T.let(spec_eval(self.class.head, :head), T.nilable(SoftwareSpec))
 
-    @active_spec = T.let(determine_active_spec(spec), SoftwareSpec)
+    requested_spec = (spec.to_sym == :head) ? head || stable : stable || head
+    raise FormulaSpecificationError, "#{full_name}: formula requires at least a URL" unless requested_spec
+
+    @active_spec = T.let(requested_spec, SoftwareSpec)
     @active_spec_sym = T.let(head? ? :head : :stable, Symbol)
     @python3 = T.let(nil, T.nilable(Pathname))
     validate_attributes!
@@ -453,12 +455,6 @@ class Formula # rubocop:disable Metrics/ClassLength
 
   sig { params(spec: SoftwareSpec).void }
   def add_global_deps_to_spec(spec); end
-
-  sig { params(requested: T.any(String, Symbol)).returns(SoftwareSpec) }
-  def determine_active_spec(requested)
-    spec = (requested.to_sym == :head) ? head || stable : stable || head
-    spec || raise(FormulaSpecificationError, "#{full_name}: formula requires at least a URL")
-  end
 
   sig { void }
   def validate_attributes!
@@ -1088,7 +1084,7 @@ class Formula # rubocop:disable Metrics/ClassLength
   # @api public
   sig { params(version: T.any(String, PkgVersion)).returns(Pathname) }
   def prefix(version = pkg_version)
-    versioned_prefix = versioned_prefix(version)
+    versioned_prefix = rack/version.to_s
     version = PkgVersion.parse(version) if version.is_a?(String)
     if !@prefix_returns_versioned_prefix && version == pkg_version &&
        versioned_prefix.directory? && Keg.new(versioned_prefix).optlinked?
@@ -4006,10 +4002,6 @@ class Formula # rubocop:disable Metrics/ClassLength
   def prepare_patches
     patchlist.grep(DATAPatch) { |p| p.path = path }
   end
-
-  # Returns the prefix for a given formula version number.
-  sig { params(version: T.any(String, Pathname, PkgVersion)).returns(Pathname) }
-  def versioned_prefix(version) = rack/version.to_s
 
   sig {
     params(

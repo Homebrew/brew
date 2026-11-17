@@ -18,8 +18,11 @@ class CVSDownloadStrategy < VCSDownloadStrategy
       elsif !@url.match?(%r{:[^/]+$})
         name
       else
-        mod, url = split_url(@url)
-        @url = T.let(url, String)
+        parts = @url.split(":")
+        mod = parts.pop
+        raise ArgumentError, "CVS URL #{@url.inspect} does not end with a module name" if mod.nil?
+
+        @url = T.let(parts.join(":"), String)
         mod
       end, String
     )
@@ -101,15 +104,5 @@ class CVSDownloadStrategy < VCSDownloadStrategy
              args:    [*quiet_flag, "update"],
              chdir:   cached_location,
              timeout: Utils::Timer.remaining(timeout)
-  end
-
-  sig { params(in_url: String).returns([String, String]) }
-  def split_url(in_url)
-    parts = in_url.split(":")
-    mod = parts.pop
-    raise ArgumentError, "CVS URL #{in_url.inspect} does not end with a module name" if mod.nil?
-
-    url = parts.join(":")
-    [mod, url]
   end
 end

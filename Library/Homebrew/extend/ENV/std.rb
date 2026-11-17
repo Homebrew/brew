@@ -53,7 +53,7 @@ module Stdenv
     end
 
     # Os is the default Apple uses for all its stuff so let's trust them
-    define_cflags "-Os #{SAFE_CFLAGS_FLAGS}"
+    CC_FLAG_VARS.each { |key| self[key] = "-Os #{SAFE_CFLAGS_FLAGS}" }
 
     begin
       send(compiler)
@@ -140,7 +140,9 @@ module Stdenv
   sig { void }
   def clang
     super
-    replace_in_cflags(/-Xarch_#{Hardware::CPU.arch_32_bit} (-march=\S*)/, '\1')
+    CC_FLAG_VARS.each do |key|
+      self[key] = fetch(key).sub(/-Xarch_#{Hardware::CPU.arch_32_bit} (-march=\S*)/, '\1') if key?(key)
+    end
     set_cpu_cflags
   end
 
@@ -156,19 +158,6 @@ module Stdenv
   end
 
   private
-
-  sig { params(before: Regexp, after: String).void }
-  def replace_in_cflags(before, after)
-    CC_FLAG_VARS.each do |key|
-      self[key] = fetch(key).sub(before, after) if key?(key)
-    end
-  end
-
-  # Convenience method to set all C compiler flags in one shot.
-  sig { params(val: String).void }
-  def define_cflags(val)
-    CC_FLAG_VARS.each { |key| self[key] = val }
-  end
 
   # Sets architecture-specific flags for every environment variable
   # given in the list `flags`.

@@ -59,13 +59,6 @@ module Cask
       }
       def install_phase(adopt: false, auto_updates: false, force: false, verbose: false, predecessor: nil,
                         command: SystemCommand)
-        run_installer(command:, verbose:)
-      end
-
-      private
-
-      sig { params(command: T.class_of(SystemCommand), verbose: T::Boolean).void }
-      def run_installer(command: SystemCommand, verbose: false)
         ohai "Running installer for #{cask} with `sudo` (which may request your password)..."
         unless path.exist?
           pkg = path.relative_path_from(cask.staged_path)
@@ -104,6 +97,8 @@ module Cask
           )
         end
       end
+
+      private
 
       sig {
         params(_blk: T.proc.params(choices_path: T.nilable(String)).void)

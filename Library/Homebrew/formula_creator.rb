@@ -155,23 +155,7 @@ module Homebrew
       end
 
       path.dirname.mkpath
-      path.write ERB.new(template, trim_mode: "<>").result(binding)
-      path
-    end
-
-    private
-
-    sig { params(name: String).returns(String) }
-    def latest_versioned_formula(name)
-      name_prefix = "#{name}@"
-      CoreTap.instance.formula_names
-             .select { |f| f.start_with?(name_prefix) }
-             .max_by { |v| Gem::Version.new(v.sub(name_prefix, "")) } || "python"
-    end
-
-    sig { returns(String) }
-    def template
-      <<~'ERB'
+      path.write ERB.new(<<~'ERB', trim_mode: "<>").result(binding)
         # Documentation: https://docs.brew.sh/Formula-Cookbook
         #                https://docs.brew.sh/rubydoc/Formula
         # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
@@ -349,6 +333,17 @@ module Homebrew
           end
         end
       ERB
+      path
+    end
+
+    private
+
+    sig { params(name: String).returns(String) }
+    def latest_versioned_formula(name)
+      name_prefix = "#{name}@"
+      CoreTap.instance.formula_names
+             .select { |f| f.start_with?(name_prefix) }
+             .max_by { |v| Gem::Version.new(v.sub(name_prefix, "")) } || "python"
     end
   end
 end

@@ -73,7 +73,51 @@ class Mktemp
     ).returns(T.type_parameter(:U))
   }
   def run(chdir: true, &_block)
-    @tmpdir = @path || create_tmpdir
+    @tmpdir = @path || begin
+      prefix_name = @prefix.tr "@", "AT"
+      tmpdir = if retain_in_cache?
+        tmp_dir = HOMEBREW_CACHE/"Sources/#{prefix_name}"
+        chmod_rm_rf(tmp_dir) # clear out previous staging directory
+        tmp_dir.mkpath
+        tmp_dir
+      elsif @compact
+        begin
+          compact_dir = @parent/"#{prefix_name[0]}-#{SecureRandom.alphanumeric(8)}"
+          compact_dir.mkdir(0700)
+          compact_dir
+        rescue Errno::EEXIST
+          retry
+        end
+      else
+        Pathname.new(Dir.mktmpdir("#{prefix_name}-", @parent.to_s))
+      end
+
+      # Make sure files inside the temporary directory have the same group as the
+      # brew instance.
+      #
+      # Reference from `man 2 open`
+      # > When a new file is created, it is given the group of the directory which
+      # contains it.
+      group_id = if HOMEBREW_BREW_FILE.grpowned?
+        HOMEBREW_BREW_FILE.stat.gid
+      else
+        Process.gid
+      end
+      begin
+        tmpdir.chown(nil, group_id)
+      rescue Errno::EPERM
+        require "etc"
+        group_name = begin
+          Etc.getgrgid(group_id)&.name
+        rescue ArgumentError
+          # Cover for misconfigured NSS setups
+          nil
+        end
+        opoo "Failed setting group \"#{group_name || group_id}\" on #{tmpdir}"
+      end
+
+      tmpdir
+    end
 
     begin
       if chdir
@@ -92,53 +136,6 @@ class Mktemp
   end
 
   private
-
-  sig { returns(Pathname) }
-  def create_tmpdir
-    prefix_name = @prefix.tr "@", "AT"
-    tmpdir = if retain_in_cache?
-      tmp_dir = HOMEBREW_CACHE/"Sources/#{prefix_name}"
-      chmod_rm_rf(tmp_dir) # clear out previous staging directory
-      tmp_dir.mkpath
-      tmp_dir
-    elsif @compact
-      begin
-        compact_dir = @parent/"#{prefix_name[0]}-#{SecureRandom.alphanumeric(8)}"
-        compact_dir.mkdir(0700)
-        compact_dir
-      rescue Errno::EEXIST
-        retry
-      end
-    else
-      Pathname.new(Dir.mktmpdir("#{prefix_name}-", @parent.to_s))
-    end
-
-    # Make sure files inside the temporary directory have the same group as the
-    # brew instance.
-    #
-    # Reference from `man 2 open`
-    # > When a new file is created, it is given the group of the directory which
-    # contains it.
-    group_id = if HOMEBREW_BREW_FILE.grpowned?
-      HOMEBREW_BREW_FILE.stat.gid
-    else
-      Process.gid
-    end
-    begin
-      tmpdir.chown(nil, group_id)
-    rescue Errno::EPERM
-      require "etc"
-      group_name = begin
-        Etc.getgrgid(group_id)&.name
-      rescue ArgumentError
-        # Cover for misconfigured NSS setups
-        nil
-      end
-      opoo "Failed setting group \"#{group_name || group_id}\" on #{tmpdir}"
-    end
-
-    tmpdir
-  end
 
   sig { params(path: Pathname).void }
   def chmod_rm_rf(path)

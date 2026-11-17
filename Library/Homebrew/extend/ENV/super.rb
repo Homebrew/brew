@@ -98,8 +98,24 @@ module Superenv
     self["MAKEFLAGS"] ||= "-j#{determine_make_jobs}"
     self["RUSTC_WRAPPER"] = "#{HOMEBREW_SHIMS_PATH}/shared/rustc_wrapper"
     self["HOMEBREW_RUSTFLAGS"] = Hardware.rustflags_target_cpu(effective_arch)
-    self["PATH"] = determine_path&.to_s
-    self["PKG_CONFIG_PATH"] = determine_pkg_config_path&.to_s
+    path = PATH.new(Superenv.bin)
+    # Formula dependencies can override standard tools.
+    path.append(deps.map(&:opt_bin))
+    path.append(homebrew_extra_paths)
+    path.append("/usr/bin", "/bin", "/usr/sbin", "/sbin")
+    begin
+      if (path_cc = homebrew_cc) && path_cc.match?(GNU_GCC_REGEXP)
+        path.append(gcc_version_formula(path_cc).opt_bin)
+      end
+    rescue FormulaUnavailableError
+      # Don't fail and don't add these formulae to the path if they don't exist.
+      nil
+    end
+    self["PATH"] = path.existing&.to_s
+    self["PKG_CONFIG_PATH"] = PATH.new(
+      deps.map { |d| d.opt_lib/"pkgconfig" },
+      deps.map { |d| d.opt_share/"pkgconfig" },
+    ).existing&.to_s
     self["PKG_CONFIG_LIBDIR"] = (determine_pkg_config_libdir || "").to_s
     self["HOMEBREW_CCCFG"] = determine_cccfg
     self["HOMEBREW_OPTIMIZATION_LEVEL"] = compiler.match?(GNU_GCC_REGEXP) ? "O2" : "Os"
@@ -108,18 +124,54 @@ module Superenv
     self["HOMEBREW_CELLAR"] = HOMEBREW_CELLAR.to_s
     self["HOMEBREW_OPT"] = "#{HOMEBREW_PREFIX}/opt"
     self["HOMEBREW_TEMP"] = HOMEBREW_TEMP.to_s
-    self["HOMEBREW_OPTFLAGS"] = determine_optflags
+    self["HOMEBREW_OPTFLAGS"] = begin
+      Hardware::CPU.optimization_flags.fetch(effective_arch)
+    rescue KeyError
+      odebug "Building a bottle for custom architecture (#{effective_arch})..."
+      Hardware::CPU.arch_flag(effective_arch)
+    end
     self["HOMEBREW_MAKE_JOBS"] = determine_make_jobs.to_s
-    self["CMAKE_PREFIX_PATH"] = determine_cmake_prefix_path&.to_s
-    self["CMAKE_FRAMEWORK_PATH"] = determine_cmake_frameworks_path&.to_s
-    self["CMAKE_INCLUDE_PATH"] = determine_cmake_include_path&.to_s
-    self["CMAKE_LIBRARY_PATH"] = determine_cmake_library_path&.to_s
-    self["ACLOCAL_PATH"] = determine_aclocal_path&.to_s
+    self["CMAKE_PREFIX_PATH"] = PATH.new(
+      Superenv.bin&.parent,
+      keg_only_deps.map(&:opt_prefix),
+      HOMEBREW_PREFIX.to_s,
+    ).existing&.to_s
+    self["CMAKE_FRAMEWORK_PATH"] = PATH.new(
+      deps.map(&:opt_frameworks),
+      homebrew_extra_cmake_frameworks_paths,
+    ).existing&.to_s
+    self["CMAKE_INCLUDE_PATH"] = PATH.new(homebrew_extra_cmake_include_paths).existing&.to_s
+    self["CMAKE_LIBRARY_PATH"] = PATH.new(homebrew_extra_cmake_library_paths).existing&.to_s
+    self["ACLOCAL_PATH"] = PATH.new(
+      keg_only_deps.map { |d| d.opt_share/"aclocal" },
+      HOMEBREW_PREFIX/"share/aclocal",
+    ).existing&.to_s
     self["M4"] = "#{HOMEBREW_PREFIX}/opt/m4/bin/m4" if deps.any? { |d| d.name == "libtool" }
-    self["HOMEBREW_ISYSTEM_PATHS"] = determine_isystem_paths&.to_s
-    self["HOMEBREW_INCLUDE_PATHS"] = determine_include_paths&.to_s
-    self["HOMEBREW_LIBRARY_PATHS"] = determine_library_paths&.to_s
-    self["HOMEBREW_DEPENDENCIES"] = determine_dependencies
+    self["HOMEBREW_ISYSTEM_PATHS"] = PATH.new(
+      HOMEBREW_PREFIX/"include",
+      homebrew_extra_isystem_paths,
+    ).existing&.to_s
+    self["HOMEBREW_INCLUDE_PATHS"] = PATH.new(keg_only_deps.map(&:opt_include)).existing&.to_s
+    library_paths = []
+    if compiler.match?(GNU_GCC_REGEXP)
+      # Add path to GCC runtime libs for version being used to compile,
+      # so that the linker will find those libs before any that may be linked in $HOMEBREW_PREFIX/lib.
+      # https://github.com/Homebrew/brew/pull/11459#issuecomment-851075936
+      begin
+        f = gcc_version_formula(compiler.to_s)
+      rescue FormulaUnavailableError
+        nil
+      else
+        library_paths << (f.opt_lib/"gcc"/f.version.major) if f.any_version_installed?
+      end
+    end
+    # Don't add `llvm` to library paths; this leads to undesired linkage to LLVM's `libunwind`
+    library_paths += keg_only_deps.reject { |dep| dep.name.match?(/^llvm(@\d+)?$/) }
+                                  .map(&:opt_lib)
+    library_paths << (HOMEBREW_PREFIX/"lib")
+    library_paths += homebrew_extra_library_paths
+    self["HOMEBREW_LIBRARY_PATHS"] = PATH.new(library_paths).existing&.to_s
+    self["HOMEBREW_DEPENDENCIES"] = deps.map(&:name).join(",")
     self["HOMEBREW_FORMULA_PREFIX"] = formula.prefix.to_s if formula
     # Prevent the OpenSSL rust crate from building a vendored OpenSSL.
     # https://github.com/sfackler/rust-openssl/blob/994e5ff8c63557ab2aa85c85cc6956b0b0216ca7/openssl/src/lib.rs#L65
@@ -194,38 +246,9 @@ module Superenv
         .map { |d| d.opt_libexec/"bin" }
   end
 
-  sig { returns(T.nilable(PATH)) }
-  def determine_path
-    path = PATH.new(Superenv.bin)
-
-    # Formula dependencies can override standard tools.
-    path.append(deps.map(&:opt_bin))
-    path.append(homebrew_extra_paths)
-    path.append("/usr/bin", "/bin", "/usr/sbin", "/sbin")
-
-    begin
-      if (cc = homebrew_cc) && cc.match?(GNU_GCC_REGEXP)
-        path.append(gcc_version_formula(cc).opt_bin)
-      end
-    rescue FormulaUnavailableError
-      # Don't fail and don't add these formulae to the path if they don't exist.
-      nil
-    end
-
-    path.existing
-  end
-
   sig { returns(T::Array[Pathname]) }
   def homebrew_extra_pkg_config_paths
     []
-  end
-
-  sig { returns(T.nilable(PATH)) }
-  def determine_pkg_config_path
-    PATH.new(
-      deps.map { |d| d.opt_lib/"pkgconfig" },
-      deps.map { |d| d.opt_share/"pkgconfig" },
-    ).existing
   end
 
   sig { returns(T.nilable(PATH)) }
@@ -235,30 +258,9 @@ module Superenv
     ).existing
   end
 
-  sig { returns(T.nilable(PATH)) }
-  def determine_aclocal_path
-    PATH.new(
-      keg_only_deps.map { |d| d.opt_share/"aclocal" },
-      HOMEBREW_PREFIX/"share/aclocal",
-    ).existing
-  end
-
   sig { returns(T::Array[Pathname]) }
   def homebrew_extra_isystem_paths
     []
-  end
-
-  sig { returns(T.nilable(PATH)) }
-  def determine_isystem_paths
-    PATH.new(
-      HOMEBREW_PREFIX/"include",
-      homebrew_extra_isystem_paths,
-    ).existing
-  end
-
-  sig { returns(T.nilable(PATH)) }
-  def determine_include_paths
-    PATH.new(keg_only_deps.map(&:opt_include)).existing
   end
 
   sig { returns(T::Array[Pathname]) }
@@ -266,53 +268,9 @@ module Superenv
     []
   end
 
-  sig { returns(T.nilable(PATH)) }
-  def determine_library_paths
-    paths = []
-    if compiler.match?(GNU_GCC_REGEXP)
-      # Add path to GCC runtime libs for version being used to compile,
-      # so that the linker will find those libs before any that may be linked in $HOMEBREW_PREFIX/lib.
-      # https://github.com/Homebrew/brew/pull/11459#issuecomment-851075936
-      begin
-        f = gcc_version_formula(compiler.to_s)
-      rescue FormulaUnavailableError
-        nil
-      else
-        paths << (f.opt_lib/"gcc"/f.version.major) if f.any_version_installed?
-      end
-    end
-
-    # Don't add `llvm` to library paths; this leads to undesired linkage to LLVM's `libunwind`
-    paths += keg_only_deps.reject { |dep| dep.name.match?(/^llvm(@\d+)?$/) }
-                          .map(&:opt_lib)
-    paths << (HOMEBREW_PREFIX/"lib")
-
-    paths += homebrew_extra_library_paths
-    PATH.new(paths).existing
-  end
-
-  sig { returns(String) }
-  def determine_dependencies
-    deps.map(&:name).join(",")
-  end
-
-  sig { returns(T.nilable(PATH)) }
-  def determine_cmake_prefix_path
-    PATH.new(
-      Superenv.bin&.parent,
-      keg_only_deps.map(&:opt_prefix),
-      HOMEBREW_PREFIX.to_s,
-    ).existing
-  end
-
   sig { returns(T::Array[Pathname]) }
   def homebrew_extra_cmake_include_paths
     []
-  end
-
-  sig { returns(T.nilable(PATH)) }
-  def determine_cmake_include_path
-    PATH.new(homebrew_extra_cmake_include_paths).existing
   end
 
   sig { returns(T::Array[Pathname]) }
@@ -320,35 +278,14 @@ module Superenv
     []
   end
 
-  sig { returns(T.nilable(PATH)) }
-  def determine_cmake_library_path
-    PATH.new(homebrew_extra_cmake_library_paths).existing
-  end
-
   sig { returns(T::Array[Pathname]) }
   def homebrew_extra_cmake_frameworks_paths
     []
   end
 
-  sig { returns(T.nilable(PATH)) }
-  def determine_cmake_frameworks_path
-    PATH.new(
-      deps.map(&:opt_frameworks),
-      homebrew_extra_cmake_frameworks_paths,
-    ).existing
-  end
-
   sig { returns(String) }
   def determine_make_jobs
     Homebrew::EnvConfig.make_jobs
-  end
-
-  sig { returns(String) }
-  def determine_optflags
-    Hardware::CPU.optimization_flags.fetch(effective_arch)
-  rescue KeyError
-    odebug "Building a bottle for custom architecture (#{effective_arch})..."
-    Hardware::CPU.arch_flag(effective_arch)
   end
 
   sig { returns(String) }
