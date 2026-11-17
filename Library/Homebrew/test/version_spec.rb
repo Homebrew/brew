@@ -317,7 +317,7 @@ RSpec.describe Version do
   end
 
   specify "erlang versions with dotted revisions" do
-    versions = %w[R16B02 R16B03.0]
+    versions = %w[R16b01 R16B02 R16B03.0]
     expect(versions.sort_by { |v| described_class.new(v) }).to eq(versions)
   end
 

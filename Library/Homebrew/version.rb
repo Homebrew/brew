@@ -802,7 +802,7 @@ class Version
           number = revision[2]
           raise "Invalid Erlang version token: #{token}" if letter.nil? || number.nil?
 
-          [Token.create(letter), Token.create(number)]
+          [Token.create(letter.upcase), Token.create(number)]
         else
           [Token.create(token)]
         end
