@@ -1602,9 +1602,8 @@ A versioned cask may only be created for a release line that meets the [acceptan
 Casks pinned to a specific version of the application (e.g. [`corretto@11`](https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/c/corretto%4011.rb)) should use the same token as the standard cask with a suffix of `@<version-number>`.
 For Corretto (`corretto`), pinned to version 11, the token is `corretto@11`, while the most recent version does not have a suffix.
 
-When every release line is versioned and the unsuffixed token should always mean the newest one, make it an alias instead of a cask of its own: a symlink in the `Aliases` directory at the tap root that points at the cask file, as [homebrew/core does for `python3`](https://github.com/Homebrew/homebrew-core/tree/HEAD/Aliases).
-With `Aliases/foo -> ../Casks/f/foo@2.rb`, `brew install foo` installs `foo@2` without a rename warning and the alias is moved to `foo@3` when that is released.
-If `foo` used to be a cask of its own, also add it to `cask_renames.json` so that existing installations are migrated to the versioned token.
+The most recent version can also get a versioned name through an alias: a symlink in the `Aliases` directory at the tap root that points at the cask file, as [homebrew/core does for `dotnet@11`](https://github.com/Homebrew/homebrew-core/tree/HEAD/Aliases).
+With `Aliases/foo@2 -> ../Casks/f/foo.rb`, `brew install --cask foo@2` installs `foo` while it is on version 2.
 An alias must not share its name with a cask in the same tap.
 
 #### Casks for alternative release channels
