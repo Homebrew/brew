@@ -40,7 +40,7 @@ RSpec.describe Utils::InfoDisplay do
                ),
                installation_status: ["Installed"], source_url: nil,
                installed_versions: [], verbose: false
-             )).to eq("==> example (Example): 1.0 → 2.0 (auto_updates)\nInstalled")
+             )).to eq("==> example (Example): 1.0 → 2.0 (auto updates)\nInstalled")
     end
 
     it "places cask metadata after the source" do
@@ -70,7 +70,7 @@ RSpec.describe Utils::InfoDisplay do
         installed_version: "1.0", installed: true, outdated: true, auto_updates: true
       )
 
-      expect(described_class.package_title(title)).to eq("==> example (Example, Another): 1.0 → 2.0 (auto_updates)")
+      expect(described_class.package_title(title)).to eq("==> example (Example, Another): 1.0 → 2.0 (auto updates)")
     end
 
     it "formats a HEAD-only outdated formula" do

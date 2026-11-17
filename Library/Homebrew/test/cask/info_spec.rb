@@ -493,13 +493,13 @@ RSpec.describe Cask::Info, :cask do
       .to output(/Required: .*#{unsatisfied_arch} architecture.*✘/).to_stdout
   end
 
-  it "prints auto_updates if the Cask has `auto_updates true`" do
+  it "prints auto updates if the Cask has `auto_updates true`" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 
     expect do
       described_class.info(Cask::CaskLoader.load("with-auto-updates"), args:)
     end.to output(<<~EOS).to_stdout
-      #{oh1_title uninstalled("with-auto-updates")} (AutoUpdates): 1.0 (auto_updates)
+      #{oh1_title uninstalled("with-auto-updates")} (AutoUpdates): 1.0 (auto updates)
       https://brew.sh/autoupdates
       Not installed
       From: https://github.com/Homebrew/homebrew-cask/blob/HEAD/Casks/w/with-auto-updates.rb
