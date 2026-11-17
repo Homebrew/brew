@@ -195,16 +195,17 @@ RSpec.describe Version do
   end
 
   specify "sorting versions with pre-release and string tokens" do
-    permutations = [%w[1a 1alpha 1], %w[1.0a 1.0rc1 1.0]].flat_map do |versions|
-      versions.map { |v| described_class.new(v) }.permutation.map do |permutation|
+    versions = [
+      %w[1alpha 1beta 1pre 1rc1 1 1a],
+      %w[1.0alpha 1.0beta 1.0pre 1.0rc1 1.0 1.0a],
+    ]
+    permutations = versions.flat_map do |version_set|
+      version_set.map { |v| described_class.new(v) }.permutation.map do |permutation|
         [permutation.sort.map(&:to_s), permutation.max.to_s]
       end
     end
 
-    expect(permutations).to eq(
-      Array.new(6, [%w[1alpha 1 1a], "1a"]) +
-        Array.new(6, [%w[1.0rc1 1.0 1.0a], "1.0a"]),
-    )
+    expect(permutations.uniq).to eq(versions.map { |version_set| [version_set, version_set.last] })
   end
 
   specify "comparing beta versions" do
