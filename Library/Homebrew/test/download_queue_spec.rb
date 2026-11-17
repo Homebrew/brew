@@ -34,6 +34,316 @@ RSpec.describe Homebrew::DownloadQueue do
     download_queue.shutdown
   end
 
+  describe "#with_progress" do
+    before do
+      allow($stdout).to receive(:tty?).and_return(true)
+      ENV["TERM"] = "xterm-256color"
+      allow(downloadable).to receive(:fetched_size).and_return(nil)
+    end
+
+    it "displays new downloads before preparation or downloading finishes" do
+      displayed = Queue.new
+      both_displayed = Queue.new
+      release_download = Queue.new
+      second_download = instance_double(
+        Downloadable,
+        cached_download:                 HOMEBREW_CACHE/"downloads/second.tar.gz",
+        downloaded_and_valid?:           false,
+        downloader:                      nil,
+        download_queue_message:          "Bottle second",
+        staged_path_from_download_queue: nil,
+        fetched_size:                    nil,
+      )
+      allow(retryable_download).to receive(:fetch) { release_download.pop }
+      allow($stdout).to receive(:print) do |message|
+        displayed << message if message.include?("Bottle testball")
+        both_displayed << message if message.include?("Bottle testball") && message.include?("Bottle second")
+      end
+
+      download_queue.with_progress do
+        download_queue.enqueue(downloadable)
+        first_frame = displayed.pop(timeout: 2)
+        download_queue.enqueue(second_download)
+        expect([first_frame, both_displayed.pop(timeout: 2)])
+          .to match([include("Bottle testball"), include("Bottle testball", "Bottle second")])
+      end
+    ensure
+      2.times { release_download&.push(cached_download) }
+    end
+
+    it "clears progress before preparation output and resumes rendering" do
+      displayed = Queue.new
+      redrawn = Queue.new
+      release_download = Queue.new
+      output = +""
+      allow($stderr).to receive(:tty?).and_return(true)
+      allow(File).to receive(:identical?).and_call_original
+      allow(File).to receive(:identical?).with($stdout, $stderr).and_return(true)
+      allow(retryable_download).to receive(:fetch) { release_download.pop }
+      allow($stdout).to receive(:print) do |message|
+        output << message
+        displayed << true if message.include?("Bottle testball")
+        redrawn << true if message.include?("Bottle testball") && output.include?("preparation warning\n")
+      end
+      allow($stderr).to receive(:write) do |message|
+        output << message
+        message.bytesize
+      end
+
+      download_queue.with_progress do
+        download_queue.enqueue(downloadable)
+        displayed.pop(timeout: 2)
+        $stderr.puts "preparation warning"
+        redrawn.pop(timeout: 2)
+      end
+
+      expect(output).to match(/Bottle testball.*\e\[Jpreparation warning\n.*Bottle testball/m)
+    ensure
+      release_download&.push(cached_download)
+    end
+
+    it "resumes progress when a manifest fetch completes a partial line" do
+      displayed = Queue.new
+      release_download = Queue.new
+      manifest = instance_double(
+        Resource::BottleManifest,
+        cached_download:        HOMEBREW_CACHE/"downloads/manifest.json",
+        downloaded_and_valid?:  true,
+        downloader:             nil,
+        download_queue_message: "Bottle Manifest testball",
+        fetched_size:           nil,
+      )
+      allow(manifest).to receive(:is_a?) { |klass| klass == Resource::BottleManifest }
+      allow(retryable_download).to receive(:fetch) { release_download.pop }
+      allow($stdout).to receive(:print) do |message|
+        displayed << true if message.include?("Bottle testball")
+      end
+      allow($stdout).to receive(:write, &:bytesize)
+
+      download_queue.with_progress do
+        download_queue.enqueue(downloadable)
+        displayed.pop(timeout: 2)
+        $stdout.print "Preparing"
+        displayed.clear
+        download_queue.enqueue(manifest)
+        download_queue.fetch(only: Resource::BottleManifest, heading: "Manifests")
+        expect(displayed.pop(timeout: 2)).to be true
+      end
+    ensure
+      release_download&.push(cached_download)
+    end
+
+    it "retains coloured completion rows above active downloads without repeating them at fetch" do
+      allow(Tty).to receive_messages(color?: true, height: 1)
+      active_download = instance_double(Downloadable, download_queue_message: "Bottle active", fetched_size: nil)
+      first_future = Concurrent::Promises.resolvable_future
+      active_future = Concurrent::Promises.resolvable_future
+      download_queue.downloads[downloadable] = first_future
+      download_queue.downloads[active_download] = active_future
+      frames = Queue.new
+      output = +""
+      frame = +""
+      allow($stdout).to receive(:print) do |message|
+        output << message
+        frame << message
+        if message == Tty.end_synchronized_update
+          frames << frame
+          frame = +""
+        end
+      end
+      allow($stdout).to receive(:puts) do |*messages|
+        message = "#{messages.join("\n")}\n"
+        output << message
+        frame << message
+      end
+
+      first_frame = T.let(nil, T.nilable(String))
+      completed_frame = T.let(nil, T.nilable(String))
+      download_queue.with_progress do
+        first_frame = frames.pop(timeout: 2)
+        first_future.fulfill(cached_download)
+        completed_frame = Timeout.timeout(2) do
+          loop do
+            rendered = frames.pop
+            break rendered if rendered.include?("\e[32m\u2714\uFE0E\e[0m Bottle testball\n")
+          end
+        end
+        frames.pop(timeout: 2)
+        active_future.fulfill(cached_download)
+        Timeout.timeout(2) do
+          loop { break if frames.pop.include?("\e[32m\u2714\uFE0E\e[0m Bottle active\n") }
+        end
+      end
+      download_queue.fetch(heading: "Downloading bottles")
+
+      expect([first_frame, completed_frame, Tty.strip_ansi(output).scan("Bottle testball\n").length]).to match([
+        /\e\[34m.\e\[0m Bottle testball/,
+        /\e\[32m\u2714\uFE0E\e\[0m Bottle testball\n.*\e\[34m.\e\[0m Bottle active/m,
+        1,
+      ])
+      expect(output).not_to include("Downloading bottles")
+    end
+
+    it "retries unwritten completion rows without repeating rows already printed" do
+      second_download = instance_double(Downloadable, download_queue_message: "Bottle second", fetched_size: nil)
+      download_queue.downloads[downloadable] = Concurrent::Promises.fulfilled_future(cached_download)
+      download_queue.downloads[second_download] = Concurrent::Promises.fulfilled_future(cached_download)
+      failed = Queue.new
+      output = +""
+      allow($stdout).to receive(:print) { |message| output << message }
+      allow($stdout).to receive(:puts) do |*messages|
+        messages.flatten.each do |message|
+          if message.include?("Bottle second")
+            failed << true
+            raise Errno::EIO
+          end
+          output << "#{message}\n"
+        end
+      end
+
+      download_queue.with_progress do
+        raise "renderer did not attempt completion output" unless failed.pop(timeout: 2)
+      end
+      download_queue.fetch
+
+      expect([output.scan("Bottle testball\n").length, output.scan("Bottle second\n").length]).to eq([1, 1])
+    end
+  end
+
+  describe "progress output" do
+    let(:frames) { Queue.new }
+    let(:render_attempts) { Queue.new }
+    let(:render_event) { Concurrent::Event.new }
+    let(:progress) do
+      Homebrew::DownloadQueue::Progress.new do
+        frames << true
+        [[], ["active download"]]
+      end
+    end
+
+    before do
+      download_queue
+      allow($stdout).to receive(:print)
+      allow($stdout).to receive(:write, &:bytesize)
+      allow($stderr).to receive(:write, &:bytesize)
+      allow(Concurrent::Event).to receive(:new).and_return(render_event)
+      allow(render_event).to receive(:wait).and_wrap_original do |wait, timeout|
+        render_attempts << true
+        wait.call(timeout)
+      end
+    end
+
+    it "pauses render attempts during fetch and resumes afterwards" do
+      paused_frames = T.let(nil, T.nilable(Integer))
+      allow(progress).to receive(:resume).and_wrap_original do |resume|
+        frames.clear
+        render_attempts.clear
+        # Two wait entries guarantee a render-loop iteration between them.
+        2.times { raise "renderer did not attempt a refresh" unless render_attempts.pop(timeout: 2) }
+        paused_frames = frames.size
+        resume.call
+      end
+
+      progress.run do
+        frames.pop(timeout: 2)
+        download_queue.fetch
+        expect([paused_frames, frames.pop(timeout: 2)]).to eq([0, true])
+      end
+    end
+
+    test_each([false, true]) do |stderr_tty|
+      it "ignores stderr on a separate #{stderr_tty ? "terminal" : "log"} when tracking partial lines" do
+        allow($stderr).to receive(:tty?).and_return(stderr_tty)
+        allow(File).to receive(:identical?).and_call_original
+        allow(File).to receive(:identical?).with($stdout, $stderr).and_return(false)
+
+        progress.run do
+          frames.pop(timeout: 2)
+          $stdout.print "Preparing"
+          frames.clear
+          $stderr.puts "warning"
+          render_attempts.clear
+          2.times { raise "renderer did not attempt a refresh" unless render_attempts.pop(timeout: 2) }
+          premature_frames = frames.size
+          $stdout.puts " done"
+
+          expect([premature_frames, frames.pop(timeout: 2)]).to eq([0, true])
+        end
+      end
+    end
+
+    test_each([IOError, Errno::EPIPE, Errno::EIO]) do |error|
+      it "tolerates #{error} when clearing a visible frame" do
+        expect($stdout).to receive(:print).with("#{Tty.move_cursor_beginning}#{Tty.clear_to_end_of_screen}")
+                                          .at_least(:once).and_raise(error)
+
+        expect do
+          progress.run do
+            raise "renderer did not display a frame" unless frames.pop(timeout: 2)
+
+            progress.pause
+            progress.resume
+          end
+        end.not_to raise_error
+      end
+    end
+  end
+
+  it "does not replace downloads enqueued during a concurrent first read" do
+    download_queue
+    entered = Queue.new
+    release = Queue.new
+    interrupted = T.let(false, T::Boolean)
+    # Force a first read to overlap enqueue if the getter creates the hash.
+    trace = TracePoint.new(:call, :c_call) do |event|
+      next if event.method_id != :let
+      next unless event.self.equal?(T)
+      next unless Thread.current[:downloads_reader]
+      next if interrupted
+      next unless caller_locations.any? { |location| location.base_label == "downloads" }
+
+      interrupted = true
+      entered << true
+      release.pop
+    end
+    trace.enable
+    reader = Thread.new do
+      Thread.current[:downloads_reader] = true
+      download_queue.downloads
+      entered << true
+    end
+    raise "reader did not start" unless entered.pop(timeout: 2)
+
+    allow(downloadable).to receive(:downloaded_and_valid?).and_return(true)
+    download_queue.enqueue(downloadable)
+    release << true
+    reader.join
+
+    expect(download_queue.downloads).to have_key(downloadable)
+  ensure
+    trace&.disable
+    release&.push(true)
+    reader&.join
+  end
+
+  it "preserves a pause failure and resumes progress after fetch cleanup" do
+    progress = instance_double(Homebrew::DownloadQueue::Progress, resume: nil)
+    allow(Homebrew::DownloadQueue::Progress).to receive(:current).and_return(progress)
+    allow(progress).to receive(:pause).and_raise("pause failed")
+
+    expect(progress).to receive(:resume)
+    expect { download_queue.fetch(only: Resource::BottleManifest) }.to raise_error("pause failed")
+  end
+
+  it "resumes progress even when pruning fetched downloads fails" do
+    progress = instance_double(Homebrew::DownloadQueue::Progress, pause: nil, resume: nil)
+    allow(Homebrew::DownloadQueue::Progress).to receive(:current).and_return(progress)
+    allow(download_queue.downloads).to receive(:clear).and_raise("prune failed")
+
+    expect(progress).to receive(:resume)
+    expect { download_queue.fetch }.to raise_error("prune failed")
+  end
+
   it "reports rejected download errors in parallel mode and marks the fetch as failed" do
     download_queue.enqueue(downloadable)
 

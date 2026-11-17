@@ -300,26 +300,28 @@ module Homebrew
           early_fetch_heading = Install.combined_fetch_downloads_heading(formula_names: planned_fetch_names)
           shared_download_queue.print_heading(early_fetch_heading) if early_fetch_heading
           begin
-            unless only_upgrade_casks
-              formulae_prefetched = upgrade_outdated_formulae!(
-                formulae,
-                prefetch_only:        true,
-                download_queue:       shared_download_queue,
-                prefetch_names:       prefetched_formulae_names,
-                prefetch_upgrades:    [],
-                show_upgrade_summary: false,
-              )
-            end
-            unless only_upgrade_formulae
-              prefetched_casks = prefetch_outdated_casks!(
-                casks,
-                download_queue:      shared_download_queue,
-                prefetch_names:      prefetched_cask_names,
-                prefetch_upgrades:   [],
-                prefetch_casks:      prefetched_cask_upgrade_casks,
-                prefetch_installers: prefetched_cask_installers,
-                prefetch_errors:     prefetched_cask_errors,
-              )
+            shared_download_queue.with_progress do
+              unless only_upgrade_casks
+                formulae_prefetched = upgrade_outdated_formulae!(
+                  formulae,
+                  prefetch_only:        true,
+                  download_queue:       shared_download_queue,
+                  prefetch_names:       prefetched_formulae_names,
+                  prefetch_upgrades:    [],
+                  show_upgrade_summary: false,
+                )
+              end
+              unless only_upgrade_formulae
+                prefetched_casks = prefetch_outdated_casks!(
+                  casks,
+                  download_queue:      shared_download_queue,
+                  prefetch_names:      prefetched_cask_names,
+                  prefetch_upgrades:   [],
+                  prefetch_casks:      prefetched_cask_upgrade_casks,
+                  prefetch_installers: prefetched_cask_installers,
+                  prefetch_errors:     prefetched_cask_errors,
+                )
+              end
             end
             unless early_fetch_heading
               fetch_heading = Install.combined_fetch_downloads_heading(
