@@ -61,7 +61,24 @@ module Homebrew
 
         formulae_and_casks.each do |formula_or_cask|
           if formula_or_cask.is_a?(Cask::Cask)
-            unpack_cask(formula_or_cask, unpack_dir)
+            stage_dir = unpack_dir/"#{formula_or_cask.token}-#{formula_or_cask.version}"
+
+            odie "Destination #{stage_dir} already exists!" if stage_dir.exist? && !args.force?
+
+            oh1 "Unpacking #{Formatter.identifier(formula_or_cask.full_name)} to: #{stage_dir}"
+
+            download = Cask::Download.new(formula_or_cask)
+
+            downloaded_path = if download.downloaded?
+              download.verify_download_integrity(download.cached_download)
+              download.cached_download
+            else
+              download.fetch(quiet: false)
+            end
+
+            rm_rf stage_dir if args.force?
+            stage_dir.mkpath
+            UnpackStrategy.detect(downloaded_path).extract_nestedly(to: stage_dir, verbose: true)
           elsif (formula = T.cast(formula_or_cask, Formula))
             unpack_formula(formula, unpack_dir)
           end
@@ -98,28 +115,6 @@ module Homebrew
           system "git", "add", "-A"
           system "git", "commit", "-q", "-m", "brew-unpack"
         end
-      end
-
-      sig { params(cask: Cask::Cask, unpack_dir: Pathname).void }
-      def unpack_cask(cask, unpack_dir)
-        stage_dir = unpack_dir/"#{cask.token}-#{cask.version}"
-
-        odie "Destination #{stage_dir} already exists!" if stage_dir.exist? && !args.force?
-
-        oh1 "Unpacking #{Formatter.identifier(cask.full_name)} to: #{stage_dir}"
-
-        download = Cask::Download.new(cask)
-
-        downloaded_path = if download.downloaded?
-          download.verify_download_integrity(download.cached_download)
-          download.cached_download
-        else
-          download.fetch(quiet: false)
-        end
-
-        rm_rf stage_dir if args.force?
-        stage_dir.mkpath
-        UnpackStrategy.detect(downloaded_path).extract_nestedly(to: stage_dir, verbose: true)
       end
     end
   end

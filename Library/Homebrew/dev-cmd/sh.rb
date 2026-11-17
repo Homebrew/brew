@@ -41,10 +41,47 @@ module Homebrew
 
       sig { override.void }
       def run
-        prompt, notice = if args.ruby?
-          setup_ruby_environment!
+        if args.ruby?
+          Utils::GemSetup.install_bundler_gems!(setup_path: true)
+
+          prompt = "brew ruby"
+          notice = unless Homebrew::EnvConfig.no_env_hints?
+            <<~EOS
+              Your shell has been configured to use Homebrew's Ruby environment.
+              This includes the correct Ruby version, GEM_HOME, and bundle configuration.
+              Tools like RuboCop, Sorbet, and RSpec are available via `bundle exec`.
+              Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`).
+              When done, type `exit`.
+            EOS
+          end
         else
-          setup_build_environment!
+          ENV.activate_extensions!(env: args.env)
+
+          if Superenv.enabled_for?(args.env)
+            ENV.deps = Formula.installed.select do |f|
+              f.keg_only? && f.opt_prefix.directory?
+            end
+          end
+          ENV.setup_build_environment
+          if Superenv.enabled_for?(args.env)
+            # superenv stopped adding brew's bin but generally users will want it
+            ENV["PATH"] = PATH.new(ENV.fetch("PATH")).insert(1, HOMEBREW_PREFIX/"bin").to_s
+          end
+
+          ENV["VERBOSE"] = "1" if args.verbose?
+
+          prompt = "brew"
+          notice = unless Homebrew::EnvConfig.no_env_hints?
+            <<~EOS
+              Your shell has been configured to use Homebrew's build environment;
+              this should help you build stuff. Notably though, the system versions of
+              gem and pip will ignore our configuration and insist on using the
+              environment they were built under (mostly). Sadly, scons will also
+              ignore our configuration.
+              Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`).
+              When done, type `exit`.
+            EOS
+          end
         end
 
         preferred_path = Utils::Shell.preferred_path(default: "/bin/bash")
@@ -56,57 +93,6 @@ module Homebrew
         else
           system Utils::Shell.shell_with_prompt(prompt, preferred_path:, notice:)
         end
-      end
-
-      private
-
-      sig { returns([String, T.nilable(String)]) }
-      def setup_ruby_environment!
-        Utils::GemSetup.install_bundler_gems!(setup_path: true)
-
-        notice = unless Homebrew::EnvConfig.no_env_hints?
-          <<~EOS
-            Your shell has been configured to use Homebrew's Ruby environment.
-            This includes the correct Ruby version, GEM_HOME, and bundle configuration.
-            Tools like RuboCop, Sorbet, and RSpec are available via `bundle exec`.
-            Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`).
-            When done, type `exit`.
-          EOS
-        end
-
-        ["brew ruby", notice]
-      end
-
-      sig { returns([String, T.nilable(String)]) }
-      def setup_build_environment!
-        ENV.activate_extensions!(env: args.env)
-
-        if Superenv.enabled_for?(args.env)
-          ENV.deps = Formula.installed.select do |f|
-            f.keg_only? && f.opt_prefix.directory?
-          end
-        end
-        ENV.setup_build_environment
-        if Superenv.enabled_for?(args.env)
-          # superenv stopped adding brew's bin but generally users will want it
-          ENV["PATH"] = PATH.new(ENV.fetch("PATH")).insert(1, HOMEBREW_PREFIX/"bin").to_s
-        end
-
-        ENV["VERBOSE"] = "1" if args.verbose?
-
-        notice = unless Homebrew::EnvConfig.no_env_hints?
-          <<~EOS
-            Your shell has been configured to use Homebrew's build environment;
-            this should help you build stuff. Notably though, the system versions of
-            gem and pip will ignore our configuration and insist on using the
-            environment they were built under (mostly). Sadly, scons will also
-            ignore our configuration.
-            Hide these hints with `HOMEBREW_NO_ENV_HINTS=1` (see `man brew`).
-            When done, type `exit`.
-          EOS
-        end
-
-        ["brew", notice]
       end
     end
   end

@@ -503,13 +503,6 @@ module Homebrew
 
         return false if labels.include?("CI-syntax-only") || labels.include?("CI-no-bottles")
 
-        changed_packages(tap, original_commit).any? do |f|
-          !f.instance_of?(Cask::Cask)
-        end
-      end
-
-      sig { params(tap: Tap, original_commit: String).returns(T::Array[T.any(Formula, Cask::Cask)]) }
-      def changed_packages(tap, original_commit)
         formulae = Utils.popen_read("git", "-C", tap.path, "diff-tree",
                                     "-r", "--name-only", "--diff-filter=AM",
                                     original_commit, "HEAD", "--", tap.formula_dir)
@@ -538,7 +531,9 @@ module Homebrew
             nil
           end
         end
-        formulae + casks
+        (formulae + casks).any? do |f|
+          !f.instance_of?(Cask::Cask)
+        end
       end
 
       sig { params(repo: String, pull_request: String).void }

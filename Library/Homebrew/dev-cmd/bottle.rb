@@ -547,24 +547,6 @@ module Homebrew
         "#{gnu_tar_formula.opt_bin}/tar"
       end
 
-      sig { params(mtime: String).returns(T::Array[String]) }
-      def reproducible_gnutar_args(mtime)
-        # Ensure gnu tar is set up for reproducibility.
-        # https://reproducible-builds.org/docs/archives/
-        [
-          # File modification times
-          "--mtime=#{mtime}",
-          # File ordering
-          "--sort=name",
-          # Users, groups and numeric ids
-          "--owner=0", "--group=0", "--numeric-owner",
-          # PAX headers
-          "--format=pax",
-          # Set exthdr names to exclude PID (for GNU tar <1.33). Also don't store atime and ctime.
-          "--pax-option=globexthdr.name=/GlobalHead.%n,exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime"
-        ].freeze
-      end
-
       sig { returns(T.nilable(Formula)) }
       def gnu_tar_formula_ensure_installed_if_needed!
         gnu_tar_formula = begin
@@ -589,7 +571,20 @@ module Homebrew
         gnu_tar_formula = gnu_tar_formula_ensure_installed_if_needed!
         return default_tar_args if gnu_tar_formula.blank?
 
-        [gnu_tar(gnu_tar_formula), reproducible_gnutar_args(mtime)].freeze
+        # Ensure gnu tar is set up for reproducibility.
+        # https://reproducible-builds.org/docs/archives/
+        [gnu_tar(gnu_tar_formula), [
+          # File modification times
+          "--mtime=#{mtime}",
+          # File ordering
+          "--sort=name",
+          # Users, groups and numeric ids
+          "--owner=0", "--group=0", "--numeric-owner",
+          # PAX headers
+          "--format=pax",
+          # Set exthdr names to exclude PID (for GNU tar <1.33). Also don't store atime and ctime.
+          "--pax-option=globexthdr.name=/GlobalHead.%n,exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime"
+        ].freeze].freeze
       end
 
       sig { params(formula: Formula).returns(T::Array[Regexp]) }

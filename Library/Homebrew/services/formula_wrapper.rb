@@ -236,7 +236,7 @@ module Homebrew
         reset_cache! unless cached
 
         if System.launchctl?
-          status_success
+          status_output_success_type.success
         else # System.systemctl?
           loaded_service_names.present?
         end
@@ -333,6 +333,24 @@ module Homebrew
 
       sig { returns(T::Hash[Symbol, T.anything]) }
       def to_hash
+        status = if pid?
+          :started
+        elsif !loaded?(cached: true)
+          :none
+        elsif (last_exit_code = exit_code).present? && last_exit_code.zero?
+          if timed?
+            :scheduled
+          else
+            :stopped
+          end
+        elsif error?
+          :error
+        elsif unknown_status?
+          :unknown
+        else
+          :other
+        end
+
         hash = {
           name:,
           service_name: active_service_name,
@@ -342,7 +360,7 @@ module Homebrew
           pid:,
           exit_code:,
           user:         owner,
-          status:       status_symbol,
+          status:,
           file:         service_file_present? ? registered_destination : source_service_file,
           registered:   service_file_present?,
           loaded_file:,
@@ -464,35 +482,9 @@ module Homebrew
         status_output_success_type.output
       end
 
-      sig { returns(T::Boolean) }
-      def status_success
-        status_output_success_type.success
-      end
-
       sig { returns(Symbol) }
       def status_type
         status_output_success_type.type
-      end
-
-      sig { returns(Symbol) }
-      def status_symbol
-        if pid?
-          :started
-        elsif !loaded?(cached: true)
-          :none
-        elsif (exit_code = self.exit_code).present? && exit_code.zero?
-          if timed?
-            :scheduled
-          else
-            :stopped
-          end
-        elsif error?
-          :error
-        elsif unknown_status?
-          :unknown
-        else
-          :other
-        end
       end
 
       sig { params(status_type: Symbol).returns(Regexp) }

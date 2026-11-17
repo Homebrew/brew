@@ -82,8 +82,67 @@ module Homebrew
             ohai "Getting formulae..."
           end
 
-          formulae, all_formulae, formula_installs = formulae_all_installs_from_args(use_all_formulae)
-          deps_hash, uses_hash = deps_uses_from_formulae(all_formulae)
+          if args.named.present?
+            formulae = all_formulae = args.named.to_formulae
+          elsif args.dependents?
+            formulae = all_formulae = Formula.all
+
+            @sort = T.let(" (sorted by number of dependents)", T.nilable(String))
+          elsif use_all_formulae
+            formulae = all_formulae = Formula.all
+          else
+            formula_installs = {}
+
+            ohai "Getting analytics data..."
+            analytics = Homebrew::API::Analytics.fetch "install", 90
+
+            if analytics.blank?
+              raise UsageError,
+                    "default sort by analytics data requires " \
+                    "`$HOMEBREW_NO_GITHUB_API` and `$HOMEBREW_NO_ANALYTICS` to be unset."
+            end
+
+            formulae = analytics["items"].filter_map do |i|
+              f = i["formula"].split.first
+              next if f.include?("/")
+              next if formula_installs[f].present?
+
+              formula_installs[f] = i["count"]
+              begin
+                Formula[f]
+              rescue FormulaUnavailableError
+                nil
+              end
+            end
+            @sort = T.let(" (sorted by installs in the last 90 days; top 10,000 only)", T.nilable(String))
+
+            all_formulae = Formula.all
+          end
+
+          # Remove deprecated and disabled formulae as we do not care if they are unbottled
+          formulae = Array(formulae).reject { |f| f.deprecated? || f.disabled? } if formulae.present?
+          all_formulae = Array(all_formulae).reject { |f| f.deprecated? || f.disabled? } if all_formulae.present?
+
+          # Remove portable formulae as they are handled differently
+          formulae = formulae.reject { |f| PORTABLE_FORMULAE.include?(f.name) } if formulae.present?
+          all_formulae = all_formulae.reject { |f| PORTABLE_FORMULAE.include?(f.name) } if all_formulae.present?
+
+          ohai "Populating dependency tree..."
+
+          deps_hash = {}
+          uses_hash = {}
+
+          all_formulae.each do |f|
+            deps = Dependency.expand(f, cache_key: "unbottled") do |_, dep|
+              next Dependable::PRUNE if dep.optional?
+            end.map(&:to_formula)
+            deps_hash[f.name] = deps
+
+            deps.each do |dep|
+              uses_hash[dep.name] ||= []
+              uses_hash[dep.name] << f
+            end
+          end
 
           if args.dependents?
             formula_dependents = {}
@@ -111,84 +170,6 @@ module Homebrew
       end
 
       private
-
-      sig {
-        params(use_all_formulae: T::Boolean).returns([T::Array[Formula], T::Array[Formula],
-                                                      T.nilable(T::Hash[Symbol, Integer])])
-      }
-      def formulae_all_installs_from_args(use_all_formulae)
-        if args.named.present?
-          formulae = all_formulae = args.named.to_formulae
-        elsif args.dependents?
-          formulae = all_formulae = Formula.all
-
-          @sort = T.let(" (sorted by number of dependents)", T.nilable(String))
-        elsif use_all_formulae
-          formulae = all_formulae = Formula.all
-        else
-          formula_installs = {}
-
-          ohai "Getting analytics data..."
-          analytics = Homebrew::API::Analytics.fetch "install", 90
-
-          if analytics.blank?
-            raise UsageError,
-                  "default sort by analytics data requires " \
-                  "`$HOMEBREW_NO_GITHUB_API` and `$HOMEBREW_NO_ANALYTICS` to be unset."
-          end
-
-          formulae = analytics["items"].filter_map do |i|
-            f = i["formula"].split.first
-            next if f.include?("/")
-            next if formula_installs[f].present?
-
-            formula_installs[f] = i["count"]
-            begin
-              Formula[f]
-            rescue FormulaUnavailableError
-              nil
-            end
-          end
-          @sort = T.let(" (sorted by installs in the last 90 days; top 10,000 only)", T.nilable(String))
-
-          all_formulae = Formula.all
-        end
-
-        # Remove deprecated and disabled formulae as we do not care if they are unbottled
-        formulae = Array(formulae).reject { |f| f.deprecated? || f.disabled? } if formulae.present?
-        all_formulae = Array(all_formulae).reject { |f| f.deprecated? || f.disabled? } if all_formulae.present?
-
-        # Remove portable formulae as they are handled differently
-        formulae = formulae.reject { |f| PORTABLE_FORMULAE.include?(f.name) } if formulae.present?
-        all_formulae = all_formulae.reject { |f| PORTABLE_FORMULAE.include?(f.name) } if all_formulae.present?
-
-        [T.let(formulae, T::Array[Formula]), T.let(all_formulae, T::Array[Formula]),
-         T.let(formula_installs, T.nilable(T::Hash[Symbol, Integer]))]
-      end
-
-      sig {
-        params(all_formulae: T::Array[Formula]).returns([T::Hash[String, T.untyped], T::Hash[String, T.untyped]])
-      }
-      def deps_uses_from_formulae(all_formulae)
-        ohai "Populating dependency tree..."
-
-        deps_hash = {}
-        uses_hash = {}
-
-        all_formulae.each do |f|
-          deps = Dependency.expand(f, cache_key: "unbottled") do |_, dep|
-            next Dependable::PRUNE if dep.optional?
-          end.map(&:to_formula)
-          deps_hash[f.name] = deps
-
-          deps.each do |dep|
-            uses_hash[dep.name] ||= []
-            uses_hash[dep.name] << f
-          end
-        end
-
-        [deps_hash, uses_hash]
-      end
 
       sig { params(formulae: T::Array[Formula]).void }
       def output_total(formulae)

@@ -541,7 +541,8 @@ module Homebrew
       def preinstall!(no_upgrade: false, verbose: false)
         return true if self.class.formula_tap_changed?(@full_name)
 
-        if installed? && (self.class.no_upgrade_with_args?(no_upgrade, @name) || @pin || !upgradable?)
+        if installed? && (self.class.no_upgrade_with_args?(no_upgrade, @name) || @pin ||
+                          !self.class.formula_upgradable?(@full_name))
           return true if pin_needed?
 
           puts "Skipping install of #{@name} formula. It is already installed." if verbose
@@ -683,7 +684,7 @@ module Homebrew
         link_args = []
         link_status = self.class.expected_link_status?(@link, keg_only: keg_only?)
         cmd = if link_status
-          link_args << "--force" if unlinked_and_keg_only?
+          link_args << "--force" if !linked? && keg_only?
           link_args << "--overwrite" if @link == :overwrite
           "link" unless linked?
         elsif linked?
@@ -752,16 +753,6 @@ module Homebrew
       sig { returns(T::Boolean) }
       def keg_only?
         Formula[@full_name].keg_only?
-      end
-
-      sig { returns(T::Boolean) }
-      def unlinked_and_keg_only?
-        !linked? && keg_only?
-      end
-
-      sig { returns(T::Boolean) }
-      def upgradable?
-        self.class.formula_upgradable?(@full_name)
       end
 
       sig { returns(T::Array[String]) }

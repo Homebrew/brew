@@ -67,7 +67,34 @@ module Homebrew
 
           expanded_paths = args.named.to_paths
           expanded_paths.each do |path|
-            raise_with_message!(path, args.cask?) unless path.exist?
+            next if path.exist?
+
+            name = path.basename(".rb").to_s
+
+            if Regexp.new("#{HOMEBREW_TAP_DIR_REGEX.source}$").match?(path.to_s)
+              raise TapUnavailableError, Tap.from_path(path)&.name || path.to_s
+            elsif args.cask? || core_cask_path?(path)
+              if !CoreCaskTap.instance.installed? && Homebrew::API.cask_token?(name)
+                command = "brew tap --force #{CoreCaskTap.instance.name}"
+                action = "tap #{CoreCaskTap.instance.name}"
+              else
+                command = "brew create --cask --set-name #{name} $URL"
+                action = "create a new cask"
+              end
+            elsif core_formula_path?(path) &&
+                  !CoreTap.instance.installed? &&
+                  Homebrew::API.formula_name?(name)
+              command = "brew tap --force #{CoreTap.instance.name}"
+              action = "tap #{CoreTap.instance.name}"
+            else
+              command = "brew create --set-name #{name} $URL"
+              action = "create a new formula"
+            end
+
+            raise UsageError, <<~EOS
+              #{name} doesn't exist on disk.
+              Run #{Formatter.identifier(command)} to #{action}!
+            EOS
           end
           expanded_paths
         end
@@ -84,7 +111,7 @@ module Homebrew
              next if path == "--project"
 
              is_formula = core_formula_path?(path)
-             is_formula || core_cask_path?(path) || core_formula_tap?(path) || core_cask_tap?(path)
+             is_formula || core_cask_path?(path) || path == CoreTap.instance.path || core_cask_tap?(path)
            end
           from_source = " --build-from-source" if is_formula
           no_api = "HOMEBREW_NO_INSTALL_FROM_API=1 " unless Homebrew::EnvConfig.no_install_from_api?
@@ -108,43 +135,8 @@ module Homebrew
       end
 
       sig { params(path: Pathname).returns(T::Boolean) }
-      def core_formula_tap?(path)
-        path == CoreTap.instance.path
-      end
-
-      sig { params(path: Pathname).returns(T::Boolean) }
       def core_cask_tap?(path)
         path == CoreCaskTap.instance.path
-      end
-
-      sig { params(path: Pathname, cask: T::Boolean).returns(T.noreturn) }
-      def raise_with_message!(path, cask)
-        name = path.basename(".rb").to_s
-
-        if Regexp.new("#{HOMEBREW_TAP_DIR_REGEX.source}$").match?(path.to_s)
-          raise TapUnavailableError, Tap.from_path(path)&.name || path.to_s
-        elsif cask || core_cask_path?(path)
-          if !CoreCaskTap.instance.installed? && Homebrew::API.cask_token?(name)
-            command = "brew tap --force #{CoreCaskTap.instance.name}"
-            action = "tap #{CoreCaskTap.instance.name}"
-          else
-            command = "brew create --cask --set-name #{name} $URL"
-            action = "create a new cask"
-          end
-        elsif core_formula_path?(path) &&
-              !CoreTap.instance.installed? &&
-              Homebrew::API.formula_name?(name)
-          command = "brew tap --force #{CoreTap.instance.name}"
-          action = "tap #{CoreTap.instance.name}"
-        else
-          command = "brew create --set-name #{name} $URL"
-          action = "create a new formula"
-        end
-
-        raise UsageError, <<~EOS
-          #{name} doesn't exist on disk.
-          Run #{Formatter.identifier(command)} to #{action}!
-        EOS
       end
     end
   end

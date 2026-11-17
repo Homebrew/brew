@@ -297,7 +297,14 @@ module Homebrew
         filestub_regex = %r{Library/Homebrew/([\w/-]+).rb}
         changed_files.filter_map { |file| file[filestub_regex, 1] }
                      .flat_map do |filestub|
-          shared_context_tests = shared_context_test_files(filestub)
+          shared_context_tests = case filestub
+          when "test/support/helper/spec/shared_context/integration_test"
+            tests_tagged_with("integration_test")
+          when "test/support/helper/spec/shared_context/homebrew_cask"
+            tests_tagged_with("cask")
+          else
+            []
+          end
           next shared_context_tests if shared_context_tests.present?
 
           if filestub.start_with?("test/")
@@ -354,31 +361,8 @@ module Homebrew
         files.grep_v(%r{^test/os/linux(/.*|_spec\.rb)$})
       end
 
-      sig { params(filestub: String).returns(T::Array[Pathname]) }
-      def shared_context_test_files(filestub)
-        case filestub
-        when "test/support/helper/spec/shared_context/integration_test"
-          tests_tagged_with("integration_test")
-        when "test/support/helper/spec/shared_context/homebrew_cask"
-          tests_tagged_with("cask")
-        else
-          []
-        end
-      end
-
       sig { params(tag: String).returns(T::Array[Pathname]) }
       def tests_tagged_with(tag)
-        Dir.glob("test/**/*_spec.rb").filter_map do |file|
-          path = Pathname(file)
-          next unless path.exist?
-          next unless file_uses_rspec_tag?(path, tag)
-
-          path
-        end
-      end
-
-      sig { params(path: Pathname, tag: String).returns(T::Boolean) }
-      def file_uses_rspec_tag?(path, tag)
         escaped_tag = Regexp.escape(tag)
         rspec_declaration_methods = %w[describe context it specify example].join("|")
         rspec_declaration_regex = /^\s*(?:RSpec\.)?(?:#{rspec_declaration_methods})\b/
@@ -387,10 +371,18 @@ module Homebrew
         # Match hash tag syntax: `tag_name: true/false/nil/value`.
         hash_tag_regex = /(?:^|[,(])\s*#{escaped_tag}:\s*(?:true|false|nil|:[a-z_]\w*|[a-z_]\w*)?/i
 
-        path.read.each_line.any? do |line|
-          is_rspec_declaration = line.match?(rspec_declaration_regex)
-          has_tag = line.match?(symbol_tag_regex) || line.match?(hash_tag_regex)
-          is_rspec_declaration && has_tag
+        Dir.glob("test/**/*_spec.rb").filter_map do |file|
+          path = Pathname(file)
+          next unless path.exist?
+
+          tagged = path.read.each_line.any? do |line|
+            is_rspec_declaration = line.match?(rspec_declaration_regex)
+            has_tag = line.match?(symbol_tag_regex) || line.match?(hash_tag_regex)
+            is_rspec_declaration && has_tag
+          end
+          next unless tagged
+
+          path
         end
       end
     end

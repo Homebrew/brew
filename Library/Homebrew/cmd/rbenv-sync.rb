@@ -34,7 +34,31 @@ module Homebrew
 
           HOMEBREW_CELLAR.glob("ruby{,@*}")
                          .flat_map(&:children)
-                         .each { |path| link_rbenv_versions(path, rbenv_versions) }
+                         .each do |path|
+            version = Keg.new(path).version
+            major_version = version.major.to_i
+            minor_version = version.minor.to_i
+            patch_version = version.patch.to_i
+
+            patch_version_range = if Homebrew::EnvConfig.env_sync_strict?
+              # Only create symlinks for the exact installed patch version.
+              # e.g. 3.4.0 => 3.4.0
+              [patch_version]
+            else
+              # Create folder symlinks for all patch versions to the latest patch version
+              # e.g. 3.4.0 => 3.4.2
+              0..patch_version
+            end
+
+            patch_version_range.each do |patch|
+              link_path = rbenv_versions/"#{major_version}.#{minor_version}.#{patch}"
+              # Don't clobber existing user installations.
+              next if link_path.exist? && !link_path.symlink?
+
+              FileUtils.rm_f link_path
+              FileUtils.ln_s path, link_path
+            end
+          end
 
           rbenv_versions.children
                         .select(&:symlink?)
@@ -42,37 +66,6 @@ module Homebrew
                         .each { |path| FileUtils.rm_f path }
         ensure
           rbenv_sync_running.unlink if rbenv_sync_running.exist?
-        end
-      end
-
-      private
-
-      sig { params(path: Pathname, rbenv_versions: Pathname).void }
-      def link_rbenv_versions(path, rbenv_versions)
-        rbenv_versions.mkpath
-
-        version = Keg.new(path).version
-        major_version = version.major.to_i
-        minor_version = version.minor.to_i
-        patch_version = version.patch.to_i
-
-        patch_version_range = if Homebrew::EnvConfig.env_sync_strict?
-          # Only create symlinks for the exact installed patch version.
-          # e.g. 3.4.0 => 3.4.0
-          [patch_version]
-        else
-          # Create folder symlinks for all patch versions to the latest patch version
-          # e.g. 3.4.0 => 3.4.2
-          0..patch_version
-        end
-
-        patch_version_range.each do |patch|
-          link_path = rbenv_versions/"#{major_version}.#{minor_version}.#{patch}"
-          # Don't clobber existing user installations.
-          next if link_path.exist? && !link_path.symlink?
-
-          FileUtils.rm_f link_path
-          FileUtils.ln_s path, link_path
         end
       end
     end

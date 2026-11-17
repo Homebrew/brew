@@ -409,7 +409,15 @@ module Homebrew
       }
       def print_problems(results)
         results.each do |(name, path), problems|
-          problem_lines = format_problem_lines(problems)
+          problem_lines = problems.map do |problem|
+            status = " #{Formatter.success("[corrected]")}" if problem.fetch(:corrected)
+            location = problem.fetch(:location)
+            if location
+              location = "#{location.line&.to_s&.prepend("line ")}#{location.column&.to_s&.prepend(", col ")}: "
+            end
+            message = problem.fetch(:message)
+            "* #{location}#{message.chomp.gsub("\n", "\n    ")}#{status}"
+          end
 
           if args.display_filename?
             problem_lines.each do |l|
@@ -418,19 +426,6 @@ module Homebrew
           else
             puts name, problem_lines.map { |l| l.dup.prepend("  ") }
           end
-        end
-      end
-
-      sig { params(problems: T::Array[T::Hash[Symbol, T.untyped]]).returns(T::Array[String]) }
-      def format_problem_lines(problems)
-        problems.map do |problem|
-          status = " #{Formatter.success("[corrected]")}" if problem.fetch(:corrected)
-          location = problem.fetch(:location)
-          if location
-            location = "#{location.line&.to_s&.prepend("line ")}#{location.column&.to_s&.prepend(", col ")}: "
-          end
-          message = problem.fetch(:message)
-          "* #{location}#{message.chomp.gsub("\n", "\n    ")}#{status}"
         end
       end
     end

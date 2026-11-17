@@ -236,8 +236,47 @@ module Homebrew
 
         formula = Formulary.factory(formula_name)
 
-        source_dependents, bottled_dependents, testable_dependents =
-          dependents_for_formula(formula, formula_name, args:)
+        info_header "Determining dependents..."
+
+        dependents = dependent_pairs_for_formula(formula_name, args:)
+        if (filter = @formulae_dependents_filter)
+          dependents = dependents.select do |dependent, _|
+            filter.include?(dependent.name) || filter.include?(dependent.full_name)
+          end
+        end
+        dependents.reject! { |dependent, _| @tested_dependents.include?(dependent.full_name) }
+
+        # Split into dependents that we could potentially be building from source and those
+        # we should not. The criteria is that a dependent must have bottled dependencies and
+        # the `--build-dependents-from-source` flag was passed. Total source build dependents
+        # are limited per formula per shard to avoid overly long CI runtime.
+        source_dependents = []
+        if args.build_dependents_from_source?
+          source_dependents, dependents = split_source_dependents(dependents)
+        end
+
+        # From the non-source list, get rid of any dependents we are only a build dependency to
+        dependents.select! do |_, deps|
+          deps.reject { |d| d.build? && !d.test? }
+              .map(&:to_formula)
+              .include?(formula)
+        end
+
+        dependents = dependents.transpose.first.to_a
+        source_dependents = source_dependents.transpose.first.to_a
+
+        testable_dependents = source_dependents.select(&:test_defined?)
+        bottled_dependents = dependents.select { |dep| bottled?(dep) }
+        testable_dependents += bottled_dependents.select(&:test_defined?)
+
+        info_header "Source dependents:"
+        puts source_dependents
+
+        info_header "Bottled dependents:"
+        puts bottled_dependents
+
+        info_header "Testable dependents:"
+        puts testable_dependents
 
         return if source_dependents.blank? && bottled_dependents.blank? && testable_dependents.blank?
 
@@ -284,56 +323,6 @@ module Homebrew
         end
 
         @tested_dependents |= (source_dependents + bottled_dependents).map(&:full_name)
-      end
-
-      sig {
-        params(formula: Formula, formula_name: String, args: Homebrew::Cmd::TestBotCmd::Args)
-          .returns([T::Array[Formula], T::Array[Formula], T::Array[Formula]])
-      }
-      def dependents_for_formula(formula, formula_name, args:)
-        info_header "Determining dependents..."
-
-        dependents = dependent_pairs_for_formula(formula_name, args:)
-        if (filter = @formulae_dependents_filter)
-          dependents = dependents.select do |dependent, _|
-            filter.include?(dependent.name) || filter.include?(dependent.full_name)
-          end
-        end
-        dependents.reject! { |dependent, _| @tested_dependents.include?(dependent.full_name) }
-
-        # Split into dependents that we could potentially be building from source and those
-        # we should not. The criteria is that a dependent must have bottled dependencies and
-        # the `--build-dependents-from-source` flag was passed. Total source build dependents
-        # are limited per formula per shard to avoid overly long CI runtime.
-        source_dependents = []
-        if args.build_dependents_from_source?
-          source_dependents, dependents = split_source_dependents(dependents)
-        end
-
-        # From the non-source list, get rid of any dependents we are only a build dependency to
-        dependents.select! do |_, deps|
-          deps.reject { |d| d.build? && !d.test? }
-              .map(&:to_formula)
-              .include?(formula)
-        end
-
-        dependents = dependents.transpose.first.to_a
-        source_dependents = source_dependents.transpose.first.to_a
-
-        testable_dependents = source_dependents.select(&:test_defined?)
-        bottled_dependents = dependents.select { |dep| bottled?(dep) }
-        testable_dependents += bottled_dependents.select(&:test_defined?)
-
-        info_header "Source dependents:"
-        puts source_dependents
-
-        info_header "Bottled dependents:"
-        puts bottled_dependents
-
-        info_header "Testable dependents:"
-        puts testable_dependents
-
-        [source_dependents, bottled_dependents, testable_dependents]
       end
 
       sig {

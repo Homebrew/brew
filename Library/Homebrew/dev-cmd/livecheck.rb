@@ -104,7 +104,7 @@ module Homebrew
         )
 
         skipped_autobump = T.let(false, T::Boolean)
-        if skip_autobump?
+        if !args.autobump? && !Homebrew::EnvConfig.livecheck_autobump?
           autobump_lists = {}
 
           formulae_and_casks_to_check = formulae_and_casks_to_check.reject do |formula_or_cask|
@@ -148,11 +148,6 @@ module Homebrew
       sig { returns(String) }
       def watchlist_path
         @watchlist_path ||= T.let(File.expand_path(Homebrew::EnvConfig.livecheck_watchlist), T.nilable(String))
-      end
-
-      sig { returns(T::Boolean) }
-      def skip_autobump?
-        !(args.autobump? || Homebrew::EnvConfig.livecheck_autobump?)
       end
     end
   end

@@ -33,7 +33,53 @@ module Homebrew
           FileUtils.touch pyenv_sync_running
           HOMEBREW_CELLAR.glob("python{,@*}")
                          .flat_map(&:children)
-                         .each { |path| link_pyenv_versions(path, pyenv_versions) }
+                         .each do |path|
+            version = Keg.new(path).version
+            major_version = version.major.to_i
+            minor_version = version.minor.to_i
+            patch_version = version.patch.to_i
+
+            patch_version_range = if Homebrew::EnvConfig.env_sync_strict?
+              # Only create symlinks for the exact installed patch version.
+              # e.g. 3.11.0 => 3.11.0
+              [patch_version]
+            else
+              # Create folder symlinks for all patch versions to the latest patch version
+              # e.g. 3.11.0 => 3.11.3
+              0..patch_version
+            end
+
+            patch_version_range.each do |patch|
+              link_path = pyenv_versions/"#{major_version}.#{minor_version}.#{patch}"
+
+              # Don't clobber existing user installations.
+              next if link_path.exist? && !link_path.symlink?
+
+              FileUtils.rm_f link_path
+              FileUtils.ln_s path, link_path
+
+              # Create an unversioned symlinks
+              # This is what pyenv expects to find in ~/.pyenv/versions/___/bin'.
+              # Without this, `python3`, `pip3` do not exist and pyenv falls back to system Python.
+              # (eg. python3 -> python3.11, pip3 -> pip3.11)
+              executables = %w[python3 pip3 wheel3 idle3 pydoc3]
+              executables.each do |executable|
+                major_link_path = link_path/"bin/#{executable}"
+
+                # Don't clobber existing user installations.
+                next if major_link_path.exist? && !major_link_path.symlink?
+
+                executable_link_path = link_path/"bin/#{executable}.#{minor_version}"
+                FileUtils.rm_f major_link_path
+
+                begin
+                  FileUtils.ln_s executable_link_path, major_link_path
+                rescue => e
+                  opoo "Failed to link #{executable_link_path} to #{major_link_path}: #{e}"
+                end
+              end
+            end
+          end
 
           pyenv_versions.children
                         .select(&:symlink?)
@@ -41,59 +87,6 @@ module Homebrew
                         .each { |path| FileUtils.rm_f path }
         ensure
           pyenv_sync_running.unlink if pyenv_sync_running.exist?
-        end
-      end
-
-      private
-
-      sig { params(path: Pathname, pyenv_versions: Pathname).void }
-      def link_pyenv_versions(path, pyenv_versions)
-        pyenv_versions.mkpath
-
-        version = Keg.new(path).version
-        major_version = version.major.to_i
-        minor_version = version.minor.to_i
-        patch_version = version.patch.to_i
-
-        patch_version_range = if Homebrew::EnvConfig.env_sync_strict?
-          # Only create symlinks for the exact installed patch version.
-          # e.g. 3.11.0 => 3.11.0
-          [patch_version]
-        else
-          # Create folder symlinks for all patch versions to the latest patch version
-          # e.g. 3.11.0 => 3.11.3
-          0..patch_version
-        end
-
-        patch_version_range.each do |patch|
-          link_path = pyenv_versions/"#{major_version}.#{minor_version}.#{patch}"
-
-          # Don't clobber existing user installations.
-          next if link_path.exist? && !link_path.symlink?
-
-          FileUtils.rm_f link_path
-          FileUtils.ln_s path, link_path
-
-          # Create an unversioned symlinks
-          # This is what pyenv expects to find in ~/.pyenv/versions/___/bin'.
-          # Without this, `python3`, `pip3` do not exist and pyenv falls back to system Python.
-          # (eg. python3 -> python3.11, pip3 -> pip3.11)
-          executables = %w[python3 pip3 wheel3 idle3 pydoc3]
-          executables.each do |executable|
-            major_link_path = link_path/"bin/#{executable}"
-
-            # Don't clobber existing user installations.
-            next if major_link_path.exist? && !major_link_path.symlink?
-
-            executable_link_path = link_path/"bin/#{executable}.#{minor_version}"
-            FileUtils.rm_f major_link_path
-
-            begin
-              FileUtils.ln_s executable_link_path, major_link_path
-            rescue => e
-              opoo "Failed to link #{executable_link_path} to #{major_link_path}: #{e}"
-            end
-          end
         end
       end
     end
