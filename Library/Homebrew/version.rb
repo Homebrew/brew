@@ -792,7 +792,7 @@ class Version
 
   sig { returns(T::Array[Token]) }
   def tokens
-    erlang_version = version&.match?(/\AR\d+[AB]\d*(?:-\d+)?\z/i)
+    erlang_version = version&.match?(/\AR\d+[AB]\d*(?:\.\d+)*(?:-\d+)?\z/i)
     @tokens ||= T.let(
       version&.scan(SCAN_PATTERN)&.flat_map do |token|
         token = T.cast(token, String)

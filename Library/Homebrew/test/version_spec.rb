@@ -316,6 +316,11 @@ RSpec.describe Version do
     expect(versions.sort_by { |v| described_class.new(v) }).to eq(versions)
   end
 
+  specify "erlang versions with dotted revisions" do
+    versions = %w[R16B02 R16B03.0]
+    expect(versions.sort_by { |v| described_class.new(v) }).to eq(versions)
+  end
+
   specify "hash equality" do
     v1 = described_class.new("0.1.0")
     v2 = described_class.new("0.1.0")
