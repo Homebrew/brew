@@ -194,6 +194,19 @@ RSpec.describe Version do
     expect(described_class.new("1.2.3alpha4")).to be < described_class.new("1.2.3-p34")
   end
 
+  specify "sorting versions with pre-release and string tokens" do
+    permutations = [%w[1a 1alpha 1], %w[1.0a 1.0rc1 1.0]].flat_map do |versions|
+      versions.map { |v| described_class.new(v) }.permutation.map do |permutation|
+        [permutation.sort.map(&:to_s), permutation.max.to_s]
+      end
+    end
+
+    expect(permutations).to eq(
+      Array.new(6, [%w[1alpha 1 1a], "1a"]) +
+        Array.new(6, [%w[1.0rc1 1.0 1.0a], "1.0a"]),
+    )
+  end
+
   specify "comparing beta versions" do
     expect(described_class.new("1.2.3beta2")).to eq described_class.new("1.2.3b2")
     expect(described_class.new("1.2.3beta2")).to eq described_class.new("1.2.3B2")

@@ -161,7 +161,17 @@ class Version
 
       case other
       when StringToken
-        value <=> other.value
+        case self
+        when AlphaToken, BetaToken, PreToken, RCToken
+          -1
+        else
+          case other
+          when AlphaToken, BetaToken, PreToken, RCToken
+            1
+          else
+            value <=> other.value
+          end
+        end
       when NumericToken
         -1
       when NullToken
@@ -782,8 +792,21 @@ class Version
 
   sig { returns(T::Array[Token]) }
   def tokens
+    erlang_version = version&.match?(/\AR\d+[AB]\d*(?:-\d+)?\z/i)
     @tokens ||= T.let(
-      version&.scan(SCAN_PATTERN)&.map { |token| Token.create(T.cast(token, String)) } || [],
+      version&.scan(SCAN_PATTERN)&.flat_map do |token|
+        token = T.cast(token, String)
+        revision = /\A([AB])([0-9]+)\z/i.match(token) if erlang_version
+        if revision
+          letter = revision[1]
+          number = revision[2]
+          raise "Invalid Erlang version token: #{token}" if letter.nil? || number.nil?
+
+          [Token.create(letter), Token.create(number)]
+        else
+          [Token.create(token)]
+        end
+      end || [],
       T.nilable(T::Array[Token]),
     )
   end
