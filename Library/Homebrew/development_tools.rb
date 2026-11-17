@@ -101,7 +101,6 @@ class DevelopmentTools
         require "os/mac/xcode"
         clang_version = OS::Mac::CLT.latest_clang_version(
           macos: MacOSVersion.from_symbol(Homebrew::SimulateSystem.current_os),
-          arm64: Homebrew::SimulateSystem.current_arch == :arm,
         )
         return Version.new(clang_version.split(".", 2).fetch(0))
       end
