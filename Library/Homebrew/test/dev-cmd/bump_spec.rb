@@ -207,6 +207,19 @@ RSpec.describe Homebrew::DevCmd::Bump do
         .and not_to_output.to_stderr
     end
 
+    it "skips casks with no version for the current platform" do
+      cask = Homebrew::SimulateSystem.with(os: :linux) do
+        Cask::Cask.new("macos-only") do
+          on_macos do
+            version "1.2.3"
+          end
+        end
+      end
+
+      expect { bump.skip_ineligible_package!(cask) }
+        .to output(/Cask has no version for the current platform so `brew bump` cannot check it\./).to_stdout
+    end
+
     it "prints a message for autobumped packages" do
       allow(f_basic).to receive(:tap).and_return(instance_double(Tap, allow_bump?: false))
 
@@ -572,6 +585,30 @@ RSpec.describe Homebrew::DevCmd::Bump do
         end
       RUBY
       Homebrew::SimulateSystem.with(os: newest_macos, arch: :arm) { Cask::CaskLoader.from_path(path) }
+    end
+
+    it "bumps the available version when the other architecture has no version" do
+      version_args = [:arm, :intel].map do |arch|
+        cask = Homebrew::SimulateSystem.with(arch:) do
+          Cask::CaskLoader.from_content(<<~RUBY)
+            cask "single_arch_cask" do
+              on_#{arch} do
+                version "1.2.3"
+              end
+            end
+          RUBY
+        end
+        allow(bump).to receive(:livecheck_result).and_return([Version.new("1.2.4"), nil])
+
+        version_info = bump.retrieve_versions_by_arch(formula_or_cask: cask, repositories: [])
+        bump.version_args_for_bump(
+          current_version:   version_info.current_version,
+          new_version:       version_info.new_version,
+          multiple_versions: version_info.multiple_versions,
+          name:              "single_arch_cask",
+        )
+      end
+      expect(version_args).to eq([["--version=1.2.4"], ["--version=1.2.4"]])
     end
 
     it "resolves existing per-OS versions for each supported platform" do

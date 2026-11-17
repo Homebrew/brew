@@ -193,10 +193,13 @@ module Homebrew
           name = formula_or_cask.name
           text = "Formula is #{disabled ? "disabled" : "HEAD-only"} so not accepting updates.\n"
         else
-          skip = disabled || formula_or_cask.version.latest?
+          version = formula_or_cask.version
+          skip = disabled || version.nil? || version.latest?
           name = formula_or_cask.token
           text = if disabled
             "Cask is disabled so not accepting updates.\n"
+          elsif version.nil?
+            "Cask has no version for the current platform so `brew bump` cannot check it.\n"
           else
             "Cask uses `version :latest` so `brew bump` cannot check it.\n"
           end
@@ -297,6 +300,8 @@ module Homebrew
               current_version_value = stable.version
             else
               loaded_formula_or_cask = formula_or_cask.refresh_copy
+              next unless loaded_formula_or_cask.version
+
               current_version_value = Version.new(loaded_formula_or_cask.version)
             end
 
@@ -342,11 +347,10 @@ module Homebrew
             versions.replace(general: values.first)
           end
         # Consolidate into a single general version when only one architecture
-        # was simulated (e.g. `depends_on arch:` restricts to a single arch) or
-        # when the arm and intel versions are identical, as happens with casks
-        # where only the checksums differ.
-        elsif is_cask_with_blocks && arch_options.length == 1
-          single_arch = arch_options[0]
+        # has a version or when the arm and intel versions are identical, as
+        # happens with casks where only the checksums differ.
+        elsif is_cask_with_blocks && current_versions.one?
+          single_arch = current_versions.keys.fetch(0)
           current_versions = { general: current_versions[single_arch] }
           new_versions = { general: new_versions[single_arch] }
           cooldown_skipped_versions = { general: cooldown_skipped_versions[single_arch] }.compact
