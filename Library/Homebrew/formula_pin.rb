@@ -12,22 +12,16 @@ class FormulaPin
 
   sig { returns(Pathname) }
   def path
-    HOMEBREW_PINNED_KEGS/@formula.name
-  end
-
-  sig { params(version: PkgVersion).void }
-  def pin_at(version)
-    HOMEBREW_PINNED_KEGS.mkpath
-    version_path = @formula.rack/version.to_s
-    path.make_relative_symlink(version_path) if !pinned? && version_path.exist?
+    @formula.possible_names.map { |name| HOMEBREW_PINNED_KEGS/name }.find(&:symlink?) ||
+      (HOMEBREW_PINNED_KEGS/@formula.name)
   end
 
   sig { void }
   def pin
     latest_keg = @formula.installed_kegs.max_by(&:scheme_and_version)
-    return if latest_keg.nil?
+    return if latest_keg.nil? || pinned?
 
-    pin_at(latest_keg.version)
+    (HOMEBREW_PINNED_KEGS/latest_keg.name).make_relative_symlink(latest_keg.rack/latest_keg.version.to_s)
   end
 
   sig { void }
