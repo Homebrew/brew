@@ -131,10 +131,8 @@ module Formulary
     old_stdout = $stdout
     $stdout = StringIO.new
 
-    mod = Module.new
     namespace = namespace.to_sym
-    remove_const(namespace) if const_defined?(namespace)
-    const_set(namespace, mod)
+    mod = replace_namespace(namespace)
 
     eval_formula = lambda do
       # Set `BUILD_FLAGS` in the formula's namespace so we can
@@ -189,6 +187,13 @@ module Formulary
       opoo warning
     end
     $stdout = old_stdout if old_stdout
+  end
+
+  # Replace a formula's namespace so reloading does not retain constants from an older definition.
+  sig { params(namespace: Symbol).returns(T::Module[T.anything]) }
+  def self.replace_namespace(namespace)
+    remove_const(namespace) if const_defined?(namespace)
+    const_set(namespace, Module.new)
   end
 
   sig { params(identifier: String).returns(String) }

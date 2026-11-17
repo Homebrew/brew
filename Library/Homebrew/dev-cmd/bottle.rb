@@ -607,7 +607,9 @@ module Homebrew
 
       sig { params(formula: Formula).void }
       def bottle_formula(formula)
-        local_bottle_json = args.json? && formula.local_bottle_path
+        args = self.args
+        local_bottle_path = formula.local_bottle_path
+        local_bottle_json = args.json? && local_bottle_path
 
         unless local_bottle_json
           unless formula.latest_version_installed?
@@ -629,8 +631,8 @@ module Homebrew
         return ofail "Formula has no stable version: #{formula.full_name}" unless formula.stable
 
         bottle_tag, rebuild = if local_bottle_json
-          _, tag_string, rebuild_string = Utils::Bottles.extname_tag_rebuild(formula.local_bottle_path.to_s)
-          raise "Cannot determine the bottle tag from #{formula.local_bottle_path}" if tag_string.nil?
+          _, tag_string, rebuild_string = Utils::Bottles.extname_tag_rebuild(local_bottle_path.to_s)
+          raise "Cannot determine the bottle tag from #{local_bottle_path}" if tag_string.nil?
 
           [tag_string.to_sym, rebuild_string.to_i]
         end
@@ -677,9 +679,8 @@ module Homebrew
         cellar = HOMEBREW_CELLAR.to_s
         padded = T.let(prefix == bottle_tag.padded_prefix, T::Boolean)
 
-        if local_bottle_json
-          bottle_path = formula.local_bottle_path
-          return unless bottle_path
+        if local_bottle_json && local_bottle_path
+          bottle_path = local_bottle_path
 
           local_filename = bottle_path.basename.to_s
 

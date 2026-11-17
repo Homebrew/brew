@@ -17,6 +17,50 @@ RSpec.describe PyPI do
     "https://github.com/pypa/pip-audit/releases/download/v2.5.6/v2.5.6.tar.gz"
   end
 
+  describe ".input_packages" do
+    it "deduplicates the main and extra packages with normalised names" do
+      main = PyPI::Package.new("Example_Name==1.0")
+      extras = [PyPI::Package.new("example-name==1.0"), PyPI::Package.new("other==2.0")]
+
+      expect(described_class.input_packages(main, extras, ignore_non_pypi_packages: false).map(&:to_s))
+        .to eq(["example-name==1.0", "other==2.0"])
+    end
+
+    it "allows extra packages without a main package" do
+      extra = PyPI::Package.new("example==1.0")
+
+      expect(described_class.input_packages(nil, [extra], ignore_non_pypi_packages: false)).to eq([extra])
+    end
+
+    it "rejects conflicting versions of the same package" do
+      main = PyPI::Package.new("example==1.0")
+      extra = PyPI::Package.new("example==2.0")
+
+      expect { described_class.input_packages(main, [extra], ignore_non_pypi_packages: false) }
+        .to raise_error(SystemExit).and output(/Conflicting versions.*example.*1.0, 2.0/).to_stderr
+    end
+
+    it "checks conflicts between extra packages too" do
+      extras = [PyPI::Package.new("example==1.0"), PyPI::Package.new("example==2.0")]
+
+      expect { described_class.input_packages(nil, extras, ignore_non_pypi_packages: false) }
+        .to raise_error(SystemExit).and output(/Conflicting versions.*example/).to_stderr
+    end
+
+    it "rejects non-PyPI extra packages by default" do
+      extra = PyPI::Package.new(non_pypi_package_url, is_url: true)
+
+      expect { described_class.input_packages(nil, [extra], ignore_non_pypi_packages: false) }
+        .to raise_error(SystemExit).and output(/is not available on PyPI/).to_stderr
+    end
+
+    it "preserves non-PyPI extra packages when requested" do
+      extra = PyPI::Package.new(non_pypi_package_url, is_url: true)
+
+      expect(described_class.input_packages(nil, [extra], ignore_non_pypi_packages: true)).to eq([extra])
+    end
+  end
+
   describe ".main_package" do
     let(:package_formula) do
       formula do

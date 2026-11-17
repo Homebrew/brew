@@ -15,6 +15,25 @@ RSpec.describe Homebrew::DevCmd::Audit do
       .to be_a_success
   end
 
+  describe "#format_problem_summary" do
+    subject(:audit) { described_class.new([]) }
+
+    it "omits package types without problems" do
+      expect(audit.format_problem_summary(1, 0, { formula: 1, cask: 0, tap: 0 }))
+        .to eq("1 problem in 1 formula detected")
+    end
+
+    it "counts affected packages separately from their problems" do
+      expect(audit.format_problem_summary(7, 0, { formula: 2, cask: 1 }))
+        .to eq("7 problems in 2 formulae and 1 cask detected")
+    end
+
+    it "includes the number of corrected problems" do
+      expect(audit.format_problem_summary(3, 2, { tap: 1 }))
+        .to eq("3 problems in 1 tap detected, 2 problems corrected")
+    end
+  end
+
   describe "#run" do
     subject(:audit) { described_class.new(["--tap=homebrew/test"]) }
 

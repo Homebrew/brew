@@ -104,6 +104,7 @@ module Homebrew
 
       sig { override.void }
       def run
+        args = self.args
         Formulary.enable_factory_cache!
 
         os_arch_combinations = args.os_arch_combinations
@@ -113,11 +114,13 @@ module Homebrew
         Homebrew.auditing = true
         Utils::Profiling.inject_stats!(FormulaAuditor, /^audit_/) if args.audit_debug?
 
-        strict = args.new? || args.strict?
-        online = args.new? || args.online?
-        tap_audit = args.tap.present?
+        new_formula = args.new?
+        tap_name = args.tap
+        strict = new_formula || args.strict?
+        online = new_formula || args.online?
+        tap_audit = tap_name.present?
         skip_style = args.skip_style? || args.no_named? || tap_audit
-        no_named_args = args.changed? || (args.tap.blank? && (args.installed? || args.no_named?)) || false
+        no_named_args = args.changed? || (tap_name.blank? && (args.installed? || args.no_named?)) || false
 
         gem_groups = ["audit", "ast"]
         gem_groups << "style" unless skip_style
@@ -149,8 +152,8 @@ module Homebrew
             end
 
             [audit_formulae, audit_casks]
-          elsif args.tap
-            Tap.fetch(args.tap).then do |tap|
+          elsif tap_name
+            Tap.fetch(tap_name).then do |tap|
               [
                 tap.formula_files.map { |path| Formulary.from_path(path) },
                 tap.cask_files.filter_map { |path| cask_for_audit(path, cask_audit_os, cask_audit_arch) },
@@ -173,27 +176,24 @@ module Homebrew
           end
         end
 
-        if audit_formulae.empty? && audit_casks.empty? && !args.tap
-          return ofail "No matching formulae or casks to audit!"
-        end
+        return ofail "No matching formulae or casks to audit!" if
+          audit_formulae.empty? && audit_casks.empty? && !tap_name
 
         style_files = args.named.to_paths unless skip_style
 
         only_cops = args.only_cops
-        except_cops = if !only_cops && !args.new?
+        except_cops = if !only_cops && !new_formula
           args.except_cops || (%w[FormulaAuditStrict] unless strict)
         end
 
         # Run tap audits first
-        named_arg_taps = [*audit_formulae, *audit_casks].map(&:tap).uniq if !args.tap && !no_named_args
+        named_arg_taps = [*audit_formulae, *audit_casks].map(&:tap).uniq if !tap_name && !no_named_args
         tap_problems = Tap.installed.each_with_object({}) do |tap, problems|
-          next if args.tap && tap != args.tap
+          next if tap_name && tap != tap_name
           next if named_arg_taps&.exclude?(tap)
 
-          ta = TapAuditor.new(tap, strict: args.strict?)
-          ta.audit
-
-          problems[[tap.name, tap.path]] = ta.problems if ta.problems.any?
+          errors = TapAuditor.new(tap, strict: args.strict?).tap(&:audit).problems
+          problems[[tap.name, tap.path]] = errors if errors.any?
         end
 
         # Check style in a single batch run up front for performance
@@ -221,7 +221,7 @@ module Homebrew
               audit_proc = proc do
                 FormulaAuditor.new(
                   Formulary.from_path(path),
-                  new_formula:         args.new?,
+                  new_formula:,
                   strict:,
                   online:,
                   git:                 args.git?,
@@ -273,28 +273,16 @@ module Homebrew
                           .sum { |problems| problems.count { |problem| problem.fetch(:corrected) } }
 
         total_problems_count = problem_groups.values.sum { |problems| problems.values.sum(&:length) }
+        return if total_problems_count.zero?
 
-        if total_problems_count.positive?
-          errors_summary = Utils.pluralize("problem", total_problems_count, include_count: true)
+        errors_summary = format_problem_summary(total_problems_count, corrected_count,
+                                                problem_groups.transform_values(&:length))
 
-          error_sources = problem_groups.filter_map do |type, problems|
-            Utils.pluralize(type.to_s, problems.length, include_count: true) unless problems.empty?
-          end
-
-          errors_summary += " in #{Utils::Text.to_sentence(error_sources)}" if error_sources.any?
-
-          errors_summary += " detected"
-
-          if corrected_count.positive?
-            errors_summary += ", #{Utils.pluralize("problem", corrected_count, include_count: true)} corrected"
-          end
-
-          # Succeed when everything was corrected, as `brew style --fix` does.
-          if total_problems_count == corrected_count
-            opoo "#{errors_summary}."
-          else
-            ofail "#{errors_summary}."
-          end
+        # Succeed when everything was corrected, as `brew style --fix` does.
+        if total_problems_count == corrected_count
+          opoo "#{errors_summary}."
+        else
+          ofail "#{errors_summary}."
         end
 
         return unless GitHub::Actions.env_set?
@@ -313,6 +301,25 @@ module Homebrew
             puts annotation if annotation.relevant?
           end
         end
+      end
+
+      sig { params(total: Integer, corrected: Integer, sources: T::Hash[Symbol, Integer]).returns(String) }
+      def format_problem_summary(total, corrected, sources)
+        errors_summary = Utils.pluralize("problem", total, include_count: true)
+
+        error_sources = sources.filter_map do |type, count|
+          Utils.pluralize(type.to_s, count, include_count: true) unless count.zero?
+        end
+
+        errors_summary += " in #{Utils::Text.to_sentence(error_sources)}" if error_sources.any?
+
+        errors_summary += " detected"
+
+        if corrected.positive?
+          errors_summary += ", #{Utils.pluralize("problem", corrected, include_count: true)} corrected"
+        end
+
+        errors_summary
       end
 
       sig {

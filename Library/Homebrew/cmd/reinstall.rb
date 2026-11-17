@@ -122,6 +122,9 @@ module Homebrew
 
       sig { override.void }
       def run
+        args = self.args
+        force = args.force?
+        verbose = args.verbose?
         formulae = T.let([], T::Array[Formula])
         casks = T.let([], T::Array[Cask::Cask])
         unavailable_errors = T.let(
@@ -178,7 +181,7 @@ module Homebrew
               onoe "#{formula.full_name} is pinned. You must unpin it to reinstall."
               next
             end
-            Migrator.migrate_if_needed(formula, force: args.force?)
+            Migrator.migrate_if_needed(formula, force:)
             Homebrew::Reinstall.build_install_context(
               formula.latest_formula,
               flags:                      args.flags_only,
@@ -187,10 +190,10 @@ module Homebrew
               interactive:                args.interactive?,
               keep_tmp:                   args.keep_tmp?,
               debug_symbols:              args.debug_symbols?,
-              force:                      args.force?,
+              force:,
               debug:                      args.debug?,
               quiet:                      args.quiet?,
-              verbose:                    args.verbose?,
+              verbose:,
               git:                        args.git?,
             )
           end
@@ -212,10 +215,10 @@ module Homebrew
               interactive:                args.interactive?,
               keep_tmp:                   args.keep_tmp?,
               debug_symbols:              args.debug_symbols?,
-              force:                      args.force?,
+              force:,
               debug:                      args.debug?,
               quiet:                      args.quiet?,
-              verbose:                    args.verbose?,
+              verbose:,
             )
           # Ensure the early download queue is shut down on interrupts.
           rescue Exception # rubocop:disable Lint/RescueException
@@ -235,10 +238,10 @@ module Homebrew
               interactive:                args.interactive?,
               keep_tmp:                   args.keep_tmp?,
               debug_symbols:              args.debug_symbols?,
-              force:                      args.force?,
+              force:,
               debug:                      args.debug?,
               quiet:                      args.quiet?,
-              verbose:                    args.verbose?,
+              verbose:,
             )
           end
 
@@ -251,10 +254,10 @@ module Homebrew
             interactive:                args.interactive?,
             keep_tmp:                   args.keep_tmp?,
             debug_symbols:              args.debug_symbols?,
-            force:                      args.force?,
+            force:,
             debug:                      args.debug?,
             quiet:                      args.quiet?,
-            verbose:                    args.verbose?,
+            verbose:,
           )
 
           shared_download_queue ||= Homebrew::DownloadQueue.new(pour: true)
@@ -272,8 +275,8 @@ module Homebrew
                 Cask::Installer.new(
                   cask,
                   binaries:       args.binaries?,
-                  verbose:        args.verbose?,
-                  force:          args.force?,
+                  verbose:,
+                  force:,
                   adopt:          args.adopt?,
                   skip_cask_deps: args.skip_cask_deps?,
                   require_sha:    args.cask_require_sha?,
@@ -321,10 +324,10 @@ module Homebrew
             interactive:                   args.interactive?,
             keep_tmp:                      args.keep_tmp?,
             debug_symbols:                 args.debug_symbols?,
-            force:                         args.force?,
+            force:,
             debug:                         args.debug?,
             quiet:                         args.quiet?,
-            verbose:                       args.verbose?,
+            verbose:,
             cleanup:                       false,
             prefetched_formula_installers: dependent_formulae_installers
           )
@@ -336,8 +339,8 @@ module Homebrew
             reinstalled_casks = Cask::Reinstall.reinstall_casks(
               *casks,
               binaries:        args.binaries?,
-              verbose:         args.verbose?,
-              force:           args.force?,
+              verbose:,
+              force:,
               adopt:           args.adopt?,
               require_sha:     args.cask_require_sha?,
               skip_cask_deps:  args.skip_cask_deps?,

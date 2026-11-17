@@ -92,6 +92,7 @@ module Homebrew
 
       sig { override.void }
       def run
+        args = self.args
         if args.json?
           raise UsageError, "`brew list --json` requires `--versions`." unless args.versions?
           raise UsageError, "`brew list --versions --json` does not support named arguments." unless args.no_named?
@@ -99,6 +100,7 @@ module Homebrew
           raise UsageError, "`brew list --versions --json` is only supported by the fast Bash path with `jq`."
         end
 
+        one_per_line = args.public_send(:"1?")
         installed_as_dependency = args.no_installed_on_request?
         filter_flags = {
           "`--installed-on-request`"    => args.installed_on_request?,
@@ -124,7 +126,7 @@ module Homebrew
           else
             args.named.to_resolved_formulae.map(&:full_name)
           end.sort(&Cask::List::TAP_AND_NAME_COMPARISON)
-          full_formula_names = Formatter.columns(full_formula_names) unless args.public_send(:"1?")
+          full_formula_names = Formatter.columns(full_formula_names) unless one_per_line
           puts full_formula_names if full_formula_names.present?
           if args.cask? || (!args.formula? && args.no_named?)
             cask_names = if args.no_named?
@@ -135,7 +137,7 @@ module Homebrew
             # The cast is because `Keg`` does not define `full_name`
             full_cask_names = T.cast(cask_names, T::Array[T.any(Formula, Cask::Cask)])
                                .map(&:full_name).sort(&Cask::List::TAP_AND_NAME_COMPARISON)
-            full_cask_names = Formatter.columns(full_cask_names) unless args.public_send(:"1?")
+            full_cask_names = Formatter.columns(full_cask_names) unless one_per_line
             puts full_cask_names if full_cask_names.present?
           end
         elsif args.pinned?
@@ -176,7 +178,7 @@ module Homebrew
           ENV["CLICOLOR"] = nil
 
           ls_args = []
-          ls_args << "-1" if args.public_send(:"1?")
+          ls_args << "-1" if one_per_line
           ls_args << "-l" if args.l?
           ls_args << "-r" if args.r?
           ls_args << "-t" if args.t?
@@ -203,7 +205,7 @@ module Homebrew
             system_command! "find", args: casks.map(&:caskroom_path) + find_args, print_stdout: true if casks.present?
           else
             kegs.each { |keg| PrettyListing.new keg }
-            Cask::List.list_casks(*casks, one: args.public_send(:"1?")) if casks.present?
+            Cask::List.list_casks(*casks, one: one_per_line) if casks.present?
           end
         end
       end

@@ -305,6 +305,9 @@ module Homebrew
 
       sig { params(formula: Formula, shadowed_by: T.nilable(Tap)).void }
       def info_formula(formula, shadowed_by: nil)
+        args = self.args
+        verbose = args.verbose?
+        tap = formula.tap
         shadowing_formula = shadowing_installed_formula(formula)
         kegs = shadowing_formula ? [] : formula.installed_kegs
         installed = kegs.any?
@@ -321,25 +324,13 @@ module Homebrew
         installed_version = if outdated
           (formula.linked_version || kegs.max_by(&:scheme_and_version)&.version).to_s
         end
-        title_name = if shadowing_formula && formula.tap
+        title_name = if shadowing_formula && tap
           Utils.fully_qualified_name(formula)
         elsif shadowed_by
           formula.name
         else
           formula.full_name
         end
-        conflicts = formula.conflicts.filter_map do |conflict|
-          resolved = begin
-            Formulary.factory(conflict.name)
-          rescue FormulaUnavailableError
-            nil
-          end
-          next if resolved && resolved.full_name == formula.full_name
-
-          conflict_name = resolved&.full_name || conflict.name
-          reason = " (because #{conflict.reason})" if conflict.reason
-          "#{conflict_name}#{reason}"
-        end.sort!
 
         heads, versioned = kegs.partition { |keg| keg.version.head? }
         kegs = [
@@ -350,7 +341,7 @@ module Homebrew
           installation_status = ["Not installed"]
           if (bottle = formula.bottle)
             begin
-              bottle.fetch_tab(quiet: !args.debug?) if args.verbose?
+              bottle.fetch_tab(quiet: !args.debug?) if verbose
               bottle_size = bottle.bottle_size
               installed_size = bottle.installed_size
               installation_status << "Bottle Size: #{Formatter.disk_usage_readable(bottle_size)}" if bottle_size
@@ -374,8 +365,8 @@ module Homebrew
             installed:,
             outdated:,
             warning:           missing_libraries.present?,
-            removed:           installed && formula.tap.present? &&
-                                 kegs.all? { |keg| keg.tab.tap == formula.tap && keg.deleted_formula? },
+            removed:           installed && tap.present? &&
+                                 kegs.all? { |keg| keg.tab.tap == tap && keg.deleted_formula? },
             stable:            stable.present?,
             bottled:,
             head:              formula.head.present?,
@@ -384,13 +375,13 @@ module Homebrew
           shadowed_by:         shadowed_by&.name,
           aliases:             formula.aliases,
           old_names:           formula.oldnames,
-          conflicts:,
+          conflicts:           formula_conflicts(formula),
           installation_status:,
           source_url:          github_info(formula),
-          tap:                 formula.tap,
+          tap:,
           license:             formula.license,
-          installed_versions:  installed_section_rows(shadowing_formula || formula, verbose: args.verbose?),
-          verbose:             args.verbose?,
+          installed_versions:  installed_section_rows(shadowing_formula || formula, verbose:),
+          verbose:,
         )
 
         tab_runtime_deps = kegs.last&.runtime_dependencies
@@ -436,7 +427,7 @@ module Homebrew
           )
         end
         if installed_dependents.any?
-          dependency_lines << if args.verbose?
+          dependency_lines << if verbose
             "Dependents (#{installed_dependents.count}): #{installed_dependents.join(", ")}"
           else
             "Dependents: #{installed_dependents.count}"
@@ -452,8 +443,8 @@ module Homebrew
           Options.dump_for_formula formula
         end
 
-        caveats = Caveats.new(formula, shadowed_path: !args.verbose?)
-        if args.verbose?
+        caveats = Caveats.new(formula, shadowed_path: !verbose)
+        if verbose
           binaries_keg = kegs.find(&:linked?) || kegs.last
           binaries = if binaries_keg
             binary_files = [binaries_keg/"bin", binaries_keg/"sbin"].select(&:directory?).flat_map do |dir|
@@ -476,6 +467,22 @@ module Homebrew
         return unless formula.core_formula?
 
         Utils::Analytics.formula_output(formula, args:)
+      end
+
+      sig { params(formula: Formula).returns(T::Array[String]) }
+      def formula_conflicts(formula)
+        formula.conflicts.filter_map do |conflict|
+          resolved = begin
+            Formulary.factory(conflict.name)
+          rescue FormulaUnavailableError
+            nil
+          end
+          next if resolved && resolved.full_name == formula.full_name
+
+          conflict_name = resolved&.full_name || conflict.name
+          reason = " (because #{conflict.reason})" if conflict.reason
+          "#{conflict_name}#{reason}"
+        end.sort!
       end
 
       private

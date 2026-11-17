@@ -255,6 +255,9 @@ module PyPI
                                     print_only: false, quiet: false, verbose: false,
                                     ignore_errors: false, ignore_non_pypi_packages: false,
                                     ignore_main_package_cooldown: false)
+    formula_name = formula.name
+    formula_path = formula.path
+    resources = formula.resources
     pypi_packages_info = formula.pypi_packages_info
     if pypi_packages_info && [package_name, extra_packages, exclude_packages, dependencies].all?(&:blank?)
       package_name = pypi_packages_info.package_name
@@ -266,10 +269,10 @@ module PyPI
     missing_dependencies = Array(dependencies).reject do |dependency|
       Formula[dependency].any_version_installed?
     rescue FormulaUnavailableError
-      odie "Formula \"#{dependency}\" not found but it is a dependency to update \"#{formula.name}\" resources."
+      odie "Formula \"#{dependency}\" not found but it is a dependency to update \"#{formula_name}\" resources."
     end
     if missing_dependencies.present?
-      missing_msg = "formulae required to update \"#{formula.name}\" resources: #{missing_dependencies.join(", ")}"
+      missing_msg = "formulae required to update \"#{formula_name}\" resources: #{missing_dependencies.join(", ")}"
       odie "Missing #{missing_msg}" unless install_dependencies
       ohai "Installing #{missing_msg}"
       require "formula"
@@ -308,30 +311,16 @@ module PyPI
     # remove packages from the exclude list if we've explicitly requested them as an extra package
     exclude_packages.delete_if { |package| extra_packages.include?(package) }
 
-    input_packages = Array(main_package)
-    extra_packages.each do |extra_package|
-      if !extra_package.valid_pypi_package? && !ignore_non_pypi_packages
-        odie "\"#{extra_package}\" is not available on PyPI."
-      end
+    input_packages = self.input_packages(main_package, extra_packages, ignore_non_pypi_packages:)
 
-      input_packages.each do |existing_package|
-        if existing_package.same_package?(extra_package) && existing_package.version != extra_package.version
-          odie "Conflicting versions specified for the `#{extra_package.name}` package: " \
-               "#{existing_package.version}, #{extra_package.version}"
-        end
-      end
-
-      input_packages << extra_package unless input_packages.include? extra_package
-    end
-
-    test_resources, non_test_resources = formula.resources.reject(&:livecheck_defined?).partition(&:test?)
+    test_resources, non_test_resources = resources.reject(&:livecheck_defined?).partition(&:test?)
     non_pypi_resource_names = non_test_resources.reject do |resource|
       resource.url.start_with?(PYTHONHOSTED_URL_PREFIX)
     end.to_set(&:name)
     test_resources = test_resources.to_set(&:name)
 
-    existing_resources_by_name = formula.resources.to_h { |resource| [resource.name, resource] }
-    existing_resource_blocks = resource_blocks_from_formula(formula.path.read)
+    existing_resources_by_name = resources.to_h { |resource| [resource.name, resource] }
+    existing_resource_blocks = resource_blocks_from_formula(formula_path.read)
 
     require "formula"
     Formula[python_name].ensure_installed!
@@ -372,7 +361,7 @@ module PyPI
           if ignore_errors
             package_error = "unknown failure"
           else
-            odie "Unable to resolve some dependencies. Please update the resources for \"#{formula.name}\" manually."
+            odie "Unable to resolve some dependencies. Please update the resources for \"#{formula_name}\" manually."
           end
         elsif url.blank? || checksum.blank?
           if ignore_errors
@@ -380,7 +369,7 @@ module PyPI
           else
             odie <<~EOS
               Unable to find the URL and/or sha256 for the "#{name}" resource.
-              Please update the resources for "#{formula.name}" manually.
+              Please update the resources for "#{formula_name}" manually.
             EOS
           end
         else
@@ -430,25 +419,50 @@ module PyPI
     end
 
     odie <<~EOS unless non_pypi_resource_names.empty?
-      "#{formula.name}" contains non-PyPI resources: #{non_pypi_resource_names.sort.join(", ")}
+      "#{formula_name}" contains non-PyPI resources: #{non_pypi_resource_names.sort.join(", ")}
       Please update the resources manually.
     EOS
 
     ohai "Updating resource blocks" unless quiet
-    formula_ast = Utils::AST::FormulaAST.new(formula.path.read)
+    formula_ast = Utils::AST::FormulaAST.new(formula_path.read)
     if formula_ast.replace_resource_stanzas(
       resource_section,
-      replace_existing:   formula.resources.any? { |resource| !resource.name.start_with?("homebrew-") },
+      replace_existing:   resources.any? { |resource| !resource.name.start_with?("homebrew-") },
       preserve_livecheck: true,
     ) == :multiple_groups
-      odie "Unable to update resource blocks for \"#{formula.name}\" automatically. Please update them manually."
+      odie "Unable to update resource blocks for \"#{formula_name}\" automatically. Please update them manually."
     end
-    formula.path.atomic_write(formula_ast.process)
+    formula_path.atomic_write(formula_ast.process)
 
-    ofail "Unable to resolve some dependencies. Please check #{formula.path} for RESOURCE-ERROR comments." if
+    ofail "Unable to resolve some dependencies. Please check #{formula_path} for RESOURCE-ERROR comments." if
       package_errors.present?
 
     true
+  end
+
+  # Combine resolver inputs while rejecting ambiguous versions before invoking pip.
+  sig {
+    params(main_package: T.nilable(Package), extra_packages: T::Array[Package], ignore_non_pypi_packages: T::Boolean)
+      .returns(T::Array[Package])
+  }
+  def self.input_packages(main_package, extra_packages, ignore_non_pypi_packages:)
+    input_packages = Array(main_package)
+    extra_packages.each do |extra_package|
+      if !extra_package.valid_pypi_package? && !ignore_non_pypi_packages
+        odie "\"#{extra_package}\" is not available on PyPI."
+      end
+
+      input_packages.each do |existing_package|
+        if existing_package.same_package?(extra_package) && existing_package.version != extra_package.version
+          odie "Conflicting versions specified for the `#{extra_package.name}` package: " \
+               "#{existing_package.version}, #{extra_package.version}"
+        end
+      end
+
+      input_packages << extra_package unless input_packages.include? extra_package
+    end
+
+    input_packages
   end
 
   sig {

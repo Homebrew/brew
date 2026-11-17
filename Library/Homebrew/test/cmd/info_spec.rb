@@ -42,6 +42,37 @@ RSpec.describe Homebrew::Cmd::Info do
 
   it_behaves_like "parseable arguments"
 
+  describe "#formula_conflicts" do
+    subject(:command) { described_class.new([]) }
+
+    let(:test_formula) do
+      formula("testball") do
+        url "https://example.com/testball-1.0.tar.gz"
+        conflicts_with "zlib", because: "both install the same library"
+        conflicts_with "alias"
+        conflicts_with "missing"
+      end
+    end
+
+    before do
+      allow(Formulary).to receive(:factory).with("zlib")
+                                           .and_return(instance_double(Formula, full_name: "user/tap/zlib"))
+      allow(Formulary).to receive(:factory).with("alias").and_return(test_formula)
+      allow(Formulary).to receive(:factory).with("missing").and_raise(FormulaUnavailableError.new("missing"))
+    end
+
+    it "sorts qualified names, preserves reasons and omits aliases of the formula itself" do
+      expect(command.formula_conflicts(test_formula))
+        .to eq(["missing", "user/tap/zlib (because both install the same library)"])
+    end
+
+    it "returns no conflicts when none are declared" do
+      allow(test_formula).to receive(:conflicts).and_return([])
+
+      expect(command.formula_conflicts(test_formula)).to be_empty
+    end
+  end
+
   it "formats the common package summary" do
     test_formula = formula("testball") do
       T.bind(self, T.class_of(Formula))

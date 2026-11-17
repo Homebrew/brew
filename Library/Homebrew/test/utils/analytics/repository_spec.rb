@@ -31,6 +31,84 @@ RSpec.describe Utils::Analytics::Repository do
     Utils.safe_popen_read(*git, "commit", "--quiet", "-m", "Update catalogue")
   end
 
+  describe "#pull_request_numbers" do
+    subject(:report) { described_class.new(repository, "Homebrew/brew") }
+
+    it "combines merge, squash and closing references without duplicates" do
+      message = <<~EOS
+        Merge pull request #123 from user/branch (#456)
+
+        Closes #123.
+        Closes Homebrew/brew#789.
+        Closes https://github.com/Homebrew/brew/pull/1011.
+      EOS
+
+      expect(report.pull_request_numbers(message)).to eq(%w[123 456 789 1011])
+    end
+
+    it "ignores references to other repositories and non-closing mentions" do
+      message = <<~EOS
+        Mention #123
+
+        Closes Homebrew/homebrew-core#456.
+        Closes https://github.com/Homebrew/homebrew-core/pull/789.
+        Fixes #1011.
+      EOS
+
+      expect(report.pull_request_numbers(message)).to be_empty
+    end
+
+    it "matches closing references regardless of capitalisation" do
+      expect(report.pull_request_numbers("closes HOMEBREW/BREW#123\nCLOSES #456")).to eq(%w[123 456])
+    end
+
+    it "only treats merge and squash references in the subject as pull requests" do
+      expect(report.pull_request_numbers("Update formula\nMerge pull request #123\nDetails (#456)")).to be_empty
+    end
+
+    it "ignores legacy issues preceding the first pull request" do
+      legacy = described_class.new(repository, "Homebrew/legacy-homebrew")
+
+      expect(legacy.pull_request_numbers("Closes #2325.\nCloses #2326.")).to eq(["2326"])
+    end
+  end
+
+  describe "#catalogue_count" do
+    subject(:report) { described_class.new(repository, "Homebrew/homebrew-core") }
+
+    before do
+      entries = [
+        "100644 blob abc\tFormula/one.rb",
+        "100755 blob abc\tFormula/t/two.rb",
+        "100644 blob abc\tLibrary/Formula/three.rb",
+        "120000 blob abc\tFormula/alias.rb",
+        "100644 blob abc\tFormula/README.md",
+        "100644 blob abc\tFormula/too/deep/ignored.rb",
+        "100644 blob abc\tCasks/one.rb",
+        "100755 blob abc\tCasks/font/t/two.rb",
+        "100644 blob abc\tCask/three.rb",
+        "120000 blob abc\tCasks/alias.rb",
+        "100644 blob abc\tCasks/README.md",
+        "040000 tree abc\tFormula/subtree.rb",
+      ]
+      allow(report).to receive(:git).with("ls-tree", "-rz", "revision").and_return(entries.join("\0"))
+    end
+
+    it "counts regular formula files in current and historical layouts" do
+      expect(report.catalogue_count("revision", formula_repository: true)).to eq(3)
+    end
+
+    it "counts nested casks but excludes aliases, directories and other files" do
+      expect(report.catalogue_count("revision", formula_repository: false)).to eq(3)
+    end
+
+    it "handles an empty tree" do
+      allow(report).to receive(:git).with("ls-tree", "-rz", "revision").and_return("")
+
+      expect(report.catalogue_count("revision", formula_repository: true)).to eq(0)
+    end
+  end
+
   it "counts year-end catalogues including deleted formulae but excluding aliases" do
     expect(described_class.new(repository, "Homebrew/homebrew-core").rows.map do |row|
       [row["period"], row["formulae"]]

@@ -949,30 +949,30 @@ module Homebrew
           if phase == :uninstall
             next [] if step["type"] != "symlink" || step["uninstall"] != true
 
-            next [resolve_path(step_path(step, "target")).parent]
+            next [resolve_step_path(step, "target").parent]
           end
 
           case step.fetch("type")
           when "mkdir_p"
-            path = resolve_path(step_path(step, "path"))
+            path = resolve_step_path(step, "path")
             [path.parent.directory? ? path : path.parent]
           when "mkdir", "touch", "write"
-            [resolve_path(step_path(step, "path")).parent]
+            [resolve_step_path(step, "path").parent]
           when "move"
-            [resolve_path(step_path(step, "source")).parent, resolve_path(step_path(step, "target")).parent]
+            [resolve_step_path(step, "source").parent, resolve_step_path(step, "target").parent]
           when "move_children", "move_contents"
-            [resolve_path(step_path(step, "source")), resolve_path(step_path(step, "target"))]
+            [resolve_step_path(step, "source"), resolve_step_path(step, "target")]
           when "copy", "symlink"
-            [resolve_path(step_path(step, "target")).parent]
+            [resolve_step_path(step, "target").parent]
           when "remove"
             step_paths(step, "paths").flat_map { |path| expand_path_glob(path) }.map(&:parent)
           when "inreplace", "change_dylib_id"
-            path = resolve_path(step_path(step, (step["type"] == "inreplace") ? "path" : "source"))
+            path = resolve_step_path(step, (step["type"] == "inreplace") ? "path" : "source")
             [path.exist? ? path : path.parent]
           when "link_dir", "link_children"
-            [resolve_path(step_path(step, "target"))]
+            [resolve_step_path(step, "target")]
           when "run"
-            paths = step.key?("stdout_path") ? [resolve_path(step_path(step, "stdout_path")).parent] : []
+            paths = step.key?("stdout_path") ? [resolve_step_path(step, "stdout_path").parent] : []
             if step.key?("writable_paths")
               paths.concat(step_paths(step, "writable_paths").map do |path|
                 resolve_path(path)
@@ -1010,7 +1010,7 @@ module Homebrew
           run_terminate_process(step)
         when "change_dylib_id"
           Homebrew::InstallSteps.change_dylib_id(
-            resolve_path(step_path(step, "source")),
+            resolve_step_path(step, "source"),
             expand_template_tokens(step_string(step, "id")),
             resolve_source: step["resolve_source"] == true,
           )
@@ -1035,28 +1035,28 @@ module Homebrew
         when "set_ownership"
           run_set_ownership(step)
         when "compile_gsettings_schemas"
-          run_formula_tool("glib", "glib-compile-schemas", resolve_path(step_path(step, "path")))
+          run_formula_tool("glib", "glib-compile-schemas", resolve_step_path(step, "path"))
         when "gio_querymodules"
-          run_formula_tool("glib", "gio-querymodules", resolve_path(step_path(step, "path")))
+          run_formula_tool("glib", "gio-querymodules", resolve_step_path(step, "path"))
         when "gdk_pixbuf_query_loaders"
           run_formula_tool("gdk-pixbuf", "gdk-pixbuf-query-loaders", "--update-cache")
         when "gtk_update_icon_cache"
           require "utils/path"
           if Utils::Path.formula_any_version_installed?("gtk4")
             run_formula_tool("gtk4", "gtk4-update-icon-cache", "-q", "-t", "-f",
-                             resolve_path(step_path(step, "path")))
+                             resolve_step_path(step, "path"))
           else
             run_formula_tool("gtk+3", "gtk3-update-icon-cache", "-q", "-t", "-f",
-                             resolve_path(step_path(step, "path")))
+                             resolve_step_path(step, "path"))
           end
         when "update_mime_database"
-          run_formula_tool("shared-mime-info", "update-mime-database", resolve_path(step_path(step, "path")))
+          run_formula_tool("shared-mime-info", "update-mime-database", resolve_step_path(step, "path"))
         when "update_desktop_database"
-          run_formula_tool("desktop-file-utils", "update-desktop-database", resolve_path(step_path(step, "path")))
+          run_formula_tool("desktop-file-utils", "update-desktop-database", resolve_step_path(step, "path"))
         when "delete_keychain_certificate"
           certificate_hash = nil
           if step.key?("matching_certificate")
-            certificate = resolve_path(step_path(step, "matching_certificate"))
+            certificate = resolve_step_path(step, "matching_certificate")
             return unless certificate.exist?
 
             certificate_hash = run_command_output("/usr/bin/openssl", "x509", "-fingerprint", "-sha256", "-noout",
@@ -1094,18 +1094,18 @@ module Homebrew
       def run_file_step(step)
         case step.fetch("type")
         when "mkdir"
-          resolve_path(step_path(step, "path")).mkdir
+          resolve_step_path(step, "path").mkdir
         when "mkdir_p"
-          resolve_path(step_path(step, "path")).mkpath
+          resolve_step_path(step, "path").mkpath
         when "init_data_dir"
           run_init_data_dir(step)
         when "touch"
-          path = resolve_path(step_path(step, "path"))
+          path = resolve_step_path(step, "path")
           path.dirname.mkpath
           FileUtils.touch path
         when "move"
           source = resolve_step_source(step)
-          target = resolve_path(step_path(step, "target"))
+          target = resolve_step_path(step, "target")
           target.dirname.mkpath
           destination = step_destination(source, target)
           if step.key?("overwrite")
@@ -1123,8 +1123,8 @@ module Homebrew
           end
           FileUtils.rm_f marker if (marker = temporary_backup_marker(source))
         when "move_children", "move_contents"
-          source = resolve_path(step_path(step, "source"))
-          target = resolve_path(step_path(step, "target"))
+          source = resolve_step_path(step, "source")
+          target = resolve_step_path(step, "target")
           target.mkpath
           children = source.children.reject { |child| child == target }
           return if children.empty?
@@ -1132,7 +1132,7 @@ module Homebrew
           FileUtils.mv children, target
         when "copy"
           source = resolve_step_source(step)
-          target = resolve_path(step_path(step, "target"))
+          target = resolve_step_path(step, "target")
           target.dirname.mkpath
           destination = step_destination(source, target)
           overwrite = step["overwrite"] != false
@@ -1169,7 +1169,7 @@ module Homebrew
         when "inreplace"
           require "utils/inreplace"
 
-          path = resolve_path(step_path(step, "path"))
+          path = resolve_step_path(step, "path")
           before = expand_template_tokens(step_string(step, "before"))
           after = expand_template_tokens(step_string(step, "after"))
           regexp_options = T.cast(step["regexp_options"], T.nilable(Integer))
@@ -1178,8 +1178,8 @@ module Homebrew
                                      audit_result: step["skip_audit"] != true,
                                      global:       step["first_only"] != true)
         when "link_dir"
-          source_dir = resolve_path(step_path(step, "source"))
-          target_dir = resolve_path(step_path(step, "target"))
+          source_dir = resolve_step_path(step, "source")
+          target_dir = resolve_step_path(step, "target")
           source_dir.find do |source|
             link_target = target_dir/source.relative_path_from(source_dir)
             next if source.basename.to_s == ".DS_Store"
@@ -1193,15 +1193,15 @@ module Homebrew
             end
           end
         when "link_children"
-          target_dir = resolve_path(step_path(step, "target"))
+          target_dir = resolve_step_path(step, "target")
           target_dir.mkpath
           link_prefix = expand_template_tokens(step["prefix"].to_s)
           link_suffix = expand_template_tokens(step["suffix"].to_s)
-          resolve_path(step_path(step, "source")).each_child do |source|
+          resolve_step_path(step, "source").each_child do |source|
             target_dir.install_symlink source => "#{link_prefix}#{source.basename}#{link_suffix}"
           end
         when "symlink"
-          target = resolve_path(step_path(step, "target"))
+          target = resolve_step_path(step, "target")
           if step["source_glob"] == true
             sources = expand_path_glob(step_path(step, "source"))
             return if sources.empty?
@@ -1220,7 +1220,7 @@ module Homebrew
           content = T.cast(step["content"], T.nilable(String))
           raise ArgumentError, "install step write requires content" if content.nil?
 
-          path = resolve_path(step_path(step, "path"))
+          path = resolve_step_path(step, "path")
           if step["overwrite"] == true || !path.exist?
             path.dirname.mkpath
             path.atomic_write(expand_template_tokens(content))
@@ -1233,7 +1233,7 @@ module Homebrew
       sig { params(step: Step).returns(T::Boolean) }
       def step_guards_match?(step)
         if step["type"] == "move" && context_value(:temp)
-          source = resolve_path(step_path(step, "source"))
+          source = resolve_step_path(step, "source")
           if temporary_backup_marker(source)&.exist? && !source.exist? && !source.symlink?
             raise "Expected cask backup is missing:\n#{source}"
           end
@@ -1282,8 +1282,8 @@ module Homebrew
         args = T.cast(step["args"], T.nilable(T::Array[String]))&.map { |arg| expand_template_tokens(arg) } || []
         environment = T.cast(step["env"] || {}, PathSpec)
                        .transform_values { |value| expand_template_tokens(value.to_s) }
-        input = step.key?("stdin_path") ? resolve_path(step_path(step, "stdin_path")).read : []
-        working_directory = resolve_path(step_path(step, "chdir")) if step.key?("chdir")
+        input = step.key?("stdin_path") ? resolve_step_path(step, "stdin_path").read : []
+        working_directory = resolve_step_path(step, "chdir") if step.key?("chdir")
         result = @command.run(command, args:, sudo: step["sudo"] == true, env: environment, input:,
                                      must_succeed: step["allow_failure"] != true,
                                      print_stdout: step["print_stdout"] == true,
@@ -1293,7 +1293,7 @@ module Homebrew
         return unless step.key?("stdout_path")
         return unless result.success?
 
-        output_path = resolve_path(step_path(step, "stdout_path"))
+        output_path = resolve_step_path(step, "stdout_path")
         output_path.dirname.mkpath
         output_path.write(result.stdout)
       end
@@ -1395,7 +1395,7 @@ module Homebrew
         return if step.fetch("type") != "symlink"
         return if step["uninstall"] != true
 
-        target = resolve_path(step_path(step, "target"))
+        target = resolve_step_path(step, "target")
         return unless target.symlink?
         return if read_symlink(target, step) != Pathname(link_source(step_path(step, "source")))
 
@@ -1421,7 +1421,7 @@ module Homebrew
           raise ArgumentError, "unknown data directory initialiser: #{using}"
         end
 
-        path = resolve_path(step_path(step, "path"))
+        path = resolve_step_path(step, "path")
         path.mkpath
         return if ENV["HOMEBREW_GITHUB_ACTIONS"].present?
         return if (path/marker).exist?
@@ -1495,6 +1495,11 @@ module Homebrew
       sig { params(step: Step).returns(T::Array[Pathname]) }
       def existing_step_paths(step)
         step_paths(step, "paths").flat_map { |spec| expand_path_glob(spec) }.select(&:exist?)
+      end
+
+      sig { params(step: Step, key: String).returns(Pathname) }
+      def resolve_step_path(step, key)
+        resolve_path(step_path(step, key))
       end
 
       sig { params(step: Step).returns(Pathname) }

@@ -127,6 +127,7 @@ module Homebrew
 
       sig { override.void }
       def run
+        args = self.args
         maintainer_report_csv = args.maintainer_report_csv
         if args.maintainer_exempt && !maintainer_report_csv
           odie "`--maintainer-exempt` requires `--maintainer-report-csv`."
