@@ -804,6 +804,7 @@ class Version
 
           [Token.create(letter.upcase), Token.create(number)]
         else
+          token = token.upcase if erlang_version && /\A[AB]\z/i.match?(token)
           [Token.create(token)]
         end
       end || [],
