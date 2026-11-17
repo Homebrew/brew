@@ -223,7 +223,7 @@ On macOS, code signing, notarisation and Gatekeeper provide independent checks t
 
 * A [Developer ID signature](https://developer.apple.com/developer-id/) ties the artefact to a certificate Apple issued to a registered developer and lets macOS detect changes made after it was signed.
 * [Apple's notary service](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution) automatically scans submitted software for known malicious content and code-signing problems, records the result and issues a ticket that Apple can later revoke.
-* [Gatekeeper](https://support.apple.com/guide/security/gatekeeper-and-runtime-protection-sec5599b66df/web) checks the developer identity, notarisation ticket and signature when quarantined software is first opened or installed.
+* [Gatekeeper](https://support.apple.com/en-us/102445) checks the developer identity, notarisation ticket and signature when quarantined software is first opened or installed.
 
 Homebrew applies macOS quarantine attributes to Cask downloads so Gatekeeper performs these checks instead of Homebrew bypassing them.
 Homebrew also audits apps, installers and other executable artefacts in official macOS casks that Gatekeeper can assess and requires them to pass on a default macOS configuration.
