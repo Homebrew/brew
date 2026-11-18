@@ -191,6 +191,12 @@ module Homebrew
           hash["service_name_present"] = hash.dig("service", "name").present?
           hash["stable_present"] = hash.dig("urls", "stable").present?
 
+          active_spec = hash["stable_present"] ? :stable : :head
+          hash["incompatible"] = process_requirements(hash["requirements_array"] || [], active_spec).any? do |args|
+            requirement = DependencyCollector.new.build(args)
+            requirement.required? && !requirement.platform_supported?(bottle_tag)
+          end
+
           FormulaStruct.from_hash(hash)
         end
 
