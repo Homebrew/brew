@@ -2275,6 +2275,26 @@ RSpec.describe Formula do
 
       expect(f.incompatible?).to be(true)
     end
+
+    it "is true when another fatal requirement isn't met", :needs_macos do
+      f = formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/example-1.0.tar.gz"
+        depends_on xcode: "99.0"
+      end
+
+      expect(f.incompatible?).to be(true)
+    end
+
+    it "ignores requirements that are only needed to build" do
+      f = formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/example-1.0.tar.gz"
+        depends_on xcode: ["99.0", :build]
+      end
+
+      expect(f.incompatible?).to be(false)
+    end
   end
 
   specify "requirements" do
