@@ -3,7 +3,6 @@
 
 require "utils/output"
 require "deprecate_disable"
-require "simulate_system"
 
 module Utils
   # Shared presentation helpers for formula and cask information.
@@ -236,14 +235,6 @@ module Utils
       section("Binaries", formatted.empty? ? [] : [formatted])
     end
 
-    sig { params(requirement: Requirement).returns(T::Boolean) }
-    def self.requirement_for_other_os?(requirement)
-      return !Homebrew::SimulateSystem.simulating_or_running_on_macos? if requirement.instance_of?(MacOSRequirement)
-      return !Homebrew::SimulateSystem.simulating_or_running_on_linux? if requirement.instance_of?(LinuxRequirement)
-
-      false
-    end
-
     sig { params(installed_count: Integer, total_count: Integer, mark_uninstalled: T::Boolean).returns(String) }
     def self.dependency_status_counts(installed_count, total_count, mark_uninstalled: true)
       missing_count = total_count - installed_count
@@ -294,7 +285,6 @@ module Utils
     sig { params(formula: Formula).returns(T::Boolean) }
     def self.formula_installs_from_source?(formula)
       return false if formula.disabled? || formula.incompatible?
-      return false if formula.requirements.any? { |requirement| requirement_for_other_os?(requirement) }
 
       stable = formula.stable
       return true if stable.blank? && formula.head.present?
