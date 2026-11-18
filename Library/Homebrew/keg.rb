@@ -155,10 +155,15 @@ class Keg
   sig { returns(T::Array[Pathname]) }
   def self.must_exist_subdirectories
     @must_exist_subdirectories ||= T.let((keg_link_directories - %w[var] + %w[
-      libexec
       opt
       var/homebrew/linked
     ]).map { |dir| HOMEBREW_PREFIX/dir }.sort.uniq.freeze, T.nilable(T::Array[Pathname]))
+  end
+
+  # Formulae may also install symlinks into an existing libexec directory.
+  sig { returns(T::Array[Pathname]) }
+  def self.prefix_subdirectories
+    must_exist_subdirectories + [HOMEBREW_PREFIX/"libexec"].select(&:directory?)
   end
 
   # Keep relatively in sync with
@@ -183,7 +188,7 @@ class Keg
       share/fish share/fish/vendor_completions.d share/fish/vendor_functions.d
       share/pwsh share/pwsh/completions
       var/log
-    ].map { |dir| HOMEBREW_PREFIX/dir } + must_exist_subdirectories + [
+    ].map { |dir| HOMEBREW_PREFIX/dir } + prefix_subdirectories + [
       HOMEBREW_CACHE,
       HOMEBREW_CELLAR,
       HOMEBREW_LOCKS,

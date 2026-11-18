@@ -99,6 +99,15 @@ RSpec.describe Keg do
     expect(Class.new(described_class).must_be_writable_directories).to include(site_packages)
   end
 
+  it "does not require a missing libexec directory" do
+    RSpec::Mocks.with_temporary_scope do
+      stub_const("HOMEBREW_PREFIX", mktmpdir)
+      keg_class = Class.new(described_class)
+      expect(keg_class.must_exist_directories | keg_class.must_be_writable_directories)
+        .not_to include(HOMEBREW_PREFIX/"libexec")
+    end
+  end
+
   specify "#empty_installation?" do
     %w[.DS_Store INSTALL_RECEIPT.json LICENSE.txt].each do |file|
       touch keg/file
