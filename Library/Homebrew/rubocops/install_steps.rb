@@ -29,53 +29,47 @@ module RuboCop
         GITHUB_ACTIONS_GUARD_SOURCE = "return if ENV[\"HOMEBREW_GITHUB_ACTIONS\"]"
         MYSQL_FORMULA_CLASS_REGEX = /\AMysql(?:AT\d+)?\z/
         MYSQL_DATADIR_METHOD_SOURCE = "def datadir var/\"mysql\" end"
-        MYSQL_INITIALISE_SOURCE = T.let(
-          <<~'RUBY'.gsub(/\s+/, " ").strip.freeze,
-            unless (datadir/"mysql/general_log.CSM").exist?
-              ENV["TMPDIR"] = nil
-              system bin/"mysqld", "--initialize-insecure", "--user=#{ENV["USER"]}",
-                                   "--basedir=#{prefix}", "--datadir=#{datadir}", "--tmpdir=/tmp"
-            end
-          RUBY
-          String,
-        )
-        MARIADB_INITIALISE_SOURCE = T.let(
-          <<~'RUBY'.gsub(/\s+/, " ").strip.freeze,
-            unless File.exist? "#{var}/mysql/mysql/user.frm"
-              ENV["TMPDIR"] = nil
-              system bin/"mysql_install_db", "--verbose", "--user=#{ENV["USER"]}",
-                "--basedir=#{prefix}", "--datadir=#{var}/mysql", "--tmpdir=/tmp"
-            end
-          RUBY
-          String,
-        )
+        mysql_initialise_source = <<~'RUBY'.gsub(/\s+/, " ").strip
+          unless (datadir/"mysql/general_log.CSM").exist?
+            ENV["TMPDIR"] = nil
+            system bin/"mysqld", "--initialize-insecure", "--user=#{ENV["USER"]}",
+                                 "--basedir=#{prefix}", "--datadir=#{datadir}", "--tmpdir=/tmp"
+          end
+        RUBY
+        MYSQL_INITIALISE_SOURCE = T.let(mysql_initialise_source.freeze, String)
+        mariadb_initialise_source = <<~'RUBY'.gsub(/\s+/, " ").strip
+          unless File.exist? "#{var}/mysql/mysql/user.frm"
+            ENV["TMPDIR"] = nil
+            system bin/"mysql_install_db", "--verbose", "--user=#{ENV["USER"]}",
+              "--basedir=#{prefix}", "--datadir=#{var}/mysql", "--tmpdir=/tmp"
+          end
+        RUBY
+        MARIADB_INITIALISE_SOURCE = T.let(mariadb_initialise_source.freeze, String)
         POSTGRESQL_DATADIR_METHOD_SOURCE = "def postgresql_datadir var/name end"
         POSTGRESQL_MARKER_METHOD_SOURCE = "def pg_version_exists? (postgresql_datadir/\"PG_VERSION\").exist? end"
         POSTGRESQL_INIT_SOURCE_REGEX = Regexp.new(
           '\Asystem bin/"initdb", "--locale=(C|en_US\\.UTF-8)", "-E", "UTF-8", ' \
           'postgresql_datadir unless pg_version_exists\\?\\z',
         ).freeze
-        POSTGRESQL_LINK_DIR_SOURCE = T.let(
-          <<~RUBY.gsub(/\s+/, " ").strip.freeze,
-            %w[include lib share].each do |dir|
-              dst_dir = HOMEBREW_PREFIX/dir/name
-              src_dir = prefix/dir/"postgresql"
-              src_dir.find do |src|
-                dst = dst_dir/src.relative_path_from(src_dir)
-                next if dst.directory? && !dst.symlink? && src.directory? && !src.symlink?
+        postgresql_link_dir_source = <<~RUBY.gsub(/\s+/, " ").strip
+          %w[include lib share].each do |dir|
+            dst_dir = HOMEBREW_PREFIX/dir/name
+            src_dir = prefix/dir/"postgresql"
+            src_dir.find do |src|
+              dst = dst_dir/src.relative_path_from(src_dir)
+              next if dst.directory? && !dst.symlink? && src.directory? && !src.symlink?
 
-                rm_r(dst) if dst.exist? || dst.symlink?
-                if src.symlink? || src.file?
-                  Find.prune if src.basename.to_s == ".DS_Store"
-                  dst.parent.install_symlink src
-                elsif src.directory?
-                  dst.mkpath
-                end
+              rm_r(dst) if dst.exist? || dst.symlink?
+              if src.symlink? || src.file?
+                Find.prune if src.basename.to_s == ".DS_Store"
+                dst.parent.install_symlink src
+              elsif src.directory?
+                dst.mkpath
               end
             end
-          RUBY
-          String,
-        )
+          end
+        RUBY
+        POSTGRESQL_LINK_DIR_SOURCE = T.let(postgresql_link_dir_source.freeze, String)
         POSTGRESQL_LINK_CHILDREN_SOURCE =
           "bin.each_child { |f| (HOMEBREW_PREFIX/\"bin\").install_symlink " \
           "f => \"\#{f.basename}-\#{version.major}\" }"

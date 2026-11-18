@@ -28,6 +28,8 @@ module Homebrew
         ).void
       }
       def initialize(tap:, git:, dry_run:, fail_fast:, verbose:)
+        @formula_install_ranks = T.let(nil, T.nilable(T::Hash[String, Integer]))
+
         super
         @testing_formulae_with_tested_dependents = T.let([], T::Array[String])
         @tested_dependents_list = T.let(nil, T.nilable(Pathname))
@@ -61,14 +63,12 @@ module Homebrew
 
         download_artifacts_from_previous_run!("dependents{,_#{previous_run_artifact_specifier}*}",
                                               dry_run: args.dry_run?)
-        @skip_candidates = T.let(
-          if (tested_dependents_cache = artifact_cache/@tested_dependents_list).exist?
-            tested_dependents_cache.read.split("\n")
-          else
-            []
-          end,
-          T.nilable(T::Array[String]),
-        )
+        skip_candidates = if (tested_dependents_cache = artifact_cache/@tested_dependents_list).exist?
+          tested_dependents_cache.read.split("\n")
+        else
+          []
+        end
+        @skip_candidates = T.let(skip_candidates, T.nilable(T::Array[String]))
 
         if args.formulae_dependents_shard.present?
           dependent_pairs = @dependent_testing_formulae.flat_map do |formula_name|
@@ -186,7 +186,7 @@ module Homebrew
 
         ohai "Only source building #{max} of #{source_dependents.count} dependents"
 
-        @formula_install_ranks ||= T.let(begin
+        @formula_install_ranks ||= begin
           analytics = begin
             require "api/analytics"
             Homebrew::API::Analytics.fetch "install", 90
@@ -200,7 +200,7 @@ module Homebrew
 
             hash[formula.to_s] = number.to_i
           end
-        end, T.nilable(T::Hash[String, Integer]))
+        end
 
         if @formula_install_ranks.present?
           last = @formula_install_ranks.each_value.max.to_i + 1

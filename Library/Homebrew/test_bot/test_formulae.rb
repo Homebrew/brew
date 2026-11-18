@@ -32,7 +32,9 @@ module Homebrew
         @artifact_cache = T.let(Pathname.new("artifact-cache"), Pathname)
         # Let's keep track of the artifacts we've already downloaded
         # to avoid repeatedly trying to download the same thing.
-        @downloaded_artifacts = T.let(Hash.new { |h, k| h[k] = [] }, T::Hash[String, T::Array[String]])
+        downloaded_artifacts = Hash.new { |h, k| h[k] = [] }
+        @downloaded_artifacts = T.let(downloaded_artifacts, T::Hash[String, T::Array[String]])
+        @installed_formulae_deps = T.let(nil, T.nilable(T::Hash[String, T::Array[String]]))
         @testing_formulae = T.let([], T::Array[String])
         @tested_formulae = T.let([], T::Array[String])
       end
@@ -480,12 +482,9 @@ module Homebrew
         installed_formulae = Utils.safe_popen_read("brew", "list", "--full-name", "--formulae").split("\n")
         uninstallable_formulae = installed_formulae - keep_formulae
 
-        @installed_formulae_deps ||= T.let(
-          Hash.new do |h, formula|
-            h[formula] = Utils.safe_popen_read("brew", "deps", "--full-name", formula).split("\n")
-          end,
-          T.nilable(T::Hash[String, T::Array[String]]),
-        )
+        @installed_formulae_deps ||= Hash.new do |h, formula|
+          h[formula] = Utils.safe_popen_read("brew", "deps", "--full-name", formula).split("\n")
+        end
 
         uninstallable_formulae.reject! do |name|
           keep_formulae.any? { |f| @installed_formulae_deps[f].include?(name) }

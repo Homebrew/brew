@@ -237,10 +237,10 @@ module Homebrew
       sig { params(name: String).returns(T::Array[T::Hash[String, T.untyped]]) }
       def matching_releases(name)
         releases_url = "#{GitHub::API_URL}/repos/Homebrew/brew/releases?per_page=#{GitHub::MAX_PER_PAGE}"
-        releases = T.cast(GitHub::API.open_rest(releases_url,
-                                                request_method: :GET,
-                                                scopes:         GitHub::CREATE_ISSUE_FORK_OR_PR_SCOPES),
-                          T::Array[T::Hash[String, T.untyped]])
+        response = GitHub::API.open_rest(releases_url,
+                                         request_method: :GET,
+                                         scopes:         GitHub::CREATE_ISSUE_FORK_OR_PR_SCOPES)
+        releases = T.cast(response, T::Array[T::Hash[String, T.untyped]])
         releases.select do |release|
           release_name = release["name"].to_s
           release_name = release.fetch("tag_name", "").to_s if release_name.blank?

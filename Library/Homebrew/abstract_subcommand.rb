@@ -105,7 +105,8 @@ module Homebrew
     def initialize(args, context: nil, targets: nil, quiet: false, cleanup: true)
       # `args` is frozen by `CLI::Parser#parse`, so `extend` needs an unfrozen clone
       # (which, unlike `dup`, keeps the singleton methods the parser defined on it).
-      @args = T.let(args.clone(freeze: false).extend(self.class.args_module).freeze, CLI::Args)
+      resolved_args = args.clone(freeze: false).extend(self.class.args_module).freeze
+      @args = T.let(resolved_args, CLI::Args)
       @context = context
       @targets = targets
       @quiet = quiet

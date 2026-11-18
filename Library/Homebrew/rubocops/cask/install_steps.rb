@@ -24,35 +24,29 @@ module RuboCop
         LEGACY_FLIGHT_MSG = "Casks must use `%<steps>s` instead of `%<flight>s`."
         KEYCHAIN_HASHES_SOURCE =
           'hashes = stdout.lines.grep(/^SHA-256 hash:/) { |l| l.split(":").second.strip }'
-        KEYCHAIN_DELETE_SOURCE = T.let(
-          <<~RUBY.gsub(/\s+/, " ").strip.freeze,
-            hashes.each do |h|
-              system_command "/usr/bin/security",
-                             args: ["delete-certificate", "-Z", h],
-                             sudo: true
-            end
-          RUBY
-          String,
-        )
+        keychain_delete_source = <<~RUBY.gsub(/\s+/, " ").strip
+          hashes.each do |h|
+            system_command "/usr/bin/security",
+                           args: ["delete-certificate", "-Z", h],
+                           sudo: true
+          end
+        RUBY
+        KEYCHAIN_DELETE_SOURCE = T.let(keychain_delete_source.freeze, String)
         CERTIFICATE_EXISTS_GUARD_SOURCE = "next unless cert.exist?"
-        CERTIFICATE_FINGERPRINT_SOURCE = T.let(
-          <<~RUBY.gsub(/\s+/, " ").strip.freeze,
-            stdout, * = system_command "/usr/bin/openssl",
-                                       args: ["x509", "-fingerprint", "-sha256", "-noout", "-in", cert]
-          RUBY
-          String,
-        )
+        certificate_fingerprint_source = <<~RUBY.gsub(/\s+/, " ").strip
+          stdout, * = system_command "/usr/bin/openssl",
+                                     args: ["x509", "-fingerprint", "-sha256", "-noout", "-in", cert]
+        RUBY
+        CERTIFICATE_FINGERPRINT_SOURCE = T.let(certificate_fingerprint_source.freeze, String)
         CERTIFICATE_HASH_SOURCE = 'hash = stdout.lines.first.split("=").second.delete(":").strip'
-        CERTIFICATE_HASH_DELETE_SOURCE = T.let(
-          <<~RUBY.gsub(/\s+/, " ").strip.freeze,
-            if hashes.include?(hash)
-              system_command "/usr/bin/security",
-                             args: ["delete-certificate", "-Z", hash],
-                             sudo: true
-            end
-          RUBY
-          String,
-        )
+        certificate_hash_delete_source = <<~RUBY.gsub(/\s+/, " ").strip
+          if hashes.include?(hash)
+            system_command "/usr/bin/security",
+                           args: ["delete-certificate", "-Z", hash],
+                           sudo: true
+          end
+        RUBY
+        CERTIFICATE_HASH_DELETE_SOURCE = T.let(certificate_hash_delete_source.freeze, String)
 
         sig { override.params(cask_block: RuboCop::Cask::AST::CaskBlock).void }
         def on_cask(cask_block)

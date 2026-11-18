@@ -16,7 +16,8 @@ module RuboCop
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)
           node = formula_nodes.node
-          @full_source_content = T.let(source_buffer(node).source, T.nilable(String))
+          full_source_content = source_buffer(node).source
+          @full_source_content = T.let(full_source_content, T.nilable(String))
 
           return if (body_node = formula_nodes.body_node).nil?
 
@@ -42,13 +43,12 @@ module RuboCop
           if inline_patches.empty? && patch_end?
             @offensive_node = T.let(node, T.nilable(RuboCop::AST::Node))
             @source_buf = T.let(source_buffer(node), T.nilable(Parser::Source::Buffer))
-            @line_no = T.let(node.loc.last_line + 1, T.nilable(Integer))
+            line_no = node.loc.last_line + 1
+            @line_no = T.let(line_no, T.nilable(Integer))
             @column = T.let(0, T.nilable(Integer))
             @length = T.let(7, T.nilable(Integer)) # "__END__".size
-            @offense_source_range = T.let(
-              source_range(@source_buf, @line_no, @column, @length),
-              T.nilable(Parser::Source::Range),
-            )
+            offense_source_range = source_range(@source_buf, @line_no, @column, @length)
+            @offense_source_range = T.let(offense_source_range, T.nilable(Parser::Source::Range))
             add_offense(@offense_source_range, message: "Patch is missing `patch :DATA`")
           end
 

@@ -36,7 +36,8 @@ module RuboCop
         class_node, parent_class_node, body = *node
         @body = T.let(body, T.nilable(RuboCop::AST::Node))
 
-        @formula_name = T.let(Pathname.new(@file_path).basename(".rb").to_s, T.nilable(String))
+        formula_name = Pathname.new(@file_path).basename(".rb").to_s
+        @formula_name = T.let(formula_name, T.nilable(String))
         audit_formula(FormulaNodes.new(node:, class_node:, parent_class_node:, body_node: body))
       end
 
@@ -147,7 +148,8 @@ module RuboCop
           parameters(call).first
         # sha256 is passed as a key-value pair in bottle blocks
         elsif parameters(call).fetch(0).hash_type?
-          hash_node = T.cast(parameters(call).fetch(0), RuboCop::AST::HashNode)
+          hash_node = parameters(call).fetch(0)
+          hash_node = T.cast(hash_node, RuboCop::AST::HashNode)
           if hash_node.keys.first.value == :cellar
             # sha256 :cellar :any, :tag "hexdigest"
             hash_node.values.last
@@ -276,12 +278,13 @@ module RuboCop
 
       sig { returns(T::Array[Symbol]) }
       def on_system_methods
-        @on_system_methods ||= T.let(
-          [:intel, :arm, :macos, :linux, :system, *MacOSVersion::SYMBOLS.keys].map do |m|
-            :"on_#{m}"
-          end,
-          T.nilable(T::Array[Symbol]),
-        )
+        return @on_system_methods if @on_system_methods
+
+        on_system_methods = [:intel, :arm, :macos, :linux, :system, *MacOSVersion::SYMBOLS.keys].map do |m|
+          :"on_#{m}"
+        end
+        @on_system_methods = T.let(on_system_methods, T.nilable(T::Array[Symbol]))
+        on_system_methods
       end
     end
   end

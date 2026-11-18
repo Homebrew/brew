@@ -3,6 +3,10 @@
 
 require "macos_version"
 
+macos_blocks = MacOSVersion::SYMBOLS.keys.map do |os_name|
+  [{ name: :"on_#{os_name}", type: :block_call }]
+end
+
 FORMULA_COMPONENT_PRECEDENCE_LIST = T.let([
   [{ name: :include,   type: :method_call }],
   [{ name: :desc,      type: :method_call }],
@@ -31,9 +35,7 @@ FORMULA_COMPONENT_PRECEDENCE_LIST = T.let([
   [{ name: :depends_on, type: :method_call }],
   [{ name: :uses_from_macos, type: :method_call }],
   [{ name: :on_macos, type: :block_call }],
-  *MacOSVersion::SYMBOLS.keys.map do |os_name|
-    [{ name: :"on_#{os_name}", type: :block_call }]
-  end,
+  *macos_blocks,
   [{ name: :on_system, type: :block_call }],
   [{ name: :on_linux, type: :block_call }],
   [{ name: :on_arm, type: :block_call }],

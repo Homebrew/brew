@@ -45,14 +45,12 @@ module Homebrew
       def run
         Formulary.enable_factory_cache!
 
-        @bottle_tag = T.let(
-          if (tag = args.tag)
-            Utils::Bottles::Tag.from_symbol(tag.to_sym)
-          else
-            Utils::Bottles.tag
-          end,
-          T.nilable(Utils::Bottles::Tag),
-        )
+        bottle_tag = if (tag = args.tag)
+          Utils::Bottles::Tag.from_symbol(tag.to_sym)
+        else
+          Utils::Bottles.tag
+        end
+        @bottle_tag = T.let(bottle_tag, T.nilable(Utils::Bottles::Tag))
         return unless @bottle_tag
 
         if args.lost?

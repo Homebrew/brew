@@ -58,22 +58,18 @@ module RuboCop
 
         node_begin_pos = start_column(node)
         line_begin_pos = line_start_column(node)
-        @column = T.let(
-          if node_begin_pos == line_begin_pos
-            node_begin_pos + match_object.begin(0) - line_begin_pos
-          else
-            node_begin_pos + match_object.begin(0) - line_begin_pos + 1
-          end,
-          T.nilable(Integer),
-        )
+        column = if node_begin_pos == line_begin_pos
+          node_begin_pos + match_object.begin(0) - line_begin_pos
+        else
+          node_begin_pos + match_object.begin(0) - line_begin_pos + 1
+        end
+        @column = T.let(column, T.nilable(Integer))
         @length = T.let(match_object.to_s.length, T.nilable(Integer))
         @line_no = T.let(line_number(node), T.nilable(Integer))
         @source_buf = T.let(source_buffer(node), T.nilable(Parser::Source::Buffer))
         @offensive_node = T.let(node, T.nilable(RuboCop::AST::Node))
-        @offensive_source_range = T.let(
-          source_range(@source_buf, @line_no, @column, @length),
-          T.nilable(Parser::Source::Range),
-        )
+        offensive_source_range = source_range(@source_buf, @line_no, @column, @length)
+        @offensive_source_range = T.let(offensive_source_range, T.nilable(Parser::Source::Range))
         match_object
       end
 

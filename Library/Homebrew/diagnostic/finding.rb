@@ -56,14 +56,9 @@ module Homebrew
         @tier = tier
         @affects = affects
         @links = links
-        @remediation ||= T.let(
-          if remediation.is_a?(String)
-            Remediation.new(text: remediation)
-          else
-            remediation
-          end,
-          T.nilable(Homebrew::Diagnostic::Finding::Remediation),
-        )
+
+        remediation = Remediation.new(text: remediation) if remediation.is_a?(String)
+        @remediation = T.let(remediation, T.nilable(Remediation))
       end
 
       sig {

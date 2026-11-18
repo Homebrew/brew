@@ -32,7 +32,8 @@ module Homebrew
 
       VALID_DAYS = %w[30 90 365].freeze
       VALID_FORMULA_CATEGORIES = %w[install install-on-request build-error].freeze
-      VALID_CATEGORIES = T.let((VALID_FORMULA_CATEGORIES + %w[cask-install os-version]).freeze, T::Array[String])
+      valid_categories = (VALID_FORMULA_CATEGORIES + %w[cask-install os-version])
+      VALID_CATEGORIES = T.let(valid_categories.freeze, T::Array[String])
 
       cmd_args do
         description <<~EOS
@@ -126,10 +127,10 @@ module Homebrew
         elsif (json = args.json)
           print_json(json, args.no_named? && !args.installed?)
         elsif args.installed?
-          T.let([
+          [
             *(args.cask? ? [] : Formula.installed.sort),
             *(args.formula? ? [] : Cask::Caskroom.casks.sort_by(&:full_name)),
-          ], T::Array[T.any(Formula, Cask::Cask)]).each_with_index do |formula_or_cask, i|
+          ].each_with_index do |formula_or_cask, i|
             puts unless i.zero?
 
             info_formula_or_cask(formula_or_cask, quiet: !args.verbose?)
@@ -623,26 +624,24 @@ module Homebrew
             formulae.map(&:to_hash)
           end
         when :v2
-          formulae, casks = T.let(
-            if all_packages
-              formulae = [] if args.cask?
-              formulae ||= Formula.all.sort
-              casks = [] if args.formula?
-              casks ||= Cask::Cask.all.sort_by(&:full_name)
-              [formulae, casks]
-            elsif args.installed?
-              formulae = [] if args.cask?
-              formulae ||= Formula.installed.sort
-              casks = [] if args.formula?
-              casks ||= Cask::Caskroom.casks.sort_by(&:full_name)
-              [formulae, casks]
-            else
-              named_formulae, named_casks = T.cast(
-                args.named.to_formulae_to_casks(method: :resolve_cask), [T::Array[Formula], T::Array[Cask::Cask]]
-              )
-              [named_formulae.map { |f| swap_to_installed_formula(f, qualified_inputs) }, named_casks]
-            end, [T::Array[Formula], T::Array[Cask::Cask]]
-          )
+          formulae, casks = if all_packages
+            formulae = [] if args.cask?
+            formulae ||= Formula.all.sort
+            casks = [] if args.formula?
+            casks ||= Cask::Cask.all.sort_by(&:full_name)
+            [formulae, casks]
+          elsif args.installed?
+            formulae = [] if args.cask?
+            formulae ||= Formula.installed.sort
+            casks = [] if args.formula?
+            casks ||= Cask::Caskroom.casks.sort_by(&:full_name)
+            [formulae, casks]
+          else
+            named_formulae, named_casks = T.cast(
+              args.named.to_formulae_to_casks(method: :resolve_cask), [T::Array[Formula], T::Array[Cask::Cask]]
+            )
+            [named_formulae.map { |f| swap_to_installed_formula(f, qualified_inputs) }, named_casks]
+          end
 
           if args.variations?
             {
@@ -738,7 +737,7 @@ module Homebrew
             nil
           end
           installed ||= formula.any_version_installed? if !installed && formula
-          outdated = T.let(installed && formula&.outdated? == true, T::Boolean)
+          outdated = installed && formula&.outdated? == true
           warning = missing_library_deps.include?(Utils.name_from_full_name(dep.name))
           needed_by_installed_keg = if formula_outdated && tab_runtime_deps
             matching_tab_dep.present?

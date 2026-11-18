@@ -11,7 +11,7 @@ require "search"
 module Homebrew
   module Cmd
     class SearchCmd < AbstractCommand
-      PACKAGE_MANAGERS = T.let({
+      package_managers = {
         alpine:    ->(query) { "https://pkgs.alpinelinux.org/packages?name=#{query}" },
         repology:  ->(query) { "https://repology.org/projects/?search=#{query}" },
         macports:  ->(query) { "https://ports.macports.org/search/?q=#{query}" },
@@ -25,7 +25,8 @@ module Homebrew
         ubuntu:    lambda { |query|
           "https://packages.ubuntu.com/search?keywords=#{query}&searchon=names&suite=all&section=all"
         },
-      }.freeze, T::Hash[Symbol, T.proc.params(query: String).returns(String)])
+      }
+      PACKAGE_MANAGERS = T.let(package_managers.freeze, T::Hash[Symbol, T.proc.params(query: String).returns(String)])
 
       cmd_args do
         description <<~EOS

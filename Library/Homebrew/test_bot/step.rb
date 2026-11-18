@@ -50,14 +50,17 @@ module Homebrew
         ).void
       }
       def initialize(command, env:, verbose:, named_args: nil, ignore_failures: false, repository: nil)
-        @named_args = T.let([named_args].flatten.compact.map(&:to_s), T::Array[String])
-        @command = T.let(command + @named_args, T::Array[String])
+        names = [named_args].flatten.compact.map(&:to_s)
+        @named_args = T.let(names, T::Array[String])
+        resolved_command = command + @named_args
+        @command = T.let(resolved_command, T::Array[String])
         @env = env
         @verbose = verbose
         @ignore_failures = ignore_failures
         @repository = repository
 
-        @name = T.let(command[1]&.delete("-"), T.nilable(String))
+        command_name = command[1]&.delete("-")
+        @name = T.let(command_name, T.nilable(String))
         @status = T.let(:running, Symbol)
         @output = T.let(nil, T.nilable(String))
       end

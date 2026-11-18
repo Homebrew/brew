@@ -76,45 +76,43 @@ module RuboCop
       ALLOWED_STEP_ARGUMENT_NODE_TYPES = [:array, :dstr, :hash, :int, :nil, :pair, :regexp, :regopt, :str,
                                           :sym].freeze
 
-      STEP_BLOCK_MSG = T.let(
-        "Steps blocks may only contain install step DSL calls. Prefer canonical calls: " \
-        "#{(ALLOWED_STEP_METHODS - COMPATIBILITY_STEP_METHODS).map { |method| "`#{method}`" }.join(", ")}.".freeze,
-        String,
-      )
+      resolved_step_block_msg = "Steps blocks may only contain install step DSL calls. Prefer canonical calls: " \
+                                "#{(ALLOWED_STEP_METHODS - COMPATIBILITY_STEP_METHODS).map do |method|
+                                  "`#{method}`"
+                                end.join(", ")}."
+      STEP_BLOCK_MSG = T.let(resolved_step_block_msg.freeze, String)
       BREW_RUBY_STEP_MSG = "Install steps must not use `brew ruby` because it enables developer mode."
       LEGACY_STEP_METHOD_MSG = "Use `%<replacement>s` instead of legacy install step `%<method>s`."
       LEGACY_STEP_KEYWORD_MSG = "Use `%<replacement>s:` instead of legacy install step keyword `%<keyword>s:`."
       SIMPLE_STEP_CONVERSION_MSG = "Use `%<steps_block>s` for simple file preparation."
-      REBUILD_ACTION_STEP_LINES = T.let(
-        T.let([
-          [
-            "system Formula[\"glib\"].opt_bin/\"glib-compile-schemas\", " \
-            "HOMEBREW_PREFIX/\"share/glib-2.0/schemas\"",
-            "compile_gsettings_schemas",
-          ],
-          [
-            "system Formula[\"gdk-pixbuf\"].opt_bin/\"gdk-pixbuf-query-loaders\", " \
-            "\"--update-cache\"",
-            "update_gdk_pixbuf_loaders_cache",
-          ],
-          [
-            "system Formula[\"gtk+3\"].opt_bin/\"gtk3-update-icon-cache\", " \
-            "\"-q\", \"-t\", \"-f\", HOMEBREW_PREFIX/\"share/icons/hicolor\"",
-            "update_gtk_icon_cache",
-          ],
-          [
-            "system Formula[\"shared-mime-info\"].opt_bin/\"update-mime-database\", " \
-            "HOMEBREW_PREFIX/\"share/mime\"",
-            "update_mime_database",
-          ],
-          [
-            "system Formula[\"desktop-file-utils\"].opt_bin/\"update-desktop-database\", " \
-            "HOMEBREW_PREFIX/\"share/applications\"",
-            "update_desktop_database",
-          ],
-        ], T::Array[[String, String]]).to_h.freeze,
-        T::Hash[String, String],
-      )
+      rebuild_action_step_lines = T.let([
+        [
+          "system Formula[\"glib\"].opt_bin/\"glib-compile-schemas\", " \
+          "HOMEBREW_PREFIX/\"share/glib-2.0/schemas\"",
+          "compile_gsettings_schemas",
+        ],
+        [
+          "system Formula[\"gdk-pixbuf\"].opt_bin/\"gdk-pixbuf-query-loaders\", " \
+          "\"--update-cache\"",
+          "update_gdk_pixbuf_loaders_cache",
+        ],
+        [
+          "system Formula[\"gtk+3\"].opt_bin/\"gtk3-update-icon-cache\", " \
+          "\"-q\", \"-t\", \"-f\", HOMEBREW_PREFIX/\"share/icons/hicolor\"",
+          "update_gtk_icon_cache",
+        ],
+        [
+          "system Formula[\"shared-mime-info\"].opt_bin/\"update-mime-database\", " \
+          "HOMEBREW_PREFIX/\"share/mime\"",
+          "update_mime_database",
+        ],
+        [
+          "system Formula[\"desktop-file-utils\"].opt_bin/\"update-desktop-database\", " \
+          "HOMEBREW_PREFIX/\"share/applications\"",
+          "update_desktop_database",
+        ],
+      ], T::Array[[String, String]]).to_h
+      REBUILD_ACTION_STEP_LINES = T.let(rebuild_action_step_lines.freeze, T::Hash[String, String])
 
       sig { params(file_path: String).returns(T::Boolean) }
       def official_homebrew_tap?(file_path)

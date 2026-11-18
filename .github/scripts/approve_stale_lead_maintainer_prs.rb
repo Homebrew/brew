@@ -99,7 +99,8 @@ class StaleLeadMaintainerPrApproval
     @recent_approval_results = T.let({}, T::Hash[String, T::Array[RecentApproval]])
     @reviews = T.let({}, T::Hash[Integer, GitHubPayloads])
     @printed_pull_request_summary = T.let(false, T::Boolean)
-    @weekday_approval_window = T.let((1..5).cover?(Time.now.utc.wday), T::Boolean)
+    weekday_approval_window = (1..5).cover?(Time.now.utc.wday)
+    @weekday_approval_window = T.let(weekday_approval_window, T::Boolean)
   end
 
   sig { void }
@@ -180,7 +181,8 @@ class StaleLeadMaintainerPrApproval
   def evaluate(pull_request, exhaustive:)
     number = T.cast(pull_request.fetch("number"), Integer)
     title = T.cast(pull_request.fetch("title"), String)
-    author = T.cast(T.cast(pull_request.fetch("user"), GitHubPayload).fetch("login"), String)
+    author = T.cast(pull_request.fetch("user"), GitHubPayload).fetch("login")
+    author = T.cast(author, String)
     created_at = Time.parse(T.cast(pull_request.fetch("created_at"), String))
     draft = T.cast(pull_request.fetch("draft"), T::Boolean)
     head = T.cast(pull_request.fetch("head"), GitHubPayload)
@@ -216,10 +218,8 @@ class StaleLeadMaintainerPrApproval
       return finish(data, ["@#{data.author} is not listed as a lead maintainer in README.md."])
     end
 
-    approved_pr = T.let(
-      @recent_approval_results[data.author]&.find { |approval| approval.number != data.number },
-      T.nilable(RecentApproval),
-    )
+    approved_pr = T.let(nil, T.nilable(RecentApproval))
+    approved_pr ||= @recent_approval_results[data.author]&.find { |approval| approval.number != data.number }
     unless approved_pr
       @recent_approval_results[data.author] ||= []
       @recent_approval_issues[data.author] ||= []
@@ -263,15 +263,9 @@ class StaleLeadMaintainerPrApproval
         page = @recent_approval_search_pages.fetch(data.author, 0) + 1
         cutoff_date = (Time.now.utc - (7 * 24 * 60 * 60)).to_date.iso8601
         query = "repo:#{@repository} is:pr reviewed-by:#{data.author} review:approved updated:>=#{cutoff_date}"
-        issues = T.cast(
-          T.cast(
-            rest(
-              "#{API_URL}/search/issues?#{URI.encode_www_form(q: query, per_page: MAX_PER_PAGE, page:)}",
-            ),
-            GitHubPayload,
-          ).fetch("items"),
-          GitHubPayloads,
-        )
+        params = URI.encode_www_form(q: query, per_page: MAX_PER_PAGE, page:)
+        issues = T.cast(rest("#{API_URL}/search/issues?#{params}"), GitHubPayload).fetch("items")
+        issues = T.cast(issues, GitHubPayloads)
         @recent_approval_search_pages[data.author] = page
         @recent_approval_issues.fetch(data.author).concat(issues)
         @recent_approval_search_complete[data.author] = true if issues.length < MAX_PER_PAGE
@@ -535,10 +529,8 @@ class StaleLeadMaintainerPrApproval
 
   sig { params(url: T.any(String, URI::Generic), additional_query_params: String).returns(GitHubPayloads) }
   def paginated_rest(url, additional_query_params = "")
-    pages = T.cast(
-      JSON.parse(gh_api("#{url}?per_page=#{MAX_PER_PAGE}&#{additional_query_params}", "--paginate", "--slurp")),
-      T::Array[GitHubPage],
-    )
+    pages = JSON.parse(gh_api("#{url}?per_page=#{MAX_PER_PAGE}&#{additional_query_params}", "--paginate", "--slurp"))
+    pages = T.cast(pages, T::Array[GitHubPage])
     pages.flat_map do |page|
       page.is_a?(Array) ? page : [page]
     end
@@ -552,7 +544,8 @@ class StaleLeadMaintainerPrApproval
     ).returns(GitHubResult)
   }
   def rest(url, data: {}, request_method: :GET)
-    T.cast(JSON.parse(gh_api(url.to_s, "--method", request_method.to_s, data:)), GitHubResult)
+    response = gh_api(url.to_s, "--method", request_method.to_s, data:)
+    T.cast(JSON.parse(response), GitHubResult)
   end
 
   sig { params(args: String, data: RequestData).returns(String) }

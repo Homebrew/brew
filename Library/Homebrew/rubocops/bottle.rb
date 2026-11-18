@@ -66,7 +66,8 @@ module RuboCop
           max_tag_column = 0
           sha256_nodes.each do |sha256_node|
             sha256_hash = sha256_node.last_argument
-            tag_column = T.let(sha256_hash.pairs.last.source_range.column, Integer)
+            pair = sha256_hash.pairs.last
+            tag_column = T.let(pair.source_range.column, Integer)
 
             max_tag_column = tag_column if tag_column > max_tag_column
           end
@@ -101,7 +102,8 @@ module RuboCop
           max_digest_column = 0
           sha256_nodes.each do |sha256_node|
             sha256_hash = sha256_node.last_argument
-            digest_column = T.let(sha256_hash.pairs.last.value.source_range.column, Integer)
+            value = sha256_hash.pairs.last.value
+            digest_column = T.let(value.source_range.column, Integer)
 
             max_digest_column = digest_column if digest_column > max_digest_column
           end

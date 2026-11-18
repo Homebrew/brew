@@ -33,13 +33,14 @@ module RuboCop
             ->(node) { node.parent == block_node }
           end
 
-          @stanzas ||= T.let(
-            block_body.each_node
-                      .select(&:stanza?)
-                      .select(&is_stanza)
-                      .map { |node| Stanza.new(node, comments) },
-            T.nilable(T::Array[Stanza]),
-          )
+          return @stanzas if @stanzas
+
+          resolved_stanzas = block_body.each_node
+                                       .select(&:stanza?)
+                                       .select(&is_stanza)
+                                       .map { |node| Stanza.new(node, comments) }
+          @stanzas = T.let(resolved_stanzas, T.nilable(T::Array[Stanza]))
+          resolved_stanzas
         end
       end
 

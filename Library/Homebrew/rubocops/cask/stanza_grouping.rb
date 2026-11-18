@@ -68,10 +68,8 @@ module RuboCop
         sig { params(line_index: Integer, message: String, block: T.proc.params(corrector: RuboCop::Cop::Corrector).void).void }
         def add_offense(line_index, message:, &block)
           line_length = [processed_source[line_index].size, 1].max
-          @range = T.let(
-            source_range(processed_source.buffer, line_index + 1, 0, line_length),
-            T.nilable(Parser::Source::Range),
-          )
+          range = source_range(processed_source.buffer, line_index + 1, 0, line_length)
+          @range = T.let(range, T.nilable(Parser::Source::Range))
           super(@range, message:, &block)
         end
       end

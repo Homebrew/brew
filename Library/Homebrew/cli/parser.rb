@@ -184,7 +184,8 @@ module Homebrew
         # Disable default handling of `--help` switch.
         @parser.base.long.delete("help")
 
-        @args = T.let((cmd.args_class || Args).new, Args)
+        args = (cmd.args_class || Args).new
+        @args = T.let(args, Args)
 
         @command_name = T.let(cmd.command_name, String)
         @is_dev_cmd = T.let(cmd.dev_cmd?, T::Boolean)
