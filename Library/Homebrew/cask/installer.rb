@@ -411,7 +411,8 @@ module Cask
 
       check_stanza_os_requirements
       check_supported_system
-      check_system_requirements
+      check_macos_requirements
+      check_arch_requirements
     end
 
     sig { void }
@@ -433,9 +434,21 @@ module Cask
     end
 
     sig { void }
-    def check_system_requirements
-      message = @cask.unmet_system_requirement_message
-      raise CaskError, "#{@cask}: #{message}" if message
+    def check_macos_requirements
+      macos_requirement = @cask.unsatisfied_macos_requirement
+      return unless macos_requirement
+
+      raise CaskError, "#{@cask}: #{macos_requirement.message(type: :cask)}"
+    end
+
+    sig { void }
+    def check_arch_requirements
+      return if @cask.supported_arch?
+
+      raise CaskError,
+            "#{@cask}: This cask depends on hardware architecture being one of " \
+            "[#{@cask.depends_on.arch&.join(", ")}], " \
+            "but you are running #{{ type: Hardware::CPU.type, bits: Hardware::CPU.bits }}."
     end
 
     sig { returns(T::Array[T.any(Formula, ::Cask::Cask)]) }
