@@ -70,7 +70,7 @@ RSpec.describe Homebrew::Search do
     let(:tab) { instance_double(Tab, installed_on_request: false) }
     let(:formula) do
       instance_double(Formula, full_name: "testball", any_version_installed?: false,
-                              valid_platform?: true, deprecated?: false, disabled?: false, incompatible?: false,
+                              valid_platform?: true, deprecated?: false, disabled?: false,
                               pinned?: false, requirements: [], deps: [],
                               runtime_installed_formula_dependents: [], stable: nil, head: nil, pour_bottle?: true)
     end
@@ -90,11 +90,6 @@ RSpec.describe Homebrew::Search do
     it "annotates disabled formulae" do
       allow(formula).to receive(:disabled?).and_return(true)
       expect(described_class.search_formulae(/testball/)).to contain_exactly(include("(disabled)"))
-    end
-
-    it "annotates incompatible formulae" do
-      allow(formula).to receive(:incompatible?).and_return(true)
-      expect(described_class.search_formulae(/testball/)).to contain_exactly(include("(incompatible)"))
     end
 
     it "does not show a red cross for disabled formulae" do
@@ -119,7 +114,7 @@ RSpec.describe Homebrew::Search do
     let(:tab) { instance_double(Cask::Tab, installed_on_request: false) }
     let(:cask) do
       instance_double(Cask::Cask, full_name: "testball", installed?: false, deprecated?: false, disabled?: false,
-                                   supports_linux?: true, incompatible?: false, depends_on:)
+                                   supports_linux?: true, depends_on:)
     end
 
     before do
@@ -137,11 +132,6 @@ RSpec.describe Homebrew::Search do
     it "annotates disabled casks" do
       allow(cask).to receive(:disabled?).and_return(true)
       expect(described_class.search_casks(/testball/)).to contain_exactly(include("(disabled)"))
-    end
-
-    it "annotates incompatible casks" do
-      allow(cask).to receive(:incompatible?).and_return(true)
-      expect(described_class.search_casks(/testball/)).to contain_exactly(include("(incompatible)"))
     end
 
     it "does not show a red cross for disabled casks" do
