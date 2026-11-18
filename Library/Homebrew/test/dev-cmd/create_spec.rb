@@ -10,11 +10,17 @@ RSpec.describe Homebrew::DevCmd::Create do
 
   it_behaves_like "parseable arguments"
 
-  it "creates a new Formula file for a given URL", :integration_test do
+  it "creates formula and cask files with the download's checksum", :integration_test do
+    checksum = %Q(sha256 "#{TESTBALL_SHA256}")
     brew "create", "--set-name=Testball", url, "HOMEBREW_EDITOR" => "/bin/cat"
 
     expect(formula_file).to exist
-    expect(formula_file.read).to match(%Q(sha256 "#{TESTBALL_SHA256}"))
+    expect(formula_file.each_line.map(&:strip)).to include(checksum)
+
+    CoreCaskTap.instance.path.mkpath
+    expect(brew("create", "--cask", "--set-name=Testball", url, "HOMEBREW_EDITOR" => "/bin/cat")).to be_a_success
+
+    expect(CoreCaskTap.instance.new_cask_path("testball").each_line.map(&:strip)).to include(checksum)
   end
 
   it "generates valid cask tokens" do
