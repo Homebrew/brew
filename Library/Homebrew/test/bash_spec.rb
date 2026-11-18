@@ -118,6 +118,28 @@ RSpec.describe "Bash" do
     end
   end
 
+  describe "brew.sh" do
+    it "ignores an inherited `HOMEBREW_BASH_COMMAND` for commands without a Bash implementation" do
+      ENV["HOMEBREW_LIBRARY"] = HOMEBREW_LIBRARY_PATH.parent.to_s
+      ENV["HOMEBREW_BASH_COMMAND"] = "/inherited/command.sh"
+      stdout, stderr, status = Open3.capture3(
+        "/bin/bash", "-c", <<~BASH, "bash", "services"
+          source() {
+            case "$1" in
+              /inherited/command.sh) echo 'Inherited command'; exit 1 ;;
+              */utils/analytics.sh) setup-analytics() { :; } ;;
+              */utils/ruby.sh) echo 'Ruby fallback'; exit 0 ;;
+              *) builtin source "$@" ;;
+            esac
+          }
+          source "${HOMEBREW_LIBRARY}/Homebrew/brew.sh" "$1"
+        BASH
+      )
+
+      expect([stdout, stderr, status.success?]).to eq(["Ruby fallback\n", "", true])
+    end
+  end
+
   describe "setup-locale" do
     it "uses the macOS locale charmap rather than the locale name", :needs_macos do
       setup_locale = [
