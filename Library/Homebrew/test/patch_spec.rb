@@ -204,6 +204,8 @@ RSpec.describe Patch do
     end
 
     it "rejects an Index header that escapes via `..`", :needs_macos do
+      skip "Requires BSD `patch`." if MacOS.version < :ventura
+
       mktmpdir do |base|
         patch = <<~EOS
           Index: a/../escape.txt
@@ -302,6 +304,8 @@ RSpec.describe Patch do
     end
 
     it "rejects an escaping target that `patch` only names as a reject file", :needs_macos do
+      skip "Requires BSD `patch`." if MacOS.version < :ventura
+
       mktmpdir do |base|
         patch = <<~EOS
           --- a/../escape.txt
@@ -317,6 +321,8 @@ RSpec.describe Patch do
     end
 
     it "rejects a target reaching outside through a symlinked directory", :needs_macos do
+      skip "Requires BSD `patch`." if MacOS.version < :ventura
+
       mktmpdir do |base|
         (base/"src").mkpath
         outside = base.parent/"outside"
@@ -334,6 +340,46 @@ RSpec.describe Patch do
 
         expect { described_class.ensure_targets_within!(patch, strip: :p1, base:) }
           .to raise_error(/escapes the staged source tree/)
+      end
+    end
+  end
+
+  describe ".apply" do
+    include Context
+
+    let(:patch) do
+      <<~EOS
+        --- a/foo.c
+        +++ b/foo.c
+        @@ -1 +1 @@
+        -old
+        +new
+      EOS
+    end
+
+    it "hides the `patch` output" do
+      mktmpdir do |base|
+        (base/"foo.c").write("old\n")
+
+        expect { described_class.apply(patch, strip: :p1, base:) }.not_to output.to_stdout
+      end
+    end
+
+    it "prints the `patch` output when verbose" do
+      mktmpdir do |base|
+        (base/"foo.c").write("old\n")
+
+        expect { with_context(verbose: true) { described_class.apply(patch, strip: :p1, base:) } }
+          .to output("patching file foo.c\n").to_stdout
+      end
+    end
+
+    it "includes the `patch` output in the error when it fails" do
+      mktmpdir do |base|
+        (base/"foo.c").write("other\n")
+
+        expect { described_class.apply(patch, strip: :p1, base:) }
+          .to raise_error(ErrorDuringExecution, /patching file foo\.c/)
       end
     end
   end
