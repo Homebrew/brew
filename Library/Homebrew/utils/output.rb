@@ -347,6 +347,15 @@ module Utils
       end
 
       sig { params(string: String).returns(String) }
+      def pretty_incompatible(string)
+        if $stdout.tty?
+          "#{string} #{Formatter.error("(incompatible)")}"
+        else
+          string
+        end
+      end
+
+      sig { params(string: String).returns(String) }
       def pretty_removed(string)
         if $stdout.tty?
           "#{string} #{Formatter.warning("(removed from tap)")}"
@@ -404,12 +413,12 @@ module Utils
 
       sig {
         params(string: String, installed: T::Boolean, warning: T::Boolean, outdated: T::Boolean,
-               deprecated: T::Boolean, disabled: T::Boolean, removed: T::Boolean, can_install: T::Boolean,
-               mark_uninstalled: T::Boolean, bold: T.nilable(T::Boolean)).returns(String)
+               deprecated: T::Boolean, disabled: T::Boolean, incompatible: T::Boolean, removed: T::Boolean,
+               can_install: T::Boolean, mark_uninstalled: T::Boolean, bold: T.nilable(T::Boolean)).returns(String)
       }
       def pretty_install_status(string, installed:, warning: false, outdated: false, deprecated: false,
-                                disabled: false, removed: false, can_install: true, mark_uninstalled: false,
-                                bold: nil)
+                                disabled: false, incompatible: false, removed: false, can_install: true,
+                                mark_uninstalled: false, bold: nil)
         bold = installed if bold.nil?
         status = if warning
           pretty_warning(string, bold:)
@@ -428,6 +437,8 @@ module Utils
           pretty_removed(status)
         elsif disabled
           pretty_disabled(status)
+        elsif incompatible
+          pretty_incompatible(status)
         elsif deprecated
           pretty_deprecated(status)
         else

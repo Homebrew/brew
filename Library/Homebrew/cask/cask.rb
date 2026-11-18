@@ -332,6 +332,17 @@ module Cask
       end
     end
 
+    # True if an OS, macOS version or architecture requirement isn't met on this system.
+    sig { returns(T::Boolean) }
+    def incompatible?
+      require "cask_dependent"
+      requirements = CaskDependent.new(self).requirements
+      os_requirements = requirements.grep(LinuxRequirement) + requirements.grep(MacOSRequirement)
+      # Architectures are alternatives, so matching one is enough.
+      arch_requirements = requirements.grep(ArchRequirement)
+      os_requirements.any? { !it.satisfied? } || (arch_requirements.any? && arch_requirements.none?(&:satisfied?))
+    end
+
     sig { returns(T::Boolean) }
     def uninstall_flight_blocks?
       artifacts.any? do |artifact|

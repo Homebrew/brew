@@ -2264,6 +2264,19 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#incompatible?" do
+    it "is true when an architecture requirement isn't met" do
+      allow(Hardware::CPU).to receive(:type).and_return(:arm)
+      f = formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/example-1.0.tar.gz"
+        depends_on arch: :x86_64
+      end
+
+      expect(f.incompatible?).to be(true)
+    end
+  end
+
   specify "requirements" do
     # don't try to load/fetch gcc/glibc
     allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)

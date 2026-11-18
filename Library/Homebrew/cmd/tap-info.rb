@@ -124,13 +124,15 @@ module Homebrew
       sig { params(tap: Tap, name: String, installed: T::Boolean).returns(String) }
       def decorate_formula(tap, name, installed:)
         formula = Formulary.factory("#{tap.name}/#{name}")
+        incompatible = formula.incompatible?
         pretty_install_status(
           name,
           installed:,
           outdated:         installed && formula.outdated?,
           deprecated:       formula.deprecated?,
           disabled:         formula.disabled?,
-          can_install:      formula.valid_platform? && !formula.disabled?,
+          incompatible:,
+          can_install:      formula.valid_platform? && !formula.disabled? && !incompatible,
           mark_uninstalled: false,
         )
       rescue
@@ -140,13 +142,15 @@ module Homebrew
       sig { params(tap: Tap, token: String, installed: T::Boolean).returns(String) }
       def decorate_cask(tap, token, installed:)
         cask = Cask::CaskLoader.load("#{tap.name}/#{token}")
+        incompatible = cask.incompatible?
         pretty_install_status(
           token,
           installed:,
           outdated:         installed && cask.outdated?,
           deprecated:       cask.deprecated?,
           disabled:         cask.disabled?,
-          can_install:      cask.valid_platform? && !cask.disabled?,
+          incompatible:,
+          can_install:      cask.valid_platform? && !cask.disabled? && !incompatible,
           mark_uninstalled: false,
         )
       rescue

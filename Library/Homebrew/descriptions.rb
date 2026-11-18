@@ -111,6 +111,7 @@ class Descriptions
     end
     deprecated = @status_data.dig(full_name, :deprecated) == true
     disabled = @status_data.dig(full_name, :disabled) == true
+    incompatible = false
     if !deprecated && !disabled
       formula_or_cask = begin
         if description.is_a?(Array)
@@ -123,9 +124,11 @@ class Descriptions
       end
       deprecated = formula_or_cask&.deprecated? == true
       disabled = formula_or_cask&.disabled? == true
+      incompatible = formula_or_cask&.incompatible? == true
     end
 
-    Homebrew::Search.pretty_install_status(printed_name, installed:, deprecated:, disabled:, bold: true)
+    Homebrew::Search.pretty_install_status(printed_name, installed:, deprecated:, disabled:, incompatible:,
+                                           bold: true)
   end
 
   sig { returns(T::Set[String]) }

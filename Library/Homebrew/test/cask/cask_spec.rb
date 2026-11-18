@@ -650,6 +650,22 @@ RSpec.describe Cask::Cask, :cask do
     end
   end
 
+  describe "#incompatible?" do
+    before { allow(Hardware::CPU).to receive(:type).and_return(:arm) }
+
+    it "is true when no architecture matches" do
+      cask = described_class.new("example") { depends_on arch: :intel }
+
+      expect(cask.incompatible?).to be(true)
+    end
+
+    it "is false when one of its architectures matches" do
+      cask = described_class.new("example") { depends_on arch: [:intel, :arm64] }
+
+      expect(cask.incompatible?).to be(false)
+    end
+  end
+
   describe "#outdated_info" do
     it "includes pinned cask details" do
       cask = Cask::CaskLoader.load("local-caffeine")

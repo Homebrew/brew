@@ -43,6 +43,16 @@ RSpec.describe Utils::InfoDisplay do
              )).to eq("==> example (Example): 1.0 → 2.0 (auto updates)\nInstalled")
     end
 
+    it "marks an incompatible package with ⊘ and `(incompatible)`" do
+      allow($stdout).to receive(:tty?).and_return(true)
+      allow(cask).to receive(:incompatible?).and_return(true)
+
+      expect(described_class.package_summary(
+               formula_or_cask: cask, title: Utils::InfoDisplay::Title.new(name: "example", version: "2.0"),
+               installation_status: [], source_url: nil, installed_versions: [], verbose: false
+             )).to match(/\A.*example.*⊘.*\(incompatible\).*: 2\.0/)
+    end
+
     it "places cask metadata after the source" do
       allow(described_class).to receive(:metadata_lines).with(cask).and_return(["Pinned: 1.0"])
 
