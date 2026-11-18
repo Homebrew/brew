@@ -157,10 +157,27 @@ module Utils
       def report_formula_installs(formula_installers)
         return if not_this_run? || disabled?
 
+        packages = formula_installers.flat_map do |formula_installer|
+          deps = begin
+            formula_installer.ignore_deps? ? [] : formula_installer.compute_dependencies
+          rescue
+            # Installing will fail with this error so there are no dependencies to report.
+            []
+          end
+          installers = deps.map { |dep| formula_installer.dependency_installer(dep, dep.to_formula) }
+          installers << formula_installer unless formula_installer.only_deps?
+          installers.filter_map do |installer|
+            formula = installer.formula
+            tap = formula.tap
+            next if tap.nil? || !tap.should_report_analytics?
+
+            { package_name: formula.name, tap_name: tap.name, on_request: installer.installed_on_request?,
+              options: installer.display_options(formula).join(" ") }
+          end
+        end
+
         # A dependency of several of the formulae is only installed once.
-        packages = formula_installers.flat_map(&:install_analytics_events)
-                                     .uniq { |package| package[:package_name] }
-        report_package_events(:formula_install, packages)
+        report_package_events(:formula_install, packages.uniq { |package| package[:package_name] })
       end
 
       # Reports installing the casks in a single request. Call this before installing them.

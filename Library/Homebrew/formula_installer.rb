@@ -34,7 +34,6 @@ require "utils/fork"
 require "utils/output"
 require "utils/path"
 require "utils/attestation"
-require "utils/analytics"
 
 # Installer for a formula.
 # Installation phases share locks, rollback state and dependency bookkeeping.
@@ -904,30 +903,6 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
     end
     options += effective_build_options_for(formula).used_options.to_a.map(&:to_s)
     options
-  end
-
-  # The analytics events for installing the formula and the dependencies it will
-  # install, so they can be reported before installing them.
-  sig { returns(T::Array[Utils::Analytics::PackageEvent]) }
-  def install_analytics_events
-    deps = begin
-      ignore_deps? ? [] : compute_dependencies
-    rescue
-      # Installing will fail with this error so there are no dependencies to report.
-      []
-    end
-    installers = deps.map { |dep| dependency_installer(dep, dep.to_formula) }
-    installers << self unless only_deps?
-    installers.filter_map(&:install_analytics_event)
-  end
-
-  sig { returns(T.nilable(Utils::Analytics::PackageEvent)) }
-  def install_analytics_event
-    tap = formula.tap
-    return if tap.nil? || !tap.should_report_analytics?
-
-    { package_name: formula.name, tap_name: tap.name, on_request: installed_on_request?,
-      options: display_options(formula).join(" ") }
   end
 
   sig { params(deps: T::Array[Dependency]).void }

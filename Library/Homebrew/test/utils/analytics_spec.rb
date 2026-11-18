@@ -160,28 +160,96 @@ RSpec.describe Utils::Analytics do
   end
 
   describe "::report_formula_installs" do
-    it "reports each formula and dependency to install once" do
+    let(:tap) { instance_double(Tap, name: "homebrew/core", should_report_analytics?: true) }
+
+    def package_event(name, on_request: false, options: "")
+      { package_name: name, tap_name: "homebrew/core", on_request:, options: }
+    end
+
+    # An installer for the formula `name` from `formula_tap`, installed with `display_options`.
+    def installer_for(name, on_request:, formula_tap: tap, display_options: [], **options)
+      formula = instance_double(Formula, name:, tap: formula_tap)
+      installer = instance_double(FormulaInstaller, formula:, installed_on_request?: on_request,
+                                                    ignore_deps?: false, only_deps?: false, **options)
+      allow(installer).to receive(:display_options).with(formula).and_return(display_options)
+      installer
+    end
+
+    # An installer for the formula `name` that installs the `dependencies` (names) first.
+    def formula_installer(name, dependencies: [], **options)
+      installer = installer_for(name, on_request: true, **options)
+      deps = dependencies.map do |dependency_name|
+        dep_formula = instance_double(Formula)
+        dep = instance_double(Dependency, to_formula: dep_formula)
+        dep_installer = installer_for(dependency_name, on_request: false)
+        allow(installer).to receive(:dependency_installer).with(dep, dep_formula).and_return(dep_installer)
+        dep
+      end
+      allow(installer).to receive(:compute_dependencies).and_return(deps)
+      installer
+    end
+
+    before do
       ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
       ENV.delete("HOMEBREW_NO_ANALYTICS")
-      shared_dep = { package_name: "shared", tap_name: "homebrew/core", on_request: false, options: "" }
-      foo = { package_name: "foo", tap_name: "homebrew/core", on_request: true, options: "" }
-      bar = { package_name: "bar", tap_name: "homebrew/core", on_request: true, options: "" }
-      formula_installers = [
-        instance_double(FormulaInstaller, install_analytics_events: [shared_dep, foo]),
-        instance_double(FormulaInstaller, install_analytics_events: [shared_dep, bar]),
-      ]
-      expect(described_class).to receive(:report_package_events).with(:formula_install, [shared_dep, foo, bar])
+    end
 
-      described_class.report_formula_installs(formula_installers)
+    it "reports the dependencies each formula installs and then the formula, each once" do
+      expect(described_class).to receive(:report_package_events).with(:formula_install, [
+        package_event("shared"), package_event("foo", on_request: true),
+        package_event("baz"), package_event("bar", on_request: true)
+      ])
+
+      described_class.report_formula_installs([
+        formula_installer("foo", dependencies: ["shared"]),
+        formula_installer("bar", dependencies: ["shared", "baz"]),
+      ])
+    end
+
+    it "reports the options a formula is installed with" do
+      expect(described_class).to receive(:report_package_events)
+        .with(:formula_install, [package_event("foo", on_request: true, options: "--HEAD")])
+
+      described_class.report_formula_installs([formula_installer("foo", display_options: ["--HEAD"])])
+    end
+
+    it "does not report formulae from taps that don't report analytics" do
+      private_tap = instance_double(Tap, should_report_analytics?: false)
+      expect(described_class).to receive(:report_package_events).with(:formula_install, [])
+
+      described_class.report_formula_installs([formula_installer("foo", formula_tap: private_tap)])
+    end
+
+    it "only reports the dependencies when only installing them" do
+      expect(described_class).to receive(:report_package_events).with(:formula_install, [package_event("dep")])
+
+      described_class.report_formula_installs([formula_installer("foo", dependencies: ["dep"], only_deps?: true)])
+    end
+
+    it "does not report the dependencies of formulae that ignore them" do
+      installer = formula_installer("foo", dependencies: ["dep"], ignore_deps?: true)
+      expect(installer).not_to receive(:compute_dependencies)
+      expect(described_class).to receive(:report_package_events)
+        .with(:formula_install, [package_event("foo", on_request: true)])
+
+      described_class.report_formula_installs([installer])
+    end
+
+    it "still reports a formula whose dependencies can't be computed" do
+      installer = formula_installer("foo")
+      allow(installer).to receive(:compute_dependencies).and_raise(RuntimeError, "unsatisfied requirement")
+      expect(described_class).to receive(:report_package_events)
+        .with(:formula_install, [package_event("foo", on_request: true)])
+
+      described_class.report_formula_installs([installer])
     end
 
     it "does not look at the formulae when analytics are disabled" do
       ENV["HOMEBREW_NO_ANALYTICS"] = "1"
-      formula_installer = instance_double(FormulaInstaller)
-      expect(formula_installer).not_to receive(:install_analytics_events)
       expect(described_class).not_to receive(:report_package_events)
 
-      described_class.report_formula_installs([formula_installer])
+      # Any message sent to this double fails the test.
+      described_class.report_formula_installs([instance_double(FormulaInstaller)])
     end
   end
 
