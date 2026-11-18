@@ -275,7 +275,7 @@ RSpec.describe Utils::Output do
       expect(status).to match(/\Afoo #{esc 31}⊘#{esc 0} #{esc 31}\(incompatible\)#{esc 0}\z/)
     end
 
-    it "annotates a deprecated incompatible entry with `(deprecated)` like `brew desc`" do
+    it "annotates a deprecated incompatible entry with `(incompatible)`, since it can't be installed" do
       status = described_class.pretty_install_status(
         "foo",
         installed:        false,
@@ -283,7 +283,7 @@ RSpec.describe Utils::Output do
         incompatible:     true,
         mark_uninstalled: false,
       )
-      expect(status).to match(/\Afoo #{esc 33}\(deprecated\)#{esc 0}\z/)
+      expect(status).to match(/\Afoo #{esc 31}\(incompatible\)#{esc 0}\z/)
     end
 
     it "keeps a disabled installed entry marked as installed" do

@@ -87,11 +87,11 @@ RSpec.describe Descriptions do
     expect { descriptions.print }.to output(/foo .*: Core foo/).to_stdout
   end
 
-  it "marks incompatible formulae in interactive descriptions" do
+  it "marks incompatible formulae in interactive descriptions, even deprecated ones" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
     descriptions_hash["homebrew/core/foo"] = "Core foo"
 
-    formula = instance_double(Formula, deprecated?: false, disabled?: false, incompatible?: true)
+    formula = instance_double(Formula, deprecated?: true, disabled?: false, incompatible?: true)
     allow(Formulary).to receive(:factory).with("homebrew/core/foo").and_return(formula)
 
     expect { descriptions.print }.to output(/foo .*\(incompatible\).*: Core foo/).to_stdout
