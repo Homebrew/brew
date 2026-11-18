@@ -359,9 +359,9 @@ module Homebrew
         return [] if formula_installers.empty?
 
         if dry_run
-          groups = formula_installers.reject(&:only_deps?).group_by do |fi|
-            installed_version = Upgrade.installed_version(fi.formula) if dry_run_action == "install"
-            if installed_version && installed_version != fi.formula.pkg_version
+          groups = formula_installers.reject(&:only_deps?).group_by do |installer|
+            installed_version = Upgrade.installed_version(installer.formula) if dry_run_action == "install"
+            if installed_version && installed_version != installer.formula.pkg_version
               "upgrade"
             else
               dry_run_action
@@ -370,9 +370,9 @@ module Homebrew
           groups.keys.sort.each do |action|
             group = groups.fetch(action)
             ohai "Would #{action} #{Utils.pluralize("formula", group.count, include_count: true)}:"
-            puts Formatter.version_changes(group.map do |fi|
-              formula = fi.formula
-              size = bottle_download_size(formula, debug: fi.debug?) if fi.pour_bottle?
+            puts Formatter.version_changes(group.map do |installer|
+              formula = installer.formula
+              size = bottle_download_size(formula, debug: installer.debug?) if installer.pour_bottle?
               if action == "upgrade"
                 Upgrade.formula_version_change(formula, size:)
               else
@@ -381,10 +381,10 @@ module Homebrew
             end)
           end
 
-          formula_installers.each do |fi|
-            next if fi.ignore_deps?
+          formula_installers.each do |installer|
+            next if installer.ignore_deps?
 
-            print_dry_run_dependencies(fi.formula, fi.compute_dependencies) do |dependency|
+            print_dry_run_dependencies(installer.formula, installer.compute_dependencies) do |dependency|
               Upgrade.formula_version_change(dependency)
             end
           end
@@ -462,12 +462,12 @@ module Homebrew
       # built from source rather than poured from a bottle.
       sig { params(formula_installers: T::Array[FormulaInstaller]).returns(T::Array[String]) }
       def source_build_formulae(formula_installers)
-        formula_installers.flat_map do |fi|
-          formulae = fi.only_deps? ? [] : [fi.formula]
-          formulae += fi.compute_dependencies.map(&:to_formula) unless fi.ignore_deps?
+        formula_installers.flat_map do |installer|
+          formulae = installer.only_deps? ? [] : [installer.formula]
+          formulae += installer.compute_dependencies.map(&:to_formula) unless installer.ignore_deps?
           formulae.filter_map do |formula|
             next unless formula.core_formula?
-            next if fi.install_bottle_for?(formula, fi.effective_build_options_for(formula))
+            next if installer.install_bottle_for?(formula, installer.effective_build_options_for(formula))
 
             formula.full_specified_name
           end
