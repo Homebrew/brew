@@ -605,6 +605,22 @@ RSpec.describe Homebrew::Install do
     end
   end
 
+  describe "::bottle_download_size" do
+    it "skips the size when the bottle manifest cannot be downloaded" do
+      formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/testball-0.1.tar.gz"
+      end
+      bottle = instance_double(Bottle)
+      download_error = DownloadError.new(instance_double(Resource::BottleManifest, download_queue_name: "testball"),
+                                         RuntimeError.new("offline"))
+      allow(bottle).to receive(:fetch_tab).and_raise(download_error)
+      allow(formula).to receive(:bottle).and_return(bottle)
+
+      expect(described_class.bottle_download_size(formula)).to be_nil
+    end
+  end
+
   describe "::print_dry_run_dependencies" do
     it "splits fresh installs and upgrades under separate headers" do
       fresh = formula("fresh-dep") do

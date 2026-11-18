@@ -446,7 +446,7 @@ module Homebrew
         end
       end
 
-      # The size of the bottle that would be downloaded for a formula.
+      # The size of the bottle that would be downloaded for a formula, if known.
       sig { params(formula: Formula, debug: T::Boolean).returns(T.nilable(String)) }
       def bottle_download_size(formula, debug: false)
         bottle = formula.bottle
@@ -456,6 +456,8 @@ module Homebrew
         return unless (download_size = bottle.bottle_size)
 
         Formatter.disk_usage_readable(download_size.to_i)
+      rescue DownloadError, ChecksumMismatchError, Resource::BottleManifest::Error
+        nil
       end
 
       # The `homebrew/core` formulae, dependencies included, that would be
