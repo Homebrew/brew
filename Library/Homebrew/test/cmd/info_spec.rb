@@ -1846,6 +1846,24 @@ RSpec.describe Homebrew::Cmd::Info do
       .and not_to_output.to_stderr
   end
 
+  it "hides source install metadata for formulae that can't be installed on this platform" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+    end
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, valid_platform?: false)
+
+    expect { info.info_formula(formula) }
+      .to not_to_output(/Installs from source: yes/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
   it "hides source install metadata for disabled formulae" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
 

@@ -284,7 +284,7 @@ module Utils
 
     sig { params(formula: Formula).returns(T::Boolean) }
     def self.formula_installs_from_source?(formula)
-      return false if formula.disabled? || formula.incompatible?
+      return false if formula.disabled? || formula.incompatible? || !formula.valid_platform?
 
       stable = formula.stable
       return true if stable.blank? && formula.head.present?
