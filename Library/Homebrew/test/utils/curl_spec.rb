@@ -713,8 +713,6 @@ RSpec.describe "Utils::Curl" do
       ["1", "10", "1", nil, %w[--retry 10 --verbose]],
       ["/path with spaces/\n--insecure", "0", nil, nil, ["-q", "--config", "/path with spaces/\n--insecure"]],
       [nil, "-1", nil, nil, %w[-q]],
-      [nil, "invalid", nil, nil, %w[-q]],
-      [nil, "08", nil, nil, %w[-q --retry 08]],
       *%w[false NO off nil 0].map { |value| [nil, nil, value, value, %w[-q --retry 3]] },
       ["1", "0", nil, "1", %w[--proto-redir =https]],
       ["1", "0", nil, "yes", %w[--proto-redir =https]],

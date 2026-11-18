@@ -140,6 +140,48 @@ RSpec.describe "Bash" do
     end
   end
 
+  describe "arithmetic on environment values" do
+    let(:marker) { mktmpdir/"marker" }
+    let(:payload) { "x[$(touch #{marker})0]" }
+
+    before { ENV["HOMEBREW_LIBRARY"] = HOMEBREW_LIBRARY_PATH.parent.to_s }
+
+    def brew_sh_value(name)
+      stdout, stderr, status = Open3.capture3(
+        "/bin/bash", "-c", <<~BASH, "bash", "info"
+          source() {
+            case "$1" in
+              */utils/curl.sh) echo "${#{name}-unset}"; exit 0 ;;
+              *) builtin source "$@" ;;
+            esac
+          }
+          source "${HOMEBREW_LIBRARY}/Homebrew/brew.sh" "$1"
+        BASH
+      )
+      [stdout, stderr, status.success?]
+    end
+
+    test_each(%w[
+      HOMEBREW_API_AUTO_UPDATE_SECS
+      HOMEBREW_AUTO_UPDATE_SECS
+      HOMEBREW_COMMAND_DEPTH
+      HOMEBREW_CURL_RETRIES
+    ]) do |name|
+      it "does not evaluate an inherited `#{name}`" do
+        ENV[name] = payload
+
+        expected = (name == "HOMEBREW_COMMAND_DEPTH") ? "1\n" : "unset\n"
+        expect([*brew_sh_value(name), marker.exist?]).to eq([expected, "", true, false])
+      end
+    end
+
+    it "reads a leading zero as decimal" do
+      ENV["HOMEBREW_CURL_RETRIES"] = "08"
+
+      expect(brew_sh_value("HOMEBREW_CURL_RETRIES")).to eq(["8\n", "", true])
+    end
+  end
+
   describe "setup-locale" do
     it "uses the macOS locale charmap rather than the locale name", :needs_macos do
       setup_locale = [
