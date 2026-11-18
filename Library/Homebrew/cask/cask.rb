@@ -335,12 +335,22 @@ module Cask
     # True if an OS, macOS version or architecture requirement isn't met on this system.
     sig { returns(T::Boolean) }
     def incompatible?
-      require "cask_dependent"
-      requirements = CaskDependent.new(self).requirements
-      os_requirements = requirements.grep(LinuxRequirement) + requirements.grep(MacOSRequirement)
-      # Architectures are alternatives, so matching one is enough.
-      arch_requirements = requirements.grep(ArchRequirement)
-      os_requirements.any? { !it.satisfied? } || (arch_requirements.any? && arch_requirements.none?(&:satisfied?))
+      !valid_platform? || !unmet_system_requirement_message.nil?
+    end
+
+    # Why a `depends_on macos:`, `maximum_macos:` or `arch:` requirement isn't met on this system, if one isn't.
+    sig { returns(T.nilable(String)) }
+    def unmet_system_requirement_message
+      macos_requirement = [depends_on.macos, depends_on.maximum_macos].compact.find { !it.satisfied? }
+      return macos_requirement.message(type: :cask) if macos_requirement
+
+      archs = depends_on.arch
+      return if archs.nil? || archs.any? do |arch|
+        arch[:type] == Hardware::CPU.type && Array(arch[:bits]).include?(Hardware::CPU.bits)
+      end
+
+      "This cask depends on hardware architecture being one of [#{archs.join(", ")}], " \
+        "but you are running #{{ type: Hardware::CPU.type, bits: Hardware::CPU.bits }}."
     end
 
     sig { returns(T::Boolean) }

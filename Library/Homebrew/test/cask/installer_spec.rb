@@ -333,7 +333,7 @@ RSpec.describe Cask::Installer, :cask do
       macos_cask = Cask::CaskLoader.load("with-depends-on-macos-failure")
       allow(macos_cask.depends_on.maximum_macos).to receive(:satisfied?).and_return(false)
       expect do
-        described_class.new(macos_cask).check_macos_requirements
+        described_class.new(macos_cask).check_system_requirements
       end.to raise_error(
         Cask::CaskError,
         "with-depends-on-macos-failure: This cask does not run on macOS versions newer than Monterey.",
@@ -344,7 +344,7 @@ RSpec.describe Cask::Installer, :cask do
       arch_cask = Cask::CaskLoader.load("with-depends-on-arch")
       allow(Hardware::CPU).to receive(:type).and_return(:ppc)
       expect do
-        described_class.new(arch_cask).check_arch_requirements
+        described_class.new(arch_cask).check_system_requirements
       end.to raise_error(Cask::CaskError, /\Awith-depends-on-arch: This cask depends on hardware architecture/)
     end
 
