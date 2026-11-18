@@ -24,6 +24,29 @@ RSpec.describe Homebrew::Assertions do
       expect($CHILD_STATUS.termsig).to eq Signal.list.fetch("INT")
     end
 
+    it "kills the process group when it ignores the requested signal" do
+      parent, child = UNIXSocket.pair
+      formula_assertions.with_test_process(
+        RbConfig.ruby, "-e", <<~RUBY, in: child, out: child, signal: "-TERM", pgroup: true
+          Signal.trap(:TERM, :IGNORE)
+          fork do
+            puts Process.pid
+            $stdout.flush
+            $stdin.read
+          end
+          $stdin.read
+        RUBY
+      ) do
+        child.close
+        parent.readline
+      end
+
+      expect(Timeout.timeout(5) { parent.read }).to eq("")
+    ensure
+      parent&.close
+      child&.close
+    end
+
     it "kills and reaps a child that ignores the requested signal" do
       IO.pipe do |reader, writer|
         formula_assertions.with_test_process(RbConfig.ruby, "-e", <<~RUBY, out: writer) do

@@ -31,6 +31,7 @@ module Homebrew
     # Yields the child process ID and terminates and reaps the child on exit.
     # The block may also reap the child itself.
     # Sends `KILL` if the child is still running five seconds after the requested signal.
+    # Use a minus-prefixed signal with `pgroup: true` to send both signals to the process group.
     # Extra keyword arguments are forwarded to `Process.spawn`.
     #
     # @api public
@@ -47,9 +48,9 @@ module Homebrew
       signal_number = Signal.list.fetch(signal.delete_prefix("-").delete_prefix("SIG"), 0)
       raise ArgumentError, "Unsupported signal: #{signal.inspect}" if signal_number.zero?
 
-      signal_number = -signal_number if signal.start_with?("-")
       executable = executable.to_s
       pid = Process.spawn([executable, executable], *args, **spawn_options)
+      target = signal.start_with?("-") ? -pid : pid
       begin
         yield(pid)
       ensure
@@ -61,7 +62,7 @@ module Homebrew
 
         unless reaped
           begin
-            Process.kill(signal_number, pid)
+            Process.kill(signal_number, target)
           rescue Errno::ESRCH
             # The child or its process group may have exited before signalling.
           end
@@ -71,7 +72,7 @@ module Homebrew
             until Process.wait(pid, Process::WNOHANG)
               remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
               if remaining <= 0
-                Process.kill("KILL", pid)
+                Process.kill("KILL", target)
                 Process.wait(pid)
                 break
               end
@@ -79,7 +80,11 @@ module Homebrew
               sleep [0.1, remaining].min
             end
           rescue Errno::ESRCH
-            # The child exited between the non-blocking wait and the signal.
+            begin
+              Process.kill("KILL", pid) if target.negative?
+            rescue Errno::ESRCH
+              # The child exited between the non-blocking wait and the signal.
+            end
             Process.wait(pid)
           end
         end
