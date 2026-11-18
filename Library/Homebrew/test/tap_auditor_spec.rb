@@ -41,6 +41,11 @@ RSpec.describe Homebrew::TapAuditor do
       auditor.problems
     end
 
+    it "skips the autobump lookup for official taps" do
+      expect(tap).not_to receive(:autobump)
+      auditor.audit
+    end
+
     context "with cask_renames.json" do
       let(:cask_renames_path) { tap_path/"cask_renames.json" }
       let(:renames_data) { {} }

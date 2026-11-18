@@ -41,6 +41,7 @@ module Homebrew
 
     sig { params(tap: Tap, strict: T.nilable(T::Boolean)).void }
     def initialize(tap, strict:)
+      @tap                                            = tap
       @name                                           = T.let(tap.name, String)
       @path                                           = T.let(tap.path, Pathname)
       @tap_audit_exceptions                           = T.let(tap.audit_exceptions, T::Hash[Symbol, T.untyped])
@@ -49,8 +50,6 @@ module Homebrew
                                                               T::Array[T::Array[String]])
       @tap_disabled_new_usr_local_relocation_formulae = T.let(tap.disabled_new_usr_local_relocation_formulae,
                                                               T::Array[String])
-      @tap_autobump                                   = T.let(tap.autobump, T::Array[String])
-      @tap_official                                   = T.let(tap.official?, T::Boolean)
       @problems                                       = T.let([], T::Array[T::Hash[Symbol, T.untyped]])
       @cask_tokens                                    = T.let([], T::Array[String])
       @formula_aliases                                = T.let([], T::Array[String])
@@ -98,7 +97,7 @@ module Homebrew
       check_formula_list_directory "style_exceptions", @tap_style_exceptions
       check_renames "formula_renames.json", @formula_renames, @formula_names, @formula_aliases
       check_renames "cask_renames.json", @cask_renames, @cask_tokens
-      check_formula_list ".github/autobump.txt", @tap_autobump unless @tap_official
+      check_formula_list ".github/autobump.txt", @tap.autobump unless @tap.official?
       check_formula_list "synced_versions_formulae", @tap_synced_versions_formulae.flatten
       check_formula_list "disabled_new_usr_local_relocation_formulae.json",
                          @tap_disabled_new_usr_local_relocation_formulae
