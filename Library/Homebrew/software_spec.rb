@@ -83,7 +83,8 @@ class SoftwareSpec
     @flags = flags
     @deprecated_flags = T.let([], T::Array[DeprecatedOption])
     @deprecated_options = T.let([], T::Array[DeprecatedOption])
-    @build = T.let(BuildOptions.new(Options.create(@flags), options), BuildOptions)
+    build = BuildOptions.new(Options.create(@flags), options)
+    @build = T.let(build, BuildOptions)
     @compiler_failures = T.let([], T::Array[CompilerFailure])
     @depends_on_macos_bare_set_top_level = T.let(false, T::Boolean)
     @depends_on_macos_version_set_top_level = T.let(false, T::Boolean)

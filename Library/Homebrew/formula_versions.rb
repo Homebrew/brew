@@ -110,10 +110,11 @@ class FormulaVersions
 
   # Resolve historical macOS conditionals using the target, never the worker host.
   class LegacyMacOSVersion < Version
-    RELEASES = T.let(MacOSVersion::RELEASES.merge(
+    releases = MacOSVersion::RELEASES.merge(
       yosemite: "10.10", mavericks: "10.9", mountain_lion: "10.8", lion: "10.7",
       snow_leopard: "10.6", leopard: "10.5", tiger: "10.4"
-    ).freeze, T::Hash[Symbol, String])
+    )
+    RELEASES = T.let(releases.freeze, T::Hash[Symbol, String])
 
     sig { override.params(other: T.untyped).returns(T.nilable(Integer)) }
     def <=>(other)
@@ -132,9 +133,12 @@ class FormulaVersions
       RELEASES.key(to_s) || raise(FormulaSpecificationError, "Historical Linux MacOS.version has no release name")
     end
 
+    null_version = new("NULL")
+    null_version.instance_variable_set(:@version, nil)
+
     # Linux answered historical macOS queries as older than every release
     # from February 2018 until September 2024.
-    NULL = T.let(new("NULL").tap { |v| v.instance_variable_set(:@version, nil) }.freeze, LegacyMacOSVersion)
+    NULL = T.let(null_version.freeze, LegacyMacOSVersion)
 
     private
 
@@ -326,14 +330,19 @@ class FormulaVersions
   }
   def initialize(formula, simulated_target: false, repository: nil)
     @simulated_target = simulated_target
-    @name = T.let(formula.is_a?(Formula) ? formula.name : formula.basename(".rb").to_s, String)
-    @path = T.let(formula.is_a?(Formula) ? formula.tap_path : formula, Pathname)
-    @repository = T.let(repository || (formula.tap!.path if formula.is_a?(Formula)) ||
-                       raise(ArgumentError, "A repository is required for a historical formula path"), Pathname)
-    @relative_path = T.let(@path.relative_path_from(@repository).to_s, String)
+    name = formula.is_a?(Formula) ? formula.name : formula.basename(".rb").to_s
+    @name = T.let(name, String)
+    resolved_path = formula.is_a?(Formula) ? formula.tap_path : formula
+    @path = T.let(resolved_path, Pathname)
+    resolved_repository = repository || (formula.tap!.path if formula.is_a?(Formula)) ||
+                          raise(ArgumentError, "A repository is required for a historical formula path")
+    @repository = T.let(resolved_repository, Pathname)
+    relative_path = @path.relative_path_from(@repository).to_s
+    @relative_path = T.let(relative_path, String)
     # Also look at e.g. older homebrew-core paths before sharding.
     if (match = @relative_path.match(%r{^(HomebrewFormula|Formula)/(?:[a-z]|lib)/(.+)}))
-      @old_relative_path = T.let("#{match[1]}/#{match[2]}", T.nilable(String))
+      old_relative_path = "#{match[1]}/#{match[2]}"
+      @old_relative_path = T.let(old_relative_path, T.nilable(String))
     end
     @formula_at_revision = T.let({}, T::Hash[String, Formula])
     @load_error = T.let(nil, T.nilable(Exception))

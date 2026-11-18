@@ -306,10 +306,8 @@ class Keg
   ELF64_LITTLE_ENDIAN_MAGIC = "\x7fELF\x02\x01"
   MOVABS_REX_PREFIXES = [0x48, 0x49].freeze
   MOVABS_REGISTER_OPCODES = T.let(0xb8..0xbf, T::Range[Integer])
-  MOVABS_INSTRUCTION_PREFIXES = T.let(
-    MOVABS_REX_PREFIXES.product(MOVABS_REGISTER_OPCODES.to_a).map { it.pack("C*") }.freeze,
-    T::Array[String],
-  )
+  movabs_instruction_prefixes = MOVABS_REX_PREFIXES.product(MOVABS_REGISTER_OPCODES.to_a).map { it.pack("C*") }
+  MOVABS_INSTRUCTION_PREFIXES = T.let(movabs_instruction_prefixes.freeze, T::Array[String])
   MOVABS_INSTRUCTION_REGEX = /#{Regexp.union(MOVABS_INSTRUCTION_PREFIXES)}/n
   MOVABS_OPERAND_BYTESIZE = 8
   MOVABS_MAX_GAP_BYTESIZE = 32
@@ -701,7 +699,8 @@ class Keg
   sig { params(file: Pathname, string: String).returns(T.nilable(T::Array[[String, String]])) }
   def self.elf_relocation_strings(file, string)
     require "os/linux/elf"
-    return unless T.cast(Pathname.new(file.to_s).extend(ELFShim), ELFShim).elf?
+    elf_path = Pathname.new(file.to_s)
+    return unless T.cast(elf_path.extend(ELFShim), ELFShim).elf?
 
     require "elftools"
     require "strscan"

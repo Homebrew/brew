@@ -33,7 +33,8 @@ class BottleTransition
       end
     end
     base_branch = ENV.fetch("GITHUB_BASE_REF", nil).presence
-    @base_ref = T.let(base_ref || (base_branch ? "origin/#{base_branch}" : "origin/HEAD"), String)
+    base_ref ||= (base_branch ? "origin/#{base_branch}" : "origin/HEAD")
+    @base_ref = T.let(base_ref, String)
     @base_revision = T.let(nil, T.nilable(String))
     @required = T.let({}, T::Hash[String, T::Boolean])
   end

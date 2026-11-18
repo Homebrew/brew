@@ -19,6 +19,10 @@ class Keg
   include Utils::Output::Mixin
   include Utils::Path
 
+  @must_exist_subdirectories = T.let(nil, T.nilable(T::Array[Pathname]))
+  @must_exist_directories = T.let(nil, T.nilable(T::Array[Pathname]))
+  @must_be_writable_directories = T.let(nil, T.nilable(T::Array[Pathname]))
+
   Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
 
   # Error for when a keg is already linked.
@@ -154,10 +158,10 @@ class Keg
 
   sig { returns(T::Array[Pathname]) }
   def self.must_exist_subdirectories
-    @must_exist_subdirectories ||= T.let((keg_link_directories - %w[var] + %w[
+    @must_exist_subdirectories ||= (keg_link_directories - %w[var] + %w[
       opt
       var/homebrew/linked
-    ]).map { |dir| HOMEBREW_PREFIX/dir }.sort.uniq.freeze, T.nilable(T::Array[Pathname]))
+    ]).map { |dir| HOMEBREW_PREFIX/dir }.sort.uniq.freeze
   end
 
   # Formulae may also install symlinks into an existing libexec directory.
@@ -170,16 +174,16 @@ class Keg
   # {https://github.com/Homebrew/install/blob/HEAD/install.sh}
   sig { returns(T::Array[Pathname]) }
   def self.must_exist_directories
-    @must_exist_directories ||= T.let((must_exist_subdirectories + [
+    @must_exist_directories ||= (must_exist_subdirectories + [
       HOMEBREW_CELLAR,
-    ].sort.uniq).freeze, T.nilable(T::Array[Pathname]))
+    ].sort.uniq).freeze
   end
 
   # Keep relatively in sync with
   # {https://github.com/Homebrew/install/blob/HEAD/install.sh}
   sig { returns(T::Array[Pathname]) }
   def self.must_be_writable_directories
-    @must_be_writable_directories ||= T.let((%w[
+    @must_be_writable_directories ||= (%w[
       etc/bash_completion.d lib/cps lib/pkgconfig
       share/aclocal share/doc share/info share/locale share/man
       share/man/man1 share/man/man2 share/man/man3 share/man/man4
@@ -195,7 +199,7 @@ class Keg
       HOMEBREW_LOGS,
       HOMEBREW_REPOSITORY,
       *HOMEBREW_PREFIX.glob("lib/python*/site-packages"),
-    ]).sort.uniq.freeze, T.nilable(T::Array[Pathname]))
+    ]).sort.uniq.freeze
   end
 
   sig { returns(String) }
@@ -220,8 +224,10 @@ class Keg
 
     @path = path
     @name = T.let(path.parent.basename.to_s, String)
-    @linked_keg_record = T.let(HOMEBREW_LINKED_KEGS/name, Pathname)
-    @opt_record = T.let(HOMEBREW_PREFIX/"opt/#{name}", Pathname)
+    linked_keg_record = HOMEBREW_LINKED_KEGS/name
+    @linked_keg_record = T.let(linked_keg_record, Pathname)
+    opt_record = HOMEBREW_PREFIX/"opt/#{name}"
+    @opt_record = T.let(opt_record, Pathname)
     @oldname_opt_records = T.let([], T::Array[Pathname])
     @require_relocation = T.let(false, T::Boolean)
     @overwritten_cask_symlinks = T.let({}, T::Hash[Pathname, [String, Pathname]])

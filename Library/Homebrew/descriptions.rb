@@ -56,6 +56,10 @@ class Descriptions
     ).void
   }
   def initialize(descriptions, status_data: {})
+    @installed_formulae = T.let(nil, T.nilable(T::Set[String]))
+    @installed_casks = T.let(nil, T.nilable(T::Set[String]))
+    @short_names = T.let(nil, T.nilable(T::Hash[String, String]))
+
     @descriptions = descriptions
     @status_data = status_data
   end
@@ -138,26 +142,17 @@ class Descriptions
 
   sig { returns(T::Set[String]) }
   def installed_formulae
-    @installed_formulae ||= T.let(
-      Formula.installed.flat_map { |formula| [formula.name, formula.full_name] }.to_set,
-      T.nilable(T::Set[String]),
-    )
+    @installed_formulae ||= Formula.installed.flat_map { |formula| [formula.name, formula.full_name] }.to_set
   end
 
   sig { returns(T::Set[String]) }
   def installed_casks
-    @installed_casks ||= T.let(
-      Cask::Caskroom.casks.flat_map { |cask| [cask.token, cask.full_name] }.to_set,
-      T.nilable(T::Set[String]),
-    )
+    @installed_casks ||= Cask::Caskroom.casks.flat_map { |cask| [cask.token, cask.full_name] }.to_set
   end
 
   sig { returns(T::Hash[String, String]) }
   def short_names
-    @short_names ||= T.let(
-      @descriptions.keys.to_h { |k| [k, Utils.name_from_full_name(k)] },
-      T.nilable(T::Hash[String, String]),
-    )
+    @short_names ||= @descriptions.keys.to_h { |k| [k, Utils.name_from_full_name(k)] }
   end
 
   sig { returns(T::Hash[String, Integer]) }

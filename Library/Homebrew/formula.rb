@@ -103,6 +103,14 @@ class Formula # rubocop:disable Metrics/ClassLength
   extend T::Helpers
   extend Utils::Output::Mixin
 
+  @tap_names = T.let(nil, T.nilable(T::Array[String]))
+  @tap_files = T.let(nil, T.nilable(T::Array[Pathname]))
+  @names = T.let(nil, T.nilable(T::Array[String]))
+  @full_names = T.let(nil, T.nilable(T::Array[String]))
+  @tap_aliases = T.let(nil, T.nilable(T::Array[String]))
+  @aliases = T.let(nil, T.nilable(T::Array[String]))
+  @alias_full_names = T.let(nil, T.nilable(T::Array[String]))
+
   Cache = type_template { { fixed: T::Hash[Symbol, T.untyped] } }
 
   abstract!
@@ -122,9 +130,10 @@ class Formula # rubocop:disable Metrics/ClassLength
   @conflicts = T.let([], T::Array[FormulaConflict])
   @skip_clean_paths = T.let(Set.new, T::Set[T.any(String, Symbol)])
   @link_overwrite_paths = T.let(Set.new, T::Set[String])
-  @network_access_allowed = T.let(SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
+  resolved_network_access_allowed = SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
     [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
-  end, T::Hash[Symbol, T::Boolean])
+  end
+  @network_access_allowed = T.let(resolved_network_access_allowed, T::Hash[Symbol, T::Boolean])
 
   # The name of this {Formula}.
   # e.g. `this-formula`
@@ -280,6 +289,8 @@ class Formula # rubocop:disable Metrics/ClassLength
   }
   def initialize(name, path, spec, alias_path: nil, tap: nil, force_bottle: false)
     # Only allow instances of subclasses. The base class does not hold any spec information (URLs etc).
+    @aliases = T.let(nil, T.nilable(T::Array[String]))
+
     raise "Do not call `Formula.new' directly without a subclass." unless self.class < Formula
     raise "Formula subclasses cannot override `brew`." if self.class.instance_method(:brew).owner != Formula
 
@@ -292,9 +303,12 @@ class Formula # rubocop:disable Metrics/ClassLength
     @unresolved_path = path
     @path = T.let(resolved_path(path), Pathname)
     @alias_path = alias_path
-    @alias_name = T.let((File.basename(alias_path) if alias_path), T.nilable(String))
-    @revision = T.let(self.class.revision || 0, Integer)
-    @version_scheme = T.let(self.class.version_scheme || 0, Integer)
+    alias_name = (File.basename(alias_path) if alias_path)
+    @alias_name = T.let(alias_name, T.nilable(String))
+    revision = self.class.revision || 0
+    @revision = T.let(revision, Integer)
+    version_scheme = self.class.version_scheme || 0
+    @version_scheme = T.let(version_scheme, Integer)
     @compatibility_version = T.let(self.class.compatibility_version, T.nilable(Integer))
 
     @autobump = T.let(true, T::Boolean)
@@ -312,17 +326,22 @@ class Formula # rubocop:disable Metrics/ClassLength
     @pypi_packages_info = T.let(self.class.pypi_packages_info, T.nilable(PypiPackages))
 
     @full_name = T.let(full_name_with_optional_tap(name), String)
-    @full_alias_name = T.let((full_name_with_optional_tap(@alias_name) if @alias_name), T.nilable(String))
+    full_alias_name = (full_name_with_optional_tap(@alias_name) if @alias_name)
+    @full_alias_name = T.let(full_alias_name, T.nilable(String))
 
-    @stable = T.let(spec_eval(self.class.stable, :stable), T.nilable(SoftwareSpec))
-    @head = T.let(spec_eval(self.class.head, :head), T.nilable(SoftwareSpec))
+    stable_spec = self.class.stable
+    @stable = T.let(spec_eval(stable_spec, :stable), T.nilable(SoftwareSpec))
+    head_spec = self.class.head
+    @head = T.let(spec_eval(head_spec, :head), T.nilable(SoftwareSpec))
 
     requested_spec = (spec.to_sym == :head) ? head || stable : stable || head
     raise FormulaSpecificationError, "#{full_name}: formula requires at least a URL" unless requested_spec
 
     @active_spec = T.let(requested_spec, SoftwareSpec)
-    @active_spec_sym = T.let(head? ? :head : :stable, Symbol)
+    active_spec_sym = head? ? :head : :stable
+    @active_spec_sym = T.let(active_spec_sym, Symbol)
     @python3 = T.let(nil, T.nilable(Pathname))
+    @service = T.let(nil, T.nilable(Homebrew::Service))
     validate_attributes!
     @build = T.let(active_spec.build, T.any(BuildOptions, Tab))
     @pin = T.let(FormulaPin.new(self), FormulaPin)
@@ -917,13 +936,11 @@ class Formula # rubocop:disable Metrics/ClassLength
   # @api internal
   sig { returns(T::Array[String]) }
   def aliases
-    @aliases ||= T.let(
-      if (tap = self.tap)
-        tap.alias_reverse_table.fetch(full_name, []).map { Utils.name_from_full_name(it) }
-      else
-        []
-      end, T.nilable(T::Array[String])
-    )
+    @aliases ||= if (tap = self.tap)
+      tap.alias_reverse_table.fetch(full_name, []).map { Utils.name_from_full_name(it) }
+    else
+      []
+    end
   end
 
   # The {Resource}s for the currently active {SoftwareSpec}.
@@ -1600,7 +1617,7 @@ class Formula # rubocop:disable Metrics/ClassLength
   # @api public
   sig { returns(Homebrew::Service) }
   def service
-    @service ||= T.let(Homebrew::Service.new(self, &self.class.service), T.nilable(Homebrew::Service))
+    @service ||= Homebrew::Service.new(self, &self.class.service)
   end
 
   # A stable path for this formula, when installed. Contains the formula name
@@ -2765,27 +2782,27 @@ class Formula # rubocop:disable Metrics/ClassLength
   # An array of all tap {Formula} names.
   sig { returns(T::Array[String]) }
   def self.tap_names
-    @tap_names ||= T.let(Tap.reject(&:core_tap?).flat_map(&:formula_names).sort, T.nilable(T::Array[String]))
+    @tap_names ||= Tap.reject(&:core_tap?).flat_map(&:formula_names).sort
   end
 
   # An array of all tap {Formula} files.
   sig { returns(T::Array[Pathname]) }
   def self.tap_files
-    @tap_files ||= T.let(Tap.reject(&:core_tap?).flat_map(&:formula_files), T.nilable(T::Array[Pathname]))
+    @tap_files ||= Tap.reject(&:core_tap?).flat_map(&:formula_files)
   end
 
   # An array of all {Formula} names.
   sig { returns(T::Array[String]) }
   def self.names
-    @names ||= T.let((core_names + tap_names.map do |name|
+    @names ||= (core_names + tap_names.map do |name|
       Utils.name_from_full_name(name)
-    end).uniq.sort, T.nilable(T::Array[String]))
+    end).uniq.sort
   end
 
   # An array of all {Formula} names, which the tap formulae have as the fully-qualified name.
   sig { returns(T::Array[String]) }
   def self.full_names
-    @full_names ||= T.let(core_names + tap_names, T.nilable(T::Array[String]))
+    @full_names ||= core_names + tap_names
   end
 
   # An array of each known trusted {Formula}.
@@ -2859,29 +2876,32 @@ class Formula # rubocop:disable Metrics/ClassLength
   # An array of all tap aliases.
   sig { returns(T::Array[String]) }
   def self.tap_aliases
-    @tap_aliases ||= T.let(Tap.reject(&:core_tap?).flat_map(&:aliases).sort, T.nilable(T::Array[String]))
+    @tap_aliases ||= Tap.reject(&:core_tap?).flat_map(&:aliases).sort
   end
 
   # An array of all aliases.
   sig { returns(T::Array[String]) }
   def self.aliases
-    @aliases ||= T.let((core_aliases + tap_aliases.map do |name|
+    @aliases ||= (core_aliases + tap_aliases.map do |name|
       Utils.name_from_full_name(name)
-    end).uniq.sort, T.nilable(T::Array[String]))
+    end).uniq.sort
   end
 
   # An array of all aliases as fully-qualified names.
   sig { returns(T::Array[String]) }
   def self.alias_full_names
-    @alias_full_names ||= T.let(core_aliases + tap_aliases, T.nilable(T::Array[String]))
+    @alias_full_names ||= core_aliases + tap_aliases
   end
 
   # Returns a list of approximately matching formula names, but not the complete match.
   sig { params(name: String).returns(T::Array[String]) }
   def self.fuzzy_search(name)
-    @spell_checker ||= T.let(DidYouMean::SpellChecker.new(dictionary: Set.new(names + full_names).to_a),
-                             T.nilable(DidYouMean::SpellChecker))
-    T.cast(@spell_checker.correct(name), T::Array[String])
+    checker = @spell_checker
+    unless checker
+      checker = DidYouMean::SpellChecker.new(dictionary: (names + full_names).uniq)
+      @spell_checker = T.let(checker, T.nilable(DidYouMean::SpellChecker))
+    end
+    T.cast(checker.correct(name), T::Array[String])
   end
 
   T::Sig::WithoutRuntime.sig { params(name: String).returns(Formula) }
@@ -5346,11 +5366,14 @@ class Formula # rubocop:disable Metrics/ClassLength
 
       deprecation_date = Date.parse(date)
       @deprecation_date = T.let(deprecation_date, T.nilable(Date))
-      @deprecated = T.let(deprecation_date <= Date.today, T.nilable(T::Boolean))
+      deprecated = deprecation_date <= Date.today
+      @deprecated = T.let(deprecated, T.nilable(T::Boolean))
       if @deprecated
         @deprecation_reason = T.let(because, T.nilable(T.any(String, Symbol)))
-        @deprecation_replacement_formula = T.let(replacement_formula.presence || replacement, T.nilable(String))
-        @deprecation_replacement_cask = T.let(replacement_cask.presence || replacement, T.nilable(String))
+        deprecation_replacement_formula = replacement_formula.presence || replacement
+        @deprecation_replacement_formula = T.let(deprecation_replacement_formula, T.nilable(String))
+        deprecation_replacement_cask = replacement_cask.presence || replacement
+        @deprecation_replacement_cask = T.let(deprecation_replacement_cask, T.nilable(String))
       else
         # Reset these to handle disable! before deprecate!
         @deprecation_reason = nil
@@ -5462,15 +5485,19 @@ class Formula # rubocop:disable Metrics/ClassLength
         return if @deprecation_date.present?
 
         @deprecation_reason = T.let(because, T.nilable(T.any(String, Symbol)))
-        @deprecation_replacement_formula = T.let(replacement_formula.presence || replacement, T.nilable(String))
-        @deprecation_replacement_cask = T.let(replacement_cask.presence || replacement, T.nilable(String))
+        deprecation_replacement_formula = replacement_formula.presence || replacement
+        @deprecation_replacement_formula = T.let(deprecation_replacement_formula, T.nilable(String))
+        deprecation_replacement_cask = replacement_cask.presence || replacement
+        @deprecation_replacement_cask = T.let(deprecation_replacement_cask, T.nilable(String))
         @deprecated = T.let(true, T.nilable(T::Boolean))
         return
       end
 
       @disable_reason = T.let(because, T.nilable(T.any(String, Symbol)))
-      @disable_replacement_formula = T.let(replacement_formula.presence || replacement, T.nilable(String))
-      @disable_replacement_cask = T.let(replacement_cask.presence || replacement, T.nilable(String))
+      disable_replacement_formula = replacement_formula.presence || replacement
+      @disable_replacement_formula = T.let(disable_replacement_formula, T.nilable(String))
+      disable_replacement_cask = replacement_cask.presence || replacement
+      @disable_replacement_cask = T.let(disable_replacement_cask, T.nilable(String))
       @disabled = T.let(true, T.nilable(T::Boolean))
     end
 

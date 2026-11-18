@@ -64,7 +64,7 @@ class MacOSRequirement < Requirement
 
   sig { params(tags: T.untyped, comparator: String).void }
   def initialize(tags = [], comparator: ">=")
-    @version = T.let(begin
+    version = begin
       if comparator == "==" && tags.first.respond_to?(:map)
         tags.first.map { |s| MacOSVersion.from_symbol(s) }
       else
@@ -89,7 +89,8 @@ class MacOSRequirement < Requirement
 
       # Otherwise fallback to the oldest allowed if comparator is >=.
       MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED) if comparator == ">="
-    end, T.nilable(T.any(MacOSVersion, T::Array[MacOSVersion])))
+    end
+    @version = T.let(version, T.nilable(T.any(MacOSVersion, T::Array[MacOSVersion])))
 
     @comparator = comparator
     super(tags.drop(1))

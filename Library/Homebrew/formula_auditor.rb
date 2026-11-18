@@ -22,6 +22,8 @@ module Homebrew
     include Utils::Curl
     include Utils::Output::Mixin
 
+    @aliases = T.let(nil, T.nilable(T::Array[String]))
+
     sig { override.returns(Formula) }
     attr_reader :formula
 
@@ -65,10 +67,12 @@ module Homebrew
       # Accept precomputed style offense results, for efficiency
       @style_offenses = style_offenses
       # Allow the formula tap to be set as homebrew/core, for testing purposes
-      @core_tap = T.let(formula.tap&.core_tap? || core_tap || false, T::Boolean)
+      @core_tap = core_tap
+      @core_tap = true if formula.tap&.core_tap?
       @problems = T.let([], T::Array[T.any(String, T::Hash[Symbol, T.untyped])])
       @new_formula_problems = T.let([], T::Array[T.any(String, T::Hash[Symbol, T.untyped])])
-      @text = T.let(Formulary.formula_contents(formula.path).b, String)
+      text = Formulary.formula_contents(formula.path).b
+      @text = T.let(text, String)
       @specs = T.let([formula.stable, formula.head].compact, T::Array[SoftwareSpec])
       @spdx_license_data = spdx_license_data
       @spdx_exception_data = spdx_exception_data
@@ -172,7 +176,7 @@ module Homebrew
     sig { returns(T::Array[String]) }
     def self.aliases
       # core aliases + tap alias names + tap alias full name
-      @aliases ||= T.let(Formula.aliases + Formula.tap_aliases, T.nilable(T::Array[String]))
+      @aliases ||= Formula.aliases + Formula.tap_aliases
     end
 
     sig { void }
@@ -1210,9 +1214,7 @@ module Homebrew
 
     sig { void }
     def audit_text
-      bin_names = Set.new
-      bin_names << formula.name
-      bin_names += formula.aliases
+      bin_names = Set[formula.name, *formula.aliases]
       [formula.bin, formula.sbin].each do |dir|
         next unless dir.exist?
 
@@ -1231,8 +1233,7 @@ module Homebrew
     sig { void }
     def audit_reverse_migration
       # Only enforce for new formula being re-added to core
-      return unless @strict
-      return unless @core_tap
+      return if !@strict || !@core_tap
       return unless formula.tap!.tap_migrations.key?(formula.name)
 
       problem <<~EOS

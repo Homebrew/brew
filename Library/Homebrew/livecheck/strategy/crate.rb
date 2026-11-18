@@ -25,14 +25,16 @@ module Homebrew
         # provided.
         DEFAULT_REGEX = /^v?(\d+(?:\.\d+)+)$/i
 
-        # The default `strategy` block used to extract version information when
-        # a `strategy` block isn't provided.
-        DEFAULT_BLOCK = T.let(proc do |json, regex|
+        default_block = proc do |json, regex|
           next if json["yanked"]
           next unless (match = json["vers"]&.match(regex))
 
           match[1]
-        end.freeze, T.proc.params(
+        end
+
+        # The default `strategy` block used to extract version information when
+        # a `strategy` block isn't provided.
+        DEFAULT_BLOCK = T.let(default_block.freeze, T.proc.params(
           arg0: T::Hash[String, T.anything],
           arg1: Regexp,
         ).returns(T.any(String, T::Array[String])))

@@ -94,14 +94,12 @@ class Requirement
     satisfy = self.class.satisfy
     return true unless satisfy
 
-    @satisfied_result = T.let(
-      satisfy.yielder(env:, cc:, build_bottle:, bottle_arch:) do |p|
-        raise ArgumentError, "#{self.class} `satisfy` requires a block when given options" if p.nil?
+    satisfied_result = satisfy.yielder(env:, cc:, build_bottle:, bottle_arch:) do |p|
+      raise ArgumentError, "#{self.class} `satisfy` requires a block when given options" if p.nil?
 
-        instance_eval(&p)
-      end,
-      Object,
-    )
+      instance_eval(&p)
+    end
+    @satisfied_result = T.let(satisfied_result, Object)
     return false unless @satisfied_result
 
     true

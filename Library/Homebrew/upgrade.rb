@@ -211,10 +211,7 @@ module Homebrew
         else
           Install.fetch_formulae(formula_installers)
         end
-        dependency_summary = T.let(
-          dry_run ? { install: [], upgrade: [] } : nil,
-          T.nilable(Install::DependencySummary),
-        )
+        dependency_summary = { install: [], upgrade: [] } if dry_run
 
         upgraded_formula_installers = valid_formula_installers.select do |fi|
           upgraded = upgrade_formula(fi, dry_run:, verbose:, skip_formula_names:, dependency_summary:)

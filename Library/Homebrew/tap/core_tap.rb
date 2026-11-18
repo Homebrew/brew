@@ -80,10 +80,10 @@ class CoreTap < AbstractCoreTap
 
   sig { override.returns(Pathname) }
   def formula_dir
-    @formula_dir ||= T.let(begin
+    @formula_dir ||= begin
       ensure_installed!
       super
-    end, T.nilable(Pathname))
+    end
   end
 
   sig { params(name: String).returns(String) }
@@ -106,68 +106,62 @@ class CoreTap < AbstractCoreTap
 
   sig { override.returns(Pathname) }
   def alias_dir
-    @alias_dir ||= T.let(begin
+    @alias_dir ||= begin
       ensure_installed!
       super
-    end, T.nilable(Pathname))
+    end
   end
 
   sig { override.returns(T::Hash[String, String]) }
   def formula_renames
-    @formula_renames ||= T.let(
-      if Homebrew::EnvConfig.no_install_from_api?
-        ensure_installed!
-        super
-      else
-        Homebrew::API.formula_renames
-      end,
-      T.nilable(T::Hash[String, String]),
-    )
+    @formula_renames ||= if Homebrew::EnvConfig.no_install_from_api?
+      ensure_installed!
+      super
+    else
+      Homebrew::API.formula_renames
+    end
   end
 
   sig { override.returns(T::Hash[String, T.untyped]) }
   def tap_migrations
-    @tap_migrations ||= T.let(
-      if Homebrew::EnvConfig.no_install_from_api?
-        ensure_installed!
-        super
-      else
-        Homebrew::API.formula_tap_migrations
-      end,
-      T.nilable(T::Hash[String, T.untyped]),
-    )
+    @tap_migrations ||= if Homebrew::EnvConfig.no_install_from_api?
+      ensure_installed!
+      super
+    else
+      Homebrew::API.formula_tap_migrations
+    end
   end
 
   sig { override.returns(T::Array[String]) }
   def autobump
-    @autobump ||= T.let(begin
+    @autobump ||= begin
       ensure_installed!
       super
-    end, T.nilable(T::Array[String]))
+    end
   end
 
   sig { override.returns(T::Hash[Symbol, T.untyped]) }
   def audit_exceptions
-    @audit_exceptions ||= T.let(begin
+    @audit_exceptions ||= begin
       ensure_installed!
       super
-    end, T.nilable(T::Hash[Symbol, T.untyped]))
+    end
   end
 
   sig { override.returns(T::Hash[Symbol, T.untyped]) }
   def style_exceptions
-    @style_exceptions ||= T.let(begin
+    @style_exceptions ||= begin
       ensure_installed!
       super
-    end, T.nilable(T::Hash[Symbol, T.untyped]))
+    end
   end
 
   sig { override.returns(T::Array[T::Array[String]]) }
   def synced_versions_formulae
-    @synced_versions_formulae ||= T.let(begin
+    @synced_versions_formulae ||= begin
       ensure_installed!
       super
-    end, T.nilable(T::Array[T::Array[String]]))
+    end
   end
 
   sig { override.params(file: Pathname).returns(String) }
@@ -177,14 +171,11 @@ class CoreTap < AbstractCoreTap
 
   sig { override.returns(T::Hash[String, String]) }
   def alias_table
-    @alias_table ||= T.let(
-      if Homebrew::EnvConfig.no_install_from_api?
-        super
-      else
-        Homebrew::API.formula_aliases
-      end,
-      T.nilable(T::Hash[String, String]),
-    )
+    @alias_table ||= if Homebrew::EnvConfig.no_install_from_api?
+      super
+    else
+      Homebrew::API.formula_aliases
+    end
   end
 
   sig { override.returns(T::Array[Pathname]) }
@@ -205,18 +196,15 @@ class CoreTap < AbstractCoreTap
   def formula_files_by_name
     return super if Homebrew::EnvConfig.no_install_from_api?
 
-    @formula_files_by_name ||= T.let(
-      begin
-        formula_directory_path = formula_dir.to_s
-        Homebrew::API.formula_names.each_with_object({}) do |name, hash|
-          # If there's more than one item with the same path: use the longer one to prioritise more specific results.
-          existing_path = hash[name]
-          # Pathname equivalent is slow in a tight loop
-          new_path = File.join(formula_directory_path, new_formula_subdirectory(name), "#{name.downcase}.rb")
-          hash[name] = Pathname(new_path) if existing_path.nil? || existing_path.to_s.length < new_path.length
-        end
-      end,
-      T.nilable(T::Hash[String, Pathname]),
-    )
+    @formula_files_by_name ||= begin
+      formula_directory_path = formula_dir.to_s
+      Homebrew::API.formula_names.each_with_object({}) do |name, hash|
+        # If there's more than one item with the same path: use the longer one to prioritise more specific results.
+        existing_path = hash[name]
+        # Pathname equivalent is slow in a tight loop
+        new_path = File.join(formula_directory_path, new_formula_subdirectory(name), "#{name.downcase}.rb")
+        hash[name] = Pathname(new_path) if existing_path.nil? || existing_path.to_s.length < new_path.length
+      end
+    end
   end
 end

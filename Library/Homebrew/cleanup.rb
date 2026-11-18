@@ -296,7 +296,8 @@ module Homebrew
       @dry_run = dry_run
       @scrub = scrub
       @prune = T.let(days.present?, T::Boolean)
-      @days = T.let(days || Homebrew::EnvConfig.cleanup_max_age_days.to_i, Integer)
+      days ||= Homebrew::EnvConfig.cleanup_max_age_days.to_i
+      @days = T.let(days, Integer)
       @cache = cache
       @output = output
       @cleaned_up_paths = T.let(Set.new, T::Set[Pathname])
@@ -373,7 +374,7 @@ module Homebrew
 
       formulae = install_cleanup_formulae(formulae).uniq(&:full_name)
       casks = casks.uniq(&:full_name)
-      packages = T.let(formulae + casks, T::Array[T.any(Formula, Cask::Cask)])
+      packages = formulae + casks
       return if packages.empty?
 
       output = InstallCleanupOutput.new($stdout, oh1_title("Cleanup"))

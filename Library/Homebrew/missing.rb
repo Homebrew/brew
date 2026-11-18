@@ -47,7 +47,7 @@ module Homebrew
 
     sig { params(cask: Cask::Cask, hide: T::Array[String]).returns(T::Array[String]) }
     def self.cask_deps(cask, hide)
-      tab_deps = T.let(Cask::Tab.for_cask(cask).runtime_dependencies, T.untyped)
+      tab_deps = Cask::Tab.for_cask(cask).runtime_dependencies
       return [] unless tab_deps.is_a?(Hash)
 
       tab_deps.keys.flat_map do |type|

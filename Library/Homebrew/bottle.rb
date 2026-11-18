@@ -438,45 +438,43 @@ class Bottle
                            root_url == Homebrew::EnvConfig.bottle_domain
     return if @resource.download_strategy != CurlGitHubPackagesDownloadStrategy && !custom_bottle_domain
 
-    @github_packages_manifest_resource ||= T.let(
-      begin
-        resource = Resource::BottleManifest.new(self)
+    return @github_packages_manifest_resource if @github_packages_manifest_resource
 
-        resource_version = @resource.version
-        odie "resource version is nil" if resource_version.nil?
+    resource = Resource::BottleManifest.new(self)
 
-        version_rebuild = GitHubPackages.version_rebuild(resource_version, rebuild)
-        resource.version(version_rebuild)
+    resource_version = @resource.version
+    odie "resource version is nil" if resource_version.nil?
 
-        image_name = GitHubPackages.image_formula_name(@name)
-        # The JSON API supplies the digest of this bottle's own manifest; a
-        # bottle block can only supply that of the index listing every bottle.
-        manifest_sha256 = @manifest_checksum&.hexdigest || @spec.manifest_sha256
-        # A digest names one immutable manifest; a tag can be moved to another.
-        manifest_reference = if manifest_sha256
-          "sha256:#{manifest_sha256}"
-        else
-          GitHubPackages.image_version_rebuild(version_rebuild)
-        end
-        manifest_path = "#{image_name}/manifests/#{manifest_reference}"
-        resource.sha256(manifest_sha256) if manifest_sha256
-        resource.url(
-          "#{root_url}/#{manifest_path}",
-          using:   CurlGitHubPackagesDownloadStrategy,
-          headers: ["Accept: application/vnd.oci.image.#{@manifest_checksum ? "manifest" : "index"}.v1+json"],
-        )
-        # Give a legacy mirror the first chance to serve the manifest. Many
-        # contain only bottle archives, so retain GHCR as a fallback. By
-        # contrast, `$HOMEBREW_ARTIFACT_DOMAIN` must provide an OCI registry
-        # proxy for bottle blobs and manifests; the strategy rewrites the GHCR
-        # URL for it.
-        resource.mirror("#{HOMEBREW_BOTTLE_DEFAULT_DOMAIN}/#{manifest_path}") if custom_bottle_domain
-        T.cast(resource.downloader, CurlGitHubPackagesDownloadStrategy).resolved_basename =
-          "#{name}-#{version_rebuild}.bottle_manifest.json"
-        resource
-      end,
-      T.nilable(Resource::BottleManifest),
+    version_rebuild = GitHubPackages.version_rebuild(resource_version, rebuild)
+    resource.version(version_rebuild)
+
+    image_name = GitHubPackages.image_formula_name(@name)
+    # The JSON API supplies the digest of this bottle's own manifest; a
+    # bottle block can only supply that of the index listing every bottle.
+    manifest_sha256 = @manifest_checksum&.hexdigest || @spec.manifest_sha256
+    # A digest names one immutable manifest; a tag can be moved to another.
+    manifest_reference = if manifest_sha256
+      "sha256:#{manifest_sha256}"
+    else
+      GitHubPackages.image_version_rebuild(version_rebuild)
+    end
+    manifest_path = "#{image_name}/manifests/#{manifest_reference}"
+    resource.sha256(manifest_sha256) if manifest_sha256
+    resource.url(
+      "#{root_url}/#{manifest_path}",
+      using:   CurlGitHubPackagesDownloadStrategy,
+      headers: ["Accept: application/vnd.oci.image.#{@manifest_checksum ? "manifest" : "index"}.v1+json"],
     )
+    # Give a legacy mirror the first chance to serve the manifest. Many
+    # contain only bottle archives, so retain GHCR as a fallback. By
+    # contrast, `$HOMEBREW_ARTIFACT_DOMAIN` must provide an OCI registry
+    # proxy for bottle blobs and manifests; the strategy rewrites the GHCR
+    # URL for it.
+    resource.mirror("#{HOMEBREW_BOTTLE_DEFAULT_DOMAIN}/#{manifest_path}") if custom_bottle_domain
+    T.cast(resource.downloader, CurlGitHubPackagesDownloadStrategy).resolved_basename =
+      "#{name}-#{version_rebuild}.bottle_manifest.json"
+    @github_packages_manifest_resource = T.let(resource, T.nilable(Resource::BottleManifest))
+    resource
   end
 
   sig { override.returns(String) }

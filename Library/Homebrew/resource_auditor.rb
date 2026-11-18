@@ -9,6 +9,8 @@ module Homebrew
   class ResourceAuditor
     include Utils::Curl
 
+    @curl_deps = T.let(nil, T.nilable(T::Array[String]))
+
     sig { returns(T.nilable(String)) }
     attr_reader :name
 
@@ -160,11 +162,11 @@ module Homebrew
 
     sig { returns(T::Array[String]) }
     def self.curl_deps
-      @curl_deps ||= T.let(begin
+      @curl_deps ||= begin
         ["curl"] + ::Formula["curl"].recursive_dependencies.map(&:name).uniq
       rescue FormulaUnavailableError
         []
-      end, T.nilable(T::Array[String]))
+      end
     end
 
     sig { void }

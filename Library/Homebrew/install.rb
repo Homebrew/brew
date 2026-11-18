@@ -144,7 +144,7 @@ module Homebrew
       )
         return formula_installers if formula_installers.empty?
 
-        download_queue = T.let(download_queue || Homebrew::DownloadQueue.new(pour: true), Homebrew::DownloadQueue)
+        download_queue ||= Homebrew::DownloadQueue.new(pour: true)
 
         begin
           valid_formula_installers = prelude_fetch_formulae(formula_installers, download_queue:)

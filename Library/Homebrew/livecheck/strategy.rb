@@ -15,6 +15,8 @@ module Homebrew
     module Strategy
       extend Utils::Curl
 
+      @strategies = T.let(nil, T.nilable(T::Hash[Symbol, T.untyped]))
+
       # {Strategy} priorities informally range from 1 to 10, where 10 is the
       # highest priority. 5 is the default priority because it's roughly in
       # the middle of this range. Strategies with a priority of 0 (or lower)
@@ -64,14 +66,15 @@ module Homebrew
       ].freeze, T::Array[String])
 
       # `curl` arguments used in `Strategy#page_content` method.
-      PAGE_CONTENT_CURL_ARGS = T.let(([
+      PAGE_CONTENT_CURL_ARGS = T.let([
         # Return an error when the HTTP response code is 400 or greater but
         # continue to return body content
         "--fail-with-body",
         # Include HTTP response headers in output, so we can identify the
         # final URL after any redirections
         "--include",
-      ] + DEFAULT_CURL_ARGS).freeze, T::Array[String])
+        *DEFAULT_CURL_ARGS,
+      ].freeze, T::Array[String])
 
       # Baseline `curl` options used in {Strategy} methods.
       DEFAULT_CURL_OPTIONS = T.let({
@@ -108,13 +111,13 @@ module Homebrew
       def self.strategies
         # Strategies (including tap-provided ones) are discovered dynamically.
         # rubocop:disable Sorbet/ConstantsFromStrings
-        @strategies ||= T.let(Strategy.constants.sort.each_with_object({}) do |const_symbol, hash|
+        @strategies ||= Strategy.constants.sort.each_with_object({}) do |const_symbol, hash|
           constant = Strategy.const_get(const_symbol)
           next unless constant.is_a?(Class)
 
           key = Utils.underscore(const_symbol).to_sym
           hash[key] = constant
-        end, T.nilable(T::Hash[Symbol, T.untyped]))
+        end
         # rubocop:enable Sorbet/ConstantsFromStrings
       end
       private_class_method :strategies

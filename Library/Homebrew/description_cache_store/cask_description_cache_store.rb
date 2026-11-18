@@ -20,13 +20,12 @@ class CaskDescriptionCacheStore < DescriptionCacheStore
     return if database.empty? || report.empty?
 
     renamings = T.cast(report.select_formula_or_cask(:RC), T::Array[[String, String]])
-    alterations = T.cast(
-      report.select_formula_or_cask(:AC) +
-      report.select_formula_or_cask(:MC) +
-      renamings.filter_map(&:last),
-      T::Array[String],
-    )
-    deletions = T.cast(report.select_formula_or_cask(:DC) + renamings.filter_map(&:first), T::Array[String])
+    alterations = report.select_formula_or_cask(:AC) +
+                  report.select_formula_or_cask(:MC) +
+                  renamings.filter_map(&:last)
+    alterations = T.cast(alterations, T::Array[String])
+    deletions = report.select_formula_or_cask(:DC) + renamings.filter_map(&:first)
+    deletions = T.cast(deletions, T::Array[String])
 
     update_from_cask_tokens!(alterations)
     delete_from_cask_tokens!(deletions)
