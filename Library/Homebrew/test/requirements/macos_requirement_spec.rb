@@ -138,5 +138,11 @@ RSpec.describe MacOSRequirement do
 
       expect(requirement.platform_supported?(tag)).to be(true)
     end
+
+    it "is false on a system that is neither macOS nor Linux" do
+      tag = Utils::Bottles::Tag.new(system: :generic, arch: :arm64)
+
+      expect(requirement.platform_supported?(tag)).to be(false)
+    end
   end
 end
