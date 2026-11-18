@@ -36,11 +36,12 @@ module Homebrew
       end
 
       # Describe a formula's version change for an upgrade summary.
-      sig { params(formula: Formula).returns(VersionChange) }
-      def formula_version_change(formula)
+      sig { params(formula: Formula, size: T.nilable(String)).returns(VersionChange) }
+      def formula_version_change(formula, size: nil)
         current_version = installed_version(formula)
         old_version = current_version.to_s if current_version && current_version != formula.pkg_version
-        VersionChange.new(name: formula.full_specified_name, old_version:, new_version: formula.pkg_version.to_s)
+        VersionChange.new(name: formula.full_specified_name, old_version:, new_version: formula.pkg_version.to_s,
+                          size:)
       end
 
       sig {

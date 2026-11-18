@@ -124,6 +124,9 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       added 1.0
       ==> Would upgrade 1 formula:
       changed 1.0_1 -> 2.0
+      ==> 2 homebrew/core formulae that would build from source
+      changed
+      added
     EOS
   end
 
@@ -197,6 +200,9 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       changed 2.0
       ==> Would install 1 dependency for changed:
       dependency 1.0
+      ==> 2 homebrew/core formulae that would build from source
+      changed
+      dependency
     EOS
   end
 
@@ -224,6 +230,9 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
       changed 2.0
       ==> Would upgrade 1 dependency for changed:
       dependency 1.0
+      ==> 2 homebrew/core formulae that would build from source
+      changed
+      dependency
     EOS
   end
 
@@ -424,6 +433,8 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
     expect { described_class.new(["--formula", "--dry-run", "onlyball"]).run }.to output(<<~EOS).to_stdout
       ==> Would install 1 formula:
       onlyball 1.0
+      ==> 1 homebrew/core formula that would build from source
+      onlyball
     EOS
   end
 
