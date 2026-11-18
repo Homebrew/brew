@@ -84,6 +84,23 @@ RSpec.describe RuboCop::Cop::Homebrew::PublicApiCookbook do
         end
       RUBY
     end
+
+    it "does not report an offense for an annotated cask method after a long `sig`" do
+      options = (1..15).map { |index| "        option#{index}: T.nilable(String)," }.join("\n")
+      expect_no_offenses(<<~RUBY, cask_dsl_path)
+        module Cask
+          module DSL
+            # @api public
+            sig {
+              params(
+        #{options}
+              ).void
+            }
+            def desc; end
+          end
+        end
+      RUBY
+    end
   end
 
   context "when a formula cookbook method is missing from the helper list" do
