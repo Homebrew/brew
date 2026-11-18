@@ -5,6 +5,8 @@ require "version"
 
 # Helper functions for querying operating system information.
 module OS
+  @kernel_version = T.let(nil, T.nilable(Version))
+
   # Check whether the operating system is macOS.
   #
   # @api public
@@ -41,7 +43,7 @@ module OS
   sig { returns(Version) }
   def self.kernel_version
     require "etc"
-    @kernel_version ||= T.let(Version.new(Etc.uname.fetch(:release)), T.nilable(Version))
+    @kernel_version ||= Version.new(Etc.uname.fetch(:release))
   end
 
   # Get the kernel name.

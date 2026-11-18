@@ -22,7 +22,8 @@ class LockFile
   sig { params(type: Symbol, locked_path: Pathname).void }
   def initialize(type, locked_path)
     @locked_path = locked_path
-    @path = T.let(HOMEBREW_LOCKS/"#{locked_path.basename}.#{type}.lock", Pathname)
+    path = HOMEBREW_LOCKS/"#{locked_path.basename}.#{type}.lock"
+    @path = T.let(path, Pathname)
     @lockfile = T.let(nil, T.nilable(File))
   end
 

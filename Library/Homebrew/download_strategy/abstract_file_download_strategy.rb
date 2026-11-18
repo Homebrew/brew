@@ -19,10 +19,11 @@ class AbstractFileDownloadStrategy < AbstractDownloadStrategy
   # @api public
   sig { returns(Pathname) }
   def symlink_location
-    @symlink_location ||= T.let(
-      @cache/Utils.safe_filename("#{name}--#{version}#{Pathname(parse_basename(url)).extname}"),
-      T.nilable(Pathname),
-    )
+    return @symlink_location if @symlink_location
+
+    symlink_location = @cache/Utils.safe_filename("#{name}--#{version}#{Pathname(parse_basename(url)).extname}")
+    @symlink_location = T.let(symlink_location, T.nilable(Pathname))
+    symlink_location
   end
 
   # Path for storing the completed download.

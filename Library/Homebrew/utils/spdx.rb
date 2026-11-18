@@ -19,40 +19,53 @@ module SPDX
 
   sig { returns(T::Hash[String, T.untyped]) }
   def license_data
-    @license_data ||= T.let(JSON.parse((DATA_PATH/"spdx_licenses.json").read), T.nilable(T::Hash[String, T.untyped]))
+    return @license_data if @license_data
+
+    license_data = JSON.parse((DATA_PATH/"spdx_licenses.json").read)
+    @license_data = T.let(license_data, T.nilable(T::Hash[String, T.untyped]))
+    license_data
   end
 
   sig { returns(T::Hash[String, T.untyped]) }
   def exception_data
-    @exception_data ||= T.let(JSON.parse((DATA_PATH/"spdx_exceptions.json").read),
-                              T.nilable(T::Hash[String, T.untyped]))
+    return @exception_data if @exception_data
+
+    exception_data = JSON.parse((DATA_PATH/"spdx_exceptions.json").read)
+    @exception_data = T.let(exception_data, T.nilable(T::Hash[String, T.untyped]))
+    exception_data
   end
 
   sig { returns(T::Hash[String, T::Boolean]) }
   def license_index
-    @license_index ||= T.let(
-      license_data["licenses"].to_h do |spdx_license|
-        [spdx_license["licenseId"].downcase, !!spdx_license["isDeprecatedLicenseId"]]
-      end,
-      T.nilable(T::Hash[String, T::Boolean]),
-    )
+    return @license_index if @license_index
+
+    license_index = license_data["licenses"].to_h do |spdx_license|
+      [spdx_license["licenseId"].downcase, spdx_license["isDeprecatedLicenseId"] == true]
+    end
+    @license_index = T.let(license_index, T.nilable(T::Hash[String, T::Boolean]))
+    license_index
   end
 
   sig { returns(T::Hash[String, T::Boolean]) }
   def exception_index
-    @exception_index ||= T.let(
-      exception_data["exceptions"].filter_map do |spdx_exception|
-        next if spdx_exception["isDeprecatedLicenseId"]
+    return @exception_index if @exception_index
 
-        [spdx_exception["licenseExceptionId"].downcase, true]
-      end.to_h,
-      T.nilable(T::Hash[String, T::Boolean]),
-    )
+    exception_index = exception_data["exceptions"].filter_map do |spdx_exception|
+      next if spdx_exception["isDeprecatedLicenseId"]
+
+      [spdx_exception["licenseExceptionId"].downcase, true]
+    end.to_h
+    @exception_index = T.let(exception_index, T.nilable(T::Hash[String, T::Boolean]))
+    exception_index
   end
 
   sig { returns(String) }
   def latest_tag
-    @latest_tag ||= T.let(GitHub::API.open_rest(API_URL)["tag_name"], T.nilable(String))
+    return @latest_tag if @latest_tag
+
+    latest_tag = GitHub::API.open_rest(API_URL)["tag_name"]
+    @latest_tag = T.let(latest_tag, T.nilable(String))
+    latest_tag
   end
 
   sig { params(to: Pathname).void }

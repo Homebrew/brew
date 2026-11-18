@@ -94,7 +94,8 @@ module Homebrew
       end
 
       aliases = Formula.alias_full_names
-      results = T.cast(search(Formula.full_names + aliases, string_or_regex), T::Array[String]).sort_by do |name|
+      names = Formula.full_names + aliases
+      results = T.cast(search(names, string_or_regex), T::Array[String]).sort_by do |name|
         base_name, version_str = name.split("@", 2)
         # unversioned formulae sort higher than versioned ones
         [base_name, Version.new(version_str || "0")]

@@ -20,10 +20,14 @@ module Utils
         when Tag
           tag
         else
-          @tag ||= T.let(Tag.new(
-                           system: HOMEBREW_SYSTEM.downcase.to_sym,
-                           arch:   HOMEBREW_PROCESSOR.downcase.to_sym,
-                         ), T.nilable(Tag))
+          return @tag if @tag
+
+          bottle_tag = Tag.new(
+            system: HOMEBREW_SYSTEM.downcase.to_sym,
+            arch:   HOMEBREW_PROCESSOR.downcase.to_sym,
+          )
+          @tag = T.let(bottle_tag, T.nilable(Tag))
+          bottle_tag
         end
       end
 
@@ -168,6 +172,8 @@ module Utils
 
     # Denotes the arch and OS of a bottle.
     class Tag
+      @all_archs_regex = T.let(nil, T.nilable(Regexp))
+
       sig { returns(Symbol) }
       attr_reader :system, :arch
 
@@ -175,13 +181,13 @@ module Utils
       def self.from_symbol(value)
         return new(system: :all, arch: :all) if value == :all
 
-        @all_archs_regex ||= T.let(begin
+        @all_archs_regex ||= begin
           all_archs = Hardware::CPU::ALL_ARCHS.map(&:to_s)
           /
             ^(?:(?<arch>#{Regexp.union(all_archs)})_)?
             (?<system>[\w.]+)$
           /x
-        end, T.nilable(Regexp))
+        end
         match = @all_archs_regex.match(value.to_s)
         system = match[:system] if match
         raise ArgumentError, "Invalid bottle tag symbol" if match.nil? || system.nil?

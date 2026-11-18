@@ -28,16 +28,18 @@ module Utils
 
     sig { returns(Version) }
     def self.version
-      @version ||= T.let(begin
-        stdout, _, status = system_command(git, args: ["--version"], env: no_global_config_env,
-                                                verbose: false, print_stderr: false).to_a
-        version_str = stdout.chomp[/git version (\d+(?:\.\d+)*)/, 1] if status.success?
-        if version_str.nil?
-          require "utils/tool"
-          Utils::Tool.invalidate_cache(:git)
-        end
-        version_str.nil? ? Version::NULL : Version.new(version_str)
-      end, T.nilable(Version))
+      return @version if @version
+
+      stdout, _, status = system_command(git, args: ["--version"], env: no_global_config_env,
+                                              verbose: false, print_stderr: false).to_a
+      version_str = stdout.chomp[/git version (\d+(?:\.\d+)*)/, 1] if status.success?
+      if version_str.nil?
+        require "utils/tool"
+        Utils::Tool.invalidate_cache(:git)
+      end
+      resolved_version = version_str.nil? ? Version::NULL : Version.new(version_str)
+      @version = T.let(resolved_version, T.nilable(Version))
+      resolved_version
     end
 
     sig { returns(T.nilable(String)) }
@@ -45,7 +47,8 @@ module Utils
       return unless available?
       return @path if defined?(@path)
 
-      @path = T.let(Utils.popen_read(git, "--homebrew=print-path").chomp.presence, T.nilable(String))
+      resolved_path = Utils.popen_read(git, "--homebrew=print-path").chomp.presence
+      @path = T.let(resolved_path, T.nilable(String))
     end
 
     sig { returns(Pathname) }

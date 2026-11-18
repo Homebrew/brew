@@ -32,7 +32,8 @@ class Mktemp
     @parent = parent
     @compact = compact
     @retain_in_cache = retain_in_cache
-    @retain = T.let(retain || @retain_in_cache, T::Boolean)
+    retain ||= @retain_in_cache
+    @retain = retain
     @quiet = T.let(false, T::Boolean)
     @tmpdir = T.let(nil, T.nilable(Pathname))
   end

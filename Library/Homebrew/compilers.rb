@@ -14,8 +14,8 @@ module CompilerConstants
     "llvm_clang" => :llvm_clang,
   }.freeze, T::Hash[String, Symbol])
 
-  COMPILERS = T.let((COMPILER_SYMBOL_MAP.values +
-                     GNU_GCC_VERSIONS.map { |n| "gcc-#{n}" }).freeze, T::Array[T.any(String, Symbol)])
+  compilers = COMPILER_SYMBOL_MAP.values + GNU_GCC_VERSIONS.map { |n| "gcc-#{n}" }
+  COMPILERS = T.let(compilers.freeze, T::Array[T.any(String, Symbol)])
 end
 require "compilers/compiler_failure"
 require "compilers/compiler_selector"

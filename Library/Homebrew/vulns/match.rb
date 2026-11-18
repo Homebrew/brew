@@ -183,11 +183,9 @@ module Homebrew
           raise ArgumentError, "Hit requires at least one Evidence" if evidence.empty?
 
           @vulnerability = vulnerability
-          @evidence = T.let(
-            evidence.map { |e| e.with_source(vulnerability) }
-                    .sort_by { |e| -STRATEGY_PRECISION.fetch(e.strategy) }.freeze,
-            T::Array[Evidence],
-          )
+          resolved_evidence = evidence.map { |e| e.with_source(vulnerability) }
+                                      .sort_by { |e| -STRATEGY_PRECISION.fetch(e.strategy) }.freeze
+          @evidence = T.let(resolved_evidence, T::Array[Evidence])
         end
 
         sig { returns(Evidence) }
@@ -813,11 +811,16 @@ module Homebrew
 
         fixed = history ? history.fixed : first_fixed
         fixed ||= formula.pkg_version.to_s if !history && status&.fixed?
-        events = T.let(history ? history.events : [{ introduced: first_introduced || "0" }],
-                       T::Array[T::Hash[Symbol, String]])
-        events << { fixed: } if !history && fixed
+        events = if history
+          history.events
+        else
+          range_events = T.let([], T::Array[T::Hash[Symbol, String]])
+          range_events << { introduced: first_introduced || "0" }
+          range_events << { fixed: } if fixed
+          range_events
+        end
 
-        record = T.let({
+        record = {
           schema_version:    OsvExport::SCHEMA_VERSION,
           id:                record_id(formula, hit),
           published:         timestamp,
@@ -830,7 +833,7 @@ module Homebrew
             confidence:        confidence_for(hit, status),
             upstream_evidence: hit.evidence.map { |e| e.to_h.except(:advisory, :source_record).compact }.uniq,
           },
-        }, T::Hash[Symbol, T.untyped])
+        }
 
         if history
           record.fetch(:affected).fetch(0).fetch(:ecosystem_specific)[:range_state] = fixed ? "fixed" : "affected"
@@ -878,7 +881,7 @@ module Homebrew
           .returns(T::Hash[Symbol, T.untyped])
       }
       def affected_entry(formula, hit, events, fixed, status, status_evidence)
-        eco = T.let({ fix: fixed ? "bump" : nil }, T::Hash[Symbol, T.nilable(String)])
+        eco = { fix: fixed ? "bump" : nil }
         eco[:range_state] = status.state.to_s if status
         eco[:upstream_fixed_in] = status.fixed_in if status&.fixed_in
         # Attribute the resource whose subject decided the state, falling back

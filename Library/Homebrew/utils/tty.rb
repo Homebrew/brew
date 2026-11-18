@@ -6,6 +6,8 @@ require "utils/popen"
 
 # Various helper functions for interacting with TTYs.
 module Tty
+  @height = T.let(nil, T.nilable(Integer))
+  @width = T.let(nil, T.nilable(Integer))
   @stream = T.let($stdout, T.nilable(T.any(IO, StringIO)))
 
   COLOR_CODES = T.let(
@@ -146,7 +148,7 @@ module Tty
     sig { returns(T.nilable([Integer, Integer])) }
     def size
       clear_stale_size!
-      @size ||= T.let(($stdin.winsize if $stdin.tty?), T.nilable([Integer, Integer]))
+      @size ||= ($stdin.winsize if $stdin.tty?)
     rescue IOError, SystemCallError
       nil
     end
@@ -161,19 +163,13 @@ module Tty
 
     sig { returns(Integer) }
     def height
-      size&.first || @height ||= T.let(
-        Utils.popen_read_text("/usr/bin/tput", "lines", err: File::NULL).presence&.to_i || 40,
-        T.nilable(Integer),
-      )
+      size&.first || @height ||= Utils.popen_read_text("/usr/bin/tput", "lines", err: File::NULL).presence&.to_i || 40
     end
 
     # Keep in sync with `columns` in Library/Homebrew/utils/tty.sh.
     sig { returns(Integer) }
     def width
-      size&.second || @width ||= T.let(
-        Utils.popen_read_text("/usr/bin/tput", "cols", err: File::NULL).presence&.to_i || 80,
-        T.nilable(Integer),
-      )
+      size&.second || @width ||= Utils.popen_read_text("/usr/bin/tput", "cols", err: File::NULL).presence&.to_i || 80
     end
 
     sig { params(string: String).returns(String) }
@@ -239,7 +235,7 @@ module Tty
       return unless @size_stale
 
       @size_stale = false
-      @size = nil
+      @size = T.let(nil, T.nilable([Integer, Integer]))
       @height = nil
       @width = nil
     end

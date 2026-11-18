@@ -42,13 +42,14 @@ class MacOSVersion < Version
   # NOTE: When removing support, exclude the symbol here and add it to
   #       `DISABLED_MACOS_VERSIONS` in `MacOSRequirement`.
   # NOTE: Active symbols must match `macos_version_name` in `cmd/update.sh`.
-  SYMBOLS = T.let(RELEASES.except(
+  symbols = RELEASES.except(
     :catalina,
     :mojave,
     :high_sierra,
     :sierra,
     :el_capitan,
-  ).freeze, T::Hash[Symbol, String])
+  )
+  SYMBOLS = T.let(symbols.freeze, T::Hash[Symbol, String])
 
   sig { params(macos_version: MacOSVersion).returns(Version) }
   def self.kernel_major_version(macos_version)
@@ -191,10 +192,11 @@ class MacOSVersion < Version
   alias requires_sse42? requires_nehalem_cpu?
   alias requires_popcnt? requires_nehalem_cpu?
 
+  null_version = MacOSVersion.new("11")
+  null_version.instance_variable_set(:@version, nil)
+
   # Represents the absence of a version.
   #
   # NOTE: Constructor needs to called with an arbitrary macOS-like version which is then set to `nil`.
-  NULL = T.let(MacOSVersion.new("11").tap do |v|
-    T.let(v, MacOSVersion).instance_variable_set(:@version, nil)
-  end.freeze, MacOSVersion)
+  NULL = T.let(null_version.freeze, MacOSVersion)
 end

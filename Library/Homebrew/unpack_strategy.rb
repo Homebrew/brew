@@ -165,7 +165,8 @@ module UnpackStrategy
            merge_xattrs: T::Boolean, temporary_directory: Pathname).void
   }
   def initialize(path, ref_type: nil, ref: nil, merge_xattrs: false, temporary_directory: HOMEBREW_TEMP)
-    @path = T.let(Path.new(Pathname(path).expand_path), Path)
+    resolved_path = Path.new(Pathname(path).expand_path)
+    @path = T.let(resolved_path, Path)
     @ref_type = ref_type
     @ref = ref
     @merge_xattrs = merge_xattrs
