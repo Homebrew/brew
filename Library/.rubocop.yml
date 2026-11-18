@@ -127,6 +127,9 @@ Homebrew/NoSendInTests:
   Exclude:
     - "Homebrew/test/support/fixtures/**/*"
 
+Homebrew/SimpleTypeAssertion:
+  Enabled: false
+
 Homebrew/UnreferencedLet:
   Description: "Removes a lazy `let` whose name is never referenced (its block never runs)."
   Include:
