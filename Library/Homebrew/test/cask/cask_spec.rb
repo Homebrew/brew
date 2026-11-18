@@ -665,11 +665,18 @@ RSpec.describe Cask::Cask, :cask do
       expect(cask.incompatible?).to be(false)
     end
 
-    it "is true when a macOS requirement isn't met" do
+    it "is true when a macOS requirement isn't met", :needs_macos do
       cask = Cask::CaskLoader.load("with-depends-on-macos-failure")
       allow(cask.depends_on.maximum_macos).to receive(:satisfied?).and_return(false)
 
       expect(cask.incompatible?).to be(true)
+    end
+
+    it "is false when its macOS requirement is met", :needs_macos do
+      cask = Cask::CaskLoader.load("with-depends-on-macos-failure")
+      allow(cask.depends_on.maximum_macos).to receive(:satisfied?).and_return(true)
+
+      expect(cask.incompatible?).to be(false)
     end
   end
 
