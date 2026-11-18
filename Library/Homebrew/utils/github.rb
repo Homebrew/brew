@@ -21,10 +21,10 @@ module GitHub
 
   WorkflowArray = T.type_alias { [T::Array[T::Hash[String, T.untyped]], String, String, String, String, T::Array[String], String] }
 
-  sig { params(repo: String, filters: T.untyped).returns(T::Array[T::Hash[String, T.untyped]]) }
-  def self.issues(repo:, **filters)
+  sig { params(repo: String, state: String, labels: String).returns(T::Array[T::Hash[String, T.untyped]]) }
+  def self.issues(repo:, state:, labels:)
     uri = url_to("repos", repo, "issues")
-    uri.query = URI.encode_www_form(filters)
+    uri.query = URI.encode_www_form(state:, labels:)
     API.open_rest(uri)
   end
 
