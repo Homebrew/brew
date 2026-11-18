@@ -32,7 +32,8 @@ module Homebrew
         end
 
         @advisories = T.let(advisories, T::Hash[String, T.untyped])
-        @meta = T.let(as_hash(top["meta"]) || {}, T::Hash[String, T.untyped])
+        resolved_meta = as_hash(top["meta"]) || {}
+        @meta = T.let(resolved_meta, T::Hash[String, T.untyped])
       end
 
       sig { returns(T::Hash[String, T.untyped]) }

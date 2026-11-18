@@ -311,6 +311,8 @@ class SystemCommand
   def initialize(executable, args: [], sudo: false, sudo_as_root: false, env: {}, input: [], must_succeed: false,
                  print_stdout: false, print_stderr: true, debug: nil, verbose: nil, secrets: [], chdir: nil,
                  timeout: nil)
+    @expanded_args = T.let(nil, T.nilable(T::Array[String]))
+
     require "extend/ENV"
     @executable = executable
     @args = args
@@ -338,7 +340,8 @@ class SystemCommand
     @print_stderr = print_stderr
     @debug = debug
     @verbose = verbose
-    @secrets = T.let((Array(secrets) + ENV.sensitive_environment.values).uniq, T::Array[String])
+    resolved_secrets = (Array(secrets) + ENV.sensitive_environment.values).uniq
+    @secrets = T.let(resolved_secrets, T::Array[String])
     @chdir = chdir
     @timeout = timeout
     @sandbox = T.let(nil, T.nilable(Sandbox))
@@ -427,13 +430,13 @@ class SystemCommand
 
   sig { returns(T::Array[String]) }
   def expanded_args
-    @expanded_args ||= T.let(args.map do |arg|
+    @expanded_args ||= args.map do |arg|
       if arg.is_a?(Pathname)
         File.absolute_path(arg)
       else
         arg.to_s
       end
-    end, T.nilable(T::Array[String]))
+    end
   end
 
   class ProcessTerminatedInterrupt < StandardError; end
@@ -633,6 +636,10 @@ class SystemCommand
       ).void
     }
     def initialize(command, output, status, secrets:)
+      @stdout = T.let(nil, T.nilable(String))
+      @stderr = T.let(nil, T.nilable(String))
+      @merged_output = T.let(nil, T.nilable(String))
+
       @command       = command
       @output        = output
       @status        = status
@@ -649,21 +656,21 @@ class SystemCommand
 
     sig { returns(String) }
     def stdout
-      @stdout ||= T.let(@output.select { |type,| type == :stdout }
-                               .map { |_, line| line }
-                               .join, T.nilable(String))
+      @stdout ||= @output.select { |type,| type == :stdout }
+                         .map { |_, line| line }
+                         .join
     end
 
     sig { returns(String) }
     def stderr
-      @stderr ||= T.let(@output.select { |type,| type == :stderr }
-                               .map { |_, line| line }
-                               .join, T.nilable(String))
+      @stderr ||= @output.select { |type,| type == :stderr }
+                         .map { |_, line| line }
+                         .join
     end
 
     sig { returns(String) }
     def merged_output
-      @merged_output ||= T.let(@output.map { |_, line| line }.join, T.nilable(String))
+      @merged_output ||= @output.map { |_, line| line }.join
     end
 
     sig { returns(T::Boolean) }
@@ -682,21 +689,21 @@ class SystemCommand
     sig { returns(T.untyped) }
     def plist
       require "plist"
-      @plist ||= T.let(begin
-        output = stdout
+      return @plist if @plist
 
-        output = output.sub(/\A(.*?)(\s*<\?\s*xml)/m) do
-          warn_plist_garbage(Regexp.last_match(1))
-          Regexp.last_match(2)
-        end
+      output = stdout
 
-        output = output.sub(%r{(<\s*/\s*plist\s*>\s*)(.*?)\Z}m) do
-          warn_plist_garbage(Regexp.last_match(2))
-          Regexp.last_match(1)
-        end
+      output = output.sub(/\A(.*?)(\s*<\?\s*xml)/m) do
+        warn_plist_garbage(Regexp.last_match(1))
+        Regexp.last_match(2)
+      end
 
-        Plist.parse_xml(output, marshal: false)
-      end, T.untyped)
+      output = output.sub(%r{(<\s*/\s*plist\s*>\s*)(.*?)\Z}m) do
+        warn_plist_garbage(Regexp.last_match(2))
+        Regexp.last_match(1)
+      end
+      resolved_plist = Plist.parse_xml(output, marshal: false)
+      @plist = T.let(resolved_plist, T.untyped)
     end
 
     sig { params(garbage: T.nilable(String)).void }

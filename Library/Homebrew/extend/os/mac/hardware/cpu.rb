@@ -55,11 +55,15 @@ module OS
 
           sig { returns(T::Array[Symbol]) }
           def features
-            @features ||= T.let(::Hardware::CPU.sysctl_n(
+            return @features if @features
+
+            features = ::Hardware::CPU.sysctl_n(
               "machdep.cpu.features",
               "machdep.cpu.extfeatures",
               "machdep.cpu.leaf7_features",
-            ).split.map { |s| s.downcase.to_sym }, T.nilable(T::Array[Symbol]))
+            ).split.map { |s| s.downcase.to_sym }
+            @features = T.let(features, T.nilable(T::Array[Symbol]))
+            features
           end
 
           sig { returns(T::Boolean) }

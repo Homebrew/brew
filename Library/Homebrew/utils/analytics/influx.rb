@@ -21,7 +21,7 @@ module Utils
       DEFAULT_CATEGORY_DIMENSIONS = CategoryDimensions.new(
         bucket: :formula_install, dimension_key: :formula, groups: [:package, :tap_name, :options],
       ).freeze
-      CATEGORY_DIMENSIONS = T.let({
+      category_dimensions = {
         homebrew_devcmdrun_developer: CategoryDimensions.new(
           bucket: :formula_install, dimension_key: "devcmdrun_developer", groups: [:devcmdrun, :developer],
         ),
@@ -57,7 +57,8 @@ module Utils
         build_error:                  CategoryDimensions.new(
           bucket: :build_error, dimension_key: :formula, groups: [:package, :tap_name, :options],
         ),
-      }.freeze, T::Hash[Symbol, CategoryDimensions])
+      }
+      CATEGORY_DIMENSIONS = T.let(category_dimensions.freeze, T::Hash[Symbol, CategoryDimensions])
 
       sig { void }
       def setup_python
@@ -165,14 +166,14 @@ module Utils
             SELECT #{sql_groups}, COUNT(*) AS "count" FROM "#{dimensions.bucket}" WHERE time >= now() - INTERVAL '#{days_ago} day'#{additional_where} GROUP BY #{sql_groups}
           EOS
 
-          json = T.let({
+          json = {
             category:,
             total_items: 0,
             start_date:  Date.today - days_ago.to_i,
             end_date:    Date.today,
             total_count: 0,
             items:       [],
-          }, T::Hash[Symbol, T.untyped])
+          }
 
           each_influx_record(query) do |record|
             if category == :homebrew_env_config

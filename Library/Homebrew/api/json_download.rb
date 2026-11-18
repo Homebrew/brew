@@ -31,7 +31,8 @@ module Homebrew
       sig { params(url: String, target: Pathname, stale_seconds: T.nilable(Integer)).void }
       def initialize(url, target:, stale_seconds:)
         super()
-        @url = T.let(URL.new(url, using: API::JSONDownloadStrategy, target:, stale_seconds:), URL)
+        download_url = URL.new(url, using: API::JSONDownloadStrategy, target:, stale_seconds:)
+        @url = T.let(download_url, URL)
       end
 
       sig { override.returns(API::JSONDownloadStrategy) }

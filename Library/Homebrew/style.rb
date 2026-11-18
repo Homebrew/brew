@@ -66,8 +66,9 @@ module Homebrew
     }
     def self.check_style_json(files, fix: false, todo: false, except_cops: nil, only_cops: nil,
                               reset_cache: false, debug: false, verbose: false)
-      T.cast(check_style_impl(files, :json, fix:, todo:, except_cops:, only_cops:,
-                              reset_cache:, debug:, verbose:), Offenses)
+      result = check_style_impl(files, :json, fix:, todo:, except_cops:, only_cops:,
+                              reset_cache:, debug:, verbose:)
+      T.cast(result, Offenses)
     end
 
     sig {
@@ -549,9 +550,10 @@ module Homebrew
     sig { returns(Pathname) }
     def self.shellcheck
       require "formula"
-      T.cast(Formula["shellcheck"].ensure_installed!(latest:     true,
-                                                     reason:     "shell style checks",
-                                                     executable: "shellcheck"), Pathname)
+      executable = Formula["shellcheck"].ensure_installed!(latest:     true,
+                                                           reason:     "shell style checks",
+                                                           executable: "shellcheck")
+      T.cast(executable, Pathname)
     end
 
     sig { returns(Pathname) }
@@ -562,18 +564,20 @@ module Homebrew
     sig { returns(Pathname) }
     private_class_method def self.shfmt_executable
       require "formula"
-      T.cast(Formula["shfmt"].ensure_installed!(latest:     true,
-                                                reason:     "formatting shell scripts",
-                                                executable: "shfmt"), Pathname)
+      executable = Formula["shfmt"].ensure_installed!(latest:     true,
+                                                      reason:     "formatting shell scripts",
+                                                      executable: "shfmt")
+      T.cast(executable, Pathname)
     end
 
     sig { returns(Pathname) }
     def self.actionlint
       require "formula"
-      T.cast(Formula["actionlint"].ensure_installed!(latest:       true,
-                                                     reason:       "GitHub Actions checks",
-                                                     executable:   "actionlint",
-                                                     version_args: ["-version"]), Pathname)
+      executable = Formula["actionlint"].ensure_installed!(latest:       true,
+                                                           reason:       "GitHub Actions checks",
+                                                           executable:   "actionlint",
+                                                           version_args: ["-version"])
+      T.cast(executable, Pathname)
     end
 
     # Collection of style offenses.
@@ -634,7 +638,8 @@ module Homebrew
         @cop_name = T.let(json["cop_name"], T.nilable(String))
         @corrected = T.let(json["corrected"], T::Boolean)
         location = json.fetch("location")
-        @location = T.let(SourceLocation.new(location.fetch("line"), location["column"]), SourceLocation)
+        source_location = SourceLocation.new(location.fetch("line"), location["column"])
+        @location = T.let(source_location, SourceLocation)
       end
 
       sig { returns(T::Boolean) }

@@ -161,12 +161,12 @@ module Homebrew
       ).void
     }
     private_class_method def self.record(phase, started_at, completed_at, detail: nil)
-      event = T.let({
+      event = {
         "phase"     => phase,
         "start"     => ((started_at - @started_at) * 1_000_000).round,
         "duration"  => ((completed_at - started_at) * 1_000_000).round,
         "thread_id" => Thread.current.object_id,
-      }, Event)
+      }
       event["detail"] = detail if detail
       @mutex.synchronize { @events << event }
     end

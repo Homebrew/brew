@@ -31,8 +31,8 @@ module GitHub
   CREATE_GIST_SCOPES = ["gist"].freeze
   CREATE_ISSUE_FORK_OR_PR_SCOPES = ["repo"].freeze
   CREATE_WORKFLOW_SCOPES = ["workflow"].freeze
-  ALL_SCOPES = T.let((CREATE_GIST_SCOPES + CREATE_ISSUE_FORK_OR_PR_SCOPES + CREATE_WORKFLOW_SCOPES).freeze,
-                     T::Array[String])
+  all_scopes = (CREATE_GIST_SCOPES + CREATE_ISSUE_FORK_OR_PR_SCOPES + CREATE_WORKFLOW_SCOPES)
+  ALL_SCOPES = T.let(all_scopes.freeze, T::Array[String])
   private_constant :ALL_SCOPES
   GITHUB_ACCESS_TOKEN_REGEX = %r{
     ^(?:
@@ -49,6 +49,8 @@ module GitHub
   module API
     extend SystemCommand::Mixin
     extend Utils::Output::Mixin
+
+    @credentials_error_message = T.let(nil, T.nilable(String))
 
     # Generic API error.
     class Error < RuntimeError
@@ -277,7 +279,7 @@ module GitHub
       credentials_scopes = "none" if credentials_scopes.blank?
 
       what = CREDENTIAL_NAMES.fetch(credentials_type)
-      @credentials_error_message ||= T.let(begin
+      @credentials_error_message ||= begin
         error_message = <<~EOS
           Your #{what} credentials do not have sufficient scope!
           Scopes required: #{needed_scopes}
@@ -286,7 +288,7 @@ module GitHub
         EOS
         onoe error_message
         error_message
-      end, T.nilable(String))
+      end
     end
 
     T::Sig::WithoutRuntime.sig {

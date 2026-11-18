@@ -13,20 +13,19 @@ class CVSDownloadStrategy < VCSDownloadStrategy
     super
     @url = T.let(@url.sub(%r{^cvs://}, ""), String)
 
-    @module = T.let(
-      if meta.key?(:module)
-        meta.fetch(:module)
-      elsif !@url.match?(%r{:[^/]+$})
-        name
-      else
-        parts = @url.split(":")
-        mod = parts.pop
-        raise ArgumentError, "CVS URL #{@url.inspect} does not end with a module name" if mod.nil?
+    resolved_module = if meta.key?(:module)
+      meta.fetch(:module)
+    elsif !@url.match?(%r{:[^/]+$})
+      name
+    else
+      parts = @url.split(":")
+      mod = parts.pop
+      raise ArgumentError, "CVS URL #{@url.inspect} does not end with a module name" if mod.nil?
 
-        @url = T.let(parts.join(":"), String)
-        mod
-      end, String
-    )
+      @url = T.let(parts.join(":"), String)
+      mod
+    end
+    @module = T.let(resolved_module, String)
   end
 
   # Returns the most recent modified time for all files in the current working directory after stage.

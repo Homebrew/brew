@@ -11,31 +11,29 @@ module OS
       module ClassMethods
         sig { returns(T::Array[String]) }
         def keg_link_directories
-          @keg_link_directories ||= T.let((super + ["Frameworks"]).freeze, T.nilable(T::Array[String]))
+          @keg_link_directories ||= T.let([*super, "Frameworks"].freeze, T.nilable(T::Array[String]))
         end
 
         sig { returns(T::Array[::Pathname]) }
         def must_exist_subdirectories
-          @must_exist_subdirectories ||= T.let((
-            super +
-            [HOMEBREW_PREFIX/"Frameworks"]
-          ).sort.uniq.freeze, T.nilable(T::Array[::Pathname]))
+          @must_exist_subdirectories ||= T.let(with_frameworks_directory(super), T.nilable(T::Array[::Pathname]))
         end
 
         sig { returns(T::Array[::Pathname]) }
         def must_exist_directories
-          @must_exist_directories ||= T.let((
-            super +
-            [HOMEBREW_PREFIX/"Frameworks"]
-          ).sort.uniq.freeze, T.nilable(T::Array[::Pathname]))
+          @must_exist_directories ||= T.let(with_frameworks_directory(super), T.nilable(T::Array[::Pathname]))
         end
 
         sig { returns(T::Array[::Pathname]) }
         def must_be_writable_directories
-          @must_be_writable_directories ||= T.let((
-            super +
-            [HOMEBREW_PREFIX/"Frameworks"]
-          ).sort.uniq.freeze, T.nilable(T::Array[::Pathname]))
+          @must_be_writable_directories ||= T.let(with_frameworks_directory(super), T.nilable(T::Array[::Pathname]))
+        end
+
+        private
+
+        sig { params(directories: T::Array[::Pathname]).returns(T::Array[::Pathname]) }
+        def with_frameworks_directory(directories)
+          (directories + [HOMEBREW_PREFIX/"Frameworks"]).sort.uniq.freeze
         end
       end
 

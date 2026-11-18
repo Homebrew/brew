@@ -3,6 +3,7 @@
 
 require "system_command"
 require "utils/path"
+require "version"
 
 module Utils
   # Helper functions for querying Git information.
@@ -10,6 +11,8 @@ module Utils
   # @see GitRepository
   module Git
     extend SystemCommand::Mixin
+
+    @version = T.let(nil, T.nilable(Version))
 
     sig { returns(T::Boolean) }
     def self.available?
@@ -28,16 +31,18 @@ module Utils
 
     sig { returns(Version) }
     def self.version
-      @version ||= T.let(begin
+      @version ||= begin
         stdout, _, status = system_command(git, args: ["--version"], env: no_global_config_env,
                                                 verbose: false, print_stderr: false).to_a
         version_str = stdout.chomp[/git version (\d+(?:\.\d+)*)/, 1] if status.success?
-        if version_str.nil?
+        if version_str
+          Version.new(version_str)
+        else
           require "utils/tool"
           Utils::Tool.invalidate_cache(:git)
+          Version::NULL
         end
-        version_str.nil? ? Version::NULL : Version.new(version_str)
-      end, T.nilable(Version))
+      end
     end
 
     sig { returns(T.nilable(String)) }
@@ -45,7 +50,8 @@ module Utils
       return unless available?
       return @path if defined?(@path)
 
-      @path = T.let(Utils.popen_read(git, "--homebrew=print-path").chomp.presence, T.nilable(String))
+      resolved_path = Utils.popen_read(git, "--homebrew=print-path").chomp.presence
+      @path = T.let(resolved_path, T.nilable(String))
     end
 
     sig { returns(Pathname) }
@@ -62,7 +68,7 @@ module Utils
 
     sig { void }
     def self.clear_available_cache
-      remove_instance_variable(:@version) if defined?(@version)
+      @version = nil
       remove_instance_variable(:@path) if defined?(@path)
       remove_instance_variable(:@git) if defined?(@git)
     end

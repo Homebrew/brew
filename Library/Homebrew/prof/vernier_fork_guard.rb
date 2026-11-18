@@ -20,7 +20,7 @@ module Homebrew
       # `Vernier::Autorun` is created by `-r vernier/autorun`; Sorbet's RBI for
       # the gem does not expose it, so keep this lookup dynamic.
       # rubocop:disable Sorbet/ConstantsFromStrings
-      autorun = T.let(Object.const_get(:Vernier).const_get(:Autorun), T.untyped)
+      autorun = Object.const_get(:Vernier).const_get(:Autorun)
       # rubocop:enable Sorbet/ConstantsFromStrings
       return yield unless autorun.running?
 
@@ -50,7 +50,7 @@ module Homebrew
 
       # `Vernier::Autorun` is absent from the gem's RBI, so look it up dynamically.
       # rubocop:disable Sorbet/ConstantsFromStrings
-      autorun = T.let(Object.const_get(:Vernier).const_get(:Autorun), T.untyped)
+      autorun = Object.const_get(:Vernier).const_get(:Autorun)
       # rubocop:enable Sorbet/ConstantsFromStrings
       return unless autorun.running?
 

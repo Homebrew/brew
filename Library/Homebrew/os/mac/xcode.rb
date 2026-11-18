@@ -7,6 +7,8 @@ module OS
   module Mac
     # Helper module for querying Xcode information.
     module Xcode
+      @prefix = T.let(nil, T.nilable(::Pathname))
+
       DEFAULT_BUNDLE_PATH = ::Pathname.new("/Applications/Xcode.app").freeze
       BUNDLE_ID = "com.apple.dt.Xcode"
       OLD_BUNDLE_ID = "com.apple.Xcode"
@@ -88,7 +90,7 @@ module OS
       # directory or nil if Xcode.app is not installed.
       sig { returns(T.nilable(::Pathname)) }
       def self.prefix
-        @prefix ||= T.let(begin
+        @prefix ||= begin
           dir = MacOS.active_developer_dir
 
           if dir.empty? || dir == CLT::PKG_PATH || !File.directory?(dir)
@@ -98,7 +100,7 @@ module OS
             # Use cleanpath to avoid pathological trailing slash
             ::Pathname.new(dir).cleanpath
           end
-        end, T.nilable(::Pathname))
+        end
       end
 
       sig { returns(::Pathname) }

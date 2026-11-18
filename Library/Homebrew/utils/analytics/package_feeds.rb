@@ -38,7 +38,8 @@ module Utils
       sig { params(repository: Pathname).void }
       def initialize(repository)
         @history = T.let(FormulaHistory.new(repository), FormulaHistory)
-        @revision = T.let(@history.git("rev-parse", "--verify", "refs/remotes/origin/HEAD^{commit}"), String)
+        revision = @history.git("rev-parse", "--verify", "refs/remotes/origin/HEAD^{commit}")
+        @revision = T.let(revision, String)
         @builds = T.let({}, T::Hash[[String, String], Builds])
       end
 

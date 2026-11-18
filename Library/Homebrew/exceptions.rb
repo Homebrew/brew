@@ -868,29 +868,25 @@ class ErrorDuringExecution < RuntimeError
     output = output&.map { |type, line| [type, Formatter.redact_secrets(line, secrets)] }
     @output = output
 
-    @exitstatus = T.let(
-      case status
-      when Integer
-        status
-      when Hash
-        status["exitstatus"]
-      else
-        status.exitstatus
-      end,
-      T.nilable(Integer),
-    )
+    resolved_exitstatus = case status
+    when Integer
+      status
+    when Hash
+      status["exitstatus"]
+    else
+      status.exitstatus
+    end
+    @exitstatus = T.let(resolved_exitstatus, T.nilable(Integer))
 
-    @termsig = T.let(
-      case status
-      when Integer
-        nil
-      when Hash
-        status["termsig"]
-      else
-        status.termsig
-      end,
-      T.nilable(Integer),
-    )
+    resolved_termsig = case status
+    when Integer
+      nil
+    when Hash
+      status["termsig"]
+    else
+      status.termsig
+    end
+    @termsig = T.let(resolved_termsig, T.nilable(Integer))
 
     reason = if exitstatus
       "exited with #{exitstatus}"

@@ -39,14 +39,16 @@ module OS
 
         sig { returns(Version) }
         def ld64_version
-          @ld64_version ||= T.let(begin
-            json = Utils.popen_read("/usr/bin/ld", "-version_details")
-            if $CHILD_STATUS.success?
-              Version.parse(JSON.parse(json)["version"])
-            else
-              Version::NULL
-            end
-          end, T.nilable(Version))
+          return @ld64_version if @ld64_version
+
+          json = Utils.popen_read("/usr/bin/ld", "-version_details")
+          ld64_version = if $CHILD_STATUS.success?
+            Version.parse(JSON.parse(json)["version"])
+          else
+            Version::NULL
+          end
+          @ld64_version = T.let(ld64_version, T.nilable(Version))
+          ld64_version
         end
 
         sig { returns(T::Boolean) }

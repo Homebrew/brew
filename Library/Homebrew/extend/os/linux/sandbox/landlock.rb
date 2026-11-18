@@ -71,15 +71,13 @@ class Sandbox
     # https://www.kernel.org/doc/html/latest/userspace-api/landlock.html#network-flags
     MINIMUM_FULL_NETWORK_ABI = 10
 
-    WRITE_ACCESS_FS = T.let(
-      (ACCESS_FS_WRITE_FILE | ACCESS_FS_REMOVE_DIR | ACCESS_FS_REMOVE_FILE | ACCESS_FS_MAKE_CHAR |
-      ACCESS_FS_MAKE_DIR | ACCESS_FS_MAKE_REG | ACCESS_FS_MAKE_SOCK | ACCESS_FS_MAKE_FIFO |
-      ACCESS_FS_MAKE_BLOCK | ACCESS_FS_MAKE_SYM).freeze,
-      Integer,
-    )
+    write_access_fs = (ACCESS_FS_WRITE_FILE | ACCESS_FS_REMOVE_DIR | ACCESS_FS_REMOVE_FILE | ACCESS_FS_MAKE_CHAR |
+    ACCESS_FS_MAKE_DIR | ACCESS_FS_MAKE_REG | ACCESS_FS_MAKE_SOCK | ACCESS_FS_MAKE_FIFO |
+    ACCESS_FS_MAKE_BLOCK | ACCESS_FS_MAKE_SYM)
+    WRITE_ACCESS_FS = T.let(write_access_fs.freeze, Integer)
     FILE_WRITE_ACCESS_FS = T.let((ACCESS_FS_WRITE_FILE | ACCESS_FS_TRUNCATE).freeze, Integer)
     FILE_READ_ACCESS_FS = T.let((ACCESS_FS_EXECUTE | ACCESS_FS_READ_FILE).freeze, Integer)
-    READ_ACCESS_FS = T.let((ACCESS_FS_EXECUTE | ACCESS_FS_READ_FILE | ACCESS_FS_READ_DIR).freeze, Integer)
+    READ_ACCESS_FS = T.let((FILE_READ_ACCESS_FS | ACCESS_FS_READ_DIR).freeze, Integer)
     private_constant :CREATE_RULESET_VERSION, :RULE_PATH_BENEATH, :PR_SET_NO_NEW_PRIVS, :O_PATH, :O_CLOEXEC,
                      :CREATE_RULESET_SYSCALL, :ADD_RULE_SYSCALL, :RESTRICT_SELF_SYSCALL,
                      :ACCESS_FS_EXECUTE, :ACCESS_FS_WRITE_FILE, :ACCESS_FS_READ_FILE, :ACCESS_FS_READ_DIR,
@@ -162,10 +160,8 @@ class Sandbox
       sig { params(attributes: T.nilable(String), size: Integer, flags: Integer).returns(Integer) }
       def landlock_create_ruleset(attributes, size, flags)
         @landlock_create_ruleset ||= T.let(
-          Fiddle::Function.new(
-            Fiddle.dlopen(nil)["syscall"],
+          syscall_function(
             [Fiddle::TYPE_LONG, Fiddle::TYPE_VOIDP, Fiddle::TYPE_SIZE_T, Fiddle::TYPE_UINT],
-            Fiddle::TYPE_LONG,
           ),
           T.nilable(Fiddle::Function),
         )
@@ -175,10 +171,8 @@ class Sandbox
       sig { params(ruleset_fd: Integer, type: Integer, attributes: String, flags: Integer).returns(Integer) }
       def landlock_add_rule(ruleset_fd, type, attributes, flags)
         @landlock_add_rule ||= T.let(
-          Fiddle::Function.new(
-            Fiddle.dlopen(nil)["syscall"],
+          syscall_function(
             [Fiddle::TYPE_LONG, Fiddle::TYPE_INT, Fiddle::TYPE_INT, Fiddle::TYPE_VOIDP, Fiddle::TYPE_UINT],
-            Fiddle::TYPE_LONG,
           ),
           T.nilable(Fiddle::Function),
         )
@@ -188,10 +182,8 @@ class Sandbox
       sig { params(ruleset_fd: Integer, flags: Integer).returns(Integer) }
       def landlock_restrict_self(ruleset_fd, flags)
         @landlock_restrict_self ||= T.let(
-          Fiddle::Function.new(
-            Fiddle.dlopen(nil)["syscall"],
+          syscall_function(
             [Fiddle::TYPE_LONG, Fiddle::TYPE_INT, Fiddle::TYPE_UINT],
-            Fiddle::TYPE_LONG,
           ),
           T.nilable(Fiddle::Function),
         )
@@ -201,10 +193,9 @@ class Sandbox
       sig { returns(Integer) }
       def set_no_new_privileges
         @prctl ||= T.let(
-          Fiddle::Function.new(
-            Fiddle.dlopen(nil)["prctl"],
+          libc_function(
+            "prctl",
             [Fiddle::TYPE_INT, Fiddle::TYPE_ULONG, Fiddle::TYPE_ULONG, Fiddle::TYPE_ULONG, Fiddle::TYPE_ULONG],
-            Fiddle::TYPE_INT,
           ),
           T.nilable(Fiddle::Function),
         )
@@ -214,10 +205,9 @@ class Sandbox
       sig { params(path: String).returns(Integer) }
       def open_path(path)
         @open ||= T.let(
-          Fiddle::Function.new(
-            Fiddle.dlopen(nil)["open"],
+          libc_function(
+            "open",
             [Fiddle::TYPE_CONST_STRING, Fiddle::TYPE_INT],
-            Fiddle::TYPE_INT,
           ),
           T.nilable(Fiddle::Function),
         )
@@ -227,10 +217,9 @@ class Sandbox
       sig { params(file_descriptor: Integer).returns(Integer) }
       def close_file_descriptor(file_descriptor)
         @close ||= T.let(
-          Fiddle::Function.new(
-            Fiddle.dlopen(nil)["close"],
+          libc_function(
+            "close",
             [Fiddle::TYPE_INT],
-            Fiddle::TYPE_INT,
           ),
           T.nilable(Fiddle::Function),
         )
@@ -243,6 +232,16 @@ class Sandbox
       end
 
       private
+
+      sig { params(arguments: T::Array[Integer]).returns(Fiddle::Function) }
+      def syscall_function(arguments)
+        libc_function("syscall", arguments, Fiddle::TYPE_LONG)
+      end
+
+      sig { params(name: String, arguments: T::Array[Integer], result: Integer).returns(Fiddle::Function) }
+      def libc_function(name, arguments, result = Fiddle::TYPE_INT)
+        Fiddle::Function.new(Fiddle.dlopen(nil)[name], arguments, result)
+      end
 
       sig { returns(Symbol) }
       def compute_state
@@ -338,14 +337,14 @@ class Sandbox
         # not provide a private IPC namespace:
         # https://github.com/bminor/glibc/blob/master/sysdeps/posix/shm-directory.c
         # https://www.kernel.org/doc/html/latest/filesystems/mqueue.html
-        device_path_rules = T.let({
+        device_path_rules = {
           "/dev/full"   => FILE_WRITE_ACCESS_FS,
           "/dev/mqueue" => allowed_write_access_fs | (@deny_read ? ACCESS_FS_READ_FILE : 0),
           "/dev/ptmx"   => pty_access,
           "/dev/pts"    => pty_access,
           "/dev/shm"    => allowed_write_access_fs,
           "/dev/tty"    => pty_access,
-        }, T::Hash[String, Integer])
+        }
         device_path_rules.each do |path, allowed_access|
           next unless File.exist?(path)
 

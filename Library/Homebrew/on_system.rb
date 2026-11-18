@@ -9,9 +9,10 @@ module OnSystem
   ALL_OS_OPTIONS = T.let([*MacOSVersion::SYMBOLS.keys, :linux].freeze, T::Array[Symbol])
   ALL_OS_ARCH_COMBINATIONS = T.let(ALL_OS_OPTIONS.product(ARCH_OPTIONS).freeze, T::Array[[Symbol, Symbol]])
 
-  VALID_OS_ARCH_TAGS = T.let(ALL_OS_ARCH_COMBINATIONS.map do |os, arch|
+  valid_os_arch_tags = ALL_OS_ARCH_COMBINATIONS.map do |os, arch|
     Utils::Bottles::Tag.new(system: os, arch:)
-  end.freeze, T::Array[Utils::Bottles::Tag])
+  end
+  VALID_OS_ARCH_TAGS = T.let(valid_os_arch_tags.freeze, T::Array[Utils::Bottles::Tag])
 
   sig { params(arch: Symbol).returns(T::Boolean) }
   def self.arch_condition_met?(arch)
@@ -137,14 +138,12 @@ module OnSystem
 
         return unless OnSystem.os_condition_met? os_name, or_condition
 
-        @on_system_block_min_os = T.let(
-          if or_condition == :or_older
-            @called_in_on_system_block ? @on_system_block_min_os : MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED)
-          else
-            MacOSVersion.from_symbol(os_name)
-          end,
-          T.nilable(MacOSVersion),
-        )
+        on_system_block_min_os = if or_condition == :or_older
+          @called_in_on_system_block ? @on_system_block_min_os : MacOSVersion.new(HOMEBREW_MACOS_OLDEST_ALLOWED)
+        else
+          MacOSVersion.from_symbol(os_name)
+        end
+        @on_system_block_min_os = T.let(on_system_block_min_os, T.nilable(MacOSVersion))
         @called_in_on_system_block = T.let(true, T.nilable(T::Boolean))
         @called_in_on_os_block = T.let(true, T.nilable(T::Boolean))
         result = block.call

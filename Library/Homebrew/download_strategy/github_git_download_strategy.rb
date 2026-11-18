@@ -16,6 +16,7 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy
   def initialize(url, name, version, **meta)
     super
     @version = version
+    @github_last_commit = T.let(nil, T.nilable(String))
 
     match_data = %r{^https?://github\.com/(?<user>[^/]+)/(?<repo>[^/]+)\.git$}.match(@url)
     return unless match_data
@@ -66,7 +67,8 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy
                       args:  ["symbolic-ref", "refs/remotes/origin/HEAD"],
                       chdir: cached_location
 
-    @default_branch = T.let(result.stdout[%r{^refs/remotes/origin/(.*)$}, 1], T.nilable(String))
+    branch = result.stdout[%r{^refs/remotes/origin/(.*)$}, 1]
+    @default_branch = T.let(branch, T.nilable(String))
   end
 
   private
@@ -74,10 +76,7 @@ class GitHubGitDownloadStrategy < GitDownloadStrategy
   sig { returns(T.nilable(String)) }
   def github_last_commit
     user, repo = github_user_and_repo
-    @github_last_commit ||= T.let(
-      GitHub.last_commit(user, repo, @ref, head_version, length: MINIMUM_COMMIT_HASH_LENGTH),
-      T.nilable(String),
-    )
+    @github_last_commit ||= GitHub.last_commit(user, repo, @ref, head_version, length: MINIMUM_COMMIT_HASH_LENGTH)
   end
 
   sig { returns([String, String]) }
