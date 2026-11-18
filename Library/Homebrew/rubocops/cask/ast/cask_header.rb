@@ -27,7 +27,7 @@ module RuboCop
 
         sig { returns(T.all(RuboCop::AST::Node, RuboCop::AST::ParameterizedNode::RestArguments)) }
         def hash_node
-          @hash_node ||= T.let(method_node.each_child_node(:hash).first, T.nilable(RuboCop::AST::Node))
+          @hash_node ||= T.let(method_node.child_nodes.find(&:hash_type?), T.nilable(RuboCop::AST::Node))
         end
       end
     end

@@ -243,14 +243,14 @@ module Homebrew
 
         user_names.each_key do |username|
           grand_total = grand_totals.fetch(username)
-          greater_than_total = T.let(grand_total.fetch(:merged_pr_author_hit_cap, 0).positive?, T::Boolean)
+          hit_cap = grand_total.fetch(:merged_pr_author_hit_cap, 0)
+          greater_than_total = T.let(hit_cap.positive?, T::Boolean)
           contributions = CONTRIBUTION_TYPES.keys.filter_map do |type|
             type_count = grand_total[type]
             next if type_count.nil? || type_count.zero?
 
             count_prefix = ""
-            if ([:merged_pr_author, :merged_pr].include?(type) && grand_total.fetch(:merged_pr_author_hit_cap,
-                                                                                    0).positive?) ||
+            if ([:merged_pr_author, :merged_pr].include?(type) && hit_cap.positive?) ||
                (type == :approved_pr_review && type_count >= MAX_PR_SEARCH) || type_count >= MAX_CONTRIBUTIONS
               greater_than_total ||= true
               count_prefix = ">="
@@ -976,11 +976,11 @@ module Homebrew
         end
 
         # Map commit SHAs to their respective authors based on identity resolution
-        commit_authors = T.let(records.to_h do |fields|
+        commit_authors = records.to_h do |fields|
           [fields.fetch(:commit_hash), user_for_git_identity(
             fields.fetch(:author_name), fields.fetch(:author_email), identity_users
           )]
-        end, T::Hash[String, T.nilable(String)])
+        end
 
         # Coauthor contributions with "Co-authored-by" in body
         records.each do |fields|

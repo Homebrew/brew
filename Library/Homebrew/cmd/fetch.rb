@@ -390,7 +390,7 @@ module Homebrew
       }
       def api_fetch_names(regex:, capture:, named:, aliases:, renames:)
         requested_names = args.named.downcased_unique_named
-        names = T.let(requested_names.filter_map do |requested_name|
+        names = requested_names.filter_map do |requested_name|
           name = requested_name[regex, capture]
           next if name.blank?
 
@@ -400,22 +400,16 @@ module Homebrew
           next unless named.call(name)
 
           name
-        end, T::Array[String])
+        end
         return if names.length != requested_names.length
 
         names
       end
 
-      sig { returns(Integer) }
-      def retries
-        @retries ||= T.let(args.retry? ? FETCH_MAX_TRIES : 1, T.nilable(Integer))
-      end
-
       sig { returns(DownloadQueue) }
       def download_queue
-        @download_queue ||= T.let(begin
-          DownloadQueue.new(retries:, force: args.force?)
-        end, T.nilable(DownloadQueue))
+        retries = args.retry? ? FETCH_MAX_TRIES : 1
+        @download_queue ||= T.let(DownloadQueue.new(retries:, force: args.force?), T.nilable(DownloadQueue))
       end
     end
   end

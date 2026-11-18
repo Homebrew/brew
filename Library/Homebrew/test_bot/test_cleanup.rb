@@ -9,10 +9,11 @@ module Homebrew
     class TestCleanup < Test
       protected
 
-      ALLOWED_TAPS = T.let([
+      allowed_taps = [
         CoreTap.instance.name,
         CoreCaskTap.instance.name,
-      ].freeze, T::Array[String])
+      ]
+      ALLOWED_TAPS = T.let(allowed_taps.freeze, T::Array[String])
 
       sig { params(repository: String).void }
       def reset_if_needed(repository)

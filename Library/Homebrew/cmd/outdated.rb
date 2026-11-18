@@ -215,11 +215,10 @@ module Homebrew
                 pinned:             c.pinned?,
                 pinned_version:     c.pinned_version }
             else
-              T.cast(
-                c.outdated_info(upgrade_greedy_cask?(args.greedy?, formula_or_cask),
-                                verbose?, true, args.greedy_latest?, args.greedy_auto_updates?),
-                T::Hash[Symbol, T.untyped],
-              )
+              greedy = upgrade_greedy_cask?(args.greedy?, formula_or_cask)
+              info = c.outdated_info(greedy,
+                                     verbose?, true, args.greedy_latest?, args.greedy_auto_updates?)
+              T.cast(info, T::Hash[Symbol, T.untyped])
             end
           end
         end
@@ -246,10 +245,8 @@ module Homebrew
 
       sig { returns(T::Array[Formula]) }
       def outdated_formulae
-        formulae = T.cast(
-          select_outdated(args.named.to_resolved_formulae.presence || Formula.installed).sort,
-          T::Array[Formula],
-        )
+        formulae = select_outdated(args.named.to_resolved_formulae.presence || Formula.installed).sort
+        formulae = T.cast(formulae, T::Array[Formula])
         return formulae unless args.vulnerable?
 
         require "vulns"
@@ -288,12 +285,8 @@ module Homebrew
       def upgrade_greedy_cask?(greedy, cask)
         return true if greedy
 
-        @greedy_list ||= T.let(
-          begin
-            upgrade_greedy_casks = Homebrew::EnvConfig.upgrade_greedy_casks.presence
-            upgrade_greedy_casks&.split || []
-          end, T.nilable(T::Array[String])
-        )
+        @greedy_list ||= T.let(nil, T.nilable(T::Array[String]))
+        @greedy_list ||= Homebrew::EnvConfig.upgrade_greedy_casks.to_s.split
 
         @greedy_list.include?(cask.token)
       end

@@ -77,12 +77,13 @@ module RuboCop
 
         sig { returns(T::Array[Parser::Source::Comment]) }
         def comments
-          @comments ||= T.let(
-            stanza_node.each_node.reduce([]) do |comments, node|
-              comments | comments_hash[node.loc]
-            end,
-            T.nilable(T::Array[Parser::Source::Comment]),
-          )
+          return @comments if @comments
+
+          resolved_comments = stanza_node.each_node.reduce([]) do |comments, node|
+            comments | comments_hash[node.loc]
+          end
+          @comments = T.let(resolved_comments, T.nilable(T::Array[Parser::Source::Comment]))
+          resolved_comments
         end
 
         sig { returns(T::Hash[Parser::Source::Map, T::Array[Parser::Source::Comment]]) }

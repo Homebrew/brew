@@ -15,8 +15,7 @@ NO_AUTOBUMP_REASONS_LIST = T.let(
     incompatible_version_format: "the package has a version format that can only be updated manually",
     bumped_by_upstream:          "updates to the package are handled by the upstream developers",
   }
-    .merge(NO_AUTOBUMP_REASONS_INTERNAL)
-    .merge(NO_AUTOBUMP_REASONS_DEPRECATED)
+    .merge(NO_AUTOBUMP_REASONS_INTERNAL, NO_AUTOBUMP_REASONS_DEPRECATED)
     .freeze,
   T::Hash[Symbol, String],
 )

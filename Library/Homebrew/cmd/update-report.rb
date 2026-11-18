@@ -182,10 +182,10 @@ module Homebrew
 
       sig { void }
       def auto_update_header
-        @auto_update_header ||= T.let(begin
-          ohai "Auto-updated Homebrew!" if args.auto_update?
-          true
-        end, T.nilable(T::Boolean))
+        return if @auto_update_header
+
+        ohai "Auto-updated Homebrew!" if args.auto_update?
+        @auto_update_header = T.let(true, T.nilable(T::Boolean))
       end
 
       sig { void }

@@ -202,10 +202,10 @@ module Homebrew
           EOS
         end
 
-        formulae, casks = T.cast(
-          args.named.to_formulae_and_casks(method: :bottle, warn: false).partition { it.is_a?(Formula) },
-          [T::Array[Formula], T::Array[Cask::Cask]],
-        )
+        packages_by_type = args.named.to_formulae_and_casks(method: :bottle, warn: false).partition do
+          it.is_a?(Formula)
+        end
+        formulae, casks = T.cast(packages_by_type, [T::Array[Formula], T::Array[Cask::Cask]])
         installed_on_request = !args.as_dependency?
         ask = !args.no_ask? && !dry_run
         cask_upgrade_summary = T.let([], T::Array[VersionChange])
@@ -367,8 +367,7 @@ module Homebrew
         end
 
         if !dry_run && (formulae_installer.any? || dependent_formulae_installer.any? || fetch_casks.any?)
-          download_queue = T.let(shared_download_queue || Homebrew::DownloadQueue.new(pour: true),
-                                 Homebrew::DownloadQueue)
+          download_queue = shared_download_queue || Homebrew::DownloadQueue.new(pour: true)
           shared_download_queue = nil
           fetched = fetch_installers(formulae_installer, dependent_formulae_installer, fetch_casks,
                                      upgrade_casks, failed_casks, download_queue:, installed_on_request:,

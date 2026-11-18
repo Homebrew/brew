@@ -735,10 +735,8 @@ module RuboCop
       class MacOSOnLinux < FormulaCop
         include OnSystemConditionalsHelper
 
-        ON_MACOS_BLOCKS = T.let(
-          [:macos, *MACOS_VERSION_OPTIONS].map { |os| :"on_#{os}" }.freeze,
-          T::Array[Symbol],
-        )
+        on_macos_blocks = [:macos, *MACOS_VERSION_OPTIONS].map { |os| :"on_#{os}" }
+        ON_MACOS_BLOCKS = T.let(on_macos_blocks.freeze, T::Array[Symbol])
 
         sig { override.params(formula_nodes: FormulaNodes).void }
         def audit_formula(formula_nodes)

@@ -234,7 +234,8 @@ module Homebrew
 
     sig { params(stdin: T.any(IO, StringIO), stdout: T.any(IO, StringIO), stderr: T.any(IO, StringIO)).void }
     def initialize(stdin: $stdin, stdout: $stdout, stderr: $stderr)
-      @debug_logging = T.let(ARGV.include?("--debug") || ARGV.include?("-d"), T::Boolean)
+      debug_logging = ARGV.include?("--debug") || ARGV.include?("-d")
+      @debug_logging = T.let(debug_logging, T::Boolean)
       @ping_switch = T.let(ARGV.include?("--ping"), T::Boolean)
       @stdin = stdin
       @stdout = stdout

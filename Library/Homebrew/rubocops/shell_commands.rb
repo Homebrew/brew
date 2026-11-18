@@ -65,10 +65,8 @@ module RuboCop
         ].freeze
         private_constant :TARGET_METHODS
 
-        RESTRICT_ON_SEND = T.let(
-          TARGET_METHODS.map(&:second).uniq.freeze,
-          T::Array[T.nilable(Symbol)],
-        )
+        restrict_on_send = TARGET_METHODS.map(&:second).uniq
+        RESTRICT_ON_SEND = T.let(restrict_on_send.freeze, T::Array[T.nilable(Symbol)])
 
         sig { params(node: RuboCop::AST::SendNode).void }
         def on_send(node)

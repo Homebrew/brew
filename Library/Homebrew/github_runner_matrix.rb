@@ -34,6 +34,8 @@ class GitHubRunnerMatrix
     ).void
   }
   def initialize(testing_formulae, deleted_formulae, all_supported:, dependent_matrix:, dependent_shards: nil)
+    @ephemeral_suffix = T.let(nil, T.nilable(String))
+
     if all_supported && (testing_formulae.present? || deleted_formulae.present? || dependent_matrix)
       raise ArgumentError, "all_supported is mutually exclusive to other arguments"
     end
@@ -42,26 +44,26 @@ class GitHubRunnerMatrix
     @deleted_formulae = deleted_formulae
     @all_supported = all_supported
     @dependent_matrix = dependent_matrix
-    @dependent_shards = T.let(dependent_shards || 1, Integer)
+    dependent_shards ||= 1
+    @dependent_shards = T.let(dependent_shards, Integer)
     @compatible_testing_formulae = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
     @formulae_with_untested_dependents = T.let({}, T::Hash[GitHubRunner, T::Array[TestRunnerFormula]])
 
     # gracefully handle non-GitHub Actions environments
-    @github_run_id = T.let(
-      if ENV.key?("GITHUB_ACTIONS")
-        ENV.fetch("GITHUB_RUN_ID")
-      else
-        ENV.fetch("GITHUB_RUN_ID", "")
-      end, String
-    )
-    @linux_self_hosted = T.let(ENV.fetch("HOMEBREW_LINUX_SELF_HOSTED", "false") == "true", T::Boolean)
-    @runner_timeout = T.let(
-      if ENV.fetch("HOMEBREW_MACOS_LONG_TIMEOUT", "false") == "true"
-        GITHUB_ACTIONS_LONG_TIMEOUT
-      else
-        GITHUB_ACTIONS_SHORT_TIMEOUT
-      end, Integer
-    )
+    github_run_id = if ENV.key?("GITHUB_ACTIONS")
+      ENV.fetch("GITHUB_RUN_ID")
+    else
+      ENV.fetch("GITHUB_RUN_ID", "")
+    end
+    @github_run_id = T.let(github_run_id, String)
+    linux_self_hosted = ENV.fetch("HOMEBREW_LINUX_SELF_HOSTED", "false") == "true"
+    @linux_self_hosted = T.let(linux_self_hosted, T::Boolean)
+    runner_timeout = if ENV.fetch("HOMEBREW_MACOS_LONG_TIMEOUT", "false") == "true"
+      GITHUB_ACTIONS_LONG_TIMEOUT
+    else
+      GITHUB_ACTIONS_SHORT_TIMEOUT
+    end
+    @runner_timeout = T.let(runner_timeout, Integer)
 
     @runners = T.let([], T::Array[GitHubRunner])
     generate_runners!
@@ -237,55 +239,56 @@ class GitHubRunnerMatrix
 
   sig { returns(T::Array[TestRunnerFormula]) }
   def transition_formulae
-    @transition_formulae ||= T.let(begin
-      transition = BottleTransition.new
-      covered = @testing_formulae.select { |formula| transition.required?(formula.formula) }
-      needed_names = []
-      testing_names = @testing_formulae.map(&:name)
+    return @transition_formulae if @transition_formulae
 
-      Homebrew::SimulateSystem.with(os: BottleTransition::MACOS, arch: :arm) do
-        covered.each do |formula|
-          dependencies = Formulary.factory(formula.name).recursive_dependencies do |dependent, dependency|
-            next Dependable::PRUNE if dependency.optional?
+    transition = BottleTransition.new
+    covered = @testing_formulae.select { |formula| transition.required?(formula.formula) }
+    needed_names = []
+    testing_names = @testing_formulae.map(&:name)
 
-            if dependency.test? && !dependency.build? && testing_names.exclude?(dependency.name) &&
-               transition_test_dependency_bottled?(dependency.to_formula)
-              next Dependable::PRUNE
-            end
-            if dependency.is_a?(UsesFromMacOSDependency) && dependency.use_macos_install?
-              next Dependable::PRUNE
-            end
-            next unless dependent.is_a?(Formula)
-            next unless dependency.build?
-            next if testing_names.include?(dependent.name)
+    Homebrew::SimulateSystem.with(os: BottleTransition::MACOS, arch: :arm) do
+      covered.each do |formula|
+        dependencies = Formulary.factory(formula.name).recursive_dependencies do |dependent, dependency|
+          next Dependable::PRUNE if dependency.optional?
 
-            Dependable::PRUNE unless dependent.bottle_specification.tag?(Utils::Bottles.tag(:all))
+          if dependency.test? && !dependency.build? && testing_names.exclude?(dependency.name) &&
+             transition_test_dependency_bottled?(dependency.to_formula)
+            next Dependable::PRUNE
           end
-          missing = dependencies.reject do |dependency|
-            dependency_formula = dependency.to_formula
-            if testing_names.include?(dependency.name)
-              candidate = TestRunnerFormula.new(dependency_formula)
-              candidate.compatible?(platform: :macos, arch: :arm64,
-                                    macos_version: BottleTransition.tag.to_macos_version)
-            else
-              dependency_formula.bottle_specification.tag?(BottleTransition.tag, no_older_versions: true)
-            end
+          if dependency.is_a?(UsesFromMacOSDependency) && dependency.use_macos_install?
+            next Dependable::PRUNE
           end
-          if missing.present?
-            opoo <<~EOS
-              Skipping #{formula.name}'s #{BottleTransition.tag} build: unavailable dependencies: #{missing.map(&:name).join(", ")}.
-              Resolve these dependencies and retry CI before publishing.
-            EOS
-            next
-          end
+          next unless dependent.is_a?(Formula)
+          next unless dependency.build?
+          next if testing_names.include?(dependent.name)
 
-          needed_names << formula.name
-          needed_names.concat(dependencies.map(&:name) & testing_names)
+          Dependable::PRUNE unless dependent.bottle_specification.tag?(Utils::Bottles.tag(:all))
         end
-      end
+        missing = dependencies.reject do |dependency|
+          dependency_formula = dependency.to_formula
+          if testing_names.include?(dependency.name)
+            candidate = TestRunnerFormula.new(dependency_formula)
+            candidate.compatible?(platform: :macos, arch: :arm64,
+                                  macos_version: BottleTransition.tag.to_macos_version)
+          else
+            dependency_formula.bottle_specification.tag?(BottleTransition.tag, no_older_versions: true)
+          end
+        end
+        if missing.present?
+          opoo <<~EOS
+            Skipping #{formula.name}'s #{BottleTransition.tag} build: unavailable dependencies: #{missing.map(&:name).join(", ")}.
+            Resolve these dependencies and retry CI before publishing.
+          EOS
+          next
+        end
 
-      @testing_formulae.select { |formula| needed_names.include?(formula.name) }
-    end, T.nilable(T::Array[TestRunnerFormula]))
+        needed_names << formula.name
+        needed_names.concat(dependencies.map(&:name) & testing_names)
+      end
+    end
+    transition_formulae = @testing_formulae.select { |formula| needed_names.include?(formula.name) }
+    @transition_formulae = T.let(transition_formulae, T.nilable(T::Array[TestRunnerFormula]))
+    transition_formulae
   end
 
   sig { params(formula: Formula).returns(T::Boolean) }
@@ -304,12 +307,12 @@ class GitHubRunnerMatrix
 
   sig { returns(String) }
   def ephemeral_suffix
-    @ephemeral_suffix ||= T.let(begin
+    @ephemeral_suffix ||= begin
       suffix = "-#{@github_run_id}"
       suffix << "-deps" if @dependent_matrix
       suffix << "-long" if @runner_timeout == GITHUB_ACTIONS_LONG_TIMEOUT
       suffix.freeze
-    end, T.nilable(String))
+    end
   end
 
   NEWEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER = :golden_gate
