@@ -110,6 +110,21 @@ RSpec.describe RuboCop::Cop::Homebrew::SingleUseMethod do
       RUBY
     end
 
+    it "does not report a method also named in a string" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          def install
+            system "make", *make_args
+            system "make", *public_send("make_args")
+          end
+
+          def make_args
+            ["PREFIX=\#{prefix}"]
+          end
+        end
+      RUBY
+    end
+
     it "does not report a method that may be called through an interpolated name" do
       expect_no_offenses(<<~RUBY)
         class Foo < Formula
@@ -133,6 +148,21 @@ RSpec.describe RuboCop::Cop::Homebrew::SingleUseMethod do
           end
 
           def make_args
+            ["PREFIX=\#{prefix}"]
+          end
+        end
+      RUBY
+    end
+
+    it "reports a method called on self" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          def install
+            system "make", *self.make_args
+          end
+
+          def make_args
+          ^^^^^^^^^^^^^ Inline `make_args` into its only caller.
             ["PREFIX=\#{prefix}"]
           end
         end
@@ -187,6 +217,22 @@ RSpec.describe RuboCop::Cop::Homebrew::SingleUseMethod do
       RUBY
     end
 
+    it "does not report a method with an on_system block using a numbered parameter" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          def install
+            system "make", *make_args
+          end
+
+          def make_args
+            args = ["PREFIX=\#{prefix}"]
+            on_intel { args << "ARCH=\#{_1}" }
+            args
+          end
+        end
+      RUBY
+    end
+
     it "does not report a memoised method" do
       expect_no_offenses(<<~RUBY)
         class Foo < Formula
@@ -215,6 +261,20 @@ RSpec.describe RuboCop::Cop::Homebrew::SingleUseMethod do
       RUBY
     end
 
+    it "does not report a method checking for a block" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          def install
+            system "make", *make_args
+          end
+
+          def make_args
+            block_given? ? ["--verbose"] : []
+          end
+        end
+      RUBY
+    end
+
     it "does not report a method with a rescue called in a condition" do
       expect_no_offenses(<<~RUBY)
         class Foo < Formula
@@ -226,6 +286,41 @@ RSpec.describe RuboCop::Cop::Homebrew::SingleUseMethod do
             version.major >= 2
           rescue ArgumentError
             false
+          end
+        end
+      RUBY
+    end
+
+    it "does not report a method with a rescue called in an `||` operand" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          def install
+            build_version = tagged_version || version.to_s
+            system "make", "VERSION=\#{build_version}"
+          end
+
+          def tagged_version
+            (buildpath/"VERSION").read
+          rescue Errno::ENOENT
+            nil
+          end
+        end
+      RUBY
+    end
+
+    it "does not report a method with a rescue called in a `case`/`in` subject" do
+      expect_no_offenses(<<~RUBY)
+        class Foo < Formula
+          def install
+            case build_type
+            in "release" then system "make"
+            end
+          end
+
+          def build_type
+            (buildpath/"TYPE").read
+          rescue Errno::ENOENT
+            "release"
           end
         end
       RUBY

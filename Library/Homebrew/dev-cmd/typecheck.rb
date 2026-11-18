@@ -173,8 +173,14 @@ module Homebrew
           RuboCop::Cop::IgnoredMethods
           RuboCop::Cop::IgnoredNode
           RuboCop::Cop::IgnoredPattern
+          RuboCop::Cop::MethodComplexity
           RuboCop::Cop::MethodPreference
+          RuboCop::Cop::Metrics::BlockNesting
+          RuboCop::Cop::Metrics::CyclomaticComplexity
+          RuboCop::Cop::Metrics::PerceivedComplexity
+          RuboCop::Cop::Metrics::Utils
           RuboCop::Cop::Offense
+          RuboCop::Cop::ProjectIndexHelp
           RuboCop::Cop::RangeHelp
           RuboCop::Cop::Registry
           RuboCop::Cop::Util
