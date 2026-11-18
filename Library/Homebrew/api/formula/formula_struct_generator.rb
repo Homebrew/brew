@@ -265,7 +265,8 @@ module Homebrew
         sig { params(requirements_array: RequirementsArray, spec: Symbol).returns(T::Array[FormulaStruct::DependsOnArgs]) }
         def process_requirements(requirements_array, spec)
           requirements_array.filter_map do |req|
-            next unless req["specs"].include?(spec.to_s)
+            # API generators pass `Formula#to_hash` directly, without converting symbols and versions to strings.
+            next unless req["specs"].map(&:to_sym).include?(spec)
 
             req_name = req["name"].to_sym
             next if API_SUPPORTED_REQUIREMENTS.exclude?(req_name)
@@ -274,7 +275,7 @@ module Homebrew
             when :arch
               req["version"]&.to_sym
             when :macos, :maximum_macos
-              MacOSVersion::SYMBOLS.key(req["version"])
+              MacOSVersion::SYMBOLS.key(req["version"].to_s)
             else
               req["version"]
             end

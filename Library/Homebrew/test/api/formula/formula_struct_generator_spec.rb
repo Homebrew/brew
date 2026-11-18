@@ -187,6 +187,18 @@ RSpec.describe Homebrew::API::Formula::FormulaStructGenerator do
       )
     end
 
+    it "keeps requirements from a formula hash that wasn't converted to JSON" do
+      requirements_formula = formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/foo-1.0.tar.gz"
+        depends_on arch: :arm64
+        depends_on macos: :sonoma
+      end
+      hash["requirements"] = requirements_formula.to_hash["requirements"]
+
+      expect(struct.stable_dependencies).to eq([{ arch: [:arm64] }, { macos: [:sonoma] }])
+    end
+
     it "falls back to stable deps when head_dependencies is absent" do
       hash.update({
         "dependencies"             => ["foo"],
