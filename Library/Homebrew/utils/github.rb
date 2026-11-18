@@ -28,7 +28,7 @@ module GitHub
     API.open_rest(uri)
   end
 
-  sig { params(query: String, qualifiers: T.untyped).returns(T::Array[T::Hash[String, T.untyped]]) }
+  sig { params(query: String, qualifiers: T.anything).returns(T::Array[T::Hash[String, T.untyped]]) }
   def self.search_issues(query, **qualifiers)
     json = search("issues", query, **qualifiers)
     json.fetch("items", [])
@@ -139,7 +139,7 @@ module GitHub
     API.open_rest(uri) { |json| json.fetch("private", true) }
   end
 
-  sig { params(main_params: String, qualifiers: T.untyped).returns(String) }
+  sig { params(main_params: String, qualifiers: T.anything).returns(String) }
   def self.search_query_string(*main_params, **qualifiers)
     params = T.let(main_params.to_a, T::Array[T.nilable(String)])
 
@@ -166,7 +166,7 @@ module GitHub
     URI.parse([API_URL, *subroutes].join("/"))
   end
 
-  sig { params(entity: String, queries: String, qualifiers: T.untyped).returns(T::Hash[String, T.untyped]) }
+  sig { params(entity: String, queries: String, qualifiers: T.anything).returns(T::Hash[String, T.untyped]) }
   def self.search(entity, *queries, **qualifiers)
     uri = url_to "search", entity
     uri.query = search_query_string(*queries, **qualifiers)
@@ -218,7 +218,7 @@ module GitHub
     end
   end
 
-  sig { params(user: String, repo: String, workflow: String, ref: String, inputs: T.untyped).void }
+  sig { params(user: String, repo: String, workflow: String, ref: String, inputs: T.anything).void }
   def self.workflow_dispatch_event(user, repo, workflow, ref, **inputs)
     url = "#{API_URL}/repos/#{user}/#{repo}/actions/workflows/#{workflow}/dispatches"
     API.open_rest(url, data:           { ref:, inputs: },

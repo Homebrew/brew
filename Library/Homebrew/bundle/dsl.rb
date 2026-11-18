@@ -139,7 +139,7 @@ module Homebrew
       end
 
       sig {
-        override.params(method_name: Symbol, args: T.untyped, options: T.untyped,
+        override.params(method_name: Symbol, args: T.untyped, options: Object,
                         block: T.nilable(T.proc.void)).returns(T.untyped)
       }
       def method_missing(method_name, *args, **options, &block)

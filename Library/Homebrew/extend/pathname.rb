@@ -97,7 +97,7 @@ class Pathname
   # Only appends to a file that is already created.
   #
   # @api public
-  sig { params(content: String, open_args: T.untyped).void }
+  sig { params(content: String, open_args: T.anything).void }
   def append_lines(content, **open_args)
     raise "Cannot append file that doesn't exist: #{self}" unless exist?
 

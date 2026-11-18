@@ -8,7 +8,8 @@ class CurlGitHubPackagesDownloadStrategy < CurlDownloadStrategy
   sig { params(resolved_basename: String).returns(T.nilable(String)) }
   attr_writer :resolved_basename
 
-  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
+  # Formula `url` specs reach download strategies as arbitrary options.
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void } # rubocop:disable Homebrew/NoUntypedKeywordRest
   def initialize(url, name, version, **meta)
     meta[:headers] ||= []
     # GitHub Packages authorization header.

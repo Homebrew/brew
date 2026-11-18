@@ -642,7 +642,13 @@ module Cask
     # NOTE: Multiple dependencies can be specified.
     #
     # @api public
-    sig { params(arg: T.nilable(Symbol), kwargs: T.untyped).returns(DSL::DependsOn) }
+    sig {
+      params(
+        arg:    T.nilable(Symbol),
+        # Sorbet checks the `T::Hash` that `CaskLoader` splats here against the value type as a whole.
+        kwargs: T.untyped, # rubocop:disable Homebrew/NoUntypedKeywordRest
+      ).returns(DSL::DependsOn)
+    }
     def depends_on(arg = nil, **kwargs)
       @depends_on_set_in_block = true if @called_in_on_system_block
       if arg == :macos
