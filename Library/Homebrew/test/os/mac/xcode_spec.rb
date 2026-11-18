@@ -68,7 +68,7 @@ RSpec.describe OS::Mac::Xcode, :needs_macos do
 
   describe OS::Mac::CLT do
     describe ".latest_version" do
-      test_each_hash({ "27" => "27.0", "26" => "27.0", "15" => "26.3", "14" => "16.2",
+      test_each_hash({ "27" => "27.0", "26" => "26.6", "15" => "26.3", "14" => "16.2",
                       "13" => "15.1", "12" => "14.2", "11" => "13.2" }) do |macos, clt|
         it "recommends Command Line Tools #{clt} on macOS #{macos}" do
           allow(OS::Mac).to receive(:version).and_return(MacOSVersion.new(macos))
@@ -76,14 +76,6 @@ RSpec.describe OS::Mac::Xcode, :needs_macos do
 
           expect(described_class.latest_version).to eq(clt)
         end
-      end
-
-      it "follows Xcode updates on Intel Tahoe" do
-        allow(OS::Mac).to receive(:version).and_return(MacOSVersion.new("26"))
-        allow(Hardware::CPU).to receive(:physical_cpu_arm64?).and_return(false)
-        allow(OS::Mac::Xcode).to receive(:latest_version).and_return("26.7")
-
-        expect(described_class.latest_version).to eq("26.7")
       end
     end
 
@@ -96,12 +88,12 @@ RSpec.describe OS::Mac::Xcode, :needs_macos do
     end
 
     describe ".latest_clang_version" do
-      test_each(%w[27 26]) do |macos|
-        it "recommends the Xcode 27 compiler on macOS #{macos}" do
+      test_each_hash({ "27" => "2100.3.34.2", "26" => "2100.1.1.101" }) do |macos, clang|
+        it "recommends the #{clang} compiler on Apple silicon macOS #{macos}" do
           allow(OS::Mac).to receive(:version).and_return(MacOSVersion.new(macos))
           allow(Hardware::CPU).to receive_messages(intel?: false, physical_cpu_arm64?: true)
 
-          expect(described_class.latest_clang_version).to eq("2100.3.34.2")
+          expect(described_class.latest_clang_version).to eq(clang)
         end
       end
 
@@ -112,8 +104,8 @@ RSpec.describe OS::Mac::Xcode, :needs_macos do
         expect(described_class.latest_clang_version).to eq("2100.1.1.101")
       end
 
-      it "returns the compiler version for a simulated macOS and architecture" do
-        expect(described_class.latest_clang_version(macos: MacOSVersion.new("12"), arm64: false))
+      it "returns the compiler version for a simulated macOS" do
+        expect(described_class.latest_clang_version(macos: MacOSVersion.new("12")))
           .to eq("1400.0.29.202")
       end
     end
@@ -137,11 +129,11 @@ RSpec.describe OS::Mac::Xcode, :needs_macos do
         expect(described_class.outdated?).to be true
       end
 
-      it "reports Intel's latest Command Line Tools as outdated under Rosetta on Tahoe" do
+      it "accepts the latest Command Line Tools on Apple silicon Tahoe" do
         allow(Hardware::CPU).to receive(:physical_cpu_arm64?).and_return(true)
         allow(described_class).to receive(:detect_clang_version).and_return("2100.1.1.101")
 
-        expect(described_class.outdated?).to be true
+        expect(described_class.outdated?).to be false
       end
 
       it "does not report unavailable compiler metadata as outdated" do
