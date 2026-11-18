@@ -132,5 +132,11 @@ RSpec.describe MacOSRequirement do
         expect(requirement.platform_supported?(Utils::Bottles::Tag.from_symbol(tag))).to be(supported)
       end
     end
+
+    it "is true on a macOS version too new to be known" do
+      tag = Utils::Bottles::Tag.new(system: :dunno, arch: :arm64)
+
+      expect(requirement.platform_supported?(tag)).to be(true)
+    end
   end
 end

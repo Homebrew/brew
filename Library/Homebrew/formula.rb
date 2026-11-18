@@ -2940,10 +2940,14 @@ class Formula # rubocop:disable Metrics/ClassLength
     supports_macos? && supports_linux?
   end
 
-  # True if a fatal requirement needed beyond building isn't met on this system.
+  # True if this platform can't meet a requirement needed beyond building.
+  # Formulae loaded from the internal API use the value stored there for this platform.
   sig { returns(T::Boolean) }
   def incompatible?
-    requirements.any? { |requirement| requirement.required? && requirement.fatal? && !requirement.satisfied? }
+    return api_source&.[]("incompatible") == true if loaded_from_internal_api?
+
+    bottle_tag = Homebrew::SimulateSystem.current_tag
+    requirements.any? { |requirement| requirement.required? && !requirement.platform_supported?(bottle_tag) }
   end
 
   sig { returns(T::Boolean) }

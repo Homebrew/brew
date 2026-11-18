@@ -333,8 +333,11 @@ module Cask
     end
 
     # True if an OS, macOS version or architecture requirement isn't met on this system.
+    # Casks loaded from the internal API use the value stored there for this platform.
     sig { returns(T::Boolean) }
     def incompatible?
+      return api_source&.[]("incompatible") == true if loaded_from_internal_api?
+
       !valid_platform? || !unsatisfied_macos_requirement.nil? || !supported_arch?
     end
 

@@ -312,6 +312,23 @@ RSpec.describe Formulary do
       end
     end
 
+    it "reads incompatible from the API instead of the requirements" do
+      struct = Homebrew::API::FormulaStruct.from_hash({
+        "desc"                 => "API formula",
+        "homepage"             => "https://example.com",
+        "license"              => "MIT",
+        "ruby_source_checksum" => "checksum",
+        "stable_present"       => true,
+        "stable_url_args"      => ["https://example.com/foo-1.0.tar.gz", {}],
+        "stable_version"       => "1.0",
+        "incompatible"         => true,
+      })
+      klass = described_class.load_formula_from_struct!(formula_name, struct, api_source: struct.serialize,
+                                                        tap_git_head: "", flags: [], internal_api: true)
+
+      expect(klass.new(formula_name, formula_path, :stable).incompatible?).to be(true)
+    end
+
     it "writes an empty overlay when a variation removes the last no_linkage tag" do
       formula_path.write(formula_content.sub('depends_on "shared" => :no_linkage', 'depends_on "shared"'))
 

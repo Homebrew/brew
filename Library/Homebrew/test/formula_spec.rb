@@ -2276,21 +2276,22 @@ RSpec.describe Formula do
       expect(f.incompatible?).to be(true)
     end
 
-    it "is true when another fatal requirement isn't met", :needs_macos do
+    it "ignores requirements that depend on more than the platform" do
       f = formula do
         T.bind(self, T.class_of(Formula))
         url "https://brew.sh/example-1.0.tar.gz"
         depends_on xcode: "99.0"
       end
 
-      expect(f.incompatible?).to be(true)
+      expect(f.incompatible?).to be(false)
     end
 
     it "ignores requirements that are only needed to build" do
+      allow(Hardware::CPU).to receive(:type).and_return(:arm)
       f = formula do
         T.bind(self, T.class_of(Formula))
         url "https://brew.sh/example-1.0.tar.gz"
-        depends_on xcode: ["99.0", :build]
+        depends_on arch: [:x86_64, :build]
       end
 
       expect(f.incompatible?).to be(false)

@@ -672,6 +672,13 @@ RSpec.describe Cask::Cask, :cask do
       expect(cask.incompatible?).to be(false)
     end
 
+    it "reads the value stored in the internal API" do
+      cask = described_class.new("example", loaded_from_api: true, loaded_from_internal_api: true,
+                                            api_source: { "incompatible" => true })
+
+      expect(cask.incompatible?).to be(true)
+    end
+
     it "is true when a macOS requirement isn't met", :needs_macos do
       cask = Cask::CaskLoader.load("with-depends-on-macos-failure")
       allow(cask.depends_on.maximum_macos).to receive(:satisfied?).and_return(false)
