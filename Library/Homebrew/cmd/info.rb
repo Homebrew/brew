@@ -157,18 +157,23 @@ module Homebrew
         end
       end
 
-      sig { params(names: T::Array[String]).returns(T::Array[String]) }
-      def self.installed_dependent_names(names)
+      sig { params(names: T::Array[String], build: T::Boolean).returns(T::Array[String]) }
+      def self.installed_dependent_names(names, build: false)
         Formula.racks.filter_map do |rack|
           keg = Keg.from_rack(rack)
           next unless keg
 
           tab_path = keg/AbstractTab::FILENAME
           next unless tab_path.file?
+          # Only kegs built from source need their build dependencies again.
+          next if build && keg.tab.poured_from_bottle
 
           dependencies = begin
-            keg.to_formula.runtime_dependencies(keg:)
+            formula = keg.to_formula
+            build ? formula.deps.select(&:build?) : formula.runtime_dependencies(keg:)
           rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
+            next if build
+
             (keg.runtime_dependencies || []).filter_map do |dep|
               full_name = T.cast(dep, T::Hash[String, T.untyped])["full_name"]
               Dependency.new(full_name) if full_name
@@ -397,11 +402,6 @@ module Homebrew
         else
           tab_runtime_deps
         end
-        installed_dependents = if $stdout.tty? && kegs.any?
-          self.class.installed_dependent_names(formula.possible_names)
-        else
-          [].freeze
-        end
         built_from_source = kegs.any? { |keg| !keg.tab.poured_from_bottle }
         installs_from_source = !installed && Utils::InfoDisplay.formula_installs_from_source?(formula)
         dependency_lines = %w[build required recommended optional].filter_map do |type|
@@ -433,11 +433,16 @@ module Homebrew
             installed_count, runtime_deps.count, mark_uninstalled: !outdated
           )
         end
-        if installed_dependents.any?
-          dependency_lines << if verbose
-            "Dependents (#{installed_dependents.count}): #{installed_dependents.join(", ")}"
-          else
-            "Dependents: #{installed_dependents.count}"
+        if $stdout.tty? && kegs.any?
+          { "Dependents" => false, "Build dependents" => true }.each do |type, build|
+            names = self.class.installed_dependent_names(formula.possible_names, build:)
+            next if names.empty?
+
+            dependency_lines << if verbose
+              "#{type} (#{names.count}): #{names.join(", ")}"
+            else
+              "#{type}: #{names.count}"
+            end
           end
         end
         puts Utils::InfoDisplay.section("Dependencies", dependency_lines) if dependency_lines.present?
