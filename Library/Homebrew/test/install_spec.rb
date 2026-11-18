@@ -619,6 +619,19 @@ RSpec.describe Homebrew::Install do
 
       expect(described_class.bottle_download_size(formula)).to be_nil
     end
+
+    it "skips the size of a local bottle" do
+      formula = formula("testball") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/testball-0.1.tar.gz"
+      end
+      allow(formula).to receive_messages(
+        local_bottle_path: Pathname("testball--0.1.big_sur.bottle.tar.gz"),
+        bottle:            instance_double(Bottle, fetch_tab: nil, bottle_size: 500),
+      )
+
+      expect(described_class.bottle_download_size(formula)).to be_nil
+    end
   end
 
   describe "::print_dry_run_dependencies" do

@@ -449,8 +449,8 @@ module Homebrew
       # The size of the bottle that would be downloaded for a formula, if known.
       sig { params(formula: Formula, debug: T::Boolean).returns(T.nilable(String)) }
       def bottle_download_size(formula, debug: false)
-        bottle = formula.bottle
-        return unless bottle
+        return if formula.local_bottle_path
+        return unless (bottle = formula.bottle)
 
         bottle.fetch_tab(quiet: !debug)
         return unless (download_size = bottle.bottle_size)
