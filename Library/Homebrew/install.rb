@@ -463,8 +463,12 @@ module Homebrew
       sig { params(formula_installers: T::Array[FormulaInstaller]).returns(T::Array[String]) }
       def source_build_formulae(formula_installers)
         formula_installers.flat_map do |installer|
-          formulae = installer.only_deps? ? [] : [installer.formula]
-          formulae += installer.compute_dependencies.map(&:to_formula) unless installer.ignore_deps?
+          formulae = if installer.ignore_deps?
+            [installer.formula]
+          else
+            dependencies = installer.compute_dependencies.map(&:to_formula)
+            installer.only_deps? ? dependencies : [installer.formula, *dependencies]
+          end
           formulae.filter_map do |formula|
             next unless formula.core_formula?
             next if installer.install_bottle_for?(formula, installer.effective_build_options_for(formula))
