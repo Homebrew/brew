@@ -33,7 +33,8 @@ module Cask
           raise CaskInvalidError.new(cask, "'generated_script' requires a path within the staged cask")
         end
 
-        @path = T.let(cask.staged_path/path, Pathname)
+        resolved_path = cask.staged_path/path
+        @path = T.let(resolved_path, Pathname)
         @path_string = T.let(path.to_s, String)
         @content = content
       end

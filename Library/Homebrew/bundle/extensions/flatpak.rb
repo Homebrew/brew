@@ -286,7 +286,7 @@ module Homebrew
           return false unless Bundle.system(flatpak, "install", "-y", "--system", actual_remote, name, verbose:)
 
           package = { name:, remote: actual_remote, remote_url: url }
-          packages_with_remotes = T.let(@packages_with_remotes || [], T::Array[Package])
+          packages_with_remotes = @packages_with_remotes || []
           packages_with_remotes << package
           @packages_with_remotes = packages_with_remotes
           @installed_packages = packages_with_remotes.dup
@@ -305,7 +305,7 @@ module Homebrew
           _application, actual_remote = installed_line&.split("\t")
           actual_remote ||= "#{name}-origin"
           package = { name:, remote: actual_remote, remote_url: nil }
-          packages_with_remotes = T.let(@packages_with_remotes || [], T::Array[Package])
+          packages_with_remotes = @packages_with_remotes || []
           packages_with_remotes << package
           @packages_with_remotes = packages_with_remotes
           @installed_packages = packages_with_remotes.dup

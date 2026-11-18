@@ -44,46 +44,44 @@ class CaskDependent
 
   sig { returns(T::Array[Dependency]) }
   def deps
-    @deps ||= T.let(
-      @cask.depends_on.formula.map do |f|
-        Dependency.new f
-      end,
-      T.nilable(T::Array[Dependency]),
-    )
+    return @deps if @deps
+
+    deps = @cask.depends_on.formula.map do |f|
+      Dependency.new f
+    end
+    @deps = T.let(deps, T.nilable(T::Array[Dependency]))
+    deps
   end
 
   sig { returns(T::Array[::Requirement]) }
   def requirements
-    @requirements ||= T.let(
-      begin
-        requirements = []
-        dsl_reqs = @cask.depends_on
+    return @requirements if @requirements
 
-        dsl_reqs.arch&.each do |arch|
-          arch = if arch[:bits] == 64
-            if arch[:type] == :intel
-              :x86_64
-            else
-              :"#{arch[:type]}64"
-            end
-          elsif arch[:type] == :intel && arch[:bits] == 32
-            :i386
-          else
-            arch[:type]
-          end
-          requirements << ArchRequirement.new([arch])
-        end
-        dsl_reqs.cask.each do |cask_ref|
-          requirements << CaskDependent::Requirement.new([{ cask: cask_ref }])
-        end
-        requirements << dsl_reqs.linux if dsl_reqs.linux
-        requirements << dsl_reqs.macos if dsl_reqs.macos
-        requirements << dsl_reqs.maximum_macos if dsl_reqs.maximum_macos
+    requirements = []
+    dsl_reqs = @cask.depends_on
 
-        requirements
-      end,
-      T.nilable(T::Array[::Requirement]),
-    )
+    dsl_reqs.arch&.each do |arch|
+      arch = if arch[:bits] == 64
+        if arch[:type] == :intel
+          :x86_64
+        else
+          :"#{arch[:type]}64"
+        end
+      elsif arch[:type] == :intel && arch[:bits] == 32
+        :i386
+      else
+        arch[:type]
+      end
+      requirements << ArchRequirement.new([arch])
+    end
+    dsl_reqs.cask.each do |cask_ref|
+      requirements << CaskDependent::Requirement.new([{ cask: cask_ref }])
+    end
+    requirements << dsl_reqs.linux if dsl_reqs.linux
+    requirements << dsl_reqs.macos if dsl_reqs.macos
+    requirements << dsl_reqs.maximum_macos if dsl_reqs.maximum_macos
+    @requirements = T.let(requirements, T.nilable(T::Array[::Requirement]))
+    requirements
   end
 
   sig {

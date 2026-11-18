@@ -13,6 +13,7 @@ class URL
   sig { params(url: String, specs: T::Hash[Symbol, T.untyped]).void }
   def initialize(url, specs = {})
     @url = T.let(url.freeze, String)
+    @version = T.let(nil, T.nilable(Version))
     @specs = T.let(specs.dup, T::Hash[Symbol, T.untyped])
     @using = T.let(@specs.delete(:using), T.nilable(T.any(Symbol, T::Class[AbstractDownloadStrategy])))
     @specs.freeze
@@ -31,6 +32,6 @@ class URL
 
   sig { returns(Version) }
   def version
-    @version ||= T.let(Version.detect(@url, tag: @specs[:tag]), T.nilable(Version))
+    @version ||= Version.detect(@url, tag: @specs[:tag])
   end
 end

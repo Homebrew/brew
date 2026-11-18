@@ -298,17 +298,16 @@ module Cask
       def initialize(token, from_json: nil, path: nil, from_installed_caskfile: false,
                      from_internal_json: false, api_fallback: true)
         @token = T.let(token.sub(%r{^homebrew/(?:homebrew-)?cask/}i, ""), String)
-        @sourcefile_path = T.let(
-          if path
-            path
-          elsif from_json
-            from_internal_json ? Homebrew::API::Internal.cached_packages_json_file_path : Homebrew::API::Cask.cached_json_file_path
-          else
-            Homebrew::API.cached_cask_json_file_path
-          end,
-          Pathname,
-        )
-        @path = T.let(path || CaskLoader.default_path(@token), Pathname)
+        sourcefile_path = if path
+          path
+        elsif from_json
+          from_internal_json ? Homebrew::API::Internal.cached_packages_json_file_path : Homebrew::API::Cask.cached_json_file_path
+        else
+          Homebrew::API.cached_cask_json_file_path
+        end
+        @sourcefile_path = T.let(sourcefile_path, Pathname)
+        path ||= CaskLoader.default_path(@token)
+        @path = T.let(path, Pathname)
         @from_json = from_json
         @from_installed_caskfile = from_installed_caskfile
         @from_internal_json = from_internal_json

@@ -21,6 +21,12 @@ module Cask
 
     sig { params(package_id: String, command: T.class_of(SystemCommand)).void }
     def initialize(package_id, command = SystemCommand)
+      @pkgutil_bom_files = T.let(nil, T.nilable(T::Array[Pathname]))
+      @pkgutil_bom_specials = T.let(nil, T.nilable(T::Array[Pathname]))
+      @pkgutil_bom_dirs = T.let(nil, T.nilable(T::Array[Pathname]))
+      @pkgutil_bom_all = T.let(nil, T.nilable(T::Array[Pathname]))
+      @root = T.let(nil, T.nilable(Pathname))
+
       @package_id = package_id
       @command = command
     end
@@ -72,42 +78,39 @@ module Cask
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_files
-      @pkgutil_bom_files ||= T.let(pkgutil_bom_all.select(&:file?) - pkgutil_bom_specials,
-                                   T.nilable(T::Array[Pathname]))
+      @pkgutil_bom_files ||= pkgutil_bom_all.select(&:file?) - pkgutil_bom_specials
     end
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_specials
-      @pkgutil_bom_specials ||= T.let(pkgutil_bom_all.select { it.symlink? || it.chardev? || it.blockdev? },
-                                      T.nilable(T::Array[Pathname]))
+      @pkgutil_bom_specials ||= pkgutil_bom_all.select { it.symlink? || it.chardev? || it.blockdev? }
     end
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_dirs
-      @pkgutil_bom_dirs ||= T.let(pkgutil_bom_all.select(&:directory?) - pkgutil_bom_specials,
-                                  T.nilable(T::Array[Pathname]))
+      @pkgutil_bom_dirs ||= pkgutil_bom_all.select(&:directory?) - pkgutil_bom_specials
     end
 
     sig { returns(T::Array[Pathname]) }
     def pkgutil_bom_all
-      @pkgutil_bom_all ||= T.let(
-        @command.run!("/usr/sbin/pkgutil", args: ["--files", package_id])
-                .stdout
-                .split("\n")
-                .map { |path| root.join(path) }
-                .reject { |path| OS::Mac.undeletable?(path) },
-        T.nilable(T::Array[Pathname]),
-      )
+      @pkgutil_bom_all ||= @command.run!("/usr/sbin/pkgutil", args: ["--files", package_id])
+                                   .stdout
+                                   .split("\n")
+                                   .map { |path| root.join(path) }
+                                   .reject { |path| OS::Mac.undeletable?(path) }
     end
 
     sig { returns(Pathname) }
     def root
-      @root ||= T.let(Pathname.new(info.fetch("volume")).join(info.fetch("install-location")), T.nilable(Pathname))
+      @root ||= Pathname.new(info.fetch("volume")).join(info.fetch("install-location"))
     end
 
     sig { returns(T.untyped) }
     def info
-      @info ||= T.let(@command.run!("/usr/sbin/pkgutil", args: ["--pkg-info-plist", package_id]).plist, T.untyped)
+      return @info if @info
+
+      resolved_info = @command.run!("/usr/sbin/pkgutil", args: ["--pkg-info-plist", package_id]).plist
+      @info = T.let(resolved_info, T.untyped)
     end
 
     private

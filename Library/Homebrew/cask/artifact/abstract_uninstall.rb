@@ -91,6 +91,8 @@ module Cask
 
       sig { params(cask: Cask, directives: DirectivesType).void }
       def initialize(cask, **directives)
+        @running_bundle_ids = T.let(nil, T.nilable(T::Array[String]))
+
         ::Utils::Data.assert_valid_keys(directives, *ORDERED_DIRECTIVES, *METADATA_KEYS)
 
         super
@@ -460,12 +462,9 @@ module Cask
 
       sig { returns(T::Array[String]) }
       def running_bundle_ids
-        @running_bundle_ids ||= T.let(
-          system_command("osascript", args:         ["-l", "JavaScript", "-e", RUNNING_BUNDLE_IDS_SCRIPT],
-                                      print_stderr: true)
-            .stdout.split("\n").map(&:strip).reject(&:empty?),
-          T.nilable(T::Array[String]),
-        )
+        @running_bundle_ids ||= system_command(
+          "osascript", args: ["-l", "JavaScript", "-e", RUNNING_BUNDLE_IDS_SCRIPT], print_stderr: true
+        ).stdout.split("\n").map(&:strip).reject(&:empty?)
       end
 
       sig { params(bundle_id: String).returns(SystemCommand::Result) }

@@ -17,6 +17,10 @@ module Cask
       extend T::Helpers
       extend ::Utils::Output::Mixin
 
+      @english_name = T.let(nil, T.nilable(String))
+      @english_article = T.let(nil, T.nilable(String))
+      @dsl_key = T.let(nil, T.nilable(Symbol))
+
       abstract!
 
       include Comparable
@@ -27,17 +31,17 @@ module Cask
       DirectivesType = T.type_alias { Object }
       sig { overridable.returns(String) }
       def self.english_name
-        @english_name ||= T.let(to_s.sub(/^.*:/, "").gsub(/(.)([A-Z])/, '\1 \2'), T.nilable(String))
+        @english_name ||= to_s.sub(/^.*:/, "").gsub(/(.)([A-Z])/, '\1 \2')
       end
 
       sig { returns(String) }
       def self.english_article
-        @english_article ||= T.let(/^[aeiou]/i.match?(english_name) ? "an" : "a", T.nilable(String))
+        @english_article ||= /^[aeiou]/i.match?(english_name) ? "an" : "a"
       end
 
       sig { overridable.returns(Symbol) }
       def self.dsl_key
-        @dsl_key ||= T.let(to_s.sub(/^.*:/, "").gsub(/(.)([A-Z])/, '\1_\2').downcase.to_sym, T.nilable(Symbol))
+        @dsl_key ||= to_s.sub(/^.*:/, "").gsub(/(.)([A-Z])/, '\1_\2').downcase.to_sym
       end
 
       sig { overridable.returns(Symbol) }
@@ -74,60 +78,61 @@ module Cask
 
       sig { returns(T::Hash[T.class_of(AbstractArtifact), Integer]) }
       def sort_order
-        @sort_order ||= T.let(
+        return @sort_order if @sort_order
+
+        sort_order = [
+          PreflightSteps,
+          UninstallPreflightSteps,
+          PreflightBlock,
+          # The `uninstall` stanza should be run first, as it may
+          # depend on other artifacts still being installed.
+          Uninstall,
+          GeneratedScript,
+          Installer,
+          # `pkg` should be run before `binary`, so
+          # targets are created prior to linking.
+          # `pkg` should be run before `app`, since an `app` could
+          # contain a nested installer (e.g. `wireshark`).
+          Pkg,
           [
-            PreflightSteps,
-            UninstallPreflightSteps,
-            PreflightBlock,
-            # The `uninstall` stanza should be run first, as it may
-            # depend on other artifacts still being installed.
-            Uninstall,
-            GeneratedScript,
-            Installer,
-            # `pkg` should be run before `binary`, so
-            # targets are created prior to linking.
-            # `pkg` should be run before `app`, since an `app` could
-            # contain a nested installer (e.g. `wireshark`).
-            Pkg,
-            [
-              App,
-              AppImage,
-              Suite,
-              Artifact,
-              Colorpicker,
-              Prefpane,
-              Qlplugin,
-              Mdimporter,
-              Dictionary,
-              Font,
-              Service,
-              InputMethod,
-              InternetPlugin,
-              KeyboardLayout,
-              AudioUnitPlugin,
-              VstPlugin,
-              Vst3Plugin,
-              ScreenSaver,
-            ],
-            [
-              Binary,
-              CommandWrapper,
-            ],
-            Manpage,
-            [
-              BashCompletion,
-              ZshCompletion,
-              FishCompletion,
-              PwshCompletion,
-            ],
-            GeneratedCompletion,
-            PostflightSteps,
-            UninstallPostflightSteps,
-            PostflightBlock,
-            Zap,
-          ].each_with_index.flat_map { |classes, i| Array(classes).map { |c| [c, i] } }.to_h,
-          T.nilable(T::Hash[T.class_of(AbstractArtifact), Integer]),
-        )
+            App,
+            AppImage,
+            Suite,
+            Artifact,
+            Colorpicker,
+            Prefpane,
+            Qlplugin,
+            Mdimporter,
+            Dictionary,
+            Font,
+            Service,
+            InputMethod,
+            InternetPlugin,
+            KeyboardLayout,
+            AudioUnitPlugin,
+            VstPlugin,
+            Vst3Plugin,
+            ScreenSaver,
+          ],
+          [
+            Binary,
+            CommandWrapper,
+          ],
+          Manpage,
+          [
+            BashCompletion,
+            ZshCompletion,
+            FishCompletion,
+            PwshCompletion,
+          ],
+          GeneratedCompletion,
+          PostflightSteps,
+          UninstallPostflightSteps,
+          PostflightBlock,
+          Zap,
+        ].each_with_index.flat_map { |classes, i| Array(classes).map { |c| [c, i] } }.to_h
+        @sort_order = T.let(sort_order, T.nilable(T::Hash[T.class_of(AbstractArtifact), Integer]))
+        sort_order
       end
 
       sig { override.params(other: BasicObject).returns(T.nilable(Integer)) }

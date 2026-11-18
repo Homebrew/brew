@@ -15,7 +15,7 @@ module Homebrew
         class << self
           sig { override.void }
           def reset!
-            @started_services = nil
+            @started_services = T.let(nil, T.nilable(T::Array[String]))
           end
 
           # Action methods that return a success/failure boolean, not predicate methods.
@@ -75,19 +75,16 @@ module Homebrew
 
           sig { returns(T::Array[String]) }
           def started_services
-            @started_services ||= T.let(
-              if !Homebrew::Services::System.launchctl? && !Homebrew::Services::System.systemctl?
-                started_services_without_daemon_manager
-              else
-                states_to_skip = %w[stopped none]
+            @started_services ||= if !Homebrew::Services::System.launchctl? && !Homebrew::Services::System.systemctl?
+              started_services_without_daemon_manager
+            else
+              states_to_skip = %w[stopped none]
 
-                services_list = JSON.parse(Utils.safe_popen_read(HOMEBREW_BREW_FILE, "services", "list", "--json"))
-                services_list.filter_map do |hash|
-                  hash.fetch("name") if states_to_skip.exclude?(hash.fetch("status"))
-                end
-              end,
-              T.nilable(T::Array[String]),
-            )
+              services_list = JSON.parse(Utils.safe_popen_read(HOMEBREW_BREW_FILE, "services", "list", "--json"))
+              services_list.filter_map do |hash|
+                hash.fetch("name") if states_to_skip.exclude?(hash.fetch("status"))
+              end
+            end
           end
 
           sig { params(formula: Formula, prefix: Pathname).returns(T.nilable(Pathname)) }

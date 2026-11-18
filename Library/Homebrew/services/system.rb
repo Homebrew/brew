@@ -11,6 +11,8 @@ module Homebrew
     module System
       extend Utils::Output::Mixin
 
+      @user = T.let(nil, T.nilable(String))
+
       LAUNCHCTL_DOMAIN_ACTION_NOT_SUPPORTED = 125
       MISSING_DAEMON_MANAGER_EXCEPTION_MESSAGE = "`brew services` is supported only on macOS or Linux (with systemd)!"
 
@@ -46,7 +48,7 @@ module Homebrew
       # Current user running `[sudo] brew services`.
       sig { returns(T.nilable(String)) }
       def self.user
-        @user ||= T.let(ENV["USER"].presence || Utils.safe_popen_read("/usr/bin/whoami").chomp, T.nilable(String))
+        @user ||= ENV["USER"].presence || Utils.safe_popen_read("/usr/bin/whoami").chomp
       end
 
       sig { params(username: String).returns(T::Boolean) }

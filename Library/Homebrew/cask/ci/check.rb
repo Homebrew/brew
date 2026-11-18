@@ -23,29 +23,29 @@ module Cask
       GOOGLE_LAUNCHJOBS_REGEX = /com\.google\.(keystone|GoogleUpdater)/
       private_constant :GOOGLE_LAUNCHJOBS_REGEX
 
-      CHECKS = T.let({
+      checks = {
         installed_apps:       lambda {
           ["/Applications", File.expand_path("~/Applications")]
-          .flat_map { |dir| (0..5).map { |i| "/*" * i }.flat_map { |glob| Dir["#{dir}#{glob}.app"] } }
+            .flat_map { |dir| (0..5).map { |i| "/*" * i }.flat_map { |glob| Dir["#{dir}#{glob}.app"] } }
         },
         installed_kexts:      lambda {
           system_command!("/usr/sbin/kextstat", args: ["-kl"], print_stderr: false)
-          .stdout
-          .lines
-          .map do |line|
-            identifier = line.match(/^.{52}([^\s]+)/)&.[](1)
-            raise "Unexpected kextstat output: #{line}" unless identifier
+            .stdout
+            .lines
+            .map do |line|
+              identifier = line.match(/^.{52}([^\s]+)/)&.[](1)
+              raise "Unexpected kextstat output: #{line}" unless identifier
 
-            identifier
-          end
+              identifier
+            end
           .grep_v(/^com\.apple\./)
         },
         installed_pkgs:       lambda {
           Pathname("/var/db/receipts")
-          .children
-          .grep(/\.plist$/)
-          .map { |path| path.basename.to_s.sub(/\.plist$/, "") }
-          .grep_v(/^com\.google(?:\.pkg)?\.Keystone/i)
+            .children
+            .grep(/\.plist$/)
+            .map { |path| path.basename.to_s.sub(/\.plist$/, "") }
+            .grep_v(/^com\.google(?:\.pkg)?\.Keystone/i)
         },
         installed_launchjobs: lambda {
           format_launchjob = lambda { |file|
@@ -64,29 +64,30 @@ module Cask
             "/Library/LaunchAgents",
             "/Library/LaunchDaemons",
           ].map { |path| Pathname(path).expand_path }
-          .select(&:directory?)
-          .flat_map(&:children)
-          .grep_v(GOOGLE_LAUNCHJOBS_REGEX)
-          .select { |child| child.extname == ".plist" }
-          .select(&:exist?)
-          .map(&format_launchjob)
+           .select(&:directory?)
+           .flat_map(&:children)
+           .grep_v(GOOGLE_LAUNCHJOBS_REGEX)
+           .select { |child| child.extname == ".plist" }
+           .select(&:exist?)
+           .map(&format_launchjob)
         },
         loaded_launchjobs:    lambda {
           launchctl = lambda do |sudo|
             system_command!("/bin/launchctl", args: ["list"], print_stderr: false, sudo:)
-            .stdout
-            .lines.drop(1)
-            .grep_v(APPLE_LAUNCHJOBS_REGEX)
-            .grep_v(GOOGLE_LAUNCHJOBS_REGEX)
+              .stdout
+              .lines.drop(1)
+              .grep_v(APPLE_LAUNCHJOBS_REGEX)
+              .grep_v(GOOGLE_LAUNCHJOBS_REGEX)
           end
 
           [false, true]
-          .flat_map(&launchctl)
-          .map { |line| line.split(/\s+/).fetch(2) }
-          .grep_v(/^com\.apple\./)
-          .grep_v(GOOGLE_LAUNCHJOBS_REGEX)
+            .flat_map(&launchctl)
+            .map { |line| line.split(/\s+/).fetch(2) }
+            .grep_v(/^com\.apple\./)
+            .grep_v(GOOGLE_LAUNCHJOBS_REGEX)
         },
-      }.freeze, T::Hash[Symbol, T.proc.returns(T::Array[String])])
+      }
+      CHECKS = T.let(checks.freeze, T::Hash[Symbol, T.proc.returns(T::Array[String])])
       private_constant :CHECKS
 
       # Represents additions and removals between two snapshots.
@@ -98,8 +99,10 @@ module Cask
         def initialize(before, after)
           @before = T.let(before.sort.uniq, T::Array[String])
           @after = T.let(after.sort.uniq, T::Array[String])
-          @removed = T.let(@before - @after, T::Array[String])
-          @added = T.let(@after - @before, T::Array[String])
+          removed = @before - @after
+          @removed = T.let(removed, T::Array[String])
+          added = @after - @before
+          @added = T.let(added, T::Array[String])
         end
 
         sig { returns(T::Boolean) }

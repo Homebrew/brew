@@ -130,6 +130,10 @@ module Cask
     def initialize(token, sourcefile_path: nil, source: nil, tap: nil, loaded_from_api: false,
                    loaded_from_internal_api: false, loaded_from_metadata: false, api_source: nil, config: nil,
                    allow_reassignment: false, loader: nil, &block)
+      @old_tokens = T.let(nil, T.nilable(T::Array[String]))
+      @new_download_sha = T.let(nil, T.nilable(String))
+      @ruby_source_checksum = T.let(nil, T.nilable(T::Hash[Symbol, T.nilable(String)]))
+
       @token = token
       @sourcefile_path = sourcefile_path
       @source = source
@@ -146,16 +150,15 @@ module Cask
       # https://github.com/sorbet/sorbet/issues/6843
       @block = T.let(block, T.untyped)
 
-      @default_config = T.let(config || Config.new, Config)
+      default_config = config || Config.new
+      @default_config = T.let(default_config, Config)
 
-      @config = T.let(
-        if config_path.exist?
-          Config.from_json(File.read(config_path), ignore_invalid_keys: true)
-        else
-          @default_config
-        end,
-        Config,
-      )
+      resolved_config = if config_path.exist?
+        Config.from_json(File.read(config_path), ignore_invalid_keys: true)
+      else
+        @default_config
+      end
+      @config = T.let(resolved_config, Config)
       refresh
     end
 
@@ -182,15 +185,12 @@ module Cask
     # An old name for the cask.
     sig { returns(T::Array[String]) }
     def old_tokens
-      @old_tokens ||= T.let(
-        if (t = tap)
-          Tap.tap_migration_oldnames(t, token, cask: true) +
-            t.cask_reverse_renames.fetch(token, [])
-        else
-          []
-        end,
-        T.nilable(T::Array[String]),
-      )
+      @old_tokens ||= if (t = tap)
+        Tap.tap_migration_oldnames(t, token, cask: true) +
+          t.cask_reverse_renames.fetch(token, [])
+      else
+        []
+      end
     end
 
     sig { params(config: Config).void }
@@ -445,12 +445,9 @@ module Cask
       require "cask/installer"
 
       # Call checksumable? before hashing
-      @new_download_sha ||= T.let(
-        Installer.new(self, verify_download_integrity: false)
-                 .download(quiet: true)
-                 .instance_eval { |x| Digest::SHA256.file(x).hexdigest },
-        T.nilable(String),
-      )
+      @new_download_sha ||= Installer.new(self, verify_download_integrity: false)
+                                     .download(quiet: true)
+                                     .instance_eval { |x| Digest::SHA256.file(x).hexdigest }
     end
 
     sig { returns(T::Boolean) }
@@ -555,20 +552,18 @@ module Cask
       return unless (sfp = sourcefile_path)
       return unless (t = tap)
 
-      @ruby_source_path = T.let(sfp.relative_path_from(t.path).to_s, T.nilable(String))
+      ruby_source_path = sfp.relative_path_from(t.path).to_s
+      @ruby_source_path = T.let(ruby_source_path, T.nilable(String))
     end
 
     sig { returns(T::Hash[Symbol, T.nilable(String)]) }
     def ruby_source_checksum
-      @ruby_source_checksum ||= T.let(
-        begin
-          sfp = sourcefile_path
-          {
-            sha256: sfp ? Digest::SHA256.file(sfp).hexdigest : nil,
-          }.freeze
-        end,
-        T.nilable(T::Hash[Symbol, T.nilable(String)]),
-      )
+      @ruby_source_checksum ||= begin
+        sfp = sourcefile_path
+        {
+          sha256: sfp ? Digest::SHA256.file(sfp).hexdigest : nil,
+        }.freeze
+      end
     end
 
     sig { returns(T::Array[String]) }
@@ -838,13 +833,14 @@ module Cask
 
     sig { returns(T.nilable(Homebrew::BundleVersion)) }
     def bundle_version
-      @bundle_version ||= T.let(
-        if (bundle = artifacts.find { |a| a.is_a?(Artifact::App) }&.target) &&
-           (plist = Pathname("#{bundle}/Contents/Info.plist")) && plist.exist? && plist.readable?
-          Homebrew::BundleVersion.from_info_plist(plist)
-        end,
-        T.nilable(Homebrew::BundleVersion),
-      )
+      return @bundle_version if @bundle_version
+
+      bundle_version = if (bundle = artifacts.find { |a| a.is_a?(Artifact::App) }&.target) &&
+                          (plist = Pathname("#{bundle}/Contents/Info.plist")) && plist.exist? && plist.readable?
+        Homebrew::BundleVersion.from_info_plist(plist)
+      end
+      @bundle_version = T.let(bundle_version, T.nilable(Homebrew::BundleVersion))
+      bundle_version
     end
 
     sig { returns(DSL) }

@@ -68,8 +68,10 @@ module Cask
         super(cask, ".homebrew-command-wrappers/#{name}", target: name)
         @content = T.let(content.presence, T.nilable(String))
         @executable = T.let(executable&.to_s.presence, T.nilable(String))
-        @args = T.let(Array(args).map(&:to_s), T::Array[String])
-        @env = T.let(env.to_h { |key, value| [key.to_s, value.to_s] }, T::Hash[String, String])
+        resolved_args = Array(args).map(&:to_s)
+        @args = T.let(resolved_args, T::Array[String])
+        resolved_env = env.to_h { |key, value| [key.to_s, value.to_s] }
+        @env = T.let(resolved_env, T::Hash[String, String])
       end
 
       sig {

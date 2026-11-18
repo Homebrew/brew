@@ -17,14 +17,15 @@ module OS
           # This avoids a `sudo` prompt to `chgrp` the directory after creation.
           sig { returns(String) }
           def expected_caskroom_group
-            @expected_caskroom_group ||= T.let(
-              begin
-                Etc.getgrgid(Process.egid)&.name || "root"
-              rescue ArgumentError
-                "root"
-              end,
-              T.nilable(String),
-            )
+            return @expected_caskroom_group if @expected_caskroom_group
+
+            expected_caskroom_group = begin
+              Etc.getgrgid(Process.egid)&.name || "root"
+            rescue ArgumentError
+              "root"
+            end
+            @expected_caskroom_group = T.let(expected_caskroom_group, T.nilable(String))
+            expected_caskroom_group
           end
         end
       end
