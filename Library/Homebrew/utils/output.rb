@@ -437,10 +437,10 @@ module Utils
           pretty_removed(status)
         elsif disabled
           pretty_disabled(status)
-        elsif incompatible
-          pretty_incompatible(status)
         elsif deprecated
           pretty_deprecated(status)
+        elsif incompatible
+          pretty_incompatible(status)
         else
           status
         end
