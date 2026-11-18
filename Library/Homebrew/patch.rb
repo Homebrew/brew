@@ -87,7 +87,7 @@ module Patch
   def self.apply(text, strip:, base:)
     ensure_targets_within!(text, strip:, base:)
     Sandbox.capture("patch", args: ["-g", "0", "-f", "-#{strip}"], input: text,
-                             write_paths: [base], chdir: base, print_stdout: true)
+                             write_paths: [base], chdir: base, print_stdout: Context.current.verbose?)
   end
 
   sig {
