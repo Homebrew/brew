@@ -127,6 +127,9 @@ system "python3.y", "-m", "pip", "install", *std_pip_args(build_isolation: true)
 Match the executable to the declared dependency whenever the Python minor version changes.
 Use upstream build-system options to direct bindings into the formula prefix rather than patching global Python paths.
 
+When building bindings for multiple Python 3 versions, declare each `python@3.y` dependency and iterate over `python3_interpreters` in the install and test blocks.
+Each entry is the dependency's `opt_libexec/"bin/python"` path.
+
 ### Build-system integration for Python bindings
 
 When more than one Python is available in the dependency graph, pass the declared interpreter to the build system explicitly.

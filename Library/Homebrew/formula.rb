@@ -930,10 +930,25 @@ class Formula # rubocop:disable Metrics/ClassLength
   # @!method resources
   def_delegator :"active_spec.resources", :values, :resources
 
-  # The {Dependency}s for the currently active {SoftwareSpec}.
+  # The direct dependencies for the active {SoftwareSpec}.
+  # An optionally versioned name or regular expression filters by both the
+  # declared name and its basename, in declaration order.
   #
   # @api public
   delegate deps: :active_spec
+
+  # The single direct dependency matching an optionally versioned name or a regular expression.
+  #
+  # @raise [RuntimeError] if no dependency matches or distinct dependency names match
+  # @api public
+  sig { params(name: T.any(String, Regexp)).returns(Dependency) }
+  def dep(name)
+    matches = deps(name).uniq(&:name)
+    return matches.fetch(0) if matches.size == 1
+
+    raise "`#{full_name}` must declare exactly one dependency matching #{name.inspect}; " \
+          "found #{matches.map(&:name).join(", ").presence || "none"}."
+  end
 
   # The stable path to the executable provided by this formula's direct Python 3 dependency.
   #
@@ -951,6 +966,14 @@ class Formula # rubocop:disable Metrics/ClassLength
     end
 
     @python3 = python_deps.values.fetch(0)
+  end
+
+  # The stable `libexec/bin/python` paths of direct `python@3.x` dependencies.
+  #
+  # @api public
+  sig { returns(T::Array[Pathname]) }
+  def python3_interpreters
+    deps(/\Apython@3\.\d+\z/).map { |dep| dep.opt_libexec/"bin/python" }.uniq
   end
 
   # The declared {Dependency}s for the currently active {SoftwareSpec} (i.e. including those provided by macOS).

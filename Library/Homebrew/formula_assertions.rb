@@ -25,6 +25,67 @@ module Homebrew
       @assertions ||= T.let(0, T.nilable(Integer))
     end
 
+    # Runs a command in the background for the duration of a test block.
+    # Pass the executable and its arguments separately. For shell setup, use `exec`
+    # to replace the shell with the process the helper should clean up.
+    # Yields the child process ID and terminates and reaps the child on exit.
+    # The block may also reap the child itself.
+    # Sends `KILL` if the child is still running five seconds after the requested signal.
+    # Extra keyword arguments are forwarded to `Process.spawn`.
+    #
+    # @api public
+    sig {
+      params(
+        executable:    T.any(String, Pathname),
+        args:          T.any(String, Pathname),
+        signal:        String,
+        spawn_options: T.anything,
+        block:         T.proc.params(pid: Integer).void,
+      ).void
+    }
+    def with_test_process(executable, *args, signal: "TERM", **spawn_options, &block)
+      signal_number = Signal.list.fetch(signal.delete_prefix("-").delete_prefix("SIG"), 0)
+      raise ArgumentError, "Unsupported signal: #{signal.inspect}" if signal_number.zero?
+
+      signal_number = -signal_number if signal.start_with?("-")
+      executable = executable.to_s
+      pid = Process.spawn([executable, executable], *args, **spawn_options)
+      begin
+        yield(pid)
+      ensure
+        reaped = begin
+          Process.wait(pid, Process::WNOHANG)
+        rescue Errno::ECHILD
+          true
+        end
+
+        unless reaped
+          begin
+            Process.kill(signal_number, pid)
+          rescue Errno::ESRCH
+            # The child or its process group may have exited before signalling.
+          end
+
+          begin
+            deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+            until Process.wait(pid, Process::WNOHANG)
+              remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+              if remaining <= 0
+                Process.kill("KILL", pid)
+                Process.wait(pid)
+                break
+              end
+
+              sleep [0.1, remaining].min
+            end
+          rescue Errno::ESRCH
+            # The child exited between the non-blocking wait and the signal.
+            Process.wait(pid)
+          end
+        end
+      end
+    end
+
     # Returns the output of running cmd and asserts the exit status.
     #
     # @api public

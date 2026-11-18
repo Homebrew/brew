@@ -105,6 +105,16 @@ RSpec.describe Dependency do
     end
   end
 
+  describe "opt paths" do
+    it "uses the declared dependency name without its tap" do
+      dependency = described_class.new("user/tap/openssl@4")
+      opt = HOMEBREW_PREFIX/"opt/openssl@4"
+
+      expect([dependency.opt_prefix, dependency.opt_bin, dependency.opt_lib, dependency.opt_include,
+              dependency.opt_libexec]).to eq([opt, opt/"bin", opt/"lib", opt/"include", opt/"libexec"])
+    end
+  end
+
   describe "#formula_name?" do
     it "only accepts bare or tap-qualified formula names" do
       names = ["foo", "foo@1.2", "foo-bar+baz", "homebrew/core/foo", "user/repo/foo", ".", "..", "foo.rb",

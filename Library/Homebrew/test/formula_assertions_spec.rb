@@ -11,6 +11,95 @@ RSpec.describe Homebrew::Assertions do
     end.new
   end
 
+  describe "#with_test_process" do
+    it "terminates and reaps the child with the requested signal" do
+      formula_assertions.with_test_process("/bin/sleep", "60", signal: "INT") { nil }
+
+      expect($CHILD_STATUS.termsig).to eq Signal.list.fetch("INT")
+    end
+
+    it "accepts a SIG-prefixed process group signal" do
+      formula_assertions.with_test_process("/bin/sleep", "60", signal: "-SIGINT", pgroup: true) { nil }
+
+      expect($CHILD_STATUS.termsig).to eq Signal.list.fetch("INT")
+    end
+
+    it "kills and reaps a child that ignores the requested signal" do
+      IO.pipe do |reader, writer|
+        formula_assertions.with_test_process(RbConfig.ruby, "-e", <<~RUBY, out: writer) do
+          Signal.trap(:TERM, :IGNORE)
+          $stdout.sync = true
+          puts Process.pid
+          sleep
+        RUBY
+          writer.close
+          reader.gets
+        end
+      end
+
+      expect($CHILD_STATUS.termsig).to eq Signal.list.fetch("KILL")
+    end
+
+    it "preserves exceptions from the test block" do
+      expect do
+        formula_assertions.with_test_process("/bin/sleep", "60") { raise "test failed" }
+      end.to raise_error(RuntimeError, "test failed")
+    end
+
+    it "leaves a child reaped by the test block alone" do
+      expect(Process).not_to receive(:kill)
+
+      formula_assertions.with_test_process("/bin/sh", "-c", "exit 0") { |pid| Process.wait(pid) }
+    end
+
+    it "preserves the test block's exception after it reaps the child" do
+      expect do
+        formula_assertions.with_test_process("/bin/sh", "-c", "exit 0") do |pid|
+          Process.wait(pid)
+          raise Errno::ECHILD, "test failed"
+        end
+      end.to raise_error(Errno::ECHILD, /test failed/)
+    end
+
+    it "preserves errors when spawning the child fails" do
+      expect do
+        formula_assertions.with_test_process((mktmpdir/"missing-executable").to_s) { nil }
+      end.to raise_error(Errno::ENOENT)
+    end
+
+    it "rejects an implicit shell command" do
+      expect do
+        formula_assertions.with_test_process("/bin/echo ready | /bin/cat", out: File::NULL) { nil }
+      end.to raise_error(Errno::ENOENT)
+    end
+
+    it "runs a single executable path containing shell metacharacters literally" do
+      executable = mktmpdir/"test & command"
+      executable.write("#!/bin/sh\nexit 27\n")
+      executable.chmod(0755)
+
+      formula_assertions.with_test_process(executable.to_s) { |pid| Process.wait(pid) }
+
+      expect($CHILD_STATUS.exitstatus).to eq(27)
+    end
+
+    it "rejects an invalid signal before spawning the child" do
+      allow(Process).to receive(:spawn).and_raise("spawned before signal validation")
+
+      expect do
+        formula_assertions.with_test_process("/bin/sleep", "60", signal: "TERMM") { nil }
+      end.to raise_error(ArgumentError, /TERMM/)
+    end
+
+    it "forwards spawn options" do
+      IO.pipe do |reader, writer|
+        formula_assertions.with_test_process("/bin/echo", "ready", [:out, :err] => writer) do
+          expect(reader.gets).to eq("ready\n")
+        end
+      end
+    end
+  end
+
   it "preserves the shell exit status for a non-executable Pathname" do
     executable = mktmpdir/"not-executable"
     executable.write("")

@@ -283,6 +283,98 @@ RSpec.describe Formula do
     end
   end
 
+  describe "#deps" do
+    let(:f) do
+      formula "dependency-lookup" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on "postgresql-client"
+        depends_on "postgresql@17" => :build
+        depends_on "postgresql" => :test
+        depends_on "user/tap/postgresql@18"
+        depends_on "ffmpeg@7"
+        depends_on "ffmpeg-full"
+        depends_on "ffmpeg@7-full"
+      end
+    end
+
+    it "returns all direct dependencies when no name is given" do
+      expect(f.deps).to eq(f.active_spec.deps)
+    end
+
+    it "finds direct dependencies by base name in declaration order" do
+      expect(f.deps("postgresql").map(&:name))
+        .to eq ["postgresql@17", "postgresql", "user/tap/postgresql@18"]
+    end
+
+    it "can limit matches to a tap" do
+      expect(f.deps("user/tap/postgresql").map(&:name)).to eq ["user/tap/postgresql@18"]
+    end
+
+    it "finds both unversioned and versioned full formulae" do
+      expect(f.deps("ffmpeg-full").map(&:name)).to eq ["ffmpeg-full", "ffmpeg@7-full"]
+    end
+
+    it "accepts a regular expression" do
+      expect(f.deps(/\Apostgresql@\d+\z/).map(&:name)).to eq ["postgresql@17", "user/tap/postgresql@18"]
+    end
+
+    it "keeps dependency tag filters available on filtered dependencies" do
+      expect(f.deps("postgresql").build.map(&:name)).to eq ["postgresql@17"]
+    end
+
+    it "returns an empty collection when no dependency matches" do
+      expect(f.deps("sqlite")).to be_empty
+    end
+  end
+
+  describe "#dep" do
+    let(:f) do
+      formula "dependency-lookup" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on "openssl@4" => :build
+        depends_on "openssl@4" => :test
+        depends_on "python@3.14"
+        depends_on "python@3.15"
+      end
+    end
+
+    it "returns the dependency when its name is declared with separate tags" do
+      expect(f.dep("openssl").name).to eq("openssl@4")
+    end
+
+    it "raises a descriptive error when no dependency matches" do
+      expect { f.dep("llvm") }
+        .to raise_error(RuntimeError,
+                        '`dependency-lookup` must declare exactly one dependency matching "llvm"; found none.')
+    end
+
+    it "raises a descriptive error when distinct dependency names match" do
+      expect { f.dep("python") }
+        .to raise_error(RuntimeError, '`dependency-lookup` must declare exactly one dependency matching "python"; ' \
+                                      "found python@3.14, python@3.15.")
+    end
+  end
+
+  describe "#python3_interpreters" do
+    it "returns one libexec interpreter path for each direct versioned Python 3 dependency" do
+      f = formula "multiple-python-interpreters" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+        depends_on "python"
+        depends_on "python@3.14" => :build
+        depends_on "python@3.14" => :test
+        depends_on "user/tap/python@3.13" => [:build, :test]
+      end
+
+      expect(f.python3_interpreters).to eq [
+        HOMEBREW_PREFIX/"opt/python@3.14/libexec/bin/python",
+        HOMEBREW_PREFIX/"opt/python@3.13/libexec/bin/python",
+      ]
+    end
+  end
+
   describe "#python3" do
     it "returns the stable executable for a direct Python dependency" do
       f = formula "python-runtime-dependent" do
