@@ -302,6 +302,7 @@ module OS
       def self.latest_version
         case MacOS.version
         when "26" then "26.6"
+        when "15" then "16.4"
         when "13" then "15.1"
         when "11" then "13.2"
         else           MacOS::Xcode.latest_version
@@ -313,7 +314,7 @@ module OS
         case macos.strip_patch
         when "27" then "2100.3.34.2"
         when "26" then "2100.1.1.101"
-        when "15" then "1700.6.4.2"
+        when "15" then "1700.0.13.5"
         when "14" then "1600.0.26.6"
         when "13" then "1500.1.0.2.5"
         when "12" then "1400.0.29.202"
