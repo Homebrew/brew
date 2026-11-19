@@ -307,7 +307,8 @@ jobs:
   build-and-publish-long-runner:
     name: Build runner Docker image (${{ matrix.platform }})
     needs: [generate-tags, build]
-    if: github.repository_owner == 'Homebrew'
+    # The `main` push for the tagged commit already publishes this image.
+    if: github.repository_owner == 'Homebrew' && github.event_name != 'release'
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
