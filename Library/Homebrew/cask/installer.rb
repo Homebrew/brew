@@ -435,7 +435,7 @@ module Cask
 
     sig { void }
     def check_macos_requirements
-      macos_requirement = @cask.unsatisfied_macos_requirement
+      macos_requirement = [@cask.depends_on.macos, @cask.depends_on.maximum_macos].compact.find { !it.satisfied? }
       return unless macos_requirement
 
       raise CaskError, "#{@cask}: #{macos_requirement.message(type: :cask)}"
@@ -443,12 +443,19 @@ module Cask
 
     sig { void }
     def check_arch_requirements
-      return if @cask.supported_arch?
+      return if @cask.depends_on.arch.nil?
+
+      @current_arch = T.let(@current_arch, T.nilable(T::Hash[Symbol, T.nilable(T.any(Symbol, Integer))]))
+      @current_arch ||= { type: Hardware::CPU.type, bits: Hardware::CPU.bits }
+      return if @cask.depends_on.arch.any? do |arch|
+        arch[:type] == @current_arch[:type] &&
+        Array(arch[:bits]).include?(@current_arch[:bits])
+      end
 
       raise CaskError,
             "#{@cask}: This cask depends on hardware architecture being one of " \
-            "[#{@cask.depends_on.arch&.join(", ")}], " \
-            "but you are running #{{ type: Hardware::CPU.type, bits: Hardware::CPU.bits }}."
+            "[#{@cask.depends_on.arch.join(", ")}], " \
+            "but you are running #{@current_arch}."
     end
 
     sig { returns(T::Array[T.any(Formula, ::Cask::Cask)]) }

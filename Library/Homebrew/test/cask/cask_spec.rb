@@ -658,18 +658,24 @@ RSpec.describe Cask::Cask, :cask do
   end
 
   describe "#incompatible?" do
-    before { allow(Hardware::CPU).to receive(:type).and_return(:arm) }
-
-    it "is true when no architecture matches" do
-      cask = described_class.new("example") { depends_on arch: :intel }
-
-      expect(cask.incompatible?).to be(true)
+    let(:cask) do
+      described_class.new("example") do
+        version "1.2.3"
+        sha256 :no_check
+        url "https://brew.sh/example.zip"
+        depends_on macos: :sonoma
+        depends_on arch: :arm64
+        app "Example.app"
+      end
     end
 
-    it "is false when one of its architectures matches" do
-      cask = described_class.new("example") { depends_on arch: [:intel, :arm64] }
-
-      expect(cask.incompatible?).to be(false)
+    test_each([[:sonoma, :arm, false], [:ventura, :arm, true], [:sonoma, :intel, true],
+               [:linux, :arm, true]]) do |(os, arch, incompatible)|
+      it "is #{incompatible} on #{os} #{arch}" do
+        Homebrew::SimulateSystem.with(os:, arch:) do
+          expect(cask.incompatible?).to be(incompatible)
+        end
+      end
     end
 
     it "reads the value stored in the internal API" do
@@ -677,20 +683,6 @@ RSpec.describe Cask::Cask, :cask do
                                             api_source: { "incompatible" => true })
 
       expect(cask.incompatible?).to be(true)
-    end
-
-    it "is true when a macOS requirement isn't met", :needs_macos do
-      cask = Cask::CaskLoader.load("with-depends-on-macos-failure")
-      allow(cask.depends_on.maximum_macos).to receive(:satisfied?).and_return(false)
-
-      expect(cask.incompatible?).to be(true)
-    end
-
-    it "is false when its macOS requirement is met", :needs_macos do
-      cask = Cask::CaskLoader.load("with-depends-on-macos-failure")
-      allow(cask.depends_on.maximum_macos).to receive(:satisfied?).and_return(true)
-
-      expect(cask.incompatible?).to be(false)
     end
   end
 

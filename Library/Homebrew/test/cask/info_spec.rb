@@ -175,6 +175,7 @@ RSpec.describe Cask::Info, :cask do
     before do
       installed_path.mkpath
       allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+      allow(cask).to receive(:incompatible?).and_return(false)
       allow(installed_cask).to receive_messages(installed?: true, installed_version: "3.2.0-RC3", outdated?: false)
       allow(Cask::Caskroom).to receive(:casks).and_return([installed_cask])
       allow(Cask::Tab).to receive(:for_cask).with(installed_cask).and_return(

@@ -332,28 +332,13 @@ module Cask
       end
     end
 
-    # True if an OS, macOS version or architecture requirement isn't met on this system.
+    # True if this cask doesn't support this platform.
     # Casks loaded from the internal API use the value stored there for this platform.
     sig { returns(T::Boolean) }
     def incompatible?
       return api_source&.[]("incompatible") == true if loaded_from_internal_api?
 
-      !valid_platform? || !unsatisfied_macos_requirement.nil? || !supported_arch?
-    end
-
-    # The first `depends_on macos:` or `maximum_macos:` requirement that isn't met on this system.
-    sig { returns(T.nilable(MacOSRequirement)) }
-    def unsatisfied_macos_requirement
-      [depends_on.macos, depends_on.maximum_macos].compact.find { !it.satisfied? }
-    end
-
-    # True unless `depends_on arch:` lists only other architectures.
-    sig { returns(T::Boolean) }
-    def supported_arch?
-      archs = depends_on.arch
-      return true if archs.nil?
-
-      archs.any? { |arch| arch[:type] == Hardware::CPU.type && Array(arch[:bits]).include?(Hardware::CPU.bits) }
+      !platform_supported?(Homebrew::SimulateSystem.current_tag)
     end
 
     sig { returns(T::Boolean) }
