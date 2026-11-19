@@ -27,7 +27,8 @@ module OS
 
         # Validate every architecture, nested code and strict bundle structure.
         # https://developer.apple.com/documentation/security/static-code-validation-flags
-        VALIDATION_FLAGS = T.let(((1 << 0) | (1 << 3) | (1 << 4)).freeze, Integer)
+        validation_flags = ((1 << 0) | (1 << 3) | (1 << 4))
+        VALIDATION_FLAGS = T.let(validation_flags.freeze, Integer)
 
         # https://developer.apple.com/documentation/security/errseccsreqfailed
         REQUIREMENT_FAILED_STATUS = -67050

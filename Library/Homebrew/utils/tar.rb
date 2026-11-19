@@ -27,7 +27,8 @@ module Utils
 
         gnu_tar_gtar_path = HOMEBREW_PREFIX/"opt/gnu-tar/bin/gtar"
         gnu_tar_gtar = gnu_tar_gtar_path if gnu_tar_gtar_path.executable?
-        @executable = T.let(which("gtar") || gnu_tar_gtar || which("tar"), T.nilable(Pathname))
+        executable = which("gtar") || gnu_tar_gtar || which("tar")
+        @executable = T.let(executable, T.nilable(Pathname))
       end
 
       sig { params(path: T.any(Pathname, String)).void }

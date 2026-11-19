@@ -69,11 +69,9 @@ class DevelopmentTools
 
     sig { returns(T.nilable(String)) }
     def clang_version_output
-      @clang_version_output ||= T.let(
-        if (path = locate("clang"))
-          Utils.popen_read_text(path, "--version", err: :err)
-        end, T.nilable(String)
-      )
+      @clang_version_output ||= if (path = locate("clang"))
+        Utils.popen_read_text(path, "--version", err: :err)
+      end
     end
 
     # Get the Clang version.
@@ -81,13 +79,11 @@ class DevelopmentTools
     # @api public
     sig { returns(Version) }
     def clang_version
-      @clang_version ||= T.let(
-        if (build_version = clang_version_output&.[](/(?:clang|LLVM) version (\d+\.\d(?:\.\d)?)/, 1))
-          Version.new(build_version)
-        else
-          Version::NULL
-        end, T.nilable(Version)
-      )
+      @clang_version ||= if (build_version = clang_version_output&.[](/(?:clang|LLVM) version (\d+\.\d(?:\.\d)?)/, 1))
+        Version.new(build_version)
+      else
+        Version::NULL
+      end
     end
 
     # Get the Clang build version.
@@ -105,13 +101,10 @@ class DevelopmentTools
         return Version.new(clang_version.split(".", 2).fetch(0))
       end
 
-      @clang_build_version ||= T.let(
-        if (build_version = clang_version_output&.[](%r{clang(?:-| version [^ ]+ \(tags/RELEASE_)(\d{2,})}, 1))
-          Version.new(build_version)
-        else
-          Version::NULL
-        end, T.nilable(Version)
-      )
+      @clang_build_version ||= begin
+        build_version = clang_version_output&.[](%r{clang(?:-| version [^ ]+ \(tags/RELEASE_)(\d{2,})}, 1)
+        build_version ? Version.new(build_version) : Version::NULL
+      end
     end
 
     # Get the LLVM Clang build version.
@@ -128,7 +121,7 @@ class DevelopmentTools
     # @api private
     sig { returns(Version) }
     def llvm_clang_version
-      @llvm_clang_version ||= T.let(begin
+      @llvm_clang_version ||= begin
         path = Formula["llvm"].opt_prefix/"bin/clang"
         if path.executable? &&
            (build_version = Utils.popen_read_text(path, "--version", err: :err)[/clang version (\d+\.\d\.\d)/, 1])
@@ -138,7 +131,7 @@ class DevelopmentTools
         end
       rescue FormulaUnavailableError
         Version::NULL
-      end, T.nilable(Version))
+      end
     end
 
     sig { returns(Pathname) }
@@ -169,7 +162,9 @@ class DevelopmentTools
     sig { void }
     def clear_version_cache
       @clang_version_output = T.let(nil, T.nilable(String))
-      @clang_version = @clang_build_version = @llvm_clang_version = T.let(nil, T.nilable(Version))
+      @clang_version = T.let(nil, T.nilable(Version))
+      @clang_build_version = T.let(nil, T.nilable(Version))
+      @llvm_clang_version = T.let(nil, T.nilable(Version))
       @gcc_version = T.let({}, T.nilable(T::Hash[String, Version]))
     end
 

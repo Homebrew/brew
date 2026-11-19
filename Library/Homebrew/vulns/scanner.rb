@@ -103,7 +103,8 @@ module Homebrew
       def initialize(formulae, ignore_patches: true, min_severity: nil, fix_type: nil)
         @formulae = formulae
         @ignore_patches = ignore_patches
-        @min_severity_level = T.let(min_severity ? SEVERITY_LEVELS.fetch(min_severity) : 0, Integer)
+        min_severity_level = min_severity ? SEVERITY_LEVELS.fetch(min_severity) : 0
+        @min_severity_level = T.let(min_severity_level, Integer)
         @fix_type = fix_type
       end
 

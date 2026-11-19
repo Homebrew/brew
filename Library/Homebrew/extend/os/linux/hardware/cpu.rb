@@ -12,11 +12,12 @@ module OS
 
           sig { returns(T::Hash[Symbol, String]) }
           def optimization_flags
-            @optimization_flags ||= T.let(begin
-              flags = super.dup
-              flags[:native] = arch_flag(Homebrew::EnvConfig.arch)
-              flags
-            end, T.nilable(T::Hash[Symbol, String]))
+            return @optimization_flags if @optimization_flags
+
+            flags = super.dup
+            flags[:native] = arch_flag(Homebrew::EnvConfig.arch)
+            @optimization_flags = T.let(flags, T.nilable(T::Hash[Symbol, String]))
+            flags
           end
 
           sig { returns(Symbol) }
@@ -137,8 +138,11 @@ module OS
           # Supported CPU instructions
           sig { returns(T::Array[String]) }
           def flags
-            @flags ||= T.let(cpuinfo[/^(?:flags|Features)\s*: (.*)/, 1]&.split, T.nilable(T::Array[String]))
-            @flags ||= []
+            return @flags if @flags
+
+            flags = cpuinfo[/^(?:flags|Features)\s*: (.*)/, 1]&.split || []
+            @flags = T.let(flags, T.nilable(T::Array[String]))
+            flags
           end
 
           # Compatibility with Mac method, which returns lowercase symbols

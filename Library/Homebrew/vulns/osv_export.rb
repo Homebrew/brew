@@ -403,13 +403,15 @@ module Homebrew
       def self.record_for(formula, vuln_id, patches: formula.serialized_patches,
                           fixed: formula.pkg_version.to_s, upstream: nil, now: Time.now.utc)
         timestamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        id = record_id(formula, vuln_id)
+        entry = affected_entry(formula, vuln_id, patches, fixed)
         record = T.let({
           schema_version:    SCHEMA_VERSION,
-          id:                record_id(formula, vuln_id),
+          id:,
           published:         timestamp,
           modified:          timestamp,
           upstream:          [vuln_id],
-          affected:          [affected_entry(formula, vuln_id, patches, fixed)],
+          affected:          [entry],
           database_specific: { source: "generated" },
         }, T::Hash[Symbol, T.untyped])
 

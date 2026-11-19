@@ -26,10 +26,12 @@ module Homebrew
         @type = T.let(type.downcase.freeze, String)
         namespace = nil if namespace && namespace.empty?
         namespace, name = self.class.normalize(@type, namespace, name)
-        @namespace = T.let(namespace && -namespace, T.nilable(String))
+        namespace = -namespace if namespace
+        @namespace = namespace
         @name = T.let(-name, String)
         version = nil if version && version.empty?
-        @version = T.let(version && -version, T.nilable(String))
+        version = -version if version
+        @version = version
       end
 
       sig { returns(String) }

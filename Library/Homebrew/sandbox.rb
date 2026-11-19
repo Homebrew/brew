@@ -16,6 +16,8 @@ class Sandbox
   include Utils::Output::Mixin
   extend Utils::Output::Mixin
 
+  @tty_state = T.let(nil, T.nilable(String))
+
   # Privileged groups that are expected to be able to use a working sandbox.
   PRIVILEGED_GROUPS = %w[admin staff root wheel].freeze
 
@@ -372,7 +374,7 @@ class Sandbox
   # capture it once per process. `nil` when it cannot be captured.
   sig { returns(T.nilable(String)) }
   def self.tty_state
-    @tty_state ||= T.let(Utils.popen_read("stty", "-g", in: :in).chomp, T.nilable(String))
+    @tty_state ||= Utils.popen_read("stty", "-g", in: :in).chomp
     @tty_state.presence
   end
 

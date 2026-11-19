@@ -20,31 +20,29 @@ module Homebrew
       tap:  "tap dependencies",
     }.freeze, T::Hash[Symbol, String])
 
-    BUNDLE_DISABLE_ENVS = T.let(
-      {
-        cleanup: [BUNDLE_CORE_TYPES, Homebrew::Bundle.extensions.select(&:cleanup_supported?).to_h do |extension|
-          [extension.type, extension.banner_name]
-        end],
-        dump:    [BUNDLE_CORE_TYPES, Homebrew::Bundle.extensions.select(&:dump_disable_supported?).to_h do |extension|
-          [extension.type, extension.banner_name]
-        end],
-      }.flat_map do |command, type_descriptions|
-        type_descriptions.reduce(&:merge).map do |type, description|
-          verb = (command == :cleanup) ? "clean up" : "dump"
-          [
-            :"HOMEBREW_BUNDLE_#{command.upcase}_NO_#{type.to_s.upcase}",
-            {
-              description: "If set, `brew bundle #{command}` will not #{verb} #{description}.",
-              boolean:     true,
-            },
-          ]
-        end
-      end.sort.to_h.freeze,
-      T::Hash[Symbol, T::Hash[Symbol, T.untyped]],
-    )
+    bundle_disable_envs = {
+      cleanup: [BUNDLE_CORE_TYPES, Homebrew::Bundle.extensions.select(&:cleanup_supported?).to_h do |extension|
+        [extension.type, extension.banner_name]
+      end],
+      dump:    [BUNDLE_CORE_TYPES, Homebrew::Bundle.extensions.select(&:dump_disable_supported?).to_h do |extension|
+        [extension.type, extension.banner_name]
+      end],
+    }.flat_map do |command, type_descriptions|
+      type_descriptions.reduce(&:merge).map do |type, description|
+        verb = (command == :cleanup) ? "clean up" : "dump"
+        [
+          :"HOMEBREW_BUNDLE_#{command.upcase}_NO_#{type.to_s.upcase}",
+          {
+            description: "If set, `brew bundle #{command}` will not #{verb} #{description}.",
+            boolean:     true,
+          },
+        ]
+      end
+    end.sort.to_h
+    BUNDLE_DISABLE_ENVS = T.let(bundle_disable_envs.freeze, T::Hash[Symbol, T::Hash[Symbol, T.untyped]])
 
     # Keep environment-variable defaults and documentation together in one registry.
-    ENVS = T.let({ # rubocop:disable Metrics/CollectionLiteralLength
+    envs = { # rubocop:disable Metrics/CollectionLiteralLength
       HOMEBREW_ALLOWED_TAPS:                     {
         description: "A space-separated list of taps. Homebrew will refuse to install a " \
                      "formula unless it and all of its dependencies are in an official tap " \
@@ -820,9 +818,11 @@ module Homebrew
         description: "A comma-separated list of hostnames and domain names excluded " \
                      "from proxying by `curl`(1), `git`(1) and `svn`(1) when downloading through Homebrew.",
       },
-    }.freeze, T::Hash[Symbol, T::Hash[Symbol, T.untyped]])
+    }
+    ENVS = T.let(envs.freeze, T::Hash[Symbol, T::Hash[Symbol, T.untyped]])
 
-    ANALYTICS_VARIABLES = T.let((ENVS.keys - [:HOMEBREW_NO_ANALYTICS]).freeze, T::Array[Symbol])
+    analytics_variables = ENVS.keys - [:HOMEBREW_NO_ANALYTICS]
+    ANALYTICS_VARIABLES = T.let(analytics_variables.freeze, T::Array[Symbol])
 
     sig { params(env: Symbol, hash: T::Hash[Symbol, T.untyped]).returns(String) }
     def env_method_name(env, hash)

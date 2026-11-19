@@ -24,6 +24,9 @@ module Hardware
     INTEL_64BIT_OLDEST_CPU = :core2
     ROSETTA_RUNTIME_PATH = "/Library/Apple/usr/libexec/oah/libRosettaRuntime"
 
+    @cores = T.let(nil, T.nilable(Integer))
+    @bits = T.let(nil, T.nilable(Integer))
+
     class << self
       sig { returns(T::Hash[Symbol, String]) }
       def optimization_flags
@@ -101,21 +104,18 @@ module Hardware
 
       sig { returns(Integer) }
       def cores
-        @cores ||= T.let(
-          begin
-            cores = Utils.popen_read("getconf", "_NPROCESSORS_ONLN").chomp.to_i
-            $CHILD_STATUS.success? ? cores : 1
-          end,
-          T.nilable(Integer),
-        )
+        @cores ||= begin
+          cores = Utils.popen_read("getconf", "_NPROCESSORS_ONLN").chomp.to_i
+          $CHILD_STATUS.success? ? cores : 1
+        end
       end
 
       sig { returns(T.nilable(Integer)) }
       def bits
-        @bits ||= T.let(case RUBY_PLATFORM
+        @bits ||= case RUBY_PLATFORM
         when /x86_64/, /ppc64|powerpc64/, /aarch64|arm64/ then 64
         when /i\d86/, /ppc/, /arm/ then 32
-        end, T.nilable(Integer))
+        end
       end
 
       sig { returns(T::Boolean) }
@@ -216,6 +216,8 @@ module Hardware
     end
   end
 
+  @target_cpu = T.let(nil, T.nilable(Symbol))
+
   class << self
     sig { returns(String) }
     def cores_as_words
@@ -264,12 +266,12 @@ module Hardware
       # Rust already defaults to the oldest supported cpu for each target-triplet
       # so it's safe to ignore generic archs such as :armv6 here.
       # Rust defaults to apple-m1 since Rust 1.71 for aarch64-apple-darwin.
-      @target_cpu ||= T.let(case arch
+      @target_cpu ||= case arch
       when :core
         :prescott
       when :native, :ivybridge, :sandybridge, :westmere, :nehalem, :core2
         arch
-      end, T.nilable(Symbol))
+      end
       return if @target_cpu.blank?
 
       "--codegen target-cpu=#{@target_cpu}"

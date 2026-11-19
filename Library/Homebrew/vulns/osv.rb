@@ -30,8 +30,8 @@ module Homebrew
         packages.each_slice(BATCH_SIZE).with_index do |batch, batch_index|
           offset = batch_index * BATCH_SIZE
           pending = batch.map.with_index do |pkg, index|
-            query = T.let({ package: { name: pkg.fetch(:name), ecosystem: pkg.fetch(:ecosystem) } },
-                          T::Hash[Symbol, T.untyped])
+            package = { name: pkg.fetch(:name), ecosystem: pkg.fetch(:ecosystem) }
+            query = T.let({ package: package }, T::Hash[Symbol, T.untyped])
             query[:version] = pkg.fetch(:version) if pkg.fetch(:version)
             { slot: offset + index, query: }
           end

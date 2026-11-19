@@ -13,6 +13,8 @@ module OS
   module Mac
     extend Utils::Output::Mixin
 
+    @active_developer_dir = T.let(nil, T.nilable(String))
+
     raise "Loaded OS::Mac on generic OS!" if ENV["HOMEBREW_TEST_GENERIC_OS"]
 
     # This check is the only acceptable or necessary one in this file.
@@ -96,10 +98,7 @@ module OS
 
     sig { returns(String) }
     def self.active_developer_dir
-      @active_developer_dir ||= T.let(
-        Utils.popen_read("/usr/bin/xcode-select", "-print-path").strip,
-        T.nilable(String),
-      )
+      @active_developer_dir ||= Utils.popen_read("/usr/bin/xcode-select", "-print-path").strip
     end
 
     sig { returns(T.any(CLTSDKLocator, XcodeSDKLocator)) }

@@ -43,17 +43,16 @@ module Homebrew
       if (json_dir = bottle_json_dir.presence) && Pathname(json_dir).directory?
         Dir[File.join(json_dir, "**", "*.bottle.json")].each do |path|
           bottle_json = begin
-            T.cast(JSON.parse(File.read(path)), T::Hash[String, T::Hash[String, T.untyped]])
+            contents = File.read(path)
+            T.cast(JSON.parse(contents), T::Hash[String, T::Hash[String, T.untyped]])
           rescue JSON::ParserError => e
             opoo "Skipping #{path}: #{e.message}"
             next
           end
 
           bottle_json.each do |full_name, hash|
-            path_exec_file_tags = T.cast(
-              hash.dig("bottle", "tags") || {},
-              T::Hash[String, T::Hash[String, T.untyped]],
-            ).values.select { |tag_hash| tag_hash.key?("path_exec_files") }
+            tags = hash.dig("bottle", "tags") || {}
+            path_exec_file_tags = T.cast(tags, T::Hash[String, T::Hash[String, T.untyped]]).values.select { |tag_hash| tag_hash.key?("path_exec_files") }
 
             if path_exec_file_tags.empty?
               opoo "Skipping #{full_name}: no `path_exec_files` in #{path}"

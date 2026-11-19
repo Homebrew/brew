@@ -197,7 +197,8 @@ module Formatter
     output = +""
 
     rows.times do |row_index|
-      item_indices_for_row = T.cast(row_index.step(objects.size - 1, rows).to_a, T::Array[Integer])
+      item_indices_for_row = row_index.step(objects.size - 1, rows).to_a
+      item_indices_for_row = T.cast(item_indices_for_row, T::Array[Integer])
 
       first_n = item_indices_for_row.first(item_indices_for_row.size - 1).map do |index|
         objects.fetch(index) + "".rjust(col_width - object_lengths.fetch(index))

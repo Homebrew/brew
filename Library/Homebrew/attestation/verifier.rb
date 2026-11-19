@@ -25,7 +25,8 @@ module Homebrew
       LOG_HASH_ALGORITHM = "SHA2_256"
       LOG_KEY_FORMAT = "PKIX_ECDSA_P256_SHA_256"
       LOG_KEY_CURVE = "prime256v1"
-      JSON_SAFE_INTEGER_MAX = T.let((1 << 53) - 1, Integer)
+      json_safe_integer_max = (1 << 53) - 1
+      JSON_SAFE_INTEGER_MAX = T.let(json_safe_integer_max.freeze, Integer)
       SHA256_BYTES = 32
       MERKLE_LEAF_PREFIX = "\x00"
       MERKLE_NODE_PREFIX = "\x01"
@@ -188,11 +189,11 @@ module Homebrew
         )
       end
 
+      @trusted_root = T.let(nil, T.nilable(TrustedRoot))
+
       sig { returns(TrustedRoot) }
       def self.trusted_root
-        @trusted_root ||= T.let(
-          parse_trusted_root((HOMEBREW_LIBRARY_PATH/"attestation/trusted_root.json").read), T.nilable(TrustedRoot)
-        )
+        @trusted_root ||= parse_trusted_root((HOMEBREW_LIBRARY_PATH/"attestation/trusted_root.json").read)
       end
 
       sig { params(json: String).returns(TrustedRoot) }

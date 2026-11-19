@@ -9,11 +9,12 @@ module Homebrew
     # Unknown Ruby or DSL is deliberately evaluated separately on each platform.
     module PlatformIndependence
       SOURCE_CALLS = [:url, :mirror, :version, :sha256, :sha1, :md5].freeze
-      FORMULA_CALLS = T.let((SOURCE_CALLS + [
+      formula_calls = (SOURCE_CALLS + [
         :desc, :homepage, :head, :revision, :version_scheme, :license, :depends_on,
         :uses_from_macos, :keg_only, :conflicts_with, :option, :deprecated_option,
         :deprecate!, :disable!, :pypi_packages
-      ]).freeze, T::Array[Symbol])
+      ])
+      FORMULA_CALLS = T.let(formula_calls.freeze, T::Array[Symbol])
 
       sig { params(formula: Formula).returns(T::Boolean) }
       def self.formula?(formula)

@@ -20,7 +20,8 @@ module Utils
       return executable if executable
 
       Kernel.require "formula"
-      T.cast(Formula[formula_name].ensure_installed!(reason:, latest:, executable: name), Pathname)
+      executable = Formula[formula_name].ensure_installed!(reason:, latest:, executable: name)
+      T.cast(executable, Pathname)
     end
   end
 end

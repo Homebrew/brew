@@ -6,8 +6,6 @@ require "utils/github"
 
 # Helper module for updating SPDX license data.
 module SPDX
-  module_function
-
   DATA_PATH = T.let((HOMEBREW_DATA_PATH/"spdx").freeze, Pathname)
   API_URL = "https://api.github.com/repos/spdx/license-list-data/releases/latest"
   LICENSEREF_PREFIX = "LicenseRef-Homebrew-"
@@ -17,47 +15,48 @@ module SPDX
     :truncated,
   ].freeze
 
+  @license_data = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
+  @exception_data = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
+  @license_index = T.let(nil, T.nilable(T::Hash[String, T::Boolean]))
+  @exception_index = T.let(nil, T.nilable(T::Hash[String, T::Boolean]))
+  @latest_tag = T.let(nil, T.nilable(String))
+
   sig { returns(T::Hash[String, T.untyped]) }
-  def license_data
-    @license_data ||= T.let(JSON.parse((DATA_PATH/"spdx_licenses.json").read), T.nilable(T::Hash[String, T.untyped]))
+  def self.license_data
+    @license_data ||= JSON.parse((DATA_PATH/"spdx_licenses.json").read)
   end
 
   sig { returns(T::Hash[String, T.untyped]) }
-  def exception_data
-    @exception_data ||= T.let(JSON.parse((DATA_PATH/"spdx_exceptions.json").read),
-                              T.nilable(T::Hash[String, T.untyped]))
+  def self.exception_data
+    @exception_data ||= JSON.parse((DATA_PATH/"spdx_exceptions.json").read)
   end
 
   sig { returns(T::Hash[String, T::Boolean]) }
-  def license_index
-    @license_index ||= T.let(
-      license_data["licenses"].to_h do |spdx_license|
-        [spdx_license["licenseId"].downcase, !!spdx_license["isDeprecatedLicenseId"]]
-      end,
-      T.nilable(T::Hash[String, T::Boolean]),
-    )
+  def self.license_index
+    @license_index ||= license_data["licenses"].to_h do |spdx_license|
+      [spdx_license["licenseId"].downcase, spdx_license["isDeprecatedLicenseId"] == true]
+    end
   end
 
   sig { returns(T::Hash[String, T::Boolean]) }
-  def exception_index
-    @exception_index ||= T.let(
-      exception_data["exceptions"].filter_map do |spdx_exception|
-        next if spdx_exception["isDeprecatedLicenseId"]
+  def self.exception_index
+    @exception_index ||= exception_data["exceptions"].filter_map do |spdx_exception|
+      next if spdx_exception["isDeprecatedLicenseId"]
 
-        [spdx_exception["licenseExceptionId"].downcase, true]
-      end.to_h,
-      T.nilable(T::Hash[String, T::Boolean]),
-    )
+      [spdx_exception["licenseExceptionId"].downcase, true]
+    end.to_h
   end
 
   sig { returns(String) }
-  def latest_tag
-    @latest_tag ||= T.let(GitHub::API.open_rest(API_URL)["tag_name"], T.nilable(String))
+  def self.latest_tag
+    @latest_tag ||= GitHub::API.open_rest(API_URL)["tag_name"]
   end
+
+  module_function
 
   sig { params(to: Pathname).void }
   def download_latest_license_data!(to: DATA_PATH)
-    data_url = "https://raw.githubusercontent.com/spdx/license-list-data/refs/tags/#{latest_tag}/json/"
+    data_url = "https://raw.githubusercontent.com/spdx/license-list-data/refs/tags/#{SPDX.latest_tag}/json/"
     Utils::Curl.curl_download("#{data_url}licenses.json", to: to/"spdx_licenses.json")
     Utils::Curl.curl_download("#{data_url}exceptions.json", to: to/"spdx_exceptions.json")
   end
@@ -109,19 +108,19 @@ module SPDX
   def valid_license?(license)
     return ALLOWED_LICENSE_SYMBOLS.include? license if license.is_a? Symbol
 
-    license_index.key?(license.delete_suffix("+").downcase)
+    SPDX.license_index.key?(license.delete_suffix("+").downcase)
   end
 
   sig { params(license: T.any(String, Symbol)).returns(T::Boolean) }
   def deprecated_license?(license)
     return false if license.is_a? Symbol
 
-    license_index.fetch(license.delete_suffix("+").downcase, false)
+    SPDX.license_index.fetch(license.delete_suffix("+").downcase, false)
   end
 
   sig { params(exception: String).returns(T::Boolean) }
   def valid_license_exception?(exception)
-    exception_index.key?(exception.downcase)
+    SPDX.exception_index.key?(exception.downcase)
   end
 
   sig {

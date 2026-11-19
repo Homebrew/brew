@@ -22,13 +22,16 @@ module Homebrew
     sig { params(retries: Integer, force: T::Boolean, pour: T::Boolean).void }
     def initialize(retries: 1, force: false, pour: false)
       @concurrency = T.let(EnvConfig.download_concurrency, Integer)
-      @quiet = T.let(@concurrency > 1, T::Boolean)
-      @tries = T.let(retries + 1, Integer)
+      quiet = @concurrency > 1
+      @quiet = T.let(quiet, T::Boolean)
+      tries = retries + 1
+      @tries = T.let(tries, Integer)
       @force = force
       @pour = pour
       @pool = T.let(Concurrent::FixedThreadPool.new(concurrency), Concurrent::FixedThreadPool)
       @tty = T.let($stdout.tty?, T::Boolean)
-      @dumb_tty = T.let(ENV["TERM"] == "dumb", T::Boolean)
+      dumb_tty = ENV["TERM"] == "dumb"
+      @dumb_tty = T.let(dumb_tty, T::Boolean)
       @spinner = T.let(nil, T.nilable(Spinner))
       @symlink_targets = T.let({}, T::Hash[Pathname, T::Set[Downloadable]])
       @downloads_by_location = T.let({}, T::Hash[Pathname, Concurrent::Promises::Future])
