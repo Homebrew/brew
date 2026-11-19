@@ -15,7 +15,8 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
   sig { returns(T::Array[String]) }
   attr_reader :mirrors
 
-  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
+  # Formula `url` specs reach download strategies as arbitrary options.
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void } # rubocop:disable Homebrew/NoUntypedKeywordRest
   def initialize(url, name, version, **meta)
     @try_partial = T.let(true, T::Boolean)
     @expand_deferred_environment = T.let(false, T::Boolean)

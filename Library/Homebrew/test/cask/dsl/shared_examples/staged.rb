@@ -14,7 +14,7 @@ RSpec.shared_examples Cask::Staged do
 
   it "can run system commands with list-form arguments" do
     expect(subject.command).to receive(:run!)
-      .with("echo", args: ["homebrew-cask", "rocks!"])
+      .with("echo", hash_including(args: ["homebrew-cask", "rocks!"]))
 
     subject.system_command("echo", args: ["homebrew-cask", "rocks!"])
   end

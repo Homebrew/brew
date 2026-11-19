@@ -17,7 +17,8 @@ module Cask
     sig {
       params(uninstall_flight_blocks: T.nilable(T::Boolean),
              uninstall_artifacts:     T.nilable(T::Array[T.untyped]),
-             rest:                    T.untyped).void
+             # Listing `AbstractTab#initialize`'s keywords here would silently drop any it gains later.
+             rest:                    T.untyped).void # rubocop:disable Homebrew/NoUntypedKeywordRest
     }
     def initialize(uninstall_flight_blocks: nil, uninstall_artifacts: nil, **rest)
       @uninstall_flight_blocks = uninstall_flight_blocks

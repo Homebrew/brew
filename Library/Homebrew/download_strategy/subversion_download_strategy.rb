@@ -7,7 +7,8 @@ require "utils/timer"
 #
 # @api public
 class SubversionDownloadStrategy < VCSDownloadStrategy
-  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void }
+  # Formula `url` specs reach download strategies as arbitrary options.
+  sig { params(url: String, name: String, version: T.nilable(T.any(String, Version)), meta: T.untyped).void } # rubocop:disable Homebrew/NoUntypedKeywordRest
   def initialize(url, name, version, **meta)
     super
     @url = @url.sub("svn+http://", "")

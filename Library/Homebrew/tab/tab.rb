@@ -73,7 +73,8 @@ class Tab < AbstractTab
            compiler:                T.nilable(T.any(String, Symbol)),
            source_modified_time:    T.nilable(Integer),
            tapped_from:             T.nilable(String),
-           rest:                    T.untyped).void
+           # Listing `AbstractTab#initialize`'s keywords here would silently drop any it gains later.
+           rest:                    T.untyped).void # rubocop:disable Homebrew/NoUntypedKeywordRest
   }
   def initialize(poured_from_bottle: nil, built_as_bottle: nil, built_prefix: nil, padded_prefix: nil,
                  changed_files: nil,

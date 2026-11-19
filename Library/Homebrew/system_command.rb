@@ -519,7 +519,7 @@ class SystemCommand
       env:        T::Hash[String, T.nilable(T.any(String, T::Boolean, PATH))],
       executable: String,
       args:       String,
-      options:    T.untyped,
+      options:    T.anything,
     ).returns([IO, IO, IO, Thread])
   }
   def exec3(env, executable, *args, **options)

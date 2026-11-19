@@ -435,21 +435,36 @@ module Cask
     # ```
     #
     # @api public
-    T::Sig::WithoutRuntime.sig { params(uri: T.nilable(T.any(URI::Generic, String)), options: T.untyped).returns(T.nilable(URL)) }
-    def url(uri = nil, **options)
+    T::Sig::WithoutRuntime.sig {
+      params(
+        uri:        T.nilable(T.any(URI::Generic, String)),
+        verified:   T.nilable(String),
+        using:      T.nilable(T.any(T::Class[AbstractDownloadStrategy], Symbol)),
+        tag:        T.nilable(String),
+        branch:     T.nilable(String),
+        revisions:  T.nilable(T::Hash[T.any(Symbol, String), String]),
+        revision:   T.nilable(String),
+        trust_cert: T.nilable(T::Boolean),
+        cookies:    T.nilable(T::Hash[T.any(String, Symbol), String]),
+        referer:    T.nilable(T.any(URI::Generic, String)),
+        header:     T.nilable(T.any(String, T::Array[String])),
+        user_agent: T.nilable(T.any(Symbol, String)),
+        data:       T.nilable(T::Hash[String, String]),
+        only_path:  T.nilable(String),
+      ).returns(T.nilable(URL))
+    }
+    def url(uri = nil, verified: nil, using: nil, tag: nil, branch: nil, revisions: nil, revision: nil,
+            trust_cert: nil, cookies: nil, referer: nil, header: nil, user_agent: nil, data: nil, only_path: nil)
       caller_location = caller_locations.fetch(0)
       return @url unless uri
 
-      unless @cask.loaded_from_api?
-        URL::DEPRECATED_URL_SPECS.each do |spec|
-          next unless options[spec]
-
-          odeprecated "the `#{spec}` parameter in the `url` stanza", "the default URL verification behaviour"
-        end
+      if verified && !@cask.loaded_from_api?
+        odeprecated "the `verified` parameter in the `url` stanza", "the default URL verification behaviour"
       end
 
       set_unique_stanza(:url, false) do
-        URL.new(uri, **options.except(*URL::DEPRECATED_URL_SPECS), caller_location:)
+        URL.new(uri, using:, tag:, branch:, revisions:, revision:, trust_cert:, cookies:, referer:, header:,
+                user_agent:, data:, only_path:, caller_location:)
       end
     end
 
@@ -627,7 +642,13 @@ module Cask
     # NOTE: Multiple dependencies can be specified.
     #
     # @api public
-    sig { params(arg: T.nilable(Symbol), kwargs: T.untyped).returns(DSL::DependsOn) }
+    sig {
+      params(
+        arg:    T.nilable(Symbol),
+        # Sorbet checks the `T::Hash` that `CaskLoader` splats here against the value type as a whole.
+        kwargs: T.untyped, # rubocop:disable Homebrew/NoUntypedKeywordRest
+      ).returns(DSL::DependsOn)
+    }
     def depends_on(arg = nil, **kwargs)
       @depends_on_set_in_block = true if @called_in_on_system_block
       if arg == :macos

@@ -71,7 +71,7 @@ module RuboCop
             # Skip blank lines, comments, and sig blocks (including multi-line).
             line_idx = comment.loc.line # 1-based; lines array is 0-based
             in_sig = T.let(false, T::Boolean)
-            (1..15).each do |offset|
+            (1..lines.length).each do |offset|
               target_line = lines[line_idx - 1 + offset]&.strip
               break if target_line.nil?
               next if target_line.empty? || target_line.start_with?("#")

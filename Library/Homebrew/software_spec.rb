@@ -256,7 +256,7 @@ class SoftwareSpec
                                     T::Hash[T.any(String, Symbol, T::Class[Requirement]), T.untyped],
                                     T::Class[Requirement], Dependable)),
       set_in_block: T::Boolean,
-      spec_kwargs:  T.untyped,
+      spec_kwargs:  T.anything,
     ).void
   }
   def depends_on(spec = nil, set_in_block: false, **spec_kwargs)

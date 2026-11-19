@@ -448,10 +448,10 @@ RSpec.describe Version do
   end
 
   describe "::detect" do
-    matcher :be_detected_from do |url, **specs|
+    matcher :be_detected_from do |url, tag: nil|
       T.bind(self, T.class_of(RSpec::Matchers::DSL::Matcher))
       match do |expected|
-        @detected = Version.detect(url, **specs)
+        @detected = Version.detect(url, tag:)
         @detected == expected
       end
 

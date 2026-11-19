@@ -849,11 +849,9 @@ module Homebrew
       }
       def check_new_version(formula, tap_remote_repo, version: nil, url: nil, tag: nil)
         if version.nil?
-          specs = {}
-          specs[:tag] = tag if tag.present?
           return if url.blank?
 
-          version = Version.detect(url, **specs).to_s
+          version = Version.detect(url, tag: tag.presence).to_s
           return if version.blank?
         end
 

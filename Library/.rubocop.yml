@@ -127,6 +127,13 @@ Homebrew/NoSendInTests:
   Exclude:
     - "Homebrew/test/support/fixtures/**/*"
 
+Homebrew/NoUntypedKeywordRest:
+  Description: "Name the keywords a method accepts instead of typing `**options` as `T.untyped`."
+  Include:
+    - "Homebrew/**/*.rb"
+  Exclude:
+    - "Homebrew/test/**/*"
+
 Homebrew/SimpleTypeAssertion:
   Enabled: false
 

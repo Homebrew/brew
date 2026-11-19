@@ -31,6 +31,6 @@ class URL
 
   sig { returns(Version) }
   def version
-    @version ||= T.let(Version.detect(@url, **@specs), T.nilable(Version))
+    @version ||= T.let(Version.detect(@url, tag: @specs[:tag]), T.nilable(Version))
   end
 end

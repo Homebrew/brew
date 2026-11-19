@@ -98,7 +98,7 @@ module Homebrew
               GitHubPackages::URL_REGEX.match?(formula_owner.bottle_specification.root_url)))
         problem "`version #{version}` does not match #{GitHubPackages::VALID_OCI_TAG_REGEX.source}"
       elsif !version_text.detected_from_url?
-        version_url = Version.detect(url!, **specs)
+        version_url = Version.detect(url!, tag: specs[:tag])
         if version_url.to_s == version_text.to_s && version.instance_of?(Version)
           problem "`version #{version_text}` is redundant with version scanned from URL"
         end
