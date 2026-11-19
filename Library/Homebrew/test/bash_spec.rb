@@ -182,6 +182,22 @@ RSpec.describe "Bash" do
     end
   end
 
+  describe "OS detection" do
+    it "ignores an inherited `HOMEBREW_MACOS` or `HOMEBREW_LINUX`" do
+      ENV["HOMEBREW_MACOS"] = "1"
+      ENV["HOMEBREW_LINUX"] = nil
+      stdout, stderr, status = Open3.capture3(
+        "/bin/bash", "-c", <<~BASH, "bash", (HOMEBREW_LIBRARY_PATH/"utils/os.sh").to_s
+          OSTYPE=linux-gnu
+          source "$1"
+          printf "%s,%s" "${HOMEBREW_MACOS-unset}" "${HOMEBREW_LINUX-unset}"
+        BASH
+      )
+
+      expect([stdout, stderr, status.success?]).to eq(["unset,1", "", true])
+    end
+  end
+
   describe "setup-locale" do
     it "uses the macOS locale charmap rather than the locale name", :needs_macos do
       setup_locale = [

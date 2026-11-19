@@ -19,6 +19,7 @@ case "${MACHTYPE}" in
     ;;
 esac
 
+unset HOMEBREW_MACOS HOMEBREW_LINUX
 case "${OSTYPE}" in
   darwin*)
     HOMEBREW_SYSTEM="Darwin"
