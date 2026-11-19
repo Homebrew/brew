@@ -5,6 +5,36 @@ require "io/console"
 require "pty"
 
 RSpec.describe Tty do
+  describe "::to_s" do
+    it "keeps pending colours and styles isolated between threads" do
+      allow(described_class).to receive(:color?).and_return(true)
+      described_class.green
+      described_class.bold
+
+      other_thread_output = Thread.new { "#{described_class.red}warning#{described_class.reset}" }.value
+
+      expect([other_thread_output, described_class.to_s, described_class.to_s])
+        .to eq(["\e[31mwarning\e[0m", "\e[32;1m", ""])
+    ensure
+      described_class.reset_escape_sequence!
+    end
+  end
+
+  describe "::with" do
+    it "keeps stream overrides local to the thread and restores them afterwards" do
+      allow($stdout).to receive(:tty?).and_return(true)
+      allow($stderr).to receive(:tty?).and_return(false)
+      colours = []
+
+      described_class.with($stderr) do
+        colours << Thread.new { described_class.green.to_s }.value
+        colours << described_class.red.to_s
+      end
+
+      expect([*colours, described_class.blue.to_s]).to eq(["\e[32m", "", "\e[34m"])
+    end
+  end
+
   describe "::strip_ansi" do
     it "removes ANSI escape codes from a string" do
       expect(described_class.strip_ansi("\033[36;7mhello\033[0m")).to eq("hello")

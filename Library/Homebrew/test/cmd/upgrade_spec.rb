@@ -577,6 +577,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       shutdown:         nil,
       print_heading:    nil,
     )
+    allow(download_queue).to receive(:with_progress).and_yield
 
     allow(Homebrew::DownloadQueue).to receive(:new).and_return(download_queue)
     expect(Cask::Upgrade).to receive(:outdated_casks).once.and_return([])
@@ -625,6 +626,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd = described_class.new([])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, failed_downloads: [], shutdown: nil,
                                      print_heading: nil)
+    allow(download_queue).to receive(:with_progress).and_yield
 
     expect(cmd).to receive(:upgrade_outdated_formulae!)
       .with([], dry_run: true, show_upgrade_summary: false)
@@ -748,6 +750,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
       cmd = described_class.new([requested_name])
       download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, failed_downloads: [], shutdown: nil,
                                        print_heading: nil)
+      allow(download_queue).to receive(:with_progress).and_yield
       allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable)
         .with(method: :resolve)
         .and_return([formula])
@@ -1108,6 +1111,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd = described_class.new(["-y"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, failed_downloads: [], shutdown: nil,
                                      print_heading: nil)
+    allow(download_queue).to receive(:with_progress).and_yield
     cask = instance_double(
       Cask::Cask,
       artifacts:         [],
@@ -1162,6 +1166,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd = described_class.new(["--formula", "testball", "--yes"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, failed_downloads: [], shutdown: nil,
                                      print_heading: nil)
+    allow(download_queue).to receive(:with_progress).and_yield
 
     allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable)
       .with(method: :resolve)
@@ -1193,6 +1198,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd = described_class.new(["--cask", "codex", "--yes"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, failed_downloads: [], shutdown: nil,
                                      print_heading: nil)
+    allow(download_queue).to receive(:with_progress).and_yield
 
     allow(cmd.args.named).to receive(:to_formulae_and_casks_and_unavailable)
       .with(method: :resolve)
@@ -1279,6 +1285,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
     cmd = described_class.new([])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, failed_downloads: [], shutdown: nil,
                                      print_heading: nil)
+    allow(download_queue).to receive(:with_progress).and_yield
     cask = instance_double(
       Cask::Cask,
       artifacts:         [],
@@ -1333,6 +1340,11 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
                                      print_heading: nil)
     sequence = []
 
+    allow(download_queue).to receive(:with_progress) do |&block|
+      sequence << "progress started"
+      block.call
+      sequence << "progress stopped"
+    end
     allow(download_queue).to receive(:print_heading) { |heading| sequence << heading }
     allow(cmd).to receive(:upgrade_outdated_formulae!) do |_, dry_run: false, prefetch_only: false,
                                                               prefetch_names: nil, **|
@@ -1362,13 +1374,17 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
 
     cmd.run
 
-    expect(sequence).to eq(["Fetching downloads for: deno, openssl@3 and openssl@4", "prefetch"])
+    expect(sequence).to eq([
+      "Fetching downloads for: deno, openssl@3 and openssl@4",
+      "progress started", "prefetch", "progress stopped"
+    ])
   end
 
   it "uses prefetched compatible casks and carries requirement errors into upgrade" do
     cmd = described_class.new(["--yes"])
     download_queue = instance_double(Homebrew::DownloadQueue, fetch: nil, failed_downloads: [], shutdown: nil,
                                      print_heading: nil)
+    allow(download_queue).to receive(:with_progress).and_yield
     cask = instance_double(Cask::Cask)
     cask_error = Cask::CaskError.new("bad-cask: This cask requires Linux.")
 
@@ -1536,6 +1552,7 @@ RSpec.describe Homebrew::Cmd::UpgradeCmd do
                                                               failed_downloads: [failed_download],
                                                               print_heading:    nil,
                                                               shutdown:         nil)
+    allow(download_queue).to receive(:with_progress).and_yield
     cask = instance_double(
       Cask::Cask,
       artifacts:         [],

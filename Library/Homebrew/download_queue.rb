@@ -10,6 +10,7 @@ require "retryable_download"
 require "concurrent/set"
 require "resource"
 require "utils/output"
+require "download_queue/progress"
 
 module Homebrew
   # Raised when a download is cancelled cooperatively.
@@ -31,12 +32,14 @@ module Homebrew
       @dumb_tty = T.let(ENV["TERM"] == "dumb", T::Boolean)
       @spinner = T.let(nil, T.nilable(Spinner))
       @symlink_targets = T.let({}, T::Hash[Pathname, T::Set[Downloadable]])
+      @downloads = T.let({}, T::Hash[Downloadable, Concurrent::Promises::Future])
       @downloads_by_location = T.let({}, T::Hash[Pathname, Concurrent::Promises::Future])
       @staged_downloads_by_location = T.let({}, T::Hash[Pathname, Concurrent::Promises::Future])
       @cancelled = T.let(Concurrent::AtomicBoolean.new(false), Concurrent::AtomicBoolean)
       @active_threads = T.let(Concurrent::Set.new, Concurrent::Set)
       @failed_downloads = T.let([], T::Array[Downloadable])
       @deferred_failure_messages = T.let([], T::Array[T.proc.void])
+      @reported_downloads = T.let({}, T::Hash[Downloadable, Concurrent::Promises::Future])
     end
 
     sig {
@@ -109,6 +112,39 @@ module Homebrew
       end
     end
 
+    # Shows progress while preparing downloads and retains completed rows.
+    # Returns the block's result.
+    # Waiting for downloads and handling failures remain fetch's responsibility.
+    sig { type_parameters(:U).params(block: T.proc.returns(T.type_parameter(:U))).returns(T.type_parameter(:U)) }
+    def with_progress(&block)
+      return yield if concurrency == 1 || !tty_with_cursor_move_support? || Progress.current
+
+      trap(:WINCH) { Tty.size_stale! }
+      progress = Progress.new do
+        snapshot = downloads.dup.map { |download, future| [download, future, future.state] }
+        message_length_max = snapshot.map { |download, _| download.download_queue_message.length }.max || 0
+        finished, pending = snapshot.partition { |_, _, state| [:fulfilled, :rejected].include?(state) }
+        finished.reject! do |download, future|
+          @reported_downloads[download].equal?(future) || future.reason.is_a?(CancelledDownloadError)
+        end
+        format_message = lambda do |(download, future, state)|
+          message = message_with_progress(download, future, download.download_queue_message, message_length_max)
+          "#{status_from_state(state)} #{message}"
+        end
+        [
+          finished.map do |entry|
+            [format_message.call(entry), -> { @reported_downloads[entry[0]] = entry[1] }]
+          end,
+          pending.first([concurrency, Tty.height].min).map(&format_message),
+        ]
+      end
+      progress.run(&block)
+    # Interrupting preparation must also cancel the downloads already started.
+    rescue Exception # rubocop:disable Lint/RescueException
+      cancel
+      raise
+    end
+
     sig { params(heading: String).void }
     def print_heading(heading)
       if tty
@@ -139,16 +175,17 @@ module Homebrew
              allow_failures: T::Boolean).void
     }
     def fetch(only: nil, heading: nil, allow_failures: false)
+      progress = Progress.current
       @failed_downloads = []
       @deferred_failure_messages = []
       context_before_fetch = Context.current
-      fetchable_downloads = if only
-        downloads.select { |downloadable, _| downloadable.is_a?(only) }
-      else
-        downloads
-      end
+      fetchable_downloads = only ? downloads.select { |downloadable, _| downloadable.is_a?(only) } : downloads
+      progress&.pause
       return if fetchable_downloads.empty?
 
+      heading = nil if fetchable_downloads.all? do |download, future|
+        @reported_downloads[download].equal?(future) && (future.fulfilled? || allow_failures)
+      end
       print_heading(heading) if heading
 
       if concurrency == 1
@@ -179,8 +216,7 @@ module Homebrew
         return
       end
 
-      message_length_max = fetchable_downloads.each_key.map { |download| download.download_queue_message.length }
-                                              .max || 0
+      message_length_max = fetchable_downloads.keys.map { |download| download.download_queue_message.length }.max || 0
       remaining_downloads = fetchable_downloads.dup.to_a
       previous_pending_line_count = 0
       max_lines = [concurrency, Tty.height].min
@@ -201,12 +237,12 @@ module Homebrew
         stdout_print_and_flush_if_tty Tty.hide_cursor
 
         output_message = lambda do |downloadable, future, last|
-          status = status_from_future(future)
+          status = status_from_state(future.state) unless @reported_downloads[downloadable].equal?(future)
           exception = future.reason if future.rejected?
           next 1 if exception.is_a?(CancelledDownloadError)
 
           message = downloadable.download_queue_message
-          if tty_with_cursor_move_support?
+          if tty_with_cursor_move_support? && status
             message = message_with_progress(downloadable, future, message, message_length_max)
             stdout_print_and_flush "#{status} #{message}#{"\n" unless last}"
           elsif status
@@ -259,9 +295,7 @@ module Homebrew
               stdout_print_and_flush Tty.clear_to_end_of_screen
             end
 
-            finished_downloads, remaining_downloads = remaining_downloads.partition do |_, future|
-              future.resolved?
-            end
+            finished_downloads, remaining_downloads = remaining_downloads.partition { |_, future| future.resolved? }
 
             finished_downloads.each do |downloadable, future|
               previous_pending_line_count -= 1
@@ -319,19 +353,21 @@ module Homebrew
       # Restore the pre-parallel fetch context to avoid quiet state bleeding out
       # from threads, and clear queue state even when a fatal download error
       # aborts the fetch above.
-      Context.current = context_before_fetch if context_before_fetch
+      begin
+        Context.current = context_before_fetch if context_before_fetch
 
-      if only
-        # Keep unfetched downloads (and their location dedup entries) queued
-        # for the next fetch.
-        fetchable_downloads.each_key { |downloadable| downloads.delete(downloadable) }
-        fetched_staging = fetchable_downloads.each_value.to_set
-        @staged_downloads_by_location.delete_if { |_, future| fetched_staging.include?(future) }
-      else
-        downloads.clear
-        @downloads_by_location.clear
-        @staged_downloads_by_location.clear
-        @symlink_targets.clear
+        if only
+          # Keep unfetched downloads (and their location dedup entries) queued
+          # for the next fetch.
+          fetchable_downloads.each_key { |downloadable| downloads.delete(downloadable) }
+          fetched_staging = fetchable_downloads.each_value.to_set
+          @staged_downloads_by_location.delete_if { |_, future| fetched_staging.include?(future) }
+        else
+          [downloads, @downloads_by_location, @staged_downloads_by_location, @symlink_targets].each(&:clear)
+        end
+        @reported_downloads.keep_if { |downloadable, _| downloads.key?(downloadable) }
+      ensure
+        progress&.resume
       end
     end
 
@@ -358,9 +394,7 @@ module Homebrew
     end
 
     sig { returns(T::Hash[Downloadable, Concurrent::Promises::Future]) }
-    def downloads
-      @downloads ||= T.let({}, T.nilable(T::Hash[Downloadable, Concurrent::Promises::Future]))
-    end
+    attr_reader :downloads
 
     private
 
@@ -466,9 +500,9 @@ module Homebrew
       $stderr.puts "#{status} #{downloadable.download_queue_message}"
     end
 
-    sig { params(future: Concurrent::Promises::Future).returns(T.nilable(String)) }
-    def status_from_future(future)
-      case future.state
+    sig { params(state: Symbol).returns(T.nilable(String)) }
+    def status_from_state(state)
+      case state
       when :fulfilled
         if tty
           "#{Tty.green}✔︎#{Tty.reset}"
@@ -484,7 +518,7 @@ module Homebrew
       when :pending, :processing
         "#{Tty.blue}#{spinner}#{Tty.reset}" if tty_with_cursor_move_support?
       else
-        raise future.state.to_s
+        raise state.to_s
       end
     end
 
