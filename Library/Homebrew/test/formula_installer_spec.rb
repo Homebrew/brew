@@ -297,7 +297,7 @@ RSpec.describe FormulaInstaller do
       expect(Sandbox).to receive(:with_preserved_brew_file).and_yield
       libexec_allowed = false
       allow(sandbox).to receive(:allow_write_path) do |path|
-        next if path != "#{HOMEBREW_PREFIX}/libexec"
+        next if Pathname(path) != HOMEBREW_PREFIX/"libexec"
 
         libexec_allowed = true
         expect(HOMEBREW_PREFIX/"libexec").to be_a_directory
@@ -308,6 +308,19 @@ RSpec.describe FormulaInstaller do
 
       expect(libexec_allowed).to be true
       expect(HOMEBREW_PREFIX/"libexec").to be_writable
+    end
+
+    it "runs post-install when a read-only prefix lacks libexec" do
+      stub_const("HOMEBREW_PREFIX", mktmpdir)
+      HOMEBREW_PREFIX.chmod 0555
+      skip "The current user can still write to the prefix." if HOMEBREW_PREFIX.writable?
+
+      sandbox = instance_double(Sandbox).as_null_object
+      allow(Sandbox).to receive_messages(new: sandbox, use_for?: true, full_write_isolation?: true)
+      expect(sandbox).not_to receive(:allow_write_path).with(satisfy { |path| path.to_s.end_with?("/libexec") })
+      expect(sandbox).to receive(:run)
+
+      described_class.new(Testball.new).post_install
     end
 
     it "restores bin/brew after a Landlock-sandboxed post-install replaces it" do
