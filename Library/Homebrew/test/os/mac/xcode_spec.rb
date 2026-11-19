@@ -68,7 +68,7 @@ RSpec.describe OS::Mac::Xcode, :needs_macos do
 
   describe OS::Mac::CLT do
     describe ".latest_version" do
-      test_each_hash({ "27" => "27.0", "26" => "26.6", "15" => "26.3", "14" => "16.2",
+      test_each_hash({ "27" => "27.0", "26" => "26.6", "15" => "16.4", "14" => "16.2",
                       "13" => "15.1", "12" => "14.2", "11" => "13.2" }) do |macos, clt|
         it "recommends Command Line Tools #{clt} on macOS #{macos}" do
           allow(OS::Mac).to receive(:version).and_return(MacOSVersion.new(macos))
@@ -88,7 +88,7 @@ RSpec.describe OS::Mac::Xcode, :needs_macos do
     end
 
     describe ".latest_clang_version" do
-      test_each_hash({ "27" => "2100.3.34.2", "26" => "2100.1.1.101" }) do |macos, clang|
+      test_each_hash({ "27" => "2100.3.34.2", "26" => "2100.1.1.101", "15" => "1700.0.13.5" }) do |macos, clang|
         it "recommends the #{clang} compiler on Apple silicon macOS #{macos}" do
           allow(OS::Mac).to receive(:version).and_return(MacOSVersion.new(macos))
           allow(Hardware::CPU).to receive_messages(intel?: false, physical_cpu_arm64?: true)
