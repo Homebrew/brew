@@ -45,7 +45,7 @@ setup_curl_args() {
   fi
 
   local retries="${HOMEBREW_CURL_RETRIES:-3}"
-  if [[ "${retries}" =~ ^[0-9]+$ ]] && ((10#${retries} > 0))
+  if ((retries > 0))
   then
     CURL_DISABLE_CURLRC_ARGS+=(--retry "${retries}")
   fi

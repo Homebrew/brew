@@ -167,6 +167,20 @@ esac
 
 source "${HOMEBREW_LIBRARY}/Homebrew/utils.sh"
 
+# Bash arithmetic evaluates names and array subscripts in a value, so keep
+# numeric variables only as decimal integers. `10#` reads a leading zero as
+# decimal rather than octal, so later arithmetic can use them directly.
+for VAR in HOMEBREW_API_AUTO_UPDATE_SECS HOMEBREW_AUTO_UPDATE_SECS HOMEBREW_COMMAND_DEPTH HOMEBREW_CURL_RETRIES
+do
+  if [[ "${!VAR:-}" =~ ^[0-9]+$ ]]
+  then
+    export "${VAR}=$((10#${!VAR}))"
+  else
+    unset "${VAR}"
+  fi
+done
+unset VAR
+
 check-run-command-as-root() {
   [[ "${EUID}" == 0 ]] || return
 
@@ -280,7 +294,7 @@ export USER="${USER:-$(id -un)}"
 
 # A depth of 1 means this command was directly invoked by a user.
 # Higher depths mean this command was invoked by another Homebrew command.
-export HOMEBREW_COMMAND_DEPTH="$((HOMEBREW_COMMAND_DEPTH + 1))"
+export HOMEBREW_COMMAND_DEPTH="$((${HOMEBREW_COMMAND_DEPTH:-0} + 1))"
 
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/curl.sh"
 source "${HOMEBREW_LIBRARY}/Homebrew/utils/git.sh"
