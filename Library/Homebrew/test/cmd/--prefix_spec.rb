@@ -8,16 +8,34 @@ RSpec.describe Homebrew::Cmd::Prefix do
   it_behaves_like "parseable arguments"
 
   it "prints Homebrew's prefix and a Formula's prefix", :integration_test do
-    setup_test_formula "testball"
-
     expect { brew_sh "--prefix" }
       .to output("#{ENV.fetch("HOMEBREW_PREFIX")}\n").to_stdout
       .and not_to_output.to_stderr
       .and be_a_success
-    expect { brew_sh "--prefix", "testball", "HOMEBREW_BREW_SH" => test_prefix_brew_sh }
-      .to output(%r{/opt/testball\n}).to_stdout
-      .and not_to_output.to_stderr
-      .and be_a_success
+
+    env = {
+      "HOMEBREW_BREW_SH" => test_prefix_brew_sh,
+      "HOMEBREW_CACHE"   => mktmpdir.to_s,
+      "HOMEBREW_TEMP"    => HOMEBREW_TEMP.to_s,
+      "https_proxy"      => "http://127.0.0.1:1",
+    }
+    keg = HOMEBREW_CELLAR/"testball2/1.0"
+    keg.mkpath
+    %w[testball2 testball-alias].each do |name|
+      (HOMEBREW_PREFIX/"opt"/name).make_relative_symlink(keg)
+      expect { brew_sh "--prefix", name, env }
+        .to output("#{HOMEBREW_PREFIX}/opt/testball2\n").to_stdout
+        .and not_to_output.to_stderr
+        .and be_a_success
+    end
+
+    (CoreTap.instance.alias_dir/"testball-alias").make_relative_symlink(setup_test_formula("testball"))
+    %w[testball testball-alias].each do |name|
+      expect { brew_sh "--prefix", name, env.merge("HOMEBREW_NO_INSTALL_FROM_API" => "1") }
+        .to output("#{HOMEBREW_PREFIX}/opt/testball\n").to_stdout
+        .and not_to_output.to_stderr
+        .and be_a_success
+    end
   end
 
   it "prints the prefix for a Formula" do
