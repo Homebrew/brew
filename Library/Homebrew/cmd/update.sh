@@ -413,7 +413,7 @@ api_curl_download() {
     --write-out "%{http_code}" \
     "$@" \
     --user-agent "${HOMEBREW_USER_AGENT_CURL}" \
-    "${json_url}"
+    --url "${json_url}"
 }
 
 fetch_api_file() {
