@@ -9,13 +9,6 @@ class RuboCop::Cop::Homebrew::NoUntypedKeywordRest
   sig { params(node: RuboCop::AST::Node, kwargs: T.untyped, block: T.untyped).returns(T.untyped) }
   def signature?(node, **kwargs, &block); end
 
-  sig do
-    params(
-      node: RuboCop::AST::Node,
-      pattern: T.any(String, Symbol),
-      kwargs: T.untyped,
-      block: T.untyped
-    ).returns(T.untyped)
-  end
-  def untyped_param_type(node, *pattern, **kwargs, &block); end
+  sig { params(node: RuboCop::AST::Node, kwargs: T.untyped, block: T.untyped).returns(T.untyped) }
+  def untyped_param_type(node, **kwargs, &block); end
 end
