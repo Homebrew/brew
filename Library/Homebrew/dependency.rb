@@ -3,6 +3,7 @@
 
 require "dependable"
 require "utils"
+require "utils/path"
 
 # A dependency on another Homebrew formula.
 #
@@ -10,6 +11,8 @@ require "utils"
 class Dependency
   include Dependable
 
+  # The name used in the formula's dependency declaration.
+  # @api public
   sig { returns(String) }
   attr_reader :name
 
@@ -45,6 +48,31 @@ class Dependency
     [name, tags].hash
   end
 
+  # The stable install path for the declared dependency name.
+  # @api public
+  sig { returns(Pathname) }
+  def opt_prefix = Utils::Path.formula_opt_prefix(name)
+
+  # The `bin` directory under {#opt_prefix}.
+  # @api public
+  sig { returns(Pathname) }
+  def opt_bin = Utils::Path.formula_opt_bin(name)
+
+  # The `lib` directory under {#opt_prefix}.
+  # @api public
+  sig { returns(Pathname) }
+  def opt_lib = Utils::Path.formula_opt_lib(name)
+
+  # The `include` directory under {#opt_prefix}.
+  # @api public
+  sig { returns(Pathname) }
+  def opt_include = Utils::Path.formula_opt_include(name)
+
+  # The `libexec` directory under {#opt_prefix}.
+  # @api public
+  sig { returns(Pathname) }
+  def opt_libexec = Utils::Path.formula_opt_libexec(name)
+
   sig { returns(Formula) }
   def to_installed_formula
     raise FormulaUnavailableError, name unless formula_name?
@@ -54,6 +82,8 @@ class Dependency
     formula
   end
 
+  # Loads the formula with the options declared on this dependency.
+  # @api public
   sig { returns(Formula) }
   def to_formula
     raise FormulaUnavailableError, name unless formula_name?

@@ -26,13 +26,11 @@ module Language
       ).returns(T::Hash[String, Pathname])
     }
     def self.direct_dependency_paths(formula, pattern: /\Apython(?:@.+)?\z/, required: false)
-      formula.deps.filter_map do |dependency|
+      formula.deps(pattern).filter_map do |dependency|
         next if required && !dependency.required?
 
         name = Utils.name_from_full_name(dependency.name)
-        next unless name.match?(pattern)
-
-        [name, Utils::Path.formula_opt_bin(name)/name.delete("@")]
+        [name, dependency.opt_bin/name.delete("@")]
       end.to_h
     end
 

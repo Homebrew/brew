@@ -9,7 +9,9 @@ class Version
 
   sig { params(name: T.any(String, Symbol), full: T::Boolean).returns(Regexp) }
   def self.formula_optionally_versioned_regex(name, full: true)
-    /#{"^" if full}#{Regexp.escape(name)}(?:@\d[\d.]*)?#{"$" if full}/
+    name = name.to_s
+    suffix = "-full" if name.end_with?("-full")
+    /#{"^" if full}#{Regexp.escape(name.delete_suffix("-full"))}(?:@\d[\d.]*)?#{suffix}#{"$" if full}/
   end
 
   # A part of a {Version}.

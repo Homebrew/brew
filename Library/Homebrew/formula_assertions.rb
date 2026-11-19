@@ -25,6 +25,79 @@ module Homebrew
       @assertions ||= T.let(0, T.nilable(Integer))
     end
 
+    # Runs a command in the background for the duration of a test block.
+    # Pass the executable and its arguments separately. For shell setup, use `exec`
+    # to replace the shell with the process the helper should clean up.
+    # Yields the child process ID and terminates and reaps the child on exit.
+    # The block may also reap the child itself.
+    # Use a minus-prefixed signal with `pgroup: true` to send both signals to the process group.
+    # Sends `KILL` if the child or selected group is still running five seconds after the requested signal.
+    # Extra keyword arguments are forwarded to `Process.spawn`.
+    #
+    # @api public
+    sig {
+      params(
+        executable:    T.any(String, Pathname),
+        args:          T.any(String, Pathname),
+        signal:        String,
+        spawn_options: T.anything,
+        block:         T.proc.params(pid: Integer).void,
+      ).void
+    }
+    def with_test_process(executable, *args, signal: "TERM", **spawn_options, &block)
+      signal_number = Signal.list.fetch(signal.delete_prefix("-").delete_prefix("SIG"), 0)
+      raise ArgumentError, "Unsupported signal: #{signal.inspect}" if signal_number.zero?
+
+      executable = executable.to_s
+      pid = Process.spawn([executable, executable], *args, **spawn_options)
+      target = signal.start_with?("-") ? -pid : pid
+      begin
+        yield(pid)
+      ensure
+        reaped = T.let(reap_test_process(pid, Process::WNOHANG), T::Boolean)
+        if target.negative? || !reaped
+          begin
+            Process.kill(signal_number, target)
+          rescue Errno::ESRCH, Errno::EPERM => e
+            raise if target.positive? && e.is_a?(Errno::EPERM)
+
+            target = pid
+          end
+
+          deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5
+          loop do
+            reaped ||= reap_test_process(pid, Process::WNOHANG)
+            Process.kill(0, target) if target.negative?
+            break if reaped && target.positive?
+
+            remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+            break if remaining <= 0
+
+            sleep [0.1, remaining].min
+          rescue Errno::ESRCH, Errno::EPERM
+            # On macOS, probing a group with only zombies may raise EPERM.
+            target = pid
+          end
+
+          begin
+            Process.kill("KILL", target) if target.negative?
+          rescue Errno::ESRCH, Errno::EPERM
+            # The group may have exited since the last check.
+          end
+
+          unless reaped
+            begin
+              # The child may have left the original process group.
+              Process.kill("KILL", pid)
+            rescue Errno::ESRCH
+              # The child exited between the non-blocking wait and the signal.
+            end
+            reap_test_process(pid)
+          end
+        end
+      end
+    end
+
     # Returns the output of running cmd and asserts the exit status.
     #
     # @api public
@@ -62,6 +135,15 @@ module Homebrew
     rescue Minitest::Assertion
       puts output if verbose?
       raise
+    end
+
+    private
+
+    sig { params(pid: Integer, flags: Integer).returns(T::Boolean) }
+    def reap_test_process(pid, flags = 0)
+      !Process.wait(pid, flags).nil?
+    rescue Errno::ECHILD
+      true
     end
   end
 end

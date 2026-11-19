@@ -358,9 +358,15 @@ class SoftwareSpec
     depends_on UsesFromMacOSDependency.new(dep, tags, bounds:)
   end
 
-  sig { returns(Dependencies) }
-  def deps
-    dependency_collector.deps.dup_without_system_deps
+  sig { params(name: T.nilable(T.any(String, Regexp))).returns(Dependencies) }
+  def deps(name = nil)
+    spec_deps = dependency_collector.deps.dup_without_system_deps
+    return spec_deps if name.nil?
+
+    pattern = name.is_a?(Regexp) ? name : Version.formula_optionally_versioned_regex(name)
+    Dependencies.new(*spec_deps.select do |dependency|
+      dependency.name.match?(pattern) || Utils.name_from_full_name(dependency.name).match?(pattern)
+    end)
   end
 
   sig { returns(Dependencies) }

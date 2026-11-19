@@ -308,6 +308,16 @@ Use [Language-Specific Formulae](Language-Specific-Formulae.md) for Python, Node
 Use [`resource`](/rubydoc/Formula.html#resource-class_method) blocks when dependencies need separate immutable URLs and SHA-256 checksums.
 Do not rely on packages installed in the contributor's global language environment.
 
+Use [`dep`](/rubydoc/Formula.html#dep-instance_method) when the active spec declares exactly one matching dependency.
+For example, `dep("openssl").opt_lib` gives the stable library directory for the declared OpenSSL version.
+The returned dependency also provides `opt_prefix`, `opt_bin`, `opt_include` and `opt_libexec`.
+
+Use [`deps`](/rubydoc/Formula.html#deps-instance_method) to get the active spec's direct dependencies.
+Pass a name or regular expression to filter the collection.
+For example, `deps("postgresql").map(&:to_formula)` returns formula objects for the declared PostgreSQL dependencies.
+A name such as `ffmpeg-full` also matches versioned variants such as `ffmpeg@7-full`.
+If no dependency matches, `deps` returns an empty collection.
+
 ### Install the formula
 
 ```sh
@@ -326,6 +336,14 @@ The [`test do`](/rubydoc/Formula.html#test-class_method) block automatically cre
 
 On macOS, the test sandbox allows Unix socket connections within `testpath`, including its subdirectories, even when the formula disables network access for tests.
 Create sockets for test services in this directory; connections to sockets elsewhere are denied except for Homebrew's internal communication and, when network access is allowed, macOS DNS resolution.
+
+Use [`with_test_process`](/rubydoc/Homebrew/Assertions.html#with_test_process-instance_method) to run a background command while making assertions.
+Pass the executable and each argument separately.
+For shell setup, pass `"/bin/sh"`, `"-c"` and a script that uses `exec` to replace the shell with the process to clean up.
+The helper terminates and reaps the process when the block exits.
+The block may also reap the process itself.
+Use a minus-prefixed signal such as `"-TERM"` with `pgroup: true` to send both signals to the process group.
+If the process or selected group is still running five seconds after the requested signal, the helper sends `KILL`.
 
 We want tests that don't require any user input and test the basic functionality of the application. For example `foo build-foo input.foo` is a good test and (despite their widespread use) `foo --version` and `foo --help` are bad tests. However, a bad test is better than no test at all.
 

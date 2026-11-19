@@ -177,6 +177,7 @@ Style/Documentation:
     - cask/dsl.rb
     - cask/dsl/version.rb
     - cask/url.rb
+    - dependency.rb
     - development_tools.rb
     - download_strategy/abstract_download_strategy.rb
     - download_strategy/abstract_file_download_strategy.rb
