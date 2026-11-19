@@ -200,6 +200,9 @@ module Homebrew
           hash["#{name}_present"] = hash["#{name}_args"].present?
         end
 
+        hash["service_run_present"] ||= hash["service_run_kwargs"].present?
+        hash["service_present"] ||= hash["service_run_present"] || hash["service_name_present"]
+
         if (bottle_checksum = hash["bottle_checksum"])
           tag = hash.fetch("bottle_tag", bottle_tag.to_sym)
           cellar = hash.fetch("bottle_cellar", DEFAULT_CELLAR)
