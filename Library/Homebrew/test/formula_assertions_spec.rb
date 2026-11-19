@@ -27,27 +27,42 @@ RSpec.describe Homebrew::Assertions do
     sig { params(leader: Symbol).returns(String) }
     def remaining_worker_output(leader)
       parent, child = UNIXSocket.pair
-      formula_assertions.with_test_process(
-        RbConfig.ruby, "-e", <<~RUBY, in: child, out: child, signal: "-TERM", pgroup: true
-          Signal.trap(:TERM, #{(leader == :ignore) ? ":IGNORE" : ":DEFAULT"})
-          fork do
-            Signal.trap(:TERM, :IGNORE)
-            puts Process.pid
-            $stdout.flush
-            $stdin.read
-          end
-          $stdin.read unless #{leader == :exit}
-        RUBY
-      ) do |pid|
-        child.close
-        parent.readline
-        Process.wait(pid) if leader == :exit
-      end
+      leader_pid = T.let(nil, T.nilable(Integer))
+      Timeout.timeout(15) do
+        formula_assertions.with_test_process(
+          RbConfig.ruby, "-e", <<~RUBY, in: child, out: child, signal: "-TERM", pgroup: true
+            Signal.trap(:TERM, #{(leader == :ignore) ? ":IGNORE" : ":DEFAULT"})
+            fork do
+              Signal.trap(:TERM, :IGNORE)
+              puts Process.pid
+              $stdout.flush
+              $stdin.read
+            end
+            if #{leader == :move_group}
+              Process.setpgid(0, Process.getpgid(Process.ppid))
+              puts Process.pid
+              $stdout.flush
+            end
+            $stdin.read unless #{leader == :exit}
+          RUBY
+        ) do |pid|
+          leader_pid = pid
+          child.close
+          parent.readline
+          parent.readline if leader == :move_group
+          Process.wait(pid) if leader == :exit
+        end
 
-      Timeout.timeout(5) { parent.read }
+        parent.read
+      end
     ensure
       parent&.close
       child&.close
+      begin
+        Timeout.timeout(5) { Process.wait(leader_pid) if leader_pid }
+      rescue Errno::ECHILD
+        # The helper already reaped the leader.
+      end
     end
 
     it "kills the worker when its leader ignores the requested signal" do
@@ -60,6 +75,10 @@ RSpec.describe Homebrew::Assertions do
 
     it "kills the worker when its leader exits on the requested signal" do
       expect(remaining_worker_output(:wait)).to eq("")
+    end
+
+    it "kills the worker and the leader when the leader changes process groups" do
+      expect(remaining_worker_output(:move_group)).to eq("")
     end
 
     it "kills and reaps a child that ignores the requested signal" do

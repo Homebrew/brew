@@ -82,12 +82,13 @@ module Homebrew
           begin
             Process.kill("KILL", target) if target.negative?
           rescue Errno::ESRCH, Errno::EPERM
-            target = pid
+            # The group may have exited since the last check.
           end
 
           unless reaped
             begin
-              Process.kill("KILL", pid) if target.positive?
+              # The child may have left the original process group.
+              Process.kill("KILL", pid)
             rescue Errno::ESRCH
               # The child exited between the non-blocking wait and the signal.
             end
