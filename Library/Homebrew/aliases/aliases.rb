@@ -10,15 +10,14 @@ module Homebrew
   module Aliases
     extend Utils::Output::Mixin
 
+    @reserved = T.let(nil, T.nilable(T::Array[String]))
+
     sig { returns(T::Array[String]) }
     def self.reserved
-      @reserved ||= T.let(
-        (Commands.internal_commands +
-         Commands.internal_developer_commands +
-         Commands.internal_commands_aliases +
-         %w[alias unalias]).freeze,
-        T.nilable(T::Array[String]),
-      )
+      @reserved ||= (Commands.internal_commands +
+       Commands.internal_developer_commands +
+       Commands.internal_commands_aliases +
+       %w[alias unalias]).freeze
     end
 
     sig { void }

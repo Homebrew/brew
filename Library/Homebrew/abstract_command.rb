@@ -61,7 +61,8 @@ module Homebrew
       sig { params(block: T.proc.bind(CLI::Parser).void).void }
       def cmd_args(&block)
         @parser_block = T.let(block, T.nilable(T.proc.void))
-        @args_class = T.let(const_set(:Args, Class.new(CLI::Args)), T.nilable(T.class_of(CLI::Args)))
+        args_class = const_set(:Args, Class.new(CLI::Args))
+        @args_class = T.let(args_class, T.nilable(T.class_of(CLI::Args)))
       end
     end
 
@@ -70,7 +71,8 @@ module Homebrew
 
     T::Sig::WithoutRuntime.sig { params(argv: T::Array[String], formula: T.nilable(Formula)).void }
     def initialize(argv = ARGV.freeze, formula: nil)
-      @args = T.let(self.class.parser.parse(argv, formula:), CLI::Args)
+      parsed_args = self.class.parser.parse(argv, formula:)
+      @args = T.let(parsed_args, CLI::Args)
     end
 
     # This method will be invoked when the command is run.

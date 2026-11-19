@@ -194,18 +194,16 @@ module RuboCop
 
         sig { returns(T::Hash[Symbol, Integer]) }
         def definitions_by_name
-          @definitions_by_name ||= T.let(
-            begin
-              ast = processed_source.ast
-              counts = Hash.new(0)
-              ast&.each_node(:any_block) do |node|
-                name = definition_name(node)
-                counts[name] += 1 if name
-              end
-              counts
-            end,
-            T.nilable(T::Hash[Symbol, Integer]),
-          )
+          return @definitions_by_name if @definitions_by_name
+
+          ast = processed_source.ast
+          counts = Hash.new(0)
+          ast&.each_node(:any_block) do |node|
+            name = definition_name(node)
+            counts[name] += 1 if name
+          end
+          @definitions_by_name = T.let(counts, T.nilable(T::Hash[Symbol, Integer]))
+          counts
         end
 
         # A name is "referenced" if it is called as a bare method (`foo`), appears as a symbol
@@ -219,29 +217,27 @@ module RuboCop
         # separately by `dynamic_dispatch?`, which exempts the whole file.
         sig { returns(T::Set[Symbol]) }
         def referenced_names
-          @referenced_names ||= T.let(
-            begin
-              ast = processed_source.ast
-              names = Set.new
-              ast&.each_node(:sym, :str, :call) do |node|
-                if node.sym_type?
-                  names << node.value unless definition_name_argument?(node)
-                elsif node.str_type?
-                  # A string with invalid encoding (e.g. a deliberate bad-UTF-8 test fixture) cannot
-                  # contain an identifier-shaped reference and would raise on `scan`, so skip it.
-                  if node.value.valid_encoding?
-                    node.value.scan(IDENTIFIER_IN_STRING) do |token|
-                      names << token.to_sym
-                    end
-                  end
-                elsif node.receiver.nil? && node.arguments.empty?
-                  names << node.method_name
+          return @referenced_names if @referenced_names
+
+          ast = processed_source.ast
+          names = Set.new
+          ast&.each_node(:sym, :str, :call) do |node|
+            if node.sym_type?
+              names << node.value unless definition_name_argument?(node)
+            elsif node.str_type?
+              # A string with invalid encoding (e.g. a deliberate bad-UTF-8 test fixture) cannot
+              # contain an identifier-shaped reference and would raise on `scan`, so skip it.
+              if node.value.valid_encoding?
+                node.value.scan(IDENTIFIER_IN_STRING) do |token|
+                  names << token.to_sym
                 end
               end
-              names
-            end,
-            T.nilable(T::Set[Symbol]),
-          )
+            elsif node.receiver.nil? && node.arguments.empty?
+              names << node.method_name
+            end
+          end
+          @referenced_names = T.let(names, T.nilable(T::Set[Symbol]))
+          names
         end
 
         sig { params(sym_node: RuboCop::AST::Node).returns(T::Boolean) }

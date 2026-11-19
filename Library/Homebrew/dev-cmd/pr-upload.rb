@@ -178,20 +178,28 @@ module Homebrew
 
       sig { params(bottles_hash: T::Hash[String, T.untyped]).returns(T::Boolean) }
       def github_releases?(bottles_hash)
-        @github_releases ||= T.let(bottles_hash.values.all? do |bottle_hash|
+        return @github_releases if @github_releases
+
+        github_releases = bottles_hash.values.all? do |bottle_hash|
           root_url = bottle_hash["bottle"]["root_url"]
           url_match = root_url.match GitHubReleases::URL_REGEX
           _, _, _, tag = *url_match
 
           tag
-        end, T.nilable(T::Boolean))
+        end
+        @github_releases = T.let(github_releases, T.nilable(T::Boolean))
+        github_releases
       end
 
       sig { params(bottles_hash: T::Hash[String, T.untyped]).returns(T::Boolean) }
       def github_packages?(bottles_hash)
-        @github_packages ||= T.let(bottles_hash.values.all? do |bottle_hash|
+        return @github_packages if @github_packages
+
+        github_packages = bottles_hash.values.all? do |bottle_hash|
           bottle_hash["bottle"]["root_url"].match? GitHubPackages::URL_REGEX
-        end, T.nilable(T::Boolean))
+        end
+        @github_packages = T.let(github_packages, T.nilable(T::Boolean))
+        github_packages
       end
 
       sig { params(json_files: T::Array[String], args: T.untyped).returns(T::Hash[String, T.untyped]) }

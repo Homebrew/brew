@@ -5,20 +5,18 @@ module RuboCop
   module Cask
     # Constants available globally for use in all cask cops.
     module Constants
-      ON_SYSTEM_METHODS = T.let(
-        [:arm, :intel, *MacOSVersion::SYMBOLS.keys, :macos, :linux].map { |option| :"on_#{option}" }.freeze,
-        T::Array[Symbol],
-      )
-      ON_SYSTEM_METHODS_STANZA_ORDER = T.let(
-        [
-          :arm,
-          :intel,
-          *MacOSVersion::SYMBOLS.reverse_each.to_h.keys, # Oldest OS blocks first since that's more common in Casks.
-          :macos,
-          :linux,
-        ].map { |option, _| :"on_#{option}" }.freeze,
-        T::Array[Symbol],
-      )
+      on_system_methods = [:arm, :intel, *MacOSVersion::SYMBOLS.keys, :macos, :linux].map do |option|
+        :"on_#{option}"
+      end
+      ON_SYSTEM_METHODS = T.let(on_system_methods.freeze, T::Array[Symbol])
+      on_system_methods_stanza_order = [
+        :arm,
+        :intel,
+        *MacOSVersion::SYMBOLS.reverse_each.to_h.keys, # Oldest OS blocks first since that's more common in Casks.
+        :macos,
+        :linux,
+      ].map { |option, _| :"on_#{option}" }
+      ON_SYSTEM_METHODS_STANZA_ORDER = T.let(on_system_methods_stanza_order.freeze, T::Array[Symbol])
       SHA256_ARCH_ORDER = [:arm, :intel, :x86_64, :arm64_linux, :x86_64_linux].freeze
 
       STANZA_GROUPS = T.let(
@@ -83,12 +81,10 @@ module RuboCop
         T::Array[T::Array[Symbol]],
       )
 
-      STANZA_GROUP_HASH = T.let(
-        STANZA_GROUPS.each_with_object({}) do |stanza_group, hash|
-          stanza_group.each { |stanza| hash[stanza] = stanza_group }
-        end.freeze,
-        T::Hash[Symbol, T::Array[Symbol]],
-      )
+      stanza_group_hash = STANZA_GROUPS.each_with_object({}) do |stanza_group, hash|
+        stanza_group.each { |stanza| hash[stanza] = stanza_group }
+      end
+      STANZA_GROUP_HASH = T.let(stanza_group_hash.freeze, T::Hash[Symbol, T::Array[Symbol]])
 
       STANZA_ORDER = T.let(STANZA_GROUPS.flatten.freeze, T::Array[Symbol])
 

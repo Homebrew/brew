@@ -92,12 +92,11 @@ module Utils
       extend Forwardable
       include AST
 
-      PATCH_PLATFORM_BLOCKS = T.let(
-        [*OnSystem::ARCH_OPTIONS, *OnSystem::BASE_OS_OPTIONS, *MacOSVersion::SYMBOLS.keys, :system].map do |name|
-          :"on_#{name}"
-        end.freeze,
-        T::Array[Symbol],
-      )
+      patch_platform_blocks = [*OnSystem::ARCH_OPTIONS, *OnSystem::BASE_OS_OPTIONS, *MacOSVersion::SYMBOLS.keys,
+                               :system].map do |name|
+        :"on_#{name}"
+      end
+      PATCH_PLATFORM_BLOCKS = T.let(patch_platform_blocks.freeze, T::Array[Symbol])
 
       delegate process: :tree_rewriter
 
@@ -336,10 +335,8 @@ module Utils
           end
         end
 
-        install_node = T.cast(
-          children.find { |child| child.def_type? && T.cast(child, DefNode).method_name == :install },
-          T.nilable(DefNode),
-        )
+        install_node = children.find { |child| child.def_type? && T.cast(child, DefNode).method_name == :install }
+        install_node = T.cast(install_node, T.nilable(DefNode))
         raise "Could not find 'install' method!" if install_node.blank?
 
         tree_rewriter.insert_before(whole_line_range(install_node.source_range), resource_section)

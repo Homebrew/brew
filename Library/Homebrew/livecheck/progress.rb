@@ -14,13 +14,14 @@ module Homebrew
         end
 
         require "ruby-progressbar"
-        @bar = T.let(ProgressBar.create(
-                       total:,
-                       progress_mark:  "#",
-                       remainder_mark: ".",
-                       format:         " %t: [%B] %c/%C ",
-                       output:         $stderr,
-                     ), T.nilable(ProgressBar::Base))
+        bar = ProgressBar.create(
+          total:,
+          progress_mark:  "#",
+          remainder_mark: ".",
+          format:         " %t: [%B] %c/%C ",
+          output:         $stderr,
+        )
+        @bar = T.let(bar, T.nilable(ProgressBar::Base))
       end
 
       sig { void }

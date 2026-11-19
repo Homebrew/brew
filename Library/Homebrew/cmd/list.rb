@@ -149,8 +149,7 @@ module Homebrew
           raise UsageError, "Cannot use #{filter_flags.join(", ")} with formula arguments." unless args.no_named?
 
           formulae = if args.t?
-            # See https://ruby-doc.org/3.2/Kernel.html#method-i-test
-            Formula.installed.sort_by { |formula| T.cast(test("M", formula.rack.to_s), Time) }.reverse!
+            Formula.installed.sort_by { |formula| formula.rack.mtime }.reverse!
           elsif args.full_name?
             Formula.installed.sort { |a, b| Cask::List::TAP_AND_NAME_COMPARISON.call(a.full_name, b.full_name) }
           else

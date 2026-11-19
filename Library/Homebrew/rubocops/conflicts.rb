@@ -20,7 +20,8 @@ module RuboCop
           find_method_calls_by_name(body_node, :conflicts_with).each do |conflicts_with_call|
             next unless parameters(conflicts_with_call).last.respond_to? :values
 
-            reason = T.cast(parameters(conflicts_with_call).fetch(-1), RuboCop::AST::HashNode).values.first
+            arguments = parameters(conflicts_with_call)
+            reason = T.cast(arguments.fetch(-1), RuboCop::AST::HashNode).values.first
             offending_node(reason)
             name = Regexp.new(formula_name, Regexp::IGNORECASE)
             reason_text = string_content(reason).sub(name, "")

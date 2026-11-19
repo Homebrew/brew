@@ -36,13 +36,14 @@ module Homebrew
               ENV["BAT_THEME"] = bat_theme
             end
             require "formula"
-            T.cast(Formula["bat"].ensure_installed!(
-                     reason:           "displaying <formula>/<cask> source",
-                     # The user might want to capture the output of `brew cat ...`
-                     # Redirect stdout to stderr
-                     output_to_stderr: true,
-                     executable:       "bat",
-                   ), Pathname)
+            bat = Formula["bat"].ensure_installed!(
+              reason:           "displaying <formula>/<cask> source",
+              # The user might want to capture the output of `brew cat ...`
+              # Redirect stdout to stderr
+              output_to_stderr: true,
+              executable:       "bat",
+            )
+            T.cast(bat, Pathname)
           else
             "cat"
           end

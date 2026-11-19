@@ -47,7 +47,7 @@ module Homebrew
           CaskDependent.new(cask).deps.map { |dep| Utils.name_from_full_name(dep.name) }
         end
 
-        dep_names = T.let((formula_dep_names + cask_dep_names).to_set, T::Set[String])
+        dep_names = (formula_dep_names + cask_dep_names).to_set
 
         leaves_list = installed.reject { |f| dep_names.intersect?(f.possible_names) }
         leaves_list.select! { |leaf| installed_on_request?(leaf) } if args.installed_on_request?

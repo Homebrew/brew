@@ -9,11 +9,10 @@ module Tapioca
     class Args < Tapioca::Dsl::Compiler
       extend T::Generic
 
-      GLOBAL_OPTIONS = T.let(
-        Homebrew::CLI::Parser.global_options.map do |short_option, long_option, _|
-          [short_option, long_option].map { "#{Homebrew::CLI::Parser.option_to_name(it)}?" }
-        end.flatten.freeze, T::Array[String]
-      )
+      global_options = Homebrew::CLI::Parser.global_options.map do |short_option, long_option, _|
+        [short_option, long_option].map { "#{Homebrew::CLI::Parser.option_to_name(it)}?" }
+      end.flatten
+      GLOBAL_OPTIONS = T.let(global_options.freeze, T::Array[String])
 
       ConstantType = type_member { { fixed: T.class_of(Homebrew::AbstractCommand) } }
       sig { override.returns(T::Enumerable[T.class_of(Homebrew::AbstractCommand)]) }

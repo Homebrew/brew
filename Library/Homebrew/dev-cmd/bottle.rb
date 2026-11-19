@@ -672,7 +672,7 @@ module Homebrew
 
         prefix = HOMEBREW_PREFIX.to_s
         cellar = HOMEBREW_CELLAR.to_s
-        padded = T.let(prefix == bottle_tag.padded_prefix, T::Boolean)
+        padded = prefix == bottle_tag.padded_prefix
 
         if local_bottle_json && local_bottle_path
           bottle_path = local_bottle_path

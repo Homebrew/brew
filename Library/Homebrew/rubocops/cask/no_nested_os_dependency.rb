@@ -13,13 +13,11 @@ module RuboCop
       class NoNestedOSDependency < Base
         OS_DEPENDENCIES = [:macos, :linux].freeze
         ARCH_BLOCK_METHODS = [:on_arm, :on_intel].freeze
-        OS_BLOCK_METHODS = T.let(
-          [
-            *RuboCop::Cask::Constants::ON_SYSTEM_METHODS.reject { |method| ARCH_BLOCK_METHODS.include?(method) },
-            :on_system,
-          ].freeze,
-          T::Array[Symbol],
-        )
+        os_block_methods = [
+          *RuboCop::Cask::Constants::ON_SYSTEM_METHODS.reject { |method| ARCH_BLOCK_METHODS.include?(method) },
+          :on_system,
+        ]
+        OS_BLOCK_METHODS = T.let(os_block_methods.freeze, T::Array[Symbol])
         OS_DISPLAY_NAMES = T.let({ macos: "macOS", linux: "Linux" }.freeze, T::Hash[Symbol, String])
         MSG = "A bare %<os_name>s dependency must not be nested in this conditional block. " \
               "Move it to the top level if the cask is %<os_name>s-only; otherwise remove it."

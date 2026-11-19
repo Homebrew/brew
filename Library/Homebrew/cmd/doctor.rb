@@ -65,7 +65,7 @@ module Homebrew
           end
 
           finding         = checks.public_send(method)
-          method_findings = T.let(Array(finding).compact, T::Array[Diagnostic::Finding])
+          method_findings = Array(finding).compact
           next if method_findings.empty?
 
           finding_collection.concat(method_findings.compact)
