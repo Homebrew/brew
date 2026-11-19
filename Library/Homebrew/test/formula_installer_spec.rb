@@ -317,7 +317,7 @@ RSpec.describe FormulaInstaller do
 
       sandbox = instance_double(Sandbox).as_null_object
       allow(Sandbox).to receive_messages(new: sandbox, use_for?: true, full_write_isolation?: true)
-      expect(sandbox).not_to receive(:allow_write_path).with(%r{/libexec\z})
+      expect(sandbox).not_to receive(:allow_write_path).with(satisfy { |path| path.to_s.end_with?("/libexec") })
       expect(sandbox).to receive(:run)
 
       described_class.new(Testball.new).post_install
