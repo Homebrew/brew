@@ -41,6 +41,30 @@ RSpec.describe Homebrew::Cmd::Doctor do
     end
   end
 
+  it "warns about an installed inventory tool at the host's usual tier" do
+    inventory = OS::ThirdPartyHomebrew.new(presence_file: __FILE__)
+    stub_const("OS::ThirdPartyHomebrew::CONFIGURATIONS", { inventory: })
+    allow(OS).to receive(:third_party_homebrew).and_return(nil)
+
+    expect { described_class.new(["check_for_installed_homebrew_management_software", "--json"]).run }
+      .to output(/"tier": 1.*"text": "Found third-party Homebrew management software on this machine\."/m).to_stdout
+  end
+
+  it "runs the inventory check as a non-fatal preinstall warning" do
+    checks = Homebrew::Diagnostic::Checks.new
+
+    expect(checks.preinstall_checks - checks.supported_configuration_checks)
+      .to include("check_for_installed_homebrew_management_software")
+  end
+
+  it "skips the inventory warning when the management tool owns the installation" do
+    manager = OS::ThirdPartyHomebrew.new(presence_file: __FILE__)
+    stub_const("OS::ThirdPartyHomebrew::CONFIGURATIONS", { manager: })
+    allow(OS).to receive(:third_party_homebrew).and_return(manager)
+
+    expect(Homebrew::Diagnostic::Checks.new.check_for_installed_homebrew_management_software).to be_nil
+  end
+
   context "with a relocatable custom prefix" do
     before do
       allow(Utils::Bottles).to receive(:tag).and_return(Utils::Bottles::Tag.from_symbol(:arm64_tahoe))
