@@ -167,7 +167,13 @@ module Utils
             # Installing will fail with this error so there are no dependencies to report.
             []
           end
-          installers = deps.map { |dep| formula_installer.dependency_installer(dep, dep.to_formula) }
+          # Analytics must not stop the install, so leave out a package whose details can't be read
+          # (e.g. from a corrupt install receipt): installing it reports the error instead.
+          installers = deps.filter_map do |dep|
+            formula_installer.dependency_installer(dep, dep.to_formula)
+          rescue
+            nil
+          end
           installers << formula_installer unless formula_installer.only_deps?
           installers.filter_map do |installer|
             formula = installer.formula
@@ -176,6 +182,8 @@ module Utils
 
             { package_name: formula.name, tap_name: tap.name, on_request: installer.installed_on_request?,
               options: installer.display_options(formula).join(" ") }
+          rescue
+            nil
           end
         end
 

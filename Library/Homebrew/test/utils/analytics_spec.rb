@@ -260,6 +260,27 @@ RSpec.describe Utils::Analytics do
       described_class.report_formula_installs([installer])
     end
 
+    it "leaves out a dependency whose install receipt can't be read" do
+      installer = formula_installer("foo", dependencies: ["readable"])
+      broken_formula = instance_double(Formula)
+      broken_dep = instance_double(Dependency, to_formula: broken_formula)
+      allow(installer).to receive(:dependency_installer).with(broken_dep, broken_formula)
+                                                        .and_raise(JSON::ParserError, "corrupt INSTALL_RECEIPT.json")
+      allow(installer).to receive(:compute_dependencies).and_return([broken_dep, *installer.compute_dependencies])
+      expect(described_class).to receive(:report_package_events)
+        .with(:formula_install, [package_event("readable"), package_event("foo", on_request: true)])
+
+      described_class.report_formula_installs([installer])
+    end
+
+    it "leaves out a formula whose installed options can't be read" do
+      installer = formula_installer("foo", dependencies: ["dep"])
+      allow(installer).to receive(:display_options).and_raise(JSON::ParserError, "corrupt INSTALL_RECEIPT.json")
+      expect(described_class).to receive(:report_package_events).with(:formula_install, [package_event("dep")])
+
+      described_class.report_formula_installs([installer])
+    end
+
     it "does not look at the formulae when analytics are disabled" do
       ENV["HOMEBREW_NO_ANALYTICS"] = "1"
       expect(described_class).not_to receive(:report_package_events)
