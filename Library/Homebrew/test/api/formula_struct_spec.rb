@@ -270,6 +270,34 @@ RSpec.describe Homebrew::API::FormulaStruct do
       expect(struct.service_args).to eq([[:run_type, :immediate]])
     end
 
+    context "with only a service name or run command" do
+      def deserialize_service(fields)
+        described_class.deserialize({
+          "desc"                 => "test formula",
+          "homepage"             => "https://example.com",
+          "license"              => "MIT",
+          "ruby_source_checksum" => "abc123",
+          "stable_version"       => "1.0.0",
+          **fields,
+        })
+      end
+
+      it "recognises a named service" do
+        expect(deserialize_service("service_name_args" => { ":macos" => "org.example.foo" }))
+          .to have_attributes(service?: true, service_name?: true)
+      end
+
+      it "recognises a service with a run command" do
+        expect(deserialize_service("service_run_args" => ["foo"]))
+          .to have_attributes(service?: true, service_run?: true)
+      end
+
+      it "recognises a service with a platform-specific run command" do
+        expect(deserialize_service("service_run_kwargs" => { ":linux" => "foo" }))
+          .to have_attributes(service?: true, service_run?: true)
+      end
+    end
+
     it "formats conflicts into arg pairs" do
       bottle_tag = Utils::Bottles::Tag.from_symbol(:arm64_sequoia)
       hash = {
