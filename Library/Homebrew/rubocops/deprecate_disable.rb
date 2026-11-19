@@ -22,10 +22,19 @@ module RuboCop
             date(node) do |date_node|
               Date.iso8601(string_content(date_node))
             rescue ArgumentError
-              fixed_date_string = Date.parse(string_content(date_node)).iso8601
+              date_string = string_content(date_node)
+              fixed_date_string = begin
+                Date.parse(date_string).iso8601 if Date._parse(date_string).values_at(:year, :mon, :mday).all?
+              rescue ArgumentError
+                nil
+              end
               @offensive_node = date_node
-              problem "Use `#{fixed_date_string}` to comply with ISO 8601" do |corrector|
-                corrector.replace(date_node.source_range, "\"#{fixed_date_string}\"")
+              if fixed_date_string
+                problem "Use `#{fixed_date_string}` to comply with ISO 8601" do |corrector|
+                  corrector.replace(date_node.source_range, "\"#{fixed_date_string}\"")
+                end
+              else
+                problem "Use an ISO 8601 date (`YYYY-MM-DD`)"
               end
             end
           end
