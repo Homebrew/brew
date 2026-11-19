@@ -342,8 +342,8 @@ Pass the executable and each argument separately.
 For shell setup, pass `"/bin/sh"`, `"-c"` and a script that uses `exec` to replace the shell with the process to clean up.
 The helper terminates and reaps the process when the block exits.
 The block may also reap the process itself.
-If the process is still running five seconds after the requested signal, the helper sends `KILL`.
 Use a minus-prefixed signal such as `"-TERM"` with `pgroup: true` to send both signals to the process group.
+If the process or selected group is still running five seconds after the requested signal, the helper sends `KILL`.
 
 We want tests that don't require any user input and test the basic functionality of the application. For example `foo build-foo input.foo` is a good test and (despite their widespread use) `foo --version` and `foo --help` are bad tests. However, a bad test is better than no test at all.
 

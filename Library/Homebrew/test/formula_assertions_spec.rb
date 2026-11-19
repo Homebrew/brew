@@ -24,27 +24,42 @@ RSpec.describe Homebrew::Assertions do
       expect($CHILD_STATUS.termsig).to eq Signal.list.fetch("INT")
     end
 
-    it "kills the process group when it ignores the requested signal" do
+    sig { params(leader: Symbol).returns(String) }
+    def remaining_worker_output(leader)
       parent, child = UNIXSocket.pair
       formula_assertions.with_test_process(
         RbConfig.ruby, "-e", <<~RUBY, in: child, out: child, signal: "-TERM", pgroup: true
-          Signal.trap(:TERM, :IGNORE)
+          Signal.trap(:TERM, #{(leader == :ignore) ? ":IGNORE" : ":DEFAULT"})
           fork do
+            Signal.trap(:TERM, :IGNORE)
             puts Process.pid
             $stdout.flush
             $stdin.read
           end
-          $stdin.read
+          $stdin.read unless #{leader == :exit}
         RUBY
-      ) do
+      ) do |pid|
         child.close
         parent.readline
+        Process.wait(pid) if leader == :exit
       end
 
-      expect(Timeout.timeout(5) { parent.read }).to eq("")
+      Timeout.timeout(5) { parent.read }
     ensure
       parent&.close
       child&.close
+    end
+
+    it "kills the worker when its leader ignores the requested signal" do
+      expect(remaining_worker_output(:ignore)).to eq("")
+    end
+
+    it "kills the worker when its leader is reaped before cleanup" do
+      expect(remaining_worker_output(:exit)).to eq("")
+    end
+
+    it "kills the worker when its leader exits on the requested signal" do
+      expect(remaining_worker_output(:wait)).to eq("")
     end
 
     it "kills and reaps a child that ignores the requested signal" do
