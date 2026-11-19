@@ -824,6 +824,14 @@ RSpec.describe Cask::Upgrade, :cask do
 
       described_class.upgrade_casks!(local_caffeine, args:)
     end
+
+    it "reports a cask whose download couldn't be enqueued for prefetching" do
+      allow(Homebrew::Install).to receive(:enqueue_cask_installers).and_return([])
+
+      expect(Utils::Analytics).to receive(:report_package_events).with(:cask_install, [upgrade_event]).once
+
+      expect(described_class.upgrade_casks!(local_caffeine, args:)).to be(true)
+    end
   end
 
   context "when quarantine support is unavailable" do
