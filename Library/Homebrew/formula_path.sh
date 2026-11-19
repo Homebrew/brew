@@ -77,7 +77,25 @@ homebrew-formula-path() {
     fi
   fi
 
-  [[ -z "${formula_exists}" ]] && return 1
+  if [[ -z "${formula_exists}" ]]
+  then
+    local opt_prefix="${HOMEBREW_PREFIX}/opt/${formula}"
+    [[ "${formula}" != */* && -L "${opt_prefix}" ]] || return 1
+
+    # A tap alias may have changed since the opt link was created.
+    local tap_alias
+    for tap_alias in "${HOMEBREW_REPOSITORY}/Library/Taps"/*/*/Aliases/"${formula}"
+    do
+      [[ -L "${tap_alias}" ]] && return 1
+    done
+
+    # Installed formulae and their aliases link to Cellar/<name>/<version>.
+    local keg rack
+    keg="$(realpath "${opt_prefix}")" || return 1
+    rack="${keg%/*}"
+    [[ "${rack%/*}" -ef "${HOMEBREW_CELLAR}" ]] || return 1
+    formula="${rack##*/}"
+  fi
 
   if [[ -n "${prefix}" ]]
   then
