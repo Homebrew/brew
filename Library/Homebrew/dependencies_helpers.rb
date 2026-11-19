@@ -24,7 +24,8 @@ module DependenciesHelpers
       .returns(T::Array[Dependency])
   }
   def recursive_dep_includes(root_dependent, includes, ignores)
-    T.cast(recursive_includes(Dependency, root_dependent, includes, ignores), T::Array[Dependency])
+    dependencies = recursive_includes(Dependency, root_dependent, includes, ignores)
+    T.cast(dependencies, T::Array[Dependency])
   end
 
   sig {
@@ -32,7 +33,8 @@ module DependenciesHelpers
       .returns(Requirements)
   }
   def recursive_req_includes(root_dependent, includes, ignores)
-    T.cast(recursive_includes(Requirement, root_dependent, includes, ignores), Requirements)
+    requirements = recursive_includes(Requirement, root_dependent, includes, ignores)
+    T.cast(requirements, Requirements)
   end
 
   sig {

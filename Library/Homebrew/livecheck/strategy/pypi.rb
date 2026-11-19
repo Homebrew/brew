@@ -20,14 +20,16 @@ module Homebrew
       class Pypi
         extend Strategic
 
-        # The default `strategy` block used to extract version information when
-        # a `strategy` block isn't provided.
-        DEFAULT_BLOCK = T.let(proc do |json, regex|
+        default_block = proc do |json, regex|
           version = json.dig("info", "version")
           next if version.blank?
 
           regex ? version[regex, 1] : version
-        end.freeze, T.proc.params(
+        end
+
+        # The default `strategy` block used to extract version information when
+        # a `strategy` block isn't provided.
+        DEFAULT_BLOCK = T.let(default_block.freeze, T.proc.params(
           json:  T::Hash[String, T.anything],
           regex: T.nilable(Regexp),
         ).returns(T.nilable(String)))

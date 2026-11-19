@@ -58,42 +58,33 @@ class CoreCaskTap < AbstractCoreTap
   def cask_files_by_name
     return super if Homebrew::EnvConfig.no_install_from_api?
 
-    @cask_files_by_name ||= T.let(
-      begin
-        cask_directory_path = cask_dir.to_s
-        Homebrew::API.cask_tokens.each_with_object({}) do |name, hash|
-          # If there's more than one item with the same path: use the longer one to prioritise more specific results.
-          existing_path = hash[name]
-          # Pathname equivalent is slow in a tight loop
-          new_path = File.join(cask_directory_path, new_cask_subdirectory(name), "#{name.downcase}.rb")
-          hash[name] = Pathname(new_path) if existing_path.nil? || existing_path.to_s.length < new_path.length
-        end
-      end,
-      T.nilable(T::Hash[String, Pathname]),
-    )
+    @cask_files_by_name ||= begin
+      cask_directory_path = cask_dir.to_s
+      Homebrew::API.cask_tokens.each_with_object({}) do |name, hash|
+        # If there's more than one item with the same path: use the longer one to prioritise more specific results.
+        existing_path = hash[name]
+        # Pathname equivalent is slow in a tight loop
+        new_path = File.join(cask_directory_path, new_cask_subdirectory(name), "#{name.downcase}.rb")
+        hash[name] = Pathname(new_path) if existing_path.nil? || existing_path.to_s.length < new_path.length
+      end
+    end
   end
 
   sig { override.returns(T::Hash[String, String]) }
   def cask_renames
-    @cask_renames ||= T.let(
-      if Homebrew::EnvConfig.no_install_from_api?
-        super
-      else
-        Homebrew::API.cask_renames
-      end,
-      T.nilable(T::Hash[String, String]),
-    )
+    @cask_renames ||= if Homebrew::EnvConfig.no_install_from_api?
+      super
+    else
+      Homebrew::API.cask_renames
+    end
   end
 
   sig { override.returns(T::Hash[String, T.untyped]) }
   def tap_migrations
-    @tap_migrations ||= T.let(
-      if Homebrew::EnvConfig.no_install_from_api?
-        super
-      else
-        Homebrew::API.cask_tap_migrations
-      end,
-      T.nilable(T::Hash[String, T.untyped]),
-    )
+    @tap_migrations ||= if Homebrew::EnvConfig.no_install_from_api?
+      super
+    else
+      Homebrew::API.cask_tap_migrations
+    end
   end
 end

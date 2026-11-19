@@ -62,16 +62,12 @@ class DescriptionCacheStore < CacheStore
     return if database.empty? || report.empty?
 
     renamings = T.cast(report.select_formula_or_cask(:R), T::Array[[String, String]])
-    alterations = T.cast(
-      report.select_formula_or_cask(:A) +
-      report.select_formula_or_cask(:M) +
-      renamings.filter_map(&:last),
-      T::Array[String],
-    )
-    deletions = T.cast(
-      report.select_formula_or_cask(:D) + renamings.filter_map(&:first),
-      T::Array[String],
-    )
+    alterations = report.select_formula_or_cask(:A) +
+                  report.select_formula_or_cask(:M) +
+                  renamings.filter_map(&:last)
+    alterations = T.cast(alterations, T::Array[String])
+    deletions = report.select_formula_or_cask(:D) + renamings.filter_map(&:first)
+    deletions = T.cast(deletions, T::Array[String])
 
     update_from_formula_names!(alterations)
     delete_from_formula_names!(deletions)

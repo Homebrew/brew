@@ -36,7 +36,8 @@ module DeprecateDisable
   # Keep in sync with RemoveDisabledPackages::REMOVE_DISABLED_MONTHS in
   # Homebrew/actions/remove-disabled-packages/main.rb.
   REMOVE_DISABLED_TIME_WINDOW = 12
-  REMOVE_DISABLED_BEFORE = T.let((Date.today << REMOVE_DISABLED_TIME_WINDOW).freeze, Date)
+  remove_disabled_before = Date.today << REMOVE_DISABLED_TIME_WINDOW
+  REMOVE_DISABLED_BEFORE = T.let(remove_disabled_before.freeze, Date)
 
   # Whether a formula or cask is disabled on every OS/architecture combination.
   sig { params(formula_or_cask: T.any(Formula, Cask::Cask)).returns(T::Boolean) }

@@ -379,9 +379,9 @@ class Dependency
 
     sig { params(deps: T::Array[Dependency]).returns(T::Array[T.any(String, Symbol)]) }
     def merge_tags(deps)
-      other_tags = T.let(deps.flat_map(&:option_tags).uniq, T::Array[T.any(String, Symbol)])
-      other_tags << :test if deps.flat_map(&:tags).include?(:test)
-      merge_necessity(deps) + merge_temporality(deps) + other_tags
+      tags = merge_necessity(deps) + merge_temporality(deps) + deps.flat_map(&:option_tags).uniq
+      tags << :test if deps.flat_map(&:tags).include?(:test)
+      tags
     end
 
     sig { params(deps: T::Array[Dependency]).returns(T::Array[Symbol]) }

@@ -297,6 +297,10 @@ class Tap # rubocop:disable Metrics/ClassLength
 
   sig { params(user: String, repository: String).void }
   def initialize(user, repository)
+    @potential_formula_dirs = T.let(nil, T.nilable(T::Array[Pathname]))
+    @formula_file_regex = T.let(nil, T.nilable(Regexp))
+    @disabled_new_usr_local_relocation_formulae = T.let(nil, T.nilable(T::Array[String]))
+
     require "git_repository"
 
     @user = user
@@ -304,7 +308,8 @@ class Tap # rubocop:disable Metrics/ClassLength
     @name = T.let("#{@user}/#{@repository}".downcase, String)
     @full_repository = T.let("homebrew-#{@repository}", String)
     @full_name = T.let("#{@user}/#{@full_repository}", String)
-    @path = T.let(HOMEBREW_TAP_DIRECTORY/@full_name.downcase, Pathname)
+    path = HOMEBREW_TAP_DIRECTORY/@full_name.downcase
+    @path = T.let(path, Pathname)
     @git_repository = T.let(GitRepository.new(@path), GitRepository)
   end
 
@@ -312,39 +317,39 @@ class Tap # rubocop:disable Metrics/ClassLength
   sig { void }
   def clear_cache
     @remote = nil
-    @repository_var_suffix = nil
+    @repository_var_suffix = T.let(nil, T.nilable(String))
     remove_instance_variable(:@private) if instance_variable_defined?(:@private)
 
-    @formula_dir = nil
-    @formula_files = nil
-    @formula_files_by_name = nil
-    @formula_names = nil
-    @prefix_to_versioned_formulae_names = nil
-    @formula_renames = nil
-    @formula_reverse_renames = nil
+    @formula_dir = T.let(nil, T.nilable(Pathname))
+    @formula_files = T.let(nil, T.nilable(T::Array[Pathname]))
+    @formula_files_by_name = T.let(nil, T.nilable(T::Hash[String, Pathname]))
+    @formula_names = T.let(nil, T.nilable(T::Array[String]))
+    @prefix_to_versioned_formulae_names = T.let(nil, T.nilable(T::Hash[String, T::Array[String]]))
+    @formula_renames = T.let(nil, T.nilable(T::Hash[String, String]))
+    @formula_reverse_renames = T.let(nil, T.nilable(T::Hash[String, T::Array[String]]))
 
-    @cask_dir = nil
-    @cask_files = nil
-    @cask_files_by_name = nil
-    @cask_tokens = nil
-    @cask_renames = nil
-    @cask_reverse_renames = nil
+    @cask_dir = T.let(nil, T.nilable(Pathname))
+    @cask_files = T.let(nil, T.nilable(T::Array[Pathname]))
+    @cask_files_by_name = T.let(nil, T.nilable(T::Hash[String, Pathname]))
+    @cask_tokens = T.let(nil, T.nilable(T::Array[String]))
+    @cask_renames = T.let(nil, T.nilable(T::Hash[String, String]))
+    @cask_reverse_renames = T.let(nil, T.nilable(T::Hash[String, T::Array[String]]))
 
-    @alias_dir = nil
-    @alias_files = nil
+    @alias_dir = T.let(nil, T.nilable(Pathname))
+    @alias_files = T.let(nil, T.nilable(T::Array[Pathname]))
     @aliases = nil
-    @alias_table = nil
-    @alias_reverse_table = nil
+    @alias_table = T.let(nil, T.nilable(T::Hash[String, String]))
+    @alias_reverse_table = T.let(nil, T.nilable(T::Hash[String, T::Array[String]]))
 
-    @command_dir = nil
-    @command_files = nil
+    @command_dir = T.let(nil, T.nilable(Pathname))
+    @command_files = T.let(nil, T.nilable(T::Array[Pathname]))
 
-    @tap_migrations = nil
-    @reverse_tap_migrations_renames = nil
+    @tap_migrations = T.let(nil, T.nilable(T::Hash[String, String]))
+    @reverse_tap_migrations_renames = T.let(nil, T.nilable(T::Hash[String, T::Array[String]]))
 
     @audit_exceptions = nil
     @style_exceptions = nil
-    @synced_versions_formulae = nil
+    @synced_versions_formulae = T.let(nil, T.nilable(T::Array[T::Array[String]]))
 
     @config = nil
   end
@@ -417,10 +422,10 @@ class Tap # rubocop:disable Metrics/ClassLength
 
   sig { returns(String) }
   def repository_var_suffix
-    @repository_var_suffix ||= T.let(path.to_s
-                                         .delete_prefix(HOMEBREW_TAP_DIRECTORY.to_s)
-                                         .tr("^A-Za-z0-9", "_")
-                                         .upcase, T.nilable(String))
+    @repository_var_suffix ||= path.to_s
+                                   .delete_prefix(HOMEBREW_TAP_DIRECTORY.to_s)
+                                   .tr("^A-Za-z0-9", "_")
+                                   .upcase
   end
 
   # Check whether this {Tap} is a Git repository.
@@ -505,11 +510,13 @@ class Tap # rubocop:disable Metrics/ClassLength
   # {TapConfig} of this {Tap}.
   sig { returns(TapConfig) }
   def config
-    @config ||= T.let(begin
-      raise TapUnavailableError, name unless installed?
+    return @config if @config
 
-      TapConfig.new(self)
-    end, T.nilable(TapConfig))
+    raise TapUnavailableError, name unless installed?
+
+    config = TapConfig.new(self)
+    @config = T.let(config, T.nilable(TapConfig))
+    config
   end
 
   # Check whether this {Tap} is installed.
@@ -1000,19 +1007,16 @@ class Tap # rubocop:disable Metrics/ClassLength
   sig { overridable.returns(Pathname) }
   def formula_dir
     # Official formulae taps always use this directory, saves time to hardcode.
-    @formula_dir ||= T.let(
-      if official?
-        path/"Formula"
-      else
-        potential_formula_dirs.find(&:directory?) || (path/"Formula")
-      end,
-      T.nilable(Pathname),
-    )
+    @formula_dir ||= if official?
+      path/"Formula"
+    else
+      potential_formula_dirs.find(&:directory?) || (path/"Formula")
+    end
   end
 
   sig { returns(T::Array[Pathname]) }
   def potential_formula_dirs
-    @potential_formula_dirs ||= T.let([path/"Formula", path/"HomebrewFormula", path].freeze, T.nilable(T::Array[Pathname]))
+    @potential_formula_dirs ||= [path/"Formula", path/"HomebrewFormula", path].freeze
   end
 
   sig { overridable.params(name: String).returns(Pathname) }
@@ -1025,7 +1029,7 @@ class Tap # rubocop:disable Metrics/ClassLength
   # @api public
   sig { returns(Pathname) }
   def cask_dir
-    @cask_dir ||= T.let(path/"Casks", T.nilable(Pathname))
+    @cask_dir ||= path/"Casks"
   end
 
   sig { params(token: String).returns(Pathname) }
@@ -1061,55 +1065,49 @@ class Tap # rubocop:disable Metrics/ClassLength
   # An array of all {Formula} files of this {Tap}.
   sig { overridable.returns(T::Array[Pathname]) }
   def formula_files
-    @formula_files ||= T.let(
-      if formula_dir.directory?
-        if formula_dir == path
-          # We only want the top level here so we don't treat commands & casks as formulae.
-          # Sharding is only supported in Formula/ and HomebrewFormula/.
-          Pathname.glob(formula_dir/"*.rb")
-        else
-          Pathname.glob(formula_dir/"**/*.rb").sort_by(&:to_s)
-        end
+    @formula_files ||= if formula_dir.directory?
+      if formula_dir == path
+        # We only want the top level here so we don't treat commands & casks as formulae.
+        # Sharding is only supported in Formula/ and HomebrewFormula/.
+        Pathname.glob(formula_dir/"*.rb")
       else
-        []
-      end,
-      T.nilable(T::Array[Pathname]),
-    )
+        Pathname.glob(formula_dir/"**/*.rb").sort_by(&:to_s)
+      end
+    else
+      []
+    end
   end
 
   # A mapping of {Formula} names to {Formula} file paths.
   sig { overridable.returns(T::Hash[String, Pathname]) }
   def formula_files_by_name
-    @formula_files_by_name ||= T.let(formula_files.each_with_object({}) do |file, hash|
+    @formula_files_by_name ||= formula_files.each_with_object({}) do |file, hash|
       # If there's more than one file with the same basename: use the longer one to prioritise more specific results.
       basename = file.basename(".rb").to_s
       existing_file = hash[basename]
       hash[basename] = file if existing_file.nil? || existing_file.to_s.length < file.to_s.length
-    end, T.nilable(T::Hash[String, Pathname]))
+    end
   end
 
   # An array of all {Cask} files of this {Tap}.
   sig { returns(T::Array[Pathname]) }
   def cask_files
-    @cask_files ||= T.let(
-      if cask_dir.directory?
-        Pathname.glob(cask_dir/"**/*.rb").sort_by(&:to_s)
-      else
-        []
-      end,
-      T.nilable(T::Array[Pathname]),
-    )
+    @cask_files ||= if cask_dir.directory?
+      Pathname.glob(cask_dir/"**/*.rb").sort_by(&:to_s)
+    else
+      []
+    end
   end
 
   # A mapping of {Cask} tokens to {Cask} file paths.
   sig { returns(T::Hash[String, Pathname]) }
   def cask_files_by_name
-    @cask_files_by_name ||= T.let(cask_files.each_with_object({}) do |file, hash|
+    @cask_files_by_name ||= cask_files.each_with_object({}) do |file, hash|
       # If there's more than one file with the same basename: use the longer one to prioritise more specific results.
       basename = file.basename(".rb").to_s
       existing_file = hash[basename]
       hash[basename] = file if existing_file.nil? || existing_file.to_s.length < file.to_s.length
-    end, T.nilable(T::Hash[String, Pathname]))
+    end
   end
 
   RUBY_FILE_NAME_REGEX = %r{[^/]+\.rb}
@@ -1120,19 +1118,16 @@ class Tap # rubocop:disable Metrics/ClassLength
 
   sig { returns(Regexp) }
   def formula_file_regex
-    @formula_file_regex ||= T.let(
-      case formula_dir
-      when path/"Formula"
-        %r{^Formula/#{ZERO_OR_MORE_SUBDIRECTORIES_REGEX.source}#{RUBY_FILE_NAME_REGEX.source}$}o
-      when path/"HomebrewFormula"
-        %r{^HomebrewFormula/#{ZERO_OR_MORE_SUBDIRECTORIES_REGEX.source}#{RUBY_FILE_NAME_REGEX.source}$}o
-      when path
-        /^#{RUBY_FILE_NAME_REGEX.source}$/o
-      else
-        raise ArgumentError, "Unexpected formula_dir: #{formula_dir}"
-      end,
-      T.nilable(Regexp),
-    )
+    @formula_file_regex ||= case formula_dir
+    when path/"Formula"
+      %r{^Formula/#{ZERO_OR_MORE_SUBDIRECTORIES_REGEX.source}#{RUBY_FILE_NAME_REGEX.source}$}o
+    when path/"HomebrewFormula"
+      %r{^HomebrewFormula/#{ZERO_OR_MORE_SUBDIRECTORIES_REGEX.source}#{RUBY_FILE_NAME_REGEX.source}$}o
+    when path
+      /^#{RUBY_FILE_NAME_REGEX.source}$/o
+    else
+      raise ArgumentError, "Unexpected formula_dir: #{formula_dir}"
+    end
   end
   private :formula_file_regex
 
@@ -1154,35 +1149,35 @@ class Tap # rubocop:disable Metrics/ClassLength
   # An array of all {Formula} names of this {Tap}.
   sig { overridable.returns(T::Array[String]) }
   def formula_names
-    @formula_names ||= T.let(formula_files.map { formula_file_to_name(it) }, T.nilable(T::Array[String]))
+    @formula_names ||= formula_files.map { formula_file_to_name(it) }
   end
 
   # A hash of all {Formula} name prefixes to versioned {Formula} in this {Tap}.
   sig { returns(T::Hash[String, T::Array[String]]) }
   def prefix_to_versioned_formulae_names
-    @prefix_to_versioned_formulae_names ||= T.let(formula_names
-                                                  .select { |name| name.include?("@") }
-                                                  .group_by { |name| name.sub(/@[\d.]+(?=-full$|$)/, "") }
-                                                  .transform_values(&:sort)
-                                                  .freeze, T.nilable(T::Hash[String, T::Array[String]]))
+    @prefix_to_versioned_formulae_names ||= formula_names
+                                            .select { |name| name.include?("@") }
+                                            .group_by { |name| name.sub(/@[\d.]+(?=-full$|$)/, "") }
+                                            .transform_values(&:sort)
+                                            .freeze
   end
 
   # An array of all {Cask} tokens of this {Tap}.
   sig { returns(T::Array[String]) }
   def cask_tokens
-    @cask_tokens ||= T.let(cask_files.map { formula_file_to_name(it) }, T.nilable(T::Array[String]))
+    @cask_tokens ||= cask_files.map { formula_file_to_name(it) }
   end
 
   # Path to the directory of all alias files for this {Tap}.
   sig { overridable.returns(Pathname) }
   def alias_dir
-    @alias_dir ||= T.let(path/"Aliases", T.nilable(Pathname))
+    @alias_dir ||= path/"Aliases"
   end
 
   # An array of all alias files of this {Tap}.
   sig { returns(T::Array[Pathname]) }
   def alias_files
-    @alias_files ||= T.let(Pathname.glob("#{alias_dir}/*").select(&:file?), T.nilable(T::Array[Pathname]))
+    @alias_files ||= Pathname.glob("#{alias_dir}/*").select(&:file?)
   end
 
   # An array of all aliases of this {Tap}.
@@ -1194,40 +1189,34 @@ class Tap # rubocop:disable Metrics/ClassLength
   # Mapping from aliases to formula names.
   sig { overridable.returns(T::Hash[String, String]) }
   def alias_table
-    @alias_table ||= T.let(alias_files.to_h do |alias_file|
-                             [alias_file_to_name(alias_file),
-                              formula_file_to_name(resolved_path(alias_file))]
-                           end, T.nilable(T::Hash[String, String]))
+    @alias_table ||= alias_files.to_h do |alias_file|
+      [alias_file_to_name(alias_file),
+       formula_file_to_name(resolved_path(alias_file))]
+    end
   end
 
   # Mapping from formula names to aliases.
   sig { returns(T::Hash[String, T::Array[String]]) }
   def alias_reverse_table
-    @alias_reverse_table ||= T.let(
-      alias_table.each_with_object({}) do |(alias_name, formula_name), alias_reverse_table|
-        alias_reverse_table[formula_name] ||= []
-        alias_reverse_table[formula_name] << alias_name
-      end,
-      T.nilable(T::Hash[String, T::Array[String]]),
-    )
+    @alias_reverse_table ||= alias_table.each_with_object({}) do |(alias_name, formula_name), alias_reverse_table|
+      alias_reverse_table[formula_name] ||= []
+      alias_reverse_table[formula_name] << alias_name
+    end
   end
 
   sig { returns(Pathname) }
   def command_dir
-    @command_dir ||= T.let(path/"cmd", T.nilable(Pathname))
+    @command_dir ||= path/"cmd"
   end
 
   # An array of all commands files of this {Tap}.
   sig { returns(T::Array[Pathname]) }
   def command_files
-    @command_files ||= T.let(
-      if command_dir.directory?
-        Commands.find_commands(command_dir)
-      else
-        []
-      end,
-      T.nilable(T::Array[Pathname]),
-    )
+    @command_files ||= if command_dir.directory?
+      Commands.find_commands(command_dir)
+    else
+      []
+    end
   end
 
   sig { returns(T::Hash[String, T.untyped]) }
@@ -1265,73 +1254,62 @@ class Tap # rubocop:disable Metrics/ClassLength
   # Hash with tap cask renames.
   sig { returns(T::Hash[String, String]) }
   def cask_renames
-    @cask_renames ||= T.let(
-      if (rename_file = path/HOMEBREW_TAP_CASK_RENAMES_FILE).file?
-        JSON.parse(rename_file.read)
-      else
-        {}
-      end,
-      T.nilable(T::Hash[String, String]),
-    )
+    @cask_renames ||= if (rename_file = path/HOMEBREW_TAP_CASK_RENAMES_FILE).file?
+      JSON.parse(rename_file.read)
+    else
+      {}
+    end
   end
 
   # Mapping from new to old cask tokens. Reverse of {#cask_renames}.
   sig { returns(T::Hash[String, T::Array[String]]) }
   def cask_reverse_renames
-    @cask_reverse_renames ||= T.let(cask_renames.each_with_object({}) do |(old_name, new_name), hash|
+    @cask_reverse_renames ||= cask_renames.each_with_object({}) do |(old_name, new_name), hash|
       hash[new_name] ||= []
       hash[new_name] << old_name
-    end, T.nilable(T::Hash[String, T::Array[String]]))
+    end
   end
 
   # Hash with tap formula renames.
   sig { overridable.returns(T::Hash[String, String]) }
   def formula_renames
-    @formula_renames ||= T.let(
-      if (rename_file = path/HOMEBREW_TAP_FORMULA_RENAMES_FILE).file?
-        JSON.parse(rename_file.read)
-      else
-        {}
-      end,
-      T.nilable(T::Hash[String, String]),
-    )
+    @formula_renames ||= if (rename_file = path/HOMEBREW_TAP_FORMULA_RENAMES_FILE).file?
+      JSON.parse(rename_file.read)
+    else
+      {}
+    end
   end
 
   # Mapping from new to old formula names. Reverse of {#formula_renames}.
   sig { returns(T::Hash[String, T::Array[String]]) }
   def formula_reverse_renames
-    @formula_reverse_renames ||= T.let(formula_renames.each_with_object({}) do |(old_name, new_name), hash|
+    @formula_reverse_renames ||= formula_renames.each_with_object({}) do |(old_name, new_name), hash|
       hash[new_name] ||= []
       hash[new_name] << old_name
-    end, T.nilable(T::Hash[String, T::Array[String]]))
+    end
   end
 
   # Hash with tap migrations.
   sig { overridable.returns(T::Hash[String, String]) }
   def tap_migrations
-    @tap_migrations ||= T.let(
-      if (migration_file = path/HOMEBREW_TAP_MIGRATIONS_FILE).file?
-        JSON.parse(migration_file.read)
-      else
-        {}
-      end, T.nilable(T::Hash[String, String])
-    )
+    @tap_migrations ||= if (migration_file = path/HOMEBREW_TAP_MIGRATIONS_FILE).file?
+      JSON.parse(migration_file.read)
+    else
+      {}
+    end
   end
 
   sig { returns(T::Hash[String, T::Array[String]]) }
   def reverse_tap_migrations_renames
-    @reverse_tap_migrations_renames ||= T.let(
-      tap_migrations.each_with_object({}) do |(old_name, new_name), hash|
-        # Only include renames:
-        # + `homebrew/cask/water-buffalo`
-        # - `homebrew/cask`
-        next unless Utils.full_name?(new_name)
+    @reverse_tap_migrations_renames ||= tap_migrations.each_with_object({}) do |(old_name, new_name), hash|
+      # Only include renames:
+      # + `homebrew/cask/water-buffalo`
+      # - `homebrew/cask`
+      next unless Utils.full_name?(new_name)
 
-        hash[new_name] ||= []
-        hash[new_name] << old_name
-      end,
-      T.nilable(T::Hash[String, T::Array[String]]),
-    )
+      hash[new_name] ||= []
+      hash[new_name] << old_name
+    end
   end
 
   # The old names a formula or cask had before getting migrated to the current tap.
@@ -1420,27 +1398,20 @@ class Tap # rubocop:disable Metrics/ClassLength
   # Array with synced versions formulae
   sig { overridable.returns(T::Array[T::Array[String]]) }
   def synced_versions_formulae
-    @synced_versions_formulae ||= T.let(
-      if (synced_file = path/HOMEBREW_TAP_SYNCED_VERSIONS_FORMULAE_FILE).file?
-        JSON.parse(synced_file.read)
-      else
-        []
-      end,
-      T.nilable(T::Array[T::Array[String]]),
-    )
+    @synced_versions_formulae ||= if (synced_file = path/HOMEBREW_TAP_SYNCED_VERSIONS_FORMULAE_FILE).file?
+      JSON.parse(synced_file.read)
+    else
+      []
+    end
   end
 
   # Array with formulae that should not be relocated to new /usr/local
   sig { overridable.returns(T::Array[String]) }
   def disabled_new_usr_local_relocation_formulae
-    @disabled_new_usr_local_relocation_formulae ||= T.let(
-      if (synced_file = path/HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE).file?
-        JSON.parse(synced_file.read)
-      else
-        []
-      end,
-      T.nilable(T::Array[String]),
-    )
+    @disabled_new_usr_local_relocation_formulae ||= begin
+      synced_file = path/HOMEBREW_TAP_DISABLED_NEW_USR_LOCAL_RELOCATION_FORMULAE_FILE
+      synced_file.file? ? JSON.parse(synced_file.read) : []
+    end
   end
 
   sig { returns(T::Boolean) }

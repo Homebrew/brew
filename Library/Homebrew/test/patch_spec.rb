@@ -386,37 +386,41 @@ RSpec.describe Patch do
 
   describe "#resolves" do
     it "merges explicit resolves with CVEs inferred from url and apply paths" do
-      patch = T.cast(described_class.create(:p1, nil) do
+      patch = described_class.create(:p1, nil) do
         url "https://example.com/CVE-2024-1111.patch"
         apply "patches/cve-2024-2222.patch"
         resolves "CVE-2024-3333"
-      end, ExternalPatch)
+      end
+      patch = T.cast(patch, ExternalPatch)
       expect(patch.resolves).to eq(["CVE-2024-3333", "CVE-2024-1111", "CVE-2024-2222"])
     end
 
     it "carries explicit resolves through to a local file patch and infers from the file path" do
-      patch = T.cast(described_class.create(:p1, nil) do
+      patch = described_class.create(:p1, nil) do
         file "Patches/CVE-2024-1234.diff"
         resolves "CVE-2024-5678"
-      end, LocalPatch)
+      end
+      patch = T.cast(patch, LocalPatch)
       expect(patch.resolves).to eq(["CVE-2024-5678", "CVE-2024-1234"])
     end
   end
 
   describe "#type" do
     it "stores a valid type on an external patch" do
-      patch = T.cast(described_class.create(:p1, nil) do
+      patch = described_class.create(:p1, nil) do
         url "https://example.com/foo.diff"
         type :backport
-      end, ExternalPatch)
+      end
+      patch = T.cast(patch, ExternalPatch)
       expect(patch.type).to eq(:backport)
     end
 
     it "carries type through to a local file patch" do
-      patch = T.cast(described_class.create(:p1, nil) do
+      patch = described_class.create(:p1, nil) do
         file "Patches/foo.diff"
         type :unofficial
-      end, LocalPatch)
+      end
+      patch = T.cast(patch, LocalPatch)
       expect(patch.type).to eq(:unofficial)
     end
 

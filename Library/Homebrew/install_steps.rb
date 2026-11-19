@@ -173,10 +173,8 @@ module Homebrew
 
       sig { params(step: ::T::Hash[String, ::T.nilable(StepValue)]).returns(Step) }
       def self.compact_step(step)
-        compacted_step = ::T.cast(
-          ::Utils.deep_compact_blank(step.except(*PRESERVED_STEP_VALUE_KEYS)) || {},
-          Step,
-        )
+        compacted_step = ::Utils.deep_compact_blank(step.except(*PRESERVED_STEP_VALUE_KEYS)) || {}
+        compacted_step = ::T.cast(compacted_step, Step)
         PRESERVED_STEP_VALUE_KEYS.each do |key|
           value = step[key]
           next if value.nil?
@@ -201,7 +199,8 @@ module Homebrew
           end
         when Hash
           if key == "env"
-            ::T.cast(obj.to_h { |env_key, value| [env_key.to_s, value&.to_s] }.compact, PathSpec)
+            values = obj.to_h { |env_key, value| [env_key.to_s, value&.to_s] }.compact
+            ::T.cast(values, PathSpec)
           else
             normalise_path_value(obj)
           end
@@ -223,7 +222,8 @@ module Homebrew
       def self.normalise_path_value(obj)
         case obj
         when Hash
-          ::T.cast(obj.to_h { |key, value| [key.to_s, value&.to_s] }.compact_blank, PathSpec)
+          values = obj.to_h { |key, value| [key.to_s, value&.to_s] }.compact_blank
+          ::T.cast(values, PathSpec)
         else
           { "path" => obj.to_s }
         end
@@ -1276,7 +1276,8 @@ module Homebrew
       def run_serialised_command(step)
         command = resolve_command(step_path(step, "command"))
         args = T.cast(step["args"], T.nilable(T::Array[String]))&.map { |arg| expand_template_tokens(arg) } || []
-        environment = T.cast(step["env"] || {}, PathSpec)
+        env = step["env"] || {}
+        environment = T.cast(env, PathSpec)
                        .transform_values { |value| expand_template_tokens(value.to_s) }
         input = step.key?("stdin_path") ? resolve_step_path(step, "stdin_path").read : []
         working_directory = resolve_step_path(step, "chdir") if step.key?("chdir")
@@ -1307,7 +1308,8 @@ module Homebrew
           command = "/usr/bin/killall"
           args = [name]
         end
-        attempts = T.cast(step["attempts"] || 1, Integer)
+        attempts = step["attempts"] || 1
+        attempts = T.cast(attempts, Integer)
 
         begin
           run_command command, *args, sudo: step["sudo"] == true

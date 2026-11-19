@@ -394,7 +394,8 @@ module Formulary
 
     sig { params(bottle_name: String).void }
     def initialize(bottle_name)
-      @bottle_path = T.let(Pathname(bottle_name).realpath, Pathname)
+      bottle_path = Pathname(bottle_name).realpath
+      @bottle_path = T.let(bottle_path, Pathname)
       name, full_name = Utils::Bottles.resolve_formula_names(@bottle_path)
       tap, = Tap.with_formula_name(full_name)
 
@@ -406,7 +407,8 @@ module Formulary
 
       # Mimic a Cellar path to simulate relaxed deprecation behaviour shared with postinstalls.
       version = Utils::Bottles.resolve_version(@bottle_path)
-      @cellar_formula_path = T.let(HOMEBREW_CELLAR/name/version/".brew"/"#{name}.rb", Pathname)
+      cellar_formula_path = HOMEBREW_CELLAR/name/version/".brew"/"#{name}.rb"
+      @cellar_formula_path = T.let(cellar_formula_path, Pathname)
 
       super name, fallback_path, tap:
     end

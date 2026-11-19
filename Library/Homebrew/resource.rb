@@ -128,7 +128,10 @@ class Resource
 
   sig { void }
   def prepare_patches
-    patches.grep(DATAPatch) { |p| p.path = T.cast(T.cast(owner, SoftwareSpec).owner, ::Formula).path }
+    patches.grep(DATAPatch) do |patch|
+      spec = T.cast(owner, SoftwareSpec)
+      patch.path = T.cast(spec.owner, ::Formula).path
+    end
   end
 
   sig { params(skip_downloaded: T::Boolean).void }
@@ -409,7 +412,8 @@ class Resource
     sig { params(path: String).void }
     def initialize(path)
       super(File.basename(path))
-      @downloader = T.let(LocalBottleDownloadStrategy.new(Pathname(path)), LocalBottleDownloadStrategy)
+      downloader = LocalBottleDownloadStrategy.new(Pathname(path))
+      @downloader = T.let(downloader, LocalBottleDownloadStrategy)
     end
   end
 

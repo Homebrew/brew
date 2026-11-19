@@ -76,15 +76,19 @@ class AbstractTab
   def initialize(homebrew_version: nil, tabfile: nil, loaded_from_api: nil, loaded_from_internal_api: nil,
                  installed_on_request: nil, time: nil, arch: nil, source: nil, built_on: nil,
                  runtime_dependencies: nil, **_unknown)
-    @installed_on_request = T.let(installed_on_request || false, T::Boolean)
-    @installed_on_request_present = T.let(!installed_on_request.nil?, T::Boolean)
+    resolved_installed_on_request = installed_on_request || false
+    @installed_on_request = T.let(resolved_installed_on_request, T::Boolean)
+    installed_on_request_present = !installed_on_request.nil?
+    @installed_on_request_present = T.let(installed_on_request_present, T::Boolean)
     @homebrew_version = homebrew_version
-    @tabfile = T.let(tabfile.nil? ? nil : Pathname(tabfile), T.nilable(Pathname))
+    resolved_tabfile = Pathname(tabfile) unless tabfile.nil?
+    @tabfile = T.let(resolved_tabfile, T.nilable(Pathname))
     @loaded_from_api = loaded_from_api
     @loaded_from_internal_api = loaded_from_internal_api
     @time = time
     @arch = arch
-    @source = T.let(source || {}, T::Hash[String, T.untyped])
+    source ||= {}
+    @source = T.let(source, T::Hash[String, T.untyped])
     @built_on = built_on
     @runtime_dependencies = runtime_dependencies
   end

@@ -225,11 +225,15 @@ class Caveats
 
   sig { returns(T.nilable(Keg)) }
   def keg
-    @keg ||= T.let([formula.prefix, formula.opt_prefix, formula.linked_keg].filter_map do |d|
+    return @keg if @keg
+
+    keg = [formula.prefix, formula.opt_prefix, formula.linked_keg].filter_map do |d|
       Keg.new(Utils::Path.resolved_path(d))
     rescue
       nil
-    end.first, T.nilable(Keg))
+    end.first
+    @keg = T.let(keg, T.nilable(Keg))
+    keg
   end
 
   sig { params(shell: Symbol).returns(T.nilable(String)) }

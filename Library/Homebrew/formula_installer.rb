@@ -42,7 +42,8 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
   include Utils::Output::Mixin
   include Utils::Path
 
-  ETC_VAR_DIRS = T.let([HOMEBREW_PREFIX/"etc", HOMEBREW_PREFIX/"var"].freeze, T::Array[Pathname])
+  etc_var_dirs = [HOMEBREW_PREFIX/"etc", HOMEBREW_PREFIX/"var"]
+  ETC_VAR_DIRS = T.let(etc_var_dirs.freeze, T::Array[Pathname])
 
   sig { override.returns(Formula) }
   attr_reader :formula
@@ -1171,7 +1172,11 @@ on_request: installed_on_request?, options:)
 
   sig { returns(T.nilable(Float)) }
   def build_time
-    @build_time ||= T.let(Time.now - @start_time, T.nilable(Float)) if @start_time && !interactive?
+    return if !@start_time || interactive?
+    return @build_time if @build_time
+
+    elapsed = Time.now - @start_time
+    @build_time = T.let(elapsed, T.nilable(Float))
   end
 
   sig { returns(T::Array[String]) }

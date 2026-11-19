@@ -153,16 +153,19 @@ class Migrator
     @newname = T.let(formula.name, String)
 
     @formula = formula
-    @old_cellar = T.let(HOMEBREW_CELLAR/oldname, Pathname)
+    resolved_old_cellar = HOMEBREW_CELLAR/oldname
+    @old_cellar = T.let(resolved_old_cellar, Pathname)
     raise MigratorNoOldpathError, oldname unless old_cellar.exist?
 
-    @old_tabs = T.let(old_cellar.subdirs.map { |d| Keg.new(d).tab }, T::Array[Tab])
+    resolved_old_tabs = old_cellar.subdirs.map { |d| Keg.new(d).tab }
+    @old_tabs = T.let(resolved_old_tabs, T::Array[Tab])
     first_tab = old_tabs.first
     @old_tap = T.let(first_tab&.tap, T.nilable(Tap))
 
     raise MigratorDifferentTapsError.new(formula, oldname, old_tap) if !force && !from_same_tap_user?
 
-    @new_cellar = T.let(HOMEBREW_CELLAR/formula.name, Pathname)
+    new_cellar = HOMEBREW_CELLAR/formula.name
+    @new_cellar = T.let(new_cellar, Pathname)
     @new_cellar_existed = T.let(@new_cellar.exist?, T::Boolean)
 
     @old_linked_kegs = T.let(linked_old_linked_kegs, T::Array[Keg])
@@ -177,10 +180,13 @@ class Migrator
       @new_linked_keg_record = HOMEBREW_CELLAR/"#{newname}/#{File.basename(old_linked_kegs.first.to_s)}"
     end
 
-    @old_pin_record = T.let(HOMEBREW_PINNED_KEGS/oldname, Pathname)
-    @new_pin_record = T.let(HOMEBREW_PINNED_KEGS/newname, Pathname)
+    resolved_old_pin_record = HOMEBREW_PINNED_KEGS/oldname
+    @old_pin_record = T.let(resolved_old_pin_record, Pathname)
+    new_pin_record = HOMEBREW_PINNED_KEGS/newname
+    @new_pin_record = T.let(new_pin_record, Pathname)
     @pinned = T.let(old_pin_record.symlink?, T::Boolean)
-    @old_pin_link_record = T.let(old_pin_record.symlink? ? old_pin_record.readlink : nil, T.nilable(Pathname))
+    old_pin_link_record = old_pin_record.readlink if old_pin_record.symlink?
+    @old_pin_link_record = T.let(old_pin_link_record, T.nilable(Pathname))
   end
 
   # Fix `INSTALL_RECEIPT`s for tap-migrated formula.
