@@ -94,20 +94,17 @@ module Homebrew
       def self.support_tier_message(tier:)
         return if tier.to_s == "1"
 
-        tier_title, tier_slug, tier_issues = if tier.to_s == "unsupported"
-          ["an Unsupported", "unsupported", "Do not report any issues"]
+        tier = (tier == "unsupported") ? :unsupported : tier.to_i if tier.is_a?(String)
+        tier_title, tier_slug = if tier == :unsupported
+          ["an Unsupported", "unsupported"]
         else
-          ["a Tier #{tier}", "tier-#{tier.to_s.downcase}", "You can report issues with Tier #{tier} configurations"]
+          ["a Tier #{tier}", "tier-#{tier}"]
         end
-
-        tier_issues = "Report issues to the upstream Nix project, not" if OS.nix_managed_homebrew?
 
         <<~EOS
           This is #{tier_title} configuration:
             #{Formatter.url("https://docs.brew.sh/Support-Tiers##{tier_slug}")}
-          #{Formatter.bold("#{tier_issues} to Homebrew/* repositories!")}
-            #{Formatter.url(OS::ISSUES_URL) if defined?(OS::ISSUES_URL)}
-          Read the above document before opening any issues or PRs.
+          #{Utils::Output.issue_reporting_message(:homebrew, tier:)}
         EOS
       end
     end

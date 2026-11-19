@@ -191,7 +191,12 @@ RSpec.describe Formulary do
       end
     end
 
-    it "points to the tap's issues when a formula prints while being loaded" do
+    it "points to the tap's issues when a formula prints on a Tier 1 installation" do
+      require "diagnostic"
+      allow(Homebrew::Diagnostic).to receive(:support_tier).and_return(1)
+      allow(OS).to receive(:third_party_homebrew).and_return(nil)
+      stub_const("OS::ISSUES_URL", "https://docs.brew.sh/Troubleshooting")
+
       expect do
         described_class.load_formula(
           "printing-formula",

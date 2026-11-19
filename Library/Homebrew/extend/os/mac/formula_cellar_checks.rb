@@ -94,8 +94,11 @@ module OS
             output += <<~EOS
               Rebuild this from source with:
                 brew reinstall --build-from-source #{formula}
-              If that's successful, file an issue#{formula.tap ? " here:\n  #{formula.tap!.issues_url}" : "."}
             EOS
+            message = Utils::Output.issue_reporting_message(
+              formula.tap, formula:, tap_action: "If rebuilding fixes the problem, report it"
+            )
+            output << "#{message}\n" if message
           end
           problem_if_output output
         end

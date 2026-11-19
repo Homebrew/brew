@@ -84,7 +84,7 @@ RSpec.describe Homebrew::Diagnostic::Finding do
 
   describe "#support_tier_message" do
     before do
-      allow(OS).to receive(:nix_managed_homebrew?).and_return(false)
+      allow(OS).to receive(:third_party_homebrew).and_return(nil)
     end
 
     it "returns nil for Tier 1" do
@@ -100,13 +100,6 @@ RSpec.describe Homebrew::Diagnostic::Finding do
       message = described_class.support_tier_message(tier: :unsupported)
       expect(message).to include("This is an Unsupported configuration:")
         .and include("https://docs.brew.sh/Support-Tiers#unsupported")
-    end
-
-    it "points Nix-managed installs at the upstream Nix project" do
-      allow(OS).to receive(:nix_managed_homebrew?).and_return(true)
-
-      message = described_class.support_tier_message(tier: 2)
-      expect(message).to include("Report issues to the upstream Nix project, not")
     end
   end
 end

@@ -688,8 +688,9 @@ on_request: installed_on_request?, options:)
 
       raise if Homebrew::EnvConfig.developer?
 
-      $stderr.puts "Please report this issue to the #{formula.tap&.full_name} tap".squeeze(" ")
-      $stderr.puts " (not Homebrew/* repositories)!" unless formula.core_formula?
+      if (message = issue_reporting_message(formula.tap, formula:, build_options: build_options_for_reporting))
+        $stderr.puts message
+      end
       false
     else
       f.linked_keg.exist? && f.opt_prefix.exist?
@@ -1215,6 +1216,14 @@ on_request: installed_on_request?, options:)
   sig { returns(T::Array[String]) }
   def build_argv = sanitized_argv_options + options.as_flags
 
+  sig { returns(T::Array[String]) }
+  def build_options_for_reporting
+    flags = build_argv
+    # gist-logs may run with a different developer setting from the build.
+    flags << "HOMEBREW_DEVELOPER=1" if build_bottle? && Homebrew::EnvConfig.developer?
+    build_from_source? ? flags | ["--build-from-source"] : flags
+  end
+
   sig { void }
   def build
     retain_tmp = keep_tmp? || debug_symbols? || interactive?
@@ -1227,6 +1236,10 @@ on_request: installed_on_request?, options:)
     # would point at a JSON file (e.g. formula.jws.json) which build.rb cannot
     # load. See: https://github.com/orgs/Homebrew/discussions/6455
     @formula = Homebrew::API::Formula.source_download_formula(formula) if formula.loaded_from_api?
+
+    logged_options = build_options_for_reporting
+    formula.logs.mkpath
+    formula.build_options_log.write([formula.full_name, *logged_options].join(" "))
 
     staging_path = (create_staging_path if formula.fetch_defined?)
     run_fetch(staging_path:) if staging_path
@@ -1271,6 +1284,7 @@ on_request: installed_on_request?, options:)
     if e.is_a? BuildError
       e.formula = formula
       e.options = display_options(formula)
+      e.build_flags = logged_options if logged_options
     end
 
     Utils::Interrupts.ignore do

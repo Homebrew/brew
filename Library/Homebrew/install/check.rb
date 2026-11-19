@@ -9,6 +9,14 @@ module Homebrew
     extend Utils::Output::Mixin
 
     class << self
+      sig { void }
+      def warn_on_build_from_source
+        return if Homebrew::EnvConfig.developer?
+
+        opoo "building from source is not supported!"
+        Diagnostic.support_tiers << 3
+      end
+
       sig {
         params(formula: Formula, head: T::Boolean, fetch_head: T::Boolean,
                only_dependencies: T::Boolean, force: T::Boolean, quiet: T::Boolean,

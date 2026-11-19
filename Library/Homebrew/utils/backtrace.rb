@@ -42,15 +42,16 @@ module Utils
       @print_backtrace_message = true
     end
 
-    sig { params(error: Exception).returns(T.nilable(String)) }
-    def self.tap_error_url(error)
+    sig { params(error: Exception).returns(T.nilable(Tap)) }
+    def self.tap_for_error(error)
       backtrace = error.backtrace
       return if backtrace.blank?
 
       backtrace.each do |line|
-        if (tap = line.match(%r{/Library/Taps/([^/]+/[^/]+)/}))
-          return "https://github.com/#{tap[1]}/issues/new"
-        end
+        next unless (tap_name = line[%r{/Library/Taps/([^/]+/[^/]+)/}, 1])
+
+        require "tap"
+        return Tap.fetch(tap_name)
       end
 
       nil

@@ -448,10 +448,7 @@ module Homebrew
           raise BuildFlagsError.new(build_flags, bottled: formulae.all?(&:bottled?))
         end
 
-        return if Homebrew::EnvConfig.developer?
-
-        opoo "building from source is not supported!"
-        puts "You're on your own. Failures are expected so don't create any issues, please!"
+        Install.warn_on_build_from_source
       end
 
       # Fetch the shared install plan and retain only formulae whose downloads succeeded.

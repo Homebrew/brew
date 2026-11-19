@@ -68,6 +68,12 @@ RSpec.describe Utils::Backtrace do
     expect(described_class.clean(exception)).to be_nil
   end
 
+  it "identifies the tap responsible for a frame in an external command" do
+    tap = Tap.fetch("example", "tools")
+    error = exception_with backtrace: ["/brew.rb:1", "#{tap.path}/cmd/tool.rb:42"]
+    expect(described_class.tap_for_error(error)).to eq(tap)
+  end
+
   it "handles empty array backtrace" do
     exception = exception_with backtrace: []
     expect(described_class.clean(exception)).to eq []

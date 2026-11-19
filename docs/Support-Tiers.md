@@ -1,5 +1,5 @@
 ---
-last_review_date: "2026-09-21"
+last_review_date: "2026-11-19"
 ---
 
 # Support Tiers
@@ -20,7 +20,8 @@ Users can expect:
 - reproducible bugs to be investigated and, where possible, fixed by Homebrew maintainers
 - no warning output related to system configuration
 - full CI coverage for testing and bottle builds
-- support through Homebrew’s GitHub issue trackers
+- issue tracker support for bugs reproducible on Tier 1, such as a broken library link in an official bottle
+- help with setup questions, such as how to configure your `PATH`, in [Homebrew Discussions](https://github.com/orgs/Homebrew/discussions)
 - pull requests to be blocked if they fail on Tier 1 systems
 
 ### macOS
@@ -54,12 +55,11 @@ To qualify as Tier 1, a Linux configuration must meet all of the following:
 A custom prefix must be equal to or shorter in bytes than the platform's default:
 
 - Apple Silicon macOS: `/opt/homebrew` (13 bytes); `/opt/brew` fits, but `/opt/homebrew-extra` is too long.
-- Intel macOS: `/usr/local` (10 bytes); `/opt/brew` fits, but `/opt/homebrew` is too long.
 - Linux: `/home/linuxbrew/.linuxbrew` (26 bytes); `/opt/homebrew` fits, but `/home/linuxbrew/.linuxbrew-extra` is too long.
 
 The Cellar path must also be equal to or shorter in bytes than the corresponding default prefix followed by `/Cellar`.
-With build prefix relocation enabled (the default), these installations qualify for Tier 1 when all other Tier 1 requirements are met; Intel macOS remains Tier 3.
-This support is new and may not yet be fully stable, even for Tier 1 configurations.
+Build prefix relocation must also be enabled (the default).
+Support for custom prefixes is new and may not yet be fully stable.
 
 ## Tier 2
 
@@ -71,8 +71,8 @@ The following conditions typically apply:
 - Pull requests that fix issues specific to these configurations may be considered, but maintainers do not commit to resolving related bugs
 - `brew doctor` will output warnings related to configuration
 - CI coverage may be incomplete; bottles may be unavailable or fail to install
-- Issues that only affect these configurations may be closed without investigation
-- Support is generally limited to community responses on Homebrew’s Discussions
+- Ask about Tier 2 problems, such as a missing bottle on a macOS prerelease, in [Homebrew Discussions](https://github.com/orgs/Homebrew/discussions)
+- If you can reproduce the failure on Tier 1, file an issue with those steps
 
 Tier 2 configurations include:
 
@@ -94,37 +94,36 @@ The following conditions typically apply:
 - Functionality may regress intentionally if it benefits supported configurations
 - Loud configuration warnings will be printed at runtime
 - CI coverage is unavailable; bottles will rarely be built or published
-- Issues affecting only these configurations may be closed without response
-- Support is limited to community replies via Homebrew’s Discussions
+- For problems confined to Tier 3, such as build failures on Intel macOS, ask in [Homebrew Discussions](https://github.com/orgs/Homebrew/discussions)
 
 Tier 3 configurations include:
 
 - macOS versions no longer covered by CI and no longer receiving regular Apple security updates
 - Systems that build official packages from source despite available bottles
 - Homebrew installed outside the default prefix with a prefix or Cellar longer in bytes than the platform's defaults, or with build prefix relocation disabled
-- Homebrew installations managed by Nix (e.g. nix-darwin or nix-homebrew)
-- Homebrew invoked through a third-party wrapper
+- Homebrew installations managed by another package manager
+- Homebrew invoked through a third-party wrapper (deprecated)
 - Installing formulae using `--HEAD`
 - Installing deprecated or disabled formulae
-- Intel x86_64 systems running macOS
+- Intel x86_64 systems running macOS, regardless of prefix (the default is `/usr/local`, 10 bytes)
 
-If you are using a Homebrew wrapper, get support from and file issues with that wrapper instead of Homebrew unless the same problem is reproducible when running Homebrew directly.
+Provisioning tools that simply run `brew` or `brew bundle` use the installation’s usual tier.
+Report problems caused by a wrapper or package manager, such as a blocked installation, to its maintainers.
 Homebrew's internal `brew` commands invoke Homebrew directly, not the wrapper.
 The legacy `HOMEBREW_FORCE_BREW_WRAPPER`, `HOMEBREW_FORCE_BREW_WRAPPER_HELP_MESSAGE` and `HOMEBREW_NO_FORCE_BREW_WRAPPER` settings are ignored and produce deprecation warnings in Ruby commands.
 `brew doctor` warns if another `brew` executable takes precedence over the current installation in your `PATH`.
 
 ## Unsupported
 
-An unsupported configuration is one in which:
-
-- Homebrew will not run without third-party patches or modifications
-- Migration to another tool is required (e.g. [MacPorts](https://www.macports.org), [Tigerbrew](https://github.com/mistydemeo/tigerbrew) or a native Linux package manager)
+Do not file issues from these configurations, even for a reproducible installation failure.
+If Homebrew requires third-party patches to run, consider [MacPorts](https://www.macports.org), [Tigerbrew](https://github.com/mistydemeo/tigerbrew) or a native Linux package manager.
 
 Unsupported configurations include:
 
-- FreeBSD
+- Operating systems other than macOS or Linux
 - macOS Catalina 10.15 and earlier
-- Multiple accounts independently modifying the same Homebrew installation, or access through a setuid wrapper
+- Multiple accounts independently modifying the same Homebrew installation
+- Invocations with different real and effective user IDs
 - Beowulf clusters
 - Nokia 3210s
 - CPUs built inside of Minecraft
@@ -136,7 +135,7 @@ Packages installed from third-party taps outside the Homebrew GitHub organisatio
 
 While Homebrew may assist third-party maintainers in resolving issues related to the formula, cask or tap system itself, it does not provide support for the behaviour or operation of third-party software.
 
-Bugs that occur only when using third-party formulae or casks may be closed without investigation.
+Report bugs in third-party formulae and casks, such as use of a deprecated Homebrew method, to the tap's maintainers.
 
 ## Future macOS support
 
