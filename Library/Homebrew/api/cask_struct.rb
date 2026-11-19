@@ -128,7 +128,8 @@ module Homebrew
 
       sig { params(languages: T::Array[String]).returns(T.nilable(String)) }
       def language(languages)
-        T.cast(language_variation(languages)&.[](:value), T.nilable(String))
+        variation = language_variation(languages)
+        T.cast(variation&.[](:value), T.nilable(String))
       end
 
       sig { returns(T::Hash[String, T.untyped]) }

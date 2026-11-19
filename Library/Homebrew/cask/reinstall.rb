@@ -40,7 +40,7 @@ module Cask
         end
       end
 
-      cask_installers = T.let(cask_installers || [], T::Array[Installer])
+      cask_installers ||= []
       begin
         if cask_installers.empty?
           cask_installers = casks.map do |cask|

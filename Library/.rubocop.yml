@@ -135,7 +135,7 @@ Homebrew/NoUntypedKeywordRest:
     - "Homebrew/test/**/*"
 
 Homebrew/SimpleTypeAssertion:
-  Enabled: false
+  Enabled: true
 
 Homebrew/UnreferencedLet:
   Description: "Removes a lazy `let` whose name is never referenced (its block never runs)."

@@ -71,10 +71,8 @@ module Cask
       Artifact::Zap,
     ].freeze
 
-    ACTIVATABLE_ARTIFACT_CLASSES = T.let(
-      (ORDINARY_ARTIFACT_CLASSES - [Artifact::StageOnly]).freeze,
-      T::Array[T.class_of(Artifact::AbstractArtifact)],
-    )
+    activatable_artifact_classes = ORDINARY_ARTIFACT_CLASSES - [Artifact::StageOnly]
+    ACTIVATABLE_ARTIFACT_CLASSES = T.let(activatable_artifact_classes.freeze, T::Array[T.class_of(Artifact::AbstractArtifact)])
 
     ARTIFACT_BLOCK_CLASSES = [
       Artifact::PreflightBlock,
@@ -88,11 +86,12 @@ module Cask
       Artifact::UninstallPostflightSteps,
     ].freeze
 
-    ARTIFACT_DSL_METHODS = T.let(Set.new([
+    artifact_dsl_methods = Set.new([
       *ORDINARY_ARTIFACT_CLASSES.map(&:dsl_key),
       *ARTIFACT_BLOCK_CLASSES.flat_map { |klass| [klass.dsl_key, klass.uninstall_dsl_key] },
       *INSTALL_STEP_ARTIFACT_CLASSES.map(&:dsl_key),
-    ]).freeze, T::Set[Symbol])
+    ])
+    ARTIFACT_DSL_METHODS = T.let(artifact_dsl_methods.freeze, T::Set[Symbol])
 
     DSL_METHODS = T.let(Set.new([
       :arch,

@@ -324,7 +324,8 @@ module Homebrew
         def package_source(package)
           return package[:source] if package.key?(:source)
 
-          T.cast(package[:options].fetch(:source, nil), T.nilable(String))
+          source = package[:options].fetch(:source, nil)
+          T.cast(source, T.nilable(String))
         end
         private :package_source
 

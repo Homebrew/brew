@@ -94,13 +94,12 @@ module Cask
 
     sig { returns(UnpackStrategy) }
     def primary_container
-      @primary_container ||= T.let(
-        begin
-          downloaded_path = cask.download || fetch(quiet: true)
-          UnpackStrategy.detect(downloaded_path, type: cask.container&.type, merge_xattrs: true)
-        end,
-        T.nilable(UnpackStrategy),
-      )
+      return @primary_container if @primary_container
+
+      downloaded_path = cask.download || fetch(quiet: true)
+      primary_container = UnpackStrategy.detect(downloaded_path, type: cask.container&.type, merge_xattrs: true)
+      @primary_container = T.let(primary_container, T.nilable(UnpackStrategy))
+      primary_container
     end
 
     sig { params(to: Pathname, verbose: T::Boolean, container: T.nilable(UnpackStrategy)).void }

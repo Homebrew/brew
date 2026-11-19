@@ -76,9 +76,10 @@ module Cask
     sig { params(cask: Cask).returns(T::Hash[Symbol, T::Array[T::Hash[String, T.untyped]]]) }
     def self.runtime_deps_hash(cask)
       cask_and_formula_dep_graph = ::Utils::TopologicalHash.graph_package_dependencies(cask)
-      cask_deps, formula_deps = T.cast(cask_and_formula_dep_graph.values.flatten.uniq.partition do |dep|
+      dependencies_by_type = cask_and_formula_dep_graph.values.flatten.uniq.partition do |dep|
         dep.is_a?(Cask)
-      end, [T::Array[Cask], T::Array[Formula]])
+      end
+      cask_deps, formula_deps = T.cast(dependencies_by_type, [T::Array[Cask], T::Array[Formula]])
 
       runtime_deps = {}
 

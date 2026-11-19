@@ -61,7 +61,8 @@ module Homebrew
               end
             end
           when :brew, :cask
-            full_name = T.cast(entry.options.fetch(:full_name, entry.name), String)
+            name = entry.options.fetch(:full_name, entry.name)
+            full_name = T.cast(name, String)
             next [] if trusted != true
             # Only fully-qualified names map to a tap, so unqualified names cannot be trusted.
             next [] unless Utils.full_name?(full_name)

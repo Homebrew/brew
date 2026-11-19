@@ -252,7 +252,9 @@ module Homebrew
           return false if Brew.formula_tap_changed?(entry.full_name)
         when "Homebrew::Bundle::Cask"
           return false if (entry.options.keys - [*BATCHABLE_OPTION_KEYS, :args]).any?
-          return false if T.cast(entry.options.fetch(:args, {}), Homebrew::Bundle::NestedEntryOptions).present?
+
+          args = entry.options.fetch(:args, {})
+          return false if T.cast(args, Homebrew::Bundle::NestedEntryOptions).present?
           return false if Cask.cask_tap_changed?(entry.name, entry.options)
         else
           return false

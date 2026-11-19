@@ -60,6 +60,11 @@ module Homebrew
       # Initialize a new `Service` instance with supplied formula.
       sig { params(formula: Formula, service_name: T.nilable(String)).void }
       def initialize(formula, service_name: nil)
+        @service_name = T.let(nil, T.nilable(String))
+        @service_names = T.let(nil, T.nilable(T::Array[String]))
+        @service_files = T.let(nil, T.nilable(T::Array[Pathname]))
+        @service_startup = T.let(nil, T.nilable(T::Boolean))
+
         @formula = formula
         @service_name_override = service_name
         @status_output_success_type = T.let(nil, T.nilable(StatusOutputSuccessType))
@@ -87,7 +92,8 @@ module Homebrew
       def timed?
         return @timed unless @timed.nil?
 
-        @timed = T.let(service? && load_service.timed?, T.nilable(T::Boolean))
+        timed = service? && load_service.timed?
+        @timed = T.let(timed, T.nilable(T::Boolean))
         @timed ||= false
       end
 
@@ -96,7 +102,8 @@ module Homebrew
       def keep_alive?
         return @keep_alive unless @keep_alive.nil?
 
-        @keep_alive = T.let(service? && load_service.keep_alive?, T.nilable(T::Boolean))
+        keep_alive = service? && load_service.keep_alive?
+        @keep_alive = T.let(keep_alive, T.nilable(T::Boolean))
         @keep_alive ||= false
       end
 
@@ -116,26 +123,22 @@ module Homebrew
       # for systemd (e.g., `sh.brew.<formula>`).
       sig { returns(String) }
       def service_name
-        @service_name ||= T.let(
-          if System.launchctl?
-            @service_name_override || formula.plist_name
-          else # System.systemctl?
-            @service_name_override || formula.service_name
-          end, T.nilable(String)
-        )
+        @service_name ||= if System.launchctl?
+          @service_name_override || formula.plist_name
+        else # System.systemctl?
+          @service_name_override || formula.service_name
+        end
       end
 
       sig { returns(T::Array[String]) }
       def service_names
-        @service_names ||= T.let(
-          if @service_name_override
-            [@service_name_override]
-          elsif System.launchctl?
-            formula.plist_names
-          else # System.systemctl?
-            formula.service_names
-          end, T.nilable(T::Array[String])
-        )
+        @service_names ||= if @service_name_override
+          [@service_name_override]
+        elsif System.launchctl?
+          formula.plist_names
+        else # System.systemctl?
+          formula.service_names
+        end
       end
 
       # service_file delegates with formula.launchd_service_path or formula.systemd_service_path for systemd.
@@ -146,13 +149,11 @@ module Homebrew
 
       sig { returns(T::Array[Pathname]) }
       def service_files
-        @service_files ||= T.let(
-          if System.launchctl?
-            formula.launchd_service_paths
-          else # System.systemctl?
-            formula.systemd_service_paths
-          end, T.nilable(T::Array[Pathname])
-        )
+        @service_files ||= if System.launchctl?
+          formula.launchd_service_paths
+        else # System.systemctl?
+          formula.systemd_service_paths
+        end
       end
 
       sig { returns(Pathname) }
@@ -184,13 +185,11 @@ module Homebrew
       # Whether the service should be launched at startup
       sig { returns(T::Boolean) }
       def service_startup?
-        @service_startup ||= T.let(
-          if service?
-            load_service.requires_root?
-          else
-            false
-          end, T.nilable(T::Boolean)
-        )
+        @service_startup ||= if service?
+          load_service.requires_root?
+        else
+          false
+        end
       end
 
       # Path to destination service directory. If run as root, it's `boot_path`, else `user_path`.

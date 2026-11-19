@@ -4,7 +4,7 @@
 module OS
   module Mac
     # Keep the protected system paths together so removal safeguards can be reviewed in one place.
-    SYSTEM_DIRS = T.let([ # rubocop:disable Metrics/CollectionLiteralLength
+    system_dirs = [ # rubocop:disable Metrics/CollectionLiteralLength
       "/",
       "/Applications",
       "/Applications/Utilities",
@@ -234,11 +234,11 @@ module OS
       "/var/tmp",
     ]
                   .to_set { |path| ::Pathname.new(path) }
-                  .freeze, T::Set[::Pathname])
+    SYSTEM_DIRS = T.let(system_dirs.freeze, T::Set[::Pathname])
     private_constant :SYSTEM_DIRS
 
     # Keep the protected user paths together so removal safeguards can be reviewed in one place.
-    UNDELETABLE_PATHS = T.let([ # rubocop:disable Metrics/CollectionLiteralLength
+    undeletable_paths = [ # rubocop:disable Metrics/CollectionLiteralLength
       "~/",
       "~/Applications",
       "~/Applications/.localized",
@@ -375,17 +375,17 @@ module OS
     ]
                         .to_set { |path| ::Pathname.new(path.sub(%r{^~(?=(?:/|$))}, Dir.home)).expand_path }
                         .union(SYSTEM_DIRS)
-                        .freeze, T::Set[::Pathname])
+    UNDELETABLE_PATHS = T.let(undeletable_paths.freeze, T::Set[::Pathname])
     private_constant :UNDELETABLE_PATHS
 
     # Directories under which nothing can be deleted.
-    UNDELETABLE_CONTAINERS = T.let([
+    undeletable_containers = [
       "~/Library/Application Support/com.apple.TCC",
       "~/Library/Keychains",
       "~/Library/Messages",
     ]
                              .to_set { |path| ::Pathname.new(path.sub(%r{^~(?=(?:/|$))}, Dir.home)).expand_path }
-                             .freeze, T::Set[::Pathname])
+    UNDELETABLE_CONTAINERS = T.let(undeletable_containers.freeze, T::Set[::Pathname])
     private_constant :UNDELETABLE_CONTAINERS
 
     sig { params(dir: T.any(::Pathname, String)).returns(T::Boolean) }

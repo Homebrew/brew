@@ -107,7 +107,7 @@ module Homebrew
 
           @dsl = T.let(nil, T.nilable(Homebrew::Bundle::Dsl))
           @kept_casks = nil
-          @kept_formulae = nil
+          @kept_formulae = T.let(nil, T.nilable(T::Array[String]))
           Homebrew::Bundle::Cask.reset!
           Homebrew::Bundle::Brew.reset!
           Homebrew::Bundle::Tap.reset!
@@ -240,15 +240,13 @@ module Homebrew
 
         sig { params(global: T::Boolean, file: T.nilable(String), dsl: T.nilable(Homebrew::Bundle::Dsl)).void }
         def self.read_dsl_from_brewfile!(global: false, file: nil, dsl: nil)
-          @dsl = T.let(
-            if dsl
-              dsl
-            else
-              require "bundle/brewfile"
-              Homebrew::Bundle::Brewfile.read(global:, file:)
-            end,
-            T.nilable(Homebrew::Bundle::Dsl),
-          )
+          resolved_dsl = if dsl
+            dsl
+          else
+            require "bundle/brewfile"
+            Homebrew::Bundle::Brewfile.read(global:, file:)
+          end
+          @dsl = T.let(resolved_dsl, T.nilable(Homebrew::Bundle::Dsl))
         end
 
         sig { returns(T.nilable(Homebrew::Bundle::Dsl)) }
@@ -290,23 +288,20 @@ module Homebrew
           require "bundle/brew"
           require "bundle/cask"
 
-          @kept_formulae ||= T.let(
-            begin
-              raise ArgumentError, "dsl is unset!" unless @dsl
+          @kept_formulae ||= begin
+            raise ArgumentError, "dsl is unset!" unless @dsl
 
-              kept_formulae = @dsl.entries.select { |e| e.type == :brew }.map(&:name)
-              kept_formulae += Homebrew::Bundle::Cask.formula_dependencies(kept_casks)
-              kept_formulae.map! do |f|
-                Homebrew::Bundle::Brew.formula_aliases.fetch(
-                  f,
-                  Homebrew::Bundle::Brew.formula_oldnames.fetch(f, f),
-                )
-              end
+            kept_formulae = @dsl.entries.select { |e| e.type == :brew }.map(&:name)
+            kept_formulae += Homebrew::Bundle::Cask.formula_dependencies(kept_casks)
+            kept_formulae.map! do |f|
+              Homebrew::Bundle::Brew.formula_aliases.fetch(
+                f,
+                Homebrew::Bundle::Brew.formula_oldnames.fetch(f, f),
+              )
+            end
 
-              kept_formulae + recursive_dependencies(Homebrew::Bundle::Brew.formulae, kept_formulae)
-            end,
-            T.nilable(T::Array[String]),
-          )
+            kept_formulae + recursive_dependencies(Homebrew::Bundle::Brew.formulae, kept_formulae)
+          end
         end
 
         sig { params(global: T::Boolean, file: T.nilable(String)).returns(T::Array[String]) }
@@ -370,7 +365,8 @@ module Homebrew
             when :brew
               Utils.tap_from_full_name(entry.name)
             when :cask
-              Utils.tap_from_full_name(T.cast(entry.options.fetch(:full_name, entry.name), String))
+              full_name = entry.options.fetch(:full_name, entry.name)
+              Utils.tap_from_full_name(T.cast(full_name, String))
             end
           end
           kept_taps += kept_formulae.filter_map(&:tap).map(&:name)

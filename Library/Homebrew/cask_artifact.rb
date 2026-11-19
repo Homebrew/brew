@@ -55,7 +55,8 @@ module Cask
       @caskroom_path = T.let(Pathname(context.fetch("caskroom_path")), Pathname)
       @home = T.let(Pathname(context.fetch("home")), Pathname)
       @temp = T.let(Pathname(context.fetch("temp")), Pathname)
-      @config = T.let(Config.from_json(context.fetch("config"), ignore_invalid_keys: true), Config)
+      config = Config.from_json(context.fetch("config"), ignore_invalid_keys: true)
+      @config = T.let(config, Config)
     end
 
     sig { returns(String) }

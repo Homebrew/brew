@@ -69,6 +69,8 @@ module Cask
       new_cask: nil, fix: nil, only: [], except: []
     )
       # `new_cask` implies `online`, `strict` and `signing`
+      @tmpdir = T.let(nil, T.nilable(Pathname))
+
       online = new_cask if online.nil?
       strict = new_cask if strict.nil?
       signing = new_cask if signing.nil?
@@ -207,7 +209,7 @@ module Cask
 
       return if artifacts.empty?
 
-      @tmpdir ||= T.let(Pathname(Dir.mktmpdir("cask-audit", HOMEBREW_TEMP)), T.nilable(Pathname))
+      @tmpdir ||= Pathname(Dir.mktmpdir("cask-audit", HOMEBREW_TEMP))
 
       # Clean up tmp dir when @tmpdir object is destroyed
       ObjectSpace.define_finalizer(

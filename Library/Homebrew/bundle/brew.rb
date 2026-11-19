@@ -479,10 +479,13 @@ module Homebrew
 
       sig { params(name: String, options: T::Hash[Symbol, T.untyped]).void }
       def initialize(name = "", options = {})
+        @conflicts_with = T.let(nil, T.nilable(T::Array[String]))
+
         super()
         @full_name = name
         @name = T.let(Utils.name_from_full_name(name), String)
-        @args = T.let(options.fetch(:args, []).map { |arg| "--#{arg}" }, T::Array[String])
+        args = options.fetch(:args, []).map { |arg| "--#{arg}" }
+        @args = T.let(args, T::Array[String])
         @conflicts_with_arg = T.let(options.fetch(:conflicts_with, []), T::Array[String])
         @restart_service = T.let(options[:restart_service], T.nilable(T.any(Symbol, T::Boolean)))
         @start_service = T.let(options.fetch(:start_service, @restart_service), T.nilable(T.any(Symbol, T::Boolean)))
@@ -490,7 +493,8 @@ module Homebrew
         @postinstall = T.let(options.fetch(:postinstall, nil), T.nilable(String))
         @version_file = T.let(options.fetch(:version_file, nil), T.nilable(String))
         @trusted = T.let(options.fetch(:trusted, false), T::Boolean)
-        @pin = T.let(options[:pin] == true, T::Boolean)
+        pin = options[:pin] == true
+        @pin = T.let(pin, T::Boolean)
         @changed = T.let(nil, T.nilable(T::Boolean))
       end
 
@@ -757,21 +761,18 @@ module Homebrew
 
       sig { returns(T::Array[String]) }
       def conflicts_with
-        @conflicts_with ||= T.let(
-          begin
-            conflicts_with = Set.new
-            conflicts_with += @conflicts_with_arg
+        @conflicts_with ||= begin
+          conflicts_with = Set.new
+          conflicts_with += @conflicts_with_arg
 
-            if (formula = T.cast(self.class.formulae_by_full_name(@full_name),
-                                 T.nilable(T::Hash[Symbol, T.untyped]))) &&
-              (formula_conflicts_with = formula[:conflicts_with])
-              conflicts_with += formula_conflicts_with
-            end
+          if (formula = T.cast(self.class.formulae_by_full_name(@full_name),
+                               T.nilable(T::Hash[Symbol, T.untyped]))) &&
+             (formula_conflicts_with = formula[:conflicts_with])
+            conflicts_with += formula_conflicts_with
+          end
 
-            conflicts_with.to_a
-          end,
-          T.nilable(T::Array[String]),
-        )
+          conflicts_with.to_a
+        end
       end
 
       sig { params(verbose: T::Boolean).returns(T::Boolean) }

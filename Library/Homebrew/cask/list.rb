@@ -8,18 +8,17 @@ module Cask
   module List
     extend ::Utils::Output::Mixin
 
-    TAP_AND_NAME_COMPARISON = T.let(
-      proc do |a, b|
-        if a.include?("/") && b.exclude?("/")
-          1
-        elsif a.exclude?("/") && b.include?("/")
-          -1
-        else
-          a <=> b
-        end
-      end.freeze,
-      T.proc.params(a: String, b: String).returns(Integer),
-    )
+    tap_and_name_comparison = proc do |a, b|
+      if a.include?("/") && b.exclude?("/")
+        1
+      elsif a.exclude?("/") && b.include?("/")
+        -1
+      else
+        a <=> b
+      end
+    end
+    TAP_AND_NAME_COMPARISON = T.let(tap_and_name_comparison.freeze,
+                                    T.proc.params(a: String, b: String).returns(Integer))
 
     sig { params(casks: Cask, one: T::Boolean, full_name: T::Boolean, versions: T::Boolean).void }
     def self.list_casks(*casks, one: false, full_name: false, versions: false)

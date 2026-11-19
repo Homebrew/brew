@@ -59,7 +59,7 @@ module Homebrew
           ).returns(SubcommandContext)
         }
         def context(args, extensions:, ask: false)
-          subcommand = T.let(args.subcommand || "install", String)
+          subcommand = args.subcommand || "install"
           no_upgrade = if args.upgrade?
             false
           else

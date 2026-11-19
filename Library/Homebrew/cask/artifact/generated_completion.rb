@@ -63,6 +63,8 @@ module Cask
         ).void
       }
       def initialize(cask, commands, base_name:, shell_parameter_format:, shells:)
+        @resolved_base_name = T.let(nil, T.nilable(String))
+
         super(cask, *commands, base_name:, shell_parameter_format:, shells:)
 
         @commands = commands
@@ -175,12 +177,12 @@ module Cask
 
       sig { returns(String) }
       def resolved_base_name
-        @resolved_base_name ||= T.let(begin
+        @resolved_base_name ||= begin
           executable = staged_path_join_executable(commands.fetch(0))
           name = base_name || File.basename(executable.to_s)
           name = cask.token if name.empty?
           name
-        end, T.nilable(String))
+        end
         @resolved_base_name
       end
 
