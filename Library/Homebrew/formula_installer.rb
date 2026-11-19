@@ -1550,8 +1550,9 @@ on_request: installed_on_request?, options:)
         end
         # Created ahead of the sandbox so the Linux backend does not record it
         # as its own and remove it when it is still empty at cleanup.
-        (HOMEBREW_PREFIX/"libexec").mkpath
-        sandbox.allow_write_path "#{HOMEBREW_PREFIX}/libexec"
+        libexec = HOMEBREW_PREFIX/"libexec"
+        libexec.mkpath if HOMEBREW_PREFIX.writable?
+        sandbox.allow_write_path libexec if libexec.directory?
         sandbox.protect_homebrew_state
       end
     end
