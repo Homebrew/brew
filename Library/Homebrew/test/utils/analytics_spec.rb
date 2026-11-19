@@ -137,15 +137,31 @@ RSpec.describe Utils::Analytics do
         array_including(
           "--data-binary",
           "formula_install,ci=false,on_request=true version=\"1.0\",package=\"foo\"," \
-          "tap_name=\"homebrew/core\" 123\n" \
+          "tap_name=\"homebrew/core\" 123000000000\n" \
           "formula_install,ci=false,on_request=false version=\"1.0\",package=\"bar\"," \
-          "tap_name=\"homebrew/core\",options=\"--HEAD\" 123",
+          "tap_name=\"homebrew/core\",options=\"--HEAD\" 123000000001",
         ),
       )
 
       described_class.report_package_events(:formula_install, [
         { package_name: "foo", tap_name: "homebrew/core", on_request: true, options: "" },
         { package_name: "bar", tap_name: "homebrew/core", on_request: false, options: "--HEAD" },
+      ])
+    end
+
+    it "gives packages with the same tags different timestamps so InfluxDB keeps each one" do
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Time).to receive(:now).and_return(Time.at(123))
+      allow(described_class).to receive_messages(default_package_tags: { ci: false }, default_package_fields: {})
+      expect(described_class).to receive(:write_influx).with([
+        "cask_install,ci=false,on_request=true package=\"foo\",tap_name=\"homebrew/cask\" 123000000000",
+        "cask_install,ci=false,on_request=true package=\"bar\",tap_name=\"homebrew/cask\" 123000000001",
+      ])
+
+      described_class.report_package_events(:cask_install, [
+        { package_name: "foo", tap_name: "homebrew/cask", on_request: true, options: "" },
+        { package_name: "bar", tap_name: "homebrew/cask", on_request: true, options: "" },
       ])
     end
 
@@ -320,7 +336,7 @@ RSpec.describe Utils::Analytics do
         anything,
         array_including(
           "--data-binary",
-          'formula_install,os=Linux\ [WSL] os_name_and_version="Ubuntu 24.04 LTS [WSL]" 123',
+          'formula_install,os=Linux\ [WSL] os_name_and_version="Ubuntu 24.04 LTS [WSL]" 123000000000',
         ),
       )
 

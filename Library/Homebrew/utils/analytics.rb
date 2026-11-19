@@ -62,9 +62,10 @@ module Utils
       sig {
         params(measurement: Symbol,
                tags:        T::Hash[Symbol, T.any(T::Boolean, String)],
-               fields:      T::Hash[Symbol, T.any(T::Boolean, String)]).returns(String)
+               fields:      T::Hash[Symbol, T.any(T::Boolean, String)],
+               index:       Integer).returns(String)
       }
-      def influx_line(measurement, tags, fields)
+      def influx_line(measurement, tags, fields, index: 0)
         # Tags are always implicitly strings and must have low cardinality.
         tags_string = tags.map { |k, v| "#{k}=#{v.to_s.gsub(/[ ,=]/) { |char| "\\#{char}" }}" }
                           .join(",")
@@ -74,13 +75,15 @@ module Utils
                               .map { |k, v| %Q(#{k}="#{v}") }
                               .join(",")
 
-        "#{measurement},#{tags_string} #{fields_string} #{Time.now.to_i}"
+        # InfluxDB merges points with the same tags and timestamp, so keep second precision
+        # but give each event in a request its own nanosecond (its `index`) within that second.
+        "#{measurement},#{tags_string} #{fields_string} #{(Time.now.to_i * 1_000_000_000) + index}"
       end
 
       sig { params(lines: T::Array[String]).void }
       def write_influx(lines)
-        # Second precision is highest we can do and has the lowest performance cost.
-        url = "#{INFLUX_HOST}/api/v2/write?bucket=#{INFLUX_BUCKET}&precision=s"
+        # Timestamps are whole seconds written in nanoseconds: see `influx_line`.
+        url = "#{INFLUX_HOST}/api/v2/write?bucket=#{INFLUX_BUCKET}&precision=ns"
 
         # Line protocol separates each event with a newline. Put as many events in each request
         # as fit in INFLUX_MAX_BATCH_BYTES: an event larger than that on its own is sent by itself.
@@ -132,7 +135,7 @@ module Utils
       def report_package_events(measurement, packages)
         return if not_this_run? || disabled?
 
-        lines = packages.map do |package|
+        lines = packages.each_with_index.map do |package, index|
           # ensure options are removed (by `.compact` below) if empty
           options = package[:options].presence
 
@@ -146,7 +149,7 @@ module Utils
             options:,
           ).compact
 
-          influx_line(measurement, tags, fields)
+          influx_line(measurement, tags, fields, index:)
         end
         write_influx(lines)
       end
