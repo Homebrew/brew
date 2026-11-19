@@ -40,10 +40,21 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
   def run_quiet_update_report
     with_env(
-      HOMEBREW_UPDATE_BEFORE: "abc",
-      HOMEBREW_UPDATE_AFTER:  "abc",
+      HOMEBREW_UPDATE_BEFORE: "a" * 40,
+      HOMEBREW_UPDATE_AFTER:  "a" * 40,
       HOMEBREW_UPDATE_TEST:   "1",
     ) { described_class.new(["--quiet"]).run }
+  end
+
+  it "refuses an update revision that is not a Git revision" do
+    expect do
+      with_env(
+        HOMEBREW_UPDATE_BEFORE: "--output=/tmp/x",
+        HOMEBREW_UPDATE_AFTER:  "a" * 40,
+        HOMEBREW_UPDATE_TEST:   "1",
+      ) { described_class.new(["--quiet"]).run }
+    end.to raise_error(SystemExit)
+      .and output(/update-report should not be called directly!/).to_stderr_from_any_process
   end
 
   it "copies update revisions once for duplicate redirect records" do
@@ -78,8 +89,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
     with_env(
       "HOMEBREW_REDIRECTED_REMOTES_FILE"                   => redirected_remotes_file.to_s,
-      "HOMEBREW_UPDATE_BEFORE"                             => "abc",
-      "HOMEBREW_UPDATE_AFTER"                              => "abc",
+      "HOMEBREW_UPDATE_BEFORE"                             => "a" * 40,
+      "HOMEBREW_UPDATE_AFTER"                              => "a" * 40,
       "HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}" => before_revision,
     ) do
       expect { update_report.run }.to raise_error(SystemExit)
@@ -103,8 +114,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     allow(Homebrew::EnvConfig).to receive_messages(disable_load_formula?: true, no_install_from_api?: true)
 
     ENV["HOMEBREW_REDIRECTED_REMOTES_FILE"] = redirected_remotes_file.to_s
-    ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
-    ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+    ENV["HOMEBREW_UPDATE_BEFORE"] = "a" * 40
+    ENV["HOMEBREW_UPDATE_AFTER"] = "a" * 40
     ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
 
     expect { described_class.new(["--quiet"]).run }.to raise_error(SystemExit)
@@ -127,8 +138,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     allow(Homebrew::EnvConfig).to receive_messages(disable_load_formula?: true, no_install_from_api?: true)
 
     ENV["HOMEBREW_REDIRECTED_REMOTES_FILE"] = redirected_remotes_file.to_s
-    ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
-    ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+    ENV["HOMEBREW_UPDATE_BEFORE"] = "a" * 40
+    ENV["HOMEBREW_UPDATE_AFTER"] = "a" * 40
     ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
 
     expect { described_class.new(["--quiet"]).run }.to raise_error(SystemExit)
@@ -149,8 +160,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     redirected_remotes_file.write("#{tap.path}\thttps://github.com/Homebrew/homebrew-branch\n")
     allow(Homebrew::EnvConfig).to receive_messages(disable_load_formula?: true, no_install_from_api?: true)
     ENV["HOMEBREW_REDIRECTED_REMOTES_FILE"] = redirected_remotes_file.to_s
-    ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
-    ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+    ENV["HOMEBREW_UPDATE_BEFORE"] = "a" * 40
+    ENV["HOMEBREW_UPDATE_AFTER"] = "a" * 40
     ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
     ENV["HOMEBREW_UPDATE_BRANCH#{tap.repository_var_suffix}"] = branch
 
@@ -192,14 +203,14 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
       it "warns about Homebrew/brew after the report and before the auto-update's blank line" do
         allow(Utils).to receive(:popen_read).and_return("1.0.0\n")
-        ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
-        ENV["HOMEBREW_UPDATE_AFTER"] = "def"
+        ENV["HOMEBREW_UPDATE_BEFORE"] = "a" * 40
+        ENV["HOMEBREW_UPDATE_AFTER"] = "d" * 40
         update_report = described_class.new(["--auto-update"])
         allow(update_report).to receive(:puts)
 
         expect(update_report).to receive(:puts).with(/^No changes to formulae/).ordered
         expect(update_report).to receive(:warn_if_branch_not_updated)
-          .with("Homebrew/brew", an_instance_of(GitRepository), "def")
+          .with("Homebrew/brew", an_instance_of(GitRepository), "d" * 40)
           .ordered
         expect(update_report).to receive(:puts).with(no_args).ordered
 
@@ -209,8 +220,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       it "warns about a tap even when nothing was reported as updated" do
         system "git", "-C", tap.path.to_s, "checkout", "-q", "-b", "my-work", before_revision
         system "git", "-C", tap.path.to_s, "remote", "remove", "origin"
-        ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
-        ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+        ENV["HOMEBREW_UPDATE_BEFORE"] = "a" * 40
+        ENV["HOMEBREW_UPDATE_AFTER"] = "a" * 40
         ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
         ENV["HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"] = updated_revision
         update_report = described_class.new([])
@@ -237,8 +248,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     redirected_remotes_file.write("#{tap.path}\thttps://github.com/Homebrew/homebrew-conflict\n")
     allow(Homebrew::EnvConfig).to receive_messages(disable_load_formula?: true, no_install_from_api?: true)
     ENV["HOMEBREW_REDIRECTED_REMOTES_FILE"] = redirected_remotes_file.to_s
-    ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
-    ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+    ENV["HOMEBREW_UPDATE_BEFORE"] = "a" * 40
+    ENV["HOMEBREW_UPDATE_AFTER"] = "a" * 40
     ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = before_revision
     ENV["HOMEBREW_UPDATE_BRANCH#{tap.repository_var_suffix}"] = branch
 
@@ -264,8 +275,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
     )
     allow(Homebrew::EnvConfig).to receive_messages(disable_load_formula?: true, no_install_from_api?: true)
     ENV["HOMEBREW_REDIRECTED_REMOTES_FILE"] = redirected_remotes_file.to_s
-    ENV["HOMEBREW_UPDATE_BEFORE"] = "abc"
-    ENV["HOMEBREW_UPDATE_AFTER"] = "abc"
+    ENV["HOMEBREW_UPDATE_BEFORE"] = "a" * 40
+    ENV["HOMEBREW_UPDATE_AFTER"] = "a" * 40
     ENV["HOMEBREW_UPDATE_BEFORE#{locked_tap.repository_var_suffix}"] = locked_before
     ENV["HOMEBREW_UPDATE_BEFORE#{clean_tap.repository_var_suffix}"] = clean_before
 
@@ -296,8 +307,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
     with_env(
       "HOMEBREW_REDIRECTED_REMOTES_FILE"                       => redirected_remotes_file.to_s,
-      "HOMEBREW_UPDATE_BEFORE"                                 => "abc",
-      "HOMEBREW_UPDATE_AFTER"                                  => "abc",
+      "HOMEBREW_UPDATE_BEFORE"                                 => "a" * 40,
+      "HOMEBREW_UPDATE_AFTER"                                  => "a" * 40,
       "HOMEBREW_UPDATE_BEFORE#{foo_tap.repository_var_suffix}" => foo_before,
       "HOMEBREW_UPDATE_BEFORE#{bar_tap.repository_var_suffix}" => bar_before,
     ) do
@@ -327,8 +338,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
     with_env(
       "HOMEBREW_REDIRECTED_REMOTES_FILE"                   => redirected_remotes_file.to_s,
-      "HOMEBREW_UPDATE_BEFORE"                             => "abc",
-      "HOMEBREW_UPDATE_AFTER"                              => "abc",
+      "HOMEBREW_UPDATE_BEFORE"                             => "a" * 40,
+      "HOMEBREW_UPDATE_AFTER"                              => "a" * 40,
       "HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}" => before_revision,
     ) do
       expect { update_report.run }.to raise_error(SystemExit)
@@ -652,8 +663,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
         def initialize(tap)
           @tap = tap
 
-          ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = "12345678"
-          ENV["HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"] = "abcdef00"
+          ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = "1" * 40
+          ENV["HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"] = "b" * 40
 
           super
         end
@@ -678,6 +689,15 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
       expect do
         described_class.new(tap)
       end.to raise_error(Reporter::ReporterRevisionUnsetError)
+    end
+
+    specify "with a revision variable that is not a Git revision" do
+      ENV["HOMEBREW_UPDATE_BEFORE#{tap.repository_var_suffix}"] = "--output=/tmp/x"
+      ENV["HOMEBREW_UPDATE_AFTER#{tap.repository_var_suffix}"] = "a" * 40
+
+      expect do
+        described_class.new(tap)
+      end.to raise_error(Reporter::ReporterRevisionInvalidError)
     end
 
     specify "without any changes" do
