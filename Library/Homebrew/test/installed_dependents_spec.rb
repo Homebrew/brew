@@ -402,4 +402,73 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_some_installed_dependents([keg])&.last).to include("qux")
     end
   end
+
+  describe "::find_some_installed_build_dependents" do
+    let!(:dependent) do
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo" => :build
+      end
+    end
+
+    specify "a formula built from source needs the keg to build" do
+      expect(described_class.find_some_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
+    end
+
+    specify "a formula poured from a usable bottle doesn't need the keg to build" do
+      [keg, dependent].each do |poured_keg|
+        tab = Tab.empty
+        tab.tabfile = poured_keg/AbstractTab::FILENAME
+        tab.poured_from_bottle = true
+        tab.write
+      end
+      allow(Formulary.factory("bar")).to receive_messages(bottled?: true, pour_bottle?: true)
+
+      expect(described_class.find_some_installed_build_dependents([keg])).to be_nil
+    end
+
+    specify "a formula that is uninstalled too doesn't need the keg to build" do
+      expect(described_class.find_some_installed_build_dependents([keg, dependent])).to be_nil
+    end
+  end
+
+  describe "::build_dependents_by_name" do
+    it "maps the build dependencies to keep to the formulae that need them" do
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo" => :build
+      end
+
+      expect(described_class.build_dependents_by_name(Formula.installed, Formula.installed)).to eq("foo" => ["bar"])
+    end
+  end
+
+  describe "::formulae_safe_to_remove" do
+    let(:installed) { Formula.installed }
+
+    before do
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo"
+        depends_on "foo-keg-only" => :build
+      end
+    end
+
+    it "removes formulae when everything that depends on them is also being removed" do
+      expect(described_class.formulae_safe_to_remove(installed, installed)).to match_array(installed)
+    end
+
+    it "keeps runtime and build dependencies of formulae that stay installed" do
+      expect(described_class.formulae_safe_to_remove(installed - [Formulary.factory("bar")], installed)).to eq([])
+    end
+
+    it "keeps dependencies of formulae that it has decided to keep" do
+      setup_test_keg("baz", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "bar"
+      end
+
+      expect(described_class.formulae_safe_to_remove(installed - [Formulary.factory("baz")], installed)).to eq([])
+    end
+  end
 end

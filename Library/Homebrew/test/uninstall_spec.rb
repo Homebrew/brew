@@ -84,6 +84,26 @@ RSpec.describe Homebrew::Uninstall do
       expect(Homebrew).to have_failed
     end
 
+    specify "when a formula built from source needs the keg to build" do
+      build_dependency = formula("build_dependency") do
+        T.bind(self, T.class_of(Formula))
+        url "f-1"
+      end
+      build_dependent = formula("build_dependent") do
+        T.bind(self, T.class_of(Formula))
+        url "f-1"
+        depends_on "build_dependency" => :build
+      end
+      [build_dependency, build_dependent].each do |f|
+        f.latest_installed_prefix.mkpath
+        stub_formula_loader f
+      end
+      kegs_by_rack = { build_dependency.rack => [Keg.new(build_dependency.latest_installed_prefix)] }
+
+      expect { described_class.handle_unsatisfied_dependents(kegs_by_rack) }
+        .to output(/required to build build_dependent, which is currently installed/).to_stderr
+    end
+
     specify "when `ignore_dependencies` is true" do
       expect do
         described_class.handle_unsatisfied_dependents(kegs_by_rack, ignore_dependencies: true)

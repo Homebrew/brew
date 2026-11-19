@@ -1099,7 +1099,9 @@ module Homebrew
                                                                               formulae: installed_formulae))
         removable_formulae.reject! { |formula| required_kegs.include?(formula.any_installed_keg) }
       end
-      removable_formulae = Utils::Autoremove.formulae_safe_to_remove(removable_formulae, installed_formulae)
+      # Uninstalling skips pinned formulae, so they stay and keep their dependencies.
+      removable_formulae = InstalledDependents.formulae_safe_to_remove(removable_formulae.reject(&:pinned?),
+                                                                       installed_formulae)
 
       return if removable_formulae.blank?
 

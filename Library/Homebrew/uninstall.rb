@@ -167,9 +167,13 @@ module Homebrew
 
     sig { params(kegs: T::Array[Keg], casks: T::Array[Cask::Cask], named_args: T::Array[String]).returns(T::Boolean) }
     def self.check_for_dependents!(kegs, casks: [], named_args: [])
-      return false unless (result = InstalledDependents.find_some_installed_dependents(kegs, casks:))
-
-      DependentsMessage.new(*result, named_args:).output
+      if (result = InstalledDependents.find_some_installed_dependents(kegs, casks:))
+        DependentsMessage.new(*result, named_args:).output
+      elsif (result = InstalledDependents.find_some_installed_build_dependents(kegs))
+        DependentsMessage.new(*result, named_args:, build: true).output
+      else
+        return false
+      end
       true
     end
 

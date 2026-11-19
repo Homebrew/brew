@@ -3135,6 +3135,21 @@ class Formula # rubocop:disable Metrics/ClassLength
     end
   end
 
+  # Returns the names of the runtime dependencies in the install receipt, which
+  # avoids loading a {Formula} for each of them.
+  sig { returns(T::Array[String]) }
+  def installed_runtime_dependency_names
+    if (tab_deps = any_installed_keg&.tab&.runtime_dependencies)
+      tab_deps.filter_map do |dep|
+        full_name = dep["full_name"] if dep.is_a?(Hash)
+        Utils.name_from_full_name(full_name) if full_name
+      end
+    else
+      # Fallback for pre-1.1.6 installations without tab runtime_dependencies.
+      installed_runtime_formula_dependencies.map(&:name)
+    end
+  end
+
   sig { returns(T::Array[Formula]) }
   def runtime_installed_formula_dependents
     # `any_installed_keg` and `runtime_dependencies` `select`s ensure

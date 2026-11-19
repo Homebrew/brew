@@ -7,6 +7,7 @@ require "cleanup"
 
 require "utils/formatter"
 require "utils"
+require "installed_dependents"
 require "bundle/dsl"
 require "bundle/extensions"
 require "bundle/trust"
@@ -300,7 +301,11 @@ module Homebrew
               )
             end
 
-            kept_formulae + recursive_dependencies(Homebrew::Bundle::Brew.formulae, kept_formulae)
+            # Keep what `brew autoremove` keeps for them, as `brew uninstall` refuses to remove it.
+            installed = Formula.installed
+            removable = installed.reject { |f| Homebrew::Bundle::Brew.formula_in_array?(f.full_name, kept_formulae) }
+            kept_formulae +
+              (installed - InstalledDependents.formulae_safe_to_remove(removable, installed)).map(&:full_name)
           end
         end
 
@@ -317,37 +322,6 @@ module Homebrew
           raise "kept_casks is nil" unless @kept_casks
 
           @kept_casks
-        end
-
-        sig {
-          params(current_formulae: T::Array[T::Hash[Symbol, T.untyped]], formulae_names: T::Array[String],
-                 top_level: T::Boolean).returns(T::Array[String])
-        }
-        private_class_method def self.recursive_dependencies(current_formulae, formulae_names, top_level: true)
-          @checked_formulae_names = T.let([], T.nilable(T::Array[String])) if top_level
-          dependencies = T.let([], T::Array[String])
-
-          formulae_names.each do |name|
-            raise "checked_formulae_names is unset!" unless @checked_formulae_names
-            next if @checked_formulae_names.include?(name)
-
-            formula = current_formulae.find { |f| f[:full_name] == name }
-            next unless formula
-
-            f_deps = formula[:dependencies]
-            unless formula[:poured_from_bottle?]
-              f_deps += formula[:build_dependencies]
-              f_deps.uniq!
-            end
-            next unless f_deps
-            next if f_deps.empty?
-
-            @checked_formulae_names << name
-            f_deps += recursive_dependencies(current_formulae, f_deps, top_level: false)
-            dependencies += f_deps
-          end
-
-          dependencies.uniq
         end
 
         IGNORED_TAPS = %w[homebrew/core].freeze

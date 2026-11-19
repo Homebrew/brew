@@ -120,12 +120,14 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         brew 'homebrew/tap/hasdependency'
         brew 'hasbuilddependency1'
         brew 'hasbuilddependency2'
+        brew 'hasbuilddependency3'
         mas 'appstoreapp1', id: 1
         vscode 'VsCodeExtension1'
       RUBY
       described_class.read_dsl_from_brewfile!
       %w[a b d2 homebrew/tap/f homebrew/tap/g homebrew/tap/h homebrew/tap/i2
-         homebrew/tap/hasdependency hasbuilddependency1 hasbuilddependency2].each do |full_name|
+         homebrew/tap/hasdependency hasbuilddependency1 hasbuilddependency2
+         hasbuilddependency3].each do |full_name|
         tap_name = Utils.tap_from_full_name(full_name)
         name = Utils.name_from_full_name(full_name)
         tap = (Tap.fetch(tap_name) if tap_name.present?)
@@ -145,7 +147,9 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
     end
 
     it "computes which formulae to uninstall" do
-      dependencies_arrays_hash = { dependencies: [], build_dependencies: [] }
+      dependencies_arrays_hash = { dependencies: [] }
+      build_dependencies = { "hasbuilddependency1" => "builddependency1", "hasbuilddependency2" => "builddependency2",
+                             "hasbuilddependency3" => "builddependency3" }
       formulae_hash = [
         { name: "a2", full_name: "a2", aliases: ["a"], dependencies: ["d"] },
         { name: "c", full_name: "c" },
@@ -156,25 +160,18 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         { name: "i", full_name: "homebrew/tap/i", aliases: ["i2"] },
         { name: "hasdependency", full_name: "homebrew/tap/hasdependency", dependencies: ["isdependency"] },
         { name: "isdependency", full_name: "homebrew/tap/isdependency" },
-        {
-          name:                "hasbuilddependency1",
-          full_name:           "hasbuilddependency1",
-          poured_from_bottle?: true,
-          build_dependencies:  ["builddependency1"],
-        },
-        {
-          name:                "hasbuilddependency2",
-          full_name:           "hasbuilddependency2",
-          poured_from_bottle?: false,
-          build_dependencies:  ["builddependency2"],
-        },
+        { name: "hasbuilddependency1", full_name: "hasbuilddependency1" },
+        { name: "hasbuilddependency2", full_name: "hasbuilddependency2" },
+        { name: "hasbuilddependency3", full_name: "hasbuilddependency3" },
         { name: "builddependency1", full_name: "builddependency1" },
         { name: "builddependency2", full_name: "builddependency2" },
+        { name: "builddependency3", full_name: "builddependency3" },
         { name: "caskdependency", full_name: "homebrew/tap/caskdependency" },
+        { name: "pinned", full_name: "pinned" },
       ].map { |formula| dependencies_arrays_hash.merge(formula) }
       allow(Homebrew::Bundle::Brew).to receive(:formulae).and_return(formulae_hash)
 
-      formulae_hash.each do |hash_formula|
+      installed = formulae_hash.map do |hash_formula|
         name = hash_formula[:name]
         full_name = hash_formula[:full_name]
         tap_name = Utils.tap_from_full_name(full_name) || "homebrew/core"
@@ -182,9 +179,17 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         f = formula(name, tap:) do
           T.bind(self, T.class_of(Formula))
           url "#{name}-1.0"
+          depends_on build_dependencies.fetch(name) => :build if build_dependencies.key?(name)
         end
         stub_formula_loader f, full_name
+        # A build dependency stays for a formula built from source or when it was built from source itself.
+        tab = instance_double(Tab, poured_from_bottle: %w[hasbuilddependency2 builddependency3].exclude?(name))
+        allow(f).to receive_messages(installed_runtime_dependency_names: hash_formula[:dependencies],
+                                     any_installed_keg: instance_double(Keg, tab:),
+                                     bottled?: true, pour_bottle?: true, pinned?: name == "pinned")
+        f
       end
+      allow(Formula).to receive(:installed).and_return(installed)
 
       allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).and_return(%w[caskdependency])
       expect(described_class.formulae_to_uninstall).to eql %w[
@@ -192,6 +197,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         homebrew/tap/e
         other/tap/h
         builddependency1
+        pinned
       ]
     end
 
@@ -208,7 +214,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       described_class.read_dsl_from_brewfile!
 
       allow(Homebrew::Bundle::Brew).to receive(:formulae).and_return([
-        { name: "foo", full_name: "homebrew/tap/foo", dependencies: [], build_dependencies: [] },
+        { name: "foo", full_name: "homebrew/tap/foo", dependencies: [] },
       ])
       stub_formula_loader formula("foo", tap: Tap.fetch("homebrew/tap")) {
         T.bind(self, T.class_of(Formula))
