@@ -290,6 +290,11 @@ module Cask
 
       download_queue ||= Homebrew::DownloadQueue.default
 
+      # Only the prefetched casks have been downloaded and verified by now.
+      ::Utils::Analytics.report_cask_installs(upgradable_casks.filter_map do |(_, new_cask)|
+        prefetched_cask_installers.find { |installer| installer.cask.equal?(new_cask) }
+      end)
+
       upgradable_casks.each_with_index do |(old_cask, new_cask), index|
         new_cask_installer = prefetched_cask_installers.find { |installer| installer.cask.equal?(new_cask) }
         upgrade_cask(
@@ -523,8 +528,6 @@ module Cask
       tab = Tab.create(new_cask)
       tab.installed_on_request = old_tab.tabfile.nil? || old_tab.installed_on_request
       tab.write
-
-      new_cask_installer.report_analytics
 
       end_time = Time.now
       Homebrew.messages.package_installed(new_cask.token, end_time - start_time)

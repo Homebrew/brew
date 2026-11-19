@@ -72,8 +72,12 @@ module Homebrew
           cask = load_cask(require_cask_path!(operation, cask_path))
           raise Cask::CaskError, "#{cask} is already installed." if cask.installed?
 
-          Utils::Analytics.report_cask_installs([cask])
-          Cask::Installer.new(cask, verbose: args.verbose?).install
+          installer = Cask::Installer.new(cask, verbose: args.verbose?)
+          # Download (and verify) the cask before reporting it; installing reuses the download.
+          installer.prelude
+          installer.download
+          Utils::Analytics.report_cask_installs([installer])
+          installer.install
           Homebrew.messages.display_messages(force_caveats: true)
         when "snapshot"
           raise UsageError, "The `snapshot` operation does not accept a cask." if cask_path

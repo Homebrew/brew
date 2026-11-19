@@ -254,21 +254,41 @@ RSpec.describe Utils::Analytics do
   end
 
   describe "::report_cask_installs" do
-    it "reports the casks from taps that report analytics" do
+    let(:reporting_tap) { instance_double(Tap, name: "homebrew/cask", should_report_analytics?: true) }
+
+    def cask_installer(token, tap:, download_failed: false)
+      instance_double(Cask::Installer, cask:             instance_double(Cask::Cask, token:, tap:),
+                                       download_failed?: download_failed)
+    end
+
+    before do
       ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
       ENV.delete("HOMEBREW_NO_ANALYTICS")
-      reporting_tap = instance_double(Tap, name: "homebrew/cask", should_report_analytics?: true)
-      casks = [
-        instance_double(Cask::Cask, token: "foo", tap: reporting_tap),
-        instance_double(Cask::Cask, token: "bar", tap: instance_double(Tap, should_report_analytics?: false)),
-        instance_double(Cask::Cask, token: "baz", tap: nil),
-      ]
+    end
+
+    it "reports the casks from taps that report analytics" do
       expect(described_class).to receive(:report_package_events).with(
         :cask_install,
         [{ package_name: "foo", tap_name: "homebrew/cask", on_request: true, options: "" }],
       )
 
-      described_class.report_cask_installs(casks)
+      described_class.report_cask_installs([
+        cask_installer("foo", tap: reporting_tap),
+        cask_installer("bar", tap: instance_double(Tap, should_report_analytics?: false)),
+        cask_installer("baz", tap: nil),
+      ])
+    end
+
+    it "does not report casks whose download or checksum verification failed" do
+      expect(described_class).to receive(:report_package_events).with(
+        :cask_install,
+        [{ package_name: "foo", tap_name: "homebrew/cask", on_request: true, options: "" }],
+      )
+
+      described_class.report_cask_installs([
+        cask_installer("foo", tap: reporting_tap),
+        cask_installer("bar", tap: reporting_tap, download_failed: true),
+      ])
     end
   end
 

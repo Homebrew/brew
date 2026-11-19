@@ -180,12 +180,15 @@ module Utils
         report_package_events(:formula_install, packages.uniq { |package| package[:package_name] })
       end
 
-      # Reports installing the casks in a single request. Call this before installing them.
-      sig { params(casks: T::Array[::Cask::Cask]).void }
-      def report_cask_installs(casks)
+      # Reports installing the casks in a single request. Call this after downloading
+      # them and before installing them.
+      sig { params(cask_installers: T::Array[::Cask::Installer]).void }
+      def report_cask_installs(cask_installers)
         return if not_this_run? || disabled?
 
-        packages = casks.filter_map do |cask|
+        # A cask whose download (or its checksum verification) failed won't be installed.
+        packages = cask_installers.reject(&:download_failed?).filter_map do |installer|
+          cask = installer.cask
           tap = cask.tap
           next if tap.nil? || !tap.should_report_analytics?
 

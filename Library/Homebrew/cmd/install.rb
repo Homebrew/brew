@@ -527,25 +527,32 @@ module Homebrew
       def install_casks(new_casks, installed_casks, failed_casks, prefetched_cask_installers, cask_upgrade_summary,
                         installed_on_request:)
         installed_or_upgraded_casks = T.let([], T::Array[Cask::Cask])
-        new_casks.each do |cask|
+        new_cask_installers = new_casks.filter_map do |cask|
           next if failed_casks.any? { |failed_cask| failed_cask.equal?(cask) }
 
-          installer = prefetched_cask_installers.find { |candidate| candidate.cask.equal?(cask) }
-          installer ||= Cask::Installer.new(
-            cask,
-            adopt:                args.adopt?,
-            binaries:             args.binaries?,
-            force:                args.force?,
-            quiet:                args.quiet?,
-            require_sha:          args.cask_require_sha?,
-            skip_cask_deps:       args.skip_cask_deps?,
-            verbose:              args.verbose?,
-            installed_on_request:,
-          )
+          prefetched_cask_installers.find { |candidate| candidate.cask.equal?(cask) } ||
+            Cask::Installer.new(
+              cask,
+              adopt:                args.adopt?,
+              binaries:             args.binaries?,
+              force:                args.force?,
+              quiet:                args.quiet?,
+              require_sha:          args.cask_require_sha?,
+              skip_cask_deps:       args.skip_cask_deps?,
+              verbose:              args.verbose?,
+              installed_on_request:,
+            )
+        end
+
+        # Only the prefetched casks have been downloaded and verified by now.
+        require "utils/analytics"
+        Utils::Analytics.report_cask_installs(new_cask_installers & prefetched_cask_installers)
+
+        new_cask_installers.each do |installer|
           installer.install
-          installed_or_upgraded_casks << cask
+          installed_or_upgraded_casks << installer.cask
         rescue => e
-          ofail "#{cask.full_name}: #{e}"
+          ofail "#{installer.cask.full_name}: #{e}"
         end
 
         installed_casks_to_upgrade = installed_casks.reject do |cask|

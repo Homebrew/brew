@@ -74,7 +74,7 @@ module Cask
       # Reinstall everything that did download and report each failure as it
       # happens, rather than aborting the whole run; the failures still exit
       # nonzero at the end.
-      ::Utils::Analytics.report_cask_installs(cask_installers.map(&:cask))
+      ::Utils::Analytics.report_cask_installs(cask_installers)
 
       reinstalled_casks = T.let([], T::Array[Cask])
       cask_installers.each do |installer|

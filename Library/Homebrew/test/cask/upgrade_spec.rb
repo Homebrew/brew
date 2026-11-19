@@ -790,14 +790,20 @@ RSpec.describe Cask::Upgrade, :cask do
   end
 
   context "when reporting upgrade analytics" do
+    let(:upgrade_event) do
+      { package_name: "local-caffeine", tap_name: "homebrew/cask", on_request: true, options: "" }
+    end
+
     before do
       Cask::Installer.new(Cask::CaskLoader.from_path(cask_path("outdated/local-caffeine"))).install
       allow(CoreCaskTap.instance).to receive(:should_report_analytics?).and_return(true)
+      ENV.delete("HOMEBREW_NO_ANALYTICS_THIS_RUN")
+      ENV.delete("HOMEBREW_NO_ANALYTICS")
+      allow(Utils::Analytics).to receive(:deferred_curl)
     end
 
-    it "reports a successful upgrade as one cask install" do
-      expect(Utils::Analytics).to receive(:report_package_event)
-        .with(:cask_install, package_name: "local-caffeine", tap_name: "homebrew/cask", on_request: true).once
+    it "reports an upgrade as one cask install once it has been downloaded" do
+      expect(Utils::Analytics).to receive(:report_package_events).with(:cask_install, [upgrade_event]).once
 
       described_class.upgrade_casks!(local_caffeine, args:)
     end
@@ -805,16 +811,16 @@ RSpec.describe Cask::Upgrade, :cask do
     it "does not report upgrades from private taps" do
       allow(CoreCaskTap.instance).to receive(:should_report_analytics?).and_return(false)
 
-      expect(Utils::Analytics).not_to receive(:report_package_event)
+      expect(Utils::Analytics).to receive(:report_package_events).with(:cask_install, [])
 
       described_class.upgrade_casks!(local_caffeine, args:)
     end
 
-    it "does not report failed upgrades" do
+    it "reports the upgrade before upgrading so a failed upgrade is still reported" do
       allow_any_instance_of(Cask::Installer).to receive(:finalize_upgrade)
         .and_raise(Cask::CaskError, "finalize failed")
 
-      expect(Utils::Analytics).not_to receive(:report_package_event)
+      expect(Utils::Analytics).to receive(:report_package_events).with(:cask_install, [upgrade_event]).once
 
       described_class.upgrade_casks!(local_caffeine, args:)
     end

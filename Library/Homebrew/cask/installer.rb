@@ -206,11 +206,6 @@ module Cask
       tab.installed_on_request = installed_on_request?
       tab.write
 
-<<<<<<< HEAD
-      report_analytics
-
-=======
->>>>>>> e43a2e4d49 (analytics: report installs before installing)
       purge_backed_up_versioned_files
 
       puts summary
@@ -226,15 +221,6 @@ module Cask
       raise e
     ensure
       @cask.cleanup_temp(retain: !completed)
-    end
-
-    # Report a successful installation or upgrade.
-    sig { void }
-    def report_analytics
-      if (tap = @cask.tap) && tap.should_report_analytics?
-        ::Utils::Analytics.report_package_event(:cask_install, package_name: @cask.token, tap_name: tap.name,
-                                               on_request: true)
-      end
     end
 
     sig { void }
@@ -532,7 +518,7 @@ module Cask
       end
 
       missing_cask_installers = cask_installers.reject { |installer| installer.cask.installed? }
-      ::Utils::Analytics.report_cask_installs(missing_cask_installers.map(&:cask))
+      ::Utils::Analytics.report_cask_installs(missing_cask_installers)
       missing_cask_installers.each(&:install)
       return if formula_installers.blank?
 
