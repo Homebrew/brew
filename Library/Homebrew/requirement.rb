@@ -112,8 +112,9 @@ class Requirement
     self.class.fatal || false
   end
 
-  # Whether the platform of a bottle tag can meet this requirement.
-  # True for requirements that depend on more than the platform.
+  # Whether the platform of a bottle tag can meet this requirement, like {Cask::Cask#platform_supported?}.
+  # {#satisfied?} only answers for the machine running `brew`, but the API is generated for every platform.
+  # True for requirements that depend on more than the platform, e.g. the installed Xcode.
   sig { overridable.params(_bottle_tag: Utils::Bottles::Tag).returns(T::Boolean) }
   def platform_supported?(_bottle_tag) = true
 
