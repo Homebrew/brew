@@ -72,6 +72,46 @@ RSpec.describe Homebrew::API do
       expect(fetched_json).to eq json_hash
     end
 
+    context "when running as root in a user-owned installation" do
+      before do
+        allow(Homebrew).to receive(:running_as_root_but_not_owned_by_root?).and_return(true)
+      end
+
+      it "uses the Homebrew owner's cache in the suggested services retry" do
+        target = cache_dir/"missing.json"
+        stub_const("HOMEBREW_BREW_FILE", Pathname("/brew prefix/bin/brew"))
+
+        expect do
+          described_class.fetch_json_api_file("missing.json", target:)
+        end.to raise_error(SystemExit).and output(<<~EOS).to_stderr
+          Error: Root cannot download the missing API cache file #{target.to_s.dump}.
+          For system services, populate the Homebrew owner's private cache and retry.
+            /brew\\ prefix/bin/brew as-brew-user info
+            sudo HOMEBREW_CACHE="$(/brew\\ prefix/bin/brew as-brew-user --cache)" /brew\\ prefix/bin/brew services ...
+        EOS
+      end
+
+      it "preserves malformed JSON instead of downloading it again" do
+        target = cache_dir/"bar.json"
+        mock_curl_download stdout: json
+
+        expect do
+          described_class.fetch_json_api_file("bar.json", target:)
+        end.to raise_error(SystemExit).and output(/invalid API cache file/).to_stderr
+        expect(target.read).to eq "tmp"
+      end
+
+      it "preserves a cached file that fails signature verification" do
+        target = cache_dir/"foo.jws.json"
+        target.write json
+
+        expect do
+          described_class.fetch_json_api_file("foo.jws.json", target:)
+        end.to raise_error(SystemExit).and output(/Failed to verify integrity/).to_stderr
+        expect(target.read).to eq json
+      end
+    end
+
     it "loads the configured curlrc once per download", :needs_utils_curl do
       ENV["HOMEBREW_CURLRC"] = (cache_dir/"curlrc").to_s
       curl_args = []
