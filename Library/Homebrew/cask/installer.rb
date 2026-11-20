@@ -358,6 +358,7 @@ module Cask
           artifact,
           T.any(
             Artifact::AbstractFlightBlock,
+            Artifact::DesktopEntry,
             Artifact::GeneratedCompletion,
             Artifact::GeneratedScript,
             Artifact::Installer,
@@ -754,6 +755,7 @@ module Cask
         T::Array[
           T.any(
             Artifact::AbstractFlightBlock,
+            Artifact::DesktopEntry,
             Artifact::GeneratedCompletion,
             Artifact::KeyboardLayout,
             Artifact::Moved,

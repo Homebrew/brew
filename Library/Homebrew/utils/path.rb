@@ -172,6 +172,11 @@ module Utils
       puts "uninfo #{path}" if verbose
     end
 
+    sig { returns(Pathname) }
+    def self.xdg_data_home
+      Pathname(ENV.fetch("HOMEBREW_XDG_DATA_HOME", "~/.local/share"))
+    end
+
     sig { returns(T.nilable(String)) }
     private_class_method def self.install_info_executable
       @install_info_executable ||= if File.executable?("/usr/bin/install-info")

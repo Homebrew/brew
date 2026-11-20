@@ -153,6 +153,20 @@ RSpec.describe Utils::Path do
     end
   end
 
+  describe "::xdg_data_home" do
+    it "uses `HOMEBREW_XDG_DATA_HOME` when set" do
+      ENV["HOMEBREW_XDG_DATA_HOME"] = "/xdg/data"
+
+      expect(described_class.xdg_data_home).to eq(Pathname("/xdg/data"))
+    end
+
+    it "defaults to `~/.local/share`" do
+      ENV.delete("HOMEBREW_XDG_DATA_HOME")
+
+      expect(described_class.xdg_data_home).to eq(Pathname("~/.local/share"))
+    end
+  end
+
   describe "::rmdir_if_possible" do
     it "removes an empty directory" do
       dir = mktmpdir
