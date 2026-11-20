@@ -41,6 +41,42 @@ RSpec.describe RuboCop::Cop::FormulaAudit::DeprecateDisableDate do
       RUBY
     end
 
+    it "reports an offense without a correction if `date` is not a valid date" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          deprecate! date: "2020-06-31"
+                           ^^^^^^^^^^^^ FormulaAudit/DeprecateDisableDate: Use an ISO 8601 date (`YYYY-MM-DD`)
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+
+    it "reports an offense without a correction if `date` has no year" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          deprecate! date: "6/25"
+                           ^^^^^^ FormulaAudit/DeprecateDisableDate: Use an ISO 8601 date (`YYYY-MM-DD`)
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+
+    it "reports an offense without a correction if `date` has no day" do
+      expect_offense(<<~RUBY)
+        class Foo < Formula
+          url 'https://brew.sh/foo-1.0.tgz'
+          deprecate! date: "June 2020"
+                           ^^^^^^^^^^^ FormulaAudit/DeprecateDisableDate: Use an ISO 8601 date (`YYYY-MM-DD`)
+        end
+      RUBY
+
+      expect_no_corrections
+    end
+
     it "reports no offenses if `date` is ISO 8601 compliant" do
       expect_no_offenses(<<~RUBY)
         class Foo < Formula
