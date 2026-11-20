@@ -399,12 +399,19 @@ RSpec.describe Resource do
       end
 
       it "lists each bottle's own manifest digest in an index" do
-        cached_download.write(JSON.generate("manifests" => [{
-          "digest"      => "sha256:#{"faceb00c" * 8}",
-          "annotations" => { "sh.brew.bottle.digest" => TEST_SHA256 },
-        }]))
+        cached_download.write(JSON.generate("manifests" => %w[arm64_sequoia arm64_sonoma].map do |tag|
+          {
+            "digest"      => "sha256:#{Digest::SHA256.hexdigest(tag)}",
+            "annotations" => { "org.opencontainers.image.ref.name" => "1.0.#{tag}",
+                               "sh.brew.bottle.digest"             => TEST_SHA256 },
+          }
+        end))
 
-        expect(manifest.platform_manifest_sha256s).to eq(TEST_SHA256 => "faceb00c" * 8)
+        # Bottles for several tags can share a checksum.
+        expect(manifest.platform_manifest_sha256s).to eq(
+          ["1.0.arm64_sequoia", TEST_SHA256] => Digest::SHA256.hexdigest("arm64_sequoia"),
+          ["1.0.arm64_sonoma", TEST_SHA256]  => Digest::SHA256.hexdigest("arm64_sonoma"),
+        )
       end
 
       it "refuses to list digests from an index that does not match its expected digest" do

@@ -5,7 +5,6 @@ require "utils/executable"
 
 require "date"
 require "json"
-require "tempfile"
 require "utils/popen"
 require "utils/github/api"
 require "exceptions"
@@ -210,9 +209,9 @@ module Homebrew
     # The provenance is verified as originating from `signing_repository`, which is a `String`
     # that should be formatted as a GitHub `owner/repository`.
     #
-    # Callers may additionally pass in `signing_workflow`, which will scope the attestation
-    # down to an exact GitHub Actions workflow, in
-    # `https://github/OWNER/REPO/.github/workflows/WORKFLOW.yml@REF` format.
+    # A bundle listed by `prefetch` is verified with `verify_bundle`, so it must also come
+    # from one of the workflows and refs in that repository's trust policy. Otherwise `gh`
+    # verifies the repository alone.
     #
     # @return [Hash] the JSON-decoded response.
     # @raise [GhAuthNeeded] on any authentication failures
@@ -220,14 +219,11 @@ module Homebrew
     #
     # @api private
     sig {
-      params(bottle: Bottle, signing_repo: String,
-             signing_workflow: T.nilable(String), subject: T.nilable(String)).returns(T::Hash[String, T.untyped])
+      params(bottle: Bottle, signing_repo: String, subject: T.nilable(String)).returns(T::Hash[String, T.untyped])
     }
-    def self.check_attestation(bottle, signing_repo, signing_workflow = nil, subject = nil)
+    def self.check_attestation(bottle, signing_repo, subject = nil)
       cmd = ["attestation", "verify", bottle.cached_download, "--repo", signing_repo, "--format",
              "json"]
-
-      cmd += ["--cert-identity", signing_workflow] if signing_workflow.present?
 
       # Fail early if we have no credentials. The command below invariably
       # fails without them, so this saves us an unnecessary subshell.
@@ -235,54 +231,56 @@ module Homebrew
       raise GhAuthNeeded, "missing credentials" if credentials.blank?
 
       digest = Downloadable.verification_cache.sha256(bottle.cached_download)
-      lines = prefetched_bundle_lines(bottle, digest, signing_organisation(signing_repo))
-      bundle_path = nil
-      begin
-        if lines
-          count = Utils.pluralize("listed attestation", lines.count, include_count: true)
-          odebug "Verifying #{bottle.filename} against #{count} from #{signing_repo}"
-          bundle_file = Tempfile.create(["attestations-", ".jsonl"], HOMEBREW_TEMP)
-          bundle_path = Pathname(bundle_file.path)
-          begin
-            bundle_file.puts(lines)
-          ensure
-            bundle_file.close
-          end
-          cmd += ["--bundle", bundle_path]
-        end
-
-        result = system_command!(gh_executable, args: cmd,
-                                 env: { "GH_TOKEN" => credentials, "GH_HOST" => "github.com" },
-                                 secrets: [credentials], print_stderr: false, chdir: HOMEBREW_TEMP)
-      rescue ErrorDuringExecution => e
-        if e.exitstatus == 1 && e.stderr.include?("unknown command")
-          raise GhIncompatible, "gh CLI is incompatible with attestations"
-        end
-
-        # Even if we have credentials, they may be invalid or malformed.
-        if e.exitstatus == 4 || e.stderr.include?("HTTP 401: Bad credentials")
-          raise GhAuthInvalid, "invalid credentials"
-        end
-
-        if e.stderr.match?(/HTTP (?:403|429)\b.*(?:API rate limit exceeded|exceeded a secondary rate limit)/)
-          raise RateLimitExceededError, "GitHub API rate limit exceeded: #{e}"
-        end
-
-        # The API used to return 404 but now can return 200 with an empty array.
-        # We match the no attestation case precisely as there are similarly worded errors.
-        if e.stderr.include?("HTTP 404: Not Found") || e.stderr.match?(/: no attestations found\R/)
-          raise MissingAttestationError, "attestation not found: #{e}"
-        end
-
-        raise InvalidAttestationError, "attestation verification failed: #{e}"
-      ensure
-        bundle_path&.unlink
+      if bottle.resource.checksum&.hexdigest != digest
+        raise InvalidAttestationError, "#{bottle.filename} does not match its formula checksum"
       end
 
-      begin
-        attestations = JSON.parse(result.stdout)
-      rescue JSON::ParserError
-        raise InvalidAttestationError, "attestation verification returned malformed JSON"
+      attestations = if (lines = prefetched_bundle_lines(bottle, digest, signing_organisation(signing_repo)))
+        count = Utils.pluralize("listed attestation", lines.count, include_count: true)
+        odebug "Verifying #{bottle.filename} against #{count} from #{signing_repo}"
+        rejections = []
+        verified = lines.filter_map do |line|
+          verify_bundle(line, digest, signing_repo)
+        rescue InvalidAttestationError => e
+          rejections << e.message
+          nil
+        end
+        raise InvalidAttestationError, rejections.uniq.join("\n") if verified.empty?
+
+        verified
+      else
+        begin
+          result = system_command!(gh_executable, args: cmd,
+                                   env: { "GH_TOKEN" => credentials, "GH_HOST" => "github.com" },
+                                   secrets: [credentials], print_stderr: false, chdir: HOMEBREW_TEMP)
+        rescue ErrorDuringExecution => e
+          if e.exitstatus == 1 && e.stderr.include?("unknown command")
+            raise GhIncompatible, "gh CLI is incompatible with attestations"
+          end
+
+          # Even if we have credentials, they may be invalid or malformed.
+          if e.exitstatus == 4 || e.stderr.include?("HTTP 401: Bad credentials")
+            raise GhAuthInvalid, "invalid credentials"
+          end
+
+          if e.stderr.match?(/HTTP (?:403|429)\b.*(?:API rate limit exceeded|exceeded a secondary rate limit)/)
+            raise RateLimitExceededError, "GitHub API rate limit exceeded: #{e}"
+          end
+
+          # The API used to return 404 but now can return 200 with an empty array.
+          # We match the no attestation case precisely as there are similarly worded errors.
+          if e.stderr.include?("HTTP 404: Not Found") || e.stderr.match?(/: no attestations found\R/)
+            raise MissingAttestationError, "attestation not found: #{e}"
+          end
+
+          raise InvalidAttestationError, "attestation verification failed: #{e}"
+        end
+
+        begin
+          JSON.parse(result.stdout)
+        rescue JSON::ParserError
+          raise InvalidAttestationError, "attestation verification returned malformed JSON"
+        end
       end
 
       # `gh attestation verify` returns a JSON array of one or more results,
@@ -347,19 +345,20 @@ module Homebrew
     # proof and Sigstore's trusted root is pinned in
     # `attestation/trusted_root.json`.
     #
-    # The provenance must have been signed by `signing_workflow`, in
-    # `https://github.com/OWNER/REPO/.github/workflows/WORKFLOW.yml@REF` format.
+    # The provenance must have been signed under the trust policy of
+    # `signing_repo`: by one of its allow-listed workflows and refs, on a
+    # GitHub-hosted runner, for the repository and owner with the expected IDs.
     #
     # @return [Hash] the verified statement and signing time, shaped like a
     #   `gh attestation verify --format json` result
     # @raise [InvalidAttestationError] on any verification failures
     #
     # @api private
-    sig { params(bundle: String, digest: String, signing_workflow: String).returns(T::Hash[String, T.untyped]) }
-    def self.verify_bundle(bundle, digest, signing_workflow)
+    sig { params(bundle: String, digest: String, signing_repo: String).returns(T::Hash[String, T.untyped]) }
+    def self.verify_bundle(bundle, digest, signing_repo)
       require "attestation/verifier"
 
-      result = Verifier.verify(bundle, digest, signing_workflow)
+      result = Verifier.verify(bundle, digest, signing_repo)
       {
         "verificationResult" => {
           "statement"          => result.statement,
@@ -467,7 +466,7 @@ module Homebrew
         end
         subject = "#{url_sha256}--#{bottle.filename}"
 
-        # We don't pass in a signing workflow for backfill signatures because
+        # `gh` is not given a signing workflow for backfill signatures because
         # some backfilled bottle signatures were signed from the 'backfill'
         # branch, and others from 'main' of trailofbits/homebrew-brew-verify
         # so the signing workflow is slightly different which causes some bottles to incorrectly
@@ -475,7 +474,7 @@ module Homebrew
         # because if somehow someone could generate false backfill attestations
         # from a different workflow we will still catch it because the
         # attestation would have been generated after our cutoff date.
-        backfill_attestation = check_attestation bottle, BACKFILL_REPO, nil, subject
+        backfill_attestation = check_attestation bottle, BACKFILL_REPO, subject
         timestamp = backfill_attestation.dig("verificationResult", "verifiedTimestamps",
                                              0, "timestamp")
 

@@ -92,6 +92,7 @@ Optionally contains the SHA-256 hash of the GitHub Packages manifest that lists 
 
 When it is present, Homebrew fetches the manifest by this hash and refuses it if its contents do not match.
 It must be removed or updated whenever a bottle is added to or changed in the block.
+`brew pr-upload` writes it for bottles it uploads to GitHub Packages.
 
 ### Checksum (`sha256`)
 

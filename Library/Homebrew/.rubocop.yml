@@ -4,6 +4,11 @@ inherit_from:
 Homebrew/MoveToExtendOS:
   Enabled: true
 
+# Portable Ruby does not ship the `base64` gem.
+Homebrew/NoBase64:
+  Include:
+    - "**/*.rb"
+
 # This fixture intentionally exercises the deprecated flight-block DSL.
 Cask/InstallSteps:
   Exclude:

@@ -1,7 +1,6 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "base64"
 require "openssl"
 require "stringio"
 require "time"
@@ -43,6 +42,13 @@ module Homebrew
       CODE_SIGNING_USAGE = "Code Signing"
       OIDC_ISSUER_EXTENSION = "1.3.6.1.4.1.57264.1.1"
       OIDC_ISSUER_V2_EXTENSION = "1.3.6.1.4.1.57264.1.8"
+      RUNNER_ENVIRONMENT_EXTENSION = "1.3.6.1.4.1.57264.1.11"
+      SOURCE_REPOSITORY_EXTENSION = "1.3.6.1.4.1.57264.1.12"
+      SOURCE_REPOSITORY_REF_EXTENSION = "1.3.6.1.4.1.57264.1.14"
+      SOURCE_REPOSITORY_ID_EXTENSION = "1.3.6.1.4.1.57264.1.15"
+      SOURCE_REPOSITORY_OWNER_ID_EXTENSION = "1.3.6.1.4.1.57264.1.17"
+      HOSTED_RUNNER_ENVIRONMENT = "github-hosted"
+      PREDICATE_TYPE = "https://slsa.dev/provenance/v1"
       URI_GENERAL_NAME_TAG = 6
       TIMESTAMP_VERSION = "\x00"
       CERTIFICATE_TIMESTAMP_SIGNATURE_TYPE = "\x00"
@@ -112,8 +118,38 @@ module Homebrew
         const :integrated_time, Time
       end
 
-      sig { params(bundle: String, digest: String, signing_workflow: String).returns(Result) }
-      def self.verify(bundle, digest, signing_workflow)
+      # The numeric IDs survive a rename, so another repository cannot take over a trusted name.
+      class Policy < T::Struct
+        const :repository, String
+        const :repository_id, String
+        const :owner_id, String
+        const :workflows, T::Array[String]
+        # Each trusted ref and, if it is no longer signed from, the last time a signature from it is valid.
+        const :refs, T::Hash[String, T.nilable(Time)]
+      end
+
+      # homebrew-core signed from `master` until `main` became its default branch in 2025. Its
+      # workflows stopped accepting `master` on 9 November 2026, so no later signature from it is valid:
+      # <https://github.com/Homebrew/homebrew-core/pull/324453>
+      core_master_cutoff = Time.utc(2026, 11, 10)
+      backfill_cutoff = BACKFILL_CUTOFF.to_time
+      policies = [
+        Policy.new(repository: HOMEBREW_CORE_REPO, repository_id: "52855516", owner_id: "1503512",
+                   workflows:  %w[publish-commit-bottles.yml dispatch-build-bottle.yml dispatch-rebottle.yml],
+                   refs:       { "refs/heads/main" => nil, "refs/heads/master" => core_master_cutoff }),
+        Policy.new(repository: BACKFILL_REPO, repository_id: "754716714", owner_id: "2314423",
+                   workflows:  %w[backfill_signatures.yml],
+                   refs:       { "refs/heads/main" => backfill_cutoff, "refs/heads/backfill" => backfill_cutoff }),
+      ]
+      POLICIES = T.let(policies.freeze, T::Array[Policy])
+
+      sig { params(bundle: String, digest: String, signing_repo: String).returns(Result) }
+      def self.verify(bundle, digest, signing_repo)
+        policy = POLICIES.find { |candidate| candidate.repository == signing_repo }
+        unless policy
+          raise InvalidAttestationError, "attestation verification failed: no trust policy for #{signing_repo}"
+        end
+
         verification_bundle = parse_bundle(bundle)
         log_entry = verification_bundle.log_entry
         integrated_time = Time.at(log_entry.integrated_time).utc
@@ -124,7 +160,7 @@ module Homebrew
         leaf_certificate = OpenSSL::X509::Certificate.new(verification_bundle.certificate_der)
         certificate_chain = verify_certificate(leaf_certificate, integrated_time)
         verify_sct(leaf_certificate, certificate_chain.fetch(1), integrated_time)
-        verify_identity(leaf_certificate, signing_workflow)
+        verify_identity(leaf_certificate, policy, integrated_time)
         verify_dsse(leaf_certificate, verification_bundle.payload, verification_bundle.signature)
         verify_body(log_entry.body, verification_bundle.payload, verification_bundle.signature, leaf_certificate)
         Result.new(statement: verify_statement(verification_bundle.payload, digest), integrated_time:)
@@ -172,20 +208,20 @@ module Homebrew
                           certificate.fetch(:x509CertificateChain).fetch(:certificates).fetch(0).fetch(:rawBytes)
         Bundle.new(
           log_entry:       LogEntry.new(
-            log_index: log_integer(log_index), log_id: Base64.strict_decode64(log_id),
+            log_index: log_integer(log_index), log_id: log_id.unpack1("m0"),
             integrated_time: log_integer(integrated_time),
-            inclusion_promise: Base64.strict_decode64(inclusion_promise),
-            body: Base64.strict_decode64(body), inclusion_proof: InclusionProof.new(
+            inclusion_promise: inclusion_promise.unpack1("m0"),
+            body: body.unpack1("m0"), inclusion_proof: InclusionProof.new(
               log_index: log_integer(proof_index), tree_size: log_integer(tree_size),
               encoded_root_hash: root_hash, checkpoint: checkpoint, hashes: proof_hashes.map do |encoded_hash|
                 encoded_hash => String
-                Base64.strict_decode64(encoded_hash)
+                encoded_hash.unpack1("m0")
               end
             )
           ),
-          certificate_der: Base64.strict_decode64(raw_certificate),
-          payload:         Base64.strict_decode64(payload),
-          signature:       Base64.strict_decode64(signature),
+          certificate_der: raw_certificate.unpack1("m0"),
+          payload:         payload.unpack1("m0"),
+          signature:       signature.unpack1("m0"),
         )
       end
 
@@ -211,7 +247,7 @@ module Homebrew
               validity_period: parse_validity_period(validity),
               certificates:    certificates.map do |certificate|
                 certificate => { rawBytes: String => raw_certificate }
-                Base64.strict_decode64(raw_certificate)
+                raw_certificate.unpack1("m0")
               end,
             )
           end,
@@ -225,7 +261,7 @@ module Homebrew
                                  publicKey: { rawBytes: String => public_key, keyDetails: LOG_KEY_FORMAT,
                                               validFor: Hash => validity } }
 
-          LogKey.new(log_id: Base64.strict_decode64(log_id), public_key_der: Base64.strict_decode64(public_key),
+          LogKey.new(log_id: log_id.unpack1("m0"), public_key_der: public_key.unpack1("m0"),
                      validity_period: parse_validity_period(validity))
         end
       end
@@ -269,7 +305,7 @@ module Homebrew
       sig { params(log_entry: LogEntry, public_key: OpenSSL::PKey::EC).void }
       def self.verify_promise(log_entry, public_key)
         # Sorted ASCII keys and integer values are the complete canonical JSON domain here.
-        promise = JSON.generate(body: Base64.strict_encode64(log_entry.body),
+        promise = JSON.generate(body: [log_entry.body].pack("m0"),
                                 integratedTime: log_entry.integrated_time,
                                 logID: log_entry.log_id.unpack1("H*"), logIndex: log_entry.log_index)
         check(log_entry.integrated_time.positive? && log_entry.log_index >= 0, "invalid log time or index")
@@ -298,7 +334,7 @@ module Homebrew
           leaf_index >>= 1
           last_leaf_index >>= 1
         end
-        check(last_leaf_index.zero? && root_hash == Base64.strict_decode64(proof.encoded_root_hash),
+        check(last_leaf_index.zero? && root_hash == proof.encoded_root_hash.unpack1("m0"),
               "invalid inclusion proof root")
       end
 
@@ -315,7 +351,7 @@ module Homebrew
           signature_match = %r{\A\u2014 \S+ ([A-Za-z0-9+/=]+)\n\z}.match(line)
           raise InvalidAttestationError, "invalid checkpoint signature line" unless signature_match
 
-          signature = Base64.strict_decode64(signature_match[1].to_s)
+          signature = signature_match[1].to_s.unpack1("m0")
           signature.start_with?(log_id.byteslice(0, CHECKPOINT_KEY_HINT_BYTES).to_s) &&
             public_key.verify(SIGNATURE_DIGEST, signature.byteslice(CHECKPOINT_KEY_HINT_BYTES..).to_s, "#{note}\n")
         end
@@ -407,8 +443,8 @@ module Homebrew
         read_bytes(stream, read_bytes(stream, LENGTH_PREFIX_BYTES).unpack1("n"))
       end
 
-      sig { params(leaf_certificate: OpenSSL::X509::Certificate, workflow: String).void }
-      def self.verify_identity(leaf_certificate, workflow)
+      sig { params(leaf_certificate: OpenSSL::X509::Certificate, policy: Policy, integrated_time: Time).void }
+      def self.verify_identity(leaf_certificate, policy, integrated_time)
         issuers = leaf_certificate.extensions.filter_map do |extension|
           case extension.oid
           when OIDC_ISSUER_EXTENSION then extension.value_der
@@ -418,14 +454,35 @@ module Homebrew
           end
         end
         check(issuers.any?(GITHUB_ACTIONS_ISSUER), "OIDC issuer does not match")
+        # DER is canonical, so a claim must be the expected encoding, exactly once.
+        claims = leaf_certificate.extensions.group_by(&:oid).transform_values do |extensions|
+          extensions.map(&:value_der)
+        end
+        repository_url = "https://github.com/#{policy.repository}"
+        {
+          "runner environment"         => [RUNNER_ENVIRONMENT_EXTENSION, HOSTED_RUNNER_ENVIRONMENT],
+          "source repository"          => [SOURCE_REPOSITORY_EXTENSION, repository_url],
+          "source repository ID"       => [SOURCE_REPOSITORY_ID_EXTENSION, policy.repository_id],
+          "source repository owner ID" => [SOURCE_REPOSITORY_OWNER_ID_EXTENSION, policy.owner_id],
+        }.each do |claim, (extension_id, expected)|
+          check(claims[extension_id] == [OpenSSL::ASN1::UTF8String.new(expected).to_der], "#{claim} does not match")
+        end
+        ref = policy.refs.keys.find do |trusted_ref|
+          claims[SOURCE_REPOSITORY_REF_EXTENSION] == [OpenSSL::ASN1::UTF8String.new(trusted_ref).to_der]
+        end
+        raise InvalidAttestationError, "source repository ref does not match" unless ref
+
+        signing_cutoff = policy.refs[ref]
+        check(!signing_cutoff || integrated_time <= signing_cutoff, "signed after the #{ref} cutoff")
         alternative_names = leaf_certificate.extensions.find do |extension|
           extension.oid == SUBJECT_ALTERNATIVE_NAME_EXTENSION
         end
         raise InvalidAttestationError, "missing SAN" unless alternative_names
 
+        workflows = policy.workflows.map { |workflow| "#{repository_url}/.github/workflows/#{workflow}@#{ref}" }
         names = OpenSSL::ASN1.decode(alternative_names.value_der)
         check(names.is_a?(OpenSSL::ASN1::Sequence) && names.value.any? do |name|
-          name.tag_class == :CONTEXT_SPECIFIC && name.tag == URI_GENERAL_NAME_TAG && name.value == workflow
+          name.tag_class == :CONTEXT_SPECIFIC && name.tag == URI_GENERAL_NAME_TAG && workflows.include?(name.value)
         end, "SANs do not match")
       end
 
@@ -450,8 +507,8 @@ module Homebrew
           }, **nil
         }
         check(payload_hash == OpenSSL::Digest::SHA256.hexdigest(payload) &&
-              logged_signature == Base64.strict_encode64(signature) &&
-              logged_certificate == Base64.strict_encode64(leaf_certificate.to_pem),
+              logged_signature == [signature].pack("m0") &&
+              logged_certificate == [leaf_certificate.to_pem].pack("m0"),
               "log body does not match envelope")
       end
 
@@ -461,6 +518,7 @@ module Homebrew
         parse_json(payload) => Hash => statement
         statement.fetch("_type") => String => statement_type
         check(statement_type == STATEMENT_TYPE, "expected in-toto v1 statement")
+        check(statement["predicateType"] == PREDICATE_TYPE, "expected SLSA provenance v1 predicate")
         statement.fetch("subject") => Array => subjects
         matches = subjects.map do |subject|
           subject => Hash => subject_fields
