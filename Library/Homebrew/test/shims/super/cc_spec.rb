@@ -153,6 +153,42 @@ RSpec.describe CcShim::Cmd do
     ])
   end
 
+  describe "#deployment_target" do
+    subject(:deployment_target) { described_class.new("clang", ["-c", "test.c"]).deployment_target }
+
+    before do
+      setup_env(real_prefix)
+      ENV["HOMEBREW_MACOSX_DEPLOYMENT_TARGET"] = "14"
+      ENV.delete("MACOSX_DEPLOYMENT_TARGET")
+    end
+
+    it "defaults to the macOS major version" do
+      expect(deployment_target).to eq("14")
+    end
+
+    it "replaces an empty deployment target" do
+      ENV["MACOSX_DEPLOYMENT_TARGET"] = ""
+      expect(deployment_target).to eq("14")
+    end
+
+    it "leaves a deployment target set by the build system" do
+      ENV["MACOSX_DEPLOYMENT_TARGET"] = "26.0"
+      expect(deployment_target).to be_nil
+    end
+
+    it "leaves another platform's deployment target alone" do
+      ENV["IPHONEOS_DEPLOYMENT_TARGET"] = "17.0"
+      expect(deployment_target).to be_nil
+    end
+
+    it "passes the deployment target to the compiler", :needs_macos do
+      ENV["HOMEBREW_RUBY_PATH"] = RbConfig.ruby
+      output = Utils.popen_read(HOMEBREW_SHIMS_PATH/"mac/super/bin/clang",
+                                "-###", "-c", "-x", "c", File::NULL, err: :out)
+      expect(output[/"-triple" "([^"]+)"/, 1]).to end_with("-apple-macosx14.0.0")
+    end
+  end
+
   context "when no path component of the prefix is a symlink" do
     it "keeps the prefix, declared dependencies and references to self" do
       expect(include_flags(real_prefix)).to include(

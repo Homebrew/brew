@@ -105,6 +105,7 @@ module OS
 
         Homebrew::Diagnostic.checks(:fatal_setup_build_environment_checks)
         self["HOMEBREW_SDKROOT"] = sdk.path.to_s if sdk
+        self["HOMEBREW_MACOSX_DEPLOYMENT_TARGET"] = MacOS.version.to_s
 
         self["HOMEBREW_DEVELOPER_DIR"] = if is_xcode_sdk
           MacOS::Xcode.prefix.to_s

@@ -362,5 +362,12 @@ RSpec.describe "ENV" do
         expect(env["OBJCXX"]).to eq gcc.sub("gcc", "g++")
       end
     end
+
+    describe "#setup_build_environment", :needs_macos do
+      it "passes the macOS major version to the shims" do
+        env.setup_build_environment
+        expect(env["HOMEBREW_MACOSX_DEPLOYMENT_TARGET"]).to eq MacOS.version.to_s
+      end
+    end
   end
 end
