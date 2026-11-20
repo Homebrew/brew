@@ -124,7 +124,7 @@ module InstalledDependents
     end
     # Don't include build dependencies of formulae that keep none of their kegs.
     remaining_formulae = Formula.installed.reject { |f| (f.installed_kegs - kegs).empty? }
-    build_dependents = build_dependents_by_name(remaining_formulae, Formula.installed)
+    build_dependents = build_dependents_by_name(remaining_formulae, Formula.installed, removed_kegs: kegs)
     dependents_by_keg = names_by_keg.transform_values { |names| build_dependents.values_at(*names).flatten.compact }
                                     .reject { |_, dependents| dependents.empty? }
     return if dependents_by_keg.empty?
@@ -146,13 +146,19 @@ module InstalledDependents
   # from source or without a usable bottle. Those built from source are
   # always kept, as a bottle may not be usable by the next upgrade and they
   # take a while to install again.
-  sig { params(formulae: T::Array[Formula], installed: T::Array[Formula]).returns(T::Hash[String, T::Array[String]]) }
-  def build_dependents_by_name(formulae, installed)
+  sig {
+    params(formulae: T::Array[Formula], installed: T::Array[Formula], removed_kegs: T::Array[Keg])
+      .returns(T::Hash[String, T::Array[String]])
+  }
+  def build_dependents_by_name(formulae, installed, removed_kegs: [])
     dependents = T.let({}, T::Hash[String, T::Array[String]])
     built_from_source_names = installed.reject { |f| f.any_installed_keg&.tab&.poured_from_bottle }
                                        .flat_map(&:possible_names).to_set
     formulae.each do |formula|
-      tab = formula.any_installed_keg&.tab
+      keg = formula.any_installed_keg
+      # Read the install receipt that is left once `removed_kegs` are gone.
+      keg = (formula.installed_kegs - removed_kegs).last if keg && removed_kegs.include?(keg)
+      tab = keg&.tab
       # Pouring a bottle doesn't use build dependencies
       pours_bottle = tab&.poured_from_bottle && formula.bottled? && formula.pour_bottle?
 

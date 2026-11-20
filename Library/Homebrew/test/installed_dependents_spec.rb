@@ -417,16 +417,28 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
     end
 
-    specify "a formula poured from a usable bottle doesn't need the keg to build" do
-      [keg, dependent].each do |poured_keg|
+    def pour_from_usable_bottle(*poured_kegs)
+      poured_kegs.each do |poured_keg|
         tab = Tab.empty
         tab.tabfile = poured_keg/AbstractTab::FILENAME
         tab.poured_from_bottle = true
         tab.write
       end
       allow(Formulary.factory("bar")).to receive_messages(bottled?: true, pour_bottle?: true)
+    end
+
+    specify "a formula poured from a usable bottle doesn't need the keg to build" do
+      pour_from_usable_bottle(keg, dependent)
 
       expect(described_class.find_installed_build_dependents([keg])).to be_nil
+    end
+
+    specify "a formula whose remaining keg was built from source still needs the keg to build" do
+      linked_dependent = Keg.new((dependent.rack/"2.0").tap(&:mkpath))
+      linked_dependent.optlink
+      pour_from_usable_bottle(keg, linked_dependent)
+
+      expect(described_class.find_installed_build_dependents([keg, linked_dependent])).to eq([[keg], ["bar"]])
     end
 
     specify "a formula that is uninstalled too doesn't need the keg to build" do
