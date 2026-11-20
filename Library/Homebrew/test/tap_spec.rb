@@ -1360,8 +1360,8 @@ RSpec.describe Tap do
         allow(tap).to receive_messages(command_files: [], formula_files: [], cask_files: [],
                                        formula_names: [], cask_tokens: [], link_completions_and_manpages: nil)
         expect(SystemCommand).to receive(:safe_system)
-          .with("git", "-c", "core.hooksPath=#{File::NULL}", "-C", source_tap,
-                "worktree", "add", "--detach", tap.path, "HEAD")
+          .with("git", args: ["-c", "core.hooksPath=#{File::NULL}", "-C", source_tap,
+                              "worktree", "add", "--detach", tap.path, "HEAD"])
           .and_wrap_original do
             tap.path.mkpath
             (tap.path/".git").write "gitdir: #{source_tap}/.git/worktrees/#{tap.full_repository.downcase}\n"
@@ -1412,8 +1412,8 @@ RSpec.describe Tap do
       allow(tap).to receive_messages(command_files: [], formula_files: [], cask_files: [],
                                      formula_names: [], cask_tokens: [], link_completions_and_manpages: nil)
       expect(SystemCommand).to receive(:safe_system)
-        .with("git", "-c", "core.hooksPath=#{File::NULL}", "-C", source_tap,
-              "worktree", "add", "--detach", tap.path, "HEAD")
+        .with("git", args: ["-c", "core.hooksPath=#{File::NULL}", "-C", source_tap,
+                            "worktree", "add", "--detach", tap.path, "HEAD"])
         .and_wrap_original do
           tap.path.mkpath
           (tap.path/".git").write "gitdir: #{source_tap}/.git/worktrees/#{tap.full_repository.downcase}\n"

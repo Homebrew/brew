@@ -353,8 +353,8 @@ module Homebrew
         end
 
         # Get the set of authors in this series.
-        authors = Utils.safe_popen_read("git", "-C", git_repo.pathname, "show",
-                                        "--no-patch", "--pretty=%an <%ae>", *commits).lines.map(&:strip).uniq.compact
+        authors = Utils.safe_popen_read("git", "-C", git_repo.pathname, "show", "--no-patch", "--pretty=%an <%ae>",
+                                        args: commits).lines.map(&:strip).uniq.compact
 
         # Get the author and date of the first commit of this series, which we use for the squashed commit.
         original_author = authors.shift

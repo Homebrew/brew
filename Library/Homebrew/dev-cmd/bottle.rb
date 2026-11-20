@@ -364,8 +364,8 @@ module Homebrew
               tar_mtime = tab_source_modified_time.strftime("%Y-%m-%d %H:%M:%S")
               tar, tar_args = setup_tar_and_args!(tar_mtime, default_tar: formula.name == "gnu-tar")
               SystemCommand.safe_system tar, "--create", "--numeric-owner",
-                                        *tar_args,
-                                        "--file", tar_path, "#{formula.name}/#{formula.pkg_version}"
+                                        args: [*tar_args, "--file", tar_path,
+                                               "#{formula.name}/#{formula.pkg_version}"]
               sudo_purge
               # Set filename as it affects the tarball checksum.
               relocatable_tar_path = "#{formula}-bottle.tar"

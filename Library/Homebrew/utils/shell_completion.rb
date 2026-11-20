@@ -66,7 +66,7 @@ module Utils
       args = commands + Array(shell_parameter)
       options = T.let({}, T::Hash[Symbol, Symbol])
       options[:err] = :err if print_stderr || ENV["HOMEBREW_STDERR"]
-      Utils.safe_popen_read(env, *args, **options)
+      Utils.safe_popen_read(env, args:, **options)
     end
   end
 end

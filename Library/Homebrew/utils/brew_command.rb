@@ -9,7 +9,7 @@ module Utils
 
     sig { params(args: T.any(String, Pathname)).void }
     def run!(*args)
-      SystemCommand.safe_system(HOMEBREW_BREW_FILE, *args)
+      SystemCommand.safe_system(HOMEBREW_BREW_FILE, args:)
     end
   end
 end

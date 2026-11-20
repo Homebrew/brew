@@ -64,7 +64,7 @@ module Homebrew
             return
           end
 
-          SystemCommand.safe_system pager, *args.named.to_paths
+          SystemCommand.safe_system pager, args: args.named.to_paths
         end
       end
     end

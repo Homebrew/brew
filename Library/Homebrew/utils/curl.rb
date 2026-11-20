@@ -866,7 +866,7 @@ module Utils
     sig { returns(T::Boolean) }
     def curl_supports_tls13?
       @curl_supports_tls13 ||= Hash.new do |h, key|
-        h[key] = SystemCommand.quiet_system(curl_executable, *curl_args("--tlsv1.3", "--head", "https://brew.sh/"))
+        h[key] = SystemCommand.quiet_system(curl_executable, args: curl_args("--tlsv1.3", "--head", "https://brew.sh/"))
       end
       @curl_supports_tls13[curl_path]
     end
