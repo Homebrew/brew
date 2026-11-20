@@ -2575,6 +2575,28 @@ RSpec.describe Homebrew::FormulaAuditor do
       fa.audit_deprecate_disable
       expect(fa.problems).to be_empty
     end
+
+    test_each([
+      ["deprecation", :foobar, :repo_archived, "2021-01-01"],
+      ["disable", :repo_archived, :foobar, "2021-01-01"],
+      ["scheduled disable", :repo_archived, :foobar, (Date.today + 1).to_s],
+    ]) do |stanza, deprecate_reason, disable_reason, disable_date|
+      specify "it checks the #{stanza} reason when both stanzas are present" do
+        fa = formula_auditor "foo", <<~RUBY
+          class Foo < Formula
+            url "https://brew.sh/foo-1.0.tgz"
+
+          deprecate! date: "2020-01-01", because: :#{deprecate_reason}
+          disable! date: "#{disable_date}", because: :#{disable_reason}
+          end
+        RUBY
+
+        mkdir_p fa.formula.prefix
+        fa.audit_deprecate_disable
+        expect(fa.problems.map { |problem| problem[:message] })
+          .to include("foobar is not a valid deprecate! or disable! reason")
+      end
+    end
   end
 
   describe "#audit_gcc_dependency" do
