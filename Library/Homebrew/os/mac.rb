@@ -186,7 +186,7 @@ module OS
     def self.mdfind(*ids)
       @mdfind ||= T.let(nil, T.nilable(T::Hash[T::Array[String], T::Array[String]]))
       (@mdfind ||= {}).fetch(ids) do
-        @mdfind[ids] = Utils.popen_read("/usr/bin/mdfind", mdfind_query(*ids)).split("\n")
+        @mdfind[ids] = Utils.popen_read("/usr/bin/mdfind", mdfind_query(ids)).split("\n")
       end
     end
 
@@ -198,9 +198,9 @@ module OS
       end
     end
 
-    sig { params(ids: String).returns(String) }
-    def self.mdfind_query(*ids)
-      ids.map! { |id| "kMDItemCFBundleIdentifier == #{id}" }.join(" || ")
+    sig { params(ids: T::Array[String]).returns(String) }
+    def self.mdfind_query(ids)
+      ids.map { |id| "kMDItemCFBundleIdentifier == #{id}" }.join(" || ")
     end
   end
 end

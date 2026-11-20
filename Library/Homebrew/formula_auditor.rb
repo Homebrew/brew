@@ -1214,7 +1214,7 @@ module Homebrew
 
     sig { void }
     def audit_text
-      bin_names = Set[formula.name, *formula.aliases]
+      bin_names = [formula.name, *formula.aliases].to_set
       [formula.bin, formula.sbin].each do |dir|
         next unless dir.exist?
 

@@ -9,9 +9,9 @@ require "cask/cask_loader"
 
 class String
   # @!visibility private
-  sig { params(args: Integer).returns(Formula) }
-  def f(*args)
-    Formulary.factory(self, *args)
+  sig { params(spec: Symbol).returns(Formula) }
+  def f(spec = :stable)
+    Formulary.factory(self, spec)
   end
 
   # @!visibility private

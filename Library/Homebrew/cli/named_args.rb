@@ -333,7 +333,7 @@ module Homebrew
 
         Homebrew::API.with_no_api_env_if_needed(@without_api) do
           if method == :bottle && only != :cask && HOMEBREW_BOTTLES_EXTNAME_REGEX.match?(name)
-            return Formulary.from_bottle(name, *@override_spec, force_bottle: @force_bottle, flags: @flags)
+            return Formulary.from_bottle(name, @override_spec || :stable, force_bottle: @force_bottle, flags: @flags)
           end
 
           unreadable_error = nil
@@ -342,7 +342,7 @@ module Homebrew
             begin
               case method
               when nil, :factory, :bottle, :resolve_cask
-                Formulary.factory(name, *@override_spec, warn:, force_bottle: @force_bottle, flags: @flags)
+                Formulary.factory(name, @override_spec || :stable, warn:, force_bottle: @force_bottle, flags: @flags)
               when :resolve
                 resolve_formula(name)
               when :latest_kegs
@@ -350,7 +350,7 @@ module Homebrew
               when :default_kegs
                 resolve_default_keg(name)
               when :kegs
-                resolve_kegs(name).fetch(1)
+                resolve_kegs(name)[1]
               else
                 raise
               end

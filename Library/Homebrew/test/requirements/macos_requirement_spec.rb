@@ -22,9 +22,8 @@ RSpec.describe MacOSRequirement do
   end
 
   it "tracks every retired macOS release" do
-    expect(MacOSVersion::RELEASES.keys - MacOSVersion::SYMBOLS.keys).to contain_exactly(
-      *MacOSRequirement::DISABLED_MACOS_VERSIONS,
-      *MacOSRequirement::DEPRECATED_MACOS_VERSIONS,
+    expect(MacOSVersion::RELEASES.keys - MacOSVersion::SYMBOLS.keys).to match_array(
+      MacOSRequirement::DISABLED_MACOS_VERSIONS + MacOSRequirement::DEPRECATED_MACOS_VERSIONS,
     )
   end
 

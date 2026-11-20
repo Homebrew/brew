@@ -141,9 +141,9 @@ module Homebrew
         "<NONE>"
       end
 
-      sig { params(args: T.anything).void }
-      def add_info(*args)
-        ohai(*args) if @verbose
+      sig { params(title: String, info: T.anything).void }
+      def add_info(title, info)
+        ohai(title, info) if @verbose
       end
 
       sig { params(version: MacOSVersion, intel: T::Boolean).returns(T.nilable(String)) }

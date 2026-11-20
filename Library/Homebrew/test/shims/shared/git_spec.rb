@@ -24,7 +24,7 @@ RSpec.describe "shims/shared/git", type: :system do
       FileUtils.ln_s "git", shims_dir/tool
       shims_dir
     end
-    ENV["PATH"] = PATH.new(ENV.fetch("PATH")).prepend(*shims_dirs).to_s
+    ENV["PATH"] = PATH.new(ENV.fetch("PATH")).prepend(shims_dirs).to_s
 
     expect(SystemCommand.run(shims_dirs.fetch(0)/tool, timeout: 10).stderr)
       .to eq("You must: brew install #{tool}\n")
