@@ -15,6 +15,46 @@ RSpec.describe Cask::Installer, :cask do
     end
   end
 
+  describe "#check_deprecate_disable" do
+    test_each([[:deprecate!, :disable!], [:disable!, :deprecate!]]) do |first, second|
+      context "with #{first} before #{second}" do
+        let(:installer) do
+          cask = Cask::Cask.new("scheduled") do
+            stanzas = {
+              deprecate!: { date: "2020-01-01", because: :unmaintained, replacement_formula: "foo" },
+              disable!:   { date: "2021-01-01", because: :discontinued, replacement_cask: "bar" },
+            }
+            [first, second].each { |stanza| public_send(stanza, **stanzas.fetch(stanza)) }
+          end
+          described_class.new(cask)
+        end
+
+        it "allows installation silently before the deprecation date" do
+          allow(Date).to receive(:today).and_return(Date.new(2019, 12, 31))
+          expect { installer.check_deprecate_disable }.not_to output.to_stderr
+        end
+
+        it "warns with the deprecation reason and replacement on the deprecation date" do
+          allow(Date).to receive(:today).and_return(Date.new(2020, 1, 1))
+          expect { installer.check_deprecate_disable }.to output(<<~EOS).to_stderr
+            Warning: scheduled has been deprecated because it is not maintained upstream! It will be disabled on 2021-01-01.
+            Replacement:
+              brew install --formula foo
+          EOS
+        end
+
+        it "refuses installation with the disable reason and replacement on the disable date" do
+          allow(Date).to receive(:today).and_return(Date.new(2021, 1, 1))
+          expect { installer.check_deprecate_disable }.to raise_error(Cask::CaskCannotBeInstalledError, <<~EOS)
+            disabled because it is discontinued upstream! It was disabled on 2021-01-01.
+            Replacement:
+              brew install --cask bar
+          EOS
+        end
+      end
+    end
+  end
+
   describe "#extract_primary_container" do
     it "respects the installer's download integrity setting" do
       cask = Cask::CaskLoader.from_path(cask_path("local-caffeine"))

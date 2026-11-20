@@ -16,25 +16,24 @@ RSpec.describe Homebrew::Cmd::Desc do
       .and be_a_success
   end
 
-  it "shows an installed Cask's description with status" do
+  it "shows an installed cask as disabled when it is also deprecated" do
     allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
     cask = Cask::Cask.new("local-transmission") do
       version "2.61"
       name "Transmission"
       desc "BitTorrent client"
       url "https://example.com/local-transmission.zip"
+      deprecate! date: "2020-01-01", because: :unmaintained
+      disable! date: "2021-01-01", because: :discontinued
     end
     cmd = described_class.new(["--cask", "local-transmission"])
 
     allow(cmd.args.named).to receive(:to_formulae_and_casks).and_return([cask])
     allow(Cask::Caskroom).to receive(:casks).and_return([cask])
-    allow(Formulary).to receive(:factory)
-      .with("local-transmission")
-      .and_raise(FormulaUnavailableError.new("local-transmission"))
     allow(Cask::CaskLoader).to receive(:load).with("local-transmission").and_return(cask)
 
     expect { cmd.run }
-      .to output(/local-transmission .*✔.*: \(Transmission\) BitTorrent client/).to_stdout
+      .to output(/local-transmission .*✔.*\(disabled\).*: \(Transmission\) BitTorrent client/).to_stdout
       .and not_to_output.to_stderr
   end
 

@@ -86,21 +86,23 @@ RSpec.describe Descriptions do
     expect { descriptions.print }.to output(/foo .*: Core foo/).to_stdout
   end
 
-  it "uses installed and deprecation metadata without loading formulae" do
-    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
-    descriptions_hash["homebrew/core/foo"] = "Core foo"
+  test_each([[false, "deprecated"], [true, "disabled"]]) do |disabled, status|
+    it "shows #{status} from metadata without loading the formula" do
+      allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+      descriptions_hash["homebrew/core/foo"] = "Core foo"
 
-    descriptions = described_class.new(
-      descriptions_hash,
-      status_data: { "homebrew/core/foo" => { deprecated: true, disabled: false } },
-    )
+      descriptions = described_class.new(
+        descriptions_hash,
+        status_data: { "homebrew/core/foo" => { deprecated: true, disabled: } },
+      )
 
-    allow(Formula).to receive(:installed).and_return(
-      [instance_double(Formula, name: "foo", full_name: "homebrew/core/foo")],
-    )
-    expect(Formulary).not_to receive(:factory)
-    expect(Cask::CaskLoader).not_to receive(:load)
+      allow(Formula).to receive(:installed).and_return(
+        [instance_double(Formula, name: "foo", full_name: "homebrew/core/foo")],
+      )
+      expect(Formulary).not_to receive(:factory)
+      expect(Cask::CaskLoader).not_to receive(:load)
 
-    expect { descriptions.print }.to output(/foo .*deprecated.*: Core foo/).to_stdout
+      expect { descriptions.print }.to output(/foo .*#{status}.*: Core foo/).to_stdout
+    end
   end
 end

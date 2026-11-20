@@ -6,6 +6,7 @@ require "utils/brew_command"
 require "utils/text"
 
 require "autobump_constants"
+require "deprecate_disable/dsl"
 require "cache_store"
 require "did_you_mean"
 require "keg_only_reason"
@@ -4130,6 +4131,7 @@ class Formula # rubocop:disable Metrics/ClassLength
   # The methods below define the formula DSL.
   class << self
     include BuildEnvironment::DSL
+    include DeprecateDisable::DSL
     include OnSystem::MacOSAndLinux
 
     # Initialise instance variables for each subclass. These need to be initialised before the class is frozen,
@@ -5360,84 +5362,8 @@ class Formula # rubocop:disable Metrics/ClassLength
       ).void
     }
     def deprecate!(date:, because:, replacement: nil, replacement_formula: nil, replacement_cask: nil)
-      if [replacement, replacement_formula, replacement_cask].filter_map(&:presence).length > 1
-        raise ArgumentError, "more than one of replacement, replacement_formula and/or replacement_cask specified!"
-      end
-
-      if replacement
-        odeprecated(
-          "deprecate!(:replacement)",
-          "deprecate!(:replacement_formula) or deprecate!(:replacement_cask)",
-        )
-      end
-
-      @deprecate_args = T.let(
-        { date:, because:, replacement_formula:, replacement_cask: },
-        T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]),
-      )
-
-      deprecation_date = Date.parse(date)
-      @deprecation_date = T.let(deprecation_date, T.nilable(Date))
-      deprecated = deprecation_date <= Date.today
-      @deprecated = T.let(deprecated, T.nilable(T::Boolean))
-      if @deprecated
-        @deprecation_reason = T.let(because, T.nilable(T.any(String, Symbol)))
-        deprecation_replacement_formula = replacement_formula.presence || replacement
-        @deprecation_replacement_formula = T.let(deprecation_replacement_formula, T.nilable(String))
-        deprecation_replacement_cask = replacement_cask.presence || replacement
-        @deprecation_replacement_cask = T.let(deprecation_replacement_cask, T.nilable(String))
-      else
-        # Reset these to handle disable! before deprecate!
-        @deprecation_reason = nil
-        @deprecation_replacement_formula = nil
-        @deprecation_replacement_cask = nil
-      end
+      set_deprecation(date:, because:, replacement:, replacement_formula:, replacement_cask:)
     end
-
-    # Whether this {Formula} is deprecated (i.e. warns on installation).
-    # Defaults to false.
-    #
-    # @see .deprecate!
-    sig { returns(T::Boolean) }
-    def deprecated?
-      @deprecated == true
-    end
-
-    # The date of deprecation of a {Formula}.
-    #
-    # @return [nil] if no date is specified.
-    # @see .deprecate!
-    sig { returns(T.nilable(Date)) }
-    attr_reader :deprecation_date
-
-    # The reason for deprecation of a {Formula}.
-    #
-    # @return [nil] if no reason was provided or the formula is not deprecated.
-    # @see .deprecate!
-    sig { returns(T.nilable(T.any(String, Symbol))) }
-    attr_reader :deprecation_reason
-
-    # The replacement formula for a deprecated {Formula}.
-    #
-    # @return [nil] if no replacement was provided or the formula is not deprecated.
-    # @see .deprecate!
-    sig { returns(T.nilable(String)) }
-    attr_reader :deprecation_replacement_formula
-
-    # The replacement cask for a deprecated {Formula}.
-    #
-    # @return [nil] if no replacement was provided or the formula is not deprecated.
-    # @see .deprecate!
-    sig { returns(T.nilable(String)) }
-    attr_reader :deprecation_replacement_cask
-
-    # The arguments that were passed to deprecate!.
-    #
-    # @return [nil] if deprecate! was not called.
-    # @see .deprecate!
-    # @api private
-    sig { returns(T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))])) }
-    attr_reader :deprecate_args
 
     # Disables a {Formula} (on the given date) so it cannot be installed.
     # If the date has not yet passed and there is no deprecate! date,
@@ -5474,89 +5400,8 @@ class Formula # rubocop:disable Metrics/ClassLength
       ).void
     }
     def disable!(date:, because:, replacement: nil, replacement_formula: nil, replacement_cask: nil)
-      if [replacement, replacement_formula, replacement_cask].filter_map(&:presence).length > 1
-        raise ArgumentError, "more than one of replacement, replacement_formula and/or replacement_cask specified!"
-      end
-
-      if replacement
-        odeprecated(
-          "disable!(:replacement)",
-          "disable!(:replacement_formula) or disable!(:replacement_cask)",
-        )
-      end
-
-      @disable_args = T.let(
-        { date:, because:, replacement_formula:, replacement_cask: },
-        T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]),
-      )
-
-      disable_date = Date.parse(date)
-      @disable_date = T.let(disable_date, T.nilable(Date))
-
-      if disable_date > Date.today
-        return if @deprecation_date.present?
-
-        @deprecation_reason = T.let(because, T.nilable(T.any(String, Symbol)))
-        deprecation_replacement_formula = replacement_formula.presence || replacement
-        @deprecation_replacement_formula = T.let(deprecation_replacement_formula, T.nilable(String))
-        deprecation_replacement_cask = replacement_cask.presence || replacement
-        @deprecation_replacement_cask = T.let(deprecation_replacement_cask, T.nilable(String))
-        @deprecated = T.let(true, T.nilable(T::Boolean))
-        return
-      end
-
-      @disable_reason = T.let(because, T.nilable(T.any(String, Symbol)))
-      disable_replacement_formula = replacement_formula.presence || replacement
-      @disable_replacement_formula = T.let(disable_replacement_formula, T.nilable(String))
-      disable_replacement_cask = replacement_cask.presence || replacement
-      @disable_replacement_cask = T.let(disable_replacement_cask, T.nilable(String))
-      @disabled = T.let(true, T.nilable(T::Boolean))
+      set_disable(date:, because:, replacement:, replacement_formula:, replacement_cask:)
     end
-
-    # Whether this {Formula} is disabled (i.e. cannot be installed).
-    # Defaults to false.
-    #
-    # @see .disable!
-    sig { returns(T::Boolean) }
-    def disabled?
-      @disabled == true
-    end
-
-    # The date that this {Formula} was or becomes disabled.
-    # Returns `nil` if no date is specified.
-    #
-    # @see .disable!
-    sig { returns(T.nilable(Date)) }
-    attr_reader :disable_date
-
-    # The reason this {Formula} is disabled.
-    # Returns `nil` if no reason was provided or the formula is not disabled.
-    #
-    # @see .disable!
-    sig { returns(T.nilable(T.any(String, Symbol))) }
-    attr_reader :disable_reason
-
-    # The replacement formula for a disabled {Formula}.
-    # Returns `nil` if no reason was provided or the formula is not disabled.
-    #
-    # @see .disable!
-    sig { returns(T.nilable(String)) }
-    attr_reader :disable_replacement_formula
-
-    # The replacement cask for a disabled {Formula}.
-    # Returns `nil` if no reason was provided or the formula is not disabled.
-    #
-    # @see .disable!
-    sig { returns(T.nilable(String)) }
-    attr_reader :disable_replacement_cask
-
-    # The arguments that were passed to disable!.
-    #
-    # @return [nil] if disable! was not called.
-    # @see .disable!
-    # @api private
-    sig { returns(T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))])) }
-    attr_reader :disable_args
 
     # Permit overwriting certain files while linking.
     #
