@@ -117,7 +117,7 @@ module Homebrew
 
       sig { params(args: String).void }
       def run_bundle(*args)
-        SystemCommand.safe_system "bundle", *args
+        SystemCommand.safe_system "bundle", args:
       end
     end
   end

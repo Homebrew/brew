@@ -17,7 +17,7 @@ module Utils
       ENV["DISPLAY"] = Homebrew::EnvConfig.display
 
       Utils::Shell.with_env(DBUS_SESSION_BUS_ADDRESS: ENV.fetch("HOMEBREW_DBUS_SESSION_BUS_ADDRESS", nil)) do
-        SystemCommand.safe_system(browser, *args)
+        SystemCommand.safe_system(browser, args:)
       end
     end
   end

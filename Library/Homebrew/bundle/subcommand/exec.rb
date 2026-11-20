@@ -336,7 +336,7 @@ module Homebrew
               (
                 formula.versioned_formulae_names +
                   formula.conflicts.map(&:name) +
-                  Array(entry.options[:conflicts_with])
+                  Array(entry.options[:conflicts_with]).map(&:to_s)
               ).uniq,
             ]
           end
@@ -352,7 +352,7 @@ module Homebrew
           # We parse from a command invocation so that brew wrappers can invoke special actions
           # for the elevated nature of `brew services`
           services_info = JSON.parse(
-            Utils.safe_popen_read(HOMEBREW_BREW_FILE, "services", "info", "--json", *names_to_query),
+            Utils.safe_popen_read(HOMEBREW_BREW_FILE, "services", "info", "--json", args: names_to_query),
           )
 
           entries_formulae.filter_map do |entry, formula|

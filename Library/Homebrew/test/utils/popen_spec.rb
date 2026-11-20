@@ -73,6 +73,10 @@ RSpec.describe Utils do
       expect($CHILD_STATUS).to be_a_success
     end
 
+    it "appends `args:` to the positional arguments" do
+      expect(described_class.popen_read("sh", "-c", args: ["echo success"]).chomp).to eq("success")
+    end
+
     it "can be given a block to manually read from the pipe" do
       expect(
         described_class.popen_read("sh", "-c", "echo success") do |pipe|
@@ -110,6 +114,13 @@ RSpec.describe Utils do
 
     it "supports writing to a command's standard input" do
       described_class.popen_write("grep", "-q", "success") do |pipe|
+        pipe.write "success\n"
+      end
+      expect($CHILD_STATUS).to be_a_success
+    end
+
+    it "appends `args:` to the positional arguments" do
+      described_class.popen_write("grep", "-q", args: ["success"]) do |pipe|
         pipe.write "success\n"
       end
       expect($CHILD_STATUS).to be_a_success

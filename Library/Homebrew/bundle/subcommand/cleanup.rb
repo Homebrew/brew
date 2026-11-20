@@ -382,9 +382,9 @@ module Homebrew
           nil
         end
 
-        sig { params(cmd: T.any(Pathname, String), args: T.anything).returns(String) }
+        sig { params(cmd: T.any(Pathname, String), args: String).returns(String) }
         def self.system_output_no_stderr(cmd, *args)
-          Utils.safe_popen_read(cmd, *args, err: File::NULL)
+          Utils.safe_popen_read(cmd, args:, err: File::NULL)
         end
       end
     end

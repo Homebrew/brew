@@ -33,7 +33,8 @@ module Utils
     sig { params(filenames: T.any(String, Pathname)).void }
     def open(*filenames)
       $stdout.puts "Editing #{filenames.join "\n"}"
-      Utils::Shell.with_homebrew_path { SystemCommand.safe_system(*command.shellsplit, *filenames) }
+      executable, *args = command.shellsplit
+      Utils::Shell.with_homebrew_path { SystemCommand.safe_system(executable, args: [*args, *filenames]) }
     end
   end
 end

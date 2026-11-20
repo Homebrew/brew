@@ -663,7 +663,7 @@ class Keg
       return
     end
 
-    Utils.popen_read("strings", *strings_encoding_args, "-t", "x", "-", file.to_s) do |io|
+    Utils.popen_read("strings", args: [*strings_encoding_args, "-t", "x", "-", file.to_s]) do |io|
       until io.eof?
         line = io.readline.chomp
         offset, match = line.split(" ", 2)

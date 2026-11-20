@@ -138,7 +138,7 @@ module Utils
 
       sig { params(args: String).returns(String) }
       def git(*args)
-        Utils.safe_popen_read("git", "-C", @path.to_s, *args).chomp
+        Utils.safe_popen_read("git", "-C", @path.to_s, args:).chomp
       end
     end
   end

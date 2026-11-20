@@ -110,7 +110,7 @@ module Utils
       rev, *paths = Utils.popen_read(
         git, "-C", repo, "log",
         "--pretty=format:%h", "--abbrev=7", "--max-count=1",
-        "--diff-filter=d", "--name-only", *args, "--", *files
+        "--diff-filter=d", "--name-only", args: [*args, "--", *files]
       ).lines.map(&:chomp).reject(&:empty?)
       [rev, paths]
     end
@@ -228,7 +228,7 @@ module Utils
     sig { params(repo: T.any(Pathname, String), args: String, resolve: T::Boolean, verbose: T::Boolean).returns(String) }
     def self.cherry_pick!(repo, *args, resolve: false, verbose: false)
       cmd = [git.to_s, "-C", repo, "cherry-pick"] + args
-      output = Utils.popen_read(*cmd, err: :out)
+      output = Utils.popen_read(args: cmd, err: :out)
       if $CHILD_STATUS.success?
         puts output if verbose
         output
