@@ -135,8 +135,8 @@ module Cask
         return
       end
 
-      ::Utils::Data.assert_valid_keys(@env, *self.class.defaults.keys) if @env
-      ::Utils::Data.assert_valid_keys(@explicit, *self.class.defaults.keys)
+      ::Utils::Data.assert_valid_keys(@env, self.class.defaults.keys) if @env
+      ::Utils::Data.assert_valid_keys(@explicit, self.class.defaults.keys)
     end
 
     # runtime recursive evaluation forces the LazyObject to be evaluated

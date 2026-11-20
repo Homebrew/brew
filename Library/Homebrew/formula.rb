@@ -3211,7 +3211,7 @@ class Formula # rubocop:disable Metrics/ClassLength
   def merge_spec_dependables(dependables)
     # We have a hash of specs names (stable/head) to dependency lists.
     # Merge all of the dependency lists together, removing any duplicates.
-    all_dependables = [].union(*dependables.values.map(&:to_a))
+    all_dependables = dependables.values.flat_map(&:to_a).uniq
 
     all_dependables.map do |dependable|
       {

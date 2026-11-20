@@ -210,9 +210,7 @@ module Homebrew
 
         sig { returns(T::Array[String]) }
         def identifiers
-          evidence.flat_map { |item| item.source_record&.identifiers || [] }
-                  .prepend(*vulnerability.identifiers)
-                  .uniq
+          (vulnerability.identifiers + evidence.flat_map { |item| item.source_record&.identifiers || [] }).uniq
         end
       end
 

@@ -720,8 +720,8 @@ module Cask
         directories.all?(&:directory?)
       end
 
-      sig { params(directories: Pathname, command: T.class_of(SystemCommand)).void }
-      def recursive_rmdir(*directories, command:)
+      sig { params(directories: T::Array[Pathname], command: T.class_of(SystemCommand)).returns(T::Boolean) }
+      def recursive_rmdir(directories, command:)
         directories.all? do |resolved_path|
           puts resolved_path.sub(Dir.home, "~")
           next false if resolved_path.symlink?
@@ -747,7 +747,7 @@ module Cask
             children.delete(ds_store)
           end
 
-          next false unless recursive_rmdir(*children, command:)
+          next false unless recursive_rmdir(children, command:)
 
           begin
             Utils.gain_permissions_rmdir(resolved_path, command:)
@@ -774,7 +774,7 @@ module Cask
         each_resolved_path(:rmdir, directories) do |_path, resolved_paths|
           next unless resolved_paths.all?(&:directory?)
 
-          recursive_rmdir(*resolved_paths, command:)
+          recursive_rmdir(resolved_paths, command:)
         end
       end
 

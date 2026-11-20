@@ -70,7 +70,7 @@ module Cask
           )
         end
 
-        ::Utils::Data.assert_valid_keys(args, *VALID_KEYS)
+        ::Utils::Data.assert_valid_keys(args, VALID_KEYS.to_a)
         new(cask, **args)
       end
 

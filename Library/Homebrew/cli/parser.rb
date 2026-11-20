@@ -241,7 +241,7 @@ module Homebrew
 
         hidden = true if odisabled || odeprecated
 
-        description = option_description(description, *names, hidden:)
+        description = option_description(description, names, hidden:)
         env, counterpart = env
         if env
           env_hidden = Homebrew::EnvConfig.hidden?(Homebrew::EnvConfig::ENVS.fetch(:"HOMEBREW_#{env.upcase}",
@@ -255,7 +255,7 @@ module Homebrew
           end
           description += " Enabled by default if `$HOMEBREW_#{env.upcase}` is set#{affix}"
         end
-        process_option(*names, description, type: :switch, hidden:, subcommands:)
+        process_option(names, description, type: :switch, hidden:, subcommands:)
 
         @parser.public_send(method, *names, *wrap_option_desc(description)) do |value|
           # This odeprecated should stick around indefinitely.
@@ -265,7 +265,7 @@ module Homebrew
           end
           value = true if names.none? { |name| name.start_with?("--[no-]") }
 
-          set_switch(*names, value:, from: :args)
+          set_switch(names, value:, from: :args)
         end
 
         names.each do |name|
@@ -274,7 +274,7 @@ module Homebrew
 
         env_value = value_for_env(env)
         value = env_value&.present?
-        set_switch(*names, value:, from: :env) unless value.nil?
+        set_switch(names, value:, from: :env) unless value.nil?
       end
       alias switch_option switch
 
@@ -331,8 +331,8 @@ module Homebrew
       }
       def comma_array(name, description: nil, hidden: false, subcommands: nil)
         name = name.chomp "="
-        description = option_description(description, name, hidden:)
-        process_option(name, description, type: :comma_array, hidden:, subcommands:)
+        description = option_description(description, [name], hidden:)
+        process_option([name], description, type: :comma_array, hidden:, subcommands:)
         @parser.on(name, OptionParser::REQUIRED_ARGUMENT, Array, *wrap_option_desc(description)) do |list|
           option_name = option_to_name(name)
           @option_sources[option_name] = :args
@@ -355,11 +355,11 @@ module Homebrew
         end
         names.map! { |name| name.chomp "=" }
         hidden = true if odeprecated || odisabled
-        description = option_description(description, *names, hidden:)
+        description = option_description(description, names, hidden:)
         if odisabled
           description += " (disabled#{"; replaced by #{replacement}" if replacement.present?})"
         else
-          process_option(*names, description, type: flag_type, hidden:, subcommands:)
+          process_option(names, description, type: flag_type, hidden:, subcommands:)
         end
         @parser.on(*names, *wrap_option_desc(description), required) do |option_value|
           # This odisabled should stick around indefinitely.
@@ -407,17 +407,12 @@ module Homebrew
         end
       end
 
-      sig { params(names: String).returns(T.nilable(String)) }
-      def option_to_description(*names)
-        names.map { |name| name.to_s.sub(/\A--?/, "").tr("-", " ") }.max
-      end
-
-      sig { params(description: T.nilable(String), names: String, hidden: T::Boolean).returns(String) }
-      def option_description(description, *names, hidden: false)
+      sig { params(description: T.nilable(String), names: T::Array[String], hidden: T::Boolean).returns(String) }
+      def option_description(description, names, hidden: false)
         return HIDDEN_DESC_PLACEHOLDER if hidden
         return description if description.present?
 
-        option_to_description(*names)
+        names.map { |name| name.to_s.sub(/\A--?/, "").tr("-", " ") }.max || ""
       end
 
       sig {
@@ -501,7 +496,7 @@ module Homebrew
           if @subcommands.present? && named_args.present?
             subcommand_arg = named_args.fetch(0)
             if (subcommand = subcommand_for_name(subcommand_arg)) && subcommand.alias_options.key?(subcommand_arg)
-              set_switch(subcommand.alias_options.fetch(subcommand_arg), value: true, from: :args)
+              set_switch([subcommand.alias_options.fetch(subcommand_arg)], value: true, from: :args)
             end
           end
           unless @is_dev_cmd
@@ -510,7 +505,7 @@ module Homebrew
           end
           @conflicts.each do |mutually_exclusive_options_group|
             @constraints.each do |p, s, _subcommands|
-              next unless Set[p, s].subset?(Set[*mutually_exclusive_options_group])
+              next unless Set[p, s].subset?(mutually_exclusive_options_group.to_set)
 
               raise InvalidConstraintError.new(p, s)
             end
@@ -873,8 +868,8 @@ module Homebrew
         BANNER
       end
 
-      sig { params(names: String, value: T.untyped, from: Symbol).void }
-      def set_switch(*names, value:, from:)
+      sig { params(names: T::Array[String], value: T.untyped, from: Symbol).void }
+      def set_switch(names, value:, from:)
         names.each do |name|
           option_name = option_to_name(name)
           @switch_sources[option_name] = from
@@ -884,9 +879,9 @@ module Homebrew
         end
       end
 
-      sig { params(args: String).void }
-      def disable_switch(*args)
-        args.each do |name|
+      sig { params(names: T::Array[String]).void }
+      def disable_switch(names)
+        names.each do |name|
           result = if name.start_with?("--[no-]")
             nil
           else
@@ -936,7 +931,7 @@ module Homebrew
           select_cli_arg = violations.count - env_var_options.count == 1
           raise OptionConflictError, violations.map { name_to_option(it) } unless select_cli_arg
 
-          env_var_options.each { disable_switch(it) }
+          disable_switch(env_var_options)
         end
       end
 
@@ -1032,11 +1027,11 @@ module Homebrew
       end
 
       sig {
-        params(args: String, type: Symbol, hidden: T::Boolean,
+        params(names: T::Array[String], description: String, type: Symbol, hidden: T::Boolean,
                subcommands: T.nilable(T.any(String, T::Array[String]))).void
       }
-      def process_option(*args, type:, hidden: false, subcommands: nil)
-        option, = @parser.make_switch(args)
+      def process_option(names, description, type:, hidden: false, subcommands: nil)
+        option, = @parser.make_switch([*names, description])
         @processed_options.reject! { |existing| existing.second == option.long.first } if option.long.first.present?
         if option.long.first.present?
           @processed_option_summaries.reject! do |existing,|
@@ -1066,8 +1061,7 @@ module Homebrew
           processed_option_summaries << [option, hidden]
         end
 
-        args.pop # last argument is the description
-        args.each do |name|
+        names.each do |name|
           option_name = option_to_name(name)
           @option_types[option_name] = type
           # Global options are accepted everywhere, so a subcommand block
@@ -1084,9 +1078,9 @@ module Homebrew
                                              effective_subcommands
         end
         if type == :switch
-          disable_switch(*args)
+          disable_switch(names)
         else
-          args.each do |name|
+          names.each do |name|
             set_args_method(option_to_name(name).to_sym, nil)
           end
         end
