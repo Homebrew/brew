@@ -1,10 +1,11 @@
 # typed: strict
 # frozen_string_literal: true
 
-require "autobump_constants"
+require "autobump/dsl"
 require "deprecate_disable/dsl"
+require "homepage/dsl"
 require "locale"
-require "livecheck"
+require "livecheck/dsl"
 require "utils/output"
 require "utils/path"
 
@@ -36,7 +37,10 @@ module Cask
   class DSL
     include ::Utils::Output::Mixin
     include ::Utils::Path
+    include Autobump::DSL
     include DeprecateDisable::DSL
+    include Homepage::DSL
+    include Livecheck::DSL
 
     ORDINARY_ARTIFACT_CLASSES = [
       Artifact::Installer,
@@ -149,17 +153,8 @@ module Cask
     sig { returns(String) }
     attr_reader :token
 
-    sig { returns(T.nilable(T.any(String, Symbol))) }
-    attr_reader :no_autobump_message
-
     sig { returns(ArtifactSet) }
     attr_reader :artifacts
-
-    sig { returns(T.nilable(Date)) }
-    attr_reader :homepage_browsed
-
-    sig { returns(T.nilable(MacOSVersion)) }
-    attr_reader :on_system_block_min_os
 
     sig { params(cask: Cask).void }
     def initialize(cask)
@@ -170,9 +165,6 @@ module Cask
       @artifacts = T.let(ArtifactSet.new, ArtifactSet)
       @auto_updates = T.let(nil, T.nilable(T::Boolean))
       @auto_updates_set_in_block = T.let(false, T::Boolean)
-      @autobump = T.let(true, T::Boolean)
-      @called_in_on_system_block = T.let(false, T::Boolean)
-      @called_in_on_os_block = T.let(false, T::Boolean)
       @cask = cask
       @caveats = T.let(DSL::Caveats.new(cask), DSL::Caveats)
       @conflicts_with = T.let(nil, T.nilable(DSL::ConflictsWith))
@@ -183,18 +175,12 @@ module Cask
       @desc = T.let(nil, T.nilable(String))
       @desc_set_in_block = T.let(false, T::Boolean)
       @homepage = T.let(nil, T.nilable(String))
-      @homepage_browsed = T.let(nil, T.nilable(Date))
       @homepage_set_in_block = T.let(false, T::Boolean)
       @language_blocks = T.let({}, T::Hash[T::Array[String], Proc])
       @language_eval = T.let(nil, T.nilable(String))
       @livecheck = T.let(Livecheck.new(cask), Livecheck)
-      @livecheck_defined = T.let(false, T::Boolean)
       @name = T.let([], T::Array[String])
       @no_autobump_defined = T.let(false, T::Boolean)
-      @no_autobump_message = T.let(nil, T.nilable(T.any(String, Symbol)))
-      @on_system_blocks_exist = T.let(false, T::Boolean)
-      @on_os_blocks_exist = T.let(false, T::Boolean)
-      @on_system_block_min_os = T.let(nil, T.nilable(MacOSVersion))
       @os = T.let(nil, T.nilable(String))
       @os_set_in_block = T.let(false, T::Boolean)
       @rename = T.let([], T::Array[DSL::Rename])
@@ -210,15 +196,6 @@ module Cask
 
     sig { returns(T::Boolean) }
     def depends_on_set_in_block? = @depends_on_set_in_block
-
-    sig { returns(T::Boolean) }
-    def livecheck_defined? = @livecheck_defined
-
-    sig { returns(T::Boolean) }
-    def on_system_blocks_exist? = @on_system_blocks_exist
-
-    sig { returns(T::Boolean) }
-    def on_os_blocks_exist? = @on_os_blocks_exist
 
     # Specifies the cask's name.
     #
@@ -266,16 +243,16 @@ module Cask
       return instance_variable_get(:"@#{stanza}") if should_return
 
       unless @cask.allow_reassignment
-        if !instance_variable_get(:"@#{stanza}").nil? && !@called_in_on_system_block
+        if !instance_variable_get(:"@#{stanza}").nil? && !in_on_system_block?
           raise CaskInvalidError.new(cask, "'#{stanza}' stanza may only appear once.")
         end
 
-        if instance_variable_get(:"@#{stanza}_set_in_block") && @called_in_on_system_block
+        if instance_variable_get(:"@#{stanza}_set_in_block") && in_on_system_block?
           raise CaskInvalidError.new(cask, "'#{stanza}' stanza may only be overridden once.")
         end
       end
 
-      instance_variable_set(:"@#{stanza}_set_in_block", true) if @called_in_on_system_block
+      instance_variable_set(:"@#{stanza}_set_in_block", true) if in_on_system_block?
       instance_variable_set(:"@#{stanza}", yield)
     rescue CaskInvalidError
       raise
@@ -295,14 +272,13 @@ module Cask
     # Automated homepage availability audits are skipped for one year.
     #
     # @api public
-    sig { params(homepage: T.nilable(String), browsed: T.nilable(String)).returns(T.nilable(String)) }
-    def homepage(homepage = nil, browsed: nil)
-      raise CaskInvalidError.new(cask, "`browsed` requires a homepage URL") if homepage.nil? && browsed
+    sig { override.params(url: T.nilable(String), browsed: T.nilable(String)).returns(T.nilable(String)) }
+    def homepage(url = nil, browsed: nil)
+      return super unless url
 
-      set_unique_stanza(:homepage, homepage.nil?) do
-        @homepage_browsed = Date.parse(browsed) if browsed
-        homepage
-      end
+      set_unique_stanza(:homepage, false) { super }
+    rescue ArgumentError => e
+      raise CaskInvalidError.new(cask, e)
     end
 
     # Specifies language-specific values for the cask.
@@ -482,9 +458,9 @@ module Cask
           raise CaskInvalidError.new(cask, "invalid 'version' value: #{arg.inspect}")
         end
 
-        set_no_autobump(because: :latest_version) if arg == :latest && !no_autobump_defined?
-
-        DSL::Version.new(arg)
+        version = DSL::Version.new(arg)
+        set_no_autobump(because: :latest_version) if version.latest? && autobump?
+        version
       end
     end
 
@@ -524,7 +500,7 @@ module Cask
       x86_64 ||= intel if intel.present? && x86_64.nil?
       set_unique_stanza(:sha256, should_return) do
         if arm.present? || x86_64.present? || x86_64_linux.present? || arm64_linux.present?
-          @on_system_blocks_exist = true
+          mark_on_system_block
         end
 
         val = arg || on_system_conditional(
@@ -558,8 +534,6 @@ module Cask
       should_return = arm.nil? && intel.nil?
 
       set_unique_stanza(:arch, should_return) do
-        @on_system_blocks_exist = true
-
         on_arch_conditional(arm:, intel:)
       end
     end
@@ -583,8 +557,7 @@ module Cask
       should_return = macos.nil? && linux.nil?
 
       set_unique_stanza(:os, should_return) do
-        @on_system_blocks_exist = true
-        @on_os_blocks_exist = true
+        mark_on_system_block(os: true)
 
         on_system_conditional(macos:, linux:)
       end
@@ -603,7 +576,7 @@ module Cask
       ).returns(DSL::DependsOn)
     }
     def depends_on(arg = nil, **kwargs)
-      @depends_on_set_in_block = true if @called_in_on_system_block
+      @depends_on_set_in_block = true if in_on_system_block?
       if arg == :macos
         if kwargs.key?(:macos) || kwargs.key?(:maximum_macos)
           raise CaskInvalidError.new(cask, "`depends_on :macos` cannot be combined with another macOS `depends_on`")
@@ -621,8 +594,8 @@ module Cask
         # Only OS blocks scope a dependency to one OS: `on_arm`/`on_intel`
         # blocks are evaluated on every OS, so a macOS dependency inside one
         # applies everywhere and marks the cask macOS-only.
-        @depends_on.load(kwargs, set_in_block: @called_in_on_system_block, os_scoped: @called_in_on_os_block)
-      rescue RuntimeError => e
+        @depends_on.load(kwargs, set_in_block: in_on_system_block?, os_scoped: in_on_os_block?)
+      rescue RuntimeError, ArgumentError => e
         raise CaskInvalidError.new(cask, e)
       end
       @depends_on
@@ -701,13 +674,12 @@ module Cask
     def livecheck(&block)
       return @livecheck unless block
 
-      if !@cask.allow_reassignment && @livecheck_defined
+      if !@cask.allow_reassignment && livecheck_defined?
         raise CaskInvalidError.new(cask, "'livecheck' stanza may only appear once.")
       end
 
-      @livecheck_defined = true
-      @livecheck.instance_eval(&block)
-      set_no_autobump(because: :extract_plist) if @livecheck.strategy == :extract_plist && !no_autobump_defined?
+      configure_livecheck(@livecheck, &block)
+      set_no_autobump(because: :extract_plist) if @livecheck.strategy == :extract_plist && autobump?
       @livecheck
     end
 
@@ -721,13 +693,12 @@ module Cask
         raise CaskInvalidError.new(cask, "'no_autobump!' can only be used in official Homebrew taps.")
       end
 
-      set_no_autobump(because:)
-    end
+      if !@cask.allow_reassignment && @no_autobump_defined
+        raise CaskInvalidError.new(cask, "'no_autobump!' stanza may only appear once.")
+      end
 
-    # Is the cask in autobump list?
-    sig { returns(T::Boolean) }
-    def autobump?
-      @autobump == true
+      set_no_autobump(because:, from_metadata: @cask.loaded_from_metadata?)
+      @no_autobump_defined = true
     end
 
     # Declare that a cask is no longer functional or supported.
@@ -831,28 +802,6 @@ module Cask
       return HOMEBREW_CASK_APPDIR_PLACEHOLDER if Cask.generating_hash?
 
       cask.config.appdir
-    end
-
-    private
-
-    sig { returns(T::Boolean) }
-    def no_autobump_defined?
-      @no_autobump_defined
-    end
-
-    sig { params(because: T.any(String, Symbol)).void }
-    def set_no_autobump(because:)
-      if because.is_a?(Symbol) && !NO_AUTOBUMP_REASONS_LIST.key?(because) && !@cask.loaded_from_metadata?
-        raise ArgumentError, "'because' argument should use valid symbol or a string!"
-      end
-
-      if !@cask.allow_reassignment && no_autobump_defined?
-        raise CaskInvalidError.new(cask, "'no_autobump!' stanza may only appear once.")
-      end
-
-      @no_autobump_defined = true
-      @no_autobump_message = because
-      @autobump = false
     end
   end
 end

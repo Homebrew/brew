@@ -181,6 +181,56 @@ RSpec.describe Cask::CaskLoader::FromAPILoader, :cask do
   end
 
   describe "#load" do
+    shared_examples "package reasons" do |autobump_reason, lifecycle_reason|
+      it "preserves the reasons through both API formats" do
+        cask = Cask::Cask.new("test-cask") do
+          version "1.0"
+          url "https://brew.sh/test-cask.zip"
+          no_autobump! because: autobump_reason
+          deprecate! date: "2020-01-01", because: lifecycle_reason
+          disable! date: "2021-01-01", because: lifecycle_reason
+        end
+        json = JSON.parse(JSON.generate(cask.to_h))
+        struct = Homebrew::API::Cask::CaskStructGenerator.generate_cask_struct_hash(json)
+        internal_json = JSON.parse(JSON.generate(struct.serialize))
+        loaders = [
+          described_class.new(cask.token, from_json: json),
+          described_class.new(cask.token, from_json: internal_json, from_internal_json: true),
+        ]
+
+        expect(loaders.map { |loader| loader.load(config: nil) }).to all(
+          have_attributes(
+            autobump?:           false,
+            no_autobump_message: autobump_reason,
+            deprecation_reason:  lifecycle_reason,
+            disable_reason:      lifecycle_reason,
+          ),
+        )
+      end
+    end
+
+    it_behaves_like "package reasons", :bumped_by_upstream, :unmaintained
+    it_behaves_like "package reasons", "maintained by the vendor", "archived upstream"
+    it_behaves_like "package reasons", ":vendor-managed", "\\vendor-managed"
+    it_behaves_like "package reasons", "\\vendor-managed", ":vendor-managed"
+
+    it "rejects an unknown autobump symbol in current internal API data" do
+      struct = Homebrew::API::CaskStruct.new(version: "1.0", url_args: ["https://brew.sh/test.zip"],
+                                             no_autobump_message: :unknown_reason)
+      loader = described_class.new("test-cask", from_json: struct.serialize, from_internal_json: true)
+
+      expect { loader.load(config: nil) }.to raise_error(ArgumentError, /'because' argument/)
+    end
+
+    it "infers the autobump exclusion from older API data with a latest version" do
+      cask = described_class.new("test-cask", from_json: {
+        "version" => "latest",
+        "url"     => "https://brew.sh/test-cask.zip",
+      }).load(config: nil)
+
+      expect(cask).to have_attributes(autobump?: false, no_autobump_message: :latest_version)
+    end
+
     it "loads existing JSON metadata that still has a verified URL spec" do
       cask = described_class.new(
         "legacy-verified",

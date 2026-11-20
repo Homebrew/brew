@@ -315,11 +315,7 @@ module Cask
     end
 
     sig { returns(T::Boolean) }
-    def supports_linux?
-      return true if depends_on.requires_linux?
-
-      !depends_on.requires_macos?
-    end
+    def supports_linux? = !depends_on.requires_macos?
 
     sig { returns(T::Boolean) }
     def supports_macos?

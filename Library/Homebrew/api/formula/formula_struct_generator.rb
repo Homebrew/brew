@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "autobump"
 require "deprecate_disable"
 
 module Homebrew
@@ -101,8 +102,7 @@ module Homebrew
           hash["link_overwrite_paths"] = hash["link_overwrite"]
 
           if (reason = hash["no_autobump_message"])
-            reason = reason.to_sym if NO_AUTOBUMP_REASONS_LIST.key?(reason.to_sym)
-            hash["no_autobump_args"] = { because: reason }
+            hash["no_autobump_args"] = { because: Autobump.reason_from_api(reason) }
           end
 
           if (condition = hash["pour_bottle_only_if"])

@@ -5,8 +5,9 @@ require "utils/brew_command"
 
 require "utils/text"
 
-require "autobump_constants"
+require "autobump/dsl"
 require "deprecate_disable/dsl"
+require "homepage/dsl"
 require "cache_store"
 require "did_you_mean"
 require "keg_only_reason"
@@ -30,7 +31,7 @@ require "bottle"
 require "pour_bottle_check"
 require "head_software_spec"
 require "bottle_specification"
-require "livecheck"
+require "livecheck/dsl"
 require "service"
 require "install_renamed"
 require "pkg_version"
@@ -312,9 +313,6 @@ class Formula # rubocop:disable Metrics/ClassLength
     @version_scheme = T.let(version_scheme, Integer)
     @compatibility_version = T.let(self.class.compatibility_version, T.nilable(Integer))
 
-    @autobump = T.let(true, T::Boolean)
-    @no_autobump_message = T.let(nil, T.nilable(T.any(String, Symbol)))
-
     @force_bottle = force_bottle
 
     @tap = tap
@@ -349,7 +347,6 @@ class Formula # rubocop:disable Metrics/ClassLength
     @follow_installed_alias = T.let(true, T::Boolean)
     @prefix_returns_versioned_prefix = T.let(false, T.nilable(T::Boolean))
     @oldname_locks = T.let([], T::Array[FormulaLock])
-    @on_system_blocks_exist = T.let(false, T::Boolean)
   end
 
   sig { params(spec_sym: Symbol).void }
@@ -2945,15 +2942,11 @@ class Formula # rubocop:disable Metrics/ClassLength
 
   sig { returns(T::Boolean) }
   def supports_macos?
-    !active_spec.depends_on_linux_set_top_level?
+    !active_spec.requires_linux?
   end
 
   sig { returns(T::Boolean) }
-  def supports_linux?
-    return true if active_spec.depends_on_linux_set_top_level?
-
-    !active_spec.depends_on_macos_set_top_level?
-  end
+  def supports_linux? = !active_spec.requires_macos?
 
   sig { params(options: T::Hash[Symbol, String]).void }
   def print_tap_action(options = {})
@@ -3549,10 +3542,8 @@ class Formula # rubocop:disable Metrics/ClassLength
     hash
   end
 
-  sig { returns(T.nilable(T::Boolean)) }
-  def on_system_blocks_exist?
-    self.class.on_system_blocks_exist? || @on_system_blocks_exist
-  end
+  sig { override.returns(T::Boolean) }
+  def on_system_blocks_exist? = super || self.class.on_system_blocks_exist?
 
   sig { params(keep_tmp: T::Boolean).void }
   def run_test(keep_tmp: false)
@@ -4130,8 +4121,11 @@ class Formula # rubocop:disable Metrics/ClassLength
 
   # The methods below define the formula DSL.
   class << self
+    include Autobump::DSL
     include BuildEnvironment::DSL
     include DeprecateDisable::DSL
+    include Homepage::DSL
+    include Livecheck::DSL
     include OnSystem::MacOSAndLinux
 
     # Initialise instance variables for each subclass. These need to be initialised before the class is frozen,
@@ -4152,8 +4146,6 @@ class Formula # rubocop:disable Metrics/ClassLength
         @loaded_from_api = T.let(false, T.nilable(T::Boolean))
         @loaded_from_internal_api = T.let(false, T.nilable(T::Boolean))
         @api_source = T.let(nil, T.nilable(T::Hash[String, T.untyped]))
-        @on_system_blocks_exist = T.let(false, T.nilable(T::Boolean))
-        @homepage_browsed = T.let(nil, T.nilable(Date))
         @network_access_allowed = SUPPORTED_NETWORK_ACCESS_PHASES.to_h do |phase|
           [phase, DEFAULT_NETWORK_ACCESS_ALLOWED]
         end
@@ -4193,10 +4185,8 @@ class Formula # rubocop:disable Metrics/ClassLength
     sig { returns(T.nilable(T::Hash[String, T.untyped])) }
     attr_reader :api_source
 
-    # Whether this formula contains OS/arch-specific blocks
-    # (e.g. `on_macos`, `on_arm`, `on_monterey :or_older`, `on_system :linux, macos: :big_sur_or_newer`).
-    sig { returns(T::Boolean) }
-    def on_system_blocks_exist? = !!@on_system_blocks_exist
+    sig { override.returns(T::Boolean) }
+    def on_system_blocks_exist? = super || [@stable, @head].compact.any?(&:on_system_blocks_exist?)
 
     # The reason for why this software is not linked (by default) to {::HOMEBREW_PREFIX}.
     sig { returns(T.nilable(KegOnlyReason)) }
@@ -4399,45 +4389,6 @@ class Formula # rubocop:disable Metrics/ClassLength
           Homebrew::InstallSteps::DSL.normalise_steps(steps)
         end,
       )
-    end
-
-    # The homepage for the software. Used by users to get more information
-    # about the software and Homebrew maintainers as a point of contact for
-    # e.g. submitting patches.
-    # Can be opened with running `brew home`.
-    #
-    # ### Example
-    #
-    # ```ruby
-    # homepage "https://www.example.com", browsed: "2026-07-26"
-    # ```
-    #
-    # `browsed` is the date when a human last checked the homepage in a browser.
-    # Automated homepage availability audits are skipped for one year.
-    #
-    # @api public
-    sig { params(val: T.nilable(String), browsed: T.nilable(String)).returns(T.nilable(String)) }
-    def homepage(val = nil, browsed: nil)
-      if val.nil?
-        raise ArgumentError, "`browsed` requires a homepage URL" if browsed
-
-        return @homepage
-      end
-
-      @homepage_browsed = Date.parse(browsed) if browsed
-      @homepage = T.let(val, T.nilable(String))
-    end
-
-    sig { returns(T.nilable(Date)) }
-    attr_reader :homepage_browsed
-
-    # Checks whether a `livecheck` specification is defined or not.
-    #
-    # It returns `true` when a `livecheck` block is present in the {Formula}
-    # and `false` otherwise.
-    sig { returns(T::Boolean) }
-    def livecheck_defined?
-      @livecheck_defined == true
     end
 
     # Checks whether a service specification is defined or not.
@@ -4674,7 +4625,7 @@ class Formula # rubocop:disable Metrics/ClassLength
       raise ArgumentError, "#{self} has no stable spec" if stable.nil?
       return stable unless block
 
-      stable.instance_eval(&block)
+      stable.evaluate(on_system_block, &block)
     end
 
     # Adds a {.head} {SoftwareSpec}.
@@ -4718,7 +4669,7 @@ class Formula # rubocop:disable Metrics/ClassLength
       raise ArgumentError, "#{self} has no head spec" if head.nil?
 
       if block
-        head.instance_eval(&block)
+        head.evaluate(on_system_block, &block)
       else
         head.url(val, specs)
       end
@@ -4876,8 +4827,7 @@ class Formula # rubocop:disable Metrics/ClassLength
     # @api public
     sig { params(dep: T.any(String, Symbol, T::Hash[T.any(String, Symbol, T::Class[Requirement]), T.untyped], T::Class[Requirement])).void }
     def depends_on(dep)
-      set_in_block = instance_variable_get(:@called_in_on_system_block) == true
-      specs.each { |spec| spec.depends_on(dep, set_in_block:) }
+      specs.each { |spec| spec.depends_on(dep, set_in_block: in_on_system_block?, os_scoped: in_on_os_block?) }
     end
 
     # Indicates use of dependencies provided by macOS.
@@ -5188,12 +5138,9 @@ class Formula # rubocop:disable Metrics/ClassLength
     # ```
     #
     # @api public
-    sig { params(block: T.nilable(T.proc.bind(Livecheck).returns(T.untyped))).returns(T.untyped) }
+    sig { params(block: T.nilable(T.proc.bind(Livecheck).void)).returns(T.nilable(Livecheck)) }
     def livecheck(&block)
-      return @livecheck unless block
-
-      @livecheck_defined = T.let(true, T.nilable(T::Boolean))
-      @livecheck.instance_eval(&block)
+      configure_livecheck(@livecheck, &block) if @livecheck
     end
 
     # Exclude the formula from the autobump list.
@@ -5207,27 +5154,8 @@ class Formula # rubocop:disable Metrics/ClassLength
         raise ArgumentError, "no_autobump! can only be used in official Homebrew taps." if tap && !tap.official?
       end
 
-      if because.is_a?(Symbol) && !NO_AUTOBUMP_REASONS_LIST.key?(because) && !loaded_from_metadata?
-        raise ArgumentError, "'because' argument should use valid symbol or a string!"
-      end
-
-      @no_autobump_defined = T.let(true, T.nilable(T::Boolean))
-      @no_autobump_message = T.let(because, T.nilable(T.any(String, Symbol)))
-      @autobump = T.let(false, T.nilable(T::Boolean))
+      set_no_autobump(because:, from_metadata: loaded_from_metadata?)
     end
-
-    # Is the formula in the autobump list?
-    sig { returns(T::Boolean) }
-    def autobump?
-      @autobump != false # @autobump may be `nil`
-    end
-
-    # Message that explains why the formula was excluded from the autobump list.
-    # Returns `nil` if no message is specified.
-    #
-    # @see .no_autobump!
-    sig { returns(T.nilable(T.any(String, Symbol))) }
-    attr_reader :no_autobump_message
 
     # Service can be used to define services.
     # This method evaluates the DSL specified in the service block of the

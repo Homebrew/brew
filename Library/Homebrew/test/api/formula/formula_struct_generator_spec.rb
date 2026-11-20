@@ -172,6 +172,21 @@ RSpec.describe Homebrew::API::Formula::FormulaStructGenerator do
       ])
     end
 
+    it "preserves custom autobump and lifecycle reasons through both API formats" do
+      hash["no_autobump_message"] = ":vendor-managed"
+      hash["deprecate_args"] = { "date" => "2020-01-01", "because" => "\\vendor-managed" }
+      hash["disable_args"] = { "date" => "2021-01-01", "because" => ":vendor-managed" }
+      restored = Homebrew::API::FormulaStruct.deserialize(JSON.parse(JSON.generate(struct.serialize)))
+
+      expect([struct, restored]).to all(
+        have_attributes(
+          no_autobump_args: { because: ":vendor-managed" },
+          deprecate_args:   { date: "2020-01-01", because: "\\vendor-managed" },
+          disable_args:     { date: "2021-01-01", because: ":vendor-managed" },
+        ),
+      )
+    end
+
     it "falls back to stable deps when head_dependencies is absent" do
       hash.update({
         "dependencies"             => ["foo"],

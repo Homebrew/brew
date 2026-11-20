@@ -68,6 +68,10 @@ RSpec.describe Resource do
   end
 
   describe "#livecheck" do
+    it "returns the configured livecheck from a resource block" do
+      expect(resource.livecheck { skip "archived" }).to equal(resource.livecheck)
+    end
+
     specify "when `livecheck` block is set" do
       expect(livecheck_resource.livecheck.url).to eq("https://brew.sh/test/releases")
       expect(livecheck_resource.livecheck.regex).to eq(/foo[._-]v?\d+(?:\.\d+)+\.t/i)

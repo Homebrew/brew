@@ -4,6 +4,17 @@
 require "on_system"
 
 RSpec.describe OnSystem do
+  it "keeps the stricter minimum OS inside nested release blocks" do
+    Homebrew::SimulateSystem.with(os: :tahoe) do
+      cask = Cask::Cask.new("nested-releases") do
+        on_tahoe :or_newer do
+          on_ventura(:or_newer) { name "Nested releases" }
+        end
+      end
+      expect(cask.on_system_block_min_os).to eq(MacOSVersion.from_symbol(:tahoe))
+    end
+  end
+
   describe "::os_condition_met?" do
     it "returns true for `:macos` when simulating macOS" do
       Homebrew::SimulateSystem.with(os: :macos) do

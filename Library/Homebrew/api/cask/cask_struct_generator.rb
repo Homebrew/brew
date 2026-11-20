@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "autobump"
 require "cask/url"
 require "utils/output"
 
@@ -54,6 +55,10 @@ module Homebrew
           end
 
           hash["names"] = hash["name"]
+
+          if (reason = hash["no_autobump_message"])
+            hash["no_autobump_message"] = Autobump.reason_from_api(reason)
+          end
 
           if (artifacts = hash["artifacts"])
             hash["raw_artifacts"] = process_artifacts(artifacts)
