@@ -163,6 +163,12 @@ class Version
 
       case other
       when StringToken
+        # The unsuffixed release separates pre-releases from lettered patches.
+        if self.class != other.class
+          return -1 if self < NULL_TOKEN
+          return 1 if other < NULL_TOKEN
+        end
+
         value <=> other.value
       when NumericToken
         -1
@@ -600,13 +606,6 @@ class Version
 
       Version.new(other.to_s)
     when Version
-      if other.null?
-        # Cannot compare `NULL` to `NULL`.
-        return if null?
-
-        return 1
-      end
-
       other
     when nil
       return 1
@@ -614,7 +613,17 @@ class Version
       return
     end
 
-    # All `other.null?` cases are handled at this point.
+    compare_version(other)
+  end
+
+  sig { params(other: Version).returns(T.nilable(Integer)) }
+  def compare_version(other)
+    if other.null?
+      # Cannot compare `NULL` to `NULL`.
+      return if null?
+
+      return 1
+    end
     return -1 if null?
 
     return 0 if version == other.version
@@ -622,8 +631,8 @@ class Version
     return -1 if !head? && other.head?
     return 0 if head? && other.head?
 
-    ltokens = tokens
-    rtokens = other.tokens
+    ltokens = tokens(for_comparison: true)
+    rtokens = other.tokens(for_comparison: true)
     max = max(ltokens.length, rtokens.length)
     l = r = 0
 
@@ -650,6 +659,7 @@ class Version
 
     0
   end
+  private :compare_version
 
   sig { override.params(other: T.anything).returns(T::Boolean) }
   def ==(other)
@@ -661,7 +671,14 @@ class Version
 
     super
   end
-  alias eql? ==
+
+  sig { override.params(other: BasicObject).returns(T::Boolean) }
+  def eql?(other)
+    case other
+    when Version then compare_version(other)&.zero? || false
+    else false
+    end
+  end
 
   # The major version.
   #
@@ -717,7 +734,13 @@ class Version
 
   sig { returns(Integer) }
   def hash
-    version.hash
+    return "HEAD".hash if head?
+
+    # Comparison ignores trailing zeroes in each run of numeric tokens.
+    tokens(for_comparison: true).slice_before { |token| !token.numeric? }.flat_map do |run|
+      run.pop while run.last == NULL_TOKEN
+      run.map { |token| token.is_a?(CompositeToken) ? [token.class, token.rev] : token.value }
+    end.hash
   end
 
   # Convert the version to a floating-point number.
@@ -784,12 +807,22 @@ class Version
   sig { returns(T.nilable(String)) }
   attr_reader :version
 
-  sig { returns(T::Array[Token]) }
-  def tokens
-    return @tokens if @tokens
+  sig { params(for_comparison: T::Boolean).returns(T::Array[Token]) }
+  def tokens(for_comparison: false)
+    tokens = @tokens
+    if tokens.nil?
+      tokens = Array(version&.scan(SCAN_PATTERN)).map { |token| Token.create(T.cast(token, String)) }
+      if version&.match(/\Ar\d+([ab])(?![a-z])(\d*)/i) in [erlang_series, revision]
+        # R16B-2 is revision 0 of Erlang/OTP series B, followed by patch 2.
+        erlang_tokens = tokens.dup
+        erlang_tokens[2, 1] = [StringToken.new(erlang_series.upcase), NumericToken.new(revision.to_i)]
+        @erlang_tokens = T.let(erlang_tokens, T.nilable(T::Array[Token]))
+      end
+      @tokens = T.let(tokens, T.nilable(T::Array[Token]))
+    end
 
-    tokens = version&.scan(SCAN_PATTERN)&.map { |token| Token.create(T.cast(token, String)) } || []
-    @tokens = T.let(tokens, T.nilable(T::Array[Token]))
+    return @erlang_tokens if for_comparison && @erlang_tokens
+
     tokens
   end
 
