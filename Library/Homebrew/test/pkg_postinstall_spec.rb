@@ -57,7 +57,9 @@ RSpec.describe "package postinstall", type: :system do
 
   sig { returns(T::Hash[String, T.nilable(String)]) }
   let(:git_env) do
-    config_env = Utils::Git.no_global_config_env.merge("GIT_CONFIG_NOSYSTEM" => "1")
+    # Git 2.30 still looks for global configuration under HOME and XDG_CONFIG_HOME.
+    config_env = Utils::Git.no_global_config_env.merge("GIT_CONFIG_NOSYSTEM" => "1",
+                                                       "HOME" => mktmpdir.to_s, "XDG_CONFIG_HOME" => "")
     Utils.safe_popen_read(config_env, Utils::Git.git, "rev-parse", "--local-env-vars")
          .split.to_h { |name| [name, nil] }.merge(config_env)
   end
@@ -163,13 +165,21 @@ RSpec.describe "package postinstall", type: :system do
     sig { returns(Pathname) }
     let(:origin) { test_root/"origin" }
 
+    sig { returns(String) }
+    def git_command
+      (Utils::Git.path || raise("Git is required")).shellescape
+    end
+
     sig { params(args: T.any(String, Pathname)).returns(String) }
     def previous_git(*args)
       git "--git-dir", prefix/".homebrew-pkg-previous.git", "--work-tree", prefix, *args
     end
 
     before do
-      (test_root/"Developer Tools/usr/bin").write_exec_script(Utils::Git.path || raise("Git is required"))
+      (test_root/"Developer Tools/usr/bin/git").write <<~SH
+        #!/bin/bash
+        exec #{git_command} "$@"
+      SH
       git "init", "-q", "-b", "stable", origin
       (origin/".gitignore").write "/*\n!/Library\n"
       git "-C", origin, "add", "-f", ".gitignore"
@@ -199,8 +209,8 @@ RSpec.describe "package postinstall", type: :system do
     it "preserves local history and fetches the latest release" do
       previous_git "tag", "999.0.0", "local-work"
       previous_git "remote", "set-url", "origin", test_root/"other-origin"
-      (prefix/".homebrew-pkg-previous.git/info/attributes").write "bin/brew filter=uppercase\n"
-      previous_git "config", "filter.uppercase.smudge", "tr a-z A-Z"
+      (prefix/".homebrew-pkg-previous.git/info/attributes").write "bin/brew filter=upper=case\n"
+      previous_git "config", "filter.upper=case.smudge", "tr a-z A-Z"
       (origin/"bin").mkpath
       (origin/"bin/brew").write "latest\n"
       git "-C", origin, "add", "-f", "bin/brew"
@@ -224,6 +234,15 @@ RSpec.describe "package postinstall", type: :system do
       expect([status.exitstatus, git("-C", prefix, "describe", "--tags", "--exact-match"),
               git("-C", prefix, "show", "-s", "--format=%s", "local-work")])
         .to eq([0, "1.0.1", "retired"]), stderr
+    end
+
+    it "discards partially fetched tags when installing the packaged release" do
+      git "-C", origin, "tag", "-f", "1.0.0", "HEAD"
+      git "-C", origin, "tag", "1.0.2"
+      (prefix/".homebrew-pkg-previous.git/index.lock").write ""
+
+      _, stderr, status = result
+      expect([status.exitstatus, git("-C", prefix, "tag", "--points-at", "HEAD")]).to eq([0, "1.0.1"]), stderr
     end
 
     it "honours the live repository's excludes when cleaning the upgraded worktree" do
@@ -364,10 +383,10 @@ RSpec.describe "package postinstall", type: :system do
         set -e
         if [[ " $* " == *" -C . "* && ( " $* " == *" read-tree "* || " $* " == *" checkout "* ) ]]; then
           cmp "#{prefix}/.gitignore" "#{test_root}/before-upgrade"
-          "#{Utils::Git.path}" -C "#{prefix}" checkout --force local-work
+          #{git_command} -C "#{prefix}" checkout --force local-work
           echo switched >> "#{commands}"
         fi
-        exec "#{Utils::Git.path}" "$@"
+        exec #{git_command} "$@"
       SH
 
       _, stderr, status = result
@@ -432,11 +451,11 @@ RSpec.describe "package postinstall", type: :system do
         #!/bin/bash
         set -e
         if [[ " $* " == *" fetch-pack "* ]]; then
-          commit=$(git -C "#{prefix}" -c user.name=test -c user.email=test@example.org \\
+          commit=$(#{git_command} -C "#{prefix}" -c user.name=test -c user.email=test@example.org \\
             commit-tree 'local-work^{tree}' -p local-work -m concurrent)
-          git -C "#{prefix}" update-ref refs/heads/during-upgrade "$commit"
+          #{git_command} -C "#{prefix}" update-ref refs/heads/during-upgrade "$commit"
         fi
-        exec "#{Utils::Git.path}" "$@"
+        exec #{git_command} "$@"
       SH
 
       stdout, stderr, status = result

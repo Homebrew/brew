@@ -130,7 +130,8 @@ clean_worktree() {
     echo "Could not read Git configuration. Leaving untracked files in place." >&2
     return 0
   fi
-  if [[ "${scope}" == command ]]
+  # Git 2.30 reports the default value's scope as unknown.
+  if [[ "${scope}" == command || "${scope}" == unknown ]]
   then
     readable_git_file "${excludes_file}" optional || return 0
   elif [[ -n "${excludes_file}" ]]
@@ -162,10 +163,13 @@ then
   packaged_head="$(git_as_user "${staging}" rev-parse --verify HEAD)"
   # Match Homebrew's dead-connection thresholds in Library/Homebrew/utils/curl.sh.
   if GIT_HTTP_LOW_SPEED_LIMIT=100 GIT_HTTP_LOW_SPEED_TIME=5 GIT_ALLOW_PROTOCOL=https \
-     git_as_user "${staging}" fetch --atomic --no-recurse-submodules --tags origin
+     git_as_user "${staging}" fetch --no-recurse-submodules --tags origin
   then
     tag_filter=--list
   else
+    # Git 2.30 can update some tags even when the fetch fails.
+    rm -rf "${staging}/.git"
+    cp -R "${payload_directory}/.git" "${staging}/.git"
     tag_filter="--points-at=${packaged_head}"
     echo "Could not fetch Homebrew releases. Using the packaged release." >&2
   fi
@@ -180,13 +184,13 @@ then
      ! git_as_user . symbolic-ref --quiet refs/heads/stable >/dev/null &&
      git_as_user . config --null --name-only --list >"${staging}/config-keys"
   then
-    # Check out the packaged contents without running local filter drivers.
-    checkout_config=(-c core.sparseCheckout=false)
+    # Disable checkout filters, including names containing '=' that Git 2.30 cannot override with -c.
+    printf '[core]\n\tsparseCheckout = false\n' >"${staging}/checkout.config"
     while IFS= read -r -d '' key
     do
       if [[ "${key}" == filter.* ]]
       then
-        checkout_config+=("--config-env=${key}=EMPTY_FILTER")
+        git_as_user "${staging}" config --file "${staging}/checkout.config" -- "${key}" ""
       fi
     done <"${staging}/config-keys"
     # Keep the original refs, objects and index together until every update succeeds.
@@ -197,7 +201,7 @@ then
       backup=""
     elif GIT_ALLOW_PROTOCOL="file" git_as_user . fetch-pack --no-progress "${staging}" "${release_ref:-HEAD}" >/dev/null &&
          { [[ -z "${release_ref}" ]] || git_as_user . update-ref --no-deref "${release_ref}" "${release_object}"; } &&
-         EMPTY_FILTER="" git_as_user . "${checkout_config[@]}" checkout --no-recurse-submodules --force -B stable "${revision}"
+         git_as_user . -c "include.path=${staging}/checkout.config" checkout --no-recurse-submodules --force -B stable "${revision}"
     then
       reuse_git=true
       rm -rf "${backup}" || echo "Could not remove the previous Git repository in ${backup}." >&2
