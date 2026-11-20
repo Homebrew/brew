@@ -137,6 +137,24 @@ RSpec.describe Utils::Analytics::Influx do
             { number: 2, "os_arch_ci" => "Linux x86_64", count: "1", percent: "33.33" },
           ])
       end
+
+      it "groups x86-64 CPU families by level and keeps other CPU families" do
+        command = described_class.new
+        allow(command).to receive(:each_influx_record)
+          .and_yield({ "os" => "Linux", "arch" => "x86_64", "cpu_family" => "zen4", "ci" => "true", "count" => 4 })
+          .and_yield({ "os" => "Linux", "arch" => "x86_64", "cpu_family" => "skylake", "ci" => "false",
+                       "count" => 2 })
+          .and_yield({ "os" => "Linux", "arch" => "x86_64", "cpu_family" => "zen3", "ci" => "false", "count" => 1 })
+          .and_yield({ "os" => "Linux", "arch" => "arm64", "cpu_family" => "armv8_2_a", "ci" => "false",
+                       "count" => 1 })
+
+        expect(command.query(categories: [:homebrew_os_arch_level_ci]).fetch(0).fetch(:items))
+          .to eq([
+            { number: 1, "os_arch_level_ci" => "Linux x86_64 x86_64-v4 (CI)", count: "4", percent: "50" },
+            { number: 2, "os_arch_level_ci" => "Linux x86_64 x86_64-v3", count: "3", percent: "37.50" },
+            { number: 3, "os_arch_level_ci" => "Linux arm64 armv8_2_a", count: "1", percent: "12.50" },
+          ])
+      end
     end
 
     context "with package renames and tap migrations" do
