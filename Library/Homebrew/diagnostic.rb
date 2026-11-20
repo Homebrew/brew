@@ -29,6 +29,39 @@ module Homebrew
       @support_tiers ||= T.let([], T.nilable(T::Array[T.any(Integer, Symbol)]))
     end
 
+    sig { params(formula: Formula, build_options: T::Array[String]).returns(T.nilable(Finding)) }
+    def self.formula_build_finding(formula, build_options: [])
+      reason = if formula.head? || build_options.include?("--HEAD")
+        "was built from an unstable upstream --HEAD"
+      elsif formula.deprecated?
+        "is deprecated"
+      elsif formula.disabled?
+        "is disabled"
+      elsif (build_options.intersect?(%w[--build-bottle --build-from-source]) &&
+             build_options.exclude?("HOMEBREW_DEVELOPER=1")) ||
+            build_options.any? { |flag| flag.start_with?("--cc=") }
+        "was built from source with non-default build options"
+      end
+      Finding.new("#{formula.name}'s formula #{reason}.", tier: 3) if reason
+    end
+
+    # Include host checks for commands that have not run preinstall diagnostics.
+    sig { params(formula: T.nilable(Formula), build_options: T::Array[String]).returns(T.any(Integer, Symbol)) }
+    def self.support_tier(formula: nil, build_options: [])
+      checks = Checks.new
+      configuration_checks = formula ? checks.build_error_checks : checks.supported_configuration_checks
+      tiers = configuration_checks.flat_map do |check|
+        Array(checks.public_send(check)).map(&:tier)
+      end
+      if formula
+        finding = formula_build_finding(formula, build_options:)
+        tiers << finding.tier if finding
+      else
+        tiers.concat(support_tiers)
+      end
+      Finding.support_tier(tiers)
+    end
+
     sig { void }
     def self.report_support_tier
       message = Finding.support_tier_message(tier: Finding.support_tier(support_tiers))
@@ -38,15 +71,14 @@ module Homebrew
 
     at_exit { Homebrew::Diagnostic.report_support_tier }
 
-    sig { params(type: Symbol, fatal: T::Boolean).void }
+    sig { params(type: Symbol, fatal: T::Boolean).returns(T::Array[T.any(Integer, Symbol)]) }
     def self.checks(type, fatal: true)
       checks = Checks.new
-      failed = T.let(false, T::Boolean)
+      tiers = []
       checks.public_send(type).each do |check|
         Array(checks.public_send(check)).each do |finding|
-          support_tiers << finding.tier
+          tiers << finding.tier
           if fatal
-            failed = true
             ofail finding.to_s
           else
             opoo finding.to_s
@@ -55,7 +87,10 @@ module Homebrew
           end
         end
       end
-      exit 1 if failed && fatal
+      support_tiers.concat(tiers)
+      exit 1 if fatal && tiers.any?
+
+      tiers
     end
 
     # Diagnostic checks.
@@ -200,7 +235,7 @@ module Homebrew
       def supported_configuration_checks
         %w[
           check_homebrew_prefix
-          check_for_nix_homebrew
+          check_for_third_party_homebrew
         ].freeze
       end
 
@@ -943,16 +978,10 @@ module Homebrew
       end
 
       sig { returns(T.nilable(Finding)) }
-      def check_for_nix_homebrew
-        return unless OS.nix_managed_homebrew?
+      def check_for_third_party_homebrew
+        return unless (provider = OS.third_party_homebrew)
 
-        Finding.new(
-          <<~EOS,
-            Your Homebrew installation is managed by Nix.
-            Homebrew does not support Nix-managed installations.
-          EOS
-          tier: 3,
-        )
+        Finding.new(provider.diagnostic, tier: provider.tier)
       end
 
       sig { returns(T.nilable(Finding)) }

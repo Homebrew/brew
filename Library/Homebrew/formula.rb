@@ -1530,6 +1530,18 @@ class Formula # rubocop:disable Metrics/ClassLength
   sig { returns(Pathname) }
   def logs = HOMEBREW_LOGS + name
 
+  sig { returns(Pathname) }
+  def build_options_log = logs/"00.options.out"
+
+  # Build logs share a directory for formulae with the same short name.
+  sig { returns(T::Array[String]) }
+  def logged_build_options
+    name, *flags = build_options_log.read.split
+    (name == full_name) ? flags : []
+  rescue Errno::ENOENT
+    []
+  end
+
   # The prefix, if any, to use in filenames for logging current activity.
   sig { returns(String) }
   def active_log_prefix

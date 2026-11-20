@@ -20,6 +20,27 @@ RSpec.describe Homebrew::Cmd::Doctor do
       .to output(/"tier": 1/).to_stdout
   end
 
+  context "with a third-party wrapper" do
+    before do
+      allow(OS).to receive(:third_party_homebrew).and_return(OS::ThirdPartyHomebrew.new(issues_url: "https://example.com/support"))
+    end
+
+    it "reports Tier 3 and directs wrapper problems to the provider" do
+      allow(Tty).to receive(:color?).and_return(false)
+      expect { described_class.new(["check_for_third_party_homebrew"]).run }.to output(<<~EOS).to_stdout
+        This is a Tier 3 configuration:
+          https://docs.brew.sh/Support-Tiers#tier-3
+        Report problems specific to this configuration to the third-party provider.
+          https://example.com/support
+      EOS
+    end
+
+    it "reports Tier 3 in JSON" do
+      expect { described_class.new(["check_for_third_party_homebrew", "--json"]).run }
+        .to output(/"tier": 3.*"links": \[\]/m).to_stdout
+    end
+  end
+
   context "with a relocatable custom prefix" do
     before do
       allow(Utils::Bottles).to receive(:tag).and_return(Utils::Bottles::Tag.from_symbol(:arm64_tahoe))

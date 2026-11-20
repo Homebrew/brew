@@ -204,10 +204,6 @@ class Build
             Utils::Shell.interactive(formula)
           else
             formula.prefix.mkpath
-            formula.logs.mkpath
-
-            (formula.logs/"00.options.out").write \
-              "#{formula.full_name} #{formula.build.used_options.sort.join(" ")}".strip
 
             Pathname.activate_extensions!
             formula.install

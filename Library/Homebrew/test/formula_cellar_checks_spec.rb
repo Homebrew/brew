@@ -110,6 +110,26 @@ RSpec.describe FormulaCellarChecks do
     end
   end
 
+  it "reports the tier guidance regardless of whether rebuilding fixes broken linkage", :needs_macos do
+    allow(Tty).to receive(:color?).and_return(false)
+    allow(f).to receive(:prefix).and_return(f.prefix)
+    allow(Keg).to receive(:new).and_return(instance_double(Keg, tab: instance_double(Tab, poured_from_bottle: true)))
+    allow(LinkageChecker).to receive(:new).and_return(
+      instance_double(LinkageChecker, broken_library_linkage?: true, display_test_output: "missing library"),
+    )
+    allow(Homebrew::Diagnostic).to receive(:support_tier).and_return(:unsupported)
+    allow(OS).to receive(:third_party_homebrew).and_return(nil)
+
+    expect(checks).to receive(:problem_if_output).with(<<~EOS)
+      #{f} has broken dynamic library links:
+        missing library
+      Rebuild this from source with:
+        brew reinstall --build-from-source #{f}
+      Do not file issues for this configuration.
+    EOS
+    checks.check_linkage
+  end
+
   describe "#binary_program?", :needs_linux do
     def elf(name) = ELFPathname.wrap(TEST_FIXTURE_DIR/"elf"/name)
 

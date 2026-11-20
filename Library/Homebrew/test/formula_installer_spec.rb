@@ -948,6 +948,17 @@ RSpec.describe FormulaInstaller do
 
     before { allow(Formulary).to receive(:factory).with("other").and_return(conflicting_formula) }
 
+    it "routes a missing conflict for the current source build to Discussions" do
+      allow(Formulary).to receive(:factory).with("other").and_raise(FormulaUnavailableError, "other")
+      allow(Homebrew::EnvConfig).to receive(:developer?).and_return(false)
+      allow(Homebrew::Diagnostic::Checks).to receive(:new)
+        .and_return(instance_double(Homebrew::Diagnostic::Checks, build_error_checks: []))
+      allow(OS).to receive(:third_party_homebrew).and_return(nil)
+      installer = described_class.new(test_formula, build_from_source_formulae: [test_formula.full_name])
+
+      expect { installer.check_conflicts }.to output(/problems specific to Tier 3/).to_stderr
+    end
+
     context "when conflicting formula is installed but not linked" do
       before do
         linked_keg = instance_double(Pathname, exist?: false)
@@ -2562,7 +2573,29 @@ RSpec.describe FormulaInstaller do
     end
   end
 
+  describe "#build_options_for_reporting" do
+    it "records whether a bottle build used developer mode" do
+      formula = Testball.new
+      installer = described_class.new(formula, build_bottle: true, build_from_source_formulae: [formula.full_name])
+      ENV.delete("HOMEBREW_DEVELOPER")
+
+      expect { ENV["HOMEBREW_DEVELOPER"] = "1" }
+        .to change { installer.build_options_for_reporting.include?("HOMEBREW_DEVELOPER=1") }.from(false).to(true)
+    end
+  end
+
   describe "#build" do
+    it "records source build options even if the build subprocess fails before install" do
+      formula = Testball.new
+      installer = described_class.new(formula, build_from_source_formulae: [formula.full_name], cc: "clang")
+      error = BuildError.new(formula, "make", [], {})
+      allow(Sandbox).to receive(:run_or_fork).and_raise(error)
+
+      expect { installer.build }.to raise_error(BuildError)
+      expect(formula.logged_build_options).to include("--build-from-source", "--cc=clang")
+      expect(error.build_flags).to eq(formula.logged_build_options)
+    end
+
     it "denies build writes to the temporary Cellar after granting the formula's var", :needs_macos do
       skip "Sandbox not available." unless Sandbox.available?
       skip "Nested sandboxing is not supported." if Sandbox.nested_sandbox?

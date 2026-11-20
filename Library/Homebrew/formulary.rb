@@ -181,8 +181,8 @@ module Formulary
         Formula #{name} attempted to print the following while being loaded:
         #{printed_to_stdout}
       WARNING
-      if (tap = Tap.from_path(path)) && (issues_url = tap.issues_url)
-        warning += Utils::Output.issue_reporting_message(issues_url, homebrew: tap.official?)
+      if (message = Utils::Output.issue_reporting_message(Tap.from_path(path)))
+        warning += message
       end
       opoo warning
     end
@@ -566,7 +566,7 @@ module Formulary
     def load_file(flags:, ignore_errors:)
       super
     rescue MethodDeprecatedError => e
-      e.issues_url = tap.issues_url || tap.to_s
+      e.source_tap = tap
       raise
     end
   end

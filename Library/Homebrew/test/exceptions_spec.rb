@@ -163,6 +163,28 @@ RSpec.describe "Exception" do
     let(:formula) { instance_double(Formula, name: "foo") }
 
     it(:to_s) { expect(error.to_s).to eq("Failed executing: badprg arg1 2 arg3 arg4") }
+
+    it "reports each failed formula separately and keeps the worst tier for the exit summary" do
+      require "diagnostic"
+      tap = Tap.fetch("example", "tools")
+      allow(tap).to receive(:issues_url).and_return("https://example.com/issues")
+      stable = instance_double(Formula, name: "stable", head?: false, deprecated?: false, disabled?: false, tap:)
+      allow(formula).to receive(:head?).and_return(true)
+      stable_error = described_class.new(stable, "make", [], {})
+      stable_error.build_flags = %w[--build-bottle --build-from-source HOMEBREW_DEVELOPER=1]
+      allow(stable_error).to receive(:issues).and_return([{ "title"    => "Build fix",
+                                                            "html_url" => "https://example.com/1" }])
+      allow(Homebrew::Diagnostic).to receive(:support_tiers).and_return([])
+      allow(Homebrew::Diagnostic::Checks).to receive(:new)
+        .and_return(instance_double(Homebrew::Diagnostic::Checks, build_error_checks: []))
+      allow(OS).to receive(:third_party_homebrew).and_return(nil)
+      stub_const("OS::ISSUES_URL", "https://docs.brew.sh/Troubleshooting")
+
+      expect { error.dump }.to output(/Homebrew Discussions/).to_stdout
+      expect { stable_error.dump }.to output(%r{https://example.com/issues.*Build fix}m).to_stdout
+      expect(Utils::Output.issue_reporting_message(formula: stable)).to be_nil
+      expect { Homebrew::Diagnostic.report_support_tier }.to output(/Tier 3/).to_stderr
+    end
   end
 
   describe OperationInProgressError do

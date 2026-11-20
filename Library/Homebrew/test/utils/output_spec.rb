@@ -9,6 +9,43 @@ RSpec.describe Utils::Output do
     /(?:\e\[\d+m)*\e\[#{code}m/
   end
 
+  describe "#issue_reporting_message" do
+    before do
+      require "diagnostic"
+      allow(Tty).to receive(:color?).and_return(false)
+      allow(Homebrew::Diagnostic).to receive(:support_tiers).and_return([])
+      allow(Homebrew::Diagnostic::Checks).to receive(:new)
+        .and_return(instance_double(Homebrew::Diagnostic::Checks, supported_configuration_checks: []))
+      allow(OS).to receive(:third_party_homebrew).and_return(nil)
+      stub_const("OS::ISSUES_URL", "https://docs.brew.sh/Troubleshooting")
+    end
+
+    [2, 3].each do |tier|
+      it "directs a Tier #{tier} failure in an official tap to Discussions" do
+        T.bind(self, RSpec::Core::ExampleGroup)
+        Homebrew::Diagnostic.support_tiers << tier
+        expect(described_class.issue_reporting_message(CoreTap.instance)).to eq(<<~EOS.chomp)
+          Please do not file Homebrew issues for problems specific to Tier #{tier}.
+          Ask the community on Homebrew Discussions:
+            https://github.com/orgs/Homebrew/discussions
+        EOS
+      end
+    end
+
+    it "suppresses every filing destination on an unsupported host, even with a provider" do
+      allow(OS).to receive(:third_party_homebrew).and_return(OS::ThirdPartyHomebrew.new(issues_url: "https://example.com/support"))
+      Homebrew::Diagnostic.support_tiers << :unsupported
+      expect(described_class.issue_reporting_message(Tap.fetch("example", "tools")))
+        .to eq("Do not file issues for this configuration.")
+    end
+
+    it "gives generic guidance for a provider without a support URL" do
+      allow(OS).to receive(:third_party_homebrew).and_return(OS::ThirdPartyHomebrew.new)
+      expect(described_class.issue_reporting_message(tier: 3))
+        .to eq("Report problems specific to this configuration to the third-party provider.")
+    end
+  end
+
   describe "#opoo_once" do
     it "prints the same warning once across receivers" do
       expect do
@@ -430,7 +467,11 @@ RSpec.describe Utils::Output do
       expect([raised&.backtrace, errors]).to match [["formula.rb:12"], [equal(raised)]]
     end
 
-    it "raises a MethodDeprecatedError when `disable` is true" do
+    it "raises a MethodDeprecatedError with the third-party tap destination on Tier 3" do
+      require "diagnostic"
+      allow(Homebrew::Diagnostic).to receive(:support_tier).and_return(3)
+      allow(OS).to receive(:third_party_homebrew).and_return(nil)
+      stub_const("OS::ISSUES_URL", "https://docs.brew.sh/Troubleshooting")
       ENV.delete("HOMEBREW_DEVELOPER")
       expect do
         described_class.odeprecated(

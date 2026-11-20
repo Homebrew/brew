@@ -34,7 +34,15 @@ module Homebrew
       def run
         Install.perform_preinstall_checks_once(all_fatal: true)
         Install.perform_build_from_source_checks(all_fatal: true)
-        return unless (formula = args.named.to_resolved_formulae.first)
+        return unless (name = args.named.downcased_unique_named.first)
+
+        # The installed keg can be HEAD even when the failed build was stable.
+        formula = Formulary.resolve(name, spec: (:stable if args.new_issue?), flags: args.flags_only)
+
+        if args.new_issue?
+          message = issue_reporting_message(formula:, build_options: formula.logged_build_options)
+          odie message if message
+        end
 
         files = load_logs(formula.logs)
         build_time = formula.logs.ctime
