@@ -296,7 +296,7 @@ module Homebrew
 
             # Keep formulae with keepme references and what `brew autoremove` keeps
             # for them and the Brewfile, as `brew uninstall` refuses to remove it.
-            installed = Homebrew::Bundle::Brew.formulae.map { |f| Formula[f[:full_name]] }
+            installed = Homebrew::Bundle::Brew.formulae.map { |f| Formulary.resolve(f[:full_name]) }
             removable = installed.reject do |f|
               Homebrew::Bundle::Brew.formula_in_array?(f.full_name, kept_formulae) ||
                 f.installed_kegs.any? { |keg| keg.keepme_refs.present? }

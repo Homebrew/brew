@@ -119,7 +119,7 @@ module InstalledDependents
     # An older keg can go while the one that `opt` points to stays.
     names_by_keg = kegs.select(&:optlinked?).to_h do |keg|
       [keg, keg.to_formula.possible_names]
-    rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
+    rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError, FormulaSpecificationError
       [keg, [keg.name]]
     end
     # Don't include build dependencies of formulae that keep none of their kegs.

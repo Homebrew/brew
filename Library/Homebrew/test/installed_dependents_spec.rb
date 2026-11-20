@@ -444,6 +444,12 @@ RSpec.describe InstalledDependents do
 
       expect(described_class.find_installed_build_dependents([older_keg])).to be_nil
     end
+
+    specify "a keg whose formula has no usable spec is still needed to build" do
+      allow(keg).to receive(:to_formula).and_raise(FormulaSpecificationError)
+
+      expect(described_class.find_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
+    end
   end
 
   describe "::build_dependents_by_name" do

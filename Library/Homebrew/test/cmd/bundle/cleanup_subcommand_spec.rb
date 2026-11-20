@@ -263,6 +263,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         url "#{name}-1.0"
       end
       stub_formula_loader f, name
+      f.rack.mkpath
 
       keg = instance_double(Keg)
       allow(keg).to receive(:keepme_refs).and_return(["/some/file"])
@@ -283,8 +284,35 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       allow(Homebrew::Bundle::Brew).to receive(:formulae)
         .and_return(formulae.map { |f| { name: f.name, full_name: f.full_name } })
       keg = instance_double(Keg, keepme_refs: ["/some/file"])
+      formulae.fetch(0).rack.mkpath
       allow(formulae.fetch(0)).to receive_messages(installed_kegs:                     [keg],
                                                    installed_runtime_dependency_names: ["dependency"])
+
+      expect(described_class.formulae_to_uninstall).to be_empty
+    end
+
+    it "keeps the build dependencies of formulae installed from HEAD" do
+      allow(Homebrew::Bundle::Brew).to receive(:formulae).and_return([
+        { name: "g", full_name: "homebrew/tap/g" },
+        { name: "headdependency", full_name: "headdependency" },
+      ])
+      head_formula = formula("g", tap: Tap.fetch("homebrew/tap")) do
+        T.bind(self, T.class_of(Formula))
+        url "g-1.0"
+        head do
+          url "https://github.com/Homebrew/g.git"
+          depends_on "headdependency" => :build
+        end
+      end
+      stub_formula_loader head_formula, "homebrew/tap/g"
+      stub_formula_loader formula("headdependency") {
+        T.bind(self, T.class_of(Formula))
+        url "headdependency-1.0"
+      }, "headdependency"
+      tab = Tab.empty
+      tab.tabfile = (head_formula.rack/"HEAD-1234567").tap(&:mkpath)/AbstractTab::FILENAME
+      tab.source["spec"] = "head"
+      tab.write
 
       expect(described_class.formulae_to_uninstall).to be_empty
     end
