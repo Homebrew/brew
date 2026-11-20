@@ -14,6 +14,8 @@ module RuboCop
       # - `stable do` should not be present with only `url|checksum|mirror|version`
       # - `head do` should not be present with only `url`
       class ComponentsRedundancy < FormulaCop
+        extend AutoCorrector
+
         HEAD_MSG = "`head` and `head do` should not be simultaneously present"
         STABLE_MSG = "`stable do` should not be present without a `head` spec"
         STABLE_BLOCK_METHODS = [:url, :sha256, :mirror, :version].freeze
@@ -22,16 +24,16 @@ module RuboCop
         def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
 
-          urls = find_method_calls_by_name(body_node, :url)
+          url_with_revision_and_sha256(body_node) do |url, specs, sha256|
+            using_git = if (using = using_spec(specs))
+              using.sym_type? && using.value == :git
+            else
+              string_content(url).match?(%r{^git://|\.git$})
+            end
 
-          urls.each do |url|
-            url.arguments.each do |arg|
-              next if arg.class != RuboCop::AST::HashNode
-
-              url_args = arg.keys.each.map(&:value)
-              if method_called?(body_node, :sha256) && url_args.include?(:tag) && url_args.include?(:revision)
-                problem "Do not use both `sha256` and `tag:`/`revision:`."
-              end
+            offending_node(sha256)
+            problem "Do not use both `sha256` and `revision:`." do |corrector|
+              corrector.remove(range_with_surrounding_space(range: sha256.source_range, side: :left)) if using_git
             end
           end
 
@@ -66,6 +68,14 @@ module RuboCop
 
           problem STABLE_MSG if stable_block
         end
+
+        def_node_search :url_with_revision_and_sha256, <<~PATTERN
+          (begin <(send nil? :url $_ $(hash <(pair (sym :revision) _) ...>)) $(send nil? :sha256 ...) ...>)
+        PATTERN
+
+        def_node_matcher :using_spec, <<~PATTERN
+          (hash <(pair (sym :using) $_) ...>)
+        PATTERN
       end
     end
   end
