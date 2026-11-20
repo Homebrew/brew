@@ -244,6 +244,7 @@ module Cask
           )
         end
         valid_formula_installers = Homebrew::Install.fetch_formulae(formula_installers)
+        ::Utils::Analytics.report_formula_installs(valid_formula_installers)
 
         formula_installers.each do |fi|
           next unless valid_formula_installers.include?(fi)

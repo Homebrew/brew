@@ -832,7 +832,7 @@ RSpec.describe FormulaInstaller do
       # rubocop:enable RSpec/DescribedClass
 
       allow(dependency_formula).to receive_messages(
-        linked_keg:                Pathname("/tmp/nonexistent-linked-keg"),
+        linked_keg:                instance_double(Pathname, directory?: false),
         latest_version_installed?: false,
         tap:                       nil,
         any_version_installed?:    false,
@@ -869,7 +869,7 @@ RSpec.describe FormulaInstaller do
 
     before do
       allow(dependency_formula).to receive_messages(
-        linked_keg:                Pathname("/tmp/nonexistent-linked-keg"),
+        linked_keg:                instance_double(Pathname, directory?: false),
         latest_version_installed?: false,
         tap:                       nil,
         any_version_installed?:    true,
@@ -919,6 +919,37 @@ RSpec.describe FormulaInstaller do
         .with("Installing testball dependency: #{Formatter.identifier(dependency_formula.name)} (1.0)")
 
       installer.install_dependency(dependency)
+    end
+  end
+
+  describe "#dependency_installer" do
+    let(:dependency_formula) do
+      formula "analytics-dependency" do
+        T.bind(self, T.class_of(Formula))
+        url "foo-1.0"
+      end
+    end
+    let(:dependency) do
+      instance_double(Dependency, to_formula: dependency_formula, name: dependency_formula.name,
+                                  options: Options.new)
+    end
+    let(:testball) { Testball.new }
+
+    before do
+      allow(dependency_formula).to receive_messages(
+        tap:                       nil,
+        linked_keg:                instance_double(Pathname, directory?: false),
+        latest_version_installed?: false,
+        any_version_installed?:    false,
+      )
+    end
+
+    it "installs a new dependency as not installed on request" do
+      installer = described_class.new(testball, installed_on_request: true)
+                                 .dependency_installer(dependency, dependency_formula)
+
+      expect(installer.formula).to eq(dependency_formula)
+      expect(installer).not_to be_installed_on_request
     end
   end
 

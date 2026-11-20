@@ -603,12 +603,6 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
     options = display_options(formula).join(" ")
     oh1 "Installing #{Formatter.identifier(formula.full_name)} #{options}".strip if show_header?
 
-    if (tap = formula.tap) && tap.should_report_analytics?
-      require "utils/analytics"
-      Utils::Analytics.report_package_event(:formula_install, package_name: formula.name, tap_name: tap.name,
-on_request: installed_on_request?, options:)
-    end
-
     self.class.attempted << formula
 
     if pour_bottle?
@@ -960,10 +954,49 @@ on_request: installed_on_request?, options:)
     fi.enqueue_fetch
   end
 
+  # The installer for a dependency, keeping the options and `installed_on_request`
+  # of the version of it that's already installed.
+  sig { params(dep: Dependency, dep_formula: Formula).returns(FormulaInstaller) }
+  def dependency_installer(dep, dep_formula)
+    if dep_formula.linked_keg.directory?
+      linked_keg = Keg.new(resolved_path(dep_formula.linked_keg))
+      tab = linked_keg.tab
+      keg_was_linked = linked_keg.linked?
+    end
+    tab ||= Keg.new(dep_formula.prefix).tab if dep_formula.latest_version_installed?
+
+    options = Options.new
+    options |= tab.used_options if tab.present?
+    options |= Tab.remap_deprecated_options(dep_formula.deprecated_options, dep.options)
+    options &= dep_formula.options
+
+    installed_on_request = dep_formula.any_version_installed? && tab.present? && tab.installed_on_request
+    installed_on_request ||= false
+
+    FormulaInstaller.new(
+      dep_formula,
+      options:,
+      link_keg:                   keg_was_linked || nil,
+      installed_on_request:,
+      force_bottle:               false,
+      include_test_formulae:      @include_test_formulae,
+      build_from_source_formulae: @build_from_source_formulae,
+      keep_tmp:                   keep_tmp?,
+      debug_symbols:              debug_symbols?,
+      force:                      force?,
+      debug:                      debug?,
+      quiet:                      quiet?,
+      verbose:                    verbose?,
+    )
+  end
+
   sig { params(dep: Dependency, dep_formula: Formula).void }
   def install_dependency(dep, dep_formula = dep.to_formula)
     upgrading = dep_formula.outdated?
     upgrade_from = "#{Keg.new(dep_formula.opt_prefix).version} -> " if upgrading && dep_formula.optlinked?
+
+    # Before the installed kegs it reads from are unlinked and renamed below.
+    fi = dependency_installer(dep, dep_formula)
 
     if dep_formula.linked_keg.directory?
       linked_keg = Keg.new(resolved_path(dep_formula.linked_keg))
@@ -987,29 +1020,6 @@ on_request: installed_on_request?, options:)
       EOS
     end
 
-    options = Options.new
-    options |= tab.used_options if tab.present?
-    options |= Tab.remap_deprecated_options(dep_formula.deprecated_options, dep.options)
-    options &= dep_formula.options
-
-    installed_on_request = dep_formula.any_version_installed? && tab.present? && tab.installed_on_request
-    installed_on_request ||= false
-
-    fi = FormulaInstaller.new(
-      dep_formula,
-      options:,
-      link_keg:                   keg_was_linked || nil,
-      installed_on_request:,
-      force_bottle:               false,
-      include_test_formulae:      @include_test_formulae,
-      build_from_source_formulae: @build_from_source_formulae,
-      keep_tmp:                   keep_tmp?,
-      debug_symbols:              debug_symbols?,
-      force:                      force?,
-      debug:                      debug?,
-      quiet:                      quiet?,
-      verbose:                    verbose?,
-    )
     action = upgrading ? "Upgrading" : "Installing"
     oh1 "#{action} #{formula.full_name} dependency: #{Formatter.identifier(dep.name)} " \
         "(#{upgrade_from}#{dep_formula.pkg_version})"

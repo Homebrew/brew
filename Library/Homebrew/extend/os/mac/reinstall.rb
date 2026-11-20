@@ -23,6 +23,7 @@ module OS
           end
 
           require "install"
+          require "utils/analytics"
 
           pkgconf = ::Formula["pkgconf"]
 
@@ -32,6 +33,7 @@ module OS
           begin
             return if Homebrew::Install.fetch_formulae([context.formula_installer]).empty?
 
+            ::Utils::Analytics.report_formula_installs([context.formula_installer])
             reinstall_formula(context)
             ohai "Reinstalled pkgconf due to macOS version mismatch"
           rescue

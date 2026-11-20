@@ -15,6 +15,13 @@ module Utils
     INFLUX_ORG = "d81a3e6d582d485f"
     WSL_SUFFIX = " [WSL]"
     ENV_CONFIG_COMMANDS = %w[config fetch install reinstall update update-report upgrade].freeze
+    # Linux limits a single `curl` argument (the request body) to 128KiB so stay well under it.
+    INFLUX_MAX_BATCH_BYTES = 65_536 # 64KiB
+
+    # A package to report with `report_package_events`.
+    PackageEvent = T.type_alias do
+      { package_name: String, tap_name: String, on_request: T::Boolean, options: String }
+    end
 
     extend Utils::Output::Mixin
     extend T::Generic
@@ -49,6 +56,16 @@ module Utils
       def report_influx(measurement, tags, fields)
         return if not_this_run? || disabled?
 
+        write_influx([influx_line(measurement, tags, fields)])
+      end
+
+      sig {
+        params(measurement: Symbol,
+               tags:        T::Hash[Symbol, T.any(T::Boolean, String)],
+               fields:      T::Hash[Symbol, T.any(T::Boolean, String)],
+               index:       Integer).returns(String)
+      }
+      def influx_line(measurement, tags, fields, index: 0)
         # Tags are always implicitly strings and must have low cardinality.
         tags_string = tags.map { |k, v| "#{k}=#{v.to_s.gsub(/[ ,=]/) { |char| "\\#{char}" }}" }
                           .join(",")
@@ -58,16 +75,36 @@ module Utils
                               .map { |k, v| %Q(#{k}="#{v}") }
                               .join(",")
 
-        args = [
-          "--max-time", "3",
-          "--header", "Content-Type: text/plain; charset=utf-8",
-          "--header", "Accept: application/json",
-          "--data-binary", "#{measurement},#{tags_string} #{fields_string} #{Time.now.to_i}"
-        ]
+        # InfluxDB merges points with the same tags and timestamp, so keep second precision
+        # but give each event in a request its own nanosecond (its `index`) within that second.
+        "#{measurement},#{tags_string} #{fields_string} #{(Time.now.to_i * 1_000_000_000) + index}"
+      end
 
-        # Second precision is highest we can do and has the lowest performance cost.
-        url = "#{INFLUX_HOST}/api/v2/write?bucket=#{INFLUX_BUCKET}&precision=s"
-        deferred_curl(url, args)
+      sig { params(lines: T::Array[String]).void }
+      def write_influx(lines)
+        # Timestamps are whole seconds written in nanoseconds: see `influx_line`.
+        url = "#{INFLUX_HOST}/api/v2/write?bucket=#{INFLUX_BUCKET}&precision=ns"
+
+        # Line protocol separates each event with a newline. Put as many events in each request
+        # as fit in INFLUX_MAX_BATCH_BYTES: an event larger than that on its own is sent by itself.
+        bodies = lines.each_with_object(T.let([], T::Array[String])) do |line, result|
+          body = result.last
+          if body && body.bytesize + 1 + line.bytesize <= INFLUX_MAX_BATCH_BYTES
+            body << "\n" << line
+          else
+            result << line.dup
+          end
+        end
+
+        bodies.each do |body|
+          args = [
+            "--max-time", "3",
+            "--header", "Content-Type: text/plain; charset=utf-8",
+            "--header", "Accept: application/json",
+            "--data-binary", body
+          ]
+          deferred_curl(url, args)
+        end
       end
 
       sig { params(url: String, args: T::Array[String]).void }
@@ -90,19 +127,85 @@ module Utils
                on_request: T::Boolean, options: String).void
       }
       def report_package_event(measurement, package_name:, tap_name:, on_request: false, options: "")
+        report_package_events(measurement, [{ package_name:, tap_name:, on_request:, options: }])
+      end
+
+      # Reports all the packages in a single request.
+      sig { params(measurement: Symbol, packages: T::Array[PackageEvent]).void }
+      def report_package_events(measurement, packages)
         return if not_this_run? || disabled?
 
-        # ensure options are removed (by `.compact` below) if empty
-        options = nil if options.blank?
+        lines = packages.each_with_index.map do |package, index|
+          # ensure options are removed (by `.compact` below) if empty
+          options = package[:options].presence
 
-        # Tags must have low cardinality.
-        tags = default_package_tags.merge(on_request:)
+          # Tags must have low cardinality.
+          tags = default_package_tags.merge(on_request: package[:on_request])
 
-        # Fields can have high cardinality.
-        fields = default_package_fields.merge(package: package_name, tap_name:, options:)
-                                       .compact
+          # Fields can have high cardinality.
+          fields = default_package_fields.merge(
+            package:  package[:package_name],
+            tap_name: package[:tap_name],
+            options:,
+          ).compact
 
-        report_influx(measurement, tags, fields)
+          influx_line(measurement, tags, fields, index:)
+        end
+        write_influx(lines)
+      end
+
+      # Reports installing the formulae, and the dependencies they will install,
+      # in a single request. Call this before installing them.
+      sig { params(formula_installers: T::Array[::FormulaInstaller]).void }
+      def report_formula_installs(formula_installers)
+        return if not_this_run? || disabled?
+
+        packages = formula_installers.flat_map do |formula_installer|
+          deps = begin
+            formula_installer.ignore_deps? ? [] : formula_installer.compute_dependencies
+          rescue
+            # Installing will fail with this error so there are no dependencies to report.
+            []
+          end
+          # Analytics must not stop the install, so leave out a package whose details can't be read
+          # (e.g. from a corrupt install receipt): installing it reports the error instead.
+          installers = deps.filter_map do |dep|
+            formula_installer.dependency_installer(dep, dep.to_formula)
+          rescue
+            nil
+          end
+          installers << formula_installer unless formula_installer.only_deps?
+          installers.filter_map do |installer|
+            formula = installer.formula
+            tap = formula.tap
+            next if tap.nil? || !tap.should_report_analytics?
+
+            { package_name: formula.name, tap_name: tap.name, on_request: installer.installed_on_request?,
+              options: installer.display_options(formula).join(" ") }
+          rescue
+            nil
+          end
+        end
+
+        # A dependency of several of the formulae is only installed once.
+        report_package_events(:formula_install, packages.uniq { |package| package[:package_name] })
+      end
+
+      # Reports installing the casks in a single request. Call this after downloading
+      # them and before installing them.
+      sig { params(cask_installers: T::Array[::Cask::Installer]).void }
+      def report_cask_installs(cask_installers)
+        return if not_this_run? || disabled?
+
+        # A cask whose download (or its checksum verification) failed won't be installed.
+        packages = cask_installers.reject(&:download_failed?).filter_map do |installer|
+          cask = installer.cask
+          tap = cask.tap
+          next if tap.nil? || !tap.should_report_analytics?
+
+          { package_name: cask.token, tap_name: tap.name, on_request: true, options: "" }
+        end
+        report_package_events(:cask_install, packages)
       end
 
       sig { params(exception: BuildError).void }

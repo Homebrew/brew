@@ -213,6 +213,9 @@ module Homebrew
         end
         dependency_summary = { install: [], upgrade: [] } if dry_run
 
+        require "utils/analytics"
+        Utils::Analytics.report_formula_installs(valid_formula_installers) unless dry_run
+
         upgraded_formula_installers = valid_formula_installers.select do |fi|
           upgraded = upgrade_formula(fi, dry_run:, verbose:, skip_formula_names:, dependency_summary:)
           Cleanup.install_formula_clean!(fi.formula) if upgraded && !dry_run && cleanup
@@ -485,6 +488,9 @@ module Homebrew
         end
 
         valid_formula_installers = Install.fetch_formulae(reinstall_contexts.map(&:formula_installer))
+
+        require "utils/analytics"
+        Utils::Analytics.report_formula_installs(valid_formula_installers)
 
         reinstall_contexts.each do |reinstall_context|
           next unless valid_formula_installers.include?(reinstall_context.formula_installer)
