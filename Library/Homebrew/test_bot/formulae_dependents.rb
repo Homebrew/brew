@@ -393,7 +393,7 @@ module Homebrew
         end
 
         if dependent.deprecated? || dependent.disabled?
-          verb = dependent.deprecated? ? :deprecated : :disabled
+          verb = dependent.disabled? ? :disabled : :deprecated
           skipped dependent.name, "#{dependent.full_name} has been #{verb}!"
           return
         end

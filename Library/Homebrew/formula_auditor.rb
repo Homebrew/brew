@@ -412,17 +412,15 @@ module Homebrew
             EOS
           end
 
-          if dep_f.deprecated? && !formula.deprecated? && !formula.disabled?
-            problem <<~EOS
-              Dependency '#{dep.name}' is deprecated but has un-deprecated dependents. Either
-              un-deprecate '#{dep.name}' or deprecate it and all of its dependents.
-            EOS
-          end
-
           if dep_f.disabled? && !formula.disabled?
             problem <<~EOS
               Dependency '#{dep.name}' is disabled but has un-disabled dependents. Either
               un-disable '#{dep.name}' or disable it and all of its dependents.
+            EOS
+          elsif dep_f.deprecated? && !formula.deprecated? && !formula.disabled?
+            problem <<~EOS
+              Dependency '#{dep.name}' is deprecated but has un-deprecated dependents. Either
+              un-deprecate '#{dep.name}' or deprecate it and all of its dependents.
             EOS
           end
 

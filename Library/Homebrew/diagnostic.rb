@@ -33,10 +33,10 @@ module Homebrew
     def self.formula_build_finding(formula, build_options: [])
       reason = if formula.head? || build_options.include?("--HEAD")
         "was built from an unstable upstream --HEAD"
-      elsif formula.deprecated?
-        "is deprecated"
       elsif formula.disabled?
         "is disabled"
+      elsif formula.deprecated?
+        "is deprecated"
       elsif (build_options.intersect?(%w[--build-bottle --build-from-source]) &&
              build_options.exclude?("HOMEBREW_DEVELOPER=1")) ||
             build_options.any? { |flag| flag.start_with?("--cc=") }
@@ -1295,14 +1295,13 @@ module Homebrew
       sig { returns(T.nilable(Finding)) }
       def check_cask_deprecated_disabled
         casks = Cask::Caskroom.casks
-        deprecated_or_disabled = casks.select(&:deprecated?)
-        deprecated_or_disabled += casks.select(&:disabled?)
+        deprecated_or_disabled = casks.select { |cask| cask.deprecated? || cask.disabled? }
         return if deprecated_or_disabled.empty?
 
         Finding.new(
           "Some installed casks are deprecated or disabled.",
           affects:     deprecated_or_disabled.map(&:token),
-          remediation: append_indented_list(deprecated_or_disabled.sort_by(&:token).uniq, <<~EOS),
+          remediation: append_indented_list(deprecated_or_disabled.sort_by(&:token), <<~EOS),
             You should find replacements for the following casks:
 
           EOS
