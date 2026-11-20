@@ -648,6 +648,13 @@ RSpec.describe Cask::Cask, :cask do
     it "returns false for casks with bare depends_on :linux" do
       expect(Cask::CaskLoader.load("with-depends-on-linux-bare").supports_macos?).to be false
     end
+
+    it "returns false on ARM for casks with depends_on :linux inside on_arm" do
+      allow(Hardware::CPU).to receive(:type).and_return(:arm)
+      cask = described_class.new("example") { on_arm { depends_on :linux } }
+
+      expect(cask.supports_macos?).to be false
+    end
   end
 
   describe "#incompatible?" do
