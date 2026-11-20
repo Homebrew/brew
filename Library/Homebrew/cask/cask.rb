@@ -891,6 +891,11 @@ module Cask
       installed_short_version = nil if AUTO_UPDATES_BAD_BUNDLE_VERSIONS.include?(installed_short_version)
       return false if installed_short_version.nil? && installed_bundle_version.nil?
 
+      # Self-updates change the bundle version, so an app whose short and bundle versions
+      # still match a CSV installation record is the build Homebrew installed and a
+      # different tap version is outdated, as for casks without `auto_updates`.
+      return true if installed_version.to_s.split(",").first(2) == [installed_short_version, installed_bundle_version]
+
       # Some apps split a cask version like 2.61-2057 across the short
       # version and bundle version fields.
       if installed_short_version && installed_bundle_version

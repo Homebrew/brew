@@ -483,6 +483,24 @@ RSpec.describe Cask::Cask, :cask do
 
         expect(cask.outdated_version).to eq("158.0.1")
       end
+
+      it "is outdated when the unchanged short and bundle versions match a CSV installation record" do
+        tap_version = "2.61,2058"
+        cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
+        allow(cask).to receive(:installed_version).and_return("2.61,2057")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+
+        expect(cask.outdated_version).to eq("2.61,2057")
+      end
+
+      it "is not outdated when a self-updated bundle version no longer matches a CSV installation record" do
+        tap_version = "2.61,2058"
+        cask = write_auto_updates_cask(cask_file, version: tap_version, artifacts:)
+        allow(cask).to receive(:installed_version).and_return("2.61,2056")
+        stub_cask_bundle_version(cask.config.appdir/"MyFancyApp.app", short_version: "2.61", bundle_version: "2057")
+
+        expect(cask.outdated_version).to be_nil
+      end
     end
 
     describe ":latest casks" do
