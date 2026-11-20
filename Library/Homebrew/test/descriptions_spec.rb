@@ -97,6 +97,18 @@ RSpec.describe Descriptions do
     expect { descriptions.print }.to output(/foo .*\(incompatible\).*: Core foo/).to_stdout
   end
 
+  it "loads cask entries as casks for their status" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    descriptions_hash["homebrew/cask/foo"] = ["Foo", "Cask foo"]
+
+    formula = instance_double(Formula, deprecated?: true, disabled?: false, incompatible?: false)
+    cask = instance_double(Cask::Cask, deprecated?: false, disabled?: false, incompatible?: true)
+    allow(Formulary).to receive(:factory).with("homebrew/cask/foo").and_return(formula)
+    allow(Cask::CaskLoader).to receive(:load).with("homebrew/cask/foo").and_return(cask)
+
+    expect { descriptions.print }.to output(/foo .*\(incompatible\).*: \(Foo\) Cask foo/).to_stdout
+  end
+
   test_each([[false, "deprecated"], [true, "disabled"]]) do |disabled, status|
     it "shows #{status} from metadata without loading the formula" do
       allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
