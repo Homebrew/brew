@@ -538,8 +538,8 @@ depends_on arch: [:x86_64]          # same meaning as above
 ### Stanza: `deprecate!` / `disable!`
 
 `deprecate!` and `disable!` are used to declare that a cask is no longer functional or supported.
-Casks that contain a `deprecate!` stanza can still be installed, but will print a warning message when they are installed or upgraded.
-Casks that contain a `disable!` stanza cannot be installed or upgraded and will print an error message.
+Deprecated casks print a warning when installed or upgraded.
+Disabled casks cannot be installed or upgraded.
 
 The syntax for both stanzas is the same:
 
@@ -555,8 +555,9 @@ disable! date: "YYYY-MM-DD", because: :unmaintained, replacement_cask: "alternat
 #### `date:` parameter
 
 The `date:` parameter controls when the deprecation or disabling will take effect.
-Casks that have a `deprecate!` stanza with a date in the future will not be treated as being deprecated until that date.
-Casks that have a `disable!` stanza with a date in the future will be automatically deprecated until that date, at which point they will become disabled.
+An explicit `deprecate!` date sets the start of the warning period.
+With `disable!` alone, a future disable date starts the warning period immediately.
+See [Deprecating, Disabling and Removing](Deprecating-Disabling-and-Removing.md#disable) for how the two dates work together.
 
 #### `because:` parameter
 

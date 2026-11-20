@@ -109,35 +109,23 @@ class Descriptions
     else
       installed_formulae.include?(full_name)
     end
-    printed_name = if installed
-      Homebrew::Search.pretty_installed(printed_name)
-    else
-      "#{Tty.bold}#{printed_name}#{Tty.reset}"
-    end
-
-    status_data = @status_data[full_name]
-    if status_data&.[](:deprecated)
-      Homebrew::Search.pretty_deprecated(printed_name)
-    elsif status_data&.[](:disabled)
-      Homebrew::Search.pretty_disabled(printed_name)
-    else
+    deprecated = @status_data.dig(full_name, :deprecated) == true
+    disabled = @status_data.dig(full_name, :disabled) == true
+    if !deprecated && !disabled
       formula_or_cask = begin
-        Formulary.factory(full_name)
-      rescue FormulaUnavailableError
-        Cask::CaskLoader.load(full_name)
-      rescue Cask::CaskUnavailableError
+        if description.is_a?(Array)
+          Cask::CaskLoader.load(full_name)
+        else
+          Formulary.factory(full_name)
+        end
+      rescue FormulaUnavailableError, Cask::CaskUnavailableError
         nil
       end
-      return printed_name if formula_or_cask.nil?
-
-      if formula_or_cask.deprecated?
-        Homebrew::Search.pretty_deprecated(printed_name)
-      elsif formula_or_cask.disabled?
-        Homebrew::Search.pretty_disabled(printed_name)
-      else
-        printed_name
-      end
+      deprecated = formula_or_cask&.deprecated? == true
+      disabled = formula_or_cask&.disabled? == true
     end
+
+    Homebrew::Search.pretty_install_status(printed_name, installed:, deprecated:, disabled:, bold: true)
   end
 
   sig { returns(T::Set[String]) }

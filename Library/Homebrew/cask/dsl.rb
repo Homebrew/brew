@@ -2,6 +2,7 @@
 # frozen_string_literal: true
 
 require "autobump_constants"
+require "deprecate_disable/dsl"
 require "locale"
 require "livecheck"
 require "utils/output"
@@ -35,6 +36,7 @@ module Cask
   class DSL
     include ::Utils::Output::Mixin
     include ::Utils::Path
+    include DeprecateDisable::DSL
 
     ORDINARY_ARTIFACT_CLASSES = [
       Artifact::Installer,
@@ -154,37 +156,7 @@ module Cask
     attr_reader :artifacts
 
     sig { returns(T.nilable(Date)) }
-    attr_reader :deprecation_date
-
-    sig { returns(T.nilable(T.any(String, Symbol))) }
-    attr_reader :deprecation_reason
-
-    sig { returns(T.nilable(String)) }
-    attr_reader :deprecation_replacement_cask
-
-    sig { returns(T.nilable(String)) }
-    attr_reader :deprecation_replacement_formula
-
-    sig { returns(T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))])) }
-    attr_reader :deprecate_args
-
-    sig { returns(T.nilable(Date)) }
-    attr_reader :disable_date
-
-    sig { returns(T.nilable(T.any(String, Symbol))) }
-    attr_reader :disable_reason
-
-    sig { returns(T.nilable(String)) }
-    attr_reader :disable_replacement_cask
-
-    sig { returns(T.nilable(String)) }
-    attr_reader :disable_replacement_formula
-
-    sig { returns(T.nilable(Date)) }
     attr_reader :homepage_browsed
-
-    sig { returns(T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))])) }
-    attr_reader :disable_args
 
     sig { returns(T.nilable(MacOSVersion)) }
     attr_reader :on_system_block_min_os
@@ -208,20 +180,8 @@ module Cask
       @container_set_in_block = T.let(false, T::Boolean)
       @depends_on = T.let(DSL::DependsOn.new, DSL::DependsOn)
       @depends_on_set_in_block = T.let(false, T::Boolean)
-      @deprecated = T.let(false, T::Boolean)
-      @deprecation_date = T.let(nil, T.nilable(Date))
-      @deprecation_reason = T.let(nil, T.nilable(T.any(String, Symbol)))
-      @deprecation_replacement_cask = T.let(nil, T.nilable(String))
-      @deprecation_replacement_formula = T.let(nil, T.nilable(String))
-      @deprecate_args = T.let(nil, T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]))
       @desc = T.let(nil, T.nilable(String))
       @desc_set_in_block = T.let(false, T::Boolean)
-      @disable_date = T.let(nil, T.nilable(Date))
-      @disable_reason = T.let(nil, T.nilable(T.any(String, Symbol)))
-      @disable_replacement_cask = T.let(nil, T.nilable(String))
-      @disable_replacement_formula = T.let(nil, T.nilable(String))
-      @disable_args = T.let(nil, T.nilable(T::Hash[Symbol, T.nilable(T.any(String, Symbol))]))
-      @disabled = T.let(false, T::Boolean)
       @homepage = T.let(nil, T.nilable(String))
       @homepage_browsed = T.let(nil, T.nilable(Date))
       @homepage_set_in_block = T.let(false, T::Boolean)
@@ -250,12 +210,6 @@ module Cask
 
     sig { returns(T::Boolean) }
     def depends_on_set_in_block? = @depends_on_set_in_block
-
-    sig { returns(T::Boolean) }
-    def deprecated? = @deprecated
-
-    sig { returns(T::Boolean) }
-    def disabled? = @disabled
 
     sig { returns(T::Boolean) }
     def livecheck_defined? = @livecheck_defined
@@ -791,26 +745,7 @@ module Cask
       ).void
     }
     def deprecate!(date:, because:, replacement: nil, replacement_formula: nil, replacement_cask: nil)
-      if [replacement, replacement_formula, replacement_cask].filter_map(&:presence).length > 1
-        raise ArgumentError, "more than one of replacement, replacement_formula and/or replacement_cask specified!"
-      end
-
-      if replacement
-        odeprecated(
-          "deprecate!(:replacement)",
-          "deprecate!(:replacement_formula) or deprecate!(:replacement_cask)",
-        )
-      end
-
-      @deprecate_args = { date:, because:, replacement_formula:, replacement_cask: }
-
-      @deprecation_date = Date.parse(date)
-      return if @deprecation_date > Date.today
-
-      @deprecation_reason = because
-      @deprecation_replacement_formula = replacement_formula.presence || replacement
-      @deprecation_replacement_cask = replacement_cask.presence || replacement
-      @deprecated = true
+      set_deprecation(date:, because:, replacement:, replacement_formula:, replacement_cask:)
     end
 
     # Declare that a cask is no longer functional or supported.
@@ -828,36 +763,10 @@ module Cask
       ).void
     }
     def disable!(date:, because:, replacement: nil, replacement_formula: nil, replacement_cask: nil)
-      if [replacement, replacement_formula, replacement_cask].filter_map(&:presence).length > 1
-        raise ArgumentError, "more than one of replacement, replacement_formula and/or replacement_cask specified!"
-      end
-
       # odeprecate: remove this remapping when the :unsigned reason is removed
       because = :fails_gatekeeper_check if because == :unsigned
 
-      if replacement
-        odeprecated(
-          "disable!(:replacement)",
-          "disable!(:replacement_formula) or disable!(:replacement_cask)",
-        )
-      end
-
-      @disable_args = { date:, because:, replacement_formula:, replacement_cask: }
-
-      @disable_date = Date.parse(date)
-
-      if @disable_date > Date.today
-        @deprecation_reason = because
-        @deprecation_replacement_formula = replacement_formula.presence || replacement
-        @deprecation_replacement_cask = replacement_cask.presence || replacement
-        @deprecated = true
-        return
-      end
-
-      @disable_reason = because
-      @disable_replacement_formula = replacement_formula.presence || replacement
-      @disable_replacement_cask = replacement_cask.presence || replacement
-      @disabled = true
+      set_disable(date:, because:, replacement:, replacement_formula:, replacement_cask:)
     end
 
     ORDINARY_ARTIFACT_CLASSES.each do |klass|

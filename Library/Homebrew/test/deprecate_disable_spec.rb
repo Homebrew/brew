@@ -154,6 +154,11 @@ RSpec.describe DeprecateDisable do
       expect(described_class.type(disabled_formula)).to eq :disabled
     end
 
+    it "returns :disabled if the formula is both deprecated and disabled" do
+      allow(disabled_formula).to receive(:deprecated?).and_return(true)
+      expect(described_class.type(disabled_formula)).to eq :disabled
+    end
+
     it "returns :deprecated if the cask is deprecated" do
       expect(described_class.type(deprecated_cask)).to eq :deprecated
     end

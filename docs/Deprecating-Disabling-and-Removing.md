@@ -46,8 +46,19 @@ Add a `disable!` call with the same parameters:
 disable! date: "YYYY-MM-DD", because: :reason
 ```
 
-- `date:` should be the date the reason for disabling came into effect. A future date means the formula or cask is deprecated until that date and then becomes disabled.
+- `date:` should be the date the reason for disabling came into effect.
+  With `disable!` alone, a future date deprecates the formula or cask immediately and disables it on that date.
 - `replacement_formula:` and `replacement_cask:` work the same as for `deprecate!`.
+
+When both stanzas are present, their dates determine what happens on installation regardless of declaration order.
+
+| Period                                      | Default installation behaviour                               |
+| ------------------------------------------- | ------------------------------------------------------------ |
+| Before both dates                           | Proceeds without a lifecycle warning.                        |
+| From the deprecation date until disablement | Warns with the reason and any replacement from `deprecate!`. |
+| On or after the disable date                | Fails with the reason and any replacement from `disable!`.   |
+
+In an interactive terminal, `brew desc` shows `(disabled)` once the disable date is reached, even if the package is also deprecated.
 
 ### When to deprecate formulae
 
