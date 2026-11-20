@@ -187,6 +187,31 @@ RSpec.describe Homebrew::API::Formula::FormulaStructGenerator do
       )
     end
 
+    it "keeps requirements from a formula hash that wasn't converted to JSON" do
+      requirements_formula = formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/foo-1.0.tar.gz"
+        depends_on arch: :arm64
+        depends_on macos: :sonoma
+      end
+      hash["requirements"] = requirements_formula.to_hash["requirements"]
+
+      expect(struct.stable_dependencies).to eq([{ arch: [:arm64] }, { macos: [:sonoma] }])
+    end
+
+    test_each([[:arm64_sonoma, false], [:arm64_ventura, true], [:sonoma, true]]) do |(tag, incompatible)|
+      it "sets incompatible to #{incompatible} on #{tag}" do
+        hash["requirements"] = [
+          { "name" => "arch", "version" => "arm64", "contexts" => [], "specs" => ["stable"] },
+          { "name" => "macos", "version" => "14", "contexts" => [], "specs" => ["stable"] },
+          { "name" => "xcode", "version" => "99.0", "contexts" => [], "specs" => ["stable"] },
+        ]
+        struct = described_class.generate_formula_struct_hash(hash, bottle_tag: Utils::Bottles::Tag.from_symbol(tag))
+
+        expect(struct.incompatible).to be(incompatible)
+      end
+    end
+
     it "falls back to stable deps when head_dependencies is absent" do
       hash.update({
         "dependencies"             => ["foo"],

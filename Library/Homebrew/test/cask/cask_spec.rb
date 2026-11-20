@@ -698,6 +698,42 @@ RSpec.describe Cask::Cask, :cask do
     it "returns false for casks with bare depends_on :linux" do
       expect(Cask::CaskLoader.load("with-depends-on-linux-bare").supports_macos?).to be false
     end
+
+    it "returns false on ARM for casks with depends_on :linux inside on_arm" do
+      allow(Hardware::CPU).to receive(:type).and_return(:arm)
+      cask = described_class.new("example") { on_arm { depends_on :linux } }
+
+      expect(cask.supports_macos?).to be false
+    end
+  end
+
+  describe "#incompatible?" do
+    let(:cask) do
+      described_class.new("example") do
+        version "1.2.3"
+        sha256 :no_check
+        url "https://brew.sh/example.zip"
+        depends_on macos: :sonoma
+        depends_on arch: :arm64
+        app "Example.app"
+      end
+    end
+
+    test_each([[:sonoma, :arm, false], [:ventura, :arm, true], [:sonoma, :intel, true],
+               [:linux, :arm, true]]) do |(os, arch, incompatible)|
+      it "is #{incompatible} on #{os} #{arch}" do
+        Homebrew::SimulateSystem.with(os:, arch:) do
+          expect(cask.incompatible?).to be(incompatible)
+        end
+      end
+    end
+
+    it "reads the value stored in the internal API" do
+      cask = described_class.new("example", loaded_from_api: true, loaded_from_internal_api: true,
+                                            api_source: { "incompatible" => true })
+
+      expect(cask.incompatible?).to be(true)
+    end
   end
 
   describe "#outdated_info" do

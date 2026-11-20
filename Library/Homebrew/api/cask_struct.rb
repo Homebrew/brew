@@ -82,6 +82,7 @@ module Homebrew
       const :desc, T.nilable(String)
       const :disable_args, T::Hash[Symbol, T.nilable(T.any(String, Symbol))], default: {}
       const :homepage, T.nilable(String)
+      const :incompatible, T::Boolean, default: false
       const :languages, T::Array[String], default: []
       const :language_variations, T::Array[LanguageVariation], default: []
       const :names, T::Array[String], default: []

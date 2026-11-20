@@ -332,6 +332,15 @@ module Cask
       end
     end
 
+    # True if this cask doesn't support this platform.
+    # Casks loaded from the internal API use the value stored there for this platform.
+    sig { returns(T::Boolean) }
+    def incompatible?
+      return api_source&.[]("incompatible") == true if loaded_from_internal_api?
+
+      !platform_supported?(Homebrew::SimulateSystem.current_tag)
+    end
+
     sig { returns(T::Boolean) }
     def uninstall_flight_blocks?
       artifacts.any? do |artifact|

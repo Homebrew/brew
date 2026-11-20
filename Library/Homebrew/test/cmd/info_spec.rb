@@ -543,7 +543,8 @@ RSpec.describe Homebrew::Cmd::Info do
       allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
       allow(Homebrew::SimulateSystem).to receive_messages(simulating_or_running_on_macos?: macos,
                                                           simulating_or_running_on_linux?: linux)
-      allow(formula).to receive(:requirements).and_return(requirement_class ? [requirement_class.new] : [])
+      allow(formula).to receive_messages(requirements:  requirement_class ? [requirement_class.new] : [],
+                                         incompatible?: false)
 
       expect { info.info_formula(formula) }
         .to output(/Build \(1\): builddep/).to_stdout
@@ -1821,6 +1822,61 @@ RSpec.describe Homebrew::Cmd::Info do
       core_formula?: false,
       requirements:  Requirements.new(os_requirement),
     )
+
+    expect { info.info_formula(formula) }
+      .to not_to_output(/Installs from source: yes/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "hides source install metadata for incompatible formulae" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+    end
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, incompatible?: true)
+
+    expect { info.info_formula(formula) }
+      .to not_to_output(/Installs from source: yes/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "hides source install metadata for formulae that can't be installed on this platform" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+    end
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive_messages(core_formula?: false, valid_platform?: false)
+
+    expect { info.info_formula(formula) }
+      .to not_to_output(/Installs from source: yes/).to_stdout
+      .and not_to_output.to_stderr
+  end
+
+  it "hides source install metadata for disabled formulae" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+
+    info = described_class.new([])
+    formula = formula("testball") do
+      T.bind(self, T.class_of(Formula))
+      url "https://brew.sh/testball-0.1.tar.gz"
+      homepage "https://brew.sh/testball"
+      desc "Some test"
+      disable! date: "2024-01-01", because: :unmaintained
+    end
+    allow(info).to receive(:github_info).with(formula).and_return("https://example.com/testball.rb")
+    allow(formula).to receive(:core_formula?).and_return(false)
 
     expect { info.info_formula(formula) }
       .to not_to_output(/Installs from source: yes/).to_stdout

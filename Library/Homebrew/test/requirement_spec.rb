@@ -48,6 +48,12 @@ RSpec.describe Requirement do
     end
   end
 
+  describe "#platform_supported?" do
+    it "is true when a requirement doesn't depend on the platform" do
+      expect(requirement.platform_supported?(Utils::Bottles::Tag.from_symbol(:arm64_linux))).to be(true)
+    end
+  end
+
   describe "#fatal?" do
     describe "#fatal true is specified" do
       let(:klass) do

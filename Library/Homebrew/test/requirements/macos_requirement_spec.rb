@@ -123,4 +123,26 @@ RSpec.describe MacOSRequirement do
       end
     end
   end
+
+  describe "#platform_supported?" do
+    subject(:requirement) { described_class.new([:sonoma]) }
+
+    test_each([[:arm64_sonoma, true], [:ventura, false], [:x86_64_linux, false]]) do |(tag, supported)|
+      it "is #{supported} on #{tag}" do
+        expect(requirement.platform_supported?(Utils::Bottles::Tag.from_symbol(tag))).to be(supported)
+      end
+    end
+
+    it "is true on a macOS version too new to be known" do
+      tag = Utils::Bottles::Tag.new(system: :dunno, arch: :arm64)
+
+      expect(requirement.platform_supported?(tag)).to be(true)
+    end
+
+    it "is false on a system that is neither macOS nor Linux" do
+      tag = Utils::Bottles::Tag.new(system: :generic, arch: :arm64)
+
+      expect(requirement.platform_supported?(tag)).to be(false)
+    end
+  end
 end

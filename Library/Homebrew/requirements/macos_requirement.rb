@@ -144,6 +144,14 @@ class MacOSRequirement < Requirement
     end
   end
 
+  sig { override.params(bottle_tag: Utils::Bottles::Tag).returns(T::Boolean) }
+  def platform_supported?(bottle_tag)
+    return allows?(bottle_tag.to_macos_version) if bottle_tag.macos?
+
+    # A macOS version too new to be known can't be ruled out.
+    bottle_tag.system == :dunno
+  end
+
   sig { override.params(type: Symbol).returns(String) }
   def message(type: :formula)
     subject = (type == :cask) ? "This cask" : "This formula"

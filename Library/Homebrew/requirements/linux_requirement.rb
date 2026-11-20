@@ -9,6 +9,9 @@ class LinuxRequirement < Requirement
 
   satisfy(build_env: false) { OS.linux? }
 
+  sig { override.params(bottle_tag: Utils::Bottles::Tag).returns(T::Boolean) }
+  def platform_supported?(bottle_tag) = bottle_tag.linux?
+
   sig { returns(String) }
   def display_s
     "Linux"

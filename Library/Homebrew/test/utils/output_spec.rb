@@ -265,6 +265,27 @@ RSpec.describe Utils::Output do
       expect(status).to match(/\Afoo #{esc 31}⊘#{esc 0} #{esc 31}\(disabled\)#{esc 0}\z/)
     end
 
+    it "marks an incompatible uninstalled entry that cannot be installed with ⊘ and (incompatible)" do
+      status = described_class.pretty_install_status(
+        "foo",
+        installed:    false,
+        incompatible: true,
+        can_install:  false,
+      )
+      expect(status).to match(/\Afoo #{esc 31}⊘#{esc 0} #{esc 31}\(incompatible\)#{esc 0}\z/)
+    end
+
+    it "annotates a deprecated incompatible entry with `(incompatible)`, since it can't be installed" do
+      status = described_class.pretty_install_status(
+        "foo",
+        installed:        false,
+        deprecated:       true,
+        incompatible:     true,
+        mark_uninstalled: false,
+      )
+      expect(status).to match(/\Afoo #{esc 31}\(incompatible\)#{esc 0}\z/)
+    end
+
     it "keeps a disabled installed entry marked as installed" do
       expect(described_class.pretty_install_status("foo", installed: true, disabled: true))
         .to match(/foo #{esc 32}✔#{esc 0} #{esc 31}\(disabled\)#{esc 0}\z/)

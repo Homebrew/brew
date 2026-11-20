@@ -116,6 +116,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       false,
         deprecated?:     false,
         disabled?:       false,
+        incompatible?:   false,
         valid_platform?: true,
       )
       allow(Formulary).to receive(:factory).with("homebrew/foo/installed").and_return(formula)
@@ -129,6 +130,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       true,
         deprecated?:     false,
         disabled?:       false,
+        incompatible?:   false,
         valid_platform?: true,
       )
       allow(Formulary).to receive(:factory).with("homebrew/foo/outdated").and_return(formula)
@@ -142,6 +144,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       false,
         deprecated?:     true,
         disabled?:       false,
+        incompatible?:   false,
         valid_platform?: true,
       )
       allow(Formulary).to receive(:factory).with("homebrew/foo/old").and_return(formula)
@@ -155,11 +158,26 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       false,
         deprecated?:     false,
         disabled?:       true,
+        incompatible?:   false,
         valid_platform?: true,
       )
       allow(Formulary).to receive(:factory).with("homebrew/foo/gone").and_return(formula)
 
       expect(tap_info.decorate_formula(tap, "gone", installed: false)).to match(/gone.*⊘.*\(disabled\)/)
+    end
+
+    it "marks an incompatible formula with `(incompatible)` and ⊘" do
+      formula = instance_double(
+        Formula,
+        outdated?:       false,
+        deprecated?:     false,
+        disabled?:       false,
+        incompatible?:   true,
+        valid_platform?: true,
+      )
+      allow(Formulary).to receive(:factory).with("homebrew/foo/newer").and_return(formula)
+
+      expect(tap_info.decorate_formula(tap, "newer", installed: false)).to match(/newer.*⊘.*\(incompatible\)/)
     end
 
     it "marks a formula that cannot be installed on this platform with ⊘" do
@@ -168,6 +186,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       false,
         deprecated?:     false,
         disabled?:       false,
+        incompatible?:   false,
         valid_platform?: false,
       )
       allow(Formulary).to receive(:factory).with("homebrew/foo/incompatible").and_return(formula)
@@ -195,6 +214,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       false,
         deprecated?:     false,
         disabled?:       false,
+        incompatible?:   false,
         valid_platform?: true,
       )
       allow(Cask::CaskLoader).to receive(:load).with("homebrew/foo/installed").and_return(cask)
@@ -208,6 +228,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       true,
         deprecated?:     false,
         disabled?:       false,
+        incompatible?:   false,
         valid_platform?: true,
       )
       allow(Cask::CaskLoader).to receive(:load).with("homebrew/foo/outdated").and_return(cask)
@@ -221,6 +242,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       false,
         deprecated?:     true,
         disabled?:       false,
+        incompatible?:   false,
         valid_platform?: true,
       )
       allow(Cask::CaskLoader).to receive(:load).with("homebrew/foo/old").and_return(cask)
@@ -234,11 +256,26 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       false,
         deprecated?:     false,
         disabled?:       true,
+        incompatible?:   false,
         valid_platform?: true,
       )
       allow(Cask::CaskLoader).to receive(:load).with("homebrew/foo/gone").and_return(cask)
 
       expect(tap_info.decorate_cask(tap, "gone", installed: false)).to match(/gone.*⊘.*\(disabled\)/)
+    end
+
+    it "marks an incompatible cask with `(incompatible)` and ⊘" do
+      cask = instance_double(
+        Cask::Cask,
+        outdated?:       false,
+        deprecated?:     false,
+        disabled?:       false,
+        incompatible?:   true,
+        valid_platform?: true,
+      )
+      allow(Cask::CaskLoader).to receive(:load).with("homebrew/foo/newer").and_return(cask)
+
+      expect(tap_info.decorate_cask(tap, "newer", installed: false)).to match(/newer.*⊘.*\(incompatible\)/)
     end
 
     it "marks a cask that cannot be installed on this platform with ⊘" do
@@ -247,6 +284,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
         outdated?:       false,
         deprecated?:     false,
         disabled?:       false,
+        incompatible?:   false,
         valid_platform?: false,
       )
       allow(Cask::CaskLoader).to receive(:load).with("homebrew/foo/incompatible").and_return(cask)
@@ -282,6 +320,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
           outdated?:       false,
           deprecated?:     false,
           disabled?:       false,
+          incompatible?:   false,
           valid_platform?: true,
         )
         cask = instance_double(
@@ -289,6 +328,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
           outdated?:       false,
           deprecated?:     false,
           disabled?:       false,
+          incompatible?:   false,
           valid_platform?: true,
         )
         allow(Formulary).to receive(:factory).with("homebrew/foo/foo").and_return(formula)
@@ -327,6 +367,7 @@ RSpec.describe Homebrew::Cmd::TapInfo do
           outdated?:       false,
           deprecated?:     false,
           disabled?:       false,
+          incompatible?:   false,
           valid_platform?: true,
         )
         allow(Formulary).to receive(:factory).with("homebrew/foo/formula7").and_return(formula7)

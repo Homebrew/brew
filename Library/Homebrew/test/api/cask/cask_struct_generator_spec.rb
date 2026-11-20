@@ -107,4 +107,24 @@ RSpec.describe Homebrew::API::Cask::CaskStructGenerator do
     output = described_class.process_url_specs({ verified: "cdn.example.com/", bar: "baz" })
     expect(output).to eq({ bar: "baz" })
   end
+
+  describe "::generate_cask_struct_hash" do
+    let(:hash) do
+      cask = Cask::Cask.new("example") do
+        version "1.0"
+        sha256 "67cdb8a02803ef37fdbf7e0be205863172e41a561ca446cd84f0d7ab35a99d94"
+        url "https://brew.sh/example-1.0.zip"
+        app "Example.app"
+      end
+      cask.to_hash_with_variations.merge("supported_platforms" => [:arm64_sonoma])
+    end
+
+    test_each([[:arm64_sonoma, false], [:sonoma, true]]) do |(tag, incompatible)|
+      it "sets incompatible to #{incompatible} on #{tag}" do
+        struct = described_class.generate_cask_struct_hash(hash, bottle_tag: Utils::Bottles::Tag.from_symbol(tag))
+
+        expect(struct.incompatible).to be(incompatible)
+      end
+    end
+  end
 end

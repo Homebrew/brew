@@ -28,6 +28,12 @@ class ArchRequirement < Requirement
     end
   end
 
+  sig { override.params(bottle_tag: Utils::Bottles::Tag).returns(T::Boolean) }
+  def platform_supported?(bottle_tag)
+    Utils::Bottles::Tag.new(system: bottle_tag.system, arch: @arch || :dunno).standardized_arch ==
+      bottle_tag.standardized_arch
+  end
+
   sig { returns(String) }
   def message
     "The #{@arch} architecture is required for this software."
