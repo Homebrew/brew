@@ -819,7 +819,8 @@ RSpec.describe Homebrew::InstallSteps do
     expect(command).to receive(:run!)
       .with("/usr/bin/pkill", args: ["-f", "/Applications/Example.app"], sudo: false,
                               print_stdout: true, print_stderr: true)
-      .exactly(3).times
+      .exactly(3)
+      .times
       .and_raise(ErrorDuringExecution.new([], status: 1))
 
     expect { runner.run(steps) }.not_to raise_error
@@ -1027,7 +1028,8 @@ RSpec.describe Homebrew::InstallSteps do
     expect(runner).to receive(:run_command).with(root/"homebrew/opt/glib/bin/gio-querymodules",
                                                  HOMEBREW_PREFIX/"lib/gio/modules").ordered
     expect(runner).to receive(:run_command)
-      .with(root/"homebrew/opt/gdk-pixbuf/bin/gdk-pixbuf-query-loaders", "--update-cache").ordered
+      .with(root/"homebrew/opt/gdk-pixbuf/bin/gdk-pixbuf-query-loaders", "--update-cache")
+      .ordered
     expect(runner).to receive(:run_command).with(root/"homebrew/opt/shared-mime-info/bin/update-mime-database",
                                                  HOMEBREW_PREFIX/"share/mime").ordered
     expect(runner).to receive(:run_command)
@@ -1082,13 +1084,16 @@ RSpec.describe Homebrew::InstallSteps do
     runner = Homebrew::InstallSteps::Runner.new(context: gcc_context)
     expect(runner).to receive(:context_version_major).and_return("15")
     expect(runner).to receive(:run_command_output)
-      .with(gcc, "-print-libgcc-file-name").ordered
+      .with(gcc, "-print-libgcc-file-name")
+      .ordered
       .and_return("#{libgcc}/libgcc_s.so\n")
     expect(runner).to receive(:run_command_output)
-      .with("/usr/bin/cc", "-print-file-name=crti.o").ordered
+      .with("/usr/bin/cc", "-print-file-name=crti.o")
+      .ordered
       .and_return("#{crti}\n")
     expect(runner).to receive(:run_command_output)
-      .with(gcc, "-print-multiarch").ordered
+      .with(gcc, "-print-multiarch")
+      .ordered
       .and_return("x86_64-linux-gnu\n")
     expect(runner).to receive(:run_command_output).with(gcc, "-dumpspecs").ordered.and_return(original_specs)
     expect(FileUtils).to receive(:ln_sf).with([crti.to_s], libgcc).and_call_original
@@ -1173,10 +1178,12 @@ RSpec.describe Homebrew::InstallSteps do
     localedef = root/"prefix/bin/localedef"
     expect(runner).to receive(:ohai).with("Installing locale data for de_DE.utf8 en_GB en_US.UTF-8")
     expect(runner).to receive(:run_command)
-      .with(localedef, "-i", "de_DE", "-f", "UTF-8", "de_DE.utf8").ordered
+      .with(localedef, "-i", "de_DE", "-f", "UTF-8", "de_DE.utf8")
+      .ordered
     expect(runner).to receive(:run_command).with(localedef, "-i", "en_GB", "en_GB").ordered
     expect(runner).to receive(:run_command)
-      .with(localedef, "-i", "en_US", "-f", "UTF-8", "en_US.UTF-8").ordered
+      .with(localedef, "-i", "en_US", "-f", "UTF-8", "en_US.UTF-8")
+      .ordered
 
     runner.run(steps)
 
@@ -1522,9 +1529,11 @@ RSpec.describe Homebrew::InstallSteps do
         SHA-256 hash: DEF456
       EOS
     expect(runner).to receive(:run_command)
-      .with("/usr/bin/security", "delete-certificate", "-Z", "ABC123", sudo: true).ordered
+      .with("/usr/bin/security", "delete-certificate", "-Z", "ABC123", sudo: true)
+      .ordered
     expect(runner).to receive(:run_command)
-      .with("/usr/bin/security", "delete-certificate", "-Z", "DEF456", sudo: true).ordered
+      .with("/usr/bin/security", "delete-certificate", "-Z", "DEF456", sudo: true)
+      .ordered
 
     runner.run(steps)
   end
@@ -1587,13 +1596,17 @@ RSpec.describe Homebrew::InstallSteps do
       .with(app: root/"stage/Owned.file", command:)
       .and_return(true)
     expect(command).to receive(:run!)
-      .with("chmod", args: ["-R", "--", "0755", root/"stage/Prepared.app"], sudo: false).ordered
+      .with("chmod", args: ["-R", "--", "0755", root/"stage/Prepared.app"], sudo: false)
+      .ordered
     expect(command).to receive(:run!)
-      .with("chmod", args: ["--", "0644", root/"stage/Prepared.file"], sudo: false).ordered
+      .with("chmod", args: ["--", "0644", root/"stage/Prepared.file"], sudo: false)
+      .ordered
     expect(command).to receive(:run!)
-      .with("chown", args: ["-R", "--", "root:wheel", root/"stage/Owned.app"], sudo: nil).ordered
+      .with("chown", args: ["-R", "--", "root:wheel", root/"stage/Owned.app"], sudo: nil)
+      .ordered
     expect(command).to receive(:run!)
-      .with("chown", args: ["--", "root:wheel", root/"stage/Owned.file"], sudo: nil).ordered
+      .with("chown", args: ["--", "root:wheel", root/"stage/Owned.file"], sudo: nil)
+      .ordered
 
     Homebrew::InstallSteps::Runner.new(context:, command:).run(steps)
   end

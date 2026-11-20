@@ -129,8 +129,11 @@ module RuboCop
           return if in_condition && node.body&.type?(:rescue, :ensure)
 
           # `Naming/RescuedExceptionsVariableName` stops renaming a rescued variable the caller already uses.
-          caller_names = call.each_ancestor(:any_def, :any_block).to_a.last
-                             &.each_descendant(:lvasgn, :argument)&.map(&:name)
+          caller_names = call.each_ancestor(:any_def, :any_block)
+                             .to_a
+                             .last
+                             &.each_descendant(:lvasgn, :argument)
+                             &.map(&:name)
           return if caller_names&.intersect?(rescued_variable_names(node).to_a)
 
           return if !formula_class?(namespace) && !single_use_in_project_index?(namespace, name)
@@ -236,8 +239,10 @@ module RuboCop
           cached = self.class.cached_index_name_counts
           return [cached[1], cached[2], cached[3]] if cached && cached[0].equal?(project_index)
 
-          definitions = project_index.declarations.grep(Rubydex::Method)
-                                     .map { |method| method.unqualified_name.delete_suffix("()") }.tally
+          definitions = project_index.declarations
+                                     .grep(Rubydex::Method)
+                                     .map { |method| method.unqualified_name.delete_suffix("()") }
+                                     .tally
           references = project_index.method_references.map { |reference| reference.name.delete_suffix("()") }.tally
           # The index has no symbols, e.g. specs stubbing `receive(:name)`, so find them in the source.
           symbols = project_index.documents.flat_map do |document|

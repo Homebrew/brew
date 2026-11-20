@@ -674,7 +674,8 @@ RSpec.describe Homebrew::Bundle::Brew do
       test_each([false, true]) do |pin|
         it "reinstalls from the requested tap with pin: #{pin}" do
           expect(Homebrew::Bundle).to receive(:brew)
-            .with("reinstall", "--formula", tapped_name, "--with-option", verbose: false).and_return(true)
+            .with("reinstall", "--formula", tapped_name, "--with-option", verbose: false)
+            .and_return(true)
 
           described_class.install!(tapped_name, **options, pin:)
         end
@@ -713,7 +714,8 @@ RSpec.describe Homebrew::Bundle::Brew do
         installed_tab.write
 
         expect(Homebrew::Bundle).to receive(:brew)
-          .with("upgrade", "--formula", tapped_name, verbose: false).and_return(true)
+          .with("upgrade", "--formula", tapped_name, verbose: false)
+          .and_return(true)
 
         described_class.install!(tapped_name)
       end

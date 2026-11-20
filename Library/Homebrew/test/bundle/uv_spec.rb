@@ -28,7 +28,8 @@ RSpec.describe Homebrew::Bundle::Uv do
       described_class.reset!
       allow(described_class).to receive_messages(package_manager_executable: Pathname("uv"), packages: [])
       allow(described_class).to receive(:command_output)
-        .with(Pathname("uv"), args: ["tool", "dir"]).and_return("/tmp/uv tools\n")
+        .with(Pathname("uv"), args: ["tool", "dir"])
+        .and_return("/tmp/uv tools\n")
       allow(SystemCommand).to receive(:run!)
         .with(Pathname("uv"), args:         ["pip", "install", "--dry-run", "--upgrade", "--python",
                                              "/tmp/uv tools/example-tool/bin/python",
@@ -82,7 +83,8 @@ RSpec.describe Homebrew::Bundle::Uv do
                                                  package_installed?: true, packages: [], installed_packages: [])
       ENV["UV_PYTHON"] = "/different/python"
       allow(described_class).to receive(:command_output)
-        .with(Pathname("uv"), args: ["tool", "dir"]).and_return("/tmp/tools\n")
+        .with(Pathname("uv"), args: ["tool", "dir"])
+        .and_return("/tmp/tools\n")
       expect(Homebrew::Bundle).to receive(:system)
         .with("uv", "tool", "install", "example-tool", "--upgrade", "--python", "/tmp/tools/example-tool/bin/python",
               verbose: false).and_return(true)
@@ -93,7 +95,8 @@ RSpec.describe Homebrew::Bundle::Uv do
       allow(described_class).to receive_messages(package_manager_executable: Pathname("uv"),
                                                  package_installed?: true, packages: [], installed_packages: [])
       allow(described_class).to receive(:command_output)
-        .with(Pathname("uv"), args: ["tool", "dir"]).and_return("/tmp/tools\n")
+        .with(Pathname("uv"), args: ["tool", "dir"])
+        .and_return("/tmp/tools\n")
       expect(Homebrew::Bundle).to receive(:system)
         .with("uv", "tool", "install", "example-tool[extra] @ git+https://example.com/tool",
               "--upgrade", "--python", "/tmp/tools/example-tool/bin/python", "--with", "dependency<2",
@@ -108,7 +111,8 @@ RSpec.describe Homebrew::Bundle::Uv do
       allow(described_class).to receive(:package_manager_executable).and_return(Pathname("uv"))
       allow(described_class).to receive(:command_output).and_call_original
       allow(described_class).to receive(:command_output)
-        .with(Pathname("uv"), args: ["tool", "dir"]).and_return("/tmp/tools\n")
+        .with(Pathname("uv"), args: ["tool", "dir"])
+        .and_return("/tmp/tools\n")
     end
 
     test_each([">=1, <2", "==1.0"]) do |requirement|
@@ -597,7 +601,8 @@ RSpec.describe Homebrew::Bundle::Uv do
 
         it "installs package with no options" do
           expect(Homebrew::Bundle).to receive(:system)
-            .with("/tmp/uv/bin/uv", "tool", "install", "other-tool", verbose: false).and_return(true)
+            .with("/tmp/uv/bin/uv", "tool", "install", "other-tool", verbose: false)
+            .and_return(true)
 
           expect(described_class.preinstall!("other-tool")).to be(true)
           expect(described_class.install!("other-tool")).to be(true)
@@ -660,7 +665,8 @@ RSpec.describe Homebrew::Bundle::Uv do
         it "installs a package from its source" do
           source = "git+https://example.com/tools/other-tool.git"
           expect(Homebrew::Bundle).to receive(:system)
-            .with("/tmp/uv/bin/uv", "tool", "install", source, verbose: false).and_return(true)
+            .with("/tmp/uv/bin/uv", "tool", "install", source, verbose: false)
+            .and_return(true)
 
           expect(described_class.preinstall!("other-tool", source:)).to be(true)
           expect(described_class.install!("other-tool", source:)).to be(true)
@@ -732,7 +738,8 @@ RSpec.describe Homebrew::Bundle::Uv do
 
     it "returns the uninstall command result" do
       allow(Homebrew::Bundle).to receive(:system)
-        .with("/tmp/uv/bin/uv", "tool", "uninstall", "example", verbose: false).and_return(false)
+        .with("/tmp/uv/bin/uv", "tool", "uninstall", "example", verbose: false)
+        .and_return(false)
 
       expect(
         described_class.uninstall_package!("example", executable: Pathname("/tmp/uv/bin/uv")),

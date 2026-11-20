@@ -56,7 +56,8 @@ RSpec.describe Homebrew::Bundle::Installer do
   it "fetches and installs formulae and casks in one `brew install`" do
     expect(Homebrew::Bundle).to receive(:brew)
       .with("install", "--adopt", "homebrew/core/mysql", "homebrew/cask/google-chrome", verbose: false)
-      .once.and_return(true)
+      .once
+      .and_return(true)
 
     described_class.install!([formula_entry, cask_entry], quiet: true)
   end
@@ -92,7 +93,8 @@ RSpec.describe Homebrew::Bundle::Installer do
     allow(Homebrew::Bundle::Tap).to receive(:installed_taps).and_return(["thirdparty/tap"])
 
     expect(Homebrew::Trust).to receive(:trust!).with(:formula, "thirdparty/tap/bar").ordered.and_return(true)
-    expect(Formula).to receive(:[]).with("thirdparty/tap/bar").ordered
+    expect(Formula).to receive(:[]).with("thirdparty/tap/bar")
+                                   .ordered
                                    .and_return(instance_double(Formula, full_name: "thirdparty/tap/bar",
                                                                         tap:       Tap.fetch("thirdparty/tap"),
                                                                         conflicts: []))
@@ -107,7 +109,8 @@ RSpec.describe Homebrew::Bundle::Installer do
     allow(Homebrew::Bundle::Tap).to receive(:installed_taps).and_return(["thirdparty/tap"])
 
     expect(Homebrew::Trust).to receive(:trust!).with(:cask, "thirdparty/tap/baz").ordered.and_return(true)
-    expect(::Cask::CaskLoader).to receive(:load).with("thirdparty/tap/baz").ordered
+    expect(::Cask::CaskLoader).to receive(:load).with("thirdparty/tap/baz")
+                                                .ordered
                                                 .and_return(instance_double(::Cask::Cask,
                                                                             full_name: "thirdparty/tap/baz",
                                                                             tap:       Tap.fetch("thirdparty/tap")))
@@ -202,9 +205,11 @@ RSpec.describe Homebrew::Bundle::Installer do
     it "attributes a failed batch to the entries that are not installed afterwards" do
       allow(Homebrew::Bundle).to receive(:brew).with("install", any_args).and_return(false)
       allow(Homebrew::Bundle::Brew).to receive(:formula_installed_and_up_to_date?)
-        .with("mysql", no_upgrade: false).and_return(true)
+        .with("mysql", no_upgrade: false)
+        .and_return(true)
       allow(Homebrew::Bundle::Brew).to receive(:formula_installed_and_up_to_date?)
-        .with("redis", no_upgrade: false).and_return(false)
+        .with("redis", no_upgrade: false)
+        .and_return(false)
 
       expect do
         expect(described_class.install!([formula_entry, second_formula_entry], quiet: true)).to be(false)
@@ -290,9 +295,11 @@ RSpec.describe Homebrew::Bundle::Installer do
         (HOMEBREW_CELLAR/"mysql@8.4/8.4").mkpath
 
         expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
-                                                  .ordered.and_return(true)
+                                                  .ordered
+                                                  .and_return(true)
         expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "mysql", verbose: false)
-                                                  .ordered.and_return(true)
+                                                  .ordered
+                                                  .and_return(true)
 
         described_class.install!([formula_entry], quiet: true)
       end
@@ -310,9 +317,11 @@ RSpec.describe Homebrew::Bundle::Installer do
           true
         end
         expect(Homebrew::Bundle).to receive(:brew).with("unlink", "mysql@8.4", verbose: false)
-                                                  .ordered.and_return(true)
+                                                  .ordered
+                                                  .and_return(true)
         expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "mysql", verbose: false)
-                                                  .ordered.and_return(true)
+                                                  .ordered
+                                                  .and_return(true)
 
         described_class.install!([Homebrew::Bundle::Dsl::Entry.new(:brew, "mysql-lts"), formula_entry], quiet: true)
       end
@@ -373,9 +382,11 @@ RSpec.describe Homebrew::Bundle::Installer do
           true
         end
         expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
-                                                  .ordered.and_return(true)
+                                                  .ordered
+                                                  .and_return(true)
         expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
-                                                  .ordered.and_return(true)
+                                                  .ordered
+                                                  .and_return(true)
 
         described_class.install!([
           Homebrew::Bundle::Dsl::Entry.new(:brew, "ctags-lsp"),
@@ -398,9 +409,11 @@ RSpec.describe Homebrew::Bundle::Installer do
           true
         end
         expect(Homebrew::Bundle).to receive(:brew).with("unlink", "universal-ctags", verbose: false)
-                                                  .ordered.and_return(true)
+                                                  .ordered
+                                                  .and_return(true)
         expect(Homebrew::Bundle).to receive(:brew).with("install", "--formula", "ctags", verbose: false)
-                                                  .ordered.and_return(true)
+                                                  .ordered
+                                                  .and_return(true)
 
         described_class.install!([
           Homebrew::Bundle::Dsl::Entry.new(:cask, "editor"),
@@ -468,7 +481,8 @@ RSpec.describe Homebrew::Bundle::Installer do
 
       expect(Homebrew::Bundle).to receive(:brew)
         .with("install", "--adopt", "thirdparty/tap/mysql", "thirdparty/tap/google-chrome", verbose: false)
-        .once.and_return(true)
+        .once
+        .and_return(true)
 
       described_class.install!([formula_entry, cask_entry], quiet: true)
     end
@@ -484,7 +498,8 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Brew).to receive(:installed_formulae).and_return(["mysql"])
 
       expect(Homebrew::Bundle).to receive(:brew)
-        .with("reinstall", "--formula", "thirdparty/tap/mysql", verbose: false).and_return(true)
+        .with("reinstall", "--formula", "thirdparty/tap/mysql", verbose: false)
+        .and_return(true)
 
       described_class.install!(
         Homebrew::Bundle::Dsl.new(StringIO.new('brew "thirdparty/tap/mysql"')).entries,
@@ -500,7 +515,8 @@ RSpec.describe Homebrew::Bundle::Installer do
       allow(Homebrew::Bundle::Cask).to receive(:install!).and_call_original
 
       expect(Homebrew::Bundle).to receive(:brew)
-        .with("reinstall", "--cask", "thirdparty/tap/google-chrome", "--adopt", verbose: false).and_return(true)
+        .with("reinstall", "--cask", "thirdparty/tap/google-chrome", "--adopt", verbose: false)
+        .and_return(true)
 
       described_class.install!(
         Homebrew::Bundle::Dsl.new(StringIO.new('cask "thirdparty/tap/google-chrome"')).entries,
@@ -524,7 +540,8 @@ RSpec.describe Homebrew::Bundle::Installer do
         end
 
         expect(Homebrew::Bundle.installable(type)).to receive(:install!)
-          .with("local", preinstall: true, no_upgrade: false, verbose: false, force: false).and_return(true)
+          .with("local", preinstall: true, no_upgrade: false, verbose: false, force: false)
+          .and_return(true)
 
         described_class.install!([entry], quiet: true)
       end
@@ -548,10 +565,12 @@ RSpec.describe Homebrew::Bundle::Installer do
 
         expect(Homebrew::Bundle).to receive(:brew)
           .with("install", *(["--force", "--overwrite"] if force), "homebrew/core/mysql", verbose: false)
-          .ordered.and_return(true)
+          .ordered
+          .and_return(true)
         expect(Homebrew::Bundle).to receive(:brew)
           .with("install", "--cask", name, force ? "--force" : "--adopt", verbose: false)
-          .ordered.and_return(success)
+          .ordered
+          .and_return(success)
 
         expect do
           expect(described_class.install!([
@@ -592,7 +611,8 @@ RSpec.describe Homebrew::Bundle::Installer do
 
       expect(::Cask::CaskLoader).not_to receive(:load)
       expect(Homebrew::Bundle).to receive(:brew)
-        .with("install", "--formula", "thirdparty/tap/collision", verbose: false).and_return(true)
+        .with("install", "--formula", "thirdparty/tap/collision", verbose: false)
+        .and_return(true)
 
       expect do
         described_class.install!([Homebrew::Bundle::Dsl::Entry.new(:brew, "thirdparty/tap/collision")], quiet: true)
@@ -603,7 +623,8 @@ RSpec.describe Homebrew::Bundle::Installer do
       expect(Homebrew::Bundle).to receive(:brew)
         .with("install", "--force", "--overwrite", "homebrew/core/mysql",
               "homebrew/cask/google-chrome", verbose: false)
-        .once.and_return(true)
+        .once
+        .and_return(true)
 
       described_class.install!([formula_entry, cask_entry], force: true, quiet: true)
     end
@@ -743,7 +764,8 @@ RSpec.describe Homebrew::Bundle::Installer do
     context "when native batch preparation fails" do
       before do
         allow(Homebrew::Bundle::Npm).to receive(:preinstall!)
-          .with("example-tool", any_args).and_raise(inventory_error)
+          .with("example-tool", any_args)
+          .and_raise(inventory_error)
         allow(Homebrew::Bundle::Npm).to receive(:preinstall!).with("installed-tool", any_args).and_return(false)
       end
 
@@ -763,7 +785,8 @@ RSpec.describe Homebrew::Bundle::Installer do
 
           it "preserves the preparation failure and installs only actionable entries" do
             expect(Homebrew::Bundle::Npm).to receive(:install_batch!)
-              .with([actionable_entry], verbose: false).and_return(batch_succeeded)
+              .with([actionable_entry], verbose: false)
+              .and_return(batch_succeeded)
 
             expect_failure_and_continuation
           end
@@ -804,7 +827,8 @@ RSpec.describe Homebrew::Bundle::Installer do
 
         it "reports the failure and continues independent entries" do
           allow(Homebrew::Bundle::Krew).to receive(:preinstall!)
-            .with("example-tool", any_args).and_raise(error, "inventory unavailable")
+            .with("example-tool", any_args)
+            .and_raise(error, "inventory unavailable")
 
           expect_failure_and_continuation
         end

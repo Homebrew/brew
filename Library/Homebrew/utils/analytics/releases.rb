@@ -85,7 +85,9 @@ module Utils
               "previous_revision" => previous.fetch("revision")
             ).merge(statistics("#{previous.fetch("revision")}..#{row.fetch("revision")}"))
             earlier = git("log", "--no-merges", "--format=%aE", previous.fetch("revision"))
-                      .b.lines(chomp: true).map { |email| email.unpack1("H*") }
+                      .b
+                      .lines(chomp: true)
+                      .map { |email| email.unpack1("H*") }
             aggregate["new_contributors"] = (aggregate.fetch("authors") - earlier).size
             aggregate
           end

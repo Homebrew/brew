@@ -84,7 +84,8 @@ module Utils
           excluded << "^#{split}^"
         end
         git("log", "--first-parent", "--reverse", "--format=%ct%x00%B%x00", range, *excluded)
-          .split("\0").each_slice(2) do |timestamp, message|
+          .split("\0")
+          .each_slice(2) do |timestamp, message|
             next if message.nil?
 
             pull_request_numbers(message).each do |number|

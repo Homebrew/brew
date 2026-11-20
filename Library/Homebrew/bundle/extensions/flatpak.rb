@@ -159,7 +159,8 @@ module Homebrew
         def package_outdated?(name, with: nil, source: nil)
           command_output(package_manager_executable!,
                          args: ["remote-ls", "--app", "--updates", "--columns=application"])
-            .lines(chomp: true).include?(name)
+            .lines(chomp: true)
+            .include?(name)
         end
 
         sig { override.params(package: Object).returns(String) }

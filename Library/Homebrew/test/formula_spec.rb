@@ -499,10 +499,12 @@ RSpec.describe Formula do
       allow(DevelopmentTools).to receive_messages(needs_libc_formula?: false, needs_compiler_formula?: false)
 
       allow(Formulary).to receive(:load_formula_from_path)
-        .with(f2.name, f2.path, flags: [], ignore_errors: false).and_return(f2)
+        .with(f2.name, f2.path, flags: [], ignore_errors: false)
+        .and_return(f2)
       allow(Formulary).to receive(:factory).with(f2.name).and_return(f2)
       allow(Formulary).to receive(:load_formula_from_path)
-        .with(f_full2.name, f_full2.path, flags: [], ignore_errors: false).and_return(f_full2)
+        .with(f_full2.name, f_full2.path, flags: [], ignore_errors: false)
+        .and_return(f_full2)
       allow(Formulary).to receive(:factory).with(f_full2.name).and_return(f_full2)
       allow(f).to receive(:versioned_formulae_names).and_return([f2.name])
     end
@@ -677,7 +679,8 @@ RSpec.describe Formula do
     before do
       [f, f_full, f_versioned, f_versioned_full].each do |formula|
         allow(Formulary).to receive(:load_formula_from_path)
-          .with(formula.name, formula.path, flags: [], ignore_errors: false).and_return(formula)
+          .with(formula.name, formula.path, flags: [], ignore_errors: false)
+          .and_return(formula)
         allow(Formulary).to receive(:factory).with(formula.name).and_return(formula)
         FileUtils.touch formula.path
       end
@@ -2157,7 +2160,8 @@ RSpec.describe Formula do
       allow(Formulary).to receive(:loader_for).and_call_original
       allow(Formulary).to receive(:loader_for).with(dependency_name, warn: false).and_return(loader)
       allow(Homebrew::Trust).to receive(:trusted?)
-        .with(:formula, "#{untrusted_tap}/#{dependency_name}").and_return(false)
+        .with(:formula, "#{untrusted_tap}/#{dependency_name}")
+        .and_return(false)
       expect(Formulary).not_to receive(:factory).with(dependency_name, any_args)
 
       expect(formula.missing_dependencies(hide: [dependency_name]).map(&:name)).to eq([dependency_name])
@@ -2179,7 +2183,8 @@ RSpec.describe Formula do
       allow(Formulary).to receive(:loader_for).and_call_original
       allow(Formulary).to receive(:loader_for).with(dependency_name, any_args).and_return(loader)
       allow(Homebrew::Trust).to receive(:trusted?)
-        .with(:formula, "#{untrusted_tap}/new").and_return(false)
+        .with(:formula, "#{untrusted_tap}/new")
+        .and_return(false)
       expect(Formulary).not_to receive(:factory).with(dependency_name, any_args)
       (HOMEBREW_CELLAR/"new").mkpath
 

@@ -386,7 +386,8 @@ module Homebrew
               f.sub!(%r{/.*}, "/*") unless @verbose
               File.join(dir, f)
             end
-            .sort.uniq
+            .sort
+            .uniq
         end
         return if files.empty?
 
@@ -599,7 +600,8 @@ module Homebrew
       sig { returns(T.nilable(Finding)) }
       def check_access_directories
         not_writable_dirs =
-          Keg.must_be_writable_directories.select(&:exist?)
+          Keg.must_be_writable_directories
+             .select(&:exist?)
              .reject(&:writable?)
         return if not_writable_dirs.empty?
 

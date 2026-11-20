@@ -41,7 +41,8 @@ RSpec.describe Homebrew::Settings do
       setup_setting
       expect(Utils).to receive(:popen_read)
         .with("git", "-C", HOMEBREW_REPOSITORY.to_s, "config", "--null", "--get-regexp", "^homebrew\\.")
-        .once.and_call_original
+        .once
+        .and_call_original
 
       described_class.read(:foo)
       described_class.read(:bar)

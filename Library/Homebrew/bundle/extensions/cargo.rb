@@ -168,7 +168,8 @@ module Homebrew
 
           cargo = package_manager_executable!
           with_env(cargo_env(cargo)) do
-            installed = package_list.each_line.filter_map { |line| line.match(PACKAGE_LIST_REGEX) }
+            installed = package_list.each_line
+                                    .filter_map { |line| line.match(PACKAGE_LIST_REGEX) }
                                     .find do |match|
               match[:name] == name && normalize_source(match[:origin]) == source
             end
@@ -194,7 +195,10 @@ module Homebrew
             else
               version_line = SystemCommand.run!(cargo, args: ["info", "--color=never", name],
                                                        chdir: HOMEBREW_TEMP, print_stderr: false)
-                                          .stdout.lines.find { |line| line.start_with?("version: ") }.to_s
+                                          .stdout
+                                          .lines
+                                          .find { |line| line.start_with?("version: ") }
+                                          .to_s
               latest = version_line[/\(latest ([^)]+)\)/, 1] || version_line[/\Aversion: (\S+)/, 1]
               unless latest&.match?(/\A\d+\.\d+\.\d+/)
                 raise "Invalid Cargo version for #{name}: #{version_line.inspect}"

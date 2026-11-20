@@ -109,7 +109,9 @@ module Homebrew
       }
       def ambiguous_packages(packages, full_name: false)
         packages.group_by { |item| package_or_resource_name(item, full_name:) }
-                .values.select { |items| items.length > 1 }.flatten
+                .values
+                .select { |items| items.length > 1 }
+                .flatten
       end
       private :ambiguous_packages
 

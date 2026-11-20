@@ -20,7 +20,8 @@ RSpec.describe UnpackStrategy::Path do
   it "caches the file type" do
     expect(path).to receive(:system_command)
       .with("file", args: ["-b", path], print_stderr: false)
-      .once.and_return(instance_double(SystemCommand::Result, stdout: "Zip archive\n"))
+      .once
+      .and_return(instance_double(SystemCommand::Result, stdout: "Zip archive\n"))
 
     2.times { path.file_type }
   end
@@ -28,7 +29,8 @@ RSpec.describe UnpackStrategy::Path do
   it "caches ZIP entries" do
     expect(path).to receive(:system_command)
       .with("zipinfo", args: ["-1", anything], print_stderr: false)
-      .once.and_return(instance_double(SystemCommand::Result, stdout: "container/\n"))
+      .once
+      .and_return(instance_double(SystemCommand::Result, stdout: "container/\n"))
 
     2.times { path.zipinfo }
   end

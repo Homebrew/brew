@@ -100,9 +100,11 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         allow(GitHub).to receive(:too_many_open_prs?).and_return(false)
         allow(GitHub::PatchInclusion).to receive(:new).and_return(patch_inclusion)
         allow(patch_inclusion).to receive(:removal_reason)
-          .with(patch_url, source_url:, tag: nil, revision: nil).and_return("Patch inclusion evidence.")
+          .with(patch_url, source_url:, tag: nil, revision: nil)
+          .and_return("Patch inclusion evidence.")
         allow(patch_inclusion).to receive(:removal_reason)
-          .with(other_url, source_url:, tag: nil, revision: nil).and_return(nil)
+          .with(other_url, source_url:, tag: nil, revision: nil)
+          .and_return(nil)
         allow(Homebrew::Bump).to receive(:create_pr)
       end
 

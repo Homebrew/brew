@@ -191,7 +191,8 @@ module Homebrew
           hash, short_hash, *commit_message, relative_path_string =
             Utils.popen_read(Utils::Git.git, "log", "--since=1 month ago", "--diff-filter=D", "--name-only",
                              "--max-count=1", "--format=%H%n%h%n%B", "--", relative_path)
-                 .lines.map(&:chomp)
+                 .lines
+                 .map(&:chomp)
 
           if hash.blank? || short_hash.blank? || relative_path_string.blank?
             ofail "No previously deleted formula found." unless silent

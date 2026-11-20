@@ -11,7 +11,11 @@ RSpec.describe "Workflows" do
   ]) do |workflow, step_id, expected_statuses|
     it "accepts the expected pull request origins for #{workflow}" do
       step = YAML.load_file(HOMEBREW_LIBRARY_PATH.parent.parent/".github/workflows/#{workflow}.yml")
-                 .fetch("jobs").values.fetch(0).fetch("steps").find { |s| s["id"] == step_id }
+                 .fetch("jobs")
+                 .values
+                 .fetch(0)
+                 .fetch("steps")
+                 .find { |s| s["id"] == step_id }
       raise "Missing workflow step #{step_id}" unless step
 
       results = [

@@ -282,7 +282,8 @@ module Homebrew
       def self.decode(component)
         return component unless component.include?("%")
 
-        component.b.gsub(/%[0-9A-Fa-f]{2}/) { |m| Integer(m[1, 2], 16).chr }
+        component.b
+                 .gsub(/%[0-9A-Fa-f]{2}/) { |m| Integer(m[1, 2], 16).chr }
                  .force_encoding(component.encoding)
       end
 

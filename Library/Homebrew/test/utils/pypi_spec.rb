@@ -565,7 +565,8 @@ RSpec.describe PyPI do
             .and_return(instance_double(SystemCommand::Result,
                                         status: instance_double(Process::Status, success?: false)))
           expect(described_class).to receive(:pip_output)
-            .with(array_including("--report=/dev/stdout", "foo[bar] @ #{url}"), any_args).and_return(report)
+            .with(array_including("--report=/dev/stdout", "foo[bar] @ #{url}"), any_args)
+            .and_return(report)
 
           described_class.update_python_resources!(formula, package_name: "foo[bar]", quiet: true)
         end
@@ -580,7 +581,8 @@ RSpec.describe PyPI do
             .and_return(instance_double(SystemCommand::Result,
                                         status: instance_double(Process::Status, success?: true), stdout: pypi_json))
           expect(described_class).to receive(:pip_output)
-            .with(array_including("--report=/dev/stdout", "foo[bar]==1.0"), any_args).and_return(report)
+            .with(array_including("--report=/dev/stdout", "foo[bar]==1.0"), any_args)
+            .and_return(report)
 
           described_class.update_python_resources!(formula, package_name: "foo[bar]", quiet: true)
         end

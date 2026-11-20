@@ -171,7 +171,8 @@ module Homebrew
                         "`brew audit [name ...]`"
             end
 
-            args.named.to_formulae_and_casks_with_taps
+            args.named
+                .to_formulae_and_casks_with_taps
                 .partition { |formula_or_cask| formula_or_cask.is_a?(Formula) }
           end
         end
@@ -334,7 +335,9 @@ module Homebrew
           os = :linux if os != :linux && !cask.supports_macos?
           os = :macos if os == :linux && !cask.supports_linux?
           cask_archs = SimulateSystem.with(os:, arch:) { reload_cask(cask) }
-                                     .depends_on.arch&.map { |cask_arch| cask_arch[:type] }
+                                     .depends_on
+                                     .arch
+                                     &.map { |cask_arch| cask_arch[:type] }
           arch = OnSystem::ARCH_OPTIONS.find { cask_archs.include?(it) } if cask_archs&.exclude?(arch)
 
           SimulateSystem.with(os:, arch:) do

@@ -120,7 +120,8 @@ RSpec.describe Homebrew::TestBot::Formulae do
           .with("brew", "deps", "--formula", "--include-build", "--include-test", "--full-name", "foo")
           .and_return("build\nruntime\ntest\ntransitive\n")
         allow(Utils).to receive(:safe_popen_read)
-          .with("brew", "deps", "--formula", "--include-test", "foo").and_return("runtime\ntest\ntransitive\n")
+          .with("brew", "deps", "--formula", "--include-test", "foo")
+          .and_return("runtime\ntest\ntransitive\n")
       end
 
       it "keeps direct and transitive runtime dependencies of the installed formula" do
@@ -383,7 +384,9 @@ RSpec.describe Homebrew::TestBot::Formulae do
         allow(formulae).to receive(:puts)
 
         expect(Utils).to receive(:safe_popen_read)
-          .with("git", "-C", repository, "show", "origin/HEAD:Formula/libssh2.rb").once.and_call_original
+          .with("git", "-C", repository, "show", "origin/HEAD:Formula/libssh2.rb")
+          .once
+          .and_call_original
 
         2.times { formulae.annotate_added_dependencies(Formulary.factory("foo")) }
       end

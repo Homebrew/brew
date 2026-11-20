@@ -723,7 +723,8 @@ module Homebrew
 
       downloads = (cache/"downloads").children
 
-      referenced_downloads = cache_files.map { |file| file[:path] }.select(&:symlink?)
+      referenced_downloads = cache_files.map { |file| file[:path] }
+                                        .select(&:symlink?)
                                         .map { |path| resolved_path(path) }
 
       (downloads - referenced_downloads).each do |download|

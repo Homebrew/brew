@@ -9,7 +9,8 @@ RSpec.describe Homebrew::TestBot::Setup do
   describe "#run!" do
     it "is successful" do
       expect(setup).to receive(:test)
-        .exactly(3).times
+        .exactly(3)
+        .times
         .and_return(instance_double(Homebrew::TestBot::Step, passed?: true))
 
       expect(setup.run!(args: instance_double(Homebrew::Cmd::TestBotCmd::Args)).passed?).to be(true)

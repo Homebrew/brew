@@ -124,7 +124,8 @@ RSpec.describe CompilerSelector do
         allow(Formula).to receive(:[]).with("llvm")
                                       .and_return(instance_double(Formula, opt_prefix: llvm_prefix))
         allow(Utils).to receive(:popen_read_text)
-          .with(clang, "--version", err: :err).and_return("clang version 21.1.0\n")
+          .with(clang, "--version", err: :err)
+          .and_return("clang version 21.1.0\n")
 
         expect(selector.compiler).to eq(:llvm_clang)
       end

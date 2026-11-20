@@ -336,7 +336,10 @@ module ELFShim
       # The dynamic section's [d_tag, d_val] pairs up to DT_NULL. Like elftools,
       # use the first entry for each tag, which is the one `assoc` finds.
       entries = read_bytes(file, dynamic_header.fetch(:p_offset), dynamic_header.fetch(:p_filesz))
-                .unpack("#{address}*").map { |value| Integer(value) }.each_slice(2).to_a
+                .unpack("#{address}*")
+                .map { |value| Integer(value) }
+                .each_slice(2)
+                .to_a
       return unless (null_index = entries.index { |d_tag, _| d_tag == DT_NULL })
 
       entries = entries.first(null_index)

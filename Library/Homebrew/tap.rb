@@ -1438,7 +1438,8 @@ class Tap # rubocop:disable Metrics/ClassLength
   def self.installed
     cache[:installed] ||= if HOMEBREW_TAP_DIRECTORY.directory?
       # Keep hidden-directory exclusion in sync with cmd/update.sh.
-      HOMEBREW_TAP_DIRECTORY.glob("*").select(&:directory?)
+      HOMEBREW_TAP_DIRECTORY.glob("*")
+                            .select(&:directory?)
                             .flat_map { it.glob("*").select(&:directory?) }
                             .map { from_path(it) }
     else

@@ -182,7 +182,8 @@ class Caveats
       "The following #{formula.name} executables are shadowed by " \
         "#{"linked #{sibling} " if sibling}commands in #{dir}:\n" \
         "#{Formatter.columns(names, min_width: names.map(&:length).max.to_i)}"
-    end.join.chomp
+    end.join
+       .chomp
   end
 
   sig { params(shadower: Pathname).returns(T.nilable(String)) }

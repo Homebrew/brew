@@ -669,7 +669,8 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         expect do
           described_class.cleanup(force: true, zap: arguments.include?("--zap"), dsl:)
         end.to(
-          change(Homebrew, :failed?).from(false).to(true)
+          change(Homebrew, :failed?).from(false)
+            .to(true)
             .and(output(a_string_including(failure_message, "may have been removed")).to_stderr),
         )
       end
@@ -702,12 +703,15 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         .and_return(Pathname("/usr/bin/false"))
       allow(described_class).to receive(:puts)
       expect(described_class).to receive(:system_output_no_stderr)
-        .with(HOMEBREW_BREW_FILE, "cleanup").ordered.and_return("")
+        .with(HOMEBREW_BREW_FILE, "cleanup")
+        .ordered
+        .and_return("")
 
       expect do
         described_class.cleanup(force: true, dsl:, casks: false, formulae: false, taps: false)
       end.to(
-        change(Homebrew, :failed?).from(false).to(true)
+        change(Homebrew, :failed?).from(false)
+          .to(true)
           .and(output(/Failed to uninstall npm packages: remaining/).to_stderr),
       )
     end

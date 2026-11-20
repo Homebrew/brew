@@ -7,7 +7,7 @@ RSpec.describe RuboCop::Cop::Homebrew::MultilineMethodChain, :config do
   it "corrects calls sharing the first line of a split chain" do
     expect_offense(<<~RUBY)
       dependents(formulae, installed).keys.to_set
-                                          ^ Start each call in a multiline chain on its own line.
+                                          ^ Keep one dotted call per line in a multiline chain.
                                      .merge(formulae.flat_map(&:names))
     RUBY
 
@@ -22,8 +22,8 @@ RSpec.describe RuboCop::Cop::Homebrew::MultilineMethodChain, :config do
     expect_offense(<<~RUBY)
       values
         &.map { |value| value.name.strip }&.compact.sort
-                                          ^^ Start each call in a multiline chain on its own line.
-                                                   ^ Start each call in a multiline chain on its own line.
+                                          ^^ Keep one dotted call per line in a multiline chain.
+                                                   ^ Keep one dotted call per line in a multiline chain.
     RUBY
 
     expect_correction(<<~RUBY)
@@ -60,6 +60,33 @@ RSpec.describe RuboCop::Cop::Homebrew::MultilineMethodChain, :config do
         example
       TEXT
                     .merge(other)
+    RUBY
+  end
+
+  it "keeps the first call on the closing line of a block" do
+    expect_offense(<<~RUBY)
+      values
+        .map do |value|
+          value.name
+        end.join.chomp
+                ^ Keep one dotted call per line in a multiline chain.
+    RUBY
+
+    expect_correction(<<~RUBY)
+      values
+        .map do |value|
+          value.name
+        end.join
+        .chomp
+    RUBY
+  end
+
+  it "accepts a single call on the closing line of an argument list" do
+    expect_no_offenses(<<~RUBY)
+      values
+        .fetch(
+          key,
+        ).to_set
     RUBY
   end
 end

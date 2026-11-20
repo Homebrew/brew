@@ -29,7 +29,8 @@ RSpec.describe Homebrew::Bundle::Cargo do
 
   def stub_cargo_list(output)
     allow(described_class).to receive(:command_output)
-      .with(Pathname("cargo"), args: ["install", "--list"], print_stderr: true).and_return(output)
+      .with(Pathname("cargo"), args: ["install", "--list"], print_stderr: true)
+      .and_return(output)
   end
 
   describe ".package_outdated?" do
@@ -556,7 +557,8 @@ RSpec.describe Homebrew::Bundle::Cargo do
 
     it "returns the uninstall command result" do
       allow(Homebrew::Bundle).to receive(:system)
-        .with("/tmp/rust/bin/cargo", "uninstall", "example", verbose: false).and_return(false)
+        .with("/tmp/rust/bin/cargo", "uninstall", "example", verbose: false)
+        .and_return(false)
 
       expect(
         described_class.uninstall_package!("example", executable: Pathname("/tmp/rust/bin/cargo")),

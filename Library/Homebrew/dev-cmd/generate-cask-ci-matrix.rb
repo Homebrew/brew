@@ -129,7 +129,8 @@ module Homebrew
         if cask.supports_macos?
           # Skip macOS if no runner satisfies the cask's min/max macOS requirements.
           macos_requirements = [cask.depends_on.macos, cask.depends_on.maximum_macos]
-                               .compact.select(&:version_specified?)
+                               .compact
+                               .select(&:version_specified?)
 
           filtered_runners = if macos_requirements.empty?
             MACOS_RUNNERS.dup

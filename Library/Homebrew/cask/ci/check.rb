@@ -75,7 +75,8 @@ module Cask
           launchctl = lambda do |sudo|
             system_command!("/bin/launchctl", args: ["list"], print_stderr: false, sudo:)
               .stdout
-              .lines.drop(1)
+              .lines
+              .drop(1)
               .grep_v(APPLE_LAUNCHJOBS_REGEX)
               .grep_v(GOOGLE_LAUNCHJOBS_REGEX)
           end

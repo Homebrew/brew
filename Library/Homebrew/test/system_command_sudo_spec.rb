@@ -10,7 +10,8 @@ RSpec.describe SystemCommand do
 
     expect(described_class).to receive(:run)
       .with("/bin/bash", args: [HOMEBREW_LIBRARY_PATH/"utils/sudo.sh"], print_stderr: false)
-      .once.and_return(instance_double(SystemCommand::Result, success?: true))
+      .once
+      .and_return(instance_double(SystemCommand::Result, success?: true))
 
     2.times { described_class.new("true", sudo: true).command }
   end

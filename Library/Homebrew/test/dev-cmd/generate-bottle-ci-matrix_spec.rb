@@ -44,8 +44,9 @@ RSpec.describe Homebrew::DevCmd::GenerateBottleCiMatrix do
     ENV.delete("GITHUB_OUTPUT")
 
     expect { command.run }
-      .to change(Homebrew, :failed?).from(false).to(true)
-      .and output(/testball already has a bottle for arm64_linux/).to_stderr
+      .to change(Homebrew, :failed?).from(false)
+                                    .to(true)
+                                    .and output(/testball already has a bottle for arm64_linux/).to_stderr
   end
 
   it "generates the dispatched bottle runner matrix", :integration_test do

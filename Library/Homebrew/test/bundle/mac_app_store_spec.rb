@@ -384,7 +384,8 @@ RSpec.describe Homebrew::Bundle::MacAppStore do
       expect do
         described_class.cleanup!(items)
       end.to(
-        change(Homebrew, :failed?).from(false).to(true)
+        change(Homebrew, :failed?).from(false)
+          .to(true)
           .and(output(
             a_string_including("Failed to uninstall Mac App Store dependencies: bar (456)"),
           ).to_stderr)

@@ -986,7 +986,8 @@ RSpec.describe Cask::Audit, :cask do
 
         def stub_check(command, *args, path)
           allow(audit).to receive(:system_command)
-            .with(command, args: [*args, path], print_stderr: false).and_return(failed_result)
+            .with(command, args: [*args, path], print_stderr: false)
+            .and_return(failed_result)
         end
 
         before do
@@ -1130,7 +1131,8 @@ RSpec.describe Cask::Audit, :cask do
       context "when the homepage domain is newly registered" do
         before do
           allow(SharedAudits).to receive(:new_domain_problem)
-            .with("https://brew.sh").and_return(domain_problem)
+            .with("https://brew.sh")
+            .and_return(domain_problem)
         end
 
         it { is_expected.to error_with(domain_problem) }

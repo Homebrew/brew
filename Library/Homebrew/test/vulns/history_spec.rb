@@ -378,7 +378,8 @@ RSpec.describe Homebrew::Vulns::History do
     before do
       allow(FormulaVersions).to receive(:new).and_call_original
       allow_any_instance_of(FormulaVersions).to receive(:rev_list)
-        .and_yield("new", source_path).and_yield("old", source_path)
+        .and_yield("new", source_path)
+        .and_yield("old", source_path)
       allow(Utils).to receive(:popen_read).and_call_original
       ["new", "old"].zip([current_source, old_source]).each do |revision, source|
         allow(Utils).to receive(:popen_read).with("git", "cat-file", "blob", "#{revision}:#{source_path}")

@@ -469,7 +469,8 @@ RSpec.describe Utils::Analytics::API do
       command.generate_repositories(repositories: { "Homebrew/brew" => Pathname.pwd })
 
       expect(JSON.parse(Pathname("_data/analytics/github/history.json").read)
-                 .dig("combined_contributors", "rows").first(4))
+                 .dig("combined_contributors", "rows")
+                 .first(4))
         .to eq([{ "period" => "current", "contributors" => 3, "new_contributors" => 3 },
                 { "period" => "2026", "contributors" => 1, "new_contributors" => 1 },
                 { "period" => "2025", "contributors" => 1, "new_contributors" => 1 },

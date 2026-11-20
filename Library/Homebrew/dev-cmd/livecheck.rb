@@ -79,7 +79,9 @@ module Homebrew
           elsif File.exist?(watchlist_path)
             begin
               # This removes blank lines, comment lines, and trailing comments
-              names = Pathname.new(watchlist_path).read.lines
+              names = Pathname.new(watchlist_path)
+                              .read
+                              .lines
                               .filter_map do |line|
                                 comment_index = line.index("#")
                                 next if comment_index&.zero?

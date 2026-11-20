@@ -203,9 +203,11 @@ RSpec.describe UnpackStrategy::Dmg do
         result = instance_double(SystemCommand::Result, success?: true, plist: { "system-entities" => [] })
 
         expect(unpack_strategy).to receive(:system_command)
-          .with("diskutil", hash_including(args: array_including("create"))).and_return(result)
+          .with("diskutil", hash_including(args: array_including("create")))
+          .and_return(result)
         allow(unpack_strategy).to receive(:system_command)
-          .with("diskutil", hash_including(args: array_including("attach"))).and_return(result)
+          .with("diskutil", hash_including(args: array_including("attach")))
+          .and_return(result)
 
         unpack_strategy.mount { nil }
       end
@@ -216,11 +218,15 @@ RSpec.describe UnpackStrategy::Dmg do
         attach_result = instance_double(SystemCommand::Result, success?: true, plist: { "system-entities" => [] })
 
         expect(unpack_strategy).to receive(:system_command)
-          .with("diskutil", hash_including(args: array_including("create"))).ordered.and_return(failed_result)
+          .with("diskutil", hash_including(args: array_including("create")))
+          .ordered
+          .and_return(failed_result)
         expect(unpack_strategy).not_to receive(:system_command)
           .with("diskutil", hash_including(args: array_including("attach")))
         expect(unpack_strategy).to receive(:system_command)
-          .with("hdiutil", hash_including(input: "qn\n")).ordered.and_return(attach_result)
+          .with("hdiutil", hash_including(input: "qn\n"))
+          .ordered
+          .and_return(attach_result)
 
         unpack_strategy.mount { |mounts| expect(mounts).to be_empty }
       end
@@ -239,7 +245,8 @@ RSpec.describe UnpackStrategy::Dmg do
             converted_result
           end
         allow(unpack_strategy).to receive(:system_command)
-          .with("diskutil", hash_including(args: array_including("attach"))).and_return(refused_result)
+          .with("diskutil", hash_including(args: array_including("attach")))
+          .and_return(refused_result)
         allow(unpack_strategy).to receive(:system_command).with("hdiutil", any_args) do
           raw_copy_kept = raw_copy&.exist?
           attach_result
@@ -256,7 +263,9 @@ RSpec.describe UnpackStrategy::Dmg do
       attach_result = instance_double(SystemCommand::Result, success?: true, plist: { "system-entities" => [] })
 
       expect(unpack_strategy).to receive(:system_command)
-        .with("diskutil", any_args).ordered.and_return(refused_result)
+        .with("diskutil", any_args)
+        .ordered
+        .and_return(refused_result)
       expect(unpack_strategy).to receive(:system_command).with(
         "hdiutil",
         args:         [

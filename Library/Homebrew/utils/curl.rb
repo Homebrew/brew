@@ -793,7 +793,8 @@ module Utils
           # Try to get encoding from Content-Type header, then from a `<meta>` tag
           # outside comments in the first 1024 bytes as browsers do.
           charset = content_type[/;\s*charset\s*=\s*"?([^\s";]+)/i, 1] if content_type
-          charset ||= File.binread(file_path, 1024).to_s
+          charset ||= File.binread(file_path, 1024)
+                          .to_s
                           .gsub(/<!--.*?(?:-->|\z)/m, "")[/<meta[^>]*[\s;]charset\s*=\s*["']?([\w-]+)/i, 1]
           begin
             if charset

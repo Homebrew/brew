@@ -64,7 +64,8 @@ RSpec.describe "Satisfy Dependencies and Requirements", :cask do
 
     it "enqueues missing formula dependencies" do
       expect(Homebrew::Install).to receive(:enqueue_formulae)
-        .with([formula_installer], download_queue: Homebrew::DownloadQueue.default).and_return([formula_installer])
+        .with([formula_installer], download_queue: Homebrew::DownloadQueue.default)
+        .and_return([formula_installer])
 
       installer.enqueue_dependency_downloads
     end

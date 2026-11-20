@@ -121,7 +121,8 @@ RSpec.describe Homebrew::Services::Cli do
       timer_file.write("timer")
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, path:, systemctl?: true)
       allow(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("status", "homebrew.name.timer").and_return(true)
+        .with("status", "homebrew.name.timer")
+        .and_return(true)
       allow(services_cli).to receive(:running).and_return([])
 
       expect([services_cli.remove_unused_service_files, service_file.exist?, timer_file.exist?])
@@ -180,7 +181,8 @@ RSpec.describe Homebrew::Services::Cli do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, path:)
       allow(services_cli).to receive(:running).and_return([])
       expect(Homebrew::Services::System).to receive(:launchctl_service_running?)
-        .with("org.example.package").and_return(true)
+        .with("org.example.package")
+        .and_return(true)
 
       expect(services_cli.remove_unused_service_files).to be_empty
       expect(active_service).to exist
@@ -459,9 +461,11 @@ RSpec.describe Homebrew::Services::Cli do
     it "stops and removes the compatible systemd service label" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("disable", "--now", "homebrew.name").and_return(true)
+        .with("disable", "--now", "homebrew.name")
+        .and_return(true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("disable", "sh.brew.name.service").and_return(true)
+        .with("disable", "sh.brew.name.service")
+        .and_return(true)
       expect(Homebrew::Services::System::Systemctl).to receive(:run).with("daemon-reload")
 
       dest_dir = mktmpdir
@@ -489,7 +493,8 @@ RSpec.describe Homebrew::Services::Cli do
     it "preserves a compatible systemd service file when stopping fails" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("disable", "--now", "homebrew.name").and_return(false)
+        .with("disable", "--now", "homebrew.name")
+        .and_return(false)
       expect(Homebrew::Services::System::Systemctl).not_to receive(:run)
 
       destination = mktmpdir/"homebrew.name.service"
@@ -516,7 +521,8 @@ RSpec.describe Homebrew::Services::Cli do
     it "cleans up after an accepted asynchronous systemd stop" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("--no-block", "disable", "--now", "homebrew.name").and_return(true)
+        .with("--no-block", "disable", "--now", "homebrew.name")
+        .and_return(true)
       expect(Homebrew::Services::System::Systemctl).to receive(:run).with("--no-block", "daemon-reload")
 
       destination = mktmpdir/"homebrew.name.service"
@@ -543,9 +549,13 @@ RSpec.describe Homebrew::Services::Cli do
     it "stops a compatible systemd service whose timer is inactive" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("stop", "homebrew.name.timer").ordered.and_return(true)
+        .with("stop", "homebrew.name.timer")
+        .ordered
+        .and_return(true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("stop", "homebrew.name").ordered.and_return(true)
+        .with("stop", "homebrew.name")
+        .ordered
+        .and_return(true)
       service = instance_double(
         Homebrew::Services::FormulaWrapper,
         name:                  "name",
@@ -573,9 +583,11 @@ RSpec.describe Homebrew::Services::Cli do
         candidate_domain_targets: ["gui/501"],
       )
       allow(Homebrew::Services::System).to receive(:launchctl_service_running?)
-        .with("sh.brew.name").and_return(true, false)
+        .with("sh.brew.name")
+        .and_return(true, false)
       allow(Homebrew::Services::System).to receive(:launchctl_service_running?)
-        .with("homebrew.mxcl.name").and_return(true, false)
+        .with("homebrew.mxcl.name")
+        .and_return(true, false)
       expect(SystemCommand).to receive(:quiet_system)
         .with(Pathname("/bin/launchctl"), "bootout", "gui/501/sh.brew.name")
       expect(SystemCommand).to receive(:quiet_system)
@@ -672,7 +684,9 @@ RSpec.describe Homebrew::Services::Cli do
         systemctl?:                 false,
       )
       expect(SystemCommand).to receive(:quiet_system)
-        .with("/bin/launchctl", "stop", "homebrew.mxcl.name").once.and_return(true)
+        .with("/bin/launchctl", "stop", "homebrew.mxcl.name")
+        .once
+        .and_return(true)
 
       expect do
         services_cli.kill([service])
@@ -691,7 +705,8 @@ RSpec.describe Homebrew::Services::Cli do
       allow(service).to receive(:reset_cache!)
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("stop", "homebrew.name").and_return(true)
+        .with("stop", "homebrew.name")
+        .and_return(true)
 
       expect do
         services_cli.kill([service])
@@ -711,7 +726,8 @@ RSpec.describe Homebrew::Services::Cli do
       allow(service).to receive(:reset_cache!)
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("stop", "homebrew.name").and_return(true)
+        .with("stop", "homebrew.name")
+        .and_return(true)
 
       expect do
         services_cli.kill([service])
@@ -836,7 +852,8 @@ RSpec.describe Homebrew::Services::Cli do
     it "installs timed systemd timer files" do
       allow(Homebrew::Services::System).to receive(:systemctl?).and_return(true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("disable", "homebrew.name.timer").and_return(true)
+        .with("disable", "homebrew.name.timer")
+        .and_return(true)
       allow(Homebrew::Services::System::Systemctl).to receive(:run).with("daemon-reload")
 
       source_dir = mktmpdir

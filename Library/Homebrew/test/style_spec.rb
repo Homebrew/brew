@@ -38,7 +38,8 @@ RSpec.describe Homebrew::Style do
       RUBY
 
       expect(described_class.check_style_json([formula], except_cops: ["FormulaAuditStrict"])
-                            .for_path(formula).map(&:message))
+                            .for_path(formula)
+                            .map(&:message))
         .to include('Declare test resources outside `test do` using `resource "name", :test do`.')
     end
 

@@ -69,7 +69,8 @@ RSpec.describe Utils::Analytics::Releases do
     allow(report).to receive(:git).and_call_original
     expect(report).not_to receive(:git).with("log", "--format=%P%x09%aE%x09%s", "1.0.0..1.1.0")
     expect(report).to receive(:git).with("log", "--format=%P%x09%aE%x09%s", "#{previous}..#{revision}")
-                                   .at_least(:once).and_call_original
+                                   .at_least(:once)
+                                   .and_call_original
 
     report.report
   end

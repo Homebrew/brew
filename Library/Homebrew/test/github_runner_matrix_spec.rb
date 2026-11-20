@@ -128,7 +128,8 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
 
       it "includes changed dependencies needed by an already-bottled formula" do
         allow_any_instance_of(BottleTransition).to receive(:required?)
-          .with(testball_depender.formula).and_return(true)
+          .with(testball_depender.formula)
+          .and_return(true)
         runners = described_class.new([testball, testball_depender], [],
                                       all_supported: false, dependent_matrix: false)
                                  .active_runner_specs_hash
@@ -165,7 +166,8 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
       it "keeps standard runners when transition prerequisites are missing" do
         testball
         allow_any_instance_of(BottleTransition).to receive(:required?)
-          .with(testball_depender.formula).and_return(true)
+          .with(testball_depender.formula)
+          .and_return(true)
 
         runners = described_class.new([testball_depender], [], all_supported: false, dependent_matrix: false)
                                  .active_runner_specs_hash

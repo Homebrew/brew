@@ -71,7 +71,8 @@ module Homebrew
             "schema_version"       => versions.first,
           },
           "advisories" => by_formula.transform_values { |records| records.sort_by { |record| record.fetch("id") } }
-                                    .sort.to_h,
+                                    .sort
+                                    .to_h,
         }
       end
 

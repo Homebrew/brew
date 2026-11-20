@@ -76,7 +76,8 @@ RSpec.describe Homebrew::Bundle::Winget do
 
     it "handles only the exact no-applications native status" do
       expect(described_class).to receive(:run_inventory_script)
-        .with(Pathname("powershell.exe"), "query\nif ($nativeCode -eq 2316632084) { exit 0 }\n").and_return(output)
+        .with(Pathname("powershell.exe"), "query\nif ($nativeCode -eq 2316632084) { exit 0 }\n")
+        .and_return(output)
       described_class.package_outdated?("Example.App", source: "msstore")
     end
   end
@@ -608,7 +609,8 @@ RSpec.describe Homebrew::Bundle::Winget do
       expect do
         described_class.cleanup!(items)
       end.to(
-        change(Homebrew, :failed?).from(false).to(true)
+        change(Homebrew, :failed?).from(false)
+          .to(true)
           .and(output(a_string_including("Other App (XP987654321ABC, msstore)")).to_stderr)
           .and(output("Uninstalled 0 winget packages\n").to_stdout),
       )

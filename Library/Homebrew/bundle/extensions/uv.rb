@@ -114,7 +114,8 @@ module Homebrew
             args.push("--upgrade", "--python", tool_python(name))
           else
             # Find the newest installed Homebrew Python from opt/bin filenames without loading formulae.
-            python = Formula.installed_formula_names.grep(/\Apython(?:@.+)?\z/)
+            python = Formula.installed_formula_names
+                            .grep(/\Apython(?:@.+)?\z/)
                             .flat_map { |formula_name| Utils::Path.formula_opt_bin(formula_name).glob("python[0-9]*") }
                             .select { |path| path.file? && path.basename.to_s.match?(/\Apython\d+\.\d+\z/) }
                             .max_by { |path| Version.new(path.basename.to_s.delete_prefix("python")) }

@@ -328,9 +328,11 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
       allow(formula).to receive(:plist_names).and_return(["sh.brew.mysql", "homebrew.mxcl.mysql"])
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("sh.brew.mysql").and_return(["", false, :launchctl_list])
+        .with("sh.brew.mysql")
+        .and_return(["", false, :launchctl_list])
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("homebrew.mxcl.mysql").and_return(["pid = 123", true, :launchctl_print])
+        .with("homebrew.mxcl.mysql")
+        .and_return(["pid = 123", true, :launchctl_print])
 
       expect(service.loaded?).to be(true)
       expect(service.pid).to eq(123)
@@ -354,11 +356,14 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
       allow(formula).to receive(:launchd_service_paths).and_return(service_files)
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("sh.brew.mysql").and_return(["", false, :launchctl_list])
+        .with("sh.brew.mysql")
+        .and_return(["", false, :launchctl_list])
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("homebrew.mxcl.mysql").and_return(["", false, :launchctl_list])
+        .with("homebrew.mxcl.mysql")
+        .and_return(["", false, :launchctl_list])
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("org.example.mysql").and_return(["pid = 123", true, :launchctl_print])
+        .with("org.example.mysql")
+        .and_return(["pid = 123", true, :launchctl_print])
 
       expect([service.loaded?, service.active_service_name]).to eq([true, "org.example.mysql"])
     end
@@ -367,7 +372,8 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
       allow(formula).to receive(:plist_names).and_return(["sh.brew.mysql", "homebrew.mxcl.mysql"])
       expect(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("sh.brew.mysql").and_return(["pid = 123", true, :launchctl_print])
+        .with("sh.brew.mysql")
+        .and_return(["pid = 123", true, :launchctl_print])
       expect(Homebrew::Services::System).not_to receive(:launchctl_find_service).with("homebrew.mxcl.mysql")
 
       expect(service.active_service_name).to eq("sh.brew.mysql")
@@ -377,9 +383,11 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, systemctl?: false)
       allow(formula).to receive(:plist_names).and_return(["sh.brew.mysql", "homebrew.mxcl.mysql"])
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("sh.brew.mysql").and_return(["last exit code = 0", true, :launchctl_print])
+        .with("sh.brew.mysql")
+        .and_return(["last exit code = 0", true, :launchctl_print])
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("homebrew.mxcl.mysql").and_return(["pid = 123", true, :launchctl_print])
+        .with("homebrew.mxcl.mysql")
+        .and_return(["pid = 123", true, :launchctl_print])
 
       expect(service.active_service_name).to eq("homebrew.mxcl.mysql")
     end
@@ -412,7 +420,8 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(service).to receive(:timed?).and_return(true)
       allow(Homebrew::Services::System::Systemctl).to receive(:quiet_run).and_return(false)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("status", "homebrew.mysql.service").and_return(true)
+        .with("status", "homebrew.mysql.service")
+        .and_return(true)
 
       expect(service.loaded_service_names).to eq(["homebrew.mysql"])
     end
@@ -420,9 +429,11 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
     it "finds a service loaded with the compatible systemd label" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("status", "sh.brew.mysql.service").and_return(false)
+        .with("status", "sh.brew.mysql.service")
+        .and_return(false)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("status", "homebrew.mysql.service").and_return(true)
+        .with("status", "homebrew.mysql.service")
+        .and_return(true)
 
       expect(service.loaded_service_names).to eq(["homebrew.mysql"])
     end
@@ -430,9 +441,13 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
     it "caches compatible systemd loaded-name probes" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("status", "sh.brew.mysql.service").once.and_return(false)
+        .with("status", "sh.brew.mysql.service")
+        .once
+        .and_return(false)
       expect(Homebrew::Services::System::Systemctl).to receive(:quiet_run)
-        .with("status", "homebrew.mysql.service").once.and_return(true)
+        .with("status", "homebrew.mysql.service")
+        .once
+        .and_return(true)
 
       expect([
         service.loaded?,
@@ -444,7 +459,8 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
     it "reports the active compatible systemd label" do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       allow(Homebrew::Services::System::Systemctl).to receive(:popen_read)
-        .with("status", "homebrew.mysql.service").and_return("Main PID: 123 (mysqld)")
+        .with("status", "homebrew.mysql.service")
+        .and_return("Main PID: 123 (mysqld)")
       allow(service).to receive(:loaded_service_names).and_return(["homebrew.mysql"])
 
       expect(service.active_service_name).to eq("homebrew.mysql")
@@ -454,9 +470,11 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       allow(service).to receive_messages(timed?: true, loaded_service_names: [])
       allow(Homebrew::Services::System::Systemctl).to receive(:popen_read)
-        .with("status", "sh.brew.mysql.service").and_return("Active: inactive (dead)")
+        .with("status", "sh.brew.mysql.service")
+        .and_return("Active: inactive (dead)")
       allow(Homebrew::Services::System::Systemctl).to receive(:popen_read)
-        .with("status", "homebrew.mysql.service").and_return("Main PID: 123 (mysqld)")
+        .with("status", "homebrew.mysql.service")
+        .and_return("Main PID: 123 (mysqld)")
 
       expect(service.active_service_name).to eq("homebrew.mysql")
     end
@@ -471,9 +489,11 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: false, systemctl?: true)
       allow(service).to receive(:loaded_service_names).and_return([])
       expect(Homebrew::Services::System::Systemctl).to receive(:popen_read)
-        .with("status", "sh.brew.mysql.service").and_return("")
+        .with("status", "sh.brew.mysql.service")
+        .and_return("")
       expect(Homebrew::Services::System::Systemctl).to receive(:popen_read)
-        .with("status", "homebrew.mysql.service").and_return(output)
+        .with("status", "homebrew.mysql.service")
+        .and_return(output)
 
       expect([
         service.active_service_name,
@@ -590,9 +610,11 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(Homebrew::Services::System).to receive_messages(launchctl?: true, root?: false, systemctl?: false)
       allow(formula).to receive(:plist_names).and_return(["sh.brew.mysql", "homebrew.mxcl.mysql"])
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("sh.brew.mysql").and_return(["", false, :launchctl_list])
+        .with("sh.brew.mysql")
+        .and_return(["", false, :launchctl_list])
       allow(Homebrew::Services::System).to receive(:launchctl_find_service)
-        .with("homebrew.mxcl.mysql").and_return(["pid = 123", true, :launchctl_print])
+        .with("homebrew.mxcl.mysql")
+        .and_return(["pid = 123", true, :launchctl_print])
       allow(service).to receive(:dest_dir).and_return(mktmpdir)
       service.destinations.each { |destination| destination.write("service") }
 
@@ -645,7 +667,8 @@ RSpec.describe Homebrew::Services::FormulaWrapper do
       allow(formula).to receive(:launchd_service_paths).and_return(service_files)
       allow(Formulary).to receive(:factory).with("mysql").and_return(formula)
       expect(Homebrew::Services::System).to receive(:launchctl_service_running?)
-        .with("sh.brew.mysql").and_return(false)
+        .with("sh.brew.mysql")
+        .and_return(false)
       expect(Homebrew::Services::System).not_to receive(:launchctl_service_running?)
         .with("homebrew.mxcl.mysql")
 

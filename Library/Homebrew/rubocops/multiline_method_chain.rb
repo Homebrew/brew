@@ -19,7 +19,7 @@ module RuboCop
       class MultilineMethodChain < Base
         extend AutoCorrector
 
-        MSG = "Start each call in a multiline chain on its own line."
+        MSG = "Keep one dotted call per line in a multiline chain."
 
         sig { params(node: RuboCop::AST::SendNode).void }
         def on_send(node)
@@ -36,8 +36,9 @@ module RuboCop
           continuation = dots.find(&:begins_its_line?)
           return unless continuation
 
-          dots.drop(1).each do |dot|
-            next if dot.begins_its_line?
+          dots.each_cons(2) do |pair|
+            dot = pair.fetch(1)
+            next unless dot.same_line?(pair.fetch(0))
             # A newline after a heredoc opener would put the call inside the string.
             next if processed_source.ast.each_node(:any_str).any? do |str|
               str.heredoc? && str.first_line == dot.line && str.source_range.begin_pos < dot.begin_pos

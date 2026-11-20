@@ -98,7 +98,8 @@ module Utils
         return [] unless path
 
         Utils.safe_popen_read("git", "-C", path, "ls-tree", "-r", "--name-only", "HEAD", "--", "_posts")
-             .lines(chomp: true).filter_map do |file|
+             .lines(chomp: true)
+             .filter_map do |file|
           match = file.match(
             %r{\A_posts/(\d{4})-(\d{2})-(\d{2})-(homebrew-\d+\.\d+\.\d+|security-incident-disclosure)\.md\z},
           )
@@ -435,12 +436,16 @@ module Utils
         data[:security_disclosures] = disclosures
         data[:maintainer_history] = archived["maintainer_history"] if archived["maintainer_history"]
         combined = git_repositories.slice("Homebrew/brew", "Homebrew/homebrew-core", "Homebrew/homebrew-cask")
-        first_years = combined.values.flat_map { |repository| repository.author_identities.keys }.uniq.sort
+        first_years = combined.values
+                              .flat_map { |repository| repository.author_identities.keys }
+                              .uniq
+                              .sort
                               .each_with_object({}) do |period, first|
           combined.each_value do |repository|
             repository.author_identities.fetch(period, []).each { |identity| first[identity] ||= period }
           end
-        end.values.tally
+        end.values
+           .tally
         data[:combined_contributors] = {
           repositories: combined.keys,
           rows:         ["current", *(2009..today.year).to_a.reverse.map(&:to_s)].map do |period|

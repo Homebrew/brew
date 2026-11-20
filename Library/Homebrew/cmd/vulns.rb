@@ -103,7 +103,8 @@ module Homebrew
         list = T.let([], T::Array[Formula])
         if (brewfile = args.brewfile)
           require "bundle/brewfile"
-          list += Homebrew::Bundle::Brewfile.read(file: brewfile_path(brewfile)).entries
+          list += Homebrew::Bundle::Brewfile.read(file: brewfile_path(brewfile))
+                                            .entries
                                             .select { |e| e.type == :brew }
                                             .map { |e| Formulary.resolve(e.name) }
         end

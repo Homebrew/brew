@@ -371,7 +371,8 @@ module Homebrew
         # supports
         strategy_data = strategy.find_versions(
           **{ cask:, url:, regex: livecheck_regex, options: livecheck_options }
-            .slice(*livecheck_find_versions_parameters(strategy)).compact,
+            .slice(*livecheck_find_versions_parameters(strategy))
+            .compact,
           &livecheck_strategy_block
         )
         match_version_map = strategy_data[:matches]
@@ -561,7 +562,8 @@ module Homebrew
           # supports
           strategy_data = strategy.find_versions(
             **{ url:, regex: livecheck_regex, options: livecheck_options }
-              .slice(*livecheck_find_versions_parameters(strategy)).compact,
+              .slice(*livecheck_find_versions_parameters(strategy))
+              .compact,
             &livecheck_strategy_block
           )
           match_version_map = strategy_data[:matches]

@@ -531,7 +531,9 @@ module Homebrew
         *HOMEBREW_REPOSITORY.glob(".github/scripts/*.sh"),
         *HOMEBREW_REPOSITORY.glob("package/scripts/*"),
         *HOMEBREW_LIBRARY.glob("Homebrew/**/*.sh").reject { |path| path.to_s.include?("/vendor/") },
-        *HOMEBREW_LIBRARY.glob("Homebrew/shims/**/*").map(&:realpath).uniq
+        *HOMEBREW_LIBRARY.glob("Homebrew/shims/**/*")
+                         .map(&:realpath)
+                         .uniq
                          .reject(&:directory?)
                          .reject { |path| path.basename.to_s == "cc" }
                          .select do |path|

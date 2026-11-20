@@ -135,8 +135,9 @@ RSpec.describe Homebrew::DevCmd::CaskCi do
       ENV["HOMEBREW_SNAPSHOT_BEFORE"] = JSON.generate(empty_snapshot)
 
       expect { command.run }
-        .to change(Homebrew, :failed?).from(false).to(true)
-        .and output(/::error.*Some applications are still installed/).to_stdout
+        .to change(Homebrew, :failed?).from(false)
+                                      .to(true)
+                                      .and output(/::error.*Some applications are still installed/).to_stdout
     end
   end
 
