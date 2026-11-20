@@ -97,6 +97,7 @@ module Cask
           [
             App,
             AppImage,
+            DesktopEntry,
             Suite,
             Artifact,
             Colorpicker,

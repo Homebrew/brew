@@ -17,6 +17,7 @@ RSpec.describe RuboCop::Cop::Cask::StanzaOrder, :config do
       :on_linux,
       :on_system_conditional,
       :app_image,
+      :desktop_entry,
       :generated_script,
       :command_wrapper,
       :generate_completions_from_executable,

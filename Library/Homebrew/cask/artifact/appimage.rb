@@ -1,6 +1,7 @@
 # typed: strict
 # frozen_string_literal: true
 
+require "cask/artifact/desktop_integration"
 require "cask/artifact/moved"
 require "cask/desktop_file_parser"
 
@@ -8,6 +9,8 @@ module Cask
   module Artifact
     # Artifact corresponding to the `app_image` stanza.
     class AppImage < Moved
+      include DesktopIntegration
+
       sig { override.params(target: T.any(String, Pathname), base_dir: T.nilable(Pathname)).returns(Pathname) }
       def resolve_target(target, base_dir: nil)
         Pathname.new("#{config.appimagedir}/#{target}")
@@ -48,7 +51,7 @@ module Cask
             end
 
             begin
-              desktop_file.replace_program(target.to_s, environment:)
+              desktop_file.replace_program(environment:) { target.to_s }
             rescue ArgumentError
               odebug "Skipping '#{embedded_desktop_file.basename}' due to malformed `Exec`"
               next
@@ -85,42 +88,13 @@ module Cask
           {}
         end
 
-        desktop_entry_dir = Pathname(ENV.fetch("HOMEBREW_XDG_DATA_HOME", "~/.local/share")).expand_path/"applications"
-        desktop_entries.each_key do |desktop_entry_name|
-          desktop_entry = desktop_entry_dir/desktop_entry_name
-          next if !desktop_entry.exist? && !desktop_entry.symlink?
-
-          message = "It seems there is already a desktop entry at '#{desktop_entry}'"
-          # An upgrade rewrites the entry whatever it contains.
-          raise CaskError, "#{message}. Use `--force` to overwrite." if !force && !adopt && !predecessor
-
-          opoo "#{message}; overwriting."
-        end
+        refuse_taken_desktop_entries(desktop_entries.keys, force:, adopt:, predecessor:)
 
         super
 
         make_executable(target, command:)
 
-        desktop_entries.each do |desktop_entry_name, desktop_file|
-          desktop_entry_dir.mkpath
-          desktop_entry = desktop_entry_dir/desktop_entry_name
-          ohai "Creating desktop entry '#{desktop_entry}'"
-          if desktop_entry.exist? || desktop_entry.symlink?
-            # Take over the entry from any other cask that links to it,
-            # so uninstalling that cask doesn't remove this one's entry.
-            Caskroom.path.glob("*/*/*.desktop").each do |desktop_entry_link|
-              desktop_entry_link.unlink if desktop_entry_link.symlink? && desktop_entry_link.readlink == desktop_entry
-            end
-            desktop_entry.unlink
-          end
-          desktop_entry.write(desktop_file.to_s)
-          FileUtils.ln_sf desktop_entry, cask.staged_path/desktop_entry_name
-        end
-
-        # Update mimetype cache if possible
-        return if desktop_entries.values.none? { |desktop_file| desktop_file.get("MimeType") }
-
-        update_mime_info_cache(desktop_entry_dir, command:)
+        write_desktop_entries(desktop_entries, command:)
       end
 
       sig {
@@ -137,23 +111,7 @@ module Cask
       }
       def uninstall_phase(skip: false, force: false, adopt: false, verbose: false, successor: nil, upgrade: false,
                           reinstall: false, command: SystemCommand)
-        desktop_entry_dirs_with_mime_types = cask.staged_path
-                                                 .glob("*.desktop")
-                                                 .select(&:symlink?)
-                                                 .filter_map do |desktop_entry_link|
-          desktop_entry = desktop_entry_link.readlink
-          desktop_entry_link.unlink
-          next if !desktop_entry.exist? && !desktop_entry.symlink?
-
-          mime_types = DesktopFileParser.new(desktop_entry.read).get("MimeType") if desktop_entry.file?
-          ohai "Removing desktop entry '#{desktop_entry}'"
-          desktop_entry.unlink
-          desktop_entry.dirname if mime_types.present?
-        end
-        # Stop the mimetype cache from offering the removed entries
-        desktop_entry_dirs_with_mime_types.uniq.each do |desktop_entry_dir|
-          update_mime_info_cache(desktop_entry_dir, command:)
-        end
+        remove_desktop_entries(cask.staged_path.glob("*.desktop"), command:)
 
         # Migration shim for the `Symlinked` -> `Moved` transition.
         # Old installs have the real AppImage in the versioned Caskroom `source`
@@ -193,15 +151,6 @@ module Cask
       # Enough of an extensionless `.DirIcon` to find an SVG's `<svg` tag.
       DESKTOP_ENTRY_ICON_HEADER_BYTES = 1024
       private_constant :DESKTOP_ENTRY_ICON_HEADER_BYTES
-
-      # Rebuild `desktop_entry_dir`'s mimetype cache, but only if there is one
-      sig { params(desktop_entry_dir: Pathname, command: T.class_of(SystemCommand)).void }
-      def update_mime_info_cache(desktop_entry_dir, command:)
-        return unless (desktop_entry_dir/"mimeinfo.cache").exist?
-        return unless (update_desktop_database = which("update-desktop-database"))
-
-        command.run(update_desktop_database, args: [desktop_entry_dir], print_stderr: false)
-      end
 
       sig { params(path: Pathname, command: T.class_of(SystemCommand)).void }
       def make_executable(path, command:)

@@ -31,6 +31,9 @@ class Cask::DSL
   def command_wrapper(*args, **kwargs); end
 
   sig { params(args: T.anything, kwargs: T.anything).void }
+  def desktop_entry(*args, **kwargs); end
+
+  sig { params(args: T.anything, kwargs: T.anything).void }
   def dictionary(*args, **kwargs); end
 
   sig { params(args: T.anything, kwargs: T.anything).void }
