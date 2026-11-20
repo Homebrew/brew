@@ -220,13 +220,38 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Text do
       RUBY
     end
 
-    it "reports an offense if `env :std` is present in homebrew/core" do
+    it "reports each formula `env` call in homebrew/core" do
       expect_offense(<<~RUBY, "/homebrew-core/")
         class Foo < Formula
-          url "https://brew.sh/foo-1.0.tgz"
-
           env :std
-          ^^^^^^^^ FormulaAudit/Text: `env :std` in homebrew/core formulae is deprecated
+          ^^^^^^^^ FormulaAudit/Text: Do not use `env` in homebrew/core formulae.
+
+          on_macos do
+            env :userpaths, :other
+            ^^^^^^^^^^^^^^^^^^^^^^ FormulaAudit/Text: Do not use `env` in homebrew/core formulae.
+          end
+        end
+      RUBY
+    end
+
+    it "allows other objects' `env` calls in homebrew/core" do
+      expect_no_offenses(<<~RUBY, "/homebrew-core/")
+        class Foo < Formula
+          class CustomRequirement < Requirement
+            env { ENV.prepend_path "PATH", "/opt/foo/bin" }
+          end
+
+          def install
+            toolchain.env :std
+          end
+        end
+      RUBY
+    end
+
+    it "allows `env :std` in third-party taps" do
+      expect_no_offenses(<<~RUBY, "/Taps/example/homebrew-tools/Formula/foo.rb")
+        class Foo < Formula
+          env :std
         end
       RUBY
     end
