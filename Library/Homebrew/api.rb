@@ -60,7 +60,12 @@ module Homebrew
 
       if Homebrew.running_as_root_but_not_owned_by_root? &&
          (!target.exist? || target.empty?)
-        odie "Need to download #{url} but cannot as root! Run `brew update` without `sudo` first then try again."
+        odie <<~EOS
+          Need to download #{url} but cannot as root because the API cache is missing at #{target}.
+          Populate this cache entry without starting a service, then retry with `sudo` and your user's
+          cache. For `brew services`, run `brew info <formula>` without `sudo`, then use the full Brew path:
+          `sudo HOMEBREW_CACHE="$(brew --cache)" "$(command -v brew)" services ...`.
+        EOS
       end
 
       curl_args = [

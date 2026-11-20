@@ -72,6 +72,17 @@ RSpec.describe Homebrew::API do
       expect(fetched_json).to eq json_hash
     end
 
+    it "explains how to use the user cache when running as root" do
+      target = cache_dir/"missing.json"
+      allow(Homebrew).to receive(:running_as_root_but_not_owned_by_root?).and_return(true)
+
+      expect do
+        described_class.fetch_json_api_file("missing.json", target:)
+      end.to raise_error(SystemExit).and output(
+        /Populate this cache entry without starting a service[\s\S]*HOMEBREW_CACHE=.*services/,
+      ).to_stderr
+    end
+
     it "loads the configured curlrc once per download", :needs_utils_curl do
       ENV["HOMEBREW_CURLRC"] = (cache_dir/"curlrc").to_s
       curl_args = []
