@@ -317,6 +317,25 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       expect(described_class.formulae_to_uninstall).to be_empty
     end
 
+    it "uninstalls a formula that was deleted from its tap" do
+      allow(Homebrew::Bundle::Brew).to receive(:formulae)
+        .and_return([{ name: "deleted", full_name: "homebrew/tap/deleted" }])
+      allow(Formulary).to receive(:loader_for).with(/deleted/, any_args).and_call_original
+      keg_path = HOMEBREW_CELLAR/"deleted/1.0"
+      (keg_path/".brew").mkpath
+      (keg_path/".brew/deleted.rb").write <<~RUBY
+        class Deleted < Formula
+          url "deleted-1.0"
+        end
+      RUBY
+      tab = Tab.empty
+      tab.tabfile = keg_path/AbstractTab::FILENAME
+      tab.source["tap"] = "homebrew/tap"
+      tab.write
+
+      expect(described_class.formulae_to_uninstall).to eql(%w[homebrew/tap/deleted])
+    end
+
     it "computes which VSCode extensions to uninstall" do
       allow(Homebrew::Bundle::VscodeExtension).to receive(:extensions).and_return(%w[z])
       expect(Homebrew::Bundle::VscodeExtension.cleanup_items(described_class.dsl.entries)).to eql(%w[z])
