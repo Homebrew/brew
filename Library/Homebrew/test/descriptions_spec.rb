@@ -128,4 +128,18 @@ RSpec.describe Descriptions do
       expect { descriptions.print }.to output(/foo .*#{status}.*: Core foo/).to_stdout
     end
   end
+
+  it "prefers cached incompatible metadata over deprecated without loading formulae" do
+    allow_any_instance_of(StringIO).to receive(:tty?).and_return(true)
+    descriptions_hash["homebrew/core/foo"] = "Core foo"
+
+    descriptions = described_class.new(
+      descriptions_hash,
+      status_data: { "homebrew/core/foo" => { deprecated: true, disabled: false, incompatible: true } },
+    )
+
+    expect(Formulary).not_to receive(:factory)
+
+    expect { descriptions.print }.to output(/foo .*\(incompatible\).*: Core foo/).to_stdout
+  end
 end

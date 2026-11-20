@@ -111,8 +111,8 @@ class Descriptions
     end
     deprecated = @status_data.dig(full_name, :deprecated) == true
     disabled = @status_data.dig(full_name, :disabled) == true
-    incompatible = false
-    if !deprecated && !disabled
+    incompatible = @status_data.dig(full_name, :incompatible) == true
+    if !deprecated && !disabled && !incompatible
       formula_or_cask = begin
         if description.is_a?(Array)
           Cask::CaskLoader.load(full_name)
