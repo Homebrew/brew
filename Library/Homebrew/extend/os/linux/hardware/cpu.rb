@@ -11,6 +11,7 @@ module OS
           requires_ancestor { T.class_of(::Hardware::CPU) }
 
           HEX_BASE = 16
+          ARM_IMPLEMENTER_ID = 0x41
 
           sig { returns(T::Hash[Symbol, String]) }
           def optimization_flags
@@ -51,8 +52,8 @@ module OS
           sig { params(implementer: Integer, cpu_model: Integer).returns(Symbol) }
           def arm_family(implementer, cpu_model)
             unknown = :"unknown_#{implementer.to_s(HEX_BASE)}"
-            # only mapping for Arm (0x41) is implemented
-            return unknown if implementer != 0x41
+            # only mapping for Arm is implemented
+            return unknown if implementer != ARM_IMPLEMENTER_ID
 
             # See https://en.wikipedia.org/wiki/ARM_architecture_family#Cores
             # and https://github.com/llvm/llvm-project/blob/main/llvm/lib/TargetParser/Host.cpp

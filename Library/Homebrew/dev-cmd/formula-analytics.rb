@@ -31,6 +31,8 @@ module Homebrew
                description: "Output the number of devcmdrun/HOMEBREW_DEVELOPER events."
         switch "--homebrew-env-config",
                description: "Output rates of non-default Homebrew environment configuration variables."
+        switch "--homebrew-os-arch-level-ci",
+               description: "Output the number of OS/Architecture/Architecture level/CI events."
         switch "--homebrew-os-arch-ci",
                description: "Output the number of OS/Architecture/CI events."
         switch "--homebrew-prefixes",
@@ -53,8 +55,8 @@ module Homebrew
 
         conflicts "--install", "--cask-install", "--install-on-request", "--build-error", "--os-version",
                   "--homebrew-devcmdrun-developer", "--homebrew-env-config", "--homebrew-os-arch-ci",
-                  "--homebrew-prefixes", "--homebrew-versions", "--brew-command-run", "--brew-command-run-options",
-                  "--brew-test-bot-test"
+                  "--homebrew-os-arch-level-ci", "--homebrew-prefixes", "--homebrew-versions", "--brew-command-run",
+                  "--brew-command-run-options", "--brew-test-bot-test"
         conflicts "--json", "--all-core-formulae-json", "--setup"
 
         named_args :none
@@ -79,6 +81,7 @@ module Homebrew
         categories << :homebrew_devcmdrun_developer if args.homebrew_devcmdrun_developer?
         categories << :homebrew_env_config if args.homebrew_env_config?
         categories << :homebrew_os_arch_ci if args.homebrew_os_arch_ci?
+        categories << :homebrew_os_arch_level_ci if args.homebrew_os_arch_level_ci?
         categories << :homebrew_prefixes if args.homebrew_prefixes?
         categories << :homebrew_versions if args.homebrew_versions?
         categories << :os_versions if args.os_version?

@@ -17,6 +17,7 @@ module Utils
         const :bucket, Symbol
         const :dimension_key, T.any(String, Symbol)
         const :groups, T::Array[Symbol]
+        const :where, String, default: ""
       end
 
       DEFAULT_CATEGORY_DIMENSIONS = CategoryDimensions.new(
@@ -28,9 +29,17 @@ module Utils
         ),
         homebrew_env_config:          CategoryDimensions.new(
           bucket: :command_run, dimension_key: "env_config", groups: [:env_config, :env_config_state],
+          # Events predating the user-set-aware `env_config_state` tag
+          # counted brew's own exports as configuration, so drop them.
+          where:  " AND env_config_state IS NOT NULL"
         ),
         homebrew_os_arch_ci:          CategoryDimensions.new(
           bucket: :formula_install, dimension_key: "os_arch_ci", groups: [:os, :arch, :ci],
+        ),
+        homebrew_os_arch_level_ci:    CategoryDimensions.new(
+          bucket: :formula_install, dimension_key: "os_arch_level_ci", groups: [:os, :arch, :cpu_family, :ci],
+          # Events predating the `cpu_family` tag can't be attributed to one.
+          where:  " AND cpu_family IS NOT NULL"
         ),
         homebrew_prefixes:            CategoryDimensions.new(
           bucket: :formula_install, dimension_key: "prefix", groups: [:prefix, :os, :arch],
@@ -155,9 +164,7 @@ module Utils
           additional_where = all_core_formulae_json ? " AND tap_name ~ '^homebrew/'" : ""
           dimensions = CATEGORY_DIMENSIONS.fetch(category, DEFAULT_CATEGORY_DIMENSIONS)
           dimension_key = dimensions.dimension_key
-          # Events predating the user-set-aware `env_config_state` tag
-          # counted brew's own exports as configuration, so drop them.
-          additional_where += " AND env_config_state IS NOT NULL" if category == :homebrew_env_config
+          additional_where += dimensions.where if dimensions.where.present?
           additional_where += " AND on_request = 'true'" if category == :formula_install_on_request
 
           package_renames = self.package_renames(dimension_key)
@@ -199,11 +206,12 @@ module Utils
               next
             end
 
-            platform = "#{record["os"]} #{record["arch"]}"
+            platform = [record["os"], record["arch"],
+                        Hardware::CPU::X86_64_LEVELS[record["cpu_family"]]].compact.join(" ")
             dimension = case category
             when :homebrew_devcmdrun_developer
               "devcmdrun=#{record["devcmdrun"]} HOMEBREW_DEVELOPER=#{record["developer"]}"
-            when :homebrew_os_arch_ci
+            when :homebrew_os_arch_ci, :homebrew_os_arch_level_ci
               ci_suffix = " (CI)" if record["ci"] == "true"
               "#{platform}#{ci_suffix}"
             when :homebrew_prefixes
