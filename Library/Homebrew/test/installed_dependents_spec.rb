@@ -466,6 +466,13 @@ RSpec.describe InstalledDependents do
 
       expect(described_class.build_dependents_by_name(installed, installed)).to eq("foo" => ["bar"])
     end
+
+    it "keeps a build dependency whose formula has no usable spec" do
+      build_dependency = installed.flat_map { |f| f.deps.to_a }.find(&:build?)
+      allow(build_dependency).to receive(:to_formula).and_raise(FormulaSpecificationError)
+
+      expect(described_class.build_dependents_by_name(installed, installed)).to eq("foo" => ["bar"])
+    end
   end
 
   describe "::formulae_safe_to_remove" do

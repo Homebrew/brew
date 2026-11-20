@@ -163,7 +163,7 @@ module InstalledDependents
           [dep.to_formula.name]
         rescue TapFormulaAmbiguityError => e
           e.loaders.map(&:name)
-        rescue Homebrew::UntrustedTapError
+        rescue Homebrew::UntrustedTapError, FormulaSpecificationError
           dep.formula_loaders.map(&:name)
         rescue FormulaUnavailableError
           []
