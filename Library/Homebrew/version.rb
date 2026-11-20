@@ -163,6 +163,12 @@ class Version
 
       case other
       when StringToken
+        # The unsuffixed release separates pre-releases from lettered patches.
+        if self.class != other.class
+          return -1 if self < NULL_TOKEN
+          return 1 if other < NULL_TOKEN
+        end
+
         value <=> other.value
       when NumericToken
         -1
@@ -622,8 +628,8 @@ class Version
     return -1 if !head? && other.head?
     return 0 if head? && other.head?
 
-    ltokens = tokens
-    rtokens = other.tokens
+    ltokens = tokens(for_comparison: true)
+    rtokens = other.tokens(for_comparison: true)
     max = max(ltokens.length, rtokens.length)
     l = r = 0
 
@@ -784,12 +790,22 @@ class Version
   sig { returns(T.nilable(String)) }
   attr_reader :version
 
-  sig { returns(T::Array[Token]) }
-  def tokens
-    return @tokens if @tokens
+  sig { params(for_comparison: T::Boolean).returns(T::Array[Token]) }
+  def tokens(for_comparison: false)
+    tokens = @tokens
+    if tokens.nil?
+      tokens = Array(version&.scan(SCAN_PATTERN)).map { |token| Token.create(T.cast(token, String)) }
+      if version&.match(/\Ar\d+([ab])(?![a-z])(\d*)/i) in [erlang_series, revision]
+        # R16B-2 is revision 0 of Erlang/OTP series B, followed by patch 2.
+        erlang_tokens = tokens.dup
+        erlang_tokens[2, 1] = [StringToken.new(erlang_series.upcase), NumericToken.new(revision.to_i)]
+        @erlang_tokens = T.let(erlang_tokens, T.nilable(T::Array[Token]))
+      end
+      @tokens = T.let(tokens, T.nilable(T::Array[Token]))
+    end
 
-    tokens = version&.scan(SCAN_PATTERN)&.map { |token| Token.create(T.cast(token, String)) } || []
-    @tokens = T.let(tokens, T.nilable(T::Array[Token]))
+    return @erlang_tokens if for_comparison && @erlang_tokens
+
     tokens
   end
 

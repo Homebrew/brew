@@ -179,6 +179,19 @@ RSpec.describe Version do
     expect(described_class.new("HEAD")).to eq described_class.new("HEAD-fedcba")
   end
 
+  it "compares pre-releases and lettered releases in both directions" do
+    [
+      %w[1alpha 1beta 1 1a],
+      %w[1.1.1-pre9 1.1.1 1.1.1a], # OpenSSL
+      %w[1.3.9rc1 1.3.9rc2 1.3.9rc3 1.3.9 1.3.9a 1.3.9b 1.3.9c 1.3.9d 1.3.9e], # ProFTPD
+      %w[R16 R16a R16A01 R16b R16B-2 R16B01 R16b02 R16B03.0], # Erlang/OTP
+    ].each do |versions|
+      versions.map { |v| described_class.new(v) }.combination(2) do |older, newer|
+        expect([older <=> newer, newer <=> older]).to eq([-1, 1]), "expected #{older} < #{newer}"
+      end
+    end
+  end
+
   specify "comparing alpha versions" do
     expect(described_class.new("1.2.3alpha")).to be < described_class.new("1.2.3")
     expect(described_class.new("1.2.3")).to be < described_class.new("1.2.3a")
@@ -409,6 +422,7 @@ RSpec.describe Version do
       expect(described_class.new("1.2.3pre4").patch).to eq Version::Token.create("3")
       expect(described_class.new("1.2.3rc4").patch).to eq Version::Token.create("3")
       expect(described_class.new("1.2.3-p4").patch).to eq Version::Token.create("3")
+      expect(described_class.new("R16B02").patch).to eq Version::Token.create("B02")
     end
   end
 
