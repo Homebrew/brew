@@ -39,6 +39,7 @@ class BuildEnvironment
 
     sig { overridable.params(settings: Symbol).returns(T.nilable(BuildEnvironment)) }
     def env(*settings)
+      # odeprecated "`env`" unless settings.empty?
       env = @env
       Kernel.raise ArgumentError, "#{self} has not been initialized with a BuildEnvironment" if env.nil?
 

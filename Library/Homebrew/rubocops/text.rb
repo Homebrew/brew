@@ -41,6 +41,13 @@ module RuboCop
               problem "`keg_only` reason should not include `$HOMEBREW_PREFIX` " \
                       "as it creates confusing `brew info` output."
             end
+
+            find_every_method_call_by_name(node, :env).each do |env|
+              next if env.receiver && !env.receiver.self_type?
+              next if env.each_ancestor(:class, :module).first != node
+
+              add_offense(env, message: "Do not use `env` in homebrew/core formulae.")
+            end
           end
 
           find_method_with_args(body_node, :revision, 0) do
@@ -119,10 +126,6 @@ module RuboCop
         def audit_formula(formula_nodes)
           return if (body_node = formula_nodes.body_node).nil?
 
-          find_method_with_args(body_node, :env, :userpaths) do
-            problem "`env :userpaths` in homebrew/core formulae is deprecated"
-          end
-
           share_path_starts_with(body_node, formula_name) do |share_node|
             offending_node(share_node)
             problem "Use `pkgshare` instead of `share/\"#{@formula_name}\"`"
@@ -141,12 +144,6 @@ module RuboCop
             problem "Use `bin/\"#{cmd}\"` instead of `\"\#{bin}/#{cmd}\"`" do |corrector|
               corrector.replace(bin_node.loc.expression, "bin/\"#{cmd}\"")
             end
-          end
-
-          return if formula_tap != "homebrew-core"
-
-          find_method_with_args(body_node, :env, :std) do
-            problem "`env :std` in homebrew/core formulae is deprecated"
           end
         end
 

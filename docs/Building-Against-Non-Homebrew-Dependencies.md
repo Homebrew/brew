@@ -13,7 +13,7 @@ Formulae in `homebrew/core` must use declared Homebrew dependencies or supported
 They cannot depend on an arbitrary executable, library or language runtime from the user's `PATH` when a Homebrew dependency is the supported alternative.
 
 Declare ordinary dependencies with `depends_on` and use the default formula for requirements that provide one.
-Do not use `env :std` in `homebrew/core` to expose undeclared user software.
+Use the default build environment in `homebrew/core` and omit the `env` declaration.
 
 ## Third-party taps
 
