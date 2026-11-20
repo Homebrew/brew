@@ -1,178 +1,262 @@
-#!/bin/bash
-# $1 Full path to the installer (unused)
-# $2 Location of the Homebrew installation we may need to move into place
-# $3 Target install location (unused)
-# $4 System root directory (unused)
+#!/bin/bash -p
 set -euo pipefail
-
-# Use system tools without triggering developer tool installation prompts.
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+unset CDPATH
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)"
-if [[ -f "${script_dir}/macos_user.sh" ]]
+if [[ "${1:-}" != --as-install-user ]]
 then
+  # Resolve the signed scripts directory before changing to the prefix.
+  script_dir="$(cd -P -- "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
   # `pkgbuild` stages this helper beside the package scripts.
-  # shellcheck disable=SC1091
+  # shellcheck source=Homebrew/utils/macos_user.sh
   source "${script_dir}/macos_user.sh"
-else
-  # This fallback keeps direct local execution from the repository working.
-  # shellcheck disable=SC1091
-  source "${script_dir}/../../Library/Homebrew/utils/macos_user.sh"
+  homebrew-package-setup "$@"
+
+  developer_dir="$(xcode-select --print-path 2>/dev/null)" || developer_dir=""
+  # Root opens the signed script because the install user may not be able to.
+  "${user_command[@]}" /bin/bash -p -s -- --as-install-user "${homebrew_directory}" "${payload_directory}" \
+    "${homebrew_pkg_group}" "$(umask)" "${developer_dir}" "${install_uid}" "${directories[@]}" <"${script_dir}/postinstall"
+  rm -rfx "${payload_directory}"
+  exit 0
 fi
 
-# disable analytics while installing
-export HOMEBREW_NO_ANALYTICS_THIS_RUN=1
-export HOMEBREW_NO_ANALYTICS_MESSAGE_OUTPUT=1
-
-# verify the installation exists
-# default to /opt/homebrew to make development/testing easier
-homebrew_directory="${2:-/opt/homebrew}"
-if [[ ! -d "${homebrew_directory:?}" ]]
+shift
+if [[ "${EUID}" == 0 || "${EUID}" != "$6" ]]
 then
-  echo "No directory at ${homebrew_directory}!" >&2
+  echo "The package payload must be installed as the selected non-root account." >&2
+  exit 1
+fi
+homebrew_directory="$1"
+payload_directory="$2"
+homebrew_pkg_group="$3"
+developer_dir="$5"
+cd -P -- "${homebrew_directory}"
+
+if [[ -e .homebrew-pkg-previous.git || -L .homebrew-pkg-previous.git ]]
+then
+  if [[ -e .git || -L .git ]]
+  then
+    echo "Cannot restore the previous Git repository because .git already exists." >&2
+    exit 1
+  fi
+  mv .homebrew-pkg-previous.git .git
+fi
+
+if [[ ! -f "${payload_directory}/.git/HEAD" || -L "${payload_directory}" ]]
+then
+  echo "Missing packaged Git repository in ${payload_directory}." >&2
   exit 1
 fi
 
-cd "${homebrew_directory}"
-
-refuse_symlinked_directories() {
-  for dir in Caskroom Cellar Frameworks bin etc include lib opt sbin share var var/homebrew var/homebrew/linked
-  do
-    if [[ -L "${dir}" ]]
-    then
-      echo "Refusing to operate on symlinked ${dir} in ${homebrew_directory}." >&2
-      exit 1
-    fi
-  done
-}
-
-enter_managed_directory() {
-  local directory="$1"
-  local expected_path="$2"
-  local display_path="$3"
-
-  if [[ -L "${directory}" ]]
-  then
-    echo "Refusing to operate on symlinked ${display_path} in ${homebrew_directory}." >&2
-    exit 1
-  fi
-
-  cd -P "${directory}"
-  if [[ "$(pwd -P)" != "${expected_path}" ]]
-  then
-    echo "Refusing to operate on ${display_path} outside ${homebrew_directory}." >&2
-    exit 1
-  fi
-}
-
-prefix_directory="$(pwd -P)"
-
-# optionally define an install user at /var/tmp/.homebrew_pkg_user.plist
-# otherwise, get valid logged in user
-homebrew_pkg_user="$(homebrew-package-user)" ||
-  {
-    echo "No valid user for Homebrew installation. Log in before install or specify an install user."
-    exit 1
-  }
-
-if [[ "$(id -u "${homebrew_pkg_user}")" -eq 0 ]]
-then
-  echo "The Homebrew installation user must not be root."
-  exit 1
-fi
-
-homebrew_pkg_group="admin"
-if [[ " $(id -Gn "${homebrew_pkg_user}") " != *" admin "* ]]
-then
-  homebrew_pkg_group="$(id -gn "${homebrew_pkg_user}")"
-fi
-homebrew_pkg_mode="ug=rwx"
+homebrew_pkg_mode=ug=rwx
+remove_write=o-w
 if [[ "${homebrew_pkg_group}" == staff ]]
 then
-  # Keep in sync with brew.sh and Homebrew/install's install.sh.
-  umask go-w
+  # Keep the installer's umask and any stricter account umask.
+  umask "$(printf '%03o' "$((8#$4 | 8#$(umask)))")"
+  remove_write=go-w
   homebrew_pkg_mode="u=rwx,go-w"
-  chmod -R go-w .
 fi
+umask "${remove_write}"
 
-# create missing directories
-refuse_symlinked_directories
-mkdir -vp Caskroom Cellar Frameworks etc include lib opt sbin share var
-(
-  enter_managed_directory var "${prefix_directory}/var" var
-  mkdir -vp homebrew
-  enter_managed_directory homebrew "${prefix_directory}/var/homebrew" var/homebrew
-  mkdir -vp linked
-)
-
-if [[ -z "${HOMEBREW_NO_SUDO:-}" ]] && command -v sudo &>/dev/null
-then
-  user_command=(sudo -u "${homebrew_pkg_user}")
-elif [[ "$(id -u)" == 0 ]]
-then
-  user_command=(homebrew-login "${homebrew_pkg_user}")
-else
-  echo "Switching to the Homebrew installation user without sudo requires root." >&2
-  exit 1
-fi
-
-if [[ "${homebrew_pkg_group}" == staff ]]
-then
-  # Account-switching tools may reset the umask; retain both masks afterwards.
-  # shellcheck disable=SC2016
-  user_command+=(/bin/bash -c 'umask "$(printf "%03o" "$((8#$1 | 8#$(umask)))")"; shift; exec "$@"' -- "$(umask)")
-fi
-
-# set permissions
-refuse_symlinked_directories
-chmod -h "${homebrew_pkg_mode}" Caskroom Cellar Frameworks bin etc include lib opt sbin share var
-(
-  enter_managed_directory var "${prefix_directory}/var" var
-  enter_managed_directory homebrew "${prefix_directory}/var/homebrew" var/homebrew
-  chmod "${homebrew_pkg_mode}" .
-  enter_managed_directory linked "${prefix_directory}/var/homebrew/linked" var/homebrew/linked
-  chmod "${homebrew_pkg_mode}" .
-)
-chown -R "${homebrew_pkg_user}:${homebrew_pkg_group}" .
-
-rm -rf "${homebrew_directory}/.git/hooks" "${homebrew_directory}/.gitconfig" "${homebrew_directory}/.config/git"
-# The package already contains a stable checkout; reset it when Git is available.
-if developer_dir="$(xcode-select --print-path 2>/dev/null)" &&
-   [[ -n "${developer_dir}" && "${developer_dir}" != / && -x "${developer_dir}/usr/bin/git" ]]
-then
-  git_as_user() {
-    "${user_command[@]}" /usr/bin/env \
-      HOME="${homebrew_directory}" GIT_CONFIG_GLOBAL=/dev/null PATH="${PATH}" \
-      "${developer_dir}/usr/bin/git" -c core.hooksPath=/dev/null "$@"
-  }
-
-  latest_tag="$(git_as_user -C "${homebrew_directory}" tag --list --sort="-version:refname" | head -n1)"
-  git_as_user -C "${homebrew_directory}" checkout --force -B stable
-  git_as_user -C "${homebrew_directory}" reset --hard "${latest_tag}"
-  git_as_user -C "${homebrew_directory}" clean -f -d
-fi
-
-# move API cache to ~/Library/Caches/Homebrew
-user_home_dir="$(homebrew-user-home "${homebrew_pkg_user}")" ||
-  {
-    echo "No home directory for Homebrew installation user: ${homebrew_pkg_user}"
+create_directory() {
+  if [[ -L "$1" ]]
+  then
+    echo "Refusing to operate on symlinked ${PWD}/$1." >&2
     exit 1
-  }
-user_cache_dir="${user_home_dir}/Library/Caches/Homebrew"
-user_api_cache_dir="${user_cache_dir}/api"
-# Seed the cache as the install user: as root, `cp` follows a symlink planted at the
-# destination, and the `chown -R` this removes would reach anything hard-linked into the tree.
-"${user_command[@]}" mkdir -vp "${user_api_cache_dir}"
-"${user_command[@]}" cp -vpR "${homebrew_directory}/cache_api/." "${user_api_cache_dir}"
-if [[ "${homebrew_pkg_group}" == staff ]]
-then
-  "${user_command[@]}" chmod -R go-w "${user_cache_dir}"
-fi
-rm -vrf "${homebrew_directory}/cache_api"
+  fi
+  mkdir -p "$1"
+}
 
-# add Homebrew to the default PATH
-if [[ -d "/etc/paths.d" ]]
+directories=("${@:7}")
+for directory in "${directories[@]}"
+do
+  create_directory "${directory}"
+done
+
+if [[ -z "${developer_dir}" || "${developer_dir}" == / || ! -x "${developer_dir}/usr/bin/git" ]]
 then
-  echo "${homebrew_directory}/bin" >/etc/paths.d/homebrew
-  chown root:wheel /etc/paths.d/homebrew
+  developer_dir=""
+  # Without developer tools, install the packaged checkout as the owner.
+  tar -C "${payload_directory}" --exclude=./.git --exclude=./cache_api -cf - . | tar -xf -
 fi
+chmod "${homebrew_pkg_mode}" "${directories[@]}"
+
+staging="$(mktemp -d)"
+trap 'rm -rf "${staging}"' EXIT
+cp -R "${payload_directory}/.git" "${staging}/.git"
+
+git_as_user() {
+  local repository="$1"
+  shift
+  HOME="${staging}" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1 \
+    GIT_NO_LAZY_FETCH=1 GIT_ALLOW_PROTOCOL="${GIT_ALLOW_PROTOCOL:-}" \
+    "${developer_dir}/usr/bin/git" -C "${repository}" --git-dir=.git --work-tree=. \
+    -c core.hooksPath=/dev/null -c core.fsmonitor=false "$@"
+}
+
+local_git_repository() {
+  local unusual_entry
+  [[ -d .git && -O .git && ! -L .git && ! -e .git/commondir && ! -e .git/objects/info/alternates ]] &&
+    unusual_entry="$(find .git ! \( -type d -o -type f \) -print -quit)" && [[ -z "${unusual_entry}" ]]
+}
+
+readable_git_file() {
+  local path="$1"
+  [[ -f "${path}" && -r "${path}" ]] && return 0
+  if [[ "${2:-}" == optional ]]
+  then
+    # A missing default is fine only if we could search its parent directories.
+    while [[ ! -e "${path}" && ! -L "${path}" ]]
+    do
+      path="$(dirname -- "${path}")"
+    done
+    [[ "${path}" != "$1" && -d "${path}" && -x "${path}" ]] && return 0
+  fi
+  echo "Could not read $1. Leaving untracked files in place." >&2
+  return 1
+}
+
+clean_worktree() {
+  local scope excludes_file
+  readable_git_file "${HOME}/.gitconfig" optional && readable_git_file "${HOME}/.config/git/config" optional &&
+    readable_git_file .git/info/exclude optional || return 0
+  # Only this read uses the install user's global configuration and home.
+  if ! git_as_user . rev-parse --git-dir >/dev/null ||
+     ! "${developer_dir}/usr/bin/git" --git-dir=.git --work-tree=. config --includes --show-scope --null --path \
+     --default "${HOME}/.config/git/ignore" --get core.excludesFile >"${staging}/exclusions" ||
+     ! { IFS= read -r -d '' scope && IFS= read -r -d '' excludes_file; } <"${staging}/exclusions"
+  then
+    echo "Could not read Git configuration. Leaving untracked files in place." >&2
+    return 0
+  fi
+  # Git 2.30 reports the default value's scope as unknown.
+  if [[ "${scope}" == command || "${scope}" == unknown ]]
+  then
+    readable_git_file "${excludes_file}" optional || return 0
+  elif [[ -n "${excludes_file}" ]]
+  then
+    readable_git_file "${excludes_file}" || return 0
+  fi
+
+  if [[ "$1" == "${staging}" ]]
+  then
+    if [[ -f .git/info/exclude ]]
+    then
+      mkdir -p "${staging}/.git/info"
+      install -m 600 .git/info/exclude "${staging}/.git/info/exclude"
+    fi
+    if [[ "${scope}" == local || "${scope}" == worktree ]]
+    then
+      git_as_user "${staging}" config -- core.excludesFile "${excludes_file}"
+    fi
+  fi
+  git_as_user "$1" --work-tree="${homebrew_directory}" -c "core.excludesFile=${excludes_file}" \
+    clean -f -d -e '/.homebrew-pkg-backup.*/' || echo "Could not remove all untracked files." >&2
+}
+
+reuse_git=false
+backup_template="${homebrew_directory}/.homebrew-pkg-backup.XXXXXX"
+if [[ -n "${developer_dir}" ]]
+then
+  # Resolve the release using only the packaged origin and its tags.
+  packaged_head="$(git_as_user "${staging}" rev-parse --verify HEAD)"
+  # Match Homebrew's dead-connection thresholds in Library/Homebrew/utils/curl.sh.
+  if GIT_HTTP_LOW_SPEED_LIMIT=100 GIT_HTTP_LOW_SPEED_TIME=5 GIT_ALLOW_PROTOCOL=https \
+     git_as_user "${staging}" fetch --no-recurse-submodules --tags origin
+  then
+    tag_filter=--list
+  else
+    # Git 2.30 can update some tags even when the fetch fails.
+    rm -rf "${staging}/.git"
+    cp -R "${payload_directory}/.git" "${staging}/.git"
+    tag_filter="--points-at=${packaged_head}"
+    echo "Could not fetch Homebrew releases. Using the packaged release." >&2
+  fi
+  release_ref="$(git_as_user "${staging}" tag "${tag_filter}" --sort=version:refname |
+    awk '/^[0-9]+\.[0-9]+\.[0-9]+$/ { ref = "refs/tags/" $0 } END { print ref }')"
+  release_object="$(git_as_user "${staging}" rev-parse --verify "${release_ref:-${packaged_head}}")"
+  revision="$(git_as_user "${staging}" rev-parse --verify "${release_object}^{commit}")"
+  # Transfer objects directly from the seed without using existing remotes,
+  # URL rewrites, helpers or fetch refspecs from the live configuration.
+  # Resetting a symbolic stable branch would also reset its target.
+  if local_git_repository && git_as_user . fsck --full --no-dangling &&
+     ! git_as_user . symbolic-ref --quiet refs/heads/stable >/dev/null &&
+     git_as_user . config --null --name-only --list >"${staging}/config-keys"
+  then
+    # Disable checkout filters, including names containing '=' that Git 2.30 cannot override with -c.
+    printf '[core]\n\tsparseCheckout = false\n' >"${staging}/checkout.config"
+    while IFS= read -r -d '' key
+    do
+      if [[ "${key}" == filter.* ]]
+      then
+        git_as_user "${staging}" config --file "${staging}/checkout.config" -- "${key}" ""
+      fi
+    done <"${staging}/config-keys"
+    # Keep the original refs, objects and index together until every update succeeds.
+    backup="$(mktemp -d "${backup_template}")"
+    if ! cp -cR .git "${backup}/"
+    then
+      rm -rf "${backup}"
+      backup=""
+    elif GIT_ALLOW_PROTOCOL="file" git_as_user . fetch-pack --no-progress "${staging}" "${release_ref:-HEAD}" >/dev/null &&
+         { [[ -z "${release_ref}" ]] || git_as_user . update-ref --no-deref "${release_ref}" "${release_object}"; } &&
+         git_as_user . -c "include.path=${staging}/checkout.config" checkout --no-recurse-submodules --force -B stable "${revision}"
+    then
+      reuse_git=true
+      rm -rf "${backup}" || echo "Could not remove the previous Git repository in ${backup}." >&2
+      clean_worktree .
+    fi
+  fi
+  if [[ "${reuse_git}" == false ]]
+  then
+    git_as_user "${staging}" --work-tree="${homebrew_directory}" checkout --force -B stable "${revision}"
+    if local_git_repository
+    then
+      clean_worktree "${staging}"
+    fi
+  fi
+elif local_git_repository && diff -qr -x hooks "${staging}/.git" .git >/dev/null
+then
+  reuse_git=true
+fi
+
+if [[ "${reuse_git}" == false ]]
+then
+  if [[ -e .git || -L .git ]]
+  then
+    if [[ -n "${backup:-}" ]]
+    then
+      mv .git "${backup}/live.git"
+      echo "Saved the live Git repository in ${backup}/live.git"
+    else
+      backup="$(mktemp -d "${backup_template}")"
+      mv .git "${backup}/"
+    fi
+    echo "Saved the previous Git repository in ${backup}/.git"
+  fi
+  mv "${staging}/.git" .git
+fi
+
+rm -rf .git/hooks .gitconfig
+if [[ -d .config && ! -L .config ]]
+then
+  (cd -P .config && [[ "${PWD}" == "${homebrew_directory}/.config" ]] && rm -rf git)
+fi
+
+restrict_write_access() {
+  chmod -R "${remove_write}" . || echo "Could not update all permissions in ${PWD}." >&2
+}
+restrict_write_access
+
+cd -P -- "${HOME}"
+for directory in Library Caches Homebrew api
+do
+  create_directory "${directory}"
+  cd -P -- "${directory}"
+  if [[ "${directory}" == Homebrew ]]
+  then
+    restrict_write_access
+  fi
+done
+tar -C "${payload_directory}/cache_api" -cf - . | tar -xf -

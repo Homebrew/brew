@@ -138,22 +138,17 @@ jobs:
 
           echo "version=${homebrew_version}" >> "${GITHUB_OUTPUT}"
 
-          # Ship a stable checkout for hosts without Git or developer tools.
-          git -C brew checkout --force -B stable
-
       - name: Prepare Homebrew API cache for package
         run: |
-          package_api_cache="${RUNNER_TEMP}/homebrew-api-cache"
-          rm -rvf ~/Library/Caches/Homebrew/api "${package_api_cache}"
+          rm -rvf ~/Library/Caches/Homebrew/api
 
           HOMEBREW_DEVELOPER=1 HOMEBREW_UPDATE_SKIP_BREW=1 brew update --auto-update --verbose
-          cp -vR ~/Library/Caches/Homebrew/api brew/cache_api
 
       - name: Check installer Git commands
         run: |
           # Keep repository Git calls using the install user's wrapper.
-          if grep -nE 'git .* (checkout|reset|clean)\b|git .* tag --list\b' \
-            brew/package/scripts/postinstall
+          if grep -nE '(^|[[:space:]])git (.* )?(checkout|reset|clean|fetch|tag)( |$)' \
+            brew/package/scripts/{preinstall,postinstall}
           then
             echo "Installer Git repository operations must use \`git_as_user\`."
             exit 1
@@ -162,12 +157,25 @@ jobs:
       - name: Open macOS keychain
         run: security list-keychain -d user -s "${RUNNER_TEMP}/${TEMPORARY_KEYCHAIN_FILE}"
 
-      - name: Prepare Homebrew installer scripts
+      - name: Prepare Homebrew installer payload and scripts
         run: |
-          installer_scripts="${RUNNER_TEMP}/homebrew-installer-scripts"
-          rm -rvf "${installer_scripts}"
-          mkdir -vp "${installer_scripts}"
-          cp -vp brew/package/scripts/preinstall \
+          # PackageKit owns the staging tree. Only the install user writes to the live prefix.
+          payload="pkgroot/private/var/db/sh.brew.homebrew"
+          mkdir pkgroot
+          mkdir -p pkgroot/private/etc/paths.d
+          git init --template= --initial-branch=stable "${payload}"
+          git -C "${payload}" fetch "${GITHUB_WORKSPACE}/brew" HEAD \
+            '+refs/remotes/origin/*:refs/remotes/origin/*' '+refs/tags/*:refs/tags/*'
+          git -C "${payload}" remote add origin https://github.com/Homebrew/brew
+          git -C "${payload}" remote set-head origin main
+          git -C "${payload}" reset --hard "$(git -C brew rev-parse HEAD)"
+          cp -R ~/Library/Caches/Homebrew/api "${payload}/cache_api"
+          chmod -R a+rX,go-w "${payload}"
+          echo /opt/homebrew/bin >pkgroot/private/etc/paths.d/homebrew
+
+          installer_scripts="$(mktemp -d "${RUNNER_TEMP}/homebrew-installer-scripts.XXXXXX")"
+          git -C "${payload}" ls-tree -rtz --format='%(objectmode) %(path)' HEAD >"${installer_scripts}/paths"
+          cp brew/package/scripts/preinstall \
             brew/package/scripts/postinstall \
             brew/Library/Homebrew/utils/macos_user.sh \
             "${installer_scripts}/"
@@ -178,11 +186,11 @@ jobs:
           HOMEBREW_VERSION: ${{ steps.homebrew-version.outputs.version }}
         # Note: `Library/Homebrew/test/support/fixtures/` contains unsigned
         # binaries so it needs to be excluded from notarization.
-        run: pkgbuild --root brew
+        run: pkgbuild --root pkgroot
           --scripts "${HOMEBREW_INSTALLER_SCRIPTS}"
           --identifier sh.brew.homebrew
           --version "${HOMEBREW_VERSION}"
-          --install-location /opt/homebrew
+          --install-location /
           --filter .DS_Store
           --filter "(.*)/Library/Homebrew/test/support/fixtures/"
           --min-os-version "${HOMEBREW_MACOS_OLDEST_SUPPORTED}"
@@ -268,6 +276,16 @@ jobs:
 
       - run: brew doctor
 
+      - name: Recreate a package receipt that owns Git files
+        run: |
+          git -C /opt/homebrew branch pkg-upgrade-test
+          mkdir "${RUNNER_TEMP}/legacy-payload"
+          mv /opt/homebrew/.git "${RUNNER_TEMP}/legacy-payload/"
+          pkgbuild --root "${RUNNER_TEMP}/legacy-payload" --identifier sh.brew.homebrew \
+            --ownership preserve --filter .DS_Store --version 1 --install-location /opt/homebrew "${RUNNER_TEMP}/legacy.pkg"
+          sudo installer -pkg "${RUNNER_TEMP}/legacy.pkg" -target /
+          pkgutil --files sh.brew.homebrew | grep -Fx '.git/HEAD'
+
       - name: Zero existing installer logs (again)
         run: echo | sudo tee /var/log/install.log
 
@@ -279,6 +297,14 @@ jobs:
       - name: Output installer logs (again)
         if: ${{ always() }}
         run: sudo cat /var/log/install.log
+
+      - name: Check Git after the package upgrade
+        run: |
+          pkgutil --files sh.brew.homebrew | grep -Fx 'private/var/db/sh.brew.homebrew/.git/HEAD'
+          test ! -e /private/var/db/sh.brew.homebrew
+          git -C /opt/homebrew rev-parse --verify 'refs/heads/pkg-upgrade-test^{commit}'
+          git -C /opt/homebrew fsck --connectivity-only --no-dangling
+          brew update
 
       - run: brew config
 

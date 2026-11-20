@@ -95,6 +95,17 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
     expect(stderr).to eq("Error: `brew as-console-user` is only supported on macOS.\n")
   end
 
+  it "rejects an invalid exit status from login" do
+    _, _, status = run_as_console_user_shell <<~SH
+      source "#{macos_user_script}"
+      chown() { :; }
+      login() { printf '256\\n' >"$9"; }
+      homebrew-login brewer true
+    SH
+
+    expect(status.exitstatus).to eq 1
+  end
+
   it "uses the package user plist before the console user" do
     homebrew_pkg_user_plist = test_root/".homebrew_pkg_user.plist"
     homebrew_pkg_user_plist.write "plist"
@@ -102,8 +113,8 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
     stdout, stderr, status = run_as_console_user_shell(
       <<~SH,
         source "#{macos_user_script}"
-        defaults() { printf 'munki\\n'; }
-        stat() { printf 'root 600\\n'; }
+        plutil() { printf 'munki\\n'; }
+        stat() { printf 'Regular File 0 600 1\\n'; }
         ls() { printf -- '-rw------- 1 root wheel 0 x\\n'; }
         homebrew-package-user
       SH
@@ -115,6 +126,25 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
     expect(stderr).to be_empty
   end
 
+  it "requires the package user plist to have a single link" do
+    plist = test_root/"user.plist"
+    plist.write "plist"
+
+    stdout, _, status = run_as_console_user_shell(
+      <<~SH,
+        source "#{macos_user_script}"
+        homebrew-console-user() { return 1; }
+        stat() { echo 'Regular File 0 600 2'; }
+        ls() { echo '-rw------- 2 root wheel'; }
+        plutil() { echo managing-user; }
+        homebrew-package-user
+      SH
+      "HOMEBREW_PKG_USER_PLIST" => plist.to_s,
+    )
+
+    expect([status.exitstatus, stdout]).to eq([1, ""])
+  end
+
   it "honours a root-owned plist that carries extended attributes" do
     homebrew_pkg_user_plist = test_root/".homebrew_pkg_user.plist"
     homebrew_pkg_user_plist.write "plist"
@@ -122,8 +152,8 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
     stdout, stderr, status = run_as_console_user_shell(
       <<~SH,
         source "#{macos_user_script}"
-        defaults() { printf 'munki\\n'; }
-        stat() { printf 'root 600\\n'; }
+        plutil() { printf 'munki\\n'; }
+        stat() { printf 'Regular File 0 600 1\\n'; }
         ls() { printf -- '-rw-------@ 1 root wheel 0 x\\n'; }
         homebrew-package-user
       SH
@@ -142,8 +172,8 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
     stdout, stderr, status = run_as_console_user_shell(
       <<~SH,
         source "#{macos_user_script}"
-        defaults() { printf 'attacker\\n'; }
-        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'attacker 600\\n';; esac; }
+        plutil() { printf 'attacker\\n'; }
+        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'Regular File 502 600 1\\n';; esac; }
         ls() { printf -- '-rw------- 1 attacker staff 0 x\\n'; }
         homebrew-package-user
       SH
@@ -162,8 +192,8 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
     stdout, stderr, status = run_as_console_user_shell(
       <<~SH,
         source "#{macos_user_script}"
-        defaults() { printf 'attacker\\n'; }
-        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'root 644\\n';; esac; }
+        plutil() { printf 'attacker\\n'; }
+        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'Regular File 0 644 1\\n';; esac; }
         ls() { printf -- '-rw-rw-rw- 1 root wheel 0 x\\n'; }
         homebrew-package-user
       SH
@@ -182,8 +212,8 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
     stdout, stderr, status = run_as_console_user_shell(
       <<~SH,
         source "#{macos_user_script}"
-        defaults() { printf 'attacker\\n'; }
-        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'root 600\\n';; esac; }
+        plutil() { printf 'attacker\\n'; }
+        stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'Regular File 0 600 1\\n';; esac; }
         ls() { printf -- '-rw-------@ 1 root wheel 0 x\\n 0: group:everyone deny delete\\n'; }
         homebrew-package-user
       SH
@@ -204,7 +234,7 @@ RSpec.describe Homebrew::Cmd::AsConsoleUser do
     stdout, stderr, status = run_as_console_user_shell(
       <<~SH,
         source "#{macos_user_script}"
-        defaults() { printf 'attacker\\n'; }
+        plutil() { printf 'attacker\\n'; }
         stat() { case "$*" in *"/dev/console") printf 'root\\n';; *) printf 'root\\n';; esac; }
         ls() { printf -- '-rw------- 1 root wheel 0 x\\n'; }
         homebrew-package-user

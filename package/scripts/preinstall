@@ -1,22 +1,46 @@
-#!/bin/bash
+#!/bin/bash -p
 set -euo pipefail
+export PATH="/usr/bin:/bin:/usr/sbin:/sbin"
+unset CDPATH
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)"
-if [[ -f "${script_dir}/macos_user.sh" ]]
+script_dir="$(cd -P -- "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# `pkgbuild` stages this helper beside the package scripts.
+# shellcheck source=Homebrew/utils/macos_user.sh
+source "${script_dir}/macos_user.sh"
+homebrew-package-setup "$@"
+
+# Check the package paths in the install user's shell before moving a receipt-owned .git.
+# shellcheck disable=SC2016
+{
+  printf '040000 %s\0' . "${directories[@]}"
+  cat "${script_dir}/paths"
+} | "${user_command[@]}" /bin/bash -p -c '
+  cd -P -- "$1" || exit 1
+  while IFS= read -r -d "" entry
+  do
+    path="${entry#* }"
+    [[ -e "${path}" || -L "${path}" ]] || continue
+    case "${entry%% *}" in
+      040000) [[ -d "${path}" && ! -L "${path}" && -O "${path}" && -w "${path}" && -x "${path}" ]] && continue ;;
+      *) [[ -L "${path}" || ( -f "${path}" && -O "${path}" ) ]] && continue ;;
+    esac
+    echo "The install user cannot replace ${PWD}/${path}. Check its ownership and permissions." >&2
+    exit 1
+  done
+' -- "${homebrew_directory}"
+
+# An interrupted installation may have left an incomplete package payload.
+rm -rfx "${payload_directory}"
+
+# Older receipts own individual Git files. Move the repository out of reach
+# before PackageKit removes obsolete packs, then restore it in postinstall.
+if [[ -e .git || -L .git ]]
 then
-  # `pkgbuild` stages this helper beside the package scripts.
-  # shellcheck disable=SC1091
-  source "${script_dir}/macos_user.sh"
-else
-  # This fallback keeps direct local execution from the repository working.
-  # shellcheck disable=SC1091
-  source "${script_dir}/../../Library/Homebrew/utils/macos_user.sh"
+  receipts="$(pkgutil --pkgs)"
+  grep -Fxq sh.brew.homebrew <<<"${receipts}" || exit 0
+  receipt_files="$(pkgutil --files sh.brew.homebrew)"
+  grep -Fxq '.git/HEAD' <<<"${receipt_files}" || exit 0
+  [[ ! -e .homebrew-pkg-previous.git && ! -L .homebrew-pkg-previous.git ]] ||
+    homebrew-package-abort "Cannot save .git because .homebrew-pkg-previous.git already exists."
+  "${user_command[@]}" mv -h "${homebrew_directory}/.git" "${homebrew_directory}/.homebrew-pkg-previous.git"
 fi
-
-if homebrew-package-user &>/dev/null
-then
-  exit 0
-fi
-
-echo "No valid user for Homebrew installation. Log in before install or specify an install user."
-exit 1
