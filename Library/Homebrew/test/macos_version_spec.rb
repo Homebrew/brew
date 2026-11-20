@@ -56,6 +56,11 @@ RSpec.describe MacOSVersion do
     end
   end
 
+  it "finds equivalent hash keys after caching comparisons" do
+    [version, big_sur_major].each { |v| v.compare(">=", v) }
+    expect({ version => :installed }[big_sur_major]).to eq(:installed)
+  end
+
   specify "comparisons" do
     expect(version).to be >= :big_sur
     expect(version).to eq :big_sur

@@ -606,13 +606,6 @@ class Version
 
       Version.new(other.to_s)
     when Version
-      if other.null?
-        # Cannot compare `NULL` to `NULL`.
-        return if null?
-
-        return 1
-      end
-
       other
     when nil
       return 1
@@ -620,7 +613,17 @@ class Version
       return
     end
 
-    # All `other.null?` cases are handled at this point.
+    compare_version(other)
+  end
+
+  sig { params(other: Version).returns(T.nilable(Integer)) }
+  def compare_version(other)
+    if other.null?
+      # Cannot compare `NULL` to `NULL`.
+      return if null?
+
+      return 1
+    end
     return -1 if null?
 
     return 0 if version == other.version
@@ -656,6 +659,7 @@ class Version
 
     0
   end
+  private :compare_version
 
   sig { override.params(other: T.anything).returns(T::Boolean) }
   def ==(other)
@@ -667,7 +671,14 @@ class Version
 
     super
   end
-  alias eql? ==
+
+  sig { override.params(other: BasicObject).returns(T::Boolean) }
+  def eql?(other)
+    case other
+    when Version then compare_version(other)&.zero? || false
+    else false
+    end
+  end
 
   # The major version.
   #
@@ -723,7 +734,13 @@ class Version
 
   sig { returns(Integer) }
   def hash
-    version.hash
+    return "HEAD".hash if head?
+
+    # Comparison ignores trailing zeroes in each run of numeric tokens.
+    tokens(for_comparison: true).slice_before { |token| !token.numeric? }.flat_map do |run|
+      run.pop while run.last == NULL_TOKEN
+      run.map { |token| token.is_a?(CompositeToken) ? [token.class, token.rev] : token.value }
+    end.hash
   end
 
   # Convert the version to a floating-point number.

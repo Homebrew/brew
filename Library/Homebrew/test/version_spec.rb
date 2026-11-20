@@ -329,6 +329,21 @@ RSpec.describe Version do
     expect(h[v2]).to eq(:foo)
   end
 
+  it "finds equivalent versions in a hash" do
+    [
+      %w[R16B R16B00],
+      %w[1.2 1.2.0],
+      %w[1.0.0alpha01 1A1],
+      %w[HEAD-abcdef HEAD-fedcba],
+    ].each do |stored, lookup|
+      expect({ described_class.new(stored) => :installed }[described_class.new(lookup)]).to eq(:installed)
+    end
+  end
+
+  it "distinguishes version keys from string keys" do
+    expect(described_class.new("1")).not_to eql("1")
+  end
+
   describe "::new" do
     it "parses a version from a string" do
       v = described_class.new("1.20")
