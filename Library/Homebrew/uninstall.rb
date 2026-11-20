@@ -169,7 +169,7 @@ module Homebrew
     def self.check_for_dependents!(kegs, casks: [], named_args: [])
       if (result = InstalledDependents.find_some_installed_dependents(kegs, casks:))
         DependentsMessage.new(*result, named_args:).output
-      elsif (result = InstalledDependents.find_some_installed_build_dependents(kegs))
+      elsif (result = InstalledDependents.find_installed_build_dependents(kegs))
         DependentsMessage.new(*result, named_args:, build: true).output
       else
         return false

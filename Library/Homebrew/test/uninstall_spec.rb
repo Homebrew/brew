@@ -96,6 +96,7 @@ RSpec.describe Homebrew::Uninstall do
       end
       [build_dependency, build_dependent].each do |f|
         f.latest_installed_prefix.mkpath
+        Keg.new(f.latest_installed_prefix).optlink
         stub_formula_loader f
       end
       kegs_by_rack = { build_dependency.rack => [Keg.new(build_dependency.latest_installed_prefix)] }

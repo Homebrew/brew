@@ -171,7 +171,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       ].map { |formula| dependencies_arrays_hash.merge(formula) }
       allow(Homebrew::Bundle::Brew).to receive(:formulae).and_return(formulae_hash)
 
-      installed = formulae_hash.map do |hash_formula|
+      formulae_hash.each do |hash_formula|
         name = hash_formula[:name]
         full_name = hash_formula[:full_name]
         tap_name = Utils.tap_from_full_name(full_name) || "homebrew/core"
@@ -187,9 +187,7 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
         allow(f).to receive_messages(installed_runtime_dependency_names: hash_formula[:dependencies],
                                      any_installed_keg: instance_double(Keg, tab:),
                                      bottled?: true, pour_bottle?: true, pinned?: name == "pinned")
-        f
       end
-      allow(Formula).to receive(:installed).and_return(installed)
 
       allow(Homebrew::Bundle::Cask).to receive(:formula_dependencies).and_return(%w[caskdependency])
       expect(described_class.formulae_to_uninstall).to eql %w[
@@ -269,6 +267,24 @@ RSpec.describe Homebrew::Cmd::Bundle::CleanupSubcommand do
       keg = instance_double(Keg)
       allow(keg).to receive(:keepme_refs).and_return(["/some/file"])
       allow(f).to receive(:installed_kegs).and_return([keg])
+
+      expect(described_class.formulae_to_uninstall).to be_empty
+    end
+
+    it "keeps the dependencies of formulae with .keepme references" do
+      formulae = %w[c dependency].map do |name|
+        f = formula(name) do
+          T.bind(self, T.class_of(Formula))
+          url "#{name}-1.0"
+        end
+        stub_formula_loader f, name
+        f
+      end
+      allow(Homebrew::Bundle::Brew).to receive(:formulae)
+        .and_return(formulae.map { |f| { name: f.name, full_name: f.full_name } })
+      keg = instance_double(Keg, keepme_refs: ["/some/file"])
+      allow(formulae.fetch(0)).to receive_messages(installed_kegs:                     [keg],
+                                                   installed_runtime_dependency_names: ["dependency"])
 
       expect(described_class.formulae_to_uninstall).to be_empty
     end

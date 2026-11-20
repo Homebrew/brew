@@ -106,18 +106,24 @@ module InstalledDependents
     [all_required_kegs.to_a, all_dependents.sort]
   end
 
-  # Given an array of kegs, this method will try to find some other installed
-  # formulae that `brew autoremove` keeps them for as build dependencies.
-  # It returns the same as {find_some_installed_dependents}.
+  # Given an array of kegs, this method finds the installed formulae that
+  # `brew autoremove` keeps them for as build dependencies. If there are any,
+  # it returns:
+  #
+  # - the kegs in the passed array that are kept for them
+  # - the names of those formulae.
+  #
+  # If there are none, it returns nil.
   sig { params(kegs: T::Array[Keg]).returns(T.nilable([T::Array[Keg], T::Array[String]])) }
-  def find_some_installed_build_dependents(kegs)
-    names_by_keg = kegs.to_h do |keg|
+  def find_installed_build_dependents(kegs)
+    # An older keg can go while the one that `opt` points to stays.
+    names_by_keg = kegs.select(&:optlinked?).to_h do |keg|
       [keg, keg.to_formula.possible_names]
     rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError
       [keg, [keg.name]]
     end
-    # Don't include build dependencies of kegs that were in the given array.
-    remaining_formulae = Formula.installed.reject { |f| names_by_keg.values.flatten.include?(f.name) }
+    # Don't include build dependencies of formulae that keep none of their kegs.
+    remaining_formulae = Formula.installed.reject { |f| (f.installed_kegs - kegs).empty? }
     build_dependents = build_dependents_by_name(remaining_formulae, Formula.installed)
     dependents_by_keg = names_by_keg.transform_values { |names| build_dependents.values_at(*names).flatten.compact }
                                     .reject { |_, dependents| dependents.empty? }
@@ -130,7 +136,8 @@ module InstalledDependents
   # dependencies in {build_dependents_by_name}.
   sig { params(formulae: T::Array[Formula], installed: T::Array[Formula]).returns(T::Set[String]) }
   def names_of_dependencies_to_keep(formulae, installed)
-    build_dependents_by_name(formulae, installed).keys.to_set
+    build_dependents_by_name(formulae, installed).keys
+                                                 .to_set
                                                  .merge(formulae.flat_map(&:installed_runtime_dependency_names))
   end
 
@@ -152,11 +159,18 @@ module InstalledDependents
       formula.deps.select(&:build?).each do |dep|
         next if pours_bottle && built_from_source_names.exclude?(Utils.name_from_full_name(dep.name))
 
-        (dependents[dep.to_formula.name] ||= []) << formula.name
-      rescue TapFormulaAmbiguityError => e
-        e.loaders.each { |loader| (dependents[loader.name] ||= []) << formula.name }
-      rescue FormulaUnavailableError
-        # do nothing
+        dependency_names = begin
+          [dep.to_formula.name]
+        rescue TapFormulaAmbiguityError => e
+          e.loaders.map(&:name)
+        rescue Homebrew::UntrustedTapError
+          dep.formula_loaders.map(&:name)
+        rescue FormulaUnavailableError
+          []
+        end
+        dependency_names.each do |dependency_name|
+          dependents[dependency_name] = dependents.fetch(dependency_name, []) + [formula.name]
+        end
       end
     end
     dependents
@@ -166,7 +180,8 @@ module InstalledDependents
   # earlier removal candidates.
   sig { params(removable: T::Array[Formula], installed: T::Array[Formula]).returns(T::Array[Formula]) }
   def formulae_safe_to_remove(removable, installed)
-    until removable.empty?
+    # Each pass keeps at least one more formula or is the last one.
+    removable.length.times do
       names_to_keep = names_of_dependencies_to_keep(installed - removable, installed)
       still_removable = removable.reject { |f| names_to_keep.intersect?(f.possible_names) }
       break if still_removable.length == removable.length

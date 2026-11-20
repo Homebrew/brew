@@ -403,7 +403,7 @@ RSpec.describe InstalledDependents do
     end
   end
 
-  describe "::find_some_installed_build_dependents" do
+  describe "::find_installed_build_dependents" do
     let!(:dependent) do
       setup_test_keg("bar", "1.0") do
         T.bind(self, T.class_of(Formula))
@@ -411,8 +411,10 @@ RSpec.describe InstalledDependents do
       end
     end
 
+    before { keg.optlink }
+
     specify "a formula built from source needs the keg to build" do
-      expect(described_class.find_some_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
+      expect(described_class.find_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
     end
 
     specify "a formula poured from a usable bottle doesn't need the keg to build" do
@@ -424,22 +426,45 @@ RSpec.describe InstalledDependents do
       end
       allow(Formulary.factory("bar")).to receive_messages(bottled?: true, pour_bottle?: true)
 
-      expect(described_class.find_some_installed_build_dependents([keg])).to be_nil
+      expect(described_class.find_installed_build_dependents([keg])).to be_nil
     end
 
     specify "a formula that is uninstalled too doesn't need the keg to build" do
-      expect(described_class.find_some_installed_build_dependents([keg, dependent])).to be_nil
+      expect(described_class.find_installed_build_dependents([keg, dependent])).to be_nil
+    end
+
+    specify "a formula that keeps another keg still needs the keg to build" do
+      (dependent.rack/"2.0").mkpath
+
+      expect(described_class.find_installed_build_dependents([keg, dependent])).to eq([[keg], ["bar"]])
+    end
+
+    specify "an older keg isn't needed to build while the linked one stays" do
+      older_keg = Keg.new((keg.rack/"0.9").tap(&:mkpath))
+
+      expect(described_class.find_installed_build_dependents([older_keg])).to be_nil
     end
   end
 
   describe "::build_dependents_by_name" do
-    it "maps the build dependencies to keep to the formulae that need them" do
+    let(:installed) { Formula.installed }
+
+    before do
       setup_test_keg("bar", "1.0") do
         T.bind(self, T.class_of(Formula))
         depends_on "foo" => :build
       end
+    end
 
-      expect(described_class.build_dependents_by_name(Formula.installed, Formula.installed)).to eq("foo" => ["bar"])
+    it "maps the build dependencies to keep to the formulae that need them" do
+      expect(described_class.build_dependents_by_name(installed, installed)).to eq("foo" => ["bar"])
+    end
+
+    it "keeps a build dependency whose tap is untrusted" do
+      build_dependency = installed.flat_map { |f| f.deps.to_a }.find(&:build?)
+      allow(build_dependency).to receive(:to_formula).and_raise(Homebrew::UntrustedTapError)
+
+      expect(described_class.build_dependents_by_name(installed, installed)).to eq("foo" => ["bar"])
     end
   end
 

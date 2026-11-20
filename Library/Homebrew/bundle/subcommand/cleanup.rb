@@ -274,13 +274,6 @@ module Homebrew
           current_formulae.reject! do |f|
             Homebrew::Bundle::Brew.formula_in_array?(f[:full_name], kept_formulae)
           end
-
-          # Don't try to uninstall formulae with keepme references
-          current_formulae.reject! do |f|
-            Formula[f[:full_name]].installed_kegs.any? do |keg|
-              keg.keepme_refs.present?
-            end
-          end
           current_formulae.map { |f| f[:full_name] }
         end
 
@@ -301,9 +294,13 @@ module Homebrew
               )
             end
 
-            # Keep what `brew autoremove` keeps for them, as `brew uninstall` refuses to remove it.
-            installed = Formula.installed
-            removable = installed.reject { |f| Homebrew::Bundle::Brew.formula_in_array?(f.full_name, kept_formulae) }
+            # Keep formulae with keepme references and what `brew autoremove` keeps
+            # for them and the Brewfile, as `brew uninstall` refuses to remove it.
+            installed = Homebrew::Bundle::Brew.formulae.map { |f| Formula[f[:full_name]] }
+            removable = installed.reject do |f|
+              Homebrew::Bundle::Brew.formula_in_array?(f.full_name, kept_formulae) ||
+                f.installed_kegs.any? { |keg| keg.keepme_refs.present? }
+            end
             kept_formulae +
               (installed - InstalledDependents.formulae_safe_to_remove(removable, installed)).map(&:full_name)
           end
