@@ -480,9 +480,18 @@ end
 module RSpec::Support::WithKeywordsWhenNeeded
   private
 
-  def class_exec(klass, *args, **_arg2, &block); end
+  def class_exec(klass, *args, **, &block); end
 
   class << self
-    def class_exec(klass, *args, **_arg2, &block); end
+    def class_exec(klass, *args, **, &block); end
+  end
+end
+
+class Thread
+  def __rspec_local_data; end
+  def __rspec_local_data=(_arg0); end
+
+  class << self
+    def __rspec_current_thread; end
   end
 end

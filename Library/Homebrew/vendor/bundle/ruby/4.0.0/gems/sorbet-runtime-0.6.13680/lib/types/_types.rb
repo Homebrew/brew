@@ -331,7 +331,7 @@ module T
       if keys.is_a?(T::Types::Untyped) && values.is_a?(T::Types::Untyped)
         T::Types::TypedHash::Untyped::Private::INSTANCE
       else
-        T::Types::TypedHash.new(keys: keys, values: values)
+        T::Types::TypedHash::Private::Pool.type_for_keys_and_values(keys, values)
       end
     end
   end

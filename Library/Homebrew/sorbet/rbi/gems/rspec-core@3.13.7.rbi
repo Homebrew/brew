@@ -5,8 +5,6 @@
 # Please instead update this file by running `bin/tapioca gem rspec-core`.
 
 
-module ERB::Escape; end
-
 module RSpec
   extend ::RSpec::Core::Warnings
 
@@ -65,6 +63,45 @@ class RSpec::Core::BacktraceFormatter
   private
 
   def matches?(patterns, line); end
+end
+
+module RSpec::Core::Bisect; end
+
+class RSpec::Core::Bisect::BisectFailedError < ::StandardError
+  class << self
+    def for_failed_spec_run(spec_output); end
+  end
+end
+
+class RSpec::Core::Bisect::Channel
+  def initialize; end
+
+  def close; end
+  def receive; end
+  def send(message); end
+end
+
+RSpec::Core::Bisect::Channel::MARSHAL_DUMP_ENCODING = T.let(T.unsafe(nil), Encoding)
+
+class RSpec::Core::Bisect::ExampleSetDescriptor < ::Struct
+  def all_example_ids; end
+  def all_example_ids=(_); end
+  def failed_example_ids; end
+  def failed_example_ids=(_); end
+
+  class << self
+    def [](*_arg0); end
+    def inspect; end
+    def keyword_init?; end
+    def members; end
+    def new(*_arg0); end
+  end
+end
+
+class RSpec::Core::Bisect::Notifier
+  def initialize(formatter); end
+
+  def publish(event, *args); end
 end
 
 class RSpec::Core::Configuration
@@ -601,7 +638,7 @@ class RSpec::Core::ExampleGroup
 
   private
 
-  def method_missing(name, *args, **_arg2); end
+  def method_missing(name, *args, **); end
 
   class << self
     def add_example(example); end
@@ -846,6 +883,18 @@ module RSpec::Core::Formatters
   end
 end
 
+class RSpec::Core::Formatters::BaseBisectFormatter
+  def initialize(expected_failures); end
+
+  def example_failed(notification); end
+  def example_finished(notification); end
+  def start_dump(_notification); end
+
+  class << self
+    def inherited(formatter); end
+  end
+end
+
 class RSpec::Core::Formatters::BaseFormatter
   def initialize(output); end
 
@@ -870,6 +919,12 @@ class RSpec::Core::Formatters::BaseTextFormatter < ::RSpec::Core::Formatters::Ba
   def dump_summary(summary); end
   def message(notification); end
   def seed(notification); end
+end
+
+class RSpec::Core::Formatters::BisectDRbFormatter < ::RSpec::Core::Formatters::BaseBisectFormatter
+  def initialize(_output); end
+
+  def notify_results(results); end
 end
 
 module RSpec::Core::Formatters::ConsoleCodes
@@ -1065,7 +1120,7 @@ end
 
 module RSpec::Core::Formatters::ExceptionPresenter::Factory::EmptyBacktraceFormatter
   class << self
-    def format_backtrace(*_arg0); end
+    def format_backtrace(*); end
   end
 end
 
@@ -1568,7 +1623,7 @@ class RSpec::Core::LegacyExampleGroupHash
 end
 
 module RSpec::Core::MemoizedHelpers
-  def initialize(*_arg0); end
+  def initialize(*); end
 
   def is_expected; end
   def should(matcher = T.unsafe(nil), message = T.unsafe(nil)); end
@@ -1952,7 +2007,7 @@ class RSpec::Core::NullReporter
   class << self
     private
 
-    def method_missing(*_arg0); end
+    def method_missing(*); end
   end
 end
 
@@ -2079,7 +2134,9 @@ class RSpec::Core::OutputWrapper
   def lineno=(*args, &block); end
   def method_missing(name, *args, &block); end
   def noecho(*args, &block); end
-  def nread(*args, &block); end
+  def nonblock(*args, &block); end
+  def nonblock=(*args, &block); end
+  def nonblock?(*args, &block); end
   def oflush(*args, &block); end
   def output; end
   def output=(_arg0); end
@@ -2104,7 +2161,6 @@ class RSpec::Core::OutputWrapper
   def readline(*args, &block); end
   def readlines(*args, &block); end
   def readpartial(*args, &block); end
-  def ready?(*args, &block); end
   def reopen(*args, &block); end
   def respond_to?(name, priv = T.unsafe(nil)); end
   def rewind(*args, &block); end
