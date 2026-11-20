@@ -1426,6 +1426,28 @@ RSpec.describe Homebrew::FormulaAuditor do
   end
 
   describe "#audit_deps" do
+    it "only asks dependents of a dependency that is also deprecated to be disabled" do
+      fa = formula_auditor "foo", <<~RUBY, core_tap: true
+        class Foo < Formula
+          url "https://brew.sh/foo-1.0.tgz"
+          homepage "https://brew.sh"
+
+          depends_on "bar"
+        end
+      RUBY
+      f_bar = formula("bar") do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/bar-1.0.tgz"
+        deprecate! date: "2020-01-01", because: :unmaintained
+        disable! date: "2021-01-01", because: :unmaintained
+      end
+      allow(fa.formula.deps.first).to receive(:to_formula).and_return(f_bar)
+      fa.audit_deps
+
+      expect(fa.problems.map { |problem| problem[:message] }.grep(/but has un-/))
+        .to contain_exactly(a_string_starting_with("Dependency 'bar' is disabled"))
+    end
+
     describe "a dependency on a macOS-provided keg-only formula" do
       describe "which is allowlisted" do
         subject(:f_a) { fa }

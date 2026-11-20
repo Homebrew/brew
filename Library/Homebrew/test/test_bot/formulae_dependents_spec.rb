@@ -47,6 +47,14 @@ RSpec.describe Homebrew::TestBot::FormulaeDependents do
       expect(formulae_dependents.steps.map(&:command).select { |command| command[1] == "fetch" })
         .to eq([%w[brew fetch --build-from-source --retry --test foo], %w[brew fetch --retry bar]])
     end
+
+    it "skips a dependent that is also deprecated as disabled" do
+      allow(dependent).to receive_messages(deprecated?: true, disabled?: true)
+
+      expect do
+        formulae_dependents.install_dependent(dependent, [dependent], args: Homebrew::Cmd::TestBotCmd.new([]).args)
+      end.to output(/foo has been disabled!/).to_stderr
+    end
   end
 
   describe "#dependents_for_shard" do

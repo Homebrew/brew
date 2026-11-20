@@ -75,4 +75,12 @@ RSpec.describe Homebrew::Diagnostic do
         .to output("Warning: First line\nSecond line\n").to_stderr
     end
   end
+
+  describe "::formula_build_finding" do
+    it "reports a formula that is also deprecated as disabled" do
+      formula = instance_double(Formula, name: "testball", head?: false, deprecated?: true, disabled?: true)
+
+      expect(described_class.formula_build_finding(formula)&.text).to eq("testball's formula is disabled.")
+    end
+  end
 end

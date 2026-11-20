@@ -365,6 +365,13 @@ RSpec.describe Homebrew::Diagnostic::Checks do
     end
   end
 
+  specify "#check_cask_deprecated_disabled lists a cask that is also deprecated once" do
+    cask = instance_double(Cask::Cask, token: "foo", deprecated?: true, disabled?: true)
+    allow(Cask::Caskroom).to receive(:casks).and_return([cask])
+
+    expect(checks.check_cask_deprecated_disabled&.affects).to eq(["foo"])
+  end
+
   describe "#check_for_unlinked_but_not_keg_only" do
     before { (HOMEBREW_CELLAR/"testball/1.0").mkpath }
 
