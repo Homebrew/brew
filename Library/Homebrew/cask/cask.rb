@@ -908,13 +908,10 @@ module Cask
                         installed_short_version == tap_short_version.rpartition("-").first
       end
 
-      return false if [installed_short_version, installed_bundle_version].any? do |installed_plist_version|
-        compare_version_strings(installed_plist_version, tap_short_version)&.zero?
-      end
+      return false if compare_version_strings(installed_bundle_version, tap_short_version)&.zero?
 
       short_comparison = compare_version_strings(installed_short_version, tap_short_version)
-      return true if short_comparison == -1
-      return false if short_comparison == 1
+      return short_comparison.negative? if short_comparison
 
       # A short version still matching Homebrew's installation record means a
       # different non-CSV tap version is outdated, as for casks without `auto_updates`.
@@ -923,8 +920,20 @@ module Cask
       build_comparisons = version.csv.filter_map do |candidate|
         compare_version_strings(installed_bundle_version, candidate.to_s)
       end
-      return false if build_comparisons.empty?
       return false if build_comparisons.include?(0)
+
+      short_segments = installed_short_version.to_s.split(".")
+      tap_segments = tap_short_version.split(".")
+      # A single number may identify the build. Prefer a comparable build in that case.
+      if build_comparisons.empty? || (short_segments.size > 1 && tap_segments.size > 1)
+        short_segments.zip(tap_segments) do |installed, tap|
+          break unless [installed, tap].all?(/\A\d+\z/)
+
+          comparison = installed.to_i <=> tap.to_i
+          return false if comparison.positive?
+          return build_comparisons.all?(&:negative?) if comparison.negative?
+        end
+      end
 
       build_comparisons.include?(-1)
     end
