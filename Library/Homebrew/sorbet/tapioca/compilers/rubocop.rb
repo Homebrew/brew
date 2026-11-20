@@ -34,7 +34,8 @@ module Tapioca
       def decorate
         root.create_path(constant) do |klass|
           constant.instance_methods(false).each do |method_name|
-            source_location = constant.instance_method(method_name).source_location
+            dsl_method = constant.instance_method(method_name)
+            source_location = dsl_method.source_location
             next if source_location.nil?
 
             source_file, source_line = source_location
@@ -51,9 +52,13 @@ module Tapioca
                 method_name.to_s,
                 parameters:  [
                   create_param("node", type: "RuboCop::AST::Node"),
+                  # The node defaults to `self`, so a required parameter is a positional `%1` in the pattern.
+                  if dsl_method.parameters.any? { |type, _| type == :req }
+                    create_rest_param("pattern", type: "T.any(String, Symbol)")
+                  end,
                   create_kw_rest_param("kwargs", type: "T.untyped"),
                   create_block_param("block", type: "T.untyped"),
-                ],
+                ].compact,
                 return_type: "T.untyped",
               )
             when /\Adef_node_search/
