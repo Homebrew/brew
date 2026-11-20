@@ -8,6 +8,9 @@ module CcShim
     sig { returns(T::Array[String]) }
     def args; end
 
+    sig { returns(T.nilable(String)) }
+    def deployment_target; end
+
     sig { returns(Regexp) }
     def keg_regex; end
   end

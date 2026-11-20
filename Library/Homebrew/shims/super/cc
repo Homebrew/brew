@@ -90,6 +90,14 @@ class Cmd
     end
   end
 
+  def deployment_target
+    # Leave any target the build system set: clang rejects or overrides
+    # another platform's target when a macOS one is also present.
+    return if ENV.any? { |name, value| name.match?(/\A[A-Z]+_DEPLOYMENT_TARGET\z/) && !value.empty? }
+
+    ENV.fetch("HOMEBREW_MACOSX_DEPLOYMENT_TARGET", nil)
+  end
+
   def tool
     @tool ||= case @arg0
     when "ld" then "ld"
@@ -586,6 +594,11 @@ if __FILE__ == $PROGRAM_NAME
 
   args << { close_others: false }
   if mac?
+    # Without a deployment target, clang on macOS 27 and newer can target the
+    # running minor version (e.g. 27.2) instead of the major version (27.0).
+    # It is set here rather than in superenv so build systems don't see it.
+    deployment_target = cmd.deployment_target
+    ENV["MACOSX_DEPLOYMENT_TARGET"] = deployment_target if deployment_target
     exec "#{dirname}/xcrun", tool, *args
   else
     paths = ENV["PATH"].split(":")
