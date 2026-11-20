@@ -4,7 +4,7 @@
 require "downloadable"
 require "formula_creator"
 require "mktemp"
-require "livecheck"
+require "livecheck/dsl"
 require "on_system"
 require "utils/output"
 
@@ -14,6 +14,7 @@ require "utils/output"
 class Resource
   include Downloadable
   include FileUtils
+  include Livecheck::DSL
   include OnSystem::MacOSAndLinux
   include Utils::Output::Mixin
 
@@ -55,7 +56,6 @@ class Resource
     @patches = T.let([], T::Array[T.any(EmbeddedPatch, ExternalPatch)])
     @owner = T.let(nil, T.nilable(Owner))
     @livecheck = T.let(Livecheck.new(self), Livecheck)
-    @livecheck_defined = T.let(false, T::Boolean)
     @insecure = T.let(false, T::Boolean)
     instance_eval(&block) if block
   end
@@ -262,22 +262,8 @@ class Resource
   #   regex /foo-(\d+(?:\.\d+)+)\.tar/
   # end
   # ```
-  sig { params(block: T.nilable(T.proc.bind(Livecheck).void)).returns(T.untyped) }
-  def livecheck(&block)
-    return @livecheck unless block
-
-    @livecheck_defined = true
-    @livecheck.instance_eval(&block)
-  end
-
-  # Whether a livecheck specification is defined or not.
-  #
-  # It returns `true` when a `livecheck` block is present in the {Resource}
-  # and `false` otherwise.
-  sig { returns(T::Boolean) }
-  def livecheck_defined?
-    @livecheck_defined == true
-  end
+  sig { params(block: T.nilable(T.proc.bind(Livecheck).void)).returns(Livecheck) }
+  def livecheck(&block) = configure_livecheck(@livecheck, &block)
 
   sig { params(val: String).returns(Checksum) }
   def sha256(val)

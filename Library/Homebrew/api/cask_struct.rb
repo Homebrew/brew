@@ -85,6 +85,7 @@ module Homebrew
       const :languages, T::Array[String], default: []
       const :language_variations, T::Array[LanguageVariation], default: []
       const :names, T::Array[String], default: []
+      const :no_autobump_message, T.nilable(T.any(String, Symbol))
       const :renames, T::Array[[String, String]], default: []
       const :ruby_source_checksum, T::Hash[Symbol, T.nilable(String)], default: { sha256: nil }
       const :ruby_source_path, T.nilable(String)

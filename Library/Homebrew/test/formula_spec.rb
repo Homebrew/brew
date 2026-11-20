@@ -1299,6 +1299,15 @@ RSpec.describe Formula do
     end.to raise_error(ArgumentError, "`browsed` requires a homepage URL")
   end
 
+  it "clears the browser check when a formula changes homepage" do
+    klass = Class.new(Formula) do
+      homepage "https://brew.sh/", browsed: "2026-07-26"
+      homepage "https://docs.brew.sh/"
+    end
+
+    expect(klass.homepage_browsed).to be_nil
+  end
+
   specify "spec integration" do
     f = formula do
       T.bind(self, T.class_of(Formula))
@@ -1748,6 +1757,11 @@ RSpec.describe Formula do
   end
 
   describe "#livecheck_defined?" do
+    it "returns the configured livecheck from a formula block" do
+      klass = Class.new(described_class)
+      expect(klass.livecheck { skip "archived" }).to equal(klass.livecheck)
+    end
+
     specify "no `livecheck` block defined" do
       f = formula do
         T.bind(self, T.class_of(Formula))
@@ -3569,6 +3583,54 @@ RSpec.describe Formula do
   end
 
   describe "OS support" do
+    it "preserves an enclosing OS block when entering a software spec" do
+      Homebrew::SimulateSystem.with(os: :tahoe) do
+        f = formula do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/test-1.0.tar.gz"
+          on_macos { stable { depends_on macos: :ventura } }
+        end
+        expect(f.supports_linux?).to be(true)
+      end
+    end
+
+    it "detects platform blocks declared inside a software spec for API variations" do
+      f = formula do
+        T.bind(self, T.class_of(Formula))
+        url "https://brew.sh/test-1.0.tar.gz"
+        head do
+          url "https://brew.sh/test.git", branch: "main"
+          on_macos { depends_on macos: :ventura }
+        end
+      end
+      expect(f.on_system_blocks_exist?).to be(true)
+    end
+
+    it "requires macOS when an architecture block declares the requirement" do
+      Homebrew::SimulateSystem.with(os: :linux, arch: :arm) do
+        f = formula do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/test-1.0.tar.gz"
+          on_arm { depends_on macos: :ventura }
+        end
+        expect(f.supports_linux?).to be(false)
+      end
+    end
+
+    it "keeps later dependencies in the outer OS block after a nested block" do
+      Homebrew::SimulateSystem.with(os: :tahoe, arch: :arm) do
+        f = formula do
+          T.bind(self, T.class_of(Formula))
+          url "https://brew.sh/test-1.0.tar.gz"
+          on_macos do
+            on_arm { depends_on "foo" }
+            depends_on macos: :ventura
+          end
+        end
+        expect(f.supports_linux?).to be(true)
+      end
+    end
+
     it "returns false for Linux when macOS is required at the top level" do
       f = formula do
         T.bind(self, T.class_of(Formula))
@@ -3628,6 +3690,15 @@ RSpec.describe Formula do
           depends_on :macos
         end
       end.to raise_error(ArgumentError, "`depends_on :macos` cannot be combined with another macOS `depends_on`")
+    end
+
+    it "does not allow duplicate top-level Linux requirements" do
+      expect do
+        Class.new(Formula) do
+          depends_on :linux
+          depends_on :linux
+        end
+      end.to raise_error(ArgumentError, /Only a single 'depends_on linux' is allowed/)
     end
 
     it "returns false for Linux when maximum macOS is required at the top level" do

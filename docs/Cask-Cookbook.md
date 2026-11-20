@@ -144,6 +144,7 @@ homepage "https://www.example.com/", browsed: "2026-07-26"
 ```
 
 This skips automated homepage availability audits for one year. Do not use a future date.
+A homepage override that changes the URL needs its own browser check.
 
 ### At least one artifact stanza is also required
 
@@ -821,6 +822,7 @@ no_autobump! because: :incompatible_version_format
 A complete list of allowed symbols can be found in [`NO_AUTOBUMP_REASONS_LIST`](/rubydoc/top-level-namespace.html#NO_AUTOBUMP_REASONS_LIST-constant).
 
 Casks that use `strategy :extract_plist` in their `livecheck` block or have `version :latest` are always excluded from the autobump list and do not require `no_autobump!` to be declared.
+If the cask also declares `no_autobump!`, Homebrew reports its explicit reason regardless of stanza order.
 
 Refer to the [Autobump](Autobump.md) page for more information about the autobump process in Homebrew.
 

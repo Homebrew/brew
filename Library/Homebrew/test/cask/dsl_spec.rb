@@ -239,6 +239,43 @@ RSpec.describe Cask::DSL, :cask, :no_api do
       expect(cask.autobump?).to be(true)
     end
 
+    it "uses the explicit reason when version :latest appears first" do
+      cask = Cask::Cask.new("test-cask") do
+        version :latest
+        no_autobump! because: :bumped_by_upstream
+      end
+
+      expect(cask).to have_attributes(autobump?: false, no_autobump_message: :bumped_by_upstream)
+    end
+
+    it "uses the explicit reason when the extract_plist strategy appears first" do
+      cask = Cask::Cask.new("test-cask") do
+        livecheck { strategy :extract_plist }
+        no_autobump! because: :bumped_by_upstream
+      end
+
+      expect(cask.no_autobump_message).to eq(:bumped_by_upstream)
+    end
+
+    it "preserves an explicit reason when automatic exclusions appear later" do
+      cask = Cask::Cask.new("test-cask") do
+        no_autobump! because: :bumped_by_upstream
+        version :latest
+        livecheck { strategy :extract_plist }
+      end
+
+      expect(cask.no_autobump_message).to eq(:bumped_by_upstream)
+    end
+
+    it "rejects duplicate explicit reasons" do
+      expect do
+        Cask::Cask.new("test-cask") do
+          no_autobump! because: :bumped_by_upstream
+          no_autobump! because: :incompatible_version_format
+        end
+      end.to raise_error(Cask::CaskInvalidError, /'no_autobump!' stanza may only appear once/)
+    end
+
     it "rejects the disabled reason in a current cask" do
       expect do
         Cask::Cask.new("test-cask") do
@@ -485,6 +522,16 @@ RSpec.describe Cask::DSL, :cask, :no_api do
   describe "homepage stanza" do
     let(:token) { "invalid-two-homepage" }
 
+    it "clears the browser check when a platform overrides the homepage" do
+      Homebrew::SimulateSystem.with(os: :macos) do
+        cask = Cask::Cask.new("homepage-override") do
+          homepage "https://brew.sh/", browsed: "2026-07-26"
+          on_macos { homepage "https://docs.brew.sh/" }
+        end
+        expect(cask.homepage_browsed).to be_nil
+      end
+    end
+
     it "prevents defining multiple homepages" do
       expect { cask }.to raise_error(Cask::CaskInvalidError, /'homepage' stanza may only appear once/)
     end
@@ -662,6 +709,16 @@ RSpec.describe Cask::DSL, :cask, :no_api do
   end
 
   describe "depends_on linux" do
+    it "allows an OS-scoped Linux requirement alongside a top-level one" do
+      Homebrew::SimulateSystem.with(os: :linux) do
+        cask = Cask::Cask.new("linux-only") do
+          depends_on :linux
+          on_linux { depends_on :linux }
+        end
+        expect(cask.supports_macos?).to be(false)
+      end
+    end
+
     context "when bare :linux is used" do
       let(:token) { "with-depends-on-linux-bare" }
 

@@ -551,9 +551,7 @@ module Homebrew
         puts if debug && strategy.blank? && livecheck_reference != :parent
         next if strategy.blank? && livecheck_reference != :parent
 
-        if debug && !(livecheck_homebrew_curl = livecheck_options.homebrew_curl).nil?
-          puts "Homebrew curl?:   #{livecheck_homebrew_curl ? "Yes" : "No"}"
-        end
+        puts "Homebrew curl?:   Yes" if debug && livecheck_options.homebrew_curl
 
         if livecheck_reference == :parent
           match_version_map = { formula_latest => Version.new(formula_latest) }

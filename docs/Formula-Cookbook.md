@@ -85,6 +85,7 @@ homepage "https://www.example.com", browsed: "2026-07-26"
 ```
 
 This skips automated homepage availability audits for one year. Do not use a future date.
+A homepage override that changes the URL needs its own browser check.
 
 ### Fill in the `desc`
 
@@ -745,6 +746,7 @@ on_system :linux, macos: :sonoma_or_older do
 end
 ```
 
+An OS requirement inside an architecture block applies on every OS for that architecture.
 To check multiple conditions, nest the corresponding blocks. For example, the following code adds a `gettext` build dependency when on ARM *and* macOS:
 
 ```ruby

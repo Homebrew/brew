@@ -404,6 +404,10 @@ module Cask
           deprecate!(**localised_cask_struct.deprecate_args) if localised_cask_struct.deprecate?
           disable!(**localised_cask_struct.disable_args) if localised_cask_struct.disable?
 
+          if (reason = localised_cask_struct.no_autobump_message)
+            set_no_autobump(because: reason, from_metadata: cask.loaded_from_metadata?)
+          end
+
           auto_updates localised_cask_struct.auto_updates if localised_cask_struct.auto_updates?
           conflicts_with(**localised_cask_struct.conflicts_with_args) if localised_cask_struct.conflicts?
 
