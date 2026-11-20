@@ -57,7 +57,7 @@ module Utils
       end
       heading += ": #{versions.join(", ")}"
       heading += " [keg-only]" if title.keg_only
-      heading += " (auto_updates)" if title.auto_updates
+      heading += " (auto updates)" if title.auto_updates
       heading
     end
 
