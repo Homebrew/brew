@@ -148,6 +148,16 @@ module T::Types
         EMPTY_ARRAY = [].freeze
         private_constant :EMPTY_ARRAY
 
+        @nilable_cache = ObjectSpace::WeakMap.new
+
+        # Memoizes `T.nilable(type)` for compound types, the way `Simple#to_nilable` does for simple ones.
+        def self.nilable_of(type)
+          cached = @nilable_cache[type]
+          return cached if cached
+
+          @nilable_cache[type] = Union.new([type, T::Utils::Nilable::NIL_TYPE])
+        end
+
         # Try to use `to_nilable` on a type to get memoization, or failing that
         # try to at least use SimplePairUnion to get faster init and typechecking.
         #
@@ -164,7 +174,14 @@ module T::Types
           if !types.empty?
             # Slow path
             return Union.new([type_a, type_b] + types)
-          elsif !type_a.is_a?(T::Types::Simple) || !type_b.is_a?(T::Types::Simple)
+          elsif !type_a.is_a?(T::Types::Simple)
+            if type_b.equal?(T::Utils::Nilable::NIL_TYPE)
+              return nilable_of(type_a)
+            else
+              # Slow path
+              return Union.new([type_a, type_b])
+            end
+          elsif !type_b.is_a?(T::Types::Simple)
             # Slow path
             return Union.new([type_a, type_b])
           end

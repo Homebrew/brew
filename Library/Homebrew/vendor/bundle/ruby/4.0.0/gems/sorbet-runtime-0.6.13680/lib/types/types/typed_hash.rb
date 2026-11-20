@@ -45,6 +45,33 @@ module T::Types
       Hash.new(...)
     end
 
+    # Only public for `Private::Pool`, which holds each per-keys bucket weakly, so every pooled type keeps its own bucket alive.
+    def _retain_pool_bucket(bucket)
+      @pool_bucket = bucket
+    end
+
+    module Private
+      module Pool
+        @cache = ObjectSpace::WeakMap.new
+
+        def self.type_for_keys_and_values(keys, values)
+          by_values = @cache[keys]
+          if by_values.nil?
+            by_values = ObjectSpace::WeakMap.new
+            @cache[keys] = by_values
+          end
+
+          cached = by_values[values]
+          return cached if cached
+
+          type = TypedHash.new(keys: keys, values: values)
+          type._retain_pool_bucket(by_values)
+          by_values[values] = type
+          type
+        end
+      end
+    end
+
     class Untyped < TypedHash
       def initialize
         # Use the INSTANCE constant directly (rather than `T.untyped`) so this
