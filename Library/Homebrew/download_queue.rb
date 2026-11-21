@@ -201,7 +201,7 @@ module Homebrew
       trap(:WINCH) { Tty.size_stale! }
       frame_width = Tty.width if tty_with_cursor_move_support?
       begin
-        stdout_print_and_flush_if_tty Tty.hide_cursor
+        stdout_print_and_flush_if_tty "#{Tty.hide_cursor}#{Tty.disable_line_wrap}"
 
         output_message = lambda do |downloadable, future, last|
           status = status_from_future(future)
@@ -211,7 +211,7 @@ module Homebrew
           message = downloadable.download_queue_message
           if tty_with_cursor_move_support?
             message = message_with_progress(downloadable, future, message, message_length_max)
-            stdout_print_and_flush "#{status} #{message}#{"\n" unless last}"
+            stdout_print_and_flush "\r#{status} #{message}#{Tty.clear_to_end}#{"\n" unless last}"
           elsif status
             $stderr.puts "#{status} #{message}"
           end
@@ -278,7 +278,6 @@ module Homebrew
 
               last = i == max_lines - 1 || i == remaining_downloads.count - 1
               previous_pending_line_count += output_message.call(downloadable, future, last)
-              stdout_print_and_flush_if_tty Tty.clear_to_end
             end
 
             if (previous_pending_line_count - 1).zero?
@@ -310,7 +309,7 @@ module Homebrew
         end
       ensure
         stdout_print_and_flush_if_tty Tty.end_synchronized_update
-        stdout_print_and_flush_if_tty Tty.show_cursor
+        stdout_print_and_flush_if_tty "#{Tty.restore_line_wrap}#{Tty.show_cursor}"
         @deferred_failure_messages.each(&:call)
       end
     # `Interrupt` inherits from `Exception`, so rescue it to cancel active workers

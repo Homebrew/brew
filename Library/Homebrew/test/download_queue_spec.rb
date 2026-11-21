@@ -344,6 +344,44 @@ RSpec.describe Homebrew::DownloadQueue do
     expect(Tty.strip_ansi(rendered_lines.fetch(0)).chomp.each_grapheme_cluster.count).to eq(Tty.width - 1)
   end
 
+  it "overwrites characters echoed before a download progress row" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    ENV["TERM"] = "xterm-256color"
+    allow(Tty).to receive(:width).and_return(80)
+    allow(downloadable).to receive_messages(total_size: 1024, phase: :downloading)
+    allow(downloadable).to receive(:fetched_size) do
+      $stdout.print "ab"
+      1024
+    end
+    download_queue.downloads[downloadable] = Concurrent::Promises.fulfilled_future(cached_download)
+
+    expect { download_queue.fetch }.to output(satisfy do |output|
+      Tty.strip_ansi(Tty.collapse_carriage_returns(output)).start_with?("✔︎ Bottle testball")
+    end).to_stdout
+  end
+
+  it "keeps echoed characters from wrapping a pending row before the cursor resets" do
+    allow($stdout).to receive(:tty?).and_return(true)
+    ENV["TERM"] = "xterm-256color"
+    allow(Tty).to receive(:width).and_return(80)
+    allow(downloadable).to receive_messages(fetched_size: 512, total_size: 1024, phase: :downloading)
+    future = Concurrent::Promises.resolvable_future
+    download_queue.downloads[downloadable] = future
+
+    allow(download_queue).to receive(:stdout_print_and_flush).and_wrap_original do |write, message|
+      write.call(message)
+      if message.include?("Bottle testball") && !future.resolved?
+        $stdout.print "ab"
+        future.fulfill(cached_download)
+      end
+    end
+
+    expect { download_queue.fetch }.to output(satisfy do |output|
+      before_input, _, after_input = output.partition("ab")
+      before_input.scan(/\e\[\?7[hl]/).last == "\e[?7l" && after_input.include?("\e[?7h")
+    end).to_stdout
+  end
+
   it "emits no synchronized update sequences when stdout is not a TTY" do
     allow($stdout).to receive(:tty?).and_return(false)
     allow(retryable_download).to receive(:fetch).and_return(cached_download)
