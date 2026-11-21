@@ -166,7 +166,8 @@ module Homebrew
             outdated_versions = outdated_kegs.group_by { |keg| Formulary.from_keg(keg).full_name }
                                              .sort_by { |full_name, _kegs| full_name }
                                              .map do |full_name, kegs|
-              "#{full_name} (#{kegs.map(&:version).join(", ")})"
+              versions = kegs.map(&:version).join(", ")
+              "#{full_name} (#{versions})"
             end.join(", ")
 
             pinned_version = " [pinned at #{f.pinned_version}]" if f.pinned?

@@ -87,14 +87,18 @@ module Homebrew
             output_lines = []
 
             if ignored_steps.present?
+              multiple_steps = ignored_steps.count > 1
+              step_suffix = multiple_steps ? "s" : ""
               output_lines += [
-                "Warning: #{ignored_steps.count} failed step#{"s" if ignored_steps.count > 1} ignored!",
+                "Warning: #{ignored_steps.count} failed step#{step_suffix} ignored!",
               ]
               output_lines += ignored_steps.map(&:command_trimmed)
             end
 
             if failed_steps.present?
-              output_lines += ["Error: #{failed_steps.count} failed step#{"s" if failed_steps.count > 1}!"]
+              multiple_steps = failed_steps.count > 1
+              step_suffix = multiple_steps ? "s" : ""
+              output_lines += ["Error: #{failed_steps.count} failed step#{step_suffix}!"]
               output_lines += failed_steps.map(&:command_trimmed)
             end
 

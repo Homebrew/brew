@@ -317,7 +317,8 @@ module Homebrew
         errors_summary += " detected"
 
         if corrected.positive?
-          errors_summary += ", #{Utils.pluralize("problem", corrected, include_count: true)} corrected"
+          corrected_problems = Utils.pluralize("problem", corrected, include_count: true)
+          errors_summary += ", #{corrected_problems} corrected"
         end
 
         errors_summary
@@ -416,10 +417,13 @@ module Homebrew
             status = " #{Formatter.success("[corrected]")}" if problem.fetch(:corrected)
             location = problem.fetch(:location)
             if location
-              location = "#{location.line&.to_s&.prepend("line ")}#{location.column&.to_s&.prepend(", col ")}: "
+              line_label = location.line&.to_s&.prepend("line ")
+              column_label = location.column&.to_s&.prepend(", col ")
+              location = "#{line_label}#{column_label}: "
             end
             message = problem.fetch(:message)
-            "* #{location}#{message.chomp.gsub("\n", "\n    ")}#{status}"
+            indented_message = message.chomp.gsub("\n", "\n    ")
+            "* #{location}#{indented_message}#{status}"
           end
 
           if args.display_filename?

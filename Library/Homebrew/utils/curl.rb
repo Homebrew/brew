@@ -429,10 +429,11 @@ module Utils
     rescue ErrorDuringExecution => e
       raise if e.exitstatus != 23 # CURLE_WRITE_ERROR
 
+      error_message = strip_progress_bar(Tty.collapse_carriage_returns(e.stderr)).strip
       raise DownloadWriteError, <<~EOS
         Could not write download to #{destination}
         Check that the destination has enough free disk space and is writable.
-        #{strip_progress_bar(Tty.collapse_carriage_returns(e.stderr)).strip}
+        #{error_message}
       EOS
     end
 
@@ -744,7 +745,8 @@ module Utils
       specs = specs.flat_map do |option, argument|
         next [] if argument == false # No flag.
 
-        args = ["--#{option.to_s.tr("_", "-")}"]
+        option_name = option.to_s.tr("_", "-")
+        args = ["--#{option_name}"]
         args << argument if argument != true # It's a flag.
         args
       end

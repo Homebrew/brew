@@ -155,10 +155,12 @@ module GitHub
     end
 
     params += qualifiers.except(:args, :from, :to).flat_map do |key, value|
-      Array(value).map { |v| "#{key.to_s.tr("_", "-")}:#{v}" }
+      qualifier = key.to_s.tr("_", "-")
+      Array(value).map { |v| "#{qualifier}:#{v}" }
     end
 
-    "q=#{URI.encode_www_form_component(params.compact.join(" "))}&per_page=#{MAX_PER_PAGE}"
+    search_terms = URI.encode_www_form_component(params.compact.join(" "))
+    "q=#{search_terms}&per_page=#{MAX_PER_PAGE}"
   end
 
   sig { params(subroutes: T.any(String, Integer)).returns(URI::Generic) }
@@ -204,16 +206,14 @@ module GitHub
       next if commit.present? && commit != r["commit"]["oid"]
       next unless valid_associations.include? r["authorAssociation"]
 
-      email = r["author"]["email"].presence ||
-              "#{r["author"]["databaseId"]}+#{r["author"]["login"]}@users.noreply.github.com"
-
-      name = r["author"]["name"].presence ||
-             r["author"]["login"]
+      author = r["author"]
+      login = author["login"]
+      email = author["email"].presence || "#{author["databaseId"]}+#{login}@users.noreply.github.com"
 
       {
         "email" => email,
-        "name"  => name,
-        "login" => r["author"]["login"],
+        "name"  => author["name"].presence || login,
+        "login" => login,
       }
     end
   end
@@ -591,9 +591,11 @@ module GitHub
     return if pull_requests.blank?
 
     confidence = version ? "are" : "might be"
+    state_prefix = state ? "#{state} " : ""
+    pr_list = pull_requests.map { |pr| "#{pr["title"]} #{pr["html_url"]}" }.join("\n")
     duplicates_message = <<~EOS
-      These #{"#{state} " if state}pull requests #{confidence} duplicates:
-      #{pull_requests.map { |pr| "#{pr["title"]} #{pr["html_url"]}" }.join("\n")}
+      These #{state_prefix}pull requests #{confidence} duplicates:
+      #{pr_list}
     EOS
     error_message = <<~EOS
       Duplicate PRs must not be opened.

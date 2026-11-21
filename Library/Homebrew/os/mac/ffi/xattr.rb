@@ -14,7 +14,8 @@ module OS
 
       sig { params(operation: String, path: String, attribute: T.nilable(String)).void }
       private_class_method def self.raise_xattr_error(operation, path, attribute = nil)
-        raise SystemCallError.new("#{operation} for #{attribute || path}", Fiddle.last_error)
+        target = attribute || path
+        raise SystemCallError.new("#{operation} for #{target}", Fiddle.last_error)
       end
 
       sig { params(path: String).returns(T::Array[String]) }

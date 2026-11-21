@@ -52,7 +52,8 @@ module RuboCop
             next if required_deps.all? { |dep| uses_from_macos_or_depends_on.include?(dep) }
 
             @offensive_node = found
-            problem "Add `#{kind}` lines above for #{required_deps.map { |req| "`\"#{req}\"`" }.join(" and ")}."
+            dependencies = required_deps.map { |req| "`\"#{req}\"`" }.join(" and ")
+            problem "Add `#{kind}` lines above for #{dependencies}."
           end
         end
       end

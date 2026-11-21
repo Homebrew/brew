@@ -98,10 +98,11 @@ module Homebrew
 
         if summary_file
           File.open(summary_file, "a") do |file|
+            update_message = updated ? "Updated command-not-found database." : "No changes"
             file.puts <<~EOS
               ## Database Update Summary
 
-              #{updated ? "Updated command-not-found database." : "No changes"}
+              #{update_message}
             EOS
           end
         end

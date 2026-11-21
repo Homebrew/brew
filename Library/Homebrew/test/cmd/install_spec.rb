@@ -896,7 +896,8 @@ RSpec.describe Homebrew::Cmd::InstallCmd do
 
     test_each([false, true].product([false, true])) do |on_request, outdated|
       it "preserves a cask's on_request: #{on_request} when outdated: #{outdated}" do
-        cask = Cask::CaskLoader.from_path(cask_path("#{"outdated/" if outdated}local-caffeine"))
+        directory = outdated ? "outdated/" : ""
+        cask = Cask::CaskLoader.from_path(cask_path("#{directory}local-caffeine"))
         InstallHelper.stub_cask_installation(cask)
         tab = cask.tab
         tab.installed_on_request = on_request

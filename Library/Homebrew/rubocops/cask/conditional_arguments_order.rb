@@ -69,8 +69,9 @@ module RuboCop
           end.join(", ")
         end
 
+        stanza_names = ON_CONDITIONAL_STANZAS.map(&:inspect).join(" ")
         def_node_matcher :conditional_variable?, <<~PATTERN
-          (lvasgn _ (send nil? {#{ON_CONDITIONAL_STANZAS.map(&:inspect).join(" ")}} ...))
+          (lvasgn _ (send nil? {#{stanza_names}} ...))
         PATTERN
       end
     end

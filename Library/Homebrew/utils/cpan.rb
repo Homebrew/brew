@@ -188,7 +188,9 @@ module CPAN
     if package_errors.present?
       ofail "Unable to resolve some dependencies. Please check #{formula.path} for RESOURCE-ERROR comments."
     elsif updated_count.positive?
-      ohai "Updated #{updated_count} CPAN resource#{"s" if updated_count != 1}" unless quiet
+      unless quiet
+        ohai "Updated #{updated_count} CPAN #{Utils.pluralize("resource", updated_count)}"
+      end
     end
 
     true

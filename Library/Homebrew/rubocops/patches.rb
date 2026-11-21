@@ -177,7 +177,8 @@ module RuboCop
           return if node.sym_type? && PATCH_TYPES.include?(T.cast(node, RuboCop::AST::SymbolNode).value)
 
           offending_node(node)
-          problem "Patch `type` should be one of: #{PATCH_TYPES.map(&:inspect).join(", ")}"
+          patch_types = PATCH_TYPES.map(&:inspect).join(", ")
+          problem "Patch `type` should be one of: #{patch_types}"
         end
 
         sig { params(patch: RuboCop::AST::Node).void }

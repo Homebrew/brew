@@ -11,9 +11,9 @@ module Utils
       hash.each_key do |key|
         next if valid_keys.include?(key)
 
+        key_names = valid_keys.map(&:inspect).join(", ")
         Kernel.raise ArgumentError,
-                     "Unknown key: #{key.inspect}. " \
-                     "Valid keys are: #{valid_keys.map(&:inspect).join(", ")}"
+                     "Unknown key: #{key.inspect}. Valid keys are: #{key_names}"
       end
     end
   end

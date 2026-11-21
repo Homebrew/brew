@@ -140,7 +140,7 @@ Homebrew/NoUntypedKeywordRest:
     - "Homebrew/test/**/*"
 
 Homebrew/SimpleInterpolation:
-  Enabled: false
+  Enabled: true
 
 Homebrew/SimpleTernary:
   Enabled: true

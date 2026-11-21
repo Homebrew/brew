@@ -50,7 +50,8 @@ class GitHubReleases
         uploaded_count += 1
         next if bottle_count < 3
 
-        ohai "Upload progress: #{uploaded_count} formula(e) uploaded, #{bottle_count - uploaded_count} remaining"
+        remaining = bottle_count - uploaded_count
+        ohai "Upload progress: #{uploaded_count} formula(e) uploaded, #{remaining} remaining"
       end
 
       # Publish the release (and thereby create its tag) now that all bottle

@@ -25,11 +25,12 @@ module RuboCop
           problem "Skipped formulae must not contain other livecheck information." do |corrector|
             skip = find_strings(skip_node).fetch(0)
             skip = string_content(skip) if skip.present?
+            reason = skip.present? ? " \"#{skip}\"" : ""
             corrector.replace(
               livecheck_node.source_range,
               <<~EOS.strip,
                 livecheck do
-                    skip#{" \"#{skip}\"" if skip.present?}
+                    skip#{reason}
                   end
               EOS
             )

@@ -18,6 +18,7 @@ RSpec.describe Homebrew::Diagnostic do
                              ])
     allow(Homebrew::Diagnostic::Checks).to receive(:new).and_return(checks)
 
+    tier_message = Homebrew::Diagnostic::Finding.support_tier_message(tier: 3)&.chomp
     expect do
       described_class.checks(:supported_configuration_checks, fatal: false)
       described_class.report_support_tier
@@ -26,11 +27,12 @@ RSpec.describe Homebrew::Diagnostic do
       Warning: First warning
       Warning: Second warning
 
-      #{Homebrew::Diagnostic::Finding.support_tier_message(tier: 3)&.chomp}
+      #{tier_message}
     EOS
   end
 
   it "includes a custom compiler in the final tier without repeating the tier warning" do
+    tier_message = Homebrew::Diagnostic::Finding.support_tier_message(tier: 3)&.chomp
     expect do
       Homebrew::Install.check_cc_argv("clang")
       described_class.support_tiers << 2
@@ -38,7 +40,7 @@ RSpec.describe Homebrew::Diagnostic do
     end.to output(<<~EOS).to_stderr
       Warning: You passed `--cc=clang`.
 
-      #{Homebrew::Diagnostic::Finding.support_tier_message(tier: 3)&.chomp}
+      #{tier_message}
     EOS
   end
 

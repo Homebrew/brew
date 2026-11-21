@@ -24,7 +24,8 @@ module OS
       def self.system_version
         @system_version ||= T.let(nil, T.nilable(Version))
         @system_version ||= if (path = system_path)
-          Version.new("#{SOVERSION}#{path.realpath.basename.to_s.delete_prefix!(SONAME)}")
+          library_version = path.realpath.basename.to_s.delete_prefix!(SONAME)
+          Version.new("#{SOVERSION}#{library_version}")
         else
           Version::NULL
         end

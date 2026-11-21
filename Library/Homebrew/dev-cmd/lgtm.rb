@@ -63,7 +63,7 @@ module Homebrew
                .each do |file|
             next if file.blank?
 
-            tapped_name = "#{tap.name}/#{Pathname(file).basename(".rb")}"
+            tapped_name = "#{tap.name}/#{File.basename(file, ".rb")}"
 
             if tap.formula_file?(file)
               (added_files.include?(file) ? new_formulae : changed_formulae) << tapped_name

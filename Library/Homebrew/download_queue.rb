@@ -182,8 +182,7 @@ module Homebrew
         return
       end
 
-      message_length_max =
-        fetchable_downloads.each_key.map { |download| download.download_queue_message.length }.max || 0
+      message_length_max = fetchable_downloads.each_key.map { it.download_queue_message.length }.max || 0
       remaining_downloads = fetchable_downloads.dup.to_a
       previous_pending_line_count = 0
       max_lines = [concurrency, Tty.height].min
@@ -211,7 +210,8 @@ module Homebrew
           message = downloadable.download_queue_message
           if tty_with_cursor_move_support?
             message = message_with_progress(downloadable, future, message, message_length_max)
-            stdout_print_and_flush "\r#{status} #{message}#{Tty.clear_to_end}#{"\n" unless last}"
+            newline = last ? "" : "\n"
+            stdout_print_and_flush "\r#{status} #{message}#{Tty.clear_to_end}#{newline}"
           elsif status
             $stderr.puts "#{status} #{message}"
           end
@@ -548,7 +548,8 @@ module Homebrew
       message_length = available_width - progress.length
       return message[0, available_width].to_s unless message_length.positive?
 
-      "#{message[0, message_length].to_s.ljust(message_length)}#{progress}"
+      padded_message = message[0, message_length].to_s.ljust(message_length)
+      "#{padded_message}#{progress}"
     end
 
     # Animated spinner for download progress display.

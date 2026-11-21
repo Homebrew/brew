@@ -442,7 +442,7 @@ module Homebrew
     private_class_method def self.run_linter(executable, args, files, timeout:, env: {})
       system_command executable, args: [*args, *files], env:, print_stderr: false, timeout:
     rescue Timeout::Error
-      raise Timeout::Error, "#{Pathname(executable).basename} did not finish within #{timeout}s on " \
+      raise Timeout::Error, "#{File.basename(executable)} did not finish within #{timeout}s on " \
                             "#{files.length} file(s)."
     end
 

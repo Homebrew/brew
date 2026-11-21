@@ -7,6 +7,7 @@ require_relative "../../../.github/scripts/approve_stale_lead_maintainer_prs"
 RSpec.describe StaleLeadMaintainerPrApproval do
   subject(:approval) { described_class.new }
 
+  let(:sorbet_runtime_path) { Gem.loaded_specs.fetch("sorbet-runtime").full_gem_path }
   let(:now) { Time.utc(2026, 9, 8, 12) }
   let(:api_url) { "https://api.github.com/repos/Homebrew/brew" }
   let(:report_query) { "state=open&head=Homebrew%3Aapprove-stale-lead-maintainer-prs&per_page=1" }
@@ -106,7 +107,7 @@ RSpec.describe StaleLeadMaintainerPrApproval do
   it "loads independently of Homebrew without running approvals" do
     stdout, stderr, status = Open3.capture3(
       { "RUBYOPT" => nil, "RUBYLIB" => nil, "GITHUB_REPOSITORY" => nil },
-      RbConfig.ruby, "-I", "#{Gem.loaded_specs.fetch("sorbet-runtime").full_gem_path}/lib",
+      RbConfig.ruby, "-I", "#{sorbet_runtime_path}/lib",
       "-e", "require ARGV.fetch(0); puts defined?(Homebrew).inspect",
       File.expand_path("../../../.github/scripts/approve_stale_lead_maintainer_prs.rb", __dir__)
     )
@@ -117,7 +118,7 @@ RSpec.describe StaleLeadMaintainerPrApproval do
   it "runs as a standalone Ruby script when there are no open PRs" do
     stdout, stderr, status = Open3.capture3(
       { "RUBYOPT" => nil, "RUBYLIB" => nil },
-      RbConfig.ruby, "-I", "#{Gem.loaded_specs.fetch("sorbet-runtime").full_gem_path}/lib",
+      RbConfig.ruby, "-I", "#{sorbet_runtime_path}/lib",
       File.expand_path("../../../.github/scripts/approve_stale_lead_maintainer_prs.rb", __dir__)
     )
 
@@ -146,7 +147,7 @@ RSpec.describe StaleLeadMaintainerPrApproval do
     File.write("clock.rb", "def Time.now = Time.at(#{now.to_i}).utc\n")
     stdout, stderr, status = Open3.capture3(
       { "RUBYOPT" => nil, "RUBYLIB" => nil },
-      RbConfig.ruby, "-I", "#{Gem.loaded_specs.fetch("sorbet-runtime").full_gem_path}/lib",
+      RbConfig.ruby, "-I", "#{sorbet_runtime_path}/lib",
       "-r", "./clock.rb", File.expand_path("../../../.github/scripts/approve_stale_lead_maintainer_prs.rb", __dir__)
     )
 
@@ -168,7 +169,7 @@ RSpec.describe StaleLeadMaintainerPrApproval do
     stdout, stderr, status = Open3.capture3(
       { "RUBYOPT" => nil, "RUBYLIB" => nil, "LC_ALL" => "C", "LANG" => "C",
         "GH_TEST_RESPONSES" => File.expand_path("responses.json") },
-      RbConfig.ruby, "-I", "#{Gem.loaded_specs.fetch("sorbet-runtime").full_gem_path}/lib",
+      RbConfig.ruby, "-I", "#{sorbet_runtime_path}/lib",
       "-r", "./clock.rb", File.expand_path("../../../.github/scripts/approve_stale_lead_maintainer_prs.rb", __dir__)
     )
 
@@ -179,7 +180,7 @@ RSpec.describe StaleLeadMaintainerPrApproval do
     stdout, stderr, status = Open3.capture3(
       { "RUBYOPT" => nil, "RUBYLIB" => nil, "LC_ALL" => "C", "LANG" => "C",
         "GH_TEST_ERROR" => "gh: not found \u{1F37A}", "GH_TEST_EXIT" => "1" },
-      RbConfig.ruby, "-I", "#{Gem.loaded_specs.fetch("sorbet-runtime").full_gem_path}/lib",
+      RbConfig.ruby, "-I", "#{sorbet_runtime_path}/lib",
       File.expand_path("../../../.github/scripts/approve_stale_lead_maintainer_prs.rb", __dir__)
     )
 

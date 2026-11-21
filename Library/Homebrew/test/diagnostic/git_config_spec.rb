@@ -171,8 +171,9 @@ RSpec.describe Homebrew::Diagnostic::Checks do
             opaque = \xFF
         EOS
 
+        private_config = Regexp.escape((home/"private-config").to_s.inspect)
         expect(checks.check_git_config_in_sandbox&.to_s)
-          .to match(/\A(?!.*private-token).*#{Regexp.escape((home/"private-config").to_s.inspect)}/m)
+          .to match(/\A(?!.*private-token).*#{private_config}/m)
       end
 
       it "does not mistake a similarly named location for a restricted path" do
