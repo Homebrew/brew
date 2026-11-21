@@ -38,6 +38,13 @@ module Cask
       @token = T.let(token.to_s, String)
       @reason = T.let(reason.to_s, String)
     end
+
+    private
+
+    sig { returns(String) }
+    def reason_suffix
+      reason.empty? ? "." : ": #{reason}"
+    end
   end
 
   # Error when a cask is not installed.
@@ -86,7 +93,7 @@ module Cask
   class CaskUnavailableError < AbstractCaskErrorWithToken
     sig { returns(String) }
     def to_s
-      "Cask '#{token}' is unavailable#{reason.empty? ? "." : ": #{reason}"}"
+      "Cask '#{token}' is unavailable#{reason_suffix}"
     end
   end
 
@@ -94,7 +101,7 @@ module Cask
   class CaskUnreadableError < CaskUnavailableError
     sig { returns(String) }
     def to_s
-      "Cask '#{token}' is unreadable#{reason.empty? ? "." : ": #{reason}"}"
+      "Cask '#{token}' is unreadable#{reason_suffix}"
     end
   end
 
@@ -157,7 +164,7 @@ module Cask
   class CaskCyclicDependencyError < AbstractCaskErrorWithToken
     sig { returns(String) }
     def to_s
-      "Cask '#{token}' includes cyclic dependencies on other Casks#{reason.empty? ? "." : ": #{reason}"}"
+      "Cask '#{token}' includes cyclic dependencies on other Casks#{reason_suffix}"
     end
   end
 
@@ -181,7 +188,7 @@ module Cask
   class CaskInvalidError < AbstractCaskErrorWithToken
     sig { returns(String) }
     def to_s
-      "Cask '#{token}' definition is invalid#{reason.empty? ? "." : ": #{reason}"}"
+      "Cask '#{token}' definition is invalid#{reason_suffix}"
     end
   end
 

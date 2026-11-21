@@ -110,13 +110,16 @@ RSpec.describe Cask::List, :cask do
         artifact.install_phase(command: NeverSudoSystemCommand, force: false)
       end
 
+      transmission_app = Pathname(transmission.config.appdir).join("Transmission.app")
+      transmission_size = Pathname(transmission.config.appdir).join("Transmission.app").abv
+      caffeine_app = Pathname(caffeine.config.appdir).join("Caffeine.app")
       expect do
         described_class.list_casks(transmission, caffeine)
       end.to output(<<~EOS).to_stdout
         ==> App
-        #{Pathname(transmission.config.appdir).join("Transmission.app")} (#{Pathname(transmission.config.appdir).join("Transmission.app").abv})
+        #{transmission_app} (#{transmission_size})
         ==> App
-        Missing App: #{Pathname(caffeine.config.appdir).join("Caffeine.app")}
+        Missing App: #{caffeine_app}
       EOS
     end
   end

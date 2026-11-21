@@ -77,7 +77,11 @@ class ExternalPatch
         patch_files << children.fetch(0).basename
       end
       resource_directory = resource.directory.presence
-      dir = resource_directory ? base_dir/resource_directory : base_dir
+      dir = if resource_directory
+        base_dir/resource_directory
+      else
+        base_dir
+      end
       Utils::Path.ensure_child_of!(base_dir, dir, message: "Patch directory escapes the staged source tree: #{dir}")
       patch_files.each do |patch_file|
         ohai "Applying #{patch_file}"

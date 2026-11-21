@@ -509,7 +509,7 @@ class FormulaInstaller # rubocop:disable Metrics/ClassLength
     return if pinned_unsatisfied_deps.empty?
 
     raise CannotInstallFormulaError,
-          "You must `brew unpin #{pinned_unsatisfied_deps * " "}` as installing " \
+          "You must `brew unpin #{pinned_unsatisfied_deps.join(" ")}` as installing " \
           "#{formula.full_name} requires the latest version of pinned dependencies."
   end
 
@@ -963,7 +963,10 @@ on_request: installed_on_request?, options:)
   sig { params(dep: Dependency, dep_formula: Formula).void }
   def install_dependency(dep, dep_formula = dep.to_formula)
     upgrading = dep_formula.outdated?
-    upgrade_from = "#{Keg.new(dep_formula.opt_prefix).version} -> " if upgrading && dep_formula.optlinked?
+    if upgrading && dep_formula.optlinked?
+      installed_version = Keg.new(dep_formula.opt_prefix).version
+      upgrade_from = "#{installed_version} -> "
+    end
 
     if dep_formula.linked_keg.directory?
       linked_keg = Keg.new(resolved_path(dep_formula.linked_keg))
@@ -1221,7 +1224,11 @@ on_request: installed_on_request?, options:)
     flags = build_argv
     # gist-logs may run with a different developer setting from the build.
     flags << "HOMEBREW_DEVELOPER=1" if build_bottle? && Homebrew::EnvConfig.developer?
-    build_from_source? ? flags | ["--build-from-source"] : flags
+    if build_from_source?
+      flags | ["--build-from-source"]
+    else
+      flags
+    end
   end
 
   sig { void }
@@ -1861,7 +1868,8 @@ on_request: installed_on_request?, options:)
   def forbidden_license_check
     forbidden_licenses = Homebrew::EnvConfig.forbidden_licenses.to_s.dup
     SPDX::ALLOWED_LICENSE_SYMBOLS.each do |s|
-      pattern = /#{s.to_s.tr("_", " ")}/i
+      option_name = s.to_s.tr("_", " ")
+      pattern = /#{option_name}/i
       forbidden_licenses.sub!(pattern, s.to_s)
     end
 

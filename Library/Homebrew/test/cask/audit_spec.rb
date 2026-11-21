@@ -55,7 +55,8 @@ RSpec.describe Cask::Audit, :cask do
     if passed?(audit)
       "passed"
     else
-      "errored with #{audit.errors.map { |e| e.fetch(:message).inspect }.join(",")}"
+      messages = audit.errors.map { |e| e.fetch(:message).inspect }.join(",")
+      "errored with #{messages}"
     end
   end
 

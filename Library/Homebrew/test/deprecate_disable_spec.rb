@@ -90,8 +90,13 @@ RSpec.describe DeprecateDisable do
       [:formula, :cask].product([:sonoma, :linux], [:arm, :intel]).map do |type, os, arch|
         Homebrew::SimulateSystem.with(os:, arch:) do
           path = mktmpdir/"test.rb"
+          declaration = if type == :formula
+            "class Test < Formula"
+          else
+            'cask "test" do'
+          end
           path.write <<~RUBY
-            #{(type == :formula) ? "class Test < Formula" : 'cask "test" do'}
+            #{declaration}
               version "1.2.3"
               url "https://brew.sh/test-1.2.3.tgz"
               #{disable_stanzas}
@@ -136,10 +141,11 @@ RSpec.describe DeprecateDisable do
       ["on_sonoma :or_older"], %w[on_macos on_arm]
     ]) do |conditions|
       it "returns false when disabled in #{conditions.join(" and ")}" do
+        closing_lines = conditions.map { "end" }.join("\n")
         expect(disable_statuses(<<~RUBY)).to all(be(false))
           #{conditions.join(" do\n")} do
             disable! date: "2020-01-01", because: :unmaintained
-          #{conditions.map { "end" }.join("\n")}
+          #{closing_lines}
         RUBY
       end
     end

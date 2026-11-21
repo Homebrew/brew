@@ -327,7 +327,11 @@ class CurlDownloadStrategy < AbstractFileDownloadStrategy
         next arg unless arg.include?(EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX)
 
         undeclared = arg.gsub(placeholder_pattern) do |placeholder|
-          (declared.any? { |value| value.include?(placeholder) }) ? "" : placeholder
+          if declared.any? { |value| value.include?(placeholder) }
+            ""
+          else
+            placeholder
+          end
         end
         next ENV.expand_deferred_environment(arg) if undeclared.exclude?(
           EnvSensitive::DEFERRED_PLACEHOLDER_PREFIX,

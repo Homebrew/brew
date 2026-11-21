@@ -386,7 +386,7 @@ RSpec.describe GitDownloadStrategy do
     end
 
     test_each([nil, "explicit-test-token"].product(%w[checkout reset config submodule])) do |(token, command)|
-      it "does not pass #{token ? "an explicit" : "an automatic"} token to #{command} commands" do
+      it "keeps the token out of #{command} commands (explicit token: #{token.present?})" do
         ENV["HOMEBREW_GITHUB_API_TOKEN"] = token
         allow(strategy).to receive_messages(repo_valid?: true, partial_clone_sparse_checkout?: true,
                                             submodules?: true)
@@ -398,7 +398,7 @@ RSpec.describe GitDownloadStrategy do
     end
 
     test_each([false, true]) do |shallow|
-      it "passes the credential when updating a #{shallow ? "shallow" : "full"} cached repository" do
+      it "passes the credential when updating a cached repository (shallow: #{shallow})" do
         allow(strategy).to receive_messages(repo_valid?: true, shallow_dir?: shallow)
         expect(strategy).to receive(:system_command!).with(
           "git", hash_including(args: ["fetch", "--no-recurse-submodules", "origin", *("--unshallow" if shallow)],

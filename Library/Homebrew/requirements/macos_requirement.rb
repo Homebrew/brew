@@ -154,7 +154,8 @@ class MacOSRequirement < Requirement
 
   sig { override.params(type: Symbol).returns(String) }
   def message(type: :formula)
-    subject = (type == :cask) ? "This cask" : "This formula"
+    for_cask = type == :cask
+    subject = for_cask ? "This cask" : "This formula"
     "#{subject} requires macOS."
   end
 

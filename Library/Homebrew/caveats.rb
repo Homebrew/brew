@@ -119,10 +119,11 @@ class Caveats
 
       if which("cmake", ORIGINAL_PATHS) &&
          ((formula.lib/"cmake").directory? || (formula.share/"cmake").directory?)
+        cmake_path = Utils::Shell.export_value("CMAKE_PREFIX_PATH", formula.opt_prefix.to_s)
         s << <<~EOS
 
           For cmake to find #{formula.name} you may need to set:
-            #{Utils::Shell.export_value("CMAKE_PREFIX_PATH", formula.opt_prefix.to_s)}
+            #{cmake_path}
         EOS
       end
     end
@@ -179,9 +180,9 @@ class Caveats
     shadowed.group_by { |_, shadower| [shadower.dirname, sibling_keg_name(shadower)] }
             .map do |(dir, sibling), executables|
       names = executables.map { |name, _| name }
-      "The following #{formula.name} executables are shadowed by " \
-        "#{"linked #{sibling} " if sibling}commands in #{dir}:\n" \
-        "#{Formatter.columns(names, min_width: names.map(&:length).max.to_i)}"
+      linked_sibling = sibling ? "linked #{sibling} " : ""
+      columns = Formatter.columns(names, min_width: names.map(&:length).max.to_i)
+      "The following #{formula.name} executables are shadowed by #{linked_sibling}commands in #{dir}:\n#{columns}"
     end.join
        .chomp
   end
@@ -305,7 +306,8 @@ class Caveats
     startup = formula.service.requires_root?
     if Utils::Service.running?(formula)
       s << "To restart #{formula.full_name} after an upgrade:"
-      s << "  #{"sudo " if startup}brew services restart #{formula.full_name}"
+      sudo = startup ? "sudo " : ""
+      s << "  #{sudo}brew services restart #{formula.full_name}"
     elsif startup
       s << "To start #{formula.full_name} now and restart at startup:"
       s << "  sudo brew services start #{formula.full_name}"

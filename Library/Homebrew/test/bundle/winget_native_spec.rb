@@ -21,13 +21,15 @@ RSpec.describe Homebrew::Bundle::Winget do
     skip "Requires WSL and Windows PowerShell 5.1." unless OS.wsl?
 
     described_class.reset!
+    source_path = described_class.powershell_quote(windows_path(fixture("winget.cs")))
+    executable_path = described_class.powershell_quote(windows_path(executable))
     SystemCommand.run!(powershell, args: ["-NoProfile", "-NonInteractive", "-Command", <<~POWERSHELL])
       $ErrorActionPreference = 'Stop'
       if ($PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSVersion.Minor -ne 1) {
         throw 'Windows PowerShell 5.1 required'
       }
-      $source = Get-Content #{described_class.powershell_quote(windows_path(fixture("winget.cs")))} -Raw -Encoding UTF8
-      $output = #{described_class.powershell_quote(windows_path(executable))}
+      $source = Get-Content #{source_path} -Raw -Encoding UTF8
+      $output = #{executable_path}
       Add-Type -TypeDefinition $source -Language CSharp -OutputAssembly $output -OutputType ConsoleApplication
     POWERSHELL
     (native_directory/"exit-code.txt").write "00000000"
@@ -76,7 +78,7 @@ RSpec.describe Homebrew::Bundle::Winget do
   end
 
   test_each(["'", "\u2018", "\u2019", "\u201A", "\u201B"]) do |quote|
-    context "with U+#{quote.ord.to_s(16).upcase} in executable and export paths" do
+    context "with #{quote.inspect} in executable and export paths" do
       let(:quoted_directory) { native_directory/"Example#{quote}s café; $(Write-Output unexpected)" }
       let(:quoted_executable) { quoted_directory/"fixture.exe" }
 

@@ -42,7 +42,9 @@ class BottleSpecification
 
   sig { params(val: T.nilable(Integer)).returns(Integer) }
   def rebuild(val = nil)
-    val.nil? ? @rebuild : @rebuild = val
+    return @rebuild if val.nil?
+
+    @rebuild = val
   end
 
   # The SHA-256 of the GitHub Packages image index that lists every bottle
@@ -190,13 +192,14 @@ class BottleSpecification
   sig { returns(T::Array[{ "tag" => Symbol, "digest" => Checksum, "cellar" => T.any(Symbol, String) }]) }
   def checksums
     tags = collector.tags.sort_by do |tag|
+      arm64 = tag.arch == :arm64
       version = tag.to_macos_version
       # Give `arm64` bottles a higher priority so they are first.
-      priority = (tag.arch == :arm64) ? 3 : 2
+      priority = arm64 ? 3 : 2
       "#{priority}.#{version}_#{tag}"
     rescue MacOSVersion::Error
       # Sort non-macOS tags below macOS tags, and arm64 tags before other tags.
-      priority = (tag.arch == :arm64) ? 1 : 0
+      priority = arm64 ? 1 : 0
       "#{priority}.#{tag}"
     end
     tags.reverse.map do |tag|

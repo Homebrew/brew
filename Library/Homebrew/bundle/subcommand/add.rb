@@ -12,10 +12,11 @@ module Homebrew
     class Bundle < Homebrew::AbstractCommand
       class AddSubcommand < Homebrew::AbstractSubcommand
         subcommand_args do
-          extensions = Homebrew::Bundle.extensions
+          extensions = Homebrew::Bundle.extensions.select(&:add_supported?)
+          extension_flags = extensions.map { |extension| "`--#{extension.flag}`" }
           usage_banner <<~EOS
             `brew bundle add` <name> [...]:
-            Add entries to your `Brewfile`. Adds formulae by default. Use #{Utils::Text.to_sentence(["`--cask`", "`--tap`", *extensions.select(&:add_supported?).map { |extension| "`--#{extension.flag}`" }])} to add the corresponding entry instead.
+            Add entries to your `Brewfile`. Adds formulae by default. Use #{Utils::Text.to_sentence(["`--cask`", "`--tap`", *extension_flags])} to add the corresponding entry instead.
           EOS
           named_args min: 1
           switch "--install",
@@ -26,7 +27,7 @@ module Homebrew
                  description: "Add Homebrew cask entries."
           switch "--tap", "--taps",
                  description: "Add Homebrew tap entries."
-          extensions.select(&:add_supported?).each do |extension|
+          extensions.each do |extension|
             switch "--#{extension.flag}",
                    description: extension.switch_description("Add entries for #{extension.banner_name}.")
           end

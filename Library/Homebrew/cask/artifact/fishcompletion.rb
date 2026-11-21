@@ -12,7 +12,7 @@ module Cask
         name = if target.to_s.end_with? ".fish"
           target
         else
-          new_name = "#{File.basename(target, File.extname(target))}.fish"
+          new_name = "#{File.basename(target, ".*")}.fish"
           odebug "Renaming completion #{target} to #{new_name}"
 
           new_name

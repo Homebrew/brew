@@ -240,17 +240,23 @@ class Requirement
 
     sig { params(val: T.nilable(String)).returns(T.nilable(String)) }
     def cask(val = nil)
-      val.nil? ? @cask : @cask = val
+      return @cask if val.nil?
+
+      @cask = val
     end
 
     sig { params(val: T.nilable(String)).returns(T.nilable(String)) }
     def download(val = nil)
-      val.nil? ? @download : @download = val
+      return @download if val.nil?
+
+      @download = val
     end
 
     sig { params(val: T.nilable(T::Boolean)).returns(T.nilable(T::Boolean)) }
     def fatal(val = nil)
-      val.nil? ? @fatal : @fatal = val
+      return @fatal if val.nil?
+
+      @fatal = val
     end
 
     sig {

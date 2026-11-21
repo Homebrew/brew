@@ -180,7 +180,7 @@ module Homebrew
         usable_strategies.sort_by do |strategy|
           # The strategy's optional `PRIORITY` constant is read dynamically.
           # rubocop:disable Sorbet/ConstantsFromStrings
-          strategy.const_defined?(:PRIORITY) ? -strategy.const_get(:PRIORITY) : -DEFAULT_PRIORITY
+          -(strategy.const_defined?(:PRIORITY) ? strategy.const_get(:PRIORITY) : DEFAULT_PRIORITY)
           # rubocop:enable Sorbet/ConstantsFromStrings
         end
       end

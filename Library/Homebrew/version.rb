@@ -11,7 +11,10 @@ class Version
   def self.formula_optionally_versioned_regex(name, full: true)
     name = name.to_s
     suffix = "-full" if name.end_with?("-full")
-    /#{"^" if full}#{Regexp.escape(name.delete_suffix("-full"))}(?:@\d[\d.]*)?#{suffix}#{"$" if full}/
+    anchor_start = full ? "^" : ""
+    name_pattern = Regexp.escape(name.delete_suffix("-full"))
+    anchor_end = full ? "$" : ""
+    /#{anchor_start}#{name_pattern}(?:@\d[\d.]*)?#{suffix}#{anchor_end}/
   end
 
   # A part of a {Version}.
@@ -718,7 +721,11 @@ class Version
     return self if null?
 
     major_minor = tokens.first(2)
-    major_minor.empty? ? NULL : self.class.new(major_minor.join("."))
+    if major_minor.empty?
+      NULL
+    else
+      self.class.new(major_minor.join("."))
+    end
   end
 
   # The major, minor and patch version.
@@ -729,7 +736,11 @@ class Version
     return self if null?
 
     major_minor_patch = tokens.first(3)
-    major_minor_patch.empty? ? NULL : self.class.new(major_minor_patch.join("."))
+    if major_minor_patch.empty?
+      NULL
+    else
+      self.class.new(major_minor_patch.join("."))
+    end
   end
 
   sig { returns(Integer) }

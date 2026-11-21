@@ -177,7 +177,8 @@ module Homebrew
 
       sig { params(package: Object).returns(String) }
       def self.dump_entry(package)
-        line = "#{type} #{quote(dump_name(package))}"
+        quoted_name = quote(dump_name(package))
+        line = "#{type} #{quoted_name}"
         with = dump_with(package)
         return line if with.blank?
 
@@ -264,7 +265,8 @@ module Homebrew
             success
           end
         end
-        puts "Uninstalled #{Utils.pluralize(package_description, successes, include_count: true)}"
+        package_count = Utils.pluralize(package_description, successes, include_count: true)
+        puts "Uninstalled #{package_count}"
       end
 
       sig { params(name: String, executable: Pathname).returns(T::Boolean) }
@@ -366,8 +368,12 @@ module Homebrew
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(String) }
       def failure_reason(package, no_upgrade:)
-        "#{self.class.check_label} #{self.class.dump_name(package)} needs to be " \
-          "#{(!no_upgrade && installed_and_up_to_date?(package, no_upgrade: true)) ? "upgraded" : "installed"}."
+        action = if !no_upgrade && installed_and_up_to_date?(package, no_upgrade: true)
+          "upgraded"
+        else
+          "installed"
+        end
+        "#{self.class.check_label} #{self.class.dump_name(package)} needs to be #{action}."
       end
 
       sig { override.params(package: Object, no_upgrade: T::Boolean).returns(T::Boolean) }

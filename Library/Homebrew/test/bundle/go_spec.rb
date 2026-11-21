@@ -222,9 +222,10 @@ RSpec.describe Homebrew::Bundle::Go do
         let(:bin_dir) { mktmpdir/"bin" }
 
         before do
+          use_gobin = variable == "GOBIN"
           allow(described_class).to receive(:command_output)
             .with(go, args: ["env", "GOBIN"], print_stderr: true)
-            .and_return((variable == "GOBIN") ? bin_dir.to_s : "")
+            .and_return(use_gobin ? bin_dir.to_s : "")
           allow(described_class).to receive(:command_output)
             .with(go, args: ["env", "GOPATH"], print_stderr: true)
             .and_return(bin_dir.dirname.to_s)
@@ -290,8 +291,9 @@ RSpec.describe Homebrew::Bundle::Go do
                "example.com/tool\textra", "example.com/to\rol", "example.com/to\vol", "example.com/to\fol"]) do |path|
       it "rejects a malformed path #{path.inspect} without selecting a later record" do
         write_metadata("\tpath\t#{path}\n\tpath\texample.com/other\n")
+        first_path = (bin/"first").to_s.inspect
         expect { described_class.packages }
-          .to raise_error(RuntimeError, "Invalid Go package path for #{(bin/"first").to_s.inspect}: #{path.inspect}")
+          .to raise_error(RuntimeError, "Invalid Go package path for #{first_path}: #{path.inspect}")
       end
     end
 
