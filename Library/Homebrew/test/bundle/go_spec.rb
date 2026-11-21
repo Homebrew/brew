@@ -66,7 +66,9 @@ RSpec.describe Homebrew::Bundle::Go do
 
     it "discovers binaries once between resets" do
       expect(described_class).to receive(:discovered_binaries)
-        .with(Pathname("go")).twice.and_return({ "/tmp/tool" => "example.com/tools/cmd/tool" })
+        .with(Pathname("go"))
+        .twice
+        .and_return({ "/tmp/tool" => "example.com/tools/cmd/tool" })
       2.times do
         2.times { described_class.package_outdated?("example.com/tools/cmd/tool") }
         described_class.reset!
@@ -152,7 +154,8 @@ RSpec.describe Homebrew::Bundle::Go do
   describe "checked inventory" do
     before do
       allow(described_class).to receive(:command_output)
-        .with(anything, args: ["env", anything], print_stderr: true).and_return(inventory_bin.to_s)
+        .with(anything, args: ["env", anything], print_stderr: true)
+        .and_return(inventory_bin.to_s)
     end
 
     it_behaves_like "a checked package inventory"
@@ -223,7 +226,8 @@ RSpec.describe Homebrew::Bundle::Go do
             .with(go, args: ["env", "GOBIN"], print_stderr: true)
             .and_return((variable == "GOBIN") ? bin_dir.to_s : "")
           allow(described_class).to receive(:command_output)
-            .with(go, args: ["env", "GOPATH"], print_stderr: true).and_return(bin_dir.dirname.to_s)
+            .with(go, args: ["env", "GOPATH"], print_stderr: true)
+            .and_return(bin_dir.dirname.to_s)
         end
 
         it "returns an empty inventory when the directory does not exist" do
@@ -497,7 +501,8 @@ RSpec.describe Homebrew::Bundle::Go do
       expect do
         described_class.cleanup!(["example.com/tools/example"])
       end.to(
-        change(Homebrew, :failed?).from(false).to(true)
+        change(Homebrew, :failed?).from(false)
+          .to(true)
           .and(output(/Failed to remove Go executables: go executable not found/).to_stderr),
       )
     end
@@ -542,9 +547,11 @@ RSpec.describe Homebrew::Bundle::Go do
       before do
         Homebrew.failed = false
         allow(described_class).to receive(:command_output)
-          .with(Pathname("go"), args: ["env", "GOBIN"], print_stderr: true).and_return(bin_dir.to_s)
+          .with(Pathname("go"), args: ["env", "GOBIN"], print_stderr: true)
+          .and_return(bin_dir.to_s)
         allow(described_class).to receive(:command_output)
-          .with(Pathname("go"), args: ["env", "GOPATH"], print_stderr: true).and_return("/tmp/go")
+          .with(Pathname("go"), args: ["env", "GOPATH"], print_stderr: true)
+          .and_return("/tmp/go")
         executables.each do |executable|
           FileUtils.touch executable
           FileUtils.chmod "+x", executable
@@ -579,7 +586,8 @@ RSpec.describe Homebrew::Bundle::Go do
         expect do
           described_class.cleanup!(["example.com/tools/example"])
         end.to(
-          change(Homebrew, :failed?).from(false).to(true)
+          change(Homebrew, :failed?).from(false)
+            .to(true)
             .and(output("Removed 1 Go executable\n").to_stdout)
             .and(output(
               a_string_including("Failed to remove Go executable #{executables.first}"),

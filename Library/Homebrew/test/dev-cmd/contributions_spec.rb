@@ -582,7 +582,8 @@ RSpec.describe Homebrew::DevCmd::Contributions do
         },
       )
       allow(command).to receive(:previous_maintainer_reports)
-        .with("2026-09-01").and_return([{ "alice" => [false, false] }])
+        .with("2026-09-01")
+        .and_return([{ "alice" => [false, false] }])
     end
 
     it "normalises former usernames when exempting Maintainers" do
@@ -657,7 +658,8 @@ RSpec.describe Homebrew::DevCmd::Contributions do
         ["--maintainer-report-csv", "--from=2026-09-01", "--to=2026-10-01"],
       ).args)
       allow(command).to receive(:previous_maintainer_reports)
-        .with("2026-06-01").and_return([{ "alice" => [false, false] }])
+        .with("2026-06-01")
+        .and_return([{ "alice" => [false, false] }])
       report = Dir.chdir(mktmpdir) do
         Pathname("brew-contributions-2026-06-01-to-2026-09-01.csv")
           .write("username,brew first approvals,brew total,core total,cask total\nalice,0,25,25,0\n")
@@ -693,7 +695,8 @@ RSpec.describe Homebrew::DevCmd::Contributions do
     it "can assess monthly requirements independently of the reporting dates" do
       stub_const("Homebrew::DevCmd::Contributions::ACTIVITY_PERIOD_MONTHS", 1)
       allow(command).to receive(:previous_maintainer_reports)
-        .with("2026-11-01").and_return([{ "alice" => [false, false] }])
+        .with("2026-11-01")
+        .and_return([{ "alice" => [false, false] }])
       report = Dir.chdir(mktmpdir) do
         command.run
         CSV.read("brew-contributions-2026-11-01-to-2026-12-01.csv", headers: true).first

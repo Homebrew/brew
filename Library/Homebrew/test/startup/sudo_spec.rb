@@ -37,8 +37,14 @@ RSpec.describe "sudo detection" do # rubocop:disable RSpec/DescribeClass
     Open3.capture3("/bin/bash", "-c", <<~SH)
       /usr/bin/sudo() { "#{sudo}" "$@"; }
       command() { echo "#{sudo}"; }
-      #{(HOMEBREW_LIBRARY_PATH/"brew.sh").read.split("# Use this configuration file").fetch(1)
-                                          .split("# Remove internal variables").fetch(0).lines.drop(1).join}
+      #{(HOMEBREW_LIBRARY_PATH/"brew.sh").read
+                                          .split("# Use this configuration file")
+                                          .fetch(1)
+                                          .split("# Remove internal variables")
+                                          .fetch(0)
+                                          .lines
+                                          .drop(1)
+                                          .join}
     SH
 
     expect(sudo_log).not_to exist

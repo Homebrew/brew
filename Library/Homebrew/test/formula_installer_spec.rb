@@ -738,10 +738,12 @@ RSpec.describe FormulaInstaller do
       installer.ran_prelude = true
 
       expect(download_queue).to receive(:enqueue)
-        .with(bottle, check_attestation: false, stage: false).ordered
+        .with(bottle, check_attestation: false, stage: false)
+        .ordered
       expect(installer).to receive(:fetch_dependencies).ordered
       expect(download_queue).to receive(:enqueue)
-        .with(bottle, check_attestation: false).ordered
+        .with(bottle, check_attestation: false)
+        .ordered
 
       installer.enqueue_fetch
     end
@@ -750,7 +752,8 @@ RSpec.describe FormulaInstaller do
       expect(installer).to receive(:fetch_dependencies).ordered
       expect(installer).to receive(:fetch_bottle_tab).with(enqueue: true).ordered
       expect(download_queue).to receive(:enqueue)
-        .with(bottle, check_attestation: false).ordered
+        .with(bottle, check_attestation: false)
+        .ordered
 
       installer.enqueue_fetch
     end
@@ -758,7 +761,8 @@ RSpec.describe FormulaInstaller do
     it "does not requeue a bottle already enqueued by the prelude fetch" do
       allow(installer).to receive(:pour_bottle?).and_return(true)
       expect(download_queue).to receive(:enqueue)
-        .with(bottle, check_attestation: false, stage: true).once
+        .with(bottle, check_attestation: false, stage: true)
+        .once
       installer.prelude_fetch
 
       expect(installer).to receive(:fetch_dependencies)
@@ -783,7 +787,8 @@ RSpec.describe FormulaInstaller do
         expect(installer).to receive(:fetch_dependencies).ordered
         expect(installer).to receive(:fetch_bottle_tab).with(enqueue: true).ordered
         expect(download_queue).to receive(:enqueue)
-          .with(bottle, check_attestation: true).ordered
+          .with(bottle, check_attestation: true)
+          .ordered
 
         installer.enqueue_fetch
       end

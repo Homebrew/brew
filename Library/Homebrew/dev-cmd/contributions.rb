@@ -299,7 +299,9 @@ module Homebrew
         user_names = T.let({}, T::Hash[String, String])
         lead_maintainers = T.let({}, T::Hash[String, T::Boolean])
         Utils.safe_popen_read(Utils::Git.git, "-C", brew_path, "show", "#{period_end_ref}:README.md")
-             .dup.force_encoding(Encoding::UTF_8).each_line do |line|
+             .dup
+             .force_encoding(Encoding::UTF_8)
+             .each_line do |line|
           lead = line.start_with?("Homebrew's [Lead Maintainers]")
           next if !lead &&
                   !line.start_with?("Homebrew's other Maintainers") &&
@@ -985,7 +987,8 @@ module Homebrew
         # Coauthor contributions with "Co-authored-by" in body
         records.each do |fields|
           coauthors = fields.fetch(:commit_message)
-                            .scan(/^Co-authored-by:\s*(.*?)\s*<([^>]+)>/i).filter_map do |match|
+                            .scan(/^Co-authored-by:\s*(.*?)\s*<([^>]+)>/i)
+                            .filter_map do |match|
             next unless match.is_a?(Array)
 
             user_for_git_identity(match.fetch(0), match.fetch(1), identity_users)

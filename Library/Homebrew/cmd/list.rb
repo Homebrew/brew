@@ -136,7 +136,8 @@ module Homebrew
             end
             # The cast is because `Keg`` does not define `full_name`
             full_cask_names = T.cast(cask_names, T::Array[T.any(Formula, Cask::Cask)])
-                               .map(&:full_name).sort(&Cask::List::TAP_AND_NAME_COMPARISON)
+                               .map(&:full_name)
+                               .sort(&Cask::List::TAP_AND_NAME_COMPARISON)
             full_cask_names = Formatter.columns(full_cask_names) unless one_per_line
             puts full_cask_names if full_cask_names.present?
           end

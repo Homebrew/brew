@@ -51,7 +51,8 @@ RSpec.describe Cask::Artifact::Binary, :cask do
 
     it "makes the binary executable" do
       expect(FileUtils).to receive(:chmod)
-        .with("+x", cask.staged_path.join("naked_non_executable")).and_call_original
+        .with("+x", cask.staged_path.join("naked_non_executable"))
+        .and_call_original
 
       artifacts.each do |artifact|
         artifact.install_phase(command: NeverSudoSystemCommand, force: false)

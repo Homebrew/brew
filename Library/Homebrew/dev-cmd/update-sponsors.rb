@@ -69,7 +69,8 @@ module Homebrew
             end
             next if applicable_tiers.empty?
 
-            escaped_name = s[:name].gsub(/[[:cntrl:]]+/, " ").strip
+            escaped_name = s[:name].gsub(/[[:cntrl:]]+/, " ")
+                                   .strip
                                    .gsub(/[\\`*_\[\]<>&~]/) { |character| "\\#{character}" }
             names[escaped_name] ||= escaped_name
 

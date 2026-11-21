@@ -289,25 +289,35 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
 
           # Stop original nginx
           expect(Homebrew::Bundle::Brew::Services).to receive(:stop)
-            .with("nginx", keep: true).and_return(true).ordered
+            .with("nginx", keep: true)
+            .and_return(true)
+            .ordered
 
           # Stop nginx conflicts
           expect(Homebrew::Bundle::Brew::Services).to receive(:stop)
-            .with("httpd", keep: true).and_return(true).ordered
+            .with("httpd", keep: true)
+            .and_return(true)
+            .ordered
 
           # Start new nginx
           expect(Homebrew::Bundle::Brew::Services).to receive(:run)
-            .with("nginx", file: nginx_service_file).and_return(true).ordered
+            .with("nginx", file: nginx_service_file)
+            .and_return(true)
+            .ordered
 
           # No need to stop original redis (not started)
 
           # Stop redis conflicts
           expect(Homebrew::Bundle::Brew::Services).to receive(:stop)
-            .with("redis@6.2", keep: true).and_return(true).ordered
+            .with("redis@6.2", keep: true)
+            .and_return(true)
+            .ordered
 
           # Start new redis
           expect(Homebrew::Bundle::Brew::Services).to receive(:run)
-            .with("redis", file: redis_service_file).and_return(true).ordered
+            .with("redis", file: redis_service_file)
+            .and_return(true)
+            .ordered
 
           # Run exec commands
           expect(Kernel).to receive(:system).with("/usr/bin/true").and_return(true).ordered
@@ -319,9 +329,13 @@ RSpec.describe Homebrew::Cmd::Bundle::ExecSubcommand do
 
           # Stop new services
           expect(Homebrew::Bundle::Brew::Services).to receive(:stop)
-            .with("nginx", keep: true).and_return(true).ordered
+            .with("nginx", keep: true)
+            .and_return(true)
+            .ordered
           expect(Homebrew::Bundle::Brew::Services).to receive(:stop)
-            .with("redis", keep: true).and_return(true).ordered
+            .with("redis", keep: true)
+            .and_return(true)
+            .ordered
 
           # Restart registered services we stopped due to conflicts (skip httpd as not registered)
           expect(Homebrew::Bundle::Brew::Services).to receive(:run).with("redis@6.2").and_return(true).ordered

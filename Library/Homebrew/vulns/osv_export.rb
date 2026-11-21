@@ -52,7 +52,8 @@ module Homebrew
       sig {
         params(annotated:   T::Array[[Formula, T::Array[T::Hash[String, T.untyped]]]],
                dir:         T.any(String, Pathname),
-               first_fixed: T.nilable(T.proc.params(formula: Formula, vuln_id: String)
+               first_fixed: T.nilable(T.proc
+                                         .params(formula: Formula, vuln_id: String)
                                          .returns(T.nilable(T.any(String, Symbol)))),
                now:         Time)
           .returns(T::Array[String])

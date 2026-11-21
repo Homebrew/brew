@@ -65,7 +65,8 @@ RSpec.describe Homebrew::TestBot::TestFormulae do
       before do
         allow(unbottled.bottle_specification).to receive(:tag?).and_return(false)
         allow(unbottled.bottle_specification).to receive(:tag?)
-          .with(Utils::Bottles.tag, no_older_versions: false).and_return(true)
+          .with(Utils::Bottles.tag, no_older_versions: false)
+          .and_return(true)
       end
 
       it "rejects older bottles when requested" do

@@ -22,7 +22,8 @@ RSpec.describe Homebrew::Bundle::Flatpak do
       allow(described_class).to receive_messages(package_manager_executable: Pathname("flatpak"),
                                                  package_installed?:         true)
       expect(Homebrew::Bundle).to receive(:system)
-        .with("flatpak", "update", "-y", "--noninteractive", "Example.App", verbose: false).and_return(true)
+        .with("flatpak", "update", "-y", "--noninteractive", "Example.App", verbose: false)
+        .and_return(true)
       described_class.install!("Example.App", remote: "https://example.com/app.flatpakref")
     end
 
@@ -30,7 +31,8 @@ RSpec.describe Homebrew::Bundle::Flatpak do
       allow(described_class).to receive_messages(package_manager_executable: Pathname("flatpak"),
                                                  package_installed?:         true)
       expect(Homebrew::Bundle).to receive(:system)
-        .with("flatpak", "update", "-y", "--noninteractive", "Example.App", verbose: false).and_return(true)
+        .with("flatpak", "update", "-y", "--noninteractive", "Example.App", verbose: false)
+        .and_return(true)
       described_class.install_batch!([described_class.entry("Example.App")])
     end
   end
@@ -166,18 +168,21 @@ RSpec.describe Homebrew::Bundle::Flatpak do
         allow(described_class).to receive(:package_manager_executable)
           .and_return(Pathname("/example/bin/flatpak"))
         expect(Kernel).to receive(:system)
-          .with("/example/bin/flatpak", "uninstall", "-y", "--system", "org.example.App").ordered do
+          .with("/example/bin/flatpak", "uninstall", "-y", "--system", "org.example.App")
+          .ordered do
           expect(ENV.fetch("PATH")).to eq("/usr/bin:/bin")
           result
         end
         expect(Kernel).to receive(:system)
           .with("/example/bin/flatpak", "uninstall", "-y", "--system", "org.example.Second")
-          .ordered.and_return(true)
+          .ordered
+          .and_return(true)
 
         expect do
           described_class.cleanup!(%w[org.example.App org.example.Second])
         end.to(
-          change(Homebrew, :failed?).from(false).to(true)
+          change(Homebrew, :failed?).from(false)
+            .to(true)
             .and(output(
               a_string_including("Failed to uninstall Flatpak packages: org.example.App"),
             ).to_stderr)

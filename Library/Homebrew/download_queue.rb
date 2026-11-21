@@ -182,8 +182,8 @@ module Homebrew
         return
       end
 
-      message_length_max = fetchable_downloads.each_key.map { |download| download.download_queue_message.length }
-                                              .max || 0
+      message_length_max =
+        fetchable_downloads.each_key.map { |download| download.download_queue_message.length }.max || 0
       remaining_downloads = fetchable_downloads.dup.to_a
       previous_pending_line_count = 0
       max_lines = [concurrency, Tty.height].min

@@ -37,13 +37,17 @@ RSpec.describe Formulary, :no_api do
 
     it "loads the bottle without looking up a cask" do
       expect(Homebrew::CLI::NamedArgs.new(bottle_path.to_s)
-        .to_formulae_and_casks(method: :bottle).first).to have_attributes(local_bottle_path: bottle_path.realpath)
+        .to_formulae_and_casks(method: :bottle)
+        .first).to have_attributes(local_bottle_path: bottle_path.realpath)
     end
 
     test_each([[], ["--only-dependencies"], ["--formula"]]) do |flags|
       it "parses bottle formula options with #{flags.inspect}" do
         expect(Homebrew::Cmd::InstallCmd.new([bottle_path.to_s, "--with-feature", *flags])
-          .args.named.to_formulae_and_casks(method: :bottle).first)
+          .args
+          .named
+          .to_formulae_and_casks(method: :bottle)
+          .first)
           .to have_attributes(local_bottle_path: bottle_path.realpath)
       end
     end

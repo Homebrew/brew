@@ -137,7 +137,9 @@ module Cask
       }
       def uninstall_phase(skip: false, force: false, adopt: false, verbose: false, successor: nil, upgrade: false,
                           reinstall: false, command: SystemCommand)
-        desktop_entry_dirs_with_mime_types = cask.staged_path.glob("*.desktop").select(&:symlink?)
+        desktop_entry_dirs_with_mime_types = cask.staged_path
+                                                 .glob("*.desktop")
+                                                 .select(&:symlink?)
                                                  .filter_map do |desktop_entry_link|
           desktop_entry = desktop_entry_link.readlink
           desktop_entry_link.unlink

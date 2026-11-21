@@ -42,7 +42,9 @@ RSpec.describe Cask::Upgrade, :cask do
       ENV["TMPDIR"] = ENV["HOMEBREW_TEMP"] = "/private/tmp"
       environment = mktmpdir/"reopened-app-environment"
       old_cask = Cask::CaskLoader.from_path(cask_path("with-uninstall-quit"))
-      old_cask.artifacts.grep(Cask::Artifact::Uninstall).fetch(0)
+      old_cask.artifacts
+              .grep(Cask::Artifact::Uninstall)
+              .fetch(0)
               .bundle_ids_to_reopen << "my.fancy.package.app"
 
       allow(upgrade).to receive(:system).with("open", "-b", "my.fancy.package.app", any_args)
@@ -570,7 +572,8 @@ RSpec.describe Cask::Upgrade, :cask do
 
     it "releases quarantine when Gatekeeper was already approved and identity matches" do
       allow(Cask::Quarantine).to receive(:signing_identity_match)
-        .with(auto_updates_path, auto_updates_identity).and_return(true)
+        .with(auto_updates_path, auto_updates_identity)
+        .and_return(true)
 
       expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
@@ -583,7 +586,8 @@ RSpec.describe Cask::Upgrade, :cask do
 
     it "reports a changed signer when the new app does not satisfy the old designated requirement" do
       allow(Cask::Quarantine).to receive(:signing_identity_match)
-        .with(auto_updates_path, auto_updates_identity).and_return(false)
+        .with(auto_updates_path, auto_updates_identity)
+        .and_return(false)
 
       expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
@@ -606,7 +610,8 @@ RSpec.describe Cask::Upgrade, :cask do
 
     it "reports an unverified signer when the new signing identity is missing" do
       allow(Cask::Quarantine).to receive(:signing_identity_match)
-        .with(auto_updates_path, auto_updates_identity).and_return(nil)
+        .with(auto_updates_path, auto_updates_identity)
+        .and_return(nil)
 
       expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
@@ -630,7 +635,8 @@ RSpec.describe Cask::Upgrade, :cask do
     it "releases quarantine for casks without auto_updates when Gatekeeper was already approved " \
        "and identity matches" do
       allow(Cask::Quarantine).to receive(:signing_identity_match)
-        .with(local_caffeine_path, local_caffeine_identity).and_return(true)
+        .with(local_caffeine_path, local_caffeine_identity)
+        .and_return(true)
 
       expect(described_class.quarantine_release_decision(
                outdated_local_caffeine,
@@ -643,7 +649,8 @@ RSpec.describe Cask::Upgrade, :cask do
 
     it "releases quarantine when the old app carried no quarantine attribute at all" do
       allow(Cask::Quarantine).to receive(:signing_identity_match)
-        .with(auto_updates_path, auto_updates_identity).and_return(true)
+        .with(auto_updates_path, auto_updates_identity)
+        .and_return(true)
 
       expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
@@ -656,7 +663,8 @@ RSpec.describe Cask::Upgrade, :cask do
 
     it "reports a changed signer for an unquarantined old app whose identity no longer matches" do
       allow(Cask::Quarantine).to receive(:signing_identity_match)
-        .with(auto_updates_path, auto_updates_identity).and_return(false)
+        .with(auto_updates_path, auto_updates_identity)
+        .and_return(false)
 
       expect(described_class.quarantine_release_decision(
                outdated_auto_updates,
@@ -797,7 +805,8 @@ RSpec.describe Cask::Upgrade, :cask do
 
     it "reports a successful upgrade as one cask install" do
       expect(Utils::Analytics).to receive(:report_package_event)
-        .with(:cask_install, package_name: "local-caffeine", tap_name: "homebrew/cask", on_request: true).once
+        .with(:cask_install, package_name: "local-caffeine", tap_name: "homebrew/cask", on_request: true)
+        .once
 
       described_class.upgrade_casks!(local_caffeine, args:)
     end

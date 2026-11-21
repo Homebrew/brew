@@ -179,7 +179,8 @@ RSpec.describe Homebrew::FormulaAuditor do
 
     it "reports newly registered homepage domains" do
       allow(SharedAudits).to receive(:new_domain_problem)
-        .with("https://brew.sh").and_return(domain_problem)
+        .with("https://brew.sh")
+        .and_return(domain_problem)
 
       fa = homepage_auditor
       fa.audit_homepage_domain_age

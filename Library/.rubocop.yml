@@ -107,7 +107,7 @@ Homebrew/MoveToExtendOS:
   Enabled: false
 
 Homebrew/MultilineMethodChain:
-  Enabled: false
+  Enabled: true
   Include:
     - "Homebrew/**/*.{rb,rbi}"
 

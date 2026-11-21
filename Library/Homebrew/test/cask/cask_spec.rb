@@ -1349,7 +1349,8 @@ RSpec.describe Cask::Cask, :cask do
 
     context "when loaded from json file" do
       let(:expected_json) do
-        (TEST_FIXTURE_DIR/"cask/everything-with-variations.json").read.strip
+        (TEST_FIXTURE_DIR/"cask/everything-with-variations.json").read
+          .strip
           .gsub("$APPDIR", "#{TEST_TMPDIR}/cask-appdir")
       end
 

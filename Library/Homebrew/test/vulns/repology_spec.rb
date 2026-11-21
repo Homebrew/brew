@@ -252,7 +252,8 @@ RSpec.describe Homebrew::Vulns::Repology do
     it "returns the entries array from ::Repology.single_package_query" do
       entries = [{ "repo" => "debian_12", "srcname" => "curl" }]
       allow(Repology).to receive(:single_package_query)
-        .with("curl", repository: Repology::HOMEBREW_CORE).and_return({ "curl" => entries })
+        .with("curl", repository: Repology::HOMEBREW_CORE)
+        .and_return({ "curl" => entries })
       expect(described_class.fetch_project("curl")).to eq entries
     end
 

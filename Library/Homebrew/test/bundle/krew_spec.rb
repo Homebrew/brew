@@ -35,7 +35,8 @@ RSpec.describe Homebrew::Bundle::Krew do
       allow(described_class).to receive(:command_output).with(Pathname("kubectl-krew"), args: ["update"])
                                                         .and_return("")
       allow(described_class).to receive(:command_output)
-        .with(Pathname("kubectl-krew"), args: ["info", "custom/example-tool"]).and_return("VERSION: v1.1.0\n")
+        .with(Pathname("kubectl-krew"), args: ["info", "custom/example-tool"])
+        .and_return("VERSION: v1.1.0\n")
     end
 
     it "compares the receipt with the refreshed custom index" do
@@ -54,7 +55,8 @@ RSpec.describe Homebrew::Bundle::Krew do
 
     it "rejects malformed plugin metadata" do
       allow(described_class).to receive(:command_output)
-        .with(Pathname("kubectl-krew"), args: ["info", "custom/example-tool"]).and_return("")
+        .with(Pathname("kubectl-krew"), args: ["info", "custom/example-tool"])
+        .and_return("")
       expect { described_class.package_outdated?("custom/example-tool") }.to raise_error(/Invalid Krew version/)
     end
   end

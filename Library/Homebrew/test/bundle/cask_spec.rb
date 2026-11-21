@@ -349,7 +349,8 @@ RSpec.describe Homebrew::Bundle::Cask do
 
         it "reinstalls from the requested tap" do
           expect(Homebrew::Bundle).to receive(:brew)
-            .with("reinstall", "--cask", "thirdparty/tap/google-chrome", "--adopt", verbose: false).and_return(true)
+            .with("reinstall", "--cask", "thirdparty/tap/google-chrome", "--adopt", verbose: false)
+            .and_return(true)
 
           described_class.install!("google-chrome", **options)
         end

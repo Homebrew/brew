@@ -161,7 +161,8 @@ RSpec.describe Homebrew::Cmd::Untap do
     named_args = [formula_name, cask.full_name]
     expect(Cask::Uninstall).to receive(:check_dependent_casks).with(cask, named_args:).ordered
     expect(Homebrew::Uninstall).to receive(:uninstall_kegs)
-      .with({ rack => [keg] }, casks: [cask], force: false, named_args:).ordered
+      .with({ rack => [keg] }, casks: [cask], force: false, named_args:)
+      .ordered
     expect(Cask::Uninstall).to receive(:uninstall_casks).with(cask, force: false)
     expect(tap).to receive(:uninstall).with(manual: true)
 
@@ -188,7 +189,8 @@ RSpec.describe Homebrew::Cmd::Untap do
     named_args = [formula_name, cask.full_name]
     expect(Cask::Uninstall).to receive(:check_dependent_casks).with(cask, named_args:).ordered
     expect(Homebrew::Uninstall).to receive(:uninstall_kegs)
-      .with({ rack => [keg] }, casks: [cask], force: true, named_args:).ordered
+      .with({ rack => [keg] }, casks: [cask], force: true, named_args:)
+      .ordered
     expect(Cask::Uninstall).to receive(:uninstall_casks).with(cask, force: true)
     expect(tap).to receive(:uninstall).with(manual: true)
 

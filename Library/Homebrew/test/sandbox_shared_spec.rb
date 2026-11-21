@@ -352,7 +352,8 @@ RSpec.describe Sandbox do
     it "warns once when the sandbox is unavailable" do
       allow(described_class).to receive(:available?).and_return(false)
       expect(described_class).to receive(:opoo)
-        .with("Sandbox unavailable: running install hooks without sandboxing!").once
+        .with("Sandbox unavailable: running install hooks without sandboxing!")
+        .once
 
       2.times { described_class.use_for?("running install hooks") }
     end
@@ -367,7 +368,8 @@ RSpec.describe Sandbox do
     it "warns once when relying on an outer sandbox" do
       allow(described_class).to receive_messages(available?: true, avoid_nested_sandboxing?: true)
       expect(described_class).to receive(:opoo)
-        .with("Running install hooks without Homebrew's sandbox; relying on the outer sandbox.").once
+        .with("Running install hooks without Homebrew's sandbox; relying on the outer sandbox.")
+        .once
 
       2.times { described_class.use_for?("running install hooks") }
     end
@@ -418,7 +420,9 @@ RSpec.describe Sandbox do
       sandbox.allow_write_system_temp
       sandbox.deny_all_network
       expect(sandbox).to receive(:sandbox_command) do |args, tmpdir|
-        expect(sandbox.profile.rules.select { |rule| rule.allow && rule.operation == "network*" }
+        expect(sandbox.profile
+          .rules
+          .select { |rule| rule.allow && rule.operation == "network*" }
           .map { |rule| [rule.filter&.path, rule.filter&.type] }).to eq([[tmpdir, :subpath]])
         args
       end

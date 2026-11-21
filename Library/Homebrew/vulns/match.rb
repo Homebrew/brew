@@ -184,7 +184,8 @@ module Homebrew
 
           @vulnerability = vulnerability
           resolved_evidence = evidence.map { |e| e.with_source(vulnerability) }
-                                      .sort_by { |e| -STRATEGY_PRECISION.fetch(e.strategy) }.freeze
+                                      .sort_by { |e| -STRATEGY_PRECISION.fetch(e.strategy) }
+                                      .freeze
           @evidence = T.let(resolved_evidence, T::Array[Evidence])
         end
 
@@ -726,8 +727,10 @@ module Homebrew
         override = @overrides&.advisory_override(formula_name, hit.identifiers) if formula_name
         return if !override&.state && current_prerelease_boundary?(hit)
 
-        subjects = hit.evidence.reject { |ev| ev.strategy == :distro && ev.subject_version.nil? }
-                      .group_by(&:resource).map do |_, evidence|
+        subjects = hit.evidence
+                      .reject { |ev| ev.strategy == :distro && ev.subject_version.nil? }
+                      .group_by(&:resource)
+                      .map do |_, evidence|
           results = evidence.filter_map do |ev|
             status = evidence_range_status(ev, ev.subject_version)
             [status, ev] if status
@@ -1035,8 +1038,10 @@ module Homebrew
       sig { params(formula: Formula, hit: Hit).returns(HistoricalObservation) }
       def reconciliation_observation(formula, hit)
         reasons = T.let([], T::Array[Symbol])
-        subjects = hit.evidence.reject { |ev| ev.strategy == :distro && ev.subject_version.nil? }
-                      .group_by { |ev| [ev.ecosystem, ev.name, ev.resource] }.map do |_, evidence|
+        subjects = hit.evidence
+                      .reject { |ev| ev.strategy == :distro && ev.subject_version.nil? }
+                      .group_by { |ev| [ev.ecosystem, ev.name, ev.resource] }
+                      .map do |_, evidence|
           states = evidence.map do |ev|
             next :unknown if ev.subject_version.nil?
 

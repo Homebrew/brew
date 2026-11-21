@@ -170,11 +170,15 @@ module Cask
       def self.reject_covered(cask, generated_paths)
         zap_directives = cask.artifacts.grep(::Cask::Artifact::Zap).map(&:directives)
         deletable_paths = zap_directives.flat_map { |directives| directives.values_at(:trash, :delete) }
-                                        .flatten.compact.map(&:to_s)
+                                        .flatten
+                                        .compact
+                                        .map(&:to_s)
         # `rmdir` only removes empty directories, so it covers a generated path
         # itself but not anything beneath it.
         rmdir_paths = zap_directives.flat_map { |directives| directives[:rmdir] }
-                                    .flatten.compact.map(&:to_s)
+                                    .flatten
+                                    .compact
+                                    .map(&:to_s)
 
         generated_paths.reject do |generated|
           deletable_paths.any? { |existing| covers?(existing, generated) || descendant?(generated, of: existing) } ||

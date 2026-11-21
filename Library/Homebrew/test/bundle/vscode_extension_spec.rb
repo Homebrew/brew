@@ -94,18 +94,21 @@ RSpec.describe Homebrew::Bundle::VscodeExtension do
         ENV["PATH"] = "/usr/bin:/bin"
         allow(described_class).to receive(:package_manager_executable).and_return(Pathname("code"))
         expect(Kernel).to receive(:system)
-          .with("code", "--uninstall-extension", "publisher.first").ordered do
+          .with("code", "--uninstall-extension", "publisher.first")
+          .ordered do
             expect(ENV.fetch("PATH")).to eq("/usr/bin:/bin")
             result
           end
         expect(Kernel).to receive(:system)
           .with("code", "--uninstall-extension", "publisher.second")
-          .ordered.and_return(true)
+          .ordered
+          .and_return(true)
 
         expect do
           described_class.cleanup!(%w[publisher.first publisher.second])
         end.to(
-          change(Homebrew, :failed?).from(false).to(true)
+          change(Homebrew, :failed?).from(false)
+            .to(true)
             .and(output(a_string_including("publisher.first")).to_stderr)
             .and(output("Uninstalled 1 vscode extension\n").to_stdout),
         )

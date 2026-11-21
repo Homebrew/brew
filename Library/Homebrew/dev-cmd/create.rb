@@ -277,8 +277,10 @@ module Homebrew
           unpack_dir = Pathname(dir)
           UnpackStrategy.detect(download, merge_xattrs: true).extract_nestedly(to: unpack_dir)
 
-          shallowest_apps = unpack_dir.glob("**/*.app").group_by { |app| app.each_filename.count }
-                                      .min_by(&:first)&.last
+          shallowest_apps = unpack_dir.glob("**/*.app")
+                                      .group_by { |app| app.each_filename.count }
+                                      .min_by(&:first)
+                                      &.last
           next unless shallowest_apps&.one?
 
           shallowest_app = shallowest_apps.fetch(0)
@@ -297,7 +299,8 @@ module Homebrew
         return unless app.directory?
 
         Utils.popen_read_text(HOMEBREW_BREW_FILE, "generate-zap", "--name", app.basename(".app").to_s, err: :err)
-             .slice(/^zap (?:trash|delete):.*/m)&.chomp
+             .slice(/^zap (?:trash|delete):.*/m)
+             &.chomp
       end
 
       private

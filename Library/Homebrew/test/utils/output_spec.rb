@@ -415,7 +415,8 @@ RSpec.describe Utils::Output do
       it "warns once across receivers and backtraces" do
         expect do
           2.times do |i|
-            Class.new { include Utils::Output::Mixin }.new
+            Class.new { include Utils::Output::Mixin }
+                 .new
                  .odeprecated("method", caller: ["formula.rb:12", "caller.rb:#{i}"])
           end
         end.to output("Warning: Calling method is deprecated! There is no replacement.\n").to_stderr

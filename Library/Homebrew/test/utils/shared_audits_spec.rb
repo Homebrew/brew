@@ -265,7 +265,8 @@ RSpec.describe SharedAudits do
       first_page = [{ "commit" => { "author" => { "email" => "Jo@Acme.io" } } }]
       second_page = [{ "commit" => { "author" => { "email" => "x@brew.sh" } } }]
       allow(GitHub::API).to receive(:paginate_rest).with(commits_url)
-                                                   .and_yield(first_page, 1).and_yield(second_page, 2)
+                                                   .and_yield(first_page, 1)
+                                                   .and_yield(second_page, 2)
 
       expect(described_class.pull_request_commit_email_domains).to eq(["acme.io", "brew.sh"])
     end

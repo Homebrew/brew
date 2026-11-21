@@ -701,8 +701,11 @@ class Sandbox
     require "extend/ENV"
 
     Dir.mktmpdir("homebrew-sandbox", temporary_directory) do |tmpdir|
-      env = ENV.sensitive_environment.transform_values { nil }.merge("HOME" => tmpdir)
-               .merge(env).merge(sandbox_environment(tmpdir))
+      env = ENV.sensitive_environment
+               .transform_values { nil }
+               .merge("HOME" => tmpdir)
+               .merge(env)
+               .merge(sandbox_environment(tmpdir))
       sandbox_executable, *sandbox_args = sandbox_command([executable, *args.map(&:to_s)], tmpdir)
       raise "Missing sandbox command" unless sandbox_executable
 

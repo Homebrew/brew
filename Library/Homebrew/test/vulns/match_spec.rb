@@ -673,7 +673,8 @@ RSpec.describe Homebrew::Vulns::Match do
       allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("DSA-1")
                                                             .and_return({ "id"       => "DSA-1",
                                                                           "upstream" => ["CVE-2024-0404"] })
-      expect(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-2024-0404").once
+      expect(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-2024-0404")
+                                                             .once
                                                              .and_raise(Homebrew::Vulns::OSV::NotFoundError, "404")
       hits = Array.new(2) { strict.resolve_upstream({ "DSA-1" => [ev(:distro)] }, identity) }
 
@@ -734,7 +735,8 @@ RSpec.describe Homebrew::Vulns::Match do
       end
 
       it "holds only dependent formulae when a prefetched record fails" do
-        expect(Homebrew::Vulns::OSV).to receive(:vulnerability).with("DSA-1").once
+        expect(Homebrew::Vulns::OSV).to receive(:vulnerability).with("DSA-1")
+                                                               .once
                                                                .and_raise(Homebrew::Vulns::OSV::NotFoundError, "404")
         held = []
         yielded = []
@@ -985,7 +987,8 @@ RSpec.describe Homebrew::Vulns::Match do
       hit = make_hit(vulnerability, *evidence)
 
       expect(matcher.to_brew_record(requests, hit, now:)
-                    .dig(:database_specific, :upstream_evidence).map { |row| row[:resource] })
+                    .dig(:database_specific, :upstream_evidence)
+                    .map { |row| row[:resource] })
         .to eq ["first", "second"]
     end
 

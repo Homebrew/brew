@@ -160,7 +160,8 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
       allow(Cask::Uninstall).to receive(:check_dependent_casks)
 
       expect(Cask::Uninstall).to receive(:unpin_for_removal?)
-        .with(cask, force: false, dry_run: true).and_call_original
+        .with(cask, force: false, dry_run: true)
+        .and_call_original
       expect(Homebrew::Cleanup).not_to receive(:autoremove)
       expect { cmd.run }
         .to output(/testball is pinned.*test-cask is pinned/m).to_stderr

@@ -359,8 +359,11 @@ RSpec.describe InstalledDependents do
     def setup_test_cask(name, version, dependency)
       c = stub_cask_name(name, version, dependency)
       Cask::Caskroom.path.join(name, c.version).mkpath
-      Cask::Caskroom.path.join(name, ".metadata", c.version, "0", "Casks").tap(&:mkpath)
-                    .join("#{name}.rb").open("w") do |caskfile|
+      Cask::Caskroom.path
+                    .join(name, ".metadata", c.version, "0", "Casks")
+                    .tap(&:mkpath)
+                    .join("#{name}.rb")
+                    .open("w") do |caskfile|
                       caskfile.puts <<~RUBY
                         cask "#{name}" do
                           version "#{version}"

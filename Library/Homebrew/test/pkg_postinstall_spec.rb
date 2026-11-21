@@ -61,7 +61,9 @@ RSpec.describe "package postinstall", type: :system do
     config_env = Utils::Git.no_global_config_env.merge("GIT_CONFIG_NOSYSTEM" => "1",
                                                        "HOME" => mktmpdir.to_s, "XDG_CONFIG_HOME" => "")
     Utils.safe_popen_read(config_env, Utils::Git.git, "rev-parse", "--local-env-vars")
-         .split.to_h { |name| [name, nil] }.merge(config_env)
+         .split
+         .to_h { |name| [name, nil] }
+         .merge(config_env)
   end
 
   sig { params(script: String).returns([String, String, Process::Status]) }
@@ -146,11 +148,13 @@ RSpec.describe "package postinstall", type: :system do
     (test_root/"paths").binwrite(["040000 Library", "040000 Library/Homebrew", "100755 bin/brew", ""].join("\0"))
     scripts = HOMEBREW_LIBRARY_PATH.parent.parent/"package/scripts"
     [scripts/"preinstall", scripts/"postinstall", HOMEBREW_LIBRARY_PATH/"utils/macos_user.sh"].each do |file|
-      script = file.read.gsub("/opt/homebrew", prefix.to_s)
+      script = file.read
+                   .gsub("/opt/homebrew", prefix.to_s)
                    .gsub("/private/var/db/sh.brew.homebrew", payload.to_s)
       # The scripts use the host's tools even when `--generic` makes OS.linux? false.
       if OS.kernel_name == "Linux"
-        script = script.gsub("mv -h ", "mv ").gsub("rm -rfx", "rm -rf --one-file-system")
+        script = script.gsub("mv -h ", "mv ")
+                       .gsub("rm -rfx", "rm -rf --one-file-system")
                        .gsub("cp -cR", "cp --reflink=auto -R")
       end
       (test_root/file.basename).write(script)

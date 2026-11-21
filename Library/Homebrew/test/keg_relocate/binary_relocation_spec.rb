@@ -67,8 +67,10 @@ RSpec.describe Keg do
         end
       end
       let(:relocated_instructions) do
-        instructions.sub("/home/li", "/home/u/").sub("nuxbrew/", ".b//////")
-                    .sub(".linuxbr", "////////").sub("ew/etc/f", "///etc/f")
+        instructions.sub("/home/li", "/home/u/")
+                    .sub("nuxbrew/", ".b//////")
+                    .sub(".linuxbr", "////////")
+                    .sub("ew/etc/f", "///etc/f")
       end
 
       before do

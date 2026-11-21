@@ -424,7 +424,9 @@ RSpec.describe GitDownloadStrategy do
 
     it "uses the selected gh executable with a bounded lookup" do
       expect(GitHub::API).to receive(:github_cli_token)
-        .with(executable: Pathname("/trusted/bin/gh"), timeout: 10).once.and_return("keychain-test-token")
+        .with(executable: Pathname("/trusted/bin/gh"), timeout: 10)
+        .once
+        .and_return("keychain-test-token")
 
       strategy.fetch
     end

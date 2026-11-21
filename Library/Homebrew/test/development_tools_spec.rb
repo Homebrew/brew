@@ -43,7 +43,8 @@ RSpec.describe DevelopmentTools do
       allow(Formula).to receive(:[]).with("llvm")
                                     .and_return(instance_double(Formula, opt_prefix: llvm_prefix))
       allow(Utils).to receive(:popen_read_text)
-        .with(clang, "--version", err: :err).and_return("clang version 21.1.0\n")
+        .with(clang, "--version", err: :err)
+        .and_return("clang version 21.1.0\n")
 
       expect(development_tools.llvm_clang_build_version).to eq(Version.new("21.1.0"))
     end
@@ -83,13 +84,15 @@ RSpec.describe DevelopmentTools do
       allow(Formula).to receive(:[]).with("llvm")
                                     .and_return(instance_double(Formula, opt_prefix: llvm_prefix))
       allow(Utils).to receive(:popen_read_text)
-        .with(clang, "--version", err: :err).and_return("clang version 21.1.0\n")
+        .with(clang, "--version", err: :err)
+        .and_return("clang version 21.1.0\n")
     end
 
     it "refreshes the LLVM Clang version after an upgrade" do
       development_tools.llvm_clang_version
       allow(Utils).to receive(:popen_read_text)
-        .with(llvm_prefix/"bin/clang", "--version", err: :err).and_return("clang version 22.1.0\n")
+        .with(llvm_prefix/"bin/clang", "--version", err: :err)
+        .and_return("clang version 22.1.0\n")
 
       development_tools.clear_version_cache
 

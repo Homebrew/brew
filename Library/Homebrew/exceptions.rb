@@ -1021,7 +1021,8 @@ class CyclicDependencyError < RuntimeError
     super <<~EOS
       The following packages contain cyclic dependencies:
         #{strongly_connected_components.select { |packages| packages.count > 1 }
-                                                .map { |packages| Utils::Text.to_sentence(packages) }.join("\n  ")}
+                                                .map { |packages| Utils::Text.to_sentence(packages) }
+                                                .join("\n  ")}
     EOS
   end
 end

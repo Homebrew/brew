@@ -151,7 +151,9 @@ RSpec.describe Homebrew::DevCmd::Bottle do
         expect(HOMEBREW_CELLAR/"testball-bottle.tar").not_to exist
 
         tag = JSON.parse(Pathname(Dir["testball--0.1*.bottle.json"].fetch(0)).read)
-                  .dig("testball", "bottle", "tags").values.fetch(0)
+                  .dig("testball", "bottle", "tags")
+                  .values
+                  .fetch(0)
         expect(tag.fetch("tab")).to include(
           "changed_files"           => be_an(Array),
           "linkage_files"           => be_an(Array),
@@ -171,7 +173,9 @@ RSpec.describe Homebrew::DevCmd::Bottle do
         expect { brew "bottle", "--no-rebuild", "--json", "--skip-relocation", "testball" }
           .to be_a_success
         skipped_tag = JSON.parse(Pathname(Dir["testball--0.1*.bottle.json"].fetch(0)).read)
-                          .dig("testball", "bottle", "tags").values.fetch(0)
+                          .dig("testball", "bottle", "tags")
+                          .values
+                          .fetch(0)
         expect(skipped_tag.fetch("tab").values_at(
                  "changed_files", "linkage_files", "binary_relocation_files"
                )).to eq([nil, nil, nil])

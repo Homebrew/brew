@@ -320,7 +320,8 @@ module Cask
         raise CaskInvalidError.new(cask, "No default language specified.")
       end
 
-      locales = cask.config.languages
+      locales = cask.config
+                    .languages
                     .filter_map do |language|
                       Locale.parse(language)
                     rescue Locale::ParserError

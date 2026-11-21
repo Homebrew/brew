@@ -251,9 +251,11 @@ RSpec.describe Sandbox::Landlock do
       expect(landlock).to receive(:open_path).with("/dev/ptmx").and_return(19)
       expect(landlock).to receive(:open_path).with("/dev/pts").and_return(20)
       expect(described_class).to receive(:landlock_add_rule)
-        .with(17, 1, [32_770, 19].pack("Ql"), 0).and_return(0)
+        .with(17, 1, [32_770, 19].pack("Ql"), 0)
+        .and_return(0)
       expect(described_class).to receive(:landlock_add_rule)
-        .with(17, 1, [32_770, 20].pack("Ql"), 0).and_return(0)
+        .with(17, 1, [32_770, 20].pack("Ql"), 0)
+        .and_return(0)
 
       landlock.apply!
     end
@@ -281,7 +283,8 @@ RSpec.describe Sandbox::Landlock do
       }.each do |path, (access, file_descriptor)|
         expect(landlock).to receive(:open_path).with(path).and_return(file_descriptor)
         expect(described_class).to receive(:landlock_add_rule)
-          .with(17, 1, [access, file_descriptor].pack("Ql"), 0).and_return(0)
+          .with(17, 1, [access, file_descriptor].pack("Ql"), 0)
+          .and_return(0)
       end
 
       landlock.apply!
@@ -406,7 +409,8 @@ RSpec.describe Sandbox::Landlock do
 
         expect(landlock).to receive(:open_path).with("/dev/full").and_return(19)
         expect(described_class).to receive(:landlock_add_rule)
-          .with(17, 1, [2, 19].pack("Ql"), 0).and_return(0)
+          .with(17, 1, [2, 19].pack("Ql"), 0)
+          .and_return(0)
 
         landlock.apply!
       end

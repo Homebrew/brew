@@ -138,7 +138,8 @@ RSpec.describe Homebrew::DevCmd::PrUpload do
         allow(current).to receive(:tap).and_return(Tap.fetch("user/test"))
         allow(Formulary).to receive(:from_path).and_call_original
         allow(Formulary).to receive(:from_path)
-          .with(HOMEBREW_REPOSITORY/bottles.fetch(current.name).fetch("formula").fetch("path")).and_return(current)
+          .with(HOMEBREW_REPOSITORY/bottles.fetch(current.name).fetch("formula").fetch("path"))
+          .and_return(current)
         allow_any_instance_of(BottleTransition).to receive(:required?).and_call_original
         bottles.fetch(current.name).fetch("bottle")["tags"] = {}
 

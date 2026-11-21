@@ -66,7 +66,8 @@ RSpec.describe Cask::Appcast do
       YAML
       allow(described_class).to receive(:url_exist?).and_return(false)
       allow(described_class).to receive(:url_exist?)
-        .with("https://update.example.com/latest-mac.yml").and_return(true)
+        .with("https://update.example.com/latest-mac.yml")
+        .and_return(true)
       expect(described_class.find(app))
         .to have_attributes(url: "https://update.example.com/latest-mac.yml", strategy: :electron_builder)
     end
@@ -77,7 +78,8 @@ RSpec.describe Cask::Appcast do
       YAML
       allow(described_class).to receive(:url_exist?).and_return(false)
       allow(described_class).to receive(:url_exist?)
-        .with("https://update.example.com/packages/latest-mac.yml").and_return(true)
+        .with("https://update.example.com/packages/latest-mac.yml")
+        .and_return(true)
       expect(described_class.find(app))
         .to have_attributes(url: "https://update.example.com/packages/latest-mac.yml", strategy: :electron_builder)
     end
@@ -135,7 +137,8 @@ RSpec.describe Cask::Appcast do
       YAML
       allow(described_class).to receive(:url_exist?).and_return(false)
       allow(described_class).to receive(:url_exist?)
-        .with("https://update.example.com/beta-mac.yml").and_return(true)
+        .with("https://update.example.com/beta-mac.yml")
+        .and_return(true)
       expect(described_class.find(app))
         .to have_attributes(url: "https://update.example.com/beta-mac.yml", strategy: :electron_builder)
     end

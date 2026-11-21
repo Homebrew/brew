@@ -175,7 +175,8 @@ RSpec.describe Homebrew::Cmd::UpdateReport do
 
         expect(update_report).to receive(:puts).with(/^No changes to formulae/).ordered
         expect(update_report).to receive(:warn_if_branch_not_updated)
-          .with("Homebrew/brew", an_instance_of(GitRepository), "def").ordered
+          .with("Homebrew/brew", an_instance_of(GitRepository), "def")
+          .ordered
         expect(update_report).to receive(:puts).with(no_args).ordered
 
         update_report.run

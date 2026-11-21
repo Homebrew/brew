@@ -341,7 +341,8 @@ RSpec.describe Caveats do
         FileUtils.touch(keg_only_f.opt_bin/"foo")
         FileUtils.chmod(0755, keg_only_f.opt_bin/"foo")
         allow_any_instance_of(Object).to receive(:which)
-          .with("foo", ORIGINAL_PATHS).and_return(Pathname.new("/usr/local/bin/foo"))
+          .with("foo", ORIGINAL_PATHS)
+          .and_return(Pathname.new("/usr/local/bin/foo"))
 
         expect(described_class.new(keg_only_f).shadowed_path_text).to be_nil
       end

@@ -44,7 +44,8 @@ RSpec.describe Homebrew::Cmd::Uses do
       allow(cmd.args.named).to receive(:to_formulae)
         .and_return([instance_double(Formula, name: "foo", full_name: "foo")])
       allow(Homebrew::API::Internal).to receive(:formula_names_including)
-        .with(["\"foo\"", "/foo\""]).and_return(["bar"])
+        .with(["\"foo\"", "/foo\""])
+        .and_return(["bar"])
 
       expect(Formula).to receive(:all).with(core_names: ["bar"]).and_return([])
       cmd.run

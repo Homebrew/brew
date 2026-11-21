@@ -139,8 +139,10 @@ RSpec.describe Cask::Uninstall, :cask do
 
       before do
         timestamped_versions.each do |timestamped_version|
-          caskroom_path.join(".metadata", *timestamped_version, "Casks").tap(&:mkpath)
-                       .join("#{token}.rb").open("w") do |caskfile|
+          caskroom_path.join(".metadata", *timestamped_version, "Casks")
+                       .tap(&:mkpath)
+                       .join("#{token}.rb")
+                       .open("w") do |caskfile|
                          caskfile.puts <<~RUBY
                            cask '#{token}' do
                              version '#{timestamped_version[0]}'

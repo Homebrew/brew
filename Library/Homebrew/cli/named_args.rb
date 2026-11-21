@@ -111,7 +111,8 @@ module Homebrew
                                 [T::Array[T.any(Formula, Keg)], T::Array[Cask::Cask]]])
         )
         partitioned = to_formulae_and_casks(only:, method:).partition { |o| o.is_a?(Formula) || o.is_a?(Keg) }
-                                                           .map(&:freeze).freeze
+                                                           .map(&:freeze)
+                                                           .freeze
         @to_formulae_to_casks[[method, only]] =
           T.cast(partitioned, [T::Array[T.any(Formula, Keg)], T::Array[Cask::Cask]])
       end
@@ -267,7 +268,8 @@ module Homebrew
         @to_kegs_to_casks[key] ||= begin
           partitioned = to_formulae_and_casks(only:, ignore_unavailable:, method:)
                         .partition { |o| o.is_a?(Keg) }
-                        .map(&:freeze).freeze
+                        .map(&:freeze)
+                        .freeze
           T.cast(partitioned, [T::Array[Keg], T::Array[Cask::Cask]])
         end
       end

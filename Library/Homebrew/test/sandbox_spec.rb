@@ -29,7 +29,9 @@ RSpec.describe Sandbox, :needs_macos do
 
     it "keeps the per-user system temporary directories writable without the download cache" do
       sandbox.allow_write_system_temp
-      expect(sandbox.profile.rules.select { |rule| rule.allow && rule.operation == "file-write*" }
+      expect(sandbox.profile
+        .rules
+        .select { |rule| rule.allow && rule.operation == "file-write*" }
         .map { |rule| [rule.filter&.path, rule.filter&.type] }).to contain_exactly(
           ["/private/tmp", :subpath],
           ["/private/var/tmp", :subpath],

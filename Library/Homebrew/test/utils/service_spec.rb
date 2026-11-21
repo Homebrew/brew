@@ -21,7 +21,8 @@ RSpec.describe Utils::Service do
       end
       allow(described_class).to receive(:launchctl?).and_return(true)
       allow(Homebrew::Services::System).to receive(:launchctl_service_running?)
-        .with(f.plist_name).and_return(true)
+        .with(f.plist_name)
+        .and_return(true)
       expect(described_class.running?(f)).to be true
     end
 
@@ -32,9 +33,11 @@ RSpec.describe Utils::Service do
       end
       allow(described_class).to receive(:launchctl?).and_return(true)
       expect(Homebrew::Services::System).to receive(:launchctl_service_running?)
-        .with("sh.brew.formula_name").and_return(false)
+        .with("sh.brew.formula_name")
+        .and_return(false)
       expect(Homebrew::Services::System).to receive(:launchctl_service_running?)
-        .with("homebrew.mxcl.formula_name").and_return(true)
+        .with("homebrew.mxcl.formula_name")
+        .and_return(true)
 
       expect(described_class.running?(f)).to be true
     end
@@ -60,9 +63,11 @@ RSpec.describe Utils::Service do
       systemctl = Pathname("/bin/systemctl")
       allow(described_class).to receive_messages(launchctl: nil, systemctl?: true, systemctl:)
       expect(SystemCommand).to receive(:quiet_system)
-        .with(systemctl, "is-active", "--quiet", "sh.brew.formula_name").and_return(false)
+        .with(systemctl, "is-active", "--quiet", "sh.brew.formula_name")
+        .and_return(false)
       expect(SystemCommand).to receive(:quiet_system)
-        .with(systemctl, "is-active", "--quiet", "homebrew.formula_name").and_return(true)
+        .with(systemctl, "is-active", "--quiet", "homebrew.formula_name")
+        .and_return(true)
 
       expect(described_class.running?(f)).to be true
     end

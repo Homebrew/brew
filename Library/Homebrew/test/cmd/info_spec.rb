@@ -351,7 +351,8 @@ RSpec.describe Homebrew::Cmd::Info do
     allow(Cask::Info).to receive(:repo_url).and_return(nil)
     expect(Cask::Caskroom).to receive(:casks).with(no_args).once.and_return(casks)
     expect(Cask::Caskroom).to receive(:casks).with(tokens: contain_exactly("example", "example@dev"))
-                                             .twice.and_return(casks)
+                                             .twice
+                                             .and_return(casks)
 
     expect { described_class.new(["--installed", "--cask", "--verbose"]).run }.to output(<<~EOS).to_stdout
       ==> example: 1.0
@@ -2508,7 +2509,8 @@ RSpec.describe Homebrew::Cmd::Info do
         allow(Utils).to receive(:popen_read).and_call_original
 
         expect(Utils).to receive(:popen_read).with(Utils::Git.git, "-C", tap.path, "ls-files", "-z")
-                                             .once.and_call_original
+                                             .once
+                                             .and_call_original
 
         %w[testball testball2].each do |name|
           info.github_info(Formulary.from_path(formula_path.dirname/"#{name}.rb"))

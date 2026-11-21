@@ -63,7 +63,8 @@ module Sponsors
     end
 
     activities.group_by { |activity| [activity.dig("sponsor", "login"), activity.dig("sponsorsTier", "id")] }
-              .values.flat_map do |events|
+              .values
+              .flat_map do |events|
       # A refund invalidates earlier gifts at this tier until another gift is made.
       refunded_at = events.filter_map { |event| event["timestamp"] if event["action"] == "REFUND" }.max
       events.filter_map do |activity|

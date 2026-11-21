@@ -181,7 +181,8 @@ RSpec.describe Homebrew::Services::System do
 
     it "delegates to launchctl_find_service" do
       allow(described_class).to receive(:launchctl_find_service)
-        .with(label, sudo: false).and_return(["output", true, :launchctl_print])
+        .with(label, sudo: false)
+        .and_return(["output", true, :launchctl_print])
       expect(described_class.launchctl_service_running?(label)).to be true
     end
   end
