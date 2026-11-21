@@ -14,19 +14,25 @@ class DependentsMessage
   sig { returns(T::Array[String]) }
   attr_reader :deps, :named_args
 
-  sig { params(requireds: T::Array[T.any(String, Keg)], dependents: T::Array[String], named_args: T::Array[String]).void }
-  def initialize(requireds, dependents, named_args: [])
+  sig {
+    params(requireds: T::Array[T.any(String, Keg)], dependents: T::Array[String], named_args: T::Array[String],
+           build: T::Boolean).void
+  }
+  def initialize(requireds, dependents, named_args: [], build: false)
     @reqs = requireds
     @deps = dependents
     @named_args = named_args
+    @build = build
   end
 
   sig { void }
   def output
     installed_deps = "#{Utils::Text.to_sentence(deps)}, which #{deps.one? ? "is" : "are"} currently installed"
+    it_is_or_they_are = reqs.one? ? "it is" : "they are"
+    to_build_or_by = @build ? "to build" : "by"
     ofail <<~EOS
       Refusing to uninstall #{Utils::Text.to_sentence(reqs)}
-      because #{reqs.one? ? "it is" : "they are"} required by #{installed_deps}.
+      because #{it_is_or_they_are} required #{to_build_or_by} #{installed_deps}.
       You can override this and force removal with:
         brew uninstall --ignore-dependencies #{named_args.join(" ")}
     EOS

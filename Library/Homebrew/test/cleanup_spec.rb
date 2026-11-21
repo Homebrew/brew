@@ -360,14 +360,14 @@ RSpec.describe Homebrew::Cleanup do
 
       def installed_formula(name, poured: false, usable_bottle: true, requested: false, pinned: false,
                             runtime: [], build: [])
-        tab = instance_double(Tab, runtime_dependencies: runtime.map { |dep| { "full_name" => dep } },
-                                   poured_from_bottle: poured, installed_on_request: requested,
+        tab = instance_double(Tab, poured_from_bottle: poured, installed_on_request: requested,
                                    installed_on_request_present?: true)
         deps = build.map { |dep| instance_double(Dependency, name: dep.name, build?: true, to_formula: dep) }
         keg = instance_double(Keg, name:, tab:)
         instance_double(Formula, name:, full_name: name, possible_names: [name], aliases: [], deps:, pinned?: pinned,
                                  bottled?: usable_bottle, pour_bottle?: true,
                                  installed_runtime_formula_dependencies: [],
+                                 installed_runtime_dependency_names: runtime,
                                  any_installed_keg: keg, installed_kegs: [keg])
       end
 

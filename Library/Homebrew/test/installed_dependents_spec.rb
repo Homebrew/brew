@@ -402,4 +402,147 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_some_installed_dependents([keg])&.last).to include("qux")
     end
   end
+
+  describe "::find_installed_build_dependents" do
+    let!(:dependent) do
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo" => :build
+      end
+    end
+
+    before { keg.optlink }
+
+    specify "a formula built from source needs the keg to build" do
+      expect(described_class.find_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
+    end
+
+    def pour_from_usable_bottle(*poured_kegs)
+      poured_kegs.each do |poured_keg|
+        tab = Tab.empty
+        tab.tabfile = poured_keg/AbstractTab::FILENAME
+        tab.poured_from_bottle = true
+        tab.write
+      end
+      allow(Formulary.factory("bar")).to receive_messages(bottled?: true, pour_bottle?: true)
+    end
+
+    specify "a formula poured from a usable bottle doesn't need the keg to build" do
+      pour_from_usable_bottle(keg, dependent)
+
+      expect(described_class.find_installed_build_dependents([keg])).to be_nil
+    end
+
+    specify "a formula whose remaining keg was built from source still needs the keg to build" do
+      linked_dependent = Keg.new((dependent.rack/"2.0").tap(&:mkpath))
+      linked_dependent.optlink
+      pour_from_usable_bottle(keg, linked_dependent)
+
+      expect(described_class.find_installed_build_dependents([keg, linked_dependent])).to eq([[keg], ["bar"]])
+    end
+
+    specify "a formula that is uninstalled too doesn't need the keg to build" do
+      expect(described_class.find_installed_build_dependents([keg, dependent])).to be_nil
+    end
+
+    specify "a formula that keeps another keg still needs the keg to build" do
+      (dependent.rack/"2.0").mkpath
+
+      expect(described_class.find_installed_build_dependents([keg, dependent])).to eq([[keg], ["bar"]])
+    end
+
+    specify "an older keg isn't needed to build while the linked one stays" do
+      older_keg = Keg.new((keg.rack/"0.9").tap(&:mkpath))
+
+      expect(described_class.find_installed_build_dependents([older_keg])).to be_nil
+    end
+
+    specify "the last keg is needed to build even when `opt` doesn't point to it" do
+      keg.remove_opt_record
+
+      expect(described_class.find_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
+    end
+
+    specify "a keg whose formula has no usable spec is still needed to build" do
+      allow(keg).to receive(:to_formula).and_raise(FormulaSpecificationError)
+
+      expect(described_class.find_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
+    end
+
+    specify "the kegs of a formula that isn't uninstalled aren't listed" do
+      expect(Formulary.factory("bar")).not_to receive(:installed_kegs)
+
+      described_class.find_installed_build_dependents([keg])
+    end
+  end
+
+  describe "::build_dependents_by_name" do
+    let(:installed) { Formula.installed }
+
+    before do
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo" => :build
+      end
+    end
+
+    it "maps the build dependencies to keep to the formulae that need them" do
+      expect(described_class.build_dependents_by_name(installed, installed)).to eq("foo" => ["bar"])
+    end
+
+    it "looks up a build dependency once for all the formulae that need it" do
+      setup_test_keg("baz", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo" => :build
+      end
+      formulae = installed
+      allow(Formulary).to receive(:factory).and_call_original
+      expect(Formulary).to receive(:factory).with("foo", warn: false).once.and_call_original
+
+      described_class.build_dependents_by_name(formulae, formulae)
+    end
+
+    it "keeps a build dependency whose tap is untrusted" do
+      build_dependency = installed.flat_map { |f| f.deps.to_a }.find(&:build?)
+      allow(build_dependency).to receive(:to_formula).and_raise(Homebrew::UntrustedTapError)
+
+      expect(described_class.build_dependents_by_name(installed, installed)).to eq("foo" => ["bar"])
+    end
+
+    it "keeps a build dependency whose formula has no usable spec" do
+      build_dependency = installed.flat_map { |f| f.deps.to_a }.find(&:build?)
+      allow(build_dependency).to receive(:to_formula).and_raise(FormulaSpecificationError)
+
+      expect(described_class.build_dependents_by_name(installed, installed)).to eq("foo" => ["bar"])
+    end
+  end
+
+  describe "::formulae_safe_to_remove" do
+    let(:installed) { Formula.installed }
+
+    before do
+      setup_test_keg("bar", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo"
+        depends_on "foo-keg-only" => :build
+      end
+    end
+
+    it "removes formulae when everything that depends on them is also being removed" do
+      expect(described_class.formulae_safe_to_remove(installed, installed)).to match_array(installed)
+    end
+
+    it "keeps runtime and build dependencies of formulae that stay installed" do
+      expect(described_class.formulae_safe_to_remove(installed - [Formulary.factory("bar")], installed)).to eq([])
+    end
+
+    it "keeps dependencies of formulae that it has decided to keep" do
+      setup_test_keg("baz", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "bar"
+      end
+
+      expect(described_class.formulae_safe_to_remove(installed - [Formulary.factory("baz")], installed)).to eq([])
+    end
+  end
 end

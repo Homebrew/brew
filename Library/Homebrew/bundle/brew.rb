@@ -380,7 +380,6 @@ module Homebrew
             runtime_dependencies = if (runtime_deps = tab.runtime_dependencies)
               T.cast(runtime_deps, T::Array[T::Hash[String, T.untyped]]).filter_map { |d| d["full_name"] }
             end
-            poured_from_bottle = tab.poured_from_bottle
           end
 
           runtime_dependencies ||= formula.runtime_dependencies.map(&:name)
@@ -404,12 +403,10 @@ module Homebrew
             version:,
             installed_on_request?:  installed_on_request != false,
             dependencies:           runtime_dependencies,
-            build_dependencies:     formula.deps.select(&:build?).map(&:name).uniq,
             conflicts_with:         formula.conflicts.map(&:name),
             pinned?:                formula.pinned? || false,
             outdated?:              formula.outdated? || false,
             link?:                  link,
-            poured_from_bottle?:    poured_from_bottle || false,
             bottle:                 bottle_hash || false,
             bottled:                bottled || false,
             official_tap:           formula.tap&.official? || false,
