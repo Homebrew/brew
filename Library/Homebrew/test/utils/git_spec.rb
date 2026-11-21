@@ -242,8 +242,8 @@ RSpec.describe Utils::Git do
         expect { described_class.ensure_installed! }.to raise_error("Git is unavailable")
       end
 
-      it "installs Git through the API without accepting the system stub",
-         unless: ENV.fetch("HOMEBREW_TEST_GENERIC_OS", nil) do
+      it "installs Git through the API without accepting the system stub" do
+        ENV.delete("HOMEBREW_TEST_GENERIC_OS")
         ENV.delete("HOMEBREW_NO_INSTALL_FROM_API")
         allow(CoreTap.instance).to receive(:installed?).and_return(false)
         allow(described_class).to receive(:available?).and_return(false)
@@ -265,8 +265,8 @@ RSpec.describe Utils::Git do
         expect { described_class.ensure_installed! }.to raise_error("Git is unavailable")
       end
 
-      it "keeps using the git shim after the formula install helper",
-         unless: ENV.fetch("HOMEBREW_TEST_GENERIC_OS", nil) do
+      it "keeps using the git shim after the formula install helper" do
+        ENV.delete("HOMEBREW_TEST_GENERIC_OS")
         expect(described_class).to receive(:available?).and_return(false)
         allow(CoreTap.instance).to receive(:installed?).and_return(true)
         formula_double = instance_double(Formula)

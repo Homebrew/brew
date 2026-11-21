@@ -83,16 +83,30 @@ module Test
 
       requires_ancestor { RSpec::Core::Pending }
 
-      # Skip missing tools locally, but fail on CI so runner dependency
-      # regressions cannot silently reduce coverage. `brew test-bot`'s
-      # portable-ruby validation runs this suite in homebrew-core build
-      # containers that intentionally lack some tools, so skip there too.
+      # Missing prerequisites skip locally and fail on CI.
       def ensure_test_dependency!(available, message)
         return if available
 
-        raise message if ENV["CI"] && !ENV["HOMEBREW_TEST_BOT"]
+        raise message if ENV["CI"]
 
         skip message
+      end
+
+      # Returns diagnostics for pending or filtered examples assigned to this CI worker.
+      # Only unmet :needs_macos, :needs_linux or :needs_network requirements permit a skip.
+      def self.unexpected_ci_skips(examples)
+        examples.filter_map do |example|
+          metadata = example.metadata
+          result = example.execution_result
+          next if [:passed, :failed].include?(result.status)
+
+          next if metadata[:needs_network] && !ENV["HOMEBREW_TEST_ONLINE"]
+          # An example requiring both operating systems can never run.
+          next if metadata[:needs_macos] && !metadata[:needs_linux] && !OS.mac?
+          next if metadata[:needs_linux] && !metadata[:needs_macos] && !OS.linux?
+
+          "#{example.location} #{example.full_description} (#{result.pending_message || "filtered out"})"
+        end
       end
     end
   end
@@ -111,7 +125,35 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
   config.raise_on_warning = true
   config.disable_monkey_patching!
 
-  config.filter_run_when_matching :focus
+  config.filter_run_when_matching :focus unless ENV["CI"]
+
+  if ENV["CI"]
+    # Include the file's implicit OS requirement so CI detects conflicting example tags.
+    config.define_derived_metadata(file_path: Test::Helper::Files::MACOS_SPEC) { |m| m[:needs_macos] = true }
+    config.define_derived_metadata(file_path: Test::Helper::Files::LINUX_SPEC) { |m| m[:needs_linux] = true }
+
+    # Resolve line selectors after all declarations have loaded and before RSpec
+    # clears its example groups if every example on this worker is filtered out.
+    def config.load_spec_files
+      super.tap do
+        selected = RSpec.world.all_examples
+        if (locations = inclusion_filter[:locations])
+          # A line passed to --only narrows just the file it belongs to.
+          selected.reject! do |example|
+            locations.fetch(File.expand_path(example.metadata[:rerun_file_path]), []).any? &&
+              !inclusion_filter.include_example?(example)
+          end
+        end
+
+        after(:suite) do
+          next if RSpec.world.wants_to_quit
+
+          skipped = Test::Helper::Dependencies.unexpected_ci_skips(selected)
+          raise "Unexpected CI skips:\n#{skipped.join("\n")}" unless skipped.empty?
+        end
+      end
+    end
+  end
 
   config.silence_filter_announcements = true if ENV["TEST_ENV_NUMBER"]
 
@@ -204,11 +246,6 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
 
   config.before(:each, :needs_network) do
     skip "Requires network connection." unless ENV["HOMEBREW_TEST_ONLINE"]
-  end
-
-  config.before(:each, :needs_homebrew_core) do
-    core_tap_path = "#{ENV.fetch("HOMEBREW_LIBRARY")}/Taps/homebrew/homebrew-core"
-    ensure_test_dependency!(Dir.exist?(core_tap_path), "Requires homebrew/core to be tapped.")
   end
 
   config.before(:each, :needs_daemon_manager) do

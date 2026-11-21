@@ -4,6 +4,8 @@
 require "open3"
 
 RSpec.describe "brew shellenv", type: :system do
+  include Test::Helper::Dependencies
+
   before do
     ENV["HOMEBREW_PREFIX"] = HOMEBREW_PREFIX.to_s
     ENV["HOMEBREW_CELLAR"] = HOMEBREW_CELLAR.to_s
@@ -36,9 +38,11 @@ RSpec.describe "brew shellenv", type: :system do
 
   sig { params(shell: String, shell_args: T::Array[String]).returns(T::Hash[String, String]) }
   def shellenv_environment(shell, shell_args)
+    shell_path = which(shell, ORIGINAL_PATHS)
+    ensure_test_dependency!(shell_path, "#{shell} is not installed.")
     stdout, stderr, status = Open3.capture3(
       { "HOMEBREW_PREFIX" => nil, "HOMEBREW_CELLAR" => nil, "HOMEBREW_REPOSITORY" => nil },
-      (which(shell, ORIGINAL_PATHS) || skip("#{shell} is not installed")).to_s, *shell_args,
+      shell_path.to_s, *shell_args,
       "#{shellenv(shell)}\n/usr/bin/env"
     )
     raise "shellenv failed: #{stderr}" if !status.success? || !stderr.empty?

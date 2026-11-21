@@ -73,8 +73,8 @@ jobs:
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
         with:
-          core: true
-          cask: true
+          core: shallow
+          cask: shallow
 
       - name: Cache Bundler RubyGems
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -137,15 +137,17 @@ jobs:
           - name: cask audit (Linux)
             runs-on: ubuntu-latest
             container: ghcr.io/homebrew/brew:main
+            tap-mode: 'true'
           - name: cask audit (macOS)
             runs-on: macos-26
+            tap-mode: shallow
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
         with:
-          core: true
-          cask: true
+          core: ${{ matrix.tap-mode }}
+          cask: ${{ matrix.tap-mode }}
 
       - name: Run brew readall on all casks
         run: brew readall --os=all --arch=all homebrew/cask
@@ -318,11 +320,8 @@ jobs:
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
         with:
-          # We only test needs_homebrew_core tests on macOS because
-          # homebrew/core is not available by default on GitHub-hosted Ubuntu
-          # runners, and it's expensive to tap it.
-          # Load-only jobs never run examples, so they don't need it either.
-          core: ${{ runner.os == 'macOS' && matrix.load-only != true }}
+          # Check formula names against the tap on macOS and the API on Linux.
+          core: ${{ runner.os == 'macOS' && !matrix.load-only && 'shallow' || 'false' }}
           cask: false
 
       - name: Untap untrusted preinstalled taps
@@ -346,9 +345,15 @@ jobs:
       - name: Install Bundler RubyGems
         run: brew install-bundler-gems --groups=all
 
-      - name: Install Subversion
-        if: matrix.online || (runner.os == 'macOS' && matrix.load-only != true)
-        run: brew install subversion
+      - name: Install fish and Subversion
+        if: matrix.load-only != true
+        run: brew install fish subversion
+
+      - name: Install Linux test shells
+        if: runner.os == 'Linux' && matrix.load-only != true
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tcsh zsh
 
       - name: Create parallel test log directory
         run: mkdir tests
@@ -389,6 +394,10 @@ jobs:
           read -ra test_flags <<< "$TEST_FLAGS"
           if (( SHARD_COUNT > 0 )); then
             test_flags+=("--shard=$SHARD_INDEX/$SHARD_COUNT")
+          fi
+          # Some network tests exercise the native macOS sandbox.
+          if [[ "$RUNNER_OS" == macOS && "$GITHUB_EVENT_NAME" == pull_request ]]; then
+            test_flags+=(--online)
           fi
           brew tests "${test_flags[@]}"
         env:
@@ -523,6 +532,7 @@ jobs:
         id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d # 2026.11.14.1
         with:
+          # The default formula audit compares revisions with brew audit --git.
           core: true
           cask: false
 

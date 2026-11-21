@@ -142,26 +142,30 @@ RSpec.describe Homebrew::DevCmd::Test do
     expect(Pathname((Formula["testball"].logs/"testpath").read)).not_to exist
   end
 
-  it "blocks network access when test phase is offline", :integration_test, :needs_sandbox do
-    skip "Sandbox not available." unless Sandbox.available?
-    skip "Nested sandboxing is not supported." if Sandbox.nested_sandbox?
+  context "when the formula test is offline", :integration_test do
+    test_each(%w[macos linux]) do |platform|
+      it "blocks network access on #{platform}", needs_linux: platform == "linux", needs_macos: platform == "macos" do
+        skip "Sandbox not available." unless Sandbox.available?
+        skip "Nested sandboxing is not supported." if Sandbox.nested_sandbox?
 
-    formula_name = "testball_offline_test"
-    setup_test_formula formula_name, <<~RUBY, tab_attributes: { installed_on_request: true }
-      deny_network_access! :test
-      test do
-        require "socket"
-        UNIXServer.open("test.sock") do
-          UNIXSocket.open("test.sock", &:close)
-        end
-        system "curl", "example.org"
+        formula_name = "testball_offline_test"
+        setup_test_formula formula_name, <<~RUBY, tab_attributes: { installed_on_request: true }
+          deny_network_access! :test
+          test do
+            require "socket"
+            UNIXServer.open("test.sock") do
+              UNIXSocket.open("test.sock", &:close)
+            end
+            system "curl", "example.org"
+          end
+        RUBY
+        HOMEBREW_LINKED_KEGS.mkpath
+        (HOMEBREW_LINKED_KEGS/formula_name).make_relative_symlink(Formula[formula_name].prefix)
+
+        expect { brew "test", "--verbose", formula_name, "HOMEBREW_NO_INSTALL_FROM_API" => "1" }
+          .to output(/curl: \((?:6\) Could not resolve host:|7\) Failed to connect to) example\.org/).to_stdout
+          .and be_a_failure
       end
-    RUBY
-    HOMEBREW_LINKED_KEGS.mkpath
-    (HOMEBREW_LINKED_KEGS/formula_name).make_relative_symlink(Formula[formula_name].prefix)
-
-    expect { brew "test", "--verbose", formula_name, "HOMEBREW_NO_INSTALL_FROM_API" => "1" }
-      .to output(/curl: \((?:6\) Could not resolve host:|7\) Failed to connect to) example\.org/).to_stdout
-      .and be_a_failure
+    end
   end
 end

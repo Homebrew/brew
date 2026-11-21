@@ -147,9 +147,14 @@ RSpec.describe FormulaCellarChecks do
   end
 
   describe "#check_prebuilt_npm_binaries" do
-    # A keg's binaries are enumerated by the macOS and Linux `Keg` extensions,
-    # so there is nothing for the check to look at on a generic OS.
-    before { skip "Binary enumeration is OS-specific." if !OS.mac? && !OS.linux? }
+    before do
+      if !OS.mac? && !OS.linux?
+        require "os/linux/elf"
+        allow_any_instance_of(Keg).to receive(:binary_executable_or_library_files) do |keg|
+          keg.find.select(&:file?).map { |path| path.extend(ELFShim) }.select(&:elf?)
+        end
+      end
+    end
 
     it "reports an executable that is byte-identical to a downloaded package file" do
       binary = install_at "lib/node_modules/foo/node_modules/foo-darwin-arm64/foo"

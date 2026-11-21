@@ -256,7 +256,11 @@ RSpec.describe Cask::Installer, :cask do
     end
 
     it "works with xar-based Casks" do
-      skip "xar is not installed." unless which("xar")
+      unless which("xar")
+        allow_any_instance_of(UnpackStrategy::Xar).to receive(:extract_to_dir) do |_strategy, unpack_dir, **|
+          FileUtils.touch unpack_dir/"container"
+        end
+      end
 
       ENV["HOMEBREW_DEVELOPER"] = nil
       Homebrew.raise_deprecation_exceptions = false

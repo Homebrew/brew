@@ -3,16 +3,16 @@
 
 RSpec.shared_examples "formulae exist" do |array|
   T.bind(self, T.class_of(RSpec::Core::ExampleGroup))
-  formulae = T.cast(array, T::Array[Formula])
-
-  test_each(formulae) do |f|
-    it "#{f} formula exists", :needs_homebrew_core do
+  test_each(T.cast(array, T::Array[String])) do |name|
+    it "#{name} formula exists" do
       T.bind(self, RSpec::Core::ExampleGroup)
 
-      core_tap = Pathname("#{HOMEBREW_LIBRARY_PATH}/../Taps/homebrew/homebrew-core")
-      formula_paths = core_tap.glob("Formula/**/#{f}.rb")
-      alias_path = core_tap/"Aliases/#{f}"
-      expect(formula_paths.any?(&:exist?) || alias_path.exist?).to be true
+      core = HOMEBREW_LIBRARY_PATH.parent/"Taps/homebrew/homebrew-core"
+      if core.directory?
+        expect((core/"Aliases"/name).file? || core.glob("Formula/**/#{name}.rb").any?(&:file?)).to be true
+      else
+        expect(Homebrew::API.formula_name?(name) || Homebrew::API.formula_aliases.key?(name)).to be true
+      end
     end
   end
 end
