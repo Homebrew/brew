@@ -5268,7 +5268,7 @@ Linnane and William Woodruff.
 Homebrew's other Maintainers are Andrew Nesbitt, Anton Melnikov, Bo Anderson,
 Branch Vincent, Caleb Xu, Daeho Ro, Douglas Eichelberger, Dustin Rodrigues, FX
 Coudert, Harald Nordgren, Issy Long, Klaus Hipp, Markus Reiter, Michka Popoff,
-Štefan Baebler, Thierry Moisan and William Woodruff.
+Štefan Baebler, Thierry Moisan, William Woodruff and hyuraku.
 
 ## BUGS
 
