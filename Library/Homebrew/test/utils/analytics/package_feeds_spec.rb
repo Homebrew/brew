@@ -43,8 +43,9 @@ RSpec.describe Utils::Analytics::PackageFeeds do
   def formula(name = "example", version: "1.0", revision: 0, rebuild: 0, extra: "")
     path = repository/"Formula"/"#{name}.rb"
     path.dirname.mkpath
+    class_name = name.split("-").map(&:capitalize).join
     path.write <<~RUBY
-      class #{name.split("-").map(&:capitalize).join} < Formula
+      class #{class_name} < Formula
         desc "Tools & utilities"
         homepage "https://example.test"
         url "https://example.test/#{name}-#{version}.tar.gz"

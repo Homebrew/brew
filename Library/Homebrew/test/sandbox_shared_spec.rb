@@ -988,9 +988,10 @@ RSpec.describe Sandbox do
       stub_const("HOMEBREW_PREFIX", home/"Documents/homebrew")
       HOMEBREW_PREFIX.mkpath
 
+      documents = (home/"Documents").realpath
       expect(sandbox).to receive(:opoo).with(<<~EOS)
         The sandbox cannot prevent formulae from reading:
-          #{(home/"Documents").realpath}
+          #{documents}
         because this required path is inside it:
           #{HOMEBREW_PREFIX.realpath}
         Formulae may access personal data in this directory.

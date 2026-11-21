@@ -61,11 +61,14 @@ module OS
         sig { params(out: T.any(File, StringIO, IO)).void }
         def macos_config(out = $stdout)
           out.puts "macOS: #{MacOS.full_version}-#{kernel}"
-          out.puts "CLT: #{clt || "N/A"}"
-          out.puts "Xcode: #{xcode || "N/A"}"
+          clt_version = clt || "N/A"
+          out.puts "CLT: #{clt_version}"
+          xcode_version = xcode || "N/A"
+          out.puts "Xcode: #{xcode_version}"
           # Metal Toolchain is a separate install starting with Xcode 26.
           if ::Hardware::CPU.arm64? && MacOS::Xcode.installed? && MacOS::Xcode.version >= "26.0"
-            out.puts "Metal Toolchain: #{metal_toolchain || "N/A"}"
+            metal_version = metal_toolchain || "N/A"
+            out.puts "Metal Toolchain: #{metal_version}"
           end
           out.puts "Rosetta 2: #{::Hardware::CPU.in_rosetta2?}" if ::Hardware::CPU.physical_cpu_arm64?
         end

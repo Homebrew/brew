@@ -216,7 +216,8 @@ module Homebrew
       top_level_options = command_options(command).keys.sort.join("\n          ")
       subcommand_names = subcommand_completion_names(subcommands).join(" ")
       subcommand_cases = subcommands.map do |subcommand|
-        "      #{([subcommand.name] + subcommand.aliases).join("|")}) subcommand=\"#{subcommand.name}\"; break ;;"
+        case_pattern = ([subcommand.name] + subcommand.aliases).join("|")
+        "      #{case_pattern}) subcommand=\"#{subcommand.name}\"; break ;;"
       end.join("\n")
       option_cases = subcommands.map do |subcommand|
         options = command_options(command, subcommand: subcommand.name).keys.sort.join("\n        ")
@@ -288,13 +289,14 @@ module Homebrew
 
       named_completion_string = generate_bash_named_args_completion(Commands.named_args_type(command))
 
+      option_names = command_options(command).keys.sort.join("\n      ")
       <<~COMPLETION
         _brew_#{Commands.method_name command}() {
           local cur="${COMP_WORDS[COMP_CWORD]}"
           case "${cur}" in
             -*)
               __brewcomp "
-              #{command_options(command).keys.sort.join("\n      ")}
+              #{option_names}
               "
               return
               ;;
@@ -345,11 +347,12 @@ module Homebrew
       options = command_options(command)
       options = generate_zsh_arguments(command, options, Commands.named_args_type(command))
 
+      arguments = options.map! { |opt| format_zsh_argument(opt) }.join(" \\\n    ")
       <<~COMPLETION
         # brew #{command}
         _brew_#{Commands.method_name command}() {
           _arguments \\
-            #{options.map! { |opt| format_zsh_argument(opt) }.join(" \\\n    ")}
+            #{arguments}
         }
       COMPLETION
     end
@@ -372,7 +375,8 @@ module Homebrew
           next unless ZSH_NAMED_ARGS_COMPLETION_FUNCTION_MAPPING.key? type
 
           args_options << "- #{type}"
-          opt = "--#{type.to_s.gsub(/(?:installed|outdated)_/, "")}"
+          option_name = type.to_s.gsub(/(?:installed|outdated)_/, "")
+          opt = "--#{option_name}"
           if options.key?(opt)
             desc = options[opt]
 
@@ -433,10 +437,11 @@ module Homebrew
           command_options(command, subcommand: subcommand.name),
           Commands.named_args_type(command, subcommand: subcommand.name),
         )
+        arguments = options.map! { |opt| format_zsh_argument(opt) }.join(" \\\n          ")
         <<~EOS
           #{names})
                   _arguments \\
-                    #{options.map! { |opt| format_zsh_argument(opt) }.join(" \\\n          ")}
+                    #{arguments}
                   ;;
         EOS
       end.join
@@ -473,7 +478,12 @@ module Homebrew
       conflicts = Commands.option_conflicts(command, option.gsub(/^--?/, ""))
       return "" if conflicts.blank?
 
-      "(#{conflicts.map { |conflict| "-#{"-" if conflict.size > 1}#{conflict}" }.join(" ")})"
+      conflict_flags = conflicts.map do |conflict|
+        next "-#{conflict}" if conflict.size <= 1
+
+        "--#{conflict}"
+      end.join(" ")
+      "(#{conflict_flags})"
     end
 
     sig { params(commands: T::Array[String]).returns(String) }
@@ -560,9 +570,8 @@ module Homebrew
       end
 
       lines += subcommands + options + named_args
-      <<~COMPLETION
-        #{lines.join("\n").chomp}
-      COMPLETION
+      completion_body = lines.join("\n").chomp
+      "#{completion_body}\n"
     end
 
     sig {
@@ -646,9 +655,8 @@ module Homebrew
         )
       end
 
-      <<~COMPLETION
-        #{lines.join("\n").chomp}
-      COMPLETION
+      completion_body = lines.join("\n").chomp
+      "#{completion_body}\n"
     end
 
     sig { params(commands: T::Array[String]).returns(String) }

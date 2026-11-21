@@ -98,9 +98,10 @@ module Homebrew
             if HOMEBREW_PREFIX.to_s == HOMEBREW_DEFAULT_PREFIX && formula.present? &&
                formula.keg_only_reason.by_macos?
               caveats = Caveats.new(formula)
+              keg_only_text = caveats.keg_only_text(skip_reason: true)&.strip
               opoo <<~EOS
                 Refusing to link macOS provided/shadowed software: #{keg.name}
-                #{caveats.keg_only_text(skip_reason: true)&.strip}
+                #{keg_only_text}
               EOS
               next
             end
@@ -166,8 +167,14 @@ module Homebrew
 
         opt = HOMEBREW_PREFIX/"opt/#{keg.name}"
         puts "\nIf you need to have this software first in your PATH instead consider running:"
-        puts "  #{Utils::Shell.prepend_path_in_profile(opt/"bin")}"  if bin.directory?
-        puts "  #{Utils::Shell.prepend_path_in_profile(opt/"sbin")}" if sbin.directory?
+        if bin.directory?
+          bin_profile = Utils::Shell.prepend_path_in_profile(opt/"bin")
+          puts "  #{bin_profile}"
+        end
+        return unless sbin.directory?
+
+        sbin_profile = Utils::Shell.prepend_path_in_profile(opt/"sbin")
+        puts "  #{sbin_profile}"
       end
     end
   end

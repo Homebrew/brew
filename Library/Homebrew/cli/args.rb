@@ -177,7 +177,8 @@ module Homebrew
           elsif @table[flag].instance_of? String
             "#{option}=#{@table[flag]}"
           elsif @table[flag].instance_of? Array
-            "#{option}=#{@table[flag].join(",")}"
+            option_values = @table[flag].join(",")
+            "#{option}=#{option_values}"
           end
         end.freeze
       end

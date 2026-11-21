@@ -66,7 +66,8 @@ module Homebrew
         ohai "#{prs.count} matching pull #{Utils.pluralize("request", prs.count)}:"
         pr_urls = []
         prs.each do |pr|
-          puts "#{tap.full_name unless tap.core_tap?}##{pr["number"]}: #{pr["title"]}"
+          tap_prefix = tap.core_tap? ? "" : tap.full_name
+          puts "#{tap_prefix}##{pr["number"]}: #{pr["title"]}"
           pr_urls << pr["html_url"]
         end
 

@@ -63,7 +63,7 @@ RSpec.describe LockFile do
     end
 
     test_each([false, true]) do |replaced|
-      it "unlocks when its file has been #{replaced ? "replaced" : "deleted"}" do
+      it "unlocks when its file disappears (replaced: #{replaced})" do
         lock_file.lock
         lock_file.path.unlink
         lock_file_copy.lock if replaced

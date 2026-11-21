@@ -358,9 +358,10 @@ class Pathname
   }
   def write_jar_script(target_jar, script_name, java_opts = "", java_version: nil)
     mkpath
+    java_home = Language::Java.overridable_java_home_env(java_version)[:JAVA_HOME]
     (self/script_name).write <<~EOS
       #!/bin/bash
-      export JAVA_HOME="#{Language::Java.overridable_java_home_env(java_version)[:JAVA_HOME]}"
+      export JAVA_HOME="#{java_home}"
       exec "${JAVA_HOME}/bin/java" #{java_opts} -jar "#{target_jar}" "$@"
     EOS
   end

@@ -20,7 +20,8 @@ module Utils
       when 2
         "#{values[0]} #{conjunction} #{values[1]}"
       else
-        "#{values.first(values.length - 1).join(", ")} #{conjunction} #{values[-1]}"
+        *prefix, last = values
+        "#{prefix.join(", ")} #{conjunction} #{last}"
       end
     end
   end

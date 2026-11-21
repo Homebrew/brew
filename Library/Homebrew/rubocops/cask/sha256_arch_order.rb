@@ -61,7 +61,8 @@ module RuboCop
           indent = " " * (node.loc.column + STANZA_PREFIX.length)
           pairs.each_with_index.map do |pair, index|
             key = "#{pair.key.source}:".ljust(width + 2)
-            "#{index.zero? ? STANZA_PREFIX : indent}#{key}#{pair.value.source}"
+            line_prefix = index.zero? ? STANZA_PREFIX : indent
+            "#{line_prefix}#{key}#{pair.value.source}"
           end.join(",\n")
         end
       end

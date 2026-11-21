@@ -82,8 +82,9 @@ module Homebrew
           Homebrew.failed = true
         end
         if results.outdated_without_sbom.any?
+          package_names = results.outdated_without_sbom.sort.join(", ")
           opoo <<~EOS
-            The installed source of #{results.outdated_without_sbom.sort.join(", ")} could not be determined
+            The installed source of #{package_names} could not be determined
             (older than the current formula and no SBOM was written at install time). Results above reflect
             the current formula version, not what is installed. Run `brew upgrade` for accurate results.
           EOS

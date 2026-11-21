@@ -249,7 +249,8 @@ module Homebrew
         entries = @sections.fetch(section, {})
         position = section_offset + 1
         entries_tile_section = entries.each_with_index.all? do |(name, (offset, bytesize)), index|
-          key_bytes = "#{"," if index.positive?}#{name.to_json}:"
+          separator = index.positive? ? "," : ""
+          key_bytes = "#{separator}#{name.to_json}:"
           next false if !offset.is_a?(Integer) || !bytesize.is_a?(Integer) || bytesize.negative?
           next false if offset != position + key_bytes.bytesize
           next false if payload.byteslice(position, key_bytes.bytesize) != key_bytes

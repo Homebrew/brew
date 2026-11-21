@@ -45,7 +45,8 @@ module RuboCop
             end
 
             add_offense(dot) do |corrector|
-              corrector.insert_before(dot, "\n#{" " * continuation.column}")
+              indentation = " " * continuation.column
+              corrector.insert_before(dot, "\n#{indentation}")
             end
           end
         end

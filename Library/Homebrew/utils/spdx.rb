@@ -142,7 +142,8 @@ module SPDX
       if license_expression.keys.length == 1
         hash_type = license_expression.keys.first
         if hash_type.is_a? String
-          expressions.push "#{hash_type} WITH #{license_expression[hash_type][:with]}"
+          exception = license_expression[hash_type][:with]
+          expressions.push "#{hash_type} WITH #{exception}"
         else
           expressions += license_expression[hash_type].map do |license|
             license_expression_to_string license, bracket: true, hash_type:

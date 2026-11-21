@@ -72,12 +72,13 @@ module RuboCop
         MSG = "Remove unreferenced `let(:%<name>s)` -- its name is never used, so the block never runs."
         RESTRICT_ON_SEND = [:let].freeze
 
+        method_names = DEFINITION_METHODS.map(&:inspect).join(" ")
         # The name symbol of any definition (`let`/`let!`/`subject`) in any block form -- used to
         # count how many times a name is defined, so override / `super` chains (including a
         # `subject` that overrides a `let` of the same name) are never flagged.
         # @!method definition_name(node)
         def_node_matcher :definition_name, <<~PATTERN
-          (any_block (send nil? {#{DEFINITION_METHODS.map { |method| ":#{method}" }.join(" ")}} (sym $_) ...) ...)
+          (any_block (send nil? {#{method_names}} (sym $_) ...) ...)
         PATTERN
 
         sig { params(node: RuboCop::AST::SendNode).void }

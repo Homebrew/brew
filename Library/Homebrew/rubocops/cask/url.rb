@@ -59,9 +59,10 @@ module RuboCop
               parameter.source_range,
               message: "Keyword URL parameter should be on a new indented line.",
             ) do |corrector|
+              indentation = " " * url_stanza.loc.column
               corrector.replace(
                 range_between(previous_parameter.source_range.end_pos, parameter.source_range.begin_pos),
-                ",\n#{" " * url_stanza.loc.column}",
+                ",\n#{indentation}",
               )
             end
           end
@@ -72,9 +73,10 @@ module RuboCop
             stanza_node.source_range,
             message: "Keyword URL parameter should be on a new indented line.",
           ) do |corrector|
+            indentation = " " * url_stanza.loc.column
             corrector.replace(
               range_between(url_stanza.source_range.end_pos, hash_node.source_range.begin_pos),
-              ",\n#{" " * url_stanza.loc.column}",
+              ",\n#{indentation}",
             )
           end
         end

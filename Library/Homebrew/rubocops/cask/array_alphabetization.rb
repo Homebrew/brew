@@ -68,7 +68,8 @@ module RuboCop
         sig { params(source: T::Array[String], index: Integer, line: String).returns(String) }
         def recursively_find_comments(source, index, line)
           if source.fetch(index - 1).strip.start_with?("#")
-            return recursively_find_comments(source, index - 1, "#{source[index - 1]}\n#{line}")
+            previous_line = source[index - 1]
+            return recursively_find_comments(source, index - 1, "#{previous_line}\n#{line}")
           end
 
           line

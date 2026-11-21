@@ -304,8 +304,9 @@ module Homebrew
             # formula (name, version), but not an exact tag match.
             # This is sound insofar as the signature has already been verified. However,
             # longer term, we should also directly attest to `:all`-tagged bottles.
+            filename = "#{bottle.filename.name}--#{bottle.filename.version}"
             candidate["name"].match?(
-              /\A#{Regexp.escape("#{bottle.filename.name}--#{bottle.filename.version}")}\.
+              /\A#{Regexp.escape(filename)}\.
                 [^.]+\.bottle(?:\.\d+)?\.tar\.gz\z/x,
             )
           else

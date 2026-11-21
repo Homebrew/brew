@@ -1734,7 +1734,8 @@ module Homebrew
           end
           next if cask_count.zero?
 
-          "#{tap.path} (#{Utils.pluralize("cask", cask_count, include_count: true)})"
+          cask_count_label = Utils.pluralize("cask", cask_count, include_count: true)
+          "#{tap.path} (#{cask_count_label})"
         end
         add_info "Cask Taps:", taps_info
 
@@ -1824,7 +1825,8 @@ module Homebrew
         elsif result.stderr.include? "pkg_resources.DistributionNotFound"
           Finding.new("Your Python installation is unable to find `xattr`.")
         else
-          Finding.new("unknown xattr error: #{result.stderr.split("\n").last}")
+          error_message = result.stderr.split("\n").last
+          Finding.new("unknown xattr error: #{error_message}")
         end
       end
 
@@ -1963,8 +1965,12 @@ module Homebrew
         guidance = []
         if upgradeable_dependents.present? || pinned_dependents.present?
           commands = []
-          commands << "brew unpin #{pinned_dependents.uniq.sort.join(" ")}" if pinned_dependents.present?
-          commands << "brew upgrade #{(upgradeable_dependents + pinned_dependents).uniq.sort.join(" ")}"
+          if pinned_dependents.present?
+            pinned_names = pinned_dependents.uniq.sort.join(" ")
+            commands << "brew unpin #{pinned_names}"
+          end
+          upgrade_names = (upgradeable_dependents + pinned_dependents).uniq.sort.join(" ")
+          commands << "brew upgrade #{upgrade_names}"
           guidance << [
             "To stop the listed dependents from requiring the formulae above, run:",
             commands.map { |command| "  #{command}" }.join("\n"),

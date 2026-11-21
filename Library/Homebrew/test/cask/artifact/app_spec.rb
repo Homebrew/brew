@@ -54,10 +54,10 @@ RSpec.describe Cask::Artifact::App, :cask do
         end
       end
 
-      test_each([["0755", nil], ["755", nil], ["0755", :macos], ["0755", :linux]]) do |mode, platform|
-        it "prepares mode #{mode} with the #{platform || "stubbed"} sandbox before installing the app",
+      test_each([["0755", :stubbed], ["755", :stubbed], ["0755", :macos], ["0755", :linux]]) do |mode, platform|
+        it "prepares mode #{mode} with the #{platform} sandbox before installing the app",
            needs_linux: platform == :linux, needs_macos: platform == :macos do
-          if platform
+          if platform != :stubbed
             allow(Sandbox).to receive(:available?).and_call_original
             skip "Sandbox is not available." unless Sandbox.available?
             skip "Nested sandboxing is not supported." if Sandbox.nested_sandbox?
@@ -79,7 +79,7 @@ RSpec.describe Cask::Artifact::App, :cask do
 
           expect(%w[installer.sh uninstaller.sh].map { |name| (target_path/name).stat.mode & 0777 })
             .to eq([0755, 0755])
-          unless platform
+          if platform == :stubbed
             expect(prepared_steps).to eq([{
               "type" => "set_permissions", "permissions" => mode, "non_recursive" => true,
               "paths" => %w[installer.sh uninstaller.sh].map do |name|

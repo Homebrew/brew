@@ -139,12 +139,17 @@ module Homebrew
           ).strip
         end
 
+        display_url = url.presence || "(blank)"
+        origin_revision = tap_origin_ref_revision.presence || "(blank)"
+        display_revision = tap_revision.presence || "(blank)"
+        start_revision = diff_start_sha1.presence || "(blank)"
+        end_revision = diff_end_sha1.presence || "(blank)"
         puts <<-EOS
-    url               #{url.presence                     || "(blank)"}
-    tap #{origin_ref} #{tap_origin_ref_revision.presence || "(blank)"}
-    HEAD              #{tap_revision.presence            || "(blank)"}
-    diff_start_sha1   #{diff_start_sha1.presence         || "(blank)"}
-    diff_end_sha1     #{diff_end_sha1.presence           || "(blank)"}
+    url               #{display_url}
+    tap #{origin_ref} #{origin_revision}
+    HEAD              #{display_revision}
+    diff_start_sha1   #{start_revision}
+    diff_end_sha1     #{end_revision}
         EOS
 
         modified_formulae = []
@@ -218,13 +223,18 @@ module Homebrew
           end
         end
 
+        tested_names = @testing_formulae.join(" ").presence || "(none)"
+        added_names = @added_formulae.join(" ").presence || "(none)"
+        modified_names = modified_formulae.join(" ").presence || "(none)"
+        deleted_names = @deleted_formulae.join(" ").presence || "(none)"
+        fetch_names = @formulae_to_fetch.join(" ").presence || "(none)"
         puts <<-EOS
 
-    testing_formulae  #{@testing_formulae.join(" ").presence  || "(none)"}
-    added_formulae    #{@added_formulae.join(" ").presence    || "(none)"}
-    modified_formulae #{modified_formulae.join(" ").presence  || "(none)"}
-    deleted_formulae  #{@deleted_formulae.join(" ").presence  || "(none)"}
-    formulae_to_fetch #{@formulae_to_fetch.join(" ").presence || "(none)"}
+    testing_formulae  #{tested_names}
+    added_formulae    #{added_names}
+    modified_formulae #{modified_names}
+    deleted_formulae  #{deleted_names}
+    formulae_to_fetch #{fetch_names}
         EOS
       end
 

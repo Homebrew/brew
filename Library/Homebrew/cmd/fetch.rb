@@ -108,7 +108,7 @@ module Homebrew
         current_os_arch = [SimulateSystem.current_os, SimulateSystem.current_arch]
         fetch_hook_formulae = T.let([], T::Array[Formula])
 
-        puts "Fetching: #{bucket * ", "}" if bucket.size > 1
+        puts "Fetching: #{bucket.join(", ")}" if bucket.size > 1
         bucket.each do |formula_or_cask|
           case formula_or_cask
           when Formula
@@ -273,9 +273,10 @@ module Homebrew
           next Dependable::PRUNE if dependency.test? && !dependency.build?
         end.map(&:to_formula).reject(&:any_version_installed?)
         if missing_dependencies.present?
+          missing_names = missing_dependencies.map(&:full_name).join(", ")
           odebug <<~EOS
             Not running #{formula.full_name}'s `fetch` as these dependencies are not installed:
-              #{missing_dependencies.map(&:full_name).join(", ")}
+              #{missing_names}
             Install them first with:
               brew install --only-dependencies #{formula.full_name}
           EOS
@@ -322,7 +323,7 @@ module Homebrew
           bottles << [name, bottle]
         end
 
-        puts "Fetching: #{names * ", "}" if names.size > 1
+        puts "Fetching: #{names.join(", ")}" if names.size > 1
         bottles.each do |name, bottle|
           ohai "Fetching #{name} from #{CoreTap.instance}"
           bottle.clear_cache if args.force?
@@ -361,7 +362,7 @@ module Homebrew
           downloads << [token, download]
         end
 
-        puts "Fetching: #{tokens * ", "}" if tokens.size > 1
+        puts "Fetching: #{tokens.join(", ")}" if tokens.size > 1
         downloads.each do |token, download|
           ohai "Fetching #{token} from #{CoreCaskTap.instance}"
           download_queue.enqueue(download)

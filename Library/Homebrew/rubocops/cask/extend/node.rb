@@ -10,8 +10,9 @@ module RuboCop
       def_node_matcher :method_node, "{$(send ...) (block $(send ...) ...)}"
       def_node_matcher :block_body,  "(block _ _ $_)"
       def_node_matcher :cask_block?, "(block (send nil? :cask ...) args ...)"
+      system_methods = ON_SYSTEM_METHODS.map(&:inspect).join(" ")
       def_node_matcher :on_system_block?,
-                       "(block (send nil? {#{ON_SYSTEM_METHODS.map(&:inspect).join(" ")}} ...) args ...)"
+                       "(block (send nil? {#{system_methods}} ...) args ...)"
       def_node_matcher :arch_variable?, "(lvasgn _ (send nil? :on_arch_conditional ...))"
       def_node_matcher :system_variable?, "(lvasgn _ (send nil? :on_system_conditional ...))"
       def_node_matcher :begin_block?, "(begin ...)"

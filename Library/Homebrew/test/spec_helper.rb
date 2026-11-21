@@ -105,7 +105,8 @@ module Test
           next if metadata[:needs_macos] && !metadata[:needs_linux] && !OS.mac?
           next if metadata[:needs_linux] && !metadata[:needs_macos] && !OS.linux?
 
-          "#{example.location} #{example.full_description} (#{result.pending_message || "filtered out"})"
+          reason = result.pending_message || "filtered out"
+          "#{example.location} #{example.full_description} (#{reason})"
         end
       end
     end

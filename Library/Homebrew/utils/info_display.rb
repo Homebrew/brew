@@ -99,7 +99,8 @@ module Utils
     def self.installation_summary(version, tab)
       reason = installation_reason(tab)
 
-      "Installed: #{version}#{" (#{reason})" if reason != "-"}"
+      reason_note = " (#{reason})" if reason != "-"
+      "Installed: #{version}#{reason_note}"
     end
 
     sig {
@@ -247,8 +248,8 @@ module Utils
 
     sig { params(installed_count: Integer, total_count: Integer, mark_uninstalled: T::Boolean).returns(String) }
     def self.recursive_runtime_line(installed_count, total_count, mark_uninstalled: true)
-      "Recursive Runtime (#{total_count}): " \
-        "#{dependency_status_counts(installed_count, total_count, mark_uninstalled:)}"
+      status_counts = dependency_status_counts(installed_count, total_count, mark_uninstalled:)
+      "Recursive Runtime (#{total_count}): #{status_counts}"
     end
 
     sig { params(formula: Formula).returns(T::Array[String]) }

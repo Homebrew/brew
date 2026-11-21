@@ -95,10 +95,11 @@ module Formatter
   def self.format_help_text(string, width: 172)
     desc = OPTION_DESC_WIDTH
     indent = width - desc
+    indentation = " " * indent
     string.gsub(/(?<=\S) *\n(?=\S)/, " ")
           .gsub(/([`>)\]]:) /, "\\1\n    ")
-          .gsub(/^( +-.+  +(?=\S.{#{desc}}))(.{1,#{desc}})(?: +|$)(?!-)\n?/, "\\1\\2\n#{" " * indent}")
-          .gsub(/^( {#{indent}}(?=\S.{#{desc}}))(.{1,#{desc}})(?: +|$)(?!-)\n?/, "\\1\\2\n#{" " * indent}")
+          .gsub(/^( +-.+  +(?=\S.{#{desc}}))(.{1,#{desc}})(?: +|$)(?!-)\n?/, "\\1\\2\n#{indentation}")
+          .gsub(/^( {#{indent}}(?=\S.{#{desc}}))(.{1,#{desc}})(?: +|$)(?!-)\n?/, "\\1\\2\n#{indentation}")
           .gsub(/(.{1,#{width}})(?: +|$)(?!-)\n?/, "\\1\n")
   end
 
@@ -157,7 +158,8 @@ module Formatter
       old_version = change.old_version
       next truncate(change.new_version, max: old_width) unless old_version
 
-      "#{truncate(old_version, max: old_width).ljust(old_width)} -> #{truncate(change.new_version, max: new_width)}"
+      previous_version = truncate(old_version, max: old_width).ljust(old_width)
+      "#{previous_version} -> #{truncate(change.new_version, max: new_width)}"
     end
     versions_width = versions.map(&:length).max || 0
 

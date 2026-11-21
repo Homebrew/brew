@@ -98,7 +98,8 @@ RSpec.describe Homebrew::Cmd::UninstallCmd do
 
     it "reports an error when the requested package does not exist" do
       cmd = described_class.new(["--dry-run", "--formula", "missing-package"])
-      error_message = /No such keg: #{Regexp.escape((HOMEBREW_CELLAR/"missing-package").to_s)}/
+      missing_path = Regexp.escape((HOMEBREW_CELLAR/"missing-package").to_s)
+      error_message = /No such keg: #{missing_path}/
 
       expect { cmd.run }
         .to output(error_message).to_stderr

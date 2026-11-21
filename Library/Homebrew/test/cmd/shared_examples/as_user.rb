@@ -37,14 +37,16 @@ RSpec.shared_examples "switching users without sudo" do |command_name = nil|
     SH
     brew_file.chmod(0755)
 
+    uid = root ? 0 : 501
+    user = root ? "root" : "operator"
     run_as_user_shell(
       <<~SH,
         source "#{HOMEBREW_LIBRARY_PATH}/cmd/#{command_name}.sh"
         stat() { echo brewer; }
         id() {
           case "$1" in
-            -u) echo #{root ? 0 : 501} ;;
-            -un) echo #{root ? "root" : "operator"} ;;
+            -u) echo #{uid} ;;
+            -un) echo #{user} ;;
             -P) printf 'brewer:*:503:1234::0:0:Brewer:#{test_root}:/usr/bin/false\\n' ;;
           esac
         }

@@ -60,7 +60,7 @@ module Debrew
 
       choice = T.let(nil, T.nilable(Entry))
       while choice.nil?
-        menu.entries.each_with_index { |e, i| puts "#{i + 1}. #{e.name}" }
+        menu.entries.each.with_index(1) { |entry, number| puts "#{number}. #{entry.name}" }
         print menu.prompt unless menu.prompt.nil?
 
         input = $stdin.gets || exit
@@ -75,7 +75,9 @@ module Debrew
           case possible.size
           when 0 then puts "No such option"
           when 1 then choice = possible.first
-          else puts "Multiple options match: #{possible.map(&:name).join(" ")}"
+          else
+            choices = possible.map(&:name).join(" ")
+            puts "Multiple options match: #{choices}"
           end
         end
       end

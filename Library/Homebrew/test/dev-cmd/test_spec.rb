@@ -11,7 +11,7 @@ RSpec.describe Homebrew::DevCmd::Test do
   it_behaves_like "parseable arguments"
 
   test_each([false, true]) do |fetch_failed|
-    it "handles #{fetch_failed ? "failed" : "successful"} test resource downloads before starting the sandbox" do
+    it "handles test resource downloads before starting the sandbox (fetch failed: #{fetch_failed})" do
       cmd = described_class.new(["foo"])
       foo = formula("foo") do
         T.bind(self, T.class_of(Formula))
