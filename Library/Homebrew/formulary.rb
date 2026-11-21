@@ -593,8 +593,8 @@ module Formulary
 
         if warn && [:rename, :migration].include?(type) &&
            !(type == :migration && migrated_tap.core_cask_tap?)
-          opoo "Formula #{name} was renamed to " \
-               "#{migrated_tap.core_tap? ? migrated_name : "#{migrated_tap}/#{migrated_name}"}."
+          new_full_name = migrated_tap.core_tap? ? migrated_name : "#{migrated_tap}/#{migrated_name}"
+          opoo "Formula #{name} was renamed to #{new_full_name}."
         end
 
         if (core_loader = loader_from_name_tap_type(name_tap_type))&.path&.exist?

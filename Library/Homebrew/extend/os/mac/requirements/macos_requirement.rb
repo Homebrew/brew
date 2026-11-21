@@ -15,22 +15,26 @@ module OS
 
       sig { params(type: Symbol).returns(String) }
       def message(type: :formula)
-        subject = (type == :cask) ? "This cask" : "This formula"
+        for_cask = type == :cask
+        subject = for_cask ? "This cask" : "This formula"
 
         return "#{subject} requires macOS." unless version_specified?
 
         case comparator
         when ">="
-          "#{subject} does not run on macOS versions older than #{T.cast(version, MacOSVersion).pretty_name}."
+          pretty_version = T.cast(version, MacOSVersion).pretty_name
+          "#{subject} does not run on macOS versions older than #{pretty_version}."
         when "<="
           case type
           when :formula
+            pretty_version = T.cast(version, MacOSVersion).pretty_name
             <<~EOS
               #{subject} either does not compile or function as expected on macOS
-              versions newer than #{T.cast(version, MacOSVersion).pretty_name} due to an upstream incompatibility.
+              versions newer than #{pretty_version} due to an upstream incompatibility.
             EOS
           when :cask
-            "#{subject} does not run on macOS versions newer than #{T.cast(version, MacOSVersion).pretty_name}."
+            pretty_version = T.cast(version, MacOSVersion).pretty_name
+            "#{subject} does not run on macOS versions newer than #{pretty_version}."
           else
             ""
           end
@@ -41,7 +45,8 @@ module OS
             return "#{subject} does not run on macOS versions other than #{versions.join(", ")} and #{last}."
           end
 
-          "#{subject} does not run on macOS versions other than #{T.cast(version, MacOSVersion).pretty_name}."
+          pretty_version = T.cast(version, MacOSVersion).pretty_name
+          "#{subject} does not run on macOS versions other than #{pretty_version}."
         end
       end
     end

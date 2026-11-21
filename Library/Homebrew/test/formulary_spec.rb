@@ -289,7 +289,11 @@ RSpec.describe Formulary do
                                                       [:public, :internal])) do |(tag_symbol, spec, format)|
       it "preserves #{spec} declarations through the #{format} API on #{tag_symbol}", :aggregate_failures do
         payload = json
-        tag = (tag_symbol == :arm64_sequoia) ? mac_tag : linux_tag
+        tag = if tag_symbol == :arm64_sequoia
+          mac_tag
+        else
+          linux_tag
+        end
         Homebrew::SimulateSystem.with_tag(tag) do
           source = described_class.from_path(formula_path, spec)
           restored = if format == :public

@@ -84,8 +84,9 @@ module Homebrew
 
               if rack.directory?
                 versions = rack.subdirs.map(&:basename)
+                verb = versions.one? ? "is" : "are"
                 puts <<~EOS
-                  #{keg.name} #{Utils::Text.to_sentence(versions)} #{versions.one? ? "is" : "are"} still installed.
+                  #{keg.name} #{Utils::Text.to_sentence(versions)} #{verb} still installed.
                   To remove all versions, run:
                     brew uninstall --force #{keg.name}
                 EOS
@@ -96,10 +97,11 @@ module Homebrew
               paths = f.pkgetc.find.map(&:to_s) if f.pkgetc.exist?
               if paths.present?
                 puts
+                paths_list = paths.sort.uniq.join("\n  ")
                 opoo <<~EOS
                   The following #{f.name} configuration files have not been removed!
                   If desired, remove them manually with `rm -rf`:
-                    #{paths.sort.uniq.join("\n  ")}
+                    #{paths_list}
                 EOS
               end
 
@@ -123,10 +125,11 @@ module Homebrew
               maybe_paths -= paths if paths.present?
               if maybe_paths.present?
                 puts
+                paths_list = maybe_paths.sort.uniq.join("\n  ")
                 opoo <<~EOS
                   The following may be #{f.name} configuration files and have not been removed!
                   If desired, remove them manually with `rm -rf`:
-                    #{maybe_paths.sort.uniq.join("\n  ")}
+                    #{paths_list}
                 EOS
               end
             end

@@ -619,9 +619,10 @@ class Keg
     end
     make_relative_symlink(linked_keg_record, path, verbose:, dry_run:, overwrite:) unless dry_run
     @overwritten_cask_symlinks.group_by { |_, (cask_token, _)| cask_token }.each do |cask_token, symlinks|
+      symlink_paths = symlinks.map(&:first).join("\n  ")
       opoo <<~EOS
         Overwrote symlinks from the #{cask_token} cask:
-          #{symlinks.map(&:first).join("\n  ")}
+          #{symlink_paths}
         To restore them, run:
           brew unlink --formula #{name} && brew link --cask #{cask_token}
       EOS

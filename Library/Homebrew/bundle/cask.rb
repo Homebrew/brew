@@ -90,7 +90,8 @@ module Homebrew
           install_result = if pin_only
             true
           elsif !tap_changed && cask_installed?(name)
-            status = "#{options[:greedy] ? "may not be" : "not"} up-to-date"
+            update_status = options[:greedy] ? "may not be" : "not"
+            status = "#{update_status} up-to-date"
             puts "Upgrading #{name} cask. It is installed but #{status}." if verbose
             Bundle.brew("upgrade", "--cask", full_name, verbose:)
           else
@@ -111,7 +112,10 @@ module Homebrew
             args.uniq!
 
             with_args = " with #{args.join(" ")}" if args.present?
-            puts "#{tap_changed ? "Reinstalling" : "Installing"} #{full_name} cask#{with_args}." if verbose
+            if verbose
+              action = tap_changed ? "Reinstalling" : "Installing"
+              puts "#{action} #{full_name} cask#{with_args}."
+            end
 
             if Bundle.brew(tap_changed ? "reinstall" : "install", "--cask", full_name, *args, verbose:)
               installed_casks << name
@@ -344,7 +348,8 @@ module Homebrew
               key = "language"
               value = Array(cask_config.explicit.fetch(:languages, [])).join(",")
             end
-            "#{key}: \"#{value.to_s.sub(/^#{Dir.home}/, "~")}\""
+            display_value = value.to_s.sub(/^#{Dir.home}/, "~")
+            "#{key}: \"#{display_value}\""
           end.join(", ")
         end
       end

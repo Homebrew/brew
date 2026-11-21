@@ -17,7 +17,7 @@ module Cask
 
       installed = cask.installed?
       outdated = installed && cask.outdated?
-      output = "#{::Utils::InfoDisplay.package_summary(
+      summary = ::Utils::InfoDisplay.package_summary(
         formula_or_cask:     cask,
         title:               ::Utils::InfoDisplay::Title.new(
           name:              cask.token,
@@ -32,7 +32,8 @@ module Cask
         source_url:          repo_url(cask),
         installed_versions:  installed_section_rows(cask),
         verbose:,
-      )}\n"
+      )
+      output = "#{summary}\n"
       deps = deps_info(cask, mark_uninstalled: installed)
       output << deps if deps
       require "cask_dependent"
@@ -49,7 +50,10 @@ module Cask
       output << "#{artifacts}\n" if artifacts
       if verbose
         binaries = cask.artifacts.grep(Artifact::Binary).map { |binary| binary.target.basename.to_s }
-        output << "#{::Utils::InfoDisplay.binaries_section(binaries).chomp}\n" if binaries.present?
+        if binaries.present?
+          binaries_section = ::Utils::InfoDisplay.binaries_section(binaries).chomp
+          output << "#{binaries_section}\n"
+        end
       end
       caveats = Installer.caveats(cask)
       output << caveats if caveats

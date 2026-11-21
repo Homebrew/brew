@@ -172,7 +172,11 @@ RSpec.describe Cask::Artifact::App, :cask do
           outside.write "#!/bin/sh\n"
           outside.chmod 0644
           (source_path/"installer.sh").unlink
-          relative_path = (link_type == :directory_symlink) ? "linked/installer.sh" : "installer.sh"
+          relative_path = if link_type == :directory_symlink
+            "linked/installer.sh"
+          else
+            "installer.sh"
+          end
           case link_type
           when :directory_symlink
             File.symlink(outside.dirname, source_path/"linked")

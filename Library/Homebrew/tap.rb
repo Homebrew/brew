@@ -130,7 +130,8 @@ class Tap # rubocop:disable Metrics/ClassLength
 
   sig { returns(T::Array[String]) }
   def self.forbidden_taps
-    cache_key = :"forbidden_taps_#{Homebrew::EnvConfig.forbidden_taps.to_s.tr(" ", "_")}"
+    forbidden_taps = Homebrew::EnvConfig.forbidden_taps.to_s.tr(" ", "_")
+    cache_key = :"forbidden_taps_#{forbidden_taps}"
     cache[cache_key] ||= tap_list_references(Homebrew::EnvConfig.forbidden_taps.to_s, "HOMEBREW_FORBIDDEN_TAPS")
   end
 
@@ -648,7 +649,8 @@ class Tap # rubocop:disable Metrics/ClassLength
         "Redirected tap #{old_name} to tap #{name}"
       end,
     )
-    $stderr.puts "#{trust_invalidated ? "Untrusted" : "Not trusted"} tap: #{old_name}"
+    trust_status = trust_invalidated ? "Untrusted" : "Not trusted"
+    $stderr.puts "#{trust_status} tap: #{old_name}"
   end
 
   sig { params(args: T::Array[T.any(String, Pathname)], chdir: T.nilable(Pathname)).returns(T.untyped) }
@@ -689,7 +691,11 @@ class Tap # rubocop:disable Metrics/ClassLength
     if official? && DEPRECATED_OFFICIAL_TAPS.include?(repository)
       odie "#{name} was deprecated. This tap is now empty and all its contents were either deleted or migrated."
     elsif user == "caskroom" || name == "phinze/cask"
-      new_repository = (repository == "cask") ? "cask" : "cask-#{repository}"
+      new_repository = if repository == "cask"
+        "cask"
+      else
+        "cask-#{repository}"
+      end
       odie "#{name} was moved. Tap homebrew/#{new_repository} instead."
     end
 

@@ -66,45 +66,49 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
     }
   end
   let(:xml) do
+    v123 = item_hashes[:v123]
     v123_item = <<~XML
       <item>
-        <title>#{item_hashes[:v123][:title]}</title>
-        <sparkle:minimumSystemVersion>#{item_hashes[:v123][:minimum_system_version]}</sparkle:minimumSystemVersion>
-        <sparkle:releaseNotesLink>#{item_hashes[:v123][:release_notes_link]}</sparkle:releaseNotesLink>
-        <pubDate>#{item_hashes[:v123][:pub_date]}</pubDate>
-        <enclosure url="#{item_hashes[:v123][:url]}" sparkle:shortVersionString="#{item_hashes[:v123][:short_version]}" sparkle:version="#{item_hashes[:v123][:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
+        <title>#{v123[:title]}</title>
+        <sparkle:minimumSystemVersion>#{v123[:minimum_system_version]}</sparkle:minimumSystemVersion>
+        <sparkle:releaseNotesLink>#{v123[:release_notes_link]}</sparkle:releaseNotesLink>
+        <pubDate>#{v123[:pub_date]}</pubDate>
+        <enclosure url="#{v123[:url]}" sparkle:shortVersionString="#{v123[:short_version]}" sparkle:version="#{v123[:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
       </item>
     XML
 
+    v122 = item_hashes[:v122]
     v122_item = <<~XML
       <item>
-        <title>#{item_hashes[:v122][:title]}</title>
-        <link>#{item_hashes[:v122][:link]}</link>
-        <sparkle:minimumSystemVersion>#{item_hashes[:v122][:minimum_system_version]}</sparkle:minimumSystemVersion>
-        <sparkle:releaseNotesLink>#{item_hashes[:v122][:release_notes_link]}</sparkle:releaseNotesLink>
-        <pubDate>#{item_hashes[:v122][:pub_date]}</pubDate>
-        <sparkle:version>#{item_hashes[:v122][:version]}</sparkle:version>
-        <sparkle:shortVersionString>#{item_hashes[:v122][:short_version]}</sparkle:shortVersionString>
+        <title>#{v122[:title]}</title>
+        <link>#{v122[:link]}</link>
+        <sparkle:minimumSystemVersion>#{v122[:minimum_system_version]}</sparkle:minimumSystemVersion>
+        <sparkle:releaseNotesLink>#{v122[:release_notes_link]}</sparkle:releaseNotesLink>
+        <pubDate>#{v122[:pub_date]}</pubDate>
+        <sparkle:version>#{v122[:version]}</sparkle:version>
+        <sparkle:shortVersionString>#{v122[:short_version]}</sparkle:shortVersionString>
       </item>
     XML
 
+    v121 = item_hashes[:v121]
     v121_item_with_osx_os = <<~XML
       <item>
-        <title>#{item_hashes[:v121][:title]}</title>
-        <sparkle:minimumSystemVersion>#{item_hashes[:v121][:minimum_system_version]}</sparkle:minimumSystemVersion>
-        <sparkle:releaseNotesLink>#{item_hashes[:v121][:release_notes_link]}</sparkle:releaseNotesLink>
-        <pubDate>#{item_hashes[:v121][:pub_date]}</pubDate>
-        <enclosure os="#{item_hashes[:v121][:os]}" url="#{item_hashes[:v121][:url]}" sparkle:shortVersionString="#{item_hashes[:v121][:short_version]}" sparkle:version="#{item_hashes[:v121][:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
+        <title>#{v121[:title]}</title>
+        <sparkle:minimumSystemVersion>#{v121[:minimum_system_version]}</sparkle:minimumSystemVersion>
+        <sparkle:releaseNotesLink>#{v121[:release_notes_link]}</sparkle:releaseNotesLink>
+        <pubDate>#{v121[:pub_date]}</pubDate>
+        <enclosure os="#{v121[:os]}" url="#{v121[:url]}" sparkle:shortVersionString="#{v121[:short_version]}" sparkle:version="#{v121[:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
       </item>
     XML
 
+    v120 = item_hashes[:v120]
     v120_item_with_macos_os = <<~XML
       <item>
-        <title>#{item_hashes[:v120][:title]}</title>
-        <sparkle:minimumSystemVersion>#{item_hashes[:v120][:minimum_system_version]}</sparkle:minimumSystemVersion>
-        <sparkle:releaseNotesLink>#{item_hashes[:v120][:release_notes_link]}</sparkle:releaseNotesLink>
-        <pubDate>#{item_hashes[:v120][:pub_date]}</pubDate>
-        <enclosure os="#{item_hashes[:v120][:os]}" url="#{item_hashes[:v120][:url]}" sparkle:shortVersionString="#{item_hashes[:v120][:short_version]}" sparkle:version="#{item_hashes[:v120][:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
+        <title>#{v120[:title]}</title>
+        <sparkle:minimumSystemVersion>#{v120[:minimum_system_version]}</sparkle:minimumSystemVersion>
+        <sparkle:releaseNotesLink>#{v120[:release_notes_link]}</sparkle:releaseNotesLink>
+        <pubDate>#{v120[:pub_date]}</pubDate>
+        <enclosure os="#{v120[:os]}" url="#{v120[:url]}" sparkle:shortVersionString="#{v120[:short_version]}" sparkle:version="#{v120[:version]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
       </item>
     XML
 
@@ -146,13 +150,14 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
       ),
     )
 
+    v123 = item_hashes[:v123]
     no_versions_item = create_appcast_xml <<~XML
       <item>
         <title>Version</title>
-        <sparkle:minimumSystemVersion>#{item_hashes[:v123][:minimum_system_version]}</sparkle:minimumSystemVersion>
-        <sparkle:releaseNotesLink>#{item_hashes[:v123][:release_notes_link]}</sparkle:releaseNotesLink>
-        <pubDate>#{item_hashes[:v123][:pub_date]}</pubDate>
-        <enclosure url="#{item_hashes[:v123][:url]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
+        <sparkle:minimumSystemVersion>#{v123[:minimum_system_version]}</sparkle:minimumSystemVersion>
+        <sparkle:releaseNotesLink>#{v123[:release_notes_link]}</sparkle:releaseNotesLink>
+        <pubDate>#{v123[:pub_date]}</pubDate>
+        <enclosure url="#{v123[:url]}" length="12345678" type="application/octet-stream" sparkle:dsaSignature="ABCDEF+GHIJKLMNOPQRSTUVWXYZab/cdefghijklmnopqrst/uvwxyz1234567==" />
       </item>
     XML
 
@@ -401,6 +406,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
         end,
       ).to eq([item_hashes[:v123][:short_version]])
 
+      v123 = item_hashes[:v123]
       expect(
         sparkle.versions_from_content(xml[:appcast], title_regex) do |items, regex|
           next if (item = items[0]).blank?
@@ -410,7 +416,7 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
 
           "#{match[1]},#{item.version}"
         end,
-      ).to eq(["#{item_hashes[:v123][:short_version]},#{item_hashes[:v123][:version]}"])
+      ).to eq(["#{v123[:short_version]},#{v123[:version]}"])
 
       # Returning an array of strings from the block
       expect(
@@ -488,7 +494,8 @@ RSpec.describe Homebrew::Livecheck::Strategy::Sparkle do
         match = item.url.match(regex)
         next if match.blank?
 
-        "#{match[1]},#{match[1].tr(".", "")}"
+        compact_version = match[1].tr(".", "")
+        "#{match[1]},#{compact_version}"
       end).to eq(match_data[:cached].merge({ regex: appcast_regex }))
     end
 

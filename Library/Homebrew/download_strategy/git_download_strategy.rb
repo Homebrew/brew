@@ -172,7 +172,7 @@ class GitDownloadStrategy < VCSDownloadStrategy
   sig { params(args: T::Array[String], timeout: T.nilable(Time)).returns(SystemCommand::Result) }
   def git_download_command!(args:, timeout: nil)
     download_env = env(credential_lookup: true)
-    system_command!("git", args:, chdir: (args.first == "clone") ? nil : cached_location,
+    system_command!("git", args:, chdir: (cached_location if args.first != "clone"),
                           timeout: Utils::Timer.remaining(timeout), env: download_env,
                           secrets: download_env.values_at("GH_TOKEN").compact, **command_output_options)
   end

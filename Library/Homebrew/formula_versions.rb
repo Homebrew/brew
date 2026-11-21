@@ -44,7 +44,8 @@ class FormulaVersions
              block: T.nilable(T.proc.bind(Resource).void)).returns(T.nilable(Resource))
     }
     def resource(name = nil, klass = Resource, &block)
-      super(name, (klass == Resource) ? LegacyResource : klass, &block)
+      klass = LegacyResource if klass == Resource
+      super
     end
 
     sig {
@@ -330,7 +331,11 @@ class FormulaVersions
   }
   def initialize(formula, simulated_target: false, repository: nil)
     @simulated_target = simulated_target
-    name = formula.is_a?(Formula) ? formula.name : formula.basename(".rb").to_s
+    name = if formula.is_a?(Formula)
+      formula.name
+    else
+      formula.basename(".rb").to_s
+    end
     @name = T.let(name, String)
     resolved_path = formula.is_a?(Formula) ? formula.tap_path : formula
     @path = T.let(resolved_path, Pathname)

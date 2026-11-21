@@ -70,8 +70,9 @@ module Homebrew
 
           # `longest_status` includes 9 color characters from `Tty.color` and `Tty.reset`.
           # We don't have these in the header row, so we don't need to add the extra padding.
+          status_width = longest_status - 9
           headers = "#{Tty.bold}%-#{longest_name}.#{longest_name}<name>s " \
-                    "%-#{longest_status - 9}.#{longest_status - 9}<status>s " \
+                    "%-#{status_width}.#{status_width}<status>s " \
                     "%-#{longest_user}.#{longest_user}<user>s %<file>s#{Tty.reset}"
           row = "%-#{longest_name}.#{longest_name}<name>s " \
                 "%-#{longest_status}.#{longest_status}<status>s " \

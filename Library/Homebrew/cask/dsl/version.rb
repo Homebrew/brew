@@ -11,7 +11,8 @@ module Cask
         "_" => :underscores,
       }.freeze, T::Hash[String, Symbol])
 
-      DIVIDER_REGEX = /(?:#{DIVIDERS.keys.map { |v| Regexp.quote(v) }.join("|")})/
+      divider_pattern = DIVIDERS.keys.map { |v| Regexp.quote(v) }.join("|")
+      DIVIDER_REGEX = /(?:#{divider_pattern})/
 
       MAJOR_MINOR_PATCH_REGEX = /^([^.,:]+)(?:.([^.,:]+)(?:.([^.,:]+))?)?/
 

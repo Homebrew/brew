@@ -75,22 +75,25 @@ RSpec.describe Homebrew::Livecheck::Strategy do
   let(:response_text) do
     response_text = {}
 
+    ok_headers = response_hash[:ok][:headers]
     response_text[:ok] = <<~EOS
-      HTTP/1.1 #{response_hash[:ok][:status_code]} #{response_hash[:ok][:status_text]}\r
-      Cache-Control: #{response_hash[:ok][:headers]["cache-control"]}\r
-      Content-Type: #{response_hash[:ok][:headers]["content-type"]}\r
-      Date: #{response_hash[:ok][:headers]["date"]}\r
-      Expires: #{response_hash[:ok][:headers]["expires"]}\r
-      Last-Modified: #{response_hash[:ok][:headers]["last-modified"]}\r
-      Content-Length: #{response_hash[:ok][:headers]["content-length"]}\r
+      HTTP/1.1 #{response_hash.dig(:ok, :status_code)} #{response_hash.dig(:ok, :status_text)}\r
+      Cache-Control: #{ok_headers["cache-control"]}\r
+      Content-Type: #{ok_headers["content-type"]}\r
+      Date: #{ok_headers["date"]}\r
+      Expires: #{ok_headers["expires"]}\r
+      Last-Modified: #{ok_headers["last-modified"]}\r
+      Content-Length: #{ok_headers["content-length"]}\r
       \r
       #{body.rstrip}
     EOS
 
+    redirect_headers = response_hash[:redirection][:headers]
     response_text[:redirection_to_ok] = response_text[:ok].sub(
-      "HTTP/1.1 #{response_hash[:ok][:status_code]} #{response_hash[:ok][:status_text]}\r",
-      "HTTP/1.1 #{response_hash[:redirection][:status_code]} #{response_hash[:redirection][:status_text]}\r\n" \
-      "Location: #{response_hash[:redirection][:headers]["location"]}\r",
+      "HTTP/1.1 #{response_hash.dig(:ok, :status_code)} #{response_hash.dig(:ok, :status_text)}\r",
+      "HTTP/1.1 #{response_hash.dig(:redirection,
+                                    :status_code)} #{response_hash.dig(:redirection, :status_text)}\r\n" \
+      "Location: #{redirect_headers["location"]}\r",
     )
 
     response_text

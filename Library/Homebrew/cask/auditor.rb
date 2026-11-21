@@ -80,8 +80,8 @@ module Cask
       if !language && !(blocks = cask.instance_variable_get(:@dsl).instance_variable_get(:@language_blocks)).empty?
         sample_languages = if blocks.length > LANGUAGE_BLOCK_LIMIT && !@audit_new_cask
           sample_keys = blocks.keys.shuffle.take(LANGUAGE_BLOCK_LIMIT)
-          ohai "Auditing a sample of available languages for #{cask}: " \
-               "#{::Utils::Text.to_sentence(sample_keys.map { |lang| lang[0].to_s })}"
+          sample_names = ::Utils::Text.to_sentence(sample_keys.map { |lang| lang[0].to_s })
+          ohai "Auditing a sample of available languages for #{cask}: #{sample_names}"
           blocks.select { |k| sample_keys.include?(k) }
         else
           blocks
@@ -90,7 +90,10 @@ module Cask
         sample_languages.each_key do |l|
           audit = audit_languages(l)
           if audit.summary.present? && output_summary?(audit)
-            ohai "Auditing language: #{::Utils::Text.to_sentence(l.map { |lang| "'#{lang}'" })}" if output_summary?
+            if output_summary?
+              languages = ::Utils::Text.to_sentence(l.map { |lang| "'#{lang}'" })
+              ohai "Auditing language: #{languages}"
+            end
             puts audit.summary
           end
           errors += audit.errors

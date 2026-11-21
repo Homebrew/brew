@@ -29,7 +29,8 @@ class CoreCaskTap < AbstractCoreTap
   sig { params(token: String).returns(String) }
   def new_cask_subdirectory(token)
     if token.start_with?("font-")
-      "font/font-#{token.delete_prefix("font-")[0]}"
+      first_letter = token.delete_prefix("font-")[0]
+      "font/font-#{first_letter}"
     else
       token[0].to_s
     end

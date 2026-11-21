@@ -49,7 +49,7 @@ RSpec.describe Homebrew::Bundle::Cargo do
     end
 
     test_each([nil, "https://example.com/tool?branch=next"]) do |source|
-      context "when the #{source ? "Git" : "registry"} lookup fails" do
+      context "when the lookup fails for source #{source.inspect}" do
         before do
           if source
             stub_cargo_list("example-tool v1.0.0 (#{source}#12345678):\n")

@@ -79,7 +79,8 @@ module Homebrew
         sorted = dependency_graph.tsort_with_cycles do |cycles|
           raise CyclicDependencyError, cycles if Homebrew::EnvConfig.developer?
 
-          odebug "Ignoring cyclic dependencies: #{cycles.map { |cycle| Utils::Text.to_sentence(cycle) }.join(", ")}"
+          cycle_names = cycles.map { |cycle| Utils::Text.to_sentence(cycle) }.join(", ")
+          odebug "Ignoring cyclic dependencies: #{cycle_names}"
         end
         formulae_to_install = sorted & formulae_to_install
 
@@ -239,7 +240,8 @@ module Homebrew
       sig { params(formula: Formula, fi_options: Options).void }
       def print_upgrade_message(formula, fi_options)
         version_upgrade = if formula.optlinked?
-          "#{Keg.new(formula.opt_prefix).version} -> #{formula.pkg_version}"
+          installed_version = Keg.new(formula.opt_prefix).version
+          "#{installed_version} -> #{formula.pkg_version}"
         else
           "-> #{formula.pkg_version}"
         end
@@ -347,7 +349,7 @@ module Homebrew
           opoo <<~EOS
             The following dependents of upgraded formulae are outdated but will not
             be upgraded because they are not bottled:
-              #{skipped * "\n  "}
+              #{skipped.join("\n  ")}
           EOS
         end
 
@@ -397,8 +399,9 @@ module Homebrew
           installed_formulae = (dry_run ? formulae : FormulaInstaller.installed.to_a).dup
           formula_plural = Utils.pluralize("formula", installed_formulae.count)
           upgrade_verb = dry_run ? "Would upgrade" : "Upgrading"
-          ohai "#{upgrade_verb} #{Utils.pluralize("dependent", upgradeable.count,
-                                                  include_count: true)} of upgraded #{formula_plural}:"
+          dependent_count = Utils.pluralize("dependent", upgradeable.count,
+                                            include_count: true)
+          ohai "#{upgrade_verb} #{dependent_count} of upgraded #{formula_plural}:"
           puts_no_installed_dependents_check_disable_message_if_not_already!
           puts Formatter.version_changes(upgradeable.map { |f| formula_version_change(f) }).join("\n")
         end
@@ -459,8 +462,9 @@ module Homebrew
         if reinstallable_broken_dependents.blank?
           ohai "No broken dependents to reinstall!"
         else
-          ohai "Reinstalling #{Utils.pluralize("dependent", reinstallable_broken_dependents.count,
-                                               include_count: true)} with broken linkage from source:"
+          dependent_count = Utils.pluralize("dependent", reinstallable_broken_dependents.count,
+                                            include_count: true)
+          ohai "Reinstalling #{dependent_count} with broken linkage from source:"
           puts_no_installed_dependents_check_disable_message_if_not_already!
           puts reinstallable_broken_dependents.map(&:full_specified_name)
                                               .join(", ")

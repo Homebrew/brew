@@ -139,7 +139,8 @@ module OS
           dylib_suffix = find_dylib_suffix_from(target)
           target_dir = ::Pathname.new(target.delete_suffix(dylib_suffix)).cleanpath
 
-          "@loader_path/#{target_dir.relative_path_from(file.dirname)/dylib_suffix}"
+          relative_path = target_dir.relative_path_from(file.dirname)/dylib_suffix
+          "@loader_path/#{relative_path}"
         else
           target
         end

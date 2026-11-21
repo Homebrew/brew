@@ -109,7 +109,12 @@ module Homebrew
           require "formula"
           require "utils/path"
 
-          args = ["tool", "install", upgrade ? upgrade_requirement(name, source:) : source.presence || name]
+          requirement = if upgrade
+            upgrade_requirement(name, source:)
+          else
+            source.presence || name
+          end
+          args = ["tool", "install", requirement]
           if upgrade
             args.push("--upgrade", "--python", tool_python(name))
           else
@@ -157,7 +162,8 @@ module Homebrew
           return "#{name} @ #{source}" if source.present?
 
           packages
-          "#{name}#{@requirements&.[](normalize_name(name))}"
+          requirement = @requirements&.[](normalize_name(name))
+          "#{name}#{requirement}"
         end
         private :upgrade_requirement
 

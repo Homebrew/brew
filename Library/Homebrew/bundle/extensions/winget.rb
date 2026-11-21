@@ -276,12 +276,14 @@ module Homebrew
                        Pathname.new("/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
           raise "WinGet inventory requires Windows PowerShell 5.1 (powershell.exe)" unless powershell.executable?
 
+          quoted_winget = powershell_quote(inventory_windows_path(winget.to_s))
+          quoted_args = args.map { |arg| powershell_quote(arg) }.join(" ")
           script = <<~POWERSHELL
             trap { [Console]::Error.WriteLine($_); exit 1 }
             [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 
             $LASTEXITCODE = $null
-            & #{powershell_quote(inventory_windows_path(winget.to_s))} #{args.map { |arg| powershell_quote(arg) }.join(" ")}
+            & #{quoted_winget} #{quoted_args}
             $nativeStatus = $LASTEXITCODE
 
             if ($nativeStatus -isnot [int]) {
@@ -558,7 +560,8 @@ module Homebrew
         sig { params(value: String).returns(String) }
         def powershell_quote(value)
           # Escape smart quotes because PowerShell treats them as delimiters.
-          "'#{value.gsub(/['\u2018-\u201B]/) { |quote| quote * 2 }}'"
+          escaped_value = value.gsub(/['\u2018-\u201B]/) { |quote| quote * 2 }
+          "'#{escaped_value}'"
         end
 
         sig { params(output: String).returns(T::Boolean) }

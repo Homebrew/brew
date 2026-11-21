@@ -167,7 +167,8 @@ module Homebrew
                 []
               end
               if Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--cask", *args, "--force", *casks
-                puts "Uninstalled #{Utils.pluralize("cask", casks.size, include_count: true)}"
+                cask_count = Utils.pluralize("cask", casks.size, include_count: true)
+                puts "Uninstalled #{cask_count}"
               else
                 ofail "Failed to uninstall casks. Some may have been removed."
               end
@@ -175,7 +176,8 @@ module Homebrew
 
             if formulae.any?
               if Kernel.system HOMEBREW_BREW_FILE, "uninstall", "--formula", "--force", *formulae
-                puts "Uninstalled #{Utils.pluralize("formula", formulae.size, include_count: true)}"
+                formula_count = Utils.pluralize("formula", formulae.size, include_count: true)
+                puts "Uninstalled #{formula_count}"
               else
                 ofail "Failed to uninstall formulae. Some may have been removed."
               end

@@ -540,8 +540,7 @@ RSpec.describe Cask::Cask, :cask do
         let(:cask) { described_class.new("basic-cask") }
 
         context "when versions #{installed_version} are installed and the " \
-                "tap version is #{tap_version}, #{"not " unless greedy}greedy " \
-                "and sha is #{"not " unless outdated_sha}outdated" do
+                "tap version is #{tap_version}, greedy is #{greedy} and outdated_sha is #{outdated_sha}" do
           it {
             allow(cask).to receive_messages(installed_version:,
                                             version:                Cask::DSL::Version.new(tap_version),
@@ -873,7 +872,8 @@ RSpec.describe Cask::Cask, :cask do
           version "1.2.3"
         end
         sha256 :no_check
-        url "https://brew.sh/foo-#{version&.major_minor || raise(Cask::CaskInvalidError.new(cask, "version is only set on macOS"))}.zip"
+        major_minor = version&.major_minor || raise(Cask::CaskInvalidError.new(cask, "version is only set on macOS"))
+        url "https://brew.sh/foo-#{major_minor}.zip"
       end
 
       tag = Utils::Bottles::Tag.new(system: :linux, arch: :arm)
