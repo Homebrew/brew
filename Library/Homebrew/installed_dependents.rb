@@ -153,7 +153,8 @@ module InstalledDependents
   def build_dependents_by_name(formulae, installed, removed_kegs: [])
     dependents = T.let({}, T::Hash[String, T::Array[String]])
     built_from_source_names = installed.reject { |f| f.any_installed_keg&.tab&.poured_from_bottle }
-                                       .flat_map(&:possible_names).to_set
+                                       .flat_map(&:possible_names)
+                                       .to_set
     formulae.each do |formula|
       keg = formula.any_installed_keg
       # Read the install receipt that is left once `removed_kegs` are gone.

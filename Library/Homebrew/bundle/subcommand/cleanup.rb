@@ -300,7 +300,7 @@ module Homebrew
               Formulary.resolve(f[:full_name])
             rescue FormulaUnavailableError
               # A formula that was deleted from its tap is loaded from its keg.
-              Formulary.resolve(f[:name])
+              Formulary.from_rack(HOMEBREW_CELLAR/f[:name])
             end
             removable = installed.reject do |f|
               Homebrew::Bundle::Brew.formula_in_array?(f.full_name, kept_formulae) ||
