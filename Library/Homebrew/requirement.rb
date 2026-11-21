@@ -320,18 +320,20 @@ class Requirement
     # the list.
     # The default filter, which is applied when a block is not given, omits
     # optionals and recommends based on what the dependent has asked for.
+    # Only the full expansion of `dependent` is cached. `root_cache_key`
+    # selects its cache, defaults to `cache_key` and disables caching when blank.
     sig {
       params(
-        dependent: T.any(Formula, CaskDependent, SoftwareSpec),
-        cache_key: T.nilable(String),
-        block:     T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent, SoftwareSpec),
-                                           arg1: Requirement).returns(T.nilable(Symbol))),
+        dependent:      T.any(Formula, CaskDependent, SoftwareSpec),
+        cache_key:      T.nilable(String),
+        root_cache_key: T.nilable(String),
+        block:          T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent, SoftwareSpec),
+                                                arg1: Requirement).returns(T.nilable(Symbol))),
       ).returns(Requirements)
     }
-    def expand(dependent, cache_key: nil, &block)
-      if cache_key.present?
-        cache[cache_key] ||= {}
-        return cache[cache_key][cache_id dependent].dup if cache[cache_key][cache_id dependent]
+    def expand(dependent, cache_key: nil, root_cache_key: cache_key, &block)
+      if root_cache_key.present? && (entry = cache.dig(root_cache_key, cache_id(dependent)))
+        return entry.dup
       end
 
       reqs = Requirements.new
@@ -348,12 +350,9 @@ class Requirement
         end
       end
 
-      if cache_key.present?
-        # Even though we setup the cache above
-        # 'dependent.recursive_dependencies.map(&:to_formula)'
-        # is invalidating the singleton cache
-        cache[cache_key] ||= {}
-        cache[cache_key][cache_id dependent] = reqs.dup
+      if root_cache_key.present?
+        cache[root_cache_key] ||= {}
+        cache[root_cache_key][cache_id dependent] = reqs.dup
       end
       reqs
     end

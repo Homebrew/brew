@@ -154,6 +154,19 @@ RSpec.describe Dependency do
     expect(deps.map(&:name)).to eq(%w[shared foo bar])
   end
 
+  it "shares recursive expansions between roots with different root cache keys" do
+    child_formula = instance_double(Formula, deps: [], name: "child", full_name: "child")
+    child_dep = described_class.new("child")
+    expect(child_dep).to receive(:to_formula).once.and_return(child_formula)
+    shared_dep = build_dep(:shared, [], [child_dep])
+    roots = %w[f g].map { |name| instance_double(Formula, deps: [shared_dep], name:, full_name: name) }
+
+    roots.each do |root|
+      described_class.expand(root, cache_key:      "root-cache-key-spec",
+                                   root_cache_key: "root-cache-key-spec-#{root.name}")
+    end
+  end
+
   it "returns only the dependencies given as a collection as second argument" do
     expect(formula.deps).to eq([foo, bar, baz, qux])
     expect(described_class.expand(formula, [bar, baz])).to eq([bar, baz])

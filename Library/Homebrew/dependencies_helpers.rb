@@ -47,10 +47,14 @@ module DependenciesHelpers
   }
   def recursive_includes(klass, root_dependent, includes, ignores)
     cache_key = "recursive_includes_#{includes}_#{ignores}"
-    # Only the root's test dependencies are included, so a root with any cannot share these expansions.
-    cache_key += "_#{root_dependent.full_name}" if includes.include?(:test?) && root_dependent.deps.any?(&:test?)
+    # Only the root's expansion can include its test dependencies.
+    root_cache_key = if includes.include?(:test?) && root_dependent.deps.any?(&:test?)
+      "#{cache_key}_#{root_dependent.full_name}"
+    else
+      cache_key
+    end
 
-    klass.expand(root_dependent, cache_key:) do |dependent, dep|
+    klass.expand(root_dependent, cache_key:, root_cache_key:) do |dependent, dep|
       next Dependable::PRUNE if ignores.any? { |ignore| dep.public_send(ignore) }
       next Dependable::PRUNE if includes.none? do |include|
         # Ignore indirect test dependencies
