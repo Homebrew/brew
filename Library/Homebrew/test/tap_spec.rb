@@ -892,6 +892,129 @@ RSpec.describe Tap do
       FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"newowner"
     end
 
+    context "when installed receipts name the redirected tap", :trust_store do
+      let(:tap) { described_class.fetch("oldreceipts", "foo") }
+      let(:redirect_output) { "warning: redirecting to https://github.com/newreceipts/homebrew-foo\n" }
+      let(:formula_tabfile) { HOMEBREW_CELLAR/"redirected-formula/1.0/INSTALL_RECEIPT.json" }
+      let(:cask_tabfile) { HOMEBREW_PREFIX/"Caskroom/redirected-cask/.metadata/INSTALL_RECEIPT.json" }
+      let(:other_tap_tabfile) { HOMEBREW_CELLAR/"other-formula/1.0/INSTALL_RECEIPT.json" }
+
+      def setup_tap_repository
+        tap.path.mkpath
+        system "git", "-C", tap.path.to_s, "init"
+        system "git", "-C", tap.path.to_s, "remote", "add", "origin", "https://github.com/oldreceipts/homebrew-foo"
+      end
+
+      before do
+        setup_tap_repository
+
+        {
+          formula_tabfile   => [Tab, tap.path/"Formula/redirected-formula.rb"],
+          cask_tabfile      => [Cask::Tab, tap.path/"Casks/redirected-cask.rb"],
+          other_tap_tabfile => [Tab, described_class.fetch("otherreceipts", "foo").path/"Formula/other-formula.rb"],
+        }.each do |tabfile, (tab_class, source_path)|
+          tabfile.dirname.mkpath
+          tab = tab_class.empty
+          tab.tabfile = tabfile
+          tab.tap = described_class.from_path(source_path)
+          tab.source["path"] = source_path.to_s
+          tab.write
+        end
+      end
+
+      after do
+        FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"oldreceipts"
+        FileUtils.rm_rf HOMEBREW_TAP_DIRECTORY/"newreceipts"
+      end
+
+      context "when the redirect is accepted" do
+        before { tap.update_remote_from_git_redirect!(redirect_output, quiet: true) }
+
+        it "updates the tap in an installed formula's receipt" do
+          expect(JSON.parse(formula_tabfile.read).dig("source", "tap")).to eq("newreceipts/foo")
+        end
+
+        it "updates the path in an installed formula's receipt" do
+          expect(JSON.parse(formula_tabfile.read).dig("source", "path"))
+            .to eq((tap.path/"Formula/redirected-formula.rb").to_s)
+        end
+
+        it "updates the tap in an installed cask's receipt" do
+          expect(JSON.parse(cask_tabfile.read).dig("source", "tap")).to eq("newreceipts/foo")
+        end
+
+        it "updates the path in an installed cask's receipt" do
+          expect(JSON.parse(cask_tabfile.read).dig("source", "path"))
+            .to eq((tap.path/"Casks/redirected-cask.rb").to_s)
+        end
+
+        it "leaves receipts from other taps unchanged" do
+          expect(JSON.parse(other_tap_tabfile.read).dig("source", "tap")).to eq("otherreceipts/foo")
+        end
+      end
+
+      it "lets a cask installed from the old name see upgrades from the new name", :cask do
+        require "cask/installer"
+
+        allow(GitHub).to receive(:private_repo?).and_return(true)
+        FileUtils.mkdir_p tap.path/"Casks"
+        FileUtils.cp TEST_FIXTURE_DIR/"cask/Casks/local-caffeine.rb", tap.path/"Casks"
+        Homebrew::Trust.trust!(:tap, tap.name)
+        Cask::Installer.new(Cask::CaskLoader.load("#{tap}/local-caffeine")).install
+
+        tap.update_remote_from_git_redirect!(redirect_output, quiet: true)
+        Homebrew::Trust.trust!(:tap, tap.name)
+        cask_file = tap.path/"Casks/local-caffeine.rb"
+        cask_file.write cask_file.read.sub('version "1.2.3"', 'version "2.0.0"')
+
+        expect(Cask::Caskroom.casks(tokens: ["local-caffeine"]).fetch(0)).to be_outdated
+      end
+
+      it "warns and updates the other receipts when one cannot be read" do
+        formula_tabfile.write "not JSON"
+        Tab.clear_cache
+
+        expect { tap.update_remote_from_git_redirect!(redirect_output, quiet: true) }
+          .to output(/Failed to update the receipt for .*redirected-formula/).to_stderr
+        expect(JSON.parse(cask_tabfile.read).dig("source", "tap")).to eq("newreceipts/foo")
+      end
+
+      it "warns and updates the other receipts when another cask cannot be loaded" do
+        config_file = HOMEBREW_PREFIX/"Caskroom/other-cask/.metadata/config.json"
+        config_file.dirname.mkpath
+        config_file.write "not JSON"
+
+        expect { tap.update_remote_from_git_redirect!(redirect_output, quiet: true) }
+          .to output(/Failed to update the receipt for other-cask/).to_stderr
+        expect(JSON.parse(cask_tabfile.read).dig("source", "tap")).to eq("newreceipts/foo")
+      end
+
+      it "leaves receipts unchanged when the redirect is refused" do
+        allow(Homebrew::EnvConfig).to receive(:forbidden_taps).and_return("newreceipts/foo")
+
+        begin
+          tap.update_remote_from_git_redirect!(redirect_output, quiet: true)
+        rescue TapRedirectNotAllowedError
+          nil
+        end
+
+        expect(JSON.parse(cask_tabfile.read).dig("source", "tap")).to eq("oldreceipts/foo")
+      end
+
+      it "leaves receipts unchanged when a newly cloned tap is redirected" do
+        FileUtils.rm_rf tap.path
+        allow(GitHub).to receive(:private_repo?).and_return(false)
+        allow(tap).to receive(:git_command!) do
+          setup_tap_repository
+          instance_double(SystemCommand::Result, stderr: redirect_output)
+        end
+
+        tap.install(quiet: true)
+
+        expect(JSON.parse(cask_tabfile.read).dig("source", "tap")).to eq("oldreceipts/foo")
+      end
+    end
+
     it "prints tap redirect and untrust messages", :trust_store do
       require "trust"
 
