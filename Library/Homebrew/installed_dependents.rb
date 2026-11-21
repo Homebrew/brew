@@ -116,8 +116,11 @@ module InstalledDependents
   # If there are none, it returns nil.
   sig { params(kegs: T::Array[Keg]).returns(T.nilable([T::Array[Keg], T::Array[String]])) }
   def find_installed_build_dependents(kegs)
-    # An older keg can go while the one that `opt` points to stays.
-    names_by_keg = kegs.select(&:optlinked?).to_h do |keg|
+    # An older keg can go while another one stays, unless `opt` points to it.
+    last_or_linked_kegs = kegs.select do |keg|
+      keg.optlinked? || keg.rack.subdirs.all? { |dir| kegs.include?(Keg.new(dir)) }
+    end
+    names_by_keg = last_or_linked_kegs.to_h do |keg|
       [keg, keg.to_formula.possible_names]
     rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError, FormulaSpecificationError
       [keg, [keg.name]]

@@ -457,6 +457,12 @@ RSpec.describe InstalledDependents do
       expect(described_class.find_installed_build_dependents([older_keg])).to be_nil
     end
 
+    specify "the last keg is needed to build even when `opt` doesn't point to it" do
+      keg.remove_opt_record
+
+      expect(described_class.find_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
+    end
+
     specify "a keg whose formula has no usable spec is still needed to build" do
       allow(keg).to receive(:to_formula).and_raise(FormulaSpecificationError)
 
