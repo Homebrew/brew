@@ -65,7 +65,11 @@ module RuboCop
           pairs.each_with_index do |pair, index|
             next unless empty_string_value?(pair)
 
-            key = (pair.key.sym_type? || pair.key.str_type?) ? pair.key.value : pair.key.source
+            key = if pair.key.sym_type? || pair.key.str_type?
+              pair.key.value
+            else
+              pair.key.source
+            end
 
             add_offense(pair, message: format(MSG_KEY, stanza:, key:)) do |corrector|
               range = if index.zero?
@@ -85,8 +89,9 @@ module RuboCop
           pair.value.str_type? && pair.value.value.empty?
         end
 
+        stanza_names = ON_CONDITIONAL_STANZAS.map(&:inspect).join(" ")
         def_node_matcher :conditional_variable?, <<~PATTERN
-          (lvasgn _ (send nil? {#{ON_CONDITIONAL_STANZAS.map(&:inspect).join(" ")}} ...))
+          (lvasgn _ (send nil? {#{stanza_names}} ...))
         PATTERN
       end
     end

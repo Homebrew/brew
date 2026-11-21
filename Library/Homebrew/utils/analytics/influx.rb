@@ -10,6 +10,7 @@ module Utils
       include Utils::Output::Mixin
 
       FIRST_INFLUXDB_ANALYTICS_DATE = Date.new(2023, 03, 27).freeze
+      CORE_TAP_NAMES = T.let({ formula: "homebrew/core", cask: "homebrew/cask" }.freeze, T::Hash[Symbol, String])
       STANDARD_PREFIXES = %w[/opt/homebrew /usr/local /home/linuxbrew/.linuxbrew].freeze
 
       class CategoryDimensions < T::Struct
@@ -176,6 +177,7 @@ module Utils
           }
 
           each_influx_record(query) do |record|
+            count = record["count"]
             if category == :homebrew_env_config
               state = record["env_config_state"]
               env_config_name = record["env_config"].to_s
@@ -184,15 +186,15 @@ module Utils
               next if %w[unset default non_default].exclude?(state)
               next unless Homebrew::EnvConfig::ENVS.key?(env_config_name.to_sym)
 
-              count = record["count"]
+              state_counts = { state => count }
               json[:total_count] += count
               json[:items] << {
                 number: nil,
                 dimension_key => env_config_name,
                 count:,
-                non_default_count: (state == "non_default") ? count : 0,
-                set_default_count: (state == "default") ? count : 0,
-                unset_count:       (state == "unset") ? count : 0,
+                non_default_count: state_counts.fetch("non_default", 0),
+                set_default_count: state_counts.fetch("default", 0),
+                unset_count:       state_counts.fetch("unset", 0),
               }
               next
             end
@@ -202,14 +204,17 @@ module Utils
             when :homebrew_devcmdrun_developer
               "devcmdrun=#{record["devcmdrun"]} HOMEBREW_DEVELOPER=#{record["developer"]}"
             when :homebrew_os_arch_ci
-              "#{platform}#{" (CI)" if record["ci"] == "true"}"
+              ci_suffix = " (CI)" if record["ci"] == "true"
+              "#{platform}#{ci_suffix}"
             when :homebrew_prefixes
               prefix = record["prefix"].to_s
-              (STANDARD_PREFIXES.any? { |std| std.casecmp?(prefix) }) ? prefix : "custom-prefix (#{platform})"
+              standard = STANDARD_PREFIXES.any? { |std| std.casecmp?(prefix) }
+              standard ? prefix : "custom-prefix (#{platform})"
             when :os_versions
               format_os_version_dimension(record["os_name_and_version"])
             when :command_run_options
-              "#{record["command"]} #{record["options"].to_s.split.sort.join(" ")}"
+              sorted_options = record["options"].to_s.split.sort.join(" ")
+              "#{record["command"]} #{sorted_options}"
             when :test_bot_test
               test_bot_dimension(record["command"], os: record["os"].to_s, arch: record["arch"].to_s,
                                                     passed: record["passed"] == "true")
@@ -218,15 +223,13 @@ module Utils
             end
             next if dimension.blank?
 
-            if [:formula, :cask].include?(dimension_key)
-              tap_name = record["tap_name"].presence
-              dimension = "#{tap_name}/#{dimension}" if tap_name
+            if dimension_key.is_a?(Symbol) && (core_tap_name = CORE_TAP_NAMES[dimension_key])
+              dimension = [record["tap_name"].presence, dimension].compact.join("/")
               seen = Set.new
               while (new_name = package_renames[dimension]) && seen.add?(dimension)
                 dimension = new_name
               end
 
-              core_tap_name = (dimension_key == :cask) ? "homebrew/cask" : "homebrew/core"
               next if all_core_formulae_json && !dimension.start_with?("#{core_tap_name}/")
 
               dimension = dimension.delete_prefix("#{core_tap_name}/")
@@ -242,15 +245,9 @@ module Utils
             dimension = dimension.strip
             next if dimension.match?(/[<>]/)
 
-            count = record["count"]
-
             json[:total_count] += count
 
-            json[:items] << {
-              number: nil,
-              dimension_key => dimension,
-              count:,
-            }
+            json[:items] << { number: nil, dimension_key => dimension, count: }
           end
 
           odie "No data returned" if json[:total_count].zero?
@@ -267,8 +264,7 @@ module Utils
             json[:formulae] = json.delete(:items).group_by { |item| item[dimension_key].split.first }.sort.to_h
             json[:formulae].reject! { |name, _| name.include?("/") }
             json[:formulae].each_value do |items|
-              items.sort_by! { |item| -item[:count] }
-              items.each do |item|
+              items.sort_by! { |item| -item[:count] }.each do |item|
                 item.delete(:number)
                 item[:count] = Utils::Analytics.format_count(item[:count])
               end
@@ -312,7 +308,9 @@ module Utils
         return if command_and_package.last.to_s.include?("/")
         return if options.intersect?(%w[--tap= --only-dependencies --cached])
 
-        "#{(command_and_package + options.sort).join(" ")} (#{os} #{arch}) (#{passed ? "PASSED" : "FAILED"})"
+        command_line = (command_and_package + options.sort).join(" ")
+        result = passed ? "PASSED" : "FAILED"
+        "#{command_line} (#{os} #{arch}) (#{result})"
       end
 
       sig { params(dimension_key: T.any(String, Symbol)).returns(T::Hash[String, String]) }
@@ -322,8 +320,9 @@ module Utils
         require "tap"
 
         package_renames = {}
+        casks = dimension_key == :cask
         Tap.all.select(&:official?).each do |tap|
-          ((dimension_key == :cask) ? tap.cask_renames : tap.formula_renames).each do |old_name, new_name|
+          (casks ? tap.cask_renames : tap.formula_renames).each do |old_name, new_name|
             package_renames["#{tap.name}/#{old_name}"] = "#{tap.name}/#{new_name}"
           end
           tap.tap_migrations.each do |old_name, new_name|
@@ -353,7 +352,11 @@ module Utils
         begin
           macos_version = ::MacOSVersion.new(dimension)
           release_version = macos_version.release_version
-          os_name = (macos_version < "10.12") ? "OS X" : "macOS"
+          os_name = if macos_version < "10.12"
+            "OS X"
+          else
+            "macOS"
+          end
           if (release_name = macos_version.release_name)
             return "#{os_name} #{release_name} (#{release_version})"
           end
@@ -373,7 +376,8 @@ module Utils
         when /KDE neon .*?([\d.]+)/ then "KDE neon #{Regexp.last_match(1)}"
         when /Amazon Linux (\d+)\.[.\d]*/ then "Amazon Linux #{Regexp.last_match(1)}"
         when /^Armbian\S*(?: OS)? (\d+)\.0?(\d+)\S*(?: (\w+))?/
-          "Armbian #{Regexp.last_match(1)}.#{Regexp.last_match(2)} #{Regexp.last_match(3)&.downcase}".strip
+          release_name = Regexp.last_match(3)&.downcase
+          "Armbian #{Regexp.last_match(1)}.#{Regexp.last_match(2)} #{release_name}".strip
         when /Fedora Linux Rawhide[.\dn]*/ then "Fedora Linux Rawhide"
         when /Red Hat Enterprise Linux CoreOS (\d+\.\d+)[-.\d]*/
           "Red Hat Enterprise Linux CoreOS #{Regexp.last_match(1)}"

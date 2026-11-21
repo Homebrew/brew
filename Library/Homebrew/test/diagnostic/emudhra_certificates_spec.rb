@@ -158,7 +158,12 @@ RSpec.describe Homebrew::Diagnostic::Checks do
       bundle = mktmpdir/"cert.pem"
       unaffected = certificate_pem("Unaffected Root CA")
       bundle.write ["Unaffected Root CA", "emSign ECC Root CA - G3", "AAA Certificate Services"].map { |name|
-        "=== /CN=#{name}\n#{(name == "Unaffected Root CA") ? unaffected : certificate_pem(name)}"
+        certificate = if name == "Unaffected Root CA"
+          unaffected
+        else
+          certificate_pem(name)
+        end
+        "=== /CN=#{name}\n#{certificate}"
       }.join + "=== /CN=Unaffected Root CA\n#{unaffected}"
       original = bundle.read
       _, _, status = run_mitigation(bundle)

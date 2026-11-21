@@ -340,7 +340,7 @@ module Homebrew
               end
               skip_relocation = relocatable && !keg.require_relocation?
             end
-            tab.padded_prefix = (padded && !relocatable) ? true : nil
+            tab.padded_prefix = (true if padded && !relocatable)
             tab.binary_relocation_files = args.skip_relocation? ? nil : binary_relocation_files.sort
 
             if args.only_json_tab?
@@ -953,9 +953,9 @@ module Homebrew
           pkg_version = bottle_hash["formula"]["pkg_version"]
 
           path.parent.cd do
+            action = checksums ? "update" : "add"
             SystemCommand.safe_system "git", "commit", "--no-edit", "--verbose",
-                                      "--message=#{short_name}: #{checksums ? "update" : "add"} " \
-                                      "#{pkg_version} bottle.",
+                                      "--message=#{short_name}: #{action} #{pkg_version} bottle.",
                                       "--", path
           end
         end

@@ -291,7 +291,11 @@ module Homebrew
         candidates = []
 
         paths.each do |path|
-          expanded = path.start_with?("~") ? File.join(home, path[2..]) : path
+          expanded = if path.start_with?("~")
+            File.join(home, path[2..])
+          else
+            path
+          end
           parent = File.dirname(expanded)
 
           next unless parent.match?(%r{/(Application Support|Containers|Group Containers)/})

@@ -121,7 +121,11 @@ module Homebrew
                 opoo "Could not identify the tap for #{name} from its installation receipt."
                 nil
               end
-              (tap.nil? || tap.core_tap?) ? name : "#{tap}/#{name}"
+              if tap.nil? || tap.core_tap?
+                name
+              else
+                "#{tap}/#{name}"
+              end
             end
           else
             args.named.to_resolved_formulae.map(&:full_name)
@@ -254,7 +258,8 @@ module Homebrew
             end
 
             if package_found && entry.nil?
-              opoo "#{package_name || name} not pinned"
+              display_name = package_name || name
+              opoo "#{display_name} not pinned"
             elsif !package_found
               Homebrew.failed = true
             end
@@ -276,8 +281,8 @@ module Homebrew
         broken_symlinks = Cask::Caskroom.path.glob("*").select { |child| child.symlink? && !child.exist? }
         return if broken_symlinks.empty?
 
-        opoo "Broken Caskroom symlinks (`brew cleanup` removes them): " \
-             "#{broken_symlinks.map(&:basename).sort.join(", ")}"
+        symlinks = broken_symlinks.map(&:basename).sort.join(", ")
+        opoo "Broken Caskroom symlinks (`brew cleanup` removes them): #{symlinks}"
       end
 
       sig { params(name: String).returns(T.nilable(String)) }
@@ -285,7 +290,9 @@ module Homebrew
         pin_path = HOMEBREW_PINNED_KEGS/name
         return unless pin_path.symlink?
 
-        "#{name}#{" #{pin_path.readlink.basename}" if args.versions?}"
+        return name unless args.versions?
+
+        "#{name} #{pin_path.readlink.basename}"
       end
 
       sig { params(token: String).returns(T.nilable(String)) }
@@ -293,7 +300,10 @@ module Homebrew
         pin_path = HOMEBREW_PINNED_CASKS/token
         return if !pin_path.symlink? || !pin_path.exist?
 
-        "#{token}#{" #{Utils::Path.resolved_path(pin_path).basename}" if args.versions?}"
+        return token unless args.versions?
+
+        target = Utils::Path.resolved_path(pin_path)
+        "#{token} #{target.basename}"
       end
 
       # Keep in sync with `homebrew-list-formula-versions` in
@@ -313,7 +323,7 @@ module Homebrew
           versions = d.subdirs.map { |pn| pn.basename.to_s }
           next if args.multiple? && versions.length < 2
 
-          puts "#{d.basename} #{versions * " "}"
+          puts "#{d.basename} #{versions.join(" ")}"
         end
       end
 

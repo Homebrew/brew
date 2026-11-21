@@ -220,7 +220,8 @@ module Homebrew
         else
           maximum_characters_in_title = 72
           max = maximum_characters_in_title - new_formula_version.to_s.length - 1
-          "#{Formatter.truncate(Array(args.bump_synced).join(" "), max:)} #{new_formula_version}"
+          synced_formulae = Formatter.truncate(Array(args.bump_synced).join(" "), max:)
+          "#{synced_formulae} #{new_formula_version}"
         end
 
         pr_message = Homebrew::Bump.pr_message("bump-formula-pr", user_message: args.message)
@@ -420,7 +421,7 @@ module Homebrew
               next false if reasons.value?(nil)
 
               reasons.each do |patch_url, reason|
-                ohai "#{args.dry_run? ? "Would remove" : "Removing"} patch: #{patch_url}"
+                ohai(args.dry_run? ? "Would remove patch: #{patch_url}" : "Removing patch: #{patch_url}")
                 puts reason
                 formula_pr_message += "\n\n#{reason}"
               end
@@ -510,15 +511,16 @@ module Homebrew
           formula_checkboxes << "- [ ] `resource` blocks have been checked for updates."
 
           if failed_updates.any?
-            formula_checkboxes << "#{failed_updates.map do |name, status|
+            update_errors = failed_updates.map do |name, status|
               "  - Resource `#{name}` failed to auto-update (#{status})."
-            end.join("\n")}\n"
+            end.join("\n")
+            formula_checkboxes << "#{update_errors}\n"
           end
         end
 
         if downgraded_resources.any?
           resource_names = downgraded_resources.keys.map { |name| "`#{name}`" }.join(", ")
-          verb = (downgraded_resources.size == 1) ? "was" : "were"
+          verb = downgraded_resources.one? ? "was" : "were"
           formula_checkboxes <<
             "**Warning:** #{resource_names} #{verb} " \
             "downgraded to match the latest upstream version."
@@ -867,7 +869,11 @@ module Homebrew
         name, old_alias_version = versioned_alias.split("@")
         return if old_alias_version.blank?
 
-        new_alias_regex = (old_alias_version.split(".").length == 1) ? /^\d+/ : /^\d+\.\d+/
+        new_alias_regex = if old_alias_version.split(".").length == 1
+          /^\d+/
+        else
+          /^\d+\.\d+/
+        end
         new_alias_version, = *new_formula_version.to_s.match(new_alias_regex)
         return if new_alias_version.blank?
         return if Version.new(new_alias_version) <= Version.new(old_alias_version)

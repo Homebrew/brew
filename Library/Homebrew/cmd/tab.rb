@@ -48,7 +48,7 @@ module Homebrew
         not_installed = packages.reject(&:any_version_installed?)
         if not_installed.any?
           names = not_installed.map(&:to_s)
-          is_or_are = (names.length == 1) ? "is" : "are"
+          is_or_are = names.one? ? "is" : "are"
           odie "#{Utils::Text.to_sentence(names)} #{is_or_are} not installed."
         end
 
@@ -80,7 +80,8 @@ module Homebrew
                 "Tab file for #{name} does not exist."
         end
 
-        installed_on_request_str = "#{"not " unless installed_on_request}installed on request"
+        on_request_status = installed_on_request ? "" : "not "
+        installed_on_request_str = "#{on_request_status}installed on request"
         if (tab.installed_on_request && installed_on_request) ||
            (!tab.installed_on_request && !installed_on_request)
           tab.write if created_tab

@@ -158,7 +158,11 @@ class GitHubRunnerMatrix
                                                        NEWEST_GITHUB_ACTIONS_ARM_MACOS_RUNNER)
 
       runner, timeout = if use_github_runner && github_runner_available
-        prefix = (macos_version >= "27") ? "xcode" : "macos"
+        prefix = if macos_version >= "27"
+          "xcode"
+        else
+          "macos"
+        end
         ["#{prefix}-#{version}", GITHUB_ACTIONS_RUNNER_TIMEOUT]
       elsif macos_version >= :monterey
         ["#{version}-arm64#{ephemeral_suffix}", @runner_timeout]
@@ -275,8 +279,9 @@ class GitHubRunnerMatrix
           end
         end
         if missing.present?
+          missing_names = missing.map(&:name).join(", ")
           opoo <<~EOS
-            Skipping #{formula.name}'s #{BottleTransition.tag} build: unavailable dependencies: #{missing.map(&:name).join(", ")}.
+            Skipping #{formula.name}'s #{BottleTransition.tag} build: unavailable dependencies: #{missing_names}.
             Resolve these dependencies and retry CI before publishing.
           EOS
           next

@@ -162,8 +162,9 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         end
       end
       let(:command) do
+        formula_names = formulae.map(&:full_name).join(",")
         described_class.new([
-          *options, "--bump-synced=#{formulae.map(&:full_name).join(",")}",
+          *options, "--bump-synced=#{formula_names}",
           "--url=https://brew.sh/updated-2.0.tar.gz", "--sha256=#{"b" * 64}", formulae.first.full_name
         ])
       end
@@ -189,7 +190,8 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
         it "restores completed alias moves and all formulae when #{failed_formula} fails audit" do
           original_contents = formulae.map { |formula| formula.path.read }
           allow(command).to receive(:system) do |*arguments|
-            system((arguments.last == failed_formula) ? "/usr/bin/false" : "/usr/bin/true")
+            failed = arguments.last == failed_formula
+            system(failed ? "/usr/bin/false" : "/usr/bin/true")
           end
 
           expect { command.run }.to raise_error(SystemExit)
@@ -261,12 +263,13 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
     it "updates a formula disabled only on the current arch" do
       formula_path = CoreTap.instance.new_formula_path("test")
       formula_path.dirname.mkpath
+      architecture = Hardware::CPU.arm? ? "arm" : "intel"
       formula_path.write <<~RUBY
         class Test < Formula
           url "https://brew.sh/test-1.2.3.tgz"
           sha256 "#{"a" * 64}"
 
-          on_#{Hardware::CPU.arm? ? "arm" : "intel"} do
+          on_#{architecture} do
             disable! date: "2020-01-01", because: :unmaintained
           end
         end
@@ -293,12 +296,13 @@ RSpec.describe Homebrew::DevCmd::BumpFormulaPr do
     it "updates a formula disabled only on the current OS" do
       formula_path = CoreTap.instance.new_formula_path("test")
       formula_path.dirname.mkpath
+      platform = OS.mac? ? "macos" : "linux"
       formula_path.write <<~RUBY
         class Test < Formula
           url "https://brew.sh/test-1.2.3.tgz"
           sha256 "#{"a" * 64}"
 
-          on_#{OS.mac? ? "macos" : "linux"} do
+          on_#{platform} do
             disable! date: "2020-01-01", because: :unmaintained
           end
         end

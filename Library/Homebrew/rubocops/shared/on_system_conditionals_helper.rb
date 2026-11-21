@@ -44,7 +44,12 @@ module RuboCop
           if_statement_string = if ARCH_OPTIONS.include?(on_system_option)
             "if Hardware::CPU.#{on_system_option}?"
           elsif BASE_OS_OPTIONS.include?(on_system_option)
-            "if OS.#{(on_system_option == :macos) ? "mac" : "linux"}?"
+            os_name = if on_system_option == :macos
+              "mac"
+            else
+              "linux"
+            end
+            "if OS.#{os_name}?"
           elsif on_system_option == :system
             "if OS.linux? || MacOS.version"
           else
@@ -96,7 +101,11 @@ module RuboCop
         return unless body_node.source.include?("Hardware")
 
         ARCH_OPTIONS.each do |arch_option|
-          else_method = (arch_option == :arm) ? :on_intel : :on_arm
+          else_method = if arch_option == :arm
+            :on_intel
+          else
+            :on_arm
+          end
           if_arch_node_search(body_node, arch: :"#{arch_option}?") do |if_node, else_node|
             next if node_is_allowed?(if_node, allowed_methods:, allowed_blocks:)
 

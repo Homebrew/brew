@@ -69,11 +69,16 @@ RSpec.describe Homebrew::Diagnostic::Checks do
         executable = prefix/"opt/#{tool}/bin/#{tool}"
         executable.dirname.mkpath
         (executable.dirname/"version").write "999.0.0\n"
+        version_prefix = if tool == "git"
+          "git version"
+        else
+          "curl"
+        end
         executable.write <<~SH
           #!/bin/bash
           echo probe >> "#{executable.dirname}/probes"
           [[ -f "#{executable.dirname}/broken" ]] && exit 1
-          printf '%s ' '#{(tool == "git") ? "git version" : "curl"}'
+          printf '%s ' '#{version_prefix}'
           cat "#{executable.dirname}/version"
         SH
         executable.chmod(0755)

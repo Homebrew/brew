@@ -115,7 +115,11 @@ module Utils
     end
 
     prefix = include_count ? "#{count} " : ""
-    suffix = (count == 1) ? singular : plural
+    suffix = if count == 1
+      singular
+    else
+      plural
+    end
     "#{prefix}#{stem}#{suffix}"
   end
 

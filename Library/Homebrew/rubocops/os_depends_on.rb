@@ -58,7 +58,11 @@ module RuboCop
             match = pair.value.value.match(/\A\s*(?<comparator>>=|<=)\s*:(?<version>\S+)\s*\z/)
             next unless match
 
-            replacement_key = (match[:comparator] == "<=") ? :maximum_macos : :macos
+            replacement_key = if match[:comparator] == "<="
+              :maximum_macos
+            else
+              :macos
+            end
             message = "Use `depends_on #{replacement_key}: :#{match[:version]}`."
             add_offense(pair.value.source_range, message:) do |corrector|
               corrector.replace(pair.source_range, "#{replacement_key}: :#{match[:version]}")
@@ -169,9 +173,10 @@ module RuboCop
           os_stanza = stanzas.find { |stanza| os_only_stanza?(stanza, os) }
           return unless os_stanza
 
-          os_name = (os == :macos) ? "macOS" : "Linux"
-          other_os = (os == :macos) ? :linux : :macos
-          other_os_block = (other_os == :macos) ? :on_macos : :on_linux
+          macos = os == :macos
+          os_name = macos ? "macOS" : "Linux"
+          other_os = macos ? :linux : :macos
+          other_os_block = macos ? :on_linux : :on_macos
           # `on_system` always spans both operating systems, so it can never imply a bare OS dependency.
           if stanzas.any? { |stanza| stanza.method_name == :on_system } ||
              top_level_stanzas.any? { |stanza| stanza.method_name == other_os_block } ||

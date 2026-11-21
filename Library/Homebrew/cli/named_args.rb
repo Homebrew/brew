@@ -131,10 +131,11 @@ module Homebrew
         types << "formulae" if formulae_and_casks_without_taps.any?(Formula)
         types << "casks" if formulae_and_casks_without_taps.any?(Cask::Cask)
 
+        package_names = formulae_and_casks_without_taps.sort_by(&:to_s).join("\n  ")
         odie <<~ERROR
           These #{types.join(" and ")} are not in any locally installed taps!
 
-            #{formulae_and_casks_without_taps.sort_by(&:to_s).join("\n  ")}
+            #{package_names}
 
           You may need to run `brew tap` to install additional taps.
         ERROR
@@ -514,7 +515,11 @@ module Homebrew
 
         rack = Formulary.to_rack(name.downcase)
 
-        kegs = rack.directory? ? rack.subdirs.map { |d| Keg.new(d) } : []
+        kegs = if rack.directory?
+          rack.subdirs.map { |d| Keg.new(d) }
+        else
+          []
+        end
 
         requested_tap, requested_formula = Tap.with_formula_name(name)
         if requested_tap && requested_formula

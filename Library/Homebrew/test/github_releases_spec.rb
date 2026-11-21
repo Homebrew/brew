@@ -263,8 +263,9 @@ RSpec.describe GitHubReleases do
 
         upload_attempts[remote_file] += 1
         upload_failed = remote_file == "bar.bottle.tar.gz" && upload_attempts[remote_file] == 1
+        foo_asset = remote_file == "foo.bottle.tar.gz"
         assets << {
-          "id"    => ((remote_file == "foo.bottle.tar.gz") ? 100 : 200) + upload_attempts[remote_file],
+          "id"    => (foo_asset ? 100 : 200) + upload_attempts[remote_file],
           "name"  => remote_file,
           "state" => upload_failed ? "starter" : "uploaded",
         }

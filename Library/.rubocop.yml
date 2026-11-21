@@ -139,12 +139,12 @@ Homebrew/NoUntypedKeywordRest:
   Exclude:
     - "Homebrew/test/**/*"
 
-# Enable these after migrating the existing offences.
+# Enable this after migrating the remaining interpolation offences.
 Homebrew/SimpleInterpolation:
   Enabled: false
 
 Homebrew/SimpleTernary:
-  Enabled: false
+  Enabled: true
 
 Homebrew/SimpleTypeAssertion:
   Enabled: true

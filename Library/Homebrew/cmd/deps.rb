@@ -184,8 +184,10 @@ module Homebrew
                   elsif dep.recommended?
                     attributes << "color = green"
                   end
-                  comment = " # #{dep.tags.map(&:inspect).join(", ")}" if dep.tags.any?
-                  "  \"#{d.name}\" -> \"#{dep}\"#{" [#{attributes.join(", ")}]" if attributes.any?}#{comment}"
+                  tags = dep.tags.map(&:inspect)
+                  comment = " # #{tags.join(", ")}" if tags.any?
+                  attribute_list = attributes.any? ? " [#{attributes.join(", ")}]" : ""
+                  "  \"#{d.name}\" -> \"#{dep}\"#{attribute_list}#{comment}"
                 end
               end.flatten.join("\n")
               dot_code = "digraph {\n#{edges}\n}"
@@ -232,8 +234,7 @@ module Homebrew
 
           all_deps = dependents.map { deps_for_dependent(it, recursive:) }.reduce(args.union? ? :| : :&)
           condense_requirements(all_deps)
-          all_deps.map! { dep_display_name(it) }
-          all_deps.uniq!
+          all_deps.map! { dep_display_name(it) }.uniq!
           all_deps.sort! unless args.topological?
           puts all_deps
         end
@@ -319,7 +320,11 @@ module Homebrew
 
         if recursive
           deps ||= recursive_dep_includes(dependency, includes, ignores)
-          reqs = args.include_requirements? ? recursive_req_includes(dependency, includes, ignores) : Requirements.new
+          reqs = if args.include_requirements?
+            recursive_req_includes(dependency, includes, ignores)
+          else
+            Requirements.new
+          end
         else
           deps ||= select_includes(dependency.deps, ignores, includes)
           reqs   = select_includes(dependency.requirements, ignores, includes)

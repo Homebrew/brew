@@ -355,7 +355,11 @@ module Homebrew
         limit = last["limit"] || last[:limit]
         return :open if limit == "*"
 
-        (last.key?("introduced") || last.key?(:introduced)) ? :open : :terminal
+        if last.key?("introduced") || last.key?(:introduced)
+          :open
+        else
+          :terminal
+        end
       end
       private_class_method :range_state
 
