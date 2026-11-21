@@ -100,14 +100,20 @@ module OS
             value = match[2]
             next if key.nil? || value.nil?
 
-            values[key] = value.start_with?("0x") ? value.to_i(16).to_s : value
+            values[key] = if value.start_with?("0x")
+              value.to_i(16).to_s
+            else
+              value
+            end
           end
         end
 
         sig { params(out: T.any(File, StringIO, IO)).void }
         def linux_config(out = $stdout)
-          out.puts "Kernel: #{Utils.safe_popen_read("uname", "-mors").chomp}"
-          out.puts "Landlock ABI: #{::Sandbox::Landlock.kernel_abi_version || "N/A"}"
+          kernel = Utils.safe_popen_read("uname", "-mors").chomp
+          out.puts "Kernel: #{kernel}"
+          abi = ::Sandbox::Landlock.kernel_abi_version || "N/A"
+          out.puts "Landlock ABI: #{abi}"
           out.puts "OS: #{OS::Linux.os_version}"
           if OS.wsl?
             out.puts "WSL: #{OS::Linux.wsl_version}"

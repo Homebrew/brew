@@ -37,7 +37,12 @@ module Homebrew
 
       # Display command-specific (or generic) help in response to `UsageError`.
       if usage_error
-        $stderr.puts path ? command_help(cmd, path, remaining_args:, usage_error: true) : HOMEBREW_HELP_MESSAGE
+        message = if path
+          command_help(cmd, path, remaining_args:, usage_error: true)
+        else
+          HOMEBREW_HELP_MESSAGE
+        end
+        $stderr.puts message
         $stderr.puts
         onoe usage_error
         exit 1

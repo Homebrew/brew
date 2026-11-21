@@ -12,6 +12,19 @@ module Homebrew
 
         private
 
+        sig { params(from: T.nilable(String), to: T.nilable(String)).returns(String) }
+        def time_period(from:, to:)
+          if from && to
+            "between #{from} and #{to}"
+          elsif from
+            "after #{from}"
+          elsif to
+            "before #{to}"
+          else
+            "in all time"
+          end
+        end
+
         sig {
           params(
             results:                T::Hash[String, T::Hash[String, T::Hash[Symbol, Integer]]],
@@ -84,7 +97,7 @@ module Homebrew
               user,
               user_names.fetch(user),
               maintainer_since,
-              maintainer_since_date ? [(period_end - maintainer_since_date).to_i, 0].max : nil,
+              ([(period_end - maintainer_since_date).to_i, 0].max if maintainer_since_date),
               *PRIMARY_REPOS.flat_map do |repository|
                 counts = user_repositories.fetch(repository)
                 [*counts.values_at(*MAINTAINER_CONTRIBUTION_TYPES),
@@ -104,8 +117,9 @@ module Homebrew
               "username", "name", "since", "tenure days",
               *PRIMARY_REPOS.flat_map do |repository|
                 repository = repository_name(repository)
+                brew_repository = repository == "brew"
                 [
-                  "#{repository} merged", (repository == "brew") ? "brew first approvals" : "#{repository} approvals",
+                  "#{repository} merged", brew_repository ? "brew first approvals" : "#{repository} approvals",
                   "#{repository} issues closed", "#{repository} total"
                 ]
               end,
@@ -131,10 +145,11 @@ module Homebrew
           period_end = Date.iso8601(to)
           activity_end = activity_period_end(period_end)
           activity_start = activity_end.prev_month(ACTIVITY_PERIOD_MONTHS)
+          period_summary = summary_period(Date.iso8601(from), period_end)
           summary = [
             "## Maintainer contribution summary",
             "",
-            "Contribution counts cover #{summary_period(Date.iso8601(from), period_end)}.",
+            "Contribution counts cover #{period_summary}.",
             "",
             "### Latest completed quarter: #{summary_period(activity_start, activity_end)}",
             "",
@@ -143,9 +158,10 @@ module Homebrew
             ),
           ]
           if activity_end < period_end
+            activity_period = summary_period(activity_end, activity_end.next_month(ACTIVITY_PERIOD_MONTHS))
             summary += [
               "",
-              "### Current quarter: #{summary_period(activity_end, activity_end.next_month(ACTIVITY_PERIOD_MONTHS))}",
+              "### Current quarter: #{activity_period}",
               "",
               "Progress through #{period_end.prev_day.iso8601}; the quarter is still in progress.",
               "",
@@ -198,17 +214,20 @@ module Homebrew
             cells = if user_totals
               gaps = []
               if maintainer_below
-                gaps << "#{MAINTAINER_ACTIVITY_THRESHOLD - user_totals.values.sum} more for Maintainer activity"
+                remaining = MAINTAINER_ACTIVITY_THRESHOLD - user_totals.values.sum
+                gaps << "#{remaining} more for Maintainer activity"
               end
               if lead_below
                 below = user_totals.filter_map do |repository, total|
                   next if total >= LEAD_REPOSITORY_ACTIVITY_THRESHOLD
 
-                  "#{repository_name(repository)}: #{LEAD_REPOSITORY_ACTIVITY_THRESHOLD - total} more"
+                  remaining = LEAD_REPOSITORY_ACTIVITY_THRESHOLD - total
+                  "#{repository_name(repository)}: #{remaining} more"
                 end
                 needed = LEAD_ACTIVITY_REPOSITORIES - (user_totals.length - below.length)
+                repository_label = Utils.pluralize("repositor", needed, plural: "ies", singular: "y")
                 gaps << "Lead: reach #{LEAD_REPOSITORY_ACTIVITY_THRESHOLD} in #{needed} more " \
-                        "#{Utils.pluralize("repositor", needed, plural: "ies", singular: "y")} (#{below.join(", ")})"
+                        "#{repository_label} (#{below.join(", ")})"
               end
               gaps << "capped counts are lower bounds" if capped
               [*user_totals.values, user_totals.values.sum, gaps.join("; ")]
@@ -218,9 +237,10 @@ module Homebrew
             table << "| #{[username, *cells].join(" | ")} |"
           end
 
+          exempt_note = exempt.any? ? "; exempt: #{exempt.join(", ")}" : ""
           summary = [
             "- Maintainer activity: **#{maintainer_activity.count(true)}/#{maintainer_activity.length} met**; " \
-            "#{maintainer_activity.count(nil)} unknown#{"; exempt: #{exempt.join(", ")}" if exempt.any?}.",
+            "#{maintainer_activity.count(nil)} unknown#{exempt_note}.",
           ]
           unless lead_activity.empty?
             summary << "- Lead activity (Lead Maintainers): **#{lead_activity.count(true)}/#{lead_activity.length} " \
@@ -229,10 +249,11 @@ module Homebrew
           return summary if table.empty?
 
           repositories = PRIMARY_REPOS.map { |repository| repository_name(repository).capitalize }
+          table_separator = " ---: |" * (repositories.length + 1)
           summary + [
             "",
             "| Maintainer | #{repositories.join(" | ")} | Total | Numerical gap |",
-            "| --- |#{" ---: |" * (repositories.length + 1)} --- |",
+            "| --- |#{table_separator} --- |",
             *table,
           ]
         end

@@ -61,7 +61,11 @@ RSpec.describe Homebrew::Cmd::Update do
       setup_update_utils
       FileUtils.ln_s repository_root/"Library/Homebrew/shims", test_root/"Library/Homebrew/shims"
       (test_root/"core").mkpath
-      remote_base = (description == "non-default remotes") ? "other" : "https://github.com/Homebrew"
+      remote_base = if description == "non-default remotes"
+        "other"
+      else
+        "https://github.com/Homebrew"
+      end
 
       _stdout, stderr, status = run_update_shell(
         <<~SH,
@@ -179,8 +183,8 @@ RSpec.describe Homebrew::Cmd::Update do
           "HOMEBREW_CELLAR"                       => (test_root/"Cellar").to_s,
           "HOMEBREW_PREFIX"                       => test_root.to_s,
           "HOMEBREW_FORCE_BREWED_CA_CERTIFICATES" => nil,
-          "HOMEBREW_FORCE_BREWED_CURL"            => (tool == "curl") ? "1" : nil,
-          "HOMEBREW_FORCE_BREWED_GIT"             => (tool == "git") ? "1" : nil,
+          "HOMEBREW_FORCE_BREWED_CURL"            => ("1" if tool == "curl"),
+          "HOMEBREW_FORCE_BREWED_GIT"             => ("1" if tool == "git"),
           "HOMEBREW_LIBRARY"                      => (test_root/"Library").to_s,
           "HOMEBREW_NO_INSTALL_FROM_API"          => nil,
           "HOMEBREW_REPOSITORY"                   => test_root.to_s,
@@ -321,7 +325,8 @@ RSpec.describe Homebrew::Cmd::Update do
       cache_path.write "cached"
       args_file.write ""
       etag_path.write saved_etag if saved_etag
-      Pathname("#{etag_path}.url").write saved_url || "#{api_domain || "https://formulae.example/api"}/formula.jws.json"
+      base_url = api_domain || "https://formulae.example/api"
+      Pathname("#{etag_path}.url").write saved_url || "#{base_url}/formula.jws.json"
 
       _stdout, stderr, status = run_update_shell(
         <<~SH,

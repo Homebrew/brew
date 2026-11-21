@@ -189,9 +189,14 @@ RSpec.describe Homebrew::DevCmd::UpdateSponsors do
 
         command.run
 
+        platform_name = if platform == :patreon
+          "Patreon"
+        else
+          "Open Collective"
+        end
         expect(readme.read).to include(
           "[Sponsor](https://example.com/sponsor) and [many others](",
-          "via [#{(platform == :patreon) ? "Patreon" : "Open Collective"}]",
+          "via [#{platform_name}]",
           "[![Sponsor](https://example.com/logo.png)](https://example.com/sponsor)",
         )
       end

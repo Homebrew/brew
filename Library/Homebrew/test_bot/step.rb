@@ -180,7 +180,7 @@ module Homebrew
           [formula.path.to_s, nil]
         end
       rescue FormulaUnavailableError
-        glob_result = @repository ? @repository.glob("**/#{name}*").first&.to_s : nil
+        glob_result = @repository.glob("**/#{name}*").first&.to_s if @repository
         [glob_result, nil]
       end
 

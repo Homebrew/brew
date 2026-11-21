@@ -78,7 +78,8 @@ module Test
       sig { returns(String) }
       def command_id
         Thread.current[:brew_integration_test_number] ||= 0
-        "#{Process.pid}:#{ENV.fetch("TEST_ENV_NUMBER", "")}:#{Thread.current[:brew_integration_test_number] += 1}"
+        test_number = Thread.current[:brew_integration_test_number] += 1
+        "#{Process.pid}:#{ENV.fetch("TEST_ENV_NUMBER", "")}:#{test_number}"
       end
 
       # Runs a `brew` command with the test configuration
@@ -187,7 +188,11 @@ module Test
         case name
         when /^testball/
           # Use a different tarball for testball2 to avoid lock errors when writing concurrency tests
-          prefix = (name == "testball2") ? "testball2" : "testball"
+          prefix = if name == "testball2"
+            "testball2"
+          else
+            "testball"
+          end
           tarball = if OS.linux?
             TEST_FIXTURE_DIR/"tarballs/#{prefix}-0.1-linux.tbz"
           else

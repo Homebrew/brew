@@ -52,14 +52,19 @@ RSpec.describe GitHub do
           },
         })
 
-        expect(described_class.sponsorships("Homebrew")).to eq(one_time ? [] : [{
-          type:,
-          login:            "sponsor",
-          name:             "sponsor",
-          monthly_amount:   monthly_amount || 0,
-          tier_description: (monthly_amount && "Name and logo in our README").to_s,
-          started_at:       "2026-10-01T00:00:00Z",
-        }])
+        expected_sponsors = if one_time
+          []
+        else
+          [{
+            type:,
+                  login:            "sponsor",
+                  name:             "sponsor",
+                  monthly_amount:   monthly_amount || 0,
+                  tier_description: (monthly_amount && "Name and logo in our README").to_s,
+                  started_at:       "2026-10-01T00:00:00Z",
+          }]
+        end
+        expect(described_class.sponsorships("Homebrew")).to eq(expected_sponsors)
       end
     end
   end

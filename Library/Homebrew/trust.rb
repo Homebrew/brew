@@ -112,7 +112,11 @@ module Homebrew
         tap = Tap.fetch(tap_name)
         next if tap.official?
 
-        formula_name = (type == :cask) ? item_name : tap_formula_name(tap, item_name)
+        formula_name = if type == :cask
+          item_name
+        else
+          tap_formula_name(tap, item_name)
+        end
         types = if type == :formula
           tap.formula_files_by_name.key?(formula_name) ? [:formula] : []
         elsif type == :cask
@@ -241,7 +245,8 @@ module Homebrew
       return unless (tap = tap_from_path(path))
       return if trusted_tap?(tap)
 
-      full_name = "#{tap.name}/#{command || path.basename(path.extname).to_s.delete_prefix("brew-")}"
+      command_name = command || path.basename(path.extname).to_s.delete_prefix("brew-")
+      full_name = "#{tap.name}/#{command_name}"
       return if trusted?(:command, full_name)
 
       raise_untrusted!(:command, full_name, tap)

@@ -1011,7 +1011,8 @@ RSpec.describe Homebrew::Attestation do
     end
 
     it "rejects whitespace in the signed log time" do
-      log_entry(bundle)["integratedTime"] = " #{log_entry(bundle).fetch("integratedTime")}"
+      integrated_time = log_entry(bundle).fetch("integratedTime")
+      log_entry(bundle)["integratedTime"] = " #{integrated_time}"
 
       expect { described_class.verify_bundle(JSON.generate(bundle), digest, signing_repo) }
         .to raise_error(Homebrew::Attestation::InvalidAttestationError)
@@ -1262,7 +1263,8 @@ RSpec.describe Homebrew::Attestation do
 
       it "rejects a bad checkpoint signature" do
         checkpoint = proof.checkpoint.sub(/(\S+)\n\z/) do
-          "#{corrupt_signature(Regexp.last_match(1))}\n"
+          signature = corrupt_signature(Regexp.last_match(1))
+          "#{signature}\n"
         end
 
         expect { verifier.verify_checkpoint(proof.with(checkpoint:), key_id, key) }
@@ -1431,7 +1433,8 @@ RSpec.describe Homebrew::Attestation do
           end
           stub_const("Homebrew::Attestation::Verifier::POLICIES", policies)
 
-          expect { verified_digests(fixture, digest, policies.fetch((fixture == "backfill") ? 1 : 0).repository) }
+          backfill = fixture == "backfill"
+          expect { verified_digests(fixture, digest, policies.fetch(backfill ? 1 : 0).repository) }
             .to raise_error(Homebrew::Attestation::InvalidAttestationError, /signed after the #{ref} cutoff/)
         end
       end
@@ -1469,7 +1472,8 @@ RSpec.describe Homebrew::Attestation do
             else
               authority.fetch(:publicKey).fetch(:validFor)
             end
-            period[boundary] = (time + ((boundary == :start) ? 1 : -1)).iso8601
+            start_boundary = boundary == :start
+            period[boundary] = (time + (start_boundary ? 1 : -1)).iso8601
           end
           trusted_root = verifier.parse_trusted_root(JSON.generate(root))
           allow(verifier).to receive(:trusted_root).and_return(trusted_root)

@@ -13,9 +13,10 @@ RSpec.describe Utils::Analytics::Vulnerabilities do
         ["foo", "CVE-2", nil, nil, nil],
         %w[foo CVE-3 bump fixed 2025-01-01],
       ].each_with_index do |(name, upstream, fix, state, withdrawn), index|
+        generated = fix == "patch"
         (repository/"advisories/#{index}.json").write(JSON.generate({
           id: "BREW-#{name}-#{upstream}", upstream: [upstream], withdrawn:,
-          database_specific: { source: (fix == "patch") ? "generated" : "matched" },
+          database_specific: { source: generated ? "generated" : "matched" },
           affected: [{ package: { name: }, ecosystem_specific: { fix:, range_state: state } }]
         }))
       end

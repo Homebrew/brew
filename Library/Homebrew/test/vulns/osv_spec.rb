@@ -125,7 +125,7 @@ RSpec.describe Homebrew::Vulns::OSV, :needs_utils_curl do
       posted = T.let([], T::Array[T::Hash[String, T.untyped]])
       expect(Utils::Curl).to receive(:curl_output).twice do |*args, **_options|
         posted << JSON.parse(args[args.index("--json") + 1])
-        curl_result(stdout: ((posted.size == 1) ? page1 : page2).to_json)
+        curl_result(stdout: (posted.one? ? page1 : page2).to_json)
       end
 
       results = described_class.query_batch(packages)

@@ -20,7 +20,7 @@ class Object
   sig { returns(T::Boolean) }
   def blank?
     # `empty?` is not defined on `Object` so cannot be called directly here.
-    respond_to?(:empty?) ? !!public_send(:empty?) : false # rubocop:disable Style/SendWithLiteralMethodName
+    respond_to?(:empty?) && !!public_send(:empty?) # rubocop:disable Style/SendWithLiteralMethodName
   end
 
   # An object is present if it's not blank.

@@ -62,7 +62,12 @@ module RuboCop
           end
 
           add_offense(node, message: format(MSG, keyword:)) do |corrector|
-            corrector.replace(ternary, ((keyword == "if") ? ternary.if_branch : ternary.else_branch).source)
+            branch = if keyword == "if"
+              ternary.if_branch
+            else
+              ternary.else_branch
+            end
+            corrector.replace(ternary, branch.source)
             corrector.insert_after(node, " #{keyword} #{ternary.condition.source}")
           end
         end

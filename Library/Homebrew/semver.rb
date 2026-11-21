@@ -86,7 +86,11 @@ module Homebrew
         cmp = compare_identifier(lhs, rhs)
         return cmp unless cmp.zero?
       end
-      (left.length == right.length) ? 0 : -1
+      if left.length == right.length
+        0
+      else
+        -1
+      end
     end
 
     sig { params(lhs: String, rhs: String).returns(Integer) }

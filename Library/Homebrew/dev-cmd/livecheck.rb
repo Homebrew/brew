@@ -67,8 +67,16 @@ module Homebrew
         formulae_and_casks_to_check = Homebrew::API.with_no_api_env do
           if args.tap
             tap = Tap.fetch(args.tap)
-            formulae = args.cask? ? [] : tap.formula_files.map { |path| Formulary.from_path(path) }
-            casks = args.formula? ? [] : tap.cask_files.map { |path| Cask::CaskLoader.from_path(path) }
+            formulae = if args.cask?
+              []
+            else
+              tap.formula_files.map { |path| Formulary.from_path(path) }
+            end
+            casks = if args.formula?
+              []
+            else
+              tap.cask_files.map { |path| Cask::CaskLoader.from_path(path) }
+            end
             formulae + casks
           elsif args.installed?
             formulae = args.cask? ? [] : Formula.installed
