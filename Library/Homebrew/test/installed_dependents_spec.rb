@@ -462,6 +462,12 @@ RSpec.describe InstalledDependents do
 
       expect(described_class.find_installed_build_dependents([keg])).to eq([[keg], ["bar"]])
     end
+
+    specify "the kegs of a formula that isn't uninstalled aren't listed" do
+      expect(Formulary.factory("bar")).not_to receive(:installed_kegs)
+
+      described_class.find_installed_build_dependents([keg])
+    end
   end
 
   describe "::build_dependents_by_name" do
@@ -476,6 +482,18 @@ RSpec.describe InstalledDependents do
 
     it "maps the build dependencies to keep to the formulae that need them" do
       expect(described_class.build_dependents_by_name(installed, installed)).to eq("foo" => ["bar"])
+    end
+
+    it "looks up a build dependency once for all the formulae that need it" do
+      setup_test_keg("baz", "1.0") do
+        T.bind(self, T.class_of(Formula))
+        depends_on "foo" => :build
+      end
+      formulae = installed
+      allow(Formulary).to receive(:factory).and_call_original
+      expect(Formulary).to receive(:factory).with("foo", warn: false).once.and_call_original
+
+      described_class.build_dependents_by_name(formulae, formulae)
     end
 
     it "keeps a build dependency whose tap is untrusted" do

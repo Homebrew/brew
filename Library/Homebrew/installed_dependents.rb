@@ -122,8 +122,11 @@ module InstalledDependents
     rescue FormulaUnavailableError, TapFormulaAmbiguityError, Homebrew::UntrustedTapError, FormulaSpecificationError
       [keg, [keg.name]]
     end
+    keg_names = kegs.map(&:name)
     # Don't include build dependencies of formulae that keep none of their kegs.
-    remaining_formulae = Formula.installed.reject { |f| (f.installed_kegs - kegs).empty? }
+    remaining_formulae = Formula.installed.reject do |f|
+      keg_names.intersect?(f.possible_names) && (f.installed_kegs - kegs).empty?
+    end
     build_dependents = build_dependents_by_name(remaining_formulae, Formula.installed, removed_kegs: kegs)
     dependents_by_keg = names_by_keg.transform_values { |names| build_dependents.values_at(*names).flatten.compact }
                                     .reject { |_, dependents| dependents.empty? }
@@ -152,6 +155,7 @@ module InstalledDependents
   }
   def build_dependents_by_name(formulae, installed, removed_kegs: [])
     dependents = T.let({}, T::Hash[String, T::Array[String]])
+    names_by_dependency = T.let({}, T::Hash[String, T::Array[String]])
     built_from_source_names = installed.reject { |f| f.any_installed_keg&.tab&.poured_from_bottle }
                                        .flat_map(&:possible_names)
                                        .to_set
@@ -166,7 +170,8 @@ module InstalledDependents
       formula.deps.select(&:build?).each do |dep|
         next if pours_bottle && built_from_source_names.exclude?(Utils.name_from_full_name(dep.name))
 
-        dependency_names = begin
+        # Many formulae share a build dependency, so look each one up once.
+        dependency_names = names_by_dependency[dep.name] ||= begin
           [dep.to_formula.name]
         rescue TapFormulaAmbiguityError => e
           e.loaders.map(&:name)
