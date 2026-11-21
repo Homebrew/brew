@@ -236,6 +236,8 @@ class Dependency
     # the list.
     # The default filter, which is applied when a block is not given, omits
     # optionals and recommends based on what the dependent has asked for
+    # `root_cache_key` caches the expansion of `dependent` itself and defaults
+    # to `cache_key`, which is used for every recursive expansion.
     #
     # @api internal
     T::Sig::WithoutRuntime.sig {
@@ -244,13 +246,15 @@ class Dependency
         dependent:       T.any(Formula, CaskDependent),
         deps:            T::Array[Dependency],
         cache_key:       T.nilable(String),
+        root_cache_key:  T.nilable(String),
         cache_timestamp: T.nilable(Time),
         formula_cache:   T.nilable(T::Hash[Dependency, Formula]),
         block:           T.nilable(T.proc.params(arg0: T.any(Formula, CaskDependent),
                                                  arg1: Dependency).returns(T.nilable(Symbol))),
       ).returns(T::Array[Dependency])
     }
-    def expand(dependent, deps = dependent.deps, cache_key: nil, cache_timestamp: nil, formula_cache: nil, &block)
+    def expand(dependent, deps = dependent.deps, cache_key: nil, root_cache_key: cache_key, cache_timestamp: nil,
+               formula_cache: nil, &block)
       raise ArgumentError, "formula_cache requires cache_key" if formula_cache && cache_key.blank?
 
       # Keep track dependencies to avoid infinite cyclic dependency recursion.
@@ -258,7 +262,7 @@ class Dependency
       @expand_stack.push dependent.name
 
       begin
-        if cache_key.present? && (entry = cache(cache_key, cache_timestamp:)[cache_id dependent])
+        if root_cache_key.present? && (entry = cache(root_cache_key, cache_timestamp:)[cache_id dependent])
           return entry.dup
         end
 
@@ -291,7 +295,7 @@ class Dependency
         end
 
         expanded_deps = merge_repeats(expanded_deps)
-        cache(cache_key, cache_timestamp:)[cache_id dependent] = expanded_deps.dup if cache_key.present?
+        cache(root_cache_key, cache_timestamp:)[cache_id dependent] = expanded_deps.dup if root_cache_key.present?
         expanded_deps
       ensure
         @expand_stack.pop
