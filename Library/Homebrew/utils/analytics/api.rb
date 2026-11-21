@@ -61,7 +61,10 @@ module Utils
         CATEGORIES.each do |category|
           category_name = category.delete_prefix("core-")
           all_core = category != category_name
-          data_source = ((category_name == "cask-install") ? "homebrew-cask" : "homebrew-core") if all_core
+          if all_core
+            cask_install = category_name == "cask-install"
+            data_source = cask_install ? "homebrew-cask" : "homebrew-core"
+          end
           measurement = case category_name
           when "install" then :formula_install
           when "install-on-request" then :formula_install_on_request
@@ -271,7 +274,7 @@ module Utils
           records = {}
           (budget - 2).times do |page|
             entries = GitHub::API.open_rest("https://api.github.com/repos/#{repository}/issues?" \
-                                            "state=all&sort=created&direction=desc&per_page=100&page=#{page + 1}" \
+                                            "state=all&sort=created&direction=desc&per_page=100&page=#{page.succ}" \
                                             "&since=#{cutoff}T00:00:00Z")
             requests += 1
             entries.each do |entry|
@@ -298,7 +301,8 @@ module Utils
         }.to_h do |metric, (type, date)|
           # Search has a separate limit: 30 requests/minute authenticated, 10 otherwise.
           sleep GitHub::API.credentials ? 2.1 : 6.1
-          query = "repo:#{repository} is:#{type} #{date}:#{from}..#{Date.iso8601(to) - 1}"
+          range_end = Date.iso8601(to) - 1
+          query = "repo:#{repository} is:#{type} #{date}:#{from}..#{range_end}"
           result = GitHub::API.open_rest("https://api.github.com/search/issues?" \
                                          "q=#{URI.encode_www_form_component(query)}&per_page=1")
           raise "Incomplete GitHub search for #{repository}: #{metric}" if result.fetch("incomplete_results")
@@ -408,7 +412,7 @@ module Utils
               to = if period == today.year.to_s
                 today.iso8601
               else
-                "#{period.to_i + 1}-01-01"
+                "#{period.to_i.succ}-01-01"
               end
               activity = if repo == "Homebrew/legacy-homebrew" && historical_rows.any?
                 { "pull_requests_opened" => 0, "issues_opened" => 0 }
@@ -456,8 +460,13 @@ module Utils
                 repository.author_identities.fetch(period, [])
               end
             end
+            new_contributors = if period == "current"
+              identities.uniq.size
+            else
+              first_years.fetch(period, 0)
+            end
             { period:, contributors: identities.uniq.size,
-              new_contributors: (period == "current") ? identities.uniq.size : first_years.fetch(period, 0) }
+              new_contributors: new_contributors }
           end,
         }
         case saved = archived["combined_contributors"]

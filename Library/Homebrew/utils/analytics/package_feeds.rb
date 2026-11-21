@@ -67,7 +67,7 @@ module Utils
 
             after = builds(change.path, change.after, sources)
             before_blob = change.before
-            before = before_blob ? builds(change.old_path, before_blob, sources) : nil
+            before = (builds(change.old_path, before_blob, sources) if before_blob)
             next if before && after.none? do |platform, build|
               old = before.fetch(platform)
               build.version && (old.version != build.version || build.revision > old.revision)
@@ -128,7 +128,11 @@ module Utils
             after = metadata.fetch(3)
             status = metadata.fetch(4)
             old_path = tokens.shift || raise("Missing package path")
-            path = status.start_with?("R", "C") ? (tokens.shift || raise("Missing renamed package path")) : old_path
+            path = if status.start_with?("R", "C")
+              tokens.shift || raise("Missing renamed package path")
+            else
+              old_path
+            end
             if status == "D" && %w[100644 100755].include?(old_mode) && package_path?(old_path)
               deleted[[commit, File.basename(old_path)]] = [old_path, before]
             end

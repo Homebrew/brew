@@ -53,7 +53,11 @@ module RuboCop
 
           parent = node.parent
           # `private def foo` and `private_class_method def self.foo` wrap the definition in a send.
-          definition = (parent.is_a?(RuboCop::AST::SendNode) && parent.adjacent_def_modifier?) ? parent : node
+          definition = if parent.is_a?(RuboCop::AST::SendNode) && parent.adjacent_def_modifier?
+            parent
+          else
+            node
+          end
           # `left_sibling` scans every sibling, so only reach it for a named `**`.
           signature = definition.left_sibling
           return if !signature.is_a?(RuboCop::AST::BlockNode) || !signature?(signature)

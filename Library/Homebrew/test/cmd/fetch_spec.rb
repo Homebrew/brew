@@ -232,7 +232,8 @@ RSpec.describe Homebrew::Cmd::FetchCmd do
 
       expect(downloads.map { |download| [File.basename(download.url.to_s), download.checksum.to_s] })
         .to match_array(%w[macos linux].product(%w[intel arm], %w[en fr]).map do |os, arch, language|
-          ["#{os}-#{arch}-#{language}.zip", ((language == "en") ? "0" : "1") * 64]
+          english = language == "en"
+          ["#{os}-#{arch}-#{language}.zip", (english ? "0" : "1") * 64]
         end)
     end
 

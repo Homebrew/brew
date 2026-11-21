@@ -203,9 +203,8 @@ module Homebrew
             upstream_state = matcher.aggregate_state_at(formula, hit)
             if override.state != upstream_state
               emitter.record_history_unavailable(formula.name)
-              opoo "#{record_id}: reviewed state override " \
-                   "#{upstream_state.nil? ? "cannot be checked against" : "disagrees with"} " \
-                   "upstream history; " \
+              comparison = upstream_state.nil? ? "cannot be checked against" : "disagrees with"
+              opoo "#{record_id}: reviewed state override #{comparison} upstream history; " \
                    "skipping automatic update. Review its ranges and provenance together."
               next
             end
@@ -326,7 +325,11 @@ module Homebrew
 
           Homebrew::SimulateSystem.with(os:, arch:) do
             begin
-              view = (index.zero? || independent) ? formula : Formulary.from_path(formula.path)
+              view = if index.zero? || independent
+                formula
+              else
+                Formulary.from_path(formula.path)
+              end
               platform_hits = if index.zero? || independent
                 hits
               else
@@ -574,16 +577,20 @@ module Homebrew
           v = hit.vulnerability
           status, = matcher.range_status(hit, formula_name: formula.name)
           state = case status&.state
-          when nil       then "uncomparable"
-          when :affected then "AFFECTED#{", upstream fix #{status&.fixed_in}" if status&.fixed_in}"
-          when :fixed    then "fixed (upstream #{status&.fixed_in || "?"})"
+          when nil then "uncomparable"
+          when :affected
+            upstream_fix = status&.fixed_in ? ", upstream fix #{status&.fixed_in}" : ""
+            "AFFECTED#{upstream_fix}"
+          when :fixed
+            fixed_version = status&.fixed_in || "?"
+            "fixed (upstream #{fixed_version})"
           else "not applicable"
           end
           summary = v.summary&.slice(0, 60)
+          resource_note = hit.resource ? " (resource: #{hit.resource})" : ""
+          summary_note = summary ? " — #{summary}" : ""
           puts "  #{hit.canonical_id} [#{hit.strategy}, #{matcher.confidence_for(hit, status)}] " \
-               "#{v.severity_display} #{state}" \
-               "#{" (resource: #{hit.resource})" if hit.resource}" \
-               "#{" — #{summary}" if summary}"
+               "#{v.severity_display} #{state}#{resource_note}#{summary_note}"
         end
       end
 

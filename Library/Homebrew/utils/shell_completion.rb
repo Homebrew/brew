@@ -26,7 +26,8 @@ module Utils
     }
     def self.completion_shell_parameter(format, shell, executable, env)
       # Go's cobra and Rust's clap accept "powershell".
-      shell_parameter = (shell == :pwsh) ? "powershell" : shell.to_s
+      powershell = shell == :pwsh
+      shell_parameter = powershell ? "powershell" : shell.to_s
 
       case format
       when nil

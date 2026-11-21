@@ -86,9 +86,10 @@ module GitHub
         @reset = reset
         @resource = resource
         new_pat_message = ", or:\n#{GitHub.pat_blurb}" if API.credentials.blank?
+        limit_note = limit ? " (#{limit} limit)" : ""
         message = <<~EOS
           GitHub API Error: #{github_message}
-          Rate limit exceeded for #{resource} resource#{" (#{limit} limit)" if limit}.
+          Rate limit exceeded for #{resource} resource#{limit_note}.
           Try again in #{pretty_ratelimit_reset}#{new_pat_message}
         EOS
         super(message, github_message)
@@ -306,7 +307,11 @@ module GitHub
     def self.open_rest(url, data: nil, data_binary_path: nil, request_method: nil,
                        scopes: [].freeze, parse_json: true, return_headers: false, &_block)
       # This is a no-op if the user is opting out of using the GitHub API.
-      return block_given? ? yield({}) : {} if Homebrew::EnvConfig.no_github_api?
+      if Homebrew::EnvConfig.no_github_api?
+        return yield({}) if block_given?
+
+        return {}
+      end
 
       # This is a Curl format token, not a Ruby one.
       # rubocop:disable Style/FormatStringToken

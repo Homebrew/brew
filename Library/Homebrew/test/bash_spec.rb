@@ -67,7 +67,12 @@ RSpec.describe "Bash" do
         ENV["HOMEBREW_NO_INSTALL_FROM_API"] = nil
         ENV["HOMEBREW_CACHE"] = cache.to_s
         (cache/"api").mkpath
-        (cache/"api/#{(command == "formulae") ? "formula" : "cask"}_names.txt")
+        package_type = if command == "formulae"
+          "formula"
+        else
+          "cask"
+        end
+        (cache/"api/#{package_type}_names.txt")
           .write((1..10_000).map { |i| format("item%05d\n", i) }.join)
 
         stdout, stderr, status = Open3.capture3(
@@ -102,7 +107,12 @@ RSpec.describe "Bash" do
         ENV["HOMEBREW_CACHE"] = cache.to_s
         ENV["HOMEBREW_REPOSITORY"] = mktmpdir.to_s
         (cache/"api").mkpath
-        (cache/"api/#{(command == "formulae") ? "formula" : "cask"}_names.txt").write("item1\nitem2")
+        package_type = if command == "formulae"
+          "formula"
+        else
+          "cask"
+        end
+        (cache/"api/#{package_type}_names.txt").write("item1\nitem2")
         script = <<~BASH
           source "${HOMEBREW_LIBRARY}/Homebrew/cmd/$1.sh"
           type() { [[ "$*" != "-P jq" ]] && builtin type "$@"; }
@@ -170,7 +180,11 @@ RSpec.describe "Bash" do
       it "does not evaluate an inherited `#{name}`" do
         ENV[name] = payload
 
-        expected = (name == "HOMEBREW_COMMAND_DEPTH") ? "1\n" : "unset\n"
+        expected = if name == "HOMEBREW_COMMAND_DEPTH"
+          "1\n"
+        else
+          "unset\n"
+        end
         expect([*brew_sh_value(name), marker.exist?]).to eq([expected, "", true, false])
       end
     end

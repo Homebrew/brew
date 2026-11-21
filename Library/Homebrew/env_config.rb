@@ -29,7 +29,11 @@ module Homebrew
       end],
     }.flat_map do |command, type_descriptions|
       type_descriptions.reduce(&:merge).map do |type, description|
-        verb = (command == :cleanup) ? "clean up" : "dump"
+        verb = if command == :cleanup
+          "clean up"
+        else
+          "dump"
+        end
         [
           :"HOMEBREW_BUNDLE_#{command.upcase}_NO_#{type.to_s.upcase}",
           {

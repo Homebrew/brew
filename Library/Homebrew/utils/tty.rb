@@ -186,7 +186,10 @@ module Tty
 
     sig { params(string: String).returns(String) }
     def truncate(string)
-      (w = width).zero? ? string.to_s : (string.to_s[0, w - 4] || "")
+      w = width
+      return string.to_s if w.zero?
+
+      string.to_s[0, w - 4] || ""
     end
 
     sig { returns(String) }

@@ -172,7 +172,11 @@ module Homebrew
         # Touching after a failed download would mark a stale cache as fresh and
         # cause `skip_download?` to short-circuit subsequent retries until cleanup.
         if download_succeeded
-          mtime = insecure_download ? Time.new(1970, 1, 1) : Time.now
+          mtime = if insecure_download
+            Time.new(1970, 1, 1)
+          else
+            Time.now
+          end
           FileUtils.touch(target, mtime:)
         end
 

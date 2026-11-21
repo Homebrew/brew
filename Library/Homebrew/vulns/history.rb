@@ -141,10 +141,17 @@ module Homebrew
       def record_load_failure(formula, revision, path, error)
         platform = "#{SimulateSystem.current_os}/#{SimulateSystem.current_arch}"
         key = [formula.full_name, revision, path, platform]
-        @load_failures[key] ||= LoadFailure.new(
+        return if @load_failures[key]
+
+        message = if error
+          error.message.lines.first.to_s.strip
+        else
+          "Formula could not be loaded"
+        end
+        @load_failures[key] = LoadFailure.new(
           formula: formula.full_name, revision:, path:, platform:,
           error_class: error&.class&.name || "FormulaUnavailableError",
-          message: error ? error.message.lines.first.to_s.strip : "Formula could not be loaded"
+          message:
         )
       end
     end

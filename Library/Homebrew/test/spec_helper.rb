@@ -347,7 +347,11 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
       target = target_api_internal_cache/path.basename
       next if target.exist?
 
-      (path.extname == ".txt") ? FileUtils.cp(path, target) : FileUtils.ln(path, target)
+      if path.extname == ".txt"
+        FileUtils.cp(path, target)
+      else
+        FileUtils.ln(path, target)
+      end
     end
 
     if package_path
@@ -438,9 +442,10 @@ RSpec.configure do |config| # rubocop:disable Metrics/BlockLength
       files_after_test = Test::Helper::Files.find_files
 
       diff = Set.new(@__files_before_test) ^ Set.new(files_after_test)
+      changed_files = diff.map { |f| "  #{f}" }.join("\n")
       expect(diff).to be_empty, <<~EOS
         file leak detected:
-        #{diff.map { |f| "  #{f}" }.join("\n")}
+        #{changed_files}
       EOS
 
       Homebrew.failed = @__homebrew_failed

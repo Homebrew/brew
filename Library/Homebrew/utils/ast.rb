@@ -260,7 +260,8 @@ module Utils
           end
         end
         text = new_stanzas.map do |stanza_name, value|
-          "\n#{stanza_text(stanza_name, value, indent: preceding_component.source_range.column)}"
+          stanza = stanza_text(stanza_name, value, indent: preceding_component.source_range.column)
+          "\n#{stanza}"
         end.join
         tree_rewriter.insert_after(preceding_expr, text)
       end
@@ -434,7 +435,8 @@ module Utils
           end
         end
 
-        tree_rewriter.insert_after(preceding_expr, "\n#{stanza_text(name, value, indent: 2)}")
+        stanza = stanza_text(name, value, indent: 2)
+        tree_rewriter.insert_after(preceding_expr, "\n#{stanza}")
       end
 
       private
@@ -569,7 +571,7 @@ module Utils
       sig { params(position: Integer).returns(Integer) }
       def line_end_pos(position)
         newline_pos = formula_contents.index("\n", position)
-        newline_pos ? newline_pos + 1 : formula_contents.length
+        newline_pos&.succ || formula_contents.length
       end
 
       sig { params(node: Node, target_name: Symbol, target_type: T.nilable(Symbol)).returns(T::Boolean) }
@@ -842,7 +844,7 @@ module Utils
       sig { params(position: Integer).returns(Integer) }
       def line_end_pos(position)
         newline_pos = cask_contents.index("\n", position)
-        newline_pos ? newline_pos + 1 : cask_contents.length
+        newline_pos&.succ || cask_contents.length
       end
     end
   end

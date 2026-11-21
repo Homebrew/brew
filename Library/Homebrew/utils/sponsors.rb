@@ -55,8 +55,8 @@ module Sponsors
       }
     GRAPHQL
     activities = []
-    GitHub::API.paginate_graphql(query, variables: { since: "#{Date.today << BENEFIT_MONTHS}T00:00:00Z" },
-                                        scopes:    ["user"]) do |result|
+    since = Date.today << BENEFIT_MONTHS
+    GitHub::API.paginate_graphql(query, variables: { since: "#{since}T00:00:00Z" }, scopes: ["user"]) do |result|
       page = result.fetch("organization").fetch("sponsorsActivities")
       activities.concat(page.fetch("nodes").compact)
       page.fetch("pageInfo")
@@ -126,9 +126,10 @@ module Sponsors
         descriptions = member.fetch("relationships").fetch("currently_entitled_tiers").fetch("data").map do |tier|
           included.fetch(["tier", tier.fetch("id")]).fetch("attributes")["description"].to_s
         end
+        individual = descriptions.join("\n").match?(/\bindividuals only\b/i)
         {
           name: user.fetch("full_name"), url: user.fetch("url"), logo: user["image_url"].to_s,
-          type: descriptions.join("\n").match?(/\bindividuals only\b/i) ? "User" : "Organization",
+          type: individual ? "User" : "Organization",
           monthly_amount: amount / 100,
           tier_descriptions: (descriptions +
                               legacy_tier_descriptions(amount / 100, attributes["pledge_relationship_start"])).uniq
@@ -194,14 +195,18 @@ module Sponsors
         raise "Expected Open Collective sponsorship amounts in USD." if amount.fetch("currency") != "USD"
 
         amount_in_dollars = amount.fetch("valueInCents").to_i / 100
+        individual = account["type"] == "INDIVIDUAL"
+        monthly = frequency == "MONTHLY"
+        one_time = frequency == "ONETIME"
+        yearly = frequency == "YEARLY"
         {
           name: account.fetch("name"), url: "https://opencollective.com/#{slug}", logo: account["imageUrl"].to_s,
-          type: (account["type"] == "INDIVIDUAL") ? "User" : "Organization",
-          monthly_amount: amount_in_dollars / ((frequency == "MONTHLY") ? 1 : BENEFIT_MONTHS),
+          type: individual ? "User" : "Organization",
+          monthly_amount: amount_in_dollars / (monthly ? 1 : BENEFIT_MONTHS),
           tier_descriptions: ([order.dig("tier", "description"), order.dig("tier", "longDescription")].compact +
                               legacy_tier_descriptions(
-                                amount_in_dollars / ((frequency == "YEARLY") ? BENEFIT_MONTHS : 1),
-                                (frequency == "ONETIME") ? order["processedAt"] : order["createdAt"],
+                                amount_in_dollars / (yearly ? BENEFIT_MONTHS : 1),
+                                one_time ? order["processedAt"] : order["createdAt"],
                               )).uniq
         }
       end)
@@ -218,7 +223,10 @@ module Sponsors
     headers = ["--header", "Content-Type: application/json"]
     headers += ["--header", "Authorization: Bearer #{token}"] if token
     response = Utils::Curl.curl_output(url, "--fail", *headers, secrets: [token].compact)
-    raise "Could not retrieve sponsorships from #{URI(url).host}." unless response.status.success?
+    unless response.status.success?
+      host = URI(url).host
+      raise "Could not retrieve sponsorships from #{host}."
+    end
 
     response.stdout
   end

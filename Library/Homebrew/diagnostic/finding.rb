@@ -94,7 +94,13 @@ module Homebrew
       def self.support_tier_message(tier:)
         return if tier.to_s == "1"
 
-        tier = (tier == "unsupported") ? :unsupported : tier.to_i if tier.is_a?(String)
+        if tier.is_a?(String)
+          tier = if tier == "unsupported"
+            :unsupported
+          else
+            tier.to_i
+          end
+        end
         tier_title, tier_slug = if tier == :unsupported
           ["an Unsupported", "unsupported"]
         else

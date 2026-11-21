@@ -388,7 +388,11 @@ RSpec.describe Homebrew::Vulns::Match do
       bypass = "CVE-2026-111171"
       identifiers = [*original, bypass]
       advisories = identifiers.to_h do |id|
-        excluded = (id == bypass) ? original : [bypass]
+        excluded = if id == bypass
+          original
+        else
+          [bypass]
+        end
         [id, { "excluded_aliases" => excluded }]
       end
       overrides = Homebrew::Vulns::AdvisoryOverrides.new({ "slither-analyzer" => { "advisories" => advisories } })
@@ -728,7 +732,10 @@ RSpec.describe Homebrew::Vulns::Match do
 
       before do
         allow(Homebrew::Vulns::OSV).to receive(:query_batch) do |queries|
-          queries.map { |query| [{ "id" => query[:name].include?("other") ? "CVE-2024-0002" : "DSA-1" }] }
+          queries.map do |query|
+            other = query[:name].include?("other")
+            [{ "id" => other ? "CVE-2024-0002" : "DSA-1" }]
+          end
         end
         allow(Homebrew::Vulns::OSV).to receive(:vulnerability).with("CVE-2024-0002")
                                                               .and_return({ "id" => "CVE-2024-0002" })
@@ -952,9 +959,10 @@ RSpec.describe Homebrew::Vulns::Match do
 
     it "deduplicates exported evidence after removing internal provenance" do
       records = ["CVE-2024-1234", "GHSA-abcd"].map do |id|
+        cve = id == "CVE-2024-1234"
         vulnerability = vuln(
           "id"       => id,
-          "aliases"  => [(id == "CVE-2024-1234") ? "GHSA-abcd" : "CVE-2024-1234"],
+          "aliases"  => [cve ? "GHSA-abcd" : "CVE-2024-1234"],
           "affected" => [{
             "package" => { "ecosystem" => "PyPI", "name" => "requests" },
             "ranges"  => [{ "type" => "ECOSYSTEM", "events" => [
