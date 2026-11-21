@@ -20,10 +20,11 @@ module Homebrew
         ).void
       }
       def self.text(results, max_summary: DEFAULT_MAX_SUMMARY, list_skipped: false, io: $stdout)
-        io.puts "Checking #{Utils.pluralize("package", results.checked, include_count: true)} for vulnerabilities..."
+        checked_packages = Utils.pluralize("package", results.checked, include_count: true)
+        io.puts "Checking #{checked_packages} for vulnerabilities..."
         if results.skipped.positive?
-          msg = "(#{Utils.pluralize("package", results.skipped, include_count: true)} " \
-                "skipped - no supported source URL)"
+          skipped_packages = Utils.pluralize("package", results.skipped, include_count: true)
+          msg = "(#{skipped_packages} skipped - no supported source URL)"
           if list_skipped && results.skipped_formulae.any?
             io.puts "#{msg}:"
             results.skipped_formulae.sort.each { |f| io.puts "  #{sanitize(f)}" }
@@ -49,16 +50,23 @@ module Homebrew
             total += 1
             line = "  #{sanitize(v.id)} (#{colorize_severity(v.severity, v.severity_display)})"
             summary = v.summary
-            line += " - #{truncate(sanitize(summary), max_summary)}" if summary
+            if summary
+              summary_text = truncate(sanitize(summary), max_summary)
+              line += " - #{summary_text}"
+            end
             io.puts line
-            io.puts "    Fixed in: #{v.fixed_versions.map { |s| sanitize(s) }.join(", ")}" if v.fixed_versions.any?
+            if v.fixed_versions.any?
+              fixed_versions = v.fixed_versions.map { |s| sanitize(s) }.join(", ")
+              io.puts "    Fixed in: #{fixed_versions}"
+            end
           end
           io.puts
         end
 
-        io.puts "Found #{Utils.pluralize("vulnerabilit", total, plural: "ies", singular: "y",
-include_count: true)} " \
-                "in #{Utils.pluralize("package", open.size, include_count: true)}"
+        vulnerabilities = Utils.pluralize("vulnerabilit", total, plural: "ies", singular: "y",
+include_count: true)
+        packages = Utils.pluralize("package", open.size, include_count: true)
+        io.puts "Found #{vulnerabilities} in #{packages}"
         patched_summary(patched, io:)
       end
 
@@ -104,7 +112,8 @@ include_count: true)} " \
         io.puts
         io.puts "#{total} resolved by formula patches (not counted; pass --no-ignore-patches to include):"
         patched.sort_by(&:name).each do |f|
-          io.puts "  #{sanitize(f.name)}: #{f.patched.map { |v| sanitize(v.id) }.join(", ")}"
+          patched_versions = f.patched.map { |v| sanitize(v.id) }.join(", ")
+          io.puts "  #{sanitize(f.name)}: #{patched_versions}"
         end
       end
 

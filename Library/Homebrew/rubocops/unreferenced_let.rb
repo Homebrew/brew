@@ -76,8 +76,9 @@ module RuboCop
         # count how many times a name is defined, so override / `super` chains (including a
         # `subject` that overrides a `let` of the same name) are never flagged.
         # @!method definition_name(node)
+        method_names = DEFINITION_METHODS.map { |method| ":#{method}" }.join(" ")
         def_node_matcher :definition_name, <<~PATTERN
-          (any_block (send nil? {#{DEFINITION_METHODS.map { |method| ":#{method}" }.join(" ")}} (sym $_) ...) ...)
+          (any_block (send nil? {#{method_names}} (sym $_) ...) ...)
         PATTERN
 
         sig { params(node: RuboCop::AST::SendNode).void }

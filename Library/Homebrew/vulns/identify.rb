@@ -211,7 +211,10 @@ module Homebrew
           name = Regexp.last_match(2)
           return if name.nil?
 
-          namespace &&= "@#{decode(namespace).delete_prefix("@")}"
+          if namespace
+            decoded = decode(namespace)
+            namespace = "@#{decoded.delete_prefix("@")}"
+          end
           name = decode(name)
           return unless (version = version_after_prefix(basename, name))
 

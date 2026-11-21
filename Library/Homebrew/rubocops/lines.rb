@@ -220,15 +220,17 @@ module RuboCop
           return if (body_node = formula_nodes.body_node).nil?
 
           find_method_with_args(body_node, :local_npm_install_args) do |method|
-            problem "Use `std_npm_args` instead of `#{T.cast(@offensive_node,
-                                                             RuboCop::AST::SendNode).method_name}`." do |corrector|
+            method_name = T.cast(@offensive_node,
+                                 RuboCop::AST::SendNode).method_name
+            problem "Use `std_npm_args` instead of `#{method_name}`." do |corrector|
               corrector.replace(method.source_range, "std_npm_args(prefix: false)")
             end
           end
 
           find_method_with_args(body_node, :std_npm_install_args) do |method|
-            problem "Use `std_npm_args` instead of `#{T.cast(@offensive_node,
-                                                             RuboCop::AST::SendNode).method_name}`." do |corrector|
+            method_name = T.cast(@offensive_node,
+                                 RuboCop::AST::SendNode).method_name
+            problem "Use `std_npm_args` instead of `#{method_name}`." do |corrector|
               if (param = parameters(method).fetch(0).source) == "libexec"
                 corrector.replace(method.source_range, "std_npm_args")
               else
@@ -475,7 +477,7 @@ module RuboCop
 
           problem "Use `license any_of: #{license.source}` instead of `license #{license.source}`" do |corrector|
             corrector.replace(license_node.source_range,
-                              "license any_of: #{parameters(license_node).fetch(0).source}")
+                              "license any_of: #{license.source}")
           end
         end
       end

@@ -31,11 +31,12 @@ module Utils
         Pathname("_data/analytics/#{suffix}").mkpath
         Pathname("api/analytics/#{suffix}").mkpath
         Pathname("_data/analytics/#{suffix}/#{name}.json").write(JSON.pretty_generate(data))
+        data_source_line = data_source ? "#{data_source}: true" : ""
         Pathname("api/analytics/#{suffix}/#{name}.json").write(<<~EOS)
           ---
           layout: analytics_json
           category: #{category}
-          #{"#{data_source}: true" if data_source}
+          #{data_source_line}
           ---
           {{ content }}
         EOS
@@ -50,7 +51,10 @@ module Utils
         return if not_this_run? || disabled?
 
         # Tags are always implicitly strings and must have low cardinality.
-        tags_string = tags.map { |k, v| "#{k}=#{v.to_s.gsub(/[ ,=]/) { |char| "\\#{char}" }}" }
+        tags_string = tags.map do |k, v|
+          escaped_value = v.to_s.gsub(/[ ,=]/) { |char| "\\#{char}" }
+          "#{k}=#{escaped_value}"
+        end
                           .join(",")
 
         # Fields need explicitly wrapped with quotes and can have high cardinality.
@@ -328,9 +332,8 @@ module Utils
         install_count = analytics.dig("install", "30d")&.values&.sum
         return unless install_count&.positive?
 
-        puts "Downloads / analytics install events (30 days): " \
-             "#{format("%.2f", downloads.last_30_days.to_f / install_count)}x " \
-             "(#{format_count(install_count)} events)"
+        ratio = format("%.2f", downloads.last_30_days.to_f / install_count)
+        puts "Downloads / analytics install events (30 days): #{ratio}x (#{format_count(install_count)} events)"
       end
 
       sig { params(formula: Formula, args: Homebrew::Cmd::Info::Args).void }
@@ -476,8 +479,11 @@ module Utils
         puts "#{formatted_index_header} | #{formatted_name_with_options_header} | " \
              "#{formatted_count_header} |  #{formatted_percent_header}"
 
-        columns_line = "#{"-"*index_width}:|-#{"-"*name_with_options_width}-|-" \
-                       "#{"-"*count_width}:|-#{"-"*percent_width}:"
+        index_rule = "-"*index_width
+        name_rule = "-"*name_with_options_width
+        count_rule = "-"*count_width
+        percent_rule = "-"*percent_width
+        columns_line = "#{index_rule}:|-#{name_rule}-|-#{count_rule}:|-#{percent_rule}:"
         puts columns_line
 
         index = 0

@@ -49,7 +49,7 @@ RSpec.describe Homebrew::DevCmd::Benchmark do
     hyperfine = mktmpdir/"hyperfine"
     hyperfine.write("#!/bin/sh\n")
     hyperfine.chmod(0755)
-    formulae = Array.new(100) { |index| "formula-#{index + 1}" }
+    formulae = Array.new(100) { |index| "formula-#{index.succ}" }
     benchmark = described_class.new(["--runs=2", *formulae])
     hyperfine_calls = []
 

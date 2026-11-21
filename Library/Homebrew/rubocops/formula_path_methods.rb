@@ -108,7 +108,8 @@ module RuboCop
             return unless utils_path?(receiver)
             return unless node.each_ancestor.any? { |ancestor| service_block?(ancestor) }
 
-            return "#{node.method_name}(#{node.arguments.map(&:source).join(", ")})"
+            arguments = node.arguments.map(&:source).join(", ")
+            return "#{node.method_name}(#{arguments})"
           else
             return if node.each_ancestor.any?(&:rescue_type?)
 

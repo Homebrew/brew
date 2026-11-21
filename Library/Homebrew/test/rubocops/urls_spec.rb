@@ -319,11 +319,12 @@ RSpec.describe RuboCop::Cop::FormulaAudit::Urls do
         expected_url = "https://www.apache.org/dyn/closer.lua?path=apr/apr-1.7.6.tar.bz2"
         message = "FormulaAudit/Urls: #{url} should be: #{expected_url}"
 
+        carets = "^" * url.size
         expect_offense(<<~RUBY, url:, message:)
           class Foo < Formula
             desc "foo"
             url "#{url}"
-            ^^^^^#{"^" * url.size}^ #{message}
+            ^^^^^#{carets}^ #{message}
           end
         RUBY
 

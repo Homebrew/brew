@@ -47,8 +47,8 @@ class GitHubPackages
       end
     end
 
-    url = "https://github.com/Homebrew/homebrew-core/pkgs/container/core%2F" \
-          "#{image_formula_name(formula_name).gsub("/", "%2F")}"
+    escaped_name = image_formula_name(formula_name).gsub("/", "%2F")
+    url = "https://github.com/Homebrew/homebrew-core/pkgs/container/core%2F#{escaped_name}"
     output = Utils::Curl.curl_output("--fail", "--compressed", url)
     return unless output.success?
 
@@ -157,7 +157,8 @@ class GitHubPackages
       next if bottle_count < 3
 
       uploaded_count = index + 1
-      ohai "Upload progress: #{uploaded_count} formula(e) uploaded, #{bottle_count - uploaded_count} remaining"
+      remaining = bottle_count - uploaded_count
+      ohai "Upload progress: #{uploaded_count} formula(e) uploaded, #{remaining} remaining"
     end
   end
 
@@ -253,7 +254,8 @@ class GitHubPackages
     git_revision = bottle_hash["formula"]["tap_git_revision"]
 
     source_org_repo = "#{org}/#{repo}"
-    source = "https://github.com/#{source_org_repo}/blob/#{git_revision.presence || "HEAD"}/#{git_path}"
+    revision = git_revision.presence || "HEAD"
+    source = "https://github.com/#{source_org_repo}/blob/#{revision}/#{git_path}"
 
     formula_core_tap = formula_full_name.exclude?("/")
     documentation = if formula_core_tap
@@ -330,7 +332,7 @@ class GitHubPackages
       else
         "darwin"
       end
-      raise TypeError, "unknown tab['built_on']['os']: #{tab["built_on"]["os"]}" if os.blank?
+      raise TypeError, "unknown tab['built_on']['os']: #{tab.dig("built_on", "os")}" if os.blank?
 
       os_version = tab["built_on"]["os_version"].presence if tab["built_on"].present?
       case os
@@ -590,7 +592,8 @@ class GitHubPackages
 
     image_name = GitHubPackages.image_formula_name(formula_name)
     image_tag = GitHubPackages.image_version_rebuild(version_rebuild)
-    image_uri = "#{GitHubPackages.root_url(org, repo, DOCKER_PREFIX)}/#{image_name}:#{image_tag}"
+    root_url = GitHubPackages.root_url(org, repo, DOCKER_PREFIX)
+    image_uri = "#{root_url}/#{image_name}:#{image_tag}"
 
     puts
     inspect_args = ["inspect", "--raw", image_uri.to_s]

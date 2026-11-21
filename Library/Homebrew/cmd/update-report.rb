@@ -255,14 +255,14 @@ module Homebrew
           rescue Reporter::ReporterRevisionUnsetError => e
             if Homebrew::EnvConfig.developer?
               require "utils/backtrace"
-              onoe "#{e.message}\n#{Utils::Backtrace.clean(e)&.join("\n")}"
+              onoe [e.message, Utils::Backtrace.clean(e)].join("\n")
             end
             next
           end
-          if reporter.updated?
-            updated_taps << tap.name
-            hub.add(reporter, auto_update: args.auto_update?)
-          end
+          next unless reporter.updated?
+
+          updated_taps << tap.name
+          hub.add(reporter, auto_update: args.auto_update?)
         end
 
         # If we're installing from the API: we cannot use Git to check for #
@@ -301,8 +301,8 @@ module Homebrew
 
         unless updated_taps.empty?
           auto_update_header
-          puts "Updated #{Utils.pluralize("tap", updated_taps.count,
-                                          include_count: true)} (#{Utils::Text.to_sentence(updated_taps)})."
+          tap_count = Utils.pluralize("tap", updated_taps.count, include_count: true)
+          puts "Updated #{tap_count} (#{Utils::Text.to_sentence(updated_taps)})."
           updated = true
         end
 
@@ -367,10 +367,11 @@ module Homebrew
 
         failed_fetch_dirs = ENV["HOMEBREW_MISSING_REMOTE_REF_DIRS"]&.split("\n")
         if failed_fetch_dirs.present?
+          failed_taps = failed_fetch_dirs.map { |dir| Tap.from_path(dir) }.join("\n  ")
           ofail <<~EOS
             Some taps failed to update!
             The following taps can not read their remote branches:
-              #{failed_fetch_dirs.map { |dir| Tap.from_path(dir) }.join("\n  ")}
+              #{failed_taps}
             This is happening because the remote branch was renamed or deleted.
             Reset taps to point to the correct remote branches by running `brew tap --repair`
           EOS

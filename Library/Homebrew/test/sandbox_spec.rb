@@ -160,8 +160,9 @@ RSpec.describe Sandbox, :needs_macos do
       let(:check_responsibility) { "puts false" }
 
       before do
+        disclaim_path = (HOMEBREW_LIBRARY_PATH/"utils/disclaim").to_s.inspect
         (dir/"disclaim_fallback.rb").write <<~RUBY
-          require #{(HOMEBREW_LIBRARY_PATH/"utils/disclaim").to_s.inspect}
+          require #{disclaim_path}
           Utils::Disclaim.singleton_class.class_eval { public :exec_without_disclaim }
           Utils::Disclaim.exec_without_disclaim(ARGV)
         RUBY

@@ -175,10 +175,12 @@ module RuboCop
 
           diff = []
           if (missing_from_list = (table - list).to_a.sort).any?
-            diff << "missing from the list: #{missing_from_list.map { |m| "`#{m}`" }.join(", ")}"
+            method_list = missing_from_list.map { |m| "`#{m}`" }.join(", ")
+            diff << "missing from the list: #{method_list}"
           end
           if (missing_from_table = (list - table).to_a.sort).any?
-            diff << "not in the cookbook table: #{missing_from_table.map { |m| "`#{m}`" }.join(", ")}"
+            method_list = missing_from_table.map { |m| "`#{m}`" }.join(", ")
+            diff << "not in the cookbook table: #{method_list}"
           end
 
           node = processed_source.ast&.each_descendant(:casgn)&.find do |casgn|

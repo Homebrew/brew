@@ -203,7 +203,7 @@ RSpec.describe GitHubRunnerMatrix, :no_api do
       end
 
       test_each([nil, :tahoe, :arm64_linux]) do |bottle_tag|
-        it "skips a test-only dependency with #{bottle_tag || "no"} bottles" do
+        it "skips a test-only dependency with bottle tag #{bottle_tag.inspect}" do
           dependency = setup_test_runner_formula("test-only-dependency")
           dependency.formula.bottle_specification.sha256(bottle_tag => "a" * 64) if bottle_tag
           covered = setup_test_runner_formula("covered", [{ dependency.name => :test }])

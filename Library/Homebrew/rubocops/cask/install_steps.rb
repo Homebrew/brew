@@ -114,7 +114,8 @@ module RuboCop
           return fingerprint_keychain_step_lines(direct_nodes) if direct_nodes.length == 7
 
           if (name_node = keychain_delete_sequence_name(direct_nodes))&.str_type?
-            return ["delete_keychain_certificates #{T.cast(name_node, RuboCop::AST::StrNode).str_content.inspect}"]
+            certificate_name = T.cast(name_node, RuboCop::AST::StrNode).str_content.inspect
+            return ["delete_keychain_certificates #{certificate_name}"]
           end
 
           return if body_node.nil? || !body_node.block_type?
@@ -135,7 +136,8 @@ module RuboCop
           return if sequence_name_node.children != [:cert_name]
 
           name_nodes.map do |name|
-            "delete_keychain_certificates #{T.cast(name, RuboCop::AST::StrNode).str_content.inspect}"
+            str = T.cast(name, RuboCop::AST::StrNode)
+            "delete_keychain_certificates #{str.str_content.inspect}"
           end
         end
 

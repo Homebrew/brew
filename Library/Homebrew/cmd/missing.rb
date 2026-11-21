@@ -46,9 +46,10 @@ module Homebrew
 
         return if missing_deps.empty? || args.hide
 
+        install_commands = Homebrew::Missing.install_commands(missing_deps).join("\n  ")
         opoo <<~EOS
           You should `brew install` the missing dependencies:
-            #{Homebrew::Missing.install_commands(missing_deps).join("\n  ")}
+            #{install_commands}
         EOS
       end
     end

@@ -15,13 +15,14 @@ RSpec.describe "startup umask", type: :system do
   ]) do |(macos, primary_group, groups, initial_umask, expected_umask)|
     it "uses #{expected_umask} for #{[macos, primary_group, groups, initial_umask]} including subprocesses" do
       directory = mktmpdir
+      umask_setup = (HOMEBREW_LIBRARY_PATH/"brew.sh").read[/^# Prevent other staff members.*?^fi$/m]
       stdout, stderr, status = Open3.capture3(
         { "HOMEBREW_MACOS" => macos }, "/bin/bash", "-c", <<~SH, "--", directory.to_s
           umask #{initial_umask}
           id() {
             if [[ "$1" == -gn ]]; then echo '#{primary_group}'; else echo '#{groups}'; fi
           }
-          #{(HOMEBREW_LIBRARY_PATH/"brew.sh").read[/^# Prevent other staff members.*?^fi$/m]}
+          #{umask_setup}
           umask
           /bin/bash -c 'mkdir "$1/child"; touch "$1/child/file"' -- "$1"
         SH

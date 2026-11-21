@@ -56,7 +56,8 @@ module Homebrew
         advisories = begin
           Homebrew::Vulns::AdvisoryDatabase.load
         rescue Homebrew::Vulns::CachedFeed::Error, ErrorDuringExecution => e
-          opoo "Skipping vulnerabilities field: #{e.message.lines.first&.strip}"
+          error_message = e.message.lines.first&.strip
+          opoo "Skipping vulnerabilities field: #{error_message}"
           nil
         end
 

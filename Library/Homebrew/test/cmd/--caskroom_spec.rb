@@ -29,8 +29,8 @@ RSpec.describe Homebrew::Cmd::Caskroom do
     ])
 
     expect { cmd.run }
-      .to output("#{HOMEBREW_PREFIX/"Caskroom"/"local-transmission"}\n" \
-                 "#{HOMEBREW_PREFIX/"Caskroom"/"local-caffeine"}\n").to_stdout
+      .to output("#{HOMEBREW_PREFIX}/Caskroom/local-transmission\n" \
+                 "#{HOMEBREW_PREFIX}/Caskroom/local-caffeine\n").to_stdout
       .and not_to_output.to_stderr
   end
 end

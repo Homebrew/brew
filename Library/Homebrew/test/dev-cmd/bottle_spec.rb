@@ -6,6 +6,9 @@ require "dev-cmd/bottle"
 
 RSpec.describe Homebrew::DevCmd::Bottle do
   def stub_hash(parameters)
+    root_url = parameters[:root_url] || HOMEBREW_BOTTLE_DEFAULT_DOMAIN
+    sbom_field = parameters[:sbom] ? ",\"sbom\":#{parameters[:sbom].to_json}" : ""
+    tab_field = parameters[:tab] ? ",\"tab\":#{parameters[:tab].to_json}" : ""
     <<~JSON
       {
         "#{parameters[:name]}":{
@@ -14,7 +17,7 @@ RSpec.describe Homebrew::DevCmd::Bottle do
               "path":"#{parameters[:path]}"
            },
            "bottle":{
-              "root_url":"#{parameters[:root_url] || HOMEBREW_BOTTLE_DEFAULT_DOMAIN}",
+              "root_url":"#{root_url}",
               "prefix":"/usr/local",
               "cellar":"#{parameters[:cellar]}",
               "rebuild":0,
@@ -23,8 +26,8 @@ RSpec.describe Homebrew::DevCmd::Bottle do
                     "filename":"#{parameters[:filename]}",
                     "local_filename":"#{parameters[:local_filename]}",
                     "sha256":"#{parameters[:sha256]}"
-                    #{",\"sbom\":#{parameters[:sbom].to_json}" if parameters[:sbom]}
-                    #{",\"tab\":#{parameters[:tab].to_json}" if parameters[:tab]}
+                    #{sbom_field}
+                    #{tab_field}
                  }
               }
            }
@@ -112,8 +115,9 @@ RSpec.describe Homebrew::DevCmd::Bottle do
         FileUtils.ln_s "not-exist", "symlink"
       end
       formula.libexec.mkpath
+      prefix_data = Array.new(Homebrew::DevCmd::Bottle::MAXIMUM_STRING_MATCHES + 1, formula.libexec.to_s).join("\0")
       (formula.libexec/"raw-prefix").binwrite(
-        "\0#{Array.new(Homebrew::DevCmd::Bottle::MAXIMUM_STRING_MATCHES + 1, formula.libexec.to_s).join("\0")}\0",
+        "\0#{prefix_data}\0",
       )
       require "patchelf"
       library = formula.libexec/"José/libhello.so.0"

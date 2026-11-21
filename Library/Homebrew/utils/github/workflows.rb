@@ -92,9 +92,10 @@ module GitHub
       last_check = check_suite.fetch(-1)
       status = last_check["status"].sub("_", " ").downcase
       if status != "completed"
+        workflow_url = Formatter.url last_check["workflowRun"]["url"]
         raise API::Error, <<~EOS
           The newest workflow run for ##{pr} is still #{status}!
-            #{Formatter.url last_check["workflowRun"]["url"]}
+            #{workflow_url}
         EOS
       end
 
@@ -115,9 +116,10 @@ module GitHub
         .map { |_, arts| arts.max_by { |art| art["created_at"] } }
 
       if matching_artifacts.empty?
+        workflow_url = Formatter.url last_check["workflowRun"]["url"]
         raise API::Error, <<~EOS
           No artifacts with the pattern `#{artifact_pattern}` were found!
-            #{Formatter.url last_check["workflowRun"]["url"]}
+            #{workflow_url}
         EOS
       end
 

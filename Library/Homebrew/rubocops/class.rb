@@ -128,7 +128,8 @@ module RuboCop
                 source.insert(name.source_range.end_pos - range.begin_pos,
                               ", :test")
               end
-              source = source.gsub(/^ {#{resource.source_range.column - test.source_range.column}}/, "")
+              indent_difference = resource.source_range.column - test.source_range.column
+              source = source.gsub(/^ {#{indent_difference}}/, "")
               corrector.insert_before(range_with_comments_and_lines(test), "#{source}\n")
               range = range.adjust(end_pos: 1) if range.source_buffer.source[range.end_pos] == "\n"
               corrector.remove(range)

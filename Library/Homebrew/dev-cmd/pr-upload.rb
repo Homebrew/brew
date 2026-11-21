@@ -161,10 +161,11 @@ module Homebrew
           Utils::Git.set_name_email!
           Utils::Git.setup_gpg!
           path.parent.cd do
+            action = unbottled_formulae.include?(formula_name) ? "add" : "update"
+            version = bottle_hash.fetch("formula").fetch("pkg_version")
             SystemCommand.safe_system "git", "commit", "--no-edit", "--verbose",
                                       "--message=#{Utils.name_from_full_name(formula_name)}: " \
-                                      "#{unbottled_formulae.include?(formula_name) ? "add" : "update"} " \
-                                      "#{bottle_hash.fetch("formula").fetch("pkg_version")} bottle.",
+                                      "#{action} #{version} bottle.",
                                       "--", path
           end
         end
