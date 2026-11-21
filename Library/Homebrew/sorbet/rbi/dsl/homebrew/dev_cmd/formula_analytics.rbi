@@ -42,6 +42,9 @@ class Homebrew::DevCmd::FormulaAnalytics::Args < Homebrew::CLI::Args
   def homebrew_os_arch_ci?; end
 
   sig { returns(T::Boolean) }
+  def homebrew_os_arch_level_ci?; end
+
+  sig { returns(T::Boolean) }
   def homebrew_prefixes?; end
 
   sig { returns(T::Boolean) }
