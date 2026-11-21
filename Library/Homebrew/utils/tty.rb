@@ -135,6 +135,18 @@ module Tty
       "\033[?25h"
     end
 
+    # Save auto-wrap mode and disable it so echoed input cannot wrap a progress row.
+    sig { returns(String) }
+    def disable_line_wrap
+      "\033[?7s\033[?7l"
+    end
+
+    # Enable wrapping as a fallback for terminals that ignore mode save/restore.
+    sig { returns(String) }
+    def restore_line_wrap
+      "\033[?7h\033[?7r"
+    end
+
     sig { returns(String) }
     def begin_synchronized_update
       "\033[?2026h"
